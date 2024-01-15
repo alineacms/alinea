@@ -115,4 +115,18 @@ export class UnionShape<T extends UnionRow>
     await Promise.all(tasks)
     if (this.postProcess) await this.postProcess(value, loader)
   }
+
+  searchableText(value: T): string {
+    let res = ''
+    if (Array.isArray(value)) value = value[0] ?? {}
+    else value = value ?? {}
+    const type = value.type
+    const shape = this.shapes[type]
+    const self: Record<string, any> = value || {}
+    if (!shape) return ''
+    for (const [key, field] of entries(shape.properties)) {
+      res += field.searchableText(self[key])
+    }
+    return res
+  }
 }

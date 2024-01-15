@@ -97,6 +97,10 @@ export namespace Type {
     return type[Type.Data].shape
   }
 
+  export function searchableText(type: Type, value: any): string {
+    return shape(type).searchableText(value).trim()
+  }
+
   export function fields(type: Type): Record<string, Field> {
     return type as any
   }

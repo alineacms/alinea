@@ -100,7 +100,8 @@ export class RichTextShape<Blocks>
   constructor(
     public label: Label,
     public shapes?: Record<string, RecordShape>,
-    public initialValue?: TextDoc<Blocks>
+    public initialValue?: TextDoc<Blocks>,
+    public searchable?: boolean
   ) {
     this.values = shapes
       ? fromEntries(
@@ -314,6 +315,29 @@ export class RichTextShape<Blocks>
         })
       )
     )
+  }
+
+  searchableText(value: TextDoc<Blocks>): string {
+    let res = ''
+    if (!this.searchable) return res
+    if (!Array.isArray(value)) return res
+    return value.reduce((acc, node) => {
+      return acc + this.textOf(node)
+    }, '')
+  }
+
+  textOf(node: TextNode<any>): string {
+    if (this.values[node.type]) {
+      const shape = this.values[node.type]
+      return shape.searchableText(node)
+    }
+    if (node.type === 'text') return ' ' + node.text ?? ''
+    if ('content' in node && Array.isArray(node.content)) {
+      return node.content.reduce((acc, node) => {
+        return acc + this.textOf(node)
+      }, '')
+    }
+    return ''
   }
 }
 

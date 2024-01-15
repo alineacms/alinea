@@ -9,6 +9,7 @@ import {NoticeBlock} from './NoticeBlock'
 
 export function bodyField() {
   return alinea.richText('Body', {
+    searchable: true,
     schema: alinea.schema({
       CodeBlock,
       CodeVariantsBlock,

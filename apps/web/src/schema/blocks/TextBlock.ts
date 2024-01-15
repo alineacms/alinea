@@ -15,7 +15,8 @@ export const TextField = alinea.richText('Body', {
     ChapterLinkBlock,
     ExampleBlock
   }),
-  inline: true
+  inline: true,
+  searchable: true
 })
 
 export const TextBlock = alinea.type('Body text', {
