@@ -107,24 +107,26 @@ function NewEntryForm({parentId}: NewEntryProps) {
     })
   }, [])
 
+  async function allowedTypes(parentId?: string) {
+    if (!parentId) {
+      return root.contains ?? []
+    } else {
+      const parent = await graph.preferDraft.get(
+        Entry({entryId: parentId}).select(parentData)
+      )
+      const parentType = parent && config.schema[parent.type]
+      return (
+        (parentType && Type.meta(parentType).contains) || keys(config.schema)
+      )
+    }
+  }
+
   const typeField = useMemo(() => {
-    const typeField = select('Select type', {})
+    const typeField = select<Record<string, any>>('Select type', {})
     return track.options(typeField, async get => {
-      const types: Array<string> = []
       const selectedParent = get(parentField)
       const parentId = selectedParent?.entry
-      if (!parentId) {
-        types.push(...(root.contains ?? []))
-      } else {
-        const parent = await graph.preferDraft.get(
-          Entry({entryId: parentId}).select(parentData)
-        )
-        const parentType = parent && config.schema[parent.type]
-        types.push(
-          ...((parentType && Type.meta(parentType).contains) ||
-            keys(config.schema))
-        )
-      }
+      const types: Array<string> = await allowedTypes(parentId)
       return {
         items: fromEntries(
           types
@@ -175,9 +177,17 @@ function NewEntryForm({parentId}: NewEntryProps) {
   )
   const form = useForm(formType)
 
+  const parentAtoms = form.fieldInfo(parentField)
   const typeAtoms = form.fieldInfo(typeField)
   const copyFromAtoms = form.fieldInfo(copyFromField)
   const selectedType = useAtomValue(typeAtoms.value)
+  const selectedParent = useAtomValue(parentAtoms.value)
+
+  useEffect(() => {
+    allowedTypes(selectedParent?.entry).then(types => {
+      if (types.length > 0) typeAtoms.mutator(types[0])
+    })
+  }, [selectedParent])
 
   useEffect(() => {
     copyFromAtoms.mutator.replace(undefined!)
