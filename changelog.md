@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.5]
+
+- A source entry can be chosen in the modal where new entries are created.
+  All data from that entry will be copied to the new entry.
+
 ## [0.5.4]
 
 - Shared fields (#365)
