@@ -5,7 +5,7 @@ import {RecordShape} from '../shape/RecordShape.js'
 
 export class RichTextField<
   Blocks,
-  Options extends FieldOptions<TextDoc<Blocks>>
+  Options extends FieldOptions<TextDoc<Blocks>> & {searchable?: boolean}
 > extends Field<TextDoc<Blocks>, RichTextMutator<Blocks>, Options> {
   constructor(
     shape: {[key: string]: RecordShape<any>} | undefined,
@@ -15,7 +15,8 @@ export class RichTextField<
       shape: new RichTextShape(
         meta.options.label,
         shape,
-        meta.options.initialValue
+        meta.options.initialValue,
+        meta.options.searchable
       ),
       ...meta
     })

@@ -15,12 +15,8 @@ export interface RichTextOptions<Blocks extends Schema>
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
-  /** A default value */
-  initialValue?: TextDoc<Blocks>
-  /** Hide this rich text field */
-  hidden?: boolean
-  /** Make this rich text field read-only */
-  readOnly?: boolean
+  /** Index the text value of this field */
+  searchable?: boolean
 }
 
 /** Create a rich text field configuration */

@@ -28,7 +28,7 @@ import {
   UnOpType,
   withRecursive
 } from 'rado'
-import {iif, match, count as sqlCount} from 'rado/sqlite'
+import {bm25, iif, match, count as sqlCount} from 'rado/sqlite'
 import {Database} from '../Database.js'
 import {LinkResolver} from './LinkResolver.js'
 import {ResolveContext} from './ResolveContext.js'
@@ -470,7 +470,8 @@ export class EntryResolver {
       : this.selectAll(ctx, {name})
     if (first) extra.singleResult = true
     if (groupBy) extra.groupBy = groupBy.map(expr => this.expr(ctx, expr))
-    if (orderBy) extra.orderBy = this.orderBy(ctx, orderBy)
+    if (searchTerms) extra.orderBy = [bm25(EntrySearch, 20, 1).asc()]
+    else if (orderBy) extra.orderBy = this.orderBy(ctx, orderBy)
     return query[Query.Data].with(extra)
   }
 

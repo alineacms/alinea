@@ -4,6 +4,7 @@ export const EntrySearch = table({
   EntrySearch: class {
     title = column.string
     searchableText = column.string
+    rank = column.number
   }
 })
 

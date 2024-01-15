@@ -7,6 +7,7 @@ import {
   Schema,
   SyncResponse,
   Syncable,
+  Type,
   Workspace,
   createId,
   unreachable
@@ -485,8 +486,7 @@ export class Database implements Syncable {
       ...data,
       path: pathData
     }
-    const searchableText = ''
-
+    const searchableText = Type.searchableText(type, entryData)
     return {
       workspace: meta.workspace,
       root: meta.root,

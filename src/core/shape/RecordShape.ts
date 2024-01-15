@@ -83,4 +83,13 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
     }
     await Promise.all(tasks)
   }
+
+  searchableText(value: T): string {
+    let res = ''
+    const self: Record<string, any> = value || {}
+    for (const key of keys(this.properties)) {
+      res += this.properties[key].searchableText(self[key])
+    }
+    return res
+  }
 }
