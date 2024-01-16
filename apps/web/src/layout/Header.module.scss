@@ -77,6 +77,12 @@
       white-space: nowrap;
       border-radius: 8px;
 
+      &.is-search {
+        display: block;
+        font-size: 18px;
+        cursor: pointer;
+      }
+
       &.is-intro {
         @include s {
           display: none;
@@ -207,5 +213,86 @@
 
   :global(#mobilemenu:checked) + & {
     display: block;
+  }
+}
+
+.searchmodal {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  padding: 60px;
+
+  @include s {
+    padding: 20px;
+  }
+
+  &-header {
+    position: sticky;
+    top: 0;
+    background: var(--web-background);
+    z-index: 1;
+    padding: 8px 20px;
+
+    &-icon {
+      font-size: 22px;
+      &.is-pending {
+        animation: glow 0.5s ease-in-out infinite alternate;
+      }
+    }
+
+    &-input {
+      background: none;
+      border: none;
+      font-size: 18px;
+      height: 40px;
+      width: 100%;
+      flex: 1;
+      &:focus {
+        outline: none;
+      }
+    }
+  }
+
+  &-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  &-container {
+    position: relative;
+    margin: 0 auto;
+    max-width: 566px;
+    background: var(--web-background);
+    color: var(--web-foreground);
+    border-radius: 8px;
+    max-height: 100%;
+    overflow: auto;
+  }
+}
+
+.results {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 8px 20px 20px 16px;
+
+  &-row {
+    border-radius: 8px;
+    padding: 8px 12px;
+    &:hover {
+      color: var(--web-foreground);
+      background: var(--web-highlight);
+    }
+  }
+}
+
+@keyframes glow {
+  from {
+    color: var(--web-foreground);
+  }
+  to {
+    color: var(--web-accent);
   }
 }

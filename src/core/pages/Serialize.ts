@@ -106,6 +106,8 @@ function seralizeExpr(
       }
       if (expr.defaultCase) serializeSelection(targets, expr.defaultCase)
       return
+    case 'call':
+      return
     default:
       unreachable(expr)
   }

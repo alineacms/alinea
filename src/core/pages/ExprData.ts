@@ -46,6 +46,7 @@ export type ExprData =
   | ExprData.Value
   | ExprData.Record
   | ExprData.Case
+  | ExprData.Call
 
 export namespace ExprData {
   namespace types {
@@ -84,6 +85,11 @@ export namespace ExprData {
       cases = array(tuple(adt, Selection.adt))
       defaultCase? = Selection.adt.optional
     }
+    export class Call {
+      type = literal('call')
+      method = string
+      args = array(adt)
+    }
   }
   export interface UnOp extends Infer<types.UnOp> {}
   export function UnOp(op: UnaryOp, expr: ExprData): ExprData {
@@ -117,6 +123,10 @@ export namespace ExprData {
   ): ExprData {
     return {type: 'case', expr, cases, defaultCase}
   }
+  export interface Call extends Infer<types.Call> {}
+  export function Call(method: string, args: Array<ExprData>): ExprData {
+    return {type: 'call', method, args}
+  }
   export const adt: Type<ExprData> = union(
     types.UnOp,
     types.BinOp,
@@ -124,6 +134,7 @@ export namespace ExprData {
     types.Access,
     types.Value,
     types.Record,
-    types.Case
+    types.Case,
+    types.Call
   )
 }

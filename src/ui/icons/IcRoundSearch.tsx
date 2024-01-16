@@ -10,4 +10,3 @@ export function IcRoundSearch(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundSearch
