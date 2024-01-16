@@ -113,7 +113,7 @@ export class Handler implements Resolver {
   }
 
   async periodicSync(syncInterval = 5) {
-    if (syncInterval === 0) return
+    if (syncInterval === Infinity) return
     const now = Date.now()
     if (now - this.lastSync < syncInterval * 1000) return
     this.lastSync = now

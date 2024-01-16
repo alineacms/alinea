@@ -29,6 +29,8 @@ export interface GraphRealmApi {
   find<S extends Projection | Type>(select: S): Promise<Selection.Infer<S>>
   /** The time in seconds to poll for updates to content */
   syncInterval(interval: number): GraphRealmApi
+  /** Disable polling for updates to content */
+  disableSync(): GraphRealmApi
   /** The amount of results found */
   count(cursor: Cursor.Find<any>): Promise<number>
 }
@@ -47,6 +49,19 @@ export class GraphRealm implements GraphRealmApi {
     private origin: GraphOrigin = {}
   ) {
     this.targets = Schema.targets(config.schema)
+  }
+
+  disableSync() {
+    return new GraphRealm(
+      this.config,
+      params => {
+        return this.resolve({
+          ...params,
+          syncInterval: Infinity
+        })
+      },
+      this.origin
+    )
   }
 
   syncInterval(interval: number) {

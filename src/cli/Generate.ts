@@ -1,7 +1,9 @@
 import {Database} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
+import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
+import {join} from 'alinea/core/util/Paths'
 import {BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
@@ -103,14 +105,17 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
   let afterGenerateCalled = false
 
-  const [store, exportStore] = await createDb()
+  function writeStore(data: Uint8Array) {
+    return exportStore(data, join(context.outDir, 'store.js'))
+  }
+  const [store, storeData] = await createDb()
   await copyStaticFiles(context)
   while (true) {
     const {done} = await nextBuild
     nextBuild = builds.next()
     try {
       const cms = await loadCMS(context.outDir)
-      cms.exportStore(context.outDir, new Uint8Array())
+      await writeStore(new Uint8Array())
       const fileData = new LocalData({
         config: cms.config,
         fs: fs.promises,
@@ -125,12 +130,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         nextBuild
       )) {
         yield {cms, db, localData: fileData}
-        // For debug reasons write out db
-        if (process.env.NODE_ENV === 'development')
-          fs.writeFileSync(
-            path.join(context.outDir, 'content.sqlite'),
-            exportStore()
-          )
         if (onAfterGenerate && !afterGenerateCalled) {
           afterGenerateCalled = true
           onAfterGenerate()
@@ -139,7 +138,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       if (done) {
         await Promise.all([
           generatePackage(context, cms.config),
-          cms.exportStore(context.outDir, exportStore())
+          writeStore(storeData())
         ])
         break
       }

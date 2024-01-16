@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   if (!searchTerm) return Response.json([])
   const matches = await cms
     .in(cms.workspaces.main.pages)
-    .syncInterval(0)
+    .disableSync()
     .find(
       Entry()
         .select({

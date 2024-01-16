@@ -1,5 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (
+    config,
+    {buildId, dev, isServer, defaultLoaders, nextRuntime, webpack}
+  ) => {
+    if (config.name === 'edge-server') {
+      config.resolve.conditionNames = ['worker', 'import', 'require']
+      config.module.rules.unshift({
+        test: /\.wasm$/,
+        loader: 'next-middleware-wasm-loader',
+        type: 'javascript/auto'
+      })
+    }
+    return config
+  },
   reactStrictMode: false,
   swcMinify: true,
   typescript: {
