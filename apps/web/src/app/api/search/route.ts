@@ -13,7 +13,7 @@ export async function GET(request: Request) {
         .select({
           title: Entry.title,
           url: Entry.url,
-          snippet: alinea.snippet(),
+          snippet: alinea.snippet('[[mark]]', '[[/mark]]'),
           parents({parents}) {
             return parents().select({
               id: Entry.entryId,
@@ -24,7 +24,19 @@ export async function GET(request: Request) {
         .search(...searchTerm.split(' '))
         .take(25)
     )
-  return Response.json(matches)
+
+  return Response.json(
+    matches.map(match => {
+      return {
+        ...match,
+        snippet: match.snippet
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\[\[mark\]\]/g, '<mark>')
+          .replace(/\[\[\/mark\]\]/g, '</mark>')
+      }
+    })
+  )
 }
 
 export const runtime = 'edge'

@@ -6,7 +6,7 @@ export function snippet(
   end = '</mark>',
   cutOff = '...',
   limit = 64
-) {
+): Expr<string> {
   return Expr(
     ExprData.Call('snippet', [
       ExprData.Value(start),
