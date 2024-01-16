@@ -56,6 +56,7 @@ export namespace Connection {
     selection: Selection
     location?: Array<string>
     locale?: string
+    syncInterval?: number
   }
   export type MediaUploadParams = {
     buffer: ArrayBuffer

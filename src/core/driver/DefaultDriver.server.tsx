@@ -31,6 +31,7 @@ export class DefaultDriver extends CMS {
         config: this.config,
         url: devUrl,
         resolveDefaults: {
+          syncInterval: this.config.syncInterval ?? 60,
           realm: Realm.Published
         }
       })
