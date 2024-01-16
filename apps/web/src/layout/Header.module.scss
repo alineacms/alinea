@@ -218,6 +218,8 @@
 
 .searchmodal {
   position: fixed;
+  display: flex;
+  align-items: flex-start;
   inset: 0;
   z-index: 10;
   padding: 60px;
@@ -262,12 +264,15 @@
   &-container {
     position: relative;
     margin: 0 auto;
+    width: 100%;
     max-width: 566px;
     background: var(--web-background);
     color: var(--web-foreground);
     border-radius: 8px;
     max-height: 100%;
-    overflow: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 }
 
@@ -277,6 +282,8 @@
   flex-direction: column;
   gap: 15px;
   padding: 8px 20px 20px 16px;
+  max-height: 100%;
+  overflow: auto;
 
   &-row {
     border-radius: 8px;

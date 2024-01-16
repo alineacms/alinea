@@ -14,6 +14,8 @@ import {
   use,
   useDeferredValue,
   useEffect,
+  useLayoutEffect,
+  useRef,
   useState
 } from 'react'
 import {createPortal} from 'react-dom'
@@ -89,10 +91,15 @@ const SearchResults = memo(function SearchResults({
   searchTerm
 }: SearchResultsProps) {
   const results = use(searchResults(searchTerm))
+  const ref = useRef<HTMLUListElement>(null)
+  useLayoutEffect(() => {
+    const list = ref.current
+    if (list) list.scrollTop = 0
+  }, [searchTerm])
   if (results.length === 0)
     return <p className={styles.results()}>No results</p>
   return (
-    <ul className={styles.results()}>
+    <ul ref={ref} className={styles.results()}>
       {results.map((result: SearchResult) => {
         return (
           <li key={result.url} className={styles.results.row()}>
