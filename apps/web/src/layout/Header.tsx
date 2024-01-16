@@ -94,7 +94,7 @@ function Menu({links}: MenuProps) {
       <Stack.Right>
         <HStack gap={12} center>
           <SearchButton>
-            <button className={styles.root.social()}>
+            <button className={styles.root.social('search')}>
               <IcRoundSearch className={styles.root.social.icon()} />
             </button>
           </SearchButton>

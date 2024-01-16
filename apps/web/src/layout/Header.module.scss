@@ -136,6 +136,12 @@
     .is-transparent &:hover {
       color: black;
     }
+
+    &.is-search {
+      @include ml {
+        display: none;
+      }
+    }
   }
 
   &-mobileButton {
