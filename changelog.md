@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.8]
+
+- Fix navigation missing when selecting internal pages in Link fields.
+
 ## [0.5.7]
 
 - The interval at which Alinea polls the backend for content updates is
