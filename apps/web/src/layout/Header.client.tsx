@@ -1,7 +1,7 @@
 'use client'
 
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
-import {HStack, fromModule} from 'alinea/ui'
+import {HStack, VStack, fromModule} from 'alinea/ui'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
@@ -87,6 +87,7 @@ interface SearchResult {
 interface SearchResultsProps {
   searchTerm: string
 }
+
 const SearchResults = memo(function SearchResults({
   searchTerm
 }: SearchResultsProps) {
@@ -104,9 +105,15 @@ const SearchResults = memo(function SearchResults({
         return (
           <li key={result.url} className={styles.results.row()}>
             <Link href={result.url}>
-              {result.parents && <Breadcrumbs flat parents={result.parents} />}
-              <h3>{result.title}</h3>
-              <Snippet snippet={result.snippet} />
+              <VStack gap={6}>
+                <header>
+                  {result.parents && (
+                    <Breadcrumbs flat parents={result.parents} />
+                  )}
+                  <h3>{result.title}</h3>
+                </header>
+                <Snippet snippet={result.snippet} />
+              </VStack>
             </Link>
           </li>
         )
@@ -158,7 +165,7 @@ function SearchModal({onClose}: SearchModalProps) {
         </HStack>
         {searchTerm && (
           <Suspense fallback={<p className={styles.results()}>Loading</p>}>
-            {<SearchResults searchTerm={searching} />}
+            <SearchResults searchTerm={searching} />
           </Suspense>
         )}
       </div>

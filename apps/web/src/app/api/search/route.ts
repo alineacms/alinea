@@ -13,7 +13,7 @@ export async function GET(request: Request) {
         .select({
           title: Entry.title,
           url: Entry.url,
-          snippet: alinea.snippet('[[mark]]', '[[/mark]]'),
+          snippet: alinea.snippet('[[mark]]', '[[/mark]]', '…', 25),
           parents({parents}) {
             return parents().select({
               id: Entry.entryId,
