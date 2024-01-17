@@ -244,12 +244,14 @@ function NewEntryForm({parentId}: NewEntryProps) {
       data: {...entryData, title, path},
       searchableText: ''
     })
-    return mutate({
-      type: MutationType.Create,
-      entryId: entry.entryId,
-      entry,
-      file: entryFileName(config, data, parentPaths)
-    }).then(() => {
+    return mutate([
+      {
+        type: MutationType.Create,
+        entryId: entry.entryId,
+        entry,
+        file: entryFileName(config, data, parentPaths)
+      }
+    ]).then(() => {
       setIsCreating(false)
       navigate(nav.entry({entryId: entry.i18nId}))
       if (parent) updateEntries([parent.i18nId])

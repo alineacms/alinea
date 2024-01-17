@@ -7,7 +7,7 @@ import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {entryFileName} from 'alinea/core/EntryFilenames'
 import {GraphRealm} from 'alinea/core/Graph'
-import {MutationType} from 'alinea/core/Mutation'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Projection} from 'alinea/core/pages/Projection'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries} from 'alinea/core/util/Objects'
@@ -184,14 +184,16 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
         const nextIndex = next?.getItemData()?.index ?? null
         try {
           const newIndex = generateKeyBetween(previousIndex, nextIndex)
+          const mutations: Array<Mutation> = []
           for (const entry of dropping.getItemData().entries) {
-            mutate({
+            mutations.push({
               type: MutationType.Order,
               entryId: entry.entryId,
               file: entryFileName(config, entry, entry.parentPaths),
               index: newIndex
             })
           }
+          mutate(mutations, true)
         } catch (err) {
           console.error(err)
         }

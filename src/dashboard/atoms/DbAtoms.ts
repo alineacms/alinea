@@ -51,11 +51,13 @@ const localDbAtom = atom(async (get, set) => {
     return changed
   }
   const debounceSync = debounce(syncDb, 100)
-  const sync = (force: boolean) =>
-    limit(() => debounceSync(force).catch(() => [] as Array<string>))
+  const sync = (force: boolean) => {
+    return limit(() => debounceSync(force).catch(() => [] as Array<string>))
+  }
+
   const applyMutations = async (
     mutations: Array<Mutation>,
-    commitHash: string
+    commitHash: string | undefined
   ) => {
     return limit(async () => {
       const update = await db.applyMutations(mutations, commitHash)
@@ -123,13 +125,17 @@ async function suffixPaths(
 
 export const mutateAtom = atom(
   null,
-  async (get, set, ...mutations: Array<Mutation>) => {
+  async (get, set, mutations: Array<Mutation>, optimistic = false) => {
     const client = get(clientAtom)
     const config = get(configAtom)
+    const {applyMutations} = await get(localDbAtom)
+    if (optimistic) {
+      const changed = await applyMutations(mutations, undefined)
+      set(changedEntriesAtom, changed)
+    }
     const graph = await get(graphAtom)
     const normalized = await limit(() => suffixPaths(config, graph, mutations))
     const {commitHash} = await client.mutate(normalized)
-    const {applyMutations} = await get(localDbAtom)
     if (normalized.length === 0) return
     const changed = await applyMutations(normalized, commitHash)
     set(changedEntriesAtom, changed)

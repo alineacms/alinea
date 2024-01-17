@@ -302,7 +302,7 @@ export function createEntryEditor(entryData: EntryData) {
     return set(transact, {
       clearChanges: true,
       transition: EntryTransition.SaveDraft,
-      action: () => set(mutateAtom, mutation),
+      action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete save action, please try again later'
     })
   })
@@ -348,7 +348,7 @@ export function createEntryEditor(entryData: EntryData) {
     return set(transact, {
       clearChanges: true,
       transition: EntryTransition.SaveTranslation,
-      action: () => set(mutateAtom, mutation),
+      action: () => set(mutateAtom, [mutation]),
       errorMessage:
         'Could not complete translate action, please try again later'
     })
@@ -399,7 +399,7 @@ export function createEntryEditor(entryData: EntryData) {
     return set(transact, {
       clearChanges: true,
       transition: EntryTransition.PublishEdits,
-      action: () => set(mutateAtom, ...mutations),
+      action: () => set(mutateAtom, mutations),
       errorMessage: 'Could not complete publish action, please try again later'
     })
   })
@@ -428,7 +428,7 @@ export function createEntryEditor(entryData: EntryData) {
     return set(transact, {
       clearChanges: true,
       transition: EntryTransition.RestoreRevision,
-      action: () => set(mutateAtom, mutation),
+      action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete publish action, please try again later'
     })
   })
@@ -447,7 +447,7 @@ export function createEntryEditor(entryData: EntryData) {
     mutations.push(...(await persistSharedFields(graph, entry)))
     return set(transact, {
       transition: EntryTransition.PublishDraft,
-      action: () => set(mutateAtom, ...mutations),
+      action: () => set(mutateAtom, mutations),
       errorMessage: 'Could not complete publish action, please try again later'
     })
   })
@@ -460,7 +460,7 @@ export function createEntryEditor(entryData: EntryData) {
     }
     return set(transact, {
       transition: EntryTransition.DiscardDraft,
-      action: () => set(mutateAtom, mutation),
+      action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete discard action, please try again later'
     })
   })
@@ -474,7 +474,7 @@ export function createEntryEditor(entryData: EntryData) {
     }
     return set(transact, {
       transition: EntryTransition.ArchivePublished,
-      action: () => set(mutateAtom, mutation),
+      action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete archive action, please try again later'
     })
   })
@@ -489,7 +489,7 @@ export function createEntryEditor(entryData: EntryData) {
     }
     return set(transact, {
       transition: EntryTransition.PublishArchived,
-      action: () => set(mutateAtom, mutation),
+      action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete publish action, please try again later'
     })
   })
@@ -513,7 +513,7 @@ export function createEntryEditor(entryData: EntryData) {
     }
     return set(transact, {
       transition: EntryTransition.DeleteFile,
-      action: () => set(mutateAtom, mutation),
+      action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete delete action, please try again later'
     })
   })
@@ -527,7 +527,7 @@ export function createEntryEditor(entryData: EntryData) {
     }
     return set(transact, {
       transition: EntryTransition.DeleteArchived,
-      action: () => set(mutateAtom, mutation),
+      action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete delete action, please try again later'
     })
   })

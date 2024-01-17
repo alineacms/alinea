@@ -15,7 +15,7 @@ import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRig
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
-import {changedEntriesAtom, graphAtom} from '../atoms/DbAtoms.js'
+import {changedEntriesAtom} from '../atoms/DbAtoms.js'
 import {
   EntryTreeItem,
   rootId,
@@ -124,7 +124,6 @@ export interface EntryTreeProps {
 }
 
 export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
-  const graph = useAtomValue(graphAtom)
   const root = useRoot()
   const treeProvider = useEntryTreeProvider()
   const navigate = useNavigate()

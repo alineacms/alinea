@@ -186,14 +186,14 @@ async function process(
   }
 }
 
-function createBatch(mutate: (...mutations: Array<Mutation>) => Promise<void>) {
+function createBatch(mutate: (mutations: Array<Mutation>) => Promise<void>) {
   let trigger = withResolvers()
   let nextRun: any = undefined
   const batch = [] as Array<Mutation>
   async function run() {
     const todo = batch.splice(0, batch.length)
     try {
-      await batchTasker(() => mutate(...todo))
+      await batchTasker(() => mutate(todo))
       trigger.resolve(void 0)
     } catch (error) {
       trigger.reject(error)
