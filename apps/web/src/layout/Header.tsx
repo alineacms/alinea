@@ -4,10 +4,11 @@ import {Entry} from 'alinea/core'
 import {HStack, Stack, Styler, fromModule} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
+import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {MdiGithub} from 'alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
 import {Home} from '../schema/Home'
-import {HeaderRoot, MobileMenu} from './Header.client'
+import {HeaderRoot, MobileMenu, SearchButton} from './Header.client'
 import css from './Header.module.scss'
 import {PageContainer} from './Page'
 import {Logo} from './branding/Logo'
@@ -92,6 +93,11 @@ function Menu({links}: MenuProps) {
       </HStack>
       <Stack.Right>
         <HStack gap={12} center>
+          <SearchButton>
+            <button className={styles.root.social('search')}>
+              <IcRoundSearch className={styles.root.social.icon()} />
+            </button>
+          </SearchButton>
           <a
             href="https://github.com/alineacms/alinea"
             target="_blank"
@@ -142,7 +148,7 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
                 className={style()}
                 activeFor={link.active}
               >
-                {link.label}
+                {link.label || link.title}
               </Link>
             )
           default:
@@ -152,6 +158,11 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
       <Link href="/changelog" className={style()}>
         Changelog
       </Link>
+      <SearchButton>
+        <button className={styles.root.nav.link({search: true})}>
+          <IcRoundSearch />
+        </button>
+      </SearchButton>
       {/*<a href="https://demo.alinea.sh" target="_blank" className={style()}>
         Demo
       </a>*/}

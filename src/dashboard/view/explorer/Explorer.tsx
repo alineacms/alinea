@@ -53,6 +53,7 @@ export function Explorer({
   selection = [],
   toggleSelect = () => {},
   onNavigate,
+  withNavigation,
   showMedia,
   border = true
 }: ExplorerProps) {
@@ -105,6 +106,7 @@ export function Explorer({
         selection,
         onSelect: toggleSelect,
         onNavigate,
+        withNavigation,
         showMedia,
         border
       }}

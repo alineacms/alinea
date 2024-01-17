@@ -4,10 +4,6 @@ import {Config} from '../Config.js'
 import {Resolver} from '../Resolver.js'
 
 export class DefaultDriver extends CMS {
-  exportStore(outDir: string, data: Uint8Array): Promise<void> {
-    throw new Error('Not implemented')
-  }
-
   async readStore(): Promise<Store> {
     throw new Error('Not implemented')
   }

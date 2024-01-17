@@ -15,13 +15,23 @@ import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
 export type Location = Root | Workspace | PageSeed
 
 export interface GraphRealmApi {
+  /** Filter results by location */
   in(location: Location): GraphRealmApi
+  /** Filter results by locale */
   locale(locale: string): GraphRealmApi
+  /** Find a single entry or null */
   maybeGet<S extends Projection | Type>(
     select: S
   ): Promise<Projection.InferOne<S> | null>
+  /** Find a single entry */
   get<S extends Projection | Type>(select: S): Promise<Projection.InferOne<S>>
+  /** Find a set of entries */
   find<S extends Projection | Type>(select: S): Promise<Selection.Infer<S>>
+  /** The time in seconds to poll for updates to content */
+  syncInterval(interval: number): GraphRealmApi
+  /** Disable polling for updates to content */
+  disableSync(): GraphRealmApi
+  /** The amount of results found */
   count(cursor: Cursor.Find<any>): Promise<number>
 }
 
@@ -39,6 +49,32 @@ export class GraphRealm implements GraphRealmApi {
     private origin: GraphOrigin = {}
   ) {
     this.targets = Schema.targets(config.schema)
+  }
+
+  disableSync() {
+    return new GraphRealm(
+      this.config,
+      params => {
+        return this.resolve({
+          ...params,
+          syncInterval: Infinity
+        })
+      },
+      this.origin
+    )
+  }
+
+  syncInterval(interval: number) {
+    return new GraphRealm(
+      this.config,
+      params => {
+        return this.resolve({
+          ...params,
+          syncInterval: interval
+        })
+      },
+      this.origin
+    )
   }
 
   in(location: Location): GraphRealmApi {

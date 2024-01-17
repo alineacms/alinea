@@ -28,7 +28,7 @@ import {
   UnOpType,
   withRecursive
 } from 'rado'
-import {bm25, iif, match, count as sqlCount} from 'rado/sqlite'
+import {bm25, iif, match, snippet, count as sqlCount} from 'rado/sqlite'
 import {Database} from '../Database.js'
 import {LinkResolver} from './LinkResolver.js'
 import {ResolveContext} from './ResolveContext.js'
@@ -169,6 +169,22 @@ export class EntryResolver {
     return res[Expr.Data]
   }
 
+  exprCall(ctx: ResolveContext, {method, args}: pages.ExprData.Call): ExprData {
+    switch (method) {
+      case 'snippet':
+        return snippet(
+          EntrySearch,
+          1,
+          new Expr(this.expr(ctx, args[0])),
+          new Expr(this.expr(ctx, args[1])),
+          new Expr(this.expr(ctx, args[2])),
+          new Expr(this.expr(ctx, args[3]))
+        )[Expr.Data]
+      default:
+        throw new Error(`Unknown method: "${method}"`)
+    }
+  }
+
   expr(ctx: ResolveContext, expr: pages.ExprData): ExprData {
     switch (expr.type) {
       case 'unop':
@@ -185,6 +201,8 @@ export class EntryResolver {
         return this.exprRecord(ctx, expr)
       case 'case':
         return this.exprCase(ctx, expr)
+      case 'call':
+        return this.exprCall(ctx, expr)
     }
   }
 

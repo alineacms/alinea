@@ -5,6 +5,7 @@ export {
   page,
   root,
   schema,
+  snippet,
   track,
   type,
   workspace

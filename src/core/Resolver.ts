@@ -11,6 +11,7 @@ export interface PreviewUpdate {
 export interface ResolveDefaults {
   realm?: Realm
   preview?: PreviewUpdate
+  syncInterval?: number
 }
 
 export interface Resolver {

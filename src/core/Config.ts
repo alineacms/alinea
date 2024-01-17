@@ -25,9 +25,11 @@ export interface Config {
   preview?: string | ComponentType<{entry: Entry; previewToken: string}>
   /** Every edit will pass through a draft phase before being published */
   enableDrafts?: boolean
+  /** The interval in seconds at which the frontend will poll for updates */
+  syncInterval?: number
 
   /**
-  publicDir?: string
+    publicDir?: string
   dashboardFile?: string
   handlerUrl?: 
   */

@@ -73,8 +73,10 @@ export class Handler implements Resolver {
 
   resolve = async (params: Connection.ResolveParams) => {
     const {resolveDefaults} = this.options
-    await this.periodicSync()
-    return this.resolver.resolve({...resolveDefaults, ...params})
+    const resolveParams = {...resolveDefaults, ...params}
+    const {syncInterval} = resolveParams
+    await this.periodicSync(syncInterval)
+    return this.resolver.resolve(resolveParams)
   }
 
   protected previewAuth(): Connection.Context {
@@ -110,9 +112,10 @@ export class Handler implements Resolver {
     return {...entry, ...entryData, path: entry.path}
   }
 
-  async periodicSync() {
+  async periodicSync(syncInterval = 5) {
+    if (syncInterval === Infinity) return
     const now = Date.now()
-    if (now - this.lastSync < 5_000) return
+    if (now - this.lastSync < syncInterval * 1000) return
     this.lastSync = now
     try {
       await this.syncPending()

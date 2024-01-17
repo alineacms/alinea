@@ -32,7 +32,6 @@ export abstract class CMS extends GraphRealm implements CMSApi {
   }
 
   abstract resolver(): Promise<Resolver>
-  abstract exportStore(cwd: string, store: Uint8Array): Promise<void>
   abstract readStore(): Promise<Store>
 
   #attach(config: Config) {

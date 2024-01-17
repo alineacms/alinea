@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.8]
+
+- Fix navigation missing when selecting internal pages in Link fields.
+
+## [0.5.7]
+
+- The interval at which Alinea polls the backend for content updates is
+  now configurable. It can be set in config.syncInterval and overwritten
+  per query.
+
+  ```tsx
+  // Poll for updates every 60 seconds
+  const results = await cms.syncInterval(60).find(Entry())
+  // Disable syncing all for this query in case you want results fast,
+  // but not necessarily up to date
+  const matches = await cms.disableSync().find(Entry().search('fast'))
+  ```
+
 ## [0.5.6]
 
 - Pages can be queried with search terms.

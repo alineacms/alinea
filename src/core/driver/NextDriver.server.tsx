@@ -35,6 +35,7 @@ class NextDriver extends DefaultDriver implements NextApi {
     const [draftStatus] = outcome(() => draftMode())
     const isDraft = draftStatus?.isEnabled
     const resolveDefaults: ResolveDefaults = {
+      syncInterval: this.config.syncInterval ?? 60,
       realm: Realm.Published
     }
     if (isDraft) {
