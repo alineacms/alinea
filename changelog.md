@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.9]
+
+- Changing entry order by dragging them in the sidebar is now applied
+  immediately making changes much smoother.
+
 ## [0.5.8]
 
 - Fix navigation missing when selecting internal pages in Link fields.
