@@ -344,6 +344,11 @@ function jsEntry({watch, test}) {
                   }
                   debug.enable = () => {}
                   debug.formatters = {}
+                `,
+
+                // Used in react-aria-components, not ESM
+                'use-sync-external-store/shim/index.js': `data:text/javascript,
+                  export {useSyncExternalStore} from 'react'
                 `
               },
               define: {

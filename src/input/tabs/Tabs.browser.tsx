@@ -2,10 +2,11 @@ import {Section, Type} from 'alinea/core'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, TextLabel} from 'alinea/ui'
-import {Lift} from 'alinea/ui/Lift'
+import {Lift, LiftHeader} from 'alinea/ui/Lift'
 import {Sink} from 'alinea/ui/Sink'
-import {Tabs} from 'alinea/ui/Tabs'
+import * as Tabs from 'alinea/ui/Tabs'
 import {useElevation} from 'alinea/ui/util/Elevation'
+import {useId} from 'react'
 import {TabsSection, tabs as createTabs} from './Tabs.js'
 
 export * from './Tabs.js'
@@ -18,52 +19,53 @@ interface TabsViewProps {
 }
 
 export interface TabsHeaderProps {
+  id: string
   section: Section
   backdrop?: boolean
 }
 
-export function TabsHeader({section, backdrop}: TabsHeaderProps) {
+export function TabsHeader({id, section, backdrop = true}: TabsHeaderProps) {
   const tabs = section[Section.Data] as TabsSection
   const visibleTypes = tabs.types.filter(type => !Type.meta(type).isHidden)
   if (!visibleTypes.length) return null
-  return (
-    <Tabs.List backdrop={backdrop}>
+  const list = (
+    <Tabs.TabList>
       {visibleTypes.map((type, i) => {
         const meta = Type.meta(type)
         const Icon = meta.icon
         return (
-          <Tabs.Trigger key={i}>
+          <Tabs.Tab key={i} id={`${id}+${i}`}>
             <HStack center gap={8}>
               {Icon && <Icon />}
               <TextLabel label={Type.label(type)} />
             </HStack>
-          </Tabs.Trigger>
+          </Tabs.Tab>
         )
       })}
-    </Tabs.List>
+    </Tabs.TabList>
   )
+  return backdrop ? <LiftHeader>{list}</LiftHeader> : list
 }
 
 function TabsView({section}: TabsViewProps) {
+  const id = useId()
   const {parent} = useElevation()
   const tabs = section[Section.Data] as TabsSection
   const visibleTypes = tabs.types.filter(type => !Type.meta(type).isHidden)
   if (!visibleTypes.length) return null
   const inner = (
-    <Tabs.Root>
-      <TabsHeader section={section} />
+    <Tabs.Tabs>
+      <TabsHeader id={id} section={section} />
       <Lift>
-        <Tabs.Panels>
-          {visibleTypes.map((type, i) => {
-            return (
-              <Tabs.Panel key={i} tabIndex={i}>
-                <InputForm type={type} border={false} />
-              </Tabs.Panel>
-            )
-          })}
-        </Tabs.Panels>
+        {visibleTypes.map((type, i) => {
+          return (
+            <Tabs.TabPanel key={i} id={`${id}+${i}`}>
+              <InputForm type={type} border={false} />
+            </Tabs.TabPanel>
+          )
+        })}
       </Lift>
-    </Tabs.Root>
+    </Tabs.Tabs>
   )
   return (
     <div>

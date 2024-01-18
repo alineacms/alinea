@@ -11,7 +11,8 @@
   z-index: 0;
   appearance: none;
   background: transparent;
-  display: block;
+  display: flex;
+  align-items: center;
   border: none;
   color: inherit;
   font: inherit;
@@ -31,7 +32,7 @@
     opacity: 1;
   }
 
-  &.is-selected {
+  &[data-selected] {
     opacity: 1;
     background: var(--alinea-selected);
     color: var(--alinea-selected-foreground);

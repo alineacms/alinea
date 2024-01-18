@@ -6,7 +6,7 @@ import {TabsHeader, TabsSection} from 'alinea/input/tabs/Tabs.browser'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Statusbar} from 'alinea/ui/Statusbar'
-import {Tabs} from 'alinea/ui/Tabs'
+import * as Tabs from 'alinea/ui/Tabs'
 import {IcOutlineTableRows} from 'alinea/ui/icons/IcOutlineTableRows'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
@@ -193,7 +193,7 @@ export function EntryEdit({editor}: EntryEditProps) {
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
           {showHistory && <EntryHistory editor={editor} />}
-          <Tabs.Root>
+          <Tabs.Tabs>
             <EntryTitle
               editor={editor}
               backLink={
@@ -207,7 +207,11 @@ export function EntryEdit({editor}: EntryEditProps) {
             >
               {hasRootTabs && (
                 <div className={styles.root.tabs()}>
-                  <TabsHeader backdrop={false} section={sections[0]} />
+                  <TabsHeader
+                    id="entry"
+                    backdrop={false}
+                    section={sections[0]}
+                  />
                 </div>
               )}
             </EntryTitle>
@@ -232,17 +236,15 @@ export function EntryEdit({editor}: EntryEditProps) {
                   {mode === EditMode.Diff ? (
                     <ShowChanges editor={editor} />
                   ) : hasRootTabs && visibleTypes ? (
-                    <Tabs.Panels>
-                      {visibleTypes.map((type, i) => {
-                        return (
-                          <FormProvider form={form} key={i}>
-                            <Tabs.Panel tabIndex={i}>
-                              <InputForm type={type} />
-                            </Tabs.Panel>
-                          </FormProvider>
-                        )
-                      })}
-                    </Tabs.Panels>
+                    visibleTypes.map((type, i) => {
+                      return (
+                        <FormProvider form={form} key={i}>
+                          <Tabs.TabPanel id={`entry+${i}`}>
+                            <InputForm type={type} />
+                          </Tabs.TabPanel>
+                        </FormProvider>
+                      )
+                    })
                   ) : (
                     <VStack gap={18}>
                       <InputForm form={form} />
@@ -251,7 +253,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                 </SuspenseBoundary>
               </EntryEditorProvider>
             </Main.Container>
-          </Tabs.Root>
+          </Tabs.Tabs>
           <FieldToolbar.Root />
         </FieldToolbar.Provider>
       </Main>

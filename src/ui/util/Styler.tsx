@@ -1,4 +1,4 @@
-import {forwardRef} from 'react'
+import {ComponentType, createElement, forwardRef} from 'react'
 import type {As, ComponentWithAs} from './PropsWithAs.js'
 
 type VariantImpl<T extends string> = T | {[K in T]?: boolean}
@@ -150,4 +150,18 @@ export const fromModule = <M extends {[key: string]: string}>(
     })
   }
   return res as any
+}
+
+export function style<T extends ComponentType>(
+  component: T,
+  styler: Styler
+): T {
+  return forwardRef((props: any, ref) => {
+    const {className, ...rest} = props
+    return createElement(component, {
+      ...rest,
+      className: styler.mergeProps(props)(),
+      ref
+    })
+  }) as any
 }
