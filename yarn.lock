@@ -69,10 +69,8 @@ __metadata:
     "@dnd-kit/core": ^3.1.1
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
-    "@floating-ui/react-dom": ^0.7.1
     "@headless-tree/core": ^0.0.8
     "@headless-tree/react": ^0.0.7
-    "@headlessui/react": ^1.7.17
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
     "@types/debounce-promise": ^3.1.8
@@ -1202,35 +1200,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/core@npm:^0.7.1":
-  version: 0.7.1
-  resolution: "@floating-ui/core@npm:0.7.1"
-  checksum: e38ca88a318e17b48b5f891b1a61190c62fe15d7027aba4c9a6905883fdabe0318f9e16ce8a33b529e37f9d2560d60ea3ec6280231f5d5656fd4d87163b4d0ee
-  languageName: node
-  linkType: hard
-
-"@floating-ui/dom@npm:^0.5.1":
-  version: 0.5.1
-  resolution: "@floating-ui/dom@npm:0.5.1"
-  dependencies:
-    "@floating-ui/core": ^0.7.1
-  checksum: 436dfcc8906241b3466a95e9b5de448e708d91e516ccf7cee20a8e7b55e2616fd97c9f9a8a4ddb65c5fa50d3c3bb99aacf2c0899a57c6051c39be4358d5e9c81
-  languageName: node
-  linkType: hard
-
-"@floating-ui/react-dom@npm:^0.7.1":
-  version: 0.7.1
-  resolution: "@floating-ui/react-dom@npm:0.7.1"
-  dependencies:
-    "@floating-ui/dom": ^0.5.1
-    use-isomorphic-layout-effect: ^1.1.1
-  peerDependencies:
-    react: ">=16.8.0"
-    react-dom: ">=16.8.0"
-  checksum: 3d3ad798e07131ad1d12c37f0475cc8ba091d753547115ec5cff0d8d4bdc28dee27e0fd6da39c8ca5b3066bcce30a97c50bda6ea7b45fc42fbc80c39f85499aa
-  languageName: node
-  linkType: hard
-
 "@fontsource/inter@npm:5.0.1":
   version: 5.0.1
   resolution: "@fontsource/inter@npm:5.0.1"
@@ -1323,18 +1292,6 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: a80e521d0625a81892322ce35270f0e8028354fe5b4763592201579f8e89bf1a72b56c6544ff66d3e97d7e3118bcea3809616d6c30ce9359a45ab43adb1a2816
-  languageName: node
-  linkType: hard
-
-"@headlessui/react@npm:^1.7.17":
-  version: 1.7.17
-  resolution: "@headlessui/react@npm:1.7.17"
-  dependencies:
-    client-only: ^0.0.1
-  peerDependencies:
-    react: ^16 || ^17 || ^18
-    react-dom: ^16 || ^17 || ^18
-  checksum: 0cdb67747e7f606f78214dac0b48573247779e70534b4471515c094b74addda173dc6a9847d33aea9c6e6bc151016c034125328953077e32aa7947ebabed91f7
   languageName: node
   linkType: hard
 
@@ -5328,7 +5285,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"client-only@npm:0.0.1, client-only@npm:^0.0.1":
+"client-only@npm:0.0.1":
   version: 0.0.1
   resolution: "client-only@npm:0.0.1"
   checksum: 0c16bf660dadb90610553c1d8946a7fdfb81d624adea073b8440b7d795d5b5b08beb3c950c6a2cf16279365a3265158a236876d92bce16423c485c322d7dfaf8
@@ -13806,18 +13763,6 @@ resolve@^1.10.0:
     react-dom:
       optional: true
   checksum: 07c61f517954f718c241670eb69463c603fd6baf376a78c472570fb4332c008be22833335342fa261238d5172dea51e486466d6d584fefc82be15ec624715d6c
-  languageName: node
-  linkType: hard
-
-"use-isomorphic-layout-effect@npm:^1.1.1":
-  version: 1.1.2
-  resolution: "use-isomorphic-layout-effect@npm:1.1.2"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-  checksum: a6532f7fc9ae222c3725ff0308aaf1f1ddbd3c00d685ef9eee6714fd0684de5cb9741b432fbf51e61a784e2955424864f7ea9f99734a02f237b17ad3e18ea5cb
   languageName: node
   linkType: hard
 

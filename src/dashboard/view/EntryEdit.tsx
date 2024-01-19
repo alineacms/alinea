@@ -6,7 +6,7 @@ import {TabsHeader, TabsSection} from 'alinea/input/tabs/Tabs.browser'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Statusbar} from 'alinea/ui/Statusbar'
-import * as Tabs from 'alinea/ui/Tabs'
+import {TabPanel, Tabs} from 'alinea/ui/Tabs'
 import {IcOutlineTableRows} from 'alinea/ui/icons/IcOutlineTableRows'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
@@ -193,7 +193,7 @@ export function EntryEdit({editor}: EntryEditProps) {
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
           {showHistory && <EntryHistory editor={editor} />}
-          <Tabs.Tabs>
+          <Tabs className={styles.root.tabs()}>
             <EntryTitle
               editor={editor}
               backLink={
@@ -206,7 +206,7 @@ export function EntryEdit({editor}: EntryEditProps) {
               }
             >
               {hasRootTabs && (
-                <div className={styles.root.tabs()}>
+                <div className={styles.root.tabs.header()}>
                   <TabsHeader
                     id="entry"
                     backdrop={false}
@@ -239,9 +239,9 @@ export function EntryEdit({editor}: EntryEditProps) {
                     visibleTypes.map((type, i) => {
                       return (
                         <FormProvider form={form} key={i}>
-                          <Tabs.TabPanel id={`entry+${i}`}>
+                          <TabPanel id={`entry+${i}`}>
                             <InputForm type={type} />
-                          </Tabs.TabPanel>
+                          </TabPanel>
                         </FormProvider>
                       )
                     })
@@ -253,7 +253,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                 </SuspenseBoundary>
               </EntryEditorProvider>
             </Main.Container>
-          </Tabs.Tabs>
+          </Tabs>
           <FieldToolbar.Root />
         </FieldToolbar.Provider>
       </Main>

@@ -2,9 +2,7 @@ import {Workspace} from 'alinea/core'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {select} from 'alinea/input'
 import {HStack, Icon, VStack, fromModule, px} from 'alinea/ui'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
-import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {IcBaselineAccountCircle} from 'alinea/ui/icons/IcBaselineAccountCircle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
@@ -12,13 +10,18 @@ import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
-import {Switch} from 'react-aria-components'
+import {
+  Button,
+  Dialog,
+  DialogTrigger,
+  Popover,
+  Switch
+} from 'react-aria-components'
 import {dashboardOptionsAtom} from '../../atoms/DashboardAtoms.js'
 import {
   preferencesAtom,
   sizePreferenceAtom,
-  toggleSchemePreferenceAtom,
-  workspacePreferenceAtom
+  toggleSchemePreferenceAtom
 } from '../../atoms/PreferencesAtoms.js'
 import {useSession} from '../../hook/UseSession.js'
 import {IconButton} from '../IconButton.js'
@@ -48,7 +51,6 @@ export function SidebarSettings() {
   )
   const toggleSchemePreference = useSetAtom(toggleSchemePreferenceAtom)
   const updateFontSize = useSetAtom(sizePreferenceAtom)
-  const updateWorkspace = useSetAtom(workspacePreferenceAtom)
 
   function disableTransition(run: () => void) {
     document.body.setAttribute('data-disable-transition', 'true')
@@ -57,72 +59,75 @@ export function SidebarSettings() {
   }
 
   return (
-    <DropdownMenu.Root top style={{margin: 'auto', marginBottom: 0}}>
-      <DropdownMenu.Trigger style={{width: '100%'}}>
-        <Sidebar.Nav.Item aria-label="Settings">
-          <Icon icon={IcBaselineAccountCircle} />
-        </Sidebar.Nav.Item>
-      </DropdownMenu.Trigger>
+    <DialogTrigger>
+      <Sidebar.Nav.Item
+        as={Button}
+        aria-label="Settings"
+        style={{marginTop: 'auto'}}
+      >
+        <Icon icon={IcBaselineAccountCircle} />
+      </Sidebar.Nav.Item>
 
-      <DropdownMenu.Items style={{maxWidth: px(200)}}>
-        <VStack gap={10}>
-          {session.user.name && (
-            <header className={styles.root.header()}>
-              <HStack center gap={10} className={styles.root.username()}>
-                <Icon icon={IcBaselineAccountCircle} size={26} />
-                <Ellipsis>{session.user.name}</Ellipsis>
-              </HStack>
-            </header>
-          )}
+      <Popover placement="top left" style={{maxWidth: px(200)}}>
+        <Dialog className={styles.root.popover()}>
+          <VStack gap={10}>
+            {session.user.name && (
+              <header className={styles.root.header()}>
+                <HStack center gap={10} className={styles.root.username()}>
+                  <Icon icon={IcBaselineAccountCircle} size={26} />
+                  <Ellipsis>{session.user.name}</Ellipsis>
+                </HStack>
+              </header>
+            )}
 
-          <VStack gap={8}>
-            <HStack justify={'space-between'} style={{padding: px(6)}}>
-              <HStack center gap={16}>
-                <Icon
-                  icon={IcSharpBrightnessMedium}
-                  size={20}
-                  title="Switch theme"
-                />
-                <Switch
-                  isSelected={checked}
-                  onChange={() => {
-                    disableTransition(toggleSchemePreference)
-                  }}
-                  className={styles.root.switch({checked})}
-                >
-                  <span
-                    className={styles.root.switch.slider({
-                      checked
-                    })}
+            <VStack gap={8}>
+              <HStack justify={'space-between'} style={{padding: px(6)}}>
+                <HStack center gap={16}>
+                  <Icon
+                    icon={IcSharpBrightnessMedium}
+                    size={20}
+                    title="Switch theme"
                   />
-                </Switch>
+                  <Switch
+                    isSelected={checked}
+                    onChange={() => {
+                      disableTransition(toggleSchemePreference)
+                    }}
+                    className={styles.root.switch({checked})}
+                  >
+                    <span
+                      className={styles.root.switch.slider({
+                        checked
+                      })}
+                    />
+                  </Switch>
+                </HStack>
+                <HStack center gap={4}>
+                  <Icon
+                    icon={IcRoundTextFields}
+                    size={20}
+                    style={{marginRight: px(12)}}
+                    title="Font size"
+                  />
+                  <IconButton
+                    icon={IcRoundKeyboardArrowDown}
+                    onClick={() =>
+                      disableTransition(() => updateFontSize(size - 1))
+                    }
+                    disabled={size <= 16}
+                    title="Decrease font size"
+                  />
+                  <IconButton
+                    icon={IcRoundKeyboardArrowUp}
+                    onClick={() =>
+                      disableTransition(() => updateFontSize(size + 1))
+                    }
+                    disabled={size >= 40}
+                    title="Increase font size"
+                  />
+                </HStack>
               </HStack>
-              <HStack center gap={4}>
-                <Icon
-                  icon={IcRoundTextFields}
-                  size={20}
-                  style={{marginRight: px(12)}}
-                  title="Font size"
-                />
-                <IconButton
-                  icon={IcRoundKeyboardArrowDown}
-                  onClick={() =>
-                    disableTransition(() => updateFontSize(size - 1))
-                  }
-                  disabled={size <= 16}
-                  title="Decrease font size"
-                />
-                <IconButton
-                  icon={IcRoundKeyboardArrowUp}
-                  onClick={() =>
-                    disableTransition(() => updateFontSize(size + 1))
-                  }
-                  disabled={size >= 40}
-                  title="Increase font size"
-                />
-              </HStack>
-            </HStack>
-            {/*workspaces.length > 1 && (
+              {/*workspaces.length > 1 && (
               <InputField
                 // Todo: we should use a form here to react to the value change
                 value={preferences.workspace || ''}
@@ -130,19 +135,15 @@ export function SidebarSettings() {
                 field={defaultWorkspace}
               />
             )*/}
+            </VStack>
+            {session.end && (
+              <footer className={styles.root.footer()}>
+                <Button onPress={session.end}>Logout</Button>
+              </footer>
+            )}
           </VStack>
-
-          {session.end && (
-            <PopoverMenu.Footer>
-              <DropdownMenu.Root>
-                <DropdownMenu.Item onClick={session.end}>
-                  Logout
-                </DropdownMenu.Item>
-              </DropdownMenu.Root>
-            </PopoverMenu.Footer>
-          )}
-        </VStack>
-      </DropdownMenu.Items>
-    </DropdownMenu.Root>
+        </Dialog>
+      </Popover>
+    </DialogTrigger>
   )
 }

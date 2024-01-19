@@ -1,7 +1,26 @@
 .root {
+  &-popover {
+    padding: 5px;
+    min-width: 220px;
+    max-height: 300px;
+    overflow: auto;
+    border-radius: var(--alinea-border-radius);
+    background: var(--alinea-background);
+    border: 1px solid var(--alinea-outline);
+    box-shadow: 0 2px 10px var(--alinea-shadow);
+    outline: none;
+    z-index: 2;
+    color: var(--alinea-foreground);
+  }
+
   &-header {
-    padding-bottom: 10px;
+    padding: 10px 20px;
     box-shadow: var(--alinea-divider-bottom);
+  }
+
+  &-footer {
+    padding: 10px 20px;
+    box-shadow: var(--alinea-divider-top);
   }
 
   &-switch {

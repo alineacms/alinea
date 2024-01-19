@@ -6,8 +6,7 @@ import {
   ListBox,
   ListBoxItem,
   Popover,
-  Select,
-  SelectValue
+  Select
 } from 'react-aria-components'
 import css from './LangSwitch.module.scss'
 
@@ -21,11 +20,12 @@ export interface LangswitchProps {
 }
 
 export function Langswitch({
-  selected,
   locales,
+  selected,
   onChange,
   inline
 }: LangswitchProps) {
+  if (locales.length === 0) return null
   return (
     <div className={styles.langswitch({inline})}>
       <Select
@@ -44,7 +44,7 @@ export function Langswitch({
               className={styles.langswitch.input.icon({lang: true})}
             />
             <span className={styles.langswitch.input.label()}>
-              <SelectValue />
+              {selected.toUpperCase()}
             </span>
             {locales.length > 0 && (
               <Icon

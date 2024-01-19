@@ -65,7 +65,7 @@ function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
                 {Object.entries(items).map(([key, label]) => {
                   const isSelected = key === value
                   return (
-                    <ListBoxItem key={key} id={key}>
+                    <ListBoxItem key={key} id={key} textValue={label}>
                       <HStack
                         center
                         gap={4}
