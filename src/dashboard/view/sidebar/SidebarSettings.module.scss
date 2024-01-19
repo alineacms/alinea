@@ -1,4 +1,9 @@
 .root {
+  &-header {
+    padding-bottom: 10px;
+    box-shadow: var(--alinea-divider-bottom);
+  }
+
   &-switch {
     position: relative;
     display: inline-flex;

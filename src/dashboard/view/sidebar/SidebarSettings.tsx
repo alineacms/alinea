@@ -67,12 +67,12 @@ export function SidebarSettings() {
       <DropdownMenu.Items style={{maxWidth: px(200)}}>
         <VStack gap={10}>
           {session.user.name && (
-            <PopoverMenu.Header>
+            <header className={styles.root.header()}>
               <HStack center gap={10} className={styles.root.username()}>
                 <Icon icon={IcBaselineAccountCircle} size={26} />
                 <Ellipsis>{session.user.name}</Ellipsis>
               </HStack>
-            </PopoverMenu.Header>
+            </header>
           )}
 
           <VStack gap={8}>

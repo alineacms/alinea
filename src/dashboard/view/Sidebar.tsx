@@ -4,7 +4,6 @@ import {entries} from 'alinea/core/util/Objects'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {HStack, Icon, Stack, fromModule} from 'alinea/ui'
 import {Badge} from 'alinea/ui/Badge'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {Pane} from 'alinea/ui/Pane'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
@@ -17,6 +16,13 @@ import {
   useContext,
   useReducer
 } from 'react'
+import {
+  Button,
+  Menu,
+  MenuItem,
+  MenuTrigger,
+  Popover
+} from 'react-aria-components'
 import {useConfig} from '../hook/UseConfig.js'
 import {useEntryLocation} from '../hook/UseEntryLocation.js'
 import {useLocale} from '../hook/UseLocale.js'
@@ -125,8 +131,8 @@ export namespace Sidebar {
     return (
       <HStack as="header" center gap={12} className={styles.navHeader()}>
         {workspaces.length > 1 ? (
-          <DropdownMenu.Root bottom>
-            <DropdownMenu.Trigger>
+          <MenuTrigger>
+            <Button>
               <HStack center gap={4}>
                 <WorkspaceLabel
                   label={workspace.label}
@@ -135,31 +141,35 @@ export namespace Sidebar {
                 />
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
-            </DropdownMenu.Trigger>
+            </Button>
 
-            <DropdownMenu.Items>
-              {workspaces.map(([key, workspace]) => {
-                const {roots, label, color, icon} = Workspace.data(workspace)
-                const [name, root] = entries(roots)[0]
-                return (
-                  <DropdownMenu.Item
-                    key={key}
-                    onClick={() =>
-                      navigate(
-                        nav.entry({
-                          workspace: key,
-                          root: name,
-                          locale: Root.defaultLocale(root)
-                        })
-                      )
-                    }
-                  >
-                    <WorkspaceLabel label={label} color={color} icon={icon} />
-                  </DropdownMenu.Item>
-                )
-              })}
-            </DropdownMenu.Items>
-          </DropdownMenu.Root>
+            <Popover>
+              <Menu
+                onAction={key => {
+                  const name = key as string
+                  const workspace = config.workspaces[name]
+                  const {roots} = Workspace.data(workspace)
+                  const [, root] = entries(roots)[0]
+                  navigate(
+                    nav.entry({
+                      workspace: name,
+                      root: name,
+                      locale: Root.defaultLocale(root)
+                    })
+                  )
+                }}
+              >
+                {workspaces.map(([key, workspace]) => {
+                  const {label, color, icon} = Workspace.data(workspace)
+                  return (
+                    <MenuItem key={key} id={key}>
+                      <WorkspaceLabel label={label} color={color} icon={icon} />
+                    </MenuItem>
+                  )
+                })}
+              </Menu>
+            </Popover>
+          </MenuTrigger>
         ) : (
           <a
             {...link(nav.root({workspace: workspace.name}))}

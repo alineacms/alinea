@@ -55,6 +55,7 @@ export function Langswitch({
           </Button>
           {locales.length > 0 && (
             <Popover
+              isNonModal
               placement="bottom right"
               className={styles.langswitch.dropdown()}
             >
