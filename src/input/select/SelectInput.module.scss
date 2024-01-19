@@ -58,10 +58,9 @@
   }
 
   &-dropdown {
-    position: absolute;
     list-style: none;
     margin: 0;
-    width: 100%;
+    width: var(--trigger-width);
     max-height: 240px;
     overflow-y: auto;
     z-index: 2;
