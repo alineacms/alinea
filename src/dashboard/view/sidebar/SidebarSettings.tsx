@@ -1,4 +1,3 @@
-import {Switch} from '@headlessui/react'
 import {Workspace} from 'alinea/core'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {select} from 'alinea/input'
@@ -13,6 +12,7 @@ import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
+import {Switch} from 'react-aria-components'
 import {dashboardOptionsAtom} from '../../atoms/DashboardAtoms.js'
 import {
   preferencesAtom,
@@ -84,7 +84,7 @@ export function SidebarSettings() {
                   title="Switch theme"
                 />
                 <Switch
-                  checked={checked}
+                  isSelected={checked}
                   onChange={() => {
                     disableTransition(toggleSchemePreference)
                   }}

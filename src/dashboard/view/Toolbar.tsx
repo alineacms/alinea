@@ -1,4 +1,3 @@
-import {Switch} from '@headlessui/react'
 import {Root as AlineaRoot, Config, Workspace} from 'alinea/core'
 import {Label} from 'alinea/core/Label'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
@@ -23,6 +22,7 @@ import {createSlots} from 'alinea/ui/util/Slots'
 import {parseToHsla} from 'color2k'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType} from 'react'
+import {Switch} from 'react-aria-components'
 import {dashboardOptionsAtom} from '../atoms/DashboardAtoms.js'
 import {navAtom, workspaceAtom} from '../atoms/NavigationAtoms.js'
 import {
@@ -176,7 +176,7 @@ export namespace Toolbar {
                       <HStack center gap={16}>
                         <Icon icon={IcSharpBrightnessMedium} size={20} />
                         <Switch
-                          checked={checked}
+                          isSelected={checked}
                           onChange={toggleSchemePreference}
                           className={styles.root.switch({checked})}
                         >

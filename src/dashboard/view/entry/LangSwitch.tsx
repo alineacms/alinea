@@ -1,7 +1,14 @@
-import {Listbox} from '@headlessui/react'
 import {HStack, Icon, fromModule} from 'alinea/ui'
 import {IcRoundLanguage} from 'alinea/ui/icons/IcRoundLanguage'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
+import {
+  Button,
+  ListBox,
+  ListBoxItem,
+  Popover,
+  Select,
+  SelectValue
+} from 'react-aria-components'
 import css from './LangSwitch.module.scss'
 
 const styles = fromModule(css)
@@ -21,62 +28,54 @@ export function Langswitch({
 }: LangswitchProps) {
   return (
     <div className={styles.langswitch({inline})}>
-      <Listbox
-        value={selected}
-        onChange={value => {
-          if (!value) return
-          onChange(value)
-          /*if (!value) return
-          navigate(
-            nav.entry({
-              entryId: entryLocation?.entryId,
-              workspace,
-              root: root.name,
-              locale: value
-            })
-          )*/
+      <Select
+        aria-label="Language"
+        selectedKey={selected}
+        onSelectionChange={value => {
+          onChange(value as string)
         }}
       >
         <div>
-          <Listbox.Button
+          <Button
             className={styles.langswitch.input({active: locales.length > 0})}
           >
             <Icon
               icon={IcRoundLanguage}
               className={styles.langswitch.input.icon({lang: true})}
             />
-            <span className={styles.langswitch.input.label()}>{selected}</span>
+            <span className={styles.langswitch.input.label()}>
+              <SelectValue />
+            </span>
             {locales.length > 0 && (
               <Icon
                 icon={IcRoundUnfoldMore}
                 className={styles.langswitch.input.icon()}
               />
             )}
-          </Listbox.Button>
+          </Button>
           {locales.length > 0 && (
-            <Listbox.Options className={styles.langswitch.dropdown()}>
-              <div className={styles.langswitch.dropdown.inner()}>
+            <Popover
+              placement="bottom right"
+              className={styles.langswitch.dropdown()}
+            >
+              <ListBox className={styles.langswitch.dropdown.inner()}>
                 {locales.map(locale => (
-                  <Listbox.Option key={locale} value={locale}>
-                    {({active, selected}) => (
-                      <HStack
-                        center
-                        gap={4}
-                        className={styles.langswitch.dropdown.option({
-                          active,
-                          selected
-                        })}
-                      >
-                        {locale.toUpperCase()}
-                      </HStack>
-                    )}
-                  </Listbox.Option>
+                  <ListBoxItem
+                    key={locale}
+                    id={locale}
+                    textValue={locale.toUpperCase()}
+                    className={styles.langswitch.dropdown.option()}
+                  >
+                    <HStack center gap={4}>
+                      {locale.toUpperCase()}
+                    </HStack>
+                  </ListBoxItem>
                 ))}
-              </div>
-            </Listbox.Options>
+              </ListBox>
+            </Popover>
           )}
         </div>
-      </Listbox>
+      </Select>
     </div>
   )
 }
