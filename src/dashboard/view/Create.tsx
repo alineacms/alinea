@@ -8,7 +8,14 @@ import css from './Create.module.scss'
 const styles = fromModule(css)
 
 export namespace Create {
-  export const Root = styles.root.toElement('div')
+  export interface RootProps extends HTMLAttributes<HTMLDivElement> {
+    disabled?: boolean
+  }
+  export function Root({disabled, ...props}: RootProps) {
+    return (
+      <div {...props} className={styles.root.mergeProps(props)({disabled})} />
+    )
+  }
 
   export type Props = {
     icon?: ComponentType

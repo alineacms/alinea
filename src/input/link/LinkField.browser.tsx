@@ -48,20 +48,24 @@ export type * from './LinkField.js'
 
 const styles = fromModule(css)
 
-export const createLink = Field.provideView(LinkInput, createLinkField)
-export const createLinks = Field.provideView(LinksInput, createLinksField)
+export const createLink = Field.provideView(SingleLinkInput, createLinkField)
+export const createLinks = Field.provideView(
+  MultipleLinksInput,
+  createLinksField
+)
 
 interface LinkInputProps<Row extends Reference> {
   field: LinkField<Row>
 }
 
-function LinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
+function SingleLinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
   const {options, value, mutator} = useField(field)
-
+  const {readOnly} = options
   const [pickFrom, setPickFrom] = useState<string | undefined>()
   const picker = pickFrom ? options.pickers[pickFrom] : undefined
 
   function handleConfirm(link: Array<Reference>) {
+    if (readOnly) return
     const selected = link[0]
     if (!pickFrom || !picker || !selected) return
     mutator.replace(selected as Row)
@@ -87,6 +91,7 @@ function LinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
             <Sink.Root>
               {value && options.pickers[value.type] ? (
                 <LinkInputRow<Row>
+                  readOnly={readOnly}
                   field={field}
                   rowId={value.id}
                   fields={options.pickers[value.type].fields}
@@ -97,12 +102,15 @@ function LinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
                 />
               ) : (
                 <div className={styles.create()}>
-                  <Create.Root>
+                  <Create.Root disabled={readOnly}>
                     {entries(options.pickers).map(([name, picker]) => {
                       return (
                         <Create.Button
                           key={name}
-                          onClick={() => setPickFrom(name)}
+                          onClick={() => {
+                            if (readOnly) return
+                            setPickFrom(name)
+                          }}
                         >
                           <TextLabel label={picker.label} />
                         </Create.Button>
@@ -127,11 +135,11 @@ interface LinksInputProps<Row extends Reference & ListRow> {
   field: LinksField<Row>
 }
 
-function LinksInput<Row extends Reference & ListRow>({
+function MultipleLinksInput<Row extends Reference & ListRow>({
   field
 }: LinksInputProps<Row>) {
   const {options, value, mutator} = useField(field)
-
+  const {readOnly} = options
   const [pickFrom, setPickFrom] = useState<
     {type: string; id?: string} | undefined
   >()
@@ -174,7 +182,7 @@ function LinksInput<Row extends Reference & ListRow>({
   function handleDragEnd(event: DragEndEvent) {
     const {active, over} = event
     if (!over || active.id === over.id) return
-    mutator.move(ids.indexOf(active.id), ids.indexOf(over.id))
+    if (!readOnly) mutator.move(ids.indexOf(active.id), ids.indexOf(over.id))
     setDragging(null)
   }
 
@@ -226,13 +234,14 @@ function LinksInput<Row extends Reference & ListRow>({
                         onRemove={() => mutator.remove(reference.id)}
                         onEdit={() => setPickFrom(reference)}
                         isSortable={options.max !== 1}
+                        readOnly={readOnly}
                       />
                     )
                   })}
 
                   {showLinkPicker && (
                     <div className={styles.create()}>
-                      <Create.Root>
+                      <Create.Root disabled={readOnly}>
                         {entries(options.pickers).map(([name, picker]) => {
                           return (
                             <Create.Button
@@ -266,6 +275,7 @@ function LinksInput<Row extends Reference & ListRow>({
                     onEdit={() => setPickFrom(dragging)}
                     isDragOverlay
                     isSortable={options.max !== 1}
+                    readOnly={readOnly}
                   />
                 ) : null}
               </DragOverlay>
@@ -322,6 +332,7 @@ interface LinkInputRowProps<Row extends Reference>
   isSortable?: boolean
   handle?: DraggableSyntheticListeners
   rootRef?: Ref<HTMLDivElement>
+  readOnly?: boolean
 }
 
 function LinkInputRow<Row extends Reference>({
@@ -337,6 +348,7 @@ function LinkInputRow<Row extends Reference>({
   isDragging,
   isDragOverlay,
   isSortable,
+  readOnly,
   ...rest
 }: LinkInputRowProps<Row>) {
   const RowView = picker.viewRow!
@@ -368,10 +380,12 @@ function LinkInputRow<Row extends Reference>({
             <RowView reference={reference} />
           </Suspense>
         </div>
-        <Sink.Options>
-          <IconButton icon={IcRoundEdit} onClick={onEdit} />
-          <IconButton icon={IcRoundClose} onClick={onRemove} />
-        </Sink.Options>
+        {!readOnly && (
+          <Sink.Options>
+            <IconButton icon={IcRoundEdit} onClick={onEdit} />
+            <IconButton icon={IcRoundClose} onClick={onRemove} />
+          </Sink.Options>
+        )}
       </Sink.Header>
       {fields && (
         <Sink.Content>
@@ -382,7 +396,7 @@ function LinkInputRow<Row extends Reference>({
   )
   if (!fields) return inner
   return (
-    <FormRow field={field} type={fields}>
+    <FormRow field={field} type={fields} readOnly={readOnly}>
       {inner}
     </FormRow>
   )

@@ -223,8 +223,8 @@ const layoutMeasuringConfig = {
 }
 
 export function ListInput({field}: ListInputProps) {
-  const {options, value, mutator, label} = useField(field)
-  const schema = options.schema
+  const {options, value, mutator} = useField(field)
+  const {schema, readOnly} = options
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<ListRow | null>(null)
@@ -243,10 +243,10 @@ export function ListInput({field}: ListInputProps) {
   function handleDragEnd(event: DragEndEvent) {
     const {active, over} = event
     if (!over || active.id === over.id) return
-    mutator.move(ids.indexOf(active.id), ids.indexOf(over.id))
+
+    if (!readOnly) mutator.move(ids.indexOf(active.id), ids.indexOf(over.id))
     setDragging(null)
   }
-
   return (
     <DndContext
       sensors={sensors}
@@ -268,13 +268,21 @@ export function ListInput({field}: ListInputProps) {
                       field={field}
                       rowId={row.id}
                       type={type}
+                      readOnly={readOnly}
                     >
                       <ListInputRowSortable
                         row={row}
                         schema={schema}
-                        onMove={direction => mutator.move(i, i + direction)}
-                        onDelete={() => mutator.remove(row.id)}
+                        onMove={direction => {
+                          if (readOnly) return
+                          mutator.move(i, i + direction)
+                        }}
+                        onDelete={() => {
+                          if (readOnly) return
+                          mutator.remove(row.id)
+                        }}
                         onCreate={(type: string) => {
+                          if (readOnly) return
                           mutator.push({type} as any, i)
                         }}
                         firstRow={i === 0}
@@ -285,6 +293,7 @@ export function ListInput({field}: ListInputProps) {
                 <ListCreateRow
                   schema={schema}
                   onCreate={(type: string) => {
+                    if (readOnly) return
                     mutator.push({type} as any)
                   }}
                 />
@@ -303,6 +312,7 @@ export function ListInput({field}: ListInputProps) {
                   field={field}
                   rowId={dragging.id}
                   type={options.schema[dragging.type]}
+                  readOnly={readOnly}
                 >
                   <ListInputRow
                     key="overlay"

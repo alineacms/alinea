@@ -1,7 +1,8 @@
 import {Label, renderLabel} from 'alinea/core/Label'
-import {fromModule, px} from 'alinea/ui'
+import {Icon, fromModule, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {HStack} from 'alinea/ui/Stack'
+import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {ComponentType, PropsWithChildren, forwardRef, memo} from 'react'
 import css from './InputLabel.module.scss'
@@ -16,6 +17,7 @@ export type LabelHeaderProps = {
   focused?: boolean
   icon?: ComponentType
   shared?: boolean
+  readOnly?: boolean
 }
 
 export const LabelHeader = memo(function LabelHeader({
@@ -25,7 +27,8 @@ export const LabelHeader = memo(function LabelHeader({
   size,
   focused,
   // icon: Icon,
-  shared
+  shared,
+  readOnly
 }: LabelHeaderProps) {
   return (
     <header className={styles.header(size, {focused})}>
@@ -34,6 +37,7 @@ export const LabelHeader = memo(function LabelHeader({
           {/*Icon && <Icon />*/}
           <span>{renderLabel(label)}</span>
         </HStack>
+        {readOnly && <Icon title="Read-only" icon={IcOutlineLock} />}
         {shared && <Chip icon={PhGlobe}>Shared</Chip>}
         {optional && <Chip>Optional</Chip>}
         {help && (
@@ -57,6 +61,8 @@ export type LabelProps = PropsWithChildren<{
   icon?: ComponentType
   empty?: boolean
   shared?: boolean
+  readOnly?: boolean
+  className?: string
 }>
 
 /** Label for an input */
@@ -75,14 +81,22 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
       size,
       icon,
       empty,
-      shared
+      shared,
+      readOnly,
+      className
     },
     ref
   ) {
     const Tag = asLabel ? 'label' : 'div'
     return (
       <Tag
-        className={styles.root({collection, inline, focused, empty})}
+        className={styles.root.with(className)({
+          collection,
+          inline,
+          focused,
+          empty,
+          readOnly
+        })}
         style={{width: `${width * 100}%`}}
         ref={ref as any}
       >
@@ -96,6 +110,7 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
               focused={focused}
               icon={icon}
               shared={shared}
+              readOnly={readOnly}
             />
           )}
           {children}

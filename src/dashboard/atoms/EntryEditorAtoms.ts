@@ -628,9 +628,8 @@ export function createEntryEditor(entryData: EntryData) {
   })
   const form = atom(get => {
     const doc = get(currentDoc)
-    return new FormAtoms(type, doc.getMap(ROOT_KEY), {
-      readOnly: doc !== edits.doc
-    })
+    const readOnly = doc !== edits.doc ? true : undefined
+    return new FormAtoms(type, doc.getMap(ROOT_KEY), {readOnly})
   })
 
   const yUpdate = debounceAtom(edits.yUpdate, 250)

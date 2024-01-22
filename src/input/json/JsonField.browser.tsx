@@ -80,7 +80,7 @@ function JsonInput<T>({field}: JsonInputProps<T>) {
           }}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          disabled={options.readOnly}
+          readOnly={options.readOnly}
         />
       </HStack>
     </InputLabel>

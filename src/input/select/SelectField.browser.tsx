@@ -30,6 +30,7 @@ interface SelectInputProps<Key extends string> {
 
 function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
   const {value = null, mutator, label, options} = useField(field)
+  const {readOnly} = options
   const items = options.items as Record<string, string>
   const {x, y, reference, floating, refs, strategy} = useFloating({
     whileElementsMounted: autoUpdate,
@@ -51,7 +52,7 @@ function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
 
   return (
     <InputLabel {...options} icon={IcRoundArrowDropDownCircle}>
-      <div className={styles.root()}>
+      <div className={styles.root({readOnly})}>
         <Listbox value={value} onChange={mutator} disabled={options.readOnly}>
           {({open}) => (
             <div>

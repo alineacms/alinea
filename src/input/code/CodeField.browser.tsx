@@ -46,7 +46,7 @@ function CodeInput({field}: CodeInputProps) {
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
           spellCheck="false"
-          disabled={options.readOnly}
+          readOnly={options.readOnly}
         />
       </HStack>
     </InputLabel>

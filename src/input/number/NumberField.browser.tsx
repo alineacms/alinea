@@ -53,7 +53,7 @@ function NumberInput({field}: NumberInputProps) {
         }}
         min={minValue}
         max={maxValue}
-        disabled={readOnly}
+        readOnly={readOnly}
         step={step || 1}
       />
     </InputLabel>

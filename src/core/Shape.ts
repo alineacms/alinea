@@ -13,7 +13,7 @@ export interface Shape<Value = any, Mutator = any> {
   applyY(value: Value, parent: YType, key: string): void
   init(parent: YType, key: string): void
   watch(parent: YType, key: string): (fun: () => void) => () => void
-  mutator(parent: YType, key: string, readOnly: boolean): Mutator
+  mutator(parent: YType, key: string): Mutator
   applyLinks(value: Value, loader: LinkResolver): Promise<void>
   searchableText(value: Value): string
 }

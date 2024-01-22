@@ -138,11 +138,9 @@ export class ListShape<T extends ListRow>
       }
     }
   }
-  mutator(parent: Y.Map<any>, key: string, readOnly: boolean) {
+  mutator(parent: Y.Map<any>, key: string) {
     const res = {
-      readOnly,
       replace: (id: string, row: T) => {
-        if (readOnly) return
         const record = parent.get(key)
         const rows: Array<ListRow> = this.fromY(record) as any
         const index = rows.findIndex(r => r.id === id)
@@ -150,7 +148,6 @@ export class ListShape<T extends ListRow>
         res.push(row, index)
       },
       push: (row: Omit<T, 'id' | 'index'>, insertAt?: number) => {
-        if (readOnly) return
         const type = row.type
         const shape = this.values[type]
         const record = parent.get(key)
@@ -169,12 +166,10 @@ export class ListShape<T extends ListRow>
         record.set(id, item)
       },
       remove(id: string) {
-        if (readOnly) return
         const record = parent.get(key)
         record.delete(id)
       },
       move: (oldIndex: number, newIndex: number) => {
-        if (readOnly) return
         const record = parent.get(key)
         const rows: Array<ListRow> = this.fromY(record) as any
         const from = rows[oldIndex]

@@ -1,9 +1,6 @@
 {
   "title": "Fields",
-  "position": {
-    "x": 0.6293332926432291,
-    "y": 0.2579999796549479
-  },
+  "text": "Text value",
   "richText": [
     {
       "type": "paragraph",
@@ -236,6 +233,10 @@
   },
   "tabA": "",
   "tabB": "",
+  "position": {
+    "x": 0.6293332926432291,
+    "y": 0.2579999796549479
+  },
   "shared": "Shared value",
   "metadata": {
     "title": "",

@@ -12,7 +12,11 @@ import {RichTextField} from 'alinea/core/field/RichTextField'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {useField, useFieldMutator} from 'alinea/dashboard/editor/UseField'
+import {
+  useField,
+  useFieldMutator,
+  useFieldOptions
+} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
@@ -54,8 +58,9 @@ function typeExtension(field: Field, name: string, type: Type) {
   function View({node, deleteNode}: NodeViewProps) {
     const {id} = node.attrs
     const meta = Type.meta(type)
+    const {readOnly} = useFieldOptions(field)
     return (
-      <FormRow field={field} type={type} rowId={id}>
+      <FormRow field={field} type={type} rowId={id} readOnly={readOnly}>
         <NodeViewWrapper>
           <Sink.Root style={{margin: `${px(18)} 0`}}>
             <Sink.Header>
@@ -160,9 +165,9 @@ function RichTextEditor<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
   const {value, mutator, options} = useField(field)
-  const {readOnly, fragment, insert} = mutator
+  const {fragment, insert} = mutator
   const picker = usePickTextLink()
-  const {schema} = options
+  const {readOnly, schema} = options
   const [focus, setFocus] = useState(false)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLElement>(null)

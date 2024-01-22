@@ -123,7 +123,7 @@ function PathInput({field}: PathInputProps) {
             applySuffix()
           }}
           style={{paddingRight: px(getRightInputPadding())}}
-          disabled={options.readOnly}
+          readOnly={options.readOnly}
         />
         <div
           ref={suffixRef}

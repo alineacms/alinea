@@ -39,11 +39,13 @@ function CheckInput({field}: CheckInputProps) {
           className={styles.root.input()}
           type="checkbox"
           checked={Boolean(value)}
-          onChange={e => mutator(e.currentTarget.checked)}
+          onChange={e => {
+            if (!readOnly) mutator(e.currentTarget.checked)
+          }}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           autoFocus={options.autoFocus}
-          disabled={readOnly}
+          readOnly={readOnly}
         />
         <span className={styles.root.checkmark({disabled: readOnly})}>
           {value && (
@@ -56,7 +58,7 @@ function CheckInput({field}: CheckInputProps) {
         </span>
         <TextLabel
           label={description ?? label}
-          className={styles.root.label()}
+          className={styles.root.label({disabled: readOnly})}
         />
       </HStack>
     </InputLabel>

@@ -26,13 +26,12 @@ function TextInput({field}: TextInputProps) {
     inline,
     iconLeft: IconLeft,
     iconRight: IconRight,
-    autoFocus
+    autoFocus,
+    readOnly
   } = options
-
   const Input = multiline ? TextareaAutosize : 'input'
-  // Todo: unlocalise
   // Todo: redraw textarea on fontSize change
-  const placeholder = inline ? String(label) : ''
+  const placeholder = inline ? label : ''
   const empty = value === ''
   return (
     <InputLabel
@@ -45,7 +44,7 @@ function TextInput({field}: TextInputProps) {
       <HStack center gap={8}>
         {IconLeft && <IconLeft />}
         <Input
-          className={styles.root.input()}
+          className={styles.root.input({readOnly})}
           type="text"
           value={value || ''}
           onChange={e => mutator(e.currentTarget.value)}
@@ -53,7 +52,7 @@ function TextInput({field}: TextInputProps) {
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          disabled={options.readOnly}
+          readOnly={options.readOnly}
         />
         {IconRight && <IconRight />}
       </HStack>

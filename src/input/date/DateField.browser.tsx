@@ -26,7 +26,7 @@ function DateInput({field}: DateInputProps) {
         value={value ?? ''}
         onChange={e => mutator(e.currentTarget.value)}
         autoFocus={options.autoFocus}
-        disabled={options.readOnly}
+        readOnly={options.readOnly}
       />
     </InputLabel>
   )

@@ -35,26 +35,28 @@ export class FormAtoms<T = any> {
   constructor(
     public type: Type<T>,
     public container: Y.Map<any>,
-    private options: {readOnly: boolean} = {readOnly: false}
+    options: {readOnly?: boolean} = {}
   ) {
+    const readOnly = options.readOnly
+    const forcedOptions = typeof readOnly === 'boolean' ? {readOnly} : {}
     container.doc!.transact(() => {
       for (const section of Type.sections(type)) {
         for (const [key, field] of entries(Section.fields(section))) {
           const ref = Field.ref(field)
           const shape = Field.shape(field)
-          const defaultOptions = Field.options(field)
+          const defaultOptions = {...Field.options(field), ...forcedOptions}
           const optionsTracker = optionTrackerOf(field)
           shape.init(container, key)
-          const mutator = shape.mutator(container, key, false)
+          const mutator = shape.mutator(container, key)
           const options = optionsTracker
             ? unwrap(
                 atom(get => {
                   const tracked = optionsTracker(this.getter(get))
                   if (tracked instanceof Promise)
                     return tracked.then(partial => {
-                      return {...defaultOptions, ...partial}
+                      return {...defaultOptions, ...partial, ...forcedOptions}
                     })
-                  return {...defaultOptions, ...tracked}
+                  return {...defaultOptions, ...tracked, ...forcedOptions}
                 }),
                 prev => prev ?? defaultOptions
               )
@@ -174,13 +176,15 @@ export interface FormRowProps {
   field: Field
   rowId?: string
   type: Type
+  readOnly?: boolean
 }
 
 export function FormRow({
   children,
   field,
   type,
-  rowId
+  rowId,
+  readOnly
 }: PropsWithChildren<FormRowProps>) {
   const form = useFormContext()
   const rowForm = useMemo(() => {
@@ -190,7 +194,7 @@ export function FormRow({
       if (!inner.has(rowId)) inner.set(rowId, new Y.Map())
     }
     const row = rowId ? inner.get(rowId) : inner
-    return new FormAtoms(type, row)
-  }, [form, rowId])
+    return new FormAtoms(type, row, {readOnly})
+  }, [form, rowId, readOnly])
   return <FormProvider form={rowForm}>{children}</FormProvider>
 }

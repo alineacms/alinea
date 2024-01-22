@@ -47,10 +47,8 @@ const TabsExample = alinea.type('Tabs Example', {
 
 const Fields = alinea.document('Fields', {
   ...alinea.tabs(
-    alinea.tab('Custom field', {
-      position: position('Position field')
-    }),
     alinea.tab('Basic fields', {
+      text: alinea.text('Text field'),
       richText: alinea.richText('Rich text field'),
       select: alinea.select('Select field', {
         a: 'Option a',
@@ -69,17 +67,23 @@ const Fields = alinea.document('Fields', {
       entry: alinea.entry('Internal link'),
       entryWithCondition: alinea.entry('With condition', {
         help: `Show only entries of type Fields`,
-        condition: Entry.type.is('Fields')
+        condition: Entry.type.is('Fields'),
+        readOnly: true
       }),
-      linkMultiple: alinea.link.multiple('Mixed links, multiple'),
+      linkMultiple: alinea.link.multiple('Mixed links, multiple', {
+        readOnly: true
+      }),
       image: alinea.image('Image link'),
-      images: alinea.image.multiple('Image link (multiple)'),
+      images: alinea.image.multiple('Image link (multiple)', {
+        readOnly: true
+      }),
       file: alinea.entry('File link'),
       withFields: alinea.link('With extra fields', {
         fields: alinea.type({
           fieldA: alinea.text('Field A', {width: 0.5}),
           fieldB: alinea.text('Field B', {width: 0.5})
-        })
+        }),
+        readOnly: true
       })
     }),
     alinea.tab('List fields', {
@@ -92,7 +96,8 @@ const Fields = alinea.document('Fields', {
           Image: alinea.type('Image', {
             image: alinea.image('Image')
           })
-        })
+        }),
+        readOnly: true
       })
     }),
     alinea.tab('Rich text fields', {
@@ -154,6 +159,9 @@ const Fields = alinea.document('Fields', {
           tabB: alinea.text('Tab B')
         })
       )
+    }),
+    alinea.tab('Custom field', {
+      position: position('Position field')
     }),
     alinea.tab('I18n', {
       shared: alinea.text('Shared field', {

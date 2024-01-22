@@ -21,7 +21,11 @@ function ObjectInput<Definition>({field}: ObjectInputProps<Definition>) {
     <InputLabel {...options} icon={IcRoundFeed}>
       <Sink.Root>
         <Sink.Content>
-          <FormRow field={field} type={options.fields}>
+          <FormRow
+            field={field}
+            type={options.fields}
+            readOnly={options.readOnly}
+          >
             <InputForm type={options.fields} />
           </FormRow>
         </Sink.Content>
