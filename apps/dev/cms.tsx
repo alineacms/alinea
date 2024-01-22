@@ -14,7 +14,8 @@ const Folder = alinea.type('Folder', {
     width: 0.5
   }),
   [alinea.meta]: {
-    isContainer: true
+    isContainer: true,
+    orderChildrenBy: {asc: 'title'}
   }
 })
 

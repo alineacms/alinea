@@ -34,8 +34,11 @@ export interface TypeMeta {
   isContainer?: true
   /** Entries do not show up in the sidebar content tree */
   isHidden?: true
+  /** Order children entries in the sidebar content tree */
+  orderChildrenBy?: {asc: string} | {desc: string}
   /** Accepts entries of these types as children */
   contains?: Array<string>
+
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 

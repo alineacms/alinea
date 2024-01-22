@@ -78,11 +78,12 @@ function PreviewField({field}: PreviewFieldProps) {
 
 function editorConfig(monaco: Monaco) {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-    jsx: 'preserve'
+    jsx: 'preserve',
+    typeRoots: ['node_modules/@types']
   })
   monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    `declare var alinea: typeof import('alinea').alinea;` + declarations,
-    '@types/alinea/index.d.ts'
+    `declare var alinea: typeof import('alinea').alinea;\n` + declarations,
+    'file:///node_modules/@types/alinea/index.d.ts'
   )
 }
 
@@ -199,7 +200,7 @@ export default function Playground() {
   }, [code])
   const client = React.use(connection)
   return (
-    <DashboardProvider dev client={client} config={example}>
+    <DashboardProvider dev client={client} config={example.config}>
       <Script
         src="https://cdn.jsdelivr.net/npm/typescript@5.1.3/lib/typescript.min.js"
         onLoad={() => {
