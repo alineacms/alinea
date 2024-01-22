@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+- Fix `Entry` fields showing up as type `unkown` in TypeScript.
+- The `readOnly` option that is included in all fields will now show a lock item
+  next to the field label. The option is passed down in nested fields such as
+  the `List` and `Rich text` fields.
+
 ## [0.5.9]
 
 - Changing entry order by dragging them in the sidebar is now applied
