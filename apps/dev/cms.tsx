@@ -45,6 +45,27 @@ const TabsExample = alinea.type('Tabs Example', {
   )
 })
 
+const rootField = alinea.select('Root field', {
+  a: 'Option a',
+  b: 'Option b'
+})
+
+const showIfA = alinea.track.options(alinea.text('Show if A'), get => {
+  return {hidden: get(rootField) !== 'a'}
+})
+const showIfB = alinea.track.options(alinea.text('Show if B'), get => {
+  return {hidden: get(rootField) !== 'b'}
+})
+
+const nestedList = alinea.list('Nested list', {
+  schema: alinea.schema({
+    Row: alinea.type('List item', {
+      a: showIfA,
+      b: showIfB
+    })
+  })
+})
+
 const Fields = alinea.document('Fields', {
   ...alinea.tabs(
     alinea.tab('Basic fields', {
@@ -168,6 +189,10 @@ const Fields = alinea.document('Fields', {
         help: `This field is shared between languages.`,
         shared: true
       })
+    }),
+    alinea.tab('Conditional fields', {
+      rootField,
+      nestedList
     })
   )
 })

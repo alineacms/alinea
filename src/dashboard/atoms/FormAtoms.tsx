@@ -35,7 +35,10 @@ export class FormAtoms<T = any> {
   constructor(
     public type: Type<T>,
     public container: Y.Map<any>,
-    options: {readOnly?: boolean} = {}
+    public options: {
+      parent?: FormAtoms
+      readOnly?: boolean
+    } = {}
   ) {
     const readOnly = options.readOnly
     const forcedOptions = typeof readOnly === 'boolean' ? {readOnly} : {}
@@ -80,7 +83,7 @@ export class FormAtoms<T = any> {
   }
 
   private getter: (get: Getter) => FieldGetter = get => field => {
-    const info = this.fields.get(Field.ref(field))
+    const info = this.fieldInfo(field)
     if (!info) throw new Error(`Field not found: ${Field.label(field)}`)
     return get(info.value)
   }
@@ -115,10 +118,7 @@ export class FormAtoms<T = any> {
   }
 
   keyOf(field: Field) {
-    const res = this.fields.get(Field.ref(field))
-    const label = Field.label(field)
-    if (!res) throw new Error(`Field not found: ${label}`)
-    return res.key
+    return this.fieldInfo(field).key
   }
 
   fieldInfo<Value, Mutator, Options extends FieldOptions<Value>>(
@@ -126,7 +126,11 @@ export class FormAtoms<T = any> {
   ): FieldInfo<Value, Mutator, Options> {
     const res = this.fields.get(Field.ref(field))
     const label = Field.label(field)
-    if (!res) throw new Error(`Field not found: ${label}`)
+    if (!res) {
+      console.log(this.options)
+      if (this.options.parent) return this.options.parent.fieldInfo(field)
+      throw new Error(`Field not found: ${label}`)
+    }
     return res as FieldInfo<Value, Mutator, Options>
   }
 }
@@ -194,7 +198,10 @@ export function FormRow({
       if (!inner.has(rowId)) inner.set(rowId, new Y.Map())
     }
     const row = rowId ? inner.get(rowId) : inner
-    return new FormAtoms(type, row, {readOnly})
+    return new FormAtoms(type, row, {
+      readOnly,
+      parent: form
+    })
   }, [form, rowId, readOnly])
   return <FormProvider form={rowForm}>{children}</FormProvider>
 }
