@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.5.10]
 
 - Fix `Entry` fields showing up as type `unkown` in TypeScript.
 - The `readOnly` option that is included in all fields will now show a lock item
