@@ -6,19 +6,20 @@ import {ExampleBlock} from './ExampleBlock'
 import {ImageBlock} from './ImageBlock'
 import {NoticeBlock} from './NoticeBlock'
 
-export const TextField = alinea.richText('Body', {
-  schema: alinea.schema({
-    CodeBlock,
-    CodeVariantsBlock,
-    ImageBlock,
-    NoticeBlock,
-    ChapterLinkBlock,
-    ExampleBlock
-  }),
-  inline: true,
-  searchable: true
-})
+export const textField = () =>
+  alinea.richText('Body', {
+    schema: alinea.schema({
+      CodeBlock,
+      CodeVariantsBlock,
+      ImageBlock,
+      NoticeBlock,
+      ChapterLinkBlock,
+      ExampleBlock
+    }),
+    inline: true,
+    searchable: true
+  })
 
 export const TextBlock = alinea.type('Body text', {
-  text: TextField
+  text: textField()
 })

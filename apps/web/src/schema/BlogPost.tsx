@@ -1,5 +1,5 @@
 import alinea from 'alinea'
-import {TextField} from './blocks/TextBlock'
+import {textField} from './blocks/TextBlock'
 
 export const BlogPost = alinea.document('Blog post', {
   publishDate: alinea.date('Publish date'),
@@ -11,5 +11,5 @@ export const BlogPost = alinea.document('Blog post', {
     })
   }),
   introduction: alinea.text('Short introduction', {multiline: true}),
-  body: TextField
+  body: textField()
 })
