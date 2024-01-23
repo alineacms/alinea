@@ -103,8 +103,13 @@ const Fields = alinea.document('Fields', {
         fields: alinea.type({
           fieldA: alinea.text('Field A', {width: 0.5}),
           fieldB: alinea.text('Field B', {width: 0.5})
-        }),
-        readOnly: true
+        })
+      }),
+      multipleWithFields: alinea.link.multiple('Multiple With extra fields', {
+        fields: alinea.type({
+          fieldA: alinea.text('Field A', {width: 0.5}),
+          fieldB: alinea.text('Field B', {width: 0.5})
+        })
       })
     }),
     alinea.tab('List fields', {
@@ -117,8 +122,7 @@ const Fields = alinea.document('Fields', {
           Image: alinea.type('Image', {
             image: alinea.image('Image')
           })
-        }),
-        readOnly: true
+        })
       })
     }),
     alinea.tab('Rich text fields', {

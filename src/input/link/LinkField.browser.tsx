@@ -235,6 +235,7 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
                         onEdit={() => setPickFrom(reference)}
                         isSortable={options.max !== 1}
                         readOnly={readOnly}
+                        multiple
                       />
                     )
                   })}
@@ -276,6 +277,7 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
                     isDragOverlay
                     isSortable={options.max !== 1}
                     readOnly={readOnly}
+                    multiple
                   />
                 ) : null}
               </DragOverlay>
@@ -333,6 +335,7 @@ interface LinkInputRowProps<Row extends Reference>
   handle?: DraggableSyntheticListeners
   rootRef?: Ref<HTMLDivElement>
   readOnly?: boolean
+  multiple?: boolean
 }
 
 function LinkInputRow<Row extends Reference>({
@@ -349,6 +352,7 @@ function LinkInputRow<Row extends Reference>({
   isDragOverlay,
   isSortable,
   readOnly,
+  multiple,
   ...rest
 }: LinkInputRowProps<Row>) {
   const RowView = picker.viewRow!
@@ -396,7 +400,12 @@ function LinkInputRow<Row extends Reference>({
   )
   if (!fields) return inner
   return (
-    <FormRow field={field} type={fields} readOnly={readOnly}>
+    <FormRow
+      field={field}
+      type={fields}
+      readOnly={readOnly}
+      rowId={multiple ? rowId : undefined}
+    >
       {inner}
     </FormRow>
   )

@@ -140,6 +140,24 @@
     "fieldA": "A",
     "fieldB": "B"
   },
+  "multipleWithFields": [
+    {
+      "id": "2bLjJYt4wIGaQxS7YQmxtbIDQYQ",
+      "index": "a0",
+      "type": "entry",
+      "entry": "2aqpV5SN9JrZGSRkS3am07zPSmU",
+      "fieldA": "Field A",
+      "fieldB": ""
+    },
+    {
+      "id": "2bLjJaegIJZyUyQepwi76Om0hee",
+      "index": "a1",
+      "type": "entry",
+      "entry": "2U6y6iIQIuQg2D0PViWdKenqgMv",
+      "fieldA": "",
+      "fieldB": "Field B"
+    }
+  ],
   "list": [
     {
       "id": "2U6zmJT84rFV9R1kGBKi6nENtTN",
@@ -238,6 +256,7 @@
     "y": 0.2579999796549479
   },
   "shared": "Shared value",
+  "nestedList": [],
   "metadata": {
     "title": "",
     "description": "",
