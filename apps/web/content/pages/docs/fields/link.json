@@ -146,6 +146,59 @@
           "text": "Limit the amount of rows in case of multiple links."
         }
       ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`fields`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "start",
+      "content": [
+        {
+          "type": "text",
+          "text": "A "
+        },
+        {
+          "type": "text",
+          "text": "Type",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2bLjpgRCHB9vktOTfMOmtoyNGIV",
+                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " that defines extra fields added to every chosen link. For example adding an `alt` field to images:"
+        }
+      ]
+    },
+    {
+      "id": "2bLjsYUBGxzkuxwV3LJNOBMsarU",
+      "type": "CodeBlock",
+      "code": "alinea.image('Pick an image', {\n  fields: alinea.type({\n    alt: alinea.text('Alt description')\n  })\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "id": "2bLjx7pekuob0jFZ0EFVrEeLL6O",
+      "type": "ExampleBlock",
+      "code": "export default alinea.image('Pick an image', {\n  fields: alinea.type({\n    alt: alinea.text('Alt description')\n  })\n})"
     }
   ],
   "metadata": {
