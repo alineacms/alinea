@@ -627,6 +627,7 @@ export class Database implements Syncable {
               index: 'a0'
             }
           },
+          seed,
           seed
         )
         const record = createRecord(entry)
