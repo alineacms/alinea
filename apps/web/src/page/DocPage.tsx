@@ -63,19 +63,28 @@ export async function generateStaticParams() {
   const urls = await cms
     .in(cms.workspaces.main.pages.docs)
     .find(Entry().select(Entry.url))
-  return urls.flatMap(url => {
-    return supportedFrameworks
-      .map(framework => {
+  return urls
+    .flatMap(url => {
+      return supportedFrameworks
+        .map(framework => {
+          return {
+            framework: framework.name,
+            slug: url.split('/').slice(2)
+          }
+        })
+        .concat({
+          framework: url.split('/')[2],
+          slug: url.split('/').slice(3)
+        })
+    })
+    .concat(
+      supportedFrameworks.map(framework => {
         return {
           framework: framework.name,
-          slug: url.split('/').slice(2)
+          slug: []
         }
       })
-      .concat({
-        framework: url.split('/')[2],
-        slug: url.split('/').slice(3)
-      })
-  })
+    )
 }
 
 export async function generateMetadata({
