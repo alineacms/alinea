@@ -88,6 +88,7 @@ type ListInputRowProps = PropsWithChildren<
     row: ListRow
     schema: Schema
     isDragging?: boolean
+    readOnly?: boolean
     onMove?: (direction: 1 | -1) => void
     onDelete?: () => void
     handle?: DraggableSyntheticListeners
@@ -110,6 +111,7 @@ function ListInputRow({
   rootRef,
   isDragging,
   isDragOverlay,
+  readOnly,
   onCreate,
   firstRow,
   ...rest
@@ -123,7 +125,7 @@ function ListInputRow({
       ref={rootRef}
       {...rest}
     >
-      {!isDragOverlay && (
+      {!readOnly && !isDragOverlay && (
         <ListInsertRow
           open={showInsert}
           first={Boolean(firstRow)}
@@ -151,17 +153,19 @@ function ListInputRow({
         <Sink.Title>
           <TextLabel label={Type.label(type)} />
         </Sink.Title>
-        <Sink.Options>
-          <IconButton
-            icon={IcRoundKeyboardArrowUp}
-            onClick={() => onMove?.(-1)}
-          />
-          <IconButton
-            icon={IcRoundKeyboardArrowDown}
-            onClick={() => onMove?.(1)}
-          />
-          <IconButton icon={IcRoundClose} onClick={onDelete} />
-        </Sink.Options>
+        {!readOnly && (
+          <Sink.Options>
+            <IconButton
+              icon={IcRoundKeyboardArrowUp}
+              onClick={() => onMove?.(-1)}
+            />
+            <IconButton
+              icon={IcRoundKeyboardArrowDown}
+              onClick={() => onMove?.(1)}
+            />
+            <IconButton icon={IcRoundClose} onClick={onDelete} />
+          </Sink.Options>
+        )}
       </Sink.Header>
       <Sink.Content>
         <InputForm type={type} />
@@ -172,14 +176,20 @@ function ListInputRow({
 
 interface ListCreateRowProps {
   schema: Schema
+  readOnly?: boolean
   inline?: boolean
   onCreate: (type: string) => void
 }
 
-function ListCreateRow({schema, inline, onCreate}: ListCreateRowProps) {
+function ListCreateRow({
+  schema,
+  readOnly,
+  inline,
+  onCreate
+}: ListCreateRowProps) {
   return (
     <div className={styles.create({inline})}>
-      <Create.Root>
+      <Create.Root disabled={readOnly}>
         {entries(schema).map(([key, type]) => {
           return (
             <Create.Button
@@ -273,6 +283,7 @@ export function ListInput({field}: ListInputProps) {
                       <ListInputRowSortable
                         row={row}
                         schema={schema}
+                        readOnly={readOnly}
                         onMove={direction => {
                           if (readOnly) return
                           mutator.move(i, i + direction)
@@ -292,6 +303,7 @@ export function ListInput({field}: ListInputProps) {
                 })}
                 <ListCreateRow
                   schema={schema}
+                  readOnly={readOnly}
                   onCreate={(type: string) => {
                     if (readOnly) return
                     mutator.push({type} as any)

@@ -37,7 +37,9 @@ export const LabelHeader = memo(function LabelHeader({
           {/*Icon && <Icon />*/}
           <span>{renderLabel(label)}</span>
         </HStack>
-        {readOnly && <Icon title="Read-only" icon={IcOutlineLock} />}
+        {readOnly && (
+          <Icon title="Read-only" icon={IcOutlineLock} style={{opacity: 0.6}} />
+        )}
         {shared && <Chip icon={PhGlobe}>Shared</Chip>}
         {optional && <Chip>Optional</Chip>}
         {help && (
@@ -113,7 +115,7 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
               readOnly={readOnly}
             />
           )}
-          {children}
+          <div className={styles.root.inner.content()}>{children}</div>
         </div>
       </Tag>
     )

@@ -16,6 +16,13 @@
     padding: 6px 6px 8px 6px;
   }
 
+  &.is-readOnly &-inner-content {
+    opacity: 0.75;
+  }
+  &.is-readOnly &.is-readOnly &-inner-content {
+    opacity: 1;
+  }
+
   &-header {
     padding-top: 0;
   }
