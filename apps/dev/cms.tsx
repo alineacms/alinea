@@ -88,16 +88,11 @@ const Fields = alinea.document('Fields', {
       entry: alinea.entry('Internal link'),
       entryWithCondition: alinea.entry('With condition', {
         help: `Show only entries of type Fields`,
-        condition: Entry.type.is('Fields'),
-        readOnly: true
+        condition: Entry.type.is('Fields')
       }),
-      linkMultiple: alinea.link.multiple('Mixed links, multiple', {
-        readOnly: true
-      }),
+      linkMultiple: alinea.link.multiple('Mixed links, multiple'),
       image: alinea.image('Image link'),
-      images: alinea.image.multiple('Image link (multiple)', {
-        readOnly: true
-      }),
+      images: alinea.image.multiple('Image link (multiple)'),
       file: alinea.entry('File link'),
       withFields: alinea.link('With extra fields', {
         fields: alinea.type({
