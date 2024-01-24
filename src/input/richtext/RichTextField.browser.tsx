@@ -12,11 +12,7 @@ import {RichTextField} from 'alinea/core/field/RichTextField'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {
-  useField,
-  useFieldMutator,
-  useFieldOptions
-} from 'alinea/dashboard/editor/UseField'
+import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
@@ -26,7 +22,7 @@ import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
 import {Sink} from 'alinea/ui/Sink'
-import {useCallback, useMemo, useRef, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import {richText as createRichText, RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
@@ -149,10 +145,14 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   )
 }
 
-function RichTextEditor<Blocks extends Schema>({
+export interface RichTextInputProps<Blocks extends Schema> {
+  field: RichTextField<Blocks, RichTextOptions<Blocks>>
+}
+
+export function RichTextInput<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
-  const {value, mutator, options, error} = useField(field)
+  const {value, mutator, options} = useField(field)
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
   const {readOnly, schema} = options
@@ -174,18 +174,12 @@ function RichTextEditor<Blocks extends Schema>({
     },
     [setFocus, containerRef, toolbarRef]
   )
+  const blocks = useMemo(() => {
+    return schemaToExtensions(field, schema)
+  }, [field, schema])
   const extensions = useMemo(
-    () => [
-      Collaboration.configure({
-        fragment,
-        onFirstRender() {
-          console.log('on first render')
-        }
-      }),
-      RichTextKit,
-      ...schemaToExtensions(field, schema)
-    ],
-    [fragment, schema]
+    () => [Collaboration.configure({fragment}), RichTextKit, ...blocks],
+    [fragment, blocks]
   )
   // The collaboration extension takes over content syncing after inital content
   // is set. Unfortunately we can't fully utilize it to set the content initally
@@ -204,7 +198,7 @@ function RichTextEditor<Blocks extends Schema>({
         }
       })
     }),
-    []
+    [fragment]
   )
   const onFocus = useCallback(
     ({event}: {event: Event}) => focusToggle(event.currentTarget),
@@ -229,7 +223,10 @@ function RichTextEditor<Blocks extends Schema>({
       })
     }, 'self')
     return editor!
-  }, [])
+  }, [fragment])
+  useEffect(() => {
+    return () => editor.destroy()
+  }, [editor])
   return (
     <>
       {focus && (
@@ -257,18 +254,4 @@ function RichTextEditor<Blocks extends Schema>({
       </InputLabel>
     </>
   )
-}
-
-export interface RichTextInputProps<Blocks extends Schema> {
-  field: RichTextField<Blocks, RichTextOptions<Blocks>>
-}
-
-export function RichTextInput<Blocks extends Schema>({
-  field
-}: RichTextInputProps<Blocks>) {
-  const {fragment} = useFieldMutator(field)
-  const key = useMemo(createId, [fragment])
-  // We key here currently because the tiptap/yjs combination fails to register
-  // changes when the fragment is changed while the editor is mounted.
-  return <RichTextEditor key={key} field={field} />
 }

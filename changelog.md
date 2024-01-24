@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.12]
+
+- Link fields using the `condition` option are now constrained with their locale
+- Upgrade the tiptap editor and fix a few stability issues with the editor
+
 ## [0.5.11]
 
 - Fix storing extra `fields` on the Link field correctly for multiple links.
