@@ -106,7 +106,7 @@ export class FormAtoms<T = any> {
       const current = shape.fromY(this.container.get(key))
       const next = tracker ? tracker(this.getter(g)) : current
       // Todo: we shouldn't mutate here, this should run in a pass after
-      if (next !== current) shape.applyY(next, this.container, key)
+      if (tracker && next !== current) shape.applyY(next, this.container, key)
       return next
     })
   }
@@ -194,9 +194,6 @@ export function FormRow({
   const rowForm = useMemo(() => {
     const key = form.keyOf(field)
     const inner = form.container.get(key)
-    if (rowId) {
-      if (!inner.has(rowId)) inner.set(rowId, new Y.Map())
-    }
     const row = rowId ? inner.get(rowId) : inner
     return new FormAtoms(type, row, {
       readOnly,

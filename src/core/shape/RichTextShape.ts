@@ -260,15 +260,18 @@ export class RichTextShape<Blocks>
     if (!parent.has(key)) parent.set(key, this.toY(this.create()))
   }
   watch(parent: Y.Map<any>, key: string) {
-    // There's no watching of the fragment involved
-    return () => () => {}
+    const map: Y.Map<any> = parent.get(key)
+    return (fun: () => void) => {
+      const listener = (events: Array<Y.YEvent<any>>, tx: Y.Transaction) => {
+        if (tx.origin === 'self') return
+        fun()
+      }
+      map.observeDeep(listener)
+      return () => map.unobserveDeep(listener)
+    }
   }
   mutator(parent: Y.Map<any>, key: string) {
-    let map = parent.get(key)
-    if (!map) {
-      parent.set(key, this.toY([]))
-      map = parent.get(key)
-    }
+    const map = parent.get(key)
     return {
       map,
       fragment: map.get('$text'),

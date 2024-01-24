@@ -52,7 +52,8 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
     if (!current) return void (map as Y.Map<any>).set(key, this.toY(value))
     const self: Record<string, any> = value ?? {}
     for (const key of keys(this.properties)) {
-      this.properties[key].applyY(self[key], current, key)
+      this.properties[key].init(current, key)
+      if (key in self) this.properties[key].applyY(self[key], current, key)
     }
   }
   init(parent: Y.Map<any>, key: string): void {

@@ -121,20 +121,18 @@ export class ListShape<T extends ListRow>
     if (!parent.has(key)) parent.set(key, this.toY(this.create()))
   }
   watch(parent: Y.Map<any>, key: string) {
-    const record: Y.Map<any> = parent.has(key)
-      ? parent.get(key)
-      : parent.set(key, new Y.Map())
+    const map: Y.Map<any> = parent.get(key)
     return (fun: () => void) => {
       function w(events: Array<Y.YEvent<any>>, transaction: Y.Transaction) {
         for (const event of events) {
-          if (event.target === record) fun()
+          if (event.target === map) fun()
           if (event instanceof Y.YMapEvent && event.keysChanged.has('index'))
             fun()
         }
       }
-      record.observeDeep(w)
+      map.observeDeep(w)
       return () => {
-        record.unobserveDeep(w)
+        map.unobserveDeep(w)
       }
     }
   }

@@ -26,15 +26,7 @@ import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
 import {Sink} from 'alinea/ui/Sink'
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  useState
-} from 'react'
-import {useEditor} from './hook/UseEditor.js'
+import {useCallback, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import {richText as createRichText, RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
@@ -46,8 +38,6 @@ export * from './RichTextField.js'
 export const richText = Field.provideView(RichTextInput, createRichText)
 
 const styles = fromModule(css)
-
-const IsNested = createContext(false)
 
 type NodeViewProps = {
   node: {attrs: {id: string}}
@@ -79,9 +69,7 @@ function typeExtension(field: Field, name: string, type: Type) {
               </Sink.Options>
             </Sink.Header>
             <Sink.Content>
-              <IsNested.Provider value={true}>
-                <InputForm type={type} />
-              </IsNested.Provider>
+              <InputForm type={type} />
             </Sink.Content>
           </Sink.Root>
         </NodeViewWrapper>
@@ -164,7 +152,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
 function RichTextEditor<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
-  const {value, mutator, options} = useField(field)
+  const {value, mutator, options, error} = useField(field)
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
   const {readOnly, schema} = options
@@ -186,12 +174,19 @@ function RichTextEditor<Blocks extends Schema>({
     },
     [setFocus, containerRef, toolbarRef]
   )
-  const extensions = [
-    Collaboration.configure({fragment}),
-    RichTextKit,
-    ...schemaToExtensions(field, schema)
-  ]
-  const isNested = useContext(IsNested)
+  const extensions = useMemo(
+    () => [
+      Collaboration.configure({
+        fragment,
+        onFirstRender() {
+          console.log('on first render')
+        }
+      }),
+      RichTextKit,
+      ...schemaToExtensions(field, schema)
+    ],
+    [fragment, schema]
+  )
   // The collaboration extension takes over content syncing after inital content
   // is set. Unfortunately we can't fully utilize it to set the content initally
   // as well because it does not work synchronously causing flickering.
@@ -219,17 +214,22 @@ function RichTextEditor<Blocks extends Schema>({
     ({event}: {event: FocusEvent}) => focusToggle(event.relatedTarget),
     [focusToggle]
   )
-  const editor = useEditor(
-    {
-      content: isNested ? undefined : content,
-      onFocus,
-      onBlur,
-      extensions,
-      editable: !options.readOnly && !readOnly
-    },
-    []
-  )
-  if (!editor) return null
+  const editor = useMemo(() => {
+    const doc = fragment.doc!
+    let editor
+    // The y-prosemirror plugin sometimes mutates the doc during setup
+    // which we want to catch because the mutations do not mean a value change
+    doc.transact(() => {
+      editor = new Editor({
+        content,
+        onFocus,
+        onBlur,
+        extensions,
+        editable: !options.readOnly && !readOnly
+      })
+    }, 'self')
+    return editor!
+  }, [])
   return (
     <>
       {focus && (
