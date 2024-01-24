@@ -1,7 +1,7 @@
 import {Field} from 'alinea/core'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
+import {useFieldError, useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {Sink} from 'alinea/ui/Sink'
 import {IcRoundFeed} from 'alinea/ui/icons/IcRoundFeed'
@@ -17,8 +17,9 @@ interface ObjectInputProps<Definition> {
 
 function ObjectInput<Definition>({field}: ObjectInputProps<Definition>) {
   const options = useFieldOptions(field)
+  const error = useFieldError(field)
   return (
-    <InputLabel {...options} icon={IcRoundFeed}>
+    <InputLabel {...options} error={error} icon={IcRoundFeed}>
       <Sink.Root>
         <Sink.Content>
           <FormRow

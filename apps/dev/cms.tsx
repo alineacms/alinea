@@ -121,6 +121,16 @@ const Fields = alinea.document('Fields', {
       })
     }),
     alinea.tab('Rich text fields', {
+      withInitial: alinea.richText('With initial value', {
+        initialValue: [
+          {
+            type: 'paragraph',
+            content: [
+              {type: 'text', text: 'This is a paragraph with initial value'}
+            ]
+          }
+        ]
+      }),
       nested: alinea.richText('With nested blocks', {
         schema: {
           Inner: alinea.type('Inner', {
@@ -192,7 +202,20 @@ const Fields = alinea.document('Fields', {
     alinea.tab('Conditional fields', {
       rootField,
       nestedList
-    })
+    }),
+    alinea.tab(
+      'Many fields',
+      Object.fromEntries(
+        Array.from({length: 200}, (_, i) => [
+          `field${i}`,
+          alinea.richText(`Field ${i}`, {
+            initialValue: [
+              {type: 'paragraph', content: [{type: 'text', text: `Field ${i}`}]}
+            ]
+          })
+        ])
+      )
+    )
   )
 })
 

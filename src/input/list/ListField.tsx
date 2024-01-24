@@ -12,8 +12,6 @@ export interface ListOptions<Definitions extends Schema>
   width?: number
   /** Add instructional text to a field */
   help?: string
-  /** Field is optional */
-  optional?: boolean
   /** Display a minimal version */
   inline?: boolean
   /** Hide this list field */

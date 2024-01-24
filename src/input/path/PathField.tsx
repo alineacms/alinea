@@ -7,7 +7,6 @@ export interface PathOptions extends FieldOptions<string> {
   from?: string
   help?: string
   inline?: boolean
-  optional?: boolean
 }
 
 export class PathField extends ScalarField<string, PathOptions> {}

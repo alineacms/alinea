@@ -247,6 +247,7 @@ function RichTextEditor<Blocks extends Schema>({
         icon={IcRoundNotes}
         empty={editor.isEmpty}
         ref={containerRef}
+        error={error}
       >
         <InsertMenu editor={editor} schema={schema} onInsert={insert} />
         <EditorContent

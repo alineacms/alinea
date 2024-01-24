@@ -19,7 +19,7 @@ interface JsonInputProps<T> {
 }
 
 function JsonInput<T>({field}: JsonInputProps<T>) {
-  const {options, value, mutator, label} = useField(field)
+  const {options, value, mutator, label, error} = useField(field)
   const [text, setText] = useState(JSON.stringify(value, null, 2))
   const [valid, setValid] = useState(true)
   const [focus, setFocus] = useState(false)
@@ -46,6 +46,7 @@ function JsonInput<T>({field}: JsonInputProps<T>) {
     <InputLabel
       asLabel
       {...options}
+      error={error}
       focused={focus}
       icon={IcRoundTextFields}
       empty={empty}

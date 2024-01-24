@@ -1,5 +1,6 @@
 import {Field, FieldOptions} from 'alinea/core'
 import {useAtomValue} from 'jotai'
+import {useCallback, useMemo} from 'react'
 import {useFormContext} from '../atoms/FormAtoms.js'
 
 export function useField<Value, Mutator, Options extends FieldOptions<Value>>(
@@ -14,12 +15,14 @@ export function useField<Value, Mutator, Options extends FieldOptions<Value>>(
   const value = useFieldValue(actual)
   const mutator = useFieldMutator(actual)
   const options = useFieldOptions(actual)
+  const error = useFieldError(actual)
   return {
     fieldKey,
     label: options.label,
     options,
     value,
-    mutator
+    mutator,
+    error
   }
 }
 
@@ -41,6 +44,35 @@ export function useFieldOptions<
   const atoms = useFormContext()
   const atom = atoms.fieldInfo(field)
   return useAtomValue(atom.options)
+}
+
+export function useFieldError<
+  Value,
+  Mutator,
+  Options extends FieldOptions<Value>
+>(field: Field<Value, Mutator, Options>) {
+  const value = useFieldValue(field)
+  const options = useFieldOptions(field)
+  const hasError = useCallback(
+    (value: Value) => {
+      if (options.validate) {
+        const validates = options.validate(value)
+        if (typeof validates === 'boolean') return !validates
+        return validates
+      }
+      const isOptional = options.optional
+      const isEmpty =
+        value === undefined ||
+        value === null ||
+        value === '' ||
+        (Array.isArray(value) && value.length === 0)
+      if (!isOptional && isEmpty) return true
+    },
+    [options]
+  )
+  return useMemo(() => {
+    return hasError(value)
+  }, [hasError, value])
 }
 
 export function useFieldValue<

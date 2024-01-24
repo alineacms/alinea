@@ -9,8 +9,6 @@ export interface CheckOptions extends FieldOptions<boolean> {
   width?: number
   /** Add instructional text to a field */
   help?: string
-  /** Field is optional */
-  optional?: boolean
   /** Display a minimal version */
   inline?: boolean
   /** A default value */

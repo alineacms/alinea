@@ -1,4 +1,3 @@
-import {Label, renderLabel} from 'alinea/core/Label'
 import {Icon, fromModule, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {HStack} from 'alinea/ui/Stack'
@@ -10,48 +9,51 @@ import css from './InputLabel.module.scss'
 const styles = fromModule(css)
 
 export type LabelHeaderProps = {
-  label: Label
+  label: string
   help?: string
-  optional?: boolean
   size?: 'small' | 'medium' | 'large'
   focused?: boolean
   icon?: ComponentType
   shared?: boolean
   readOnly?: boolean
+  optional?: boolean
+  error?: boolean | string
 }
 
 export const LabelHeader = memo(function LabelHeader({
   label,
-  optional,
   help,
   size,
   focused,
   // icon: Icon,
   shared,
-  readOnly
+  readOnly,
+  optional,
+  error
 }: LabelHeaderProps) {
   return (
-    <header className={styles.header(size, {focused})}>
+    <header className={styles.header(size, {focused, error: Boolean(error)})}>
       <HStack center wrap gap={`${px(4)} ${px(8)}`}>
         <HStack center gap={8} className={styles.header.title()}>
           {/*Icon && <Icon />*/}
-          <span>{renderLabel(label)}</span>
+          <span>{label}</span>
         </HStack>
         {readOnly && (
           <Icon title="Read-only" icon={IcOutlineLock} style={{opacity: 0.6}} />
         )}
         {shared && <Chip icon={PhGlobe}>Shared</Chip>}
         {optional && <Chip>Optional</Chip>}
-        {help && (
-          <div className={styles.header.help()}>{renderLabel(help)}</div>
+        {help && <div className={styles.header.help()}>{help}</div>}
+        {typeof error === 'string' && (
+          <div className={styles.header.help()}>{error}</div>
         )}
       </HStack>
     </header>
   )
 })
 
-export type LabelProps = PropsWithChildren<{
-  label?: Label
+export interface LabelProps extends PropsWithChildren {
+  label?: string
   asLabel?: boolean
   help?: string
   optional?: boolean
@@ -65,7 +67,9 @@ export type LabelProps = PropsWithChildren<{
   shared?: boolean
   readOnly?: boolean
   className?: string
-}>
+  error?: boolean | string
+  required?: boolean
+}
 
 /** Label for an input */
 export const InputLabel = forwardRef<HTMLElement, LabelProps>(
@@ -85,7 +89,9 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
       empty,
       shared,
       readOnly,
-      className
+      className,
+      error,
+      required
     },
     ref
   ) {
@@ -113,6 +119,7 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
               icon={icon}
               shared={shared}
               readOnly={readOnly}
+              error={error}
             />
           )}
           <div className={styles.root.inner.content()}>{children}</div>

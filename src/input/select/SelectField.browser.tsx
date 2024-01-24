@@ -29,7 +29,7 @@ interface SelectInputProps<Key extends string> {
 }
 
 function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
-  const {value = null, mutator, label, options} = useField(field)
+  const {value = null, mutator, label, options, error} = useField(field)
   const {readOnly} = options
   const items = options.items as Record<string, string>
   const {x, y, reference, floating, refs, strategy} = useFloating({
@@ -51,7 +51,7 @@ function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
   })
 
   return (
-    <InputLabel {...options} icon={IcRoundArrowDropDownCircle}>
+    <InputLabel {...options} error={error} icon={IcRoundArrowDropDownCircle}>
       <div className={styles.root({readOnly})}>
         <Listbox value={value} onChange={mutator} disabled={options.readOnly}>
           {({open}) => (
