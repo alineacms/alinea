@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.6.0]
+
+- Field validation (#369)
+
+  Introduces two new Field options available for every Field: `required` and
+  `validate`. The `required` option will make sure the field value is not empty
+  when saving. The `validate` option can be used to validate the field value
+  using a custom function. The function should return `true` if the value is
+  valid, `false` if it is not valid and a string if it is not valid and a
+  message should be shown to the user.
+
+  This is a breaking change, removing the `optional` property from Fields.
+  It was never functional.
+
+  ```tsx
+  alinea.text('Hello field', {
+    help: 'This field only accepts "hello" as a value',
+    validate(value) {
+      if (value !== 'hello') return 'Only "hello" is allowed!'
+    }
+  })
+  ```
+
 ## [0.5.12]
 
 - Link fields using the `condition` option are now constrained with their locale
