@@ -11,8 +11,6 @@ export interface SelectConfig<Key> extends FieldOptions<Key> {
   width?: number
   /** Add instructional text to a field */
   help?: string
-  /** Field is optional */
-  optional?: boolean
   /** Display a minimal version */
   inline?: boolean
   /** Choose a custom placeholder (eg. 'Select an option')  */

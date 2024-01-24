@@ -7,8 +7,6 @@ export interface JsonOptions<T> extends FieldOptions<T> {
   width?: number
   /** Add instructional text to a field */
   help?: string
-  /** Field is optional */
-  optional?: boolean
   /** Display a minimal version */
   inline?: boolean
   /** Focus this input automatically */

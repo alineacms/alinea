@@ -56,7 +56,7 @@ function TabsView({section}: TabsViewProps) {
         <Tabs.Panels>
           {visibleTypes.map((type, i) => {
             return (
-              <Tabs.Panel key={i} tabIndex={i}>
+              <Tabs.Panel unmount={false} key={i} tabIndex={i}>
                 <InputForm type={type} border={false} />
               </Tabs.Panel>
             )

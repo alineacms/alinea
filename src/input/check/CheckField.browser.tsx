@@ -19,13 +19,14 @@ interface CheckInputProps {
 }
 
 function CheckInput({field}: CheckInputProps) {
-  const {value, mutator, label, options} = useField(field)
+  const {value, mutator, label, options, error} = useField(field)
   const {description, readOnly} = options
   const [focus, setFocus] = useState(false)
   return (
     <InputLabel
       asLabel
       {...options}
+      error={error}
       label={description ? label : undefined}
       focused={focus}
       icon={IcRoundTextFields}

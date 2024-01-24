@@ -233,7 +233,7 @@ const layoutMeasuringConfig = {
 }
 
 export function ListInput({field}: ListInputProps) {
-  const {options, value, mutator} = useField(field)
+  const {options, value, mutator, error} = useField(field)
   const {schema, readOnly} = options
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row.id)
@@ -265,7 +265,7 @@ export function ListInput({field}: ListInputProps) {
       onDragEnd={handleDragEnd}
       layoutMeasuring={layoutMeasuringConfig}
     >
-      <InputLabel {...options} icon={IcOutlineList}>
+      <InputLabel {...options} error={error} icon={IcOutlineList}>
         <div className={styles.root()}>
           <div className={styles.root.inner({inline: options.inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>

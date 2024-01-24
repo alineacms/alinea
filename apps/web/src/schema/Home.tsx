@@ -3,10 +3,14 @@ import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 
 export const Home = alinea.document('Home', {
+  title: alinea.text('Title'),
+  path: alinea.path('Path', {
+    hidden: true
+  }),
   ...alinea.tabs(
     alinea.tab('Homepage', {
-      headline: alinea.text('Headline', {multiline: true}),
-      byline: alinea.text('Byline', {multiline: true}),
+      headline: alinea.text('Headline', {multiline: true, required: true}),
+      byline: alinea.text('Byline', {multiline: true, required: true}),
       action: alinea.link.entry('Action', {
         fields: alinea.type('Fields', {
           label: alinea.text('Button label')
