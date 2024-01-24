@@ -12,6 +12,7 @@
   &-shadow {
     content: attr(data-value) ' ';
     grid-area: 1 / 1 / 2 / 2;
+    overflow-x: auto;
     visibility: hidden;
     white-space: pre-wrap;
   }

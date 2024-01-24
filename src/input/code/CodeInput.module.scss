@@ -11,7 +11,7 @@
     border-radius: var(--alinea-border-radius);
     line-height: 1.5;
     font-family: 'JetBrains Mono', monospace;
-    white-space: pre;
+    white-space: pre !important;
     font-size: 13px;
     background: var(--alinea-fields);
     box-shadow: var(--alinea-fields-shadow);
