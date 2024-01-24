@@ -5,6 +5,7 @@ import {
   EntryPhase,
   EntryRow,
   EntryUrlMeta,
+  Field,
   ROOT_KEY,
   Root,
   Type,
@@ -380,7 +381,27 @@ export function createEntryEditor(entryData: EntryData) {
     return res
   }
 
+  const errorsAtom = atom(get => {
+    return get(get(form).errors)
+  })
+
+  const confirmErrorsAtom = atom(null, get => {
+    const errors = get(errorsAtom)
+    if (errors.size > 0) {
+      let errorMessage = ''
+      for (const [ref, {field, error}] of errors.entries()) {
+        const label = Field.label(field)
+        const line = typeof error === 'string' ? `${label}: ${error}` : label
+        errorMessage += `\n— ${line}`
+      }
+      const message = `These fields contains errors, are you sure you want to publish?${errorMessage}`
+      return confirm(message)
+    }
+    return true
+  })
+
   const publishEdits = atom(null, async (get, set) => {
+    if (!set(confirmErrorsAtom)) return
     const currentFile = entryFile(activeVersion)
     const update = base64.stringify(edits.getLocalUpdate())
     const entry = await getDraftEntry({phase: EntryPhase.Published})
@@ -434,6 +455,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const publishDraft = atom(null, async (get, set) => {
+    if (!set(confirmErrorsAtom)) return
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Publish,

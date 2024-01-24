@@ -188,7 +188,6 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         </DropdownMenu.Item>
       </>
     ) : null
-
   return (
     <>
       {isReplacing && <FileUploader />}

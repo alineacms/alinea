@@ -32,6 +32,24 @@ export interface FieldInfo<
 export class FormAtoms<T = any> {
   private fields = new Map<symbol, FieldInfo>()
 
+  private errorMap = atom(
+    new Map<symbol, {field: Field; error: boolean | string}>()
+  )
+
+  errors = atom(
+    get => get(this.errorMap),
+    (get, set, field: Field, error: boolean | string | undefined) => {
+      const errors = new Map(get(this.errors))
+      const ref = Field.ref(field)
+      if (error) errors.set(ref, {field, error})
+      else errors.delete(ref)
+      set(this.errorMap, errors)
+      if (this.options.parent) set(this.options.parent.errors, field, error)
+    }
+  )
+
+  hasErrors = atom(get => get(this.errorMap).size > 0)
+
   constructor(
     public type: Type<T>,
     public container: Y.Map<any>,

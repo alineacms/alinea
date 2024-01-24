@@ -236,7 +236,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                       {visibleTypes.map((type, i) => {
                         return (
                           <FormProvider form={form} key={i}>
-                            <Tabs.Panel tabIndex={i}>
+                            <Tabs.Panel unmount={false} tabIndex={i}>
                               <InputForm type={type} />
                             </Tabs.Panel>
                           </FormProvider>

@@ -1,6 +1,6 @@
 import {Field, FieldOptions} from 'alinea/core'
-import {useAtomValue} from 'jotai'
-import {useCallback, useMemo} from 'react'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {useCallback, useEffect, useMemo} from 'react'
 import {useFormContext} from '../atoms/FormAtoms.js'
 
 export function useField<Value, Mutator, Options extends FieldOptions<Value>>(
@@ -51,6 +51,8 @@ export function useFieldError<
   Mutator,
   Options extends FieldOptions<Value>
 >(field: Field<Value, Mutator, Options>) {
+  const atoms = useFormContext()
+  const setError = useSetAtom(atoms.errors)
   const value = useFieldValue(field)
   const options = useFieldOptions(field)
   const hasError = useCallback(
@@ -70,9 +72,13 @@ export function useFieldError<
     },
     [options]
   )
-  return useMemo(() => {
+  const error = useMemo(() => {
     return hasError(value)
   }, [hasError, value])
+  useEffect(() => {
+    setError(field, error)
+  }, [error])
+  return error
 }
 
 export function useFieldValue<
