@@ -12,7 +12,7 @@ import {RichTextField} from 'alinea/core/field/RichTextField'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {useField, useFieldMutator} from 'alinea/dashboard/editor/UseField'
+import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
@@ -22,15 +22,7 @@ import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
 import {Menu, MenuItem} from 'alinea/ui/Menu'
 import {Sink} from 'alinea/ui/Sink'
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  useState
-} from 'react'
-import {useEditor} from './hook/UseEditor.js'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import {richText as createRichText, RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
@@ -43,8 +35,6 @@ export const richText = Field.provideView(RichTextInput, createRichText)
 
 const styles = fromModule(css)
 
-const IsNested = createContext(false)
-
 type NodeViewProps = {
   node: {attrs: {id: string}}
   deleteNode: () => void
@@ -54,8 +44,9 @@ function typeExtension(field: Field, name: string, type: Type) {
   function View({node, deleteNode}: NodeViewProps) {
     const {id} = node.attrs
     const meta = Type.meta(type)
+    const {readOnly} = useFieldOptions(field)
     return (
-      <FormRow field={field} type={type} rowId={id}>
+      <FormRow field={field} type={type} rowId={id} readOnly={readOnly}>
         <NodeViewWrapper>
           <Sink.Root style={{margin: `${px(18)} 0`}}>
             <Sink.Header>
@@ -74,9 +65,7 @@ function typeExtension(field: Field, name: string, type: Type) {
               </Sink.Options>
             </Sink.Header>
             <Sink.Content>
-              <IsNested.Provider value={true}>
-                <InputForm type={type} />
-              </IsNested.Provider>
+              <InputForm type={type} />
             </Sink.Content>
           </Sink.Root>
         </NodeViewWrapper>
@@ -158,13 +147,17 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   )
 }
 
-function RichTextEditor<Blocks extends Schema>({
+export interface RichTextInputProps<Blocks extends Schema> {
+  field: RichTextField<Blocks, RichTextOptions<Blocks>>
+}
+
+export function RichTextInput<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
-  const {value, mutator, options} = useField(field)
-  const {readOnly, fragment, insert} = mutator
+  const {value, mutator, options, error} = useField(field)
+  const {fragment, insert} = mutator
   const picker = usePickTextLink()
-  const {schema} = options
+  const {readOnly, schema} = options
   const [focus, setFocus] = useState(false)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLElement>(null)
@@ -183,12 +176,13 @@ function RichTextEditor<Blocks extends Schema>({
     },
     [setFocus, containerRef, toolbarRef]
   )
-  const extensions = [
-    Collaboration.configure({fragment}),
-    RichTextKit,
-    ...schemaToExtensions(field, schema)
-  ]
-  const isNested = useContext(IsNested)
+  const blocks = useMemo(() => {
+    return schemaToExtensions(field, schema)
+  }, [field, schema])
+  const extensions = useMemo(
+    () => [Collaboration.configure({fragment}), RichTextKit, ...blocks],
+    [fragment, blocks]
+  )
   // The collaboration extension takes over content syncing after inital content
   // is set. Unfortunately we can't fully utilize it to set the content initally
   // as well because it does not work synchronously causing flickering.
@@ -206,7 +200,7 @@ function RichTextEditor<Blocks extends Schema>({
         }
       })
     }),
-    []
+    [fragment]
   )
   const onFocus = useCallback(
     ({event}: {event: Event}) => focusToggle(event.currentTarget),
@@ -216,17 +210,25 @@ function RichTextEditor<Blocks extends Schema>({
     ({event}: {event: FocusEvent}) => focusToggle(event.relatedTarget),
     [focusToggle]
   )
-  const editor = useEditor(
-    {
-      content: isNested ? undefined : content,
-      onFocus,
-      onBlur,
-      extensions,
-      editable: !options.readOnly && !readOnly
-    },
-    []
-  )
-  if (!editor) return null
+  const editor = useMemo(() => {
+    const doc = fragment.doc!
+    let editor
+    // The y-prosemirror plugin sometimes mutates the doc during setup
+    // which we want to catch because the mutations do not mean a value change
+    doc.transact(() => {
+      editor = new Editor({
+        content,
+        onFocus,
+        onBlur,
+        extensions,
+        editable: !options.readOnly && !readOnly
+      })
+    }, 'self')
+    return editor!
+  }, [fragment])
+  useEffect(() => {
+    return () => editor.destroy()
+  }, [editor])
   return (
     <>
       {focus && (
@@ -244,6 +246,7 @@ function RichTextEditor<Blocks extends Schema>({
         icon={IcRoundNotes}
         empty={editor.isEmpty}
         ref={containerRef}
+        error={error}
       >
         <InsertMenu editor={editor} schema={schema} onInsert={insert} />
         <EditorContent
@@ -253,18 +256,4 @@ function RichTextEditor<Blocks extends Schema>({
       </InputLabel>
     </>
   )
-}
-
-export interface RichTextInputProps<Blocks extends Schema> {
-  field: RichTextField<Blocks, RichTextOptions<Blocks>>
-}
-
-export function RichTextInput<Blocks extends Schema>({
-  field
-}: RichTextInputProps<Blocks>) {
-  const {fragment} = useFieldMutator(field)
-  const key = useMemo(createId, [fragment])
-  // We key here currently because the tiptap/yjs combination fails to register
-  // changes when the fragment is changed while the editor is mounted.
-  return <RichTextEditor key={key} field={field} />
 }

@@ -56,8 +56,8 @@ export interface InputFieldProps<V, M> {
 
 export function InputField<V, M>({field}: InputFieldProps<V, M>) {
   const View = field[Field.Data].view
-  if (!View) return <MissingView field={field} />
   const options = useFieldOptions(field)
+  if (!View) return <MissingView field={field} />
   if (options.hidden) return null
   return (
     <ErrorBoundary>

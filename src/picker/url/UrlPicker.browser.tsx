@@ -18,10 +18,10 @@ export const urlPicker = Picker.withView(createUrlPicker, {
 
 const linkForm = type('Link', {
   url: text('Url', {
+    required: true,
     help: 'Url of the link'
   }),
   title: text('Description', {
-    optional: true,
     help: 'Text to display inside the link element'
   }),
   blank: check('Target', {

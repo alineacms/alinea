@@ -179,12 +179,28 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
         this.sections.push(section({definition: current}))
       current = {}
     }
+    const seen = new Map<symbol, string>()
+    function validateField(key: string, field: Field) {
+      const ref = Field.ref(field)
+      if (!seen.has(ref)) return seen.set(ref, key)
+      const fieldLabel = Field.label(field)
+      throw new Error(
+        `Duplicate field "${fieldLabel}" in type "${label}", found under key "${key}" and "${seen.get(
+          ref
+        )}"` +
+          `\nSee: https://alinea.sh/docs/configuration/schema/type#fields-must-be-unique`
+      )
+    }
     for (const [key, value] of entries(definition)) {
       if (Field.isField(value)) {
         current[key] = value
+        validateField(key, value)
       } else if (Section.isSection(value)) {
         addCurrent()
         this.sections.push(value)
+        for (const [key, field] of entries(Section.fields(value))) {
+          validateField(key, field)
+        }
       }
     }
     addCurrent()

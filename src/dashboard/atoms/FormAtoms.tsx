@@ -32,29 +32,61 @@ export interface FieldInfo<
 export class FormAtoms<T = any> {
   private fields = new Map<symbol, FieldInfo>()
 
+  private errorMap = atom(
+    new Map<string, {field: Field; error: boolean | string}>()
+  )
+
+  errors = atom(
+    get => get(this.errorMap),
+    (
+      get,
+      set,
+      path: string,
+      field: Field,
+      error: boolean | string | undefined
+    ) => {
+      const current = get(this.errorMap)
+      if (!error && !current.has(path)) return
+      const errors = new Map(current)
+      if (error) errors.set(path, {field, error})
+      else errors.delete(path)
+      set(this.errorMap, errors)
+      if (this.options.parent)
+        set(this.options.parent.errors, path, field, error)
+    }
+  )
+
+  hasErrors = atom(get => get(this.errorMap).size > 0)
+
   constructor(
     public type: Type<T>,
     public container: Y.Map<any>,
-    private options: {readOnly: boolean} = {readOnly: false}
+    public path = '',
+    public options: {
+      parent?: FormAtoms
+      readOnly?: boolean
+    } = {}
   ) {
+    const readOnly = options.readOnly
+    const forcedOptions = typeof readOnly === 'boolean' ? {readOnly} : {}
     container.doc!.transact(() => {
       for (const section of Type.sections(type)) {
         for (const [key, field] of entries(Section.fields(section))) {
           const ref = Field.ref(field)
           const shape = Field.shape(field)
-          const defaultOptions = Field.options(field)
+          const defaultOptions = {...Field.options(field), ...forcedOptions}
           const optionsTracker = optionTrackerOf(field)
           shape.init(container, key)
-          const mutator = shape.mutator(container, key, false)
+          const mutator = shape.mutator(container, key)
           const options = optionsTracker
             ? unwrap(
                 atom(get => {
                   const tracked = optionsTracker(this.getter(get))
                   if (tracked instanceof Promise)
                     return tracked.then(partial => {
-                      return {...defaultOptions, ...partial}
+                      return {...defaultOptions, ...partial, ...forcedOptions}
                     })
-                  return {...defaultOptions, ...tracked}
+                  return {...defaultOptions, ...tracked, ...forcedOptions}
                 }),
                 prev => prev ?? defaultOptions
               )
@@ -78,7 +110,7 @@ export class FormAtoms<T = any> {
   }
 
   private getter: (get: Getter) => FieldGetter = get => field => {
-    const info = this.fields.get(Field.ref(field))
+    const info = this.fieldInfo(field)
     if (!info) throw new Error(`Field not found: ${Field.label(field)}`)
     return get(info.value)
   }
@@ -101,7 +133,7 @@ export class FormAtoms<T = any> {
       const current = shape.fromY(this.container.get(key))
       const next = tracker ? tracker(this.getter(g)) : current
       // Todo: we shouldn't mutate here, this should run in a pass after
-      if (next !== current) shape.applyY(next, this.container, key)
+      if (tracker && next !== current) shape.applyY(next, this.container, key)
       return next
     })
   }
@@ -113,10 +145,7 @@ export class FormAtoms<T = any> {
   }
 
   keyOf(field: Field) {
-    const res = this.fields.get(Field.ref(field))
-    const label = Field.label(field)
-    if (!res) throw new Error(`Field not found: ${label}`)
-    return res.key
+    return this.fieldInfo(field).key
   }
 
   fieldInfo<Value, Mutator, Options extends FieldOptions<Value>>(
@@ -124,7 +153,10 @@ export class FormAtoms<T = any> {
   ): FieldInfo<Value, Mutator, Options> {
     const res = this.fields.get(Field.ref(field))
     const label = Field.label(field)
-    if (!res) throw new Error(`Field not found: ${label}`)
+    if (!res) {
+      if (this.options.parent) return this.options.parent.fieldInfo(field)
+      throw new Error(`Field not found: ${label}`)
+    }
     return res as FieldInfo<Value, Mutator, Options>
   }
 }
@@ -174,23 +206,26 @@ export interface FormRowProps {
   field: Field
   rowId?: string
   type: Type
+  readOnly?: boolean
 }
 
 export function FormRow({
   children,
   field,
   type,
-  rowId
+  rowId,
+  readOnly
 }: PropsWithChildren<FormRowProps>) {
   const form = useFormContext()
   const rowForm = useMemo(() => {
     const key = form.keyOf(field)
     const inner = form.container.get(key)
-    if (rowId) {
-      if (!inner.has(rowId)) inner.set(rowId, new Y.Map())
-    }
     const row = rowId ? inner.get(rowId) : inner
-    return new FormAtoms(type, row)
-  }, [form, rowId])
+    const path = form.path + `.${key}` + (rowId ? `[${rowId}]` : '')
+    return new FormAtoms(type, row, path, {
+      readOnly,
+      parent: form
+    })
+  }, [form, rowId, readOnly])
   return <FormProvider form={rowForm}>{children}</FormProvider>
 }

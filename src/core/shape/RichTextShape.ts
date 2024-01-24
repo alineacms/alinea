@@ -72,7 +72,6 @@ function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
 }
 
 export type RichTextMutator<R> = {
-  readOnly: boolean
   map: Y.Map<any>
   fragment: Y.XmlFragment
   insert: (id: string, block: string) => void
@@ -261,17 +260,19 @@ export class RichTextShape<Blocks>
     if (!parent.has(key)) parent.set(key, this.toY(this.create()))
   }
   watch(parent: Y.Map<any>, key: string) {
-    // There's no watching of the fragment involved
-    return () => () => {}
-  }
-  mutator(parent: Y.Map<any>, key: string, readOnly: boolean) {
-    let map = parent.get(key)
-    if (!map) {
-      parent.set(key, this.toY([]))
-      map = parent.get(key)
+    const map: Y.Map<any> = parent.get(key)
+    return (fun: () => void) => {
+      const listener = (events: Array<Y.YEvent<any>>, tx: Y.Transaction) => {
+        if (tx.origin === 'self') return
+        fun()
+      }
+      map.observeDeep(listener)
+      return () => map.unobserveDeep(listener)
     }
+  }
+  mutator(parent: Y.Map<any>, key: string) {
+    const map = parent.get(key)
     return {
-      readOnly,
       map,
       fragment: map.get('$text'),
       insert: (id: string, block: string) => {

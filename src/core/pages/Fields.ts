@@ -1,4 +1,4 @@
-import {IsStrictlyAny, ObjectUnion} from 'alinea/core/util/Types.js'
+import {IsStrictlyAny, ObjectUnion} from '../util/Types.js'
 import {Expr} from './Expr.js'
 
 type RecordField<T> = Expr<T> & FieldsOf<ObjectUnion<T>>

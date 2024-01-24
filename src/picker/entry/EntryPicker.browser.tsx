@@ -136,7 +136,7 @@ export function EntryPickerModal({
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     if (!withNavigation && condition)
       return Entry()
-        .where(condition)
+        .where(condition, Entry.locale.is(locale ?? null))
         .search(...terms)
     const rootCondition = and(
       Entry.workspace.is(destination.workspace),

@@ -23,7 +23,7 @@ function tryParseNumber(input: string) {
 }
 
 function NumberInput({field}: NumberInputProps) {
-  const {options, value, mutator} = useField(field)
+  const {options, value, mutator, error} = useField(field)
   const {minValue, maxValue, readOnly, step} = options
   const ref = useRef<HTMLInputElement>(null)
   const defaultValue = String(value ?? '')
@@ -36,7 +36,7 @@ function NumberInput({field}: NumberInputProps) {
     input.value = defaultValue
   }, [defaultValue])
   return (
-    <InputLabel asLabel {...options} icon={IcRoundNumbers}>
+    <InputLabel asLabel {...options} error={error} icon={IcRoundNumbers}>
       <input
         type="number"
         ref={ref}
@@ -53,7 +53,7 @@ function NumberInput({field}: NumberInputProps) {
         }}
         min={minValue}
         max={maxValue}
-        disabled={readOnly}
+        readOnly={readOnly}
         step={step || 1}
       />
     </InputLabel>

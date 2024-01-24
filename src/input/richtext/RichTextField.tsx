@@ -11,8 +11,6 @@ export interface RichTextOptions<Blocks extends Schema>
   width?: number
   /** Add instructional text to a field */
   help?: string
-  /** Field is optional */
-  optional?: boolean
   /** Display a minimal version */
   inline?: boolean
   /** Index the text value of this field */

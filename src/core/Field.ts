@@ -5,6 +5,7 @@ import {Hint} from './Hint.js'
 import {Shape} from './Shape.js'
 
 export interface FieldOptions<Value> {
+  /** A description of the field */
   label: string
   /** Hide this field in the dashboard */
   hidden?: boolean
@@ -12,8 +13,12 @@ export interface FieldOptions<Value> {
   readOnly?: boolean
   /** The initial value of the field */
   initialValue?: Value
-  /** The value of this field is shared across all languages  */
+  /** The value of this field is shared across all languages */
   shared?: boolean
+  /** Providing a value for this field is required */
+  required?: boolean
+  /** Validate the given value */
+  validate?(value: Value): boolean | string | undefined
 }
 
 export type WithoutLabel<Options extends FieldOptions<any>> = Omit<

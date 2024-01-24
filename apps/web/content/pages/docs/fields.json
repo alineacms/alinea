@@ -35,7 +35,7 @@
     {
       "id": "2YklqLFpIIeyPugEBoAD6iZSvtr",
       "type": "ExampleBlock",
-      "code": "import {Field, ScalarField, Hint, Label} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\ninterface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\nfunction range(label: Label, options: RangeFieldOptions = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    label,\n    options,\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {label, options} = field[Field.Data]\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel label={label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Kitchen sink', {\n  ...alinea.tabs(\n    alinea.tab('Basic fields', {\n      title: alinea.text('Text field'),\n      path: alinea.path('Path field', {\n        help: 'Creates a slug of the value of another field'\n      }),\n      richText: alinea.richText('Rich text field'),\n      select: alinea.select('Select field', {\n        a: 'Option a',\n        b: 'Option b'\n      }),\n      number: alinea.number('Number field', {\n        minValue: 0,\n        maxValue: 10\n      }),\n      check: alinea.check('Check field', {label: 'Check me please'}),\n      date: alinea.date('Date field'),\n      code: alinea.code('Code field')\n    }),\n    alinea.tab('Link fields', {\n      externalLink: alinea.url('External link'),\n      entry: alinea.entry('Internal link'),\n      linkMultiple: alinea.link.multiple('Mixed links, multiple'),\n      image: alinea.entry('Image link'),\n      file: alinea.entry('File link')\n    }),\n    alinea.tab('List fields', {\n      list: alinea.list('My list field', {\n        schema: alinea.schema({\n          Text: alinea.type('Text', {\n            title: alinea.text('Item title'),\n            text: alinea.richText('Item body text')\n          }),\n          Image: alinea.type('Image', {\n            image: alinea.image('Image')\n          })\n        })\n      })  \n    }),\n    alinea.tab('Inline fields', {\n      street: alinea.text('Street', {width: 0.6, inline: true, multiline: true}),\n      streetNr: alinea.text('Number', {width: 0.2, inline: true}),\n      box: alinea.text('Box', {width: 0.2, inline: true}),\n      zip: alinea.text('Zipcode', {width: 0.2, inline: true}),\n      city: alinea.text('City', {width: 0.4, inline: true}),\n      country: alinea.text('Country', {\n        width: 0.4,\n        inline: true\n      })\n    }),\n    alinea.tab('Custom fields', {\n      range: range('Range field')  \n    })\n  )\n})\n"
+      "code": "import {Field, FieldOptions, Label, ScalarField, Hint, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Kitchen sink', {\n  ...alinea.tabs(\n    alinea.tab('Basic fields', {\n      title: alinea.text('Text field'),\n      path: alinea.path('Path field', {\n        help: 'Creates a slug of the value of another field'\n      }),\n      richText: alinea.richText('Rich text field'),\n      select: alinea.select('Select field', {\n        a: 'Option a',\n        b: 'Option b'\n      }),\n      number: alinea.number('Number field', {\n        minValue: 0,\n        maxValue: 10\n      }),\n      check: alinea.check('Check field', {label: 'Check me please'}),\n      date: alinea.date('Date field'),\n      code: alinea.code('Code field')\n    }),\n    alinea.tab('Link fields', {\n      externalLink: alinea.url('External link'),\n      entry: alinea.entry('Internal link'),\n      linkMultiple: alinea.link.multiple('Mixed links, multiple'),\n      image: alinea.entry('Image link'),\n      file: alinea.entry('File link')\n    }),\n    alinea.tab('List fields', {\n      list: alinea.list('My list field', {\n        schema: alinea.schema({\n          Text: alinea.type('Text', {\n            title: alinea.text('Item title'),\n            text: alinea.richText('Item body text')\n          }),\n          Image: alinea.type('Image', {\n            image: alinea.image('Image')\n          })\n        })\n      })  \n    }),\n    alinea.tab('Inline fields', {\n      street: alinea.text('Street', {width: 0.6, inline: true, multiline: true}),\n      streetNr: alinea.text('Number', {width: 0.2, inline: true}),\n      box: alinea.text('Box', {width: 0.2, inline: true}),\n      zip: alinea.text('Zipcode', {width: 0.2, inline: true}),\n      city: alinea.text('City', {width: 0.4, inline: true}),\n      country: alinea.text('Country', {\n        width: 0.4,\n        inline: true\n      })\n    }),\n    alinea.tab('Custom fields', {\n      range: range('Range field')  \n    })\n  )\n})\n"
     },
     {
       "type": "heading",
@@ -229,6 +229,55 @@
       "id": "2arMRXdHMiPwRAv9LYGf8LF4HQW",
       "type": "CodeBlock",
       "code": "const Type = alinea.type('Persist', {\n // Persist field data over all locales\n sharedField: alinea.text('Shared text', {shared: true})\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`required`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The `required` option will make sure the field value is not empty when saving when set to `true`."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`validate`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The `validate` option can be used to validate the field value using a custom function. The function should return `true` if the value is valid, `false` if it is not valid and a string if it is not valid and a message should be shown to the user."
+        }
+      ]
+    },
+    {
+      "id": "2bOzOm5x9az8v36Esr3rHzjSmKT",
+      "type": "CodeBlock",
+      "code": "alinea.text('Hello field', {\n  help: 'This field only accepts \"hello\" as a value',\n  validate(value) {\n    if (value !== 'hello') return 'Only \"hello\" is allowed!'\n  }\n})",
       "fileName": "",
       "language": ""
     },

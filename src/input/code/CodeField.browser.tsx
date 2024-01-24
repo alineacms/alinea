@@ -23,7 +23,7 @@ interface CodeInputProps {
 // and is stored as a simple string, but using an XMLFragment on the Yjs
 // side so we can have it be collaborative.
 function CodeInput({field}: CodeInputProps) {
-  const {value, mutator, label, options} = useField(field)
+  const {value, mutator, label, options, error} = useField(field)
   const [focus, setFocus] = useState(false)
 
   const placeholder = options.inline ? String(label) : ''
@@ -32,6 +32,7 @@ function CodeInput({field}: CodeInputProps) {
     <InputLabel
       asLabel
       {...options}
+      error={error}
       focused={focus}
       icon={IcRoundCode}
       empty={empty}
@@ -46,7 +47,7 @@ function CodeInput({field}: CodeInputProps) {
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
           spellCheck="false"
-          disabled={options.readOnly}
+          readOnly={options.readOnly}
         />
       </HStack>
     </InputLabel>

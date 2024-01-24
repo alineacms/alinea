@@ -17,16 +17,16 @@ interface DateInputProps {
 }
 
 function DateInput({field}: DateInputProps) {
-  const {options, value, mutator} = useField(field)
+  const {options, value, mutator, error} = useField(field)
   return (
-    <InputLabel asLabel {...options} icon={IcRoundDateRange}>
+    <InputLabel asLabel {...options} error={error} icon={IcRoundDateRange}>
       <input
         className={styles.root.input()}
         type="date"
         value={value ?? ''}
         onChange={e => mutator(e.currentTarget.value)}
         autoFocus={options.autoFocus}
-        disabled={options.readOnly}
+        readOnly={options.readOnly}
       />
     </InputLabel>
   )

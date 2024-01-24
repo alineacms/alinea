@@ -121,28 +121,24 @@ export class ListShape<T extends ListRow>
     if (!parent.has(key)) parent.set(key, this.toY(this.create()))
   }
   watch(parent: Y.Map<any>, key: string) {
-    const record: Y.Map<any> = parent.has(key)
-      ? parent.get(key)
-      : parent.set(key, new Y.Map())
+    const map: Y.Map<any> = parent.get(key)
     return (fun: () => void) => {
       function w(events: Array<Y.YEvent<any>>, transaction: Y.Transaction) {
         for (const event of events) {
-          if (event.target === record) fun()
+          if (event.target === map) fun()
           if (event instanceof Y.YMapEvent && event.keysChanged.has('index'))
             fun()
         }
       }
-      record.observeDeep(w)
+      map.observeDeep(w)
       return () => {
-        record.unobserveDeep(w)
+        map.unobserveDeep(w)
       }
     }
   }
-  mutator(parent: Y.Map<any>, key: string, readOnly: boolean) {
+  mutator(parent: Y.Map<any>, key: string) {
     const res = {
-      readOnly,
       replace: (id: string, row: T) => {
-        if (readOnly) return
         const record = parent.get(key)
         const rows: Array<ListRow> = this.fromY(record) as any
         const index = rows.findIndex(r => r.id === id)
@@ -150,7 +146,6 @@ export class ListShape<T extends ListRow>
         res.push(row, index)
       },
       push: (row: Omit<T, 'id' | 'index'>, insertAt?: number) => {
-        if (readOnly) return
         const type = row.type
         const shape = this.values[type]
         const record = parent.get(key)
@@ -169,12 +164,10 @@ export class ListShape<T extends ListRow>
         record.set(id, item)
       },
       remove(id: string) {
-        if (readOnly) return
         const record = parent.get(key)
         record.delete(id)
       },
       move: (oldIndex: number, newIndex: number) => {
-        if (readOnly) return
         const record = parent.get(key)
         const rows: Array<ListRow> = this.fromY(record) as any
         const from = rows[oldIndex]

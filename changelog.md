@@ -1,5 +1,63 @@
 # Changelog
 
+## [0.6.0]
+
+- Field validation (#369)
+
+  Introduces two new Field options available for every Field: `required` and
+  `validate`. The `required` option will make sure the field value is not empty
+  when saving. The `validate` option can be used to validate the field value
+  using a custom function. The function should return `true` if the value is
+  valid, `false` if it is not valid and a string if it is not valid and a
+  message should be shown to the user.
+
+  This is a breaking change, removing the `optional` property from Fields.
+  It was never functional.
+
+  ```tsx
+  alinea.text('Hello field', {
+    help: 'This field only accepts "hello" as a value',
+    validate(value) {
+      if (value !== 'hello') return 'Only "hello" is allowed!'
+    }
+  })
+  ```
+
+## [0.5.12]
+
+- Link fields using the `condition` option are now constrained with their locale
+- Upgrade the tiptap editor and fix a few stability issues with the editor
+
+## [0.5.11]
+
+- Fix storing extra `fields` on the Link field correctly for multiple links.
+- In conditional configuration functions it's now possible to access fields from
+  parent contexts. For example field options of a nested field inside a `List`
+  field can depend on the value of a field in the entry root.
+
+  ```tsx
+  const innerField = alinea.text('Read-only if status is published')
+  const Type = alinea.type('Conditional example', {
+    status: alinea.select('Status', {
+      draft: 'Draft',
+      published: 'Published'
+    }),
+    list: alinea.list('List', {
+      schema: {ListRow: alinea.type({innerField})}
+    })
+  })
+  alinea.track.options(innerField, get => {
+    return {readOnly: get(Type.status) === 'published'}
+  })
+  ```
+
+## [0.5.10]
+
+- Fix `Entry` fields showing up as type `unkown` in TypeScript.
+- The `readOnly` option that is included in all fields will now show a lock item
+  next to the field label. The option is passed down in nested fields such as
+  the `List` and `Rich text` fields.
+
 ## [0.5.9]
 
 - Changing entry order by dragging them in the sidebar is now applied

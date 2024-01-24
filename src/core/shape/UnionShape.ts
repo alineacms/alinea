@@ -87,15 +87,13 @@ export class UnionShape<T extends UnionRow>
       return () => parent.unobserve(observe)
     }
   }
-  mutator(parent: Y.Map<any>, key: string, readOnly: boolean): UnionMutator<T> {
+  mutator(parent: Y.Map<any>, key: string): UnionMutator<T> {
     return {
       replace: (v: T | undefined) => {
-        if (readOnly) return
         if (!v) parent.set(key, null)
         else parent.set(key, this.toY(v))
       },
       set: (k: any, v: any) => {
-        if (readOnly) return
         const record = parent.get(key)
         const type = record.get('type')
         const shape = this.shapes[type]

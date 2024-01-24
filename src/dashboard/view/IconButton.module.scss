@@ -2,8 +2,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.8em;
-  height: 1.8em;
+  width: 1.6em;
+  height: 1.6em;
   border-radius: 50%;
   font-size: 1em;
   flex-shrink: 0;
@@ -29,10 +29,5 @@
 
   &:focus.is-active {
     background: hsla(var(--alinea-negative), 0.1);
-  }
-
-  &:disabled {
-    pointer-events: none;
-    opacity: 0.5;
   }
 }

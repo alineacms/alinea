@@ -28,7 +28,8 @@ interface SelectInputProps<Key extends string> {
 }
 
 function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
-  const {value = null, mutator, label, options} = useField(field)
+  const {value = null, mutator, label, options, error} = useField(field)
+  const {readOnly} = options
   const items = options.items as Record<string, string>
   return (
     <InputLabel {...options} icon={IcRoundArrowDropDownCircle}>
@@ -42,24 +43,30 @@ function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
           isDisabled={options.readOnly}
         >
           <div>
-            <Button className={styles.root.input()}>
-              <span className={styles.root.input.label({placeholder: !value})}>
-                <TextLabel
-                  label={(value ? items[value] : options.placeholder) || label}
+            <div className={styles.root.input.button()}>
+              <Button className={styles.root.input()}>
+                <span
+                  className={styles.root.input.label({placeholder: !value})}
+                >
+                  <TextLabel
+                    label={
+                      (value ? items[value] : options.placeholder) || label
+                    }
+                  />
+                </span>
+                <Icon
+                  icon={IcRoundUnfoldMore}
+                  className={styles.root.input.icon()}
                 />
-              </span>
-              <Icon
-                icon={IcRoundUnfoldMore}
-                className={styles.root.input.icon()}
-              />
-              {value && options.optional && (
+              </Button>
+              {value && (
                 <IconButton
                   icon={IcRoundClose}
                   onClick={() => mutator(undefined!)}
                   className={styles.root.input.delete()}
                 />
               )}
-            </Button>
+            </div>
             <Popover className={styles.root.dropdown()}>
               <ListBox className={styles.root.dropdown.inner()}>
                 {Object.entries(items).map(([key, label]) => {

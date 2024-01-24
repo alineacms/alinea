@@ -45,12 +45,39 @@ const TabsExample = alinea.type('Tabs Example', {
   )
 })
 
+const rootField = alinea.select('Root field', {
+  a: 'Option a',
+  b: 'Option b'
+})
+
+const showIfA = alinea.track.options(alinea.text('Show if A'), get => {
+  return {hidden: get(rootField) !== 'a'}
+})
+const showIfB = alinea.track.options(alinea.text('Show if B'), get => {
+  return {hidden: get(rootField) !== 'b'}
+})
+
+const nestedList = alinea.list('Nested list', {
+  schema: alinea.schema({
+    Row: alinea.type('List item', {
+      a: showIfA,
+      b: showIfB
+    })
+  })
+})
+
 const Fields = alinea.document('Fields', {
   ...alinea.tabs(
-    alinea.tab('Custom field', {
-      position: position('Position field')
-    }),
     alinea.tab('Basic fields', {
+      text: alinea.text('Text field'),
+      hello: alinea.text('Validated text field', {
+        help: 'This field only accepts "hello"',
+        validate: value => {
+          if (value !== 'hello') {
+            return 'Only "hello" is allowed'
+          }
+        }
+      }),
       richText: alinea.richText('Rich text field'),
       select: alinea.select('Select field', {
         a: 'Option a',
@@ -80,6 +107,12 @@ const Fields = alinea.document('Fields', {
           fieldA: alinea.text('Field A', {width: 0.5}),
           fieldB: alinea.text('Field B', {width: 0.5})
         })
+      }),
+      multipleWithFields: alinea.link.multiple('Multiple With extra fields', {
+        fields: alinea.type({
+          fieldA: alinea.text('Field A', {width: 0.5}),
+          fieldB: alinea.text('Field B', {width: 0.5, required: true})
+        })
       })
     }),
     alinea.tab('List fields', {
@@ -96,6 +129,17 @@ const Fields = alinea.document('Fields', {
       })
     }),
     alinea.tab('Rich text fields', {
+      withInitial: alinea.richText('With initial value', {
+        required: true,
+        initialValue: [
+          {
+            type: 'paragraph',
+            content: [
+              {type: 'text', text: 'This is a paragraph with initial value'}
+            ]
+          }
+        ]
+      }),
       nested: alinea.richText('With nested blocks', {
         schema: {
           Inner: alinea.type('Inner', {
@@ -155,11 +199,18 @@ const Fields = alinea.document('Fields', {
         })
       )
     }),
+    alinea.tab('Custom field', {
+      position: position('Position field')
+    }),
     alinea.tab('I18n', {
       shared: alinea.text('Shared field', {
         help: `This field is shared between languages.`,
         shared: true
       })
+    }),
+    alinea.tab('Conditional fields', {
+      rootField,
+      nestedList
     })
   )
 })

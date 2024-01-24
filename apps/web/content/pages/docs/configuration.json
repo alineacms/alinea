@@ -8,37 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "All configuration can be managed from the `cms.tsx` file. This file is created in the project `preview`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "A url which is used in the dashboard for "
-        },
-        {
-          "type": "text",
-          "text": "live previews",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "2a4lENV0tYD7pJsarKpb35IL4nG",
-                "data-entry": "2YlBsRF2vZwxcS27oOSJYmQM37q",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": ".root (or your `src` folder if it exists) during `alinea init`."
+          "text": "All configuration can be managed from the `cms.tsx` file. This file is created in the project root (or your `src` folder if it exists) during `alinea init`."
         }
       ]
     },
@@ -56,7 +26,7 @@
       "content": [
         {
           "type": "text",
-          "text": "The alinea package exports a general purpose `createCMS` function as well as framework specific functions such as `createNextCMS`. The framework specific instances expose helper methods to help integrate the content into your framework of choice."
+          "text": "The `alinea` package exports a general purpose `createCMS` function as well as framework specific functions such as `createNextCMS`. The framework specific instances expose helper methods to help integrate the content into your framework of choice."
         }
       ]
     },

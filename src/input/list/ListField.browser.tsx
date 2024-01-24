@@ -88,6 +88,7 @@ type ListInputRowProps = PropsWithChildren<
     row: ListRow
     schema: Schema
     isDragging?: boolean
+    readOnly?: boolean
     onMove?: (direction: 1 | -1) => void
     onDelete?: () => void
     handle?: DraggableSyntheticListeners
@@ -110,6 +111,7 @@ function ListInputRow({
   rootRef,
   isDragging,
   isDragOverlay,
+  readOnly,
   onCreate,
   firstRow,
   ...rest
@@ -123,7 +125,7 @@ function ListInputRow({
       ref={rootRef}
       {...rest}
     >
-      {!isDragOverlay && (
+      {!readOnly && !isDragOverlay && (
         <ListInsertRow
           open={showInsert}
           first={Boolean(firstRow)}
@@ -151,17 +153,19 @@ function ListInputRow({
         <Sink.Title>
           <TextLabel label={Type.label(type)} />
         </Sink.Title>
-        <Sink.Options>
-          <IconButton
-            icon={IcRoundKeyboardArrowUp}
-            onClick={() => onMove?.(-1)}
-          />
-          <IconButton
-            icon={IcRoundKeyboardArrowDown}
-            onClick={() => onMove?.(1)}
-          />
-          <IconButton icon={IcRoundClose} onClick={onDelete} />
-        </Sink.Options>
+        {!readOnly && (
+          <Sink.Options>
+            <IconButton
+              icon={IcRoundKeyboardArrowUp}
+              onClick={() => onMove?.(-1)}
+            />
+            <IconButton
+              icon={IcRoundKeyboardArrowDown}
+              onClick={() => onMove?.(1)}
+            />
+            <IconButton icon={IcRoundClose} onClick={onDelete} />
+          </Sink.Options>
+        )}
       </Sink.Header>
       <Sink.Content>
         <InputForm type={type} />
@@ -172,14 +176,20 @@ function ListInputRow({
 
 interface ListCreateRowProps {
   schema: Schema
+  readOnly?: boolean
   inline?: boolean
   onCreate: (type: string) => void
 }
 
-function ListCreateRow({schema, inline, onCreate}: ListCreateRowProps) {
+function ListCreateRow({
+  schema,
+  readOnly,
+  inline,
+  onCreate
+}: ListCreateRowProps) {
   return (
     <div className={styles.create({inline})}>
-      <Create.Root>
+      <Create.Root disabled={readOnly}>
         {entries(schema).map(([key, type]) => {
           return (
             <Create.Button
@@ -223,8 +233,8 @@ const layoutMeasuringConfig = {
 }
 
 export function ListInput({field}: ListInputProps) {
-  const {options, value, mutator, label} = useField(field)
-  const schema = options.schema
+  const {options, value, mutator, error} = useField(field)
+  const {schema, readOnly} = options
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<ListRow | null>(null)
@@ -243,10 +253,10 @@ export function ListInput({field}: ListInputProps) {
   function handleDragEnd(event: DragEndEvent) {
     const {active, over} = event
     if (!over || active.id === over.id) return
-    mutator.move(ids.indexOf(active.id), ids.indexOf(over.id))
+
+    if (!readOnly) mutator.move(ids.indexOf(active.id), ids.indexOf(over.id))
     setDragging(null)
   }
-
   return (
     <DndContext
       sensors={sensors}
@@ -255,7 +265,7 @@ export function ListInput({field}: ListInputProps) {
       onDragEnd={handleDragEnd}
       layoutMeasuring={layoutMeasuringConfig}
     >
-      <InputLabel {...options} icon={IcOutlineList}>
+      <InputLabel {...options} error={error} icon={IcOutlineList}>
         <div className={styles.root()}>
           <div className={styles.root.inner({inline: options.inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
@@ -268,13 +278,22 @@ export function ListInput({field}: ListInputProps) {
                       field={field}
                       rowId={row.id}
                       type={type}
+                      readOnly={readOnly}
                     >
                       <ListInputRowSortable
                         row={row}
                         schema={schema}
-                        onMove={direction => mutator.move(i, i + direction)}
-                        onDelete={() => mutator.remove(row.id)}
+                        readOnly={readOnly}
+                        onMove={direction => {
+                          if (readOnly) return
+                          mutator.move(i, i + direction)
+                        }}
+                        onDelete={() => {
+                          if (readOnly) return
+                          mutator.remove(row.id)
+                        }}
                         onCreate={(type: string) => {
+                          if (readOnly) return
                           mutator.push({type} as any, i)
                         }}
                         firstRow={i === 0}
@@ -284,7 +303,9 @@ export function ListInput({field}: ListInputProps) {
                 })}
                 <ListCreateRow
                   schema={schema}
+                  readOnly={readOnly}
                   onCreate={(type: string) => {
+                    if (readOnly) return
                     mutator.push({type} as any)
                   }}
                 />
@@ -303,6 +324,7 @@ export function ListInput({field}: ListInputProps) {
                   field={field}
                   rowId={dragging.id}
                   type={options.schema[dragging.type]}
+                  readOnly={readOnly}
                 >
                   <ListInputRow
                     key="overlay"

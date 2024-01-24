@@ -6,6 +6,10 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+
+  &.is-disabled {
+    pointer-events: none;
+  }
 }
 
 .button {

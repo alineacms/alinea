@@ -1,5 +1,6 @@
 {
   "title": "Type",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -229,6 +230,85 @@
           "text": "."
         }
       ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Good to know"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "Fields must be unique"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Alinea will throw an error if a field shows up multiple times in the same `Type`. Having unique fields is important so we can use the field references directly when "
+        },
+        {
+          "type": "text",
+          "text": "querying data",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2bMDWBN5BaC5E3OxgHCQZFHUp47",
+                "data-entry": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " or in "
+        },
+        {
+          "type": "text",
+          "text": "conditional configuration",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2bMDXpF1usIvfF9iDpLslLCmPSu",
+                "data-entry": "24yE2mu6Xq959jrP135Sdb4e3lG",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". "
+        }
+      ]
+    },
+    {
+      "id": "2bMDZDXD2d1Am2Gq94E4xZREnPG",
+      "type": "CodeBlock",
+      "code": "const textField = alinea.text('Text field')\nconst MyType = alinea.type('My type', {\n  fieldA: textField,\n  fieldB: textField // This is not allowed\n})\n\n// You can rewrite the above to get unique \n// references by making textField a function\nconst textField = () => alinea.text('Text field')\nconst MyType = alinea.type('My type', {\n  fieldA: textField(),\n  fieldB: textField() // This is fine\n})",
+      "fileName": "",
+      "language": ""
     }
   ],
   "metadata": {

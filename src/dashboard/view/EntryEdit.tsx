@@ -239,8 +239,15 @@ export function EntryEdit({editor}: EntryEditProps) {
                     visibleTypes.map((type, i) => {
                       return (
                         <FormProvider form={form} key={i}>
-                          <TabPanel id={`entry+${i}`}>
-                            <InputForm type={type} />
+                          <TabPanel shouldForceMount id={`entry+${i}`}>
+                            {({isInert}) => (
+                              <div
+                                aria-hidden={isInert ? 'true' : undefined}
+                                style={{display: isInert ? 'none' : undefined}}
+                              >
+                                <InputForm type={type} />
+                              </div>
+                            )}
                           </TabPanel>
                         </FormProvider>
                       )

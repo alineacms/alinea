@@ -7,18 +7,10 @@ export interface DateOptions extends FieldOptions<string> {
   width?: number
   /** Add instructional text to a field */
   help?: string
-  /** Field is optional */
-  optional?: boolean
   /** Display a minimal version */
   inline?: boolean
-  /** A default value */
-  initialValue?: string
   /** Focus this input automatically */
   autoFocus?: boolean
-  /** Hide this date field */
-  hidden?: boolean
-  /** Make this date field read-only*/
-  readOnly?: boolean
 }
 
 /** Internal representation of a date field */
