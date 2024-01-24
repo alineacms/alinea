@@ -1,6 +1,7 @@
 {
   "title": "Fields",
   "text": "Text value",
+  "hello": "hello",
   "richText": [
     {
       "type": "paragraph",
@@ -186,6 +187,17 @@
         "type": "image",
         "entry": "2VIQEijQeV2wB47xuXdxDnPnJz2"
       }
+    }
+  ],
+  "withInitial": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "This is a paragraph with initial value"
+        }
+      ]
     }
   ],
   "nested": [

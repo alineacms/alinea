@@ -152,7 +152,7 @@ export interface RichTextInputProps<Blocks extends Schema> {
 export function RichTextInput<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
-  const {value, mutator, options} = useField(field)
+  const {value, mutator, options, error} = useField(field)
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
   const {readOnly, schema} = options

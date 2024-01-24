@@ -56,31 +56,33 @@ function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
         <Listbox value={value} onChange={mutator} disabled={options.readOnly}>
           {({open}) => (
             <div>
-              <Listbox.Button
-                ref={reference}
-                className={styles.root.input({open})}
-              >
-                <span
-                  className={styles.root.input.label({placeholder: !value})}
+              <div className={styles.root.input({open})}>
+                <Listbox.Button
+                  ref={reference}
+                  className={styles.root.input.button()}
                 >
-                  <TextLabel
-                    label={
-                      (value ? items[value] : options.placeholder) || label
-                    }
+                  <span
+                    className={styles.root.input.label({placeholder: !value})}
+                  >
+                    <TextLabel
+                      label={
+                        (value ? items[value] : options.placeholder) || label
+                      }
+                    />
+                  </span>
+                  <Icon
+                    icon={IcRoundUnfoldMore}
+                    className={styles.root.input.icon()}
                   />
-                </span>
-                <Icon
-                  icon={IcRoundUnfoldMore}
-                  className={styles.root.input.icon()}
-                />
-                {value && options.optional && (
+                </Listbox.Button>
+                {value && !options.required && (
                   <IconButton
                     icon={IcRoundClose}
                     onClick={() => mutator(undefined!)}
                     className={styles.root.input.delete()}
                   />
                 )}
-              </Listbox.Button>
+              </div>
               <Listbox.Options
                 ref={floating}
                 style={{

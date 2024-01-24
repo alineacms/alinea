@@ -60,13 +60,13 @@ export function useFieldError<
         if (typeof validates === 'boolean') return !validates
         return validates
       }
-      const isOptional = options.optional
+      const isRequired = options.required
       const isEmpty =
         value === undefined ||
         value === null ||
         value === '' ||
         (Array.isArray(value) && value.length === 0)
-      if (!isOptional && isEmpty) return true
+      if (isRequired && isEmpty) return true
     },
     [options]
   )

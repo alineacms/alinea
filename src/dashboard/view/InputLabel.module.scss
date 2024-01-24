@@ -43,6 +43,10 @@
     font-weight: normal;
     font-style: italic;
     font-size: 12px;
+
+    &.is-error {
+      color: var(--alinea-error);
+    }
   }
 
   &.is-large &-title {

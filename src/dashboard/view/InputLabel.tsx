@@ -16,7 +16,7 @@ export type LabelHeaderProps = {
   icon?: ComponentType
   shared?: boolean
   readOnly?: boolean
-  optional?: boolean
+  required?: boolean
   error?: boolean | string
 }
 
@@ -28,24 +28,28 @@ export const LabelHeader = memo(function LabelHeader({
   // icon: Icon,
   shared,
   readOnly,
-  optional,
+  required,
   error
 }: LabelHeaderProps) {
+  const showError = typeof error === 'string'
   return (
     <header className={styles.header(size, {focused, error: Boolean(error)})}>
       <HStack center wrap gap={`${px(4)} ${px(8)}`}>
         <HStack center gap={8} className={styles.header.title()}>
           {/*Icon && <Icon />*/}
-          <span>{label}</span>
+          <span>
+            {label}
+            {required && ' *'}
+          </span>
         </HStack>
         {readOnly && (
           <Icon title="Read-only" icon={IcOutlineLock} style={{opacity: 0.6}} />
         )}
         {shared && <Chip icon={PhGlobe}>Shared</Chip>}
-        {optional && <Chip>Optional</Chip>}
-        {help && <div className={styles.header.help()}>{help}</div>}
-        {typeof error === 'string' && (
-          <div className={styles.header.help()}>{error}</div>
+        {showError ? (
+          <div className={styles.header.help({error: true})}>{error}</div>
+        ) : (
+          help && <div className={styles.header.help()}>{help}</div>
         )}
       </HStack>
     </header>
@@ -56,7 +60,6 @@ export interface LabelProps extends PropsWithChildren {
   label?: string
   asLabel?: boolean
   help?: string
-  optional?: boolean
   width?: number
   inline?: boolean
   collection?: boolean
@@ -79,7 +82,6 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
       label,
       asLabel,
       help,
-      optional,
       width = 1,
       inline = false,
       collection = false,
@@ -113,7 +115,7 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
             <LabelHeader
               label={label}
               help={help}
-              optional={optional}
+              required={required}
               size={size}
               focused={focused}
               icon={icon}

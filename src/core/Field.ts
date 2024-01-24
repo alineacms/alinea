@@ -13,11 +13,11 @@ export interface FieldOptions<Value> {
   readOnly?: boolean
   /** The initial value of the field */
   initialValue?: Value
-  /** The value of this field is shared across all languages  */
+  /** The value of this field is shared across all languages */
   shared?: boolean
-  /** The value of this field is not required  */
-  optional?: boolean
-  /** Validate the given value  */
+  /** Providing a value for this field is required */
+  required?: boolean
+  /** Validate the given value */
   validate?(value: Value): boolean | string | undefined
 }
 

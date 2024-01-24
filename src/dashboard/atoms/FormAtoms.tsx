@@ -127,7 +127,6 @@ export class FormAtoms<T = any> {
     const res = this.fields.get(Field.ref(field))
     const label = Field.label(field)
     if (!res) {
-      console.log(this.options)
       if (this.options.parent) return this.options.parent.fieldInfo(field)
       throw new Error(`Field not found: ${label}`)
     }
