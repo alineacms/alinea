@@ -152,7 +152,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
 function RichTextEditor<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
-  const {value, mutator, options, error} = useField(field)
+  const {value, mutator, options} = useField(field)
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
   const {readOnly, schema} = options
