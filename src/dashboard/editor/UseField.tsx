@@ -79,7 +79,7 @@ export function useFieldError<
   }, [hasError, value])
   useEffect(() => {
     setError(fieldPath, field, error)
-  }, [error])
+  }, [setError, fieldPath, field, error])
   return error
 }
 
