@@ -55,6 +55,8 @@ export function useFieldError<
   const setError = useSetAtom(atoms.errors)
   const value = useFieldValue(field)
   const options = useFieldOptions(field)
+  const key = useFieldKey(field)
+  const fieldPath = atoms.path + '.' + key
   const hasError = useCallback(
     (value: Value) => {
       if (options.validate) {
@@ -76,7 +78,7 @@ export function useFieldError<
     return hasError(value)
   }, [hasError, value])
   useEffect(() => {
-    setError(field, error)
+    setError(fieldPath, field, error)
   }, [error])
   return error
 }

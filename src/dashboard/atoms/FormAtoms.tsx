@@ -33,18 +33,26 @@ export class FormAtoms<T = any> {
   private fields = new Map<symbol, FieldInfo>()
 
   private errorMap = atom(
-    new Map<symbol, {field: Field; error: boolean | string}>()
+    new Map<string, {field: Field; error: boolean | string}>()
   )
 
   errors = atom(
     get => get(this.errorMap),
-    (get, set, field: Field, error: boolean | string | undefined) => {
-      const errors = new Map(get(this.errors))
-      const ref = Field.ref(field)
-      if (error) errors.set(ref, {field, error})
-      else errors.delete(ref)
+    (
+      get,
+      set,
+      path: string,
+      field: Field,
+      error: boolean | string | undefined
+    ) => {
+      const current = get(this.errorMap)
+      if (!error && !current.has(path)) return
+      const errors = new Map(current)
+      if (error) errors.set(path, {field, error})
+      else errors.delete(path)
       set(this.errorMap, errors)
-      if (this.options.parent) set(this.options.parent.errors, field, error)
+      if (this.options.parent)
+        set(this.options.parent.errors, path, field, error)
     }
   )
 
@@ -53,6 +61,7 @@ export class FormAtoms<T = any> {
   constructor(
     public type: Type<T>,
     public container: Y.Map<any>,
+    public path = '',
     public options: {
       parent?: FormAtoms
       readOnly?: boolean
@@ -212,7 +221,8 @@ export function FormRow({
     const key = form.keyOf(field)
     const inner = form.container.get(key)
     const row = rowId ? inner.get(rowId) : inner
-    return new FormAtoms(type, row, {
+    const path = form.path + `.${key}` + (rowId ? `[${rowId}]` : '')
+    return new FormAtoms(type, row, path, {
       readOnly,
       parent: form
     })

@@ -389,7 +389,7 @@ export function createEntryEditor(entryData: EntryData) {
     const errors = get(errorsAtom)
     if (errors.size > 0) {
       let errorMessage = ''
-      for (const [ref, {field, error}] of errors.entries()) {
+      for (const [path, {field, error}] of errors.entries()) {
         const label = Field.label(field)
         const line = typeof error === 'string' ? `${label}: ${error}` : label
         errorMessage += `\n— ${line}`
@@ -651,7 +651,7 @@ export function createEntryEditor(entryData: EntryData) {
   const form = atom(get => {
     const doc = get(currentDoc)
     const readOnly = doc !== edits.doc ? true : undefined
-    return new FormAtoms(type, doc.getMap(ROOT_KEY), {readOnly})
+    return new FormAtoms(type, doc.getMap(ROOT_KEY), '', {readOnly})
   })
 
   const yUpdate = debounceAtom(edits.yUpdate, 250)
