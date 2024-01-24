@@ -4,9 +4,7 @@ import {ScalarField} from 'alinea/core/field/ScalarField'
 export interface CodeFieldOptions extends FieldOptions<string> {
   width?: number
   help?: string
-  optional?: boolean
   inline?: boolean
-  initialValue?: string
   language?: string
 }
 

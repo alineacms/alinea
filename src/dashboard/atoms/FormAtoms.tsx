@@ -32,9 +32,36 @@ export interface FieldInfo<
 export class FormAtoms<T = any> {
   private fields = new Map<symbol, FieldInfo>()
 
+  private errorMap = atom(
+    new Map<string, {field: Field; error: boolean | string}>()
+  )
+
+  errors = atom(
+    get => get(this.errorMap),
+    (
+      get,
+      set,
+      path: string,
+      field: Field,
+      error: boolean | string | undefined
+    ) => {
+      const current = get(this.errorMap)
+      if (!error && !current.has(path)) return
+      const errors = new Map(current)
+      if (error) errors.set(path, {field, error})
+      else errors.delete(path)
+      set(this.errorMap, errors)
+      if (this.options.parent)
+        set(this.options.parent.errors, path, field, error)
+    }
+  )
+
+  hasErrors = atom(get => get(this.errorMap).size > 0)
+
   constructor(
     public type: Type<T>,
     public container: Y.Map<any>,
+    public path = '',
     public options: {
       parent?: FormAtoms
       readOnly?: boolean
@@ -127,7 +154,6 @@ export class FormAtoms<T = any> {
     const res = this.fields.get(Field.ref(field))
     const label = Field.label(field)
     if (!res) {
-      console.log(this.options)
       if (this.options.parent) return this.options.parent.fieldInfo(field)
       throw new Error(`Field not found: ${label}`)
     }
@@ -195,7 +221,8 @@ export function FormRow({
     const key = form.keyOf(field)
     const inner = form.container.get(key)
     const row = rowId ? inner.get(rowId) : inner
-    return new FormAtoms(type, row, {
+    const path = form.path + `.${key}` + (rowId ? `[${rowId}]` : '')
+    return new FormAtoms(type, row, path, {
       readOnly,
       parent: form
     })

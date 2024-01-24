@@ -19,7 +19,7 @@ interface TextInputProps {
 }
 
 function TextInput({field}: TextInputProps) {
-  const {value, mutator, label, options} = useField(field)
+  const {value, mutator, label, options, error} = useField(field)
   const [focus, setFocus] = useState(false)
   const {
     multiline,
@@ -37,6 +37,7 @@ function TextInput({field}: TextInputProps) {
     <InputLabel
       asLabel
       {...options}
+      error={error}
       empty={empty}
       focused={focus}
       icon={IcRoundTextFields}

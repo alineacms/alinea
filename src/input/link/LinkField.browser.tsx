@@ -59,7 +59,7 @@ interface LinkInputProps<Row extends Reference> {
 }
 
 function SingleLinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
-  const {options, value, mutator} = useField(field)
+  const {options, value, mutator, error} = useField(field)
   const {readOnly} = options
   const [pickFrom, setPickFrom] = useState<string | undefined>()
   const picker = pickFrom ? options.pickers[pickFrom] : undefined
@@ -85,7 +85,7 @@ function SingleLinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
           onCancel={() => setPickFrom(undefined)}
         />
       )}
-      <InputLabel {...options} icon={IcRoundLink}>
+      <InputLabel {...options} error={error} icon={IcRoundLink}>
         <div className={styles.root()}>
           <div className={styles.root.inner()}>
             <Sink.Root>
@@ -138,7 +138,7 @@ interface LinksInputProps<Row extends Reference & ListRow> {
 function MultipleLinksInput<Row extends Reference & ListRow>({
   field
 }: LinksInputProps<Row>) {
-  const {options, value, mutator} = useField(field)
+  const {options, value, mutator, error} = useField(field)
   const {readOnly} = options
   const [pickFrom, setPickFrom] = useState<
     {type: string; id?: string} | undefined
@@ -212,7 +212,7 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
         onDragEnd={handleDragEnd}
         layoutMeasuring={layoutMeasuringConfig}
       >
-        <InputLabel {...options} icon={IcRoundLink}>
+        <InputLabel {...options} error={error} icon={IcRoundLink}>
           <div className={styles.root()}>
             <div className={styles.root.inner()}>
               <SortableContext

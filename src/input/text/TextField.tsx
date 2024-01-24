@@ -9,8 +9,6 @@ export interface TextOptions extends FieldOptions<string> {
   width?: number
   /** Add instructional text to a field */
   help?: string
-  /** Field is optional */
-  optional?: boolean
   /** Allow line breaks */
   multiline?: boolean
   /** Display a minimal version */

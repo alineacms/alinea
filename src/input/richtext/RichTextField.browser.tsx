@@ -152,7 +152,7 @@ export interface RichTextInputProps<Blocks extends Schema> {
 export function RichTextInput<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
-  const {value, mutator, options} = useField(field)
+  const {value, mutator, options, error} = useField(field)
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
   const {readOnly, schema} = options
@@ -244,6 +244,7 @@ export function RichTextInput<Blocks extends Schema>({
         icon={IcRoundNotes}
         empty={editor.isEmpty}
         ref={containerRef}
+        error={error}
       >
         <InsertMenu editor={editor} schema={schema} onInsert={insert} />
         <EditorContent

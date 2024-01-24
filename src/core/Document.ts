@@ -21,8 +21,8 @@ export function document<Definition extends TypeDefinition>(
   return type(label, {
     ...tabs(
       tab('Document', {
-        title: text('Title', {width: 0.5}),
-        path: path('Path', {width: 0.5}),
+        title: text('Title', {required: true, width: 0.5}),
+        path: path('Path', {required: true, width: 0.5}),
         ...definition,
         [Meta]: {
           icon: IcRoundInsertDriveFile

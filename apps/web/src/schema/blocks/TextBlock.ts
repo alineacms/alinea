@@ -16,7 +16,6 @@ export const textField = () =>
       ChapterLinkBlock,
       ExampleBlock
     }),
-    inline: true,
     searchable: true
   })
 

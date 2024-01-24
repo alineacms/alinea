@@ -31,18 +31,22 @@
 .header {
   position: relative;
   padding-bottom: 8px;
+  color: var(--alinea-fields-foreground);
 
   &-title {
     display: inline-block;
     font-weight: 600;
     font-size: 13px;
-    color: var(--alinea-fields-foreground);
   }
 
   &-help {
     font-weight: normal;
     font-style: italic;
     font-size: 12px;
+
+    &.is-error {
+      color: var(--alinea-error);
+    }
   }
 
   &.is-large &-title {
@@ -52,5 +56,9 @@
 
   &.is-focused &-title {
     color: var(--alinea-foreground);
+  }
+
+  &.is-error &-title {
+    color: var(--alinea-error);
   }
 }

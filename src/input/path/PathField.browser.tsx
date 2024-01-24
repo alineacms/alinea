@@ -23,7 +23,7 @@ interface PathInputProps {
 }
 
 function PathInput({field}: PathInputProps) {
-  const {value: fieldValue, mutator, options} = useField(field)
+  const {value: fieldValue, mutator, options, error} = useField(field)
   const graph = useGraph()
   const editor = useEntryEditor()
   const {from = 'title'} = options
@@ -102,6 +102,7 @@ function PathInput({field}: PathInputProps) {
     <InputLabel
       asLabel
       {...options}
+      error={error}
       focused={focus}
       icon={IcRoundLink}
       empty={empty}

@@ -29,7 +29,7 @@ interface SelectInputProps<Key extends string> {
 }
 
 function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
-  const {value = null, mutator, label, options} = useField(field)
+  const {value = null, mutator, label, options, error} = useField(field)
   const {readOnly} = options
   const items = options.items as Record<string, string>
   const {x, y, reference, floating, refs, strategy} = useFloating({
@@ -51,36 +51,38 @@ function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
   })
 
   return (
-    <InputLabel {...options} icon={IcRoundArrowDropDownCircle}>
+    <InputLabel {...options} error={error} icon={IcRoundArrowDropDownCircle}>
       <div className={styles.root({readOnly})}>
         <Listbox value={value} onChange={mutator} disabled={options.readOnly}>
           {({open}) => (
             <div>
-              <Listbox.Button
-                ref={reference}
-                className={styles.root.input({open})}
-              >
-                <span
-                  className={styles.root.input.label({placeholder: !value})}
+              <div className={styles.root.input({open})}>
+                <Listbox.Button
+                  ref={reference}
+                  className={styles.root.input.button()}
                 >
-                  <TextLabel
-                    label={
-                      (value ? items[value] : options.placeholder) || label
-                    }
+                  <span
+                    className={styles.root.input.label({placeholder: !value})}
+                  >
+                    <TextLabel
+                      label={
+                        (value ? items[value] : options.placeholder) || label
+                      }
+                    />
+                  </span>
+                  <Icon
+                    icon={IcRoundUnfoldMore}
+                    className={styles.root.input.icon()}
                   />
-                </span>
-                <Icon
-                  icon={IcRoundUnfoldMore}
-                  className={styles.root.input.icon()}
-                />
-                {value && options.optional && (
+                </Listbox.Button>
+                {value && !options.required && (
                   <IconButton
                     icon={IcRoundClose}
                     onClick={() => mutator(undefined!)}
                     className={styles.root.input.delete()}
                   />
                 )}
-              </Listbox.Button>
+              </div>
               <Listbox.Options
                 ref={floating}
                 style={{

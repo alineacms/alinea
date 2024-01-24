@@ -70,6 +70,14 @@ const Fields = alinea.document('Fields', {
   ...alinea.tabs(
     alinea.tab('Basic fields', {
       text: alinea.text('Text field'),
+      hello: alinea.text('Validated text field', {
+        help: 'This field only accepts "hello"',
+        validate: value => {
+          if (value !== 'hello') {
+            return 'Only "hello" is allowed'
+          }
+        }
+      }),
       richText: alinea.richText('Rich text field'),
       select: alinea.select('Select field', {
         a: 'Option a',
@@ -103,7 +111,7 @@ const Fields = alinea.document('Fields', {
       multipleWithFields: alinea.link.multiple('Multiple With extra fields', {
         fields: alinea.type({
           fieldA: alinea.text('Field A', {width: 0.5}),
-          fieldB: alinea.text('Field B', {width: 0.5})
+          fieldB: alinea.text('Field B', {width: 0.5, required: true})
         })
       })
     }),
@@ -121,6 +129,17 @@ const Fields = alinea.document('Fields', {
       })
     }),
     alinea.tab('Rich text fields', {
+      withInitial: alinea.richText('With initial value', {
+        required: true,
+        initialValue: [
+          {
+            type: 'paragraph',
+            content: [
+              {type: 'text', text: 'This is a paragraph with initial value'}
+            ]
+          }
+        ]
+      }),
       nested: alinea.richText('With nested blocks', {
         schema: {
           Inner: alinea.type('Inner', {
