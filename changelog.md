@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Allow importing `.css` and `.module.css` in custom fields and views.
 - Make `isContainer` optional if `contains` is used on Types.
 - Add i18nId to retrieved entry Link fields when queried.
 
