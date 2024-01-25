@@ -287,7 +287,7 @@
     {
       "id": "2bRQUBTqZ510BRTvtbDs333cnoR",
       "type": "CodeBlock",
-      "code": "{\n  \"scripts\": {\n    \"dev: \"NODE_OPTIONS=--enable-source-maps alinea dev -- next dev\",\n    \"build\": \"NODE_OPTIONS=--enable-source-maps alinea build -- next build\"\n  }\n}",
+      "code": "{\n  \"scripts\": {\n    \"dev\": \"NODE_OPTIONS=--enable-source-maps alinea dev -- next dev\",\n    \"build\": \"NODE_OPTIONS=--enable-source-maps alinea build -- next build\"\n  }\n}",
       "fileName": "",
       "language": "tsx"
     },
