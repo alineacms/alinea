@@ -45,20 +45,12 @@ function generatePackage(context: GenerateContext, config: Config) {
 }
 
 async function createDb(): Promise<[Store, () => Uint8Array]> {
-  /*try {
-    const {default: betterSqlite3} = await import('better-sqlite3')
-    const {connect} = await import('rado/driver/better-sqlite3')
-    const db = betterSqlite3(':memory:')
-    const store = connect(db).toAsync()
-    return [store, () => db.serialize()]
-  } catch {*/
   const {default: sqlite} = await import('@alinea/sqlite-wasm')
   const {Database} = await sqlite()
   const {connect} = await import('rado/driver/sql.js')
   const db = new Database()
   const store = connect(db).toAsync()
   return [store, () => db.export()]
-  //}
 }
 
 export async function* generate(options: GenerateOptions): AsyncGenerator<

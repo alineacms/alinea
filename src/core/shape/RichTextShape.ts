@@ -332,7 +332,7 @@ export class RichTextShape<Blocks>
       const shape = this.values[node.type]
       return shape.searchableText(node)
     }
-    if (node.type === 'text') return ' ' + node.text ?? ''
+    if (node.type === 'text') return node.text ? ' ' + node.text : ''
     if ('content' in node && Array.isArray(node.content)) {
       return node.content.reduce((acc, node) => {
         return acc + this.textOf(node)

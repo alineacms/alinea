@@ -76,12 +76,7 @@ export function createLocalServer(
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
     initial = true
   const config = {
-    external: [
-      'next/navigation',
-      'next/headers',
-      'better-sqlite3',
-      '@alinea/generated/store.js'
-    ],
+    external: ['next/navigation', 'next/headers', '@alinea/generated/store.js'],
     format: 'esm',
     target: 'esnext',
     treeShaking: true,
