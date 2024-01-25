@@ -51,6 +51,7 @@ export function compileConfig({
     },
     platform: 'node',
     jsx: 'automatic',
+    sourcemap: true,
     define,
     plugins: [
       externalPlugin(rootDir),
