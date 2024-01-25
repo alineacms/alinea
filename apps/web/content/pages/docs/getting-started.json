@@ -210,7 +210,7 @@
               "index": "a0",
               "type": "Variant",
               "name": "next.config.js",
-              "language": "shellscript",
+              "language": "tsx",
               "code": "const nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: ['@alinea/generated']\n  }\n}\n\nmodule.exports = nextConfig"
             },
             {
@@ -218,7 +218,7 @@
               "index": "a1",
               "type": "Variant",
               "name": "next.config.mjs",
-              "language": "shellscript",
+              "language": "tsx",
               "code": "/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  experimental: {\n    serverComponentsExternalPackages: [\"@alinea/generated\"],\n  },\n};\n\nexport default nextConfig;"
             }
           ]
