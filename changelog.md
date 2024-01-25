@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.6.1]
 
 - Allow importing `.css` and `.module.css` in custom fields and views.
 - Make `isContainer` optional if `contains` is used on Types.
