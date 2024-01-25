@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.2]
+
+- Live-reload changes to `.css` files used for custom fields and views.
+
 ## [0.6.1]
 
 - Allow importing `.css` and `.module.css` in custom fields and views.
