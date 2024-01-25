@@ -1,5 +1,6 @@
 {
   "title": "Getting started",
+  "navigationTitle": "",
   "body": [
     {
       "id": "2YX0hoFtrkov2TMQT8cuHwhgN6L",
@@ -196,17 +197,31 @@
           "content": [
             {
               "type": "text",
-              "text": "Alinea generates a few files at build time which should not be cached when deployed in production. If you're hosting on Vercel add `@alinea/generated` to `experimental.serverComponentsExternalPackages` in `next.config.js`:"
+              "text": "Alinea generates a few files at build time which should not be cached when deployed in production. If you're hosting on Vercel add `@alinea/generated` to `experimental.serverComponentsExternalPackages` in `next.config.js` or in `next.config.mjs`:"
             }
           ]
         },
         {
-          "id": "2YlJWtg13eze9KfsGwnL3TLmRWG",
-          "type": "CodeBlock",
-          "code": "const nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: ['@alinea/generated']\n  }\n}\n\nmodule.exports = nextConfig",
-          "fileName": "next.config.js",
-          "language": "",
-          "compact": false
+          "id": "2bRC6LC1i4PfMRTFBeXuHrvWjk0",
+          "type": "CodeVariantsBlock",
+          "variants": [
+            {
+              "id": "2bRC6k9IXwZsgnaBLqqWcybH8H9",
+              "index": "a0",
+              "type": "Variant",
+              "name": "next.config.js",
+              "language": "tsx",
+              "code": "const nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: ['@alinea/generated']\n  }\n}\n\nmodule.exports = nextConfig"
+            },
+            {
+              "id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
+              "index": "a1",
+              "type": "Variant",
+              "name": "next.config.mjs",
+              "language": "tsx",
+              "code": "/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: [\"@alinea/generated\"]\n  }\n}\n\nexport default nextConfig"
+            }
+          ]
         }
       ],
       "js": [
