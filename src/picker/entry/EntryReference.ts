@@ -5,6 +5,7 @@ export interface EntryLinkReference extends Reference {
 }
 
 export interface EntryReference extends EntryLinkReference {
+  i18nId: string
   title: string
   entryType: string
   path: string
