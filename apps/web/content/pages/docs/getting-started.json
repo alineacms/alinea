@@ -219,7 +219,7 @@
               "type": "Variant",
               "name": "next.config.mjs",
               "language": "tsx",
-              "code": "/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: [\"@alinea/generated\"]\n  }\n};\n\nexport default nextConfig;"
+              "code": "/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: [\"@alinea/generated\"]\n  }\n}\n\nexport default nextConfig"
             }
           ]
         }
