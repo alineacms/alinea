@@ -98,7 +98,7 @@
       "content": [
         {
           "type": "text",
-          "text": "When a type is marked as a container it can contain subpages."
+          "text": "When a type is marked as a container it can contain subpages of any Type. If you like to restrict allowed Types, use `contains`."
         }
       ]
     },
@@ -127,7 +127,7 @@
       "content": [
         {
           "type": "text",
-          "text": "In case this type is a container the allowed sub types can be declared in an array."
+          "text": "Accept entries of these Types as children. For example a `Blog` can accept `BlogEntry` children."
         }
       ]
     },

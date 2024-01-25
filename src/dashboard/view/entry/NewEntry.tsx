@@ -86,7 +86,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {name: workspace} = useWorkspace()
   const containerTypes = entries(config.schema)
     .filter(([, type]) => {
-      return Type.meta(type!).isContainer
+      return Type.isContainer(type!)
     })
     .map(pair => pair[0])
   const root = useRoot()

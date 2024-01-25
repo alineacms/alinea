@@ -7,7 +7,6 @@ export const Docs = alinea.document('Docs', {
   }),
   body: bodyField(),
   [alinea.meta]: {
-    isContainer: true,
     contains: ['Doc', 'Docs']
   }
 })

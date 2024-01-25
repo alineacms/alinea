@@ -30,12 +30,12 @@ export interface EntryUrlMeta {
 
 /** Optional settings to configure a Type */
 export interface TypeMeta {
-  /** Entries can be created as children of this entry */
+  /** Accepts entries of these types as children */
+  contains?: Array<string>
+  /** Accept entries of any type as children */
   isContainer?: true
   /** Entries do not show up in the sidebar content tree */
   isHidden?: true
-  /** Accepts entries of these types as children */
-  contains?: Array<string>
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 
@@ -114,7 +114,8 @@ export namespace Type {
   }
 
   export function isContainer(type: Type) {
-    return Boolean(type[Type.Data].meta.isContainer)
+    const {meta} = type[Type.Data]
+    return Boolean(meta.isContainer || meta.contains)
   }
 
   export function target(type: Type): TypeTarget {
