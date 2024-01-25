@@ -52,6 +52,14 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
     })
   }, [config])
   function getConfig() {
+    // Reload css
+    const link = document.querySelector(
+      'link[href^="/entry.css"]'
+    ) as HTMLLinkElement
+    const copy = link.cloneNode() as HTMLLinkElement
+    copy.href = '/entry.css?' + Math.random()
+    copy.onload = () => link.remove()
+    link.after(copy)
     return loadConfig().then(setConfig)
   }
   useEffect(() => {
