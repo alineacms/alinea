@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+- Make `isContainer` optional if `contains` is used on Types.
+- Add i18nId to retrieved entry Link fields when queried.
+
 ## [0.6.0]
 
 - Field validation (#369)
