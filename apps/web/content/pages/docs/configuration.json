@@ -214,6 +214,137 @@
           "text": "Optionally set the interval in seconds at which the frontend will poll for updates."
         }
       ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Good to know"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "Dealing with errors"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Your config file is read and executed during the `alinea dev` and `alinea build` "
+        },
+        {
+          "type": "text",
+          "text": "CLI",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2bRPphjzKp0th73W5AIX4MbwCAC",
+                "data-entry": "m5KGP-I5smg2S8o4A-j15",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " commands. If anything goes wrong, you might see an error such as:"
+        }
+      ]
+    },
+    {
+      "id": "2bRPtrWBR0pa60dm18O0y8DW2u8",
+      "type": "CodeBlock",
+      "code": "Error: Fail\n    at file:///home/alineacms/alinea/node_modules/@alinea/generated/config.js?1706175675574:419:7\n    at ModuleJob.run (node:internal/modules/esm/module_job:194:25)",
+      "fileName": "",
+      "language": "shellscript"
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "To debug these situations Alinea compiles your config file with an included source map. To enable node to read the source map and report correct positions you can enable the Node.js `--enable-source-maps` flag. You can add it to the scripts in package.json:"
+        }
+      ]
+    },
+    {
+      "id": "2bRQUBTqZ510BRTvtbDs333cnoR",
+      "type": "CodeBlock",
+      "code": "{\n  \"scripts\": {\n    \"dev: \"NODE_OPTIONS=--enable-source-maps alinea dev -- next dev\",\n    \"build\": \"NODE_OPTIONS=--enable-source-maps alinea build -- next build\"\n  }\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "id": "2bRQZBPfwzPF6lNUtjW0wVPFY06",
+      "type": "NoticeBlock",
+      "level": "info",
+      "body": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "If you're developing on Windows you can use "
+            },
+            {
+              "type": "text",
+              "text": "cross-env",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "2bRQg3uk3C0YltnrWPpj2ROCT7p",
+                    "data-entry": null,
+                    "data-type": "url",
+                    "href": "https://www.npmjs.com/package/cross-env",
+                    "target": "_blank",
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " to achieve the same."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The error will now point to the right file:"
+        }
+      ]
+    },
+    {
+      "id": "2bRR5xvNhvfy0EaJAgL0owbuNYV",
+      "type": "CodeBlock",
+      "code": "Error: Fail\n    at <anonymous> (/home/alinea/apps/dev/cms.tsx:278:7)\n    at ModuleJob.run (node:internal/modules/esm/module_job:194:25)",
+      "fileName": "",
+      "language": "shellscript"
     }
   ],
   "metadata": {
