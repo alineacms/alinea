@@ -49,9 +49,13 @@ export function compileConfig({
     logOverride: {
       'ignored-bare-import': 'silent'
     },
-    platform: 'node',
+    platform: 'neutral',
     jsx: 'automatic',
     define,
+    loader: {
+      '.module.css': 'local-css',
+      '.css': 'css'
+    },
     plugins: [
       externalPlugin(rootDir),
       ignorePlugin,

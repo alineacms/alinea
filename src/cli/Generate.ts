@@ -92,7 +92,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     outDir: path.join(nodeModules, '@alinea/generated'), // path.join(rootDir, '.alinea'),
     watch: options.watch || false
   }
-
+  await copyStaticFiles(context)
   const builds = compileConfig(context)[Symbol.asyncIterator]()
   let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
   let afterGenerateCalled = false
@@ -101,7 +101,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     return exportStore(data, join(context.outDir, 'store.js'))
   }
   const [store, storeData] = await createDb()
-  await copyStaticFiles(context)
   while (true) {
     const {done} = await nextBuild
     nextBuild = builds.next()

@@ -2,6 +2,7 @@ import {FieldOptions, ScalarField, WithoutLabel} from 'alinea/core'
 import {InputLabel, useField} from 'alinea/dashboard'
 import {HStack, VStack} from 'alinea/ui'
 import {SVGProps, useState} from 'react'
+import css from './PositionField.module.css'
 
 export interface PositionOptions extends FieldOptions<Position> {}
 
@@ -45,7 +46,7 @@ export function PositionInput({field}: PositionInputProps) {
   ])
   const hasValue = value.x !== null && value.y !== null
   return (
-    <InputLabel label={label}>
+    <InputLabel label={label} className={css.field}>
       <HStack gap={20} wrap center>
         <div
           style={{

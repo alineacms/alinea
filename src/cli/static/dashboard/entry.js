@@ -1,5 +1,7 @@
-import {Client} from 'alinea/core/Client'
+import '@alinea/generated/config.css'
 import 'alinea/css'
+
+import {Client} from 'alinea/core/Client'
 import {App} from 'alinea/dashboard/App'
 import {jsx} from 'react/jsx-runtime'
 import {reactRender} from './render-react18.js'

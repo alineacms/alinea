@@ -190,7 +190,6 @@ export function createLocalServer(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          <link href="/config.css" rel="stylesheet" />
           <link href="/entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
@@ -204,10 +203,7 @@ export function createLocalServer(
         )
       }),
       handler.router,
-      serveBrowserBuild,
-      matcher.get('/config.css').map((): Response => {
-        return new Response('', {headers: {'content-type': 'text/css'}})
-      })
+      serveBrowserBuild
     )
   ).notFound(() => new Response('Not found', {status: 404}))
 

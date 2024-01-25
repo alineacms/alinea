@@ -1,12 +1,10 @@
-import { Plugin } from "esbuild"
+import {Plugin} from 'esbuild'
 
 export const ignorePlugin: Plugin = {
   name: 'ignore',
   setup(build) {
     const commonExtensions = [
-      'css',
       'html',
-      'css',
       'scss',
       'less',
       'png',
