@@ -47,8 +47,7 @@ const external = builtinModules
     'react-dom',
     'sass',
     'glob',
-    'esbuild',
-    'better-sqlite3'
+    'esbuild'
   ])
 
 const scssOptions = {
@@ -324,6 +323,11 @@ function jsEntry({watch, test}) {
               platform: 'neutral',
               mainFields: ['module', 'main'],
               alias: {
+                // Mistakenly imported because it is used in the JSDocs
+                'y-protocols/awareness': `data:text/javascript,
+                  export const Awareness = undefined
+                `,
+
                 // Used in lib0, polyfill crypto for nodejs
                 'lib0/webcrypto': `data:text/javascript,
                   import {crypto} from '@alinea/iso'

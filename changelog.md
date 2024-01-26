@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.2]
+
+- Live-reload changes to `.css` files used for custom fields and views.
+
+## [0.6.1]
+
+- Allow importing `.css` and `.module.css` in custom fields and views.
+- Make `isContainer` optional if `contains` is used on Types.
+- Add i18nId to retrieved entry Link fields when queried.
+
 ## [0.6.0]
 
 - Field validation (#369)

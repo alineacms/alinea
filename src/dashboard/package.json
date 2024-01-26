@@ -17,15 +17,13 @@
     "diff-match-patch": "^1.0.5",
     "fflate": "^0.8.0",
     "jotai": "^2.4.2",
-    "lib0": "^0.2.78",
+    "lib0": "^0.2.88",
     "p-limit": "^4.0.0",
     "pretty-bytes": "^6.0.0",
     "react-aria-components": "^1.0.1",
     "react-query": "^3.39.1",
     "react-tiny-virtual-list": "^2.2.0",
     "smartcrop": "^2.0.5",
-    "thumbhash": "^0.1.1",
-    "y-indexeddb": "^9.0.11",
-    "y-webrtc": "^10.2.0"
+    "thumbhash": "^0.1.1"
   }
 }

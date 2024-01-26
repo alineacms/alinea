@@ -13,6 +13,7 @@ import {assign} from 'alinea/core/util/Objects'
 import {EntryLinkReference} from './EntryReference.js'
 
 export const entryFields = {
+  i18nId: Entry.i18nId,
   title: Entry.title,
   entryType: Entry.type,
   url: Entry.url,

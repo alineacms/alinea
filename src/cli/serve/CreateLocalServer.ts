@@ -76,12 +76,7 @@ export function createLocalServer(
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
     initial = true
   const config = {
-    external: [
-      'next/navigation',
-      'next/headers',
-      'better-sqlite3',
-      '@alinea/generated/store.js'
-    ],
+    external: ['next/navigation', 'next/headers', '@alinea/generated/store.js'],
     format: 'esm',
     target: 'esnext',
     treeShaking: true,
@@ -195,7 +190,6 @@ export function createLocalServer(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          <link href="/config.css" rel="stylesheet" />
           <link href="/entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
@@ -209,10 +203,7 @@ export function createLocalServer(
         )
       }),
       handler.router,
-      serveBrowserBuild,
-      matcher.get('/config.css').map((): Response => {
-        return new Response('', {headers: {'content-type': 'text/css'}})
-      })
+      serveBrowserBuild
     )
   ).notFound(() => new Response('Not found', {status: 404}))
 

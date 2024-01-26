@@ -8,10 +8,7 @@ declare module 'raw-loader!*' {
   export default content
 }
 
-declare module 'eval:*'
 declare module 'postcss-pxtorem'
-declare module 'line-height'
-declare module 'dts-bundle'
 
 declare module 'octokit-commit-multiple-files/create-or-update-files.js' {
   import {Octokit} from '@octokit/rest'

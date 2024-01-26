@@ -52,25 +52,18 @@
   "dependencies": {
     "@alinea/iso": "^0.3.1",
     "@alinea/sqlite-wasm": "^0.1.14",
-    "esbuild": "^0.19.2"
+    "esbuild": "^0.19.12"
   },
   "peerDependencies": {
     "react": "*",
     "react-dom": "*"
   },
   "devDependencies": {
-    "@esbx/alias": "^0.0.20",
-    "@esbx/extension": "^0.0.19",
-    "@esbx/external": "^0.0.19",
-    "@esbx/reload": "^0.0.19",
-    "@esbx/reporter": "^0.0.19",
-    "@esbx/run": "^0.0.19",
-    "@esbx/sass": "^0.0.19",
-    "@esbx/static": "^0.0.19",
+    "@esbx/reporter": "^0.0.20",
     "@esbx/target": "^0.0.20",
-    "@esbx/workspaces": "^0.0.19",
-    "@ladle/react": "^4.0.1",
-    "@types/better-sqlite3": "^7.6.4",
+    "@esbx/util": "^0.0.20",
+    "@esbx/workspaces": "^0.0.20",
+    "@ladle/react": "^4.0.2",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
     "@types/node": "20.0.0",
@@ -80,29 +73,24 @@
     "@typescript/analyze-trace": "^0.9.1",
     "@ungap/with-resolvers": "^0.1.0",
     "alinea": "link:.",
-    "autoprefixer": "^10.4.2",
-    "cross-env": "^7.0.3",
     "esbx": "^0.0.18",
-    "find-config": "^1.0.0",
     "glob": "^7.2.0",
-    "memfs": "^3.4.1",
     "npm-run-all": "^4.1.5",
+    "postcss-modules": "^6.0.0",
     "postcss-pxtorem": "^6.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "rimraf": "^5.0.0",
     "sass": "^1.63.4",
     "speedscope": "^1.14.0",
-    "typescript": "^5.2.2",
-    "typescript-plugin-css-modules": "^5.0.1",
+    "typescript": "^5.3.3",
+    "typescript-plugin-css-modules": "^5.0.2",
     "uvu": "^0.5.1"
   },
   "packageManager": "yarn@3.2.0",
   "resolutions": {
-    "esbuild": "0.19.2",
-    "mime-db": "1.51.0",
-    "yjs": "13.6.7",
-    "lib0": "0.2.74"
+    "esbuild": "0.19.12",
+    "yjs": "13.6.11",
+    "lib0": "0.2.88"
   },
   "exports": {
     "./package.json": "./package.json",
