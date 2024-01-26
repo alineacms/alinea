@@ -6,6 +6,7 @@ import {GitHistory} from 'alinea/cli/serve/GitHistory'
 import {Config, Connection, Draft, createId} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
+import simpleGit from 'simple-git'
 
 const latency = 0
 
@@ -17,7 +18,7 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
   history: History
 
   constructor(public config: Config, public db: Database, rootDir: string) {
-    this.history = new GitHistory(config, rootDir)
+    this.history = new GitHistory(simpleGit(rootDir), config, rootDir)
   }
 
   async mutate(params: Connection.MutateParams) {

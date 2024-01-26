@@ -15,6 +15,7 @@ import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
 import {outcome} from '../Outcome.js'
 import {ResolveDefaults, Resolver} from '../Resolver.js'
+import {User} from '../User.js'
 import {createSelection} from '../pages/CreateSelection.js'
 import {Realm} from '../pages/Realm.js'
 import {DefaultDriver} from './DefaultDriver.server.js'
@@ -26,9 +27,26 @@ const SearchParams = object({
   realm: enums(Realm)
 })
 
+const PREVIEW_TOKEN = 'alinea-preview-token'
+
 class NextDriver extends DefaultDriver implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
   jwtSecret = this.apiKey || 'dev'
+
+  async user(): Promise<User | null> {
+    const {cookies, draftMode} = await import('next/headers.js')
+    const [draftStatus] = outcome(() => draftMode())
+    const isDraft = draftStatus?.isEnabled
+    // We exit early if we're not in draft mode to avoid marking every page
+    // as dynamic
+    if (!isDraft) return null
+    const token = cookies().get(PREVIEW_TOKEN)?.value
+    if (!token) return null
+    const previews = new JWTPreviews(this.jwtSecret)
+    const payload = await previews.verify(token)
+    if (!payload) return null
+    return payload
+  }
 
   async getDefaults(): Promise<ResolveDefaults> {
     const {cookies, draftMode} = await import('next/headers.js')
@@ -92,7 +110,8 @@ class NextDriver extends DefaultDriver implements NextApi {
       realm: searchParams.get('realm')
     })
     const previews = new JWTPreviews(this.jwtSecret)
-    const payload = await previews.verify(params.token)
+    await previews.verify(params.token)
+    cookies().set(PREVIEW_TOKEN, params.token)
     if (!searchParams.has('full')) {
       // Clear preview cookies
       cookies().delete(PREVIEW_UPDATE_NAME)
@@ -120,17 +139,14 @@ class NextDriver extends DefaultDriver implements NextApi {
     })
   }
 
-  async previews(): Promise<JSX.Element | null> {
+  previews = async (): Promise<JSX.Element | null> => {
     const {draftMode} = await import('next/headers.js')
     const [draftStatus] = outcome(() => draftMode())
     const isDraft = draftStatus?.isEnabled
     if (!isDraft) return null
+    const user = await this.user()
     const NextPreviews = lazy(() => import('alinea/core/driver/NextPreviews'))
-    return (
-      <Suspense>
-        <NextPreviews />
-      </Suspense>
-    )
+    return <Suspense>{user && <NextPreviews user={user} />}</Suspense>
   }
 }
 

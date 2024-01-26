@@ -66,7 +66,7 @@ export class Handler implements Resolver {
       this.parsePreview.bind(this)
     )
     this.changes = new ChangeSetCreator(options.config)
-    const auth = options.auth || Auth.anonymous()
+    const auth = options.auth ?? Auth.anonymous()
     this.connect = ctx => new HandlerConnection(this, ctx)
     this.router = createRouter(auth, this.connect)
   }
@@ -192,8 +192,8 @@ class HandlerConnection implements Connection {
   previewToken(): Promise<string> {
     const {previews} = this.handler.options
     const user = this.ctx.user
-    if (!user) return previews.sign({anonymous: true})
-    return previews.sign({sub: user.sub})
+    if (!user) throw new Error('Unauthorized, user not available')
+    return previews.sign(user)
   }
 
   // Media

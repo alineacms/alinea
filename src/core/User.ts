@@ -3,3 +3,8 @@ export interface User {
   email?: string
   name?: string
 }
+
+export const localUser = {
+  sub: 'local',
+  name: 'Local user'
+}

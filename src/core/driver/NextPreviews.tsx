@@ -9,10 +9,15 @@ import {
 import {usePreview} from 'alinea/preview/react'
 // @ts-ignore
 import {useRouter} from 'next/navigation'
+import {User} from '../User.js'
 
 const MAX_CHUNKS = 5
 
-export default function NextPreviews() {
+export interface NextPreviewsProps {
+  user: User
+}
+
+export default function NextPreviews({user}: NextPreviewsProps) {
   const router = useRouter()
   const {isPreviewing} = usePreview({
     async preview({entryId, phase, update}) {

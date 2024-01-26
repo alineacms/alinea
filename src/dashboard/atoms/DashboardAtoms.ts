@@ -1,4 +1,4 @@
-import {Connection, Session} from 'alinea/core'
+import {Connection, Session, User} from 'alinea/core'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import {useEffect} from 'react'
@@ -19,7 +19,7 @@ export function useSetDashboardOptions(options: AppProps) {
       [
         sessionAtom,
         {
-          user: {sub: 'anonymous'},
+          user: JSON.parse(process.env.ALINEA_USER as string) as User,
           cnx: client
         }
       ]
