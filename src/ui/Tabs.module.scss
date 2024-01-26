@@ -32,7 +32,7 @@
     opacity: 1;
   }
 
-  &[data-selected] {
+  &[aria-selected='true'] {
     opacity: 1;
     background: var(--alinea-selected);
     color: var(--alinea-selected-foreground);

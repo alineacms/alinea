@@ -57,20 +57,15 @@ function TabsView({section}: TabsViewProps) {
     <Tabs.Tabs>
       <TabsHeader id={id} section={section} />
       <Lift>
-        {visibleTypes.map((type, i) => {
-          return (
-            <Tabs.TabPanel shouldForceMount key={i} id={`${id}+${i}`}>
-              {({isInert}) => (
-                <div
-                  aria-hidden={isInert ? 'true' : undefined}
-                  style={{display: isInert ? 'none' : undefined}}
-                >
-                  <InputForm type={type} border={false} />
-                </div>
-              )}
-            </Tabs.TabPanel>
-          )
-        })}
+        <Tabs.TabPanels>
+          {visibleTypes.map((type, i) => {
+            return (
+              <Tabs.TabPanel key={i} id={`${id}+${i}`}>
+                <InputForm type={type} border={false} />
+              </Tabs.TabPanel>
+            )
+          })}
+        </Tabs.TabPanels>
       </Lift>
     </Tabs.Tabs>
   )

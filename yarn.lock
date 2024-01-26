@@ -57,6 +57,7 @@ __metadata:
     cito: ^0.2.0
     p-lazy: ^4.0.0
     pretty-ms: ^8.0.0
+    y-protocols: ^1.0.6
     yjs: ^13.6.11
   languageName: unknown
   linkType: soft
@@ -155,6 +156,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/ui@workspace:src/ui"
   dependencies:
+    "@headlessui/react": ^1.7.18
     color2k: ^1.2.4
     react-aria-components: ^1.0.1
     regexparam: ^2.0.1
@@ -1299,6 +1301,19 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: a80e521d0625a81892322ce35270f0e8028354fe5b4763592201579f8e89bf1a72b56c6544ff66d3e97d7e3118bcea3809616d6c30ce9359a45ab43adb1a2816
+  languageName: node
+  linkType: hard
+
+"@headlessui/react@npm:^1.7.18":
+  version: 1.7.18
+  resolution: "@headlessui/react@npm:1.7.18"
+  dependencies:
+    "@tanstack/react-virtual": ^3.0.0-beta.60
+    client-only: ^0.0.1
+  peerDependencies:
+    react: ^16 || ^17 || ^18
+    react-dom: ^16 || ^17 || ^18
+  checksum: 7463167b4cf2ad57f92c2deedd6429a245dfc4d979ead5533d2e83429e3e4dd39c346e5a8fd958e6bd9e2fba42486af97577b7dd3137f5a797dacc93632578ba
   languageName: node
   linkType: hard
 
@@ -3601,6 +3616,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/react-virtual@npm:^3.0.0-beta.60":
+  version: 3.0.2
+  resolution: "@tanstack/react-virtual@npm:3.0.2"
+  dependencies:
+    "@tanstack/virtual-core": 3.0.0
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: d8a370150582cf765a3e74e506cd1d95b65449a9b30c992865743d091b3953c03a6832f732439beef0a9c4f42bc211ea42a08d6b488122b32afd76b1cd7569bf
+  languageName: node
+  linkType: hard
+
+"@tanstack/virtual-core@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@tanstack/virtual-core@npm:3.0.0"
+  checksum: 7283d50fc7b7a56608c37a8e94a93b85890ff7e39c6281633a19c4d6f6f4fbf25f8418f1eec302a008a8746a0d1d0cd00630137b55e6cf019818d68af8ed16b6
+  languageName: node
+  linkType: hard
+
 "@tiptap/core@npm:^2.1.16":
   version: 2.1.16
   resolution: "@tiptap/core@npm:2.1.16"
@@ -5168,7 +5202,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"client-only@npm:0.0.1":
+"client-only@npm:0.0.1, client-only@npm:^0.0.1":
   version: 0.0.1
   resolution: "client-only@npm:0.0.1"
   checksum: 0c16bf660dadb90610553c1d8946a7fdfb81d624adea073b8440b7d795d5b5b08beb3c950c6a2cf16279365a3265158a236876d92bce16423c485c322d7dfaf8
@@ -13614,6 +13648,17 @@ resolve@^1.10.0:
     y-protocols: ^1.0.1
     yjs: ^13.5.38
   checksum: 25fc16ec2b44d6d27c80a6c9df4dd5149e69b5d6bcef877542f2db81caf5e6271db1d15e356e3514c72c3d51438f6549995ca0a989b3c9f5a236c0a12aff7c05
+  languageName: node
+  linkType: hard
+
+"y-protocols@npm:^1.0.6":
+  version: 1.0.6
+  resolution: "y-protocols@npm:1.0.6"
+  dependencies:
+    lib0: ^0.2.85
+  peerDependencies:
+    yjs: ^13.0.0
+  checksum: 4b57c8811befcf2e45c3d47830005f8a33e626c734f78a42fe8a4fa3caad2233ba85a7c8bceefbd52ffc40130d3f3faee664fd0d1c324ff1fa8817a056ccdc1c
   languageName: node
   linkType: hard
 

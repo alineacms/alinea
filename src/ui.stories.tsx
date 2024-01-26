@@ -22,11 +22,13 @@ export function TabsList() {
           <Tabs.Tab>Monarchy and Republic</Tabs.Tab>
           <Tabs.Tab>Empire</Tabs.Tab>
         </Tabs.TabList>
-        <Tabs.TabPanel>
-          Arma virumque cano, Troiae qui primus ab oris.
-        </Tabs.TabPanel>
-        <Tabs.TabPanel>Senatus Populusque Romanus.</Tabs.TabPanel>
-        <Tabs.TabPanel>Alea jacta est.</Tabs.TabPanel>
+        <Tabs.TabPanels>
+          <Tabs.TabPanel id="t1">
+            Arma virumque cano, Troiae qui primus ab oris.
+          </Tabs.TabPanel>
+          <Tabs.TabPanel id="t2">Senatus Populusque Romanus.</Tabs.TabPanel>
+          <Tabs.TabPanel id="t3">Alea jacta est.</Tabs.TabPanel>
+        </Tabs.TabPanels>
       </Tabs.Tabs>
     </UIStory>
   )
