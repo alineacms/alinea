@@ -3,8 +3,10 @@ import {EntryLocation} from 'alinea/dashboard/DashboardNav'
 import {graphAtom} from 'alinea/dashboard/atoms/DbAtoms'
 import {locationAtom, useNavigate} from 'alinea/dashboard/atoms/LocationAtoms'
 import {useNav} from 'alinea/dashboard/hook/UseNav'
+import {Loader} from 'alinea/ui'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
+import {useLayoutEffect} from 'react'
 import {entryEditorAtoms} from './atoms/EntryEditorAtoms.js'
 import {entryLocationAtom, localeAtom} from './atoms/NavigationAtoms.js'
 import {Route, Router} from './atoms/RouterAtoms.js'
@@ -66,8 +68,10 @@ export const editRoute = new Route({
 function EditRoute(location: EntryLocation | null) {
   const nav = useNav()
   const navigate = useNavigate()
-  if (location) navigate(nav.entry(location))
-  return 'Not found'
+  useLayoutEffect(() => {
+    if (location) navigate(nav.entry(location))
+  }, [location])
+  return <Loader absolute />
 }
 
 const routes = [draftRoute, editRoute, entryRoute]
