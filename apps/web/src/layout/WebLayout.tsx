@@ -29,7 +29,7 @@ export default async function WebLayout({
       <Header />
       <div className={styles.layout.content()}>{children}</div>
       {footer && <Footer />}
-      <cms.previews />
+      <cms.previews widget />
     </div>
   )
 }

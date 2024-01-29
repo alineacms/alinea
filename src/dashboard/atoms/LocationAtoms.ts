@@ -89,6 +89,11 @@ export function useLocation() {
   return useAtomValue(locationAtom)
 }
 
+export function useSearchParams() {
+  const location = useLocation()
+  return new URLSearchParams(location.search)
+}
+
 export function useNavigate() {
   const setLocation = useSetAtom(locationAtom)
   return function navigate(url: string) {

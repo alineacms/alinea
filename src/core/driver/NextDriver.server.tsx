@@ -1,3 +1,5 @@
+'use server'
+
 import {JWTPreviews} from 'alinea/backend'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
@@ -7,8 +9,9 @@ import {
   PREVIEW_UPDATE_NAME
 } from 'alinea/preview/PreviewConstants'
 import {enums, object, string} from 'cito'
+import dynamic from 'next/dynamic.js'
 import PLazy from 'p-lazy'
-import {Suspense, lazy} from 'react'
+import {Suspense} from 'react'
 import {Client} from '../Client.js'
 import {Config} from '../Config.js'
 import {Entry} from '../Entry.js'
@@ -19,7 +22,7 @@ import {User} from '../User.js'
 import {createSelection} from '../pages/CreateSelection.js'
 import {Realm} from '../pages/Realm.js'
 import {DefaultDriver} from './DefaultDriver.server.js'
-import {NextApi} from './NextDriver.js'
+import {NextApi, PreviewProps} from './NextDriver.js'
 
 const SearchParams = object({
   token: string,
@@ -139,14 +142,36 @@ class NextDriver extends DefaultDriver implements NextApi {
     })
   }
 
-  previews = async (): Promise<JSX.Element | null> => {
+  previews = async ({
+    widget,
+    workspace,
+    root
+  }: PreviewProps): Promise<JSX.Element | null> => {
     const {draftMode} = await import('next/headers.js')
     const [draftStatus] = outcome(() => draftMode())
     const isDraft = draftStatus?.isEnabled
     if (!isDraft) return null
     const user = await this.user()
-    const NextPreviews = lazy(() => import('alinea/core/driver/NextPreviews'))
-    return <Suspense>{user && <NextPreviews user={user} />}</Suspense>
+    const NextPreviews = dynamic(
+      () => import('alinea/core/driver/NextPreviews'),
+      {ssr: false}
+    )
+    const devUrl = process.env.ALINEA_DEV_SERVER
+    const dashboardUrl =
+      devUrl ?? this.config.dashboard?.dashboardUrl ?? '/admin.html'
+    return (
+      <Suspense>
+        {user && (
+          <NextPreviews
+            widget={widget}
+            user={user}
+            dashboardUrl={dashboardUrl}
+            workspace={workspace}
+            root={root}
+          />
+        )}
+      </Suspense>
+    )
   }
 }
 
