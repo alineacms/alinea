@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.3]
+
+- Add a preview widget which enables editors to easily switch from previewing
+  to editing. Enable by setting widget to true:
+
+  ```tsx
+  <cms.previews widget />
+  ```
+
+- Add a function to retrieve the current logged in user:
+
+  ```tsx
+  console.log(await cms.user())
+  ```
+
 ## [0.6.2]
 
 - Live-reload changes to `.css` files used for custom fields and views.
