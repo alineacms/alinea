@@ -45,6 +45,12 @@ const styles = `
   .inner.is-centered {
     border-color: #8189e5;
   }
+  .inner[data-dragging="true"] {
+    cursor: grabbing;
+  }
+  .inner[data-dragging="true"] * {
+    pointer-events: none;
+  }
   .logo {
     display: block;
     height: 25px;
@@ -123,6 +129,7 @@ function PreviewWidget({dashboardUrl, workspace, root}: NextPreviewsProps) {
   })
 
   const [xPosition, setXPosition] = useState(0.5)
+  const [isDragging, setIsDragging] = useState(false)
   const isCentered = Math.abs(xPosition - 0.5) < 0.05
 
   function startDrag(event: React.MouseEvent) {
@@ -134,6 +141,7 @@ function PreviewWidget({dashboardUrl, workspace, root}: NextPreviewsProps) {
     const containerWidth = (event.currentTarget as HTMLElement).clientWidth
     const minOffset = containerWidth / 2
     function move(event: MouseEvent) {
+      setIsDragging(true)
       const deltaX = event.clientX - startX
       let newX = Math.max(0, Math.min(1, startOffset + deltaX / windowWidth))
       const min = minOffset / windowWidth
@@ -148,6 +156,7 @@ function PreviewWidget({dashboardUrl, workspace, root}: NextPreviewsProps) {
       if (isCentered) setXPosition(0.5)
       window.removeEventListener('mousemove', move)
       window.removeEventListener('mouseup', stop)
+      setTimeout(() => setIsDragging(false), 0)
     }
     window.addEventListener('mousemove', move)
     window.addEventListener('mouseup', stop)
@@ -168,7 +177,6 @@ function PreviewWidget({dashboardUrl, workspace, root}: NextPreviewsProps) {
   }, [])
 
   if (closed) return null
-
   return (
     <ShadowRoot>
       <style>{styles}</style>
@@ -179,7 +187,10 @@ function PreviewWidget({dashboardUrl, workspace, root}: NextPreviewsProps) {
         }}
         onMouseDown={startDrag}
       >
-        <div className={`inner` + (isCentered ? ` is-centered` : ``)}>
+        <div
+          className={`inner` + (isCentered ? ` is-centered` : ``)}
+          data-dragging={isDragging}
+        >
           <a
             href={String(adminUrl)}
             target="_top"
