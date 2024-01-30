@@ -77,12 +77,6 @@ export function createLocalServer(
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
     initial = true
   const config = {
-    external: [
-      'next/navigation.js',
-      'next/dynamic.js',
-      'next/headers.js',
-      '@alinea/generated/store.js'
-    ],
     format: 'esm',
     target: 'esnext',
     treeShaking: true,

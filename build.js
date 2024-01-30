@@ -35,20 +35,11 @@ const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
     'fs-extra',
-    '@alinea/generated',
-    '@alinea/iso',
-    '@alinea/sqlite-wasm',
+    '@alinea',
     'next',
-    'next/navigation.js',
-    'next/dynamic.js',
-    'next/headers.js',
-    '@remix-run/node',
-    '@remix-run/react',
-    'react/jsx-runtime',
+    '@remix-run',
     'react',
     'react-dom',
-    'sass',
-    'glob',
     'esbuild'
   ])
 
