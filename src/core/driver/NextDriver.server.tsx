@@ -1,3 +1,5 @@
+'use server'
+
 import {JWTPreviews} from 'alinea/backend'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
