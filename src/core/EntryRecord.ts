@@ -1,4 +1,4 @@
-import {object, string} from 'cito'
+import {boolean, object, string} from 'cito'
 import {EntryRow} from './EntryRow.js'
 
 export const META_KEY = '@alinea'
@@ -12,6 +12,8 @@ export const EntryMeta = object(
     index = string
     root? = string.optional
     seeded? = string.optional
+      // Todo: Backwards comptability, remove at 1.0
+      .or(boolean)
   }
 )
 
