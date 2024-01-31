@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.4]
+
+- Improve page seeding in roots with multiple languages. Seeding content is
+  currently undocumented until it reaches a stable interface.
+
 ## [0.6.3]
 
 - Add a preview widget which enables editors to easily switch from previewing
