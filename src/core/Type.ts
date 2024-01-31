@@ -29,7 +29,7 @@ export interface EntryUrlMeta {
 }
 
 /** Optional settings to configure a Type */
-export interface TypeMeta {
+export interface TypeOptions {
   /** Accepts entries of these types as children */
   contains?: Array<string>
   /** Accept entries of any type as children */
@@ -57,7 +57,7 @@ export interface TypeData {
   shape: RecordShape
   hint: Hint
   definition: TypeDefinition
-  meta: TypeMeta
+  options: TypeOptions
   sections: Array<Section>
   target: TypeTarget
 }
@@ -89,8 +89,8 @@ export namespace Type {
     return type[Type.Data].label
   }
 
-  export function meta(type: Type): TypeMeta {
-    return type[Type.Data].meta
+  export function meta(type: Type): TypeOptions {
+    return type[Type.Data].options
   }
 
   export function shape(type: Type): RecordShape {
@@ -114,7 +114,7 @@ export namespace Type {
   }
 
   export function isContainer(type: Type) {
-    const {meta} = type[Type.Data]
+    const {options: meta} = type[Type.Data]
     return Boolean(meta.isContainer || meta.contains)
   }
 
@@ -153,12 +153,14 @@ function fieldsOfDefinition(
 class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   shape: RecordShape
   hint: Hint
-  meta: TypeMeta
   sections: Array<Section> = []
   target: Type<Definition>
 
-  constructor(public label: Label, public definition: Definition) {
-    this.meta = this.definition[Meta] || {}
+  constructor(
+    public label: Label,
+    public definition: Definition,
+    public options: TypeOptions = definition[Meta] ?? {}
+  ) {
     this.shape = new RecordShape(
       label,
       fromEntries(
@@ -266,26 +268,31 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
 
 export interface TypeDefinition {
   [key: string]: Field<any, any> | Section
-  readonly [Meta]?: TypeMeta
+  readonly [Meta]?: TypeOptions
 }
 
 /** Create a new type */
 export function type<Definition extends TypeDefinition>(
-  definition: Definition
+  definition: Definition,
+  options?: TypeOptions
 ): Type<StripMeta<Definition>>
 export function type<Definition extends TypeDefinition>(
   label: string,
-  definition: Definition
+  definition: Definition,
+  options?: TypeOptions
 ): Type<StripMeta<Definition>>
 export function type<Definition extends TypeDefinition>(
   label: string | Definition,
-  definition?: Definition
+  definition: Definition | TypeOptions,
+  options?: TypeOptions
 ): Type<StripMeta<Definition>> {
   const title = typeof label === 'string' ? label : 'Anonymous'
   const def = typeof label === 'string' ? definition : label
+  const opt = typeof label === 'string' ? options : definition
   const instance = new TypeInstance<StripMeta<Definition>>(
     title,
-    def as Definition
+    def as Definition,
+    opt as TypeOptions
   )
   return instance.target
 }

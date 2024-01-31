@@ -6,7 +6,7 @@ import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundShare} from 'alinea/ui/icons/IcRoundShare'
 import {Label} from './Label.js'
 import {Meta} from './Meta.js'
-import {Type, TypeDefinition, type} from './Type.js'
+import {Type, TypeDefinition, TypeOptions, type} from './Type.js'
 
 type Document<Definition> = {
   title: TextField
@@ -16,25 +16,31 @@ type Document<Definition> = {
 
 export function document<Definition extends TypeDefinition>(
   label: Label,
-  definition: Definition
+  definition: Definition,
+  options: TypeOptions = definition[Meta] ?? {}
 ): Type<Document<Definition>> {
-  return type(label, {
-    ...tabs(
-      tab('Document', {
-        title: text('Title', {required: true, width: 0.5}),
-        path: path('Path', {required: true, width: 0.5}),
-        ...definition,
-        [Meta]: {
-          icon: IcRoundInsertDriveFile
-        }
-      }),
-      tab('Metadata', {
-        metadata: metadata(),
-        [Meta]: {
-          icon: IcRoundShare
-        }
-      })
-    ),
-    [Meta]: definition[Meta]
-  }) as any
+  return type(
+    label,
+    {
+      ...tabs(
+        tab(
+          'Document',
+          {
+            title: text('Title', {required: true, width: 0.5}),
+            path: path('Path', {required: true, width: 0.5}),
+            ...definition
+          },
+          {icon: IcRoundInsertDriveFile}
+        ),
+        tab(
+          'Metadata',
+          {
+            metadata: metadata()
+          },
+          {icon: IcRoundShare}
+        )
+      )
+    },
+    options
+  ) as any
 }

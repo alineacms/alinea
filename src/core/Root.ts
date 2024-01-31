@@ -6,7 +6,7 @@ export interface RootI18n {
   locales: Array<string>
 }
 
-export interface RootMeta {
+export interface RootOptions {
   contains?: Array<string>
   icon?: ComponentType
   i18n?: RootI18n
@@ -16,10 +16,10 @@ export interface RootMeta {
 
 export interface RootDefinition {
   [key: string]: PageSeed
-  [Meta]?: RootMeta
+  [Meta]?: RootOptions
 }
 
-export interface RootData extends RootMeta {
+export interface RootData extends RootOptions {
   label: Label
 }
 
@@ -51,13 +51,14 @@ export namespace Root {
 
 export function root<Definition extends RootDefinition>(
   label: Label,
-  definition: Definition
+  definition: Definition,
+  options: RootOptions = definition[Meta] ?? {}
 ): Root<StripMeta<Definition>> {
   return {
     ...definition,
     [Root.Data]: {
       label,
-      ...definition[Meta]
+      ...options
     }
   }
 }

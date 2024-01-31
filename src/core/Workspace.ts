@@ -5,7 +5,7 @@ import {Meta, StripMeta} from './Meta.js'
 import {Root} from './Root.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 
-export interface WorkspaceMeta {
+export interface WorkspaceOptions {
   /** A directory which contains the json entry files */
   source: string
   /** The directory where media files are placed in case a file backend is used */
@@ -15,7 +15,7 @@ export interface WorkspaceMeta {
   icon?: ComponentType
 }
 
-export interface WorkspaceData extends WorkspaceMeta {
+export interface WorkspaceData extends WorkspaceOptions {
   label: Label
   roots: Roots
   color: string
@@ -25,7 +25,7 @@ type Roots = Record<string, Root>
 
 export interface WorkspaceDefinition {
   [key: string]: Root
-  [Meta]: WorkspaceMeta
+  [Meta]?: WorkspaceOptions
 }
 
 export type Workspace<Definition extends Roots = Roots> = Definition & {
@@ -58,17 +58,17 @@ export namespace Workspace {
 export function workspace<Definition extends WorkspaceDefinition>(
   /** The name of the workspace */
   label: Label,
-  definition: Definition
+  definition: Definition,
+  options: WorkspaceOptions | undefined = definition[Meta]
 ): Workspace<StripMeta<Definition>> {
-  if (!definition[Meta])
-    throw new Error(`Workspace definition must contain a meta property`)
+  if (!options) throw new Error(`Workspace requires option source to be set`)
   return {
     ...definition,
     [Workspace.Data]: {
       label,
       roots: definition,
-      ...definition[Meta],
-      color: definition[Meta].color ?? getRandomColor(JSON.stringify(label))
+      ...options,
+      color: options.color ?? getRandomColor(JSON.stringify(label))
     }
   }
 }
