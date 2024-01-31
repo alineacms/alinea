@@ -179,7 +179,7 @@ export default function Playground() {
         'alinea/dashboard': dashboard
       }
       const require = (name: string) => pkgs[name]
-      exec(require, exports, React, alinea.alinea)
+      exec(require, exports, React, alinea)
       setState({result: exports.default})
     } catch (error) {
       setState({...state, error})
@@ -199,7 +199,7 @@ export default function Playground() {
   }, [code])
   const client = React.use(connection)
   return (
-    <DashboardProvider dev client={client} config={example}>
+    <DashboardProvider dev client={client} config={example.config}>
       <Script
         src="https://cdn.jsdelivr.net/npm/typescript@5.1.3/lib/typescript.min.js"
         onLoad={() => {
