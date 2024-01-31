@@ -26,9 +26,8 @@ export async function createPersistentStore(): Promise<PersistentStore> {
     sqlitePromise
   ])
 
-  const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
-
   // Cleanup older versions, delete all databases except the current one
+  let store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
   const databases = await idb.getAllKeys(store)
   for (const name of databases) {
     if (name !== dbName) {
@@ -37,6 +36,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
   }
 
   // See if we have a blob available to initialize the database with
+  store = idb.transact(storage, [STORAGE_NAME], 'readonly')[0]
   const buffer = await idb.get(store, dbName)
   const init = ArrayBuffer.isView(buffer) ? buffer : undefined
   let db = new Database(init)
@@ -74,6 +74,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
   const persistent = {
     store: connect(db, driverOptions).toAsync(),
     async flush() {
+      store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
       await idb.put(store, db.export(), dbName)
     },
     clone() {
@@ -81,6 +82,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
       return connect(clone, driverOptions).toAsync()
     },
     async clear() {
+      store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
       await idb.del(store, dbName)
       db = new Database()
       persistent.store = connect(db, driverOptions).toAsync()
