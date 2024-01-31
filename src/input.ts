@@ -1,5 +1,3 @@
-// Included inputs
-export {document} from 'alinea/core/Document'
 export {check} from 'alinea/input/check'
 export {code} from 'alinea/input/code'
 export {date} from 'alinea/input/date'

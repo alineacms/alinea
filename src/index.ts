@@ -1,14 +1,12 @@
-// Config creation
-export {Root, Workspace} from 'alinea/core'
-export type {Config, Infer, Schema, TextDoc, Type} from 'alinea/core'
-export * from 'alinea/core/driver/DefaultDriver'
-export * from 'alinea/core/driver/NextDriver'
-export {alinea}
+export * from './alinea.js'
 import * as alinea from './alinea.js'
-export default alinea
-export type {
-  EntryReference,
-  FileReference,
-  ImageReference
-} from 'alinea/picker/entry/EntryReference'
-export type {UrlReference} from 'alinea/picker/url'
+
+export {alinea as default}
+
+// Next CMS constructor - deprecated
+import {createNextCMS as _createNextCMS} from 'alinea/core/driver/NextDriver'
+export {createNextCMS}
+/** @deprecated Use import {createCMS} from 'alinea/next' instead */
+const createNextCMS = _createNextCMS
+
+export * from 'alinea/core/driver/DefaultDriver'

@@ -1,4 +1,5 @@
-import alinea, {createNextCMS} from 'alinea'
+import alinea from 'alinea'
+import {createCMS} from 'alinea/next'
 import * as schema from './schema'
 
 const pages = alinea.root('Pages', {
@@ -34,4 +35,4 @@ const config = alinea.config({
       : '/api/preview'
 })
 
-export const cms = createNextCMS(config)
+export const cms = createCMS(config)
