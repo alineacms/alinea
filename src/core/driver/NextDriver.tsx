@@ -1,7 +1,6 @@
 import {CMSApi} from '../CMS.js'
 import {Config} from '../Config.js'
 import {User} from '../User.js'
-import {DefaultDriver} from './DefaultDriver.js'
 
 export interface PreviewProps {
   widget?: boolean
@@ -19,5 +18,5 @@ export interface NextApi extends CMSApi {
 export function createNextCMS<Definition extends Config>(
   config: Definition
 ): Definition & NextApi {
-  return new DefaultDriver(config) as any
+  throw new Error('Your CMS instance should not be used client-side')
 }
