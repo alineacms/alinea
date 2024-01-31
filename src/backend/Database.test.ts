@@ -29,7 +29,7 @@ async function entry(
     type: typeNames.get(type)!,
     title,
     path: data.path ?? slugify(title),
-    seeded: false,
+    seeded: null,
     workspace: 'main',
     root: 'pages',
     level: 0,
@@ -174,6 +174,7 @@ test('change published path for entry with language', async () => {
   const example = createExample()
   const db = await example.db
   const multi = example.in(example.workspaces.main.multiLanguage)
+  console.log(await multi.find(Entry()))
   const localised3 = await multi.get(Entry({path: 'localised3'}))
   assert.is(localised3.url, '/en/localised2/localised3')
 

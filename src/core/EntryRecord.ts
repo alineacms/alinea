@@ -1,4 +1,4 @@
-import {boolean, object, string} from 'cito'
+import {object, string} from 'cito'
 import {EntryRow} from './EntryRow.js'
 
 export const META_KEY = '@alinea'
@@ -11,7 +11,7 @@ export const EntryMeta = object(
     type = string
     index = string
     root? = string.optional
-    seeded? = boolean.optional
+    seeded? = string.optional
   }
 )
 
