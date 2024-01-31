@@ -1,5 +1,6 @@
 {
   "title": "Live previews",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -84,13 +85,32 @@
         {
           "id": "2YlDBfC8A8tt3H8vaxKz1JZuov8",
           "type": "CodeBlock",
-          "code": "import {cms} from '@/cms'\n\nexport default async function Layout({children}: PropsWithChildren) {\n  return (\n    <>\n      <header />\n      <main>{children}</main>\n      <footer />\n      <cms.previews />\n    </>\n  )\n}",
+          "code": "import {cms} from '@/cms'\n\nexport default async function Layout({children}: PropsWithChildren) {\n  return (\n    <>\n      <header />\n      <main>{children}</main>\n      <footer />\n      <cms.previews widget />\n    </>\n  )\n}",
           "fileName": "app/layout.tsx",
           "language": "",
           "compact": false
         }
       ],
       "js": []
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "This will enable a little widget at the bottom of the page that confirms to the editor they're looking at a preview of the page. If you don't want a preview widget but do want live previews, remove the `widget` prop."
+        }
+      ]
+    },
+    {
+      "id": "2bdTZ8LeQUAM9wSSymghzMuF2fc",
+      "type": "ImageBlock",
+      "image": {
+        "id": "2bdTdyQCKpFuiWrKw0kQb3VLG62",
+        "type": "image",
+        "entry": "2bdTdpHQw9EAiuPIPvHIThCKOnT"
+      }
     }
   ],
   "metadata": {

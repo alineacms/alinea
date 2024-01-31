@@ -233,7 +233,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       url,
       index: generateKeyBetween(null, parent?.childrenIndex || null),
       parent: parent?.id ?? null,
-      seeded: false,
+      seeded: null,
       level: parent ? parent.level + 1 : 0,
       parentDir: parentDir,
       childrenDir: childrenDir,

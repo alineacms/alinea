@@ -1,0 +1,59 @@
+{
+  "title": "Seeded page",
+  "text": "",
+  "hello": "hello",
+  "richText": [],
+  "externalLink": {},
+  "entry": {},
+  "entryWithCondition": {},
+  "linkMultiple": [],
+  "image": {},
+  "images": [],
+  "file": {},
+  "withFields": {},
+  "multipleWithFields": [],
+  "list": [],
+  "withInitial": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "This is a paragraph with initial value"
+        }
+      ]
+    }
+  ],
+  "nested": [],
+  "street": "",
+  "streetNr": "",
+  "box": "",
+  "zip": "",
+  "city": "",
+  "country": "",
+  "object": {
+    "fieldA": "",
+    "fieldB": ""
+  },
+  "tabA": "",
+  "tabB": "",
+  "shared": "This is shared",
+  "nestedList": [],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2biVnIbzfvslFRzFXSvaI7JJ95b",
+    "type": "Fields",
+    "index": "a0",
+    "seeded": "/fr/seededpath.json",
+    "i18nId": "2biVnHG1AqV27e1ihkmoztfFCmY",
+    "root": "pages"
+  }
+}

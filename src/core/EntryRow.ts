@@ -20,7 +20,7 @@ export class EntryTable {
   phase = column.string<EntryPhase>()
   title = column.string
   type = column.string
-  seeded = column.boolean.default(false)
+  seeded = column.string.nullable
 
   // Hierarchy
   workspace = column.string

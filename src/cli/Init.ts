@@ -53,7 +53,7 @@ export async function init(options: InitOptions) {
         title: 'Welcome',
         alinea: {
           index: 'a0',
-          seeded: true
+          seeded: 'welcome.json'
         }
       },
       null,

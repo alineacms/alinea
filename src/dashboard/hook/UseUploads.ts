@@ -6,7 +6,8 @@ import {
   EntryPhase,
   EntryRow,
   HttpError,
-  Workspace
+  Workspace,
+  slugify
 } from 'alinea/core'
 import {entryFileName, entryFilepath} from 'alinea/core/EntryFilenames'
 import {createId} from 'alinea/core/Id'
@@ -161,7 +162,9 @@ async function process(
     }
     case UploadStatus.Uploading: {
       const fileName = upload.file.name
-      const file = join(upload.to.directory, fileName)
+      const extension = extname(fileName)
+      const path = slugify(basename(fileName, extension))
+      const file = join(upload.to.directory, path + extension)
       const info = await client.prepareUpload(file)
       await fetch(info.upload.url, {
         method: info.upload.method ?? 'POST',
@@ -244,9 +247,10 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         }
       })
     )
+
+    const extension = extname(upload.file.name)
+    const path = slugify(basename(upload.file.name, extension))
     const prev = await graph.preferPublished.maybeGet(Entry({parent: parentId}))
-    const extension = extname(upload.file.name.toLowerCase())
-    const path = basename(upload.file.name.toLowerCase(), extension)
 
     const entryLocation = {
       workspace: upload.to.workspace,
@@ -270,14 +274,15 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         : location
 
     const hash = await createFileHash(new Uint8Array(buffer))
+    const title = basename(upload.file.name, extension)
     const entry = await createEntryRow<Media.File>(config, {
       ...entryLocation,
       parent: parent?.entryId ?? null,
       entryId: entryId,
       type: 'MediaFile',
       url: (parent ? parent.url : '') + '/' + path,
-      title: basename(path, extension),
-      seeded: false,
+      title,
+      seeded: null,
       modifiedAt: Date.now(),
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
@@ -290,7 +295,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       active: true,
       main: true,
       data: {
-        title: basename(path, extension),
+        title,
         location: fileLocation,
         extension: extension,
         size: buffer.byteLength,

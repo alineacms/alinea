@@ -3,9 +3,11 @@ import {Handler} from 'alinea/backend/Handler'
 import {HttpRouter} from 'alinea/backend/router/Router'
 import {createCloudDebugHandler} from 'alinea/cloud/server/CloudDebugHandler'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
+import {Auth, localUser} from 'alinea/core'
 import {CMS} from 'alinea/core/CMS'
 import {BuildOptions} from 'esbuild'
 import path from 'node:path'
+import simpleGit from 'simple-git'
 import pkg from '../../package.json'
 import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
@@ -85,6 +87,12 @@ export async function serve(options: ServeOptions): Promise<void> {
   let cms: CMS | undefined
   let handle: HttpRouter | undefined
 
+  const git = simpleGit(rootDir)
+  const [name = localUser.name, email] = (
+    await Promise.all([git.getConfig('user.name'), git.getConfig('user.email')])
+  ).map(res => res.value ?? undefined)
+  const user = {...localUser, name, email}
+
   while (true) {
     const current = await nextGen
     if (!current?.value) return
@@ -92,8 +100,14 @@ export async function serve(options: ServeOptions): Promise<void> {
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
+      const history = new GitHistory(git, currentCMS.config, rootDir)
+      const auth: Auth.Server = {
+        async contextFor() {
+          return {user}
+        }
+      }
       const backend = createBackend()
-      handle = createLocalServer(context, backend)
+      handle = createLocalServer(context, backend, user)
       cms = currentCMS
       context.liveReload.reload('refresh')
 
@@ -107,12 +121,13 @@ export async function serve(options: ServeOptions): Promise<void> {
             process.env.ALINEA_API_KEY
           )
         return new Handler({
+          auth,
           config: currentCMS.config,
           db,
           target: fileData,
           media: fileData,
           drafts,
-          history: new GitHistory(currentCMS.config, rootDir),
+          history,
           previews: new JWTPreviews('dev'),
           previewAuthToken: 'dev'
         })

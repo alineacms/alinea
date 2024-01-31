@@ -12,7 +12,7 @@ import {locationAtom, matchAtoms} from './LocationAtoms.js'
 
 export interface RouteData<T> {
   path: string
-  loader: (params: Record<string, string>) => Atom<Promise<T>>
+  loader?: (params: Record<string, string>) => Atom<Promise<T>>
   component: FunctionComponent<T>
 }
 
@@ -50,7 +50,8 @@ export class Router {
   matchingRouteWithData = atom(async (get): Promise<Match> => {
     const match = get(this.matchingRoute)
     if (!match) return undefined
-    const data = await get(match.route.data.loader(match.params))
+    const {loader} = match.route.data
+    const data = loader ? await get(loader(match.params)) : {}
     return {route: match.route, data, params: match.params}
   })
 

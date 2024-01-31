@@ -7,7 +7,7 @@ export interface Entry {
   phase: EntryPhase
   title: string
   type: string
-  seeded: boolean
+  seeded: string | null
   workspace: string
   root: string
   level: number

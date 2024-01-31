@@ -1,3 +1,5 @@
+'use server'
+
 import {JWTPreviews} from 'alinea/backend'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
@@ -7,18 +9,20 @@ import {
   PREVIEW_UPDATE_NAME
 } from 'alinea/preview/PreviewConstants'
 import {enums, object, string} from 'cito'
+import dynamic from 'next/dynamic.js'
 import PLazy from 'p-lazy'
-import {Suspense, lazy} from 'react'
+import {Suspense} from 'react'
 import {Client} from '../Client.js'
 import {Config} from '../Config.js'
 import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
 import {outcome} from '../Outcome.js'
 import {ResolveDefaults, Resolver} from '../Resolver.js'
+import {User} from '../User.js'
 import {createSelection} from '../pages/CreateSelection.js'
 import {Realm} from '../pages/Realm.js'
 import {DefaultDriver} from './DefaultDriver.server.js'
-import {NextApi} from './NextDriver.js'
+import {NextApi, PreviewProps} from './NextDriver.js'
 
 const SearchParams = object({
   token: string,
@@ -26,9 +30,26 @@ const SearchParams = object({
   realm: enums(Realm)
 })
 
+const PREVIEW_TOKEN = 'alinea-preview-token'
+
 class NextDriver extends DefaultDriver implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
   jwtSecret = this.apiKey || 'dev'
+
+  async user(): Promise<User | null> {
+    const {cookies, draftMode} = await import('next/headers.js')
+    const [draftStatus] = outcome(() => draftMode())
+    const isDraft = draftStatus?.isEnabled
+    // We exit early if we're not in draft mode to avoid marking every page
+    // as dynamic
+    if (!isDraft) return null
+    const token = cookies().get(PREVIEW_TOKEN)?.value
+    if (!token) return null
+    const previews = new JWTPreviews(this.jwtSecret)
+    const payload = await previews.verify(token)
+    if (!payload) return null
+    return payload
+  }
 
   async getDefaults(): Promise<ResolveDefaults> {
     const {cookies, draftMode} = await import('next/headers.js')
@@ -92,7 +113,8 @@ class NextDriver extends DefaultDriver implements NextApi {
       realm: searchParams.get('realm')
     })
     const previews = new JWTPreviews(this.jwtSecret)
-    const payload = await previews.verify(params.token)
+    await previews.verify(params.token)
+    cookies().set(PREVIEW_TOKEN, params.token)
     if (!searchParams.has('full')) {
       // Clear preview cookies
       cookies().delete(PREVIEW_UPDATE_NAME)
@@ -120,15 +142,34 @@ class NextDriver extends DefaultDriver implements NextApi {
     })
   }
 
-  async previews(): Promise<JSX.Element | null> {
+  previews = async ({
+    widget,
+    workspace,
+    root
+  }: PreviewProps): Promise<JSX.Element | null> => {
     const {draftMode} = await import('next/headers.js')
     const [draftStatus] = outcome(() => draftMode())
     const isDraft = draftStatus?.isEnabled
     if (!isDraft) return null
-    const NextPreviews = lazy(() => import('alinea/core/driver/NextPreviews'))
+    const user = await this.user()
+    const NextPreviews = dynamic(
+      () => import('alinea/core/driver/NextPreviews'),
+      {ssr: false}
+    )
+    const devUrl = process.env.ALINEA_DEV_SERVER
+    const dashboardUrl =
+      devUrl ?? this.config.dashboard?.dashboardUrl ?? '/admin.html'
     return (
       <Suspense>
-        <NextPreviews />
+        {user && (
+          <NextPreviews
+            widget={widget}
+            user={user}
+            dashboardUrl={dashboardUrl}
+            workspace={workspace}
+            root={root}
+          />
+        )}
       </Suspense>
     )
   }

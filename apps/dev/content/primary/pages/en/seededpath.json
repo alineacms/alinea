@@ -1,0 +1,12 @@
+{
+  "@alinea": {
+    "entryId": "2biVnGJdrJMNLuVarwl3DeQDTy2",
+    "type": "Fields",
+    "index": "a0",
+    "seeded": "/en/seededpath.json",
+    "i18nId": "2biVnHG1AqV27e1ihkmoztfFCmY",
+    "root": "pages"
+  },
+  "tabA": "",
+  "shared": "This is shared"
+}

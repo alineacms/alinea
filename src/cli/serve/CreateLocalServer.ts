@@ -2,7 +2,7 @@ import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {Handler} from 'alinea/backend'
 import {HttpRouter, router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/server/CloudConfig'
-import {Trigger, trigger} from 'alinea/core'
+import {Trigger, User, trigger} from 'alinea/core'
 import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -66,7 +66,8 @@ export function createLocalServer(
     production,
     liveReload
   }: ServeContext,
-  handler: Handler
+  handler: Handler,
+  user: User
 ): HttpRouter {
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
@@ -76,7 +77,6 @@ export function createLocalServer(
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
     initial = true
   const config = {
-    external: ['next/navigation', 'next/headers', '@alinea/generated/store.js'],
     format: 'esm',
     target: 'esnext',
     treeShaking: true,
@@ -95,6 +95,7 @@ export function createLocalServer(
     plugins: buildOptions?.plugins || [],
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
+      'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
       'process.env.NODE_ENV': production ? "'production'" : "'development'",
       'process.env.ALINEA_CLOUD_URL': cloudUrl
         ? JSON.stringify(cloudUrl)

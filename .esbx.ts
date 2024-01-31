@@ -8,6 +8,8 @@ export const VersionTask = {
   action(semver) {
     const root = getManifest('.')
     root.version = semver
+    // Remove the workspaces property because it is only used internally
+    delete root.workspaces
     fs.writeFileSync('package.json', JSON.stringify(root, null, 2) + '\n')
     report(`bumped version to ${semver}`, false)
   }

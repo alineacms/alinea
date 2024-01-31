@@ -234,6 +234,11 @@ export const cms = createCMS({
         }
       }),
       pages: alinea.root('Languages', {
+        seededPath: alinea.page(
+          Fields({
+            title: 'Seeded page'
+          })
+        ),
         [alinea.meta]: {
           icon: IcRoundTranslate,
           contains: ['TabsExample', 'Fields', 'Page', 'Folder'],
