@@ -1,4 +1,5 @@
-import alinea, {createCMS} from 'alinea'
+import alinea from 'alinea'
+import {createCMS} from 'alinea/core'
 
 const Page = alinea.type('Page', {
   title: alinea.text('Title'),

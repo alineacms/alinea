@@ -66,7 +66,7 @@ export async function init(options: InitOptions) {
     'utf-8'
   )
   const configFileContents = options.next
-    ? configFile.replaceAll('createCMS', 'createNextCMS')
+    ? configFile.replaceAll('alinea/core', 'alinea/next')
     : configFile
   const hasSrcDir = (await outcome(fs.stat(path.join(cwd, 'src')))).isSuccess()
   const configFileLocation = path.join(

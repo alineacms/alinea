@@ -15,20 +15,10 @@
     {
       "id": "2a4tC7lBmNMZUuJDec7zsG4st62",
       "type": "CodeBlock",
-      "code": "import {createNextCMS} from 'alinea'\n\nexport const cms = createNextCMS({\n  workspaces, schema, dashboard, preview\n})",
+      "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  workspaces, schema, dashboard, preview\n})",
       "fileName": "cms.tsx",
       "language": "",
       "compact": false
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "The `alinea` package exports a general purpose `createCMS` function as well as framework specific functions such as `createNextCMS`. The framework specific instances expose helper methods to help integrate the content into your framework of choice."
-        }
-      ]
     },
     {
       "type": "heading",

@@ -1,5 +1,5 @@
-import alinea, {createCMS} from 'alinea'
-import {Entry} from 'alinea/core'
+import alinea from 'alinea'
+import {Entry, createCMS} from 'alinea/core'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import {position} from './src/PositionField'

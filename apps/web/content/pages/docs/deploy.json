@@ -1,5 +1,6 @@
 {
   "title": "Deploy",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -66,7 +67,7 @@
         {
           "id": "2YlDwmJLzaL93bp5gYZmshbJG1P",
           "type": "CodeBlock",
-          "code": "export const cms = createNextCMS({\n  // schema and workspaces ...\n  dashboard: {\n    handlerUrl: '/api/cms',\n    staticFile: 'public/admin.html',\n    dashboardUrl: '/admin.html'\n  }\n})",
+          "code": "export const cms = createCMS({\n  // schema and workspaces ...\n  dashboard: {\n    handlerUrl: '/api/cms',\n    staticFile: 'public/admin.html',\n    dashboardUrl: '/admin.html'\n  }\n})",
           "fileName": "",
           "language": "",
           "compact": false
