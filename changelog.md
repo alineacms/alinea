@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0]
+
+- File and image titles can be edited. A focus point can be chosen for images.
+- The exports of the alinea package are restructured. Unless you were using the
+  now removed named `alinea` exports this should not be a breaking change.
+- The `createNextCMS` function is now deprecated and it is recommended to
+  import it as `{createCMS} from 'alinea/next'` instead.
+- The local database which stores content for editors is now rebuilt on `alinea`
+  version changes. This means breaking changes to the schema will not cause
+  errors in the browser.
+- Upload file names and paths are now slugified correctly.
+
 ## [0.6.4]
 
 - Improve page seeding in roots with multiple languages. Seeding content is
