@@ -17,7 +17,7 @@ __metadata:
   resolution: "@alinea/auth.passwordless@workspace:src/auth/passwordless"
   dependencies:
     "@types/nodemailer": ^6.4.4
-    nodemailer: ^6.6.5
+    nodemailer: ^6.9.9
     superstruct: ^1.0.3
   languageName: unknown
   linkType: soft
@@ -8567,10 +8567,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:^6.6.5":
-  version: 6.7.3
-  resolution: "nodemailer@npm:6.7.3"
-  checksum: b94d099f00f25666fc96a7cb498045e7428045b8cc0245ce10522190fd513b586d6e31305afd019f6878f1540d14d169d0dbe2e1f77385795c7054912d822ec0
+"nodemailer@npm:^6.9.9":
+  version: 6.9.9
+  resolution: "nodemailer@npm:6.9.9"
+  checksum: 9af862b497273796ad6ba7ca9eac23a7d69737554f6dd51cfd3557f60902c56344158192672f1208daf00340a47a9e1805bd809965edc191011b35dd98a74be1
   languageName: node
   linkType: hard
 

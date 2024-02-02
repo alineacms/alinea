@@ -6,6 +6,6 @@
   },
   "devDependencies": {
     "@types/nodemailer": "^6.4.4",
-    "nodemailer": "^6.6.5"
+    "nodemailer": "^6.9.9"
   }
 }
