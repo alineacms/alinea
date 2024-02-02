@@ -3,7 +3,14 @@ import {Connection} from './Connection.js'
 import {Graph, GraphRealm} from './Graph.js'
 import {Resolver} from './Resolver.js'
 import {Root} from './Root.js'
-import {CreateOp, DeleteOp, EditOp, Op, Transaction} from './Transaction.js'
+import {
+  CreateOp,
+  DeleteOp,
+  EditOp,
+  Op,
+  Transaction,
+  UploadOp
+} from './Transaction.js'
 import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {entries} from './util/Objects.js'
@@ -46,6 +53,10 @@ export abstract class CMS extends GraphRealm {
 
   delete(entryId: string) {
     return new DeleteOp(new Transaction(this), entryId)
+  }
+
+  upload(fileName: string, data: Uint8Array) {
+    return new UploadOp(new Transaction(this), fileName, data)
   }
 
   #attach(config: Config) {

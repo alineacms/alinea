@@ -1,6 +1,7 @@
 import PLazy from 'p-lazy'
 import {CMS} from './CMS.js'
 import {Config} from './Config.js'
+import {Connection} from './Connection.js'
 import {Entry} from './Entry.js'
 import {
   entryChildrenDir,
@@ -10,6 +11,7 @@ import {
 } from './EntryFilenames.js'
 import {EntryPhase, EntryRow} from './EntryRow.js'
 import {GraphRealm} from './Graph.js'
+import {HttpError} from './HttpError.js'
 import {createId} from './Id.js'
 import {Mutation, MutationType} from './Mutation.js'
 import {Root} from './Root.js'
@@ -20,16 +22,23 @@ import {slugify} from './util/Slugs.js'
 
 export class Transaction {
   commited = false
+  cnx: Promise<Connection>
   constructor(
     protected cms: CMS,
     protected tasks: Array<(cms: CMS) => Promise<Array<Mutation>>> = []
-  ) {}
+  ) {
+    this.cnx = this.cms.connection()
+  }
+
+  get graph() {
+    return this.cms.graph
+  }
 
   get config() {
     return this.cms.config
   }
 
-  addTask(task: (cms: CMS) => Promise<Array<Mutation>>) {
+  addTask(task: () => Promise<Array<Mutation>>) {
     this.tasks.push(task)
     return this
   }
@@ -38,7 +47,7 @@ export class Transaction {
     if (this.commited) throw new Error(`Transaction already commited`)
     this.commited = true
     const mutations = await Promise.all(this.tasks.map(task => task(this.cms)))
-    const cnx = await this.cms.connection()
+    const cnx = await this.cnx
     const result = await cnx.mutate(mutations.flat())
     return result
   }
@@ -59,15 +68,51 @@ export class Op {
     return new DeleteOp(this.tx, entryId)
   }
 
+  upload(fileName: string, data: Uint8Array) {
+    return new UploadOp(this.tx, fileName, data)
+  }
+
   async commit() {
     await this.tx.commit()
+  }
+}
+
+export class UploadOp extends Op {
+  constructor(tx: Transaction, fileName: string, data: Uint8Array) {
+    super(
+      tx.addTask(async (): Promise<Array<Mutation>> => {
+        const {config, graph} = tx
+        const cnx = await tx.cnx
+        const info = await cnx.prepareUpload(fileName)
+        await fetch(info.upload.url, {
+          method: info.upload.method ?? 'POST',
+          body: data
+        }).then(async result => {
+          if (!result.ok)
+            throw new HttpError(
+              result.status,
+              `Could not reach server for upload`
+            )
+        })
+        // Todo: create entry here just as in UseUploads
+        return [
+          {
+            type: MutationType.Upload,
+            entryId: info.entryId,
+            url: info.previewUrl,
+            file: info.location
+          }
+        ]
+      })
+    )
   }
 }
 
 export class DeleteOp extends Op {
   constructor(tx: Transaction, protected entryId: string) {
     super(
-      tx.addTask(async ({config, graph}) => {
+      tx.addTask(async () => {
+        const {config, graph} = tx
         const entry = await graph.preferPublished.get(
           Entry({entryId: this.entryId})
         )
@@ -91,7 +136,8 @@ export class EditOp<Definition> extends Op {
 
   constructor(tx: Transaction, protected entryId: string) {
     super(
-      tx.addTask(async ({graph, config}) => {
+      tx.addTask(async () => {
+        const {config, graph} = tx
         let realm: GraphRealm
         if (this.changePhase === EntryPhase.Draft) realm = graph.preferDraft
         else if (this.changePhase === EntryPhase.Archived)
@@ -163,7 +209,7 @@ export class EditOp<Definition> extends Op {
     return this
   }
 
-  moveTo(workspace: string, root: string, parentId?: string) {
+  /*moveTo(workspace: string, root: string, parentId?: string) {
     throw new Error(`Not implemented`)
     return this
   }
@@ -173,7 +219,7 @@ export class EditOp<Definition> extends Op {
     return this
   }
 
-  /*createAfter<Definition>(type: Type<Definition>) {
+  createAfter<Definition>(type: Type<Definition>) {
     throw new Error(`Not implemented`)
     return new CreateOp(this.tx, type)
   }
@@ -205,6 +251,9 @@ export class EditOp<Definition> extends Op {
 }
 
 export class CreateOp<Definition> extends Op {
+  workspace?: string
+  root?: string
+  locale?: string | null
   entryData: Partial<Type.Infer<Definition>> = {}
   entryRow = PLazy.from(async () => {
     return createEntry(
@@ -222,12 +271,19 @@ export class CreateOp<Definition> extends Op {
     public entryId: string = createId()
   ) {
     super(
-      tx.addTask(async ({config, graph}): Promise<Array<Mutation>> => {
+      tx.addTask(async (): Promise<Array<Mutation>> => {
+        const {config} = tx
         const parent = await this.parentRow
         const entry = await createEntry(
           config,
           this.type,
-          {entryId: this.entryId, data: this.entryData ?? {}},
+          {
+            entryId: this.entryId,
+            workspace: this.workspace,
+            root: this.root,
+            locale: this.locale,
+            data: this.entryData ?? {}
+          },
           parent
         )
         const parentPaths = entryParentPaths(config, entry)
@@ -242,6 +298,28 @@ export class CreateOp<Definition> extends Op {
         ]
       })
     )
+  }
+
+  setParent(parentId: string) {
+    this.parentRow = PLazy.from(async () => {
+      return this.tx.graph.preferPublished.get(Entry({entryId: parentId}))
+    })
+    return this
+  }
+
+  setWorkspace(workspace: string) {
+    this.workspace = workspace
+    return this
+  }
+
+  setRoot(root: string) {
+    this.root = root
+    return this
+  }
+
+  setLocale(locale: string | null) {
+    this.locale = locale
+    return this
   }
 
   set(entryData: Partial<Type.Infer<Definition>>) {
@@ -262,9 +340,12 @@ async function createEntry(
 ): Promise<EntryRow> {
   const typeNames = Schema.typeNames(config.schema)
   const typeName = typeNames.get(type)!
-  const workspace = partial.workspace ?? Object.keys(config.workspaces)[0]
-  const root = partial.root ?? Object.keys(config.workspaces[workspace])[0]
+  const workspace =
+    parent?.workspace ?? partial.workspace ?? Object.keys(config.workspaces)[0]
+  const root =
+    parent?.root ?? partial.root ?? Object.keys(config.workspaces[workspace])[0]
   const locale =
+    parent?.locale ??
     partial.locale ??
     Root.defaultLocale(config.workspaces[workspace][root]) ??
     null

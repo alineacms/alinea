@@ -40,7 +40,11 @@ test('change draft path', async () => {
   assert.is(resParent0.url, '/parent')
   // Changing entry paths in draft should not have an influence on
   // computed properties such as url, filePath etc. until we publish.
-  await example.edit(parent.entryId).draft().set({path: 'new-path'}).commit()
+  await example
+    .edit(parent.entryId, Container)
+    .draft()
+    .set({path: 'new-path'})
+    .commit()
   const resParent1 = await example.graph.drafts.get(
     Entry({entryId: parent.entryId})
   )
