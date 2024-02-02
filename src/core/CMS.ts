@@ -1,7 +1,7 @@
 import {Store} from 'alinea/backend/Store'
-import {Resolver} from 'alinea/core'
 import {Config, createConfig} from './Config.js'
-import {Graph, GraphRealm, GraphRealmApi} from './Graph.js'
+import {Graph, GraphRealm} from './Graph.js'
+import {Resolver} from './Resolver.js'
 import {Root} from './Root.js'
 import {Workspace} from './Workspace.js'
 import {entries} from './util/Objects.js'
@@ -9,11 +9,7 @@ import {entries} from './util/Objects.js'
 type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
 
-export interface CMSApi extends GraphRealmApi {
-  resolver(): Promise<Resolver>
-}
-
-export abstract class CMS extends GraphRealm implements CMSApi {
+export abstract class CMS extends GraphRealm {
   graph: Graph
   config: Config
 
