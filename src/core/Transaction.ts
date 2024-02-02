@@ -28,10 +28,10 @@ export class Transaction {
 
   async commit() {
     if (this.commited) throw new Error(`Transaction already commited`)
+    this.commited = true
     const mutations = await Promise.all(this.tasks.map(task => task(this.cms)))
     const cnx = await this.cms.connection()
     const result = await cnx.mutate(mutations.flat())
-    this.commited = true
     return result
   }
 }
@@ -57,45 +57,70 @@ export class Op {
 }
 
 export class DeleteOp extends Op {
-  constructor(protected tx: Transaction, protected entryId: string) {
-    super(tx)
-    this.tx.addTask(async ({config, graph}) => {
-      const entry = await graph.preferPublished.get(
-        Entry({entryId: this.entryId})
-      )
-      const parentPaths = entryParentPaths(config, entry)
-      const file = entryFileName(config, entry, parentPaths)
-      return [
-        {
-          type: MutationType.Remove,
-          entryId: this.entryId,
-          file
-        }
-      ]
-    })
+  constructor(tx: Transaction, protected entryId: string) {
+    super(
+      tx.addTask(async ({config, graph}) => {
+        const entry = await graph.preferPublished.get(
+          Entry({entryId: this.entryId})
+        )
+        const parentPaths = entryParentPaths(config, entry)
+        const file = entryFileName(config, entry, parentPaths)
+        return [
+          {
+            type: MutationType.Remove,
+            entryId: this.entryId,
+            file
+          }
+        ]
+      })
+    )
   }
 }
 
 export class EditOp<Definition> extends Op {
-  entryData: Partial<Type.Infer<Definition>> = {}
+  entryData?: Partial<Type.Infer<Definition>>
+  changePhase?: EntryPhase
 
-  constructor(protected tx: Transaction, protected entryId: string) {
-    super(tx)
-    this.tx.addTask(async ({graph, config}) => {
-      const entry = await graph.preferPublished.get(
-        Entry({entryId: this.entryId})
-      )
-      const parentPaths = entryParentPaths(config, entry)
-      const file = entryFileName(config, entry, parentPaths)
-      return [
-        {
-          type: MutationType.Patch,
-          entryId: this.entryId,
-          file,
-          patch: this.entryData
+  constructor(
+    tx: Transaction,
+    protected entryId: string,
+    protected phase = EntryPhase.Published
+  ) {
+    super(
+      tx.addTask(async ({graph, config}) => {
+        const entry = await graph.all.get(
+          Entry({entryId: this.entryId, phase: this.phase})
+        )
+        const parentPaths = entryParentPaths(config, entry)
+        const file = entryFileName(config, entry, parentPaths)
+        const mutations: Array<Mutation> = []
+        if (this.entryData)
+          mutations.push({
+            type: MutationType.Patch,
+            entryId: this.entryId,
+            file,
+            patch: this.entryData
+          })
+        switch (this.changePhase) {
+          case EntryPhase.Published:
+            mutations.push({
+              type: MutationType.Publish,
+              phase: this.phase,
+              entryId: this.entryId,
+              file
+            })
+            break
+          case EntryPhase.Archived:
+            mutations.push({
+              type: MutationType.Archive,
+              entryId: this.entryId,
+              file
+            })
+            break
         }
-      ]
-    })
+        return mutations
+      })
+    )
   }
 
   set(entryData: Partial<Type.Infer<Definition>>) {
@@ -113,7 +138,7 @@ export class EditOp<Definition> extends Op {
     return this
   }
 
-  createAfter<Definition>(type: Type<Definition>) {
+  /*createAfter<Definition>(type: Type<Definition>) {
     throw new Error(`Not implemented`)
     return new CreateOp(this.tx, type)
   }
@@ -126,19 +151,17 @@ export class EditOp<Definition> extends Op {
   createChild<Definition>(type: Type<Definition>) {
     throw new Error(`Not implemented`)
     return new CreateOp(this.tx, type)
-  }
+  }*/
 
   archive() {
-    throw new Error(`Not implemented`)
-    return this
-  }
-
-  saveDraft() {
+    this.phase = EntryPhase.Published
+    this.changePhase = EntryPhase.Archived
     return this
   }
 
   publish() {
-    throw new Error(`Not implemented`)
+    this.phase = EntryPhase.Draft
+    this.changePhase = EntryPhase.Published
     return this
   }
 }
@@ -148,24 +171,33 @@ export class CreateOp<Definition> extends Op {
   entryData: Partial<Type.Infer<Definition>> = {}
 
   constructor(
-    protected tx: Transaction,
+    tx: Transaction,
     protected type: Type<Definition>,
     public entryId: string = createId()
   ) {
-    super(tx)
-    this.tx.addTask(async ({config}) => {
-      const entry = await createEntry(config, this.type, this.entryData)
-      const parentPaths = entryParentPaths(config, entry)
-      const file = entryFileName(config, entry, parentPaths)
-      return [
-        {
-          type: MutationType.Create,
-          entryId: this.entryId,
-          file,
-          entry: entry
-        }
-      ]
-    })
+    super(
+      tx.addTask(async ({config, graph}) => {
+        const parent = this.parentId
+          ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
+          : undefined
+        const entry = await createEntry(
+          config,
+          this.type,
+          this.entryData,
+          parent
+        )
+        const parentPaths = entryParentPaths(config, entry)
+        const file = entryFileName(config, entry, parentPaths)
+        return [
+          {
+            type: MutationType.Create,
+            entryId: this.entryId,
+            file,
+            entry: entry
+          }
+        ]
+      })
+    )
   }
 
   setParent(parentId: string) {
@@ -180,11 +212,6 @@ export class CreateOp<Definition> extends Op {
 
   createChild<Definition>(type: Type<Definition>) {
     return new CreateOp(this.tx, type).setParent(this.entryId)
-  }
-
-  async publish(): Promise<string> {
-    await this.tx.commit()
-    return this.entryId
   }
 }
 

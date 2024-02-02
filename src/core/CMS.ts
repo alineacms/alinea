@@ -1,4 +1,5 @@
 import {Store} from 'alinea/backend/Store'
+import {EntryPhase} from 'alinea/core'
 import {Config, createConfig} from './Config.js'
 import {Connection} from './Connection.js'
 import {Graph, GraphRealm} from './Graph.js'
@@ -44,6 +45,22 @@ export abstract class CMS extends GraphRealm {
 
   edit<Definition>(entryId: string, type?: Type<Definition>) {
     return new EditOp<Definition>(new Transaction(this), entryId)
+  }
+
+  editDraft<Definition>(entryId: string, type?: Type<Definition>) {
+    return new EditOp<Definition>(
+      new Transaction(this),
+      entryId,
+      EntryPhase.Draft
+    )
+  }
+
+  createDraft<Definition>(fromEntryId: string, type?: Type<Definition>) {
+    return new EditOp<Definition>(
+      new Transaction(this),
+      fromEntryId,
+      EntryPhase.Draft
+    )
   }
 
   delete(entryId: string) {
