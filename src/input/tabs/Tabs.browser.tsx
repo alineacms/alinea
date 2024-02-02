@@ -10,8 +10,7 @@ import {TabsSection, tabs as createTabs} from './Tabs.js'
 
 export * from './Tabs.js'
 
-// Todo: fix type here
-export const tabs = Section.provideView(TabsView, createTabs as any)
+export const tabs = Section.provideView(TabsView, createTabs)
 
 interface TabsViewProps {
   section: Section
