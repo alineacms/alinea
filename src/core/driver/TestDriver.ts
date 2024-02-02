@@ -2,14 +2,14 @@ import sqlite from '@alinea/sqlite-wasm'
 import {Database, Handler, JWTPreviews} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
 import {connect} from 'rado/driver/sql.js'
-import {CMS, CMSApi} from '../CMS.js'
+import {CMS} from '../CMS.js'
 import {Config} from '../Config.js'
 import {Connection} from '../Connection.js'
 import {Resolver} from '../Resolver.js'
 import {Logger} from '../util/Logger.js'
 import {DefaultDriver} from './DefaultDriver.js'
 
-export interface TestApi extends CMSApi {
+export interface TestApi extends CMS {
   db: Promise<Database>
   connection(): Promise<Connection>
 }

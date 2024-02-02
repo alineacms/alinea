@@ -1,4 +1,4 @@
-import {CMSApi} from '../CMS.js'
+import {CMS} from '../CMS.js'
 import {Config} from '../Config.js'
 import {User} from '../User.js'
 import {DefaultDriver} from './DefaultDriver.js'
@@ -9,7 +9,7 @@ export interface PreviewProps {
   root?: string
 }
 
-export interface NextApi extends CMSApi {
+export interface NextApi extends CMS {
   user(): Promise<User | null>
   previews(params: PreviewProps): Promise<JSX.Element | null>
   backendHandler(request: Request): Promise<Response>
