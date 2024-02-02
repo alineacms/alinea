@@ -30,7 +30,7 @@ import {
   VStack,
   fromModule
 } from 'alinea/ui'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {Menu, MenuItem} from 'alinea/ui/Menu'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
@@ -215,31 +215,28 @@ export function EntryPickerModal({
                       <button onClick={toRoot}>{workspace.label}</button>
                     </BreadcrumbsItem>
                     <BreadcrumbsItem>
-                      <DropdownMenu.Root bottom>
-                        <DropdownMenu.Trigger>
+                      <Menu
+                        onAction={name => {
+                          setDestination({
+                            workspace: destination.workspace,
+                            root: name as string
+                          })
+                        }}
+                        label={
                           <HStack center gap={4}>
                             {Root.label(workspace.roots[destination.root])}
                             <Icon icon={IcRoundUnfoldMore} />
                           </HStack>
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Items>
-                          {entries(workspace.roots).map(([name, root]) => {
-                            return (
-                              <DropdownMenu.Item
-                                key={name}
-                                onClick={() => {
-                                  setDestination({
-                                    workspace: destination.workspace,
-                                    root: name
-                                  })
-                                }}
-                              >
-                                {Root.label(root)}
-                              </DropdownMenu.Item>
-                            )
-                          })}
-                        </DropdownMenu.Items>
-                      </DropdownMenu.Root>
+                        }
+                      >
+                        {entries(workspace.roots).map(([name, root]) => {
+                          return (
+                            <MenuItem key={name} id={name}>
+                              {Root.label(root)}
+                            </MenuItem>
+                          )
+                        })}
+                      </Menu>
                       {destinationRoot.i18n && (
                         <Langswitch
                           inline

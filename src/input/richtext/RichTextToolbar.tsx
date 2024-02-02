@@ -1,7 +1,6 @@
 import {Reference} from 'alinea/core/Reference'
 import {UrlReference} from 'alinea/picker/url'
 import {fromModule, HStack, Icon, px, Typo} from 'alinea/ui'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcAlignCenter} from 'alinea/ui/icons/IcAlignCenter'
 import {IcAlignJustify} from 'alinea/ui/icons/IcAlignJustify'
 import {IcAlignLeft} from 'alinea/ui/icons/IcAlignLeft'
@@ -18,9 +17,11 @@ import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 /*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
 import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
+import {Level} from '@tiptap/extension-heading'
 import {Editor} from '@tiptap/react'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
+import {Menu, MenuItem} from 'alinea/ui/Menu'
 import {forwardRef, Ref} from 'react'
 import {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
@@ -121,47 +122,39 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
         onBlur={e => focusToggle(e.relatedTarget)}
       >
         <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
-          <DropdownMenu.Root top>
-            <DropdownMenu.Trigger
-              title="Heading/paragraph"
-              className={styles.root.dropdown()}
-            >
-              <HStack gap={10} center>
+          <Menu
+            label={
+              <HStack gap={10} center className={styles.root.dropdown()}>
                 <span>{Styles[selectedStyle]}</span>
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Items>
-              <DropdownMenu.Item onClick={() => exec().clearNodes().run()}>
-                <Typo.P>Normal text</Typo.P>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 1}).run()}
-              >
-                <Typo.H1 flat>Heading 1</Typo.H1>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 2}).run()}
-              >
-                <Typo.H2 flat>Heading 2</Typo.H2>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 3}).run()}
-              >
-                <Typo.H3 flat>Heading 3</Typo.H3>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 4}).run()}
-              >
-                <Typo.H4 flat>Heading 4</Typo.H4>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 5}).run()}
-              >
-                <Typo.H5 flat>Heading 5</Typo.H5>
-              </DropdownMenu.Item>
-            </DropdownMenu.Items>
-          </DropdownMenu.Root>
+            }
+            onAction={id => {
+              if (typeof id !== 'string') return
+              if (id === 'paragraph') return exec().clearNodes().run()
+              const level = parseInt(id.slice(1)) as Level
+              exec().setHeading({level}).run()
+            }}
+          >
+            <MenuItem id="paragraph">
+              <Typo.P>Normal text</Typo.P>
+            </MenuItem>
+            <MenuItem id="h1">
+              <Typo.H1 flat>Heading 1</Typo.H1>
+            </MenuItem>
+            <MenuItem id="h2">
+              <Typo.H2 flat>Heading 2</Typo.H2>
+            </MenuItem>
+            <MenuItem id="h3">
+              <Typo.H3 flat>Heading 3</Typo.H3>
+            </MenuItem>
+            <MenuItem id="h4">
+              <Typo.H4 flat>Heading 4</Typo.H4>
+            </MenuItem>
+            <MenuItem id="h5">
+              <Typo.H5 flat>Heading 5</Typo.H5>
+            </MenuItem>
+          </Menu>
           <div className={styles.root.separator()} />
           <IconButton
             icon={IcRoundFormatBold}
@@ -193,12 +186,9 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             }}
             active={editor.isActive('small')}
           />
-          <DropdownMenu.Root top>
-            <DropdownMenu.Trigger
-              title="Alignment"
-              className={styles.root.dropdown()}
-            >
-              <HStack gap={10} center>
+          <Menu
+            label={
+              <HStack gap={10} center className={styles.root.dropdown()}>
                 <Icon
                   icon={
                     editor.isActive({textAlign: 'center'})
@@ -213,62 +203,58 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 />
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Items>
-              <DropdownMenu.Item
-                onClick={() => exec().setTextAlign('left').run()}
-              >
-                <HStack gap={8} center>
-                  <Icon
-                    round
-                    icon={IcAlignLeft}
-                    title="Align left"
-                    active={editor.isActive({textAlign: 'left'})}
-                  />
-                  <span>Left</span>
-                </HStack>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setTextAlign('center').run()}
-              >
-                <HStack gap={8} center>
-                  <Icon
-                    round
-                    icon={IcAlignCenter}
-                    title="Align center"
-                    active={editor.isActive({textAlign: 'center'})}
-                  />
-                  <span>Center</span>
-                </HStack>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setTextAlign('right').run()}
-              >
-                <HStack gap={8} center>
-                  <Icon
-                    round
-                    icon={IcAlignRight}
-                    title="Align right"
-                    active={editor.isActive({textAlign: 'right'})}
-                  />
-                  <span>Right</span>
-                </HStack>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setTextAlign('justify').run()}
-              >
-                <HStack gap={8} center>
-                  <Icon
-                    round
-                    icon={IcAlignJustify}
-                    title="Align justify"
-                    active={editor.isActive({textAlign: 'justify'})}
-                  />
-                  <span>Justify</span>
-                </HStack>
-              </DropdownMenu.Item>
-            </DropdownMenu.Items>
-          </DropdownMenu.Root>
+            }
+            onAction={id => {
+              exec()
+                .setTextAlign(id as string)
+                .run()
+            }}
+          >
+            <MenuItem id="left">
+              <HStack gap={8} center>
+                <Icon
+                  round
+                  icon={IcAlignLeft}
+                  title="Align left"
+                  active={editor.isActive({textAlign: 'left'})}
+                />
+                <span>Left</span>
+              </HStack>
+            </MenuItem>
+            <MenuItem id="center">
+              <HStack gap={8} center>
+                <Icon
+                  round
+                  icon={IcAlignCenter}
+                  title="Align center"
+                  active={editor.isActive({textAlign: 'center'})}
+                />
+                <span>Center</span>
+              </HStack>
+            </MenuItem>
+            <MenuItem id="right">
+              <HStack gap={8} center>
+                <Icon
+                  round
+                  icon={IcAlignRight}
+                  title="Align right"
+                  active={editor.isActive({textAlign: 'right'})}
+                />
+                <span>Right</span>
+              </HStack>
+            </MenuItem>
+            <MenuItem id="justify">
+              <HStack gap={8} center>
+                <Icon
+                  round
+                  icon={IcAlignJustify}
+                  title="Align justify"
+                  active={editor.isActive({textAlign: 'justify'})}
+                />
+                <span>Justify</span>
+              </HStack>
+            </MenuItem>
+          </Menu>
           <IconButton
             icon={IcRoundFormatClear}
             size={18}

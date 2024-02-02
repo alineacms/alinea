@@ -6,7 +6,7 @@ import {TabsHeader, TabsSection} from 'alinea/input/tabs/Tabs.browser'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Statusbar} from 'alinea/ui/Statusbar'
-import {Tabs} from 'alinea/ui/Tabs'
+import {TabPanel, Tabs} from 'alinea/ui/Tabs'
 import {IcOutlineTableRows} from 'alinea/ui/icons/IcOutlineTableRows'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
@@ -193,65 +193,69 @@ export function EntryEdit({editor}: EntryEditProps) {
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
           {showHistory && <EntryHistory editor={editor} />}
-          <Tabs.Root>
-            <EntryTitle
-              editor={editor}
-              backLink={
-                editor.activeVersion.parent
-                  ? nav.entry({
-                      entryId: editor.activeVersion.parent,
-                      workspace: editor.activeVersion.workspace
-                    })
-                  : nav.entry({entryId: undefined})
-              }
-            >
-              {hasRootTabs && (
-                <div className={styles.root.tabs()}>
-                  <TabsHeader backdrop={false} section={sections[0]} />
-                </div>
-              )}
-            </EntryTitle>
-            <Main.Container>
-              {untranslated && (
-                <div>
-                  <EntryNotice
-                    icon={IcRoundTranslate}
-                    title="Untranslated"
-                    variant="untranslated"
-                  >
-                    This page has not yet been translated to this language,
-                    <br />
-                    {editor.parentNeedsTranslation
-                      ? 'please translate the parent page first.'
-                      : 'please enter the details below and save to start translating.'}
-                  </EntryNotice>
-                </div>
-              )}
-              <EntryEditorProvider editor={editor}>
-                <SuspenseBoundary name="input form">
-                  {mode === EditMode.Diff ? (
-                    <ShowChanges editor={editor} />
-                  ) : hasRootTabs && visibleTypes ? (
-                    <Tabs.Panels>
-                      {visibleTypes.map((type, i) => {
+          <div className={styles.root.tabs()}>
+            <Tabs>
+              <EntryTitle
+                editor={editor}
+                backLink={
+                  editor.activeVersion.parent
+                    ? nav.entry({
+                        entryId: editor.activeVersion.parent,
+                        workspace: editor.activeVersion.workspace
+                      })
+                    : nav.entry({entryId: undefined})
+                }
+              >
+                {hasRootTabs && (
+                  <div className={styles.root.tabs.header()}>
+                    <TabsHeader
+                      id="entry"
+                      backdrop={false}
+                      section={sections[0]}
+                    />
+                  </div>
+                )}
+              </EntryTitle>
+              <Main.Container>
+                {untranslated && (
+                  <div>
+                    <EntryNotice
+                      icon={IcRoundTranslate}
+                      title="Untranslated"
+                      variant="untranslated"
+                    >
+                      This page has not yet been translated to this language,
+                      <br />
+                      {editor.parentNeedsTranslation
+                        ? 'please translate the parent page first.'
+                        : 'please enter the details below and save to start translating.'}
+                    </EntryNotice>
+                  </div>
+                )}
+                <EntryEditorProvider editor={editor}>
+                  <SuspenseBoundary name="input form">
+                    {mode === EditMode.Diff ? (
+                      <ShowChanges editor={editor} />
+                    ) : hasRootTabs && visibleTypes ? (
+                      visibleTypes.map((type, i) => {
                         return (
                           <FormProvider form={form} key={i}>
-                            <Tabs.Panel unmount={false} tabIndex={i}>
+                            <TabPanel id={`entry+${i}`}>
                               <InputForm type={type} />
-                            </Tabs.Panel>
+                            </TabPanel>
                           </FormProvider>
                         )
-                      })}
-                    </Tabs.Panels>
-                  ) : (
-                    <VStack gap={18}>
-                      <InputForm form={form} />
-                    </VStack>
-                  )}
-                </SuspenseBoundary>
-              </EntryEditorProvider>
-            </Main.Container>
-          </Tabs.Root>
+                      })
+                    ) : (
+                      <VStack gap={18}>
+                        <InputForm form={form} />
+                      </VStack>
+                    )}
+                  </SuspenseBoundary>
+                </EntryEditorProvider>
+              </Main.Container>
+            </Tabs>
+          </div>
           <FieldToolbar.Root />
         </FieldToolbar.Provider>
       </Main>
