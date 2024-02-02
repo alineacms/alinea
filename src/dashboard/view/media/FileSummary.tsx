@@ -89,8 +89,6 @@ export const FileSummaryRow = view(
 export const FileSummaryThumb = view(
   fileSummarySelect,
   function FileSummaryThumb(file: SummaryProps) {
-    const ratio = file.width / file.height
-    const imageCover = ratio > 1 && ratio < 2
     return (
       <div className={styles.thumb()} title={renderLabel(file.title)}>
         <div
