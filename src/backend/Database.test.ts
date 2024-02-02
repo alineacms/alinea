@@ -101,51 +101,40 @@ function publish(entry: EntryRow): Mutation {
 
 test('create', async () => {
   const example = createExample()
-  const db = await example.db
-  const entry1 = await entry(example, example.schema.Page, {
-    title: 'Test title'
-  })
-  await db.applyMutations([create(entry1)])
-  const result = await example.get(Entry({entryId: entry1.entryId}))
-  assert.is(result.entryId, entry1.entryId)
+  const {Page} = example.schema
+  const parentId = await example
+    .create(Page)
+    .set({title: 'Test title'})
+    .publish()
+  const result = await example.get(Entry({entryId: parentId}))
+  assert.is(result.entryId, parentId)
   assert.is(result.title, 'Test title')
 })
 
 test('remove child entries', async () => {
   const example = createExample()
-  const db = await example.db
-  const parent = await entry(example, example.schema.Container)
-  const sub = await entry(example, example.schema.Container, {}, parent)
-  const subSub = await entry(example, example.schema.Page, {}, sub)
-
-  await db.applyMutations([create(parent), create(sub), create(subSub)])
-
-  const res1 = await example.get(Entry({entryId: subSub.entryId}))
+  const {Page, Container} = example.schema
+  const parentId = await example.create(Container).publish()
+  const subId = await example.edit(parentId).createChild(Container).publish()
+  const entryId = await example.edit(subId).createChild(Page).publish()
+  const res1 = await example.get(Entry({entryId}))
   assert.ok(res1)
-  assert.is(res1.parent, sub.entryId)
-
-  await db.applyMutations([remove(parent)])
-
-  const res2 = await example.get(Entry({entryId: subSub.entryId}))
+  assert.is(res1.parent, subId)
+  await example.delete(parentId).commit()
+  const res2 = await example.get(Entry({entryId}))
   assert.not.ok(res2)
 })
 
 test('change draft path', async () => {
   const example = createExample()
-  const db = await example.db
-  const parent = await entry(example, example.schema.Container, {
-    path: 'parent'
-  })
-  const sub = await entry(
-    example,
-    example.schema.Container,
-    {path: 'sub'},
-    parent
-  )
-  await db.applyMutations([create(parent), create(sub)])
+  const {Container} = example.schema
+  const tx = example.transaction()
+  const parent = tx.create(Container).set({path: 'parent'})
+  const sub = parent.createChild(Container).set({path: 'sub'})
+  await tx.commit()
   const resParent0 = await example.get(Entry({entryId: parent.entryId}))
   assert.is(resParent0.url, '/parent')
-
+  await example.edit(parent.entryId).set({path: 'new-path'}).saveDraft()
   const draft = {
     ...parent,
     phase: EntryPhase.Draft,
