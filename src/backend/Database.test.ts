@@ -6,11 +6,11 @@ import {createExample} from './test/Example.js'
 test('create', async () => {
   const example = createExample()
   const {Page} = example.schema
-  const parent = example.create(Page).set({title: 'Test title'})
+  const parent = example.create(Page).set({title: 'New parent'})
   await parent.commit()
   const result = await example.get(Entry({entryId: parent.entryId}))
   assert.is(result.entryId, parent.entryId)
-  assert.is(result.title, 'Test title')
+  assert.is(result.title, 'New parent')
 })
 
 test('remove child entries', async () => {
@@ -40,7 +40,7 @@ test('change draft path', async () => {
   assert.is(resParent0.url, '/parent')
   // Changing entry paths in draft should not have an influence on
   // computed properties such as url, filePath etc. until we publish.
-  await example.createDraft(parent.entryId).set({path: 'new-path'}).commit()
+  await example.edit(parent.entryId).draft().set({path: 'new-path'}).commit()
   const resParent1 = await example.graph.drafts.get(
     Entry({entryId: parent.entryId})
   )
@@ -58,7 +58,7 @@ test('change draft path', async () => {
 
 test('change published path for entry with language', async () => {
   const example = createExample()
-  const multi = example.in(example.workspaces.main.multiLanguage)
+  const multi = example.locale('en').in(example.workspaces.main.multiLanguage)
   const localised3 = await multi.get(Entry({path: 'localised3'}))
   assert.is(localised3.url, '/en/localised2/localised3')
 

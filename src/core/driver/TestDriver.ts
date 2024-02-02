@@ -5,16 +5,16 @@ import {connect} from 'rado/driver/sql.js'
 import {CMS} from '../CMS.js'
 import {Config} from '../Config.js'
 import {Connection} from '../Connection.js'
+import {createId} from '../Id.js'
 import {Resolver} from '../Resolver.js'
 import {Logger} from '../util/Logger.js'
-import {DefaultDriver} from './DefaultDriver.js'
 
 export interface TestApi extends CMS {
   db: Promise<Database>
   connection(): Promise<Connection>
 }
 
-class TestDriver extends DefaultDriver implements TestApi {
+class TestDriver extends CMS implements TestApi {
   store: Promise<Store> = sqlite().then(({Database}) =>
     connect(new Database()).toAsync()
   )
@@ -28,14 +28,15 @@ class TestDriver extends DefaultDriver implements TestApi {
       config: this.config,
       db,
       previews: new JWTPreviews('test'),
-      previewAuthToken: 'test'
+      previewAuthToken: 'test',
+      target: {
+        mutate: async ({mutations}) => {
+          return {commitHash: createId()}
+        }
+      }
     })
     return handler.connect({logger: new Logger('test')})
   })
-  async exportStore(outDir: string, data: Uint8Array) {}
-  async readStore(): Promise<Store> {
-    return this.store
-  }
 
   async connection(): Promise<Connection> {
     return this.handler

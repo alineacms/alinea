@@ -15,7 +15,7 @@
     "release:types": "tsc",
     "release:build": "node build.js",
     "type": "tsc --diagnostics",
-    "test": "node build.js --test",
+    "test": "NODE_OPTIONS=--enable-source-maps node build.js --test",
     "tag": "esbx tag",
     "dev:check": "tsc -w",
     "dev:run": "node build.js --watch -- node dev.js --dir apps/dev --config cms",
