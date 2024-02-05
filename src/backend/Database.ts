@@ -602,7 +602,7 @@ export class Database implements Syncable {
           const seed =
             typeof seeded === 'string'
               ? this.seed.get(seeded)
-              : // Backwards compatibility
+              : // Backward compatibility
               seeded === true
               ? this.seed.get(file.filePath)
               : undefined

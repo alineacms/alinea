@@ -9,7 +9,7 @@ export const JsonLoader: Loader = {
   extension: '.json',
   parse(schema: Schema, input: Uint8Array) {
     const raw = JSON.parse(decoder.decode(input))
-    // This is backwards compatibility for the old format
+    // This is backward compatibility for the old format
     if (!raw[META_KEY]) raw[META_KEY] = raw.alinea ?? {}
     if (!raw[META_KEY].entryId)
       raw[META_KEY].entryId = raw.id ?? raw[META_KEY].id

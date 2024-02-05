@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.7.1]
+
+- Support entries that were seeded in versions prior to 0.6.4 for backward
+  compatibility.
+
 ## [0.7.0]
 
 - File and image titles can be edited. A focus point can be chosen for images.
