@@ -600,7 +600,12 @@ export class Database implements Syncable {
           const record = EntryRecord(raw)
           const seeded = record[META_KEY]?.seeded
           const seed =
-            typeof seeded === 'string' ? this.seed.get(seeded) : undefined
+            typeof seeded === 'string'
+              ? this.seed.get(seeded)
+              : // Backwards compatibility
+              seeded === true
+              ? this.seed.get(file.filePath)
+              : undefined
           const entry = this.computeEntry(record, file, seed)
 
           if (seed) seenSeeds.add(seed.filePath)
