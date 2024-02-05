@@ -80,4 +80,15 @@ test('change published path for entry with language', async () => {
   assert.is(localised3Publish.url, '/en/localised2/localised3')
 })
 
+test('file upload', async () => {
+  const example = createExample()
+  const fileName = 'test.txt'
+  const data = new TextEncoder().encode('Hello, World!')
+  const upload = example.upload(fileName, data)
+  await upload.commit()
+  const result = await example.get(Entry({entryId: upload.entryId}))
+  assert.is(result.title, 'test')
+  assert.is(result.root, 'media')
+})
+
 test.run()

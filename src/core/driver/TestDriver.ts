@@ -1,6 +1,7 @@
 import sqlite from '@alinea/sqlite-wasm'
 import {Database, Handler, JWTPreviews} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
+import type {AddressInfo} from 'node:net'
 import {connect} from 'rado/driver/sql.js'
 import {CMS} from '../CMS.js'
 import {Config} from '../Config.js'
@@ -33,6 +34,20 @@ class TestDriver extends CMS implements TestApi {
         mutate: async ({mutations}) => {
           return {commitHash: createId()}
         }
+      },
+      media: {
+        async prepareUpload(file: string) {
+          const id = createId()
+          const serve = await listenForUpload()
+          return {
+            entryId: createId(),
+            location: `media/${file}_${id}`,
+            previewUrl: `media/${file}_${id}`,
+            upload: {
+              url: serve.url
+            }
+          }
+        }
       }
     })
     return handler.connect({logger: new Logger('test')})
@@ -51,4 +66,19 @@ export function createTestCMS<Definition extends Config>(
   config: Definition
 ): Definition & TestApi & CMS {
   return new TestDriver(config) as any
+}
+
+async function listenForUpload(): Promise<{url: string}> {
+  const {createServer} = await import('node:http')
+  const server = createServer((req, res) => {
+    res.end()
+    server.close()
+  })
+  return new Promise(resolve => {
+    server.listen(0, () => {
+      resolve({
+        url: `http://localhost:${(server.address() as AddressInfo).port}`
+      })
+    })
+  })
 }

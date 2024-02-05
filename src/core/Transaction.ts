@@ -1,3 +1,4 @@
+import {createFileHash} from 'alinea/backend/util/ContentHash'
 import PLazy from 'p-lazy'
 import {CMS} from './CMS.js'
 import {Config} from './Config.js'
@@ -7,7 +8,8 @@ import {
   entryChildrenDir,
   entryFileName,
   entryFilepath,
-  entryUrl
+  entryUrl,
+  workspaceMediaDir
 } from './EntryFilenames.js'
 import {EntryPhase, EntryRow} from './EntryRow.js'
 import {GraphRealm} from './Graph.js'
@@ -17,7 +19,10 @@ import {Mutation, MutationType} from './Mutation.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {EntryUrlMeta, Type, TypeI} from './Type.js'
+import {Workspace} from './Workspace.js'
+import {MediaFile} from './media/MediaSchema.js'
 import {createEntryRow, entryParentPaths} from './util/EntryRows.js'
+import {basename, extname, join, normalize} from './util/Paths.js'
 import {slugify} from './util/Slugs.js'
 
 export class Transaction {
@@ -78,12 +83,24 @@ export class Op {
 }
 
 export class UploadOp extends Op {
+  entryId = createId()
+  parentId?: string
+  workspace?: string
+  root?: string
+
   constructor(tx: Transaction, fileName: string, data: Uint8Array) {
     super(
       tx.addTask(async (): Promise<Array<Mutation>> => {
         const {config, graph} = tx
         const cnx = await tx.cnx
-        const info = await cnx.prepareUpload(fileName)
+        const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
+        const root =
+          this.root ?? Workspace.defaultMediaRoot(config.workspaces[workspace])
+        const extension = extname(fileName)
+        const path = slugify(basename(fileName, extension))
+        const directory = workspaceMediaDir(config, workspace)
+        const file = join(directory, path + extension)
+        const info = await cnx.prepareUpload(file)
         await fetch(info.upload.url, {
           method: info.upload.method ?? 'POST',
           body: data
@@ -94,17 +111,75 @@ export class UploadOp extends Op {
               `Could not reach server for upload`
             )
         })
-        // Todo: create entry here just as in UseUploads
+        const parent = this.parentId
+          ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
+          : undefined
+        const title = basename(fileName, extension)
+        const hash = await createFileHash(data)
+        const {mediaDir} = Workspace.data(config.workspaces[workspace])
+        const prefix = mediaDir && normalize(mediaDir)
+        const fileLocation =
+          prefix && info.location.startsWith(prefix)
+            ? info.location.slice(prefix.length)
+            : info.location
+        const entryData = {
+          title,
+          location: fileLocation,
+          extension,
+          size: data.byteLength,
+          hash
+          /*width: upload.width,
+          height: upload.height,
+          averageColor: upload.averageColor,
+          focus: upload.focus,
+          thumbHash: upload.thumbHash,
+          preview: upload.preview*/
+        }
+        const entry = await createEntry(
+          config,
+          MediaFile,
+          {
+            path,
+            entryId: this.entryId,
+            workspace,
+            root,
+            data: entryData
+          },
+          parent
+        )
+        const parentPaths = entryParentPaths(config, entry)
+        const entryFile = entryFileName(config, entry, parentPaths)
         return [
           {
             type: MutationType.Upload,
-            entryId: info.entryId,
+            entryId: this.entryId,
             url: info.previewUrl,
             file: info.location
+          },
+          {
+            type: MutationType.Create,
+            entryId: entry.entryId,
+            file: entryFile,
+            entry
           }
         ]
       })
     )
+  }
+
+  setParent(parentId: string) {
+    this.parentId = parentId
+    return this
+  }
+
+  setWorkspace(workspace: string) {
+    this.workspace = workspace
+    return this
+  }
+
+  setRoot(root: string) {
+    this.root = root
+    return this
   }
 }
 
@@ -251,6 +326,7 @@ export class EditOp<Definition> extends Op {
 }
 
 export class CreateOp<Definition> extends Op {
+  entryId = createId()
   workspace?: string
   root?: string
   locale?: string | null
@@ -267,8 +343,7 @@ export class CreateOp<Definition> extends Op {
   constructor(
     protected tx: Transaction,
     protected type: Type<Definition>,
-    protected parentRow?: Promise<EntryRow>,
-    public entryId: string = createId()
+    protected parentRow?: Promise<EntryRow>
   ) {
     super(
       tx.addTask(async (): Promise<Array<Mutation>> => {
@@ -367,7 +442,7 @@ async function createEntry(
     seeded: null,
     workspace: workspace,
     root: root,
-    level: 0,
+    level: parent ? parent.level + 1 : 0,
     parent: parent?.entryId ?? null,
     locale,
     index: 'a0',
