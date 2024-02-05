@@ -140,6 +140,7 @@ const Fields = alinea.document('Fields', {
           }
         ]
       }),
+      makeRO: alinea.check('Make read-only'),
       nested: alinea.richText('With nested blocks', {
         schema: {
           Inner: alinea.type('Inner', {
@@ -213,6 +214,10 @@ const Fields = alinea.document('Fields', {
       nestedList
     })
   )
+})
+
+alinea.track.options(Fields.nested, get => {
+  return {readOnly: get(Fields.makeRO)}
 })
 
 const schema = alinea.schema({

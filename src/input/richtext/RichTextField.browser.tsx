@@ -17,6 +17,7 @@ import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
@@ -208,6 +209,7 @@ export function RichTextInput<Blocks extends Schema>({
     ({event}: {event: FocusEvent}) => focusToggle(event.relatedTarget),
     [focusToggle]
   )
+  const isEditable = !options.readOnly && !readOnly
   const editor = useMemo(() => {
     const doc = fragment.doc!
     let editor
@@ -219,17 +221,20 @@ export function RichTextInput<Blocks extends Schema>({
         onFocus,
         onBlur,
         extensions,
-        editable: !options.readOnly && !readOnly
+        editable: isEditable
       })
     }, 'self')
     return editor!
   }, [fragment])
+  useNonInitialEffect(() => {
+    editor.setOptions({editable: isEditable})
+  }, [isEditable])
   useEffect(() => {
     return () => editor.destroy()
   }, [editor])
   return (
     <>
-      {focus && (
+      {isEditable && focus && (
         <RichTextToolbar
           ref={toolbarRef}
           editor={editor}
@@ -247,6 +252,7 @@ export function RichTextInput<Blocks extends Schema>({
         error={error}
       >
         <InsertMenu editor={editor} schema={schema} onInsert={insert} />
+
         <EditorContent
           className={styles.root.editor({focus, readonly: options.readOnly})}
           editor={editor}
