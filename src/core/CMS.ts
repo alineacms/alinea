@@ -1,3 +1,4 @@
+import {File} from '@alinea/iso'
 import {Config, createConfig} from './Config.js'
 import {Connection} from './Connection.js'
 import {Graph, GraphRealm} from './Graph.js'
@@ -55,8 +56,8 @@ export abstract class CMS extends GraphRealm {
     return new DeleteOp(new Transaction(this), entryId)
   }
 
-  upload(fileName: string, data: Uint8Array) {
-    return new UploadOp(new Transaction(this), fileName, data)
+  upload(file: File) {
+    return new UploadOp(new Transaction(this), file)
   }
 
   #attach(config: Config) {

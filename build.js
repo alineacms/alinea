@@ -37,6 +37,7 @@ const external = builtinModules
     'fs-extra',
     '@alinea',
     'next',
+    'sharp',
     '@remix-run',
     'react',
     'react-dom',

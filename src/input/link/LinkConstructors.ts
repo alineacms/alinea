@@ -1,10 +1,10 @@
-import {Media} from 'alinea/backend/Media'
 import {ListRow} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {WithoutLabel} from 'alinea/core/Field'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
+import {imageExtensions} from 'alinea/core/media/IsImage'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {
   LinkFieldOptions,
@@ -27,7 +27,7 @@ import {UrlPickerOptions, UrlReference, urlPicker} from 'alinea/picker/url'
 
 const imageCondition = Entry.type
   .is('MediaFile')
-  .and(MediaFile.extension.isIn(Media.imageExtensions))
+  .and(MediaFile.extension.isIn(imageExtensions))
 
 export function imagePicker<Fields>(
   multiple: boolean,
@@ -51,7 +51,7 @@ export function imagePicker<Fields>(
 
 const fileCondition = Entry.type
   .is('MediaFile')
-  .and(MediaFile.extension.isNotIn(Media.imageExtensions))
+  .and(MediaFile.extension.isNotIn(imageExtensions))
 
 export function filePicker<Fields>(
   multiple: boolean,

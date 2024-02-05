@@ -1,4 +1,10 @@
-import {Picker, PickerProps, Root, WorkspaceData, createId} from 'alinea/core'
+import {
+  PickerProps,
+  Root,
+  WorkspaceData,
+  createId,
+  pickerWithView
+} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {workspaceMediaDir} from 'alinea/core/EntryFilenames'
 import {Reference} from 'alinea/core/Reference'
@@ -48,7 +54,7 @@ import {EntryReference} from './EntryReference.js'
 
 export * from './EntryPicker.js'
 
-export const entryPicker = Picker.withView(createEntryPicker, {
+export const entryPicker = pickerWithView(createEntryPicker, {
   view: EntryPickerModal,
   viewRow: EntryPickerRow
 })

@@ -50,7 +50,7 @@
     "src/input/richtext"
   ],
   "dependencies": {
-    "@alinea/iso": "^0.3.1",
+    "@alinea/iso": "^0.3.2",
     "@alinea/sqlite-wasm": "^0.1.14",
     "esbuild": "^0.19.12"
   },
@@ -81,6 +81,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sass": "^1.63.4",
+    "sharp": "^0.33.2",
     "speedscope": "^1.14.0",
     "typescript": "^5.3.3",
     "typescript-plugin-css-modules": "^5.0.2",
@@ -102,6 +103,11 @@
       "worker": "./dist/cloud/view/CloudAuth.js",
       "browser": "./dist/cloud/view/CloudAuth.browser.js",
       "default": "./dist/cloud/view/CloudAuth.js"
+    },
+    "./core/media/ImagePreview": {
+      "worker": "./dist/core/media/ImagePreview.js",
+      "browser": "./dist/core/media/ImagePreview.browser.js",
+      "default": "./dist/core/media/ImagePreview.js"
     },
     "./core/media/MediaRoot": {
       "worker": "./dist/core/media/MediaRoot.js",

@@ -16,6 +16,7 @@ import {
 import {entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
 import {EntryRecord, META_KEY, createRecord} from 'alinea/core/EntryRecord'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {createFileHash, createRowHash} from 'alinea/core/util/ContentHash'
 import {createEntryRow, publishEntryRow} from 'alinea/core/util/EntryRows'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
@@ -30,7 +31,6 @@ import {Target} from './Target.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
-import {createFileHash, createRowHash} from './util/ContentHash.js'
 
 interface Seed {
   type: string

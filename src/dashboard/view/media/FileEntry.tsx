@@ -1,4 +1,5 @@
 import {Media} from 'alinea/backend/Media'
+import {isImage} from 'alinea/core/media/IsImage'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {FormProvider, useField} from 'alinea/dashboard'
 import {Typo, fromModule} from 'alinea/ui'
@@ -147,7 +148,6 @@ function FileView({editor}: EntryEditProps) {
 export function FileEntry(props: EntryEditProps) {
   const nav = useNav()
   const {editor} = props
-  const isImage = Media.isImage(editor.activeVersion.data.extension)
   const form = useAtomValue(editor.form)
   return (
     <Main className={styles.root()}>
@@ -165,7 +165,11 @@ export function FileEntry(props: EntryEditProps) {
       />
       <FormProvider form={form}>
         <Main.Container>
-          {isImage ? <ImageView {...props} /> : <FileView {...props} />}
+          {isImage(editor.activeVersion.data.extension) ? (
+            <ImageView {...props} />
+          ) : (
+            <FileView {...props} />
+          )}
         </Main.Container>
       </FormProvider>
     </Main>

@@ -1,4 +1,6 @@
+import {File} from '@alinea/iso'
 import {Entry, EntryPhase} from 'alinea/core'
+import {readFileSync} from 'fs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 import {createExample} from './test/Example.js'
@@ -82,13 +84,28 @@ test('change published path for entry with language', async () => {
 
 test('file upload', async () => {
   const example = createExample()
-  const fileName = 'test.txt'
-  const data = new TextEncoder().encode('Hello, World!')
-  const upload = example.upload(fileName, data)
+  const file = new File(['Hello, World!'], 'test.txt')
+  const upload = example.upload(file)
   await upload.commit()
   const result = await example.get(Entry({entryId: upload.entryId}))
   assert.is(result.title, 'test')
   assert.is(result.root, 'media')
+})
+
+test('image upload', async () => {
+  const example = createExample()
+  const imageData = readFileSync(
+    'apps/web/public/screenshot-2022-09-19-at-12-21-23.2U9fkc81kcSh2InU931HrUJstwD.png'
+  )
+  const file = new File([imageData], 'test.png')
+  const upload = example.upload(file)
+  await upload.commit()
+  const result = await example.get(Entry({entryId: upload.entryId}))
+  assert.is(result.title, 'test')
+  assert.is(result.root, 'media')
+  assert.is(result.data.width, 2880)
+  assert.is(result.data.height, 1422)
+  assert.is(result.data.averageColor, '#4b4f59')
 })
 
 test.run()

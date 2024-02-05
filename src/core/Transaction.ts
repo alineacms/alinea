@@ -1,4 +1,6 @@
+import {File} from '@alinea/iso'
 import {createFileHash} from 'alinea/backend/util/ContentHash'
+import {createPreview} from 'alinea/core/media/ImagePreview'
 import PLazy from 'p-lazy'
 import {CMS} from './CMS.js'
 import {Config} from './Config.js'
@@ -20,7 +22,7 @@ import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {EntryUrlMeta, Type, TypeI} from './Type.js'
 import {Workspace} from './Workspace.js'
-import {MediaFile} from './media/MediaSchema.js'
+import {isImage} from './media/IsImage.js'
 import {createEntryRow, entryParentPaths} from './util/EntryRows.js'
 import {basename, extname, join, normalize} from './util/Paths.js'
 import {slugify} from './util/Slugs.js'
@@ -61,6 +63,13 @@ export class Transaction {
 export class Op {
   constructor(protected tx: Transaction) {}
 
+  protected typeName(type: TypeI) {
+    const typeNames = Schema.typeNames(this.tx.config.schema)
+    const typeName = typeNames.get(type)!
+    if (!typeName) throw new Error(`Type not found: ${type}`)
+    return typeName
+  }
+
   create<Definition>(type: Type<Definition>) {
     return new CreateOp<Definition>(this.tx, type)
   }
@@ -73,8 +82,8 @@ export class Op {
     return new DeleteOp(this.tx, entryId)
   }
 
-  upload(fileName: string, data: Uint8Array) {
-    return new UploadOp(this.tx, fileName, data)
+  upload(file: File) {
+    return new UploadOp(this.tx, file)
   }
 
   async commit() {
@@ -84,14 +93,15 @@ export class Op {
 
 export class UploadOp extends Op {
   entryId = createId()
-  parentId?: string
-  workspace?: string
-  root?: string
+  private parentId?: string
+  private workspace?: string
+  private root?: string
 
-  constructor(tx: Transaction, fileName: string, data: Uint8Array) {
+  constructor(tx: Transaction, file: File) {
     super(
       tx.addTask(async (): Promise<Array<Mutation>> => {
         const {config, graph} = tx
+        const fileName = file.name
         const cnx = await tx.cnx
         const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
         const root =
@@ -99,11 +109,14 @@ export class UploadOp extends Op {
         const extension = extname(fileName)
         const path = slugify(basename(fileName, extension))
         const directory = workspaceMediaDir(config, workspace)
-        const file = join(directory, path + extension)
-        const info = await cnx.prepareUpload(file)
+        const uploadLocation = join(directory, path + extension)
+        const info = await cnx.prepareUpload(uploadLocation)
+        const previewData = isImage(file.name)
+          ? await createPreview(file)
+          : undefined
         await fetch(info.upload.url, {
           method: info.upload.method ?? 'POST',
-          body: data
+          body: file
         }).then(async result => {
           if (!result.ok)
             throw new HttpError(
@@ -115,7 +128,9 @@ export class UploadOp extends Op {
           ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
           : undefined
         const title = basename(fileName, extension)
-        const hash = await createFileHash(data)
+        const hash = await createFileHash(
+          new Uint8Array(await file.arrayBuffer())
+        )
         const {mediaDir} = Workspace.data(config.workspaces[workspace])
         const prefix = mediaDir && normalize(mediaDir)
         const fileLocation =
@@ -126,18 +141,13 @@ export class UploadOp extends Op {
           title,
           location: fileLocation,
           extension,
-          size: data.byteLength,
-          hash
-          /*width: upload.width,
-          height: upload.height,
-          averageColor: upload.averageColor,
-          focus: upload.focus,
-          thumbHash: upload.thumbHash,
-          preview: upload.preview*/
+          size: file.size,
+          hash,
+          ...previewData
         }
         const entry = await createEntry(
           config,
-          MediaFile,
+          'MediaFile',
           {
             path,
             entryId: this.entryId,
@@ -206,8 +216,8 @@ export class DeleteOp extends Op {
 }
 
 export class EditOp<Definition> extends Op {
-  entryData?: Partial<Type.Infer<Definition>>
-  changePhase?: EntryPhase
+  private entryData?: Partial<Type.Infer<Definition>>
+  private changePhase?: EntryPhase
 
   constructor(tx: Transaction, protected entryId: string) {
     super(
@@ -241,7 +251,7 @@ export class EditOp<Definition> extends Op {
             file,
             entry: await createEntry(
               config,
-              type,
+              this.typeName(type),
               {
                 ...entry,
                 phase: EntryPhase.Draft,
@@ -327,14 +337,14 @@ export class EditOp<Definition> extends Op {
 
 export class CreateOp<Definition> extends Op {
   entryId = createId()
-  workspace?: string
-  root?: string
-  locale?: string | null
-  entryData: Partial<Type.Infer<Definition>> = {}
-  entryRow = PLazy.from(async () => {
+  private workspace?: string
+  private root?: string
+  private locale?: string | null
+  private entryData: Partial<Type.Infer<Definition>> = {}
+  private entryRow = PLazy.from(async () => {
     return createEntry(
       this.tx.config,
-      this.type,
+      this.typeName(this.type),
       {entryId: this.entryId, data: this.entryData ?? {}},
       await this.parentRow
     )
@@ -351,7 +361,7 @@ export class CreateOp<Definition> extends Op {
         const parent = await this.parentRow
         const entry = await createEntry(
           config,
-          this.type,
+          this.typeName(type),
           {
             entryId: this.entryId,
             workspace: this.workspace,
@@ -409,12 +419,11 @@ export class CreateOp<Definition> extends Op {
 
 async function createEntry(
   config: Config,
-  type: TypeI,
+  typeName: string,
   partial: Partial<EntryRow> = {title: 'Entry'},
   parent?: EntryRow
 ): Promise<EntryRow> {
-  const typeNames = Schema.typeNames(config.schema)
-  const typeName = typeNames.get(type)!
+  const type = config.schema[typeName]
   const workspace =
     parent?.workspace ?? partial.workspace ?? Object.keys(config.workspaces)[0]
   const root =
