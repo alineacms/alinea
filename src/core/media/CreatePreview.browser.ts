@@ -2,7 +2,9 @@ import {base64} from 'alinea/core/util/Encoding'
 import {rgba, toHex} from 'color2k'
 import smartcrop from 'smartcrop'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
-import type {ImagePreviewDetails} from './ImagePreview.js'
+import type {ImagePreviewDetails} from './CreatePreview.js'
+
+export {ImagePreviewDetails}
 
 export async function createPreview(file: File): Promise<ImagePreviewDetails> {
   const url = URL.createObjectURL(file)

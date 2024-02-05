@@ -10,7 +10,8 @@ import {
   EditOp,
   Op,
   Transaction,
-  UploadOp
+  UploadOp,
+  UploadOptions
 } from './Transaction.js'
 import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
@@ -56,8 +57,8 @@ export abstract class CMS extends GraphRealm {
     return new DeleteOp(new Transaction(this), entryId)
   }
 
-  upload(file: File) {
-    return new UploadOp(new Transaction(this), file)
+  upload(file: File, options?: UploadOptions) {
+    return new UploadOp(new Transaction(this), file, options)
   }
 
   #attach(config: Config) {

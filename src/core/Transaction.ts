@@ -1,6 +1,5 @@
 import {File} from '@alinea/iso'
-import {createFileHash} from 'alinea/backend/util/ContentHash'
-import {createPreview} from 'alinea/core/media/ImagePreview'
+import {ImagePreviewDetails} from 'alinea/core/media/CreatePreview'
 import PLazy from 'p-lazy'
 import {CMS} from './CMS.js'
 import {Config} from './Config.js'
@@ -23,6 +22,7 @@ import {Schema} from './Schema.js'
 import {EntryUrlMeta, Type, TypeI} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {isImage} from './media/IsImage.js'
+import {createFileHash} from './util/ContentHash.js'
 import {createEntryRow, entryParentPaths} from './util/EntryRows.js'
 import {basename, extname, join, normalize} from './util/Paths.js'
 import {slugify} from './util/Slugs.js'
@@ -82,13 +82,17 @@ export class Op {
     return new DeleteOp(this.tx, entryId)
   }
 
-  upload(file: File) {
-    return new UploadOp(this.tx, file)
+  upload(file: File, options?: UploadOptions) {
+    return new UploadOp(this.tx, file, options)
   }
 
   async commit() {
     await this.tx.commit()
   }
+}
+
+export interface UploadOptions {
+  createPreview?(file: File): Promise<ImagePreviewDetails>
 }
 
 export class UploadOp extends Op {
@@ -97,7 +101,7 @@ export class UploadOp extends Op {
   private workspace?: string
   private root?: string
 
-  constructor(tx: Transaction, file: File) {
+  constructor(tx: Transaction, file: File, options: UploadOptions = {}) {
     super(
       tx.addTask(async (): Promise<Array<Mutation>> => {
         const {config, graph} = tx
@@ -112,7 +116,7 @@ export class UploadOp extends Op {
         const uploadLocation = join(directory, path + extension)
         const info = await cnx.prepareUpload(uploadLocation)
         const previewData = isImage(file.name)
-          ? await createPreview(file)
+          ? await options.createPreview?.(file)
           : undefined
         await fetch(info.upload.url, {
           method: info.upload.method ?? 'POST',
@@ -295,11 +299,6 @@ export class EditOp<Definition> extends Op {
   }
 
   /*moveTo(workspace: string, root: string, parentId?: string) {
-    throw new Error(`Not implemented`)
-    return this
-  }
-
-  setParent(parentId: string) {
     throw new Error(`Not implemented`)
     return this
   }

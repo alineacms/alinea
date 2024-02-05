@@ -1,0 +1,48 @@
+{
+  "title": "Mutating content",
+  "navigationTitle": "",
+  "body": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Your CMS instance has methods to create and update content."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Creating content"
+        }
+      ]
+    },
+    {
+      "id": "2bww0XuSHzm0f72kxNM5cQlVLvI",
+      "type": "CodeBlock",
+      "code": "import {cms} from '@/cms'\n\nconst BlogPost = alinea.type(...)\n\n// Start a transactin to create a new entry of type BlogPost\nconst post = cms.create(BlogPost).set({\n  title: 'A new blog post',\n  body: 'Hello world'\n})\n\n// The new entry ID can be read before comitting\nconsole.log(`Creating post with id: ${post.entryId}`)\n\n// Save the changes\nawait post.commit()",
+      "fileName": "",
+      "language": ""
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2bwoBrTOuERj2E8r7yuNglC0H6G",
+    "type": "Doc",
+    "index": "a1G"
+  }
+}

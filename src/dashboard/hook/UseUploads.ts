@@ -1,5 +1,4 @@
 import {Media} from 'alinea/backend/Media'
-import {createFileHash} from 'alinea/backend/util/ContentHash'
 import {
   Connection,
   Entry,
@@ -12,9 +11,10 @@ import {
 import {entryFileName, entryFilepath} from 'alinea/core/EntryFilenames'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {createPreview} from 'alinea/core/media/ImagePreview'
+import {createPreview} from 'alinea/core/media/CreatePreview'
 import {isImage} from 'alinea/core/media/IsImage'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {createFileHash} from 'alinea/core/util/ContentHash'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {

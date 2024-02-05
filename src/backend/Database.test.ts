@@ -1,5 +1,6 @@
 import {File} from '@alinea/iso'
 import {Entry, EntryPhase} from 'alinea/core'
+import {createPreview} from 'alinea/core/media/CreatePreview'
 import {readFileSync} from 'fs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
@@ -98,7 +99,7 @@ test('image upload', async () => {
     'apps/web/public/screenshot-2022-09-19-at-12-21-23.2U9fkc81kcSh2InU931HrUJstwD.png'
   )
   const file = new File([imageData], 'test.png')
-  const upload = example.upload(file)
+  const upload = example.upload(file, {createPreview})
   await upload.commit()
   const result = await example.get(Entry({entryId: upload.entryId}))
   assert.is(result.title, 'test')
