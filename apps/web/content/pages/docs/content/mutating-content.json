@@ -13,6 +13,13 @@
       ]
     },
     {
+      "id": "2bx32QbAHT1Ib8MCrogypD3TOvL",
+      "type": "CodeBlock",
+      "code": "// These are defined in cms.tsx and \n// will be used in the examples below\nconst BlogPost = alinea.type(...)\nconst schema = {BlogPost}\nconst cms = createCMS({schema, ...})",
+      "fileName": "",
+      "language": ""
+    },
+    {
       "type": "heading",
       "textAlign": "left",
       "level": 2,
@@ -24,9 +31,103 @@
       ]
     },
     {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "New entries can be created using the `create` function."
+        }
+      ]
+    },
+    {
       "id": "2bww0XuSHzm0f72kxNM5cQlVLvI",
       "type": "CodeBlock",
-      "code": "import {cms} from '@/cms'\n\nconst BlogPost = alinea.type(...)\n\n// Start a transactin to create a new entry of type BlogPost\nconst post = cms.create(BlogPost).set({\n  title: 'A new blog post',\n  body: 'Hello world'\n})\n\n// The new entry ID can be read before comitting\nconsole.log(`Creating post with id: ${post.entryId}`)\n\n// Save the changes\nawait post.commit()",
+      "code": "// Start a transaction to create a new entry of type BlogPost\nconst post = cms.create(BlogPost).set({\n  title: 'A new blog post',\n  body: 'Hello world'\n})\n\n// The new entry ID can be read before comitting\nconsole.log(`Creating post with id: ${post.entryId}`)\n\n// Save the changes\nawait post.commit()",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Update content"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Entry fields can be edited using the `edit` function. Optionally pass the entry Type as a second argument so the field values are typed correctly."
+        }
+      ]
+    },
+    {
+      "id": "2bx3AJ8D93WgmthX8tiEqZura9X",
+      "type": "CodeBlock",
+      "code": "import {Entry} from 'alinea/core'\n\n// Select the first blog post\nconst blogPost = await cms.get(BlogPost().select({entryId: Entry.entryId}))\n\n// Edit a field and save\nawait cms.edit(blogPost.entryId, BlogPost).set({\n  body: 'New body text'\n}).commit()",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "File uploads"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Files can be uploaded using the upload function."
+        }
+      ]
+    },
+    {
+      "id": "2bx3SNjDfXQsRSkJYEUX5GY3qg9",
+      "type": "CodeBlock",
+      "code": "const file = new File(['content'], 'test.txt')\nconst upload = cms.upload(file)\n\n// The new entry ID can be read before comitting\nconsole.log(`Creating post with id: ${upload.entryId}`)\n\n// Upload file and save file metadata\nawait upload.commit()",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "Creating image previews"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Alinea can create all the metadata for images (such as previews) by passing a `createPreview` function. On the server this will use the `sharp` package to read image data. The package will need to be installed separately."
+        }
+      ]
+    },
+    {
+      "id": "2bxKAtZiQcruhSmRPO9PldQZ3mR",
+      "type": "CodeBlock",
+      "code": "import {createPreview} from 'alinea/core/media/CreatePreview'\nimport fs from 'node:fs'\n\nconst file = new File([\n  fs.readFileSync('./test.png')\n], 'test.png')\nconst upload = example.upload(file, {createPreview})\nawait upload.commit()",
       "fileName": "",
       "language": ""
     }
