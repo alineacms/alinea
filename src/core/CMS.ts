@@ -1,19 +1,9 @@
-import {File} from '@alinea/iso'
 import {Config, createConfig} from './Config.js'
 import {Connection} from './Connection.js'
 import {Graph, GraphRealm} from './Graph.js'
 import {Resolver} from './Resolver.js'
 import {Root} from './Root.js'
-import {
-  CreateOp,
-  DeleteOp,
-  EditOp,
-  Op,
-  Transaction,
-  UploadOp,
-  UploadOptions
-} from './Transaction.js'
-import {Type} from './Type.js'
+import {Operation, Transaction} from './Transaction.js'
 import {Workspace} from './Workspace.js'
 import {entries} from './util/Objects.js'
 
@@ -41,24 +31,11 @@ export abstract class CMS extends GraphRealm {
   abstract resolver(): Promise<Resolver>
   abstract connection(): Promise<Connection>
 
-  transaction() {
-    return new Op(new Transaction(this))
-  }
-
-  create<Definition>(type: Type<Definition>) {
-    return new CreateOp<Definition>(new Transaction(this), type)
-  }
-
-  edit<Definition>(entryId: string, type?: Type<Definition>) {
-    return new EditOp<Definition>(new Transaction(this), entryId)
-  }
-
-  delete(entryId: string) {
-    return new DeleteOp(new Transaction(this), entryId)
-  }
-
-  upload(file: File, options?: UploadOptions) {
-    return new UploadOp(new Transaction(this), file, options)
+  commit(...operations: Array<Operation>) {
+    return Transaction.commit(
+      this,
+      operations.map(op => op[Operation.Data]).flat()
+    )
   }
 
   #attach(config: Config) {

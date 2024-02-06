@@ -1,9 +1,7 @@
 import {File} from '@alinea/iso'
 import {ImagePreviewDetails} from 'alinea/core/media/CreatePreview'
-import PLazy from 'p-lazy'
 import {CMS} from './CMS.js'
 import {Config} from './Config.js'
-import {Connection} from './Connection.js'
 import {Entry} from './Entry.js'
 import {
   entryChildrenDir,
@@ -27,67 +25,33 @@ import {createEntryRow, entryParentPaths} from './util/EntryRows.js'
 import {basename, extname, join, normalize} from './util/Paths.js'
 import {slugify} from './util/Slugs.js'
 
-export class Transaction {
-  commited = false
-  cnx: Promise<Connection>
-  constructor(
-    protected cms: CMS,
-    protected tasks: Array<(cms: CMS) => Promise<Array<Mutation>>> = []
-  ) {
-    this.cnx = this.cms.connection()
-  }
-
-  get graph() {
-    return this.cms.graph
-  }
-
-  get config() {
-    return this.cms.config
-  }
-
-  addTask(task: () => Promise<Array<Mutation>>) {
-    this.tasks.push(task)
-    return this
-  }
-
-  async commit() {
-    if (this.commited) throw new Error(`Transaction already commited`)
-    this.commited = true
-    const mutations = await Promise.all(this.tasks.map(task => task(this.cms)))
-    const cnx = await this.cnx
-    const result = await cnx.mutate(mutations.flat())
-    return result
+export interface Transaction {
+  (cms: CMS): Promise<Array<Mutation>>
+}
+export namespace Transaction {
+  export async function commit(cms: CMS, tx: Array<Transaction>) {
+    const mutations = await Promise.all(tx.map(task => task(cms)))
+    const cnx = await cms.connection()
+    return cnx.mutate(mutations.flat())
   }
 }
 
-export class Op {
-  constructor(protected tx: Transaction) {}
+export interface Operation {
+  [Operation.Data]: Transaction
+}
 
-  protected typeName(type: TypeI) {
-    const typeNames = Schema.typeNames(this.tx.config.schema)
+export class Operation {
+  static readonly Data = Symbol.for('@alinea/Operation.Data')
+
+  constructor(tx: Transaction) {
+    this[Operation.Data] = tx
+  }
+
+  protected typeName(config: Config, type: TypeI) {
+    const typeNames = Schema.typeNames(config.schema)
     const typeName = typeNames.get(type)!
     if (!typeName) throw new Error(`Type not found: ${type}`)
     return typeName
-  }
-
-  create<Definition>(type: Type<Definition>) {
-    return new CreateOp<Definition>(this.tx, type)
-  }
-
-  edit<Definition>(entryId: string, type?: Type<Definition>) {
-    return new EditOp<Definition>(this.tx, entryId)
-  }
-
-  delete(entryId: string) {
-    return new DeleteOp(this.tx, entryId)
-  }
-
-  upload(file: File, options?: UploadOptions) {
-    return new UploadOp(this.tx, file, options)
-  }
-
-  async commit() {
-    await this.tx.commit()
   }
 }
 
@@ -95,90 +59,87 @@ export interface UploadOptions {
   createPreview?(file: File): Promise<ImagePreviewDetails>
 }
 
-export class UploadOp extends Op {
+export class UploadOperation extends Operation {
   entryId = createId()
   private parentId?: string
   private workspace?: string
   private root?: string
 
-  constructor(tx: Transaction, file: File, options: UploadOptions = {}) {
-    super(
-      tx.addTask(async (): Promise<Array<Mutation>> => {
-        const {config, graph} = tx
-        const fileName = file.name
-        const cnx = await tx.cnx
-        const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
-        const root =
-          this.root ?? Workspace.defaultMediaRoot(config.workspaces[workspace])
-        const extension = extname(fileName)
-        const path = slugify(basename(fileName, extension))
-        const directory = workspaceMediaDir(config, workspace)
-        const uploadLocation = join(directory, path + extension)
-        const info = await cnx.prepareUpload(uploadLocation)
-        const previewData = isImage(file.name)
-          ? await options.createPreview?.(file)
-          : undefined
-        await fetch(info.upload.url, {
-          method: info.upload.method ?? 'POST',
-          body: file
-        }).then(async result => {
-          if (!result.ok)
-            throw new HttpError(
-              result.status,
-              `Could not reach server for upload`
-            )
-        })
-        const parent = this.parentId
-          ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
-          : undefined
-        const title = basename(fileName, extension)
-        const hash = await createFileHash(
-          new Uint8Array(await file.arrayBuffer())
-        )
-        const {mediaDir} = Workspace.data(config.workspaces[workspace])
-        const prefix = mediaDir && normalize(mediaDir)
-        const fileLocation =
-          prefix && info.location.startsWith(prefix)
-            ? info.location.slice(prefix.length)
-            : info.location
-        const entryData = {
-          title,
-          location: fileLocation,
-          extension,
-          size: file.size,
-          hash,
-          ...previewData
-        }
-        const entry = await createEntry(
-          config,
-          'MediaFile',
-          {
-            path,
-            entryId: this.entryId,
-            workspace,
-            root,
-            data: entryData
-          },
-          parent
-        )
-        const parentPaths = entryParentPaths(config, entry)
-        const entryFile = entryFileName(config, entry, parentPaths)
-        return [
-          {
-            type: MutationType.Upload,
-            entryId: this.entryId,
-            url: info.previewUrl,
-            file: info.location
-          },
-          {
-            type: MutationType.Create,
-            entryId: entry.entryId,
-            file: entryFile,
-            entry
-          }
-        ]
+  constructor(file: File, options: UploadOptions = {}) {
+    super(async ({config, graph, connection}): Promise<Array<Mutation>> => {
+      const fileName = file.name
+      const cnx = await connection()
+      const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
+      const root =
+        this.root ?? Workspace.defaultMediaRoot(config.workspaces[workspace])
+      const extension = extname(fileName)
+      const path = slugify(basename(fileName, extension))
+      const directory = workspaceMediaDir(config, workspace)
+      const uploadLocation = join(directory, path + extension)
+      const info = await cnx.prepareUpload(uploadLocation)
+      const previewData = isImage(file.name)
+        ? await options.createPreview?.(file)
+        : undefined
+      await fetch(info.upload.url, {
+        method: info.upload.method ?? 'POST',
+        body: file
+      }).then(async result => {
+        if (!result.ok)
+          throw new HttpError(
+            result.status,
+            `Could not reach server for upload`
+          )
       })
-    )
+      const parent = this.parentId
+        ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
+        : undefined
+      const title = basename(fileName, extension)
+      const hash = await createFileHash(
+        new Uint8Array(await file.arrayBuffer())
+      )
+      const {mediaDir} = Workspace.data(config.workspaces[workspace])
+      const prefix = mediaDir && normalize(mediaDir)
+      const fileLocation =
+        prefix && info.location.startsWith(prefix)
+          ? info.location.slice(prefix.length)
+          : info.location
+      const entryData = {
+        title,
+        location: fileLocation,
+        extension,
+        size: file.size,
+        hash,
+        ...previewData
+      }
+      const entry = await createEntry(
+        config,
+        'MediaFile',
+        {
+          path,
+          entryId: this.entryId,
+          workspace,
+          root,
+          data: entryData
+        },
+        parent
+      )
+      const parentPaths = entryParentPaths(config, entry)
+      const entryFile = entryFileName(config, entry, parentPaths)
+      return [
+        {
+          type: MutationType.Upload,
+          entryId: this.entryId,
+          url: info.previewUrl,
+          file: info.location
+        },
+        {
+          type: MutationType.Create,
+          entryId: entry.entryId,
+          file: entryFile,
+          entry
+        }
+      ]
+    })
   }
 
   setParent(parentId: string) {
@@ -197,100 +158,94 @@ export class UploadOp extends Op {
   }
 }
 
-export class DeleteOp extends Op {
-  constructor(tx: Transaction, protected entryId: string) {
-    super(
-      tx.addTask(async () => {
-        const {config, graph} = tx
-        const entry = await graph.preferPublished.get(
-          Entry({entryId: this.entryId})
-        )
-        const parentPaths = entryParentPaths(config, entry)
-        const file = entryFileName(config, entry, parentPaths)
-        return [
-          {
-            type: MutationType.Remove,
-            entryId: this.entryId,
-            file
-          }
-        ]
-      })
-    )
+export class DeleteOp extends Operation {
+  constructor(protected entryId: string) {
+    super(async ({config, graph}) => {
+      const entry = await graph.preferPublished.get(
+        Entry({entryId: this.entryId})
+      )
+      const parentPaths = entryParentPaths(config, entry)
+      const file = entryFileName(config, entry, parentPaths)
+      return [
+        {
+          type: MutationType.Remove,
+          entryId: this.entryId,
+          file
+        }
+      ]
+    })
   }
 }
 
-export class EditOp<Definition> extends Op {
+export class EditOperation<Definition> extends Operation {
   private entryData?: Partial<Type.Infer<Definition>>
   private changePhase?: EntryPhase
 
-  constructor(tx: Transaction, protected entryId: string) {
-    super(
-      tx.addTask(async () => {
-        const {config, graph} = tx
-        let realm: GraphRealm
-        if (this.changePhase === EntryPhase.Draft) realm = graph.preferDraft
-        else if (this.changePhase === EntryPhase.Archived)
-          realm = graph.preferPublished
-        else if (this.changePhase === EntryPhase.Published)
-          realm = graph.preferDraft
-        else realm = graph.preferPublished
-        const entry = await realm.get(Entry({entryId: this.entryId}))
-        const parent = entry.parent
-          ? await graph.preferPublished.get(Entry({entryId: entry.parent}))
-          : undefined
-        const parentPaths = entryParentPaths(config, entry)
+  constructor(protected entryId: string) {
+    super(async ({config, graph}) => {
+      let realm: GraphRealm
+      if (this.changePhase === EntryPhase.Draft) realm = graph.preferDraft
+      else if (this.changePhase === EntryPhase.Archived)
+        realm = graph.preferPublished
+      else if (this.changePhase === EntryPhase.Published)
+        realm = graph.preferDraft
+      else realm = graph.preferPublished
+      const entry = await realm.get(Entry({entryId: this.entryId}))
+      const parent = entry.parent
+        ? await graph.preferPublished.get(Entry({entryId: entry.parent}))
+        : undefined
+      const parentPaths = entryParentPaths(config, entry)
 
-        const file = entryFileName(
-          config,
-          {...entry, phase: entry.phase},
-          parentPaths
-        )
-        const type = config.schema[entry.type]
-        const mutations: Array<Mutation> = []
-        const createDraft = this.changePhase === EntryPhase.Draft
-        if (createDraft)
+      const file = entryFileName(
+        config,
+        {...entry, phase: entry.phase},
+        parentPaths
+      )
+      const type = config.schema[entry.type]
+      const mutations: Array<Mutation> = []
+      const createDraft = this.changePhase === EntryPhase.Draft
+      if (createDraft)
+        mutations.push({
+          type: MutationType.Edit,
+          entryId: this.entryId,
+          file,
+          entry: await createEntry(
+            config,
+            this.typeName(config, type),
+            {
+              ...entry,
+              phase: EntryPhase.Draft,
+              data: {...entry.data, ...this.entryData}
+            },
+            parent
+          )
+        })
+      else if (this.entryData)
+        mutations.push({
+          type: MutationType.Patch,
+          entryId: this.entryId,
+          file,
+          patch: this.entryData
+        })
+      switch (this.changePhase) {
+        case EntryPhase.Published:
           mutations.push({
-            type: MutationType.Edit,
+            type: MutationType.Publish,
+            phase: entry.phase,
             entryId: this.entryId,
-            file,
-            entry: await createEntry(
-              config,
-              this.typeName(type),
-              {
-                ...entry,
-                phase: EntryPhase.Draft,
-                data: {...entry.data, ...this.entryData}
-              },
-              parent
-            )
+            file
           })
-        else if (this.entryData)
+          break
+        case EntryPhase.Archived:
           mutations.push({
-            type: MutationType.Patch,
+            type: MutationType.Archive,
             entryId: this.entryId,
-            file,
-            patch: this.entryData
+            file
           })
-        switch (this.changePhase) {
-          case EntryPhase.Published:
-            mutations.push({
-              type: MutationType.Publish,
-              phase: entry.phase,
-              entryId: this.entryId,
-              file
-            })
-            break
-          case EntryPhase.Archived:
-            mutations.push({
-              type: MutationType.Archive,
-              entryId: this.entryId,
-              file
-            })
-            break
-        }
-        return mutations
-      })
-    )
+          break
+      }
+      return mutations
+    })
   }
 
   set(entryData: Partial<Type.Infer<Definition>>) {
@@ -305,17 +260,17 @@ export class EditOp<Definition> extends Op {
 
   createAfter<Definition>(type: Type<Definition>) {
     throw new Error(`Not implemented`)
-    return new CreateOp(this.tx, type)
+    return new CreateOp(type)
   }
 
   createBefore<Definition>(type: Type<Definition>) {
     throw new Error(`Not implemented`)
-    return new CreateOp(this.tx, type)
+    return new CreateOp(type)
   }
 
   createChild<Definition>(type: Type<Definition>) {
     throw new Error(`Not implemented`)
-    return new CreateOp(this.tx, type)
+    return new CreateOp(type)
   }*/
 
   draft() {
@@ -334,60 +289,57 @@ export class EditOp<Definition> extends Op {
   }
 }
 
-export class CreateOp<Definition> extends Op {
+export class CreateOperation<Definition> extends Operation {
   entryId = createId()
   private workspace?: string
   private root?: string
   private locale?: string | null
   private entryData: Partial<Type.Infer<Definition>> = {}
-  private entryRow = PLazy.from(async () => {
+  private entryRow = async (cms: CMS) => {
     return createEntry(
-      this.tx.config,
-      this.typeName(this.type),
+      cms.config,
+      this.typeName(cms.config, this.type),
       {entryId: this.entryId, data: this.entryData ?? {}},
-      await this.parentRow
-    )
-  })
-
-  constructor(
-    protected tx: Transaction,
-    protected type: Type<Definition>,
-    protected parentRow?: Promise<EntryRow>
-  ) {
-    super(
-      tx.addTask(async (): Promise<Array<Mutation>> => {
-        const {config} = tx
-        const parent = await this.parentRow
-        const entry = await createEntry(
-          config,
-          this.typeName(type),
-          {
-            entryId: this.entryId,
-            workspace: this.workspace,
-            root: this.root,
-            locale: this.locale,
-            data: this.entryData ?? {}
-          },
-          parent
-        )
-        const parentPaths = entryParentPaths(config, entry)
-        const file = entryFileName(config, entry, parentPaths)
-        return [
-          {
-            type: MutationType.Create,
-            entryId: this.entryId,
-            file,
-            entry: entry
-          }
-        ]
-      })
+      await this.parentRow?.(cms)
     )
   }
 
-  setParent(parentId: string) {
-    this.parentRow = PLazy.from(async () => {
-      return this.tx.graph.preferPublished.get(Entry({entryId: parentId}))
+  constructor(
+    protected type: Type<Definition>,
+    protected parentRow?: (cms: CMS) => Promise<EntryRow>
+  ) {
+    super(async (cms): Promise<Array<Mutation>> => {
+      const parent = await this.parentRow?.(cms)
+      const {config} = cms
+      const entry = await createEntry(
+        config,
+        this.typeName(config, type),
+        {
+          entryId: this.entryId,
+          workspace: this.workspace,
+          root: this.root,
+          locale: this.locale,
+          data: this.entryData ?? {}
+        },
+        parent
+      )
+      const parentPaths = entryParentPaths(config, entry)
+      const file = entryFileName(config, entry, parentPaths)
+      return [
+        {
+          type: MutationType.Create,
+          entryId: this.entryId,
+          file,
+          entry: entry
+        }
+      ]
     })
+  }
+
+  setParent(parentId: string) {
+    this.parentRow = async (cms: CMS) => {
+      return cms.graph.preferPublished.get(Entry({entryId: parentId}))
+    }
     return this
   }
 
@@ -412,7 +364,7 @@ export class CreateOp<Definition> extends Op {
   }
 
   createChild<Definition>(type: Type<Definition>) {
-    return new CreateOp(this.tx, type, this.entryRow)
+    return new CreateOperation(type, this.entryRow)
   }
 }
 

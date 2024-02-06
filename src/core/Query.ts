@@ -1,8 +1,8 @@
-import {Entry} from '../Entry.js'
-import {Type} from '../Type.js'
-import {Cursor, SourceType} from './Cursor.js'
-import {EV, Expr} from './Expr.js'
-import {Projection} from './Projection.js'
+import {Entry} from './Entry.js'
+import {Type} from './Type.js'
+import {Cursor, SourceType} from './pages/Cursor.js'
+import {EV, Expr} from './pages/Expr.js'
+import {Projection} from './pages/Projection.js'
 
 /*
 // Todo: support multiple types
