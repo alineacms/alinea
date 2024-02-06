@@ -52,7 +52,7 @@ export const Target = class {
     const conditions = isConditionalRecord
       ? entries(input[0]).map(([key, value]) => {
           const field = Expr(ExprData.Field(this.data, key))
-          return Expr(
+          return Expr<boolean>(
             ExprData.BinOp(
               field[Expr.Data],
               BinaryOp.Equals,
@@ -60,7 +60,7 @@ export const Target = class {
             )
           )
         })
-      : input.map(ev => Expr(createExprData(ev)))
+      : input.map(ev => Expr<boolean>(createExprData(ev)))
     return Expr.and(...conditions)[Expr.Data]
   }
 

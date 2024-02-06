@@ -1,8 +1,25 @@
-import {page, root, type, workspace} from 'alinea/core'
+import {Entry, document, page, root, schema, type, workspace} from 'alinea/core'
 import {createTestCMS} from 'alinea/core/driver/TestDriver'
 import {createMediaRoot} from 'alinea/core/media/MediaRoot'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
-import {path, tab, tabs, text} from 'alinea/input'
+import {
+  check,
+  code,
+  date,
+  entry,
+  image,
+  link,
+  list,
+  number,
+  object,
+  path,
+  richText,
+  select,
+  tab,
+  tabs,
+  text,
+  url
+} from 'alinea/input'
 
 export function createExample() {
   const Page = type('Type', {
@@ -29,6 +46,101 @@ export function createExample() {
     [type.meta]: {
       isContainer: true
     }
+  })
+
+  const Fields = document('Fields', {
+    text: text('Text field'),
+    hello: text('Validated text field', {
+      help: 'This field only accepts "hello"',
+      validate: value => {
+        if (value !== 'hello') {
+          return 'Only "hello" is allowed'
+        }
+      }
+    }),
+    richText: richText('Rich text field'),
+    select: select('Select field', {
+      a: 'Option a',
+      b: 'Option b'
+    }),
+    number: number('Number field', {
+      minValue: 0,
+      maxValue: 10
+    }),
+    check: check('Check field', {description: 'Check me please'}),
+    date: date('Date field'),
+    code: code('Code field'),
+    externalLink: url('External link'),
+    entry: entry('Internal link'),
+    entryWithCondition: entry('With condition', {
+      help: `Show only entries of type Fields`,
+      condition: Entry.type.is('Fields')
+    }),
+    linkMultiple: link.multiple('Mixed links, multiple'),
+    image: image('Image link'),
+    images: image.multiple('Image link (multiple)'),
+    file: entry('File link'),
+    withFields: link('With extra fields', {
+      fields: type({
+        fieldA: text('Field A', {width: 0.5}),
+        fieldB: text('Field B', {width: 0.5})
+      })
+    }),
+    multipleWithFields: link.multiple('Multiple With extra fields', {
+      fields: type({
+        fieldA: text('Field A', {width: 0.5}),
+        fieldB: text('Field B', {width: 0.5, required: true})
+      })
+    }),
+    list: list('My list field', {
+      schema: schema({
+        Text: type('Text', {
+          title: text('Item title'),
+          text: richText('Item body text')
+        }),
+        Image: type('Image', {
+          image: image('Image')
+        })
+      })
+    }),
+    withInitial: richText('With initial value', {
+      required: true,
+      initialValue: [
+        {
+          type: 'paragraph',
+          content: [
+            {type: 'text', text: 'This is a paragraph with initial value'}
+          ]
+        }
+      ]
+    }),
+    nested: richText('With nested blocks', {
+      schema: {
+        Inner: type('Inner', {
+          checkbox1: check('Checkbox 1'),
+          checkbox2: check('Checkbox 2'),
+          title: text('Title'),
+          content: richText('Inner rich text')
+        }),
+
+        NestLayout: type('Nested layout fields', {
+          object: object('Object field', {
+            fields: type('Fields', {
+              fieldA: text('Field A', {width: 0.5}),
+              fieldB: text('Field B', {width: 0.5})
+            })
+          }),
+          ...tabs(
+            tab('Tab A', {
+              tabA: text('Tab A')
+            }),
+            tab('Tab B', {
+              tabB: text('Tab B')
+            })
+          )
+        })
+      }
+    })
   })
 
   const main = workspace('Main', {
@@ -76,7 +188,7 @@ export function createExample() {
   })
 
   return createTestCMS({
-    schema: {Page, Container},
+    schema: {Fields, Page, Container},
     workspaces: {main}
   })
 }

@@ -70,7 +70,7 @@
     {
       "id": "28hy8mAMZJiFhtaajix2fKGBKBE",
       "type": "CodeBlock",
-      "code": "// Fetch the first page where field equals the string 'value'\nconst page = await cms.get(Query(Page).where({field: 'value'}))",
+      "code": "import {Query} from 'alinea'\n\n// Fetch the first page where field equals the string 'value'\nconst page = await cms.get(\n  Query(Page).where({field: 'value'})\n)",
       "fileName": "",
       "language": "",
       "compact": false
@@ -99,7 +99,7 @@
     {
       "id": "28hyQUttn286uRfAArTKdMWNJVb",
       "type": "CodeBlock",
-      "code": "// Fetch all pages where field equals the string 'value'\nconst pages = await cms.find(Page({field: 'value'}))",
+      "code": "import {Query} from 'alinea'\n\n// Fetch all pages where field equals the string 'value'\nconst pages = await cms.find(\n  Query(Page).where({field: 'value'})\n)",
       "fileName": "",
       "language": "",
       "compact": false
@@ -128,7 +128,7 @@
     {
       "id": "28hyZtRcyC7fXKRHUiqhjA5O7iA",
       "type": "CodeBlock",
-      "code": "// Skip the first 10 pages and return a maximum of 10\nconst limited = await cms.find(Page().skip(10).take(10))",
+      "code": "// Skip the first 10 pages and return a maximum of 10\nconst limited = await cms.find(\n  Query(Page).skip(10).take(10)\n)",
       "fileName": "",
       "language": "",
       "compact": false
@@ -157,7 +157,7 @@
     {
       "id": "2b05iLFLHZ4Vxcyao5sTiFKsFOi",
       "type": "CodeBlock",
-      "code": "const results = await cms.find(\n  Page().search('query', 'content')\n)",
+      "code": "import {Query} from 'alinea'\n\nconst results = await cms.find(\n  Query(Page).search('query', 'content')\n)",
       "fileName": "",
       "language": ""
     },
@@ -185,7 +185,7 @@
     {
       "id": "IEmT75lZgxznL9v7Zq9mW",
       "type": "CodeBlock",
-      "code": "const old = await cms.find(\n  Animal().where(Animal.age.isGreater(10))\n)\nconst teenager = await cms.find(Human().where(\n   Human.age.isGreater(10).or(\n     Human.age.isLess(20)\n   )\n)\nconst applesOrOranges = await cms.find(\n  Fruit().where(Fruit.title.isIn(['apple', 'orange']))\n)",
+      "code": "import {Query} from 'alinea'\n\nconst old = await cms.find(\n  Query(Animal).where(Animal.age.isGreater(10))\n)\nconst teenager = await cms.find(Query(Human).where(\n  Query.or(\n    Human.age.isGreater(10),\n    Human.age.isLess(20)\n  )\n)\nconst applesOrOranges = await cms.find(\n  Query(Fruit).where(\n    Fruit.title.isIn(['apple', 'orange'])\n  )\n)",
       "fileName": "",
       "language": "",
       "compact": false
@@ -196,7 +196,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Conditions can be created by accessing the fields of the table instances and using the operators of Expr:"
+          "text": "Conditions can be created by accessing the fields of the table instances and using the conditional operators:"
         }
       ]
     },
@@ -231,7 +231,7 @@
     {
       "id": "28hzjFJi5kuByP0j3ZX79ATIyyS",
       "type": "CodeBlock",
-      "code": "const ordered = await cms.find(NewsItem().orderBy(NewsItem.publishDate.desc())",
+      "code": "import {Query} from 'alinea'\n\nconst ordered = await cms.find(\n  Query(NewsItem).orderBy(NewsItem.publishDate.desc())\n)",
       "fileName": "",
       "language": "",
       "compact": false
@@ -260,7 +260,7 @@
     {
       "id": "28i0B7nRFUqmGWdCmchhzy21bkt",
       "type": "CodeBlock",
-      "code": "const grouped = await cms.find(\n  NewsItem().groupBy(NewsItem.category)\n)",
+      "code": "import {Query} from 'alinea'\n\nconst grouped = await cms.find(\n  Query(NewsItem).groupBy(NewsItem.category)\n)",
       "fileName": "",
       "language": "",
       "compact": false
@@ -289,7 +289,7 @@
     {
       "id": "28hywuwvVMmRT7zhyZEumjM19tI",
       "type": "CodeBlock",
-      "code": "// Return only titles\nconst rows = await cms.find(\n  Page().select({title: Page.title})\n)",
+      "code": "import {Query} from 'alinea'\n\n// Return only titles\nconst rows = await cms.find(\n  Query(Page).select({title: Page.title})\n)",
       "fileName": "",
       "language": "",
       "compact": false

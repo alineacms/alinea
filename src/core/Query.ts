@@ -14,8 +14,8 @@ export function Query<Types extends Array<TypeI>>(
 
 export function Query<Definition>(
   type: Type<Definition>
-): Cursor.Find<Type.Infer<Definition>> {
-  return new Cursor.Find({target: {type}})
+): Cursor.Typed<Definition> {
+  return new Cursor.Typed(type)
 }
 
 export namespace Query {
@@ -99,6 +99,10 @@ export namespace Query {
   export const wherePath = (path: string) => Entry().where(Entry.path.is(path))
   export const whereLocale = (locale: string) =>
     Entry().where(Entry.locale.is(locale))
+  export const whereWorkspace = (workspace: string) =>
+    Entry().where(Entry.workspace.is(workspace))
+  export const whereRoot = (root: string) => Entry().where(Entry.root.is(root))
+  export const whereType = (type: string) => Entry().where(Entry.type.is(type))
 
   export const select = <S extends Projection>(select: S) =>
     Entry().select(select)

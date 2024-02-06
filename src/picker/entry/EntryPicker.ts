@@ -5,7 +5,7 @@ import {Label} from 'alinea/core/Label'
 import {Reference} from 'alinea/core/Reference'
 import {Type} from 'alinea/core/Type'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
-import {Expr} from 'alinea/core/pages/Expr'
+import {Condition} from 'alinea/core/pages/Condition'
 import {Projection} from 'alinea/core/pages/Projection'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
@@ -44,7 +44,7 @@ export interface EntryPickerOptions<T = {}> {
   hint: Hint
   selection: Projection
   defaultView?: 'row' | 'thumb'
-  condition?: Expr<boolean>
+  condition?: Condition
   withNavigation?: boolean
   showMedia?: boolean
   max?: number

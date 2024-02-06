@@ -70,6 +70,7 @@ export class Field<
 
 export namespace Field {
   export const Data = Symbol.for('@alinea/Field.Data')
+  export const Value = Symbol.for('@alinea/Field.Value')
   export const Ref = Symbol.for('@alinea/Field.Self')
 
   export function provideView<
