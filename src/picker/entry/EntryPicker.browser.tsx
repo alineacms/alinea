@@ -9,7 +9,7 @@ import {Entry} from 'alinea/core/Entry'
 import {workspaceMediaDir} from 'alinea/core/EntryFilenames'
 import {Reference} from 'alinea/core/Reference'
 import {isMediaRoot} from 'alinea/core/media/MediaRoot'
-import {and} from 'alinea/core/pages/Expr'
+import {Expr} from 'alinea/core/pages/Expr'
 import {entries} from 'alinea/core/util/Objects'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
@@ -144,16 +144,16 @@ export function EntryPickerModal({
       return Entry()
         .where(condition, Entry.locale.is(locale ?? null))
         .search(...terms)
-    const rootCondition = and(
+    const rootCondition = Expr.and(
       Entry.workspace.is(destination.workspace),
       Entry.root.is(destination.root)
     )
     const destinationCondition =
       terms.length === 0
-        ? and(rootCondition, Entry.parent.is(destination.parentId ?? null))
+        ? Expr.and(rootCondition, Entry.parent.is(destination.parentId ?? null))
         : rootCondition
     const translatedCondition = destinationLocale
-      ? and(destinationCondition, Entry.locale.is(destinationLocale))
+      ? Expr.and(destinationCondition, Entry.locale.is(destinationLocale))
       : destinationCondition
     return Entry()
       .where(translatedCondition)

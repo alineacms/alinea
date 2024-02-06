@@ -1,7 +1,7 @@
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {Page} from '@/schema/Page'
-import {Entry} from 'alinea/core'
+import {Query} from 'alinea'
 import {notFound} from 'next/navigation'
 import {TextView} from './blocks/TextBlockView'
 
@@ -13,18 +13,22 @@ export interface GenericPageProps {
 
 export const dynamicParams = false
 export async function generateStaticParams() {
-  const slugs = await cms.find(Page().select(Entry.path))
+  const slugs = await cms.find(Query(Page).select(Query.path))
   return slugs.map(slug => ({slug}))
 }
 
 export async function generateMetadata({params}: GenericPageProps) {
-  const page = await cms.maybeGet(Page().where(Entry.url.is(`/${params.slug}`)))
+  const page = await cms.maybeGet(
+    Query(Page).where(Query.url.is(`/${params.slug}`))
+  )
   if (!page) return notFound()
   return {title: page.metadata?.title || page.title}
 }
 
 export default async function GenericPage({params}: GenericPageProps) {
-  const page = await cms.maybeGet(Page().where(Entry.url.is(`/${params.slug}`)))
+  const page = await cms.maybeGet(
+    Query(Page).where(Query.url.is(`/${params.slug}`))
+  )
   if (!page) return notFound()
   return (
     <PageContainer>

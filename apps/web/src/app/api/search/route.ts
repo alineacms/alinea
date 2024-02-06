@@ -1,6 +1,5 @@
 import {cms} from '@/cms'
-import alinea from 'alinea'
-import {Entry} from 'alinea/core'
+import alinea, {Query} from 'alinea'
 
 export async function GET(request: Request) {
   const searchTerm = new URL(request.url).searchParams.get('query')
@@ -9,18 +8,15 @@ export async function GET(request: Request) {
     .in(cms.workspaces.main.pages)
     .disableSync()
     .find(
-      Entry()
-        .select({
-          title: Entry.title,
-          url: Entry.url,
-          snippet: alinea.snippet('[[mark]]', '[[/mark]]', '…', 25),
-          parents({parents}) {
-            return parents().select({
-              id: Entry.entryId,
-              title: Entry.title
-            })
-          }
+      Query.select({
+        title: Query.title,
+        url: Query.url,
+        snippet: alinea.snippet('[[mark]]', '[[/mark]]', '…', 25),
+        parents: Query.parents().select({
+          id: Query.id,
+          title: Query.title
         })
+      })
         .search(...searchTerm.split(' '))
         .take(25)
     )

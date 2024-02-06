@@ -3,7 +3,7 @@ import {Type} from '../Type.js'
 import {entries} from '../util/Objects.js'
 import {createExprData} from './CreateExprData.js'
 import {createSelection} from './CreateSelection.js'
-import {EV, Expr, and} from './Expr.js'
+import {EV, Expr} from './Expr.js'
 import {BinaryOp, ExprData} from './ExprData.js'
 import {Projection} from './Projection.js'
 import {Selection} from './Selection.js'
@@ -90,7 +90,23 @@ export namespace Cursor {
       const current = this[Cursor.Data].where
       return new Find(
         this.with({
-          where: and(current ? Expr(current) : true, ...where)[Expr.Data]
+          where: Expr.and(current ? Expr(current) : true, ...where)[Expr.Data]
+        })
+      )
+    }
+
+    whereUrl(url: string): Find<Row> {
+      return new Find<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'url')).is(url)[Expr.Data]
+        })
+      )
+    }
+
+    wherePath(path: string): Find<Row> {
+      return new Find<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'path')).is(path)[Expr.Data]
         })
       )
     }
@@ -168,7 +184,7 @@ export namespace Cursor {
           )
         )
       })
-      return and(...conditions)[Expr.Data]
+      return Expr.and(...conditions)[Expr.Data]
     }
   }
 
@@ -177,7 +193,7 @@ export namespace Cursor {
       const current = this[Cursor.Data].where
       return new Get(
         this.with({
-          where: and(current ? Expr(current) : true, ...where)[Expr.Data]
+          where: Expr.and(current ? Expr(current) : true, ...where)[Expr.Data]
         })
       )
     }

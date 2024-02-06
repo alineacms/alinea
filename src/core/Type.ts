@@ -1,6 +1,6 @@
 import {EntryPhase, Expand} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
-import {Expr, and} from 'alinea/core/pages/Expr'
+import {Expr} from 'alinea/core/pages/Expr'
 import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
@@ -75,7 +75,7 @@ export interface TypeI<Definition = object> extends Callable {
 
 export type Type<Definition = object> = Definition & TypeI<Definition>
 
-export type TypeRow<Definition> = Expand<{
+type TypeRow<Definition> = Expand<{
   [K in keyof Definition as Definition[K] extends Expr<any>
     ? K
     : never]: Definition[K] extends Expr<infer T> ? T : never
@@ -229,7 +229,7 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
           )
         })
       : input.map(ev => Expr(createExprData(ev)))
-    return and(...conditions)[Expr.Data]
+    return Expr.and(...conditions)[Expr.Data]
   }
 
   call(...input: Array<any>) {

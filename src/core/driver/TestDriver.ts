@@ -69,7 +69,7 @@ export function createTestCMS<Definition extends Config>(
 }
 
 async function listenForUpload(): Promise<{url: string}> {
-  const {createServer} = await import('node:http')
+  const {createServer} = await import('http')
   const server = createServer((req, res) => {
     res.end()
     server.close()

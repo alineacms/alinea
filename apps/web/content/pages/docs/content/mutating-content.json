@@ -8,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Your CMS instance has methods to create and update content."
+          "text": "Your CMS instance has methods to create and update content. During development these will update the file system directly, while in production the changes will result in a new git commit."
         }
       ]
     },

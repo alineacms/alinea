@@ -29,7 +29,7 @@
         {
           "id": "2YlCpSWtMLknsvHhIwtZlTf1MDI",
           "type": "CodeBlock",
-          "code": "import {cms} from '@/cms'\n\nexport default async function HomePage() {\n  const homePage = await cms.get(HomePage())\n  return <h1>{homePage.title}</h1>\n}",
+          "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nexport default async function HomePage() {\n  const homePage = await cms.get(Query(HomePage))\n  return <h1>{homePage.title}</h1>\n}",
           "fileName": "",
           "language": "",
           "compact": false
@@ -70,7 +70,7 @@
     {
       "id": "28hy8mAMZJiFhtaajix2fKGBKBE",
       "type": "CodeBlock",
-      "code": "// Fetch the first page where field equals the string 'value'\nconst page = await cms.get(Page({field: 'value'}))",
+      "code": "// Fetch the first page where field equals the string 'value'\nconst page = await cms.get(Query(Page).where({field: 'value'}))",
       "fileName": "",
       "language": "",
       "compact": false
@@ -295,7 +295,6 @@
       "compact": false
     }
   ],
-  "extraField": [],
   "metadata": {
     "title": "",
     "description": "",

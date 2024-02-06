@@ -139,21 +139,45 @@ export class ExprI<T> {
     )
   }
 
-  add(this: Expr<number>, that: EV<number>): Expr<number> {
+  add(
+    this: Expr<number>,
+    that: EV<number>,
+    ...rest: Array<EV<number>>
+  ): Expr<number>
+  add(...args: Array<EV<number>>): Expr<number> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Add, createExprData(that))
+      args
+        .map(Expr.create)
+        .map(expr => expr[Expr.Data])
+        .reduce((a, b) => ExprData.BinOp(a, BinaryOp.Add, b))
     )
   }
 
-  substract(this: Expr<number>, that: EV<number>): Expr<number> {
+  subtract(
+    this: Expr<number>,
+    that: EV<number>,
+    ...rest: Array<EV<number>>
+  ): Expr<number>
+  subtract(...args: Array<EV<number>>): Expr<number> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Subt, createExprData(that))
+      args
+        .map(Expr.create)
+        .map(expr => expr[Expr.Data])
+        .reduce((a, b) => ExprData.BinOp(a, BinaryOp.Subt, b))
     )
   }
 
-  multiply(this: Expr<number>, that: EV<number>): Expr<number> {
+  multiply(
+    this: Expr<number>,
+    that: EV<number>,
+    ...rest: Array<EV<number>>
+  ): Expr<number>
+  multiply(...args: Array<EV<number>>): Expr<number> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Mult, createExprData(that))
+      args
+        .map(Expr.create)
+        .map(expr => expr[Expr.Data])
+        .reduce((a, b) => ExprData.BinOp(a, BinaryOp.Mult, b))
     )
   }
 
@@ -163,15 +187,35 @@ export class ExprI<T> {
     )
   }
 
-  divide(this: Expr<number>, that: EV<number>): Expr<number> {
+  divide(
+    this: Expr<number>,
+    that: EV<number>,
+    ...rest: Array<EV<number>>
+  ): Expr<number>
+  divide(...args: Array<EV<number>>): Expr<number> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Div, createExprData(that))
+      args
+        .map(Expr.create)
+        .map(expr => expr[Expr.Data])
+        .reduce((a, b) => ExprData.BinOp(a, BinaryOp.Div, b))
     )
   }
 
   concat(this: Expr<string>, that: EV<string>): Expr<string> {
     return Expr(
       ExprData.BinOp(this[Expr.Data], BinaryOp.Concat, createExprData(that))
+    )
+  }
+
+  endsWith(this: Expr<string>, that: string): Expr<boolean> {
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Like, createExprData(`%${that}`))
+    )
+  }
+
+  startsWith(this: Expr<string>, that: string): Expr<boolean> {
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Like, createExprData(`${that}%`))
     )
   }
 
@@ -256,24 +300,6 @@ export class CaseBuilder<T, Res> {
   }
 }
 
-export function and(...conditions: Array<EV<boolean>>): Expr<boolean> {
-  return conditions
-    .map(Expr.create)
-    .reduce(
-      (condition, expr) => condition.and(expr),
-      Expr(ExprData.Value(true))
-    )
-}
-
-export function or(...conditions: Array<EV<boolean>>): Expr<boolean> {
-  return conditions
-    .map(Expr.create)
-    .reduce(
-      (condition, expr) => condition.or(expr),
-      Expr(ExprData.Value(false))
-    )
-}
-
 export namespace Expr {
   export const Data = Symbol.for('@alinea/Expr.Data')
   export const IsExpr = Symbol.for('@alinea/Expr.IsExpr')
@@ -303,5 +329,23 @@ export namespace Expr {
       (typeof input === 'object' || typeof input === 'function') &&
       input[Expr.IsExpr]
     )
+  }
+
+  export function and(...conditions: Array<EV<boolean>>): Expr<boolean> {
+    return conditions
+      .map(Expr.create)
+      .reduce(
+        (condition, expr) => condition.and(expr),
+        Expr(ExprData.Value(true))
+      )
+  }
+
+  export function or(...conditions: Array<EV<boolean>>): Expr<boolean> {
+    return conditions
+      .map(Expr.create)
+      .reduce(
+        (condition, expr) => condition.or(expr),
+        Expr(ExprData.Value(false))
+      )
   }
 }

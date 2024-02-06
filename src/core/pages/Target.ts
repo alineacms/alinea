@@ -2,7 +2,7 @@ import {createId} from 'alinea/core/Id'
 import {Callable} from 'rado/util/Callable'
 import {createExprData} from './CreateExprData.js'
 import {Cursor} from './Cursor.js'
-import {EV, Expr, and} from './Expr.js'
+import {EV, Expr} from './Expr.js'
 import {BinaryOp, ExprData} from './ExprData.js'
 import {Fields} from './Fields.js'
 import {TargetData} from './TargetData.js'
@@ -61,7 +61,7 @@ export const Target = class {
           )
         })
       : input.map(ev => Expr(createExprData(ev)))
-    return and(...conditions)[Expr.Data]
+    return Expr.and(...conditions)[Expr.Data]
   }
 
   get(field: string) {
