@@ -97,6 +97,8 @@ export namespace Query {
   export const whereId = (id: string) => Entry().where(Entry.entryId.is(id))
   export const whereUrl = (url: string) => Entry().where(Entry.url.is(url))
   export const wherePath = (path: string) => Entry().where(Entry.path.is(path))
+  export const whereParent = (parentId: string) =>
+    Entry().where(Entry.parent.is(parentId))
   export const whereLocale = (locale: string) =>
     Entry().where(Entry.locale.is(locale))
   export const whereWorkspace = (workspace: string) =>

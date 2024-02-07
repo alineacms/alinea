@@ -9,6 +9,25 @@ import {entries, fromEntries, keys} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
 import {ScalarShape} from './ScalarShape.js'
 
+export enum RichTextElements {
+  h1 = 'h1',
+  h2 = 'h2',
+  h3 = 'h3',
+  h4 = 'h4',
+  h5 = 'h5',
+  h6 = 'h6',
+  p = 'p',
+  b = 'b',
+  i = 'i',
+  ul = 'ul',
+  ol = 'ol',
+  li = 'li',
+  a = 'a',
+  hr = 'hr',
+  br = 'br',
+  small = 'small'
+}
+
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
 function serialize(
   item: Y.XmlElement | Y.XmlText | Y.XmlHook

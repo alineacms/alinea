@@ -1,26 +1,14 @@
-import {Infer, Schema, TextDoc, TextNode, slugify} from 'alinea/core'
+import {
+  Infer,
+  RichTextElements,
+  Schema,
+  TextDoc,
+  TextNode,
+  slugify
+} from 'alinea/core'
 import {ComponentType, Fragment, ReactElement, isValidElement} from 'react'
 
-export enum Elements {
-  h1 = 'h1',
-  h2 = 'h2',
-  h3 = 'h3',
-  h4 = 'h4',
-  h5 = 'h5',
-  h6 = 'h6',
-  p = 'p',
-  b = 'b',
-  i = 'i',
-  ul = 'ul',
-  ol = 'ol',
-  li = 'li',
-  a = 'a',
-  hr = 'hr',
-  br = 'br',
-  small = 'small'
-}
-
-type Element = keyof typeof Elements
+type Element = keyof typeof RichTextElements
 
 function textContent(doc: TextDoc): string {
   return doc.reduce((text, node) => {
@@ -133,7 +121,7 @@ export type RichTextProps<Blocks extends Schema> = {
   doc: TextDoc<Blocks>
   text?: ComponentType<{children: string}>
 } & {
-  [K in keyof typeof Elements]?:
+  [K in keyof typeof RichTextElements]?:
     | ComponentType<JSX.IntrinsicElements[K]>
     | ReactElement
 } & {[K in keyof Blocks]?: ComponentType<Infer<Blocks[K]>>}

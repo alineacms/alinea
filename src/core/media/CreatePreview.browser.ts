@@ -6,8 +6,8 @@ import type {ImagePreviewDetails} from './CreatePreview.js'
 
 export {ImagePreviewDetails}
 
-export async function createPreview(file: File): Promise<ImagePreviewDetails> {
-  const url = URL.createObjectURL(file)
+export async function createPreview(blob: Blob): Promise<ImagePreviewDetails> {
+  const url = URL.createObjectURL(blob)
 
   // Load the image
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {

@@ -112,6 +112,10 @@ export class ExprI<T> {
     )
   }
 
+  isBetween(min: EV<T>, max: EV<T>): Expr<boolean> {
+    return this.isGreaterOrEqual(min).and(this.isLessOrEqual(max))
+  }
+
   isGreater(that: EV<any>): Expr<boolean> {
     return Expr(
       ExprData.BinOp(this[Expr.Data], BinaryOp.Greater, createExprData(that))

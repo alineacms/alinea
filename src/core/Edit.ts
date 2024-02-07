@@ -30,7 +30,10 @@ export namespace Edit {
     return new DeleteOp(entryId)
   }
 
-  export function upload(file: File, options?: UploadOptions) {
+  export function upload(
+    file: File | [string, Uint8Array],
+    options?: UploadOptions
+  ) {
     return new UploadOperation(file, options)
   }
 

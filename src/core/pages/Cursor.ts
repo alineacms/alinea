@@ -118,6 +118,14 @@ export namespace Cursor {
       )
     }
 
+    whereParent(parentId: string): Find<Row> {
+      return new Find<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'parent')).is(parentId)[Expr.Data]
+        })
+      )
+    }
+
     whereLocale(locale: string): Find<Row> {
       return new Find<Row>(
         this.with({

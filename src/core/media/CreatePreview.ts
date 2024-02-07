@@ -1,4 +1,3 @@
-import {File} from '@alinea/iso'
 import {base64} from 'alinea/core/util/Encoding'
 import {rgba, toHex} from 'color2k'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
@@ -12,13 +11,13 @@ export interface ImagePreviewDetails {
   preview: string
 }
 
-export async function createPreview(file: File): Promise<ImagePreviewDetails> {
+export async function createPreview(blob: Blob): Promise<ImagePreviewDetails> {
   const {default: sharp} = await import('sharp' + '').catch(() => {
     throw new Error(
       `To create image previews server side you need to install the 'sharp' package`
     )
   })
-  const image = sharp(await file.arrayBuffer())
+  const image = sharp(await blob.arrayBuffer())
   const metadata = await image.metadata()
   const width = metadata.width ?? 0
   const height = metadata.height ?? 0

@@ -1,4 +1,4 @@
-import {File} from '@alinea/iso'
+import {Blob, File} from '@alinea/iso'
 import {ImagePreviewDetails} from 'alinea/core/media/CreatePreview'
 import {CMS} from './CMS.js'
 import {Config} from './Config.js'
@@ -56,7 +56,7 @@ export class Operation {
 }
 
 export interface UploadOptions {
-  createPreview?(file: File): Promise<ImagePreviewDetails>
+  createPreview?(blob: Blob): Promise<ImagePreviewDetails>
 }
 
 export class UploadOperation extends Operation {
@@ -65,9 +65,10 @@ export class UploadOperation extends Operation {
   private workspace?: string
   private root?: string
 
-  constructor(file: File, options: UploadOptions = {}) {
+  constructor(file: File | [string, Uint8Array], options: UploadOptions = {}) {
     super(async ({config, graph, connection}): Promise<Array<Mutation>> => {
-      const fileName = file.name
+      const fileName = Array.isArray(file) ? file[0] : file.name
+      const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
       const cnx = await connection()
       const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
       const root =
@@ -77,12 +78,14 @@ export class UploadOperation extends Operation {
       const directory = workspaceMediaDir(config, workspace)
       const uploadLocation = join(directory, path + extension)
       const info = await cnx.prepareUpload(uploadLocation)
-      const previewData = isImage(file.name)
-        ? await options.createPreview?.(file)
+      const previewData = isImage(fileName)
+        ? await options.createPreview?.(
+            file instanceof Blob ? file : new Blob([body])
+          )
         : undefined
       await fetch(info.upload.url, {
         method: info.upload.method ?? 'POST',
-        body: file
+        body
       }).then(async result => {
         if (!result.ok)
           throw new HttpError(
@@ -94,9 +97,7 @@ export class UploadOperation extends Operation {
         ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
         : undefined
       const title = basename(fileName, extension)
-      const hash = await createFileHash(
-        new Uint8Array(await file.arrayBuffer())
-      )
+      const hash = await createFileHash(new Uint8Array(body))
       const {mediaDir} = Workspace.data(config.workspaces[workspace])
       const prefix = mediaDir && normalize(mediaDir)
       const fileLocation =
@@ -107,7 +108,7 @@ export class UploadOperation extends Operation {
         title,
         location: fileLocation,
         extension,
-        size: file.size,
+        size: body.byteLength,
         hash,
         ...previewData
       }

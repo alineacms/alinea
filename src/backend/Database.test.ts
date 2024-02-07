@@ -1,4 +1,3 @@
-import {File} from '@alinea/iso'
 import {Edit, EntryPhase, Query} from 'alinea/core'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {readFileSync} from 'fs'
@@ -81,8 +80,10 @@ test('change published path for entry with language', async () => {
 
 test('file upload', async () => {
   const example = createExample()
-  const file = new File(['Hello, World!'], 'test.txt')
-  const upload = Edit.upload(file)
+  const upload = Edit.upload([
+    'test.txt',
+    new TextEncoder().encode('Hello, World!')
+  ])
   await example.commit(upload)
   const result = await example.get(Query.whereId(upload.entryId))
   assert.is(result.title, 'test')
@@ -94,8 +95,7 @@ test('image upload', async () => {
   const imageData = readFileSync(
     'apps/web/public/screenshot-2022-09-19-at-12-21-23.2U9fkc81kcSh2InU931HrUJstwD.png'
   )
-  const file = new File([imageData], 'test.png')
-  const upload = Edit.upload(file, {createPreview})
+  const upload = Edit.upload(['test.png', imageData], {createPreview})
   await example.commit(upload)
   const result = await example.get(Query.whereId(upload.entryId))
   assert.is(result.title, 'test')
@@ -105,7 +105,7 @@ test('image upload', async () => {
   assert.is(result.data.averageColor, '#4b4f59')
 })
 
-test.only('field creators', async () => {
+test('field creators', async () => {
   const example = createExample()
   const {Fields} = example.schema
   const entry = Edit.create(Fields)
@@ -115,10 +115,8 @@ test.only('field creators', async () => {
       text: Edit.richText(Fields.richText)
         .addHtml(
           `
-            <h1>Testje</h1>
-            <p>
-              This will be quite useful.
-            </p>
+            <h1>Test</h1>
+            <p>This will be quite useful.</p>
           `
         )
         .value()
@@ -126,10 +124,15 @@ test.only('field creators', async () => {
     .value()
   entry.set({title: 'Fields', list})
   await example.commit(entry)
-  const res = await example.get(
+  const res = (await example.get(
     Query.whereId(entry.entryId).select(Fields.list)
-  )
-  console.log(res[0])
+  ))![0]
+  if (res?.type !== 'Text') throw new Error('Expected Text')
+  assert.equal(res.text[0], {
+    type: 'heading',
+    level: 1,
+    content: [{type: 'text', text: 'Test'}]
+  })
 })
 
 test.run()

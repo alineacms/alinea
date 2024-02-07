@@ -53,13 +53,8 @@ class TestDriver extends CMS implements TestApi {
     return handler.connect({logger: new Logger('test')})
   })
 
-  async connection(): Promise<Connection> {
-    return this.handler
-  }
-
-  async resolver(): Promise<Resolver> {
-    return this.handler
-  }
+  connection = (): Promise<Connection> => this.handler
+  resolver = (): Promise<Resolver> => this.handler
 }
 
 export function createTestCMS<Definition extends Config>(
