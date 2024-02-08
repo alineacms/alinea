@@ -47,7 +47,7 @@
     "src/dashboard",
     "src/ui",
     "src/auth/passwordless",
-    "src/input/richtext"
+    "src/field/richtext"
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.2",
