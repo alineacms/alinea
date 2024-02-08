@@ -28,4 +28,4 @@ export {document} from 'alinea/core/Document'
 export {createMediaRoot as media} from 'alinea/core/media/MediaRoot'
 
 // Included inputs
-export * from './input.js'
+export * from './field.js'

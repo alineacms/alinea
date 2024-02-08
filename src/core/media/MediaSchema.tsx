@@ -1,8 +1,8 @@
 import {Hint} from 'alinea/core/Hint'
 import {Type, type} from 'alinea/core/Type'
-import {hidden} from 'alinea/input/hidden'
-import {path} from 'alinea/input/path'
-import {text} from 'alinea/input/text'
+import {hidden} from 'alinea/field/hidden'
+import {path} from 'alinea/field/path'
+import {text} from 'alinea/field/text'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {

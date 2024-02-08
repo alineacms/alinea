@@ -1,7 +1,7 @@
-import {metadata} from 'alinea/input/metadata'
-import {PathField, path} from 'alinea/input/path'
-import {tab, tabs} from 'alinea/input/tabs'
-import {TextField, text} from 'alinea/input/text'
+import {metadata} from 'alinea/field/metadata'
+import {PathField, path} from 'alinea/field/path'
+import {tab, tabs} from 'alinea/field/tabs'
+import {TextField, text} from 'alinea/field/text'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundShare} from 'alinea/ui/icons/IcRoundShare'
 import {

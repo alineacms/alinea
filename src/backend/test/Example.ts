@@ -19,7 +19,7 @@ import {
   tabs,
   text,
   url
-} from 'alinea/input'
+} from 'alinea/field'
 
 export function createExample() {
   const Page = type('Type', {

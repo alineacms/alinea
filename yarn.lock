@@ -101,9 +101,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.richtext@workspace:src/input/richtext":
+"@alinea/field.richtext@workspace:src/input/richtext":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.richtext@workspace:src/input/richtext"
+  resolution: "@alinea/field.richtext@workspace:src/input/richtext"
   dependencies:
     "@tiptap/core": ^2.1.16
     "@tiptap/extension-blockquote": ^2.1.16

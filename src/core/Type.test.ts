@@ -1,5 +1,5 @@
 import {Type, type} from 'alinea/core'
-import {list, richText, text} from 'alinea/input'
+import {list, richText, text} from 'alinea/field'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 
