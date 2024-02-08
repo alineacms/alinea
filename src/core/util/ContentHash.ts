@@ -1,5 +1,5 @@
-import {EntryRow} from 'alinea/core'
 import xxhash from 'xxhash-wasm'
+import {EntryRow} from '../EntryRow.js'
 
 const xxHash = xxhash()
 

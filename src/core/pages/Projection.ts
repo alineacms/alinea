@@ -1,4 +1,4 @@
-import {Type} from 'alinea/core/Type'
+import {Type} from '../Type.js'
 import {Cursor} from './Cursor.js'
 import {Expr} from './Expr.js'
 import {Target} from './Target.js'

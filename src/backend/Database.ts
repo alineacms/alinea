@@ -1,4 +1,3 @@
-import {JsonLoader, Media} from 'alinea/backend'
 import {
   Config,
   EntryUrlMeta,
@@ -25,12 +24,14 @@ import {Driver, Expr, Select, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'
 import {EntryPhase, EntryRow} from '../core/EntryRow.js'
+import {Media} from './Media.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
+import {JsonLoader} from './loader/JsonLoader.js'
 
 interface Seed {
   type: string

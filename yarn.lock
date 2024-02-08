@@ -185,6 +185,7 @@ __metadata:
     remark: ^14.0.2
     remark-html: ^15.0.1
     shiki: ^0.10.1
+    tsx: ^4.7.0
     typescript: ^5.3.3
     use-clipboard-copy: ^0.2.0
   languageName: unknown
@@ -5134,6 +5135,15 @@ fsevents@~2.3.2:
   dependencies:
     resolve-pkg-maps: ^1.0.0
   checksum: fd2589a50e21543cf416285e5c4ac605359f49209b6c2e66bb8698fac907356e060de0a681e40881f00182b6f19771377411a88adcc78fd3954732ff54f4a54d
+  languageName: node
+  linkType: hard
+
+"get-tsconfig@npm:^4.7.2":
+  version: 4.7.2
+  resolution: "get-tsconfig@npm:4.7.2"
+  dependencies:
+    resolve-pkg-maps: ^1.0.0
+  checksum: 172358903250eff0103943f816e8a4e51d29b8e5449058bdf7266714a908a48239f6884308bd3a6ff28b09f692b9533dbebfd183ab63e4e14f073cda91f1bca9
   languageName: node
   linkType: hard
 
@@ -11237,6 +11247,22 @@ resolve@^1.10.0:
   peerDependencies:
     typescript: ">=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta"
   checksum: 1843f4c1b2e0f975e08c4c21caa4af4f7f65a12ac1b81b3b8489366826259323feb3fc7a243123453d2d1a02314205a7634e048d4a8009921da19f99755cdc48
+  languageName: node
+  linkType: hard
+
+"tsx@npm:^4.7.0":
+  version: 4.7.0
+  resolution: "tsx@npm:4.7.0"
+  dependencies:
+    esbuild: ~0.19.10
+    fsevents: ~2.3.3
+    get-tsconfig: ^4.7.2
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    tsx: dist/cli.mjs
+  checksum: a3a17fa8a40dbe0aff26fb2bc71a069e568152e0685b0bd9a31ea1091806274ba14882551433ed01efa7eae16f1aa965e2e47f3075ec1e914c42cf5dfce1f924
   languageName: node
   linkType: hard
 

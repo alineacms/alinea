@@ -1,7 +1,7 @@
-import {fromModule} from 'alinea/ui'
 import {HTMLProps} from 'react'
 import css from './Lift.module.scss'
 import {ElevationProvider} from './util/Elevation.js'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

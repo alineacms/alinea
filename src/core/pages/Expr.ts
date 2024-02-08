@@ -1,4 +1,3 @@
-import {Condition} from './Condition.js'
 import {createExprData} from './CreateExprData.js'
 import {createSelection} from './CreateSelection.js'
 import {Cursor, OrderBy, OrderDirection} from './Cursor.js'
@@ -8,6 +7,7 @@ import type {Selection} from './Selection.js'
 
 /** Expression or value of type T */
 export type EV<T> = Expr<T> | T
+export type Condition = Expr<boolean> | HasExpr<boolean>
 
 export interface Expr<T> extends ExprI<T> {}
 

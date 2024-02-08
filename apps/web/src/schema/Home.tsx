@@ -5,9 +5,7 @@ import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 export const Home = Config.document('Home', {
   fields: {
     title: Field.text('Title'),
-    path: Field.path('Path', {
-      hidden: true
-    }),
+    path: Field.path('Path', {hidden: true}),
     ...Field.tabs(
       Field.tab('Homepage', {
         icon: IcRoundInsertDriveFile,
@@ -50,9 +48,9 @@ export const Home = Config.document('Home', {
                 fields: {
                   label: Field.text('Label'),
                   links: Field.link.multiple('Links', {
-                    fields: Config.type('Fields', {
+                    fields: {
                       label: Field.text('Label')
-                    })
+                    }
                   })
                 }
               })

@@ -1,6 +1,6 @@
 import {Config} from './Config.js'
-import {Connection} from './Connection.js'
 import {PageSeed} from './Page.js'
+import {ResolveParams} from './Resolver.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
@@ -45,7 +45,7 @@ export class GraphRealm implements GraphRealmApi {
 
   constructor(
     protected config: Config,
-    private resolve: (params: Connection.ResolveParams) => Promise<unknown>,
+    private resolve: (params: ResolveParams) => Promise<unknown>,
     private origin: GraphOrigin = {}
   ) {
     this.targets = Schema.targets(config.schema)
@@ -144,7 +144,7 @@ export class Graph {
 
   constructor(
     public config: Config,
-    public resolve: (params: Connection.ResolveParams) => Promise<unknown>
+    public resolve: (params: ResolveParams) => Promise<unknown>
   ) {
     this.drafts = new GraphRealm(this.config, params => {
       return this.resolve({

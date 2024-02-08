@@ -1,9 +1,7 @@
-import {EntryPhase, Expand} from 'alinea/core'
-import {Cursor} from 'alinea/core/pages/Cursor'
-import {Expr} from 'alinea/core/pages/Expr'
-import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
+import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
+import {EntryPhase} from './EntryRow.js'
 import {Field} from './Field.js'
 import {Hint} from './Hint.js'
 import {Label} from './Label.js'
@@ -11,6 +9,8 @@ import {Meta, StripMeta} from './Meta.js'
 import {Section, section} from './Section.js'
 import type {View} from './View.js'
 import {createExprData} from './pages/CreateExprData.js'
+import {Cursor} from './pages/Cursor.js'
+import {Expr} from './pages/Expr.js'
 import {BinaryOp, ExprData} from './pages/ExprData.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {
@@ -20,6 +20,7 @@ import {
   fromEntries,
   keys
 } from './util/Objects.js'
+import {Expand} from './util/Types.js'
 
 export interface EntryUrlMeta {
   phase: EntryPhase

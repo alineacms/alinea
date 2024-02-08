@@ -1,8 +1,8 @@
 import {
-  Connection,
   Field,
   PreviewUpdate,
   ResolveDefaults,
+  ResolveParams,
   Schema,
   Type,
   unreachable
@@ -624,7 +624,7 @@ export class EntryResolver {
     locale,
     realm = this.defaults?.realm ?? Realm.Published,
     preview = this.defaults?.preview
-  }: Connection.ResolveParams): Promise<T> => {
+  }: ResolveParams): Promise<T> => {
     const ctx = new ResolveContext({realm, location, locale})
     const queryData = this.query(ctx, selection)
     const query = new Query<Interim>(queryData)

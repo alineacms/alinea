@@ -1,10 +1,14 @@
-import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
-import {Drafts} from 'alinea/backend/Drafts'
-import {History, Revision} from 'alinea/backend/History'
-import {Pending} from 'alinea/backend/Pending'
 import {Config, Connection, Draft, createId} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
+import {Database} from '../Database.js'
+import {Drafts} from '../Drafts.js'
+import {Handler} from '../Handler.js'
+import {History, Revision} from '../History.js'
+import {Media} from '../Media.js'
+import {Pending} from '../Pending.js'
+import {Target} from '../Target.js'
+import {JWTPreviews} from '../util/JWTPreviews.js'
 
 class MemoryApi implements Media, Target, History, Drafts, Pending {
   drafts = new Map<string, Draft>()

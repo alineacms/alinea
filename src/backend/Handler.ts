@@ -9,6 +9,7 @@ import {
   EntryRow,
   PreviewUpdate,
   ResolveDefaults,
+  ResolveParams,
   Resolver,
   SyncResponse,
   parseYDoc
@@ -71,7 +72,7 @@ export class Handler implements Resolver {
     this.router = createRouter(auth, this.connect)
   }
 
-  resolve = async (params: Connection.ResolveParams) => {
+  resolve = async (params: ResolveParams) => {
     const {resolveDefaults} = this.options
     const resolveParams = {...resolveDefaults, ...params}
     const {syncInterval} = resolveParams
@@ -267,7 +268,7 @@ function respond<T>({result, logger}: LoggerResult<T>) {
   })
 }
 
-const ResolveBody: Type<Connection.ResolveParams> = object({
+const ResolveBody: Type<ResolveParams> = object({
   selection: Selection.adt,
   locale: string.optional,
   realm: enums(Realm),

@@ -1,5 +1,5 @@
-import {createId} from 'alinea/core/Id'
 import {Callable} from 'rado/util/Callable'
+import {createId} from '../Id.js'
 import {createExprData} from './CreateExprData.js'
 import {Cursor} from './Cursor.js'
 import {EV, Expr} from './Expr.js'

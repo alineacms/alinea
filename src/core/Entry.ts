@@ -1,6 +1,6 @@
-import {Expand} from 'alinea/core'
 import {EntryPhase, EntryRow} from './EntryRow.js'
 import {Target} from './pages/Target.js'
+import {Expand} from './util/Types.js'
 
 export interface Entry {
   entryId: string
