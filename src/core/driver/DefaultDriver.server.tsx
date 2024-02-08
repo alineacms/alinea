@@ -14,7 +14,7 @@ import {Logger} from '../util/Logger.js'
 
 const store = PLazy.from(async () => {
   // @ts-ignore
-  const {storeData} = import('@alinea/generated/store.js')
+  const {storeData} = await import('@alinea/generated/store.js')
   return createStore(new Uint8Array(base64.parse(storeData)))
 })
 
