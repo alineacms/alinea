@@ -13,20 +13,13 @@
       ]
     },
     {
-      "id": "2bx32QbAHT1Ib8MCrogypD3TOvL",
-      "type": "CodeBlock",
-      "code": "// These are defined in cms.tsx and \n// will be used in the examples below\nconst BlogPost = alinea.type(...)\nconst schema = {BlogPost}\nconst cms = createCMS({schema, ...})",
-      "fileName": "",
-      "language": ""
-    },
-    {
       "type": "heading",
       "textAlign": "left",
       "level": 2,
       "content": [
         {
           "type": "text",
-          "text": "Creating content"
+          "text": "Creating Entries"
         }
       ]
     },
@@ -36,7 +29,7 @@
       "content": [
         {
           "type": "text",
-          "text": "New entries can be created using the `create` function."
+          "text": "New Entries can be created using the `create` function."
         }
       ]
     },
@@ -50,11 +43,39 @@
     {
       "type": "heading",
       "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "Creating child Entries"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "To nest new Entries correctly it's possible to set the parent id, or construct directly from a parent update."
+        }
+      ]
+    },
+    {
+      "id": "2c4tj6ItJDix4tpGojE9LGn0fTo",
+      "type": "CodeBlock",
+      "code": "import {Edit} from 'alinea'\n\nconst blog = Edit.create(Blog).set({title: 'Blog'})\nconst posts = postData.map(data =>\n  blog.createChild(BlogPost).set({title: data.title})\n)\n// Or, if you're adding to an existing parent\n// blog.create(BlogPost).setParent(blogId).set({title: data.title})\nawait cms.commit(blog, ...posts)",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
       "level": 2,
       "content": [
         {
           "type": "text",
-          "text": "Update content"
+          "text": "Update Fields"
         }
       ]
     },
@@ -72,6 +93,34 @@
       "id": "2bx3AJ8D93WgmthX8tiEqZura9X",
       "type": "CodeBlock",
       "code": "import {Edit, Query} from 'alinea'\n\n// Select the first blog post\nconst blogPostId = await cms.get(Query(BlogPost).select(Query.id))\n\n// Edit a field and save\nconst update = Edit(blogPostId, BlogPost).set({\n  body: 'New body text'\n})\n\nawait cms.commit(update)",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "Constructing field values"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Some fields contain values that are more complex than a string. The Edit namespace contains helper functions to construct these. In this example we construct the value of a List Field."
+        }
+      ]
+    },
+    {
+      "id": "2c4t1IBcmwpjaS3YqNaJQxRpWss",
+      "type": "CodeBlock",
+      "code": "const richTextField = richText('Item body text');\nconst listField = list('My list field', {\n  schema: {\n    Text: type('Text', {\n      title: text('Item title'),\n      text: richText,\n    })\n  }\n})\nconst rowText = Edit.richText(richTextField)\n  .addHtml(`\n    <h1>Main heading</h1>\n    <p>A rich text value parsed from HTML.</p>\n  `)\n  .value()\nconst listValue = Edit.list(listField)\n  .add('Text', {\n    title: 'The row title',\n    text: rowText,\n  })\n  .value()\nconst update = Edit(entryId, TypeWithList).set({\n  list: listValue\n})",
       "fileName": "",
       "language": ""
     },
