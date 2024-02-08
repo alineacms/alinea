@@ -1,11 +1,15 @@
-import alinea from 'alinea'
+import {Config, Field} from 'alinea'
 
-export const ColumnsBlock = alinea.type('Columns', {
-  items: alinea.list('Items', {
-    schema: alinea.schema({
-      ColumnItem: alinea.type('Item', {
-        text: alinea.richText('Text')
-      })
+export const ColumnsBlock = Config.type('Columns', {
+  fields: {
+    items: Field.list('Items', {
+      schema: {
+        ColumnItem: Config.type('Item', {
+          fields: {
+            text: Field.richText('Text')
+          }
+        })
+      }
     })
-  })
+  }
 })

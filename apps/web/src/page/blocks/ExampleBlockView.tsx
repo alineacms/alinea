@@ -1,14 +1,12 @@
 import {ExampleBlock} from '@/schema/blocks/ExampleBlock'
-import alinea from 'alinea'
+import {Infer} from 'alinea'
 import {fromModule} from 'alinea/ui'
 import lzstring from 'lz-string'
 import css from './ExampleBlockView.module.scss'
 
 const styles = fromModule(css)
 
-export async function ExampleBlockView({
-  code
-}: alinea.infer<typeof ExampleBlock>) {
+export async function ExampleBlockView({code}: Infer<typeof ExampleBlock>) {
   const hash = lzstring.compressToEncodedURIComponent(code)
   return (
     <div>

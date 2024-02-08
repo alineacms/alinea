@@ -1,5 +1,6 @@
 {
   "title": "Workspaces",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -14,8 +15,8 @@
     {
       "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
       "type": "CodeBlock",
-      "code": "export const cms = createCMS({\n  workspaces: {\n    // Define a main workspace\n    main: alinea.workspace('Main workspace', {\n      // Define Roots\n      pages: alinea.root('Pages'),\n      media: alinea.media(),\n      // Workspace configuration\n      [alinea.meta]: {\n        color: '#3F61E8',\n        source: 'content',\n        mediaDir: 'public'\n      }\n    })\n  }\n})",
-      "fileName": "cms.tsx",
+      "code": "import {Config} from 'alinea'\n\nConfig.workspace('Main workspace', {\n  source: 'content',\n  color: '#3F61E8',\n  mediaDir: 'public',\n  roots: {\n    // Website pages can be managed within this Root\n    pages: Config.root('Pages'),\n    // Image and file uploads will end up here\n    media: Config.media()\n  }\n})",
+      "fileName": "",
       "language": "",
       "compact": false
     },
@@ -50,6 +51,47 @@
                 "data-type": "entry",
                 "href": null,
                 "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`roots`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "An object containing "
+        },
+        {
+          "type": "text",
+          "text": "Roots",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2c5D0rdh3wpYg35vLkio0mOCncI",
+                "data-entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+                "data-type": "entry",
+                "href": null,
+                "title": null
               }
             }
           ]

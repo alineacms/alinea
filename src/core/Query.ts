@@ -3,6 +3,7 @@ import {Type} from './Type.js'
 import {Cursor, SourceType} from './pages/Cursor.js'
 import {EV, Expr} from './pages/Expr.js'
 import {Projection} from './pages/Projection.js'
+import {snippet as snippetHelper} from './pages/Snippet.js'
 
 /*
 // Todo: support multiple types
@@ -110,6 +111,7 @@ export namespace Query {
     Entry().select(select)
   export const search = (...searchTerms: Array<string>) =>
     Entry().search(...searchTerms)
+  export const snippet = snippetHelper
 
   export function children<Definition>(
     type?: Type<Definition>,

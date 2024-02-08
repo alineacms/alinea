@@ -15,7 +15,7 @@
     {
       "id": "267RNY6ruMlaKYh8ADfzxtq0jnA",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})",
+      "code": "import {Field} from 'alinea'\n\nField.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -23,7 +23,7 @@
     {
       "id": "kLT1p_gpGFN1L9rIy9e5E",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Text field', {\n  text: alinea.text('My text field', {\n    help: 'This is an example field',\n    multiline: true,\n    initialValue: 'A text value'\n  })\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Text field', {\n  text: Field.text('My text field', {\n    help: 'This is an example field',\n    multiline: true,\n    initialValue: 'A text value'\n  })\n})"
     },
     {
       "type": "heading",

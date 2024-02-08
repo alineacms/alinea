@@ -35,7 +35,7 @@
     {
       "id": "267QyzM4851hQU1DihfoV3fSIFg",
       "type": "CodeBlock",
-      "code": "alinea.type('My type', {\n  title: alinea.text('Title', {width: 0.5}),\n  path: alinea.path('Path', {width: 0.5}),\n  // Extra fields\n  [alinea.meta]: {\n    // Configuration\n    isContainer: true\n  }\n})",
+      "code": "import {Config} from 'alinea'\n\nConfig.type('My type', {\n  isContainer: true,\n  fields: {\n    title: alinea.text('Title', {width: 0.5}),\n    path: alinea.path('Path', {width: 0.5})\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -306,7 +306,7 @@
     {
       "id": "2bMDZDXD2d1Am2Gq94E4xZREnPG",
       "type": "CodeBlock",
-      "code": "const textField = alinea.text('Text field')\nconst MyType = alinea.type('My type', {\n  fieldA: textField,\n  fieldB: textField // This is not allowed\n})\n\n// You can rewrite the above to get unique \n// references by making textField a function\nconst textField = () => alinea.text('Text field')\nconst MyType = alinea.type('My type', {\n  fieldA: textField(),\n  fieldB: textField() // This is fine\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nconst textField = Field.text('Text field')\nconst MyType = Config.type('My type', {\n  fields: {\n    fieldA: textField,\n    fieldB: textField // This is not allowed\n  }\n})\n\n// You can rewrite the above to get unique \n// references by making textField a function\nconst textField = () => Field.text('Text field')\nconst MyType = Config.type('My type', {\n  fields: {\n    fieldA: textField(),\n    fieldB: textField() // This is fine\n  }\n})",
       "fileName": "",
       "language": ""
     }

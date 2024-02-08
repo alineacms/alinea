@@ -1,5 +1,6 @@
 {
   "title": "Tabs",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -14,7 +15,7 @@
     {
       "id": "268hspT1GDy0ag8lya8m9dObKhX",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.tabs(\n  alinea.tab('Tab A', {\n    // ... fields\n  }),\n  alinea.tab('Tab B', {\n    // ... fields\n  })\n)",
+      "code": "import {Field} from 'alinea'\n\nField.tabs(\n  Field.tab('Tab A', {\n    fields: {\n      // ... fields\n    }\n  }),\n  Field.tab('Tab B', {\n    fields: {\n      // ... fields\n    }\n  })\n)",
       "fileName": "",
       "language": "",
       "compact": false
@@ -22,7 +23,7 @@
     {
       "id": "2YkqykVitVKoLg9NLRTwjLvsccv",
       "type": "ExampleBlock",
-      "code": "import alinea from 'alinea'\n\nexport default alinea.type('Tabs field', {\n  ...alinea.tabs(\n    alinea.tab('Tab A', {\n      fieldA: alinea.text('Field in Tab A')\n    }),\n    alinea.tab('Tab B', {\n      fieldB: alinea.text('Field in Tab B')\n    })\n  )\n})"
+      "code": "import {Config, Field} from \"alinea\"\n\nexport default Config.type(\"Tabs field\", {\n  ...Field.tabs(\n    Field.tab(\"Tab A\", {\n      fields: {\n        fieldA: Field.text(\"Field in Tab A\")\n      }\n    }),\n    Field.tab(\"Tab B\", {\n      fields: {\n        fieldB: Field.text(\"Field in Tab B\")\n      }\n    })\n  )\n})"
     }
   ],
   "metadata": {

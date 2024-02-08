@@ -2,7 +2,7 @@ import {fromModule, Typo, VStack} from 'alinea/ui'
 //import {useClipboard} from 'use-clipboard-copy'
 //import MdiContentCopy from '../../icons/MdiContentCopy'
 import {CodeBlock} from '@/schema/blocks/CodeBlock'
-import alinea from 'alinea'
+import {Infer} from 'alinea'
 import {codeHighlighter} from './code/CodeHighlighter'
 import css from './CodeBlockView.module.scss'
 
@@ -13,7 +13,7 @@ export async function CodeBlockView({
   compact,
   fileName,
   language
-}: alinea.infer<typeof CodeBlock>) {
+}: Infer<typeof CodeBlock>) {
   const {codeToHtml} = await codeHighlighter
   if (!code) return null
   const html = codeToHtml(code, {

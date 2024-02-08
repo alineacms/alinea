@@ -1,9 +1,10 @@
-export * from './alinea.js'
 import * as alinea from './alinea.js'
-
 export {alinea as default}
 
-export {Edit, Query} from 'alinea/core'
+export * as Config from './config.js'
+export {Edit, Query} from './core.js'
+export * as Field from './field.js'
+export * from './types.js'
 
 // Next CMS constructor - deprecated
 import {createNextCMS as _createNextCMS} from 'alinea/core/driver/NextDriver'

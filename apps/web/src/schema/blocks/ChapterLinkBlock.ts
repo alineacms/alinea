@@ -1,10 +1,12 @@
-import alinea from 'alinea'
+import {Config, Field} from 'alinea'
 
-export const ChapterLinkBlock = alinea.type('Chapter link', {
-  link: alinea.entry('Link', {
-    fields: alinea.type('Link fields', {
-      description: alinea.text('Description', {multiline: true})
-    }),
-    inline: true
-  })
+export const ChapterLinkBlock = Config.type('Chapter link', {
+  fields: {
+    link: Field.entry('Link', {
+      inline: true,
+      fields: {
+        description: Field.text('Description', {multiline: true})
+      }
+    })
+  }
 })

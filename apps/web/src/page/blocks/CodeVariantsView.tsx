@@ -1,5 +1,5 @@
 import {CodeVariantsBlock} from '@/schema/blocks/CodeVariantsBlock'
-import alinea from 'alinea'
+import {Infer} from 'alinea'
 import {fromModule} from 'alinea/ui'
 import {CodeVariantTabs} from './CodeVariantsView.client'
 import css from './CodeVariantsView.module.scss'
@@ -8,7 +8,7 @@ import {codeHighlighter} from './code/CodeHighlighter'
 const styles = fromModule(css)
 
 export interface CodeVariantsViewProps
-  extends alinea.infer<typeof CodeVariantsBlock> {}
+  extends Infer<typeof CodeVariantsBlock> {}
 
 export async function CodeVariantsView({variants}: CodeVariantsViewProps) {
   const {codeToHtml} = await codeHighlighter

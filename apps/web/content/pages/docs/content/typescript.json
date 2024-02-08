@@ -1,5 +1,6 @@
 {
   "title": "TypeScript",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -34,7 +35,7 @@
     {
       "id": "x22_stOQkju1mt4F41ffb",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nconst schema = alinea.schema({\n  BlogOverview: alinea.document('Blog overview', {\n    [alinea.meta]: {\n      isContainer: true,\n      contains: ['BlogPost']\n    }\n  }),\n  BlogPost: alinea.document('Blog post', {\n    publishDate: alinea.date('Publish date'),\n    body: alinea.richText('Body')\n  })\n})\n\ntype BlogOverview = alinea.infer<typeof schema.BlogOverview>\ntype BlogPost = alinea.infer<typeof schema.BlogPost>",
+      "code": "import {Infer, Config, Field} from 'alinea'\n\nconst schema = {\n  BlogOverview: Config.document('Blog overview', {\n    contains: ['BlogPost']\n  }),\n  BlogPost: Config.document('Blog post', {\n    fields: {\n      publishDate: Field.date('Publish date'),\n      body: Field.richText('Body')\n    }\n  })\n}\n\ntype BlogOverview = Infer<typeof schema.BlogOverview>\ntype BlogPost = Infer<typeof schema.BlogPost>",
       "fileName": "",
       "language": "",
       "compact": false

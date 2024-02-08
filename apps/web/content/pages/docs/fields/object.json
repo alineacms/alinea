@@ -1,5 +1,6 @@
 {
   "title": "Object",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -14,7 +15,7 @@
     {
       "id": "290iDwpZVR0wrW2N3JaIHxtxc0I",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.object('Address', {\n  fields: alinea.type('Object fields', {\n    street: alinea.text('Street'),\n    zip: alinea.text('Zip code', {width: 0.5}),\n    city: alinea.text('City', {width: 0.5})\n  })\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nField.object('Address', {\n  fields: {\n    street: Field.text('Street'),\n    zip: Field.text('Zip code', {width: 0.5}),\n    city: Field.text('City', {width: 0.5})\n  })\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -22,7 +23,7 @@
     {
       "id": "gwFTx1qVSxQvMi_joKo4Q",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Object field', {\n  object: alinea.object('Address', {\n    fields: alinea.type('Object fields', {\n      street: alinea.text('Street'),\n      zip: alinea.text('Zip code', {width: 0.5}),\n      city: alinea.text('City', {width: 0.5})\n    })\n  })\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Object field', {\n  fields: {\n    object: Field.object('Address', {\n      fields: {\n        street: Field.text('Street'),\n        zip: Field.text('Zip code', {width: 0.5}),\n        city: Field.text('City', {width: 0.5})\n      }\n    })\n  }\n})"
     }
   ],
   "metadata": {

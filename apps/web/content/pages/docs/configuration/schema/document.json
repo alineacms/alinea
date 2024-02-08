@@ -1,5 +1,6 @@
 {
   "title": "Document",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -99,7 +100,7 @@
     {
       "id": "2aB4qCnskaV2qenr0eibzXhpjU4",
       "type": "CodeBlock",
-      "code": "alinea.document('Web page', {\n  // Extra fields\n  [alinea.meta]: {\n    // Configuration\n  }\n})",
+      "code": "import {Config} from 'alinea'\n\nConfig.document('Web page', {\n  fields: {\n    // Extra fields\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false

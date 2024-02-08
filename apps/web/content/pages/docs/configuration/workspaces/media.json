@@ -1,5 +1,6 @@
 {
   "title": "Media",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -14,7 +15,7 @@
     {
       "id": "2aB4BmlaljcbjYyF3KAxVvZgLhW",
       "type": "CodeBlock",
-      "code": "alinea.workspace('Main workspace', {\n  media: alinea.media()\n  // ...\n})",
+      "code": "import {Config} from 'alinea'\n\nConfig.workspace('Main workspace', {\n  roots: {\n    // ...\n    media: Config.media()\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -62,8 +63,12 @@
     }
   ],
   "metadata": {
+    "title": "",
+    "description": "",
     "openGraph": {
-      "image": {}
+      "title": "",
+      "image": {},
+      "description": ""
     }
   },
   "@alinea": {

@@ -1,5 +1,6 @@
 {
   "title": "Date",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -14,7 +15,7 @@
     {
       "id": "utmfOtYpwki29ZXEW5QPX",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.date('Date field')",
+      "code": "import {Field} from 'alinea'\n\nField.date('Date field')",
       "fileName": "",
       "language": "",
       "compact": false
@@ -22,7 +23,7 @@
     {
       "id": "RHKsNdTj50LX0TFLU2_QH",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Date field', {\n  date: alinea.date('Date field')\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Date field', {\n  fields: {\n    date: Field.date('Date field')\n  }\n})"
     }
   ],
   "metadata": {

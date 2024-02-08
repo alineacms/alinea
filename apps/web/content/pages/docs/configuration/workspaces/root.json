@@ -1,5 +1,6 @@
 {
   "title": "Roots",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -14,7 +15,7 @@
     {
       "id": "28hkhm5hPbTobb7YrlwX7qCuNJE",
       "type": "CodeBlock",
-      "code": "alinea.workspace('Main workspace', {\n  pages: alinea.root('Pages', {\n    // Configuration\n    [alinea.meta]: {\n      contains: ['HomePage', 'GenericPage'],\n      i18n: {\n        locales: ['en', 'fr', 'de']\n      }\n    }\n  })\n})",
+      "code": "import {Config} from 'alinea'\n\nConfig.root('Pages', {\n  contains: ['HomePage', 'GenericPage'],\n  i18n: {\n    locales: ['en', 'fr', 'de']\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false

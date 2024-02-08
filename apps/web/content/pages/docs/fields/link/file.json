@@ -15,7 +15,7 @@
     {
       "id": "tYljidhFDZXvLGHPdOUyj",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.file('Single file link')\n\nalinea.file.multiple('Multiple file links')",
+      "code": "import {Field} from 'alinea'\n\nField.file('Single file link')\n\nField.file.multiple('Multiple file links')",
       "fileName": "",
       "language": "",
       "compact": false
@@ -23,7 +23,7 @@
     {
       "id": "2Yks376YZg3E6MZZHv9KcuYgQos",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('File field', {\n  file: alinea.file('Single file link'),\n\n  fileMultiple: alinea.file.multiple('Multiple file links')\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('File field', {\n  file: Field.file('Single file link'),\n\n  fileMultiple: Field.file.multiple('Multiple file links')\n})"
     },
     {
       "type": "heading",

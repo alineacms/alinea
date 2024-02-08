@@ -15,7 +15,7 @@
     {
       "id": "268iODr7pOAG2BeDXXfDEvDZYfr",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.richText('My rich text field', {\n  blocks: alinea.schema({\n    CodeBlock: CodeBlockSchema,\n    ImageBlock: ImageBlockSchema\n  })\n})",
+      "code": "import {Field} from 'alinea'\n\nField.richText('My rich text field', {\n  blocks: {\n    CodeBlock,\n    ImageBlock\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -23,7 +23,7 @@
     {
       "id": "EuUkPtwTcHiQweiT_zZZI",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Rich Text field', {\n  richText: alinea.richText('My rich text field', {\n    initialValue: [\n      {type: 'heading', level: 1, content: [\n        {type: 'text', text: \"Hello world\"}\n      ]},\n      {type: 'paragraph', content: [\n        {type: 'text', text: \"A paragraph follows\"}\n      ]}   \n    ]\n  })\n})\n "
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Rich Text field', {\n  richText: Field.richText('My rich text field', {\n    initialValue: [\n      {type: 'heading', level: 1, content: [\n        {type: 'text', text: \"Hello world\"}\n      ]},\n      {type: 'paragraph', content: [\n        {type: 'text', text: \"A paragraph follows\"}\n      ]}   \n    ]\n  })\n})\n "
     },
     {
       "type": "heading",

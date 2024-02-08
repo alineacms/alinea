@@ -1,9 +1,9 @@
-import alinea from 'alinea'
+import {Config, Field} from 'alinea'
 import {bodyField} from './blocks/BodyField'
 
-export const Doc = alinea.document('Doc', {
+export const Doc = Config.document('Doc', {
   fields: {
-    navigationTitle: alinea.text('Title in navigation', {
+    navigationTitle: Field.text('Title in navigation', {
       searchable: true
     }),
     body: bodyField()

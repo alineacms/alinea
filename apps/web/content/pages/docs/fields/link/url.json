@@ -15,14 +15,14 @@
     {
       "id": "2aiMCRN0CLmhmeDTiClxqD0dIxf",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.url('Single URL link')\n\nalinea.url.multiple('Multiple URL links')",
+      "code": "import {Field} from 'alinea'\n\nField.url('Single URL link')\n\nField.url.multiple('Multiple URL links')",
       "fileName": "",
       "language": ""
     },
     {
       "id": "2aiMFdnqKQucL7haTVJQfqtcsVs",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Url field', {\n  url: alinea.url('Single URL link'),\n  urlMultiple: alinea.url.multiple('Multiple URL links')\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Url field', {\n  url: Field.url('Single URL link'),\n  urlMultiple: Field.url.multiple('Multiple URL links')\n})"
     },
     {
       "type": "heading",
@@ -68,8 +68,12 @@
     }
   ],
   "metadata": {
+    "title": "",
+    "description": "",
     "openGraph": {
-      "image": {}
+      "title": "",
+      "image": {},
+      "description": ""
     }
   },
   "@alinea": {

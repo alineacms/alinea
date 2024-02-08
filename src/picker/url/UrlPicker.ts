@@ -1,7 +1,7 @@
 import {Picker} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
 import {Reference} from 'alinea/core/Reference'
-import {Type} from 'alinea/core/Type'
+import {Type, type} from 'alinea/core/Type'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 
@@ -18,14 +18,17 @@ export namespace UrlReference {
   }
 }
 
-export interface UrlPickerOptions<T> {
-  fields?: Type<T>
+export interface UrlPickerOptions<Definition> {
+  fields?: Definition | Type<Definition>
 }
 
 export function urlPicker<Fields>(
   options: UrlPickerOptions<Fields>
 ): Picker<UrlReference & Type.Infer<Fields>> {
-  const extra = options.fields && Type.shape(options.fields)
+  const fieldType = Type.isType(options.fields)
+    ? options.fields
+    : options.fields && type({fields: options.fields as any})
+  const extra = fieldType && Type.shape(fieldType)
   return {
     shape: new RecordShape('Url', {
       url: new ScalarShape('Url'),
@@ -35,7 +38,7 @@ export function urlPicker<Fields>(
     hint: Hint.Extern({name: 'UrlReference', package: 'alinea/picker/url'}),
     label: 'External website',
     handlesMultiple: false,
-    fields: options.fields,
+    fields: fieldType,
     options /*,
     select(row) {
       return row.fields

@@ -1,16 +1,18 @@
-import alinea from 'alinea'
+import {Config, Field} from 'alinea'
 
-export const NoticeBlock = alinea.type('Notice', {
-  level: alinea.select('Level', {
-    initialValue: 'info',
-    width: 0.5,
-    inline: true,
-    options: {
-      info: 'Info',
-      warning: 'Warning'
-    }
-  }),
-  body: alinea.richText('Text', {
-    inline: true
-  })
+export const NoticeBlock = Config.type('Notice', {
+  fields: {
+    level: Field.select('Level', {
+      initialValue: 'info',
+      width: 0.5,
+      inline: true,
+      options: {
+        info: 'Info',
+        warning: 'Warning'
+      }
+    }),
+    body: Field.richText('Text', {
+      inline: true
+    })
+  }
 })

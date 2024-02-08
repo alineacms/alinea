@@ -1,28 +1,30 @@
-import alinea from 'alinea'
+import {Config, Field} from 'alinea'
 import {IcRoundCode} from 'alinea/ui/icons/IcRoundCode'
 
-export const CodeVariants = alinea.list('Variants', {
+export const CodeVariants = Field.list('Variants', {
   inline: true,
-  schema: alinea.schema({
-    Variant: alinea.type('Code variant', {
-      name: alinea.text('Variant name', {inline: true, width: 0.5}),
-      language: alinea.select('Language', {
-        inline: true,
-        width: 0.25,
-        initialValue: 'tsx',
-        options: {
-          tsx: 'Typescript',
-          shellscript: 'Shell'
-        }
-      }),
-      code: alinea.code('Code', {inline: true})
+  schema: {
+    Variant: Config.type('Code variant', {
+      fields: {
+        name: Field.text('Variant name', {inline: true, width: 0.5}),
+        language: Field.select('Language', {
+          inline: true,
+          width: 0.25,
+          initialValue: 'tsx',
+          options: {
+            tsx: 'Typescript',
+            shellscript: 'Shell'
+          }
+        }),
+        code: Field.code('Code', {inline: true})
+      }
     })
-  })
+  }
 })
 
-export const CodeVariantsBlock = alinea.type('Code variants', {
-  variants: CodeVariants,
-  [alinea.type.meta]: {
-    icon: IcRoundCode
+export const CodeVariantsBlock = Config.type('Code variants', {
+  icon: IcRoundCode,
+  fields: {
+    variants: CodeVariants
   }
 })

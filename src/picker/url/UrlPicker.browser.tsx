@@ -1,11 +1,12 @@
-import {PickerProps, createId, pickerWithView, type} from 'alinea/core'
+import {PickerProps, createId, pickerWithView} from 'alinea/core'
+import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {check} from 'alinea/field/check'
 import {text} from 'alinea/field/text'
 import {Button, HStack, Stack} from 'alinea/ui'
-import {FormEvent} from 'react'
+import {FormEvent, useMemo} from 'react'
 import {UrlReference, urlPicker as createUrlPicker} from './UrlPicker.js'
 import {UrlPickerRow} from './UrlPickerRow.js'
 
@@ -16,20 +17,6 @@ export const urlPicker = pickerWithView(createUrlPicker, {
   viewRow: UrlPickerRow
 })
 
-const linkForm = type('Link', {
-  url: text('Url', {
-    required: true,
-    help: 'Url of the link'
-  }),
-  title: text('Description', {
-    help: 'Text to display inside the link element'
-  }),
-  blank: check('Target', {
-    description: 'Open link in new tab',
-    initialValue: true
-  })
-})
-
 export function UrlPickerForm({
   selection,
   options,
@@ -37,6 +24,25 @@ export function UrlPickerForm({
   onCancel
 }: PickerProps) {
   const preSelected = selection?.[0] as UrlReference | undefined
+  const linkForm = useMemo(
+    () =>
+      type('Link', {
+        fields: {
+          url: text('Url', {
+            required: true,
+            help: 'Url of the link'
+          }),
+          title: text('Description', {
+            help: 'Text to display inside the link element'
+          }),
+          blank: check('Target', {
+            description: 'Open link in new tab',
+            initialValue: true
+          })
+        }
+      }),
+    []
+  )
   const form = useForm(linkForm, {
     initialValue: preSelected
       ? {...preSelected, blank: preSelected.target === '_blank'}

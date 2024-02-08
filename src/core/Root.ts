@@ -54,6 +54,7 @@ export interface RootOptions<Definition> extends RootMeta {
   entries?: Definition
 }
 
+export function root<Definition extends RootDefinition>(label: Label): Root<{}>
 export function root<Definition extends RootDefinition>(
   label: Label,
   definition: RootOptions<Definition>
@@ -65,7 +66,7 @@ export function root<Definition extends RootDefinition>(
 ): Root<StripMeta<Definition>>
 export function root<Definition extends RootDefinition>(
   label: Label,
-  definition: RootOptions<Definition> | Definition
+  definition: RootOptions<Definition> | Definition = {}
 ): Root<Definition> {
   const isOptions = 'entries' in definition
   const def: any = definition

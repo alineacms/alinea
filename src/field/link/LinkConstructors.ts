@@ -78,8 +78,8 @@ type LinkData<Fields> =
   | (UrlReference & Type.Infer<Fields>)
   | (FileReference & Type.Infer<Fields>)
 
-export interface LinkOptions<Fields, Row> extends LinkFieldOptions<Row> {
-  fields?: Type<Fields>
+export interface LinkOptions<Definition, Row> extends LinkFieldOptions<Row> {
+  fields?: Definition | Type<Definition>
 }
 
 export function link<Fields>(

@@ -95,7 +95,7 @@
     {
       "id": "268j43D4sYTv9i4LXKv8Isvwlzi",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.link('Single link')\n\nalinea.link.multiple('Multiple links')",
+      "code": "import {Field} from 'alinea'\n\nField.link('Single link')\n\nField.link.multiple('Multiple links')",
       "fileName": "",
       "language": "",
       "compact": false
@@ -103,7 +103,7 @@
     {
       "id": "7JteCOtZTREVRHMMcZqMR",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Link field', {\n  link: alinea.link('Single link'),\n  linkMultiple: alinea.link.multiple('Multiple links')\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Link field', {\n  link: Field.link('Single link'),\n  linkMultiple: Field.link.multiple('Multiple links')\n})"
     },
     {
       "type": "heading",
@@ -191,14 +191,14 @@
     {
       "id": "2bLjsYUBGxzkuxwV3LJNOBMsarU",
       "type": "CodeBlock",
-      "code": "alinea.image('Pick an image', {\n  fields: alinea.type({\n    alt: alinea.text('Alt description')\n  })\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nField.image('Pick an image', {\n  fields: Config.type({\n    fields: {alt: Field.text('Alt description')}\n  })\n})",
       "fileName": "",
       "language": ""
     },
     {
       "id": "2bLjx7pekuob0jFZ0EFVrEeLL6O",
       "type": "ExampleBlock",
-      "code": "export default alinea.image('Pick an image', {\n  fields: alinea.type({\n    alt: alinea.text('Alt description')\n  })\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Field.image('Pick an image', {\n  fields: Config.type({\n    fields: {alt: Field.text('Alt description')}\n  })\n})"
     }
   ],
   "metadata": {

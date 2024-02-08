@@ -15,7 +15,7 @@
     {
       "id": "2aiLnCCudPz6D0aNgADlzuObGEs",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.entry('Single entry link')\n\nalinea.entry.multiple('Multiple entry links')",
+      "code": "import {Field} from 'alinea'\n\nField.entry('Single entry link')\n\nField.entry.multiple('Multiple entry links')",
       "fileName": "",
       "language": ""
     },
@@ -89,11 +89,11 @@
       "content": [
         {
           "type": "text",
-          "text": "Limit the pages shown in the explorer to this condition. Conditions can be built using fields in the same way as when "
+          "text": "Limit the pages shown in the explorer to this condition. Conditions can be built using fields in the same way as described in the "
         },
         {
           "type": "text",
-          "text": "querying data",
+          "text": "querying content",
           "marks": [
             {
               "type": "link",
@@ -110,21 +110,25 @@
         },
         {
           "type": "text",
-          "text": ". "
+          "text": " chapter. "
         }
       ]
     },
     {
       "id": "2aiNY0EOVAiPH085iK0NelgMfhO",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\nimport {Entry} from 'alinea/core'\n\nalinea.entry('Link to author', {\n  condition: Entry.type.is('Author')\n})",
+      "code": "import {Field, Query} from 'alinea'\n\nField.entry('Link to author', {\n  condition: Query.type.is('Author')\n})",
       "fileName": "",
       "language": ""
     }
   ],
   "metadata": {
+    "title": "",
+    "description": "",
     "openGraph": {
-      "image": {}
+      "title": "",
+      "image": {},
+      "description": ""
     }
   },
   "@alinea": {

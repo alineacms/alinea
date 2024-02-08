@@ -1,5 +1,6 @@
 {
   "title": "Select",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -14,7 +15,7 @@
     {
       "id": "268iVJXDY23EWvw51STlvnDU0eR",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})",
+      "code": "import {Field} from 'alinea'\n\nField.select('My select field', {\n  options: {\n    a: 'Option a',\n    b: 'Option b'\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -22,7 +23,7 @@
     {
       "id": "2Yl56dl7ynjRy9stWye5pCVTwLH",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Select field', {\n  select: alinea.select('My select field', {\n    a: 'Option a',\n    b: 'Option b'\n  })\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Select field', {\n  select: Field.select('My select field', {\n    options: {\n      a: 'Option a',\n      b: 'Option b'\n    }\n  })\n})"
     }
   ],
   "metadata": {

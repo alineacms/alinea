@@ -1,5 +1,6 @@
 {
   "title": "List",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -14,7 +15,7 @@
     {
       "id": "268j9BBXf8jwwZ427XxBT2O0snb",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.list('My list field', {\n  schema: alinea.schema({\n    Text: alinea.type('Text', {\n      title: alinea.text('Item title'),\n      text: alinea.richText('Item body text')\n    }),\n    Image: alinea.type('Image', {\n      image: alinea.image('Image')\n    })\n  })\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nField.list('My list field', {\n  schema: {\n    Text: Config.type('Text', {\n      fields: {\n        title: Field.text('Item title'),\n        text: Field.richText('Item body text')\n      }\n    }),\n    Image: Config.type('Image', {\n      fields: {image: Field.image('Image')}\n    })\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -22,7 +23,7 @@
     {
       "id": "MOMpcuuHwKl-kSmmbcKgx",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('List field', {\n  list: alinea.list('My list field', {\n    schema: alinea.schema({\n      Text: alinea.type('Text', {\n        title: alinea.text('Item title'),\n        text: alinea.richText('Item body text')\n      }),\n      Image: alinea.type('Image', {\n        image: alinea.image('Image')\n      })\n    })\n  })\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type(\"List field\", {\n  list: Field.list(\"My list field\", {\n    schema: {\n      Text: Config.type(\"Text\", {\n        fields: {\n          title: Field.text(\"Item title\"),\n          text: Field.richText(\"Item body text\"),\n        }\n      })\n      Image: Config.type(\"Image\", {\n        fields: { image: Field.image(\"Image\") }\n      })\n    }\n  })\n})\n"
     }
   ],
   "metadata": {

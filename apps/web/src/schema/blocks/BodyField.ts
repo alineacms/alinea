@@ -1,4 +1,4 @@
-import alinea from 'alinea'
+import {Config, Field} from 'alinea'
 import {ChapterLinkBlock} from './ChapterLinkBlock'
 import {CodeBlock} from './CodeBlock'
 import {CodeVariantsBlock} from './CodeVariantsBlock'
@@ -8,9 +8,9 @@ import {ImageBlock} from './ImageBlock'
 import {NoticeBlock} from './NoticeBlock'
 
 export function bodyField() {
-  return alinea.richText('Body', {
+  return Field.richText('Body', {
     searchable: true,
-    schema: alinea.schema({
+    schema: {
       CodeBlock,
       CodeVariantsBlock,
       ImageBlock,
@@ -18,10 +18,12 @@ export function bodyField() {
       ChapterLinkBlock,
       ExampleBlock,
       FrameworkBlock
-    })
+    }
   })
 }
 
-export const BodyBlock = alinea.type('Body text', {
-  body: bodyField()
+export const BodyBlock = Config.type('Body text', {
+  fields: {
+    body: bodyField()
+  }
 })

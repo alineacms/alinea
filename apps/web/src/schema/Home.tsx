@@ -1,60 +1,62 @@
-import alinea from 'alinea'
+import {Config, Field} from 'alinea'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 
-export const Home = alinea.document('Home', {
+export const Home = Config.document('Home', {
   fields: {
-    title: alinea.text('Title'),
-    path: alinea.path('Path', {
+    title: Field.text('Title'),
+    path: Field.path('Path', {
       hidden: true
     }),
-    ...alinea.tabs(
-      alinea.tab('Homepage', {
+    ...Field.tabs(
+      Field.tab('Homepage', {
         icon: IcRoundInsertDriveFile,
         fields: {
-          headline: alinea.text('Headline', {multiline: true, required: true}),
-          byline: alinea.text('Byline', {multiline: true, required: true}),
-          action: alinea.link.entry('Action', {
-            fields: alinea.type('Fields', {
-              label: alinea.text('Button label')
-            })
+          headline: Field.text('Headline', {multiline: true, required: true}),
+          byline: Field.text('Byline', {multiline: true, required: true}),
+          action: Field.link.entry('Action', {
+            fields: {
+              label: Field.text('Button label')
+            }
           }),
-          screenshot: alinea.link.image('Screenshot'),
-          introduction: alinea.object('Introduction', {
-            fields: alinea.type('Fields', {
-              text: alinea.richText('Text')
+          screenshot: Field.link.image('Screenshot'),
+          introduction: Field.object('Introduction', {
+            fields: {
+              text: Field.richText('Text')
               // code: CodeVariants
-            })
+            }
           })
         }
       }),
-      alinea.tab('Top navigation', {
+      Field.tab('Top navigation', {
         icon: IcRoundLink,
         fields: {
-          links: alinea.link.multiple('Links', {
-            fields: alinea.type('Fields', {
-              label: alinea.text('Label'),
-              active: alinea.text('Active url', {
+          links: Field.link.multiple('Links', {
+            fields: {
+              label: Field.text('Label'),
+              active: Field.text('Active url', {
                 help: 'Active when this url is active'
               })
-            })
+            }
           })
         }
       }),
-      alinea.tab('Footer navigation', {
+      Field.tab('Footer navigation', {
         icon: IcRoundLink,
         fields: {
-          footer: alinea.list('Navigation', {
-            schema: alinea.schema({
-              Section: alinea.type('Section', {
-                label: alinea.text('Label'),
-                links: alinea.link.multiple('Links', {
-                  fields: alinea.type('Fields', {
-                    label: alinea.text('Label')
+          footer: Field.list('Navigation', {
+            schema: {
+              Section: Config.type('Section', {
+                fields: {
+                  label: Field.text('Label'),
+                  links: Field.link.multiple('Links', {
+                    fields: Config.type('Fields', {
+                      label: Field.text('Label')
+                    })
                   })
-                })
+                }
               })
-            })
+            }
           })
         }
       })

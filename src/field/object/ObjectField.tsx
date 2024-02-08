@@ -1,13 +1,9 @@
-import {FieldOptions, Type, WithoutLabel} from 'alinea/core'
+import {FieldOptions, Type, TypeFields, WithoutLabel, type} from 'alinea/core'
 import {RecordField} from 'alinea/core/field/RecordField'
 
 export interface ObjectOptions<Definition>
   extends FieldOptions<Type.Infer<Definition>> {
-  /** The fields */
   fields: Type<Definition>
-  width?: number
-  help?: string
-  inline?: boolean
 }
 
 export class ObjectField<Definition> extends RecordField<
@@ -15,12 +11,24 @@ export class ObjectField<Definition> extends RecordField<
   ObjectOptions<Definition>
 > {}
 
+export function object<Definition extends TypeFields>(
+  label: string,
+  options: WithoutLabel<{fields: Definition} & FieldOptions<Definition>>
+): ObjectField<Definition>
+/** @deprecated Define fields directly, without using Type */
+export function object<Definition extends TypeFields>(
+  label: string,
+  options: WithoutLabel<{fields: Type<Definition>} & FieldOptions<Definition>>
+): ObjectField<Definition>
 export function object<Definition>(
   label: string,
-  options: WithoutLabel<ObjectOptions<Definition>>
+  options: WithoutLabel<{fields: any} & ObjectOptions<Definition>>
 ): ObjectField<Definition> {
-  return new ObjectField(Type.shape(options.fields), {
-    hint: Type.hint(options.fields),
-    options: {label, ...options}
+  const fields = Type.isType(options.fields)
+    ? options.fields
+    : type({fields: options.fields})
+  return new ObjectField(Type.shape(fields), {
+    hint: Type.hint(fields),
+    options: {label, ...options, fields}
   })
 }

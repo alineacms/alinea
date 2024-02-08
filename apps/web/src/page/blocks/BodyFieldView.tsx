@@ -1,6 +1,6 @@
 import {WebText} from '@/layout/WebText'
 import {BodyBlock} from '@/schema/blocks/BodyField'
-import alinea from 'alinea'
+import {Infer} from 'alinea'
 import {fromModule} from 'alinea/ui'
 import {ComponentType, Fragment} from 'react'
 import {ChapterLinkView} from './ChapterLinkView'
@@ -14,7 +14,7 @@ import css from './TextBlockView.module.scss'
 
 const styles = fromModule(css)
 
-export interface BodyViewProps extends alinea.infer<typeof BodyBlock> {
+export interface BodyViewProps extends Infer<typeof BodyBlock> {
   container?: ComponentType
 }
 

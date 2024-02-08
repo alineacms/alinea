@@ -15,7 +15,7 @@
     {
       "id": "28hu0MbpUcAOhWTWi954kRRNHcM",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.check('Subscribe to the newsletter')",
+      "code": "import {Field} from 'alinea'\n\nField.check('Subscribe to the newsletter')",
       "fileName": "",
       "language": "",
       "compact": true
@@ -23,7 +23,7 @@
     {
       "id": "2LfI_a2TA_L7QW2kK-nDa",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Check field', {\n  check: alinea.check('Subscribe to the newsletter')\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Check field', {\n  fields: {\n    check: Field.check('Subscribe to the newsletter')\n  }\n})"
     }
   ],
   "metadata": {

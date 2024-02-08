@@ -1,5 +1,6 @@
 {
   "title": "Schema",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -34,7 +35,7 @@
     {
       "id": "267QjRgoDq3nZ6Dth0o3MElJgzP",
       "type": "CodeBlock",
-      "code": "export const cms = createCMS({\n  schema: alinea.schema({\n    TypeA, TypeB, TypeC\n  })\n})",
+      "code": "import {Config} from 'alinea'\n\nConfig.schema({\n  types: {\n    TypeA, TypeB, TypeC\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -104,7 +105,7 @@
     {
       "id": "286gbW4zHgdrAHcGBLGRtixZguV",
       "type": "CodeBlock",
-      "code": "alinea.schema({\n  BlogOverview: alinea.document('Blog overview', {\n    [alinea.meta]: {\n      isContainer: true,\n      contains: ['BlogPost']\n    }\n  }),\n  BlogPost: alinea.document('Blog post', {\n    publishDate: alinea.date('Publish date'),\n    body: alinea.richText('Body')\n  })\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nConfig.schema({\n  BlogOverview: Config.document('Blog overview', {\n    contains: ['BlogPost']\n  }),\n  BlogPost: Config.document('Blog post', {\n    publishDate: Field.date('Publish date'),\n    body: Field.richText('Body')\n  })\n})",
       "fileName": "",
       "language": "",
       "compact": false

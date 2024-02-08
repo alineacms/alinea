@@ -1,27 +1,27 @@
-import alinea from 'alinea'
+import {Config} from 'alinea'
 import {createCMS} from 'alinea/next'
 import * as schema from './schema'
 
-const pages = alinea.root('Pages', {
+const pages = Config.root('Pages', {
   contains: ['Page', 'Home'],
   entries: {
-    index: alinea.page(schema.Home),
-    roadmap: alinea.page(schema.Page),
-    docs: alinea.page(schema.Docs)
+    index: Config.page(schema.Home),
+    roadmap: Config.page(schema.Page),
+    docs: Config.page(schema.Docs)
   }
 })
 
-const main = alinea.workspace('Alinea', {
+const main = Config.workspace('Alinea', {
   color: '#3F61E8',
   mediaDir: 'public',
   source: 'content',
   roots: {
     pages,
-    media: alinea.media()
+    media: Config.media()
   }
 })
 
-const config = alinea.config({
+const config = Config.create({
   schema,
   workspaces: {main},
   dashboard: {

@@ -3,7 +3,7 @@ import {Entry} from 'alinea/core/Entry'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
 import {Reference} from 'alinea/core/Reference'
-import {Type} from 'alinea/core/Type'
+import {Type, type} from 'alinea/core/Type'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {Condition} from 'alinea/core/pages/Condition'
 import {Projection} from 'alinea/core/pages/Projection'
@@ -40,7 +40,7 @@ export const imageFields = {
   focus: MediaFile.focus
 }
 
-export interface EntryPickerOptions<T = {}> {
+export interface EntryPickerOptions<Definition = {}> {
   hint: Hint
   selection: Projection
   defaultView?: 'row' | 'thumb'
@@ -50,25 +50,24 @@ export interface EntryPickerOptions<T = {}> {
   max?: number
   label?: string
   title?: Label
-  fields?: Type<T>
+  fields?: Definition | Type<Definition>
 }
 
 export function entryPicker<Ref extends Reference, Fields>(
   options: EntryPickerOptions<Fields>
 ): Picker<Ref & Type.Infer<Fields>, EntryPickerOptions<Fields>> {
-  const extra = options.fields && Type.shape(options.fields)
-  /*const hint = Hint.Extern({
-    name: externType[options.type],
-    package: 'alinea/picker/entry'
-  })*/
+  const fieldType = Type.isType(options.fields)
+    ? options.fields
+    : options.fields && type({fields: options.fields as any})
+  const extra = fieldType && Type.shape(fieldType)
   return {
     shape: new RecordShape('Entry', {
       entry: new ScalarShape('Entry')
     }).concat(extra),
-    hint: options.fields
-      ? Hint.Intersection(options.hint, Type.hint(options.fields))
+    hint: fieldType
+      ? Hint.Intersection(options.hint, Type.hint(fieldType))
       : options.hint,
-    fields: options.fields,
+    fields: fieldType,
     label: options.label || 'Page link',
     handlesMultiple: true,
     options,
