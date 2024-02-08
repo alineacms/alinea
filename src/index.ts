@@ -3,6 +3,8 @@ import * as alinea from './alinea.js'
 
 export {alinea as default}
 
+export {Edit, Query} from 'alinea/core'
+
 // Next CMS constructor - deprecated
 import {createNextCMS as _createNextCMS} from 'alinea/core/driver/NextDriver'
 export {createNextCMS}

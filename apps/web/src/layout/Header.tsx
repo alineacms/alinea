@@ -1,6 +1,5 @@
 import {cms} from '@/cms'
-import {EntryReference, UrlReference} from 'alinea'
-import {Entry} from 'alinea/core'
+import {EntryReference, Query, UrlReference} from 'alinea'
 import {HStack, Stack, Styler, fromModule} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
@@ -56,15 +55,9 @@ export async function Header() {
 }
 
 async function MobileNav() {
-  const docs = await cms.in(cms.workspaces.main.pages.docs).find(
-    Entry().select({
-      id: Entry.entryId,
-      type: Entry.type,
-      url: Entry.url,
-      title: Entry.title,
-      parent: Entry.parent
-    })
-  )
+  const docs = await cms
+    .in(cms.workspaces.main.pages.docs)
+    .find(Query.select(Query.entry))
   const tree = [
     {id: 'home', url: '/', title: 'Home'},
     {id: 'roadmap', url: '/roadmap', title: 'Roadmap'},

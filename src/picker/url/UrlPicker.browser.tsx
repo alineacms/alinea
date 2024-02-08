@@ -1,4 +1,4 @@
-import {Picker, PickerProps, createId, type} from 'alinea/core'
+import {PickerProps, createId, pickerWithView, type} from 'alinea/core'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'
@@ -11,7 +11,7 @@ import {UrlPickerRow} from './UrlPickerRow.js'
 
 export * from './UrlPicker.js'
 
-export const urlPicker = Picker.withView(createUrlPicker, {
+export const urlPicker = pickerWithView(createUrlPicker, {
   view: UrlPickerModal,
   viewRow: UrlPickerRow
 })

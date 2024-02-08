@@ -1,8 +1,9 @@
-import {Store} from 'alinea/backend/Store'
 import {Config, createConfig} from './Config.js'
+import {Connection} from './Connection.js'
 import {Graph, GraphRealm} from './Graph.js'
 import {Resolver} from './Resolver.js'
 import {Root} from './Root.js'
+import {Operation, Transaction} from './Transaction.js'
 import {Workspace} from './Workspace.js'
 import {entries} from './util/Objects.js'
 
@@ -28,7 +29,14 @@ export abstract class CMS extends GraphRealm {
   }
 
   abstract resolver(): Promise<Resolver>
-  abstract readStore(): Promise<Store>
+  abstract connection(): Promise<Connection>
+
+  commit(...operations: Array<Operation>) {
+    return Transaction.commit(
+      this,
+      operations.map(op => op[Operation.Data]).flat()
+    )
+  }
 
   #attach(config: Config) {
     for (const [name, workspace] of entries(config.workspaces)) {

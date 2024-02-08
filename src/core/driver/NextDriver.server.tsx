@@ -1,7 +1,6 @@
 'use server'
 
 import {JWTPreviews} from 'alinea/backend'
-import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
   PREVIEW_ENTRYID_NAME,
@@ -10,7 +9,6 @@ import {
 } from 'alinea/preview/PreviewConstants'
 import {enums, object, string} from 'cito'
 import dynamic from 'next/dynamic.js'
-import PLazy from 'p-lazy'
 import {Suspense} from 'react'
 import {Client} from '../Client.js'
 import {Config} from '../Config.js'
@@ -98,11 +96,6 @@ class NextDriver extends DefaultDriver implements NextApi {
     const response = await handler.router.handle(request)
     return response ?? new Response('Not found', {status: 404})
   }
-
-  cloudHandler = PLazy.from(async () => {
-    const db = await this.db
-    return createCloudHandler(this.config, db, this.apiKey)
-  })
 
   previewHandler = async (request: Request) => {
     const {draftMode, cookies} = await import('next/headers.js')

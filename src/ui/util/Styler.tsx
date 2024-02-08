@@ -138,6 +138,7 @@ export const fromModule = <M extends {[key: string]: string}>(
 ): ModuleStyles<M> => {
   const res: {[key: string]: any} = {}
   const variants: Map<string, string> = new Map()
+  if (!styles) return res as any
   for (const key of Object.keys(styles)) {
     const parts = key.split('-')
     if (parts[0] === 'is') variants.set(key, styles[key])

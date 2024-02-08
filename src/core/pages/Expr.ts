@@ -1,3 +1,4 @@
+import {Condition} from './Condition.js'
 import {createExprData} from './CreateExprData.js'
 import {createSelection} from './CreateSelection.js'
 import {Cursor, OrderBy, OrderDirection} from './Cursor.js'
@@ -14,15 +15,19 @@ export function Expr<T>(expr: ExprData): Expr<T> {
   return new ExprI(expr)
 }
 
+export interface HasExpr<T> {
+  [Expr.ToExpr](): Expr<T>
+}
+
 export interface ExprI<T> {
   [Expr.Data]: ExprData
-  [Expr.IsExpr]: boolean
+  [Expr.ExprRef]: boolean
 }
 
 export class ExprI<T> {
   constructor(expr: ExprData) {
     this[Expr.Data] = expr
-    this[Expr.IsExpr] = true
+    this[Expr.ExprRef] = true
   }
 
   asc(): OrderBy {
@@ -107,6 +112,10 @@ export class ExprI<T> {
     )
   }
 
+  isBetween(min: EV<T>, max: EV<T>): Expr<boolean> {
+    return this.isGreaterOrEqual(min).and(this.isLessOrEqual(max))
+  }
+
   isGreater(that: EV<any>): Expr<boolean> {
     return Expr(
       ExprData.BinOp(this[Expr.Data], BinaryOp.Greater, createExprData(that))
@@ -139,21 +148,45 @@ export class ExprI<T> {
     )
   }
 
-  add(this: Expr<number>, that: EV<number>): Expr<number> {
+  add(
+    this: Expr<number>,
+    that: EV<number>,
+    ...rest: Array<EV<number>>
+  ): Expr<number>
+  add(...args: Array<EV<number>>): Expr<number> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Add, createExprData(that))
+      args
+        .map(Expr.create)
+        .map(expr => expr[Expr.Data])
+        .reduce((a, b) => ExprData.BinOp(a, BinaryOp.Add, b))
     )
   }
 
-  substract(this: Expr<number>, that: EV<number>): Expr<number> {
+  subtract(
+    this: Expr<number>,
+    that: EV<number>,
+    ...rest: Array<EV<number>>
+  ): Expr<number>
+  subtract(...args: Array<EV<number>>): Expr<number> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Subt, createExprData(that))
+      args
+        .map(Expr.create)
+        .map(expr => expr[Expr.Data])
+        .reduce((a, b) => ExprData.BinOp(a, BinaryOp.Subt, b))
     )
   }
 
-  multiply(this: Expr<number>, that: EV<number>): Expr<number> {
+  multiply(
+    this: Expr<number>,
+    that: EV<number>,
+    ...rest: Array<EV<number>>
+  ): Expr<number>
+  multiply(...args: Array<EV<number>>): Expr<number> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Mult, createExprData(that))
+      args
+        .map(Expr.create)
+        .map(expr => expr[Expr.Data])
+        .reduce((a, b) => ExprData.BinOp(a, BinaryOp.Mult, b))
     )
   }
 
@@ -163,15 +196,35 @@ export class ExprI<T> {
     )
   }
 
-  divide(this: Expr<number>, that: EV<number>): Expr<number> {
+  divide(
+    this: Expr<number>,
+    that: EV<number>,
+    ...rest: Array<EV<number>>
+  ): Expr<number>
+  divide(...args: Array<EV<number>>): Expr<number> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Div, createExprData(that))
+      args
+        .map(Expr.create)
+        .map(expr => expr[Expr.Data])
+        .reduce((a, b) => ExprData.BinOp(a, BinaryOp.Div, b))
     )
   }
 
   concat(this: Expr<string>, that: EV<string>): Expr<string> {
     return Expr(
       ExprData.BinOp(this[Expr.Data], BinaryOp.Concat, createExprData(that))
+    )
+  }
+
+  endsWith(this: Expr<string>, that: string): Expr<boolean> {
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Like, createExprData(`%${that}`))
+    )
+  }
+
+  startsWith(this: Expr<string>, that: string): Expr<boolean> {
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Like, createExprData(`${that}%`))
     )
   }
 
@@ -203,7 +256,7 @@ export class ExprI<T> {
     expr: EV<T>,
     select: S
   ): CaseBuilder<T, Projection.Infer<S>> {
-    return new CaseBuilder(this).when(expr, select)
+    return new CaseBuilder<T, Projection.Infer<S>>(this).when(expr, select)
   }
 
   at<T>(this: Expr<Array<T>>, index: number): Expr<T | null> {
@@ -256,27 +309,9 @@ export class CaseBuilder<T, Res> {
   }
 }
 
-export function and(...conditions: Array<EV<boolean>>): Expr<boolean> {
-  return conditions
-    .map(Expr.create)
-    .reduce(
-      (condition, expr) => condition.and(expr),
-      Expr(ExprData.Value(true))
-    )
-}
-
-export function or(...conditions: Array<EV<boolean>>): Expr<boolean> {
-  return conditions
-    .map(Expr.create)
-    .reduce(
-      (condition, expr) => condition.or(expr),
-      Expr(ExprData.Value(false))
-    )
-}
-
 export namespace Expr {
   export const Data = Symbol.for('@alinea/Expr.Data')
-  export const IsExpr = Symbol.for('@alinea/Expr.IsExpr')
+  export const ExprRef = Symbol.for('@alinea/Expr.ExprRef')
   export const ToExpr = Symbol.for('@alinea/Expr.ToExpr')
   export const NULL = create(null)
 
@@ -285,11 +320,12 @@ export namespace Expr {
   }*/
 
   export function create<T>(input: EV<T>): Expr<T> {
+    if (hasExpr<T>(input)) return input[Expr.ToExpr]()
     if (isExpr<T>(input)) return input
     return Expr(ExprData.Value(input))
   }
 
-  export function hasExpr<T>(input: any): input is {[Expr.ToExpr](): Expr<T>} {
+  export function hasExpr<T>(input: any): input is HasExpr<T> {
     return (
       input &&
       (typeof input === 'function' || typeof input === 'object') &&
@@ -301,7 +337,27 @@ export namespace Expr {
     return (
       input !== null &&
       (typeof input === 'object' || typeof input === 'function') &&
-      input[Expr.IsExpr]
+      input[Expr.ExprRef]
     )
+  }
+
+  export function and(
+    ...conditions: Array<Condition | boolean>
+  ): Expr<boolean> {
+    return conditions
+      .map(Expr.create)
+      .reduce(
+        (condition, expr) => condition.and(expr),
+        Expr(ExprData.Value(true))
+      )
+  }
+
+  export function or(...conditions: Array<Condition | boolean>): Expr<boolean> {
+    return conditions
+      .map(Expr.create)
+      .reduce(
+        (condition, expr) => condition.or(expr),
+        Expr(ExprData.Value(false))
+      )
   }
 }

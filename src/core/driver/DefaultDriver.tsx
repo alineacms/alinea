@@ -1,6 +1,7 @@
 import {Store} from 'alinea/backend/Store'
 import {CMS} from '../CMS.js'
 import {Config} from '../Config.js'
+import {Connection} from '../Connection.js'
 import {Resolver} from '../Resolver.js'
 
 export class DefaultDriver extends CMS {
@@ -9,6 +10,10 @@ export class DefaultDriver extends CMS {
   }
 
   async resolver(): Promise<Resolver> {
+    throw new Error('Not implemented')
+  }
+
+  async connection(): Promise<Connection> {
     throw new Error('Not implemented')
   }
 }

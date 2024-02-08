@@ -1,5 +1,5 @@
-import alinea from 'alinea'
-import {Entry, createCMS} from 'alinea/core'
+import alinea, {Query} from 'alinea'
+import {createCMS} from 'alinea/core'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import {position} from './src/PositionField'
@@ -96,7 +96,7 @@ const Fields = alinea.document('Fields', {
       entry: alinea.entry('Internal link'),
       entryWithCondition: alinea.entry('With condition', {
         help: `Show only entries of type Fields`,
-        condition: Entry.type.is('Fields')
+        condition: Query.whereType('Fields')
       }),
       linkMultiple: alinea.link.multiple('Mixed links, multiple'),
       image: alinea.image('Image link'),

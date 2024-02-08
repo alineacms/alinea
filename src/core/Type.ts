@@ -1,6 +1,6 @@
 import {EntryPhase, Expand} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
-import {Expr, and} from 'alinea/core/pages/Expr'
+import {Expr} from 'alinea/core/pages/Expr'
 import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
@@ -70,19 +70,19 @@ export declare class TypeI<Definition = object> {
 
 export interface TypeI<Definition = object> extends Callable {
   (): Cursor.Find<TypeRow<Definition>>
-  (partial: Partial<TypeRow<Definition>>): Cursor.Partial<Definition>
+  (partial: Partial<TypeRow<Definition>>): Cursor.Typed<Definition>
 }
 
 export type Type<Definition = object> = Definition & TypeI<Definition>
 
-export type TypeRow<Definition> = Expand<{
+type TypeRow<Definition> = Expand<{
   [K in keyof Definition as Definition[K] extends Expr<any>
     ? K
     : never]: Definition[K] extends Expr<infer T> ? T : never
 }>
-
 export namespace Type {
   export type Infer<Definition> = TypeRow<Definition>
+
   export const Data = Symbol.for('@alinea/Type.Data')
 
   export function label(type: Type): Label {
@@ -220,7 +220,7 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     const conditions = isConditionalRecord
       ? entries(input[0]).map(([key, value]) => {
           const field = Expr(ExprData.Field({type: this.target}, key))
-          return Expr(
+          return Expr<boolean>(
             ExprData.BinOp(
               field[Expr.Data],
               BinaryOp.Equals,
@@ -228,13 +228,13 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
             )
           )
         })
-      : input.map(ev => Expr(createExprData(ev)))
-    return and(...conditions)[Expr.Data]
+      : input.map(ev => Expr<boolean>(createExprData(ev)))
+    return Expr.and(...conditions)[Expr.Data]
   }
 
   call(...input: Array<any>) {
     const isConditionalRecord = input.length === 1 && !Expr.isExpr(input[0])
-    if (isConditionalRecord) return new Cursor.Partial(this.target, input[0])
+    if (isConditionalRecord) return new Cursor.Typed(this.target, input[0])
     else
       return new Cursor.Find({
         target: {type: this.target},

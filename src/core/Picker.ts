@@ -35,22 +35,20 @@ export interface Picker<Row extends Reference, Options extends {} = {}> {
   postProcess?: PostProcess<Row>
 }
 
-export namespace Picker {
-  export function withView<
-    R extends Reference,
-    T extends {},
-    C extends (...args: Array<any>) => Picker<R, T>
-  >(
-    create: C,
-    views: {
-      view: ComponentType<PickerProps<T>>
-      viewRow: ComponentType<{reference: R}>
-    }
-  ): C {
-    const factory = (...args: Array<any>) => {
-      const field: any = create(...args)
-      return {...field, ...views}
-    }
-    return factory as any
+export function pickerWithView<
+  R extends Reference,
+  T extends {},
+  C extends (...args: Array<any>) => Picker<R, T>
+>(
+  create: C,
+  views: {
+    view: ComponentType<PickerProps<T>>
+    viewRow: ComponentType<{reference: R}>
   }
+): C {
+  const factory = (...args: Array<any>) => {
+    const field: any = create(...args)
+    return {...field, ...views}
+  }
+  return factory as any
 }

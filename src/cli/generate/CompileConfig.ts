@@ -51,6 +51,7 @@ export function compileConfig({
     },
     platform: 'neutral',
     jsx: 'automatic',
+    sourcemap: true,
     define,
     loader: {
       '.module.css': 'local-css',
