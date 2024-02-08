@@ -6,14 +6,15 @@ export const CodeVariants = alinea.list('Variants', {
   schema: alinea.schema({
     Variant: alinea.type('Code variant', {
       name: alinea.text('Variant name', {inline: true, width: 0.5}),
-      language: alinea.select(
-        'Language',
-        {
+      language: alinea.select('Language', {
+        inline: true,
+        width: 0.25,
+        initialValue: 'tsx',
+        options: {
           tsx: 'Typescript',
           shellscript: 'Shell'
-        },
-        {inline: true, width: 0.25, initialValue: 'tsx'}
-      ),
+        }
+      }),
       code: alinea.code('Code', {inline: true})
     })
   })

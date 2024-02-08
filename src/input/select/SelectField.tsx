@@ -18,7 +18,7 @@ export interface SelectConfig<Key> extends FieldOptions<Key> {
 }
 
 export interface SelectOptions<Key extends string> extends SelectConfig<Key> {
-  items: Record<Key, string>
+  options: Record<Key, string>
 }
 
 export class SelectField<Key extends string> extends ScalarField<
@@ -26,19 +26,30 @@ export class SelectField<Key extends string> extends ScalarField<
   SelectOptions<Key>
 > {}
 
-/** Create a select field configuration */
-
+export function select<const Items extends Record<string, string>>(
+  label: string,
+  items: WithoutLabel<
+    {options: Items} & SelectConfig<Extract<keyof Items, string>>
+  >
+): SelectField<Extract<keyof Items, string>>
+/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
 export function select<const Items extends Record<string, string>>(
   label: string,
   items: Items,
-  options: WithoutLabel<SelectConfig<Extract<keyof Items, string>>> = {}
-): SelectField<Extract<keyof Items, string>> {
+  options?: WithoutLabel<SelectConfig<Extract<keyof Items, string>>>
+): SelectField<Extract<keyof Items, string>>
+export function select(
+  label: string,
+  itemsOrOptions: any,
+  options?: any
+): SelectField<any> {
+  const items = itemsOrOptions.options ?? itemsOrOptions
   const keys = Object.keys(items)
   return new SelectField({
     hint: Hint.Union(keys.map(key => Hint.Literal(key))),
     options: {
       label,
-      items,
+      options: items,
       ...options
     }
   })

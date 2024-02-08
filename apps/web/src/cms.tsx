@@ -3,21 +3,21 @@ import {createCMS} from 'alinea/next'
 import * as schema from './schema'
 
 const pages = alinea.root('Pages', {
-  index: alinea.page(schema.Home),
-  roadmap: alinea.page(schema.Page),
-  docs: alinea.page(schema.Docs),
-  [alinea.meta]: {
-    contains: ['Page', 'Home']
+  contains: ['Page', 'Home'],
+  entries: {
+    index: alinea.page(schema.Home),
+    roadmap: alinea.page(schema.Page),
+    docs: alinea.page(schema.Docs)
   }
 })
 
 const main = alinea.workspace('Alinea', {
-  pages,
-  media: alinea.media(),
-  [alinea.meta]: {
-    color: '#3F61E8',
-    mediaDir: 'public',
-    source: 'content'
+  color: '#3F61E8',
+  mediaDir: 'public',
+  source: 'content',
+  roots: {
+    pages,
+    media: alinea.media()
   }
 })
 

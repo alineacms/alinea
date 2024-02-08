@@ -27,7 +27,7 @@ type Roots = Record<string, Root>
 
 export interface WorkspaceDefinition {
   [key: string]: Root
-  [Meta]: WorkspaceMeta
+  [Meta]?: WorkspaceMeta
 }
 
 export type Workspace<Definition extends Roots = Roots> = Definition & {
@@ -63,21 +63,38 @@ export namespace Workspace {
   }
 }
 
+export interface WorkspaceOptions<Definition> extends WorkspaceMeta {
+  roots: Definition
+}
+
 /** Create a workspace */
 export function workspace<Definition extends WorkspaceDefinition>(
   /** The name of the workspace */
   label: Label,
+  definition: WorkspaceOptions<Definition>
+): Workspace<Definition>
+/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
+export function workspace<Definition extends WorkspaceDefinition>(
+  /** The name of the workspace */
+  label: Label,
   definition: Definition
-): Workspace<StripMeta<Definition>> {
-  if (!definition[Meta])
-    throw new Error(`Workspace definition must contain a meta property`)
+): Workspace<StripMeta<Definition>>
+export function workspace<Definition extends WorkspaceDefinition>(
+  /** The name of the workspace */
+  label: Label,
+  definition: WorkspaceOptions<Definition> | Definition
+) {
+  const isOptions = 'roots' in definition && !Root.isRoot(definition.roots)
+  const def: any = definition
+  const roots = isOptions ? def.roots : def
+  const options: WorkspaceMeta = (isOptions ? def : def[Meta]) ?? {}
   return {
-    ...definition,
+    ...roots,
     [Workspace.Data]: {
       label,
-      roots: definition,
-      ...definition[Meta],
-      color: definition[Meta].color ?? getRandomColor(JSON.stringify(label))
+      roots,
+      ...options,
+      color: options.color ?? getRandomColor(JSON.stringify(label))
     }
   }
 }

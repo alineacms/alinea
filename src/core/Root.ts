@@ -2,6 +2,7 @@ import type {ComponentType} from 'react'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {PageSeed} from './Page.js'
+
 export interface RootI18n {
   locales: Array<string>
 }
@@ -49,15 +50,32 @@ export namespace Root {
   }
 }
 
+export interface RootOptions<Definition> extends RootMeta {
+  entries?: Definition
+}
+
+export function root<Definition extends RootDefinition>(
+  label: Label,
+  definition: RootOptions<Definition>
+): Root<Definition>
+/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
 export function root<Definition extends RootDefinition>(
   label: Label,
   definition: Definition
-): Root<StripMeta<Definition>> {
+): Root<StripMeta<Definition>>
+export function root<Definition extends RootDefinition>(
+  label: Label,
+  definition: RootOptions<Definition> | Definition
+): Root<Definition> {
+  const isOptions = 'entries' in definition
+  const def: any = definition
+  const entries = isOptions ? def.entries : definition
+  const options = isOptions ? def : def[Meta]
   return {
-    ...definition,
+    ...entries,
     [Root.Data]: {
       label,
-      ...definition[Meta]
+      ...options
     }
   }
 }

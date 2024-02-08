@@ -128,7 +128,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       const parentId = selectedParent?.entry
       const types: Array<string> = await allowedTypes(parentId)
       return {
-        items: fromEntries(
+        options: fromEntries(
           types
             .map(key => {
               return [key, config.schema[key]] as const

@@ -153,12 +153,14 @@ function fieldsOfDefinition(
 class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   shape: RecordShape
   hint: Hint
-  meta: TypeMeta
   sections: Array<Section> = []
   target: Type<Definition>
 
-  constructor(public label: Label, public definition: Definition) {
-    this.meta = this.definition[Meta] || {}
+  constructor(
+    public label: Label,
+    public definition: Definition,
+    public meta: TypeMeta
+  ) {
     this.shape = new RecordShape(
       label,
       fromEntries(
@@ -269,24 +271,49 @@ export interface TypeDefinition {
   readonly [Meta]?: TypeMeta
 }
 
+export interface TypeFields {
+  [key: string]: Field<any, any> | Section
+}
+
+export interface TypeOptions<Definition> extends TypeMeta {
+  fields: Definition
+}
+
+export function parseTypeParams<Definition>(
+  definition: TypeOptions<Definition> | Definition
+) {
+  const def: any = definition
+  const isOptions = 'fields' in def && !Field.isField(def.fields)
+  const options: TypeMeta = (isOptions ? def : def[Meta]) ?? {}
+  const d = isOptions ? def.fields : def
+  return {definition: d as Definition, options}
+}
+
 /** Create a new type */
+export function type<Definition extends TypeFields>(
+  definition: TypeOptions<Definition>
+): Type<Definition>
+export function type<Definition extends TypeFields>(
+  label: string,
+  definition: TypeOptions<Definition>
+): Type<Definition>
+/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
 export function type<Definition extends TypeDefinition>(
   definition: Definition
 ): Type<StripMeta<Definition>>
+/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
 export function type<Definition extends TypeDefinition>(
   label: string,
   definition: Definition
 ): Type<StripMeta<Definition>>
 export function type<Definition extends TypeDefinition>(
-  label: string | Definition,
-  definition?: Definition
-): Type<StripMeta<Definition>> {
+  label: string | TypeOptions<Definition> | Definition,
+  definition?: TypeOptions<Definition> | Definition
+) {
   const title = typeof label === 'string' ? label : 'Anonymous'
-  const def = typeof label === 'string' ? definition : label
-  const instance = new TypeInstance<StripMeta<Definition>>(
-    title,
-    def as Definition
-  )
+  const def: any = typeof label === 'string' ? definition : label
+  const {definition: d, options} = parseTypeParams(def)
+  const instance = new TypeInstance<StripMeta<Definition>>(title, d, options)
   return instance.target
 }
 

@@ -31,7 +31,7 @@ interface SelectInputProps<Key extends string> {
 function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
   const {value = null, mutator, label, options, error} = useField(field)
   const {readOnly} = options
-  const items = options.items as Record<string, string>
+  const items = options.options as Record<string, string>
   const {x, y, reference, floating, refs, strategy} = useFloating({
     whileElementsMounted: autoUpdate,
     strategy: 'fixed',

@@ -31,7 +31,7 @@ export function page<
 >(
   type: Type<Definition> | Cursor.Typed<Definition>,
   children?: Children
-): PageSeed<Definition, Children> {
+): PageSeed<Definition> {
   children = children ?? ({} as Children)
   return {
     ...children,
