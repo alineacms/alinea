@@ -13,6 +13,7 @@ export interface RootMeta {
   i18n?: RootI18n
   /** A React component used to view this root in the dashboard */
   view?: ComponentType<{root: RootData}>
+  isMediaRoot?: boolean
 }
 
 export interface RootDefinition {
@@ -47,6 +48,10 @@ export namespace Root {
 
   export function isRoot(value: any): value is Root {
     return Boolean(value && value[Root.Data])
+  }
+
+  export function isMediaRoot(root: Root): boolean {
+    return Boolean(root[Root.Data].isMediaRoot)
   }
 }
 

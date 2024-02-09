@@ -4,11 +4,8 @@ import {PageSeed} from '../Page.js'
 import {root} from '../Root.js'
 import {
   MediaRoot,
-  createMediaRoot as createMediaRootConfig,
-  mediaRootId
+  createMediaRoot as createMediaRootConfig
 } from './MediaRoot.js'
-
-export {isMediaRoot} from './MediaRoot.js'
 
 export function createMediaRoot<Children extends Record<string, PageSeed>>(
   children: Children = {} as Children
@@ -17,9 +14,9 @@ export function createMediaRoot<Children extends Record<string, PageSeed>>(
     icon: IcRoundPermMedia,
     contains: ['MediaLibrary'],
     view: MediaExplorer,
+    isMediaRoot: true,
     entries: {
-      ...createMediaRootConfig(children),
-      [mediaRootId]: true
+      ...createMediaRootConfig(children)
     }
   }) as any as MediaRoot<Children>
 }

@@ -1,4 +1,3 @@
-import {isMediaRoot} from 'alinea/core/media/MediaRoot'
 import type {ComponentType} from 'react'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
@@ -56,7 +55,7 @@ export namespace Workspace {
   export function defaultMediaRoot(workspace: Workspace): string {
     const {roots} = workspace[Workspace.Data]
     for (const [name, root] of entries(roots))
-      if (isMediaRoot(root)) return name
+      if (Root.isMediaRoot(root)) return name
     throw new Error(`Workspace has no media root`)
   }
 
