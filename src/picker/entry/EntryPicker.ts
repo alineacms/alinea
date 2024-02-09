@@ -44,6 +44,7 @@ export interface EntryPickerOptions<Definition = {}> {
   hint: Hint
   selection: Projection
   defaultView?: 'row' | 'thumb'
+  location?: {workspace: string; root: string}
   condition?: Condition
   withNavigation?: boolean
   showMedia?: boolean

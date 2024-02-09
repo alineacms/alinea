@@ -149,7 +149,7 @@ export namespace link {
       pickers: {
         entry: entryPicker<EntryReference, Fields>({
           ...options,
-          withNavigation: !options.condition,
+          withNavigation: Boolean(options.location || !options.condition),
           hint: Hint.Extern({
             name: 'EntryReference',
             package: 'alinea/picker/entry'

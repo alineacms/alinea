@@ -68,8 +68,8 @@ export function root<Definition extends RootDefinition>(
   label: Label,
   definition: RootOptions<Definition> | Definition = {}
 ): Root<Definition> {
-  const isOptions = 'entries' in definition
   const def: any = definition
+  const isOptions = 'entries' in def || !def[Meta]
   const entries = isOptions ? def.entries : definition
   const options = isOptions ? def : def[Meta]
   return {

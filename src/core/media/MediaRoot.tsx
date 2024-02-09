@@ -1,5 +1,3 @@
-import IcRoundPermMedia from 'alinea/ui/icons/IcRoundPermMedia'
-import {Meta} from '../Meta.js'
 import {PageSeed} from '../Page.js'
 import {Root, root} from '../Root.js'
 
@@ -18,11 +16,10 @@ export function createMediaRoot<Children extends Record<string, PageSeed>>(
   children: Children = {} as Children
 ) {
   return root('Media', {
-    ...children,
-    [Meta]: {
-      icon: IcRoundPermMedia,
-      contains: ['MediaLibrary']
-    },
-    [mediaRootId]: true
+    contains: ['MediaLibrary'],
+    entries: {
+      ...children,
+      [mediaRootId]: true
+    }
   }) as any as MediaRoot<Children>
 }

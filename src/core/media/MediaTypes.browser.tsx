@@ -39,7 +39,6 @@ export type MediaLibrary = config.MediaLibrary
 export const MediaLibrary: typeof config.MediaLibrary = type(
   'Media directory',
   {
-    isContainer: true,
     contains: ['MediaLibrary'],
     view: MediaExplorer,
     icon: IcRoundPermMedia,

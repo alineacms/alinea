@@ -1,8 +1,8 @@
+import {isMediaRoot} from 'alinea/core/media/MediaRoot'
 import type {ComponentType} from 'react'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Root} from './Root.js'
-import {isMediaRoot} from './media/MediaRoot.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 import {entries} from './util/Objects.js'
 
@@ -57,7 +57,11 @@ export namespace Workspace {
     const {roots} = workspace[Workspace.Data]
     for (const [name, root] of entries(roots))
       if (isMediaRoot(root)) return name
-    throw new Error(`Workspace ${workspace.name} has no media root`)
+    throw new Error(`Workspace has no media root`)
+  }
+
+  export function defaultRoot(workspace: Workspace): string {
+    return Object.keys(workspace[Workspace.Data].roots)[0]
   }
 }
 

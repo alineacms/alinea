@@ -75,173 +75,183 @@ const nestedList = Field.list('Nested list', {
 })
 
 const Fields = Config.document('Fields', {
-  ...Field.tabs(
-    Field.tab('Basic fields', {
-      fields: {
-        text: Field.text('Text field'),
-        hello: Field.text('Validated text field', {
-          help: 'This field only accepts "hello"',
-          validate: value => {
-            if (value !== 'hello') {
-              return 'Only "hello" is allowed'
-            }
-          }
-        }),
-        richText: Field.richText('Rich text field'),
-        select: Field.select('Select field', {
-          a: 'Option a',
-          b: 'Option b'
-        }),
-        number: Field.number('Number field', {
-          minValue: 0,
-          maxValue: 10
-        }),
-        check: Field.check('Check field', {description: 'Check me please'}),
-        date: Field.date('Date field'),
-        code: Field.code('Code field')
-      }
-    }),
-    Field.tab('Link fields', {
-      fields: {
-        externalLink: Field.url('External link'),
-        entry: Field.entry('Internal link'),
-        entryWithCondition: Field.entry('With condition', {
-          help: `Show only entries of type Fields`,
-          condition: Query.whereType('Fields')
-        }),
-        linkMultiple: Field.link.multiple('Mixed links, multiple'),
-        image: Field.image('Image link'),
-        images: Field.image.multiple('Image link (multiple)'),
-        file: Field.entry('File link'),
-        withFields: Field.link('With extra fields', {
-          fields: {
-            fieldA: Field.text('Field A', {width: 0.5}),
-            fieldB: Field.text('Field B', {width: 0.5})
-          }
-        }),
-        multipleWithFields: Field.link.multiple('Multiple With extra fields', {
-          fields: {
-            fieldA: Field.text('Field A', {width: 0.5}),
-            fieldB: Field.text('Field B', {width: 0.5, required: true})
-          }
-        })
-      }
-    }),
-    Field.tab('List fields', {
-      fields: {
-        list: Field.list('My list field', {
-          schema: {
-            Text: Config.type('Text', {
-              fields: {
-                title: Field.text('Item title'),
-                text: Field.richText('Item body text')
+  fields: {
+    ...Field.tabs(
+      Field.tab('Basic fields', {
+        fields: {
+          text: Field.text('Text field'),
+          hello: Field.text('Validated text field', {
+            help: 'This field only accepts "hello"',
+            validate: value => {
+              if (value !== 'hello') {
+                return 'Only "hello" is allowed'
               }
-            }),
-            Image: Config.type('Image', {
-              fields: {image: Field.image('Image')}
-            })
-          }
-        })
-      }
-    }),
-    Field.tab('Rich text fields', {
-      fields: {
-        withInitial: Field.richText('With initial value', {
-          required: true,
-          initialValue: [
+            }
+          }),
+          richText: Field.richText('Rich text field'),
+          select: Field.select('Select field', {
+            options: {
+              a: 'Option a',
+              b: 'Option b'
+            }
+          }),
+          number: Field.number('Number field', {
+            minValue: 0,
+            maxValue: 10
+          }),
+          check: Field.check('Check field', {description: 'Check me please'}),
+          date: Field.date('Date field'),
+          code: Field.code('Code field')
+        }
+      }),
+      Field.tab('Link fields', {
+        fields: {
+          externalLink: Field.url('External link'),
+          entry: Field.entry('Internal link'),
+          entryWithCondition: Field.entry('With condition', {
+            help: `Show only entries of type Fields in the main workspace`,
+            location: {workspace: 'primary', root: 'fields'},
+            condition: Query.type.is('Fields')
+          }),
+          linkMultiple: Field.link.multiple('Mixed links, multiple'),
+          image: Field.image('Image link'),
+          images: Field.image.multiple('Image link (multiple)'),
+          file: Field.entry('File link'),
+          withFields: Field.link('With extra fields', {
+            fields: {
+              fieldA: Field.text('Field A', {width: 0.5}),
+              fieldB: Field.text('Field B', {width: 0.5})
+            }
+          }),
+          multipleWithFields: Field.link.multiple(
+            'Multiple With extra fields',
             {
-              type: 'paragraph',
-              content: [
-                {type: 'text', text: 'This is a paragraph with initial value'}
-              ]
-            }
-          ]
-        }),
-        makeRO: Field.check('Make read-only'),
-        nested: Field.richText('With nested blocks', {
-          schema: {
-            Inner: Config.type('Inner', {
               fields: {
-                checkbox1: Field.check('Checkbox 1'),
-                checkbox2: Field.check('Checkbox 2'),
-                title: Field.text('Title'),
-                content: Field.richText('Inner rich text')
+                fieldA: Field.text('Field A', {width: 0.5}),
+                fieldB: Field.text('Field B', {width: 0.5, required: true})
               }
-            }),
-
-            NestLayout: Config.type('Nested layout fields', {
-              object: Field.object('Object field', {
+            }
+          )
+        }
+      }),
+      Field.tab('List fields', {
+        fields: {
+          list: Field.list('My list field', {
+            schema: {
+              Text: Config.type('Text', {
                 fields: {
-                  fieldA: Field.text('Field A', {width: 0.5}),
-                  fieldB: Field.text('Field B', {width: 0.5})
+                  title: Field.text('Item title'),
+                  text: Field.richText('Item body text')
                 }
               }),
-              ...Field.tabs(
-                Field.tab('Tab A', {
-                  fields: {tabA: Field.text('Tab A')}
-                }),
-                Field.tab('Tab B', {
-                  fields: {tabB: Field.text('Tab B')}
-                })
-              )
-            })
-          }
-        })
-      }
-    }),
-    Field.tab('Inline fields', {
-      fields: {
-        street: Field.text('Street', {
-          width: 0.6,
-          inline: true,
-          multiline: true
-        }),
-        streetNr: Field.text('Number', {width: 0.2, inline: true}),
-        box: Field.text('Box', {width: 0.2, inline: true}),
-        zip: Field.text('Zipcode', {width: 0.2, inline: true}),
-        city: Field.text('City', {width: 0.4, inline: true}),
-        country: Field.text('Country', {
-          width: 0.4,
-          inline: true
-        })
-      }
-    }),
-    Field.tab('Layout fields', {
-      fields: {
-        object: Field.object('Object field', {
-          fields: {
-            fieldA: Field.text('Field A', {width: 0.5}),
-            fieldB: Field.text('Field B', {width: 0.5})
-          }
-        }),
-        ...Field.tabs(
-          Field.tab('Tab A', {
-            fields: {tabA: Field.text('Tab A', {shared: true})}
-          }),
-          Field.tab('Tab B', {
-            fields: {tabB: Field.text('Tab B')}
+              Image: Config.type('Image', {
+                fields: {image: Field.image('Image')}
+              })
+            }
           })
-        )
-      }
-    }),
-    Field.tab('Custom field', {
-      fields: {position: position('Position field')}
-    }),
-    Field.tab('I18n', {
-      fields: {
-        shared: Field.text('Shared field', {
-          help: `This field is shared between languages.`,
-          shared: true
-        })
-      }
-    }),
-    Field.tab('Conditional fields', {
-      fields: {
-        rootField,
-        nestedList
-      }
-    })
-  )
+        }
+      }),
+      Field.tab('Rich text fields', {
+        fields: {
+          withInitial: Field.richText('With initial value', {
+            required: true,
+            initialValue: [
+              {
+                type: 'paragraph',
+                content: [
+                  {type: 'text', text: 'This is a paragraph with initial value'}
+                ]
+              }
+            ]
+          }),
+          makeRO: Field.check('Make read-only'),
+          nested: Field.richText('With nested blocks', {
+            schema: {
+              Inner: Config.type('Inner', {
+                fields: {
+                  checkbox1: Field.check('Checkbox 1'),
+                  checkbox2: Field.check('Checkbox 2'),
+                  title: Field.text('Title'),
+                  content: Field.richText('Inner rich text')
+                }
+              }),
+
+              NestLayout: Config.type('Nested layout fields', {
+                fields: {
+                  object: Field.object('Object field', {
+                    fields: {
+                      fieldA: Field.text('Field A', {width: 0.5}),
+                      fieldB: Field.text('Field B', {width: 0.5})
+                    }
+                  }),
+                  ...Field.tabs(
+                    Field.tab('Tab A', {
+                      fields: {tabA: Field.text('Tab A')}
+                    }),
+                    Field.tab('Tab B', {
+                      fields: {tabB: Field.text('Tab B')}
+                    })
+                  )
+                }
+              })
+            }
+          })
+        }
+      }),
+      Field.tab('Inline fields', {
+        fields: {
+          street: Field.text('Street', {
+            width: 0.6,
+            inline: true,
+            multiline: true
+          }),
+          streetNr: Field.text('Number', {width: 0.2, inline: true}),
+          box: Field.text('Box', {width: 0.2, inline: true}),
+          zip: Field.text('Zipcode', {width: 0.2, inline: true}),
+          city: Field.text('City', {width: 0.4, inline: true}),
+          country: Field.text('Country', {
+            width: 0.4,
+            inline: true
+          })
+        }
+      }),
+      Field.tab('Layout fields', {
+        fields: {
+          object: Field.object('Object field', {
+            fields: {
+              fieldA: Field.text('Field A', {width: 0.5}),
+              fieldB: Field.text('Field B', {width: 0.5})
+            }
+          }),
+          ...Field.tabs(
+            Field.tab('Tab A', {
+              fields: {tabA: Field.text('Tab A', {shared: true})}
+            }),
+            Field.tab('Tab B', {
+              fields: {tabB: Field.text('Tab B')}
+            })
+          )
+        }
+      }),
+      Field.tab('Custom field', {
+        fields: {position: position('Position field')}
+      }),
+      Field.tab('I18n', {
+        fields: {
+          shared: Field.text('Shared field', {
+            help: `This field is shared between languages.`,
+            shared: true
+          })
+        }
+      }),
+      Field.tab('Conditional fields', {
+        fields: {
+          rootField,
+          nestedList
+        }
+      })
+    )
+  }
 })
 
 Config.track.options(Fields.nested, get => {
