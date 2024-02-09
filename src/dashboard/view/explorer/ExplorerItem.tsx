@@ -1,4 +1,6 @@
-import {Schema, Type, View} from 'alinea/core'
+import {Schema} from 'alinea/core/Schema'
+import {Type} from 'alinea/core/Type'
+import {View} from 'alinea/core/View'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Icon, fromModule} from 'alinea/ui'

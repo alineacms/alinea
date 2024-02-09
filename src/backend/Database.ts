@@ -1,25 +1,21 @@
-import {
-  Config,
-  EntryUrlMeta,
-  PageSeed,
-  Root,
-  Schema,
-  SyncResponse,
-  Syncable,
-  Type,
-  Workspace,
-  createId,
-  slugify,
-  unreachable
-} from 'alinea/core'
-import {entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
+import {Config} from 'alinea/core/Config'
+import {SyncResponse, Syncable} from 'alinea/core/Connection'
 import {EntryRecord, META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {PageSeed} from 'alinea/core/Page'
+import {Root} from 'alinea/core/Root'
+import {Schema} from 'alinea/core/Schema'
+import {EntryUrlMeta, Type} from 'alinea/core/Type'
+import {Workspace} from 'alinea/core/Workspace'
 import {createFileHash, createRowHash} from 'alinea/core/util/ContentHash'
+import {entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow, publishEntryRow} from 'alinea/core/util/EntryRows'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
+import {slugify} from 'alinea/core/util/Slugs'
+import {unreachable} from 'alinea/core/util/Types'
 import {Driver, Expr, Select, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'

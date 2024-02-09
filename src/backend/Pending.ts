@@ -1,5 +1,5 @@
-import {Connection} from 'alinea/core'
-import {Mutation} from 'alinea/core/Mutation'
+import type {Connection} from 'alinea/core/Connection'
+import type {Mutation} from 'alinea/core/Mutation'
 
 export interface Pending {
   pendingSince(

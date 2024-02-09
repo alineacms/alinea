@@ -1,4 +1,3 @@
-import {renderLabel} from 'alinea/core'
 import {RootData} from 'alinea/core/Root'
 import {Icon, TextLabel, Typo, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
@@ -16,7 +15,7 @@ export function RootOverview({root}: RootOverviewProps) {
   return (
     <>
       <Head>
-        <title>{renderLabel(root.label)}</title>
+        <title>{root.label}</title>
       </Head>
       <Main>
         <div className={styles.root()}>

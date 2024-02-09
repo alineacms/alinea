@@ -1,24 +1,21 @@
-import {
-  Entry,
-  EntryPhase,
-  Type,
-  createId,
-  slugify,
-  track,
-  type
-} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
+import {EntryPhase} from 'alinea/core/EntryRow'
+import {createId} from 'alinea/core/Id'
+import {MutationType} from 'alinea/core/Mutation'
+import {track} from 'alinea/core/Tracker'
+import {Type, type} from 'alinea/core/Type'
+import {Projection} from 'alinea/core/pages/Projection'
 import {
   entryChildrenDir,
   entryFileName,
   entryFilepath,
   entryUrl
-} from 'alinea/core/EntryFilenames'
-import {MutationType} from 'alinea/core/Mutation'
-import {Projection} from 'alinea/core/pages/Projection'
+} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {dirname} from 'alinea/core/util/Paths'
+import {slugify} from 'alinea/core/util/Slugs'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
@@ -168,10 +165,12 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const formType = useMemo(
     () =>
       type({
-        parent: parentField,
-        title: titleField,
-        type: typeField,
-        copyFrom: copyFromField
+        fields: {
+          parent: parentField,
+          title: titleField,
+          type: typeField,
+          copyFrom: copyFromField
+        }
       }),
     []
   )

@@ -192,6 +192,7 @@
   "withInitial": [
     {
       "type": "paragraph",
+      "textAlign": "left",
       "content": [
         {
           "type": "text",

@@ -1,6 +1,6 @@
 import {Media} from 'alinea/backend/Media'
 import {isImage} from 'alinea/core/media/IsImage'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {MediaFile} from 'alinea/core/media/MediaTypes'
 import {FormProvider, useField} from 'alinea/dashboard'
 import {Typo, fromModule} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
@@ -24,10 +24,10 @@ interface Pos {
   y?: number
 }
 
-function ImageView({editor}: EntryEditProps) {
+function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
   const image: Media.Image = editor.activeVersion as any
   const {value: focus = {x: 0.5, y: 0.5}, mutator: setFocus} = useField(
-    MediaFile.focus
+    type.focus
   )
   const [hover, setHover] = useState<Pos>({})
   const {x: focusX = focus.x, y: focusY = focus.y} = hover
@@ -78,7 +78,7 @@ function ImageView({editor}: EntryEditProps) {
         </div>
       </div>
       <div style={{minWidth: 0}}>
-        <InputField field={MediaFile.title} />
+        <InputField field={type.title} />
         <Property label="Extension">{image.data.extension}</Property>
         <Property label="File size">{prettyBytes(image.data.size)}</Property>
         <Property label="Dimensions">
@@ -126,11 +126,11 @@ export function IcTwotonePinDrop() {
   )
 }
 
-function FileView({editor}: EntryEditProps) {
+function FileView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
   const file: Media.File = editor.activeVersion as any
   return (
     <Lift>
-      <InputField field={MediaFile.title} />
+      <InputField field={type.title} />
       <Property label="Extension">{file.data.extension}</Property>
       <Property label="File size">{prettyBytes(file.data.size)}</Property>
 
@@ -145,7 +145,7 @@ function FileView({editor}: EntryEditProps) {
   )
 }
 
-export function FileEntry(props: EntryEditProps) {
+export function FileEntry(props: EntryEditProps & {type: typeof MediaFile}) {
   const nav = useNav()
   const {editor} = props
   const form = useAtomValue(editor.form)

@@ -1,4 +1,4 @@
-import {ListShape} from 'alinea/core'
+import {ListShape} from 'alinea/core/shape/ListShape'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import * as Y from 'alinea/yjs'

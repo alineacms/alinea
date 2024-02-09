@@ -1,4 +1,5 @@
-import {Field, SectionData, SectionDefinition, section} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
+import {SectionData, SectionDefinition, section} from 'alinea/core/Section'
 import {ReactNode} from 'react'
 
 export class ViewSection implements SectionData {

@@ -1,4 +1,5 @@
-import {Connection, Draft} from 'alinea/core'
+import {Connection} from 'alinea/core/Connection'
+import {Draft} from 'alinea/core/Draft'
 
 export interface DraftTransport {
   entryId: string

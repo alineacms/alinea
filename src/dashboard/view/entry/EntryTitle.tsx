@@ -1,5 +1,6 @@
-import {EntryPhase, Type} from 'alinea/core'
+import {EntryPhase} from 'alinea/core/EntryRow'
 import {renderLabel} from 'alinea/core/Label'
+import {Type} from 'alinea/core/Type'
 import {Chip, HStack, Loader, Stack, fromModule, px} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtom, useAtomValue} from 'jotai'

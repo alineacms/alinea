@@ -1,6 +1,6 @@
 import {EntryPhase} from './EntryRow.js'
 import {Realm} from './pages/Realm.js'
-import {Selection} from './pages/Selection.js'
+import {Selection} from './pages/ResolveData.js'
 
 export interface ResolveParams extends ResolveDefaults {
   selection: Selection

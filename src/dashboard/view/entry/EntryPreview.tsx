@@ -1,4 +1,6 @@
-import {Config, Entry, PreviewUpdate} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {Entry} from 'alinea/core/Entry'
+import {PreviewUpdate} from 'alinea/core/Resolver'
 import {base64url} from 'alinea/core/util/Encoding'
 import {zlibSync} from 'fflate'
 import {useAtomValue} from 'jotai'

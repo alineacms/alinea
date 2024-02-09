@@ -1,5 +1,5 @@
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
-import {MediaSchema} from 'alinea/core/media/MediaSchema'
+import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import {ComponentType} from 'react'
 import {Auth} from './Auth.js'
 import {Entry} from './Entry.js'
@@ -70,7 +70,7 @@ export function createConfig<Definition extends Config>(
   const handlerUrl = definition.handlerUrl ?? definition.dashboard?.handlerUrl*/
   return {
     ...definition,
-    schema: {...MediaSchema, ...definition.schema},
+    schema: {MediaLibrary, MediaFile, ...definition.schema},
     dashboard: {
       auth: CloudAuthView,
       ...definition.dashboard

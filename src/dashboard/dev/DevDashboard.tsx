@@ -1,5 +1,5 @@
-import {Config} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
+import {Config} from 'alinea/core/Config'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {useSetAtom} from 'jotai'
 import {useEffect, useMemo, useState} from 'react'

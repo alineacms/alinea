@@ -1,17 +1,19 @@
 import {JsonLoader, Media} from 'alinea/backend'
 import {FS} from 'alinea/backend/FS'
-import {Connection, createId, slugify} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
+import {createId} from 'alinea/core/Id'
 import {outcome} from 'alinea/core/Outcome'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
 import {entries, keys, values} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
+import {slugify} from 'alinea/core/util/Slugs'
 import {Source, SourceEntry, WatchFiles} from '../../backend/Source.js'
 import {Target} from '../../backend/Target.js'
 import {ChangeType} from '../../backend/data/ChangeSet.js'
 import {applyJsonPatch} from '../../backend/util/JsonPatch.js'
 
+import {Connection} from 'alinea/core/Connection'
 import {basename, dirname, extname, join} from 'alinea/core/util/Paths'
 
 export interface LocalDataOptions {

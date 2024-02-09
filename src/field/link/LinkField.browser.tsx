@@ -21,7 +21,11 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {Field, ListRow, Picker, Reference, Type} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
+import {Picker} from 'alinea/core/Picker'
+import {Reference} from 'alinea/core/Reference'
+import {Type} from 'alinea/core/Type'
+import {ListRow} from 'alinea/core/shape/ListShape'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'

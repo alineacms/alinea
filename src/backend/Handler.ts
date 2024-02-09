@@ -1,24 +1,23 @@
 import {Request, Response} from '@alinea/iso'
+
+import {Auth} from 'alinea/core/Auth'
+import {Config} from 'alinea/core/Config'
+import {Connection, SyncResponse} from 'alinea/core/Connection'
+import {parseYDoc} from 'alinea/core/Doc'
+import {Draft} from 'alinea/core/Draft'
+import {Entry} from 'alinea/core/Entry'
+import {EntryRecord} from 'alinea/core/EntryRecord'
+import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {
-  Auth,
-  Config,
-  Connection,
-  Draft,
-  Entry,
-  EntryPhase,
-  EntryRow,
   PreviewUpdate,
   ResolveDefaults,
   ResolveParams,
-  Resolver,
-  SyncResponse,
-  parseYDoc
-} from 'alinea/core'
-import {EntryRecord} from 'alinea/core/EntryRecord'
-import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
+  Resolver
+} from 'alinea/core/Resolver'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Realm} from 'alinea/core/pages/Realm'
-import {Selection} from 'alinea/core/pages/Selection'
+import {Selection} from 'alinea/core/pages/ResolveData'
 import {base64, base64url} from 'alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
 import * as Y from 'alinea/yjs'

@@ -7,8 +7,11 @@ import {
   NodeViewWrapper,
   ReactNodeViewRenderer
 } from '@tiptap/react'
-import {createId, Field, Schema, Type} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
 import {RichTextField} from 'alinea/core/field/RichTextField'
+import {createId} from 'alinea/core/Id'
+import {Schema} from 'alinea/core/Schema'
+import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'

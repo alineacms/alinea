@@ -8,10 +8,14 @@ import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Section, section} from './Section.js'
 import type {View} from './View.js'
-import {createExprData} from './pages/CreateExprData.js'
 import {Cursor} from './pages/Cursor.js'
-import {Expr} from './pages/Expr.js'
-import {BinaryOp, ExprData} from './pages/ExprData.js'
+import {Expr, createExprData} from './pages/Expr.js'
+import {
+  BinaryOp,
+  ExprData,
+  Selection,
+  toSelection
+} from './pages/ResolveData.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {
   assign,
@@ -41,7 +45,7 @@ export interface TypeMeta {
   icon?: ComponentType
 
   /** A React component used to view an entry of this type in the dashboard */
-  view?: ComponentType<EntryEditProps>
+  view?: ComponentType<EntryEditProps & {type: Type}>
   /** A React component used to view a row of this type in the dashboard */
   summaryRow?: View<any>
   /** A React component used to view a thumbnail of this type in the dashboard */
@@ -67,6 +71,7 @@ export class TypeTarget {}
 
 export declare class TypeI<Definition = object> {
   get [Type.Data](): TypeData
+  [toSelection](): Selection.Row
 }
 
 export interface TypeI<Definition = object> extends Callable {
@@ -262,6 +267,12 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     }
     defineProperty(instance, Type.Data, {
       value: this,
+      enumerable: false
+    })
+    defineProperty(instance, toSelection, {
+      value: () => {
+        return Selection.Row({type: Type.target(this.target)})
+      },
       enumerable: false
     })
   }

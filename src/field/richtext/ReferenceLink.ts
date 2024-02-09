@@ -1,4 +1,4 @@
-import {createId} from 'alinea/core'
+import {createId} from 'alinea/core/Id'
 import {Reference} from 'alinea/core/Reference'
 import {EntryReference, FileReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url'

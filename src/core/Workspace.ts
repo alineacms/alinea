@@ -1,5 +1,4 @@
 import type {ComponentType} from 'react'
-import {CMS} from './CMS.js'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Root} from './Root.js'
@@ -32,7 +31,6 @@ export interface WorkspaceDefinition {
 
 export type Workspace<Definition extends Roots = Roots> = Definition & {
   [Workspace.Data]: WorkspaceData
-  [CMS.Link]?: CMS
 }
 
 export namespace Workspace {

@@ -1,7 +1,7 @@
 import {Database} from 'alinea/backend/Database'
 import {Store} from 'alinea/backend/Store'
 import {Emitter, createEmitter} from 'alinea/cli/util/Emitter'
-import {Config} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
 import pLimit from 'p-limit'
 import {getCommitSha} from '../util/CommitSha.js'
 import {createWatcher} from '../util/Watcher.js'

@@ -1,15 +1,12 @@
-import {
-  PickerProps,
-  Root,
-  WorkspaceData,
-  createId,
-  pickerWithView
-} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {workspaceMediaDir} from 'alinea/core/EntryFilenames'
+import {createId} from 'alinea/core/Id'
+import {PickerProps, pickerWithView} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
+import {Root} from 'alinea/core/Root'
+import {WorkspaceData} from 'alinea/core/Workspace'
 import {isMediaRoot} from 'alinea/core/media/MediaRoot'
 import {Expr} from 'alinea/core/pages/Expr'
+import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {entries} from 'alinea/core/util/Objects'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'

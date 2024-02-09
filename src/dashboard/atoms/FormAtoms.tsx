@@ -1,20 +1,19 @@
-import {
-  Field,
-  FieldGetter,
-  FieldOptions,
-  ROOT_KEY,
-  Section,
-  Type,
-  ValueTracker,
-  applyEntryData,
-  optionTrackerOf,
-  valueTrackerOf
-} from 'alinea/core'
+import type {FieldOptions} from 'alinea/core/Field'
+import {Field} from 'alinea/core/Field'
+import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {Atom, Getter, atom} from 'jotai'
 import {PropsWithChildren, createContext, useContext, useMemo} from 'react'
 import * as Y from 'yjs'
 
+import {ROOT_KEY, applyEntryData} from 'alinea/core/Doc'
+import {Section} from 'alinea/core/Section'
+import {
+  FieldGetter,
+  ValueTracker,
+  optionTrackerOf,
+  valueTrackerOf
+} from 'alinea/core/Tracker'
 import {unwrap} from 'jotai/utils'
 
 export interface FieldInfo<

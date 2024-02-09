@@ -1,6 +1,7 @@
-import {RichTextShape, Shape} from 'alinea/core'
+import {Shape} from 'alinea/core/Shape'
 import {ListShape} from 'alinea/core/shape/ListShape'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
+import {RichTextShape} from 'alinea/core/shape/RichTextShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import {UnionShape} from 'alinea/core/shape/UnionShape'
 import {diffRecord} from './DiffUtils.js'

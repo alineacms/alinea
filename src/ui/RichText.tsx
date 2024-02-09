@@ -1,11 +1,8 @@
-import {
-  Infer,
-  RichTextElements,
-  Schema,
-  TextDoc,
-  TextNode,
-  slugify
-} from 'alinea/core'
+import {Infer} from 'alinea/core/Infer'
+import {Schema} from 'alinea/core/Schema'
+import {TextDoc, TextNode} from 'alinea/core/TextDoc'
+import {RichTextElements} from 'alinea/core/shape/RichTextShape'
+import {slugify} from 'alinea/core/util/Slugs'
 import {ComponentType, Fragment, ReactElement, isValidElement} from 'react'
 
 type Element = keyof typeof RichTextElements

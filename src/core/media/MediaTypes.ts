@@ -1,6 +1,4 @@
 import {hidden} from 'alinea/field/hidden'
-import {path} from 'alinea/field/path'
-import {text} from 'alinea/field/text'
 import {Hint} from '../Hint.js'
 import {Type, type} from '../Type.js'
 
@@ -9,17 +7,17 @@ export const MediaLibrary = type('Media directory', {
   isContainer: true,
   contains: ['MediaLibrary'],
   fields: {
-    title: text('Title'),
-    path: path('Path')
+    title: hidden<string>('Title', Hint.String()),
+    path: hidden<string>('Path', Hint.String())
   }
 })
 
 export type MediaFile = Type.Infer<typeof MediaFile>
-export const MediaFile = type('File', {
+export const MediaFile = type('Media file', {
   isHidden: true,
   fields: {
-    title: text('Title'),
-    path: path('Path'),
+    title: hidden<string>('Title', Hint.String()),
+    path: hidden<string>('Path', Hint.String()),
     location: hidden<string>('Location', Hint.String()),
     extension: hidden<string>('Extension', Hint.String()),
     size: hidden<number>('File size', Hint.Number()),
@@ -38,8 +36,3 @@ export const MediaFile = type('File', {
     thumbHash: hidden<string>('Blur hash', Hint.String())
   }
 })
-
-export const MediaSchema = {
-  MediaLibrary,
-  MediaFile
-}

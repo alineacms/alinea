@@ -1,6 +1,6 @@
-import {Type} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {Hint} from 'alinea/core/Hint'
+import {Type} from 'alinea/core/Type'
 import {Code, code} from 'alinea/core/util/CodeGen'
 import {Lazy} from 'alinea/core/util/Lazy'
 

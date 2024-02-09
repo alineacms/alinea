@@ -1,4 +1,5 @@
-import {PickerProps, createId, pickerWithView} from 'alinea/core'
+import {createId} from 'alinea/core/Id'
+import {PickerProps, pickerWithView} from 'alinea/core/Picker'
 import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'

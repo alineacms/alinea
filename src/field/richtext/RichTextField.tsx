@@ -1,4 +1,6 @@
-import {FieldOptions, Schema, TextDoc, WithoutLabel} from 'alinea/core'
+import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import {Schema} from 'alinea/core/Schema'
+import type {TextDoc} from 'alinea/core/TextDoc'
 import {RichTextField} from 'alinea/core/field/RichTextField'
 import {richTextHint} from 'alinea/core/util/Hints'
 

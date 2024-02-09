@@ -1,5 +1,5 @@
-import {EntryPhase} from 'alinea/core'
-import {entryFile, workspaceMediaDir} from 'alinea/core/EntryFilenames'
+import {EntryPhase} from 'alinea/core/EntryRow'
+import {entryFile, workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {Button, HStack, Icon, Stack, fromModule, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'

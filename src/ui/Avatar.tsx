@@ -1,4 +1,4 @@
-import {User} from 'alinea/core'
+import {User} from 'alinea/core/User'
 import {getRandomColor} from 'alinea/core/util/GetRandomColor'
 import {useContrastColor} from './hook/UseContrastColor.js'
 import {px} from './util/Units.js'

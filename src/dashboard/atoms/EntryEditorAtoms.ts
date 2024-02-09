@@ -1,29 +1,23 @@
 import {Media} from 'alinea/backend'
-import {
-  Config,
-  Connection,
-  EntryPhase,
-  EntryRow,
-  EntryUrlMeta,
-  Field,
-  ROOT_KEY,
-  Root,
-  Type,
-  createId,
-  createYDoc,
-  parseYDoc
-} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {Connection} from 'alinea/core/Connection'
+import {ROOT_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
 import {Entry} from 'alinea/core/Entry'
+import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {Field} from 'alinea/core/Field'
+import {Graph} from 'alinea/core/Graph'
+import {createId} from 'alinea/core/Id'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {Root} from 'alinea/core/Root'
+import {EntryUrlMeta, Type} from 'alinea/core/Type'
+import type {MediaFile} from 'alinea/core/media/MediaTypes'
+import {base64} from 'alinea/core/util/Encoding'
 import {
   entryFileName,
   entryFilepath,
   entryInfo,
   entryUrl
-} from 'alinea/core/EntryFilenames'
-import {Graph} from 'alinea/core/Graph'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
-import {base64} from 'alinea/core/util/Encoding'
+} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'

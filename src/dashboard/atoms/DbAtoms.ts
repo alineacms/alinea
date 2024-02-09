@@ -1,13 +1,14 @@
 import {Database} from 'alinea/backend'
 import {EntryResolver} from 'alinea/backend/resolver/EntryResolver'
-import {Config, Entry} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {Entry} from 'alinea/core/Entry'
+import {Graph} from 'alinea/core/Graph'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {
   applySuffix,
   entryFileName,
   pathSuffix
-} from 'alinea/core/EntryFilenames'
-import {Graph} from 'alinea/core/Graph'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
+} from 'alinea/core/util/EntryFilenames'
 import {
   createEntryRow,
   entryParentPaths,

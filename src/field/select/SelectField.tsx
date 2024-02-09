@@ -1,9 +1,9 @@
-import {FieldOptions, Label, WithoutLabel} from 'alinea/core'
+import {FieldOptions, WithoutLabel} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** A string record with option labels */
-export type SelectItems<T extends string> = Record<T, Label>
+export type SelectItems<T extends string> = Record<T, string>
 
 /** Optional settings to configure a select field */
 export interface SelectConfig<Key> extends FieldOptions<Key> {
@@ -14,7 +14,7 @@ export interface SelectConfig<Key> extends FieldOptions<Key> {
   /** Display a minimal version */
   inline?: boolean
   /** Choose a custom placeholder (eg. 'Select an option')  */
-  placeholder?: Label
+  placeholder?: string
 }
 
 export interface SelectOptions<Key extends string> extends SelectConfig<Key> {

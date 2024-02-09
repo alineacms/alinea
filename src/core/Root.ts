@@ -21,7 +21,7 @@ export interface RootDefinition {
 }
 
 export interface RootData extends RootMeta {
-  label: Label
+  label: string
 }
 
 type Seed = Record<string, PageSeed>

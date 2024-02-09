@@ -1,7 +1,13 @@
-import {Entry, document, page, root, schema, type, workspace} from 'alinea/core'
+import {document} from 'alinea/core/Document'
+import {Entry} from 'alinea/core/Entry'
+import {page} from 'alinea/core/Page'
+import {root} from 'alinea/core/Root'
+import {schema} from 'alinea/core/Schema'
+import {type} from 'alinea/core/Type'
+import {workspace} from 'alinea/core/Workspace'
 import {createTestCMS} from 'alinea/core/driver/TestDriver'
 import {createMediaRoot} from 'alinea/core/media/MediaRoot'
-import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
+import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import {
   check,
   code,

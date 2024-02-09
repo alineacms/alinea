@@ -1,10 +1,10 @@
 import type {ComponentType} from 'react'
 import {Entry} from './Entry.js'
-import {Schema} from './Schema.js'
+import type {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {createSelection} from './pages/CreateSelection.js'
-import {Projection} from './pages/Projection.js'
-import {Selection} from './pages/Selection.js'
+import type {Projection} from './pages/Projection.js'
+import type {Selection} from './pages/ResolveData.js'
 import {assign, entries} from './util/Objects.js'
 
 type ViewSelection<T, S> = () => S

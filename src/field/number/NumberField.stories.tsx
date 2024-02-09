@@ -1,9 +1,9 @@
-import { type } from 'alinea/core'
-import { useForm } from 'alinea/dashboard/atoms/FormAtoms'
-import { InputForm } from 'alinea/dashboard/editor/InputForm'
-import { number } from 'alinea/field/number'
-import { VStack } from 'alinea/ui'
-import { UIStory } from 'alinea/ui/UIStory'
+import {type} from 'alinea/core/Type'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {number} from 'alinea/field/number'
+import {VStack} from 'alinea/ui'
+import {UIStory} from 'alinea/ui/UIStory'
 
 const fields = type({
   number: number('Number'),

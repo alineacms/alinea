@@ -1,11 +1,11 @@
-import {ListRow} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {WithoutLabel} from 'alinea/core/Field'
+import type {WithoutLabel} from 'alinea/core/Field'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
 import {imageExtensions} from 'alinea/core/media/IsImage'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {MediaFile} from 'alinea/core/media/MediaTypes'
+import type {ListRow} from 'alinea/core/shape/ListShape'
 import {
   LinkFieldOptions,
   createLink,

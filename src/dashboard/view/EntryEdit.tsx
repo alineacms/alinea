@@ -1,4 +1,6 @@
-import {EntryPhase, Section, Type} from 'alinea/core'
+import {EntryPhase} from 'alinea/core/EntryRow'
+import {Section} from 'alinea/core/Section'
+import {Type} from 'alinea/core/Type'
 import {FormProvider} from 'alinea/dashboard'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'

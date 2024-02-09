@@ -1,5 +1,6 @@
-import {RichTextShape, TextDoc} from 'alinea/core'
+import type {TextDoc} from 'alinea/core/TextDoc'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
+import {RichTextShape} from 'alinea/core/shape/RichTextShape'
 import {Sink} from 'alinea/ui/Sink'
 import {ReactNode, useMemo} from 'react'
 import {ChangeBox} from './ChangeBox.js'

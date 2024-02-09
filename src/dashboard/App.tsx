@@ -1,4 +1,6 @@
-import {Config, Connection, Root, renderLabel} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {Connection} from 'alinea/core/Connection'
+import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
@@ -115,7 +117,7 @@ function AppAuthenticated() {
                       key={key}
                       selected={isEntry && isSelected}
                       href={link}
-                      aria-label={renderLabel(label)}
+                      aria-label={label}
                     >
                       <Icon icon={icon ?? IcRoundDescription} />
                     </Sidebar.Nav.Item>

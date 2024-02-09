@@ -1,4 +1,4 @@
-import {Section} from 'alinea/core'
+import {Section} from 'alinea/core/Section'
 import {ViewSection, view as createView} from './View.js'
 
 export * from './View.js'

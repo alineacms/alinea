@@ -1,4 +1,4 @@
-import {Entry} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
 import {EntryLocation} from 'alinea/dashboard/DashboardNav'
 import {graphAtom} from 'alinea/dashboard/atoms/DbAtoms'
 import {locationAtom, useNavigate} from 'alinea/dashboard/atoms/LocationAtoms'

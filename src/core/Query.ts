@@ -1,8 +1,9 @@
 import {Entry} from './Entry.js'
 import {Type} from './Type.js'
-import {Cursor, SourceType} from './pages/Cursor.js'
+import {Cursor} from './pages/Cursor.js'
 import {EV, Expr} from './pages/Expr.js'
-import {Projection} from './pages/Projection.js'
+import type {Projection} from './pages/Projection.js'
+import {SourceType} from './pages/ResolveData.js'
 import {snippet as snippetHelper} from './pages/Snippet.js'
 
 /*

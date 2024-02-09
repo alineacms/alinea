@@ -1,4 +1,4 @@
-import {Entry} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
 import {Button, HStack, Stack, Typo, VStack, fromModule, px} from 'alinea/ui'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {useAtomValue} from 'jotai'

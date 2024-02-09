@@ -1,4 +1,5 @@
-import {Config, Connection} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {Connection} from 'alinea/core/Connection'
 import {useAtomValue} from 'jotai'
 import {PropsWithChildren} from 'react'
 import {QueryClient, QueryClientProvider} from 'react-query'

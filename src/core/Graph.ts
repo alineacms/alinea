@@ -7,9 +7,9 @@ import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {createSelection} from './pages/CreateSelection.js'
 import {Cursor} from './pages/Cursor.js'
-import {Projection} from './pages/Projection.js'
+import type {Projection} from './pages/Projection.js'
 import {Realm} from './pages/Realm.js'
-import {Selection} from './pages/Selection.js'
+import {Selection} from './pages/ResolveData.js'
 import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
 
 export type Location = Root | Workspace | PageSeed

@@ -1,13 +1,9 @@
-import {
-  Field,
-  SectionData,
-  SectionDefinition,
-  Type,
-  UnionToIntersection,
-  section,
-  type
-} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
+import type {SectionData, SectionDefinition} from 'alinea/core/Section'
+import {section} from 'alinea/core/Section'
+import {Type, type} from 'alinea/core/Type'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import type {UnionToIntersection} from 'alinea/core/util/Types'
 
 export class TabsSection implements SectionData {
   definition: SectionDefinition

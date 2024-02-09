@@ -1,5 +1,5 @@
 import {Switch} from '@headlessui/react'
-import {Workspace} from 'alinea/core'
+import {Workspace} from 'alinea/core/Workspace'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {select} from 'alinea/field'
 import {HStack, Icon, VStack, fromModule, px} from 'alinea/ui'

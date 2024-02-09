@@ -1,4 +1,5 @@
-import {Root, Workspace} from 'alinea/core'
+import {Root} from 'alinea/core/Root'
+import {Workspace} from 'alinea/core/Workspace'
 import {keys} from 'alinea/core/util/Objects'
 import {atom, useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'

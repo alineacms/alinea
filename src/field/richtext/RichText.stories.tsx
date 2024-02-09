@@ -1,4 +1,5 @@
-import {TextDoc, type} from 'alinea/core'
+import type {TextDoc} from 'alinea/core/TextDoc'
+import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {richText} from 'alinea/field/richtext'
