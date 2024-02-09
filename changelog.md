@@ -1,5 +1,44 @@
 # Changelog
 
+## [0.8.0]
+
+- Two changes that impact how to write config files:
+
+  - Bundle configuration function in `Config`, and fields in a `Field` namespace
+    which is exported from the `alinea` package (this is optional).
+  - Deprecate `alinea.meta` style configuration.
+    This change is applied to `Schema` (`types`), `Workspace` (`roots`),
+    `Root` (`entries`), `Type` (`fields`), `Document` (`fields`) and `Select`
+    fields (`options`).
+
+    To upgrade your config files:
+
+    ```tsx
+    // Before
+    import alinea from 'alinea'
+    const Type = alinea.type('Name', {
+      field: alinea.text('Field'),
+      [alinea.meta]: {
+        contains: ['Page']
+      }
+    })
+    // After
+    import {Config, Field} from 'alinea'
+    const Type = Config.type('Name', {
+      contains: ['Page'],
+      fields: {
+        field: Field.text('Field')
+      }
+    })
+    ```
+
+- Add the [mutation API](https://alinea.sh/docs/content/editing-content) (#374)
+
+  This introduces a commit method on CMS instances that can be used to mutate
+  cms content. It can be used to create, update and delete Entries.
+
+- Add the [Query namespace](https://alinea.sh/docs/content/query)
+
 ## [0.7.1]
 
 - Support entries that were seeded in versions prior to 0.6.4 for backward
