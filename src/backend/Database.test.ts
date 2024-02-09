@@ -1,4 +1,6 @@
-import {Edit, EntryPhase, Query} from 'alinea/core'
+import {Edit} from 'alinea/core/Edit'
+import {EntryPhase} from 'alinea/core/EntryRow'
+import {Query} from 'alinea/core/Query'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {readFileSync} from 'fs'
 import {test} from 'uvu'

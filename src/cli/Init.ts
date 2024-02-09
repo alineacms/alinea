@@ -1,4 +1,5 @@
-import {createId, outcome} from 'alinea/core'
+import {createId} from 'alinea/core/Id'
+import {outcome} from 'alinea/core/Outcome'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {dirname} from './util/Dirname.js'

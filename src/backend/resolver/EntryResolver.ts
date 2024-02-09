@@ -1,19 +1,18 @@
-import {
-  Connection,
-  Field,
-  PreviewUpdate,
-  ResolveDefaults,
-  Schema,
-  Type,
-  unreachable
-} from 'alinea/core'
 import {EntryPhase, EntryRow, EntryTable} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
+import {Field} from 'alinea/core/Field'
+import {
+  PreviewUpdate,
+  ResolveDefaults,
+  ResolveParams
+} from 'alinea/core/Resolver'
+import {Schema} from 'alinea/core/Schema'
+import {Type} from 'alinea/core/Type'
 import type * as pages from 'alinea/core/pages'
-import {SourceType} from 'alinea/core/pages/Cursor'
-import {BinaryOp, UnaryOp} from 'alinea/core/pages/ExprData'
 import {Realm} from 'alinea/core/pages/Realm'
+import {BinaryOp, SourceType, UnaryOp} from 'alinea/core/pages/ResolveData'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
+import {unreachable} from 'alinea/core/util/Types'
 import {
   BinOpType,
   Expr,
@@ -624,7 +623,7 @@ export class EntryResolver {
     locale,
     realm = this.defaults?.realm ?? Realm.Published,
     preview = this.defaults?.preview
-  }: Connection.ResolveParams): Promise<T> => {
+  }: ResolveParams): Promise<T> => {
     const ctx = new ResolveContext({realm, location, locale})
     const queryData = this.query(ctx, selection)
     const query = new Query<Interim>(queryData)

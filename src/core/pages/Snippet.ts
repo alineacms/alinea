@@ -1,5 +1,5 @@
 import {Expr} from './Expr.js'
-import {ExprData} from './ExprData.js'
+import {ExprData} from './ResolveData.js'
 
 export function snippet(
   start = '<mark>',

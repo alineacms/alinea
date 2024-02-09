@@ -1,6 +1,6 @@
-import {base64} from 'alinea/core/util/Encoding'
 import {rgba, toHex} from 'color2k'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
+import {base64} from '../util/Encoding.js'
 
 export interface ImagePreviewDetails {
   width: number

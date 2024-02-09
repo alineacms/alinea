@@ -1,15 +1,15 @@
 import {Config} from './Config.js'
-import {Connection} from './Connection.js'
 import {PageSeed} from './Page.js'
+import {ResolveParams} from './Resolver.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {createSelection} from './pages/CreateSelection.js'
 import {Cursor} from './pages/Cursor.js'
-import {Projection} from './pages/Projection.js'
+import type {Projection} from './pages/Projection.js'
 import {Realm} from './pages/Realm.js'
-import {Selection} from './pages/Selection.js'
+import {Selection} from './pages/ResolveData.js'
 import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
 
 export type Location = Root | Workspace | PageSeed
@@ -45,7 +45,7 @@ export class GraphRealm implements GraphRealmApi {
 
   constructor(
     protected config: Config,
-    private resolve: (params: Connection.ResolveParams) => Promise<unknown>,
+    private resolve: (params: ResolveParams) => Promise<unknown>,
     private origin: GraphOrigin = {}
   ) {
     this.targets = Schema.targets(config.schema)
@@ -144,7 +144,7 @@ export class Graph {
 
   constructor(
     public config: Config,
-    public resolve: (params: Connection.ResolveParams) => Promise<unknown>
+    public resolve: (params: ResolveParams) => Promise<unknown>
   ) {
     this.drafts = new GraphRealm(this.config, params => {
       return this.resolve({

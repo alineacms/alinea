@@ -1,5 +1,6 @@
 import {useWindowWidth} from '@react-hook/window-size'
-import {Root, Workspace} from 'alinea/core'
+import {Root} from 'alinea/core/Root'
+import {Workspace} from 'alinea/core/Workspace'
 import {entries} from 'alinea/core/util/Objects'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {HStack, Icon, Stack, fromModule} from 'alinea/ui'

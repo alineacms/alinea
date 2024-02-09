@@ -1,4 +1,4 @@
-import {Field} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'

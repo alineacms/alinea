@@ -1,10 +1,9 @@
-import {JsonLoader} from 'alinea/backend'
-import {Config} from './Config.js'
-import {ALT_STATUS, EntryPhase, EntryRow} from './EntryRow.js'
-import {EntryUrlMeta, Type} from './Type.js'
-import {Workspace} from './Workspace.js'
-import {values} from './util/Objects.js'
-import {join} from './util/Paths.js'
+import {Config} from '../Config.js'
+import {ALT_STATUS, EntryPhase, EntryRow} from '../EntryRow.js'
+import {EntryUrlMeta, Type} from '../Type.js'
+import {Workspace} from '../Workspace.js'
+import {values} from './Objects.js'
+import {join} from './Paths.js'
 
 export function workspaceMediaDir(config: Config, workspace: string): string {
   return Workspace.data(config.workspaces[workspace])?.mediaDir ?? ''
@@ -71,7 +70,7 @@ export function entryFilepath(
   const location = (
     entryChildrenDir(config, entry, parentPaths) +
     phaseSegment +
-    JsonLoader.extension
+    '.json'
   ).toLowerCase()
   return location
 }

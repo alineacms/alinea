@@ -1,4 +1,5 @@
-import {track, type} from 'alinea/core'
+import {track} from 'alinea/core/Tracker'
+import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {select} from 'alinea/field/select'

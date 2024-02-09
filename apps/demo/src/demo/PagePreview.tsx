@@ -1,5 +1,5 @@
 import {Recipe} from '@/demo/Recipe'
-import {Entry} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
 
 interface PagePreviewProps {
   entry: Entry

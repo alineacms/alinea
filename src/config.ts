@@ -1,12 +1,12 @@
 // Config creation
-export {
-  createConfig as create,
-  page,
-  root,
-  schema,
-  track,
-  type,
-  workspace
-} from './core.js'
+export {createConfig as create} from './core/Config.js'
 export {document} from './core/Document.js'
+export {Meta as meta} from './core/Meta.js'
+export {page} from './core/Page.js'
+export {root} from './core/Root.js'
+export {schema} from './core/Schema.js'
+export {track} from './core/Tracker.js'
+export {type} from './core/Type.js'
+export {workspace} from './core/Workspace.js'
 export {createMediaRoot as media} from './core/media/MediaRoot.js'
+export {snippet} from './core/pages/Snippet.js'

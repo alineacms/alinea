@@ -1,18 +1,17 @@
-import {FieldOptions, Hint, Label, WithoutLabel} from 'alinea/core'
+import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import {Hint} from 'alinea/core/Hint'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a text field */
 export interface CheckOptions extends FieldOptions<boolean> {
   /** Description displayed next to the checkbox */
-  description?: Label
+  description?: string
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
   help?: string
   /** Display a minimal version */
   inline?: boolean
-  /** A default value */
-  initialValue?: boolean
   /** Focus this input automatically */
   autoFocus?: boolean
 }

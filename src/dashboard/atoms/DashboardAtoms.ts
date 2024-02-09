@@ -1,4 +1,6 @@
-import {Connection, Session, User, localUser} from 'alinea/core'
+import {Connection} from 'alinea/core/Connection'
+import {Session} from 'alinea/core/Session'
+import {User, localUser} from 'alinea/core/User'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import {useEffect} from 'react'

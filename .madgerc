@@ -1,0 +1,10 @@
+{
+  "excludeRegExp": [
+    "CreateSelection"
+  ],
+  "detectiveOptions": {
+    "ts": {
+      "skipTypeImports": true
+    }
+  }
+}

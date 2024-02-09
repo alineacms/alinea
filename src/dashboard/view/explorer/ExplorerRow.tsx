@@ -1,4 +1,6 @@
-import {EntryRow, Schema, View} from 'alinea/core'
+import {EntryRow} from 'alinea/core/EntryRow'
+import {Schema} from 'alinea/core/Schema'
+import {View} from 'alinea/core/View'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'

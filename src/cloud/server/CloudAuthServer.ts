@@ -1,15 +1,13 @@
 import {fetch, Request, Response} from '@alinea/iso'
 import {Route, router} from 'alinea/backend/router/Router'
-import {
-  Auth,
-  Config,
-  Connection,
-  HttpError,
-  outcome,
-  User,
-  Workspace
-} from 'alinea/core'
+import {Auth} from 'alinea/core/Auth'
+import {Config} from 'alinea/core/Config'
+import {Connection} from 'alinea/core/Connection'
+import {HttpError} from 'alinea/core/HttpError'
+import {outcome} from 'alinea/core/Outcome'
+import {User} from 'alinea/core/User'
 import {verify} from 'alinea/core/util/JWT'
+import {Workspace} from 'alinea/core/Workspace'
 import PLazy from 'p-lazy'
 import pkg from '../../../package.json'
 import {AuthResult, AuthResultType} from '../AuthResult.js'

@@ -1,5 +1,5 @@
 import {Drafts} from 'alinea/backend/Drafts'
-import {Draft} from 'alinea/core'
+import {Draft} from 'alinea/core/Draft'
 
 export class MemoryDrafts implements Drafts {
   drafts = new Map<string, Draft>()

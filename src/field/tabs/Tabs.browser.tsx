@@ -1,4 +1,5 @@
-import {Section, Type} from 'alinea/core'
+import {Section} from 'alinea/core/Section'
+import {Type} from 'alinea/core/Type'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, TextLabel} from 'alinea/ui'

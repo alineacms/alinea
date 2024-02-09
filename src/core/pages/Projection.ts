@@ -1,8 +1,8 @@
-import {Type} from 'alinea/core/Type'
+import {Type} from '../Type.js'
+import type {Tree} from './Cursor.js'
 import {Cursor} from './Cursor.js'
 import {Expr} from './Expr.js'
 import {Target} from './Target.js'
-import {Tree} from './Tree.js'
 
 interface ProjectionRecord {
   [key: string]: ((tree: Tree) => PageProjection) | Projection

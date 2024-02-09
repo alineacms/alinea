@@ -5,7 +5,8 @@ import {
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import {EntryPhase, Type} from 'alinea/core'
+import {EntryPhase} from 'alinea/core/EntryRow'
+import {Type} from 'alinea/core/Type'
 import {Icon, fromModule, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'

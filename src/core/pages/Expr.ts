@@ -1,13 +1,21 @@
-import {Condition} from './Condition.js'
-import {createExprData} from './CreateExprData.js'
+import {entries, fromEntries} from '../util/Objects.js'
 import {createSelection} from './CreateSelection.js'
-import {Cursor, OrderBy, OrderDirection} from './Cursor.js'
-import {BinaryOp, ExprData, UnaryOp} from './ExprData.js'
-import {Projection} from './Projection.js'
-import type {Selection} from './Selection.js'
+import type {Cursor} from './Cursor.js'
+import type {Projection} from './Projection.js'
+import {
+  BinaryOp,
+  ExprData,
+  OrderBy,
+  OrderDirection,
+  Selection,
+  UnaryOp,
+  toExpr,
+  toSelection
+} from './ResolveData.js'
 
 /** Expression or value of type T */
 export type EV<T> = Expr<T> | T
+export type Condition = Expr<boolean> | HasExpr<boolean>
 
 export interface Expr<T> extends ExprI<T> {}
 
@@ -16,7 +24,7 @@ export function Expr<T>(expr: ExprData): Expr<T> {
 }
 
 export interface HasExpr<T> {
-  [Expr.ToExpr](): Expr<T>
+  [toExpr](): Expr<T>
 }
 
 export interface ExprI<T> {
@@ -278,6 +286,10 @@ export class ExprI<T> {
   toJSON() {
     return this[Expr.Data]
   }
+
+  [toSelection]() {
+    return Selection.Expr(this[Expr.Data])
+  }
 }
 
 export class CaseBuilder<T, Res> {
@@ -312,7 +324,6 @@ export class CaseBuilder<T, Res> {
 export namespace Expr {
   export const Data = Symbol.for('@alinea/Expr.Data')
   export const ExprRef = Symbol.for('@alinea/Expr.ExprRef')
-  export const ToExpr = Symbol.for('@alinea/Expr.ToExpr')
   export const NULL = create(null)
 
   /*export function value<T>(value: T): Expr<T> {
@@ -320,7 +331,7 @@ export namespace Expr {
   }*/
 
   export function create<T>(input: EV<T>): Expr<T> {
-    if (hasExpr<T>(input)) return input[Expr.ToExpr]()
+    if (hasExpr<T>(input)) return input[toExpr]()
     if (isExpr<T>(input)) return input
     return Expr(ExprData.Value(input))
   }
@@ -329,7 +340,7 @@ export namespace Expr {
     return (
       input &&
       (typeof input === 'function' || typeof input === 'object') &&
-      input[Expr.ToExpr]
+      input[toExpr]
     )
   }
 
@@ -360,4 +371,17 @@ export namespace Expr {
         Expr(ExprData.Value(false))
       )
   }
+}
+
+export function createExprData(input: any): ExprData {
+  if (input === null || input === undefined) return ExprData.Value(null)
+  if (Expr.hasExpr(input)) input = input[toExpr]()
+  if (Expr.isExpr(input)) return input[Expr.Data]
+  if (input && typeof input === 'object' && !Array.isArray(input))
+    return ExprData.Record(
+      fromEntries(
+        entries(input).map(([key, value]) => [key, createExprData(value)])
+      )
+    )
+  return ExprData.Value(input)
 }

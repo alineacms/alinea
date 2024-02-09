@@ -1,4 +1,6 @@
-import {Entry, Type, view} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
+import {Type} from 'alinea/core/Type'
+import {view} from 'alinea/core/View'
 import {Projection} from 'alinea/core/pages/Projection'
 import {Chip, HStack, TextLabel, Typo, VStack, fromModule, px} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'

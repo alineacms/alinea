@@ -1,4 +1,4 @@
-import {type} from 'alinea/core'
+import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {object} from 'alinea/field/object'

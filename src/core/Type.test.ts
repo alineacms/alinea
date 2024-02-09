@@ -1,4 +1,4 @@
-import {Type, type} from 'alinea/core'
+import {Type, type} from 'alinea/core/Type'
 import {list, richText, text} from 'alinea/field'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'

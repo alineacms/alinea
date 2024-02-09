@@ -1,4 +1,6 @@
-import {Reference, track, type} from 'alinea/core'
+import {Reference} from 'alinea/core/Reference'
+import {track} from 'alinea/core/Tracker'
+import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'

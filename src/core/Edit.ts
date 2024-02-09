@@ -1,13 +1,10 @@
 import {File} from '@alinea/iso'
-import {
-  FieldOptions,
-  ListEditor,
-  ListField,
-  ListRow,
-  RichTextEditor,
-  RichTextField,
-  TextDoc
-} from 'alinea/core'
+
+import {ListEditor, ListField} from 'alinea/core/field/ListField'
+import {RichTextEditor, RichTextField} from 'alinea/core/field/RichTextField'
+import {ListRow} from 'alinea/field/list'
+import {FieldOptions} from './Field.js'
+import {TextDoc} from './TextDoc.js'
 import {
   CreateOperation,
   DeleteOp,

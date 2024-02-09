@@ -1,4 +1,4 @@
-import {Field} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useFieldError, useFieldOptions} from 'alinea/dashboard/editor/UseField'

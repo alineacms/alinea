@@ -1,6 +1,13 @@
-import {Connection} from './Connection.js'
 import {EntryPhase} from './EntryRow.js'
 import {Realm} from './pages/Realm.js'
+import {Selection} from './pages/ResolveData.js'
+
+export interface ResolveParams extends ResolveDefaults {
+  selection: Selection
+  location?: Array<string>
+  locale?: string
+  syncInterval?: number
+}
 
 export interface PreviewUpdate {
   entryId: string
@@ -15,5 +22,5 @@ export interface ResolveDefaults {
 }
 
 export interface Resolver {
-  resolve(params: Connection.ResolveParams): Promise<unknown>
+  resolve(params: ResolveParams): Promise<unknown>
 }

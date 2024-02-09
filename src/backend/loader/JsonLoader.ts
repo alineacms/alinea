@@ -1,6 +1,6 @@
-import {Schema} from 'alinea/core'
 import {EntryRecord, META_KEY} from 'alinea/core/EntryRecord'
-import {Loader} from '../Loader.js'
+import type {Schema} from 'alinea/core/Schema'
+import type {Loader} from '../Loader.js'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()

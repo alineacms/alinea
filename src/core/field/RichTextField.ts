@@ -1,8 +1,8 @@
-import {RichTextMutator, RichTextShape} from 'alinea/core'
 import {Parser} from 'htmlparser2'
 import {Field, FieldMeta, FieldOptions} from '../Field.js'
 import {TextDoc, TextNode} from '../TextDoc.js'
 import {RecordShape} from '../shape/RecordShape.js'
+import {RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
 
 export class RichTextField<
   Blocks,

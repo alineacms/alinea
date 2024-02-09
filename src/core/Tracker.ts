@@ -1,5 +1,5 @@
-import {Mutation} from 'alinea/core/Mutation'
 import {Field, FieldOptions} from './Field.js'
+import {Mutation} from './Mutation.js'
 
 export interface FieldGetter {
   <Value>(field: Field<Value>): Value

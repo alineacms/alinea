@@ -1,4 +1,4 @@
-import {TypesOf} from 'alinea/core'
+import {TypesOf} from './util/Types.js'
 
 export namespace TextNode {
   export type Mark = {

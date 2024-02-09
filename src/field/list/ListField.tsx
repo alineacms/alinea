@@ -1,5 +1,6 @@
-import {FieldOptions, Schema, WithoutLabel} from 'alinea/core'
+import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {Infer} from 'alinea/core/Infer'
+import {Schema} from 'alinea/core/Schema'
 import {ListField} from 'alinea/core/field/ListField'
 import {listHint} from 'alinea/core/util/Hints'
 

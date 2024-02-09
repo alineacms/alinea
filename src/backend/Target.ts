@@ -1,4 +1,4 @@
-import {Connection} from 'alinea/core'
+import type {Connection} from 'alinea/core/Connection'
 
 export interface Target {
   mutate(

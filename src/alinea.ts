@@ -1,20 +1,23 @@
 // Config creation
-export {
-  createConfig as config,
-  Meta as meta,
-  page,
-  root,
-  schema,
-  snippet,
-  track,
-  type,
-  workspace
-} from 'alinea/core'
+export {createConfig as config} from 'alinea/core/Config'
+export {Meta as meta} from 'alinea/core/Meta'
+export {page} from 'alinea/core/Page'
+export {root} from 'alinea/core/Root'
+export {schema} from 'alinea/core/Schema'
+export {track} from 'alinea/core/Tracker'
+export {type} from 'alinea/core/Type'
+export {workspace} from 'alinea/core/Workspace'
+export {snippet} from 'alinea/core/pages/Snippet'
 
 // Types
 
-export {Root, Workspace} from 'alinea/core'
-export type {Config, Infer, Schema, TextDoc, Type} from 'alinea/core'
+export type {Config} from 'alinea/core/Config'
+export type {Infer} from 'alinea/core/Infer'
+export {Root} from 'alinea/core/Root'
+export type {Schema} from 'alinea/core/Schema'
+export type {TextDoc} from 'alinea/core/TextDoc'
+export type {Type} from 'alinea/core/Type'
+export {Workspace} from 'alinea/core/Workspace'
 export type {
   EntryReference,
   FileReference,
@@ -23,8 +26,8 @@ export type {
 export type {UrlReference} from 'alinea/picker/url'
 
 // Helpers
-export type {Infer as infer} from 'alinea/core'
 export {document} from 'alinea/core/Document'
+export type {Infer as infer} from 'alinea/core/Infer'
 export {createMediaRoot as media} from 'alinea/core/media/MediaRoot'
 
 // Included inputs

@@ -1,20 +1,16 @@
 import {Media} from 'alinea/backend/Media'
-import {
-  Connection,
-  Entry,
-  EntryPhase,
-  EntryRow,
-  HttpError,
-  Workspace,
-  slugify
-} from 'alinea/core'
-import {entryFileName, entryFilepath} from 'alinea/core/EntryFilenames'
+import {Connection} from 'alinea/core/Connection'
+import {Entry} from 'alinea/core/Entry'
+import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {HttpError} from 'alinea/core/HttpError'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {Workspace} from 'alinea/core/Workspace'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {isImage} from 'alinea/core/media/IsImage'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
+import type {MediaFile} from 'alinea/core/media/MediaTypes'
 import {createFileHash} from 'alinea/core/util/ContentHash'
+import {entryFileName, entryFilepath} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {
@@ -24,6 +20,7 @@ import {
   join,
   normalize
 } from 'alinea/core/util/Paths'
+import {slugify} from 'alinea/core/util/Slugs'
 import {atom, useAtom, useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
 import {useEffect} from 'react'

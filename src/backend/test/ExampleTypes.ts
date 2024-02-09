@@ -1,4 +1,4 @@
-import {type} from 'alinea/core'
+import {type} from 'alinea/core/Type'
 import {path, tab, tabs, text} from 'alinea/field'
 
 export const TypeWithTabs = type('Type', {

@@ -1,4 +1,4 @@
-import {Type} from 'alinea/core'
+import {Type} from 'alinea/core/Type'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
 import {useEntrySummary} from 'alinea/dashboard/hook/UseEntrySummary'
 import {EntrySummaryRow} from 'alinea/dashboard/view/entry/EntrySummary'

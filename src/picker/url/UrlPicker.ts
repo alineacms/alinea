@@ -1,5 +1,5 @@
-import {Picker} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
+import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Type, type} from 'alinea/core/Type'
 import {RecordShape} from 'alinea/core/shape/RecordShape'

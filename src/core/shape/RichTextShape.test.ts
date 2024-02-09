@@ -1,5 +1,5 @@
-import {RichTextShape} from 'alinea/core'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
+import {RichTextShape} from 'alinea/core/shape/RichTextShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import * as Y from 'alinea/yjs'
 import {test} from 'uvu'

@@ -1,6 +1,6 @@
-import {Connection} from 'alinea/core'
 import {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
+import {Connection} from 'alinea/core/Connection'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {Head} from 'alinea/dashboard/util/Head'

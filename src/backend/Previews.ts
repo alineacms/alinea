@@ -1,4 +1,4 @@
-import {User} from 'alinea/core'
+import type {User} from 'alinea/core/User'
 
 export interface Previews {
   sign(data: User): Promise<string>

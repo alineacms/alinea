@@ -1,5 +1,6 @@
-import {Config, EntryPhase, EntryUrlMeta, Type, Workspace} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
 import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import {EntryPhase} from 'alinea/core/EntryRow'
 import {
   ArchiveMutation,
   CreateMutation,
@@ -15,6 +16,8 @@ import {
   RemoveEntryMutation,
   UploadMutation
 } from 'alinea/core/Mutation'
+import {EntryUrlMeta, Type} from 'alinea/core/Type'
+import {Workspace} from 'alinea/core/Workspace'
 import {join} from 'alinea/core/util/Paths'
 import {JsonLoader} from '../loader/JsonLoader.js'
 

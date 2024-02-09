@@ -61,8 +61,6 @@ export abstract class CMS extends GraphRealm {
 }
 
 export namespace CMS {
-  export const Link = Symbol.for('@alinea/CMS.Link')
-
   export function instanceFor(attachment: Attachment): CMS {
     const cms = attached.get(attachment)
     if (!cms) throw new Error(`No CMS attached to ${attachment}`)

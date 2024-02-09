@@ -1,4 +1,5 @@
-import {ROOT_KEY, Type} from 'alinea/core'
+import {ROOT_KEY} from 'alinea/core/Doc'
+import {Type} from 'alinea/core/Type'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'

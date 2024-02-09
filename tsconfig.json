@@ -19,7 +19,9 @@
     "paths": {
       "alinea/*": ["./src/*.browser", "./src/*.js", "./src/*"]
     },
-    "rootDir": "src"
+    "baseUrl": ".",
+    "rootDir": "src",
+    "moduleDetection": "force"
   },
   "include": ["src"]
 }

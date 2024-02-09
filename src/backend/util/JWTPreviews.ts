@@ -1,4 +1,4 @@
-import {User} from 'alinea/core'
+import {User} from 'alinea/core/User'
 import {sign, verify} from 'alinea/core/util/JWT'
 import {Previews} from '../Previews.js'
 

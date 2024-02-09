@@ -1,5 +1,7 @@
-import {Auth, Connection, Session} from 'alinea/core'
+import {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
+import {Connection} from 'alinea/core/Connection'
+import {Session} from 'alinea/core/Session'
 import {decode} from 'alinea/core/util/JWT'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'

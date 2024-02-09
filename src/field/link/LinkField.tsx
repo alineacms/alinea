@@ -1,7 +1,10 @@
-import type {ListRow, Picker, WithoutLabel} from 'alinea/core'
-import {FieldOptions, Hint, Reference} from 'alinea/core'
+import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import {Hint} from 'alinea/core/Hint'
+import type {Picker} from 'alinea/core/Picker'
+import {Reference} from 'alinea/core/Reference'
 import {ListField} from 'alinea/core/field/ListField'
 import {UnionField} from 'alinea/core/field/UnionField'
+import type {ListRow} from 'alinea/core/shape/ListShape'
 import {UnionRow} from 'alinea/core/shape/UnionShape'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 
