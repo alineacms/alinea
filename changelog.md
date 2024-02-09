@@ -8,8 +8,8 @@
     which is exported from the `alinea` package (this is optional).
   - Deprecate `alinea.meta` style configuration.
     This change is applied to `Schema` (`types`), `Workspace` (`roots`),
-    `Root` (`entries`), `Type` (`fields`), `Document` (`fields`) and `Select`
-    fields (`options`).
+    `Root` (`entries`), `Type` (`fields`), `Document` (`fields`), `Select`
+    fields (`options`), `Tab` fields (`fields`).
 
     To upgrade your config files:
 
