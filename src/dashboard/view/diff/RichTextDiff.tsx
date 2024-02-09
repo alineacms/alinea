@@ -2,10 +2,10 @@ import type {TextDoc} from 'alinea/core/TextDoc'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {RichTextShape} from 'alinea/core/shape/RichTextShape'
 import {Sink} from 'alinea/ui/Sink'
-import {ReactNode, useMemo} from 'react'
+import {ComponentType, ReactNode, useMemo} from 'react'
 import {ChangeBox} from './ChangeBox.js'
 import {diffList, diffRecord} from './DiffUtils.js'
-import {FieldsDiff} from './FieldsDiff.js'
+import {FieldsDiffProps} from './FieldsDiff.js'
 import {ScalarDiff} from './ScalarDiff.js'
 
 type Block = {
@@ -60,12 +60,18 @@ function textDocParts(textDoc: TextDoc<any>): Array<Part> {
 }
 
 export type RichTextDiffProps = {
+  FieldsDiff: ComponentType<FieldsDiffProps>
   shape: RichTextShape<any>
   valueA: TextDoc<any>
   valueB: TextDoc<any>
 }
 
-export function RichTextDiff({shape, valueA, valueB}: RichTextDiffProps) {
+export function RichTextDiff({
+  FieldsDiff,
+  shape,
+  valueA,
+  valueB
+}: RichTextDiffProps) {
   const parts = useMemo(() => {
     return {a: textDocParts(valueA), b: textDocParts(valueB)}
   }, [valueA, valueB])

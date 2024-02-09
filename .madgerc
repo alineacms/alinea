@@ -1,7 +1,10 @@
 {
-	"detectiveOptions": {
-		"ts": {
-			"skipTypeImports": true
-		}
-	}
+  "excludeRegExp": [
+    "CreateSelection"
+  ],
+  "detectiveOptions": {
+    "ts": {
+      "skipTypeImports": true
+    }
+  }
 }

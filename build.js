@@ -121,6 +121,7 @@ const bundleTs = {
   }
 }
 
+const checkCycles = process.env.CHECK_CYCLES
 /** @type {import('esbuild').Plugin} */
 const internalPlugin = {
   name: 'internal',
@@ -128,26 +129,22 @@ const internalPlugin = {
     const cwd = process.cwd()
     const src = path.join(cwd, 'src')
     build.onResolve({filter: /^alinea\/.*/}, args => {
-      const checkCycles = process.env.CHECK_CYCLES
       if (checkCycles) {
         // Make this a relative path
         const file = args.path.slice('alinea/'.length)
-        if (args.kind === 'entry-point') return
         const localFile = path.join(src, file)
         const target =
           checkCycles === 'browser' ? BROWSER_TARGET : SERVER_TARGET
         const targetFile = `${localFile}.${target}`
-        const hasTargetFile = fs.existsSync(`${targetFile}.tsx`)
+        const hasTargetFile =
+          fs.existsSync(`${targetFile}.tsx`) ||
+          fs.existsSync(`${targetFile}.ts`)
         const relative = hasTargetFile
           ? `./${path.relative(args.resolveDir, targetFile)}.js`
           : `./${path.relative(args.resolveDir, localFile)}.js`
         return {path: relative, external: true}
       }
       return {path: args.path, external: true}
-      /*return build.resolve('./' + path.join('src', file), {
-        kind: args.kind,
-        resolveDir: cwd
-      })*/
     })
   }
 }

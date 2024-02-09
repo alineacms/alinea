@@ -1,6 +1,6 @@
 import {entries, fromEntries} from '../util/Objects.js'
 import {createSelection} from './CreateSelection.js'
-import {Cursor} from './Cursor.js'
+import type {Cursor} from './Cursor.js'
 import type {Projection} from './Projection.js'
 import {
   BinaryOp,

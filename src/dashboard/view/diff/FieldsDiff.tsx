@@ -19,6 +19,7 @@ export function FieldsDiff({changes, targetA, targetB}: FieldsDiffProps) {
             <div key={key}>
               <InputLabel label={type.label}>
                 <FieldDiff
+                  FieldsDiff={FieldsDiff}
                   shape={type}
                   valueA={targetA?.[key]}
                   valueB={targetB?.[key]}
