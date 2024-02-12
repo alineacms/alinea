@@ -254,26 +254,6 @@ export class EditOperation<Definition> extends Operation {
     return this
   }
 
-  /*moveTo(workspace: string, root: string, parentId?: string) {
-    throw new Error(`Not implemented`)
-    return this
-  }
-
-  createAfter<Definition>(type: Type<Definition>) {
-    throw new Error(`Not implemented`)
-    return new CreateOp(type)
-  }
-
-  createBefore<Definition>(type: Type<Definition>) {
-    throw new Error(`Not implemented`)
-    return new CreateOp(type)
-  }
-
-  createChild<Definition>(type: Type<Definition>) {
-    throw new Error(`Not implemented`)
-    return new CreateOp(type)
-  }*/
-
   draft() {
     this.changePhase = EntryPhase.Draft
     return this
@@ -291,81 +271,69 @@ export class EditOperation<Definition> extends Operation {
 }
 
 export class CreateOperation<Definition> extends Operation {
-  entryId = createId()
-  private workspace?: string
-  private root?: string
-  private locale?: string | null
-  private entryData: Partial<Type.Infer<Definition>> = {}
-  private entryRow = async (cms: CMS) => {
-    return createEntry(
-      cms.config,
-      this.typeName(cms.config, this.type),
-      {entryId: this.entryId, data: this.entryData ?? {}},
-      await this.parentRow?.(cms)
-    )
-  }
+  entry: Partial<Entry>
 
-  constructor(
-    protected type: Type<Definition>,
-    protected parentRow?: (cms: CMS) => Promise<EntryRow>
-  ) {
+  constructor(entry: Partial<Entry>, private type?: Type<Definition>) {
     super(async (cms): Promise<Array<Mutation>> => {
-      const parent = await this.parentRow?.(cms)
+      const partial = this.entry
+      const type = this.type
+        ? this.typeName(cms.config, this.type)
+        : partial.type
+      if (!type) throw new TypeError(`Type is missing`)
+      const parent = partial.parent
+        ? await cms.graph.preferPublished.get(Entry({entryId: partial.parent}))
+        : undefined
       const {config} = cms
-      const entry = await createEntry(
-        config,
-        this.typeName(config, type),
-        {
-          entryId: this.entryId,
-          workspace: this.workspace,
-          root: this.root,
-          locale: this.locale,
-          data: this.entryData ?? {}
-        },
-        parent
-      )
+      const entry = await createEntry(config, type, partial, parent)
       const parentPaths = entryParentPaths(config, entry)
       const file = entryFileName(config, entry, parentPaths)
       return [
         {
           type: MutationType.Create,
-          entryId: this.entryId,
+          entryId: entry.entryId,
           file,
           entry: entry
         }
       ]
     })
+    this.entry = {entryId: createId(), ...entry}
   }
 
   setParent(parentId: string) {
-    this.parentRow = async (cms: CMS) => {
-      return cms.graph.preferPublished.get(Entry({entryId: parentId}))
-    }
+    this.entry.parent = parentId
     return this
   }
 
   setWorkspace(workspace: string) {
-    this.workspace = workspace
+    this.entry.workspace = workspace
     return this
   }
 
   setRoot(root: string) {
-    this.root = root
+    this.entry.root = root
     return this
   }
 
   setLocale(locale: string | null) {
-    this.locale = locale
+    this.entry.locale = locale
     return this
   }
 
   set(entryData: Partial<Type.Infer<Definition>>) {
-    this.entryData = {...this.entryData, ...entryData}
+    this.entry.data = {...this.entry.data, ...entryData}
     return this
   }
 
   createChild<Definition>(type: Type<Definition>) {
-    return new CreateOperation(type, this.entryRow)
+    return new CreateOperation({}, type).setParent(this.entry.entryId!)
+  }
+
+  get entryId() {
+    return this.entry.entryId!
+  }
+
+  static fromType<Definition>(type: Type<Definition>) {
+    return new CreateOperation({}, type)
   }
 }
 
@@ -406,11 +374,11 @@ async function createEntry(
     level: parent ? parent.level + 1 : 0,
     parent: parent?.entryId ?? null,
     locale,
-    index: 'a0',
+    index: partial.index ?? 'a0',
     i18nId,
     modifiedAt: 0,
-    active: true,
-    main: true,
+    active: partial.active ?? true,
+    main: partial.main ?? true,
     data: entryData,
     searchableText: Type.searchableText(type, entryData)
   }

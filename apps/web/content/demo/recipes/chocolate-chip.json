@@ -1,0 +1,265 @@
+{
+  "title": "Chocolate chip",
+  "header": {
+    "image": {
+      "id": "2YtRRrpnZmsla15P7Sna9ApcPrU",
+      "type": "image",
+      "entry": "sw3j0F5a-lzQ9ubqYuS53"
+    },
+    "credit": [
+      {
+        "type": "paragraph",
+        "textAlign": "left",
+        "content": [
+          {
+            "type": "text",
+            "text": "Photo by "
+          },
+          {
+            "type": "text",
+            "text": "Jennifer Pallian",
+            "marks": [
+              {
+                "type": "link",
+                "attrs": {
+                  "data-id": null,
+                  "data-entry": null,
+                  "data-type": null,
+                  "href": "https://unsplash.com/@foodess?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
+                  "title": null
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "intro": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "There's nothing quite like a classic chocolate chip cookie. These cookies are soft and chewy, with the perfect balance of sweet and rich. And of course, they're loaded with chocolate chips."
+        }
+      ]
+    }
+  ],
+  "ingredients": [
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 cup (2 sticks) unsalted butter, at room temperature"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 cup granulated sugar"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 large eggs"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 teaspoon pure vanilla extract"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 cups all-purpose flour"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 teaspoon baking powder"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/2 teaspoon baking soda"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/2 teaspoon salt"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 cups semisweet chocolate chips"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "type": "orderedList",
+      "start": 1,
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Preheat oven to 350°F. Line a baking sheet with parchment paper. "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In a bowl, cream butter and sugar together until light and fluffy. Beat in eggs, one at a time, then stir in vanilla. In another bowl, whisk together flour, baking powder, baking soda, and salt. Gradually add to butter mixture, mixing until just blended. Stir in chocolate chips. "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Drop dough by rounded tablespoons onto prepared baking sheet. Bake until cookies are golden brown, about 15 minutes. "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Let cookies cool on baking sheet for 5 minutes; transfer cookies to a wire rack to cool completely."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "@alinea": {
+    "entryId": "oi4qtV9YaXNRIUDT2s61Y",
+    "type": "DemoRecipe",
+    "index": "Zz"
+  }
+}

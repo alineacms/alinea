@@ -479,9 +479,11 @@ export class Database implements Syncable {
 
     const pathData = entryPath === 'index' ? '' : entryPath
     const seedData = seed ? PageSeed.data(seed.page).partial : {}
+    const title = record.title ?? seedData?.title ?? ''
     const entryData = {
       ...seedData,
       ...data,
+      title,
       path: pathData
     }
     const searchableText = Type.searchableText(type, entryData)
@@ -508,7 +510,7 @@ export class Database implements Syncable {
       i18nId: alineaMeta.i18nId ?? alineaMeta.entryId,
 
       path: entryPath,
-      title: record.title ?? seedData?.title ?? '',
+      title,
       url: entryUrl(type, urlMeta),
 
       data: entryData,

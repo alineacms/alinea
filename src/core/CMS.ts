@@ -25,7 +25,7 @@ export abstract class CMS extends GraphRealm {
       const {resolve} = await this.resolver()
       return resolve(params)
     })
-    this.#attach(config)
+    //this.#attach(config)
   }
 
   abstract resolver(): Promise<Resolver>
