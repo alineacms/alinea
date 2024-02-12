@@ -1,6 +1,9 @@
 import {Config, Field} from 'alinea'
 
 export const DemoRecipe = Config.type('Recipe', {
+  entryUrl(meta) {
+    return `/demo/preview/${meta.path}`
+  },
   fields: {
     title: Field.text('Title', {width: 0.5, multiline: true}),
     path: Field.path('Path', {width: 0.5}),

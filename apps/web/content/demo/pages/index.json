@@ -54,7 +54,7 @@
     "entryId": "vTCpgsHfAjZtHabyjb8RG",
     "type": "DemoHome",
     "index": "He8hfze6W35ZPztcqouk",
-    "seeded": true,
+    "seeded": "/index.json",
     "root": "pages"
   }
 }

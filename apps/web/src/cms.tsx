@@ -43,9 +43,6 @@ const demo = Config.workspace('Demo', {
       entries: {
         index: Config.page(schema.DemoHome({title: 'Home'})),
         recipes: Config.page(schema.DemoRecipes({title: 'Recipes'}))
-      },
-      preview() {
-        return <div>test root preview</div>
       }
     }),
     media: Config.media()

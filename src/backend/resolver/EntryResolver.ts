@@ -471,7 +471,9 @@ export class EntryResolver {
       name ? ctx.Table.type.is(name) : Expr.value(true),
       this.conditionLocation(ctx.Table, ctx.location),
       this.conditionRealm(ctx.Table, ctx.realm),
-      this.conditionLocale(ctx.Table, ctx.locale),
+      source?.type === SourceType.Translations
+        ? Expr.value(true)
+        : this.conditionLocale(ctx.Table, ctx.locale),
       this.conditionSearch(ctx.Table, searchTerms)
     )
     if (skip) query = query.skip(skip)
