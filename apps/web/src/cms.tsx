@@ -22,29 +22,39 @@ function MdiPlayBox() {
   )
 }
 
-const demo = Config.root('Demo', {
-  icon: MdiPlayBox,
-  contains: ['DemoHome', 'DemoRecipes'],
-  entries: {
-    index: Config.page(schema.DemoHome({title: 'Home'})),
-    recipes: Config.page(schema.DemoRecipes({title: 'Recipes'}))
-  }
-})
-
 const main = Config.workspace('Alinea', {
   color: '#3F61E8',
   mediaDir: 'public',
   source: 'content',
   roots: {
     pages,
-    demo,
+    media: Config.media()
+  }
+})
+
+const demo = Config.workspace('Demo', {
+  color: '#FFA500',
+  mediaDir: 'public',
+  source: 'content/demo',
+  icon: MdiPlayBox,
+  roots: {
+    pages: Config.root('Demo', {
+      contains: ['DemoHome', 'DemoRecipes'],
+      entries: {
+        index: Config.page(schema.DemoHome({title: 'Home'})),
+        recipes: Config.page(schema.DemoRecipes({title: 'Recipes'}))
+      },
+      preview() {
+        return <div>test root preview</div>
+      }
+    }),
     media: Config.media()
   }
 })
 
 const config = Config.create({
   schema,
-  workspaces: {main},
+  workspaces: {main, demo},
   dashboard: {
     dashboardUrl: '/admin.html',
     handlerUrl: '/api/cms',

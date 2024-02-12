@@ -14,19 +14,19 @@ import {use, useMemo} from 'react'
 const config = {
   schema,
   workspaces: {
-    main: Config.workspace('Milk & Cookies', {
+    demo: Config.workspace('Milk & Cookies', {
       color: '#3F61E8',
       mediaDir: 'public',
       source: 'content',
       roots: {
-        demo: Config.root('Pages'),
+        pages: Config.root('Pages'),
         media: Config.media()
       }
     })
-  } /*,
+  },
   preview({entry}) {
     return <div>{entry.title}</div>
-  }*/
+  }
 }
 
 async function setup(entries: Array<Entry>) {

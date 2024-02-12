@@ -1,3 +1,4 @@
+import {Preview} from 'alinea/core/Preview'
 import type {ComponentType} from 'react'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
@@ -14,6 +15,7 @@ export interface RootMeta {
   /** A React component used to view this root in the dashboard */
   view?: ComponentType<{root: RootData}>
   isMediaRoot?: boolean
+  preview?: Preview
 }
 
 export interface RootDefinition {
@@ -40,6 +42,10 @@ export namespace Root {
 
   export function data(root: Root): RootData {
     return root[Root.Data]
+  }
+
+  export function preview(root: Root): Preview | undefined {
+    return root[Root.Data].preview
   }
 
   export function defaultLocale(root: Root): string | undefined {

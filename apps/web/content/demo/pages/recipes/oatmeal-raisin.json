@@ -1,12 +1,40 @@
 {
-  "id": "oU_7ZAszAXwar__BCXVIt",
-  "type": "DemoRecipe",
   "title": "Oatmeal raisin",
   "header": {
-    "image": [],
-    "credit": []
+    "image": {
+      "id": "2cGy9n4EVCZSTNtanFINfdnLJgJ",
+      "type": "image",
+      "entry": "2cGy9jg1l2st2v7qqI6NFyyBsGY"
+    },
+    "credit": [
+      {
+        "type": "paragraph",
+        "textAlign": "left",
+        "content": [
+          {
+            "type": "text",
+            "text": "Photo by "
+          },
+          {
+            "type": "text",
+            "text": "Tyler Nix",
+            "marks": [
+              {
+                "type": "link",
+                "attrs": {
+                  "data-id": null,
+                  "data-entry": null,
+                  "data-type": null,
+                  "href": "https://unsplash.com/@nixcreative?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash",
+                  "title": null
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
-  "imageCredit": [],
   "intro": [
     {
       "type": "paragraph",
@@ -274,7 +302,9 @@
       ]
     }
   ],
-  "alinea": {
+  "@alinea": {
+    "entryId": "oU_7ZAszAXwar__BCXVIt",
+    "type": "DemoRecipe",
     "index": "Zx"
   }
 }

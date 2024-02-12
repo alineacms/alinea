@@ -6,7 +6,7 @@ import {Suspense} from 'react'
 const DemoPage = dynamic(() => import('./DemoPage.client'), {ssr: false})
 
 export default async function Demo() {
-  const query = Query.whereRoot('demo').orderBy(Query.level.asc())
+  const query = Query.whereWorkspace('demo').orderBy(Query.level.asc())
   const entries = await cms.find(query)
   return (
     <Suspense>

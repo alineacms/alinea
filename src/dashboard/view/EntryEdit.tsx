@@ -53,7 +53,7 @@ export interface EntryEditProps {
 export function EntryEdit({editor}: EntryEditProps) {
   const {alineaDev} = useDashboard()
   const locale = useLocale()
-  const {preview, enableDrafts} = useConfig()
+  const config = useConfig()
   const {isPreviewOpen} = useSidebar()
   const nav = useNav()
   const mode = useAtomValue(editor.editMode)
@@ -78,6 +78,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   const showHistory = useAtomValue(editor.showHistory)
   const saveTranslation = useSetAtom(editor.saveTranslation)
   const previewRevision = useAtomValue(editor.previewRevision)
+  const preview = editor.preview
   const translate = () => saveTranslation(locale!)
   useEffect(() => {
     function listener(e: KeyboardEvent) {
@@ -89,7 +90,7 @@ export function EntryEdit({editor}: EntryEditProps) {
         }
         if (untranslated && hasChanges) {
           translate()
-        } else if (enableDrafts) {
+        } else if (config.enableDrafts) {
           if (hasChanges) saveDraft()
           else if (selectedPhase === EntryPhase.Draft) publishDraft()
         } else {
@@ -101,7 +102,7 @@ export function EntryEdit({editor}: EntryEditProps) {
     return () => {
       document.removeEventListener('keydown', listener)
     }
-  }, [editor, hasChanges, saveDraft, enableDrafts])
+  }, [editor, hasChanges, saveDraft, config.enableDrafts])
   const sections = Type.sections(editor.type)
   const hasRootTabs =
     sections.length === 1 && sections[0][Section.Data] instanceof TabsSection
@@ -166,7 +167,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                   >
                     Discard my changes
                   </Button>
-                  {enableDrafts ? (
+                  {config.enableDrafts ? (
                     <Button
                       onClick={() => {
                         saveDraft()
