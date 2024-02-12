@@ -1,6 +1,5 @@
-import {cms} from '@/cms'
 import {DemoHome, DemoRecipe} from '@/schema'
-import {Query} from 'alinea'
+import {Infer, Query} from 'alinea'
 import {VStack, fromModule} from 'alinea/ui'
 import css from './DemoHomePage.module.scss'
 import './demo.css'
@@ -13,17 +12,10 @@ import {RecipeCard} from './layout/RecipeCard'
 
 const styles = fromModule(css)
 
-export default async function DemoHomePage() {
-  const {hero, recipes} = await cms.get(
-    Query(DemoHome).select({
-      hero: DemoHome.hero,
-      recipes: Query(DemoRecipe).select({
-        id: Query.id,
-        url: Query.url,
-        ...DemoRecipe
-      })
-    })
-  )
+export function DemoHomePage({
+  hero,
+  recipes
+}: Infer<typeof DemoHomePage.fragment>) {
   return (
     <DemoLayout>
       <DemoHeader {...hero.header} />
@@ -46,3 +38,14 @@ export default async function DemoHomePage() {
     </DemoLayout>
   )
 }
+
+DemoHomePage.fragment = Query(DemoHome)
+  .select({
+    hero: DemoHome.hero,
+    recipes: Query(DemoRecipe).select({
+      id: Query.id,
+      url: Query.url,
+      ...DemoRecipe
+    })
+  })
+  .first()

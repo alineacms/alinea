@@ -3,7 +3,7 @@ import {Query} from 'alinea'
 import dynamic from 'next/dynamic'
 import {Suspense} from 'react'
 
-const DemoPage = dynamic(() => import('./DemoPage.client'), {ssr: false})
+const DemoPage = dynamic(() => import('./demo/DemoDashboard'), {ssr: false})
 
 export default async function Demo() {
   const query = Query.whereWorkspace('demo').orderBy(Query.level.asc())

@@ -1,6 +1,5 @@
-import {cms} from '@/cms'
 import {DemoRecipe} from '@/schema'
-import {Query} from 'alinea'
+import {Infer, Query} from 'alinea'
 import './demo.css'
 import {DemoHeader} from './layout/DemoHeader'
 import {DemoLayout} from './layout/DemoLayout'
@@ -8,10 +7,13 @@ import {DemoPage} from './layout/DemoPage'
 import {DemoText} from './layout/DemoText'
 import {DemoTypo} from './layout/DemoType'
 
-export default async function DemoRecipePage(props: {params: {slug: string}}) {
-  const {header, title, intro, ingredients, instructions} = await cms.get(
-    Query(DemoRecipe).wherePath(props.params.slug)
-  )
+export function DemoRecipePage({
+  header,
+  title,
+  intro,
+  ingredients,
+  instructions
+}: Infer<typeof DemoRecipePage.fragment>) {
   return (
     <DemoLayout>
       <DemoHeader {...header} />
@@ -35,3 +37,5 @@ export default async function DemoRecipePage(props: {params: {slug: string}}) {
     </DemoLayout>
   )
 }
+
+DemoRecipePage.fragment = Query(DemoRecipe).first()

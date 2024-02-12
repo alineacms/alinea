@@ -258,9 +258,7 @@ export function EntryEdit({editor}: EntryEditProps) {
           <FieldToolbar.Root />
         </FieldToolbar.Provider>
       </Main>
-      {preview && isPreviewOpen && !untranslated && (
-        <EntryPreview preview={preview} editor={editor} />
-      )}
+      {preview && <EntryPreview preview={preview} editor={editor} />}
     </>
   )
 }
