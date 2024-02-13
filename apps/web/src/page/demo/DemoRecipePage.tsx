@@ -1,6 +1,5 @@
 import {DemoRecipe} from '@/schema'
 import {Infer, Query} from 'alinea'
-import './demo.css'
 import {DemoHeader} from './layout/DemoHeader'
 import {DemoLayout} from './layout/DemoLayout'
 import {DemoPage} from './layout/DemoPage'
