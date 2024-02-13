@@ -4,6 +4,7 @@ import {
   FileSummaryRow,
   FileSummaryThumb
 } from 'alinea/dashboard/view/media/FileSummary'
+import {text} from 'alinea/field/text/TextField'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
 import {Entry} from '../Entry.js'
 import {Query} from '../Query.js'
@@ -55,6 +56,7 @@ export const MediaFile: typeof config.MediaFile = type('File', {
   summaryThumb: view(fileSummarySelect, FileSummaryThumb),
   view: FileEntry as any,
   fields: {
-    ...config.MediaFile
+    ...config.MediaFile,
+    title: text('Title')
   }
 })
