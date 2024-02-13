@@ -158,11 +158,12 @@ export namespace Query {
   }
 
   export function translations<Definition>(
-    type?: Type<Definition>
+    type?: Type<Definition>,
+    includeSelf: boolean = false
   ): Cursor.Find<Type.Infer<Definition>> {
     return new Cursor.Find({
       target: {type},
-      source: {type: SourceType.Translations}
+      source: {type: SourceType.Translations, includeSelf}
     })
   }
 }

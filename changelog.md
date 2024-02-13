@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.8.1]
+
+- Export `Entry` from `alinea/core` which was missing in the previous release.
+
 ## [0.8.0]
 
 - Two changes that impact how to write config files:

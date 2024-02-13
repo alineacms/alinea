@@ -312,11 +312,15 @@ export class EntryResolver {
       case SourceType.Siblings:
         return cursor
           .where(ctx.Table.parent.is(from.parent))
-          .where(ctx.Table.entryId.isNot(from.entryId))
+          .where(
+            source.includeSelf ? true : ctx.Table.entryId.isNot(from.entryId)
+          )
       case SourceType.Translations:
         return cursor
           .where(ctx.Table.i18nId.is(from.i18nId))
-          .where(ctx.Table.entryId.isNot(from.entryId))
+          .where(
+            source.includeSelf ? true : ctx.Table.entryId.isNot(from.entryId)
+          )
       case SourceType.Children:
         const Child = EntryRow().as('Child')
         const children = withRecursive(

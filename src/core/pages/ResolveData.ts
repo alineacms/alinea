@@ -114,6 +114,7 @@ export const CursorSource = cito.object(
     type = cito.enums(SourceType)
     // id = string
     depth? = cito.number.optional
+    includeSelf? = cito.boolean.optional
   }
 )
 

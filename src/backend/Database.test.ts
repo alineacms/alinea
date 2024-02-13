@@ -60,6 +60,24 @@ test('change draft path', async () => {
   assert.is(res2.url, '/new-path/sub')
 })
 
+test('fetch translations', async () => {
+  const example = createExample()
+  const {Page} = example.schema
+  const multi = example.in(example.workspaces.main.multiLanguage)
+  let res = await multi.locale('en').get(
+    Query.wherePath('localised1').select({
+      translations: Query.translations(Page, true).select(Query.locale)
+    })
+  )
+  assert.equal(res.translations, ['en', 'fr'])
+  res = await multi.locale('en').get(
+    Query.wherePath('localised1').select({
+      translations: Query.translations(Page).select(Query.locale)
+    })
+  )
+  assert.equal(res.translations, ['fr'])
+})
+
 test('change published path for entry with language', async () => {
   const example = createExample()
   const multi = example.locale('en').in(example.workspaces.main.multiLanguage)
