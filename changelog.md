@@ -3,6 +3,7 @@
 ## [0.8.1]
 
 - Export `Entry` from `alinea/core` which was missing in the previous release.
+- Fix the `includeSelf` option when querying translations.
 
 ## [0.8.0]
 
