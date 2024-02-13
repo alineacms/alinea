@@ -9,12 +9,7 @@ import {Entry} from 'alinea/core/Entry'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
-import {
-  PreviewUpdate,
-  ResolveDefaults,
-  ResolveParams,
-  Resolver
-} from 'alinea/core/Resolver'
+import {PreviewUpdate, ResolveRequest, Resolver} from 'alinea/core/Resolver'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/ResolveData'
@@ -49,7 +44,7 @@ export interface HandlerOptions {
   drafts?: Drafts
   history?: History
   pending?: Pending
-  resolveDefaults?: ResolveDefaults
+  resolveDefaults?: Partial<ResolveRequest>
 }
 
 export class Handler implements Resolver {
@@ -71,7 +66,7 @@ export class Handler implements Resolver {
     this.router = createRouter(auth, this.connect)
   }
 
-  resolve = async (params: ResolveParams) => {
+  resolve = async (params: ResolveRequest) => {
     const {resolveDefaults} = this.options
     const resolveParams = {...resolveDefaults, ...params}
     const {syncInterval} = resolveParams
@@ -267,7 +262,7 @@ function respond<T>({result, logger}: LoggerResult<T>) {
   })
 }
 
-const ResolveBody: Type<ResolveParams> = object({
+const ResolveBody: Type<ResolveRequest> = object({
   selection: Selection.adt,
   locale: string.optional,
   realm: enums(Realm),

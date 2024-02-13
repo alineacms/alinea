@@ -7,7 +7,6 @@ import {IcRoundLock} from 'alinea/ui/icons/IcRoundLock'
 import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {IcRoundRefresh} from 'alinea/ui/icons/IcRoundRefresh'
 import {useEffect, useRef, useState} from 'react'
-import {Preview} from '../Preview.browser.js'
 import {LivePreview} from '../entry/EntryPreview.js'
 import css from './BrowserPreview.module.scss'
 
@@ -106,60 +105,58 @@ export function BrowserPreview({
   )
 
   return (
-    <Preview>
-      <div className={styles.root()}>
-        <AppBar.Root className={styles.root.bar()}>
-          <HStack style={{height: '100%'}}>
-            <AppBar.Item
-              as="button"
-              icon={IcRoundArrowBack}
-              onClick={handlePrevious}
-            />
-            <AppBar.Item
-              as="button"
-              icon={IcRoundArrowForward}
-              onClick={handleNext}
-            />
-            <AppBar.Item
-              as="button"
-              icon={IcRoundRefresh}
-              onClick={handleReload}
-            />
-            <AppBar.Item full style={{flexGrow: 1, minWidth: 0}}>
-              <Typo.Monospace
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  background: 'var(--alinea-highlight)',
-                  padding: `${px(6)} ${px(15)}`,
-                  borderRadius: px(8)
-                }}
-              >
-                <HStack gap={8} center>
-                  <IcRoundLock style={{flexShrink: 0}} />
-                  <span
-                    style={{
-                      display: 'block',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {url}
-                  </span>
-                </HStack>
-              </Typo.Monospace>
-            </AppBar.Item>
-            <AppBar.Item
-              as="a"
-              icon={IcRoundOpenInNew}
-              href={url + '&full'}
-              target="_blank"
-            />
-          </HStack>
-        </AppBar.Root>
-        {inner}
-      </div>
-    </Preview>
+    <div className={styles.root()}>
+      <AppBar.Root className={styles.root.bar()}>
+        <HStack style={{height: '100%'}}>
+          <AppBar.Item
+            as="button"
+            icon={IcRoundArrowBack}
+            onClick={handlePrevious}
+          />
+          <AppBar.Item
+            as="button"
+            icon={IcRoundArrowForward}
+            onClick={handleNext}
+          />
+          <AppBar.Item
+            as="button"
+            icon={IcRoundRefresh}
+            onClick={handleReload}
+          />
+          <AppBar.Item full style={{flexGrow: 1, minWidth: 0}}>
+            <Typo.Monospace
+              style={{
+                display: 'block',
+                width: '100%',
+                background: 'var(--alinea-highlight)',
+                padding: `${px(6)} ${px(15)}`,
+                borderRadius: px(8)
+              }}
+            >
+              <HStack gap={8} center>
+                <IcRoundLock style={{flexShrink: 0}} />
+                <span
+                  style={{
+                    display: 'block',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {url}
+                </span>
+              </HStack>
+            </Typo.Monospace>
+          </AppBar.Item>
+          <AppBar.Item
+            as="a"
+            icon={IcRoundOpenInNew}
+            href={url + '&full'}
+            target="_blank"
+          />
+        </HStack>
+      </AppBar.Root>
+      {inner}
+    </div>
   )
 }

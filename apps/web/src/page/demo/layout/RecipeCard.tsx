@@ -20,9 +20,8 @@ export interface RecipeCardProps {
 }
 
 export function RecipeCard(recipe: RecipeCardProps) {
-  const image = recipe.header.image
-  if (!image?.src) return null
-  const blurUrl = imageBlurUrl(image)
+  const image = recipe.header?.image
+  const blurUrl = image && imageBlurUrl(image)
   return (
     <Link href={recipe.url}>
       <div className={styles.root()}>

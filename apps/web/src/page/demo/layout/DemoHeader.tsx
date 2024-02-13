@@ -16,7 +16,7 @@ export interface DemoHeaderProps {
 
 export function DemoHeader({image, backLink, credit}: DemoHeaderProps) {
   const hasImage = image?.src
-  const blurUrl = imageBlurUrl(image!)
+  const blurUrl = image && imageBlurUrl(image)
   return (
     <header className={styles.root({open: hasImage})}>
       {backLink && (

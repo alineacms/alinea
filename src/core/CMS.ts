@@ -16,15 +16,14 @@ export abstract class CMS extends GraphRealm {
 
   constructor(config: Config) {
     const normalizedConfig = createConfig(config)
-    super(normalizedConfig, async params => {
-      const cnx = await this.resolver()
-      return cnx.resolve(params)
-    })
+    const resolver: Resolver = {
+      resolve: params => {
+        return this.resolver().then(r => r.resolve(params))
+      }
+    }
+    super(normalizedConfig, resolver)
     this.config = normalizedConfig
-    this.graph = new Graph(normalizedConfig, async params => {
-      const {resolve} = await this.resolver()
-      return resolve(params)
-    })
+    this.graph = new Graph(normalizedConfig, resolver)
     //this.#attach(config)
   }
 

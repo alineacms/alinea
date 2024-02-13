@@ -10,7 +10,7 @@ import {IcOutlineTableRows} from 'alinea/ui/icons/IcOutlineTableRows'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useRef} from 'react'
+import {Suspense, useEffect, useRef} from 'react'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {FormProvider} from '../atoms/FormAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
@@ -23,6 +23,7 @@ import {useNav} from '../hook/UseNav.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import {Modal} from '../view/Modal.js'
 import css from './EntryEdit.module.scss'
+import {Preview} from './Preview.browser.js'
 import {useSidebar} from './Sidebar.js'
 import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditModeToggle.js'
@@ -258,7 +259,13 @@ export function EntryEdit({editor}: EntryEditProps) {
           <FieldToolbar.Root />
         </FieldToolbar.Provider>
       </Main>
-      {preview && <EntryPreview preview={preview} editor={editor} />}
+      {preview && (
+        <Preview>
+          <Suspense>
+            <EntryPreview preview={preview} editor={editor} />
+          </Suspense>
+        </Preview>
+      )}
     </>
   )
 }

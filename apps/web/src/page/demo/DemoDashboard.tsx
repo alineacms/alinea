@@ -4,21 +4,16 @@ import * as schema from '@/schema/demo'
 import {Config, Edit} from 'alinea'
 import {createMemoryHandler} from 'alinea/backend/data/MemoryHandler'
 import {Entry} from 'alinea/core/Entry'
+import {EntryPhase} from 'alinea/core/EntryRow'
 import {localUser} from 'alinea/core/User'
 import {createTestCMS} from 'alinea/core/driver/TestDriver'
 import {Logger} from 'alinea/core/util/Logger'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
-import {Preview} from 'alinea/dashboard/view/Preview'
-import {use, useMemo} from 'react'
+import {use, useDeferredValue, useMemo} from 'react'
 import {DemoHomePage} from './DemoHomePage'
 import {DemoRecipePage} from './DemoRecipePage'
-
-const previews = {
-  DemoHome: DemoHomePage,
-  DemoRecipe: DemoRecipePage
-}
 
 const config = {
   schema,
@@ -34,27 +29,41 @@ const config = {
     })
   },
   preview({entry}) {
-    return (
-      <Preview>
-        ok
-        {/*<Suspense fallback={<div style={{width: '100%'}}>Loading</div>}>
-          <EntryPreview entry={entry} />
-    </Suspense>*/}
-      </Preview>
-    )
+    switch (entry.type) {
+      case 'DemoHome':
+        return <PreviewHome entry={entry} />
+      case 'DemoRecipe':
+        return <PreviewRecipe entry={entry} />
+      default:
+        return null
+    }
   }
 }
 
-function EntryPreview({entry}: {entry: Entry}) {
+function PreviewHome({entry}) {
   const graph = useGraph()
-  const view = previews[entry.type]
-  if (!view) return null
+  const update = useDeferredValue(entry)
   const props = use(
     useMemo(() => {
-      return graph.preferDraft.get(DemoHomePage.fragment)
-    }, [entry.entryId])
+      return graph.preferDraft
+        .previewEntry({...update, phase: EntryPhase.Draft})
+        .get(DemoHomePage.fragment)
+    }, [update.rowHash])
   )
   return <DemoHomePage {...props} />
+}
+
+function PreviewRecipe({entry}) {
+  const graph = useGraph()
+  const update = useDeferredValue(entry)
+  const props = use(
+    useMemo(() => {
+      return graph.preferDraft
+        .previewEntry({...update, phase: EntryPhase.Draft})
+        .get(DemoRecipePage.fragment.wherePath(update.path))
+    }, [update.rowHash])
+  )
+  return <DemoRecipePage {...props} />
 }
 
 async function setup(entries: Array<Entry>) {
@@ -77,6 +86,5 @@ export interface DemoProps {
 
 export default function Demo({entries}: DemoProps) {
   const {cms, client} = use(useMemo(() => setup(entries), [entries]))
-  console.log(entries)
   return <App dev config={cms.config} client={client} />
 }
