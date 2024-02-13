@@ -272,21 +272,27 @@ export class EditOperation<Definition> extends Operation {
 
 export class CreateOperation<Definition> extends Operation {
   entry: Partial<Entry>
+  private entryRow = async (cms: CMS) => {
+    const partial = this.entry
+    const type = this.type ? this.typeName(cms.config, this.type) : partial.type
+    if (!type) throw new TypeError(`Type is missing`)
+    const parent = await (this.parentRow
+      ? this.parentRow(cms)
+      : partial.parent
+      ? cms.graph.preferPublished.get(Entry({entryId: partial.parent}))
+      : undefined)
+    return createEntry(cms.config, type, partial, parent)
+  }
 
-  constructor(entry: Partial<Entry>, private type?: Type<Definition>) {
+  constructor(
+    entry: Partial<Entry>,
+    private type?: Type<Definition>,
+    private parentRow?: (cms: CMS) => Promise<EntryRow>
+  ) {
     super(async (cms): Promise<Array<Mutation>> => {
-      const partial = this.entry
-      const type = this.type
-        ? this.typeName(cms.config, this.type)
-        : partial.type
-      if (!type) throw new TypeError(`Type is missing`)
-      const parent = partial.parent
-        ? await cms.graph.preferPublished.get(Entry({entryId: partial.parent}))
-        : undefined
-      const {config} = cms
-      const entry = await createEntry(config, type, partial, parent)
-      const parentPaths = entryParentPaths(config, entry)
-      const file = entryFileName(config, entry, parentPaths)
+      const entry = await this.entryRow(cms)
+      const parentPaths = entryParentPaths(cms.config, entry)
+      const file = entryFileName(cms.config, entry, parentPaths)
       return [
         {
           type: MutationType.Create,
@@ -325,7 +331,7 @@ export class CreateOperation<Definition> extends Operation {
   }
 
   createChild<Definition>(type: Type<Definition>) {
-    return new CreateOperation({}, type).setParent(this.entry.entryId!)
+    return new CreateOperation({}, type, this.entryRow)
   }
 
   get entryId() {
@@ -340,7 +346,7 @@ export class CreateOperation<Definition> extends Operation {
 async function createEntry(
   config: Config,
   typeName: string,
-  partial: Partial<EntryRow> = {title: 'Entry'},
+  partial: Partial<Entry> = {title: 'Entry'},
   parent?: EntryRow
 ): Promise<EntryRow> {
   const type = config.schema[typeName]
@@ -353,10 +359,10 @@ async function createEntry(
     partial.locale ??
     Root.defaultLocale(config.workspaces[workspace][root]) ??
     null
-  const title = partial.data.title ?? partial.title ?? 'Entry'
+  const title = partial.data?.title ?? partial.title ?? 'Entry'
   const phase = partial.phase ?? EntryPhase.Published
   const path = slugify(
-    (phase === EntryPhase.Published && partial.data.path) ||
+    (phase === EntryPhase.Published && partial.data?.path) ||
       (partial.path ?? title)
   )
   const entryData = {title, path, ...partial.data}
