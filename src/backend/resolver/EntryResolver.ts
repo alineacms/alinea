@@ -4,7 +4,7 @@ import {Field} from 'alinea/core/Field'
 import {
   PreviewUpdate,
   ResolveDefaults,
-  ResolveParams
+  ResolveRequest
 } from 'alinea/core/Resolver'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
@@ -471,7 +471,9 @@ export class EntryResolver {
       name ? ctx.Table.type.is(name) : Expr.value(true),
       this.conditionLocation(ctx.Table, ctx.location),
       this.conditionRealm(ctx.Table, ctx.realm),
-      this.conditionLocale(ctx.Table, ctx.locale),
+      source?.type === SourceType.Translations
+        ? Expr.value(true)
+        : this.conditionLocale(ctx.Table, ctx.locale),
       this.conditionSearch(ctx.Table, searchTerms)
     )
     if (skip) query = query.skip(skip)
@@ -623,17 +625,18 @@ export class EntryResolver {
     locale,
     realm = this.defaults?.realm ?? Realm.Published,
     preview = this.defaults?.preview
-  }: ResolveParams): Promise<T> => {
+  }: ResolveRequest): Promise<T> => {
     const ctx = new ResolveContext({realm, location, locale})
     const queryData = this.query(ctx, selection)
     const query = new Query<Interim>(queryData)
     if (preview) {
-      const updated = await this.parsePreview?.(preview)
+      const updated =
+        'entry' in preview ? preview.entry : await this.parsePreview?.(preview)
       if (updated)
         try {
           await this.db.store.transaction(async tx => {
             const current = EntryRow({
-              entryId: preview.entryId,
+              entryId: updated.entryId,
               active: true
             })
             // Temporarily add preview entry

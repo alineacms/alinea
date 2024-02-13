@@ -37,6 +37,10 @@ interface Seed {
   page: PageSeed
 }
 
+function seedKey(workspace: string, root: string, filePath: string) {
+  return `${workspace}.${root}.${filePath}`
+}
+
 export class Database implements Syncable {
   seed: Map<string, Seed>
 
@@ -479,9 +483,11 @@ export class Database implements Syncable {
 
     const pathData = entryPath === 'index' ? '' : entryPath
     const seedData = seed ? PageSeed.data(seed.page).partial : {}
+    const title = record.title ?? seedData?.title ?? ''
     const entryData = {
       ...seedData,
       ...data,
+      title,
       path: pathData
     }
     const searchableText = Type.searchableText(type, entryData)
@@ -508,7 +514,7 @@ export class Database implements Syncable {
       i18nId: alineaMeta.i18nId ?? alineaMeta.entryId,
 
       path: entryPath,
-      title: record.title ?? seedData?.title ?? '',
+      title,
       url: entryUrl(type, urlMeta),
 
       data: entryData,
@@ -534,7 +540,8 @@ export class Database implements Syncable {
             const filePath = paths.join(target, path) + '.json'
             const typeName = typeNames.get(type)
             if (!typeName) continue
-            res.set(filePath, {
+            const key = seedKey(workspaceName, rootName, filePath)
+            res.set(key, {
               type: typeName,
               workspace: workspaceName,
               root: rootName,
@@ -588,25 +595,27 @@ export class Database implements Syncable {
         // fly under the radar
         if (exists) {
           seenVersions.push(exists.versionId)
-          if (exists.seeded) seenSeeds.add(exists.seeded)
-          else seenSeeds.add(file.filePath)
+          const key = seedKey(
+            file.workspace,
+            file.root,
+            exists.seeded ?? file.filePath
+          )
+          seenSeeds.add(key)
           continue
         }
         try {
           const raw = JsonLoader.parse(this.config.schema, file.contents)
           const record = EntryRecord(raw)
           const seeded = record[META_KEY]?.seeded
-          const seed =
-            typeof seeded === 'string'
-              ? this.seed.get(seeded)
-              : // Backward compatibility
-              seeded === true
-              ? this.seed.get(file.filePath)
-              : undefined
+          const key = seedKey(
+            file.workspace,
+            file.root,
+            typeof seeded === 'string' ? seeded : file.filePath
+          )
+          const seed = this.seed.get(key)
           const entry = this.computeEntry(record, file, seed)
 
-          if (seed) seenSeeds.add(seed.filePath)
-          else seenSeeds.add(file.filePath)
+          seenSeeds.add(key)
 
           await query(
             EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
@@ -623,8 +632,9 @@ export class Database implements Syncable {
         }
       }
       const stableI18nIds = new Map<string, string>()
-      for (const [seedPath, seed] of this.seed.entries()) {
-        if (seenSeeds.has(seedPath)) continue
+      for (const seed of this.seed.values()) {
+        const key = seedKey(seed.workspace, seed.root, seed.filePath)
+        if (seenSeeds.has(key)) continue
         const {type, partial} = PageSeed.data(seed.page)
         const typeName = typeNames.get(type)
         if (!typeName) continue

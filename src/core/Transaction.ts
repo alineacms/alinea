@@ -254,26 +254,6 @@ export class EditOperation<Definition> extends Operation {
     return this
   }
 
-  /*moveTo(workspace: string, root: string, parentId?: string) {
-    throw new Error(`Not implemented`)
-    return this
-  }
-
-  createAfter<Definition>(type: Type<Definition>) {
-    throw new Error(`Not implemented`)
-    return new CreateOp(type)
-  }
-
-  createBefore<Definition>(type: Type<Definition>) {
-    throw new Error(`Not implemented`)
-    return new CreateOp(type)
-  }
-
-  createChild<Definition>(type: Type<Definition>) {
-    throw new Error(`Not implemented`)
-    return new CreateOp(type)
-  }*/
-
   draft() {
     this.changePhase = EntryPhase.Draft
     return this
@@ -291,88 +271,82 @@ export class EditOperation<Definition> extends Operation {
 }
 
 export class CreateOperation<Definition> extends Operation {
-  entryId = createId()
-  private workspace?: string
-  private root?: string
-  private locale?: string | null
-  private entryData: Partial<Type.Infer<Definition>> = {}
+  entry: Partial<Entry>
   private entryRow = async (cms: CMS) => {
-    return createEntry(
-      cms.config,
-      this.typeName(cms.config, this.type),
-      {entryId: this.entryId, data: this.entryData ?? {}},
-      await this.parentRow?.(cms)
-    )
+    const partial = this.entry
+    const type = this.type ? this.typeName(cms.config, this.type) : partial.type
+    if (!type) throw new TypeError(`Type is missing`)
+    const parent = await (this.parentRow
+      ? this.parentRow(cms)
+      : partial.parent
+      ? cms.graph.preferPublished.get(Entry({entryId: partial.parent}))
+      : undefined)
+    return createEntry(cms.config, type, partial, parent)
   }
 
   constructor(
-    protected type: Type<Definition>,
-    protected parentRow?: (cms: CMS) => Promise<EntryRow>
+    entry: Partial<Entry>,
+    private type?: Type<Definition>,
+    private parentRow?: (cms: CMS) => Promise<EntryRow>
   ) {
     super(async (cms): Promise<Array<Mutation>> => {
-      const parent = await this.parentRow?.(cms)
-      const {config} = cms
-      const entry = await createEntry(
-        config,
-        this.typeName(config, type),
-        {
-          entryId: this.entryId,
-          workspace: this.workspace,
-          root: this.root,
-          locale: this.locale,
-          data: this.entryData ?? {}
-        },
-        parent
-      )
-      const parentPaths = entryParentPaths(config, entry)
-      const file = entryFileName(config, entry, parentPaths)
+      const entry = await this.entryRow(cms)
+      const parentPaths = entryParentPaths(cms.config, entry)
+      const file = entryFileName(cms.config, entry, parentPaths)
       return [
         {
           type: MutationType.Create,
-          entryId: this.entryId,
+          entryId: entry.entryId,
           file,
           entry: entry
         }
       ]
     })
+    this.entry = {entryId: createId(), ...entry}
   }
 
   setParent(parentId: string) {
-    this.parentRow = async (cms: CMS) => {
-      return cms.graph.preferPublished.get(Entry({entryId: parentId}))
-    }
+    this.entry.parent = parentId
     return this
   }
 
   setWorkspace(workspace: string) {
-    this.workspace = workspace
+    this.entry.workspace = workspace
     return this
   }
 
   setRoot(root: string) {
-    this.root = root
+    this.entry.root = root
     return this
   }
 
   setLocale(locale: string | null) {
-    this.locale = locale
+    this.entry.locale = locale
     return this
   }
 
   set(entryData: Partial<Type.Infer<Definition>>) {
-    this.entryData = {...this.entryData, ...entryData}
+    this.entry.data = {...this.entry.data, ...entryData}
     return this
   }
 
   createChild<Definition>(type: Type<Definition>) {
-    return new CreateOperation(type, this.entryRow)
+    return new CreateOperation({}, type, this.entryRow)
+  }
+
+  get entryId() {
+    return this.entry.entryId!
+  }
+
+  static fromType<Definition>(type: Type<Definition>) {
+    return new CreateOperation({}, type)
   }
 }
 
 async function createEntry(
   config: Config,
   typeName: string,
-  partial: Partial<EntryRow> = {title: 'Entry'},
+  partial: Partial<Entry> = {title: 'Entry'},
   parent?: EntryRow
 ): Promise<EntryRow> {
   const type = config.schema[typeName]
@@ -385,10 +359,10 @@ async function createEntry(
     partial.locale ??
     Root.defaultLocale(config.workspaces[workspace][root]) ??
     null
-  const title = partial.data.title ?? partial.title ?? 'Entry'
+  const title = partial.data?.title ?? partial.title ?? 'Entry'
   const phase = partial.phase ?? EntryPhase.Published
   const path = slugify(
-    (phase === EntryPhase.Published && partial.data.path) ||
+    (phase === EntryPhase.Published && partial.data?.path) ||
       (partial.path ?? title)
   )
   const entryData = {title, path, ...partial.data}
@@ -406,11 +380,11 @@ async function createEntry(
     level: parent ? parent.level + 1 : 0,
     parent: parent?.entryId ?? null,
     locale,
-    index: 'a0',
+    index: partial.index ?? 'a0',
     i18nId,
     modifiedAt: 0,
-    active: true,
-    main: true,
+    active: partial.active ?? true,
+    main: partial.main ?? true,
     data: entryData,
     searchableText: Type.searchableText(type, entryData)
   }

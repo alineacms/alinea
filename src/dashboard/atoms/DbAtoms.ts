@@ -154,8 +154,8 @@ export const dbUpdateAtom = atom(
 
 export const graphAtom = atom(async get => {
   const config = get(configAtom)
-  const {resolve} = await get(localDbAtom)
-  return new Graph(config, resolve)
+  const resolver = await get(localDbAtom)
+  return new Graph(config, resolver)
 })
 
 const changedAtom = atom<Array<string>>([])

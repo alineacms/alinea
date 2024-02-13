@@ -10,6 +10,7 @@ import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Root} from 'alinea/core/Root'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
+import {Workspace} from 'alinea/core/Workspace'
 import type {MediaFile} from 'alinea/core/media/MediaTypes'
 import {base64} from 'alinea/core/util/Encoding'
 import {
@@ -653,6 +654,13 @@ export function createEntryEditor(entryData: EntryData) {
   const discardEdits = edits.resetChanges
   const isLoading = edits.isLoading
 
+  const preview =
+    Root.preview(
+      config.workspaces[activeVersion.workspace][activeVersion.root]
+    ) ??
+    Workspace.preview(config.workspaces[activeVersion.workspace]) ??
+    config.preview
+
   return {
     ...entryData,
     transition,
@@ -683,6 +691,7 @@ export function createEntryEditor(entryData: EntryData) {
     showHistory,
     revisionsAtom,
     previewRevision,
+    preview,
     form,
     view
   }

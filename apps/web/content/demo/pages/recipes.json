@@ -1,0 +1,10 @@
+{
+  "title": "Recipes",
+  "@alinea": {
+    "entryId": "2cGLQZvsCCxnguLrwCfPDL8uFkm",
+    "type": "DemoRecipes",
+    "index": "a1",
+    "seeded": "/recipes.json",
+    "root": "pages"
+  }
+}

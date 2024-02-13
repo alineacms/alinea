@@ -1,0 +1,310 @@
+{
+  "title": "Snickerdoodle",
+  "header": {
+    "image": {
+      "id": "2YtRRDFq54OT9HvmPA8Zstnrasl",
+      "type": "image",
+      "entry": "gyU39v_eQTqhE7QiU9OzB"
+    },
+    "credit": [
+      {
+        "type": "paragraph",
+        "textAlign": "left",
+        "content": [
+          {
+            "type": "text",
+            "text": "Photo by "
+          },
+          {
+            "type": "text",
+            "text": "Gayatri Malhotra",
+            "marks": [
+              {
+                "type": "link",
+                "attrs": {
+                  "data-id": null,
+                  "data-entry": null,
+                  "data-type": null,
+                  "href": "https://unsplash.com/@gmalhotra?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
+                  "title": null
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "intro": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "This snickerdoodle is a classic cookie that is perfect for any occasion. These cookies are made with a simple dough that is rolled in cinnamon sugar and then baked to perfection."
+        }
+      ]
+    }
+  ],
+  "ingredients": [
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/2 cup butter, softened"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/2 cup sugar"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/2 cup brown sugar"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 teaspoon vanilla"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 eggs"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 3/4 cups all-purpose flour"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 teaspoon baking powder"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/2 teaspoon baking soda"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 teaspoon cream of tartar"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/4 teaspoon salt"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 tablespoons milk"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 tablespoons sugar"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 teaspoon ground cinnamon"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "type": "orderedList",
+      "start": 1,
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Preheat oven to 400°. In a large bowl, cream butter and sugars until light and fluffy. Beat in vanilla. Add eggs, one at a time, beating well after each addition. In another bowl, whisk flour, baking powder, baking soda, cream of tartar and salt; gradually beat into butter mixture alternately with milk. "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In a small bowl, combine sugar and cinnamon. Shape dough into 1-in. balls. Roll in cinnamon-sugar. Place 2 in. apart on ungreased baking sheets. "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Bake until golden brown, 10-12 minutes. Remove to wire racks to cool."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "@alinea": {
+    "entryId": "uENumuMjqX0fSbGtrf2fj",
+    "type": "DemoRecipe",
+    "index": "Zy"
+  }
+}

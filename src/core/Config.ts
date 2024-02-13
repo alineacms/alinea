@@ -1,8 +1,7 @@
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
+import {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
-import {ComponentType} from 'react'
 import {Auth} from './Auth.js'
-import {Entry} from './Entry.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Workspace, WorkspaceData} from './Workspace.js'
@@ -22,7 +21,7 @@ export interface Config {
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
   /** A url which will be embedded in the dashboard for live previews */
-  preview?: string | ComponentType<{entry: Entry; previewToken: string}>
+  preview?: Preview
   /** Every edit will pass through a draft phase before being published */
   enableDrafts?: boolean
   /** The interval in seconds at which the frontend will poll for updates */

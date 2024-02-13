@@ -11,6 +11,17 @@ const pages = Config.root('Pages', {
   }
 })
 
+function MdiPlayBox() {
+  return (
+    <svg width="1em" height="1em" viewBox="0 0 24 24">
+      <path
+        fill="currentColor"
+        d="M19 3H5c-1.11 0-2 .89-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5a2 2 0 0 0-2-2m-9 13V8l5 4"
+      ></path>
+    </svg>
+  )
+}
+
 const main = Config.workspace('Alinea', {
   color: '#3F61E8',
   mediaDir: 'public',
@@ -21,9 +32,26 @@ const main = Config.workspace('Alinea', {
   }
 })
 
+const demo = Config.workspace('Demo', {
+  color: '#FFA500',
+  mediaDir: 'public',
+  source: 'content/demo',
+  icon: MdiPlayBox,
+  roots: {
+    pages: Config.root('Demo', {
+      contains: ['DemoHome', 'DemoRecipes'],
+      entries: {
+        index: Config.page(schema.DemoHome({title: 'Home'})),
+        recipes: Config.page(schema.DemoRecipes({title: 'Recipes'}))
+      }
+    }),
+    media: Config.media()
+  }
+})
+
 const config = Config.create({
   schema,
-  workspaces: {main},
+  workspaces: {main, demo},
   dashboard: {
     dashboardUrl: '/admin.html',
     handlerUrl: '/api/cms',

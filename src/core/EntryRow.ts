@@ -25,10 +25,6 @@ export class EntryTable {
   // Hierarchy
   workspace = column.string
   root = column.string
-  level = column.number // Amount of parents
-  filePath = column.string
-  parentDir = column.string
-  childrenDir = column.string
 
   index = column.string
   parent = column.string.nullable
@@ -37,15 +33,6 @@ export class EntryTable {
   i18nId = column.string
   locale = column.string.nullable
 
-  // Version specific
-  get versionId() {
-    return this.entryId.concat('.').concat(this.phase)
-  }
-  /** @deprecated */
-  modifiedAt = column.number
-  rowHash = column.string
-  fileHash = column.string
-
   // Entries from which a new draft can be created are marked as active,
   // there is only one active entry per entryId
   active = column.boolean
@@ -53,9 +40,24 @@ export class EntryTable {
   // draft
   main = column.boolean
 
+  // Version specific
+  get versionId() {
+    return this.entryId.concat('.').concat(this.phase)
+  }
+
   path = column.string
-  url = column.string
   data = column.json<any>()
+
+  // Computed
+  level = column.number // Amount of parents
+  filePath = column.string // Filesystem location
+  parentDir = column.string // Filesystem location
+  childrenDir = column.string // Filesystem location
+  /** @deprecated */
+  modifiedAt = column.number
+  rowHash = column.string
+  fileHash = column.string
+  url = column.string
   searchableText = column.string
 }
 

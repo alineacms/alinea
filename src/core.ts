@@ -1,4 +1,5 @@
 export {createCMS} from 'alinea/core/driver/DefaultDriver'
+export * from './core/Entry.js'
 export * from './core/Field.js'
 export * from './core/Hint.js'
 export * from './core/field/ListField.js'

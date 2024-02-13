@@ -219,6 +219,54 @@ export namespace Cursor {
       )
     }
 
+    whereUrl(url: string): Get<Row> {
+      return new Get<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'url')).is(url)[Expr.Data]
+        })
+      )
+    }
+
+    wherePath(path: string): Get<Row> {
+      return new Get<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'path')).is(path)[Expr.Data]
+        })
+      )
+    }
+
+    whereParent(parentId: string): Get<Row> {
+      return new Get<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'parent')).is(parentId)[Expr.Data]
+        })
+      )
+    }
+
+    whereLocale(locale: string): Get<Row> {
+      return new Get<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'locale')).is(locale)[Expr.Data]
+        })
+      )
+    }
+
+    whereRoot(root: string): Get<Row> {
+      return new Get<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'root')).is(root)[Expr.Data]
+        })
+      )
+    }
+
+    whereWorkspace(workspace: string): Get<Row> {
+      return new Get<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'workspace')).is(workspace)[Expr.Data]
+        })
+      )
+    }
+
     search(...searchTerms: Array<string>) {
       return new Get<Row>(this.with({searchTerms}))
     }

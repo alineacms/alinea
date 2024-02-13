@@ -3,6 +3,7 @@ import {File} from '@alinea/iso'
 import {ListEditor, ListField} from 'alinea/core/field/ListField'
 import {RichTextEditor, RichTextField} from 'alinea/core/field/RichTextField'
 import {ListRow} from 'alinea/field/list'
+import type {Entry} from './Entry.js'
 import {FieldOptions} from './Field.js'
 import {TextDoc} from './TextDoc.js'
 import {
@@ -20,7 +21,11 @@ export function Edit<Definition>(entryId: string, type?: Type<Definition>) {
 
 export namespace Edit {
   export function create<Definition>(type: Type<Definition>) {
-    return new CreateOperation<Definition>(type)
+    return new CreateOperation<Definition>({}, type)
+  }
+
+  export function createEntry(entry: Entry) {
+    return new CreateOperation(entry)
   }
 
   export function remove(entryId: string) {

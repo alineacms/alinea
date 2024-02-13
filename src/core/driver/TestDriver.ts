@@ -12,6 +12,7 @@ import {Logger} from '../util/Logger.js'
 
 export interface TestApi extends CMS {
   db: Promise<Database>
+  handler: Promise<Handler>
   connection(): Promise<Connection>
 }
 
@@ -25,7 +26,7 @@ class TestDriver extends CMS implements TestApi {
     return db
   })
   handler = this.db.then(async db => {
-    const handler = new Handler({
+    return new Handler({
       config: this.config,
       db,
       previews: new JWTPreviews('test'),
@@ -50,11 +51,12 @@ class TestDriver extends CMS implements TestApi {
         }
       }
     })
-    return handler.connect({logger: new Logger('test')})
   })
-
-  connection = (): Promise<Connection> => this.handler
-  resolver = (): Promise<Resolver> => this.handler
+  cnx = this.handler.then(handler =>
+    handler.connect({logger: new Logger('test')})
+  )
+  connection = (): Promise<Connection> => this.cnx
+  resolver = (): Promise<Resolver> => this.cnx
 }
 
 export function createTestCMS<Definition extends Config>(

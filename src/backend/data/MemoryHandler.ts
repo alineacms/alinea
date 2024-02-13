@@ -28,7 +28,7 @@ class MemoryApi implements Media, Target, History, Drafts, Pending {
   }
 
   prepareUpload(file: string): Promise<Connection.UploadResponse> {
-    throw new Error(`Not implemented`)
+    throw new Error(`Uploads are not available`)
   }
 
   async revisions(file: string): Promise<Array<Revision>> {
@@ -36,7 +36,7 @@ class MemoryApi implements Media, Target, History, Drafts, Pending {
   }
 
   async revisionData(file: string, revision: string): Promise<EntryRecord> {
-    throw new Error(`Not implemented`)
+    throw new Error(`Revisions are not available`)
   }
 
   async getDraft(entryId: string): Promise<Draft | undefined> {

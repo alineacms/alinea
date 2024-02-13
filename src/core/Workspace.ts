@@ -1,3 +1,4 @@
+import {Preview} from 'alinea/core/Preview'
 import type {ComponentType} from 'react'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
@@ -13,6 +14,7 @@ export interface WorkspaceMeta {
   /** The main theme color used in the dashboard */
   color?: string
   icon?: ComponentType
+  preview?: Preview
 }
 
 export interface WorkspaceData extends WorkspaceMeta {
@@ -46,6 +48,10 @@ export namespace Workspace {
 
   export function label(workspace: Workspace): Label {
     return workspace[Workspace.Data].label
+  }
+
+  export function preview(workspace: Workspace): Preview | undefined {
+    return workspace[Workspace.Data].preview
   }
 
   export function isWorkspace(value: any): value is Workspace {

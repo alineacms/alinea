@@ -4,7 +4,7 @@ import {PreviewUpdate} from 'alinea/core/Resolver'
 import {base64url} from 'alinea/core/util/Encoding'
 import {zlibSync} from 'fflate'
 import {useAtomValue} from 'jotai'
-import {ComponentType, Suspense, useEffect, useState} from 'react'
+import {ComponentType, useEffect, useState} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {BrowserPreview} from '../preview/BrowserPreview.js'
 
@@ -21,11 +21,7 @@ export function EntryPreview({editor, preview}: EntryPreviewProps) {
   if (!preview) return null
   if (typeof preview === 'string')
     return <EntryPreviewUrl editor={editor} preview={preview} />
-  return (
-    <Suspense>
-      <EntryPreviewComponent editor={editor} preview={preview} />
-    </Suspense>
-  )
+  return <EntryPreviewComponent editor={editor} preview={preview} />
 }
 
 interface EntryPreviewUrlProps {
