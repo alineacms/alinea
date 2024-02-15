@@ -1,7 +1,7 @@
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
-import {TextView} from '@/page/blocks/TextBlockView'
+import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
 import {Query} from 'alinea'
 import {fromModule} from 'alinea/ui'
@@ -47,7 +47,7 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
             </WebTypo.H1>
             <BlogPostMeta {...page} />
           </header>
-          <TextView text={page.body} />
+          <TextFieldView text={page.body} />
         </article>
       </PageContent>
     </PageContainer>
