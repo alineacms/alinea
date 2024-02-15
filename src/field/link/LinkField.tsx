@@ -44,7 +44,7 @@ export function createLink<Row extends Reference & UnionRow>(
     hint,
     options: {label, ...options},
     async postProcess(value, loader) {
-      const type = value._type
+      const type = value[Reference.type]
       const picker = options.pickers[type]
       if (!picker) return
       if (picker.postProcess) await picker.postProcess(value, loader)

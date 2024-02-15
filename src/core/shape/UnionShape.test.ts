@@ -24,8 +24,8 @@ const shape = new UnionShape('Blocks', {
 })
 
 const value1 = {
-  id: 'unique0',
-  type: 'Block1',
+  _id: 'unique0',
+  _type: 'Block1',
   field1: 'a',
   blockInner: {
     field3: 'a',
@@ -35,8 +35,8 @@ const value1 = {
 }
 
 const value2 = {
-  id: 'unique1',
-  type: 'Block2',
+  _id: 'unique1',
+  _type: 'Block2',
   field1: '1',
   field5: '2',
   field6: undefined

@@ -128,10 +128,10 @@ export class UnionShape<T extends UnionRow>
     if (!id || !type) return {} as T
     const shape = this.shapes[type]
     return {
-      ...(shape.normalize(data) as any),
+      ...shape.normalize(data),
       [UnionRow.type]: type,
       [UnionRow.id]: id
-    }
+    } as T
   }
 
   searchableText(value: T): string {

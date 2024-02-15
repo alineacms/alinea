@@ -10,7 +10,7 @@ import {Projection} from 'alinea/core/pages/Projection'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import {assign} from 'alinea/core/util/Objects'
-import {EntryLinkReference} from './EntryReference.js'
+import {EntryReference} from './EntryReference.js'
 
 export const entryFields = {
   i18nId: Entry.i18nId,
@@ -63,7 +63,9 @@ export function entryPicker<Ref extends Reference, Fields>(
   const extra = fieldType && Type.shape(fieldType)
   return {
     shape: new RecordShape('Entry', {
-      entry: new ScalarShape('Entry')
+      [Reference.id]: new ScalarShape('Id'),
+      [Reference.type]: new ScalarShape('Type'),
+      [EntryReference.entry]: new ScalarShape('Entry')
     }).concat(extra),
     hint: fieldType
       ? Hint.Intersection(options.hint, Type.hint(fieldType))
@@ -73,9 +75,9 @@ export function entryPicker<Ref extends Reference, Fields>(
     handlesMultiple: true,
     options,
     async postProcess(row, loader) {
-      const link: EntryLinkReference = row as any
-      if (!link.entry) return
-      const linkIds = [link.entry]
+      const link: EntryReference = row as any
+      if (!link[EntryReference.entry]) return
+      const linkIds = [link[EntryReference.entry]]
       if (!options.selection) return
       const [fields] = await loader.resolveLinks(options.selection, linkIds)
       assign(row, fields)

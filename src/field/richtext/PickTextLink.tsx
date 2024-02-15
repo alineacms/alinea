@@ -35,14 +35,14 @@ function linkForm(options: PickerOptions) {
   })
   track.options(fields.description, get => {
     const selected = get(fields.link)
-    const isUrl = selected?.type === 'url'
+    const isUrl = selected?.[Reference.type] === 'url'
     const descriptionRequired =
       options.requireDescription && !(isExistingLink || isUrl)
     return {hidden: !descriptionRequired}
   })
   track.options(fields.blank, get => {
     const selected = get(fields.link)
-    const isUrl = selected?.type === 'url'
+    const isUrl = selected?.[Reference.type] === 'url'
     return {hidden: isUrl}
   })
   return fields

@@ -4,7 +4,7 @@ import {Infer} from 'alinea'
 import {fromModule} from 'alinea/ui'
 import {RenderSelectedFramework} from './FrameworkBlockView.client'
 import css from './FrameworkBlockView.module.scss'
-import {TextView} from './TextBlockView'
+import {TextFieldView} from './TextFieldView'
 
 const styles = fromModule(css)
 
@@ -14,7 +14,10 @@ export function FrameworkBlockView(blocks: Infer<typeof FrameworkBlock>) {
       <RenderSelectedFramework
         options={supportedFrameworks.map(framework => {
           const body = blocks[framework.name]
-          return [framework.name, <TextView key={framework.name} text={body} />]
+          return [
+            framework.name,
+            <TextFieldView key={framework.name} text={body} />
+          ]
         })}
       />
     </div>

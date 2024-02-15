@@ -6,15 +6,18 @@ import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 
 export interface UrlReference extends Reference {
-  ref: 'url'
-  url: string
-  title: string
-  target: string
+  _url: string
+  _title: string
+  _target: string
 }
 
 export namespace UrlReference {
+  export const url = '_url' satisfies keyof UrlReference
+  export const title = '_title' satisfies keyof UrlReference
+  export const target = '_target' satisfies keyof UrlReference
+
   export function isUrl(value: any): value is UrlReference {
-    return value && (value.type === 'url' || value.ref === 'url')
+    return value && value[Reference.type] === 'url'
   }
 }
 
@@ -31,9 +34,11 @@ export function urlPicker<Fields>(
   const extra = fieldType && Type.shape(fieldType)
   return {
     shape: new RecordShape('Url', {
-      url: new ScalarShape('Url'),
-      title: new ScalarShape('Title'),
-      target: new ScalarShape('Target')
+      [Reference.id]: new ScalarShape('Id'),
+      [Reference.type]: new ScalarShape('Type'),
+      [UrlReference.url]: new ScalarShape('Url'),
+      [UrlReference.title]: new ScalarShape('Title'),
+      [UrlReference.target]: new ScalarShape('Target')
     }).concat(extra),
     hint: Hint.Extern({name: 'UrlReference', package: 'alinea/picker/url'}),
     label: 'External website',

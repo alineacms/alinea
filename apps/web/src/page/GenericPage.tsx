@@ -3,7 +3,7 @@ import {PageContainer, PageContent} from '@/layout/Page'
 import {Page} from '@/schema/Page'
 import {Query} from 'alinea'
 import {notFound} from 'next/navigation'
-import {TextView} from './blocks/TextBlockView'
+import {TextFieldView} from './blocks/TextFieldView'
 
 export interface GenericPageProps {
   params: {
@@ -34,7 +34,7 @@ export default async function GenericPage({params}: GenericPageProps) {
     <PageContainer>
       <PageContent>
         <article>
-          <TextView text={page.body} />
+          <TextFieldView text={page.body} />
         </article>
       </PageContent>
     </PageContainer>

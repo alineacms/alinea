@@ -13,8 +13,8 @@ export function ChapterLinkView({link}: Infer<typeof ChapterLinkBlock>) {
     <Link
       href={link.url}
       className={styles.root()}
-      target={link.type === 'url' ? '_blank' : undefined}
-      rel={link.type === 'url' ? 'nofollow noopener' : undefined}
+      target={link._type === 'url' ? '_blank' : undefined}
+      rel={link._type === 'url' ? 'nofollow noopener' : undefined}
     >
       <HStack center gap={8}>
         <span className={styles.root.title()}>

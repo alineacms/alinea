@@ -72,11 +72,11 @@ export class ListShape<Row extends ListRow>
     if (!id || !type) return undefined
     const shape = this.shapes[type]
     return {
-      ...(shape.normalize(data) as any),
+      ...shape.normalize(data),
       [ListRow.type]: type,
       [ListRow.id]: id,
       [ListRow.index]: index
-    }
+    } as Row
   }
   toY(value: Array<Row>) {
     const map = new Y.Map()

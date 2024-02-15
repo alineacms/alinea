@@ -2,6 +2,7 @@ import {Entry} from 'alinea/core/Entry'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {createId} from 'alinea/core/Id'
 import {MutationType} from 'alinea/core/Mutation'
+import {Reference} from 'alinea/core/Reference'
 import {track} from 'alinea/core/Tracker'
 import {Type, type} from 'alinea/core/Type'
 import {Projection} from 'alinea/core/pages/Projection'
@@ -95,10 +96,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
         .and(Entry.root.is(root.name)),
       initialValue: preselectedId
         ? ({
-            id: 'parent',
-            ref: 'entry',
-            type: 'entry',
-            entry: preselectedId
+            [Reference.id]: 'parent',
+            [Reference.type]: 'entry',
+            [EntryReference.entry]: preselectedId
           } as EntryReference)
         : undefined
     })
@@ -119,10 +119,12 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }
 
   const typeField = useMemo(() => {
-    const typeField = select<Record<string, any>>('Select type', {})
+    const typeField = select<Record<string, any>>('Select type', {
+      options: {}
+    })
     return track.options(typeField, async get => {
       const selectedParent = get(parentField)
-      const parentId = selectedParent?.entry
+      const parentId = selectedParent?.[EntryReference.entry]
       const types: Array<string> = await allowedTypes(parentId)
       return {
         options: fromEntries(
@@ -183,7 +185,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const selectedParent = useAtomValue(parentAtoms.value)
 
   useEffect(() => {
-    allowedTypes(selectedParent?.entry).then(types => {
+    allowedTypes(selectedParent?.[EntryReference.entry]).then(types => {
       if (types.length > 0) typeAtoms.mutator(types[0])
     })
   }, [selectedParent])
@@ -206,7 +208,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       path,
       phase: config.enableDrafts ? EntryPhase.Draft : EntryPhase.Published
     }
-    const parentId = form.data().parent?.entry
+    const parentId = form.data().parent?.[EntryReference.entry]
     const parent = await graph.preferPublished.get(
       Entry({entryId: parentId}).select(parentData)
     )
@@ -216,7 +218,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const parentDir = dirname(filePath)
     const entryType = config.schema[selected]!
     const url = entryUrl(entryType, {...data, parentPaths})
-    const copyFrom = form.data().copyFrom?.entry
+    const copyFrom = form.data().copyFrom?.[EntryReference.entry]
     const entryData = copyFrom
       ? await graph.preferPublished.get(
           Entry({entryId: copyFrom}).select(Entry.data)

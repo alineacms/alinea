@@ -140,6 +140,7 @@ export class RichTextShape<Blocks>
               key,
               new RecordShape(value.label, {
                 [Node.type]: new ScalarShape('Type'),
+                [BlockNode.id]: new ScalarShape('Id'),
                 ...value.shapes
               })
             ]
@@ -159,15 +160,19 @@ export class RichTextShape<Blocks>
   }
   private normalizeRow = (row: Node) => {
     if (Node.type in row) return row
-    const {type, id, ...data} = row as any
+    const {type, ...data} = row as any
     if (type === 'text')
       return {[Node.type]: 'text', [TextNode.text]: data.text}
     const shape = this.blocks[type]
     if (shape) {
-      return {...shape.normalize(data), [Node.type]: type, [BlockNode.id]: id}
+      return {
+        ...shape.normalize(data),
+        [Node.type]: type,
+        [BlockNode.id]: data.id
+      }
     }
     const content = data.content?.map(this.normalizeRow)
-    return {[Node.type]: type, ...data, [ElementNode.content]: content}
+    return {...data, [Node.type]: type, [ElementNode.content]: content}
   }
   toY(value: TextDoc<Blocks>) {
     const map = new Y.Map()
@@ -183,9 +188,9 @@ export class RichTextShape<Blocks>
     text.insert(0, this.toXml(value))
     return map
   }
-  fromY(value: Y.Map<any>): TextDoc<Blocks> {
-    if (!value) return []
-    const text: Y.XmlFragment = value.get('$text')
+  fromY(map: Y.Map<any>): TextDoc<Blocks> {
+    if (!map) return []
+    const text: Y.XmlFragment = map.get('$text')
     const types = this.blocks ?? {}
     const content = text?.toArray()?.map(serialize)?.flat() || []
     const [first] = content
@@ -197,12 +202,12 @@ export class RichTextShape<Blocks>
     if (isEmpty) return []
     return content.map((node): Node => {
       if (Node.isBlock(node)) {
-        const shape = types[Node.type]
+        const shape = types[node[Node.type]]
         if (shape)
           return {
+            ...shape.fromY(map.get(node[BlockNode.id])),
             [Node.type]: node[Node.type],
-            [BlockNode.id]: node[BlockNode.id],
-            ...shape.fromY(value.get(node[BlockNode.id]))
+            [BlockNode.id]: node[BlockNode.id]
           } satisfies BlockNode
       }
       return node

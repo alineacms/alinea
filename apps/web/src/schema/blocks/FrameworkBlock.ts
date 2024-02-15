@@ -1,6 +1,6 @@
 import {supportedFrameworks} from '@/layout/nav/Frameworks'
 import {Config, Field} from 'alinea'
-import {textField} from './TextBlock'
+import {textField} from '../fields/TextField'
 
 export const FrameworkBlock = Config.type('Framework specific', {
   fields: {
@@ -15,5 +15,3 @@ export const FrameworkBlock = Config.type('Framework specific', {
     )
   }
 })
-
-Object.assign

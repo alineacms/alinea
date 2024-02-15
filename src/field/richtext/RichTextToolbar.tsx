@@ -85,7 +85,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           title: picked.title,
           ...referenceToAttributes(link),
           target:
-            (link as UrlReference).target ??
+            (link as UrlReference)._target ??
             (picked.blank ? '_blank' : undefined)
         }
         if (existing) {
@@ -101,8 +101,8 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               type: 'text',
               text:
                 picked.title ||
-                (link as UrlReference).title ||
-                (link as UrlReference).url ||
+                (link as UrlReference)._title ||
+                (link as UrlReference)._url ||
                 '',
               marks: [{type: 'link', attrs}]
             })

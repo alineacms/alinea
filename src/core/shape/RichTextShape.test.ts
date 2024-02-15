@@ -203,15 +203,9 @@ test('apply over existing', () => {
   assert.equal(pass2, value2)
 })
 
-test.only('update marks', () => {
+test('update marks', () => {
   const doc = new Y.Doc()
   const root = doc.getMap(ROOT_KEY)
-  /*root.set(FIELD_KEY, shape.toY(value3))
-  doc.transact(() => {
-    shape.applyY(value4, root, FIELD_KEY)
-  })
-  const pass2 = shape.fromY(root.get(FIELD_KEY))
-  assert.equal(pass2, value4)*/
 
   root.set(FIELD_KEY, shape.toY(value3))
   doc.transact(() => {
@@ -219,6 +213,42 @@ test.only('update marks', () => {
   })
   const pass3 = shape.fromY(root.get(FIELD_KEY))
   assert.equal(pass3, value5)
+})
+
+test('normalize', () => {
+  const old = [
+    {
+      type: 'paragraph',
+      content: [{type: 'text', text: 'Hello'}]
+    },
+    {
+      type: 'Block2',
+      id: 'unique0',
+      field3: 'a',
+      field4: 'b'
+    },
+    {
+      type: 'Block1',
+      id: 'unique1',
+      field1: 'a',
+      blockInner: {
+        field3: 'a',
+        field4: 'b'
+      }
+    },
+    {
+      type: 'paragraph',
+      content: [{type: 'text', text: 'Hello'}]
+    },
+    {
+      type: 'Block2',
+      id: 'unique2',
+      field3: 'a',
+      field4: 'b'
+    }
+  ]
+  const normalized = shape.normalize(old)
+  assert.equal(normalized, value1)
 })
 
 test.run()

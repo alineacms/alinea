@@ -49,7 +49,9 @@ export function ExplorerItem({
   const isSelected = Boolean(
     isSelectable &&
       explorer.selection.find(
-        v => EntryReference.isEntryReference(v) && v.entry === entry.entryId
+        v =>
+          EntryReference.isEntryReference(v) &&
+          v[EntryReference.entry] === entry.entryId
       )
   )
   const childrenAmount = entry.childrenAmount ?? 0

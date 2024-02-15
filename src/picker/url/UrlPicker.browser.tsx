@@ -1,5 +1,6 @@
 import {createId} from 'alinea/core/Id'
 import {PickerProps, pickerWithView} from 'alinea/core/Picker'
+import {Reference} from 'alinea/core/Reference'
 import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
@@ -46,7 +47,7 @@ export function UrlPickerForm({
   )
   const form = useForm(linkForm, {
     initialValue: preSelected
-      ? {...preSelected, blank: preSelected.target === '_blank'}
+      ? {...preSelected, blank: preSelected._target === '_blank'}
       : undefined
   })
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -54,12 +55,11 @@ export function UrlPickerForm({
     e.stopPropagation()
     const data = form.data()
     const reference: UrlReference = {
-      id: preSelected?.id ?? createId(),
-      type: 'url',
-      ref: 'url',
-      url: data.url,
-      title: data.title || '',
-      target: data.blank ? '_blank' : '_self'
+      [Reference.id]: preSelected?._id ?? createId(),
+      [Reference.type]: 'url',
+      [UrlReference.url]: data.url,
+      [UrlReference.title]: data.title || '',
+      [UrlReference.target]: data.blank ? '_blank' : '_self'
     }
     onConfirm([reference])
   }

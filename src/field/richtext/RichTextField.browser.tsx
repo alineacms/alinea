@@ -41,13 +41,13 @@ export const richText = Field.provideView(RichTextInput, createRichText)
 const styles = fromModule(css)
 
 type NodeViewProps = {
-  node: {attrs: {id: string}}
+  node: {attrs: {[BlockNode.id]: string}}
   deleteNode: () => void
 }
 
 function typeExtension(field: Field, name: string, type: Type) {
   function View({node, deleteNode}: NodeViewProps) {
-    const {id} = node.attrs
+    const {[BlockNode.id]: id} = node.attrs
     const meta = Type.meta(type)
     const {readOnly} = useFieldOptions(field)
     return (
@@ -93,7 +93,7 @@ function typeExtension(field: Field, name: string, type: Type) {
     },
     addAttributes() {
       return {
-        id: {default: null}
+        [BlockNode.id]: {default: null}
       }
     }
   })
@@ -121,7 +121,16 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
         key={key}
         onClick={() => {
           onInsert(id, key)
-          editor.chain().focus().insertContent({type: key, attrs: {id}}).run()
+          editor
+            .chain()
+            .focus()
+            .insertContent({
+              [Node.type]: key,
+              attrs: {
+                [BlockNode.id]: id
+              }
+            })
+            .run()
         }}
       >
         <HStack center gap={8}>
@@ -262,6 +271,7 @@ function toContent(node: Node): JSONContent {
   const {[Node.type]: type, ...attrs} = node
   if (Node.isElement(node))
     return {type, content: node[ElementNode.content]?.map(toContent), attrs}
-  if (Node.isBlock(node)) return {type, attrs: {id: node[BlockNode.id]}}
+  if (Node.isBlock(node))
+    return {type, attrs: {[BlockNode.id]: node[BlockNode.id]}}
   throw new TypeError('Invalid node')
 }

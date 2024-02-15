@@ -1,10 +1,8 @@
 import {Reference} from 'alinea/core/Reference'
 
-export interface EntryLinkReference extends Reference {
-  entry: string
-}
-
-export interface EntryReference extends EntryLinkReference {
+export interface EntryReference extends Reference {
+  _entry: string
+  // These fields are queried from the target entry by default
   i18nId: string
   title: string
   entryType: string
@@ -13,12 +11,18 @@ export interface EntryReference extends EntryLinkReference {
 }
 
 export namespace EntryReference {
+  export const entry = '_entry' satisfies keyof EntryReference
+}
+
+export namespace EntryReference {
   export function isEntryReference(value: any): value is EntryReference {
-    return value && 'entry' in value
+    return value && EntryReference.entry in value
   }
 }
 
-export interface FileReference extends EntryLinkReference {
+export interface FileReference extends Reference {
+  _entry: string
+  // These fields are queried from the target entry by default
   title: string
   src: string
   url: string
@@ -26,13 +30,9 @@ export interface FileReference extends EntryLinkReference {
   size: number
 }
 
-export namespace FileReference {
-  export function isFileReference(value: any): value is FileReference {
-    return value && (value.type === 'file' || value.ref === 'file')
-  }
-}
-
-export interface ImageReference extends EntryLinkReference {
+export interface ImageReference extends Reference {
+  _entry: string
+  // These fields are queried from the target entry by default
   title: string
   src: string
   extension: string
@@ -43,10 +43,4 @@ export interface ImageReference extends EntryLinkReference {
   averageColor: string
   thumbHash: string
   focus: {x: number; y: number}
-}
-
-export namespace ImageReference {
-  export function isImageReference(value: any): value is ImageReference {
-    return value && (value.type === 'image' || value.ref === 'image')
-  }
 }

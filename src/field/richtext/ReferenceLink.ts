@@ -12,22 +12,22 @@ interface Anchor extends HTMLProps<HTMLAnchorElement> {
 
 export function referenceToAttributes(reference: Reference): Anchor {
   // Todo: don't stringly type here
-  switch (reference.type) {
+  switch (reference[Reference.type]) {
     case 'url': {
       const ref = reference as UrlReference
       return {
-        'data-id': ref.id,
+        'data-id': ref[Reference.id],
         'data-entry': undefined,
         'data-type': 'url',
-        href: ref.url,
-        target: ref.target
+        href: ref._url,
+        target: ref._target
       }
     }
     case 'entry': {
       const ref = reference as EntryReference
       return {
-        'data-id': ref.id,
-        'data-entry': ref.entry,
+        'data-id': ref[Reference.id],
+        'data-entry': ref[EntryReference.entry],
         'data-type': 'entry',
         href: undefined,
         target: undefined
@@ -36,15 +36,15 @@ export function referenceToAttributes(reference: Reference): Anchor {
     case 'file': {
       const ref = reference as FileReference
       return {
-        'data-id': ref.id,
-        'data-entry': ref.entry,
+        'data-id': ref[Reference.id],
+        'data-entry': ref[EntryReference.entry],
         'data-type': 'file',
         href: undefined,
         target: undefined
       }
     }
     default:
-      throw new Error(`Unexpected reference type: ${reference.type}`)
+      throw new Error(`Unexpected reference type: ${reference[Reference.type]}`)
   }
 }
 
@@ -55,23 +55,23 @@ export function attributesToReference(
   if (!id) {
     if (attributes.href)
       return {
-        id: createId(),
-        type: 'url',
-        url: attributes.href,
-        target: attributes.target
+        [Reference.id]: createId(),
+        [Reference.type]: 'url',
+        [UrlReference.url]: attributes.href,
+        [UrlReference.target]: attributes.target
       } as UrlReference
     return
   }
   if (attributes['data-entry'])
     return {
-      id,
-      type: attributes['data-type'] === 'file' ? 'file' : 'entry',
-      entry: attributes['data-entry']
+      [Reference.id]: id,
+      [Reference.type]: attributes['data-type'] === 'file' ? 'file' : 'entry',
+      [EntryReference.entry]: attributes['data-entry']
     } as EntryReference
   return {
-    id,
-    type: 'url',
-    url: attributes.href,
-    target: attributes.target
+    [Reference.id]: id,
+    [Reference.type]: 'url',
+    [UrlReference.url]: attributes.href,
+    [UrlReference.target]: attributes.target
   } as UrlReference
 }

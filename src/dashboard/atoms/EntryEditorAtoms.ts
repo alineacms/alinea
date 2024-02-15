@@ -117,7 +117,6 @@ export const entryEditorAtoms = atomFamily(
           }
         })
         .catch(() => {
-          console.log(entry.data)
           edits.applyEntryData(type, entry!.data)
         })
 
