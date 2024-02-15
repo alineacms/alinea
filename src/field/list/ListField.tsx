@@ -2,6 +2,7 @@ import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {Infer} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
 import {ListField} from 'alinea/core/field/ListField'
+import type {ListRow} from 'alinea/core/shape/ListShape'
 import {listHint} from 'alinea/core/util/Hints'
 
 /** Optional settings to configure a list field */
@@ -17,12 +18,6 @@ export interface ListOptions<Definitions extends Schema>
   inline?: boolean
   /** Hide this list field */
   hidden?: boolean
-}
-
-export interface ListRow {
-  id: string
-  index: string
-  type: string
 }
 
 /** Create a list field configuration */

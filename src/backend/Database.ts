@@ -484,12 +484,12 @@ export class Database implements Syncable {
     const pathData = entryPath === 'index' ? '' : entryPath
     const seedData = seed ? PageSeed.data(seed.page).partial : {}
     const title = record.title ?? seedData?.title ?? ''
-    const entryData = {
+    const entryData = Type.normalize(type, {
       ...seedData,
       ...data,
       title,
       path: pathData
-    }
+    })
     const searchableText = Type.searchableText(type, entryData)
     return {
       workspace: meta.workspace,
@@ -629,6 +629,8 @@ export class Database implements Syncable {
           inserted.push(`${entry.entryId}.${entry.phase}`)
         } catch (e: any) {
           console.log(`> skipped ${file.filePath} — ${e.message}`)
+          console.error(e)
+          process.exit(1)
         }
       }
       const stableI18nIds = new Map<string, string>()

@@ -157,9 +157,12 @@ const Fields = Config.document('Fields', {
             required: true,
             initialValue: [
               {
-                type: 'paragraph',
+                _type: 'paragraph',
                 content: [
-                  {type: 'text', text: 'This is a paragraph with initial value'}
+                  {
+                    _type: 'text',
+                    text: 'This is a paragraph with initial value'
+                  }
                 ]
               }
             ]

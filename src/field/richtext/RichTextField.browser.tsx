@@ -1,4 +1,4 @@
-import {mergeAttributes, Node} from '@tiptap/core'
+import {JSONContent, mergeAttributes, Node as TipTapNode} from '@tiptap/core'
 import {Collaboration} from '@tiptap/extension-collaboration'
 import {
   Editor,
@@ -11,6 +11,7 @@ import {Field} from 'alinea/core/Field'
 import {RichTextField} from 'alinea/core/field/RichTextField'
 import {createId} from 'alinea/core/Id'
 import {Schema} from 'alinea/core/Schema'
+import {BlockNode, ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
@@ -76,7 +77,7 @@ function typeExtension(field: Field, name: string, type: Type) {
       </FormRow>
     )
   }
-  return Node.create({
+  return TipTapNode.create({
     name,
     group: 'block',
     atom: true,
@@ -188,19 +189,10 @@ export function RichTextInput<Blocks extends Schema>({
   // The collaboration extension takes over content syncing after inital content
   // is set. Unfortunately we can't fully utilize it to set the content initally
   // as well because it does not work synchronously causing flickering.
-  const content = useMemo(
+  const content: JSONContent = useMemo(
     () => ({
       type: 'doc',
-      content: value.map(node => {
-        if (node.type === 'text') return node //
-        const {type, ...attrs} = node
-        if (schema?.[type]) return {type, attrs: {id: (node as any).id}}
-        return {
-          type,
-          content: 'content' in node ? node.content : undefined,
-          attrs
-        }
-      })
+      content: value.map(toContent)
     }),
     [fragment]
   )
@@ -263,4 +255,13 @@ export function RichTextInput<Blocks extends Schema>({
       </InputLabel>
     </>
   )
+}
+
+function toContent(node: Node): JSONContent {
+  if (Node.isText(node)) return {type: 'text', text: node[TextNode.text]}
+  const {[Node.type]: type, ...attrs} = node
+  if (Node.isElement(node))
+    return {type, content: node[ElementNode.content]?.map(toContent), attrs}
+  if (Node.isBlock(node)) return {type, attrs: {id: node[BlockNode.id]}}
+  throw new TypeError('Invalid node')
 }

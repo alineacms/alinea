@@ -4,7 +4,7 @@ import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {ListField} from 'alinea/core/field/ListField'
 import {UnionField} from 'alinea/core/field/UnionField'
-import type {ListRow} from 'alinea/core/shape/ListShape'
+import {ListRow} from 'alinea/core/shape/ListShape'
 import {UnionRow} from 'alinea/core/shape/UnionShape'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 
@@ -44,7 +44,7 @@ export function createLink<Row extends Reference & UnionRow>(
     hint,
     options: {label, ...options},
     async postProcess(value, loader) {
-      const type = value.type
+      const type = value._type
       const picker = options.pickers[type]
       if (!picker) return
       if (picker.postProcess) await picker.postProcess(value, loader)
@@ -77,7 +77,7 @@ export function createLinks<Row extends Reference & ListRow>(
     async postProcess(rows, loader) {
       const tasks = []
       for (const row of rows) {
-        const type = row.type
+        const type = row[ListRow.type]
         const picker = options.pickers[type]
         if (!picker) return
         if (picker.postProcess) tasks.push(picker.postProcess(row, loader))

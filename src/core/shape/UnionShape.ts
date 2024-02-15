@@ -9,8 +9,13 @@ import {RecordShape} from './RecordShape.js'
 import {ScalarShape} from './ScalarShape.js'
 
 export interface UnionRow {
-  id: string
-  type: string
+  _id: string
+  _type: string
+}
+
+export namespace UnionRow {
+  export const id = '_id' satisfies keyof UnionRow
+  export const type = '_type' satisfies keyof UnionRow
 }
 
 export interface UnionMutator<T extends UnionRow> {
@@ -33,9 +38,9 @@ export class UnionShape<T extends UnionRow>
         return [
           key,
           new RecordShape(label, {
-            id: new ScalarShape('Id'),
-            type: new ScalarShape('Type'),
-            ...type.properties
+            [UnionRow.id]: new ScalarShape('Id'),
+            [UnionRow.type]: new ScalarShape('Type'),
+            ...type.shapes
           })
         ]
       })
@@ -47,21 +52,21 @@ export class UnionShape<T extends UnionRow>
   toY(value: T) {
     if (Array.isArray(value)) value = value[0] ?? {}
     else value = value ?? {}
-    const type = value.type
+    const type = value[UnionRow.type]
     const shape = this.shapes[type]
     const self: Record<string, any> = value || {}
     const map = new Y.Map()
-    map.set('type', type)
-    map.set('id', value.id || createId())
+    map.set(UnionRow.type, type)
+    map.set(UnionRow.id, value[UnionRow.id] || createId())
     if (!shape) return map
-    for (const [key, field] of entries(shape.properties)) {
+    for (const [key, field] of entries(shape.shapes)) {
       map.set(key, field.toY(self[key]))
     }
     return map
   }
   fromY(map: Y.Map<any>): T {
     if (!map || typeof map.get !== 'function') return {} as T
-    const type = map.get('type')
+    const type = map.get(UnionRow.type)
     const recordType = this.shapes[type]
     if (recordType) return recordType.fromY(map) as T
     return {} as T
@@ -69,8 +74,9 @@ export class UnionShape<T extends UnionRow>
   applyY(value: T, parent: Y.Map<any>, key: string): void {
     const current: Y.Map<any> | undefined = parent.get(key)
     if (!current || !value) return void parent.set(key, this.toY(value))
-    const currentType = current.get('type')
-    if (currentType !== value.type) return void parent.set(key, this.toY(value))
+    const currentType = current.get(UnionRow.type)
+    if (currentType !== value[UnionRow.type])
+      return void parent.set(key, this.toY(value))
     const shape = this.shapes[currentType]
     if (!shape) return
     shape.applyY(value, parent, key)
@@ -95,7 +101,7 @@ export class UnionShape<T extends UnionRow>
       },
       set: (k: any, v: any) => {
         const record = parent.get(key)
-        const type = record.get('type')
+        const type = record.get(UnionRow.type)
         const shape = this.shapes[type]
         if (!shape) throw new Error(`Could not find type "${type}"`)
         record.set(k, shape.toY(v as object))
@@ -104,7 +110,7 @@ export class UnionShape<T extends UnionRow>
   }
   async applyLinks(value: T, loader: LinkResolver) {
     if (!value) return
-    const type = value.type
+    const type = value[UnionRow.type]
     if (!type) return
     const shape = this.shapes[type]
     if (!shape) return
@@ -114,15 +120,29 @@ export class UnionShape<T extends UnionRow>
     if (this.postProcess) await this.postProcess(value, loader)
   }
 
+  normalize(value: any): T {
+    if (Array.isArray(value)) value = value[0] ?? {}
+    if (!value) return {} as T
+    if (UnionRow.type in value) return value
+    const {id, type, ...data} = value as any
+    if (!id || !type) return {} as T
+    const shape = this.shapes[type]
+    return {
+      ...(shape.normalize(data) as any),
+      [UnionRow.type]: type,
+      [UnionRow.id]: id
+    }
+  }
+
   searchableText(value: T): string {
     let res = ''
     if (Array.isArray(value)) value = value[0] ?? {}
     else value = value ?? {}
-    const type = value.type
+    const type = value[UnionRow.type]
     const shape = this.shapes[type]
     const self: Record<string, any> = value || {}
     if (!shape) return ''
-    for (const [key, field] of entries(shape.properties)) {
+    for (const [key, field] of entries(shape.shapes)) {
       res += field.searchableText(self[key])
     }
     return res

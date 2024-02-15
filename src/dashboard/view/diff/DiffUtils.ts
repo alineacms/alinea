@@ -83,7 +83,7 @@ export function diffList<T>(
 }
 
 export function diffRecord(kind: RecordShape, targetA: any, targetB: any) {
-  const types = Object.entries(kind.properties)
+  const types = Object.entries(kind.shapes)
   return types.filter(([key, type]) => {
     if (type instanceof ScalarShape) {
       return targetA?.[key] !== targetB?.[key]

@@ -2,7 +2,7 @@ import {File} from '@alinea/iso'
 
 import {ListEditor, ListField} from 'alinea/core/field/ListField'
 import {RichTextEditor, RichTextField} from 'alinea/core/field/RichTextField'
-import {ListRow} from 'alinea/field/list'
+import type {ListRow} from 'alinea/core/shape/ListShape'
 import type {Entry} from './Entry.js'
 import {FieldOptions} from './Field.js'
 import {TextDoc} from './TextDoc.js'

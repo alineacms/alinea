@@ -25,6 +25,7 @@ import {Field} from 'alinea/core/Field'
 import {ListField} from 'alinea/core/field/ListField'
 import type {Infer} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
+import {ListRow} from 'alinea/core/shape/ListShape'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
@@ -48,7 +49,7 @@ import {
   Ref,
   useState
 } from 'react'
-import {list as createList, ListOptions, ListRow} from './ListField.js'
+import {list as createList, ListOptions} from './ListField.js'
 import css from './ListField.module.scss'
 export * from './ListField.js'
 
@@ -67,7 +68,7 @@ function ListInputRowSortable(props: ListInputRowProps) {
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
       animateLayoutChanges,
-      id: props.row.id
+      id: props.row._id
     })
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -119,7 +120,7 @@ function ListInputRow({
   firstRow,
   ...rest
 }: ListInputRowProps) {
-  const type = schema[row.type]
+  const type = schema[row[ListRow.type]]
   const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
   return (
@@ -239,7 +240,7 @@ export function ListInput({field}: ListInputProps) {
   const {options, value, mutator, error} = useField(field)
   const {schema, readOnly} = options
   const rows: Array<ListRow> = value as any
-  const ids = rows.map(row => row.id)
+  const ids = rows.map(row => row._id)
   const [dragging, setDragging] = useState<ListRow | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -250,7 +251,7 @@ export function ListInput({field}: ListInputProps) {
 
   function handleDragStart(event: DragStartEvent) {
     const {active} = event
-    setDragging(rows.find(row => row.id === active.id) || null)
+    setDragging(rows.find(row => row._id === active.id) || null)
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -274,12 +275,12 @@ export function ListInput({field}: ListInputProps) {
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
               <Sink.Root>
                 {rows.map((row, i) => {
-                  const type = options.schema[row.type]
+                  const type = options.schema[row[ListRow.type]]
                   return (
                     <FormRow
-                      key={row.id}
+                      key={row._id}
                       field={field}
-                      rowId={row.id}
+                      rowId={row._id}
                       type={type}
                       readOnly={readOnly}
                     >
@@ -293,11 +294,11 @@ export function ListInput({field}: ListInputProps) {
                         }}
                         onDelete={() => {
                           if (readOnly) return
-                          mutator.remove(row.id)
+                          mutator.remove(row._id)
                         }}
                         onCreate={(type: string) => {
                           if (readOnly) return
-                          mutator.push({type} as any, i)
+                          mutator.push({_type: type} as any, i)
                         }}
                         firstRow={i === 0}
                       />
@@ -309,7 +310,7 @@ export function ListInput({field}: ListInputProps) {
                   readOnly={readOnly}
                   onCreate={(type: string) => {
                     if (readOnly) return
-                    mutator.push({type} as any)
+                    mutator.push({_type: type} as any)
                   }}
                 />
               </Sink.Root>
@@ -325,8 +326,8 @@ export function ListInput({field}: ListInputProps) {
                 <FormRow
                   key="overlay"
                   field={field}
-                  rowId={dragging.id}
-                  type={options.schema[dragging.type]}
+                  rowId={dragging._id}
+                  type={options.schema[dragging[ListRow.type]]}
                   readOnly={readOnly}
                 >
                   <ListInputRow
