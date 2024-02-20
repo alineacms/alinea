@@ -48,8 +48,8 @@ prog
   .alias('generate')
   .describe('Generate types and content cache')
   .option('-c, --config', `Config file location`)
-  .option('-w, --watch', `Watch for changes to source files`)
   .option('-d, --dir', `Root directory of the project`)
+  .option('-w, --watch', `Watch for changes to source files`)
   .option(
     '--fix',
     `Any missing or incorrect properties will be overwritten by their default`

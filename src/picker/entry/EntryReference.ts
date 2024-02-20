@@ -1,6 +1,7 @@
 import {Reference} from 'alinea/core/Reference'
 
 export interface EntryReference extends Reference {
+  _type: 'entry'
   _entry: string
   // These fields are queried from the target entry by default
   i18nId: string
@@ -21,6 +22,7 @@ export namespace EntryReference {
 }
 
 export interface FileReference extends Reference {
+  _type: 'file'
   _entry: string
   // These fields are queried from the target entry by default
   title: string
@@ -31,6 +33,7 @@ export interface FileReference extends Reference {
 }
 
 export interface ImageReference extends Reference {
+  _type: 'image'
   _entry: string
   // These fields are queried from the target entry by default
   title: string

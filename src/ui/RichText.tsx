@@ -3,6 +3,7 @@ import {Schema} from 'alinea/core/Schema'
 import {
   BlockNode,
   ElementNode,
+  Mark,
   Node,
   TextDoc,
   TextNode
@@ -73,7 +74,7 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
     const content =
       typeof views.text === 'function' ? <views.text>{text}</views.text> : text
     const wrappers =
-      marks?.map(mark => nodeElement(mark._type, mark.attrs)) || []
+      marks?.map(mark => nodeElement(mark[Mark.type], mark)) || []
     return wrappers.reduce((children, element) => {
       if (!element?.type) return <Fragment>{children}</Fragment>
       const View: any = views[element.type]

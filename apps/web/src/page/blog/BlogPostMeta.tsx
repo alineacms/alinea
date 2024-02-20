@@ -24,13 +24,13 @@ export function BlogPostMeta({publishDate, author}: BlogPostMetaProps) {
       {author && (
         <HStack center gap={8}>
           By
-          <a href={author.url.url} className={styles.root.author.url()}>
+          <a href={author.url._url} className={styles.root.author.url()}>
             <HStack center gap={8}>
               {author.avatar && (
                 <img
                   alt="Author avatar"
                   className={styles.root.author.avatar()}
-                  src={author.avatar.url}
+                  src={author.avatar._url}
                 />
               )}
               {author.name}

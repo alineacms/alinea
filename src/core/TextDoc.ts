@@ -22,12 +22,24 @@ export namespace Node {
 
 export interface Mark {
   _type: string
-  attrs?: Record<string, string>
+  [attr: string]: string | undefined
 }
 
 export namespace Mark {
   export const type = '_type' satisfies keyof Mark
-  export const attrs = 'attrs' satisfies keyof Mark
+}
+
+export interface LinkMark extends Mark {
+  _type: 'link'
+  _id: string
+  _link: 'entry' | 'file' | 'url'
+  _entry?: string
+}
+
+export namespace LinkMark {
+  export const id = '_id' satisfies keyof LinkMark
+  export const link = '_link' satisfies keyof LinkMark
+  export const entry = '_entry' satisfies keyof LinkMark
 }
 
 export interface TextNode {

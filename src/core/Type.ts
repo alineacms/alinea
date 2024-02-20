@@ -103,8 +103,8 @@ export namespace Type {
     return type[Type.Data].shape
   }
 
-  export function normalize(type: Type, value: any): any {
-    return shape(type).normalize(value)
+  export function toV1(type: Type, value: any): any {
+    return shape(type).toV1(value)
   }
 
   export function searchableText(type: Type, value: any): string {

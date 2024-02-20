@@ -84,14 +84,14 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
     await Promise.all(tasks)
   }
 
-  normalize(value: any): T {
+  toV1(value: any): T {
     const self: Record<string, any> = value || {}
     const res: Record<string, any> = {}
     for (const key of keys(this.shapes)) {
       const isUnderscored = key.startsWith('_')
       const oldValue = isUnderscored ? self[key.slice(1)] : self[key]
       const value = self[key] ?? oldValue
-      res[key] = this.shapes[key].normalize(value)
+      res[key] = this.shapes[key].toV1(value)
     }
     return res as T
   }

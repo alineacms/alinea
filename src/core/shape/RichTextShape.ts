@@ -6,12 +6,13 @@ import {Shape} from '../Shape.js'
 import {
   BlockNode,
   ElementNode,
+  LinkMark,
   Mark,
   Node,
   TextDoc,
   TextNode
 } from '../TextDoc.js'
-import type {Expr} from '../pages/Expr.js'
+import {MediaFile} from '../media/MediaTypes.js'
 import {entries, fromEntries, keys} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
 import {ScalarShape} from './ScalarShape.js'
@@ -55,7 +56,13 @@ function serialize(
         text.marks = Object.keys(d.attributes).map(type => {
           const attrs = d.attributes[type]
           const mark: Mark = {[Mark.type]: type}
-          if (attrs && Object.keys(attrs).length) mark.attrs = attrs
+          if (attrs)
+            for (const [key, value] of Object.entries(attrs)) {
+              if (typeof value !== 'string') continue
+              if (key.startsWith('data-'))
+                mark[`_${key.slice('data-'.length)}`] = value
+              else mark[key] = value
+            }
           return mark
         })
       }
@@ -74,7 +81,16 @@ function serialize(
 
 function unserializeMarks(marks: Array<Mark>) {
   return Object.fromEntries(
-    marks.map(mark => [mark[Mark.type], {...mark[Mark.attrs]}])
+    marks.map(mark => {
+      const {[Mark.type]: type, ...attrs} = mark
+      const res = Object.fromEntries(
+        Object.entries(attrs).map(([key, value]) => {
+          if (key.startsWith('_')) return [`data-${key.slice(1)}`, value]
+          return [key, value]
+        })
+      )
+      return [type, res]
+    })
   )
 }
 
@@ -118,9 +134,9 @@ export interface TextDocSelected<Blocks> {
   linked: Array<{id: string; url: string}>
 }
 
-let linkInfoFields = undefined! as {
-  url: Expr<string>
-  location: Expr<string>
+const linkInfoFields = {
+  url: Entry.url,
+  location: MediaFile.location
 }
 
 export class RichTextShape<Blocks>
@@ -154,19 +170,42 @@ export class RichTextShape<Blocks>
   toXml(rows: TextDoc<Blocks>) {
     return rows.map(unserialize)
   }
-  normalize(value: any): TextDoc<Blocks> {
+  toV1(value: any): TextDoc<Blocks> {
     if (!Array.isArray(value)) return []
     return value.map(this.normalizeRow)
   }
   private normalizeRow = (row: Node) => {
     if (Node.type in row) return row
     const {type, ...data} = row as any
-    if (type === 'text')
-      return {[Node.type]: 'text', [TextNode.text]: data.text}
+    if (type === 'text') {
+      const updated = {[Node.type]: 'text', [TextNode.text]: data.text}
+      if (!data.marks) return updated
+      return {
+        ...updated,
+        [TextNode.marks]: data.marks.map((mark: any) => {
+          const {type, attrs} = mark
+          if (type !== 'link') return {[Mark.type]: type, ...attrs}
+          const {
+            ['data-id']: id,
+            ['data-entry']: entry,
+            ['data-type']: link,
+            ...rest
+          } = attrs
+          return {
+            [Mark.type]: type,
+            [LinkMark.id]: id,
+            [LinkMark.entry]: entry,
+            [LinkMark.link]: link,
+            ...rest
+          }
+        })
+      }
+    }
+
     const shape = this.blocks[type]
     if (shape) {
       return {
-        ...shape.normalize(data),
+        ...shape.toV1(data),
         [Node.type]: type,
         [BlockNode.id]: data.id
       }
@@ -338,23 +377,17 @@ export class RichTextShape<Blocks>
     const links = new Map<Mark, string>()
     iterMarks(doc, mark => {
       if (mark[Mark.type] !== 'link') return
-      const id = mark.attrs!['data-entry']
+      const id = mark[LinkMark.id]
       if (id) links.set(mark, id)
     })
     async function loadLinks() {
       const linkIds = Array.from(new Set(links.values()))
-      linkInfoFields ??= {
-        url: Entry.url,
-        // This is MediaFile.location - but we're avoiding circular imports here
-        location: (Entry.data as any).get('location')
-      }
       const entries = await loader.resolveLinks(linkInfoFields, linkIds)
       const info = new Map(linkIds.map((id, i) => [id, entries[i]]))
       for (const [mark, id] of links) {
-        const type = mark.attrs!['data-type'] as 'entry' | 'file' | undefined
+        const type = mark![LinkMark.link] as 'entry' | 'file' | undefined
         const data = info.get(id)
-        if (data)
-          mark.attrs!['href'] = type === 'file' ? data.location : data.url
+        if (data) mark!['href'] = type === 'file' ? data.location : data.url
       }
     }
     await Promise.all(

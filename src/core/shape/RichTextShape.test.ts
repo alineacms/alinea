@@ -102,13 +102,9 @@ const value3 = [
         marks: [
           {
             [Node.type]: 'link',
-            attrs: {
-              'data-id': '2WyS6kjRXyd0vLoZP0p129IPnAA',
-              'data-entry': '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
-              'data-type': null,
-              href: null,
-              title: ''
-            }
+            _id: '2WyS6kjRXyd0vLoZP0p129IPnAA',
+            _entry: '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
+            title: ''
           }
         ]
       }
@@ -131,13 +127,9 @@ const value4 = [
         marks: [
           {
             [Node.type]: 'link',
-            attrs: {
-              'data-id': '2WyS6kjRXyd0vLoZP0p129IPnAA',
-              'data-entry': '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
-              'data-type': null,
-              href: null,
-              title: ''
-            }
+            _id: '2WyS6kjRXyd0vLoZP0p129IPnAA',
+            _entry: '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
+            title: ''
           }
         ]
       }
@@ -160,13 +152,9 @@ const value5 = [
         marks: [
           {
             [Node.type]: 'link',
-            attrs: {
-              'data-id': 'xyz',
-              'data-entry': '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
-              'data-type': null,
-              href: null,
-              title: ''
-            }
+            _id: 'xyz',
+            _entry: '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
+            title: ''
           }
         ]
       }
@@ -247,7 +235,7 @@ test('normalize', () => {
       field4: 'b'
     }
   ]
-  const normalized = shape.normalize(old)
+  const normalized = shape.toV1(old)
   assert.equal(normalized, value1)
 })
 

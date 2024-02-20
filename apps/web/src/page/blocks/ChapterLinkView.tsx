@@ -10,12 +10,7 @@ const styles = fromModule(css)
 export function ChapterLinkView({link}: Infer<typeof ChapterLinkBlock>) {
   if (!link || !link.url) return null
   return (
-    <Link
-      href={link.url}
-      className={styles.root()}
-      target={link._type === 'url' ? '_blank' : undefined}
-      rel={link._type === 'url' ? 'nofollow noopener' : undefined}
-    >
+    <Link href={link.url} className={styles.root()}>
       <HStack center gap={8}>
         <span className={styles.root.title()}>
           {(link.description || link.title) as string}

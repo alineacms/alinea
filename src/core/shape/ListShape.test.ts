@@ -106,7 +106,7 @@ test('normalize', () => {
       }
     }
   ]
-  const pass = shape.normalize(oldValue)
+  const pass = shape.toV1(oldValue)
   assert.equal(pass, [
     {
       _id: 'unique1',

@@ -6,6 +6,7 @@ import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 
 export interface UrlReference extends Reference {
+  _type: 'url'
   _url: string
   _title: string
   _target: string

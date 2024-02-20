@@ -132,12 +132,12 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
   return (
     <>
       {links?.map(link => {
-        switch (link.type) {
+        switch (link._type) {
           case 'entry':
             return (
               <Link
                 href={link.url}
-                key={link.id}
+                key={link._id}
                 className={style()}
                 activeFor={link.active}
               >

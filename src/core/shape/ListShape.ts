@@ -62,7 +62,7 @@ export class ListShape<Row extends ListRow>
   create() {
     return this.initialValue ?? ([] as Array<Row>)
   }
-  normalize(value: any) {
+  toV1(value: any) {
     if (!Array.isArray(value)) return []
     return value.map(this.normalizeRow).filter(Boolean) as Array<Row>
   }
@@ -72,7 +72,7 @@ export class ListShape<Row extends ListRow>
     if (!id || !type) return undefined
     const shape = this.shapes[type]
     return {
-      ...shape.normalize(data),
+      ...shape.toV1(data),
       [ListRow.type]: type,
       [ListRow.id]: id,
       [ListRow.index]: index

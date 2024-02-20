@@ -120,7 +120,7 @@ export class UnionShape<T extends UnionRow>
     if (this.postProcess) await this.postProcess(value, loader)
   }
 
-  normalize(value: any): T {
+  toV1(value: any): T {
     if (Array.isArray(value)) value = value[0] ?? {}
     if (!value) return {} as T
     if (UnionRow.type in value) return value
@@ -128,7 +128,7 @@ export class UnionShape<T extends UnionRow>
     if (!id || !type) return {} as T
     const shape = this.shapes[type]
     return {
-      ...shape.normalize(data),
+      ...shape.toV1(data),
       [UnionRow.type]: type,
       [UnionRow.id]: id
     } as T

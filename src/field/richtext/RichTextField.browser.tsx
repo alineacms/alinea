@@ -11,7 +11,7 @@ import {Field} from 'alinea/core/Field'
 import {RichTextField} from 'alinea/core/field/RichTextField'
 import {createId} from 'alinea/core/Id'
 import {Schema} from 'alinea/core/Schema'
-import {BlockNode, ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
+import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
@@ -21,6 +21,7 @@ import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -167,6 +168,7 @@ export function RichTextInput<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
   const {value, mutator, options, error} = useField(field)
+  const forceUpdate = useForceUpdate()
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
   const {readOnly, schema} = options
@@ -205,6 +207,7 @@ export function RichTextInput<Blocks extends Schema>({
     }),
     [fragment]
   )
+  console.log(content)
   const onFocus = useCallback(
     ({event}: {event: Event}) => focusToggle(event.currentTarget),
     [focusToggle]
@@ -234,6 +237,7 @@ export function RichTextInput<Blocks extends Schema>({
     editor.setOptions({editable: isEditable})
   }, [isEditable])
   useEffect(() => {
+    editor.on('transaction', forceUpdate)
     return () => editor.destroy()
   }, [editor])
   return (
@@ -267,11 +271,28 @@ export function RichTextInput<Blocks extends Schema>({
 }
 
 function toContent(node: Node): JSONContent {
-  if (Node.isText(node)) return {type: 'text', text: node[TextNode.text]}
-  const {[Node.type]: type, ...attrs} = node
-  if (Node.isElement(node))
-    return {type, content: node[ElementNode.content]?.map(toContent), attrs}
-  if (Node.isBlock(node))
+  if (Node.isText(node))
+    return {
+      type: 'text',
+      text: node[TextNode.text],
+      marks: node[TextNode.marks]?.map(mark => {
+        const {[Mark.type]: type, ...attrs} = mark
+        const res = Object.fromEntries(
+          entries(attrs).map(([key, value]) => {
+            if (key.startsWith('_')) return [`data-${key.slice(1)}`, value]
+            return [key, value]
+          })
+        )
+        return {type, attrs: res}
+      })
+    }
+  if (Node.isElement(node)) {
+    const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
+    return {type, content: content?.map(toContent), attrs}
+  }
+  if (Node.isBlock(node)) {
+    const {[Node.type]: type} = node
     return {type, attrs: {[BlockNode.id]: node[BlockNode.id]}}
+  }
   throw new TypeError('Invalid node')
 }

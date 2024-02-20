@@ -16,7 +16,7 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
   toY(value: T) {
     return value
   }
-  normalize(value: any): T {
+  toV1(value: any): T {
     return value
   }
   fromY(yValue: any) {

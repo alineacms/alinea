@@ -7,7 +7,7 @@ import type {HTMLProps} from 'react'
 interface Anchor extends HTMLProps<HTMLAnchorElement> {
   'data-id'?: string
   'data-entry'?: string
-  'data-type'?: 'entry' | 'file' | 'url'
+  'data-link'?: 'entry' | 'file' | 'url'
 }
 
 export function referenceToAttributes(reference: Reference): Anchor {
@@ -18,7 +18,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': undefined,
-        'data-type': 'url',
+        'data-link': 'url',
         href: ref._url,
         target: ref._target
       }
@@ -28,7 +28,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
-        'data-type': 'entry',
+        'data-link': 'entry',
         href: undefined,
         target: undefined
       }
@@ -38,7 +38,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
-        'data-type': 'file',
+        'data-link': 'file',
         href: undefined,
         target: undefined
       }
@@ -65,7 +65,7 @@ export function attributesToReference(
   if (attributes['data-entry'])
     return {
       [Reference.id]: id,
-      [Reference.type]: attributes['data-type'] === 'file' ? 'file' : 'entry',
+      [Reference.type]: attributes['data-link'] === 'file' ? 'file' : 'entry',
       [EntryReference.entry]: attributes['data-entry']
     } as EntryReference
   return {
