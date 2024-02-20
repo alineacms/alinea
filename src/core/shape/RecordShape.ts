@@ -91,7 +91,7 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
       const isUnderscored = key.startsWith('_')
       const oldValue = isUnderscored ? self[key.slice(1)] : self[key]
       const value = self[key] ?? oldValue
-      res[key] = this.shapes[key].toV1(value)
+      if (value !== undefined) res[key] = this.shapes[key].toV1(value)
     }
     return res as T
   }

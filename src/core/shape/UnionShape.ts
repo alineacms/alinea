@@ -128,9 +128,9 @@ export class UnionShape<T extends UnionRow>
     if (!id || !type) return {} as T
     const shape = this.shapes[type]
     return {
-      ...shape.toV1(data),
       [UnionRow.type]: type,
-      [UnionRow.id]: id
+      [UnionRow.id]: id,
+      ...shape.toV1(data)
     } as T
   }
 

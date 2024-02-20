@@ -71,11 +71,12 @@ export class ListShape<Row extends ListRow>
     const {id, type, index, ...data} = row as any
     if (!id || !type) return undefined
     const shape = this.shapes[type]
+    const updated = shape.toV1(data)
     return {
-      ...shape.toV1(data),
       [ListRow.type]: type,
       [ListRow.id]: id,
-      [ListRow.index]: index
+      [ListRow.index]: index,
+      ...updated
     } as Row
   }
   toY(value: Array<Row>) {

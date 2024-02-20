@@ -191,13 +191,14 @@ export class RichTextShape<Blocks>
             ['data-type']: link,
             ...rest
           } = attrs
-          return {
-            [Mark.type]: type,
-            [LinkMark.id]: id,
-            [LinkMark.entry]: entry,
-            [LinkMark.link]: link,
-            ...rest
-          }
+          const res: Record<string, string> = {}
+          if (type) res[Mark.type] = type
+          if (id) res[LinkMark.id] = id
+          if (entry) res[LinkMark.entry] = entry
+          if (link) res[LinkMark.link] = link
+          for (const [key, value] of entries(rest))
+            if (typeof value === 'string') res[key] = rest[key]
+          return res
         })
       }
     }
@@ -205,13 +206,16 @@ export class RichTextShape<Blocks>
     const shape = this.blocks[type]
     if (shape) {
       return {
-        ...shape.toV1(data),
         [Node.type]: type,
-        [BlockNode.id]: data.id
+        [BlockNode.id]: data.id,
+        ...shape.toV1(data)
       }
     }
-    const content = data.content?.map(this.normalizeRow)
-    return {...data, [Node.type]: type, [ElementNode.content]: content}
+    const {content, ...rest} = data
+    if (type === 'heading' && rest.textAlign === 'left') delete rest.textAlign
+    const res = {[Node.type]: type, ...rest}
+    if (content) res[ElementNode.content] = content.map(this.normalizeRow)
+    return res
   }
   toY(value: TextDoc<Blocks>) {
     const map = new Y.Map()
@@ -244,9 +248,9 @@ export class RichTextShape<Blocks>
         const shape = types[node[Node.type]]
         if (shape)
           return {
-            ...shape.fromY(map.get(node[BlockNode.id])),
             [Node.type]: node[Node.type],
-            [BlockNode.id]: node[BlockNode.id]
+            [BlockNode.id]: node[BlockNode.id],
+            ...shape.fromY(map.get(node[BlockNode.id]))
           } satisfies BlockNode
       }
       return node
