@@ -43,14 +43,15 @@ export interface RequiredEntryFields extends Partial<EntryRow> {
 }
 
 export function parseRecord(record: EntryRecord) {
+  const oldest = record.alinea as any
   const {
     [META_KEY]: old,
     [EntryRecord.id]: entryId = old?.entryId! ?? record.id,
     [EntryRecord.type]: type = old?.type! ?? record.type,
-    [EntryRecord.index]: index = old?.index! ?? record.index,
-    [EntryRecord.i18nId]: i18nId = old?.i18nId! ?? record.i18nId,
-    [EntryRecord.root]: root = old?.root! ?? record.root,
-    [EntryRecord.seeded]: seeded = (old?.seeded as string) ?? record.seeded,
+    [EntryRecord.index]: index = old?.index! ?? oldest?.index,
+    [EntryRecord.i18nId]: i18nId = old?.i18nId! ?? oldest?.i18nId,
+    [EntryRecord.root]: root = old?.root! ?? oldest?.root,
+    [EntryRecord.seeded]: seeded = (old?.seeded as string) ?? oldest?.seeded,
     ...data
   } = record
   return {

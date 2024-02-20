@@ -644,14 +644,14 @@ export class Database implements Syncable {
               )
             }
           }
+          await query(
+            EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
+          )
           seenSeeds.add(key)
           seenVersions.push(
             await query(
               EntryRow().insert(withHash).returning(EntryRow.versionId)
             )
-          )
-          await query(
-            EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
           )
           inserted.push(`${entry.entryId}.${entry.phase}`)
         } catch (e: any) {
