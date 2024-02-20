@@ -207,7 +207,6 @@ export function RichTextInput<Blocks extends Schema>({
     }),
     [fragment]
   )
-  console.log(content)
   const onFocus = useCallback(
     ({event}: {event: Event}) => focusToggle(event.currentTarget),
     [focusToggle]

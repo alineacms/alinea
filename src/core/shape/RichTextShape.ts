@@ -377,20 +377,19 @@ export class RichTextShape<Blocks>
   }
   async applyLinks(doc: TextDoc<Blocks>, loader: LinkResolver): Promise<void> {
     if (!Array.isArray(doc)) return
-    doc = doc.map(this.normalizeRow)
     const links = new Map<Mark, string>()
     iterMarks(doc, mark => {
       if (mark[Mark.type] !== 'link') return
-      const id = mark[LinkMark.id]
-      if (id) links.set(mark, id)
+      const entryId = mark[LinkMark.entry]
+      if (entryId) links.set(mark, entryId)
     })
     async function loadLinks() {
       const linkIds = Array.from(new Set(links.values()))
       const entries = await loader.resolveLinks(linkInfoFields, linkIds)
       const info = new Map(linkIds.map((id, i) => [id, entries[i]]))
-      for (const [mark, id] of links) {
+      for (const [mark, entryId] of links) {
         const type = mark![LinkMark.link] as 'entry' | 'file' | undefined
-        const data = info.get(id)
+        const data = info.get(entryId)
         if (data) mark!['href'] = type === 'file' ? data.location : data.url
       }
     }

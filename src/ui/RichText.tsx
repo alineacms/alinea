@@ -59,7 +59,12 @@ function nodeElement(
     case 'small':
       return <small />
     case 'link':
-      return <a {...attributes} />
+      const props = {
+        href: attributes?.href,
+        target: attributes?.target,
+        title: attributes?.title
+      }
+      return <a {...props} />
   }
 }
 
