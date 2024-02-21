@@ -156,7 +156,9 @@ export class ChangeSetCreator {
     const {workspace, files} = await this.graph.preferPublished.get(
       Query.whereId(entryId).select({
         workspace: Query.workspace,
-        files: Query.children(MediaFile, 999)
+        files: Query.children<typeof MediaFile>(undefined!, 999).where(
+          Query.type.is('MediaFile')
+        )
       })
     )
     const mediaDir =
