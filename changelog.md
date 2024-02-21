@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.2]
+
+- Fix entries showing up under the wrong parent if they had a parent with the
+  same path name in another root.
+- Add the option to remove media folders.
+
 ## [0.8.1]
 
 - Export `Entry` from `alinea/core` which was missing in the previous release.
