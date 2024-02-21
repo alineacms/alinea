@@ -33,11 +33,15 @@ export function createExample() {
     path: path('Path'),
     ...tabs(
       tab('Tab 1', {
-        name: path('Name')
+        fields: {
+          name: path('Name')
+        }
       }),
       tab('Tab 2', {
-        name: text('Name'),
-        name2: text('Name')
+        fields: {
+          name: text('Name'),
+          name2: text('Name')
+        }
       })
     ),
     [type.meta]: {
@@ -66,8 +70,10 @@ export function createExample() {
     }),
     richText: richText('Rich text field'),
     select: select('Select field', {
-      a: 'Option a',
-      b: 'Option b'
+      options: {
+        a: 'Option a',
+        b: 'Option b'
+      }
     }),
     number: number('Number field', {
       minValue: 0,
@@ -94,8 +100,10 @@ export function createExample() {
     }),
     multipleWithFields: link.multiple('Multiple With extra fields', {
       fields: type({
-        fieldA: text('Field A', {width: 0.5}),
-        fieldB: text('Field B', {width: 0.5, required: true})
+        fields: {
+          fieldA: text('Field A', {width: 0.5}),
+          fieldB: text('Field B', {width: 0.5, required: true})
+        }
       })
     }),
     list: list('My list field', {

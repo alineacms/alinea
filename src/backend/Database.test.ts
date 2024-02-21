@@ -28,7 +28,7 @@ test('remove child entries', async () => {
   assert.ok(res1)
   assert.is(res1.parent, sub.entryId)
   await example.commit(Edit.remove(parent.entryId))
-  const res2 = await example.get(Query.whereId(entry.entryId))
+  const res2 = await example.maybeGet(Query.whereId(entry.entryId))
   assert.not.ok(res2)
 })
 
@@ -153,6 +153,26 @@ test('field creators', async () => {
     level: 1,
     content: [{type: 'text', text: 'Test'}]
   })
+})
+
+test('remove media library and files', async () => {
+  const example = createExample()
+  const {MediaLibrary, MediaFile} = example.schema
+  const library = Edit.create(MediaLibrary)
+    .setWorkspace('main')
+    .setRoot('media')
+  await example.commit(library)
+  const upload = Edit.upload([
+    'test.txt',
+    new TextEncoder().encode('Hello, World!')
+  ]).setParent(library.entryId)
+  await example.commit(upload)
+  const result = await example.get(Query.whereId(upload.entryId))
+  assert.is(result.parent, library.entryId)
+  assert.is(result.root, 'media')
+  await example.commit(Edit.remove(library.entryId))
+  const result2 = await example.maybeGet(Query.whereId(upload.entryId))
+  assert.not.ok(result2)
 })
 
 test.run()

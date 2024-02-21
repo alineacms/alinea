@@ -658,9 +658,11 @@ export class EntryResolver {
           // console.warn('Could not decode preview update', err)
         }
     }
-    const result = await this.db.store(query)
-    const linkResolver = new LinkResolver(this, this.db.store, ctx.realm)
-    if (result) await this.post({linkResolver}, result, selection)
-    return result
+    return this.db.store.transaction(async tx => {
+      const result = await tx(query)
+      const linkResolver = new LinkResolver(this, tx, ctx.realm)
+      if (result) await this.post({linkResolver}, result, selection)
+      return result
+    })
   }
 }

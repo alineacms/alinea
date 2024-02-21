@@ -111,8 +111,8 @@ export class GraphRealm implements GraphRealmApi {
 
   get<S extends Projection | Type>(select: S): Promise<Projection.InferOne<S>>
   async get(select: any) {
-    const result = this.maybeGet(select)
-    if (result === null) throw new Error('Not found')
+    const result = await this.maybeGet(select)
+    if (result === null) throw new Error('Entry not found')
     return result
   }
 

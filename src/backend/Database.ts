@@ -24,7 +24,7 @@ import {Media} from './Media.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
-import {ChangeSetCreator} from './data/ChangeSet.js'
+import {Change, ChangeType} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {JsonLoader} from './loader/JsonLoader.js'
@@ -711,24 +711,21 @@ export class Database implements Syncable {
     })
 
     if (target && publishSeed.length > 0) {
-      const changeSetCreator = new ChangeSetCreator(this.config)
-      const mutations = publishSeed.map((seed): Mutation => {
+      const changes = publishSeed.map((seed): Change => {
         const workspace = this.config.workspaces[seed.workspace]
         const file = paths.join(
           Workspace.data(workspace).source,
           seed.root,
           seed.filePath
         )
-        return {
-          type: MutationType.Create,
-          entryId: seed.entryId,
-          file: file,
-          entry: seed
-        }
+        const record = createRecord(seed)
+        const contents = new TextDecoder().decode(
+          JsonLoader.format(this.config.schema, record)
+        )
+        return {type: ChangeType.Write, file, contents}
       })
-      const changes = changeSetCreator.create(mutations)
       await target.mutate(
-        {commitHash: '', mutations: changes},
+        {commitHash: '', mutations: [{changes, meta: undefined!}]},
         {logger: new Logger('seed')}
       )
     }

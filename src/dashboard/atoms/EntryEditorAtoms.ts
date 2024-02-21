@@ -511,6 +511,31 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
+  const deleteMediaLibrary = atom(null, (get, set) => {
+    const result = confirm(
+      'Are you sure you want to delete this folder and all the files in?'
+    )
+    if (!result) return
+    const published = entryData.phases[EntryPhase.Published]
+    const mutations: Array<Mutation> = [
+      {
+        type: MutationType.Archive,
+        entryId: published.entryId,
+        file: entryFile(published)
+      },
+      {
+        type: MutationType.Remove,
+        entryId: published.entryId,
+        file: entryFile({...published, phase: EntryPhase.Archived})
+      }
+    ]
+    return set(transact, {
+      transition: EntryTransition.DeleteArchived,
+      action: () => set(mutateAtom, mutations),
+      errorMessage: 'Could not complete delete action, please try again later'
+    })
+  })
+
   const deleteFile = atom(null, (get, set) => {
     // Prompt for confirmation
     const result = confirm('Are you sure you want to delete this file?')
@@ -684,6 +709,7 @@ export function createEntryEditor(entryData: EntryData) {
     archivePublished,
     publishArchived,
     deleteFile,
+    deleteMediaLibrary,
     deleteArchived,
     saveTranslation,
     discardEdits,
