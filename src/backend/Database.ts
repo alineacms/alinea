@@ -389,7 +389,11 @@ export class Database implements Syncable {
     const {Parent} = alias(EntryRow)
     const res = await tx(
       EntryRow().set({
-        parent: Parent({childrenDir: EntryRow.parentDir})
+        parent: Parent({
+          childrenDir: EntryRow.parentDir,
+          workspace: EntryRow.workspace,
+          root: EntryRow.root
+        })
           .select(Parent.entryId)
           .maybeFirst(),
         active: EntryRealm.isActive,
