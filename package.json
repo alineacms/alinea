@@ -90,7 +90,7 @@
     "typescript-plugin-css-modules": "^5.0.2",
     "uvu": "^0.5.1"
   },
-  "packageManager": "yarn@3.2.0",
+  "packageManager": "yarn@4.1.0",
   "resolutions": {
     "esbuild": "0.19.12",
     "yjs": "13.6.11",
