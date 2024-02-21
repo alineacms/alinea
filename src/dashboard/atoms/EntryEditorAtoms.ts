@@ -513,7 +513,7 @@ export function createEntryEditor(entryData: EntryData) {
 
   const deleteMediaLibrary = atom(null, (get, set) => {
     const result = confirm(
-      'Are you sure you want to delete this folder and all the files in?'
+      'Are you sure you want to delete this folder and all its files?'
     )
     if (!result) return
     const published = entryData.phases[EntryPhase.Published]
