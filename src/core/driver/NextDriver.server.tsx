@@ -97,7 +97,7 @@ class NextDriver extends DefaultDriver implements NextApi {
     return response ?? new Response('Not found', {status: 404})
   }
 
-  previewHandler = async (request: Request) => {
+  previewHandler = async (request: Request, config?: {prefix?: string}) => {
     const {draftMode, cookies} = await import('next/headers.js')
     const {searchParams} = new URL(request.url)
     const params = SearchParams({
@@ -127,7 +127,7 @@ class NextDriver extends DefaultDriver implements NextApi {
     // Next.js incorrectly reports 0.0.0.0 as the hostname if the server is
     // listening on all interfaces
     if (source.hostname === '0.0.0.0') source.hostname = 'localhost'
-    const location = new URL(url, source.origin)
+    const location = new URL(config?.prefix ? `/${config?.prefix}${url}` : url, source.origin)
     draftMode().enable()
     return new Response(`Redirecting...`, {
       status: 302,
