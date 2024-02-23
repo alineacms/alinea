@@ -56,14 +56,16 @@ async function getPage(params: DocPageParams) {
 
 export async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages = await generateStaticParams()
-  return pages.map(page => {
-    return {
-      url: `/${
-        page.framework === 'next' ? 'docs' : `docs:${page.framework}`
-      }/${page.slug.join('/')}`,
-      priority: 0.9
-    }
-  })
+  return pages
+    .filter(page => supportedFrameworks.some(f => f.name === page.framework))
+    .map(page => {
+      return {
+        url: `/${
+          page.framework === 'next' ? 'docs' : `docs:${page.framework}`
+        }/${page.slug.join('/')}`,
+        priority: 0.9
+      }
+    })
 }
 
 export const dynamicParams = false
@@ -73,12 +75,17 @@ export async function generateStaticParams() {
     .find(Query.select(Query.url))
   return urls
     .flatMap(url => {
-      return supportedFrameworks.map(framework => {
-        return {
-          framework: framework.name,
-          slug: url.split('/').slice(2)
-        }
-      })
+      return supportedFrameworks
+        .map(framework => {
+          return {
+            framework: framework.name,
+            slug: url.split('/').slice(2)
+          }
+        })
+        .concat({
+          framework: url.split('/')[2],
+          slug: url.split('/').slice(3)
+        })
     })
     .concat(
       supportedFrameworks.map(framework => {

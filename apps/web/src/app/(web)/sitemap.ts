@@ -1,12 +1,12 @@
 import type {MetadataRoute} from 'next'
 
 const pages = [
-  import('../../page/DocPage'),
-  import('../../page/HomePage'),
-  import('../../page/BlogPostPage'),
-  import('../../page/BlogPage'),
-  import('../../page/GenericPage'),
-  import('../../page/PlaygroundPage')
+  import('@/page/DocPage'),
+  import('@/page/HomePage'),
+  import('@/page/BlogPostPage'),
+  import('@/page/BlogPage'),
+  import('@/page/GenericPage'),
+  import('@/page/PlaygroundPage')
 ]
 
 export default function sitemap(): Promise<MetadataRoute.Sitemap> {
