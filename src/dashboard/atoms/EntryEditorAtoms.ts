@@ -8,6 +8,7 @@ import {Field} from 'alinea/core/Field'
 import {Graph} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {Query} from 'alinea/core/Query'
 import {Root} from 'alinea/core/Root'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
@@ -360,13 +361,16 @@ export function createEntryEditor(entryData: EntryData) {
       const shared = Type.sharedData(type, entry.data)
       if (shared) {
         const translations = await graph.preferPublished.find(
-          Entry({i18nId: entry.i18nId})
+          Entry({i18nId: entry.i18nId}).select({
+            ...Entry,
+            parentPaths: Query.parents().select(Entry.path)
+          })
         )
         for (const translation of translations) {
           if (translation.locale === entry.locale) continue
           res.push({
             type: MutationType.Patch,
-            file: entryFile(translation),
+            file: entryFile(translation, translation.parentPaths),
             entryId: translation.entryId,
             patch: shared
           })
