@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.8.3]
+
+- Fix publishing shared fields when the parent paths are not the same.
+
 ## [0.8.2]
 
 - Fix entries showing up under the wrong parent if they had a parent with the
