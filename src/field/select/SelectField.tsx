@@ -44,13 +44,14 @@ export function select(
   options?: any
 ): SelectField<any> {
   const items = itemsOrOptions.options ?? itemsOrOptions
+  const fieldOptions = itemsOrOptions.options ? itemsOrOptions : options
   const keys = Object.keys(items)
   return new SelectField({
     hint: Hint.Union(keys.map(key => Hint.Literal(key))),
     options: {
       label,
       options: items,
-      ...options
+      ...fieldOptions
     }
   })
 }
