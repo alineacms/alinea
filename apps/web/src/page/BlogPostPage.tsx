@@ -5,6 +5,7 @@ import {TextView} from '@/page/blocks/TextBlockView'
 import {BlogPost} from '@/schema/BlogPost'
 import {Query} from 'alinea'
 import {fromModule} from 'alinea/ui'
+import {MetadataRoute} from 'next'
 import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
@@ -13,6 +14,11 @@ const styles = fromModule(css)
 
 export interface BlogPostPageProps {
   params: {slug: string}
+}
+
+export async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const pages = await generateStaticParams()
+  return pages.map(page => ({url: `/blog/${page.slug}`, priority: 0.9}))
 }
 
 export const dynamicParams = false

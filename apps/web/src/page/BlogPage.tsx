@@ -6,10 +6,15 @@ import {BlogOverview} from '@/schema/BlogOverview'
 import {BlogPost} from '@/schema/BlogPost'
 import {Query} from 'alinea'
 import {VStack, fromModule} from 'alinea/ui'
+import {MetadataRoute} from 'next'
 import css from './BlogPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
 
 const styles = fromModule(css)
+
+export function sitemap(): MetadataRoute.Sitemap {
+  return [{url: '/blog', priority: 0.5}]
+}
 
 export default async function BlogPage() {
   const overview = await cms.get(

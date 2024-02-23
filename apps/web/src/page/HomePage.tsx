@@ -21,11 +21,16 @@ import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {fromModule} from 'alinea/ui/util/Styler'
 import {px} from 'alinea/ui/util/Units'
+import type {MetadataRoute} from 'next'
 import {ComponentType, PropsWithChildren} from 'react'
 import {Link} from '../layout/nav/Link'
 import css from './HomePage.module.scss'
 
 const styles = fromModule(css)
+
+export function sitemap(): MetadataRoute.Sitemap {
+  return [{url: '/', priority: 1}]
+}
 
 export async function generateMetadata() {
   const home = await cms.get(Home())
