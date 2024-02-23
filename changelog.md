@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.8.4]
+
+- Fix select field not using field options such as width or required.
+
 ## [0.8.3]
 
 - Fix publishing shared fields when the parent paths are not the same.
