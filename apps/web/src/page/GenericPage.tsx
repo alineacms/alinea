@@ -2,6 +2,7 @@ import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {Page} from '@/schema/Page'
 import {Query} from 'alinea'
+import type {MetadataRoute} from 'next'
 import {notFound} from 'next/navigation'
 import {TextFieldView} from './blocks/TextFieldView'
 
@@ -9,6 +10,11 @@ export interface GenericPageProps {
   params: {
     slug: string
   }
+}
+
+export async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const pages = await generateStaticParams()
+  return pages.map(page => ({url: `/${page.slug}`, priority: 0.5}))
 }
 
 export const dynamicParams = false

@@ -2,7 +2,7 @@ import {metadata} from 'alinea/field/metadata'
 import {PathField, path} from 'alinea/field/path'
 import {tab, tabs} from 'alinea/field/tabs'
 import {TextField, text} from 'alinea/field/text'
-import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {IcRoundShare} from 'alinea/ui/icons/IcRoundShare'
 import {
   Type,
@@ -38,7 +38,7 @@ export function document<Definition extends TypeDefinition>(
     fields: {
       ...(tabs(
         tab('Document', {
-          icon: IcRoundInsertDriveFile,
+          icon: IcRoundDescription,
           fields: {
             title: text('Title', {required: true, width: 0.5}),
             path: path('Path', {required: true, width: 0.5}),

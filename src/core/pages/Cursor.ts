@@ -66,6 +66,14 @@ export namespace Cursor {
       )
     }
 
+    whereId(entryId: string): Get<Row> {
+      return new Get<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'entryId')).is(entryId)[Expr.Data]
+        })
+      )
+    }
+
     whereUrl(url: string): Find<Row> {
       return new Find<Row>(
         this.with({
@@ -215,6 +223,14 @@ export namespace Cursor {
       return new Get(
         this.with({
           where: Expr.and(current ? Expr(current) : true, ...where)[Expr.Data]
+        })
+      )
+    }
+
+    whereId(entryId: string): Get<Row> {
+      return new Get<Row>(
+        this.with({
+          where: Expr(ExprData.Field({}, 'entryId')).is(entryId)[Expr.Data]
         })
       )
     }

@@ -271,6 +271,7 @@ export class EditOperation<Definition> extends Operation {
 }
 
 export class CreateOperation<Definition> extends Operation {
+  /** @internal */
   entry: Partial<Entry>
   private entryRow = async (cms: CMS) => {
     const partial = this.entry

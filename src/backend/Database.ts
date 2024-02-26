@@ -24,7 +24,7 @@ import {Media} from './Media.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
-import {ChangeSetCreator} from './data/ChangeSet.js'
+import {Change, ChangeType} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {JsonLoader} from './loader/JsonLoader.js'
@@ -389,7 +389,11 @@ export class Database implements Syncable {
     const {Parent} = alias(EntryRow)
     const res = await tx(
       EntryRow().set({
-        parent: Parent({childrenDir: EntryRow.parentDir})
+        parent: Parent({
+          childrenDir: EntryRow.parentDir,
+          workspace: EntryRow.workspace,
+          root: EntryRow.root
+        })
           .select(Parent.entryId)
           .maybeFirst(),
         active: EntryRealm.isActive,
@@ -574,13 +578,13 @@ export class Database implements Syncable {
     await this.init()
     const typeNames = Schema.typeNames(this.config.schema)
     const publishSeed: Array<EntryRow> = []
-    const changeSetCreator = new ChangeSetCreator(this.config)
 
     await this.store.transaction(async query => {
       const seenVersions: Array<string> = []
       const seenSeeds = new Set<string>()
       const inserted = []
       //const endScan = timer('Scanning entries')
+      const changes: Array<Change> = []
       for await (const file of source.entries()) {
         const fileHash = await createFileHash(file.contents)
         const exists = await query(
@@ -631,17 +635,15 @@ export class Database implements Syncable {
                 entry.root,
                 entry.filePath
               )
-              const create: Mutation = {
-                type: MutationType.Create,
-                entryId: entry.entryId,
-                file: file,
-                entry: withHash
-              }
-              const changes = changeSetCreator.create([create])
-              await target!.mutate(
-                {commitHash: '', mutations: changes},
-                {logger: new Logger('seed')}
+              const record = createRecord(entry)
+              const contents = new TextDecoder().decode(
+                JsonLoader.format(this.config.schema, record)
               )
+              changes.push({
+                type: ChangeType.Write,
+                file,
+                contents
+              })
             }
           }
           await query(
@@ -660,6 +662,11 @@ export class Database implements Syncable {
           process.exit(1)
         }
       }
+      if (fix && changes.length > 0)
+        await target!.mutate(
+          {commitHash: '', mutations: [{changes, meta: undefined!}]},
+          {logger: new Logger('seed')}
+        )
       const stableI18nIds = new Map<string, string>()
       for (const seed of this.seed.values()) {
         const key = seedKey(seed.workspace, seed.root, seed.filePath)
@@ -736,23 +743,21 @@ export class Database implements Syncable {
     })
 
     if (target && publishSeed.length > 0) {
-      const mutations = publishSeed.map((seed): Mutation => {
+      const changes = publishSeed.map((seed): Change => {
         const workspace = this.config.workspaces[seed.workspace]
         const file = paths.join(
           Workspace.data(workspace).source,
           seed.root,
           seed.filePath
         )
-        return {
-          type: MutationType.Create,
-          entryId: seed.entryId,
-          file: file,
-          entry: seed
-        }
+        const record = createRecord(seed)
+        const contents = new TextDecoder().decode(
+          JsonLoader.format(this.config.schema, record)
+        )
+        return {type: ChangeType.Write, file, contents}
       })
-      const changes = changeSetCreator.create(mutations)
       await target.mutate(
-        {commitHash: '', mutations: changes},
+        {commitHash: '', mutations: [{changes, meta: undefined!}]},
         {logger: new Logger('seed')}
       )
     }

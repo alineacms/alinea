@@ -10,7 +10,7 @@ import {BodyFieldView} from '@/page/blocks/BodyFieldView'
 import {Doc} from '@/schema/Doc'
 import {Query} from 'alinea'
 import {HStack, VStack, fromModule} from 'alinea/ui'
-import {Metadata} from 'next'
+import {Metadata, MetadataRoute} from 'next'
 import {WebTypo} from '../layout/WebTypo'
 import css from './DocPage.module.scss'
 
@@ -51,6 +51,20 @@ async function getPage(params: DocPageParams) {
       })
     )
   }
+}
+
+export async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const pages = await generateStaticParams()
+  return pages
+    .filter(page => supportedFrameworks.some(f => f.name === page.framework))
+    .map(page => {
+      return {
+        url: `/${
+          page.framework === 'next' ? 'docs' : `docs:${page.framework}`
+        }/${page.slug.join('/')}`,
+        priority: 0.9
+      }
+    })
 }
 
 export const dynamicParams = false

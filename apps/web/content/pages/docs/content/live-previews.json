@@ -67,7 +67,7 @@
         {
           "id": "2YlCBIFhktYqXLnxlG8MWbFhkA4",
           "type": "CodeBlock",
-          "code": "export const cms = createNextCMS({\n  // schema and workspaces ...\n  preview:\n    process.env.NODE_ENV === 'development'\n      ? 'http://localhost:3000/api/preview'\n      : '/api/preview'\n})",
+          "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  // schema and workspaces ...\n  preview:\n    process.env.NODE_ENV === 'development'\n      ? 'http://localhost:3000/api/preview'\n      : '/api/preview'\n})",
           "fileName": "cms.tsx",
           "language": "",
           "compact": false

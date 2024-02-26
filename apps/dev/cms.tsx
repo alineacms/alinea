@@ -90,6 +90,7 @@ const Fields = Config.document('Fields', {
           }),
           richText: Field.richText('Rich text field'),
           select: Field.select('Select field', {
+            width: 0.5,
             options: {
               a: 'Option a',
               b: 'Option b'

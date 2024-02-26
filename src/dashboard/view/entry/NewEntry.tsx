@@ -65,7 +65,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
     async () => {
-      return graph.preferDraft.get(
+      return graph.preferDraft.maybeGet(
         Entry({entryId: parentId}).select(parentData)
       )
     },
@@ -209,7 +209,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       phase: config.enableDrafts ? EntryPhase.Draft : EntryPhase.Published
     }
     const parentId = form.data().parent?.[EntryReference.entry]
-    const parent = await graph.preferPublished.get(
+    const parent = await graph.preferPublished.maybeGet(
       Entry({entryId: parentId}).select(parentData)
     )
     const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
@@ -220,7 +220,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const url = entryUrl(entryType, {...data, parentPaths})
     const copyFrom = form.data().copyFrom?.[EntryReference.entry]
     const entryData = copyFrom
-      ? await graph.preferPublished.get(
+      ? await graph.preferPublished.maybeGet(
           Entry({entryId: copyFrom}).select(Entry.data)
         )
       : {}

@@ -1,0 +1,59 @@
+{
+  "title": "Shared test",
+  "text": "",
+  "hello": "hello",
+  "richText": [],
+  "externalLink": {},
+  "entry": {},
+  "entryWithCondition": {},
+  "linkMultiple": [],
+  "image": {},
+  "images": [],
+  "file": {},
+  "withFields": {},
+  "multipleWithFields": [],
+  "list": [],
+  "withInitial": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "This is a paragraph with initial value"
+        }
+      ]
+    }
+  ],
+  "nested": [],
+  "street": "",
+  "streetNr": "",
+  "box": "",
+  "zip": "",
+  "city": "",
+  "country": "",
+  "object": {
+    "fieldA": "",
+    "fieldB": ""
+  },
+  "tabA": "",
+  "tabB": "",
+  "shared": "Test 123",
+  "nestedList": [],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2clUBzDGIASu8hwxSNkEf8Xk4qc",
+    "type": "Fields",
+    "index": "a1",
+    "i18nId": "2clU9Blq6V0P1PESi9hUpSha3ah",
+    "root": "pages"
+  }
+}

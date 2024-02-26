@@ -8,6 +8,7 @@ import {Draft} from 'alinea/core/Draft'
 import {Entry} from 'alinea/core/Entry'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {Graph} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {PreviewUpdate, ResolveRequest, Resolver} from 'alinea/core/Resolver'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
@@ -60,7 +61,10 @@ export class Handler implements Resolver {
       options.config.schema,
       this.parsePreview.bind(this)
     )
-    this.changes = new ChangeSetCreator(options.config)
+    this.changes = new ChangeSetCreator(
+      options.config,
+      new Graph(options.config, this)
+    )
     const auth = options.auth ?? Auth.anonymous()
     this.connect = ctx => new HandlerConnection(this, ctx)
     this.router = createRouter(auth, this.connect)
@@ -153,7 +157,7 @@ class HandlerConnection implements Connection {
   ): Promise<{commitHash: string}> {
     const {target, db} = this.handler.options
     if (!target) throw new Error('Target not available')
-    const changeSet = this.handler.changes.create(mutations)
+    const changeSet = await this.handler.changes.create(mutations)
     const {commitHash: fromCommitHash} = await this.handler.syncPending()
     let toCommitHash: string
     try {

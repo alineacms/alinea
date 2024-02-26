@@ -8,6 +8,7 @@ import {Field} from 'alinea/core/Field'
 import {Graph} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {Query} from 'alinea/core/Query'
 import {Root} from 'alinea/core/Root'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
@@ -360,13 +361,16 @@ export function createEntryEditor(entryData: EntryData) {
       const shared = Type.sharedData(type, entry.data)
       if (shared) {
         const translations = await graph.preferPublished.find(
-          Entry({i18nId: entry.i18nId})
+          Entry({i18nId: entry.i18nId}).select({
+            ...Entry,
+            parentPaths: Query.parents().select(Entry.path)
+          })
         )
         for (const translation of translations) {
           if (translation.locale === entry.locale) continue
           res.push({
             type: MutationType.Patch,
-            file: entryFile(translation),
+            file: entryFile(translation, translation.parentPaths),
             entryId: translation.entryId,
             patch: shared
           })
@@ -508,6 +512,31 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.PublishArchived,
       action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete publish action, please try again later'
+    })
+  })
+
+  const deleteMediaLibrary = atom(null, (get, set) => {
+    const result = confirm(
+      'Are you sure you want to delete this folder and all its files?'
+    )
+    if (!result) return
+    const published = entryData.phases[EntryPhase.Published]
+    const mutations: Array<Mutation> = [
+      {
+        type: MutationType.Archive,
+        entryId: published.entryId,
+        file: entryFile(published)
+      },
+      {
+        type: MutationType.Remove,
+        entryId: published.entryId,
+        file: entryFile({...published, phase: EntryPhase.Archived})
+      }
+    ]
+    return set(transact, {
+      transition: EntryTransition.DeleteArchived,
+      action: () => set(mutateAtom, mutations),
+      errorMessage: 'Could not complete delete action, please try again later'
     })
   })
 
@@ -684,6 +713,7 @@ export function createEntryEditor(entryData: EntryData) {
     archivePublished,
     publishArchived,
     deleteFile,
+    deleteMediaLibrary,
     deleteArchived,
     saveTranslation,
     discardEdits,

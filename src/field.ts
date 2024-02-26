@@ -2,7 +2,11 @@ export {check} from 'alinea/field/check'
 export {code} from 'alinea/field/code'
 export {date} from 'alinea/field/date'
 export {json} from 'alinea/field/json'
-export {link} from 'alinea/field/link'
+export {entry} from 'alinea/field/link/EntryLink'
+export {file} from 'alinea/field/link/FileLink'
+export {image} from 'alinea/field/link/ImageLink'
+export {link} from 'alinea/field/link/Link'
+export {url} from 'alinea/field/link/UrlLink'
 export {list} from 'alinea/field/list'
 export {metadata} from 'alinea/field/metadata'
 export {number} from 'alinea/field/number'
@@ -13,9 +17,3 @@ export {select} from 'alinea/field/select'
 export {tab, tabs} from 'alinea/field/tabs'
 export {text} from 'alinea/field/text'
 export {view} from 'alinea/field/view'
-
-import {link} from 'alinea/field/link'
-export const entry = link.entry
-export const image = link.image
-export const file = link.file
-export const url = link.url
