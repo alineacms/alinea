@@ -16,11 +16,6 @@ export interface BlogPostPageProps {
   params: {slug: string}
 }
 
-export async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = await generateStaticParams()
-  return pages.map(page => ({url: `/blog/${page.slug}`, priority: 0.9}))
-}
-
 export const dynamicParams = false
 export async function generateStaticParams() {
   const slugs = await cms.find(Query(BlogPost).select(Query.path))
@@ -58,4 +53,9 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
       </PageContent>
     </PageContainer>
   )
+}
+
+BlogPostPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  const pages = await generateStaticParams()
+  return pages.map(page => ({url: `/blog/${page.slug}`, priority: 0.9}))
 }

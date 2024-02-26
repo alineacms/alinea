@@ -17,13 +17,14 @@ import {
 import {unwrap} from 'jotai/utils'
 
 export interface FieldInfo<
-  Value = any,
+  StoredValue = any,
+  QueryValue = any,
   Mutator = any,
-  Options extends FieldOptions<Value> = FieldOptions<Value>
+  Options extends FieldOptions<StoredValue> = FieldOptions<StoredValue>
 > {
   key: string
-  field: Field<Value, Mutator, Options>
-  value: Atom<Value>
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+  value: Atom<StoredValue>
   options: Atom<Options | Promise<Options>>
   mutator: Mutator
 }
@@ -147,16 +148,21 @@ export class FormAtoms<T = any> {
     return this.fieldInfo(field).key
   }
 
-  fieldInfo<Value, Mutator, Options extends FieldOptions<Value>>(
-    field: Field<Value, Mutator, Options>
-  ): FieldInfo<Value, Mutator, Options> {
+  fieldInfo<
+    StoredValue,
+    QueryValue,
+    Mutator,
+    Options extends FieldOptions<StoredValue>
+  >(
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  ): FieldInfo<StoredValue, QueryValue, Mutator, Options> {
     const res = this.fields.get(Field.ref(field))
     const label = Field.label(field)
     if (!res) {
       if (this.options.parent) return this.options.parent.fieldInfo(field)
       throw new Error(`Field not found: ${label}`)
     }
-    return res as FieldInfo<Value, Mutator, Options>
+    return res as FieldInfo<StoredValue, QueryValue, Mutator, Options>
   }
 }
 

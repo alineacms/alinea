@@ -53,20 +53,6 @@ async function getPage(params: DocPageParams) {
   }
 }
 
-export async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = await generateStaticParams()
-  return pages
-    .filter(page => supportedFrameworks.some(f => f.name === page.framework))
-    .map(page => {
-      return {
-        url: `/${
-          page.framework === 'next' ? 'docs' : `docs:${page.framework}`
-        }/${page.slug.join('/')}`,
-        priority: 0.9
-      }
-    })
-}
-
 export const dynamicParams = false
 export async function generateStaticParams() {
   const urls = await cms
@@ -201,4 +187,18 @@ export default async function DocPage({params}: DocPageProps) {
       </HStack>
     </PageWithSidebar>
   )
+}
+
+DocPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  const pages = await generateStaticParams()
+  return pages
+    .filter(page => supportedFrameworks.some(f => f.name === page.framework))
+    .map(page => {
+      return {
+        url: `/${
+          page.framework === 'next' ? 'docs' : `docs:${page.framework}`
+        }/${page.slug.join('/')}`,
+        priority: 0.9
+      }
+    })
 }

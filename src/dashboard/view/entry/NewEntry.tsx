@@ -21,10 +21,10 @@ import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {link} from 'alinea/field/link'
+import {EntryLink, entry} from 'alinea/field/link'
 import {select} from 'alinea/field/select'
 import {text} from 'alinea/field/text'
-import {entryFields, entryPicker} from 'alinea/picker/entry/EntryPicker'
+import {entryPicker} from 'alinea/picker/entry/EntryPicker'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Button, Loader, fromModule} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
@@ -89,17 +89,18 @@ function NewEntryForm({parentId}: NewEntryProps) {
     .map(pair => pair[0])
   const root = useRoot()
   const parentField = useMemo(() => {
-    return link.entry('Parent', {
-      condition: Entry.type
-        .isIn(containerTypes)
-        .and(Entry.workspace.is(workspace))
-        .and(Entry.root.is(root.name)),
+    return entry('Parent', {
+      location: {
+        workspace,
+        root: root.name
+      },
+      condition: Entry.type.isIn(containerTypes),
       initialValue: preselectedId
-        ? ({
+        ? {
             [Reference.id]: 'parent',
             [Reference.type]: 'entry',
             [EntryReference.entry]: preselectedId
-          } as EntryReference)
+          }
         : undefined
     })
   }, [])
@@ -142,7 +143,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }, [])
 
   const copyFromField = useMemo(() => {
-    const copyFromField = link.entry('Copy content from')
+    const copyFromField = entry('Copy content from')
     return track.options(copyFromField, get => {
       const type = get(typeField)!
       return {
@@ -154,7 +155,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
             hint: undefined!,
             title: 'Copy content from',
             max: 1,
-            selection: entryFields
+            selection: EntryLink
           })
         }
       }

@@ -20,26 +20,26 @@ import {
   useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
-import { CSS, FirstArgument } from '@dnd-kit/utilities'
-import { Field } from 'alinea/core/Field'
-import { Picker } from 'alinea/core/Picker'
-import { Reference } from 'alinea/core/Reference'
-import { Type } from 'alinea/core/Type'
-import { ListRow } from 'alinea/core/shape/ListShape'
-import { entries } from 'alinea/core/util/Objects'
-import { FormRow } from 'alinea/dashboard/atoms/FormAtoms'
-import { InputForm } from 'alinea/dashboard/editor/InputForm'
-import { useField } from 'alinea/dashboard/editor/UseField'
-import { Create } from 'alinea/dashboard/view/Create'
-import { IconButton } from 'alinea/dashboard/view/IconButton'
-import { InputLabel } from 'alinea/dashboard/view/InputLabel'
-import { TextLabel, fromModule } from 'alinea/ui'
-import { Sink } from 'alinea/ui/Sink'
-import { IcRoundClose } from 'alinea/ui/icons/IcRoundClose'
+import {CSS, FirstArgument} from '@dnd-kit/utilities'
+import {Field} from 'alinea/core/Field'
+import {Picker} from 'alinea/core/Picker'
+import {Reference} from 'alinea/core/Reference'
+import {Type} from 'alinea/core/Type'
+import {ListRow} from 'alinea/core/shape/ListShape'
+import {entries} from 'alinea/core/util/Objects'
+import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useField} from 'alinea/dashboard/editor/UseField'
+import {Create} from 'alinea/dashboard/view/Create'
+import {IconButton} from 'alinea/dashboard/view/IconButton'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
+import {TextLabel, fromModule} from 'alinea/ui'
+import {Sink} from 'alinea/ui/Sink'
+import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
-import { IcRoundEdit } from 'alinea/ui/icons/IcRoundEdit'
-import { IcRoundLink } from 'alinea/ui/icons/IcRoundLink'
-import { CSSProperties, HTMLAttributes, Ref, Suspense, useState } from 'react'
+import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
+import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
+import {CSSProperties, HTMLAttributes, Ref, Suspense, useState} from 'react'
 import {
   LinkField,
   LinksField,
@@ -58,11 +58,11 @@ export const createLinks = Field.provideView(
   createLinksField
 )
 
-interface LinkInputProps<Row extends Reference> {
-  field: LinkField<Row>
+interface LinkInputProps<Row> {
+  field: LinkField<Reference, Row>
 }
 
-function SingleLinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
+function SingleLinkInput<Row>({field}: LinkInputProps<Row>) {
   const {options, value, mutator, error} = useField(field)
   const {readOnly} = options
   const [pickFrom, setPickFrom] = useState<string | undefined>()
@@ -72,7 +72,7 @@ function SingleLinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
     if (readOnly) return
     const selected = link[0]
     if (!pickFrom || !picker || !selected) return
-    mutator.replace(selected as Row)
+    mutator.replace(selected)
     setPickFrom(undefined)
   }
 
@@ -94,13 +94,13 @@ function SingleLinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
           <div className={styles.root.inner()}>
             <Sink.Root>
               {value && options.pickers[value[Reference.type]] ? (
-                <LinkInputRow<Row>
+                <LinkInputRow
                   readOnly={readOnly}
                   field={field}
                   rowId={value[Reference.id]}
                   fields={options.pickers[value[Reference.type]].fields}
                   picker={options.pickers[value[Reference.type]]}
-                  reference={value as Row}
+                  reference={value}
                   onRemove={() => mutator.replace(undefined)}
                   onEdit={() => setPickFrom(value[Reference.type])}
                 />
@@ -135,16 +135,16 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-interface LinksInputProps<Row extends Reference & ListRow> {
-  field: LinksField<Row>
+interface LinksInputProps<Row> {
+  field: LinksField<ListRow, Row>
 }
 
-function MultipleLinksInput<Row extends Reference & ListRow>({
-  field
-}: LinksInputProps<Row>) {
+function MultipleLinksInput<Row>({field}: LinksInputProps<Row>) {
   const {options, value, mutator, error} = useField(field)
   const {readOnly} = options
-  const [pickFrom, setPickFrom] = useState<{[Reference.type]: string, [Reference.id]?: string} | undefined>()
+  const [pickFrom, setPickFrom] = useState<
+    {[Reference.type]: string; [Reference.id]?: string} | undefined
+  >()
   const picker = pickFrom
     ? options.pickers[pickFrom[Reference.type]]
     : undefined
@@ -229,7 +229,7 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
                     if (!options.pickers[reference[ListRow.type]]) return null
                     const type = options.pickers[reference[ListRow.type]].fields
                     return (
-                      <LinkInputRowSortable<Row>
+                      <LinkInputRowSortable
                         key={reference[ListRow.id]}
                         rowId={reference[ListRow.id]}
                         field={field}
@@ -273,12 +273,12 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
                 }}
               >
                 {dragging && options.pickers[dragging[Reference.type]] ? (
-                  <LinkInputRow<Row>
+                  <LinkInputRow
                     field={field}
                     rowId={dragging._id}
                     fields={options.pickers[dragging[Reference.type]].fields}
                     picker={options.pickers[dragging[Reference.type]]}
-                    reference={dragging as Row}
+                    reference={dragging}
                     onRemove={() => mutator.remove(dragging._id)}
                     onEdit={() => setPickFrom(dragging)}
                     isDragOverlay
@@ -302,9 +302,7 @@ function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   return true
 }
 
-function LinkInputRowSortable<Row extends Reference>(
-  props: LinkInputRowProps<Row>
-) {
+function LinkInputRowSortable(props: LinkInputRowProps) {
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
       animateLayoutChanges,
@@ -327,13 +325,12 @@ function LinkInputRowSortable<Row extends Reference>(
   )
 }
 
-interface LinkInputRowProps<Row extends Reference>
-  extends HTMLAttributes<HTMLDivElement> {
+interface LinkInputRowProps extends HTMLAttributes<HTMLDivElement> {
   field: Field
   rowId: string
-  picker: Picker<Row>
-  fields: Type<Row> | undefined
-  reference: Row
+  picker: Picker<Reference>
+  fields: Type | undefined
+  reference: Reference
   onEdit(): void
   onRemove(): void
   isDragging?: boolean
@@ -345,7 +342,7 @@ interface LinkInputRowProps<Row extends Reference>
   multiple?: boolean
 }
 
-function LinkInputRow<Row extends Reference>({
+function LinkInputRow({
   field,
   rowId,
   picker,
@@ -361,7 +358,7 @@ function LinkInputRow<Row extends Reference>({
   readOnly,
   multiple,
   ...rest
-}: LinkInputRowProps<Row>) {
+}: LinkInputRowProps) {
   const RowView = picker.viewRow!
   const inner = (
     <div

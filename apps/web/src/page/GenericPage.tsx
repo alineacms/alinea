@@ -12,11 +12,6 @@ export interface GenericPageProps {
   }
 }
 
-export async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = await generateStaticParams()
-  return pages.map(page => ({url: `/${page.slug}`, priority: 0.5}))
-}
-
 export const dynamicParams = false
 export async function generateStaticParams() {
   const slugs = await cms.find(Query(Page).select(Query.path))
@@ -45,4 +40,9 @@ export default async function GenericPage({params}: GenericPageProps) {
       </PageContent>
     </PageContainer>
   )
+}
+
+GenericPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  const pages = await generateStaticParams()
+  return pages.map(page => ({url: `/${page.slug}`, priority: 0.5}))
 }

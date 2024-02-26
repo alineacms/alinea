@@ -1,6 +1,6 @@
 import {createId} from 'alinea/core/Id'
 import {Reference} from 'alinea/core/Reference'
-import {EntryReference, FileReference} from 'alinea/picker/entry/EntryReference'
+import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url'
 import type {HTMLProps} from 'react'
 
@@ -34,7 +34,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       }
     }
     case 'file': {
-      const ref = reference as FileReference
+      const ref = reference as EntryReference
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],

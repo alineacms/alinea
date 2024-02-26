@@ -1,5 +1,5 @@
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
-import {ImageReference, TextDoc} from 'alinea'
+import {ImageLink, TextDoc} from 'alinea'
 import {HStack, fromModule, imageBlurUrl} from 'alinea/ui'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -9,7 +9,7 @@ import {DemoText} from './DemoText'
 const styles = fromModule(css)
 
 export interface DemoHeaderProps {
-  image?: ImageReference
+  image?: ImageLink
   credit?: TextDoc
   backLink?: string
 }

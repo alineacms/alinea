@@ -1,5 +1,5 @@
 import {cms} from '@/cms'
-import {EntryReference, Query, UrlReference} from 'alinea'
+import {AnyLink, Query} from 'alinea'
 import {HStack, Stack, Styler, fromModule} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
@@ -16,15 +16,7 @@ import {NavTree} from './nav/NavTree'
 
 const styles = fromModule(css)
 
-export type HeaderLink =
-  | (EntryReference & {
-      label: string
-      active: string
-    })
-  | (UrlReference & {
-      label: string
-      active: string
-    })
+export type HeaderLink = AnyLink<{label: string; active: string}>
 
 export async function Header() {
   const links = await cms.get(Home().select(Home.links))
@@ -132,21 +124,16 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
   return (
     <>
       {links?.map(link => {
-        switch (link._type) {
-          case 'entry':
-            return (
-              <Link
-                href={link.url}
-                key={link._id}
-                className={style()}
-                activeFor={link.active}
-              >
-                {link.label || link.title}
-              </Link>
-            )
-          default:
-            return null
-        }
+        return (
+          <Link
+            href={link.href}
+            key={link._id}
+            className={style()}
+            activeFor={link.fields.active}
+          >
+            {link.fields.label || link.title}
+          </Link>
+        )
       })}
       <Link href="/changelog" className={style()}>
         Changelog

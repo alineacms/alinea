@@ -1,11 +1,9 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {Type, type} from 'alinea/core/Type'
 import {RecordField} from 'alinea/core/field/RecordField'
-import {link} from 'alinea/field/link'
+import {ImageField, image} from 'alinea/field/link'
 import {ObjectField, object} from 'alinea/field/object'
 import {TextField, text} from 'alinea/field/text'
-import {ImageReference} from '../../picker/entry/EntryReference.js'
-import {LinkField} from '../link/LinkField.js'
 
 export interface MetadataOptions
   extends FieldOptions<Type.Infer<MetadataFields>> {
@@ -19,7 +17,7 @@ export interface MetadataFields {
   description: TextField
   openGraph: ObjectField<{
     title: TextField
-    image: LinkField<ImageReference>
+    image: ImageField
     description: TextField
   }>
 }
@@ -34,15 +32,17 @@ export function metadata(
   options: WithoutLabel<MetadataOptions> = {}
 ) {
   const fields = type('Fields', {
-    title: text('Title', {width: 0.5}),
-    description: text('Description', {multiline: true}),
-    openGraph: object('Open graph', {
-      fields: type('Open graph fields', {
-        title: text('Title', {width: 0.5}),
-        image: link.image('Image', {width: 0.5}),
-        description: text('Description', {multiline: true})
+    fields: {
+      title: text('Title', {width: 0.5}),
+      description: text('Description', {multiline: true}),
+      openGraph: object('Open graph', {
+        fields: {
+          title: text('Title', {width: 0.5}),
+          image: image('Image', {width: 0.5}),
+          description: text('Description', {multiline: true})
+        }
       })
-    })
+    }
   })
   return new MetadataField(Type.shape(fields), {
     hint: Type.hint(fields),

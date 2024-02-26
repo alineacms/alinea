@@ -12,8 +12,8 @@ import {ScalarShape} from './ScalarShape.js'
 
 export interface ListRow {
   _id: string
-  _index: string
   _type: string
+  _index: string
 }
 
 export namespace ListRow {

@@ -7,10 +7,20 @@ import {RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
 export class RichTextField<
   Blocks,
   Options extends FieldOptions<TextDoc<Blocks>> & {searchable?: boolean}
-> extends Field<TextDoc<Blocks>, RichTextMutator<Blocks>, Options> {
+> extends Field<
+  TextDoc<Blocks>,
+  TextDoc<Blocks>,
+  RichTextMutator<Blocks>,
+  Options
+> {
   constructor(
     shape: {[key: string]: RecordShape<any>} | undefined,
-    meta: FieldMeta<TextDoc<Blocks>, RichTextMutator<Blocks>, Options>
+    meta: FieldMeta<
+      TextDoc<Blocks>,
+      TextDoc<Blocks>,
+      RichTextMutator<Blocks>,
+      Options
+    >
   ) {
     super({
       shape: new RichTextShape(
@@ -60,7 +70,7 @@ function mapNode(
     case 'em':
       return {_type: 'italic', content: []}
     case 'ul':
-      return {_type: 'unorderedList', content: []}
+      return {_type: 'bulletList', content: []}
     case 'ol':
       return {_type: 'orderedList', content: []}
     case 'li':

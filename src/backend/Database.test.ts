@@ -130,7 +130,8 @@ test('field creators', async () => {
   const example = createExample()
   const {Fields} = example.schema
   const entry = Edit.create(Fields)
-  const list = Edit.list(Fields.list)
+  const listEditor = Edit.list(Fields.list)
+  const list = listEditor
     .add('Text', {
       title: '',
       text: Edit.richText(Fields.richText)

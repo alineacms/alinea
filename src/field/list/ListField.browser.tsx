@@ -23,7 +23,6 @@ import {
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {Field} from 'alinea/core/Field'
 import {ListField} from 'alinea/core/field/ListField'
-import type {Infer} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {Type} from 'alinea/core/Type'
@@ -229,7 +228,7 @@ function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
 }
 
 export interface ListInputProps {
-  field: ListField<Infer<Schema>, ListOptions<Schema>>
+  field: ListField<ListRow, ListRow, ListOptions<Schema>>
 }
 
 const layoutMeasuringConfig = {

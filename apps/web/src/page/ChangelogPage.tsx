@@ -13,10 +13,6 @@ export const metadata = {
   title: 'Changelog'
 }
 
-export function sitemap(): MetadataRoute.Sitemap {
-  return [{url: '/changelog', priority: 0.5}]
-}
-
 async function markdownToHtml(markdown: Buffer) {
   const result = await remark().use(html).process(markdown)
   return result.toString()
@@ -36,4 +32,8 @@ export default async function Changelog() {
       </PageContent>
     </PageContainer>
   )
+}
+
+Changelog.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/changelog', priority: 0.5}]
 }

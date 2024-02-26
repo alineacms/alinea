@@ -1,44 +1,14 @@
-import {Entry} from 'alinea/core/Entry'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
 import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Type, type} from 'alinea/core/Type'
-import {MediaFile} from 'alinea/core/media/MediaTypes'
 import type {Condition} from 'alinea/core/pages/Expr'
 import {Projection} from 'alinea/core/pages/Projection'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import {assign} from 'alinea/core/util/Objects'
 import {EntryReference} from './EntryReference.js'
-
-export const entryFields = {
-  i18nId: Entry.i18nId,
-  title: Entry.title,
-  entryType: Entry.type,
-  url: Entry.url,
-  path: Entry.path
-}
-
-export const fileFields = {
-  title: Entry.title,
-  url: MediaFile.location,
-  extension: MediaFile.extension,
-  size: MediaFile.size
-}
-
-export const imageFields = {
-  title: Entry.title,
-  src: MediaFile.location,
-  extension: MediaFile.extension,
-  size: MediaFile.size,
-  hash: MediaFile.hash,
-  width: MediaFile.width,
-  height: MediaFile.height,
-  averageColor: MediaFile.averageColor,
-  thumbHash: MediaFile.thumbHash,
-  focus: MediaFile.focus
-}
 
 export interface EntryPickerOptions<Definition = {}> {
   hint: Hint
@@ -54,9 +24,9 @@ export interface EntryPickerOptions<Definition = {}> {
   fields?: Definition | Type<Definition>
 }
 
-export function entryPicker<Ref extends Reference, Fields>(
+export function entryPicker<Ref extends EntryReference, Fields>(
   options: EntryPickerOptions<Fields>
-): Picker<Ref & Type.Infer<Fields>, EntryPickerOptions<Fields>> {
+): Picker<Ref, EntryPickerOptions<Fields>> {
   const fieldType = Type.isType(options.fields)
     ? options.fields
     : options.fields && type({fields: options.fields as any})
@@ -74,13 +44,21 @@ export function entryPicker<Ref extends Reference, Fields>(
     label: options.label || 'Page link',
     handlesMultiple: true,
     options,
-    async postProcess(row, loader) {
-      const link: EntryReference = row as any
-      if (!link[EntryReference.entry]) return
-      const linkIds = [link[EntryReference.entry]]
+    async postProcess(row: any, loader) {
+      const {
+        [Reference.id]: id,
+        [Reference.type]: type,
+        [EntryReference.entry]: entryId,
+        ...fields
+      } = row as EntryReference
+      for (const key of Object.keys(fields)) delete row[key]
+      row.id = entryId
+      row.fields = fields
+      if (!entryId) return
+      const linkIds = [entryId]
       if (!options.selection) return
-      const [fields] = await loader.resolveLinks(options.selection, linkIds)
-      assign(row, fields)
+      const [extra] = await loader.resolveLinks(options.selection, linkIds)
+      assign(row, extra)
     }
   }
 }

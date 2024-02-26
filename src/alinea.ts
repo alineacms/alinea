@@ -18,11 +18,11 @@ export type {Schema} from 'alinea/core/Schema'
 export type {TextDoc} from 'alinea/core/TextDoc'
 export type {Type} from 'alinea/core/Type'
 export {Workspace} from 'alinea/core/Workspace'
-export type {
-  EntryReference,
-  FileReference,
-  ImageReference
-} from 'alinea/picker/entry/EntryReference'
+export type {EntryLink} from 'alinea/field/link/EntryLink'
+export type {FileLink} from 'alinea/field/link/FileLink'
+export type {ImageLink} from 'alinea/field/link/ImageLink'
+export type {UrlLink} from 'alinea/field/link/UrlLink'
+export type {EntryReference} from 'alinea/picker/entry/EntryReference'
 export type {UrlReference} from 'alinea/picker/url'
 
 // Helpers

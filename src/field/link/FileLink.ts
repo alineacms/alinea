@@ -1,6 +1,7 @@
 import {Entry} from 'alinea/core/Entry'
 import type {WithoutLabel} from 'alinea/core/Field'
 import {Hint} from 'alinea/core/Hint'
+import {InferStoredValue} from 'alinea/core/Infer'
 import {Label} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
 import {imageExtensions} from 'alinea/core/media/IsImage'
@@ -11,8 +12,26 @@ import {
   createLink,
   createLinks
 } from 'alinea/field/link/LinkField'
-import {EntryPickerOptions, entryPicker, fileFields} from 'alinea/picker/entry'
-import {FileReference} from 'alinea/picker/entry/EntryReference'
+import {EntryPickerOptions, entryPicker} from 'alinea/picker/entry'
+import {EntryReference} from 'alinea/picker/entry/EntryReference'
+
+export interface FileLink<InferredFields = undefined> extends EntryReference {
+  title: string
+  /** @deprecated Use href */
+  url: string
+  href: string
+  extension: string
+  size: number
+  fields: InferredFields
+}
+
+export namespace FileLink {
+  export const title = Entry.title
+  export const url = MediaFile.location
+  export const href = MediaFile.location
+  export const extension = MediaFile.extension
+  export const size = MediaFile.size
+}
 
 const fileCondition = Entry.type
   .is('MediaFile')
@@ -22,7 +41,7 @@ export function filePicker<Fields>(
   multiple: boolean,
   options: Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'>
 ) {
-  return entryPicker<FileReference, Fields>({
+  return entryPicker<EntryReference, Fields>({
     ...options,
     hint: Hint.Extern({
       name: 'FileReference',
@@ -34,38 +53,42 @@ export function filePicker<Fields>(
     condition: fileCondition.or(Entry.type.is('MediaLibrary')),
     showMedia: true,
     defaultView: 'thumb',
-    selection: fileFields
+    selection: FileLink
   })
 }
 
-type Link<Fields> = FileReference & Type.Infer<Fields>
-
 export interface FileOptions<Fields>
-  extends LinkFieldOptions<Link<Fields>>,
+  extends LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
     Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
 
-export function file<Fields>(
+export function file<Fields = undefined>(
   label: Label,
   options: WithoutLabel<FileOptions<Fields>> = {}
 ) {
-  return createLink<Link<Fields>>(label, {
+  return createLink<
+    EntryReference & InferStoredValue<Fields>,
+    FileLink<Type.Infer<Fields>>
+  >(label, {
     ...options,
     pickers: {file: filePicker(false, options)}
   })
 }
 
 export namespace file {
-  type Link<Fields> = FileReference & Type.Infer<Fields> & ListRow
-
   export interface FilesOptions<Fields>
-    extends LinkFieldOptions<Array<Link<Fields>>>,
+    extends LinkFieldOptions<
+        Array<EntryReference & ListRow & InferStoredValue<Fields>>
+      >,
       Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
 
-  export function multiple<Fields>(
+  export function multiple<Fields = undefined>(
     label: Label,
     options: WithoutLabel<FilesOptions<Fields>> = {}
   ) {
-    return createLinks<Link<Fields>>(label, {
+    return createLinks<
+      EntryReference & ListRow & InferStoredValue<Fields>,
+      FileLink<Type.Infer<Fields>>
+    >(label, {
       ...options,
       pickers: {file: filePicker(true, options)}
     })

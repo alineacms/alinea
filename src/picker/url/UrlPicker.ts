@@ -4,6 +4,7 @@ import {Reference} from 'alinea/core/Reference'
 import {Type, type} from 'alinea/core/Type'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
+import {keys} from 'alinea/core/util/Objects'
 
 export interface UrlReference extends Reference {
   _type: 'url'
@@ -28,7 +29,7 @@ export interface UrlPickerOptions<Definition> {
 
 export function urlPicker<Fields>(
   options: UrlPickerOptions<Fields>
-): Picker<UrlReference & Type.Infer<Fields>> {
+): Picker<UrlReference> {
   const fieldType = Type.isType(options.fields)
     ? options.fields
     : options.fields && type({fields: options.fields as any})
@@ -45,9 +46,23 @@ export function urlPicker<Fields>(
     label: 'External website',
     handlesMultiple: false,
     fields: fieldType,
-    options /*,
-    select(row) {
-      return row.fields
-    }*/
+    options,
+    async postProcess(row: any, loader) {
+      const {
+        [Reference.id]: id,
+        [Reference.type]: type,
+        [UrlReference.url]: url,
+        [UrlReference.title]: title,
+        [UrlReference.target]: target,
+        ...fields
+      } = row as UrlReference
+      const fieldKeys = keys(fields)
+      for (const key of fieldKeys) delete row[key]
+      row.url = url
+      row.href = url
+      row.title = title
+      row.target = target
+      row.fields = fields
+    }
   }
 }
