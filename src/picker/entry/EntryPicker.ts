@@ -5,9 +5,10 @@ import {Reference} from 'alinea/core/Reference'
 import {Type, type} from 'alinea/core/Type'
 import type {Condition} from 'alinea/core/pages/Expr'
 import {Projection} from 'alinea/core/pages/Projection'
+import {ListRow} from 'alinea/core/shape/ListShape'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {assign} from 'alinea/core/util/Objects'
+import {assign, keys} from 'alinea/core/util/Objects'
 import {EntryReference} from './EntryReference.js'
 
 export interface EntryPickerOptions<Definition = {}> {
@@ -49,10 +50,10 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         [Reference.id]: id,
         [Reference.type]: type,
         [EntryReference.entry]: entryId,
+        [ListRow.index]: index,
         ...fields
-      } = row as EntryReference
-      for (const key of Object.keys(fields)) delete row[key]
-      row.id = entryId
+      } = row as EntryReference & ListRow
+      for (const key of keys(fields)) delete row[key]
       row.fields = fields
       if (!entryId) return
       const linkIds = [entryId]

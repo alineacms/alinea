@@ -2,6 +2,7 @@ import {Hint} from 'alinea/core/Hint'
 import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Type, type} from 'alinea/core/Type'
+import {ListRow} from 'alinea/core/shape/ListShape'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import {keys} from 'alinea/core/util/Objects'
@@ -54,8 +55,9 @@ export function urlPicker<Fields>(
         [UrlReference.url]: url,
         [UrlReference.title]: title,
         [UrlReference.target]: target,
+        [ListRow.index]: index,
         ...fields
-      } = row as UrlReference
+      } = row as UrlReference & ListRow
       const fieldKeys = keys(fields)
       for (const key of fieldKeys) delete row[key]
       row.url = url
