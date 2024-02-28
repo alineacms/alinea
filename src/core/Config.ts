@@ -68,9 +68,12 @@ export namespace Config {
 export function createConfig<Definition extends Config>(
   definition: Definition
 ) {
-  if (definition.schema['MediaFile'])
+  if (definition.schema.MediaFile && definition.schema.MediaFile !== MediaFile)
     throw new Error(`"MediaFile" is a reserved Type name`)
-  if (definition.schema['MediaLibrary'])
+  if (
+    definition.schema.MediaLibrary &&
+    definition.schema.MediaLibrary !== MediaLibrary
+  )
     throw new Error(`"MediaLibrary" is a reserved Type name`)
   const res = {
     ...definition,
