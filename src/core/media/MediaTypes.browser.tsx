@@ -51,7 +51,7 @@ export const MediaLibrary: typeof config.MediaLibrary = type(
 
 export type MediaFile = config.MediaFile
 export const MediaFile: typeof config.MediaFile = type('File', {
-  isHidden: true,
+  hidden: true,
   summaryRow: view(fileSummarySelect, FileSummaryRow),
   summaryThumb: view(fileSummarySelect, FileSummaryThumb),
   view: FileEntry as any,

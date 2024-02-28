@@ -253,6 +253,11 @@ export class RichTextShape<Blocks>
             ...shape.fromY(map.get(node[BlockNode.id]))
           } satisfies BlockNode
       }
+      if (Node.isElement(node)) {
+        if (node[Node.type] === 'heading') {
+          if (node.textAlign === 'left') delete node.textAlign
+        }
+      }
       return node
     })
   }

@@ -38,10 +38,12 @@ export interface EntryUrlMeta {
 export interface TypeMeta {
   /** Accepts entries of these types as children */
   contains?: Array<string>
-  /** Accept entries of any type as children */
+  /** @deprecated Use contains instead */
   isContainer?: true
-  /** Entries do not show up in the sidebar content tree */
+  /** @deprecated Use hidden instead */
   isHidden?: true
+  /** Entries do not show up in the sidebar content tree */
+  hidden?: true
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 
@@ -98,6 +100,10 @@ export namespace Type {
 
   export function meta(type: Type): TypeMeta {
     return type[Type.Data].meta
+  }
+
+  export function isHidden(type: Type): boolean {
+    return Boolean(meta(type).hidden || meta(type).isHidden)
   }
 
   export function shape(type: Type): RecordShape {

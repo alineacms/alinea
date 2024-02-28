@@ -27,7 +27,7 @@ export function rootId(rootName: string) {
 const visibleTypesAtom = atom(get => {
   const {schema} = get(configAtom)
   return entries(schema)
-    .filter(([_, type]) => !Type.meta(type).isHidden)
+    .filter(([_, type]) => !Type.isHidden(type))
     .map(([name]) => name)
 })
 

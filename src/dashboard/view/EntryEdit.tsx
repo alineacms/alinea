@@ -109,8 +109,7 @@ export function EntryEdit({editor}: EntryEditProps) {
     sections.length === 1 && sections[0][Section.Data] instanceof TabsSection
   const tabs: TabsSection | false =
     hasRootTabs && (sections[0][Section.Data] as TabsSection)
-  const visibleTypes =
-    tabs && tabs.types.filter(type => !Type.meta(type).isHidden)
+  const visibleTypes = tabs && tabs.types.filter(type => !Type.isHidden(type))
   useEffect(() => {
     if (isBlocking && !isNavigationChange) confirm?.()
   }, [isBlocking, isNavigationChange, confirm])

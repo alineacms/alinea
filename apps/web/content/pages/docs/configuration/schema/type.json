@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "Zx",
   "_i18nId": "267QuOShP41WnFxQFOcHZQoCsla",
-  "_root": "pages",
   "title": "Type",
   "navigationTitle": "",
   "body": [
@@ -35,7 +34,7 @@
     {
       "_type": "CodeBlock",
       "_id": "267QyzM4851hQU1DihfoV3fSIFg",
-      "code": "import {Config} from 'alinea'\n\nConfig.type('My type', {\n  isContainer: true,\n  fields: {\n    title: alinea.text('Title', {width: 0.5}),\n    path: alinea.path('Path', {width: 0.5})\n  }\n})",
+      "code": "import {Config} from 'alinea'\n\nConfig.type('Blog', {\n  contains: ['BlogPost'],\n  fields: {\n    title: alinea.text('Title', {width: 0.5}),\n    path: alinea.path('Path', {width: 0.5})\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -83,34 +82,6 @@
       "content": [
         {
           "_type": "text",
-          "text": "`isContainer`"
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "When a type is marked as a container it can contain subpages of any Type. If you like to restrict allowed Types, use `contains`."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "28hm0oPtHKhLaCy81WA2kyAKIO2",
-      "code": "isContainer: true",
-      "fileName": "",
-      "language": "",
-      "compact": false
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
           "text": "`contains`"
         }
       ]
@@ -128,7 +99,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28hmFQwpEgifAOoOnxkUe2FtXDJ",
-      "code": "contains: ['PageA', 'PageB']",
+      "code": "contains: ['BlogEntry']",
       "fileName": "",
       "language": "",
       "compact": false

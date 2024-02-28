@@ -24,7 +24,7 @@ export interface TabsHeaderProps {
 
 export function TabsHeader({section, backdrop}: TabsHeaderProps) {
   const tabs = section[Section.Data] as TabsSection
-  const visibleTypes = tabs.types.filter(type => !Type.meta(type).isHidden)
+  const visibleTypes = tabs.types.filter(type => !Type.isHidden(type))
   if (!visibleTypes.length) return null
   return (
     <Tabs.List backdrop={backdrop}>
@@ -47,7 +47,7 @@ export function TabsHeader({section, backdrop}: TabsHeaderProps) {
 function TabsView({section}: TabsViewProps) {
   const {parent} = useElevation()
   const tabs = section[Section.Data] as TabsSection
-  const visibleTypes = tabs.types.filter(type => !Type.meta(type).isHidden)
+  const visibleTypes = tabs.types.filter(type => !Type.isHidden(type))
   if (!visibleTypes.length) return null
   const inner = (
     <Tabs.Root>
