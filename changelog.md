@@ -40,6 +40,10 @@
   //   ^? {_id: string, _type: string, ..., url: string, fields: {label: string}}
   ```
 
+- Use of Type.isContainer is now deprecated, use a list of types in contains
+  instead.
+- Use of Type.isHidden is now deprecated, use `hidden` instead.
+
 ## [0.8.4]
 
 - Fix select field not using field options such as width or required.
