@@ -17,6 +17,7 @@ import {
   toSelection
 } from './pages/ResolveData.js'
 import {RecordShape} from './shape/RecordShape.js'
+import {isValidIdentifier} from './util/Identifiers.js'
 import {
   assign,
   defineProperty,
@@ -147,6 +148,17 @@ export namespace Type {
     }
     if (keys(res).length === 0) return undefined
     return res
+  }
+
+  export function validate(type: Type) {
+    for (const [key, field] of entries(fields(type))) {
+      if (!isValidIdentifier(key))
+        throw new Error(
+          `Invalid field name "${key}" in Type "${label(
+            type
+          )}", must match [A-Za-z][A-Za-z0-9_]*`
+        )
+    }
   }
 }
 
@@ -332,6 +344,7 @@ export function type<Definition extends TypeDefinition>(
   const def: any = typeof label === 'string' ? definition : label
   const {definition: d, options} = parseTypeParams(def)
   const instance = new TypeInstance<StripMeta<Definition>>(title, d, options)
+  Type.validate(instance.target)
   return instance.target
 }
 

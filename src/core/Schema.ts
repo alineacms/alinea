@@ -1,9 +1,8 @@
 import {Hint} from './Hint.js'
 import {Type, TypeTarget} from './Type.js'
-import {MediaFile, MediaLibrary} from './media/MediaTypes.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, fromEntries, keys} from './util/Objects.js'
+import {entries, fromEntries} from './util/Objects.js'
 
 const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
 const hintCache = new WeakMap<Schema, Hint.Union>()
@@ -14,24 +13,15 @@ export namespace Schema {
   export type Targets = Map<TypeTarget, string>
 
   export function validate(schema: Schema) {
-    for (const key of keys(schema)) {
+    for (const [key, type] of entries(schema)) {
       switch (key) {
         case 'Entry':
-          throw new Error(`Entry is a reserved Type name`)
-        case 'MediaFile':
-          if (schema[key] !== MediaFile)
-            throw new Error(`MediaFile is a reserved Type name`)
-          break
-        case 'MediaLibrary':
-          if (schema[key] !== MediaLibrary)
-            throw new Error(`MediaLibrary is a reserved Type name`)
-          break
+          throw new Error(`${key} is a reserved Type name`)
         default:
           if (!isValidIdentifier(key))
             throw new Error(
               `Invalid Type name "${key}", use only a-z, A-Z, 0-9, and _`
             )
-          const type = schema[key]
           const {contains} = Type.meta(type)
           if (contains) {
             for (const name of contains) {

@@ -68,9 +68,13 @@ export namespace Config {
 export function createConfig<Definition extends Config>(
   definition: Definition
 ) {
+  if (definition.schema['MediaFile'])
+    throw new Error(`"MediaFile" is a reserved Type name`)
+  if (definition.schema['MediaLibrary'])
+    throw new Error(`"MediaLibrary" is a reserved Type name`)
   const res = {
     ...definition,
-    schema: {MediaLibrary, MediaFile, ...definition.schema},
+    schema: {...definition.schema, MediaLibrary, MediaFile},
     dashboard: {
       auth: CloudAuthView,
       ...definition.dashboard
