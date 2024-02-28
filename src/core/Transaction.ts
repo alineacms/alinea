@@ -51,7 +51,8 @@ export class Operation {
   protected typeName(config: Config, type: TypeI) {
     const typeNames = Schema.typeNames(config.schema)
     const typeName = typeNames.get(type)!
-    if (!typeName) throw new Error(`Type not found: ${type}`)
+    if (!typeName)
+      throw new Error(`Type "${Type.label(type)}" not found in Schema`)
     return typeName
   }
 }
