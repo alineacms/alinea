@@ -1,5 +1,45 @@
 # Changelog
 
+## [Unreleased]
+
+- Reserve Alinea generated properties (#378)
+
+  Until now Alinea generated properties that define the content structure as
+  normal identifiers. This means that in a list a row would contain a "type",
+  "id" and "index" property while also containing user defined fields. This
+  had a lot of potential for name clashes: you could choose to name a field
+  "type" for example. It is also not future-proof as Alinea might want to add
+  more properties later on. To solve this issue Alinea now reserves all
+  properties starting with an underscore as internal. It's not needed to
+  upgrade content files manually. The old format will automatically be picked up
+  for some time. It's possible to upgrade all files in one go by running the
+  following, which will write any changes in content back to disk.
+
+  ```sh
+  npx alinea build --fix
+  ```
+
+  When querying content please pay mind that those internal properties are now
+  accessed by the underscored property and will need to be updated.
+  This becomes most apparent in getting results out of the Link field.
+
+  ```tsx
+  const MyType = Config.type('MyType', {
+    link: Field.link('Link', {
+      fields: {
+        label: Field.text('Label')
+      }
+    })
+  })
+  const result = await cms.get(Query(MyType).select(MyType.link))
+  // before:
+  //   EntryReference & {label: string}
+  //   ^? {id: string, type: string, ..., url: string, label: string}
+  // after:
+  //   EntryLink<{label: string}>
+  //   ^? {_id: string, _type: string, ..., url: string, fields: {label: string}}
+  ```
+
 ## [0.8.4]
 
 - Fix select field not using field options such as width or required.
