@@ -1,75 +1,78 @@
 {
+  "_id": "home",
+  "_type": "Home",
+  "_index": "Zx",
+  "_i18nId": "home",
+  "_seeded": "/index.json",
+  "_root": "pages",
   "title": "Homepage",
   "headline": "Shape content\nfor the modern web.",
   "byline": "Open source headless CMS with minimal setup.\nFully typed content right in your repository.",
   "action": {
-    "id": "2YcxykzomCJyGwRFMXARgTxib4b",
-    "type": "entry",
-    "entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+    "_type": "entry",
+    "_id": "2YcxykzomCJyGwRFMXARgTxib4b",
+    "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
     "label": "Get started"
   },
   "screenshot": {},
   "introduction": {
     "text": [
       {
-        "type": "heading",
-        "textAlign": "left",
+        "_type": "heading",
         "level": 2,
         "content": [
           {
-            "type": "text",
+            "_type": "text",
             "text": "Open source headless CMS"
           }
         ]
       },
       {
-        "type": "paragraph",
+        "_type": "paragraph",
         "textAlign": "left",
         "content": [
           {
-            "type": "text",
+            "_type": "text",
             "text": "Alinea is an open source content management system written in TypeScript. The dashboard boots locally with a single command. Published content changes persist on the file system in json format, allowing content to be version controlled with git."
           }
         ]
       },
       {
-        "type": "heading",
-        "textAlign": "left",
+        "_type": "heading",
         "level": 3,
         "content": [
           {
-            "type": "text",
+            "_type": "text",
             "text": "Code your schema"
           }
         ]
       },
       {
-        "type": "paragraph",
+        "_type": "paragraph",
         "textAlign": "left",
         "content": [
           {
-            "type": "text",
+            "_type": "text",
             "text": "The content schema is created using code which eliminates repetitive clicking through a UI setting up every field. Custom fields can be created and distributed without hassle."
           }
         ]
       },
       {
-        "type": "heading",
-        "textAlign": "left",
+        "_type": "heading",
         "level": 3,
         "content": [
           {
-            "type": "text",
+            "_type": "text",
             "text": "Query content"
           }
         ]
       },
       {
-        "type": "paragraph",
+        "_type": "paragraph",
         "textAlign": "left",
         "content": [
           {
-            "type": "text",
+            "_type": "text",
             "text": "Content is indexed in an embedded SQLite database. This allows fast querying and full text search. The database is shipped with your code using WebAssembly making it available everywhere (including edge deploys)."
           }
         ]
@@ -78,42 +81,42 @@
   },
   "links": [
     {
-      "id": "2a7ftYTVOui6duXcA4Js0xG8QC6",
-      "index": "a0",
-      "type": "entry",
-      "entry": "docs",
+      "_type": "entry",
+      "_id": "2a7ftYTVOui6duXcA4Js0xG8QC6",
+      "_index": "a0",
+      "_entry": "docs",
       "label": "Docs",
       "active": ""
     },
     {
-      "id": "2a7ftRO1unpBDnfvXtgJUBIBwNr",
-      "index": "a1",
-      "type": "entry",
-      "entry": "CC8aJ6-2U3s31micAzTLU",
+      "_type": "entry",
+      "_id": "2a7ftRO1unpBDnfvXtgJUBIBwNr",
+      "_index": "a1",
+      "_entry": "CC8aJ6-2U3s31micAzTLU",
       "label": "Roadmap",
       "active": ""
     },
     {
-      "id": "2a7ftUxPD7w8EMFYWjpYoJVF6GP",
-      "index": "a2",
-      "type": "entry",
-      "entry": "gx3H52whBKO_DdfcMNI3I",
+      "_type": "entry",
+      "_id": "2a7ftUxPD7w8EMFYWjpYoJVF6GP",
+      "_index": "a2",
+      "_entry": "gx3H52whBKO_DdfcMNI3I",
       "label": "Blog",
       "active": ""
     }
   ],
   "footer": [
     {
-      "id": "2ANVIUDmjNddF0QO8aB0gwXcRq8",
-      "index": "a0",
-      "type": "Section",
+      "_type": "Section",
+      "_id": "2ANVIUDmjNddF0QO8aB0gwXcRq8",
+      "_index": "a0",
       "label": "Developer",
       "links": [
         {
-          "id": "2a7fvVi9M7zcX2wx3IJfYBrCqeC",
-          "index": "a0",
-          "type": "entry",
-          "entry": "docs",
+          "_type": "entry",
+          "_id": "2a7fvVi9M7zcX2wx3IJfYBrCqeC",
+          "_index": "a0",
+          "_entry": "docs",
           "label": ""
         }
       ]
@@ -127,12 +130,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "home",
-    "type": "Home",
-    "index": "Zx",
-    "seeded": true,
-    "root": "pages"
   }
 }

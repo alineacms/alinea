@@ -1,49 +1,54 @@
 {
+  "_id": "2YlP39QVFZOzf94YMwDVrzd4gNz",
+  "_type": "BlogPost",
+  "_index": "Zy",
+  "_i18nId": "2YlP39QVFZOzf94YMwDVrzd4gNz",
+  "_root": "pages",
   "title": "Alinea 0.4.0 ⚡",
   "publishDate": "2023-12-01",
   "author": {
     "name": "Ben Merckx",
     "url": {
-      "id": "2YlPCEdeGLXkqwQQq4r482BrNmj",
-      "type": "url",
-      "url": "https://github.com/benmerckx",
-      "target": "_blank"
+      "_type": "url",
+      "_id": "2YlPCEdeGLXkqwQQq4r482BrNmj",
+      "_url": "https://github.com/benmerckx",
+      "_target": "_blank"
     },
     "avatar": {
-      "id": "2YlPFxJGo8JMh6ZDWt7NDu7MPSN",
-      "type": "url",
-      "url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
-      "target": "_self"
+      "_type": "url",
+      "_id": "2YlPFxJGo8JMh6ZDWt7NDu7MPSN",
+      "_url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
+      "_target": "_self"
     }
   },
   "introduction": "Alinea 0.4.0 contains a major rewrite of many parts of the system. Now including support for React server components, instant deploys and content publishing workflow.",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea 0.4.0 contains a major rewrite of many parts of the system. Some of the highlights:"
         }
       ]
     },
     {
-      "type": "bulletList",
+      "_type": "bulletList",
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Support for React server components",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 }
@@ -52,18 +57,18 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Instant deploys",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 }
@@ -72,18 +77,18 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Content workflow",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 }
@@ -94,154 +99,148 @@
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Support for React server components",
           "marks": [
             {
-              "type": "bold"
+              "_type": "bold"
             }
           ]
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "With Next.js 13 came a new architecture in the `/app` folder. React Server Components run only server side and can easily fetch asynchronous data. This is the ideal place to fetch data from your CMS and process it into a view."
         }
       ]
     },
     {
-      "id": "2YlQgd9V4FTWXfNlvqX49yTFn6C",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "2YlQgd9V4FTWXfNlvqX49yTFn6C",
       "code": "import alinea, {createNextCMS} from 'alinea'\n\nconst HomePage = alinea.type('Homepage', {\n  title: alinea.text('Title'),\n  path: alinea.path('Path'),\n  headline: alinea.text('Headline')\n})\n\nconst cms = createNextCMS({\n  schema: {HomePage}\n})\n\nexport default async function Home() {\n  const home = await cms.get(HomePage())\n  return (\n    <article>\n      <h1>{home.title}</h1>\n      <p>{home.headline}</p>\n    </article>\n  )\n}",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Instant deploys"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Other Git based content management systems rely on Continuous Integration to deploy content to the web. This means any change can take more than a few minutes to appear online. When a lot of changes happen the queueing of builds can become a real bottleneck to editing content. While Alinea already supported live previewing content changes it now also supports instantly deploying content changes."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Content workflow"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Editing content often requires making changes, previewing them and coming back later to continue editing. We don't always want these changes reflected online right away. Doing this correctly requires content to be available in different phases. We introduced three phases: draft, published and archived. Editors can make new drafts and publish them only when needed. Pages can be archived when they're no longer in use, and re-published when needed."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Overall stability",
           "marks": [
             {
-              "type": "bold"
+              "_type": "bold"
             }
           ]
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "We released Alinea in an alpha state with many features only partially implemented or in a proof of concept state. As development moved forwards we started using and improving Alinea in many new web projects. "
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "History"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "It's now possible to see and restore a list of older revisions within the Alinea dashboard."
         }
       ]
     },
     {
-      "id": "2YlUKcEMi7vbNDku6d1QlCoO5oA",
-      "type": "ImageBlock",
+      "_type": "ImageBlock",
+      "_id": "2YlUKcEMi7vbNDku6d1QlCoO5oA",
       "image": {
-        "id": "2YlUafLKDxzdvHmJP6Kpyd6y9xJ",
-        "type": "image",
-        "entry": "2YlUadqGteQCGAVaJ6QuSiwsdHr"
+        "_type": "image",
+        "_id": "2YlUafLKDxzdvHmJP6Kpyd6y9xJ",
+        "_entry": "2YlUadqGteQCGAVaJ6QuSiwsdHr"
       }
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Move to a single package"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea is now packaged in a single `alinea` NPM library. This allows us to more easily version things and publish canary versions. It also means installing is much faster now. Adding Alinea to your projects adds just 4 dependencies and has a total install size of less than 20MB. With Alinea you don't have to wait for minutes while your CMS installs."
         }
       ]
@@ -255,10 +254,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2YlP39QVFZOzf94YMwDVrzd4gNz",
-    "type": "BlogPost",
-    "index": "Zy"
   }
 }

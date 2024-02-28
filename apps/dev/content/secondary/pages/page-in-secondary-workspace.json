@@ -1,9 +1,8 @@
 {
-  "title": "Page in secondary workspace",
-  "@alinea": {
-    "entryId": "2U6kvzDbTmKciZbRVqyFkHtslLj",
-    "type": "Page",
-    "index": "a0",
-    "root": "pages"
-  }
+  "_id": "2U6kvzDbTmKciZbRVqyFkHtslLj",
+  "_type": "Page",
+  "_index": "a0",
+  "_i18nId": "2U6kvzDbTmKciZbRVqyFkHtslLj",
+  "_root": "pages",
+  "title": "Page in secondary workspace"
 }

@@ -1,34 +1,34 @@
 {
+  "_id": "vTCpgsHfAjZtHabyjb8RG",
+  "_type": "DemoHome",
+  "_index": "He8hfze6W35ZPztcqouk",
+  "_i18nId": "vTCpgsHfAjZtHabyjb8RG",
+  "_seeded": "/index.json",
+  "_root": "pages",
   "title": "Milk & Cookies",
   "hero": {
     "header": {
       "image": {
-        "id": "2YwhgJkO2dfyQsgPevLSZSjkfOw",
-        "type": "image",
-        "entry": "Lr282L3627dmnIWfsuOJG"
+        "_type": "image",
+        "_id": "2YwhgJkO2dfyQsgPevLSZSjkfOw",
+        "_entry": "Lr282L3627dmnIWfsuOJG"
       },
       "credit": [
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Photo by "
             },
             {
-              "type": "text",
+              "_type": "text",
               "text": "Julissa Capdevilla",
               "marks": [
                 {
-                  "type": "link",
-                  "attrs": {
-                    "data-id": null,
-                    "data-entry": null,
-                    "data-type": null,
-                    "href": "https://unsplash.com/es/@juliedroz?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
-                    "title": null
-                  }
+                  "_type": "link",
+                  "href": "https://unsplash.com/es/@juliedroz?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText"
                 }
               ]
             }
@@ -39,22 +39,15 @@
     "title": "Milk &\nCookies",
     "text": [
       {
-        "type": "paragraph",
+        "_type": "paragraph",
         "textAlign": "left",
         "content": [
           {
-            "type": "text",
+            "_type": "text",
             "text": "Grab a glass of milk, find your favorite recipe, and enjoy! Classic cookie recipes that are sure to satisfy your sweet tooth."
           }
         ]
       }
     ]
-  },
-  "@alinea": {
-    "entryId": "vTCpgsHfAjZtHabyjb8RG",
-    "type": "DemoHome",
-    "index": "He8hfze6W35ZPztcqouk",
-    "seeded": "/index.json",
-    "root": "pages"
   }
 }

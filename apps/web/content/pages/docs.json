@@ -1,24 +1,30 @@
 {
+  "_id": "docs",
+  "_type": "Docs",
+  "_index": "a0",
+  "_i18nId": "docs",
+  "_seeded": "/docs.json",
+  "_root": "pages",
   "title": "Docs",
   "navigationTitle": "Introduction",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea is an open source headless CMS written in Typescript. It stores content in flat files in your repository so they can be checked into Git. This means you can roll back to a previous version, compare changes, and track who made changes. Content is bundled with deploys so it can be retrieved without network roundtrips. "
         }
       ]
     },
     {
-      "id": "2aAZ9GrMi5KEJtBTPlKzhQR41J1",
-      "type": "ImageBlock",
+      "_type": "ImageBlock",
+      "_id": "2aAZ9GrMi5KEJtBTPlKzhQR41J1",
       "image": {
-        "id": "2aAa38NpfcvFu0jYab8dFFnbBWj",
-        "type": "image",
-        "entry": "2aAa3AZWsipZefM1WJTKylGY5wM"
+        "_type": "image",
+        "_id": "2aAa38NpfcvFu0jYab8dFFnbBWj",
+        "_entry": "2aAa3AZWsipZefM1WJTKylGY5wM"
       }
     }
   ],
@@ -30,12 +36,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "docs",
-    "type": "Docs",
-    "index": "a0",
-    "seeded": true,
-    "root": "pages"
   }
 }

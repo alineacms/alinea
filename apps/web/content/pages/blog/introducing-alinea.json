@@ -1,262 +1,237 @@
 {
+  "_id": "jVMfGc-GJGY-GXyV4tDTX",
+  "_type": "BlogPost",
+  "_index": "Zz",
+  "_i18nId": "jVMfGc-GJGY-GXyV4tDTX",
+  "_root": "pages",
   "title": "Introducing Alinea 🚀",
   "publishDate": "2022-09-30",
   "author": {
     "name": "Ben Merckx",
     "url": {
-      "id": "DiAsFDEHRKLhrgSoiPAVU",
-      "type": "url",
-      "url": "https://github.com/benmerckx",
-      "target": "_blank"
+      "_type": "url",
+      "_id": "DiAsFDEHRKLhrgSoiPAVU",
+      "_url": "https://github.com/benmerckx",
+      "_target": "_blank"
     },
     "avatar": {
-      "id": "Z4LBK9_vyKQLA_3WL6IZ6",
-      "type": "url",
-      "url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
-      "target": "_self"
+      "_type": "url",
+      "_id": "Z4LBK9_vyKQLA_3WL6IZ6",
+      "_url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
+      "_target": "_self"
     }
   },
   "introduction": "For about 8 years we've been using a custom built CMS to power the websites, apps and services we build. Over time we've seen our development workflow move from PHP to JavaScript cloud deployments. As it was time for a fresh start to shake off some technical debt, achieve new goals and open source everything we started work on a new content management system little over a year ago. Today an alpha version of Alinea is available to the public.",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "For about 8 years "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "we",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2aAPnJnaENEtTGjDxfgOwjijTEO",
-                "data-entry": null,
-                "data-type": "url",
-                "href": "https://codeurs.be/en",
-                "target": "_blank",
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2aAPnJnaENEtTGjDxfgOwjijTEO",
+              "_link": "url",
+              "href": "https://codeurs.be/en",
+              "target": "_blank",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "'ve been using a custom built CMS to power the websites, apps and services we build. Over time we've seen our development workflow move from PHP to JavaScript cloud deployments. As it was time for a fresh start to shake off some technical debt, achieve new goals and open source everything we started work on a new content management system little over a year ago. Today an alpha version of Alinea is available to the public."
         }
       ]
     },
     {
-      "id": "2U9fzC4RrGpYPrgl9rpk8IZbvJa",
-      "type": "ImageBlock",
+      "_type": "ImageBlock",
+      "_id": "2U9fzC4RrGpYPrgl9rpk8IZbvJa",
       "image": {
-        "id": "2aAv1Wwg7XpakKtlbQjUvpt5L6X",
-        "type": "image",
-        "entry": "2aAa3AZWsipZefM1WJTKylGY5wM"
+        "_type": "image",
+        "_id": "2aAv1Wwg7XpakKtlbQjUvpt5L6X",
+        "_entry": "2aAa3AZWsipZefM1WJTKylGY5wM"
       }
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A quick intro"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea is installable from "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "NPM",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "Rt6RzFDrREVC0dRXJbph4",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://www.npmjs.com/package/alinea",
-                "target": "_blank",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "Rt6RzFDrREVC0dRXJbph4",
+              "href": "https://www.npmjs.com/package/alinea",
+              "target": "_blank"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " and bundles a few utilities to structure, manage and query content. The dashboard loads your configuration and lets you edit content based on a custom schema which can be composed of "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "rich set of fields",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "TxX_2HQARYVc6te1ewpOv",
-                "data-entry": "tEBluF6vXUnc-WDPKN5K8",
-                "data-type": null,
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "TxX_2HQARYVc6te1ewpOv",
+              "_entry": "tEBluF6vXUnc-WDPKN5K8"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " - or added to by "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "building a custom field",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "v8gmN8mwB2IiH7cgZS4Ux",
-                "data-entry": "286iEJsjhd8R9NxN6EVg59fELyd",
-                "data-type": null,
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "v8gmN8mwB2IiH7cgZS4Ux",
+              "_entry": "286iEJsjhd8R9NxN6EVg59fELyd"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " (which is just some configuration and a React component)."
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Content is structured hierarchically, following configuration settings to determine which page can have child pages. We've noticed that structuring content this way comes very natural for websites. Presenting the editor with a tree of pages that follows the website's navigation makes the editing experience so transparent it requires zero training. Have a look at "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "the demo",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "o4XauEOqb4gRCdGGpisfp",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://demo.alinea.sh",
-                "target": "_self",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "o4XauEOqb4gRCdGGpisfp",
+              "href": "https://demo.alinea.sh",
+              "target": "_self"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " to judge for yourself."
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Published content changes persist on the file system in json format (or markdown in the future), allowing content to be version controlled with git. The dashboard can be hosted with a backend which authorises users, keeps drafts and pushes changes to Github. It can be self-hosted or deployed in a few clicks with our "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "cloud service",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "hZuVomM3lwYhijS1taFRm",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://www.alinea.cloud",
-                "target": "_blank",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "hZuVomM3lwYhijS1taFRm",
+              "href": "https://www.alinea.cloud",
+              "target": "_blank"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
-      "id": "2YlNBlNnDvFwItkzndyIF30F097",
-      "type": "ChapterLinkBlock",
+      "_type": "ChapterLinkBlock",
+      "_id": "2YlNBlNnDvFwItkzndyIF30F097",
       "link": {
-        "id": "2YlNCdLCxRMUdJseBFjB4cdkS1M",
-        "type": "entry",
-        "entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+        "_type": "entry",
+        "_id": "2YlNCdLCxRMUdJseBFjB4cdkS1M",
+        "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
         "description": ""
       }
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "More features"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "While we're still hard at work at stabilizing the features below they'll give an overview of what we're trying to achieve."
         }
       ]
     },
     {
-      "type": "bulletList",
+      "_type": "bulletList",
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "No framework lock-in",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Use any web framework, static site builder or ad-hoc script to display or transform data that is editable in the CMS."
                 }
               ]
@@ -264,26 +239,26 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Embedded database",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Content is indexed in an embedded SQLite database. The database is deployed with your code and can be queried during build time or at runtime with Node.js or inside an edge or serverless function. This will also enable us to provide full text search out of box without requiring an extra service."
                 }
               ]
@@ -291,26 +266,26 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Fully typed",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Configuration and content is fully typed when making use of TypeScript. It's a great feeling to be able to see what impact configuration changes have on your codebase."
                 }
               ]
@@ -318,47 +293,42 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Collaborative",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "The editing experience is built on "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Yjs",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "vBGRn_VDaFKuQdMxrlbiy",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://docs.yjs.dev/",
-                        "target": "_blank",
-                        "title": null
-                      }
+                      "_type": "link",
+                      "_id": "vBGRn_VDaFKuQdMxrlbiy",
+                      "href": "https://docs.yjs.dev/",
+                      "target": "_blank"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " primitives, which will allow multiple editors to collaborate without merge conflicts. We'll setup a WebRTC provider in the near future."
                 }
               ]
@@ -366,26 +336,26 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Internationalization",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Content can be published in multiple languages and regions. We're polishing the UI that lets you switch and compare between languages."
                 }
               ]
@@ -393,26 +363,26 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Host anywhere",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "The Alinea dashboard can be exported as a handful of static assets and a serverless function to be deployed to any cloud environment, or as a simple Node.js process."
                 }
               ]
@@ -422,12 +392,12 @@
       ]
     },
     {
-      "id": "LHkwOsLpUl2Dwlkgie7I4",
-      "type": "ChapterLinkBlock",
+      "_type": "ChapterLinkBlock",
+      "_id": "LHkwOsLpUl2Dwlkgie7I4",
       "link": {
-        "id": "ETNJb5lOS8bZ0EZmTcOuh",
-        "type": "entry",
-        "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
+        "_type": "entry",
+        "_id": "ETNJb5lOS8bZ0EZmTcOuh",
+        "_entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
         "description": "Read the docs"
       }
     }
@@ -440,10 +410,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "jVMfGc-GJGY-GXyV4tDTX",
-    "type": "BlogPost",
-    "index": "Zz"
   }
 }

@@ -1,28 +1,33 @@
 {
+  "_id": "A4UA9D0tJn2aanMDjODOj",
+  "_type": "Doc",
+  "_index": "a2B",
+  "_i18nId": "A4UA9D0tJn2aanMDjODOj",
+  "_root": "pages",
   "title": "Date",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A date field is used to input a date."
         }
       ]
     },
     {
-      "id": "utmfOtYpwki29ZXEW5QPX",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "utmfOtYpwki29ZXEW5QPX",
       "code": "import {Field} from 'alinea'\n\nField.date('Date field')",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "RHKsNdTj50LX0TFLU2_QH",
-      "type": "ExampleBlock",
+      "_type": "ExampleBlock",
+      "_id": "RHKsNdTj50LX0TFLU2_QH",
       "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Date field', {\n  fields: {\n    date: Field.date('Date field')\n  }\n})"
     }
   ],
@@ -34,10 +39,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "A4UA9D0tJn2aanMDjODOj",
-    "type": "Doc",
-    "index": "a2B"
   }
 }

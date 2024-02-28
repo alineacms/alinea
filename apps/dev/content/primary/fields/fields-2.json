@@ -1,4 +1,9 @@
 {
+  "_id": "2aqpV5SN9JrZGSRkS3am07zPSmU",
+  "_type": "Fields",
+  "_index": "a0",
+  "_i18nId": "2aqpV5SN9JrZGSRkS3am07zPSmU",
+  "_root": "fields",
   "title": "Fields 2",
   "richText": [],
   "number": 0.5,
@@ -25,11 +30,5 @@
     "openGraph": {
       "image": {}
     }
-  },
-  "@alinea": {
-    "entryId": "2aqpV5SN9JrZGSRkS3am07zPSmU",
-    "type": "Fields",
-    "index": "a0",
-    "root": "fields"
   }
 }

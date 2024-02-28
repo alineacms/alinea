@@ -1,33 +1,32 @@
 {
+  "_id": "P7QDb99Sp1JS5FyqCXXn3",
+  "_type": "DemoRecipe",
+  "_index": "Zw",
+  "_i18nId": "P7QDb99Sp1JS5FyqCXXn3",
+  "_root": "pages",
   "title": "Gingerbread",
   "header": {
     "image": {
-      "id": "2YtROX9toQXnyuLCrUaBFzhs2Gn",
-      "type": "image",
-      "entry": "dVWlsY2oNt0H7YI-EWOOm"
+      "_type": "image",
+      "_id": "2YtROX9toQXnyuLCrUaBFzhs2Gn",
+      "_entry": "dVWlsY2oNt0H7YI-EWOOm"
     },
     "credit": [
       {
-        "type": "paragraph",
+        "_type": "paragraph",
         "textAlign": "left",
         "content": [
           {
-            "type": "text",
+            "_type": "text",
             "text": "Photo by "
           },
           {
-            "type": "text",
+            "_type": "text",
             "text": "Kelsey Weinkauf",
             "marks": [
               {
-                "type": "link",
-                "attrs": {
-                  "data-id": null,
-                  "data-entry": null,
-                  "data-type": null,
-                  "href": "https://unsplash.com/@kejeki?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
-                  "title": null
-                }
+                "_type": "link",
+                "href": "https://unsplash.com/@kejeki?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText"
               }
             ]
           }
@@ -37,11 +36,11 @@
   },
   "intro": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "This gingerbread cookie is perfect for the holidays! The cookies are soft and chewy, and the gingerbread flavor is ideal for the season."
         }
       ]
@@ -49,17 +48,17 @@
   ],
   "ingredients": [
     {
-      "type": "bulletList",
+      "_type": "bulletList",
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1/2 cup (1 stick) butter, at room temperature"
                 }
               ]
@@ -67,14 +66,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 cup sugar"
                 }
               ]
@@ -82,14 +81,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 large egg"
                 }
               ]
@@ -97,14 +96,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1/4 cup dark molasses"
                 }
               ]
@@ -112,14 +111,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "2 cups all-purpose flour"
                 }
               ]
@@ -127,14 +126,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "2 teaspoons baking soda"
                 }
               ]
@@ -142,14 +141,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 teaspoon ground ginger"
                 }
               ]
@@ -157,14 +156,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 teaspoon ground cinnamon"
                 }
               ]
@@ -172,14 +171,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1/2 teaspoon ground cloves"
                 }
               ]
@@ -187,14 +186,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1/4 teaspoon salt"
                 }
               ]
@@ -206,18 +205,18 @@
   ],
   "instructions": [
     {
-      "type": "orderedList",
+      "_type": "orderedList",
       "start": 1,
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Preheat oven to 350°F. Line a baking sheet with parchment paper."
                 }
               ]
@@ -225,14 +224,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "In a bowl, cream butter and sugar together until light and fluffy. Beat in egg and molasses. In another bowl, whisk together flour, baking soda, ginger, cinnamon, cloves, and salt. Gradually add to butter mixture, mixing until just combined."
                 }
               ]
@@ -240,14 +239,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Place dough on prepared baking sheet. Using a rolling pin, roll out to 1/4-inch thickness. Using a gingerbread man cookie cutter, cut out shapes. Place cookies 1 inch apart on baking sheet."
                 }
               ]
@@ -255,14 +254,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Bake until cookies are firm to the touch, about 10 minutes. Transfer cookies to a wire rack to cool completely."
                 }
               ]
@@ -271,10 +270,5 @@
         }
       ]
     }
-  ],
-  "@alinea": {
-    "entryId": "P7QDb99Sp1JS5FyqCXXn3",
-    "type": "DemoRecipe",
-    "index": "Zw"
-  }
+  ]
 }

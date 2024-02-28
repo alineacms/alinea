@@ -1,33 +1,32 @@
 {
+  "_id": "oU_7ZAszAXwar__BCXVIt",
+  "_type": "DemoRecipe",
+  "_index": "Zx",
+  "_i18nId": "oU_7ZAszAXwar__BCXVIt",
+  "_root": "pages",
   "title": "Oatmeal raisin",
   "header": {
     "image": {
-      "id": "2cGy9n4EVCZSTNtanFINfdnLJgJ",
-      "type": "image",
-      "entry": "2cGy9jg1l2st2v7qqI6NFyyBsGY"
+      "_type": "image",
+      "_id": "2cGy9n4EVCZSTNtanFINfdnLJgJ",
+      "_entry": "2cGy9jg1l2st2v7qqI6NFyyBsGY"
     },
     "credit": [
       {
-        "type": "paragraph",
+        "_type": "paragraph",
         "textAlign": "left",
         "content": [
           {
-            "type": "text",
+            "_type": "text",
             "text": "Photo by "
           },
           {
-            "type": "text",
+            "_type": "text",
             "text": "Tyler Nix",
             "marks": [
               {
-                "type": "link",
-                "attrs": {
-                  "data-id": null,
-                  "data-entry": null,
-                  "data-type": null,
-                  "href": "https://unsplash.com/@nixcreative?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash",
-                  "title": null
-                }
+                "_type": "link",
+                "href": "https://unsplash.com/@nixcreative?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
               }
             ]
           }
@@ -37,11 +36,11 @@
   },
   "intro": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "There's nothing like a classic oatmeal raisin cookie. This recipe is easy to make and yields a delicious, chewy cookie that's perfect for a snack or dessert."
         }
       ]
@@ -49,17 +48,17 @@
   ],
   "ingredients": [
     {
-      "type": "bulletList",
+      "_type": "bulletList",
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 cup (2 sticks) unsalted butter, at room temperature"
                 }
               ]
@@ -67,14 +66,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 cup granulated sugar"
                 }
               ]
@@ -82,14 +81,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "2 large eggs"
                 }
               ]
@@ -97,14 +96,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 teaspoon pure vanilla extract"
                 }
               ]
@@ -112,14 +111,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 1/2 cups all-purpose flour"
                 }
               ]
@@ -127,14 +126,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 teaspoon baking powder"
                 }
               ]
@@ -142,14 +141,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1/2 teaspoon baking soda"
                 }
               ]
@@ -157,14 +156,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 teaspoon ground cinnamon"
                 }
               ]
@@ -172,14 +171,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1/4 teaspoon ground nutmeg"
                 }
               ]
@@ -187,14 +186,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1/2 teaspoon salt"
                 }
               ]
@@ -202,14 +201,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "3 cups old-fashioned rolled oats"
                 }
               ]
@@ -217,14 +216,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "1 cup raisins"
                 }
               ]
@@ -236,18 +235,18 @@
   ],
   "instructions": [
     {
-      "type": "orderedList",
+      "_type": "orderedList",
       "start": 1,
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Preheat oven to 350°F. Line a baking sheet with parchment paper."
                 }
               ]
@@ -255,14 +254,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "In a bowl, cream butter and sugar together until light and fluffy. Beat in eggs, one at a time, then stir in vanilla. In another bowl, whisk together flour, baking powder, baking soda, cinnamon, nutmeg, and salt. Gradually add to butter mixture, mixing until just blended. Stir in oats and raisins."
                 }
               ]
@@ -270,14 +269,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Drop dough by rounded tablespoons onto prepared baking sheet. Bake until cookies are golden brown, about 15 minutes. Cool on a baking sheet for 5 minutes; transfer cookies to a wire rack to cool completely."
                 }
               ]
@@ -285,14 +284,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Store in an airtight container at room temperature for up to 1 week."
                 }
               ]
@@ -301,10 +300,5 @@
         }
       ]
     }
-  ],
-  "@alinea": {
-    "entryId": "oU_7ZAszAXwar__BCXVIt",
-    "type": "DemoRecipe",
-    "index": "Zx"
-  }
+  ]
 }

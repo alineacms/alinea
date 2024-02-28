@@ -1,12 +1,11 @@
 {
-  "@alinea": {
-    "entryId": "2biVnGJdrJMNLuVarwl3DeQDTy2",
-    "type": "Fields",
-    "index": "a0",
-    "seeded": "/en/seededpath.json",
-    "i18nId": "2biVnHG1AqV27e1ihkmoztfFCmY",
-    "root": "pages"
-  },
+  "_id": "2biVnGJdrJMNLuVarwl3DeQDTy2",
+  "_type": "Fields",
+  "_index": "a0",
+  "_i18nId": "2biVnHG1AqV27e1ihkmoztfFCmY",
+  "_seeded": "/en/seededpath.json",
+  "_root": "pages",
+  "title": "Seeded page",
   "tabA": "",
   "shared": "This is shared"
 }

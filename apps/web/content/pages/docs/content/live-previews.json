@@ -1,90 +1,92 @@
 {
+  "_id": "2YlBsRF2vZwxcS27oOSJYmQM37q",
+  "_type": "Doc",
+  "_index": "a1V",
+  "_i18nId": "2YlBsRF2vZwxcS27oOSJYmQM37q",
+  "_root": "pages",
   "title": "Live previews",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "You can set up a live preview of your website inside the dashboard."
         }
       ]
     },
     {
-      "id": "2YlBukqI3TcPC4m3NMmmK4Spry6",
-      "type": "FrameworkBlock",
+      "_type": "FrameworkBlock",
+      "_id": "2YlBukqI3TcPC4m3NMmmK4Spry6",
       "next": [
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Create the following route in the app folder to handle previews:"
             }
           ]
         },
         {
-          "id": "2YlByBMXwRLmN6kNpcOdoeWKtGC",
-          "type": "CodeBlock",
+          "_type": "CodeBlock",
+          "_id": "2YlByBMXwRLmN6kNpcOdoeWKtGC",
           "code": "import {cms} from '@/cms'\n\nexport const GET = cms.previewHandler",
           "fileName": "app/api/preview/route.ts",
           "language": "",
           "compact": false
         },
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Update your "
             },
             {
-              "type": "text",
+              "_type": "text",
               "text": "CMS config",
               "marks": [
                 {
-                  "type": "link",
-                  "attrs": {
-                    "data-id": "2YlC927lwX5hfm2G9JHx9j3yRux",
-                    "data-entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-                    "data-type": "entry",
-                    "href": null,
-                    "title": ""
-                  }
+                  "_type": "link",
+                  "_id": "2YlC927lwX5hfm2G9JHx9j3yRux",
+                  "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+                  "_link": "entry",
+                  "title": ""
                 }
               ]
             },
             {
-              "type": "text",
+              "_type": "text",
               "text": " with the preview url:"
             }
           ]
         },
         {
-          "id": "2YlCBIFhktYqXLnxlG8MWbFhkA4",
-          "type": "CodeBlock",
+          "_type": "CodeBlock",
+          "_id": "2YlCBIFhktYqXLnxlG8MWbFhkA4",
           "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  // schema and workspaces ...\n  preview:\n    process.env.NODE_ENV === 'development'\n      ? 'http://localhost:3000/api/preview'\n      : '/api/preview'\n})",
           "fileName": "cms.tsx",
           "language": "",
           "compact": false
         },
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Include the preview widget (`<cms.previews />`) in your root layout:"
             }
           ]
         },
         {
-          "id": "2YlDBfC8A8tt3H8vaxKz1JZuov8",
-          "type": "CodeBlock",
+          "_type": "CodeBlock",
+          "_id": "2YlDBfC8A8tt3H8vaxKz1JZuov8",
           "code": "import {cms} from '@/cms'\n\nexport default async function Layout({children}: PropsWithChildren) {\n  return (\n    <>\n      <header />\n      <main>{children}</main>\n      <footer />\n      <cms.previews widget />\n    </>\n  )\n}",
           "fileName": "app/layout.tsx",
           "language": "",
@@ -94,22 +96,22 @@
       "js": []
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "This will enable a little widget at the bottom of the page that confirms to the editor they're looking at a preview of the page. If you don't want a preview widget but do want live previews, remove the `widget` prop."
         }
       ]
     },
     {
-      "id": "2bdTZ8LeQUAM9wSSymghzMuF2fc",
-      "type": "ImageBlock",
+      "_type": "ImageBlock",
+      "_id": "2bdTZ8LeQUAM9wSSymghzMuF2fc",
       "image": {
-        "id": "2bdTdyQCKpFuiWrKw0kQb3VLG62",
-        "type": "image",
-        "entry": "2bdTdpHQw9EAiuPIPvHIThCKOnT"
+        "_type": "image",
+        "_id": "2bdTdyQCKpFuiWrKw0kQb3VLG62",
+        "_entry": "2bdTdpHQw9EAiuPIPvHIThCKOnT"
       }
     }
   ],
@@ -121,10 +123,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2YlBsRF2vZwxcS27oOSJYmQM37q",
-    "type": "Doc",
-    "index": "a1V"
   }
 }

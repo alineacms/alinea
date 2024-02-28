@@ -1,4 +1,9 @@
 {
+  "_id": "2clU9Aib3KK4zpvCfYD6q9w5oH3",
+  "_type": "Fields",
+  "_index": "a1",
+  "_i18nId": "2clU9Blq6V0P1PESi9hUpSha3ah",
+  "_root": "pages",
   "title": "Shared test",
   "text": "",
   "hello": "hello",
@@ -15,11 +20,11 @@
   "list": [],
   "withInitial": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "This is a paragraph with initial value"
         }
       ]
@@ -48,11 +53,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2clU9Aib3KK4zpvCfYD6q9w5oH3",
-    "type": "Fields",
-    "index": "a1",
-    "i18nId": "2clU9Blq6V0P1PESi9hUpSha3ah"
   }
 }

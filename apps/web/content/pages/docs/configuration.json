@@ -1,318 +1,296 @@
 {
+  "_id": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+  "_type": "Docs",
+  "_index": "Zm4",
+  "_i18nId": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+  "_root": "pages",
   "title": "Configuration",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "All configuration can be managed from the `cms.tsx` file. This file is created in the project root (or your `src` folder if it exists) during `alinea init`."
         }
       ]
     },
     {
-      "id": "2a4tC7lBmNMZUuJDec7zsG4st62",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "2a4tC7lBmNMZUuJDec7zsG4st62",
       "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  workspaces, schema, dashboard, preview\n})",
       "fileName": "cms.tsx",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`workspaces`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Content can be bundled in separate "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Workspaces",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2YkhLyWRcJ1TaBwxb1l8MIeWbGP",
-                "data-entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2YkhLyWRcJ1TaBwxb1l8MIeWbGP",
+              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": ". Defining at least one is required."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`schema`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Describe the structure of your content using a "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "collection of Types",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2YkhKab77FPvVbFuEKDFvTCeQqA",
-                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2YkhKab77FPvVbFuEKDFvTCeQqA",
+              "_entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`dashboard`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "All configuration to generate the dashboard UI for "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "deployment",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2a4zuVMFhDy0YU5LCzGUUqjpyeW",
-                "data-entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2a4zuVMFhDy0YU5LCzGUUqjpyeW",
+              "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " goes here."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`preview`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A url which is used in the dashboard for "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "live previews",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2a4lENV0tYD7pJsarKpb35IL4nG",
-                "data-entry": "2YlBsRF2vZwxcS27oOSJYmQM37q",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2a4lENV0tYD7pJsarKpb35IL4nG",
+              "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`syncInterval` "
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Optionally set the interval in seconds at which the frontend will poll for updates."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Good to know"
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Dealing with errors"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Your config file is read and executed during the `alinea dev` and `alinea build` "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "CLI",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2bRPphjzKp0th73W5AIX4MbwCAC",
-                "data-entry": "m5KGP-I5smg2S8o4A-j15",
-                "data-type": "entry",
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "2bRPphjzKp0th73W5AIX4MbwCAC",
+              "_entry": "m5KGP-I5smg2S8o4A-j15",
+              "_link": "entry"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " commands. If anything goes wrong, you might see an error such as:"
         }
       ]
     },
     {
-      "id": "2bRPtrWBR0pa60dm18O0y8DW2u8",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "2bRPtrWBR0pa60dm18O0y8DW2u8",
       "code": "Error: Fail\n    at file:///home/alineacms/alinea/node_modules/@alinea/generated/config.js?1706175675574:419:7\n    at ModuleJob.run (node:internal/modules/esm/module_job:194:25)",
       "fileName": "",
       "language": "shellscript"
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "To debug these situations Alinea compiles your config file with an included source map. To enable node to read the source map and report correct positions you can enable the Node.js `--enable-source-maps` flag. You can add it to the scripts in package.json:"
         }
       ]
     },
     {
-      "id": "2bRQUBTqZ510BRTvtbDs333cnoR",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "2bRQUBTqZ510BRTvtbDs333cnoR",
       "code": "{\n  \"scripts\": {\n    \"dev\": \"NODE_OPTIONS=--enable-source-maps alinea dev -- next dev\",\n    \"build\": \"NODE_OPTIONS=--enable-source-maps alinea build -- next build\"\n  }\n}",
       "fileName": "",
       "language": "tsx"
     },
     {
-      "id": "2bRQZBPfwzPF6lNUtjW0wVPFY06",
-      "type": "NoticeBlock",
+      "_type": "NoticeBlock",
+      "_id": "2bRQZBPfwzPF6lNUtjW0wVPFY06",
       "level": "info",
       "body": [
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "If you're developing on Windows you can use "
             },
             {
-              "type": "text",
+              "_type": "text",
               "text": "cross-env",
               "marks": [
                 {
-                  "type": "link",
-                  "attrs": {
-                    "data-id": "2bRQg3uk3C0YltnrWPpj2ROCT7p",
-                    "data-entry": null,
-                    "data-type": "url",
-                    "href": "https://www.npmjs.com/package/cross-env",
-                    "target": "_blank",
-                    "title": null
-                  }
+                  "_type": "link",
+                  "_id": "2bRQg3uk3C0YltnrWPpj2ROCT7p",
+                  "_link": "url",
+                  "href": "https://www.npmjs.com/package/cross-env",
+                  "target": "_blank"
                 }
               ]
             },
             {
-              "type": "text",
+              "_type": "text",
               "text": " to achieve the same."
             }
           ]
@@ -320,18 +298,18 @@
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "The error will now point to the right file:"
         }
       ]
     },
     {
-      "id": "2bRR5xvNhvfy0EaJAgL0owbuNYV",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "2bRR5xvNhvfy0EaJAgL0owbuNYV",
       "code": "Error: Fail\n    at <anonymous> (/home/alinea/apps/dev/cms.tsx:278:7)\n    at ModuleJob.run (node:internal/modules/esm/module_job:194:25)",
       "fileName": "",
       "language": "shellscript"
@@ -345,10 +323,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-    "type": "Docs",
-    "index": "Zm4"
   }
 }

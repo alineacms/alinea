@@ -1,4 +1,9 @@
 {
+  "_id": "2arIXBZlojEnCEyxw62Df2RUfpo",
+  "_type": "Fields",
+  "_index": "Zz",
+  "_i18nId": "2Ublma8yQOzmuoJypIPTmQzW2SR",
+  "_root": "pages",
   "title": "Translated fields",
   "richText": [],
   "select": null,
@@ -15,19 +20,19 @@
   "list": [],
   "nested": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Translated "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "content",
           "marks": [
             {
-              "type": "bold"
+              "_type": "bold"
             }
           ]
         }
@@ -48,12 +53,5 @@
     "openGraph": {
       "image": {}
     }
-  },
-  "@alinea": {
-    "entryId": "2arIXBZlojEnCEyxw62Df2RUfpo",
-    "type": "Fields",
-    "index": "Zz",
-    "i18nId": "2Ublma8yQOzmuoJypIPTmQzW2SR",
-    "root": "pages"
   }
 }

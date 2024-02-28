@@ -1,4 +1,10 @@
 {
+  "_id": "2biVnHixXvXB29cJTlPcVj3Ir0E",
+  "_type": "Fields",
+  "_index": "a0",
+  "_i18nId": "2biVnHG1AqV27e1ihkmoztfFCmY",
+  "_seeded": "/nl/seededpath.json",
+  "_root": "pages",
   "title": "NL Seeded page",
   "text": "",
   "hello": "",
@@ -15,10 +21,10 @@
   "list": [],
   "withInitial": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "This is a paragraph with initial value"
         }
       ]
@@ -47,13 +53,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2biVnHixXvXB29cJTlPcVj3Ir0E",
-    "type": "Fields",
-    "index": "a0",
-    "seeded": "/nl/seededpath.json",
-    "i18nId": "2biVnHG1AqV27e1ihkmoztfFCmY",
-    "root": "pages"
   }
 }

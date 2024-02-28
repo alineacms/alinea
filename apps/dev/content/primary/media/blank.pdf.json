@@ -1,15 +1,14 @@
 {
+  "_id": "2V4cZQX2vXGoBOko2s3apBX6oWG",
+  "_type": "MediaFile",
+  "_index": "a0",
+  "_i18nId": "2V4cZQX2vXGoBOko2s3apBX6oWG",
+  "_root": "media",
   "title": "blank",
   "location": "/blank.2V4cZPNjcPrfelJe3bGVDxTbcCc.pdf",
   "extension": ".pdf",
   "size": 26468,
   "hash": "8540820f",
   "width": null,
-  "height": null,
-  "@alinea": {
-    "entryId": "2V4cZQX2vXGoBOko2s3apBX6oWG",
-    "type": "MediaFile",
-    "index": "a0",
-    "root": "media"
-  }
+  "height": null
 }

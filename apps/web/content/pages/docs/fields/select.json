@@ -1,28 +1,33 @@
 {
+  "_id": "268hmvl73nDMrfPTEpVq3AB5B3L",
+  "_type": "Doc",
+  "_index": "a23",
+  "_i18nId": "268hmvl73nDMrfPTEpVq3AB5B3L",
+  "_root": "pages",
   "title": "Select",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A select field limits data to a specific set of options."
         }
       ]
     },
     {
-      "id": "268iVJXDY23EWvw51STlvnDU0eR",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "268iVJXDY23EWvw51STlvnDU0eR",
       "code": "import {Field} from 'alinea'\n\nField.select('My select field', {\n  options: {\n    a: 'Option a',\n    b: 'Option b'\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "2Yl56dl7ynjRy9stWye5pCVTwLH",
-      "type": "ExampleBlock",
+      "_type": "ExampleBlock",
+      "_id": "2Yl56dl7ynjRy9stWye5pCVTwLH",
       "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Select field', {\n  select: Field.select('My select field', {\n    options: {\n      a: 'Option a',\n      b: 'Option b'\n    }\n  })\n})"
     }
   ],
@@ -34,10 +39,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "268hmvl73nDMrfPTEpVq3AB5B3L",
-    "type": "Doc",
-    "index": "a23"
   }
 }

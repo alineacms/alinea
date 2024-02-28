@@ -1,68 +1,73 @@
 {
+  "_id": "Xu4-sW6S0ynehY5zKR1VZ",
+  "_type": "Doc",
+  "_index": "a2Bl",
+  "_i18nId": "Xu4-sW6S0ynehY5zKR1VZ",
+  "_root": "pages",
   "title": "Image",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "The image field can be used to select an image."
         }
       ]
     },
     {
-      "id": "YCDn4dBOi-_bHy32PAqzU",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "YCDn4dBOi-_bHy32PAqzU",
       "code": "import {Field} from 'alinea'\n\nField.image('Single image link')\n\nField.image.multiple('Multiple image links')",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "D6afYJyRzrcvfZy1mTq5L",
-      "type": "ExampleBlock",
+      "_type": "ExampleBlock",
+      "_id": "D6afYJyRzrcvfZy1mTq5L",
       "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Image field', {\n  image: Field.image('Single image link'),\n  imageMultiple: Field.image.multiple('Multiple image links')\n})"
     },
     {
-      "type": "heading",
+      "_type": "heading",
       "textAlign": "start",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration",
           "marks": [
             {
-              "type": "bold"
+              "_type": "bold"
             }
           ]
         }
       ]
     },
     {
-      "type": "heading",
+      "_type": "heading",
       "textAlign": "start",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`max`",
           "marks": [
             {
-              "type": "bold"
+              "_type": "bold"
             }
           ]
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "start",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Limit the amount of rows in case of multiple links."
         }
       ]
@@ -76,10 +81,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "Xu4-sW6S0ynehY5zKR1VZ",
-    "type": "Doc",
-    "index": "a2Bl"
   }
 }

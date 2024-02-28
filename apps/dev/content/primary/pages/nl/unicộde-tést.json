@@ -1,15 +1,13 @@
 {
+  "_id": "2b01fKO0WytNOYxXx2hvaf3k0MK",
+  "_type": "Page",
+  "_index": "a0",
+  "_i18nId": "2b01fFETBoAaydHPddiZ22CljH9",
+  "_root": "pages",
   "title": "Unicộde tést",
   "metadata": {
     "openGraph": {
       "image": {}
     }
-  },
-  "@alinea": {
-    "entryId": "2b01fKO0WytNOYxXx2hvaf3k0MK",
-    "type": "Page",
-    "index": "a0",
-    "i18nId": "2b01fFETBoAaydHPddiZ22CljH9",
-    "root": "pages"
   }
 }

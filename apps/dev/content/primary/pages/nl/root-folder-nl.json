@@ -1,10 +1,8 @@
 {
-  "title": "Root folder A",
-  "@alinea": {
-    "entryId": "2clUBd0nHqL3ny8ocC4pUOstRkk",
-    "type": "Folder",
-    "index": "a0",
-    "i18nId": "2U6iOGsMb7ORnRwQi9ZPhvV9vel",
-    "root": "pages"
-  }
+  "_id": "2clUBd0nHqL3ny8ocC4pUOstRkk",
+  "_type": "Folder",
+  "_index": "a0",
+  "_i18nId": "2U6iOGsMb7ORnRwQi9ZPhvV9vel",
+  "_root": "pages",
+  "title": "Root folder A"
 }

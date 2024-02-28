@@ -1,90 +1,94 @@
 {
+  "_id": "GyPkhJLrxgmfXYtYFOq9x",
+  "_type": "Doc",
+  "_index": "a26",
+  "_i18nId": "GyPkhJLrxgmfXYtYFOq9x",
+  "_root": "pages",
   "title": "Number",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A number field is used to input numeric data."
         }
       ]
     },
     {
-      "id": "g4S5QLIWCAxleuIDzwNpk",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "g4S5QLIWCAxleuIDzwNpk",
       "code": "import {Field} from 'alinea'\n\nField.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "MFfouC0Ou_IJ8GmSx0nRK",
-      "type": "ExampleBlock",
+      "_type": "ExampleBlock",
+      "_id": "MFfouC0Ou_IJ8GmSx0nRK",
       "code": "import {Field} from 'alinea'\n\nexport default Field.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})"
     },
     {
-      "type": "heading",
+      "_type": "heading",
       "textAlign": "start",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration",
           "marks": [
             {
-              "type": "bold"
+              "_type": "bold"
             }
           ]
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`step`",
           "marks": [
             {
-              "type": "bold"
+              "_type": "bold"
             }
           ]
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Specifies the interval between legal numbers in the input field."
         },
         {
-          "type": "hardBreak"
+          "_type": "hardBreak"
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Default is 1."
         }
       ]
     },
     {
-      "id": "TgFnfhtgWoXxn8JNTvLeU",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "TgFnfhtgWoXxn8JNTvLeU",
       "code": "import {Field} from 'alinea'\n\nField.number('My decimal number field', {\n  step: 0.01\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "FTmS0mD2qcabtj5xwOI9D",
-      "type": "ExampleBlock",
+      "_type": "ExampleBlock",
+      "_id": "FTmS0mD2qcabtj5xwOI9D",
       "code": "import {Field} from 'alinea'\n\nexport default Field.number('My decimal number field', {\n  help: 'You can increase or decrease the value by 0.01',\n  initialValue: 0.01,\n  step: 0.01\n})"
     }
   ],
@@ -96,10 +100,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "GyPkhJLrxgmfXYtYFOq9x",
-    "type": "Doc",
-    "index": "a26"
   }
 }

@@ -1,4 +1,9 @@
 {
+  "_id": "268hjH2OU9fiReg61Wov1SRbPD5",
+  "_type": "Doc",
+  "_index": "a1",
+  "_i18nId": "268hjH2OU9fiReg61Wov1SRbPD5",
+  "_root": "pages",
   "title": "Rich Text",
   "navigationTitle": "",
   "body": [
@@ -166,10 +171,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "268hjH2OU9fiReg61Wov1SRbPD5",
-    "type": "Doc",
-    "index": "a1"
   }
 }

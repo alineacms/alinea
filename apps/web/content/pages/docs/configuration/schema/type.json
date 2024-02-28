@@ -1,311 +1,283 @@
 {
+  "_id": "267QuOShP41WnFxQFOcHZQoCsla",
+  "_type": "Doc",
+  "_index": "Zx",
+  "_i18nId": "267QuOShP41WnFxQFOcHZQoCsla",
+  "_root": "pages",
   "title": "Type",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A type defines fields and presentational settings. Fields hold data that can be edited in the dashboard. Top level types which are used in a "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Schema",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "a75tGMS2KoV50oYz5NOYQ",
-                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
-                "data-type": null,
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "a75tGMS2KoV50oYz5NOYQ",
+              "_entry": "267KTV8uPHIdZgFUQvJf06sfm4h"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " need to define both a title and path field."
         }
       ]
     },
     {
-      "id": "267QyzM4851hQU1DihfoV3fSIFg",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "267QyzM4851hQU1DihfoV3fSIFg",
       "code": "import {Config} from 'alinea'\n\nConfig.type('My type', {\n  isContainer: true,\n  fields: {\n    title: alinea.text('Title', {width: 0.5}),\n    path: alinea.path('Path', {width: 0.5})\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
+      "_type": "heading",
       "level": 2,
-      "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Types should be defined within a "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Schema",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2aAy9jQj9cK5OR1RlFElYWSddy2",
-                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2aAy9jQj9cK5OR1RlFElYWSddy2",
+              "_entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`isContainer`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "When a type is marked as a container it can contain subpages of any Type. If you like to restrict allowed Types, use `contains`."
         }
       ]
     },
     {
-      "id": "28hm0oPtHKhLaCy81WA2kyAKIO2",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "28hm0oPtHKhLaCy81WA2kyAKIO2",
       "code": "isContainer: true",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`contains`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Accept entries of these Types as children. For example a `Blog` can accept `BlogEntry` children."
         }
       ]
     },
     {
-      "id": "28hmFQwpEgifAOoOnxkUe2FtXDJ",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "28hmFQwpEgifAOoOnxkUe2FtXDJ",
       "code": "contains: ['PageA', 'PageB']",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`entryUrl`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "The `url` property of entries can be controlled using the `entryUrl` function in the type options. Urls are computed during generation and this can help to keep them constant if you're using a web framework that does file system routing. The available parameters are `path`, `parentPaths` and `locale`. For example: making sure a doc page always has an url in the form of `/doc/$path` you can specify `entryUrl` as the following:"
         }
       ]
     },
     {
-      "id": "aJxUeLtZdqDwmNG2_fSLq",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "aJxUeLtZdqDwmNG2_fSLq",
       "code": "entryUrl({path}) {\n  return `/doc/${path}`\n}",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`icon`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "An icon can be used to label a type in the sidebar entry tree. Icons are implemented as a React component. You can find icons on "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Icones",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "qvoK8kMv_e7gV6hhapAn5",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://icones.js.org",
-                "target": "_blank",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "qvoK8kMv_e7gV6hhapAn5",
+              "href": "https://icones.js.org",
+              "target": "_blank"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " or install a package such as "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "react-icons",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "toXRTK13MpBaa1ijN3COj",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://react-icons.github.io/react-icons",
-                "target": "_blank",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "toXRTK13MpBaa1ijN3COj",
+              "href": "https://react-icons.github.io/react-icons",
+              "target": "_blank"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Good to know"
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Fields must be unique"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea will throw an error if a field shows up multiple times in the same `Type`. Having unique fields is important so we can use the field references directly when "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "querying data",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2bMDWBN5BaC5E3OxgHCQZFHUp47",
-                "data-entry": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
-                "data-type": "entry",
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "2bMDWBN5BaC5E3OxgHCQZFHUp47",
+              "_entry": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
+              "_link": "entry"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " or in "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "conditional configuration",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2bMDXpF1usIvfF9iDpLslLCmPSu",
-                "data-entry": "24yE2mu6Xq959jrP135Sdb4e3lG",
-                "data-type": "entry",
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "2bMDXpF1usIvfF9iDpLslLCmPSu",
+              "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG",
+              "_link": "entry"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": ". "
         }
       ]
     },
     {
-      "id": "2bMDZDXD2d1Am2Gq94E4xZREnPG",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "2bMDZDXD2d1Am2Gq94E4xZREnPG",
       "code": "import {Config, Field} from 'alinea'\n\nconst textField = Field.text('Text field')\nconst MyType = Config.type('My type', {\n  fields: {\n    fieldA: textField,\n    fieldB: textField // This is not allowed\n  }\n})\n\n// You can rewrite the above to get unique \n// references by making textField a function\nconst textField = () => Field.text('Text field')\nconst MyType = Config.type('My type', {\n  fields: {\n    fieldA: textField(),\n    fieldB: textField() // This is fine\n  }\n})",
       "fileName": "",
       "language": ""
@@ -319,10 +291,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "267QuOShP41WnFxQFOcHZQoCsla",
-    "type": "Doc",
-    "index": "Zx"
   }
 }
