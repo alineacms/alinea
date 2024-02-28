@@ -5,6 +5,8 @@ import {Auth} from './Auth.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Workspace, WorkspaceData} from './Workspace.js'
+import {isValidIdentifier} from './util/Identifiers.js'
+import {entries} from './util/Objects.js'
 
 export interface DashboardConfig {
   handlerUrl: string
@@ -49,25 +51,24 @@ export namespace Config {
   export function hasAuth(config: Config): boolean {
     return Boolean(config.dashboard?.auth)
   }
+
+  export function validate(config: Config) {
+    Schema.validate(config.schema)
+    for (const [key, workspace] of entries(config.workspaces)) {
+      if (!isValidIdentifier(key))
+        throw new Error(
+          `Invalid Workspace name "${key}", use only a-z, A-Z, 0-9, and _`
+        )
+      Workspace.validate(workspace, config.schema)
+    }
+  }
 }
 
 /** Create a new config instance */
 export function createConfig<Definition extends Config>(
   definition: Definition
 ) {
-  /*const publicDir = definition.publicDir ?? './public'
-  const staticFile = definition.dashboard?.staticFile
-  let dashboardFile = 'admin.html'
-  if (staticFile) {
-    if (staticFile.startsWith('public/'))
-      dashboardFile = staticFile.slice('public/'.length)
-    else
-      throw new Error(
-        `Usage of config.dashboard.staticFile is deprecated, please use config.dashboardFile`
-      )
-  }
-  const handlerUrl = definition.handlerUrl ?? definition.dashboard?.handlerUrl*/
-  return {
+  const res = {
     ...definition,
     schema: {MediaLibrary, MediaFile, ...definition.schema},
     dashboard: {
@@ -75,4 +76,6 @@ export function createConfig<Definition extends Config>(
       ...definition.dashboard
     }
   }
+  Config.validate(res)
+  return res
 }

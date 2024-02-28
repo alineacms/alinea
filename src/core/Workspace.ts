@@ -1,9 +1,10 @@
 import {Preview} from 'alinea/core/Preview'
 import type {ComponentType} from 'react'
-import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Root} from './Root.js'
+import {Schema} from './Schema.js'
 import {getRandomColor} from './util/GetRandomColor.js'
+import {isValidIdentifier} from './util/Identifiers.js'
 import {entries} from './util/Objects.js'
 
 export interface WorkspaceMeta {
@@ -18,7 +19,7 @@ export interface WorkspaceMeta {
 }
 
 export interface WorkspaceData extends WorkspaceMeta {
-  label: Label
+  label: string
   roots: Roots
   color: string
 }
@@ -46,7 +47,7 @@ export namespace Workspace {
     return workspace[Workspace.Data].roots
   }
 
-  export function label(workspace: Workspace): Label {
+  export function label(workspace: Workspace): string {
     return workspace[Workspace.Data].label
   }
 
@@ -68,6 +69,18 @@ export namespace Workspace {
   export function defaultRoot(workspace: Workspace): string {
     return Object.keys(workspace[Workspace.Data].roots)[0]
   }
+
+  export function validate(workspace: Workspace, schema: Schema) {
+    for (const [key, root] of entries(workspace)) {
+      if (!isValidIdentifier(key))
+        throw new Error(
+          `Invalid Root name "${key}" in workspace "${label(
+            workspace
+          )}", use only a-z, A-Z, 0-9, and _`
+        )
+      Root.validate(root, label(workspace), schema)
+    }
+  }
 }
 
 export interface WorkspaceOptions<Definition> extends WorkspaceMeta {
@@ -77,18 +90,18 @@ export interface WorkspaceOptions<Definition> extends WorkspaceMeta {
 /** Create a workspace */
 export function workspace<Definition extends WorkspaceDefinition>(
   /** The name of the workspace */
-  label: Label,
+  label: string,
   definition: WorkspaceOptions<Definition>
 ): Workspace<Definition>
 /** @deprecated See https://github.com/alineacms/alinea/issues/373 */
 export function workspace<Definition extends WorkspaceDefinition>(
   /** The name of the workspace */
-  label: Label,
+  label: string,
   definition: Definition
 ): Workspace<StripMeta<Definition>>
 export function workspace<Definition extends WorkspaceDefinition>(
   /** The name of the workspace */
-  label: Label,
+  label: string,
   definition: WorkspaceOptions<Definition> | Definition
 ) {
   const isOptions = 'roots' in definition && !Root.isRoot(definition.roots)

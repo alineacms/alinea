@@ -3,6 +3,7 @@ import type {ComponentType} from 'react'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {PageSeed} from './Page.js'
+import {Schema} from './Schema.js'
 
 export interface RootI18n {
   locales: Array<string>
@@ -58,6 +59,18 @@ export namespace Root {
 
   export function isMediaRoot(root: Root): boolean {
     return Boolean(root[Root.Data].isMediaRoot)
+  }
+
+  export function validate(root: Root, workspaceLabel: string, schema: Schema) {
+    const {contains} = root[Root.Data]
+    for (const key of contains ?? []) {
+      if (!schema[key])
+        throw new Error(
+          `Root "${label(
+            root
+          )}" in workspace "${workspaceLabel}" contains "${key}", but that Type does not exist`
+        )
+    }
   }
 }
 

@@ -1,7 +1,9 @@
 import {Hint} from './Hint.js'
 import {Type, TypeTarget} from './Type.js'
+import {MediaFile, MediaLibrary} from './media/MediaTypes.js'
 import {RecordShape} from './shape/RecordShape.js'
-import {entries, fromEntries} from './util/Objects.js'
+import {isValidIdentifier} from './util/Identifiers.js'
+import {entries, fromEntries, keys} from './util/Objects.js'
 
 const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
 const hintCache = new WeakMap<Schema, Hint.Union>()
@@ -10,6 +12,38 @@ export interface Schema<Definitions = {}> extends Record<string, Type> {}
 
 export namespace Schema {
   export type Targets = Map<TypeTarget, string>
+
+  export function validate(schema: Schema) {
+    for (const key of keys(schema)) {
+      switch (key) {
+        case 'Entry':
+          throw new Error(`Entry is a reserved Type name`)
+        case 'MediaFile':
+          if (schema[key] !== MediaFile)
+            throw new Error(`MediaFile is a reserved Type name`)
+          break
+        case 'MediaLibrary':
+          if (schema[key] !== MediaLibrary)
+            throw new Error(`MediaLibrary is a reserved Type name`)
+          break
+        default:
+          if (!isValidIdentifier(key))
+            throw new Error(
+              `Invalid Type name "${key}", use only a-z, A-Z, 0-9, and _`
+            )
+          const type = schema[key]
+          const {contains} = Type.meta(type)
+          if (contains) {
+            for (const name of contains) {
+              if (!schema[name])
+                throw new Error(
+                  `Type "${key}" contains "${name}", but that Type does not exist`
+                )
+            }
+          }
+      }
+    }
+  }
 
   export function shapes(schema: Schema): Record<string, RecordShape> {
     if (!shapesCache.has(schema))
