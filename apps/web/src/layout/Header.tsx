@@ -19,7 +19,7 @@ const styles = fromModule(css)
 export type HeaderLink = AnyLink<{label: string; active: string}>
 
 export async function Header() {
-  const links = await cms.get(Home().select(Home.links))
+  const links = await cms.get(Query(Home).select(Home.links))
   return (
     <>
       <input

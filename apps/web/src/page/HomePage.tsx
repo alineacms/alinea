@@ -67,8 +67,8 @@ export default async function HomePage() {
               <Hero.Title>{home.headline}</Hero.Title>
               <Hero.ByLine>{home.byline}</Hero.ByLine>
               <HStack gap={24} style={{paddingTop: px(20)}}>
-                {home.action?.url && (
-                  <Hero.Action href={home.action.url}>
+                {home.action?.href && (
+                  <Hero.Action href={home.action.href}>
                     {home.action.fields.label}
                   </Hero.Action>
                 )}
