@@ -24,9 +24,9 @@ const shape = new ListShape('List', {
 
 const value1 = [
   {
-    id: 'unique0',
-    type: 'Block1',
-    index: 'a0',
+    _id: 'unique0',
+    _type: 'Block1',
+    _index: 'a0',
     field1: 'a',
     blockInner: {
       field3: 'a',
@@ -34,9 +34,9 @@ const value1 = [
     }
   },
   {
-    id: 'unique1',
-    type: 'Block1',
-    index: 'a0',
+    _id: 'unique1',
+    _type: 'Block1',
+    _index: 'a0',
     field1: 'a',
     blockInner: {
       field3: 'a',
@@ -44,9 +44,9 @@ const value1 = [
     }
   },
   {
-    id: 'unique2',
-    type: 'Block2',
-    index: 'a1',
+    _id: 'unique2',
+    _type: 'Block2',
+    _index: 'a1',
     field3: 'a',
     field4: 'b'
   }
@@ -54,9 +54,9 @@ const value1 = [
 
 const value2 = [
   {
-    id: 'unique1',
-    type: 'Block1',
-    index: 'a0',
+    _id: 'unique1',
+    _type: 'Block1',
+    _index: 'a0',
     field1: '00',
     blockInner: {
       field3: 'a',
@@ -64,9 +64,9 @@ const value2 = [
     }
   },
   {
-    id: 'unique3',
-    type: 'Block1',
-    index: 'a1',
+    _id: 'unique3',
+    _type: 'Block1',
+    _index: 'a1',
     field1: 'a',
     blockInner: {
       field3: 'a',
@@ -74,9 +74,9 @@ const value2 = [
     }
   },
   {
-    id: 'unique2',
-    type: 'Block2',
-    index: 'a2',
+    _id: 'unique2',
+    _type: 'Block2',
+    _index: 'a2',
     field3: 'a11',
     field4: 'b'
   }
@@ -91,6 +91,34 @@ test('apply', () => {
   })
   const pass2 = shape.fromY(root.get(FIELD_KEY))
   assert.equal(pass2, value2)
+})
+
+test('normalize', () => {
+  const oldValue = [
+    {
+      id: 'unique1',
+      type: 'Block1',
+      index: 'a0',
+      field1: '00',
+      blockInner: {
+        field3: 'a',
+        field4: 'c'
+      }
+    }
+  ]
+  const pass = shape.toV1(oldValue)
+  assert.equal(pass, [
+    {
+      _id: 'unique1',
+      _type: 'Block1',
+      _index: 'a0',
+      field1: '00',
+      blockInner: {
+        field3: 'a',
+        field4: 'c'
+      }
+    }
+  ])
 })
 
 test.run()

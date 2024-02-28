@@ -1,5 +1,7 @@
+import {Entry} from 'alinea/core'
 import type {WithoutLabel} from 'alinea/core/Field'
 import {Hint} from 'alinea/core/Hint'
+import {InferStoredValue} from 'alinea/core/Infer'
 import {Label} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
 import type {ListRow} from 'alinea/core/shape/ListShape'
@@ -8,23 +10,46 @@ import {
   createLink,
   createLinks
 } from 'alinea/field/link/LinkField'
-import {EntryPickerOptions, entryFields, entryPicker} from 'alinea/picker/entry'
+import {EntryPickerOptions, entryPicker} from 'alinea/picker/entry'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 
-type Link<Fields> = EntryReference & Type.Infer<Fields>
+export interface EntryLink<InferredFields = undefined> extends EntryReference {
+  entryId: string
+  entryType: string
+  i18nId: string
+  title: string
+  path: string
+  /** @deprecated Use href */
+  url: string
+  href: string
+  fields: InferredFields
+}
+
+export namespace EntryLink {
+  export const entryId = Entry.entryId
+  export const i18nId = Entry.i18nId
+  export const title = Entry.title
+  export const entryType = Entry.type
+  export const url = Entry.url
+  export const href = Entry.url
+  export const path = Entry.path
+}
 
 interface EntryOptions<Fields>
-  extends LinkFieldOptions<Link<Fields>>,
+  extends LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
     Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
 
-export function entry<Fields>(
+export function entry<Fields = undefined>(
   label: Label,
   options: WithoutLabel<EntryOptions<Fields>> = {}
 ) {
-  return createLink<Link<Fields>>(label, {
+  return createLink<
+    EntryReference & InferStoredValue<Fields>,
+    EntryLink<Type.Infer<Fields>>
+  >(label, {
     ...options,
     pickers: {
-      entry: entryPicker<EntryReference, Fields>({
+      entry: entryPicker({
         ...options,
         withNavigation: Boolean(options.location || !options.condition),
         hint: Hint.Extern({
@@ -33,24 +58,26 @@ export function entry<Fields>(
         }),
         title: 'Select a page',
         max: 1,
-        selection: entryFields
+        selection: EntryLink
       })
     }
-  } as any)
+  })
 }
 
 export namespace entry {
-  type Link<Fields> = EntryReference & Type.Infer<Fields> & ListRow
+  type EntryRow<Fields> = EntryLink<Type.Infer<Fields>> & ListRow
 
   interface EntryOptions<Fields>
-    extends LinkFieldOptions<Array<Link<Fields>>>,
+    extends LinkFieldOptions<
+        Array<EntryReference & ListRow & InferStoredValue<Fields>>
+      >,
       Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
 
-  export function multiple<Fields>(
+  export function multiple<Fields = undefined>(
     label: Label,
     options: WithoutLabel<EntryOptions<Fields>> = {}
   ) {
-    return createLinks<Link<Fields>>(label, {
+    return createLinks<EntryReference & ListRow, EntryRow<Fields>>(label, {
       ...options,
       pickers: {
         entry: entryPicker<EntryReference, Fields>({
@@ -61,7 +88,7 @@ export namespace entry {
             package: 'alinea/picker/entry'
           }),
           title: 'Select a page',
-          selection: entryFields
+          selection: EntryLink
         })
       }
     })

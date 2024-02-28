@@ -1,6 +1,10 @@
 // See implementations in picker.url and picker.entry
 export interface Reference {
-  id: string
-  type: string
-  ref: string
+  _id: string
+  _type: string
+}
+
+export namespace Reference {
+  export const id = '_id' satisfies keyof Reference
+  export const type = '_type' satisfies keyof Reference
 }

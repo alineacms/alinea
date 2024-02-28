@@ -1,6 +1,7 @@
 import {Edit} from 'alinea/core/Edit'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {Query} from 'alinea/core/Query'
+import {ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {readFileSync} from 'fs'
 import {test} from 'uvu'
@@ -129,7 +130,8 @@ test('field creators', async () => {
   const example = createExample()
   const {Fields} = example.schema
   const entry = Edit.create(Fields)
-  const list = Edit.list(Fields.list)
+  const listEditor = Edit.list(Fields.list)
+  const list = listEditor
     .add('Text', {
       title: '',
       text: Edit.richText(Fields.richText)
@@ -147,11 +149,11 @@ test('field creators', async () => {
   const res = (await example.get(
     Query.whereId(entry.entryId).select(Fields.list)
   ))![0]
-  if (res?.type !== 'Text') throw new Error('Expected Text')
+  if (res[Node.type] !== 'Text') throw new Error('Expected Text')
   assert.equal(res.text[0], {
-    type: 'heading',
+    [Node.type]: 'heading',
     level: 1,
-    content: [{type: 'text', text: 'Test'}]
+    [ElementNode.content]: [{[Node.type]: 'text', [TextNode.text]: 'Test'}]
   })
 })
 

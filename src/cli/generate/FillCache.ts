@@ -11,7 +11,7 @@ import {LocalData} from './LocalData.js'
 const dbCache = new WeakMap<Config, Database>()
 
 export async function* fillCache(
-  {watch, rootDir}: GenerateContext,
+  {watch, fix, rootDir}: GenerateContext,
   localData: LocalData,
   store: Store,
   config: Config,
@@ -25,7 +25,7 @@ export async function* fillCache(
   const commitSha = getCommitSha()
 
   const cache = async () => {
-    await db.fill(localData, commitSha ?? '', localData)
+    await db.fill(localData, commitSha ?? '', localData, fix)
     return db
   }
 

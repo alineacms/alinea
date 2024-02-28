@@ -1,4 +1,5 @@
 import {Blob, File} from '@alinea/iso'
+import {StoredRow} from 'alinea/core/Infer'
 import {ImagePreviewDetails} from 'alinea/core/media/CreatePreview'
 import type {CMS} from './CMS.js'
 import {Config} from './Config.js'
@@ -326,7 +327,7 @@ export class CreateOperation<Definition> extends Operation {
     return this
   }
 
-  set(entryData: Partial<Type.Infer<Definition>>) {
+  set(entryData: Partial<StoredRow<Definition>>) {
     this.entry.data = {...this.entry.data, ...entryData}
     return this
   }

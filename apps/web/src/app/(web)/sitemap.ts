@@ -11,7 +11,7 @@ const pages = [
 
 export default function sitemap(): Promise<MetadataRoute.Sitemap> {
   return Promise.all(pages)
-    .then(mods => mods.map(mod => mod.sitemap()))
+    .then(mods => mods.map(({default: page}) => page.sitemap()))
     .then(maps => Promise.all(maps))
     .then(maps => maps.flat())
 }

@@ -6,12 +6,11 @@ import {supportedFrameworks} from '@/layout/nav/Frameworks'
 import {Link} from '@/layout/nav/Link'
 import {NavTree} from '@/layout/nav/NavTree'
 import {NavItem, nestNav} from '@/layout/nav/NestNav'
-import {BodyView} from '@/page/blocks/BodyFieldView'
+import {BodyFieldView} from '@/page/blocks/BodyFieldView'
 import {Doc} from '@/schema/Doc'
 import {Query} from 'alinea'
 import {HStack, VStack, fromModule} from 'alinea/ui'
 import {Metadata, MetadataRoute} from 'next'
-import {notFound} from 'next/navigation'
 import {WebTypo} from '../layout/WebTypo'
 import css from './DocPage.module.scss'
 
@@ -54,20 +53,6 @@ async function getPage(params: DocPageParams) {
   }
 }
 
-export async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = await generateStaticParams()
-  return pages
-    .filter(page => supportedFrameworks.some(f => f.name === page.framework))
-    .map(page => {
-      return {
-        url: `/${
-          page.framework === 'next' ? 'docs' : `docs:${page.framework}`
-        }/${page.slug.join('/')}`,
-        priority: 0.9
-      }
-    })
-}
-
 export const dynamicParams = false
 export async function generateStaticParams() {
   const urls = await cms
@@ -101,13 +86,11 @@ export async function generateMetadata({
   params
 }: DocPageProps): Promise<Metadata> {
   const {doc} = await getPage(params)
-  if (!doc) return notFound()
   return {title: doc.title}
 }
 
 export default async function DocPage({params}: DocPageProps) {
   const {doc, framework} = await getPage(params)
-  if (!doc) return notFound()
   const select = {
     id: Query.id,
     type: Query.type,
@@ -164,7 +147,7 @@ export default async function DocPage({params}: DocPageProps) {
             )
           })}
         </VStack>
-        <BodyView body={doc.body} />
+        <BodyFieldView body={doc.body} />
       </WebTypo>
       <HStack
         gap={20}
@@ -204,4 +187,18 @@ export default async function DocPage({params}: DocPageProps) {
       </HStack>
     </PageWithSidebar>
   )
+}
+
+DocPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  const pages = await generateStaticParams()
+  return pages
+    .filter(page => supportedFrameworks.some(f => f.name === page.framework))
+    .map(page => {
+      return {
+        url: `/${
+          page.framework === 'next' ? 'docs' : `docs:${page.framework}`
+        }/${page.slug.join('/')}`,
+        priority: 0.9
+      }
+    })
 }

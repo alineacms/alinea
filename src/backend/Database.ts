@@ -1,6 +1,6 @@
 import {Config} from 'alinea/core/Config'
 import {SyncResponse, Syncable} from 'alinea/core/Connection'
-import {EntryRecord, META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import {EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {PageSeed} from 'alinea/core/Page'
@@ -452,8 +452,8 @@ export class Database implements Syncable {
     },
     seed?: Seed
   ): Omit<EntryRow, 'rowHash' | 'fileHash'> {
-    const {[META_KEY]: alineaMeta, ...data} = record
-    const typeName = alineaMeta.type
+    const {meta: recordMeta, data} = parseRecord(record)
+    const typeName = recordMeta.type
     const parentDir = paths.dirname(meta.filePath)
     const extension = paths.extname(meta.filePath)
     const fileName = paths.basename(meta.filePath, extension)
@@ -476,7 +476,7 @@ export class Database implements Syncable {
       )
     const childrenDir = paths.join(parentDir, entryPath)
 
-    if (!record[META_KEY].entryId) throw new Error(`missing id`)
+    if (!recordMeta.entryId) throw new Error(`missing id`)
 
     const urlMeta: EntryUrlMeta = {
       locale,
@@ -488,12 +488,12 @@ export class Database implements Syncable {
     const pathData = entryPath === 'index' ? '' : entryPath
     const seedData = seed ? PageSeed.data(seed.page).partial : {}
     const title = record.title ?? seedData?.title ?? ''
-    const entryData = {
+    const entryData = Type.toV1(type, {
       ...seedData,
       ...data,
       title,
       path: pathData
-    }
+    })
     const searchableText = Type.searchableText(type, entryData)
     return {
       workspace: meta.workspace,
@@ -505,17 +505,17 @@ export class Database implements Syncable {
       active: false,
       main: false,
 
-      entryId: alineaMeta.entryId,
+      entryId: recordMeta.entryId,
       phase: entryPhase,
-      type: alineaMeta.type,
+      type: recordMeta.type,
 
       parentDir,
       childrenDir,
       parent: null,
       level: parentDir === '/' ? 0 : segments.length,
-      index: alineaMeta.index,
+      index: recordMeta.index,
       locale,
-      i18nId: alineaMeta.i18nId ?? alineaMeta.entryId,
+      i18nId: recordMeta.i18nId ?? recordMeta.entryId,
 
       path: entryPath,
       title,
@@ -567,8 +567,12 @@ export class Database implements Syncable {
   async fill(
     source: Source,
     commitHash: string,
-    target?: Target
+    target?: Target,
+    // If the generated json is different from the source, the source will be
+    // updated with the generated json
+    fix = false
   ): Promise<void> {
+    if (fix && !target) throw new TypeError(`Target expected if fix is true`)
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
     await this.init()
@@ -580,6 +584,7 @@ export class Database implements Syncable {
       const seenSeeds = new Set<string>()
       const inserted = []
       //const endScan = timer('Scanning entries')
+      const changes: Array<Change> = []
       for await (const file of source.entries()) {
         const fileHash = await createFileHash(file.contents)
         const exists = await query(
@@ -597,7 +602,7 @@ export class Database implements Syncable {
         )
         // Todo: a config change but unchanged entry data will currently
         // fly under the radar
-        if (exists) {
+        if (!fix && exists) {
           seenVersions.push(exists.versionId)
           const key = seedKey(
             file.workspace,
@@ -609,22 +614,42 @@ export class Database implements Syncable {
         }
         try {
           const raw = JsonLoader.parse(this.config.schema, file.contents)
-          const record = EntryRecord(raw)
-          const seeded = record[META_KEY]?.seeded
+          const {meta, data} = parseRecord(raw)
+          const seeded = meta.seeded
           const key = seedKey(
             file.workspace,
             file.root,
             typeof seeded === 'string' ? seeded : file.filePath
           )
           const seed = this.seed.get(key)
+          const record = createRecord({...meta, data})
           const entry = this.computeEntry(record, file, seed)
-
-          seenSeeds.add(key)
-
+          const withHash: EntryRow = {...entry, fileHash, rowHash: ''}
+          if (fix) {
+            const fileContents = JsonLoader.format(this.config.schema, record)
+            const newHash = await createFileHash(fileContents)
+            if (fileHash !== newHash) {
+              const workspace = this.config.workspaces[entry.workspace]
+              const file = paths.join(
+                Workspace.data(workspace).source,
+                entry.root,
+                entry.filePath
+              )
+              const record = createRecord(entry)
+              const contents = new TextDecoder().decode(
+                JsonLoader.format(this.config.schema, record)
+              )
+              changes.push({
+                type: ChangeType.Write,
+                file,
+                contents
+              })
+            }
+          }
           await query(
             EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
           )
-          const withHash: EntryRow = {...entry, fileHash, rowHash: ''}
+          seenSeeds.add(key)
           seenVersions.push(
             await query(
               EntryRow().insert(withHash).returning(EntryRow.versionId)
@@ -633,8 +658,15 @@ export class Database implements Syncable {
           inserted.push(`${entry.entryId}.${entry.phase}`)
         } catch (e: any) {
           console.log(`> skipped ${file.filePath} — ${e.message}`)
+          console.error(e)
+          process.exit(1)
         }
       }
+      if (fix && changes.length > 0)
+        await target!.mutate(
+          {commitHash: '', mutations: [{changes, meta: undefined!}]},
+          {logger: new Logger('seed')}
+        )
       const stableI18nIds = new Map<string, string>()
       for (const seed of this.seed.values()) {
         const key = seedKey(seed.workspace, seed.root, seed.filePath)
@@ -652,16 +684,15 @@ export class Database implements Syncable {
           stableI18nIds.set(path, i18nId)
         }
         const entry = this.computeEntry(
-          {
+          createRecord({
+            entryId: createId(),
+            i18nId,
+            type: typeName,
+            index: 'a0',
+            seeded: seed.filePath,
             title: partial.title ?? '',
-            [META_KEY]: {
-              entryId: createId(),
-              i18nId,
-              type: typeName,
-              index: 'a0',
-              seeded: seed.filePath
-            }
-          },
+            data: partial
+          }),
           seed,
           seed
         )
@@ -689,6 +720,7 @@ export class Database implements Syncable {
       const {rowsAffected: removed} = await query(
         EntryRow().delete().where(EntryRow.versionId.isNotIn(seenVersions))
       )
+
       const noChanges = inserted.length === 0 && removed === 0
       if (noChanges) return
       // if (inserted) console.log(`> updated ${inserted} entries`)

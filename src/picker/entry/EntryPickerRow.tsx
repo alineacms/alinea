@@ -9,7 +9,7 @@ export interface EntryPickerRowProps {
 }
 
 export function EntryPickerRow({reference}: EntryPickerRowProps) {
-  const entry = useEntrySummary(reference.entry)
+  const entry = useEntrySummary(reference[EntryReference.entry])
   const {schema} = useConfig()
   if (!entry) return null
   const type = schema[entry.type]

@@ -1,16 +1,26 @@
 import {Parser} from 'htmlparser2'
 import {Field, FieldMeta, FieldOptions} from '../Field.js'
-import {TextDoc, TextNode} from '../TextDoc.js'
+import {ElementNode, TextDoc} from '../TextDoc.js'
 import {RecordShape} from '../shape/RecordShape.js'
 import {RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
 
 export class RichTextField<
   Blocks,
   Options extends FieldOptions<TextDoc<Blocks>> & {searchable?: boolean}
-> extends Field<TextDoc<Blocks>, RichTextMutator<Blocks>, Options> {
+> extends Field<
+  TextDoc<Blocks>,
+  TextDoc<Blocks>,
+  RichTextMutator<Blocks>,
+  Options
+> {
   constructor(
     shape: {[key: string]: RecordShape<any>} | undefined,
-    meta: FieldMeta<TextDoc<Blocks>, RichTextMutator<Blocks>, Options>
+    meta: FieldMeta<
+      TextDoc<Blocks>,
+      TextDoc<Blocks>,
+      RichTextMutator<Blocks>,
+      Options
+    >
   ) {
     super({
       shape: new RichTextShape(
@@ -40,7 +50,7 @@ export class RichTextEditor<Blocks> {
 function mapNode(
   name: string,
   attributes: Record<string, string>
-): TextNode.Element | undefined {
+): ElementNode | undefined {
   switch (name) {
     case 'h1':
     case 'h2':
@@ -50,32 +60,32 @@ function mapNode(
     case 'h6':
       const type = 'heading'
       const level = Number(name.slice(1))
-      return {type, level, content: []}
+      return {_type: type, level, content: []}
     case 'p':
-      return {type: 'paragraph', content: []}
+      return {_type: 'paragraph', content: []}
     case 'b':
     case 'strong':
-      return {type: 'bold', content: []}
+      return {_type: 'bold', content: []}
     case 'i':
     case 'em':
-      return {type: 'italic', content: []}
+      return {_type: 'italic', content: []}
     case 'ul':
-      return {type: 'unorderedList', content: []}
+      return {_type: 'bulletList', content: []}
     case 'ol':
-      return {type: 'orderedList', content: []}
+      return {_type: 'orderedList', content: []}
     case 'li':
-      return {type: 'listItem', content: []}
+      return {_type: 'listItem', content: []}
     case 'blockquote':
-      return {type: 'blockquote', content: []}
+      return {_type: 'blockquote', content: []}
     case 'hr':
-      return {type: 'horizontalRule'}
+      return {_type: 'horizontalRule'}
     case 'br':
-      return {type: 'hardBreak'}
+      return {_type: 'hardBreak'}
     case 'small':
-      return {type: 'small', content: []}
+      return {_type: 'small', content: []}
     case 'a':
       // Todo: pick what we need
-      return {type: 'link', ...attributes, content: []}
+      return {_type: 'link', ...attributes, content: []}
   }
 }
 
@@ -92,7 +102,7 @@ export function parseHTML(html: string): TextDoc<any> {
     },
     ontext(text) {
       const parent = parents[parents.length - 1]
-      parent?.push({type: 'text', text})
+      parent?.push({_type: 'text', text})
     },
     onclosetag() {
       parents.pop()

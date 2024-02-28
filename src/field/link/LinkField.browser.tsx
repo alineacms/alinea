@@ -58,11 +58,11 @@ export const createLinks = Field.provideView(
   createLinksField
 )
 
-interface LinkInputProps<Row extends Reference> {
-  field: LinkField<Row>
+interface LinkInputProps<Row> {
+  field: LinkField<Reference, Row>
 }
 
-function SingleLinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
+function SingleLinkInput<Row>({field}: LinkInputProps<Row>) {
   const {options, value, mutator, error} = useField(field)
   const {readOnly} = options
   const [pickFrom, setPickFrom] = useState<string | undefined>()
@@ -72,7 +72,7 @@ function SingleLinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
     if (readOnly) return
     const selected = link[0]
     if (!pickFrom || !picker || !selected) return
-    mutator.replace(selected as Row)
+    mutator.replace(selected)
     setPickFrom(undefined)
   }
 
@@ -93,16 +93,16 @@ function SingleLinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
         <div className={styles.root()}>
           <div className={styles.root.inner()}>
             <Sink.Root>
-              {value && options.pickers[value.type] ? (
-                <LinkInputRow<Row>
+              {value && options.pickers[value[Reference.type]] ? (
+                <LinkInputRow
                   readOnly={readOnly}
                   field={field}
-                  rowId={value.id}
-                  fields={options.pickers[value.type].fields}
-                  picker={options.pickers[value.type]}
-                  reference={value as Row}
+                  rowId={value[Reference.id]}
+                  fields={options.pickers[value[Reference.type]].fields}
+                  picker={options.pickers[value[Reference.type]]}
+                  reference={value}
                   onRemove={() => mutator.replace(undefined)}
-                  onEdit={() => setPickFrom(value.type)}
+                  onEdit={() => setPickFrom(value[Reference.type])}
                 />
               ) : (
                 <div className={styles.create()}>
@@ -135,40 +135,40 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-interface LinksInputProps<Row extends Reference & ListRow> {
-  field: LinksField<Row>
+interface LinksInputProps<Row> {
+  field: LinksField<ListRow, Row>
 }
 
-function MultipleLinksInput<Row extends Reference & ListRow>({
-  field
-}: LinksInputProps<Row>) {
+function MultipleLinksInput<Row>({field}: LinksInputProps<Row>) {
   const {options, value, mutator, error} = useField(field)
   const {readOnly} = options
   const [pickFrom, setPickFrom] = useState<
-    {type: string; id?: string} | undefined
+    {[Reference.type]: string; [Reference.id]?: string} | undefined
   >()
-  const picker = pickFrom ? options.pickers[pickFrom.type] : undefined
+  const picker = pickFrom
+    ? options.pickers[pickFrom[Reference.type]]
+    : undefined
 
   function handleConfirm(links: Array<ListRow & Row>) {
     if (!pickFrom || !picker || !links) return
     const seen = new Set()
     for (const link of links) {
-      if (link.type !== pickFrom.type) continue
-      seen.add(link.id)
-      const index = value.findIndex(v => v.id === link.id)
-      if (index > -1) mutator.replace(link.id, link)
+      if (link[ListRow.type] !== pickFrom[Reference.type]) continue
+      seen.add(link[ListRow.id])
+      const index = value.findIndex(v => v[ListRow.id] === link[ListRow.id])
+      if (index > -1) mutator.replace(link[ListRow.id], link)
       else mutator.push(link)
     }
     if (picker.handlesMultiple)
       for (const link of value) {
-        if (link.type !== pickFrom.type) continue
-        if (seen.has(link.id)) continue
-        mutator.remove(link.id)
+        if (link[ListRow.type] !== pickFrom[Reference.type]) continue
+        if (seen.has(link[ListRow.id])) continue
+        mutator.remove(link[ListRow.id])
       }
     setPickFrom(undefined)
   }
 
-  const ids = value.map(row => row.id)
+  const ids = value.map(row => row[ListRow.id])
 
   const [dragging, setDragging] = useState<Reference | null>(null)
   const sensors = useSensors(
@@ -180,7 +180,7 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
 
   function handleDragStart(event: DragStartEvent) {
     const {active} = event
-    setDragging(value.find(row => row.id === active.id) || null)
+    setDragging(value.find(row => row[ListRow.id] === active.id) || null)
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -198,11 +198,12 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
     <>
       {pickFrom && PickerView && (
         <PickerView
-          type={pickFrom.type}
+          type={pickFrom[Reference.type]!}
           options={picker.options}
           selection={value.filter(ref => {
-            if (ref.id === pickFrom.id) return true
-            if (picker.handlesMultiple) return ref.type === pickFrom.type
+            if (ref[ListRow.id] === pickFrom[Reference.id]) return true
+            if (picker.handlesMultiple)
+              return ref[ListRow.type] === pickFrom[Reference.type]
             return false
           })}
           onConfirm={handleConfirm}
@@ -225,17 +226,17 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
               >
                 <Sink.Root>
                   {value.map(reference => {
-                    if (!options.pickers[reference.type]) return null
-                    const type = options.pickers[reference.type].fields
+                    if (!options.pickers[reference[ListRow.type]]) return null
+                    const type = options.pickers[reference[ListRow.type]].fields
                     return (
-                      <LinkInputRowSortable<Row>
-                        key={reference.id}
-                        rowId={reference.id}
+                      <LinkInputRowSortable
+                        key={reference[ListRow.id]}
+                        rowId={reference[ListRow.id]}
                         field={field}
                         fields={type}
-                        picker={options.pickers[reference.type]}
+                        picker={options.pickers[reference[ListRow.type]]}
                         reference={reference as ListRow & Row}
-                        onRemove={() => mutator.remove(reference.id)}
+                        onRemove={() => mutator.remove(reference[ListRow.id])}
                         onEdit={() => setPickFrom(reference)}
                         isSortable={options.max !== 1}
                         readOnly={readOnly}
@@ -251,7 +252,9 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
                           return (
                             <Create.Button
                               key={name}
-                              onClick={() => setPickFrom({type: name})}
+                              onClick={() =>
+                                setPickFrom({[Reference.type]: name})
+                              }
                             >
                               <TextLabel label={picker.label} />
                             </Create.Button>
@@ -269,14 +272,14 @@ function MultipleLinksInput<Row extends Reference & ListRow>({
                   dragSourceOpacity: 0.5
                 }}
               >
-                {dragging && options.pickers[dragging.type] ? (
-                  <LinkInputRow<Row>
+                {dragging && options.pickers[dragging[Reference.type]] ? (
+                  <LinkInputRow
                     field={field}
-                    rowId={dragging.id}
-                    fields={options.pickers[dragging.type].fields}
-                    picker={options.pickers[dragging.type]}
-                    reference={dragging as Row}
-                    onRemove={() => mutator.remove(dragging.id)}
+                    rowId={dragging._id}
+                    fields={options.pickers[dragging[Reference.type]].fields}
+                    picker={options.pickers[dragging[Reference.type]]}
+                    reference={dragging}
+                    onRemove={() => mutator.remove(dragging._id)}
                     onEdit={() => setPickFrom(dragging)}
                     isDragOverlay
                     isSortable={options.max !== 1}
@@ -299,13 +302,11 @@ function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   return true
 }
 
-function LinkInputRowSortable<Row extends Reference>(
-  props: LinkInputRowProps<Row>
-) {
+function LinkInputRowSortable(props: LinkInputRowProps) {
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
       animateLayoutChanges,
-      id: props.reference.id
+      id: props.reference._id
     })
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -324,13 +325,12 @@ function LinkInputRowSortable<Row extends Reference>(
   )
 }
 
-interface LinkInputRowProps<Row extends Reference>
-  extends HTMLAttributes<HTMLDivElement> {
+interface LinkInputRowProps extends HTMLAttributes<HTMLDivElement> {
   field: Field
   rowId: string
-  picker: Picker<Row>
-  fields: Type<Row> | undefined
-  reference: Row
+  picker: Picker<Reference>
+  fields: Type | undefined
+  reference: Reference
   onEdit(): void
   onRemove(): void
   isDragging?: boolean
@@ -342,7 +342,7 @@ interface LinkInputRowProps<Row extends Reference>
   multiple?: boolean
 }
 
-function LinkInputRow<Row extends Reference>({
+function LinkInputRow({
   field,
   rowId,
   picker,
@@ -358,7 +358,7 @@ function LinkInputRow<Row extends Reference>({
   readOnly,
   multiple,
   ...rest
-}: LinkInputRowProps<Row>) {
+}: LinkInputRowProps) {
   const RowView = picker.viewRow!
   const inner = (
     <div

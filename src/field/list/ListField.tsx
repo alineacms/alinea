@@ -1,12 +1,13 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {Infer} from 'alinea/core/Infer'
+import {InferQueryValue, InferStoredValue} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
 import {ListField} from 'alinea/core/field/ListField'
+import type {ListRow} from 'alinea/core/shape/ListShape'
 import {listHint} from 'alinea/core/util/Hints'
 
 /** Optional settings to configure a list field */
 export interface ListOptions<Definitions extends Schema>
-  extends FieldOptions<Array<any>> {
+  extends FieldOptions<Array<InferStoredValue<Definitions> & ListRow>> {
   /** Allow these types of blocks to be created */
   schema: Definitions
   /** Width of the field in the dashboard UI (0-1) */
@@ -19,17 +20,15 @@ export interface ListOptions<Definitions extends Schema>
   hidden?: boolean
 }
 
-export interface ListRow {
-  id: string
-  index: string
-  type: string
-}
-
 /** Create a list field configuration */
 export function list<Definitions extends Schema>(
   label: string,
   options: WithoutLabel<ListOptions<Definitions>>
-): ListField<Infer<Definitions> & ListRow, ListOptions<Definitions>> {
+): ListField<
+  InferStoredValue<Definitions> & ListRow,
+  InferQueryValue<Definitions> & ListRow,
+  ListOptions<Definitions>
+> {
   return new ListField(Schema.shapes(options.schema), {
     hint: listHint(options.schema),
     options: {label, ...options}

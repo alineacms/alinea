@@ -19,7 +19,7 @@ jobs:
         run: yarn cycles:server
       - name: Check cycles for browser target
         run: yarn cycles:browser
-      - run: yarn test
+      - run: yarn test --report
       - uses: nowsprinting/check-version-format-action@v3
         id: version
         with: {prefix: 'v'}

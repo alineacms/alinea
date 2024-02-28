@@ -4,17 +4,12 @@ import {Page} from '@/schema/Page'
 import {Query} from 'alinea'
 import type {MetadataRoute} from 'next'
 import {notFound} from 'next/navigation'
-import {TextView} from './blocks/TextBlockView'
+import {TextFieldView} from './blocks/TextFieldView'
 
 export interface GenericPageProps {
   params: {
     slug: string
   }
-}
-
-export async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = await generateStaticParams()
-  return pages.map(page => ({url: `/${page.slug}`, priority: 0.5}))
 }
 
 export const dynamicParams = false
@@ -40,9 +35,14 @@ export default async function GenericPage({params}: GenericPageProps) {
     <PageContainer>
       <PageContent>
         <article>
-          <TextView text={page.body} />
+          <TextFieldView text={page.body} />
         </article>
       </PageContent>
     </PageContainer>
   )
+}
+
+GenericPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  const pages = await generateStaticParams()
+  return pages.map(page => ({url: `/${page.slug}`, priority: 0.5}))
 }

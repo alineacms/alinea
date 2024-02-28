@@ -1,5 +1,5 @@
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
-import {ImageReference, TextDoc} from 'alinea'
+import {ImageLink, TextDoc} from 'alinea'
 import {HStack, Stack, VStack, fromModule, imageBlurUrl} from 'alinea/ui'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -13,7 +13,7 @@ export interface RecipeCardProps {
   title: string
   url: string
   header: {
-    image?: ImageReference
+    image?: ImageLink
     credit?: TextDoc
   }
   intro: TextDoc

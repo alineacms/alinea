@@ -15,17 +15,17 @@ export function HeaderLinks({links, style}: HeaderLinksProps) {
   return (
     <>
       {links?.map(link => {
-        switch (link.type) {
+        switch (link._type) {
           case 'entry':
             return (
               <Link
-                href={link.url}
-                key={link.id}
+                href={link.href}
+                key={link._id}
                 className={style({
-                  active: pathname.startsWith(link.active || link.url)
+                  active: pathname.startsWith(link.fields.active || link.href)
                 })}
               >
-                {link.label}
+                {link.fields.label}
               </Link>
             )
           default:

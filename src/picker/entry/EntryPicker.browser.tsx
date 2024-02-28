@@ -176,15 +176,16 @@ export function EntryPickerModal({
       setSelected(selected => {
         const index = selected.findIndex(
           ref =>
-            EntryReference.isEntryReference(ref) && ref.entry === entry.entryId
+            EntryReference.isEntryReference(ref) &&
+            ref[EntryReference.entry] === entry.entryId
         )
         let res = selected.slice()
         if (index === -1) {
           res = res
             .concat({
-              id: createId(),
-              type,
-              entry: entry.entryId
+              [Reference.id]: createId(),
+              [Reference.type]: type,
+              [EntryReference.entry]: entry.entryId
             } as EntryReference)
             .slice(-(max || 0))
         } else {

@@ -23,7 +23,10 @@ export interface PickerRow {
   target?: string
 }
 
-export interface Picker<Row extends Reference, Options extends {} = {}> {
+export interface Picker<
+  StoredValue extends Reference,
+  Options extends {} = {}
+> {
   shape: RecordShape
   fields: Type<any> | undefined
   hint: Hint
@@ -31,8 +34,8 @@ export interface Picker<Row extends Reference, Options extends {} = {}> {
   handlesMultiple: boolean
   options: Options
   view?: ComponentType<PickerProps<Options>>
-  viewRow?: ComponentType<{reference: Row}>
-  postProcess?: PostProcess<Row>
+  viewRow?: ComponentType<{reference: StoredValue}>
+  postProcess?: PostProcess<StoredValue>
 }
 
 export function pickerWithView<

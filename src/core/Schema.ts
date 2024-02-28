@@ -1,6 +1,7 @@
 import {Hint} from './Hint.js'
 import {Type, TypeTarget} from './Type.js'
 import {RecordShape} from './shape/RecordShape.js'
+import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries} from './util/Objects.js'
 
 const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
@@ -10,6 +11,29 @@ export interface Schema<Definitions = {}> extends Record<string, Type> {}
 
 export namespace Schema {
   export type Targets = Map<TypeTarget, string>
+
+  export function validate(schema: Schema) {
+    for (const [key, type] of entries(schema)) {
+      switch (key) {
+        case 'Entry':
+          throw new Error(`${key} is a reserved Type name`)
+        default:
+          if (!isValidIdentifier(key))
+            throw new Error(
+              `Invalid Type name "${key}", use only a-z, A-Z, 0-9, and _`
+            )
+          const {contains} = Type.meta(type)
+          if (contains) {
+            for (const name of contains) {
+              if (!schema[name])
+                throw new Error(
+                  `Type "${key}" contains "${name}", but that Type does not exist`
+                )
+            }
+          }
+      }
+    }
+  }
 
   export function shapes(schema: Schema): Record<string, RecordShape> {
     if (!shapesCache.has(schema))

@@ -3,12 +3,13 @@ import {RecordMutator, RecordShape} from '../shape/RecordShape.js'
 
 export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
   Row,
+  Row,
   RecordMutator<Row>,
   Options
 > {
   constructor(
     shape: RecordShape<any>,
-    meta: FieldMeta<Row, RecordMutator<Row>, Options>
+    meta: FieldMeta<Row, Row, RecordMutator<Row>, Options>
   ) {
     super({shape, ...meta})
   }

@@ -1,5 +1,5 @@
 import {Config, Field} from 'alinea'
-import {textField} from './blocks/TextBlock'
+import {textField} from './fields/TextField'
 
 export const BlogPost = Config.document('Blog post', {
   fields: {

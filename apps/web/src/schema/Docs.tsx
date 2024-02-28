@@ -1,5 +1,5 @@
 import {Config, Field} from 'alinea'
-import {bodyField} from './blocks/BodyField'
+import {bodyField} from './fields/BodyField'
 
 export const Docs = Config.document('Docs', {
   contains: ['Doc', 'Docs'],

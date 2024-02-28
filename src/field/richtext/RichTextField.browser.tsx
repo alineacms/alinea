@@ -1,4 +1,4 @@
-import {mergeAttributes, Node} from '@tiptap/core'
+import {JSONContent, mergeAttributes, Node as TipTapNode} from '@tiptap/core'
 import {Collaboration} from '@tiptap/extension-collaboration'
 import {
   Editor,
@@ -11,6 +11,7 @@ import {Field} from 'alinea/core/Field'
 import {RichTextField} from 'alinea/core/field/RichTextField'
 import {createId} from 'alinea/core/Id'
 import {Schema} from 'alinea/core/Schema'
+import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
@@ -20,6 +21,7 @@ import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -40,13 +42,13 @@ export const richText = Field.provideView(RichTextInput, createRichText)
 const styles = fromModule(css)
 
 type NodeViewProps = {
-  node: {attrs: {id: string}}
+  node: {attrs: {[BlockNode.id]: string}}
   deleteNode: () => void
 }
 
 function typeExtension(field: Field, name: string, type: Type) {
   function View({node, deleteNode}: NodeViewProps) {
-    const {id} = node.attrs
+    const {[BlockNode.id]: id} = node.attrs
     const meta = Type.meta(type)
     const {readOnly} = useFieldOptions(field)
     return (
@@ -76,7 +78,7 @@ function typeExtension(field: Field, name: string, type: Type) {
       </FormRow>
     )
   }
-  return Node.create({
+  return TipTapNode.create({
     name,
     group: 'block',
     atom: true,
@@ -92,7 +94,7 @@ function typeExtension(field: Field, name: string, type: Type) {
     },
     addAttributes() {
       return {
-        id: {default: null}
+        [BlockNode.id]: {default: null}
       }
     }
   })
@@ -120,7 +122,16 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
         key={key}
         onClick={() => {
           onInsert(id, key)
-          editor.chain().focus().insertContent({type: key, attrs: {id}}).run()
+          editor
+            .chain()
+            .focus()
+            .insertContent({
+              [Node.type]: key,
+              attrs: {
+                [BlockNode.id]: id
+              }
+            })
+            .run()
         }}
       >
         <HStack center gap={8}>
@@ -157,6 +168,7 @@ export function RichTextInput<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
   const {value, mutator, options, error} = useField(field)
+  const forceUpdate = useForceUpdate()
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
   const {readOnly, schema} = options
@@ -188,19 +200,10 @@ export function RichTextInput<Blocks extends Schema>({
   // The collaboration extension takes over content syncing after inital content
   // is set. Unfortunately we can't fully utilize it to set the content initally
   // as well because it does not work synchronously causing flickering.
-  const content = useMemo(
+  const content: JSONContent = useMemo(
     () => ({
       type: 'doc',
-      content: value.map(node => {
-        if (node.type === 'text') return node //
-        const {type, ...attrs} = node
-        if (schema?.[type]) return {type, attrs: {id: (node as any).id}}
-        return {
-          type,
-          content: 'content' in node ? node.content : undefined,
-          attrs
-        }
-      })
+      content: value.map(toContent)
     }),
     [fragment]
   )
@@ -233,6 +236,7 @@ export function RichTextInput<Blocks extends Schema>({
     editor.setOptions({editable: isEditable})
   }, [isEditable])
   useEffect(() => {
+    editor.on('transaction', forceUpdate)
     return () => editor.destroy()
   }, [editor])
   return (
@@ -263,4 +267,31 @@ export function RichTextInput<Blocks extends Schema>({
       </InputLabel>
     </>
   )
+}
+
+function toContent(node: Node): JSONContent {
+  if (Node.isText(node))
+    return {
+      type: 'text',
+      text: node[TextNode.text],
+      marks: node[TextNode.marks]?.map(mark => {
+        const {[Mark.type]: type, ...attrs} = mark
+        const res = Object.fromEntries(
+          entries(attrs).map(([key, value]) => {
+            if (key.startsWith('_')) return [`data-${key.slice(1)}`, value]
+            return [key, value]
+          })
+        )
+        return {type, attrs: res}
+      })
+    }
+  if (Node.isElement(node)) {
+    const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
+    return {type, content: content?.map(toContent), attrs}
+  }
+  if (Node.isBlock(node)) {
+    const {[Node.type]: type} = node
+    return {type, attrs: {[BlockNode.id]: node[BlockNode.id]}}
+  }
+  throw new TypeError('Invalid node')
 }

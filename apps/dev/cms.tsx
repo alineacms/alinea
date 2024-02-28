@@ -118,7 +118,7 @@ const Fields = Config.document('Fields', {
           image: Field.image('Image link'),
           images: Field.image.multiple('Image link (multiple)'),
           file: Field.entry('File link'),
-          withFields: Field.link('With extra fields', {
+          withFields: Field.entry('With extra fields', {
             fields: {
               fieldA: Field.text('Field A', {width: 0.5}),
               fieldB: Field.text('Field B', {width: 0.5})
@@ -158,9 +158,12 @@ const Fields = Config.document('Fields', {
             required: true,
             initialValue: [
               {
-                type: 'paragraph',
+                _type: 'paragraph',
                 content: [
-                  {type: 'text', text: 'This is a paragraph with initial value'}
+                  {
+                    _type: 'text',
+                    text: 'This is a paragraph with initial value'
+                  }
                 ]
               }
             ]
@@ -253,10 +256,6 @@ const Fields = Config.document('Fields', {
       })
     )
   }
-})
-
-Config.track.options(Fields.nested, get => {
-  return {readOnly: get(Fields.makeRO)}
 })
 
 const schema = Config.schema({

@@ -1,7 +1,6 @@
-import {EntryPhase} from 'alinea/core/EntryRow'
 import {renderLabel} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
-import {Chip, HStack, Loader, Stack, fromModule, px} from 'alinea/ui'
+import {Chip, HStack, Loader, fromModule, px} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtom, useAtomValue} from 'jotai'
 import {PropsWithChildren} from 'react'
@@ -9,7 +8,6 @@ import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import {Head} from '../../util/Head.js'
 import {IconLink} from '../IconButton.js'
-import {EditModeToggle} from './EditModeToggle.js'
 import css from './EntryTitle.module.scss'
 
 const styles = fromModule(css)
@@ -56,7 +54,7 @@ export function EntryTitle({
             {isLoading && <Loader size={15} />}
           </HStack>
           {/*<IconButton icon={MdOutlineMoreHoriz} />*/}
-          <Stack.Right>
+          {/*<Stack.Right>
             {(hasChanges ||
               (editor.availablePhases.includes(EntryPhase.Draft) &&
                 editor.availablePhases.length > 1)) && (
@@ -65,7 +63,7 @@ export function EntryTitle({
                 onChange={mode => setEditMode(mode)}
               />
             )}
-          </Stack.Right>
+          </Stack.Right>*/}
         </HStack>
         {children}
       </div>

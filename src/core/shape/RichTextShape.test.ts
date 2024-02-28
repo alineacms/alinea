@@ -4,6 +4,7 @@ import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import * as Y from 'alinea/yjs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
+import {BlockNode, Node} from '../TextDoc.js'
 
 const ROOT_KEY = '$root'
 const FIELD_KEY = '$doc'
@@ -24,18 +25,18 @@ const shape = new RichTextShape('RichText', {
 
 const value1 = [
   {
-    type: 'paragraph',
-    content: [{type: 'text', text: 'Hello'}]
+    [Node.type]: 'paragraph',
+    content: [{[Node.type]: 'text', text: 'Hello'}]
   },
   {
-    id: 'unique0',
-    type: 'Block2',
+    [Node.type]: 'Block2',
+    [BlockNode.id]: 'unique0',
     field3: 'a',
     field4: 'b'
   },
   {
-    id: 'unique1',
-    type: 'Block1',
+    [Node.type]: 'Block1',
+    [BlockNode.id]: 'unique1',
     field1: 'a',
     blockInner: {
       field3: 'a',
@@ -43,12 +44,12 @@ const value1 = [
     }
   },
   {
-    type: 'paragraph',
-    content: [{type: 'text', text: 'Hello'}]
+    [Node.type]: 'paragraph',
+    content: [{[Node.type]: 'text', text: 'Hello'}]
   },
   {
-    id: 'unique2',
-    type: 'Block2',
+    [Node.type]: 'Block2',
+    [BlockNode.id]: 'unique2',
     field3: 'a',
     field4: 'b'
   }
@@ -56,16 +57,16 @@ const value1 = [
 
 const value2 = [
   {
-    type: 'paragraph',
-    content: [{type: 'text', text: 'Hello 123'}]
+    [Node.type]: 'paragraph',
+    content: [{[Node.type]: 'text', text: 'Hello 123'}]
   },
   {
-    type: 'paragraph',
-    content: [{type: 'text', text: 'Hello'}]
+    [Node.type]: 'paragraph',
+    content: [{[Node.type]: 'text', text: 'Hello'}]
   },
   {
-    id: 'unique1',
-    type: 'Block1',
+    [Node.type]: 'Block1',
+    [BlockNode.id]: 'unique1',
     field1: '1',
     blockInner: {
       field3: 'a',
@@ -73,14 +74,14 @@ const value2 = [
     }
   },
   {
-    id: 'unique2',
-    type: 'Block2',
+    [Node.type]: 'Block2',
+    [BlockNode.id]: 'unique2',
     field3: 'a',
     field4: 'b'
   },
   {
-    id: 'unique3',
-    type: 'Block2',
+    [Node.type]: 'Block2',
+    [BlockNode.id]: 'unique3',
     field3: 'abc',
     field4: 'def'
   }
@@ -88,26 +89,22 @@ const value2 = [
 
 const value3 = [
   {
-    type: 'paragraph',
+    [Node.type]: 'paragraph',
     textAlign: 'left',
     content: [
       {
-        type: 'text',
+        [Node.type]: 'text',
         text: 'text part 1'
       },
       {
-        type: 'text',
+        [Node.type]: 'text',
         text: 'text part 2',
         marks: [
           {
-            type: 'link',
-            attrs: {
-              'data-id': '2WyS6kjRXyd0vLoZP0p129IPnAA',
-              'data-entry': '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
-              'data-type': null,
-              href: null,
-              title: ''
-            }
+            [Node.type]: 'link',
+            _id: '2WyS6kjRXyd0vLoZP0p129IPnAA',
+            _entry: '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
+            title: ''
           }
         ]
       }
@@ -117,26 +114,22 @@ const value3 = [
 
 const value4 = [
   {
-    type: 'paragraph',
+    [Node.type]: 'paragraph',
     textAlign: 'left',
     content: [
       {
-        type: 'text',
+        [Node.type]: 'text',
         text: 'text part 1'
       },
       {
-        type: 'text',
+        [Node.type]: 'text',
         text: 'text part 3',
         marks: [
           {
-            type: 'link',
-            attrs: {
-              'data-id': '2WyS6kjRXyd0vLoZP0p129IPnAA',
-              'data-entry': '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
-              'data-type': null,
-              href: null,
-              title: ''
-            }
+            [Node.type]: 'link',
+            _id: '2WyS6kjRXyd0vLoZP0p129IPnAA',
+            _entry: '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
+            title: ''
           }
         ]
       }
@@ -146,26 +139,22 @@ const value4 = [
 
 const value5 = [
   {
-    type: 'paragraph',
+    [Node.type]: 'paragraph',
     textAlign: 'left',
     content: [
       {
-        type: 'text',
+        [Node.type]: 'text',
         text: 'text part 1'
       },
       {
-        type: 'text',
+        [Node.type]: 'text',
         text: 'text part 2',
         marks: [
           {
-            type: 'link',
-            attrs: {
-              'data-id': 'xyz',
-              'data-entry': '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
-              'data-type': null,
-              href: null,
-              title: ''
-            }
+            [Node.type]: 'link',
+            _id: 'xyz',
+            _entry: '2Ublmf4UWT5rHeIUSaJmqJYN0L9',
+            title: ''
           }
         ]
       }
@@ -202,15 +191,9 @@ test('apply over existing', () => {
   assert.equal(pass2, value2)
 })
 
-test.only('update marks', () => {
+test('update marks', () => {
   const doc = new Y.Doc()
   const root = doc.getMap(ROOT_KEY)
-  /*root.set(FIELD_KEY, shape.toY(value3))
-  doc.transact(() => {
-    shape.applyY(value4, root, FIELD_KEY)
-  })
-  const pass2 = shape.fromY(root.get(FIELD_KEY))
-  assert.equal(pass2, value4)*/
 
   root.set(FIELD_KEY, shape.toY(value3))
   doc.transact(() => {
@@ -218,6 +201,42 @@ test.only('update marks', () => {
   })
   const pass3 = shape.fromY(root.get(FIELD_KEY))
   assert.equal(pass3, value5)
+})
+
+test('normalize', () => {
+  const old = [
+    {
+      type: 'paragraph',
+      content: [{type: 'text', text: 'Hello'}]
+    },
+    {
+      type: 'Block2',
+      id: 'unique0',
+      field3: 'a',
+      field4: 'b'
+    },
+    {
+      type: 'Block1',
+      id: 'unique1',
+      field1: 'a',
+      blockInner: {
+        field3: 'a',
+        field4: 'b'
+      }
+    },
+    {
+      type: 'paragraph',
+      content: [{type: 'text', text: 'Hello'}]
+    },
+    {
+      type: 'Block2',
+      id: 'unique2',
+      field3: 'a',
+      field4: 'b'
+    }
+  ]
+  const normalized = shape.toV1(old)
+  assert.equal(normalized, value1)
 })
 
 test.run()

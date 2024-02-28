@@ -15,5 +15,6 @@ export interface Shape<Value = any, Mutator = any> {
   watch(parent: YType, key: string): (fun: () => void) => () => void
   mutator(parent: YType, key: string): Mutator
   applyLinks(value: Value, loader: LinkResolver): Promise<void>
+  toV1(value: any): Value
   searchableText(value: Value): string
 }

@@ -3,10 +3,6 @@ import type {MetadataRoute} from 'next'
 import dynamic from 'next/dynamic'
 import {Suspense} from 'react'
 
-export function sitemap(): MetadataRoute.Sitemap {
-  return [{url: '/playground', priority: 0.5}]
-}
-
 export const metadata = {
   title: 'Alinea CMS playground'
 }
@@ -25,4 +21,8 @@ export default function PlaygroundPage() {
       <PlaygroundView />
     </Suspense>
   )
+}
+
+PlaygroundPage.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/playground', priority: 0.5}]
 }

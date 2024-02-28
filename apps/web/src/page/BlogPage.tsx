@@ -12,10 +12,6 @@ import {BlogPostMeta} from './blog/BlogPostMeta'
 
 const styles = fromModule(css)
 
-export function sitemap(): MetadataRoute.Sitemap {
-  return [{url: '/blog', priority: 0.5}]
-}
-
 export default async function BlogPage() {
   const overview = await cms.get(
     Query(BlogOverview).select({
@@ -58,4 +54,8 @@ export default async function BlogPage() {
       </PageContent>
     </PageContainer>
   )
+}
+
+BlogPage.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/blog', priority: 0.5}]
 }

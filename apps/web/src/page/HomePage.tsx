@@ -28,10 +28,6 @@ import css from './HomePage.module.scss'
 
 const styles = fromModule(css)
 
-export function sitemap(): MetadataRoute.Sitemap {
-  return [{url: '/', priority: 1}]
-}
-
 export async function generateMetadata() {
   const home = await cms.get(Home())
   return {title: home.metadata?.title || home.title}
@@ -73,7 +69,7 @@ export default async function HomePage() {
               <HStack gap={24} style={{paddingTop: px(20)}}>
                 {home.action?.url && (
                   <Hero.Action href={home.action.url}>
-                    {home.action.label}
+                    {home.action.fields.label}
                   </Hero.Action>
                 )}
                 {/*<WebTypo.Link
@@ -401,4 +397,8 @@ export default async function HomePage() {
       </main>
     </WebLayout>
   )
+}
+
+HomePage.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/', priority: 1}]
 }

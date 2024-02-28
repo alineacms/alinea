@@ -2,9 +2,8 @@ import {File} from '@alinea/iso'
 
 import {ListEditor, ListField} from 'alinea/core/field/ListField'
 import {RichTextEditor, RichTextField} from 'alinea/core/field/RichTextField'
-import {ListRow} from 'alinea/field/list'
+import type {ListRow} from 'alinea/core/shape/ListShape'
 import type {Entry} from './Entry.js'
-import {FieldOptions} from './Field.js'
 import {TextDoc} from './TextDoc.js'
 import {
   CreateOperation,
@@ -47,11 +46,11 @@ export namespace Edit {
     return Edit(entryId).publish()
   }
 
-  export function list<
-    Row extends ListRow,
-    Options extends FieldOptions<Array<Row>>
-  >(field: ListField<Row, Options>, current?: Array<Row>) {
-    return new ListEditor<Row>(current)
+  export function list<StoredValue extends ListRow, QueryValue extends ListRow>(
+    field: ListField<StoredValue, QueryValue, any>,
+    current?: Array<StoredValue>
+  ) {
+    return new ListEditor<StoredValue>(current)
   }
 
   export function richText<Blocks>(

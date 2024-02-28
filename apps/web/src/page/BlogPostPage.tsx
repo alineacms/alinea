@@ -1,7 +1,7 @@
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
-import {TextView} from '@/page/blocks/TextBlockView'
+import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
 import {Query} from 'alinea'
 import {fromModule} from 'alinea/ui'
@@ -14,11 +14,6 @@ const styles = fromModule(css)
 
 export interface BlogPostPageProps {
   params: {slug: string}
-}
-
-export async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = await generateStaticParams()
-  return pages.map(page => ({url: `/blog/${page.slug}`, priority: 0.9}))
 }
 
 export const dynamicParams = false
@@ -53,9 +48,14 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
             </WebTypo.H1>
             <BlogPostMeta {...page} />
           </header>
-          <TextView text={page.body} />
+          <TextFieldView text={page.body} />
         </article>
       </PageContent>
     </PageContainer>
   )
+}
+
+BlogPostPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  const pages = await generateStaticParams()
+  return pages.map(page => ({url: `/blog/${page.slug}`, priority: 0.9}))
 }

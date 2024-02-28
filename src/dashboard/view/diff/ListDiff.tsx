@@ -14,14 +14,14 @@ export type ListDiffProps = {
 
 export function ListDiff({FieldsDiff, shape, valueA, valueB}: ListDiffProps) {
   const equals = (itemA: ListRow, itemB: ListRow) => {
-    return itemA.id === itemB.id
+    return itemA._id === itemB._id
   }
   const changes = diffList(valueA || [], valueB || [], equals)
   return (
     <Sink.Root>
       {changes.map((change, i) => {
         const block = change.value
-        const kind = shape.values[block.type]
+        const kind = shape.shapes[block[ListRow.type]]
         const compare =
           change.type === 'keep'
             ? [change.old, change.value]

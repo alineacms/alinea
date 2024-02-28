@@ -10,7 +10,7 @@ import * as core from 'alinea/core'
 import {Field} from 'alinea/core/Field'
 import {outcome} from 'alinea/core/Outcome'
 import {trigger} from 'alinea/core/Trigger'
-import {Type} from 'alinea/core/Type'
+import {Type, type} from 'alinea/core/Type'
 import 'alinea/css'
 import * as dashboard from 'alinea/dashboard'
 import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
@@ -70,8 +70,8 @@ type PreviewFieldProps = {
 }
 
 function PreviewField({field}: PreviewFieldProps) {
-  const type = React.useMemo(() => type({field}), [field])
-  const form = dashboard.useForm(type)
+  const formType = React.useMemo(() => type({fields: {field}}), [field])
+  const form = dashboard.useForm(formType)
   return (
     <div style={{margin: 'auto', width: '100%'}}>
       <InputForm form={form} />

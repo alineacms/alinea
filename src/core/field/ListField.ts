@@ -5,12 +5,23 @@ import {RecordShape} from '../shape/RecordShape.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 
 export class ListField<
-  Row extends ListRow,
-  Options extends FieldOptions<Array<Row>>
-> extends Field<Array<Row>, ListMutator<Row>, Options> {
+  StoredValue extends ListRow,
+  QueryValue,
+  Options extends FieldOptions<Array<StoredValue>>
+> extends Field<
+  Array<StoredValue>,
+  Array<QueryValue>,
+  ListMutator<StoredValue>,
+  Options
+> {
   constructor(
     shape: {[key: string]: RecordShape<any>},
-    meta: FieldMeta<Array<Row>, ListMutator<Row>, Options>
+    meta: FieldMeta<
+      Array<StoredValue>,
+      Array<QueryValue>,
+      ListMutator<StoredValue>,
+      Options
+    >
   ) {
     super({
       shape: new ListShape(
@@ -24,34 +35,37 @@ export class ListField<
   }
 }
 
-export type ListRowInput<Row extends ListRow, Key extends Row['type']> = Omit<
-  Extract<Row, {type: Key}>,
-  'type' | 'id' | 'index'
+export type ListRowInput<Row extends ListRow, Key extends Row['_type']> = Omit<
+  Extract<Row, {_type: Key}>,
+  '_type' | '_id' | '_index'
 >
 
-export class ListEditor<Row extends ListRow> {
-  constructor(private rows: Array<Row> = []) {}
+export class ListEditor<StoredRow extends ListRow> {
+  constructor(private rows: Array<StoredRow> = []) {}
 
-  insertAt<Key extends Row['type']>(
+  insertAt<Key extends StoredRow['_type']>(
     insertAt: number,
     type: Key,
-    row: ListRowInput<Row, Key>
+    row: ListRowInput<StoredRow, Key>
   ) {
     const id = createId()
     const before = insertAt - 1
     const after = before + 1
-    const keyA = this.rows[before]?.index || null
-    const keyB = this.rows[after]?.index || null
+    const keyA = this.rows[before]?._index || null
+    const keyB = this.rows[after]?._index || null
     this.rows.push({
-      id,
-      index: generateKeyBetween(keyA, keyB),
-      type,
+      _id: id,
+      _index: generateKeyBetween(keyA, keyB),
+      _type: type,
       ...row
     } as any)
     return this
   }
 
-  add<Key extends Row['type']>(type: Key, row: ListRowInput<Row, Key>) {
+  add<Key extends StoredRow['_type']>(
+    type: Key,
+    row: ListRowInput<StoredRow, Key>
+  ) {
     return this.insertAt(this.rows.length, type, row)
   }
 
