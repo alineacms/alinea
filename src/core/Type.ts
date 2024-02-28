@@ -265,13 +265,7 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   }
 
   call(...input: Array<any>) {
-    const isConditionalRecord = input.length === 1 && !Expr.isExpr(input[0])
-    if (isConditionalRecord) return new Cursor.Typed(this.target, input[0])
-    else
-      return new Cursor.Find({
-        target: {type: this.target},
-        where: this.condition(input)
-      })
+    return new Cursor.Typed(this.target, input[0])
   }
 
   field(def: Field, name: string) {
