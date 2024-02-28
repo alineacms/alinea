@@ -14,10 +14,10 @@ import {EntryPickerOptions, entryPicker} from 'alinea/picker/entry'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 
 export interface EntryLink<InferredFields = undefined> extends EntryReference {
-  id: string
+  entryId: string
+  entryType: string
   i18nId: string
   title: string
-  entryType: string
   path: string
   /** @deprecated Use href */
   url: string
@@ -26,7 +26,7 @@ export interface EntryLink<InferredFields = undefined> extends EntryReference {
 }
 
 export namespace EntryLink {
-  export const id = Entry.entryId
+  export const entryId = Entry.entryId
   export const i18nId = Entry.i18nId
   export const title = Entry.title
   export const entryType = Entry.type
