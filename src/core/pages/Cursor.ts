@@ -69,6 +69,7 @@ export namespace Cursor {
     whereId(entryId: string): Get<Row> {
       return new Get<Row>(
         this.with({
+          first: true,
           where: Expr(ExprData.Field({}, 'entryId')).is(entryId)[Expr.Data]
         })
       )
