@@ -126,7 +126,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
             .chain()
             .focus()
             .insertContent({
-              [Node.type]: key,
+              type: key,
               attrs: {
                 [BlockNode.id]: id
               }
