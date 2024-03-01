@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.9.1]
+
+- Fix whereId on Cursor typed as returning a single result but actually
+  returning multiple
+- Fix inserting blocks in rich text fields
+
 ## [0.9.0]
 
 - Reserve Alinea generated properties (#378)
