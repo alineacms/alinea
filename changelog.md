@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.3]
+
+- Fix empty path names resulting in an extra slash at the end of entry urls
+  after publish
+
 ## [0.9.2]
 
 - Fix inserting blocks in rich text fields causing issues after trying to
