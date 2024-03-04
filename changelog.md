@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.2]
+
+- Fix inserting blocks in rich text fields causing issues after trying to
+  publish
+
 ## [0.9.1]
 
 - Fix whereId on Cursor typed as returning a single result but actually
