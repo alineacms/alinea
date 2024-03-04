@@ -116,7 +116,7 @@ export function entryUrl(type: Type, meta: EntryUrlMeta) {
       .concat(
         meta.parentPaths
           .concat(meta.path)
-          .filter(segment => segment !== 'index')
+          .filter(segment => segment !== 'index' && segment !== '')
       )
       .join('/')
   )
