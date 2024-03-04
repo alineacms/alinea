@@ -9,13 +9,19 @@ export namespace Node {
     return node[type] === 'text'
   }
   export function isElement(node: any): node is ElementNode {
+    const typeName = node[type]
     return (
-      node[type] !== 'text' && node[type][0]?.toLowerCase() === node[type][0]
+      typeof typeName === 'string' &&
+      typeName !== 'text' &&
+      typeName[0]?.toLowerCase() === typeName[0]
     )
   }
   export function isBlock(node: any): node is BlockNode {
+    const typeName = node[type]
     return (
-      node[type] !== 'text' && node[type][0]?.toUpperCase() === node[type][0]
+      typeof typeName === 'string' &&
+      typeName !== 'text' &&
+      typeName[0]?.toUpperCase() === typeName[0]
     )
   }
 }

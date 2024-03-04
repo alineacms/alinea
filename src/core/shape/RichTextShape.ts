@@ -375,8 +375,14 @@ export class RichTextShape<Blocks>
       insert: (id: string, block: string) => {
         if (!this.blocks) throw new Error('No types defined')
         const shape = this.blocks[block]
-        const row = {...shape.create(), id, type: block}
-        map.set(id, shape.toY(row))
+        map.set(
+          id,
+          shape.toY({
+            ...shape.create(),
+            [Node.type]: block,
+            [BlockNode.id]: id
+          })
+        )
       }
     }
   }
