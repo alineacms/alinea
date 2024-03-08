@@ -1,5 +1,3 @@
-'use server'
-
 import {JWTPreviews} from 'alinea/backend'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
