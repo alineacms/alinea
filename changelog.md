@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.9.4]
+
+- Remove 'use server' directive from the Next.js driver because it does not
+  contain server actions at all and newer Next.js version will throw an error
+  when it is included.
+
 ## [0.9.3]
 
 - Fix empty path names resulting in an extra slash at the end of entry urls
