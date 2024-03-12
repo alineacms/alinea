@@ -21,7 +21,8 @@
     },
     "baseUrl": ".",
     "rootDir": "src",
-    "moduleDetection": "force"
+    "moduleDetection": "force",
+    "incremental": true
   },
   "include": ["src"]
 }
