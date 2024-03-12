@@ -74,9 +74,26 @@ const nestedList = Field.list('Nested list', {
   }
 })
 
+const Answer = Config.type('Answer', {
+  fields: {
+    correct: Field.check('Is correct', {width: 0.25}),
+    label: Field.text('Label', {multiline: true, width: 0.75})
+  }
+})
+const answers = Field.list('Answers', {
+  schema: {Answer},
+  validate(value) {
+    const hasCorrect = value.some(answer => answer.correct)
+    if (!hasCorrect) return 'At least one answer must be correct'
+  }
+})
+
 const Fields = Config.document('Fields', {
   fields: {
     ...Field.tabs(
+      Field.tab('Quiz', {
+        fields: {answers}
+      }),
       Field.tab('Basic fields', {
         fields: {
           text: Field.text('Text field'),
