@@ -1,6 +1,6 @@
 import {Field, FieldOptions} from 'alinea/core'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {useCallback, useEffect, useMemo} from 'react'
+import {useEffect} from 'react'
 import {useFormContext} from '../atoms/FormAtoms.js'
 
 export function useField<
@@ -9,10 +9,10 @@ export function useField<
   Mutator,
   Options extends FieldOptions<StoredValue>
 >(field: Field<StoredValue, QueryValue, Mutator, Options> | string) {
-  const atoms = useFormContext()
+  const form = useFormContext()
   const actual =
     typeof field === 'string'
-      ? (atoms.fieldByKey(field) as Field<
+      ? (form.fieldByKey(field) as Field<
           StoredValue,
           QueryValue,
           Mutator,
@@ -51,9 +51,9 @@ export function useFieldOptions<
   Mutator,
   Options extends FieldOptions<StoredValue>
 >(field: Field<StoredValue, QueryValue, Mutator, Options>) {
-  const atoms = useFormContext()
-  const atom = atoms.fieldInfo(field)
-  return useAtomValue(atom.options)
+  const form = useFormContext()
+  const info = form.fieldInfo(field)
+  return useAtomValue(info.options)
 }
 
 export function useFieldError<
@@ -62,32 +62,12 @@ export function useFieldError<
   Mutator,
   Options extends FieldOptions<StoredValue>
 >(field: Field<StoredValue, QueryValue, Mutator, Options>) {
-  const atoms = useFormContext()
-  const setError = useSetAtom(atoms.errors)
-  const value = useFieldValue(field)
-  const options = useFieldOptions(field)
+  const form = useFormContext()
+  const info = form.fieldInfo(field)
+  const setError = useSetAtom(form.errors)
   const key = useFieldKey(field)
-  const fieldPath = atoms.path + '.' + key
-  const hasError = useCallback(
-    (value: StoredValue) => {
-      if (options.validate) {
-        const validates = options.validate(value)
-        if (typeof validates === 'boolean') return !validates
-        return validates
-      }
-      const isRequired = options.required
-      const isEmpty =
-        value === undefined ||
-        value === null ||
-        value === '' ||
-        (Array.isArray(value) && value.length === 0)
-      if (isRequired && isEmpty) return true
-    },
-    [options]
-  )
-  const error = useMemo(() => {
-    return hasError(value)
-  }, [hasError, value])
+  const fieldPath = form.path + '.' + key
+  const error = useAtomValue(info.error)
   useEffect(() => {
     setError(fieldPath, field, error)
   }, [setError, fieldPath, field, error])
@@ -100,9 +80,9 @@ export function useFieldValue<
   Mutator,
   Options extends FieldOptions<StoredValue>
 >(field: Field<StoredValue, QueryValue, Mutator, Options>) {
-  const atoms = useFormContext()
-  const atom = atoms.fieldInfo(field)
-  return useAtomValue(atom.value)
+  const form = useFormContext()
+  const info = form.fieldInfo(field)
+  return useAtomValue(info.value)
 }
 
 export function useFieldMutator<
@@ -111,7 +91,7 @@ export function useFieldMutator<
   Mutator,
   Options extends FieldOptions<StoredValue>
 >(field: Field<StoredValue, QueryValue, Mutator, Options>) {
-  const atoms = useFormContext()
-  const atom = atoms.fieldInfo(field)
-  return atom.mutator
+  const form = useFormContext()
+  const info = form.fieldInfo(field)
+  return info.mutator
 }

@@ -26,6 +26,7 @@ export interface FieldInfo<
   field: Field<StoredValue, QueryValue, Mutator, Options>
   value: Atom<StoredValue>
   options: Atom<Options | Promise<Options>>
+  error: Atom<boolean | string | undefined>
   mutator: Mutator
 }
 
@@ -93,11 +94,25 @@ export class FormAtoms<T = any> {
             : atom(defaultOptions)
           const valueTracker = valueTrackerOf(field)
           const value = this.valueAtom(field, key, valueTracker)
+          const error = atom(get => {
+            const {validate, required} = get(options)
+            if (validate) {
+              const res = validate(get(value))
+              if (typeof res === 'boolean') return !res
+              return res
+            } else if (required) {
+              const current = get(value)
+              if (current === undefined || current === null) return true
+              if (typeof current === 'string' && current === '') return true
+              if (Array.isArray(current) && current.length === 0) return true
+            }
+          })
           this.fields.set(ref, {
             key,
             field,
             value,
             mutator,
+            error,
             options
           })
         }
