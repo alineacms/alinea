@@ -1,5 +1,5 @@
 import {Config} from 'alinea/core/Config'
-import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import {EntryRecord, createRecord} from 'alinea/core/EntryRecord'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {Graph} from 'alinea/core/Graph'
 import {
@@ -191,7 +191,13 @@ export class ChangeSetCreator {
   }
 
   orderChanges({file, index}: OrderMutation): Array<Change> {
-    return [{type: ChangeType.Patch, file, patch: {[META_KEY]: {index}}}]
+    return [
+      {
+        type: ChangeType.Patch,
+        file,
+        patch: {[EntryRecord.index]: index}
+      }
+    ]
   }
 
   moveChanges({
