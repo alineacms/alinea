@@ -45,10 +45,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
               </HStack>
               <Typo.P>
                 Alinea requires a{' '}
-                <Typo.Link
-                  href="https://alinea.sh/docs/deploy/exporting-the-dashboard"
-                  target="_blank"
-                >
+                <Typo.Link href="https://alinea.sh/docs/deploy" target="_blank">
                   handler
                 </Typo.Link>{' '}
                 to continue.
