@@ -3,6 +3,7 @@ import {EntryPhase} from 'alinea/core/EntryRow'
 import {createId} from 'alinea/core/Id'
 import {MutationType} from 'alinea/core/Mutation'
 import {Reference} from 'alinea/core/Reference'
+import {Schema} from 'alinea/core/Schema'
 import {track} from 'alinea/core/Tracker'
 import {Type, type} from 'alinea/core/Type'
 import {Projection} from 'alinea/core/pages/Projection'
@@ -105,17 +106,19 @@ function NewEntryForm({parentId}: NewEntryProps) {
     })
   }, [])
 
-  async function allowedTypes(parentId?: string) {
+  async function allowedTypes(parentId?: string): Promise<Array<string>> {
     if (!parentId) {
-      return root.contains ?? []
+      return root.contains
+        ? Schema.contained(config.schema, root.contains)
+        : keys(config.schema)
     } else {
       const parent = await graph.preferDraft.get(
         Entry({entryId: parentId}).select(parentData)
       )
       const parentType = parent && config.schema[parent.type]
-      return (
-        (parentType && Type.meta(parentType).contains) || keys(config.schema)
-      )
+      if (parentType)
+        return Schema.contained(config.schema, Type.contains(parentType))
+      return keys(config.schema)
     }
   }
 

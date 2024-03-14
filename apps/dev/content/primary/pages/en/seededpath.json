@@ -1,11 +1,8 @@
 {
-  "_id": "2biVnGJdrJMNLuVarwl3DeQDTy2",
-  "_type": "Fields",
+  "_id": "2dgecbJqTltGUOJZXpmkVTtLfnL",
+  "_type": "Page",
   "_index": "a0",
-  "_i18nId": "2biVnHG1AqV27e1ihkmoztfFCmY",
+  "_i18nId": "2dgeccRswr67Tr7c5S4cphuEz6I",
   "_seeded": "/en/seededpath.json",
-  "_root": "pages",
-  "title": "Seeded page",
-  "tabA": "",
-  "shared": "This is shared"
+  "_root": "pages"
 }

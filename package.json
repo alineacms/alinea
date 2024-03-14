@@ -20,7 +20,7 @@
     "test": "NODE_OPTIONS=--enable-source-maps node build.js --test",
     "tag": "esbx tag",
     "dev:check": "tsc -w",
-    "dev:run": "node build.js --watch -- node dev.js --dir apps/dev --config cms",
+    "dev:run": "node build.js --watch -- node dev.js --dir apps/dev",
     "web:run": "node build.js --watch -- node dev.js -- yarn workspace @alinea/web dev",
     "dev:stories": "ladle serve --stories \"src/**/*.stories.tsx\"",
     "gen:bundleTs": "esbx bundleTs",
