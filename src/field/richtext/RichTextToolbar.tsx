@@ -21,6 +21,8 @@ import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
 import {Editor} from '@tiptap/react'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
+import {IcRoundSubscript} from 'alinea/ui/icons/IcRoundSubscript'
+import {IcRoundSuperscript} from 'alinea/ui/icons/IcRoundSuperscript'
 import {forwardRef, Ref} from 'react'
 import {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
@@ -183,16 +185,6 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             }}
             active={editor.isActive('italic')}
           />
-          <IconButton
-            icon={IcRoundTextFields}
-            size={18}
-            title="Small"
-            onClick={e => {
-              e.preventDefault()
-              exec().toggleSmall().run()
-            }}
-            active={editor.isActive('small')}
-          />
           <DropdownMenu.Root top>
             <DropdownMenu.Trigger
               title="Alignment"
@@ -327,6 +319,37 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               e.preventDefault()
               exec().setHorizontalRule().run()
             }}
+          />
+          <div className={styles.root.separator()} />
+          <IconButton
+            icon={IcRoundTextFields}
+            size={18}
+            title="Small"
+            onClick={e => {
+              e.preventDefault()
+              exec().toggleSmall().run()
+            }}
+            active={editor.isActive('small')}
+          />
+          <IconButton
+            icon={IcRoundSubscript}
+            size={18}
+            title="Subscript"
+            onClick={e => {
+              e.preventDefault()
+              exec().toggleSubscript().run()
+            }}
+            active={editor.isActive('subscript')}
+          />
+          <IconButton
+            icon={IcRoundSuperscript}
+            size={18}
+            title="Superscript"
+            onClick={e => {
+              e.preventDefault()
+              exec().toggleSuperscript().run()
+            }}
+            active={editor.isActive('superscript')}
           />
         </HStack>
       </div>

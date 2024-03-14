@@ -31,9 +31,12 @@ export enum RichTextElements {
   ol = 'ol',
   li = 'li',
   a = 'a',
+  blockquote = 'blockquote',
   hr = 'hr',
   br = 'br',
-  small = 'small'
+  small = 'small',
+  sup = 'sup',
+  sub = 'sub'
 }
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245

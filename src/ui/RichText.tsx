@@ -58,6 +58,10 @@ function nodeElement(
       return <br />
     case 'small':
       return <small />
+    case 'subscript':
+      return <sub />
+    case 'superscript':
+      return <sup />
     case 'link':
       const props = {
         href: attributes?.href,

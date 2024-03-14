@@ -122,6 +122,8 @@ __metadata:
     "@tiptap/extension-ordered-list": "npm:^2.1.16"
     "@tiptap/extension-paragraph": "npm:^2.1.16"
     "@tiptap/extension-strike": "npm:^2.1.16"
+    "@tiptap/extension-subscript": "npm:^2.2.4"
+    "@tiptap/extension-superscript": "npm:^2.2.4"
     "@tiptap/extension-text": "npm:^2.1.16"
     "@tiptap/extension-text-align": "npm:^2.1.16"
     "@tiptap/pm": "npm:^2.1.16"
@@ -2031,6 +2033,24 @@ __metadata:
   peerDependencies:
     "@tiptap/core": ^2.0.0
   checksum: 10/d187c6c2abe9e687fe30efd772c0278b2075f7330cc26999297dd922ae6c4a2343b022a1f0b742e22c5b78bbffbf924c10fb72b9ca0c56411b37eceff7321cec
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-subscript@npm:^2.2.4":
+  version: 2.2.4
+  resolution: "@tiptap/extension-subscript@npm:2.2.4"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0
+  checksum: 10/2e37b51d91db576ab30c0e88793dd07a0d4352f096124186d02cc73729227ad8a087eb9a8148cb93b67e3163b2adf1e0cae9d4182dfe5cbb5b15eb188f248079
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-superscript@npm:^2.2.4":
+  version: 2.2.4
+  resolution: "@tiptap/extension-superscript@npm:2.2.4"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0
+  checksum: 10/8334dc1be65ce2297eab7922ac8eca87ad084a0fe5055e28d3ad849771f653d9bc8f7f47585afc6a533a035def64210e64c9e72bf8f723552803819edba9bf83
   languageName: node
   linkType: hard
 
