@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a1",
   "_i18nId": "268hjH2OU9fiReg61Wov1SRbPD5",
-  "_root": "pages",
   "title": "Rich Text",
   "navigationTitle": "",
   "body": [
@@ -20,7 +19,7 @@
     {
       "_type": "CodeBlock",
       "_id": "268iODr7pOAG2BeDXXfDEvDZYfr",
-      "code": "import {Field} from 'alinea'\n\nField.richText('My rich text field', {\n  blocks: {\n    CodeBlock,\n    ImageBlock\n  }\n})",
+      "code": "import {Field} from 'alinea'\n\nField.richText('My rich text field', {\n  schema: {\n    CodeBlock,\n    ImageBlock\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -32,7 +31,6 @@
     },
     {
       "_type": "heading",
-      "textAlign": "left",
       "level": 2,
       "content": [
         {
@@ -43,12 +41,11 @@
     },
     {
       "_type": "heading",
-      "textAlign": "left",
       "level": 3,
       "content": [
         {
           "_type": "text",
-          "text": "`blocks`"
+          "text": "`schema`"
         }
       ]
     },
@@ -64,7 +61,6 @@
     },
     {
       "_type": "heading",
-      "textAlign": "left",
       "level": 3,
       "content": [
         {
@@ -85,7 +81,6 @@
     },
     {
       "_type": "heading",
-      "textAlign": "left",
       "level": 2,
       "content": [
         {
@@ -157,7 +152,7 @@
     {
       "_type": "CodeBlock",
       "_id": "aQam3FUTLfN1uYyFFSiZk",
-      "code": "import {RichText} from 'alinea/ui'\nimport {MyBlock} from './MyBlock'\nimport {MyBlockSchema} from './MyBlock.schema'\n\nconst MyBlockSchema = alinea.type('Custom block', {\n  property: alinea.text('Property')\n})\n\nfunction MyBlock({property}) {\n  return <span>{property}</span>\n}\n\n// Add to config\nalinea.richText('My rich text field', {\n  blocks: alinea.schema({\n    MyBlock: MyBlockSchema\n  })\n})\n\n// Render in page views\n<RichText\n  doc={richTextValue}\n\n  // Render instances of my custom block with the MyBlock view\n  MyBlock={MyBlock}\n/>",
+      "code": "import {RichText} from 'alinea/ui'\nimport {MyBlock} from './MyBlock'\nimport {MyBlockSchema} from './MyBlock.schema'\n\nconst MyBlockSchema = alinea.type('Custom block', {\n  property: alinea.text('Property')\n})\n\nfunction MyBlock({property}) {\n  return <span>{property}</span>\n}\n\n// Add to config\nalinea.richText('My rich text field', {\n  schema: alinea.schema({\n    MyBlock: MyBlockSchema\n  })\n})\n\n// Render in page views\n<RichText\n  doc={richTextValue}\n\n  // Render instances of my custom block with the MyBlock view\n  MyBlock={MyBlock}\n/>",
       "fileName": "",
       "language": "",
       "compact": false
