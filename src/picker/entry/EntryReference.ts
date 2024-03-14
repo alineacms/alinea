@@ -9,6 +9,7 @@ export namespace EntryReference {
   export const entry = '_entry' satisfies keyof EntryReference
 
   export function isEntryReference(value: any): value is EntryReference {
-    return value && value._type === 'entry' && EntryReference.entry in value
+    // type can be entry, image or file
+    return value && EntryReference.entry in value
   }
 }
