@@ -70,6 +70,7 @@ export function useFieldError<
   const error = useAtomValue(info.error)
   useEffect(() => {
     setError(fieldPath, field, error)
+    return () => setError(fieldPath, field, undefined)
   }, [setError, fieldPath, field, error])
   return error
 }
