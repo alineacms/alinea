@@ -394,9 +394,9 @@ export class EntryResolver {
 
   orderBy(ctx: ResolveContext, orderBy: Array<pages.OrderBy>): Array<OrderBy> {
     return orderBy.map(({expr, order}) => {
-      const exprData = this.expr(ctx, expr)
+      const e = new Expr(this.expr(ctx, expr)).collate('NOCASE')
       return {
-        expr: exprData,
+        expr: e[Expr.Data],
         order: order === 'Desc' ? OrderDirection.Desc : OrderDirection.Asc
       }
     })
