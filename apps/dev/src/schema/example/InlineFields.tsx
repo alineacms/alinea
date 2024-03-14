@@ -1,6 +1,6 @@
 import {Config, Field} from 'alinea'
 
-export const InlineExamples = Config.document('Inline fields', {
+export const InlineFields = Config.document('Inline fields', {
   fields: {
     street: Field.text('Street', {
       width: 0.6,

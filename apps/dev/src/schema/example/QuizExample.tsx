@@ -14,6 +14,6 @@ const answers = Field.list('Answers', {
   }
 })
 
-export const QuizExamples = Config.type('Quiz', {
+export const QuizExample = Config.type('Quiz', {
   fields: {answers}
 })

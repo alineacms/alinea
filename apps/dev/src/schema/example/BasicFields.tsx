@@ -1,6 +1,6 @@
 import {Config, Field} from 'alinea'
 
-export const BasicExamples = Config.document('Basic fields', {
+export const BasicFields = Config.document('Basic fields', {
   fields: {
     text: Field.text('Text field'),
     hello: Field.text('Validated text field', {

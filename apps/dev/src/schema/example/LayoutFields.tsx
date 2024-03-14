@@ -1,6 +1,6 @@
 import {Config, Field} from 'alinea'
 
-export const LayoutExamples = Config.document('Layout fields', {
+export const LayoutFields = Config.document('Layout fields', {
   fields: {
     object: Field.object('Object field', {
       fields: {

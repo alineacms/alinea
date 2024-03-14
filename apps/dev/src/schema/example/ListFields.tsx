@@ -1,6 +1,6 @@
 import {Config, Field} from 'alinea'
 
-export const ListExamples = Config.document('List fields', {
+export const ListFields = Config.document('List fields', {
   fields: {
     list: Field.list('My list field', {
       schema: {

@@ -1,6 +1,6 @@
 import {Config, Field} from 'alinea'
 
-export const RichTextExamples = Config.document('Rich text fields', {
+export const RichTextFields = Config.document('Rich text fields', {
   fields: {
     withInitial: Field.richText('With initial value', {
       required: true,

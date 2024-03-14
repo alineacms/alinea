@@ -1,6 +1,6 @@
 import {Config, Field, Query} from 'alinea'
 
-export const LinkExamples = Config.document('Link fields', {
+export const LinkFields = Config.document('Link fields', {
   fields: {
     externalLink: Field.url('External link'),
     entry: Field.entry('Internal link'),
