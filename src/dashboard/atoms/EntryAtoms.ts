@@ -3,25 +3,25 @@ import {
   DropTarget,
   ItemInstance
 } from '@headless-tree/core'
-import {Entry} from 'alinea/core/Entry'
-import {EntryPhase} from 'alinea/core/EntryRow'
-import {GraphRealm} from 'alinea/core/Graph'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {Type} from 'alinea/core/Type'
-import {Projection} from 'alinea/core/pages/Projection'
-import {entryFileName} from 'alinea/core/util/EntryFilenames'
+import { Entry } from 'alinea/core/Entry'
+import { EntryPhase } from 'alinea/core/EntryRow'
+import { GraphRealm } from 'alinea/core/Graph'
+import { Mutation, MutationType } from 'alinea/core/Mutation'
+import { Type } from 'alinea/core/Type'
+import { Projection } from 'alinea/core/pages/Projection'
+import { entryFileName } from 'alinea/core/util/EntryFilenames'
 import {
   generateKeyBetween,
   generateNKeysBetween
 } from 'alinea/core/util/FractionalIndexing'
-import {entries} from 'alinea/core/util/Objects'
+import { entries } from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
-import {atom, useAtomValue} from 'jotai'
-import {useMemo} from 'react'
-import {useDashboard} from '../hook/UseDashboard.js'
-import {configAtom} from './DashboardAtoms.js'
-import {graphAtom, useMutate} from './DbAtoms.js'
-import {localeAtom, rootAtom, workspaceAtom} from './NavigationAtoms.js'
+import { atom, useAtomValue } from 'jotai'
+import { useMemo } from 'react'
+import { useDashboard } from '../hook/UseDashboard.js'
+import { configAtom } from './DashboardAtoms.js'
+import { graphAtom, useMutate } from './DbAtoms.js'
+import { localeAtom, rootAtom, workspaceAtom } from './NavigationAtoms.js'
 
 export function rootId(rootName: string) {
   return `@alinea/root-${rootName}`
@@ -205,10 +205,10 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
         if (items.length !== 1) return
         const [dropping] = items
         if (childIndex === null) return
-        if (dropping.getParent() !== parent) {
-          console.log('Todo: move entries')
-          return
-        }
+        const fromParent = dropping.getParent()
+        const toParent = parent
+        const isMove = fromParent !== toParent
+
         const children = parent.getChildren()
         const previous = children[childIndex - 1]
         const previousIndexKey = previous?.getItemData()?.index ?? null
@@ -219,7 +219,6 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
           )
         const nextChildIndex = next ? children.indexOf(next) : undefined
         const nextIndexKey = next?.getItemData()?.index ?? null
-
         try {
           const brokenChildren = children.slice(childIndex, nextChildIndex)
           const newIndexKey = generateKeyBetween(previousIndexKey, nextIndexKey)
@@ -247,12 +246,44 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
           }
 
           for (const entry of dropping.getItemData().entries) {
-            mutations.push({
-              type: MutationType.Order,
-              entryId: entry.entryId,
-              file: entryFileName(config, entry, entry.parentPaths),
-              index: newIndexKey
-            })
+            if (isMove) {
+              const movingTo = toParent.getItemData() as
+                | EntryTreeItem
+                | undefined
+              if (!movingTo) return
+              const parentInLocale = movingTo.entries?.find(
+                e => e.locale === entry.locale
+              )
+              if (!parentInLocale) {
+                const message = `Cannot move entry to ${movingTo.entries[0].title} because it is not translated to ${entry.locale}`
+                alert(message)
+                throw new Error(message)
+              }
+              const fromFile = entryFileName(config, entry, entry.parentPaths)
+              const toFile = entryFileName(
+                config,
+                entry,
+                parentInLocale.parentPaths.concat(parentInLocale.path)
+              )
+              mutations.push({
+                type: MutationType.Move,
+                entryId: entry.entryId,
+                entryType: entry.type,
+                fromFile,
+                toFile,
+                parent: parentInLocale.entryId,
+                root: parentInLocale.root,
+                workspace: parentInLocale.workspace,
+                index: newIndexKey
+              })
+            } else {
+              mutations.push({
+                type: MutationType.Order,
+                entryId: entry.entryId,
+                file: entryFileName(config, entry, entry.parentPaths),
+                index: newIndexKey
+              })
+            }
           }
           mutate(mutations, true)
         } catch (err) {

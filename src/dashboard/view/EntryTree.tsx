@@ -189,17 +189,18 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
       try {
         const item = tree.getItemInstance(i18nId)
         if (!item) {
+          console.log(`Item not found: ${i18nId}`)
           tree.invalidateChildrenIds(rootId(root.name))
           continue
         }
         const parent = item.getParent()
         const parentId = parent?.getId()
         if (parentId) tree.invalidateChildrenIds(parentId)
-
-        tree.invalidateChildrenIds(i18nId)
-        tree.invalidateItemData(i18nId)
       } catch (e) {
         console.error(e)
+      } finally {
+        tree.invalidateItemData(i18nId)
+        tree.invalidateChildrenIds(i18nId)
       }
     }
   }, [changed])

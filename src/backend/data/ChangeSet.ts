@@ -207,9 +207,10 @@ export class ChangeSetCreator {
     toFile,
     index
   }: MoveMutation): Array<Change> {
+    // Todo: do this for archived and draft files too
     const result: Array<Change> = []
-    const isContainer = Type.isContainer(this.config.schema[entryType])
     result.push({type: ChangeType.Rename, from: fromFile, to: toFile})
+    const isContainer = Type.isContainer(this.config.schema[entryType])
     if (!isContainer) return result
     const fromFolder = fromFile.slice(0, -'.json'.length)
     const toFolder = toFile.slice(0, -'.json'.length)

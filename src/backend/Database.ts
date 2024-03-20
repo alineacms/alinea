@@ -142,8 +142,7 @@ export class Database implements Syncable {
     next: EntryRow
   ) {
     const {childrenDir: dir} = previous
-    if (next.phase !== EntryPhase.Published || dir === next.childrenDir)
-      return []
+    if (next.phase === EntryPhase.Draft || dir === next.childrenDir) return []
     const children = await tx(
       EntryRow().where(
         EntryRow.parentDir.is(dir).or(EntryRow.childrenDir.like(dir + '/%'))
@@ -314,22 +313,54 @@ export class Database implements Syncable {
       }
       case MutationType.Order: {
         const rows = EntryRow({entryId: mutation.entryId})
-        // Todo: apply this to other languages too
         await tx(rows.set({index: mutation.index}))
         return () => this.updateHash(tx, rows)
       }
       case MutationType.Move: {
-        const rows = EntryRow({entryId: mutation.entryId})
+        const extension = paths.extname(mutation.toFile)
+        const fileName = paths.basename(mutation.toFile, extension)
+        const [entryPath, entryPhase] = entryInfo(fileName)
+        const rows = EntryRow({entryId: mutation.entryId, phase: entryPhase})
+        const current = await tx(rows)
+        const parentDir = paths.dirname(mutation.toFile)
+        const childrenDir = paths.join(parentDir, entryPath)
+        const phaseSegment =
+          entryPhase === EntryPhase.Published ? '' : `.${entryPhase}`
+        const filePath = (childrenDir + phaseSegment + '.json').toLowerCase()
+        const parent = await tx(
+          EntryRow({
+            entryId: mutation.parent,
+            phase: EntryPhase.Published
+          }).first()
+        )
         await tx(
           rows.set({
             index: mutation.index,
             parent: mutation.parent,
             workspace: mutation.workspace,
-            root: mutation.root
+            root: mutation.root,
+            parentDir,
+            childrenDir,
+            filePath
           })
         )
-        // Todo: update file & children paths
-        return () => this.updateHash(tx, rows)
+        const children: Array<EntryRow> = []
+        for (const [index, next] of (await tx(rows)).entries()) {
+          children.push(
+            ...(await this.updateChildren(tx, current[index], next))
+          )
+        }
+        return () =>
+          this.updateHash(tx, rows).then(rows => {
+            return this.updateHash(
+              tx,
+              EntryRow().where(
+                EntryRow.entryId.isIn(children.map(e => e.entryId))
+              )
+            ).then(childrenIds =>
+              rows.concat(childrenIds).concat(parent.i18nId)
+            )
+          })
       }
       case MutationType.Upload: {
         // Until this mutation is applied the uploaded file won't be locally
