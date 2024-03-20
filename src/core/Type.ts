@@ -37,7 +37,7 @@ export interface EntryUrlMeta {
 /** Optional settings to configure a Type */
 export interface TypeMeta {
   /** Accepts entries of these types as children */
-  contains?: Array<string>
+  contains?: Array<string | Type>
   /** Order children entries in the sidebar content tree */
   orderChildrenBy?: {asc: string} | {desc: string}
   /** @deprecated Use contains instead */
@@ -102,6 +102,10 @@ export namespace Type {
 
   export function meta(type: Type): TypeMeta {
     return type[Type.Data].meta
+  }
+
+  export function contains(type: Type): Array<string | Type> {
+    return meta(type).contains ?? []
   }
 
   export function isHidden(type: Type): boolean {

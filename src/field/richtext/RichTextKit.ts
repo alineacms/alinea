@@ -14,6 +14,8 @@ import ListItem from '@tiptap/extension-list-item'
 import OrderedList from '@tiptap/extension-ordered-list'
 import Paragraph from '@tiptap/extension-paragraph'
 import Strike from '@tiptap/extension-strike'
+import SubScript from '@tiptap/extension-subscript'
+import SuperScript from '@tiptap/extension-superscript'
 import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
 import {fromModule} from 'alinea/ui'
@@ -79,7 +81,9 @@ export const RichTextKit = Extension.create({
           class: styles.link()
         }
       }),
-      FloatingMenu
+      FloatingMenu,
+      SuperScript,
+      SubScript
     ]
   }
 })

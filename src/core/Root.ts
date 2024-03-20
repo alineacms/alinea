@@ -4,13 +4,14 @@ import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {PageSeed} from './Page.js'
 import {Schema} from './Schema.js'
+import {Type} from './Type.js'
 
 export interface RootI18n {
   locales: Array<string>
 }
 
 export interface RootMeta {
-  contains?: Array<string>
+  contains?: Array<string | Type>
   icon?: ComponentType
   i18n?: RootI18n
   /** A React component used to view this root in the dashboard */
@@ -63,13 +64,28 @@ export namespace Root {
 
   export function validate(root: Root, workspaceLabel: string, schema: Schema) {
     const {contains} = root[Root.Data]
-    for (const key of contains ?? []) {
-      if (!schema[key])
-        throw new Error(
-          `Root "${label(
-            root
-          )}" in workspace "${workspaceLabel}" contains "${key}", but that Type does not exist`
-        )
+    const keyOfType = Schema.typeNames(schema)
+    if (contains) {
+      for (const inner of contains) {
+        if (typeof inner === 'string') {
+          if (!schema[inner])
+            throw new Error(
+              `Root "${label(
+                root
+              )}" in workspace "${workspaceLabel}" contains "${inner}", but that Type does not exist`
+            )
+        } else {
+          const hasType = keyOfType.has(inner)
+          if (!hasType)
+            throw new Error(
+              `Root "${label(
+                root
+              )}" in workspace "${workspaceLabel}" contains "${Type.label(
+                inner
+              )}", but that Type does not exist`
+            )
+        }
+      }
     }
   }
 }

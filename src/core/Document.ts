@@ -1,5 +1,5 @@
-import {metadata} from 'alinea/field/metadata'
-import {PathField, path} from 'alinea/field/path'
+import {metadata as createMetadata} from 'alinea/field/metadata'
+import {PathField, path as createPath} from 'alinea/field/path'
 import {tab, tabs} from 'alinea/field/tabs'
 import {TextField, text} from 'alinea/field/text'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
@@ -13,11 +13,17 @@ import {
   type
 } from './Type.js'
 
-type Document<Definition> = {
+export type Document<Definition> = {
   title: TextField
   path: PathField
-  metadata: ReturnType<typeof metadata>
+  metadata: ReturnType<typeof createMetadata>
 } & Definition
+
+export namespace Document {
+  export const title = text('Title', {required: true, width: 0.5})
+  export const path = createPath('Path', {required: true, width: 0.5})
+  export const metadata = createMetadata()
+}
 
 export function document<Definition extends TypeFields>(
   label: string,
@@ -40,15 +46,15 @@ export function document<Definition extends TypeDefinition>(
         tab('Document', {
           icon: IcRoundDescription,
           fields: {
-            title: text('Title', {required: true, width: 0.5}),
-            path: path('Path', {required: true, width: 0.5}),
+            title: Document.title,
+            path: Document.path,
             ...d
           }
         }),
         tab('Metadata', {
           icon: IcRoundShare,
           fields: {
-            metadata: metadata()
+            metadata: Document.metadata
           }
         })
       ) as any) // Todo: Fix type

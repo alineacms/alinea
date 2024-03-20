@@ -1,0 +1,18 @@
+{
+  "_id": "2dgfhj4jZy1ouxya8e6BBIoLyoa",
+  "_type": "ConditionalExamples",
+  "_index": "Zz",
+  "_i18nId": "2dgfhj4jZy1ouxya8e6BBIoLyoa",
+  "title": "Conditional fields",
+  "rootField": "a",
+  "nestedList": [],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

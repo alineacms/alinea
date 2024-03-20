@@ -13,6 +13,7 @@ export namespace Schema {
   export type Targets = Map<TypeTarget, string>
 
   export function validate(schema: Schema) {
+    const keyOfType = typeNames(schema)
     for (const [key, type] of entries(schema)) {
       switch (key) {
         case 'Entry':
@@ -24,11 +25,21 @@ export namespace Schema {
             )
           const {contains} = Type.meta(type)
           if (contains) {
-            for (const name of contains) {
-              if (!schema[name])
-                throw new Error(
-                  `Type "${key}" contains "${name}", but that Type does not exist`
-                )
+            for (const inner of contains) {
+              if (typeof inner === 'string') {
+                if (!schema[inner])
+                  throw new Error(
+                    `Type "${key}" contains "${inner}", but that Type does not exist`
+                  )
+              } else {
+                const hasType = keyOfType.has(inner)
+                if (!hasType)
+                  throw new Error(
+                    `Type "${key}" contains "${Type.label(
+                      inner
+                    )}", but that Type does not exist`
+                  )
+              }
             }
           }
       }
@@ -72,6 +83,19 @@ export namespace Schema {
 
   export function typeNames(schema: Schema): Map<Type, string> {
     return new Map(entries(schema).map(([key, type]) => [type, key]))
+  }
+
+  export function contained(
+    schema: Schema,
+    contains: Array<string | Type>
+  ): Array<string> {
+    // Todo: cache this
+    const keyOfType = typeNames(schema)
+    return contains.map(inner => {
+      if (typeof inner === 'string') return inner
+      // This is validated
+      return keyOfType.get(inner)!
+    })
   }
 }
 
