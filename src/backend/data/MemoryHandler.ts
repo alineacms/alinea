@@ -1,10 +1,17 @@
-import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
-import {Drafts} from 'alinea/backend/Drafts'
-import {History, Revision} from 'alinea/backend/History'
-import {Pending} from 'alinea/backend/Pending'
-import {Config, Connection, Draft, createId} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {Connection} from 'alinea/core/Connection'
+import {Draft} from 'alinea/core/Draft'
 import {EntryRecord} from 'alinea/core/EntryRecord'
+import {createId} from 'alinea/core/Id'
 import {Mutation} from 'alinea/core/Mutation'
+import {Database} from '../Database.js'
+import {Drafts} from '../Drafts.js'
+import {Handler} from '../Handler.js'
+import {History, Revision} from '../History.js'
+import {Media} from '../Media.js'
+import {Pending} from '../Pending.js'
+import {Target} from '../Target.js'
+import {JWTPreviews} from '../util/JWTPreviews.js'
 
 class MemoryApi implements Media, Target, History, Drafts, Pending {
   drafts = new Map<string, Draft>()
@@ -21,7 +28,7 @@ class MemoryApi implements Media, Target, History, Drafts, Pending {
   }
 
   prepareUpload(file: string): Promise<Connection.UploadResponse> {
-    throw new Error(`Not implemented`)
+    throw new Error(`Uploads are not available`)
   }
 
   async revisions(file: string): Promise<Array<Revision>> {
@@ -29,7 +36,7 @@ class MemoryApi implements Media, Target, History, Drafts, Pending {
   }
 
   async revisionData(file: string, revision: string): Promise<EntryRecord> {
-    throw new Error(`Not implemented`)
+    throw new Error(`Revisions are not available`)
   }
 
   async getDraft(entryId: string): Promise<Draft | undefined> {

@@ -1,4 +1,3 @@
-import {renderLabel} from 'alinea/core'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {fromModule, px} from 'alinea/ui'
 import {useContrastColor} from 'alinea/ui/hook/UseContrastColor'
@@ -39,9 +38,7 @@ export function MediaThumbnail({file}: MediaThumbnailProps) {
           )}
         </div>
         <div className={styles.root.title()}>
-          <span className={styles.root.title.text()}>
-            {renderLabel(file.title)}
-          </span>
+          <span className={styles.root.title.text()}>{file.title}</span>
           <div className={styles.root.title.extension()}>{extension}</div>
         </div>
       </div>

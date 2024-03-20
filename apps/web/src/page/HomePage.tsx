@@ -21,6 +21,7 @@ import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {fromModule} from 'alinea/ui/util/Styler'
 import {px} from 'alinea/ui/util/Units'
+import type {MetadataRoute} from 'next'
 import {ComponentType, PropsWithChildren} from 'react'
 import {Link} from '../layout/nav/Link'
 import css from './HomePage.module.scss'
@@ -66,9 +67,9 @@ export default async function HomePage() {
               <Hero.Title>{home.headline}</Hero.Title>
               <Hero.ByLine>{home.byline}</Hero.ByLine>
               <HStack gap={24} style={{paddingTop: px(20)}}>
-                {home.action?.url && (
-                  <Hero.Action href={home.action.url}>
-                    {home.action.label}
+                {home.action?.href && (
+                  <Hero.Action href={home.action.href}>
+                    {home.action.fields.label}
                   </Hero.Action>
                 )}
                 {/*<WebTypo.Link
@@ -396,4 +397,8 @@ export default async function HomePage() {
       </main>
     </WebLayout>
   )
+}
+
+HomePage.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/', priority: 1}]
 }

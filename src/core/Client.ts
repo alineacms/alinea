@@ -1,16 +1,14 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
 import {DraftTransport} from 'alinea/backend/Drafts'
 import {Revision} from 'alinea/backend/History'
-import {
-  Config,
-  Connection,
-  Draft,
-  HttpError,
-  ResolveDefaults
-} from 'alinea/core'
-import {SyncResponse} from './Connection.js'
+
+import {Config} from './Config.js'
+import {Connection, SyncResponse} from './Connection.js'
+import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
+import {HttpError} from './HttpError.js'
 import {Mutation} from './Mutation.js'
+import {ResolveDefaults, ResolveRequest} from './Resolver.js'
 import {base64} from './util/Encoding.js'
 
 async function failOnHttpError<T>(
@@ -48,7 +46,7 @@ export class Client implements Connection {
     }).then<Connection.UploadResponse>(failOnHttpError)
   }
 
-  resolve(params: Connection.ResolveParams): Promise<unknown> {
+  resolve(params: ResolveRequest): Promise<unknown> {
     const {resolveDefaults} = this.options
     const body = JSON.stringify({...resolveDefaults, ...params})
     return this.requestJson(Connection.routes.resolve(), {

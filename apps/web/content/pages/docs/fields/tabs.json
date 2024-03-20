@@ -1,28 +1,34 @@
 {
+  "_id": "268hnUNLntD1TbeY1WPh34VFVcM",
+  "_type": "Doc",
+  "_index": "a1l",
+  "_i18nId": "268hnUNLntD1TbeY1WPh34VFVcM",
+  "_root": "pages",
   "title": "Tabs",
+  "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Tabs help you structure the input fields in the admin panel. Tabs do not hold data, but can declare underlying fields which do (or hold more tabs). "
         }
       ]
     },
     {
-      "id": "268hspT1GDy0ag8lya8m9dObKhX",
-      "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.tabs(\n  alinea.tab('Tab A', {\n    // ... fields\n  }),\n  alinea.tab('Tab B', {\n    // ... fields\n  })\n)",
+      "_type": "CodeBlock",
+      "_id": "268hspT1GDy0ag8lya8m9dObKhX",
+      "code": "import {Field} from 'alinea'\n\nField.tabs(\n  Field.tab('Tab A', {\n    fields: {\n      // ... fields\n    }\n  }),\n  Field.tab('Tab B', {\n    fields: {\n      // ... fields\n    }\n  })\n)",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "2YkqykVitVKoLg9NLRTwjLvsccv",
-      "type": "ExampleBlock",
-      "code": "import alinea from 'alinea'\n\nexport default alinea.type('Tabs field', {\n  ...alinea.tabs(\n    alinea.tab('Tab A', {\n      fieldA: alinea.text('Field in Tab A')\n    }),\n    alinea.tab('Tab B', {\n      fieldB: alinea.text('Field in Tab B')\n    })\n  )\n})"
+      "_type": "ExampleBlock",
+      "_id": "2YkqykVitVKoLg9NLRTwjLvsccv",
+      "code": "import {Config, Field} from \"alinea\"\n\nexport default Config.type(\"Tabs field\", {\n  ...Field.tabs(\n    Field.tab(\"Tab A\", {\n      fields: {\n        fieldA: Field.text(\"Field in Tab A\")\n      }\n    }),\n    Field.tab(\"Tab B\", {\n      fields: {\n        fieldB: Field.text(\"Field in Tab B\")\n      }\n    })\n  )\n})"
     }
   ],
   "metadata": {
@@ -33,10 +39,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "268hnUNLntD1TbeY1WPh34VFVcM",
-    "type": "Doc",
-    "index": "a5"
   }
 }

@@ -1,18 +1,23 @@
-import {EntryPhase, Expand} from 'alinea/core'
-import {Cursor} from 'alinea/core/pages/Cursor'
-import {Expr, and} from 'alinea/core/pages/Expr'
-import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
+import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
+import {EntryPhase} from './EntryRow.js'
 import {Field} from './Field.js'
 import {Hint} from './Hint.js'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Section, section} from './Section.js'
 import type {View} from './View.js'
-import {createExprData} from './pages/CreateExprData.js'
-import {BinaryOp, ExprData} from './pages/ExprData.js'
+import {Cursor} from './pages/Cursor.js'
+import {Expr, createExprData} from './pages/Expr.js'
+import {
+  BinaryOp,
+  ExprData,
+  Selection,
+  toSelection
+} from './pages/ResolveData.js'
 import {RecordShape} from './shape/RecordShape.js'
+import {isValidIdentifier} from './util/Identifiers.js'
 import {
   assign,
   defineProperty,
@@ -20,6 +25,7 @@ import {
   fromEntries,
   keys
 } from './util/Objects.js'
+import {Expand} from './util/Types.js'
 
 export interface EntryUrlMeta {
   phase: EntryPhase
@@ -30,20 +36,21 @@ export interface EntryUrlMeta {
 
 /** Optional settings to configure a Type */
 export interface TypeMeta {
-  /** Entries can be created as children of this entry */
-  isContainer?: true
-  /** Entries do not show up in the sidebar content tree */
-  isHidden?: true
-  /** Order children entries in the sidebar content tree */
-  orderChildrenBy?: {asc: string} | {desc: string}
   /** Accepts entries of these types as children */
   contains?: Array<string>
-
+  /** Order children entries in the sidebar content tree */
+  orderChildrenBy?: {asc: string} | {desc: string}
+  /** @deprecated Use contains instead */
+  isContainer?: true
+  /** @deprecated Use hidden instead */
+  isHidden?: true
+  /** Entries do not show up in the sidebar content tree */
+  hidden?: true
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 
   /** A React component used to view an entry of this type in the dashboard */
-  view?: ComponentType<EntryEditProps>
+  view?: ComponentType<EntryEditProps & {type: Type}>
   /** A React component used to view a row of this type in the dashboard */
   summaryRow?: View<any>
   /** A React component used to view a thumbnail of this type in the dashboard */
@@ -69,23 +76,24 @@ export class TypeTarget {}
 
 export declare class TypeI<Definition = object> {
   get [Type.Data](): TypeData
+  [toSelection](): Selection.Row
 }
 
 export interface TypeI<Definition = object> extends Callable {
   (): Cursor.Find<TypeRow<Definition>>
-  (partial: Partial<TypeRow<Definition>>): Cursor.Partial<Definition>
+  (partial: Partial<TypeRow<Definition>>): Cursor.Typed<Definition>
 }
 
 export type Type<Definition = object> = Definition & TypeI<Definition>
 
-export type TypeRow<Definition> = Expand<{
+type TypeRow<Definition> = Expand<{
   [K in keyof Definition as Definition[K] extends Expr<any>
     ? K
     : never]: Definition[K] extends Expr<infer T> ? T : never
 }>
-
 export namespace Type {
   export type Infer<Definition> = TypeRow<Definition>
+
   export const Data = Symbol.for('@alinea/Type.Data')
 
   export function label(type: Type): Label {
@@ -96,8 +104,16 @@ export namespace Type {
     return type[Type.Data].meta
   }
 
+  export function isHidden(type: Type): boolean {
+    return Boolean(meta(type).hidden || meta(type).isHidden)
+  }
+
   export function shape(type: Type): RecordShape {
     return type[Type.Data].shape
+  }
+
+  export function toV1(type: Type, value: any): any {
+    return shape(type).toV1(value)
   }
 
   export function searchableText(type: Type, value: any): string {
@@ -117,7 +133,8 @@ export namespace Type {
   }
 
   export function isContainer(type: Type) {
-    return Boolean(type[Type.Data].meta.isContainer)
+    const {meta} = type[Type.Data]
+    return Boolean(meta.isContainer || meta.contains)
   }
 
   export function target(type: Type): TypeTarget {
@@ -140,6 +157,17 @@ export namespace Type {
     if (keys(res).length === 0) return undefined
     return res
   }
+
+  export function validate(type: Type) {
+    for (const [key, field] of entries(fields(type))) {
+      if (!isValidIdentifier(key))
+        throw new Error(
+          `Invalid field name "${key}" in Type "${label(
+            type
+          )}", must match [A-Za-z][A-Za-z0-9_]*`
+        )
+    }
+  }
 }
 
 function fieldsOfDefinition(
@@ -155,12 +183,14 @@ function fieldsOfDefinition(
 class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   shape: RecordShape
   hint: Hint
-  meta: TypeMeta
   sections: Array<Section> = []
   target: Type<Definition>
 
-  constructor(public label: Label, public definition: Definition) {
-    this.meta = this.definition[Meta] || {}
+  constructor(
+    public label: Label,
+    public definition: Definition,
+    public meta: TypeMeta
+  ) {
     this.shape = new RecordShape(
       label,
       fromEntries(
@@ -182,12 +212,30 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
         this.sections.push(section({definition: current}))
       current = {}
     }
+    const seen = new Map<symbol, string>()
+    function validateField(key: string, field: Field) {
+      const ref = Field.ref(field)
+      if (!seen.has(ref)) return seen.set(ref, key)
+      console.log(definition)
+      console.log(seen.get(ref))
+      const fieldLabel = Field.label(field)
+      throw new Error(
+        `Duplicate field "${fieldLabel}" in type "${label}", found under key "${key}" and "${seen.get(
+          ref
+        )}"` +
+          `\nSee: https://alinea.sh/docs/configuration/schema/type#fields-must-be-unique`
+      )
+    }
     for (const [key, value] of entries(definition)) {
       if (Field.isField(value)) {
         current[key] = value
+        validateField(key, value)
       } else if (Section.isSection(value)) {
         addCurrent()
         this.sections.push(value)
+        for (const [key, field] of entries(Section.fields(value))) {
+          validateField(key, field)
+        }
       }
     }
     addCurrent()
@@ -206,7 +254,7 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     const conditions = isConditionalRecord
       ? entries(input[0]).map(([key, value]) => {
           const field = Expr(ExprData.Field({type: this.target}, key))
-          return Expr(
+          return Expr<boolean>(
             ExprData.BinOp(
               field[Expr.Data],
               BinaryOp.Equals,
@@ -214,18 +262,12 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
             )
           )
         })
-      : input.map(ev => Expr(createExprData(ev)))
-    return and(...conditions)[Expr.Data]
+      : input.map(ev => Expr<boolean>(createExprData(ev)))
+    return Expr.and(...conditions)[Expr.Data]
   }
 
   call(...input: Array<any>) {
-    const isConditionalRecord = input.length === 1 && !Expr.isExpr(input[0])
-    if (isConditionalRecord) return new Cursor.Partial(this.target, input[0])
-    else
-      return new Cursor.Find({
-        target: {type: this.target},
-        where: this.condition(input)
-      })
+    return new Cursor.Typed(this.target, input[0])
   }
 
   field(def: Field, name: string) {
@@ -247,6 +289,12 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
       value: this,
       enumerable: false
     })
+    defineProperty(instance, toSelection, {
+      value: () => {
+        return Selection.Row({type: Type.target(this.target)})
+      },
+      enumerable: false
+    })
   }
 }
 
@@ -255,24 +303,50 @@ export interface TypeDefinition {
   readonly [Meta]?: TypeMeta
 }
 
+export interface TypeFields {
+  [key: string]: Field<any, any> | Section
+}
+
+export interface TypeOptions<Definition> extends TypeMeta {
+  fields: Definition
+}
+
+export function parseTypeParams<Definition>(
+  definition: TypeOptions<Definition> | Definition
+) {
+  const def: any = definition
+  const isOptions = 'fields' in def && !Field.isField(def.fields)
+  const options: TypeMeta = (isOptions ? def : def[Meta]) ?? {}
+  const d = isOptions ? def.fields : def
+  return {definition: d as Definition, options}
+}
+
 /** Create a new type */
+export function type<Definition extends TypeFields>(
+  definition: TypeOptions<Definition>
+): Type<Definition>
+export function type<Definition extends TypeFields>(
+  label: string,
+  definition: TypeOptions<Definition>
+): Type<Definition>
+/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
 export function type<Definition extends TypeDefinition>(
   definition: Definition
 ): Type<StripMeta<Definition>>
+/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
 export function type<Definition extends TypeDefinition>(
   label: string,
   definition: Definition
 ): Type<StripMeta<Definition>>
 export function type<Definition extends TypeDefinition>(
-  label: string | Definition,
-  definition?: Definition
-): Type<StripMeta<Definition>> {
+  label: string | TypeOptions<Definition> | Definition,
+  definition?: TypeOptions<Definition> | Definition
+) {
   const title = typeof label === 'string' ? label : 'Anonymous'
-  const def = typeof label === 'string' ? definition : label
-  const instance = new TypeInstance<StripMeta<Definition>>(
-    title,
-    def as Definition
-  )
+  const def: any = typeof label === 'string' ? definition : label
+  const {definition: d, options} = parseTypeParams(def)
+  const instance = new TypeInstance<StripMeta<Definition>>(title, d, options)
+  Type.validate(instance.target)
   return instance.target
 }
 

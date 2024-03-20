@@ -1,5 +1,227 @@
 # Changelog
 
+## [0.9.4]
+
+- Remove 'use server' directive from the Next.js driver because it does not
+  contain server actions at all and newer Next.js version will throw an error
+  when it is included.
+
+## [0.9.3]
+
+- Fix empty path names resulting in an extra slash at the end of entry urls
+  after publish
+
+## [0.9.2]
+
+- Fix inserting blocks in rich text fields causing issues after trying to
+  publish
+
+## [0.9.1]
+
+- Fix whereId on Cursor typed as returning a single result but actually
+  returning multiple
+- Fix inserting blocks in rich text fields
+
+## [0.9.0]
+
+- Reserve Alinea generated properties (#378)
+
+  Until now Alinea generated properties that define the content structure as
+  normal identifiers. This means that in a list a row would contain a "type",
+  "id" and "index" property while also containing user defined fields. This
+  had a lot of potential for name clashes: you could choose to name a field
+  "type" for example. It is also not future-proof as Alinea might want to add
+  more properties later on. To solve this issue Alinea now reserves all
+  properties starting with an underscore as internal. It's not needed to
+  upgrade content files manually. The old format will automatically be picked up
+  for some time. It's possible to upgrade all files in one go by running the
+  following, which will write any changes in content back to disk.
+
+  ```sh
+  npx alinea build --fix
+  ```
+
+  When querying content please pay mind that those internal properties are now
+  accessed by the underscored property and will need to be updated.
+  This becomes most apparent in getting results out of the Link field.
+
+  ```tsx
+  const MyType = Config.type('MyType', {
+    link: Field.link('Link', {
+      fields: {
+        label: Field.text('Label')
+      }
+    })
+  })
+  const result = await cms.get(Query(MyType).select(MyType.link))
+  // before:
+  //   EntryReference & {label: string}
+  //   ^? {id: string, type: string, ..., url: string, label: string}
+  // after:
+  //   EntryLink<{label: string}>
+  //   ^? {_id: string, _type: string, ..., url: string, fields: {label: string}}
+  ```
+
+- Use of Type.isContainer is now deprecated, use a list of types in contains
+  instead.
+- Use of Type.isHidden is now deprecated, use `hidden` instead.
+
+## [0.8.4]
+
+- Fix select field not using field options such as width or required.
+
+## [0.8.3]
+
+- Fix publishing shared fields when the parent paths are not the same.
+
+## [0.8.2]
+
+- Fix entries showing up under the wrong parent if they had a parent with the
+  same path name in another root.
+- Add the option to remove media folders.
+
+## [0.8.1]
+
+- Export `Entry` from `alinea/core` which was missing in the previous release.
+- Fix the `includeSelf` option when querying translations.
+
+## [0.8.0]
+
+- Two changes that impact how to write config files:
+
+  - Bundle configuration function in `Config`, and fields in a `Field` namespace
+    which is exported from the `alinea` package (this is optional).
+  - Deprecate `alinea.meta` style configuration.
+    This change is applied to `Schema` (`types`), `Workspace` (`roots`),
+    `Root` (`entries`), `Type` (`fields`), `Document` (`fields`), `Select`
+    fields (`options`), `Tab` fields (`fields`).
+
+    To upgrade your config files:
+
+    ```tsx
+    // Before
+    import alinea from 'alinea'
+    const Type = alinea.type('Name', {
+      field: alinea.text('Field'),
+      [alinea.meta]: {
+        contains: ['Page']
+      }
+    })
+    // After
+    import {Config, Field} from 'alinea'
+    const Type = Config.type('Name', {
+      contains: ['Page'],
+      fields: {
+        field: Field.text('Field')
+      }
+    })
+    ```
+
+- Add the [mutation API](https://alinea.sh/docs/content/editing-content) (#374)
+
+  This introduces a commit method on CMS instances that can be used to mutate
+  cms content. It can be used to create, update and delete Entries.
+
+- Add the [Query namespace](https://alinea.sh/docs/content/query)
+
+## [0.7.1]
+
+- Support entries that were seeded in versions prior to 0.6.4 for backward
+  compatibility.
+
+## [0.7.0]
+
+- File and image titles can be edited. A focus point can be chosen for images.
+- The exports of the alinea package are restructured. Unless you were using the
+  now removed named `alinea` exports this should not be a breaking change.
+- The `createNextCMS` function is now deprecated and it is recommended to
+  import it as `{createCMS} from 'alinea/next'` instead.
+- The local database which stores content for editors is now rebuilt on `alinea`
+  version changes. This means breaking changes to the schema will not cause
+  errors in the browser.
+- Upload file names and paths are now slugified correctly.
+
+## [0.6.4]
+
+- Improve page seeding in roots with multiple languages. Seeding content is
+  currently undocumented until it reaches a stable interface.
+
+## [0.6.3]
+
+- Add a preview widget which enables editors to easily switch from previewing
+  to editing. Enable by setting widget to true:
+
+  ```tsx
+  <cms.previews widget />
+  ```
+
+- Add a function to retrieve the current logged in user:
+
+  ```tsx
+  console.log(await cms.user())
+  ```
+
+## [0.6.2]
+
+- Live-reload changes to `.css` files used for custom fields and views.
+
+## [0.6.1]
+
+- Allow importing `.css` and `.module.css` in custom fields and views.
+- Make `isContainer` optional if `contains` is used on Types.
+- Add i18nId to retrieved entry Link fields when queried.
+
+## [0.6.0]
+
+- Field validation (#369)
+
+  Introduces two new Field options available for every Field: `required` and
+  `validate`. The `required` option will make sure the field value is not empty
+  when saving. The `validate` option can be used to validate the field value
+  using a custom function. The function should return `true` if the value is
+  valid, `false` if it is not valid and a string if it is not valid and a
+  message should be shown to the user.
+
+  This is a breaking change, removing the `optional` property from Fields.
+  It was never functional.
+
+  ```tsx
+  alinea.text('Hello field', {
+    help: 'This field only accepts "hello" as a value',
+    validate(value) {
+      if (value !== 'hello') return 'Only "hello" is allowed!'
+    }
+  })
+  ```
+
+## [0.5.12]
+
+- Link fields using the `condition` option are now constrained with their locale
+- Upgrade the tiptap editor and fix a few stability issues with the editor
+
+## [0.5.11]
+
+- Fix storing extra `fields` on the Link field correctly for multiple links.
+- In conditional configuration functions it's now possible to access fields from
+  parent contexts. For example field options of a nested field inside a `List`
+  field can depend on the value of a field in the entry root.
+
+  ```tsx
+  const innerField = alinea.text('Read-only if status is published')
+  const Type = alinea.type('Conditional example', {
+    status: alinea.select('Status', {
+      draft: 'Draft',
+      published: 'Published'
+    }),
+    list: alinea.list('List', {
+      schema: {ListRow: alinea.type({innerField})}
+    })
+  })
+  alinea.track.options(innerField, get => {
+    return {readOnly: get(Type.status) === 'published'}
+  })
+  ```
+
 ## [0.5.10]
 
 - Fix `Entry` fields showing up as type `unkown` in TypeScript.

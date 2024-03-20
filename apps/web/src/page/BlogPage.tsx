@@ -4,8 +4,9 @@ import {WebTypo} from '@/layout/WebTypo'
 import {Link} from '@/layout/nav/Link'
 import {BlogOverview} from '@/schema/BlogOverview'
 import {BlogPost} from '@/schema/BlogPost'
-import {Entry} from 'alinea/core'
+import {Query} from 'alinea'
 import {VStack, fromModule} from 'alinea/ui'
+import {MetadataRoute} from 'next'
 import css from './BlogPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
 
@@ -13,18 +14,14 @@ const styles = fromModule(css)
 
 export default async function BlogPage() {
   const overview = await cms.get(
-    BlogOverview().select({
-      title: BlogOverview.title,
-      posts({children}) {
-        return children().select({
-          id: Entry.entryId,
-          url: Entry.url,
-          title: BlogPost.title,
-          introduction: BlogPost.introduction,
-          author: BlogPost.author,
-          publishDate: BlogPost.publishDate
-        })
-      }
+    Query(BlogOverview).select({
+      title: Query.title,
+      posts: Query.children(BlogPost).select({
+        ...Query.entry,
+        introduction: BlogPost.introduction,
+        author: BlogPost.author,
+        publishDate: BlogPost.publishDate
+      })
     })
   )
   return (
@@ -57,4 +54,8 @@ export default async function BlogPage() {
       </PageContent>
     </PageContainer>
   )
+}
+
+BlogPage.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/blog', priority: 0.5}]
 }

@@ -1,6 +1,7 @@
 import {HStack, Icon, Loader, fromModule} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
+import {useConfig} from '../hook/UseConfig.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
@@ -28,6 +29,8 @@ export function ContentView({editor}: ContentViewProps) {
   const RootView = root?.view ?? RootOverview
   const nav = useNav()
   const navigate = useNavigate()
+  const {schema} = useConfig()
+  const type = editor && schema[editor.activeVersion.type]
   return (
     <>
       <Sidebar.Tree>
@@ -60,7 +63,11 @@ export function ContentView({editor}: ContentViewProps) {
       </Sidebar.Tree>
       {search === '?new' && <NewEntry parentId={editor?.entryId} />}
       <SuspenseBoundary name="content view" fallback={<Loader absolute />}>
-        {editor ? <EntryView editor={editor} /> : <RootView root={root} />}
+        {type && editor ? (
+          <EntryView type={type} editor={editor} />
+        ) : (
+          <RootView root={root} />
+        )}
       </SuspenseBoundary>
     </>
   )

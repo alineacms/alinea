@@ -1,28 +1,34 @@
 {
+  "_id": "BUQj_NQqEq7YYO1nevx1o",
+  "_type": "Doc",
+  "_index": "a2C",
+  "_i18nId": "BUQj_NQqEq7YYO1nevx1o",
+  "_root": "pages",
   "title": "Code",
+  "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A code field is used to input code."
         }
       ]
     },
     {
-      "id": "itHNQSxP3U_KYZ77Q3vIC",
-      "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.code('My code field', {\n  help: 'Paste your code here'\n})",
+      "_type": "CodeBlock",
+      "_id": "itHNQSxP3U_KYZ77Q3vIC",
+      "code": "import {Field} from 'alinea'\n\nalinea.code('My code field', {\n  help: 'Paste your code here'\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "qsJHS5HxiYf1Hs8eUOG6M",
-      "type": "ExampleBlock",
-      "code": "export default alinea.type('Code field', {\n  code: alinea.code('My code field', {\n    help: 'Paste your code here'\n  })\n})"
+      "_type": "ExampleBlock",
+      "_id": "qsJHS5HxiYf1Hs8eUOG6M",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Code field', {\n  fields: {\n    code: alinea.code('My code field', {\n      help: 'Paste your code here'\n    })\n  }\n})"
     }
   ],
   "metadata": {
@@ -33,10 +39,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "BUQj_NQqEq7YYO1nevx1o",
-    "type": "Doc",
-    "index": "a2C"
   }
 }

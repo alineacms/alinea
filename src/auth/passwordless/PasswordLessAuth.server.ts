@@ -1,5 +1,10 @@
 import {Route, router} from 'alinea/backend/router/Router'
-import {Auth, Connection, HttpError, Outcome, User} from 'alinea/core'
+import {Auth} from 'alinea/core/Auth'
+import {Connection} from 'alinea/core/Connection'
+import {HttpError} from 'alinea/core/HttpError'
+import {Outcome} from 'alinea/core/Outcome'
+import {User} from 'alinea/core/User'
+
 import {sign, verify} from 'alinea/core/util/JWT'
 import type {Transporter} from 'nodemailer'
 import {assert, object, string} from 'superstruct'

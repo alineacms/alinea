@@ -1,91 +1,85 @@
 {
+  "_id": "2U6y6iIQIuQg2D0PViWdKenqgMv",
+  "_type": "Fields",
+  "_index": "a0",
+  "_i18nId": "2U6y6iIQIuQg2D0PViWdKenqgMv",
+  "_root": "fields",
   "title": "Fields",
   "text": "Text value",
+  "hello": "hello",
   "richText": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Rich text value"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "We can link to "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "internal pages",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2WyS6kjRXyd0vLoZP0p129IPnAA",
-                "data-entry": "2Ublmf4UWT5rHeIUSaJmqJYN0L9",
-                "data-type": null,
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2WyS6kjRXyd0vLoZP0p129IPnAA",
+              "_entry": "2Ublmf4UWT5rHeIUSaJmqJYN0L9",
+              "title": ""
             }
           ]
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Or to "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "external pages",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2WyS9ETlIHWPmt0A2pqYjQrgRVR",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://example.com",
-                "target": "_blank",
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2WyS9ETlIHWPmt0A2pqYjQrgRVR",
+              "href": "https://example.com",
+              "target": "_blank",
+              "title": ""
             }
           ]
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "And to "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "files",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2WyT7CRrYKKC4FlUOwvSVt7xCaV",
-                "data-entry": "2V4cZQX2vXGoBOko2s3apBX6oWG",
-                "data-type": null,
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2WyT7CRrYKKC4FlUOwvSVt7xCaV",
+              "_entry": "2V4cZQX2vXGoBOko2s3apBX6oWG",
+              "title": ""
             }
           ]
         }
@@ -99,60 +93,70 @@
   "code": "<plaintext>",
   "externalLink": {},
   "entry": {
-    "id": "2VQc8XoYv5ZftGAUUmxk1Zc40Id",
-    "type": "entry",
-    "entry": "2U6iXfImlfChadgIccgNa9P4nd0"
+    "_type": "entry",
+    "_id": "2VQc8XoYv5ZftGAUUmxk1Zc40Id",
+    "_entry": "2U6iXfImlfChadgIccgNa9P4nd0"
   },
   "entryWithCondition": {},
   "linkMultiple": [],
   "image": {
-    "id": "2VQc6vHQFNmSAklVCvOuSE8aBBA",
-    "type": "image",
-    "entry": "2V4cZT6gxL9DI5U4D7jkonlpr5A"
+    "_type": "image",
+    "_id": "2VQc6vHQFNmSAklVCvOuSE8aBBA",
+    "_entry": "2V4cZT6gxL9DI5U4D7jkonlpr5A"
   },
   "images": [
     {
-      "id": "2VQc7LMRLAIFX6fPg2G7nymdHNw",
-      "index": "a0",
-      "type": "image",
-      "entry": "2V4cZUBByx9N29qv1YybylOCQqI"
+      "_type": "image",
+      "_id": "2VQc7LMRLAIFX6fPg2G7nymdHNw",
+      "_index": "a0",
+      "_entry": "2V4cZUBByx9N29qv1YybylOCQqI"
     },
     {
-      "id": "2VQc7MQNE8YF0EHEiQd7pygm5lB",
-      "index": "a1",
-      "type": "image",
-      "entry": "2VIQEijQeV2wB47xuXdxDnPnJz2"
+      "_type": "image",
+      "_id": "2VQc7MQNE8YF0EHEiQd7pygm5lB",
+      "_index": "a1",
+      "_entry": "2VIQEijQeV2wB47xuXdxDnPnJz2"
     },
     {
-      "id": "2VQc7MSSnHyq6EDwhyrpA4SjzpJ",
-      "index": "a2",
-      "type": "image",
-      "entry": "2V4cZVEDtL1vrIdrk3gqsR3Jc5t"
+      "_type": "image",
+      "_id": "2VQc7MSSnHyq6EDwhyrpA4SjzpJ",
+      "_index": "a2",
+      "_entry": "2V4cZVEDtL1vrIdrk3gqsR3Jc5t"
     }
   ],
   "file": {},
-  "withFields": {
-    "id": "2aoSxnfF8xgFgJs9cg42NC6nJ3N",
-    "type": "url",
-    "url": "qsdf",
-    "title": "",
-    "target": "_self",
-    "fieldA": "A",
-    "fieldB": "B"
-  },
+  "withFields": {},
+  "multipleWithFields": [
+    {
+      "_type": "entry",
+      "_id": "2bLjJYt4wIGaQxS7YQmxtbIDQYQ",
+      "_index": "a0",
+      "_entry": "2aqpV5SN9JrZGSRkS3am07zPSmU",
+      "fieldA": "Field A",
+      "fieldB": ""
+    },
+    {
+      "_type": "entry",
+      "_id": "2bLjJaegIJZyUyQepwi76Om0hee",
+      "_index": "a1",
+      "_entry": "2U6y6iIQIuQg2D0PViWdKenqgMv",
+      "fieldA": "",
+      "fieldB": "Field B"
+    }
+  ],
   "list": [
     {
-      "id": "2U6zmJT84rFV9R1kGBKi6nENtTN",
-      "index": "a0",
-      "type": "Text",
+      "_type": "Text",
+      "_id": "2U6zmJT84rFV9R1kGBKi6nENtTN",
+      "_index": "a0",
       "title": "A text item",
       "text": [
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Some body text"
             }
           ]
@@ -160,40 +164,52 @@
       ]
     },
     {
-      "id": "2U9P9OJRv4bMWkjGXY413fmQxmQ",
-      "index": "a1",
-      "type": "Image",
+      "_type": "Image",
+      "_id": "2U9P9OJRv4bMWkjGXY413fmQxmQ",
+      "_index": "a1",
       "image": {
-        "id": "2VQcAoAJV5qkzZF5hmLwWiS3g0h",
-        "type": "image",
-        "entry": "2VIQEijQeV2wB47xuXdxDnPnJz2"
+        "_type": "image",
+        "_id": "2VQcAoAJV5qkzZF5hmLwWiS3g0h",
+        "_entry": "2VIQEijQeV2wB47xuXdxDnPnJz2"
       }
+    }
+  ],
+  "withInitial": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This is a paragraph with initial value"
+        }
+      ]
     }
   ],
   "nested": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Blocks can be created within rich text fields. This is a block:"
         }
       ]
     },
     {
-      "id": "2U70XiwtuZ1GwGK5XJWauz5Da1m",
-      "type": "Inner",
+      "_type": "Inner",
+      "_id": "2U70XiwtuZ1GwGK5XJWauz5Da1m",
       "checkbox1": false,
       "checkbox2": false,
       "title": "Some title",
       "content": [
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "ABCD"
             }
           ]
@@ -201,18 +217,18 @@
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Text continues alongside blocks."
         }
       ]
     },
     {
-      "id": "2W4VteHQ6frnKscoaa7KFHJ8BCk",
-      "type": "NestLayout",
+      "_type": "NestLayout",
+      "_id": "2W4VteHQ6frnKscoaa7KFHJ8BCk",
       "object": {
         "fieldA": "Field A",
         "fieldB": "Field B"
@@ -238,6 +254,7 @@
     "y": 0.2579999796549479
   },
   "shared": "Shared value",
+  "nestedList": [],
   "metadata": {
     "title": "",
     "description": "",
@@ -246,11 +263,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2U6y6iIQIuQg2D0PViWdKenqgMv",
-    "type": "Fields",
-    "index": "a0",
-    "root": "fields"
   }
 }

@@ -1,8 +1,7 @@
-import {EntryPhase, Section, Type} from 'alinea/core'
-import {FormProvider} from 'alinea/dashboard'
-import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {Modal} from 'alinea/dashboard/view/Modal'
-import {TabsHeader, TabsSection} from 'alinea/input/tabs/Tabs.browser'
+import {EntryPhase} from 'alinea/core/EntryRow'
+import {Section} from 'alinea/core/Section'
+import {Type} from 'alinea/core/Type'
+import {TabsHeader, TabsSection} from 'alinea/field/tabs/Tabs.browser'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Statusbar} from 'alinea/ui/Statusbar'
@@ -11,16 +10,20 @@ import {IcOutlineTableRows} from 'alinea/ui/icons/IcOutlineTableRows'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useRef} from 'react'
+import {Suspense, useEffect, useRef} from 'react'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
+import {FormProvider} from '../atoms/FormAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
+import {InputForm} from '../editor/InputForm.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {EntryEditorProvider} from '../hook/UseEntryEditor.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
+import {Modal} from '../view/Modal.js'
 import css from './EntryEdit.module.scss'
+import {Preview} from './Preview.browser.js'
 import {useSidebar} from './Sidebar.js'
 import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditModeToggle.js'
@@ -51,7 +54,7 @@ export interface EntryEditProps {
 export function EntryEdit({editor}: EntryEditProps) {
   const {alineaDev} = useDashboard()
   const locale = useLocale()
-  const {preview, enableDrafts} = useConfig()
+  const config = useConfig()
   const {isPreviewOpen} = useSidebar()
   const nav = useNav()
   const mode = useAtomValue(editor.editMode)
@@ -76,6 +79,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   const showHistory = useAtomValue(editor.showHistory)
   const saveTranslation = useSetAtom(editor.saveTranslation)
   const previewRevision = useAtomValue(editor.previewRevision)
+  const preview = editor.preview
   const translate = () => saveTranslation(locale!)
   useEffect(() => {
     function listener(e: KeyboardEvent) {
@@ -87,7 +91,7 @@ export function EntryEdit({editor}: EntryEditProps) {
         }
         if (untranslated && hasChanges) {
           translate()
-        } else if (enableDrafts) {
+        } else if (config.enableDrafts) {
           if (hasChanges) saveDraft()
           else if (selectedPhase === EntryPhase.Draft) publishDraft()
         } else {
@@ -99,14 +103,13 @@ export function EntryEdit({editor}: EntryEditProps) {
     return () => {
       document.removeEventListener('keydown', listener)
     }
-  }, [editor, hasChanges, saveDraft, enableDrafts])
+  }, [editor, hasChanges, saveDraft, config.enableDrafts])
   const sections = Type.sections(editor.type)
   const hasRootTabs =
     sections.length === 1 && sections[0][Section.Data] instanceof TabsSection
   const tabs: TabsSection | false =
     hasRootTabs && (sections[0][Section.Data] as TabsSection)
-  const visibleTypes =
-    tabs && tabs.types.filter(type => !Type.meta(type).isHidden)
+  const visibleTypes = tabs && tabs.types.filter(type => !Type.isHidden(type))
   useEffect(() => {
     if (isBlocking && !isNavigationChange) confirm?.()
   }, [isBlocking, isNavigationChange, confirm])
@@ -164,7 +167,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                   >
                     Discard my changes
                   </Button>
-                  {enableDrafts ? (
+                  {config.enableDrafts ? (
                     <Button
                       onClick={() => {
                         saveDraft()
@@ -236,7 +239,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                       {visibleTypes.map((type, i) => {
                         return (
                           <FormProvider form={form} key={i}>
-                            <Tabs.Panel tabIndex={i}>
+                            <Tabs.Panel unmount={false} tabIndex={i}>
                               <InputForm type={type} />
                             </Tabs.Panel>
                           </FormProvider>
@@ -255,8 +258,12 @@ export function EntryEdit({editor}: EntryEditProps) {
           <FieldToolbar.Root />
         </FieldToolbar.Provider>
       </Main>
-      {preview && isPreviewOpen && !untranslated && (
-        <EntryPreview preview={preview} editor={editor} />
+      {preview && (
+        <Preview>
+          <Suspense>
+            <EntryPreview preview={preview} editor={editor} />
+          </Suspense>
+        </Preview>
       )}
     </>
   )

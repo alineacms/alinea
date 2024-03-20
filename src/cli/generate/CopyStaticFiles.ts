@@ -17,6 +17,7 @@ export async function copyStaticFiles({outDir}: GenerateContext) {
     path.join(outDir, 'package.json'),
     JSON.stringify(packageJson, null, 2)
   )
+  await writeFileIfContentsDiffer(path.join(outDir, 'config.css'), ``)
   // await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)*/
   await writeFileIfContentsDiffer(
     path.join(outDir, '.keep'),

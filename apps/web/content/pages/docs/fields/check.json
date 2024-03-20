@@ -1,29 +1,34 @@
 {
+  "_id": "28htwzY7qMeaV15j276Myvpek8y",
+  "_type": "Doc",
+  "_index": "a29",
+  "_i18nId": "28htwzY7qMeaV15j276Myvpek8y",
+  "_root": "pages",
   "title": "Check",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A check field is used to input boolean data."
         }
       ]
     },
     {
-      "id": "28hu0MbpUcAOhWTWi954kRRNHcM",
-      "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.check('Subscribe to the newsletter')",
+      "_type": "CodeBlock",
+      "_id": "28hu0MbpUcAOhWTWi954kRRNHcM",
+      "code": "import {Field} from 'alinea'\n\nField.check('Subscribe to the newsletter')",
       "fileName": "",
       "language": "",
       "compact": true
     },
     {
-      "id": "2LfI_a2TA_L7QW2kK-nDa",
-      "type": "ExampleBlock",
-      "code": "export default alinea.type('Check field', {\n  check: alinea.check('Subscribe to the newsletter')\n})"
+      "_type": "ExampleBlock",
+      "_id": "2LfI_a2TA_L7QW2kK-nDa",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Check field', {\n  fields: {\n    check: Field.check('Subscribe to the newsletter')\n  }\n})"
     }
   ],
   "metadata": {
@@ -34,10 +39,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "28htwzY7qMeaV15j276Myvpek8y",
-    "type": "Doc",
-    "index": "a29"
   }
 }

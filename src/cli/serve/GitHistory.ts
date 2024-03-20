@@ -1,18 +1,18 @@
 import {JsonLoader} from 'alinea/backend'
 import {History, Revision} from 'alinea/backend/History'
-import {Config} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {join} from 'alinea/core/util/Paths'
-import simpleGit, {SimpleGit} from 'simple-git'
+import {SimpleGit} from 'simple-git'
 
 const encoder = new TextEncoder()
 
 export class GitHistory implements History {
-  git: SimpleGit
-
-  constructor(public config: Config, public rootDir: string) {
-    this.git = simpleGit(rootDir)
-  }
+  constructor(
+    public git: SimpleGit,
+    public config: Config,
+    public rootDir: string
+  ) {}
 
   async revisions(file: string): Promise<Array<Revision>> {
     const list = await this.git.log([

@@ -23,7 +23,10 @@ export interface PickerRow {
   target?: string
 }
 
-export interface Picker<Row extends Reference, Options extends {} = {}> {
+export interface Picker<
+  StoredValue extends Reference,
+  Options extends {} = {}
+> {
   shape: RecordShape
   fields: Type<any> | undefined
   hint: Hint
@@ -31,26 +34,24 @@ export interface Picker<Row extends Reference, Options extends {} = {}> {
   handlesMultiple: boolean
   options: Options
   view?: ComponentType<PickerProps<Options>>
-  viewRow?: ComponentType<{reference: Row}>
-  postProcess?: PostProcess<Row>
+  viewRow?: ComponentType<{reference: StoredValue}>
+  postProcess?: PostProcess<StoredValue>
 }
 
-export namespace Picker {
-  export function withView<
-    R extends Reference,
-    T extends {},
-    C extends (...args: Array<any>) => Picker<R, T>
-  >(
-    create: C,
-    views: {
-      view: ComponentType<PickerProps<T>>
-      viewRow: ComponentType<{reference: R}>
-    }
-  ): C {
-    const factory = (...args: Array<any>) => {
-      const field: any = create(...args)
-      return {...field, ...views}
-    }
-    return factory as any
+export function pickerWithView<
+  R extends Reference,
+  T extends {},
+  C extends (...args: Array<any>) => Picker<R, T>
+>(
+  create: C,
+  views: {
+    view: ComponentType<PickerProps<T>>
+    viewRow: ComponentType<{reference: R}>
   }
+): C {
+  const factory = (...args: Array<any>) => {
+    const field: any = create(...args)
+    return {...field, ...views}
+  }
+  return factory as any
 }

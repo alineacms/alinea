@@ -1,52 +1,55 @@
 {
+  "_id": "2aAyRD3ixey0IqznGhiPUjTd5Vp",
+  "_type": "Doc",
+  "_index": "Zy",
+  "_i18nId": "2aAyRD3ixey0IqznGhiPUjTd5Vp",
+  "_root": "pages",
   "title": "Document",
+  "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Use the `document` utility function to create a "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Type",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2aB4jp089wI4K3VnNePMDLM7kvo",
-                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2aB4jp089wI4K3VnNePMDLM7kvo",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " with the following preconfigured fields:"
         }
       ]
     },
     {
-      "type": "bulletList",
+      "_type": "bulletList",
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "`title`",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 }
@@ -55,18 +58,18 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "`path`",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 }
@@ -75,18 +78,18 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "`metadata`",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 }
@@ -97,50 +100,46 @@
       ]
     },
     {
-      "id": "2aB4qCnskaV2qenr0eibzXhpjU4",
-      "type": "CodeBlock",
-      "code": "alinea.document('Web page', {\n  // Extra fields\n  [alinea.meta]: {\n    // Configuration\n  }\n})",
+      "_type": "CodeBlock",
+      "_id": "2aB4qCnskaV2qenr0eibzXhpjU4",
+      "code": "import {Config} from 'alinea'\n\nConfig.document('Web page', {\n  fields: {\n    // Extra fields\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration options are the same as for a "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Type",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2aB54j0l7HKydQyHuW0YlqGnlpZ",
-                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2aB54j0l7HKydQyHuW0YlqGnlpZ",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
@@ -154,10 +153,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2aAyRD3ixey0IqznGhiPUjTd5Vp",
-    "type": "Doc",
-    "index": "Zy"
   }
 }

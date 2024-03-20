@@ -1,198 +1,158 @@
 {
+  "_id": "268hjH2OU9fiReg61Wov1SRbPD5",
+  "_type": "Doc",
+  "_index": "a1",
+  "_i18nId": "268hjH2OU9fiReg61Wov1SRbPD5",
   "title": "Rich Text",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Rich text can contain text marks like bold, italics or underline. Content can be structured using headings. It can even contain other types as blocks that can be moved around freely."
         }
       ]
     },
     {
-      "id": "268iODr7pOAG2BeDXXfDEvDZYfr",
-      "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.richText('My rich text field', {\n  blocks: alinea.schema({\n    CodeBlock: CodeBlockSchema,\n    ImageBlock: ImageBlockSchema\n  })\n})",
+      "_type": "CodeBlock",
+      "_id": "268iODr7pOAG2BeDXXfDEvDZYfr",
+      "code": "import {Field} from 'alinea'\n\nField.richText('My rich text field', {\n  schema: {\n    CodeBlock,\n    ImageBlock\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "EuUkPtwTcHiQweiT_zZZI",
-      "type": "ExampleBlock",
-      "code": "export default alinea.type('Rich Text field', {\n  richText: alinea.richText('My rich text field', {\n    initialValue: [\n      {type: 'heading', level: 1, content: [\n        {type: 'text', text: \"Hello world\"}\n      ]},\n      {type: 'paragraph', content: [\n        {type: 'text', text: \"A paragraph follows\"}\n      ]}   \n    ]\n  })\n})\n "
+      "_type": "ExampleBlock",
+      "_id": "EuUkPtwTcHiQweiT_zZZI",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Rich Text field', {\n  richText: Field.richText('My rich text field', {\n    initialValue: [\n      {_type: 'heading', level: 1, content: [\n        {_type: 'text', text: \"Hello world\"}\n      ]},\n      {_type: 'paragraph', content: [\n        {_type: 'text', text: \"A paragraph follows\"}\n      ]}   \n    ]\n  })\n})\n "
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration"
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
-          "text": "`blocks`"
+          "_type": "text",
+          "text": "`schema`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
-          "text": "Allow "
-        },
-        {
-          "type": "text",
-          "text": "Types",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "2b02QsqOf3nDEn2QtGmHSZDzf2o",
-                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
-                "data-type": "entry",
-                "href": null,
-                "title": null
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": " of this "
-        },
-        {
-          "type": "text",
-          "text": "Schema",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "2b02MX6i2ovEMRtlkX8ntt1uR3k",
-                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
-                "data-type": "entry",
-                "href": null,
-                "title": null
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": " to be created between text fragments."
+          "_type": "text",
+          "text": "Allow Types of this Schema to be created between text fragments."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`searchable`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Index the content of this field so it can be found in a search query."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Rendering rich text"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Rich text values are encoded in an array."
         }
       ]
     },
     {
-      "id": "Lnc0CiaceUAYiYzl6sfwE",
-      "type": "CodeVariantsBlock",
+      "_type": "CodeVariantsBlock",
+      "_id": "Lnc0CiaceUAYiYzl6sfwE",
       "variants": [
         {
-          "id": "pZZfVGHe4bIZGFtii-8zR",
-          "index": "a0",
-          "type": "Variant",
+          "_id": "pZZfVGHe4bIZGFtii-8zR",
+          "_index": "a0",
+          "_type": "Variant",
           "name": "JSON",
           "language": "tsx",
-          "code": "[\n  {\n    \"type\": \"heading\",\n    \"level\": 1,\n    \"content\": [\n      {\n        \"type\": \"text\",\n        \"text\": \"Hello world\"\n      }\n    ]\n  },\n  {\n    \"type\": \"paragraph\",\n    \"content\": [\n      {\n        \"type\": \"text\",\n        \"text\": \"A paragraph follows\"\n      }\n    ]\n  }\n]"
+          "code": "[\n  {\n    \"_type\": \"heading\",\n    \"level\": 1,\n    \"content\": [\n      {\n        \"type\": \"text\",\n        \"text\": \"Hello world\"\n      }\n    ]\n  },\n  {\n    \"_type\": \"paragraph\",\n    \"content\": [\n      {\n        \"type\": \"text\",\n        \"text\": \"A paragraph follows\"\n      }\n    ]\n  }\n]"
         },
         {
-          "id": "jKrgWIwJaQMb-XL58ZPcv",
-          "index": "a1",
-          "type": "Variant",
+          "_id": "jKrgWIwJaQMb-XL58ZPcv",
+          "_index": "a1",
+          "_type": "Variant",
           "name": "Types",
           "language": "tsx",
-          "code": "type TextDoc = Array<TextNode>\n\ntype TextNode = \n  | {\n    type: 'text'\n    text?: string\n    marks?: Array<{\n      type: string\n      attrs?: Record<string, string>\n    }>\n  }\n  | {\n    type: string\n    content?: TextDoc\n    [key: string]: any\n  }"
+          "code": "type TextDoc = Array<TextNode>\n\ntype TextNode = \n  | {\n    _type: 'text'\n    text?: string\n    marks?: Array<{\n      type: string\n      attrs?: Record<string, string>\n    }>\n  }\n  | {\n    _type: string\n    content?: TextDoc\n    [key: string]: any\n  }"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea provides a React component to render this array in your app. By default it will use plain tags such as h1, h2, p, ul, li, etc. to represent the text. Any of these can be customized by either passing a React component or a vnode, of which we'll copy the type and props."
         }
       ]
     },
     {
-      "id": "hOgtsNKgH3pWurn4Mb-td",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "hOgtsNKgH3pWurn4Mb-td",
       "code": "import {RichText} from 'alinea/ui'\n\n<RichText\n  doc={richTextValue}\n\n  // Everything below is optional\n\n  // Render plain text with a custom component\n  text={TextComponent}\n\n  // Attach a custom classname to paragraphs\n  p={<p className=\"my-p\" />}\n\n  // Use a custom component for h1 headings\n  h1={MyH1Heading}\n  \n  // Use a custom component for links\n  a={LinkComponent}\n\n  // Attach classes to list items\n  ul={<ul className=\"my-list\" />}\n  ol={<ol className=\"my-ordered-list\" />}\n  li={<li className=\"my-list-item\" />}\n\n  // More options\n  // b={<b />}\n  // i={<i />}\n  // u={<u />}\n  // hr={<hr />}\n  // br={<br />}\n  // small={<small />}\n  // blockquote={<blockquote />}\n/>",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "The same principle is applied for custom blocks."
         }
       ]
     },
     {
-      "id": "aQam3FUTLfN1uYyFFSiZk",
-      "type": "CodeBlock",
-      "code": "import {RichText} from 'alinea/ui'\nimport {MyBlock} from './MyBlock'\nimport {MyBlockSchema} from './MyBlock.schema'\n\nconst MyBlockSchema = alinea.type('Custom block', {\n  property: alinea.text('Property')\n})\n\nfunction MyBlock({property}) {\n  return <span>{property}</span>\n}\n\n// Add to config\nalinea.richText('My rich text field', {\n  blocks: alinea.schema({\n    MyBlock: MyBlockSchema\n  })\n})\n\n// Render in page views\n<RichText\n  doc={richTextValue}\n\n  // Render instances of my custom block with the MyBlock view\n  MyBlock={MyBlock}\n/>",
+      "_type": "CodeBlock",
+      "_id": "aQam3FUTLfN1uYyFFSiZk",
+      "code": "import {RichText} from 'alinea/ui'\nimport {MyBlock} from './MyBlock'\nimport {MyBlockSchema} from './MyBlock.schema'\n\nconst MyBlockSchema = alinea.type('Custom block', {\n  property: alinea.text('Property')\n})\n\nfunction MyBlock({property}) {\n  return <span>{property}</span>\n}\n\n// Add to config\nalinea.richText('My rich text field', {\n  schema: alinea.schema({\n    MyBlock: MyBlockSchema\n  })\n})\n\n// Render in page views\n<RichText\n  doc={richTextValue}\n\n  // Render instances of my custom block with the MyBlock view\n  MyBlock={MyBlock}\n/>",
       "fileName": "",
       "language": "",
       "compact": false
@@ -206,10 +166,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "268hjH2OU9fiReg61Wov1SRbPD5",
-    "type": "Doc",
-    "index": "a1"
   }
 }

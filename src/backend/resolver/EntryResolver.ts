@@ -1,19 +1,18 @@
-import {
-  Connection,
-  Field,
-  PreviewUpdate,
-  ResolveDefaults,
-  Schema,
-  Type,
-  unreachable
-} from 'alinea/core'
 import {EntryPhase, EntryRow, EntryTable} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
+import {Field} from 'alinea/core/Field'
+import {
+  PreviewUpdate,
+  ResolveDefaults,
+  ResolveRequest
+} from 'alinea/core/Resolver'
+import {Schema} from 'alinea/core/Schema'
+import {Type} from 'alinea/core/Type'
 import type * as pages from 'alinea/core/pages'
-import {SourceType} from 'alinea/core/pages/Cursor'
-import {BinaryOp, UnaryOp} from 'alinea/core/pages/ExprData'
 import {Realm} from 'alinea/core/pages/Realm'
+import {BinaryOp, SourceType, UnaryOp} from 'alinea/core/pages/ResolveData'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
+import {unreachable} from 'alinea/core/util/Types'
 import {
   BinOpType,
   Expr,
@@ -313,11 +312,15 @@ export class EntryResolver {
       case SourceType.Siblings:
         return cursor
           .where(ctx.Table.parent.is(from.parent))
-          .where(ctx.Table.entryId.isNot(from.entryId))
+          .where(
+            source.includeSelf ? true : ctx.Table.entryId.isNot(from.entryId)
+          )
       case SourceType.Translations:
         return cursor
           .where(ctx.Table.i18nId.is(from.i18nId))
-          .where(ctx.Table.entryId.isNot(from.entryId))
+          .where(
+            source.includeSelf ? true : ctx.Table.entryId.isNot(from.entryId)
+          )
       case SourceType.Children:
         const Child = EntryRow().as('Child')
         const children = withRecursive(
@@ -472,7 +475,9 @@ export class EntryResolver {
       name ? ctx.Table.type.is(name) : Expr.value(true),
       this.conditionLocation(ctx.Table, ctx.location),
       this.conditionRealm(ctx.Table, ctx.realm),
-      this.conditionLocale(ctx.Table, ctx.locale),
+      source?.type === SourceType.Translations
+        ? Expr.value(true)
+        : this.conditionLocale(ctx.Table, ctx.locale),
       this.conditionSearch(ctx.Table, searchTerms)
     )
     if (skip) query = query.skip(skip)
@@ -624,17 +629,18 @@ export class EntryResolver {
     locale,
     realm = this.defaults?.realm ?? Realm.Published,
     preview = this.defaults?.preview
-  }: Connection.ResolveParams): Promise<T> => {
+  }: ResolveRequest): Promise<T> => {
     const ctx = new ResolveContext({realm, location, locale})
     const queryData = this.query(ctx, selection)
     const query = new Query<Interim>(queryData)
     if (preview) {
-      const updated = await this.parsePreview?.(preview)
+      const updated =
+        'entry' in preview ? preview.entry : await this.parsePreview?.(preview)
       if (updated)
         try {
           await this.db.store.transaction(async tx => {
             const current = EntryRow({
-              entryId: preview.entryId,
+              entryId: updated.entryId,
               active: true
             })
             // Temporarily add preview entry
@@ -652,9 +658,11 @@ export class EntryResolver {
           // console.warn('Could not decode preview update', err)
         }
     }
-    const result = await this.db.store(query)
-    const linkResolver = new LinkResolver(this, this.db.store, ctx.realm)
-    if (result) await this.post({linkResolver}, result, selection)
-    return result
+    return this.db.store.transaction(async tx => {
+      const result = await tx(query)
+      const linkResolver = new LinkResolver(this, tx, ctx.realm)
+      if (result) await this.post({linkResolver}, result, selection)
+      return result
+    })
   }
 }

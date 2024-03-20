@@ -42,3 +42,5 @@ export type HasType = {type: string}
 export type TypesOf<T> = T extends HasType ? T['type'] : string
 
 export type Expand<T> = {[K in keyof T]: T[K]} & {}
+
+export type UnionOfValues<T> = T[keyof T]

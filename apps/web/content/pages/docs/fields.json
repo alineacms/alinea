@@ -1,300 +1,331 @@
 {
+  "_id": "24yE2mu6Xq959jrP135Sdb4e3lG",
+  "_type": "Docs",
+  "_index": "Zn",
+  "_i18nId": "24yE2mu6Xq959jrP135Sdb4e3lG",
+  "_root": "pages",
   "title": "Fields",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Fields make data editable. Alinea ships with a lot of field types but can easily be expanded with "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "custom fields",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2YklnbZpfpvE0AR4C7PRVp22UEX",
-                "data-entry": "286iEJsjhd8R9NxN6EVg59fELyd",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2YklnbZpfpvE0AR4C7PRVp22UEX",
+              "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
-      "id": "2YklqLFpIIeyPugEBoAD6iZSvtr",
-      "type": "ExampleBlock",
-      "code": "import {Field, FieldOptions, Label, ScalarField, Hint, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Kitchen sink', {\n  ...alinea.tabs(\n    alinea.tab('Basic fields', {\n      title: alinea.text('Text field'),\n      path: alinea.path('Path field', {\n        help: 'Creates a slug of the value of another field'\n      }),\n      richText: alinea.richText('Rich text field'),\n      select: alinea.select('Select field', {\n        a: 'Option a',\n        b: 'Option b'\n      }),\n      number: alinea.number('Number field', {\n        minValue: 0,\n        maxValue: 10\n      }),\n      check: alinea.check('Check field', {label: 'Check me please'}),\n      date: alinea.date('Date field'),\n      code: alinea.code('Code field')\n    }),\n    alinea.tab('Link fields', {\n      externalLink: alinea.url('External link'),\n      entry: alinea.entry('Internal link'),\n      linkMultiple: alinea.link.multiple('Mixed links, multiple'),\n      image: alinea.entry('Image link'),\n      file: alinea.entry('File link')\n    }),\n    alinea.tab('List fields', {\n      list: alinea.list('My list field', {\n        schema: alinea.schema({\n          Text: alinea.type('Text', {\n            title: alinea.text('Item title'),\n            text: alinea.richText('Item body text')\n          }),\n          Image: alinea.type('Image', {\n            image: alinea.image('Image')\n          })\n        })\n      })  \n    }),\n    alinea.tab('Inline fields', {\n      street: alinea.text('Street', {width: 0.6, inline: true, multiline: true}),\n      streetNr: alinea.text('Number', {width: 0.2, inline: true}),\n      box: alinea.text('Box', {width: 0.2, inline: true}),\n      zip: alinea.text('Zipcode', {width: 0.2, inline: true}),\n      city: alinea.text('City', {width: 0.4, inline: true}),\n      country: alinea.text('Country', {\n        width: 0.4,\n        inline: true\n      })\n    }),\n    alinea.tab('Custom fields', {\n      range: range('Range field')  \n    })\n  )\n})\n"
+      "_type": "ExampleBlock",
+      "_id": "2YklqLFpIIeyPugEBoAD6iZSvtr",
+      "code": "import {Config, Field} from 'alinea'\nimport {FieldOptions, ScalarField, Hint, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default Config.type('Kitchen sink', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Basic fields', {\n        title: Field.text('Text field'),\n        path: Field.path('Path field', {\n          help: 'Creates a slug of the value of another field'\n        }),\n        richText: Field.richText('Rich text field'),\n        select: Field.select('Select field', {\n          a: 'Option a',\n          b: 'Option b'\n        }),\n        number: Field.number('Number field', {\n          minValue: 0,\n          maxValue: 10\n        }),\n        check: Field.check('Check field', {label: 'Check me please'}),\n        date: Field.date('Date field'),\n        code: Field.code('Code field')\n      }),\n      Field.tab('Link fields', {\n        externalLink: Field.url('External link'),\n        entry: Field.entry('Internal link'),\n        linkMultiple: Field.link.multiple('Mixed links, multiple'),\n        image: Field.entry('Image link'),\n        file: Field.entry('File link')\n      }),\n\n      Field.tab('List fields', {\n        list: Field.list('My list field', {\n          schema: {\n            Text: Config.type('Text', {\n              fields: {\n                title: Field.text('Item title'),\n                text: Field.richText('Item body text')\n              }\n            }),\n            Image: Config.type('Image', {\n              fields: {\n                image: Field.image('Image')\n              }\n            })\n          }\n        })  \n      }),\n      Field.tab('Inline fields', {\n        street: Field.text('Street', {width: 0.6, inline: true, multiline: true}),\n        streetNr: Field.text('Number', {width: 0.2, inline: true}),\n        box: Field.text('Box', {width: 0.2, inline: true}),\n        zip: Field.text('Zipcode', {width: 0.2, inline: true}),\n        city: Field.text('City', {width: 0.4, inline: true}),\n        country: Field.text('Country', {\n          width: 0.4,\n          inline: true\n        })\n      }),\n      Field.tab('Custom fields', {\n        range: range('Range field')  \n      })\n    )\n  }\n})\n"
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "While every field will have unique properties, there are a few properties that are generally available."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`initialValue`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Prefill the fields value."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`hidden`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Hide this field in the dashboard but keep its value intact."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`readOnly`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Mark field data as read-only."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`help`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Display a help text next to the fields label."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`inline`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Show a minimal version of the field. In most cases this will mean the input label will be hidden, and the label will show up as a placeholder instead."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`width`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Setting a width value will scale the fields width down, use a number between 0 and 1. This allows you to compose the dashboard UI better based on the content of the fields."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`shared`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Fields can be persisted over all languages if your content is "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "localised",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2arLk4c7vuXfH8Dc7SCITAOiy3R",
-                "data-entry": "2YcyNztG4JXc8TLpT4l1l7njGtn",
-                "data-type": "entry",
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "2arLk4c7vuXfH8Dc7SCITAOiy3R",
+              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn",
+              "_link": "entry"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " by setting the `shared` option to `true`. When the entry is published the field data is copied to other locales. This is currently only supported on the root level, not on nested fields."
         }
       ]
     },
     {
-      "id": "2arMRXdHMiPwRAv9LYGf8LF4HQW",
-      "type": "CodeBlock",
-      "code": "const Type = alinea.type('Persist', {\n // Persist field data over all locales\n sharedField: alinea.text('Shared text', {shared: true})\n})",
+      "_type": "CodeBlock",
+      "_id": "2arMRXdHMiPwRAv9LYGf8LF4HQW",
+      "code": "import {Config, Field} from 'alinea'\n\nconst Type = Config.type('Persist', {\n  fields: {\n    // Persist field data over all locales\n    sharedField: Field.text('Shared text', {shared: true})\n  }\n})",
       "fileName": "",
       "language": ""
     },
     {
-      "type": "heading",
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`required`"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
       "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `required` option will make sure the field value is not empty when saving when set to `true`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`validate`"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `validate` option can be used to validate the field value using a custom function. The function should return `true` if the value is valid, `false` if it is not valid and a string if it is not valid and a message should be shown to the user."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2bOzOm5x9az8v36Esr3rHzjSmKT",
+      "code": "import {Config, Field} from 'alinea'\n\nField.text('Hello field', {\n  help: 'This field only accepts \"hello\" as a value',\n  validate(value) {\n    if (value !== 'hello') return 'Only \"hello\" is allowed!'\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Conditional configuration"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "All field configuration can be adjusted based on the value of other fields. After defining fields in a "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Type",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2afa4s8NMzAW23BBRN7R7TZzpE2",
-                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
-                "data-type": "entry",
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "2afa4s8NMzAW23BBRN7R7TZzpE2",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla",
+              "_link": "entry"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " a tracker function can be set up. The tracker function takes a reference to a field and a subscription function. In the subscription function field values can be retrieved and new options returned. "
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Example"
         }
       ]
     },
     {
-      "id": "2afaVBuZZzzvIuZ6Zk5btTJfhTq",
-      "type": "CodeBlock",
-      "code": "const Example = alinea.type('Conditional example', {\n  textField: alinea.text('Text field'),\n  readOnly: alinea.check('Make read-only'),\n  hidden: alinea.check('Hide field')\n})\n\nalinea.track.options(Example.textField, get => {\n  const textField = get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})",
+      "_type": "CodeBlock",
+      "_id": "2afaVBuZZzzvIuZ6Zk5btTJfhTq",
+      "code": "import {Config, Field} from 'alinea'\n\nconst Example = Config.type('Conditional example', {\n  fields: {\n    textField: Field.text('Text field'),\n    readOnly: Field.check('Make read-only'),\n    hidden: Field.check('Hide field')\n  }\n})\n\nConfig.track.options(Example.textField, get => {\n  const textField = get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})",
       "fileName": "",
       "language": ""
     },
     {
-      "id": "2afb22WA7fkOOxeH0rRyxzaee9S",
-      "type": "ExampleBlock",
-      "code": "const Example = alinea.type('Conditional example', {\n  textField: alinea.text('Text field'),\n  readOnly: alinea.check('Make read-only'),\n  hidden: alinea.check('Hide field')\n})\n\nalinea.track.options(Example.textField, get => {\n  const textField = get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})\n\nexport default Example"
+      "_type": "ExampleBlock",
+      "_id": "2afb22WA7fkOOxeH0rRyxzaee9S",
+      "code": "import {Config, Field} from 'alinea'\n\nconst Example = Config.type('Conditional example', {\n  fields: {\n    textField: Field.text('Text field'),\n    readOnly: Field.check('Make read-only'),\n    hidden: Field.check('Hide field')\n  }\n})\n\nConfig.track.options(Example.textField, get => {\n  const textField = get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})\n\nexport default Example"
     }
   ],
   "metadata": {
@@ -305,10 +336,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "24yE2mu6Xq959jrP135Sdb4e3lG",
-    "type": "Docs",
-    "index": "Zn"
   }
 }

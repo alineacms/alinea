@@ -1,5 +1,5 @@
-import {View} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
+import {View} from 'alinea/core/View'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import DataLoader from 'dataloader'
 import {atom} from 'jotai'

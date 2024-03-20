@@ -1,4 +1,5 @@
-import {EntryRow, Type} from 'alinea/core'
+import {EntryRow} from 'alinea/core/EntryRow'
+import {Type} from 'alinea/core/Type'
 import {Chip, TextLabel, fromModule} from 'alinea/ui'
 import {useConfig} from '../../hook/UseConfig.js'
 import {diffRecord} from './DiffUtils.js'

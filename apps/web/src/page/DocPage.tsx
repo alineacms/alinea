@@ -6,12 +6,11 @@ import {supportedFrameworks} from '@/layout/nav/Frameworks'
 import {Link} from '@/layout/nav/Link'
 import {NavTree} from '@/layout/nav/NavTree'
 import {NavItem, nestNav} from '@/layout/nav/NestNav'
-import {BodyView} from '@/page/blocks/BodyFieldView'
+import {BodyFieldView} from '@/page/blocks/BodyFieldView'
 import {Doc} from '@/schema/Doc'
-import {Entry} from 'alinea/core'
+import {Query} from 'alinea'
 import {HStack, VStack, fromModule} from 'alinea/ui'
-import {Metadata} from 'next'
-import {notFound} from 'next/navigation'
+import {Metadata, MetadataRoute} from 'next'
 import {WebTypo} from '../layout/WebTypo'
 import css from './DocPage.module.scss'
 
@@ -27,9 +26,9 @@ interface DocPageProps {
 }
 
 const summary = {
-  id: Entry.entryId,
-  title: Entry.title,
-  url: Entry.url
+  id: Query.id,
+  title: Query.title,
+  url: Query.url
 }
 
 async function getPage(params: DocPageParams) {
@@ -43,17 +42,13 @@ async function getPage(params: DocPageParams) {
   const url = pathname ? `/docs/${pathname}` : '/docs'
   return {
     framework,
-    doc: await cms.maybeGet(
-      Entry()
-        .where(Entry.url.is(url))
-        .select({
-          ...Doc,
-          id: Entry.entryId,
-          level: Entry.level,
-          parents({parents}) {
-            return parents().select(summary)
-          }
-        })
+    doc: await cms.get(
+      Query.whereUrl(url).select({
+        ...Doc,
+        id: Query.id,
+        level: Query.level,
+        parents: Query.parents().select(summary)
+      })
     )
   }
 }
@@ -62,45 +57,52 @@ export const dynamicParams = false
 export async function generateStaticParams() {
   const urls = await cms
     .in(cms.workspaces.main.pages.docs)
-    .find(Entry().select(Entry.url))
-  return urls.flatMap(url => {
-    return supportedFrameworks
-      .map(framework => {
+    .find(Query.select(Query.url))
+  return urls
+    .flatMap(url => {
+      return supportedFrameworks
+        .map(framework => {
+          return {
+            framework: framework.name,
+            slug: url.split('/').slice(2)
+          }
+        })
+        .concat({
+          framework: url.split('/')[2],
+          slug: url.split('/').slice(3)
+        })
+    })
+    .concat(
+      supportedFrameworks.map(framework => {
         return {
           framework: framework.name,
-          slug: url.split('/').slice(2)
+          slug: []
         }
       })
-      .concat({
-        framework: url.split('/')[2],
-        slug: url.split('/').slice(3)
-      })
-  })
+    )
 }
 
 export async function generateMetadata({
   params
 }: DocPageProps): Promise<Metadata> {
   const {doc} = await getPage(params)
-  if (!doc) return notFound()
   return {title: doc.title}
 }
 
 export default async function DocPage({params}: DocPageProps) {
   const {doc, framework} = await getPage(params)
-  if (!doc) return notFound()
   const select = {
-    id: Entry.entryId,
-    type: Entry.type,
-    url: Entry.url,
-    title: Entry.title,
+    id: Query.id,
+    type: Query.type,
+    url: Query.url,
+    title: Query.title,
     navigationTitle: Doc.navigationTitle,
-    parent: Entry.parent
+    parent: Query.parent
   }
-  const root = await cms.get(Entry({url: '/docs'}).select(select))
+  const root = await cms.get(Query.whereUrl('/docs').select(select))
   const nav = await cms
     .in(cms.workspaces.main.pages.docs)
-    .find(Entry().select(select))
+    .find(Query.select(select))
   const entries = [
     root,
     ...nav.map(item => ({
@@ -145,7 +147,7 @@ export default async function DocPage({params}: DocPageProps) {
             )
           })}
         </VStack>
-        <BodyView body={doc.body} />
+        <BodyFieldView body={doc.body} />
       </WebTypo>
       <HStack
         gap={20}
@@ -185,4 +187,18 @@ export default async function DocPage({params}: DocPageProps) {
       </HStack>
     </PageWithSidebar>
   )
+}
+
+DocPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  const pages = await generateStaticParams()
+  return pages
+    .filter(page => supportedFrameworks.some(f => f.name === page.framework))
+    .map(page => {
+      return {
+        url: `/${
+          page.framework === 'next' ? 'docs' : `docs:${page.framework}`
+        }/${page.slug.join('/')}`,
+        priority: 0.9
+      }
+    })
 }

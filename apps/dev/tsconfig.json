@@ -16,5 +16,5 @@
     "strictNullChecks": true,
     "jsx": "react-jsx"
   },
-  "include": ["cms.tsx"]
+  "include": ["cms.tsx", "next-env.d.ts"]
 }

@@ -4,8 +4,10 @@ import {useMemo} from 'react'
 import {useQuery} from 'react-query'
 //import {EntryProperty} from '../draft/EntryProperty.js'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
-import {Entry, RootData} from 'alinea/core'
-import {workspaceMediaDir} from 'alinea/core/EntryFilenames'
+import {Entry} from 'alinea/core/Entry'
+import {RootData} from 'alinea/core/Root'
+import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
+import {EntryHeader} from 'alinea/dashboard/view/entry/EntryHeader'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtomValue} from 'jotai'
 import {graphAtom} from '../atoms/DbAtoms.js'
@@ -48,7 +50,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
       const cursor = Entry()
         .where(condition)
         .orderBy(Entry.type.desc(), Entry.entryId.desc())
-      const info = await graph.preferDraft.get(
+      const info = await graph.preferDraft.maybeGet(
         Entry({entryId: parentId})
           .select({
             title: Entry.title,
@@ -72,6 +74,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   return (
     <>
       <Main className={styles.root()} scrollable={false}>
+        {editor && <EntryHeader editable={false} editor={editor} />}
         <div className={styles.root.inner()}>
           <HStack style={{flexGrow: 1, minHeight: 0}}>
             <VStack style={{height: '100%', width: '100%'}}>

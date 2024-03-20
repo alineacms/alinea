@@ -1,55 +1,58 @@
 {
+  "_id": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+  "_type": "Doc",
+  "_index": "Zgl",
+  "_i18nId": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+  "_root": "pages",
   "title": "Getting started",
+  "navigationTitle": "",
   "body": [
     {
-      "id": "2YX0hoFtrkov2TMQT8cuHwhgN6L",
-      "type": "FrameworkBlock",
+      "_type": "FrameworkBlock",
+      "_id": "2YX0hoFtrkov2TMQT8cuHwhgN6L",
       "next": [
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Get started by creating a new `Next.js` project. The following will setup a new `Next.js` project in your chosen directory."
             }
           ]
         },
         {
-          "id": "2YXL5zGSUUiBumPIemixlnKqCyL",
-          "type": "CodeBlock",
+          "_type": "CodeBlock",
+          "_id": "2YXL5zGSUUiBumPIemixlnKqCyL",
           "code": "npx create-next-app@latest",
           "fileName": "",
           "language": "shellscript",
           "compact": false
         },
         {
-          "id": "2YXKZ3Ds2lpGOsLh9adsGaBQlTx",
-          "type": "NoticeBlock",
+          "_type": "NoticeBlock",
+          "_id": "2YXKZ3Ds2lpGOsLh9adsGaBQlTx",
           "level": "info",
           "body": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Read the full instructions in the "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Next.js docs",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "2YXKczB3joyKzGfrzWgivPA8N0K",
-                        "data-entry": null,
-                        "data-type": "url",
-                        "href": "https://nextjs.org/docs/getting-started/installation",
-                        "target": "_blank",
-                        "title": ""
-                      }
+                      "_type": "link",
+                      "_id": "2YXKczB3joyKzGfrzWgivPA8N0K",
+                      "_link": "url",
+                      "href": "https://nextjs.org/docs/getting-started/installation",
+                      "target": "_blank",
+                      "title": ""
                     }
                   ]
                 }
@@ -58,50 +61,49 @@
           ]
         },
         {
-          "type": "heading",
-          "textAlign": "left",
+          "_type": "heading",
           "level": 2,
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Install Alinea"
             }
           ]
         },
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Navigate to the newly created project directory and install the package with your preferred package manager."
             }
           ]
         },
         {
-          "id": "2YcqwSzePKnvF6rL4bu9cI0d4LN",
-          "type": "CodeVariantsBlock",
+          "_type": "CodeVariantsBlock",
+          "_id": "2YcqwSzePKnvF6rL4bu9cI0d4LN",
           "variants": [
             {
-              "id": "2Ycqwgl3s7szk2B92gnXY5unG3Q",
-              "index": "a0",
-              "type": "Variant",
+              "_type": "Variant",
+              "_id": "2Ycqwgl3s7szk2B92gnXY5unG3Q",
+              "_index": "a0",
               "name": "npm",
               "language": "shellscript",
               "code": "npm install alinea"
             },
             {
-              "id": "2YcqyQsBjtLQbXB3v9l7AtdcH3U",
-              "index": "a1",
-              "type": "Variant",
+              "_type": "Variant",
+              "_id": "2YcqyQsBjtLQbXB3v9l7AtdcH3U",
+              "_index": "a1",
               "name": "yarn",
               "language": "shellscript",
               "code": "yarn add alinea"
             },
             {
-              "id": "2YcqzHpnfHK43fhtMEY6r7Wrpf1",
-              "index": "a2",
-              "type": "Variant",
+              "_type": "Variant",
+              "_id": "2YcqzHpnfHK43fhtMEY6r7Wrpf1",
+              "_index": "a2",
               "name": "pnpm",
               "language": "shellscript",
               "code": "pnpm install alinea"
@@ -109,70 +111,66 @@
           ]
         },
         {
-          "type": "heading",
-          "textAlign": "left",
+          "_type": "heading",
           "level": 2,
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Initialize the project"
             }
           ]
         },
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Alinea requires a "
             },
             {
-              "type": "text",
+              "_type": "text",
               "text": "config file",
               "marks": [
                 {
-                  "type": "link",
-                  "attrs": {
-                    "data-id": "2a4tfP6guQMwWKKRhiN0Nb5JeQN",
-                    "data-entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-                    "data-type": "entry",
-                    "href": null,
-                    "title": ""
-                  }
+                  "_type": "link",
+                  "_id": "2a4tfP6guQMwWKKRhiN0Nb5JeQN",
+                  "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+                  "_link": "entry",
+                  "title": ""
                 }
               ]
             },
             {
-              "type": "text",
+              "_type": "text",
               "text": " which can be auto-generated by running `alinea init`. If you prefer plain Javascript over Typescript, rename the file from `cms.tsx` to `cms.jsx`."
             }
           ]
         },
         {
-          "id": "2YcrGI2EPnmmIrHkfo1xKrcNVSI",
-          "type": "CodeVariantsBlock",
+          "_type": "CodeVariantsBlock",
+          "_id": "2YcrGI2EPnmmIrHkfo1xKrcNVSI",
           "variants": [
             {
-              "id": "2YcrGaP9oBJwHo8pWmHLU7blTfN",
-              "index": "a0",
-              "type": "Variant",
+              "_type": "Variant",
+              "_id": "2YcrGaP9oBJwHo8pWmHLU7blTfN",
+              "_index": "a0",
               "name": "npm",
               "language": "shellscript",
               "code": "npx alinea init --next"
             },
             {
-              "id": "2YcrHzKowUENzFVBgP5M7hf1qT1",
-              "index": "a1",
-              "type": "Variant",
+              "_type": "Variant",
+              "_id": "2YcrHzKowUENzFVBgP5M7hf1qT1",
+              "_index": "a1",
               "name": "yarn",
               "language": "shellscript",
               "code": "yarn alinea init --next"
             },
             {
-              "id": "2YcrJEDLa8oWOLJSSjsstOKg4Sl",
-              "index": "a2",
-              "type": "Variant",
+              "_type": "Variant",
+              "_id": "2YcrJEDLa8oWOLJSSjsstOKg4Sl",
+              "_index": "a2",
               "name": "pnpm",
               "language": "shellscript",
               "code": "pnpm alinea init --next"
@@ -180,89 +178,100 @@
           ]
         },
         {
-          "type": "heading",
-          "textAlign": "left",
+          "_type": "heading",
           "level": 2,
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Adjust Next.js config"
             }
           ]
         },
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
-              "text": "Alinea generates a few files at build time which should not be cached when deployed in production. If you're hosting on Vercel add `@alinea/generated` to `experimental.serverComponentsExternalPackages` in `next.config.js`:"
+              "_type": "text",
+              "text": "Alinea generates a few files at build time which should not be cached when deployed in production. If you're hosting on Vercel add `@alinea/generated` to `experimental.serverComponentsExternalPackages` in `next.config.js` or in `next.config.mjs`:"
             }
           ]
         },
         {
-          "id": "2YlJWtg13eze9KfsGwnL3TLmRWG",
-          "type": "CodeBlock",
-          "code": "const nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: ['@alinea/generated']\n  }\n}\n\nmodule.exports = nextConfig",
-          "fileName": "next.config.js",
-          "language": "",
-          "compact": false
+          "_type": "CodeVariantsBlock",
+          "_id": "2bRC6LC1i4PfMRTFBeXuHrvWjk0",
+          "variants": [
+            {
+              "_type": "Variant",
+              "_id": "2bRC6k9IXwZsgnaBLqqWcybH8H9",
+              "_index": "a0",
+              "name": "next.config.js",
+              "language": "tsx",
+              "code": "const nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: ['@alinea/generated']\n  }\n}\n\nmodule.exports = nextConfig"
+            },
+            {
+              "_type": "Variant",
+              "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
+              "_index": "a1",
+              "name": "next.config.mjs",
+              "language": "tsx",
+              "code": "/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: [\"@alinea/generated\"]\n  }\n}\n\nexport default nextConfig"
+            }
+          ]
         }
       ],
       "js": [
         {
-          "type": "heading",
-          "textAlign": "left",
+          "_type": "heading",
           "level": 2,
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Install Alinea"
             }
           ]
         },
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Install the package with your preferred package manager."
             }
           ]
         },
         {
-          "id": "2YlHrBFWnN4XWFd4eaBXxyaI7Lp",
-          "type": "CodeBlock",
+          "_type": "CodeBlock",
+          "_id": "2YlHrBFWnN4XWFd4eaBXxyaI7Lp",
           "code": "npm install alinea",
           "fileName": "",
           "language": "",
           "compact": false
         },
         {
-          "type": "heading",
-          "textAlign": "left",
+          "_type": "heading",
           "level": 2,
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Initialize the project"
             }
           ]
         },
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
               "text": "Alinea requires a config file which can be auto-generated by running:"
             }
           ]
         },
         {
-          "id": "2YlHshvHKAKMR8oVOKyso6XXrx5",
-          "type": "CodeBlock",
+          "_type": "CodeBlock",
+          "_id": "2YlHshvHKAKMR8oVOKyso6XXrx5",
           "code": "npx alinea init",
           "fileName": "",
           "language": "",
@@ -271,57 +280,56 @@
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Access the dashboard"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Congratulations, Alinea is now ready to boot!"
         },
         {
-          "type": "hardBreak"
+          "_type": "hardBreak"
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Have a look around in the dashboard by running:"
         }
       ]
     },
     {
-      "id": "2YcsowsEWLDCcidcKeyJrTKCEOg",
-      "type": "CodeVariantsBlock",
+      "_type": "CodeVariantsBlock",
+      "_id": "2YcsowsEWLDCcidcKeyJrTKCEOg",
       "variants": [
         {
-          "id": "2YcspJhldAQ2xaUIDqKHbWHrtSz",
-          "index": "a0",
-          "type": "Variant",
+          "_type": "Variant",
+          "_id": "2YcspJhldAQ2xaUIDqKHbWHrtSz",
+          "_index": "a0",
           "name": "npm",
           "language": "shellscript",
           "code": "npx alinea dev"
         },
         {
-          "id": "2YcsqDyTPJFoUeSjn6ZYJpcdWix",
-          "index": "a1",
-          "type": "Variant",
+          "_type": "Variant",
+          "_id": "2YcsqDyTPJFoUeSjn6ZYJpcdWix",
+          "_index": "a1",
           "name": "yarn",
           "language": "shellscript",
           "code": "yarn alinea dev"
         },
         {
-          "id": "2YcsrOH1ImdTgzQ3C4nWULoN0lQ",
-          "index": "a2",
-          "type": "Variant",
+          "_type": "Variant",
+          "_id": "2YcsrOH1ImdTgzQ3C4nWULoN0lQ",
+          "_index": "a2",
           "name": "pnpm",
           "language": "shellscript",
           "code": "pnpm alinea dev"
@@ -337,10 +345,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2YWqKUTrANlgEFMyBUEYdih2HpP",
-    "type": "Doc",
-    "index": "Zgl"
   }
 }

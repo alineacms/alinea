@@ -1,15 +1,17 @@
-import alinea from 'alinea'
-import {TextField} from './blocks/TextBlock'
+import {Config, Field} from 'alinea'
+import {textField} from './fields/TextField'
 
-export const BlogPost = alinea.document('Blog post', {
-  publishDate: alinea.date('Publish date'),
-  author: alinea.object('Author', {
-    fields: alinea.type('Author fields', {
-      name: alinea.text('Name', {width: 0.5}),
-      url: alinea.link.url('Url', {width: 0.5}),
-      avatar: alinea.link.url('Avatar url')
-    })
-  }),
-  introduction: alinea.text('Short introduction', {multiline: true}),
-  body: TextField
+export const BlogPost = Config.document('Blog post', {
+  fields: {
+    publishDate: Field.date('Publish date'),
+    author: Field.object('Author', {
+      fields: {
+        name: Field.text('Name', {width: 0.5}),
+        url: Field.link.url('Url', {width: 0.5}),
+        avatar: Field.link.url('Avatar url')
+      }
+    }),
+    introduction: Field.text('Short introduction', {multiline: true}),
+    body: textField()
+  }
 })

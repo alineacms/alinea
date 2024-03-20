@@ -2,6 +2,7 @@ import type {Route} from 'alinea/backend/router/Router'
 import type {ComponentType} from 'react'
 import {Connection} from './Connection.js'
 import {Session} from './Session.js'
+import {localUser} from './User.js'
 
 export namespace Auth {
   export type Server = {
@@ -14,7 +15,7 @@ export namespace Auth {
   export function anonymous(): Auth.Server {
     return {
       async contextFor() {
-        return {}
+        return {user: localUser}
       }
     }
   }

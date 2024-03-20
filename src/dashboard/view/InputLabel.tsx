@@ -1,58 +1,71 @@
-import {Label, renderLabel} from 'alinea/core/Label'
 import {Icon, fromModule, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
-import {ComponentType, PropsWithChildren, forwardRef, memo} from 'react'
+import {
+  ComponentType,
+  PropsWithChildren,
+  ReactNode,
+  forwardRef,
+  memo
+} from 'react'
 import css from './InputLabel.module.scss'
 
 const styles = fromModule(css)
 
 export type LabelHeaderProps = {
-  label: Label
+  label: ReactNode
   help?: string
-  optional?: boolean
   size?: 'small' | 'medium' | 'large'
   focused?: boolean
   icon?: ComponentType
   shared?: boolean
   readOnly?: boolean
+  required?: boolean
+  error?: boolean | string
 }
 
 export const LabelHeader = memo(function LabelHeader({
   label,
-  optional,
   help,
   size,
   focused,
   // icon: Icon,
   shared,
-  readOnly
+  readOnly,
+  required,
+  error
 }: LabelHeaderProps) {
+  const showError = typeof error === 'string'
   return (
-    <header className={styles.header(size, {focused})}>
+    <header className={styles.header(size, {focused, error: Boolean(error)})}>
       <HStack center wrap gap={`${px(4)} ${px(8)}`}>
         <HStack center gap={8} className={styles.header.title()}>
           {/*Icon && <Icon />*/}
-          <span>{renderLabel(label)}</span>
+          <span>
+            {label}
+            {required && ' *'}
+          </span>
         </HStack>
-        {readOnly && <Icon title="Read-only" icon={IcOutlineLock} />}
+        {readOnly && (
+          <Icon title="Read-only" icon={IcOutlineLock} style={{opacity: 0.6}} />
+        )}
         {shared && <Chip icon={PhGlobe}>Shared</Chip>}
-        {optional && <Chip>Optional</Chip>}
-        {help && (
-          <div className={styles.header.help()}>{renderLabel(help)}</div>
+        {showError ? (
+          <div className={styles.header.help({error: true})}>{error}</div>
+        ) : (
+          help && <div className={styles.header.help()}>{help}</div>
         )}
       </HStack>
     </header>
   )
 })
 
-export type LabelProps = PropsWithChildren<{
-  label?: Label
+export interface InputLabelProps extends PropsWithChildren {
+  label?: ReactNode
   asLabel?: boolean
   help?: string
-  optional?: boolean
   width?: number
   inline?: boolean
   collection?: boolean
@@ -63,17 +76,18 @@ export type LabelProps = PropsWithChildren<{
   shared?: boolean
   readOnly?: boolean
   className?: string
-}>
+  error?: boolean | string
+  required?: boolean
+}
 
 /** Label for an input */
-export const InputLabel = forwardRef<HTMLElement, LabelProps>(
+export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
   function InputLabel(
     {
       children,
       label,
       asLabel,
       help,
-      optional,
       width = 1,
       inline = false,
       collection = false,
@@ -83,7 +97,9 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
       empty,
       shared,
       readOnly,
-      className
+      className,
+      error,
+      required
     },
     ref
   ) {
@@ -105,15 +121,16 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
             <LabelHeader
               label={label}
               help={help}
-              optional={optional}
+              required={required}
               size={size}
               focused={focused}
               icon={icon}
               shared={shared}
               readOnly={readOnly}
+              error={error}
             />
           )}
-          {children}
+          <div className={styles.root.inner.content()}>{children}</div>
         </div>
       </Tag>
     )

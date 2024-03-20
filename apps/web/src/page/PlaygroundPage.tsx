@@ -1,4 +1,5 @@
 import {Loader} from 'alinea/ui'
+import type {MetadataRoute} from 'next'
 import dynamic from 'next/dynamic'
 import {Suspense} from 'react'
 
@@ -20,4 +21,8 @@ export default function PlaygroundPage() {
       <PlaygroundView />
     </Suspense>
   )
+}
+
+PlaygroundPage.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/playground', priority: 0.5}]
 }

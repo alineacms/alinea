@@ -1,191 +1,185 @@
 {
+  "_id": "286iEJsjhd8R9NxN6EVg59fELyd",
+  "_type": "Doc",
+  "_index": "a6",
+  "_i18nId": "286iEJsjhd8R9NxN6EVg59fELyd",
+  "_root": "pages",
   "title": "Custom fields",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "It's possible to create custom fields. A field needs a constructor function that users call to create instances of it in their configuration. "
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Range field example"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Let's create a custom field to demonstrate."
         }
       ]
     },
     {
-      "id": "tjXTNIX1E2w3fts1zXG9Z",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "tjXTNIX1E2w3fts1zXG9Z",
       "code": "import {FieldOptions, ScalarField, Hint, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "To use the field in your types later call the constructor function:"
         }
       ]
     },
     {
-      "id": "WnK5Nlvq82spn6R62dTQe",
-      "type": "CodeBlock",
-      "code": "alinea.type('My type', {\n  ...fields,\n  myRangeField: range('A range field', {\n    min: 0, \n    max: 20\n  })\n})",
+      "_type": "CodeBlock",
+      "_id": "WnK5Nlvq82spn6R62dTQe",
+      "code": "import {Config} from 'alinea'\n\nConfig.type('My type', {\n  fields: {\n    // ...\n    myRangeField: range('A range field', {\n      min: 0, \n      max: 20\n    })\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "yhfKjT9ITmHHD0N5JRU4G",
-      "type": "ExampleBlock",
-      "code": "import {FieldOptions, ScalarField, Hint, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Custom fields', {\n  range: range('A range field', {min: 0, max: 20})\n})"
+      "_type": "ExampleBlock",
+      "_id": "yhfKjT9ITmHHD0N5JRU4G",
+      "code": "import {Config} from 'alinea'\nimport {FieldOptions, ScalarField, Hint, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default Config.type('Custom fields', {\n  range: range('A range field', {min: 0, max: 20})\n})"
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Field types"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea ships with four kinds of field primitives that can be nested inside each other. Under the covers these are created via "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Y.js",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "GKdJazwD5XXkZjkkVENGE",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://docs.yjs.dev/",
-                "target": "_blank",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "GKdJazwD5XXkZjkkVENGE",
+              "href": "https://docs.yjs.dev/",
+              "target": "_blank"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " allowing them to be fully collaborative."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": " Scalar fields"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Scalar values hold a single value that is overwritten anytime it is changed."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": " Record fields"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A record value stores an object with data. The object values can take any shape."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "List fields"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A list holds an array of values, which must be record shapes. Every item in a list has a type, an automatically generated id and an index for sorting added on."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Rich text fields"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Rich text is an XML like structure for WYSIWYG data."
         }
       ]
@@ -199,10 +193,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "286iEJsjhd8R9NxN6EVg59fELyd",
-    "type": "Doc",
-    "index": "a6"
   }
 }

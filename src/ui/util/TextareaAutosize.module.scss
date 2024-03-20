@@ -1,0 +1,19 @@
+.root {
+  display: grid;
+  width: 100%;
+
+  &-textarea {
+    grid-area: 1 / 1 / 2 / 2;
+    overflow-x: auto;
+    resize: none;
+    white-space: pre-wrap;
+  }
+
+  &-shadow {
+    content: attr(data-value) ' ';
+    grid-area: 1 / 1 / 2 / 2;
+    overflow-x: auto;
+    visibility: hidden;
+    white-space: pre-wrap;
+  }
+}

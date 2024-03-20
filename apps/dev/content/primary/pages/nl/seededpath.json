@@ -1,0 +1,57 @@
+{
+  "_id": "2biVnHixXvXB29cJTlPcVj3Ir0E",
+  "_type": "Fields",
+  "_index": "a0",
+  "_i18nId": "2biVnHG1AqV27e1ihkmoztfFCmY",
+  "_seeded": "/nl/seededpath.json",
+  "_root": "pages",
+  "title": "NL Seeded page",
+  "text": "",
+  "hello": "",
+  "richText": [],
+  "externalLink": {},
+  "entry": {},
+  "entryWithCondition": {},
+  "linkMultiple": [],
+  "image": {},
+  "images": [],
+  "file": {},
+  "withFields": {},
+  "multipleWithFields": [],
+  "list": [],
+  "withInitial": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This is a paragraph with initial value"
+        }
+      ]
+    }
+  ],
+  "nested": [],
+  "street": "",
+  "streetNr": "",
+  "box": "",
+  "zip": "",
+  "city": "",
+  "country": "",
+  "object": {
+    "fieldA": "",
+    "fieldB": ""
+  },
+  "tabA": "",
+  "tabB": "",
+  "shared": "This is shared",
+  "nestedList": [],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

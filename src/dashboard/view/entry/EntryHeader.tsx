@@ -1,5 +1,5 @@
-import {EntryPhase} from 'alinea/core'
-import {entryFile, workspaceMediaDir} from 'alinea/core/EntryFilenames'
+import {EntryPhase} from 'alinea/core/EntryRow'
+import {entryFile, workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {Button, HStack, Icon, Stack, fromModule, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -79,6 +79,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const previewRevision = useAtomValue(editor.previewRevision)
   const isActivePhase = editor.activePhase === selectedPhase
   const isMediaFile = editor.activeVersion.type === 'MediaFile'
+  const isMediaLibrary = editor.activeVersion.type === 'MediaLibrary'
   const hasChanges = useAtomValue(editor.hasChanges)
   const currentTransition = useAtomValue(editor.transition)?.transition
   const untranslated = locale && locale !== editor.activeVersion.locale
@@ -100,9 +101,16 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const publishArchived = useSetAtom(editor.publishArchived)
   const deleteArchived = useSetAtom(editor.deleteArchived)
   const deleteFile = useSetAtom(editor.deleteFile)
+  const deleteMediaLibrary = useSetAtom(editor.deleteMediaLibrary)
   const queryClient = useQueryClient()
   function deleteFileAndNavigate() {
     return deleteFile()?.then(() => {
+      queryClient.invalidateQueries('explorer')
+      navigate(nav.root(entryLocation))
+    })
+  }
+  function deleteMediaLibraryAndNavigate() {
+    return deleteMediaLibrary()?.then(() => {
       queryClient.invalidateQueries('explorer')
       navigate(nav.root(entryLocation))
     })
@@ -164,6 +172,15 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             Delete
           </DropdownMenu.Item>
         </>
+      ) : isMediaLibrary ? (
+        <>
+          <DropdownMenu.Item
+            className={styles.root.action()}
+            onClick={deleteMediaLibraryAndNavigate}
+          >
+            Delete
+          </DropdownMenu.Item>
+        </>
       ) : (
         <DropdownMenu.Item
           className={styles.root.action()}
@@ -188,7 +205,6 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         </DropdownMenu.Item>
       </>
     ) : null
-
   return (
     <>
       {isReplacing && <FileUploader />}
@@ -355,7 +371,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                     </DropdownMenu.Trigger>
 
                     <DropdownMenu.Items>
-                      {!isMediaFile && (
+                      {!isMediaFile && !isMediaLibrary && (
                         <DropdownMenu.Item
                           onClick={() => setShowHistory(!showHistory)}
                         >

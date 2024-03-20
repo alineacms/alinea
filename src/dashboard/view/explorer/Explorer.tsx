@@ -1,5 +1,6 @@
 import useSize from '@react-hook/size'
-import {Reference, View} from 'alinea/core'
+import {Reference} from 'alinea/core/Reference'
+import {View} from 'alinea/core/View'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {Loader, fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'

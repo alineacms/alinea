@@ -1,4 +1,6 @@
-import {Field, Section, Type} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
+import {Section} from 'alinea/core/Section'
+import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {Lift} from 'alinea/ui/Lift'
@@ -56,8 +58,8 @@ export interface InputFieldProps<V, M> {
 
 export function InputField<V, M>({field}: InputFieldProps<V, M>) {
   const View = field[Field.Data].view
-  if (!View) return <MissingView field={field} />
   const options = useFieldOptions(field)
+  if (!View) return <MissingView field={field} />
   if (options.hidden) return null
   return (
     <ErrorBoundary>

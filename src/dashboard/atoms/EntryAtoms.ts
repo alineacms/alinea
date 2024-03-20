@@ -3,12 +3,13 @@ import {
   DropTarget,
   ItemInstance
 } from '@headless-tree/core'
-import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {entryFileName} from 'alinea/core/EntryFilenames'
+import {EntryPhase} from 'alinea/core/EntryRow'
 import {GraphRealm} from 'alinea/core/Graph'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {Type} from 'alinea/core/Type'
 import {Projection} from 'alinea/core/pages/Projection'
+import {entryFileName} from 'alinea/core/util/EntryFilenames'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
@@ -26,7 +27,7 @@ export function rootId(rootName: string) {
 const visibleTypesAtom = atom(get => {
   const {schema} = get(configAtom)
   return entries(schema)
-    .filter(([_, type]) => !Type.meta(type).isHidden)
+    .filter(([_, type]) => !Type.isHidden(type))
     .map(([name]) => name)
 })
 

@@ -1,6 +1,6 @@
-import {Entry} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
-import {Projection} from 'alinea/core/pages/Projection'
+import type {Projection} from 'alinea/core/pages/Projection'
 import {Realm} from 'alinea/core/pages/Realm'
 import {serializeSelection} from 'alinea/core/pages/Serialize'
 import DataLoader from 'dataloader'

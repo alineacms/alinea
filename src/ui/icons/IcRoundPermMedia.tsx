@@ -14,4 +14,3 @@ export function IcRoundPermMedia(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundPermMedia

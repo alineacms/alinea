@@ -10,12 +10,14 @@
     "stories": "ladle serve",
     "demo": "node build.js --watch -- node dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
     "build": "tsc && node build.js",
+    "cycles:server": "CHECK_CYCLES=server node build.js && madge --warning --circular dist/index.js dist/backend.js",
+    "cycles:browser": "CHECK_CYCLES=browser node build.js && madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
     "alinea": "node build.js && node dist/cli.js",
     "build:alinea": "node build.js",
     "release:types": "tsc",
     "release:build": "node build.js",
     "type": "tsc --diagnostics",
-    "test": "node build.js --test",
+    "test": "NODE_OPTIONS=--enable-source-maps node build.js --test",
     "tag": "esbx tag",
     "dev:check": "tsc -w",
     "dev:run": "node build.js --watch -- node dev.js --dir apps/dev --config cms",
@@ -47,30 +49,23 @@
     "src/dashboard",
     "src/ui",
     "src/auth/passwordless",
-    "src/input/richtext"
+    "src/field/richtext"
   ],
   "dependencies": {
-    "@alinea/iso": "^0.3.1",
-    "@alinea/sqlite-wasm": "^0.1.14",
-    "esbuild": "^0.19.2"
+    "@alinea/iso": "^0.3.2",
+    "@alinea/sqlite-wasm": "^0.1.16",
+    "esbuild": "^0.20.1"
   },
   "peerDependencies": {
     "react": "*",
     "react-dom": "*"
   },
   "devDependencies": {
-    "@esbx/alias": "^0.0.20",
-    "@esbx/extension": "^0.0.19",
-    "@esbx/external": "^0.0.19",
-    "@esbx/reload": "^0.0.19",
-    "@esbx/reporter": "^0.0.19",
-    "@esbx/run": "^0.0.19",
-    "@esbx/sass": "^0.0.19",
-    "@esbx/static": "^0.0.19",
+    "@esbx/reporter": "^0.0.20",
     "@esbx/target": "^0.0.20",
-    "@esbx/workspaces": "^0.0.19",
-    "@ladle/react": "^4.0.1",
-    "@types/better-sqlite3": "^7.6.4",
+    "@esbx/util": "^0.0.20",
+    "@esbx/workspaces": "^0.0.20",
+    "@ladle/react": "^4.0.2",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
     "@types/node": "20.0.0",
@@ -80,29 +75,26 @@
     "@typescript/analyze-trace": "^0.9.1",
     "@ungap/with-resolvers": "^0.1.0",
     "alinea": "link:.",
-    "autoprefixer": "^10.4.2",
-    "cross-env": "^7.0.3",
     "esbx": "^0.0.18",
-    "find-config": "^1.0.0",
     "glob": "^7.2.0",
-    "memfs": "^3.4.1",
+    "madge": "^6.1.0",
     "npm-run-all": "^4.1.5",
+    "postcss-modules": "^6.0.0",
     "postcss-pxtorem": "^6.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "rimraf": "^5.0.0",
     "sass": "^1.63.4",
+    "sharp": "0.32.6",
     "speedscope": "^1.14.0",
-    "typescript": "^5.2.2",
-    "typescript-plugin-css-modules": "^5.0.1",
+    "typescript": "^5.3.3",
+    "typescript-plugin-css-modules": "^5.0.2",
     "uvu": "^0.5.1"
   },
-  "packageManager": "yarn@3.2.0",
+  "packageManager": "yarn@4.1.0",
   "resolutions": {
-    "esbuild": "0.19.2",
-    "mime-db": "1.51.0",
-    "yjs": "13.6.7",
-    "lib0": "0.2.74"
+    "esbuild": "0.20.1",
+    "yjs": "13.6.11",
+    "lib0": "0.2.88"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -115,95 +107,100 @@
       "browser": "./dist/cloud/view/CloudAuth.browser.js",
       "default": "./dist/cloud/view/CloudAuth.js"
     },
+    "./core/media/CreatePreview": {
+      "worker": "./dist/core/media/CreatePreview.js",
+      "browser": "./dist/core/media/CreatePreview.browser.js",
+      "default": "./dist/core/media/CreatePreview.js"
+    },
     "./core/media/MediaRoot": {
       "worker": "./dist/core/media/MediaRoot.js",
       "browser": "./dist/core/media/MediaRoot.browser.js",
       "default": "./dist/core/media/MediaRoot.js"
     },
-    "./core/media/MediaSchema": {
-      "worker": "./dist/core/media/MediaSchema.js",
-      "browser": "./dist/core/media/MediaSchema.browser.js",
-      "default": "./dist/core/media/MediaSchema.js"
+    "./core/media/MediaTypes": {
+      "worker": "./dist/core/media/MediaTypes.js",
+      "browser": "./dist/core/media/MediaTypes.browser.js",
+      "default": "./dist/core/media/MediaTypes.js"
     },
     "./dashboard/view/Preview": {
       "worker": "./dist/dashboard/view/Preview.js",
       "browser": "./dist/dashboard/view/Preview.browser.js",
       "default": "./dist/dashboard/view/Preview.js"
     },
-    "./input/check/CheckField": {
-      "worker": "./dist/input/check/CheckField.js",
-      "browser": "./dist/input/check/CheckField.browser.js",
-      "default": "./dist/input/check/CheckField.js"
+    "./field/check/CheckField": {
+      "worker": "./dist/field/check/CheckField.js",
+      "browser": "./dist/field/check/CheckField.browser.js",
+      "default": "./dist/field/check/CheckField.js"
     },
-    "./input/code/CodeField": {
-      "worker": "./dist/input/code/CodeField.js",
-      "browser": "./dist/input/code/CodeField.browser.js",
-      "default": "./dist/input/code/CodeField.js"
+    "./field/code/CodeField": {
+      "worker": "./dist/field/code/CodeField.js",
+      "browser": "./dist/field/code/CodeField.browser.js",
+      "default": "./dist/field/code/CodeField.js"
     },
-    "./input/date/DateField": {
-      "worker": "./dist/input/date/DateField.js",
-      "browser": "./dist/input/date/DateField.browser.js",
-      "default": "./dist/input/date/DateField.js"
+    "./field/date/DateField": {
+      "worker": "./dist/field/date/DateField.js",
+      "browser": "./dist/field/date/DateField.browser.js",
+      "default": "./dist/field/date/DateField.js"
     },
-    "./input/json/JsonField": {
-      "worker": "./dist/input/json/JsonField.js",
-      "browser": "./dist/input/json/JsonField.browser.js",
-      "default": "./dist/input/json/JsonField.js"
+    "./field/json/JsonField": {
+      "worker": "./dist/field/json/JsonField.js",
+      "browser": "./dist/field/json/JsonField.browser.js",
+      "default": "./dist/field/json/JsonField.js"
     },
-    "./input/link/LinkField": {
-      "worker": "./dist/input/link/LinkField.js",
-      "browser": "./dist/input/link/LinkField.browser.js",
-      "default": "./dist/input/link/LinkField.js"
+    "./field/link/LinkField": {
+      "worker": "./dist/field/link/LinkField.js",
+      "browser": "./dist/field/link/LinkField.browser.js",
+      "default": "./dist/field/link/LinkField.js"
     },
-    "./input/list/ListField": {
-      "worker": "./dist/input/list/ListField.js",
-      "browser": "./dist/input/list/ListField.browser.js",
-      "default": "./dist/input/list/ListField.js"
+    "./field/list/ListField": {
+      "worker": "./dist/field/list/ListField.js",
+      "browser": "./dist/field/list/ListField.browser.js",
+      "default": "./dist/field/list/ListField.js"
     },
-    "./input/metadata/MetadataField": {
-      "worker": "./dist/input/metadata/MetadataField.js",
-      "browser": "./dist/input/metadata/MetadataField.browser.js",
-      "default": "./dist/input/metadata/MetadataField.js"
+    "./field/metadata/MetadataField": {
+      "worker": "./dist/field/metadata/MetadataField.js",
+      "browser": "./dist/field/metadata/MetadataField.browser.js",
+      "default": "./dist/field/metadata/MetadataField.js"
     },
-    "./input/number/NumberField": {
-      "worker": "./dist/input/number/NumberField.js",
-      "browser": "./dist/input/number/NumberField.browser.js",
-      "default": "./dist/input/number/NumberField.js"
+    "./field/number/NumberField": {
+      "worker": "./dist/field/number/NumberField.js",
+      "browser": "./dist/field/number/NumberField.browser.js",
+      "default": "./dist/field/number/NumberField.js"
     },
-    "./input/object/ObjectField": {
-      "worker": "./dist/input/object/ObjectField.js",
-      "browser": "./dist/input/object/ObjectField.browser.js",
-      "default": "./dist/input/object/ObjectField.js"
+    "./field/object/ObjectField": {
+      "worker": "./dist/field/object/ObjectField.js",
+      "browser": "./dist/field/object/ObjectField.browser.js",
+      "default": "./dist/field/object/ObjectField.js"
     },
-    "./input/path/PathField": {
-      "worker": "./dist/input/path/PathField.js",
-      "browser": "./dist/input/path/PathField.browser.js",
-      "default": "./dist/input/path/PathField.js"
+    "./field/path/PathField": {
+      "worker": "./dist/field/path/PathField.js",
+      "browser": "./dist/field/path/PathField.browser.js",
+      "default": "./dist/field/path/PathField.js"
     },
-    "./input/richtext/RichTextField": {
-      "worker": "./dist/input/richtext/RichTextField.js",
-      "browser": "./dist/input/richtext/RichTextField.browser.js",
-      "default": "./dist/input/richtext/RichTextField.js"
+    "./field/richtext/RichTextField": {
+      "worker": "./dist/field/richtext/RichTextField.js",
+      "browser": "./dist/field/richtext/RichTextField.browser.js",
+      "default": "./dist/field/richtext/RichTextField.js"
     },
-    "./input/select/SelectField": {
-      "worker": "./dist/input/select/SelectField.js",
-      "browser": "./dist/input/select/SelectField.browser.js",
-      "default": "./dist/input/select/SelectField.js"
+    "./field/select/SelectField": {
+      "worker": "./dist/field/select/SelectField.js",
+      "browser": "./dist/field/select/SelectField.browser.js",
+      "default": "./dist/field/select/SelectField.js"
     },
-    "./input/tabs/Tabs": {
-      "worker": "./dist/input/tabs/Tabs.js",
-      "browser": "./dist/input/tabs/Tabs.browser.js",
-      "default": "./dist/input/tabs/Tabs.js"
+    "./field/tabs/Tabs": {
+      "worker": "./dist/field/tabs/Tabs.js",
+      "browser": "./dist/field/tabs/Tabs.browser.js",
+      "default": "./dist/field/tabs/Tabs.js"
     },
-    "./input/text/TextField": {
-      "worker": "./dist/input/text/TextField.js",
-      "browser": "./dist/input/text/TextField.browser.js",
-      "default": "./dist/input/text/TextField.js"
+    "./field/text/TextField": {
+      "worker": "./dist/field/text/TextField.js",
+      "browser": "./dist/field/text/TextField.browser.js",
+      "default": "./dist/field/text/TextField.js"
     },
-    "./input/view/View": {
-      "worker": "./dist/input/view/View.js",
-      "browser": "./dist/input/view/View.browser.js",
-      "default": "./dist/input/view/View.js"
+    "./field/view/View": {
+      "worker": "./dist/field/view/View.js",
+      "browser": "./dist/field/view/View.browser.js",
+      "default": "./dist/field/view/View.js"
     },
     "./picker/entry/EntryPicker": {
       "worker": "./dist/picker/entry/EntryPicker.js",

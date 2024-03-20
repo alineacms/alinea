@@ -1,23 +1,19 @@
 import {Request, Response} from '@alinea/iso'
-import {
-  Auth,
-  Config,
-  Connection,
-  Draft,
-  Entry,
-  EntryPhase,
-  EntryRow,
-  PreviewUpdate,
-  ResolveDefaults,
-  Resolver,
-  SyncResponse,
-  parseYDoc
-} from 'alinea/core'
+
+import {Auth} from 'alinea/core/Auth'
+import {Config} from 'alinea/core/Config'
+import {Connection, SyncResponse} from 'alinea/core/Connection'
+import {parseYDoc} from 'alinea/core/Doc'
+import {Draft} from 'alinea/core/Draft'
+import {Entry} from 'alinea/core/Entry'
 import {EntryRecord} from 'alinea/core/EntryRecord'
+import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {Graph} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
+import {PreviewUpdate, ResolveRequest, Resolver} from 'alinea/core/Resolver'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Realm} from 'alinea/core/pages/Realm'
-import {Selection} from 'alinea/core/pages/Selection'
+import {Selection} from 'alinea/core/pages/ResolveData'
 import {base64, base64url} from 'alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
 import * as Y from 'alinea/yjs'
@@ -49,7 +45,7 @@ export interface HandlerOptions {
   drafts?: Drafts
   history?: History
   pending?: Pending
-  resolveDefaults?: ResolveDefaults
+  resolveDefaults?: Partial<ResolveRequest>
 }
 
 export class Handler implements Resolver {
@@ -65,13 +61,16 @@ export class Handler implements Resolver {
       options.config.schema,
       this.parsePreview.bind(this)
     )
-    this.changes = new ChangeSetCreator(options.config)
-    const auth = options.auth || Auth.anonymous()
+    this.changes = new ChangeSetCreator(
+      options.config,
+      new Graph(options.config, this)
+    )
+    const auth = options.auth ?? Auth.anonymous()
     this.connect = ctx => new HandlerConnection(this, ctx)
     this.router = createRouter(auth, this.connect)
   }
 
-  resolve = async (params: Connection.ResolveParams) => {
+  resolve = async (params: ResolveRequest) => {
     const {resolveDefaults} = this.options
     const resolveParams = {...resolveDefaults, ...params}
     const {syncInterval} = resolveParams
@@ -158,7 +157,7 @@ class HandlerConnection implements Connection {
   ): Promise<{commitHash: string}> {
     const {target, db} = this.handler.options
     if (!target) throw new Error('Target not available')
-    const changeSet = this.handler.changes.create(mutations)
+    const changeSet = await this.handler.changes.create(mutations)
     const {commitHash: fromCommitHash} = await this.handler.syncPending()
     let toCommitHash: string
     try {
@@ -192,8 +191,8 @@ class HandlerConnection implements Connection {
   previewToken(): Promise<string> {
     const {previews} = this.handler.options
     const user = this.ctx.user
-    if (!user) return previews.sign({anonymous: true})
-    return previews.sign({sub: user.sub})
+    if (!user) throw new Error('Unauthorized, user not available')
+    return previews.sign(user)
   }
 
   // Media
@@ -267,7 +266,7 @@ function respond<T>({result, logger}: LoggerResult<T>) {
   })
 }
 
-const ResolveBody: Type<Connection.ResolveParams> = object({
+const ResolveBody: Type<ResolveRequest> = object({
   selection: Selection.adt,
   locale: string.optional,
   realm: enums(Realm),

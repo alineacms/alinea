@@ -10,4 +10,3 @@ export function IcRoundCode(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundCode

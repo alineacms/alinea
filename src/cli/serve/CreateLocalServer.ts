@@ -2,7 +2,8 @@ import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {Handler} from 'alinea/backend'
 import {HttpRouter, router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/server/CloudConfig'
-import {Trigger, trigger} from 'alinea/core'
+import {Trigger, trigger} from 'alinea/core/Trigger'
+import {User} from 'alinea/core/User'
 import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -66,7 +67,8 @@ export function createLocalServer(
     production,
     liveReload
   }: ServeContext,
-  handler: Handler
+  handler: Handler,
+  user: User
 ): HttpRouter {
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
@@ -76,12 +78,6 @@ export function createLocalServer(
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
     initial = true
   const config = {
-    external: [
-      'next/navigation',
-      'next/headers',
-      'better-sqlite3',
-      '@alinea/generated/store.js'
-    ],
     format: 'esm',
     target: 'esnext',
     treeShaking: true,
@@ -100,6 +96,7 @@ export function createLocalServer(
     plugins: buildOptions?.plugins || [],
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
+      'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
       'process.env.NODE_ENV': production ? "'production'" : "'development'",
       'process.env.ALINEA_CLOUD_URL': cloudUrl
         ? JSON.stringify(cloudUrl)
@@ -195,7 +192,6 @@ export function createLocalServer(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          <link href="/config.css" rel="stylesheet" />
           <link href="/entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
@@ -209,10 +205,7 @@ export function createLocalServer(
         )
       }),
       handler.router,
-      serveBrowserBuild,
-      matcher.get('/config.css').map((): Response => {
-        return new Response('', {headers: {'content-type': 'text/css'}})
-      })
+      serveBrowserBuild
     )
   ).notFound(() => new Response('Not found', {status: 404}))
 

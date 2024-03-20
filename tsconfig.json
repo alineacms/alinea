@@ -17,9 +17,12 @@
     "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "paths": {
-      "alinea/*": ["./src/*.browser", "./src/*.js", "./src/*"]
+      "alinea/*": ["./src/*.js", "./src/*"]
     },
-    "rootDir": "src"
+    "baseUrl": ".",
+    "rootDir": "src",
+    "moduleDetection": "force",
+    "incremental": true
   },
   "include": ["src"]
 }

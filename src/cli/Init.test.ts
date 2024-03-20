@@ -1,6 +1,6 @@
 import {init} from 'alinea/cli/Init'
 import fs from 'fs-extra'
-import path from 'path'
+import path from 'node:path'
 import {test} from 'uvu'
 
 const testPms = false

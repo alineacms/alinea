@@ -1,5 +1,5 @@
-import {Schema} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
+import {Schema} from 'alinea/core/Schema'
 
 export interface Loader {
   extension: string

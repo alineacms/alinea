@@ -1,6 +1,5 @@
 import {cms} from '@/cms'
-import {EntryReference, UrlReference} from 'alinea'
-import {Entry} from 'alinea/core'
+import {AnyLink, Query} from 'alinea'
 import {HStack, Stack, Styler, fromModule} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
@@ -17,18 +16,10 @@ import {NavTree} from './nav/NavTree'
 
 const styles = fromModule(css)
 
-export type HeaderLink =
-  | (EntryReference & {
-      label: string
-      active: string
-    })
-  | (UrlReference & {
-      label: string
-      active: string
-    })
+export type HeaderLink = AnyLink<{label: string; active: string}>
 
 export async function Header() {
-  const links = await cms.get(Home().select(Home.links))
+  const links = await cms.get(Query(Home).select(Home.links))
   return (
     <>
       <input
@@ -56,15 +47,9 @@ export async function Header() {
 }
 
 async function MobileNav() {
-  const docs = await cms.in(cms.workspaces.main.pages.docs).find(
-    Entry().select({
-      id: Entry.entryId,
-      type: Entry.type,
-      url: Entry.url,
-      title: Entry.title,
-      parent: Entry.parent
-    })
-  )
+  const docs = await cms
+    .in(cms.workspaces.main.pages.docs)
+    .find(Query.select(Query.entry))
   const tree = [
     {id: 'home', url: '/', title: 'Home'},
     {id: 'roadmap', url: '/roadmap', title: 'Roadmap'},
@@ -139,21 +124,16 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
   return (
     <>
       {links?.map(link => {
-        switch (link.type) {
-          case 'entry':
-            return (
-              <Link
-                href={link.url}
-                key={link.id}
-                className={style()}
-                activeFor={link.active}
-              >
-                {link.label || link.title}
-              </Link>
-            )
-          default:
-            return null
-        }
+        return (
+          <Link
+            href={link.href}
+            key={link._id}
+            className={style()}
+            activeFor={link.fields.active}
+          >
+            {link.fields.label || link.title}
+          </Link>
+        )
       })}
       <Link href="/changelog" className={style()}>
         Changelog

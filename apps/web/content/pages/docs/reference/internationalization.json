@@ -1,52 +1,47 @@
 {
+  "_id": "2YcyNztG4JXc8TLpT4l1l7njGtn",
+  "_type": "Doc",
+  "_index": "Zz",
+  "_i18nId": "2YcyNztG4JXc8TLpT4l1l7njGtn",
+  "_root": "pages",
   "title": "Internationalization",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea is built with internalization in mind. It's possible to make content available in more than one language or region. To get started configure the `i18n` on a "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Root",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "XHuywJ5Fm6kEPueYKwPkt",
-                "data-entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
-                "data-type": null,
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "XHuywJ5Fm6kEPueYKwPkt",
+              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " in your schema. It requires a list of supported locales. Any entry created within this root can then be translated to the other languages. The url of these entries will have the locale prepended (this behaviour can be configured, see the `entryUrl` property when creating a "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Type",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "sQuOh2rPighhFO4a3-Q0e",
-                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
-                "data-type": null,
-                "href": null,
-                "title": null
-              }
+              "_type": "link",
+              "_id": "sQuOh2rPighhFO4a3-Q0e",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": ")."
         }
       ]
@@ -60,10 +55,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2YcyNztG4JXc8TLpT4l1l7njGtn",
-    "type": "Doc",
-    "index": "Zz"
   }
 }

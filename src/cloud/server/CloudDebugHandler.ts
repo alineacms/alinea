@@ -3,9 +3,13 @@ import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
 import {Pending} from 'alinea/backend/Pending'
 import {GitHistory} from 'alinea/cli/serve/GitHistory'
-import {Config, Connection, Draft, createId} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {Connection} from 'alinea/core/Connection'
+import {Draft} from 'alinea/core/Draft'
 import {EntryRecord} from 'alinea/core/EntryRecord'
+import {createId} from 'alinea/core/Id'
 import {Mutation} from 'alinea/core/Mutation'
+import simpleGit from 'simple-git'
 
 const latency = 0
 
@@ -17,7 +21,7 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
   history: History
 
   constructor(public config: Config, public db: Database, rootDir: string) {
-    this.history = new GitHistory(config, rootDir)
+    this.history = new GitHistory(simpleGit(rootDir), config, rootDir)
   }
 
   async mutate(params: Connection.MutateParams) {

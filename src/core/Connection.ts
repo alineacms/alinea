@@ -5,9 +5,8 @@ import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
 import {Mutation} from './Mutation.js'
-import {ResolveDefaults, Resolver} from './Resolver.js'
+import {Resolver} from './Resolver.js'
 import {User} from './User.js'
-import {Selection} from './pages/Selection.js'
 import {Logger} from './util/Logger.js'
 
 export interface SyncResponse {
@@ -52,12 +51,7 @@ export namespace Connection {
       method?: string
     }
   }
-  export interface ResolveParams extends ResolveDefaults {
-    selection: Selection
-    location?: Array<string>
-    locale?: string
-    syncInterval?: number
-  }
+
   export type MediaUploadParams = {
     buffer: ArrayBuffer
     fileLocation: string

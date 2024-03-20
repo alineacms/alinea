@@ -1,13 +1,11 @@
-/* eslint-disable @next/next/no-img-element */
-
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
-import {TextView} from '@/page/blocks/TextBlockView'
+import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
-import {Entry} from 'alinea/core'
+import {Query} from 'alinea'
 import {fromModule} from 'alinea/ui'
-import {notFound} from 'next/navigation'
+import {MetadataRoute} from 'next'
 import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
@@ -20,23 +18,17 @@ export interface BlogPostPageProps {
 
 export const dynamicParams = false
 export async function generateStaticParams() {
-  const slugs = await cms.find(BlogPost().select(Entry.path))
+  const slugs = await cms.find(Query(BlogPost).select(Query.path))
   return slugs.map(slug => ({slug}))
 }
 
 export async function generateMetadata({params}: BlogPostPageProps) {
-  const page = await cms.maybeGet(
-    BlogPost().where(Entry.url.is(`/blog/${params.slug}`))
-  )
-  if (!page) return notFound()
+  const page = await cms.get(Query(BlogPost).whereUrl(`/blog/${params.slug}`))
   return {title: page.metadata?.title || page.title}
 }
 
 export default async function BlogPostPage({params}: BlogPostPageProps) {
-  const page = await cms.maybeGet(
-    BlogPost().where(Entry.url.is(`/blog/${params.slug}`))
-  )
-  if (!page) return notFound()
+  const page = await cms.get(Query(BlogPost).whereUrl(`/blog/${params.slug}`))
   return (
     <PageContainer>
       <PageContent>
@@ -56,9 +48,14 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
             </WebTypo.H1>
             <BlogPostMeta {...page} />
           </header>
-          <TextView text={page.body} />
+          <TextFieldView text={page.body} />
         </article>
       </PageContent>
     </PageContainer>
   )
+}
+
+BlogPostPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  const pages = await generateStaticParams()
+  return pages.map(page => ({url: `/blog/${page.slug}`, priority: 0.9}))
 }

@@ -1,5 +1,5 @@
-import {Mutation} from 'alinea/core/Mutation'
 import {Field, FieldOptions} from './Field.js'
+import {Mutation} from './Mutation.js'
 
 export interface FieldGetter {
   <Value>(field: Field<Value>): Value
@@ -32,18 +32,28 @@ export function valueTrackerOf(field: Field) {
 const mutationTrackers = new Map<symbol, MutationTracker>()
 
 export namespace track {
-  export function options<Value, OnChange, Options extends FieldOptions<Value>>(
-    field: Field<Value, OnChange, Options>,
+  export function options<
+    StoredValue,
+    QueryValue,
+    OnChange,
+    Options extends FieldOptions<StoredValue>
+  >(
+    field: Field<StoredValue, QueryValue, OnChange, Options>,
     tracker: OptionsTracker<Options>
-  ): Field<Value, OnChange, Options> {
+  ): Field<StoredValue, QueryValue, OnChange, Options> {
     optionTrackers.set(Field.ref(field), tracker)
     return field
   }
 
-  export function value<Value>(
-    field: Field<Value>,
-    tracker: ValueTracker<Value>
-  ): Field<Value> {
+  export function value<
+    StoredValue,
+    QueryValue,
+    OnChange,
+    Options extends FieldOptions<StoredValue>
+  >(
+    field: Field<StoredValue, QueryValue, OnChange, Options>,
+    tracker: ValueTracker<StoredValue>
+  ): Field<StoredValue, QueryValue, OnChange, Options> {
     valueTrackers.set(Field.ref(field), tracker)
     return field
   }

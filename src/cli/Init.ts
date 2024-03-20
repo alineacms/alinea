@@ -1,7 +1,7 @@
-import {createId, outcome} from 'alinea/core'
+import {createId} from 'alinea/core/Id'
+import {outcome} from 'alinea/core/Outcome'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import {generate} from './Generate.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 
@@ -53,7 +53,7 @@ export async function init(options: InitOptions) {
         title: 'Welcome',
         alinea: {
           index: 'a0',
-          seeded: true
+          seeded: 'welcome.json'
         }
       },
       null,
@@ -66,7 +66,7 @@ export async function init(options: InitOptions) {
     'utf-8'
   )
   const configFileContents = options.next
-    ? configFile.replaceAll('createCMS', 'createNextCMS')
+    ? configFile.replaceAll('alinea/core', 'alinea/next')
     : configFile
   const hasSrcDir = (await outcome(fs.stat(path.join(cwd, 'src')))).isSuccess()
   const configFileLocation = path.join(
@@ -75,8 +75,6 @@ export async function init(options: InitOptions) {
   )
   await fs.writeFile(configFileLocation, configFileContents)
   const pm = await detectPm()
-  for await (const _ of generate({cwd: path.resolve(cwd), quiet})) {
-  }
   if (options.next) {
     let [pkg] = await outcome(
       fs.readFile(path.join(cwd, 'package.json'), 'utf-8')

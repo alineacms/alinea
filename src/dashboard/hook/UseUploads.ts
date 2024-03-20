@@ -1,18 +1,16 @@
 import {Media} from 'alinea/backend/Media'
-import {createFileHash} from 'alinea/backend/util/ContentHash'
-import {
-  Connection,
-  Entry,
-  EntryPhase,
-  EntryRow,
-  HttpError,
-  Workspace
-} from 'alinea/core'
-import {entryFileName, entryFilepath} from 'alinea/core/EntryFilenames'
+import {Connection} from 'alinea/core/Connection'
+import {Entry} from 'alinea/core/Entry'
+import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {HttpError} from 'alinea/core/HttpError'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
-import {base64} from 'alinea/core/util/Encoding'
+import {Workspace} from 'alinea/core/Workspace'
+import {createPreview} from 'alinea/core/media/CreatePreview.browser'
+import {isImage} from 'alinea/core/media/IsImage'
+import type {MediaFile} from 'alinea/core/media/MediaTypes'
+import {createFileHash} from 'alinea/core/util/ContentHash'
+import {entryFileName, entryFilepath} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {
@@ -22,12 +20,10 @@ import {
   join,
   normalize
 } from 'alinea/core/util/Paths'
-import {rgba, toHex} from 'color2k'
+import {slugify} from 'alinea/core/util/Slugs'
 import {atom, useAtom, useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
 import {useEffect} from 'react'
-import smartcrop from 'smartcrop'
-import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {useMutate} from '../atoms/DbAtoms.js'
 import {errorAtom} from '../atoms/ErrorAtoms.js'
 import {withResolvers} from '../util/WithResolvers.js'
@@ -89,79 +85,23 @@ async function process(
 ): Promise<Upload> {
   switch (upload.status) {
     case UploadStatus.Queued:
-      const isImage = Media.isImage(upload.file.name)
-      const next = isImage
+      const next = isImage(upload.file.name)
         ? UploadStatus.CreatingPreview
         : UploadStatus.Uploading
       return {...upload, status: next}
     case UploadStatus.CreatingPreview: {
-      const url = URL.createObjectURL(upload.file)
-
-      // Load the image
-      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const image = new Image()
-        image.onload = () => resolve(image)
-        image.onerror = err => reject(err)
-        image.src = url
-      }).finally(() => URL.revokeObjectURL(url))
-
-      const size = Math.max(image.width, image.height)
-
-      // Scale the image to 100x100 maximum size
-      const thumbW = Math.round((100 * image.width) / size)
-      const thumbH = Math.round((100 * image.height) / size)
-      const thumbCanvas = document.createElement('canvas')
-      const thumbContext = thumbCanvas.getContext('2d')!
-      thumbCanvas.width = thumbW
-      thumbCanvas.height = thumbH
-      thumbContext.drawImage(image, 0, 0, thumbW, thumbH)
-
-      // Calculate thumbhash
-      const pixels = thumbContext.getImageData(0, 0, thumbW, thumbH)
-      const thumbHash = rgbaToThumbHash(thumbW, thumbH, pixels.data)
-
-      // Get the average color via thumbhash
-      const {r, g, b, a} = thumbHashToAverageRGBA(thumbHash)
-      const averageColor = toHex(rgba(r * 255, g * 255, b * 255, a))
-
-      // Create webp preview image
-      const previewW = Math.min(
-        Math.round((160 * image.width) / size),
-        image.width
-      )
-      const previewH = Math.min(
-        Math.round((160 * image.height) / size),
-        image.height
-      )
-      const previewCanvas = document.createElement('canvas')
-      const previewContext = previewCanvas.getContext('2d')!
-      previewContext.imageSmoothingEnabled = true
-      previewContext.imageSmoothingQuality = 'high'
-      previewCanvas.width = previewW
-      previewCanvas.height = previewH
-      previewContext.drawImage(image, 0, 0, previewW, previewH)
-      const preview = previewCanvas.toDataURL('image/webp')
-
-      const crop = await smartcrop.crop(image, {width: 100, height: 100})
-      const focus = {
-        x: (crop.topCrop.x + crop.topCrop.width / 2) / image.width,
-        y: (crop.topCrop.y + crop.topCrop.height / 2) / image.height
-      }
-
+      const previewData = await createPreview(upload.file)
       return {
         ...upload,
-        preview,
-        averageColor,
-        focus,
-        thumbHash: base64.stringify(thumbHash),
-        width: image.naturalWidth,
-        height: image.naturalHeight,
+        ...previewData,
         status: UploadStatus.Uploading
       }
     }
     case UploadStatus.Uploading: {
       const fileName = upload.file.name
-      const file = join(upload.to.directory, fileName)
+      const extension = extname(fileName)
+      const path = slugify(basename(fileName, extension))
+      const file = join(upload.to.directory, path + extension)
       const info = await client.prepareUpload(file)
       await fetch(info.upload.url, {
         method: info.upload.method ?? 'POST',
@@ -244,9 +184,10 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         }
       })
     )
+
+    const extension = extname(upload.file.name)
+    const path = slugify(basename(upload.file.name, extension))
     const prev = await graph.preferPublished.maybeGet(Entry({parent: parentId}))
-    const extension = extname(upload.file.name.toLowerCase())
-    const path = basename(upload.file.name.toLowerCase(), extension)
 
     const entryLocation = {
       workspace: upload.to.workspace,
@@ -270,14 +211,15 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         : location
 
     const hash = await createFileHash(new Uint8Array(buffer))
+    const title = basename(upload.file.name, extension)
     const entry = await createEntryRow<Media.File>(config, {
       ...entryLocation,
       parent: parent?.entryId ?? null,
       entryId: entryId,
       type: 'MediaFile',
       url: (parent ? parent.url : '') + '/' + path,
-      title: basename(path, extension),
-      seeded: false,
+      title,
+      seeded: null,
       modifiedAt: Date.now(),
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
@@ -290,7 +232,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       active: true,
       main: true,
       data: {
-        title: basename(path, extension),
+        title,
         location: fileLocation,
         extension: extension,
         size: buffer.byteLength,

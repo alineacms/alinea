@@ -1,5 +1,6 @@
 import {PageContainer, PageContent} from '@/layout/Page'
 import {fromModule} from 'alinea/ui'
+import {MetadataRoute} from 'next'
 import fs from 'node:fs'
 import path from 'node:path'
 import {remark} from 'remark'
@@ -31,4 +32,8 @@ export default async function Changelog() {
       </PageContent>
     </PageContainer>
   )
+}
+
+Changelog.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/changelog', priority: 0.5}]
 }

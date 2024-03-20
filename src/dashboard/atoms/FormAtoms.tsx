@@ -1,40 +1,68 @@
-import {
-  Field,
-  FieldGetter,
-  FieldOptions,
-  ROOT_KEY,
-  Section,
-  Type,
-  ValueTracker,
-  applyEntryData,
-  optionTrackerOf,
-  valueTrackerOf
-} from 'alinea/core'
+import type {FieldOptions} from 'alinea/core/Field'
+import {Field} from 'alinea/core/Field'
+import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {Atom, Getter, atom} from 'jotai'
 import {PropsWithChildren, createContext, useContext, useMemo} from 'react'
 import * as Y from 'yjs'
 
+import {ROOT_KEY, applyEntryData} from 'alinea/core/Doc'
+import {Section} from 'alinea/core/Section'
+import {
+  FieldGetter,
+  ValueTracker,
+  optionTrackerOf,
+  valueTrackerOf
+} from 'alinea/core/Tracker'
 import {unwrap} from 'jotai/utils'
 
 export interface FieldInfo<
-  Value = any,
+  StoredValue = any,
+  QueryValue = any,
   Mutator = any,
-  Options extends FieldOptions<Value> = FieldOptions<Value>
+  Options extends FieldOptions<StoredValue> = FieldOptions<StoredValue>
 > {
   key: string
-  field: Field<Value, Mutator, Options>
-  value: Atom<Value>
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+  value: Atom<StoredValue>
   options: Atom<Options | Promise<Options>>
+  error: Atom<boolean | string | undefined>
   mutator: Mutator
 }
 
 export class FormAtoms<T = any> {
   private fields = new Map<symbol, FieldInfo>()
 
+  private errorMap = atom(
+    new Map<string, {field: Field; error: boolean | string}>()
+  )
+
+  errors = atom(
+    get => get(this.errorMap),
+    (
+      get,
+      set,
+      path: string,
+      field: Field,
+      error: boolean | string | undefined
+    ) => {
+      const current = get(this.errorMap)
+      if (!error && !current.has(path)) return
+      const errors = new Map(current)
+      if (error) errors.set(path, {field, error})
+      else errors.delete(path)
+      set(this.errorMap, errors)
+      if (this.options.parent)
+        set(this.options.parent.errors, path, field, error)
+    }
+  )
+
+  hasErrors = atom(get => get(this.errorMap).size > 0)
+
   constructor(
     public type: Type<T>,
     public container: Y.Map<any>,
+    public path = '',
     public options: {
       parent?: FormAtoms
       readOnly?: boolean
@@ -66,11 +94,25 @@ export class FormAtoms<T = any> {
             : atom(defaultOptions)
           const valueTracker = valueTrackerOf(field)
           const value = this.valueAtom(field, key, valueTracker)
+          const error = atom(get => {
+            const {validate, required} = get(options)
+            if (validate) {
+              const res = validate(get(value))
+              if (typeof res === 'boolean') return !res
+              return res
+            } else if (required) {
+              const current = get(value)
+              if (current === undefined || current === null) return true
+              if (typeof current === 'string' && current === '') return true
+              if (Array.isArray(current) && current.length === 0) return true
+            }
+          })
           this.fields.set(ref, {
             key,
             field,
             value,
             mutator,
+            error,
             options
           })
         }
@@ -106,7 +148,7 @@ export class FormAtoms<T = any> {
       const current = shape.fromY(this.container.get(key))
       const next = tracker ? tracker(this.getter(g)) : current
       // Todo: we shouldn't mutate here, this should run in a pass after
-      if (next !== current) shape.applyY(next, this.container, key)
+      if (tracker && next !== current) shape.applyY(next, this.container, key)
       return next
     })
   }
@@ -121,17 +163,21 @@ export class FormAtoms<T = any> {
     return this.fieldInfo(field).key
   }
 
-  fieldInfo<Value, Mutator, Options extends FieldOptions<Value>>(
-    field: Field<Value, Mutator, Options>
-  ): FieldInfo<Value, Mutator, Options> {
+  fieldInfo<
+    StoredValue,
+    QueryValue,
+    Mutator,
+    Options extends FieldOptions<StoredValue>
+  >(
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  ): FieldInfo<StoredValue, QueryValue, Mutator, Options> {
     const res = this.fields.get(Field.ref(field))
     const label = Field.label(field)
     if (!res) {
-      console.log(this.options)
       if (this.options.parent) return this.options.parent.fieldInfo(field)
       throw new Error(`Field not found: ${label}`)
     }
-    return res as FieldInfo<Value, Mutator, Options>
+    return res as FieldInfo<StoredValue, QueryValue, Mutator, Options>
   }
 }
 
@@ -194,11 +240,9 @@ export function FormRow({
   const rowForm = useMemo(() => {
     const key = form.keyOf(field)
     const inner = form.container.get(key)
-    if (rowId) {
-      if (!inner.has(rowId)) inner.set(rowId, new Y.Map())
-    }
     const row = rowId ? inner.get(rowId) : inner
-    return new FormAtoms(type, row, {
+    const path = form.path + `.${key}` + (rowId ? `[${rowId}]` : '')
+    return new FormAtoms(type, row, path, {
       readOnly,
       parent: form
     })

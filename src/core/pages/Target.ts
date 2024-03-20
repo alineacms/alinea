@@ -1,17 +1,23 @@
-import {createId} from 'alinea/core/Id'
 import {Callable} from 'rado/util/Callable'
-import {createExprData} from './CreateExprData.js'
+import {createId} from '../Id.js'
 import {Cursor} from './Cursor.js'
-import {EV, Expr, and} from './Expr.js'
-import {BinaryOp, ExprData} from './ExprData.js'
+import {EV, Expr, createExprData} from './Expr.js'
 import {Fields} from './Fields.js'
+import {
+  BinaryOp,
+  ExprData,
+  Selection,
+  targetData,
+  toSelection
+} from './ResolveData.js'
 import {TargetData} from './TargetData.js'
 
 const {create, entries} = Object
 
 export declare class TargetI<Row = object> {
   get [Target.IsTarget](): true
-  get [Target.Data](): TargetData
+  get [targetData](): TargetData
+  [toSelection](): Selection.Row
 }
 
 export interface TargetI<Row = object> extends Callable {
@@ -29,7 +35,6 @@ export namespace Target {
 }
 
 export const Target = class {
-  static readonly Data = Symbol.for('@alinea/Target.Data')
   static readonly IsTarget = Symbol.for('@alinea/Target.IsTarget')
   cache = create(null)
 
@@ -52,7 +57,7 @@ export const Target = class {
     const conditions = isConditionalRecord
       ? entries(input[0]).map(([key, value]) => {
           const field = Expr(ExprData.Field(this.data, key))
-          return Expr(
+          return Expr<boolean>(
             ExprData.BinOp(
               field[Expr.Data],
               BinaryOp.Equals,
@@ -60,8 +65,8 @@ export const Target = class {
             )
           )
         })
-      : input.map(ev => Expr(createExprData(ev)))
-    return and(...conditions)[Expr.Data]
+      : input.map(ev => Expr<boolean>(createExprData(ev)))
+    return Expr.and(...conditions)[Expr.Data]
   }
 
   get(field: string) {
@@ -90,8 +95,10 @@ export const Target = class {
         switch (prop) {
           case Target.IsTarget:
             return true
-          case Target.Data:
+          case targetData:
             return data
+          case toSelection:
+            return Selection.Row(data)
         }
       }
     })

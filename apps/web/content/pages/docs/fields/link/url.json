@@ -1,80 +1,84 @@
 {
+  "_id": "2aiM9Z6hrhingqGxBX6GGKEVBAh",
+  "_type": "Doc",
+  "_index": "a1",
+  "_i18nId": "2aiM9Z6hrhingqGxBX6GGKEVBAh",
+  "_root": "pages",
   "title": "Url",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "The Url field can be used to link to an external resource."
         }
       ]
     },
     {
-      "id": "2aiMCRN0CLmhmeDTiClxqD0dIxf",
-      "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.url('Single URL link')\n\nalinea.url.multiple('Multiple URL links')",
+      "_type": "CodeBlock",
+      "_id": "2aiMCRN0CLmhmeDTiClxqD0dIxf",
+      "code": "import {Field} from 'alinea'\n\nField.url('Single URL link')\n\nField.url.multiple('Multiple URL links')",
       "fileName": "",
       "language": ""
     },
     {
-      "id": "2aiMFdnqKQucL7haTVJQfqtcsVs",
-      "type": "ExampleBlock",
-      "code": "export default alinea.type('Url field', {\n  url: alinea.url('Single URL link'),\n  urlMultiple: alinea.url.multiple('Multiple URL links')\n})"
+      "_type": "ExampleBlock",
+      "_id": "2aiMFdnqKQucL7haTVJQfqtcsVs",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Url field', {\n  url: Field.url('Single URL link'),\n  urlMultiple: Field.url.multiple('Multiple URL links')\n})"
     },
     {
-      "type": "heading",
+      "_type": "heading",
       "textAlign": "start",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration",
           "marks": [
             {
-              "type": "bold"
+              "_type": "bold"
             }
           ]
         }
       ]
     },
     {
-      "type": "heading",
+      "_type": "heading",
       "textAlign": "start",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`max`",
           "marks": [
             {
-              "type": "bold"
+              "_type": "bold"
             }
           ]
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "start",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Limit the amount of rows in case of multiple links."
         }
       ]
     }
   ],
   "metadata": {
+    "title": "",
+    "description": "",
     "openGraph": {
-      "image": {}
+      "title": "",
+      "image": {},
+      "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2aiM9Z6hrhingqGxBX6GGKEVBAh",
-    "type": "Doc",
-    "index": "a1"
   }
 }

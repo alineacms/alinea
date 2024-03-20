@@ -1,232 +1,317 @@
-import alinea, {createCMS} from 'alinea'
-import {Entry} from 'alinea/core'
+import {Config, Field, Query} from 'alinea'
+import {createCMS} from 'alinea/core'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import {position} from './src/PositionField'
 
-const Page = alinea.document('Page', {})
+const Page = Config.document('Page', {
+  fields: {}
+})
 
-const Folder = alinea.type('Folder', {
-  title: alinea.text('Title', {
-    width: 0.5
-  }),
-  path: alinea.path('Path', {
-    width: 0.5
-  }),
-  [alinea.meta]: {
-    isContainer: true,
-    orderChildrenBy: {asc: 'title'}
+const Folder = Config.type('Folder', {
+  isContainer: true,
+  orderChildrenBy: {asc: 'title'},
+  fields: {
+    title: Field.text('Title', {
+      width: 0.5
+    }),
+    path: Field.path('Path', {
+      width: 0.5
+    })
   }
 })
 
-const CustomPage = alinea.document('Custom page', {
-  [alinea.meta]: {
-    view() {
-      return (
-        <div style={{width: '100%', height: '100%', background: 'red'}}>
-          Custom entry view
-        </div>
-      )
-    }
-  }
+const CustomPage = Config.document('Custom page', {
+  view() {
+    return (
+      <div style={{width: '100%', height: '100%', background: 'red'}}>
+        Custom entry view
+      </div>
+    )
+  },
+  fields: {}
 })
 
 // alineacms/alinea#353
-const TabsExample = alinea.type('Tabs Example', {
-  path: alinea.path('Path', {
-    hidden: true
-  }),
-  ...alinea.tabs(
-    alinea.tab('Tab 1', {
-      title: alinea.text('Title')
+const TabsExample = Config.type('Tabs Example', {
+  fields: {
+    path: Field.path('Path', {
+      hidden: true
     }),
-    alinea.tab('Tab 2', {
-      another_title: alinea.text('Another title')
-    })
-  )
+    ...Field.tabs(
+      Field.tab('Tab 1', {
+        fields: {title: Field.text('Title')}
+      }),
+      Field.tab('Tab 2', {
+        fields: {another_title: Field.text('Another title')}
+      })
+    )
+  }
 })
 
-const rootField = alinea.select('Root field', {
-  a: 'Option a',
-  b: 'Option b'
+const rootField = Field.select('Root field', {
+  initialValue: 'a',
+  options: {
+    a: 'Option a',
+    b: 'Option b'
+  }
 })
 
-const showIfA = alinea.track.options(alinea.text('Show if A'), get => {
+const showIfA = Config.track.options(Field.text('Show if A'), get => {
   return {hidden: get(rootField) !== 'a'}
 })
-const showIfB = alinea.track.options(alinea.text('Show if B'), get => {
+const showIfB = Config.track.options(Field.text('Show if B'), get => {
   return {hidden: get(rootField) !== 'b'}
 })
 
-const nestedList = alinea.list('Nested list', {
-  schema: alinea.schema({
-    Row: alinea.type('List item', {
-      a: showIfA,
-      b: showIfB
+const nestedList = Field.list('Nested list', {
+  schema: {
+    Row: Config.type('List item', {
+      fields: {
+        a: showIfA,
+        b: showIfB
+      }
     })
-  })
+  }
 })
 
-const Fields = alinea.document('Fields', {
-  ...alinea.tabs(
-    alinea.tab('Basic fields', {
-      text: alinea.text('Text field'),
-      richText: alinea.richText('Rich text field'),
-      select: alinea.select('Select field', {
-        a: 'Option a',
-        b: 'Option b'
-      }),
-      number: alinea.number('Number field', {
-        minValue: 0,
-        maxValue: 10
-      }),
-      check: alinea.check('Check field', {description: 'Check me please'}),
-      date: alinea.date('Date field'),
-      code: alinea.code('Code field')
-    }),
-    alinea.tab('Link fields', {
-      externalLink: alinea.url('External link'),
-      entry: alinea.entry('Internal link'),
-      entryWithCondition: alinea.entry('With condition', {
-        help: `Show only entries of type Fields`,
-        condition: Entry.type.is('Fields'),
-        readOnly: true
-      }),
-      linkMultiple: alinea.link.multiple('Mixed links, multiple', {
-        readOnly: true
-      }),
-      image: alinea.image('Image link'),
-      images: alinea.image.multiple('Image link (multiple)', {
-        readOnly: true
-      }),
-      file: alinea.entry('File link'),
-      withFields: alinea.link('With extra fields', {
-        fields: alinea.type({
-          fieldA: alinea.text('Field A', {width: 0.5}),
-          fieldB: alinea.text('Field B', {width: 0.5})
-        }),
-        readOnly: true
-      })
-    }),
-    alinea.tab('List fields', {
-      list: alinea.list('My list field', {
-        schema: alinea.schema({
-          Text: alinea.type('Text', {
-            title: alinea.text('Item title'),
-            text: alinea.richText('Item body text')
-          }),
-          Image: alinea.type('Image', {
-            image: alinea.image('Image')
-          })
-        }),
-        readOnly: true
-      })
-    }),
-    alinea.tab('Rich text fields', {
-      nested: alinea.richText('With nested blocks', {
-        schema: {
-          Inner: alinea.type('Inner', {
-            checkbox1: alinea.check('Checkbox 1'),
-            checkbox2: alinea.check('Checkbox 2'),
-            title: alinea.text('Title'),
-            content: alinea.richText('Inner rich text')
-          }),
+const Answer = Config.type('Answer', {
+  fields: {
+    correct: Field.check('Is correct', {width: 0.25}),
+    label: Field.text('Label', {multiline: true, width: 0.75})
+  }
+})
+const answers = Field.list('Answers', {
+  schema: {Answer},
+  validate(value) {
+    const hasCorrect = value.some(answer => answer.correct)
+    if (!hasCorrect) return 'At least one answer must be correct'
+  }
+})
 
-          NestLayout: alinea.type('Nested layout fields', {
-            object: alinea.object('Object field', {
-              fields: alinea.type('Fields', {
-                fieldA: alinea.text('Field A', {width: 0.5}),
-                fieldB: alinea.text('Field B', {width: 0.5})
-              })
-            }),
-            ...alinea.tabs(
-              alinea.tab('Tab A', {
-                tabA: alinea.text('Tab A')
+const Fields = Config.document('Fields', {
+  fields: {
+    ...Field.tabs(
+      Field.tab('Quiz', {
+        fields: {answers}
+      }),
+      Field.tab('Basic fields', {
+        fields: {
+          text: Field.text('Text field'),
+          hello: Field.text('Validated text field', {
+            help: 'This field only accepts "hello"',
+            validate: value => {
+              if (value !== 'hello') {
+                return 'Only "hello" is allowed'
+              }
+            }
+          }),
+          richText: Field.richText('Rich text field'),
+          select: Field.select('Select field', {
+            width: 0.5,
+            options: {
+              a: 'Option a',
+              b: 'Option b'
+            }
+          }),
+          number: Field.number('Number field', {
+            minValue: 0,
+            maxValue: 10
+          }),
+          check: Field.check('Check field', {description: 'Check me please'}),
+          date: Field.date('Date field'),
+          code: Field.code('Code field')
+        }
+      }),
+      Field.tab('Link fields', {
+        fields: {
+          externalLink: Field.url('External link'),
+          entry: Field.entry('Internal link'),
+          entryWithCondition: Field.entry('With condition', {
+            help: `Show only entries of type Fields in the main workspace`,
+            location: {workspace: 'primary', root: 'fields'},
+            condition: Query.type.is('Fields')
+          }),
+          linkMultiple: Field.link.multiple('Mixed links, multiple'),
+          image: Field.image('Image link'),
+          images: Field.image.multiple('Image link (multiple)'),
+          file: Field.entry('File link'),
+          withFields: Field.entry('With extra fields', {
+            fields: {
+              fieldA: Field.text('Field A', {width: 0.5}),
+              fieldB: Field.text('Field B', {width: 0.5})
+            }
+          }),
+          multipleWithFields: Field.link.multiple(
+            'Multiple With extra fields',
+            {
+              fields: {
+                fieldA: Field.text('Field A', {width: 0.5}),
+                fieldB: Field.text('Field B', {width: 0.5, required: true})
+              }
+            }
+          )
+        }
+      }),
+      Field.tab('List fields', {
+        fields: {
+          list: Field.list('My list field', {
+            schema: {
+              Text: Config.type('Text', {
+                fields: {
+                  title: Field.text('Item title'),
+                  text: Field.richText('Item body text')
+                }
               }),
-              alinea.tab('Tab B', {
-                tabB: alinea.text('Tab B')
+              Image: Config.type('Image', {
+                fields: {image: Field.image('Image')}
               })
-            )
+            }
           })
         }
-      })
-    }),
-    alinea.tab('Inline fields', {
-      street: alinea.text('Street', {
-        width: 0.6,
-        inline: true,
-        multiline: true
       }),
-      streetNr: alinea.text('Number', {width: 0.2, inline: true}),
-      box: alinea.text('Box', {width: 0.2, inline: true}),
-      zip: alinea.text('Zipcode', {width: 0.2, inline: true}),
-      city: alinea.text('City', {width: 0.4, inline: true}),
-      country: alinea.text('Country', {
-        width: 0.4,
-        inline: true
-      })
-    }),
-    alinea.tab('Layout fields', {
-      object: alinea.object('Object field', {
-        fields: alinea.type('Fields', {
-          fieldA: alinea.text('Field A', {width: 0.5}),
-          fieldB: alinea.text('Field B', {width: 0.5})
-        })
+      Field.tab('Rich text fields', {
+        fields: {
+          withInitial: Field.richText('With initial value', {
+            required: true,
+            initialValue: [
+              {
+                _type: 'paragraph',
+                content: [
+                  {
+                    _type: 'text',
+                    text: 'This is a paragraph with initial value'
+                  }
+                ]
+              }
+            ]
+          }),
+          makeRO: Field.check('Make read-only'),
+          nested: Field.richText('With nested blocks', {
+            schema: {
+              Inner: Config.type('Inner', {
+                fields: {
+                  checkbox1: Field.check('Checkbox 1'),
+                  checkbox2: Field.check('Checkbox 2'),
+                  title: Field.text('Title'),
+                  content: Field.richText('Inner rich text')
+                }
+              }),
+
+              NestLayout: Config.type('Nested layout fields', {
+                fields: {
+                  object: Field.object('Object field', {
+                    fields: {
+                      fieldA: Field.text('Field A', {width: 0.5}),
+                      fieldB: Field.text('Field B', {width: 0.5})
+                    }
+                  }),
+                  ...Field.tabs(
+                    Field.tab('Tab A', {
+                      fields: {tabA: Field.text('Tab A')}
+                    }),
+                    Field.tab('Tab B', {
+                      fields: {tabB: Field.text('Tab B')}
+                    })
+                  )
+                }
+              })
+            }
+          })
+        }
       }),
-      ...alinea.tabs(
-        alinea.tab('Tab A', {
-          tabA: alinea.text('Tab A', {shared: true})
-        }),
-        alinea.tab('Tab B', {
-          tabB: alinea.text('Tab B')
-        })
-      )
-    }),
-    alinea.tab('Custom field', {
-      position: position('Position field')
-    }),
-    alinea.tab('I18n', {
-      shared: alinea.text('Shared field', {
-        help: `This field is shared between languages.`,
-        shared: true
+      Field.tab('Inline fields', {
+        fields: {
+          street: Field.text('Street', {
+            width: 0.6,
+            inline: true,
+            multiline: true
+          }),
+          streetNr: Field.text('Number', {width: 0.2, inline: true}),
+          box: Field.text('Box', {width: 0.2, inline: true}),
+          zip: Field.text('Zipcode', {width: 0.2, inline: true}),
+          city: Field.text('City', {width: 0.4, inline: true}),
+          country: Field.text('Country', {
+            width: 0.4,
+            inline: true
+          })
+        }
+      }),
+      Field.tab('Layout fields', {
+        fields: {
+          object: Field.object('Object field', {
+            fields: {
+              fieldA: Field.text('Field A', {width: 0.5}),
+              fieldB: Field.text('Field B', {width: 0.5})
+            }
+          }),
+          ...Field.tabs(
+            Field.tab('Tab A', {
+              fields: {tabA: Field.text('Tab A', {shared: true})}
+            }),
+            Field.tab('Tab B', {
+              fields: {tabB: Field.text('Tab B')}
+            })
+          )
+        }
+      }),
+      Field.tab('Custom field', {
+        fields: {position: position('Position field')}
+      }),
+      Field.tab('I18n', {
+        fields: {
+          shared: Field.text('Shared field', {
+            help: `This field is shared between languages.`,
+            shared: true
+          })
+        }
+      }),
+      Field.tab('Conditional fields', {
+        fields: {
+          rootField,
+          nestedList
+        }
       })
-    }),
-    alinea.tab('Conditional fields', {
-      rootField,
-      nestedList
-    })
-  )
+    )
+  }
 })
 
-const schema = alinea.schema({
-  Page,
-  Folder,
-  CustomPage,
-  TabsExample,
-  Fields
+const schema = Config.schema({
+  types: {
+    Page,
+    Folder,
+    CustomPage,
+    TabsExample,
+    Fields
+  }
 })
 
 export const cms = createCMS({
   schema,
   workspaces: {
-    primary: alinea.workspace('Primary workspace', {
-      fields: alinea.root('Fields', {
-        [alinea.meta]: {
+    primary: Config.workspace('Primary workspace', {
+      mediaDir: 'public',
+      source: 'content/primary',
+      roots: {
+        fields: Config.root('Fields', {
           contains: ['Folder', 'TabsExample', 'Fields'],
           icon: IcRoundUploadFile
-        }
-      }),
-      pages: alinea.root('Languages', {
-        [alinea.meta]: {
+        }),
+        pages: Config.root('Languages', {
           icon: IcRoundTranslate,
           contains: ['TabsExample', 'Fields', 'Page', 'Folder'],
           i18n: {
             locales: ['en', 'fr', 'nl']
+          },
+          entries: {
+            seededPath: Config.page(
+              Fields({
+                title: 'Seeded page'
+              })
+            )
           }
-        }
-      }),
-      custom: alinea.root('Custom', {
-        [alinea.meta]: {
+        }),
+        custom: Config.root('Custom', {
           contains: ['CustomPage'],
           view() {
             return (
@@ -237,22 +322,16 @@ export const cms = createCMS({
               </div>
             )
           }
-        }
-      }),
-      media: alinea.media(),
-      [alinea.meta]: {
-        mediaDir: 'public',
-        source: 'content/primary'
+        }),
+        media: Config.media()
       }
     }),
-    secondary: alinea.workspace('Secondary workspace', {
-      pages: alinea.root('Pages', {
-        [alinea.meta]: {
+    secondary: Config.workspace('Secondary workspace', {
+      source: 'content/secondary',
+      roots: {
+        pages: Config.root('Pages', {
           contains: ['Page', 'Folder']
-        }
-      }),
-      [alinea.meta]: {
-        source: 'content/secondary'
+        })
       }
     })
   }

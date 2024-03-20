@@ -1,9 +1,8 @@
 {
-  "id": "gx3H52whBKO_DdfcMNI3I",
-  "type": "BlogOverview",
-  "title": "Blog",
-  "alinea": {
-    "index": "a0",
-    "root": "data"
-  }
+  "_id": "gx3H52whBKO_DdfcMNI3I",
+  "_type": "BlogOverview",
+  "_index": "a0",
+  "_i18nId": "gx3H52whBKO_DdfcMNI3I",
+  "_root": "pages",
+  "title": "Blog"
 }

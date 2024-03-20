@@ -1,28 +1,25 @@
 import {Media} from 'alinea/backend'
-import {
-  Config,
-  Connection,
-  EntryPhase,
-  EntryRow,
-  EntryUrlMeta,
-  ROOT_KEY,
-  Root,
-  Type,
-  createId,
-  createYDoc,
-  parseYDoc
-} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {Connection} from 'alinea/core/Connection'
+import {ROOT_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
 import {Entry} from 'alinea/core/Entry'
+import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {Field} from 'alinea/core/Field'
+import {Graph} from 'alinea/core/Graph'
+import {createId} from 'alinea/core/Id'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {Query} from 'alinea/core/Query'
+import {Root} from 'alinea/core/Root'
+import {EntryUrlMeta, Type} from 'alinea/core/Type'
+import {Workspace} from 'alinea/core/Workspace'
+import type {MediaFile} from 'alinea/core/media/MediaTypes'
+import {base64} from 'alinea/core/util/Encoding'
 import {
   entryFileName,
   entryFilepath,
   entryInfo,
   entryUrl
-} from 'alinea/core/EntryFilenames'
-import {Graph} from 'alinea/core/Graph'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
-import {base64} from 'alinea/core/util/Encoding'
+} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
@@ -364,13 +361,16 @@ export function createEntryEditor(entryData: EntryData) {
       const shared = Type.sharedData(type, entry.data)
       if (shared) {
         const translations = await graph.preferPublished.find(
-          Entry({i18nId: entry.i18nId})
+          Entry({i18nId: entry.i18nId}).select({
+            ...Entry,
+            parentPaths: Query.parents().select(Entry.path)
+          })
         )
         for (const translation of translations) {
           if (translation.locale === entry.locale) continue
           res.push({
             type: MutationType.Patch,
-            file: entryFile(translation),
+            file: entryFile(translation, translation.parentPaths),
             entryId: translation.entryId,
             patch: shared
           })
@@ -380,7 +380,27 @@ export function createEntryEditor(entryData: EntryData) {
     return res
   }
 
+  const errorsAtom = atom(get => {
+    return get(get(form).errors)
+  })
+
+  const confirmErrorsAtom = atom(null, get => {
+    const errors = get(errorsAtom)
+    if (errors.size > 0) {
+      let errorMessage = ''
+      for (const [path, {field, error}] of errors.entries()) {
+        const label = Field.label(field)
+        const line = typeof error === 'string' ? `${label}: ${error}` : label
+        errorMessage += `\n— ${line}`
+      }
+      const message = `These fields contains errors, are you sure you want to publish?${errorMessage}`
+      return confirm(message)
+    }
+    return true
+  })
+
   const publishEdits = atom(null, async (get, set) => {
+    if (!set(confirmErrorsAtom)) return
     const currentFile = entryFile(activeVersion)
     const update = base64.stringify(edits.getLocalUpdate())
     const entry = await getDraftEntry({phase: EntryPhase.Published})
@@ -434,6 +454,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const publishDraft = atom(null, async (get, set) => {
+    if (!set(confirmErrorsAtom)) return
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Publish,
@@ -491,6 +512,31 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.PublishArchived,
       action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete publish action, please try again later'
+    })
+  })
+
+  const deleteMediaLibrary = atom(null, (get, set) => {
+    const result = confirm(
+      'Are you sure you want to delete this folder and all its files?'
+    )
+    if (!result) return
+    const published = entryData.phases[EntryPhase.Published]
+    const mutations: Array<Mutation> = [
+      {
+        type: MutationType.Archive,
+        entryId: published.entryId,
+        file: entryFile(published)
+      },
+      {
+        type: MutationType.Remove,
+        entryId: published.entryId,
+        file: entryFile({...published, phase: EntryPhase.Archived})
+      }
+    ]
+    return set(transact, {
+      transition: EntryTransition.DeleteArchived,
+      action: () => set(mutateAtom, mutations),
+      errorMessage: 'Could not complete delete action, please try again later'
     })
   })
 
@@ -629,13 +675,20 @@ export function createEntryEditor(entryData: EntryData) {
   const form = atom(get => {
     const doc = get(currentDoc)
     const readOnly = doc !== edits.doc ? true : undefined
-    return new FormAtoms(type, doc.getMap(ROOT_KEY), {readOnly})
+    return new FormAtoms(type, doc.getMap(ROOT_KEY), '', {readOnly})
   })
 
   const yUpdate = debounceAtom(edits.yUpdate, 250)
 
   const discardEdits = edits.resetChanges
   const isLoading = edits.isLoading
+
+  const preview =
+    Root.preview(
+      config.workspaces[activeVersion.workspace][activeVersion.root]
+    ) ??
+    Workspace.preview(config.workspaces[activeVersion.workspace]) ??
+    config.preview
 
   return {
     ...entryData,
@@ -660,6 +713,7 @@ export function createEntryEditor(entryData: EntryData) {
     archivePublished,
     publishArchived,
     deleteFile,
+    deleteMediaLibrary,
     deleteArchived,
     saveTranslation,
     discardEdits,
@@ -667,6 +721,7 @@ export function createEntryEditor(entryData: EntryData) {
     showHistory,
     revisionsAtom,
     previewRevision,
+    preview,
     form,
     view
   }

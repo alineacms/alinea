@@ -25,7 +25,7 @@ export function CodeVariantTabs({variants}: Infer<typeof CodeVariantsBlock>) {
         {variants.map(variant => {
           return (
             <button
-              key={variant.id}
+              key={variant._id}
               className={styles.root.trigger({
                 selected: selectedVariant === variant.name
               })}
@@ -40,7 +40,7 @@ export function CodeVariantTabs({variants}: Infer<typeof CodeVariantsBlock>) {
       {variants.map(variant => {
         if (selectedVariant !== variant.name) return null
         return (
-          <div className={styles.root.code()} key={variant.id}>
+          <div className={styles.root.code()} key={variant._id}>
             {variant.code && (
               <WebTypo.Monospace
                 as="div"

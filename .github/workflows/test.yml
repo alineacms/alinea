@@ -15,7 +15,11 @@ jobs:
       - uses: actions/setup-node@v3
         with: {node-version: '18', cache: 'yarn'}
       - run: yarn
-      - run: yarn test
+      - name: Check cycles for server target
+        run: yarn cycles:server
+      - name: Check cycles for browser target
+        run: yarn cycles:browser
+      - run: yarn test --report
       - uses: nowsprinting/check-version-format-action@v3
         id: version
         with: {prefix: 'v'}

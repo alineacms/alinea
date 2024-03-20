@@ -1,4 +1,4 @@
-import {Entry} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {HStack, Stack, fromModule} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'

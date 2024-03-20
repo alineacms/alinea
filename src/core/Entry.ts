@@ -1,13 +1,13 @@
-import {Expand} from 'alinea/core'
 import {EntryPhase, EntryRow} from './EntryRow.js'
 import {Target} from './pages/Target.js'
+import {Expand} from './util/Types.js'
 
 export interface Entry {
   entryId: string
   phase: EntryPhase
   title: string
   type: string
-  seeded: boolean
+  seeded: string | null
   workspace: string
   root: string
   level: number

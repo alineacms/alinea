@@ -1,6 +1,8 @@
-import alinea from 'alinea'
-import {TextField} from './blocks/TextBlock'
+import {Config} from 'alinea'
+import {textField} from './fields/TextField'
 
-export const Page = alinea.document('Page', {
-  body: TextField
+export const Page = Config.document('Page', {
+  fields: {
+    body: textField()
+  }
 })

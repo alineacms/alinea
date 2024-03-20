@@ -2,7 +2,7 @@
   "name": "@alinea/cli",
   "type": "module",
   "dependencies": {
-    "esbuild": "^0.19.2"
+    "esbuild": "^0.20.1"
   },
   "devDependencies": {
     "@types/escape-html": "^1.0.2",

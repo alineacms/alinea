@@ -1,5 +1,6 @@
-import {Connection, User} from 'alinea/core'
+import {Connection} from 'alinea/core/Connection'
 import {EntryRecord} from 'alinea/core/EntryRecord'
+import {User} from 'alinea/core/User'
 
 export interface Revision {
   ref: string

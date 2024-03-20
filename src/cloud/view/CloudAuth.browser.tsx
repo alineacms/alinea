@@ -1,6 +1,6 @@
-import {Connection} from 'alinea/core'
 import {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
+import {Connection} from 'alinea/core/Connection'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {Head} from 'alinea/dashboard/util/Head'
@@ -45,10 +45,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
               </HStack>
               <Typo.P>
                 Alinea requires a{' '}
-                <Typo.Link
-                  href="https://alinea.sh/docs/deploy/exporting-the-dashboard"
-                  target="_blank"
-                >
+                <Typo.Link href="https://alinea.sh/docs/deploy" target="_blank">
                   handler
                 </Typo.Link>{' '}
                 to continue.

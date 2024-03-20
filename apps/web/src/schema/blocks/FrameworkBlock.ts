@@ -1,15 +1,17 @@
 import {supportedFrameworks} from '@/layout/nav/Frameworks'
-import alinea from 'alinea'
-import {TextField} from './TextBlock'
+import {Config, Field} from 'alinea'
+import {textField} from '../fields/TextField'
 
-export const FrameworkBlock = alinea.type('Framework specific', {
-  ...alinea.tabs(
-    ...supportedFrameworks.map(framework => {
-      return alinea.tab(framework.label, {
-        [framework.name]: TextField
+export const FrameworkBlock = Config.type('Framework specific', {
+  fields: {
+    ...Field.tabs(
+      ...supportedFrameworks.map(framework => {
+        return Field.tab(framework.label, {
+          fields: {
+            [framework.name]: textField()
+          }
+        })
       })
-    })
-  )
+    )
+  }
 })
-
-Object.assign

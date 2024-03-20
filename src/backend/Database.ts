@@ -1,35 +1,33 @@
-import {JsonLoader, Media} from 'alinea/backend'
-import {
-  Config,
-  EntryUrlMeta,
-  PageSeed,
-  Root,
-  Schema,
-  SyncResponse,
-  Syncable,
-  Type,
-  Workspace,
-  createId,
-  unreachable
-} from 'alinea/core'
-import {entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
-import {EntryRecord, META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import {Config} from 'alinea/core/Config'
+import {SyncResponse, Syncable} from 'alinea/core/Connection'
+import {EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
+import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {PageSeed} from 'alinea/core/Page'
+import {Root} from 'alinea/core/Root'
+import {Schema} from 'alinea/core/Schema'
+import {EntryUrlMeta, Type} from 'alinea/core/Type'
+import {Workspace} from 'alinea/core/Workspace'
+import {createFileHash, createRowHash} from 'alinea/core/util/ContentHash'
+import {entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow, publishEntryRow} from 'alinea/core/util/EntryRows'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
+import {slugify} from 'alinea/core/util/Slugs'
+import {unreachable} from 'alinea/core/util/Types'
 import {Driver, Expr, Select, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'
 import {EntryPhase, EntryRow} from '../core/EntryRow.js'
+import {Media} from './Media.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
-import {ChangeSetCreator} from './data/ChangeSet.js'
+import {Change, ChangeType} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
-import {createFileHash, createRowHash} from './util/ContentHash.js'
+import {JsonLoader} from './loader/JsonLoader.js'
 
 interface Seed {
   type: string
@@ -37,6 +35,10 @@ interface Seed {
   root: string
   filePath: string
   page: PageSeed
+}
+
+function seedKey(workspace: string, root: string, filePath: string) {
+  return `${workspace}.${root}.${filePath}`
 }
 
 export class Database implements Syncable {
@@ -387,7 +389,11 @@ export class Database implements Syncable {
     const {Parent} = alias(EntryRow)
     const res = await tx(
       EntryRow().set({
-        parent: Parent({childrenDir: EntryRow.parentDir})
+        parent: Parent({
+          childrenDir: EntryRow.parentDir,
+          workspace: EntryRow.workspace,
+          root: EntryRow.root
+        })
           .select(Parent.entryId)
           .maybeFirst(),
         active: EntryRealm.isActive,
@@ -446,8 +452,8 @@ export class Database implements Syncable {
     },
     seed?: Seed
   ): Omit<EntryRow, 'rowHash' | 'fileHash'> {
-    const {[META_KEY]: alineaMeta, ...data} = record
-    const typeName = alineaMeta.type
+    const {meta: recordMeta, data} = parseRecord(record)
+    const typeName = recordMeta.type
     const parentDir = paths.dirname(meta.filePath)
     const extension = paths.extname(meta.filePath)
     const fileName = paths.basename(meta.filePath, extension)
@@ -470,7 +476,7 @@ export class Database implements Syncable {
       )
     const childrenDir = paths.join(parentDir, entryPath)
 
-    if (!record[META_KEY].entryId) throw new Error(`missing id`)
+    if (!recordMeta.entryId) throw new Error(`missing id`)
 
     const urlMeta: EntryUrlMeta = {
       locale,
@@ -481,36 +487,38 @@ export class Database implements Syncable {
 
     const pathData = entryPath === 'index' ? '' : entryPath
     const seedData = seed ? PageSeed.data(seed.page).partial : {}
-    const entryData = {
+    const title = record.title ?? seedData?.title ?? ''
+    const entryData = Type.toV1(type, {
       ...seedData,
       ...data,
+      title,
       path: pathData
-    }
+    })
     const searchableText = Type.searchableText(type, entryData)
     return {
       workspace: meta.workspace,
       root: meta.root,
       filePath: meta.filePath,
-      seeded: Boolean(seed || alineaMeta.seeded || false),
+      seeded: seed?.filePath ?? null,
 
       modifiedAt: Date.now(), // file.modifiedAt,
       active: false,
       main: false,
 
-      entryId: alineaMeta.entryId,
+      entryId: recordMeta.entryId,
       phase: entryPhase,
-      type: alineaMeta.type,
+      type: recordMeta.type,
 
       parentDir,
       childrenDir,
       parent: null,
       level: parentDir === '/' ? 0 : segments.length,
-      index: alineaMeta.index,
+      index: recordMeta.index,
       locale,
-      i18nId: alineaMeta.i18nId ?? alineaMeta.entryId,
+      i18nId: recordMeta.i18nId ?? recordMeta.entryId,
 
       path: entryPath,
-      title: record.title ?? seedData?.title ?? '',
+      title,
       url: entryUrl(type, urlMeta),
 
       data: entryData,
@@ -530,12 +538,14 @@ export class Database implements Syncable {
           const target = locale ? `/${locale}` : '/'
           while (pages.length > 0) {
             const [pagePath, page] = pages.shift()!
+            const path = pagePath.split('/').map(slugify).join('/')
             if (!PageSeed.isPageSeed(page)) continue
             const {type} = PageSeed.data(page)
-            const filePath = paths.join(target, pagePath) + '.json'
+            const filePath = paths.join(target, path) + '.json'
             const typeName = typeNames.get(type)
             if (!typeName) continue
-            res.set(filePath, {
+            const key = seedKey(workspaceName, rootName, filePath)
+            res.set(key, {
               type: typeName,
               workspace: workspaceName,
               root: rootName,
@@ -544,7 +554,7 @@ export class Database implements Syncable {
             })
             const children = entries(page).map(
               ([childPath, child]) =>
-                [paths.join(pagePath, childPath), child as PageSeed] as const
+                [paths.join(path, childPath), child as PageSeed] as const
             )
             pages.push(...children)
           }
@@ -557,8 +567,12 @@ export class Database implements Syncable {
   async fill(
     source: Source,
     commitHash: string,
-    target?: Target
+    target?: Target,
+    // If the generated json is different from the source, the source will be
+    // updated with the generated json
+    fix = false
   ): Promise<void> {
+    if (fix && !target) throw new TypeError(`Target expected if fix is true`)
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
     await this.init()
@@ -570,8 +584,8 @@ export class Database implements Syncable {
       const seenSeeds = new Set<string>()
       const inserted = []
       //const endScan = timer('Scanning entries')
+      const changes: Array<Change> = []
       for await (const file of source.entries()) {
-        const seed = this.seed.get(file.filePath)
         const fileHash = await createFileHash(file.contents)
         const exists = await query(
           EntryRow({
@@ -580,27 +594,62 @@ export class Database implements Syncable {
             workspace: file.workspace,
             root: file.root
           })
-            .select(EntryRow.versionId)
+            .select({
+              versionId: EntryRow.versionId,
+              seeded: EntryRow.seeded
+            })
             .maybeFirst()
         )
-        if (seed) {
-          seenSeeds.add(seed.filePath)
-        }
         // Todo: a config change but unchanged entry data will currently
         // fly under the radar
-        if (exists) {
-          seenVersions.push(exists)
+        if (!fix && exists) {
+          seenVersions.push(exists.versionId)
+          const key = seedKey(
+            file.workspace,
+            file.root,
+            exists.seeded ?? file.filePath
+          )
+          seenSeeds.add(key)
           continue
         }
         try {
           const raw = JsonLoader.parse(this.config.schema, file.contents)
-          const entry = this.computeEntry(EntryRecord(raw), file, seed)
-          if (entry.seeded && entry.phase === EntryPhase.Published && !seed)
-            throw new Error(`seed entry is missing from config`)
+          const {meta, data} = parseRecord(raw)
+          const seeded = meta.seeded
+          const key = seedKey(
+            file.workspace,
+            file.root,
+            typeof seeded === 'string' ? seeded : file.filePath
+          )
+          const seed = this.seed.get(key)
+          const record = createRecord({...meta, data})
+          const entry = this.computeEntry(record, file, seed)
+          const withHash: EntryRow = {...entry, fileHash, rowHash: ''}
+          if (fix) {
+            const fileContents = JsonLoader.format(this.config.schema, record)
+            const newHash = await createFileHash(fileContents)
+            if (fileHash !== newHash) {
+              const workspace = this.config.workspaces[entry.workspace]
+              const file = paths.join(
+                Workspace.data(workspace).source,
+                entry.root,
+                entry.filePath
+              )
+              const record = createRecord(entry)
+              const contents = new TextDecoder().decode(
+                JsonLoader.format(this.config.schema, record)
+              )
+              changes.push({
+                type: ChangeType.Write,
+                file,
+                contents
+              })
+            }
+          }
           await query(
             EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
           )
-          const withHash: EntryRow = {...entry, fileHash, rowHash: ''}
+          seenSeeds.add(key)
           seenVersions.push(
             await query(
               EntryRow().insert(withHash).returning(EntryRow.versionId)
@@ -609,24 +658,42 @@ export class Database implements Syncable {
           inserted.push(`${entry.entryId}.${entry.phase}`)
         } catch (e: any) {
           console.log(`> skipped ${file.filePath} — ${e.message}`)
+          console.error(e)
+          process.exit(1)
         }
       }
-      const seedPaths = Array.from(this.seed.keys())
-      for (const seedPath of seedPaths) {
-        if (seenSeeds.has(seedPath)) continue
-        const seed = this.seed.get(seedPath)!
+      if (fix && changes.length > 0)
+        await target!.mutate(
+          {commitHash: '', mutations: [{changes, meta: undefined!}]},
+          {logger: new Logger('seed')}
+        )
+      const stableI18nIds = new Map<string, string>()
+      for (const seed of this.seed.values()) {
+        const key = seedKey(seed.workspace, seed.root, seed.filePath)
+        if (seenSeeds.has(key)) continue
         const {type, partial} = PageSeed.data(seed.page)
         const typeName = typeNames.get(type)
         if (!typeName) continue
+        const root = this.config.workspaces[seed.workspace][seed.root]
+        const {i18n} = Root.data(root)
+        let i18nId = createId()
+        if (i18n) {
+          const [, locale, ...rest] = seed.filePath.split('/')
+          const path = rest.join('/')
+          i18nId = stableI18nIds.get(path) ?? createId()
+          stableI18nIds.set(path, i18nId)
+        }
         const entry = this.computeEntry(
-          {
+          createRecord({
+            entryId: createId(),
+            i18nId,
+            type: typeName,
+            index: 'a0',
+            seeded: seed.filePath,
             title: partial.title ?? '',
-            [META_KEY]: {
-              entryId: createId(),
-              type: typeName,
-              index: 'a0'
-            }
-          },
+            data: partial
+          }),
+          seed,
           seed
         )
         const record = createRecord(entry)
@@ -639,7 +706,6 @@ export class Database implements Syncable {
         inserted.push(`${entry.entryId}.${entry.phase}`)
         publishSeed.push({
           ...withHash,
-          seeded: true,
           title: undefined!,
           data: {}
         })
@@ -654,6 +720,7 @@ export class Database implements Syncable {
       const {rowsAffected: removed} = await query(
         EntryRow().delete().where(EntryRow.versionId.isNotIn(seenVersions))
       )
+
       const noChanges = inserted.length === 0 && removed === 0
       if (noChanges) return
       // if (inserted) console.log(`> updated ${inserted} entries`)
@@ -676,24 +743,21 @@ export class Database implements Syncable {
     })
 
     if (target && publishSeed.length > 0) {
-      const changeSetCreator = new ChangeSetCreator(this.config)
-      const mutations = publishSeed.map((seed): Mutation => {
+      const changes = publishSeed.map((seed): Change => {
         const workspace = this.config.workspaces[seed.workspace]
         const file = paths.join(
           Workspace.data(workspace).source,
           seed.root,
           seed.filePath
         )
-        return {
-          type: MutationType.Create,
-          entryId: seed.entryId,
-          file: file,
-          entry: seed
-        }
+        const record = createRecord(seed)
+        const contents = new TextDecoder().decode(
+          JsonLoader.format(this.config.schema, record)
+        )
+        return {type: ChangeType.Write, file, contents}
       })
-      const changes = changeSetCreator.create(mutations)
       await target.mutate(
-        {commitHash: '', mutations: changes},
+        {commitHash: '', mutations: [{changes, meta: undefined!}]},
         {logger: new Logger('seed')}
       )
     }

@@ -7,7 +7,10 @@ import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import {createExample} from 'alinea/backend/test/Example'
 import * as core from 'alinea/core'
-import {Field, Type, outcome} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
+import {outcome} from 'alinea/core/Outcome'
+import {trigger} from 'alinea/core/Trigger'
+import {Type, type} from 'alinea/core/Type'
 import 'alinea/css'
 import * as dashboard from 'alinea/dashboard'
 import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
@@ -43,14 +46,14 @@ const defaultValue = `export default alinea.type('Type', {
 })`
 
 type PreviewTypeProps = {
-  type: core.Type
+  type: Type
 }
 
 function PreviewType({type}: PreviewTypeProps) {
   const state = useRef<any>()
   const form = dashboard.useForm(type, {initialValue: state.current})
   state.current = form.data()
-  const label = core.Type.label(type)
+  const label = Type.label(type)
   return (
     <div style={{margin: 'auto', width: '100%', padding: `20px 0`}}>
       <Typo.H1>
@@ -67,8 +70,8 @@ type PreviewFieldProps = {
 }
 
 function PreviewField({field}: PreviewFieldProps) {
-  const type = React.useMemo(() => core.type({field}), [field])
-  const form = dashboard.useForm(type)
+  const formType = React.useMemo(() => type({fields: {field}}), [field])
+  const form = dashboard.useForm(formType)
   return (
     <div style={{margin: 'auto', width: '100%'}}>
       <InputForm form={form} />
@@ -121,7 +124,7 @@ function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
   )
 }
 
-const ts = core.trigger<typeof typescript>()
+const ts = trigger<typeof typescript>()
 const example = createExample()
 const connection = example.connection()
 
@@ -180,7 +183,7 @@ export default function Playground() {
         'alinea/dashboard': dashboard
       }
       const require = (name: string) => pkgs[name]
-      exec(require, exports, React, alinea.alinea)
+      exec(require, exports, React, alinea)
       setState({result: exports.default})
     } catch (error) {
       setState({...state, error})

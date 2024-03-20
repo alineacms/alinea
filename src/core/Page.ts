@@ -29,9 +29,9 @@ export function page<
   Definition,
   Children extends Record<string, PageSeed<any, any>>
 >(
-  type: Type<Definition> | Cursor.Partial<Definition>,
+  type: Type<Definition> | Cursor.Typed<Definition>,
   children?: Children
-): PageSeed<Definition, Children> {
+): PageSeed<Definition> {
   children = children ?? ({} as Children)
   return {
     ...children,

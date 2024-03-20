@@ -1,4 +1,6 @@
-import {Connection, Session} from 'alinea/core'
+import {Connection} from 'alinea/core/Connection'
+import {Session} from 'alinea/core/Session'
+import {User, localUser} from 'alinea/core/User'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import {useEffect} from 'react'
@@ -14,16 +16,18 @@ export function useSetDashboardOptions(options: AppProps) {
 
   const {client, config, dev} = options
   const auth = config.dashboard?.auth
-  if (dev || !auth)
+  if (dev || !auth) {
+    const userData = process.env.ALINEA_USER as string | undefined
     useHydrateAtoms([
       [
         sessionAtom,
         {
-          user: {sub: 'anonymous'},
+          user: userData ? (JSON.parse(userData) as User) : localUser,
           cnx: client
         }
       ]
     ])
+  }
 
   const setDashboardOptions = useSetAtom(dashboardOptionsAtom)
   useEffect(

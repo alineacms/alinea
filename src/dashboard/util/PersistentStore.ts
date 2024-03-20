@@ -4,8 +4,10 @@ import * as idb from 'lib0/indexeddb.js'
 import prettyMilliseconds from 'pretty-ms'
 import {DriverOptions} from 'rado'
 import {connect} from 'rado/driver/sql.js'
+import pkg from '../../../package.json'
 
-const STORAGE_NAME = '@alinea/peristent.store'
+const STORAGE_NAME = `@alinea/peristent.store`
+const dbName = `db-${pkg.version}`
 
 export interface PersistentStore {
   store: Store
@@ -23,11 +25,22 @@ export async function createPersistentStore(): Promise<PersistentStore> {
     storagePromise,
     sqlitePromise
   ])
+
+  // Cleanup older versions, delete all databases except the current one
+  let store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
+  const databases = await idb.getAllKeys(store)
+  for (const name of databases) {
+    if (name !== dbName) {
+      await idb.del(store, name)
+    }
+  }
+
   // See if we have a blob available to initialize the database with
-  const [store] = idb.transact(storage, [STORAGE_NAME], 'readonly')
-  const buffer = await idb.get(store, 'db')
+  store = idb.transact(storage, [STORAGE_NAME], 'readonly')[0]
+  const buffer = await idb.get(store, dbName)
   const init = ArrayBuffer.isView(buffer) ? buffer : undefined
   let db = new Database(init)
+
   const driverOptions: DriverOptions = {
     logQuery(stmt, duration) {
       if (!stmt.sql.startsWith('SELECT')) return
@@ -55,25 +68,27 @@ export async function createPersistentStore(): Promise<PersistentStore> {
       console.groupEnd()
     }
   }
+
   // Return an async connection so we can move the database to a worker later
   // without have to rewrite the dashboard
   const persistent = {
     store: connect(db, driverOptions).toAsync(),
     async flush() {
-      const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
-      await idb.put(store, db.export(), 'db')
+      store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
+      await idb.put(store, db.export(), dbName)
     },
     clone() {
       const clone = new Database(db.export())
       return connect(clone, driverOptions).toAsync()
     },
     async clear() {
-      const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
-      await idb.del(store, 'db')
+      store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
+      await idb.del(store, dbName)
       db = new Database()
       persistent.store = connect(db, driverOptions).toAsync()
     }
   }
+
   return persistent
 }
 

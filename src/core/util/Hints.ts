@@ -17,7 +17,7 @@ function rowsOf(union: Hint.Union) {
     return Hint.Definition(
       def.name,
       def.fields,
-      Hint.Extern({name: 'ListRow', package: 'alinea/input/list'})
+      Hint.Extern({name: 'ListRow', package: 'alinea/field/list'})
     )
   })
   return Hint.Union(types)

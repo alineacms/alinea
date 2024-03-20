@@ -1,5 +1,7 @@
-import {Config, EntryPhase, EntryUrlMeta, Type, Workspace} from 'alinea/core'
-import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import {Config} from 'alinea/core/Config'
+import {EntryRecord, createRecord} from 'alinea/core/EntryRecord'
+import {EntryPhase} from 'alinea/core/EntryRow'
+import {Graph} from 'alinea/core/Graph'
 import {
   ArchiveMutation,
   CreateMutation,
@@ -15,6 +17,10 @@ import {
   RemoveEntryMutation,
   UploadMutation
 } from 'alinea/core/Mutation'
+import {Query} from 'alinea/core/Query'
+import {Type} from 'alinea/core/Type'
+import {Workspace} from 'alinea/core/Workspace'
+import {MediaFile} from 'alinea/core/media/MediaTypes'
 import {join} from 'alinea/core/util/Paths'
 import {JsonLoader} from '../loader/JsonLoader.js'
 
@@ -65,22 +71,7 @@ const decoder = new TextDecoder()
 const loader = JsonLoader
 
 export class ChangeSetCreator {
-  constructor(public config: Config) {}
-
-  entryLocation(
-    {locale, parentPaths, path, phase}: EntryUrlMeta,
-    extension: string
-  ) {
-    const segments = (locale ? [locale] : [])
-      .concat(
-        parentPaths
-          .concat(path)
-          .map(segment => (segment === '' ? 'index' : segment))
-      )
-      .join('/')
-    const phaseSegment = phase === EntryPhase.Published ? '' : `.${phase}`
-    return (segments + phaseSegment + extension).toLowerCase()
-  }
+  constructor(protected config: Config, protected graph: Graph) {}
 
   editChanges({previousFile, file, entry}: EditMutation): Array<Change> {
     const type = this.config.schema[entry.type]
@@ -157,10 +148,34 @@ export class ChangeSetCreator {
     ]
   }
 
-  removeChanges({file}: RemoveEntryMutation): Array<Change> {
+  async removeChanges({
+    entryId,
+    file
+  }: RemoveEntryMutation): Promise<Array<Change>> {
     if (!file.endsWith(`.${EntryPhase.Archived}.json`)) return []
+    const {workspace, files} = await this.graph.preferPublished.get(
+      Query.whereId(entryId).select({
+        workspace: Query.workspace,
+        files: Query.children<typeof MediaFile>(undefined!, 999).where(
+          Query.type.is('MediaFile')
+        )
+      })
+    )
+    const mediaDir =
+      Workspace.data(this.config.workspaces[workspace])?.mediaDir ?? ''
+    const removeFiles: Array<Change> = files.map(file => {
+      const binaryLocation = join(mediaDir, file.location)
+      return {
+        type: ChangeType.Delete,
+        file: binaryLocation
+      }
+    })
     return [
+      // Remove any media files in this location
+      ...removeFiles,
+      // Remove entry
       {type: ChangeType.Delete, file},
+      // Remove children
       {
         type: ChangeType.Delete,
         file: file.slice(0, -`.${EntryPhase.Archived}.json`.length)
@@ -176,7 +191,13 @@ export class ChangeSetCreator {
   }
 
   orderChanges({file, index}: OrderMutation): Array<Change> {
-    return [{type: ChangeType.Patch, file, patch: {[META_KEY]: {index}}}]
+    return [
+      {
+        type: ChangeType.Patch,
+        file,
+        patch: {[EntryRecord.index]: index}
+      }
+    ]
   }
 
   moveChanges({
@@ -221,7 +242,7 @@ export class ChangeSetCreator {
     return [{type: ChangeType.Delete, file: mutation.file}, removeBinary]
   }
 
-  mutationChanges(mutation: Mutation): Array<Change> {
+  async mutationChanges(mutation: Mutation): Promise<Array<Change>> {
     switch (mutation.type) {
       case MutationType.Edit:
         return this.editChanges(mutation)
@@ -248,9 +269,10 @@ export class ChangeSetCreator {
     }
   }
 
-  create(mutations: Array<Mutation>): ChangeSet {
-    return mutations.map(meta => {
-      return {changes: this.mutationChanges(meta), meta}
-    })
+  async create(mutations: Array<Mutation>): Promise<ChangeSet> {
+    const res = []
+    for (const meta of mutations)
+      res.push({changes: await this.mutationChanges(meta), meta})
+    return res
   }
 }
