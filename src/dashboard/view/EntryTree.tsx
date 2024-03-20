@@ -126,6 +126,7 @@ export interface EntryTreeProps {
 
 export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   const root = useRoot()
+  const {schema} = useConfig()
   const treeProvider = useEntryTreeProvider()
   const navigate = useNavigate()
   const nav = useNav()
@@ -170,6 +171,12 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   }, [selected.join()])
   useEffect(() => {
     tree.invalidateChildrenIds(rootId(root.name))
+    for (const item of tree.getItems()) {
+      const typeName: string = item.getItemData()?.type
+      const type = schema[typeName]
+      const {orderChildrenBy} = Type.meta(type)
+      if (orderChildrenBy) tree.invalidateChildrenIds(item.getId())
+    }
   }, [treeProvider])
   useEffect(() => {
     for (const i18nId of changed) {

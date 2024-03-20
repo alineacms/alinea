@@ -18,7 +18,7 @@ import {useMemo} from 'react'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {configAtom} from './DashboardAtoms.js'
 import {graphAtom, useMutate} from './DbAtoms.js'
-import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
+import {localeAtom, rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
 export function rootId(rootName: string) {
   return `@alinea/root-${rootName}`
@@ -52,6 +52,7 @@ async function entryTreeRoot(
   return {
     id: rootId(root),
     index: '',
+    type: '',
     isFolder: true,
     entries: [],
     children
@@ -60,6 +61,7 @@ async function entryTreeRoot(
 
 const entryTreeItemLoaderAtom = atom(async get => {
   const graph = await get(graphAtom)
+  const locale = get(localeAtom)
   const visibleTypes = get(visibleTypesAtom)
   const {schema} = get(configAtom)
   const root = get(rootAtom)
@@ -79,19 +81,21 @@ const entryTreeItemLoaderAtom = atom(async get => {
       path: Entry.path,
       parentPaths({parents}) {
         return parents(Entry).select(Entry.path)
-      },
-      children({children}) {
+      }
+      /*children({children}) {
         return children(Entry)
           .where(Entry.type.isIn(visibleTypes))
           .select(Entry.i18nId)
           .groupBy(Entry.i18nId)
           .orderBy(Entry.index.asc())
-      }
+      }*/
     } satisfies Projection
     const entries = Entry()
       .select({
         id: Entry.i18nId,
+        entryId: Entry.entryId,
         index: Entry.index,
+        type: Entry.type,
         data,
         translations({translations}) {
           return translations().select(data)
@@ -101,12 +105,34 @@ const entryTreeItemLoaderAtom = atom(async get => {
       .where(Entry.i18nId.isIn(search))
     const rows = await graph.preferDraft.find(entries)
     for (const row of rows) {
+      const type = schema[row.type]
+      const orderBy = Type.meta(type).orderChildrenBy ?? Entry.index.asc()
+      const ids = row.translations.map(row => row.entryId).concat(row.entryId)
+      const children = await graph.preferDraft.find(
+        Entry()
+          .where(Entry.parent.isIn(ids), Entry.type.isIn(visibleTypes))
+          .select({locale: Entry.locale, i18nId: Entry.i18nId})
+          .orderBy(orderBy)
+      )
       const entries = [row.data].concat(row.translations)
+      const translatedChildren = new Set(
+        children
+          .filter(child => child.locale === locale)
+          .map(child => child.i18nId)
+      )
+      const untranslated = new Set()
+      const orderedChildren = children.filter(child => {
+        if (translatedChildren.has(child.i18nId)) return child.locale === locale
+        if (untranslated.has(child.i18nId)) return false
+        untranslated.add(child.i18nId)
+        return true
+      })
       indexed.set(row.id, {
         id: row.id,
+        type: row.type,
         index: row.index,
         entries,
-        children: [...new Set(entries.flatMap(entry => entry.children))]
+        children: [...new Set(orderedChildren.map(child => child.i18nId))]
       })
     }
     const res: Array<EntryTreeItem | undefined> = []
@@ -144,6 +170,7 @@ const loaderAtom = atom(get => {
 export interface EntryTreeItem {
   id: string
   index: string
+  type: string
   entries: Array<{
     id: string
     entryId: string

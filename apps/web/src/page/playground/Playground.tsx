@@ -81,11 +81,12 @@ function PreviewField({field}: PreviewFieldProps) {
 
 function editorConfig(monaco: Monaco) {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-    jsx: 'preserve'
+    jsx: 'preserve',
+    typeRoots: ['node_modules/@types']
   })
   monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    `declare var alinea: typeof import('alinea').alinea;` + declarations,
-    '@types/alinea/index.d.ts'
+    `declare var alinea: typeof import('alinea').alinea;\n` + declarations,
+    'file:///node_modules/@types/alinea/index.d.ts'
   )
 }
 
