@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.5]
+
+- Entries in the dashboard sidebar can now be ordered by a field value.
+  Use the `orderChildrenBy` configuration option to set which field to order by.
+
+  ```tsx
+  const Type = Config.type('Type', {
+    orderChildrenBy: Query.title.asc() // Order by Entry title
+    // ...
+  })
+  ```
+
+- Add subscript and superscript options to rich text Fields.
+- Stop using the porter stemming FTS5 tokenizer in search queries. The algorithm
+  does not work well with non-english languages and so is not a good default.
+- Fix select box not showing a checkmark in the explorer while replacing file or
+  image links.
+- Unset validation errors when fields are no longer used.
+
 ## [0.9.4]
 
 - Remove 'use server' directive from the Next.js driver because it does not
