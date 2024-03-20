@@ -13,6 +13,7 @@ import {Expr, createExprData} from './pages/Expr.js'
 import {
   BinaryOp,
   ExprData,
+  OrderBy,
   Selection,
   toSelection
 } from './pages/ResolveData.js'
@@ -39,7 +40,7 @@ export interface TypeMeta {
   /** Accepts entries of these types as children */
   contains?: Array<string | Type>
   /** Order children entries in the sidebar content tree */
-  orderChildrenBy?: {asc: string} | {desc: string}
+  orderChildrenBy?: OrderBy
   /** @deprecated Use contains instead */
   isContainer?: true
   /** @deprecated Use hidden instead */
