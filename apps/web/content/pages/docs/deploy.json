@@ -3,7 +3,6 @@
   "_type": "Docs",
   "_index": "Zp",
   "_i18nId": "28NgMpMQkmTy4uyFhPj8z4XVqml",
-  "_root": "pages",
   "title": "Deploy",
   "navigationTitle": "",
   "body": [
@@ -73,6 +72,39 @@
           "fileName": "",
           "language": "",
           "compact": false
+        },
+        {
+          "_type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "_type": "text",
+              "text": "While building your project, an admin folder will be created together with the staticFile as defined within your "
+            },
+            {
+              "_type": "text",
+              "text": "CMS config",
+              "marks": [
+                {
+                  "_type": "link",
+                  "_id": "2eM1iHgXBo49fVD4NaBDbLI7XpI",
+                  "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+                  "_link": "entry"
+                }
+              ]
+            },
+            {
+              "_type": "text",
+              "text": ". Exclude the admin path and the staticFile from git by adding them to your `.gitignore` file:"
+            }
+          ]
+        },
+        {
+          "_type": "CodeBlock",
+          "_id": "2eM0q5z6cky9xrlPsHoH5ltj1A6",
+          "code": "/public/admin*",
+          "fileName": ".gitignore",
+          "language": ""
         },
         {
           "_type": "paragraph",
