@@ -391,7 +391,12 @@ async function createEntry(
     data: entryData,
     searchableText: Type.searchableText(type, entryData)
   }
-  const parentPaths = parent?.childrenDir.split('/').filter(Boolean) ?? []
+  const isI18n = Boolean(Root.data(config.workspaces[workspace][root]).i18n)
+  const parentPaths =
+    parent?.childrenDir
+      .split('/')
+      .filter(Boolean)
+      .slice(isI18n ? 1 : 0) ?? []
   const filePath = entryFilepath(config, details, parentPaths)
   const childrenDir = entryChildrenDir(config, details, parentPaths)
   const urlMeta: EntryUrlMeta = {

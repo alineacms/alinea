@@ -177,4 +177,17 @@ test('remove media library and files', async () => {
   assert.not.ok(result2)
 })
 
+test('create multi language entries', async () => {
+  const example = createExample()
+  const {Page} = example.schema
+  const localised2 = await example.get(Query.wherePath('localised2'))
+  const entry = Edit.create(Page).setParent(localised2.entryId).set({
+    title: 'New entry',
+    path: 'new-entry'
+  })
+  await example.commit(entry)
+  const result = await example.get(Query.whereId(entry.entryId))
+  assert.is(result.url, '/en/localised2/new-entry')
+})
+
 test.run()
