@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.6]
+
+- Fix double language in urls for entries created through the Edit api
+
 ## [0.9.5]
 
 - Entries in the dashboard sidebar can now be ordered by a field value.
