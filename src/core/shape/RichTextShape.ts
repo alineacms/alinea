@@ -36,7 +36,11 @@ export enum RichTextElements {
   br = 'br',
   small = 'small',
   sup = 'sup',
-  sub = 'sub'
+  sub = 'sub',
+  table = 'table',
+  tableCell = 'td',
+  tableHeader = 'th',
+  tableRow = 'tr'
 }
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245

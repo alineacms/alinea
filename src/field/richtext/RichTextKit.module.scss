@@ -53,3 +53,25 @@ h3.heading {
 .link {
   cursor: text;
 }
+
+.table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  overflow: hidden;
+  &:not(:last-child) {
+    margin-bottom: 14px;
+  }
+}
+
+.td,
+.th {
+  padding: 4px 8px;
+  border: 1px solid var(--alinea-fields-table);
+}
+
+.th {
+  background: var(--alinea-fields-header);
+  text-align: left;
+  font-weight: 700;
+}

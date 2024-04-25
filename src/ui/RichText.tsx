@@ -69,6 +69,14 @@ function nodeElement(
         title: attributes?.title
       }
       return <a {...props} />
+    case 'table':
+      return <table />
+    case 'tableCell':
+      return <td />
+    case 'tableHeader':
+      return <th />
+    case 'tableRow':
+      return <tr />
   }
 }
 
@@ -129,7 +137,12 @@ export type RichTextProps<Blocks extends Schema> = {
   text?: ComponentType<{children: string}>
 } & {
   [K in keyof typeof RichTextElements]?:
-    | ComponentType<JSX.IntrinsicElements[K]>
+    | ComponentType<
+        React.JSX.IntrinsicElements[Extract<
+          K,
+          keyof React.JSX.IntrinsicElements
+        >]
+      >
     | ReactElement
 } & {[K in keyof Blocks]?: ComponentType<Infer<Blocks[K]>>}
 

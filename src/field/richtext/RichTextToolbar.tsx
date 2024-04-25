@@ -64,6 +64,8 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
     ? 'h5'
     : 'paragraph'
 
+  const selectedTable = editor.isActive('table')
+
   function handleLink() {
     const attrs = editor.getAttributes('link')
     const existing: Reference | undefined = attributesToReference(attrs)
@@ -162,6 +164,67 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               >
                 <Typo.H5 flat>Heading 5</Typo.H5>
               </DropdownMenu.Item>
+            </DropdownMenu.Items>
+          </DropdownMenu.Root>
+          <DropdownMenu.Root top>
+            <DropdownMenu.Trigger
+              title="Table"
+              className={styles.root.dropdown()}
+            >
+              <HStack gap={10} center>
+                <span>Table</span>
+                <Icon icon={IcRoundUnfoldMore} />
+              </HStack>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Items>
+              {selectedTable ? (
+                <>
+                  <DropdownMenu.Item
+                    onClick={() => exec().addColumnBefore().run()}
+                  >
+                    <Typo.P>Insert column before</Typo.P>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onClick={() => exec().addColumnAfter().run()}
+                  >
+                    <Typo.P>Insert column after</Typo.P>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onClick={() => exec().deleteColumn().run()}
+                  >
+                    <Typo.P>Delete column</Typo.P>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onClick={() => exec().addRowBefore().run()}
+                  >
+                    <Typo.P>Insert row before</Typo.P>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item onClick={() => exec().addRowAfter().run()}>
+                    <Typo.P>Insert row after</Typo.P>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item onClick={() => exec().deleteRow().run()}>
+                    <Typo.P>Delete row</Typo.P>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item onClick={() => exec().deleteTable().run()}>
+                    <Typo.P>Delete table</Typo.P>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onClick={() => exec().toggleHeaderRow().run()}
+                  >
+                    <Typo.P>Toggle header row</Typo.P>
+                  </DropdownMenu.Item>
+                </>
+              ) : (
+                <DropdownMenu.Item
+                  onClick={() =>
+                    exec()
+                      .insertTable({rows: 3, cols: 3, withHeaderRow: true})
+                      .run()
+                  }
+                >
+                  <Typo.P>Insert table</Typo.P>
+                </DropdownMenu.Item>
+              )}
             </DropdownMenu.Items>
           </DropdownMenu.Root>
           <div className={styles.root.separator()} />
