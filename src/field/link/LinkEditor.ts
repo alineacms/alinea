@@ -18,24 +18,34 @@ export class LinkEditor<StoredValue extends Reference> {
     return this
   }
 
-  addUrl(data: {url: string; title: string; target?: string}) {
+  addUrl(
+    data: {url: string; title: string; target?: string},
+    fields?: Record<string, unknown>
+  ) {
     return this.add('url', {
       [UrlReference.url]: data.url,
       [UrlReference.title]: data.title,
-      [UrlReference.target]: data.target ?? '_blank'
+      [UrlReference.target]: data.target ?? '_blank',
+      ...fields
     } as any)
   }
 
-  addEntry(entryId: string) {
-    return this.add('entry', {[EntryReference.entry]: entryId} as any)
+  addEntry(entryId: string, fields?: Record<string, unknown>) {
+    return this.add('entry', {
+      [EntryReference.entry]: entryId,
+      ...fields
+    } as any)
   }
 
-  addImage(entryId: string) {
-    return this.add('image', {[EntryReference.entry]: entryId} as any)
+  addImage(entryId: string, fields?: Record<string, unknown>) {
+    return this.add('image', {
+      [EntryReference.entry]: entryId,
+      ...fields
+    } as any)
   }
 
-  addFile(entryId: string) {
-    return this.add('file', {[EntryReference.entry]: entryId} as any)
+  addFile(entryId: string, fields?: Record<string, unknown>) {
+    return this.add('file', {[EntryReference.entry]: entryId, ...fields} as any)
   }
 
   value() {
