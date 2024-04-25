@@ -19,19 +19,21 @@ const styles = fromModule(css)
 function linkForm(options: PickerOptions) {
   const isExistingLink = Boolean(options.link)
   const fields = type({
-    link: createLink('Link', {
-      required: true,
-      initialValue: options.link as EntryReference
-    }),
-    description: text('Description', {
-      help: 'Text to display inside the link element'
-    }),
-    title: text('Tooltip', {
-      help: 'Extra information that describes the link, shown on hover'
-    }),
-    blank: check('Open link in new tab', {
-      inline: true
-    })
+    fields: {
+      link: createLink('Link', {
+        required: true,
+        initialValue: options.link as EntryReference
+      }),
+      description: text('Description', {
+        help: 'Text to display inside the link element'
+      }),
+      title: text('Tooltip', {
+        help: 'Extra information that describes the link, shown on hover'
+      }),
+      blank: check('Open link in new tab', {
+        inline: true
+      })
+    }
   })
   track.options(fields.description, get => {
     const selected = get(fields.link)

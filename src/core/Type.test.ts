@@ -12,8 +12,10 @@ const Test = type('Test', {
     list: list('List', {
       schema: {
         Sub: type({
-          c: text('C'),
-          d: text('D', {searchable: true})
+          fields: {
+            c: text('C'),
+            d: text('D', {searchable: true})
+          }
         })
       }
     }),

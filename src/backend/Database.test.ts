@@ -1,4 +1,4 @@
-import {Edit} from 'alinea/core/Edit'
+import * as Edit from 'alinea/core/Edit'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {Query} from 'alinea/core/Query'
 import {ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
@@ -44,7 +44,7 @@ test('change draft path', async () => {
   // Changing entry paths in draft should not have an influence on
   // computed properties such as url, filePath etc. until we publish.
   await example.commit(
-    Edit(parent.entryId, Container).set({path: 'new-path'}).draft()
+    Edit.update(parent.entryId, Container).set({path: 'new-path'}).draft()
   )
   const resParent1 = await example.graph.drafts.get(
     Query.whereId(parent.entryId)
