@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.9.7]
+
+- Add `Edit.link` and `Edit.links` to create link values in the Edit api. These
+  are currently not optimally typed and will be improved in the future.
+
+  ```tsx
+  const imageField = Field.link('Image', {
+    fields: {
+      alt: Field.text('Alt text')
+    }
+  })
+  const imageValue = Edit.link(imageField)
+    .addImage(imageId, {alt: 'An image'})
+    .value()
+  ```
+
 ## [0.9.6]
 
 - Fix double language in urls for entries created through the Edit api
