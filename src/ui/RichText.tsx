@@ -71,6 +71,8 @@ function nodeElement(
       return <a {...props} />
     case 'table':
       return <table />
+    case 'tableBody':
+      return <tbody />
     case 'tableCell':
       return <td />
     case 'tableHeader':
