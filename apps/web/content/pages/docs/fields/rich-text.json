@@ -81,6 +81,26 @@
     },
     {
       "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`enableTables`"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Allow tables to be inserted in this field."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
       "level": 2,
       "content": [
         {

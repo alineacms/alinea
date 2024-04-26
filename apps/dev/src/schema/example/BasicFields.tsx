@@ -11,7 +11,7 @@ export const BasicFields = Config.document('Basic fields', {
         }
       }
     }),
-    richText: Field.richText('Rich text field'),
+    richText: Field.richText('Rich text field', {enableTables: true}),
     select: Field.select('Select field', {
       width: 0.5,
       options: {

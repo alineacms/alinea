@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.8]
+
+- Add support for tables in Rich Text Fields. This can be enabled using the
+  `enableTables` option.
+
 ## [0.9.7]
 
 - Add `Edit.link` and `Edit.links` to create link values in the Edit api. These
