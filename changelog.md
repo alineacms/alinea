@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.9]
+
+- Use AND to separate search terms so the order of terms does not matter
+
 ## [0.9.8]
 
 - Add support for tables in Rich Text Fields. This can be enabled using the
