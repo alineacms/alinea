@@ -445,7 +445,7 @@ export class EntryResolver {
     if (!searchTerms?.length) return Expr.value(true)
     const terms = searchTerms
       .map(term => `"${term.replaceAll('"', '')}"*`)
-      .join(' + ')
+      .join(' AND ')
     return match(EntrySearch, terms)
   }
 
