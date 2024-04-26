@@ -38,6 +38,7 @@ export enum RichTextElements {
   sup = 'sup',
   sub = 'sub',
   table = 'table',
+  tbody = 'tbody',
   td = 'td',
   th = 'th',
   tr = 'tr'

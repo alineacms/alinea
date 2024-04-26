@@ -88,6 +88,8 @@ function mapNode(
       return {_type: 'link', ...attributes, content: []}
     case 'table':
       return {_type: 'table', content: []}
+    case 'tbody':
+      return {_type: 'tableBody', content: []}
     case 'td':
       return {_type: 'tableCell', content: []}
     case 'th':
