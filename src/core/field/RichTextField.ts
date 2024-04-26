@@ -86,6 +86,14 @@ function mapNode(
     case 'a':
       // Todo: pick what we need
       return {_type: 'link', ...attributes, content: []}
+    case 'table':
+      return {_type: 'table', content: []}
+    case 'td':
+      return {_type: 'tableCell', content: []}
+    case 'th':
+      return {_type: 'tableHeader', content: []}
+    case 'tr':
+      return {_type: 'tableRow', content: []}
   }
 }
 
