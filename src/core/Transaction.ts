@@ -181,7 +181,7 @@ export class DeleteOp extends Operation {
 }
 
 export class EditOperation<Definition> extends Operation {
-  private entryData?: Partial<Type.Infer<Definition>>
+  private entryData?: Partial<StoredRow<Definition>>
   private changePhase?: EntryPhase
 
   constructor(protected entryId: string) {
@@ -251,7 +251,7 @@ export class EditOperation<Definition> extends Operation {
     })
   }
 
-  set(entryData: Partial<Type.Infer<Definition>>) {
+  set(entryData: Partial<StoredRow<Definition>>) {
     this.entryData = {...this.entryData, ...entryData}
     return this
   }
