@@ -69,6 +69,14 @@ function nodeElement(
         title: attributes?.title
       }
       return <a {...props} />
+    case 'table':
+      return <table />
+    case 'tableCell':
+      return <td />
+    case 'tableHeader':
+      return <th />
+    case 'tableRow':
+      return <tr />
   }
 }
 

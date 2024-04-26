@@ -124,6 +124,10 @@ __metadata:
     "@tiptap/extension-strike": "npm:^2.1.16"
     "@tiptap/extension-subscript": "npm:^2.2.4"
     "@tiptap/extension-superscript": "npm:^2.2.4"
+    "@tiptap/extension-table": "npm:^2.1.16"
+    "@tiptap/extension-table-cell": "npm:^2.1.16"
+    "@tiptap/extension-table-header": "npm:^2.1.16"
+    "@tiptap/extension-table-row": "npm:^2.1.16"
     "@tiptap/extension-text": "npm:^2.1.16"
     "@tiptap/extension-text-align": "npm:^2.1.16"
     "@tiptap/pm": "npm:^2.1.16"
@@ -2051,6 +2055,43 @@ __metadata:
   peerDependencies:
     "@tiptap/core": ^2.0.0
   checksum: 10/8334dc1be65ce2297eab7922ac8eca87ad084a0fe5055e28d3ad849771f653d9bc8f7f47585afc6a533a035def64210e64c9e72bf8f723552803819edba9bf83
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-table-cell@npm:^2.1.16":
+  version: 2.3.0
+  resolution: "@tiptap/extension-table-cell@npm:2.3.0"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0
+  checksum: 10/a8815699e0c5a4d1b60ed29053a6e3a6bc97a2cdae4f56ceaba1887963cd0bea45a36c04be03c5373811e754dd46674a04af82e882984353c2d3b0a7a1b3c2a0
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-table-header@npm:^2.1.16":
+  version: 2.3.0
+  resolution: "@tiptap/extension-table-header@npm:2.3.0"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0
+  checksum: 10/dca98ff3092cc9d4a63cb41b0510569888f6d5875c69aaac44451761cfb3dee0704fe37f3a6cedb1be4628f322c2d6fe4da54097eb8fd9d6b6b0fc3ec8980097
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-table-row@npm:^2.1.16":
+  version: 2.3.0
+  resolution: "@tiptap/extension-table-row@npm:2.3.0"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0
+  checksum: 10/ad673e0f31ba303f5b2f9437b8b04e34525901fbe09a1936fbafd247a742c6e362001f1d6716d4f2c431c772a6bf3d2cb39109a88440684809d09d8f311f241f
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-table@npm:^2.1.16":
+  version: 2.3.0
+  resolution: "@tiptap/extension-table@npm:2.3.0"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0
+    "@tiptap/pm": ^2.0.0
+  checksum: 10/1ee73ef21159fa095ce06f59357c008c3461680756063a50e4fe3ae150508bc7affe3eb14ef03a4f098b3e33c890902540cc178153db4814f6bd9f07a5f516d2
   languageName: node
   linkType: hard
 
