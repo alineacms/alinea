@@ -5,7 +5,7 @@
 export function applyJsonPatch(source: any, patch: object) {
   if (!patch || typeof patch !== 'object') return source
   for (const [key, value] of Object.entries(patch)) {
-    if (value && typeof value === 'object') {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
       if (!source[key]) source[key] = {}
       applyJsonPatch(source[key], value)
     } else {
