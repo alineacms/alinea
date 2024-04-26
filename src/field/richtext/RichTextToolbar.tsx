@@ -43,11 +43,11 @@ export type RichTextToolbarProps = {
   editor: Editor
   focusToggle: (target: EventTarget | null) => void
   pickLink: PickTextLinkFunc
-  enableTable?: boolean
+  enableTables?: boolean
 }
 
 export const RichTextToolbar = forwardRef(function RichTextToolbar(
-  {pickLink, editor, focusToggle, enableTable}: RichTextToolbarProps,
+  {pickLink, editor, focusToggle, enableTables}: RichTextToolbarProps,
   ref: Ref<HTMLDivElement>
 ) {
   function exec() {
@@ -167,7 +167,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               </DropdownMenu.Item>
             </DropdownMenu.Items>
           </DropdownMenu.Root>
-          {enableTable && (
+          {enableTables && (
             <DropdownMenu.Root top>
               <DropdownMenu.Trigger
                 title="Table"

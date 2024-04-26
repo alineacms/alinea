@@ -17,8 +17,8 @@ export interface RichTextOptions<Blocks extends Schema>
   inline?: boolean
   /** Index the text value of this field */
   searchable?: boolean
-  /** Enable inserting and editing table */
-  enableTable?: boolean
+  /** Enable inserting and editing tables */
+  enableTables?: boolean
 }
 
 /** Create a rich text field configuration */
