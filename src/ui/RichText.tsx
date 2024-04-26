@@ -137,7 +137,7 @@ export type RichTextProps<Blocks extends Schema> = {
   text?: ComponentType<{children: string}>
 } & {
   [K in keyof typeof RichTextElements]?:
-    | ComponentType<JSX.IntrinsicElements>
+    | ComponentType<JSX.IntrinsicElements[K]>
     | ReactElement
 } & {[K in keyof Blocks]?: ComponentType<Infer<Blocks[K]>>}
 
