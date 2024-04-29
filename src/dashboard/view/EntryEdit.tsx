@@ -83,7 +83,8 @@ export function EntryEdit({editor}: EntryEditProps) {
   const translate = () => saveTranslation(locale!)
   useEffect(() => {
     function listener(e: KeyboardEvent) {
-      if (e.metaKey && e.key === 's') {
+      const isControl = e.ctrlKey || e.metaKey
+      if (isControl && e.key === 's') {
         e.preventDefault()
         if (previewRevision) {
           alert('todo')
