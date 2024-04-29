@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.10]
+
+- Fix the ctrl+s shortkey to publish changes
+
 ## [0.9.9]
 
 - Use AND to separate search terms so the order of terms does not matter
