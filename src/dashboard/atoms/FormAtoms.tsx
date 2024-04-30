@@ -77,6 +77,7 @@ export class FormAtoms<T = any> {
           const shape = Field.shape(field)
           const defaultOptions = {...Field.options(field), ...forcedOptions}
           const optionsTracker = optionTrackerOf(field)
+          console.log({field, optionsTracker})
           shape.init(container, key)
           const mutator = shape.mutator(container, key)
           const options = optionsTracker
@@ -179,6 +180,30 @@ export class FormAtoms<T = any> {
     }
     return res as FieldInfo<StoredValue, QueryValue, Mutator, Options>
   }
+
+  inner = new Map<string, FormAtoms>()
+
+  innerForm(
+    type: Type,
+    field: string,
+    rowId: string | undefined,
+    readOnly = false
+  ) {
+    console.log(field, readOnly)
+    const path = this.path + `.${field}` + (rowId ? `[${rowId}]` : '')
+    if (this.inner.has(path)) {
+      const innerForm = this.inner.get(path)!
+      if (innerForm.options.readOnly === readOnly) return this.inner.get(path)!
+    }
+    const inner = this.container.get(field)
+    const row = rowId ? inner.get(rowId) : inner
+    const innerForm = new FormAtoms(type, row, path, {
+      readOnly,
+      parent: this
+    })
+    this.inner.set(path, innerForm)
+    return innerForm
+  }
 }
 
 const formAtomsContext = createContext<FormAtoms | undefined>(undefined)
@@ -239,13 +264,7 @@ export function FormRow({
   const form = useFormContext()
   const rowForm = useMemo(() => {
     const key = form.keyOf(field)
-    const inner = form.container.get(key)
-    const row = rowId ? inner.get(rowId) : inner
-    const path = form.path + `.${key}` + (rowId ? `[${rowId}]` : '')
-    return new FormAtoms(type, row, path, {
-      readOnly,
-      parent: form
-    })
-  }, [form, rowId, readOnly])
+    return form.innerForm(type, key, rowId, readOnly)
+  }, [form, field, rowId, readOnly])
   return <FormProvider form={rowForm}>{children}</FormProvider>
 }

@@ -4,24 +4,21 @@ import {
   HTMLAttributes,
   HTMLProps,
   PropsWithChildren,
-  PropsWithRef,
   useMemo
 } from 'react'
 import {px} from './util/Units.js'
 
-export type StackProps = PropsWithRef<
-  Omit<HTMLProps<HTMLDivElement>, 'wrap'> & {
-    gap?: number | string
-    direction?: CSSProperties['flexDirection']
-    align?: CSSProperties['alignItems']
-    justify?: CSSProperties['justifyContent']
-    horizontal?: boolean
-    wrap?: boolean
-    center?: boolean
-    full?: boolean
-    autoWidth?: boolean
-  }
->
+export type StackProps = Omit<HTMLProps<HTMLDivElement>, 'wrap'> & {
+  gap?: number | string
+  direction?: CSSProperties['flexDirection']
+  align?: CSSProperties['alignItems']
+  justify?: CSSProperties['justifyContent']
+  horizontal?: boolean
+  wrap?: boolean
+  center?: boolean
+  full?: boolean
+  autoWidth?: boolean
+}
 
 function stack(props: StackProps) {
   const direction = props.direction || 'column'

@@ -8,6 +8,11 @@ const rootField = Field.select('Root field', {
   }
 })
 
+const copyField = Field.text('Selected field')
+Config.track.options(copyField, get => {
+  return {initialValue: get(rootField) ?? ''}
+})
+
 const showIfA = Config.track.options(Field.text('Show if A'), get => {
   return {hidden: get(rootField) !== 'a'}
 })
@@ -29,6 +34,7 @@ const nestedList = Field.list('Nested list', {
 export const ConditionalExamples = Config.document('Conditional fields', {
   fields: {
     rootField,
+    copyField,
     nestedList
   }
 })

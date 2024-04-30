@@ -21,6 +21,10 @@ export interface TextOptions extends FieldOptions<string> {
   autoFocus?: boolean
   /** Index the text value of this field */
   searchable?: boolean
+  /** Use the value of this field as the default metadata title */
+  providesTitle?: boolean
+  /** Use the value of this field as the default metadata description */
+  providesDescription?: boolean
 }
 
 export class TextField extends ScalarField<string, TextOptions> {}

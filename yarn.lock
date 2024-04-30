@@ -82,7 +82,8 @@ __metadata:
     debounce-promise: "npm:^3.1.2"
     diff-match-patch: "npm:^1.0.5"
     fflate: "npm:^0.8.0"
-    jotai: "npm:^2.4.2"
+    jotai: "npm:^2.8.0"
+    jotai-effect: "npm:^1.0.0"
     lib0: "npm:^0.2.88"
     p-limit: "npm:^4.0.0"
     pretty-bytes: "npm:^6.0.0"
@@ -7139,9 +7140,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jotai@npm:^2.4.2":
-  version: 2.4.2
-  resolution: "jotai@npm:2.4.2"
+"jotai-effect@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "jotai-effect@npm:1.0.0"
+  peerDependencies:
+    jotai: ">=2.5.0"
+  checksum: 10/4393c88deaebbfd4e8fad46ac1b7d03235d0dd684c56049e8c57b14a1298695e80b047c0b1561cbb5af694db9ea819aaaf6ae9c1a35b27d4ef98532b39065d15
+  languageName: node
+  linkType: hard
+
+"jotai@npm:^2.8.0":
+  version: 2.8.0
+  resolution: "jotai@npm:2.8.0"
   peerDependencies:
     "@types/react": ">=17.0.0"
     react: ">=17.0.0"
@@ -7150,7 +7160,7 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10/12d500e93fe0a236803da7662a8fd3772f54f89c2be207a3150e3be7600f1b9792402de0989157f8b8112ff95ba4880b4a675432758c81e3756b08fc7fd81d0a
+  checksum: 10/6500e36c1d8edf1305e9a403e92764d4b3d4290e471a9a890efb7644a6b79312f0e5cfc420cec48812adf3a967caf18f53c01fa92a187e3628b7d8b145fec1d7
   languageName: node
   linkType: hard
 

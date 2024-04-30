@@ -20,7 +20,11 @@ export type Document<Definition> = {
 } & Definition
 
 export namespace Document {
-  export const title = text('Title', {required: true, width: 0.5})
+  export const title = text('Title', {
+    required: true,
+    width: 0.5,
+    providesTitle: true
+  })
   export const path = createPath('Path', {required: true, width: 0.5})
   export const metadata = createMetadata()
 }

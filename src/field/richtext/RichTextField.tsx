@@ -19,6 +19,10 @@ export interface RichTextOptions<Blocks extends Schema>
   searchable?: boolean
   /** Enable inserting and editing tables */
   enableTables?: boolean
+  /** Use the value of this field as the default metadata title */
+  providesTitle?: boolean
+  /** Use the value of this field as the default metadata description */
+  providesDescription?: boolean
 }
 
 /** Create a rich text field configuration */

@@ -1,4 +1,4 @@
-import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import {type FieldOptions, type WithoutLabel} from 'alinea/core/Field'
 import {Type, TypeFields, type} from 'alinea/core/Type'
 import {RecordField} from 'alinea/core/field/RecordField'
 

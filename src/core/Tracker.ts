@@ -29,9 +29,13 @@ export function valueTrackerOf(field: Field) {
   return valueTrackers.get(Field.ref(field))
 }
 
-const mutationTrackers = new Map<symbol, MutationTracker>()
-
 export namespace track {
+  export function options<Fields extends Array<Field>>(
+    fields: Fields,
+    tracker: OptionsTracker<
+      Fields[number] extends Field<any, any, any, infer O> ? O : any
+    >
+  ): void
   export function options<
     StoredValue,
     QueryValue,
@@ -40,9 +44,17 @@ export namespace track {
   >(
     field: Field<StoredValue, QueryValue, OnChange, Options>,
     tracker: OptionsTracker<Options>
-  ): Field<StoredValue, QueryValue, OnChange, Options> {
-    optionTrackers.set(Field.ref(field), tracker)
-    return field
+  ): Field<StoredValue, QueryValue, OnChange, Options>
+  export function options(
+    fields: Field | Array<Field>,
+    tracker: OptionsTracker
+  ) {
+    if (Array.isArray(fields)) {
+      fields.forEach(field => optionTrackers.set(Field.ref(field), tracker))
+    } else {
+      optionTrackers.set(Field.ref(fields), tracker)
+      return fields
+    }
   }
 
   export function value<
