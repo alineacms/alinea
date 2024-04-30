@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.11]
+
+- Minor dashboard layout changes
+
 ## [0.9.10]
 
 - Fix the ctrl+s shortkey to publish changes
