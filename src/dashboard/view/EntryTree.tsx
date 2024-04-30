@@ -9,11 +9,10 @@ import {EntryPhase} from 'alinea/core/EntryRow'
 import {Type} from 'alinea/core/Type'
 import {Icon, fromModule, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
-import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
-import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
+import {IcRoundVisibilityOff} from 'alinea/ui/icons/IcRoundVisibilityOff'
 import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {changedEntriesAtom} from '../atoms/DbAtoms.js'
@@ -55,14 +54,17 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
   const isDraft = selected.phase === EntryPhase.Draft
   const isUntranslated = locale && selected.locale !== locale
   const isArchived = selected.phase === EntryPhase.Archived
+  const isUnpublished = selected.phase === EntryPhase.Archived
   const isSelected = entryId && itemData.id === entryId
+
   return (
     <div
       {...item.getProps()}
       ref={item.registerElement}
       className={styles.tree.item({
-        untranslated: isUntranslated,
         selected: isSelected,
+        unpublished: isUnpublished,
+        untranslated: isUntranslated,
         drop: item.isDropTarget() && item.isDraggingOver(),
         dropAbove: item.isDropTargetAbove() && item.isDraggingOver(),
         dropBelow: item.isDropTargetBelow() && item.isDraggingOver()
@@ -78,7 +80,11 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
         <span className={styles.tree.item.icon()}>
           <Icon
             icon={
-              isUntranslated ? IcRoundTranslate : icon ?? IcOutlineDescription
+              isUntranslated
+                ? IcRoundTranslate
+                : isUnpublished
+                ? IcRoundVisibilityOff
+                : icon ?? IcOutlineDescription
             }
           />
         </span>
@@ -87,6 +93,24 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
           {selectedEntry(locale, itemData).title}
         </span>
 
+        {/* {isUntranslated && (
+          <span className={styles.tree.status({untranslated: true})}>
+            <Icon icon={IcRoundTranslate} size={16} />
+          </span>
+        )} */}
+
+        {/* {!isUntranslated && isDraft && (
+          <span className={styles.tree.status({draft: true})}>
+            <Icon icon={IcRoundEdit} size={16} />
+          </span>
+        )} */}
+
+        {/* {!isUntranslated && isArchived && (
+          <span className={styles.tree.status({archived: true})}>
+            <Icon icon={IcRoundArchive} size={16} />
+          </span>
+        )} */}
+
         {item.isFolder() && (
           <span className={styles.tree.item.arrow()}>
             {item.isExpanded() ? (
@@ -94,24 +118,6 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
             ) : (
               <Icon icon={IcRoundKeyboardArrowRight} size={18} />
             )}
-          </span>
-        )}
-
-        {/*isUntranslated && (
-            <span className={styles.tree.status()}>
-              <Icon icon={IcRoundTranslate} />
-            </span>
-          )*/}
-
-        {!isUntranslated && isDraft && (
-          <span className={styles.tree.status({draft: true})}>
-            <Icon icon={IcRoundEdit} />
-          </span>
-        )}
-
-        {!isUntranslated && isArchived && (
-          <span className={styles.tree.status({archived: true})}>
-            <Icon icon={IcRoundArchive} size={18} />
           </span>
         )}
       </button>
