@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a1G",
   "_i18nId": "2bwoBrTOuERj2E8r7yuNglC0H6G",
-  "_root": "pages",
   "title": "Editing content",
   "navigationTitle": "",
   "body": [
@@ -87,14 +86,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Entry fields can be edited using the `edit` function. Optionally pass the entry Type as a second argument so the field values are typed correctly."
+          "text": "Entry fields can be edited using the `update` function. Optionally pass the entry Type as a second argument so the field values are typed correctly."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2bx3AJ8D93WgmthX8tiEqZura9X",
-      "code": "import {Edit, Query} from 'alinea'\n\n// Select the first blog post\nconst blogPostId = await cms.get(Query(BlogPost).select(Query.id))\n\n// Edit a field and save\nconst update = Edit(blogPostId, BlogPost).set({\n  body: 'New body text'\n})\n\nawait cms.commit(update)",
+      "code": "import {Edit, Query} from 'alinea'\n\n// Select the first blog post\nconst blogPostId = await cms.get(Query(BlogPost).select(Query.id))\n\n// Edit a field and save\nconst update = Edit.update(blogPostId, BlogPost).set({\n  body: 'New body text'\n})\n\nawait cms.commit(update)",
       "fileName": "",
       "language": ""
     },
