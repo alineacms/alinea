@@ -120,7 +120,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2c4t1IBcmwpjaS3YqNaJQxRpWss",
-      "code": "const richTextField = richText('Item body text');\nconst listField = list('My list field', {\n  schema: {\n    Text: type('Text', {\n      title: text('Item title'),\n      text: richText,\n    })\n  }\n})\nconst rowText = Edit.richText(richTextField)\n  .addHtml(`\n    <h1>Main heading</h1>\n    <p>A rich text value parsed from HTML.</p>\n  `)\n  .value()\nconst listValue = Edit.list(listField)\n  .add('Text', {\n    title: 'The row title',\n    text: rowText,\n  })\n  .value()\nconst update = Edit(entryId, TypeWithList).set({\n  list: listValue\n})",
+      "code": "const richTextField = richText('Item body text');\nconst listField = list('My list field', {\n  schema: {\n    Text: type('Text', {\n      title: text('Item title'),\n      text: richText,\n    })\n  }\n})\nconst rowText = Edit.richText(richTextField)\n  .addHtml(`\n    <h1>Main heading</h1>\n    <p>A rich text value parsed from HTML.</p>\n  `)\n  .value()\nconst listValue = Edit.list(listField)\n  .add('Text', {\n    title: 'The row title',\n    text: rowText,\n  })\n  .value()\nconst update = Edit.update(entryId, TypeWithList).set({\n  list: listValue\n})",
       "fileName": "",
       "language": ""
     },
