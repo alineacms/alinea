@@ -342,9 +342,12 @@ export function EntryPickerModal({
                 toggleSelect={handleSelect}
                 showMedia={showMedia}
                 onNavigate={
-                  search
+                  search && !showMedia
                     ? undefined
                     : entryId => {
+                        if (showMedia && search) {
+                          setSearch('')
+                        }
                         updateDestination({...destination, parentId: entryId})
                       }
                 }
