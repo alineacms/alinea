@@ -185,8 +185,9 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       })
     )
 
-    const extension = extname(upload.file.name)
-    const path = slugify(basename(upload.file.name, extension))
+    const extensionOriginal = extname(upload.file.name)
+    const extension = extensionOriginal.toLowerCase()
+    const path = slugify(basename(upload.file.name, extensionOriginal))
     const prev = await graph.preferPublished.maybeGet(Entry({parent: parentId}))
 
     const entryLocation = {
@@ -211,7 +212,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         : location
 
     const hash = await createFileHash(new Uint8Array(buffer))
-    const title = basename(upload.file.name, extension)
+    const title = basename(upload.file.name, extensionOriginal)
     const entry = await createEntryRow<Media.File>(config, {
       ...entryLocation,
       parent: parent?.entryId ?? null,
