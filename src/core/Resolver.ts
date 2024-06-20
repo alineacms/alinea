@@ -10,6 +10,15 @@ export interface PreviewUpdate {
   update: string
 }
 
+export interface PreviewMetadata {
+  title: string
+  description?: string
+  'og:title'?: string
+  'og:description'?: string
+  'og:url'?: string
+  'og:image'?: string
+}
+
 export interface ResolveRequest {
   selection: Selection
   location?: Array<string>

@@ -3,20 +3,19 @@
   "_type": "BlogPost",
   "_index": "Zy",
   "_i18nId": "2YlP39QVFZOzf94YMwDVrzd4gNz",
-  "_root": "pages",
   "title": "Alinea 0.4.0 ⚡",
   "publishDate": "2023-12-01",
   "author": {
     "name": "Ben Merckx",
     "url": {
-      "_type": "url",
       "_id": "2YlPCEdeGLXkqwQQq4r482BrNmj",
+      "_type": "url",
       "_url": "https://github.com/benmerckx",
       "_target": "_blank"
     },
     "avatar": {
-      "_type": "url",
       "_id": "2YlPFxJGo8JMh6ZDWt7NDu7MPSN",
+      "_type": "url",
       "_url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
       "_target": "_self"
     }
@@ -220,8 +219,8 @@
       "_type": "ImageBlock",
       "_id": "2YlUKcEMi7vbNDku6d1QlCoO5oA",
       "image": {
-        "_type": "image",
         "_id": "2YlUafLKDxzdvHmJP6Kpyd6y9xJ",
+        "_type": "image",
         "_entry": "2YlUadqGteQCGAVaJ6QuSiwsdHr"
       }
     },
@@ -251,7 +250,11 @@
     "description": "",
     "openGraph": {
       "title": "",
-      "image": {},
+      "image": {
+        "_id": "2i9FuSoeYtbbK9Oq7YNBJuygCit",
+        "_type": "image",
+        "_entry": "2i9FuEJofr5yFe9DuleODHjjWkm"
+      },
       "description": ""
     }
   }

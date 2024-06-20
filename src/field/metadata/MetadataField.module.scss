@@ -1,0 +1,22 @@
+.google,
+.facebook {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.google h3,
+.facebook h3 {
+  font-size: 18px;
+  color: #1a0dab;
+}
+
+.google p,
+.facebook p {
+  color: #4d5156;
+}
+
+.facebook img {
+  max-width: 100%;
+  height: auto;
+}

@@ -1,4 +1,4 @@
-import type {PreviewUpdate} from 'alinea/core/Resolver'
+import type {PreviewMetadata, PreviewUpdate} from 'alinea/core/Resolver'
 import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
 
 export interface PreviewApi {
@@ -40,8 +40,36 @@ export function registerPreview(api: PreviewApi) {
     window.parent.postMessage({action: PreviewAction.Pong}, document.referrer)
     addEventListener('message', handleMessage)
     console.log('[Alinea preview listener attached]')
+
+    try {
+      const meta = fetchMetadataFromDocument()
+      window.parent.postMessage(
+        {action: PreviewAction.Meta, ...meta},
+        document.referrer
+      )
+      console.log('[Alinea meta data send to parent]')
+    } catch (e) {
+      console.error('[Alinea meta data send to parent failed]')
+    }
   }
   return () => {
     removeEventListener('message', handleMessage)
+  }
+}
+
+function fetchMetadataFromDocument(): PreviewMetadata {
+  function fetchData(selector: string): string | undefined {
+    return (
+      document.querySelector(selector)?.getAttribute('content') || undefined
+    )
+  }
+
+  return {
+    title: document.title,
+    description: fetchData('meta[name="description"]'),
+    'og:title': fetchData('meta[property="og:title"]'),
+    'og:description': fetchData('meta[property="og:description"]'),
+    'og:url': fetchData('meta[property="og:url"]'),
+    'og:image': fetchData('meta[property="og:image"]')
   }
 }
