@@ -10,7 +10,10 @@ import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Type} from 'alinea/core/Type'
 import {Projection} from 'alinea/core/pages/Projection'
 import {entryFileName} from 'alinea/core/util/EntryFilenames'
-import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
+import {
+  generateKeyBetween,
+  generateNKeysBetween
+} from 'alinea/core/util/FractionalIndexing'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
 import {atom, useAtomValue} from 'jotai'
@@ -206,19 +209,49 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
           console.log('Todo: move entries')
           return
         }
-        const previous = parent.getChildren()[childIndex - 1]
-        const next = parent.getChildren()[childIndex]
-        const previousIndex = previous?.getItemData()?.index ?? null
-        const nextIndex = next?.getItemData()?.index ?? null
+        const children = parent.getChildren()
+        const previous = children[childIndex - 1]
+        const previousIndexKey = previous?.getItemData()?.index ?? null
+        const next = children
+          .slice(childIndex)
+          .find(
+            entry => !entry || entry?.getItemData().index !== previousIndexKey
+          )
+        const nextChildIndex = next ? children.indexOf(next) : undefined
+        const nextIndexKey = next?.getItemData()?.index ?? null
+
         try {
-          const newIndex = generateKeyBetween(previousIndex, nextIndex)
+          const brokenChildren = children.slice(childIndex, nextChildIndex)
+          const newIndexKey = generateKeyBetween(previousIndexKey, nextIndexKey)
           const mutations: Array<Mutation> = []
+
+          if (brokenChildren.length > 0) {
+            // Start by generating new, clean keys for broken children (children with duplicate keys)
+            const newKeys = generateNKeysBetween(
+              newIndexKey,
+              nextIndexKey,
+              brokenChildren.length
+            )
+            for (let i = 0; i < brokenChildren.length; i++) {
+              const child = brokenChildren[i]
+              const correctedIndexKey = newKeys[i]
+              for (const entry of child.getItemData().entries) {
+                mutations.push({
+                  type: MutationType.Order,
+                  entryId: entry.entryId,
+                  file: entryFileName(config, entry, entry.parentPaths),
+                  index: correctedIndexKey
+                })
+              }
+            }
+          }
+
           for (const entry of dropping.getItemData().entries) {
             mutations.push({
               type: MutationType.Order,
               entryId: entry.entryId,
               file: entryFileName(config, entry, entry.parentPaths),
-              index: newIndex
+              index: newIndexKey
             })
           }
           mutate(mutations, true)
