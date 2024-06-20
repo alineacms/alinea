@@ -3,11 +3,10 @@
   vertical-align: top;
 
   &:not([style*='width: 100%']) {
-    @media (max-width: 1024px) {
+    @container lift (max-width: 480px) {
       width: 50% !important;
     }
-
-    @media (max-width: 768px) {
+    @container lift (max-width: 320px) {
       width: 100% !important;
     }
   }
