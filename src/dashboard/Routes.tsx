@@ -57,7 +57,8 @@ const editLoader = atomFamily(() => {
         workspace: Entry.workspace
       })
     )
-    return entry
+    if (!entry) return null
+    return {...entry, locale: entry.locale || undefined}
   })
 })
 
