@@ -51,6 +51,8 @@ const editLoader = atomFamily(() => {
     const entry = await graph.preferDraft.maybeGet(
       Entry(where).select({
         entryId: Entry.entryId,
+        locale: Entry.locale,
+        i18nId: Entry.i18nId,
         root: Entry.root,
         workspace: Entry.workspace
       })
