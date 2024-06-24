@@ -21,16 +21,31 @@ import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {fromModule} from 'alinea/ui/util/Styler'
 import {px} from 'alinea/ui/util/Units'
-import type {MetadataRoute} from 'next'
+import type {Metadata, MetadataRoute} from 'next'
 import {ComponentType, PropsWithChildren} from 'react'
 import {Link} from '../layout/nav/Link'
 import css from './HomePage.module.scss'
 
 const styles = fromModule(css)
 
-export async function generateMetadata() {
-  const home = await cms.get(Home())
-  return {title: home.metadata?.title || home.title}
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await cms.get(Home())
+  const openGraphImage = page.metadata?.openGraph.image
+  return {
+    title: page.metadata?.title || page.title,
+    description: page.metadata?.description,
+    openGraph: {
+      images: openGraphImage
+        ? [
+            {
+              url: openGraphImage.src,
+              width: openGraphImage.width,
+              height: openGraphImage.height
+            }
+          ]
+        : []
+    }
+  }
 }
 
 interface HighlightProps {

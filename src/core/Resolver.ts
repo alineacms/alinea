@@ -10,6 +10,25 @@ export interface PreviewUpdate {
   update: string
 }
 
+export interface PreviewMetadata {
+  title: string
+  description?: string
+  language?: string
+  robots?: string
+  canonical?: string
+  'og:title'?: string
+  'og:description'?: string
+  'og:url'?: string
+  'og:image'?: string
+  'og:image:width'?: string
+  'og:image:height'?: string
+  'twitter:card'?: string
+  'twitter:title'?: string
+  'twitter:image'?: string
+  'twitter:image:width'?: string
+  'twitter:image:height'?: string
+}
+
 export interface ResolveRequest {
   selection: Selection
   location?: Array<string>
