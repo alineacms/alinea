@@ -16,9 +16,10 @@ export interface PreviewMetadata {
   language?: string
   robots?: string
   canonical?: string
+  'og:url'?: string
+  'og:site_name'?: string
   'og:title'?: string
   'og:description'?: string
-  'og:url'?: string
   'og:image'?: string
   'og:image:width'?: string
   'og:image:height'?: string

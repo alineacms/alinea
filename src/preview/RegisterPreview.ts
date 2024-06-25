@@ -76,9 +76,10 @@ function fetchMetadataFromDocument(): PreviewMetadata {
     robots: fetchData('meta[name="robots"]'),
     canonical: fetchData('link[rel="canonical"]', 'href'),
 
+    'og:url': fetchData('meta[property="og:url"]'),
+    'og:site_name': fetchData('meta[property="og:site_name"]'),
     'og:title': fetchData('meta[property="og:title"]'),
     'og:description': fetchData('meta[property="og:description"]'),
-    'og:url': fetchData('meta[property="og:url"]'),
     'og:image': fetchData('meta[property="og:image"]'),
     'og:image:width': fetchData('meta[property="og:image:width"]'),
     'og:image:height': fetchData('meta[property="og:image:height"]'),
