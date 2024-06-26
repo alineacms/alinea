@@ -1,0 +1,121 @@
+.preview {
+  margin-top: 1em;
+
+  &-subtitle {
+    color: var(--alinea-fields-foreground);
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+}
+
+.searchengine {
+  padding: 10px;
+  max-width: 600px;
+  border: 1px solid var(--alinea-outline);
+  border-radius: var(--alinea-border-radius);
+
+  &-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &-intro {
+    display: flex;
+    align-items: center;
+
+    &-favicon {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 100%;
+      border: 1px solid var(--alinea-outline);
+      background-color: var(--alinea-selected);
+      margin-right: 12px;
+
+      &-icon {
+        color: var(--alinea-selected-foreground);
+        width: 18px;
+        height: 18px;
+        line-height: 1;
+      }
+    }
+
+    &-url {
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    &-url,
+    &-sitename {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &-title {
+    margin-block: 4px;
+    color: var(--alinea-selected-foreground);
+    font-size: 20px;
+    line-height: 1.3;
+    font-weight: 400;
+  }
+
+  &-description {
+    font-size: 14px;
+    line-height: 1.5;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+
+.opengraph {
+  max-width: 527px;
+  border: 1px solid var(--alinea-outline);
+  border-radius: var(--alinea-border-radius);
+
+  &-img {
+    height: auto;
+    display: block;
+    max-width: 100%;
+  }
+
+  &-body {
+    padding: 10px 12px;
+
+    &-url {
+      font-size: 12px;
+      line-height: 16px;
+      text-transform: uppercase;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &-content {
+      height: 46px;
+      overflow: hidden;
+
+      &-title {
+        margin-block: 4px;
+        font-size: 16px;
+        font-weight: 600;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+
+      &-description {
+        font-size: 14px;
+        line-height: 20px;
+      }
+    }
+  }
+}

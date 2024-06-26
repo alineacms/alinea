@@ -16,8 +16,9 @@ export interface MetadataFields {
   title: TextField
   description: TextField
   openGraph: ObjectField<{
-    title: TextField
+    siteName: TextField
     image: ImageField
+    title: TextField
     description: TextField
   }>
 }
@@ -37,8 +38,12 @@ export function metadata(
       description: text('Description', {multiline: true}),
       openGraph: object('Open graph', {
         fields: {
-          title: text('Title', {width: 0.5}),
-          image: image('Image', {width: 0.5}),
+          siteName: text('Site name', {width: 0.25}),
+          image: image('Image', {
+            width: 0.75,
+            help: 'Recommended size: 1200 x 630 pixels'
+          }),
+          title: text('Title'),
           description: text('Description', {multiline: true})
         }
       })

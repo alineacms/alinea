@@ -33,6 +33,7 @@ import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
 import {FieldToolbar} from './entry/FieldToolbar.js'
+import {BrowserPreviewMetaProvider} from './preview/BrowserPreview.js'
 
 const styles = fromModule(css)
 
@@ -115,7 +116,7 @@ export function EntryEdit({editor}: EntryEditProps) {
     if (isBlocking && !isNavigationChange) confirm?.()
   }, [isBlocking, isNavigationChange, confirm])
   return (
-    <>
+    <BrowserPreviewMetaProvider entryId={editor.entryId}>
       {alineaDev && (
         <>
           <Statusbar.Slot>
@@ -266,6 +267,6 @@ export function EntryEdit({editor}: EntryEditProps) {
           </Suspense>
         </Preview>
       )}
-    </>
+    </BrowserPreviewMetaProvider>
   )
 }

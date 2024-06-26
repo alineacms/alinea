@@ -1,3 +1,4 @@
+import {PreviewMetadata} from 'alinea/core/Resolver'
 import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
 import {HStack, Loader, Typo, fromModule, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
@@ -6,7 +7,14 @@ import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {IcRoundLock} from 'alinea/ui/icons/IcRoundLock'
 import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {IcRoundRefresh} from 'alinea/ui/icons/IcRoundRefresh'
-import {useEffect, useRef, useState} from 'react'
+import {
+  PropsWithChildren,
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import {LivePreview} from '../entry/EntryPreview.js'
 import css from './BrowserPreview.module.scss'
 
@@ -17,10 +25,42 @@ export interface BrowserPreviewProps {
   registerLivePreview(api: LivePreview): void
 }
 
+const BrowserPreviewMetaContext = createContext<{
+  setMetadata: (msg: PreviewMetadata) => void
+  metadata?: PreviewMetadata
+}>({
+  setMetadata: () => {}
+})
+
+export const BrowserPreviewMetaProvider: React.FC<
+  PropsWithChildren<{
+    entryId: string
+  }>
+> = ({entryId, children}) => {
+  const [metdata, setMetadata] = useState<PreviewMetadata>()
+
+  useEffect(() => {
+    setMetadata(undefined)
+  }, [entryId])
+
+  return (
+    <BrowserPreviewMetaContext.Provider
+      value={{setMetadata, metadata: metdata}}
+    >
+      {children}
+    </BrowserPreviewMetaContext.Provider>
+  )
+}
+
+export function usePreviewMetadata() {
+  return useContext(BrowserPreviewMetaContext)?.metadata
+}
+
 export function BrowserPreview({
   url,
   registerLivePreview
 }: BrowserPreviewProps) {
+  const metaContext = useContext(BrowserPreviewMetaContext)
   const iframe = useRef<HTMLIFrameElement>(null)
   const [loading, setLoading] = useState(true)
   const hasPreviewListener = useRef(false)
@@ -40,6 +80,9 @@ export function BrowserPreview({
             post({action: PreviewAction.Preview, ...update})
           }
         })
+      }
+      if (event.data.action === PreviewAction.Meta) {
+        metaContext.setMetadata(event.data)
       }
     }
 

@@ -9,8 +9,8 @@
   "headline": "Shape content\nfor the modern web.",
   "byline": "Open source headless CMS with minimal setup.\nFully typed content right in your repository.",
   "action": {
-    "_type": "entry",
     "_id": "2YcxykzomCJyGwRFMXARgTxib4b",
+    "_type": "entry",
     "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
     "label": "Get started"
   },
@@ -81,25 +81,25 @@
   },
   "links": [
     {
-      "_type": "entry",
       "_id": "2a7ftYTVOui6duXcA4Js0xG8QC6",
       "_index": "a0",
+      "_type": "entry",
       "_entry": "docs",
       "label": "Docs",
       "active": ""
     },
     {
-      "_type": "entry",
       "_id": "2a7ftRO1unpBDnfvXtgJUBIBwNr",
       "_index": "a1",
+      "_type": "entry",
       "_entry": "CC8aJ6-2U3s31micAzTLU",
       "label": "Roadmap",
       "active": ""
     },
     {
-      "_type": "entry",
       "_id": "2a7ftUxPD7w8EMFYWjpYoJVF6GP",
       "_index": "a2",
+      "_type": "entry",
       "_entry": "gx3H52whBKO_DdfcMNI3I",
       "label": "Blog",
       "active": ""
@@ -107,15 +107,15 @@
   ],
   "footer": [
     {
-      "_type": "Section",
       "_id": "2ANVIUDmjNddF0QO8aB0gwXcRq8",
       "_index": "a0",
+      "_type": "Section",
       "label": "Developer",
       "links": [
         {
-          "_type": "entry",
           "_id": "2a7fvVi9M7zcX2wx3IJfYBrCqeC",
           "_index": "a0",
+          "_type": "entry",
           "_entry": "docs",
           "label": ""
         }
@@ -124,10 +124,15 @@
   ],
   "metadata": {
     "title": "Alinea - Open source headless CMS",
-    "description": "",
+    "description": "Alinea is a open source headless CMS with minimal setup. Fully typed content right in your repository.",
     "openGraph": {
+      "siteName": "Alinea",
+      "image": {
+        "_id": "2i9HvjoJjgs3bDP5bMyQyekUfGu",
+        "_type": "image",
+        "_entry": "2i9FuEJofr5yFe9DuleODHjjWkm"
+      },
       "title": "",
-      "image": {},
       "description": ""
     }
   }

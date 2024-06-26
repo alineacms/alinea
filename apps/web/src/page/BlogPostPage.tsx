@@ -5,7 +5,7 @@ import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
 import {Query} from 'alinea'
 import {fromModule} from 'alinea/ui'
-import {MetadataRoute} from 'next'
+import {Metadata, MetadataRoute} from 'next'
 import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
@@ -22,9 +22,26 @@ export async function generateStaticParams() {
   return slugs.map(slug => ({slug}))
 }
 
-export async function generateMetadata({params}: BlogPostPageProps) {
+export async function generateMetadata({
+  params
+}: BlogPostPageProps): Promise<Metadata> {
   const page = await cms.get(Query(BlogPost).whereUrl(`/blog/${params.slug}`))
-  return {title: page.metadata?.title || page.title}
+  const openGraphImage = page.metadata?.openGraph.image
+  return {
+    title: page.metadata?.title || page.title,
+    description: page.metadata?.description || page.introduction,
+    openGraph: {
+      images: openGraphImage
+        ? [
+            {
+              url: openGraphImage.src,
+              width: openGraphImage.width,
+              height: openGraphImage.height
+            }
+          ]
+        : []
+    }
+  }
 }
 
 export default async function BlogPostPage({params}: BlogPostPageProps) {
