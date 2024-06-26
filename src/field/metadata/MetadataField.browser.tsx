@@ -47,7 +47,7 @@ function MetadataPreview() {
 const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
   return (
     <>
-      <h4 className={styles.preview.subtitle()}>Google</h4>
+      <h4 className={styles.preview.subtitle()}>Search engine</h4>
       <div className={styles.searchengine()}>
         <div className={styles.searchengine.intro()}>
           <div className={styles.searchengine.intro.favicon()}>
@@ -85,7 +85,7 @@ const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
 const OpenGraphPreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
   return (
     <>
-      <h4 className={styles.preview.subtitle()}>Facebook</h4>
+      <h4 className={styles.preview.subtitle()}>Social share</h4>
       <div className={styles.opengraph()}>
         <img
           src={metaTags['og:image']}
