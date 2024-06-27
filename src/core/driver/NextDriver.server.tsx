@@ -6,7 +6,6 @@ import {
   PREVIEW_UPDATE_NAME
 } from 'alinea/preview/PreviewConstants'
 import {enums, object, string} from 'cito'
-import dynamic from 'next/dynamic.js'
 import {Suspense} from 'react'
 import {Client} from '../Client.js'
 import {Config} from '../Config.js'
@@ -139,6 +138,7 @@ class NextDriver extends DefaultDriver implements NextApi {
     root
   }: PreviewProps): Promise<JSX.Element | null> => {
     const {draftMode} = await import('next/headers.js')
+    const {default: dynamic} = await import('next/dynamic.js')
     const [draftStatus] = outcome(() => draftMode())
     const isDraft = draftStatus?.isEnabled
     if (!isDraft) return null
