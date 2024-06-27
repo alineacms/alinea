@@ -3,25 +3,25 @@ import {
   DropTarget,
   ItemInstance
 } from '@headless-tree/core'
-import { Entry } from 'alinea/core/Entry'
-import { EntryPhase } from 'alinea/core/EntryRow'
-import { GraphRealm } from 'alinea/core/Graph'
-import { Mutation, MutationType } from 'alinea/core/Mutation'
-import { Type } from 'alinea/core/Type'
-import { Projection } from 'alinea/core/pages/Projection'
-import { entryFileName } from 'alinea/core/util/EntryFilenames'
+import {Entry} from 'alinea/core/Entry'
+import {EntryPhase} from 'alinea/core/EntryRow'
+import {GraphRealm} from 'alinea/core/Graph'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {Type} from 'alinea/core/Type'
+import {Projection} from 'alinea/core/pages/Projection'
+import {entryFileName} from 'alinea/core/util/EntryFilenames'
 import {
   generateKeyBetween,
   generateNKeysBetween
 } from 'alinea/core/util/FractionalIndexing'
-import { entries } from 'alinea/core/util/Objects'
+import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
-import { atom, useAtomValue } from 'jotai'
-import { useMemo } from 'react'
-import { useDashboard } from '../hook/UseDashboard.js'
-import { configAtom } from './DashboardAtoms.js'
-import { graphAtom, useMutate } from './DbAtoms.js'
-import { localeAtom, rootAtom, workspaceAtom } from './NavigationAtoms.js'
+import {atom, useAtomValue} from 'jotai'
+import {useMemo} from 'react'
+import {useDashboard} from '../hook/UseDashboard.js'
+import {configAtom} from './DashboardAtoms.js'
+import {graphAtom, useMutate} from './DbAtoms.js'
+import {localeAtom, rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
 export function rootId(rootName: string) {
   return `@alinea/root-${rootName}`
@@ -209,6 +209,8 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
         const toParent = parent
         const isMove = fromParent !== toParent
 
+        console.log(isMove)
+
         const children = parent.getChildren()
         const previous = children[childIndex - 1]
         const previousIndexKey = previous?.getItemData()?.index ?? null
@@ -219,6 +221,7 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
           )
         const nextChildIndex = next ? children.indexOf(next) : undefined
         const nextIndexKey = next?.getItemData()?.index ?? null
+
         try {
           const brokenChildren = children.slice(childIndex, nextChildIndex)
           const newIndexKey = generateKeyBetween(previousIndexKey, nextIndexKey)
