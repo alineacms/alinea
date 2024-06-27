@@ -118,6 +118,7 @@ export class GraphRealm implements GraphRealmApi {
 
   find<S extends Projection | Type>(select: S): Promise<Selection.Infer<S>>
   async find(select: any) {
+    if (Type.isType(select)) select = select()
     const selection = createSelection(select)
     serializeSelection(this.#targets, selection)
     return this.#resolver.resolve({
