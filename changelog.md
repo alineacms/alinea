@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.0]
+
+- Removed deprecated `createNextCMS` and `createCMS` from the `alinea` package
+  root. Instead use the `createCMS` function from `alinea/core` or
+  `alinea/next`.
+
 ## [0.9.14]
 
 - Avoid importing the 'next' package if we're not using next
