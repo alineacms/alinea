@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.14]
+
+- Avoid importing the 'next' package if we're not using next
+
 ## [0.9.13]
 
 - Introduced share previews from metadata fields which are fetched live from the preview iframe window
