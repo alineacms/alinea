@@ -327,12 +327,15 @@ export class Database implements Syncable {
         const phaseSegment =
           entryPhase === EntryPhase.Published ? '' : `.${entryPhase}`
         const filePath = (childrenDir + phaseSegment + '.json').toLowerCase()
-        const parent = await tx(
-          EntryRow({
-            entryId: mutation.parent,
-            phase: EntryPhase.Published
-          }).first()
-        )
+        const parent = mutation.parent
+          ? await tx(
+              EntryRow({
+                entryId: mutation.parent,
+                phase: EntryPhase.Published
+              }).first()
+            )
+          : null
+
         await tx(
           rows.set({
             index: mutation.index,
@@ -357,9 +360,13 @@ export class Database implements Syncable {
               EntryRow().where(
                 EntryRow.entryId.isIn(children.map(e => e.entryId))
               )
-            ).then(childrenIds =>
-              rows.concat(childrenIds).concat(parent.i18nId)
-            )
+            ).then(childrenIds => {
+              if (parent) {
+                return rows.concat(childrenIds).concat(parent.i18nId)
+              } else {
+                return rows.concat(childrenIds)
+              }
+            })
           })
       }
       case MutationType.Upload: {

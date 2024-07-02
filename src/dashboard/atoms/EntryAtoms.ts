@@ -3,6 +3,7 @@ import {
   DropTarget,
   ItemInstance
 } from '@headless-tree/core'
+import {Root} from 'alinea/alinea'
 import {Entry} from 'alinea/core/Entry'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {GraphRealm} from 'alinea/core/Graph'
@@ -209,8 +210,6 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
         const toParent = parent
         const isMove = fromParent !== toParent
 
-        console.log(isMove)
-
         const children = parent.getChildren()
         const previous = children[childIndex - 1]
         const previousIndexKey = previous?.getItemData()?.index ?? null
@@ -250,35 +249,95 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
 
           for (const entry of dropping.getItemData().entries) {
             if (isMove) {
-              const movingTo = toParent.getItemData() as
-                | EntryTreeItem
-                | undefined
-              if (!movingTo) return
-              const parentInLocale = movingTo.entries?.find(
-                e => e.locale === entry.locale
-              )
-              if (!parentInLocale) {
-                const message = `Cannot move entry to ${movingTo.entries[0].title} because it is not translated to ${entry.locale}`
-                alert(message)
-                throw new Error(message)
+              // Things we need to check for a valid move:
+              // 1) The parent we are moving into is either the root OR a folder entry which can accept children
+              // 2) If the parent we are moving to is a folder, it should be translated to all the same locales as the subject we are dropping
+              // 3) The parent we are moving to should accept this kind of channel
+              // 4) The parent we are moving to should not be a child of the subject we are moving
+
+              if (toParent.getItemData() === null) {
+                const workspaceConfig = config.workspaces[entry.workspace]
+                const {contains} = Root.data(workspaceConfig[entry.root])
+                if (contains && contains.includes(entry.type)) {
+                  const message = `Cannot move entry to root because it does not support ${entry.type} as a child`
+                  alert(message)
+                  throw new Error(message)
+                }
+
+                const fromFile = entryFileName(config, entry, entry.parentPaths)
+                const toFile = entryFileName(config, entry, [])
+                mutations.push({
+                  type: MutationType.Move,
+                  entryId: entry.entryId,
+                  entryType: entry.type,
+                  fromFile,
+                  toFile,
+                  parent: null,
+                  root: entry.root,
+                  workspace: entry.workspace,
+                  index: newIndexKey
+                })
+              } else {
+                const movingTo = toParent.getItemData()
+                const parentInLocale = movingTo.entries?.find(
+                  e => e.locale === entry.locale
+                )
+                if (!parentInLocale) {
+                  const message = `Cannot move entry to ${movingTo.entries[0]?.title} because it is not translated to ${entry.locale}`
+                  alert(message)
+                  throw new Error(message)
+                }
+
+                const parentType = config.schema[entry.type]
+                const isContainer = Type.isContainer(parentType)
+                if (!isContainer) {
+                  const message = `Cannot move entry to ${movingTo.entries[0]?.title} because it is not a container`
+                  alert(message)
+                  throw new Error(message)
+                }
+
+                const typeConfig = Type.meta(config.schema[movingTo.type])
+                if (
+                  typeConfig.contains &&
+                  !typeConfig.contains.includes(entry.type)
+                ) {
+                  const message = `Cannot move entry to ${movingTo.entries[0]?.title} because it does not support ${entry.type} as a child`
+                  alert(message)
+                  throw new Error(message)
+                }
+
+                if (
+                  [...parentInLocale.parentPaths, parentInLocale.path]
+                    .join('/')
+                    .startsWith([...entry.parentPaths, entry.path].join('/'))
+                ) {
+                  const message = `Cannot move entry to ${movingTo.entries[0]?.title} because it is a child of the entry`
+                  alert(message)
+                  throw new Error(message)
+                }
+
+                const fromFile = entryFileName(config, entry, entry.parentPaths)
+                const toFile = entryFileName(
+                  config,
+                  entry,
+                  parentInLocale.parentPaths.concat(parentInLocale.path)
+                )
+
+                mutations.push({
+                  type: MutationType.Move,
+                  entryId: entry.entryId,
+                  entryType: entry.type,
+                  fromFile,
+                  toFile,
+                  parent: parentInLocale.entryId,
+                  root: parentInLocale.root,
+                  workspace: parentInLocale.workspace,
+                  index: newIndexKey
+                })
               }
-              const fromFile = entryFileName(config, entry, entry.parentPaths)
-              const toFile = entryFileName(
-                config,
-                entry,
-                parentInLocale.parentPaths.concat(parentInLocale.path)
-              )
-              mutations.push({
-                type: MutationType.Move,
-                entryId: entry.entryId,
-                entryType: entry.type,
-                fromFile,
-                toFile,
-                parent: parentInLocale.entryId,
-                root: parentInLocale.root,
-                workspace: parentInLocale.workspace,
-                index: newIndexKey
-              })
+
+              // TODO 1: it looks like the index defined in a move mutation is not applied
+              // TODO 2: when move mutations are applied, the frontend crashes and needs a refresh
             } else {
               mutations.push({
                 type: MutationType.Order,

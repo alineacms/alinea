@@ -99,7 +99,7 @@ export interface MoveMutation {
   entryType: string
   fromFile: string
   toFile: string
-  parent: string
+  parent: string | null
   root: string
   workspace: string
   index: string
