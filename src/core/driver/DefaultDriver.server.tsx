@@ -2,6 +2,7 @@ import {Database} from 'alinea/backend'
 import {createStore} from 'alinea/backend/Store'
 import {EntryResolver} from 'alinea/backend/resolver/EntryResolver'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
+import {decode} from 'buffer-to-base64'
 import PLazy from 'p-lazy'
 import {CMS} from '../CMS.js'
 import {Client} from '../Client.js'
@@ -9,13 +10,12 @@ import {Config} from '../Config.js'
 import {Connection} from '../Connection.js'
 import {Resolver} from '../Resolver.js'
 import {Realm} from '../pages/Realm.js'
-import {base64} from '../util/Encoding.js'
 import {Logger} from '../util/Logger.js'
 
 const store = PLazy.from(async () => {
   // @ts-ignore
   const {storeData} = await import('@alinea/generated/store.js')
-  return createStore(new Uint8Array(base64.parse(storeData)))
+  return createStore(new Uint8Array(await decode(storeData)))
 })
 
 export class DefaultDriver extends CMS {

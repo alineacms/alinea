@@ -41,6 +41,7 @@ __metadata:
   dependencies:
     "@types/escape-html": "npm:^1.0.2"
     "@types/sade": "npm:^1.7.3"
+    buffer-to-base64: "npm:^0.1.5"
     compare-versions: "npm:^4.1.3"
     esbuild: "npm:^0.20.1"
     escape-html: "npm:^1.0.3"
@@ -3348,6 +3349,13 @@ __metadata:
   bin:
     browserslist: cli.js
   checksum: 10/e3590793db7f66ad3a50817e7b7f195ce61e029bd7187200244db664bfbe0ac832f784e4f6b9c958aef8ea4abe001ae7880b7522682df521f4bc0a5b67660b5e
+  languageName: node
+  linkType: hard
+
+"buffer-to-base64@npm:^0.1.5":
+  version: 0.1.5
+  resolution: "buffer-to-base64@npm:0.1.5"
+  checksum: 10/d5043ab687f33c29aa5d30e115be07af98eecc2540ee87cd8968245d1aed738b87ba11e3819a4abddafcccca89c52a4050c914da895a85aab73dee41939e6ee5
   languageName: node
   linkType: hard
 

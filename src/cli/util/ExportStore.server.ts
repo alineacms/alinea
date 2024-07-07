@@ -1,4 +1,4 @@
-import {base64} from 'alinea/core/util/Encoding'
+import {encode} from 'buffer-to-base64'
 import {promises as fs} from 'node:fs'
 import path, {dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -80,8 +80,8 @@ function embedInWasm(data: Uint8Array) {
   `
 }
 
-function embedInJs(source: string, data: Uint8Array) {
-  return source.replace('$DB', base64.stringify(data))
+async function embedInJs(source: string, data: Uint8Array) {
+  return source.replace('$DB', await encode(data))
 }
 
 export async function exportStore(
@@ -95,7 +95,7 @@ export async function exportStore(
     'utf-8'
   )
   if (!asWasm) {
-    await fs.writeFile(location, embedInJs(source, data))
+    await fs.writeFile(location, await embedInJs(source, data))
   } else {
     await fs.writeFile(
       location,
