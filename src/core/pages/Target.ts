@@ -1,5 +1,5 @@
 import {Callable} from 'rado/util/Callable'
-import {createId} from '../Id.js'
+import {rowId} from '../util/RowId.js'
 import {Cursor} from './Cursor.js'
 import {EV, Expr, createExprData} from './Expr.js'
 import {Fields} from './Fields.js'
@@ -78,18 +78,18 @@ export const Target = class {
     const impl = new this(data)
     const name = data.name || 'target'
     const call = {[name]: (...args: Array<any>) => impl.call(...args)}[name]
-    const rowId = `@@@${createId()}`
+    const id = rowId()
     return new Proxy<any>(call, {
       ownKeys() {
-        return ['prototype', rowId]
+        return ['prototype', id]
       },
       getOwnPropertyDescriptor(target, prop) {
-        if (prop === rowId) return {enumerable: true, configurable: true}
+        if (prop === id) return {enumerable: true, configurable: true}
         return Reflect.getOwnPropertyDescriptor(target, prop)
       },
       get: (_, prop) => {
         if (typeof prop === 'string') {
-          if (prop === rowId) return data
+          if (prop === id) return data
           return impl.get(prop)
         }
         switch (prop) {

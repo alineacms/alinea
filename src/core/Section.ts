@@ -1,7 +1,7 @@
 import {ComponentType} from 'react'
 import {Field} from './Field.js'
-import {createId} from './Id.js'
 import {assign, create, defineProperty, entries} from './util/Objects.js'
+import {rowId} from './util/RowId.js'
 
 export interface SectionDefinition {
   [key: string]: Field<any, any> | Section
@@ -29,7 +29,6 @@ export type SectionView<Fields> = ComponentType<{
 
 export namespace Section {
   export const Data = Symbol.for('@alinea/Section.Data')
-  export const PREFIX = '@@@'
 
   export function provideView<
     Fields,
@@ -77,7 +76,8 @@ export function section<Fields>(data: SectionOptions): Section<Fields> {
   // This magic property is the only enumerable property on the section
   // Any tools that use a section will have to retrieve the fields from
   // the section data
-  section[`${Section.PREFIX}${createId()}`] = section
+  const id = rowId()
+  section[id] = section
   if (!data.fields) assign(data, {fields})
   defineProperty(section, Section.Data, {
     value: data,

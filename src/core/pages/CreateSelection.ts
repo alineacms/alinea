@@ -1,3 +1,4 @@
+import {isRowId} from '../util/RowId.js'
 import {Tree} from './Cursor.js'
 import {ExprData, Selection, toSelection} from './ResolveData.js'
 
@@ -16,7 +17,7 @@ function fromInput(input: any, parent?: any, level = 0): Selection {
     const keys = Object.keys(input)
     return Selection.Record(
       keys.map(key => {
-        if (key.startsWith('@@@')) return [input[key]]
+        if (isRowId(key)) return [input[key]]
         return [key, fromInput(input[key], input, level + 1)]
       })
     )
