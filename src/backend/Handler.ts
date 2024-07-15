@@ -180,7 +180,7 @@ class HandlerConnection implements Connection {
     for (const mutation of mutations) {
       switch (mutation.type) {
         case MutationType.Edit:
-          tasks.push(this.persistEdit(mutation))
+          tasks.push(this.persistEdit(mutation, toCommitHash))
           continue
       }
     }
@@ -233,13 +233,14 @@ class HandlerConnection implements Connection {
 
   // Drafts
 
-  private async persistEdit(mutation: EditMutation) {
+  private async persistEdit(mutation: EditMutation, commitHash: string) {
     const {drafts} = this.handler.options
     if (!drafts || !mutation.update) return
     const update = base64.parse(mutation.update)
     const currentDraft = await this.getDraft(mutation.entryId)
     await this.storeDraft({
       entryId: mutation.entryId,
+      commitHash,
       fileHash: mutation.entry.fileHash,
       draft: currentDraft
         ? mergeUpdatesV2([currentDraft.draft, update])

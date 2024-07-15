@@ -28,7 +28,7 @@ export interface Connection extends Resolver, Syncable, History, Drafts {
   getDraft(entryId: string): Promise<Draft | undefined>
   storeDraft(draft: Draft): Promise<void>
 }
-
+0
 export namespace Connection {
   export type UploadParams = {
     parentId?: string

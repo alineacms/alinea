@@ -3,6 +3,7 @@ import {Draft} from 'alinea/core/Draft'
 
 export interface DraftTransport {
   entryId: string
+  commitHash: string
   fileHash: string
   draft: string
 }
