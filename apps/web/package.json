@@ -34,7 +34,7 @@
     "eslint-config-next": "13.4.0",
     "raw-loader": "^4.0.2",
     "tsx": "^4.7.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.3"
   },
   "exports": {
     ".": "./dist/index.js",

@@ -86,7 +86,7 @@
     "sass": "^1.63.4",
     "sharp": "0.32.6",
     "speedscope": "^1.14.0",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.3",
     "typescript-plugin-css-modules": "^5.0.2",
     "uvu": "^0.5.1"
   },
