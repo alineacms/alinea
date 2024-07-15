@@ -54,6 +54,7 @@ export class Handler implements Resolver {
   changes: ChangeSetCreator
   protected lastSync = 0
   protected resolver: EntryResolver
+  protected draftCache: Record<string, Draft> = {}
 
   constructor(public options: HandlerOptions) {
     this.resolver = new EntryResolver(
@@ -86,8 +87,11 @@ export class Handler implements Resolver {
   }
 
   async parsePreview(preview: PreviewUpdate) {
-    const {config} = this.options
-    await this.periodicSync()
+    const {config, db} = this.options
+    const meta = await db.meta()
+    if (preview.commitHash !== meta.commitHash) {
+      await this.periodicSync()
+    }
     const update = unzlibSync(base64url.parse(preview.update))
     const entry = await this.resolver.resolve<EntryRow>({
       selection: createSelection(
@@ -96,10 +100,17 @@ export class Handler implements Resolver {
       realm: Realm.PreferDraft
     })
     if (!entry) return
-    const currentDraft = await this.options.drafts?.getDraft(
-      preview.entryId,
-      this.previewAuth()
-    )
+    const cachedDraft = this.draftCache[preview.entryId]
+    let currentDraft: Draft | undefined
+    if (cachedDraft?.commitHash === preview.commitHash) {
+      currentDraft = cachedDraft
+    } else {
+      currentDraft = await this.options.drafts?.getDraft(
+        preview.entryId,
+        this.previewAuth()
+      )
+      if (currentDraft) this.draftCache[preview.entryId] = currentDraft
+    }
     const apply = currentDraft
       ? mergeUpdatesV2([currentDraft.draft, update])
       : update
@@ -273,6 +284,7 @@ const ResolveBody: Type<ResolveRequest> = object({
   realm: enums(Realm),
   preview: object({
     entryId: string,
+    commitHash: string,
     phase: enums(EntryPhase),
     update: string
   }).optional

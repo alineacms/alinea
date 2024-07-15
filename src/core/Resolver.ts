@@ -6,6 +6,7 @@ export type PreviewRequest = PreviewUpdate | {entry: EntryRow}
 
 export interface PreviewUpdate {
   entryId: string
+  commitHash: string
   phase: EntryPhase
   update: string
 }

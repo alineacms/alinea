@@ -5,6 +5,7 @@ import {base64url} from 'alinea/core/util/Encoding'
 import {zlibSync} from 'fflate'
 import {useAtomValue} from 'jotai'
 import {ComponentType, useEffect, useState} from 'react'
+import {dbHashAtom} from '../../atoms/DbAtoms.js'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {BrowserPreview} from '../preview/BrowserPreview.js'
 
@@ -30,6 +31,7 @@ interface EntryPreviewUrlProps {
 }
 
 function EntryPreviewUrl({editor, preview}: EntryPreviewUrlProps) {
+  const commitHash = useAtomValue(dbHashAtom)
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const previewSearch = `?token=${editor.previewToken}&entryId=${editor.entryId}&realm=${selectedPhase}`
   const [api, setApi] = useState<LivePreview | undefined>(undefined)
@@ -40,10 +42,11 @@ function EntryPreviewUrl({editor, preview}: EntryPreviewUrlProps) {
     const update = base64url.stringify(compressed)
     api.preview({
       entryId: editor.entryId,
+      commitHash: commitHash,
       phase: selectedPhase,
       update
     })
-  }, [api, yUpdate])
+  }, [api, yUpdate, commitHash])
   const base = new URL(preview, location.href)
   const url = new URL(previewSearch, base)
   return <BrowserPreview url={url.toString()} registerLivePreview={setApi} />

@@ -1,6 +1,7 @@
 import {JWTPreviews} from 'alinea/backend'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
+  PREVIEW_COMMIT_HASH_NAME,
   PREVIEW_ENTRYID_NAME,
   PREVIEW_PHASE_NAME,
   PREVIEW_UPDATE_NAME
@@ -63,9 +64,12 @@ class NextDriver extends DefaultDriver implements NextApi {
       if (update) {
         const entryIdCookie = cookies().get(PREVIEW_ENTRYID_NAME)
         const phaseCookie = cookies().get(PREVIEW_PHASE_NAME)
+        const commitHashCookie = cookies().get(PREVIEW_COMMIT_HASH_NAME)
         const entryId = entryIdCookie?.value
         const phase = phaseCookie?.value as EntryPhase
-        if (entryId && phase) resolveDefaults.preview = {entryId, phase, update}
+        const commitHash = commitHashCookie?.value
+        if (entryId && phase && commitHash)
+          resolveDefaults.preview = {entryId, commitHash, phase, update}
       }
     }
     return resolveDefaults

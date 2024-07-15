@@ -2,6 +2,7 @@
 
 import {chunkCookieValue} from 'alinea/preview/ChunkCookieValue'
 import {
+  PREVIEW_COMMIT_HASH_NAME,
   PREVIEW_ENTRYID_NAME,
   PREVIEW_PHASE_NAME,
   PREVIEW_UPDATE_NAME
@@ -13,6 +14,7 @@ import {IcRoundExitToApp} from 'alinea/ui/icons/IcRoundExitToApp'
 import {usePathname, useRouter} from 'next/navigation.js'
 import {PropsWithChildren, useEffect, useState} from 'react'
 import {createPortal} from 'react-dom'
+import {PreviewUpdate} from '../Resolver.js'
 import {User} from '../User.js'
 
 const MAX_CHUNKS = 5
@@ -106,24 +108,8 @@ function PreviewWidget({dashboardUrl, workspace, root}: NextPreviewsProps) {
   if (root) entryParams.set('root', root)
   const entryUrl = new URL(`#/edit?${entryParams}`, adminUrl)
   const {isPreviewing} = usePreview({
-    async preview({entryId, phase, update}) {
-      const chunks = chunkCookieValue(PREVIEW_UPDATE_NAME, update)
-
-      // Todo: if we reached the limit show the user a modal or indication in
-      // the UI that previewing will be temporarily disabled until the changes
-      // are saved or published
-      if (chunks.length > MAX_CHUNKS) {
-        console.warn('Too many chunks, previewing will be disabled')
-        return
-      }
-
-      const now = Date.now()
-      const expiry = new Date(now + 10_000)
-      document.cookie = `${PREVIEW_ENTRYID_NAME}=${entryId};expires=${expiry.toUTCString()};path=/`
-      document.cookie = `${PREVIEW_PHASE_NAME}=${phase};expires=${expiry.toUTCString()};path=/`
-      for (const {name, value} of chunks) {
-        document.cookie = `${name}=${value};expires=${expiry.toUTCString()};path=/`
-      }
+    async preview(update) {
+      setPreviewCookies(update)
       router.refresh()
     }
   })
@@ -235,32 +221,46 @@ export interface NextPreviewsProps {
   widget?: boolean
 }
 
+async function setPreviewCookies({
+  entryId,
+  commitHash,
+  phase,
+  update
+}: PreviewUpdate) {
+  const chunks = chunkCookieValue(PREVIEW_UPDATE_NAME, update)
+
+  // Todo: if we reached the limit show the user a modal or indication in
+  // the UI that previewing will be temporarily disabled until the changes
+  // are saved or published
+  if (chunks.length > MAX_CHUNKS) {
+    console.warn('Too many chunks, previewing will be disabled')
+    return
+  }
+
+  const now = Date.now()
+  const expiry = new Date(now + 10_000)
+  document.cookie = `${PREVIEW_ENTRYID_NAME}=${entryId};expires=${expiry.toUTCString()};path=/`
+  document.cookie = `${PREVIEW_COMMIT_HASH_NAME}=${commitHash};expires=${expiry.toUTCString()};path=/`
+  document.cookie = `${PREVIEW_PHASE_NAME}=${phase};expires=${expiry.toUTCString()};path=/`
+  for (const {name, value} of chunks) {
+    document.cookie = `${name}=${value};expires=${expiry.toUTCString()};path=/`
+  }
+}
+
 export default function NextPreviews(props: NextPreviewsProps) {
+  if (!props.widget) return <WithoutWidget />
+  return <PreviewWidget {...props} />
+}
+
+function WithoutWidget() {
   const router = useRouter()
   const {isPreviewing} = usePreview({
-    async preview({entryId, phase, update}) {
-      const chunks = chunkCookieValue(PREVIEW_UPDATE_NAME, update)
-
-      // Todo: if we reached the limit show the user a modal or indication in
-      // the UI that previewing will be temporarily disabled until the changes
-      // are saved or published
-      if (chunks.length > MAX_CHUNKS) {
-        console.warn('Too many chunks, previewing will be disabled')
-        return
-      }
-
-      const now = Date.now()
-      const expiry = new Date(now + 10_000)
-      document.cookie = `${PREVIEW_ENTRYID_NAME}=${entryId};expires=${expiry.toUTCString()};path=/`
-      document.cookie = `${PREVIEW_PHASE_NAME}=${phase};expires=${expiry.toUTCString()};path=/`
-      for (const {name, value} of chunks) {
-        document.cookie = `${name}=${value};expires=${expiry.toUTCString()};path=/`
-      }
+    async preview(update) {
+      setPreviewCookies(update)
       router.refresh()
     }
   })
-  if (!props.widget) return null
-  return <PreviewWidget {...props} />
+  return null
 }
 
 function ShadowRoot({children}: PropsWithChildren) {
