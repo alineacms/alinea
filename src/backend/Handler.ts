@@ -90,6 +90,9 @@ export class Handler implements Resolver {
     const {config, db} = this.options
     const meta = await db.meta()
     if (preview.commitHash !== meta.commitHash) {
+      console.log(
+        `Sync because requested ${preview.commitHash} does not match db ${meta.commitHash}`
+      )
       await this.periodicSync()
     }
     const update = unzlibSync(base64url.parse(preview.update))
@@ -105,6 +108,9 @@ export class Handler implements Resolver {
     if (cachedDraft?.commitHash === preview.commitHash) {
       currentDraft = cachedDraft
     } else {
+      console.log(
+        `Request draft requested ${preview.commitHash} does not match cached ${cachedDraft?.commitHash}`
+      )
       currentDraft = await this.options.drafts?.getDraft(
         preview.entryId,
         this.previewAuth()
