@@ -26,11 +26,11 @@ export const persistentStoreAtom = atom(createPersistentStore)
 
 const limit = pLimit(1)
 
-export const dbHashAtom = atom(async get => {
+export const dbMetaAtom = atom(async get => {
   const db = await get(localDbAtom)
   get(changedEntriesAtom)
   const meta = await db.db.meta()
-  return meta.contentHash
+  return meta
 })
 
 const localDbAtom = atom(async (get, set) => {

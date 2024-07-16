@@ -14,7 +14,7 @@ import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
 import {router} from './Routes.js'
 import {sessionAtom} from './atoms/DashboardAtoms.js'
-import {dbHashAtom, useDbUpdater} from './atoms/DbAtoms.js'
+import {dbMetaAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
@@ -74,7 +74,7 @@ function AppAuthenticated() {
   const locale = useLocale()
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
-  const dbHash = useAtomValue(dbHashAtom)
+  const meta = useAtomValue(dbMetaAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -135,7 +135,7 @@ function AppAuthenticated() {
             {alineaDev && (
               <Statusbar.Root>
                 <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                  {dbHash}
+                  {meta.contentHash}
                 </Statusbar.Status>
               </Statusbar.Root>
             )}
