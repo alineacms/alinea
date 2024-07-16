@@ -139,7 +139,6 @@ export class CloudApi implements Media, Target, History, Pending, Drafts {
 
   storeDraft(draft: Draft, ctx: Connection.Context): Promise<void> {
     const body = {
-      commitHash: draft.commitHash,
       fileHash: draft.fileHash,
       update: base64.stringify(draft.draft)
     }

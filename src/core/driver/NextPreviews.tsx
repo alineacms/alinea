@@ -2,7 +2,7 @@
 
 import {chunkCookieValue} from 'alinea/preview/ChunkCookieValue'
 import {
-  PREVIEW_COMMIT_HASH_NAME,
+  PREVIEW_CONTENT_HASH_NAME,
   PREVIEW_ENTRYID_NAME,
   PREVIEW_PHASE_NAME,
   PREVIEW_UPDATE_NAME
@@ -223,7 +223,7 @@ export interface NextPreviewsProps {
 
 async function setPreviewCookies({
   entryId,
-  commitHash,
+  contentHash,
   phase,
   update
 }: PreviewUpdate) {
@@ -240,7 +240,7 @@ async function setPreviewCookies({
   const now = Date.now()
   const expiry = new Date(now + 10_000)
   document.cookie = `${PREVIEW_ENTRYID_NAME}=${entryId};expires=${expiry.toUTCString()};path=/`
-  document.cookie = `${PREVIEW_COMMIT_HASH_NAME}=${commitHash};expires=${expiry.toUTCString()};path=/`
+  document.cookie = `${PREVIEW_CONTENT_HASH_NAME}=${contentHash};expires=${expiry.toUTCString()};path=/`
   document.cookie = `${PREVIEW_PHASE_NAME}=${phase};expires=${expiry.toUTCString()};path=/`
   for (const {name, value} of chunks) {
     document.cookie = `${name}=${value};expires=${expiry.toUTCString()};path=/`

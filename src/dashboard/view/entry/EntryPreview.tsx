@@ -31,7 +31,7 @@ interface EntryPreviewUrlProps {
 }
 
 function EntryPreviewUrl({editor, preview}: EntryPreviewUrlProps) {
-  const {commitHash} = useAtomValue(dbMetaAtom)
+  const {contentHash} = useAtomValue(dbMetaAtom)
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const previewSearch = `?token=${editor.previewToken}&entryId=${editor.entryId}&realm=${selectedPhase}`
   const [api, setApi] = useState<LivePreview | undefined>(undefined)
@@ -42,11 +42,11 @@ function EntryPreviewUrl({editor, preview}: EntryPreviewUrlProps) {
     const update = base64url.stringify(compressed)
     api.preview({
       entryId: editor.entryId,
-      commitHash: commitHash,
+      contentHash: contentHash,
       phase: selectedPhase,
       update
     })
-  }, [api, yUpdate, commitHash])
+  }, [api, yUpdate, contentHash])
   const base = new URL(preview, location.href)
   const url = new URL(previewSearch, base)
   return <BrowserPreview url={url.toString()} registerLivePreview={setApi} />

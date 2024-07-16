@@ -54,7 +54,7 @@ export class Handler implements Resolver {
   changes: ChangeSetCreator
   protected lastSync = 0
   protected resolver: EntryResolver
-  protected draftCache: Record<string, Draft> = {}
+  protected draftCache: Record<string, Draft & {contentHash: string}> = {}
 
   constructor(public options: HandlerOptions) {
     this.resolver = new EntryResolver(
@@ -88,12 +88,13 @@ export class Handler implements Resolver {
 
   async parsePreview(preview: PreviewUpdate) {
     const {config, db} = this.options
-    const meta = await db.meta()
-    if (preview.commitHash !== meta.commitHash) {
+    let meta = await db.meta()
+    if (preview.contentHash !== meta.contentHash) {
       console.log(
-        `Sync because requested ${preview.commitHash} does not match db ${meta.commitHash}`
+        `Sync because requested ${preview.contentHash} does not match db ${meta.commitHash}`
       )
       await this.periodicSync()
+      meta = await db.meta()
     }
     const update = unzlibSync(base64url.parse(preview.update))
     const entry = await this.resolver.resolve<EntryRow>({
@@ -105,17 +106,21 @@ export class Handler implements Resolver {
     if (!entry) return
     const cachedDraft = this.draftCache[preview.entryId]
     let currentDraft: Draft | undefined
-    if (cachedDraft?.commitHash === preview.commitHash) {
+    if (cachedDraft?.contentHash === meta.contentHash) {
       currentDraft = cachedDraft
     } else {
       console.log(
-        `Request draft requested ${preview.commitHash} does not match cached ${cachedDraft?.commitHash}`
+        `Request draft requested ${meta.contentHash} does not match cached ${cachedDraft?.contentHash}`
       )
       currentDraft = await this.options.drafts?.getDraft(
         preview.entryId,
         this.previewAuth()
       )
-      if (currentDraft) this.draftCache[preview.entryId] = currentDraft
+      if (currentDraft)
+        this.draftCache[preview.entryId] = {
+          ...currentDraft,
+          contentHash: meta.contentHash
+        }
     }
     const apply = currentDraft
       ? mergeUpdatesV2([currentDraft.draft, update])
@@ -258,7 +263,6 @@ class HandlerConnection implements Connection {
     const currentDraft = await this.getDraft(mutation.entryId)
     await this.storeDraft({
       entryId: mutation.entryId,
-      commitHash,
       fileHash: mutation.entry.fileHash,
       draft: currentDraft
         ? mergeUpdatesV2([currentDraft.draft, update])
@@ -291,7 +295,7 @@ const ResolveBody: Type<ResolveRequest> = object({
   realm: enums(Realm),
   preview: object({
     entryId: string,
-    commitHash: string,
+    contentHash: string,
     phase: enums(EntryPhase),
     update: string
   }).optional
