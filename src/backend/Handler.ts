@@ -90,9 +90,6 @@ export class Handler implements Resolver {
     const {config, db} = this.options
     let meta = await db.meta()
     if (preview.contentHash !== meta.contentHash) {
-      console.log(
-        `Sync because requested ${preview.contentHash} does not match db ${meta.commitHash}`
-      )
       await this.periodicSync()
       meta = await db.meta()
     }
@@ -109,9 +106,6 @@ export class Handler implements Resolver {
     if (cachedDraft?.contentHash === meta.contentHash) {
       currentDraft = cachedDraft
     } else {
-      console.log(
-        `Request draft requested ${meta.contentHash} does not match cached ${cachedDraft?.contentHash}`
-      )
       currentDraft = await this.options.drafts?.getDraft(
         preview.entryId,
         this.previewAuth()
