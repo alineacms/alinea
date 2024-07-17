@@ -85,35 +85,33 @@ export namespace Connection {
   export interface Context extends AuthContext {
     logger: Logger
   }
-  const base = '/hub'
   export const routes = {
-    base,
     resolve() {
-      return base + `/resolve`
+      return `/resolve`
     },
     mutate() {
-      return base + `/mutate`
+      return `/mutate`
     },
     revisions() {
-      return base + `/revisions`
+      return `/revisions`
     },
     sync() {
-      return base + `/sync`
+      return `/sync`
     },
     draft() {
-      return base + `/draft`
+      return `/draft`
     },
     media() {
-      return base + `/media`
+      return `/media`
     },
     prepareUpload() {
-      return base + `/upload`
+      return `/upload`
     },
     files(location?: string) {
-      return base + `/files${location ? '/' + location : ''}`
+      return `/files&location=${location}`
     },
     previewToken() {
-      return base + `/preview-token`
+      return `/preview-token`
     }
   }
 }

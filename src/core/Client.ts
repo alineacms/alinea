@@ -69,14 +69,14 @@ export class Client implements Connection {
   revisions(file: string): Promise<Array<Revision>> {
     const params = new URLSearchParams({file})
     return this.requestJson(
-      Connection.routes.revisions() + '?' + params.toString()
+      Connection.routes.revisions() + '&' + params.toString()
     ).then<Array<Revision>>(failOnHttpError)
   }
 
   revisionData(file: string, revisionId: string): Promise<EntryRecord> {
     const params = new URLSearchParams({file, revisionId})
     return this.requestJson(
-      Connection.routes.revisions() + '?' + params.toString()
+      Connection.routes.revisions() + '&' + params.toString()
     ).then<EntryRecord>(failOnHttpError)
   }
 
@@ -85,7 +85,7 @@ export class Client implements Connection {
   syncRequired(contentHash: string): Promise<boolean> {
     const params = new URLSearchParams({contentHash})
     return this.requestJson(
-      Connection.routes.sync() + '?' + params.toString()
+      Connection.routes.sync() + '&' + params.toString()
     ).then<boolean>(failOnHttpError)
   }
 
@@ -100,7 +100,7 @@ export class Client implements Connection {
 
   getDraft(entryId: string): Promise<Draft | undefined> {
     const params = new URLSearchParams({entryId})
-    return this.requestJson(Connection.routes.draft() + '?' + params.toString())
+    return this.requestJson(Connection.routes.draft() + '&' + params.toString())
       .then<DraftTransport | null>(failOnHttpError)
       .then(draft =>
         draft
@@ -120,10 +120,7 @@ export class Client implements Connection {
     const {url, applyAuth = v => v, unauthorized} = this.options
     const controller = new AbortController()
     const signal = controller.signal
-    const location =
-      url.endsWith('/') && endpoint.startsWith('/')
-        ? url + endpoint.slice(1)
-        : url + endpoint
+    const location = url + '?' + endpoint
     const promise = fetch(location, {
       ...applyAuth(init),
       signal

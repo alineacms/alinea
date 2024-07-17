@@ -303,7 +303,7 @@ function createRouter(
   auth: Auth.Server,
   createApi: (context: Connection.Context) => Connection
 ): Route<Request, Response | undefined> {
-  const matcher = router.startAt(Connection.routes.base)
+  const matcher = router.queryMatcher
   async function context<T extends {request: Request; url: URL}>(
     input: T
   ): Promise<T & {ctx: Connection.Context; logger: Logger}> {

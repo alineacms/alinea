@@ -171,7 +171,7 @@ export function createLocalServer(
         }
       })
     }),
-    matcher.post('/upload').map(async ({request, url}) => {
+    router.queryMatcher.post('/upload').map(async ({request, url}) => {
       if (!request.body) return new Response('No body', {status: 400})
       const file = url.searchParams.get('file')!
       const dir = path.join(cwd, path.dirname(file))
@@ -186,6 +186,7 @@ export function createLocalServer(
       return new Response()
     }),
     router.compress(
+      handler.router,
       matcher.get('/').map(({url}): Response => {
         const handlerUrl = `${url.protocol}//${url.host}`
         return new Response(
@@ -194,17 +195,14 @@ export function createLocalServer(
           <link rel="icon" href="data:," />
           <link href="/entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
-          <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
+          <meta name="handshake_url" value="${handlerUrl}/?auth.handshake" />
+          <meta name="redirect_url" value="${handlerUrl}/?auth" />
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,
-          {
-            headers: {'content-type': 'text/html'}
-          }
+          {headers: {'content-type': 'text/html'}}
         )
       }),
-      handler.router,
       serveBrowserBuild
     )
   ).notFound(() => new Response('Not found', {status: 404}))
