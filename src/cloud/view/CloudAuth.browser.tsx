@@ -1,6 +1,5 @@
 import {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
-import {Connection} from 'alinea/core/Connection'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {Head} from 'alinea/dashboard/util/Head'
@@ -19,12 +18,9 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {data, isError} = useQuery(
     ['auth.cloud'],
     () => {
-      return fetch(
-        joinPaths(client.options.url, Connection.routes.base, `/auth.cloud`),
-        {
-          credentials: 'include'
-        }
-      ).then<AuthResult>(res => res.json())
+      return fetch(joinPaths(client.options.url, `/auth/cloud`), {
+        credentials: 'include'
+      }).then<AuthResult>(res => res.json())
     },
     {keepPreviousData: true}
   )
@@ -65,12 +61,8 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
           options => ({...options, credentials: 'same-origin'}),
           () => setSession(undefined)
         ),
-        end: async () => {
-          location.href = joinPaths(
-            client.options.url,
-            Connection.routes.base,
-            `/auth/logout`
-          )
+        async end() {
+          location.href = joinPaths(client.options.url, `/auth/logout`)
         }
       })
       return null
