@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.10.1]
+
+- Use buffer-to-base64 to compress store data written to disk
+- Improve live previews, fetch data only when needed
+
 ## [0.10.0]
 
 - Removed deprecated `createNextCMS` and `createCMS` from the `alinea` package
