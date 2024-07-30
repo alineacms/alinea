@@ -21,24 +21,23 @@ type JWKS = {keys: Array<JsonWebKey>}
 
 class RemoteUnavailableError extends Error {}
 
-let publicKey = PLazy.from(loadPublicKey)
-function loadPublicKey(retry = 0): Promise<JsonWebKey> {
-  return fetch(cloudConfig.jwks)
-    .then<JWKS>(async res => {
-      if (res.status !== 200) throw new HttpError(res.status, await res.text())
-      return res.json()
-    })
-    .then(jwks => {
-      const key = jwks.keys[0] // .find(key => key.use === 'sig')
-      if (!key) throw new HttpError(500, 'No signature key found')
-      return key
-    })
-    .catch(error => {
-      if (retry < 3) return loadPublicKey(retry + 1)
-      publicKey = PLazy.from(loadPublicKey)
-      throw new RemoteUnavailableError('Remote unavailable', {cause: error})
-    })
-}
+let publicKey = PLazy.from(async function loadPublicKey(
+  retry = 0
+): Promise<JsonWebKey> {
+  try {
+    const res = await fetch(cloudConfig.jwks)
+    if (res.status !== 200) throw new HttpError(res.status, await res.text())
+    const result: JWKS = await res.json()
+    const jwks = result
+    const key = jwks.keys[0] // .find(key => key.use === 'sig')
+    if (!key) throw new HttpError(500, 'No signature key found')
+    return key
+  } catch (error) {
+    if (retry < 3) return loadPublicKey(retry + 1)
+    publicKey = PLazy.from(loadPublicKey)
+    throw new RemoteUnavailableError('Remote unavailable', {cause: error})
+  }
+})
 
 const COOKIE_NAME = 'alinea.cloud'
 
