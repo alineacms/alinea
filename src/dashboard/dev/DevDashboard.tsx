@@ -47,7 +47,6 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
   const client = useMemo(() => {
     if (!config) return null
     return new Client({
-      config: config,
       url: joinPaths(location.origin, location.pathname)
     })
   }, [config])

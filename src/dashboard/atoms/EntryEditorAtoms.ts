@@ -29,7 +29,12 @@ import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
+import {
+  dbMetaAtom,
+  entryRevisionAtoms,
+  graphAtom,
+  mutateAtom
+} from './DbAtoms.js'
 import {Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
@@ -41,11 +46,6 @@ export enum EditMode {
 }
 
 export type Version = Entry & {parents: Array<string>}
-
-const previewTokenAtom = atom(async get => {
-  const client = get(clientAtom)
-  return client.previewToken()
-})
 
 interface EntryEditorParams {
   locale: string | null
@@ -159,12 +159,10 @@ export const entryEditorAtoms = atomFamily(
       const availablePhases = values(EntryPhase).filter(
         phase => phases[phase] !== undefined
       )
-      const previewToken = await get(previewTokenAtom)
       return createEntryEditor({
         parents,
         translations,
         parentNeedsTranslation,
-        previewToken,
         client,
         config,
         entryId,
@@ -188,7 +186,6 @@ export interface EntryData {
   availablePhases: Array<EntryPhase>
   translations: Array<{locale: string; entryId: string}>
   parentNeedsTranslation: boolean
-  previewToken: string
   edits: Edits
 }
 
@@ -689,6 +686,13 @@ export function createEntryEditor(entryData: EntryData) {
     Workspace.preview(config.workspaces[activeVersion.workspace]) ??
     config.preview
 
+  const previewToken = atom(async get => {
+    const phase = get(selectedPhase)
+    const {contentHash} = await get(dbMetaAtom)
+    const client = get(clientAtom)
+    return client.previewToken({entryId: entryData.entryId, phase, contentHash})
+  })
+
   return {
     ...entryData,
     transition,
@@ -719,6 +723,7 @@ export function createEntryEditor(entryData: EntryData) {
     isLoading,
     showHistory,
     revisionsAtom,
+    previewToken,
     previewRevision,
     preview,
     form,

@@ -1,5 +1,6 @@
 import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
+import {PreviewInfo} from 'alinea/backend/Previews'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
@@ -20,7 +21,7 @@ export interface Syncable {
 }
 
 export interface Connection extends Resolver, Syncable, History, Drafts {
-  previewToken(): Promise<string>
+  previewToken(request: PreviewInfo): Promise<string>
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>
@@ -28,7 +29,7 @@ export interface Connection extends Resolver, Syncable, History, Drafts {
   getDraft(entryId: string): Promise<Draft | undefined>
   storeDraft(draft: Draft): Promise<void>
 }
-0
+
 export namespace Connection {
   export type UploadParams = {
     parentId?: string
@@ -112,6 +113,9 @@ export namespace Connection {
     },
     previewToken() {
       return `/preview-token`
+    },
+    preview() {
+      return `/preview`
     }
   }
 }

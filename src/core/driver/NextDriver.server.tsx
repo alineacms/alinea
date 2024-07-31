@@ -80,7 +80,6 @@ class NextDriver extends DefaultDriver implements NextApi {
     const devUrl = process.env.ALINEA_DEV_SERVER
     if (devUrl)
       return new Client({
-        config: this.config,
         url: devUrl,
         resolveDefaults
       })
