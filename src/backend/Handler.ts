@@ -26,7 +26,7 @@ import {DraftTransport, Drafts} from './Drafts.js'
 import {History, Revision} from './History.js'
 import {Media} from './Media.js'
 import {Pending} from './Pending.js'
-import {Previews} from './Previews'
+import {PreviewInfo, Previews} from './Previews'
 import {Target} from './Target.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
 import {EntryResolver} from './resolver/EntryResolver.js'
@@ -87,6 +87,7 @@ export class Handler implements Resolver {
   }
 
   async parsePreview(preview: PreviewUpdate) {
+    if (!preview.update) return
     const {config, db} = this.options
     let meta = await db.meta()
     if (preview.contentHash !== meta.contentHash) {
@@ -205,11 +206,11 @@ class HandlerConnection implements Connection {
     return {commitHash: toCommitHash}
   }
 
-  previewToken(): Promise<string> {
+  previewToken(request: PreviewInfo): Promise<string> {
     const {previews} = this.handler.options
     const user = this.ctx.user
     if (!user) throw new Error('Unauthorized, user not available')
-    return previews.sign(user)
+    return previews.sign(request)
   }
 
   // Media
@@ -285,18 +286,24 @@ function respond<T>({result, logger}: LoggerResult<T>) {
 
 const ResolveBody: Type<ResolveRequest> = object({
   selection: Selection.adt,
+  realm: enums(Realm).optional,
   locale: string.optional,
-  realm: enums(Realm),
   preview: object({
     entryId: string,
     contentHash: string,
     phase: enums(EntryPhase),
-    update: string
+    update: string.optional
   }).optional
 })
 
 const PrepareBody = object({
   filename: string
+})
+
+const PreviewBody = object({
+  entryId: string,
+  contentHash: string,
+  phase: string
 })
 
 function createRouter(
@@ -318,11 +325,13 @@ function createRouter(
     auth.router,
 
     matcher
-      .get(Connection.routes.previewToken())
+      .post(Connection.routes.previewToken())
       .map(context)
-      .map(({ctx}) => {
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
         const api = createApi(ctx)
-        return ctx.logger.result(api.previewToken())
+        const request = PreviewBody(body)
+        return ctx.logger.result(api.previewToken(request))
       })
       .map(respond),
 

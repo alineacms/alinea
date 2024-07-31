@@ -18,7 +18,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {data, isError} = useQuery(
     ['auth.cloud'],
     () => {
-      return fetch(joinPaths(client.options.url, `/auth/cloud`), {
+      return fetch(joinPaths(client.url, `/auth/cloud`), {
         credentials: 'include'
       }).then<AuthResult>(res => res.json())
     },
@@ -62,7 +62,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
           () => setSession(undefined)
         ),
         async end() {
-          location.href = joinPaths(client.options.url, `/auth/logout`)
+          location.href = joinPaths(client.url, `/auth/logout`)
         }
       })
       return null

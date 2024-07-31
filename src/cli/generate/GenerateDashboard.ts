@@ -39,7 +39,7 @@ export async function generateDashboard(
     platform: 'browser',
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
-      'process.env.NODE_ENV': "'production'",
+      'process.env.NODE_ENV': '"production"',
       ...publicDefines(process.env)
     },
     ...buildOptions,

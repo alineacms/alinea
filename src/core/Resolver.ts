@@ -1,4 +1,4 @@
-import {EntryPhase, EntryRow} from './EntryRow.js'
+import {EntryRow} from './EntryRow.js'
 import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/ResolveData.js'
 
@@ -7,8 +7,8 @@ export type PreviewRequest = PreviewUpdate | {entry: EntryRow}
 export interface PreviewUpdate {
   entryId: string
   contentHash: string
-  phase: EntryPhase
-  update: string
+  phase: string
+  update?: string
 }
 
 export interface PreviewMetadata {

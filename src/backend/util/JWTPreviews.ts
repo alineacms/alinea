@@ -1,15 +1,14 @@
-import {User} from 'alinea/core/User'
 import {sign, verify} from 'alinea/core/util/JWT'
-import {Previews} from '../Previews.js'
+import {PreviewInfo, Previews} from '../Previews.js'
 
 export class JWTPreviews implements Previews {
   constructor(private secret: string) {}
 
-  sign(data: User): Promise<string> {
+  sign(data: PreviewInfo): Promise<string> {
     return sign(data, this.secret)
   }
 
-  verify(token: string): Promise<User> {
+  verify(token: string): Promise<PreviewInfo> {
     return verify(token, this.secret)
   }
 }
