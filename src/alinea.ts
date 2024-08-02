@@ -2,12 +2,12 @@
 export {createConfig as config} from 'alinea/core/Config'
 export {Meta as meta} from 'alinea/core/Meta'
 export {page} from 'alinea/core/Page'
+export {snippet} from 'alinea/core/pages/Snippet'
 export {root} from 'alinea/core/Root'
 export {schema} from 'alinea/core/Schema'
 export {track} from 'alinea/core/Tracker'
 export {type} from 'alinea/core/Type'
 export {workspace} from 'alinea/core/Workspace'
-export {snippet} from 'alinea/core/pages/Snippet'
 
 // Types
 
