@@ -38,14 +38,3 @@ declare module 'octokit-commit-multiple-files/create-or-update-files.js' {
   ) => Promise<void>
   export default createOrUpdateFiles
 }
-
-declare module 'buffer-to-base64' {
-  export function encode(
-    buffer: ArrayBuffer,
-    format?: CompressionFormat
-  ): Promise<string>
-  export function decode(
-    btoa: string,
-    format?: CompressionFormat
-  ): Promise<ArrayBuffer>
-}

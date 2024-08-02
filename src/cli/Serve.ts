@@ -31,6 +31,7 @@ export type ServeOptions = {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
+  watch?: boolean
   onAfterGenerate?: (env?: Record<string, string>) => void
 }
 
@@ -76,8 +77,9 @@ export async function serve(options: ServeOptions): Promise<void> {
   const gen = generate({
     ...options,
     dashboardUrl,
-    watch: true,
+    watch: options.watch,
     async onAfterGenerate() {
+      console.log(await dashboardUrl)
       options.onAfterGenerate?.({
         ALINEA_DEV_SERVER: await dashboardUrl
       })

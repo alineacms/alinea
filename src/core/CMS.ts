@@ -14,11 +14,11 @@ export class CMS<Definition extends Config = Config> extends GraphRealm {
   graph: Graph
   config: Definition
 
-  constructor(config: Definition, public connection: Promise<Connection>) {
+  constructor(config: Definition, public connection: Connection) {
     const normalizedConfig = createConfig(config)
     const resolver: Resolver = {
       resolve: params => {
-        return connection.then(cnx => cnx.resolve(params))
+        return connection.resolve(params)
       }
     }
     super(normalizedConfig, resolver)
