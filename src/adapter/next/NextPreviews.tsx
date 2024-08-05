@@ -1,10 +1,10 @@
 'use client'
 
 import {usePreview} from 'alinea/preview/react'
+import {registerPreviewWidget} from 'alinea/preview/widget'
 import {usePathname, useRouter} from 'next/navigation.js'
 import {useEffect} from 'react'
-import {registerPreviewWidget} from '../preview/widget.js'
-import {setPreviewCookies} from './AlineaCookies.js'
+import {setPreviewCookies} from 'alinea/preview/AlineaCookies'
 
 export interface NextPreviewsProps {
   dashboardUrl: string
@@ -33,7 +33,6 @@ export default function NextPreviews({
       router.refresh()
     }
   })
-  console.log(isPreviewing)
   useEffect(() => {
     if (widget && isPreviewing) registerPreviewWidget()
   }, [isPreviewing])

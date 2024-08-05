@@ -43,6 +43,7 @@
   "workspaces": [
     "apps/web",
     "apps/dev",
+    "src/adapter",
     "src/backend",
     "src/cli",
     "src/core",
@@ -221,16 +222,6 @@
       "worker": "./dist/cli/util/ExportStore.server.js",
       "browser": "./dist/cli/util/ExportStore.js",
       "default": "./dist/cli/util/ExportStore.server.js"
-    },
-    "./core/driver/DefaultDriver": {
-      "worker": "./dist/core/driver/DefaultDriver.server.js",
-      "browser": "./dist/core/driver/DefaultDriver.js",
-      "default": "./dist/core/driver/DefaultDriver.server.js"
-    },
-    "./core/driver/NextDriver": {
-      "worker": "./dist/core/driver/NextDriver.server.js",
-      "browser": "./dist/core/driver/NextDriver.js",
-      "default": "./dist/core/driver/NextDriver.server.js"
     }
   }
 }

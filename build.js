@@ -39,7 +39,6 @@ const external = builtinModules
     '@alinea',
     'next',
     'sharp',
-    '@remix-run',
     'react',
     'react-dom',
     'esbuild'
