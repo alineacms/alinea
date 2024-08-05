@@ -12,8 +12,6 @@
     "preserveWatchOutput": true,
     "declaration": true,
     "emitDeclarationOnly": true,
-    // We'll want to enable this at some point
-    // "noUncheckedIndexedAccess": true,
     "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "paths": {

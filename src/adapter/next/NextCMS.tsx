@@ -3,8 +3,8 @@ import {Client} from 'alinea/core/Client'
 import {CMS, ConnectionContext} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
-import {parseChunkedCookies} from '../preview/ChunkCookieValue.js'
-import {alineaCookies} from './AlineaCookies.js'
+import {alineaCookies} from 'alinea/preview/AlineaCookies'
+import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 
 export interface PreviewProps {
   widget?: boolean

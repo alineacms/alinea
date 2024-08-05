@@ -107,7 +107,8 @@ export function createLocalServer(
       'ignored-bare-import': 'silent'
     },
     tsconfig,
-    write: false
+    write: false,
+    external: ['node:async_hooks']
   } satisfies BuildOptions
 
   config.plugins.push({

@@ -48,7 +48,7 @@ export interface HandlerOptions {
   resolveDefaults?: Partial<ResolveRequest>
 }
 
-export class Handler implements Resolver {
+export class Handler {
   connect: (ctx: Connection.Context) => Connection
   router: Route<Request, Response | undefined>
   changes: ChangeSetCreator

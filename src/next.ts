@@ -1,2 +1,2 @@
-export {createCMS} from 'alinea/adapter/NextCMS'
-export {createHandler} from 'alinea/adapter/NextHandler'
+export {createCMS} from 'alinea/adapter/next/NextCMS'
+export {createHandler} from 'alinea/adapter/next/NextHandler'

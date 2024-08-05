@@ -3,9 +3,9 @@ import {Database, JWTPreviews} from 'alinea/backend'
 import {generatedStore} from 'alinea/backend/Store'
 import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
+import {alineaCookies} from 'alinea/preview/AlineaCookies'
 import PLazy from 'p-lazy'
-import {createCloudHandler} from '../cloud/server/CloudHandler.js'
-import {alineaCookies} from './AlineaCookies.js'
+import {createCloudHandler} from '../../cloud/server/CloudHandler.js'
 import {NextCMS} from './NextCMS.js'
 
 const handlers = new WeakMap<NextCMS, (request: Request) => Promise<Response>>()

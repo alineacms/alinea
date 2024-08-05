@@ -13,7 +13,7 @@ export async function boot(handlerUrl) {
   into.id = 'root'
   element.parentElement.replaceChild(into, element)
   const config = await loadConfig()
-  const client = new Client({config, url: handlerUrl})
+  const client = new Client({url: handlerUrl})
   reactRender(jsx(App, {config, client}), into)
 }
 

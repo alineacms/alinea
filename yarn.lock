@@ -12,6 +12,14 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@alinea/adapter@workspace:src/adapter":
+  version: 0.0.0-use.local
+  resolution: "@alinea/adapter@workspace:src/adapter"
+  dependencies:
+    cookie-es: "npm:^1.2.2"
+  languageName: unknown
+  linkType: soft
+
 "@alinea/auth.passwordless@workspace:src/auth/passwordless":
   version: 0.0.0-use.local
   resolution: "@alinea/auth.passwordless@workspace:src/auth/passwordless"
@@ -3854,6 +3862,13 @@ __metadata:
   version: 2.0.0
   resolution: "convert-source-map@npm:2.0.0"
   checksum: 10/c987be3ec061348cdb3c2bfb924bec86dea1eacad10550a85ca23edb0fe3556c3a61c7399114f3331ccb3499d7fd0285ab24566e5745929412983494c3926e15
+  languageName: node
+  linkType: hard
+
+"cookie-es@npm:^1.2.2":
+  version: 1.2.2
+  resolution: "cookie-es@npm:1.2.2"
+  checksum: 10/0fd742c11caa185928e450543f84df62d4b2c1fc7b5041196b57b7db04e1c6ac6585fb40e4f579a2819efefd2d6a9cbb4d17f71240d05f4dcd8f74ae81341a20
   languageName: node
   linkType: hard
 

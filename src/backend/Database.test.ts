@@ -116,7 +116,9 @@ test('image upload', async () => {
   const imageData = readFileSync(
     'apps/web/public/screenshot-2022-09-19-at-12-21-23.2U9fkc81kcSh2InU931HrUJstwD.png'
   )
-  const upload = Edit.upload(['test.png', imageData], {createPreview})
+  const upload = Edit.upload(['test.png', new Uint8Array(imageData)], {
+    createPreview
+  })
   await example.commit(upload)
   const result = await example.get(Query.whereId(upload.entryId))
   assert.is(result.title, 'test')
