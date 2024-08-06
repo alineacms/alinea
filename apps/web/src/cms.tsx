@@ -55,9 +55,10 @@ export const cms = createCMS({
   dashboard: {
     dashboardUrl: '/admin.html',
     staticFile: 'public/admin.html',
-    handlerUrl:
-      process.env.NODE_ENV === 'development'
-        ? 'http://localhost:3000/api/cms'
-        : '/api/cms'
-  }
+    handlerUrl: '/api/cms'
+  },
+  preview:
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000/api/cms'
+      : '/api/cms'
 })

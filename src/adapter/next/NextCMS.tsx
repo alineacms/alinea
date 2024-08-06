@@ -52,11 +52,10 @@ export class NextCMS<
   }
 }
 
-export function createCMS<Definition extends Config>(config: Definition) {
+export function createCMS<Definition extends Config>(
+  config: Definition
+): NextCMS<Definition> {
   const devUrl = process.env.ALINEA_DEV_SERVER
-  const cms: NextCMS<Definition> = new NextCMS(
-    config,
-    new Client({url: devUrl ?? '/api/cms'})
-  )
-  return cms
+  const url = devUrl ?? config.dashboard?.handlerUrl ?? '/api/cms'
+  return new NextCMS(config, new Client({url}))
 }
