@@ -1,7 +1,6 @@
-import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
-import {Drafts} from 'alinea/backend/Drafts'
-import {History, Revision} from 'alinea/backend/History'
-import {Pending} from 'alinea/backend/Pending'
+import {Database, Handler, JWTPreviews} from 'alinea/backend'
+import {Backend} from 'alinea/backend/Backend'
+import {Revision} from 'alinea/backend/History'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {Config} from 'alinea/core/Config'
 import {Connection} from 'alinea/core/Connection'
@@ -44,7 +43,7 @@ function asJson(init: RequestInit = {}) {
   }
 }
 
-export class CloudApi implements Media, Target, History, Pending, Drafts {
+export class CloudApi implements Backend {
   constructor(private config: Config) {}
 
   mutate(params: Connection.MutateParams, ctx: Connection.Context) {
