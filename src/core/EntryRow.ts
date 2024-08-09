@@ -1,4 +1,5 @@
-import {index, InferSelectModel, primaryKey, table} from 'rado'
+import {index, InferSelectModel, primaryKey, sql, table} from 'rado'
+import {concat} from 'rado/universal'
 import * as column from 'rado/universal/columns'
 import {createId} from './Id.js'
 
@@ -79,6 +80,10 @@ export const EntryRow = table(
     }
   }
 )
+
+export function entryVersionId(entry = EntryRow) {
+  return concat(entry.entryId, sql.value('.'), entry.phase)
+}
 
 /**
  * Represents an Entry row in the database,

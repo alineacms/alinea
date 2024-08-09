@@ -16,10 +16,21 @@ import {entries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
-import {Sql, alias, and, asc, eq, inArray, like, notInArray, or} from 'rado'
+import {
+  Sql,
+  alias,
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  like,
+  notInArray,
+  or
+} from 'rado'
 import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'
-import {EntryPhase, EntryRow} from '../core/EntryRow.js'
+import {EntryPhase, EntryRow, entryVersionId} from '../core/EntryRow.js'
 import {Media} from './Media.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
@@ -368,23 +379,24 @@ export class Database implements Syncable {
         // available so the preview url is used. The fileHash is updated so that
         // syncing to the client after a successful deploy will overwrite this
         // change.
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Published
-        })
-        const existing = await tx(row.maybeFirst())
+        const condition = and(
+          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.phase, EntryPhase.Published)
+        )
+        const existing = await tx.select().from(EntryRow).where(condition).get()
         if (!existing) return
         if (process.env.NODE_ENV !== 'develoment')
-          await tx(
-            row.set({
+          await tx
+            .update(EntryRow)
+            .set({
               data: {
                 ...existing.data,
                 location: mutation.url,
                 [Media.ORIGINAL_LOCATION]: existing.data.location
               }
             })
-          )
-        return () => this.updateHash(tx, row)
+            .where(condition)
+        return () => this.updateHash(tx, condition)
       }
       default:
         throw unreachable(mutation)
@@ -423,43 +435,42 @@ export class Database implements Syncable {
 
   static async index(tx: Store) {
     const Parent = alias(EntryRow, 'Parent')
+    const parent = tx
+      .select(Parent.entryId)
+      .from(Parent)
+      .where(
+        eq(Parent.childrenDir, EntryRow.parentDir),
+        eq(Parent.workspace, EntryRow.workspace),
+        eq(Parent.root, EntryRow.root)
+      )
     const res = await tx.update(EntryRow).set({
-      parent: Parent({
-        childrenDir: EntryRow.parentDir,
-        workspace: EntryRow.workspace,
-        root: EntryRow.root
-      })
-        .select(Parent.entryId)
-        .maybeFirst(),
+      parent,
       active: EntryRealm.isActive,
       main: EntryRealm.isMain
     })
-
     return res
   }
 
-  private async writeMeta(tx: Driver.Async, commitHash: string) {
+  private async writeMeta(tx: Store, commitHash: string) {
     const {create32} = await xxhash()
     let hash = create32()
-    const contentHashes = await tx(
-      EntryRow().select(EntryRow.rowHash).orderBy(EntryRow.rowHash)
-    )
+    const contentHashes = await tx
+      .select(EntryRow.rowHash)
+      .from(EntryRow)
+      .orderBy(EntryRow.rowHash)
     for (const c of contentHashes) hash = hash.update(c)
     const contentHash = hash.digest().toString(16).padStart(8, '0')
-    const modifiedAt = await tx(
-      EntryRow()
-        .select(EntryRow.modifiedAt)
-        .orderBy(EntryRow.modifiedAt.desc())
-        .maybeFirst()
-    )
-    await tx(AlineaMeta().delete())
-    await tx(
-      AlineaMeta().insertOne({
-        commitHash,
-        contentHash,
-        modifiedAt: modifiedAt ?? 0
-      })
-    )
+    const modifiedAt = await tx
+      .select(EntryRow.modifiedAt)
+      .from(EntryRow)
+      .orderBy(desc(EntryRow.modifiedAt))
+      .get()
+    await tx.delete(AlineaMeta)
+    await tx.insert(AlineaMeta).values({
+      commitHash,
+      contentHash,
+      modifiedAt: modifiedAt ?? 0
+    })
   }
 
   inited = false
@@ -468,7 +479,7 @@ export class Database implements Syncable {
     this.inited = true
     try {
       await this.store.transaction(async tx => {
-        await tx(create(EntryRow, AlineaMeta))
+        await tx.create(EntryRow, AlineaMeta)
         await createEntrySearch(tx)
       })
       await this.meta()
@@ -614,7 +625,7 @@ export class Database implements Syncable {
     const typeNames = Schema.typeNames(this.config.schema)
     const publishSeed: Array<EntryRow> = []
 
-    await this.store.transaction(async query => {
+    await this.store.transaction(async tx => {
       const seenVersions: Array<string> = []
       const seenSeeds = new Set<string>()
       const inserted = []
@@ -622,19 +633,21 @@ export class Database implements Syncable {
       const changes: Array<Change> = []
       for await (const file of source.entries()) {
         const fileHash = await createFileHash(file.contents)
-        const exists = await query(
-          EntryRow({
-            fileHash: fileHash,
-            filePath: file.filePath,
-            workspace: file.workspace,
-            root: file.root
+        const exists = await tx
+          .select({
+            versionId: entryVersionId(),
+            seeded: EntryRow.seeded
           })
-            .select({
-              versionId: EntryRow.versionId,
-              seeded: EntryRow.seeded
-            })
-            .maybeFirst()
-        )
+          .from(EntryRow)
+
+          .where(
+            eq(EntryRow.filePath, file.filePath),
+            eq(EntryRow.workspace, file.workspace),
+            eq(EntryRow.root, file.root),
+            eq(EntryRow.fileHash, fileHash)
+          )
+          .get()
+
         // Todo: a config change but unchanged entry data will currently
         // fly under the radar
         if (!fix && exists) {
@@ -681,15 +694,15 @@ export class Database implements Syncable {
               })
             }
           }
-          await query(
-            EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
-          )
-          seenSeeds.add(key)
-          seenVersions.push(
-            await query(
-              EntryRow().insert(withHash).returning(EntryRow.versionId)
+          await tx
+            .delete(EntryRow)
+            .where(
+              eq(EntryRow.entryId, entry.entryId),
+              eq(EntryRow.phase, entry.phase)
             )
-          )
+          seenSeeds.add(key)
+          await tx.insert(EntryRow).values(withHash)
+          seenVersions.push(`${entry.entryId}.${entry.phase}`)
           inserted.push(`${entry.entryId}.${entry.phase}`)
         } catch (e: any) {
           console.log(`> skipped ${file.filePath} — ${e.message}`)
@@ -735,9 +748,8 @@ export class Database implements Syncable {
         const fileContents = JsonLoader.format(this.config.schema, record)
         const fileHash = await createFileHash(fileContents)
         const withHash = {...entry, fileHash, rowHash: ''}
-        seenVersions.push(
-          await query(EntryRow().insert(withHash).returning(EntryRow.versionId))
-        )
+        await tx.insert(EntryRow).values(withHash)
+        seenVersions.push(`${withHash.entryId}.${withHash.phase}`)
         inserted.push(`${entry.entryId}.${entry.phase}`)
         publishSeed.push({
           ...withHash,
@@ -752,9 +764,9 @@ export class Database implements Syncable {
       )*/
       if (seenVersions.length === 0) return
 
-      const {rowsAffected: removed} = await query(
-        EntryRow().delete().where(EntryRow.versionId.isNotIn(seenVersions))
-      )
+      const {rowsAffected: removed} = await tx
+        .delete(EntryRow)
+        .where(notInArray(entryVersionId(EntryRow), seenVersions))
 
       const noChanges = inserted.length === 0 && removed === 0
       if (noChanges) return
