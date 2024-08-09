@@ -1,8 +1,8 @@
 import {sql} from 'rado'
 import {Store} from '../Store.js'
 
-export function createEntrySearch(store: Store) {
-  return store(
+export function createEntrySearch(db: Store) {
+  return db.batch([
     sql`
       create virtual table if not exists EntrySearch using fts5(
         title, searchableText,
@@ -45,5 +45,5 @@ export function createEntrySearch(store: Store) {
           );
         end
     `
-  )
+  ])
 }

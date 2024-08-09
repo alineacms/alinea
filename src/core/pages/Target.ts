@@ -1,4 +1,4 @@
-import {Callable} from 'rado/util/Callable'
+import {Callable} from '../util/Callable.js'
 import {rowId} from '../util/RowId.js'
 import {Cursor} from './Cursor.js'
 import {EV, Expr, createExprData} from './Expr.js'

@@ -1,11 +1,10 @@
-import {column, table} from 'rado'
+import {InferSelectModel, table} from 'rado'
+import * as column from 'rado/universal/columns'
 
-export const EntrySearch = table({
-  EntrySearch: class {
-    title = column.string
-    searchableText = column.string
-    rank = column.number
-  }
+export const EntrySearch = table('EntrySearch', {
+  title: column.text(),
+  searchableText: column.text(),
+  rank: column.integer()
 })
 
-export type EntrySearch = table<typeof EntrySearch>
+export type EntrySearch = InferSelectModel<typeof EntrySearch>

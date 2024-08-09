@@ -1,5 +1,4 @@
 import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
-import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
 import {Field} from './Field.js'
@@ -18,6 +17,7 @@ import {
   toSelection
 } from './pages/ResolveData.js'
 import {RecordShape} from './shape/RecordShape.js'
+import {Callable} from './util/Callable.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {
   assign,

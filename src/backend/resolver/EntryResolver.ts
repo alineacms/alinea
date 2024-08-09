@@ -1,4 +1,4 @@
-import {EntryPhase, EntryRow, EntryTable} from 'alinea/core/EntryRow'
+import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Field} from 'alinea/core/Field'
 import {

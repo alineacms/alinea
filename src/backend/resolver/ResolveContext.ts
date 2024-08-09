@@ -1,6 +1,6 @@
-import {EntryRow, EntryTable} from 'alinea/core/EntryRow'
+import {EntryRow} from 'alinea/core/EntryRow'
 import {Realm} from 'alinea/core/pages/Realm'
-import {Table} from 'rado'
+import {alias} from 'rado'
 
 interface ResolveContextData {
   realm: Realm
@@ -18,9 +18,9 @@ enum ExprContext {
 }
 
 export class ResolveContext {
-  table: Table<EntryTable>
+  table: typeof EntryRow
   constructor(private data: Partial<ResolveContextData>) {
-    this.table = EntryRow().as(`E${this.depth}`)
+    this.table = alias(EntryRow, `E${this.depth}`)
   }
 
   linkContext() {
