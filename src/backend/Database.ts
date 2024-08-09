@@ -388,7 +388,7 @@ export class Database implements Syncable {
         )
         const existing = await tx.select().from(EntryRow).where(condition).get()
         if (!existing) return
-        if (process.env.NODE_ENV !== 'develoment')
+        if (process.env.NODE_ENV !== 'development')
           await tx
             .update(EntryRow)
             .set({

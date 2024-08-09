@@ -57,8 +57,8 @@ export async function generateDashboard(
         <link rel="icon" href="data:," />
         <link href="${baseUrl}/entry.css?${pkg.version}" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
-        <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
+        <meta name="handshake_url" value="${handlerUrl}?/auth/handshake" />
+        <meta name="redirect_url" value="${handlerUrl}?/auth" />
         <body>
           <script type="module">
             import {boot} from '${baseUrl}/entry.js?${pkg.version}'

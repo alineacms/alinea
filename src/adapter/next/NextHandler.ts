@@ -19,6 +19,7 @@ async function handlePreview(
   const {searchParams} = new URL(request.url)
   const previewToken = searchParams.get('preview')
   if (!previewToken) return new Response('Not found', {status: 404})
+  console.log(context)
   const previews = new JWTPreviews(context.apiKey ?? 'dev')
   const info = await previews.verify(previewToken)
   const cookie = cookies()

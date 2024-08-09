@@ -28,6 +28,7 @@ export async function generateMetadata({
   const page = await cms.get(Query(BlogPost).whereUrl(`/blog/${params.slug}`))
   const openGraphImage = page.metadata?.openGraph.image
   return {
+    metadataBase: new URL('https://alinea.sh'),
     title: page.metadata?.title || page.title,
     description: page.metadata?.description || page.introduction,
     openGraph: {

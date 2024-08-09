@@ -89,7 +89,8 @@
     "speedscope": "^1.14.0",
     "typescript": "^5.5.3",
     "typescript-plugin-css-modules": "^5.0.2",
-    "uvu": "^0.5.1"
+    "uvu": "^0.5.1",
+    "yjs-src": "npm:yjs@13.6.11"
   },
   "packageManager": "yarn@4.1.0",
   "resolutions": {
