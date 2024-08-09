@@ -2886,6 +2886,7 @@ __metadata:
     typescript: "npm:^5.5.3"
     typescript-plugin-css-modules: "npm:^5.0.2"
     uvu: "npm:^0.5.1"
+    yjs-src: "npm:yjs@13.6.11"
   peerDependencies:
     react: "*"
     react-dom: "*"
@@ -13210,7 +13211,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yjs@npm:13.6.11":
+"yjs-src@npm:yjs@13.6.11, yjs@npm:13.6.11":
   version: 13.6.11
   resolution: "yjs@npm:13.6.11"
   dependencies:

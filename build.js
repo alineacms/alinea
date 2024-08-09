@@ -227,7 +227,7 @@ const externalize = {
       if (args.kind === 'entry-point') return
       if (args.path.endsWith('.scss') || args.path.endsWith('.json')) return
       if (!args.resolveDir.startsWith(src)) return
-      if (!args.path.endsWith('.js')) {
+      if (!args.path.endsWith('.js') && !args.path.endsWith('.mjs')) {
         console.error(`Missing file extension on local import: ${args.path}`)
         console.error(`In file: ${args.importer}`)
         process.exit(1)
@@ -331,6 +331,7 @@ function jsEntry({watch, test, report}) {
               platform: 'neutral',
               mainFields: ['module', 'main'],
               alias: {
+                yjs: `./src/yjs.ts`,
                 // Mistakenly imported because it is used in the JSDocs
                 'y-protocols/awareness': `data:text/javascript,
                   export const Awareness = undefined
