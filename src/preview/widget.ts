@@ -2,7 +2,7 @@ import {DOMAttributes} from 'react'
 
 export function registerPreviewWidget() {
   if (customElements.get('alinea-preview')) return
-  const observedAttributes = ['adminUrl', 'editUrl']
+  const observedAttributes = ['adminUrl', 'editUrl', 'livePreview']
   const template = `
     <div class="previews">
       <div class="inner">
@@ -11,6 +11,11 @@ export function registerPreviewWidget() {
             <path fill="#5763E6" d="M20.8178 10.3977V11.733C19.8978 10.6534 18.5316 10 16.6636 10C13.0112 10 10 13.267 10 17.5C10 21.733 13.0112 25 16.6636 25C18.5316 25 19.8978 24.3466 20.8178 23.267V24.6023H25V10.3977H20.8178ZM17.5 20.9659C15.5762 20.9659 14.1822 19.6307 14.1822 17.5C14.1822 15.3693 15.5762 14.0341 17.5 14.0341C19.4238 14.0341 20.8178 15.3693 20.8178 17.5C20.8178 19.6307 19.4238 20.9659 17.5 20.9659Z" />
           </svg>
         </a>
+        <div class="connection" title="Previewing live" id="preview-disabled">
+          <svg  class="icon" width="1em" height="1em" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M11 22v-8.275q-.45-.275-.725-.712T10 12q0-.825.588-1.412T12 10t1.413.588T14 12q0 .575-.275 1.025t-.725.7V22zm-5.9-2.75q-1.425-1.375-2.262-3.238T2 12q0-2.075.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12q0 2.15-.837 4.025T18.9 19.25l-1.4-1.4q1.15-1.1 1.825-2.613T20 12q0-3.35-2.325-5.675T12 4T6.325 6.325T4 12q0 1.725.675 3.225t1.85 2.6zm2.825-2.825q-.875-.825-1.4-1.963T6 12q0-2.5 1.75-4.25T12 6t4.25 1.75T18 12q0 1.325-.525 2.475t-1.4 1.95L14.65 15q.625-.575.988-1.35T16 12q0-1.65-1.175-2.825T12 8T9.175 9.175T8 12q0 .9.363 1.663T9.35 15z"/>
+          </svg>
+        </div>
         <span class="separator"></span>
         <a target="_top" class="button" title="Edit content" id="btn-edit">
           <svg class="icon" width="1em" height="1em" viewBox="0 0 24 24">
@@ -77,10 +82,27 @@ export function registerPreviewWidget() {
       white-space: nowrap;
       height: 100%;
       width: 45px;
-      border-radius: 5px;
     }
     .button:hover {
       color: #000;
+    }
+    .connection {
+      display: none;
+      box-sizing: border-box;
+      align-items: center;
+      justify-content: center;
+      margin-left: -6px;
+      margin-top: -1px;
+      padding-right: 13px;
+      height: 100%;
+    }
+    .is-connected .connection {
+      display: flex;
+      color: #5763E6;
+    }
+    .is-warning .connection {
+      display: flex;
+      color: #bf1029;
     }
     .separator {
       display: block;
@@ -101,6 +123,7 @@ export function registerPreviewWidget() {
 
   class AlineaPreview extends HTMLElement {
     static observedAttributes = observedAttributes
+    #previews?: HTMLDivElement
     #adminButton?: HTMLAnchorElement
     #editButton?: HTMLAnchorElement
     #disconnect!: () => void
@@ -116,6 +139,13 @@ export function registerPreviewWidget() {
           return
         case 'editUrl':
           if (this.#editButton) this.#editButton.href = value ?? ''
+          return
+        case 'livePreview':
+          this.#previews?.classList.toggle(
+            'is-connected',
+            value === 'connected'
+          )
+          this.#previews?.classList.toggle('is-warning', value === 'warning')
           return
       }
     }
@@ -137,6 +167,7 @@ export function registerPreviewWidget() {
       wrapper.innerHTML = template
       shadow.appendChild(wrapper)
       const previews: HTMLDivElement = wrapper.querySelector('.previews')!
+      this.#previews = previews
       const inner: HTMLDivElement = wrapper.querySelector('.inner')!
       this.#adminButton = previews.querySelector('#btn-admin')!
       this.#editButton = previews.querySelector('#btn-edit')!
@@ -202,6 +233,7 @@ declare global {
       ['alinea-preview']: DOMAttributes<HTMLElement> & {
         adminUrl: string
         editUrl: string
+        livePreview?: 'connected' | 'warning'
       }
     }
   }

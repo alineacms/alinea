@@ -148,7 +148,6 @@ export class Handler {
           meta.commitHash,
           this.previewAuth()
         )
-        console.log(toApply)
         if (!toApply) return meta
         await db.applyMutations(toApply.mutations, toApply.toCommitHash)
       } catch (error) {

@@ -59,6 +59,6 @@ export const cms = createCMS({
   },
   preview:
     process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3001/api/cms'
+      ? 'http://localhost:3000/api/cms'
       : '/api/cms'
 })
