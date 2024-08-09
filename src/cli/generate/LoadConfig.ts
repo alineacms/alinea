@@ -1,5 +1,5 @@
+import {createCMS} from 'alinea/core'
 import {CMS} from 'alinea/core/CMS'
-import {createCMS} from 'alinea/core/driver/DefaultDriver'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 

@@ -32,9 +32,9 @@ const styles = fromModule(css)
 export async function generateMetadata(): Promise<Metadata> {
   const page = await cms.get(
     Query(Home).select({
-      url: (Query as any).url,
-      title: (Query as any).title,
-      metadata: (Home as any).metadata
+      url: Query.url,
+      title: Query.title,
+      metadata: Home.metadata
     })
   )
   const appUrl = 'https://alinea.sh'

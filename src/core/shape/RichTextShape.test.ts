@@ -1,9 +1,9 @@
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {RichTextShape} from 'alinea/core/shape/RichTextShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import * as Y from 'alinea/yjs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
+import * as Y from 'yjs'
 import {BlockNode, Node} from '../TextDoc.js'
 
 const ROOT_KEY = '$root'
@@ -176,7 +176,7 @@ test('apply over empty', () => {
   const doc = new Y.Doc()
   const root = doc.getMap(ROOT_KEY)
   shape.applyY(value1, root, FIELD_KEY)
-  const pass1 = shape.fromY(root.get(FIELD_KEY))
+  const pass1 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
   assert.equal(pass1, value1)
 })
 
@@ -187,7 +187,7 @@ test('apply over existing', () => {
   doc.transact(() => {
     shape.applyY(value2, root, FIELD_KEY)
   })
-  const pass2 = shape.fromY(root.get(FIELD_KEY))
+  const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
   assert.equal(pass2, value2)
 })
 
@@ -199,7 +199,7 @@ test('update marks', () => {
   doc.transact(() => {
     shape.applyY(value5, root, FIELD_KEY)
   })
-  const pass3 = shape.fromY(root.get(FIELD_KEY))
+  const pass3 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
   assert.equal(pass3, value5)
 })
 

@@ -97,7 +97,7 @@ export function createCloudDebugHandler(
     history: api,
     drafts: api,
     pending: api,
-    previews: new JWTPreviews('dev'),
+    previews: new JWTPreviews(process.env.ALINEA_API_KEY ?? 'dev'),
     previewAuthToken: 'dev'
   })
 }

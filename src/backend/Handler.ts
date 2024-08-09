@@ -16,17 +16,17 @@ import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/ResolveData'
 import {base64, base64url} from 'alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
-import * as Y from 'alinea/yjs'
 import {Type, enums, object, string} from 'cito'
 import {unzlibSync} from 'fflate'
 import pLimit from 'p-limit'
+import * as Y from 'yjs'
 import {mergeUpdatesV2} from 'yjs'
 import {Database} from './Database.js'
 import {DraftTransport, Drafts} from './Drafts.js'
 import {History, Revision} from './History.js'
 import {Media} from './Media.js'
 import {Pending} from './Pending.js'
-import {Previews} from './Previews'
+import {PreviewInfo, Previews} from './Previews'
 import {Target} from './Target.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
 import {EntryResolver} from './resolver/EntryResolver.js'
@@ -48,7 +48,7 @@ export interface HandlerOptions {
   resolveDefaults?: Partial<ResolveRequest>
 }
 
-export class Handler implements Resolver {
+export class Handler {
   connect: (ctx: Connection.Context) => Connection
   router: Route<Request, Response | undefined>
   changes: ChangeSetCreator
@@ -87,6 +87,7 @@ export class Handler implements Resolver {
   }
 
   async parsePreview(preview: PreviewUpdate) {
+    if (!preview.update) return
     const {config, db} = this.options
     let meta = await db.meta()
     if (preview.contentHash !== meta.contentHash) {
@@ -147,7 +148,6 @@ export class Handler implements Resolver {
           meta.commitHash,
           this.previewAuth()
         )
-        console.log(toApply)
         if (!toApply) return meta
         await db.applyMutations(toApply.mutations, toApply.toCommitHash)
       } catch (error) {
@@ -205,11 +205,11 @@ class HandlerConnection implements Connection {
     return {commitHash: toCommitHash}
   }
 
-  previewToken(): Promise<string> {
+  previewToken(request: PreviewInfo): Promise<string> {
     const {previews} = this.handler.options
     const user = this.ctx.user
     if (!user) throw new Error('Unauthorized, user not available')
-    return previews.sign(user)
+    return previews.sign(request)
   }
 
   // Media
@@ -285,13 +285,13 @@ function respond<T>({result, logger}: LoggerResult<T>) {
 
 const ResolveBody: Type<ResolveRequest> = object({
   selection: Selection.adt,
+  realm: enums(Realm).optional,
   locale: string.optional,
-  realm: enums(Realm),
   preview: object({
     entryId: string,
     contentHash: string,
     phase: enums(EntryPhase),
-    update: string
+    update: string.optional
   }).optional
 })
 
@@ -299,11 +299,17 @@ const PrepareBody = object({
   filename: string
 })
 
+const PreviewBody = object({
+  entryId: string,
+  contentHash: string,
+  phase: string
+})
+
 function createRouter(
   auth: Auth.Server,
   createApi: (context: Connection.Context) => Connection
 ): Route<Request, Response | undefined> {
-  const matcher = router.startAt(Connection.routes.base)
+  const matcher = router.queryMatcher
   async function context<T extends {request: Request; url: URL}>(
     input: T
   ): Promise<T & {ctx: Connection.Context; logger: Logger}> {
@@ -318,11 +324,13 @@ function createRouter(
     auth.router,
 
     matcher
-      .get(Connection.routes.previewToken())
+      .post(Connection.routes.previewToken())
       .map(context)
-      .map(({ctx}) => {
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
         const api = createApi(ctx)
-        return ctx.logger.result(api.previewToken())
+        const request = PreviewBody(body)
+        return ctx.logger.result(api.previewToken(request))
       })
       .map(respond),
 

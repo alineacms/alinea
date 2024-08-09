@@ -33,7 +33,8 @@ interface EntryPreviewUrlProps {
 function EntryPreviewUrl({editor, preview}: EntryPreviewUrlProps) {
   const {contentHash} = useAtomValue(dbMetaAtom)
   const selectedPhase = useAtomValue(editor.selectedPhase)
-  const previewSearch = `?token=${editor.previewToken}&entryId=${editor.entryId}&realm=${selectedPhase}`
+  const previewToken = useAtomValue(editor.previewToken)
+  const previewSearch = `?preview=${previewToken}`
   const [api, setApi] = useState<LivePreview | undefined>(undefined)
   const yUpdate = useAtomValue(editor.yUpdate)
   useEffect(() => {
@@ -59,6 +60,7 @@ interface EntryPreviewComponentProps {
 
 function EntryPreviewComponent({editor, preview}: EntryPreviewComponentProps) {
   const entry = useAtomValue(editor.draftEntry)
+  const previewToken = useAtomValue(editor.previewToken)
   const Tag = preview
-  return <Tag entry={entry} previewToken={editor.previewToken} />
+  return <Tag entry={entry} previewToken={previewToken} />
 }

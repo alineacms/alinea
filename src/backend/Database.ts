@@ -342,7 +342,7 @@ export class Database implements Syncable {
         })
         const existing = await tx(row.maybeFirst())
         if (!existing) return
-        if (process.env.NODE_ENV !== 'develoment')
+        if (process.env.NODE_ENV !== 'development')
           await tx(
             row.set({
               data: {

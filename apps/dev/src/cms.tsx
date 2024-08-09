@@ -1,5 +1,5 @@
 import {Config} from 'alinea'
-import {createCMS} from 'alinea/core'
+import {createCMS} from 'alinea/next'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import * as schema from './schema'

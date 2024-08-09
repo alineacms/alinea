@@ -31,8 +31,8 @@ export interface Config {
 
   /**
     publicDir?: string
-  dashboardFile?: string
-  handlerUrl?: 
+    dashboardFile?: string
+    handlerUrl?: string
   */
 
   dashboard?: DashboardConfig
