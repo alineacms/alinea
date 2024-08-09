@@ -5,21 +5,18 @@ export const alineaCookies = {
   previewToken: '@a/p'
 }
 
-const MAX_CHUNKS = 5
+const MAX_CHUNKS = 4
 
-export async function setPreviewCookies(update: string) {
+export function setPreviewCookies(update: string): boolean {
   const chunks = chunkCookieValue(alineaCookies.update, update)
-
-  // Todo: if we reached the limit show the user a modal or indication in
-  // the UI that previewing will be temporarily disabled until the changes
-  // are saved or published
-  if (chunks.length > MAX_CHUNKS) {
-    console.warn('Too many chunks, previewing will be disabled')
-    return
-  }
-
-  const expiry = new Date(Date.now() + 10_000)
-  for (const {name, value} of chunks) {
-    document.cookie = `${name}=${value};expires=${expiry.toUTCString()}`
+  if (chunks.length > MAX_CHUNKS) return false
+  try {
+    const expiry = new Date(Date.now() + 10_000)
+    for (const {name, value} of chunks)
+      document.cookie = `${name}=${value};expires=${expiry.toUTCString()}`
+    return true
+  } catch (error) {
+    console.error(error)
+    return false
   }
 }

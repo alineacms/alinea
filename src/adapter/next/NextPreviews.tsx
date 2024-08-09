@@ -4,7 +4,7 @@ import {setPreviewCookies} from 'alinea/preview/AlineaCookies'
 import {usePreview} from 'alinea/preview/react'
 import {registerPreviewWidget} from 'alinea/preview/widget'
 import {usePathname, useRouter} from 'next/navigation.js'
-import {useEffect} from 'react'
+import {useEffect, useState} from 'react'
 
 export interface NextPreviewsProps {
   dashboardUrl: string
@@ -19,6 +19,7 @@ export default function NextPreviews({
   root,
   workspace
 }: NextPreviewsProps) {
+  const [previewDisabled, setPreviewDisabled] = useState(false)
   const pathname = usePathname()
   const adminUrl = new URL(dashboardUrl, location.origin)
   const entryParams = new URLSearchParams({url: pathname})
@@ -29,8 +30,9 @@ export default function NextPreviews({
   const {isPreviewing} = usePreview({
     async preview({update}) {
       if (!update) return
-      setPreviewCookies(update)
-      router.refresh()
+      const success = setPreviewCookies(update)
+      if (success) router.refresh()
+      setPreviewDisabled(!success)
     }
   })
   useEffect(() => {
@@ -38,6 +40,12 @@ export default function NextPreviews({
   }, [widget])
   if (!widget) return null
   return (
-    <alinea-preview adminUrl={String(adminUrl)} editUrl={String(editUrl)} />
+    <alinea-preview
+      adminUrl={String(adminUrl)}
+      editUrl={String(editUrl)}
+      livePreview={
+        isPreviewing ? (previewDisabled ? 'warning' : 'connected') : undefined
+      }
+    />
   )
 }

@@ -221,8 +221,6 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     function validateField(key: string, field: Field) {
       const ref = Field.ref(field)
       if (!seen.has(ref)) return seen.set(ref, key)
-      console.log(definition)
-      console.log(seen.get(ref))
       const fieldLabel = Field.label(field)
       throw new Error(
         `Duplicate field "${fieldLabel}" in type "${label}", found under key "${key}" and "${seen.get(

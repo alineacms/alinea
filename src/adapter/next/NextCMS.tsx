@@ -37,7 +37,9 @@ export class NextCMS<
     const {default: dynamic} = await import('next/dynamic.js')
     const [isDraft] = outcome(() => draftMode().isEnabled)
     if (!isDraft) return null
-    const dashboardUrl = this.config.dashboard?.dashboardUrl ?? '/admin.html'
+    const devUrl = process.env.ALINEA_DEV_SERVER
+    const dashboardUrl =
+      devUrl ?? this.config.dashboard?.dashboardUrl ?? '/admin.html'
     const NextPreviews = dynamic(() => import('./NextPreviews.js'), {
       ssr: false
     })
