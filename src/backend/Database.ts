@@ -307,57 +307,61 @@ export class Database implements Syncable {
       case MutationType.FileRemove:
         if (mutation.replace) return
       case MutationType.Remove: {
-        const existing = await tx(
-          EntryRow({entryId: mutation.entryId}).maybeFirst()
-        )
-        if (!existing) return
-        const phases = await tx(EntryRow({entryId: mutation.entryId}))
+        const phases = await tx
+          .select()
+          .from(EntryRow)
+          .where(eq(EntryRow.entryId, mutation.entryId))
+        if (phases.length === 0) return
         // Remove child entries
         for (const phase of phases) {
-          await tx(
-            EntryRow()
-              .delete()
-              .where(
-                EntryRow.parentDir
-                  .is(phase.childrenDir)
-                  .or(EntryRow.childrenDir.like(phase.childrenDir + '/%'))
+          await tx
+            .delete(EntryRow)
+            .where(
+              or(
+                eq(EntryRow.parentDir, phase.childrenDir),
+                like(EntryRow.childrenDir, phase.childrenDir + '/%')
               )
-          )
+            )
         }
-        await tx(EntryRow({entryId: mutation.entryId}).delete())
-        return async () => phases.map(e => e.i18nId).concat(existing.i18nId)
+        await tx.delete(EntryRow).where(eq(EntryRow.entryId, mutation.entryId))
+        return async () => [phases[0].i18nId]
       }
       case MutationType.Discard: {
-        const existing = await tx(
-          EntryRow({entryId: mutation.entryId}).maybeFirst()
-        )
+        const existing = await tx
+          .select()
+          .from(EntryRow)
+          .where(eq(EntryRow.entryId, mutation.entryId))
+          .get()
         if (!existing) return
-        await tx(
-          EntryRow({
-            entryId: mutation.entryId,
-            phase: EntryPhase.Draft
-          }).delete()
-        )
+        await tx
+          .delete(EntryRow)
+          .where(
+            and(
+              eq(EntryRow.entryId, mutation.entryId),
+              eq(EntryRow.phase, EntryPhase.Draft)
+            )
+          )
         return async () => [existing.i18nId]
       }
       case MutationType.Order: {
-        const rows = EntryRow({entryId: mutation.entryId})
+        const condition = eq(EntryRow.entryId, mutation.entryId)
         // Todo: apply this to other languages too
-        await tx(rows.set({index: mutation.index}))
-        return () => this.updateHash(tx, rows)
+        await tx.update(EntryRow).set({index: mutation.index}).where(condition)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Move: {
-        const rows = EntryRow({entryId: mutation.entryId})
-        await tx(
-          rows.set({
+        const condition = eq(EntryRow.entryId, mutation.entryId)
+        await tx
+          .update(EntryRow)
+          .set({
             index: mutation.index,
             parent: mutation.parent,
             workspace: mutation.workspace,
             root: mutation.root
           })
-        )
+          .where(condition)
         // Todo: update file & children paths
-        return () => this.updateHash(tx, rows)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Upload: {
         // Until this mutation is applied the uploaded file won't be locally
