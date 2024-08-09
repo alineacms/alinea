@@ -2,7 +2,7 @@ import {DOMAttributes} from 'react'
 
 export function registerPreviewWidget() {
   if (customElements.get('alinea-preview')) return
-  const observedAttributes = ['adminUrl', 'entryUrl']
+  const observedAttributes = ['adminUrl', 'editUrl']
   const template = `
     <div class="previews">
       <div class="inner">
