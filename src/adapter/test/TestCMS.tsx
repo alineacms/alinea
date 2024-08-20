@@ -12,7 +12,7 @@ import {connect} from 'rado/driver/sql.js'
 export function createCMS<Definition extends Config>(definition: Definition) {
   const config = createConfig(definition)
   const store: Promise<Store> = sqlite().then(({Database}) =>
-    connect(new Database()).toAsync()
+    connect(new Database())
   )
   const db = store.then(async store => {
     const db = new Database(config, store)
