@@ -29,7 +29,7 @@ __metadata:
     cito: "npm:^0.2.0"
     dataloader: "npm:^2.1.0"
     pretty-ms: "npm:^8.0.0"
-    rado: "npm:^0.4.9"
+    rado: "npm:^1.0.8"
     regexparam: "npm:^2.0.1"
     xxhash-wasm: "npm:^1.0.2"
   languageName: unknown
@@ -10394,10 +10394,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.4.9":
-  version: 0.4.9
-  resolution: "rado@npm:0.4.9"
-  checksum: 10/65fef9a5d32618d678adabbbf976c2bb4c8b20e7ad55a195ff2f15a2164ba1c014bf15fcbbdbed673f0d5d624e874349c89c8db7c0bbdcf1ee99b9190cb5a0db
+"rado@npm:^1.0.8":
+  version: 1.0.8
+  resolution: "rado@npm:1.0.8"
+  checksum: 10/f0e7d3dc9a969fbaecf0e7528f3e0e8bedd656b05fae9eae4696abc8d24e6d37b4b1103e8daeaf4309db5c3c6a1cd87e41641c92aef0fcd65c85b6642c4a71f9
   languageName: node
   linkType: hard
 

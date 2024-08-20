@@ -17,9 +17,7 @@ export interface TestApi extends CMS {
 }
 
 class TestDriver extends CMS implements TestApi {
-  store: Promise<Store> = sqlite().then(({Database}) =>
-    connect(new Database()).toAsync()
-  )
+  store: Promise<Store> = sqlite().then(({Database}) => connect(new Database()))
   db = this.store.then(async store => {
     const db = new Database(this.config, store)
     await db.fill({async *entries() {}}, '')

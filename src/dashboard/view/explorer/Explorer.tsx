@@ -1,6 +1,7 @@
 import useSize from '@react-hook/size'
 import {Reference} from 'alinea/core/Reference'
-import {View} from 'alinea/core/View'
+import {summarySelection} from 'alinea/core/media/Summary'
+import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {Loader, fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
@@ -72,15 +73,11 @@ export function Explorer({
     async () => {
       const summaryView = type === 'row' ? 'summaryRow' : 'summaryThumb'
       const defaultView = defaultSummaryView[summaryView]
-      const selection = View.getSelection(
-        schema,
-        summaryView,
-        defaultView.selection()
-      )
+      const selection = summarySelection(schema)
       const total = await graph.preferDraft.count(cursor)
       const select = new Cursor.Find<any>({
         ...cursor[Cursor.Data],
-        select: selection
+        select: createSelection(selection)
       })
       return {
         type,

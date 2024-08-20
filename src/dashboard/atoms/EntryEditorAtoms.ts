@@ -94,7 +94,6 @@ export const entryEditorAtoms = atomFamily(
       if (!entry) return undefined
       const entryId = entry.entryId
       get(entryRevisionAtoms(entry.i18nId))
-
       const type = config.schema[entry.type]
       const edits = get(entryEditsAtoms(entryId))
 

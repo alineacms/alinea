@@ -159,6 +159,7 @@ export namespace router {
   }
 
   export function reportError(error: any) {
+    console.error(error)
     return router.jsonResponse(Outcome.Failure(error))
   }
 

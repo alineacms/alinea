@@ -150,7 +150,6 @@ export type ExprData =
   | ExprData.Access
   | ExprData.Value
   | ExprData.Record
-  | ExprData.Case
   | ExprData.Call
 
 export namespace ExprData {
@@ -184,12 +183,6 @@ export namespace ExprData {
       type = cito.literal('record')
       fields = cito.record(adt)
     }
-    export class Case {
-      type = cito.literal('case')
-      expr = adt
-      cases = cito.array(cito.tuple(adt, Selection.adt))
-      defaultCase? = Selection.adt.optional
-    }
     export class Call {
       type = cito.literal('call')
       method = cito.string
@@ -220,14 +213,6 @@ export namespace ExprData {
   export function Record(fields: {[k: string]: ExprData}): ExprData {
     return {type: 'record', fields}
   }
-  export interface Case extends cito.Infer<types.Case> {}
-  export function Case(
-    expr: ExprData,
-    cases: Array<[ExprData, Selection]>,
-    defaultCase?: Selection
-  ): ExprData {
-    return {type: 'case', expr, cases, defaultCase}
-  }
   export interface Call extends cito.Infer<types.Call> {}
   export function Call(method: string, args: Array<ExprData>): ExprData {
     return {type: 'call', method, args}
@@ -239,7 +224,6 @@ export namespace ExprData {
     types.Access,
     types.Value,
     types.Record,
-    types.Case,
     types.Call
   )
 }

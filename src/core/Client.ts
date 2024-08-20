@@ -1,7 +1,6 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
 import {DraftTransport} from 'alinea/backend/Drafts'
 import {Revision} from 'alinea/backend/History'
-
 import {Config} from './Config.js'
 import {Connection, SyncResponse} from './Connection.js'
 import {Draft} from './Draft.js'

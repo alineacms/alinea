@@ -1,5 +1,4 @@
-import type {fileSummarySelect} from 'alinea/core/media/MediaTypes.browser'
-import {Projection} from 'alinea/core/pages/Projection'
+import {SummaryProps} from 'alinea/core/media/Summary'
 import {Chip, HStack, TextLabel, Typo, VStack, fromModule, px} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
@@ -10,8 +9,6 @@ import {Fragment, ReactNode} from 'react'
 import css from './FileSummary.module.scss'
 
 const styles = fromModule(css)
-
-type SummaryProps = Projection.Infer<ReturnType<typeof fileSummarySelect>>
 
 export function FileSummaryRow(file: SummaryProps) {
   return (

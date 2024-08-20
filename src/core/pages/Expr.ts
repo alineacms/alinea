@@ -1,7 +1,5 @@
 import {entries, fromEntries} from '../util/Objects.js'
-import {createSelection} from './CreateSelection.js'
 import type {Cursor} from './Cursor.js'
-import type {Projection} from './Projection.js'
 import {
   BinaryOp,
   ExprData,
@@ -260,13 +258,6 @@ export class ExprI<T> {
     )
   }*/
 
-  when<S extends Projection>(
-    expr: EV<T>,
-    select: S
-  ): CaseBuilder<T, Projection.Infer<S>> {
-    return new CaseBuilder<T, Projection.Infer<S>>(this).when(expr, select)
-  }
-
   at<T>(this: Expr<Array<T>>, index: number): Expr<T | null> {
     return this.get(`[${Number(index)}]`)
   }
@@ -289,35 +280,6 @@ export class ExprI<T> {
 
   [toSelection]() {
     return Selection.Expr(this[Expr.Data])
-  }
-}
-
-export class CaseBuilder<T, Res> {
-  constructor(
-    protected expr: Expr<T>,
-    protected cases: Array<[ExprData, Selection]> = []
-  ) {}
-
-  when<S extends Projection>(
-    expr: EV<T>,
-    select: S
-  ): CaseBuilder<T, Res | Projection.Infer<S>> {
-    return new CaseBuilder(
-      this.expr,
-      this.cases.concat([
-        [Expr.create(expr)[Expr.Data], createSelection(select)]
-      ])
-    )
-  }
-
-  orElse<S extends Projection>(select: S): Expr<Res | Projection.Infer<S>> {
-    return Expr(
-      ExprData.Case(this.expr[Expr.Data], this.cases, createSelection(select))
-    )
-  }
-
-  end(): Expr<Res> {
-    return Expr(ExprData.Case(this.expr[Expr.Data], this.cases))
   }
 }
 

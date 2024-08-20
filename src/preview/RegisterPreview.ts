@@ -52,7 +52,6 @@ export function registerPreview(api: PreviewApi) {
     try {
       fetchAndSendMetadata()
       observer = new MutationObserver(mutationList => {
-        console.log('mutationList', mutationList)
         fetchAndSendMetadata()
       })
       observer.observe(document.head, {childList: true})

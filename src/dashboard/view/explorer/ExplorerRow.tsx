@@ -1,10 +1,10 @@
 import {EntryRow} from 'alinea/core/EntryRow'
 import {Schema} from 'alinea/core/Schema'
-import {View} from 'alinea/core/View'
+import {SummaryProps} from 'alinea/core/media/Summary'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
-import {memo} from 'react'
+import {ComponentType, memo} from 'react'
 import {useQuery} from 'react-query'
 import {graphAtom} from '../../atoms/DbAtoms.js'
 import {ExplorerItem} from './ExplorerItem.js'
@@ -19,7 +19,7 @@ export type ExplorerRowProps = {
   amount: number
   from: number
   summaryView: 'summaryRow' | 'summaryThumb'
-  defaultView: View<EntryRow, any>
+  defaultView: ComponentType<SummaryProps>
 }
 
 export const ExplorerRow = memo(function ExplorerRow({

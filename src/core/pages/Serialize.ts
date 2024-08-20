@@ -96,14 +96,6 @@ function seralizeExpr(
     case 'record':
       for (const field of values(expr.fields)) seralizeExpr(targets, field)
       return
-    case 'case':
-      seralizeExpr(targets, expr.expr)
-      for (const [condition, value] of expr.cases) {
-        seralizeExpr(targets, condition)
-        serializeSelection(targets, value)
-      }
-      if (expr.defaultCase) serializeSelection(targets, expr.defaultCase)
-      return
     case 'call':
       return
     default:

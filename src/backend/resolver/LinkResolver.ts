@@ -4,7 +4,6 @@ import type {Projection} from 'alinea/core/pages/Projection'
 import {Realm} from 'alinea/core/pages/Realm'
 import {serializeSelection} from 'alinea/core/pages/Serialize'
 import DataLoader from 'dataloader'
-import {Query} from 'rado'
 import {Store} from '../Store.js'
 import type {EntryResolver} from './EntryResolver.js'
 import {ResolveContext} from './ResolveContext.js'
@@ -33,13 +32,11 @@ export class LinkResolver {
           })
         )
         serializeSelection(this.resolver.targets, selection)
-        const query = new Query<Array<LinkData>>(
-          this.resolver.query(
-            new ResolveContext({realm: this.realm}),
-            selection
-          )
+        const query = this.resolver.query<{entryId: string; projection: any}>(
+          new ResolveContext({realm: this.realm}),
+          selection
         )
-        const entries = await this.store(query)
+        const entries = await query.all(this.store)
         const results = new Map(
           entries.map(entry => [entry.entryId, entry.projection])
         )

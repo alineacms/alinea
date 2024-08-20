@@ -1,6 +1,6 @@
 import {Config, Field} from 'alinea'
 
-const Answer = Config.document('Answer', {
+const Answer = Config.type('Answer', {
   fields: {
     correct: Field.check('Is correct', {width: 0.25}),
     label: Field.text('Label', {multiline: true, width: 0.75})
@@ -14,6 +14,6 @@ const answers = Field.list('Answers', {
   }
 })
 
-export const QuizExample = Config.type('Quiz', {
+export const QuizExample = Config.document('Quiz', {
   fields: {answers}
 })

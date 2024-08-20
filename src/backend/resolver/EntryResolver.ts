@@ -1,6 +1,9 @@
-import {EntryPhase, EntryRow, EntryTable} from 'alinea/core/EntryRow'
+import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Field} from 'alinea/core/Field'
+import type * as pages from 'alinea/core/pages'
+import {Realm} from 'alinea/core/pages/Realm'
+import {BinaryOp, SourceType, UnaryOp} from 'alinea/core/pages/ResolveData'
 import {
   PreviewUpdate,
   ResolveDefaults,
@@ -8,53 +11,62 @@ import {
 } from 'alinea/core/Resolver'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
-import type * as pages from 'alinea/core/pages'
-import {Realm} from 'alinea/core/pages/Realm'
-import {BinaryOp, SourceType, UnaryOp} from 'alinea/core/pages/ResolveData'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import {
-  BinOpType,
-  Expr,
-  ExprData,
-  OrderBy,
-  OrderDirection,
-  ParamData,
+  alias,
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  include,
+  like,
+  lt,
+  ne,
   Query,
-  QueryData,
   Select,
-  Table,
-  UnOpType,
-  withRecursive
+  selection,
+  SelectionInput,
+  Sql,
+  sql
 } from 'rado'
-import {bm25, iif, match, snippet, count as sqlCount} from 'rado/sqlite'
+import {Builder} from 'rado/core/Builder'
+import {input} from 'rado/core/expr/Input'
+import {getData, getSql, getTable, HasSql} from 'rado/core/Internal'
+import {Either} from 'rado/core/MetaData'
+import {bm25, snippet} from 'rado/sqlite'
 import {Database} from '../Database.js'
 import {LinkResolver} from './LinkResolver.js'
 import {ResolveContext} from './ResolveContext.js'
 
+const builder = new Builder()
+
 const unOps = {
-  [UnaryOp.Not]: UnOpType.Not,
-  [UnaryOp.IsNull]: UnOpType.IsNull
+  [UnaryOp.Not]: sql`not`,
+  [UnaryOp.IsNull]: sql`is null`
 }
 
 const binOps = {
-  [BinaryOp.Add]: BinOpType.Add,
-  [BinaryOp.Subt]: BinOpType.Subt,
-  [BinaryOp.Mult]: BinOpType.Mult,
-  [BinaryOp.Mod]: BinOpType.Mod,
-  [BinaryOp.Div]: BinOpType.Div,
-  [BinaryOp.Greater]: BinOpType.Greater,
-  [BinaryOp.GreaterOrEqual]: BinOpType.GreaterOrEqual,
-  [BinaryOp.Less]: BinOpType.Less,
-  [BinaryOp.LessOrEqual]: BinOpType.LessOrEqual,
-  [BinaryOp.Equals]: BinOpType.Equals,
-  [BinaryOp.NotEquals]: BinOpType.NotEquals,
-  [BinaryOp.And]: BinOpType.And,
-  [BinaryOp.Or]: BinOpType.Or,
-  [BinaryOp.Like]: BinOpType.Like,
-  [BinaryOp.In]: BinOpType.In,
-  [BinaryOp.NotIn]: BinOpType.NotIn,
-  [BinaryOp.Concat]: BinOpType.Concat
+  [BinaryOp.Add]: sql`+`,
+  [BinaryOp.Subt]: sql`-`,
+  [BinaryOp.Mult]: sql`*`,
+  [BinaryOp.Mod]: sql`%`,
+  [BinaryOp.Div]: sql`/`,
+  [BinaryOp.Greater]: sql`>`,
+  [BinaryOp.GreaterOrEqual]: sql`>=`,
+  [BinaryOp.Less]: sql`<`,
+  [BinaryOp.LessOrEqual]: sql`<=`,
+  [BinaryOp.Equals]: sql`=`,
+  [BinaryOp.NotEquals]: sql`!=`,
+  [BinaryOp.And]: sql`and`,
+  [BinaryOp.Or]: sql`or`,
+  [BinaryOp.Like]: sql`like`,
+  [BinaryOp.In]: sql`in`,
+  [BinaryOp.NotIn]: sql`not in`,
+  [BinaryOp.Concat]: sql`||`
 }
 
 const MAX_DEPTH = 999
@@ -85,27 +97,27 @@ export class EntryResolver {
     ctx: ResolveContext,
     target: pages.TargetData,
     field: string
-  ): ExprData {
+  ): HasSql {
     const {name} = target
     if (!name) {
-      const fields: Record<string, Expr<any>> = ctx.Table as any
-      if (field in fields) return fields[field][Expr.Data]
+      const fields: Record<string, HasSql> = ctx.Table as any
+      if (field in fields) return fields[field]
       throw new Error(`Selecting unknown field: "${field}"`)
     }
     const type = this.schema[name]
     if (!type)
       throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
-    return ctx.Table.data.get(field)[Expr.Data]
+    return (<any>ctx.Table.data)[field]
   }
 
-  pageFields(ctx: ResolveContext): Array<[string, ExprData]> {
+  pageFields(ctx: ResolveContext): Array<[string, HasSql]> {
     return pageFields.map(key => [key, this.fieldOf(ctx, {}, key)])
   }
 
   selectFieldsOf(
     ctx: ResolveContext,
     target: pages.TargetData
-  ): Array<[string, ExprData]> {
+  ): Array<[string, HasSql]> {
     const {name} = target
     if (!name) return this.pageFields(ctx)
     const type = this.schema[name]
@@ -115,76 +127,76 @@ export class EntryResolver {
     })
   }
 
-  exprUnOp(ctx: ResolveContext, {op, expr}: pages.ExprData.UnOp): ExprData {
-    return new ExprData.UnOp(unOps[op], this.expr(ctx, expr))
+  exprUnOp(ctx: ResolveContext, {op, expr}: pages.ExprData.UnOp): HasSql {
+    switch (op) {
+      case UnaryOp.IsNull:
+        return sql`${this.expr(ctx, expr)} is null`
+      default:
+        return sql`${unOps[op]} ${this.expr(ctx, expr)}`
+    }
   }
 
-  exprBinOp(ctx: ResolveContext, {op, a, b}: pages.ExprData.BinOp): ExprData {
-    return new ExprData.BinOp(binOps[op], this.expr(ctx, a), this.expr(ctx, b))
+  exprBinOp(ctx: ResolveContext, {op, a, b}: pages.ExprData.BinOp): HasSql {
+    switch (op) {
+      case BinaryOp.In:
+        return inArray(this.expr(ctx, a), this.expr(ctx, b))
+      case BinaryOp.NotIn:
+        return inArray(this.expr(ctx, a), this.expr(ctx, b))
+      default:
+        return sql`${this.expr(ctx, a)} ${binOps[op]} ${this.expr(ctx, b)}`
+    }
   }
 
   exprField(
     ctx: ResolveContext,
     {target, field}: pages.ExprData.Field
-  ): ExprData {
+  ): HasSql {
     return this.fieldOf(ctx, target, field)
   }
 
   exprAccess(
     ctx: ResolveContext,
     {expr, field}: pages.ExprData.Access
-  ): ExprData {
-    return new ExprData.Field(this.expr(ctx.access, expr), field)
+  ): HasSql {
+    return sql.jsonPath({
+      target: getSql(this.expr(ctx.access, expr)),
+      asSql: true,
+      segments: [field]
+    })
   }
 
-  exprValue(ctx: ResolveContext, {value}: pages.ExprData.Value): ExprData {
-    return new ExprData.Param(new ParamData.Value(value))
+  exprValue(ctx: ResolveContext, {value}: pages.ExprData.Value): HasSql {
+    return sql.value(value ?? null)
   }
 
-  exprRecord(ctx: ResolveContext, {fields}: pages.ExprData.Record): ExprData {
-    return new ExprData.Record(
-      fromEntries(
-        entries(fields).map(([key, expr]) => {
-          return [key, this.expr(ctx, expr)]
-        })
-      )
-    )
-  }
-
-  exprCase(
+  exprRecord(
     ctx: ResolveContext,
-    {expr, cases, defaultCase}: pages.ExprData.Case
-  ): ExprData {
-    const subject = new Expr(this.expr(ctx, expr))
-    let res = new Expr(
-      defaultCase ? this.select(ctx, defaultCase) : Expr.NULL[Expr.Data]
+    {fields}: pages.ExprData.Record
+  ): Record<string, HasSql> {
+    return fromEntries(
+      entries(fields).map(([key, expr]) => {
+        return [key, this.expr(ctx, expr)]
+      })
     )
-    for (const [condition, value] of cases)
-      res = iif(
-        subject.is(new Expr(this.expr(ctx, condition))),
-        new Expr(this.select(ctx, value)),
-        res
-      )
-    return res[Expr.Data]
   }
 
-  exprCall(ctx: ResolveContext, {method, args}: pages.ExprData.Call): ExprData {
+  exprCall(ctx: ResolveContext, {method, args}: pages.ExprData.Call): HasSql {
     switch (method) {
       case 'snippet':
         return snippet(
           EntrySearch,
           1,
-          new Expr(this.expr(ctx, args[0])),
-          new Expr(this.expr(ctx, args[1])),
-          new Expr(this.expr(ctx, args[2])),
-          new Expr(this.expr(ctx, args[3]))
-        )[Expr.Data]
+          this.expr(ctx, args[0]),
+          this.expr(ctx, args[1]),
+          this.expr(ctx, args[2]),
+          this.expr(ctx, args[3])
+        )
       default:
         throw new Error(`Unknown method: "${method}"`)
     }
   }
 
-  expr(ctx: ResolveContext, expr: pages.ExprData): ExprData {
+  expr(ctx: ResolveContext, expr: pages.ExprData): HasSql<any> {
     switch (expr.type) {
       case 'unop':
         return this.exprUnOp(ctx, expr)
@@ -197,65 +209,63 @@ export class EntryResolver {
       case 'value':
         return this.exprValue(ctx, expr)
       case 'record':
-        return this.exprRecord(ctx, expr)
-      case 'case':
-        return this.exprCase(ctx, expr)
+        //return this.exprRecord(ctx, expr)
+        throw new Error('Record expressions are not supported')
       case 'call':
         return this.exprCall(ctx, expr)
     }
   }
 
-  selectRecord(
-    ctx: ResolveContext,
-    {fields}: pages.Selection.Record
-  ): ExprData {
-    return new ExprData.Record(
-      fromEntries(
-        fields.flatMap(field => {
-          switch (field.length) {
-            case 1:
-              const [target] = field
-              return this.selectFieldsOf(ctx.select, target)
-            case 2:
-              const [key, selection] = field
-              return [[key, this.select(ctx, selection)]]
-          }
-        })
-      )
+  selectRecord(ctx: ResolveContext, {fields}: pages.Selection.Record) {
+    return fromEntries(
+      fields.flatMap(field => {
+        switch (field.length) {
+          case 1:
+            const [target] = field
+            return this.selectFieldsOf(ctx.select, target)
+          case 2:
+            const [key, selection] = field
+            return [[key, this.select(ctx, selection)]]
+        }
+      })
     )
   }
 
-  selectRow(ctx: ResolveContext, {target}: pages.Selection.Row): ExprData {
-    return new ExprData.Record(
-      fromEntries(this.selectFieldsOf(ctx.select, target))
-    )
+  selectRow(
+    ctx: ResolveContext,
+    {target}: pages.Selection.Row
+  ): SelectionInput {
+    return fromEntries(this.selectFieldsOf(ctx.select, target))
   }
 
   selectCursor(
     ctx: ResolveContext,
     selection: pages.Selection.Cursor
-  ): ExprData {
-    return new ExprData.Query(this.queryCursor(ctx, selection))
+  ): SelectionInput {
+    const isSingle = selection.cursor.first ?? false
+    const query = this.queryCursor(ctx, selection)
+    if (isSingle) return include.one(query)
+    return include(query)
   }
 
   selectExpr(
     ctx: ResolveContext,
     {expr, fromParent}: pages.Selection.Expr
-  ): ExprData {
+  ): SelectionInput {
     ctx = fromParent ? ctx.decreaseDepth() : ctx
     return this.expr(ctx.select, expr)
   }
 
-  selectCount(): ExprData {
-    return sqlCount()[Expr.Data]
+  selectCount(): SelectionInput {
+    return count().as('count')
   }
 
-  selectAll(ctx: ResolveContext, target: pages.TargetData): ExprData {
+  selectAll(ctx: ResolveContext, target: pages.TargetData): SelectionInput {
     const fields = this.selectFieldsOf(ctx.select, target)
-    return new ExprData.Record(fromEntries(fields))
+    return fromEntries(fields)
   }
 
-  select(ctx: ResolveContext, selection: pages.Selection): ExprData {
+  select(ctx: ResolveContext, selection: pages.Selection): SelectionInput {
     switch (selection.type) {
       case 'cursor':
         return this.selectCursor(ctx, selection)
@@ -273,187 +283,206 @@ export class EntryResolver {
   queryRecord(
     ctx: ResolveContext,
     selection: pages.Selection.Record
-  ): QueryData.Select {
+  ): Query<any, Either> {
     const expr = this.selectRecord(ctx.select, selection)
-    return new QueryData.Select({
-      selection: expr,
-      singleResult: true
-    })
+    return builder.select(expr)
   }
 
   querySource(
     ctx: ResolveContext,
     source: pages.CursorSource | undefined,
     hasSearch: boolean
-  ): Select<Table.Select<EntryTable>> {
+  ): Select<any> {
+    const {aliased} = getTable(ctx.Table)
     const cursor = hasSearch
-      ? EntrySearch()
+      ? builder
+          .select(ctx.Table)
+          .from(EntrySearch)
           .innerJoin(
             ctx.Table,
-            ctx.Table().get('rowid').is(EntrySearch().get('rowid'))
+            eq(sql`${sql.identifier(aliased)}.rowid`, EntrySearch.rowid)
           )
-          .select(ctx.Table)
-      : ctx.Table()
-    if (!source) return cursor.orderBy(ctx.Table.index.asc())
-    const from = EntryRow().as(`E${ctx.depth - 1}`) // .as(source.id)
+      : builder.select().from(ctx.Table)
+    if (!source) return cursor.orderBy(asc(ctx.Table.index))
+    const from = alias(EntryRow, `E${ctx.depth - 1}`) // .as(source.id)
     switch (source.type) {
       case SourceType.Parent:
-        return cursor.where(ctx.Table.entryId.is(from.parent)).take(1)
+        return cursor.where(eq(ctx.Table.entryId, from.parent)).limit(1)
       case SourceType.Next:
         return cursor
-          .where(ctx.Table.parent.is(from.parent))
-          .where(ctx.Table.index.isGreater(from.index))
-          .take(1)
+          .where(
+            eq(ctx.Table.parent, from.parent),
+            gt(ctx.Table.index, from.index)
+          )
+          .limit(1)
       case SourceType.Previous:
         return cursor
-          .where(ctx.Table.parent.is(from.parent))
-          .where(ctx.Table.index.isLess(from.index))
-          .take(1)
+          .where(
+            eq(ctx.Table.parent, from.parent),
+            lt(ctx.Table.index, from.index)
+          )
+          .limit(1)
       case SourceType.Siblings:
-        return cursor
-          .where(ctx.Table.parent.is(from.parent))
-          .where(
-            source.includeSelf ? true : ctx.Table.entryId.isNot(from.entryId)
-          )
+        return cursor.where(
+          eq(ctx.Table.parent, from.parent),
+          source.includeSelf ? undefined : ne(ctx.Table.entryId, from.entryId)
+        )
       case SourceType.Translations:
-        return cursor
-          .where(ctx.Table.i18nId.is(from.i18nId))
-          .where(
-            source.includeSelf ? true : ctx.Table.entryId.isNot(from.entryId)
-          )
+        return cursor.where(
+          eq(ctx.Table.i18nId, from.i18nId),
+          source.includeSelf ? undefined : ne(ctx.Table.entryId, from.entryId)
+        )
       case SourceType.Children:
-        const Child = EntryRow().as('Child')
-        const children = withRecursive(
-          Child({entryId: from.entryId})
+        const Child = alias(EntryRow, 'Child')
+        const children = builder.$with('children').as(
+          builder
+            .select({
+              entryId: Child.entryId,
+              parent: Child.parent,
+              level: sql<number>`0`
+            })
+            .from(Child)
             .where(
+              eq(Child.entryId, from.entryId),
               this.conditionRealm(Child, ctx.realm),
               this.conditionLocale(Child, ctx.locale)
             )
-            .select({
-              entryId: Child.entryId,
-              parent: Child.parent,
-              level: 0
-            })
-        ).unionAll(() =>
-          Child()
-            .select({
-              entryId: Child.entryId,
-              parent: Child.parent,
-              level: children.level.add(1)
-            })
-            .innerJoin(children({entryId: Child.parent}))
-            .where(
-              this.conditionRealm(Child, ctx.realm),
-              this.conditionLocale(Child, ctx.locale),
-              children.level.isLess(
-                Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH)
-              )
+            .unionAll(self =>
+              builder
+                .select({
+                  entryId: Child.entryId,
+                  parent: Child.parent,
+                  level: sql<number>`${self.level} + 1`
+                })
+                .from(Child)
+                .innerJoin(self, eq(self.entryId, Child.parent))
+                .where(
+                  this.conditionRealm(Child, ctx.realm),
+                  this.conditionLocale(Child, ctx.locale),
+                  lt(self.level, Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH))
+                )
             )
         )
-        const childrenIds = children().select(children.entryId).skip(1)
+        const childrenIds = builder
+          .withRecursive(children)
+          .select(children.entryId)
+          .from(children)
+          .limit(-1)
+          .offset(1)
         return cursor
-          .where(ctx.Table.entryId.isIn(childrenIds))
-          .orderBy(ctx.Table.index.asc())
+          .where(inArray(ctx.Table.entryId, childrenIds))
+          .orderBy(asc(ctx.Table.index))
       case SourceType.Parents:
-        const Parent = EntryRow().as('Parent')
-        const parents = withRecursive(
-          Parent({entryId: from.entryId})
+        const Parent = alias(EntryRow, 'Parent')
+        const parents = builder.$with('parents').as(
+          builder
+            .select({
+              entryId: Parent.entryId,
+              parent: Parent.parent,
+              level: sql<number>`0`
+            })
+            .from(Parent)
             .where(
+              eq(Parent.entryId, from.entryId),
               this.conditionRealm(Parent, ctx.realm),
               this.conditionLocale(Parent, ctx.locale)
             )
-            .select({
-              entryId: Parent.entryId,
-              parent: Parent.parent,
-              level: 0
-            })
-        ).unionAll(() =>
-          Parent()
-            .select({
-              entryId: Parent.entryId,
-              parent: Parent.parent,
-              level: parents.level.add(1)
-            })
-            .innerJoin(parents({parent: Parent.entryId}))
-            .where(
-              this.conditionRealm(Parent, ctx.realm),
-              this.conditionLocale(Parent, ctx.locale),
-              parents.level.isLess(
-                Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH)
-              )
+            .unionAll(self =>
+              builder
+                .select({
+                  entryId: Parent.entryId,
+                  parent: Parent.parent,
+                  level: sql<number>`${self.level} + 1`
+                })
+                .from(Parent)
+                .innerJoin(self, eq(self.parent, Parent.entryId))
+                .where(
+                  this.conditionRealm(Parent, ctx.realm),
+                  this.conditionLocale(Parent, ctx.locale),
+                  lt(self.level, Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH))
+                )
             )
         )
-        const parentIds = parents().select(parents.entryId).skip(1)
+        const parentIds = builder
+          .withRecursive(parents)
+          .select(parents.entryId)
+          .from(parents)
+          .limit(-1)
+          .offset(1)
         return cursor
-          .where(ctx.Table.entryId.isIn(parentIds))
-          .orderBy(ctx.Table.level.asc())
+          .where(inArray(ctx.Table.entryId, parentIds))
+          .orderBy(asc(ctx.Table.level))
       default:
         throw unreachable(source.type)
     }
   }
 
-  orderBy(ctx: ResolveContext, orderBy: Array<pages.OrderBy>): Array<OrderBy> {
+  orderBy(ctx: ResolveContext, orderBy: Array<pages.OrderBy>): Array<Sql> {
     return orderBy.map(({expr, order}) => {
       // TODO: reintroduce .collate('NOCASE') when sorting on title instead of index
-      const e = new Expr(this.expr(ctx, expr))
-      return {
-        expr: e[Expr.Data],
-        order: order === 'Desc' ? OrderDirection.Desc : OrderDirection.Asc
-      }
+      const e = this.expr(ctx, expr)
+      const direction = order === 'Desc' ? desc : asc
+      return direction(e)
     })
   }
 
-  conditionLocale(Table: Table<EntryTable>, locale?: string) {
-    if (!locale) return Expr.value(true)
-    return Table.locale.is(locale)
+  conditionLocale(Table: typeof EntryRow, locale?: string) {
+    if (!locale) return sql.value(true)
+    return eq(Table.locale, locale)
   }
 
-  conditionRealm(Table: Table<EntryTable>, realm: Realm) {
+  conditionRealm(Table: typeof EntryRow, realm: Realm) {
     switch (realm) {
       case Realm.Published:
-        return Table.phase.is(EntryPhase.Published)
+        return eq(Table.phase, EntryPhase.Published)
       case Realm.Draft:
-        return Table.phase.is(EntryPhase.Draft)
+        return eq(Table.phase, EntryPhase.Draft)
       case Realm.Archived:
-        return Table.phase.is(EntryPhase.Archived)
+        return eq(Table.phase, EntryPhase.Archived)
       case Realm.PreferDraft:
         return Table.active
       case Realm.PreferPublished:
         return Table.main
       case Realm.All:
-        return Expr.value(true)
+        return sql.value(true)
     }
   }
 
-  conditionLocation(Table: Table<EntryTable>, location: Array<string>) {
+  conditionLocation(Table: typeof EntryRow, location: Array<string>) {
     switch (location.length) {
       case 1:
-        return Table.workspace.is(location[0])
+        return eq(Table.workspace, location[0])
       case 2:
-        return Table.workspace.is(location[0]).and(Table.root.is(location[1]))
+        return and(
+          eq(Table.workspace, location[0]),
+          eq(Table.root, location[1])
+        )
       case 3:
-        const condition = Table.workspace
-          .is(location[0])
-          .and(Table.root.is(location[1]))
-          .and(Table.parentDir.like(`/${location[2]}%`))
-        return condition
+        return and(
+          eq(Table.workspace, location[0]),
+          eq(Table.root, location[1]),
+          like(Table.parentDir, `/${location[2]}%`)
+        )
       default:
-        return Expr.value(true)
+        return sql.value(true)
     }
   }
 
-  conditionSearch(Table: Table<EntryTable>, searchTerms?: Array<string>) {
-    if (!searchTerms?.length) return Expr.value(true)
+  conditionSearch(
+    Table: typeof EntryRow,
+    searchTerms?: Array<string>
+  ): Sql<boolean> {
+    if (!searchTerms?.length) return sql.value(true)
     const terms = searchTerms
       .map(term => `"${term.replaceAll('"', '')}"*`)
       .join(' AND ')
-    return match(EntrySearch, terms)
+    return sql`${input(EntrySearch)} match ${input(terms)}`
   }
 
   queryCursor(
     ctx: ResolveContext,
     {cursor}: pages.Selection.Cursor
-  ): QueryData.Select {
+  ): Select<any> {
     const {
       target,
       where,
@@ -462,53 +491,66 @@ export class EntryResolver {
       orderBy,
       groupBy,
       select,
-      first,
       source,
+      first,
       searchTerms
     } = cursor
     ctx = ctx.increaseDepth().none
     const {name} = target || {}
     const hasSearch = Boolean(searchTerms?.length)
     let query = this.querySource(ctx, source, hasSearch)
-    let preCondition = query[Query.Data].where
-    let condition = Expr.and(
-      preCondition ? new Expr(preCondition) : Expr.value(true),
-      name ? ctx.Table.type.is(name) : Expr.value(true),
+    const queryData = getData(query)
+    let preCondition = queryData.where as HasSql<boolean>
+    let condition = and(
+      preCondition,
+      name ? eq(ctx.Table.type, name) : undefined,
       this.conditionLocation(ctx.Table, ctx.location),
       this.conditionRealm(ctx.Table, ctx.realm),
       source?.type === SourceType.Translations
-        ? Expr.value(true)
+        ? undefined
         : this.conditionLocale(ctx.Table, ctx.locale),
       this.conditionSearch(ctx.Table, searchTerms)
     )
-    if (skip) query = query.skip(skip)
-    if (take) query = query.take(take)
-    const extra: Partial<QueryData.Select> = {}
-    extra.where = (
-      where
-        ? condition.and(new Expr(this.expr(ctx.condition, where)))
-        : condition
-    )[Expr.Data]
-    extra.selection = select
+    if (skip) query = query.offset(skip)
+    if (take) query = query.limit(take)
+    const toSelect = select
       ? this.select(ctx.select, select)
       : this.selectAll(ctx, {name})
-    if (first) extra.singleResult = true
-    if (groupBy) extra.groupBy = groupBy.map(expr => this.expr(ctx, expr))
-    if (searchTerms) extra.orderBy = [bm25(EntrySearch, 20, 1).asc()]
-    else if (orderBy) extra.orderBy = this.orderBy(ctx, orderBy)
-    return query[Query.Data].with(extra)
+    let result = new Select({
+      ...queryData,
+      select: selection(toSelect),
+      where: where ? and(condition, this.expr(ctx.condition, where)) : condition
+    })
+    if (groupBy)
+      result = result.groupBy(...groupBy.map(expr => this.expr(ctx, expr)))
+    if (searchTerms) result = result.orderBy(asc(bm25(EntrySearch, 20, 1)))
+    else if (orderBy) result = result.orderBy(...this.orderBy(ctx, orderBy))
+    if (first) result = result.limit(1)
+    return result
   }
 
-  query(ctx: ResolveContext, selection: pages.Selection): QueryData.Select {
+  query<Result>(
+    ctx: ResolveContext,
+    selection: pages.Selection
+  ): Query<Result, Either> {
     switch (selection.type) {
       case 'cursor':
-        return this.queryCursor(ctx, selection)
+        return <any>this.queryCursor(ctx, selection)
       case 'record':
         return this.queryRecord(ctx, selection)
       case 'row':
       case 'count':
       case 'expr':
         throw new Error(`Cannot select ${selection.type} at root level`)
+    }
+  }
+
+  isSingleResult(ctx: ResolveContext, selection: pages.Selection): boolean {
+    switch (selection.type) {
+      case 'cursor':
+        return selection.cursor.first ?? false
+      default:
+        return true
     }
   }
 
@@ -525,6 +567,7 @@ export class EntryResolver {
     interim: Interim,
     {cursor}: pages.Selection.Cursor
   ): Promise<void> {
+    if (!interim) return
     const {target = {}, select, first} = cursor
     if (select) {
       if (first) await this.post(ctx, interim, select)
@@ -632,38 +675,40 @@ export class EntryResolver {
     preview = this.defaults?.preview
   }: ResolveRequest): Promise<T> => {
     const ctx = new ResolveContext({realm, location, locale})
-    const queryData = this.query(ctx, selection)
-    const query = new Query<Interim>(queryData)
+    const query = this.query(ctx, selection)
+    const singleResult = this.isSingleResult(ctx, selection)
     if (preview) {
       const updated =
         'entry' in preview ? preview.entry : await this.parsePreview?.(preview)
       if (updated)
         try {
           await this.db.store.transaction(async tx => {
-            const current = EntryRow({
-              entryId: updated.entryId,
-              active: true
-            })
             // Temporarily add preview entry
-            await tx(current.delete())
-            await tx(EntryRow().insert(updated))
+            await tx
+              .delete(EntryRow)
+              .where(
+                eq(EntryRow.entryId, updated.entryId),
+                eq(EntryRow.active, true)
+              )
+            await tx.insert(EntryRow).values(updated)
             await Database.index(tx)
-            const result = await tx(query)
+            const rows = await query.all(tx)
             const linkResolver = new LinkResolver(this, tx, ctx.realm)
+            const result = singleResult ? rows[0] : rows
             if (result) await this.post({linkResolver}, result, selection)
-            // The transaction api needs to be revised to support explicit commit/rollback
             throw {result}
           })
         } catch (err: any) {
-          if (err.result) return err.result
+          if (err.result) return err.result as T
           // console.warn('Could not decode preview update', err)
         }
     }
     return this.db.store.transaction(async tx => {
-      const result = await tx(query)
+      const rows = await query.all(tx)
       const linkResolver = new LinkResolver(this, tx, ctx.realm)
+      const result = singleResult ? rows[0] : rows
       if (result) await this.post({linkResolver}, result, selection)
-      return result
+      return result as T
     })
   }
 }

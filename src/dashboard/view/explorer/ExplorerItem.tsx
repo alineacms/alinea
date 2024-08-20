@@ -1,6 +1,6 @@
+import {SummaryProps} from 'alinea/core/media/Summary'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
-import {View} from 'alinea/core/View'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Icon, fromModule} from 'alinea/ui'
@@ -8,6 +8,7 @@ import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
+import {ComponentType} from 'react'
 import {useExplorer} from '../../hook/UseExplorer.js'
 import {useFocusListItem} from '../../hook/UseFocusList.js'
 import {useNav} from '../../hook/UseNav.js'
@@ -20,7 +21,7 @@ export interface ExplorerItemProps {
   schema: Schema
   entry: ExporerItemSelect
   summaryView: 'summaryRow' | 'summaryThumb'
-  defaultView: View<ExporerItemSelect, any>
+  defaultView: ComponentType<SummaryProps>
 }
 
 export function ExplorerItem({

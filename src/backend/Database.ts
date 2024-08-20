@@ -16,10 +16,24 @@ import {entries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
-import {Driver, Expr, Select, alias, create} from 'rado'
-import {exists} from 'rado/sqlite'
+import {
+  Sql,
+  alias,
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  exists,
+  inArray,
+  like,
+  not,
+  notInArray,
+  or
+} from 'rado'
+import {Builder} from 'rado/core/Builder'
 import xxhash from 'xxhash-wasm'
-import {EntryPhase, EntryRow} from '../core/EntryRow.js'
+import {EntryPhase, EntryRow, entryVersionId} from '../core/EntryRow.js'
 import {Media} from './Media.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
@@ -55,15 +69,16 @@ export class Database implements Syncable {
 
   async sync(contentHashes: Array<string>): Promise<SyncResponse> {
     return this.store.transaction(async tx => {
-      const insert = await tx(
-        EntryRow().where(EntryRow.rowHash.isNotIn(contentHashes))
-      )
+      const insert = await tx
+        .select()
+        .from(EntryRow)
+        .where(notInArray(EntryRow.rowHash, contentHashes))
+
       const keep = new Set(
-        await tx(
-          EntryRow()
-            .where(EntryRow.rowHash.isIn(contentHashes))
-            .select(EntryRow.rowHash)
-        )
+        await tx
+          .select(EntryRow.rowHash)
+          .from(EntryRow)
+          .where(inArray(EntryRow.rowHash, contentHashes))
       )
       const remove = contentHashes.filter(hash => !keep.has(hash))
       return {insert, remove}
@@ -71,7 +86,7 @@ export class Database implements Syncable {
   }
 
   async contentHashes() {
-    return this.store(EntryRow().select(EntryRow.rowHash))
+    return this.store.select(EntryRow.rowHash).from(EntryRow)
   }
 
   // Syncs data with a remote database, returning the i18nIds of changed entries
@@ -82,13 +97,14 @@ export class Database implements Syncable {
     if (!isRequired) return []
     const {insert, remove} = await remote.sync(await this.contentHashes())
     return this.store.transaction(async tx => {
-      const removed = await tx(
-        EntryRow().where(EntryRow.rowHash.isIn(remove)).select(EntryRow.i18nId)
-      )
-      await tx(EntryRow().delete().where(EntryRow.rowHash.isIn(remove)))
+      const removed = await tx
+        .select(EntryRow.i18nId)
+        .from(EntryRow)
+        .where(inArray(EntryRow.rowHash, remove))
+      await tx.delete(EntryRow).where(inArray(EntryRow.rowHash, remove))
       const changed = []
       for (const entry of insert) {
-        await tx(EntryRow().insertOne(entry))
+        await tx.insert(EntryRow).values(entry)
         changed.push(entry.i18nId)
       }
       await Database.index(tx)
@@ -122,33 +138,35 @@ export class Database implements Syncable {
     })
   }
 
-  private async applyPublish(tx: Driver.Async, entry: EntryRow) {
+  private async applyPublish(tx: Store, entry: EntryRow) {
     const next = publishEntryRow(this.config, entry)
-    await tx(
-      EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
+    await tx
+      .update(EntryRow)
+      .set({
         phase: EntryPhase.Published,
         filePath: next.filePath,
         parentDir: next.parentDir,
         childrenDir: next.childrenDir,
         url: next.url
       })
-    )
+      .where(
+        eq(EntryRow.entryId, entry.entryId),
+        eq(EntryRow.phase, entry.phase)
+      )
+
     return this.updateChildren(tx, entry, next)
   }
 
-  private async updateChildren(
-    tx: Driver.Async,
-    previous: EntryRow,
-    next: EntryRow
-  ) {
+  private async updateChildren(tx: Store, previous: EntryRow, next: EntryRow) {
     const {childrenDir: dir} = previous
     if (next.phase !== EntryPhase.Published || dir === next.childrenDir)
       return []
-    const children = await tx(
-      EntryRow().where(
-        EntryRow.parentDir.is(dir).or(EntryRow.childrenDir.like(dir + '/%'))
+    const children = await tx
+      .select()
+      .from(EntryRow)
+      .where(
+        or(eq(EntryRow.parentDir, dir), like(EntryRow.childrenDir, `${dir}/%`))
       )
-    )
     for (const child of children) {
       const filePath = next.childrenDir + child.filePath.slice(dir.length)
       const childrenDir = next.childrenDir + child.childrenDir.slice(dir.length)
@@ -159,22 +177,27 @@ export class Database implements Syncable {
         ...child,
         parentPaths
       })
-      await tx(
-        EntryRow({entryId: child.entryId, phase: child.phase}).set({
+      await tx
+        .update(EntryRow)
+        .set({
           filePath,
           childrenDir,
           parentDir,
           url
         })
-      )
+        .where(
+          eq(EntryRow.entryId, child.entryId),
+          eq(EntryRow.phase, child.phase)
+        )
     }
     return children
   }
 
   async logEntries() {
-    const entries = await this.store(
-      EntryRow().orderBy(EntryRow.url.asc(), EntryRow.index.asc())
-    )
+    const entries = await this.store
+      .select()
+      .from(EntryRow)
+      .orderBy(asc(EntryRow.url), asc(EntryRow.index))
     for (const entry of entries) {
       console.log(
         entry.url.padEnd(35),
@@ -186,38 +209,40 @@ export class Database implements Syncable {
   }
 
   private async applyMutation(
-    tx: Driver.Async,
+    tx: Store,
     mutation: Mutation
   ): Promise<(() => Promise<Array<string>>) | undefined> {
     switch (mutation.type) {
       case MutationType.Create: {
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: mutation.entry.phase
-        })
-        const current = await tx(row.maybeFirst())
+        const condition = and(
+          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.phase, mutation.entry.phase)
+        )
+        const current = await tx.select().from(EntryRow).where(condition).get()
         if (current) return
-        await tx(EntryRow().insert(mutation.entry))
-        return () => this.updateHash(tx, row)
+        await tx.insert(EntryRow).values(mutation.entry)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Edit: {
         const {entryId, entry} = mutation
-        const row = EntryRow({
-          entryId,
-          phase: entry.phase
-        })
-        const current = await tx(row.maybeFirst())
-        await tx(row.delete(), EntryRow().insert(entry))
+        const condition = and(
+          eq(EntryRow.entryId, entryId),
+          eq(EntryRow.phase, entry.phase)
+        )
+        const current = await tx.select().from(EntryRow).where(condition).get()
+        await tx.delete(EntryRow).where(condition)
+        await tx.insert(EntryRow).values(entry)
         let children: Array<EntryRow> = []
         if (entry.phase === EntryPhase.Published) {
           if (current) children = await this.updateChildren(tx, current, entry)
         }
         return () => {
-          return this.updateHash(tx, row).then(self =>
+          return this.updateHash(tx, condition).then(self =>
             this.updateHash(
               tx,
-              EntryRow().where(
-                EntryRow.entryId.isIn(children.map(e => e.entryId))
+              inArray(
+                EntryRow.entryId,
+                children.map(e => e.entryId)
               )
             ).then(children => self.concat(children))
           )
@@ -225,53 +250,70 @@ export class Database implements Syncable {
       }
       case MutationType.Patch: {
         const {patch} = mutation
-        const rows = EntryRow({entryId: mutation.entryId, main: true})
-        const current = await tx(rows.maybeFirst())
-        if (current) await tx(rows.set({data: {...current.data, patch}}))
-        return () => this.updateHash(tx, rows)
+        const condition = and(
+          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.main, true)
+        )
+        const current = await tx.select().from(EntryRow).where(condition).get()
+        if (current)
+          await tx
+            .update(EntryRow)
+            .set({data: {...current.data, patch}})
+            .where(condition)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Archive: {
-        const archived = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Archived
-        })
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Published
-        })
-        const published = await tx(row.maybeFirst())
+        const archived = and(
+          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.phase, EntryPhase.Archived)
+        )
+        const condition = and(
+          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.phase, EntryPhase.Published)
+        )
+        const published = await tx
+          .select()
+          .from(EntryRow)
+          .where(condition)
+          .get()
         if (!published) return
         const filePath =
           published.filePath.slice(0, -5) + `.${EntryPhase.Archived}.json`
-        await tx(
-          archived.delete(),
-          row.set({
+        await tx.delete(EntryRow).where(archived)
+        await tx
+          .update(EntryRow)
+          .set({
             phase: EntryPhase.Archived,
             filePath
           })
-        )
+          .where(condition)
         return () => this.updateHash(tx, archived)
       }
       case MutationType.Publish: {
-        const promoting = await tx(
-          EntryRow({
-            entryId: mutation.entryId,
-            phase: mutation.phase
-          }).maybeFirst()
-        )
+        const promoting = await tx
+          .select()
+          .from(EntryRow)
+          .where(
+            and(
+              eq(EntryRow.entryId, mutation.entryId),
+              eq(EntryRow.phase, mutation.phase)
+            )
+          )
+          .get()
         if (!promoting) return
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Published
-        })
-        await tx(row.delete())
+        const condition = and(
+          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.phase, EntryPhase.Published)
+        )
+        await tx.delete(EntryRow).where(condition)
         const children = await this.applyPublish(tx, promoting)
         return () =>
-          this.updateHash(tx, row).then(rows => {
+          this.updateHash(tx, condition).then(rows => {
             return this.updateHash(
               tx,
-              EntryRow().where(
-                EntryRow.entryId.isIn(children.map(e => e.entryId))
+              inArray(
+                EntryRow.entryId,
+                children.map(e => e.entryId)
               )
             ).then(r => rows.concat(r))
           })
@@ -279,105 +321,114 @@ export class Database implements Syncable {
       case MutationType.FileRemove:
         if (mutation.replace) return
       case MutationType.Remove: {
-        const existing = await tx(
-          EntryRow({entryId: mutation.entryId}).maybeFirst()
-        )
-        if (!existing) return
-        const phases = await tx(EntryRow({entryId: mutation.entryId}))
+        const phases = await tx
+          .select()
+          .from(EntryRow)
+          .where(eq(EntryRow.entryId, mutation.entryId))
+        if (phases.length === 0) return
         // Remove child entries
         for (const phase of phases) {
-          await tx(
-            EntryRow()
-              .delete()
-              .where(
-                EntryRow.parentDir
-                  .is(phase.childrenDir)
-                  .or(EntryRow.childrenDir.like(phase.childrenDir + '/%'))
+          await tx
+            .delete(EntryRow)
+            .where(
+              or(
+                eq(EntryRow.parentDir, phase.childrenDir),
+                like(EntryRow.childrenDir, phase.childrenDir + '/%')
               )
-          )
+            )
         }
-        await tx(EntryRow({entryId: mutation.entryId}).delete())
-        return async () => phases.map(e => e.i18nId).concat(existing.i18nId)
+        await tx.delete(EntryRow).where(eq(EntryRow.entryId, mutation.entryId))
+        return async () => [phases[0].i18nId]
       }
       case MutationType.Discard: {
-        const existing = await tx(
-          EntryRow({entryId: mutation.entryId}).maybeFirst()
-        )
+        const existing = await tx
+          .select()
+          .from(EntryRow)
+          .where(eq(EntryRow.entryId, mutation.entryId))
+          .get()
         if (!existing) return
-        await tx(
-          EntryRow({
-            entryId: mutation.entryId,
-            phase: EntryPhase.Draft
-          }).delete()
-        )
+        await tx
+          .delete(EntryRow)
+          .where(
+            and(
+              eq(EntryRow.entryId, mutation.entryId),
+              eq(EntryRow.phase, EntryPhase.Draft)
+            )
+          )
         return async () => [existing.i18nId]
       }
       case MutationType.Order: {
-        const rows = EntryRow({entryId: mutation.entryId})
+        const condition = eq(EntryRow.entryId, mutation.entryId)
         // Todo: apply this to other languages too
-        await tx(rows.set({index: mutation.index}))
-        return () => this.updateHash(tx, rows)
+        await tx.update(EntryRow).set({index: mutation.index}).where(condition)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Move: {
-        const rows = EntryRow({entryId: mutation.entryId})
-        await tx(
-          rows.set({
+        const condition = eq(EntryRow.entryId, mutation.entryId)
+        await tx
+          .update(EntryRow)
+          .set({
             index: mutation.index,
             parent: mutation.parent,
             workspace: mutation.workspace,
             root: mutation.root
           })
-        )
+          .where(condition)
         // Todo: update file & children paths
-        return () => this.updateHash(tx, rows)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Upload: {
         // Until this mutation is applied the uploaded file won't be locally
         // available so the preview url is used. The fileHash is updated so that
         // syncing to the client after a successful deploy will overwrite this
         // change.
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Published
-        })
-        const existing = await tx(row.maybeFirst())
+        const condition = and(
+          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.phase, EntryPhase.Published)
+        )
+        const existing = await tx.select().from(EntryRow).where(condition).get()
         if (!existing) return
         if (process.env.NODE_ENV !== 'develoment')
-          await tx(
-            row.set({
+          await tx
+            .update(EntryRow)
+            .set({
               data: {
                 ...existing.data,
                 location: mutation.url,
                 [Media.ORIGINAL_LOCATION]: existing.data.location
               }
             })
-          )
-        return () => this.updateHash(tx, row)
+            .where(condition)
+        return () => this.updateHash(tx, condition)
       }
       default:
         throw unreachable(mutation)
     }
   }
 
-  async updateHash(tx: Driver.Async, selection: Select<EntryRow>) {
+  async updateHash(tx: Store, condition: Sql<boolean>) {
     const changed = []
-    const entries = await tx(selection)
+    const entries = await tx.select().from(EntryRow).where(condition)
     for (const entry of entries) {
       const updated = await createEntryRow(this.config, entry)
       changed.push(updated.i18nId)
-      await tx(
-        EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
+      await tx
+        .update(EntryRow)
+        .set({
           fileHash: updated.fileHash,
           rowHash: updated.rowHash
         })
-      )
+        .where(
+          eq(EntryRow.entryId, entry.entryId),
+          eq(EntryRow.phase, entry.phase)
+        )
     }
     return changed
   }
 
   async meta() {
     return (
-      (await this.store(AlineaMeta().maybeFirst())) ?? {
+      (await this.store.select().from(AlineaMeta).get()) ?? {
         commitHash: '',
         contentHash: '',
         modifiedAt: 0
@@ -385,46 +436,44 @@ export class Database implements Syncable {
     )
   }
 
-  static async index(tx: Driver.Async) {
-    const {Parent} = alias(EntryRow)
-    const res = await tx(
-      EntryRow().set({
-        parent: Parent({
-          childrenDir: EntryRow.parentDir,
-          workspace: EntryRow.workspace,
-          root: EntryRow.root
-        })
-          .select(Parent.entryId)
-          .maybeFirst(),
-        active: EntryRealm.isActive,
-        main: EntryRealm.isMain
-      })
-    )
+  static async index(tx: Store) {
+    const Parent = alias(EntryRow, 'Parent')
+    const parent = tx
+      .select(Parent.entryId)
+      .from(Parent)
+      .where(
+        eq(Parent.childrenDir, EntryRow.parentDir),
+        eq(Parent.workspace, EntryRow.workspace),
+        eq(Parent.root, EntryRow.root)
+      )
+    const res = await tx.update(EntryRow).set({
+      parent,
+      active: EntryRealm.isActive,
+      main: EntryRealm.isMain
+    })
     return res
   }
 
-  private async writeMeta(tx: Driver.Async, commitHash: string) {
+  private async writeMeta(tx: Store, commitHash: string) {
     const {create32} = await xxhash()
     let hash = create32()
-    const contentHashes = await tx(
-      EntryRow().select(EntryRow.rowHash).orderBy(EntryRow.rowHash)
-    )
+    const contentHashes = await tx
+      .select(EntryRow.rowHash)
+      .from(EntryRow)
+      .orderBy(EntryRow.rowHash)
     for (const c of contentHashes) hash = hash.update(c)
     const contentHash = hash.digest().toString(16).padStart(8, '0')
-    const modifiedAt = await tx(
-      EntryRow()
-        .select(EntryRow.modifiedAt)
-        .orderBy(EntryRow.modifiedAt.desc())
-        .maybeFirst()
-    )
-    await tx(AlineaMeta().delete())
-    await tx(
-      AlineaMeta().insertOne({
-        commitHash,
-        contentHash,
-        modifiedAt: modifiedAt ?? 0
-      })
-    )
+    const modifiedAt = await tx
+      .select(EntryRow.modifiedAt)
+      .from(EntryRow)
+      .orderBy(desc(EntryRow.modifiedAt))
+      .get()
+    await tx.delete(AlineaMeta)
+    await tx.insert(AlineaMeta).values({
+      commitHash,
+      contentHash,
+      modifiedAt: modifiedAt ?? 0
+    })
   }
 
   inited = false
@@ -432,10 +481,12 @@ export class Database implements Syncable {
     if (this.inited) return
     this.inited = true
     try {
-      await this.store.transaction(async tx => {
-        await tx(create(EntryRow, AlineaMeta))
-        await createEntrySearch(tx)
-      })
+      await this.store
+        .transaction(async tx => {
+          await tx.create(EntryRow, AlineaMeta)
+          await createEntrySearch(tx)
+        })
+        .catch(() => {})
       await this.meta()
     } catch (e) {
       this.inited = false
@@ -579,7 +630,7 @@ export class Database implements Syncable {
     const typeNames = Schema.typeNames(this.config.schema)
     const publishSeed: Array<EntryRow> = []
 
-    await this.store.transaction(async query => {
+    await this.store.transaction(async tx => {
       const seenVersions: Array<string> = []
       const seenSeeds = new Set<string>()
       const inserted = []
@@ -587,19 +638,21 @@ export class Database implements Syncable {
       const changes: Array<Change> = []
       for await (const file of source.entries()) {
         const fileHash = await createFileHash(file.contents)
-        const exists = await query(
-          EntryRow({
-            fileHash: fileHash,
-            filePath: file.filePath,
-            workspace: file.workspace,
-            root: file.root
+        const exists = await tx
+          .select({
+            versionId: entryVersionId(),
+            seeded: EntryRow.seeded
           })
-            .select({
-              versionId: EntryRow.versionId,
-              seeded: EntryRow.seeded
-            })
-            .maybeFirst()
-        )
+          .from(EntryRow)
+
+          .where(
+            eq(EntryRow.filePath, file.filePath),
+            eq(EntryRow.workspace, file.workspace),
+            eq(EntryRow.root, file.root),
+            eq(EntryRow.fileHash, fileHash)
+          )
+          .get()
+
         // Todo: a config change but unchanged entry data will currently
         // fly under the radar
         if (!fix && exists) {
@@ -646,15 +699,15 @@ export class Database implements Syncable {
               })
             }
           }
-          await query(
-            EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
-          )
-          seenSeeds.add(key)
-          seenVersions.push(
-            await query(
-              EntryRow().insert(withHash).returning(EntryRow.versionId)
+          await tx
+            .delete(EntryRow)
+            .where(
+              eq(EntryRow.entryId, entry.entryId),
+              eq(EntryRow.phase, entry.phase)
             )
-          )
+          seenSeeds.add(key)
+          await tx.insert(EntryRow).values(withHash)
+          seenVersions.push(`${entry.entryId}.${entry.phase}`)
           inserted.push(`${entry.entryId}.${entry.phase}`)
         } catch (e: any) {
           console.log(`> skipped ${file.filePath} — ${e.message}`)
@@ -700,9 +753,8 @@ export class Database implements Syncable {
         const fileContents = JsonLoader.format(this.config.schema, record)
         const fileHash = await createFileHash(fileContents)
         const withHash = {...entry, fileHash, rowHash: ''}
-        seenVersions.push(
-          await query(EntryRow().insert(withHash).returning(EntryRow.versionId))
-        )
+        await tx.insert(EntryRow).values(withHash)
+        seenVersions.push(`${withHash.entryId}.${withHash.phase}`)
         inserted.push(`${entry.entryId}.${entry.phase}`)
         publishSeed.push({
           ...withHash,
@@ -717,9 +769,14 @@ export class Database implements Syncable {
       )*/
       if (seenVersions.length === 0) return
 
-      const {rowsAffected: removed} = await query(
-        EntryRow().delete().where(EntryRow.versionId.isNotIn(seenVersions))
-      )
+      const removeCondition = notInArray(entryVersionId(EntryRow), seenVersions)
+      const rowsAffected = await tx
+        .select(count())
+        .from(EntryRow)
+        .where(removeCondition)
+        .get()
+      await tx.delete(EntryRow).where(removeCondition)
+      const removed = rowsAffected ?? 0
 
       const noChanges = inserted.length === 0 && removed === 0
       if (noChanges) return
@@ -727,19 +784,24 @@ export class Database implements Syncable {
       // if (removed) console.log(`> removed ${removed} entries`)
 
       //const endIndex = timer('Indexing entries')
-      await Database.index(query)
-      const entries = await query(
-        EntryRow().where(EntryRow.versionId.isIn(inserted))
-      )
+      await Database.index(tx)
+      const entries = await tx
+        .select()
+        .from(EntryRow)
+        .where(inArray(entryVersionId(EntryRow), inserted))
       for (const entry of entries) {
         const rowHash = await createRowHash(entry)
-        await query(
-          EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
+        await tx
+          .update(EntryRow)
+          .set({
             rowHash
           })
-        )
+          .where(
+            eq(EntryRow.entryId, entry.entryId),
+            eq(EntryRow.phase, entry.phase)
+          )
       }
-      await this.writeMeta(query, commitHash)
+      await this.writeMeta(tx, commitHash)
     })
 
     if (target && publishSeed.length > 0) {
@@ -765,37 +827,53 @@ export class Database implements Syncable {
 }
 
 namespace EntryRealm {
-  const {Alt} = alias(EntryRow)
-  const isDraft = EntryRow.phase.is(EntryPhase.Draft)
-  const isArchived = EntryRow.phase.is(EntryPhase.Archived)
-  const isPublished = EntryRow.phase.is(EntryPhase.Published)
+  const builder = new Builder()
+  const Alt = alias(EntryRow, 'Alt')
+  const isDraft = eq(EntryRow.phase, EntryPhase.Draft)
+  const isArchived = eq(EntryRow.phase, EntryPhase.Archived)
+  const isPublished = eq(EntryRow.phase, EntryPhase.Published)
   const hasDraft = exists(
-    Alt({phase: EntryPhase.Draft, entryId: EntryRow.entryId})
+    builder
+      .select()
+      .from(Alt)
+      .where(eq(Alt.phase, EntryPhase.Draft), eq(Alt.entryId, EntryRow.entryId))
   )
   const hasPublished = exists(
-    Alt({phase: EntryPhase.Published, entryId: EntryRow.entryId})
+    builder
+      .select()
+      .from(Alt)
+      .where(
+        eq(Alt.phase, EntryPhase.Published),
+        eq(Alt.entryId, EntryRow.entryId)
+      )
   )
   const hasArchived = exists(
-    Alt({phase: EntryPhase.Archived, entryId: EntryRow.entryId})
+    builder
+      .select()
+      .from(Alt)
+      .where(
+        eq(Alt.phase, EntryPhase.Archived),
+        eq(Alt.entryId, EntryRow.entryId)
+      )
   )
-  const isPublishedWithoutDraft = Expr.and(isPublished, hasDraft.not())
-  const isArchivedWithoutDraftOrPublished = Expr.and(
+  const isPublishedWithoutDraft = and(isPublished, not(hasDraft))
+  const isArchivedWithoutDraftOrPublished = and(
     isArchived,
-    hasDraft.not(),
-    hasPublished.not()
+    not(hasDraft),
+    not(hasPublished)
   )
-  export const isActive = Expr.or(
+  export const isActive = or(
     isDraft,
     isPublishedWithoutDraft,
     isArchivedWithoutDraftOrPublished
   )
-  const isArchivedWithoutPublished = Expr.and(isArchived, hasPublished.not())
-  const isDraftWithoutPublishedOrArchived = Expr.and(
+  const isArchivedWithoutPublished = and(isArchived, not(hasPublished))
+  const isDraftWithoutPublishedOrArchived = and(
     isDraft,
-    hasPublished.not(),
-    hasArchived.not()
+    not(hasPublished),
+    not(hasArchived)
   )
-  export const isMain = Expr.or(
+  export const isMain = or(
     isPublished,
     isArchivedWithoutPublished,
     isDraftWithoutPublishedOrArchived

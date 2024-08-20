@@ -49,7 +49,7 @@ async function createDb(): Promise<[Store, () => Uint8Array]> {
   const {Database} = await sqlite()
   const {connect} = await import('rado/driver/sql.js')
   const db = new Database()
-  const store = connect(db).toAsync()
+  const store = connect(db)
   return [store, () => db.export()]
 }
 

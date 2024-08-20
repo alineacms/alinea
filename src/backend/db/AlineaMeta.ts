@@ -1,10 +1,10 @@
-import {column, table} from 'rado'
+import {InferSelectModel, table} from 'rado'
+import * as column from 'rado/universal/columns'
 
-class AlineaMetaTable {
-  commitHash = column.string
-  contentHash = column.string
-  modifiedAt = column.number
-}
+export const AlineaMeta = table('AlineaMeta', {
+  commitHash: column.text().notNull(),
+  contentHash: column.text().notNull(),
+  modifiedAt: column.integer().notNull()
+})
 
-export type AlineaMeta = table<AlineaMetaTable>
-export const AlineaMeta = table({AlineaMeta: AlineaMetaTable})
+export type AlineaMeta = InferSelectModel<typeof AlineaMeta>

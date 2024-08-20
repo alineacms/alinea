@@ -1,13 +1,11 @@
 import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
-import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
 import {Field} from './Field.js'
 import {Hint} from './Hint.js'
 import {Label} from './Label.js'
+import {SummaryProps} from './media/Summary.js'
 import {Meta, StripMeta} from './Meta.js'
-import {Section, section} from './Section.js'
-import type {View} from './View.js'
 import {Cursor} from './pages/Cursor.js'
 import {Expr, createExprData} from './pages/Expr.js'
 import {
@@ -17,7 +15,9 @@ import {
   Selection,
   toSelection
 } from './pages/ResolveData.js'
+import {Section, section} from './Section.js'
 import {RecordShape} from './shape/RecordShape.js'
+import {Callable} from './util/Callable.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {
   assign,
@@ -53,9 +53,9 @@ export interface TypeMeta {
   /** A React component used to view an entry of this type in the dashboard */
   view?: ComponentType<EntryEditProps & {type: Type}>
   /** A React component used to view a row of this type in the dashboard */
-  summaryRow?: View<any>
+  summaryRow?: ComponentType<SummaryProps>
   /** A React component used to view a thumbnail of this type in the dashboard */
-  summaryThumb?: View<any>
+  summaryThumb?: ComponentType<SummaryProps>
 
   /** Create indexes on fields of this type */
   // index?: (this: Fields) => Record<string, Array<Expr<any>>>
