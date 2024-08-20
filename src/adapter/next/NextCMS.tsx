@@ -5,6 +5,7 @@ import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
 import {alineaCookies} from 'alinea/preview/AlineaCookies'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
+import {createHandler} from './NextHandler.js'
 
 export interface PreviewProps {
   widget?: boolean
@@ -30,6 +31,16 @@ export class NextCMS<
       context.preview = {...info, update}
     }
     return context
+  }
+
+  /** @deprecated Use the createHandler function from 'alinea/next' */
+  get backendHandler() {
+    return createHandler(this)
+  }
+
+  /** @deprecated Use the createHandler function from 'alinea/next' */
+  get previewHandler() {
+    return createHandler(this)
   }
 
   previews = async ({widget, workspace, root}: PreviewProps) => {

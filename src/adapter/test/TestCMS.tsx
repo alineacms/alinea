@@ -47,7 +47,7 @@ export function createCMS<Definition extends Config>(definition: Definition) {
       }).connect({logger: new Logger('test')})
     })
   )
-  return cms
+  return Object.assign(cms, {db})
 }
 
 async function listenForUpload(): Promise<{url: string}> {

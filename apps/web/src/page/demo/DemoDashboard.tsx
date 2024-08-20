@@ -2,11 +2,11 @@
 
 import * as schema from '@/schema/demo'
 import {Config, Edit} from 'alinea'
+import {createCMS} from 'alinea/adapter/test/TestCMS'
 import {createMemoryHandler} from 'alinea/backend/data/MemoryHandler'
 import {Entry} from 'alinea/core/Entry'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {localUser} from 'alinea/core/User'
-import {createTestCMS} from 'alinea/core/driver/TestDriver'
 import {Logger} from 'alinea/core/util/Logger'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
@@ -67,7 +67,7 @@ function PreviewRecipe({entry}) {
 }
 
 async function setup(entries: Array<Entry>) {
-  const cms = createTestCMS(config)
+  const cms = createCMS(config)
   for (const entry of entries) {
     await cms.commit(Edit.createEntry(entry))
   }
