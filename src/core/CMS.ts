@@ -6,41 +6,35 @@ import {PreviewRequest, Resolver} from './Resolver.js'
 import {Operation} from './Transaction.js'
 
 export interface ConnectionContext {
+  apiKey?: string
   accessToken?: string
   preview?: PreviewRequest
-  apiKey?: string
 }
 
 export class CMS<Definition extends Config = Config> extends GraphRealm {
   graph: Graph
   config: Definition
+  connect: () => Promise<Connection>
 
-  constructor(
-    config: Definition,
-    public connection: Connection | Promise<Connection>
-  ) {
+  constructor(config: Definition, connect: () => Promise<Connection>) {
     const normalizedConfig = createConfig(config)
     const resolver: Resolver = {
       resolve: async params => {
-        const {preview} = await this.getContext()
-        const ctx = await this.connection
-        return ctx.resolve({...params, preview})
+        const connection = await connect()
+        return connection.resolve(params)
       }
     }
     super(normalizedConfig, resolver)
+    this.connect = connect
     this.config = normalizedConfig
     this.graph = new Graph(normalizedConfig, resolver)
-  }
-
-  async getContext(): Promise<ConnectionContext> {
-    return {}
   }
 
   async commit(...operations: Array<Operation>) {
     const mutations = await Promise.all(
       operations.flatMap(op => op[Operation.Data](this))
     )
-    const cnx = await this.connection
+    const cnx = await this.connect()
     return cnx.mutate(mutations.flat())
   }
 

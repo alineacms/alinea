@@ -52,11 +52,11 @@ const demo = Config.workspace('Demo', {
 export const cms = createCMS({
   schema,
   workspaces: {main, demo},
-  dashboard: {
-    dashboardUrl: '/admin.html',
-    staticFile: 'public/admin.html',
-    handlerUrl: '/api/cms'
-  },
+  baseUrl:
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000'
+      : 'https://alinea.sh',
+  apiUrl: '/api/cms',
   preview:
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000/api/cms'

@@ -19,34 +19,32 @@ export function createCMS<Definition extends Config>(definition: Definition) {
     await db.fill({async *entries() {}}, '')
     return db
   })
-  const cms: CMS<Definition> = new CMS(
-    config,
-    db.then(async db => {
-      return new Handler({
-        config,
-        db,
-        previews: new JWTPreviews('test'),
-        previewAuthToken: 'test',
-        target: {
-          mutate: async () => ({commitHash: createId()})
-        },
-        media: {
-          async prepareUpload(file: string) {
-            const id = createId()
-            const serve = await listenForUpload()
-            return {
-              entryId: createId(),
-              location: `media/${file}_${id}`,
-              previewUrl: `media/${file}_${id}`,
-              upload: {
-                url: serve.url
-              }
+  const connection = db.then(async db => {
+    return new Handler({
+      config,
+      db,
+      previews: new JWTPreviews('test'),
+      previewAuthToken: 'test',
+      target: {
+        mutate: async () => ({commitHash: createId()})
+      },
+      media: {
+        async prepareUpload(file: string) {
+          const id = createId()
+          const serve = await listenForUpload()
+          return {
+            entryId: createId(),
+            location: `media/${file}_${id}`,
+            previewUrl: `media/${file}_${id}`,
+            upload: {
+              url: serve.url
             }
           }
         }
-      }).connect({logger: new Logger('test')})
-    })
-  )
+      }
+    }).connect({logger: new Logger('test')})
+  })
+  const cms: CMS<Definition> = new CMS(config, async () => connection)
   return Object.assign(cms, {db})
 }
 

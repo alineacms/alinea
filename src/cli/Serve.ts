@@ -25,6 +25,7 @@ const __dirname = dirname(import.meta.url)
 
 export type ServeOptions = {
   cwd?: string
+  base?: string
   staticDir?: string
   configFile?: string
   port?: number
@@ -38,6 +39,7 @@ export type ServeOptions = {
 export async function serve(options: ServeOptions): Promise<void> {
   const {
     cwd = process.cwd(),
+    base,
     configFile,
     staticDir = path.join(__dirname, 'static'),
     alineaDev = false,
@@ -56,6 +58,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   const rootDir = path.resolve(cwd)
   const context: ServeContext = {
     rootDir,
+    base,
     staticDir,
     alineaDev,
     buildOptions: {
@@ -71,7 +74,8 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   server.then(async () => {
     console.log(`  \x1b[36mα Alinea ${pkg.version}\x1b[39m`)
-    console.log(`  - Local CMS:    ${await dashboardUrl}\n`)
+    console.log(`  - Local CMS:    ${await dashboardUrl}`)
+    if (base) console.log(`  - Frontend:     ${base}`)
   })
 
   const gen = generate({
@@ -80,6 +84,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     watch: options.watch,
     async onAfterGenerate() {
       options.onAfterGenerate?.({
+        ALINEA_BASE_URL: base ?? '',
         ALINEA_DEV_SERVER: await dashboardUrl
       })
     }

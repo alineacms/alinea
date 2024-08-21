@@ -22,6 +22,7 @@ export interface Config {
   schema: Schema
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
+
   /** A url which will be embedded in the dashboard for live previews */
   preview?: Preview
   /** Every edit will pass through a draft phase before being published */
@@ -29,12 +30,16 @@ export interface Config {
   /** The interval in seconds at which the frontend will poll for updates */
   syncInterval?: number
 
-  /**
-    publicDir?: string
-    dashboardFile?: string
-    handlerUrl?: string
-  */
+  /** The base url of the application */
+  baseUrl?: string
+  /** The url of the handler endpoint */
+  apiUrl?: string
+  /** The folder where public assets are stored, defaults to /public */
+  publicDir?: string
+  /** Filename of the generated dashboard, defaults to /admin.html */
+  dashboardFile?: string
 
+  /** @deprecated */
   dashboard?: DashboardConfig
 }
 
@@ -77,6 +82,8 @@ export function createConfig<Definition extends Config>(
     throw new Error(`"MediaLibrary" is a reserved Type name`)
   const res = {
     ...definition,
+    publicDir: definition.publicDir ?? '/public',
+    dashboardFile: definition.dashboardFile ?? '/admin.html',
     schema: {...definition.schema, MediaLibrary, MediaFile},
     dashboard: {
       auth: CloudAuthView,

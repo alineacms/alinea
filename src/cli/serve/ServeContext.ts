@@ -3,6 +3,7 @@ import {LiveReload} from './LiveReload.js'
 
 export interface ServeContext {
   rootDir: string
+  base: string | undefined
   staticDir: string
   alineaDev: boolean
   buildOptions: BuildOptions

@@ -1,5 +1,5 @@
 import {Request} from '@alinea/iso'
-import {Database, JWTPreviews} from 'alinea/backend'
+import {Database} from 'alinea/backend'
 import {generatedStore} from 'alinea/backend/Store'
 import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
@@ -15,17 +15,14 @@ async function handlePreview(
   request: Request
 ): Promise<Response> {
   const {draftMode, cookies} = await import('next/headers.js')
-  const context = await cms.getContext()
+  const connection = await cms.connect()
   const {searchParams} = new URL(request.url)
   const previewToken = searchParams.get('preview')
   if (!previewToken) return new Response('Not found', {status: 404})
-  const previews = new JWTPreviews(context.apiKey ?? 'dev')
-  const info = await previews.verify(previewToken)
+  const info = await cms.jwt.verify(previewToken)
   const cookie = cookies()
   cookie.set(alineaCookies.previewToken, previewToken)
-  const cnx = await cms.connection
-  const url = (await cnx.resolve({
-    preview: context.preview,
+  const url = (await connection.resolve({
     selection: createSelection(
       Entry({entryId: info.entryId}).select(Entry.url).first()
     )

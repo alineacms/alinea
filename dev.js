@@ -13,6 +13,7 @@ async function run({production, dir, config}) {
     alineaDev: true,
     watch: true,
     production,
+    base: 'http://localhost:3000',
     cwd: path.resolve(dir),
     configFile: config,
     staticDir: path.resolve('src/cli/static'),

@@ -27,6 +27,7 @@ prog
   .option('-c, --config', `Config file location`)
   .option('-d, --dir', `Root directory of the project`)
   .option('-p, --port', `Port to listen on`)
+  .option('-b, --base', `Base URL for previews`)
   .option('--production', `Use production backend`)
   .option('--dev', `Watch alinea sources`)
   .action(async args => {
@@ -39,6 +40,7 @@ prog
       ...args,
       alineaDev: args.dev,
       cwd: args.dir,
+      base: args.base,
       onAfterGenerate: forwardCommand,
       configFile: args.config,
       watch: true
