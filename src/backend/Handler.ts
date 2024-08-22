@@ -1,5 +1,4 @@
 import {Request, Response} from '@alinea/iso'
-
 import {Auth} from 'alinea/core/Auth'
 import {Config} from 'alinea/core/Config'
 import {Connection, SyncResponse} from 'alinea/core/Connection'
@@ -34,6 +33,14 @@ import {Route, router} from './router/Router.js'
 
 const limit = pLimit(1)
 
+export interface HandleContext {
+  apiKey?: string
+}
+
+export interface Handle {
+  (request: Request, context?: HandleContext): Promise<Response>
+}
+
 export interface HandlerOptions {
   config: Config
   db: Database
@@ -49,6 +56,7 @@ export interface HandlerOptions {
 }
 
 export class Handler {
+  handle: Handle
   connect: (ctx: Connection.Context) => Connection
   router: Route<Request, Response | undefined>
   changes: ChangeSetCreator
@@ -68,7 +76,14 @@ export class Handler {
     )
     const auth = options.auth ?? Auth.anonymous()
     this.connect = ctx => new HandlerConnection(this, ctx)
-    this.router = createRouter(auth, this.connect)
+    const keepCtx = new WeakMap<Request, HandleContext>()
+    this.router = createRouter(auth, req => keepCtx.get(req), this.connect)
+    this.handle = async (request, context = {}) => {
+      keepCtx.set(request, context)
+      const response = await this.router.handle(request)
+      if (response) return response
+      return new Response('Not found', {status: 404})
+    }
   }
 
   resolve = async (params: ResolveRequest) => {
@@ -307,6 +322,7 @@ const PreviewBody = object({
 
 function createRouter(
   auth: Auth.Server,
+  handleContext: (request: Request) => HandleContext | undefined,
   createApi: (context: Connection.Context) => Connection
 ): Route<Request, Response | undefined> {
   const matcher = router.queryMatcher
@@ -316,7 +332,11 @@ function createRouter(
     const logger = new Logger(`${input.request.method} ${input.url.pathname}`)
     return {
       ...input,
-      ctx: {...(await auth.contextFor(input.request)), logger},
+      ctx: {
+        ...handleContext(input.request),
+        ...(await auth.contextFor(input.request)),
+        logger
+      },
       logger
     }
   }

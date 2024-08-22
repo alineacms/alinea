@@ -6,7 +6,7 @@ import {outcome} from 'alinea/core/Outcome'
 import {ResolveDefaults} from 'alinea/core/Resolver'
 import {alineaCookies} from 'alinea/preview/AlineaCookies'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
-import {createHandler} from './NextHandler.js'
+import {createHandler} from './handler.js'
 
 export interface PreviewProps {
   widget?: boolean
@@ -86,7 +86,7 @@ export class NextCMS<
           '/admin.html',
         this.baseUrl
       ).href
-    const NextPreviews = dynamic(() => import('./NextPreviews.js'), {
+    const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false
     })
     return (

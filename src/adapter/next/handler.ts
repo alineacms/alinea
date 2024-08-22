@@ -6,7 +6,7 @@ import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {alineaCookies} from 'alinea/preview/AlineaCookies'
 import PLazy from 'p-lazy'
 import {createCloudHandler} from '../../cloud/server/CloudHandler.js'
-import {NextCMS} from './NextCMS.js'
+import {NextCMS} from './cms.js'
 
 const apiKey = process.env.ALINEA_API_KEY ?? 'dev'
 
@@ -52,11 +52,8 @@ export function createHandler(cms: NextCMS) {
     const {searchParams} = new URL(request.url)
     const previewToken = searchParams.get('preview')
     if (previewToken) return handlePreview(cms, request)
-    const {router} = await cloudHandler
-    const isResolving = searchParams.has('resolve')
-    // We need to be able to handle requests from other routes by
-    // validating the api key
-    const response = await router.handle(request)
+    const cloud = await cloudHandler
+    const response = await cloud.router.handle(request)
     if (response) return response
     return new Response('Not found', {status: 404})
   }

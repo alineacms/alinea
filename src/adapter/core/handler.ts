@@ -3,7 +3,7 @@ import {Database} from 'alinea/backend'
 import {generatedStore} from 'alinea/backend/Store'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import PLazy from 'p-lazy'
-import {VanillaCMS} from './VanillaCMS.js'
+import {VanillaCMS} from './cms.js'
 
 const handlers = new WeakMap<
   VanillaCMS,

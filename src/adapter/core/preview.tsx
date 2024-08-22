@@ -3,8 +3,8 @@ import {ConnectionContext} from 'alinea/core/CMS'
 import {alineaCookies} from 'alinea/preview/AlineaCookies'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {parse} from 'cookie-es'
-import {VanillaCMS} from './VanillaCMS.js'
-import {previewStore} from './VanillaPreview.js'
+import {VanillaCMS} from './cms.js'
+import {previewStore} from './previewContext.js'
 
 export async function preview<T>(
   cms: VanillaCMS,

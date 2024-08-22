@@ -1,7 +1,7 @@
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
-import {previewContext} from './VanillaPreview.js'
+import {previewContext} from './previewContext.js'
 
 export class VanillaCMS<
   Definition extends Config = Config
