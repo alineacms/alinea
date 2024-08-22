@@ -44,6 +44,15 @@ export interface Config {
 }
 
 export namespace Config {
+  export function dashboardUrl(config: Config) {
+    const base =
+      typeof config.baseUrl === 'object'
+        ? config.baseUrl[process.env.NODE_ENV as 'development' | 'production']
+        : config.baseUrl
+    if (base && config.dashboardFile)
+      return new URL(config.dashboardFile, base).href
+    return config.dashboard?.dashboardUrl
+  }
   export function mainWorkspace(config: Config): WorkspaceData {
     const key = Object.keys(config.workspaces)[0]
     return Workspace.data(config.workspaces[key])

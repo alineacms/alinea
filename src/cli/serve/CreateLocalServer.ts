@@ -1,7 +1,7 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {Handler} from 'alinea/backend'
 import {HttpRouter, router} from 'alinea/backend/router/Router'
-import {cloudUrl} from 'alinea/cloud/server/CloudConfig'
+import {cloudUrl} from 'alinea/cloud/CloudConfig'
 import {Trigger, trigger} from 'alinea/core/Trigger'
 import {User} from 'alinea/core/User'
 import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'

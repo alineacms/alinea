@@ -10,7 +10,7 @@ import {Workspace} from 'alinea/core/Workspace'
 import PLazy from 'p-lazy'
 import pkg from '../../../package.json'
 import {AuthResult, AuthResultType} from '../AuthResult.js'
-import {cloudConfig} from './CloudConfig.js'
+import {cloudConfig} from '../CloudConfig.js'
 
 export type CloudAuthServerOptions = {
   config: Config

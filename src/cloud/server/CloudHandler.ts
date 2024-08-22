@@ -10,8 +10,8 @@ import {HttpError} from 'alinea/core/HttpError'
 import {Mutation} from 'alinea/core/Mutation'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
 import {base64} from 'alinea/core/util/Encoding'
+import {cloudConfig} from '../CloudConfig.js'
 import {CloudAuthServer} from './CloudAuthServer.js'
-import {cloudConfig} from './CloudConfig.js'
 
 async function failOnHttpError(res: Response): Promise<Response> {
   if (res.status >= 400) throw new HttpError(res.status, await res.text())
