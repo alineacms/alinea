@@ -31,7 +31,7 @@ export interface Config {
   syncInterval?: number
 
   /** The base url of the application */
-  baseUrl?: string
+  baseUrl?: string | {development?: string; production?: string}
   /** The url of the handler endpoint */
   apiUrl?: string
   /** The folder where public assets are stored, defaults to /public */

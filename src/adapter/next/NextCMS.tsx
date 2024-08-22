@@ -1,5 +1,5 @@
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
-import {Client} from 'alinea/core/Client'
+import {AuthenticateRequest, Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
@@ -15,25 +15,36 @@ export interface PreviewProps {
 }
 
 const devUrl = process.env.ALINEA_DEV_SERVER
+const apiKey = process.env.ALINEA_API_KEY ?? 'dev'
 
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  jwt = new JWTPreviews(process.env.ALINEA_API_KEY ?? 'dev')
+  jwt = new JWTPreviews(apiKey)
 
-  constructor(config: Definition, public baseUrl: string) {
-    const clientUrl =
-      devUrl ??
-      new URL(
-        config.apiUrl ?? config.dashboard?.handlerUrl ?? '/api/cms',
-        baseUrl
-      ).href
-    const client = new Client({url: clientUrl})
+  constructor(config: Definition, public baseUrl?: string) {
     super(config, async () => {
       const resolveDefaults: ResolveDefaults = {}
-      const {cookies, draftMode} = await import('next/headers.js')
+      const {cookies, headers, draftMode} = await import('next/headers.js')
       const [isDraft] = outcome(() => draftMode().isEnabled)
-      if (!isDraft) return client
+      const origin = () => {
+        const host = headers().get('x-forwarded-host') ?? headers().get('host')
+        const proto = headers().get('x-forwarded-proto') ?? 'https'
+        const protocol = proto.endsWith(':') ? proto : proto + ':'
+        return `${protocol}//${host}`
+      }
+      const applyAuth: AuthenticateRequest = init => {
+        const headers = new Headers(init?.headers)
+        headers.set('Authorization', `Bearer ${apiKey}`)
+        return {...init, headers}
+      }
+      const clientUrl =
+        devUrl ??
+        new URL(
+          config.apiUrl ?? config.dashboard?.handlerUrl ?? '/api/cms',
+          baseUrl ?? origin()
+        ).href
+      if (!isDraft) return new Client({url: clientUrl, applyAuth})
       const cookie = cookies()
       const previewToken = cookie.get(alineaCookies.previewToken)?.value
       if (previewToken) {
@@ -46,6 +57,7 @@ export class NextCMS<
       }
       return new Client({
         url: clientUrl,
+        applyAuth,
         resolveDefaults
       })
     })
@@ -91,8 +103,10 @@ export class NextCMS<
 export function createCMS<Definition extends Config>(
   config: Definition
 ): NextCMS<Definition> {
-  return new NextCMS(
-    config,
-    process.env.ALINEA_BASE_URL ?? config.baseUrl ?? 'http://localhost:3000'
-  )
+  const baseUrl =
+    process.env.ALINEA_BASE_URL ??
+    (typeof config.baseUrl === 'object'
+      ? config.baseUrl[process.env.NODE_ENV as 'development' | 'production']
+      : config.baseUrl)
+  return new NextCMS(config, baseUrl)
 }

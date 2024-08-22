@@ -61,83 +61,81 @@ export class UploadOperation extends Operation {
   private root?: string
 
   constructor(file: File | [string, Uint8Array], options: UploadOptions = {}) {
-    super(
-      async ({config, graph, connection}: CMS): Promise<Array<Mutation>> => {
-        const fileName = Array.isArray(file) ? file[0] : file.name
-        const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
-        const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
-        const root =
-          this.root ?? Workspace.defaultMediaRoot(config.workspaces[workspace])
-        const extension = extname(fileName)
-        const path = slugify(basename(fileName, extension))
-        const directory = workspaceMediaDir(config, workspace)
-        const uploadLocation = join(directory, path + extension)
-        const cnx = await connection
-        const info = await cnx.prepareUpload(uploadLocation)
-        const previewData = isImage(fileName)
-          ? await options.createPreview?.(
-              file instanceof Blob ? file : new Blob([body])
-            )
-          : undefined
-        await fetch(info.upload.url, {
-          method: info.upload.method ?? 'POST',
-          body
-        }).then(async result => {
-          if (!result.ok)
-            throw new HttpError(
-              result.status,
-              `Could not reach server for upload`
-            )
-        })
-        const parent = this.parentId
-          ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
-          : undefined
-        const title = basename(fileName, extension)
-        const hash = await createFileHash(new Uint8Array(body))
-        const {mediaDir} = Workspace.data(config.workspaces[workspace])
-        const prefix = mediaDir && normalize(mediaDir)
-        const fileLocation =
-          prefix && info.location.startsWith(prefix)
-            ? info.location.slice(prefix.length)
-            : info.location
-        const entryData = {
-          title,
-          location: fileLocation,
-          extension,
-          size: body.byteLength,
-          hash,
-          ...previewData
-        }
-        const entry = await createEntry(
-          config,
-          'MediaFile',
-          {
-            path,
-            entryId: this.entryId,
-            workspace,
-            root,
-            data: entryData
-          },
-          parent
-        )
-        const parentPaths = entryParentPaths(config, entry)
-        const entryFile = entryFileName(config, entry, parentPaths)
-        return [
-          {
-            type: MutationType.Upload,
-            entryId: this.entryId,
-            url: info.previewUrl,
-            file: info.location
-          },
-          {
-            type: MutationType.Create,
-            entryId: entry.entryId,
-            file: entryFile,
-            entry
-          }
-        ]
+    super(async ({config, graph, connect}: CMS): Promise<Array<Mutation>> => {
+      const fileName = Array.isArray(file) ? file[0] : file.name
+      const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
+      const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
+      const root =
+        this.root ?? Workspace.defaultMediaRoot(config.workspaces[workspace])
+      const extension = extname(fileName)
+      const path = slugify(basename(fileName, extension))
+      const directory = workspaceMediaDir(config, workspace)
+      const uploadLocation = join(directory, path + extension)
+      const cnx = await connect()
+      const info = await cnx.prepareUpload(uploadLocation)
+      const previewData = isImage(fileName)
+        ? await options.createPreview?.(
+            file instanceof Blob ? file : new Blob([body])
+          )
+        : undefined
+      await fetch(info.upload.url, {
+        method: info.upload.method ?? 'POST',
+        body
+      }).then(async result => {
+        if (!result.ok)
+          throw new HttpError(
+            result.status,
+            `Could not reach server for upload`
+          )
+      })
+      const parent = this.parentId
+        ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
+        : undefined
+      const title = basename(fileName, extension)
+      const hash = await createFileHash(new Uint8Array(body))
+      const {mediaDir} = Workspace.data(config.workspaces[workspace])
+      const prefix = mediaDir && normalize(mediaDir)
+      const fileLocation =
+        prefix && info.location.startsWith(prefix)
+          ? info.location.slice(prefix.length)
+          : info.location
+      const entryData = {
+        title,
+        location: fileLocation,
+        extension,
+        size: body.byteLength,
+        hash,
+        ...previewData
       }
-    )
+      const entry = await createEntry(
+        config,
+        'MediaFile',
+        {
+          path,
+          entryId: this.entryId,
+          workspace,
+          root,
+          data: entryData
+        },
+        parent
+      )
+      const parentPaths = entryParentPaths(config, entry)
+      const entryFile = entryFileName(config, entry, parentPaths)
+      return [
+        {
+          type: MutationType.Upload,
+          entryId: this.entryId,
+          url: info.previewUrl,
+          file: info.location
+        },
+        {
+          type: MutationType.Create,
+          entryId: entry.entryId,
+          file: entryFile,
+          entry
+        }
+      ]
+    })
   }
 
   setParent(parentId: string) {

@@ -52,10 +52,6 @@ const demo = Config.workspace('Demo', {
 export const cms = createCMS({
   schema,
   workspaces: {main, demo},
-  baseUrl:
-    process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000'
-      : 'https://alinea.sh',
   apiUrl: '/api/cms',
   preview:
     process.env.NODE_ENV === 'development'

@@ -8,6 +8,8 @@ import PLazy from 'p-lazy'
 import {createCloudHandler} from '../../cloud/server/CloudHandler.js'
 import {NextCMS} from './NextCMS.js'
 
+const apiKey = process.env.ALINEA_API_KEY ?? 'dev'
+
 const handlers = new WeakMap<NextCMS, (request: Request) => Promise<Response>>()
 
 async function handlePreview(
@@ -42,7 +44,6 @@ async function handlePreview(
 
 export function createHandler(cms: NextCMS) {
   if (handlers.has(cms)) return handlers.get(cms)!
-  const apiKey = process.env.ALINEA_API_KEY
   const cloudHandler = PLazy.from(async () => {
     const db = new Database(cms.config, await generatedStore)
     return createCloudHandler(cms.config, db, apiKey)
@@ -52,6 +53,9 @@ export function createHandler(cms: NextCMS) {
     const previewToken = searchParams.get('preview')
     if (previewToken) return handlePreview(cms, request)
     const {router} = await cloudHandler
+    const isResolving = searchParams.has('resolve')
+    // We need to be able to handle requests from other routes by
+    // validating the api key
     const response = await router.handle(request)
     if (response) return response
     return new Response('Not found', {status: 404})

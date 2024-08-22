@@ -219,12 +219,16 @@ export class CloudAuthServer implements Auth.Server {
     if (this.context.has(request)) return this.context.get(request)!
     const cookies = request.headers.get('cookie')
     if (!cookies) throw new HttpError(401, 'Unauthorized - no cookies')
+    const prefix = `${COOKIE_NAME}=`
     const token = cookies
       .split(';')
       .map(c => c.trim())
-      .find(c => c.startsWith(`${COOKIE_NAME}=`))
+      .find(c => c.startsWith(prefix))
     if (!token) throw new HttpError(401, `Unauthorized - no ${COOKIE_NAME}`)
-    const jwt = token.slice(`${COOKIE_NAME}=`.length)
-    return {token: jwt, user: await verify<User>(jwt, await publicKey)}
+    const authToken = token.slice(prefix.length)
+    return {
+      token: authToken,
+      user: await verify<User>(authToken, await publicKey)
+    }
   }
 }

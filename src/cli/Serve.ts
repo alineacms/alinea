@@ -74,8 +74,7 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   server.then(async () => {
     console.log(`  \x1b[36mα Alinea ${pkg.version}\x1b[39m`)
-    console.log(`  - Local CMS:    ${await dashboardUrl}`)
-    if (base) console.log(`  - Frontend:     ${base}`)
+    console.log(`  - Local CMS:    ${await dashboardUrl}\n`)
   })
 
   const gen = generate({

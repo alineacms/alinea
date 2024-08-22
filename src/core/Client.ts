@@ -10,7 +10,9 @@ import {Mutation} from './Mutation.js'
 import {ResolveDefaults, ResolveRequest} from './Resolver.js'
 import {base64} from './util/Encoding.js'
 
-type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
+export type AuthenticateRequest = (
+  request?: RequestInit
+) => RequestInit | undefined
 
 export interface ClientOptions {
   url: string
