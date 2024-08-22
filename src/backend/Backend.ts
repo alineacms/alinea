@@ -2,36 +2,40 @@ import {Connection} from 'alinea/core/Connection'
 import {Draft} from 'alinea/core/Draft'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
-import {Drafts} from './Drafts.js'
-import {History, Revision} from './History.js'
-import {Media} from './Media.js'
-import {Pending} from './Pending.js'
-import {Target} from './Target.js'
+import {ResolveRequest} from 'alinea/core/Resolver'
+import {User} from 'alinea/core/User'
+import {Revision} from './History.js'
 
-export interface Backend extends Media, Target, History, Pending, Drafts {
-  // Media
-  prepareUpload(
-    file: string,
-    ctx: Connection.Context
-  ): Promise<Connection.UploadResponse>
-  // Target
-  mutate(
-    params: Connection.MutateParams,
-    ctx: Connection.Context
-  ): Promise<{commitHash: string}>
-  // History
-  revisions(file: string, ctx: Connection.Context): Promise<Array<Revision>>
-  revisionData(
-    file: string,
-    revisionId: string,
-    ctx: Connection.Context
-  ): Promise<EntryRecord>
-  // Pending
+export interface RequestContext {
+  apiKey: string
+}
+
+export interface AuthedContext extends RequestContext {
+  user: User
+  token: string
+}
+
+export interface Backend {
+  resolve(ctx: RequestContext, params: ResolveRequest): Promise<unknown>
   pendingSince(
-    commitHash: string,
-    ctx: Connection.Context
+    ctx: RequestContext,
+    commitHash: string
   ): Promise<{toCommitHash: string; mutations: Array<Mutation>} | undefined>
-  // Draft
-  getDraft(entryId: string, ctx: Connection.Context): Promise<Draft | undefined>
-  storeDraft(draft: Draft, ctx: Connection.Context): Promise<void>
+  getDraft(ctx: RequestContext, entryId: string): Promise<Draft | undefined>
+  storeDraft(ctx: RequestContext, draft: Draft): Promise<void>
+
+  auth(ctx: RequestContext, request: Request): Promise<Response>
+  verify(ctx: RequestContext, request: Request): Promise<AuthedContext>
+
+  upload(ctx: AuthedContext, file: string): Promise<Connection.UploadResponse>
+  mutate(
+    ctx: AuthedContext,
+    params: Connection.MutateParams
+  ): Promise<{commitHash: string}>
+  listRevisions(ctx: AuthedContext, file: string): Promise<Array<Revision>>
+  getRevision(
+    ctx: AuthedContext,
+    file: string,
+    revisionId: string
+  ): Promise<EntryRecord>
 }
