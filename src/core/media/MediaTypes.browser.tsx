@@ -9,6 +9,8 @@ import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
 import {type} from '../Type.js'
 import * as config from './MediaTypes.js'
 
+export const MEDIA_LOCATION = '@alinea.location'
+
 export type MediaLibrary = config.MediaLibrary
 export const MediaLibrary: typeof config.MediaLibrary = type(
   'Media directory',
