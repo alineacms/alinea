@@ -8,6 +8,7 @@ import {Root} from 'alinea/core/Root'
 import {Schema} from 'alinea/core/Schema'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
+import {MEDIA_LOCATION} from 'alinea/core/media/MediaTypes'
 import {createFileHash, createRowHash} from 'alinea/core/util/ContentHash'
 import {entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow, publishEntryRow} from 'alinea/core/util/EntryRows'
@@ -34,7 +35,6 @@ import {Builder} from 'rado/core/Builder'
 import xxhash from 'xxhash-wasm'
 import {EntryPhase, EntryRow, entryVersionId} from '../core/EntryRow.js'
 import {AuthedContext, Target} from './Backend.js'
-import {Media} from './Media.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
 import {Change, ChangeType} from './data/ChangeSet.js'
@@ -394,7 +394,7 @@ export class Database implements Syncable {
               data: {
                 ...existing.data,
                 location: mutation.url,
-                [Media.ORIGINAL_LOCATION]: existing.data.location
+                [MEDIA_LOCATION]: existing.data.location
               }
             })
             .where(condition)

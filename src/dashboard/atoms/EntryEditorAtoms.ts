@@ -1,7 +1,6 @@
-import {Media} from 'alinea/backend'
 import {Config} from 'alinea/core/Config'
 import {Connection} from 'alinea/core/Connection'
-import {ROOT_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
+import {createYDoc, parseYDoc, ROOT_KEY} from 'alinea/core/Doc'
 import {Entry} from 'alinea/core/Entry'
 import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
@@ -12,7 +11,7 @@ import {Query} from 'alinea/core/Query'
 import {Root} from 'alinea/core/Root'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
-import type {MediaFile} from 'alinea/core/media/MediaTypes'
+import {MEDIA_LOCATION, type MediaFile} from 'alinea/core/media/MediaTypes'
 import {base64} from 'alinea/core/util/Encoding'
 import {
   entryFileName,
@@ -547,8 +546,8 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: published.entryId,
       workspace: published.workspace,
       location:
-        Media.ORIGINAL_LOCATION in file
-          ? (file[Media.ORIGINAL_LOCATION] as string)
+        MEDIA_LOCATION in file
+          ? (file[MEDIA_LOCATION] as string)
           : file.location,
       file: entryFile(published),
       replace: false

@@ -1,6 +1,5 @@
-import {JsonLoader} from 'alinea/backend'
+import {JsonLoader, Revision} from 'alinea/backend'
 import {History, RequestContext} from 'alinea/backend/Backend'
-import {Revision} from 'alinea/backend/History'
 import {Config} from 'alinea/core/Config'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {join} from 'alinea/core/util/Paths'

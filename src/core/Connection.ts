@@ -1,12 +1,11 @@
-import {Drafts} from 'alinea/backend/Drafts'
-import {History, Revision} from 'alinea/backend/History'
+import {Revision} from 'alinea/backend'
 import {PreviewInfo} from 'alinea/backend/Previews'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
 import {Mutation} from './Mutation.js'
-import {Resolver, ResolveRequest} from './Resolver.js'
+import {ResolveRequest} from './Resolver.js'
 import {User} from './User.js'
 import {Logger} from './util/Logger.js'
 
@@ -20,7 +19,7 @@ export interface Syncable {
   sync(contentHashes: Array<string>): Promise<SyncResponse>
 }
 
-export interface Connection extends Resolver, Syncable, History, Drafts {
+export interface Connection extends Syncable {
   resolve(params: ResolveRequest): Promise<unknown>
   previewToken(request: PreviewInfo): Promise<string>
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>

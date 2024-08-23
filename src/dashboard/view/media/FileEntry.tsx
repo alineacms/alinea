@@ -1,6 +1,6 @@
-import {Media} from 'alinea/backend/Media'
+import {EntryRow} from 'alinea/core/EntryRow'
 import {isImage} from 'alinea/core/media/IsImage'
-import {MediaFile} from 'alinea/core/media/MediaTypes'
+import {MEDIA_LOCATION, MediaFile} from 'alinea/core/media/MediaTypes'
 import {Typo, fromModule} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {Main} from 'alinea/ui/Main'
@@ -26,7 +26,7 @@ interface Pos {
 }
 
 function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
-  const image: Media.Image = editor.activeVersion as any
+  const image: EntryRow<MediaImage> = editor.activeVersion as any
   const {value: focus = {x: 0.5, y: 0.5}, mutator: setFocus} = useField(
     type.focus
   )
@@ -87,8 +87,8 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
         </Property>
         <Property label="URL">
           <Typo.Monospace>
-            {Media.ORIGINAL_LOCATION in image.data
-              ? (image.data[Media.ORIGINAL_LOCATION] as string)
+            {MEDIA_LOCATION in image.data
+              ? (image.data[MEDIA_LOCATION] as string)
               : image.data.location}
           </Typo.Monospace>
         </Property>
@@ -128,7 +128,7 @@ export function IcTwotonePinDrop() {
 }
 
 function FileView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
-  const file: Media.File = editor.activeVersion as any
+  const file: EntryRow<MediaFile> = editor.activeVersion as any
   return (
     <Lift>
       <InputField field={type.title} />
@@ -137,8 +137,8 @@ function FileView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
 
       <Property label="URL">
         <Typo.Monospace>
-          {Media.ORIGINAL_LOCATION in file.data
-            ? (file.data[Media.ORIGINAL_LOCATION] as string)
+          {MEDIA_LOCATION in file.data
+            ? (file.data[MEDIA_LOCATION] as string)
             : file.data.location}
         </Typo.Monospace>
       </Property>
