@@ -1,5 +1,6 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
 import {DraftTransport} from 'alinea/backend/Drafts'
+import {HandleAction} from 'alinea/backend/Handle'
 import {Revision} from 'alinea/backend/History'
 import {PreviewInfo} from 'alinea/backend/Previews'
 import {Connection, SyncResponse} from './Connection.js'
@@ -32,33 +33,45 @@ export class Client implements Connection {
   }
 
   previewToken(request: PreviewInfo): Promise<string> {
-    return this.#requestJson(Connection.routes.previewToken(), {
-      method: 'POST',
-      body: JSON.stringify(request)
-    }).then<string>(this.#failOnHttpError)
+    return this.#requestJson(
+      {action: HandleAction.PreviewToken},
+      {
+        method: 'POST',
+        body: JSON.stringify(request)
+      }
+    ).then<string>(this.#failOnHttpError)
   }
 
   prepareUpload(file: string): Promise<Connection.UploadResponse> {
-    return this.#requestJson(Connection.routes.prepareUpload(), {
-      method: 'POST',
-      body: JSON.stringify({filename: file})
-    }).then<Connection.UploadResponse>(this.#failOnHttpError)
+    return this.#requestJson(
+      {action: HandleAction.Upload},
+      {
+        method: 'POST',
+        body: JSON.stringify({filename: file})
+      }
+    ).then<Connection.UploadResponse>(this.#failOnHttpError)
   }
 
   resolve(params: ResolveRequest): Promise<unknown> {
     const {resolveDefaults} = this.#options
     const body = JSON.stringify({...resolveDefaults, ...params})
-    return this.#requestJson(Connection.routes.resolve(), {
-      method: 'POST',
-      body
-    }).then(this.#failOnHttpError)
+    return this.#requestJson(
+      {action: HandleAction.Resolve},
+      {
+        method: 'POST',
+        body
+      }
+    ).then(this.#failOnHttpError)
   }
 
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
-    return this.#requestJson(Connection.routes.mutate(), {
-      method: 'POST',
-      body: JSON.stringify(mutations)
-    }).then<{commitHash: string}>(this.#failOnHttpError)
+    return this.#requestJson(
+      {action: HandleAction.Mutate},
+      {
+        method: 'POST',
+        body: JSON.stringify(mutations)
+      }
+    ).then<{commitHash: string}>(this.#failOnHttpError)
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
@@ -67,42 +80,42 @@ export class Client implements Connection {
 
   // History
   revisions(file: string): Promise<Array<Revision>> {
-    const params = new URLSearchParams({file})
-    return this.#requestJson(
-      Connection.routes.revisions() + '&' + params.toString()
-    ).then<Array<Revision>>(this.#failOnHttpError)
+    return this.#requestJson({action: HandleAction.PreviewToken, file}).then<
+      Array<Revision>
+    >(this.#failOnHttpError)
   }
 
   revisionData(file: string, revisionId: string): Promise<EntryRecord> {
-    const params = new URLSearchParams({file, revisionId})
-    return this.#requestJson(
-      Connection.routes.revisions() + '&' + params.toString()
-    ).then<EntryRecord>(this.#failOnHttpError)
+    return this.#requestJson({
+      action: HandleAction.PreviewToken,
+      file,
+      revisionId
+    }).then<EntryRecord>(this.#failOnHttpError)
   }
 
   // Syncable
 
   syncRequired(contentHash: string): Promise<boolean> {
-    const params = new URLSearchParams({contentHash})
-    return this.#requestJson(
-      Connection.routes.sync() + '&' + params.toString()
-    ).then<boolean>(this.#failOnHttpError)
+    return this.#requestJson({
+      action: HandleAction.Sync,
+      contentHash
+    }).then<boolean>(this.#failOnHttpError)
   }
 
   sync(contentHashes: Array<string>): Promise<SyncResponse> {
-    return this.#requestJson(Connection.routes.sync(), {
-      method: 'POST',
-      body: JSON.stringify(contentHashes)
-    }).then<SyncResponse>(this.#failOnHttpError)
+    return this.#requestJson(
+      {action: HandleAction.Sync},
+      {
+        method: 'POST',
+        body: JSON.stringify(contentHashes)
+      }
+    ).then<SyncResponse>(this.#failOnHttpError)
   }
 
   // Drafts
 
   getDraft(entryId: string): Promise<Draft | undefined> {
-    const params = new URLSearchParams({entryId})
-    return this.#requestJson(
-      Connection.routes.draft() + '&' + params.toString()
-    )
+    return this.#requestJson({action: HandleAction.Draft, entryId})
       .then<DraftTransport | null>(this.#failOnHttpError)
       .then(draft =>
         draft
@@ -112,17 +125,23 @@ export class Client implements Connection {
   }
 
   storeDraft(draft: Draft): Promise<void> {
-    return this.#requestJson(Connection.routes.draft(), {
-      method: 'POST',
-      body: JSON.stringify({...draft, draft: base64.stringify(draft.draft)})
-    }).then<void>(res => this.#failOnHttpError(res, false))
+    return this.#requestJson(
+      {action: HandleAction.Draft},
+      {
+        method: 'POST',
+        body: JSON.stringify({...draft, draft: base64.stringify(draft.draft)})
+      }
+    ).then<void>(res => this.#failOnHttpError(res, false))
   }
 
-  #request(endpoint: string, init?: RequestInit): Promise<Response> {
+  #request(
+    params: {action: HandleAction},
+    init?: RequestInit
+  ): Promise<Response> {
     const {url, applyAuth = v => v, unauthorized} = this.#options
     const controller = new AbortController()
     const signal = controller.signal
-    const location = url + '?' + endpoint
+    const location = url + '?' + new URLSearchParams(params).toString()
     const promise = fetch(location, {
       ...applyAuth(init),
       signal
@@ -130,7 +149,7 @@ export class Client implements Connection {
       .catch(err => {
         throw new HttpError(
           500,
-          `Could not ${init?.method || 'GET'} "${endpoint}": ${err}`
+          `Could not ${init?.method || 'GET'} "${params.action}": ${err}`
         )
       })
       .then(async res => {
@@ -144,7 +163,7 @@ export class Client implements Connection {
             : await res.text()
           throw new HttpError(
             res.status,
-            `Could not ${init?.method || 'GET'} "${endpoint}" (${
+            `Could not ${init?.method || 'GET'} "${params.action}" (${
               res.status
             }) ... ${msg.replace(/\s+/g, ' ').slice(0, 100)}`
           )
@@ -164,8 +183,11 @@ export class Client implements Connection {
     return cancelify(promise)
   }
 
-  #requestJson(endpoint: string, init?: RequestInit) {
-    return this.#request(endpoint, {
+  #requestJson<Params extends {action: HandleAction}>(
+    params: Params,
+    init?: RequestInit
+  ) {
+    return this.#request(params, {
       ...init,
       headers: {
         ...init?.headers,

@@ -1,14 +1,11 @@
 import {Request} from '@alinea/iso'
-import {Database} from 'alinea/backend'
-import {generatedStore} from 'alinea/backend/Store'
+import {Backend} from 'alinea/backend/Backend'
+import {createHandle, Handle} from 'alinea/backend/Handle'
+import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {alineaCookies} from 'alinea/preview/AlineaCookies'
-import PLazy from 'p-lazy'
-import {createCloudHandler} from '../../cloud/server/CloudHandler.js'
 import {NextCMS} from './cms.js'
-
-const apiKey = process.env.ALINEA_API_KEY ?? 'dev'
 
 const handlers = new WeakMap<NextCMS, (request: Request) => Promise<Response>>()
 
@@ -42,20 +39,17 @@ async function handlePreview(
   })
 }
 
-export function createHandler(cms: NextCMS) {
+export function createHandler(
+  cms: NextCMS,
+  backend: Backend = cloudBackend(cms.config)
+) {
   if (handlers.has(cms)) return handlers.get(cms)!
-  const cloudHandler = PLazy.from(async () => {
-    const db = new Database(cms.config, await generatedStore)
-    return createCloudHandler(cms.config, db, apiKey)
-  })
-  const handle = async (request: Request): Promise<Response> => {
+  const handleCloud = createHandle(cms, backend)
+  const handle: Handle = async (request, context) => {
     const {searchParams} = new URL(request.url)
     const previewToken = searchParams.get('preview')
     if (previewToken) return handlePreview(cms, request)
-    const cloud = await cloudHandler
-    const response = await cloud.router.handle(request)
-    if (response) return response
-    return new Response('Not found', {status: 404})
+    return handleCloud(request, context)
   }
   handlers.set(cms, handle)
   return handle

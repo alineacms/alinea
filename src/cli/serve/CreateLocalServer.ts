@@ -1,5 +1,5 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
-import {Handler} from 'alinea/backend'
+import {Handle} from 'alinea/backend/Handle'
 import {HttpRouter, router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/CloudConfig'
 import {Trigger, trigger} from 'alinea/core/Trigger'
@@ -67,7 +67,7 @@ export function createLocalServer(
     production,
     liveReload
   }: ServeContext,
-  handler: Handler,
+  handleApi: Handle,
   user: User
 ): HttpRouter {
   const devDir = path.join(staticDir, 'dev')
@@ -151,14 +151,12 @@ export function createLocalServer(
       }
     })
   }
-
   const httpRouter = router(
     matcher.get('/~dev').map((): Response => {
-      const stream = new ReadableStream({
+      const stream = new ReadableStream<string>({
         start(controller) {
           liveReload.register({
-            // Todo: check types here
-            write: v => controller.enqueue(v as any),
+            write: v => controller.enqueue(v),
             close: () => controller.close()
           })
         }
@@ -183,11 +181,10 @@ export function createLocalServer(
       )
       return new Response('Upload ok')
     }),
-    matcher.get('/preview').map(async ({request, url}) => {
-      return new Response()
-    }),
     router.compress(
-      handler.router,
+      matcher.all('/api').map(async ({url, request}) => {
+        return handleApi(request)
+      }),
       matcher.get('/').map(({url}): Response => {
         const handlerUrl = `${url.protocol}//${url.host}`
         return new Response(
@@ -196,8 +193,8 @@ export function createLocalServer(
           <link rel="icon" href="data:," />
           <link href="/entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <meta name="handshake_url" value="${handlerUrl}/?auth.handshake" />
-          <meta name="redirect_url" value="${handlerUrl}/?auth" />
+          <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
+          <meta name="redirect_url" value="${handlerUrl}?auth=login" />
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,

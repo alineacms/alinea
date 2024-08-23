@@ -1,9 +1,8 @@
-import {JWTPreviews} from 'alinea/backend'
-import {Handler} from 'alinea/backend/Handler'
+import {Backend} from 'alinea/backend/Backend'
+import {createHandle} from 'alinea/backend/Handle'
 import {HttpRouter} from 'alinea/backend/router/Router'
-import {createCloudDebugHandler} from 'alinea/cloud/server/CloudDebugHandler'
-import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
-import {Auth} from 'alinea/core/Auth'
+import {cloudBackend} from 'alinea/cloud/CloudBackend'
+import {cloudDebug} from 'alinea/cloud/CloudDebug'
 import {CMS} from 'alinea/core/CMS'
 import {localUser} from 'alinea/core/User'
 import {BuildOptions} from 'esbuild'
@@ -15,6 +14,7 @@ import {buildOptions} from './build/BuildOptions.js'
 import {createLocalServer} from './serve/CreateLocalServer.js'
 import {GitHistory} from './serve/GitHistory.js'
 import {LiveReload} from './serve/LiveReload.js'
+import {localAuth} from './serve/LocalAuth.js'
 import {MemoryDrafts} from './serve/MemoryDrafts.js'
 import {ServeContext} from './serve/ServeContext.js'
 import {startNodeServer} from './serve/StartNodeServer.js'
@@ -84,14 +84,14 @@ export async function serve(options: ServeOptions): Promise<void> {
     async onAfterGenerate() {
       options.onAfterGenerate?.({
         ALINEA_BASE_URL: base ?? '',
-        ALINEA_DEV_SERVER: await dashboardUrl
+        ALINEA_DEV_SERVER: (await dashboardUrl) + '/api'
       })
     }
   })[Symbol.asyncIterator]()
   const drafts = new MemoryDrafts()
   let nextGen = gen.next()
   let cms: CMS | undefined
-  let handle: HttpRouter | undefined
+  let handleRequest: HttpRouter | undefined
 
   const git = simpleGit(rootDir)
   const [name = localUser.name, email] = (
@@ -107,42 +107,29 @@ export async function serve(options: ServeOptions): Promise<void> {
       context.liveReload.reload('refetch')
     } else {
       const history = new GitHistory(git, currentCMS.config, rootDir)
-      const auth: Auth.Server = {
-        async contextFor() {
-          return {user}
-        }
-      }
       const backend = createBackend()
-      handle = createLocalServer(context, backend, user)
+      const handleApi = createHandle(currentCMS, backend, Promise.resolve(db))
+      handleRequest = createLocalServer(context, handleApi, user)
       cms = currentCMS
       context.liveReload.reload('refresh')
 
-      function createBackend(): Handler {
+      function createBackend(): Backend {
         if (process.env.ALINEA_CLOUD_DEBUG)
-          return createCloudDebugHandler(currentCMS.config, db, rootDir)
-        if (process.env.ALINEA_CLOUD_URL)
-          return createCloudHandler(
-            currentCMS.config,
-            db,
-            process.env.ALINEA_API_KEY
-          )
-        return new Handler({
-          auth,
-          config: currentCMS.config,
-          db,
+          return cloudDebug(currentCMS.config, rootDir)
+        if (process.env.ALINEA_CLOUD_URL) return cloudBackend(currentCMS.config)
+        return {
+          auth: localAuth(git),
           target: fileData,
           media: fileData,
           drafts,
-          history,
-          previews: new JWTPreviews('dev'),
-          previewAuthToken: 'dev'
-        })
+          history
+        }
       }
     }
     nextGen = gen.next()
     const {serve} = await server
     for await (const {request, respondWith} of serve(nextGen)) {
-      handle!(request).then(respondWith)
+      handleRequest!(request).then(respondWith)
     }
   }
 }

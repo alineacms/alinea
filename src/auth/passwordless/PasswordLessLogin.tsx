@@ -179,7 +179,7 @@ export function PasswordLessLogin({setSession}: Auth.ViewProps) {
     setState(LoginState.Loading)
     if (!(client instanceof Client))
       throw new Error(`Cannot authenticate with non http client`)
-    fetch(client.url + `?/auth/passwordless`, {
+    fetch(new URL('?auth=passwordless', client.url), {
       headers: {'content-type': 'application/json'},
       method: 'POST',
       body: JSON.stringify({email})

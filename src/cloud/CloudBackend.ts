@@ -68,7 +68,7 @@ export function cloudBackend(config: Config): Backend {
         // - no user, but a valid api key => we can redirect to cloud login
         // - no api key => display a message to setup backend
         case AuthAction.Status: {
-          const token = ctx.apiKey.split('_')[1]
+          const token = ctx.apiKey && ctx.apiKey.split('_')[1]
           if (!token)
             return Response.json({
               type: AuthResultType.MissingApiKey,

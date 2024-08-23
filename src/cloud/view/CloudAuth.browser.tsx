@@ -1,6 +1,5 @@
 import {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
-import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {Head} from 'alinea/dashboard/util/Head'
 import {Button, HStack, px, Typo, VStack} from 'alinea/ui'
@@ -18,7 +17,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {data, isError} = useQuery(
     ['auth.cloud'],
     () => {
-      return fetch(joinPaths(client.url, `/auth/cloud`), {
+      return fetch(new URL('?auth=cloud', client.url), {
         credentials: 'include'
       }).then<AuthResult>(res => res.json())
     },
@@ -62,7 +61,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
           () => setSession(undefined)
         ),
         async end() {
-          location.href = joinPaths(client.url, `/auth/logout`)
+          location.href = new URL('?auth=logout', client.url).href
         }
       })
       return null

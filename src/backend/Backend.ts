@@ -6,7 +6,7 @@ import {User} from 'alinea/core/User'
 import {Revision} from './History.js'
 
 export interface RequestContext {
-  apiKey: string
+  apiKey?: string
 }
 
 export interface AuthedContext extends RequestContext {
@@ -31,7 +31,7 @@ export interface Media {
 }
 
 export interface Drafts {
-  get(ctx: AuthedContext, entryId: string): Promise<Draft | undefined>
+  get(ctx: RequestContext, entryId: string): Promise<Draft | undefined>
   store(ctx: AuthedContext, draft: Draft): Promise<void>
 }
 
@@ -53,5 +53,5 @@ export interface Backend {
   media: Media
   drafts: Drafts
   history: History
-  pending: Pending
+  pending?: Pending
 }
