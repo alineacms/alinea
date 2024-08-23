@@ -238,9 +238,7 @@ export function createHandler(
         return resolve(context, params)
       },
       async previewToken(request: PreviewUpdate) {
-        const {dbRevision} = await init
-        const staticKey = context.apiKey ?? dbRevision
-        const previews = new JWTPreviews(staticKey)
+        const previews = new JWTPreviews(context.apiKey)
         return previews.sign(request)
       },
       async prepareUpload(file: string) {
@@ -280,13 +278,11 @@ export function createHandler(
   async function handle(
     request: Request,
     context: RequestContext = {
-      apiKey:
-        typeof process !== 'undefined' ? process.env.ALINEA_API_KEY : undefined
+      apiKey: process.env.ALINEA_API_KEY ?? 'dev'
     }
   ): Promise<Response> {
-    const {db, dbRevision, resolve, mutate, syncPending} = await init
-    const staticKey = context.apiKey ?? dbRevision
-    const previews = new JWTPreviews(staticKey)
+    const {db, resolve, mutate, syncPending} = await init
+    const previews = new JWTPreviews(context.apiKey)
     const url = new URL(request.url)
     const params = url.searchParams
     const action = params.get('action') as HandleAction
@@ -306,7 +302,7 @@ export function createHandler(
       } catch {
         const authorization = request.headers.get('authorization')
         const bearer = authorization?.slice('Bearer '.length)
-        if (bearer !== staticKey) throw new Error('Unauthorized')
+        if (bearer !== context.apiKey) throw new Error('Unauthorized')
         if (!context.apiKey) throw new Error('Missing API key')
         return context
       }
@@ -314,7 +310,9 @@ export function createHandler(
 
     // These actions can be run internally or by a user
     if (action === HandleAction.Resolve && request.method === 'POST')
-      return Response.json(await resolve(await internal(), ResolveBody(body)))
+      return Response.json(
+        (await resolve(await internal(), ResolveBody(body))) ?? null
+      )
     if (action === HandleAction.Pending && request.method === 'GET') {
       const commitHash = url.searchParams.get('commitHash')!
       return Response.json(

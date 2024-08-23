@@ -8,11 +8,11 @@ import {Database} from '../Database.js'
 export function memoryBackend(db: Database): Backend {
   const pending: Array<Connection.MutateParams & {toCommitHash: string}> = []
   const auth: Auth = {
-    async authenticate(ctx, token) {
+    async authenticate() {
       return new Response('ok')
     },
-    async verify(ctx, token) {
-      return {user: localUser, token: 'dev'}
+    async verify(ctx) {
+      return {...ctx, user: localUser, token: 'dev'}
     }
   }
   const target: Target = {

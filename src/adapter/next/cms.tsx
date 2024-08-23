@@ -37,13 +37,13 @@ export class NextCMS<
         headers.set('Authorization', `Bearer ${apiKey}`)
         return {...init, headers}
       }
-      const clientUrl =
-        devUrl ??
-        new URL(
-          config.apiUrl ?? config.dashboard?.handlerUrl ?? '/api/cms',
-          baseUrl ?? origin()
-        ).href
-      if (!isDraft) return new Client({url: clientUrl, applyAuth})
+      const clientUrl = devUrl
+        ? new URL('/api', devUrl)
+        : new URL(
+            config.apiUrl ?? config.dashboard?.handlerUrl ?? '/api/cms',
+            baseUrl ?? origin()
+          )
+      if (!isDraft) return new Client({url: clientUrl.href, applyAuth})
       const cookie = cookies()
       const previewToken = cookie.get(alineaCookies.previewToken)?.value
       if (previewToken) {
@@ -53,9 +53,10 @@ export class NextCMS<
         )
         const info = await this.jwt.verify(previewToken)
         resolveDefaults.preview = {...info, update}
+        console.log(resolveDefaults)
       }
       return new Client({
-        url: clientUrl,
+        url: clientUrl.href,
         applyAuth,
         resolveDefaults
       })

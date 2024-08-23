@@ -5,7 +5,7 @@ import {Mutation} from 'alinea/core/Mutation'
 import {User} from 'alinea/core/User'
 
 export interface RequestContext {
-  apiKey?: string
+  apiKey: string
 }
 
 export interface AuthedContext extends RequestContext {

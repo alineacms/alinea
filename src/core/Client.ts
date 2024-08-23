@@ -79,14 +79,14 @@ export class Client implements Connection {
 
   // History
   revisions(file: string): Promise<Array<Revision>> {
-    return this.#requestJson({action: HandleAction.PreviewToken, file}).then<
+    return this.#requestJson({action: HandleAction.History, file}).then<
       Array<Revision>
     >(this.#failOnHttpError)
   }
 
   revisionData(file: string, revisionId: string): Promise<EntryRecord> {
     return this.#requestJson({
-      action: HandleAction.PreviewToken,
+      action: HandleAction.History,
       file,
       revisionId
     }).then<EntryRecord>(this.#failOnHttpError)
