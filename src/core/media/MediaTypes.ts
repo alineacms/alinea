@@ -2,8 +2,6 @@ import {hidden} from 'alinea/field/hidden'
 import {Hint} from '../Hint.js'
 import {Type, type} from '../Type.js'
 
-export const MEDIA_LOCATION = '@alinea.location'
-
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
   isContainer: true,

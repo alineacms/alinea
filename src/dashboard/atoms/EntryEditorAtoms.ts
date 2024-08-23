@@ -11,7 +11,8 @@ import {Query} from 'alinea/core/Query'
 import {Root} from 'alinea/core/Root'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
-import {MEDIA_LOCATION, type MediaFile} from 'alinea/core/media/MediaTypes'
+import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
+import {type MediaFile} from 'alinea/core/media/MediaTypes'
 import {base64} from 'alinea/core/util/Encoding'
 import {
   entryFileName,

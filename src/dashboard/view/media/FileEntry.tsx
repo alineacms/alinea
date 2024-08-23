@@ -1,6 +1,7 @@
 import {EntryRow} from 'alinea/core/EntryRow'
 import {isImage} from 'alinea/core/media/IsImage'
-import {MEDIA_LOCATION, MediaFile} from 'alinea/core/media/MediaTypes'
+import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
+import {MediaFile} from 'alinea/core/media/MediaTypes'
 import {Typo, fromModule} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {Main} from 'alinea/ui/Main'
