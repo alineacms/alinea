@@ -1,6 +1,9 @@
 import {Request} from '@alinea/iso'
 import {Backend} from 'alinea/backend/Backend'
-import {createHandle, Handle} from 'alinea/backend/Handle'
+import {
+  createHandler as createCoreHandler,
+  Handler
+} from 'alinea/backend/Handler'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
@@ -44,8 +47,8 @@ export function createHandler(
   backend: Backend = cloudBackend(cms.config)
 ) {
   if (handlers.has(cms)) return handlers.get(cms)!
-  const handleCloud = createHandle(cms, backend)
-  const handle: Handle = async (request, context) => {
+  const handleCloud = createCoreHandler(cms, backend)
+  const handle: Handler = async (request, context) => {
     const {searchParams} = new URL(request.url)
     const previewToken = searchParams.get('preview')
     if (previewToken) return handlePreview(cms, request)

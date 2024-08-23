@@ -1,4 +1,3 @@
-import {HandleContext} from 'alinea/backend'
 import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
 import {PreviewInfo} from 'alinea/backend/Previews'
@@ -81,7 +80,7 @@ export namespace Connection {
     user?: User
     token?: string
   }
-  export interface Context extends AuthContext, HandleContext {
+  export interface Context extends AuthContext {
     logger: Logger
   }
   export const routes = {

@@ -3,8 +3,8 @@
 import * as schema from '@/schema/demo'
 import {Config, Edit} from 'alinea'
 import {createCMS} from 'alinea/adapter/test/TestCMS'
-import {createMemoryHandler} from 'alinea/backend/data/MemoryHandler'
-import {Entry} from 'alinea/core/Entry'
+import {memoryBackend} from 'alinea/backend/data/MemoryBackend'
+import {createHandle} from 'alinea/backend/Handler'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {localUser} from 'alinea/core/User'
 import {Logger} from 'alinea/core/util/Logger'
@@ -72,7 +72,8 @@ async function setup(entries: Array<Entry>) {
     await cms.commit(Edit.createEntry(entry))
   }
   const db = await cms.db
-  const handler = createMemoryHandler(config, db)
+  const backend = memoryBackend(db)
+  const handler = createHandle(cms, backend)
   const client = handler.connect({
     logger: new Logger('local'),
     user: localUser

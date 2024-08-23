@@ -1,13 +1,25 @@
 import sqlite from '@alinea/sqlite-wasm'
-import {Database, Handler} from 'alinea/backend'
+import {Database} from 'alinea/backend'
+import {Auth, Backend} from 'alinea/backend/Backend'
+import {memoryBackend} from 'alinea/backend/data/MemoryBackend'
+import {createHandler} from 'alinea/backend/Handler'
 import {Store} from 'alinea/backend/Store'
-import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {CMS} from 'alinea/core/CMS'
 import {Config, createConfig} from 'alinea/core/Config'
 import {createId} from 'alinea/core/Id'
-import {Logger} from 'alinea/core/util/Logger'
+import {localUser} from 'alinea/core/User'
 import {AddressInfo} from 'node:net'
+import PLazy from 'p-lazy'
 import {connect} from 'rado/driver/sql.js'
+
+const auth: Auth = {
+  async authenticate(ctx, token) {
+    return new Response('ok')
+  },
+  async verify(ctx, token) {
+    return {user: localUser, token: 'dev'}
+  }
+}
 
 export function createCMS<Definition extends Config>(definition: Definition) {
   const config = createConfig(definition)
@@ -19,17 +31,16 @@ export function createCMS<Definition extends Config>(definition: Definition) {
     await db.fill({async *entries() {}}, '')
     return db
   })
-  const connection = db.then(async db => {
-    return new Handler({
-      config,
-      db,
-      previews: new JWTPreviews('test'),
-      previewAuthToken: 'test',
+  const backend = db.then(
+    (db): Backend => ({
+      ...memoryBackend(db),
       target: {
-        mutate: async () => ({commitHash: createId()})
+        async mutate(ctx, params) {
+          return {commitHash: createId()}
+        }
       },
       media: {
-        async prepareUpload(file: string) {
+        async upload(ctx, file) {
           const id = createId()
           const serve = await listenForUpload()
           return {
@@ -42,9 +53,19 @@ export function createCMS<Definition extends Config>(definition: Definition) {
           }
         }
       }
-    }).connect({logger: new Logger('test')})
+    })
+  )
+  const handle = PLazy.from(async () => {
+    return createHandler(cms, await backend, db)
   })
-  const cms: CMS<Definition> = new CMS(config, async () => connection)
+  const cms: CMS<Definition> = new CMS(config, async () => {
+    const {connect} = await handle
+    return connect({
+      apiKey: 'dev',
+      user: localUser,
+      token: ''
+    })
+  })
   return Object.assign(cms, {db})
 }
 

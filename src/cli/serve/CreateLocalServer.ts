@@ -1,5 +1,5 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
-import {Handle} from 'alinea/backend/Handle'
+import {Handler} from 'alinea/backend/Handler'
 import {HttpRouter, router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/CloudConfig'
 import {Trigger, trigger} from 'alinea/core/Trigger'
@@ -67,7 +67,7 @@ export function createLocalServer(
     production,
     liveReload
   }: ServeContext,
-  handleApi: Handle,
+  handleApi: Handler,
   user: User
 ): HttpRouter {
   const devDir = path.join(staticDir, 'dev')

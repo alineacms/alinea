@@ -1,5 +1,5 @@
 import {Backend} from 'alinea/backend/Backend'
-import {createHandle} from 'alinea/backend/Handle'
+import {createHandler} from 'alinea/backend/Handler'
 import {HttpRouter} from 'alinea/backend/router/Router'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {cloudDebug} from 'alinea/cloud/CloudDebug'
@@ -108,7 +108,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     } else {
       const history = new GitHistory(git, currentCMS.config, rootDir)
       const backend = createBackend()
-      const handleApi = createHandle(currentCMS, backend, Promise.resolve(db))
+      const handleApi = createHandler(currentCMS, backend, Promise.resolve(db))
       handleRequest = createLocalServer(context, handleApi, user)
       cms = currentCMS
       context.liveReload.reload('refresh')
