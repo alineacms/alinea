@@ -53,7 +53,6 @@ export class NextCMS<
         )
         const info = await this.jwt.verify(previewToken)
         resolveDefaults.preview = {...info, update}
-        console.log(resolveDefaults)
       }
       return new Client({
         url: clientUrl.href,

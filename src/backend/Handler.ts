@@ -73,7 +73,8 @@ export interface Handler {
   (request: Request, context?: RequestContext): Promise<Response>
 }
 
-export interface HandlerWithConnect extends Handler {
+export interface HandlerWithConnect {
+  (request: Request, context: RequestContext): Promise<Response>
   connect(context: RequestContext | AuthedContext): Connection
 }
 
@@ -277,9 +278,7 @@ export function createHandler(
 
   async function handle(
     request: Request,
-    context: RequestContext = {
-      apiKey: process.env.ALINEA_API_KEY ?? 'dev'
-    }
+    context: RequestContext
   ): Promise<Response> {
     const {db, resolve, mutate, syncPending} = await init
     const previews = new JWTPreviews(context.apiKey)
