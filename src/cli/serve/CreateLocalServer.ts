@@ -1,5 +1,5 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
-import {Handler} from 'alinea/backend/Handler'
+import {HandlerWithConnect} from 'alinea/backend/Handler'
 import {HttpRouter, router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/CloudConfig'
 import {Trigger, trigger} from 'alinea/core/Trigger'
@@ -67,7 +67,7 @@ export function createLocalServer(
     production,
     liveReload
   }: ServeContext,
-  handleApi: Handler,
+  handleApi: HandlerWithConnect,
   user: User
 ): HttpRouter {
   const devDir = path.join(staticDir, 'dev')
@@ -183,7 +183,7 @@ export function createLocalServer(
     }),
     router.compress(
       matcher.all('/api').map(async ({url, request}) => {
-        return handleApi(request)
+        return handleApi(request, {apiKey: 'dev'})
       }),
       matcher.get('/').map(({url}): Response => {
         const handlerUrl = `${url.protocol}//${url.host}`
