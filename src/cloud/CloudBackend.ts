@@ -242,7 +242,7 @@ export function cloudBackend(config: Config): Backend {
       if (!validApiKey(ctx.apiKey)) return
       type CloudDraft = {fileHash: string; update: string; commitHash: string}
       const data = await parseOutcome<CloudDraft | null>(
-        fetch(cloudConfig.upload, json({headers: bearer(ctx)}))
+        fetch(cloudConfig.drafts, json({headers: bearer(ctx)}))
       )
       return data
         ? {
