@@ -72,7 +72,7 @@ export function BrowserPreview({
 
     function handleMessage(event: MessageEvent<PreviewMessage>) {
       if (!event.data || typeof event.data !== 'object') return
-      if (event.data.action === PreviewAction.Pong) {
+      if (event.data.action === PreviewAction.Ping) {
         console.log('[Alinea preview window detected]')
         hasPreviewListener.current = true
         registerLivePreview({
@@ -80,6 +80,7 @@ export function BrowserPreview({
             post({action: PreviewAction.Preview, ...update})
           }
         })
+        post({action: PreviewAction.Pong})
       }
       if (event.data.action === PreviewAction.Meta) {
         metaContext.setMetadata(event.data)
@@ -136,11 +137,6 @@ export function BrowserPreview({
           src={url}
           onLoad={() => {
             setLoading(false)
-            try {
-              post({action: PreviewAction.Ping})
-            } catch (e) {
-              hasPreviewListener.current = false
-            }
           }}
         />
       </div>

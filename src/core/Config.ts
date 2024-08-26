@@ -22,6 +22,7 @@ export interface Config {
   schema: Schema
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
+
   /** A url which will be embedded in the dashboard for live previews */
   preview?: Preview
   /** Every edit will pass through a draft phase before being published */
@@ -29,16 +30,29 @@ export interface Config {
   /** The interval in seconds at which the frontend will poll for updates */
   syncInterval?: number
 
-  /**
-    publicDir?: string
+  /** The base url of the application */
+  baseUrl?: string | {development?: string; production?: string}
+  /** The url of the handler endpoint */
+  apiUrl?: string
+  /** The folder where public assets are stored, defaults to /public */
+  publicDir?: string
+  /** Filename of the generated dashboard, defaults to /admin.html */
   dashboardFile?: string
-  handlerUrl?: 
-  */
 
+  /** @deprecated */
   dashboard?: DashboardConfig
 }
 
 export namespace Config {
+  export function dashboardUrl(config: Config) {
+    const base =
+      typeof config.baseUrl === 'object'
+        ? config.baseUrl[process.env.NODE_ENV as 'development' | 'production']
+        : config.baseUrl
+    if (base && config.dashboardFile)
+      return new URL(config.dashboardFile, base).href
+    return config.dashboard?.dashboardUrl
+  }
   export function mainWorkspace(config: Config): WorkspaceData {
     const key = Object.keys(config.workspaces)[0]
     return Workspace.data(config.workspaces[key])
@@ -77,6 +91,8 @@ export function createConfig<Definition extends Config>(
     throw new Error(`"MediaLibrary" is a reserved Type name`)
   const res = {
     ...definition,
+    publicDir: definition.publicDir ?? '/public',
+    dashboardFile: definition.dashboardFile ?? '/admin.html',
     schema: {...definition.schema, MediaLibrary, MediaFile},
     dashboard: {
       auth: CloudAuthView,

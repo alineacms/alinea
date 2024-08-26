@@ -121,13 +121,10 @@ export namespace router {
     })
   }
 
-  export function startAt(base: string) {
-    return matcher(({pathname}) => {
-      const start = pathname.indexOf(base)
-      if (start > -1) return pathname.slice(start)
-      return pathname
-    })
-  }
+  export const queryMatcher = matcher(({search}) => {
+    const rest = search.indexOf('&')
+    return rest > -1 ? search.slice(1, rest) : search.slice(1)
+  })
 
   export async function parseFormData<In extends {request: Request}>(
     input: In

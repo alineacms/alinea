@@ -1,5 +1,5 @@
-import {JsonLoader} from 'alinea/backend'
-import {History, Revision} from 'alinea/backend/History'
+import {JsonLoader, Revision} from 'alinea/backend'
+import {History, RequestContext} from 'alinea/backend/Backend'
 import {Config} from 'alinea/core/Config'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {join} from 'alinea/core/util/Paths'
@@ -14,7 +14,7 @@ export class GitHistory implements History {
     public rootDir: string
   ) {}
 
-  async revisions(file: string): Promise<Array<Revision>> {
+  async list(ctx: RequestContext, file: string): Promise<Array<Revision>> {
     const list = await this.git.log([
       '--follow',
       '--name-status',
@@ -39,7 +39,11 @@ export class GitHistory implements History {
     })
   }
 
-  async revisionData(file: string, ref: string): Promise<EntryRecord> {
+  async revision(
+    ctx: RequestContext,
+    file: string,
+    ref: string
+  ): Promise<EntryRecord> {
     const {config} = this
     const data = await this.git.show([`${ref}:${file}`, '--format=%B'])
     try {

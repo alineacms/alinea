@@ -11,7 +11,9 @@ async function run({production, dir, config}) {
   const {serve} = await import('alinea/cli/Serve')
   return serve({
     alineaDev: true,
+    watch: true,
     production,
+    base: 'http://localhost:3000',
     cwd: path.resolve(dir),
     configFile: config,
     staticDir: path.resolve('src/cli/static'),

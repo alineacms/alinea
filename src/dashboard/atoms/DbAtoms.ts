@@ -47,7 +47,7 @@ const localDbAtom = atom(async (get, set) => {
   }
   const resolver = new EntryResolver(db, config.schema)
   const syncDb = async (force = false) => {
-    const changed = await db.syncWith(client, force)
+    const changed = await db.syncWith(client)
     if (changed.length > 0) await flush()
     return changed
   }

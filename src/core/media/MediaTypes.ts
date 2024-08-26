@@ -1,9 +1,6 @@
 import {hidden} from 'alinea/field/hidden'
-import {Entry} from '../Entry.js'
 import {Hint} from '../Hint.js'
-import {Query} from '../Query.js'
 import {Type, type} from '../Type.js'
-import {Projection} from '../pages/Projection.js'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {

@@ -8,6 +8,17 @@ export interface PreviewApi {
 
 export function registerPreview(api: PreviewApi) {
   if (typeof window === 'undefined') return
+  let observer: MutationObserver | null = null
+  if (window.location != window.parent.location) {
+    window.parent.postMessage({action: PreviewAction.Ping}, '*')
+    addEventListener('message', handleMessage)
+    console.log('[Alinea preview listener attached]')
+  }
+  return () => {
+    if (observer) observer.disconnect()
+    removeEventListener('message', handleMessage)
+  }
+
   function handleMessage(event: MessageEvent<PreviewMessage>) {
     if (!event.data || typeof event.data !== 'object') return
     const message = event.data as PreviewMessage
@@ -25,47 +36,25 @@ export function registerPreview(api: PreviewApi) {
       case PreviewAction.Next:
         console.log('[Alinea preview next received]')
         return history.forward()
-      case PreviewAction.Ping:
-        console.log('[Alinea preview ping received]')
+      case PreviewAction.Pong:
+        console.log('[Alinea preview pong received]')
         api.setIsPreviewing(true)
-        return window.parent.postMessage(
-          {action: PreviewAction.Pong},
-          event.origin
-        )
+        try {
+          fetchAndSendMetadata()
+          observer = new MutationObserver(fetchAndSendMetadata)
+          observer.observe(document.head, {childList: true})
+          console.log('[Alinea meta data sent to parent]')
+        } catch (e) {
+          console.error('[Alinea meta data sent to parent failed]')
+        }
     }
-  }
-  let observer: MutationObserver | null = null
-  if (window.location != window.parent.location) {
-    // On first load send a pong because we might have missed ping,
-    // this can warn in the console but it seems we cannot catch it
-    window.parent.postMessage({action: PreviewAction.Pong}, document.referrer)
-    addEventListener('message', handleMessage)
-    console.log('[Alinea preview listener attached]')
-
-    function fetchAndSendMetadata() {
-      const meta = fetchMetadataFromDocument()
-      window.parent.postMessage(
-        {action: PreviewAction.Meta, ...meta},
-        document.referrer
-      )
-    }
-    try {
-      fetchAndSendMetadata()
-      observer = new MutationObserver(mutationList => {
-        fetchAndSendMetadata()
-      })
-      observer.observe(document.head, {childList: true})
-      console.log('[Alinea meta data send to parent]')
-    } catch (e) {
-      console.error('[Alinea meta data send to parent failed]')
-    }
-  }
-  return () => {
-    if (observer) observer.disconnect()
-    removeEventListener('message', handleMessage)
   }
 }
 
+function fetchAndSendMetadata() {
+  const meta = fetchMetadataFromDocument()
+  window.parent.postMessage({action: PreviewAction.Meta, ...meta}, '*')
+}
 function fetchMetadataFromDocument(): PreviewMetadata {
   return {
     title: document.title,

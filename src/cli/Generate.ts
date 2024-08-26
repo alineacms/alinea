@@ -3,11 +3,12 @@ import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
-import {join} from 'alinea/core/util/Paths'
+import {basename, join} from 'alinea/core/util/Paths'
 import {BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
+import prettyBytes from 'pretty-bytes'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
@@ -23,6 +24,7 @@ const require = createRequire(import.meta.url)
 const alineaPackageDir = path.dirname(require.resolve('alinea/package.json'))
 
 export interface GenerateOptions {
+  cmd: 'dev' | 'build'
   cwd?: string
   staticDir?: string
   configFile?: string
@@ -34,14 +36,17 @@ export interface GenerateOptions {
   dashboardUrl?: Promise<string>
 }
 
-function generatePackage(context: GenerateContext, config: Config) {
-  const dashboard = config.dashboard
-  if (dashboard?.staticFile)
-    return generateDashboard(
-      context,
-      dashboard.handlerUrl,
-      dashboard.staticFile!
-    )
+async function generatePackage(context: GenerateContext, config: Config) {
+  if (!config.dashboardFile && !config.dashboard) return
+  const staticFile =
+    join(config.publicDir, config.dashboardFile) || config.dashboard?.staticFile
+  if (!staticFile) return
+  await generateDashboard(
+    context,
+    config.apiUrl ?? config.dashboard?.handlerUrl ?? '/api/cms',
+    staticFile
+  )
+  return basename(staticFile)
 }
 
 async function createDb(): Promise<[Store, () => Uint8Array]> {
@@ -62,6 +67,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   void
 > {
   const {
+    cmd,
     wasmCache = false,
     cwd = process.cwd(),
     configFile,
@@ -89,8 +95,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configDir,
     configLocation,
     fix: options.fix || false,
-    outDir: path.join(nodeModules, '@alinea/generated'), // path.join(rootDir, '.alinea'),
-    watch: options.watch || false
+    outDir: path.join(nodeModules, '@alinea/generated'),
+    watch: cmd === 'dev' || false
   }
   await copyStaticFiles(context)
   const builds = compileConfig(context)[Symbol.asyncIterator]()
@@ -106,7 +112,17 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     nextBuild = builds.next()
     try {
       const cms = await loadCMS(context.outDir)
-      await writeStore(new Uint8Array())
+      const write = async () => {
+        const [adminFile, dbSize] = await Promise.all([
+          generatePackage(context, cms.config),
+          writeStore(storeData())
+        ])
+        let message = 'generated '
+        if (adminFile) message += `${adminFile} and `
+        message += `db (${prettyBytes(dbSize)})`
+        console.log(`\x1b[90m${message}\x1b[39m`)
+      }
+
       const fileData = new LocalData({
         config: cms.config,
         fs: fs.promises,
@@ -123,14 +139,12 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         yield {cms, db, localData: fileData}
         if (onAfterGenerate && !afterGenerateCalled) {
           afterGenerateCalled = true
+          await write()
           onAfterGenerate()
         }
       }
-      if (done) {
-        await Promise.all([
-          generatePackage(context, cms.config),
-          writeStore(storeData())
-        ])
+      if (done && !afterGenerateCalled) {
+        await write()
         break
       }
     } catch (e: any) {

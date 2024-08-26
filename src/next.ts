@@ -1,1 +1,2 @@
-export {createNextCMS as createCMS} from 'alinea/core/driver/NextDriver'
+export {createCMS} from 'alinea/adapter/next/cms'
+export {createHandler} from 'alinea/adapter/next/handler'

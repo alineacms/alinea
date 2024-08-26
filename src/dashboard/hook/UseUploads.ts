@@ -1,4 +1,3 @@
-import {Media} from 'alinea/backend/Media'
 import {Connection} from 'alinea/core/Connection'
 import {Entry} from 'alinea/core/Entry'
 import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
@@ -8,7 +7,8 @@ import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Workspace} from 'alinea/core/Workspace'
 import {createPreview} from 'alinea/core/media/CreatePreview.browser'
 import {isImage} from 'alinea/core/media/IsImage'
-import type {MediaFile} from 'alinea/core/media/MediaTypes'
+import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
+import {type MediaFile} from 'alinea/core/media/MediaTypes'
 import {createFileHash} from 'alinea/core/util/ContentHash'
 import {entryFileName, entryFilepath} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
@@ -60,7 +60,7 @@ export interface Upload {
   thumbHash?: string
   width?: number
   height?: number
-  result?: Media.File
+  result?: EntryRow<MediaFile>
   error?: Error
   replace?: {entry: EntryRow; entryFile: string}
 }
@@ -80,7 +80,7 @@ const tasker = {
 
 async function process(
   upload: Upload,
-  publishUpload: (upload: Upload) => Promise<Media.File>,
+  publishUpload: (upload: Upload) => Promise<EntryRow<MediaFile>>,
   client: Connection
 ): Promise<Upload> {
   switch (upload.status) {
@@ -213,7 +213,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
 
     const hash = await createFileHash(new Uint8Array(buffer))
     const title = basename(upload.file.name, extensionOriginal)
-    const entry = await createEntryRow<Media.File>(config, {
+    const entry = await createEntryRow<EntryRow<MediaFile>>(config, {
       ...entryLocation,
       parent: parent?.entryId ?? null,
       entryId: entryId,
@@ -275,7 +275,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         if (next.error) {
           setErrorAtom(next.error.message, next.error)
         }
-        const result = next.result as Media.Image | undefined
+        const result = next.result as EntryRow<MediaImage> | undefined
         if (!result) break
         onSelect?.(result)
         break
@@ -306,7 +306,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       )
       return entry
     }
-    const newEntry = await createEntryRow<Media.File>(config, {
+    const newEntry = await createEntryRow<EntryRow<MediaFile>>(config, {
       ...replace.entry,
       data: {...entry.data, title: replace.entry.title}
     })
@@ -330,8 +330,8 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         file: replace.entryFile,
         workspace: replace.entry.workspace,
         location:
-          Media.ORIGINAL_LOCATION in mediaFile
-            ? (mediaFile[Media.ORIGINAL_LOCATION] as string)
+          MEDIA_LOCATION in mediaFile
+            ? (mediaFile[MEDIA_LOCATION] as string)
             : mediaFile.location,
         replace: true
       }

@@ -1,6 +1,5 @@
 import {Client} from 'alinea/core/Client'
 import {Config} from 'alinea/core/Config'
-import {joinPaths} from 'alinea/core/util/Urls'
 import {useSetAtom} from 'jotai'
 import {useEffect, useMemo, useState} from 'react'
 import {QueryClient} from 'react-query'
@@ -47,8 +46,7 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
   const client = useMemo(() => {
     if (!config) return null
     return new Client({
-      config: config,
-      url: joinPaths(location.origin, location.pathname)
+      url: new URL('/api', location.href).href
     })
   }, [config])
   function getConfig() {

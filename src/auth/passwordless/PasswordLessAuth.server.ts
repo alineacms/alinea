@@ -32,10 +32,10 @@ export class PasswordLessAuth implements Auth.Server {
   users = new WeakMap<Request, User>()
 
   constructor(protected options: PasswordLessAuthOptions) {
-    const matcher = router.startAt(Connection.routes.base)
+    const matcher = router.queryMatcher
     this.router = router(
       matcher
-        .post(Connection.routes.base + '/auth.passwordless')
+        .post('/auth/passwordless')
         .map(router.parseJson)
         .map(async ({body}) => {
           assert(body, LoginBody)

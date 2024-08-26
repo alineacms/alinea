@@ -88,19 +88,23 @@ export async function exportStore(
   data: Uint8Array,
   location: string,
   asWasm = false
-) {
+): Promise<number> {
   const staticDir = path.join(__dirname, '../static')
   const source = await fs.readFile(
     path.join(staticDir, `store.${asWasm ? 'wasm' : 'embed'}.js`),
     'utf-8'
   )
   if (!asWasm) {
-    await fs.writeFile(location, await embedInJs(source, data))
+    const payload = await embedInJs(source, data)
+    await fs.writeFile(location, payload)
+    return payload.length
   } else {
     await fs.writeFile(
       location,
       source.replace('$WASM', path.basename(location) + '.wasm')
     )
-    await fs.writeFile(location + '.wasm', embedInWasm(data))
+    const payload = embedInWasm(data)
+    await fs.writeFile(location + '.wasm', payload)
+    return payload.length
   }
 }

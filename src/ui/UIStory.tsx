@@ -7,7 +7,7 @@ import '../global.css'
 import {px} from './util/Units.js'
 
 const example = createExample()
-const client = await example.connection()
+const client = undefined! // await example.connection()
 
 export interface UIStoryProps extends PropsWithChildren<{}> {
   fullWidth?: boolean

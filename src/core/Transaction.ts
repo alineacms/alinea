@@ -29,13 +29,6 @@ import {slugify} from './util/Slugs.js'
 export interface Transaction {
   (cms: CMS): Promise<Array<Mutation>>
 }
-export namespace Transaction {
-  export async function commit(cms: CMS, tx: Array<Transaction>) {
-    const mutations = await Promise.all(tx.map(task => task(cms)))
-    const cnx = await cms.connection()
-    return cnx.mutate(mutations.flat())
-  }
-}
 
 export interface Operation {
   [Operation.Data]: Transaction
@@ -68,10 +61,9 @@ export class UploadOperation extends Operation {
   private root?: string
 
   constructor(file: File | [string, Uint8Array], options: UploadOptions = {}) {
-    super(async ({config, graph, connection}): Promise<Array<Mutation>> => {
+    super(async ({config, graph, connect}: CMS): Promise<Array<Mutation>> => {
       const fileName = Array.isArray(file) ? file[0] : file.name
       const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
-      const cnx = await connection()
       const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
       const root =
         this.root ?? Workspace.defaultMediaRoot(config.workspaces[workspace])
@@ -79,6 +71,7 @@ export class UploadOperation extends Operation {
       const path = slugify(basename(fileName, extension))
       const directory = workspaceMediaDir(config, workspace)
       const uploadLocation = join(directory, path + extension)
+      const cnx = await connect()
       const info = await cnx.prepareUpload(uploadLocation)
       const previewData = isImage(fileName)
         ? await options.createPreview?.(

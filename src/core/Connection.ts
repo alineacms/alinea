@@ -1,11 +1,11 @@
-import {Drafts} from 'alinea/backend/Drafts'
-import {History, Revision} from 'alinea/backend/History'
+import {Revision} from 'alinea/backend'
+import {PreviewInfo} from 'alinea/backend/Previews'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
 import {Mutation} from './Mutation.js'
-import {Resolver} from './Resolver.js'
+import {ResolveRequest} from './Resolver.js'
 import {User} from './User.js'
 import {Logger} from './util/Logger.js'
 
@@ -19,8 +19,10 @@ export interface Syncable {
   sync(contentHashes: Array<string>): Promise<SyncResponse>
 }
 
-export interface Connection extends Resolver, Syncable, History, Drafts {
-  previewToken(): Promise<string>
+export interface Connection extends Syncable {
+  user(): Promise<User | undefined>
+  resolve(params: ResolveRequest): Promise<unknown>
+  previewToken(request: PreviewInfo): Promise<string>
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>
@@ -28,7 +30,7 @@ export interface Connection extends Resolver, Syncable, History, Drafts {
   getDraft(entryId: string): Promise<Draft | undefined>
   storeDraft(draft: Draft): Promise<void>
 }
-0
+
 export namespace Connection {
   export type UploadParams = {
     parentId?: string
@@ -77,43 +79,40 @@ export namespace Connection {
   export interface AuthContext {
     user?: User
     token?: string
-    // Eventually we'll probably want to enable preview hashes that specify
-    // exactly which drafts we'd like to see. For now we'll just add in the
-    // entry id we're previewing.
-    preview?: string
   }
   export interface Context extends AuthContext {
     logger: Logger
   }
-  const base = '/hub'
   export const routes = {
-    base,
     resolve() {
-      return base + `/resolve`
+      return `/resolve`
     },
     mutate() {
-      return base + `/mutate`
+      return `/mutate`
     },
     revisions() {
-      return base + `/revisions`
+      return `/revisions`
     },
     sync() {
-      return base + `/sync`
+      return `/sync`
     },
     draft() {
-      return base + `/draft`
+      return `/draft`
     },
     media() {
-      return base + `/media`
+      return `/media`
     },
     prepareUpload() {
-      return base + `/upload`
+      return `/upload`
     },
     files(location?: string) {
-      return base + `/files${location ? '/' + location : ''}`
+      return `/files&location=${location}`
     },
     previewToken() {
-      return base + `/preview-token`
+      return `/preview-token`
+    },
+    preview() {
+      return `/preview`
     }
   }
 }

@@ -1,6 +1,6 @@
+import * as schema from '@/schema'
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/next'
-import * as schema from './schema'
 
 const pages = Config.root('Pages', {
   contains: ['Page', 'Home'],
@@ -49,18 +49,12 @@ const demo = Config.workspace('Demo', {
   }
 })
 
-const config = Config.create({
+export const cms = createCMS({
   schema,
   workspaces: {main, demo},
-  dashboard: {
-    dashboardUrl: '/admin.html',
-    handlerUrl: '/api/cms',
-    staticFile: 'public/admin.html'
-  },
+  apiUrl: '/api/cms',
   preview:
     process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000/api/preview'
-      : '/api/preview'
+      ? 'http://localhost:3000/api/cms'
+      : '/api/cms'
 })
-
-export const cms = createCMS(config)

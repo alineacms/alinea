@@ -1,7 +1,7 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
-import {Handler} from 'alinea/backend'
+import {HandlerWithConnect} from 'alinea/backend/Handler'
 import {HttpRouter, router} from 'alinea/backend/router/Router'
-import {cloudUrl} from 'alinea/cloud/server/CloudConfig'
+import {cloudUrl} from 'alinea/cloud/CloudConfig'
 import {Trigger, trigger} from 'alinea/core/Trigger'
 import {User} from 'alinea/core/User'
 import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
@@ -67,7 +67,7 @@ export function createLocalServer(
     production,
     liveReload
   }: ServeContext,
-  handler: Handler,
+  handleApi: HandlerWithConnect,
   user: User
 ): HttpRouter {
   const devDir = path.join(staticDir, 'dev')
@@ -97,7 +97,7 @@ export function createLocalServer(
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
       'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
-      'process.env.NODE_ENV': production ? "'production'" : "'development'",
+      'process.env.NODE_ENV': production ? '"production"' : '"development"',
       'process.env.ALINEA_CLOUD_URL': cloudUrl
         ? JSON.stringify(cloudUrl)
         : 'undefined',
@@ -107,7 +107,8 @@ export function createLocalServer(
       'ignored-bare-import': 'silent'
     },
     tsconfig,
-    write: false
+    write: false,
+    external: ['node:async_hooks']
   } satisfies BuildOptions
 
   config.plugins.push({
@@ -150,14 +151,12 @@ export function createLocalServer(
       }
     })
   }
-
   const httpRouter = router(
     matcher.get('/~dev').map((): Response => {
-      const stream = new ReadableStream({
+      const stream = new ReadableStream<string>({
         start(controller) {
           liveReload.register({
-            // Todo: check types here
-            write: v => controller.enqueue(v as any),
+            write: v => controller.enqueue(v),
             close: () => controller.close()
           })
         }
@@ -171,7 +170,7 @@ export function createLocalServer(
         }
       })
     }),
-    matcher.post('/upload').map(async ({request, url}) => {
+    router.queryMatcher.post('/upload').map(async ({request, url}) => {
       if (!request.body) return new Response('No body', {status: 400})
       const file = url.searchParams.get('file')!
       const dir = path.join(cwd, path.dirname(file))
@@ -182,10 +181,10 @@ export function createLocalServer(
       )
       return new Response('Upload ok')
     }),
-    matcher.get('/preview').map(async ({request, url}) => {
-      return new Response()
-    }),
     router.compress(
+      matcher.all('/api').map(async ({url, request}) => {
+        return handleApi(request, {apiKey: 'dev'})
+      }),
       matcher.get('/').map(({url}): Response => {
         const handlerUrl = `${url.protocol}//${url.host}`
         return new Response(
@@ -194,17 +193,14 @@ export function createLocalServer(
           <link rel="icon" href="data:," />
           <link href="/entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
-          <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
+          <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
+          <meta name="redirect_url" value="${handlerUrl}?auth=login" />
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,
-          {
-            headers: {'content-type': 'text/html'}
-          }
+          {headers: {'content-type': 'text/html'}}
         )
       }),
-      handler.router,
       serveBrowserBuild
     )
   ).notFound(() => new Response('Not found', {status: 404}))

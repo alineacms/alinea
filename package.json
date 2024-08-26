@@ -43,6 +43,7 @@
   "workspaces": [
     "apps/web",
     "apps/dev",
+    "src/adapter",
     "src/backend",
     "src/cli",
     "src/core",
@@ -81,14 +82,15 @@
     "npm-run-all": "^4.1.5",
     "postcss-modules": "^6.0.0",
     "postcss-pxtorem": "^6.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "sass": "^1.63.4",
     "sharp": "0.32.6",
     "speedscope": "^1.14.0",
     "typescript": "^5.5.3",
     "typescript-plugin-css-modules": "^5.0.2",
-    "uvu": "^0.5.1"
+    "uvu": "^0.5.1",
+    "yjs-src": "npm:yjs@13.6.11"
   },
   "packageManager": "yarn@4.1.0",
   "resolutions": {
@@ -221,16 +223,6 @@
       "worker": "./dist/cli/util/ExportStore.server.js",
       "browser": "./dist/cli/util/ExportStore.js",
       "default": "./dist/cli/util/ExportStore.server.js"
-    },
-    "./core/driver/DefaultDriver": {
-      "worker": "./dist/core/driver/DefaultDriver.server.js",
-      "browser": "./dist/core/driver/DefaultDriver.js",
-      "default": "./dist/core/driver/DefaultDriver.server.js"
-    },
-    "./core/driver/NextDriver": {
-      "worker": "./dist/core/driver/NextDriver.server.js",
-      "browser": "./dist/core/driver/NextDriver.js",
-      "default": "./dist/core/driver/NextDriver.server.js"
     }
   }
 }

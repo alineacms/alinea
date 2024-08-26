@@ -1,20 +1,19 @@
-import {JsonLoader, Media} from 'alinea/backend'
+import {JsonLoader} from 'alinea/backend'
+import {AuthedContext, Media, Target} from 'alinea/backend/Backend'
 import {FS} from 'alinea/backend/FS'
+import {Source, SourceEntry, WatchFiles} from 'alinea/backend/Source'
+import {ChangeType} from 'alinea/backend/data/ChangeSet'
+import {applyJsonPatch} from 'alinea/backend/util/JsonPatch'
 import {Config} from 'alinea/core/Config'
+import {Connection} from 'alinea/core/Connection'
 import {createId} from 'alinea/core/Id'
 import {outcome} from 'alinea/core/Outcome'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
 import {entries, keys, values} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
-import {slugify} from 'alinea/core/util/Slugs'
-import {Source, SourceEntry, WatchFiles} from '../../backend/Source.js'
-import {Target} from '../../backend/Target.js'
-import {ChangeType} from '../../backend/data/ChangeSet.js'
-import {applyJsonPatch} from '../../backend/util/JsonPatch.js'
-
-import {Connection} from 'alinea/core/Connection'
 import {basename, dirname, extname, join} from 'alinea/core/util/Paths'
+import {slugify} from 'alinea/core/util/Slugs'
 
 export interface LocalDataOptions {
   config: Config
@@ -122,7 +121,10 @@ export class LocalData implements Source, Target, Media {
     yield* runBatch()
   }
 
-  async mutate({mutations}: Connection.MutateParams) {
+  async mutate(
+    ctx: AuthedContext,
+    {mutations}: Connection.MutateParams
+  ): Promise<{commitHash: string}> {
     const {fs, rootDir = '.', config} = this.options
     const noop = () => {}
     for (const {changes} of mutations) {
@@ -172,7 +174,10 @@ export class LocalData implements Source, Target, Media {
     return mediaDirs.some(dir => path.contains(path.join(rootDir, dir), file))
   }
 
-  async prepareUpload(file: string): Promise<Connection.UploadResponse> {
+  async upload(
+    ctx: AuthedContext,
+    file: string
+  ): Promise<Connection.UploadResponse> {
     const {dashboardUrl} = this.options
     if (!dashboardUrl)
       throw new Error(`Cannot prepare upload without dashboard url`)
@@ -186,12 +191,12 @@ export class LocalData implements Source, Target, Media {
       entryId,
       location: fileLocation,
       previewUrl: new URL(
-        `/preview?file=${encodeURIComponent(fileLocation)}`,
+        `?/preview&file=${encodeURIComponent(fileLocation)}`,
         dashboardUrl
       ).href,
       upload: {
         url: new URL(
-          `/upload?file=${encodeURIComponent(fileLocation)}`,
+          `?/upload&file=${encodeURIComponent(fileLocation)}`,
           dashboardUrl
         ).href
       }

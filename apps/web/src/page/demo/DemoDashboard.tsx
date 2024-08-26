@@ -2,12 +2,12 @@
 
 import * as schema from '@/schema/demo'
 import {Config, Edit} from 'alinea'
-import {createMemoryHandler} from 'alinea/backend/data/MemoryHandler'
+import {createCMS} from 'alinea/adapter/test/TestCMS'
+import {memoryBackend} from 'alinea/backend/data/MemoryBackend'
+import {createHandler} from 'alinea/backend/Handler'
 import {Entry} from 'alinea/core/Entry'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {localUser} from 'alinea/core/User'
-import {createTestCMS} from 'alinea/core/driver/TestDriver'
-import {Logger} from 'alinea/core/util/Logger'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
@@ -67,14 +67,15 @@ function PreviewRecipe({entry}) {
 }
 
 async function setup(entries: Array<Entry>) {
-  const cms = createTestCMS(config)
+  const cms = createCMS(config)
   for (const entry of entries) {
     await cms.commit(Edit.createEntry(entry))
   }
   const db = await cms.db
-  const handler = createMemoryHandler(config, db)
+  const backend = memoryBackend(db)
+  const handler = createHandler(cms, backend)
   const client = handler.connect({
-    logger: new Logger('local'),
+    apiKey: 'dev',
     user: localUser
   })
   return {cms, client}

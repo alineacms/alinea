@@ -8,10 +8,10 @@ import {Root} from 'alinea/core/Root'
 import {Schema} from 'alinea/core/Schema'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
+import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import {createFileHash, createRowHash} from 'alinea/core/util/ContentHash'
 import {entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow, publishEntryRow} from 'alinea/core/util/EntryRows'
-import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
@@ -34,10 +34,9 @@ import {
 import {Builder} from 'rado/core/Builder'
 import xxhash from 'xxhash-wasm'
 import {EntryPhase, EntryRow, entryVersionId} from '../core/EntryRow.js'
-import {Media} from './Media.js'
+import {AuthedContext, Target} from './Backend.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
-import {Target} from './Target.js'
 import {Change, ChangeType} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
@@ -388,14 +387,14 @@ export class Database implements Syncable {
         )
         const existing = await tx.select().from(EntryRow).where(condition).get()
         if (!existing) return
-        if (process.env.NODE_ENV !== 'develoment')
+        if (process.env.NODE_ENV !== 'development')
           await tx
             .update(EntryRow)
             .set({
               data: {
                 ...existing.data,
                 location: mutation.url,
-                [Media.ORIGINAL_LOCATION]: existing.data.location
+                [MEDIA_LOCATION]: existing.data.location
               }
             })
             .where(condition)
@@ -429,6 +428,7 @@ export class Database implements Syncable {
   async meta() {
     return (
       (await this.store.select().from(AlineaMeta).get()) ?? {
+        revisionId: '',
         commitHash: '',
         contentHash: '',
         modifiedAt: 0
@@ -468,8 +468,10 @@ export class Database implements Syncable {
       .from(EntryRow)
       .orderBy(desc(EntryRow.modifiedAt))
       .get()
+    const current = await tx.select().from(AlineaMeta).get()
     await tx.delete(AlineaMeta)
     await tx.insert(AlineaMeta).values({
+      revisionId: current?.revisionId ?? createId(),
       commitHash,
       contentHash,
       modifiedAt: modifiedAt ?? 0
@@ -716,10 +718,10 @@ export class Database implements Syncable {
         }
       }
       if (fix && changes.length > 0)
-        await target!.mutate(
-          {commitHash: '', mutations: [{changes, meta: undefined!}]},
-          {logger: new Logger('seed')}
-        )
+        await target!.mutate({} as AuthedContext, {
+          commitHash: '',
+          mutations: [{changes, meta: undefined!}]
+        })
       const stableI18nIds = new Map<string, string>()
       for (const seed of this.seed.values()) {
         const key = seedKey(seed.workspace, seed.root, seed.filePath)
@@ -818,10 +820,10 @@ export class Database implements Syncable {
         )
         return {type: ChangeType.Write, file, contents}
       })
-      await target.mutate(
-        {commitHash: '', mutations: [{changes, meta: undefined!}]},
-        {logger: new Logger('seed')}
-      )
+      await target.mutate({} as AuthedContext, {
+        commitHash: '',
+        mutations: [{changes, meta: undefined!}]
+      })
     }
   }
 }

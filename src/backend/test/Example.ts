@@ -1,10 +1,10 @@
+import {createCMS} from 'alinea/adapter/test/TestCMS'
 import {document} from 'alinea/core/Document'
 import {Entry} from 'alinea/core/Entry'
 import {page} from 'alinea/core/Page'
 import {root} from 'alinea/core/Root'
 import {type} from 'alinea/core/Type'
 import {workspace} from 'alinea/core/Workspace'
-import {createTestCMS} from 'alinea/core/driver/TestDriver'
 import {createMediaRoot} from 'alinea/core/media/MediaRoot'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import {
@@ -212,7 +212,7 @@ export function createExample() {
     }
   })
 
-  return createTestCMS({
+  return createCMS({
     schema: {Fields, Page, Container},
     workspaces: {main}
   })
