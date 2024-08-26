@@ -78,7 +78,8 @@ function serialize(
     })
   }
   const res: ElementNode = {[Node.type]: item.nodeName}
-  const attrs = item?.getAttributes()
+  const attrs =
+    typeof item.getAttributes === 'function' ? item.getAttributes() : undefined
   if (attrs && Object.keys(attrs).length) Object.assign(res, attrs)
   const children = item.toArray()
   if (children.length) {
