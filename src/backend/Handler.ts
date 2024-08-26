@@ -59,7 +59,6 @@ const SyncBody = array(string)
 
 export enum HandleAction {
   User = 'user',
-  Auth = 'auth',
   Resolve = 'resolve',
   Pending = 'pending',
   Sync = 'sync',
@@ -288,10 +287,11 @@ export function createHandler(
     const previews = new JWTPreviews(context.apiKey)
     const url = new URL(request.url)
     const params = url.searchParams
-    const action = params.get('action') as HandleAction
+    const auth = params.get('auth')
 
-    if (action === HandleAction.Auth)
-      return backend.auth.authenticate(context, request)
+    if (auth) return backend.auth.authenticate(context, request)
+
+    const action = params.get('action') as HandleAction
 
     const isJson = request.headers
       .get('content-type')
