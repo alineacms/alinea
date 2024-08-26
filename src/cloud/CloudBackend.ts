@@ -10,6 +10,7 @@ import {
   RequestContext,
   Target
 } from 'alinea/backend/Backend'
+import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {router} from 'alinea/backend/router/Router'
 import {Config} from 'alinea/core/Config'
 import {HttpError} from 'alinea/core/HttpError'
@@ -290,12 +291,20 @@ export function cloudBackend(config: Config): Backend {
   const pending: Pending = {
     async since(ctx, commitHash) {
       if (!validApiKey(ctx.apiKey)) return
-      return parseOutcome(
+      return parseOutcome<Array<{commitHashTo: string; mutations: ChangeSet}>>(
         fetch(
           cloudConfig.pending + '?' + new URLSearchParams({since: commitHash}),
           json({headers: bearer(ctx)})
         )
-      )
+      ).then(pending => {
+        if (pending.length === 0) return undefined
+        return {
+          toCommitHash: pending[pending.length - 1].commitHashTo,
+          mutations: pending.flatMap(mutate =>
+            mutate.mutations.flatMap(m => m.meta)
+          )
+        }
+      })
     }
   }
   return {
