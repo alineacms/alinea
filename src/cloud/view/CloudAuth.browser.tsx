@@ -18,7 +18,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {data, isError} = useQuery(
     ['auth.cloud'],
     () => {
-      return fetch(new URL('?auth=cloud', clientUrl), {
+      return fetch(new URL('?auth=status', clientUrl), {
         credentials: 'include'
       }).then<AuthResult>(res => res.json())
     },
