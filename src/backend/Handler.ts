@@ -302,7 +302,8 @@ export function createHandler(
         const authorization = request.headers.get('authorization')
         const bearer = authorization?.slice('Bearer '.length)
         if (!context.apiKey) throw new Error('Missing API key')
-        if (bearer !== context.apiKey) throw new Error('Unauthorized')
+        if (bearer !== context.apiKey)
+          throw new Error('Expected matching api key')
         return context
       }
     }
