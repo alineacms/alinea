@@ -58,6 +58,7 @@ const PreviewBody = object({
 const SyncBody = array(string)
 
 export enum HandleAction {
+  User = 'user',
   Auth = 'auth',
   Resolve = 'resolve',
   Pending = 'pending',
@@ -330,6 +331,10 @@ export function createHandler(
     // Verify auth
     const verified = await backend.auth.verify(context, request)
     if (!verified) return new Response('Unauthorized', {status: 401})
+
+    // User
+    if (action === HandleAction.User && request.method === 'GET')
+      return Response.json(verified.user)
 
     // Sign preview token
     if (action === HandleAction.PreviewToken && request.method === 'POST')

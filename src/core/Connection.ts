@@ -20,6 +20,7 @@ export interface Syncable {
 }
 
 export interface Connection extends Syncable {
+  user(): Promise<User | undefined>
   resolve(params: ResolveRequest): Promise<unknown>
   previewToken(request: PreviewInfo): Promise<string>
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
