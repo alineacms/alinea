@@ -4,6 +4,7 @@ import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
 import {ResolveDefaults} from 'alinea/core/Resolver'
+import {User} from 'alinea/core/User'
 import {alineaCookies} from 'alinea/preview/AlineaCookies'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {defaultContext} from './context.js'
@@ -23,25 +24,14 @@ export class NextCMS<
     super(config, async () => {
       const context = defaultContext
       const resolveDefaults: ResolveDefaults = {}
-      const {cookies, headers, draftMode} = await import('next/headers.js')
+      const {cookies, draftMode} = await import('next/headers.js')
       const [isDraft] = outcome(() => draftMode().isEnabled)
-      const origin = () => {
-        const host = headers().get('x-forwarded-host') ?? headers().get('host')
-        const proto = headers().get('x-forwarded-proto') ?? 'https'
-        const protocol = proto.endsWith(':') ? proto : proto + ':'
-        return `${protocol}//${host}`
-      }
       const applyAuth: AuthenticateRequest = init => {
         const headers = new Headers(init?.headers)
         headers.set('Authorization', `Bearer ${context.apiKey}`)
         return {...init, headers}
       }
-      const clientUrl = devUrl
-        ? new URL('/api', devUrl)
-        : new URL(
-            config.apiUrl ?? config.dashboard?.handlerUrl ?? '/api/cms',
-            baseUrl ?? origin()
-          )
+      const clientUrl = await this.#clientUrl()
       if (!isDraft) return new Client({url: clientUrl.href, applyAuth})
       const cookie = cookies()
       const previewToken = cookie.get(alineaCookies.previewToken)?.value
@@ -60,6 +50,41 @@ export class NextCMS<
         resolveDefaults
       })
     })
+  }
+
+  async #clientUrl() {
+    const {headers} = await import('next/headers.js')
+    const origin = () => {
+      const host = headers().get('x-forwarded-host') ?? headers().get('host')
+      const proto = headers().get('x-forwarded-proto') ?? 'https'
+      const protocol = proto.endsWith(':') ? proto : proto + ':'
+      return `${protocol}//${host}`
+    }
+    return devUrl
+      ? new URL('/api', devUrl)
+      : new URL(
+          this.config.apiUrl ?? this.config.dashboard?.handlerUrl ?? '/api/cms',
+          this.baseUrl ?? origin()
+        )
+  }
+
+  async user(): Promise<User | undefined> {
+    const {cookies} = await import('next/headers.js')
+    const clientUrl = await this.#clientUrl()
+    const client = new Client({
+      url: clientUrl.href,
+      applyAuth: init => {
+        const headers = new Headers(init?.headers)
+        const cookie = cookies()
+        const alinea = cookie
+          .getAll()
+          .filter(({name}) => name.startsWith('alinea'))
+        for (const {name, value} of alinea)
+          headers.append('cookie', `${name}=${value}`)
+        return {...init, headers}
+      }
+    })
+    return client.user()
   }
 
   previews = async ({widget, workspace, root}: PreviewProps) => {

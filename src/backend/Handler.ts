@@ -235,6 +235,9 @@ export function createHandler(
 
   function connect(context: RequestContext | AuthedContext): Connection {
     return {
+      async user() {
+        return 'user' in context ? context.user : undefined
+      },
       async resolve(params: ResolveRequest) {
         const {resolve} = await init
         return resolve(context, params)

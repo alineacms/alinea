@@ -8,6 +8,7 @@ import {EntryRecord} from './EntryRecord.js'
 import {HttpError} from './HttpError.js'
 import {Mutation} from './Mutation.js'
 import {ResolveDefaults, ResolveRequest} from './Resolver.js'
+import {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
 export type AuthenticateRequest = (
@@ -49,6 +50,12 @@ export class Client implements Connection {
         body: JSON.stringify({filename: file})
       }
     ).then<Connection.UploadResponse>(this.#failOnHttpError)
+  }
+
+  user(): Promise<User | undefined> {
+    return this.#requestJson({action: HandleAction.User})
+      .then<User | null>(this.#failOnHttpError)
+      .then(user => user ?? undefined)
   }
 
   resolve(params: ResolveRequest): Promise<unknown> {
