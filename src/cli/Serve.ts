@@ -24,6 +24,7 @@ import {findConfigFile} from './util/FindConfigFile.js'
 const __dirname = dirname(import.meta.url)
 
 export type ServeOptions = {
+  cmd: 'dev' | 'build'
   cwd?: string
   base?: string
   staticDir?: string
@@ -32,7 +33,6 @@ export type ServeOptions = {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
-  watch?: boolean
   onAfterGenerate?: (env?: Record<string, string>) => void
 }
 
@@ -43,7 +43,8 @@ export async function serve(options: ServeOptions): Promise<void> {
     configFile,
     staticDir = path.join(__dirname, 'static'),
     alineaDev = false,
-    production = false
+    production = false,
+    cmd
   } = options
 
   const configLocation = configFile
@@ -74,24 +75,26 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   server.then(async () => {
     console.log(`  \x1b[36mα Alinea ${pkg.version}\x1b[39m`)
-    console.log(`  - Local CMS:    ${await dashboardUrl}\n`)
+    if (cmd === 'dev') console.log(`  - Local CMS:    ${await dashboardUrl}\n`)
   })
 
   const gen = generate({
     ...options,
     dashboardUrl,
-    watch: options.watch,
-    async onAfterGenerate() {
-      options.onAfterGenerate?.({
-        ALINEA_BASE_URL: base ?? '',
-        ALINEA_DEV_SERVER: (await dashboardUrl) + '/api'
+    watch: cmd === 'dev',
+    onAfterGenerate() {
+      dashboardUrl.then(url => {
+        options.onAfterGenerate?.({
+          ALINEA_BASE_URL: base ?? '',
+          ALINEA_DEV_SERVER: url + '/api'
+        })
       })
     }
   })[Symbol.asyncIterator]()
   const drafts = new MemoryDrafts()
   let nextGen = gen.next()
   let cms: CMS | undefined
-  let handleRequest: HttpRouter | undefined
+  let handleRequest!: HttpRouter
 
   const git = simpleGit(rootDir)
   const [name = localUser.name, email] = (
@@ -101,7 +104,7 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   while (true) {
     const current = await nextGen
-    if (!current?.value) return
+    if (!current.value) return
     const {cms: currentCMS, localData: fileData, db} = current.value
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
@@ -126,10 +129,14 @@ export async function serve(options: ServeOptions): Promise<void> {
         }
       }
     }
+    const abortController = new AbortController()
     nextGen = gen.next()
+    nextGen.then(({done}) => {
+      if (!done) abortController.abort()
+    })
     const {serve} = await server
-    for await (const {request, respondWith} of serve(nextGen)) {
-      handleRequest!(request).then(respondWith)
+    for await (const {request, respondWith} of serve(abortController)) {
+      handleRequest(request).then(respondWith)
     }
   }
 }

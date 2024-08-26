@@ -10,7 +10,7 @@ interface RequestEvent {
 
 export interface Server {
   port: number
-  serve(until?: Promise<any>): AsyncIterable<RequestEvent>
+  serve(abortController?: AbortController): AsyncIterable<RequestEvent>
 }
 
 export async function startNodeServer(
@@ -35,8 +35,13 @@ export async function startNodeServer(
   })
     .then(() => ({
       port,
-      async *serve(until?: Promise<void>) {
-        until?.then(() => messages.cancel())
+      async *serve(abortController?: AbortController) {
+        if (abortController)
+          abortController.signal.addEventListener(
+            'abort',
+            () => messages.cancel(),
+            true
+          )
         try {
           yield* messages
         } catch (e) {

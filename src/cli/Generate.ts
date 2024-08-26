@@ -23,6 +23,7 @@ const require = createRequire(import.meta.url)
 const alineaPackageDir = path.dirname(require.resolve('alinea/package.json'))
 
 export interface GenerateOptions {
+  cmd: 'dev' | 'build'
   cwd?: string
   staticDir?: string
   configFile?: string
@@ -62,6 +63,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   void
 > {
   const {
+    cmd,
     wasmCache = false,
     cwd = process.cwd(),
     configFile,
@@ -90,7 +92,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configLocation,
     fix: options.fix || false,
     outDir: path.join(nodeModules, '@alinea/generated'), // path.join(rootDir, '.alinea'),
-    watch: options.watch || false
+    watch: cmd === 'dev' || false
   }
   await copyStaticFiles(context)
   const builds = compileConfig(context)[Symbol.asyncIterator]()
@@ -106,6 +108,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     nextBuild = builds.next()
     try {
       const cms = await loadCMS(context.outDir)
+      const write = () =>
+        Promise.all([
+          generatePackage(context, cms.config),
+          writeStore(storeData())
+        ])
       await writeStore(new Uint8Array())
       const fileData = new LocalData({
         config: cms.config,
@@ -123,14 +130,12 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         yield {cms, db, localData: fileData}
         if (onAfterGenerate && !afterGenerateCalled) {
           afterGenerateCalled = true
+          await write()
           onAfterGenerate()
         }
       }
-      if (done) {
-        await Promise.all([
-          generatePackage(context, cms.config),
-          writeStore(storeData())
-        ])
+      if (done && !afterGenerateCalled) {
+        await write()
         break
       }
     } catch (e: any) {

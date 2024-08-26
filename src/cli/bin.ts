@@ -43,7 +43,7 @@ prog
       base: args.base,
       onAfterGenerate: forwardCommand,
       configFile: args.config,
-      watch: true
+      cmd: 'dev'
     })
   })
 
@@ -62,27 +62,18 @@ prog
     ensureReact()
     ensureEnv(args.dir)
     process.env.NODE_ENV = 'production'
-    /*const {generate} = await import('./Generate.js')
-    for await ({} of generate({
-      cwd: args.dir,
-      watch: args.watch,
-      fix: args.fix,
-      onAfterGenerate: forwardCommand,
-      configFile: args.config
-    })) {
-    }*/
     const {serve} = await import('./Serve.js')
     return serve({
       ...args,
       alineaDev: args.dev,
       cwd: args.dir,
-      watch: true,
       production: true,
       onAfterGenerate: env => {
         const isForwarding = forwardCommand(env)
         if (!isForwarding) process.exit(0)
       },
-      configFile: args.config
+      configFile: args.config,
+      cmd: 'build'
     })
   })
 
