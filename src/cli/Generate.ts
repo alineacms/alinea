@@ -8,6 +8,7 @@ import {BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
+import prettyBytes from 'pretty-bytes'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
@@ -91,7 +92,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configDir,
     configLocation,
     fix: options.fix || false,
-    outDir: path.join(nodeModules, '@alinea/generated'), // path.join(rootDir, '.alinea'),
+    outDir: path.join(nodeModules, '@alinea/generated'),
     watch: cmd === 'dev' || false
   }
   await copyStaticFiles(context)
@@ -99,8 +100,9 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
   let afterGenerateCalled = false
 
-  function writeStore(data: Uint8Array) {
-    return exportStore(data, join(context.outDir, 'store.js'))
+  async function writeStore(data: Uint8Array) {
+    const written = await exportStore(data, join(context.outDir, 'store.js'))
+    console.log(`\x1b[90mgenerated db (${prettyBytes(written)})\x1b[39m`)
   }
   const [store, storeData] = await createDb()
   while (true) {
@@ -113,7 +115,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           generatePackage(context, cms.config),
           writeStore(storeData())
         ])
-      await writeStore(new Uint8Array())
       const fileData = new LocalData({
         config: cms.config,
         fs: fs.promises,
