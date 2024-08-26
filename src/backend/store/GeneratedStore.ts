@@ -5,6 +5,8 @@ import {createStore} from './CreateStore.js'
 
 export const generatedStore: Promise<Store> = PLazy.from(async () => {
   // @ts-ignore
-  const {storeData} = await import('@alinea/generated/store.js')
+  const {storeData} = await import('@alinea/generated/store.js').catch(() => {
+    return {storeData: ''}
+  })
   return createStore(new Uint8Array(await decode(storeData)))
 })
