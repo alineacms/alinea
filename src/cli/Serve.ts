@@ -74,7 +74,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   }
 
   server.then(async () => {
-    process.stdout.write(`  \x1b[36mɑ Alinea  ${pkg.version}\x1b[39m `)
+    process.stdout.write(`  \x1b[36mɑlineɑ   ${pkg.version}\x1b[39m `)
     if (cmd === 'dev')
       console.log(`\n  - Local CMS:    ${await dashboardUrl}\n`)
   })
