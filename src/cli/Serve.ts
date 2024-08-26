@@ -53,7 +53,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   if (!configLocation) throw new Error(`No config file specified`)
 
   const preferredPort = options.port ? Number(options.port) : 4500
-  const server = startNodeServer(preferredPort)
+  const server = startNodeServer(preferredPort, 0, cmd === 'build')
   const dashboardUrl = server.then(server => `http://localhost:${server.port}`)
 
   const rootDir = path.resolve(cwd)
@@ -74,7 +74,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   }
 
   server.then(async () => {
-    process.stdout.write(`  \x1b[36mɑ Alinea ${pkg.version}\x1b[39m `)
+    process.stdout.write(`  \x1b[36mɑ Alinea  ${pkg.version}\x1b[39m `)
     if (cmd === 'dev')
       console.log(`\n  - Local CMS:    ${await dashboardUrl}\n`)
   })

@@ -239,6 +239,7 @@ export function cloudBackend(config: Config): Backend {
   }
   const drafts: Drafts = {
     async get(ctx, entryId) {
+      if (!validApiKey(ctx.apiKey)) return
       type CloudDraft = {fileHash: string; update: string; commitHash: string}
       const data = await parseOutcome<CloudDraft | null>(
         fetch(cloudConfig.upload, json({headers: bearer(ctx)}))
@@ -288,6 +289,7 @@ export function cloudBackend(config: Config): Backend {
   }
   const pending: Pending = {
     async since(ctx, commitHash) {
+      if (!validApiKey(ctx.apiKey)) return
       return parseOutcome(
         fetch(
           cloudConfig.pending + '?' + new URLSearchParams({since: commitHash}),
@@ -304,6 +306,10 @@ export function cloudBackend(config: Config): Backend {
     history,
     pending
   }
+}
+
+function validApiKey(apiKey: string | undefined): boolean {
+  return Boolean(apiKey?.startsWith('alineapk'))
 }
 
 function bearer(ctx: AuthedContext | RequestContext) {

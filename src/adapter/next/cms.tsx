@@ -6,6 +6,7 @@ import {outcome} from 'alinea/core/Outcome'
 import {ResolveDefaults} from 'alinea/core/Resolver'
 import {alineaCookies} from 'alinea/preview/AlineaCookies'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
+import {defaultContext} from './context.js'
 
 export interface PreviewProps {
   widget?: boolean
@@ -14,15 +15,13 @@ export interface PreviewProps {
 }
 
 const devUrl = process.env.ALINEA_DEV_SERVER
-const apiKey = process.env.ALINEA_API_KEY ?? 'dev'
 
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  jwt = new JWTPreviews(apiKey)
-
   constructor(config: Definition, public baseUrl?: string) {
     super(config, async () => {
+      const context = defaultContext
       const resolveDefaults: ResolveDefaults = {}
       const {cookies, headers, draftMode} = await import('next/headers.js')
       const [isDraft] = outcome(() => draftMode().isEnabled)
@@ -34,7 +33,7 @@ export class NextCMS<
       }
       const applyAuth: AuthenticateRequest = init => {
         const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${apiKey}`)
+        headers.set('Authorization', `Bearer ${context.apiKey}`)
         return {...init, headers}
       }
       const clientUrl = devUrl
@@ -51,7 +50,8 @@ export class NextCMS<
           alineaCookies.update,
           cookie.getAll()
         )
-        const info = await this.jwt.verify(previewToken)
+        const previews = new JWTPreviews(context.apiKey)
+        const info = await previews.verify(previewToken)
         resolveDefaults.preview = {...info, update}
       }
       return new Client({

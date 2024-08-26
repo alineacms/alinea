@@ -15,7 +15,8 @@ export interface Server {
 
 export async function startNodeServer(
   port = 4500,
-  attempt = 0
+  attempt = 0,
+  silent = false
 ): Promise<Server> {
   const messages = createEmitter<RequestEvent>()
   function serve(incoming: IncomingMessage, outgoing: ServerResponse) {
@@ -54,10 +55,11 @@ export async function startNodeServer(
       if (attempt > 10) throw err
       const incrementedPort = port + 1
       if (err.code === 'EADDRINUSE' && incrementedPort < 65535) {
-        console.log(
-          `> Port ${port} is in use, attempting ${incrementedPort} instead`
-        )
-        return startNodeServer(incrementedPort, attempt++)
+        if (!silent)
+          console.log(
+            `> Port ${port} is in use, attempting ${incrementedPort} instead`
+          )
+        return startNodeServer(incrementedPort, attempt++, silent)
       }
       throw err
     })

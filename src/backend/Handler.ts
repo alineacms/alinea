@@ -27,9 +27,9 @@ import {
   DraftTransport,
   RequestContext
 } from './Backend.js'
-import {generatedStore} from './Store.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
 import {EntryResolver} from './resolver/EntryResolver.js'
+import {generatedStore} from './store/GeneratedStore.js'
 
 const limit = pLimit(1)
 
@@ -301,8 +301,8 @@ export function createHandler(
       } catch {
         const authorization = request.headers.get('authorization')
         const bearer = authorization?.slice('Bearer '.length)
-        if (bearer !== context.apiKey) throw new Error('Unauthorized')
         if (!context.apiKey) throw new Error('Missing API key')
+        if (bearer !== context.apiKey) throw new Error('Unauthorized')
         return context
       }
     }

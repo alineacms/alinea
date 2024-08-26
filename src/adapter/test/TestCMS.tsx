@@ -1,16 +1,15 @@
-import sqlite from '@alinea/sqlite-wasm'
 import {Database} from 'alinea/backend'
 import {Auth, Backend} from 'alinea/backend/Backend'
 import {memoryBackend} from 'alinea/backend/data/MemoryBackend'
 import {createHandler} from 'alinea/backend/Handler'
 import {Store} from 'alinea/backend/Store'
+import {createStore} from 'alinea/backend/store/CreateStore'
 import {CMS} from 'alinea/core/CMS'
 import {Config, createConfig} from 'alinea/core/Config'
 import {createId} from 'alinea/core/Id'
 import {localUser} from 'alinea/core/User'
 import {AddressInfo} from 'node:net'
 import PLazy from 'p-lazy'
-import {connect} from 'rado/driver/sql.js'
 
 const auth: Auth = {
   async authenticate() {
@@ -23,9 +22,7 @@ const auth: Auth = {
 
 export function createCMS<Definition extends Config>(definition: Definition) {
   const config = createConfig(definition)
-  const store: Promise<Store> = sqlite().then(({Database}) =>
-    connect(new Database())
-  )
+  const store: Promise<Store> = createStore()
   const db = store.then(async store => {
     const db = new Database(config, store)
     await db.fill({async *entries() {}}, '')

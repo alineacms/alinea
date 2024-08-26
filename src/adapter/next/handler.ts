@@ -1,15 +1,15 @@
+import {JWTPreviews} from 'alinea/backend'
 import {Backend} from 'alinea/backend/Backend'
-import {
-  createHandler as createCoreHandler,
-  Handler
-} from 'alinea/backend/Handler'
+import {createHandler as createCoreHandler} from 'alinea/backend/Handler'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {alineaCookies} from 'alinea/preview/AlineaCookies'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {NextCMS} from './cms.js'
+import {defaultContext} from './context.js'
 
+type Handler = (request: Request) => Promise<Response>
 const handlers = new WeakMap<NextCMS, Handler>()
 
 export function createHandler(
@@ -18,12 +18,9 @@ export function createHandler(
 ) {
   if (handlers.has(cms)) return handlers.get(cms)!
   const handleCloud = createCoreHandler(cms, backend)
-  const handle: Handler = async (
-    request,
-    context = {
-      apiKey: process.env.ALINEA_API_KEY ?? 'dev'
-    }
-  ) => {
+  const handle: Handler = async request => {
+    const context = defaultContext
+    const previews = new JWTPreviews(context.apiKey)
     const {searchParams} = new URL(request.url)
     const previewToken = searchParams.get('preview')
     if (previewToken) {
@@ -31,7 +28,7 @@ export function createHandler(
       const {searchParams} = new URL(request.url)
       const previewToken = searchParams.get('preview')
       if (!previewToken) return new Response('Not found', {status: 404})
-      const info = await cms.jwt.verify(previewToken)
+      const info = await previews.verify(previewToken)
       const cookie = cookies()
       cookie.set(alineaCookies.previewToken, previewToken)
       const connection = handleCloud.connect(context)

@@ -3,7 +3,7 @@ import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
-import {join} from 'alinea/core/util/Paths'
+import {basename, join} from 'alinea/core/util/Paths'
 import {BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
@@ -36,14 +36,18 @@ export interface GenerateOptions {
   dashboardUrl?: Promise<string>
 }
 
-function generatePackage(context: GenerateContext, config: Config) {
-  const dashboard = config.dashboard
-  if (dashboard?.staticFile)
-    return generateDashboard(
-      context,
-      dashboard.handlerUrl,
-      dashboard.staticFile!
-    )
+async function generatePackage(context: GenerateContext, config: Config) {
+  if (!config.dashboardFile && !config.dashboard) return
+  const staticFile =
+    join(config.publicDir, config.dashboardFile) ||
+    config.dashboard?.staticFile ||
+    'public/admin.html'
+  await generateDashboard(
+    context,
+    config.apiUrl ?? config.dashboard?.handlerUrl ?? '/api/cms',
+    staticFile
+  )
+  return basename(staticFile)
 }
 
 async function createDb(): Promise<[Store, () => Uint8Array]> {
@@ -100,9 +104,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
   let afterGenerateCalled = false
 
-  async function writeStore(data: Uint8Array) {
-    const written = await exportStore(data, join(context.outDir, 'store.js'))
-    console.log(`\x1b[90mgenerated db (${prettyBytes(written)})\x1b[39m`)
+  function writeStore(data: Uint8Array) {
+    return exportStore(data, join(context.outDir, 'store.js'))
   }
   const [store, storeData] = await createDb()
   while (true) {
@@ -110,11 +113,17 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     nextBuild = builds.next()
     try {
       const cms = await loadCMS(context.outDir)
-      const write = () =>
-        Promise.all([
+      const write = async () => {
+        const [adminFile, dbSize] = await Promise.all([
           generatePackage(context, cms.config),
           writeStore(storeData())
         ])
+        let message = 'generated '
+        if (adminFile) message += `${adminFile} and `
+        message += `db (${prettyBytes(dbSize)})`
+        console.log(`\x1b[90m${message}\x1b[39m`)
+      }
+
       const fileData = new LocalData({
         config: cms.config,
         fs: fs.promises,
