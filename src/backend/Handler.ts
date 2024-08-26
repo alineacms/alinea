@@ -91,7 +91,7 @@ export function createHandler(
       cms.config,
       new Graph(cms.config, resolver)
     )
-    const drafts = new Map<string, Draft & {contentHash: string}>()
+    const drafts = new Map<string, {contentHash: string; draft?: Draft}>()
     let lastSync = 0
 
     return {db, dbRevision, mutate, resolve, syncPending}
@@ -209,14 +209,17 @@ export function createHandler(
       const cachedDraft = drafts.get(preview.entryId)
       let currentDraft: Draft | undefined
       if (cachedDraft?.contentHash === meta.contentHash) {
-        currentDraft = cachedDraft
+        currentDraft = cachedDraft.draft
       } else {
-        currentDraft = await backend.drafts.get(ctx, preview.entryId)
-        if (currentDraft)
+        try {
+          currentDraft = await backend.drafts.get(ctx, preview.entryId)
           drafts.set(preview.entryId, {
-            ...currentDraft,
-            contentHash: meta.contentHash
+            contentHash: meta.contentHash,
+            draft: currentDraft
           })
+        } catch (error) {
+          console.warn('> could not fetch draft', error)
+        }
       }
       const apply = currentDraft
         ? mergeUpdatesV2([currentDraft.draft, update])
