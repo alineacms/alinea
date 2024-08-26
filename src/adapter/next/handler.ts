@@ -7,6 +7,7 @@ import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {alineaCookies} from 'alinea/preview/AlineaCookies'
+import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {NextCMS} from './cms.js'
 
 const handlers = new WeakMap<NextCMS, Handler>()
@@ -34,10 +35,12 @@ export function createHandler(
       const cookie = cookies()
       cookie.set(alineaCookies.previewToken, previewToken)
       const connection = handleCloud.connect(context)
+      const update = parseChunkedCookies(alineaCookies.update, cookie.getAll())
       const url = (await connection.resolve({
         selection: createSelection(
           Entry({entryId: info.entryId}).select(Entry.url).first()
-        )
+        ),
+        preview: {...info, update}
       })) as string | null
       if (!url) return new Response('Not found', {status: 404})
       const source = new URL(request.url)
