@@ -3,7 +3,6 @@
   "_type": "Docs",
   "_index": "a1d",
   "_i18nId": "24yE79dE2ssYPDQQHFFgT0eg2tH",
-  "_root": "pages",
   "title": "Link",
   "navigationTitle": "",
   "body": [
@@ -92,7 +91,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "7JteCOtZTREVRHMMcZqMR",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Link field', {\n  link: Field.link('Single link'),\n  linkMultiple: Field.link.multiple('Multiple links')\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Link field', {\n  fields: {\n    link: Field.link('Single link'),\n    linkMultiple: Field.link.multiple('Multiple links')\n  }\n})"
     },
     {
       "_type": "heading",
@@ -189,8 +188,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
