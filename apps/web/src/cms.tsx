@@ -53,6 +53,7 @@ export const cms = createCMS({
   schema,
   workspaces: {main, demo},
   apiUrl: '/api/cms',
+  dashboardFile: 'admin.html',
   preview:
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000/api/cms'
