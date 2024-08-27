@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a23",
   "_i18nId": "268hmvl73nDMrfPTEpVq3AB5B3L",
-  "_root": "pages",
   "title": "Select",
   "navigationTitle": "",
   "body": [
@@ -28,15 +27,16 @@
     {
       "_type": "ExampleBlock",
       "_id": "2Yl56dl7ynjRy9stWye5pCVTwLH",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Select field', {\n  select: Field.select('My select field', {\n    options: {\n      a: 'Option a',\n      b: 'Option b'\n    }\n  })\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Select field', {\n  fields: {\n    select: Field.select('My select field', {\n      options: {\n        a: 'Option a',\n        b: 'Option b'\n      }\n    })\n  }\n})"
     }
   ],
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
