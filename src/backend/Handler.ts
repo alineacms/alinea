@@ -88,7 +88,10 @@ export function createHandler(
       cms.config,
       new Graph(cms.config, resolver)
     )
-    const drafts = new Map<string, {contentHash: string; draft?: Draft}>()
+    const drafts = new Map<
+      string,
+      Promise<{contentHash: string; draft?: Draft}>
+    >()
     let lastSync = Date.now()
 
     return {db, mutate, resolve, syncPending}
@@ -199,17 +202,18 @@ export function createHandler(
         realm: Realm.PreferDraft
       })
       if (!entry) return
-      const cachedDraft = drafts.get(update.entryId)
+      const cachedDraft = await drafts.get(update.entryId)
       let currentDraft: Draft | undefined
       if (cachedDraft?.contentHash === meta.contentHash) {
         currentDraft = cachedDraft.draft
       } else {
         try {
-          currentDraft = await backend.drafts.get(ctx, update.entryId)
-          drafts.set(update.entryId, {
-            contentHash: meta.contentHash,
-            draft: currentDraft
-          })
+          const pending = backend.drafts.get(ctx, update.entryId)
+          drafts.set(
+            update.entryId,
+            pending.then(draft => ({contentHash: meta.contentHash, draft}))
+          )
+          currentDraft = await pending
         } catch (error) {
           console.warn('> could not fetch draft', error)
         }
