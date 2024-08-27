@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a0",
   "_i18nId": "2aiLjrXSg8gyirKnw9LmYKwsW2O",
-  "_root": "pages",
   "title": "Entry",
   "navigationTitle": "",
   "body": [
@@ -114,7 +113,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2aiNY0EOVAiPH085iK0NelgMfhO",
-      "code": "import {Field, Query} from 'alinea'\n\nField.entry('Link to author', {\n  condition: Query.type.is('Author')\n})",
+      "code": "import {Field, Query} from 'alinea'\n\nField.entry('Link to author', {\n  fields: {\n    condition: Query.type.is('Author')\n  }\n})",
       "fileName": "",
       "language": ""
     }
@@ -123,8 +122,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
