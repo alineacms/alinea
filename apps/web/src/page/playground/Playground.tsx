@@ -40,9 +40,13 @@ import css from './Playground.module.scss'
 
 const styles = fromModule(css)
 
-const defaultValue = `export default alinea.type('Type', {
-  title: alinea.text('Title', {width: 0.5}),
-  path: alinea.path('Path', {width: 0.5})
+const defaultValue = `import {Config, Field} from 'alinea'
+
+export default Config.type('Type', {
+  fields: {
+    title: Field.text('Title', {width: 0.5}),
+    path: Field.path('Path', {width: 0.5})
+  }
 })`
 
 type PreviewTypeProps = {
@@ -126,7 +130,7 @@ function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
 
 const ts = trigger<typeof typescript>()
 const example = createExample()
-const connection = example.connection()
+const connection = example.connect()
 
 export default function Playground() {
   const [view, setView] = useState<'both' | 'preview' | 'source'>(() => {
