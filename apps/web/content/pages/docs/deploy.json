@@ -33,8 +33,8 @@
         {
           "_type": "CodeBlock",
           "_id": "2YlDbsyYSV7KaOpdP3SlyFKbgQf",
-          "code": "import {cms} from '@/cms'\n\nexport const GET = cms.backendHandler\nexport const POST = cms.backendHandler",
-          "fileName": "app/api/cms/[...slug]/route.ts",
+          "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler(cms)\n\nexport const GET = handler\nexport const POST = handler",
+          "fileName": "app/api/cms/route.ts",
           "language": "",
           "compact": false
         },
