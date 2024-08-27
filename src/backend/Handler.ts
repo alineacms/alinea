@@ -94,8 +94,10 @@ export function createHandler(
     return {db, mutate, resolve, syncPending}
 
     async function resolve(ctx: RequestContext, params: ResolveParams) {
-      await periodicSync(ctx, params.syncInterval)
-      if (!params.preview) return resolver.resolve(params as ResolveRequest)
+      if (!params.preview) {
+        await periodicSync(ctx, params.syncInterval)
+        return resolver.resolve(params as ResolveRequest)
+      }
       const entry = params.preview && (await parsePreview(ctx, params.preview))
       return resolver.resolve({
         ...params,
