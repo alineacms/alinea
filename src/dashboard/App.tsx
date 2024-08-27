@@ -150,7 +150,7 @@ function AppRoot() {
   const [session, setSession] = useAtom(sessionAtom)
   const {fullPage, config} = useDashboard()
   const {color} = Config.mainWorkspace(config)
-  const Auth = config.dashboard?.auth
+  const Auth = config.auth
   if (!session)
     return (
       <>

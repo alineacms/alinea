@@ -8,14 +8,6 @@ import {Workspace, WorkspaceData} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries} from './util/Objects.js'
 
-export interface DashboardConfig {
-  handlerUrl: string
-  dashboardUrl: string
-  auth?: Auth.View
-  /** Compile all static assets for the dashboard to this dir */
-  staticFile?: string
-}
-
 /** Configuration options */
 export interface Config {
   /** A schema describing the types of entries */
@@ -33,25 +25,23 @@ export interface Config {
   /** The base url of the application */
   baseUrl?: string | {development?: string; production?: string}
   /** The url of the handler endpoint */
-  apiUrl?: string
+  handlerUrl?: string
   /** The folder where public assets are stored, defaults to /public */
   publicDir?: string
   /** Filename of the generated dashboard */
   dashboardFile?: string
 
-  /** @deprecated */
-  dashboard?: DashboardConfig
+  /** @deprecated Use the publicDir and dashboardFile settings */
+  dashboard?: never
+
+  auth?: Auth.View
 }
 
 export namespace Config {
-  export function dashboardUrl(config: Config) {
-    const base =
-      typeof config.baseUrl === 'object'
-        ? config.baseUrl[process.env.NODE_ENV as 'development' | 'production']
-        : config.baseUrl
-    if (base && config.dashboardFile)
-      return new URL(config.dashboardFile, base).href
-    return config.dashboard?.dashboardUrl
+  export function baseUrl(config: Config) {
+    return typeof config.baseUrl === 'object'
+      ? config.baseUrl[process.env.NODE_ENV as 'development' | 'production']
+      : config.baseUrl
   }
   export function mainWorkspace(config: Config): WorkspaceData {
     const key = Object.keys(config.workspaces)[0]
@@ -63,7 +53,7 @@ export namespace Config {
   }
 
   export function hasAuth(config: Config): boolean {
-    return Boolean(config.dashboard?.auth)
+    return Boolean(config.auth)
   }
 
   export function validate(config: Config) {
@@ -93,10 +83,7 @@ export function createConfig<Definition extends Config>(
     ...definition,
     publicDir: definition.publicDir ?? '/public',
     schema: {...definition.schema, MediaLibrary, MediaFile},
-    dashboard: {
-      auth: CloudAuthView,
-      ...definition.dashboard
-    }
+    auth: CloudAuthView
   }
   Config.validate(res)
   return res

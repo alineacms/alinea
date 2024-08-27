@@ -3,6 +3,7 @@ import {Entry} from 'alinea/core/Entry'
 import {useAtomValue} from 'jotai'
 import {ComponentType, useEffect, useState} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
+import {useConfig} from '../../hook/UseConfig.js'
 import {BrowserPreview} from '../preview/BrowserPreview.js'
 
 export interface EntryPreviewProps {
@@ -16,17 +17,16 @@ export interface LivePreview {
 
 export function EntryPreview({editor, preview}: EntryPreviewProps) {
   if (!preview) return null
-  if (typeof preview === 'string')
-    return <EntryPreviewUrl editor={editor} preview={preview} />
+  if (typeof preview === 'boolean') return <EntryPreviewUrl editor={editor} />
   return <EntryPreviewComponent editor={editor} preview={preview} />
 }
 
 interface EntryPreviewUrlProps {
   editor: EntryEditor
-  preview: string
 }
 
-function EntryPreviewUrl({editor, preview}: EntryPreviewUrlProps) {
+function EntryPreviewUrl({editor}: EntryPreviewUrlProps) {
+  const config = useConfig()
   const payload = useAtomValue(editor.previewPayload)
   const previewToken = useAtomValue(editor.previewToken)
   const previewSearch = `?preview=${previewToken}`
@@ -35,19 +35,21 @@ function EntryPreviewUrl({editor, preview}: EntryPreviewUrlProps) {
     if (!api) return
     api.preview(payload)
   }, [payload])
-  const base = new URL(preview, location.href)
+  const base = new URL(
+    config.handlerUrl ?? '',
+    Config.baseUrl(config) ?? location.href
+  )
   const url = new URL(previewSearch, base)
   return <BrowserPreview url={url.toString()} registerLivePreview={setApi} />
 }
 
 interface EntryPreviewComponentProps {
   editor: EntryEditor
-  preview: ComponentType<{entry: Entry; previewToken: string}>
+  preview: ComponentType<{entry: Entry}>
 }
 
 function EntryPreviewComponent({editor, preview}: EntryPreviewComponentProps) {
   const entry = useAtomValue(editor.draftEntry)
-  const previewToken = useAtomValue(editor.previewToken)
   const Tag = preview
-  return <Tag entry={entry} previewToken={previewToken} />
+  return <Tag entry={entry} />
 }

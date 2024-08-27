@@ -1,6 +1,4 @@
-import {Entry} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
 import {ComponentType} from 'react'
 
-export type Preview =
-  | string
-  | ComponentType<{entry: Entry; previewToken: string}>
+export type Preview = boolean | ComponentType<{entry: Entry}>

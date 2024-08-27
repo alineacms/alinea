@@ -60,8 +60,7 @@ export function cloudBackend(config: Config): Backend {
     async authenticate(ctx, request) {
       const url = new URL(request.url)
       const action = url.searchParams.get('auth')
-      let dashboardPath =
-        config.dashboardFile ?? config.dashboard?.dashboardUrl ?? '/admin.html'
+      let dashboardPath = config.dashboardFile ?? '/admin.html'
       if (!dashboardPath.startsWith('/')) dashboardPath = '/' + dashboardPath
       const dashboardUrl = new URL(dashboardPath, url)
       switch (action) {

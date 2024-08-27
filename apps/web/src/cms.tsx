@@ -52,10 +52,10 @@ const demo = Config.workspace('Demo', {
 export const cms = createCMS({
   schema,
   workspaces: {main, demo},
-  apiUrl: '/api/cms',
+  baseUrl: {
+    development: 'http://localhost:3000'
+  },
+  handlerUrl: '/api/cms',
   dashboardFile: 'admin.html',
-  preview:
-    process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000/api/cms'
-      : '/api/cms'
+  preview: true
 })

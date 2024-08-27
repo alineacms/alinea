@@ -52,10 +52,7 @@ export class NextCMS<
     }
     return devUrl
       ? new URL('/api', devUrl)
-      : new URL(
-          this.config.apiUrl ?? this.config.dashboard?.handlerUrl ?? '/api/cms',
-          this.baseUrl ?? origin()
-        )
+      : new URL(this.config.handlerUrl ?? '/api/cms', this.baseUrl ?? origin())
   }
 
   async user(): Promise<User | undefined> {
@@ -85,12 +82,7 @@ export class NextCMS<
     const clientUrl = await this.#clientUrl()
     const dashboardUrl =
       devUrl ??
-      new URL(
-        this.config.dashboardFile ??
-          this.config.dashboard?.dashboardUrl ??
-          '/admin.html',
-        clientUrl
-      ).href
+      new URL(this.config.dashboardFile ?? '/admin.html', clientUrl).href
     const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false
     })
@@ -108,10 +100,6 @@ export class NextCMS<
 export function createCMS<Definition extends Config>(
   config: Definition
 ): NextCMS<Definition> {
-  const baseUrl =
-    process.env.ALINEA_BASE_URL ??
-    (typeof config.baseUrl === 'object'
-      ? config.baseUrl[process.env.NODE_ENV as 'development' | 'production']
-      : config.baseUrl)
+  const baseUrl = process.env.ALINEA_BASE_URL ?? Config.baseUrl(config)
   return new NextCMS(config, baseUrl)
 }
