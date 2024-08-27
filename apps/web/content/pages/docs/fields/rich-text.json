@@ -27,7 +27,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "EuUkPtwTcHiQweiT_zZZI",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Rich Text field', {\n  richText: Field.richText('My rich text field', {\n    initialValue: [\n      {_type: 'heading', level: 1, content: [\n        {_type: 'text', text: \"Hello world\"}\n      ]},\n      {_type: 'paragraph', content: [\n        {_type: 'text', text: \"A paragraph follows\"}\n      ]}   \n    ]\n  })\n})\n "
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Rich Text field', {\n  fields: {\n    richText: Field.richText('My rich text field', {\n      initialValue: [\n        {_type: 'heading', level: 1, content: [\n          {_type: 'text', text: \"Hello world\"}\n        ]},\n        {_type: 'paragraph', content: [\n          {_type: 'text', text: \"A paragraph follows\"}\n        ]}   \n      ]\n    })\n  }\n})\n "
     },
     {
       "_type": "heading",
@@ -182,8 +182,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
