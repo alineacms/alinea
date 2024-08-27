@@ -89,7 +89,7 @@ export function createHandler(
       new Graph(cms.config, resolver)
     )
     const drafts = new Map<string, {contentHash: string; draft?: Draft}>()
-    let lastSync = 0
+    let lastSync = Date.now()
 
     return {db, mutate, resolve, syncPending}
 
@@ -103,14 +103,12 @@ export function createHandler(
       })
     }
 
-    async function periodicSync(ctx: RequestContext, syncInterval = 5) {
+    function periodicSync(ctx: RequestContext, syncInterval = 60) {
       if (syncInterval === Infinity) return
       const now = Date.now()
-      if (now - lastSync < syncInterval * 1000) return
+      if (now - lastSync < syncInterval * 1000) return Promise.resolve()
       lastSync = now
-      try {
-        await syncPending(ctx)
-      } catch {}
+      return syncPending(ctx).catch(() => undefined)
     }
 
     function syncPending(ctx: RequestContext) {
@@ -189,7 +187,7 @@ export function createHandler(
       let meta = await db.meta()
       const update = await decodePreviewPayload(preview.payload)
       if (update.contentHash !== meta.contentHash) {
-        await periodicSync(ctx)
+        await syncPending(ctx)
         meta = await db.meta()
       }
       const entry = await resolver.resolve<EntryRow>({
