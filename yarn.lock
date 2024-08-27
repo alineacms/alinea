@@ -91,7 +91,6 @@ __metadata:
     dataloader: "npm:^2.1.0"
     debounce-promise: "npm:^3.1.2"
     diff-match-patch: "npm:^1.0.5"
-    fflate: "npm:^0.8.0"
     jotai: "npm:^2.4.2"
     lib0: "npm:^0.2.88"
     p-limit: "npm:^4.0.0"
@@ -5410,13 +5409,6 @@ __metadata:
   dependencies:
     reusify: "npm:^1.0.4"
   checksum: 10/0902cb9b81accf34e5542612c8a1df6c6ea47674f85bcc9cdc38795a28b53e4a096f751cfcf4fb25d2ea42fee5447499ba6cf5af5d0209297e1d1fd4dd551bb6
-  languageName: node
-  linkType: hard
-
-"fflate@npm:^0.8.0":
-  version: 0.8.0
-  resolution: "fflate@npm:0.8.0"
-  checksum: 10/7fc60b7d1fa4059b9d0372cc2bafad27c0df53bf65b0d71168248cccffb3983032a47adf37a2ec7a9204e6de046d8b2a66d0d8be6cc38c01279131b29173b17a
   languageName: node
   linkType: hard
 
