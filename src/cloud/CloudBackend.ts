@@ -60,9 +60,10 @@ export function cloudBackend(config: Config): Backend {
     async authenticate(ctx, request) {
       const url = new URL(request.url)
       const action = url.searchParams.get('auth')
-      const dashboardPath =
-        config.dashboardFile ?? config.dashboard?.dashboardUrl
-      const dashboardUrl = new URL(dashboardPath ?? '/admin.html', url)
+      let dashboardPath =
+        config.dashboardFile ?? config.dashboard?.dashboardUrl ?? '/admin.html'
+      if (!dashboardPath.startsWith('/')) dashboardPath = '/' + dashboardPath
+      const dashboardUrl = new URL(dashboardPath, url)
       switch (action) {
         // We start by asking our backend whether we have:
         // - a logged in user => return the user so we can create a session
