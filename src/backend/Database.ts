@@ -428,7 +428,6 @@ export class Database implements Syncable {
   async meta() {
     return (
       (await this.store.select().from(AlineaMeta).get()) ?? {
-        revisionId: '',
         commitHash: '',
         contentHash: '',
         modifiedAt: 0
@@ -471,7 +470,6 @@ export class Database implements Syncable {
     const current = await tx.select().from(AlineaMeta).get()
     await tx.delete(AlineaMeta)
     await tx.insert(AlineaMeta).values({
-      revisionId: current?.revisionId ?? createId(),
       commitHash,
       contentHash,
       modifiedAt: modifiedAt ?? 0

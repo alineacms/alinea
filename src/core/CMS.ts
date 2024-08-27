@@ -2,7 +2,7 @@ import {Config, createConfig} from './Config.js'
 import {Connection} from './Connection.js'
 import {Graph, GraphRealm} from './Graph.js'
 import {MediaFile, MediaLibrary} from './media/MediaTypes.js'
-import {PreviewRequest, Resolver} from './Resolver.js'
+import {PreviewRequest, ResolveParams, Resolver} from './Resolver.js'
 import {Operation} from './Transaction.js'
 
 export interface ConnectionContext {
@@ -21,7 +21,7 @@ export class CMS<Definition extends Config = Config> extends GraphRealm {
     const resolver: Resolver = {
       resolve: async params => {
         const connection = await connect()
-        return connection.resolve(params)
+        return connection.resolve(params as ResolveParams)
       }
     }
     super(normalizedConfig, resolver)

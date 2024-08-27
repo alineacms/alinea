@@ -1,8 +1,8 @@
-import type {PreviewMetadata, PreviewUpdate} from 'alinea/core/Resolver'
+import type {PreviewMetadata, PreviewPayload} from 'alinea/core/Resolver'
 import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
 
 export interface PreviewApi {
-  preview(update: PreviewUpdate): Promise<void>
+  preview(update: PreviewPayload): Promise<void>
   setIsPreviewing(isPreviewing: boolean): void
 }
 

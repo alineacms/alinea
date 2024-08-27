@@ -36,7 +36,7 @@ export interface Config {
   apiUrl?: string
   /** The folder where public assets are stored, defaults to /public */
   publicDir?: string
-  /** Filename of the generated dashboard, defaults to /admin.html */
+  /** Filename of the generated dashboard */
   dashboardFile?: string
 
   /** @deprecated */
@@ -92,7 +92,6 @@ export function createConfig<Definition extends Config>(
   const res = {
     ...definition,
     publicDir: definition.publicDir ?? '/public',
-    dashboardFile: definition.dashboardFile ?? '/admin.html',
     schema: {...definition.schema, MediaLibrary, MediaFile},
     dashboard: {
       auth: CloudAuthView,

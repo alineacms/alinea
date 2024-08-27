@@ -19,6 +19,7 @@ async function run({production, dir, config}) {
     staticDir: path.resolve('src/cli/static'),
     port: 4500,
     onAfterGenerate: forwardCommand,
+    cmd: 'dev',
     buildOptions: {
       minify: false
     }

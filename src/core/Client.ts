@@ -7,7 +7,7 @@ import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {HttpError} from './HttpError.js'
 import {Mutation} from './Mutation.js'
-import {ResolveDefaults, ResolveRequest} from './Resolver.js'
+import {ResolveDefaults, ResolveParams} from './Resolver.js'
 import {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
@@ -58,7 +58,7 @@ export class Client implements Connection {
       .then(user => user ?? undefined)
   }
 
-  resolve(params: ResolveRequest): Promise<unknown> {
+  resolve(params: ResolveParams): Promise<unknown> {
     const {resolveDefaults} = this.#options
     const body = JSON.stringify({...resolveDefaults, ...params})
     return this.#requestJson(

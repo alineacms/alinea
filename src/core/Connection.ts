@@ -5,9 +5,8 @@ import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
 import {Mutation} from './Mutation.js'
-import {ResolveRequest} from './Resolver.js'
+import {ResolveParams} from './Resolver.js'
 import {User} from './User.js'
-import {Logger} from './util/Logger.js'
 
 export interface SyncResponse {
   insert: Array<EntryRow>
@@ -21,7 +20,7 @@ export interface Syncable {
 
 export interface Connection extends Syncable {
   user(): Promise<User | undefined>
-  resolve(params: ResolveRequest): Promise<unknown>
+  resolve(params: ResolveParams): Promise<unknown>
   previewToken(request: PreviewInfo): Promise<string>
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
@@ -32,18 +31,6 @@ export interface Connection extends Syncable {
 }
 
 export namespace Connection {
-  export type UploadParams = {
-    parentId?: string
-    workspace: string
-    root: string
-    path: string
-    buffer: ArrayBuffer
-    preview?: string
-    averageColor?: string
-    thumbHash?: string
-    width?: number
-    height?: number
-  }
   export interface UploadResponse {
     entryId: string
     location: string
@@ -53,25 +40,6 @@ export namespace Connection {
       method?: string
     }
   }
-
-  export type MediaUploadParams = {
-    buffer: ArrayBuffer
-    fileLocation: string
-  }
-  export type Download =
-    | {type: 'buffer'; buffer: ArrayBuffer}
-    | {type: 'url'; url: string}
-  export type DownloadParams = {
-    workspace: string
-    location: string
-  }
-  export type DeleteParams = {
-    workspace: string
-    location: string
-  }
-  export interface RevisionsParams {
-    file: string
-  }
   export interface MutateParams {
     commitHash: string
     mutations: ChangeSet
@@ -79,40 +47,5 @@ export namespace Connection {
   export interface AuthContext {
     user?: User
     token?: string
-  }
-  export interface Context extends AuthContext {
-    logger: Logger
-  }
-  export const routes = {
-    resolve() {
-      return `/resolve`
-    },
-    mutate() {
-      return `/mutate`
-    },
-    revisions() {
-      return `/revisions`
-    },
-    sync() {
-      return `/sync`
-    },
-    draft() {
-      return `/draft`
-    },
-    media() {
-      return `/media`
-    },
-    prepareUpload() {
-      return `/upload`
-    },
-    files(location?: string) {
-      return `/files&location=${location}`
-    },
-    previewToken() {
-      return `/preview-token`
-    },
-    preview() {
-      return `/preview`
-    }
   }
 }

@@ -1,12 +1,10 @@
-import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {AuthenticateRequest, Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
 import {ResolveDefaults} from 'alinea/core/Resolver'
 import {User} from 'alinea/core/User'
-import {alineaCookies} from 'alinea/preview/AlineaCookies'
-import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
+import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import {defaultContext} from './context.js'
 
 export interface PreviewProps {
@@ -34,16 +32,8 @@ export class NextCMS<
       const clientUrl = await this.#clientUrl()
       if (!isDraft) return new Client({url: clientUrl.href, applyAuth})
       const cookie = cookies()
-      const previewToken = cookie.get(alineaCookies.previewToken)?.value
-      if (previewToken) {
-        const update = parseChunkedCookies(
-          alineaCookies.update,
-          cookie.getAll()
-        )
-        const previews = new JWTPreviews(context.apiKey)
-        const info = await previews.verify(previewToken)
-        resolveDefaults.preview = {...info, update}
-      }
+      const payload = getPreviewPayloadFromCookies(cookie.getAll())
+      if (payload) resolveDefaults.preview = {payload}
       return new Client({
         url: clientUrl.href,
         applyAuth,

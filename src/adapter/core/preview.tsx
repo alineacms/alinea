@@ -1,7 +1,5 @@
-import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {ConnectionContext} from 'alinea/core/CMS'
-import {alineaCookies} from 'alinea/preview/AlineaCookies'
-import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
+import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import {parse} from 'cookie-es'
 import {VanillaCMS} from './cms.js'
 import {previewStore} from './previewContext.js'
@@ -20,13 +18,10 @@ export async function preview<T>(
   const cookieHeader = request.headers.get('cookie')
   if (previewToken && cookieHeader) {
     const cookies = parse(cookieHeader)
-    const update = parseChunkedCookies(
-      alineaCookies.update,
+    const payload = getPreviewPayloadFromCookies(
       Object.entries(cookies).map(([name, value]) => ({name, value}))
     )
-    const previews = new JWTPreviews('dev')
-    const info = await previews.verify(previewToken)
-    context.preview = {...info, update}
+    if (payload) context.preview = {payload}
   }
   return storage.run(context, run)
 }

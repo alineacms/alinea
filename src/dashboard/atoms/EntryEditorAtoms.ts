@@ -25,6 +25,7 @@ import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
+import {encodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
@@ -675,6 +676,17 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const yUpdate = debounceAtom(edits.yUpdate, 250)
+  const previewPayload = atom(async get => {
+    const {contentHash} = await get(dbMetaAtom)
+    const update = get(yUpdate)
+    const phase = get(selectedPhase)
+    return encodePreviewPayload({
+      entryId: activeVersion.entryId,
+      contentHash,
+      phase,
+      update
+    })
+  })
 
   const discardEdits = edits.resetChanges
   const isLoading = edits.isLoading
@@ -687,10 +699,8 @@ export function createEntryEditor(entryData: EntryData) {
     config.preview
 
   const previewToken = atom(async get => {
-    const phase = get(selectedPhase)
-    const {contentHash} = await get(dbMetaAtom)
     const client = get(clientAtom)
-    return client.previewToken({entryId: entryData.entryId, phase, contentHash})
+    return client.previewToken({entryId: entryData.entryId})
   })
 
   return {
@@ -704,7 +714,7 @@ export function createEntryEditor(entryData: EntryData) {
     editMode,
     activeVersion,
     type,
-    yUpdate,
+    previewPayload,
     activeTitle,
     hasChanges,
     draftEntry,

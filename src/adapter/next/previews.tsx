@@ -1,6 +1,6 @@
 'use client'
 
-import {setPreviewCookies} from 'alinea/preview/AlineaCookies'
+import {setPreviewCookies} from 'alinea/preview/PreviewCookies'
 import {usePreview} from 'alinea/preview/react'
 import {registerPreviewWidget} from 'alinea/preview/widget'
 import {usePathname, useRouter} from 'next/navigation.js'
@@ -28,9 +28,9 @@ export default function NextPreviews({
   const editUrl = new URL(`#/edit?${entryParams}`, adminUrl)
   const router = useRouter()
   const {isPreviewing} = usePreview({
-    async preview({update}) {
+    async preview(update) {
       if (!update) return
-      const success = setPreviewCookies(update)
+      const success = await setPreviewCookies(update.payload)
       if (success) router.refresh()
       setPreviewDisabled(!success)
     }

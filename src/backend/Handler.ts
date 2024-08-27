@@ -5,18 +5,23 @@ import {Connection} from 'alinea/core/Connection'
 import {parseYDoc} from 'alinea/core/Doc'
 import {Draft} from 'alinea/core/Draft'
 import {Entry} from 'alinea/core/Entry'
-import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {EntryRow} from 'alinea/core/EntryRow'
 import {Graph} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {outcome} from 'alinea/core/Outcome'
-import {PreviewUpdate, ResolveRequest} from 'alinea/core/Resolver'
+import {
+  PreviewPayload,
+  PreviewUpdate,
+  ResolveParams,
+  ResolveRequest
+} from 'alinea/core/Resolver'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/ResolveData'
 import {base64, base64url} from 'alinea/core/util/Encoding'
 import {assign} from 'alinea/core/util/Objects'
+import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import {Type, array, enums, object, string} from 'cito'
-import {unzlibSync} from 'fflate'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
 import * as Y from 'yjs'
@@ -33,16 +38,11 @@ import {generatedStore} from './store/GeneratedStore.js'
 
 const limit = pLimit(1)
 
-const ResolveBody: Type<ResolveRequest> = object({
+const ResolveBody: Type<ResolveParams> = object({
   selection: Selection.adt,
   realm: enums(Realm).optional,
   locale: string.optional,
-  preview: object({
-    entryId: string,
-    contentHash: string,
-    phase: enums(EntryPhase),
-    update: string.optional
-  }).optional
+  preview: object({payload: string}).optional
 })
 
 const PrepareBody = object({
@@ -50,9 +50,7 @@ const PrepareBody = object({
 })
 
 const PreviewBody = object({
-  entryId: string,
-  contentHash: string,
-  phase: string
+  entryId: string
 })
 
 const SyncBody = array(string)
@@ -85,7 +83,6 @@ export function createHandler(
 ): HandlerWithConnect {
   const init = PLazy.from(async () => {
     const db = await database
-    const dbRevision = (await db.meta()).revisionId
     const resolver = new EntryResolver(db, cms.schema)
     const changes = new ChangeSetCreator(
       cms.config,
@@ -94,18 +91,15 @@ export function createHandler(
     const drafts = new Map<string, {contentHash: string; draft?: Draft}>()
     let lastSync = 0
 
-    return {db, dbRevision, mutate, resolve, syncPending}
+    return {db, mutate, resolve, syncPending}
 
-    async function resolve(ctx: RequestContext, params: ResolveRequest) {
+    async function resolve(ctx: RequestContext, params: ResolveParams) {
       await periodicSync(ctx, params.syncInterval)
-      if (!params.preview) return resolver.resolve(params)
-      const entry =
-        'entry' in params.preview
-          ? params.preview.entry
-          : await parsePreview(ctx, params.preview)
+      if (!params.preview) return resolver.resolve(params as ResolveRequest)
+      const entry = params.preview && (await parsePreview(ctx, params.preview))
       return resolver.resolve({
         ...params,
-        preview: entry ? {entry} : params.preview
+        preview: entry && {entry}
       })
     }
 
@@ -190,30 +184,29 @@ export function createHandler(
 
     async function parsePreview(
       ctx: RequestContext,
-      preview: PreviewUpdate
+      preview: PreviewPayload
     ): Promise<EntryRow | undefined> {
-      if (!preview.update) return
       let meta = await db.meta()
-      if (preview.contentHash !== meta.contentHash) {
+      const update = await decodePreviewPayload(preview.payload)
+      if (update.contentHash !== meta.contentHash) {
         await periodicSync(ctx)
         meta = await db.meta()
       }
-      const update = unzlibSync(base64url.parse(preview.update))
       const entry = await resolver.resolve<EntryRow>({
         selection: createSelection(
-          Entry({entryId: preview.entryId}).maybeFirst()
+          Entry({entryId: update.entryId}).maybeFirst()
         ),
         realm: Realm.PreferDraft
       })
       if (!entry) return
-      const cachedDraft = drafts.get(preview.entryId)
+      const cachedDraft = drafts.get(update.entryId)
       let currentDraft: Draft | undefined
       if (cachedDraft?.contentHash === meta.contentHash) {
         currentDraft = cachedDraft.draft
       } else {
         try {
-          currentDraft = await backend.drafts.get(ctx, preview.entryId)
-          drafts.set(preview.entryId, {
+          currentDraft = await backend.drafts.get(ctx, update.entryId)
+          drafts.set(update.entryId, {
             contentHash: meta.contentHash,
             draft: currentDraft
           })
@@ -222,8 +215,8 @@ export function createHandler(
         }
       }
       const apply = currentDraft
-        ? mergeUpdatesV2([currentDraft.draft, update])
-        : update
+        ? mergeUpdatesV2([currentDraft.draft, update.update])
+        : update.update
       const type = cms.config.schema[entry.type]
       if (!type) return
       const doc = new Y.Doc()
@@ -240,7 +233,7 @@ export function createHandler(
       async user() {
         return 'user' in context ? context.user : undefined
       },
-      async resolve(params: ResolveRequest) {
+      async resolve(params: ResolveParams) {
         const {resolve} = await init
         return resolve(context, params)
       },
@@ -286,104 +279,109 @@ export function createHandler(
     request: Request,
     context: RequestContext
   ): Promise<Response> {
-    const {db, resolve, mutate, syncPending} = await init
-    const previews = new JWTPreviews(context.apiKey)
-    const url = new URL(request.url)
-    const params = url.searchParams
-    const auth = params.get('auth')
+    try {
+      const {db, resolve, mutate, syncPending} = await init
+      const previews = new JWTPreviews(context.apiKey)
+      const url = new URL(request.url)
+      const params = url.searchParams
+      const auth = params.get('auth')
 
-    if (auth) return backend.auth.authenticate(context, request)
+      if (auth) return backend.auth.authenticate(context, request)
 
-    const action = params.get('action') as HandleAction
+      const action = params.get('action') as HandleAction
 
-    const isJson = request.headers
-      .get('content-type')
-      ?.includes('application/json')
-    if (!isJson) return new Response('Expected JSON', {status: 400})
-    const [body] = await outcome(() => request.json())
+      const isJson = request.headers
+        .get('content-type')
+        ?.includes('application/json')
+      if (!isJson) return new Response('Expected JSON', {status: 400})
+      const [body] = await outcome(() => request.json())
 
-    async function internal() {
-      try {
-        return await backend.auth.verify(context, request)
-      } catch {
-        const authorization = request.headers.get('authorization')
-        const bearer = authorization?.slice('Bearer '.length)
-        if (!context.apiKey) throw new Error('Missing API key')
-        if (bearer !== context.apiKey)
-          throw new Error('Expected matching api key')
-        return context
+      async function internal() {
+        try {
+          return await backend.auth.verify(context, request)
+        } catch {
+          const authorization = request.headers.get('authorization')
+          const bearer = authorization?.slice('Bearer '.length)
+          if (!context.apiKey) throw new Error('Missing API key')
+          if (bearer !== context.apiKey)
+            throw new Error('Expected matching api key')
+          return context
+        }
       }
+
+      // These actions can be run internally or by a user
+      if (action === HandleAction.Resolve && request.method === 'POST')
+        return Response.json(
+          (await resolve(await internal(), ResolveBody(body))) ?? null
+        )
+      if (action === HandleAction.Pending && request.method === 'GET') {
+        const commitHash = url.searchParams.get('commitHash')!
+        return Response.json(
+          await backend.pending?.since(await internal(), commitHash)
+        )
+      }
+      if (action === HandleAction.Draft && request.method === 'GET') {
+        const entryId = url.searchParams.get('entryId')!
+        const draft = await backend.drafts.get(await internal(), entryId)
+        return Response.json(
+          draft ? {...draft, draft: base64url.stringify(draft.draft)} : null
+        )
+      }
+
+      // Verify auth
+      const verified = await backend.auth.verify(context, request)
+      if (!verified) return new Response('Unauthorized', {status: 401})
+
+      // User
+      if (action === HandleAction.User && request.method === 'GET')
+        return Response.json(verified.user)
+
+      // Sign preview token
+      if (action === HandleAction.PreviewToken && request.method === 'POST')
+        return Response.json(await previews.sign(PreviewBody(body)))
+
+      // History
+      if (action === HandleAction.History && request.method === 'GET') {
+        const file = url.searchParams.get('file')!
+        const revisionId = url.searchParams.get('revisionId')
+        return Response.json(
+          await (revisionId
+            ? backend.history.revision(verified, file, revisionId)
+            : backend.history.list(verified, file))
+        )
+      }
+
+      // Syncable
+      if (action === HandleAction.Sync && request.method === 'GET') {
+        const contentHash = url.searchParams.get('contentHash')!
+        await syncPending(context)
+        return Response.json(await db.syncRequired(contentHash))
+      }
+      if (action === HandleAction.Sync && request.method === 'POST') {
+        await syncPending(context)
+        return Response.json(await db.sync(SyncBody(body)))
+      }
+
+      // Media
+      if (action === HandleAction.Upload && request.method === 'POST')
+        return Response.json(
+          await backend.media.upload(verified, PrepareBody(body).filename)
+        )
+
+      // Drafts
+      if (action === HandleAction.Draft && request.method === 'POST') {
+        const data = body as DraftTransport
+        const draft = {...data, draft: new Uint8Array(base64.parse(data.draft))}
+        return Response.json(await backend.drafts.store(verified, draft))
+      }
+
+      // Target
+      if (action === HandleAction.Mutate && request.method === 'POST')
+        return Response.json(await mutate(verified, body))
+    } catch (error) {
+      console.error(error)
+      return new Response('Internal Server Error', {status: 500})
     }
-
-    // These actions can be run internally or by a user
-    if (action === HandleAction.Resolve && request.method === 'POST')
-      return Response.json(
-        (await resolve(await internal(), ResolveBody(body))) ?? null
-      )
-    if (action === HandleAction.Pending && request.method === 'GET') {
-      const commitHash = url.searchParams.get('commitHash')!
-      return Response.json(
-        await backend.pending?.since(await internal(), commitHash)
-      )
-    }
-    if (action === HandleAction.Draft && request.method === 'GET') {
-      const entryId = url.searchParams.get('entryId')!
-      const draft = await backend.drafts.get(await internal(), entryId)
-      return Response.json(
-        draft ? {...draft, draft: base64url.stringify(draft.draft)} : null
-      )
-    }
-
-    // Verify auth
-    const verified = await backend.auth.verify(context, request)
-    if (!verified) return new Response('Unauthorized', {status: 401})
-
-    // User
-    if (action === HandleAction.User && request.method === 'GET')
-      return Response.json(verified.user)
-
-    // Sign preview token
-    if (action === HandleAction.PreviewToken && request.method === 'POST')
-      return Response.json(await previews.sign(PreviewBody(body)))
-
-    // History
-    if (action === HandleAction.History && request.method === 'GET') {
-      const file = url.searchParams.get('file')!
-      const revisionId = url.searchParams.get('revisionId')
-      return Response.json(
-        await (revisionId
-          ? backend.history.revision(verified, file, revisionId)
-          : backend.history.list(verified, file))
-      )
-    }
-
-    // Syncable
-    if (action === HandleAction.Sync && request.method === 'GET') {
-      const contentHash = url.searchParams.get('contentHash')!
-      await syncPending(context)
-      return Response.json(await db.syncRequired(contentHash))
-    }
-    if (action === HandleAction.Sync && request.method === 'POST') {
-      await syncPending(context)
-      return Response.json(await db.sync(SyncBody(body)))
-    }
-
-    // Media
-    if (action === HandleAction.Upload && request.method === 'POST')
-      return Response.json(
-        await backend.media.upload(verified, PrepareBody(body).filename)
-      )
-
-    // Drafts
-    if (action === HandleAction.Draft && request.method === 'POST') {
-      const data = body as DraftTransport
-      const draft = {...data, draft: new Uint8Array(base64.parse(data.draft))}
-      return Response.json(await backend.drafts.store(verified, draft))
-    }
-
-    // Target
-    if (action === HandleAction.Mutate && request.method === 'POST')
-      return Response.json(await mutate(verified, body))
 
     return new Response('Bad Request', {status: 400})
   }

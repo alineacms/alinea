@@ -2,13 +2,17 @@ import {EntryRow} from './EntryRow.js'
 import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/ResolveData.js'
 
-export type PreviewRequest = PreviewUpdate | {entry: EntryRow}
+export type PreviewRequest = PreviewPayload | {entry: EntryRow}
+
+export interface PreviewPayload {
+  payload: string
+}
 
 export interface PreviewUpdate {
   entryId: string
   contentHash: string
   phase: string
-  update?: string
+  update: Uint8Array
 }
 
 export interface PreviewMetadata {
@@ -37,10 +41,14 @@ export interface ResolveRequest {
   locale?: string
   syncInterval?: number
   realm?: Realm
-  preview?: PreviewRequest
+  preview?: {entry: EntryRow} | {payload: string}
 }
 
-export type ResolveDefaults = Partial<ResolveRequest>
+export interface ResolveParams extends ResolveRequest {
+  preview?: {payload: string}
+}
+
+export type ResolveDefaults = Partial<ResolveParams>
 
 export interface Resolver {
   resolve(params: ResolveRequest): Promise<unknown>

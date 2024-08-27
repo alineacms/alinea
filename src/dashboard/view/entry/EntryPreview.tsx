@@ -1,11 +1,7 @@
 import {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'
-import {PreviewUpdate} from 'alinea/core/Resolver'
-import {base64url} from 'alinea/core/util/Encoding'
-import {zlibSync} from 'fflate'
 import {useAtomValue} from 'jotai'
 import {ComponentType, useEffect, useState} from 'react'
-import {dbMetaAtom} from '../../atoms/DbAtoms.js'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {BrowserPreview} from '../preview/BrowserPreview.js'
 
@@ -15,7 +11,7 @@ export interface EntryPreviewProps {
 }
 
 export interface LivePreview {
-  preview(update: PreviewUpdate): void
+  preview(payload: string): void
 }
 
 export function EntryPreview({editor, preview}: EntryPreviewProps) {
@@ -31,23 +27,14 @@ interface EntryPreviewUrlProps {
 }
 
 function EntryPreviewUrl({editor, preview}: EntryPreviewUrlProps) {
-  const {contentHash} = useAtomValue(dbMetaAtom)
-  const selectedPhase = useAtomValue(editor.selectedPhase)
+  const payload = useAtomValue(editor.previewPayload)
   const previewToken = useAtomValue(editor.previewToken)
   const previewSearch = `?preview=${previewToken}`
   const [api, setApi] = useState<LivePreview | undefined>(undefined)
-  const yUpdate = useAtomValue(editor.yUpdate)
   useEffect(() => {
     if (!api) return
-    const compressed = zlibSync(yUpdate, {level: 9})
-    const update = base64url.stringify(compressed)
-    api.preview({
-      entryId: editor.entryId,
-      contentHash: contentHash,
-      phase: selectedPhase,
-      update
-    })
-  }, [api, yUpdate, contentHash])
+    api.preview(payload)
+  }, [payload])
   const base = new URL(preview, location.href)
   const url = new URL(previewSearch, base)
   return <BrowserPreview url={url.toString()} registerLivePreview={setApi} />

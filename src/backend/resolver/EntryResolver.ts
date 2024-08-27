@@ -4,11 +4,7 @@ import {Field} from 'alinea/core/Field'
 import type * as pages from 'alinea/core/pages'
 import {Realm} from 'alinea/core/pages/Realm'
 import {BinaryOp, SourceType, UnaryOp} from 'alinea/core/pages/ResolveData'
-import {
-  PreviewUpdate,
-  ResolveDefaults,
-  ResolveRequest
-} from 'alinea/core/Resolver'
+import {ResolveRequest} from 'alinea/core/Resolver'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
@@ -85,10 +81,7 @@ export class EntryResolver {
   constructor(
     public db: Database,
     public schema: Schema,
-    public parsePreview?: (
-      preview: PreviewUpdate
-    ) => Promise<EntryRow | undefined>,
-    public defaults?: ResolveDefaults
+    public defaults?: Partial<ResolveRequest>
   ) {
     this.targets = Schema.targets(schema)
   }
@@ -678,8 +671,7 @@ export class EntryResolver {
     const query = this.query(ctx, selection)
     const singleResult = this.isSingleResult(ctx, selection)
     if (preview) {
-      const updated =
-        'entry' in preview ? preview.entry : await this.parsePreview?.(preview)
+      const updated = 'entry' in preview ? preview.entry : undefined
       if (updated)
         try {
           await this.db.store.transaction(async tx => {

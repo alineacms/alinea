@@ -38,8 +38,9 @@ export interface GenerateOptions {
 
 async function generatePackage(context: GenerateContext, config: Config) {
   if (!config.dashboardFile && !config.dashboard) return
-  const staticFile =
-    join(config.publicDir, config.dashboardFile) || config.dashboard?.staticFile
+  const staticFile = config.dashboardFile
+    ? join(config.publicDir, config.dashboardFile)
+    : config.dashboard?.staticFile
   if (!staticFile) return
   await generateDashboard(
     context,
@@ -117,6 +118,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           generatePackage(context, cms.config),
           writeStore(storeData())
         ])
+        if (cmd !== 'build') return
         let message = 'generated '
         if (adminFile) message += `${adminFile} and `
         message += `db (${prettyBytes(dbSize)})`
