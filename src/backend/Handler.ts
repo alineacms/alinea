@@ -296,7 +296,17 @@ export function createHandler(
       if (!isJson) return new Response('Expected JSON', {status: 400})
       const [body] = await outcome(() => request.json())
 
-      async function internal() {
+      // User
+      if (action === HandleAction.User && request.method === 'GET') {
+        try {
+          const {user} = await backend.auth.verify(context, request)
+          return Response.json(user)
+        } catch {
+          return Response.json(null)
+        }
+      }
+
+      async function verifyInternal() {
         try {
           return await backend.auth.verify(context, request)
         } catch {
@@ -312,17 +322,17 @@ export function createHandler(
       // These actions can be run internally or by a user
       if (action === HandleAction.Resolve && request.method === 'POST')
         return Response.json(
-          (await resolve(await internal(), ResolveBody(body))) ?? null
+          (await resolve(await verifyInternal(), ResolveBody(body))) ?? null
         )
       if (action === HandleAction.Pending && request.method === 'GET') {
         const commitHash = url.searchParams.get('commitHash')!
         return Response.json(
-          await backend.pending?.since(await internal(), commitHash)
+          await backend.pending?.since(await verifyInternal(), commitHash)
         )
       }
       if (action === HandleAction.Draft && request.method === 'GET') {
         const entryId = url.searchParams.get('entryId')!
-        const draft = await backend.drafts.get(await internal(), entryId)
+        const draft = await backend.drafts.get(await verifyInternal(), entryId)
         return Response.json(
           draft ? {...draft, draft: base64url.stringify(draft.draft)} : null
         )
@@ -331,10 +341,6 @@ export function createHandler(
       // Verify auth
       const verified = await backend.auth.verify(context, request)
       if (!verified) return new Response('Unauthorized', {status: 401})
-
-      // User
-      if (action === HandleAction.User && request.method === 'GET')
-        return Response.json(verified.user)
 
       // Sign preview token
       if (action === HandleAction.PreviewToken && request.method === 'POST')
