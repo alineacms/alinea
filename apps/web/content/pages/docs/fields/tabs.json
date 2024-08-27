@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a1l",
   "_i18nId": "268hnUNLntD1TbeY1WPh34VFVcM",
-  "_root": "pages",
   "title": "Tabs",
   "navigationTitle": "",
   "body": [
@@ -28,15 +27,16 @@
     {
       "_type": "ExampleBlock",
       "_id": "2YkqykVitVKoLg9NLRTwjLvsccv",
-      "code": "import {Config, Field} from \"alinea\"\n\nexport default Config.type(\"Tabs field\", {\n  ...Field.tabs(\n    Field.tab(\"Tab A\", {\n      fields: {\n        fieldA: Field.text(\"Field in Tab A\")\n      }\n    }),\n    Field.tab(\"Tab B\", {\n      fields: {\n        fieldB: Field.text(\"Field in Tab B\")\n      }\n    })\n  )\n})"
+      "code": "import {Config, Field} from \"alinea\"\n\nexport default Config.type(\"Tabs field\", {\n  fields: {\n    ...Field.tabs(\n      Field.tab(\"Tab A\", {\n        fields: {\n          fieldA: Field.text(\"Field in Tab A\")\n        }\n      }),\n      Field.tab(\"Tab B\", {\n        fields: {\n          fieldB: Field.text(\"Field in Tab B\")\n        }\n      })\n    )\n  }\n})"
     }
   ],
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
