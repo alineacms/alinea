@@ -87,7 +87,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       dashboardUrl.then(url => {
         options.onAfterGenerate?.({
           ALINEA_BASE_URL: base ?? '',
-          ALINEA_DEV_SERVER: url + '/api'
+          ALINEA_DEV_SERVER: url
         })
       })
     }
