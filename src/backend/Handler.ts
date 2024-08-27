@@ -170,21 +170,25 @@ export function createHandler(
       if (!mutation.update) return
       const update = new Uint8Array(await decode(mutation.update))
       const currentDraft = await backend.drafts.get(ctx, mutation.entryId)
-      await backend.drafts.store(ctx, {
+      const updatedDraft = currentDraft
+        ? mergeUpdatesV2([currentDraft.draft, update])
+        : update
+      const draft = {
         entryId: mutation.entryId,
         fileHash: mutation.entry.fileHash,
-        draft: currentDraft
-          ? mergeUpdatesV2([currentDraft.draft, update])
-          : update
-      })
+        draft: updatedDraft
+      }
+      await backend.drafts.store(ctx, draft)
+      const {contentHash} = await db.meta()
+      drafts.set(mutation.entryId, Promise.resolve({contentHash, draft}))
     }
 
     async function parsePreview(
       ctx: RequestContext,
       preview: PreviewPayload
     ): Promise<EntryRow | undefined> {
-      let meta = await db.meta()
       const update = await decodePreviewPayload(preview.payload)
+      let meta = await db.meta()
       if (update.contentHash !== meta.contentHash) {
         await syncPending(ctx)
         meta = await db.meta()

@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "Zgl",
   "_i18nId": "2YWqKUTrANlgEFMyBUEYdih2HpP",
-  "_root": "pages",
   "title": "Getting started",
   "navigationTitle": "",
   "body": [
@@ -85,25 +84,25 @@
           "_id": "2YcqwSzePKnvF6rL4bu9cI0d4LN",
           "variants": [
             {
-              "_type": "Variant",
               "_id": "2Ycqwgl3s7szk2B92gnXY5unG3Q",
               "_index": "a0",
+              "_type": "Variant",
               "name": "npm",
               "language": "shellscript",
               "code": "npm install alinea"
             },
             {
-              "_type": "Variant",
               "_id": "2YcqyQsBjtLQbXB3v9l7AtdcH3U",
               "_index": "a1",
+              "_type": "Variant",
               "name": "yarn",
               "language": "shellscript",
               "code": "yarn add alinea"
             },
             {
-              "_type": "Variant",
               "_id": "2YcqzHpnfHK43fhtMEY6r7Wrpf1",
               "_index": "a2",
+              "_type": "Variant",
               "name": "pnpm",
               "language": "shellscript",
               "code": "pnpm install alinea"
@@ -152,30 +151,74 @@
           "_id": "2YcrGI2EPnmmIrHkfo1xKrcNVSI",
           "variants": [
             {
-              "_type": "Variant",
               "_id": "2YcrGaP9oBJwHo8pWmHLU7blTfN",
               "_index": "a0",
+              "_type": "Variant",
               "name": "npm",
               "language": "shellscript",
               "code": "npx alinea init --next"
             },
             {
-              "_type": "Variant",
               "_id": "2YcrHzKowUENzFVBgP5M7hf1qT1",
               "_index": "a1",
+              "_type": "Variant",
               "name": "yarn",
               "language": "shellscript",
               "code": "yarn alinea init --next"
             },
             {
-              "_type": "Variant",
               "_id": "2YcrJEDLa8oWOLJSSjsstOKg4Sl",
               "_index": "a2",
+              "_type": "Variant",
               "name": "pnpm",
               "language": "shellscript",
               "code": "pnpm alinea init --next"
             }
           ]
+        },
+        {
+          "_type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "_type": "text",
+              "text": "Create handle function"
+            }
+          ]
+        },
+        {
+          "_type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Add a handler route to handle the CMS backend and previews."
+            }
+          ]
+        },
+        {
+          "_type": "CodeBlock",
+          "_id": "2lFGtrO1pqUsBK9wsyzzEmfujsB",
+          "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler(cms)\n\nexport const GET = handler\nexport const POST = handler",
+          "fileName": "app/api/cms/route.ts",
+          "language": ""
+        },
+        {
+          "_type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "_type": "text",
+              "text": "Update the Alinea config"
+            }
+          ]
+        },
+        {
+          "_type": "CodeBlock",
+          "_id": "2lFH4jKdDEEw2cDbg9YYUPdsOtw",
+          "code": "export const cms = createCMS({\n  // ... schema, workspaces\n\n  // Point to your Next.js website\n  baseUrl: {\n    development: 'http://localhost:3000'\n  },\n  handlerUrl: '/api/cms',\n  dashboardFile: 'admin.html',\n  \n  // Enable live previews\n  preview: true\n})",
+          "fileName": "src/cms.tsx",
+          "language": ""
         },
         {
           "_type": "heading",
@@ -202,17 +245,17 @@
           "_id": "2bRC6LC1i4PfMRTFBeXuHrvWjk0",
           "variants": [
             {
-              "_type": "Variant",
               "_id": "2bRC6k9IXwZsgnaBLqqWcybH8H9",
               "_index": "a0",
+              "_type": "Variant",
               "name": "next.config.js",
               "language": "tsx",
               "code": "const nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: ['@alinea/generated']\n  }\n}\n\nmodule.exports = nextConfig"
             },
             {
-              "_type": "Variant",
               "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
               "_index": "a1",
+              "_type": "Variant",
               "name": "next.config.mjs",
               "language": "tsx",
               "code": "/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: [\"@alinea/generated\"]\n  }\n}\n\nexport default nextConfig"
@@ -311,25 +354,25 @@
       "_id": "2YcsowsEWLDCcidcKeyJrTKCEOg",
       "variants": [
         {
-          "_type": "Variant",
           "_id": "2YcspJhldAQ2xaUIDqKHbWHrtSz",
           "_index": "a0",
+          "_type": "Variant",
           "name": "npm",
           "language": "shellscript",
           "code": "npx alinea dev"
         },
         {
-          "_type": "Variant",
           "_id": "2YcsqDyTPJFoUeSjn6ZYJpcdWix",
           "_index": "a1",
+          "_type": "Variant",
           "name": "yarn",
           "language": "shellscript",
           "code": "yarn alinea dev"
         },
         {
-          "_type": "Variant",
           "_id": "2YcsrOH1ImdTgzQ3C4nWULoN0lQ",
           "_index": "a2",
+          "_type": "Variant",
           "name": "pnpm",
           "language": "shellscript",
           "code": "pnpm alinea dev"
@@ -341,8 +384,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

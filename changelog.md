@@ -1,5 +1,61 @@
 # Changelog
 
+## [0.11.0]
+
+- The cms handler has been rewritten to handle both backend and previews. This 
+  requires updating your handler route. In the case of Next.js you can replace
+  both `app/api/cms/[...slug]/route.ts` and `/app/api/preview.ts` with the 
+  following:
+
+  ```tsx
+  // app/api/cms/route.ts
+  import {cms} from '@/cms'
+  import {createHandler} from 'alinea/next'
+
+  const handler = createHandler(cms)
+
+  export const GET = handler
+  export const POST = handler
+  ```
+
+  This release also requires you to restructure you Alinea config file.
+  The dashboard property is replace by the `baseUrl`, `handlerUrl` and 
+  `dashboardFile` properties.
+
+  ```tsx
+  // cms.tsx
+
+  // Previously:
+  const cms = createCMS({
+    // ... schema and workspaces
+    dashboard: {
+      dashboardUrl: '/admin.html',
+      handlerUrl: '/api/cms',
+      staticFile: 'public/admin.html'
+    },
+    preview:
+      process.env.NODE_ENV === 'development'
+        ? 'http://localhost:3000/api/preview'
+        : '/api/preview'
+  })
+
+  // Becomes:
+  const cms = createCMS({
+    // ... schema and workspaces
+    baseUrl: {
+      // Point this to you Next.js website
+      development: 'http://localhost:3000'
+    },
+    handlerUrl: '/api/cms',
+    dashboardFile: 'admin.html',
+    // Optionally supply the public folder with
+    publicDir: 'public',
+    // Enable previews which are handled via handlerUrl
+    preview: true
+  })
+  ```
+
+
 ## [0.10.1]
 
 - Use buffer-to-base64 to compress store data written to disk
