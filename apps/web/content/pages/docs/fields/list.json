@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a1V",
   "_i18nId": "268hhWIV6twxD4PMp03isLY6Pac",
-  "_root": "pages",
   "title": "List",
   "navigationTitle": "",
   "body": [
@@ -28,15 +27,16 @@
     {
       "_type": "ExampleBlock",
       "_id": "MOMpcuuHwKl-kSmmbcKgx",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type(\"List field\", {\n  list: Field.list(\"My list field\", {\n    schema: {\n      Text: Config.type(\"Text\", {\n        fields: {\n          title: Field.text(\"Item title\"),\n          text: Field.richText(\"Item body text\"),\n        }\n      })\n      Image: Config.type(\"Image\", {\n        fields: { image: Field.image(\"Image\") }\n      })\n    }\n  })\n})\n"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type(\"List field\", {\n  fields: {\n    list: Field.list(\"My list field\", {\n      schema: {\n        Text: Config.type(\"Text\", {\n          fields: {\n            title: Field.text(\"Item title\"),\n            text: Field.richText(\"Item body text\"),\n          }\n        })\n        Image: Config.type(\"Image\", {\n          fields: { image: Field.image(\"Image\") }\n        })\n      }\n    })\n  }\n})\n"
     }
   ],
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
