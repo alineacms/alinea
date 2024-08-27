@@ -13,7 +13,6 @@ import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import {type MediaFile} from 'alinea/core/media/MediaTypes'
-import {base64} from 'alinea/core/util/Encoding'
 import {
   entryFileName,
   entryFilepath,
@@ -26,6 +25,7 @@ import * as paths from 'alinea/core/util/Paths'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
 import {encodePreviewPayload} from 'alinea/preview/PreviewPayload'
+import {encode} from 'buffer-to-base64'
 import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
@@ -279,7 +279,7 @@ export function createEntryEditor(entryData: EntryData) {
   )
 
   const saveDraft = atom(null, async (get, set) => {
-    const update = base64.stringify(edits.getLocalUpdate())
+    const update = await encode(edits.getLocalUpdate())
     // Use the existing path, when the entry gets published the path will change
     const entry = await getDraftEntry({
       phase: EntryPhase.Published,
@@ -399,7 +399,7 @@ export function createEntryEditor(entryData: EntryData) {
   const publishEdits = atom(null, async (get, set) => {
     if (!set(confirmErrorsAtom)) return
     const currentFile = entryFile(activeVersion)
-    const update = base64.stringify(edits.getLocalUpdate())
+    const update = await encode(edits.getLocalUpdate())
     const entry = await getDraftEntry({phase: EntryPhase.Published})
     const mutations: Array<Mutation> = []
     const editedFile = entryFile(entry)
@@ -427,7 +427,7 @@ export function createEntryEditor(entryData: EntryData) {
     const data = await get(revisionData(revision))
     const {edits} = entryData
     edits.applyEntryData(type, data)
-    const update = base64.stringify(edits.getLocalUpdate())
+    const update = await encode(edits.getLocalUpdate())
     // We're not restoring the previous path because that is unavailable
     const entry = await getDraftEntry({
       phase: EntryPhase.Published,

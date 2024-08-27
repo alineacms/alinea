@@ -21,6 +21,7 @@ import {Selection} from 'alinea/core/pages/ResolveData'
 import {base64, base64url} from 'alinea/core/util/Encoding'
 import {assign} from 'alinea/core/util/Objects'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
+import {decode} from 'buffer-to-base64'
 import {Type, array, enums, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
@@ -135,46 +136,39 @@ export function createHandler(
     async function mutate(
       ctx: AuthedContext,
       mutations: Array<Mutation>,
-      retry = 0
+      retry = false
     ): Promise<{commitHash: string}> {
       const changeSet = await changes.create(mutations)
-      const {commitHash: fromCommitHash} = await syncPending(ctx)
-      let toCommitHash: string
+      let fromCommitHash: string = await db.meta().then(meta => meta.commitHash)
       try {
         const result = await backend.target.mutate(ctx, {
           commitHash: fromCommitHash,
           mutations: changeSet
         })
-        toCommitHash = result.commitHash
+        await db.applyMutations(mutations, result.commitHash)
+        const tasks = []
+        for (const mutation of mutations) {
+          switch (mutation.type) {
+            case MutationType.Edit:
+              tasks.push(persistEdit(ctx, mutation))
+              continue
+          }
+        }
+        await Promise.all(tasks)
+        return {commitHash: result.commitHash}
       } catch (error: any) {
         if ('expectedCommitHash' in error) {
-          // Attempt again after syncing
-          // Todo: this needs to be handled differently
-          if (retry >= 3) throw error
-          return mutate(ctx, mutations, retry + 1)
+          if (retry) throw error
+          await syncPending(ctx)
+          return mutate(ctx, mutations, true)
         }
         throw error
       }
-      await db.applyMutations(mutations, toCommitHash)
-      const tasks = []
-      for (const mutation of mutations) {
-        switch (mutation.type) {
-          case MutationType.Edit:
-            tasks.push(persistEdit(ctx, mutation, toCommitHash))
-            continue
-        }
-      }
-      await Promise.all(tasks)
-      return {commitHash: toCommitHash}
     }
 
-    async function persistEdit(
-      ctx: AuthedContext,
-      mutation: EditMutation,
-      commitHash: string
-    ) {
+    async function persistEdit(ctx: AuthedContext, mutation: EditMutation) {
       if (!mutation.update) return
-      const update = base64.parse(mutation.update)
+      const update = new Uint8Array(await decode(mutation.update))
       const currentDraft = await backend.drafts.get(ctx, mutation.entryId)
       await backend.drafts.store(ctx, {
         entryId: mutation.entryId,

@@ -48,7 +48,7 @@ export class Edits {
     Y.applyUpdateV2(this.doc, update, 'self')
   }
 
-  /** A Y.js update that contains our own edits, base64 encoded */
+  /** A Y.js update that contains our own edits */
   getLocalUpdate() {
     return Y.encodeStateAsUpdateV2(this.doc, this.sourceVector)
   }
