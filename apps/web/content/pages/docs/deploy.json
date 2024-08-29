@@ -33,8 +33,8 @@
         {
           "_type": "CodeBlock",
           "_id": "2YlDbsyYSV7KaOpdP3SlyFKbgQf",
-          "code": "import {cms} from '@/cms'\n\nexport const GET = cms.backendHandler\nexport const POST = cms.backendHandler",
-          "fileName": "app/api/cms/[...slug]/route.ts",
+          "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler(cms)\n\nexport const GET = handler\nexport const POST = handler",
+          "fileName": "app/api/cms/route.ts",
           "language": "",
           "compact": false
         },
@@ -68,7 +68,7 @@
         {
           "_type": "CodeBlock",
           "_id": "2YlDwmJLzaL93bp5gYZmshbJG1P",
-          "code": "export const cms = createCMS({\n  // schema and workspaces ...\n  dashboard: {\n    handlerUrl: '/api/cms',\n    staticFile: 'public/admin.html',\n    dashboardUrl: '/admin.html'\n  }\n})",
+          "code": "export const cms = createCMS({\n  // ... schema, workspaces\n\n  // Point to your Next.js website\n  baseUrl: {\n    development: 'http://localhost:3000'\n  },\n  handlerUrl: '/api/cms',\n  dashboardFile: 'admin.html',\n  \n  // Enable live previews\n  preview: true\n})",
           "fileName": "",
           "language": "",
           "compact": false
