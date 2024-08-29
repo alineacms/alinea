@@ -19,7 +19,7 @@ export function createHandler(
   const handleCloud = createCoreHandler(cms, backend)
   const handle: Handler = async request => {
     try {
-      const context = defaultContext
+      const context = await defaultContext
       const previews = new JWTPreviews(context.apiKey)
       const {searchParams} = new URL(request.url)
       const previewToken = searchParams.get('preview')

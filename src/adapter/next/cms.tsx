@@ -20,7 +20,7 @@ export class NextCMS<
 > extends CMS<Definition> {
   constructor(config: Definition, public baseUrl?: string) {
     super(config, async () => {
-      const context = defaultContext
+      const context = await defaultContext
       const resolveDefaults: ResolveDefaults = {}
       const {cookies, draftMode} = await import('next/headers.js')
       const [isDraft] = outcome(() => draftMode().isEnabled)
