@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a1V",
   "_i18nId": "2YlBsRF2vZwxcS27oOSJYmQM37q",
-  "_root": "pages",
   "title": "Live previews",
   "navigationTitle": "",
   "body": [
@@ -27,24 +26,6 @@
           "content": [
             {
               "_type": "text",
-              "text": "Create the following route in the app folder to handle previews:"
-            }
-          ]
-        },
-        {
-          "_type": "CodeBlock",
-          "_id": "2YlByBMXwRLmN6kNpcOdoeWKtGC",
-          "code": "import {cms} from '@/cms'\n\nexport const GET = cms.previewHandler",
-          "fileName": "app/api/preview/route.ts",
-          "language": "",
-          "compact": false
-        },
-        {
-          "_type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "_type": "text",
               "text": "Update your "
             },
             {
@@ -62,14 +43,14 @@
             },
             {
               "_type": "text",
-              "text": " with the preview url:"
+              "text": " to enable live previews:"
             }
           ]
         },
         {
           "_type": "CodeBlock",
           "_id": "2YlCBIFhktYqXLnxlG8MWbFhkA4",
-          "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  // schema and workspaces ...\n  preview:\n    process.env.NODE_ENV === 'development'\n      ? 'http://localhost:3000/api/preview'\n      : '/api/preview'\n})",
+          "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  // schema and workspaces ...\n  baseUrl: {\n    // Point this url to your Next.js website\n    development: 'http://localhost:3000'\n  },\n  preview: true\n})",
           "fileName": "cms.tsx",
           "language": "",
           "compact": false
@@ -104,23 +85,15 @@
           "text": "This will enable a little widget at the bottom of the page that confirms to the editor they're looking at a preview of the page. If you don't want a preview widget but do want live previews, remove the `widget` prop."
         }
       ]
-    },
-    {
-      "_type": "ImageBlock",
-      "_id": "2bdTZ8LeQUAM9wSSymghzMuF2fc",
-      "image": {
-        "_type": "image",
-        "_id": "2bdTdyQCKpFuiWrKw0kQb3VLG62",
-        "_entry": "2bdTdpHQw9EAiuPIPvHIThCKOnT"
-      }
     }
   ],
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
