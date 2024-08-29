@@ -1,35 +1,41 @@
-import xxhash from 'xxhash-wasm'
+import {crypto} from '@alinea/iso'
 import {EntryRow} from '../EntryRow.js'
 
-const xxHash = xxhash()
+export function toHex(buffer: ArrayBuffer) {
+  return Array.from(new Uint8Array(buffer))
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 8)
+}
 
 export async function createFileHash(data: Uint8Array) {
-  const {h32Raw} = await xxHash
-  return h32Raw(data).toString(16).padStart(8, '0')
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return toHex(digest)
 }
 
 export async function createRowHash(entry: Omit<EntryRow, 'rowHash'>) {
-  const {create32} = await xxhash()
-  const hash = create32()
-    .update(`entryId ${entry.entryId}`)
-    .update(`phase ${entry.phase}`)
-    .update(`title ${entry.title}`)
-    .update(`type ${entry.type}`)
-    .update(`seeded ${entry.seeded}`)
-    .update(`workspace ${entry.workspace}`)
-    .update(`root ${entry.root}`)
-    .update(`level ${entry.level}`)
-    .update(`filePath ${entry.filePath}`)
-    .update(`parentDir ${entry.parentDir}`)
-    .update(`childrenDir ${entry.childrenDir}`)
-    .update(`index ${entry.index}`)
-    .update(`parent ${entry.parent}`)
-    .update(`i18nId ${entry.i18nId}`)
-    .update(`locale ${entry.locale}`)
-    .update(`fileHash ${entry.fileHash}`)
-    .update(`active ${entry.active}`)
-    .update(`main ${entry.main}`)
-    .update(`path ${entry.path}`)
-    .update(`url ${entry.url}`)
-  return hash.digest().toString(16).padStart(8, '0')
+  const encoder = new TextEncoder()
+  const data = encoder.encode(
+    `entryId ${entry.entryId}` +
+      `phase ${entry.phase}` +
+      `title ${entry.title}` +
+      `type ${entry.type}` +
+      `seeded ${entry.seeded}` +
+      `workspace ${entry.workspace}` +
+      `root ${entry.root}` +
+      `level ${entry.level}` +
+      `filePath ${entry.filePath}` +
+      `parentDir ${entry.parentDir}` +
+      `childrenDir ${entry.childrenDir}` +
+      `index ${entry.index}` +
+      `parent ${entry.parent}` +
+      `i18nId ${entry.i18nId}` +
+      `locale ${entry.locale}` +
+      `fileHash ${entry.fileHash}` +
+      `active ${entry.active}` +
+      `main ${entry.main}` +
+      `path ${entry.path}` +
+      `url ${entry.url}`
+  )
+  return createFileHash(data)
 }

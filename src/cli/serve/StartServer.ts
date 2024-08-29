@@ -13,7 +13,61 @@ export interface Server {
   serve(abortController?: AbortController): AsyncIterable<RequestEvent>
 }
 
-export async function startNodeServer(
+async function startBunServer(
+  port = 4500,
+  attempt = 0,
+  silent = false
+): Promise<Server> {
+  const messages = createEmitter<RequestEvent>()
+  try {
+    const server = Bun.serve({
+      port,
+      fetch(request) {
+        const {resolve, promise} = Promise.withResolvers<Response>()
+        messages.emit({
+          request,
+          async respondWith(response) {
+            resolve(response)
+          }
+        })
+        return promise
+      }
+    })
+    return {
+      port,
+      async *serve(abortController?: AbortController) {
+        if (abortController)
+          abortController.signal.addEventListener(
+            'abort',
+            () => {
+              server.stop()
+              messages.cancel()
+            },
+            true
+          )
+        try {
+          yield* messages
+        } catch (e) {
+          if (e === Emitter.CANCELLED) return
+          throw e
+        }
+      }
+    }
+  } catch (err: any) {
+    if (attempt > 10) throw err
+    const incrementedPort = port + 1
+    if (err.code === 'EADDRINUSE' && incrementedPort < 65535) {
+      if (!silent)
+        console.log(
+          `> Port ${port} is in use, attempting ${incrementedPort} instead`
+        )
+      return startBunServer(incrementedPort, attempt++, silent)
+    }
+    throw err
+  }
+}
+
+async function startNodeServer(
   port = 4500,
   attempt = 0,
   silent = false
@@ -64,3 +118,6 @@ export async function startNodeServer(
       throw err
     })
 }
+
+export const startServer =
+  'Bun' in globalThis ? startBunServer : startNodeServer

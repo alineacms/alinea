@@ -1,7 +1,6 @@
+import {suite} from '@alinea/suite'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
 import * as Y from 'yjs'
 import {UnionShape} from './UnionShape.js'
 
@@ -42,15 +41,15 @@ const value2 = {
   field6: undefined
 }
 
-test('apply', () => {
-  const doc = new Y.Doc()
-  const root = doc.getMap(ROOT_KEY)
-  root.set(FIELD_KEY, shape.toY(value1))
-  doc.transact(() => {
-    shape.applyY(value2, root, FIELD_KEY)
+suite(import.meta, test => {
+  test('apply', () => {
+    const doc = new Y.Doc()
+    const root = doc.getMap(ROOT_KEY)
+    root.set(FIELD_KEY, shape.toY(value1))
+    doc.transact(() => {
+      shape.applyY(value2, root, FIELD_KEY)
+    })
+    const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
+    test.equal(pass2, value2)
   })
-  const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
-  assert.equal(pass2, value2)
 })
-
-test.run()

@@ -1,7 +1,6 @@
+import {suite} from '@alinea/suite'
 import {outcome} from 'alinea/core/Outcome'
 import {sign, verify} from 'alinea/core/util/JWT'
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
 
 const example0 = {
   token:
@@ -54,49 +53,49 @@ const example2 = {
   secret: 'qwertyuiopasdfghjklzxcvbnm123456'
 }
 
-test('sign', async () => {
-  assert.is(
-    await sign(example1.payload, example1.secret, {
-      algorithm: example1.alg,
-      header: example1.header
-    }),
-    example1.token
-  )
+suite(import.meta, test => {
+  test('sign', async () => {
+    test.is(
+      await sign(example1.payload, example1.secret, {
+        algorithm: example1.alg,
+        header: example1.header
+      }),
+      example1.token
+    )
 
-  assert.is(
-    await sign(example2.payload, example2.secret, {algorithm: example2.alg}),
-    example2.token
-  )
+    test.is(
+      await sign(example2.payload, example2.secret, {algorithm: example2.alg}),
+      example2.token
+    )
+  })
+
+  test('example 0', async () => {
+    test.equal(
+      await verify(example0.token, example0.publicKey, {
+        algorithms: [example0.alg],
+        clockTimestamp: example0.validAt
+      }),
+      example0.payload
+    )
+  })
+
+  test('example 1', async () => {
+    test.equal(await verify(example1.token, example1.secret), example1.payload)
+  })
+
+  test('example 2', async () => {
+    test.equal(
+      await verify(example2.token, example2.secret, {
+        algorithms: [example2.alg],
+        clockTimestamp: example2.validAt
+      }),
+      example2.payload
+    )
+    const [, err] = await outcome(
+      verify(example2.token, example2.secret, {
+        clockTimestamp: example2.notValidAt
+      })
+    )
+    test.equal(err, new Error('Token expired'))
+  })
 })
-
-test('example 0', async () => {
-  assert.equal(
-    await verify(example0.token, example0.publicKey, {
-      algorithms: [example0.alg],
-      clockTimestamp: example0.validAt
-    }),
-    example0.payload
-  )
-})
-
-test('example 1', async () => {
-  assert.equal(await verify(example1.token, example1.secret), example1.payload)
-})
-
-test('example 2', async () => {
-  assert.equal(
-    await verify(example2.token, example2.secret, {
-      algorithms: [example2.alg],
-      clockTimestamp: example2.validAt
-    }),
-    example2.payload
-  )
-  const [, err] = await outcome(
-    verify(example2.token, example2.secret, {
-      clockTimestamp: example2.notValidAt
-    })
-  )
-  assert.equal(err, new Error('Token expired'))
-})
-
-test.run()

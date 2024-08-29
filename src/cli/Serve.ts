@@ -17,7 +17,7 @@ import {LiveReload} from './serve/LiveReload.js'
 import {localAuth} from './serve/LocalAuth.js'
 import {MemoryDrafts} from './serve/MemoryDrafts.js'
 import {ServeContext} from './serve/ServeContext.js'
-import {startNodeServer} from './serve/StartNodeServer.js'
+import {startServer} from './serve/StartServer.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 
@@ -53,7 +53,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   if (!configLocation) throw new Error(`No config file specified`)
 
   const preferredPort = options.port ? Number(options.port) : 4500
-  const server = startNodeServer(preferredPort, 0, cmd === 'build')
+  const server = startServer(preferredPort, 0, cmd === 'build')
   const dashboardUrl = server.then(server => `http://localhost:${server.port}`)
 
   const rootDir = path.resolve(cwd)
