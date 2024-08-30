@@ -37,7 +37,7 @@ __metadata:
     cito: "npm:^0.2.0"
     dataloader: "npm:^2.1.0"
     pretty-ms: "npm:^8.0.0"
-    rado: "npm:^1.0.8"
+    rado: "npm:^1.0.9"
     regexparam: "npm:^2.0.1"
     xxhash-wasm: "npm:^1.0.2"
   languageName: unknown
@@ -2878,6 +2878,7 @@ __metadata:
     npm-run-all: "npm:^4.1.5"
     postcss-modules: "npm:^6.0.0"
     postcss-pxtorem: "npm:^6.0.0"
+    rado: "npm:^1.0.9"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     sass: "npm:^1.63.4"
@@ -10446,10 +10447,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rado@npm:^1.0.8":
-  version: 1.0.8
-  resolution: "rado@npm:1.0.8"
-  checksum: 10/f0e7d3dc9a969fbaecf0e7528f3e0e8bedd656b05fae9eae4696abc8d24e6d37b4b1103e8daeaf4309db5c3c6a1cd87e41641c92aef0fcd65c85b6642c4a71f9
+"rado@npm:^1.0.9":
+  version: 1.0.9
+  resolution: "rado@npm:1.0.9"
+  checksum: 10/db14216c9f6c62683105db251e7314c4ca46fe73e2796d50e3d4b515cd660aef7e77a10faad2482f4871ea6b699548f61a333339f4916570610659fe38fc690f
   languageName: node
   linkType: hard
 

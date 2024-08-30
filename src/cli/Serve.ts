@@ -1,5 +1,6 @@
 import {Backend} from 'alinea/backend/Backend'
 import {createHandler} from 'alinea/backend/Handler'
+import {createApi} from 'alinea/backend/api/CreateApi'
 import {HttpRouter} from 'alinea/backend/router/Router'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {cloudDebug} from 'alinea/cloud/CloudDebug'
@@ -118,6 +119,19 @@ export async function serve(options: ServeOptions): Promise<void> {
       context.liveReload.reload('refresh')
 
       function createBackend(): Backend {
+        return createApi({
+          db: db.store,
+          auth: async (username, password) => {
+            if (username === 'admin' && password === 'admin') return true
+            return false
+          },
+          github: {
+            authToken: process.env.ALINEA_GITHUB_TOKEN ?? '',
+            owner: process.env.ALINEA_GITHUB_OWNER ?? '',
+            repo: process.env.ALINEA_GITHUB_REPO ?? '',
+            branch: process.env.ALINEA_GITHUB_BRANCH ?? ''
+          }
+        })
         if (process.env.ALINEA_CLOUD_DEBUG)
           return cloudDebug(currentCMS.config, rootDir)
         if (process.env.ALINEA_CLOUD_URL) return cloudBackend(currentCMS.config)

@@ -55,7 +55,8 @@
   "dependencies": {
     "@alinea/iso": "^0.3.2",
     "@alinea/sqlite-wasm": "^0.1.16",
-    "esbuild": "^0.20.1"
+    "esbuild": "^0.20.1",
+    "rado": "^1.0.9"
   },
   "peerDependencies": {
     "react": "*",

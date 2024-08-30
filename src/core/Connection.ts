@@ -35,10 +35,7 @@ export namespace Connection {
     entryId: string
     location: string
     previewUrl: string
-    upload: {
-      url: string
-      method?: string
-    }
+    upload: {url: string; method?: string}
   }
   export interface MutateParams {
     commitHash: string

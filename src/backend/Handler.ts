@@ -387,6 +387,7 @@ export function createHandler(
       if (action === HandleAction.Mutate && request.method === 'POST')
         return Response.json(await mutate(verified, body))
     } catch (error) {
+      if (error instanceof Response) return error
       console.error(error)
       return new Response('Internal Server Error', {status: 500})
     }
