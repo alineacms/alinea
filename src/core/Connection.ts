@@ -24,6 +24,10 @@ export interface Connection extends Syncable {
   previewToken(request: PreviewInfo): Promise<string>
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
+  handleUpload(
+    destination: Connection.UploadDestination,
+    file: Blob
+  ): Promise<void>
   revisions(file: string): Promise<Array<Revision>>
   revisionData(file: string, revisionId: string): Promise<EntryRecord>
   getDraft(entryId: string): Promise<Draft | undefined>
@@ -31,11 +35,13 @@ export interface Connection extends Syncable {
 }
 
 export namespace Connection {
-  export interface UploadResponse {
+  export interface UploadDestination {
     entryId: string
     location: string
+  }
+  export interface UploadResponse extends UploadDestination {
     previewUrl: string
-    upload: {url: string; method?: string}
+    upload?: {url: string; method?: string}
   }
   export interface MutateParams {
     commitHash: string

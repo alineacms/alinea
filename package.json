@@ -70,7 +70,7 @@
     "@ladle/react": "^4.0.2",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
-    "@types/node": "20.0.0",
+    "@types/node": "^22.5.2",
     "@types/react": "^18.2.13",
     "@types/react-dom": "^18.2.6",
     "@types/sql.js": "^1.4.4",
@@ -214,11 +214,6 @@
       "worker": "./dist/picker/url/UrlPicker.js",
       "browser": "./dist/picker/url/UrlPicker.browser.js",
       "default": "./dist/picker/url/UrlPicker.js"
-    },
-    "./auth/passwordless/PasswordLessAuth": {
-      "worker": "./dist/auth/passwordless/PasswordLessAuth.server.js",
-      "browser": "./dist/auth/passwordless/PasswordLessAuth.js",
-      "default": "./dist/auth/passwordless/PasswordLessAuth.server.js"
     },
     "./cli/util/ExportStore": {
       "worker": "./dist/cli/util/ExportStore.server.js",

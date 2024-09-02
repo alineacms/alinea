@@ -78,16 +78,21 @@ export class UploadOperation extends Operation {
             file instanceof Blob ? file : new Blob([body])
           )
         : undefined
-      await fetch(info.upload.url, {
-        method: info.upload.method ?? 'POST',
-        body
-      }).then(async result => {
-        if (!result.ok)
-          throw new HttpError(
-            result.status,
-            `Could not reach server for upload`
+      const upload = info.upload
+      await (upload
+        ? fetch(upload.url, {method: upload.method ?? 'POST', body}).then(
+            async result => {
+              if (!result.ok)
+                throw new HttpError(
+                  result.status,
+                  `Could not reach server for upload`
+                )
+            }
           )
-      })
+        : cnx.handleUpload(
+            info,
+            Array.isArray(file) ? new File([file[1]], file[0]) : file
+          ))
       const parent = this.parentId
         ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
         : undefined

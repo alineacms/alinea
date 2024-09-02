@@ -20,16 +20,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/auth.passwordless@workspace:src/auth/passwordless":
-  version: 0.0.0-use.local
-  resolution: "@alinea/auth.passwordless@workspace:src/auth/passwordless"
-  dependencies:
-    "@types/nodemailer": "npm:^6.4.4"
-    nodemailer: "npm:^6.9.9"
-    superstruct: "npm:^1.0.3"
-  languageName: unknown
-  linkType: soft
-
 "@alinea/backend@workspace:src/backend":
   version: 0.0.0-use.local
   resolution: "@alinea/backend@workspace:src/backend"
@@ -186,7 +176,7 @@ __metadata:
     "@fontsource/jetbrains-mono": "npm:5.0.1"
     "@fontsource/poppins": "npm:5.0.1"
     "@monaco-editor/react": "npm:^4.4.5"
-    "@types/node": "npm:20.0.0"
+    "@types/node": "npm:^22.5.2"
     "@types/react": "npm:^18.2.13"
     alinea: "npm:0.0.0"
     eslint: "npm:8.39.0"
@@ -2401,19 +2391,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:20.0.0":
-  version: 20.0.0
-  resolution: "@types/node@npm:20.0.0"
-  checksum: 10/fe9a67eb18ad8e2e636e26af87b382cda7cb8f2013552b98df8b54b833d189061dcef22b40c3dea675a9970605fbd5d6973a0de90c6b00a6397ea92ca33ae4cb
-  languageName: node
-  linkType: hard
-
-"@types/nodemailer@npm:^6.4.4":
-  version: 6.4.4
-  resolution: "@types/nodemailer@npm:6.4.4"
+"@types/node@npm:^22.5.2":
+  version: 22.5.2
+  resolution: "@types/node@npm:22.5.2"
   dependencies:
-    "@types/node": "npm:*"
-  checksum: 10/4986fa60424e6353e7e781ec887fc799d41f7c1d0a3f500728af63270f89c80773db493b228a137e12fc5cc45e09c8b1f71b709adff01a2b57e548a9452e6e51
+    undici-types: "npm:~6.19.2"
+  checksum: 10/c4634118abc36d1436d62e192f7088c211139165a395f1cdacca28df421d8dc8dd332b3104d72fc37764d73a205a4bbbe6e6abdc817c2c81883e147d1a96d497
   languageName: node
   linkType: hard
 
@@ -2864,7 +2847,7 @@ __metadata:
     "@ladle/react": "npm:^4.0.2"
     "@types/fs-extra": "npm:^11.0.1"
     "@types/glob": "npm:^7.1.4"
-    "@types/node": "npm:20.0.0"
+    "@types/node": "npm:^22.5.2"
     "@types/react": "npm:^18.2.13"
     "@types/react-dom": "npm:^18.2.6"
     "@types/sql.js": "npm:^1.4.4"
@@ -9233,13 +9216,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:^6.9.9":
-  version: 6.9.9
-  resolution: "nodemailer@npm:6.9.9"
-  checksum: 10/d81f8613c35785aeb60dd0e3ead2c2c0171c709381fde17ada112f5ac635630814ad09492dacaf0fd30158492ed834abb82d9c58b49e9b495e5c675fbc5fffef
-  languageName: node
-  linkType: hard
-
 "nopt@npm:^5.0.0":
   version: 5.0.0
   resolution: "nopt@npm:5.0.0"
@@ -11969,13 +11945,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"superstruct@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "superstruct@npm:1.0.3"
-  checksum: 10/632b6171ac136b6750e62a55f806cc949b3dbf2b4a7dc70cc85f54adcdf19d21eab9711f04e8a643b7dd622bbd8658366ead924f467adaccb2c8005c133b7976
-  languageName: node
-  linkType: hard
-
 "supports-color@npm:^5.3.0":
   version: 5.5.0
   resolution: "supports-color@npm:5.5.0"
@@ -12532,6 +12501,13 @@ __metadata:
     has-symbols: "npm:^1.0.3"
     which-boxed-primitive: "npm:^1.0.2"
   checksum: 10/06e1ee41c1095e37281cb71a975cb3350f7cb470a0665d2576f02cc9564f623bd90cfc0183693b8a7fdf2d242963dcc3010b509fa3ac683f540c765c0f3e7e43
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.19.2":
+  version: 6.19.8
+  resolution: "undici-types@npm:6.19.8"
+  checksum: 10/cf0b48ed4fc99baf56584afa91aaffa5010c268b8842f62e02f752df209e3dea138b372a60a963b3b2576ed932f32329ce7ddb9cb5f27a6c83040d8cd74b7a70
   languageName: node
   linkType: hard
 

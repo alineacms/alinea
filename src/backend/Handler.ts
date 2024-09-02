@@ -8,7 +8,6 @@ import {Entry} from 'alinea/core/Entry'
 import {EntryRow} from 'alinea/core/EntryRow'
 import {Graph} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
-import {outcome} from 'alinea/core/Outcome'
 import {
   PreviewPayload,
   PreviewUpdate,
@@ -244,7 +243,14 @@ export function createHandler(
         return previews.sign(request)
       },
       async prepareUpload(file: string) {
-        return backend.media.upload(context as AuthedContext, file)
+        return backend.media.prepareUpload(context as AuthedContext, file)
+      },
+      async handleUpload(destination, file) {
+        return backend.media.handleUpload?.(
+          context as AuthedContext,
+          destination,
+          file
+        )
       },
       async mutate(mutations: Array<Mutation>) {
         const {mutate} = await init
@@ -296,7 +302,7 @@ export function createHandler(
         .get('content-type')
         ?.includes('application/json')
       if (!isJson) return new Response('Expected JSON', {status: 400})
-      const [body] = await outcome(() => request.json())
+      const body = PLazy.from(() => request.json())
 
       // User
       if (action === HandleAction.User && request.method === 'GET') {
@@ -324,16 +330,17 @@ export function createHandler(
       // These actions can be run internally or by a user
       if (action === HandleAction.Resolve && request.method === 'POST')
         return Response.json(
-          (await resolve(await verifyInternal(), ResolveBody(body))) ?? null
+          (await resolve(await verifyInternal(), ResolveBody(await body))) ??
+            null
         )
       if (action === HandleAction.Pending && request.method === 'GET') {
-        const commitHash = url.searchParams.get('commitHash')!
+        const commitHash = string(url.searchParams.get('commitHash'))
         return Response.json(
           await backend.pending?.since(await verifyInternal(), commitHash)
         )
       }
       if (action === HandleAction.Draft && request.method === 'GET') {
-        const entryId = url.searchParams.get('entryId')!
+        const entryId = string(url.searchParams.get('entryId'))
         const draft = await backend.drafts.get(await verifyInternal(), entryId)
         return Response.json(
           draft ? {...draft, draft: base64url.stringify(draft.draft)} : null
@@ -346,12 +353,12 @@ export function createHandler(
 
       // Sign preview token
       if (action === HandleAction.PreviewToken && request.method === 'POST')
-        return Response.json(await previews.sign(PreviewBody(body)))
+        return Response.json(await previews.sign(PreviewBody(await body)))
 
       // History
       if (action === HandleAction.History && request.method === 'GET') {
-        const file = url.searchParams.get('file')!
-        const revisionId = url.searchParams.get('revisionId')
+        const file = string(url.searchParams.get('file'))
+        const revisionId = string.optional(url.searchParams.get('revisionId'))
         return Response.json(
           await (revisionId
             ? backend.history.revision(verified, file, revisionId)
@@ -361,31 +368,47 @@ export function createHandler(
 
       // Syncable
       if (action === HandleAction.Sync && request.method === 'GET') {
-        const contentHash = url.searchParams.get('contentHash')!
+        const contentHash = string(url.searchParams.get('contentHash'))
         await syncPending(context)
         return Response.json(await db.syncRequired(contentHash))
       }
       if (action === HandleAction.Sync && request.method === 'POST') {
         await syncPending(context)
-        return Response.json(await db.sync(SyncBody(body)))
+        return Response.json(await db.sync(SyncBody(await body)))
       }
 
       // Media
-      if (action === HandleAction.Upload && request.method === 'POST')
+      if (action === HandleAction.Upload && request.method === 'POST') {
+        const {handleUpload, prepareUpload} = backend.media
+        const isMultipart = request.headers
+          .get('content-type')
+          ?.includes('multipart')
+        if (!isMultipart)
+          return Response.json(
+            await prepareUpload(verified, PrepareBody(await body).filename)
+          )
+        if (!handleUpload) return new Response('Bad Request', {status: 400})
+        const entryId = string(url.searchParams.get('entryId'))
+        const location = string(url.searchParams.get('location'))
         return Response.json(
-          await backend.media.upload(verified, PrepareBody(body).filename)
+          await handleUpload(
+            verified,
+            {entryId, location},
+            await request.blob()
+          )
         )
+      }
 
       // Drafts
       if (action === HandleAction.Draft && request.method === 'POST') {
-        const data = body as DraftTransport
+        const data = (await body) as DraftTransport
         const draft = {...data, draft: new Uint8Array(base64.parse(data.draft))}
         return Response.json(await backend.drafts.store(verified, draft))
       }
 
       // Target
       if (action === HandleAction.Mutate && request.method === 'POST')
-        return Response.json(await mutate(verified, body))
+        return Response.json(await mutate(verified, await body))
     } catch (error) {
       if (error instanceof Response) return error
       console.error(error)

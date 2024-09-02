@@ -52,6 +52,16 @@ export class Client implements Connection {
     ).then<Connection.UploadResponse>(this.#failOnHttpError)
   }
 
+  handleUpload(
+    destination: Connection.UploadDestination,
+    file: Blob
+  ): Promise<void> {
+    return this.#requestJson(
+      {action: HandleAction.Upload, ...destination},
+      {method: 'POST', body: file}
+    ).then<void>(this.#failOnHttpError)
+  }
+
   user(): Promise<User | undefined> {
     return this.#requestJson({action: HandleAction.User})
       .then<User | null>(this.#failOnHttpError)
@@ -63,20 +73,14 @@ export class Client implements Connection {
     const body = JSON.stringify({...resolveDefaults, ...params})
     return this.#requestJson(
       {action: HandleAction.Resolve},
-      {
-        method: 'POST',
-        body
-      }
+      {method: 'POST', body}
     ).then(this.#failOnHttpError)
   }
 
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
-      {
-        method: 'POST',
-        body: JSON.stringify(mutations)
-      }
+      {method: 'POST', body: JSON.stringify(mutations)}
     ).then<{commitHash: string}>(this.#failOnHttpError)
   }
 
@@ -111,10 +115,7 @@ export class Client implements Connection {
   sync(contentHashes: Array<string>): Promise<SyncResponse> {
     return this.#requestJson(
       {action: HandleAction.Sync},
-      {
-        method: 'POST',
-        body: JSON.stringify(contentHashes)
-      }
+      {method: 'POST', body: JSON.stringify(contentHashes)}
     ).then<SyncResponse>(this.#failOnHttpError)
   }
 

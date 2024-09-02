@@ -84,7 +84,7 @@ export function databaseApi(options: DatabaseOptions) {
     }
   }
   const media: Media = {
-    async upload(ctx, file) {
+    async prepareUpload(ctx, file) {
       throw new Error('Not implemented')
     }
   }

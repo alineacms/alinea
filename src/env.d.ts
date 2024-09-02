@@ -41,7 +41,7 @@ declare module 'octokit-commit-multiple-files/create-or-update-files.js' {
 
 declare module 'buffer-to-base64' {
   export function encode(
-    buffer: ArrayBuffer,
+    buffer: ArrayBuffer | Uint8Array,
     format?: CompressionFormat
   ): Promise<string>
   export function decode(

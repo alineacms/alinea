@@ -1,7 +1,7 @@
 import {Connection} from 'alinea/core/Connection'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {base64, btoa} from 'alinea/core/util/Encoding'
-import {AuthedContext, History, Revision, Target} from '../Backend.js'
+import {AuthedContext, History, Media, Revision, Target} from '../Backend.js'
 import {Change, ChangeType} from '../data/ChangeSet.js'
 import {applyJsonPatch} from '../util/JsonPatch.js'
 
@@ -43,7 +43,15 @@ export function githubApi({authToken, owner, repo, branch}: GithubOptions) {
       throw new Error('Not implemented')
     }
   }
-  return {target, history}
+  const media: Media = {
+    async prepareUpload(ctx, file) {
+      return undefined!
+    },
+    async handleUpload(ctx, destination, file) {
+      throw new Error('Not implemented')
+    }
+  }
+  return {target, history, media}
 }
 
 async function applyChangesToRepo(

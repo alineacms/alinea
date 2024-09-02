@@ -225,7 +225,7 @@ export function cloudBackend(config: Config): Backend {
     }
   }
   const media: Media = {
-    upload(ctx, file) {
+    prepareUpload(ctx, file) {
       return parseOutcome(
         fetch(
           cloudConfig.upload,

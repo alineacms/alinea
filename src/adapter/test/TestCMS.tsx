@@ -37,7 +37,7 @@ export function createCMS<Definition extends Config>(definition: Definition) {
         }
       },
       media: {
-        async upload(ctx, file) {
+        async prepareUpload(ctx, file) {
           const id = createId()
           const serve = await listenForUpload()
           return {

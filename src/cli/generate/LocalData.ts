@@ -174,7 +174,7 @@ export class LocalData implements Source, Target, Media {
     return mediaDirs.some(dir => path.contains(path.join(rootDir, dir), file))
   }
 
-  async upload(
+  async prepareUpload(
     ctx: AuthedContext,
     file: string
   ): Promise<Connection.UploadResponse> {
