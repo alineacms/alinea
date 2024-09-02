@@ -1,4 +1,4 @@
-import {encode} from 'buffer-to-base64'
+import {encode} from 'alinea/core/util/BufferToBase64'
 import {promises as fs} from 'node:fs'
 import path, {dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'

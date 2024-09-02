@@ -73,7 +73,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
     store: connect(db),
     async flush() {
       store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
-      await idb.put(store, db.export(), dbName)
+      await idb.put(store, db.export() as any, dbName)
     },
     clone() {
       const clone = new Database(db.export())

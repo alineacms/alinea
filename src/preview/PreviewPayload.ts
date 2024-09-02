@@ -1,5 +1,5 @@
 import {PreviewUpdate} from 'alinea/core/Resolver'
-import {decode, encode} from 'buffer-to-base64'
+import {decode, encode} from 'alinea/core/util/BufferToBase64'
 import * as decoding from 'lib0/decoding.js'
 import * as encoding from 'lib0/encoding.js'
 

@@ -1,4 +1,4 @@
-import {decode} from 'buffer-to-base64'
+import {decode} from 'alinea/core/util/BufferToBase64'
 import PLazy from 'p-lazy'
 import {Store} from '../Store.js'
 import {createStore} from './CreateStore.js'

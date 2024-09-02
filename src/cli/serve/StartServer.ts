@@ -40,7 +40,6 @@ async function startBunServer(
           abortController.signal.addEventListener(
             'abort',
             () => {
-              server.stop()
               messages.cancel()
             },
             true

@@ -1,4 +1,4 @@
-import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
+import {ReadableStream, Request, Response} from '@alinea/iso'
 import {HandlerWithConnect} from 'alinea/backend/Handler'
 import {HttpRouter, router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/CloudConfig'
@@ -70,6 +70,7 @@ export function createLocalServer(
   handleApi: HandlerWithConnect,
   user: User
 ): HttpRouter {
+  console.log('local server')
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
   const entry = `alinea/cli/static/dashboard/dev`
@@ -160,13 +161,13 @@ export function createLocalServer(
             close: () => controller.close()
           })
         }
-      }).pipeThrough(new TextEncoderStream())
+      })
       return new Response(stream, {
         headers: {
           'content-type': 'text/event-stream',
           'cache-control': 'no-cache',
           'access-control-allow-origin': '*',
-          Connection: 'keep-alive'
+          connection: 'keep-alive'
         }
       })
     }),
