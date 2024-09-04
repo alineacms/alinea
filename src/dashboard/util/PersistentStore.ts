@@ -36,7 +36,8 @@ export async function createPersistentStore(): Promise<PersistentStore> {
   // See if we have a blob available to initialize the database with
   store = idb.transact(storage, [STORAGE_NAME], 'readonly')[0]
   const buffer = await idb.get(store, dbName)
-  const init = ArrayBuffer.isView(buffer) ? buffer : undefined
+  const init =
+    buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : undefined
   let db = new Database(init)
 
   /*const driverOptions =  {
