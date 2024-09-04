@@ -44,9 +44,7 @@ export function createCMS<Definition extends Config>(definition: Definition) {
             entryId: createId(),
             location: `media/${file}_${id}`,
             previewUrl: `media/${file}_${id}`,
-            upload: {
-              url: serve.url
-            }
+            url: serve.url
           }
         }
       }

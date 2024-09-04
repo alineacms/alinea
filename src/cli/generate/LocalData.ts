@@ -194,12 +194,10 @@ export class LocalData implements Source, Target, Media {
         `?/preview&file=${encodeURIComponent(fileLocation)}`,
         dashboardUrl
       ).href,
-      upload: {
-        url: new URL(
-          `?/upload&file=${encodeURIComponent(fileLocation)}`,
-          dashboardUrl
-        ).href
-      }
+      url: new URL(
+        `?/upload&file=${encodeURIComponent(fileLocation)}`,
+        dashboardUrl
+      ).href
     }
   }
 }

@@ -27,15 +27,12 @@ export interface Auth {
 }
 
 export interface Media {
-  handleUpload?(
-    ctx: AuthedContext,
-    destination: Connection.UploadDestination,
-    file: Blob
-  ): Promise<void>
   prepareUpload(
     ctx: AuthedContext,
     file: string
   ): Promise<Connection.UploadResponse>
+  handleUpload?(ctx: AuthedContext, entryId: string, file: Blob): Promise<void>
+  previewUpload?(ctx: AuthedContext, entryId: string): Promise<Response>
 }
 
 export interface DraftTransport {

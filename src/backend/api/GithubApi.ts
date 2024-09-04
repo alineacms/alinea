@@ -1,7 +1,8 @@
 import {Connection} from 'alinea/core/Connection'
 import {EntryRecord} from 'alinea/core/EntryRecord'
+import {HttpError} from 'alinea/core/HttpError'
 import {base64, btoa} from 'alinea/core/util/Encoding'
-import {AuthedContext, History, Media, Revision, Target} from '../Backend.js'
+import {AuthedContext, History, Revision, Target} from '../Backend.js'
 import {Change, ChangeType} from '../data/ChangeSet.js'
 import {applyJsonPatch} from '../util/JsonPatch.js'
 
@@ -43,15 +44,21 @@ export function githubApi({authToken, owner, repo, branch}: GithubOptions) {
       throw new Error('Not implemented')
     }
   }
-  const media: Media = {
-    async prepareUpload(ctx, file) {
-      return undefined!
+  return {target, history}
+}
+
+function graphQL(query: string, variables: object, token: string) {
+  return fetch('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
     },
-    async handleUpload(ctx, destination, file) {
-      throw new Error('Not implemented')
-    }
-  }
-  return {target, history, media}
+    body: JSON.stringify({query, variables})
+  }).then(async response => {
+    if (response.ok) return response.json()
+    throw new HttpError(response.status, await response.text())
+  })
 }
 
 async function applyChangesToRepo(
@@ -62,12 +69,6 @@ async function applyChangesToRepo(
   commitMessage: string,
   token: string
 ): Promise<string> {
-  const apiUrl = 'https://api.github.com/graphql'
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
-
   const {additions, deletions} = await processChanges(
     owner,
     repo,
@@ -75,47 +76,32 @@ async function applyChangesToRepo(
     changes,
     token
   )
-
-  const mutation = `
-    mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {
+  return graphQL(
+    `mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {
       createCommitOnBranch(input: $input) {
         commit {
           oid
         }
       }
-    }
-  `
-
-  const variables = {
-    input: {
-      branch: {
-        repositoryNameWithOwner: `${owner}/${repo}`,
-        branchName: branch
-      },
-      message: {
-        headline: commitMessage
-      },
-      fileChanges: {
-        additions,
-        deletions
-      },
-      expectedHeadOid: await getLatestCommitOid(owner, repo, branch, token)
-    }
-  }
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({query: mutation, variables})
-  })
-
-  const result = await response.json()
-
-  if (result.errors) {
-    throw new Error(`GraphQL Error: ${JSON.stringify(result.errors)}`)
-  }
-
-  return result.data.createCommitOnBranch.commit.oid
+    }`,
+    {
+      input: {
+        branch: {
+          repositoryNameWithOwner: `${owner}/${repo}`,
+          branchName: branch
+        },
+        message: {
+          headline: commitMessage
+        },
+        fileChanges: {
+          additions,
+          deletions
+        },
+        expectedHeadOid: await getLatestCommitOid(owner, repo, branch, token)
+      }
+    },
+    token
+  ).then(result => result.data.createCommitOnBranch.commit.oid)
 }
 
 async function processChanges(
@@ -209,8 +195,8 @@ async function getLatestCommitOid(
   branch: string,
   token: string
 ): Promise<string> {
-  const query = `
-    query GetLatestCommit($owner: String!, $repo: String!, $branch: String!) {
+  return graphQL(
+    `query GetLatestCommit($owner: String!, $repo: String!, $branch: String!) {
       repository(owner: $owner, name: $repo) {
         ref(qualifiedName: $branch) {
           target {
@@ -218,22 +204,10 @@ async function getLatestCommitOid(
           }
         }
       }
-    }
-  `
-
-  const variables = {owner, repo, branch}
-
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({query, variables})
-  })
-
-  const result = await response.json()
-  return result.data.repository.ref.target.oid
+    }`,
+    {owner, repo, branch},
+    token
+  ).then(result => result.data.repository.ref.target.oid)
 }
 
 async function isPathFolder(
@@ -243,8 +217,8 @@ async function isPathFolder(
   path: string,
   token: string
 ): Promise<boolean> {
-  const query = `
-    query IsPathFolder($owner: String!, $repo: String!, $expression: String!) {
+  return graphQL(
+    `query IsPathFolder($owner: String!, $repo: String!, $expression: String!) {
       repository(owner: $owner, name: $repo) {
         object(expression: $expression) {
           ... on Tree {
@@ -255,21 +229,10 @@ async function isPathFolder(
         }
       }
     }
-  `
-
-  const variables = {owner, repo, expression: `${branch}:${path}`}
-
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({query, variables})
-  })
-
-  const result = await response.json()
-  return result.data.repository.object !== null
+  `,
+    {owner, repo, expression: `${branch}:${path}`},
+    token
+  ).then(result => result.data.repository.object !== null)
 }
 
 async function listFilesInFolder(
@@ -279,8 +242,8 @@ async function listFilesInFolder(
   path: string,
   token: string
 ): Promise<string[]> {
-  const query = `
-    query ListFiles($owner: String!, $repo: String!, $expression: String!) {
+  return graphQL(
+    `query ListFiles($owner: String!, $repo: String!, $expression: String!) {
       repository(owner: $owner, name: $repo) {
         object(expression: $expression) {
           ... on Tree {
@@ -308,21 +271,10 @@ async function listFilesInFolder(
         }
       }
     }
-  `
-
-  const variables = {owner, repo, expression: `${branch}:${path}`}
-
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({query, variables})
-  })
-
-  const result = await response.json()
-  return flattenFileList(result.data.repository.object.entries, path)
+  `,
+    {owner, repo, expression: `${branch}:${path}`},
+    token
+  ).then(result => flattenFileList(result.data.repository.object.entries, path))
 }
 
 function flattenFileList(entries: any[], basePath: string): string[] {
@@ -346,8 +298,8 @@ async function fetchFileContent(
   path: string,
   token: string
 ): Promise<string> {
-  const query = `
-    query GetFileContent($owner: String!, $repo: String!, $expression: String!) {
+  return graphQL(
+    `query GetFileContent($owner: String!, $repo: String!, $expression: String!) {
       repository(owner: $owner, name: $repo) {
         object(expression: $expression) {
           ... on Blob {
@@ -356,21 +308,10 @@ async function fetchFileContent(
         }
       }
     }
-  `
-
-  const variables = {owner, repo, expression: `${branch}:${path}`}
-
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({query, variables})
-  })
-
-  const result = await response.json()
-  return result.data.repository.object.text
+  `,
+    {owner, repo, expression: `${branch}:${path}`},
+    token
+  ).then(result => result.data.repository.object.text)
 }
 
 async function fetchUploadedContent(url: string): Promise<string> {

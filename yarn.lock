@@ -149,12 +149,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@alinea/sqlite-wasm@npm:^0.1.16":
-  version: 0.1.16
-  resolution: "@alinea/sqlite-wasm@npm:0.1.16"
+"@alinea/sqlite-wasm@npm:^0.1.18":
+  version: 0.1.18
+  resolution: "@alinea/sqlite-wasm@npm:0.1.18"
   dependencies:
     "@alinea/iso": "npm:*"
-  checksum: 10/50ffaf11cc640c910f082e05c391b4b8cf18f90869babd1bc28caa9115eaf9aa1ca97a090cbdc5a92a8d636a1aa1c62e3a5356bbfeda31635148dd51e07c5e1f
+  checksum: 10/e8d49786594ee2c74f6d435f514e6bd150793b4771b8b3ea77701682f26995a7ce7ed069ad5be3d97609573e8b5891329369ff39b49b984b4b79b58b4d7beb2c
   languageName: node
   linkType: hard
 
@@ -2839,7 +2839,7 @@ __metadata:
   resolution: "alinea@workspace:."
   dependencies:
     "@alinea/iso": "npm:^0.3.2"
-    "@alinea/sqlite-wasm": "npm:^0.1.16"
+    "@alinea/sqlite-wasm": "npm:^0.1.18"
     "@esbx/reporter": "npm:^0.0.20"
     "@esbx/target": "npm:^0.0.20"
     "@esbx/util": "npm:^0.0.20"

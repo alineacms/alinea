@@ -103,19 +103,16 @@ async function process(
       const path = slugify(basename(fileName, extension))
       const file = join(upload.to.directory, path + extension)
       const info = await client.prepareUpload(file)
-      const remote = info.upload
-      await (remote
-        ? fetch(remote.url, {
-            method: remote.method ?? 'POST',
-            body: upload.file
-          }).then(async result => {
-            if (!result.ok)
-              throw new HttpError(
-                result.status,
-                `Could not reach server for upload`
-              )
-          })
-        : client.handleUpload(info, upload.file))
+      await fetch(info.url, {
+        method: info.method ?? 'POST',
+        body: upload.file
+      }).then(async result => {
+        if (!result.ok)
+          throw new HttpError(
+            result.status,
+            `Could not reach server for upload`
+          )
+      })
       return {...upload, info, status: UploadStatus.Uploaded}
     }
     case UploadStatus.Uploaded: {

@@ -245,13 +245,6 @@ export function createHandler(
       async prepareUpload(file: string) {
         return backend.media.prepareUpload(context as AuthedContext, file)
       },
-      async handleUpload(destination, file) {
-        return backend.media.handleUpload?.(
-          context as AuthedContext,
-          destination,
-          file
-        )
-      },
       async mutate(mutations: Array<Mutation>) {
         const {mutate} = await init
         return mutate(context as AuthedContext, mutations)
@@ -379,7 +372,7 @@ export function createHandler(
 
       // Media
       if (action === HandleAction.Upload && request.method === 'POST') {
-        const {handleUpload, prepareUpload} = backend.media
+        const {handleUpload, previewUpload, prepareUpload} = backend.media
         const isMultipart = request.headers
           .get('content-type')
           ?.includes('multipart')
@@ -389,20 +382,19 @@ export function createHandler(
           )
         if (!handleUpload) return new Response('Bad Request', {status: 400})
         const entryId = string(url.searchParams.get('entryId'))
-        const location = string(url.searchParams.get('location'))
-        return Response.json(
-          await handleUpload(
-            verified,
-            {entryId, location},
-            await request.blob()
+        const isPost = request.method === 'POST'
+        if (isPost)
+          return Response.json(
+            await handleUpload(verified, entryId, await request.blob())
           )
-        )
+        if (!previewUpload) return new Response('Bad Request', {status: 400})
+        return Response.json(await previewUpload(verified, entryId))
       }
 
       // Drafts
       if (action === HandleAction.Draft && request.method === 'POST') {
         const data = (await body) as DraftTransport
-        const draft = {...data, draft: new Uint8Array(base64.parse(data.draft))}
+        const draft = {...data, draft: base64.parse(data.draft)}
         return Response.json(await backend.drafts.store(verified, draft))
       }
 

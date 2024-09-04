@@ -1,9 +1,13 @@
 import {Drafts, Media, Pending, Target} from 'alinea/backend'
+import {createId} from 'alinea/core/Id'
 import {Mutation} from 'alinea/core/Mutation'
+import {basename, extname} from 'alinea/core/util/Paths'
+import {slugify} from 'alinea/core/util/Slugs'
 import PLazy from 'p-lazy'
 import {asc, Database, eq, lt, table} from 'rado'
 import {txGenerator} from 'rado/universal'
 import * as column from 'rado/universal/columns'
+import {HandleAction} from '../Handler.js'
 
 export interface DatabaseOptions {
   db: Database
@@ -22,10 +26,15 @@ const Mutation = table('alinea_mutation', {
   mutations: column.jsonb<Array<Mutation>>().notNull()
 })
 
+const Upload = table('alinea_upload', {
+  entryId: column.text().primaryKey(),
+  content: column.blob().notNull()
+})
+
 export function databaseApi(options: DatabaseOptions) {
   const setup = PLazy.from(async () => {
     const {db} = options
-    await db.create(Draft, Mutation).run()
+    await db.create(Draft, Mutation, Upload)
     return options.db
   })
   const drafts: Drafts = {
@@ -85,7 +94,39 @@ export function databaseApi(options: DatabaseOptions) {
   }
   const media: Media = {
     async prepareUpload(ctx, file) {
-      throw new Error('Not implemented')
+      const entryId = createId()
+      const extension = extname(file)
+      const base = basename(file, extension)
+      const filename = [slugify(base), entryId, slugify(extension)].join('.')
+      const url = `?${new URLSearchParams({
+        action: HandleAction.Upload,
+        entryId
+      })}`
+      return {
+        entryId,
+        location: filename,
+        previewUrl: url,
+        url: url
+      }
+    },
+    async handleUpload(ctx, entryId, file) {
+      const db = await setup
+      const content = new Uint8Array(await file.arrayBuffer())
+      await db.insert(Upload).values({entryId, content})
+    },
+    async previewUpload(ctx, entryId) {
+      const db = await setup
+      const upload = await db
+        .select()
+        .from(Upload)
+        .where(eq(Upload.entryId, entryId))
+        .get()
+      if (!upload) return new Response('Not found', {status: 404})
+      return new Response(upload.content, {
+        headers: {
+          'content-type': 'application/octet-stream'
+        }
+      })
     }
   }
   return {drafts, target, pending, media}
