@@ -291,14 +291,24 @@ export function createHandler(
 
       const action = params.get('action') as HandleAction
 
-      const isJson = request.headers
-        .get('content-type')
-        ?.includes('application/json')
-      if (!isJson) return new Response('Expected JSON', {status: 400})
-      const body = PLazy.from(() => request.json())
+      const expectJson = () => {
+        const acceptsJson = request.headers
+          .get('accept')
+          ?.includes('application/json')
+        if (!acceptsJson) throw new Response('Expected JSON', {status: 400})
+      }
+
+      const jsonBody = PLazy.from(() => {
+        const isJson = request.headers
+          .get('content-type')
+          ?.includes('application/json')
+        if (!isJson) throw new Response('Expected JSON', {status: 400})
+        return request.json()
+      })
 
       // User
       if (action === HandleAction.User && request.method === 'GET') {
+        expectJson()
         try {
           const {user} = await backend.auth.verify(context, request)
           return Response.json(user)
@@ -321,18 +331,24 @@ export function createHandler(
       }
 
       // These actions can be run internally or by a user
-      if (action === HandleAction.Resolve && request.method === 'POST')
+      if (action === HandleAction.Resolve && request.method === 'POST') {
+        expectJson()
         return Response.json(
-          (await resolve(await verifyInternal(), ResolveBody(await body))) ??
-            null
+          (await resolve(
+            await verifyInternal(),
+            ResolveBody(await jsonBody)
+          )) ?? null
         )
+      }
       if (action === HandleAction.Pending && request.method === 'GET') {
+        expectJson()
         const commitHash = string(url.searchParams.get('commitHash'))
         return Response.json(
           await backend.pending?.since(await verifyInternal(), commitHash)
         )
       }
       if (action === HandleAction.Draft && request.method === 'GET') {
+        expectJson()
         const entryId = string(url.searchParams.get('entryId'))
         const draft = await backend.drafts.get(await verifyInternal(), entryId)
         return Response.json(
@@ -345,11 +361,14 @@ export function createHandler(
       if (!verified) return new Response('Unauthorized', {status: 401})
 
       // Sign preview token
-      if (action === HandleAction.PreviewToken && request.method === 'POST')
-        return Response.json(await previews.sign(PreviewBody(await body)))
+      if (action === HandleAction.PreviewToken && request.method === 'POST') {
+        expectJson()
+        return Response.json(await previews.sign(PreviewBody(await jsonBody)))
+      }
 
       // History
       if (action === HandleAction.History && request.method === 'GET') {
+        expectJson()
         const file = string(url.searchParams.get('file'))
         const revisionId = string.optional(url.searchParams.get('revisionId'))
         return Response.json(
@@ -361,52 +380,58 @@ export function createHandler(
 
       // Syncable
       if (action === HandleAction.Sync && request.method === 'GET') {
+        expectJson()
         const contentHash = string(url.searchParams.get('contentHash'))
         await syncPending(context)
         return Response.json(await db.syncRequired(contentHash))
       }
+
       if (action === HandleAction.Sync && request.method === 'POST') {
+        expectJson()
         await syncPending(context)
-        return Response.json(await db.sync(SyncBody(await body)))
+        return Response.json(await db.sync(SyncBody(await jsonBody)))
       }
 
       // Media
-      if (action === HandleAction.Upload && request.method === 'POST') {
+      if (action === HandleAction.Upload) {
         const {handleUpload, previewUpload, prepareUpload} = backend.media
-        const isMultipart = request.headers
-          .get('content-type')
-          ?.includes('multipart')
-        if (!isMultipart)
+        const entryId = url.searchParams.get('entryId')
+        if (!entryId) {
+          expectJson()
           return Response.json(
-            await prepareUpload(verified, PrepareBody(await body).filename)
+            await prepareUpload(verified, PrepareBody(await jsonBody).filename)
           )
-        if (!handleUpload) return new Response('Bad Request', {status: 400})
-        const entryId = string(url.searchParams.get('entryId'))
+        }
         const isPost = request.method === 'POST'
-        if (isPost)
-          return Response.json(
-            await handleUpload(verified, entryId, await request.blob())
-          )
+        if (isPost) {
+          if (!handleUpload) return new Response('Bad Request', {status: 400})
+          await handleUpload(verified, entryId, await request.blob())
+          return new Response('OK', {status: 200})
+        }
         if (!previewUpload) return new Response('Bad Request', {status: 400})
+        expectJson()
         return Response.json(await previewUpload(verified, entryId))
       }
 
       // Drafts
       if (action === HandleAction.Draft && request.method === 'POST') {
-        const data = (await body) as DraftTransport
+        expectJson()
+        const data = (await jsonBody) as DraftTransport
         const draft = {...data, draft: base64.parse(data.draft)}
         return Response.json(await backend.drafts.store(verified, draft))
       }
 
       // Target
-      if (action === HandleAction.Mutate && request.method === 'POST')
-        return Response.json(await mutate(verified, await body))
+      if (action === HandleAction.Mutate && request.method === 'POST') {
+        expectJson()
+        return Response.json(await mutate(verified, await jsonBody))
+      }
     } catch (error) {
       if (error instanceof Response) return error
       console.error(error)
       return new Response('Internal Server Error', {status: 500})
     }
 
-    return new Response('Bad Request', {status: 400})
+    return new Response('Bad Request 3', {status: 400})
   }
 }

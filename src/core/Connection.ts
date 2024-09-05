@@ -24,7 +24,6 @@ export interface Connection extends Syncable {
   previewToken(request: PreviewInfo): Promise<string>
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
-  // handleUpload(file: File): Promise<Connection.UploadDestination>
   revisions(file: string): Promise<Array<Revision>>
   revisionData(file: string, revisionId: string): Promise<EntryRecord>
   getDraft(entryId: string): Promise<Draft | undefined>

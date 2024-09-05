@@ -52,16 +52,6 @@ export class Client implements Connection {
     ).then<Connection.UploadResponse>(this.#failOnHttpError)
   }
 
-  handleUpload(
-    destination: Connection.UploadDestination,
-    file: Blob
-  ): Promise<void> {
-    return this.#requestJson(
-      {action: HandleAction.Upload, ...destination},
-      {method: 'POST', body: file}
-    ).then<void>(this.#failOnHttpError)
-  }
-
   user(): Promise<User | undefined> {
     return this.#requestJson({action: HandleAction.User})
       .then<User | null>(this.#failOnHttpError)
