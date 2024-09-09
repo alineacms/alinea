@@ -1,3 +1,4 @@
+import {Headers} from '@alinea/iso'
 import {AuthenticateRequest, Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
@@ -14,6 +15,17 @@ export interface PreviewProps {
 }
 
 const devUrl = process.env.ALINEA_DEV_SERVER
+
+async function requestHeaders(): Promise<Headers> {
+  try {
+    const {getExpectedRequestStore} = await import(
+      'next/dist/client/components/request-async-storage.external.js'
+    )
+    return getExpectedRequestStore('headers').headers
+  } catch {
+    return new Headers()
+  }
+}
 
 export class NextCMS<
   Definition extends Config = Config
@@ -43,16 +55,19 @@ export class NextCMS<
   }
 
   async #clientUrl() {
-    const {headers} = await import('next/headers.js')
-    const origin = () => {
-      const host = headers().get('x-forwarded-host') ?? headers().get('host')
-      const proto = headers().get('x-forwarded-proto') ?? 'https'
+    const origin = async () => {
+      const headers = await requestHeaders()
+      const host = headers.get('x-forwarded-host') ?? headers.get('host')
+      const proto = headers.get('x-forwarded-proto') ?? 'https'
       const protocol = proto.endsWith(':') ? proto : proto + ':'
       return `${protocol}//${host}`
     }
     return devUrl
       ? new URL('/api', devUrl)
-      : new URL(this.config.handlerUrl ?? '/api/cms', this.baseUrl ?? origin())
+      : new URL(
+          this.config.handlerUrl ?? '/api/cms',
+          this.baseUrl ?? (await origin())
+        )
   }
 
   async user(): Promise<User | undefined> {
