@@ -199,6 +199,11 @@
       "browser": "./dist/field/text/TextField.browser.js",
       "default": "./dist/field/text/TextField.js"
     },
+    "./field/time/TimeField": {
+      "worker": "./dist/field/time/TimeField.js",
+      "browser": "./dist/field/time/TimeField.browser.js",
+      "default": "./dist/field/time/TimeField.js"
+    },
     "./field/view/View": {
       "worker": "./dist/field/view/View.js",
       "browser": "./dist/field/view/View.browser.js",
