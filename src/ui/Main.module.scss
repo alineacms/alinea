@@ -51,12 +51,13 @@
 
 .container {
   padding: 12px;
-  @include ml {
-    padding: var(--alinea-main-padding-y) var(--alinea-main-padding-x);
-    max-width: var(--alinea-main-width);
-  }
   width: 100%;
   // margin: 0 auto;
   flex-grow: 1;
   margin: 0 auto;
+
+  @include ml {
+    padding: var(--alinea-main-padding-y) var(--alinea-main-padding-x);
+    max-width: var(--alinea-main-width);
+  }
 }
