@@ -6,7 +6,7 @@ import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import {NextCMS} from './cms.js'
-import {defaultContext} from './context.js'
+import {requestContext} from './context.js'
 
 type Handler = (request: Request) => Promise<Response>
 const handlers = new WeakMap<NextCMS, Handler>()
@@ -19,7 +19,7 @@ export function createHandler(
   const handleCloud = createCoreHandler(cms, backend)
   const handle: Handler = async request => {
     try {
-      const context = await defaultContext
+      const context = await requestContext(cms.config)
       const previews = new JWTPreviews(context.apiKey)
       const {searchParams} = new URL(request.url)
       const previewToken = searchParams.get('preview')

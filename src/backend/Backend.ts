@@ -6,6 +6,7 @@ import {Mutation} from 'alinea/core/Mutation'
 import {User} from 'alinea/core/User'
 
 export interface RequestContext {
+  handlerUrl: URL
   apiKey: string
 }
 
@@ -32,7 +33,7 @@ export interface Media {
     file: string
   ): Promise<Connection.UploadResponse>
   handleUpload?(ctx: AuthedContext, entryId: string, file: Blob): Promise<void>
-  previewUpload?(ctx: AuthedContext, entryId: string): Promise<Response>
+  previewUpload?(ctx: RequestContext, entryId: string): Promise<Response>
 }
 
 export interface DraftTransport {

@@ -98,21 +98,27 @@ export function databaseApi(options: DatabaseOptions) {
       const extension = extname(file)
       const base = basename(file, extension)
       const filename = [slugify(base), entryId, slugify(extension)].join('.')
-      const url = `?${new URLSearchParams({
-        action: HandleAction.Upload,
-        entryId
-      })}`
+      const url = new URL(
+        `?${new URLSearchParams({
+          action: HandleAction.Upload,
+          entryId
+        })}`,
+        ctx.handlerUrl
+      )
       return {
         entryId,
         location: filename,
-        previewUrl: url,
-        url: url
+        previewUrl: url.href,
+        url: url.href
       }
     },
     async handleUpload(ctx, entryId, file) {
       const db = await setup
       const content = new Uint8Array(await file.arrayBuffer())
-      await db.insert(Upload).values({entryId, content})
+      await db.insert(Upload).values({
+        entryId,
+        content
+      })
     },
     async previewUpload(ctx, entryId) {
       const db = await setup
@@ -124,7 +130,8 @@ export function databaseApi(options: DatabaseOptions) {
       if (!upload) return new Response('Not found', {status: 404})
       return new Response(upload.content, {
         headers: {
-          'content-type': 'application/octet-stream'
+          'content-type': 'application/octet-stream',
+          'content-disposition': `inline; filename="${entryId}"`
         }
       })
     }

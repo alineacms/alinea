@@ -56,6 +56,7 @@ export function createCMS<Definition extends Config>(definition: Definition) {
   const cms: CMS<Definition> = new CMS(config, async () => {
     const {connect} = await handle
     return connect({
+      handlerUrl: new URL('http://localhost:3000'),
       apiKey: 'dev',
       user: localUser,
       token: ''
