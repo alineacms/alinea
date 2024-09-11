@@ -2,17 +2,12 @@ import {Backend} from 'alinea/backend'
 import {Database} from 'rado'
 import {basicAuth} from './BasicAuth.js'
 import {databaseApi} from './DatabaseApi.js'
-import {githubApi} from './GithubApi.js'
+import {githubApi, GithubOptions} from './GithubApi.js'
 
 export interface ApiOptions {
   db: Database
   auth: (username: string, password: string) => boolean | Promise<boolean>
-  github: {
-    authToken: string
-    owner: string
-    repo: string
-    branch: string
-  }
+  github: GithubOptions
 }
 
 export function createApi(options: ApiOptions): Backend {

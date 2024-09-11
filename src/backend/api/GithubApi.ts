@@ -2,6 +2,7 @@ import {Connection} from 'alinea/core/Connection'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
 import {base64, btoa} from 'alinea/core/util/Encoding'
+import {join} from 'alinea/core/util/Paths'
 import {AuthedContext, History, Revision, Target} from '../Backend.js'
 import {Change, ChangeType} from '../data/ChangeSet.js'
 import {applyJsonPatch} from '../util/JsonPatch.js'
@@ -11,9 +12,10 @@ export interface GithubOptions {
   owner: string
   repo: string
   branch: string
+  rootDir?: string
 }
 
-export function githubApi({authToken, owner, repo, branch}: GithubOptions) {
+export function githubApi(options: GithubOptions) {
   const target: Target = {
     async mutate(
       ctx: AuthedContext,
@@ -24,24 +26,26 @@ export function githubApi({authToken, owner, repo, branch}: GithubOptions) {
         commitMessage += `\nCo-authored-by: ${ctx.user.name} <${ctx.user.email}>`
       return {
         commitHash: await applyChangesToRepo(
-          owner,
-          repo,
-          branch,
+          options,
           params.mutations.flatMap(m => {
             return m.changes
           }),
-          commitMessage,
-          authToken
+          commitMessage
         )
       }
     }
   }
   const history: History = {
     async list(ctx, file): Promise<Array<Revision>> {
-      return []
+      return getFileCommitHistory(options, file)
     },
-    async revision(ctx, file, ref): Promise<EntryRecord> {
-      throw new Error('Not implemented')
+    async revision(ctx, file, ref): Promise<EntryRecord | undefined> {
+      const content = await getFileContentAtCommit(options, file, ref)
+      try {
+        return content ? (JSON.parse(content) as EntryRecord) : undefined
+      } catch (error) {
+        return undefined
+      }
     }
   }
   return {target, history}
@@ -61,21 +65,76 @@ function graphQL(query: string, variables: object, token: string) {
   })
 }
 
-async function applyChangesToRepo(
-  owner: string,
-  repo: string,
-  branch: string,
-  changes: Array<Change>,
-  commitMessage: string,
-  token: string
-): Promise<string> {
-  const {additions, deletions} = await processChanges(
-    owner,
-    repo,
-    branch,
-    changes,
-    token
+async function getFileCommitHistory(
+  {owner, repo, branch, authToken, rootDir}: GithubOptions,
+  file: string
+): Promise<Array<Revision>> {
+  const result = await graphQL(
+    `query GetFileHistory($owner: String!, $repo: String!, $branch: String!, $path: String!) {
+      repository(owner: $owner, name: $repo) {
+        ref(qualifiedName: $branch) {
+          target {
+            ... on Commit {
+              history(path: $path, first: 100) {
+                nodes {
+                  oid
+                  committedDate
+                  message
+                  author {
+                    name
+                    email
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }`,
+    {owner, repo, branch, path: join(rootDir, file)},
+    authToken
   )
+  const commits = result.data.repository.ref.target.history.nodes
+
+  return commits.map((commit: any) => ({
+    ref: commit.oid,
+    createdAt: new Date(commit.committedDate).getTime(),
+    file,
+    user: commit.author
+      ? {name: commit.author.name, email: commit.author.email}
+      : undefined,
+    description: commit.message
+  }))
+}
+
+async function getFileContentAtCommit(
+  {owner, repo, authToken, rootDir}: GithubOptions,
+  file: string,
+  ref: string
+): Promise<string | undefined> {
+  const result = await graphQL(
+    `query GetFileContent($owner: String!, $repo: String!, $expression: String!) {
+      repository(owner: $owner, name: $repo) {
+        object(expression: $expression) {
+          ... on Blob {
+            text
+          }
+        }
+      }
+    }`,
+    {owner, repo, expression: `${ref}:${join(rootDir, file)}`},
+    authToken
+  )
+  return result.data.repository.object?.text
+}
+
+async function applyChangesToRepo(
+  options: GithubOptions,
+  changes: Array<Change>,
+  commitMessage: string
+): Promise<string> {
+  const {additions, deletions} = await processChanges(options, changes)
+  const {owner, repo, branch, authToken} = options
   return graphQL(
     `mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {
       createCommitOnBranch(input: $input) {
@@ -97,19 +156,16 @@ async function applyChangesToRepo(
           additions,
           deletions
         },
-        expectedHeadOid: await getLatestCommitOid(owner, repo, branch, token)
+        expectedHeadOid: await getLatestCommitOid(options)
       }
     },
-    token
+    authToken
   ).then(result => result.data.createCommitOnBranch.commit.oid)
 }
 
 async function processChanges(
-  owner: string,
-  repo: string,
-  branch: string,
-  changes: Change[],
-  token: string
+  options: GithubOptions,
+  changes: Change[]
 ): Promise<{
   additions: {path: string; contents: string}[]
   deletions: {path: string}[]
@@ -120,81 +176,71 @@ async function processChanges(
   for (const change of changes) {
     switch (change.type) {
       case ChangeType.Write:
-      case ChangeType.Upload:
+      case ChangeType.Upload: {
+        const file = join(options.rootDir, change.file)
         additions.push({
-          path: change.file,
+          path: file,
           contents:
             change.type === ChangeType.Write
               ? btoa(change.contents)
               : await fetchUploadedContent(change.url)
         })
         break
-      case ChangeType.Delete:
-        deletions.push({path: change.file})
+      }
+      case ChangeType.Delete: {
+        const file = join(options.rootDir, change.file)
+        deletions.push({path: file})
         break
-      case ChangeType.Rename:
-        const isFolder = await isPathFolder(
-          owner,
-          repo,
-          branch,
-          change.from,
-          token
-        )
+      }
+      case ChangeType.Rename: {
+        const from = join(options.rootDir, change.from)
+        const to = join(options.rootDir, change.to)
+        const isFolder = await isPathFolder(options, from)
         if (isFolder) {
-          const files = await listFilesInFolder(
-            owner,
-            repo,
-            branch,
-            change.from,
-            token
+          const files = await listFilesInFolder(options, from)
+          const contents = await Promise.all(
+            files.map(file => fetchFileContent(options, file))
           )
-          for (const file of files) {
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i]
             deletions.push({path: file})
+            const path = to + file.slice(from.length)
             additions.push({
-              path: file.replace(change.from, change.to),
-              contents: await fetchFileContent(owner, repo, branch, file, token)
+              path,
+              contents: contents[i]
             })
           }
         } else {
-          deletions.push({path: change.from})
+          deletions.push({path: from})
           additions.push({
-            path: change.to,
-            contents: await fetchFileContent(
-              owner,
-              repo,
-              branch,
-              change.from,
-              token
-            )
+            path: join(options.rootDir, to),
+            contents: await fetchFileContent(options, from)
           })
         }
         break
-      case ChangeType.Patch:
-        const currentContent = await fetchFileContent(
-          owner,
-          repo,
-          branch,
-          change.file,
-          token
-        )
+      }
+      case ChangeType.Patch: {
+        const file = join(options.rootDir, change.file)
+        const currentContent = await fetchFileContent(options, file)
         const patchedContent = applyPatch(currentContent, change.patch)
         additions.push({
-          path: change.file,
+          path: file,
           contents: btoa(patchedContent)
         })
         break
+      }
     }
   }
 
   return {additions, deletions}
 }
 
-async function getLatestCommitOid(
-  owner: string,
-  repo: string,
-  branch: string,
-  token: string
-): Promise<string> {
+async function getLatestCommitOid({
+  owner,
+  repo,
+  branch,
+  authToken
+}: GithubOptions): Promise<string> {
   return graphQL(
     `query GetLatestCommit($owner: String!, $repo: String!, $branch: String!) {
       repository(owner: $owner, name: $repo) {
@@ -206,16 +252,13 @@ async function getLatestCommitOid(
       }
     }`,
     {owner, repo, branch},
-    token
+    authToken
   ).then(result => result.data.repository.ref.target.oid)
 }
 
 async function isPathFolder(
-  owner: string,
-  repo: string,
-  branch: string,
-  path: string,
-  token: string
+  {owner, repo, branch, authToken}: GithubOptions,
+  path: string
 ): Promise<boolean> {
   return graphQL(
     `query IsPathFolder($owner: String!, $repo: String!, $expression: String!) {
@@ -231,16 +274,13 @@ async function isPathFolder(
     }
   `,
     {owner, repo, expression: `${branch}:${path}`},
-    token
+    authToken
   ).then(result => result.data.repository.object !== null)
 }
 
 async function listFilesInFolder(
-  owner: string,
-  repo: string,
-  branch: string,
-  path: string,
-  token: string
+  {owner, repo, branch, authToken}: GithubOptions,
+  path: string
 ): Promise<string[]> {
   return graphQL(
     `query ListFiles($owner: String!, $repo: String!, $expression: String!) {
@@ -273,7 +313,7 @@ async function listFilesInFolder(
     }
   `,
     {owner, repo, expression: `${branch}:${path}`},
-    token
+    authToken
   ).then(result => flattenFileList(result.data.repository.object.entries, path))
 }
 
@@ -292,11 +332,8 @@ function flattenFileList(entries: any[], basePath: string): string[] {
 }
 
 async function fetchFileContent(
-  owner: string,
-  repo: string,
-  branch: string,
-  path: string,
-  token: string
+  {owner, repo, branch, authToken}: GithubOptions,
+  path: string
 ): Promise<string> {
   return graphQL(
     `query GetFileContent($owner: String!, $repo: String!, $expression: String!) {
@@ -310,7 +347,7 @@ async function fetchFileContent(
     }
   `,
     {owner, repo, expression: `${branch}:${path}`},
-    token
+    authToken
   ).then(result => result.data.repository.object.text)
 }
 

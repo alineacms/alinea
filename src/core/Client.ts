@@ -85,12 +85,17 @@ export class Client implements Connection {
     >(this.#failOnHttpError)
   }
 
-  revisionData(file: string, revisionId: string): Promise<EntryRecord> {
+  revisionData(
+    file: string,
+    revisionId: string
+  ): Promise<EntryRecord | undefined> {
     return this.#requestJson({
       action: HandleAction.History,
       file,
       revisionId
-    }).then<EntryRecord>(this.#failOnHttpError)
+    })
+      .then<EntryRecord>(this.#failOnHttpError)
+      .then(res => res ?? undefined)
   }
 
   // Syncable

@@ -25,7 +25,10 @@ export interface Connection extends Syncable {
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>
-  revisionData(file: string, revisionId: string): Promise<EntryRecord>
+  revisionData(
+    file: string,
+    revisionId: string
+  ): Promise<EntryRecord | undefined>
   getDraft(entryId: string): Promise<Draft | undefined>
   storeDraft(draft: Draft): Promise<void>
 }

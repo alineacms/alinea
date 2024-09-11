@@ -15,17 +15,21 @@ export async function requestContext(config: Config): Promise<RequestContext> {
 }
 
 async function handlerUrl(config: Config) {
-  const origin = async () => {
-    const headers = await requestHeaders()
-    const host = headers.get('x-forwarded-host') ?? headers.get('host')
-    const proto = headers.get('x-forwarded-proto') ?? 'https'
-    const protocol = proto.endsWith(':') ? proto : proto + ':'
-    return `${protocol}//${host}`
-  }
   const baseUrl = process.env.ALINEA_BASE_URL ?? Config.baseUrl(config)
   return devUrl
     ? new URL('/api', devUrl)
-    : new URL(config.handlerUrl ?? '/api/cms', baseUrl ?? (await origin()))
+    : new URL(
+        config.handlerUrl ?? '/api/cms',
+        baseUrl ?? (await requestOrigin())
+      )
+}
+
+async function requestOrigin() {
+  const headers = await requestHeaders()
+  const host = headers.get('x-forwarded-host') ?? headers.get('host')
+  const proto = headers.get('x-forwarded-proto') ?? 'https'
+  const protocol = proto.endsWith(':') ? proto : proto + ':'
+  return `${protocol}//${host}`
 }
 
 async function requestHeaders(): Promise<Headers> {

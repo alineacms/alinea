@@ -34,7 +34,7 @@ const Upload = table('alinea_upload', {
 export function databaseApi(options: DatabaseOptions) {
   const setup = PLazy.from(async () => {
     const {db} = options
-    await db.create(Draft, Mutation, Upload)
+    await db.create(Draft, Mutation, Upload).catch(() => {})
     return options.db
   })
   const drafts: Drafts = {

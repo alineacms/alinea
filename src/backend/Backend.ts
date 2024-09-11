@@ -58,7 +58,11 @@ export interface Revision {
 
 export interface History {
   list(ctx: AuthedContext, file: string): Promise<Array<Revision>>
-  revision(ctx: AuthedContext, file: string, ref: string): Promise<EntryRecord>
+  revision(
+    ctx: AuthedContext,
+    file: string,
+    ref: string
+  ): Promise<EntryRecord | undefined>
 }
 
 export interface Pending {

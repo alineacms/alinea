@@ -368,12 +368,11 @@ export function createHandler(
         const ctx = await verified
         expectJson()
         const file = string(url.searchParams.get('file'))
-        const revisionId = string.optional(url.searchParams.get('revisionId'))
-        return Response.json(
-          await (revisionId
-            ? backend.history.revision(ctx, file, revisionId)
-            : backend.history.list(ctx, file))
-        )
+        const revisionId = string.nullable(url.searchParams.get('revisionId'))
+        const result = await (revisionId
+          ? backend.history.revision(ctx, file, revisionId)
+          : backend.history.list(ctx, file))
+        return Response.json(result ?? null)
       }
 
       // Syncable
