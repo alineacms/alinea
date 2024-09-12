@@ -100,7 +100,7 @@ export function createHandler(
       string,
       Promise<{contentHash: string; draft?: Draft}>
     >()
-    let lastSync = Date.now()
+    let lastSync = 0
 
     return {db, mutate, resolve, syncPending}
 
@@ -130,6 +130,8 @@ export function createHandler(
         if (!backend.pending) return meta
         try {
           const toApply = await backend.pending.since(ctx, meta.commitHash)
+          const total = toApply?.mutations.length ?? 0
+          console.info(`> sync ${total} pending mutations`)
           if (!toApply) return meta
           await db.applyMutations(toApply.mutations, toApply.toCommitHash)
         } catch (error) {

@@ -46,13 +46,13 @@ export function cloudDebug(config: Config, rootDir: string): Backend {
     async mutate(ctx, params) {
       await lag(latency)
       for (const mutation of params.mutations) {
-        console.log(
+        console.info(
           `> cloud: mutate ${mutation.meta.type} - ${mutation.meta.entryId}`
         )
       }
       const toCommitHash = createId()
       mutations.push({...params, toCommitHash})
-      console.log(`> cloud: current ${toCommitHash}`)
+      console.info(`> cloud: current ${toCommitHash}`)
       return {commitHash: toCommitHash}
     }
   }
@@ -68,7 +68,7 @@ export function cloudDebug(config: Config, rootDir: string): Backend {
     },
     async store(ctx, draft) {
       await lag(latency)
-      console.log(`> cloud: store draft ${draft.entryId}`)
+      console.info(`> cloud: store draft ${draft.entryId}`)
       draftCache.set(draft.entryId, draft)
     }
   }
@@ -85,7 +85,7 @@ export function cloudDebug(config: Config, rootDir: string): Backend {
   const pending: Pending = {
     async since(ctx, commitHash) {
       await lag(latency)
-      console.log(`> cloud: pending since ${commitHash}`)
+      console.info(`> cloud: pending since ${commitHash}`)
       let i = mutations.length
       for (; i >= 0; i--)
         if (i > 0 && mutations[i - 1].toCommitHash === commitHash) break
