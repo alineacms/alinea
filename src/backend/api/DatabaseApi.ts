@@ -4,7 +4,7 @@ import {Mutation} from 'alinea/core/Mutation'
 import {basename, extname} from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import PLazy from 'p-lazy'
-import {asc, Database, eq, lt, table} from 'rado'
+import {asc, Database, eq, gt, table} from 'rado'
 import {txGenerator} from 'rado/universal'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../Handler.js'
@@ -85,7 +85,7 @@ export function databaseApi(options: DatabaseOptions) {
       const rows = await db
         .select()
         .from(Mutation)
-        .where(lt(Mutation.id, index ?? 0))
+        .where(gt(Mutation.id, index ?? 0))
         .orderBy(asc(Mutation.id))
       if (rows.length === 0) return undefined
       const mutations = rows.flatMap(row => row.mutations)
