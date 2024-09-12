@@ -73,7 +73,7 @@ export function BrowserPreview({
     function handleMessage(event: MessageEvent<PreviewMessage>) {
       if (!event.data || typeof event.data !== 'object') return
       if (event.data.action === PreviewAction.Ping) {
-        console.log('[Alinea preview window detected]')
+        console.info('[Alinea preview window detected]')
         hasPreviewListener.current = true
         registerLivePreview({
           preview(payload) {

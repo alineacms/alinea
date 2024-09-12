@@ -1,5 +1,5 @@
 import {Request} from '@alinea/iso'
-import {Database} from 'alinea/backend'
+import {Database} from 'alinea/backend/Database'
 import {PreviewRequest} from './Resolver.js'
 import {User} from './User.js'
 

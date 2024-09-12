@@ -1,4 +1,4 @@
-import {Database} from 'alinea/backend'
+import {Database} from 'alinea/backend/Database'
 import {EntryResolver} from 'alinea/backend/resolver/EntryResolver'
 import {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'
@@ -47,7 +47,9 @@ const localDbAtom = atom(async (get, set) => {
   }
   const resolver = new EntryResolver(db, config.schema)
   const syncDb = async (force = false) => {
+    console.log(await db.meta())
     const changed = await db.syncWith(client)
+    console.log(changed)
     if (changed.length > 0) await flush()
     return changed
   }

@@ -103,8 +103,8 @@ async function process(
       const path = slugify(basename(fileName, extension))
       const file = join(upload.to.directory, path + extension)
       const info = await client.prepareUpload(file)
-      await fetch(info.upload.url, {
-        method: info.upload.method ?? 'POST',
+      await fetch(info.url, {
+        method: info.method ?? 'POST',
         body: upload.file
       }).then(async result => {
         if (!result.ok)
@@ -116,8 +116,6 @@ async function process(
       return {...upload, info, status: UploadStatus.Uploaded}
     }
     case UploadStatus.Uploaded: {
-      const {replace} = upload
-      const info = upload.info!
       const entry = await publishUpload(upload)
       return {...upload, result: entry, status: UploadStatus.Done}
     }

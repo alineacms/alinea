@@ -78,16 +78,15 @@ export class UploadOperation extends Operation {
             file instanceof Blob ? file : new Blob([body])
           )
         : undefined
-      await fetch(info.upload.url, {
-        method: info.upload.method ?? 'POST',
-        body
-      }).then(async result => {
-        if (!result.ok)
-          throw new HttpError(
-            result.status,
-            `Could not reach server for upload`
-          )
-      })
+      fetch(info.url, {method: info.method ?? 'POST', body}).then(
+        async result => {
+          if (!result.ok)
+            throw new HttpError(
+              result.status,
+              `Could not reach server for upload`
+            )
+        }
+      )
       const parent = this.parentId
         ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
         : undefined

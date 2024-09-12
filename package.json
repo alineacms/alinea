@@ -10,7 +10,7 @@
     "stories": "ladle serve",
     "demo": "node build.js --watch -- node dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
     "build": "tsc && node build.js",
-    "cycles:server": "CHECK_CYCLES=server node build.js && madge --warning --circular dist/index.js dist/backend.js",
+    "cycles:server": "CHECK_CYCLES=server node build.js && madge --warning --circular dist/index.js",
     "cycles:browser": "CHECK_CYCLES=browser node build.js && madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
     "alinea": "node build.js && node dist/cli.js",
     "build:alinea": "node build.js",
@@ -54,8 +54,9 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.2",
-    "@alinea/sqlite-wasm": "^0.1.16",
-    "esbuild": "^0.20.1"
+    "@alinea/sqlite-wasm": "^0.1.18",
+    "esbuild": "^0.20.1",
+    "rado": "^1.0.12"
   },
   "peerDependencies": {
     "react": "*",
@@ -69,7 +70,7 @@
     "@ladle/react": "^4.0.2",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
-    "@types/node": "20.0.0",
+    "@types/node": "^22.5.2",
     "@types/react": "^18.2.13",
     "@types/react-dom": "^18.2.6",
     "@types/sql.js": "^1.4.4",
@@ -87,7 +88,7 @@
     "sass": "^1.63.4",
     "sharp": "0.32.6",
     "speedscope": "^1.14.0",
-    "typescript": "^5.5.3",
+    "typescript": "^5.6.2",
     "typescript-plugin-css-modules": "^5.0.2",
     "uvu": "^0.5.1",
     "yjs-src": "npm:yjs@13.6.11"
@@ -213,11 +214,6 @@
       "worker": "./dist/picker/url/UrlPicker.js",
       "browser": "./dist/picker/url/UrlPicker.browser.js",
       "default": "./dist/picker/url/UrlPicker.js"
-    },
-    "./auth/passwordless/PasswordLessAuth": {
-      "worker": "./dist/auth/passwordless/PasswordLessAuth.server.js",
-      "browser": "./dist/auth/passwordless/PasswordLessAuth.js",
-      "default": "./dist/auth/passwordless/PasswordLessAuth.server.js"
     },
     "./cli/util/ExportStore": {
       "worker": "./dist/cli/util/ExportStore.server.js",

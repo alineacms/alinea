@@ -1,6 +1,6 @@
-import {Database} from 'alinea/backend'
 import {Auth, Backend} from 'alinea/backend/Backend'
 import {memoryBackend} from 'alinea/backend/data/MemoryBackend'
+import {Database} from 'alinea/backend/Database'
 import {createHandler} from 'alinea/backend/Handler'
 import {Store} from 'alinea/backend/Store'
 import {createStore} from 'alinea/backend/store/CreateStore'
@@ -37,16 +37,14 @@ export function createCMS<Definition extends Config>(definition: Definition) {
         }
       },
       media: {
-        async upload(ctx, file) {
+        async prepareUpload(ctx, file) {
           const id = createId()
           const serve = await listenForUpload()
           return {
             entryId: createId(),
             location: `media/${file}_${id}`,
             previewUrl: `media/${file}_${id}`,
-            upload: {
-              url: serve.url
-            }
+            url: serve.url
           }
         }
       }
@@ -58,6 +56,7 @@ export function createCMS<Definition extends Config>(definition: Definition) {
   const cms: CMS<Definition> = new CMS(config, async () => {
     const {connect} = await handle
     return connect({
+      handlerUrl: new URL('http://localhost:3000'),
       apiKey: 'dev',
       user: localUser,
       token: ''

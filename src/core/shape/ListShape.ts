@@ -85,6 +85,7 @@ export class ListShape<Row extends ListRow>
     let currentIndex = null
     for (const row of rows) {
       const type = this.shapes[row[ListRow.type]]
+      if (!type) continue
       currentIndex = generateKeyBetween(currentIndex, null)
       map.set(
         row[ListRow.id],

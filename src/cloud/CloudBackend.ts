@@ -1,4 +1,5 @@
 import {Response} from '@alinea/iso'
+import {AuthAction} from 'alinea/backend/Auth'
 import {
   Auth,
   AuthedContext,
@@ -47,13 +48,6 @@ let publicKey = PLazy.from(async function loadPublicKey(
 })
 
 const COOKIE_NAME = 'alinea.cloud'
-
-export enum AuthAction {
-  Status = 'status',
-  Handshake = 'handshake',
-  Login = 'login',
-  Logout = 'logout'
-}
 
 export function cloudBackend(config: Config): Backend {
   const auth: Auth = {
@@ -225,7 +219,7 @@ export function cloudBackend(config: Config): Backend {
     }
   }
   const media: Media = {
-    upload(ctx, file) {
+    prepareUpload(ctx, file) {
       return parseOutcome(
         fetch(
           cloudConfig.upload,

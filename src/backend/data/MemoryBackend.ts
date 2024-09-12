@@ -25,7 +25,7 @@ export function memoryBackend(db: Database): Backend {
     }
   }
   const media: Media = {
-    upload(ctx, file) {
+    prepareUpload(ctx, file) {
       throw new Error(`Not implemented`)
     }
   }

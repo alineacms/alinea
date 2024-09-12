@@ -1,8 +1,8 @@
-import {JsonLoader} from 'alinea/backend'
 import {AuthedContext, Media, Target} from 'alinea/backend/Backend'
 import {FS} from 'alinea/backend/FS'
 import {Source, SourceEntry, WatchFiles} from 'alinea/backend/Source'
 import {ChangeType} from 'alinea/backend/data/ChangeSet'
+import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {applyJsonPatch} from 'alinea/backend/util/JsonPatch'
 import {Config} from 'alinea/core/Config'
 import {Connection} from 'alinea/core/Connection'
@@ -174,7 +174,7 @@ export class LocalData implements Source, Target, Media {
     return mediaDirs.some(dir => path.contains(path.join(rootDir, dir), file))
   }
 
-  async upload(
+  async prepareUpload(
     ctx: AuthedContext,
     file: string
   ): Promise<Connection.UploadResponse> {
@@ -194,12 +194,10 @@ export class LocalData implements Source, Target, Media {
         `?/preview&file=${encodeURIComponent(fileLocation)}`,
         dashboardUrl
       ).href,
-      upload: {
-        url: new URL(
-          `?/upload&file=${encodeURIComponent(fileLocation)}`,
-          dashboardUrl
-        ).href
-      }
+      url: new URL(
+        `?/upload&file=${encodeURIComponent(fileLocation)}`,
+        dashboardUrl
+      ).href
     }
   }
 }

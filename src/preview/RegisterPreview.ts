@@ -12,7 +12,7 @@ export function registerPreview(api: PreviewApi) {
   if (window.location != window.parent.location) {
     window.parent.postMessage({action: PreviewAction.Ping}, '*')
     addEventListener('message', handleMessage)
-    console.log('[Alinea preview listener attached]')
+    console.info('[Alinea preview listener attached]')
   }
   return () => {
     if (observer) observer.disconnect()
@@ -24,26 +24,26 @@ export function registerPreview(api: PreviewApi) {
     const message = event.data as PreviewMessage
     switch (message.action) {
       case PreviewAction.Preview:
-        console.log('[Alinea preview received]')
+        console.info('[Alinea preview received]')
         api.preview(message)
         return
       case PreviewAction.Reload:
-        console.log('[Alinea preview reload received]')
+        console.info('[Alinea preview reload received]')
         return location.reload()
       case PreviewAction.Previous:
-        console.log('[Alinea preview previous received]')
+        console.info('[Alinea preview previous received]')
         return history.back()
       case PreviewAction.Next:
-        console.log('[Alinea preview next received]')
+        console.info('[Alinea preview next received]')
         return history.forward()
       case PreviewAction.Pong:
-        console.log('[Alinea preview pong received]')
+        console.info('[Alinea preview pong received]')
         api.setIsPreviewing(true)
         try {
           fetchAndSendMetadata()
           observer = new MutationObserver(fetchAndSendMetadata)
           observer.observe(document.head, {childList: true})
-          console.log('[Alinea meta data sent to parent]')
+          console.info('[Alinea meta data sent to parent]')
         } catch (e) {
           console.error('[Alinea meta data sent to parent failed]')
         }
