@@ -10,7 +10,7 @@
     "stories": "ladle serve",
     "demo": "node build.js --watch -- node dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
     "build": "tsc && node build.js",
-    "cycles:server": "CHECK_CYCLES=server node build.js && madge --warning --circular dist/index.js dist/backend.js",
+    "cycles:server": "CHECK_CYCLES=server node build.js && madge --warning --circular dist/index.js",
     "cycles:browser": "CHECK_CYCLES=browser node build.js && madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
     "alinea": "node build.js && node dist/cli.js",
     "build:alinea": "node build.js",
