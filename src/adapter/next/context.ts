@@ -1,4 +1,4 @@
-import {RequestContext} from 'alinea/backend'
+import {RequestContext} from 'alinea/backend/Backend'
 import {generatedRelease} from 'alinea/backend/store/GeneratedRelease'
 import {Config} from 'alinea/core/Config'
 

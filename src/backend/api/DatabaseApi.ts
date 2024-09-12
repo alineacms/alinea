@@ -1,4 +1,4 @@
-import {Drafts, Media, Pending, Target} from 'alinea/backend'
+import {Drafts, Media, Pending, Target} from 'alinea/backend/Backend'
 import {createId} from 'alinea/core/Id'
 import {Mutation} from 'alinea/core/Mutation'
 import {basename, extname} from 'alinea/core/util/Paths'

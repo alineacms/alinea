@@ -1,4 +1,5 @@
-import {Database, JWTPreviews} from 'alinea/backend'
+import {Database} from 'alinea/backend/Database'
+import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'

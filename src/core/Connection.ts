@@ -1,4 +1,4 @@
-import {Revision} from 'alinea/backend'
+import {Revision} from 'alinea/backend/Backend'
 import {PreviewInfo} from 'alinea/backend/Previews'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {Draft} from './Draft.js'

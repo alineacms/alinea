@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.4.5",
+    "@vercel/postgres": "^0.10.0",
     "alinea": "0.0.0",
     "lz-string": "^1.4.4",
     "next": "^14.2.6",
@@ -34,7 +35,7 @@
     "eslint-config-next": "13.4.0",
     "raw-loader": "^4.0.2",
     "tsx": "^4.7.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.6.2"
   },
   "exports": {
     ".": "./dist/index.js",

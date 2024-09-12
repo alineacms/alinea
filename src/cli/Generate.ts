@@ -1,4 +1,4 @@
-import {Database} from 'alinea/backend'
+import {Database} from 'alinea/backend/Database'
 import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'

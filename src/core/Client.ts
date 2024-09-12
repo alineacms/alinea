@@ -1,5 +1,5 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
-import {DraftTransport, Revision} from 'alinea/backend'
+import {DraftTransport, Revision} from 'alinea/backend/Backend'
 import {HandleAction} from 'alinea/backend/Handler'
 import {PreviewInfo} from 'alinea/backend/Previews'
 import {Connection, SyncResponse} from './Connection.js'

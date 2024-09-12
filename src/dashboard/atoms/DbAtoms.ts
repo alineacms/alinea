@@ -1,4 +1,4 @@
-import {Database} from 'alinea/backend'
+import {Database} from 'alinea/backend/Database'
 import {EntryResolver} from 'alinea/backend/resolver/EntryResolver'
 import {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'

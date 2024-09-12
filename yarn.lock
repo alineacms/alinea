@@ -27,7 +27,7 @@ __metadata:
     cito: "npm:^0.2.0"
     dataloader: "npm:^2.1.0"
     pretty-ms: "npm:^8.0.0"
-    rado: "npm:^1.0.9"
+    rado: "npm:^1.0.10"
     regexparam: "npm:^2.0.1"
     xxhash-wasm: "npm:^1.0.2"
   languageName: unknown
@@ -178,6 +178,7 @@ __metadata:
     "@monaco-editor/react": "npm:^4.4.5"
     "@types/node": "npm:^22.5.2"
     "@types/react": "npm:^18.2.13"
+    "@vercel/postgres": "npm:^0.10.0"
     alinea: "npm:0.0.0"
     eslint: "npm:8.39.0"
     eslint-config-next: "npm:13.4.0"
@@ -191,7 +192,7 @@ __metadata:
     remark-html: "npm:^15.0.1"
     shiki: "npm:^0.10.1"
     tsx: "npm:^4.7.0"
-    typescript: "npm:^5.5.3"
+    typescript: "npm:^5.6.2"
     use-clipboard-copy: "npm:^0.2.0"
   languageName: unknown
   linkType: soft
@@ -1334,6 +1335,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@neondatabase/serverless@npm:^0.9.3":
+  version: 0.9.5
+  resolution: "@neondatabase/serverless@npm:0.9.5"
+  dependencies:
+    "@types/pg": "npm:8.11.6"
+  checksum: 10/4a6b370376b42823e2529c24e947a20b709dc65181ab5c21383723298ff76ff38b34ba99c3800c49e85bed7b604fda2430cec4fd9aadfac22bd06ca4e6cc98e8
+  languageName: node
+  linkType: hard
+
 "@next/env@npm:14.2.6":
   version: 14.2.6
   resolution: "@next/env@npm:14.2.6"
@@ -2421,6 +2431,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/pg@npm:8.11.6":
+  version: 8.11.6
+  resolution: "@types/pg@npm:8.11.6"
+  dependencies:
+    "@types/node": "npm:*"
+    pg-protocol: "npm:*"
+    pg-types: "npm:^4.0.1"
+  checksum: 10/4eb22d42c5363abf58b1be0104e01332a0928e9dce8571ad136ce3e256c16dd97343a17c29066e4f390ed366548cca0bda55ff48b495ee4c1d70d123cc75edf6
+  languageName: node
+  linkType: hard
+
 "@types/postcss-modules-local-by-default@npm:^4.0.0":
   version: 4.0.0
   resolution: "@types/postcss-modules-local-by-default@npm:4.0.0"
@@ -2707,6 +2728,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vercel/postgres@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "@vercel/postgres@npm:0.10.0"
+  dependencies:
+    "@neondatabase/serverless": "npm:^0.9.3"
+    bufferutil: "npm:^4.0.8"
+    ws: "npm:^8.17.1"
+  checksum: 10/637376fbab9bbd42cb55c70cb2729a34a91a319d8069193a7df00b81089eafa7a05776735a6507b862057f4747ecf6389e47dd85ff1cb39e7c761c4b5d17ba2f
+  languageName: node
+  linkType: hard
+
 "@vitejs/plugin-react-swc@npm:^3.5.0":
   version: 3.5.0
   resolution: "@vitejs/plugin-react-swc@npm:3.5.0"
@@ -2861,13 +2893,13 @@ __metadata:
     npm-run-all: "npm:^4.1.5"
     postcss-modules: "npm:^6.0.0"
     postcss-pxtorem: "npm:^6.0.0"
-    rado: "npm:^1.0.9"
+    rado: "npm:^1.0.10"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     sass: "npm:^1.63.4"
     sharp: "npm:0.32.6"
     speedscope: "npm:^1.14.0"
-    typescript: "npm:^5.5.3"
+    typescript: "npm:^5.6.2"
     typescript-plugin-css-modules: "npm:^5.0.2"
     uvu: "npm:^0.5.1"
     yjs-src: "npm:yjs@13.6.11"
@@ -3359,6 +3391,16 @@ __metadata:
     base64-js: "npm:^1.3.1"
     ieee754: "npm:^1.1.13"
   checksum: 10/997434d3c6e3b39e0be479a80288875f71cd1c07d75a3855e6f08ef848a3c966023f79534e22e415ff3a5112708ce06127277ab20e527146d55c84566405c7c6
+  languageName: node
+  linkType: hard
+
+"bufferutil@npm:^4.0.8":
+  version: 4.0.8
+  resolution: "bufferutil@npm:4.0.8"
+  dependencies:
+    node-gyp: "npm:latest"
+    node-gyp-build: "npm:^4.3.0"
+  checksum: 10/d9337badc960a19d5a031db5de47159d7d8a11b6bab399bdfbf464ffa9ecd2972fef19bb61a7d2827e0c55f912c20713e12343386b86cb013f2b99c2324ab6a3
   languageName: node
   linkType: hard
 
@@ -9164,6 +9206,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-gyp-build@npm:^4.3.0":
+  version: 4.8.2
+  resolution: "node-gyp-build@npm:4.8.2"
+  bin:
+    node-gyp-build: bin.js
+    node-gyp-build-optional: optional.js
+    node-gyp-build-test: build-test.js
+  checksum: 10/e3a365eed7a2d950864a1daa34527588c16fe43ae189d0aeb8fd1dfec91ba42a0e1b499322bff86c2832029fec4f5901bf26e32005e1e17a781dcd5177b6a657
+  languageName: node
+  linkType: hard
+
 "node-gyp@npm:latest":
   version: 8.2.0
   resolution: "node-gyp@npm:8.2.0"
@@ -9447,6 +9500,13 @@ __metadata:
   version: 1.0.0
   resolution: "oblivious-set@npm:1.0.0"
   checksum: 10/f31740ea9c3a8242ad2324e4ebb9a35359fbc2e6e7131731a0fc1c8b7b1238eb07e4c8c631a38535243a7b8e3042b7e89f7dc2a95d2989afd6f80bd5793b0aab
+  languageName: node
+  linkType: hard
+
+"obuf@npm:~1.1.2":
+  version: 1.1.2
+  resolution: "obuf@npm:1.1.2"
+  checksum: 10/53ff4ab3a13cc33ba6c856cf281f2965c0aec9720967af450e8fd06cfd50aceeefc791986a16bcefa14e7898b3ca9acdfcf15b9d9a1b9c7e1366581a8ad6e65e
   languageName: node
   linkType: hard
 
@@ -9779,6 +9839,42 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pg-int8@npm:1.0.1":
+  version: 1.0.1
+  resolution: "pg-int8@npm:1.0.1"
+  checksum: 10/a1e3a05a69005ddb73e5f324b6b4e689868a447c5fa280b44cd4d04e6916a344ac289e0b8d2695d66e8e89a7fba023affb9e0e94778770ada5df43f003d664c9
+  languageName: node
+  linkType: hard
+
+"pg-numeric@npm:1.0.2":
+  version: 1.0.2
+  resolution: "pg-numeric@npm:1.0.2"
+  checksum: 10/8899f8200caa1744439a8778a9eb3ceefb599d893e40a09eef84ee0d4c151319fd416634a6c0fc7b7db4ac268710042da5be700b80ef0de716fe089b8652c84f
+  languageName: node
+  linkType: hard
+
+"pg-protocol@npm:*":
+  version: 1.6.1
+  resolution: "pg-protocol@npm:1.6.1"
+  checksum: 10/9af672208adae8214f55f5b4597c4699ab9946205a99863d3e2bb8d024fdab16711457b539bc366cc29040218aa87508cf61294b76d288f48881b973d9117bd6
+  languageName: node
+  linkType: hard
+
+"pg-types@npm:^4.0.1":
+  version: 4.0.2
+  resolution: "pg-types@npm:4.0.2"
+  dependencies:
+    pg-int8: "npm:1.0.1"
+    pg-numeric: "npm:1.0.2"
+    postgres-array: "npm:~3.0.1"
+    postgres-bytea: "npm:~3.0.0"
+    postgres-date: "npm:~2.1.0"
+    postgres-interval: "npm:^3.0.0"
+    postgres-range: "npm:^1.1.1"
+  checksum: 10/f4d529da864d4169afab300eb8629a84a6a06aa70c471160a7e46c34b6d4dd0e61cbd57d10d98c3a36e98f474e2ff85d41e4b1c953a321146b4bae09372c58d3
+  languageName: node
+  linkType: hard
+
 "picocolors@npm:^1.0.0":
   version: 1.0.0
   resolution: "picocolors@npm:1.0.0"
@@ -10010,6 +10106,43 @@ __metadata:
     picocolors: "npm:^1.0.0"
     source-map-js: "npm:^1.0.2"
   checksum: 10/e22a4594c255f26117f38419fb494d7ecab0f596cd409f7aadc8a6173abf180ed7ea970cd13fd366ab12b5840be901d2a09b25197700c2ebcb5a8077326bf519
+  languageName: node
+  linkType: hard
+
+"postgres-array@npm:~3.0.1":
+  version: 3.0.2
+  resolution: "postgres-array@npm:3.0.2"
+  checksum: 10/0159517e4e5f263bf9e324f0c4d3c10244a294021f2b5980abc8c23afdb965370a7fc0c82012fce4d28e83186ad089b6476b05fcef6c88f8e43e37a3a2fa0ad5
+  languageName: node
+  linkType: hard
+
+"postgres-bytea@npm:~3.0.0":
+  version: 3.0.0
+  resolution: "postgres-bytea@npm:3.0.0"
+  dependencies:
+    obuf: "npm:~1.1.2"
+  checksum: 10/f5c01758fd2fa807afbd34e1ba2146f683818ebc2d23f4a62f0fd627c0b1126fc543cab1b63925f97ce6c7d8f5f316043218619c447445210ea82f10411efb1b
+  languageName: node
+  linkType: hard
+
+"postgres-date@npm:~2.1.0":
+  version: 2.1.0
+  resolution: "postgres-date@npm:2.1.0"
+  checksum: 10/faa1c70dfad0e35bd4aa7cb6088fcd4e4f039aa25dc42150129178fc2a0baa7e37eca0bf18e4142a40dea18d1955459b08783f78ec487ef27b4b93ab5e854597
+  languageName: node
+  linkType: hard
+
+"postgres-interval@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "postgres-interval@npm:3.0.0"
+  checksum: 10/c7a1cf006de97de663b6b8c4d2b167aa9909a238c4866a94b15d303762f5ac884ff4796cd6e2111b7f0a91302b83c570453aa8506fd005b5a5d5dfa87441bebc
+  languageName: node
+  linkType: hard
+
+"postgres-range@npm:^1.1.1":
+  version: 1.1.4
+  resolution: "postgres-range@npm:1.1.4"
+  checksum: 10/035759f17b44bf9ba7e71a30402ed2ca1e2b7fabb3ad794b08169a5b453d38d06905a6dfb51fe41a3f6d9fac4e183dac9e769b95053053db933be16785edce1f
   languageName: node
   linkType: hard
 
@@ -10423,10 +10556,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rado@npm:^1.0.9":
-  version: 1.0.9
-  resolution: "rado@npm:1.0.9"
-  checksum: 10/db14216c9f6c62683105db251e7314c4ca46fe73e2796d50e3d4b515cd660aef7e77a10faad2482f4871ea6b699548f61a333339f4916570610659fe38fc690f
+"rado@npm:^1.0.10":
+  version: 1.0.10
+  resolution: "rado@npm:1.0.10"
+  checksum: 10/4b7ff5a405758f65d335cb7271e3f1398d9a044c5fdb88ed41a5cb89c3f8c91a53762f69a91fcd06436ef7715c8aaf4d1498886f7b3f6950546fb72f700002e9
   languageName: node
   linkType: hard
 
@@ -12433,13 +12566,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.5.3":
-  version: 5.5.3
-  resolution: "typescript@npm:5.5.3"
+"typescript@npm:^5.6.2":
+  version: 5.6.2
+  resolution: "typescript@npm:5.6.2"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/11a867312419ed497929aafd2f1d28b2cd41810a5eb6c6e9e169559112e9ea073d681c121a29102e67cd4478d0a4ae37a306a5800f3717f59c4337e6a9bd5e8d
+  checksum: 10/f95365d4898f357823e93d334ecda9fcade54f009b397c7d05b7621cd9e865981033cf89ccde0f3e3a7b73b1fdbae18e92bc77db237b43e912f053fef0f9a53b
   languageName: node
   linkType: hard
 
@@ -12463,13 +12596,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.5.3#optional!builtin<compat/typescript>":
-  version: 5.5.3
-  resolution: "typescript@patch:typescript@npm%3A5.5.3#optional!builtin<compat/typescript>::version=5.5.3&hash=d69c25"
+"typescript@patch:typescript@npm%3A^5.6.2#optional!builtin<compat/typescript>":
+  version: 5.6.2
+  resolution: "typescript@patch:typescript@npm%3A5.6.2#optional!builtin<compat/typescript>::version=5.6.2&hash=d69c25"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/b61b8bb4b4d6a8a00f9d5f931f8c67070eed6ad11feabf4c41744a326987080bfc806a621596c70fbf2e5974eca3ed65bafeeeb22a078071bdfb51d8abd7c013
+  checksum: 10/060a7349adf698477b411be4ace470aee6c2c1bd99917fdf5d33697c17ec55c64fe724eb10399387530b50e9913b41528dd8bfcca0a5fc8f8bac63fbb4580a2e
   languageName: node
   linkType: hard
 
@@ -13131,6 +13264,21 @@ __metadata:
   version: 1.0.2
   resolution: "wrappy@npm:1.0.2"
   checksum: 10/159da4805f7e84a3d003d8841557196034155008f817172d4e986bd591f74aa82aa7db55929a54222309e01079a65a92a9e6414da5a6aa4b01ee44a511ac3ee5
+  languageName: node
+  linkType: hard
+
+"ws@npm:^8.17.1":
+  version: 8.18.0
+  resolution: "ws@npm:8.18.0"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 10/70dfe53f23ff4368d46e4c0b1d4ca734db2c4149c6f68bc62cb16fc21f753c47b35fcc6e582f3bdfba0eaeb1c488cddab3c2255755a5c3eecb251431e42b3ff6
   languageName: node
   linkType: hard
 

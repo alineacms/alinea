@@ -1,6 +1,11 @@
-import {JWTPreviews} from 'alinea/backend'
+import {
+  AvailableDrivers,
+  BackendOptions,
+  createBackend
+} from 'alinea/backend/api/CreateBackend'
 import {Backend} from 'alinea/backend/Backend'
 import {createHandler as createCoreHandler} from 'alinea/backend/Handler'
+import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
@@ -11,12 +16,13 @@ import {requestContext} from './context.js'
 type Handler = (request: Request) => Promise<Response>
 const handlers = new WeakMap<NextCMS, Handler>()
 
-export function createHandler(
+export function createHandler<Driver extends AvailableDrivers>(
   cms: NextCMS,
-  backend: Backend = cloudBackend(cms.config)
+  backend: BackendOptions<Driver> | Backend = cloudBackend(cms.config)
 ) {
   if (handlers.has(cms)) return handlers.get(cms)!
-  const handleCloud = createCoreHandler(cms, backend)
+  const api = 'database' in backend ? createBackend(backend) : backend
+  const handleBackend = createCoreHandler(cms, api)
   const handle: Handler = async request => {
     try {
       const context = await requestContext(cms.config)
@@ -30,7 +36,7 @@ export function createHandler(
         if (!previewToken) return new Response('Not found', {status: 404})
         const info = await previews.verify(previewToken)
         const cookie = cookies()
-        const connection = handleCloud.connect(context)
+        const connection = handleBackend.connect(context)
         const payload = getPreviewPayloadFromCookies(cookie.getAll())
         const url = (await connection.resolve({
           selection: createSelection(
@@ -50,7 +56,7 @@ export function createHandler(
           headers: {location: String(location)}
         })
       }
-      return handleCloud(request, context)
+      return handleBackend(request, context)
     } catch (error) {
       console.error(error)
       return new Response('Internal server error', {status: 500})

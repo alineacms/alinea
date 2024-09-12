@@ -1,6 +1,6 @@
-import {Database} from 'alinea/backend'
 import {Auth, Backend} from 'alinea/backend/Backend'
 import {memoryBackend} from 'alinea/backend/data/MemoryBackend'
+import {Database} from 'alinea/backend/Database'
 import {createHandler} from 'alinea/backend/Handler'
 import {Store} from 'alinea/backend/Store'
 import {createStore} from 'alinea/backend/store/CreateStore'

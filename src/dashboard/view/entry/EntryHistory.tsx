@@ -1,4 +1,4 @@
-import {Revision} from 'alinea/backend'
+import {Revision} from 'alinea/backend/Backend'
 import {HStack, Icon, Loader, VStack, fromModule} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
