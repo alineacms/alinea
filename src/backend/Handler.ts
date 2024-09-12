@@ -68,6 +68,13 @@ export enum HandleAction {
   Upload = 'upload'
 }
 
+export enum AuthAction {
+  Status = 'status',
+  Handshake = 'handshake',
+  Login = 'login',
+  Logout = 'logout'
+}
+
 export interface Handler {
   (request: Request, context?: RequestContext): Promise<Response>
 }

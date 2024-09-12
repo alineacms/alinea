@@ -11,6 +11,7 @@ import {
   Target
 } from 'alinea/backend/Backend'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
+import {AuthAction} from 'alinea/backend/Handler'
 import {router} from 'alinea/backend/router/Router'
 import {Config} from 'alinea/core/Config'
 import {HttpError} from 'alinea/core/HttpError'
@@ -47,13 +48,6 @@ let publicKey = PLazy.from(async function loadPublicKey(
 })
 
 const COOKIE_NAME = 'alinea.cloud'
-
-export enum AuthAction {
-  Status = 'status',
-  Handshake = 'handshake',
-  Login = 'login',
-  Logout = 'logout'
-}
 
 export function cloudBackend(config: Config): Backend {
   const auth: Auth = {
