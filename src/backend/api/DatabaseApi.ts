@@ -5,7 +5,7 @@ import {basename, extname} from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import PLazy from 'p-lazy'
 import {asc, Database, eq, gt, table} from 'rado'
-import {txGenerator} from 'rado/universal'
+import {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData.js'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../Handler.js'
 
@@ -49,20 +49,22 @@ export function databaseApi(options: DatabaseOptions) {
     },
     async store(ctx, draft) {
       const db = await setup
-      return db.transaction(
-        txGenerator(function* (tx) {
-          const [existing] = yield* tx
-            .select()
-            .from(Draft)
-            .where(eq(Draft.entryId, draft.entryId))
-          yield* existing
-            ? tx
-                .update(Draft)
-                .set(draft)
-                .where(eq(Draft.entryId, draft.entryId))
-            : tx.insert(Draft).values(draft)
-        })
-      )
+      const query =
+        db.dialect.runtime === 'mysql'
+          ? (<Database<IsMysql>>db)
+              .insert(Draft)
+              .values(draft)
+              .onDuplicateKeyUpdate({
+                set: draft
+              })
+          : (<Database<IsPostgres | IsSqlite>>db)
+              .insert(Draft)
+              .values(draft)
+              .onConflictDoUpdate({
+                target: Draft.entryId,
+                set: draft
+              })
+      await query
     }
   }
   const target: Target = {
