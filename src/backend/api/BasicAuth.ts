@@ -16,18 +16,22 @@ export function basicAuth(
   }
   return {
     async authenticate(ctx, request) {
-      const verified = await this.verify(ctx, request)
-      const url = new URL(request.url)
-      const action = url.searchParams.get('auth')
-      switch (action) {
-        case AuthAction.Status: {
-          return Response.json({
-            type: AuthResultType.Authenticated,
-            user: verified.user
-          })
+      try {
+        const verified = await this.verify(ctx, request)
+        const url = new URL(request.url)
+        const action = url.searchParams.get('auth')
+        switch (action) {
+          case AuthAction.Status: {
+            return Response.json({
+              type: AuthResultType.Authenticated,
+              user: verified.user
+            })
+          }
+          default:
+            return new Response('Bad request', {status: 400})
         }
-        default:
-          return new Response('Bad request', {status: 400})
+      } catch {
+        return unauthorized()
       }
     },
     async verify(ctx, request): Promise<AuthedContext> {
