@@ -68,10 +68,9 @@ export class NextCMS<
     const [isDraft] = outcome(() => draftMode().isEnabled)
     if (!isDraft) return null
     const context = await requestContext(this.config)
-    const dashboardUrl =
-      devUrl ??
-      new URL(this.config.dashboardFile ?? '/admin.html', context.handlerUrl)
-        .href
+    let file = this.config.dashboardFile ?? '/admin.html'
+    if (!file.startsWith('/')) file = `/${file}`
+    const dashboardUrl = devUrl ?? new URL(file, context.handlerUrl).href
     const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false
     })
