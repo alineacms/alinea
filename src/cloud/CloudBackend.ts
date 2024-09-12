@@ -1,4 +1,5 @@
 import {Response} from '@alinea/iso'
+import {AuthAction} from 'alinea/backend/Auth'
 import {
   Auth,
   AuthedContext,
@@ -11,7 +12,6 @@ import {
   Target
 } from 'alinea/backend/Backend'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
-import {AuthAction} from 'alinea/backend/Handler'
 import {router} from 'alinea/backend/router/Router'
 import {Config} from 'alinea/core/Config'
 import {HttpError} from 'alinea/core/HttpError'
