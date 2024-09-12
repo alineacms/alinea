@@ -249,8 +249,8 @@ export class EntryResolver {
     return this.expr(ctx.select, expr)
   }
 
-  selectCount(): SelectionInput {
-    return count().as('count')
+  selectCount(ctx: ResolveContext, hasSearch: boolean): SelectionInput {
+    return count(hasSearch ? EntrySearch.rowid : ctx.Table.entryId).as('count')
   }
 
   selectAll(ctx: ResolveContext, target: pages.TargetData): SelectionInput {
@@ -258,7 +258,11 @@ export class EntryResolver {
     return fromEntries(fields)
   }
 
-  select(ctx: ResolveContext, selection: pages.Selection): SelectionInput {
+  select(
+    ctx: ResolveContext,
+    selection: pages.Selection,
+    hasSearch = false
+  ): SelectionInput {
     switch (selection.type) {
       case 'cursor':
         return this.selectCursor(ctx, selection)
@@ -269,7 +273,7 @@ export class EntryResolver {
       case 'expr':
         return this.selectExpr(ctx, selection)
       case 'count':
-        return this.selectCount()
+        return this.selectCount(ctx, hasSearch)
     }
   }
 
@@ -507,7 +511,7 @@ export class EntryResolver {
     if (skip) query = query.offset(skip)
     if (take) query = query.limit(take)
     const toSelect = select
-      ? this.select(ctx.select, select)
+      ? this.select(ctx.select, select, hasSearch)
       : this.selectAll(ctx, {name})
     let result = new Select({
       ...queryData,
@@ -696,6 +700,7 @@ export class EntryResolver {
         }
     }
     return this.db.store.transaction(async tx => {
+      console.log(query.toSQL(tx))
       const rows = await query.all(tx)
       const linkResolver = new LinkResolver(this, tx, ctx.realm)
       const result = singleResult ? rows[0] : rows
