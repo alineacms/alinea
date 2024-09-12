@@ -4,7 +4,15 @@ import {basicAuth} from './BasicAuth.js'
 import {databaseApi} from './DatabaseApi.js'
 import {githubApi, GithubOptions} from './GithubApi.js'
 
-export type AvailableDrivers = keyof typeof driver
+export type AvailableDrivers =
+  | 'd1'
+  | 'mysql2'
+  | '@neondatabase/serverless'
+  | '@vercel/postgres'
+  | 'pg'
+  | '@electric-sql/pglite'
+  | 'sql.js'
+  | '@libsql/client'
 
 export interface BackendOptions<Driver extends AvailableDrivers> {
   auth(username: string, password: string): boolean | Promise<boolean>
