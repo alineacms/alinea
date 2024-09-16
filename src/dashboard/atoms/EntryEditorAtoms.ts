@@ -13,6 +13,7 @@ import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import {type MediaFile} from 'alinea/core/media/MediaTypes'
+import {encode} from 'alinea/core/util/BufferToBase64'
 import {
   entryFileName,
   entryFilepath,
@@ -25,7 +26,6 @@ import * as paths from 'alinea/core/util/Paths'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
 import {encodePreviewPayload} from 'alinea/preview/PreviewPayload'
-import {encode} from 'buffer-to-base64'
 import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
