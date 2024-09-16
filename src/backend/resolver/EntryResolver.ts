@@ -1,7 +1,7 @@
 import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Field} from 'alinea/core/Field'
-import type * as pages from 'alinea/core/pages'
+import type * as pages from 'alinea/core/pages/index'
 import {Realm} from 'alinea/core/pages/Realm'
 import {BinaryOp, SourceType, UnaryOp} from 'alinea/core/pages/ResolveData'
 import {ResolveRequest} from 'alinea/core/Resolver'
