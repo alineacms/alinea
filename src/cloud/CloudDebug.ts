@@ -7,14 +7,12 @@ import {
   Pending,
   Target
 } from 'alinea/backend/Backend'
+import {gitUser} from 'alinea/backend/util/ExecGit'
 import {GitHistory} from 'alinea/cli/serve/GitHistory'
 import {Config} from 'alinea/core/Config'
 import {Connection} from 'alinea/core/Connection'
 import {Draft} from 'alinea/core/Draft'
 import {createId} from 'alinea/core/Id'
-import {localUser} from 'alinea/core/User'
-import PLazy from 'p-lazy'
-import simpleGit from 'simple-git'
 
 const latency = 0
 
@@ -23,17 +21,8 @@ const lag = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 export function cloudDebug(config: Config, rootDir: string): Backend {
   const draftCache = new Map<string, Draft>()
   const mutations: Array<Connection.MutateParams & {toCommitHash: string}> = []
-  const git = simpleGit(rootDir)
-  const user = PLazy.from(async () => {
-    const [name = localUser.name, email] = (
-      await Promise.all([
-        git.getConfig('user.name'),
-        git.getConfig('user.email')
-      ])
-    ).map(res => res.value ?? undefined)
-    return {...localUser, name, email}
-  })
-  const gitHistory = new GitHistory(simpleGit(rootDir), config, rootDir)
+  const user = gitUser(rootDir)
+  const gitHistory = new GitHistory(config, rootDir)
   const auth: Auth = {
     async authenticate(ctx, request) {
       return new Response('ok')

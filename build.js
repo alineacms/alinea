@@ -341,23 +341,7 @@ function jsEntry({watch, test, report}) {
                 'lib0/webcrypto': `data:text/javascript,
                   import {crypto} from '@alinea/iso'
                   export const subtle = crypto.subtle
-                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`,
-
-                // Used in simple-git, but not ESM and not useful for us
-                '@kwsites/file-exists': `data:text/javascript,
-                  export function exists() {return true}
-                  export const FOLDER = undefined`,
-
-                // Used in simple-git, but not ESM and not useful for us
-                debug: `data:text/javascript,
-                  const instance = () => () => {}
-                  instance.extend = instance
-                  export default function debug() {
-                    return instance
-                  }
-                  debug.enable = () => {}
-                  debug.formatters = {}
-                `
+                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`
               },
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33
