@@ -93,7 +93,7 @@
     "uvu": "^0.5.1",
     "yjs-src": "npm:yjs@13.6.11"
   },
-  "packageManager": "yarn@4.1.0",
+  "packageManager": "yarn@4.5.0",
   "resolutions": {
     "esbuild": "0.20.1",
     "yjs": "13.6.11",
