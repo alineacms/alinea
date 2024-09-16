@@ -18,10 +18,10 @@ import {
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/ResolveData'
+import {decode} from 'alinea/core/util/BufferToBase64'
 import {base64, base64url} from 'alinea/core/util/Encoding'
 import {assign} from 'alinea/core/util/Objects'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
-import {decode} from 'alinea/core/util/BufferToBase64'
 import {Type, array, enums, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
@@ -395,24 +395,28 @@ export function createHandler(
 
       // Media
       if (action === HandleAction.Upload) {
-        const {handleUpload, previewUpload, prepareUpload} = backend.media
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
           const ctx = await verified
           expectJson()
           return Response.json(
-            await prepareUpload(ctx, PrepareBody(await body).filename)
+            await backend.media.prepareUpload(
+              ctx,
+              PrepareBody(await body).filename
+            )
           )
         }
         const isPost = request.method === 'POST'
         if (isPost) {
-          if (!handleUpload) throw new Response('Bad Request', {status: 400})
+          if (!backend.media.handleUpload)
+            throw new Response('Bad Request', {status: 400})
           const ctx = await verified
-          await handleUpload(ctx, entryId, await request.blob())
+          await backend.media.handleUpload(ctx, entryId, await request.blob())
           return new Response('OK', {status: 200})
         }
-        if (!previewUpload) throw new Response('Bad Request', {status: 400})
-        return previewUpload(context, entryId)
+        if (!backend.media.previewUpload)
+          throw new Response('Bad Request', {status: 400})
+        return backend.media.previewUpload(context, entryId)
       }
 
       // Drafts

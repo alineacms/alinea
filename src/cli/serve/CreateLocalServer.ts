@@ -70,7 +70,6 @@ export function createLocalServer(
   handleApi: HandlerWithConnect,
   user: User
 ): HttpRouter {
-  console.log('local server')
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
   const entry = `alinea/cli/static/dashboard/dev`
@@ -111,7 +110,6 @@ export function createLocalServer(
     write: false,
     external: ['node:async_hooks']
   } satisfies BuildOptions
-
   config.plugins.push({
     name: 'files',
     setup(build) {

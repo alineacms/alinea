@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
-    "composite": true,
+    "module": "ESNext",
+    "target": "ESNext",
     "moduleResolution": "node",
+    "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -13,10 +15,8 @@
     "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "paths": {
-      "alinea/*": ["./src/*"]
+      "alinea/*": ["./src/*.js"]
     },
-    "baseUrl": ".",
-    "rootDir": "src",
     "moduleDetection": "force",
     "incremental": true
   },
