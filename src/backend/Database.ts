@@ -32,7 +32,6 @@ import {
   or
 } from 'rado'
 import {Builder} from 'rado/core/Builder'
-import xxhash from 'xxhash-wasm'
 import {EntryPhase, EntryRow, entryVersionId} from '../core/EntryRow.js'
 import {AuthedContext, Target} from './Backend.js'
 import {Source} from './Source.js'
@@ -454,14 +453,12 @@ export class Database implements Syncable {
   }
 
   private async writeMeta(tx: Store, commitHash: string) {
-    const {create32} = await xxhash()
-    let hash = create32()
     const contentHashes = await tx
       .select(EntryRow.rowHash)
       .from(EntryRow)
       .orderBy(EntryRow.rowHash)
-    for (const c of contentHashes) hash = hash.update(c)
-    const contentHash = hash.digest().toString(16).padStart(8, '0')
+    const all = contentHashes.join('')
+    const contentHash = await createFileHash(new TextEncoder().encode(all))
     const modifiedAt = await tx
       .select(EntryRow.modifiedAt)
       .from(EntryRow)
