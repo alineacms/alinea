@@ -136,7 +136,7 @@ export class EntryResolver {
       case BinaryOp.NotIn:
         return inArray(this.expr(ctx, a), this.expr(ctx, b))
       default:
-        return sql`${this.expr(ctx, a)} ${binOps[op]} ${this.expr(ctx, b)}`
+        return sql`(${this.expr(ctx, a)} ${binOps[op]} ${this.expr(ctx, b)})`
     }
   }
 
@@ -700,7 +700,6 @@ export class EntryResolver {
         }
     }
     return this.db.store.transaction(async tx => {
-      console.log(query.toSQL(tx))
       const rows = await query.all(tx)
       const linkResolver = new LinkResolver(this, tx, ctx.realm)
       const result = singleResult ? rows[0] : rows
