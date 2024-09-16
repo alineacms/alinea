@@ -1,4 +1,4 @@
-import {Revision} from 'alinea/backend'
+import {Revision} from 'alinea/backend/Backend'
 import {PreviewInfo} from 'alinea/backend/Previews'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {Draft} from './Draft.js'
@@ -25,27 +25,26 @@ export interface Connection extends Syncable {
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>
-  revisionData(file: string, revisionId: string): Promise<EntryRecord>
+  revisionData(
+    file: string,
+    revisionId: string
+  ): Promise<EntryRecord | undefined>
   getDraft(entryId: string): Promise<Draft | undefined>
   storeDraft(draft: Draft): Promise<void>
 }
 
 export namespace Connection {
-  export interface UploadResponse {
+  export interface UploadDestination {
     entryId: string
     location: string
     previewUrl: string
-    upload: {
-      url: string
-      method?: string
-    }
+  }
+  export interface UploadResponse extends UploadDestination {
+    url: string
+    method?: string
   }
   export interface MutateParams {
     commitHash: string
     mutations: ChangeSet
-  }
-  export interface AuthContext {
-    user?: User
-    token?: string
   }
 }

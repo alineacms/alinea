@@ -1,42 +1,44 @@
-import {JsonLoader, Revision} from 'alinea/backend'
-import {History, RequestContext} from 'alinea/backend/Backend'
+import {History, RequestContext, Revision} from 'alinea/backend/Backend'
+import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
+import {execGit} from 'alinea/backend/util/ExecGit'
 import {Config} from 'alinea/core/Config'
 import {EntryRecord} from 'alinea/core/EntryRecord'
-import {join} from 'alinea/core/util/Paths'
-import {SimpleGit} from 'simple-git'
 
 const encoder = new TextEncoder()
 
 export class GitHistory implements History {
-  constructor(
-    public git: SimpleGit,
-    public config: Config,
-    public rootDir: string
-  ) {}
+  constructor(public config: Config, public rootDir: string) {}
 
   async list(ctx: RequestContext, file: string): Promise<Array<Revision>> {
-    const list = await this.git.log([
+    const output = await execGit(this.rootDir, [
+      'log',
       '--follow',
       '--name-status',
+      '--pretty=format:%H%n%at%n%s%n%ae%n%an%n%f',
       '--',
-      join(this.rootDir, file)
+      file
     ])
-    return list.all.map(row => {
-      const parsedFile = row.diff?.files?.[0]?.file
-      const fileLocation =
-        // SimpleGit seems to mis-parse these sometimes so we try to fix it here
-        parsedFile ? parsedFile.split('\t').pop()!.trim() : file
+
+    const revisions = output.split('\n\n').map(entry => {
+      const [hash, timestamp, message, email, name, changedFile, ...rest] =
+        entry.split('\n')
+      const fileLocation = rest.length
+        ? rest[rest.length - 1].split('\t').pop()!.trim()
+        : file
+
       return {
-        ref: row.hash,
-        createdAt: new Date(row.date).getTime(),
-        description: row.message,
+        ref: hash,
+        createdAt: parseInt(timestamp) * 1000,
+        description: message,
         file: fileLocation,
         user: {
-          sub: row.author_email,
-          name: row.author_name
+          sub: email,
+          name: name
         }
       }
     })
+
+    return revisions
   }
 
   async revision(
@@ -45,7 +47,11 @@ export class GitHistory implements History {
     ref: string
   ): Promise<EntryRecord> {
     const {config} = this
-    const data = await this.git.show([`${ref}:${file}`, '--format=%B'])
+    const data = await execGit(this.rootDir, [
+      'show',
+      `${ref}:${file}`,
+      '--format=%B'
+    ])
     try {
       return JsonLoader.parse(config.schema, encoder.encode(data))
     } catch (cause) {

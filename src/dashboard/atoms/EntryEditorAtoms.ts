@@ -425,6 +425,7 @@ export function createEntryEditor(entryData: EntryData) {
     const revision = get(previewRevision)
     if (!revision) return
     const data = await get(revisionData(revision))
+    if (!data) return
     const {edits} = entryData
     edits.applyEntryData(type, data)
     const update = await encode(edits.getLocalUpdate())
@@ -648,7 +649,8 @@ export function createEntryEditor(entryData: EntryData) {
     (params: {file: string; ref: string}) => {
       return atom(async get => {
         const data = await get(revisionData(params))
-        return createYDoc(type, {...activeVersion, data})
+        const entry = data ? {...activeVersion, data} : activeVersion
+        return createYDoc(type, entry)
       })
     },
     (a, b) => a.file === b.file && a.ref === b.ref

@@ -1,3 +1,4 @@
+import {Request, Response} from '@alinea/iso'
 import {Connection} from 'alinea/core/Connection'
 import {Draft} from 'alinea/core/Draft'
 import {EntryRecord} from 'alinea/core/EntryRecord'
@@ -5,6 +6,7 @@ import {Mutation} from 'alinea/core/Mutation'
 import {User} from 'alinea/core/User'
 
 export interface RequestContext {
+  handlerUrl: URL
   apiKey: string
 }
 
@@ -26,7 +28,12 @@ export interface Auth {
 }
 
 export interface Media {
-  upload(ctx: AuthedContext, file: string): Promise<Connection.UploadResponse>
+  prepareUpload(
+    ctx: AuthedContext,
+    file: string
+  ): Promise<Connection.UploadResponse>
+  handleUpload?(ctx: AuthedContext, entryId: string, file: Blob): Promise<void>
+  previewUpload?(ctx: RequestContext, entryId: string): Promise<Response>
 }
 
 export interface DraftTransport {
@@ -51,7 +58,11 @@ export interface Revision {
 
 export interface History {
   list(ctx: AuthedContext, file: string): Promise<Array<Revision>>
-  revision(ctx: AuthedContext, file: string, ref: string): Promise<EntryRecord>
+  revision(
+    ctx: AuthedContext,
+    file: string,
+    ref: string
+  ): Promise<EntryRecord | undefined>
 }
 
 export interface Pending {

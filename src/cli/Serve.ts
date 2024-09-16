@@ -1,13 +1,12 @@
 import {Backend} from 'alinea/backend/Backend'
 import {createHandler} from 'alinea/backend/Handler'
 import {HttpRouter} from 'alinea/backend/router/Router'
+import {gitUser} from 'alinea/backend/util/ExecGit'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {cloudDebug} from 'alinea/cloud/CloudDebug'
 import {CMS} from 'alinea/core/CMS'
-import {localUser} from 'alinea/core/User'
 import {BuildOptions} from 'esbuild'
 import path from 'node:path'
-import simpleGit from 'simple-git'
 import pkg from '../../package.json'
 import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
@@ -97,11 +96,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   let cms: CMS | undefined
   let handleRequest!: HttpRouter
 
-  const git = simpleGit(rootDir)
-  const [name = localUser.name, email] = (
-    await Promise.all([git.getConfig('user.name'), git.getConfig('user.email')])
-  ).map(res => res.value ?? undefined)
-  const user = {...localUser, name, email}
+  const user = await gitUser(rootDir)
 
   while (true) {
     const current = await nextGen
@@ -110,7 +105,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
-      const history = new GitHistory(git, currentCMS.config, rootDir)
+      const history = new GitHistory(currentCMS.config, rootDir)
       const backend = createBackend()
       const handleApi = createHandler(currentCMS, backend, Promise.resolve(db))
       handleRequest = createLocalServer(context, handleApi, user)
@@ -122,7 +117,7 @@ export async function serve(options: ServeOptions): Promise<void> {
           return cloudDebug(currentCMS.config, rootDir)
         if (process.env.ALINEA_CLOUD_URL) return cloudBackend(currentCMS.config)
         return {
-          auth: localAuth(git),
+          auth: localAuth(rootDir),
           target: fileData,
           media: fileData,
           drafts,

@@ -1,3 +1,4 @@
+import {Headers} from '@alinea/iso'
 import {AuthenticateRequest, Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
@@ -5,7 +6,9 @@ import {outcome} from 'alinea/core/Outcome'
 import {ResolveDefaults} from 'alinea/core/Resolver'
 import {User} from 'alinea/core/User'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
-import {defaultContext} from './context.js'
+import {requestContext} from './context.js'
+
+const devUrl = process.env.ALINEA_DEV_SERVER
 
 export interface PreviewProps {
   widget?: boolean
@@ -13,14 +16,12 @@ export interface PreviewProps {
   root?: string
 }
 
-const devUrl = process.env.ALINEA_DEV_SERVER
-
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
   constructor(config: Definition, public baseUrl?: string) {
     super(config, async () => {
-      const context = await defaultContext
+      const context = await requestContext(config)
       const resolveDefaults: ResolveDefaults = {}
       const {cookies, draftMode} = await import('next/headers.js')
       const [isDraft] = outcome(() => draftMode().isEnabled)
@@ -29,37 +30,24 @@ export class NextCMS<
         headers.set('Authorization', `Bearer ${context.apiKey}`)
         return {...init, headers}
       }
-      const clientUrl = await this.#clientUrl()
-      if (!isDraft) return new Client({url: clientUrl.href, applyAuth})
+      const url = context.handlerUrl.href
+      if (!isDraft) return new Client({url, applyAuth})
       const cookie = cookies()
       const payload = getPreviewPayloadFromCookies(cookie.getAll())
       if (payload) resolveDefaults.preview = {payload}
       return new Client({
-        url: clientUrl.href,
+        url,
         applyAuth,
         resolveDefaults
       })
     })
   }
 
-  async #clientUrl() {
-    const {headers} = await import('next/headers.js')
-    const origin = () => {
-      const host = headers().get('x-forwarded-host') ?? headers().get('host')
-      const proto = headers().get('x-forwarded-proto') ?? 'https'
-      const protocol = proto.endsWith(':') ? proto : proto + ':'
-      return `${protocol}//${host}`
-    }
-    return devUrl
-      ? new URL('/api', devUrl)
-      : new URL(this.config.handlerUrl ?? '/api/cms', this.baseUrl ?? origin())
-  }
-
   async user(): Promise<User | undefined> {
     const {cookies} = await import('next/headers.js')
-    const clientUrl = await this.#clientUrl()
+    const context = await requestContext(this.config)
     const client = new Client({
-      url: clientUrl.href,
+      url: context.handlerUrl.href,
       applyAuth: init => {
         const headers = new Headers(init?.headers)
         const cookie = cookies()
@@ -79,10 +67,10 @@ export class NextCMS<
     const {default: dynamic} = await import('next/dynamic.js')
     const [isDraft] = outcome(() => draftMode().isEnabled)
     if (!isDraft) return null
-    const clientUrl = await this.#clientUrl()
-    const dashboardUrl =
-      devUrl ??
-      new URL(this.config.dashboardFile ?? '/admin.html', clientUrl).href
+    const context = await requestContext(this.config)
+    let file = this.config.dashboardFile ?? '/admin.html'
+    if (!file.startsWith('/')) file = `/${file}`
+    const dashboardUrl = devUrl ?? new URL(file, context.handlerUrl).href
     const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false
     })

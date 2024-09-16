@@ -1,5 +1,5 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
-import {DraftTransport, Revision} from 'alinea/backend'
+import {DraftTransport, Revision} from 'alinea/backend/Backend'
 import {HandleAction} from 'alinea/backend/Handler'
 import {PreviewInfo} from 'alinea/backend/Previews'
 import {Connection, SyncResponse} from './Connection.js'
@@ -63,20 +63,14 @@ export class Client implements Connection {
     const body = JSON.stringify({...resolveDefaults, ...params})
     return this.#requestJson(
       {action: HandleAction.Resolve},
-      {
-        method: 'POST',
-        body
-      }
+      {method: 'POST', body}
     ).then(this.#failOnHttpError)
   }
 
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
-      {
-        method: 'POST',
-        body: JSON.stringify(mutations)
-      }
+      {method: 'POST', body: JSON.stringify(mutations)}
     ).then<{commitHash: string}>(this.#failOnHttpError)
   }
 
@@ -91,12 +85,17 @@ export class Client implements Connection {
     >(this.#failOnHttpError)
   }
 
-  revisionData(file: string, revisionId: string): Promise<EntryRecord> {
+  revisionData(
+    file: string,
+    revisionId: string
+  ): Promise<EntryRecord | undefined> {
     return this.#requestJson({
       action: HandleAction.History,
       file,
       revisionId
-    }).then<EntryRecord>(this.#failOnHttpError)
+    })
+      .then<EntryRecord>(this.#failOnHttpError)
+      .then(res => res ?? undefined)
   }
 
   // Syncable
@@ -111,10 +110,7 @@ export class Client implements Connection {
   sync(contentHashes: Array<string>): Promise<SyncResponse> {
     return this.#requestJson(
       {action: HandleAction.Sync},
-      {
-        method: 'POST',
-        body: JSON.stringify(contentHashes)
-      }
+      {method: 'POST', body: JSON.stringify(contentHashes)}
     ).then<SyncResponse>(this.#failOnHttpError)
   }
 

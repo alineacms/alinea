@@ -184,7 +184,10 @@ export function createLocalServer(
     }),
     router.compress(
       matcher.all('/api').map(async ({url, request}) => {
-        return handleApi(request, {apiKey: 'dev'})
+        return handleApi(request, {
+          handlerUrl: new URL(request.url.split('?')[0]),
+          apiKey: 'dev'
+        })
       }),
       matcher.get('/').map(({url}): Response => {
         const handlerUrl = `${url.protocol}//${url.host}`
