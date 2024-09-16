@@ -10,7 +10,7 @@ export async function execGit(cwd: string, args: string[]): Promise<string> {
   return stdout.trim()
 }
 
-export async function gitUser(cwd: string) {
+export function gitUser(cwd: string) {
   return PLazy.from(async () => {
     const [name = localUser.name, email] = (
       await Promise.all([
