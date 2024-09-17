@@ -3,5 +3,62 @@
   "_type": "RichTextFields",
   "_index": "Zz",
   "_i18nId": "2dgg9AopqPd4gasFaAefPYSS4tf",
-  "title": "Rich text fields"
+  "title": "Rich text fields",
+  "withInitial": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This is a paragraph with initial value"
+        }
+      ]
+    }
+  ],
+  "nested": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Hello world"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This is an "
+        },
+        {
+          "_type": "text",
+          "text": "inline link",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2mBtnFs3UoXk5a4dmDilfRbLNE8",
+              "_link": "url",
+              "href": "https://alinea.sh",
+              "target": "_blank"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
 }

@@ -47,7 +47,11 @@ export function UrlPickerForm({
   )
   const form = useForm(linkForm, {
     initialValue: preSelected
-      ? {...preSelected, blank: preSelected._target === '_blank'}
+      ? {
+          url: preSelected[UrlReference.url],
+          title: preSelected[UrlReference.title],
+          blank: preSelected[UrlReference.target] === '_blank'
+        }
       : undefined
   })
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
