@@ -25,6 +25,7 @@ export const BasicFields = Config.document('Basic fields', {
     }),
     check: Field.check('Check field', {description: 'Check me please'}),
     date: Field.date('Date field'),
+    time: Field.time('Time field'),
     code: Field.code('Code field')
   }
 })
