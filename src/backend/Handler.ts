@@ -19,7 +19,7 @@ import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/ResolveData'
 import {decode} from 'alinea/core/util/BufferToBase64'
-import {base64, base64url} from 'alinea/core/util/Encoding'
+import {base64} from 'alinea/core/util/Encoding'
 import {assign} from 'alinea/core/util/Objects'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import {Type, array, enums, object, string} from 'cito'
@@ -217,6 +217,11 @@ export function createHandler(
           console.warn('> could not fetch draft', error)
         }
       }
+      if (currentDraft) {
+        const existing = new Y.Doc()
+        Y.applyUpdateV2(existing, currentDraft.draft)
+        console.log({existing: existing.toJSON()})
+      }
       const apply = currentDraft
         ? mergeUpdatesV2([currentDraft.draft, update.update])
         : update.update
@@ -224,7 +229,9 @@ export function createHandler(
       if (!type) return
       const doc = new Y.Doc()
       Y.applyUpdateV2(doc, apply)
+      console.log(doc.getMap('#root').toJSON())
       const entryData = parseYDoc(type, doc)
+      console.log(entryData)
       return {...entry, ...entryData, path: entry.path}
     }
   })
@@ -354,7 +361,7 @@ export function createHandler(
         const entryId = string(url.searchParams.get('entryId'))
         const draft = await backend.drafts.get(ctx, entryId)
         return Response.json(
-          draft ? {...draft, draft: base64url.stringify(draft.draft)} : null
+          draft ? {...draft, draft: base64.stringify(draft.draft)} : null
         )
       }
 
