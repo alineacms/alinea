@@ -120,9 +120,7 @@ export class Client implements Connection {
     return this.#requestJson({action: HandleAction.Draft, entryId})
       .then<DraftTransport | null>(this.#failOnHttpError)
       .then(draft =>
-        draft
-          ? {...draft, draft: new Uint8Array(base64.parse(draft.draft))}
-          : undefined
+        draft ? {...draft, draft: base64.parse(draft.draft)} : undefined
       )
   }
 

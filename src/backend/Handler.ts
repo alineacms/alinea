@@ -217,11 +217,6 @@ export function createHandler(
           console.warn('> could not fetch draft', error)
         }
       }
-      if (currentDraft) {
-        const existing = new Y.Doc()
-        Y.applyUpdateV2(existing, currentDraft.draft)
-        console.log({existing: existing.toJSON()})
-      }
       const apply = currentDraft
         ? mergeUpdatesV2([currentDraft.draft, update.update])
         : update.update
@@ -229,9 +224,7 @@ export function createHandler(
       if (!type) return
       const doc = new Y.Doc()
       Y.applyUpdateV2(doc, apply)
-      console.log(doc.getMap('#root').toJSON())
       const entryData = parseYDoc(type, doc)
-      console.log(entryData)
       return {...entry, ...entryData, path: entry.path}
     }
   })
