@@ -1,3 +1,5 @@
+const {withAlinea} = require('alinea/next')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
@@ -9,9 +11,6 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@alinea/generated']
-  },
   rewrites() {
     return [
       {
@@ -22,4 +21,4 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig
+module.exports = withAlinea(nextConfig)
