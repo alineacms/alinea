@@ -24,8 +24,10 @@ export async function generateDashboard(
   }
   const basename = path.basename(staticFile, '.html')
   const assetsFolder = path.join(rootDir, path.dirname(staticFile), basename)
-  const altConfig = path.join(rootDir, 'tsconfig.alinea.json')
-  const tsconfig = fs.existsSync(altConfig) ? altConfig : undefined
+  const tsconfigLocation = path.join(rootDir, 'tsconfig.json')
+  const tsconfig = fs.existsSync(tsconfigLocation)
+    ? tsconfigLocation
+    : undefined
   await build({
     format: 'esm',
     target: 'esnext',
@@ -45,8 +47,6 @@ export async function generateDashboard(
     ...buildOptions,
     tsconfig,
     logLevel: 'error'
-  }).catch(e => {
-    throw 'Could not compile entrypoint'
   })
   const baseUrl = './' + escapeHtml(basename)
   await writeFileIfContentsDiffer(

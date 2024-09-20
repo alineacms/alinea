@@ -73,8 +73,10 @@ export function createLocalServer(
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
   const entry = `alinea/cli/static/dashboard/dev`
-  const altConfig = path.join(cwd, 'tsconfig.alinea.json')
-  const tsconfig = fs.existsSync(altConfig) ? altConfig : undefined
+  const tsconfigLocation = path.join(cwd, 'tsconfig.json')
+  const tsconfig = fs.existsSync(tsconfigLocation)
+    ? tsconfigLocation
+    : undefined
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
     initial = true
   const config = {
