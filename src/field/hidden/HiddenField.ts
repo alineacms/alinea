@@ -13,7 +13,7 @@ export function hidden<T>(
 ): HiddenField<T> {
   return new HiddenField({
     hint,
-    view: () => null,
-    options: {label, ...options}
+    options: {label, ...options},
+    view: 'alinea/field/hidden/HiddenField.view#HiddenInput'
   })
 }

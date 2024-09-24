@@ -23,6 +23,7 @@ export function json<T>(
 ): JsonField<T> {
   return new JsonField({
     hint: Hint.String(),
-    options: {label, ...options}
+    options: {label, ...options},
+    view: 'alinea/field/json/JsonField.view#JsonInput'
   })
 }

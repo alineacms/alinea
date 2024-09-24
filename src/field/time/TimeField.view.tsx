@@ -1,32 +1,31 @@
-import {Field} from 'alinea/core'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule} from 'alinea/ui'
 import {IcRoundDateRange} from 'alinea/ui/icons/IcRoundDateRange'
-import {DateField, date as createDate} from './DateField.js'
-import css from './DateField.module.scss'
-
-export * from './DateField.js'
-
-export const date = Field.provideView(DateInput, createDate)
+import {TimeField} from './TimeField.js'
+import css from './TimeField.module.scss'
 
 const styles = fromModule(css)
 
-interface DateInputProps {
-  field: DateField
+export interface TimeInputProps {
+  field: TimeField
 }
 
-function DateInput({field}: DateInputProps) {
+export function TimeInput({field}: TimeInputProps) {
   const {options, value, mutator, error} = useField(field)
+  const {minValue, maxValue, readOnly, step, autoFocus} = options
   return (
     <InputLabel asLabel {...options} error={error} icon={IcRoundDateRange}>
       <input
         className={styles.root.input()}
-        type="date"
+        type="time"
         value={value ?? ''}
         onChange={e => mutator(e.currentTarget.value)}
-        autoFocus={options.autoFocus}
-        readOnly={options.readOnly}
+        autoFocus={autoFocus}
+        readOnly={readOnly}
+        min={minValue}
+        max={maxValue}
+        step={step || 60}
       />
     </InputLabel>
   )

@@ -1,24 +1,19 @@
-import {Field} from 'alinea/core'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useEffect, useState} from 'react'
-import {JsonField, json as createJson} from './JsonField.js'
+import {JsonField} from './JsonField.js'
 import css from './JsonField.module.scss'
-
-export * from './JsonField.js'
-
-export const json = Field.provideView(JsonInput, createJson)
 
 const styles = fromModule(css)
 
-interface JsonInputProps<T> {
+export interface JsonInputProps<T> {
   field: JsonField<T>
 }
 
-function JsonInput<T>({field}: JsonInputProps<T>) {
+export function JsonInput<T>({field}: JsonInputProps<T>) {
   const {options, value, mutator, label, error} = useField(field)
   const [text, setText] = useState(JSON.stringify(value, null, 2))
   const [valid, setValid] = useState(true)

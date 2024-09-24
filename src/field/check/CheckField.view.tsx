@@ -1,24 +1,19 @@
-import {Field} from 'alinea/core/Field'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {useState} from 'react'
-import {CheckField, check as createCheck} from './CheckField.js'
+import {CheckField} from './CheckField.js'
 import css from './CheckField.module.scss'
-
-export * from './CheckField.js'
-
-export const check = Field.provideView(CheckInput, createCheck)
 
 const styles = fromModule(css)
 
-interface CheckInputProps {
+export interface CheckInputProps {
   field: CheckField
 }
 
-function CheckInput({field}: CheckInputProps) {
+export function CheckInput({field}: CheckInputProps) {
   const {value, mutator, label, options, error} = useField(field)
   const {description, readOnly} = options
   const [focus, setFocus] = useState(false)

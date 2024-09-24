@@ -7,11 +7,7 @@ import {Lift} from 'alinea/ui/Lift'
 import {Sink} from 'alinea/ui/Sink'
 import {Tabs} from 'alinea/ui/Tabs'
 import {useElevation} from 'alinea/ui/util/Elevation'
-import {TabsSection, tabs as createTabs} from './Tabs.js'
-
-export * from './Tabs.js'
-
-export const tabs = Section.provideView(TabsView, createTabs)
+import {TabsSection} from './Tabs.js'
 
 interface TabsViewProps {
   section: Section
@@ -44,7 +40,7 @@ export function TabsHeader({section, backdrop}: TabsHeaderProps) {
   )
 }
 
-function TabsView({section}: TabsViewProps) {
+export function TabsView({section}: TabsViewProps) {
   const {parent} = useElevation()
   const tabs = section[Section.Data] as TabsSection
   const visibleTypes = tabs.types.filter(type => !Type.isHidden(type))

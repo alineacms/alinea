@@ -29,6 +29,7 @@ export function time(
 ): TimeField {
   return new TimeField({
     hint: Hint.String(),
-    options: {label, ...options}
+    options: {label, ...options},
+    view: 'alinea/field/time/TimeField.view#TimeInput'
   })
 }

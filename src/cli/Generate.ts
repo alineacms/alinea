@@ -4,7 +4,6 @@ import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {basename, join} from 'alinea/core/util/Paths'
-import {BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
@@ -14,7 +13,6 @@ import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
 import {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
-import {loadCMS} from './generate/LoadConfig.js'
 import {LocalData} from './generate/LocalData.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
@@ -97,7 +95,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   }
   await copyStaticFiles(context)
   const builds = compileConfig(context)[Symbol.asyncIterator]()
-  let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
+  let nextBuild: Promise<{value: CMS; done?: boolean}> = builds.next()
   let afterGenerateCalled = false
 
   function writeStore(data: Uint8Array) {
@@ -105,10 +103,9 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   }
   const [store, storeData] = await createDb()
   while (true) {
-    const {done} = await nextBuild
+    const {value: cms, done} = await nextBuild
     nextBuild = builds.next()
     try {
-      const cms = await loadCMS(context.outDir)
       const write = async () => {
         const [adminFile, dbSize] = await Promise.all([
           generatePackage(context, cms.config),

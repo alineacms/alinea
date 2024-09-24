@@ -31,6 +31,7 @@ export function list<Definitions extends Schema>(
 > {
   return new ListField(Schema.shapes(options.schema), {
     hint: listHint(options.schema),
-    options: {label, ...options}
+    options: {label, ...options},
+    view: 'alinea/field/list/ListField.view#ListInput'
   })
 }

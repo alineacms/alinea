@@ -1,13 +1,15 @@
 import {Field} from 'alinea/core/Field'
 import {SectionData, SectionDefinition, section} from 'alinea/core/Section'
-import {ReactNode} from 'react'
 
 export class ViewSection implements SectionData {
+  view: string
   definition: SectionDefinition = {}
   fields: Record<string, Field> = {}
-  constructor(public children: ReactNode) {}
+  constructor(component: string) {
+    this.view = component
+  }
 }
 
-export function view(children: ReactNode) {
-  return section(new ViewSection(children))
+export function view(component: string) {
+  return section(new ViewSection(component))
 }

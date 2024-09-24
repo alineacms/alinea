@@ -29,6 +29,7 @@ export class TextField extends ScalarField<string, TextOptions> {}
 export function text(label: string, options: WithoutLabel<TextOptions> = {}) {
   return new TextField({
     hint: Hint.String(),
-    options: {label, ...options, initialValue: options.initialValue ?? ''}
+    options: {label, ...options, initialValue: options.initialValue ?? ''},
+    view: 'alinea/field/text/TextField.view#TextInput'
   })
 }

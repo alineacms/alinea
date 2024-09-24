@@ -30,14 +30,10 @@ import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
 import {Sink} from 'alinea/ui/Sink'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
-import {richText as createRichText, RichTextOptions} from './RichTextField.js'
+import {RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
 import {RichTextKit} from './RichTextKit.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
-
-export * from './RichTextField.js'
-
-export const richText = Field.provideView(RichTextInput, createRichText)
 
 const styles = fromModule(css)
 

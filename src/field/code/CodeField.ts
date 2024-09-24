@@ -16,6 +16,7 @@ export function code(
 ): CodeField {
   return new CodeField({
     hint: Hint.String(),
-    options: {label, ...options}
+    options: {label, ...options},
+    view: 'alinea/field/code/CodeField.view#CodeInput'
   })
 }

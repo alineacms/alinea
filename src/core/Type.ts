@@ -173,6 +173,14 @@ export namespace Type {
         )
     }
   }
+
+  export function views(type: Type) {
+    return fieldsOfDefinition(type[Type.Data].definition).map(
+      ([key, field]) => {
+        return Field.view(field)
+      }
+    )
+  }
 }
 
 function fieldsOfDefinition(

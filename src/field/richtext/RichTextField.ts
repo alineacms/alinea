@@ -29,6 +29,7 @@ export function richText<Blocks extends Schema = {}>(
   const shapes = options.schema && Schema.shapes(options.schema)
   return new RichTextField(shapes, {
     hint: richTextHint(options.schema),
-    options: {label, ...options}
+    options: {label, ...options},
+    view: 'alinea/field/richtext/RichTextField.view#RichTextInput'
   })
 }

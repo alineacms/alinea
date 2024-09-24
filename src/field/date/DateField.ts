@@ -23,6 +23,7 @@ export function date(
 ): DateField {
   return new DateField({
     hint: Hint.String(),
-    options: {label, ...options}
+    options: {label, ...options},
+    view: 'alinea/field/date/DateField.view#DateInput'
   })
 }

@@ -6,7 +6,6 @@ import {
   useFloating
 } from '@floating-ui/react-dom'
 import {Listbox} from '@headlessui/react'
-import {Field} from 'alinea/core'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
@@ -15,20 +14,18 @@ import {IcRoundArrowDropDownCircle} from 'alinea/ui/icons/IcRoundArrowDropDownCi
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {SelectField, select as createSelect} from './SelectField.js'
+import {SelectField} from './SelectField.js'
 import css from './SelectField.module.scss'
-
-export * from './SelectField.js'
-
-export const select = Field.provideView(SelectInput, createSelect)
 
 const styles = fromModule(css)
 
-interface SelectInputProps<Key extends string> {
+export interface SelectInputProps<Key extends string> {
   field: SelectField<Key>
 }
 
-function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
+export function SelectInput<Key extends string>({
+  field
+}: SelectInputProps<Key>) {
   const {value = null, mutator, label, options, error} = useField(field)
   const {readOnly} = options
   const items = options.options as Record<string, string>

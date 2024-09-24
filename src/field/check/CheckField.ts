@@ -26,6 +26,7 @@ export function check(
 ): CheckField {
   return new CheckField({
     hint: Hint.Boolean(),
-    options: {...options, label}
+    options: {...options, label},
+    view: 'alinea/field/check/CheckField.view#CheckInput'
   })
 }

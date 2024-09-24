@@ -1,60 +1,49 @@
-import {Field} from 'alinea/core/Field'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, fromModule} from 'alinea/ui'
-import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
+import {IcRoundCode} from 'alinea/ui/icons/IcRoundCode'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useState} from 'react'
-import {TextField, text as createText} from './TextField.js'
-import css from './TextField.module.scss'
-
-export * from './TextField.js'
-
-export const text = Field.provideView(TextInput, createText)
+import {CodeField} from './CodeField.js'
+import css from './CodeField.module.scss'
 
 const styles = fromModule(css)
 
-interface TextInputProps {
-  field: TextField
+export interface CodeInputProps {
+  field: CodeField
 }
 
-function TextInput({field}: TextInputProps) {
+// Todo: use @tiptap/extension-code-block-lowlight which would require an
+// extra value type "PlainText" which has no concept of blocks or formatting
+// and is stored as a simple string, but using an XMLFragment on the Yjs
+// side so we can have it be collaborative.
+export function CodeInput({field}: CodeInputProps) {
   const {value, mutator, label, options, error} = useField(field)
   const [focus, setFocus] = useState(false)
-  const {
-    multiline,
-    inline,
-    iconLeft: IconLeft,
-    iconRight: IconRight,
-    autoFocus,
-    readOnly
-  } = options
-  const Input = multiline ? TextareaAutosize : 'input'
-  const placeholder = inline ? label : ''
+
+  const placeholder = options.inline ? String(label) : ''
   const empty = value === ''
   return (
     <InputLabel
       asLabel
       {...options}
       error={error}
-      empty={empty}
       focused={focus}
-      icon={IcRoundTextFields}
+      icon={IcRoundCode}
+      empty={empty}
     >
       <HStack center gap={8}>
-        {IconLeft && <IconLeft />}
-        <Input
-          className={styles.root.input({readOnly})}
+        <TextareaAutosize
+          className={styles.root.input()}
           type="text"
           value={value || ''}
           onChange={e => mutator(e.currentTarget.value)}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
-          autoFocus={autoFocus}
+          spellCheck="false"
           readOnly={options.readOnly}
         />
-        {IconRight && <IconRight />}
       </HStack>
     </InputLabel>
   )

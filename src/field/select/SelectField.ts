@@ -52,6 +52,7 @@ export function select(
       label,
       options: items,
       ...fieldOptions
-    }
+    },
+    view: 'alinea/field/select/SelectField.view#SelectInput'
   })
 }

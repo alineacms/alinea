@@ -21,7 +21,6 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {Field} from 'alinea/core/Field'
 import {ListField} from 'alinea/core/field/ListField'
 import {Schema} from 'alinea/core/Schema'
 import {ListRow} from 'alinea/core/shape/ListShape'
@@ -48,11 +47,8 @@ import {
   Ref,
   useState
 } from 'react'
-import {list as createList, ListOptions} from './ListField.js'
+import {ListOptions} from './ListField.js'
 import css from './ListField.module.scss'
-export * from './ListField.js'
-
-export const list = Field.provideView(ListInput, createList)
 
 const styles = fromModule(css)
 

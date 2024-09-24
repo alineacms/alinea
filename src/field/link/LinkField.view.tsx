@@ -40,29 +40,18 @@ import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {CSSProperties, HTMLAttributes, Ref, Suspense, useState} from 'react'
-import {
-  LinkField,
-  LinksField,
-  createLink as createLinkField,
-  createLinks as createLinksField
-} from './LinkField.js'
+import {LinkField, LinksField} from './LinkField.js'
 import css from './LinkField.module.scss'
 
 export type * from './LinkField.js'
 
 const styles = fromModule(css)
 
-export const createLink = Field.provideView(SingleLinkInput, createLinkField)
-export const createLinks = Field.provideView(
-  MultipleLinksInput,
-  createLinksField
-)
-
-interface LinkInputProps<Row> {
+export interface LinkInputProps<Row> {
   field: LinkField<Reference, Row>
 }
 
-function SingleLinkInput<Row>({field}: LinkInputProps<Row>) {
+export function SingleLinkInput<Row>({field}: LinkInputProps<Row>) {
   const {options, value, mutator, error} = useField(field)
   const {readOnly} = options
   const [pickFrom, setPickFrom] = useState<string | undefined>()
@@ -135,11 +124,11 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-interface LinksInputProps<Row> {
+export interface LinksInputProps<Row> {
   field: LinksField<ListRow, Row>
 }
 
-function MultipleLinksInput<Row>({field}: LinksInputProps<Row>) {
+export function MultipleLinksInput<Row>({field}: LinksInputProps<Row>) {
   const {options, value, mutator, error} = useField(field)
   const {readOnly} = options
   const [pickFrom, setPickFrom] = useState<

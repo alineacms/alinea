@@ -19,6 +19,7 @@ export function path(
     throw new Error(`The shared option is not supported on Path fields`)
   return new PathField({
     hint: Hint.String(),
-    options: {label, ...options}
+    options: {label, ...options},
+    view: 'alinea/field/path/PathField.view#PathInput'
   })
 }

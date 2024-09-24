@@ -34,7 +34,7 @@ export interface FieldMeta<
 > {
   hint: Hint
   options: Options
-  view?: FieldView<StoredValue, QueryValue, Mutator, Options>
+  view: string
   postProcess?: (value: StoredValue, loader: LinkResolver) => Promise<void>
 }
 
@@ -84,21 +84,21 @@ export namespace Field {
   export const Value = Symbol.for('@alinea/Field.Value')
   export const Ref = Symbol.for('@alinea/Field.Self')
 
-  export function provideView<
-    StoredValue,
-    QueryValue,
-    Mutator,
-    Options extends FieldOptions<StoredValue>,
-    Factory extends (
-      ...args: Array<any>
-    ) => Field<StoredValue, QueryValue, Mutator, Options>
-  >(
-    view: FieldView<StoredValue, QueryValue, Mutator, Options>,
-    factory: Factory
-  ): Factory {
-    return ((...args: Array<any>) =>
-      new Field({...factory(...args)[Field.Data], view})) as Factory
-  }
+  // export function provideView<
+  //   StoredValue,
+  //   QueryValue,
+  //   Mutator,
+  //   Options extends FieldOptions<StoredValue>,
+  //   Factory extends (
+  //     ...args: Array<any>
+  //   ) => Field<StoredValue, QueryValue, Mutator, Options>
+  // >(
+  //   view: FieldView<StoredValue, QueryValue, Mutator, Options>,
+  //   factory: Factory
+  // ): Factory {
+  //   return ((...args: Array<any>) =>
+  //     new Field({...factory(...args)[Field.Data], view})) as Factory
+  // }
 
   // Todo: because we wrap fields in an Expr proxy we need this
   // reference - but maybe we shouldn't wrap in the future
@@ -125,7 +125,7 @@ export namespace Field {
     Options extends FieldOptions<StoredValue>
   >(
     field: Field<StoredValue, QueryValue, Mutator, Options>
-  ): FieldView<StoredValue, QueryValue, Mutator, Options> | undefined {
+  ): string | undefined {
     return field[Field.Data].view
   }
 

@@ -47,7 +47,8 @@ export function createLink<StoredValue extends Reference, QueryValue>(
       const picker = options.pickers[type]
       if (!picker) return
       if (picker.postProcess) await picker.postProcess(value, loader)
-    }
+    },
+    view: 'alinea/field/link/LinkField.view#SingleLinkInput'
   })
 }
 
@@ -82,6 +83,7 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
         if (picker.postProcess) tasks.push(picker.postProcess(row, loader))
       }
       await Promise.all(tasks)
-    }
+    },
+    view: 'alinea/field/link/LinkField.view#MultipleLinksInput'
   })
 }

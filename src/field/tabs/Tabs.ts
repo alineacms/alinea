@@ -6,6 +6,7 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import type {UnionToIntersection} from 'alinea/core/util/Types'
 
 export class TabsSection implements SectionData {
+  view = 'alinea/field/tabs/Tabs.view#TabsView'
   definition: SectionDefinition
   fields: Record<string, Field>
   constructor(public types: Array<Type>) {

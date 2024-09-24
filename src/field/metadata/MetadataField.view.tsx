@@ -1,4 +1,3 @@
-import {Field} from 'alinea/core'
 import {PreviewMetadata} from 'alinea/core/Resolver'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
@@ -6,19 +5,16 @@ import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {usePreviewMetadata} from 'alinea/dashboard/view/preview/BrowserPreview'
 import {fromModule} from 'alinea/ui'
-import {MetadataField, metadata as createMetadata} from './MetadataField.js'
+import {MetadataField} from './MetadataField.js'
 import css from './MetadataField.module.scss'
 
-export * from './MetadataField.js'
 const styles = fromModule(css)
 
-export const metadata = Field.provideView(MetadataInput, createMetadata)
-
-interface MetadataInputProps {
+export interface MetadataInputProps {
   field: MetadataField
 }
 
-function MetadataInput({field}: MetadataInputProps) {
+export function MetadataInput({field}: MetadataInputProps) {
   const options = useFieldOptions(field)
   const editor = useEntryEditor()
 

@@ -1,19 +1,14 @@
-import {Field} from 'alinea/core'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule} from 'alinea/ui'
 import {IcRoundNumbers} from 'alinea/ui/icons/IcRoundNumbers'
 import {useEffect, useRef} from 'react'
-import {NumberField, number as createNumber} from './NumberField.js'
+import {NumberField} from './NumberField.js'
 import css from './NumberField.module.scss'
-
-export * from './NumberField.js'
-
-export const number = Field.provideView(NumberInput, createNumber)
 
 const styles = fromModule(css)
 
-interface NumberInputProps {
+export interface NumberInputProps {
   field: NumberField
 }
 
@@ -22,7 +17,7 @@ function tryParseNumber(input: string) {
   return isNaN(value) ? null : value
 }
 
-function NumberInput({field}: NumberInputProps) {
+export function NumberInput({field}: NumberInputProps) {
   const {options, value, mutator, error} = useField(field)
   const {minValue, maxValue, readOnly, step} = options
   const ref = useRef<HTMLInputElement>(null)

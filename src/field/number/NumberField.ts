@@ -24,6 +24,7 @@ export function number(
 ): NumberField {
   return new NumberField({
     hint: Hint.Number(),
-    options: {label, ...options}
+    options: {label, ...options},
+    view: 'alinea/field/number/NumberField.view#NumberInput'
   })
 }
