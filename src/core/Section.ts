@@ -10,6 +10,7 @@ export interface SectionDefinition {
 export interface SectionData {
   definition: SectionDefinition
   fields: Record<string, Field>
+  sections: Array<Section>
   view?: string
 }
 
@@ -28,8 +29,13 @@ export type SectionView<Fields> = ComponentType<{
 export namespace Section {
   export const Data = Symbol.for('@alinea/Section.Data')
 
-  export function view(section: Section) {
+  export function view(section: Section): string | undefined {
     return section[Section.Data].view
+  }
+
+  export function views(section: Section): Array<string> {
+    const {view, sections} = section[Section.Data]
+    return [view, ...sections.flatMap(views)].filter(Boolean) as Array<string>
   }
 
   export function definition(section: Section) {
@@ -45,18 +51,21 @@ export namespace Section {
   }
 }
 
-interface SectionOptions extends Omit<SectionData, 'fields'> {
+interface SectionOptions extends Omit<SectionData, 'fields' | 'sections'> {
   fields?: Record<string, Field>
+  sections?: Array<Section>
 }
 
 export function section<Fields>(data: SectionOptions): Section<Fields> {
   const section = create(null)
+  const sections = [] as Array<Section>
   const fields: Record<string, Field> = create(null)
   for (const [key, value] of entries(data.definition)) {
     if (Field.isField(value)) {
       defineProperty(section, key, {value, enumerable: false})
       fields[key] = value
     } else if (Section.isSection(value)) {
+      sections.push(value)
       assign(fields, Section.fields(value))
     }
   }
@@ -66,6 +75,7 @@ export function section<Fields>(data: SectionOptions): Section<Fields> {
   const id = rowId()
   section[id] = section
   if (!data.fields) assign(data, {fields})
+  if (!data.sections) assign(data, {sections})
   defineProperty(section, Section.Data, {
     value: data,
     enumerable: false

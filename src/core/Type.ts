@@ -189,12 +189,10 @@ export namespace Type {
 function viewsOfDefinition(definition: TypeDefinition): Array<string> {
   return values(definition).flatMap(value => {
     if (Field.isField(value)) return Field.views(value)
-    if (Section.isSection(value)) {
-      const viewOfSection = Section.view(value)
-      return viewsOfDefinition(Section.fields(value)).concat(
-        viewOfSection ?? []
+    if (Section.isSection(value))
+      return Section.views(value).concat(
+        viewsOfDefinition(Section.fields(value))
       )
-    }
     return []
   })
 }

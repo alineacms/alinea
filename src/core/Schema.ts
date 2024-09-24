@@ -11,7 +11,7 @@ export namespace Schema {
   export type Targets = Map<TypeTarget, string>
 
   export function views(schema: Schema): Array<string> {
-    return values(schema).flatMap(Type.views)
+    return values(schema).flatMap(type => Type.views(type))
   }
 
   export function validate(schema: Schema) {

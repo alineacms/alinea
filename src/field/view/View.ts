@@ -5,6 +5,7 @@ export class ViewSection implements SectionData {
   view: string
   definition: SectionDefinition = {}
   fields: Record<string, Field> = {}
+  sections = []
   constructor(component: string) {
     this.view = component
   }
