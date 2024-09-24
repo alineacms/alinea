@@ -1,4 +1,4 @@
-import {FieldOptions, Hint, WithoutLabel} from 'alinea/core'
+import {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a JSON field */
@@ -22,7 +22,6 @@ export function json<T>(
   options: WithoutLabel<JsonOptions<T>> = {}
 ): JsonField<T> {
   return new JsonField({
-    hint: Hint.String(),
     options: {label, ...options},
     view: 'alinea/field/json/JsonField.view#JsonInput'
   })

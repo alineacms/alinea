@@ -2,7 +2,6 @@ import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
 import {Field} from './Field.js'
-import {Hint} from './Hint.js'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Cursor} from './pages/Cursor.js'
@@ -66,7 +65,6 @@ export interface TypeMeta {
 export interface TypeData {
   label: Label
   shape: RecordShape
-  hint: Hint
   definition: TypeDefinition
   meta: TypeMeta
   sections: Array<Section>
@@ -127,10 +125,6 @@ export namespace Type {
 
   export function fields(type: Type): Record<string, Field> {
     return type as any
-  }
-
-  export function hint(type: Type) {
-    return type[Type.Data].hint
   }
 
   export function sections(type: Type) {
@@ -217,7 +211,6 @@ function fieldsOfDefinition(
 
 class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   shape: RecordShape
-  hint: Hint
   sections: Array<Section> = []
   target: Type<Definition>
 
@@ -231,13 +224,6 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
       fromEntries(
         fieldsOfDefinition(definition).map(([key, field]) => {
           return [key, Field.shape(field as Field)]
-        })
-      )
-    )
-    this.hint = Hint.Object(
-      fromEntries(
-        fieldsOfDefinition(definition).map(([key, field]) => {
-          return [key, Field.hint(field as Field)]
         })
       )
     )

@@ -15,7 +15,6 @@ export function position(
 ) {
   return new PositionField({
     options: {label, ...options},
-    hint: undefined!,
     view: '@/field/PositionField.view#PositionInput'
   })
 }

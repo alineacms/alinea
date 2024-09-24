@@ -1,4 +1,4 @@
-import {FieldOptions, Hint, WithoutLabel} from 'alinea/core'
+import {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a text field */
@@ -22,7 +22,6 @@ export function date(
   options: WithoutLabel<DateOptions> = {}
 ): DateField {
   return new DateField({
-    hint: Hint.String(),
     options: {label, ...options},
     view: 'alinea/field/date/DateField.view#DateInput'
   })

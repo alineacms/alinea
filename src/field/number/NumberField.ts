@@ -1,4 +1,4 @@
-import {FieldOptions, Hint, WithoutLabel} from 'alinea/core'
+import {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 export interface NumberOptions extends FieldOptions<number | null> {
@@ -23,7 +23,6 @@ export function number(
   options: WithoutLabel<NumberOptions> = {}
 ): NumberField {
   return new NumberField({
-    hint: Hint.Number(),
     options: {label, ...options},
     view: 'alinea/field/number/NumberField.view#NumberInput'
   })

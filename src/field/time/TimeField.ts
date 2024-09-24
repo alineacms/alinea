@@ -1,4 +1,4 @@
-import {FieldOptions, Hint, WithoutLabel} from 'alinea/core'
+import {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a time field */
@@ -28,7 +28,6 @@ export function time(
   options: WithoutLabel<TimeOptions> = {}
 ): TimeField {
   return new TimeField({
-    hint: Hint.String(),
     options: {label, ...options},
     view: 'alinea/field/time/TimeField.view#TimeInput'
   })

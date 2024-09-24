@@ -1,5 +1,4 @@
 import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {Hint} from 'alinea/core/Hint'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 import type {ComponentType} from 'react'
 
@@ -28,7 +27,6 @@ export class TextField extends ScalarField<string, TextOptions> {}
 /** Create a text field */
 export function text(label: string, options: WithoutLabel<TextOptions> = {}) {
   return new TextField({
-    hint: Hint.String(),
     options: {label, ...options, initialValue: options.initialValue ?? ''},
     view: 'alinea/field/text/TextField.view#TextInput'
   })

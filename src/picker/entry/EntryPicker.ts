@@ -1,4 +1,3 @@
-import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
 import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
@@ -12,7 +11,6 @@ import {assign, keys} from 'alinea/core/util/Objects'
 import {EntryReference} from './EntryReference.js'
 
 export interface EntryPickerOptions<Definition = {}> {
-  hint: Hint
   selection: Projection
   defaultView?: 'row' | 'thumb'
   location?: {workspace: string; root: string}
@@ -38,9 +36,6 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       [Reference.type]: new ScalarShape('Type'),
       [EntryReference.entry]: new ScalarShape('Entry')
     }).concat(extra),
-    hint: fieldType
-      ? Hint.Intersection(options.hint, Type.hint(fieldType))
-      : options.hint,
     fields: fieldType,
     label: options.label || 'Page link',
     handlesMultiple: true,

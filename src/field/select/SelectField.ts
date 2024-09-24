@@ -1,5 +1,4 @@
 import {FieldOptions, WithoutLabel} from 'alinea/core'
-import {Hint} from 'alinea/core/Hint'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** A string record with option labels */
@@ -45,9 +44,7 @@ export function select(
 ): SelectField<any> {
   const items = itemsOrOptions.options ?? itemsOrOptions
   const fieldOptions = itemsOrOptions.options ? itemsOrOptions : options
-  const keys = Object.keys(items)
   return new SelectField({
-    hint: Hint.Union(keys.map(key => Hint.Literal(key))),
     options: {
       label,
       options: items,

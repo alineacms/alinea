@@ -1,5 +1,4 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {Hint} from 'alinea/core/Hint'
 import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {ListField} from 'alinea/core/field/ListField'
@@ -35,12 +34,7 @@ export function createLink<StoredValue extends Reference, QueryValue>(
   const blocks = fromEntries(
     pickers.map(([type, picker]) => [type, picker.shape])
   )
-  const hint =
-    pickers.length === 1
-      ? pickers[0][1].hint
-      : Hint.Union(pickers.map(([, picker]) => picker.hint))
   return new LinkField(blocks, {
-    hint,
     options: {label, ...options},
     async postProcess(value, loader) {
       const type = value[Reference.type]
@@ -67,12 +61,7 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
   const blocks = fromEntries(
     pickers.map(([type, picker]) => [type, picker.shape])
   )
-  const hint =
-    pickers.length === 1
-      ? pickers[0][1].hint
-      : Hint.Union(pickers.map(([, picker]) => picker.hint))
   return new LinksField(blocks, {
-    hint: Hint.Array(hint),
     options: {label, ...options},
     async postProcess(rows, loader) {
       const tasks = []

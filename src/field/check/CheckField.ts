@@ -1,5 +1,4 @@
 import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {Hint} from 'alinea/core/Hint'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a text field */
@@ -25,7 +24,6 @@ export function check(
   options: WithoutLabel<CheckOptions> = {}
 ): CheckField {
   return new CheckField({
-    hint: Hint.Boolean(),
     options: {...options, label},
     view: 'alinea/field/check/CheckField.view#CheckInput'
   })

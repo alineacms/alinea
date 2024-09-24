@@ -155,7 +155,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
           entry: entryPicker({
             condition: Entry.type.is(type),
             withNavigation: false,
-            hint: undefined!,
             title: 'Copy content from',
             max: 1,
             selection: EntryLink

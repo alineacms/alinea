@@ -29,7 +29,6 @@ export function object<Definition>(
     ? options.fields
     : type({fields: options.fields})
   return new ObjectField(Type.shape(fields), {
-    hint: Type.hint(fields),
     options: {label, ...options, fields},
     view: 'alinea/field/object/ObjectField.view#ObjectInput'
   })

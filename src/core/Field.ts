@@ -1,7 +1,6 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import {Expr} from 'alinea/core/pages/Expr'
 import type {ComponentType} from 'react'
-import {Hint} from './Hint.js'
 import {Shape} from './Shape.js'
 
 export interface FieldOptions<StoredValue> {
@@ -32,7 +31,6 @@ export interface FieldMeta<
   Mutator,
   Options extends FieldOptions<StoredValue>
 > {
-  hint: Hint
   options: Options
   view: string
   postProcess?: (value: StoredValue, loader: LinkResolver) => Promise<void>
@@ -92,10 +90,6 @@ export namespace Field {
 
   export function shape(field: Field<any, any>): Shape {
     return field[Field.Data].shape
-  }
-
-  export function hint(field: Field): Hint {
-    return field[Field.Data].hint
   }
 
   export function label(field: Field): string {

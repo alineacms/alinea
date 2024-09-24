@@ -1,4 +1,4 @@
-import {FieldOptions, Hint, WithoutLabel} from 'alinea/core'
+import {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 export interface CodeFieldOptions extends FieldOptions<string> {
@@ -15,7 +15,6 @@ export function code(
   options: WithoutLabel<CodeFieldOptions> = {}
 ): CodeField {
   return new CodeField({
-    hint: Hint.String(),
     options: {label, ...options},
     view: 'alinea/field/code/CodeField.view#CodeInput'
   })

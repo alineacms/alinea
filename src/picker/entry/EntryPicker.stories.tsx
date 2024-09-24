@@ -11,7 +11,6 @@ export function ImagePicker() {
           type="image"
           selection={[]}
           options={{
-            hint: undefined!,
             selection: undefined!,
             showMedia: true
           }}
@@ -34,7 +33,6 @@ export function EntryPicker() {
           type="entry"
           selection={[]}
           options={{
-            hint: undefined!,
             selection: undefined!
           }}
           onConfirm={console.log}

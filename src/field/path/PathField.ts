@@ -1,5 +1,4 @@
 import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {Hint} from 'alinea/core/Hint'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 export interface PathOptions extends FieldOptions<string> {
@@ -18,7 +17,6 @@ export function path(
   if (options.shared)
     throw new Error(`The shared option is not supported on Path fields`)
   return new PathField({
-    hint: Hint.String(),
     options: {label, ...options},
     view: 'alinea/field/path/PathField.view#PathInput'
   })
