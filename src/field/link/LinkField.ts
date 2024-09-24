@@ -1,6 +1,7 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
+import {Schema} from 'alinea/core/Schema'
 import {ListField} from 'alinea/core/field/ListField'
 import {UnionField} from 'alinea/core/field/UnionField'
 import {ListRow} from 'alinea/core/shape/ListShape'
@@ -31,10 +32,15 @@ export function createLink<StoredValue extends Reference, QueryValue>(
   options: WithoutLabel<LinkOptions<StoredValue>>
 ): LinkField<StoredValue, QueryValue> {
   const pickers = entries(options.pickers)
-  const blocks = fromEntries(
+  const schema: Schema = fromEntries(
+    pickers
+      .filter(([type, picker]) => picker.fields)
+      .map(([type, picker]) => [type, picker.fields])
+  )
+  const shapes = fromEntries(
     pickers.map(([type, picker]) => [type, picker.shape])
   )
-  return new LinkField(blocks, {
+  return new LinkField(schema, shapes, {
     options: {label, ...options},
     async postProcess(value, loader) {
       const type = value[Reference.type]
@@ -58,10 +64,15 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
   options: WithoutLabel<LinkOptions<Array<StoredValue>>>
 ): LinksField<StoredValue, QueryValue> {
   const pickers = entries(options.pickers)
-  const blocks = fromEntries(
+  const schema: Schema = fromEntries(
+    pickers
+      .filter(([type, picker]) => picker.fields)
+      .map(([type, picker]) => [type, picker.fields])
+  )
+  const shapes = fromEntries(
     pickers.map(([type, picker]) => [type, picker.shape])
   )
-  return new LinksField(blocks, {
+  return new LinksField(schema, shapes, {
     options: {label, ...options},
     async postProcess(rows, loader) {
       const tasks = []

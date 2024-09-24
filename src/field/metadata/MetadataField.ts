@@ -49,7 +49,7 @@ export function metadata(
       })
     }
   })
-  return new MetadataField(Type.shape(fields), {
+  return new MetadataField(fields, {
     options: {label, ...options, fields},
     view: 'alinea/field/metadata/MetadataField.view#MetadataInput'
   })

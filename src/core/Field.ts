@@ -43,6 +43,7 @@ export interface FieldData<
   Options extends FieldOptions<StoredValue>
 > extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   shape: Shape<StoredValue, Mutator>
+  referencedViews: Array<string>
 }
 
 export type FieldView<
@@ -101,7 +102,7 @@ export namespace Field {
   }
 
   export function views(field: Field): Array<string> {
-    return [view(field)]
+    return [view(field), ...field[Field.Data].referencedViews]
   }
 
   export function options<

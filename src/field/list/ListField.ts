@@ -28,7 +28,7 @@ export function list<Definitions extends Schema>(
   InferQueryValue<Definitions> & ListRow,
   ListOptions<Definitions>
 > {
-  return new ListField(Schema.shapes(options.schema), {
+  return new ListField(options.schema, Schema.shapes(options.schema), {
     options: {label, ...options},
     view: 'alinea/field/list/ListField.view#ListInput'
   })

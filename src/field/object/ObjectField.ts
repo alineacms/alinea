@@ -28,7 +28,7 @@ export function object<Definition>(
   const fields = Type.isType(options.fields)
     ? options.fields
     : type({fields: options.fields})
-  return new ObjectField(Type.shape(fields), {
+  return new ObjectField(fields, {
     options: {label, ...options, fields},
     view: 'alinea/field/object/ObjectField.view#ObjectInput'
   })

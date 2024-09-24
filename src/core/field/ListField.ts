@@ -1,5 +1,6 @@
 import {Field, FieldMeta, FieldOptions} from '../Field.js'
 import {createId} from '../Id.js'
+import {Schema} from '../Schema.js'
 import {ListMutator, ListRow, ListShape} from '../shape/ListShape.js'
 import {RecordShape} from '../shape/RecordShape.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
@@ -15,7 +16,8 @@ export class ListField<
   Options
 > {
   constructor(
-    shape: {[key: string]: RecordShape<any>},
+    schema: Schema,
+    shapes: Record<string, RecordShape<any>>,
     meta: FieldMeta<
       Array<StoredValue>,
       Array<QueryValue>,
@@ -26,10 +28,11 @@ export class ListField<
     super({
       shape: new ListShape(
         meta.options.label,
-        shape,
+        shapes,
         meta.options.initialValue,
         meta.postProcess
       ),
+      referencedViews: Schema.views(schema),
       ...meta
     })
   }

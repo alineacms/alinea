@@ -25,8 +25,7 @@ export function richText<Blocks extends Schema = {}>(
   label: string,
   options: WithoutLabel<RichTextOptions<Blocks>> = {}
 ): RichTextField<Blocks, RichTextOptions<Blocks>> {
-  const shapes = options.schema && Schema.shapes(options.schema)
-  return new RichTextField(shapes, {
+  return new RichTextField(options.schema, {
     options: {label, ...options},
     view: 'alinea/field/richtext/RichTextField.view#RichTextInput'
   })
