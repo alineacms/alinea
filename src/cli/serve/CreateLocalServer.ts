@@ -72,7 +72,11 @@ export function createLocalServer(
 ): HttpRouter {
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
-  const entry = `alinea/cli/static/dashboard/dev`
+  const entryPoints = {
+    entry: 'alinea/cli/static/dashboard/dev',
+    config: '@alinea/generated/config.js',
+    views: '@alinea/generated/views.js'
+  }
   const tsconfigLocation = path.join(cwd, 'tsconfig.json')
   const tsconfig = fs.existsSync(tsconfigLocation)
     ? tsconfigLocation
@@ -89,10 +93,7 @@ export function createLocalServer(
     outdir: devDir,
     bundle: true,
     absWorkingDir: cwd,
-    entryPoints: {
-      config: '@alinea/generated/config.js',
-      entry
-    },
+    entryPoints,
     platform: 'browser',
     ...buildOptions,
     plugins: buildOptions?.plugins || [],
@@ -153,6 +154,7 @@ export function createLocalServer(
       }
     })
   }
+
   const httpRouter = router(
     matcher.get('/~dev').map((): Response => {
       const stream = new ReadableStream<string>({

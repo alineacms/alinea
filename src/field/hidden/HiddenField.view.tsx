@@ -1,3 +1,3 @@
-export function HiddenField() {
+export function HiddenInput() {
   return null
 }

@@ -13,7 +13,7 @@ export namespace Schema {
   export type Targets = Map<TypeTarget, string>
 
   export function views(schema: Schema) {
-    return values(schema).flatMap(Type.views)
+    return new Set(values(schema).flatMap(Type.views))
   }
 
   export function validate(schema: Schema) {

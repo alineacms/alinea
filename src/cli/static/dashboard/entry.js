@@ -1,5 +1,8 @@
-import '@alinea/generated/config.css'
+import '@alinea/generated/views.css'
 import 'alinea/css'
+
+import {cms} from '@alinea/generated/config.js'
+import {views} from '@alinea/generated/views.js'
 
 import {Client} from 'alinea/core/Client'
 import {App} from 'alinea/dashboard/App'
@@ -12,15 +15,7 @@ export async function boot(handlerUrl) {
   const into = document.createElement('div')
   into.id = 'root'
   element.parentElement.replaceChild(into, element)
-  const config = await loadConfig()
+  const config = cms.config
   const client = new Client({url: handlerUrl})
-  reactRender(jsx(App, {config, client}), into)
-}
-
-async function loadConfig() {
-  const configModule = './config.js?' + Math.random()
-  const exports = await import(configModule)
-  if ('cms' in exports) return exports.cms.config
-  if ('config' in exports) return exports.config
-  throw new Error(`No config found in "/config.js"`)
+  reactRender(jsx(App, {config, views, client}), into)
 }

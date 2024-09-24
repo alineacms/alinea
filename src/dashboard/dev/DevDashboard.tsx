@@ -1,9 +1,9 @@
 import {Client} from 'alinea/core/Client'
 import {Config} from 'alinea/core/Config'
 import {useSetAtom} from 'jotai'
-import {useEffect, useMemo, useState} from 'react'
+import {ComponentType, useEffect, useState} from 'react'
 import {QueryClient} from 'react-query'
-import {App} from '../App.js'
+import {App, AppProps} from '../App.js'
 import {dbUpdateAtom} from '../atoms/DbAtoms.js'
 
 type DevReloadOptions = {
@@ -35,21 +35,16 @@ function setupDevReload({refresh, refetch, open, close}: DevReloadOptions) {
 
 export type DevDashboardOptions = {
   loadConfig: () => Promise<Config>
+  loadViews: () => Promise<Record<string, ComponentType>>
 }
 
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 
-export function DevDashboard({loadConfig}: DevDashboardOptions) {
-  const [config, setConfig] = useState<Config>()
+export function DevDashboard({loadConfig, loadViews}: DevDashboardOptions) {
+  const [app, setApp] = useState<AppProps>()
   const [connected, setConnected] = useState(true)
   const forceDbUpdate = useSetAtom(dbUpdateAtom)
-  const client = useMemo(() => {
-    if (!config) return null
-    return new Client({
-      url: new URL('/api', location.href).href
-    })
-  }, [config])
-  function getConfig() {
+  async function getConfig() {
     // Reload css
     const link = document.querySelector(
       'link[href^="/entry.css"]'
@@ -58,7 +53,11 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
     copy.href = '/entry.css?' + Math.random()
     copy.onload = () => link.remove()
     link.after(copy)
-    return loadConfig().then(setConfig)
+    const [config, views] = await Promise.all([loadConfig(), loadViews()])
+    const client = new Client({
+      url: new URL('/api', location.href).href
+    })
+    return setApp({config, views, client})
   }
   useEffect(() => {
     getConfig()
@@ -69,13 +68,12 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
       close: () => setConnected(false)
     })
   }, [])
-  if (!config) return null
+  if (!app) return null
   return (
     <App
       queryClient={queryClient}
-      config={config}
-      client={client!}
       dev={process.env.NODE_ENV === 'development'}
+      {...app}
     />
   )
 }

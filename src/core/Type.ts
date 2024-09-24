@@ -24,7 +24,8 @@ import {
   defineProperty,
   entries,
   fromEntries,
-  keys
+  keys,
+  values
 } from './util/Objects.js'
 import {Expand} from './util/Types.js'
 
@@ -175,12 +176,21 @@ export namespace Type {
   }
 
   export function views(type: Type) {
-    return fieldsOfDefinition(type[Type.Data].definition).map(
-      ([key, field]) => {
-        return Field.view(field)
-      }
-    )
+    return viewsOfDefinition(type[Type.Data].definition)
   }
+}
+
+function viewsOfDefinition(definition: TypeDefinition): Array<string> {
+  return values(definition).flatMap(value => {
+    if (Field.isField(value)) return Field.view(value)
+    if (Section.isSection(value)) {
+      const viewOfSection = Section.view(value)
+      return viewsOfDefinition(Section.fields(value)).concat(
+        viewOfSection ?? []
+      )
+    }
+    return []
+  })
 }
 
 function fieldsOfDefinition(

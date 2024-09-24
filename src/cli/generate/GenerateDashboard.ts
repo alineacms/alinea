@@ -1,12 +1,12 @@
 import {buildOptions} from 'alinea/cli/build/BuildOptions'
 import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
 import {publicDefines} from 'alinea/cli/util/PublicDefines'
+import {createId} from 'alinea/core/Id'
 import {code} from 'alinea/core/util/CodeGen'
 import {build} from 'esbuild'
 import escapeHtml from 'escape-html'
 import fs from 'node:fs'
 import path from 'node:path'
-import pkg from '../../../package.json'
 import {GenerateContext} from './GenerateContext.js'
 
 export async function generateDashboard(
@@ -18,9 +18,9 @@ export async function generateDashboard(
     throw new Error(
       `The staticFile option in config.dashboard must point to an .html file (include the extension)`
     )
+  const revision = createId()
   const entryPoints = {
-    entry: 'alinea/cli/static/dashboard/entry',
-    config: '@alinea/generated/config.js'
+    entry: 'alinea/cli/static/dashboard/entry'
   }
   const basename = path.basename(staticFile, '.html')
   const assetsFolder = path.join(rootDir, path.dirname(staticFile), basename)
@@ -55,13 +55,13 @@ export async function generateDashboard(
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="${baseUrl}/entry.css?${pkg.version}" rel="stylesheet" />
+        <link href="${baseUrl}/entry.css?${revision}" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
         <meta name="redirect_url" value="${handlerUrl}?auth=login" />
         <body>
           <script type="module">
-            import {boot} from '${baseUrl}/entry.js?${pkg.version}'
+            import {boot} from '${baseUrl}/entry.js?${revision}'
             boot('${handlerUrl}')
           </script>
         </body>

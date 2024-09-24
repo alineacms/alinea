@@ -10,7 +10,7 @@ export interface SectionDefinition {
 export interface SectionData {
   definition: SectionDefinition
   fields: Record<string, Field>
-  view: string
+  view?: string
 }
 
 export interface SectionI extends Record<string, Field> {}

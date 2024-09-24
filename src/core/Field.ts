@@ -123,9 +123,7 @@ export namespace Field {
     QueryValue,
     Mutator,
     Options extends FieldOptions<StoredValue>
-  >(
-    field: Field<StoredValue, QueryValue, Mutator, Options>
-  ): string | undefined {
+  >(field: Field<StoredValue, QueryValue, Mutator, Options>): string {
     return field[Field.Data].view
   }
 

@@ -1,4 +1,4 @@
-import {FieldOptions, ScalarField, WithoutLabel} from 'alinea/core'
+import {FieldOptions, ScalarField} from 'alinea/core'
 import {InputLabel, useField} from 'alinea/dashboard'
 import {HStack, VStack} from 'alinea/ui'
 import {SVGProps, useState} from 'react'
@@ -13,17 +13,6 @@ export interface Position {
 
 class PositionField extends ScalarField<Position, PositionOptions> {}
 
-export function position(
-  label: string,
-  options: WithoutLabel<PositionOptions> = {}
-) {
-  return new PositionField({
-    options: {label, ...options},
-    hint: undefined!,
-    view: PositionInput
-  })
-}
-
 interface PositionInputProps {
   field: PositionField
 }
@@ -33,7 +22,7 @@ const displayCoordinate = (value: number | null) => {
   return (value * 100).toFixed(2)
 }
 
-export function PositionInput({field}: PositionInputProps) {
+export default function PositionInput({field}: PositionInputProps) {
   const {
     label,
     options,
