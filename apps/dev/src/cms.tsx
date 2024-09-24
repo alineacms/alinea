@@ -29,15 +29,7 @@ export const cms = createCMS({
         }),
         custom: Config.root('Custom', {
           contains: ['CustomPage'],
-          view() {
-            return (
-              <div
-                style={{width: '100%', height: '100%', background: 'yellow'}}
-              >
-                Custom root view
-              </div>
-            )
-          }
+          view: './src/CustomRootView.tsx#CustomRootView'
         }),
         media: Config.media()
       }

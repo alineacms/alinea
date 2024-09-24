@@ -24,7 +24,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/backend@workspace:src/backend"
   dependencies:
-    cito: "npm:^0.2.0"
+    cito: "npm:^0.3.2"
     dataloader: "npm:^2.1.0"
     pretty-ms: "npm:^8.0.0"
     rado: "npm:^1.0.12"
@@ -52,7 +52,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/core@workspace:src/core"
   dependencies:
-    cito: "npm:^0.2.0"
+    cito: "npm:^0.3.2"
     htmlparser2: "npm:^9.1.0"
     p-lazy: "npm:^4.0.0"
     pretty-ms: "npm:^8.0.0"
@@ -3607,10 +3607,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cito@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "cito@npm:0.2.0"
-  checksum: 10/4d75b4e1ffd13a3a35dfe466f7663b760af77b797aca6bbcc9c595db245455070cf4f22f0ce561c88cd6dd6e34ed8392d0f4062990e83fc084fef6936ee7a687
+"cito@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "cito@npm:0.3.2"
+  checksum: 10/8ea0fa7163e9e4252e56f112ad8d3236feb9782a35b81dbe143dc8a2a102cac4727577d977c5ba4d8887df8ace28b51ae6b027336212a6e7e3440b052ac9d1ec
   languageName: node
   linkType: hard
 

@@ -22,7 +22,7 @@ const displayCoordinate = (value: number | null) => {
   return (value * 100).toFixed(2)
 }
 
-export default function PositionInput({field}: PositionInputProps) {
+export function PositionInput({field}: PositionInputProps) {
   const {
     label,
     options,

@@ -12,8 +12,8 @@ export interface Schema<Definitions = {}> extends Record<string, Type> {}
 export namespace Schema {
   export type Targets = Map<TypeTarget, string>
 
-  export function views(schema: Schema) {
-    return new Set(values(schema).flatMap(Type.views))
+  export function views(schema: Schema): Array<string> {
+    return values(schema).flatMap(Type.views)
   }
 
   export function validate(schema: Schema) {

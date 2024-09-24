@@ -9,6 +9,7 @@ import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {ComponentType} from 'react'
+import {useDashboard} from '../../hook/UseDashboard.js'
 import {useExplorer} from '../../hook/UseExplorer.js'
 import {useFocusListItem} from '../../hook/UseFocusList.js'
 import {useNav} from '../../hook/UseNav.js'
@@ -31,12 +32,14 @@ export function ExplorerItem({
   defaultView
 }: ExplorerItemProps) {
   const nav = useNav()
+  const {views} = useDashboard()
   const explorer = useExplorer()
   const itemRef = useFocusListItem<HTMLDivElement>(() =>
     explorer?.onSelect(entry)
   )
   const type = schema[entry.type]
-  const View: any = (type && Type.meta(type)[summaryView]) || defaultView
+  const typeView = type && Type.meta(type)[summaryView]
+  const View: any = typeView ? views[typeView] : defaultView
   const isSelectable =
     explorer.selectable === true ||
     (Array.isArray(explorer.selectable) &&

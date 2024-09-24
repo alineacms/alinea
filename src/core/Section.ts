@@ -28,17 +28,6 @@ export type SectionView<Fields> = ComponentType<{
 export namespace Section {
   export const Data = Symbol.for('@alinea/Section.Data')
 
-  // export function provideView<
-  //   Fields,
-  //   Factory extends (...args: Array<any>) => Section<Fields>
-  // >(view: SectionView<Fields>, factory: Factory): Factory {
-  //   return ((...args: Array<any>) => {
-  //     const section = factory(...args)
-  //     section[Section.Data].view = view as SectionView<object>
-  //     return section
-  //   }) as Factory
-  // }
-
   export function view(section: Section) {
     return section[Section.Data].view
   }

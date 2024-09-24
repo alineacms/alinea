@@ -1,10 +1,9 @@
-import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
+import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
 import {Field} from './Field.js'
 import {Hint} from './Hint.js'
 import {Label} from './Label.js'
-import {SummaryProps} from './media/Summary.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Cursor} from './pages/Cursor.js'
 import {Expr, createExprData} from './pages/Expr.js'
@@ -51,12 +50,12 @@ export interface TypeMeta {
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 
-  /** A React component used to view an entry of this type in the dashboard */
-  view?: ComponentType<EntryEditProps & {type: Type}>
-  /** A React component used to view a row of this type in the dashboard */
-  summaryRow?: ComponentType<SummaryProps>
-  /** A React component used to view a thumbnail of this type in the dashboard */
-  summaryThumb?: ComponentType<SummaryProps>
+  /** Point to a React component used to view an entry of this type in the dashboard */
+  view?: string
+  /** Point to a React component used to view a row of this type in the dashboard */
+  summaryRow?: string
+  /** Point to a React component used to view a thumbnail of this type in the dashboard */
+  summaryThumb?: string
 
   /** Create indexes on fields of this type */
   // index?: (this: Fields) => Record<string, Array<Expr<any>>>
@@ -164,7 +163,14 @@ export namespace Type {
     return res
   }
 
+  const TypeOptions = cito.object({
+    view: cito.string.optional,
+    summaryRow: cito.string.optional,
+    summaryThumb: cito.string.optional
+  })
+
   export function validate(type: Type) {
+    TypeOptions(meta(type))
     for (const [key, field] of entries(fields(type))) {
       if (!isValidIdentifier(key))
         throw new Error(
@@ -175,14 +181,20 @@ export namespace Type {
     }
   }
 
-  export function views(type: Type) {
-    return viewsOfDefinition(type[Type.Data].definition)
+  export function views(type: Type): Array<string> {
+    const {view, summaryRow, summaryThumb} = meta(type)
+    return [
+      view,
+      summaryRow,
+      summaryThumb,
+      ...viewsOfDefinition(type[Type.Data].definition)
+    ].filter(Boolean) as Array<string>
   }
 }
 
 function viewsOfDefinition(definition: TypeDefinition): Array<string> {
   return values(definition).flatMap(value => {
-    if (Field.isField(value)) return Field.view(value)
+    if (Field.isField(value)) return Field.views(value)
     if (Section.isSection(value)) {
       const viewOfSection = Section.view(value)
       return viewsOfDefinition(Section.fields(value)).concat(

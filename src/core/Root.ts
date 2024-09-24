@@ -1,4 +1,5 @@
 import {Preview} from 'alinea/core/Preview'
+import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
@@ -14,8 +15,8 @@ export interface RootMeta {
   contains?: Array<string | Type>
   icon?: ComponentType
   i18n?: RootI18n
-  /** A React component used to view this root in the dashboard */
-  view?: ComponentType<{root: RootData}>
+  /** Point to a React component used to view this root in the dashboard */
+  view?: string
   isMediaRoot?: boolean
   preview?: Preview
 }
@@ -62,8 +63,24 @@ export namespace Root {
     return Boolean(root[Root.Data].isMediaRoot)
   }
 
+  const RootOptions = cito.object({
+    label: cito.string,
+    i18n: cito.object({
+      locales: cito.array(cito.string)
+    }).optional,
+    view: cito.string.optional,
+    isMediaRoot: cito.boolean.optional
+  })
+
   export function validate(root: Root, workspaceLabel: string, schema: Schema) {
-    const {contains} = root[Root.Data]
+    const meta = data(root)
+    RootOptions(
+      meta,
+      `Root "${label(
+        root
+      )}" in workspace "${workspaceLabel}" has invalid options`
+    )
+    const {contains} = meta
     const keyOfType = Schema.typeNames(schema)
     if (contains) {
       for (const inner of contains) {
@@ -87,6 +104,11 @@ export namespace Root {
         }
       }
     }
+  }
+
+  export function views(root: Root): Array<string> {
+    const {view} = data(root)
+    return view ? [view] : []
   }
 }
 

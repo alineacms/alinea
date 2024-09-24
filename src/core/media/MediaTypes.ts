@@ -1,9 +1,13 @@
 import {hidden} from 'alinea/field/hidden'
+import {text} from 'alinea/field/text/TextField'
+import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
 import {Hint} from '../Hint.js'
 import {Type, type} from '../Type.js'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
+  view: 'alinea/dashboard/view/MediaExplorer#MediaExplorer',
+  icon: IcRoundPermMedia,
   isContainer: true,
   contains: ['MediaLibrary'],
   fields: {
@@ -14,9 +18,12 @@ export const MediaLibrary = type('Media directory', {
 
 export type MediaFile = Type.Infer<typeof MediaFile>
 export const MediaFile = type('Media file', {
+  view: 'alinea/dashboard/view/media/FileEntry#FileEntry',
+  summaryRow: 'alinea/dashboard/view/media/FileSummary#FileSummaryRow',
+  summaryThumb: 'alinea/dashboard/view/media/FileSummary#FileSummaryThumb',
   hidden: true,
   fields: {
-    title: hidden<string>('Title', Hint.String()),
+    title: text('Title'),
     path: hidden<string>('Path', Hint.String()),
     location: hidden<string>('Location', Hint.String()),
     extension: hidden<string>('Extension', Hint.String()),

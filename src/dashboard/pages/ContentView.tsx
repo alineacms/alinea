@@ -1,7 +1,10 @@
+import {Type} from 'alinea/core/Type'
 import {HStack, Icon, Loader, fromModule} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
+import {ComponentType} from 'react'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
+import {useDashboard} from '../hook/UseDashboard.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
@@ -22,11 +25,13 @@ export interface ContentViewProps {
 }
 
 export function ContentView({editor}: ContentViewProps) {
+  const {views} = useDashboard()
   const workspace = useWorkspace()
   const root = useRoot()
   const {search} = useLocation()
-  const EntryView = editor?.view ?? EntryEdit
-  const RootView = root?.view ?? RootOverview
+  const EntryView: ComponentType<{type?: Type; editor: EntryEditor}> =
+    editor?.view ? views[editor.view] : EntryEdit
+  const RootView = root?.view ? views[root.view] : RootOverview
   const nav = useNav()
   const navigate = useNavigate()
   const {schema} = useConfig()

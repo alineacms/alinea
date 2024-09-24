@@ -1,4 +1,3 @@
-import {createCMS} from 'alinea/core'
 import {CMS} from 'alinea/core/CMS'
 import {createRequire} from 'node:module'
 import path from 'node:path'
@@ -14,6 +13,5 @@ export async function loadCMS(outDir: string): Promise<CMS> {
   global.require = createRequire(import.meta.url)
   const exports = await import(outFile)
   if ('cms' in exports && exports.cms instanceof CMS) return exports.cms
-  if ('config' in exports) return createCMS(exports.config)
   throw new Error(`No config found in "${genConfigFile}"`)
 }

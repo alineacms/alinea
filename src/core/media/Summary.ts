@@ -2,7 +2,7 @@ import {Entry} from '../Entry.js'
 import {Projection} from '../pages/Projection.js'
 import {Query} from '../Query.js'
 import {Schema} from '../Schema.js'
-import {MediaFile as MediaFileType} from './MediaTypes.browser.js'
+import {MediaFile as MediaFileType} from './MediaTypes.js'
 
 export function summarySelection(schema: Schema) {
   const MediaFile = schema.MediaFile as typeof MediaFileType

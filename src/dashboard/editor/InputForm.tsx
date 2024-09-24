@@ -3,6 +3,7 @@ import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
+import {ErrorMessage} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {VStack} from 'alinea/ui/Stack'
 import {ComponentType} from 'react'
@@ -53,7 +54,9 @@ export interface MissingViewProps {
 }
 
 export function MissingView({field}: MissingViewProps) {
-  return <div>Missing view for field: {Field.label(field)}</div>
+  return (
+    <ErrorMessage error={`Missing view for field: ${Field.label(field)}`} />
+  )
 }
 
 export interface InputFieldProps<V, M> {
@@ -65,7 +68,7 @@ export function InputField<V, M>({field}: InputFieldProps<V, M>) {
   const view = Field.view(field)
   const options = useFieldOptions(field)
   const View: ComponentType<any> = views[view]
-  if (!view) return <MissingView field={field} />
+  if (!View) return <MissingView field={field} />
   if (options.hidden) return null
   return (
     <ErrorBoundary>

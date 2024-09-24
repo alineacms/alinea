@@ -9,6 +9,7 @@ export function createMediaRoot<Children extends Record<string, PageSeed>>(
 ) {
   return root('Media', {
     contains: ['MediaLibrary'],
+    view: 'alinea/dashboard/view/MediaExplorer#MediaExplorer',
     isMediaRoot: true,
     entries: {
       ...children

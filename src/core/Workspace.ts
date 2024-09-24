@@ -5,7 +5,7 @@ import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries} from './util/Objects.js'
+import {entries, values} from './util/Objects.js'
 
 export interface WorkspaceMeta {
   /** A directory which contains the json entry files */
@@ -80,6 +80,10 @@ export namespace Workspace {
         )
       Root.validate(root, label(workspace), schema)
     }
+  }
+
+  export function views(workspace: Workspace) {
+    return values(roots(workspace)).flatMap(Root.views)
   }
 }
 

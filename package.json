@@ -115,16 +115,6 @@
       "browser": "./dist/core/media/CreatePreview.browser.js",
       "default": "./dist/core/media/CreatePreview.js"
     },
-    "./core/media/MediaRoot": {
-      "worker": "./dist/core/media/MediaRoot.js",
-      "browser": "./dist/core/media/MediaRoot.browser.js",
-      "default": "./dist/core/media/MediaRoot.js"
-    },
-    "./core/media/MediaTypes": {
-      "worker": "./dist/core/media/MediaTypes.js",
-      "browser": "./dist/core/media/MediaTypes.browser.js",
-      "default": "./dist/core/media/MediaTypes.js"
-    },
     "./dashboard/view/Preview": {
       "worker": "./dist/dashboard/view/Preview.js",
       "browser": "./dist/dashboard/view/Preview.browser.js",
