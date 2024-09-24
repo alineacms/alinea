@@ -220,7 +220,13 @@ export function cloudBackend(config: Config): Backend {
   }
   const media: Media = {
     prepareUpload(ctx, file) {
-      return parseOutcome(
+      return parseOutcome<{
+        entryId: string
+        location: string
+        previewUrl: string
+        provider: string
+        upload: {method?: string; url: string}
+      }>(
         fetch(
           cloudConfig.upload,
           json({
@@ -229,7 +235,13 @@ export function cloudBackend(config: Config): Backend {
             body: JSON.stringify({filename: file})
           })
         )
-      )
+      ).then(({upload, ...rest}) => {
+        return {
+          ...rest,
+          method: upload.method,
+          url: upload.url
+        }
+      })
     }
   }
   const drafts: Drafts = {
