@@ -10,3 +10,30 @@ export async function* toGenerator<T>(
 ): AsyncGenerator<T> {
   for (const item of iterable) yield item
 }
+
+export function genEffect<T, TReturn>(
+  gen: AsyncIterable<T, TReturn>,
+  effect: (result: IteratorResult<T, TReturn>) => void
+): AsyncIterable<T> {
+  return {
+    [Symbol.asyncIterator]() {
+      const iter = gen[Symbol.asyncIterator]()
+      const stack: Array<Promise<IteratorResult<T, TReturn>>> = []
+      const dispense = () => {
+        stack.push(
+          iter.next().then(res => {
+            effect(res)
+            if (!res.done) dispense()
+            return res
+          })
+        )
+      }
+      dispense()
+      return {
+        next() {
+          return stack.shift()!
+        }
+      }
+    }
+  }
+}

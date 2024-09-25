@@ -1,17 +1,20 @@
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
+import {genEffect} from 'alinea/core/util/Async'
 import {code} from 'alinea/core/util/CodeGen'
-import esbuild, {BuildOptions} from 'esbuild'
+import {BuildOptions} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
-import {createEmitter, Emitter} from '../util/Emitter.js'
+import {BuildInfo, buildEmitter} from '../build/BuildEmitter.js'
+import {Emitter} from '../util/Emitter.js'
 import {externalPlugin} from '../util/ExternalPlugin.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
+import {reportHalt} from '../util/Report.js'
 import {GenerateContext} from './GenerateContext.js'
 import {loadCMS} from './LoadConfig.js'
 
-async function compileViews(ctx: GenerateContext, cms: CMS) {
+function compileViews(ctx: GenerateContext, cms: CMS) {
   const {rootDir, outDir, configLocation, watch} = ctx
   const views = new Set(
     Config.views(cms.config).filter(Boolean) as Array<string>
@@ -24,7 +27,7 @@ async function compileViews(ctx: GenerateContext, cms: CMS) {
           separatorIndex > -1 ? view.slice(0, separatorIndex + 1) : view
         const name =
           separatorIndex > -1 ? view.slice(separatorIndex + 2) : 'default'
-        const alias = `view${index}`
+        const alias = `view_${index}`
         return `import {${name} as ${alias}} from ${JSON.stringify(pkg)}`
       })
       .join('\n') +
@@ -32,7 +35,7 @@ async function compileViews(ctx: GenerateContext, cms: CMS) {
     code`export const views = {
       ${[...views]
         .map((view, index) => {
-          const alias = `view${index}`
+          const alias = `view_${index}`
           return `  ${JSON.stringify(view)}: ${alias}`
         })
         .join(',\n')}
@@ -47,18 +50,11 @@ async function compileViews(ctx: GenerateContext, cms: CMS) {
       loader: 'ts'
     }
   }
-
-  if (!watch) {
-    await esbuild.build(config)
-    return
-  }
-  const context = await esbuild.context(config)
-  context.watch()
-  return () => context.dispose()
+  return buildEmitter(config)
 }
 
 function buildConfig(ctx: GenerateContext): BuildOptions {
-  const {rootDir, outDir} = ctx
+  const {rootDir} = ctx
   const tsConfigFile = path.join(rootDir, 'tsconfig.json')
   const define = publicDefines(process.env)
   return {
@@ -82,42 +78,48 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
   }
 }
 
-export function compileConfig(ctx: GenerateContext): Emitter<CMS> {
-  const {outDir, watch, configLocation} = ctx
-  const results = createEmitter<CMS>()
+export async function* compileConfig(ctx: GenerateContext) {
+  const {outDir, configLocation, watch} = ctx
   let config = buildConfig(ctx)
-  config = {
+  const location = path
+    .relative(process.cwd(), configLocation)
+    .replace(/\\/g, '/')
+  let views: Emitter<BuildInfo> | undefined
+  const builder = buildEmitter({
     ...config,
     outdir: outDir,
     entryPoints: {config: configLocation},
-    sourcemap: true,
-    plugins: [
-      ...config.plugins!,
-      {
-        name: 'emit',
-        setup(build) {
-          let cancelWatch: (() => Promise<void>) | undefined
-          build.onStart(() => {
-            if (cancelWatch) return cancelWatch()
-          })
-          build.onEnd(async res => {
-            if (res.errors.length) {
-              console.log('> Could not compile Alinea config')
-            } else {
-              const cms = await loadCMS(outDir)
-              cancelWatch = await compileViews(ctx, cms)
-              results.emit(cms)
-              if (!watch) results.return()
-            }
-          })
-        }
+    sourcemap: true
+  })
+  const builds = genEffect(builder, ({value}) => {
+    if (value?.type === 'start') views?.return()
+  })
+  const mayEndBuild = () => {
+    if (watch) return
+    builder.return()
+    views?.return()
+  }
+  for await (const {type, result} of builds) {
+    if (type !== 'done') continue
+    if (result.errors.length) {
+      reportHalt(`Could not compile Alinea config file @ ${location}`)
+      mayEndBuild()
+      continue
+    }
+    try {
+      const cms = await loadCMS(outDir)
+      views = compileViews(ctx, cms)
+      for await (const {type, result} of views) {
+        if (type !== 'done') continue
+        if (result.errors.length)
+          reportHalt(`Could not compile Alinea config file @ ${location}`)
+        else yield cms
+        mayEndBuild()
       }
-    ]
+    } catch (error: any) {
+      const message = 'message' in error ? error.message : error
+      reportHalt(`${message} @ ${location}`)
+      mayEndBuild()
+    }
   }
-  if (watch) {
-    esbuild.context(config).then(context => context.watch())
-  } else {
-    esbuild.build(config)
-  }
-  return results
 }

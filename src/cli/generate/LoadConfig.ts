@@ -13,5 +13,7 @@ export async function loadCMS(outDir: string): Promise<CMS> {
   global.require = createRequire(import.meta.url)
   const exports = await import(outFile)
   if ('cms' in exports && exports.cms instanceof CMS) return exports.cms
-  throw new Error(`No config found in "${genConfigFile}"`)
+  if ('default' in exports)
+    throw new Error(`No export named cms found, did you export it as default?`)
+  throw new Error(`No export named cms found`)
 }

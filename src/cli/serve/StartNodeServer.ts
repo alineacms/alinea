@@ -1,7 +1,7 @@
 import {Request, Response} from '@alinea/iso'
 import {fromNodeRequest, respondTo} from 'alinea/backend/router/NodeHandler'
 import http, {IncomingMessage, ServerResponse} from 'node:http'
-import {Emitter, createEmitter} from '../util/Emitter.js'
+import {createEmitter} from '../util/Emitter.js'
 
 interface RequestEvent {
   request: Request
@@ -11,6 +11,7 @@ interface RequestEvent {
 export interface Server {
   port: number
   serve(abortController?: AbortController): AsyncIterable<RequestEvent>
+  close(): void
 }
 
 export async function startNodeServer(
@@ -27,30 +28,34 @@ export async function startNodeServer(
       }
     })
   }
-  return new Promise((resolve, reject) => {
+  return new Promise<http.Server>((resolve, reject) => {
     const server = http.createServer(serve)
     server.on('error', reject)
     server.on('listening', () => resolve(server))
     server.on('close', () => messages.return())
     server.listen(port)
   })
-    .then(() => ({
-      port,
-      async *serve(abortController?: AbortController) {
-        if (abortController)
-          abortController.signal.addEventListener(
-            'abort',
-            () => messages.cancel(),
-            true
-          )
-        try {
-          yield* messages
-        } catch (e) {
-          if (e === Emitter.CANCELLED) return
-          throw e
+    .then((server: http.Server): Server => {
+      return {
+        port,
+        close() {
+          server.close()
+        },
+        async *serve(abortController?: AbortController) {
+          if (abortController)
+            abortController.signal.addEventListener(
+              'abort',
+              () => messages.return(),
+              true
+            )
+          try {
+            yield* messages
+          } catch (e) {
+            throw e
+          }
         }
       }
-    }))
+    })
     .catch(err => {
       if (attempt > 10) throw err
       const incrementedPort = port + 1
