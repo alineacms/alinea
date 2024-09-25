@@ -79,7 +79,7 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
 }
 
 export async function* compileConfig(ctx: GenerateContext) {
-  const {outDir, configLocation, watch} = ctx
+  const {outDir, configLocation, cmd} = ctx
   let config = buildConfig(ctx)
   const location = path
     .relative(process.cwd(), configLocation)
@@ -94,16 +94,16 @@ export async function* compileConfig(ctx: GenerateContext) {
   const builds = genEffect(builder, ({value}) => {
     if (value?.type === 'start') views?.return()
   })
-  const mayEndBuild = () => {
-    if (watch) return
+  const halt = (message: string) => {
+    reportHalt(message)
+    if (cmd === 'dev') return
     builder.return()
     views?.return()
   }
   for await (const {type, result} of builds) {
     if (type !== 'done') continue
     if (result.errors.length) {
-      reportHalt(`Could not compile Alinea config file @ ${location}`)
-      mayEndBuild()
+      halt(`Could not compile Alinea config file @ ${location}`)
       continue
     }
     try {
@@ -112,14 +112,12 @@ export async function* compileConfig(ctx: GenerateContext) {
       for await (const {type, result} of views) {
         if (type !== 'done') continue
         if (result.errors.length)
-          reportHalt(`Could not compile Alinea config file @ ${location}`)
+          halt(`Could not compile Alinea config file @ ${location}`)
         else yield cms
-        mayEndBuild()
       }
     } catch (error: any) {
       const message = 'message' in error ? error.message : error
-      reportHalt(`${message} @ ${location}`)
-      mayEndBuild()
+      halt(`${message} @ ${location}`)
     }
   }
 }

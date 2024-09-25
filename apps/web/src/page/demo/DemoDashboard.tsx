@@ -10,6 +10,7 @@ import {EntryPhase} from 'alinea/core/EntryRow'
 import {localUser} from 'alinea/core/User'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
+import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {use, useDeferredValue, useMemo} from 'react'
 import {DemoHomePage} from './DemoHomePage'
@@ -48,7 +49,7 @@ function PreviewHome({entry}) {
       return graph.preferDraft
         .previewEntry({...update, phase: EntryPhase.Draft})
         .get(DemoHomePage.fragment)
-    }, [update.rowHash])
+    }, [graph.preferDraft, update])
   )
   return <DemoHomePage {...props} />
 }
@@ -61,7 +62,7 @@ function PreviewRecipe({entry}) {
       return graph.preferDraft
         .previewEntry({...update, phase: EntryPhase.Draft})
         .get(DemoRecipePage.fragment.wherePath(update.path))
-    }, [update.rowHash])
+    }, [graph.preferDraft, update])
   )
   return <DemoRecipePage {...props} />
 }
@@ -76,7 +77,8 @@ async function setup(entries: Array<Entry>) {
   const handler = createHandler(cms, backend)
   const client = handler.connect({
     apiKey: 'dev',
-    user: localUser
+    user: localUser,
+    handlerUrl: new URL(location.href)
   })
   return {cms, client}
 }
@@ -87,5 +89,5 @@ export interface DemoProps {
 
 export default function Demo({entries}: DemoProps) {
   const {cms, client} = use(useMemo(() => setup(entries), [entries]))
-  return <App dev config={cms.config} client={client} />
+  return <App dev config={cms.config} client={client} views={defaultViews} />
 }

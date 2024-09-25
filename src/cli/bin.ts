@@ -63,7 +63,7 @@ prog
     ensureEnv(args.dir)
     process.env.NODE_ENV = 'production'
     const {serve} = await import('./Serve.js')
-    const result = serve({
+    return serve({
       ...args,
       alineaDev: args.dev,
       cwd: args.dir,
@@ -75,9 +75,6 @@ prog
       configFile: args.config,
       cmd: 'build'
     })
-    await result
-    console.log('ok')
-    return result
   })
 
 prog.parse(process.argv)
