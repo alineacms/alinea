@@ -20,7 +20,7 @@ import {ServeContext} from './serve/ServeContext.js'
 import {startNodeServer} from './serve/StartNodeServer.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
-import {reportHalt} from './util/Report.js'
+import {bold, cyan, gray, reportHalt} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -36,15 +36,6 @@ export type ServeOptions = {
   production?: boolean
   onAfterGenerate?: (env?: Record<string, string>) => void
 }
-
-const ansiSupported = process.stdout.isTTY || process.env.FORCE_COLOR
-const ansi =
-  (start: string | number, end: string | number = 39) =>
-  (input: string) =>
-    ansiSupported ? `\x1b[${start}m${input}\x1b[${end}m` : input
-const gray = ansi(90)
-const cyan = ansi(36)
-const bold = ansi(1, 0)
 
 export async function serve(options: ServeOptions): Promise<void> {
   const {
