@@ -2,11 +2,11 @@ import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
+import {resolveView} from 'alinea/core/View'
 import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {ErrorMessage} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {VStack} from 'alinea/ui/Stack'
-import {ComponentType} from 'react'
 import {FormAtoms, FormProvider} from '../atoms/FormAtoms.js'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {ErrorBoundary} from '../view/ErrorBoundary.js'
@@ -22,7 +22,7 @@ export function InputForm(props: InputFormProps) {
     <VStack gap={20}>
       {Type.sections(type).map((section, i) => {
         const view = Section.view(section)
-        const View = view ? views[view] : undefined
+        const View = view ? resolveView(views, view) : undefined
         if (View) return <View section={section} key={i} />
         return (
           <div key={i} style={{display: 'contents'}}>
@@ -67,7 +67,7 @@ export function InputField<V, M>({field}: InputFieldProps<V, M>) {
   const {views} = useDashboard()
   const view = Field.view(field)
   const options = useFieldOptions(field)
-  const View: ComponentType<any> = views[view]
+  const View = resolveView(views, view)
   if (!View) return <MissingView field={field} />
   if (options.hidden) return null
   return (

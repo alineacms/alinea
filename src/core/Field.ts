@@ -1,7 +1,7 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import {Expr} from 'alinea/core/pages/Expr'
-import type {ComponentType} from 'react'
 import {Shape} from './Shape.js'
+import {View} from './View.js'
 
 export interface FieldOptions<StoredValue> {
   /** A description of the field */
@@ -32,7 +32,9 @@ export interface FieldMeta<
   Options extends FieldOptions<StoredValue>
 > {
   options: Options
-  view: string
+  view: View<{
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  }>
   postProcess?: (value: StoredValue, loader: LinkResolver) => Promise<void>
 }
 
@@ -45,15 +47,6 @@ export interface FieldData<
   shape: Shape<StoredValue, Mutator>
   referencedViews: Array<string>
 }
-
-export type FieldView<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
-> = ComponentType<{
-  field: Field<StoredValue, QueryValue, Mutator, Options>
-}>
 
 export interface Field<
   StoredValue,
@@ -97,12 +90,24 @@ export namespace Field {
     return field[Field.Data].options.label
   }
 
-  export function view(field: Field): string {
+  export function view<
+    StoredValue,
+    QueryValue,
+    Mutator,
+    Options extends FieldOptions<StoredValue>
+  >(
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  ): View<{
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  }> {
     return field[Field.Data].view
   }
 
-  export function views(field: Field): Array<string> {
-    return [view(field), ...field[Field.Data].referencedViews]
+  export function referencedViews(field: Field): Array<string> {
+    const fieldView = Field.view(field)
+    if (typeof fieldView === 'string')
+      return [fieldView, ...field[Field.Data].referencedViews]
+    return field[Field.Data].referencedViews
   }
 
   export function options<

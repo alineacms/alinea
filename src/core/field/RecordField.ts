@@ -14,7 +14,7 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
   ) {
     super({
       shape: Type.shape(type) as any,
-      referencedViews: Type.views(type),
+      referencedViews: Type.referencedViews(type),
       ...meta
     })
   }

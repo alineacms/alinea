@@ -1,6 +1,7 @@
 import {SummaryProps} from 'alinea/core/media/Summary'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
+import {resolveView} from 'alinea/core/View'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Icon, fromModule} from 'alinea/ui'
@@ -39,7 +40,7 @@ export function ExplorerItem({
   )
   const type = schema[entry.type]
   const typeView = type && Type.meta(type)[summaryView]
-  const View: any = typeView ? views[typeView] : defaultView
+  const View: any = typeView ? resolveView(views, typeView) : defaultView
   const isSelectable =
     explorer.selectable === true ||
     (Array.isArray(explorer.selectable) &&

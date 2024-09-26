@@ -1,8 +1,10 @@
+import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
 import {Field} from './Field.js'
 import {Label} from './Label.js'
+import {SummaryProps} from './media/Summary.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Cursor} from './pages/Cursor.js'
 import {Expr, createExprData} from './pages/Expr.js'
@@ -26,6 +28,7 @@ import {
   values
 } from './util/Objects.js'
 import {Expand} from './util/Types.js'
+import {View} from './View.js'
 
 export interface EntryUrlMeta {
   phase: EntryPhase
@@ -49,12 +52,12 @@ export interface TypeMeta {
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 
-  /** Point to a React component used to view an entry of this type in the dashboard */
-  view?: string
-  /** Point to a React component used to view a row of this type in the dashboard */
-  summaryRow?: string
-  /** Point to a React component used to view a thumbnail of this type in the dashboard */
-  summaryThumb?: string
+  /** A React component used to view an entry of this type in the dashboard */
+  view?: View<EntryEditProps & {type: Type}>
+  /** A React component used to view a row of this type in the dashboard */
+  summaryRow?: View<SummaryProps>
+  /** A React component used to view a thumbnail of this type in the dashboard */
+  summaryThumb?: View<SummaryProps>
 
   /** Create indexes on fields of this type */
   // index?: (this: Fields) => Record<string, Array<Expr<any>>>
@@ -175,22 +178,22 @@ export namespace Type {
     }
   }
 
-  export function views(type: Type): Array<string> {
+  export function referencedViews(type: Type): Array<string> {
     const {view, summaryRow, summaryThumb} = meta(type)
     return [
       view,
       summaryRow,
       summaryThumb,
       ...viewsOfDefinition(type[Type.Data].definition)
-    ].filter(Boolean) as Array<string>
+    ].filter(v => typeof v === 'string')
   }
 }
 
 function viewsOfDefinition(definition: TypeDefinition): Array<string> {
   return values(definition).flatMap(value => {
-    if (Field.isField(value)) return Field.views(value)
+    if (Field.isField(value)) return Field.referencedViews(value)
     if (Section.isSection(value))
-      return Section.views(value).concat(
+      return Section.referencedViews(value).concat(
         viewsOfDefinition(Section.fields(value))
       )
     return []

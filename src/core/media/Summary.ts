@@ -30,4 +30,29 @@ export function summarySelection(schema: Schema) {
   } satisfies Projection
 }
 
-export type SummaryProps = Projection.Infer<ReturnType<typeof summarySelection>>
+// To avoid circular warnings these are typed out instead of using the ReturnType
+export type SummaryProps = {
+  entryId: string
+  i18nId: string
+  type: string
+  workspace: string
+  root: string
+  title: string
+  extension: string
+  size: number
+  preview: string
+  thumbHash: string
+  averageColor: string
+  focus: {
+    x: number
+    y: number
+  }
+  width: number
+  height: number
+  parents: Array<{
+    entryId: string
+    i18nId: string
+    title: string
+  }>
+  childrenAmount: number
+}

@@ -2,6 +2,7 @@ import {ComponentType} from 'react'
 import {Field} from './Field.js'
 import {assign, create, defineProperty, entries} from './util/Objects.js'
 import {rowId} from './util/RowId.js'
+import {View} from './View.js'
 
 export interface SectionDefinition {
   [key: string]: Field<any, any> | Section
@@ -11,7 +12,7 @@ export interface SectionData {
   definition: SectionDefinition
   fields: Record<string, Field>
   sections: Array<Section>
-  view?: string
+  view?: View<{section: Section}>
 }
 
 export interface SectionI extends Record<string, Field> {}
@@ -29,13 +30,15 @@ export type SectionView<Fields> = ComponentType<{
 export namespace Section {
   export const Data = Symbol.for('@alinea/Section.Data')
 
-  export function view(section: Section): string | undefined {
+  export function view(section: Section): View<{section: Section}> | undefined {
     return section[Section.Data].view
   }
 
-  export function views(section: Section): Array<string> {
+  export function referencedViews(section: Section): Array<string> {
     const {view, sections} = section[Section.Data]
-    return [view, ...sections.flatMap(views)].filter(Boolean) as Array<string>
+    return [view, ...sections.flatMap(referencedViews)].filter(
+      v => typeof v === 'string'
+    )
   }
 
   export function definition(section: Section) {

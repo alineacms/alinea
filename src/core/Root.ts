@@ -6,6 +6,7 @@ import {Meta, StripMeta} from './Meta.js'
 import {PageSeed} from './Page.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
+import {View} from './View.js'
 
 export interface RootI18n {
   locales: Array<string>
@@ -16,7 +17,7 @@ export interface RootMeta {
   icon?: ComponentType
   i18n?: RootI18n
   /** Point to a React component used to view this root in the dashboard */
-  view?: string
+  view?: View<{root: RootData}>
   isMediaRoot?: boolean
   preview?: Preview
 }
@@ -106,9 +107,9 @@ export namespace Root {
     }
   }
 
-  export function views(root: Root): Array<string> {
+  export function referencedViews(root: Root): Array<string> {
     const {view} = data(root)
-    return view ? [view] : []
+    return typeof view === 'string' ? [view] : []
   }
 }
 
