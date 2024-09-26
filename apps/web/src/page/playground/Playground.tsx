@@ -34,7 +34,7 @@ import lzstring from 'lz-string'
 import Link from 'next/link'
 import Script from 'next/script'
 import * as React from 'react'
-import {Suspense, useCallback, useEffect, useRef, useState} from 'react'
+import {Suspense, useEffect, useRef, useState} from 'react'
 import type typescript from 'typescript'
 import {useClipboard} from 'use-clipboard-copy'
 import css from './Playground.module.scss'
@@ -163,40 +163,37 @@ export default function Playground() {
   const clipboard = useClipboard({
     copiedTimeout: 1200
   })
-  const compile = useCallback(
-    async function compile(code: string) {
-      try {
-        const {transpileModule, JsxEmit, ScriptTarget, ModuleKind} = await ts
-        const body = transpileModule(code, {
-          compilerOptions: {
-            jsx: JsxEmit.React,
-            target: ScriptTarget.ES2022,
-            module: ModuleKind.CommonJS
-          }
-        })
-        const exec = new Function(
-          'require',
-          'exports',
-          'React',
-          'alinea',
-          body.outputText
-        )
-        const exports = Object.create(null)
-        const pkgs = {
-          alinea,
-          React,
-          'alinea/core': core,
-          'alinea/dashboard': dashboard
+  async function compile(code: string) {
+    try {
+      const {transpileModule, JsxEmit, ScriptTarget, ModuleKind} = await ts
+      const body = transpileModule(code, {
+        compilerOptions: {
+          jsx: JsxEmit.React,
+          target: ScriptTarget.ES2022,
+          module: ModuleKind.CommonJS
         }
-        const require = (name: string) => pkgs[name]
-        exec(require, exports, React, alinea)
-        setState({result: exports.default})
-      } catch (error) {
-        setState({...state, error})
+      })
+      const exec = new Function(
+        'require',
+        'exports',
+        'React',
+        'alinea',
+        body.outputText
+      )
+      const exports = Object.create(null)
+      const pkgs = {
+        alinea,
+        React,
+        'alinea/core': core,
+        'alinea/dashboard': dashboard
       }
-    },
-    [state]
-  )
+      const require = (name: string) => pkgs[name]
+      exec(require, exports, React, alinea)
+      setState({result: exports.default})
+    } catch (error) {
+      setState({...state, error})
+    }
+  }
   function handleShare() {
     window.location.hash =
       '#code/' + lzstring.compressToEncodedURIComponent(code)
@@ -208,8 +205,9 @@ export default function Playground() {
   }
   useEffect(() => {
     compile(code)
-  }, [code, compile])
+  }, [code])
   const client = React.use(connection)
+  if (state.error) console.error(state.error)
   return (
     <DashboardProvider
       dev

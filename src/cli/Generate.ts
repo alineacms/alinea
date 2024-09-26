@@ -90,6 +90,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     : path.join(alineaPackageDir, 'node_modules')
 
   const context: GenerateContext = {
+    cmd,
     wasmCache,
     rootDir: rootDir,
     staticDir,
@@ -97,8 +98,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configDir,
     configLocation,
     fix: options.fix || false,
-    outDir: path.join(nodeModules, '@alinea/generated'),
-    watch: cmd === 'dev' || false
+    outDir: path.join(nodeModules, '@alinea/generated')
   }
   await copyStaticFiles(context)
   let indexing: Emitter<Database>

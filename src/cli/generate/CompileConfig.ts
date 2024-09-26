@@ -15,7 +15,7 @@ import {GenerateContext} from './GenerateContext.js'
 import {loadCMS} from './LoadConfig.js'
 
 function compileViews(ctx: GenerateContext, cms: CMS) {
-  const {rootDir, outDir, configLocation, watch} = ctx
+  const {rootDir, outDir, configLocation} = ctx
   const views = new Set(
     Config.views(cms.config).filter(Boolean) as Array<string>
   )
