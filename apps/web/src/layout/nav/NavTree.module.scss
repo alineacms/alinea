@@ -1,17 +1,6 @@
 .root {
   position: relative;
-  display: none;
   color: var(--web-foreground-faded);
-
-  &.is-open {
-    display: block;
-  }
-
-  &:not(.is-level-0) {
-    padding-left: 10px;
-    margin-left: 18px;
-    border-left: 1px solid var(--web-outline);
-  }
 
   &-sub {
     width: 100%;
@@ -30,11 +19,13 @@
 
   &-link {
     position: relative;
-    display: block;
+    display: flex;
+    align-items: center;
     font-size: 13.5px;
     color: inherit;
     text-decoration: none;
-    padding: 7.5px 10px;
+    padding: 0 10px;
+    height: 30px;
     margin: 1px;
     cursor: pointer;
     border-radius: 8px;
@@ -46,6 +37,11 @@
 
     &:hover {
       background: var(--web-highlight);
+    }
+
+    &.is-category {
+      margin-top: 16px;
+      font-weight: 600;
     }
 
     &.is-active {

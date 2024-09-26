@@ -1,11 +1,9 @@
 'use client'
 
 import {fromModule, HStack} from 'alinea/ui'
-import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
-import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import Link from 'next/link'
 import {useParams, usePathname} from 'next/navigation'
-import {ComponentProps, useEffect, useMemo, useState} from 'react'
+import {ComponentProps, useMemo} from 'react'
 import {getFramework} from './Frameworks'
 import css from './NavTree.module.scss'
 import {Nav, NavItem, nestNav} from './NestNav'
@@ -37,16 +35,9 @@ interface NavTreeItemProps {
 function NavTreeItem({level, page}: NavTreeItemProps) {
   const pathname = usePathname()
   const framework = getFramework(useParams().framework as string)
-  const [showChildren, setShowChildren] = useState<boolean | undefined>(
-    undefined
-  )
   const url = page.url && framework.link(page.url)
-  const isOpen = Boolean(showChildren ?? (url && pathname.startsWith(url)))
   const isContainer = page.children && page.children.length > 0
   const isActive = pathname === url
-  useEffect(() => {
-    setShowChildren(undefined)
-  }, [pathname])
   return (
     <>
       {isContainer ? (
@@ -56,24 +47,14 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
               center
               gap={8}
               className={styles.root.link({
-                selected: isOpen,
                 category: true,
                 active: isActive
               })}
             >
-              {isOpen ? (
-                <IcRoundKeyboardArrowDown className={styles.root.link.icon()} />
-              ) : (
-                <IcRoundKeyboardArrowRight
-                  className={styles.root.link.icon()}
-                />
-              )}
               <span>{page.label || page.title}</span>
             </HStack>
           </MaybeLink>
-          {page.children && (
-            <NavTree nav={page.children} level={level + 1} open={isOpen} />
-          )}
+          {page.children && <NavTree nav={page.children} level={level + 1} />}
         </div>
       ) : (
         <div>

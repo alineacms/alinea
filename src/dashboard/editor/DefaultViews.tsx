@@ -21,7 +21,7 @@ import {TimeInput} from 'alinea/field/time/TimeField.view'
 export const defaultViews = {
   'alinea/field/check/CheckField.view#CheckInput': CheckInput,
   'alinea/field/code/CodeField.view#CodeInput': CodeInput,
-  'alinea/field/text/DateField.view#DateInput': DateInput,
+  'alinea/field/date/DateField.view#DateInput': DateInput,
   'alinea/field/text/HiddenField.view#HiddenInput': HiddenInput,
   'alinea/field/text/JsonField.view#JsonInput': JsonInput,
   'alinea/field/link/LinkField.view#SingleLinkInput': SingleLinkInput,
