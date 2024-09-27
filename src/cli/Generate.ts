@@ -102,7 +102,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   }
   await copyStaticFiles(context)
   let indexing: Emitter<Database>
-  const builds = genEffect(compileConfig(context), () => indexing?.return())
+  const builder = compileConfig(context)
+  const builds = genEffect(builder, () => indexing?.return())
   let afterGenerateCalled = false
 
   function writeStore(data: Uint8Array) {
@@ -110,36 +111,32 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   }
   const [store, storeData] = await createDb()
   for await (const cms of builds) {
-    try {
-      const write = async () => {
-        const [adminFile, dbSize] = await Promise.all([
-          generatePackage(context, cms.config),
-          writeStore(storeData())
-        ])
-        let message = `${cmd} ${location} in `
-        const duration = performance.now() - now
-        if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
-        else message += `${duration.toFixed(0)}ms`
-        message += ` (db ${prettyBytes(dbSize)})`
-        return message
+    const write = async () => {
+      const [adminFile, dbSize] = await Promise.all([
+        generatePackage(context, cms.config),
+        writeStore(storeData())
+      ])
+      let message = `${cmd} ${location} in `
+      const duration = performance.now() - now
+      if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
+      else message += `${duration.toFixed(0)}ms`
+      message += ` (db ${prettyBytes(dbSize)})`
+      return message
+    }
+    const fileData = new LocalData({
+      config: cms.config,
+      fs: fs.promises,
+      rootDir,
+      dashboardUrl: await options.dashboardUrl
+    })
+    indexing = fillCache(context, fileData, store, cms.config)
+    for await (const db of indexing) {
+      yield {cms, db, localData: fileData}
+      if (onAfterGenerate && !afterGenerateCalled) {
+        const message = await write()
+        afterGenerateCalled = true
+        onAfterGenerate(message)
       }
-      const fileData = new LocalData({
-        config: cms.config,
-        fs: fs.promises,
-        rootDir,
-        dashboardUrl: await options.dashboardUrl
-      })
-      indexing = fillCache(context, fileData, store, cms.config)
-      for await (const db of indexing) {
-        yield {cms, db, localData: fileData}
-        if (onAfterGenerate && !afterGenerateCalled) {
-          const message = await write()
-          afterGenerateCalled = true
-          onAfterGenerate(message)
-        }
-      }
-    } catch (e: any) {
-      console.error(e)
     }
   }
 }

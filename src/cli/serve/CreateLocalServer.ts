@@ -1,14 +1,16 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {HandlerWithConnect} from 'alinea/backend/Handler'
-import {HttpRouter, router} from 'alinea/backend/router/Router'
+import {router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/CloudConfig'
 import {Trigger, trigger} from 'alinea/core/Trigger'
 import {User} from 'alinea/core/User'
-import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
+import {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
 import {Readable} from 'node:stream'
+import {buildEmitter} from '../build/BuildEmitter.js'
 import {publicDefines} from '../util/PublicDefines.js'
+import {reportHalt} from '../util/Report.js'
 import {ServeContext} from './ServeContext.js'
 
 type BuildDetails = Map<string, OutputFile>
@@ -69,7 +71,10 @@ export function createLocalServer(
   }: ServeContext,
   handleApi: HandlerWithConnect,
   user: User
-): HttpRouter {
+): {
+  close(): void
+  handle(input: Request): Promise<Response>
+} {
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
   const entryPoints = {
@@ -81,8 +86,8 @@ export function createLocalServer(
   const tsconfig = fs.existsSync(tsconfigLocation)
     ? tsconfigLocation
     : undefined
-  let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
-    initial = true
+  let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>()
+  let initial = true
   const config = {
     format: 'esm',
     target: 'esnext',
@@ -114,24 +119,23 @@ export function createLocalServer(
     external: ['node:async_hooks']
   } satisfies BuildOptions
 
-  config.plugins.push({
-    name: 'files',
-    setup(build) {
-      build.onStart(() => {
+  const builder = buildEmitter(config)
+
+  ;(async () => {
+    for await (const {type, result} of builder) {
+      if (type === 'start') {
         if (initial) initial = false
         else currentBuild = trigger<BuildDetails>()
-      })
-      build.onEnd(result => {
+      } else {
         if (result.errors.length) {
-          console.info('> building alinea dashboard failed')
+          reportHalt('Building alinea dashboard failed')
+        } else {
+          currentBuild.resolve(buildFiles(devDir, result))
+          if (alineaDev) liveReload.reload('reload')
         }
-        currentBuild.resolve(buildFiles(devDir, result))
-        if (alineaDev) liveReload.reload('reload')
-      })
+      }
     }
-  })
-
-  esbuild.context(config).then(ctx => ctx.watch())
+  })()
 
   async function serveBrowserBuild(
     request: Request
@@ -212,7 +216,13 @@ export function createLocalServer(
     )
   ).notFound(() => new Response('Not found', {status: 404}))
 
-  return async (request: Request) => {
-    return (await httpRouter.handle(request))!
+  return {
+    close() {
+      console.log('close builds')
+      builder.return()
+    },
+    async handle(request: Request) {
+      return (await httpRouter.handle(request))!
+    }
   }
 }

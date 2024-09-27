@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
+import {reportHalt} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -40,7 +41,7 @@ export async function init(options: InitOptions) {
   const {cwd = process.cwd(), quiet = false} = options
   const configLocation = findConfigFile(cwd)
   if (configLocation) {
-    console.warn(`> An alinea config file already exists in ${cwd}`)
+    reportHalt(`An alinea config file already exists in ${cwd}`)
     process.exit(1)
   }
   await fs.mkdir(path.join(cwd, 'content/pages'), {recursive: true})

@@ -13,7 +13,7 @@ export async function* toGenerator<T>(
 
 export function genEffect<T, TReturn>(
   gen: AsyncIterable<T, TReturn>,
-  effect: (result: IteratorResult<T, TReturn>) => void
+  effect: (result: T) => void
 ): AsyncIterable<T> {
   return {
     [Symbol.asyncIterator]() {
@@ -22,8 +22,10 @@ export function genEffect<T, TReturn>(
       const dispense = () => {
         stack.push(
           iter.next().then(res => {
-            effect(res)
-            if (!res.done) dispense()
+            if (!res.done) {
+              effect(res.value)
+              dispense()
+            }
             return res
           })
         )

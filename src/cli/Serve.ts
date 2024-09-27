@@ -1,6 +1,5 @@
 import {Backend} from 'alinea/backend/Backend'
 import {createHandler} from 'alinea/backend/Handler'
-import {HttpRouter} from 'alinea/backend/router/Router'
 import {gitUser} from 'alinea/backend/util/ExecGit'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {cloudDebug} from 'alinea/cloud/CloudDebug'
@@ -81,34 +80,38 @@ export async function serve(options: ServeOptions): Promise<void> {
   const drafts = new MemoryDrafts()
   let currentCMS: CMS | undefined
   let serveController = new AbortController()
-  let handleRequest!: HttpRouter
-
-  const generateFiles = genEffect(
-    generate({
-      ...options,
-      dashboardUrl,
-      watch: cmd === 'dev',
-      onAfterGenerate(msg) {
-        dashboardUrl.then(url => {
-          const version = gray(pkg.version)
-          const header = `  ${cyan(bold('ɑ'))} Alinea ${version}\n`
-          const connector = gray(cmd === 'dev' ? '├' : '╰')
-          const details = `  ${connector} ${gray(msg)}\n`
-          const footer =
-            cmd === 'dev' ? `  ${gray('╰')} Local CMS:    ${url}\n\n` : '\n'
-          process.stdout.write(header + details + footer)
-          options.onAfterGenerate?.({
-            ALINEA_BASE_URL: base ?? '',
-            ALINEA_DEV_SERVER: url
-          })
-        })
+  let localServer:
+    | {
+        close(): void
+        handle(input: Request): Promise<Response>
       }
-    }),
-    () => {
-      serveController.abort()
-      serveController = new AbortController()
+    | undefined
+
+  const fileEmitter = generate({
+    ...options,
+    dashboardUrl,
+    watch: cmd === 'dev',
+    onAfterGenerate(msg) {
+      dashboardUrl.then(url => {
+        const version = gray(pkg.version)
+        const header = `  ${cyan(bold('ɑ'))} Alinea ${version}\n`
+        const connector = gray(cmd === 'dev' ? '├' : '╰')
+        const details = `  ${connector} ${gray(msg)}\n`
+        const footer =
+          cmd === 'dev' ? `  ${gray('╰')} Local CMS:    ${url}\n\n` : '\n'
+        process.stdout.write(header + details + footer)
+        options.onAfterGenerate?.({
+          ALINEA_BASE_URL: base ?? '',
+          ALINEA_DEV_SERVER: url
+        })
+      })
     }
-  )
+  })
+
+  const generateFiles = genEffect(fileEmitter, () => {
+    serveController.abort()
+    serveController = new AbortController()
+  })
 
   const user = await gitUser(rootDir)
 
@@ -119,7 +122,8 @@ export async function serve(options: ServeOptions): Promise<void> {
       const history = new GitHistory(cms.config, rootDir)
       const backend = createBackend()
       const handleApi = createHandler(cms, backend, Promise.resolve(db))
-      handleRequest = createLocalServer(context, handleApi, user)
+      if (localServer) localServer.close()
+      localServer = createLocalServer(context, handleApi, user)
       currentCMS = cms
       context.liveReload.reload('refresh')
 
@@ -139,7 +143,7 @@ export async function serve(options: ServeOptions): Promise<void> {
 
     const {serve} = await server
     for await (const {request, respondWith} of serve(serveController)) {
-      handleRequest(request).then(respondWith)
+      localServer!.handle(request).then(respondWith)
     }
   }
 

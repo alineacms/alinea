@@ -3,7 +3,7 @@ import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
 import {publicDefines} from 'alinea/cli/util/PublicDefines'
 import {createId} from 'alinea/core/Id'
 import {code} from 'alinea/core/util/CodeGen'
-import {build} from 'esbuild'
+import esbuild from 'esbuild'
 import escapeHtml from 'escape-html'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -28,7 +28,7 @@ export async function generateDashboard(
   const tsconfig = fs.existsSync(tsconfigLocation)
     ? tsconfigLocation
     : undefined
-  await build({
+  await esbuild.build({
     format: 'esm',
     target: 'esnext',
     treeShaking: true,

@@ -91,8 +91,8 @@ export async function* compileConfig(ctx: GenerateContext) {
     entryPoints: {config: configLocation},
     sourcemap: true
   })
-  const builds = genEffect(builder, ({value}) => {
-    if (value?.type === 'start') views?.return()
+  const builds = genEffect(builder, ({type}) => {
+    if (type === 'start') views?.return()
   })
   const halt = (message: string) => {
     reportHalt(message)
