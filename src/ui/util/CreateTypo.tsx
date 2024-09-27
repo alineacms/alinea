@@ -1,3 +1,4 @@
+import {GenericStyles, Styler, styler} from '@alinea/styler'
 import {
   ComponentType,
   forwardRef,
@@ -6,11 +7,9 @@ import {
   Ref
 } from 'react'
 import {forwardRefWithAs, PropsWithAs} from './PropsWithAs.js'
-import {GenericStyles, Styler} from './Styler.js'
 
 type TypoStyles =
   | {
-      root: Styler
       link: Styler
       small: Styler
       h1: Styler
@@ -22,7 +21,7 @@ type TypoStyles =
       hyphenate: Styler
       monospace: Styler
     }
-  | GenericStyles
+  | Record<string, GenericStyles>
 
 interface Overrides {
   a?: ComponentType<any>
@@ -45,11 +44,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
   }: PropsWithChildren<{
     align?: 'left' | 'right' | 'center'
   }>) {
-    return (
-      <div style={{textAlign: align}} className={styles.root()}>
-        {children}
-      </div>
-    )
+    return <div style={{textAlign: align}}>{children}</div>
   }
 
   function H1Component(
@@ -61,7 +56,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
       <Type
         ref={ref}
         {...rest}
-        className={styles.h1.mergeProps(rest)({flat, light})}
+        className={styles.h1(styler.merge(rest), {flat, light})}
       />
     )
   }
@@ -75,7 +70,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
       <Type
         ref={ref}
         {...rest}
-        className={styles.h2.mergeProps(rest)({flat, light})}
+        className={styles.h2(styler.merge(rest), {flat, light})}
       />
     )
   }
@@ -89,7 +84,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
       <Type
         ref={ref}
         {...rest}
-        className={styles.h3.mergeProps(rest)({flat, light})}
+        className={styles.h3(styler.merge(rest), {flat, light})}
       />
     )
   }
@@ -103,7 +98,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
       <Type
         ref={ref}
         {...rest}
-        className={styles.h4.mergeProps(rest)({flat, light})}
+        className={styles.h4(styler.merge(rest), {flat, light})}
       />
     )
   }
@@ -117,7 +112,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
       <Type
         ref={ref}
         {...rest}
-        className={styles.h5.mergeProps(rest)({flat, light})}
+        className={styles.h5(styler.merge(rest), {flat, light})}
       />
     )
   }
@@ -131,7 +126,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
       <Type
         ref={ref}
         {...rest}
-        className={styles.p.mergeProps(rest)({flat, light})}
+        className={styles.p(styler.merge(rest), {flat, light})}
       />
     )
   }
@@ -142,7 +137,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
   ) {
     const Tag = overrides.a ?? 'a'
     return (
-      <Tag {...props} ref={ref} className={styles.link.mergeProps(props)()} />
+      <Tag {...props} ref={ref} className={styles.link(styler.merge(props))} />
     )
   })
 
@@ -155,7 +150,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
       <Type
         {...props}
         ref={ref}
-        className={styles.monospace.mergeProps(props)()}
+        className={styles.monospace(styler.merge(rest))}
       />
     )
   }
@@ -166,7 +161,7 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
   ) {
     const {as: Type = overrides.small ?? 'small', ...rest} = props
     return (
-      <Type {...props} className={styles.small.mergeProps(props)()} ref={ref} />
+      <Type {...props} className={styles.small(styler.merge(rest))} ref={ref} />
     )
   }
 

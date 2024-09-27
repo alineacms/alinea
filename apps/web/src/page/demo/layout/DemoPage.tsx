@@ -1,8 +1,8 @@
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
 import {PropsWithChildren} from 'react'
 import css from './DemoPage.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function DemoPage({children}: PropsWithChildren<{}>) {
   return <main className={styles.root()}>{children}</main>

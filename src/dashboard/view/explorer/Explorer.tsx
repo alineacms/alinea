@@ -1,9 +1,10 @@
+import styler from '@alinea/styler'
 import useSize from '@react-hook/size'
 import {Reference} from 'alinea/core/Reference'
 import {summarySelection} from 'alinea/core/media/Summary'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Cursor} from 'alinea/core/pages/Cursor'
-import {Loader, fromModule} from 'alinea/ui'
+import {Loader} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
@@ -15,7 +16,7 @@ import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
 import css from './Explorer.module.scss'
 import {ExplorerRow} from './ExplorerRow.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const defaultSummaryView = {
   summaryRow: EntrySummaryRow,

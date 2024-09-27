@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {createId} from 'alinea/core/Id'
@@ -27,7 +28,7 @@ import {select} from 'alinea/field/select'
 import {text} from 'alinea/field/text'
 import {entryPicker} from 'alinea/picker/entry/EntryPicker'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {Button, Loader, fromModule} from 'alinea/ui'
+import {Button, Loader} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {FormEvent, Suspense, useEffect, useMemo, useState} from 'react'
@@ -40,7 +41,7 @@ import {useRoot} from '../../hook/UseRoot.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import css from './NewEntry.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const parentData = {
   id: Entry.entryId,

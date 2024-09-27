@@ -1,12 +1,13 @@
-import {fromModule, Typo, VStack} from 'alinea/ui'
+import {Typo, VStack} from 'alinea/ui'
 //import {useClipboard} from 'use-clipboard-copy'
 //import MdiContentCopy from '../../icons/MdiContentCopy'
 import {CodeBlock} from '@/schema/blocks/CodeBlock'
+import styler from '@alinea/styler'
 import {Infer} from 'alinea'
 import {codeHighlighter} from './code/CodeHighlighter'
 import css from './CodeBlockView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export async function CodeBlockView({
   code,

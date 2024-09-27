@@ -1,9 +1,10 @@
+import styler from '@alinea/styler'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {TabsSection} from 'alinea/field/tabs/Tabs'
 import {TabsHeader} from 'alinea/field/tabs/Tabs.view'
-import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
+import {Button, HStack, Stack, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {Tabs} from 'alinea/ui/Tabs'
@@ -36,7 +37,7 @@ import {EntryTitle} from './entry/EntryTitle.js'
 import {FieldToolbar} from './entry/FieldToolbar.js'
 import {BrowserPreviewMetaProvider} from './preview/BrowserPreview.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 function ShowChanges({editor}: EntryEditProps) {
   const draftEntry = useAtomValue(editor.draftEntry)

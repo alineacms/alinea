@@ -1,5 +1,6 @@
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
-import {Button, HStack, Stack, Typo, VStack, fromModule, px} from 'alinea/ui'
+import {Button, HStack, Stack, Typo, VStack, px} from 'alinea/ui'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {useAtomValue} from 'jotai'
 import {useQuery} from 'react-query'
@@ -11,7 +12,7 @@ import {EntryEdit} from '../view/EntryEdit.js'
 import {Sidebar} from '../view/Sidebar.js'
 import css from './DraftsOverview.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface DraftsOverviewProps {
   editor?: EntryEditor

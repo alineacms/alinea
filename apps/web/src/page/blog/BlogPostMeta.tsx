@@ -1,8 +1,9 @@
+import styler from '@alinea/styler'
 import {UrlReference} from 'alinea'
-import {HStack, fromModule} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
 import css from './BlogPostMeta.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface BlogPostMetaProps {
   publishDate: string

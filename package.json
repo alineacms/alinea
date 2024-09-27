@@ -63,6 +63,7 @@
     "react-dom": "*"
   },
   "devDependencies": {
+    "@alinea/styler": "^1.0.1",
     "@esbx/reporter": "^0.0.20",
     "@esbx/target": "^0.0.20",
     "@esbx/util": "^0.0.20",

@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {Switch} from '@headlessui/react'
 import {Config} from 'alinea/core/Config'
 import {Label} from 'alinea/core/Label'
@@ -6,7 +7,7 @@ import {Workspace} from 'alinea/core/Workspace'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {select} from 'alinea/field/select'
-import {Icon, TextLabel, VStack, fromModule, px} from 'alinea/ui'
+import {Icon, TextLabel, VStack, px} from 'alinea/ui'
 import {Avatar} from 'alinea/ui/Avatar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {PopoverMenu} from 'alinea/ui/PopoverMenu'
@@ -40,7 +41,7 @@ import {IconButton} from './IconButton.js'
 import {useSidebar} from './Sidebar.js'
 import css from './Toolbar.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 type WorkspaceLabelProps = {
   color?: string

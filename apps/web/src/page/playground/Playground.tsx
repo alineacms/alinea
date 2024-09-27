@@ -3,6 +3,7 @@
 // @ts-ignore
 import declarations from '!!raw-loader!./alinea.d.ts.txt'
 import {Logo} from '@/layout/branding/Logo'
+import styler from '@alinea/styler'
 import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import {createExample} from 'alinea/backend/test/Example'
@@ -19,15 +20,7 @@ import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
 import {Viewport} from 'alinea/dashboard/view/Viewport'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
-import {
-  HStack,
-  Loader,
-  Stack,
-  TextLabel,
-  Typo,
-  VStack,
-  fromModule
-} from 'alinea/ui'
+import {HStack, Loader, Stack, TextLabel, Typo, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Pane} from 'alinea/ui/Pane'
 import lzstring from 'lz-string'
@@ -39,7 +32,7 @@ import type typescript from 'typescript'
 import {useClipboard} from 'use-clipboard-copy'
 import css from './Playground.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const defaultValue = `import {Config, Field} from 'alinea'
 

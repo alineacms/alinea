@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {JSONContent, mergeAttributes, Node as TipTapNode} from '@tiptap/core'
 import {Collaboration} from '@tiptap/extension-collaboration'
 import {
@@ -19,7 +20,7 @@ import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
+import {HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
@@ -35,7 +36,7 @@ import css from './RichTextField.module.scss'
 import {RichTextKit} from './RichTextKit.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 type NodeViewProps = {
   node: {attrs: {[BlockNode.id]: string}}

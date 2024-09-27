@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {
   ItemInstance,
   asyncDataLoaderFeature,
@@ -7,7 +8,7 @@ import {
 import {useTree} from '@headless-tree/react'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {Type} from 'alinea/core/Type'
-import {Icon, fromModule, px} from 'alinea/ui'
+import {Icon, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
@@ -29,7 +30,7 @@ import {useRoot} from '../hook/UseRoot.js'
 import {useNavigate} from '../util/HashRouter.js'
 import css from './EntryTree.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 function selectedEntry(locale: string | undefined, item: EntryTreeItem) {
   return item.entries.find(entry => entry.locale === locale) ?? item.entries[0]

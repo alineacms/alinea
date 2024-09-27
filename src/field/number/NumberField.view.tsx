@@ -1,12 +1,12 @@
+import styler from '@alinea/styler'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {fromModule} from 'alinea/ui'
 import {IcRoundNumbers} from 'alinea/ui/icons/IcRoundNumbers'
 import {useEffect, useRef} from 'react'
 import {NumberField} from './NumberField.js'
 import css from './NumberField.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface NumberInputProps {
   field: NumberField

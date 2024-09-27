@@ -14,20 +14,20 @@ import {PageContainer} from '@/layout/Page'
 import WebLayout from '@/layout/WebLayout'
 import {WebTypo} from '@/layout/WebTypo'
 import {Home} from '@/schema/Home'
+import styler from '@alinea/styler'
 import {Query} from 'alinea'
 import {HStack, VStack} from 'alinea/ui/Stack'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
-import {fromModule} from 'alinea/ui/util/Styler'
 import {px} from 'alinea/ui/util/Units'
 import type {Metadata, MetadataRoute} from 'next'
 import {ComponentType, PropsWithChildren} from 'react'
 import {Link} from '../layout/nav/Link'
 import css from './HomePage.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await cms.get(

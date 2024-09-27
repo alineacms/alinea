@@ -1,9 +1,9 @@
+import styler from '@alinea/styler'
 import {HTMLProps, PropsWithChildren} from 'react'
 import css from './Sink.module.scss'
 import {ElevationProvider} from './util/Elevation.js'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export namespace Sink {
   export function Root(props: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
@@ -13,9 +13,19 @@ export namespace Sink {
       </ElevationProvider>
     )
   }
-  export const Row = styles.row.toElement('div')
-  export const Content = styles.content.toElement('div')
-  export const Options = styles.options.toElement('div')
-  export const Header = styles.header.toElement('header')
-  export const Title = styles.title.toElement('p')
+  export function Row(props: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
+    return <div {...props} className={styles.row(styler.merge(props))} />
+  }
+  export function Content(props: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
+    return <div {...props} className={styles.content(styler.merge(props))} />
+  }
+  export function Options(props: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
+    return <div {...props} className={styles.options(styler.merge(props))} />
+  }
+  export function Header(props: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
+    return <header {...props} className={styles.header(styler.merge(props))} />
+  }
+  export function Title(props: PropsWithChildren<HTMLProps<HTMLDivElement>>) {
+    return <p {...props} className={styles.title(styler.merge(props))} />
+  }
 }

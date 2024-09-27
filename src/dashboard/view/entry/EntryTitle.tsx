@@ -1,6 +1,7 @@
+import styler from '@alinea/styler'
 import {renderLabel} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
-import {Chip, HStack, Loader, fromModule, px} from 'alinea/ui'
+import {Chip, HStack, Loader, px} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtom, useAtomValue} from 'jotai'
 import {PropsWithChildren} from 'react'
@@ -10,7 +11,7 @@ import {Head} from '../../util/Head.js'
 import {IconLink} from '../IconButton.js'
 import css from './EntryTitle.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface EntryTitleProps {
   editor: EntryEditor

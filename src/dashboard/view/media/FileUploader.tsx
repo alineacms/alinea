@@ -1,5 +1,6 @@
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
-import {HStack, Icon, VStack, fromModule} from 'alinea/ui'
+import {HStack, Icon, VStack} from 'alinea/ui'
 import {IcOutlineCloudUpload} from 'alinea/ui/icons/IcOutlineCloudUpload'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
@@ -12,7 +13,7 @@ import {
 import {FileUploadRow} from './FileUploadRow.js'
 import css from './FileUploader.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface FileUploaderProps {
   destination?: UploadDestination

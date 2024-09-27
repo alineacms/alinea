@@ -1,12 +1,13 @@
+import styler from '@alinea/styler'
 import {EntryRow} from 'alinea/core/EntryRow'
 import {Type} from 'alinea/core/Type'
-import {Chip, TextLabel, fromModule} from 'alinea/ui'
+import {Chip, TextLabel} from 'alinea/ui'
 import {useConfig} from '../../hook/UseConfig.js'
 import {diffRecord} from './DiffUtils.js'
 import css from './EntryDiff.module.scss'
 import {FieldsDiff} from './FieldsDiff.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type EntryDiffProps = {
   entryA: EntryRow

@@ -1,9 +1,9 @@
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
 import dmp from 'diff-match-patch'
 import {useMemo} from 'react'
 import css from './ScalarDiff.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const matcher = new dmp.diff_match_patch()
 

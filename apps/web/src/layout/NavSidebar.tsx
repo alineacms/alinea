@@ -1,8 +1,8 @@
-import {fromModule} from 'alinea/ui/util/Styler'
+import styler from '@alinea/styler'
 import {PropsWithChildren} from 'react'
 import css from './NavSidebar.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 //export const NavSidebar = styles.root.toElement('aside')
 

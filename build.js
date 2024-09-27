@@ -1,12 +1,12 @@
 import {ReporterPlugin} from '@esbx/reporter'
 import {getManifest} from '@esbx/workspaces'
-import {spawn} from 'child_process'
 import {dequal} from 'dequal'
 import esbuild from 'esbuild'
 import fsExtra from 'fs-extra'
 import glob from 'glob'
-import {builtinModules} from 'module'
+import {spawn} from 'node:child_process'
 import fs from 'node:fs'
+import {builtinModules} from 'node:module'
 import path from 'node:path'
 import {pathToFileURL} from 'node:url'
 import postcss from 'postcss'
@@ -36,7 +36,9 @@ const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
     'fs-extra',
-    '@alinea',
+    '@alinea/generated',
+    '@alinea/iso',
+    '@alinea/sqlite-wasm',
     'next',
     'sharp',
     'react',

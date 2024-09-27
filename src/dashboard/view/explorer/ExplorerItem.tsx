@@ -1,10 +1,11 @@
+import styler from '@alinea/styler'
 import {SummaryProps} from 'alinea/core/media/Summary'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
 import {resolveView} from 'alinea/core/View'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {Icon, fromModule} from 'alinea/ui'
+import {Icon} from 'alinea/ui'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
@@ -17,7 +18,7 @@ import {useNav} from '../../hook/UseNav.js'
 import {ExporerItemSelect} from './Explorer.js'
 import css from './ExplorerItem.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface ExplorerItemProps {
   schema: Schema

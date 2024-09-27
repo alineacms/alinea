@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {
   autoUpdate,
   flip,
@@ -9,7 +10,7 @@ import {Listbox} from '@headlessui/react'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
+import {HStack, Icon, TextLabel} from 'alinea/ui'
 import {IcRoundArrowDropDownCircle} from 'alinea/ui/icons/IcRoundArrowDropDownCircle'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -17,7 +18,7 @@ import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {SelectField} from './SelectField.js'
 import css from './SelectField.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface SelectInputProps<Key extends string> {
   field: SelectField<Key>

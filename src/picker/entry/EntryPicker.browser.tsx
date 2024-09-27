@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
 import {createId} from 'alinea/core/Id'
 import {PickerProps, pickerWithView} from 'alinea/core/Picker'
@@ -22,16 +23,7 @@ import {
   ExporerItemSelect
 } from 'alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
-import {
-  Button,
-  HStack,
-  Icon,
-  Loader,
-  Stack,
-  TextLabel,
-  VStack,
-  fromModule
-} from 'alinea/ui'
+import {Button, HStack, Icon, Loader, Stack, TextLabel, VStack} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
@@ -62,7 +54,7 @@ interface PickerLocation {
   locale?: string
 }
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface EntryPickerModalProps
   extends PickerProps<EntryPickerOptions> {}

@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
 import {pathSuffix} from 'alinea/core/util/EntryFilenames'
 import {isSeparator, slugify} from 'alinea/core/util/Slugs'
@@ -5,14 +6,14 @@ import {InputLabel} from 'alinea/dashboard'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
-import {fromModule, px} from 'alinea/ui'
+import {px} from 'alinea/ui'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {useRef, useState} from 'react'
 import {useQuery} from 'react-query'
 import {PathField} from './PathField.js'
 import css from './PathField.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 const INPUT_OFFSET_LEFT = 16
 const INPUT_OFFSET_RIGHT = 26
 

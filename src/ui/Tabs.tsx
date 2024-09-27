@@ -1,11 +1,11 @@
+import styler from '@alinea/styler'
 import {Tab} from '@headlessui/react'
 import {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
 import liftCss from './Lift.module.scss'
 import css from './Tabs.module.scss'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
-const liftStyles = fromModule(liftCss)
+const styles = styler(css)
+const liftStyles = styler(liftCss)
 
 export namespace Tabs {
   export const Root: typeof Tab.Group = Tab.Group

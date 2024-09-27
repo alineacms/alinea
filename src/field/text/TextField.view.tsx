@@ -1,13 +1,14 @@
+import styler from '@alinea/styler'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, fromModule} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useState} from 'react'
 import {TextField} from './TextField.js'
 import css from './TextField.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface TextInputProps {
   field: TextField

@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {
   closestCenter,
   defaultDropAnimation,
@@ -32,7 +33,7 @@ import {useField} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {fromModule, Icon, TextLabel} from 'alinea/ui'
+import {Icon, TextLabel} from 'alinea/ui'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import IcRoundAdd from 'alinea/ui/icons/IcRoundAdd'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -50,7 +51,7 @@ import {
 import {ListOptions} from './ListField.js'
 import css from './ListField.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   const {isSorting, wasSorting} = args

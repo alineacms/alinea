@@ -1,6 +1,7 @@
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
-import {HStack, Stack, fromModule} from 'alinea/ui'
+import {HStack, Stack} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
@@ -14,7 +15,7 @@ import {IconButton} from './IconButton.js'
 import css from './SearchBox.module.scss'
 import {Explorer} from './explorer/Explorer.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function SearchBox() {
   const nav = useNav()

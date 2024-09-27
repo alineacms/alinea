@@ -1,10 +1,11 @@
+import styler from '@alinea/styler'
 import {Listbox} from '@headlessui/react'
-import {HStack, Icon, fromModule} from 'alinea/ui'
+import {HStack, Icon} from 'alinea/ui'
 import {IcRoundLanguage} from 'alinea/ui/icons/IcRoundLanguage'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import css from './LangSwitch.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface LangswitchProps {
   locales: Array<string>

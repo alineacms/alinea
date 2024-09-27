@@ -1,11 +1,12 @@
+import styler from '@alinea/styler'
 import {link} from 'alinea/dashboard/util/HashRouter'
-import {TextLabel, fromModule} from 'alinea/ui'
+import {TextLabel} from 'alinea/ui'
 import {useNav} from '../../hook/UseNav.js'
 import {useRoot} from '../../hook/UseRoot.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import css from './RootHeader.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface RootHeaderProps {
   active?: boolean

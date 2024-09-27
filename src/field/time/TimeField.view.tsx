@@ -1,11 +1,11 @@
+import styler from '@alinea/styler'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {fromModule} from 'alinea/ui'
 import {IcRoundDateRange} from 'alinea/ui/icons/IcRoundDateRange'
 import {TimeField} from './TimeField.js'
 import css from './TimeField.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface TimeInputProps {
   field: TimeField

@@ -1,5 +1,6 @@
+import styler from '@alinea/styler'
 import {resolveView} from 'alinea/core/View'
-import {HStack, Icon, Loader, fromModule} from 'alinea/ui'
+import {HStack, Icon, Loader} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
@@ -17,7 +18,7 @@ import {Sidebar} from '../view/Sidebar.js'
 import {NewEntry} from '../view/entry/NewEntry.js'
 import css from './ContentView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface ContentViewProps {
   editor?: EntryEditor

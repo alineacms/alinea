@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {
   DndContext,
   DragEndEvent,
@@ -33,7 +34,7 @@ import {useField} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {TextLabel, fromModule} from 'alinea/ui'
+import {TextLabel} from 'alinea/ui'
 import {Sink} from 'alinea/ui/Sink'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
@@ -45,7 +46,7 @@ import css from './LinkField.module.scss'
 
 export type * from './LinkField.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface LinkInputProps<Row> {
   field: LinkField<Reference, Row>

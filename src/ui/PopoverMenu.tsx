@@ -1,9 +1,9 @@
+import styler from '@alinea/styler'
 import {Popover} from '@headlessui/react'
 import {HTMLAttributes, PropsWithChildren} from 'react'
 import css from './PopoverMenu.module.scss'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export namespace PopoverMenu {
   export function Root(props: HTMLAttributes<HTMLDivElement>) {

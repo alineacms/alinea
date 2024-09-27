@@ -1,4 +1,5 @@
-import {Icon, fromModule, px} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {Icon, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
@@ -12,7 +13,7 @@ import {
 } from 'react'
 import css from './InputLabel.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type LabelHeaderProps = {
   label: ReactNode

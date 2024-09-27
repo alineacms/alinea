@@ -2,13 +2,14 @@
 
 import {WebTypo} from '@/layout/WebTypo'
 import {CodeVariantsBlock} from '@/schema/blocks/CodeVariantsBlock'
+import styler from '@alinea/styler'
 import {Infer} from 'alinea'
-import {HStack, fromModule} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import css from './CodeVariantsView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const preferenceAtom = atomWithStorage<string | undefined>(
   `@alinea/codevariant`,

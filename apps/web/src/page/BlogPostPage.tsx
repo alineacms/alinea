@@ -3,14 +3,14 @@ import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
 import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
+import styler from '@alinea/styler'
 import {Query} from 'alinea'
-import {fromModule} from 'alinea/ui'
 import {Metadata, MetadataRoute} from 'next'
 import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface BlogPostPageProps {
   params: {slug: string}

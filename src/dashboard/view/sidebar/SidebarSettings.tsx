@@ -1,8 +1,9 @@
+import styler from '@alinea/styler'
 import {Switch} from '@headlessui/react'
 import {Workspace} from 'alinea/core/Workspace'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {select} from 'alinea/field'
-import {HStack, Icon, VStack, fromModule, px} from 'alinea/ui'
+import {HStack, Icon, VStack, px} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {PopoverMenu} from 'alinea/ui/PopoverMenu'
@@ -25,7 +26,7 @@ import {IconButton} from '../IconButton.js'
 import {Sidebar} from '../Sidebar.js'
 import css from './SidebarSettings.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function SidebarSettings() {
   const session = useSession()

@@ -1,6 +1,6 @@
 'use client'
 
-import {Styler} from 'alinea/ui'
+import {Styler} from '@alinea/styler'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
 import {HeaderLink} from './Header'

@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {Reference} from 'alinea/core/Reference'
 import {track} from 'alinea/core/Tracker'
 import {type} from 'alinea/core/Type'
@@ -8,13 +9,13 @@ import {check} from 'alinea/field/check'
 import {link as createLink} from 'alinea/field/link'
 import {text} from 'alinea/field/text'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
+import {Button, HStack, Stack, VStack} from 'alinea/ui'
 import {useTrigger} from 'alinea/ui/hook/UseTrigger'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {FormEvent, useMemo} from 'react'
 import css from './PickLink.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 function linkForm(options: PickerOptions) {
   const isExistingLink = Boolean(options.link)

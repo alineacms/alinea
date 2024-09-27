@@ -1,7 +1,8 @@
 'use client'
 
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
-import {HStack, VStack, fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {HStack, VStack} from 'alinea/ui'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
@@ -21,7 +22,7 @@ import {
 import {createPortal} from 'react-dom'
 import css from './Header.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function HeaderRoot({children}: PropsWithChildren) {
   const pathname = usePathname()

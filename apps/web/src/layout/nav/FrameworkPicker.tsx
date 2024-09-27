@@ -1,13 +1,14 @@
 'use client'
 
-import {HStack, fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {HStack} from 'alinea/ui'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import Link from 'next/link'
 import {useParams, usePathname, useRouter} from 'next/navigation'
 import css from './FrameworkPicker.module.scss'
 import {getFramework, supportedFrameworks} from './Frameworks'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function FrameworkPicker() {
   const router = useRouter()

@@ -1,6 +1,7 @@
 import {cms} from '@/cms'
+import styler from '@alinea/styler'
 import {AnyLink, Query} from 'alinea'
-import {HStack, Stack, Styler, fromModule} from 'alinea/ui'
+import {HStack, Stack, Styler} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
@@ -14,7 +15,7 @@ import {Logo} from './branding/Logo'
 import {Link} from './nav/Link'
 import {NavTree} from './nav/NavTree'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type HeaderLink = AnyLink<{label: string; active: string}>
 

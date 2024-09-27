@@ -1,13 +1,14 @@
+import styler from '@alinea/styler'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
+import {HStack, Icon, TextLabel} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {useState} from 'react'
 import {CheckField} from './CheckField.js'
 import css from './CheckField.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface CheckInputProps {
   field: CheckField

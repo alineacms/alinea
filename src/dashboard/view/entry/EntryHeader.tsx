@@ -1,6 +1,7 @@
+import styler from '@alinea/styler'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {entryFile, workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
-import {Button, HStack, Icon, Stack, fromModule, px} from 'alinea/ui'
+import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
@@ -32,7 +33,7 @@ import {FileUploader} from '../media/FileUploader.js'
 import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const variantDescription = {
   draft: 'Draft',

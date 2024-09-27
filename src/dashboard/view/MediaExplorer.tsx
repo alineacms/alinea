@@ -1,9 +1,10 @@
-import {fromModule, HStack, TextLabel, VStack} from 'alinea/ui'
+import {HStack, TextLabel, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {useMemo} from 'react'
 import {useQuery} from 'react-query'
 //import {EntryProperty} from '../draft/EntryProperty.js'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
 import {RootData} from 'alinea/core/Root'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
@@ -23,7 +24,7 @@ import {IconLink} from './IconButton.js'
 import {FileUploader} from './media/FileUploader.js'
 import css from './MediaExplorer.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface MediaExplorerProps {
   editor?: EntryEditor

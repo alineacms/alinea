@@ -1,10 +1,10 @@
+import styler from '@alinea/styler'
 import {createTypo} from 'alinea/ui/util/CreateTypo'
-import {fromModule} from 'alinea/ui/util/Styler'
 import NextLink from 'next/link'
 import {HTMLAttributes} from 'react'
 import css from './WebTypo.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 interface LinkProps {
   href?: string

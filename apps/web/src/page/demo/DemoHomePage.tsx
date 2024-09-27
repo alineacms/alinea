@@ -1,6 +1,7 @@
 import {DemoHome, DemoRecipe} from '@/schema'
+import styler from '@alinea/styler'
 import {Infer, Query} from 'alinea'
-import {VStack, fromModule} from 'alinea/ui'
+import {VStack} from 'alinea/ui'
 import css from './DemoHomePage.module.scss'
 import {DemoHeader} from './layout/DemoHeader'
 import {DemoLayout} from './layout/DemoLayout'
@@ -9,7 +10,7 @@ import {DemoText} from './layout/DemoText'
 import {DemoTypo} from './layout/DemoType'
 import {RecipeCard} from './layout/RecipeCard'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function DemoHomePage({
   hero,

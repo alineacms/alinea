@@ -8,13 +8,14 @@ import {NavTree} from '@/layout/nav/NavTree'
 import {NavItem, nestNav} from '@/layout/nav/NestNav'
 import {BodyFieldView} from '@/page/blocks/BodyFieldView'
 import {Doc} from '@/schema/Doc'
+import styler from '@alinea/styler'
 import {Query} from 'alinea'
-import {HStack, VStack, fromModule} from 'alinea/ui'
+import {HStack, VStack} from 'alinea/ui'
 import {Metadata, MetadataRoute} from 'next'
 import {WebTypo} from '../layout/WebTypo'
 import css from './DocPage.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 interface DocPageParams {
   slug: Array<string>

@@ -1,6 +1,7 @@
+import styler from '@alinea/styler'
 import {SummaryProps} from 'alinea/core/media/Summary'
 import {Type} from 'alinea/core/Type'
-import {Chip, HStack, TextLabel, Typo, VStack, fromModule, px} from 'alinea/ui'
+import {Chip, HStack, TextLabel, Typo, VStack, px} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Fragment, ReactNode} from 'react'
@@ -8,7 +9,7 @@ import {useDashboard} from '../../hook/UseDashboard.js'
 import {useNav} from '../../hook/UseNav.js'
 import css from './EntrySummary.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function EntrySummaryRow({
   entryId,

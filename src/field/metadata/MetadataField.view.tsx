@@ -1,14 +1,14 @@
+import styler from '@alinea/styler'
 import {PreviewMetadata} from 'alinea/core/Resolver'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {usePreviewMetadata} from 'alinea/dashboard/view/preview/BrowserPreview'
-import {fromModule} from 'alinea/ui'
 import {MetadataField} from './MetadataField.js'
 import css from './MetadataField.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface MetadataInputProps {
   field: MetadataField

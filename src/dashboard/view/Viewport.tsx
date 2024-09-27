@@ -1,10 +1,10 @@
+import styler from '@alinea/styler'
 import {useContrastColor} from 'alinea/ui/hook/UseContrastColor'
-import {fromModule} from 'alinea/ui/util/Styler'
 import {HTMLProps, PropsWithChildren, useEffect, useLayoutEffect} from 'react'
 import {usePreferences} from '../hook/UsePreferences.js'
 import css from './Viewport.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 type ViewportProps = PropsWithChildren<
   {

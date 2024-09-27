@@ -1,8 +1,8 @@
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
 import {HTMLProps} from 'react'
 import css from './PageHeader.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function PageHeader(props: HTMLProps<HTMLElement>) {
   return <header {...props} className={styles.root.mergeProps(props)()} />
