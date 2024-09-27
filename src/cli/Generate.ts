@@ -113,15 +113,18 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const [store, storeData] = await createDb()
   for await (const cms of builds) {
     const write = async () => {
-      const [adminFile, dbSize] = await Promise.all([
-        generatePackage(context, cms.config),
-        writeStore(storeData())
-      ])
+      let dbSize = 0
+      if (cmd === 'build') {
+        ;[, dbSize] = await Promise.all([
+          generatePackage(context, cms.config),
+          writeStore(storeData())
+        ])
+      }
       let message = `${cmd} ${location} in `
       const duration = performance.now() - now
       if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
       else message += `${duration.toFixed(0)}ms`
-      message += ` (db ${prettyBytes(dbSize)})`
+      if (dbSize > 0) message += ` (db ${prettyBytes(dbSize)})`
       return message
     }
     const fileData = new LocalData({
