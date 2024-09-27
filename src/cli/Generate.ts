@@ -18,6 +18,7 @@ import {LocalData} from './generate/LocalData.js'
 import {dirname} from './util/Dirname.js'
 import {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
+import {reportHalt} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
@@ -132,11 +133,16 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     indexing = fillCache(context, fileData, store, cms.config)
     for await (const db of indexing) {
       yield {cms, db, localData: fileData}
-      if (onAfterGenerate && !afterGenerateCalled) {
-        const message = await write()
-        afterGenerateCalled = true
-        onAfterGenerate(message)
-      }
+      if (onAfterGenerate && !afterGenerateCalled)
+        await write().then(
+          message => {
+            afterGenerateCalled = true
+            onAfterGenerate(message)
+          },
+          () => {
+            reportHalt('Alinea failed to write dashboard files')
+          }
+        )
     }
   }
 }

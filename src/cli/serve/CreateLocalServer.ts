@@ -128,7 +128,7 @@ export function createLocalServer(
         else currentBuild = trigger<BuildDetails>()
       } else {
         if (result.errors.length) {
-          reportHalt('Building alinea dashboard failed')
+          reportHalt('Building Alinea dashboard failed')
         } else {
           currentBuild.resolve(buildFiles(devDir, result))
           if (alineaDev) liveReload.reload('reload')
@@ -218,7 +218,6 @@ export function createLocalServer(
 
   return {
     close() {
-      console.log('close builds')
       builder.return()
     },
     async handle(request: Request) {
