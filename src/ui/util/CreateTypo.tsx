@@ -10,6 +10,7 @@ import {forwardRefWithAs, PropsWithAs} from './PropsWithAs.js'
 
 type TypoStyles =
   | {
+      root: Styler
       link: Styler
       small: Styler
       h1: Styler
@@ -44,7 +45,11 @@ export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
   }: PropsWithChildren<{
     align?: 'left' | 'right' | 'center'
   }>) {
-    return <div style={{textAlign: align}}>{children}</div>
+    return (
+      <div style={{textAlign: align}} className={styles.root()}>
+        {children}
+      </div>
+    )
   }
 
   function H1Component(

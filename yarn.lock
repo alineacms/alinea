@@ -156,12 +156,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@alinea/styler@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@alinea/styler@npm:1.0.1"
-  dependencies:
-    esbuild: "npm:^0.23.0"
-  checksum: 10/a5b8845c4ef50af582d9eef7008c01326628578d746eaa358ea2fe7468e59e96e05188fbf9ba1e7cb67e3300d4e803a2c03bcd1b984298575feef273a996aec1
+"@alinea/styler@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "@alinea/styler@npm:1.0.3"
+  checksum: 10/ce6175f8d51e91ea19f8b2b1afdef7bb80c8f3a93db980d4e77fb08b1ce51b99a810f4cdda38dfa2ac0262fe8493d9e129b6d09825186480f30f0058f37ada8a
   languageName: node
   linkType: hard
 
@@ -2863,7 +2861,7 @@ __metadata:
   dependencies:
     "@alinea/iso": "npm:^0.3.2"
     "@alinea/sqlite-wasm": "npm:^0.1.18"
-    "@alinea/styler": "npm:^1.0.1"
+    "@alinea/styler": "npm:^1.0.3"
     "@esbx/reporter": "npm:^0.0.20"
     "@esbx/target": "npm:^0.0.20"
     "@esbx/util": "npm:^0.0.20"
