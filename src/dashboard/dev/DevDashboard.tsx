@@ -16,7 +16,7 @@ type DevReloadOptions = {
 function setupDevReload({refresh, refetch, open, close}: DevReloadOptions) {
   const source = new EventSource('/~dev')
   source.onmessage = e => {
-    console.log(`[reload] received ${e.data}`)
+    console.info(`[reload] received ${e.data}`)
     switch (e.data) {
       case 'refetch':
         return refetch()

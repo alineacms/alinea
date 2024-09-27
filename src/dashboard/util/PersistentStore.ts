@@ -49,10 +49,10 @@ export async function createPersistentStore(): Promise<PersistentStore> {
         `${icon} Local query (${prettyMilliseconds(duration)})`
       )
       console.groupCollapsed('SQL')
-      console.log(stmt.sql)
+      console.info(stmt.sql)
       console.groupEnd()
       console.groupCollapsed('Params')
-      console.log(stmt.params())
+      console.info(stmt.params())
       console.groupEnd()
       console.groupCollapsed('Query plan')
       const explain = db.prepare(
@@ -103,6 +103,6 @@ function renderQueryPlan(plan: Array<QueryPlanItem>) {
     const parentDepth = depth.get(line.parent) || 0
     depth.set(line.id, parentDepth + 1)
     const indent = ' '.repeat(parentDepth * 2)
-    console.log(`${indent}${line.detail}`)
+    console.info(`${indent}${line.detail}`)
   }
 }

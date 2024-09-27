@@ -475,7 +475,7 @@ const reportSizePlugin = {
         entryPoints: {server: 'dist/index.js'},
         tsconfigRaw: {}
       })
-      console.log(
+      console.info(
         `Server output: ` +
           prettyBytes(server.metafile.outputs['server.js'].bytes)
       )
@@ -485,7 +485,7 @@ const reportSizePlugin = {
         entryPoints: {dashboard: 'dist/dashboard/App.js'},
         tsconfigRaw: {}
       })
-      console.log(
+      console.info(
         `Dashboard output: ` +
           prettyBytes(dashboard.metafile.outputs['dashboard.js'].bytes)
       )
@@ -532,7 +532,7 @@ async function runTests() {
     return path.basename(file).toLowerCase().includes(filter)
   })
   if (modules.length === 0) {
-    console.log(`No tests found for pattern "${filter}"`)
+    console.warn(`No tests found for pattern "${filter}"`)
     process.exit()
   }
   process.argv.push('.bin/uvu') // Trigger isCLI

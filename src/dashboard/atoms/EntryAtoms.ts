@@ -206,7 +206,7 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
         const [dropping] = items
         if (childIndex === null) return
         if (dropping.getParent() !== parent) {
-          console.log('Todo: move entries')
+          console.warn('Todo: move entries')
           return
         }
         const children = parent.getChildren()

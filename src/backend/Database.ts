@@ -197,7 +197,7 @@ export class Database implements Syncable {
       .from(EntryRow)
       .orderBy(asc(EntryRow.url), asc(EntryRow.index))
     for (const entry of entries) {
-      console.log(
+      console.info(
         entry.url.padEnd(35),
         entry.entryId.padEnd(12),
         entry.phase.padEnd(12),
@@ -707,7 +707,7 @@ export class Database implements Syncable {
           seenVersions.push(`${entry.entryId}.${entry.phase}`)
           inserted.push(`${entry.entryId}.${entry.phase}`)
         } catch (e: any) {
-          console.log(`> skipped ${file.filePath} — ${e.message}`)
+          console.info(`> skipped ${file.filePath} — ${e.message}`)
           console.error(e)
           process.exit(1)
         }
@@ -777,10 +777,7 @@ export class Database implements Syncable {
 
       const noChanges = inserted.length === 0 && removed === 0
       if (noChanges) return
-      // if (inserted) console.log(`> updated ${inserted} entries`)
-      // if (removed) console.log(`> removed ${removed} entries`)
 
-      //const endIndex = timer('Indexing entries')
       await Database.index(tx)
       const entries = await tx
         .select()

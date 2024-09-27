@@ -61,7 +61,7 @@ export async function startNodeServer(
       const incrementedPort = port + 1
       if (err.code === 'EADDRINUSE' && incrementedPort < 65535) {
         if (!silent)
-          console.log(
+          console.info(
             `> Port ${port} is in use, attempting ${incrementedPort} instead`
           )
         return startNodeServer(incrementedPort, attempt++, silent)

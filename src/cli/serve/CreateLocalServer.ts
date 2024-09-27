@@ -123,7 +123,7 @@ export function createLocalServer(
       })
       build.onEnd(result => {
         if (result.errors.length) {
-          console.log('> building alinea dashboard failed')
+          console.info('> building alinea dashboard failed')
         }
         currentBuild.resolve(buildFiles(devDir, result))
         if (alineaDev) liveReload.reload('reload')

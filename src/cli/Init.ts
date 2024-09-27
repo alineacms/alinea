@@ -40,7 +40,7 @@ export async function init(options: InitOptions) {
   const {cwd = process.cwd(), quiet = false} = options
   const configLocation = findConfigFile(cwd)
   if (configLocation) {
-    console.log(`> An alinea config file already exists in ${cwd}`)
+    console.warn(`> An alinea config file already exists in ${cwd}`)
     process.exit(1)
   }
   await fs.mkdir(path.join(cwd, 'content/pages'), {recursive: true})
@@ -88,7 +88,7 @@ export async function init(options: InitOptions) {
   const runner = pm === 'npm' ? 'npx' : pm
   const command = `${runner} alinea dev`
   if (!quiet)
-    console.log(
+    console.info(
       'Alinea initialized. You can open the dashboard with `' + command + '`'
     )
 }
