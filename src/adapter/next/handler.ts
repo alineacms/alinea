@@ -11,7 +11,7 @@ import {Entry} from 'alinea/core/Entry'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import {NextCMS} from './cms.js'
-import {requestContext} from './context.js'
+import {devUrl, requestContext} from './context.js'
 
 type Handler = (request: Request) => Promise<Response>
 const handlers = new WeakMap<NextCMS, Handler>()
@@ -36,7 +36,9 @@ export function createHandler<Driver extends AvailableDrivers>(
         if (!previewToken) return new Response('Not found', {status: 404})
         const info = await previews.verify(previewToken)
         const cookie = cookies()
-        const connection = handleBackend.connect(context)
+        const connection = devUrl()
+          ? await cms.connect()
+          : handleBackend.connect(context)
         const payload = getPreviewPayloadFromCookies(cookie.getAll())
         const url = (await connection.resolve({
           selection: createSelection(

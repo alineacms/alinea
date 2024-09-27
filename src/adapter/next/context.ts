@@ -2,6 +2,10 @@ import {RequestContext} from 'alinea/backend/Backend'
 import {generatedRelease} from 'alinea/backend/store/GeneratedRelease'
 import {Config} from 'alinea/core/Config'
 
+export function devUrl() {
+  return process.env.ALINEA_DEV_SERVER
+}
+
 export async function requestContext(config: Config): Promise<RequestContext> {
   return {
     handlerUrl: await handlerUrl(config),
@@ -14,9 +18,8 @@ export async function requestContext(config: Config): Promise<RequestContext> {
 
 async function handlerUrl(config: Config) {
   const baseUrl = process.env.ALINEA_BASE_URL ?? Config.baseUrl(config)
-  const devUrl = process.env.ALINEA_DEV_SERVER
-  return devUrl
-    ? new URL('/api', devUrl)
+  return devUrl()
+    ? new URL('/api', devUrl())
     : new URL(
         config.handlerUrl ?? '/api/cms',
         baseUrl ?? (await requestOrigin())
