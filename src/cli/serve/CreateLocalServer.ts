@@ -62,6 +62,7 @@ function buildFiles(outdir: string, result: BuildResult) {
 
 export function createLocalServer(
   {
+    cmd,
     rootDir: cwd,
     staticDir,
     alineaDev,
@@ -75,6 +76,13 @@ export function createLocalServer(
   close(): void
   handle(input: Request): Promise<Response>
 } {
+  function devHandler(request: Request) {
+    return handleApi(request, {
+      handlerUrl: new URL(request.url.split('?')[0]),
+      apiKey: 'dev'
+    })
+  }
+  if (cmd === 'build') return {close() {}, handle: devHandler}
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
   const entryPoints = {
@@ -191,10 +199,7 @@ export function createLocalServer(
     }),
     router.compress(
       matcher.all('/api').map(async ({url, request}) => {
-        return handleApi(request, {
-          handlerUrl: new URL(request.url.split('?')[0]),
-          apiKey: 'dev'
-        })
+        return devHandler(request)
       }),
       matcher.get('/').map(({url}): Response => {
         const handlerUrl = `${url.protocol}//${url.host}`

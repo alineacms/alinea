@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "dev:test": "alinea dev -- next dev",
+    "dev:test": "yarn build:alinea && alinea dev -- next dev",
     "build": "yarn build:alinea && alinea build -- next build",
     "start": "next start",
     "lint": "next lint",

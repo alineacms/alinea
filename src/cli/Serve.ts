@@ -62,6 +62,7 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   const rootDir = path.resolve(cwd)
   const context: ServeContext = {
+    cmd,
     rootDir,
     base,
     staticDir,

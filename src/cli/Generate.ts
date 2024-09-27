@@ -119,6 +119,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           generatePackage(context, cms.config),
           writeStore(storeData())
         ])
+      } else {
+        await writeStore(new Uint8Array())
       }
       let message = `${cmd} ${location} in `
       const duration = performance.now() - now
