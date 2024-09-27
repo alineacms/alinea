@@ -146,6 +146,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           },
           () => {
             reportHalt('Alinea failed to write dashboard files')
+            if (cmd === 'build') process.exit(1)
           }
         )
     }
