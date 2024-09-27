@@ -27,6 +27,7 @@ export function BlogPostMeta({publishDate, author}: BlogPostMetaProps) {
           <a href={author.url._url} className={styles.root.author.url()}>
             <HStack center gap={8}>
               {author.avatar && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   alt="Author avatar"
                   className={styles.root.author.avatar()}

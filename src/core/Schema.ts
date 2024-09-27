@@ -1,16 +1,18 @@
-import {Hint} from './Hint.js'
 import {Type, TypeTarget} from './Type.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, fromEntries} from './util/Objects.js'
+import {entries, fromEntries, values} from './util/Objects.js'
 
 const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
-const hintCache = new WeakMap<Schema, Hint.Union>()
 
 export interface Schema<Definitions = {}> extends Record<string, Type> {}
 
 export namespace Schema {
   export type Targets = Map<TypeTarget, string>
+
+  export function views(schema: Schema): Array<string> {
+    return values(schema).flatMap(type => Type.referencedViews(type))
+  }
 
   export function validate(schema: Schema) {
     const keyOfType = typeNames(schema)
@@ -57,20 +59,6 @@ export namespace Schema {
         )
       )
     return shapesCache.get(schema)!
-  }
-
-  export function hint(schema: Schema): Hint.Union {
-    if (!hintCache.has(schema)) {
-      hintCache.set(
-        schema,
-        Hint.Union(
-          entries(schema).map(([key, type]) => {
-            return Type.hint(type!)
-          })
-        )
-      )
-    }
-    return hintCache.get(schema)!
   }
 
   export function targets(schema: Schema): Targets {

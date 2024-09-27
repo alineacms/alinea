@@ -1,22 +1,34 @@
 import {Database} from 'alinea/backend/Database'
 import {Store} from 'alinea/backend/Store'
-import {Emitter, createEmitter} from 'alinea/cli/util/Emitter'
 import {Config} from 'alinea/core/Config'
 import pLimit from 'p-limit'
 import {getCommitSha} from '../util/CommitSha.js'
+import {createEmitter, Emitter} from '../util/Emitter.js'
 import {createWatcher} from '../util/Watcher.js'
 import {GenerateContext} from './GenerateContext.js'
 import {LocalData} from './LocalData.js'
 
 const dbCache = new WeakMap<Config, Database>()
 
-export async function* fillCache(
-  {watch, fix, rootDir}: GenerateContext,
+export function fillCache(
+  {fix}: GenerateContext,
   localData: LocalData,
   store: Store,
-  config: Config,
-  until: Promise<any>
-): AsyncGenerator<Database> {
+  config: Config
+): Emitter<Database> {
+  let canceled = false
+  let stopWatching = () => {
+    canceled = true
+  }
+
+  const results = createEmitter<Database>({
+    onReturn() {
+      stopWatching()
+    }
+  })
+
+  const run = () => limit(cache).then(results.emit, results.throw)
+
   const db = dbCache.has(config)
     ? dbCache.get(config)!
     : new Database(config, store)
@@ -29,27 +41,15 @@ export async function* fillCache(
     return db
   }
 
-  yield limit(cache)
-
-  if (!watch || !localData.watchFiles) return
-
-  const results = createEmitter<Promise<Database>>()
-  const stopWatching = await createWatcher({
+  createWatcher({
     watchFiles: localData.watchFiles.bind(localData),
-    async onChange() {
-      results.emit(limit(cache))
-    }
-  })
-  until.then(() => {
-    results.cancel()
+    onChange: run
+  }).then(cancel => {
+    if (canceled) cancel()
+    else stopWatching = cancel
   })
 
-  try {
-    for await (const result of results) yield result
-  } catch (e) {
-    if (e === Emitter.CANCELLED) return
-    throw e
-  } finally {
-    stopWatching()
-  }
+  run()
+
+  return results
 }

@@ -8,8 +8,6 @@ import {User} from 'alinea/core/User'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import {requestContext} from './context.js'
 
-const devUrl = process.env.ALINEA_DEV_SERVER
-
 export interface PreviewProps {
   widget?: boolean
   workspace?: string
@@ -70,6 +68,7 @@ export class NextCMS<
     const context = await requestContext(this.config)
     let file = this.config.dashboardFile ?? '/admin.html'
     if (!file.startsWith('/')) file = `/${file}`
+    const devUrl = process.env.ALINEA_DEV_SERVER
     const dashboardUrl = devUrl ?? new URL(file, context.handlerUrl).href
     const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false

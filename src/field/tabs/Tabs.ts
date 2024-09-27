@@ -1,18 +1,25 @@
 import {Field} from 'alinea/core/Field'
-import type {SectionData, SectionDefinition} from 'alinea/core/Section'
-import {section} from 'alinea/core/Section'
+import {
+  Section,
+  section,
+  SectionData,
+  SectionDefinition
+} from 'alinea/core/Section'
 import {Type, type} from 'alinea/core/Type'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import type {UnionToIntersection} from 'alinea/core/util/Types'
 
 export class TabsSection implements SectionData {
+  view = 'alinea/field/tabs/Tabs.view#TabsView'
   definition: SectionDefinition
   fields: Record<string, Field>
+  sections: Array<Section>
   constructor(public types: Array<Type>) {
     this.definition = fromEntries(types.flatMap(entries))
     this.fields = fromEntries(
       types.flatMap(entries).filter(([key, field]) => Field.isField(field))
     )
+    this.sections = types.flatMap(Type.sections)
   }
 }
 

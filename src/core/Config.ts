@@ -6,7 +6,7 @@ import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Workspace, WorkspaceData} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries} from './util/Objects.js'
+import {entries, values} from './util/Objects.js'
 
 /** Configuration options */
 export interface Config {
@@ -65,6 +65,12 @@ export namespace Config {
         )
       Workspace.validate(workspace, config.schema)
     }
+  }
+
+  export function views(config: Config): Array<string> {
+    return Schema.views(config.schema).concat(
+      values(config.workspaces).flatMap(Workspace.views)
+    )
   }
 }
 

@@ -1,6 +1,5 @@
 import {Entry} from 'alinea/core'
 import type {WithoutLabel} from 'alinea/core/Field'
-import {Hint} from 'alinea/core/Hint'
 import {InferStoredValue} from 'alinea/core/Infer'
 import {Label} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
@@ -37,7 +36,7 @@ export namespace EntryLink {
 
 interface EntryOptions<Fields>
   extends LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
-    Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
+    Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
 export function entry<Fields = undefined>(
   label: Label,
@@ -52,10 +51,6 @@ export function entry<Fields = undefined>(
       entry: entryPicker({
         ...options,
         withNavigation: Boolean(options.location || !options.condition),
-        hint: Hint.Extern({
-          name: 'EntryReference',
-          package: 'alinea/picker/entry'
-        }),
         title: 'Select a page',
         max: 1,
         selection: EntryLink
@@ -71,7 +66,7 @@ export namespace entry {
     extends LinkFieldOptions<
         Array<EntryReference & ListRow & InferStoredValue<Fields>>
       >,
-      Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
+      Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
   export function multiple<Fields = undefined>(
     label: Label,
@@ -83,10 +78,6 @@ export namespace entry {
         entry: entryPicker<EntryReference, Fields>({
           ...options,
           withNavigation: !options.condition,
-          hint: Hint.Extern({
-            name: 'EntryReference',
-            package: 'alinea/picker/entry'
-          }),
           title: 'Select a page',
           selection: EntryLink
         })

@@ -1,7 +1,7 @@
 import {Parser} from 'htmlparser2'
 import {Field, FieldMeta, FieldOptions} from '../Field.js'
+import {Schema} from '../Schema.js'
 import {ElementNode, TextDoc} from '../TextDoc.js'
-import {RecordShape} from '../shape/RecordShape.js'
 import {RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
 
 export class RichTextField<
@@ -14,7 +14,7 @@ export class RichTextField<
   Options
 > {
   constructor(
-    shape: {[key: string]: RecordShape<any>} | undefined,
+    schema: Schema | undefined,
     meta: FieldMeta<
       TextDoc<Blocks>,
       TextDoc<Blocks>,
@@ -25,10 +25,11 @@ export class RichTextField<
     super({
       shape: new RichTextShape(
         meta.options.label,
-        shape,
+        schema && Schema.shapes(schema),
         meta.options.initialValue,
         meta.options.searchable
       ),
+      referencedViews: schema ? Schema.views(schema) : [],
       ...meta
     })
   }

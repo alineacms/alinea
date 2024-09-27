@@ -14,6 +14,7 @@ import {Type, type} from 'alinea/core/Type'
 import 'alinea/css'
 import * as dashboard from 'alinea/dashboard'
 import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
+import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
 import {Viewport} from 'alinea/dashboard/view/Viewport'
@@ -206,8 +207,14 @@ export default function Playground() {
     compile(code)
   }, [code])
   const client = React.use(connection)
+  if (state.error) console.error(state.error)
   return (
-    <DashboardProvider dev client={client} config={example.config}>
+    <DashboardProvider
+      dev
+      client={client}
+      config={example.config}
+      views={defaultViews}
+    >
       <Script
         src="https://cdn.jsdelivr.net/npm/typescript@5.1.3/lib/typescript.min.js"
         onLoad={() => {

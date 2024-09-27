@@ -8,7 +8,7 @@ import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
-import {useEffect} from 'react'
+import {ComponentType, useEffect} from 'react'
 import {QueryClient} from 'react-query'
 import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
@@ -177,6 +177,7 @@ function AppRoot() {
 
 export interface AppProps {
   config: Config
+  views: Record<string, ComponentType<any>>
   client: Connection
   queryClient?: QueryClient
   fullPage?: boolean

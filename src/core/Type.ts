@@ -1,8 +1,8 @@
-import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
+import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
+import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
 import {Field} from './Field.js'
-import {Hint} from './Hint.js'
 import {Label} from './Label.js'
 import {SummaryProps} from './media/Summary.js'
 import {Meta, StripMeta} from './Meta.js'
@@ -24,9 +24,11 @@ import {
   defineProperty,
   entries,
   fromEntries,
-  keys
+  keys,
+  values
 } from './util/Objects.js'
 import {Expand} from './util/Types.js'
+import {View} from './View.js'
 
 export interface EntryUrlMeta {
   phase: EntryPhase
@@ -51,11 +53,11 @@ export interface TypeMeta {
   icon?: ComponentType
 
   /** A React component used to view an entry of this type in the dashboard */
-  view?: ComponentType<EntryEditProps & {type: Type}>
+  view?: View<EntryEditProps & {type: Type}>
   /** A React component used to view a row of this type in the dashboard */
-  summaryRow?: ComponentType<SummaryProps>
+  summaryRow?: View<SummaryProps>
   /** A React component used to view a thumbnail of this type in the dashboard */
-  summaryThumb?: ComponentType<SummaryProps>
+  summaryThumb?: View<SummaryProps>
 
   /** Create indexes on fields of this type */
   // index?: (this: Fields) => Record<string, Array<Expr<any>>>
@@ -66,7 +68,6 @@ export interface TypeMeta {
 export interface TypeData {
   label: Label
   shape: RecordShape
-  hint: Hint
   definition: TypeDefinition
   meta: TypeMeta
   sections: Array<Section>
@@ -129,10 +130,6 @@ export namespace Type {
     return type as any
   }
 
-  export function hint(type: Type) {
-    return type[Type.Data].hint
-  }
-
   export function sections(type: Type) {
     return type[Type.Data].sections
   }
@@ -163,7 +160,14 @@ export namespace Type {
     return res
   }
 
+  const TypeOptions = cito.object({
+    view: cito.string.optional,
+    summaryRow: cito.string.optional,
+    summaryThumb: cito.string.optional
+  })
+
   export function validate(type: Type) {
+    TypeOptions(meta(type))
     for (const [key, field] of entries(fields(type))) {
       if (!isValidIdentifier(key))
         throw new Error(
@@ -173,6 +177,27 @@ export namespace Type {
         )
     }
   }
+
+  export function referencedViews(type: Type): Array<string> {
+    const {view, summaryRow, summaryThumb} = meta(type)
+    return [
+      view,
+      summaryRow,
+      summaryThumb,
+      ...viewsOfDefinition(type[Type.Data].definition)
+    ].filter(v => typeof v === 'string')
+  }
+}
+
+function viewsOfDefinition(definition: TypeDefinition): Array<string> {
+  return values(definition).flatMap(value => {
+    if (Field.isField(value)) return Field.referencedViews(value)
+    if (Section.isSection(value))
+      return Section.referencedViews(value).concat(
+        viewsOfDefinition(Section.fields(value))
+      )
+    return []
+  })
 }
 
 function fieldsOfDefinition(
@@ -187,7 +212,6 @@ function fieldsOfDefinition(
 
 class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   shape: RecordShape
-  hint: Hint
   sections: Array<Section> = []
   target: Type<Definition>
 
@@ -201,13 +225,6 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
       fromEntries(
         fieldsOfDefinition(definition).map(([key, field]) => {
           return [key, Field.shape(field as Field)]
-        })
-      )
-    )
-    this.hint = Hint.Object(
-      fromEntries(
-        fieldsOfDefinition(definition).map(([key, field]) => {
-          return [key, Field.hint(field as Field)]
         })
       )
     )

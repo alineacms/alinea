@@ -1,5 +1,4 @@
 import type {ComponentType} from 'react'
-import {Hint} from './Hint.js'
 import {Label} from './Label.js'
 import {Reference} from './Reference.js'
 import {Type} from './Type.js'
@@ -29,7 +28,6 @@ export interface Picker<
 > {
   shape: RecordShape
   fields: Type<any> | undefined
-  hint: Hint
   label: Label
   handlesMultiple: boolean
   options: Options

@@ -1,8 +1,7 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import {Expr} from 'alinea/core/pages/Expr'
-import type {ComponentType} from 'react'
-import {Hint} from './Hint.js'
 import {Shape} from './Shape.js'
+import {View} from './View.js'
 
 export interface FieldOptions<StoredValue> {
   /** A description of the field */
@@ -32,9 +31,10 @@ export interface FieldMeta<
   Mutator,
   Options extends FieldOptions<StoredValue>
 > {
-  hint: Hint
   options: Options
-  view?: FieldView<StoredValue, QueryValue, Mutator, Options>
+  view: View<{
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  }>
   postProcess?: (value: StoredValue, loader: LinkResolver) => Promise<void>
 }
 
@@ -45,16 +45,8 @@ export interface FieldData<
   Options extends FieldOptions<StoredValue>
 > extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   shape: Shape<StoredValue, Mutator>
+  referencedViews: Array<string>
 }
-
-export type FieldView<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
-> = ComponentType<{
-  field: Field<StoredValue, QueryValue, Mutator, Options>
-}>
 
 export interface Field<
   StoredValue,
@@ -84,22 +76,6 @@ export namespace Field {
   export const Value = Symbol.for('@alinea/Field.Value')
   export const Ref = Symbol.for('@alinea/Field.Self')
 
-  export function provideView<
-    StoredValue,
-    QueryValue,
-    Mutator,
-    Options extends FieldOptions<StoredValue>,
-    Factory extends (
-      ...args: Array<any>
-    ) => Field<StoredValue, QueryValue, Mutator, Options>
-  >(
-    view: FieldView<StoredValue, QueryValue, Mutator, Options>,
-    factory: Factory
-  ): Factory {
-    return ((...args: Array<any>) =>
-      new Field({...factory(...args)[Field.Data], view})) as Factory
-  }
-
   // Todo: because we wrap fields in an Expr proxy we need this
   // reference - but maybe we shouldn't wrap in the future
   export function ref(field: Field): symbol {
@@ -108,10 +84,6 @@ export namespace Field {
 
   export function shape(field: Field<any, any>): Shape {
     return field[Field.Data].shape
-  }
-
-  export function hint(field: Field): Hint {
-    return field[Field.Data].hint
   }
 
   export function label(field: Field): string {
@@ -125,8 +97,17 @@ export namespace Field {
     Options extends FieldOptions<StoredValue>
   >(
     field: Field<StoredValue, QueryValue, Mutator, Options>
-  ): FieldView<StoredValue, QueryValue, Mutator, Options> | undefined {
+  ): View<{
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  }> {
     return field[Field.Data].view
+  }
+
+  export function referencedViews(field: Field): Array<string> {
+    const fieldView = Field.view(field)
+    if (typeof fieldView === 'string')
+      return [fieldView, ...field[Field.Data].referencedViews]
+    return field[Field.Data].referencedViews
   }
 
   export function options<

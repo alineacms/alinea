@@ -137,7 +137,7 @@ function SearchModal({onClose}: SearchModalProps) {
     }
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
-  }, [])
+  }, [onClose])
   return createPortal(
     <div className={styles.searchmodal()}>
       <div className={styles.searchmodal.backdrop()} onClick={onClose} />

@@ -16,12 +16,14 @@ function Link({href, ...props}: LinkProps) {
 }
 
 function withPermaLink(Tag: string) {
-  return (props: HTMLAttributes<HTMLHeadingElement>) => (
-    <Tag {...props}>
-      {props.id && <a href={`#${props.id}`} className={styles.permaLink()} />}
-      {props.children}
-    </Tag>
-  )
+  return function Perma(props: HTMLAttributes<HTMLHeadingElement>) {
+    return (
+      <Tag {...props}>
+        {props.id && <a href={`#${props.id}`} className={styles.permaLink()} />}
+        {props.children}
+      </Tag>
+    )
+  }
 }
 
 export const WebTypo = createTypo(styles, {

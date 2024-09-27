@@ -1,6 +1,5 @@
 import {Entry} from 'alinea/core/Entry'
 import type {WithoutLabel} from 'alinea/core/Field'
-import {Hint} from 'alinea/core/Hint'
 import {InferStoredValue} from 'alinea/core/Infer'
 import {Label} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
@@ -60,14 +59,10 @@ const imageCondition = Entry.type.is('MediaFile').and(
 
 function imagePicker<Fields>(
   multiple: boolean,
-  options: Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'>
+  options: Omit<EntryPickerOptions<Fields>, 'selection'>
 ) {
   return entryPicker<EntryReference, Fields>({
     ...options,
-    hint: Hint.Extern({
-      name: 'ImageReference',
-      package: 'alinea/picker/entry'
-    }),
     max: multiple ? undefined : 1,
     label: 'Image',
     title: multiple ? 'Select images' : 'Select an image',
@@ -80,7 +75,7 @@ function imagePicker<Fields>(
 
 export interface ImageOptions<Fields>
   extends LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
-    Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
+    Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
 export function image<Fields = undefined>(
   label: Label,
@@ -106,7 +101,7 @@ export namespace image {
     extends LinkFieldOptions<
         Array<EntryReference & ListRow & InferStoredValue<Fields>>
       >,
-      Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
+      Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
   export function multiple<Fields = undefined>(
     label: Label,

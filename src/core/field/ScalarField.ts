@@ -12,6 +12,7 @@ export class ScalarField<
         meta.options.initialValue,
         meta.options.searchable
       ),
+      referencedViews: [],
       ...meta
     })
   }

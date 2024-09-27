@@ -1,6 +1,7 @@
 import {SummaryProps} from 'alinea/core/media/Summary'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
+import {resolveView} from 'alinea/core/View'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Icon, fromModule} from 'alinea/ui'
@@ -9,6 +10,7 @@ import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {ComponentType} from 'react'
+import {useDashboard} from '../../hook/UseDashboard.js'
 import {useExplorer} from '../../hook/UseExplorer.js'
 import {useFocusListItem} from '../../hook/UseFocusList.js'
 import {useNav} from '../../hook/UseNav.js'
@@ -31,12 +33,14 @@ export function ExplorerItem({
   defaultView
 }: ExplorerItemProps) {
   const nav = useNav()
+  const {views} = useDashboard()
   const explorer = useExplorer()
   const itemRef = useFocusListItem<HTMLDivElement>(() =>
     explorer?.onSelect(entry)
   )
   const type = schema[entry.type]
-  const View: any = (type && Type.meta(type)[summaryView]) || defaultView
+  const typeView = type && Type.meta(type)[summaryView]
+  const View: any = typeView ? resolveView(views, typeView) : defaultView
   const isSelectable =
     explorer.selectable === true ||
     (Array.isArray(explorer.selectable) &&

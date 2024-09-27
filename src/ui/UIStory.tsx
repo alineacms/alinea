@@ -16,7 +16,7 @@ export interface UIStoryProps extends PropsWithChildren<{}> {
 
 export function UIStory({fullWidth, fullHeight, children}: UIStoryProps) {
   return (
-    <DashboardProvider dev config={example.config} client={client}>
+    <DashboardProvider dev config={example.config} client={client} views={{}}>
       <Viewport attachToBody>
         <FieldToolbar.Provider>
           <div

@@ -3,8 +3,8 @@ import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
+import {genEffect} from 'alinea/core/util/Async'
 import {basename, join} from 'alinea/core/util/Paths'
-import {BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
@@ -14,9 +14,9 @@ import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
 import {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
-import {loadCMS} from './generate/LoadConfig.js'
 import {LocalData} from './generate/LocalData.js'
 import {dirname} from './util/Dirname.js'
+import {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 
 const __dirname = dirname(import.meta.url)
@@ -32,7 +32,7 @@ export interface GenerateOptions {
   fix?: boolean
   wasmCache?: boolean
   quiet?: boolean
-  onAfterGenerate?: (env?: Record<string, string>) => void
+  onAfterGenerate?: (buildMessage: string) => void
   dashboardUrl?: Promise<string>
 }
 
@@ -73,10 +73,15 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     onAfterGenerate
   } = options
 
+  const now = performance.now()
+
   const configLocation = configFile
     ? path.join(path.resolve(cwd), configFile)
     : findConfigFile(cwd)
   if (!configLocation) throw new Error(`No config file specified`)
+  const location = path
+    .relative(process.cwd(), configLocation)
+    .replace(/\\/g, '/')
   const rootDir = path.resolve(cwd)
   const configDir = path.dirname(configLocation)
 
@@ -85,6 +90,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     : path.join(alineaPackageDir, 'node_modules')
 
   const context: GenerateContext = {
+    cmd,
     wasmCache,
     rootDir: rootDir,
     staticDir,
@@ -92,58 +98,45 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configDir,
     configLocation,
     fix: options.fix || false,
-    outDir: path.join(nodeModules, '@alinea/generated'),
-    watch: cmd === 'dev' || false
+    outDir: path.join(nodeModules, '@alinea/generated')
   }
   await copyStaticFiles(context)
-  const builds = compileConfig(context)[Symbol.asyncIterator]()
-  let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
+  let indexing: Emitter<Database>
+  const builds = genEffect(compileConfig(context), () => indexing?.return())
   let afterGenerateCalled = false
 
   function writeStore(data: Uint8Array) {
     return exportStore(data, join(context.outDir, 'store.js'))
   }
   const [store, storeData] = await createDb()
-  while (true) {
-    const {done} = await nextBuild
-    nextBuild = builds.next()
+  for await (const cms of builds) {
     try {
-      const cms = await loadCMS(context.outDir)
       const write = async () => {
         const [adminFile, dbSize] = await Promise.all([
           generatePackage(context, cms.config),
           writeStore(storeData())
         ])
-        if (cmd !== 'build') return
-        let message = 'generated '
-        if (adminFile) message += `${adminFile} and `
-        message += `db (${prettyBytes(dbSize)})`
-        console.log(`\x1b[90m${message}\x1b[39m`)
+        let message = `${cmd} ${location} in `
+        const duration = performance.now() - now
+        if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
+        else message += `${duration.toFixed(0)}ms`
+        message += ` (db ${prettyBytes(dbSize)})`
+        return message
       }
-
       const fileData = new LocalData({
         config: cms.config,
         fs: fs.promises,
         rootDir,
         dashboardUrl: await options.dashboardUrl
       })
-      for await (const db of fillCache(
-        context,
-        fileData,
-        store,
-        cms.config,
-        nextBuild
-      )) {
+      indexing = fillCache(context, fileData, store, cms.config)
+      for await (const db of indexing) {
         yield {cms, db, localData: fileData}
         if (onAfterGenerate && !afterGenerateCalled) {
+          const message = await write()
           afterGenerateCalled = true
-          await write()
-          onAfterGenerate()
+          onAfterGenerate(message)
         }
-      }
-      if (done && !afterGenerateCalled) {
-        await write()
-        break
       }
     } catch (e: any) {
       console.error(e)

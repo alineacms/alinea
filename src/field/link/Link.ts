@@ -1,5 +1,4 @@
 import type {WithoutLabel} from 'alinea/core/Field'
-import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
 import {Reference} from 'alinea/core/Reference'
 import {Type} from 'alinea/core/Type'
@@ -36,10 +35,6 @@ export function link<Fields>(
     pickers: {
       entry: entryPicker<EntryReference, Fields>({
         ...options,
-        hint: Hint.Extern({
-          name: 'EntryReference',
-          package: 'alinea/picker/entry'
-        }),
         title: 'Select a page',
         max: 1,
         selection: EntryLink
@@ -60,10 +55,6 @@ export namespace link {
       pickers: {
         entry: entryPicker<EntryReference, Fields>({
           ...options,
-          hint: Hint.Extern({
-            name: 'EntryReference',
-            package: 'alinea/picker/entry'
-          }),
           title: 'Select a page',
           selection: EntryLink
         }),

@@ -2,6 +2,7 @@ import {ComponentType} from 'react'
 import {Field} from './Field.js'
 import {assign, create, defineProperty, entries} from './util/Objects.js'
 import {rowId} from './util/RowId.js'
+import {View} from './View.js'
 
 export interface SectionDefinition {
   [key: string]: Field<any, any> | Section
@@ -10,9 +11,8 @@ export interface SectionDefinition {
 export interface SectionData {
   definition: SectionDefinition
   fields: Record<string, Field>
-  view?: ComponentType<{
-    section: Section
-  }>
+  sections: Array<Section>
+  view?: View<{section: Section}>
 }
 
 export interface SectionI extends Record<string, Field> {}
@@ -30,19 +30,15 @@ export type SectionView<Fields> = ComponentType<{
 export namespace Section {
   export const Data = Symbol.for('@alinea/Section.Data')
 
-  export function provideView<
-    Fields,
-    Factory extends (...args: Array<any>) => Section<Fields>
-  >(view: SectionView<Fields>, factory: Factory): Factory {
-    return ((...args: Array<any>) => {
-      const section = factory(...args)
-      section[Section.Data].view = view as SectionView<object>
-      return section
-    }) as Factory
+  export function view(section: Section): View<{section: Section}> | undefined {
+    return section[Section.Data].view
   }
 
-  export function view(section: Section) {
-    return section[Section.Data].view
+  export function referencedViews(section: Section): Array<string> {
+    const {view, sections} = section[Section.Data]
+    return [view, ...sections.flatMap(referencedViews)].filter(
+      v => typeof v === 'string'
+    )
   }
 
   export function definition(section: Section) {
@@ -58,18 +54,21 @@ export namespace Section {
   }
 }
 
-interface SectionOptions extends Omit<SectionData, 'fields'> {
+interface SectionOptions extends Omit<SectionData, 'fields' | 'sections'> {
   fields?: Record<string, Field>
+  sections?: Array<Section>
 }
 
 export function section<Fields>(data: SectionOptions): Section<Fields> {
   const section = create(null)
+  const sections = [] as Array<Section>
   const fields: Record<string, Field> = create(null)
   for (const [key, value] of entries(data.definition)) {
     if (Field.isField(value)) {
       defineProperty(section, key, {value, enumerable: false})
       fields[key] = value
     } else if (Section.isSection(value)) {
+      sections.push(value)
       assign(fields, Section.fields(value))
     }
   }
@@ -79,6 +78,7 @@ export function section<Fields>(data: SectionOptions): Section<Fields> {
   const id = rowId()
   section[id] = section
   if (!data.fields) assign(data, {fields})
+  if (!data.sections) assign(data, {sections})
   defineProperty(section, Section.Data, {
     value: data,
     enumerable: false
