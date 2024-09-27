@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {Popover} from '@headlessui/react'
+import {Popover, PopoverButtonProps} from '@headlessui/react'
 import {HTMLAttributes, PropsWithChildren} from 'react'
 import css from './PopoverMenu.module.scss'
 
@@ -13,9 +13,10 @@ export namespace PopoverMenu {
       </Popover>
     )
   }
-  export const Trigger: typeof Popover.Button = styles.trigger.toElement(
-    Popover.Button
-  ) as any
+
+  export function Trigger(props: PopoverButtonProps<'button'>) {
+    return <Popover.Button {...props} className={styles.trigger()} />
+  }
 
   export function Items({
     left,

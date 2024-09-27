@@ -37,7 +37,13 @@ export namespace Hero {
       />
     )
   }
-  export const ByLine = styles.byLine.toElement('p')
+
+  export function ByLine(
+    props: PropsWithChildren<HTMLProps<HTMLParagraphElement>>
+  ) {
+    return <p {...props} className={styles.byLine(styler.merge(props))} />
+  }
+
   export function Action({
     children,
     href,

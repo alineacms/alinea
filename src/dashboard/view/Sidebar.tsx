@@ -35,8 +35,6 @@ type Opened = {nav: boolean; preview: boolean}
 type OpenContext = [Opened, Dispatch<keyof Opened>]
 
 export namespace Sidebar {
-  // export const Root = styles.root.toElement('aside')
-
   const slots = createSlots()
   const opened = createContext<OpenContext | undefined>(undefined)
 

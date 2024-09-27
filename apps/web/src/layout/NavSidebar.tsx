@@ -4,8 +4,6 @@ import css from './NavSidebar.module.scss'
 
 const styles = styler(css)
 
-//export const NavSidebar = styles.root.toElement('aside')
-
 export interface NavSidebarProps {
   fluid?: boolean
 }
