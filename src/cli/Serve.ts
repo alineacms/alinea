@@ -63,6 +63,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   const rootDir = path.resolve(cwd)
   const context: ServeContext = {
     cmd,
+    configLocation,
     rootDir,
     base,
     staticDir,
@@ -124,7 +125,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       const backend = createBackend()
       const handleApi = createHandler(cms, backend, Promise.resolve(db))
       if (localServer) localServer.close()
-      localServer = createLocalServer(context, handleApi, user)
+      localServer = createLocalServer(context, cms, handleApi, user)
       currentCMS = cms
       context.liveReload.reload('refresh')
 

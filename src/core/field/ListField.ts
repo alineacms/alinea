@@ -32,7 +32,7 @@ export class ListField<
         meta.options.initialValue,
         meta.postProcess
       ),
-      referencedViews: Schema.views(schema),
+      referencedViews: Schema.referencedViews(schema),
       ...meta
     })
   }

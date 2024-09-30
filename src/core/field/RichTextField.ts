@@ -29,7 +29,7 @@ export class RichTextField<
         meta.options.initialValue,
         meta.options.searchable
       ),
-      referencedViews: schema ? Schema.views(schema) : [],
+      referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta
     })
   }

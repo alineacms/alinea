@@ -2,7 +2,6 @@ import {Database} from 'alinea/backend/Database'
 import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'
-import {Config} from 'alinea/core/Config'
 import {genEffect} from 'alinea/core/util/Async'
 import {basename, join} from 'alinea/core/util/Paths'
 import fs from 'node:fs'
@@ -37,13 +36,19 @@ export interface GenerateOptions {
   dashboardUrl?: Promise<string>
 }
 
-async function generatePackage(context: GenerateContext, config: Config) {
+async function generatePackage(context: GenerateContext, cms: CMS) {
+  const {config} = cms
   if (!config.dashboardFile) return
   const staticFile = config.dashboardFile
     ? join(config.publicDir, config.dashboardFile)
     : undefined
   if (!staticFile) return
-  await generateDashboard(context, config.handlerUrl ?? '/api/cms', staticFile)
+  await generateDashboard(
+    context,
+    cms,
+    config.handlerUrl ?? '/api/cms',
+    staticFile
+  )
   return basename(staticFile)
 }
 
@@ -116,7 +121,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       let dbSize = 0
       if (cmd === 'build') {
         ;[, dbSize] = await Promise.all([
-          generatePackage(context, cms.config),
+          generatePackage(context, cms),
           writeStore(storeData())
         ])
       } else {
