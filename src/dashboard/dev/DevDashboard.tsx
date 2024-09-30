@@ -47,10 +47,10 @@ export function DevDashboard({loadConfig, loadViews}: DevDashboardOptions) {
   async function getConfig() {
     // Reload css
     const link = document.querySelector(
-      'link[href^="/entry.css"]'
+      'link[href^="/views.css"]'
     ) as HTMLLinkElement
     const copy = link.cloneNode() as HTMLLinkElement
-    copy.href = '/entry.css?' + Math.random()
+    copy.href = '/views.css?' + Math.random()
     copy.onload = () => link.remove()
     link.after(copy)
     const [config, views] = await Promise.all([loadConfig(), loadViews()])

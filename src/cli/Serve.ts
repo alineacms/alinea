@@ -63,6 +63,7 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   const rootDir = path.resolve(cwd)
   const context: ServeContext = {
+    configLocation,
     rootDir,
     base,
     staticDir,
@@ -119,7 +120,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       const history = new GitHistory(cms.config, rootDir)
       const backend = createBackend()
       const handleApi = createHandler(cms, backend, Promise.resolve(db))
-      handleRequest = createLocalServer(context, handleApi, user)
+      handleRequest = createLocalServer(context, cms, handleApi, user)
       currentCMS = cms
       context.liveReload.reload('refresh')
 

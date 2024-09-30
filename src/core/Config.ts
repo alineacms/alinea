@@ -67,9 +67,9 @@ export namespace Config {
     }
   }
 
-  export function views(config: Config): Array<string> {
-    return Schema.views(config.schema).concat(
-      values(config.workspaces).flatMap(Workspace.views)
+  export function referencedViews(config: Config): Array<string> {
+    return Schema.referencedViews(config.schema).concat(
+      values(config.workspaces).flatMap(Workspace.referencedViews)
     )
   }
 }

@@ -2,13 +2,16 @@ import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {HandlerWithConnect} from 'alinea/backend/Handler'
 import {HttpRouter, router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/CloudConfig'
+import {CMS} from 'alinea/core/CMS'
 import {Trigger, trigger} from 'alinea/core/Trigger'
 import {User} from 'alinea/core/User'
 import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
 import {Readable} from 'node:stream'
+import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
+import {viewsPlugin} from '../util/ViewsPlugin.js'
 import {ServeContext} from './ServeContext.js'
 
 type BuildDetails = Map<string, OutputFile>
@@ -60,6 +63,7 @@ function buildFiles(outdir: string, result: BuildResult) {
 
 export function createLocalServer(
   {
+    configLocation,
     rootDir: cwd,
     staticDir,
     alineaDev,
@@ -67,6 +71,7 @@ export function createLocalServer(
     production,
     liveReload
   }: ServeContext,
+  cms: CMS,
   handleApi: HandlerWithConnect,
   user: User
 ): HttpRouter {
@@ -74,15 +79,17 @@ export function createLocalServer(
   const matcher = router.matcher()
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/dev',
-    config: '@alinea/generated/config.js',
-    views: '@alinea/generated/views.js'
+    config: configLocation,
+    views: '@alinea/views'
   }
   const tsconfigLocation = path.join(cwd, 'tsconfig.json')
   const tsconfig = fs.existsSync(tsconfigLocation)
     ? tsconfigLocation
     : undefined
-  let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
-    initial = true
+  let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>()
+  let initial = true
+  const plugins = buildOptions?.plugins || []
+  plugins.push(viewsPlugin(cwd, cms), ignorePlugin)
   const config = {
     format: 'esm',
     target: 'esnext',
@@ -96,7 +103,7 @@ export function createLocalServer(
     entryPoints,
     platform: 'browser',
     ...buildOptions,
-    plugins: buildOptions?.plugins || [],
+    plugins,
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
       'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
@@ -198,7 +205,7 @@ export function createLocalServer(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          <link href="/entry.css" rel="stylesheet" />
+          <link href="/views.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
           <meta name="redirect_url" value="${handlerUrl}?auth=login" />

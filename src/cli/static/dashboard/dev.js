@@ -1,6 +1,3 @@
-import '@alinea/generated/views.css'
-import 'alinea/css'
-
 import {DevDashboard} from 'alinea/dashboard/dev/DevDashboard'
 import {jsx} from 'react/jsx-runtime'
 import {reactRender} from './render-react18.js'

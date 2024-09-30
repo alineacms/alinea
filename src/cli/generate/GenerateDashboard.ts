@@ -1,16 +1,19 @@
 import {buildOptions} from 'alinea/cli/build/BuildOptions'
 import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
 import {publicDefines} from 'alinea/cli/util/PublicDefines'
+import {CMS} from 'alinea/core/CMS'
 import {createId} from 'alinea/core/Id'
 import {code} from 'alinea/core/util/CodeGen'
 import {build} from 'esbuild'
 import escapeHtml from 'escape-html'
 import fs from 'node:fs'
 import path from 'node:path'
+import {viewsPlugin} from '../util/ViewsPlugin.js'
 import {GenerateContext} from './GenerateContext.js'
 
 export async function generateDashboard(
-  {rootDir, configDir}: GenerateContext,
+  {configLocation, rootDir, configDir}: GenerateContext,
+  cms: CMS,
   handlerUrl: string,
   staticFile: string
 ) {
@@ -28,6 +31,7 @@ export async function generateDashboard(
   const tsconfig = fs.existsSync(tsconfigLocation)
     ? tsconfigLocation
     : undefined
+  const plugins = [viewsPlugin(rootDir, cms)]
   await build({
     format: 'esm',
     target: 'esnext',
@@ -39,12 +43,17 @@ export async function generateDashboard(
     absWorkingDir: configDir,
     entryPoints,
     platform: 'browser',
-    inject: ['alinea/cli/util/WarnPublicEnv'],
+    inject: [
+      'alinea/cli/util/WarnPublicEnv',
+      viewsPlugin.entry,
+      configLocation
+    ],
     define: {
       'process.env.NODE_ENV': '"production"',
       ...publicDefines(process.env)
     },
     ...buildOptions,
+    plugins,
     tsconfig,
     logLevel: 'error'
   })
@@ -55,7 +64,7 @@ export async function generateDashboard(
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="${baseUrl}/entry.css?${revision}" rel="stylesheet" />
+        <link href="${baseUrl}/views.css?${revision}" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
         <meta name="redirect_url" value="${handlerUrl}?auth=login" />

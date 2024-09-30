@@ -1,9 +1,3 @@
-import '@alinea/generated/views.css'
-import 'alinea/css'
-
-import {cms} from '@alinea/generated/config.js'
-import {views} from '@alinea/generated/views.js'
-
 import {Client} from 'alinea/core/Client'
 import {App} from 'alinea/dashboard/App'
 import {jsx} from 'react/jsx-runtime'

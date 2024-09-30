@@ -20,7 +20,7 @@ export class UnionField<
         meta.options.initialValue,
         meta.postProcess
       ),
-      referencedViews: schema ? Schema.views(schema) : [],
+      referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta
     })
   }

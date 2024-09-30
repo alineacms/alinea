@@ -82,7 +82,7 @@ export namespace Workspace {
     }
   }
 
-  export function views(workspace: Workspace) {
+  export function referencedViews(workspace: Workspace) {
     return values(roots(workspace)).flatMap(Root.referencedViews)
   }
 }
