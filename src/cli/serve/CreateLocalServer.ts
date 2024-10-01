@@ -149,7 +149,7 @@ export function createLocalServer(
           reportHalt('Building Alinea dashboard failed')
         } else {
           currentBuild.resolve(buildFiles(devDir, result))
-          if (alineaDev) liveReload.reload('reload')
+          liveReload.reload(alineaDev ? 'reload' : 'refresh')
         }
       }
     }

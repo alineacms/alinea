@@ -127,7 +127,6 @@ export async function serve(options: ServeOptions): Promise<void> {
       if (localServer) localServer.close()
       localServer = createLocalServer(context, cms, handleApi, user)
       currentCMS = cms
-      context.liveReload.reload('refresh')
 
       function createBackend(): Backend {
         if (process.env.ALINEA_CLOUD_DEBUG)
