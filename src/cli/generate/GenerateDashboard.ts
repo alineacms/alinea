@@ -65,7 +65,7 @@ export async function generateDashboard(
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="${baseUrl}/views.css?${revision}" rel="stylesheet" />
+        <link href="${baseUrl}/entry.css?${revision}" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
         <meta name="redirect_url" value="${handlerUrl}?auth=login" />
