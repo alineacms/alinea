@@ -48,5 +48,5 @@ export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
 }
 
 export namespace viewsPlugin {
-  export const entry = '@alinea/views'
+  export const entry = '#alinea/views'
 }

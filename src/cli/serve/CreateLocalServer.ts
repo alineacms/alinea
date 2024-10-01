@@ -67,7 +67,7 @@ export function createLocalServer(
   {
     cmd,
     configLocation,
-    rootDir: cwd,
+    rootDir,
     staticDir,
     alineaDev,
     buildOptions,
@@ -93,16 +93,16 @@ export function createLocalServer(
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/dev',
     config: configLocation,
-    views: '@alinea/views'
+    views: viewsPlugin.entry
   }
-  const tsconfigLocation = path.join(cwd, 'tsconfig.json')
+  const tsconfigLocation = path.join(rootDir, 'tsconfig.json')
   const tsconfig = fs.existsSync(tsconfigLocation)
     ? tsconfigLocation
     : undefined
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>()
   let initial = true
   const plugins = buildOptions?.plugins || []
-  plugins.push(viewsPlugin(cwd, cms), ignorePlugin)
+  plugins.push(viewsPlugin(rootDir, cms), ignorePlugin)
   const config = {
     format: 'esm',
     target: 'esnext',
@@ -112,11 +112,15 @@ export function createLocalServer(
     sourcemap: true,
     outdir: devDir,
     bundle: true,
-    absWorkingDir: cwd,
+    absWorkingDir: rootDir,
     entryPoints,
     platform: 'browser',
     ...buildOptions,
     plugins,
+    alias: {
+      'alinea/next': 'alinea/core'
+    },
+    external: ['@alinea/generated'],
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
       'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
@@ -130,8 +134,7 @@ export function createLocalServer(
       'ignored-bare-import': 'silent'
     },
     tsconfig,
-    write: false,
-    external: ['node:async_hooks']
+    write: false
   } satisfies BuildOptions
 
   const builder = buildEmitter(config)
@@ -196,10 +199,10 @@ export function createLocalServer(
     router.queryMatcher.post('/upload').map(async ({request, url}) => {
       if (!request.body) return new Response('No body', {status: 400})
       const file = url.searchParams.get('file')!
-      const dir = path.join(cwd, path.dirname(file))
+      const dir = path.join(rootDir, path.dirname(file))
       await fs.promises.mkdir(dir, {recursive: true})
       await fs.promises.writeFile(
-        path.join(cwd, file),
+        path.join(rootDir, file),
         Readable.fromWeb(request.body as any)
       )
       return new Response('Upload ok')

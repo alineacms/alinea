@@ -2,6 +2,7 @@ import {BuildOptions} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
 import {buildEmitter} from '../build/BuildEmitter.js'
+import {buildOptions} from '../build/BuildOptions.js'
 import {externalPlugin} from '../util/ExternalPlugin.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
@@ -14,6 +15,7 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
   const tsConfigFile = path.join(rootDir, 'tsconfig.json')
   const define = publicDefines(process.env)
   return {
+    ...buildOptions,
     color: true,
     format: 'esm',
     target: 'esnext',
@@ -25,10 +27,6 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
     platform: 'neutral',
     jsx: 'automatic',
     define,
-    loader: {
-      '.module.css': 'local-css',
-      '.css': 'css'
-    },
     plugins: [externalPlugin(rootDir), ignorePlugin],
     tsconfig: fs.existsSync(tsConfigFile) ? tsConfigFile : undefined
   }

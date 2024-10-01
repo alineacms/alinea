@@ -1,6 +1,4 @@
-import {buildOptions} from 'alinea/cli/build/BuildOptions'
 import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
-import {publicDefines} from 'alinea/cli/util/PublicDefines'
 import {CMS} from 'alinea/core/CMS'
 import {createId} from 'alinea/core/Id'
 import {code} from 'alinea/core/util/CodeGen'
@@ -8,6 +6,9 @@ import esbuild from 'esbuild'
 import escapeHtml from 'escape-html'
 import fs from 'node:fs'
 import path from 'node:path'
+import {buildOptions} from '../build/BuildOptions.js'
+import {ignorePlugin} from '../util/IgnorePlugin.js'
+import {publicDefines} from '../util/PublicDefines.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
 import {GenerateContext} from './GenerateContext.js'
 
@@ -31,23 +32,23 @@ export async function generateDashboard(
   const tsconfig = fs.existsSync(tsconfigLocation)
     ? tsconfigLocation
     : undefined
-  const plugins = [viewsPlugin(rootDir, cms)]
+  const plugins = [viewsPlugin(rootDir, cms), ignorePlugin]
   await esbuild.build({
     format: 'esm',
     target: 'esnext',
     treeShaking: true,
     minify: true,
-    splitting: true,
     outdir: assetsFolder,
     bundle: true,
     absWorkingDir: configDir,
     entryPoints,
     platform: 'browser',
-    inject: [
-      'alinea/cli/util/WarnPublicEnv',
-      viewsPlugin.entry,
-      configLocation
-    ],
+    inject: ['alinea/cli/util/WarnPublicEnv'],
+    alias: {
+      'alinea/next': 'alinea/core',
+      '#alinea/config': configLocation
+    },
+    external: ['@alinea/generated'],
     define: {
       'process.env.NODE_ENV': '"production"',
       ...publicDefines(process.env)

@@ -1,3 +1,7 @@
+// These are aliased during build
+import {cms} from '#alinea/config'
+import {views} from '#alinea/views'
+
 import {Client} from 'alinea/core/Client'
 import {App} from 'alinea/dashboard/App'
 import {jsx} from 'react/jsx-runtime'
