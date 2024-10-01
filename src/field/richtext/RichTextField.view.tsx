@@ -175,7 +175,7 @@ export function RichTextInput<Blocks extends Schema>({
       const element = target || document.activeElement
       const editorElement = () =>
         containerRef.current?.querySelector(
-          `${styles.root.editor.toSelector()} > .ProseMirror`
+          `.${styles.root.editor()} > .ProseMirror`
         )
       const isFocused =
         toolbarRef.current?.contains(element as HTMLElement) ||
