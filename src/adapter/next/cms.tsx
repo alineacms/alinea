@@ -69,13 +69,12 @@ export class NextCMS<
                 await db.syncWith(client).catch(() => {})
               }
             }
-            return dbResolver.resolve(params)
+            return dbResolver.resolve({...resolveDefaults, ...params})
           }
         },
         {
           url,
-          applyAuth,
-          resolveDefaults
+          applyAuth
         }
       )
       return client
