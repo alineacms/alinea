@@ -35,7 +35,7 @@ export class NextCMS<
     const database = generatedStore.then(
       store => new Database(this.config, store)
     )
-    const resolver = database.then(
+    const dbResolver = database.then(
       db => new EntryResolver(db, this.config.schema)
     )
     super(config, async () => {
@@ -56,10 +56,11 @@ export class NextCMS<
         const payload = getPreviewPayloadFromCookies(cookie.getAll())
         if (payload) resolveDefaults.preview = {payload}
       }
+      if (devUrl()) return new Client({url, applyAuth, resolveDefaults})
       const client = new NextClient(
         {
           async resolve(params) {
-            const dbResolver = await resolver
+            const resolver = await dbResolver
             if (!params.preview && !isBuild) {
               const syncInterval = params.syncInterval ?? 60
               const now = Date.now()
@@ -69,7 +70,7 @@ export class NextCMS<
                 await db.syncWith(client).catch(() => {})
               }
             }
-            return dbResolver.resolve({...resolveDefaults, ...params})
+            return resolver.resolve({...resolveDefaults, ...params})
           }
         },
         {
