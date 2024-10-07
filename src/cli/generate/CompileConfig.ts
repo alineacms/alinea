@@ -27,6 +27,9 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
     platform: 'neutral',
     jsx: 'automatic',
     define,
+    alias: {
+      'alinea/next': 'alinea/core'
+    },
     plugins: [externalPlugin(rootDir), ignorePlugin],
     tsconfig: fs.existsSync(tsConfigFile) ? tsConfigFile : undefined
   }
