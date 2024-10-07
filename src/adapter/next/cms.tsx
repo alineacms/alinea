@@ -5,19 +5,79 @@ import {generatedStore} from 'alinea/backend/store/GeneratedStore'
 import {AuthenticateRequest, Client, ClientOptions} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
+import {EntryRow} from 'alinea/core/EntryRow'
 import {outcome} from 'alinea/core/Outcome'
-import {ResolveDefaults, ResolveParams, Resolver} from 'alinea/core/Resolver'
+import {
+  PreviewPayload,
+  ResolveDefaults,
+  ResolveParams
+} from 'alinea/core/Resolver'
 import {User} from 'alinea/core/User'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
+import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
+import * as Y from 'yjs'
 import {devUrl, requestContext} from './context.js'
 
 class NextClient extends Client {
-  constructor(private resolver: Resolver, options: ClientOptions) {
+  resolver: EntryResolver
+
+  constructor(private db: Database, options: ClientOptions) {
     super(options)
+    this.resolver = new EntryResolver(db, db.config.schema)
   }
 
-  resolve(params: ResolveParams): Promise<unknown> {
-    return this.resolver.resolve(params)
+  async resolve(params: ResolveParams): Promise<unknown> {
+    const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
+    const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+    if (!params.preview && !isBuild) {
+      const syncInterval = params.syncInterval ?? 60
+      const now = Date.now()
+      if (now - lastSync >= syncInterval * 1000) {
+        lastSync = now
+        const db = await database
+        await db.syncWith(client).catch(() => {})
+      }
+    }
+    return this.resolver.resolve({...resolveDefaults, ...params})
+  }
+
+  async parsePreview(preview: PreviewPayload): Promise<EntryRow | undefined> {
+    const update = await decodePreviewPayload(preview.payload)
+    let meta = await db.meta()
+    if (update.contentHash !== meta.contentHash) {
+      await syncPending(ctx)
+      meta = await db.meta()
+    }
+    const entry = await resolver.resolve<EntryRow>({
+      selection: createSelection(Entry({entryId: update.entryId}).maybeFirst()),
+      realm: Realm.PreferDraft
+    })
+    if (!entry) return
+    const cachedDraft = await drafts.get(update.entryId)
+    let currentDraft: Draft | undefined
+    if (cachedDraft?.contentHash === meta.contentHash) {
+      currentDraft = cachedDraft.draft
+    } else {
+      try {
+        const pending = backend.drafts.get(ctx, update.entryId)
+        drafts.set(
+          update.entryId,
+          pending.then(draft => ({contentHash: meta.contentHash, draft}))
+        )
+        currentDraft = await pending
+      } catch (error) {
+        console.warn('> could not fetch draft', error)
+      }
+    }
+    const apply = currentDraft
+      ? mergeUpdatesV2([currentDraft.draft, update.update])
+      : update.update
+    const type = cms.config.schema[entry.type]
+    if (!type) return
+    const doc = new Y.Doc()
+    Y.applyUpdateV2(doc, apply)
+    const entryData = parseYDoc(type, doc)
+    return {...entry, ...entryData, path: entry.path}
   }
 }
 
@@ -54,6 +114,7 @@ export class NextCMS<
       if (isDraft) {
         const cookie = cookies()
         const payload = getPreviewPayloadFromCookies(cookie.getAll())
+        const update = payload && (await decodePreviewPayload(payload))
         if (payload) resolveDefaults.preview = {payload}
       }
       if (devUrl()) return new Client({url, applyAuth, resolveDefaults})
@@ -61,7 +122,7 @@ export class NextCMS<
         {
           async resolve(params) {
             const resolver = await dbResolver
-            if (!params.preview && !isBuild) {
+            if (!resolveDefaults.preview && !isBuild) {
               const syncInterval = params.syncInterval ?? 60
               const now = Date.now()
               if (now - lastSync >= syncInterval * 1000) {

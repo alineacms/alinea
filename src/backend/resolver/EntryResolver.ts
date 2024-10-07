@@ -78,11 +78,7 @@ export interface PostContext {
 export class EntryResolver {
   targets: Schema.Targets
 
-  constructor(
-    public db: Database,
-    public schema: Schema,
-    public defaults?: Partial<ResolveRequest>
-  ) {
+  constructor(public db: Database, public schema: Schema) {
     this.targets = Schema.targets(schema)
   }
 
@@ -668,8 +664,8 @@ export class EntryResolver {
     selection,
     location,
     locale,
-    realm = this.defaults?.realm ?? Realm.Published,
-    preview = this.defaults?.preview
+    realm = Realm.Published,
+    preview
   }: ResolveRequest): Promise<T> => {
     const ctx = new ResolveContext({realm, location, locale})
     const query = this.query(ctx, selection)
