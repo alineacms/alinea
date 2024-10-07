@@ -94,7 +94,7 @@ export function createHandler(
     >()
     let lastSync = 0
 
-    return {db, mutate, resolve, syncPending}
+    return {db, mutate, resolve, periodicSync, syncPending}
 
     async function resolve(ctx: RequestContext, params: ResolveParams) {
       if (!params.preview) {
@@ -283,7 +283,7 @@ export function createHandler(
     context: RequestContext
   ): Promise<Response> {
     try {
-      const {db, resolve, mutate, syncPending} = await init
+      const {db, resolve, mutate, periodicSync, syncPending} = await init
       const previews = new JWTPreviews(context.apiKey)
       const url = new URL(request.url)
       const params = url.searchParams
@@ -310,9 +310,11 @@ export function createHandler(
 
       const verified = PLazy.from(() => backend.auth.verify(context, request))
 
-      const internal = PLazy.from(async function verifyInternal() {
+      const internal = PLazy.from(async function verifyInternal(): Promise<
+        AuthedContext | RequestContext
+      > {
         try {
-          return await backend.auth.verify(context, request)
+          return verified
         } catch {
           const authorization = request.headers.get('authorization')
           const bearer = authorization?.slice('Bearer '.length)
@@ -322,6 +324,13 @@ export function createHandler(
           return context
         }
       })
+
+      // Sign preview token
+      if (action === HandleAction.PreviewToken && request.method === 'POST') {
+        await verified
+        expectJson()
+        return Response.json(await previews.sign(PreviewBody(await body)))
+      }
 
       // User
       if (action === HandleAction.User && request.method === 'GET') {
@@ -334,7 +343,7 @@ export function createHandler(
         }
       }
 
-      // These actions can be run internally or by a user
+      // Resolve
       if (action === HandleAction.Resolve && request.method === 'POST') {
         const ctx = await internal
         expectJson()
@@ -342,27 +351,13 @@ export function createHandler(
           (await resolve(ctx, ResolveBody(await body))) ?? null
         )
       }
+
+      // Pending
       if (action === HandleAction.Pending && request.method === 'GET') {
         const ctx = await internal
         expectJson()
         const commitHash = string(url.searchParams.get('commitHash'))
         return Response.json(await backend.pending?.since(ctx, commitHash))
-      }
-      if (action === HandleAction.Draft && request.method === 'GET') {
-        const ctx = await internal
-        expectJson()
-        const entryId = string(url.searchParams.get('entryId'))
-        const draft = await backend.drafts.get(ctx, entryId)
-        return Response.json(
-          draft ? {...draft, draft: base64.stringify(draft.draft)} : null
-        )
-      }
-
-      // Sign preview token
-      if (action === HandleAction.PreviewToken && request.method === 'POST') {
-        await verified
-        expectJson()
-        return Response.json(await previews.sign(PreviewBody(await body)))
       }
 
       // History
@@ -379,17 +374,19 @@ export function createHandler(
 
       // Syncable
       if (action === HandleAction.Sync && request.method === 'GET') {
-        await verified
+        const ctx = await internal
         expectJson()
         const contentHash = string(url.searchParams.get('contentHash'))
-        await syncPending(context)
+        if ('user' in ctx) await periodicSync(ctx)
+        else await syncPending(context)
         return Response.json(await db.syncRequired(contentHash))
       }
 
       if (action === HandleAction.Sync && request.method === 'POST') {
-        await verified
+        const ctx = await internal
         expectJson()
-        await syncPending(context)
+        if ('user' in ctx) await periodicSync(ctx)
+        else await syncPending(context)
         return Response.json(await db.sync(SyncBody(await body)))
       }
 
@@ -418,6 +415,16 @@ export function createHandler(
       }
 
       // Drafts
+      if (action === HandleAction.Draft && request.method === 'GET') {
+        const ctx = await internal
+        expectJson()
+        const entryId = string(url.searchParams.get('entryId'))
+        const draft = await backend.drafts.get(ctx, entryId)
+        return Response.json(
+          draft ? {...draft, draft: base64.stringify(draft.draft)} : null
+        )
+      }
+
       if (action === HandleAction.Draft && request.method === 'POST') {
         expectJson()
         const data = (await body) as DraftTransport
