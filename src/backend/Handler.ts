@@ -314,7 +314,7 @@ export function createHandler(
         AuthedContext | RequestContext
       > {
         try {
-          return verified
+          return await verified
         } catch {
           const authorization = request.headers.get('authorization')
           const bearer = authorization?.slice('Bearer '.length)
