@@ -822,6 +822,26 @@ export class Database implements Syncable {
       })
     }
   }
+
+  async preview<T>(
+    entry: EntryRow,
+    query: (tx: Store) => Promise<T>
+  ): Promise<T | undefined> {
+    try {
+      await this.store.transaction(async tx => {
+        // Temporarily add preview entry
+        await tx
+          .delete(EntryRow)
+          .where(eq(EntryRow.entryId, entry.entryId), eq(EntryRow.active, true))
+        await tx.insert(EntryRow).values(entry)
+        await Database.index(tx)
+        const result = await query(tx)
+        throw {result}
+      })
+    } catch (err: any) {
+      if (err.result) return err.result as T
+    }
+  }
 }
 
 namespace EntryRealm {

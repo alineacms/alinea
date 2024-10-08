@@ -7,7 +7,7 @@ import PLazy from 'p-lazy'
 import {asc, Database, eq, gt, table} from 'rado'
 import {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData.js'
 import * as column from 'rado/universal/columns'
-import {HandleAction} from '../Handler.js'
+import {HandleAction} from '../HandleAction.js'
 
 export interface DatabaseOptions {
   db: Database

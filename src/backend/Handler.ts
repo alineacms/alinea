@@ -26,6 +26,7 @@ import {
   DraftTransport,
   RequestContext
 } from './Backend.js'
+import {HandleAction} from './HandleAction.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
 import {generatedStore} from './store/GeneratedStore.js'
@@ -49,17 +50,6 @@ const PreviewBody = object({
 
 const SyncBody = array(string)
 
-export enum HandleAction {
-  User = 'user',
-  Resolve = 'resolve',
-  Pending = 'pending',
-  Sync = 'sync',
-  Draft = 'draft',
-  History = 'history',
-  PreviewToken = 'previewToken',
-  Mutate = 'mutate',
-  Upload = 'upload'
-}
 export interface Handler {
   (request: Request, context?: RequestContext): Promise<Response>
 }

@@ -34,7 +34,8 @@ import {input} from 'rado/core/expr/Input'
 import {getData, getSql, getTable, HasSql} from 'rado/core/Internal'
 import {Either} from 'rado/core/MetaData'
 import {bm25, snippet} from 'rado/sqlite'
-import {Database} from '../Database.js'
+import type {Database} from '../Database.js'
+import {Store} from '../Store.js'
 import {LinkResolver} from './LinkResolver.js'
 import {ResolveContext} from './ResolveContext.js'
 
@@ -670,37 +671,20 @@ export class EntryResolver {
     const ctx = new ResolveContext({realm, location, locale})
     const query = this.query(ctx, selection)
     const singleResult = this.isSingleResult(ctx, selection)
-    if (preview) {
-      const updated = 'entry' in preview ? preview.entry : undefined
-      if (updated)
-        try {
-          await this.db.store.transaction(async tx => {
-            // Temporarily add preview entry
-            await tx
-              .delete(EntryRow)
-              .where(
-                eq(EntryRow.entryId, updated.entryId),
-                eq(EntryRow.active, true)
-              )
-            await tx.insert(EntryRow).values(updated)
-            await Database.index(tx)
-            const rows = await query.all(tx)
-            const linkResolver = new LinkResolver(this, tx, ctx.realm)
-            const result = singleResult ? rows[0] : rows
-            if (result) await this.post({linkResolver}, result, selection)
-            throw {result}
-          })
-        } catch (err: any) {
-          if (err.result) return err.result as T
-          // console.warn('Could not decode preview update', err)
-        }
-    }
-    return this.db.store.transaction(async tx => {
+    const transact = async (tx: Store): Promise<T> => {
       const rows = await query.all(tx)
       const linkResolver = new LinkResolver(this, tx, ctx.realm)
       const result = singleResult ? rows[0] : rows
       if (result) await this.post({linkResolver}, result, selection)
       return result as T
-    })
+    }
+    if (preview) {
+      const updated = 'entry' in preview ? preview.entry : undefined
+      if (updated) {
+        const result = await this.db.preview<T>(updated, transact)
+        if (result) return result
+      }
+    }
+    return this.db.store.transaction(transact)
   }
 }
