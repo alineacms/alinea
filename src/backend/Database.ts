@@ -4,6 +4,7 @@ import {EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {PageSeed} from 'alinea/core/Page'
+import {Resolver} from 'alinea/core/Resolver'
 import {Root} from 'alinea/core/Root'
 import {Schema} from 'alinea/core/Schema'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
@@ -40,6 +41,7 @@ import {Change, ChangeType} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {JsonLoader} from './loader/JsonLoader.js'
+import {EntryResolver} from './resolver/EntryResolver.js'
 
 interface Seed {
   type: string
@@ -55,9 +57,11 @@ function seedKey(workspace: string, root: string, filePath: string) {
 
 export class Database implements Syncable {
   seed: Map<string, Seed>
+  resolver: Resolver
 
   constructor(public config: Config, public store: Store) {
     this.seed = this.seedData()
+    this.resolver = new EntryResolver(this, this.config.schema)
   }
 
   async syncRequired(contentHash: string): Promise<boolean> {

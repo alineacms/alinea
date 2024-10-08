@@ -44,9 +44,7 @@ export interface ResolveRequest {
   preview?: {entry: EntryRow} | {payload: string}
 }
 
-export interface ResolveParams extends ResolveRequest {
-  preview?: {payload: string}
-}
+export interface ResolveParams extends ResolveRequest {}
 
 export type ResolveDefaults = Partial<ResolveParams>
 

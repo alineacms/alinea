@@ -3,29 +3,22 @@ import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'
-import {parseYDoc} from 'alinea/core/Doc'
 import {Draft} from 'alinea/core/Draft'
-import {Entry} from 'alinea/core/Entry'
-import {EntryRow} from 'alinea/core/EntryRow'
 import {Graph} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {
-  PreviewPayload,
   PreviewUpdate,
   ResolveParams,
   ResolveRequest
 } from 'alinea/core/Resolver'
-import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/ResolveData'
 import {decode} from 'alinea/core/util/BufferToBase64'
 import {base64} from 'alinea/core/util/Encoding'
 import {assign} from 'alinea/core/util/Objects'
-import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import {Type, array, enums, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
-import * as Y from 'yjs'
 import {mergeUpdatesV2} from 'yjs'
 import {
   AuthedContext,
@@ -34,7 +27,7 @@ import {
   RequestContext
 } from './Backend.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
-import {EntryResolver} from './resolver/EntryResolver.js'
+import {createPreviewParser} from './resolver/ParsePreview.js'
 import {generatedStore} from './store/GeneratedStore.js'
 
 const limit = pLimit(1)
@@ -83,15 +76,12 @@ export function createHandler(
 ): HandlerWithConnect {
   const init = PLazy.from(async () => {
     const db = await database
-    const resolver = new EntryResolver(db, cms.schema)
+    const previews = createPreviewParser(db)
+    const resolver = db.resolver
     const changes = new ChangeSetCreator(
       cms.config,
       new Graph(cms.config, resolver)
     )
-    const drafts = new Map<
-      string,
-      Promise<{contentHash: string; draft?: Draft}>
-    >()
     let lastSync = 0
 
     return {db, mutate, resolve, periodicSync, syncPending}
@@ -101,10 +91,14 @@ export function createHandler(
         await periodicSync(ctx, params.syncInterval)
         return resolver.resolve(params as ResolveRequest)
       }
-      const entry = params.preview && (await parsePreview(ctx, params.preview))
+      const preview = await previews.parse(
+        params.preview,
+        () => syncPending(ctx),
+        entryId => backend.drafts.get(ctx, entryId)
+      )
       return resolver.resolve({
         ...params,
-        preview: entry && {entry}
+        preview: preview
       })
     }
 
@@ -181,51 +175,7 @@ export function createHandler(
       }
       await backend.drafts.store(ctx, draft)
       const {contentHash} = await db.meta()
-      drafts.set(mutation.entryId, Promise.resolve({contentHash, draft}))
-    }
-
-    async function parsePreview(
-      ctx: RequestContext,
-      preview: PreviewPayload
-    ): Promise<EntryRow | undefined> {
-      const update = await decodePreviewPayload(preview.payload)
-      let meta = await db.meta()
-      if (update.contentHash !== meta.contentHash) {
-        await syncPending(ctx)
-        meta = await db.meta()
-      }
-      const entry = await resolver.resolve<EntryRow>({
-        selection: createSelection(
-          Entry({entryId: update.entryId}).maybeFirst()
-        ),
-        realm: Realm.PreferDraft
-      })
-      if (!entry) return
-      const cachedDraft = await drafts.get(update.entryId)
-      let currentDraft: Draft | undefined
-      if (cachedDraft?.contentHash === meta.contentHash) {
-        currentDraft = cachedDraft.draft
-      } else {
-        try {
-          const pending = backend.drafts.get(ctx, update.entryId)
-          drafts.set(
-            update.entryId,
-            pending.then(draft => ({contentHash: meta.contentHash, draft}))
-          )
-          currentDraft = await pending
-        } catch (error) {
-          console.warn('> could not fetch draft', error)
-        }
-      }
-      const apply = currentDraft
-        ? mergeUpdatesV2([currentDraft.draft, update.update])
-        : update.update
-      const type = cms.config.schema[entry.type]
-      if (!type) return
-      const doc = new Y.Doc()
-      Y.applyUpdateV2(doc, apply)
-      const entryData = parseYDoc(type, doc)
-      return {...entry, ...entryData, path: entry.path}
+      previews.setDraft(mutation.entryId, {contentHash, draft})
     }
   })
 

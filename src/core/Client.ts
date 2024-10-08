@@ -7,7 +7,7 @@ import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {HttpError} from './HttpError.js'
 import {Mutation} from './Mutation.js'
-import {ResolveDefaults, ResolveParams} from './Resolver.js'
+import {ResolveParams} from './Resolver.js'
 import {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
@@ -19,7 +19,6 @@ export interface ClientOptions {
   url: string
   applyAuth?: AuthenticateRequest
   unauthorized?: () => void
-  resolveDefaults?: ResolveDefaults
 }
 
 export class Client implements Connection {
@@ -59,8 +58,7 @@ export class Client implements Connection {
   }
 
   resolve(params: ResolveParams): Promise<unknown> {
-    const {resolveDefaults} = this.#options
-    const body = JSON.stringify({...resolveDefaults, ...params})
+    const body = JSON.stringify(params)
     return this.#requestJson(
       {action: HandleAction.Resolve},
       {method: 'POST', body}

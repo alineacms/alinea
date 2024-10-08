@@ -1,85 +1,17 @@
 import {Headers} from '@alinea/iso'
 import {Database} from 'alinea/backend/Database'
-import {EntryResolver} from 'alinea/backend/resolver/EntryResolver'
+import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
 import {generatedStore} from 'alinea/backend/store/GeneratedStore'
-import {AuthenticateRequest, Client, ClientOptions} from 'alinea/core/Client'
+import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
-import {EntryRow} from 'alinea/core/EntryRow'
 import {outcome} from 'alinea/core/Outcome'
-import {
-  PreviewPayload,
-  ResolveDefaults,
-  ResolveParams
-} from 'alinea/core/Resolver'
+import {PreviewRequest, ResolveParams} from 'alinea/core/Resolver'
 import {User} from 'alinea/core/User'
+import {assign} from 'alinea/core/util/Objects'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
-import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
-import * as Y from 'yjs'
+import PLazy from 'p-lazy'
 import {devUrl, requestContext} from './context.js'
-
-class NextClient extends Client {
-  resolver: EntryResolver
-
-  constructor(private db: Database, options: ClientOptions) {
-    super(options)
-    this.resolver = new EntryResolver(db, db.config.schema)
-  }
-
-  async resolve(params: ResolveParams): Promise<unknown> {
-    const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
-    const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
-    if (!params.preview && !isBuild) {
-      const syncInterval = params.syncInterval ?? 60
-      const now = Date.now()
-      if (now - lastSync >= syncInterval * 1000) {
-        lastSync = now
-        const db = await database
-        await db.syncWith(client).catch(() => {})
-      }
-    }
-    return this.resolver.resolve({...resolveDefaults, ...params})
-  }
-
-  async parsePreview(preview: PreviewPayload): Promise<EntryRow | undefined> {
-    const update = await decodePreviewPayload(preview.payload)
-    let meta = await db.meta()
-    if (update.contentHash !== meta.contentHash) {
-      await syncPending(ctx)
-      meta = await db.meta()
-    }
-    const entry = await resolver.resolve<EntryRow>({
-      selection: createSelection(Entry({entryId: update.entryId}).maybeFirst()),
-      realm: Realm.PreferDraft
-    })
-    if (!entry) return
-    const cachedDraft = await drafts.get(update.entryId)
-    let currentDraft: Draft | undefined
-    if (cachedDraft?.contentHash === meta.contentHash) {
-      currentDraft = cachedDraft.draft
-    } else {
-      try {
-        const pending = backend.drafts.get(ctx, update.entryId)
-        drafts.set(
-          update.entryId,
-          pending.then(draft => ({contentHash: meta.contentHash, draft}))
-        )
-        currentDraft = await pending
-      } catch (error) {
-        console.warn('> could not fetch draft', error)
-      }
-    }
-    const apply = currentDraft
-      ? mergeUpdatesV2([currentDraft.draft, update.update])
-      : update.update
-    const type = cms.config.schema[entry.type]
-    if (!type) return
-    const doc = new Y.Doc()
-    Y.applyUpdateV2(doc, apply)
-    const entryData = parseYDoc(type, doc)
-    return {...entry, ...entryData, path: entry.path}
-  }
-}
 
 export interface PreviewProps {
   widget?: boolean
@@ -92,54 +24,57 @@ export class NextCMS<
 > extends CMS<Definition> {
   constructor(config: Definition, public baseUrl?: string) {
     let lastSync = 0
-    const database = generatedStore.then(
-      store => new Database(this.config, store)
+    const database = PLazy.from(() =>
+      generatedStore.then(store => new Database(this.config, store))
     )
-    const dbResolver = database.then(
-      db => new EntryResolver(db, this.config.schema)
-    )
+    const previewParser = PLazy.from(() => database.then(createPreviewParser))
     super(config, async () => {
       const context = await requestContext(config)
-      const resolveDefaults: ResolveDefaults = {}
-      const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
-      const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
-      const {cookies, draftMode} = await import('next/headers.js')
-      const [isDraft] = outcome(() => draftMode().isEnabled)
-      const applyAuth: AuthenticateRequest = init => {
-        const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${context.apiKey}`)
-        return {...init, headers}
-      }
-      const url = context.handlerUrl.href
-      if (isDraft) {
-        const cookie = cookies()
-        const payload = getPreviewPayloadFromCookies(cookie.getAll())
-        const update = payload && (await decodePreviewPayload(payload))
-        if (payload) resolveDefaults.preview = {payload}
-      }
-      if (devUrl()) return new Client({url, applyAuth, resolveDefaults})
-      const client = new NextClient(
-        {
-          async resolve(params) {
-            const resolver = await dbResolver
-            if (!resolveDefaults.preview && !isBuild) {
+      const client = new Client({
+        url: context.handlerUrl.href,
+        applyAuth(init) {
+          const headers = new Headers(init?.headers)
+          headers.set('Authorization', `Bearer ${context.apiKey}`)
+          return {...init, headers}
+        }
+      })
+      const clientResolve = client.resolve.bind(client)
+      const sync = () => database.then(db => db.syncWith(client))
+      return assign(client, {
+        async resolve(params: ResolveParams) {
+          const isDev = Boolean(devUrl())
+          let preview: PreviewRequest | undefined
+          const {cookies, draftMode} = await import('next/headers.js')
+          const [isDraft] = outcome(() => draftMode().isEnabled)
+          if (isDraft) {
+            const cookie = cookies()
+            const payload = getPreviewPayloadFromCookies(cookie.getAll())
+            if (payload) preview = {payload}
+          }
+          if (isDev) return clientResolve({preview, ...params})
+          const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
+          const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+          const db = await database
+          if (!isBuild) {
+            if (preview) {
+              const previews = await previewParser
+              preview = await previews.parse(
+                preview,
+                sync,
+                client.getDraft.bind(client)
+              )
+            } else {
               const syncInterval = params.syncInterval ?? 60
               const now = Date.now()
               if (now - lastSync >= syncInterval * 1000) {
                 lastSync = now
-                const db = await database
-                await db.syncWith(client).catch(() => {})
+                await sync()
               }
             }
-            return resolver.resolve({...resolveDefaults, ...params})
           }
-        },
-        {
-          url,
-          applyAuth
+          return db.resolver.resolve({preview, ...params})
         }
-      )
-      return client
+      })
     })
   }
 
