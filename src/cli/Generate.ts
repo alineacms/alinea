@@ -2,6 +2,7 @@ import {Database} from 'alinea/backend/Database'
 import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'
+import {Config} from 'alinea/core/Config'
 import {genEffect} from 'alinea/core/util/Async'
 import {basename, join} from 'alinea/core/util/Paths'
 import fs from 'node:fs'
@@ -117,6 +118,16 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   }
   const [store, storeData] = await createDb()
   for await (const cms of builds) {
+    if (cmd === 'build') {
+      const handlerUrl = cms.config.handlerUrl
+      const baseUrl = Config.baseUrl(cms.config, 'production')
+      if (handlerUrl && !baseUrl) {
+        reportHalt(
+          'No baseUrl was set for the production build in Alinea config'
+        )
+        process.exit(1)
+      }
+    }
     const write = async () => {
       let dbSize = 0
       if (cmd === 'build') {

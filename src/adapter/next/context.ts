@@ -17,7 +17,7 @@ export async function requestContext(config: Config): Promise<RequestContext> {
 }
 
 async function handlerUrl(config: Config) {
-  const baseUrl = process.env.ALINEA_BASE_URL ?? Config.baseUrl(config)
+  const baseUrl = Config.baseUrl(config)
   return devUrl()
     ? new URL('/api', devUrl())
     : new URL(

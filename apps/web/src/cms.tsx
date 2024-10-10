@@ -48,11 +48,11 @@ const demo = Config.workspace('Demo', {
     media: Config.media()
   }
 })
-
 export const cms = createCMS({
   schema,
   workspaces: {main, demo},
   baseUrl: {
+    production: process.env.VERCEL_URL ?? 'alinea.sh',
     development: 'http://localhost:3000'
   },
   handlerUrl: '/api/cms',

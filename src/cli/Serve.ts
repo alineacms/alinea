@@ -103,7 +103,6 @@ export async function serve(options: ServeOptions): Promise<void> {
           cmd === 'dev' ? `  ${gray('╰')} Local CMS:    ${url}\n\n` : '\n'
         process.stdout.write(header + details + footer)
         options.onAfterGenerate?.({
-          ALINEA_BASE_URL: base ?? '',
           ALINEA_DEV_SERVER: url
         })
       })

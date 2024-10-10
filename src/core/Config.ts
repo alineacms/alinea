@@ -38,10 +38,15 @@ export interface Config {
 }
 
 export namespace Config {
-  export function baseUrl(config: Config) {
-    return typeof config.baseUrl === 'object'
-      ? config.baseUrl[process.env.NODE_ENV as 'development' | 'production']
-      : config.baseUrl
+  export function baseUrl(
+    config: Config,
+    env = (process.env.NODE_ENV as 'development' | 'production') ?? 'production'
+  ) {
+    const result =
+      typeof config.baseUrl === 'object' ? config.baseUrl[env] : config.baseUrl
+    if (!result) return result
+    if (result.includes('://')) return result
+    return `https://${result}`
   }
   export function mainWorkspace(config: Config): WorkspaceData {
     const key = Object.keys(config.workspaces)[0]
