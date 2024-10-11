@@ -1,5 +1,6 @@
 import {Config} from './Config.js'
 import {Entry} from './Entry.js'
+import {EntryFields} from './EntryFields.js'
 import {PageSeed} from './Page.js'
 import {ResolveRequest, Resolver} from './Resolver.js'
 import {Root} from './Root.js'
@@ -14,6 +15,21 @@ import {Selection} from './pages/ResolveData.js'
 import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
 
 export type Location = Root | Workspace | PageSeed
+
+export type Filter<Fields> = {
+  [K in keyof Fields]?: Fields[K]
+}
+type FieldsOf<Types> = Types extends Type<infer V>
+  ? V
+  : Types extends Array<any>
+  ? Types[number]
+  : never
+
+export interface GraphQuery<Types, Selection> {
+  type?: Types
+  fields?: Selection
+  filter?: Filter<EntryFields & FieldsOf<Types>>
+}
 
 export interface GraphRealmApi {
   /** Filter results by location */
@@ -30,6 +46,7 @@ export interface GraphRealmApi {
   get<S extends Projection | Type>(select: S): Promise<Projection.InferOne<S>>
   /** Find a set of entries */
   find<S extends Projection | Type>(select: S): Promise<Selection.Infer<S>>
+  query(query: GraphQuery<any, any>): Promise<any>
   /** The time in seconds to poll for updates to content */
   syncInterval(interval: number): GraphRealmApi
   /** Disable polling for updates to content */
@@ -58,6 +75,19 @@ export class GraphRealm implements GraphRealmApi {
     this.#resolver = resolver
     this.#targets = Schema.targets(config.schema)
     this.#params = {...params}
+  }
+
+  query<const Types extends Type | Array<Type>, Selection>(
+    query: GraphQuery<Types, Selection>
+  ): Promise<void>
+  async query(select: any) {
+    if (Type.isType(select)) select = select()
+    const selection = createSelection(select)
+    serializeSelection(this.#targets, selection)
+    return this.#resolver.resolve({
+      ...this.#params,
+      selection
+    })
   }
 
   disableSync() {
