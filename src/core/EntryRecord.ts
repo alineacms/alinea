@@ -18,12 +18,12 @@ export interface EntryRecord extends EntryMeta {
 }
 
 export namespace EntryRecord {
-  export const id = '_id' satisfies keyof EntryRecord
-  export const type = '_type' satisfies keyof EntryRecord
-  export const index = '_index' satisfies keyof EntryRecord
-  export const i18nId = '_i18nId' satisfies keyof EntryRecord
-  export const root = '_root' satisfies keyof EntryRecord
-  export const seeded = '_seeded' satisfies keyof EntryRecord
+  export const id = '_id' satisfies keyof EntryMeta
+  export const type = '_type' satisfies keyof EntryMeta
+  export const index = '_index' satisfies keyof EntryMeta
+  export const i18nId = '_i18nId' satisfies keyof EntryMeta
+  export const root = '_root' satisfies keyof EntryMeta
+  export const seeded = '_seeded' satisfies keyof EntryMeta
 }
 
 interface OldMeta {
