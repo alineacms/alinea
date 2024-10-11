@@ -18,8 +18,8 @@
   export const POST = handler
   ```
 
-  This release also requires you to restructure you Alinea config file.
-  The dashboard property is replace by the `baseUrl`, `handlerUrl` and 
+  This release also requires you to restructure your Alinea config file.
+  The dashboard property is replaced by the `baseUrl`, `handlerUrl` and 
   `dashboardFile` properties.
 
   ```tsx
@@ -43,8 +43,10 @@
   const cms = createCMS({
     // ... schema and workspaces
     baseUrl: {
-      // Point this to you Next.js website
+      // Point this to your local frontend
       development: 'http://localhost:3000'
+      // If hosting on vercel you can use: process.env.VERCEL_URL
+      production: 'http://example.com'
     },
     handlerUrl: '/api/cms',
     dashboardFile: 'admin.html',
