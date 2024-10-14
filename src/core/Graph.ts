@@ -1,6 +1,7 @@
 import {Config} from './Config.js'
 import {Entry} from './Entry.js'
 import {EntryFields} from './EntryFields.js'
+import {Filter} from './Filter.js'
 import {PageSeed} from './Page.js'
 import {ResolveRequest, Resolver} from './Resolver.js'
 import {Root} from './Root.js'
@@ -9,26 +10,101 @@ import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {createSelection} from './pages/CreateSelection.js'
 import {Cursor} from './pages/Cursor.js'
-import type {Projection} from './pages/Projection.js'
+import {Expr} from './pages/Expr.js'
+import {Projection} from './pages/Projection.js'
 import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/ResolveData.js'
 import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
+import {Target} from './pages/index.js'
 
 export type Location = Root | Workspace | PageSeed
+type EmptyObject = Record<PropertyKey, never>
 
-export type Filter<Fields> = {
-  [K in keyof Fields]?: Fields[K]
-}
 type FieldsOf<Types> = Types extends Type<infer V>
   ? V
   : Types extends Array<any>
   ? Types[number]
   : never
 
-export interface GraphQuery<Types, Selection> {
+export interface RelatedQuery<Selection, Types>
+  extends GraphQuery<Selection, Types> {
+  translations?: EmptyObject
+  children?: EmptyObject | {depth: number}
+  parents?: EmptyObject
+  siblings?: EmptyObject
+
+  parent?: EmptyObject
+  next?: EmptyObject
+  previous?: EmptyObject
+}
+
+type IsRelated =
+  | {translations: EmptyObject}
+  | {children: EmptyObject | {depth: number}}
+  | {parents: EmptyObject}
+  | {siblings: EmptyObject}
+  | {parent: EmptyObject}
+  | {next: EmptyObject}
+  | {previous: EmptyObject}
+
+interface ToSelect {
+  [key: string]:
+    | Expr<any>
+    | RelatedQuery<ToSelect | Expr<any>, Type | Array<Type>>
+    | ToSelect
+}
+
+interface Order {
+  asc?: Expr<any>
+  desc?: Expr<any>
+}
+
+type InferSelection<Selection> = Selection extends Expr<infer V>
+  ? V
+  : Selection extends Target<infer V>
+  ? V
+  : Selection extends Type<infer V>
+  ? Type.Infer<V>
+  : {
+      [K in keyof Selection]: Selection[K] extends Target<infer V>
+        ? V
+        : Selection[K] extends Type<infer V>
+        ? Type.Infer<V>
+        : Selection[K] extends Expr<infer V>
+        ? V
+        : Selection[K] extends IsRelated
+        ? QueryResult<Selection[K]>
+        : InferSelection<Selection[K]>
+    }
+
+type InferResult<Query> = Query extends {select: infer Selection}
+  ? InferSelection<Selection>
+  : Query extends {type: infer Types}
+  ? Type.Infer<Types>
+  : EntryFields
+
+type QueryResult<Query> = Query extends {count: true}
+  ? number
+  : Query extends {first: true}
+  ? InferResult<Query> | null
+  : Query extends {get: true}
+  ? InferResult<Query>
+  : Array<InferResult<Query>>
+
+export interface GraphQuery<Selection = undefined, Types = Type | Array<Type>> {
+  select?: Selection
   type?: Types
-  fields?: Selection
   filter?: Filter<EntryFields & FieldsOf<Types>>
+  search?: string | Array<string>
+
+  first?: true
+  get?: true
+  count?: true
+  skip?: number
+  take?: number
+
+  groupBy?: Expr<any> | Array<Expr<any>>
+  orderBy?: Order | Array<Order>
 }
 
 export interface GraphRealmApi {
@@ -77,17 +153,18 @@ export class GraphRealm implements GraphRealmApi {
     this.#params = {...params}
   }
 
-  query<const Types extends Type | Array<Type>, Selection>(
-    query: GraphQuery<Types, Selection>
-  ): Promise<void>
-  async query(select: any) {
-    if (Type.isType(select)) select = select()
+  query<
+    const Types extends Type | Array<Type>,
+    Query extends GraphQuery<ToSelect | Expr<any> | Target<any>, Types>
+  >(query: Query): Promise<QueryResult<Query>> {
+    /*if (Type.isType(select)) select = select()
     const selection = createSelection(select)
     serializeSelection(this.#targets, selection)
     return this.#resolver.resolve({
       ...this.#params,
       selection
-    })
+    })*/
+    return undefined!
   }
 
   disableSync() {

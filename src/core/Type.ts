@@ -6,12 +6,12 @@ import {Field} from './Field.js'
 import {Label} from './Label.js'
 import {SummaryProps} from './media/Summary.js'
 import {Meta, StripMeta} from './Meta.js'
+import {OrderBy} from './OrderBy.js'
 import {Cursor} from './pages/Cursor.js'
 import {Expr, createExprData} from './pages/Expr.js'
 import {
   BinaryOp,
   ExprData,
-  OrderBy,
   Selection,
   toSelection
 } from './pages/ResolveData.js'
@@ -42,7 +42,7 @@ export interface TypeMeta {
   /** Accepts entries of these types as children */
   contains?: Array<string | Type>
   /** Order children entries in the sidebar content tree */
-  orderChildrenBy?: OrderBy
+  orderChildrenBy?: OrderBy | Array<OrderBy>
   /** @deprecated Use contains instead */
   isContainer?: true
   /** @deprecated Use hidden instead */

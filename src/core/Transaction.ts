@@ -88,7 +88,10 @@ export class UploadOperation extends Operation {
         }
       )
       const parent = this.parentId
-        ? await graph.preferPublished.get(Entry({entryId: this.parentId}))
+        ? await graph.preferPublished.query({
+            first: true,
+            filter: {_id: this.parentId}
+          })
         : undefined
       const title = basename(fileName, extension)
       const hash = await createFileHash(new Uint8Array(body))
@@ -156,9 +159,10 @@ export class UploadOperation extends Operation {
 export class DeleteOp extends Operation {
   constructor(protected entryId: string) {
     super(async ({config, graph}) => {
-      const entry = await graph.preferPublished.get(
-        Entry({entryId: this.entryId})
-      )
+      const entry = await graph.preferPublished.query({
+        first: true,
+        filter: {_id: this.entryId}
+      })
       const parentPaths = entryParentPaths(config, entry)
       const file = entryFileName(config, entry, parentPaths)
       return [
@@ -185,9 +189,17 @@ export class EditOperation<Definition> extends Operation {
       else if (this.changePhase === EntryPhase.Published)
         realm = graph.preferDraft
       else realm = graph.preferPublished
-      const entry = await realm.get(Entry({entryId: this.entryId}))
+      const entry = await realm.query({
+        get: true,
+        select: Entry,
+        filter: {_id: this.entryId}
+      })
       const parent = entry.parent
-        ? await graph.preferPublished.get(Entry({entryId: entry.parent}))
+        ? await graph.preferPublished.query({
+            get: true,
+            select: Entry,
+            filter: {_id: entry.parent}
+          })
         : undefined
       const parentPaths = entryParentPaths(config, entry)
 
@@ -274,7 +286,11 @@ export class CreateOperation<Definition> extends Operation {
     const parent = await (this.parentRow
       ? this.parentRow(cms)
       : partial.parent
-      ? cms.graph.preferPublished.get(Entry({entryId: partial.parent}))
+      ? cms.graph.preferPublished.query({
+          get: true,
+          select: Entry,
+          filter: {_id: partial.parent}
+        })
       : undefined)
     return createEntry(cms.config, type, partial, parent)
   }

@@ -7,7 +7,6 @@ import {Field} from 'alinea/core/Field'
 import {Graph} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {Query} from 'alinea/core/Query'
 import {Root} from 'alinea/core/Root'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
@@ -80,9 +79,14 @@ export const entryEditorAtoms = atomFamily(
       const client = get(clientAtom)
       const graph = await get(graphAtom)
       const search = locale ? {i18nId, locale} : {i18nId}
-      let entry: EntryRow | null = await graph.preferDraft.maybeGet(
-        Entry(search)
-      )
+      let entry: EntryRow | null = await graph.preferDraft.query({
+        first: true,
+        select: Entry,
+        filter: {
+          _id: i18nId,
+          _locale: locale
+        }
+      })
       if (!entry) {
         const {searchParams} = get(locationAtom)
         const preferredLanguage = searchParams.get('from')
@@ -123,31 +127,51 @@ export const entryEditorAtoms = atomFamily(
 
       if (!edits.hasData()) await loadDraft
 
-      const versions = await graph.all.find(
-        Entry({entryId}).select({
+      const versions = await graph.all.query({
+        select: {
           ...Entry,
-          parents({parents}) {
-            return parents().select(Entry.i18nId)
+          parents: {
+            parents: {},
+            select: Entry.i18nId
           }
-        })
-      )
-      const {parents} = await graph.preferDraft.get(
-        Entry({entryId}).select({
-          parents({parents}) {
-            return parents().select({entryId: Entry.entryId, path: Entry.path})
+        },
+        fitler: {
+          _id: entryId
+        }
+      })
+      const withParents = await graph.preferDraft.query({
+        first: true,
+        select: {
+          parents: {
+            parent: {},
+            select: {
+              entryId: Entry.entryId,
+              path: Entry.path
+            }
           }
-        })
-      )
-      const translations = (await graph.preferDraft.find(
-        Entry({i18nId})
-          .where(Entry.locale.isNotNull(), Entry.entryId.isNot(entryId))
-          .select({locale: Entry.locale, entryId: Entry.entryId})
-      )) as Array<{locale: string; entryId: string}>
+        },
+        filter: {
+          _id: entryId
+        }
+      })
+      const translations = (await graph.preferDraft.query({
+        select: {
+          locale: Entry.locale,
+          entryId: Entry.entryId
+        },
+        filter: {
+          _locale: {isNot: null},
+          _id: {isNot: entryId},
+          _i18nId: i18nId
+        }
+      })) as Array<{locale: string; entryId: string}>
       const parentLink =
         entry.parent &&
-        (await graph.preferDraft.get(
-          Entry({entryId: entry.parent}).select(Entry.i18nId)
-        ))
+        (await graph.preferDraft.query({
+          first: true,
+          select: Entry.i18nId,
+          filter: {_id: entry.parent}
+        }))
       const parentNeedsTranslation = parentLink
         ? !(await graph.preferDraft.maybeGet(
             Entry({i18nId: parentLink, locale})
@@ -161,7 +185,7 @@ export const entryEditorAtoms = atomFamily(
         phase => phases[phase] !== undefined
       )
       return createEntryEditor({
-        parents,
+        parents: withParents?.parents!,
         translations,
         parentNeedsTranslation,
         client,
@@ -305,20 +329,27 @@ export function createEntryEditor(entryData: EntryData) {
     const {preferDraft: active} = await get(graphAtom)
     const parentLink =
       activeVersion.parent &&
-      (await active.get(
-        Entry({entryId: activeVersion.parent}).select(Entry.i18nId)
-      ))
+      (await active.query({
+        get: true,
+        select: Entry.i18nId,
+        filter: {_id: activeVersion.parent}
+      }))
     if (activeVersion.parent && !parentLink) throw new Error('Parent not found')
     const parentData = parentLink
-      ? await active.locale(locale).get(
-          Entry({i18nId: parentLink}).select({
+      ? await active.locale(locale).query({
+          get: true,
+          select: {
             entryId: Entry.entryId,
             path: Entry.path,
-            paths({parents}) {
-              return parents().select(Entry.path)
+            paths: {
+              parents: {},
+              select: Entry.path
             }
-          })
-        )
+          },
+          filter: {
+            _i18nId: parentLink
+          }
+        })
       : undefined
     if (activeVersion.parent && !parentData)
       throw new Error('Parent not translated')
@@ -357,12 +388,18 @@ export function createEntryEditor(entryData: EntryData) {
     if (i18n) {
       const shared = Type.sharedData(type, entry.data)
       if (shared) {
-        const translations = await graph.preferPublished.find(
-          Entry({i18nId: entry.i18nId}).select({
+        const translations = await graph.preferPublished.query({
+          select: {
             ...Entry,
-            parentPaths: Query.parents().select(Entry.path)
-          })
-        )
+            parentPaths: {
+              parents: {},
+              select: Entry.path
+            }
+          },
+          filter: {
+            _i18nId: entry.i18nId
+          }
+        })
         for (const translation of translations) {
           if (translation.locale === entry.locale) continue
           res.push({

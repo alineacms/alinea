@@ -80,19 +80,18 @@ async function suffixPaths(
     switch (mutation.type) {
       case MutationType.Create: {
         const {entry} = mutation
-        const sameLocation = Entry.root
-          .is(entry.root)
-          .and(
-            Entry.workspace.is(entry.workspace),
-            Entry.locale.is(entry.locale)
-          )
-        const sameParent = Entry.parent.is(entry.parent ?? null)
-        const isExact = Entry.path.is(entry.path)
-        const startsWith = Entry.path.like(entry.path + '-%')
-        const condition = sameLocation.and(sameParent, isExact.or(startsWith))
-        const conflictingPaths = await graph.preferPublished.find(
-          Entry().where(condition).select(Entry.path)
-        )
+        const conflictingPaths = await graph.preferPublished.query({
+          select: Entry.path,
+          filter: {
+            _root: entry.root,
+            _workspace: entry.workspace,
+            _locale: entry.locale,
+            _parent: entry.parent ?? null,
+            _path: {
+              or: [entry.path, {startsWith: entry.path + '-'}]
+            }
+          }
+        })
         const suffix = pathSuffix(entry.path, conflictingPaths)
         if (suffix) {
           const updated = {

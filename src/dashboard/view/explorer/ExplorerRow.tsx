@@ -1,12 +1,12 @@
 import styler from '@alinea/styler'
-import {EntryRow} from 'alinea/core/EntryRow'
+import {GraphQuery} from 'alinea/core/Graph'
 import {Schema} from 'alinea/core/Schema'
 import {SummaryProps} from 'alinea/core/media/Summary'
-import {Cursor} from 'alinea/core/pages/Cursor'
 import {useAtomValue} from 'jotai'
 import {ComponentType, memo} from 'react'
 import {useQuery} from 'react-query'
 import {graphAtom} from '../../atoms/DbAtoms.js'
+import {ExporerItemSelect} from './Explorer.js'
 import {ExplorerItem} from './ExplorerItem.js'
 import css from './ExplorerRow.module.scss'
 
@@ -14,7 +14,7 @@ const styles = styler(css)
 
 export type ExplorerRowProps = {
   schema: Schema
-  cursor: Cursor.Find<EntryRow>
+  query: GraphQuery<ExporerItemSelect>
   batchSize: number
   amount: number
   from: number
@@ -24,7 +24,7 @@ export type ExplorerRowProps = {
 
 export const ExplorerRow = memo(function ExplorerRow({
   schema,
-  cursor,
+  query,
   batchSize,
   amount,
   from,
@@ -35,9 +35,13 @@ export const ExplorerRow = memo(function ExplorerRow({
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
   const {data} = useQuery(
-    ['explorer', 'batch', cursor, batchSize, start],
+    ['explorer', 'batch', query, batchSize, start],
     async () => {
-      return active.find(cursor.skip(start * batchSize).take(batchSize))
+      return active.query({
+        ...query,
+        skip: start * batchSize,
+        take: batchSize
+      })
     },
     {refetchOnWindowFocus: false, keepPreviousData: true, staleTime: 10000}
   )

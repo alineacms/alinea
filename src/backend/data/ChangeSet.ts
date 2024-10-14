@@ -1,3 +1,4 @@
+import {Entry} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {EntryRecord, createRecord} from 'alinea/core/EntryRecord'
 import {EntryPhase} from 'alinea/core/EntryRow'
@@ -17,7 +18,6 @@ import {
   RemoveEntryMutation,
   UploadMutation
 } from 'alinea/core/Mutation'
-import {Query} from 'alinea/core/Query'
 import {Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {MediaFile} from 'alinea/core/media/MediaTypes'
@@ -153,14 +153,22 @@ export class ChangeSetCreator {
     file
   }: RemoveEntryMutation): Promise<Array<Change>> {
     if (!file.endsWith(`.${EntryPhase.Archived}.json`)) return []
-    const {workspace, files} = await this.graph.preferPublished.get(
-      Query.whereId(entryId).select({
-        workspace: Query.workspace,
-        files: Query.children<typeof MediaFile>(undefined!, 999).where(
-          Query.type.is('MediaFile')
-        )
-      })
-    )
+    const result = await this.graph.preferPublished.query({
+      first: true,
+      select: {
+        workspace: Entry.workspace,
+        files: {
+          type: MediaFile,
+          children: {depth: 999},
+          select: {location: MediaFile.location}
+        }
+      },
+      filter: {
+        _id: entryId
+      }
+    })
+    if (!result) return []
+    const {files, workspace} = result
     const mediaDir =
       Workspace.data(this.config.workspaces[workspace])?.mediaDir ?? ''
     const removeFiles: Array<Change> = files.map(file => {

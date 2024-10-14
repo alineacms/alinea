@@ -44,19 +44,22 @@ const editLoader = atomFamily(() => {
     const url = searchParams.get('url')!
     const workspace = searchParams.get('workspace') ?? undefined
     const root = searchParams.get('root') ?? undefined
-    const where: Record<string, string> = {url}
-    if (workspace) where.workspace = workspace
-    if (root) where.root = root
     const graph = await get(graphAtom)
-    const entry = await graph.preferDraft.maybeGet(
-      Entry(where).select({
+    const entry = await graph.preferDraft.query({
+      first: true,
+      select: {
         entryId: Entry.entryId,
         locale: Entry.locale,
         i18nId: Entry.i18nId,
         root: Entry.root,
         workspace: Entry.workspace
-      })
-    )
+      },
+      filter: {
+        _url: url,
+        _workspace: workspace,
+        _root: root
+      }
+    })
     if (!entry) return null
     return {...entry, locale: entry.locale || undefined}
   })

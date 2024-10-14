@@ -38,26 +38,17 @@ export function PathInput({field}: PathInputProps) {
 
   async function getConflictingPaths() {
     if (!editor) return []
-    const sameLocation = Entry.root
-      .is(editor.activeVersion.root)
-      .and(
-        Entry.workspace.is(editor.activeVersion.workspace),
-        Entry.locale.is(editor.activeVersion.locale)
-      )
-    const sameParent = Entry.parent.is(editor.activeVersion.parent ?? null)
-    const isExact = Entry.path.is(inputValue)
-    const startsWith = Entry.path.like(inputValue + '-%')
-    const isNotSelf = editor.entryId
-      ? Entry.entryId.isNot(editor.entryId)
-      : true
-    const condition = sameLocation.and(
-      sameParent,
-      isNotSelf,
-      isExact.or(startsWith)
-    )
-    return graph.preferPublished.find(
-      Entry().where(condition).select(Entry.path)
-    )
+    return graph.preferPublished.query({
+      select: Entry.path,
+      filter: {
+        _root: editor.activeVersion.root,
+        _workspace: editor.activeVersion.workspace,
+        _locale: editor.activeVersion.locale,
+        _parent: editor.activeVersion.parent ?? null,
+        _id: {isNot: editor.entryId},
+        _path: {or: {is: inputValue, startsWith: inputValue + '-'}}
+      }
+    })
   }
 
   const {data: conflictingPaths} = useQuery(

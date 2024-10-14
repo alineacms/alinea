@@ -12,4 +12,5 @@ export interface EntryFields {
   _locale: string | null
   _path: string
   _url: string
+  _active: boolean
 }

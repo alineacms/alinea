@@ -7,7 +7,6 @@ import {Reference} from 'alinea/core/Reference'
 import {Schema} from 'alinea/core/Schema'
 import {track} from 'alinea/core/Tracker'
 import {Type, type} from 'alinea/core/Type'
-import {Projection} from 'alinea/core/pages/Projection'
 import {
   entryChildrenDir,
   entryFileName,
@@ -51,13 +50,17 @@ const parentData = {
   url: Entry.url,
   level: Entry.level,
   parent: Entry.parent,
-  parentPaths({parents}) {
-    return parents().select(Entry.path)
+  parentPaths: {
+    parents: {},
+    select: Entry.path
   },
-  childrenIndex({children}) {
-    return children().select(Entry.index).orderBy(Entry.index.asc()).first()
+  childrenIndex: {
+    first: true as const,
+    children: {},
+    select: Entry.index,
+    orderBy: {asc: Entry.index}
   }
-} satisfies Projection
+}
 
 const titleField = text('Title', {autoFocus: true})
 
@@ -67,9 +70,11 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
     async () => {
-      return graph.preferDraft.maybeGet(
-        Entry({entryId: parentId}).select(parentData)
-      )
+      return graph.preferDraft.query({
+        get: true,
+        select: parentData,
+        filter: {_id: parentId}
+      })
     },
     {suspense: true, keepPreviousData: true, staleTime: 0}
   )
@@ -113,9 +118,11 @@ function NewEntryForm({parentId}: NewEntryProps) {
         ? Schema.contained(config.schema, root.contains)
         : keys(config.schema)
     } else {
-      const parent = await graph.preferDraft.get(
-        Entry({entryId: parentId}).select(parentData)
-      )
+      const parent = await graph.preferDraft.query({
+        get: true,
+        select: parentData,
+        filter: {_id: parentId}
+      })
       const parentType = parent && config.schema[parent.type]
       if (parentType)
         return Schema.contained(config.schema, Type.contains(parentType))
@@ -213,9 +220,11 @@ function NewEntryForm({parentId}: NewEntryProps) {
       phase: config.enableDrafts ? EntryPhase.Draft : EntryPhase.Published
     }
     const parentId = form.data().parent?.[EntryReference.entry]
-    const parent = await graph.preferPublished.maybeGet(
-      Entry({entryId: parentId}).select(parentData)
-    )
+    const parent = await graph.preferPublished.query({
+      first: true,
+      select: parentData,
+      filter: {_id: parentId}
+    })
     const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
     const filePath = entryFilepath(config, data, parentPaths)
     const childrenDir = entryChildrenDir(config, data, parentPaths)
@@ -224,9 +233,11 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const url = entryUrl(entryType, {...data, parentPaths})
     const copyFrom = form.data().copyFrom?.[EntryReference.entry]
     const entryData = copyFrom
-      ? await graph.preferPublished.maybeGet(
-          Entry({entryId: copyFrom}).select(Entry.data)
-        )
+      ? await graph.preferPublished.query({
+          first: true,
+          select: Entry.data,
+          filter: {_id: copyFrom}
+        })
       : {}
     const entry = await createEntryRow(config, {
       entryId,
