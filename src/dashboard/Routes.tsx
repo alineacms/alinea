@@ -11,7 +11,6 @@ import {entryEditorAtoms} from './atoms/EntryEditorAtoms.js'
 import {entryLocationAtom, localeAtom} from './atoms/NavigationAtoms.js'
 import {Route, Router} from './atoms/RouterAtoms.js'
 import {ContentView} from './pages/ContentView.js'
-import {DraftsOverview} from './pages/DraftsOverview.js'
 
 const editorLoader = atomFamily(() => {
   return atom(async get => {
@@ -29,12 +28,6 @@ export const entryRoute = new Route({
   path: '*',
   loader: editorLoader,
   component: ContentView
-})
-
-export const draftRoute = new Route({
-  path: '/draft/:workspace?/:root?/:id?',
-  loader: editorLoader,
-  component: DraftsOverview
 })
 
 const editLoader = atomFamily(() => {
@@ -80,6 +73,6 @@ function EditRoute(location: EntryLocation | null) {
   return <Loader absolute />
 }
 
-const routes = [draftRoute, editRoute, entryRoute]
+const routes = [editRoute, entryRoute]
 
 export const router = new Router({routes})

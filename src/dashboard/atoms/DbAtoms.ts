@@ -88,7 +88,7 @@ async function suffixPaths(
             _locale: entry.locale,
             _parent: entry.parent ?? null,
             _path: {
-              or: [entry.path, {startsWith: entry.path + '-'}]
+              or: {is: entry.path, startsWith: entry.path + '-'}
             }
           }
         })

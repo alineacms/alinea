@@ -1,11 +1,12 @@
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
+import {GraphQuery} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
 import {PickerProps, pickerWithView} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
-import {Expr} from 'alinea/core/pages/Expr'
+import {Target} from 'alinea/core/pages/index'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {entries} from 'alinea/core/util/Objects'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
@@ -135,32 +136,31 @@ export function EntryPickerModal({
       })
     }
   )
-  const cursor = useMemo(() => {
+  const query = useMemo((): GraphQuery<Target<Entry>> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     if (!withNavigation && condition) {
-      return Entry()
-        .where(
-          condition,
-          location?.workspace ? Entry.workspace.is(location.workspace) : true,
-          location?.root ? Entry.root.is(location.root) : true,
-          destinationLocale ? Entry.locale.is(destinationLocale) : true
-        )
-        .search(...terms)
+      return {
+        select: Entry,
+        search: terms,
+        filter: {
+          _workspace: location?.workspace,
+          _root: location?.root,
+          _locale: destinationLocale,
+          ...condition
+        }
+      }
     }
-    const rootCondition = Expr.and(
-      Entry.workspace.is(destination.workspace),
-      Entry.root.is(destination.root)
-    )
-    const destinationCondition =
-      terms.length === 0
-        ? Expr.and(rootCondition, Entry.parent.is(destination.parentId ?? null))
-        : rootCondition
-    const translatedCondition = destinationLocale
-      ? Expr.and(destinationCondition, Entry.locale.is(destinationLocale))
-      : destinationCondition
-    return Entry()
-      .where(condition || true, translatedCondition)
-      .search(...terms)
+    return {
+      select: Entry,
+      filter: {
+        _workspace: destination.workspace,
+        _root: destination.root,
+        _parent: terms.length === 0 ? destination.parentId ?? null : undefined,
+        _locale: destinationLocale,
+        ...condition
+      },
+      search: terms
+    }
   }, [destination, destinationLocale, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
@@ -327,7 +327,7 @@ export function EntryPickerModal({
             <div className={styles.root.results()}>
               <Explorer
                 virtualized
-                cursor={cursor}
+                query={query}
                 type={view}
                 selectable={showMedia ? ['MediaFile'] : true}
                 selection={selected}

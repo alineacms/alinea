@@ -32,9 +32,10 @@ export namespace FileLink {
   export const size = MediaFile.size
 }
 
-const fileCondition = Entry.type
-  .is('MediaFile')
-  .and(MediaFile.extension.isNotIn(imageExtensions))
+const fileCondition = {
+  _type: 'MediaFile',
+  extension: {notIn: imageExtensions}
+}
 
 export function filePicker<Fields>(
   multiple: boolean,
@@ -45,7 +46,7 @@ export function filePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'File',
     title: multiple ? 'Select files' : 'Select a file',
-    condition: fileCondition.or(Entry.type.is('MediaLibrary')),
+    condition: {or: [fileCondition, {_type: 'MediaLibrary'}]},
     showMedia: true,
     defaultView: 'thumb',
     selection: FileLink

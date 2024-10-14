@@ -20,7 +20,7 @@ export function summarySelection(schema: Schema) {
     width: MediaFile.width,
     height: MediaFile.height,
     parents: {
-      parents: true as const,
+      parents: {},
       select: {
         entryId: Entry.entryId,
         i18nId: Entry.i18nId,
@@ -28,7 +28,7 @@ export function summarySelection(schema: Schema) {
       }
     },
     childrenAmount: {
-      children: true as const,
+      children: {},
       count: true as const
     }
   }

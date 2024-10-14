@@ -82,7 +82,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       root: Entry.root,
       path: Entry.path,
       parentPaths: {
-        parents: true as const,
+        parents: {},
         select: Entry.path
       }
     }
@@ -95,7 +95,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
         type: Entry.type,
         data,
         translations: {
-          translations: true,
+          translations: {},
           select: data
         }
       },

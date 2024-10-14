@@ -48,22 +48,25 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const {data} = useQuery(
     ['explorer', 'media', 'total', condition],
     async () => {
-      const cursor = Entry()
-        .where(condition)
-        .orderBy(Entry.type.desc(), Entry.entryId.desc())
-      const info = await graph.preferDraft.maybeGet(
-        Entry({entryId: parentId})
-          .select({
-            title: Entry.title,
-            parent: Entry.parent
-          })
-          .maybeFirst()
-      )
-      return {...info, cursor}
+      const query = {
+        orderBy: [{desc: Entry.type}, {desc: Entry.entryId}],
+        filter: condition
+      }
+      const info = await graph.preferDraft.query({
+        first: true,
+        select: {
+          title: Entry.title,
+          parent: Entry.parent
+        },
+        filter: {
+          _id: parentId
+        }
+      })
+      return {...info, query}
     },
     {suspense: true, keepPreviousData: true}
   )
-  const {cursor} = data!
+  const {query} = data!
   const title = data?.title || root.label
   const nav = useNav()
   const navigate = useNavigate()
@@ -93,7 +96,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
                 </HStack>
               </header>
               <Explorer
-                cursor={cursor}
+                query={query}
                 type="thumb"
                 virtualized
                 onNavigate={entryId => navigate(nav.entry({entryId: entryId}))}

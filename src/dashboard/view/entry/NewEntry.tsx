@@ -101,7 +101,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
         workspace,
         root: root.name
       },
-      condition: Entry.type.isIn(containerTypes),
+      condition: {_type: {in: containerTypes}},
       initialValue: preselectedId
         ? {
             [Reference.id]: 'parent',
@@ -161,7 +161,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
         readOnly: !type,
         pickers: {
           entry: entryPicker({
-            condition: Entry.type.is(type),
+            condition: {_type: type},
             withNavigation: false,
             title: 'Copy content from',
             max: 1,

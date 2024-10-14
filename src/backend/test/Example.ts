@@ -1,6 +1,5 @@
 import {createCMS} from 'alinea/adapter/test/TestCMS'
 import {document} from 'alinea/core/Document'
-import {Entry} from 'alinea/core/Entry'
 import {page} from 'alinea/core/Page'
 import {root} from 'alinea/core/Root'
 import {type} from 'alinea/core/Type'
@@ -86,7 +85,7 @@ export function createExample() {
       entry: entry('Internal link'),
       entryWithCondition: entry('With condition', {
         help: `Show only entries of type Fields`,
-        condition: Entry.type.is('Fields')
+        condition: {_type: 'Fields'}
       }),
       linkMultiple: link.multiple('Mixed links, multiple'),
       image: image('Image link'),

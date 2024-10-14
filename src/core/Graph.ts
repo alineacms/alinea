@@ -93,7 +93,7 @@ type QueryResult<Query> = Query extends {count: true}
 
 export interface GraphQuery<Selection = undefined, Types = Type | Array<Type>> {
   select?: Selection
-  type?: Types
+  type?: Type | Array<Type>
   filter?: Filter<EntryFields & FieldsOf<Types>>
   search?: string | Array<string>
 
@@ -106,6 +106,8 @@ export interface GraphQuery<Selection = undefined, Types = Type | Array<Type>> {
   groupBy?: Expr<any> | Array<Expr<any>>
   orderBy?: Order | Array<Order>
 }
+
+interface QueryObject<Result> extends GraphQuery {}
 
 export interface GraphRealmApi {
   /** Filter results by location */

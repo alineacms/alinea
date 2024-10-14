@@ -90,9 +90,10 @@ export class UploadOperation extends Operation {
       const parent = this.parentId
         ? await graph.preferPublished.query({
             first: true,
+            select: Entry,
             filter: {_id: this.parentId}
           })
-        : undefined
+        : null
       const title = basename(fileName, extension)
       const hash = await createFileHash(new Uint8Array(body))
       const {mediaDir} = Workspace.data(config.workspaces[workspace])
@@ -160,7 +161,8 @@ export class DeleteOp extends Operation {
   constructor(protected entryId: string) {
     super(async ({config, graph}) => {
       const entry = await graph.preferPublished.query({
-        first: true,
+        get: true,
+        select: Entry,
         filter: {_id: this.entryId}
       })
       const parentPaths = entryParentPaths(config, entry)
@@ -358,7 +360,7 @@ async function createEntry(
   config: Config,
   typeName: string,
   partial: Partial<Entry> = {title: 'Entry'},
-  parent?: EntryRow
+  parent?: EntryRow | null
 ): Promise<EntryRow> {
   const type = config.schema[typeName]
   const workspace =

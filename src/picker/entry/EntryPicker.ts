@@ -1,8 +1,10 @@
+import {Entry} from 'alinea/core/Entry'
+import {EntryFields} from 'alinea/core/EntryFields'
+import {Filter} from 'alinea/core/Filter'
 import {Label} from 'alinea/core/Label'
 import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Type, type} from 'alinea/core/Type'
-import type {Condition} from 'alinea/core/pages/Expr'
 import {Projection} from 'alinea/core/pages/Projection'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
@@ -14,7 +16,7 @@ export interface EntryPickerOptions<Definition = {}> {
   selection: Projection
   defaultView?: 'row' | 'thumb'
   location?: {workspace: string; root: string}
-  condition?: Condition
+  condition?: Filter<EntryFields & Entry>
   withNavigation?: boolean
   showMedia?: boolean
   max?: number
