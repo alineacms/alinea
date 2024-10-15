@@ -1,7 +1,6 @@
 import {Entry} from 'alinea/core'
 import * as Edit from 'alinea/core/Edit'
 import {EntryPhase} from 'alinea/core/EntryRow'
-import {Query} from 'alinea/core/Query'
 import {ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {readFileSync} from 'fs'
@@ -92,7 +91,7 @@ test('fetch translations', async () => {
       translations: {
         translations: {},
         type: Page,
-        select: Query.locale
+        select: Entry.locale
       }
     },
     filter: {_path: 'localised1'}
@@ -105,7 +104,7 @@ test('fetch translations', async () => {
       translations: {
         translations: {},
         type: Page,
-        select: Query.locale
+        select: Entry.locale
       }
     },
     filter: {_path: 'localised1'}

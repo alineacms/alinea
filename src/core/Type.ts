@@ -7,17 +7,10 @@ import {Label} from './Label.js'
 import {SummaryProps} from './media/Summary.js'
 import {Meta, StripMeta} from './Meta.js'
 import {OrderBy} from './OrderBy.js'
-import {Cursor} from './pages/Cursor.js'
-import {Expr, createExprData} from './pages/Expr.js'
-import {
-  BinaryOp,
-  ExprData,
-  Selection,
-  toSelection
-} from './pages/ResolveData.js'
+import {Expr} from './pages/Expr.js'
+import {ExprData, Selection, toSelection} from './pages/ResolveData.js'
 import {Section, section} from './Section.js'
 import {RecordShape} from './shape/RecordShape.js'
-import {Callable} from './util/Callable.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {
   assign,
@@ -72,17 +65,11 @@ export interface TypeData {
 
 export class TypeTarget {}
 
-export declare class TypeI<Definition = object> {
+export declare class TypeI {
   get [Type.Data](): TypeData
-  [toSelection](): Selection.Row
 }
 
-export interface TypeI<Definition = object> extends Callable {
-  (): Cursor.Find<TypeRow<Definition>>
-  (partial: Partial<TypeRow<Definition>>): Cursor.Typed<Definition>
-}
-
-export type Type<Definition = object> = Definition & TypeI<Definition>
+export type Type<Definition = object> = Definition & TypeI
 
 type TypeRow<Definition> = Expand<{
   [K in keyof Definition as Definition[K] extends Expr<any>
@@ -255,35 +242,9 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
       }
     }
     addCurrent()
-    const name = label as string
-    const callable = {
-      [name]: (...condition: Array<any>) => this.call(...condition)
-    }[name] as any
-    delete callable.length
-    this.target = callable
-    this.defineProperties(callable)
-  }
-
-  condition(input: Array<any>): ExprData | undefined {
-    if (input.length === 0) return undefined
-    const isConditionalRecord = input.length === 1 && !Expr.isExpr(input[0])
-    const conditions = isConditionalRecord
-      ? entries(input[0]).map(([key, value]) => {
-          const field = Expr(ExprData.Field({type: this.target}, key))
-          return Expr<boolean>(
-            ExprData.BinOp(
-              field[Expr.Data],
-              BinaryOp.Equals,
-              createExprData(value)
-            )
-          )
-        })
-      : input.map(ev => Expr<boolean>(createExprData(ev)))
-    return Expr.and(...conditions)[Expr.Data]
-  }
-
-  call(...input: Array<any>) {
-    return new Cursor.Typed(this.target, input[0])
+    const type: any = {[Type.Data]: this}
+    this.defineProperties(type)
+    this.target = type
   }
 
   field(def: Field, name: string) {
@@ -293,7 +254,7 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     })
   }
 
-  defineProperties(instance: TypeI<any>) {
+  defineProperties(instance: TypeI) {
     for (const [key, value] of fieldsOfDefinition(this.definition)) {
       defineProperty(instance, key, {
         value: this.field(value, key),

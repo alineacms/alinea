@@ -1,5 +1,4 @@
 import {Type} from './Type.js'
-import {Cursor} from './pages/Cursor.js'
 
 export interface PageSeedData {
   type: Type
@@ -29,15 +28,16 @@ export function page<
   Definition,
   Children extends Record<string, PageSeed<any, any>>
 >(
-  type: Type<Definition> | Cursor.Typed<Definition>,
+  type: Type<Definition>,
+  partial: Partial<Type.Infer<Definition>>,
   children?: Children
 ): PageSeed<Definition> {
   children = children ?? ({} as Children)
   return {
     ...children,
     [PageSeed.Data]: {
-      type: type instanceof Cursor ? type.type : type,
-      partial: type instanceof Cursor ? type.partial : {}
+      type: type,
+      partial: partial
     }
   }
 }

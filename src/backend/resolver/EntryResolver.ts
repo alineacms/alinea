@@ -2,7 +2,6 @@ import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Field} from 'alinea/core/Field'
 import {GraphQuery} from 'alinea/core/Graph'
-import {Expr} from 'alinea/core/pages/Expr'
 import {Realm} from 'alinea/core/pages/Realm'
 import {BinaryOp, SourceType, UnaryOp} from 'alinea/core/pages/ResolveData'
 import {seralizeLocation} from 'alinea/core/pages/Serialize'
@@ -236,7 +235,7 @@ export class EntryResolver {
     selection: pages.Selection.Cursor
   ): SelectionInput {
     const isSingle = selection.cursor.first ?? false
-    const query = this.queryCursor(ctx, selection)
+    const query = this.query(ctx, selection)
     if (isSingle) return include.one(query)
     return include(query)
   }
@@ -476,22 +475,9 @@ export class EntryResolver {
     return sql`${input(EntrySearch)} match ${input(terms)}`
   }
 
-  queryCursor(
-    ctx: ResolveContext,
-    {cursor}: pages.Selection.Cursor
-  ): Select<any> {
-    const {
-      target,
-      where,
-      skip,
-      take,
-      orderBy,
-      groupBy,
-      select,
-      source,
-      first,
-      searchTerms
-    } = cursor
+  query(ctx: ResolveContext, query: GraphQuery): Select<any> {
+    const {type, filter, skip, take, orderBy, groupBy, select, first, search} =
+      query
     ctx = ctx.increaseDepth().none
     const {name} = target || {}
     const hasSearch = Boolean(searchTerms?.length)
@@ -524,20 +510,6 @@ export class EntryResolver {
     else if (orderBy) result = result.orderBy(...this.orderBy(ctx, orderBy))
     if (first) result = result.limit(1)
     return result
-  }
-
-  query(ctx: ResolveContext, {select}: GraphQuery) {
-    if (Expr.isExpr(select)) return
-    switch (selection.type) {
-      case 'cursor':
-        return <any>this.queryCursor(ctx, selection)
-      case 'record':
-        return this.queryRecord(ctx, selection)
-      case 'row':
-      case 'count':
-      case 'expr':
-        throw new Error(`Cannot select ${selection.type} at root level`)
-    }
   }
 
   isSingleResult(ctx: ResolveContext, selection: pages.Selection): boolean {
@@ -669,16 +641,16 @@ export class EntryResolver {
       location
     })
     const dbQuery = this.query(ctx, query)
-    const singleResult = this.isSingleResult(ctx, selection)
+    const singleResult = query.first
     const transact = async (tx: Store): Promise<T> => {
-      const rows = await query.all(tx)
+      const rows = await dbQuery.all(tx)
       const linkResolver = new LinkResolver(this, tx, ctx.status)
       const result = singleResult ? rows[0] : rows
       if (result) await this.post({linkResolver}, result, selection)
       return result as T
     }
-    if (preview) {
-      const updated = 'entry' in preview ? preview.entry : undefined
+    if (query.preview) {
+      const updated = 'entry' in query.preview ? query.preview.entry : undefined
       if (updated) {
         const result = await this.db.preview<T>(updated, transact)
         if (result) return result

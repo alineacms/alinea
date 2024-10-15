@@ -5,6 +5,7 @@ import {Type} from 'alinea/core/Type'
 import type {ListRow} from 'alinea/core/shape/ListShape'
 import {FileLink, filePicker} from 'alinea/field/link/FileLink'
 import {
+  LinkField,
   LinkFieldOptions,
   createLink,
   createLinks
@@ -27,7 +28,7 @@ export interface LinkOptions<Definition, Row> extends LinkFieldOptions<Row> {
 export function link<Fields>(
   label: Label,
   options: WithoutLabel<LinkOptions<Fields, Reference>> = {}
-) {
+): LinkField<Reference, AnyLink<Type.Infer<Fields>>> {
   return createLink<Reference, AnyLink<Type.Infer<Fields>>>(label, {
     ...options,
     pickers: {

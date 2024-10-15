@@ -20,11 +20,9 @@ export const cms = createCMS({
             locales: ['en', 'fr', 'nl']
           },
           entries: {
-            seededPath: Config.page(
-              schema.Page({
-                title: 'Seeded page'
-              })
-            )
+            seededPath: Config.page(schema.Page, {
+              title: 'Seeded page'
+            })
           }
         }),
         custom: Config.root('Custom', {

@@ -137,7 +137,7 @@ export const entryEditorAtoms = atomFamily(
             select: Entry.i18nId
           }
         },
-        fitler: {
+        filter: {
           _id: entryId
         },
         status: 'all'

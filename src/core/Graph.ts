@@ -17,7 +17,7 @@ type FieldsOf<Types> = Types extends Type<infer V>
   ? V
   : Types extends Array<any>
   ? Types[number]
-  : never
+  : unknown
 
 export interface RelatedQuery<Selection, Types>
   extends GraphQuery<Selection, Types> {
@@ -65,29 +65,31 @@ type InferSelection<Selection> = Selection extends Expr<infer V>
         ? Type.Infer<V>
         : Selection[K] extends Expr<infer V>
         ? V
-        : Selection[K] extends IsRelated
+        : Selection[K] extends GraphQuery & IsRelated
         ? AnyQueryResult<Selection[K]>
         : InferSelection<Selection[K]>
     }
 
-type InferResult<Query> = Query extends {select: infer Selection}
-  ? InferSelection<Selection>
-  : Query extends {type: infer Types}
-  ? Type.Infer<Types>
-  : EntryFields
+type InferResult<Selection, Types> = Selection extends undefined
+  ? Types extends undefined
+    ? EntryFields
+    : Type.Infer<Types>
+  : InferSelection<Selection>
 
-type CountQueryResult<Query> = number
-type GetQueryResult<Query> = InferResult<Query>
-type FirstQueryResult<Query> = InferResult<Query> | null
-type FindQueryResult<Query> = Array<InferResult<Query>>
+type CountQueryResult<Selection, Types> = number
+type GetQueryResult<Selection, Types> = InferResult<Selection, Types>
+type FirstQueryResult<Selection, Types> = InferResult<Selection, Types> | null
+type FindQueryResult<Selection, Types> = Array<InferResult<Selection, Types>>
 
-export type AnyQueryResult<Query> = Query extends {count: true}
-  ? CountQueryResult<Query>
+export type AnyQueryResult<Query extends GraphQuery> = Query extends {
+  count: true
+}
+  ? CountQueryResult<Query['select'], Query['type']>
   : Query extends {first: true}
-  ? FirstQueryResult<Query>
+  ? FirstQueryResult<Query['select'], Query['type']>
   : Query extends {get: true}
-  ? GetQueryResult<Query>
-  : FindQueryResult<Query>
+  ? GetQueryResult<Query['select'], Query['type']>
+  : FindQueryResult<Query['select'], Query['type']>
 
 export type Status =
   /** Only published entries */
@@ -154,7 +156,7 @@ export interface QueryInput<Selection, Types> extends QuerySettings {
   filter?: Filter<EntryFields & FieldsOf<Types>>
 }
 
-export interface GraphQuery<Selection = unknown, Types = Type | Array<Type>>
+export interface GraphQuery<Selection = unknown, Types = unknown>
   extends QueryBase<Selection, Types> {
   /** Find a single entry or null */
   first?: true
@@ -164,6 +166,9 @@ export interface GraphQuery<Selection = unknown, Types = Type | Array<Type>>
   count?: true
 }
 
+type SelectionGuard = ToSelect | Expr<any> | Target<any> | undefined
+type TypeGuard = Type | Array<Type> | undefined
+
 export class Graph {
   #resolver: Resolver
 
@@ -171,37 +176,27 @@ export class Graph {
     this.#resolver = resolver
   }
 
-  find<
-    const Types extends Type | Array<Type>,
-    Query extends QueryInput<ToSelect | Expr<any> | Target<any>, Types>
-  >(query: Query): Promise<FindQueryResult<Query>> {
-    return this.#resolver.resolve(query) as Promise<FindQueryResult<Query>>
+  find<Selection extends SelectionGuard, Type extends TypeGuard>(
+    query: GraphQuery<Selection, Type>
+  ): Promise<FindQueryResult<Selection, Type>> {
+    return <any>this.#resolver.resolve(query)
   }
 
-  first<
-    const Types extends Type | Array<Type>,
-    Query extends QueryInput<ToSelect | Expr<any> | Target<any>, Types>
-  >(query: Query): Promise<FirstQueryResult<Query>> {
-    return this.#resolver.resolve({...query, first: true}) as Promise<
-      FirstQueryResult<Query>
-    >
+  first<Selection extends SelectionGuard, Type extends TypeGuard>(
+    query: GraphQuery<Selection, Type>
+  ): Promise<FirstQueryResult<Selection, Type>> {
+    return <any>this.#resolver.resolve({...query, first: true})
   }
 
-  get<
-    const Types extends Type | Array<Type>,
-    Query extends QueryInput<ToSelect | Expr<any> | Target<any>, Types>
-  >(query: Query): Promise<GetQueryResult<Query>> {
-    return this.#resolver.resolve({...query, get: true}) as Promise<
-      GetQueryResult<Query>
-    >
+  get<Selection extends SelectionGuard, Type extends TypeGuard>(
+    query: GraphQuery<Selection, Type>
+  ): Promise<GetQueryResult<Selection, Type>> {
+    return <any>this.#resolver.resolve({...query, get: true})
   }
 
-  count<
-    const Types extends Type | Array<Type>,
-    Query extends QueryInput<ToSelect | Expr<any> | Target<any>, Types>
-  >(query: Query): Promise<CountQueryResult<Query>> {
-    return this.#resolver.resolve({...query, count: true}) as Promise<
-      CountQueryResult<Query>
-    >
+  count<Selection extends SelectionGuard, Type extends TypeGuard>(
+    query: GraphQuery<Selection, Type>
+  ): Promise<CountQueryResult<Selection, Type>> {
+    return <any>this.#resolver.resolve({...query, count: true})
   }
 }

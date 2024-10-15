@@ -1,7 +1,7 @@
 import {Entry} from 'alinea/core/Entry'
+import {Status} from 'alinea/core/Graph'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
 import type {Projection} from 'alinea/core/pages/Projection'
-import {Realm} from 'alinea/core/pages/Realm'
 import {serializeSelection} from 'alinea/core/pages/Serialize'
 import DataLoader from 'dataloader'
 import {Store} from '../Store.js'
@@ -19,7 +19,7 @@ export class LinkResolver {
   constructor(
     public resolver: EntryResolver,
     public store: Store,
-    public realm: Realm
+    public status: Status
   ) {}
 
   load(projection: Projection) {
