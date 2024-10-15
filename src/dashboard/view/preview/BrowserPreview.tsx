@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {PreviewMetadata} from 'alinea/core/Resolver'
+import {PreviewMetadata} from 'alinea/core/Preview'
 import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
 import {HStack, Loader, Typo, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'

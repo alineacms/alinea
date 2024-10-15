@@ -6,6 +6,9 @@ import {useQuery} from 'react-query'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
+import {EntryFields} from 'alinea/core/EntryFields'
+import {Filter} from 'alinea/core/Filter'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {RootData} from 'alinea/core/Root'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {EntryHeader} from 'alinea/dashboard/view/entry/EntryHeader'
@@ -19,7 +22,7 @@ import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {Head} from '../util/Head.js'
-import {Explorer} from './explorer/Explorer.js'
+import {Explorer, ExporerItemSelect} from './explorer/Explorer.js'
 import {IconLink} from './IconButton.js'
 import {FileUploader} from './media/FileUploader.js'
 import css from './MediaExplorer.module.scss'
@@ -37,30 +40,32 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const workspace = useWorkspace()
   const root = useRoot()
   const graph = useAtomValue(graphAtom)
-  const condition = useMemo(() => {
+  const condition = useMemo((): Filter<EntryFields> => {
     return parentId
-      ? Entry.parent.is(parentId)
-      : Entry.root
-          .is(root.name)
-          .and(Entry.workspace.is(workspace.name))
-          .and(Entry.parent.isNull())
+      ? {_parent: parentId}
+      : {
+          _root: root.name,
+          _workspace: workspace.name,
+          _parent: null
+        }
   }, [workspace, root, parentId])
   const {data} = useQuery(
     ['explorer', 'media', 'total', condition],
     async () => {
-      const query = {
+      const query: QueryWithResult<ExporerItemSelect> = {
+        select: undefined!,
         orderBy: [{desc: Entry.type}, {desc: Entry.entryId}],
         filter: condition
       }
-      const info = await graph.preferDraft.query({
-        first: true,
+      const info = await graph.first({
         select: {
           title: Entry.title,
           parent: Entry.parent
         },
         filter: {
           _id: parentId
-        }
+        },
+        status: 'preferDraft'
       })
       return {...info, query}
     },

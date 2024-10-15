@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import useSize from '@react-hook/size'
-import {GraphQuery} from 'alinea/core/Graph'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {Reference} from 'alinea/core/Reference'
 import {summarySelection} from 'alinea/core/media/Summary'
 import {Loader} from 'alinea/ui'
@@ -33,7 +33,7 @@ export interface ExporerItemSelect {
 }
 
 export interface ExplorerProps {
-  query: GraphQuery
+  query: QueryWithResult<ExporerItemSelect>
   type: 'row' | 'thumb'
   virtualized?: boolean
   max?: number
@@ -74,18 +74,19 @@ export function Explorer({
       const summaryView = type === 'row' ? 'summaryRow' : 'summaryThumb'
       const defaultView = defaultSummaryView[summaryView]
       const selection = summarySelection(schema)
-      const total = await graph.preferDraft.query({
-        count: true,
-        query
+      const total = await graph.count({
+        ...query,
+        status: 'preferDraft'
       })
+      const querySelection: QueryWithResult<ExporerItemSelect> = {
+        ...query,
+        select: selection as any
+      }
       return {
         type,
         total: max ? Math.min(max, total) : total,
         selection,
-        query: {
-          ...query,
-          select: selection
-        },
+        query: querySelection,
         summaryView,
         defaultView
       } as const

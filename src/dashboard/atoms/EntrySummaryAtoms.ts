@@ -21,16 +21,17 @@ export interface EntrySummary {
 }
 
 export const entrySummaryLoaderAtom = atom(async get => {
-  const {preferDraft: drafts} = await get(graphAtom)
+  const graph = await get(graphAtom)
   const {schema} = get(configAtom)
   const selection = summarySelection(schema)
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
     const res = new Map()
-    const entries: Array<EntrySummary> = await drafts.query({
+    const entries: Array<EntrySummary> = await graph.find({
       select: selection,
       filter: {
         _id: {in: ids}
-      }
+      },
+      status: 'preferDraft'
     })
     for (const entry of entries) res.set(entry.entryId, entry)
     return ids.map(id => res.get(id)) as typeof entries

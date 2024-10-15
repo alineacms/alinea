@@ -5,7 +5,7 @@ import type {CMS} from './CMS.js'
 import {Config} from './Config.js'
 import {Entry} from './Entry.js'
 import {EntryPhase, EntryRow} from './EntryRow.js'
-import {GraphRealm} from './Graph.js'
+import {Status} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {createId} from './Id.js'
 import {Mutation, MutationType} from './Mutation.js'
@@ -61,7 +61,8 @@ export class UploadOperation extends Operation {
   private root?: string
 
   constructor(file: File | [string, Uint8Array], options: UploadOptions = {}) {
-    super(async ({config, graph, connect}: CMS): Promise<Array<Mutation>> => {
+    super(async (cms: CMS): Promise<Array<Mutation>> => {
+      const {config, connect} = cms
       const fileName = Array.isArray(file) ? file[0] : file.name
       const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
       const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
@@ -88,10 +89,10 @@ export class UploadOperation extends Operation {
         }
       )
       const parent = this.parentId
-        ? await graph.preferPublished.query({
-            first: true,
+        ? await cms.first({
             select: Entry,
-            filter: {_id: this.parentId}
+            filter: {_id: this.parentId},
+            status: 'preferPublished'
           })
         : null
       const title = basename(fileName, extension)
@@ -159,14 +160,14 @@ export class UploadOperation extends Operation {
 
 export class DeleteOp extends Operation {
   constructor(protected entryId: string) {
-    super(async ({config, graph}) => {
-      const entry = await graph.preferPublished.query({
-        get: true,
+    super(async cms => {
+      const entry = await cms.get({
         select: Entry,
-        filter: {_id: this.entryId}
+        filter: {_id: this.entryId},
+        status: 'preferPublished'
       })
-      const parentPaths = entryParentPaths(config, entry)
-      const file = entryFileName(config, entry, parentPaths)
+      const parentPaths = entryParentPaths(cms.config, entry)
+      const file = entryFileName(cms.config, entry, parentPaths)
       return [
         {
           type: MutationType.Remove,
@@ -183,34 +184,33 @@ export class EditOperation<Definition> extends Operation {
   private changePhase?: EntryPhase
 
   constructor(protected entryId: string) {
-    super(async ({config, graph}) => {
-      let realm: GraphRealm
-      if (this.changePhase === EntryPhase.Draft) realm = graph.preferDraft
+    super(async cms => {
+      let status: Status
+      if (this.changePhase === EntryPhase.Draft) status = 'preferDraft'
       else if (this.changePhase === EntryPhase.Archived)
-        realm = graph.preferPublished
-      else if (this.changePhase === EntryPhase.Published)
-        realm = graph.preferDraft
-      else realm = graph.preferPublished
-      const entry = await realm.query({
-        get: true,
+        status = 'preferPublished'
+      else if (this.changePhase === EntryPhase.Published) status = 'preferDraft'
+      else status = 'preferPublished'
+      const entry = await cms.get({
         select: Entry,
-        filter: {_id: this.entryId}
+        filter: {_id: this.entryId},
+        status
       })
       const parent = entry.parent
-        ? await graph.preferPublished.query({
-            get: true,
+        ? await cms.get({
             select: Entry,
-            filter: {_id: entry.parent}
+            filter: {_id: entry.parent},
+            status: 'preferPublished'
           })
         : undefined
-      const parentPaths = entryParentPaths(config, entry)
+      const parentPaths = entryParentPaths(cms.config, entry)
 
       const file = entryFileName(
-        config,
+        cms.config,
         {...entry, phase: entry.phase},
         parentPaths
       )
-      const type = config.schema[entry.type]
+      const type = cms.config.schema[entry.type]
       const mutations: Array<Mutation> = []
       const createDraft = this.changePhase === EntryPhase.Draft
       if (createDraft)
@@ -219,8 +219,8 @@ export class EditOperation<Definition> extends Operation {
           entryId: this.entryId,
           file,
           entry: await createEntry(
-            config,
-            this.typeName(config, type),
+            cms.config,
+            this.typeName(cms.config, type),
             {
               ...entry,
               phase: EntryPhase.Draft,
@@ -288,10 +288,10 @@ export class CreateOperation<Definition> extends Operation {
     const parent = await (this.parentRow
       ? this.parentRow(cms)
       : partial.parent
-      ? cms.graph.preferPublished.query({
-          get: true,
+      ? cms.get({
           select: Entry,
-          filter: {_id: partial.parent}
+          filter: {_id: partial.parent},
+          status: 'preferPublished'
         })
       : undefined)
     return createEntry(cms.config, type, partial, parent)

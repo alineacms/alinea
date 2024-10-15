@@ -38,7 +38,7 @@ export function PathInput({field}: PathInputProps) {
 
   async function getConflictingPaths() {
     if (!editor) return []
-    return graph.preferPublished.query({
+    return graph.find({
       select: Entry.path,
       filter: {
         _root: editor.activeVersion.root,
@@ -47,7 +47,8 @@ export function PathInput({field}: PathInputProps) {
         _parent: editor.activeVersion.parent ?? null,
         _id: {isNot: editor.entryId},
         _path: {or: {is: inputValue, startsWith: inputValue + '-'}}
-      }
+      },
+      status: 'preferPublished'
     })
   }
 

@@ -4,19 +4,13 @@ import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'
 import {Draft} from 'alinea/core/Draft'
-import {Graph} from 'alinea/core/Graph'
+import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
-import {
-  PreviewUpdate,
-  ResolveParams,
-  ResolveRequest
-} from 'alinea/core/Resolver'
-import {Realm} from 'alinea/core/pages/Realm'
-import {Selection} from 'alinea/core/pages/ResolveData'
+import {PreviewUpdate} from 'alinea/core/Preview'
 import {decode} from 'alinea/core/util/BufferToBase64'
 import {base64} from 'alinea/core/util/Encoding'
 import {assign} from 'alinea/core/util/Objects'
-import {Type, array, enums, object, string} from 'cito'
+import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
 import {mergeUpdatesV2} from 'yjs'
@@ -32,13 +26,6 @@ import {createPreviewParser} from './resolver/ParsePreview.js'
 import {generatedStore} from './store/GeneratedStore.js'
 
 const limit = pLimit(1)
-
-const ResolveBody: Type<ResolveParams> = object({
-  selection: Selection.adt,
-  realm: enums(Realm).optional,
-  locale: string.optional,
-  preview: object({payload: string}).optional
-})
 
 const PrepareBody = object({
   filename: string
@@ -76,18 +63,18 @@ export function createHandler(
 
     return {db, mutate, resolve, periodicSync, syncPending}
 
-    async function resolve(ctx: RequestContext, params: ResolveParams) {
-      if (!params.preview) {
-        await periodicSync(ctx, params.syncInterval)
-        return resolver.resolve(params as ResolveRequest)
+    async function resolve(ctx: RequestContext, query: GraphQuery) {
+      if (!query.preview) {
+        await periodicSync(ctx, query.syncInterval)
+        return resolver.resolve(query as GraphQuery)
       }
       const preview = await previews.parse(
-        params.preview,
+        query.preview,
         () => syncPending(ctx),
         entryId => backend.drafts.get(ctx, entryId)
       )
       return resolver.resolve({
-        ...params,
+        ...query,
         preview: preview
       })
     }
@@ -176,9 +163,11 @@ export function createHandler(
       async user() {
         return 'user' in context ? context.user : undefined
       },
-      async resolve(params: ResolveParams) {
+      async resolve<Query extends GraphQuery>(
+        query: Query
+      ): Promise<AnyQueryResult<Query>> {
         const {resolve} = await init
-        return resolve(context, params)
+        return resolve(context, query) as Promise<AnyQueryResult<Query>>
       },
       async previewToken(request: PreviewUpdate) {
         const previews = new JWTPreviews(context.apiKey)
@@ -287,9 +276,7 @@ export function createHandler(
       if (action === HandleAction.Resolve && request.method === 'POST') {
         const ctx = await internal
         expectJson()
-        return Response.json(
-          (await resolve(ctx, ResolveBody(await body))) ?? null
-        )
+        return Response.json((await resolve(ctx, await body)) ?? null)
       }
 
       // Pending

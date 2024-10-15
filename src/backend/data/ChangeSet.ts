@@ -153,8 +153,7 @@ export class ChangeSetCreator {
     file
   }: RemoveEntryMutation): Promise<Array<Change>> {
     if (!file.endsWith(`.${EntryPhase.Archived}.json`)) return []
-    const result = await this.graph.preferPublished.query({
-      first: true,
+    const result = await this.graph.first({
       select: {
         workspace: Entry.workspace,
         files: {
@@ -165,7 +164,8 @@ export class ChangeSetCreator {
       },
       filter: {
         _id: entryId
-      }
+      },
+      status: 'preferPublished'
     })
     if (!result) return []
     const {files, workspace} = result

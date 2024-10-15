@@ -70,10 +70,10 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
     async () => {
-      return graph.preferDraft.query({
-        get: true,
+      return graph.get({
         select: parentData,
-        filter: {_id: parentId}
+        filter: {_id: parentId},
+        status: 'preferDraft'
       })
     },
     {suspense: true, keepPreviousData: true, staleTime: 0}
@@ -118,10 +118,10 @@ function NewEntryForm({parentId}: NewEntryProps) {
         ? Schema.contained(config.schema, root.contains)
         : keys(config.schema)
     } else {
-      const parent = await graph.preferDraft.query({
-        get: true,
+      const parent = await graph.get({
         select: parentData,
-        filter: {_id: parentId}
+        filter: {_id: parentId},
+        status: 'preferDraft'
       })
       const parentType = parent && config.schema[parent.type]
       if (parentType)
@@ -220,10 +220,10 @@ function NewEntryForm({parentId}: NewEntryProps) {
       phase: config.enableDrafts ? EntryPhase.Draft : EntryPhase.Published
     }
     const parentId = form.data().parent?.[EntryReference.entry]
-    const parent = await graph.preferPublished.query({
-      first: true,
+    const parent = await graph.first({
       select: parentData,
-      filter: {_id: parentId}
+      filter: {_id: parentId},
+      status: 'preferPublished'
     })
     const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
     const filePath = entryFilepath(config, data, parentPaths)
@@ -233,10 +233,10 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const url = entryUrl(entryType, {...data, parentPaths})
     const copyFrom = form.data().copyFrom?.[EntryReference.entry]
     const entryData = copyFrom
-      ? await graph.preferPublished.query({
-          first: true,
+      ? await graph.first({
           select: Entry.data,
-          filter: {_id: copyFrom}
+          filter: {_id: copyFrom},
+          status: 'preferPublished'
         })
       : {}
     const entry = await createEntryRow(config, {

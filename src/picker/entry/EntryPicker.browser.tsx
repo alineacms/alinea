@@ -1,12 +1,11 @@
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
-import {GraphQuery} from 'alinea/core/Graph'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
 import {PickerProps, pickerWithView} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
-import {Target} from 'alinea/core/pages/index'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {entries} from 'alinea/core/util/Objects'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
@@ -115,28 +114,30 @@ export function EntryPickerModal({
     ['picker-parents', destination, destinationLocale],
     async () => {
       if (!destination.parentId) return []
-      const drafts = graph.preferDraft
-      const query = destinationLocale
-        ? drafts.locale(destinationLocale)
-        : drafts
-      const res = await query.get(
-        Entry({entryId: destination.parentId}).select({
+      const res = await graph.get({
+        locale: destinationLocale,
+        select: {
           title: Entry.title,
-          parents({parents}) {
-            return parents().select({
+          parents: {
+            parents: {},
+            select: {
               id: Entry.entryId,
               title: Entry.title
-            })
+            }
           }
-        })
-      )
+        },
+        filter: {
+          _id: destination.parentId
+        },
+        status: 'preferDraft'
+      })
       return res?.parents.concat({
         id: destination.parentId,
         title: res.title
       })
     }
   )
-  const query = useMemo((): GraphQuery<Target<Entry>> => {
+  const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     if (!withNavigation && condition) {
       return {

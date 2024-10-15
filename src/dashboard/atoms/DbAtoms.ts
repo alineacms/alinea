@@ -80,7 +80,7 @@ async function suffixPaths(
     switch (mutation.type) {
       case MutationType.Create: {
         const {entry} = mutation
-        const conflictingPaths = await graph.preferPublished.query({
+        const conflictingPaths = await graph.find({
           select: Entry.path,
           filter: {
             _root: entry.root,
@@ -90,7 +90,8 @@ async function suffixPaths(
             _path: {
               or: {is: entry.path, startsWith: entry.path + '-'}
             }
-          }
+          },
+          status: 'preferPublished'
         })
         const suffix = pathSuffix(entry.path, conflictingPaths)
         if (suffix) {

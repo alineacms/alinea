@@ -5,9 +5,9 @@ import {PreviewInfo} from 'alinea/backend/Previews'
 import {Connection, SyncResponse} from './Connection.js'
 import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
+import {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {Mutation} from './Mutation.js'
-import {ResolveParams} from './Resolver.js'
 import {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
@@ -57,12 +57,14 @@ export class Client implements Connection {
       .then(user => user ?? undefined)
   }
 
-  resolve(params: ResolveParams): Promise<unknown> {
-    const body = JSON.stringify(params)
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    const body = JSON.stringify(query)
     return this.#requestJson(
       {action: HandleAction.Resolve},
       {method: 'POST', body}
-    ).then(this.#failOnHttpError)
+    ).then<AnyQueryResult<Query>>(this.#failOnHttpError)
   }
 
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {

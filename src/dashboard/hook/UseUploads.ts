@@ -171,23 +171,29 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const entryId = upload.info?.entryId ?? createId()
     const {parentId} = upload.to
     const buffer = await upload.file.arrayBuffer()
-    const parent = await graph.preferPublished.maybeGet(
-      Entry({entryId: parentId}).select({
+    const parent = await graph.first({
+      select: {
         level: Entry.level,
         entryId: Entry.entryId,
         url: Entry.url,
         path: Entry.path,
-        parentPaths({parents}) {
-          return parents().select(Entry.path)
+        parentPaths: {
+          parents: {},
+          select: Entry.path
         }
-      })
-    )
+      },
+      filter: {_id: parentId},
+      status: 'preferPublished'
+    })
 
     const extensionOriginal = extname(upload.file.name)
     const extension = extensionOriginal.toLowerCase()
     const path = slugify(basename(upload.file.name, extensionOriginal))
-    const prev = await graph.preferPublished.maybeGet(Entry({parent: parentId}))
-
+    const prev = await graph.first({
+      select: Entry,
+      filter: {_parent: parentId},
+      status: 'preferPublished'
+    })
     const entryLocation = {
       workspace: upload.to.workspace,
       root: upload.to.root,

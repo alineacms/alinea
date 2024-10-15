@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {GraphQuery} from 'alinea/core/Graph'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {HStack, Stack} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
@@ -13,7 +13,7 @@ import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {IconButton} from './IconButton.js'
 import css from './SearchBox.module.scss'
-import {Explorer} from './explorer/Explorer.js'
+import {Explorer, ExporerItemSelect} from './explorer/Explorer.js'
 
 const styles = styler(css)
 
@@ -29,9 +29,10 @@ export function SearchBox() {
   const list = useFocusList({
     onClear: () => setSearch('')
   })
-  const query = useMemo((): GraphQuery => {
+  const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     return {
+      select: undefined!,
       filter: {
         _workspace: workspace,
         _root: root,

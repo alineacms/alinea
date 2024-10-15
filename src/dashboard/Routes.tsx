@@ -38,8 +38,7 @@ const editLoader = atomFamily(() => {
     const workspace = searchParams.get('workspace') ?? undefined
     const root = searchParams.get('root') ?? undefined
     const graph = await get(graphAtom)
-    const entry = await graph.preferDraft.query({
-      first: true,
+    const entry = await graph.first({
       select: {
         entryId: Entry.entryId,
         locale: Entry.locale,
@@ -51,7 +50,8 @@ const editLoader = atomFamily(() => {
         _url: url,
         _workspace: workspace,
         _root: root
-      }
+      },
+      status: 'preferDraft'
     })
     if (!entry) return null
     return {...entry, locale: entry.locale || undefined}

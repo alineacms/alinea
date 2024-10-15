@@ -5,8 +5,9 @@ import {generatedStore} from 'alinea/backend/store/GeneratedStore'
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
+import {GraphQuery} from 'alinea/core/Graph'
 import {outcome} from 'alinea/core/Outcome'
-import {PreviewRequest, ResolveParams} from 'alinea/core/Resolver'
+import {PreviewRequest} from 'alinea/core/Preview'
 import {User} from 'alinea/core/User'
 import {assign} from 'alinea/core/util/Objects'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
@@ -41,7 +42,7 @@ export class NextCMS<
       const clientResolve = client.resolve.bind(client)
       const sync = () => database.then(db => db.syncWith(client))
       return assign(client, {
-        async resolve(params: ResolveParams) {
+        async resolve(params: GraphQuery) {
           const isDev = Boolean(devUrl())
           let preview: PreviewRequest | undefined
           const {cookies, draftMode} = await import('next/headers.js')

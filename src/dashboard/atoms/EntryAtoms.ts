@@ -5,7 +5,7 @@ import {
 } from '@headless-tree/core'
 import {Entry} from 'alinea/core/Entry'
 import {EntryPhase} from 'alinea/core/EntryRow'
-import {GraphRealm} from 'alinea/core/Graph'
+import {Graph} from 'alinea/core/Graph'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Type} from 'alinea/core/Type'
 import {entryFileName} from 'alinea/core/util/EntryFilenames'
@@ -34,12 +34,13 @@ const visibleTypesAtom = atom(get => {
 })
 
 async function entryTreeRoot(
-  active: GraphRealm,
+  graph: Graph,
+  status: 'preferDraft' | 'preferPublished',
   workspace: string,
   root: string,
   visibleTypes: Array<string>
 ): Promise<EntryTreeItem> {
-  const children = await active.query({
+  const children = await graph.find({
     select: Entry.i18nId,
     groupBy: Entry.i18nId,
     orderBy: {asc: Entry.index},
@@ -49,7 +50,8 @@ async function entryTreeRoot(
       _root: root,
       _parent: null,
       _type: {in: visibleTypes}
-    }
+    },
+    status
   })
   return {
     id: rootId(root),
@@ -86,7 +88,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
         select: Entry.path
       }
     }
-    const rows = await graph.preferDraft.query({
+    const rows = await graph.find({
       groupBy: Entry.i18nId,
       select: {
         id: Entry.i18nId,
@@ -101,13 +103,14 @@ const entryTreeItemLoaderAtom = atom(async get => {
       },
       filter: {
         _i18nId: {in: search}
-      }
+      },
+      status: 'preferDraft'
     })
     for (const row of rows) {
       const type = schema[row.type]
       const orderBy = Type.meta(type).orderChildrenBy ?? {asc: Entry.index}
       const ids = row.translations.map(row => row.entryId).concat(row.entryId)
-      const children = await graph.preferDraft.query({
+      const children = await graph.find({
         select: {
           locale: Entry.locale,
           i18nId: Entry.i18nId
@@ -116,7 +119,8 @@ const entryTreeItemLoaderAtom = atom(async get => {
         filter: {
           _parent: {in: ids},
           _type: {in: visibleTypes}
-        }
+        },
+        status: 'preferDraft'
       })
       const entries = [row.data].concat(row.translations)
       const translatedChildren = new Set(
@@ -144,7 +148,8 @@ const entryTreeItemLoaderAtom = atom(async get => {
       if (id === rootId(root.name)) {
         res.push(
           await entryTreeRoot(
-            graph.preferDraft,
+            graph,
+            'preferDraft',
             workspace.name,
             root.name,
             visibleTypes

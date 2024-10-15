@@ -1,10 +1,10 @@
 import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Field} from 'alinea/core/Field'
+import {GraphQuery} from 'alinea/core/Graph'
 import type * as pages from 'alinea/core/pages/index'
 import {Realm} from 'alinea/core/pages/Realm'
 import {BinaryOp, SourceType, UnaryOp} from 'alinea/core/pages/ResolveData'
-import {ResolveRequest} from 'alinea/core/Resolver'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
@@ -661,13 +661,7 @@ export class EntryResolver {
     }
   }
 
-  resolve = async <T>({
-    selection,
-    location,
-    locale,
-    realm = Realm.Published,
-    preview
-  }: ResolveRequest): Promise<T> => {
+  resolve = async <T>(query: GraphQuery): Promise<T> => {
     const ctx = new ResolveContext({realm, location, locale})
     const query = this.query(ctx, selection)
     const singleResult = this.isSingleResult(ctx, selection)

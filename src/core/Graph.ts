@@ -1,20 +1,13 @@
 import {Config} from './Config.js'
-import {Entry} from './Entry.js'
 import {EntryFields} from './EntryFields.js'
 import {Filter} from './Filter.js'
 import {PageSeed} from './Page.js'
-import {ResolveRequest, Resolver} from './Resolver.js'
+import {PreviewRequest} from './Preview.js'
+import {Resolver} from './Resolver.js'
 import {Root} from './Root.js'
-import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
-import {createSelection} from './pages/CreateSelection.js'
-import {Cursor} from './pages/Cursor.js'
 import {Expr} from './pages/Expr.js'
-import {Projection} from './pages/Projection.js'
-import {Realm} from './pages/Realm.js'
-import {Selection} from './pages/ResolveData.js'
-import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
 import {Target} from './pages/index.js'
 
 export type Location = Root | Workspace | PageSeed
@@ -73,7 +66,7 @@ type InferSelection<Selection> = Selection extends Expr<infer V>
         : Selection[K] extends Expr<infer V>
         ? V
         : Selection[K] extends IsRelated
-        ? QueryResult<Selection[K]>
+        ? AnyQueryResult<Selection[K]>
         : InferSelection<Selection[K]>
     }
 
@@ -83,192 +76,132 @@ type InferResult<Query> = Query extends {select: infer Selection}
   ? Type.Infer<Types>
   : EntryFields
 
-type QueryResult<Query> = Query extends {count: true}
-  ? number
-  : Query extends {first: true}
-  ? InferResult<Query> | null
-  : Query extends {get: true}
-  ? InferResult<Query>
-  : Array<InferResult<Query>>
+type CountQueryResult<Query> = number
+type GetQueryResult<Query> = InferResult<Query>
+type FirstQueryResult<Query> = InferResult<Query> | null
+type FindQueryResult<Query> = Array<InferResult<Query>>
 
-export interface GraphQuery<Selection = undefined, Types = Type | Array<Type>> {
+export type AnyQueryResult<Query> = Query extends {count: true}
+  ? CountQueryResult<Query>
+  : Query extends {first: true}
+  ? FirstQueryResult<Query>
+  : Query extends {get: true}
+  ? GetQueryResult<Query>
+  : FindQueryResult<Query>
+
+export type Status =
+  /** Only published entries */
+  | 'published'
+  /** Only drafts */
+  | 'draft'
+  /** Only archived entries */
+  | 'archived'
+  /** Prefer drafts, then published, then archived */
+  | 'preferDraft'
+  /** Prefer published, then archived, then drafts */
+  | 'preferPublished'
+  /** All phases */
+  | 'all'
+
+export declare class QuerySettings {
+  filter?: Filter<EntryFields>;
+
+  /** Filter results by location */
+  in?: Location
+  /** Filter results by locale */
+  locale?: string
+
+  search?: string | Array<string>
+
+  /** The time in seconds to poll for updates to content */
+  syncInterval?: number
+  /** Disable polling for updates to content */
+  disableSync?: boolean
+
+  /** Skip the first N results */
+  skip?: number
+  /** Return the first N results */
+  take?: number
+
+  /** Group results by one or more fields */
+  groupBy?: Expr<any> | Array<Expr<any>>
+  /** Order results by one or more fields */
+  orderBy?: Order | Array<Order>
+
+  /** Change status to include drafts or archived entries */
+  status?: Status
+
+  /** Preview an entry */
+  preview?: PreviewRequest
+}
+
+export interface QueryBase<Selection, Types> extends QuerySettings {
   select?: Selection
   type?: Type | Array<Type>
   filter?: Filter<EntryFields & FieldsOf<Types>>
-  search?: string | Array<string>
-
-  first?: true
-  get?: true
-  count?: true
-  skip?: number
-  take?: number
-
-  groupBy?: Expr<any> | Array<Expr<any>>
-  orderBy?: Order | Array<Order>
 }
 
-interface QueryObject<Result> extends GraphQuery {}
+export interface QueryWithResult<Result> extends QuerySettings {
+  select: Result extends object
+    ? {
+        [K in keyof Result]: Expr<Result[K]>
+      }
+    : Expr<Result>
+}
 
-export interface GraphRealmApi {
-  /** Filter results by location */
-  in(location: Location): GraphRealmApi
-  /** Filter results by locale */
-  locale(locale: string): GraphRealmApi
+export interface QueryInput<Selection, Types> extends QuerySettings {
+  select?: Selection
+  filter?: Filter<EntryFields & FieldsOf<Types>>
+}
+
+export interface GraphQuery<Selection = unknown, Types = Type | Array<Type>>
+  extends QueryBase<Selection, Types> {
   /** Find a single entry or null */
-  maybeGet<S extends Projection | Type>(
-    select: S
-  ): Promise<Projection.InferOne<S> | null>
-  /** Preview an entry */
-  previewEntry(entry: Entry): GraphRealmApi
+  first?: true
   /** Find a single entry */
-  get<S extends Projection | Type>(select: S): Promise<Projection.InferOne<S>>
-  /** Find a set of entries */
-  find<S extends Projection | Type>(select: S): Promise<Selection.Infer<S>>
-  query(query: GraphQuery<any, any>): Promise<any>
-  /** The time in seconds to poll for updates to content */
-  syncInterval(interval: number): GraphRealmApi
-  /** Disable polling for updates to content */
-  disableSync(): GraphRealmApi
-  /** The amount of results found */
-  count(cursor: Cursor.Find<any>): Promise<number>
-}
-
-export interface GraphOrigin {
-  location?: Location
-  locale?: string
-}
-
-export class GraphRealm implements GraphRealmApi {
-  #resolver: Resolver
-  #config: Config
-  #targets: Schema.Targets
-  #params: Partial<ResolveRequest>
-
-  constructor(
-    config: Config,
-    resolver: Resolver,
-    params?: Partial<ResolveRequest>
-  ) {
-    this.#config = config
-    this.#resolver = resolver
-    this.#targets = Schema.targets(config.schema)
-    this.#params = {...params}
-  }
-
-  query<
-    const Types extends Type | Array<Type>,
-    Query extends GraphQuery<ToSelect | Expr<any> | Target<any>, Types>
-  >(query: Query): Promise<QueryResult<Query>> {
-    /*if (Type.isType(select)) select = select()
-    const selection = createSelection(select)
-    serializeSelection(this.#targets, selection)
-    return this.#resolver.resolve({
-      ...this.#params,
-      selection
-    })*/
-    return undefined!
-  }
-
-  disableSync() {
-    return new GraphRealm(this.#config, this.#resolver, {
-      ...this.#params,
-      syncInterval: Infinity
-    })
-  }
-
-  syncInterval(interval: number) {
-    return new GraphRealm(this.#config, this.#resolver, {
-      ...this.#params,
-      syncInterval: interval
-    })
-  }
-
-  in(location: Location): GraphRealmApi {
-    return new GraphRealm(this.#config, this.#resolver, {
-      ...this.#params,
-      location: seralizeLocation(this.#config, location)
-    })
-  }
-
-  locale(locale: string) {
-    return new GraphRealm(this.#config, this.#resolver, {
-      ...this.#params,
-      locale
-    })
-  }
-
-  previewEntry(entry: Entry): GraphRealmApi {
-    return new GraphRealm(this.#config, this.#resolver, {
-      ...this.#params,
-      preview: {entry}
-    })
-  }
-
-  maybeGet<S extends Projection | Type>(
-    select: S
-  ): Promise<Projection.InferOne<S> | null>
-  async maybeGet(select: any) {
-    if (select instanceof Cursor.Find) select = select.first()
-    if (Type.isType(select)) select = select().first()
-    const selection = createSelection(select)
-    serializeSelection(this.#targets, selection)
-    return this.#resolver.resolve({
-      ...this.#params,
-      selection
-    })
-  }
-
-  get<S extends Projection | Type>(select: S): Promise<Projection.InferOne<S>>
-  async get(select: any) {
-    const result = await this.maybeGet(select)
-    if (result === null) throw new Error('Entry not found')
-    return result
-  }
-
-  find<S extends Projection | Type>(select: S): Promise<Selection.Infer<S>>
-  async find(select: any) {
-    if (Type.isType(select)) select = select()
-    const selection = createSelection(select)
-    serializeSelection(this.#targets, selection)
-    return this.#resolver.resolve({
-      ...this.#params,
-      selection
-    })
-  }
-
-  count(cursor: Cursor.Find<any>): Promise<number>
-  async count(cursor: Cursor.Find<any>) {
-    const selection = createSelection(cursor.count())
-    serializeSelection(this.#targets, selection)
-    return this.#resolver.resolve({
-      ...this.#params,
-      selection
-    })
-  }
+  get?: true
+  /** Return the count of results found */
+  count?: true
 }
 
 export class Graph {
-  drafts: GraphRealm
-  archived: GraphRealm
-  published: GraphRealm
-  preferPublished: GraphRealm
-  preferDraft: GraphRealm
-  all: GraphRealm
+  #resolver: Resolver
 
-  constructor(public config: Config, public resolver: Resolver) {
-    this.drafts = new GraphRealm(this.config, resolver, {realm: Realm.Draft})
-    this.archived = new GraphRealm(this.config, resolver, {
-      realm: Realm.Archived
-    })
-    this.published = new GraphRealm(this.config, resolver, {
-      realm: Realm.Published
-    })
-    this.preferDraft = new GraphRealm(this.config, resolver, {
-      realm: Realm.PreferDraft
-    })
-    this.preferPublished = new GraphRealm(this.config, resolver, {
-      realm: Realm.PreferPublished
-    })
-    this.all = new GraphRealm(this.config, resolver, {realm: Realm.All})
+  constructor(public config: Config, resolver: Resolver) {
+    this.#resolver = resolver
+  }
+
+  find<
+    const Types extends Type | Array<Type>,
+    Query extends QueryInput<ToSelect | Expr<any> | Target<any>, Types>
+  >(query: Query): Promise<FindQueryResult<Query>> {
+    return this.#resolver.resolve(query) as Promise<FindQueryResult<Query>>
+  }
+
+  first<
+    const Types extends Type | Array<Type>,
+    Query extends QueryInput<ToSelect | Expr<any> | Target<any>, Types>
+  >(query: Query): Promise<FirstQueryResult<Query>> {
+    return this.#resolver.resolve({...query, first: true}) as Promise<
+      FirstQueryResult<Query>
+    >
+  }
+
+  get<
+    const Types extends Type | Array<Type>,
+    Query extends QueryInput<ToSelect | Expr<any> | Target<any>, Types>
+  >(query: Query): Promise<GetQueryResult<Query>> {
+    return this.#resolver.resolve({...query, get: true}) as Promise<
+      GetQueryResult<Query>
+    >
+  }
+
+  count<
+    const Types extends Type | Array<Type>,
+    Query extends QueryInput<ToSelect | Expr<any> | Target<any>, Types>
+  >(query: Query): Promise<CountQueryResult<Query>> {
+    return this.#resolver.resolve({...query, count: true}) as Promise<
+      CountQueryResult<Query>
+    >
   }
 }

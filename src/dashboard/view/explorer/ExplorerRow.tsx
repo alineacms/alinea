@@ -1,11 +1,12 @@
 import styler from '@alinea/styler'
-import {GraphQuery} from 'alinea/core/Graph'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {Schema} from 'alinea/core/Schema'
 import {SummaryProps} from 'alinea/core/media/Summary'
 import {useAtomValue} from 'jotai'
 import {ComponentType, memo} from 'react'
 import {useQuery} from 'react-query'
 import {graphAtom} from '../../atoms/DbAtoms.js'
+import {ExporerItemSelect} from './Explorer.js'
 import {ExplorerItem} from './ExplorerItem.js'
 import css from './ExplorerRow.module.scss'
 
@@ -13,7 +14,7 @@ const styles = styler(css)
 
 export type ExplorerRowProps = {
   schema: Schema
-  query: GraphQuery // <ExporerItemSelect>
+  query: QueryWithResult<ExporerItemSelect>
   batchSize: number
   amount: number
   from: number
@@ -30,16 +31,17 @@ export const ExplorerRow = memo(function ExplorerRow({
   summaryView,
   defaultView
 }: ExplorerRowProps) {
-  const {preferDraft: active} = useAtomValue(graphAtom)
+  const graph = useAtomValue(graphAtom)
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
   const {data} = useQuery(
     ['explorer', 'batch', query, batchSize, start],
     async () => {
-      return active.query({
+      return graph.find({
         ...query,
         skip: start * batchSize,
-        take: batchSize
+        take: batchSize,
+        status: 'preferDraft'
       })
     },
     {refetchOnWindowFocus: false, keepPreviousData: true, staleTime: 10000}

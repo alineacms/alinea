@@ -1,16 +1,16 @@
 import {EntryPhase} from '../EntryRow.js'
 
 export enum Realm {
-  // Query only published entries
+  /** Query only published entries */
   Published = EntryPhase.Published,
-  // Query only drafts
+  /** Query only drafts */
   Draft = EntryPhase.Draft,
-  // Query only archived entries
+  /** Query only archived entries */
   Archived = EntryPhase.Archived,
-  // Prefer drafts, then published, then archived
+  /** Prefer drafts, then published, then archived */
   PreferDraft = 'active',
-  // Prefer published, then archived, then drafts
+  /** Prefer published, then archived, then drafts */
   PreferPublished = 'main',
-  // Query all phases
+  /** Query all phases */
   All = 'all'
 }
