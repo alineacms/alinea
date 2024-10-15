@@ -177,7 +177,8 @@ export function createExample() {
           entry1: page(Page({title: 'Test title'})),
           entry2: page(Container({title: 'Entry 2'}), {
             entry3: page(Page({title: 'Entry 3'}))
-          })
+          }),
+          container1: page(Container({title: 'Container 1'}))
         }
       }),
       multiLanguage: root('Multi language', {

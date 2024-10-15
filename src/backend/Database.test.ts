@@ -3,6 +3,7 @@ import {EntryPhase} from 'alinea/core/EntryRow'
 import {Query} from 'alinea/core/Query'
 import {ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
 import {createPreview} from 'alinea/core/media/CreatePreview'
+import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {readFileSync} from 'fs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
@@ -16,6 +17,23 @@ test('create', async () => {
   const result = await example.get(Query.whereId(parent.entryId))
   assert.is(result.entryId, parent.entryId)
   assert.is(result.title, 'New parent')
+})
+
+test('index is correct', async () => {
+  const example = createExample()
+  const {Page} = example.schema
+  const container1 = await example.get(Query.wherePath('container1'))
+  const entryA = Edit.create(Page).setParent(container1.entryId)
+  await example.commit(entryA)
+  const entryB = Edit.create(Page).setParent(container1.entryId)
+  await example.commit(entryB)
+  const entries = await example.find(Query.whereParent(container1.entryId))
+  const first = generateKeyBetween(null, null)
+  const second = generateKeyBetween(first, null)
+  assert.is(entries[0].entryId, entryA.entryId)
+  assert.is(entries[0].index, first)
+  assert.is(entries[1].entryId, entryB.entryId)
+  assert.is(entries[1].index, second)
 })
 
 test('remove child entries', async () => {
