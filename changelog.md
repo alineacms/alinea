@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.11.1]
+
+- Fix RichTextEditor.addHtml not parsing marks correctly
+- Fix index on entry creation
+
 ## [0.11.0]
 
 - The cms handler has been rewritten to handle both backend and previews. This 
