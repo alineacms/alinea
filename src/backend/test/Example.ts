@@ -27,7 +27,7 @@ import {
 
 export function createExample() {
   const Page = type('Type', {
-    isContainer: true,
+    contains: ['Page'],
     fields: {
       title: text('Title'),
       path: path('Path'),
@@ -48,7 +48,7 @@ export function createExample() {
   })
 
   const Container = type('TypeB', {
-    isContainer: true,
+    contains: ['Page'],
     fields: {
       title: text('Title'),
       path: path('Path'),

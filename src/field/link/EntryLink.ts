@@ -18,8 +18,6 @@ export interface EntryLink<InferredFields = undefined> extends EntryReference {
   i18nId: string
   title: string
   path: string
-  /** @deprecated Use href */
-  url: string
   href: string
   fields: InferredFields
 }

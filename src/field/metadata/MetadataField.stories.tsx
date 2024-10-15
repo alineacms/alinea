@@ -6,7 +6,9 @@ import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
 const fields = type({
-  metadata: metadata()
+  fields: {
+    metadata: metadata()
+  }
 })
 
 export function MetadataField() {

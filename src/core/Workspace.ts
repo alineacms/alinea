@@ -1,6 +1,6 @@
 import {Preview} from 'alinea/core/Preview'
 import type {ComponentType} from 'react'
-import {Meta, StripMeta} from './Meta.js'
+import {Meta} from './Meta.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getRandomColor} from './util/GetRandomColor.js'
@@ -97,12 +97,6 @@ export function workspace<Definition extends WorkspaceDefinition>(
   label: string,
   definition: WorkspaceOptions<Definition>
 ): Workspace<Definition>
-/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
-export function workspace<Definition extends WorkspaceDefinition>(
-  /** The name of the workspace */
-  label: string,
-  definition: Definition
-): Workspace<StripMeta<Definition>>
 export function workspace<Definition extends WorkspaceDefinition>(
   /** The name of the workspace */
   label: string,

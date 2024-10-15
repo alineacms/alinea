@@ -23,7 +23,6 @@ import {
   and,
   asc,
   count,
-  desc,
   eq,
   exists,
   inArray,
@@ -61,7 +60,7 @@ export class Database implements Syncable {
 
   constructor(public config: Config, public store: Store) {
     this.seed = this.seedData()
-    this.resolver = new EntryResolver(this, this.config.schema)
+    this.resolver = new EntryResolver(this)
   }
 
   async syncRequired(contentHash: string): Promise<boolean> {
@@ -463,17 +462,11 @@ export class Database implements Syncable {
       .orderBy(EntryRow.rowHash)
     const all = contentHashes.join('')
     const contentHash = await createFileHash(new TextEncoder().encode(all))
-    const modifiedAt = await tx
-      .select(EntryRow.modifiedAt)
-      .from(EntryRow)
-      .orderBy(desc(EntryRow.modifiedAt))
-      .get()
     const current = await tx.select().from(AlineaMeta).get()
     await tx.delete(AlineaMeta)
     await tx.insert(AlineaMeta).values({
       commitHash,
-      contentHash,
-      modifiedAt: modifiedAt ?? 0
+      contentHash
     })
   }
 
@@ -553,7 +546,6 @@ export class Database implements Syncable {
       filePath: meta.filePath,
       seeded: seed?.filePath ?? null,
 
-      modifiedAt: Date.now(), // file.modifiedAt,
       active: false,
       main: false,
 

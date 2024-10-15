@@ -16,8 +16,6 @@ import {EntryReference} from 'alinea/picker/entry/EntryReference'
 
 export interface FileLink<InferredFields = undefined> extends EntryReference {
   title: string
-  /** @deprecated Use href */
-  url: string
   href: string
   extension: string
   size: number

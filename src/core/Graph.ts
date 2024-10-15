@@ -137,7 +137,7 @@ export declare class QuerySettings {
 
 export interface QueryBase<Selection, Types> extends QuerySettings {
   select?: Selection
-  type?: Type | Array<Type>
+  type?: Types
   filter?: Filter<EntryFields & FieldsOf<Types>>
 }
 

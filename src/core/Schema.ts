@@ -97,13 +97,6 @@ export interface SchemaOptions<Definition> {
 
 export function schema<Definition extends SchemaTypes>(
   options: SchemaOptions<Definition>
-): Definition
-/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
-export function schema<Definition extends SchemaTypes>(
-  options: Definition
-): Definition
-export function schema<Definition>(
-  options: SchemaOptions<Definition>
 ): Definition {
   return (options.types ?? options) as any
 }

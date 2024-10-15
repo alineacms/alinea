@@ -12,10 +12,8 @@ import {
 import {entryPicker} from 'alinea/picker/entry'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {urlPicker} from 'alinea/picker/url'
-import {EntryLink, entry as entryLink} from './EntryLink.js'
-import {file as fileLink} from './FileLink.js'
-import {image as imageLink} from './ImageLink.js'
-import {UrlLink, url as urlLink} from './UrlLink.js'
+import {EntryLink} from './EntryLink.js'
+import {UrlLink} from './UrlLink.js'
 
 export type AnyLink<InferredFields> =
   | EntryLink<InferredFields>
@@ -63,12 +61,4 @@ export namespace link {
       }
     })
   }
-  /** @deprecated Use Field.image */
-  export const image = imageLink
-  /** @deprecated Use Field.entry */
-  export const entry = entryLink
-  /** @deprecated Use Field.file */
-  export const file = fileLink
-  /** @deprecated Use Field.url */
-  export const url = urlLink
 }

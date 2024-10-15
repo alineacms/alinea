@@ -254,7 +254,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
       parentDir: parentDir,
       childrenDir: childrenDir,
       i18nId: root.i18n ? createId() : entryId,
-      modifiedAt: Date.now(),
       active: true,
       main: false,
       data: {...entryData, title, path},

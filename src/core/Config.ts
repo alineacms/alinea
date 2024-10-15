@@ -31,9 +31,6 @@ export interface Config {
   /** Filename of the generated dashboard */
   dashboardFile?: string
 
-  /** @deprecated Use the publicDir and dashboardFile settings */
-  dashboard?: never
-
   auth?: Auth.View
 }
 

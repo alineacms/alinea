@@ -12,18 +12,17 @@ const options = {
 }
 
 const fields = type({
-  selectA: select(
-    'Select',
-    {
-      one: 'Option 1',
-      two: 'Option 2'
-    },
-    {initialValue: 'one'}
-  ),
-  selectB: select('Select (tracked)', options),
-  readOnly: select('Select (read-only)', options, {
-    readOnly: true
-  })
+  fields: {
+    selectA: select('Select', {
+      initialValue: 'one',
+      options: {
+        one: 'Option 1',
+        two: 'Option 2'
+      }
+    }),
+    selectB: select('Select (tracked)', {options}),
+    readOnly: select('Select (read-only)', {options, readOnly: true})
+  }
 })
 
 track.options(fields.selectB, get => {

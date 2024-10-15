@@ -7,8 +7,10 @@ import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
 const fields = type({
-  title: text('Title'),
-  path: path('Path')
+  fields: {
+    title: text('Title'),
+    path: path('Path')
+  }
 })
 
 export function PathField() {

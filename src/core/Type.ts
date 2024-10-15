@@ -43,10 +43,6 @@ export interface TypeMeta {
   contains?: Array<string | Type>
   /** Order children entries in the sidebar content tree */
   orderChildrenBy?: OrderBy | Array<OrderBy>
-  /** @deprecated Use contains instead */
-  isContainer?: true
-  /** @deprecated Use hidden instead */
-  isHidden?: true
   /** Entries do not show up in the sidebar content tree */
   hidden?: true
   /** An icon (React component) to represent this type in the dashboard */
@@ -111,7 +107,7 @@ export namespace Type {
   }
 
   export function isHidden(type: Type): boolean {
-    return Boolean(meta(type).hidden || meta(type).isHidden)
+    return Boolean(meta(type).hidden)
   }
 
   export function shape(type: Type): RecordShape {
@@ -136,7 +132,7 @@ export namespace Type {
 
   export function isContainer(type: Type) {
     const {meta} = type[Type.Data]
-    return Boolean(meta.isContainer || meta.contains)
+    return Boolean(meta.contains)
   }
 
   export function target(type: Type): TypeTarget {
@@ -349,15 +345,6 @@ export function type<Definition extends TypeFields>(
   label: string,
   definition: TypeOptions<Definition>
 ): Type<Definition>
-/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
-export function type<Definition extends TypeDefinition>(
-  definition: Definition
-): Type<StripMeta<Definition>>
-/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
-export function type<Definition extends TypeDefinition>(
-  label: string,
-  definition: Definition
-): Type<StripMeta<Definition>>
 export function type<Definition extends TypeDefinition>(
   label: string | TypeOptions<Definition> | Definition,
   definition?: TypeOptions<Definition> | Definition

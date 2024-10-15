@@ -6,12 +6,14 @@ import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
 const fields = type('Field', {
-  time: time('Time', {}),
-  focused: time('Date', {autoFocus: true}),
-  readOnly: time('Date (read-only)', {
-    readOnly: true,
-    initialValue: '04:20'
-  })
+  fields: {
+    time: time('Time', {}),
+    focused: time('Date', {autoFocus: true}),
+    readOnly: time('Date (read-only)', {
+      readOnly: true,
+      initialValue: '04:20'
+    })
+  }
 })
 
 export function TimeField() {

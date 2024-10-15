@@ -18,7 +18,6 @@ export interface Entry {
   parent: string | null
   i18nId: string
   locale: string | null
-  modifiedAt: number
   rowHash: string
   active: boolean
   main: boolean

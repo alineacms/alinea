@@ -53,8 +53,7 @@ export const EntryRow = table(
     filePath: column.text().notNull(), // Filesystem location
     parentDir: column.text().notNull(), // Filesystem location
     childrenDir: column.text().notNull(), // Filesystem location
-    /** @deprecated */
-    modifiedAt: column.integer().notNull(),
+
     rowHash: column.text().notNull(),
     fileHash: column.text().notNull(),
     url: column.text().notNull(),

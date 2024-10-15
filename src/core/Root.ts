@@ -2,7 +2,7 @@ import {Preview} from 'alinea/core/Preview'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {Label} from './Label.js'
-import {Meta, StripMeta} from './Meta.js'
+import {Meta} from './Meta.js'
 import {PageSeed} from './Page.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
@@ -122,11 +122,6 @@ export function root<Definition extends RootDefinition>(
   label: Label,
   definition: RootOptions<Definition>
 ): Root<Definition>
-/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
-export function root<Definition extends RootDefinition>(
-  label: Label,
-  definition: Definition
-): Root<StripMeta<Definition>>
 export function root<Definition extends RootDefinition>(
   label: Label,
   definition: RootOptions<Definition> | Definition = {}

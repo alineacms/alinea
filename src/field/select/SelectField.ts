@@ -27,28 +27,14 @@ export class SelectField<Key extends string> extends ScalarField<
 
 export function select<const Items extends Record<string, string>>(
   label: string,
-  items: WithoutLabel<
+  options: WithoutLabel<
     {options: Items} & SelectConfig<Extract<keyof Items, string>>
   >
-): SelectField<Extract<keyof Items, string>>
-/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
-export function select<const Items extends Record<string, string>>(
-  label: string,
-  items: Items,
-  options?: WithoutLabel<SelectConfig<Extract<keyof Items, string>>>
-): SelectField<Extract<keyof Items, string>>
-export function select(
-  label: string,
-  itemsOrOptions: any,
-  options?: any
-): SelectField<any> {
-  const items = itemsOrOptions.options ?? itemsOrOptions
-  const fieldOptions = itemsOrOptions.options ? itemsOrOptions : options
+): SelectField<Extract<keyof Items, string>> {
   return new SelectField({
     options: {
       label,
-      options: items,
-      ...fieldOptions
+      ...options
     },
     view: 'alinea/field/select/SelectField.view#SelectInput'
   })
