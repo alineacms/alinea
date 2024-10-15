@@ -103,10 +103,12 @@ export class GraphRealm implements GraphRealmApi {
     if (Type.isType(select)) select = select().first()
     const selection = createSelection(select)
     serializeSelection(this.#targets, selection)
-    return this.#resolver.resolve({
-      ...this.#params,
-      selection
-    })
+    return (
+      (await this.#resolver.resolve({
+        ...this.#params,
+        selection
+      })) ?? null
+    )
   }
 
   get<S extends Projection | Type>(select: S): Promise<Projection.InferOne<S>>
