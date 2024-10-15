@@ -2,9 +2,10 @@ import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Field} from 'alinea/core/Field'
 import {GraphQuery} from 'alinea/core/Graph'
-import type * as pages from 'alinea/core/pages/index'
+import {Expr} from 'alinea/core/pages/Expr'
 import {Realm} from 'alinea/core/pages/Realm'
 import {BinaryOp, SourceType, UnaryOp} from 'alinea/core/pages/ResolveData'
+import {seralizeLocation} from 'alinea/core/pages/Serialize'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
@@ -77,10 +78,12 @@ export interface PostContext {
 }
 
 export class EntryResolver {
+  schema: Schema
   targets: Schema.Targets
 
-  constructor(public db: Database, public schema: Schema) {
-    this.targets = Schema.targets(schema)
+  constructor(public db: Database) {
+    this.schema = db.config.schema
+    this.targets = Schema.targets(this.schema)
   }
 
   fieldOf(
@@ -338,7 +341,7 @@ export class EntryResolver {
             .from(Child)
             .where(
               eq(Child.entryId, from.entryId),
-              this.conditionRealm(Child, ctx.realm),
+              this.conditionRealm(Child, ctx.status),
               this.conditionLocale(Child, ctx.locale)
             )
             .unionAll(self =>
@@ -351,7 +354,7 @@ export class EntryResolver {
                 .from(Child)
                 .innerJoin(self, eq(self.entryId, Child.parent))
                 .where(
-                  this.conditionRealm(Child, ctx.realm),
+                  this.conditionRealm(Child, ctx.status),
                   this.conditionLocale(Child, ctx.locale),
                   lt(self.level, Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH))
                 )
@@ -378,7 +381,7 @@ export class EntryResolver {
             .from(Parent)
             .where(
               eq(Parent.entryId, from.entryId),
-              this.conditionRealm(Parent, ctx.realm),
+              this.conditionRealm(Parent, ctx.status),
               this.conditionLocale(Parent, ctx.locale)
             )
             .unionAll(self =>
@@ -391,7 +394,7 @@ export class EntryResolver {
                 .from(Parent)
                 .innerJoin(self, eq(self.parent, Parent.entryId))
                 .where(
-                  this.conditionRealm(Parent, ctx.realm),
+                  this.conditionRealm(Parent, ctx.status),
                   this.conditionLocale(Parent, ctx.locale),
                   lt(self.level, Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH))
                 )
@@ -499,7 +502,7 @@ export class EntryResolver {
       preCondition,
       name ? eq(ctx.Table.type, name) : undefined,
       this.conditionLocation(ctx.Table, ctx.location),
-      this.conditionRealm(ctx.Table, ctx.realm),
+      this.conditionRealm(ctx.Table, ctx.status),
       source?.type === SourceType.Translations
         ? undefined
         : this.conditionLocale(ctx.Table, ctx.locale),
@@ -523,10 +526,8 @@ export class EntryResolver {
     return result
   }
 
-  query<Result>(
-    ctx: ResolveContext,
-    selection: pages.Selection
-  ): Query<Result, Either> {
+  query(ctx: ResolveContext, {select}: GraphQuery) {
+    if (Expr.isExpr(select)) return
     switch (selection.type) {
       case 'cursor':
         return <any>this.queryCursor(ctx, selection)
@@ -662,12 +663,16 @@ export class EntryResolver {
   }
 
   resolve = async <T>(query: GraphQuery): Promise<T> => {
-    const ctx = new ResolveContext({realm, location, locale})
-    const query = this.query(ctx, selection)
+    const location = seralizeLocation(this.db.config, query.location)
+    const ctx = new ResolveContext({
+      ...query,
+      location
+    })
+    const dbQuery = this.query(ctx, query)
     const singleResult = this.isSingleResult(ctx, selection)
     const transact = async (tx: Store): Promise<T> => {
       const rows = await query.all(tx)
-      const linkResolver = new LinkResolver(this, tx, ctx.realm)
+      const linkResolver = new LinkResolver(this, tx, ctx.status)
       const result = singleResult ? rows[0] : rows
       if (result) await this.post({linkResolver}, result, selection)
       return result as T

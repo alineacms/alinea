@@ -87,7 +87,7 @@ test('fetch translations', async () => {
   const {Page} = example.schema
   let res = await example.get({
     locale: 'en',
-    in: example.workspaces.main.multiLanguage,
+    location: example.workspaces.main.multiLanguage,
     select: {
       translations: {
         translations: {},
@@ -100,7 +100,7 @@ test('fetch translations', async () => {
   assert.equal(res.translations, ['en', 'fr'])
   res = await example.get({
     locale: 'en',
-    in: example.workspaces.main.multiLanguage,
+    location: example.workspaces.main.multiLanguage,
     select: {
       translations: {
         translations: {},
@@ -117,7 +117,7 @@ test('change published path for entry with language', async () => {
   const example = createExample()
   const localised3 = await example.get({
     locale: 'en',
-    in: example.workspaces.main.multiLanguage,
+    location: example.workspaces.main.multiLanguage,
     select: Entry,
     filter: {_path: 'localised3'}
   })
@@ -127,7 +127,7 @@ test('change published path for entry with language', async () => {
   await example.commit(Edit.archive(localised3.entryId))
 
   const localised3Archived = await example.get({
-    in: example.workspaces.main.multiLanguage,
+    location: example.workspaces.main.multiLanguage,
     select: Entry,
     filter: {_path: 'localised3'},
     status: 'archived'

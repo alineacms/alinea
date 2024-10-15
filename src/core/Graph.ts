@@ -104,10 +104,10 @@ export type Status =
   | 'all'
 
 export declare class QuerySettings {
-  filter?: Filter<EntryFields>;
+  filter?: Filter<EntryFields>
 
   /** Filter results by location */
-  in?: Location
+  location?: Location
   /** Filter results by locale */
   locale?: string
 

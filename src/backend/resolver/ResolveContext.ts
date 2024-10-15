@@ -1,9 +1,9 @@
 import {EntryRow} from 'alinea/core/EntryRow'
-import {Realm} from 'alinea/core/pages/Realm'
+import {Status} from 'alinea/core/Graph'
 import {alias} from 'rado'
 
 interface ResolveContextData {
-  realm: Realm
+  status: Status
   location: Array<string>
   locale: string | undefined
   depth: number
@@ -25,7 +25,7 @@ export class ResolveContext {
 
   linkContext() {
     return new ResolveContext({
-      realm: this.realm
+      status: this.status
     })
   }
 
@@ -35,8 +35,8 @@ export class ResolveContext {
   get location() {
     return this.data.location ?? []
   }
-  get realm() {
-    return this.data.realm ?? Realm.Published
+  get status() {
+    return this.data.status ?? 'published'
   }
   get locale() {
     return this.data.locale

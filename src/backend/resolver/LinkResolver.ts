@@ -33,7 +33,7 @@ export class LinkResolver {
         )
         serializeSelection(this.resolver.targets, selection)
         const query = this.resolver.query<{entryId: string; projection: any}>(
-          new ResolveContext({realm: this.realm}),
+          new ResolveContext({status: this.realm}),
           selection
         )
         const entries = await query.all(this.store)

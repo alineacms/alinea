@@ -26,4 +26,4 @@ type AndCondition<Fields> = {
     : never]?: Condition<InferValue<Fields[K]>>
 }
 
-export type Filter<Fields> = AndCondition<Fields> | OrCondition<Fields>
+export type Filter<Fields> = OrCondition<Fields> | AndCondition<Fields>
