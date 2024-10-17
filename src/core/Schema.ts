@@ -61,14 +61,6 @@ export namespace Schema {
     return shapesCache.get(schema)!
   }
 
-  export function targets(schema: Schema): Targets {
-    return new Map(
-      entries(schema).map(([key, type]) => {
-        return [Type.target(type), key]
-      })
-    )
-  }
-
   export function typeNames(schema: Schema): Map<Type, string> {
     return new Map(entries(schema).map(([key, type]) => [type, key]))
   }

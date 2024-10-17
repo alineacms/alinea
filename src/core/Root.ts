@@ -1,8 +1,8 @@
 import {Preview} from 'alinea/core/Preview'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
+import {getRoot, HasRoot, internalRoot} from './Internal.js'
 import {Label} from './Label.js'
-import {Meta} from './Meta.js'
 import {PageSeed} from './Page.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
@@ -22,9 +22,8 @@ export interface RootMeta {
   preview?: Preview
 }
 
-export interface RootDefinition {
+export interface EntriesDefinition {
   [key: string]: PageSeed
-  [Meta]?: RootMeta
 }
 
 export interface RootData extends RootMeta {
@@ -33,27 +32,25 @@ export interface RootData extends RootMeta {
 
 type Seed = Record<string, PageSeed>
 
-export type Root<Definition extends Seed = Seed> = Definition & {
-  [Root.Data]: RootData
-}
+export type Root<Definition = object> = Definition & HasRoot
 
 export namespace Root {
   export const Data = Symbol.for('@alinea/Root.Data')
 
   export function label(root: Root): Label {
-    return root[Root.Data].label
+    return getRoot(root).label
   }
 
   export function data(root: Root): RootData {
-    return root[Root.Data]
+    return getRoot(root)
   }
 
   export function preview(root: Root): Preview | undefined {
-    return root[Root.Data].preview
+    return getRoot(root).preview
   }
 
   export function defaultLocale(root: Root): string | undefined {
-    return root[Root.Data].i18n?.locales[0]
+    return getRoot(root).i18n?.locales[0]
   }
 
   export function isRoot(value: any): value is Root {
@@ -61,7 +58,7 @@ export namespace Root {
   }
 
   export function isMediaRoot(root: Root): boolean {
-    return Boolean(root[Root.Data].isMediaRoot)
+    return Boolean(getRoot(root).isMediaRoot)
   }
 
   const RootOptions = cito.object({
@@ -113,32 +110,20 @@ export namespace Root {
   }
 }
 
-export interface RootOptions<Definition> extends RootMeta {
-  entries?: Definition
+export interface RootOptions<Entries> extends RootMeta {
+  entries?: Entries
 }
 
-export function root<Definition extends RootDefinition>(label: Label): Root<{}>
-export function root<Definition extends RootDefinition>(
-  label: Label,
-  definition: RootOptions<Definition>
-): Root<Definition>
-export function root<Definition extends RootDefinition>(
-  label: Label,
-  definition: RootOptions<Definition> | Definition = {}
-): Root<Definition> {
-  const def: any = definition
-  const isOptions = 'entries' in def || !def[Meta]
-  const entries = isOptions ? def.entries : definition
-  const options = isOptions ? def : def[Meta]
+export interface RootInternal extends RootOptions<EntriesDefinition> {
+  label: string
+}
+
+export function root<Entries extends EntriesDefinition>(
+  label: string,
+  config: RootOptions<Entries> = {}
+): Root<Entries> {
   return {
-    ...entries,
-    [Root.Data]: {
-      label,
-      ...options
-    }
+    ...config.entries,
+    [internalRoot]: {...config, label}
   }
-}
-
-export namespace root {
-  export const meta: typeof Meta = Meta
 }

@@ -3,23 +3,15 @@ import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
 import {Field} from './Field.js'
+import {getType, HasType, internalType} from './Internal.js'
 import {Label} from './Label.js'
 import {SummaryProps} from './media/Summary.js'
-import {Meta, StripMeta} from './Meta.js'
 import {OrderBy} from './OrderBy.js'
 import {Expr} from './pages/Expr.js'
-import {ExprData, Selection, toSelection} from './pages/ResolveData.js'
-import {Section, section} from './Section.js'
+import {section, Section} from './Section.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {
-  assign,
-  defineProperty,
-  entries,
-  fromEntries,
-  keys,
-  values
-} from './util/Objects.js'
+import {entries, fromEntries, keys, values} from './util/Objects.js'
 import {Expand} from './util/Types.js'
 import {View} from './View.js'
 
@@ -30,46 +22,7 @@ export interface EntryUrlMeta {
   locale?: string | null
 }
 
-/** Optional settings to configure a Type */
-export interface TypeMeta {
-  /** Accepts entries of these types as children */
-  contains?: Array<string | Type>
-  /** Order children entries in the sidebar content tree */
-  orderChildrenBy?: OrderBy | Array<OrderBy>
-  /** Entries do not show up in the sidebar content tree */
-  hidden?: true
-  /** An icon (React component) to represent this type in the dashboard */
-  icon?: ComponentType
-
-  /** A React component used to view an entry of this type in the dashboard */
-  view?: View<EntryEditProps & {type: Type}>
-  /** A React component used to view a row of this type in the dashboard */
-  summaryRow?: View<SummaryProps>
-  /** A React component used to view a thumbnail of this type in the dashboard */
-  summaryThumb?: View<SummaryProps>
-
-  /** Create indexes on fields of this type */
-  // index?: (this: Fields) => Record<string, Array<Expr<any>>>
-
-  entryUrl?: (meta: EntryUrlMeta) => string
-}
-
-export interface TypeData {
-  label: Label
-  shape: RecordShape
-  definition: TypeDefinition
-  meta: TypeMeta
-  sections: Array<Section>
-  target: TypeTarget
-}
-
-export class TypeTarget {}
-
-export declare class TypeI {
-  get [Type.Data](): TypeData
-}
-
-export type Type<Definition = object> = Definition & TypeI
+export type Type<Definition = object> = Definition & HasType
 
 type TypeRow<Definition> = Expand<{
   [K in keyof Definition as Definition[K] extends Expr<any>
@@ -82,27 +35,18 @@ export namespace Type {
   export const Data = Symbol.for('@alinea/Type.Data')
 
   export function label(type: Type): Label {
-    return type[Type.Data].label
+    return getType(type).label
   }
-
-  export function meta(type: Type): TypeMeta {
-    return type[Type.Data].meta
-  }
-
   export function contains(type: Type): Array<string | Type> {
-    return meta(type).contains ?? []
+    return getType(type).contains ?? []
   }
 
   export function isHidden(type: Type): boolean {
-    return Boolean(meta(type).hidden)
+    return Boolean(getType(type).hidden)
   }
 
   export function shape(type: Type): RecordShape {
-    return type[Type.Data].shape
-  }
-
-  export function toV1(type: Type, value: any): any {
-    return shape(type).toV1(value)
+    return getType(type).shape
   }
 
   export function searchableText(type: Type, value: any): string {
@@ -110,24 +54,19 @@ export namespace Type {
   }
 
   export function fields(type: Type): Record<string, Field> {
-    return type as any
+    return getType(type).fields
   }
 
   export function sections(type: Type) {
-    return type[Type.Data].sections
+    return getType(type).sections
   }
 
   export function isContainer(type: Type) {
-    const {meta} = type[Type.Data]
-    return Boolean(meta.contains)
-  }
-
-  export function target(type: Type): TypeTarget {
-    return type[Type.Data].target
+    return Boolean(getType(type).contains)
   }
 
   export function field(type: Type, name: string): Field | undefined {
-    return (type as any)[name]
+    return getType(type).fields[name]
   }
 
   export function isType(type: any): type is Type {
@@ -150,7 +89,7 @@ export namespace Type {
   })
 
   export function validate(type: Type) {
-    TypeOptions(meta(type))
+    TypeOptions(getType(type))
     for (const [key, field] of entries(fields(type))) {
       if (!isValidIdentifier(key))
         throw new Error(
@@ -162,17 +101,17 @@ export namespace Type {
   }
 
   export function referencedViews(type: Type): Array<string> {
-    const {view, summaryRow, summaryThumb} = meta(type)
+    const {view, summaryRow, summaryThumb} = getType(type)
     return [
       view,
       summaryRow,
       summaryThumb,
-      ...viewsOfDefinition(type[Type.Data].definition)
+      ...viewsOfDefinition(getType(type).fields)
     ].filter(v => typeof v === 'string')
   }
 }
 
-function viewsOfDefinition(definition: TypeDefinition): Array<string> {
+function viewsOfDefinition(definition: FieldsDefinition): Array<string> {
   return values(definition).flatMap(value => {
     if (Field.isField(value)) return Field.referencedViews(value)
     if (Section.isSection(value))
@@ -184,7 +123,7 @@ function viewsOfDefinition(definition: TypeDefinition): Array<string> {
 }
 
 function fieldsOfDefinition(
-  definition: TypeDefinition
+  definition: FieldsDefinition
 ): Array<readonly [string, Field]> {
   return entries(definition).flatMap(([key, value]) => {
     if (Field.isField(value)) return [[key, value]] as const
@@ -193,131 +132,97 @@ function fieldsOfDefinition(
   })
 }
 
-class TypeInstance<Definition extends TypeDefinition> implements TypeData {
-  shape: RecordShape
-  sections: Array<Section> = []
-  target: Type<Definition>
-
-  constructor(
-    public label: Label,
-    public definition: Definition,
-    public meta: TypeMeta
-  ) {
-    this.shape = new RecordShape(
-      label,
-      fromEntries(
-        fieldsOfDefinition(definition).map(([key, field]) => {
-          return [key, Field.shape(field as Field)]
-        })
-      )
-    )
-    let current: Record<string, Field> = {}
-    const addCurrent = () => {
-      if (keys(current).length > 0)
-        this.sections.push(section({definition: current}))
-      current = {}
-    }
-    const seen = new Map<symbol, string>()
-    function validateField(key: string, field: Field) {
-      const ref = Field.ref(field)
-      if (!seen.has(ref)) return seen.set(ref, key)
-      const fieldLabel = Field.label(field)
-      throw new Error(
-        `Duplicate field "${fieldLabel}" in type "${label}", found under key "${key}" and "${seen.get(
-          ref
-        )}"` +
-          `\nSee: https://alinea.sh/docs/configuration/schema/type#fields-must-be-unique`
-      )
-    }
-    for (const [key, value] of entries(definition)) {
-      if (Field.isField(value)) {
-        current[key] = value
-        validateField(key, value)
-      } else if (Section.isSection(value)) {
-        addCurrent()
-        this.sections.push(value)
-        for (const [key, field] of entries(Section.fields(value))) {
-          validateField(key, field)
-        }
-      }
-    }
-    addCurrent()
-    const type: any = {[Type.Data]: this}
-    this.defineProperties(type)
-    this.target = type
-  }
-
-  field(def: Field, name: string) {
-    return assign(Expr(ExprData.Field({type: this.target}, name)), {
-      [Field.Data]: def[Field.Data],
-      [Field.Ref]: def[Field.Ref]
-    })
-  }
-
-  defineProperties(instance: TypeI) {
-    for (const [key, value] of fieldsOfDefinition(this.definition)) {
-      defineProperty(instance, key, {
-        value: this.field(value, key),
-        enumerable: true,
-        configurable: true
-      })
-    }
-    defineProperty(instance, Type.Data, {
-      value: this,
-      enumerable: false
-    })
-    defineProperty(instance, toSelection, {
-      value: () => {
-        return Selection.Row({type: Type.target(this.target)})
-      },
-      enumerable: false
-    })
-  }
+export interface FieldsDefinition {
+  [key: string]: Field
 }
 
-export interface TypeDefinition {
-  [key: string]: Field<any, any> | Section
-  readonly [Meta]?: TypeMeta
-}
-
-export interface TypeFields {
-  [key: string]: Field<any, any> | Section
-}
-
-export interface TypeOptions<Definition> extends TypeMeta {
+export interface TypeConfig<Definition> {
   fields: Definition
+  /** Accepts entries of these types as children */
+  contains?: Array<string | Type>
+  /** Order children entries in the sidebar content tree */
+  orderChildrenBy?: OrderBy | Array<OrderBy>
+  /** Entries do not show up in the sidebar content tree */
+  hidden?: true
+  /** An icon (React component) to represent this type in the dashboard */
+  icon?: ComponentType
+
+  /** A React component used to view an entry of this type in the dashboard */
+  view?: View<EntryEditProps & {type: Type}>
+  /** A React component used to view a row of this type in the dashboard */
+  summaryRow?: View<SummaryProps>
+  /** A React component used to view a thumbnail of this type in the dashboard */
+  summaryThumb?: View<SummaryProps>
+
+  entryUrl?: (meta: EntryUrlMeta) => string
 }
 
-export function parseTypeParams<Definition>(
-  definition: TypeOptions<Definition> | Definition
-) {
-  const def: any = definition
-  const isOptions = 'fields' in def && !Field.isField(def.fields)
-  const options: TypeMeta = (isOptions ? def : def[Meta]) ?? {}
-  const d = isOptions ? def.fields : def
-  return {definition: d as Definition, options}
+export interface TypeInternal extends TypeConfig<FieldsDefinition> {
+  label: string
+  sections: Array<Section>
+  shape: RecordShape
 }
 
 /** Create a new type */
-export function type<Definition extends TypeFields>(
-  definition: TypeOptions<Definition>
-): Type<Definition>
-export function type<Definition extends TypeFields>(
+export function type<Fields extends FieldsDefinition>(
+  config: TypeConfig<Fields>
+): Type<Fields>
+export function type<Fields extends FieldsDefinition>(
   label: string,
-  definition: TypeOptions<Definition>
-): Type<Definition>
-export function type<Definition extends TypeDefinition>(
-  label: string | TypeOptions<Definition> | Definition,
-  definition?: TypeOptions<Definition> | Definition
+  config: TypeConfig<Fields>
+): Type<Fields>
+export function type<Fields extends FieldsDefinition>(
+  ...args: [string | TypeConfig<Fields>, TypeConfig<Fields>?]
 ) {
-  const title = typeof label === 'string' ? label : 'Anonymous'
-  const def: any = typeof label === 'string' ? definition : label
-  const {definition: d, options} = parseTypeParams(def)
-  const instance = new TypeInstance<StripMeta<Definition>>(title, d, options)
-  Type.validate(instance.target)
-  return instance.target
-}
-
-export namespace type {
-  export const meta: typeof Meta = Meta
+  const label = typeof args[0] === 'string' ? args[0] : 'Anonymous'
+  const config = typeof args[0] === 'string' ? args[1]! : args[0]
+  const sections: Array<Section> = []
+  let current: Record<string, Field> = {}
+  const addCurrent = () => {
+    if (keys(current).length > 0) sections.push(section({definition: current}))
+    current = {}
+  }
+  const seen = new Map<symbol, string>()
+  function validateField(key: string, field: Field) {
+    const ref = Field.ref(field)
+    if (!seen.has(ref)) return seen.set(ref, key)
+    const fieldLabel = Field.label(field)
+    throw new Error(
+      `Duplicate field "${fieldLabel}" in type "${label}", found under key "${key}" and "${seen.get(
+        ref
+      )}"` +
+        `\nSee: https://alinea.sh/docs/configuration/schema/type#fields-must-be-unique`
+    )
+  }
+  for (const [key, value] of entries(config.fields)) {
+    if (Field.isField(value)) {
+      current[key] = value
+      validateField(key, value)
+    } else if (Section.isSection(value)) {
+      addCurrent()
+      sections.push(value)
+      for (const [key, field] of entries(Section.fields(value))) {
+        validateField(key, field)
+      }
+    }
+  }
+  addCurrent()
+  const instance = {
+    ...config.fields,
+    [internalType]: {
+      ...config,
+      sections,
+      shape: new RecordShape(
+        label,
+        fromEntries(
+          fieldsOfDefinition(config.fields).map(([key, field]) => {
+            return [key, Field.shape(field as Field)]
+          })
+        )
+      ),
+      label
+    }
+  }
+  Type.validate(instance)
+  return instance
 }

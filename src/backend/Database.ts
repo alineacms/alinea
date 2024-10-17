@@ -533,12 +533,12 @@ export class Database implements Syncable {
     const pathData = entryPath === 'index' ? '' : entryPath
     const seedData = seed ? PageSeed.data(seed.page).partial : {}
     const title = record.title ?? seedData?.title ?? ''
-    const entryData = Type.toV1(type, {
+    const entryData = {
       ...seedData,
       ...data,
       title,
       path: pathData
-    })
+    }
     const searchableText = Type.searchableText(type, entryData)
     return {
       workspace: meta.workspace,

@@ -1,5 +1,4 @@
 import styler from '@alinea/styler'
-import {renderLabel} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
 import {Chip, HStack, Loader, px} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
@@ -51,7 +50,7 @@ export function EntryTitle({
             <h1 className={styles.root.title()}>
               <span>{title}</span>
             </h1>
-            <Chip>{renderLabel(Type.label(type))}</Chip>
+            <Chip>{Type.label(type)}</Chip>
             {isLoading && <Loader size={15} />}
           </HStack>
           {/*<IconButton icon={MdOutlineMoreHoriz} />*/}

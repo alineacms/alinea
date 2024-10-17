@@ -4,13 +4,13 @@ import {tab, tabs} from 'alinea/field/tabs'
 import {TextField, text} from 'alinea/field/text'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {IcRoundShare} from 'alinea/ui/icons/IcRoundShare'
-import {Type, TypeFields, TypeOptions, parseTypeParams, type} from './Type.js'
+import {FieldsDefinition, Type, TypeConfig, type} from './Type.js'
 
-export type Document<Definition> = {
+export interface Document {
   title: TextField
   path: PathField
   metadata: ReturnType<typeof createMetadata>
-} & Definition
+}
 
 export namespace Document {
   export const title = text('Title', {required: true, width: 0.5})
@@ -18,30 +18,28 @@ export namespace Document {
   export const metadata = createMetadata()
 }
 
-export function document<Definition extends TypeFields>(
+export function document<Fields extends FieldsDefinition>(
   label: string,
-  definition: TypeOptions<Definition>
-): Type<Document<Definition>> {
-  const {definition: d, options} = parseTypeParams(definition)
+  {fields, ...config}: TypeConfig<Fields>
+): Type<Document & Fields> {
+  const fieldsWithMeta: Document & Fields = tabs(
+    tab('Document', {
+      icon: IcRoundDescription,
+      fields: {
+        title: Document.title,
+        path: Document.path,
+        ...fields
+      }
+    }),
+    tab('Metadata', {
+      icon: IcRoundShare,
+      fields: {
+        metadata: Document.metadata
+      }
+    })
+  ) as any
   return type(label, {
-    ...options,
-    fields: {
-      ...(tabs(
-        tab('Document', {
-          icon: IcRoundDescription,
-          fields: {
-            title: Document.title,
-            path: Document.path,
-            ...d
-          }
-        }),
-        tab('Metadata', {
-          icon: IcRoundShare,
-          fields: {
-            metadata: Document.metadata as any
-          }
-        })
-      ) as any) // Todo: Fix type
-    }
+    ...config,
+    fields: fieldsWithMeta
   })
 }
