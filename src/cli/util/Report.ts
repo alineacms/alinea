@@ -1,5 +1,10 @@
-export function reportHalt(message: string) {
+export function reportHalt(message: string, error?: Error) {
   process.stdout.write(`${red(bold('Error:'))} ${message}\n`)
+  // Log stack
+  if (error) {
+    const stack = error.stack?.split('\n').slice(1).join('\n')
+    if (stack) process.stdout.write(`${gray(stack)}\n`)
+  }
 }
 
 const ansiSupported = process.stdout.isTTY || process.env.FORCE_COLOR

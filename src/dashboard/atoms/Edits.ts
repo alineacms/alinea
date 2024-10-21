@@ -1,4 +1,4 @@
-import {ROOT_KEY} from 'alinea/core/Doc'
+import {DOC_KEY} from 'alinea/core/Doc'
 import {Type} from 'alinea/core/Type'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
@@ -12,7 +12,7 @@ export class Edits {
   sourceVector: Uint8Array | undefined
   sourceUpdate: Uint8Array | undefined
   /** The root map containing field data */
-  root = this.doc.getMap(ROOT_KEY)
+  root = this.doc.getMap(DOC_KEY)
   /** Did we make any local changes? */
   hasChanges = createChangesAtom(this.root)
   /** Clear local changes, reset to source */
@@ -63,7 +63,7 @@ export class Edits {
     const clientID = this.doc.clientID
     this.doc.clientID = 1
     this.doc.transact(() => {
-      Type.shape(type).applyY(entryData, this.doc, ROOT_KEY)
+      Type.shape(type).applyY(entryData, this.doc, DOC_KEY)
     }, 'self')
     this.doc.clientID = clientID
   }

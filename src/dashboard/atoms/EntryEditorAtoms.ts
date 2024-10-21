@@ -1,6 +1,6 @@
 import {Config} from 'alinea/core/Config'
 import {Connection} from 'alinea/core/Connection'
-import {createYDoc, parseYDoc, ROOT_KEY} from 'alinea/core/Doc'
+import {createYDoc, DOC_KEY, parseYDoc} from 'alinea/core/Doc'
 import {Entry} from 'alinea/core/Entry'
 import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
@@ -239,7 +239,7 @@ export function createEntryEditor(entryData: EntryData) {
   const yDoc = edits.doc
   const hasChanges = edits.hasChanges
   const draftEntry = keepPreviousData(
-    yAtom(edits.doc.getMap(ROOT_KEY), getDraftEntry)
+    yAtom(edits.doc.getMap(DOC_KEY), getDraftEntry)
   )
   const editMode = atom(EditMode.Editing)
   const view = getType(type).view
@@ -720,7 +720,7 @@ export function createEntryEditor(entryData: EntryData) {
   const form = atom(get => {
     const doc = get(currentDoc)
     const readOnly = doc !== edits.doc ? true : undefined
-    return new FormAtoms(type, doc.getMap(ROOT_KEY), '', {readOnly})
+    return new FormAtoms(type, doc.getMap(DOC_KEY), '', {readOnly})
   })
 
   const yUpdate = debounceAtom(edits.yUpdate, 250)

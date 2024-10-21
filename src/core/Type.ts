@@ -12,7 +12,13 @@ import {Root} from './Root.js'
 import {section, Section} from './Section.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, fromEntries, keys, values} from './util/Objects.js'
+import {
+  defineProperty,
+  entries,
+  fromEntries,
+  keys,
+  values
+} from './util/Objects.js'
 import {Expand} from './util/Types.js'
 import {View} from './View.js'
 
@@ -61,7 +67,7 @@ export namespace Type {
   }
 
   export function fields(type: Type): Record<string, Field> {
-    return getType(type).fields
+    return getType(type).allFields
   }
 
   export function sections(type: Type) {
@@ -73,7 +79,7 @@ export namespace Type {
   }
 
   export function field(type: Type, name: string): Field | undefined {
-    return getType(type).fields[name]
+    return getType(type).allFields[name]
   }
 
   export function isType(type: any): type is Type {
@@ -113,22 +119,24 @@ export namespace Type {
       view,
       summaryRow,
       summaryThumb,
-      ...viewsOfDefinition(getType(type).fields)
+      ...viewsOfDefinition(getType(type).allFields)
     ].filter(v => typeof v === 'string')
   }
 
-  export function attach(type: Type, field: Field, name: string) {
-    const fieldData = getField(field)
-    const address = fieldData.address
-    if (address)
-      throw new Error(
-        `Field "${fieldData.options.label}" cannot be added to type ${label(
-          type
-        )} @ ${name} because it is already attached to type ${label(
-          address.type
-        )} @ ${address.name}`
-      )
-    fieldData.address = {type, name}
+  export function attach(type: Type) {
+    for (const [name, field] of entries(type)) {
+      const fieldData = getField(field)
+      const address = fieldData.address
+      if (address)
+        throw new Error(
+          `Field "${fieldData.options.label}" cannot be added to type ${label(
+            type
+          )} @ ${name} because it is already attached to type ${label(
+            address.type
+          )} @ ${address.name}`
+        )
+      fieldData.address = {type, name}
+    }
   }
 }
 
@@ -180,6 +188,7 @@ export interface TypeConfig<Definition> {
 
 export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   label: string
+  allFields: Record<string, Field>
   sections: Array<Section>
   shape: RecordShape
   address?: {root: Root; name: string}
@@ -211,9 +220,10 @@ export function type<Fields extends FieldsDefinition>(
   }
   addCurrent()
   const instance = {
-    ...config.fields,
+    ...(current as Fields),
     [internalType]: {
       ...config,
+      allFields: current,
       sections,
       shape: new RecordShape(
         label,
@@ -232,7 +242,7 @@ export function type<Fields extends FieldsDefinition>(
       return {[TYPE_KEY]: address}
     }
   }
-  for (const [key, field] of fields) Type.attach(instance, field, key)
+  defineProperty(instance, 'toJSON', {enumerable: false})
   Type.validate(instance)
   return instance
 }

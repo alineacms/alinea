@@ -11,7 +11,9 @@ import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, values} from './util/Objects.js'
+import {defineProperty, entries, values} from './util/Objects.js'
+
+export const WORKSPACE_KEY = '@alinea.Workspace'
 
 export interface WorkspaceMeta {
   /** A directory which contains the json entry files */
@@ -30,8 +32,8 @@ export interface RootsDefinition {
   [key: string]: Root
 }
 
-export type Workspace<Definition extends RootsDefinition = Roots> = Definition &
-  HasWorkspace & {toJSON(): Array<string>}
+export type Workspace<Definition = object> = Definition &
+  HasWorkspace & {toJSON(): {[WORKSPACE_KEY]: {name: string}}}
 
 export namespace Workspace {
   export function data(workspace: Workspace): WorkspaceInternal {
@@ -109,9 +111,10 @@ export function workspace<Roots extends RootsDefinition>(
     toJSON() {
       const {address} = getWorkspace(this)
       if (!address) throw new Error('Workspace has no address')
-      return [address.name]
+      return {[WORKSPACE_KEY]: address}
     }
   }
+  defineProperty(instance, 'toJSON', {enumerable: false})
   for (const [key, root] of Object.entries(roots)) {
     const rootData = getRoot(root)
     if (rootData.address)

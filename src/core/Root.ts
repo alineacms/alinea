@@ -8,6 +8,9 @@ import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {View} from './View.js'
 import {Workspace} from './Workspace.js'
+import {defineProperty} from './util/Objects.js'
+
+export const ROOT_KEY = '@alinea.Root'
 
 export interface RootI18n {
   locales: Array<string>
@@ -31,10 +34,8 @@ export interface RootData extends RootMeta {
   label: string
 }
 
-type Seed = Record<string, PageSeed>
-
-export type Root<Entries = EntriesDefinition> = Entries &
-  HasRoot & {toJSON(): Array<string>}
+export type Root<Entries = object> = Entries &
+  HasRoot & {toJSON(): {[ROOT_KEY]: {workspace: Workspace; name: string}}}
 
 export namespace Root {
   export const Data = Symbol.for('@alinea/Root.Data')
@@ -73,14 +74,7 @@ export namespace Root {
   })
 
   export function validate(root: Root, workspaceLabel: string, schema: Schema) {
-    const meta = data(root)
-    RootOptions(
-      meta,
-      `Root "${label(
-        root
-      )}" in workspace "${workspaceLabel}" has invalid options`
-    )
-    const {contains} = meta
+    const {contains} = getRoot(root)
     const keyOfType = Schema.typeNames(schema)
     if (contains) {
       for (const inner of contains) {
@@ -125,13 +119,15 @@ export function root<Entries extends EntriesDefinition>(
   label: string,
   config: RootOptions<Entries> = {}
 ): Root<Entries> {
-  return <Root<Entries>>{
+  const instance = <Root<Entries>>{
     ...config.entries,
     [internalRoot]: {...config, label},
     toJSON() {
       const {address} = getRoot(this)
       if (!address) throw new Error('Root has no address')
-      return [address.workspace, address.name]
+      return {[ROOT_KEY]: address}
     }
   }
+  defineProperty(instance, 'toJSON', {enumerable: false})
+  return instance
 }

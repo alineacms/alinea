@@ -1,17 +1,10 @@
 import {Entry} from 'alinea/core/Entry'
 import type {InferProjection, Projection} from 'alinea/core/Graph'
 import {Status} from 'alinea/core/Graph'
-import {createSelection} from 'alinea/core/pages/CreateSelection'
-import {serializeSelection} from 'alinea/core/pages/Serialize'
 import DataLoader from 'dataloader'
 import {Store} from '../Store.js'
 import type {EntryResolver} from './EntryResolver.js'
 import {ResolveContext} from './ResolveContext.js'
-
-interface LinkData {
-  entryId: string
-  projection: any
-}
 
 export class LinkResolver {
   loaders = new Map<Projection, DataLoader<string, object>>()
@@ -25,18 +18,20 @@ export class LinkResolver {
   load(projection: Projection) {
     return new DataLoader<string, object>(
       async (ids: ReadonlyArray<string>) => {
-        const selection = createSelection(
-          Entry().where(Entry.entryId.isIn(ids)).select({
-            entryId: Entry.entryId,
-            projection: projection
-          })
+        const query = this.resolver.query(
+          new ResolveContext({status: this.status}),
+          {
+            select: {
+              entryId: Entry.entryId,
+              projection: projection
+            },
+            filter: {_id: {in: ids}}
+          }
         )
-        serializeSelection(this.resolver.targets, selection)
-        const query = this.resolver.query<{entryId: string; projection: any}>(
-          new ResolveContext({status: this.realm}),
-          selection
-        )
-        const entries = await query.all(this.store)
+        const entries = (await query.all(this.store)) as Array<{
+          entryId: string
+          projection: any
+        }>
         const results = new Map(
           entries.map(entry => [entry.entryId, entry.projection])
         )

@@ -80,7 +80,7 @@ export class EntryResolver {
     return count(hasSearch ? EntrySearch.rowid : ctx.Table.entryId).as('count')
   }
 
-  selectTypes(types: Array<Type>): Projection {
+  projectTypes(types: Array<Type>): Projection {
     return fromEntries(
       types.flatMap((type): Array<[string, Expr]> => {
         return entries(getType(type).fields)
@@ -88,29 +88,36 @@ export class EntryResolver {
     )
   }
 
-  selection(query: GraphQuery<Projection>): Projection {
+  projection(query: GraphQuery<Projection>): Projection {
     return (
       query.select ??
-      this.selectTypes(Array.isArray(query.type) ? query.type : [query.type])
+      this.projectTypes(Array.isArray(query.type) ? query.type : [query.type])
     )
+  }
+
+  selectProjection(ctx: ResolveContext, value: Projection): SelectionInput {
+    if (value instanceof Expr) return this.expr(ctx, value)
+    const source = querySource(value)
+    if (!source)
+      return fromEntries(
+        entries(value).map(([key, value]) => {
+          return [key, this.selectProjection(ctx, value as Projection)]
+        })
+      )
+    const related = value as RelatedQuery<Projection>
+    const isSingle = this.isSingleResult(related)
+    const query = this.query(ctx, related)
+    return isSingle ? include.one(query) : include(query)
   }
 
   select(ctx: ResolveContext, query: GraphQuery<Projection>): SelectionInput {
     if (query.count === true)
       return this.selectCount(ctx, Boolean(query.search))
     if (query.select instanceof Expr) return this.expr(ctx, query.select)
-    const fields = this.selection(query)
-    return fromEntries(
-      entries(EntryFields as Projection)
-        .concat(entries(fields))
-        .map(([key, value]) => {
-          const source = querySource(value)
-          if (!source) return [key, this.expr(ctx, value)]
-          const related = value as RelatedQuery<Projection>
-          const isSingle = this.isSingleResult(related)
-          const query = this.query(ctx, related)
-          return [key, isSingle ? include.one(query) : include(query)]
-        })
+    const fields = this.projection(query)
+    return this.selectProjection(
+      ctx,
+      fromEntries(entries(EntryFields as Projection).concat(entries(fields)))
     )
   }
 
@@ -346,7 +353,6 @@ export class EntryResolver {
       }
       return (<any>ctx.Table.data)[name]
     }
-
     const conditions = entries(filter).flatMap(function mapCondition(
       this: void,
       [key, value]
@@ -375,6 +381,8 @@ export class EntryResolver {
                 return and(...mapCondition([key, c]))
               })
             )
+          case 'in':
+            return inArray(field, value)
           default:
             throw new Error(`Unknown filter operator: "${op}"`)
         }
@@ -452,7 +460,7 @@ export class EntryResolver {
     query: GraphQuery<Projection>
   ) {
     if (!interim) return
-    const selected = this.selection(query)
+    const selected = this.projection(query)
     if (selected instanceof Expr) return this.postExpr(ctx, interim, selected)
     await Promise.all(
       entries(selected).map(([key, value]) => {
@@ -480,6 +488,7 @@ export class EntryResolver {
       location
     })
     const dbQuery = this.query(ctx, query as GraphQuery<Projection>)
+    console.log(dbQuery.toSQL(this.db.store))
     const singleResult = this.isSingleResult(query)
     const transact = async (tx: Store): Promise<T> => {
       const rows = await dbQuery.all(tx)

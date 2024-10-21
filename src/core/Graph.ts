@@ -6,12 +6,11 @@ import {Filter} from './Filter.js'
 import {PageSeed} from './Page.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
-import {Root} from './Root.js'
-import {Schema} from './Schema.js'
+import {Root, ROOT_KEY} from './Root.js'
 import {Type, TYPE_KEY} from './Type.js'
 import {hasExact} from './util/Checks.js'
 import {keys} from './util/Objects.js'
-import {Workspace} from './Workspace.js'
+import {Workspace, WORKSPACE_KEY} from './Workspace.js'
 
 export type Location = Root | Workspace | PageSeed | Array<string>
 type EmptyObject = Record<PropertyKey, never>
@@ -204,14 +203,16 @@ export class Graph {
   }
 }
 
-export function parseQuery(schema: Schema, input: string): GraphQuery {
+export function parseQuery(config: Config, input: string): GraphQuery {
   return JSON.parse(input, (key, value) => {
     if (value && typeof value === 'object') {
       const props = keys(value)
       if (props.length === 1) {
         const [key] = keys(value)
-        if (key === TYPE_KEY) return schema[value.name]
+        if (key === TYPE_KEY) return config.schema[value.name]
         else if (key === EXPR_KEY) return value.type[value.name]
+        else if (key === ROOT_KEY) return value.workspace[value.name]
+        else if (key === WORKSPACE_KEY) return config.workspaces[value.name]
       }
     }
     return value

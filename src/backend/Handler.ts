@@ -276,8 +276,10 @@ export function createHandler(
       if (action === HandleAction.Resolve && request.method === 'POST') {
         const ctx = await internal
         expectJson()
-        const raw = await body
-        return Response.json((await resolve(ctx, parseQuery(raw))) ?? null)
+        const raw = await request.text()
+        return Response.json(
+          (await resolve(ctx, parseQuery(cms.config, raw))) ?? null
+        )
       }
 
       // Pending

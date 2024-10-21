@@ -44,8 +44,8 @@ export async function* compileConfig(ctx: GenerateContext) {
     entryPoints: {config: configLocation},
     sourcemap: true
   })
-  const halt = (message: string) => {
-    reportHalt(message)
+  const halt = (message: string, error?: Error) => {
+    reportHalt(message, error)
     if (cmd === 'dev') return
     builds.return()
   }
@@ -59,7 +59,7 @@ export async function* compileConfig(ctx: GenerateContext) {
       yield await loadCMS(outDir)
     } catch (error: any) {
       const message = 'message' in error ? error.message : error
-      halt(`${message} @ ${location}`)
+      halt(`${message} @ ${location}`, error)
     }
   }
 }

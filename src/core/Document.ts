@@ -12,32 +12,29 @@ export interface Document {
   metadata: ReturnType<typeof createMetadata>
 }
 
-export namespace Document {
-  export const title = text('Title', {required: true, width: 0.5})
-  export const path = createPath('Path', {required: true, width: 0.5})
-  export const metadata = createMetadata()
+function documentFields() {
+  return {
+    title: text('Title', {required: true, width: 0.5}),
+    path: createPath('Path', {required: true, width: 0.5}),
+    metadata: createMetadata()
+  }
 }
 
 export function document<Fields extends FieldsDefinition>(
   label: string,
   {fields, ...config}: TypeConfig<Fields>
 ): Type<Document & Fields> {
-  const fieldsWithMeta: Document & Fields = tabs(
+  const {title, path, metadata} = documentFields()
+  const fieldsWithMeta: Document & Fields = <any>tabs(
     tab('Document', {
       icon: IcRoundDescription,
-      fields: {
-        title: Document.title,
-        path: Document.path,
-        ...fields
-      }
+      fields: {title, path, ...fields}
     }),
     tab('Metadata', {
       icon: IcRoundShare,
-      fields: {
-        metadata: Document.metadata
-      }
+      fields: {metadata}
     })
-  ) as any
+  )
   return type(label, {
     ...config,
     fields: fieldsWithMeta

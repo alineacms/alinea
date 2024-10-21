@@ -44,6 +44,7 @@ export namespace Schema {
             }
           }
       }
+      Type.attach(type)
     }
   }
 
