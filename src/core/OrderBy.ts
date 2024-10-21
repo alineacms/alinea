@@ -1,3 +1,3 @@
-import {Expr} from './pages/Expr.js'
+import {Expr} from './Expr.js'
 
 export type OrderBy = {asc: Expr<any>} | {desc: Expr<any>}

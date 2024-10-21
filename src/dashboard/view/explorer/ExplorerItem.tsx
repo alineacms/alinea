@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
+import {getType} from 'alinea/core/Internal'
 import {SummaryProps} from 'alinea/core/media/Summary'
 import {Schema} from 'alinea/core/Schema'
-import {Type} from 'alinea/core/Type'
 import {resolveView} from 'alinea/core/View'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
@@ -40,7 +40,7 @@ export function ExplorerItem({
     explorer?.onSelect(entry)
   )
   const type = schema[entry.type]
-  const typeView = type && Type.meta(type)[summaryView]
+  const typeView = type && getType(type)[summaryView]
   const View: any = typeView ? resolveView(views, typeView) : defaultView
   const isSelectable =
     explorer.selectable === true ||

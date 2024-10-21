@@ -2,12 +2,12 @@ import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
+import {Expr} from './Expr.js'
 import {Field} from './Field.js'
-import {getType, HasType, internalType} from './Internal.js'
+import {getField, getType, HasType, internalType} from './Internal.js'
 import {Label} from './Label.js'
 import {SummaryProps} from './media/Summary.js'
 import {OrderBy} from './OrderBy.js'
-import {Expr} from './pages/Expr.js'
 import {section, Section} from './Section.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
@@ -109,6 +109,20 @@ export namespace Type {
       ...viewsOfDefinition(getType(type).fields)
     ].filter(v => typeof v === 'string')
   }
+
+  export function attach(type: Type, field: Field, name: string) {
+    const fieldData = getField(field)
+    const address = fieldData.address
+    if (address)
+      throw new Error(
+        `Field "${fieldData.options.label}" cannot be added to type ${label(
+          type
+        )} @ ${name} because it is already attached to type ${label(
+          address.type
+        )} @ ${address.name}`
+      )
+    fieldData.address = {type, name}
+  }
 }
 
 function viewsOfDefinition(definition: FieldsDefinition): Array<string> {
@@ -182,27 +196,16 @@ export function type<Fields extends FieldsDefinition>(
     if (keys(current).length > 0) sections.push(section({definition: current}))
     current = {}
   }
-  const seen = new Map<symbol, string>()
-  function validateField(key: string, field: Field) {
-    const ref = Field.ref(field)
-    if (!seen.has(ref)) return seen.set(ref, key)
-    const fieldLabel = Field.label(field)
-    throw new Error(
-      `Duplicate field "${fieldLabel}" in type "${label}", found under key "${key}" and "${seen.get(
-        ref
-      )}"` +
-        `\nSee: https://alinea.sh/docs/configuration/schema/type#fields-must-be-unique`
-    )
-  }
+  const fields: Array<[string, Field]> = []
   for (const [key, value] of entries(config.fields)) {
     if (Field.isField(value)) {
       current[key] = value
-      validateField(key, value)
+      fields.push([key, value])
     } else if (Section.isSection(value)) {
       addCurrent()
       sections.push(value)
       for (const [key, field] of entries(Section.fields(value))) {
-        validateField(key, field)
+        fields.push([key, field])
       }
     }
   }
@@ -223,6 +226,7 @@ export function type<Fields extends FieldsDefinition>(
       label
     }
   }
+  for (const [key, field] of fields) Type.attach(instance, field, key)
   Type.validate(instance)
   return instance
 }

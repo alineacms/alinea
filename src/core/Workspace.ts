@@ -1,6 +1,6 @@
 import {Preview} from 'alinea/core/Preview'
 import type {ComponentType} from 'react'
-import {Meta} from './Meta.js'
+import {getWorkspace, HasWorkspace, internalWorkspace} from './Internal.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getRandomColor} from './util/GetRandomColor.js'
@@ -18,41 +18,33 @@ export interface WorkspaceMeta {
   preview?: Preview
 }
 
-export interface WorkspaceData extends WorkspaceMeta {
-  label: string
-  roots: Roots
-  color: string
-}
-
 type Roots = Record<string, Root>
 
 export interface WorkspaceDefinition {
   [key: string]: Root
-  [Meta]?: WorkspaceMeta
 }
 
-export type Workspace<Definition extends Roots = Roots> = Definition & {
-  [Workspace.Data]: WorkspaceData
-}
+export type Workspace<Definition extends Roots = Roots> = Definition &
+  HasWorkspace
 
 export namespace Workspace {
   export const Data = Symbol.for('@alinea/Workspace.Data')
   export const Meta = Symbol.for('@alinea/Workspace.Meta')
 
-  export function data(workspace: Workspace): WorkspaceData {
-    return workspace[Workspace.Data]
+  export function data(workspace: Workspace): WorkspaceInternal {
+    return getWorkspace(workspace)
   }
 
   export function roots(workspace: Workspace): Roots {
-    return workspace[Workspace.Data].roots
+    return getWorkspace(workspace).roots
   }
 
   export function label(workspace: Workspace): string {
-    return workspace[Workspace.Data].label
+    return getWorkspace(workspace).label
   }
 
   export function preview(workspace: Workspace): Preview | undefined {
-    return workspace[Workspace.Data].preview
+    return getWorkspace(workspace).preview
   }
 
   export function isWorkspace(value: any): value is Workspace {
@@ -60,14 +52,14 @@ export namespace Workspace {
   }
 
   export function defaultMediaRoot(workspace: Workspace): string {
-    const {roots} = workspace[Workspace.Data]
+    const {roots} = getWorkspace(workspace)
     for (const [name, root] of entries(roots))
       if (Root.isMediaRoot(root)) return name
     throw new Error(`Workspace has no media root`)
   }
 
   export function defaultRoot(workspace: Workspace): string {
-    return Object.keys(workspace[Workspace.Data].roots)[0]
+    return Object.keys(getWorkspace(workspace).roots)[0]
   }
 
   export function validate(workspace: Workspace, schema: Schema) {
@@ -87,36 +79,29 @@ export namespace Workspace {
   }
 }
 
-export interface WorkspaceOptions<Definition> extends WorkspaceMeta {
+export interface WorkspaceConfig<Definition> extends WorkspaceMeta {
   roots: Definition
+}
+
+export interface WorkspaceInternal
+  extends WorkspaceConfig<WorkspaceDefinition> {
+  label: string
+  color: string
 }
 
 /** Create a workspace */
 export function workspace<Definition extends WorkspaceDefinition>(
   /** The name of the workspace */
   label: string,
-  definition: WorkspaceOptions<Definition>
-): Workspace<Definition>
-export function workspace<Definition extends WorkspaceDefinition>(
-  /** The name of the workspace */
-  label: string,
-  definition: WorkspaceOptions<Definition> | Definition
-) {
-  const isOptions = 'roots' in definition && !Root.isRoot(definition.roots)
-  const def: any = definition
-  const roots = isOptions ? def.roots : def
-  const options: WorkspaceMeta = (isOptions ? def : def[Meta]) ?? {}
+  config: WorkspaceConfig<Definition>
+): Workspace<Definition> {
+  const roots = config.roots
   return {
     ...roots,
-    [Workspace.Data]: {
+    [internalWorkspace]: {
+      ...config,
       label,
-      roots,
-      ...options,
-      color: options.color ?? getRandomColor(JSON.stringify(label))
+      color: config.color ?? getRandomColor(JSON.stringify(label))
     }
   }
-}
-
-export namespace workspace {
-  export const meta: typeof Meta = Meta
 }

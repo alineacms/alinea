@@ -1,5 +1,4 @@
-import {Expr} from './Expr.js'
-import {ExprData} from './ResolveData.js'
+import {Expr} from '../Expr.js'
 
 export function snippet(
   start = '<mark>',
@@ -7,12 +6,5 @@ export function snippet(
   cutOff = '...',
   limit = 64
 ): Expr<string> {
-  return Expr(
-    ExprData.Call('snippet', [
-      ExprData.Value(start),
-      ExprData.Value(end),
-      ExprData.Value(cutOff),
-      ExprData.Value(limit)
-    ])
-  )
+  throw new Error('To implement')
 }

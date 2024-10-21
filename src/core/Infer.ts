@@ -1,8 +1,7 @@
 import {Expand, UnionOfValues} from 'alinea/core/util/Types'
+import {Expr} from './Expr.js'
 import {Field} from './Field.js'
 import {Type} from './Type.js'
-import {Cursor} from './pages/Cursor.js'
-import {Expr} from './pages/Expr.js'
 
 type QueryList<T> = Expand<
   UnionOfValues<{
@@ -18,10 +17,8 @@ export type QueryRow<Definition> = {
 
 export type InferQueryValue<T> = T extends Type<infer Fields>
   ? QueryRow<Fields>
-  : T extends Field<any, infer QueryValue>
+  : T extends Expr<infer QueryValue>
   ? QueryValue
-  : T extends Cursor<infer Row>
-  ? Row
   : T extends Record<string, Type>
   ? QueryList<T>
   : never

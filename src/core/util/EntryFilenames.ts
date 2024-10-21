@@ -1,5 +1,6 @@
 import {Config} from '../Config.js'
 import {ALT_STATUS, EntryPhase, EntryRow} from '../EntryRow.js'
+import {getRoot, getType} from '../Internal.js'
 import {EntryUrlMeta, Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
 import {values} from './Objects.js'
@@ -35,7 +36,7 @@ export function entryChildrenDir(
     throw new Error(`Workspace "${entry.workspace}" does not exist`)
   const root = Workspace.roots(workspace)[entry.root]
   if (!root) throw new Error(`Root "${entry.root}" does not exist`)
-  const hasI18n = Boolean(root.i18n)
+  const hasI18n = getRoot(root).i18n
   const {locale, path, phase} = entry
   if (hasI18n && !locale) throw new Error(`Entry is missing locale`)
   if (!values(EntryPhase).includes(phase))
@@ -107,7 +108,7 @@ export function entryFile(config: Config, entry: EntryRow) {
 }
 
 export function entryUrl(type: Type, meta: EntryUrlMeta) {
-  const {entryUrl} = Type.meta(type)
+  const {entryUrl} = getType(type)
   if (entryUrl) return entryUrl(meta)
   const segments = meta.locale ? [meta.locale] : []
   return (

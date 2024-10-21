@@ -1,5 +1,5 @@
 import {EntryPhase, EntryRow} from './EntryRow.js'
-import {Target} from './pages/Target.js'
+import {Expr} from './Expr.js'
 import {Expand} from './util/Types.js'
 
 export interface Entry {
@@ -27,7 +27,31 @@ export interface Entry {
   data: Record<string, any>
   searchableText: string
 }
-export const Entry = Target.create<Entry>({})
+export const Entry = {
+  entryId: new Expr<string>(['entryId']),
+  phase: new Expr<EntryPhase>(['phase']),
+  title: new Expr<string>(['title']),
+  type: new Expr<string>(['type']),
+  seeded: new Expr<string | null>(['seeded']),
+  workspace: new Expr<string>(['workspace']),
+  root: new Expr<string>(['root']),
+  level: new Expr<number>(['level']),
+  filePath: new Expr<string>(['filePath']),
+  parentDir: new Expr<string>(['parentDir']),
+  childrenDir: new Expr<string>(['childrenDir']),
+  index: new Expr<string>(['index']),
+  parent: new Expr<string | null>(['parent']),
+  i18nId: new Expr<string>(['i18nId']),
+  locale: new Expr<string | null>(['locale']),
+  rowHash: new Expr<string>(['rowHash']),
+  active: new Expr<boolean>(['active']),
+  main: new Expr<boolean>(['main']),
+  path: new Expr<string>(['path']),
+  fileHash: new Expr<string>(['fileHash']),
+  url: new Expr<string>(['url']),
+  data: new Expr<Record<string, any>>(['data']),
+  searchableText: new Expr<string>(['searchableText'])
+}
 
 // We can't export the inferred type because the rado depencency types are
 // not included in distribution. At least we'll get a type error here if the

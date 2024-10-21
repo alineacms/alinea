@@ -6,6 +6,7 @@ import {
 import {Entry} from 'alinea/core/Entry'
 import {EntryPhase} from 'alinea/core/EntryRow'
 import {Graph} from 'alinea/core/Graph'
+import {getType} from 'alinea/core/Internal'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Type} from 'alinea/core/Type'
 import {entryFileName} from 'alinea/core/util/EntryFilenames'
@@ -108,7 +109,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     })
     for (const row of rows) {
       const type = schema[row.type]
-      const orderBy = Type.meta(type).orderChildrenBy ?? {asc: Entry.index}
+      const orderBy = getType(type).orderChildrenBy ?? {asc: Entry.index}
       const ids = row.translations.map(row => row.entryId).concat(row.entryId)
       const children = await graph.find({
         select: {

@@ -32,7 +32,7 @@ export interface RootData extends RootMeta {
 
 type Seed = Record<string, PageSeed>
 
-export type Root<Definition = object> = Definition & HasRoot
+export type Root<Entries = object> = Entries & HasRoot
 
 export namespace Root {
   export const Data = Symbol.for('@alinea/Root.Data')
@@ -122,7 +122,7 @@ export function root<Entries extends EntriesDefinition>(
   label: string,
   config: RootOptions<Entries> = {}
 ): Root<Entries> {
-  return {
+  return <Root<Entries>>{
     ...config.entries,
     [internalRoot]: {...config, label}
   }

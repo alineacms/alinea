@@ -1,7 +1,7 @@
 import {Entry} from 'alinea/core/Entry'
+import type {InferProjection, Projection} from 'alinea/core/Graph'
 import {Status} from 'alinea/core/Graph'
 import {createSelection} from 'alinea/core/pages/CreateSelection'
-import type {Projection} from 'alinea/core/pages/Projection'
 import {serializeSelection} from 'alinea/core/pages/Serialize'
 import DataLoader from 'dataloader'
 import {Store} from '../Store.js'
@@ -48,7 +48,7 @@ export class LinkResolver {
   resolveLinks<P extends Projection>(
     projection: P,
     entryIds: ReadonlyArray<string>
-  ): Promise<Array<Projection.Infer<P> | undefined>> {
+  ): Promise<Array<InferProjection<P> | undefined>> {
     if (this.loaders.has(projection))
       return this.loaders.get(projection)!.loadMany(entryIds).then(skipErrors)
     const loader = this.load(projection)

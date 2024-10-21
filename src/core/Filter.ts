@@ -1,4 +1,4 @@
-import {Expr} from './pages/Expr.js'
+import {Expr} from './Expr.js'
 
 type Primitive = string | number | boolean | null
 

@@ -1,6 +1,5 @@
 // Config creation
 export {createConfig as config} from 'alinea/core/Config'
-export {Meta as meta} from 'alinea/core/Meta'
 export {page} from 'alinea/core/Page'
 export {snippet} from 'alinea/core/pages/Snippet'
 export {root} from 'alinea/core/Root'

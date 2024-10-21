@@ -2,9 +2,10 @@ import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import {Auth} from './Auth.js'
+import {getWorkspace} from './Internal.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
-import {Workspace, WorkspaceData} from './Workspace.js'
+import {Workspace, WorkspaceInternal} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
 
@@ -45,9 +46,9 @@ export namespace Config {
     if (result.includes('://')) return result
     return `https://${result}`
   }
-  export function mainWorkspace(config: Config): WorkspaceData {
+  export function mainWorkspace(config: Config): WorkspaceInternal {
     const key = Object.keys(config.workspaces)[0]
-    return Workspace.data(config.workspaces[key])
+    return getWorkspace(config.workspaces[key])
   }
 
   export function type(config: Config, name: string): Type | undefined {

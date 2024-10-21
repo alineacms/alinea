@@ -11,6 +11,7 @@ import {
 import {Field} from 'alinea/core/Field'
 import {RichTextField} from 'alinea/core/field/RichTextField'
 import {createId} from 'alinea/core/Id'
+import {getType} from 'alinea/core/Internal'
 import {Schema} from 'alinea/core/Schema'
 import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
@@ -46,7 +47,7 @@ type NodeViewProps = {
 function typeExtension(field: Field, name: string, type: Type) {
   function View({node, deleteNode}: NodeViewProps) {
     const {[BlockNode.id]: id} = node.attrs
-    const meta = Type.meta(type)
+    const meta = getType(type)
     const {readOnly} = useFieldOptions(field)
     return (
       <FormRow field={field} type={type} rowId={id} readOnly={readOnly}>
@@ -130,7 +131,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
         }}
       >
         <HStack center gap={8}>
-          <Icon icon={Type.meta(type).icon ?? IcRoundAddCircle} />
+          <Icon icon={getType(type).icon ?? IcRoundAddCircle} />
           <TextLabel label={Type.label(type)} />
         </HStack>
       </DropdownMenu.Item>

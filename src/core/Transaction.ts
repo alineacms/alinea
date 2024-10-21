@@ -11,7 +11,7 @@ import {createId} from './Id.js'
 import {Mutation, MutationType} from './Mutation.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
-import {EntryUrlMeta, Type, TypeI} from './Type.js'
+import {EntryUrlMeta, Type} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {isImage} from './media/IsImage.js'
 import {createFileHash} from './util/ContentHash.js'
@@ -41,7 +41,7 @@ export class Operation {
     this[Operation.Data] = tx
   }
 
-  protected typeName(config: Config, type: TypeI) {
+  protected typeName(config: Config, type: Type) {
     const typeNames = Schema.typeNames(config.schema)
     const typeName = typeNames.get(type)!
     if (!typeName)

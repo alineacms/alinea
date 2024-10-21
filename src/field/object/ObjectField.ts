@@ -1,5 +1,5 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {Type, TypeFields, type} from 'alinea/core/Type'
+import {FieldsDefinition, Type, type} from 'alinea/core/Type'
 import {RecordField} from 'alinea/core/field/RecordField'
 
 export interface ObjectOptions<Definition>
@@ -12,7 +12,7 @@ export class ObjectField<Definition> extends RecordField<
   ObjectOptions<Definition>
 > {}
 
-export function object<Definition extends TypeFields>(
+export function object<Definition extends FieldsDefinition>(
   label: string,
   options: WithoutLabel<
     {fields: Definition} & FieldOptions<Type.Infer<Definition>>

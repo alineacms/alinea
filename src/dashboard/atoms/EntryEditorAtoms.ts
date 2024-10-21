@@ -6,6 +6,7 @@ import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
 import {Graph} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
+import {getType} from 'alinea/core/Internal'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Root} from 'alinea/core/Root'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
@@ -241,7 +242,7 @@ export function createEntryEditor(entryData: EntryData) {
     yAtom(edits.doc.getMap(ROOT_KEY), getDraftEntry)
   )
   const editMode = atom(EditMode.Editing)
-  const view = Type.meta(type).view
+  const view = getType(type).view
   const previewRevision = atom(
     undefined as {ref: string; file: string} | undefined
   )

@@ -1,5 +1,6 @@
 import {Config} from './Config.js'
 import {EntryFields} from './EntryFields.js'
+import {Expr} from './Expr.js'
 import {Filter} from './Filter.js'
 import {PageSeed} from './Page.js'
 import {PreviewRequest} from './Preview.js'
@@ -7,8 +8,6 @@ import {Resolver} from './Resolver.js'
 import {Root} from './Root.js'
 import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
-import {Expr} from './pages/Expr.js'
-import {Target} from './pages/index.js'
 
 export type Location = Root | Workspace | PageSeed
 type EmptyObject = Record<PropertyKey, never>
@@ -47,6 +46,9 @@ interface ToSelect {
     | ToSelect
 }
 
+export type Projection = ToSelect | Expr<any>
+export type InferProjection<Selection> = InferSelection<Selection>
+
 interface Order {
   asc?: Expr<any>
   desc?: Expr<any>
@@ -54,14 +56,10 @@ interface Order {
 
 type InferSelection<Selection> = Selection extends Expr<infer V>
   ? V
-  : Selection extends Target<infer V>
-  ? V
   : Selection extends Type<infer V>
   ? Type.Infer<V>
   : {
-      [K in keyof Selection]: Selection[K] extends Target<infer V>
-        ? V
-        : Selection[K] extends Type<infer V>
+      [K in keyof Selection]: Selection[K] extends Type<infer V>
         ? Type.Infer<V>
         : Selection[K] extends Expr<infer V>
         ? V
@@ -166,7 +164,7 @@ export interface GraphQuery<Selection = unknown, Types = unknown>
   count?: true
 }
 
-type SelectionGuard = ToSelect | Expr<any> | Target<any> | undefined
+type SelectionGuard = Projection | undefined
 type TypeGuard = Type | Array<Type> | undefined
 
 export class Graph {

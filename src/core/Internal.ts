@@ -1,6 +1,7 @@
 import {FieldInternal} from './Field.js'
 import {RootInternal} from './Root.js'
 import {TypeInternal} from './Type.js'
+import {WorkspaceInternal} from './Workspace.js'
 
 export const internalRoot = Symbol('@alinea.Root')
 export interface HasRoot {
@@ -22,3 +23,11 @@ export interface HasField {
 }
 export const hasField = (obj: object): obj is HasField => internalField in obj
 export const getField = (obj: HasField) => obj[internalField]
+
+export const internalWorkspace = Symbol('@alinea.Workspace')
+export interface HasWorkspace {
+  [internalWorkspace]: WorkspaceInternal
+}
+export const hasWorkspace = (obj: object): obj is HasWorkspace =>
+  internalWorkspace in obj
+export const getWorkspace = (obj: HasWorkspace) => obj[internalWorkspace]
