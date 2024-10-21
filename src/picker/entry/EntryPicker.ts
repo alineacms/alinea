@@ -30,7 +30,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
 ): Picker<Ref, EntryPickerOptions<Fields>> {
   const fieldType = Type.isType(options.fields)
     ? options.fields
-    : options.fields && type({fields: options.fields as any})
+    : options.fields && type('Entry fields', {fields: options.fields as any})
   const extra = fieldType && Type.shape(fieldType)
   return {
     shape: new RecordShape('Entry', {

@@ -8,12 +8,15 @@ import {getField, getType, HasType, internalType} from './Internal.js'
 import {Label} from './Label.js'
 import {SummaryProps} from './media/Summary.js'
 import {OrderBy} from './OrderBy.js'
+import {Root} from './Root.js'
 import {section, Section} from './Section.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries, keys, values} from './util/Objects.js'
 import {Expand} from './util/Types.js'
 import {View} from './View.js'
+
+export const TYPE_KEY = '@alinea.Type'
 
 export interface EntryUrlMeta {
   phase: EntryPhase
@@ -22,7 +25,11 @@ export interface EntryUrlMeta {
   locale?: string | null
 }
 
-export type Type<Definition = object> = Definition & HasType
+declare class TypeI {
+  toJSON(): {[TYPE_KEY]: {root: Root; name: string}}
+}
+
+export type Type<Definition = object> = Definition & HasType & TypeI
 
 type TypeRow<Definition> = Expand<{
   [K in keyof Definition as Definition[K] extends Expr<any>
@@ -175,21 +182,14 @@ export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   label: string
   sections: Array<Section>
   shape: RecordShape
+  address?: {root: Root; name: string}
 }
 
 /** Create a new type */
 export function type<Fields extends FieldsDefinition>(
-  config: TypeConfig<Fields>
-): Type<Fields>
-export function type<Fields extends FieldsDefinition>(
   label: string,
   config: TypeConfig<Fields>
-): Type<Fields>
-export function type<Fields extends FieldsDefinition>(
-  ...args: [string | TypeConfig<Fields>, TypeConfig<Fields>?]
-) {
-  const label = typeof args[0] === 'string' ? args[0] : 'Anonymous'
-  const config = typeof args[0] === 'string' ? args[1]! : args[0]
+): Type<Fields> {
   const sections: Array<Section> = []
   let current: Record<string, Field> = {}
   const addCurrent = () => {
@@ -224,6 +224,12 @@ export function type<Fields extends FieldsDefinition>(
         )
       ),
       label
+    },
+    toJSON() {
+      const {address} = getType(this)
+      if (!address)
+        throw new Error(`Type "${label}" has no address, cannot serialize`)
+      return {[TYPE_KEY]: address}
     }
   }
   for (const [key, field] of fields) Type.attach(instance, field, key)

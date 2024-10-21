@@ -58,7 +58,7 @@ const parentData = {
     first: true as const,
     children: {},
     select: Entry.index,
-    orderBy: {asc: Entry.index}
+    orderBy: {asc: Entry.index, caseSensitive: true}
   }
 }
 
@@ -177,7 +177,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
 
   const formType = useMemo(
     () =>
-      type({
+      type('New entry', {
         fields: {
           parent: parentField,
           title: titleField,

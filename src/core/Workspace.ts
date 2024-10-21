@@ -3,6 +3,7 @@ import type {ComponentType} from 'react'
 import {
   getRoot,
   getWorkspace,
+  hasWorkspace,
   HasWorkspace,
   internalWorkspace
 } from './Internal.js'
@@ -25,17 +26,14 @@ export interface WorkspaceMeta {
 
 type Roots = Record<string, Root>
 
-export interface WorkspaceDefinition {
+export interface RootsDefinition {
   [key: string]: Root
 }
 
-export type Workspace<Definition extends Roots = Roots> = Definition &
-  HasWorkspace
+export type Workspace<Definition extends RootsDefinition = Roots> = Definition &
+  HasWorkspace & {toJSON(): Array<string>}
 
 export namespace Workspace {
-  export const Data = Symbol.for('@alinea/Workspace.Data')
-  export const Meta = Symbol.for('@alinea/Workspace.Meta')
-
   export function data(workspace: Workspace): WorkspaceInternal {
     return getWorkspace(workspace)
   }
@@ -53,7 +51,7 @@ export namespace Workspace {
   }
 
   export function isWorkspace(value: any): value is Workspace {
-    return Boolean(value && value[Workspace.Data])
+    return Boolean(value && hasWorkspace(value))
   }
 
   export function defaultMediaRoot(workspace: Workspace): string {
@@ -88,19 +86,18 @@ export interface WorkspaceConfig<Definition> extends WorkspaceMeta {
   roots: Definition
 }
 
-export interface WorkspaceInternal
-  extends WorkspaceConfig<WorkspaceDefinition> {
+export interface WorkspaceInternal extends WorkspaceConfig<RootsDefinition> {
   label: string
   color: string
   address?: {name: string}
 }
 
 /** Create a workspace */
-export function workspace<Definition extends WorkspaceDefinition>(
+export function workspace<Roots extends RootsDefinition>(
   /** The name of the workspace */
   label: string,
-  config: WorkspaceConfig<Definition>
-): Workspace<Definition> {
+  config: WorkspaceConfig<Roots>
+): Workspace<Roots> {
   const roots = config.roots
   const instance = {
     ...roots,
@@ -108,6 +105,11 @@ export function workspace<Definition extends WorkspaceDefinition>(
       ...config,
       label,
       color: config.color ?? getRandomColor(JSON.stringify(label))
+    },
+    toJSON() {
+      const {address} = getWorkspace(this)
+      if (!address) throw new Error('Workspace has no address')
+      return [address.name]
     }
   }
   for (const [key, root] of Object.entries(roots)) {

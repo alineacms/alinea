@@ -18,7 +18,9 @@ export function object<Definition extends FieldsDefinition>(
     {fields: Definition} & FieldOptions<Type.Infer<Definition>>
   >
 ): ObjectField<Definition> {
-  const fields: Type<Definition> = type({fields: options.fields})
+  const fields: Type<Definition> = type('Object fields', {
+    fields: options.fields
+  })
   return new ObjectField(fields, {
     options: {label, ...options, fields},
     view: 'alinea/field/object/ObjectField.view#ObjectInput'

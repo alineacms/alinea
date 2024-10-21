@@ -20,7 +20,7 @@ const RowB = type('Row B', {
   }
 })
 
-const fields = type({
+const fields = type('Fields', {
   fields: {
     list: list('List', {
       schema: {

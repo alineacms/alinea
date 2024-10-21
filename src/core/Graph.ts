@@ -1,15 +1,19 @@
+import * as cito from 'cito'
 import {Config} from './Config.js'
 import {EntryFields} from './EntryFields.js'
-import {Expr} from './Expr.js'
+import {Expr, EXPR_KEY} from './Expr.js'
 import {Filter} from './Filter.js'
 import {PageSeed} from './Page.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
 import {Root} from './Root.js'
-import {Type} from './Type.js'
+import {Schema} from './Schema.js'
+import {Type, TYPE_KEY} from './Type.js'
+import {hasExact} from './util/Checks.js'
+import {keys} from './util/Objects.js'
 import {Workspace} from './Workspace.js'
 
-export type Location = Root | Workspace | PageSeed
+export type Location = Root | Workspace | PageSeed | Array<string>
 type EmptyObject = Record<PropertyKey, never>
 
 type FieldsOf<Types> = Types extends Type<infer V>
@@ -18,12 +22,12 @@ type FieldsOf<Types> = Types extends Type<infer V>
   ? Types[number]
   : unknown
 
-export interface RelatedQuery<Selection, Types>
+export interface RelatedQuery<Selection = unknown, Types = unknown>
   extends GraphQuery<Selection, Types> {
-  translations?: EmptyObject
+  translations?: EmptyObject | {includeSelf: boolean}
   children?: EmptyObject | {depth: number}
-  parents?: EmptyObject
-  siblings?: EmptyObject
+  parents?: EmptyObject | {depth: number}
+  siblings?: EmptyObject | {includeSelf: boolean}
 
   parent?: EmptyObject
   next?: EmptyObject
@@ -49,16 +53,17 @@ interface ToSelect {
 export type Projection = ToSelect | Expr<any>
 export type InferProjection<Selection> = InferSelection<Selection>
 
-interface Order {
+export interface Order {
   asc?: Expr<any>
   desc?: Expr<any>
+  caseSensitive?: boolean
 }
 
 type InferSelection<Selection> = Selection extends Expr<infer V>
   ? V
   : Selection extends Type<infer V>
   ? Type.Infer<V>
-  : {
+  : EntryFields & {
       [K in keyof Selection]: Selection[K] extends Type<infer V>
         ? Type.Infer<V>
         : Selection[K] extends Expr<infer V>
@@ -104,6 +109,13 @@ export type Status =
   | 'all'
 
 export declare class QuerySettings {
+  /** Find a single entry or null */
+  first?: true
+  /** Find a single entry */
+  get?: true
+  /** Return the count of results found */
+  count?: true
+
   filter?: Filter<EntryFields>
 
   /** Filter results by location */
@@ -155,14 +167,7 @@ export interface QueryInput<Selection, Types> extends QuerySettings {
 }
 
 export interface GraphQuery<Selection = unknown, Types = unknown>
-  extends QueryBase<Selection, Types> {
-  /** Find a single entry or null */
-  first?: true
-  /** Find a single entry */
-  get?: true
-  /** Return the count of results found */
-  count?: true
-}
+  extends QueryBase<Selection, Types> {}
 
 type SelectionGuard = Projection | undefined
 type TypeGuard = Type | Array<Type> | undefined
@@ -197,4 +202,45 @@ export class Graph {
   ): Promise<CountQueryResult<Selection, Type>> {
     return <any>this.#resolver.resolve({...query, count: true})
   }
+}
+
+export function parseQuery(schema: Schema, input: string): GraphQuery {
+  return JSON.parse(input, (key, value) => {
+    if (value && typeof value === 'object') {
+      const props = keys(value)
+      if (props.length === 1) {
+        const [key] = keys(value)
+        if (key === TYPE_KEY) return schema[value.name]
+        else if (key === EXPR_KEY) return value.type[value.name]
+      }
+    }
+    return value
+  })
+}
+
+const emptySource = cito.object({}).and(hasExact([]))
+const depthSource = cito
+  .object({depth: cito.number.optional})
+  .and(hasExact(['depth']))
+const includeSource = cito
+  .object({includeSelf: cito.boolean.optional})
+  .and(hasExact(['includeSelf']))
+const translationsSource = cito.object({translations: includeSource})
+const childrenSource = cito.object({children: depthSource})
+const parentsSource = cito.object({parents: depthSource})
+const siblingsSource = cito.object({siblings: includeSource})
+
+const parentSource = cito.object({parent: emptySource})
+const nextSource = cito.object({next: emptySource})
+const prevSource = cito.object({previous: emptySource})
+
+export function querySource(query: unknown) {
+  if (!query || typeof query !== 'object') return
+  if (translationsSource.check(query)) return 'translations'
+  if (childrenSource.check(query)) return 'children'
+  if (parentsSource.check(query)) return 'parents'
+  if (siblingsSource.check(query)) return 'siblings'
+  if (parentSource.check(query)) return 'parent'
+  if (nextSource.check(query)) return 'next'
+  if (prevSource.check(query)) return 'previous'
 }

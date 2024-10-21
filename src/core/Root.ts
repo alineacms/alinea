@@ -1,13 +1,13 @@
-import {Workspace} from 'alinea/alinea'
-import {Preview} from 'alinea/core/Preview'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {getRoot, HasRoot, internalRoot} from './Internal.js'
 import {Label} from './Label.js'
 import {PageSeed} from './Page.js'
+import {Preview} from './Preview.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {View} from './View.js'
+import {Workspace} from './Workspace.js'
 
 export interface RootI18n {
   locales: Array<string>
@@ -33,7 +33,8 @@ export interface RootData extends RootMeta {
 
 type Seed = Record<string, PageSeed>
 
-export type Root<Entries = object> = Entries & HasRoot
+export type Root<Entries = EntriesDefinition> = Entries &
+  HasRoot & {toJSON(): Array<string>}
 
 export namespace Root {
   export const Data = Symbol.for('@alinea/Root.Data')
@@ -126,6 +127,11 @@ export function root<Entries extends EntriesDefinition>(
 ): Root<Entries> {
   return <Root<Entries>>{
     ...config.entries,
-    [internalRoot]: {...config, label}
+    [internalRoot]: {...config, label},
+    toJSON() {
+      const {address} = getRoot(this)
+      if (!address) throw new Error('Root has no address')
+      return [address.workspace, address.name]
+    }
   }
 }

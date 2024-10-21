@@ -11,7 +11,7 @@ const options = {
   option2: 'Option 2'
 }
 
-const fields = type({
+const fields = type('Fields', {
   fields: {
     selectA: select('Select', {
       initialValue: 'one',

@@ -5,7 +5,7 @@ import {metadata} from 'alinea/field/metadata/MetadataField'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-const fields = type({
+const fields = type('Fields', {
   fields: {
     metadata: metadata()
   }

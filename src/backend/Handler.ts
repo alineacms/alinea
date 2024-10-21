@@ -4,7 +4,7 @@ import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'
 import {Draft} from 'alinea/core/Draft'
-import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
+import {AnyQueryResult, Graph, GraphQuery, parseQuery} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {PreviewUpdate} from 'alinea/core/Preview'
 import {decode} from 'alinea/core/util/BufferToBase64'
@@ -276,7 +276,8 @@ export function createHandler(
       if (action === HandleAction.Resolve && request.method === 'POST') {
         const ctx = await internal
         expectJson()
-        return Response.json((await resolve(ctx, await body)) ?? null)
+        const raw = await body
+        return Response.json((await resolve(ctx, parseQuery(raw))) ?? null)
       }
 
       // Pending

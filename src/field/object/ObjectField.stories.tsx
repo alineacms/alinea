@@ -6,7 +6,7 @@ import {text} from 'alinea/field/text/TextField'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-const fields = type({
+const fields = type('Fields', {
   fields: {
     path: object('Object', {
       fields: {

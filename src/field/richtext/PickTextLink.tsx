@@ -19,7 +19,7 @@ const styles = styler(css)
 
 function linkForm(options: PickerOptions) {
   const isExistingLink = Boolean(options.link)
-  const fields = type({
+  const fields = type('Pick link', {
     fields: {
       link: createLink('Link', {
         required: true,

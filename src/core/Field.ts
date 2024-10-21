@@ -72,7 +72,7 @@ export class Field<
       const {address, options} = getField(this)
       if (!address)
         throw new Error(`Field ${options.label} is not attached to type`)
-      return ['data', address.name]
+      return address
     })
     this[internalField] = {ref: Symbol(), ...data}
   }

@@ -44,7 +44,7 @@ async function entryTreeRoot(
   const children = await graph.find({
     select: Entry.i18nId,
     groupBy: Entry.i18nId,
-    orderBy: {asc: Entry.index},
+    orderBy: {asc: Entry.index, caseSensitive: true},
     filter: {
       _active: true,
       _workspace: workspace,

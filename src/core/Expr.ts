@@ -1,14 +1,22 @@
+import {Type} from './Type.js'
 import {Lazy} from './util/Lazy.js'
 
-export class Expr<Value> {
+export const EXPR_KEY = '@alinea.Expr'
+
+export interface ExprAddress {
+  type?: Type
+  name: string
+}
+
+export class Expr<Value = unknown> {
   private declare exprBrand: [Value]
 
-  #path: Lazy<Array<string>>
-  constructor(path: Lazy<Array<string>>) {
-    this.#path = path
+  #address: Lazy<ExprAddress>
+  constructor(path: Lazy<ExprAddress>) {
+    this.#address = path
   }
 
   toJSON() {
-    return Lazy.get(this.#path)
+    return {[EXPR_KEY]: Lazy.get(this.#address)}
   }
 }
