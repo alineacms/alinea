@@ -1,3 +1,4 @@
+import {Workspace} from 'alinea/alinea'
 import {Preview} from 'alinea/core/Preview'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
@@ -116,6 +117,7 @@ export interface RootOptions<Entries> extends RootMeta {
 
 export interface RootInternal extends RootOptions<EntriesDefinition> {
   label: string
+  address?: {workspace: Workspace; name: string}
 }
 
 export function root<Entries extends EntriesDefinition>(

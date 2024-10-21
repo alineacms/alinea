@@ -1,6 +1,11 @@
 import {Preview} from 'alinea/core/Preview'
 import type {ComponentType} from 'react'
-import {getWorkspace, HasWorkspace, internalWorkspace} from './Internal.js'
+import {
+  getRoot,
+  getWorkspace,
+  HasWorkspace,
+  internalWorkspace
+} from './Internal.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getRandomColor} from './util/GetRandomColor.js'
@@ -87,6 +92,7 @@ export interface WorkspaceInternal
   extends WorkspaceConfig<WorkspaceDefinition> {
   label: string
   color: string
+  address?: {name: string}
 }
 
 /** Create a workspace */
@@ -96,7 +102,7 @@ export function workspace<Definition extends WorkspaceDefinition>(
   config: WorkspaceConfig<Definition>
 ): Workspace<Definition> {
   const roots = config.roots
-  return {
+  const instance = {
     ...roots,
     [internalWorkspace]: {
       ...config,
@@ -104,4 +110,13 @@ export function workspace<Definition extends WorkspaceDefinition>(
       color: config.color ?? getRandomColor(JSON.stringify(label))
     }
   }
+  for (const [key, root] of Object.entries(roots)) {
+    const rootData = getRoot(root)
+    if (rootData.address)
+      throw new Error(
+        `Root "${key}" in workspace "${label}" is already attached to a workspace`
+      )
+    rootData.address = {workspace: instance, name: key}
+  }
+  return instance
 }

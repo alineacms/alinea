@@ -94,6 +94,14 @@ export function createConfig<Definition extends Config>(
     schema: {...definition.schema, MediaLibrary, MediaFile},
     auth: CloudAuthView
   }
+  for (const [key, workspace] of entries(res.workspaces)) {
+    const workspaceData = getWorkspace(workspace)
+    if (workspaceData.address)
+      throw new Error(
+        `Workspace "${key}" is already attached as "${workspaceData.address.name}"`
+      )
+    workspaceData.address = {name: key}
+  }
   Config.validate(res)
   return res
 }
