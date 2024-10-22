@@ -4,7 +4,7 @@ import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
 import {Expr} from './Expr.js'
 import {Field} from './Field.js'
-import {getType, HasType, internalType} from './Internal.js'
+import {getType, hasType, HasType, internalType} from './Internal.js'
 import {Label} from './Label.js'
 import {SummaryProps} from './media/Summary.js'
 import {OrderBy} from './OrderBy.js'
@@ -31,8 +31,6 @@ type TypeRow<Definition> = Expand<{
 }>
 export namespace Type {
   export type Infer<Definition> = TypeRow<Definition>
-
-  export const Data = Symbol.for('@alinea/Type.Data')
 
   export function label(type: Type): Label {
     return getType(type).label
@@ -70,7 +68,7 @@ export namespace Type {
   }
 
   export function isType(type: any): type is Type {
-    return Boolean(type && type[Type.Data])
+    return Boolean(type && hasType(type))
   }
 
   export function sharedData(type: Type, entryData: Record<string, unknown>) {
@@ -176,6 +174,9 @@ export function type<Fields extends FieldsDefinition>(
     current = {}
   }
   const fields: Array<[string, Field]> = []
+  if (typeof config.fields !== 'object') {
+    throw new Error('Type fields must be an object')
+  }
   for (const [key, value] of entries(config.fields)) {
     if (Field.isField(value)) {
       current[key] = value

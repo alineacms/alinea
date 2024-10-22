@@ -1,6 +1,6 @@
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
-import {getRoot, HasRoot, internalRoot} from './Internal.js'
+import {getRoot, hasRoot, HasRoot, internalRoot} from './Internal.js'
 import {Label} from './Label.js'
 import {PageSeed} from './Page.js'
 import {Preview} from './Preview.js'
@@ -34,8 +34,6 @@ export type Root<Entries extends EntriesDefinition = EntriesDefinition> =
   Entries & HasRoot
 
 export namespace Root {
-  export const Data = Symbol.for('@alinea/Root.Data')
-
   export function label(root: Root): Label {
     return getRoot(root).label
   }
@@ -53,7 +51,7 @@ export namespace Root {
   }
 
   export function isRoot(value: any): value is Root {
-    return Boolean(value && value[Root.Data])
+    return Boolean(value && hasRoot(value))
   }
 
   export function isMediaRoot(root: Root): boolean {
