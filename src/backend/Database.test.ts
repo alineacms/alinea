@@ -25,18 +25,22 @@ test('create', async () => {
 test('index is correct', async () => {
   const example = createExample()
   const {Page} = example.schema
-  const container1 = await example.get(Query.wherePath('container1'))
-  const entryA = Edit.create(Page).setParent(container1.entryId)
+  const container1 = await example.get({
+    filter: {_path: 'container1'}
+  })
+  const entryA = Edit.create(Page).setParent(container1._id)
   await example.commit(entryA)
-  const entryB = Edit.create(Page).setParent(container1.entryId)
+  const entryB = Edit.create(Page).setParent(container1._id)
   await example.commit(entryB)
-  const entries = await example.find(Query.whereParent(container1.entryId))
+  const entries = await example.find({
+    filter: {_parent: container1._id}
+  })
   const first = generateKeyBetween(null, null)
   const second = generateKeyBetween(first, null)
-  assert.is(entries[0].entryId, entryA.entryId)
-  assert.is(entries[0].index, first)
-  assert.is(entries[1].entryId, entryB.entryId)
-  assert.is(entries[1].index, second)
+  assert.is(entries[0]._id, entryA.entryId)
+  assert.is(entries[0]._index, first)
+  assert.is(entries[1]._id, entryB.entryId)
+  assert.is(entries[1]._index, second)
 })
 
 test('remove child entries', async () => {

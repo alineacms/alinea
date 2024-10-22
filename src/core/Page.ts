@@ -29,7 +29,7 @@ export function page<
   Children extends Record<string, PageSeed<any, any>>
 >(
   type: Type<Definition>,
-  partial: Partial<Type.Infer<Definition>>,
+  partial: Partial<Type.Infer<Definition>> = {},
   children?: Children
 ): PageSeed<Definition> {
   children = children ?? ({} as Children)

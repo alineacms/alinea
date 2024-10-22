@@ -295,11 +295,14 @@ export class CreateOperation<Definition> extends Operation {
           status: 'preferPublished'
         })
       : undefined)
-    const previousIndex = await cms.graph.preferPublished.maybeGet(
-      Entry({parent: parent?.entryId ?? null})
-        .select(Entry.index)
-        .orderBy(Entry.index.desc())
-    )
+    const previousIndex = await cms.first({
+      status: 'preferPublished',
+      select: Entry.index,
+      filter: {
+        _parent: parent?.entryId ?? null
+      },
+      orderBy: {desc: Entry.index, caseSensitive: true}
+    })
     const index = generateKeyBetween(previousIndex, null)
     return createEntry(cms.config, type, {...partial, index}, parent)
   }

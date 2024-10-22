@@ -1,26 +1,28 @@
 import {cms} from '@/cms'
-import alinea, {Query} from 'alinea'
+import {Entry} from 'alinea/core/Entry'
+import {snippet} from 'alinea/core/pages/Snippet'
 
 export async function GET(request: Request) {
   const searchTerm = new URL(request.url).searchParams.get('query')
   if (!searchTerm) return Response.json([])
-  const matches = await cms
-    .in(cms.workspaces.main.pages)
-    .disableSync()
-    .find(
-      Query.select({
-        title: Query.title,
-        url: Query.url,
-        snippet: alinea.snippet('[[mark]]', '[[/mark]]', '…', 25),
-        parents: Query.parents().select({
-          id: Query.id,
-          title: Query.title
-        })
-      })
-        .search(...searchTerm.split(' '))
-        .take(25)
-    )
-
+  const matches = await cms.find({
+    location: cms.workspaces.main.pages,
+    disableSync: true,
+    search: searchTerm.split(' '),
+    take: 25,
+    select: {
+      title: Entry.title,
+      url: Entry.url,
+      snippet: snippet('[[mark]]', '[[/mark]]', '…', 25),
+      parents: {
+        parents: {},
+        select: {
+          id: Entry.entryId,
+          title: Entry.title
+        }
+      }
+    }
+  })
   return Response.json(
     matches.map(match => {
       return {

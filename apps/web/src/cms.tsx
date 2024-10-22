@@ -41,8 +41,8 @@ const demo = Config.workspace('Demo', {
     pages: Config.root('Demo', {
       contains: ['DemoHome', 'DemoRecipes'],
       entries: {
-        index: Config.page(schema.DemoHome({title: 'Home'})),
-        recipes: Config.page(schema.DemoRecipes({title: 'Recipes'}))
+        index: Config.page(schema.DemoHome, {title: 'Home'}),
+        recipes: Config.page(schema.DemoRecipes, {title: 'Recipes'})
       }
     }),
     media: Config.media()

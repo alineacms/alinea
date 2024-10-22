@@ -523,7 +523,7 @@ export class EntryResolver {
     const transact = async (tx: Store): Promise<T> => {
       const rows = await dbQuery.all(tx)
       const linkResolver = new LinkResolver(this, tx, ctx.status)
-      const result = singleResult ? rows[0] : rows
+      const result = singleResult ? rows[0] ?? null : rows
       if (result)
         await this.post({linkResolver}, result, query as GraphQuery<Projection>)
       return result as T
