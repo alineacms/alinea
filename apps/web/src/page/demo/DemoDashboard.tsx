@@ -6,7 +6,6 @@ import {createCMS} from 'alinea/adapter/test/TestCMS'
 import {memoryBackend} from 'alinea/backend/data/MemoryBackend'
 import {createHandler} from 'alinea/backend/Handler'
 import {Entry} from 'alinea/core/Entry'
-import {EntryPhase} from 'alinea/core/EntryRow'
 import {localUser} from 'alinea/core/User'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
@@ -46,10 +45,8 @@ function PreviewHome({entry}) {
   const update = useDeferredValue(entry)
   const props = use(
     useMemo(() => {
-      return graph.preferDraft
-        .previewEntry({...update, phase: EntryPhase.Draft})
-        .get(DemoHomePage.fragment)
-    }, [graph.preferDraft, update])
+      return DemoHomePage.query(graph, update)
+    }, [graph, update])
   )
   return <DemoHomePage {...props} />
 }
@@ -59,10 +56,8 @@ function PreviewRecipe({entry}) {
   const update = useDeferredValue(entry)
   const props = use(
     useMemo(() => {
-      return graph.preferDraft
-        .previewEntry({...update, phase: EntryPhase.Draft})
-        .get(DemoRecipePage.fragment.wherePath(update.path))
-    }, [graph.preferDraft, update])
+      return DemoRecipePage.query(graph, update)
+    }, [graph, update])
   )
   return <DemoRecipePage {...props} />
 }

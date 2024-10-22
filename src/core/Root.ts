@@ -1,6 +1,6 @@
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
-import {getRoot, HasLocation, HasRoot, internalRoot} from './Internal.js'
+import {getRoot, HasRoot, internalRoot} from './Internal.js'
 import {Label} from './Label.js'
 import {PageSeed} from './Page.js'
 import {Preview} from './Preview.js'
@@ -30,7 +30,8 @@ export interface RootData extends RootMeta {
   label: string
 }
 
-export type Root<Entries = object> = Entries & HasRoot & HasLocation
+export type Root<Entries extends EntriesDefinition = EntriesDefinition> =
+  Entries & HasRoot
 
 export namespace Root {
   export const Data = Symbol.for('@alinea/Root.Data')

@@ -1,12 +1,11 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {Type, type} from 'alinea/core/Type'
 import {RecordField} from 'alinea/core/field/RecordField'
-import {ImageField, image} from 'alinea/field/link'
+import {ImageField, ImageLink, image} from 'alinea/field/link'
 import {ObjectField, object} from 'alinea/field/object'
 import {TextField, text} from 'alinea/field/text'
 
-export interface MetadataOptions
-  extends FieldOptions<Type.Infer<MetadataFields>> {
+export interface MetadataOptions extends FieldOptions<Metadata> {
   inferTitleFrom?: string
   inferDescriptionFrom?: string
   inferImageFrom?: string
@@ -23,8 +22,19 @@ export interface MetadataFields {
   }>
 }
 
+export interface Metadata {
+  title: string
+  description: string
+  openGraph: {
+    siteName: string
+    image: ImageLink
+    title: string
+    description: string
+  }
+}
+
 export class MetadataField extends RecordField<
-  Type.Infer<MetadataFields>,
+  Metadata,
   MetadataOptions & {fields: Type<MetadataFields>}
 > {}
 

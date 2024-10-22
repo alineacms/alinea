@@ -3,12 +3,13 @@ import {Workspace} from 'alinea/types'
 import {Config} from './Config.js'
 import {Expr} from './Expr.js'
 import {Field} from './Field.js'
+import {PageSeed} from './Page.js'
 import {Root} from './Root.js'
 import {Type} from './Type.js'
 import {entries} from './util/Objects.js'
 
 const scopes = new WeakMap()
-type Entity = Workspace | Root | Type | Field | Expr
+type Entity = Workspace | Root | Type | Field | Expr | PageSeed
 const ENTITY_KEY = '@alinea.Entity'
 
 export class Scope {
@@ -20,6 +21,9 @@ export class Scope {
       this.#insert(workspace, 'workspace', workspaceName)
       for (const [rootName, root] of entries(workspace)) {
         this.#insert(root, 'root', workspaceName, rootName)
+        for (const [pageName, page] of entries(root)) {
+          this.#insert(page, 'page', workspaceName, rootName, pageName)
+        }
       }
     }
     for (const [typeName, type] of entries(config.schema)) {
@@ -31,6 +35,10 @@ export class Scope {
     for (const [name, expr] of entries(Entry)) {
       this.#insert(expr, 'entry', name)
     }
+  }
+
+  locationOf(entity: Entity) {
+    return this.#paths.get(entity)?.slice(1)
   }
 
   nameOf(entity: Entity) {

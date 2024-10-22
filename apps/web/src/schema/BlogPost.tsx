@@ -7,8 +7,8 @@ export const BlogPost = Config.document('Blog post', {
     author: Field.object('Author', {
       fields: {
         name: Field.text('Name', {width: 0.5}),
-        url: Field.link.url('Url', {width: 0.5}),
-        avatar: Field.link.url('Avatar url')
+        url: Field.url('Url', {width: 0.5}),
+        avatar: Field.url('Avatar url')
       }
     }),
     introduction: Field.text('Short introduction', {multiline: true}),

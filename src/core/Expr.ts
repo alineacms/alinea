@@ -1,5 +1,6 @@
+declare const brand: unique symbol
 export class Expr<Value = unknown> {
-  private declare exprBrand: [Value]
+  [brand]!: Value
 
   constructor() {}
 }

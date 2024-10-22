@@ -15,7 +15,7 @@ import WebLayout from '@/layout/WebLayout'
 import {WebTypo} from '@/layout/WebTypo'
 import {Home} from '@/schema/Home'
 import styler from '@alinea/styler'
-import {Query} from 'alinea'
+import {Entry} from 'alinea/core/Entry'
 import {HStack, VStack} from 'alinea/ui/Stack'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
@@ -30,13 +30,14 @@ import css from './HomePage.module.scss'
 const styles = styler(css)
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await cms.get(
-    Query(Home).select({
-      url: Query.url,
-      title: Query.title,
+  const page = await cms.get({
+    type: Home,
+    select: {
+      url: Entry.url,
+      title: Home.title,
       metadata: Home.metadata
-    })
-  )
+    }
+  })
   const appUrl = 'https://alinea.sh'
   const title = page.metadata?.title || page.title
   const ogTitle = page.metadata?.openGraph?.title || title
@@ -83,7 +84,7 @@ function Highlight({
 }
 
 export default async function HomePage() {
-  const home = await cms.get(Home())
+  const home = await cms.get({type: Home})
   return (
     <WebLayout footer={false}>
       <main className={styles.home()}>

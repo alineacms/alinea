@@ -7,7 +7,6 @@ import {
 } from 'alinea/core/Section'
 import {Type, type} from 'alinea/core/Type'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
-import type {UnionToIntersection} from 'alinea/core/util/Types'
 
 export class TabsSection implements SectionData {
   view = 'alinea/field/tabs/Tabs.view#TabsView'
@@ -23,14 +22,19 @@ export class TabsSection implements SectionData {
   }
 }
 
-type ArrayIntersection<T> = Type<
-  UnionToIntersection<T extends Array<Type<infer V>> ? V : never>
->
+// Source: https://stackoverflow.com/a/77965444
+type Cast<From, To> = From extends To ? From : never
+type FoldIntoIntersection<
+  T extends readonly {}[],
+  Acc extends {} = {}
+> = T extends readonly [infer H, ...infer HS]
+  ? FoldIntoIntersection<Cast<HS, readonly {}[]>, Acc & H>
+  : Acc
 
 /** Create tabs */
-export function tabs<Types extends Array<Type>>(
+export function tabs<const Types extends Array<Type>>(
   ...types: Types
-): ArrayIntersection<Types> {
+): FoldIntoIntersection<Types> {
   return section(new TabsSection(types))
 }
 

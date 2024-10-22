@@ -1,16 +1,17 @@
+import {Root, Workspace} from 'alinea/types'
 import * as cito from 'cito'
 import {Config} from './Config.js'
 import {EntryFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
 import {Filter} from './Filter.js'
-import {HasLocation} from './Internal.js'
+import {PageSeed} from './Page.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
 import {Type} from './Type.js'
 import {hasExact} from './util/Checks.js'
 import {Expand} from './util/Types.js'
 
-export type Location = HasLocation | Array<string>
+export type Location = Root | Workspace | PageSeed | Array<string>
 type EmptyObject = Record<PropertyKey, never>
 
 type FieldsOf<Types> = Types extends Type<infer V>
@@ -76,22 +77,19 @@ type InferResult<Selection, Types, Include> = Selection extends Expr<
   ? Types extends undefined
     ? EntryFields & (Include extends undefined ? {} : InferSelection<Include>)
     : Type.Infer<Types> &
+        EntryFields &
         (Include extends undefined ? {} : InferSelection<Include>)
   : InferSelection<Selection>
 
 type CountQueryResult<Selection, Types, Include> = number
-type GetQueryResult<Selection, Types, Include> = InferResult<
-  Selection,
-  Types,
-  Include
->
-type FirstQueryResult<Selection, Types, Include> = InferResult<
-  Selection,
-  Types,
-  Include
-> | null
-type FindQueryResult<Selection, Types, Include> = Array<
+type GetQueryResult<Selection, Types, Include> = Expand<
   InferResult<Selection, Types, Include>
+>
+type FirstQueryResult<Selection, Types, Include> = Expand<
+  InferResult<Selection, Types, Include>
+> | null
+type FindQueryResult<Selection, Types, Include> = Expand<
+  Array<InferResult<Selection, Types, Include>>
 >
 
 interface CountQuery<Selection, Types, Include>

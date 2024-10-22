@@ -22,7 +22,7 @@ const auth: Auth = {
 
 export function createCMS<Definition extends Config>(
   definition: Definition
-): CMS<Definition> {
+): CMS<Definition> & {db: Promise<Database>} {
   const config = createConfig(definition)
   const store: Promise<Store> = createStore()
   const db = store.then(async store => {

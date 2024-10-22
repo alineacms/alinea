@@ -1,4 +1,4 @@
-import {metadata as createMetadata} from 'alinea/field/metadata'
+import {MetadataField, metadata as createMetadata} from 'alinea/field/metadata'
 import {PathField, path as createPath} from 'alinea/field/path'
 import {tab, tabs} from 'alinea/field/tabs'
 import {TextField, text} from 'alinea/field/text'
@@ -9,7 +9,7 @@ import {FieldsDefinition, Type, TypeConfig, type} from './Type.js'
 export interface Document {
   title: TextField
   path: PathField
-  metadata: ReturnType<typeof createMetadata>
+  metadata: MetadataField
 }
 
 function documentFields() {

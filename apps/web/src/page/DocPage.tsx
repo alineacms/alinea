@@ -9,7 +9,7 @@ import {NavItem, nestNav} from '@/layout/nav/NestNav'
 import {BodyFieldView} from '@/page/blocks/BodyFieldView'
 import {Doc} from '@/schema/Doc'
 import styler from '@alinea/styler'
-import {Query} from 'alinea'
+import {Entry} from 'alinea/core/Entry'
 import {HStack, VStack} from 'alinea/ui'
 import {Metadata, MetadataRoute} from 'next'
 import {WebTypo} from '../layout/WebTypo'
@@ -27,9 +27,9 @@ interface DocPageProps {
 }
 
 const summary = {
-  id: Query.id,
-  title: Query.title,
-  url: Query.url
+  id: Entry.entryId,
+  title: Entry.title,
+  url: Entry.url
 }
 
 async function getPage(params: DocPageParams) {
@@ -43,22 +43,27 @@ async function getPage(params: DocPageParams) {
   const url = pathname ? `/docs/${pathname}` : '/docs'
   return {
     framework,
-    doc: await cms.get(
-      Query.whereUrl(url).select({
-        ...Doc,
-        id: Query.id,
-        level: Query.level,
-        parents: Query.parents().select(summary)
-      })
-    )
+    doc: await cms.get({
+      type: Doc,
+      filter: {_url: url},
+      include: {
+        id: Entry.entryId,
+        level: Entry.level,
+        parents: {
+          parents: {},
+          select: summary
+        }
+      }
+    })
   }
 }
 
 export const dynamicParams = false
 export async function generateStaticParams() {
-  const urls = await cms
-    .in(cms.workspaces.main.pages.docs)
-    .find(Query.select(Query.url))
+  const urls = await cms.find({
+    location: cms.workspaces.main.pages.docs,
+    select: Entry.url
+  })
   return urls
     .flatMap(url => {
       return supportedFrameworks
@@ -93,17 +98,21 @@ export async function generateMetadata({
 export default async function DocPage({params}: DocPageProps) {
   const {doc, framework} = await getPage(params)
   const select = {
-    id: Query.id,
-    type: Query.type,
-    url: Query.url,
-    title: Query.title,
+    id: Entry.entryId,
+    type: Entry.type,
+    url: Entry.url,
+    title: Entry.title,
     navigationTitle: Doc.navigationTitle,
-    parent: Query.parent
+    parent: Entry.parent
   }
-  const root = await cms.get(Query.whereUrl('/docs').select(select))
-  const nav = await cms
-    .in(cms.workspaces.main.pages.docs)
-    .find(Query.select(select))
+  const root = await cms.get({
+    select,
+    filter: {_url: '/docs'}
+  })
+  const nav = await cms.find({
+    location: cms.workspaces.main.pages.docs,
+    select
+  })
   const entries = [
     root,
     ...nav.map(item => ({

@@ -12,7 +12,7 @@ import {
   RelatedQuery,
   Status
 } from 'alinea/core/Graph'
-import {getLocation, getType} from 'alinea/core/Internal'
+import {getType} from 'alinea/core/Internal'
 import {Schema} from 'alinea/core/Schema'
 import {getScope, Scope} from 'alinea/core/Scope'
 import {Type} from 'alinea/core/Type'
@@ -513,7 +513,7 @@ export class EntryResolver {
   resolve = async <T>(query: GraphQuery): Promise<T> => {
     const location = Array.isArray(query.location)
       ? query.location
-      : query.location && getLocation(query.location)
+      : query.location && this.scope.locationOf(query.location)
     const ctx = new ResolveContext({
       ...query,
       location

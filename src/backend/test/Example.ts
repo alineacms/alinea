@@ -26,7 +26,7 @@ import {
 } from 'alinea/field'
 
 export function createExample() {
-  const Page = type('Type', {
+  const Page = document('Type', {
     contains: ['Page'],
     fields: {
       title: text('Title'),

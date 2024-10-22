@@ -30,14 +30,6 @@ export type HasField = {
 export const hasField = (obj: object): obj is HasField => internalField in obj
 export const getField = (obj: HasField) => obj[internalField]
 
-export const internalLocation = Symbol('@alinea.Location')
-export type HasLocation = {
-  readonly [internalLocation]: Array<string>
-}
-export const hasLocation = (obj: object): obj is HasLocation =>
-  internalLocation in obj
-export const getLocation = (obj: HasLocation) => obj[internalLocation]
-
 export const internalWorkspace = Symbol('@alinea.Workspace')
 export type HasWorkspace = {
   [internalWorkspace]: WorkspaceInternal

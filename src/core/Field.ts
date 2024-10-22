@@ -53,6 +53,7 @@ export interface FieldInternal extends FieldData<any, any, any, any> {
   ref: symbol
 }
 
+declare const brand: unique symbol
 export class Field<
     StoredValue = any,
     QueryValue = any,
@@ -62,7 +63,7 @@ export class Field<
   extends Expr<QueryValue>
   implements HasField
 {
-  private declare fieldBrand: [StoredValue, QueryValue, Mutator, Options];
+  [brand]!: [StoredValue, QueryValue, Mutator, Options];
 
   [internalField]: FieldInternal
   constructor(data: FieldData<StoredValue, QueryValue, Mutator, Options>) {
