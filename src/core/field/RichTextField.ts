@@ -1,7 +1,7 @@
 import {Parser} from 'htmlparser2'
 import {Field, FieldMeta, FieldOptions} from '../Field.js'
 import {Schema} from '../Schema.js'
-import {ElementNode, TextDoc} from '../TextDoc.js'
+import {ElementNode, Mark, TextDoc, TextNode} from '../TextDoc.js'
 import {RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
 
 export class RichTextField<
@@ -64,12 +64,6 @@ function mapNode(
       return {_type: type, level, content: []}
     case 'p':
       return {_type: 'paragraph', content: []}
-    case 'b':
-    case 'strong':
-      return {_type: 'bold', content: []}
-    case 'i':
-    case 'em':
-      return {_type: 'italic', content: []}
     case 'ul':
       return {_type: 'bulletList', content: []}
     case 'ol':
@@ -82,11 +76,6 @@ function mapNode(
       return {_type: 'horizontalRule'}
     case 'br':
       return {_type: 'hardBreak'}
-    case 'small':
-      return {_type: 'small', content: []}
-    case 'a':
-      // Todo: pick what we need
-      return {_type: 'link', ...attributes, content: []}
     case 'table':
       return {_type: 'table', content: []}
     case 'tbody':
@@ -100,23 +89,57 @@ function mapNode(
   }
 }
 
+function mapMark(
+  name: string,
+  attributes: Record<string, string>
+): Mark | undefined {
+  switch (name) {
+    case 'b':
+    case 'strong':
+      return {_type: 'bold'}
+    case 'i':
+    case 'em':
+      return {_type: 'italic'}
+    case 'u':
+      return {_type: 'underline'}
+    case 's':
+    case 'strike':
+      return {_type: 'strike'}
+    case 'a':
+      return {_type: 'link', ...attributes}
+  }
+}
+
 export function parseHTML(html: string): TextDoc<any> {
   const doc: TextDoc<any> = []
   if (typeof html !== 'string') return doc
-  let parents: Array<TextDoc<any> | undefined> = [doc]
+  let parents: Array<{tag: string; doc?: TextDoc<any>}> = [
+    {tag: undefined!, doc}
+  ]
+  let marks: Array<Mark> = []
   const parser = new Parser({
     onopentag(name, attributes) {
       const node = mapNode(name, attributes)
-      const parent = parents[parents.length - 1]
-      if (node) parent?.push(node)
-      parents.push(node?.content)
+      const mark = mapMark(name, attributes)
+      const parent = parents.at(-1)
+      if (node) {
+        parent?.doc?.push(node)
+        parents.push({tag: name, doc: node?.content})
+      } else if (mark) {
+        marks.push(mark)
+      }
     },
     ontext(text) {
-      const parent = parents[parents.length - 1]
-      parent?.push({_type: 'text', text})
+      const parent = parents.at(-1)
+      const node: TextNode = {_type: 'text', text}
+      if (marks.length) node.marks = marks
+      parent?.doc?.push(node)
+      marks = []
     },
-    onclosetag() {
-      parents.pop()
+    onclosetag(name) {
+      const parent = parents.at(-1)
+      if (parent?.tag === name) parents.pop()
+      else marks.pop()
     }
   })
   parser.write(html)

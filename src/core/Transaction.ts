@@ -23,6 +23,7 @@ import {
   workspaceMediaDir
 } from './util/EntryFilenames.js'
 import {createEntryRow, entryParentPaths} from './util/EntryRows.js'
+import {generateKeyBetween} from './util/FractionalIndexing.js'
 import {basename, extname, join, normalize} from './util/Paths.js'
 import {slugify} from './util/Slugs.js'
 
@@ -294,7 +295,13 @@ export class CreateOperation<Definition> extends Operation {
           status: 'preferPublished'
         })
       : undefined)
-    return createEntry(cms.config, type, partial, parent)
+    const previousIndex = await cms.graph.preferPublished.maybeGet(
+      Entry({parent: parent?.entryId ?? null})
+        .select(Entry.index)
+        .orderBy(Entry.index.desc())
+    )
+    const index = generateKeyBetween(previousIndex, null)
+    return createEntry(cms.config, type, {...partial, index}, parent)
   }
 
   constructor(

@@ -180,7 +180,8 @@ export function createExample() {
             {
               entry3: page(Page, {title: 'Entry 3'})
             }
-          )
+          ),
+          container1: page(Container, {title: 'Container 1'})
         }
       }),
       multiLanguage: root('Multi language', {
