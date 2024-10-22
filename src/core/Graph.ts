@@ -271,7 +271,7 @@ const nextSource = cito.object({next: emptySource})
 const prevSource = cito.object({previous: emptySource})
 
 export function querySource(query: unknown) {
-  if (!query || typeof query !== 'object') return
+  if (query?.constructor !== Object) return
   if (translationsSource.check(query)) return 'translations'
   if (childrenSource.check(query)) return 'children'
   if (parentsSource.check(query)) return 'parents'

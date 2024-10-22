@@ -12,7 +12,7 @@ import {
   RelatedQuery,
   Status
 } from 'alinea/core/Graph'
-import {getType} from 'alinea/core/Internal'
+import {hasField} from 'alinea/core/Internal'
 import {Schema} from 'alinea/core/Schema'
 import {getScope, Scope} from 'alinea/core/Scope'
 import {Type} from 'alinea/core/Type'
@@ -78,10 +78,10 @@ export class EntryResolver {
   expr(ctx: ResolveContext, expr: Expr<any>): HasSql<any> {
     const name = this.scope.nameOf(expr)
     if (!name) throw new Error(`Expression has no name ${expr}`)
-    const result =
-      expr instanceof Field
-        ? (<any>ctx.Table.data)[name]
-        : ctx.Table[name as keyof EntryRow]
+    const isDataField = name !== 'path' && name !== 'type' && hasField(expr)
+    const result = isDataField
+      ? (<any>ctx.Table.data)[name]
+      : ctx.Table[name as keyof EntryRow]
     if (!result) throw new Error(`Unknown field: "${name}"`)
     return result
   }
@@ -91,30 +91,27 @@ export class EntryResolver {
   }
 
   projectTypes(types: Array<Type>): Array<[string, Expr]> {
-    return entries(EntryFields as Projection).concat(
-      types.flatMap((type): Array<[string, Expr]> => {
-        return entries(getType(type).fields)
-      })
-    )
+    return entries(EntryFields as Projection).concat(types.flatMap(entries))
   }
 
   projection(query: GraphQuery<Projection>): Projection {
     return (
       query.select ??
       fromEntries(
-        query.type
+        (query.type
           ? this.projectTypes(
               Array.isArray(query.type) ? query.type : [query.type]
             )
-          : entries(EntryFields).concat(
-              query.include ? entries(query.include) : []
-            )
+          : []
+        )
+          .concat(entries(EntryFields))
+          .concat(query.include ? entries(query.include) : [])
       )
     )
   }
 
   selectProjection(ctx: ResolveContext, value: Projection): SelectionInput {
-    if (value instanceof Expr) return this.expr(ctx, value)
+    if (Expr.isExpr(value)) return this.expr(ctx, value)
     const source = querySource(value)
     if (!source)
       return fromEntries(
@@ -131,7 +128,7 @@ export class EntryResolver {
   select(ctx: ResolveContext, query: GraphQuery<Projection>): SelectionInput {
     if (query.count === true)
       return this.selectCount(ctx, Boolean(query.search?.length))
-    if (query.select instanceof Expr) return this.expr(ctx, query.select)
+    if (Expr.isExpr(query.select)) return this.expr(ctx, query.select)
     const fields = this.projection(query)
     return this.selectProjection(ctx, fromEntries(entries(fields)))
   }
@@ -482,7 +479,7 @@ export class EntryResolver {
     interim: Interim,
     expr: Expr
   ): Promise<void> {
-    if (expr instanceof Field) await this.postField(ctx, interim, expr)
+    if (hasField(expr)) await this.postField(ctx, interim, expr as any)
   }
 
   async postRow(
@@ -492,7 +489,7 @@ export class EntryResolver {
   ) {
     if (!interim) return
     const selected = this.projection(query)
-    if (selected instanceof Expr) return this.postExpr(ctx, interim, selected)
+    if (Expr.isExpr(selected)) return this.postExpr(ctx, interim, selected)
     await Promise.all(
       entries(selected).map(([key, value]) => {
         const source = querySource(value)

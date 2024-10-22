@@ -44,9 +44,9 @@ async function getPage(params: DocPageParams) {
   return {
     framework,
     doc: await cms.get({
-      type: Doc,
       filter: {_url: url},
       include: {
+        ...Doc,
         id: Entry.entryId,
         level: Entry.level,
         parents: {

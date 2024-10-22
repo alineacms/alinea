@@ -46,15 +46,16 @@ export class Scope {
   }
 
   stringify(input: any): string {
-    return JSON.stringify(input, (key, value) => {
+    const result = JSON.stringify(input, (key, value) => {
       if (this.#paths.has(value))
         return {[ENTITY_KEY]: this.#paths.get(value)?.join('.')}
       return value
     })
+    return result
   }
 
   parse<Result>(input: string): Result {
-    return JSON.parse(input, (key, value) => {
+    const result = JSON.parse(input, (key, value) => {
       if (value && typeof value === 'object') {
         const props = Object.keys(value)
         if (props.length === 1) {
@@ -64,6 +65,7 @@ export class Scope {
       }
       return value
     })
+    return result
   }
 
   #insert(entity: Entity, ...path: Array<string>) {

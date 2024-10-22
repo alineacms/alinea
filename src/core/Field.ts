@@ -63,7 +63,7 @@ export class Field<
   extends Expr<QueryValue>
   implements HasField
 {
-  [brand]!: [StoredValue, QueryValue, Mutator, Options];
+  declare [brand]: [StoredValue, QueryValue, Mutator, Options];
 
   [internalField]: FieldInternal
   constructor(data: FieldData<StoredValue, QueryValue, Mutator, Options>) {
