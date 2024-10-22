@@ -90,24 +90,26 @@ export class EntryResolver {
     return count(hasSearch ? EntrySearch.rowid : ctx.Table.entryId).as('count')
   }
 
-  projectTypes(types: Array<Type>): Projection {
-    return fromEntries(
-      entries(EntryFields as Projection).concat(
-        types.flatMap((type): Array<[string, Expr]> => {
-          return entries(getType(type).fields)
-        })
-      )
+  projectTypes(types: Array<Type>): Array<[string, Expr]> {
+    return entries(EntryFields as Projection).concat(
+      types.flatMap((type): Array<[string, Expr]> => {
+        return entries(getType(type).fields)
+      })
     )
   }
 
   projection(query: GraphQuery<Projection>): Projection {
     return (
       query.select ??
-      (query.type
-        ? this.projectTypes(
-            Array.isArray(query.type) ? query.type : [query.type]
-          )
-        : EntryFields)
+      fromEntries(
+        query.type
+          ? this.projectTypes(
+              Array.isArray(query.type) ? query.type : [query.type]
+            )
+          : entries(EntryFields).concat(
+              query.include ? entries(query.include) : []
+            )
+      )
     )
   }
 
