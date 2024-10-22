@@ -144,21 +144,30 @@ export function EntryPickerModal({
         select: Entry,
         search: terms,
         filter: {
-          _workspace: location?.workspace,
-          _root: location?.root,
-          _locale: destinationLocale,
-          ...condition
+          and: [
+            condition,
+            {
+              _workspace: destination.workspace,
+              _root: destination.root,
+              _locale: destinationLocale
+            }
+          ]
         }
       }
     }
     return {
       select: Entry,
       filter: {
-        _workspace: destination.workspace,
-        _root: destination.root,
-        _parent: terms.length === 0 ? destination.parentId ?? null : undefined,
-        _locale: destinationLocale,
-        ...condition
+        and: [
+          condition,
+          {
+            _workspace: destination.workspace,
+            _root: destination.root,
+            _parent:
+              terms.length === 0 ? destination.parentId ?? null : undefined,
+            _locale: destinationLocale
+          }
+        ]
       },
       search: terms
     }

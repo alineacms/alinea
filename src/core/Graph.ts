@@ -1,18 +1,15 @@
 import * as cito from 'cito'
 import {Config} from './Config.js'
 import {EntryFields} from './EntryFields.js'
-import {Expr, EXPR_KEY} from './Expr.js'
+import {Expr} from './Expr.js'
 import {Filter} from './Filter.js'
-import {PageSeed} from './Page.js'
+import {HasLocation} from './Internal.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
-import {Root, ROOT_KEY} from './Root.js'
-import {Type, TYPE_KEY} from './Type.js'
+import {Type} from './Type.js'
 import {hasExact} from './util/Checks.js'
-import {keys} from './util/Objects.js'
-import {Workspace, WORKSPACE_KEY} from './Workspace.js'
 
-export type Location = Root | Workspace | PageSeed | Array<string>
+export type Location = HasLocation | Array<string>
 type EmptyObject = Record<PropertyKey, never>
 
 type FieldsOf<Types> = Types extends Type<infer V>
@@ -34,7 +31,7 @@ export interface RelatedQuery<Selection = unknown, Types = unknown>
 }
 
 type IsRelated =
-  | {translations: EmptyObject}
+  | {translations: EmptyObject | {includeSelf: boolean}}
   | {children: EmptyObject | {depth: number}}
   | {parents: EmptyObject}
   | {siblings: EmptyObject}
@@ -61,8 +58,8 @@ export interface Order {
 type InferSelection<Selection> = Selection extends Expr<infer V>
   ? V
   : Selection extends Type<infer V>
-  ? Type.Infer<V>
-  : EntryFields & {
+  ? EntryFields & Type.Infer<V>
+  : {
       [K in keyof Selection]: Selection[K] extends Type<infer V>
         ? Type.Infer<V>
         : Selection[K] extends Expr<infer V>
@@ -87,7 +84,11 @@ export type AnyQueryResult<Query extends GraphQuery> = Query extends {
   count: true
 }
   ? CountQueryResult<Query['select'], Query['type']>
-  : Query extends {first: true}
+  : Query extends
+      | {first: true}
+      | {next: EmptyObject}
+      | {previous: EmptyObject}
+      | {parent: EmptyObject}
   ? FirstQueryResult<Query['select'], Query['type']>
   : Query extends {get: true}
   ? GetQueryResult<Query['select'], Query['type']>
@@ -178,48 +179,47 @@ export class Graph {
     this.#resolver = resolver
   }
 
-  find<Selection extends SelectionGuard, Type extends TypeGuard>(
+  find<
+    Selection extends SelectionGuard = undefined,
+    Type extends TypeGuard = undefined
+  >(
     query: GraphQuery<Selection, Type>
   ): Promise<FindQueryResult<Selection, Type>> {
     return <any>this.#resolver.resolve(query)
   }
 
-  first<Selection extends SelectionGuard, Type extends TypeGuard>(
+  first<
+    Selection extends SelectionGuard = undefined,
+    Type extends TypeGuard = undefined
+  >(
     query: GraphQuery<Selection, Type>
   ): Promise<FirstQueryResult<Selection, Type>> {
     return <any>this.#resolver.resolve({...query, first: true})
   }
 
-  get<Selection extends SelectionGuard, Type extends TypeGuard>(
+  get<
+    Selection extends SelectionGuard = undefined,
+    Type extends TypeGuard = undefined
+  >(
     query: GraphQuery<Selection, Type>
   ): Promise<GetQueryResult<Selection, Type>> {
     return <any>this.#resolver.resolve({...query, get: true})
   }
 
-  count<Selection extends SelectionGuard, Type extends TypeGuard>(
+  count<
+    Selection extends SelectionGuard = undefined,
+    Type extends TypeGuard = undefined
+  >(
     query: GraphQuery<Selection, Type>
   ): Promise<CountQueryResult<Selection, Type>> {
     return <any>this.#resolver.resolve({...query, count: true})
   }
 }
 
-export function parseQuery(config: Config, input: string): GraphQuery {
-  return JSON.parse(input, (key, value) => {
-    if (value && typeof value === 'object') {
-      const props = keys(value)
-      if (props.length === 1) {
-        const [key] = keys(value)
-        if (key === TYPE_KEY) return config.schema[value.name]
-        else if (key === EXPR_KEY) return value.type[value.name]
-        else if (key === ROOT_KEY) return value.workspace[value.name]
-        else if (key === WORKSPACE_KEY) return config.workspaces[value.name]
-      }
-    }
-    return value
-  })
-}
-
-const emptySource = cito.object({}).and(hasExact([]))
+const plainObject = cito.type((value): value is object => {
+  return value?.constructor === Object
+})
+const emptySource = plainObject.and(hasExact([]))
 const depthSource = cito
   .object({depth: cito.number.optional})
   .and(hasExact(['depth']))

@@ -2,7 +2,6 @@ import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import {Expr} from './Expr.js'
 import {getField, hasField, HasField, internalField} from './Internal.js'
 import {Shape} from './Shape.js'
-import {Type} from './Type.js'
 import {View} from './View.js'
 
 export interface FieldOptions<StoredValue> {
@@ -52,7 +51,6 @@ export interface FieldData<
 
 export interface FieldInternal extends FieldData<any, any, any, any> {
   ref: symbol
-  address?: {type: Type; name: string}
 }
 
 export class Field<
@@ -68,12 +66,7 @@ export class Field<
 
   [internalField]: FieldInternal
   constructor(data: FieldData<StoredValue, QueryValue, Mutator, Options>) {
-    super(() => {
-      const {address, options} = getField(this)
-      if (!address)
-        throw new Error(`Field ${options.label} is not attached to type`)
-      return address
-    })
+    super()
     this[internalField] = {ref: Symbol(), ...data}
   }
 }

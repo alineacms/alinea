@@ -2,12 +2,14 @@ import {AbortController, fetch, Response} from '@alinea/iso'
 import {DraftTransport, Revision} from 'alinea/backend/Backend'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import {PreviewInfo} from 'alinea/backend/Previews'
+import {Config} from './Config.js'
 import {Connection, SyncResponse} from './Connection.js'
 import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {Mutation} from './Mutation.js'
+import {getScope} from './Scope.js'
 import {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
@@ -16,6 +18,7 @@ export type AuthenticateRequest = (
 ) => RequestInit | undefined
 
 export interface ClientOptions {
+  config: Config
   url: string
   applyAuth?: AuthenticateRequest
   unauthorized?: () => void
@@ -60,7 +63,8 @@ export class Client implements Connection {
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    const body = JSON.stringify(query)
+    const scope = getScope(this.#options.config)
+    const body = scope.stringify(query)
     return this.#requestJson(
       {action: HandleAction.Resolve},
       {method: 'POST', body}

@@ -4,9 +4,10 @@ import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'
 import {Draft} from 'alinea/core/Draft'
-import {AnyQueryResult, Graph, GraphQuery, parseQuery} from 'alinea/core/Graph'
+import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {PreviewUpdate} from 'alinea/core/Preview'
+import {getScope} from 'alinea/core/Scope'
 import {decode} from 'alinea/core/util/BufferToBase64'
 import {base64} from 'alinea/core/util/Encoding'
 import {assign} from 'alinea/core/util/Objects'
@@ -277,9 +278,8 @@ export function createHandler(
         const ctx = await internal
         expectJson()
         const raw = await request.text()
-        return Response.json(
-          (await resolve(ctx, parseQuery(cms.config, raw))) ?? null
-        )
+        const scope = getScope(cms.config)
+        return Response.json((await resolve(ctx, scope.parse(raw))) ?? null)
       }
 
       // Pending

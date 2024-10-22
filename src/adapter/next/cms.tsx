@@ -32,6 +32,7 @@ export class NextCMS<
     super(config, async () => {
       const context = await requestContext(config)
       const client = new Client({
+        config: this.config,
         url: context.handlerUrl.href,
         applyAuth(init) {
           const headers = new Headers(init?.headers)
@@ -83,6 +84,7 @@ export class NextCMS<
     const {cookies} = await import('next/headers.js')
     const context = await requestContext(this.config)
     const client = new Client({
+      config: this.config,
       url: context.handlerUrl.href,
       applyAuth: init => {
         const headers = new Headers(init?.headers)

@@ -4,25 +4,16 @@ import type {ComponentType} from 'react'
 import {EntryPhase} from './EntryRow.js'
 import {Expr} from './Expr.js'
 import {Field} from './Field.js'
-import {getField, getType, HasType, internalType} from './Internal.js'
+import {getType, HasType, internalType} from './Internal.js'
 import {Label} from './Label.js'
 import {SummaryProps} from './media/Summary.js'
 import {OrderBy} from './OrderBy.js'
-import {Root} from './Root.js'
 import {section, Section} from './Section.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {
-  defineProperty,
-  entries,
-  fromEntries,
-  keys,
-  values
-} from './util/Objects.js'
+import {entries, fromEntries, keys, values} from './util/Objects.js'
 import {Expand} from './util/Types.js'
 import {View} from './View.js'
-
-export const TYPE_KEY = '@alinea.Type'
 
 export interface EntryUrlMeta {
   phase: EntryPhase
@@ -31,11 +22,7 @@ export interface EntryUrlMeta {
   locale?: string | null
 }
 
-declare class TypeI {
-  toJSON(): {[TYPE_KEY]: {root: Root; name: string}}
-}
-
-export type Type<Definition = object> = Definition & HasType & TypeI
+export type Type<Definition = object> = Definition & HasType
 
 type TypeRow<Definition> = Expand<{
   [K in keyof Definition as Definition[K] extends Expr<any>
@@ -122,22 +109,6 @@ export namespace Type {
       ...viewsOfDefinition(getType(type).allFields)
     ].filter(v => typeof v === 'string')
   }
-
-  export function attach(type: Type) {
-    for (const [name, field] of entries(type)) {
-      const fieldData = getField(field)
-      const address = fieldData.address
-      if (address)
-        throw new Error(
-          `Field "${fieldData.options.label}" cannot be added to type ${label(
-            type
-          )} @ ${name} because it is already attached to type ${label(
-            address.type
-          )} @ ${address.name}`
-        )
-      fieldData.address = {type, name}
-    }
-  }
 }
 
 function viewsOfDefinition(definition: FieldsDefinition): Array<string> {
@@ -191,7 +162,6 @@ export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   allFields: Record<string, Field>
   sections: Array<Section>
   shape: RecordShape
-  address?: {root: Root; name: string}
 }
 
 /** Create a new type */
@@ -219,11 +189,12 @@ export function type<Fields extends FieldsDefinition>(
     }
   }
   addCurrent()
+  const allFields = fromEntries(fields) as Fields
   const instance = {
-    ...(current as Fields),
+    ...allFields,
     [internalType]: {
       ...config,
-      allFields: current,
+      allFields,
       sections,
       shape: new RecordShape(
         label,
@@ -234,15 +205,8 @@ export function type<Fields extends FieldsDefinition>(
         )
       ),
       label
-    },
-    toJSON() {
-      const {address} = getType(this)
-      if (!address)
-        throw new Error(`Type "${label}" has no address, cannot serialize`)
-      return {[TYPE_KEY]: address}
     }
   }
-  defineProperty(instance, 'toJSON', {enumerable: false})
   Type.validate(instance)
   return instance
 }

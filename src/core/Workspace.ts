@@ -1,7 +1,6 @@
 import {Preview} from 'alinea/core/Preview'
 import type {ComponentType} from 'react'
 import {
-  getRoot,
   getWorkspace,
   hasWorkspace,
   HasWorkspace,
@@ -11,9 +10,7 @@ import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {defineProperty, entries, values} from './util/Objects.js'
-
-export const WORKSPACE_KEY = '@alinea.Workspace'
+import {entries, values} from './util/Objects.js'
 
 export interface WorkspaceMeta {
   /** A directory which contains the json entry files */
@@ -32,8 +29,8 @@ export interface RootsDefinition {
   [key: string]: Root
 }
 
-export type Workspace<Definition = object> = Definition &
-  HasWorkspace & {toJSON(): {[WORKSPACE_KEY]: {name: string}}}
+export type Workspace<Definition extends Roots = Roots> = Definition &
+  HasWorkspace
 
 export namespace Workspace {
   export function data(workspace: Workspace): WorkspaceInternal {
@@ -91,7 +88,6 @@ export interface WorkspaceConfig<Definition> extends WorkspaceMeta {
 export interface WorkspaceInternal extends WorkspaceConfig<RootsDefinition> {
   label: string
   color: string
-  address?: {name: string}
 }
 
 /** Create a workspace */
@@ -107,21 +103,7 @@ export function workspace<Roots extends RootsDefinition>(
       ...config,
       label,
       color: config.color ?? getRandomColor(JSON.stringify(label))
-    },
-    toJSON() {
-      const {address} = getWorkspace(this)
-      if (!address) throw new Error('Workspace has no address')
-      return {[WORKSPACE_KEY]: address}
     }
-  }
-  defineProperty(instance, 'toJSON', {enumerable: false})
-  for (const [key, root] of Object.entries(roots)) {
-    const rootData = getRoot(root)
-    if (rootData.address)
-      throw new Error(
-        `Root "${key}" in workspace "${label}" is already attached to a workspace`
-      )
-    rootData.address = {workspace: instance, name: key}
   }
   return instance
 }

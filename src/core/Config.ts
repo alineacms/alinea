@@ -77,10 +77,13 @@ export namespace Config {
   }
 }
 
+const normalized = new WeakSet()
+
 /** Create a new config instance */
 export function createConfig<Definition extends Config>(
   definition: Definition
 ) {
+  if (normalized.has(definition)) return definition
   if (definition.schema.MediaFile && definition.schema.MediaFile !== MediaFile)
     throw new Error(`"MediaFile" is a reserved Type name`)
   if (
@@ -89,19 +92,12 @@ export function createConfig<Definition extends Config>(
   )
     throw new Error(`"MediaLibrary" is a reserved Type name`)
   const res = {
+    auth: CloudAuthView,
     ...definition,
     publicDir: definition.publicDir ?? '/public',
-    schema: {...definition.schema, MediaLibrary, MediaFile},
-    auth: CloudAuthView
-  }
-  for (const [key, workspace] of entries(res.workspaces)) {
-    const workspaceData = getWorkspace(workspace)
-    if (workspaceData.address)
-      throw new Error(
-        `Workspace "${key}" is already attached as "${workspaceData.address.name}"`
-      )
-    workspaceData.address = {name: key}
+    schema: {...definition.schema, MediaLibrary, MediaFile}
   }
   Config.validate(res)
+  normalized.add(res)
   return res
 }

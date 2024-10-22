@@ -1,7 +1,7 @@
 import {Config, createConfig} from './Config.js'
 import {Connection} from './Connection.js'
 import {Graph} from './Graph.js'
-import {MediaFile, MediaLibrary} from './media/MediaTypes.js'
+import type {MediaFile, MediaLibrary} from './media/MediaTypes.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
 import {Operation} from './Transaction.js'

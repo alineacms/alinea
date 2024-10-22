@@ -55,6 +55,7 @@ export function DevDashboard({loadConfig, loadViews}: DevDashboardOptions) {
     link.after(copy)
     const [config, views] = await Promise.all([loadConfig(), loadViews()])
     const client = new Client({
+      config,
       url: new URL('/api', location.href).href
     })
     return setApp({config, views, client})

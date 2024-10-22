@@ -146,7 +146,7 @@ export const entryEditorAtoms = atomFamily(
       const withParents = await graph.first({
         select: {
           parents: {
-            parent: {},
+            parents: {},
             select: {
               entryId: Entry.entryId,
               path: Entry.path
@@ -192,7 +192,7 @@ export const entryEditorAtoms = atomFamily(
         phase => phases[phase] !== undefined
       )
       return createEntryEditor({
-        parents: withParents?.parents!,
+        parents: withParents?.parents ?? [],
         translations,
         parentNeedsTranslation,
         client,

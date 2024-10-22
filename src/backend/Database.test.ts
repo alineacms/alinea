@@ -29,11 +29,9 @@ test('remove child entries', async () => {
   const entry = sub.createChild(Page)
   await example.commit(parent, sub, entry)
   const res1 = await example.get({
-    select: Entry,
     filter: {_id: entry.entryId}
   })
-  assert.ok(res1)
-  assert.is(res1.parent, sub.entryId)
+  assert.is(res1._parent, sub.entryId)
   await example.commit(Edit.remove(parent.entryId))
   const res2 = await example.find({first: true, filter: {_id: entry.entryId}})
   assert.not.ok(res2)
@@ -89,7 +87,9 @@ test('fetch translations', async () => {
     location: example.workspaces.main.multiLanguage,
     select: {
       translations: {
-        translations: {},
+        translations: {
+          includeSelf: true
+        },
         type: Page,
         select: Entry.locale
       }
@@ -198,10 +198,11 @@ test('field creators', async () => {
     .value()
   entry.set({title: 'Fields', list})
   await example.commit(entry)
-  const res = (await example.get({
+  const listRes = await example.get({
     select: Fields.list,
     filter: {_id: entry.entryId}
-  }))![0]
+  })
+  const res = listRes[0]
   if (res[Node.type] !== 'Text') throw new Error('Expected Text')
   assert.equal(res.text[0], {
     [Node.type]: 'heading',

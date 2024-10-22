@@ -1,16 +1,12 @@
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
-import {getRoot, HasRoot, internalRoot} from './Internal.js'
+import {getRoot, HasLocation, HasRoot, internalRoot} from './Internal.js'
 import {Label} from './Label.js'
 import {PageSeed} from './Page.js'
 import {Preview} from './Preview.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {View} from './View.js'
-import {Workspace} from './Workspace.js'
-import {defineProperty} from './util/Objects.js'
-
-export const ROOT_KEY = '@alinea.Root'
 
 export interface RootI18n {
   locales: Array<string>
@@ -34,8 +30,7 @@ export interface RootData extends RootMeta {
   label: string
 }
 
-export type Root<Entries = object> = Entries &
-  HasRoot & {toJSON(): {[ROOT_KEY]: {workspace: Workspace; name: string}}}
+export type Root<Entries = object> = Entries & HasRoot & HasLocation
 
 export namespace Root {
   export const Data = Symbol.for('@alinea/Root.Data')
@@ -112,7 +107,6 @@ export interface RootOptions<Entries> extends RootMeta {
 
 export interface RootInternal extends RootOptions<EntriesDefinition> {
   label: string
-  address?: {workspace: Workspace; name: string}
 }
 
 export function root<Entries extends EntriesDefinition>(
@@ -121,13 +115,7 @@ export function root<Entries extends EntriesDefinition>(
 ): Root<Entries> {
   const instance = <Root<Entries>>{
     ...config.entries,
-    [internalRoot]: {...config, label},
-    toJSON() {
-      const {address} = getRoot(this)
-      if (!address) throw new Error('Root has no address')
-      return {[ROOT_KEY]: address}
-    }
+    [internalRoot]: {...config, label}
   }
-  defineProperty(instance, 'toJSON', {enumerable: false})
   return instance
 }

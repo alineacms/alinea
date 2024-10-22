@@ -1,7 +1,7 @@
 import {EntryFields} from 'alinea/core/EntryFields'
 import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
-import {Expr, EXPR_KEY} from 'alinea/core/Expr'
+import {Expr} from 'alinea/core/Expr'
 import {Field} from 'alinea/core/Field'
 import {Filter} from 'alinea/core/Filter'
 import {
@@ -12,8 +12,9 @@ import {
   RelatedQuery,
   Status
 } from 'alinea/core/Graph'
-import {getType} from 'alinea/core/Internal'
+import {getLocation, getType} from 'alinea/core/Internal'
 import {Schema} from 'alinea/core/Schema'
+import {getScope, Scope} from 'alinea/core/Scope'
 import {Type} from 'alinea/core/Type'
 import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
@@ -29,6 +30,8 @@ import {
   gte,
   inArray,
   include,
+  isNotNull,
+  isNull,
   like,
   lt,
   lte,
@@ -50,6 +53,9 @@ import {LinkResolver} from './LinkResolver.js'
 import {ResolveContext} from './ResolveContext.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))
+const andFilter = cito
+  .object({and: cito.array(cito.any)})
+  .and(hasExact(['and']))
 
 const builder = new Builder()
 const MAX_DEPTH = 999
@@ -62,18 +68,22 @@ export interface PostContext {
 
 export class EntryResolver {
   schema: Schema
+  scope: Scope
 
   constructor(public db: Database) {
     this.schema = db.config.schema
+    this.scope = getScope(db.config)
   }
 
   expr(ctx: ResolveContext, expr: Expr<any>): HasSql<any> {
-    const {[EXPR_KEY]: address} = expr.toJSON()
-    if (!address.type) {
-      const key = address.name as keyof EntryRow
-      return ctx.Table[key]
-    }
-    return (<any>ctx.Table.data)[address.name]
+    const name = this.scope.nameOf(expr)
+    if (!name) throw new Error(`Expression has no name ${expr}`)
+    const result =
+      expr instanceof Field
+        ? (<any>ctx.Table.data)[name]
+        : ctx.Table[name as keyof EntryRow]
+    if (!result) throw new Error(`Unknown field: "${name}"`)
+    return result
   }
 
   selectCount(ctx: ResolveContext, hasSearch: boolean): SelectionInput {
@@ -82,16 +92,22 @@ export class EntryResolver {
 
   projectTypes(types: Array<Type>): Projection {
     return fromEntries(
-      types.flatMap((type): Array<[string, Expr]> => {
-        return entries(getType(type).fields)
-      })
+      entries(EntryFields as Projection).concat(
+        types.flatMap((type): Array<[string, Expr]> => {
+          return entries(getType(type).fields)
+        })
+      )
     )
   }
 
   projection(query: GraphQuery<Projection>): Projection {
     return (
       query.select ??
-      this.projectTypes(Array.isArray(query.type) ? query.type : [query.type])
+      (query.type
+        ? this.projectTypes(
+            Array.isArray(query.type) ? query.type : [query.type]
+          )
+        : EntryFields)
     )
   }
 
@@ -112,13 +128,10 @@ export class EntryResolver {
 
   select(ctx: ResolveContext, query: GraphQuery<Projection>): SelectionInput {
     if (query.count === true)
-      return this.selectCount(ctx, Boolean(query.search))
+      return this.selectCount(ctx, Boolean(query.search?.length))
     if (query.select instanceof Expr) return this.expr(ctx, query.select)
     const fields = this.projection(query)
-    return this.selectProjection(
-      ctx,
-      fromEntries(entries(EntryFields as Projection).concat(entries(fields)))
-    )
+    return this.selectProjection(ctx, fromEntries(entries(fields)))
   }
 
   querySource(ctx: ResolveContext, query: RelatedQuery): Select<any> {
@@ -328,27 +341,36 @@ export class EntryResolver {
     return sql`${input(EntrySearch)} match ${input(terms)}`
   }
 
-  conditionTypes(ctx: ResolveContext, types: Type | Array<Type> | undefined) {
-    if (!types) return sql.value(true)
+  conditionTypes(ctx: ResolveContext, types: Type | Array<Type>) {
     if (Array.isArray(types)) {
-      const names = types.map(type => getType(type).address!.name)
+      const names = types.map(type => this.scope.nameOf(type))
       return inArray(ctx.Table.type, names)
     }
-    return eq(ctx.Table.type, getType(types).address!.name)
+    return eq(ctx.Table.type, this.scope.nameOf(types))
   }
 
   conditionFilter(ctx: ResolveContext, filter: Filter): Sql<boolean> {
     const isOrFilter = orFilter.check(filter)
-    if (isOrFilter) {
-      const conditions = filter.or.map(filter =>
-        this.conditionFilter(ctx, filter)
+    if (isOrFilter)
+      return or(
+        ...filter.or
+          .filter(Boolean)
+          .map(filter => this.conditionFilter(ctx, filter))
       )
-      return or(...conditions)
-    }
-
+    const isAndFilter = andFilter.check(filter)
+    if (isAndFilter)
+      return and(
+        ...filter.and
+          .filter(Boolean)
+          .map(filter => this.conditionFilter(ctx, filter))
+      )
     function filterField(ctx: ResolveContext, name: string): HasSql {
       if (name.startsWith('_')) {
-        const key = name.slice(1) as keyof EntryRow
+        const entryProp = name.slice(1)
+        const key = (
+          entryProp === 'id' ? 'entryId' : entryProp
+        ) as keyof EntryRow
+        if (!(key in ctx.Table)) throw new Error(`Unknown field: "${name}"`)
         return ctx.Table[key]
       }
       return (<any>ctx.Table.data)[name]
@@ -358,12 +380,17 @@ export class EntryResolver {
       [key, value]
     ): Array<Sql<boolean>> {
       const field = filterField(ctx, key)
-      if (typeof value !== 'object' || !value) return [eq(field, value)]
+      if (typeof value !== 'object' || !value)
+        return value === undefined
+          ? []
+          : [value === null ? isNull(field) : eq(field, value)]
       return entries(value).map(([op, value]) => {
         switch (op) {
           case 'is':
+            if (value === null) return isNull(field)
             return eq(field, value)
           case 'isNot':
+            if (value === null) return isNotNull(field)
             return ne(field, value)
           case 'gt':
             return gt(field, value)
@@ -376,11 +403,13 @@ export class EntryResolver {
           case 'startsWith':
             return like(field as HasSql<string>, `${value}%`)
           case 'or':
-            return or(
-              ...value.map((c: unknown) => {
-                return and(...mapCondition([key, c]))
-              })
-            )
+            if (Array.isArray(value))
+              return or(
+                ...value.map((c: unknown) => {
+                  return and(...mapCondition([key, c]))
+                })
+              )
+            return and(...mapCondition([key, value]))
           case 'in':
             return inArray(field, value)
           default:
@@ -392,15 +421,14 @@ export class EntryResolver {
   }
 
   query(ctx: ResolveContext, query: RelatedQuery<Projection>): Select<any> {
-    const {type, filter, skip, take, orderBy, groupBy, select, first, search} =
-      query
+    const {type, filter, skip, take, orderBy, groupBy, first, search} = query
     ctx = ctx.increaseDepth().none
     let q = this.querySource(ctx, query)
     const queryData = getData(q)
     let preCondition = queryData.where as HasSql<boolean>
     let condition = and(
       preCondition,
-      this.conditionTypes(ctx, type as Type | Array<Type>),
+      type ? this.conditionTypes(ctx, type as Type | Array<Type>) : undefined,
       this.conditionLocation(ctx.Table, ctx.location),
       this.conditionStatus(ctx.Table, ctx.status),
       querySource(query) === 'translations'
@@ -422,7 +450,7 @@ export class EntryResolver {
       result = result.groupBy(
         ...this.groupBy(ctx, Array.isArray(groupBy) ? groupBy : [groupBy])
       )
-    if (search) result = result.orderBy(asc(bm25(EntrySearch, 20, 1)))
+    if (search?.length) result = result.orderBy(asc(bm25(EntrySearch, 20, 1)))
     else if (orderBy)
       result = result.orderBy(
         ...this.orderBy(ctx, Array.isArray(orderBy) ? orderBy : [orderBy])
@@ -433,7 +461,9 @@ export class EntryResolver {
   }
 
   isSingleResult(query: RelatedQuery): boolean {
-    return Boolean(query.first ?? query.parent ?? query.next ?? query.previous)
+    return Boolean(
+      query.first || query.get || query.parent || query.next || query.previous
+    )
   }
 
   async postField(
@@ -450,8 +480,7 @@ export class EntryResolver {
     interim: Interim,
     expr: Expr
   ): Promise<void> {
-    const {[EXPR_KEY]: address} = expr.toJSON()
-    if (address.type) await this.postField(ctx, interim, expr as Field)
+    if (expr instanceof Field) await this.postField(ctx, interim, expr)
   }
 
   async postRow(
@@ -482,13 +511,12 @@ export class EntryResolver {
   resolve = async <T>(query: GraphQuery): Promise<T> => {
     const location = Array.isArray(query.location)
       ? query.location
-      : query.location?.toJSON()
+      : query.location && getLocation(query.location)
     const ctx = new ResolveContext({
       ...query,
       location
     })
     const dbQuery = this.query(ctx, query as GraphQuery<Projection>)
-    console.log(dbQuery.toSQL(this.db.store))
     const singleResult = this.isSingleResult(query)
     const transact = async (tx: Store): Promise<T> => {
       const rows = await dbQuery.all(tx)

@@ -109,7 +109,10 @@ const entryTreeItemLoaderAtom = atom(async get => {
     })
     for (const row of rows) {
       const type = schema[row.type]
-      const orderBy = getType(type).orderChildrenBy ?? {asc: Entry.index}
+      const orderBy = getType(type).orderChildrenBy ?? {
+        asc: Entry.index,
+        caseSensitive: true
+      }
       const ids = row.translations.map(row => row.entryId).concat(row.entryId)
       const children = await graph.find({
         select: {

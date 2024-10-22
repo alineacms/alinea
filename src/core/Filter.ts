@@ -19,13 +19,15 @@ export type Condition<V> =
     }
   | V
 
-type OrCondition<Fields> = {or: Array<Filter<Fields>>}
-type AndCondition<Fields> = {
+type AndCondition<Fields> = {and: Array<Filter<Fields> | undefined>}
+type OrCondition<Fields> = {or: Array<Filter<Fields> | undefined>}
+type FieldCondition<Fields> = {
   [K in keyof Fields as InferValue<Fields[K]> extends Primitive
     ? K
     : never]?: Condition<InferValue<Fields[K]>>
 }
 
 export type Filter<Fields = unknown> =
-  | OrCondition<Fields>
   | AndCondition<Fields>
+  | OrCondition<Fields>
+  | FieldCondition<Fields>
