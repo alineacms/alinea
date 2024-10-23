@@ -51,7 +51,7 @@ export namespace Type {
     return shape(type).searchableText(value).trim()
   }
 
-  export function fields(type: Type): Record<string, Field> {
+  function fields(type: Type): Record<string, Field> {
     return getType(type).allFields
   }
 
@@ -104,7 +104,7 @@ export namespace Type {
       view,
       summaryRow,
       summaryThumb,
-      ...viewsOfDefinition(getType(type).allFields)
+      ...viewsOfDefinition(getType(type).fields)
     ].filter(v => typeof v === 'string')
   }
 }
