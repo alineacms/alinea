@@ -9,7 +9,6 @@ export async function GET(request: Request) {
     disableSync: true,
     search: searchTerm.split(' '),
     take: 25,
-    filter: {},
     select: {
       title: Query.title,
       url: Query.url,
