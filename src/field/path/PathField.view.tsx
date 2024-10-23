@@ -30,7 +30,7 @@ export function PathInput({field}: PathInputProps) {
   const hiddenRef = useRef<HTMLSpanElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const suffixRef = useRef<HTMLDivElement>(null)
-  const {value: source} = useField<string, string, unknown, any>(from)
+  const {value: source = ''} = useField<string, string, unknown, any>(from)
   const value = fieldValue ?? slugify(source)
   const [endsWithSeparator, setEndsWithSeparator] = useState(false)
   const inputValue = (value ?? '') + (endsWithSeparator ? '-' : '')
