@@ -41,13 +41,11 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const root = useRoot()
   const graph = useAtomValue(graphAtom)
   const condition = useMemo((): Filter<EntryFields> => {
-    return parentId
-      ? {_parentId: parentId}
-      : {
-          _root: root.name,
-          _workspace: workspace.name,
-          _parentId: null
-        }
+    return {
+      _root: root.name,
+      _workspace: workspace.name,
+      _parentId: parentId ?? null
+    }
   }, [workspace, root, parentId])
   const {data} = useQuery(
     ['explorer', 'media', 'total', condition],
@@ -57,20 +55,23 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
         orderBy: [{desc: Entry.type}, {desc: Entry.id}],
         filter: condition
       }
-      const info = await graph.first({
-        select: {
-          title: Entry.title,
-          parent: Entry.parentId
-        },
-        filter: {
-          _id: parentId
-        },
-        status: 'preferDraft'
-      })
+      const info =
+        parentId &&
+        (await graph.first({
+          select: {
+            title: Entry.title,
+            parent: Entry.parentId
+          },
+          filter: {
+            _id: parentId
+          },
+          status: 'preferDraft'
+        }))
       return {...info, query}
     },
     {suspense: true, keepPreviousData: true}
   )
+  console.log({data, root})
   const {query} = data!
   const title = data?.title || root.label
   const nav = useNav()
