@@ -20,11 +20,12 @@ export const cms = createCMS({
         pages: Config.root('Example project', {
           contains: ['Page'],
           entries: {
-            welcome: Config.page(
-              Page({
+            welcome: Config.page({
+              type: Page,
+              fields: {
                 title: 'Welcome'
-              })
-            )
+              }
+            })
           }
         }),
         media: Config.media()

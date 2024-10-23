@@ -2,7 +2,7 @@ import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {getRoot, hasRoot, HasRoot, internalRoot} from './Internal.js'
 import {Label} from './Label.js'
-import {PageSeed} from './Page.js'
+import {Page} from './Page.js'
 import {Preview} from './Preview.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
@@ -23,7 +23,7 @@ export interface RootMeta {
 }
 
 export interface EntriesDefinition {
-  [key: string]: PageSeed
+  [key: string]: Page
 }
 
 export interface RootData extends RootMeta {

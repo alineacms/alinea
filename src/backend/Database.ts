@@ -1,9 +1,10 @@
+import {reportHalt} from 'alinea/cli/util/Report'
 import {Config} from 'alinea/core/Config'
 import {SyncResponse, Syncable} from 'alinea/core/Connection'
 import {EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {PageSeed} from 'alinea/core/Page'
+import {Page} from 'alinea/core/Page'
 import {Resolver} from 'alinea/core/Resolver'
 import {Root} from 'alinea/core/Root'
 import {Schema} from 'alinea/core/Schema'
@@ -47,7 +48,7 @@ interface Seed {
   workspace: string
   root: string
   filePath: string
-  page: PageSeed
+  page: Page
 }
 
 function seedKey(workspace: string, root: string, filePath: string) {
@@ -522,7 +523,7 @@ export class Database implements Syncable {
     }
 
     const pathData = entryPath === 'index' ? '' : entryPath
-    const seedData = seed ? PageSeed.data(seed.page).partial : {}
+    const seedData = seed ? Page.data(seed.page).fields : {}
     const title = record.title ?? seedData?.title ?? ''
     const entryData = {
       ...seedData,
@@ -569,13 +570,13 @@ export class Database implements Syncable {
         const {i18n} = Root.data(root)
         const locales = i18n?.locales ?? [undefined]
         for (const locale of locales) {
-          const pages: Array<readonly [string, PageSeed]> = entries(root)
+          const pages: Array<readonly [string, Page]> = entries(root)
           const target = locale ? `/${locale}` : '/'
           while (pages.length > 0) {
             const [pagePath, page] = pages.shift()!
             const path = pagePath.split('/').map(slugify).join('/')
-            if (!PageSeed.isPageSeed(page)) continue
-            const {type} = PageSeed.data(page)
+            if (!Page.isPage(page)) continue
+            const {type} = Page.data(page)
             const filePath = paths.join(target, path) + '.json'
             const typeName = typeNames.get(type)
             if (!typeName) continue
@@ -589,7 +590,7 @@ export class Database implements Syncable {
             })
             const children = entries(page).map(
               ([childPath, child]) =>
-                [paths.join(path, childPath), child as PageSeed] as const
+                [paths.join(path, childPath), child as Page] as const
             )
             pages.push(...children)
           }
@@ -691,8 +692,7 @@ export class Database implements Syncable {
           seenVersions.push(`${entry.id}.${entry.phase}`)
           inserted.push(`${entry.id}.${entry.phase}`)
         } catch (e: any) {
-          console.info(`> skipped ${file.filePath} — ${e.message}`)
-          console.error(e)
+          reportHalt(`${e.message} @ ${file.filePath}`)
           process.exit(1)
         }
       }
@@ -705,7 +705,7 @@ export class Database implements Syncable {
       for (const seed of this.seed.values()) {
         const key = seedKey(seed.workspace, seed.root, seed.filePath)
         if (seenSeeds.has(key)) continue
-        const {type, partial} = PageSeed.data(seed.page)
+        const {type, fields} = Page.data(seed.page)
         const typeName = typeNames.get(type)
         if (!typeName) continue
         const root = this.config.workspaces[seed.workspace][seed.root]
@@ -724,8 +724,8 @@ export class Database implements Syncable {
             type: typeName,
             index: 'a0',
             seeded: seed.filePath,
-            title: partial.title ?? '',
-            data: partial
+            title: fields.title ?? '',
+            data: fields
           }),
           seed,
           seed

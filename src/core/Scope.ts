@@ -3,13 +3,13 @@ import {Config} from './Config.js'
 import {Expr} from './Expr.js'
 import {Field} from './Field.js'
 import {getExpr, hasExpr} from './Internal.js'
-import {PageSeed} from './Page.js'
+import {Page} from './Page.js'
 import {Root} from './Root.js'
 import {Type} from './Type.js'
 import {entries} from './util/Objects.js'
 
 const scopes = new WeakMap()
-type Entity = Workspace | Root | Type | Field | Expr | PageSeed
+type Entity = Workspace | Root | Type | Field | Expr | Page
 const ENTITY_KEY = '@alinea.Entity'
 const EXPR_KEY = '@alinea.Expr'
 

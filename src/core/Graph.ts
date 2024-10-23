@@ -4,14 +4,14 @@ import {Config} from './Config.js'
 import {EntryFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
 import {Filter} from './Filter.js'
-import {PageSeed} from './Page.js'
+import {Page} from './Page.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
 import {Type} from './Type.js'
 import {hasExact} from './util/Checks.js'
 import {Expand} from './util/Types.js'
 
-export type Location = Root | Workspace | PageSeed | Array<string>
+export type Location = Root | Workspace | Page | Array<string>
 type EmptyObject = Record<PropertyKey, never>
 
 type FieldsOf<Types> = Types extends Type<infer V>

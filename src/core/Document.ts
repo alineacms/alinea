@@ -6,7 +6,7 @@ import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {IcRoundShare} from 'alinea/ui/icons/IcRoundShare'
 import {FieldsDefinition, Type, TypeConfig, type} from './Type.js'
 
-export interface Document {
+export type Document = {
   title: TextField
   path: PathField
   metadata: MetadataField
