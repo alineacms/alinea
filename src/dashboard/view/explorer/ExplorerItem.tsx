@@ -57,19 +57,19 @@ export function ExplorerItem({
       explorer.selection.find(
         v =>
           EntryReference.isEntryReference(v) &&
-          v[EntryReference.entry] === entry.entryId
+          v[EntryReference.entry] === entry.id
       )
   )
   const childrenAmount = entry.childrenAmount ?? 0
 
   function navigateTo() {
-    explorer.onNavigate?.(entry.entryId)
+    explorer.onNavigate?.(entry.id)
   }
 
   return (
     <div
       ref={itemRef}
-      key={entry.entryId}
+      key={entry.id}
       className={styles.root(summaryView === 'summaryRow' ? 'row' : 'thumb', {
         selected: isSelected,
         border: explorer.border

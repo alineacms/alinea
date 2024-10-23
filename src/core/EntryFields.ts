@@ -17,7 +17,7 @@ export interface EntryFields {
 }
 
 export const EntryFields = {
-  _id: Entry.entryId,
+  _id: Entry.id,
   _type: Entry.type,
   _index: Entry.index,
   _i18nId: Entry.i18nId,

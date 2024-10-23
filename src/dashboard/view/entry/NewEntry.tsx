@@ -43,7 +43,7 @@ import css from './NewEntry.module.scss'
 const styles = styler(css)
 
 const parentData = {
-  id: Entry.entryId,
+  id: Entry.id,
   i18nId: Entry.i18nId,
   type: Entry.type,
   path: Entry.path,
@@ -240,7 +240,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
         })
       : {}
     const entry = await createEntryRow(config, {
-      entryId,
+      id: entryId,
       ...data,
       filePath,
       type: selected,
@@ -262,7 +262,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     return mutate([
       {
         type: MutationType.Create,
-        entryId: entry.entryId,
+        entryId: entry.id,
         entry,
         file: entryFileName(config, data, parentPaths)
       }

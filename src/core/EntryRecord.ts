@@ -36,27 +36,26 @@ interface OldMeta {
 }
 
 export interface RequiredEntryFields extends Partial<EntryRow> {
-  entryId: string
+  id: string
   type: string
   index: string
   data: Record<string, any>
 }
 
 export function parseRecord(record: EntryRecord) {
-  const oldest = record.alinea as any
   const {
     [META_KEY]: old,
-    [EntryRecord.id]: entryId = old?.entryId! ?? record.id,
-    [EntryRecord.type]: type = old?.type! ?? record.type,
-    [EntryRecord.index]: index = old?.index! ?? oldest?.index,
-    [EntryRecord.i18nId]: i18nId = old?.i18nId! ?? oldest?.i18nId,
-    [EntryRecord.root]: root = old?.root! ?? oldest?.root,
-    [EntryRecord.seeded]: seeded = (old?.seeded as string) ?? oldest?.seeded,
+    [EntryRecord.id]: id,
+    [EntryRecord.type]: type,
+    [EntryRecord.index]: index,
+    [EntryRecord.i18nId]: i18nId,
+    [EntryRecord.root]: root,
+    [EntryRecord.seeded]: seeded,
     ...data
   } = record
   return {
     meta: {
-      entryId,
+      id,
       type,
       index,
       i18nId,
@@ -70,7 +69,7 @@ export function parseRecord(record: EntryRecord) {
 export function createRecord(entry: RequiredEntryFields): EntryRecord {
   const {path = entry.path, title = entry.title, ...data} = entry.data
   const meta: EntryRecord = {
-    [EntryRecord.id]: entry.entryId,
+    [EntryRecord.id]: entry.id,
     [EntryRecord.type]: entry.type,
     [EntryRecord.index]: entry.index,
     [EntryRecord.i18nId]: entry.i18nId

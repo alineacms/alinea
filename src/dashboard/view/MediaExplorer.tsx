@@ -54,7 +54,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
     async () => {
       const query: QueryWithResult<ExporerItemSelect> = {
         select: undefined!,
-        orderBy: [{desc: Entry.type}, {desc: Entry.entryId}],
+        orderBy: [{desc: Entry.type}, {desc: Entry.id}],
         filter: condition
       }
       const info = await graph.first({

@@ -3,7 +3,7 @@ import {Expr} from './Expr.js'
 import {Expand} from './util/Types.js'
 
 export interface Entry {
-  entryId: string
+  id: string
   phase: EntryPhase
   title: string
   type: string
@@ -28,7 +28,7 @@ export interface Entry {
   searchableText: string
 }
 export const Entry = {
-  entryId: new Expr<string>(),
+  id: new Expr<string>(),
   phase: new Expr<EntryPhase>(),
   title: new Expr<string>(),
   type: new Expr<string>(),

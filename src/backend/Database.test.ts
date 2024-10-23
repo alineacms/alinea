@@ -16,9 +16,9 @@ test('create', async () => {
   await example.commit(parent)
   const result = await example.get({
     select: Entry,
-    filter: {_id: parent.entryId}
+    filter: {_id: parent.id}
   })
-  assert.is(result.entryId, parent.entryId)
+  assert.is(result.id, parent.id)
   assert.is(result.title, 'New parent')
 })
 
@@ -37,9 +37,9 @@ test('index is correct', async () => {
   })
   const first = generateKeyBetween(null, null)
   const second = generateKeyBetween(first, null)
-  assert.is(entries[0]._id, entryA.entryId)
+  assert.is(entries[0]._id, entryA.id)
   assert.is(entries[0]._index, first)
-  assert.is(entries[1]._id, entryB.entryId)
+  assert.is(entries[1]._id, entryB.id)
   assert.is(entries[1]._index, second)
 })
 
@@ -51,11 +51,11 @@ test('remove child entries', async () => {
   const entry = sub.createChild(Page)
   await example.commit(parent, sub, entry)
   const res1 = await example.get({
-    filter: {_id: entry.entryId}
+    filter: {_id: entry.id}
   })
-  assert.is(res1._parent, sub.entryId)
-  await example.commit(Edit.remove(parent.entryId))
-  const res2 = await example.find({first: true, filter: {_id: entry.entryId}})
+  assert.is(res1._parent, sub.id)
+  await example.commit(Edit.remove(parent.id))
+  const res2 = await example.find({first: true, filter: {_id: entry.id}})
   assert.not.ok(res2)
 })
 
@@ -67,36 +67,36 @@ test('change draft path', async () => {
   await example.commit(parent, sub)
   const resParent0 = await example.get({
     select: Entry,
-    filter: {_id: parent.entryId}
+    filter: {_id: parent.id}
   })
   assert.is(resParent0.url, '/parent')
   // Changing entry paths in draft should not have an influence on
   // computed properties such as url, filePath etc. until we publish.
   await example.commit(
-    Edit.update(parent.entryId, Container).set({path: 'new-path'}).draft()
+    Edit.update(parent.id, Container).set({path: 'new-path'}).draft()
   )
   const resParent1 = await example.get({
     select: Entry,
-    filter: {_id: parent.entryId},
+    filter: {_id: parent.id},
     status: 'draft'
   })
   assert.is(resParent1.url, '/parent')
   const res1 = await example.get({
     select: Entry,
-    filter: {_id: sub.entryId}
+    filter: {_id: sub.id}
   })
   assert.is(res1.url, '/parent/sub')
 
   // Once we publish, the computed properties should be updated.
-  await example.commit(Edit.publish(parent.entryId))
+  await example.commit(Edit.publish(parent.id))
   const resParent2 = await example.get({
     select: Entry,
-    filter: {_id: parent.entryId}
+    filter: {_id: parent.id}
   })
   assert.is(resParent2.url, '/new-path')
   const res2 = await example.get({
     select: Entry,
-    filter: {_id: sub.entryId}
+    filter: {_id: sub.id}
   })
   assert.is(res2.url, '/new-path/sub')
 })
@@ -145,7 +145,7 @@ test('change published path for entry with language', async () => {
   assert.is(localised3.url, '/en/localised2/localised3')
 
   // Archive localised3
-  await example.commit(Edit.archive(localised3.entryId))
+  await example.commit(Edit.archive(localised3.id))
 
   const localised3Archived = await example.get({
     location: example.workspaces.main.multiLanguage,
@@ -156,7 +156,7 @@ test('change published path for entry with language', async () => {
   assert.is(localised3Archived.phase, EntryPhase.Archived)
 
   // And publish again
-  await example.commit(Edit.publish(localised3.entryId))
+  await example.commit(Edit.publish(localised3.id))
   const localised3Publish = await example.get({
     locale: 'en',
     select: Entry,
@@ -222,7 +222,7 @@ test('field creators', async () => {
   await example.commit(entry)
   const listRes = await example.get({
     select: Fields.list,
-    filter: {_id: entry.entryId}
+    filter: {_id: entry.id}
   })
   const res = listRes[0]
   if (res[Node.type] !== 'Text') throw new Error('Expected Text')
@@ -243,15 +243,15 @@ test('remove media library and files', async () => {
   const upload = Edit.upload([
     'test.txt',
     new TextEncoder().encode('Hello, World!')
-  ]).setParent(library.entryId)
+  ]).setParent(library.id)
   await example.commit(upload)
   const result = await example.get({
     select: Entry,
     filter: {_id: upload.entryId}
   })
-  assert.is(result.parent, library.entryId)
+  assert.is(result.parent, library.id)
   assert.is(result.root, 'media')
-  await example.commit(Edit.remove(library.entryId))
+  await example.commit(Edit.remove(library.id))
   const result2 = await example.first({
     filter: {_id: upload.entryId}
   })
@@ -265,14 +265,14 @@ test('create multi language entries', async () => {
     select: Entry,
     filter: {_path: 'localised2'}
   })
-  const entry = Edit.create(Page).setParent(localised2.entryId).set({
+  const entry = Edit.create(Page).setParent(localised2.id).set({
     title: 'New entry',
     path: 'new-entry'
   })
   await example.commit(entry)
   const result = await example.get({
     select: Entry,
-    filter: {_id: entry.entryId}
+    filter: {_id: entry.id}
   })
   assert.is(result.url, '/en/localised2/new-entry')
 })

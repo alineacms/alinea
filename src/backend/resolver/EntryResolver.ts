@@ -87,7 +87,7 @@ export class EntryResolver {
   }
 
   selectCount(ctx: ResolveContext, hasSearch: boolean): SelectionInput {
-    return count(hasSearch ? EntrySearch.rowid : ctx.Table.entryId).as('count')
+    return count(hasSearch ? EntrySearch.rowid : ctx.Table.id).as('count')
   }
 
   projectTypes(types: Array<Type>): Array<[string, Expr]> {
@@ -148,7 +148,7 @@ export class EntryResolver {
     const from = alias(EntryRow, `E${ctx.depth - 1}`) // .as(source.id)
     switch (querySource(query)) {
       case 'parent':
-        return cursor.where(eq(ctx.Table.entryId, from.parent)).limit(1)
+        return cursor.where(eq(ctx.Table.id, from.parent)).limit(1)
       case 'next':
         return cursor
           .where(
@@ -166,36 +166,34 @@ export class EntryResolver {
       case 'siblings':
         return cursor.where(
           eq(ctx.Table.parent, from.parent),
-          query.siblings?.includeSelf
-            ? undefined
-            : ne(ctx.Table.entryId, from.entryId)
+          query.siblings?.includeSelf ? undefined : ne(ctx.Table.id, from.id)
         )
       case 'translations':
         return cursor.where(
           eq(ctx.Table.i18nId, from.i18nId),
           query.translations?.includeSelf
             ? undefined
-            : ne(ctx.Table.entryId, from.entryId)
+            : ne(ctx.Table.id, from.id)
         )
       case 'children':
         const Child = alias(EntryRow, 'Child')
         const children = builder.$with('children').as(
           builder
             .select({
-              entryId: Child.entryId,
+              entryId: Child.id,
               parent: Child.parent,
               level: sql<number>`0`
             })
             .from(Child)
             .where(
-              eq(Child.entryId, from.entryId),
+              eq(Child.id, from.id),
               this.conditionStatus(Child, ctx.status),
               this.conditionLocale(Child, ctx.locale)
             )
             .unionAll(self =>
               builder
                 .select({
-                  entryId: Child.entryId,
+                  entryId: Child.id,
                   parent: Child.parent,
                   level: sql<number>`${self.level} + 1`
                 })
@@ -218,32 +216,32 @@ export class EntryResolver {
           .limit(-1)
           .offset(1)
         return cursor
-          .where(inArray(ctx.Table.entryId, childrenIds))
+          .where(inArray(ctx.Table.id, childrenIds))
           .orderBy(asc(ctx.Table.index))
       case 'parents':
         const Parent = alias(EntryRow, 'Parent')
         const parents = builder.$with('parents').as(
           builder
             .select({
-              entryId: Parent.entryId,
+              entryId: Parent.id,
               parent: Parent.parent,
               level: sql<number>`0`
             })
             .from(Parent)
             .where(
-              eq(Parent.entryId, from.entryId),
+              eq(Parent.id, from.id),
               this.conditionStatus(Parent, ctx.status),
               this.conditionLocale(Parent, ctx.locale)
             )
             .unionAll(self =>
               builder
                 .select({
-                  entryId: Parent.entryId,
+                  entryId: Parent.id,
                   parent: Parent.parent,
                   level: sql<number>`${self.level} + 1`
                 })
                 .from(Parent)
-                .innerJoin(self, eq(self.parent, Parent.entryId))
+                .innerJoin(self, eq(self.parent, Parent.id))
                 .where(
                   this.conditionStatus(Parent, ctx.status),
                   this.conditionLocale(Parent, ctx.locale),
@@ -261,7 +259,7 @@ export class EntryResolver {
           .limit(-1)
           .offset(1)
         return cursor
-          .where(inArray(ctx.Table.entryId, parentIds))
+          .where(inArray(ctx.Table.id, parentIds))
           .orderBy(asc(ctx.Table.level))
       default:
         return cursor.orderBy(asc(ctx.Table.index))
@@ -366,9 +364,7 @@ export class EntryResolver {
     function filterField(ctx: ResolveContext, name: string): HasSql {
       if (name.startsWith('_')) {
         const entryProp = name.slice(1)
-        const key = (
-          entryProp === 'id' ? 'entryId' : entryProp
-        ) as keyof EntryRow
+        const key = entryProp as keyof EntryRow
         if (!(key in ctx.Table)) throw new Error(`Unknown field: "${name}"`)
         return ctx.Table[key]
       }

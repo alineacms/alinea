@@ -23,7 +23,7 @@ const defaultSummaryView = {
 }
 
 export interface ExporerItemSelect {
-  entryId: string
+  id: string
   type: string
   workspace: string
   root: string

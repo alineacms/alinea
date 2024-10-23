@@ -117,7 +117,7 @@ export class UploadOperation extends Operation {
         'MediaFile',
         {
           path,
-          entryId: this.entryId,
+          id: this.entryId,
           workspace,
           root,
           data: entryData
@@ -135,7 +135,7 @@ export class UploadOperation extends Operation {
         },
         {
           type: MutationType.Create,
-          entryId: entry.entryId,
+          entryId: entry.id,
           file: entryFile,
           entry
         }
@@ -299,7 +299,7 @@ export class CreateOperation<Definition> extends Operation {
       status: 'preferPublished',
       select: Entry.index,
       filter: {
-        _parent: parent?.entryId ?? null
+        _parent: parent?.id ?? null
       },
       orderBy: {desc: Entry.index, caseSensitive: true}
     })
@@ -319,13 +319,13 @@ export class CreateOperation<Definition> extends Operation {
       return [
         {
           type: MutationType.Create,
-          entryId: entry.entryId,
+          entryId: entry.id,
           file,
           entry: entry
         }
       ]
     })
-    this.entry = {entryId: createId(), ...entry}
+    this.entry = {id: createId(), ...entry}
   }
 
   setParent(parentId: string) {
@@ -357,8 +357,8 @@ export class CreateOperation<Definition> extends Operation {
     return new CreateOperation({}, type, this.entryRow)
   }
 
-  get entryId() {
-    return this.entry.entryId!
+  get id() {
+    return this.entry.id!
   }
 
   static fromType<Definition>(type: Type<Definition>) {
@@ -389,10 +389,10 @@ async function createEntry(
       (partial.path ?? title)
   )
   const entryData = {title, path, ...partial.data}
-  const entryId = partial.entryId ?? createId()
+  const id = partial.id ?? createId()
   const i18nId = partial.i18nId ?? createId()
   const details = {
-    entryId,
+    id,
     phase,
     type: typeName,
     title,
@@ -401,7 +401,7 @@ async function createEntry(
     workspace: workspace,
     root: root,
     level: parent ? parent.level + 1 : 0,
-    parent: parent?.entryId ?? null,
+    parent: parent?.id ?? null,
     locale,
     index: partial.index ?? 'a0',
     i18nId,

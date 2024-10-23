@@ -60,7 +60,7 @@ export const ExplorerRow = memo(function ExplorerRow({
           if (!entry) return null
           return (
             <ExplorerItem
-              key={entry.entryId}
+              key={entry.id}
               schema={schema}
               entry={entry}
               summaryView={summaryView}

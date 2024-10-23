@@ -23,7 +23,7 @@ export default async function BlogPage() {
         type: BlogPost,
         select: {
           ...Entry,
-          id: Entry.entryId,
+          id: Entry.id,
           introduction: BlogPost.introduction,
           author: BlogPost.author,
           publishDate: BlogPost.publishDate

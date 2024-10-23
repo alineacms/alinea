@@ -55,7 +55,7 @@ async function MobileNav() {
   const docs = await cms.find({
     location: cms.workspaces.main.pages.docs,
     select: {
-      id: Entry.entryId,
+      id: Entry.id,
       type: Entry.type,
       url: Entry.url,
       title: Entry.title,

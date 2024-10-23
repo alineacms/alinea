@@ -76,7 +76,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
     const data = {
       id: Entry.i18nId,
-      entryId: Entry.entryId,
+      entryId: Entry.id,
       type: Entry.type,
       title: Entry.title,
       phase: Entry.phase,
@@ -93,7 +93,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       groupBy: Entry.i18nId,
       select: {
         id: Entry.i18nId,
-        entryId: Entry.entryId,
+        entryId: Entry.id,
         index: Entry.index,
         type: Entry.type,
         data,

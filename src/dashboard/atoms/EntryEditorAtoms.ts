@@ -100,7 +100,7 @@ export const entryEditorAtoms = atomFamily(
         })
       }
       if (!entry) return undefined
-      const entryId = entry.entryId
+      const entryId = entry.id
       get(entryRevisionAtoms(entry.i18nId))
       const type = config.schema[entry.type]
       const edits = get(entryEditsAtoms(entryId))
@@ -148,7 +148,7 @@ export const entryEditorAtoms = atomFamily(
           parents: {
             parents: {},
             select: {
-              entryId: Entry.entryId,
+              entryId: Entry.id,
               path: Entry.path
             }
           }
@@ -161,7 +161,7 @@ export const entryEditorAtoms = atomFamily(
       const translations = (await graph.find({
         select: {
           locale: Entry.locale,
-          entryId: Entry.entryId
+          entryId: Entry.id
         },
         filter: {
           _locale: {isNot: null},
@@ -254,7 +254,7 @@ export function createEntryEditor(entryData: EntryData) {
     }
   )
 
-  const transition = entryTransitionAtoms(activeVersion.entryId)
+  const transition = entryTransitionAtoms(activeVersion.id)
 
   const phaseInUrl = atom(get => {
     const {search} = get(locationAtom)
@@ -320,7 +320,7 @@ export function createEntryEditor(entryData: EntryData) {
       type: MutationType.Edit,
       previousFile: entryFile(activeVersion),
       file: entryFile(entry),
-      entryId: activeVersion.entryId,
+      entryId: activeVersion.id,
       entry,
       update
     }
@@ -346,7 +346,7 @@ export function createEntryEditor(entryData: EntryData) {
       ? await graph.get({
           locale,
           select: {
-            entryId: Entry.entryId,
+            entryId: Entry.id,
             path: Entry.path,
             paths: {
               parents: {},
@@ -414,7 +414,7 @@ export function createEntryEditor(entryData: EntryData) {
           res.push({
             type: MutationType.Patch,
             file: entryFile(translation, translation.parentPaths),
-            entryId: translation.entryId,
+            entryId: translation.id,
             patch: shared
           })
         }
@@ -453,7 +453,7 @@ export function createEntryEditor(entryData: EntryData) {
       type: MutationType.Edit,
       previousFile: currentFile,
       file: editedFile,
-      entryId: activeVersion.entryId,
+      entryId: activeVersion.id,
       entry,
       update
     })
@@ -485,7 +485,7 @@ export function createEntryEditor(entryData: EntryData) {
       type: MutationType.Edit,
       previousFile: editedFile,
       file: editedFile,
-      entryId: activeVersion.entryId,
+      entryId: activeVersion.id,
       entry,
       update
     }
@@ -503,7 +503,7 @@ export function createEntryEditor(entryData: EntryData) {
       {
         type: MutationType.Publish,
         phase: EntryPhase.Draft,
-        entryId: activeVersion.entryId,
+        entryId: activeVersion.id,
         file: entryFile(activeVersion)
       }
     ]
@@ -520,7 +520,7 @@ export function createEntryEditor(entryData: EntryData) {
   const discardDraft = atom(null, (get, set) => {
     const mutation: Mutation = {
       type: MutationType.Discard,
-      entryId: activeVersion.entryId,
+      entryId: activeVersion.id,
       file: entryFile(activeVersion)
     }
     return set(transact, {
@@ -534,7 +534,7 @@ export function createEntryEditor(entryData: EntryData) {
     const published = entryData.phases[EntryPhase.Published]
     const mutation: Mutation = {
       type: MutationType.Archive,
-      entryId: published.entryId,
+      entryId: published.id,
       file: entryFile(published)
     }
     return set(transact, {
@@ -549,7 +549,7 @@ export function createEntryEditor(entryData: EntryData) {
     const mutation: Mutation = {
       type: MutationType.Publish,
       phase: EntryPhase.Archived,
-      entryId: archived.entryId,
+      entryId: archived.id,
       file: entryFile(archived)
     }
     return set(transact, {
@@ -568,12 +568,12 @@ export function createEntryEditor(entryData: EntryData) {
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Archive,
-        entryId: published.entryId,
+        entryId: published.id,
         file: entryFile(published)
       },
       {
         type: MutationType.Remove,
-        entryId: published.entryId,
+        entryId: published.id,
         file: entryFile({...published, phase: EntryPhase.Archived})
       }
     ]
@@ -592,7 +592,7 @@ export function createEntryEditor(entryData: EntryData) {
     const file = published.data as MediaFile
     const mutation: Mutation = {
       type: MutationType.FileRemove,
-      entryId: published.entryId,
+      entryId: published.id,
       workspace: published.workspace,
       location:
         MEDIA_LOCATION in file
@@ -612,7 +612,7 @@ export function createEntryEditor(entryData: EntryData) {
     const archived = entryData.phases[EntryPhase.Archived]
     const mutation: Mutation = {
       type: MutationType.Remove,
-      entryId: archived.entryId,
+      entryId: archived.id,
       file: entryFile(archived)
     }
     return set(transact, {
@@ -637,7 +637,7 @@ export function createEntryEditor(entryData: EntryData) {
     const phase = options.phase ?? activeVersion.phase
     const locale = options.locale ?? activeVersion.locale
     const path = options.path ?? data.path ?? activeVersion.path
-    const entryId = options.entryId ?? activeVersion.entryId
+    const entryId = options.entryId ?? activeVersion.id
     const parent = options.parent ?? activeVersion.parent
     const parentPaths =
       options.parentPaths ?? entryData.parents.map(p => p.path)
@@ -729,7 +729,7 @@ export function createEntryEditor(entryData: EntryData) {
     const update = get(yUpdate)
     const phase = get(selectedPhase)
     return encodePreviewPayload({
-      entryId: activeVersion.entryId,
+      entryId: activeVersion.id,
       contentHash,
       phase,
       update

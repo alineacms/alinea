@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       parents: {
         parents: {},
         select: {
-          id: Entry.entryId,
+          id: Entry.id,
           title: Entry.title
         }
       }

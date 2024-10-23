@@ -27,7 +27,7 @@ interface DocPageProps {
 }
 
 const summary = {
-  id: Entry.entryId,
+  id: Entry.id,
   title: Entry.title,
   url: Entry.url
 }
@@ -47,7 +47,7 @@ async function getPage(params: DocPageParams) {
       filter: {_url: url},
       include: {
         ...Doc,
-        id: Entry.entryId,
+        id: Entry.id,
         level: Entry.level,
         parents: {
           parents: {},
@@ -98,7 +98,7 @@ export async function generateMetadata({
 export default async function DocPage({params}: DocPageProps) {
   const {doc, framework} = await getPage(params)
   const select = {
-    id: Entry.entryId,
+    id: Entry.id,
     type: Entry.type,
     url: Entry.url,
     title: Entry.title,

@@ -16,7 +16,7 @@ export async function createFileHash(data: Uint8Array) {
 export async function createRowHash(entry: Omit<EntryRow, 'rowHash'>) {
   const encoder = new TextEncoder()
   const data = encoder.encode(
-    `entryId ${entry.entryId}` +
+    `entryId ${entry.id}` +
       `phase ${entry.phase}` +
       `title ${entry.title}` +
       `type ${entry.type}` +

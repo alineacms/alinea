@@ -150,10 +150,7 @@ export class Database implements Syncable {
         childrenDir: next.childrenDir,
         url: next.url
       })
-      .where(
-        eq(EntryRow.entryId, entry.entryId),
-        eq(EntryRow.phase, entry.phase)
-      )
+      .where(eq(EntryRow.id, entry.id), eq(EntryRow.phase, entry.phase))
 
     return this.updateChildren(tx, entry, next)
   }
@@ -186,10 +183,7 @@ export class Database implements Syncable {
           parentDir,
           url
         })
-        .where(
-          eq(EntryRow.entryId, child.entryId),
-          eq(EntryRow.phase, child.phase)
-        )
+        .where(eq(EntryRow.id, child.id), eq(EntryRow.phase, child.phase))
     }
     return children
   }
@@ -202,7 +196,7 @@ export class Database implements Syncable {
     for (const entry of entries) {
       console.info(
         entry.url.padEnd(35),
-        entry.entryId.padEnd(12),
+        entry.id.padEnd(12),
         entry.phase.padEnd(12),
         entry.title
       )
@@ -216,7 +210,7 @@ export class Database implements Syncable {
     switch (mutation.type) {
       case MutationType.Create: {
         const condition = and(
-          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.id, mutation.entryId),
           eq(EntryRow.phase, mutation.entry.phase)
         )
         const current = await tx.select().from(EntryRow).where(condition).get()
@@ -227,7 +221,7 @@ export class Database implements Syncable {
       case MutationType.Edit: {
         const {entryId, entry} = mutation
         const condition = and(
-          eq(EntryRow.entryId, entryId),
+          eq(EntryRow.id, entryId),
           eq(EntryRow.phase, entry.phase)
         )
         const current = await tx.select().from(EntryRow).where(condition).get()
@@ -242,8 +236,8 @@ export class Database implements Syncable {
             this.updateHash(
               tx,
               inArray(
-                EntryRow.entryId,
-                children.map(e => e.entryId)
+                EntryRow.id,
+                children.map(e => e.id)
               )
             ).then(children => self.concat(children))
           )
@@ -252,7 +246,7 @@ export class Database implements Syncable {
       case MutationType.Patch: {
         const {patch} = mutation
         const condition = and(
-          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.id, mutation.entryId),
           eq(EntryRow.main, true)
         )
         const current = await tx.select().from(EntryRow).where(condition).get()
@@ -265,11 +259,11 @@ export class Database implements Syncable {
       }
       case MutationType.Archive: {
         const archived = and(
-          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.id, mutation.entryId),
           eq(EntryRow.phase, EntryPhase.Archived)
         )
         const condition = and(
-          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.id, mutation.entryId),
           eq(EntryRow.phase, EntryPhase.Published)
         )
         const published = await tx
@@ -296,14 +290,14 @@ export class Database implements Syncable {
           .from(EntryRow)
           .where(
             and(
-              eq(EntryRow.entryId, mutation.entryId),
+              eq(EntryRow.id, mutation.entryId),
               eq(EntryRow.phase, mutation.phase)
             )
           )
           .get()
         if (!promoting) return
         const condition = and(
-          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.id, mutation.entryId),
           eq(EntryRow.phase, EntryPhase.Published)
         )
         await tx.delete(EntryRow).where(condition)
@@ -313,8 +307,8 @@ export class Database implements Syncable {
             return this.updateHash(
               tx,
               inArray(
-                EntryRow.entryId,
-                children.map(e => e.entryId)
+                EntryRow.id,
+                children.map(e => e.id)
               )
             ).then(r => rows.concat(r))
           })
@@ -325,7 +319,7 @@ export class Database implements Syncable {
         const phases = await tx
           .select()
           .from(EntryRow)
-          .where(eq(EntryRow.entryId, mutation.entryId))
+          .where(eq(EntryRow.id, mutation.entryId))
         if (phases.length === 0) return
         // Remove child entries
         for (const phase of phases) {
@@ -338,34 +332,34 @@ export class Database implements Syncable {
               )
             )
         }
-        await tx.delete(EntryRow).where(eq(EntryRow.entryId, mutation.entryId))
+        await tx.delete(EntryRow).where(eq(EntryRow.id, mutation.entryId))
         return async () => [phases[0].i18nId]
       }
       case MutationType.Discard: {
         const existing = await tx
           .select()
           .from(EntryRow)
-          .where(eq(EntryRow.entryId, mutation.entryId))
+          .where(eq(EntryRow.id, mutation.entryId))
           .get()
         if (!existing) return
         await tx
           .delete(EntryRow)
           .where(
             and(
-              eq(EntryRow.entryId, mutation.entryId),
+              eq(EntryRow.id, mutation.entryId),
               eq(EntryRow.phase, EntryPhase.Draft)
             )
           )
         return async () => [existing.i18nId]
       }
       case MutationType.Order: {
-        const condition = eq(EntryRow.entryId, mutation.entryId)
+        const condition = eq(EntryRow.id, mutation.entryId)
         // Todo: apply this to other languages too
         await tx.update(EntryRow).set({index: mutation.index}).where(condition)
         return () => this.updateHash(tx, condition)
       }
       case MutationType.Move: {
-        const condition = eq(EntryRow.entryId, mutation.entryId)
+        const condition = eq(EntryRow.id, mutation.entryId)
         await tx
           .update(EntryRow)
           .set({
@@ -384,7 +378,7 @@ export class Database implements Syncable {
         // syncing to the client after a successful deploy will overwrite this
         // change.
         const condition = and(
-          eq(EntryRow.entryId, mutation.entryId),
+          eq(EntryRow.id, mutation.entryId),
           eq(EntryRow.phase, EntryPhase.Published)
         )
         const existing = await tx.select().from(EntryRow).where(condition).get()
@@ -419,10 +413,7 @@ export class Database implements Syncable {
           fileHash: updated.fileHash,
           rowHash: updated.rowHash
         })
-        .where(
-          eq(EntryRow.entryId, entry.entryId),
-          eq(EntryRow.phase, entry.phase)
-        )
+        .where(eq(EntryRow.id, entry.id), eq(EntryRow.phase, entry.phase))
     }
     return changed
   }
@@ -440,7 +431,7 @@ export class Database implements Syncable {
   static async index(tx: Store) {
     const Parent = alias(EntryRow, 'Parent')
     const parent = tx
-      .select(Parent.entryId)
+      .select(Parent.id)
       .from(Parent)
       .where(
         eq(Parent.childrenDir, EntryRow.parentDir),
@@ -521,7 +512,7 @@ export class Database implements Syncable {
       )
     const childrenDir = paths.join(parentDir, entryPath)
 
-    if (!recordMeta.entryId) throw new Error(`missing id`)
+    if (!recordMeta.id) throw new Error(`missing id`)
 
     const urlMeta: EntryUrlMeta = {
       locale,
@@ -549,7 +540,7 @@ export class Database implements Syncable {
       active: false,
       main: false,
 
-      entryId: recordMeta.entryId,
+      id: recordMeta.id,
       phase: entryPhase,
       type: recordMeta.type,
 
@@ -559,7 +550,7 @@ export class Database implements Syncable {
       level: parentDir === '/' ? 0 : segments.length,
       index: recordMeta.index,
       locale,
-      i18nId: recordMeta.i18nId ?? recordMeta.entryId,
+      i18nId: recordMeta.i18nId ?? recordMeta.id,
 
       path: entryPath,
       title,
@@ -694,14 +685,11 @@ export class Database implements Syncable {
           }
           await tx
             .delete(EntryRow)
-            .where(
-              eq(EntryRow.entryId, entry.entryId),
-              eq(EntryRow.phase, entry.phase)
-            )
+            .where(eq(EntryRow.id, entry.id), eq(EntryRow.phase, entry.phase))
           seenSeeds.add(key)
           await tx.insert(EntryRow).values(withHash)
-          seenVersions.push(`${entry.entryId}.${entry.phase}`)
-          inserted.push(`${entry.entryId}.${entry.phase}`)
+          seenVersions.push(`${entry.id}.${entry.phase}`)
+          inserted.push(`${entry.id}.${entry.phase}`)
         } catch (e: any) {
           console.info(`> skipped ${file.filePath} — ${e.message}`)
           console.error(e)
@@ -731,7 +719,7 @@ export class Database implements Syncable {
         }
         const entry = this.computeEntry(
           createRecord({
-            entryId: createId(),
+            id: createId(),
             i18nId,
             type: typeName,
             index: 'a0',
@@ -747,8 +735,8 @@ export class Database implements Syncable {
         const fileHash = await createFileHash(fileContents)
         const withHash = {...entry, fileHash, rowHash: ''}
         await tx.insert(EntryRow).values(withHash)
-        seenVersions.push(`${withHash.entryId}.${withHash.phase}`)
-        inserted.push(`${entry.entryId}.${entry.phase}`)
+        seenVersions.push(`${withHash.id}.${withHash.phase}`)
+        inserted.push(`${entry.id}.${entry.phase}`)
         publishSeed.push({
           ...withHash,
           title: undefined!,
@@ -786,10 +774,7 @@ export class Database implements Syncable {
           .set({
             rowHash
           })
-          .where(
-            eq(EntryRow.entryId, entry.entryId),
-            eq(EntryRow.phase, entry.phase)
-          )
+          .where(eq(EntryRow.id, entry.id), eq(EntryRow.phase, entry.phase))
       }
       await this.writeMeta(tx, commitHash)
     })
@@ -824,7 +809,7 @@ export class Database implements Syncable {
         // Temporarily add preview entry
         await tx
           .delete(EntryRow)
-          .where(eq(EntryRow.entryId, entry.entryId), eq(EntryRow.active, true))
+          .where(eq(EntryRow.id, entry.id), eq(EntryRow.active, true))
         await tx.insert(EntryRow).values(entry)
         await Database.index(tx)
         const result = await query(tx)
@@ -846,25 +831,19 @@ namespace EntryRealm {
     builder
       .select()
       .from(Alt)
-      .where(eq(Alt.phase, EntryPhase.Draft), eq(Alt.entryId, EntryRow.entryId))
+      .where(eq(Alt.phase, EntryPhase.Draft), eq(Alt.id, EntryRow.id))
   )
   const hasPublished = exists(
     builder
       .select()
       .from(Alt)
-      .where(
-        eq(Alt.phase, EntryPhase.Published),
-        eq(Alt.entryId, EntryRow.entryId)
-      )
+      .where(eq(Alt.phase, EntryPhase.Published), eq(Alt.id, EntryRow.id))
   )
   const hasArchived = exists(
     builder
       .select()
       .from(Alt)
-      .where(
-        eq(Alt.phase, EntryPhase.Archived),
-        eq(Alt.entryId, EntryRow.entryId)
-      )
+      .where(eq(Alt.phase, EntryPhase.Archived), eq(Alt.id, EntryRow.id))
   )
   const isPublishedWithoutDraft = and(isPublished, not(hasDraft))
   const isArchivedWithoutDraftOrPublished = and(

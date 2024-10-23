@@ -174,7 +174,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const parent = await graph.first({
       select: {
         level: Entry.level,
-        entryId: Entry.entryId,
+        entryId: Entry.id,
         url: Entry.url,
         path: Entry.path,
         parentPaths: {
@@ -220,7 +220,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const entry = await createEntryRow<EntryRow<MediaFile>>(config, {
       ...entryLocation,
       parent: parent?.entryId ?? null,
-      entryId: entryId,
+      id: entryId,
       type: 'MediaFile',
       url: (parent ? parent.url : '') + '/' + path,
       title,
@@ -296,13 +296,13 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       await batchMutations(
         {
           type: MutationType.Create,
-          entryId: entry.entryId,
+          entryId: entry.id,
           file,
           entry
         },
         {
           type: MutationType.Upload,
-          entryId: entry.entryId,
+          entryId: entry.id,
           url: info.previewUrl,
           file: info.location
         }
@@ -317,19 +317,19 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     await batchMutations(
       {
         type: MutationType.Edit,
-        entryId: replace.entry.entryId,
+        entryId: replace.entry.id,
         file: replace.entryFile,
         entry: newEntry
       },
       {
         type: MutationType.Upload,
-        entryId: replace.entry.entryId,
+        entryId: replace.entry.id,
         url: info.previewUrl,
         file: info.location
       },
       {
         type: MutationType.FileRemove,
-        entryId: replace.entry.entryId,
+        entryId: replace.entry.id,
         file: replace.entryFile,
         workspace: replace.entry.workspace,
         location:

@@ -121,7 +121,7 @@ export function EntryPickerModal({
           parents: {
             parents: {},
             select: {
-              id: Entry.entryId,
+              id: Entry.id,
               title: Entry.title
             }
           }
@@ -179,7 +179,7 @@ export function EntryPickerModal({
         const index = selected.findIndex(
           ref =>
             EntryReference.isEntryReference(ref) &&
-            ref[EntryReference.entry] === entry.entryId
+            ref[EntryReference.entry] === entry.id
         )
         let res = selected.slice()
         if (index === -1) {
@@ -187,7 +187,7 @@ export function EntryPickerModal({
             .concat({
               [Reference.id]: createId(),
               [Reference.type]: type,
-              [EntryReference.entry]: entry.entryId
+              [EntryReference.entry]: entry.id
             } as EntryReference)
             .slice(-(max || 0))
         } else {

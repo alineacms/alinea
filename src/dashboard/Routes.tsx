@@ -40,7 +40,7 @@ const editLoader = atomFamily(() => {
     const graph = await get(graphAtom)
     const entry = await graph.first({
       select: {
-        entryId: Entry.entryId,
+        entryId: Entry.id,
         locale: Entry.locale,
         i18nId: Entry.i18nId,
         root: Entry.root,

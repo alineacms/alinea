@@ -21,7 +21,7 @@ export const EntryRow = table(
   'Entry',
   {
     // Entry data
-    entryId: column.text().$default(createId),
+    id: column.text().$default(createId),
     phase: column.text().notNull().$type<EntryPhase>(),
     title: column.text().notNull(),
     type: column.text().notNull(),
@@ -61,7 +61,7 @@ export const EntryRow = table(
   },
   EntryRow => {
     return {
-      primary: primaryKey(EntryRow.entryId, EntryRow.phase),
+      primary: primaryKey(EntryRow.id, EntryRow.phase),
       rowHash: index().on(EntryRow.rowHash),
       type: index().on(EntryRow.type),
       parent: index().on(EntryRow.parent),
@@ -89,7 +89,7 @@ export function concat(...slices: Array<Input<string | null>>) {
 }
 
 export function entryVersionId(entry = EntryRow) {
-  return concat(entry.entryId, sql.value('.'), entry.phase)
+  return concat(entry.id, sql.value('.'), entry.phase)
 }
 
 /**

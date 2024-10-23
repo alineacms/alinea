@@ -22,7 +22,7 @@ export class LinkResolver {
           new ResolveContext({status: this.status}),
           {
             select: {
-              entryId: Entry.entryId,
+              entryId: Entry.id,
               projection: projection
             },
             filter: {_id: {in: ids}}

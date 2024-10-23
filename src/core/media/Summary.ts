@@ -5,7 +5,7 @@ import {MediaFile as MediaFileType} from './MediaTypes.js'
 export function summarySelection(schema: Schema) {
   const MediaFile = schema.MediaFile as typeof MediaFileType
   return {
-    entryId: Entry.entryId,
+    entryId: Entry.id,
     i18nId: Entry.i18nId,
     type: Entry.type,
     workspace: Entry.workspace,
@@ -22,7 +22,7 @@ export function summarySelection(schema: Schema) {
     parents: {
       parents: {},
       select: {
-        entryId: Entry.entryId,
+        entryId: Entry.id,
         i18nId: Entry.i18nId,
         title: Entry.title
       }
