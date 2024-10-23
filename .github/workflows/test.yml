@@ -20,7 +20,7 @@ jobs:
       - name: Check cycles for browser target
         run: yarn cycles:browser
       - run: yarn test --report
-      - run: npx pkg-pr-new publish --comment=off
+      - run: yarn build && npx pkg-pr-new publish --comment=off
       - uses: nowsprinting/check-version-format-action@v3
         id: version
         with: {prefix: 'v'}
