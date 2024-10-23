@@ -163,7 +163,7 @@ export function EntryPickerModal({
           {
             _workspace: destination.workspace,
             _root: destination.root,
-            _parent:
+            _parentId:
               terms.length === 0 ? destination.parentId ?? null : undefined,
             _locale: destinationLocale
           }

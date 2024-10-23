@@ -158,9 +158,9 @@ export function FileEntry(props: EntryEditProps & {type: typeof MediaFile}) {
       <EntryTitle
         editor={editor}
         backLink={
-          editor.activeVersion.parent
+          editor.activeVersion.parentId
             ? nav.entry({
-                entryId: editor.activeVersion.parent,
+                entryId: editor.activeVersion.parentId,
                 workspace: editor.activeVersion.workspace
               })
             : nav.entry({entryId: undefined})

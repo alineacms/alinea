@@ -33,7 +33,7 @@ test('index is correct', async () => {
   const entryB = Edit.create(Page).setParent(container1._id)
   await example.commit(entryB)
   const entries = await example.find({
-    filter: {_parent: container1._id}
+    filter: {_parentId: container1._id}
   })
   const first = generateKeyBetween(null, null)
   const second = generateKeyBetween(first, null)
@@ -53,7 +53,7 @@ test('remove child entries', async () => {
   const res1 = await example.get({
     filter: {_id: entry.id}
   })
-  assert.is(res1._parent, sub.id)
+  assert.is(res1._parentId, sub.id)
   await example.commit(Edit.remove(parent.id))
   const res2 = await example.find({first: true, filter: {_id: entry.id}})
   assert.not.ok(res2)
@@ -249,7 +249,7 @@ test('remove media library and files', async () => {
     select: Entry,
     filter: {_id: upload.entryId}
   })
-  assert.is(result.parent, library.id)
+  assert.is(result.parentId, library.id)
   assert.is(result.root, 'media')
   await example.commit(Edit.remove(library.id))
   const result2 = await example.first({

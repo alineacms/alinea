@@ -136,7 +136,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     input.onchange = async () => {
       const file = input.files![0]
       const destination = {
-        parentId: editor.activeVersion.parent ?? undefined,
+        parentId: editor.activeVersion.parentId ?? undefined,
         workspace: editor.activeVersion.workspace,
         root: editor.activeVersion.root,
         directory: workspaceMediaDir(config, editor.activeVersion.workspace)

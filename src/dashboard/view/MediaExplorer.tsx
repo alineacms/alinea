@@ -42,11 +42,11 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const graph = useAtomValue(graphAtom)
   const condition = useMemo((): Filter<EntryFields> => {
     return parentId
-      ? {_parent: parentId}
+      ? {_parentId: parentId}
       : {
           _root: root.name,
           _workspace: workspace.name,
-          _parent: null
+          _parentId: null
         }
   }, [workspace, root, parentId])
   const {data} = useQuery(
@@ -60,7 +60,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
       const info = await graph.first({
         select: {
           title: Entry.title,
-          parent: Entry.parent
+          parent: Entry.parentId
         },
         filter: {
           _id: parentId

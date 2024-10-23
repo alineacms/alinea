@@ -178,24 +178,24 @@ export class EntryResolver {
     const from = alias(EntryRow, `E${ctx.depth - 1}`) // .as(source.id)
     switch (querySource(query)) {
       case 'parent':
-        return cursor.where(eq(ctx.Table.id, from.parent)).limit(1)
+        return cursor.where(eq(ctx.Table.id, from.parentId)).limit(1)
       case 'next':
         return cursor
           .where(
-            eq(ctx.Table.parent, from.parent),
+            eq(ctx.Table.parentId, from.parentId),
             gt(ctx.Table.index, from.index)
           )
           .limit(1)
       case 'previous':
         return cursor
           .where(
-            eq(ctx.Table.parent, from.parent),
+            eq(ctx.Table.parentId, from.parentId),
             lt(ctx.Table.index, from.index)
           )
           .limit(1)
       case 'siblings':
         return cursor.where(
-          eq(ctx.Table.parent, from.parent),
+          eq(ctx.Table.parentId, from.parentId),
           query.siblings?.includeSelf ? undefined : ne(ctx.Table.id, from.id)
         )
       case 'translations':
@@ -211,7 +211,7 @@ export class EntryResolver {
           builder
             .select({
               entryId: Child.id,
-              parent: Child.parent,
+              parent: Child.parentId,
               level: sql<number>`0`
             })
             .from(Child)
@@ -224,11 +224,11 @@ export class EntryResolver {
               builder
                 .select({
                   entryId: Child.id,
-                  parent: Child.parent,
+                  parent: Child.parentId,
                   level: sql<number>`${self.level} + 1`
                 })
                 .from(Child)
-                .innerJoin(self, eq(self.entryId, Child.parent))
+                .innerJoin(self, eq(self.entryId, Child.parentId))
                 .where(
                   this.conditionStatus(Child, ctx.status),
                   this.conditionLocale(Child, ctx.locale),
@@ -254,7 +254,7 @@ export class EntryResolver {
           builder
             .select({
               entryId: Parent.id,
-              parent: Parent.parent,
+              parent: Parent.parentId,
               level: sql<number>`0`
             })
             .from(Parent)
@@ -267,7 +267,7 @@ export class EntryResolver {
               builder
                 .select({
                   entryId: Parent.id,
-                  parent: Parent.parent,
+                  parent: Parent.parentId,
                   level: sql<number>`${self.level} + 1`
                 })
                 .from(Parent)

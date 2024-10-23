@@ -49,7 +49,7 @@ const parentData = {
   path: Entry.path,
   url: Entry.url,
   level: Entry.level,
-  parent: Entry.parent,
+  parent: Entry.parentId,
   parentPaths: {
     parents: {},
     select: Entry.path
@@ -248,7 +248,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       title,
       url,
       index: generateKeyBetween(null, parent?.childrenIndex || null),
-      parent: parent?.id ?? null,
+      parentId: parent?.id ?? null,
       seeded: null,
       level: parent ? parent.level + 1 : 0,
       parentDir: parentDir,

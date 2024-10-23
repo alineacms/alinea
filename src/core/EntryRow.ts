@@ -32,7 +32,7 @@ export const EntryRow = table(
     root: column.text().notNull(),
 
     index: column.text().notNull(),
-    parent: column.text(),
+    parentId: column.text(),
 
     // I18n
     i18nId: column.text().notNull(),
@@ -64,7 +64,7 @@ export const EntryRow = table(
       primary: primaryKey(EntryRow.id, EntryRow.phase),
       rowHash: index().on(EntryRow.rowHash),
       type: index().on(EntryRow.type),
-      parent: index().on(EntryRow.parent),
+      parent: index().on(EntryRow.parentId),
       url: index().on(EntryRow.url),
       path: index().on(EntryRow.path),
       fileIdentifier: index().on(

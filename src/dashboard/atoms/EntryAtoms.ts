@@ -49,7 +49,7 @@ async function entryTreeRoot(
       _active: true,
       _workspace: workspace,
       _root: root,
-      _parent: null,
+      _parentId: null,
       _type: {in: visibleTypes}
     },
     status
@@ -121,7 +121,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
         },
         orderBy,
         filter: {
-          _parent: {in: ids},
+          _parentId: {in: ids},
           _type: {in: visibleTypes}
         },
         status: 'preferDraft'

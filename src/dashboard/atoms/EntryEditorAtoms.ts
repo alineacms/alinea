@@ -171,10 +171,10 @@ export const entryEditorAtoms = atomFamily(
         status: 'preferDraft'
       })) as Array<{locale: string; entryId: string}>
       const parentLink =
-        entry.parent &&
+        entry.parentId &&
         (await graph.first({
           select: Entry.i18nId,
-          filter: {_id: entry.parent},
+          filter: {_id: entry.parentId},
           status: 'preferDraft'
         }))
       const parentNeedsTranslation = parentLink
@@ -335,13 +335,14 @@ export function createEntryEditor(entryData: EntryData) {
   const saveTranslation = atom(null, async (get, set, locale: string) => {
     const graph = await get(graphAtom)
     const parentLink =
-      activeVersion.parent &&
+      activeVersion.parentId &&
       (await graph.get({
         select: Entry.i18nId,
-        filter: {_id: activeVersion.parent},
+        filter: {_id: activeVersion.parentId},
         status: 'preferDraft'
       }))
-    if (activeVersion.parent && !parentLink) throw new Error('Parent not found')
+    if (activeVersion.parentId && !parentLink)
+      throw new Error('Parent not found')
     const parentData = parentLink
       ? await graph.get({
           locale,
@@ -359,7 +360,7 @@ export function createEntryEditor(entryData: EntryData) {
           status: 'preferDraft'
         })
       : undefined
-    if (activeVersion.parent && !parentData)
+    if (activeVersion.parentId && !parentData)
       throw new Error('Parent not translated')
     const parentPaths = parentData?.paths
       ? parentData.paths.concat(parentData.path)
@@ -638,7 +639,7 @@ export function createEntryEditor(entryData: EntryData) {
     const locale = options.locale ?? activeVersion.locale
     const path = options.path ?? data.path ?? activeVersion.path
     const entryId = options.entryId ?? activeVersion.id
-    const parent = options.parent ?? activeVersion.parent
+    const parent = options.parent ?? activeVersion.parentId
     const parentPaths =
       options.parentPaths ?? entryData.parents.map(p => p.path)
     const draftEntry = {

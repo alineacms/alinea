@@ -1,6 +1,5 @@
 import {cms} from '@/cms'
-import {Entry} from 'alinea/core/Entry'
-import {snippet} from 'alinea/core/pages/Snippet'
+import {Query} from 'alinea'
 
 export async function GET(request: Request) {
   const searchTerm = new URL(request.url).searchParams.get('query')
@@ -10,17 +9,17 @@ export async function GET(request: Request) {
     disableSync: true,
     search: searchTerm.split(' '),
     take: 25,
+    filter: {},
     select: {
-      title: Entry.title,
-      url: Entry.url,
-      snippet: snippet('[[mark]]', '[[/mark]]', '…', 25),
-      parents: {
-        parents: {},
+      title: Query.title,
+      url: Query.url,
+      snippet: Query.snippet('[[mark]]', '[[/mark]]', '…', 25),
+      parents: Query.parents({
         select: {
-          id: Entry.id,
-          title: Entry.title
+          id: Query.id,
+          title: Query.title
         }
-      }
+      })
     }
   })
   return Response.json(

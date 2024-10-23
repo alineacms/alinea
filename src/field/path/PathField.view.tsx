@@ -44,7 +44,7 @@ export function PathInput({field}: PathInputProps) {
         _root: editor.activeVersion.root,
         _workspace: editor.activeVersion.workspace,
         _locale: editor.activeVersion.locale,
-        _parent: editor.activeVersion.parent ?? null,
+        _parentId: editor.activeVersion.parentId ?? null,
         _id: {isNot: editor.entryId},
         _path: {or: {is: inputValue, startsWith: inputValue + '-'}}
       },
@@ -53,7 +53,7 @@ export function PathInput({field}: PathInputProps) {
   }
 
   const {data: conflictingPaths} = useQuery(
-    ['path', editor?.entryId, editor?.activeVersion.parent, inputValue],
+    ['path', editor?.entryId, editor?.activeVersion.parentId, inputValue],
     getConflictingPaths
   )
 

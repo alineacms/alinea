@@ -15,7 +15,7 @@ export interface Entry {
   parentDir: string
   childrenDir: string
   index: string
-  parent: string | null
+  parentId: string | null
   i18nId: string
   locale: string | null
   rowHash: string
@@ -40,7 +40,7 @@ export const Entry = {
   parentDir: new Expr<string>({type: 'entryField', name: 'parentDir'}),
   childrenDir: new Expr<string>({type: 'entryField', name: 'childrenDir'}),
   index: new Expr<string>({type: 'entryField', name: 'index'}),
-  parent: new Expr<string | null>({type: 'entryField', name: 'parent'}),
+  parentId: new Expr<string | null>({type: 'entryField', name: 'parentId'}),
   i18nId: new Expr<string>({type: 'entryField', name: 'i18nId'}),
   locale: new Expr<string | null>({type: 'entryField', name: 'locale'}),
   rowHash: new Expr<string>({type: 'entryField', name: 'rowHash'}),

@@ -191,7 +191,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const path = slugify(basename(upload.file.name, extensionOriginal))
     const prev = await graph.first({
       select: Entry,
-      filter: {_parent: parentId},
+      filter: {_parentId: parentId},
       status: 'preferPublished'
     })
     const entryLocation = {
@@ -219,7 +219,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const title = basename(upload.file.name, extensionOriginal)
     const entry = await createEntryRow<EntryRow<MediaFile>>(config, {
       ...entryLocation,
-      parent: parent?.entryId ?? null,
+      parentId: parent?.entryId ?? null,
       id: entryId,
       type: 'MediaFile',
       url: (parent ? parent.url : '') + '/' + path,

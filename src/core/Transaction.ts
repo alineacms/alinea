@@ -197,10 +197,10 @@ export class EditOperation<Definition> extends Operation {
         filter: {_id: this.entryId},
         status
       })
-      const parent = entry.parent
+      const parent = entry.parentId
         ? await cms.get({
             select: Entry,
-            filter: {_id: entry.parent},
+            filter: {_id: entry.parentId},
             status: 'preferPublished'
           })
         : undefined
@@ -288,10 +288,10 @@ export class CreateOperation<Definition> extends Operation {
     if (!type) throw new TypeError(`Type is missing`)
     const parent = await (this.parentRow
       ? this.parentRow(cms)
-      : partial.parent
+      : partial.parentId
       ? cms.get({
           select: Entry,
-          filter: {_id: partial.parent},
+          filter: {_id: partial.parentId},
           status: 'preferPublished'
         })
       : undefined)
@@ -299,7 +299,7 @@ export class CreateOperation<Definition> extends Operation {
       status: 'preferPublished',
       select: Entry.index,
       filter: {
-        _parent: parent?.id ?? null
+        _parentId: parent?.id ?? null
       },
       orderBy: {desc: Entry.index, caseSensitive: true}
     })
@@ -329,7 +329,7 @@ export class CreateOperation<Definition> extends Operation {
   }
 
   setParent(parentId: string) {
-    this.entry.parent = parentId
+    this.entry.parentId = parentId
     return this
   }
 
@@ -401,7 +401,7 @@ async function createEntry(
     workspace: workspace,
     root: root,
     level: parent ? parent.level + 1 : 0,
-    parent: parent?.id ?? null,
+    parentId: parent?.id ?? null,
     locale,
     index: partial.index ?? 'a0',
     i18nId,

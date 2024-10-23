@@ -9,7 +9,7 @@ export interface EntryFields {
   _workspace: string
   _root: string
   _phase: EntryPhase
-  _parent: string | null
+  _parentId: string | null
   _locale: string | null
   _path: string
   _url: string
@@ -24,7 +24,7 @@ export const EntryFields = {
   _workspace: Entry.workspace,
   _root: Entry.root,
   _phase: Entry.phase,
-  _parent: Entry.parent,
+  _parentId: Entry.parentId,
   _locale: Entry.locale,
   _path: Entry.path,
   _url: Entry.url,

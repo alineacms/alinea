@@ -76,7 +76,7 @@ export function createRecord(entry: RequiredEntryFields): EntryRecord {
   }
   if (entry.seeded) meta[EntryRecord.seeded] = entry.seeded
   if (entry.locale && entry.i18nId) meta[EntryRecord.i18nId] = entry.i18nId
-  if (!entry.parent) meta[EntryRecord.root] = entry.root
+  if (!entry.parentId) meta[EntryRecord.root] = entry.root
   return {
     ...meta,
     title,

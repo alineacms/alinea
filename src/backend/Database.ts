@@ -364,7 +364,7 @@ export class Database implements Syncable {
           .update(EntryRow)
           .set({
             index: mutation.index,
-            parent: mutation.parent,
+            parentId: mutation.parent,
             workspace: mutation.workspace,
             root: mutation.root
           })
@@ -439,7 +439,7 @@ export class Database implements Syncable {
         eq(Parent.root, EntryRow.root)
       )
     const res = await tx.update(EntryRow).set({
-      parent,
+      parentId: parent,
       active: EntryRealm.isActive,
       main: EntryRealm.isMain
     })
@@ -546,7 +546,7 @@ export class Database implements Syncable {
 
       parentDir,
       childrenDir,
-      parent: null,
+      parentId: null,
       level: parentDir === '/' ? 0 : segments.length,
       index: recordMeta.index,
       locale,

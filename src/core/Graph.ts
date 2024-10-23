@@ -22,10 +22,10 @@ type FieldsOf<Types> = Types extends Type<infer V>
 
 export interface RelatedQuery<Selection = unknown, Types = unknown>
   extends GraphQuery<Selection, Types> {
-  translations?: EmptyObject | {includeSelf: boolean}
-  children?: EmptyObject | {depth: number}
-  parents?: EmptyObject | {depth: number}
-  siblings?: EmptyObject | {includeSelf: boolean}
+  translations?: EmptyObject | {includeSelf: boolean | undefined}
+  children?: EmptyObject | {depth: number | undefined}
+  parents?: EmptyObject | {depth: number | undefined}
+  siblings?: EmptyObject | {includeSelf: boolean | undefined}
 
   parent?: EmptyObject
   next?: EmptyObject
@@ -33,10 +33,10 @@ export interface RelatedQuery<Selection = unknown, Types = unknown>
 }
 
 type IsRelated =
-  | {translations: EmptyObject | {includeSelf: boolean}}
-  | {children: EmptyObject | {depth: number}}
-  | {parents: EmptyObject}
-  | {siblings: EmptyObject}
+  | {translations: EmptyObject | {includeSelf: boolean | undefined}}
+  | {children: EmptyObject | {depth: number | undefined}}
+  | {parents: EmptyObject | {depth: number | undefined}}
+  | {siblings: EmptyObject | {includeSelf: boolean | undefined}}
   | {parent: EmptyObject}
   | {next: EmptyObject}
   | {previous: EmptyObject}
@@ -199,9 +199,9 @@ export interface GraphQuery<
   Include = unknown
 > extends QueryBase<Selection, Types, Include> {}
 
-type SelectionGuard = Projection | undefined
-type TypeGuard = Type | Array<Type> | undefined
-type IncludeGuard = ToSelect | undefined
+export type SelectionGuard = Projection | undefined
+export type TypeGuard = Type | Array<Type> | undefined
+export type IncludeGuard = ToSelect | undefined
 
 export class Graph {
   #resolver: Resolver
