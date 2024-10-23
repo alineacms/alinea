@@ -1,4 +1,3 @@
-import {reportHalt} from 'alinea/cli/util/Report'
 import {Config} from 'alinea/core/Config'
 import {SyncResponse, Syncable} from 'alinea/core/Connection'
 import {EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
@@ -692,7 +691,7 @@ export class Database implements Syncable {
           seenVersions.push(`${entry.id}.${entry.phase}`)
           inserted.push(`${entry.id}.${entry.phase}`)
         } catch (e: any) {
-          reportHalt(`${e.message} @ ${file.filePath}`)
+          console.warn(`${e.message} @ ${file.filePath}`)
           process.exit(1)
         }
       }
