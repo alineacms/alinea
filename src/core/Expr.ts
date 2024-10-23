@@ -1,12 +1,17 @@
+import {HasExpr, internalExpr} from './Internal.js'
+
 declare const brand: unique symbol
-const isExpr = Symbol.for('@alinea.Expr')
-export class Expr<Value = unknown> {
+export class Expr<Value = unknown> implements HasExpr {
   declare [brand]: Value;
-  [isExpr] = true
+  [internalExpr]: ExprInternal
 
-  constructor() {}
-
-  static isExpr(value: unknown): value is Expr {
-    return Boolean(value && typeof value === 'object' && isExpr in value)
+  constructor(data: ExprInternal) {
+    this[internalExpr] = data
   }
 }
+
+export type ExprInternal =
+  | {type: 'field'}
+  | {type: 'entryField'; name: string}
+  | {type: 'call'; method: string; args: Array<Expr>}
+  | {type: 'value'; value: unknown}

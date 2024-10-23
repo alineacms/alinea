@@ -1,3 +1,4 @@
+import {ExprInternal} from './Expr.js'
 import {FieldInternal} from './Field.js'
 import {RootInternal} from './Root.js'
 import {TypeInternal} from './Type.js'
@@ -37,3 +38,10 @@ export type HasWorkspace = {
 export const hasWorkspace = (obj: object): obj is HasWorkspace =>
   internalWorkspace in obj
 export const getWorkspace = (obj: HasWorkspace) => obj[internalWorkspace]
+
+export const internalExpr = Symbol.for('@alinea.Expr')
+export type HasExpr = {
+  readonly [internalExpr]: ExprInternal
+}
+export const hasExpr = (obj: object): obj is HasExpr => internalExpr in obj
+export const getExpr = (obj: HasExpr) => obj[internalExpr]

@@ -67,7 +67,7 @@ export class Field<
 
   [internalField]: FieldInternal
   constructor(data: FieldData<StoredValue, QueryValue, Mutator, Options>) {
-    super()
+    super({type: 'field'})
     this[internalField] = {ref: Symbol(), ...data}
   }
 }

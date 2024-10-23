@@ -1,8 +1,8 @@
-import {Entry} from 'alinea/core'
 import {Workspace} from 'alinea/types'
 import {Config} from './Config.js'
 import {Expr} from './Expr.js'
 import {Field} from './Field.js'
+import {getExpr, hasExpr} from './Internal.js'
 import {PageSeed} from './Page.js'
 import {Root} from './Root.js'
 import {Type} from './Type.js'
@@ -11,6 +11,7 @@ import {entries} from './util/Objects.js'
 const scopes = new WeakMap()
 type Entity = Workspace | Root | Type | Field | Expr | PageSeed
 const ENTITY_KEY = '@alinea.Entity'
+const EXPR_KEY = '@alinea.Expr'
 
 export class Scope {
   #keys: Map<string, Entity> = new Map()
@@ -32,9 +33,6 @@ export class Scope {
         this.#insert(field, 'field', typeName, fieldName)
       }
     }
-    for (const [name, expr] of entries(Entry)) {
-      this.#insert(expr, 'entry', name)
-    }
   }
 
   locationOf(entity: Entity) {
@@ -49,6 +47,8 @@ export class Scope {
     const result = JSON.stringify(input, (key, value) => {
       if (this.#paths.has(value))
         return {[ENTITY_KEY]: this.#paths.get(value)?.join('.')}
+      if (value && typeof value === 'object' && hasExpr(value))
+        return {[EXPR_KEY]: getExpr(value)}
       return value
     })
     return result
@@ -61,6 +61,7 @@ export class Scope {
         if (props.length === 1) {
           const [key] = props
           if (key === ENTITY_KEY) return this.#keys.get(value[key])
+          else if (key === EXPR_KEY) return new Expr(value[key])
         }
       }
       return value

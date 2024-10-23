@@ -6,5 +6,14 @@ export function snippet(
   cutOff = '...',
   limit = 64
 ): Expr<string> {
-  throw new Error('To implement')
+  return new Expr({
+    type: 'call',
+    method: 'snippet',
+    args: [
+      new Expr({type: 'value', value: start}),
+      new Expr({type: 'value', value: end}),
+      new Expr({type: 'value', value: cutOff}),
+      new Expr({type: 'value', value: limit})
+    ]
+  })
 }

@@ -12,12 +12,13 @@ import {
   RelatedQuery,
   Status
 } from 'alinea/core/Graph'
-import {hasField} from 'alinea/core/Internal'
+import {getExpr, HasExpr, hasExpr, hasField} from 'alinea/core/Internal'
 import {Schema} from 'alinea/core/Schema'
 import {getScope, Scope} from 'alinea/core/Scope'
 import {Type} from 'alinea/core/Type'
 import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
 import {
   alias,
@@ -46,7 +47,7 @@ import {
 import {Builder} from 'rado/core/Builder'
 import {input} from 'rado/core/expr/Input'
 import {getData, getTable, HasSql} from 'rado/core/Internal'
-import {bm25} from 'rado/sqlite'
+import {bm25, snippet} from 'rado/sqlite'
 import type {Database} from '../Database.js'
 import {Store} from '../Store.js'
 import {LinkResolver} from './LinkResolver.js'
@@ -75,15 +76,43 @@ export class EntryResolver {
     this.scope = getScope(db.config)
   }
 
-  expr(ctx: ResolveContext, expr: Expr<any>): HasSql<any> {
-    const name = this.scope.nameOf(expr)
-    if (!name) throw new Error(`Expression has no name ${expr}`)
-    const isDataField = name !== 'path' && name !== 'type' && hasField(expr)
-    const result = isDataField
-      ? (<any>ctx.Table.data)[name]
-      : ctx.Table[name as keyof EntryRow]
-    if (!result) throw new Error(`Unknown field: "${name}"`)
-    return result
+  call(
+    ctx: ResolveContext,
+    internal: {method: string; args: Array<Expr>}
+  ): HasSql<any> {
+    switch (internal.method) {
+      case 'snippet':
+        return snippet(
+          EntrySearch,
+          1,
+          internal.args[0] && this.expr(ctx, internal.args[0]),
+          internal.args[1] && this.expr(ctx, internal.args[1]),
+          internal.args[2] && this.expr(ctx, internal.args[2]),
+          internal.args[3] && this.expr(ctx, internal.args[3])
+        )
+      default:
+        throw new Error(`Unknown method: "${internal.method}"`)
+    }
+  }
+
+  expr(ctx: ResolveContext, expr: Expr): HasSql<any> {
+    const internal = getExpr(expr)
+    switch (internal.type) {
+      case 'field':
+        const name = this.scope.nameOf(expr)
+        if (!name) throw new Error(`Expression has no name ${expr}`)
+        const isEntryField = name === 'path' || name === 'type'
+        if (isEntryField) return ctx.Table[name]
+        return (<any>ctx.Table.data)[name]
+      case 'entryField':
+        return ctx.Table[internal.name as keyof EntryRow]
+      case 'call':
+        return this.call(ctx, internal)
+      case 'value':
+        return sql.value(internal.value)
+      default:
+        unreachable(internal)
+    }
   }
 
   selectCount(ctx: ResolveContext, hasSearch: boolean): SelectionInput {
@@ -111,7 +140,7 @@ export class EntryResolver {
   }
 
   selectProjection(ctx: ResolveContext, value: Projection): SelectionInput {
-    if (Expr.isExpr(value)) return this.expr(ctx, value)
+    if (value && hasExpr(value)) return this.expr(ctx, value as Expr)
     const source = querySource(value)
     if (!source)
       return fromEntries(
@@ -128,7 +157,8 @@ export class EntryResolver {
   select(ctx: ResolveContext, query: GraphQuery<Projection>): SelectionInput {
     if (query.count === true)
       return this.selectCount(ctx, Boolean(query.search?.length))
-    if (Expr.isExpr(query.select)) return this.expr(ctx, query.select)
+    if (query.select && hasExpr(query.select))
+      return this.expr(ctx, query.select as Expr)
     const fields = this.projection(query)
     return this.selectProjection(ctx, fromEntries(entries(fields)))
   }
@@ -473,7 +503,7 @@ export class EntryResolver {
   async postExpr(
     ctx: PostContext,
     interim: Interim,
-    expr: Expr
+    expr: HasExpr
   ): Promise<void> {
     if (hasField(expr)) await this.postField(ctx, interim, expr as any)
   }
@@ -485,7 +515,8 @@ export class EntryResolver {
   ) {
     if (!interim) return
     const selected = this.projection(query)
-    if (Expr.isExpr(selected)) return this.postExpr(ctx, interim, selected)
+    if (selected && hasExpr(selected))
+      return this.postExpr(ctx, interim, selected)
     await Promise.all(
       entries(selected).map(([key, value]) => {
         const source = querySource(value)
