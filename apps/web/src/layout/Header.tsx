@@ -59,7 +59,7 @@ async function MobileNav() {
       type: Entry.type,
       url: Entry.url,
       title: Entry.title,
-      parent: Entry.parent
+      parent: Entry.parentId
     }
   })
   const tree = [

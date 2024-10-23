@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a1",
   "_i18nId": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
-  "_root": "pages",
   "title": "Querying content",
   "navigationTitle": "",
   "body": [
@@ -34,7 +33,7 @@
         {
           "_type": "CodeBlock",
           "_id": "2YlCpSWtMLknsvHhIwtZlTf1MDI",
-          "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nexport default async function HomePage() {\n  const homePage = await cms.get(Query(HomePage))\n  return <h1>{homePage.title}</h1>\n}",
+          "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nexport default async function HomePage() {\n  const homePage = await cms.get({type: HomePage})\n  return <h1>{homePage.title}</h1>\n}",
           "fileName": "",
           "language": "",
           "compact": false
@@ -74,7 +73,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28hy8mAMZJiFhtaajix2fKGBKBE",
-      "code": "import {Query} from 'alinea'\n\nconst query = Query(HomePage).whereId(homePageId)\nconst entry = await cms.get(query)",
+      "code": "const entry = await cms.get({\n  type: HomePage,\n  filter: {_id: homePageId}\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -102,7 +101,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28hyQUttn286uRfAArTKdMWNJVb",
-      "code": "import {Query} from 'alinea'\n\nconst query = Query(BlogPost).whereParent(blogId)\nconst blogPosts = await cms.find(query)",
+      "code": "const blogPosts = await cms.find({\n  type: BlogPost,\n  filter: {_parentId: blogId}\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -130,7 +129,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28hyZtRcyC7fXKRHUiqhjA5O7iA",
-      "code": "// Skip the first 10 entries and return a maximum of 10\nconst query = Query(BlogPost).skip(10).take(10)",
+      "code": "// Skip the first 10 entries and return a maximum of 10\nconst posts = await cms.find({\n  type: BlogPost,\n  skip: 10,\n  take: 10\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -158,7 +157,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28hzjFJi5kuByP0j3ZX79ATIyyS",
-      "code": "const ordered = Query(NewsItem).orderBy(NewsItem.publishDate.desc())",
+      "code": "const ordered = await cms.find({\n  type: NewsItem,\n  orderBy: {desc: NewsItem.publishDate}\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -186,54 +185,10 @@
     {
       "_type": "CodeBlock",
       "_id": "28i0B7nRFUqmGWdCmchhzy21bkt",
-      "code": "const grouped = Query(NewsItem).groupBy(NewsItem.category)",
+      "code": "const grouped = await cms.find({\n  type: NewsItem,\n  orderBy: NewsItem.category\n})",
       "fileName": "",
       "language": "",
       "compact": false
-    },
-    {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Creating queries"
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Results can be filtered using the `where` function, or tailored functions such as `whereId` or `whereLocale`. To find Entries of any Type, use the Query functions directly."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "2c2tpFYfBG25n2Mfk8eIBtgSTH2",
-      "code": "// Any entry that matches your conditions\nconst searchAllEntries = Query.where(...)",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "If you're looking for Entries of a specific Type, pass it to the Query function to create a query of that Type. This will correctly infer the result TypeScript type."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "2c2trI1Z51608LisXXDO46kek10",
-      "code": "// Only entries of type BlogPost will be found\nconst narrowByType = Query(BlogPost).where(...)",
-      "fileName": "",
-      "language": ""
     },
     {
       "_type": "heading",
@@ -251,44 +206,17 @@
       "content": [
         {
           "_type": "text",
-          "text": "To search Entries by specific Fields use the `where` function. `Fields` can be compared to values using its conditional methods."
+          "text": "To search Entries by specific Fields use the `filter` option."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "IEmT75lZgxznL9v7Zq9mW",
-      "code": "// If filtered by Type first it's possible to match fields\n// on equality directly by passing an object. This does not\n// work for any other comparison operator.\nconst withPath = Query(BlogPost).where({path: 'why-you-should-get-a-cat'})\n\n// Comparisons can be made by using the conditional methods\n// of the field you're comparing to.\nconst recent = Query(BlogPost).where(\n  BlogPost.publishedDate.isGreaterOrEqual(`2024-01-01`)\n)\n\n// Multiple conditions result in matching on both (AND).\nconst previousYear = Query(BlogPost).where(\n  BlogPost.publishedDate.isGreaterOrEqual(`2023-01-01`),\n  BlogPost.publishedDate.isLess(`2024-01-01`)\n)\n\n// To match any condition use Query.or (OR).\nconst isPetPost = Query(BlogPost).where(\n  Query.or(\n    BlogPost.tags.includes('cats'),\n    BlogPost.tags.includes('dogs')\n  )\n)",
+      "code": "// If filtered by Type first it's possible to match fields\n// on equality directly by passing an object. This does not\n// work for any other comparison operator.\nconst withPath = await cms.get({\n  type: BlogPost,\n  filter: {path: 'why-you-should-get-a-cat'}\n})\n\n// Comparisons can be made by using the conditional methods\n// of the field you're comparing to.\nconst recent = await cms.find({\n  type: BlogPost,\n  filter: {publishedDate: {gte: `2024-01-01`}}\n})\n\n// Multiple conditions result in matching on both (AND).\nconst postsOf2023 = await cms.find({\n  type: BlogPost,\n  filter: {\n    publishedDate: {\n      lt: '2024-01-01',\n      gte: '2023-01-01'\n    }\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Filtering by Entry values"
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Entries contain values managed by the CMS such as an id, parent, the assigned workspace, root or locale. Query has shortcuts to query these directly."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "2c2w35gHrX76eswIr8ZNleu39zn",
-      "code": "const german = Query.whereLocale('de')\nconst blogPosts = Query(BlogPost).whereParent(blog.id)\n\n// Multiple conditions can be chained\nconst secretPages = Query(Secret).whereWorkspace('secret').whereRoot('pages')",
-      "fileName": "",
-      "language": ""
     },
     {
       "_type": "heading",
@@ -313,7 +241,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2b05iLFLHZ4Vxcyao5sTiFKsFOi",
-      "code": "// Search can be used in combination with conditions\nconst containsDogs = Query(BlogPost).where(...).search('dog')\n\n// Multiple search terms can be used\nconst containsBothDogsAndCats = Query(BlogPost).search('cat', 'dog')",
+      "code": "// Search can be used in combination with conditions\nconst containsDogs = await cms.find({\n  type: BlogPost,\n  search: 'dog'\n})\n\n// Multiple search terms can be used\nconst containsBothDogsAndCats = await cms.find({\n  type: BlogPost,\n  search: ['dog', 'cat']\n})",
       "fileName": "",
       "language": ""
     },
@@ -340,7 +268,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28hywuwvVMmRT7zhyZEumjM19tI",
-      "code": "// Returns a select set of fields \nconst rows = Query(BlogPost).select({\n  // Entry fields are available on Query\n  id: Query.id,\n  url: Query.url,\n  title: BlogPost.title,\n  description: BlogPost.shortDescription\n})\n\n// You can include all available Entry fields at once\nconst rows = Query(BlogPost).select({\n  ...Query.entry,\n  title: BlogPost.title,\n  description: BlogPost.shortDescription\n})",
+      "code": "import {Query} from 'alinea'\n\n// Returns a select set of fields \nconst rows = await cms.find({\n  type: BlogPost,\n  select: {\n    // Entry fields are available on Query\n    id: Query.id,\n    url: Query.url,\n    title: BlogPost.title,\n    description: BlogPost.shortDescription\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -368,7 +296,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2c2xXRab38WZmsa3GLCLx5Z6LGA",
-      "code": "// Select a few fields from the parent Entries to render\n// a breadcrumb navigation.\nconst breadcrumbs = Query.parents().select({\n  url: Query.url,\n  title: Query.title\n})\n\n// Use it directly in another select\nconst blogPosts = Query(BlogPost).select({\n  // Select the fields you want from this blog post\n  title: BlogPost.title,\n  body: BlogPost.body,\n  // ... and include the data of the parents\n  breadcrumbs\n})\n\n// You can use the spread operator to make the above more readable\nconst blogPosts = Query(BlogPost).select({\n  // Select all fields of the BlogPost type\n  ...BlogPost,\n  breadcrumbs\n})\n\n// Similarly you can fetch parent and children in one query\nconst blog = Query(Blog).select({\n  title: Blog.title,\n  posts: Query.children(BlogPost)\n})",
+      "code": "import {Query} from 'alinea'\n\n// Select a few fields from the parent Entries to render\n// a breadcrumb navigation.\nconst breadcrumbs = Query.parents({\n  select: {\n    url: Query.url,\n    title: Query.title\n  }\n})\n\n// Use it directly in another select\nconst blogPosts = await cms.find({\n  type: BlogPost,\n  select: {\n    // Select the fields you want from this blog post\n    title: BlogPost.title,\n    body: BlogPost.body,\n    // ... and include the data of the parents\n    breadcrumbs\n  }\n})\n\n// You can use the spread operator to make the above more readable\nconst blogPosts = await cms.find({\n  type: BlogPost,\n  select: {\n    ...BlogPost,\n    breadcrumbs\n  }\n})\n\n// Similarly you can fetch parent and children in one query\nconst blog = await cms.get({\n  type: Blog,\n  select: {\n    ...Blog,\n    posts: Query.children({type: blogPost})\n  }\n})",
       "fileName": "",
       "language": ""
     }
@@ -377,8 +305,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

@@ -9,6 +9,7 @@ import {NavItem, nestNav} from '@/layout/nav/NestNav'
 import {BodyFieldView} from '@/page/blocks/BodyFieldView'
 import {Doc} from '@/schema/Doc'
 import styler from '@alinea/styler'
+import {Query} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
 import {HStack, VStack} from 'alinea/ui'
 import {Metadata, MetadataRoute} from 'next'
@@ -49,10 +50,9 @@ async function getPage(params: DocPageParams) {
         ...Doc,
         id: Entry.id,
         level: Entry.level,
-        parents: {
-          parents: {},
+        parents: Query.parents({
           select: summary
-        }
+        })
       }
     })
   }
@@ -103,7 +103,7 @@ export default async function DocPage({params}: DocPageProps) {
     url: Entry.url,
     title: Entry.title,
     navigationTitle: Doc.navigationTitle,
-    parent: Entry.parent
+    parent: Entry.parentId
   }
   const root = await cms.get({
     select,
