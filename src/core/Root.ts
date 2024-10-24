@@ -22,7 +22,7 @@ export interface RootMeta {
   preview?: Preview
 }
 
-export interface EntriesDefinition {
+export interface ChildrenDefinition {
   [key: string]: Page
 }
 
@@ -30,8 +30,8 @@ export interface RootData extends RootMeta {
   label: string
 }
 
-export type Root<Entries extends EntriesDefinition = EntriesDefinition> =
-  Entries & HasRoot
+export type Root<Children extends ChildrenDefinition = ChildrenDefinition> =
+  Children & HasRoot
 
 export namespace Root {
   export function label(root: Root): Label {
@@ -100,20 +100,20 @@ export namespace Root {
   }
 }
 
-export interface RootOptions<Entries> extends RootMeta {
-  entries?: Entries
+export interface RootOptions<Children> extends RootMeta {
+  children?: Children
 }
 
-export interface RootInternal extends RootOptions<EntriesDefinition> {
+export interface RootInternal extends RootOptions<ChildrenDefinition> {
   label: string
 }
 
-export function root<Entries extends EntriesDefinition>(
+export function root<Entries extends ChildrenDefinition>(
   label: string,
   config: RootOptions<Entries> = {}
 ): Root<Entries> {
   const instance = <Root<Entries>>{
-    ...config.entries,
+    ...config.children,
     [internalRoot]: {...config, label}
   }
   return instance

@@ -12,7 +12,7 @@ export function createMediaRoot<Children extends Record<string, Page>>(
     contains: ['MediaLibrary'],
     view: 'alinea/dashboard/view/MediaExplorer#MediaExplorer',
     isMediaRoot: true,
-    entries: {
+    children: {
       ...children
     }
   }) as MediaRoot<Children>

@@ -101,7 +101,7 @@ function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
   const inner = (
     <Editor
       // theme="vs-dark"
-      path="alinea.config.tsx"
+      path="cms.tsx"
       defaultLanguage="typescript"
       value={code}
       beforeMount={editorConfig}

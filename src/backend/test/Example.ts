@@ -172,7 +172,7 @@ export function createExample() {
     roots: {
       pages: root('Pages', {
         contains: ['Page', 'Container'],
-        entries: {
+        children: {
           entry1: page({type: Page, fields: {title: 'Test title'}}),
           entry2: page({
             type: Container,
@@ -189,7 +189,7 @@ export function createExample() {
         i18n: {
           locales: ['en', 'fr']
         },
-        entries: {
+        children: {
           localised1: page({type: Page, fields: {title: 'Test title'}}),
           localised2: page({
             type: Container,
