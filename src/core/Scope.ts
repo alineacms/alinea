@@ -19,18 +19,18 @@ export class Scope {
 
   constructor(config: Config) {
     for (const [workspaceName, workspace] of entries(config.workspaces)) {
-      this.#insert(workspace, 'workspace', workspaceName)
+      this.#insert(workspace, 'Workspace', workspaceName)
       for (const [rootName, root] of entries(workspace)) {
-        this.#insert(root, 'root', workspaceName, rootName)
+        this.#insert(root, 'Root', workspaceName, rootName)
         for (const [pageName, page] of entries(root)) {
-          this.#insert(page, 'page', workspaceName, rootName, pageName)
+          this.#insert(page, 'Page', workspaceName, rootName, pageName)
         }
       }
     }
     for (const [typeName, type] of entries(config.schema)) {
-      this.#insert(type, 'type', typeName)
+      this.#insert(type, 'Type', typeName)
       for (const [fieldName, field] of entries(type)) {
-        this.#insert(field, 'field', typeName, fieldName)
+        this.#insert(field, 'Field', typeName, fieldName)
       }
     }
   }
@@ -69,10 +69,18 @@ export class Scope {
     return result
   }
 
-  #insert(entity: Entity, ...path: Array<string>) {
-    const key = path.join('.')
+  #insert(entity: Entity, type: string, ...path: Array<string>) {
+    const exists = this.#paths.get(entity)
+    if (exists)
+      throw new Error(
+        `${type} '${path.join('.')}' is already in use at '${exists
+          .slice(1)
+          .join('.')}' — ${type}s must be unique`
+      )
+    const segments = [type].concat(path)
+    const key = segments.join('.')
     this.#keys.set(key, entity)
-    this.#paths.set(entity, path)
+    this.#paths.set(entity, segments)
   }
 }
 
