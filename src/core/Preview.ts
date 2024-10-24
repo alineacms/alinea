@@ -13,7 +13,7 @@ export type PreviewRequest = PreviewPayload | {entry: EntryRow}
 export interface PreviewUpdate {
   entryId: string
   contentHash: string
-  phase: string
+  status: string
   update: Uint8Array
 }
 

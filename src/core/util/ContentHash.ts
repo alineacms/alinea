@@ -17,7 +17,7 @@ export async function createRowHash(entry: Omit<EntryRow, 'rowHash'>) {
   const encoder = new TextEncoder()
   const data = encoder.encode(
     `entryId ${entry.id}` +
-      `phase ${entry.phase}` +
+      `status ${entry.status}` +
       `title ${entry.title}` +
       `type ${entry.type}` +
       `seeded ${entry.seeded}` +

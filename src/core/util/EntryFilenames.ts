@@ -1,5 +1,5 @@
 import {Config} from '../Config.js'
-import {ALT_STATUS, EntryPhase, EntryRow} from '../EntryRow.js'
+import {ALT_STATUS, EntryRow, EntryStatus} from '../EntryRow.js'
 import {getRoot, getType} from '../Internal.js'
 import {EntryUrlMeta, Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
@@ -12,12 +12,12 @@ export function workspaceMediaDir(config: Config, workspace: string): string {
 
 export function entryInfo(
   fileName: string
-): [name: string, status: EntryPhase] {
+): [name: string, status: EntryStatus] {
   // See if filename ends in a known status
   const status = ALT_STATUS.find(s => fileName.endsWith(`.${s}`))
   if (status) return [fileName.slice(0, -status.length - 1), status]
   // Otherwise, it's published
-  return [fileName, EntryPhase.Published]
+  return [fileName, EntryStatus.Published]
 }
 
 export function entryChildrenDir(
@@ -27,7 +27,7 @@ export function entryChildrenDir(
     root: string
     locale: string | null
     path: string
-    phase: EntryPhase
+    status: EntryStatus
   },
   parentPaths: Array<string>
 ) {
@@ -37,10 +37,10 @@ export function entryChildrenDir(
   const root = Workspace.roots(workspace)[entry.root]
   if (!root) throw new Error(`Root "${entry.root}" does not exist`)
   const hasI18n = getRoot(root).i18n
-  const {locale, path, phase} = entry
+  const {locale, path, status} = entry
   if (hasI18n && !locale) throw new Error(`Entry is missing locale`)
-  if (!values(EntryPhase).includes(phase))
-    throw new Error(`Entry has unknown phase: ${phase}`)
+  if (!values(EntryStatus).includes(status))
+    throw new Error(`Entry has unknown phase: ${status}`)
   return (
     '/' +
     (locale ? [locale] : [])
@@ -60,17 +60,17 @@ export function entryFilepath(
     root: string
     locale: string | null
     path: string
-    phase: EntryPhase
+    status: EntryStatus
   },
   parentPaths: Array<string>
 ): string {
-  const {phase} = entry
-  if (!values(EntryPhase).includes(phase))
-    throw new Error(`Entry has unknown phase: ${phase}`)
-  const phaseSegment = phase === EntryPhase.Published ? '' : `.${phase}`
+  const {status: status} = entry
+  if (!values(EntryStatus).includes(status))
+    throw new Error(`Entry has unknown phase: ${status}`)
+  const statusSegment = status === EntryStatus.Published ? '' : `.${status}`
   const location = (
     entryChildrenDir(config, entry, parentPaths) +
-    phaseSegment +
+    statusSegment +
     '.json'
   ).toLowerCase()
   return location
@@ -83,7 +83,7 @@ export function entryFileName(
     root: string
     locale: string | null
     path: string
-    phase: EntryPhase
+    status: EntryStatus
   },
   parentPaths: Array<string>
 ): string {

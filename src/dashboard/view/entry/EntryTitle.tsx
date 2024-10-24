@@ -23,13 +23,13 @@ export function EntryTitle({
   backLink
 }: PropsWithChildren<EntryTitleProps>) {
   const {label} = useWorkspace()
-  const selectedPhase = useAtomValue(editor.selectedPhase)
+  const selectedStatus = useAtomValue(editor.selectedStatus)
   const [editMode, setEditMode] = useAtom(editor.editMode)
-  const version = editor.phases[selectedPhase]
+  const version = editor.statuses[selectedStatus]
   const type = editor.type
   const activeTitle = useAtomValue(editor.activeTitle)
   const title =
-    selectedPhase === editor.activePhase ? activeTitle : version.title
+    selectedStatus === editor.activeStatus ? activeTitle : version.title
   const hasChanges = useAtomValue(editor.hasChanges)
   const isLoading = useAtomValue(editor.isLoading)
   return (
@@ -53,17 +53,6 @@ export function EntryTitle({
             <Chip>{Type.label(type)}</Chip>
             {isLoading && <Loader size={15} />}
           </HStack>
-          {/*<IconButton icon={MdOutlineMoreHoriz} />*/}
-          {/*<Stack.Right>
-            {(hasChanges ||
-              (editor.availablePhases.includes(EntryPhase.Draft) &&
-                editor.availablePhases.length > 1)) && (
-              <EditModeToggle
-                mode={editMode}
-                onChange={mode => setEditMode(mode)}
-              />
-            )}
-          </Stack.Right>*/}
         </HStack>
         {children}
       </div>

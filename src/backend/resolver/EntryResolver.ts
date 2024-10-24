@@ -1,5 +1,5 @@
 import {EntryFields} from 'alinea/core/EntryFields'
-import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Expr} from 'alinea/core/Expr'
 import {Field} from 'alinea/core/Field'
@@ -323,11 +323,11 @@ export class EntryResolver {
   conditionStatus(Table: typeof EntryRow, status: Status) {
     switch (status) {
       case 'published':
-        return eq(Table.phase, EntryPhase.Published)
+        return eq(Table.status, EntryStatus.Published)
       case 'draft':
-        return eq(Table.phase, EntryPhase.Draft)
+        return eq(Table.status, EntryStatus.Draft)
       case 'archived':
-        return eq(Table.phase, EntryPhase.Archived)
+        return eq(Table.status, EntryStatus.Archived)
       case 'preferDraft':
         return Table.active
       case 'preferPublished':

@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {EntryPhase} from 'alinea/core/EntryRow'
+import {EntryStatus} from 'alinea/core/EntryRow'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {TabsSection} from 'alinea/field/tabs/Tabs'
@@ -44,8 +44,8 @@ function ShowChanges({editor}: EntryEditProps) {
   const hasChanges = useAtomValue(editor.hasChanges)
   const compareTo = hasChanges
     ? editor.activeVersion
-    : editor.phases[
-        editor.availablePhases.find(phase => phase !== EntryPhase.Draft)!
+    : editor.statuses[
+        editor.availableStatuses.find(status => status !== EntryStatus.Draft)!
       ]
   return <EntryDiff entryA={compareTo} entryB={draftEntry} />
 }
@@ -62,11 +62,11 @@ export function EntryEdit({editor}: EntryEditProps) {
   const nav = useNav()
   const mode = useAtomValue(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
-  const selectedPhase = useAtomValue(editor.selectedPhase)
+  const selectedStatus = useAtomValue(editor.selectedStatus)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
-  }, [editor.entryId, mode, selectedPhase])
+  }, [editor.entryId, mode, selectedStatus])
   const untranslated = locale && locale !== editor.activeVersion.locale
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
@@ -97,7 +97,7 @@ export function EntryEdit({editor}: EntryEditProps) {
           translate()
         } else if (config.enableDrafts) {
           if (hasChanges) saveDraft()
-          else if (selectedPhase === EntryPhase.Draft) publishDraft()
+          else if (selectedStatus === EntryStatus.Draft) publishDraft()
         } else {
           if (hasChanges) publishEdits()
         }

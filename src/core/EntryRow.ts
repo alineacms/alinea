@@ -4,15 +4,15 @@ import {input, Input} from 'rado/core/expr/Input'
 import * as column from 'rado/universal/columns'
 import {createId} from './Id.js'
 
-export enum EntryPhase {
+export enum EntryStatus {
   Draft = 'draft',
   Published = 'published',
   Archived = 'archived'
 }
 
-export const ALT_STATUS: Array<EntryPhase> = [
-  EntryPhase.Draft,
-  EntryPhase.Archived
+export const ALT_STATUS: Array<EntryStatus> = [
+  EntryStatus.Draft,
+  EntryStatus.Archived
 ]
 
 export type EntryLinks = {[field: string]: Array<string>}
@@ -22,7 +22,7 @@ export const EntryRow = table(
   {
     // Entry data
     id: column.text().$default(createId),
-    phase: column.text().notNull().$type<EntryPhase>(),
+    status: column.text().notNull().$type<EntryStatus>(),
     title: column.text().notNull(),
     type: column.text().notNull(),
     seeded: column.text(),
@@ -61,7 +61,7 @@ export const EntryRow = table(
   },
   EntryRow => {
     return {
-      primary: primaryKey(EntryRow.id, EntryRow.phase),
+      primary: primaryKey(EntryRow.id, EntryRow.status),
       rowHash: index().on(EntryRow.rowHash),
       type: index().on(EntryRow.type),
       parent: index().on(EntryRow.parentId),
@@ -74,8 +74,7 @@ export const EntryRow = table(
       ),
       parentDir: index().on(EntryRow.parentDir),
       childrenDir: index().on(EntryRow.childrenDir),
-      // versionId: index().on(EntryRow.versionId),
-      phase: index().on(EntryRow.phase),
+      status: index().on(EntryRow.status),
       i18nId: index().on(EntryRow.i18nId)
     }
   }
@@ -89,7 +88,7 @@ export function concat(...slices: Array<Input<string | null>>) {
 }
 
 export function entryVersionId(entry = EntryRow) {
-  return concat(entry.id, sql.value('.'), entry.phase)
+  return concat(entry.id, sql.value('.'), entry.status)
 }
 
 /**

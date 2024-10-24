@@ -1,10 +1,10 @@
-import {EntryPhase, EntryRow} from './EntryRow.js'
+import {EntryRow, EntryStatus} from './EntryRow.js'
 import {Expr} from './Expr.js'
 import {Expand} from './util/Types.js'
 
 export interface Entry {
   id: string
-  phase: EntryPhase
+  status: EntryStatus
   title: string
   type: string
   seeded: string | null
@@ -29,7 +29,7 @@ export interface Entry {
 }
 export const Entry = {
   id: new Expr<string>({type: 'entryField', name: 'id'}),
-  phase: new Expr<EntryPhase>({type: 'entryField', name: 'phase'}),
+  status: new Expr<EntryStatus>({type: 'entryField', name: 'status'}),
   title: new Expr<string>({type: 'entryField', name: 'title'}),
   type: new Expr<string>({type: 'entryField', name: 'type'}),
   seeded: new Expr<string | null>({type: 'entryField', name: 'seeded'}),

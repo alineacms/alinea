@@ -1,6 +1,6 @@
 import {Entry} from 'alinea/core'
 import * as Edit from 'alinea/core/Edit'
-import {EntryPhase} from 'alinea/core/EntryRow'
+import {EntryStatus} from 'alinea/core/EntryRow'
 import {ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
@@ -153,7 +153,7 @@ test('change published path for entry with language', async () => {
     filter: {_path: 'localised3'},
     status: 'archived'
   })
-  assert.is(localised3Archived.phase, EntryPhase.Archived)
+  assert.is(localised3Archived.status, EntryStatus.Archived)
 
   // And publish again
   await example.commit(Edit.publish(localised3.id))

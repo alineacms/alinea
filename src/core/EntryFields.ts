@@ -1,5 +1,5 @@
 import {Entry} from 'alinea/core'
-import {EntryPhase} from './EntryRow.js'
+import {EntryStatus} from './EntryRow.js'
 
 export interface EntryFields {
   _id: string
@@ -8,7 +8,7 @@ export interface EntryFields {
   _i18nId: string
   _workspace: string
   _root: string
-  _phase: EntryPhase
+  _status: EntryStatus
   _parentId: string | null
   _locale: string | null
   _path: string
@@ -23,7 +23,7 @@ export const EntryFields = {
   _i18nId: Entry.i18nId,
   _workspace: Entry.workspace,
   _root: Entry.root,
-  _phase: Entry.phase,
+  _status: Entry.status,
   _parentId: Entry.parentId,
   _locale: Entry.locale,
   _path: Entry.path,

@@ -2,7 +2,7 @@ import {Config} from 'alinea/core/Config'
 import {Connection} from 'alinea/core/Connection'
 import {createYDoc, DOC_KEY, parseYDoc} from 'alinea/core/Doc'
 import {Entry} from 'alinea/core/Entry'
-import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
 import {Graph} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
@@ -185,11 +185,11 @@ export const entryEditorAtoms = atomFamily(
           }))
         : false
       if (versions.length === 0) return undefined
-      const phases = fromEntries(
-        versions.map(version => [version.phase, version])
-      ) as Record<EntryPhase, Version>
-      const availablePhases = values(EntryPhase).filter(
-        phase => phases[phase] !== undefined
+      const statuses = fromEntries(
+        versions.map(version => [version.status, version])
+      ) as Record<EntryStatus, Version>
+      const availableStatuses = values(EntryStatus).filter(
+        status => statuses[status] !== undefined
       )
       return createEntryEditor({
         parents: withParents?.parents ?? [],
@@ -199,8 +199,8 @@ export const entryEditorAtoms = atomFamily(
         config,
         entryId,
         versions,
-        phases,
-        availablePhases,
+        statuses: statuses,
+        availableStatuses: availableStatuses,
         edits
       })
     })
@@ -214,8 +214,8 @@ export interface EntryData {
   config: Config
   entryId: string
   versions: Array<Version>
-  phases: Record<EntryPhase, Version>
-  availablePhases: Array<EntryPhase>
+  statuses: Record<EntryStatus, Version>
+  availableStatuses: Array<EntryStatus>
   translations: Array<{locale: string; entryId: string}>
   parentNeedsTranslation: boolean
   edits: Edits
@@ -226,13 +226,13 @@ export type EntryEditor = ReturnType<typeof createEntryEditor>
 const showHistoryAtom = atom(false)
 
 export function createEntryEditor(entryData: EntryData) {
-  const {config, availablePhases, edits} = entryData
-  const activePhase = availablePhases[0]
-  const activeVersion = entryData.phases[activePhase]
+  const {config, availableStatuses, edits} = entryData
+  const activeStatus = availableStatuses[0]
+  const activeVersion = entryData.statuses[activeStatus]
   const type = config.schema[activeVersion.type]
   const docs = fromEntries(
-    entries(entryData.phases).map(([phase, version]) => [
-      phase,
+    entries(entryData.statuses).map(([status, version]) => [
+      status,
       createYDoc(type, version)
     ])
   )
@@ -256,16 +256,16 @@ export function createEntryEditor(entryData: EntryData) {
 
   const transition = entryTransitionAtoms(activeVersion.id)
 
-  const phaseInUrl = atom(get => {
+  const statusInUrl = atom(get => {
     const {search} = get(locationAtom)
-    const phaseInSearch = search.slice(1)
-    if ((<Array<string>>availablePhases).includes(phaseInSearch))
-      return <EntryPhase>phaseInSearch
+    const statusInSearch = search.slice(1)
+    if ((<Array<string>>availableStatuses).includes(statusInSearch))
+      return <EntryStatus>statusInSearch
     return undefined
   })
 
-  const selectedPhase = atom(get => {
-    return get(phaseInUrl) ?? activePhase
+  const selectedStatus = atom(get => {
+    return get(statusInUrl) ?? activeStatus
   })
 
   function entryFile(entry: EntryRow, parentPaths?: Array<string>) {
@@ -313,7 +313,7 @@ export function createEntryEditor(entryData: EntryData) {
     const update = await encode(edits.getLocalUpdate())
     // Use the existing path, when the entry gets published the path will change
     const entry = await getDraftEntry({
-      phase: EntryPhase.Published,
+      status: EntryStatus.Published,
       path: activeVersion.path
     })
     const mutation: Mutation = {
@@ -368,7 +368,7 @@ export function createEntryEditor(entryData: EntryData) {
     const entryId = createId()
     const entry = await getDraftEntry({
       entryId,
-      phase: EntryPhase.Published,
+      status: EntryStatus.Published,
       parent: parentData?.entryId,
       parentPaths,
       locale
@@ -447,7 +447,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!set(confirmErrorsAtom)) return
     const currentFile = entryFile(activeVersion)
     const update = await encode(edits.getLocalUpdate())
-    const entry = await getDraftEntry({phase: EntryPhase.Published})
+    const entry = await getDraftEntry({status: EntryStatus.Published})
     const mutations: Array<Mutation> = []
     const editedFile = entryFile(entry)
     mutations.push({
@@ -478,7 +478,7 @@ export function createEntryEditor(entryData: EntryData) {
     const update = await encode(edits.getLocalUpdate())
     // We're not restoring the previous path because that is unavailable
     const entry = await getDraftEntry({
-      phase: EntryPhase.Published,
+      status: EntryStatus.Published,
       path: activeVersion.path
     })
     const editedFile = entryFile(entry)
@@ -503,12 +503,12 @@ export function createEntryEditor(entryData: EntryData) {
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Publish,
-        phase: EntryPhase.Draft,
+        status: EntryStatus.Draft,
         entryId: activeVersion.id,
         file: entryFile(activeVersion)
       }
     ]
-    const entry = entryData.phases[EntryPhase.Draft]
+    const entry = entryData.statuses[EntryStatus.Draft]
     const graph = await get(graphAtom)
     mutations.push(...(await persistSharedFields(graph, entry)))
     return set(transact, {
@@ -532,7 +532,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const archivePublished = atom(null, (get, set) => {
-    const published = entryData.phases[EntryPhase.Published]
+    const published = entryData.statuses[EntryStatus.Published]
     const mutation: Mutation = {
       type: MutationType.Archive,
       entryId: published.id,
@@ -546,10 +546,10 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const publishArchived = atom(null, (get, set) => {
-    const archived = entryData.phases[EntryPhase.Archived]
+    const archived = entryData.statuses[EntryStatus.Archived]
     const mutation: Mutation = {
       type: MutationType.Publish,
-      phase: EntryPhase.Archived,
+      status: EntryStatus.Archived,
       entryId: archived.id,
       file: entryFile(archived)
     }
@@ -565,7 +565,7 @@ export function createEntryEditor(entryData: EntryData) {
       'Are you sure you want to delete this folder and all its files?'
     )
     if (!result) return
-    const published = entryData.phases[EntryPhase.Published]
+    const published = entryData.statuses[EntryStatus.Published]
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Archive,
@@ -575,7 +575,7 @@ export function createEntryEditor(entryData: EntryData) {
       {
         type: MutationType.Remove,
         entryId: published.id,
-        file: entryFile({...published, phase: EntryPhase.Archived})
+        file: entryFile({...published, status: EntryStatus.Archived})
       }
     ]
     return set(transact, {
@@ -589,7 +589,7 @@ export function createEntryEditor(entryData: EntryData) {
     // Prompt for confirmation
     const result = confirm('Are you sure you want to delete this file?')
     if (!result) return
-    const published = entryData.phases[EntryPhase.Published]
+    const published = entryData.statuses[EntryStatus.Published]
     const file = published.data as MediaFile
     const mutation: Mutation = {
       type: MutationType.FileRemove,
@@ -610,7 +610,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const deleteArchived = atom(null, (get, set) => {
-    const archived = entryData.phases[EntryPhase.Archived]
+    const archived = entryData.statuses[EntryStatus.Archived]
     const mutation: Mutation = {
       type: MutationType.Remove,
       entryId: archived.id,
@@ -624,7 +624,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   type DraftEntryOptions = {
-    phase?: EntryPhase
+    status?: EntryStatus
     path?: string
     parentPaths?: Array<string>
     locale?: string | null
@@ -635,7 +635,7 @@ export function createEntryEditor(entryData: EntryData) {
     options: DraftEntryOptions = {}
   ): Promise<EntryRow> {
     const data = parseYDoc(type, yDoc)
-    const phase = options.phase ?? activeVersion.phase
+    const status = options.status ?? activeVersion.status
     const locale = options.locale ?? activeVersion.locale
     const path = options.path ?? data.path ?? activeVersion.path
     const entryId = options.entryId ?? activeVersion.id
@@ -649,7 +649,7 @@ export function createEntryEditor(entryData: EntryData) {
       parent,
       locale,
       path,
-      phase
+      status
     }
     const filePath = entryFilepath(config, draftEntry, parentPaths)
     const parentDir = paths.dirname(filePath)
@@ -660,7 +660,7 @@ export function createEntryEditor(entryData: EntryData) {
     const urlMeta: EntryUrlMeta = {
       locale,
       path,
-      phase,
+      status,
       parentPaths
     }
     const url = entryUrl(type, urlMeta)
@@ -704,8 +704,8 @@ export function createEntryEditor(entryData: EntryData) {
   )
 
   const selectedState = atom(get => {
-    const selected = get(selectedPhase)
-    if (selected === activePhase) return edits.doc
+    const selected = get(selectedStatus)
+    if (selected === activeStatus) return edits.doc
     return docs[selected]
   })
   const activeTitle = yAtom(edits.root, () => edits.root.get('title') as string)
@@ -728,11 +728,11 @@ export function createEntryEditor(entryData: EntryData) {
   const previewPayload = atom(async get => {
     const {contentHash} = await get(dbMetaAtom)
     const update = get(yUpdate)
-    const phase = get(selectedPhase)
+    const status = get(selectedStatus)
     return encodePreviewPayload({
       entryId: activeVersion.id,
       contentHash,
-      phase,
+      status: status,
       update
     })
   })
@@ -756,9 +756,9 @@ export function createEntryEditor(entryData: EntryData) {
     ...entryData,
     transition,
     revisionId: createId(),
-    activePhase,
-    phaseInUrl,
-    selectedPhase,
+    activeStatus,
+    statusInUrl,
+    selectedStatus,
     entryData,
     editMode,
     activeVersion,

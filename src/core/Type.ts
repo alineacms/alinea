@@ -1,7 +1,7 @@
 import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
-import {EntryPhase} from './EntryRow.js'
+import {EntryStatus} from './EntryRow.js'
 import {Expr} from './Expr.js'
 import {Field} from './Field.js'
 import {getType, hasType, HasType, internalType} from './Internal.js'
@@ -16,7 +16,7 @@ import {Expand} from './util/Types.js'
 import {View} from './View.js'
 
 export interface EntryUrlMeta {
-  phase: EntryPhase
+  status: EntryStatus
   path: string
   parentPaths: Array<string>
   locale?: string | null

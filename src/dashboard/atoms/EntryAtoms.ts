@@ -4,7 +4,7 @@ import {
   ItemInstance
 } from '@headless-tree/core'
 import {Entry} from 'alinea/core/Entry'
-import {EntryPhase} from 'alinea/core/EntryRow'
+import {EntryStatus} from 'alinea/core/EntryRow'
 import {Graph} from 'alinea/core/Graph'
 import {getType} from 'alinea/core/Internal'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
@@ -79,7 +79,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       entryId: Entry.id,
       type: Entry.type,
       title: Entry.title,
-      phase: Entry.phase,
+      status: Entry.status,
       locale: Entry.locale,
       workspace: Entry.workspace,
       root: Entry.root,
@@ -189,7 +189,7 @@ export interface EntryTreeItem {
     entryId: string
     type: string
     title: string
-    phase: EntryPhase
+    status: EntryStatus
     locale: string | null
     workspace: string
     root: string

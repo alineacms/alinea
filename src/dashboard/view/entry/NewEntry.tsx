@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
-import {EntryPhase} from 'alinea/core/EntryRow'
+import {EntryStatus} from 'alinea/core/EntryRow'
 import {createId} from 'alinea/core/Id'
 import {MutationType} from 'alinea/core/Mutation'
 import {Reference} from 'alinea/core/Reference'
@@ -217,7 +217,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       root: root.name,
       locale: locale ?? null,
       path,
-      phase: config.enableDrafts ? EntryPhase.Draft : EntryPhase.Published
+      status: config.enableDrafts ? EntryStatus.Draft : EntryStatus.Published
     }
     const parentId = form.data().parent?.[EntryReference.entry]
     const parent = await graph.first({

@@ -18,7 +18,7 @@ export interface Config {
 
   /** A url which will be embedded in the dashboard for live previews */
   preview?: Preview
-  /** Every edit will pass through a draft phase before being published */
+  /** Every edit will pass through a draft status before being published */
   enableDrafts?: boolean
   /** The interval in seconds at which the frontend will poll for updates */
   syncInterval?: number

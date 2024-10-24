@@ -131,7 +131,7 @@ export type Status =
   | 'preferDraft'
   /** Prefer published, then archived, then drafts */
   | 'preferPublished'
-  /** All phases */
+  /** All statuses */
   | 'all'
 
 export declare class QuerySettings {

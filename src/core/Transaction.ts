@@ -4,7 +4,7 @@ import {ImagePreviewDetails} from 'alinea/core/media/CreatePreview'
 import type {CMS} from './CMS.js'
 import {Config} from './Config.js'
 import {Entry} from './Entry.js'
-import {EntryPhase, EntryRow} from './EntryRow.js'
+import {EntryRow, EntryStatus} from './EntryRow.js'
 import {Status} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {createId} from './Id.js'
@@ -182,15 +182,16 @@ export class DeleteOp extends Operation {
 
 export class EditOperation<Definition> extends Operation {
   private entryData?: Partial<StoredRow<Definition>>
-  private changePhase?: EntryPhase
+  private changeStatus?: EntryStatus
 
   constructor(protected entryId: string) {
     super(async cms => {
       let status: Status
-      if (this.changePhase === EntryPhase.Draft) status = 'preferDraft'
-      else if (this.changePhase === EntryPhase.Archived)
+      if (this.changeStatus === EntryStatus.Draft) status = 'preferDraft'
+      else if (this.changeStatus === EntryStatus.Archived)
         status = 'preferPublished'
-      else if (this.changePhase === EntryPhase.Published) status = 'preferDraft'
+      else if (this.changeStatus === EntryStatus.Published)
+        status = 'preferDraft'
       else status = 'preferPublished'
       const entry = await cms.get({
         select: Entry,
@@ -208,12 +209,12 @@ export class EditOperation<Definition> extends Operation {
 
       const file = entryFileName(
         cms.config,
-        {...entry, phase: entry.phase},
+        {...entry, status: entry.status},
         parentPaths
       )
       const type = cms.config.schema[entry.type]
       const mutations: Array<Mutation> = []
-      const createDraft = this.changePhase === EntryPhase.Draft
+      const createDraft = this.changeStatus === EntryStatus.Draft
       if (createDraft)
         mutations.push({
           type: MutationType.Edit,
@@ -224,7 +225,7 @@ export class EditOperation<Definition> extends Operation {
             this.typeName(cms.config, type),
             {
               ...entry,
-              phase: EntryPhase.Draft,
+              status: EntryStatus.Draft,
               data: {...entry.data, ...this.entryData}
             },
             parent
@@ -237,16 +238,16 @@ export class EditOperation<Definition> extends Operation {
           file,
           patch: this.entryData
         })
-      switch (this.changePhase) {
-        case EntryPhase.Published:
+      switch (this.changeStatus) {
+        case EntryStatus.Published:
           mutations.push({
             type: MutationType.Publish,
-            phase: entry.phase,
+            status: entry.status,
             entryId: this.entryId,
             file
           })
           break
-        case EntryPhase.Archived:
+        case EntryStatus.Archived:
           mutations.push({
             type: MutationType.Archive,
             entryId: this.entryId,
@@ -264,17 +265,17 @@ export class EditOperation<Definition> extends Operation {
   }
 
   draft() {
-    this.changePhase = EntryPhase.Draft
+    this.changeStatus = EntryStatus.Draft
     return this
   }
 
   archive() {
-    this.changePhase = EntryPhase.Archived
+    this.changeStatus = EntryStatus.Archived
     return this
   }
 
   publish() {
-    this.changePhase = EntryPhase.Published
+    this.changeStatus = EntryStatus.Published
     return this
   }
 }
@@ -383,9 +384,9 @@ async function createEntry(
     Root.defaultLocale(config.workspaces[workspace][root]) ??
     null
   const title = partial.data?.title ?? partial.title ?? 'Entry'
-  const phase = partial.phase ?? EntryPhase.Published
+  const status = partial.status ?? EntryStatus.Published
   const path = slugify(
-    (phase === EntryPhase.Published && partial.data?.path) ||
+    (status === EntryStatus.Published && partial.data?.path) ||
       (partial.path ?? title)
   )
   const entryData = {title, path, ...partial.data}
@@ -393,7 +394,7 @@ async function createEntry(
   const i18nId = partial.i18nId ?? createId()
   const details = {
     id,
-    phase,
+    status,
     type: typeName,
     title,
     path,
@@ -422,7 +423,7 @@ async function createEntry(
   const urlMeta: EntryUrlMeta = {
     locale,
     path,
-    phase,
+    status,
     parentPaths
   }
   const url = entryUrl(type, urlMeta)

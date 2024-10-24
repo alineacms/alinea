@@ -1,6 +1,6 @@
 import {Connection} from 'alinea/core/Connection'
 import {Entry} from 'alinea/core/Entry'
-import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
 import {HttpError} from 'alinea/core/HttpError'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
@@ -199,7 +199,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       root: upload.to.root,
       locale: null,
       path: path,
-      phase: EntryPhase.Published
+      status: EntryStatus.Published
     }
     const filePath = entryFilepath(
       config,
