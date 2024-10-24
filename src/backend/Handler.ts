@@ -119,7 +119,7 @@ export function createHandler(
           mutations: changeSet
         })
         await db.applyMutations(mutations, result.commitHash)
-        const tasks = []
+        const tasks: Array<Promise<void>> = []
         for (const mutation of mutations) {
           switch (mutation.type) {
             case MutationType.Edit:

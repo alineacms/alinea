@@ -103,7 +103,7 @@ export class Database implements Syncable {
         .from(EntryRow)
         .where(inArray(EntryRow.rowHash, remove))
       await tx.delete(EntryRow).where(inArray(EntryRow.rowHash, remove))
-      const changed = []
+      const changed: Array<string> = []
       for (const entry of insert) {
         await tx.insert(EntryRow).values(entry)
         changed.push(entry.i18nId)
@@ -118,7 +118,7 @@ export class Database implements Syncable {
   async applyMutations(mutations: Array<Mutation>, commitHash?: string) {
     const hash = commitHash ?? (await this.meta()).commitHash
     return this.store.transaction(async tx => {
-      const reHash = []
+      const reHash: Array<() => Promise<Array<string>>> = []
       for (const mutation of mutations) {
         try {
           const updateRows = await this.applyMutation(tx, mutation)
@@ -402,7 +402,7 @@ export class Database implements Syncable {
   }
 
   async updateHash(tx: Store, condition: Sql<boolean>) {
-    const changed = []
+    const changed: Array<string> = []
     const entries = await tx.select().from(EntryRow).where(condition)
     for (const entry of entries) {
       const updated = await createEntryRow(this.config, entry)
@@ -617,7 +617,7 @@ export class Database implements Syncable {
     await this.store.transaction(async tx => {
       const seenVersions: Array<string> = []
       const seenSeeds = new Set<string>()
-      const inserted = []
+      const inserted: Array<string> = []
       //const endScan = timer('Scanning entries')
       const changes: Array<Change> = []
       for await (const file of source.entries()) {

@@ -55,7 +55,7 @@ export async function generateDashboard(
     },
     ...buildOptions,
     plugins,
-    tsconfig,
+    //tsconfig,
     logLevel: 'error'
   })
   const baseUrl = './' + escapeHtml(basename)

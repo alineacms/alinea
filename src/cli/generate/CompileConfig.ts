@@ -1,5 +1,4 @@
 import {BuildOptions} from 'esbuild'
-import fs from 'node:fs'
 import path from 'node:path'
 import {buildEmitter} from '../build/BuildEmitter.js'
 import {buildOptions} from '../build/BuildOptions.js'
@@ -27,8 +26,8 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
     platform: 'neutral',
     jsx: 'automatic',
     define,
-    plugins: [externalPlugin(rootDir), ignorePlugin],
-    tsconfig: fs.existsSync(tsConfigFile) ? tsConfigFile : undefined
+    plugins: [externalPlugin(rootDir), ignorePlugin]
+    //tsconfig: fs.existsSync(tsConfigFile) ? tsConfigFile : undefined
   }
 }
 

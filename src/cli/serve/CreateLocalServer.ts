@@ -1,4 +1,4 @@
-import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
+import {ReadableStream, Request, Response} from '@alinea/iso'
 import {HandlerWithConnect} from 'alinea/backend/Handler'
 import {router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/CloudConfig'
@@ -99,6 +99,7 @@ export function createLocalServer(
   const tsconfig = fs.existsSync(tsconfigLocation)
     ? tsconfigLocation
     : undefined
+
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>()
   let initial = true
   const plugins = buildOptions?.plugins || []
@@ -133,7 +134,7 @@ export function createLocalServer(
     logOverride: {
       'ignored-bare-import': 'silent'
     },
-    tsconfig,
+    //tsconfig,
     write: false
   } satisfies BuildOptions
 
@@ -186,13 +187,13 @@ export function createLocalServer(
             close: () => controller.close()
           })
         }
-      }).pipeThrough(new TextEncoderStream())
+      })
       return new Response(stream, {
         headers: {
           'content-type': 'text/event-stream',
           'cache-control': 'no-cache',
           'access-control-allow-origin': '*',
-          Connection: 'keep-alive'
+          connection: 'keep-alive'
         }
       })
     }),

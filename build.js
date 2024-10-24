@@ -48,7 +48,8 @@ const external = builtinModules
 
 const scssOptions = {
   loadPaths: ['./node_modules'],
-  importers: [resolveAlinea]
+  importers: [resolveAlinea],
+  silenceDeprecations: ['import']
 }
 
 function hash(files) {
@@ -332,6 +333,7 @@ function jsEntry({watch, test, report}) {
               chunkNames: 'chunks/[name]-[hash]',
               platform: 'neutral',
               mainFields: ['module', 'main'],
+              jsx: 'automatic',
               alias: {
                 yjs: `./src/yjs.ts`,
                 // Mistakenly imported because it is used in the JSDocs

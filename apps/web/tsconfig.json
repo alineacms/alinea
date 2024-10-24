@@ -21,6 +21,10 @@
     ],
     "strictNullChecks": true,
     "paths": {
+      "alinea": ["../../src/index.ts"],
+      "alinea/*": ["../../src/*.js"],
+      "alinea/css": ["../../src/global.css"],
+      "yjs": ["../../src/yjs.ts"],
       "@/*": ["./src/*"]
     }
   },

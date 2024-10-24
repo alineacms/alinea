@@ -14,7 +14,7 @@ export interface Server {
   close(): void
 }
 
-export async function startNodeServer(
+async function startNodeServer(
   port = 4500,
   attempt = 0,
   silent = false
@@ -69,3 +69,5 @@ export async function startNodeServer(
       throw err
     })
 }
+
+export const startServer = startNodeServer

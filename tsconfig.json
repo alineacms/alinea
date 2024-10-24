@@ -15,10 +15,11 @@
     "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "paths": {
-      "alinea/*": ["./src/*.js"]
+      "alinea/package.json": ["./package.json"],
+      "alinea": ["./src/index.ts"],
+      "alinea/*": ["./src/*.js"],
+      "yjs": ["./src/yjs.ts"]
     },
-    "baseUrl": ".",
-    "rootDir": "src",
     "moduleDetection": "force",
     "incremental": true
   },
