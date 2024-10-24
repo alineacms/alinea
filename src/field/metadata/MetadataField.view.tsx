@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {PreviewMetadata} from 'alinea/core/Resolver'
+import {PreviewMetadata} from 'alinea/core/Preview'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useFieldOptions} from 'alinea/dashboard/editor/UseField'

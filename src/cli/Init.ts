@@ -49,13 +49,11 @@ export async function init(options: InitOptions) {
     path.join(cwd, 'content/pages/welcome.json'),
     JSON.stringify(
       {
-        id: createId(),
-        type: 'Page',
-        title: 'Welcome',
-        alinea: {
-          index: 'a0',
-          seeded: 'welcome.json'
-        }
+        _id: createId(),
+        _type: 'Page',
+        _index: 'a0',
+        _seeded: 'welcome.json',
+        title: 'Welcome'
       },
       null,
       2

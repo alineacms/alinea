@@ -4,10 +4,10 @@ import {createCMS} from 'alinea/next'
 
 const pages = Config.root('Pages', {
   contains: ['Page', 'Home'],
-  entries: {
-    index: Config.page(schema.Home),
-    roadmap: Config.page(schema.Page),
-    docs: Config.page(schema.Docs)
+  children: {
+    index: Config.page({type: schema.Home}),
+    roadmap: Config.page({type: schema.Page}),
+    docs: Config.page({type: schema.Docs})
   }
 })
 
@@ -40,9 +40,12 @@ const demo = Config.workspace('Demo', {
   roots: {
     pages: Config.root('Demo', {
       contains: ['DemoHome', 'DemoRecipes'],
-      entries: {
-        index: Config.page(schema.DemoHome({title: 'Home'})),
-        recipes: Config.page(schema.DemoRecipes({title: 'Recipes'}))
+      children: {
+        index: Config.page({type: schema.DemoHome, fields: {title: 'Home'}}),
+        recipes: Config.page({
+          type: schema.DemoRecipes,
+          fields: {title: 'Recipes'}
+        })
       }
     }),
     media: Config.media()

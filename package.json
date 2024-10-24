@@ -2,6 +2,11 @@
   "bin": "./dist/cli.js",
   "name": "alinea",
   "version": "0.0.0",
+  "description": "Headless git-based CMS",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alineacms/alinea.git"
+  },
   "license": "MIT",
   "type": "module",
   "scripts": {

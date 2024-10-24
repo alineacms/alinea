@@ -11,7 +11,6 @@ import {entryEditorAtoms} from './atoms/EntryEditorAtoms.js'
 import {entryLocationAtom, localeAtom} from './atoms/NavigationAtoms.js'
 import {Route, Router} from './atoms/RouterAtoms.js'
 import {ContentView} from './pages/ContentView.js'
-import {DraftsOverview} from './pages/DraftsOverview.js'
 
 const editorLoader = atomFamily(() => {
   return atom(async get => {
@@ -31,12 +30,6 @@ export const entryRoute = new Route({
   component: ContentView
 })
 
-export const draftRoute = new Route({
-  path: '/draft/:workspace?/:root?/:id?',
-  loader: editorLoader,
-  component: DraftsOverview
-})
-
 const editLoader = atomFamily(() => {
   return atom(async get => {
     const location = get(locationAtom)
@@ -44,19 +37,22 @@ const editLoader = atomFamily(() => {
     const url = searchParams.get('url')!
     const workspace = searchParams.get('workspace') ?? undefined
     const root = searchParams.get('root') ?? undefined
-    const where: Record<string, string> = {url}
-    if (workspace) where.workspace = workspace
-    if (root) where.root = root
     const graph = await get(graphAtom)
-    const entry = await graph.preferDraft.maybeGet(
-      Entry(where).select({
-        entryId: Entry.entryId,
+    const entry = await graph.first({
+      select: {
+        entryId: Entry.id,
         locale: Entry.locale,
         i18nId: Entry.i18nId,
         root: Entry.root,
         workspace: Entry.workspace
-      })
-    )
+      },
+      filter: {
+        _url: url,
+        _workspace: workspace,
+        _root: root
+      },
+      status: 'preferDraft'
+    })
     if (!entry) return null
     return {...entry, locale: entry.locale || undefined}
   })
@@ -77,6 +73,6 @@ function EditRoute(location: EntryLocation | null) {
   return <Loader absolute />
 }
 
-const routes = [draftRoute, editRoute, entryRoute]
+const routes = [editRoute, entryRoute]
 
 export const router = new Router({routes})

@@ -18,14 +18,12 @@ export interface EntryLink<InferredFields = undefined> extends EntryReference {
   i18nId: string
   title: string
   path: string
-  /** @deprecated Use href */
-  url: string
   href: string
   fields: InferredFields
 }
 
 export namespace EntryLink {
-  export const entryId = Entry.entryId
+  export const entryId = Entry.id
   export const i18nId = Entry.i18nId
   export const title = Entry.title
   export const entryType = Entry.type

@@ -5,6 +5,7 @@ import {Type} from 'alinea/core/Type'
 import type {ListRow} from 'alinea/core/shape/ListShape'
 import {FileLink, filePicker} from 'alinea/field/link/FileLink'
 import {
+  LinkField,
   LinkFieldOptions,
   createLink,
   createLinks
@@ -12,10 +13,8 @@ import {
 import {entryPicker} from 'alinea/picker/entry'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {urlPicker} from 'alinea/picker/url'
-import {EntryLink, entry as entryLink} from './EntryLink.js'
-import {file as fileLink} from './FileLink.js'
-import {image as imageLink} from './ImageLink.js'
-import {UrlLink, url as urlLink} from './UrlLink.js'
+import {EntryLink} from './EntryLink.js'
+import {UrlLink} from './UrlLink.js'
 
 export type AnyLink<InferredFields> =
   | EntryLink<InferredFields>
@@ -29,7 +28,7 @@ export interface LinkOptions<Definition, Row> extends LinkFieldOptions<Row> {
 export function link<Fields>(
   label: Label,
   options: WithoutLabel<LinkOptions<Fields, Reference>> = {}
-) {
+): LinkField<Reference, AnyLink<Type.Infer<Fields>>> {
   return createLink<Reference, AnyLink<Type.Infer<Fields>>>(label, {
     ...options,
     pickers: {
@@ -63,12 +62,4 @@ export namespace link {
       }
     })
   }
-  /** @deprecated Use Field.image */
-  export const image = imageLink
-  /** @deprecated Use Field.entry */
-  export const entry = entryLink
-  /** @deprecated Use Field.file */
-  export const file = fileLink
-  /** @deprecated Use Field.url */
-  export const url = urlLink
 }

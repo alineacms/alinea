@@ -103,7 +103,7 @@
     {
       "_type": "CodeBlock",
       "_id": "KipDFk3xI6h94TjE3Mhc_",
-      "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"alinea.config.tsx\"\n  --fix           Any missing or incorrect properties will be overwritten by their default",
+      "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"cms.ts\"\n  --fix           Any missing or incorrect properties will be overwritten by their default",
       "fileName": "",
       "language": "",
       "compact": false

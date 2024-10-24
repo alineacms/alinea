@@ -32,7 +32,7 @@ export function urlPicker<Fields>(
 ): Picker<UrlReference> {
   const fieldType = Type.isType(options.fields)
     ? options.fields
-    : options.fields && type({fields: options.fields as any})
+    : options.fields && type('URL fields', {fields: options.fields as any})
   const extra = fieldType && Type.shape(fieldType)
   return {
     shape: new RecordShape('Url', {

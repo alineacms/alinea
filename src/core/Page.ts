@@ -1,43 +1,40 @@
-import {Type} from './Type.js'
-import {Cursor} from './pages/Cursor.js'
+import {FieldsDefinition, Type} from './Type.js'
 
-export interface PageSeedData {
+export interface PageData {
   type: Type
-  partial: Record<string, any>
+  fields: Record<string, any>
 }
 
-export type PageSeed<
-  Definition = object,
-  Children extends Record<string, PageSeed> = Record<string, PageSeed<any, any>>
+export type Page<
+  Children extends Record<string, Page> = Record<string, never>
 > = Children & {
-  [PageSeed.Data]: PageSeedData
+  [Page.Data]: PageData
 }
 
-export namespace PageSeed {
+export namespace Page {
   export const Data = Symbol.for('@alinea/Page.Data')
 
-  export function data(page: PageSeed): PageSeedData {
-    return page[PageSeed.Data]
+  export function data(page: Page): PageData {
+    return page[Page.Data]
   }
 
-  export function isPageSeed(page: any): page is PageSeed {
-    return Boolean(page && page[PageSeed.Data])
+  export function isPage(page: any): page is Page {
+    return Boolean(page && page[Page.Data])
   }
+}
+
+export interface PageConfig<Definition, Children> {
+  type: Type<Definition>
+  fields?: Partial<Type.Infer<Definition>>
+  children?: Children
 }
 
 export function page<
-  Definition,
-  Children extends Record<string, PageSeed<any, any>>
->(
-  type: Type<Definition> | Cursor.Typed<Definition>,
-  children?: Children
-): PageSeed<Definition> {
-  children = children ?? ({} as Children)
+  Fields extends FieldsDefinition,
+  Children extends Record<string, Page>
+>(config: PageConfig<Fields, Children>): Page<Children> {
   return {
-    ...children,
-    [PageSeed.Data]: {
-      type: type instanceof Cursor ? type.type : type,
-      partial: type instanceof Cursor ? type.partial : {}
-    }
-  }
+    ...config.children,
+    [Page.Data]: config
+  } as any
 }

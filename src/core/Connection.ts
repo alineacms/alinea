@@ -4,8 +4,8 @@ import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
+import {AnyQueryResult, GraphQuery} from './Graph.js'
 import {Mutation} from './Mutation.js'
-import {ResolveParams} from './Resolver.js'
 import {User} from './User.js'
 
 export interface SyncResponse {
@@ -20,7 +20,9 @@ export interface Syncable {
 
 export interface Connection extends Syncable {
   user(): Promise<User | undefined>
-  resolve(params: ResolveParams): Promise<unknown>
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>>
   previewToken(request: PreviewInfo): Promise<string>
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>

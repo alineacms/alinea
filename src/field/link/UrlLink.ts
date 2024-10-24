@@ -11,8 +11,6 @@ import {
 import {UrlPickerOptions, UrlReference, urlPicker} from 'alinea/picker/url'
 
 export interface UrlLink<InferredFields = undefined> extends UrlReference {
-  /** @deprecated Use href */
-  url: string
   href: string
   title: string
   target: string

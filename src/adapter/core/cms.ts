@@ -15,7 +15,7 @@ export function createCMS<Definition extends Config>(config: Definition) {
   const devUrl = process.env.ALINEA_DEV_SERVER
   const cms: VanillaCMS<Definition> = new VanillaCMS(
     config,
-    async () => new Client({url: devUrl ?? '/api/cms'})
+    async () => new Client({config: cms.config, url: devUrl ?? '/api/cms'})
   )
   return cms
 }

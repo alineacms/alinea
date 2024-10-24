@@ -1,9 +1,8 @@
 import styler from '@alinea/styler'
 import useSize from '@react-hook/size'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {Reference} from 'alinea/core/Reference'
 import {summarySelection} from 'alinea/core/media/Summary'
-import {createSelection} from 'alinea/core/pages/CreateSelection'
-import {Cursor} from 'alinea/core/pages/Cursor'
 import {Loader} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
@@ -24,7 +23,7 @@ const defaultSummaryView = {
 }
 
 export interface ExporerItemSelect {
-  entryId: string
+  id: string
   type: string
   workspace: string
   root: string
@@ -34,7 +33,7 @@ export interface ExporerItemSelect {
 }
 
 export interface ExplorerProps {
-  cursor: Cursor.Find<ExporerItemSelect>
+  query: QueryWithResult<ExporerItemSelect>
   type: 'row' | 'thumb'
   virtualized?: boolean
   max?: number
@@ -49,7 +48,7 @@ export interface ExplorerProps {
 
 export function Explorer({
   type,
-  cursor,
+  query,
   virtualized,
   max,
   selectable,
@@ -70,21 +69,24 @@ export function Explorer({
   }, [changed])
 
   const {data, isLoading} = useQuery(
-    ['explorer', type, cursor, max],
+    ['explorer', type, query, max],
     async () => {
       const summaryView = type === 'row' ? 'summaryRow' : 'summaryThumb'
       const defaultView = defaultSummaryView[summaryView]
       const selection = summarySelection(schema)
-      const total = await graph.preferDraft.count(cursor)
-      const select = new Cursor.Find<any>({
-        ...cursor[Cursor.Data],
-        select: createSelection(selection)
+      const total = await graph.count({
+        ...query,
+        status: 'preferDraft'
       })
+      const querySelection: QueryWithResult<ExporerItemSelect> = {
+        ...query,
+        select: selection as any
+      }
       return {
         type,
         total: max ? Math.min(max, total) : total,
         selection,
-        cursor: select,
+        query: querySelection,
         summaryView,
         defaultView
       } as const
@@ -127,7 +129,7 @@ export function Explorer({
                     <div key={index} style={{...style, height, flexShrink: 0}}>
                       <ExplorerRow
                         schema={schema}
-                        cursor={data.cursor}
+                        query={data.query}
                         amount={perRow}
                         from={from}
                         batchSize={batchSize}
@@ -147,7 +149,7 @@ export function Explorer({
                     <div key={index} style={{height, flexShrink: 0}}>
                       <ExplorerRow
                         schema={schema}
-                        cursor={data.cursor}
+                        query={data.query}
                         amount={perRow}
                         from={from}
                         batchSize={batchSize}

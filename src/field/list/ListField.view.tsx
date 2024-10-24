@@ -23,6 +23,7 @@ import {
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {ListField} from 'alinea/core/field/ListField'
+import {getType} from 'alinea/core/Internal'
 import {Schema} from 'alinea/core/Schema'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {Type} from 'alinea/core/Type'
@@ -145,7 +146,7 @@ function ListInputRow({
       <Sink.Header>
         <Sink.Options style={{zIndex: 1}}>
           <IconButton
-            icon={Type.meta(type).icon || IcRoundDragHandle}
+            icon={getType(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
           />
@@ -193,7 +194,7 @@ function ListCreateRow({
         {entries(schema).map(([key, type]) => {
           return (
             <Create.Button
-              icon={Type.meta(type).icon}
+              icon={getType(type).icon}
               key={key}
               onClick={() => onCreate(key)}
             >

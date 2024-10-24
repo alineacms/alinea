@@ -5,9 +5,11 @@ import {number} from 'alinea/field/number'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-const fields = type({
-  number: number('Number'),
-  readOnly: number('Number (read-only)', {readOnly: true, initialValue: 0})
+const fields = type('Fields', {
+  fields: {
+    number: number('Number'),
+    readOnly: number('Number (read-only)', {readOnly: true, initialValue: 0})
+  }
 })
 
 export function NumberField() {

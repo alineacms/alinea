@@ -7,7 +7,6 @@ export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
   view: 'alinea/dashboard/view/MediaExplorer#MediaExplorer',
   icon: IcRoundPermMedia,
-  isContainer: true,
   contains: ['MediaLibrary'],
   fields: {
     title: hidden<string>('Title'),

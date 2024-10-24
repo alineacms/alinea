@@ -59,14 +59,20 @@ Select only the fields you need.
 ```tsx
 import {Query} from 'alinea'
 
-const blogAndPosts = Query(Blog).select({
-  title: Blog.title,
-  posts: Query.children(BlogPost).select({
-    title: BlogPost.title
+console.log(
+  await cms.get({
+    type: Blog,
+    select: {
+      title: Blog.title,
+      posts: Query.children({
+        type: BlogPost,
+        select: {
+          title: BlogPost.title
+        }
+      })
+    }
   })
-})
-
-console.log(await cms.get(blogAndPosts))
+)
 ```
 
 [See the full api →](https://alinea.sh/docs/content/query)

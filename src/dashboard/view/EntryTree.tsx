@@ -6,8 +6,8 @@ import {
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import {EntryPhase} from 'alinea/core/EntryRow'
-import {Type} from 'alinea/core/Type'
+import {EntryStatus} from 'alinea/core/EntryRow'
+import {getType} from 'alinea/core/Internal'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -51,11 +51,11 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
   if (!itemData) return null
   currentData.current = itemData
   const selected = selectedEntry(locale, itemData)
-  const {icon} = Type.meta(schema[selected.type])
-  const isDraft = selected.phase === EntryPhase.Draft
+  const {icon} = getType(schema[selected.type])
+  const isDraft = selected.status === EntryStatus.Draft
   const isUntranslated = locale && selected.locale !== locale
-  const isArchived = selected.phase === EntryPhase.Archived
-  const isUnpublished = selected.phase === EntryPhase.Archived
+  const isArchived = selected.status === EntryStatus.Archived
+  const isUnpublished = selected.status === EntryStatus.Archived
   const isSelected = entryId && itemData.id === entryId
 
   return (
@@ -181,7 +181,7 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     for (const item of tree.getItems()) {
       const typeName: string = item.getItemData()?.type
       const type = schema[typeName]
-      const {orderChildrenBy} = Type.meta(type)
+      const {orderChildrenBy} = getType(type)
       if (orderChildrenBy) tree.invalidateChildrenIds(item.getId())
     }
   }, [treeProvider])

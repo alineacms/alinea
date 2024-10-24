@@ -1,3 +1,4 @@
+import {getType} from 'alinea/core/Internal'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
@@ -25,8 +26,7 @@ export function TabsHeader({section, backdrop}: TabsHeaderProps) {
   return (
     <Tabs.List backdrop={backdrop}>
       {visibleTypes.map((type, i) => {
-        const meta = Type.meta(type)
-        const Icon = meta.icon
+        const {icon: Icon} = getType(type)
         return (
           <Tabs.Trigger key={i}>
             <HStack center gap={8}>

@@ -84,14 +84,13 @@ export namespace Toolbar {
       '--alinea-saturation': `${saturation * 100}%`,
       '--alinea-lightness': `${lightness * 100}%`
     }
-    const defaultWorkspace = select(
-      'Default workspace',
-      fromEntries(
+    const defaultWorkspace = select('Default workspace', {
+      options: fromEntries(
         entries(config.workspaces).map(([key, workspace]) => {
           return [key, (Workspace.label(workspace) as string) || key]
         })
       )
-    )
+    })
     const toggleSchemePreference = useSetAtom(toggleSchemePreferenceAtom)
     const updateFontSize = useSetAtom(sizePreferenceAtom)
     const updateWorkspace = useSetAtom(workspacePreferenceAtom)

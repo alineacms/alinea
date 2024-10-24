@@ -8,7 +8,6 @@ import {createHandler as createCoreHandler} from 'alinea/backend/Handler'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {Entry} from 'alinea/core/Entry'
-import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import {NextCMS} from './cms.js'
 import {devUrl, requestContext} from './context.js'
@@ -40,12 +39,12 @@ export function createHandler<Driver extends AvailableDrivers>(
           ? await cms.connect()
           : handleBackend.connect(context)
         const payload = getPreviewPayloadFromCookies(cookie.getAll())
-        const url = (await connection.resolve({
-          selection: createSelection(
-            Entry({entryId: info.entryId}).select(Entry.url).first()
-          ),
+        const url = await connection.resolve({
+          first: true,
+          select: Entry.url,
+          filter: {_id: info.entryId},
           preview: payload ? {payload} : undefined
-        })) as string | null
+        })
         if (!url) return new Response('Not found', {status: 404})
         const source = new URL(request.url)
         // Next.js incorrectly reports 0.0.0.0 as the hostname if the server is

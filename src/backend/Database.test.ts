@@ -1,6 +1,6 @@
+import {Entry} from 'alinea/core'
 import * as Edit from 'alinea/core/Edit'
-import {EntryPhase} from 'alinea/core/EntryRow'
-import {Query} from 'alinea/core/Query'
+import {EntryStatus} from 'alinea/core/EntryRow'
 import {ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
@@ -14,26 +14,33 @@ test('create', async () => {
   const {Page} = example.schema
   const parent = Edit.create(Page).set({title: 'New parent'})
   await example.commit(parent)
-  const result = await example.get(Query.whereId(parent.entryId))
-  assert.is(result.entryId, parent.entryId)
+  const result = await example.get({
+    select: Entry,
+    filter: {_id: parent.id}
+  })
+  assert.is(result.id, parent.id)
   assert.is(result.title, 'New parent')
 })
 
 test('index is correct', async () => {
   const example = createExample()
   const {Page} = example.schema
-  const container1 = await example.get(Query.wherePath('container1'))
-  const entryA = Edit.create(Page).setParent(container1.entryId)
+  const container1 = await example.get({
+    filter: {_path: 'container1'}
+  })
+  const entryA = Edit.create(Page).setParent(container1._id)
   await example.commit(entryA)
-  const entryB = Edit.create(Page).setParent(container1.entryId)
+  const entryB = Edit.create(Page).setParent(container1._id)
   await example.commit(entryB)
-  const entries = await example.find(Query.whereParent(container1.entryId))
+  const entries = await example.find({
+    filter: {_parentId: container1._id}
+  })
   const first = generateKeyBetween(null, null)
   const second = generateKeyBetween(first, null)
-  assert.is(entries[0].entryId, entryA.entryId)
-  assert.is(entries[0].index, first)
-  assert.is(entries[1].entryId, entryB.entryId)
-  assert.is(entries[1].index, second)
+  assert.is(entries[0]._id, entryA.id)
+  assert.is(entries[0]._index, first)
+  assert.is(entries[1]._id, entryB.id)
+  assert.is(entries[1]._index, second)
 })
 
 test('remove child entries', async () => {
@@ -43,11 +50,12 @@ test('remove child entries', async () => {
   const sub = parent.createChild(Container)
   const entry = sub.createChild(Page)
   await example.commit(parent, sub, entry)
-  const res1 = await example.get(Query.whereId(entry.entryId))
-  assert.ok(res1)
-  assert.is(res1.parent, sub.entryId)
-  await example.commit(Edit.remove(parent.entryId))
-  const res2 = await example.maybeGet(Query.whereId(entry.entryId))
+  const res1 = await example.get({
+    filter: {_id: entry.id}
+  })
+  assert.is(res1._parentId, sub.id)
+  await example.commit(Edit.remove(parent.id))
+  const res2 = await example.find({first: true, filter: {_id: entry.id}})
   assert.not.ok(res2)
 })
 
@@ -57,63 +65,103 @@ test('change draft path', async () => {
   const parent = Edit.create(Container).set({path: 'parent'})
   const sub = parent.createChild(Container).set({path: 'sub'})
   await example.commit(parent, sub)
-  const resParent0 = await example.get(Query.whereId(parent.entryId))
+  const resParent0 = await example.get({
+    select: Entry,
+    filter: {_id: parent.id}
+  })
   assert.is(resParent0.url, '/parent')
   // Changing entry paths in draft should not have an influence on
   // computed properties such as url, filePath etc. until we publish.
   await example.commit(
-    Edit.update(parent.entryId, Container).set({path: 'new-path'}).draft()
+    Edit.update(parent.id, Container).set({path: 'new-path'}).draft()
   )
-  const resParent1 = await example.graph.drafts.get(
-    Query.whereId(parent.entryId)
-  )
+  const resParent1 = await example.get({
+    select: Entry,
+    filter: {_id: parent.id},
+    status: 'draft'
+  })
   assert.is(resParent1.url, '/parent')
-  const res1 = await example.get(Query.whereId(sub.entryId))
+  const res1 = await example.get({
+    select: Entry,
+    filter: {_id: sub.id}
+  })
   assert.is(res1.url, '/parent/sub')
 
   // Once we publish, the computed properties should be updated.
-  await example.commit(Edit.publish(parent.entryId))
-  const resParent2 = await example.get(Query.whereId(parent.entryId))
+  await example.commit(Edit.publish(parent.id))
+  const resParent2 = await example.get({
+    select: Entry,
+    filter: {_id: parent.id}
+  })
   assert.is(resParent2.url, '/new-path')
-  const res2 = await example.get(Query.whereId(sub.entryId))
+  const res2 = await example.get({
+    select: Entry,
+    filter: {_id: sub.id}
+  })
   assert.is(res2.url, '/new-path/sub')
 })
 
 test('fetch translations', async () => {
   const example = createExample()
   const {Page} = example.schema
-  const multi = example.in(example.workspaces.main.multiLanguage)
-  let res = await multi.locale('en').get(
-    Query.wherePath('localised1').select({
-      translations: Query.translations(Page, true).select(Query.locale)
-    })
-  )
+  let res = await example.get({
+    locale: 'en',
+    location: example.workspaces.main.multiLanguage,
+    select: {
+      translations: {
+        translations: {
+          includeSelf: true
+        },
+        type: Page,
+        select: Entry.locale
+      }
+    },
+    filter: {_path: 'localised1'}
+  })
   assert.equal(res.translations, ['en', 'fr'])
-  res = await multi.locale('en').get(
-    Query.wherePath('localised1').select({
-      translations: Query.translations(Page).select(Query.locale)
-    })
-  )
+  res = await example.get({
+    locale: 'en',
+    location: example.workspaces.main.multiLanguage,
+    select: {
+      translations: {
+        translations: {},
+        type: Page,
+        select: Entry.locale
+      }
+    },
+    filter: {_path: 'localised1'}
+  })
   assert.equal(res.translations, ['fr'])
 })
 
 test('change published path for entry with language', async () => {
   const example = createExample()
-  const multi = example.locale('en').in(example.workspaces.main.multiLanguage)
-  const localised3 = await multi.get(Query.wherePath('localised3'))
+  const localised3 = await example.get({
+    locale: 'en',
+    location: example.workspaces.main.multiLanguage,
+    select: Entry,
+    filter: {_path: 'localised3'}
+  })
   assert.is(localised3.url, '/en/localised2/localised3')
 
   // Archive localised3
-  await example.commit(Edit.archive(localised3.entryId))
+  await example.commit(Edit.archive(localised3.id))
 
-  const localised3Archived = await example.graph.archived
-    .in(example.workspaces.main.multiLanguage)
-    .get(Query.wherePath('localised3'))
-  assert.is(localised3Archived.phase, EntryPhase.Archived)
+  const localised3Archived = await example.get({
+    location: example.workspaces.main.multiLanguage,
+    select: Entry,
+    filter: {_path: 'localised3'},
+    status: 'archived'
+  })
+  assert.is(localised3Archived.status, EntryStatus.Archived)
 
   // And publish again
-  await example.commit(Edit.publish(localised3.entryId))
-  const localised3Publish = await multi.get(Query.wherePath('localised3'))
+  await example.commit(Edit.publish(localised3.id))
+  const localised3Publish = await example.get({
+    locale: 'en',
+    select: Entry,
+    filter: {_path: 'localised3'}
+  })
   assert.is(localised3Publish.url, '/en/localised2/localised3')
 })
 
@@ -124,7 +172,10 @@ test('file upload', async () => {
     new TextEncoder().encode('Hello, World!')
   ])
   await example.commit(upload)
-  const result = await example.get(Query.whereId(upload.entryId))
+  const result = await example.get({
+    select: Entry,
+    filter: {_id: upload.entryId}
+  })
   assert.is(result.title, 'test')
   assert.is(result.root, 'media')
 })
@@ -138,7 +189,10 @@ test('image upload', async () => {
     createPreview
   })
   await example.commit(upload)
-  const result = await example.get(Query.whereId(upload.entryId))
+  const result = await example.get({
+    select: Entry,
+    filter: {_id: upload.entryId}
+  })
   assert.is(result.title, 'test')
   assert.is(result.root, 'media')
   assert.is(result.data.width, 2880)
@@ -166,9 +220,11 @@ test('field creators', async () => {
     .value()
   entry.set({title: 'Fields', list})
   await example.commit(entry)
-  const res = (await example.get(
-    Query.whereId(entry.entryId).select(Fields.list)
-  ))![0]
+  const listRes = await example.get({
+    select: Fields.list,
+    filter: {_id: entry.id}
+  })
+  const res = listRes[0]
   if (res[Node.type] !== 'Text') throw new Error('Expected Text')
   assert.equal(res.text[0], {
     [Node.type]: 'heading',
@@ -187,26 +243,37 @@ test('remove media library and files', async () => {
   const upload = Edit.upload([
     'test.txt',
     new TextEncoder().encode('Hello, World!')
-  ]).setParent(library.entryId)
+  ]).setParent(library.id)
   await example.commit(upload)
-  const result = await example.get(Query.whereId(upload.entryId))
-  assert.is(result.parent, library.entryId)
+  const result = await example.get({
+    select: Entry,
+    filter: {_id: upload.entryId}
+  })
+  assert.is(result.parentId, library.id)
   assert.is(result.root, 'media')
-  await example.commit(Edit.remove(library.entryId))
-  const result2 = await example.maybeGet(Query.whereId(upload.entryId))
+  await example.commit(Edit.remove(library.id))
+  const result2 = await example.first({
+    filter: {_id: upload.entryId}
+  })
   assert.not.ok(result2)
 })
 
 test('create multi language entries', async () => {
   const example = createExample()
   const {Page} = example.schema
-  const localised2 = await example.get(Query.wherePath('localised2'))
-  const entry = Edit.create(Page).setParent(localised2.entryId).set({
+  const localised2 = await example.get({
+    select: Entry,
+    filter: {_path: 'localised2'}
+  })
+  const entry = Edit.create(Page).setParent(localised2.id).set({
     title: 'New entry',
     path: 'new-entry'
   })
   await example.commit(entry)
-  const result = await example.get(Query.whereId(entry.entryId))
+  const result = await example.get({
+    select: Entry,
+    filter: {_id: entry.id}
+  })
   assert.is(result.url, '/en/localised2/new-entry')
 })
 

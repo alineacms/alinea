@@ -19,12 +19,13 @@ export const cms = createCMS({
           i18n: {
             locales: ['en', 'fr', 'nl']
           },
-          entries: {
-            seededPath: Config.page(
-              schema.Page({
+          children: {
+            seededPath: Config.page({
+              type: schema.Page,
+              fields: {
                 title: 'Seeded page'
-              })
-            )
+              }
+            })
           }
         }),
         custom: Config.root('Custom', {

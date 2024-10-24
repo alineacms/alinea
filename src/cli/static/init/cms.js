@@ -17,14 +17,15 @@ export const cms = createCMS({
       source: 'content',
       mediaDir: 'public',
       roots: {
-        pages: Config.root('Example project', {
+        site: Config.root('Example site', {
           contains: ['Page'],
-          entries: {
-            welcome: Config.page(
-              Page({
+          children: {
+            welcome: Config.page({
+              type: Page,
+              fields: {
                 title: 'Welcome'
-              })
-            )
+              }
+            })
           }
         }),
         media: Config.media()

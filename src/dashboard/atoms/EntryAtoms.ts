@@ -4,11 +4,11 @@ import {
   ItemInstance
 } from '@headless-tree/core'
 import {Entry} from 'alinea/core/Entry'
-import {EntryPhase} from 'alinea/core/EntryRow'
-import {GraphRealm} from 'alinea/core/Graph'
+import {EntryStatus} from 'alinea/core/EntryRow'
+import {Graph} from 'alinea/core/Graph'
+import {getType} from 'alinea/core/Internal'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Type} from 'alinea/core/Type'
-import {Projection} from 'alinea/core/pages/Projection'
 import {entryFileName} from 'alinea/core/util/EntryFilenames'
 import {
   generateKeyBetween,
@@ -35,23 +35,25 @@ const visibleTypesAtom = atom(get => {
 })
 
 async function entryTreeRoot(
-  active: GraphRealm,
+  graph: Graph,
+  status: 'preferDraft' | 'preferPublished',
   workspace: string,
   root: string,
   visibleTypes: Array<string>
 ): Promise<EntryTreeItem> {
-  const rootEntries = Entry()
-    .where(
-      Entry.workspace.is(workspace),
-      Entry.root.is(root),
-      Entry.parent.isNull(),
-      Entry.active,
-      Entry.type.isIn(visibleTypes)
-    )
-    .select(Entry.i18nId)
-    .groupBy(Entry.i18nId)
-    .orderBy(Entry.index.asc())
-  const children = await active.find(rootEntries)
+  const children = await graph.find({
+    select: Entry.i18nId,
+    groupBy: Entry.i18nId,
+    orderBy: {asc: Entry.index, caseSensitive: true},
+    filter: {
+      _active: true,
+      _workspace: workspace,
+      _root: root,
+      _parentId: null,
+      _type: {in: visibleTypes}
+    },
+    status
+  })
   return {
     id: rootId(root),
     index: '',
@@ -74,49 +76,56 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
     const data = {
       id: Entry.i18nId,
-      entryId: Entry.entryId,
+      entryId: Entry.id,
       type: Entry.type,
       title: Entry.title,
-      phase: Entry.phase,
+      status: Entry.status,
       locale: Entry.locale,
       workspace: Entry.workspace,
       root: Entry.root,
       path: Entry.path,
-      parentPaths({parents}) {
-        return parents(Entry).select(Entry.path)
+      parentPaths: {
+        parents: {},
+        select: Entry.path
       }
-      /*children({children}) {
-        return children(Entry)
-          .where(Entry.type.isIn(visibleTypes))
-          .select(Entry.i18nId)
-          .groupBy(Entry.i18nId)
-          .orderBy(Entry.index.asc())
-      }*/
-    } satisfies Projection
-    const entries = Entry()
-      .select({
+    }
+    const rows = await graph.find({
+      groupBy: Entry.i18nId,
+      select: {
         id: Entry.i18nId,
-        entryId: Entry.entryId,
+        entryId: Entry.id,
         index: Entry.index,
         type: Entry.type,
         data,
-        translations({translations}) {
-          return translations().select(data)
+        translations: {
+          translations: {},
+          select: data
         }
-      })
-      .groupBy(Entry.i18nId)
-      .where(Entry.i18nId.isIn(search))
-    const rows = await graph.preferDraft.find(entries)
+      },
+      filter: {
+        _i18nId: {in: search}
+      },
+      status: 'preferDraft'
+    })
     for (const row of rows) {
       const type = schema[row.type]
-      const orderBy = Type.meta(type).orderChildrenBy ?? Entry.index.asc()
+      const orderBy = getType(type).orderChildrenBy ?? {
+        asc: Entry.index,
+        caseSensitive: true
+      }
       const ids = row.translations.map(row => row.entryId).concat(row.entryId)
-      const children = await graph.preferDraft.find(
-        Entry()
-          .where(Entry.parent.isIn(ids), Entry.type.isIn(visibleTypes))
-          .select({locale: Entry.locale, i18nId: Entry.i18nId})
-          .orderBy(orderBy)
-      )
+      const children = await graph.find({
+        select: {
+          locale: Entry.locale,
+          i18nId: Entry.i18nId
+        },
+        orderBy,
+        filter: {
+          _parentId: {in: ids},
+          _type: {in: visibleTypes}
+        },
+        status: 'preferDraft'
+      })
       const entries = [row.data].concat(row.translations)
       const translatedChildren = new Set(
         children
@@ -143,7 +152,8 @@ const entryTreeItemLoaderAtom = atom(async get => {
       if (id === rootId(root.name)) {
         res.push(
           await entryTreeRoot(
-            graph.preferDraft,
+            graph,
+            'preferDraft',
             workspace.name,
             root.name,
             visibleTypes
@@ -179,7 +189,7 @@ export interface EntryTreeItem {
     entryId: string
     type: string
     title: string
-    phase: EntryPhase
+    status: EntryStatus
     locale: string | null
     workspace: string
     root: string

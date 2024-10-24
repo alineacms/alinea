@@ -6,13 +6,15 @@ import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
 const fields = type('Fields', {
-  normal: check('Check', {inline: true}),
-  focused: check('Check (autofocus)', {inline: true, autoFocus: true}),
-  checked: check('Check (checked by default)', {
-    inline: true,
-    initialValue: true
-  }),
-  readOnly: check('Check (read-only)', {inline: true, readOnly: true})
+  fields: {
+    normal: check('Check', {inline: true}),
+    focused: check('Check (autofocus)', {inline: true, autoFocus: true}),
+    checked: check('Check (checked by default)', {
+      inline: true,
+      initialValue: true
+    }),
+    readOnly: check('Check (read-only)', {inline: true, readOnly: true})
+  }
 })
 
 export function CheckField() {

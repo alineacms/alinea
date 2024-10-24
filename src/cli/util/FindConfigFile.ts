@@ -1,12 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const defaultLocations = [
-  'alinea.config',
-  'src/alinea.config',
-  'cms',
-  'src/cms'
-]
+const defaultLocations = ['cms', 'src/cms']
 const testExtensions = ['.ts', '.tsx', '.js', '.jsx']
 
 export function findConfigFile(cwd: string) {

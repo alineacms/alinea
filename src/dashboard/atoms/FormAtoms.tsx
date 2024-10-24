@@ -6,7 +6,7 @@ import {Atom, Getter, atom} from 'jotai'
 import {PropsWithChildren, createContext, useContext, useMemo} from 'react'
 import * as Y from 'yjs'
 
-import {ROOT_KEY, applyEntryData} from 'alinea/core/Doc'
+import {DOC_KEY, applyEntryData} from 'alinea/core/Doc'
 import {Section} from 'alinea/core/Section'
 import {
   FieldGetter,
@@ -197,7 +197,7 @@ export function useForm<T>(
     if (options.initialValue) {
       applyEntryData(doc, type, {data: options.initialValue} as any)
     }
-    return new FormAtoms(type, doc.getMap(ROOT_KEY))
+    return new FormAtoms(type, doc.getMap(DOC_KEY))
   }, [type, options.doc])
 }
 

@@ -1,4 +1,4 @@
-import {Type} from 'alinea/core/Type'
+import {getType} from 'alinea/core/Internal'
 import {resolveView} from 'alinea/core/View'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
@@ -16,7 +16,7 @@ export function EntryPickerRow({reference}: EntryPickerRowProps) {
   const {schema} = useConfig()
   if (!entry) return null
   const type = schema[entry.type]
-  const typeView = type && Type.meta(type).summaryRow
+  const typeView = type && getType(type).summaryRow
   const View: any = typeView ? resolveView(views, typeView) : EntrySummaryRow
   return <View {...entry} />
 }

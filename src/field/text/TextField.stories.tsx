@@ -5,13 +5,15 @@ import {text} from 'alinea/field/text'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-const fields = type({
-  text: text('Text', {initialValue: 'Hello world'}),
-  focused: text('Text (autofocus)', {autoFocus: true}),
-  readOnly: text('Text (read-only)', {
-    readOnly: true,
-    initialValue: 'Hello world'
-  })
+const fields = type('Fields', {
+  fields: {
+    text: text('Text', {initialValue: 'Hello world'}),
+    focused: text('Text (autofocus)', {autoFocus: true}),
+    readOnly: text('Text (read-only)', {
+      readOnly: true,
+      initialValue: 'Hello world'
+    })
+  }
 })
 
 export function TextField() {

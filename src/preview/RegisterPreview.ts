@@ -1,4 +1,4 @@
-import type {PreviewMetadata, PreviewPayload} from 'alinea/core/Resolver'
+import type {PreviewMetadata, PreviewPayload} from 'alinea/core/Preview'
 import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
 
 export interface PreviewApi {

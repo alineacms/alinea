@@ -13,7 +13,7 @@ const packageJson = {
 }
 
 export async function copyStaticFiles({outDir}: GenerateContext) {
-  await fs.mkdir(outDir, {recursive: true}).catch(console.log)
+  await fs.mkdir(outDir, {recursive: true}).catch(console.error)
 
   await fs.writeFile(
     path.join(outDir, 'release.js'),
