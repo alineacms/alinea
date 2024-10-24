@@ -1,6 +1,8 @@
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {code} from 'alinea/core/util/CodeGen'
+import {keys} from 'alinea/core/util/Objects'
+import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
 import {Plugin} from 'esbuild'
 
 export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
@@ -8,7 +10,9 @@ export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
     name: viewsPlugin.entry,
     setup(build) {
       const views = new Set(
-        Config.referencedViews(cms.config).filter(Boolean) as Array<string>
+        keys(defaultViews).concat(
+          Config.referencedViews(cms.config).filter(Boolean) as Array<string>
+        )
       )
       const entry =
         [...views]
