@@ -24,7 +24,7 @@ export class NextCMS<
   constructor(config: Definition, public baseUrl?: string) {
     let lastSync = 0
     const init = PLazy.from(async () => {
-      if (process.env.NEXT_RUNTIME === 'edge') return undefined!
+      if (process.env.NEXT_RUNTIME === 'edge') throw 'assert'
       const {generatedStore} = await import(
         'alinea/backend/store/GeneratedStore'
       )
