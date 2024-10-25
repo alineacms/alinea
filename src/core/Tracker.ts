@@ -1,5 +1,4 @@
 import {Field, FieldOptions} from './Field.js'
-import {Mutation} from './Mutation.js'
 
 export interface FieldGetter {
   <Value>(field: Field<Value>): Value
@@ -13,10 +12,6 @@ export interface ValueTracker<Value = any> {
   (getter: FieldGetter): Value
 }
 
-export interface MutationTracker {
-  (mutations: Array<Mutation>): Array<Mutation> | Promise<Array<Mutation>>
-}
-
 const optionTrackers = new Map<symbol, OptionsTracker>()
 
 export function optionTrackerOf(field: Field) {
@@ -28,8 +23,6 @@ const valueTrackers = new Map<symbol, ValueTracker>()
 export function valueTrackerOf(field: Field) {
   return valueTrackers.get(Field.ref(field))
 }
-
-const mutationTrackers = new Map<symbol, MutationTracker>()
 
 export namespace track {
   export function options<
