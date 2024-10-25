@@ -323,8 +323,9 @@ export class EntryResolver {
       })
   }
 
-  conditionLocale(Table: typeof EntryRow, locale?: string) {
+  conditionLocale(Table: typeof EntryRow, locale?: string | null) {
     if (!locale) return sql.value(true)
+    if (locale === null) return isNull(Table.locale)
     return eq(Table.locale, locale)
   }
 

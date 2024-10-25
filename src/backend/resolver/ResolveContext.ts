@@ -5,7 +5,7 @@ import {alias} from 'rado'
 interface ResolveContextData {
   status: Status
   location: Array<string>
-  locale: string | undefined
+  locale: string | undefined | null
   depth: number
   expr: ExprContext
 }
