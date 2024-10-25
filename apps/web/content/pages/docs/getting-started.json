@@ -122,7 +122,7 @@
               "_index": "a3",
               "_type": "Variant",
               "name": "bun",
-              "language": "tsx",
+              "language": "shellscript",
               "code": "bun add alinea"
             }
           ]
@@ -197,7 +197,7 @@
               "_index": "a3",
               "_type": "Variant",
               "name": "bun",
-              "language": "tsx",
+              "language": "shellscript",
               "code": "bun alinea init --next"
             }
           ]
@@ -272,24 +272,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Alinea generates a few files at build time which should not be cached when deployed in production. Add `@alinea/generated` to `serverExternalPackages` in your Next.js config file:"
-            }
-          ]
-        },
-        {
-          "_type": "NoticeBlock",
-          "_id": "2nvCsWaPqzkMpQJesljIGv1WfnT",
-          "level": "warning",
-          "body": [
-            {
-              "_type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "For Next.js versions below 15 you'll find the option under `experimental.serverComponentsExternalPackages`."
-                }
-              ]
+              "text": "To work around a few Next.js quirks some config changes are needed. Alinea exports a function to do this for you:"
             }
           ]
         },
@@ -303,7 +286,7 @@
               "_type": "Variant",
               "name": "next.config.js",
               "language": "tsx",
-              "code": "const nextConfig = {\n  // ... other options\n  serverExternalPackages: ['@alinea/generated']\n}\n\nmodule.exports = nextConfig"
+              "code": "const {withAlinea} = require('alinea/next')\n\nconst nextConfig = {...}\n\nmodule.exports = withAlinea(nextConfig)"
             },
             {
               "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
@@ -311,7 +294,7 @@
               "_type": "Variant",
               "name": "next.config.mjs",
               "language": "tsx",
-              "code": "/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  // ... other options\n  serverComponentsExternalPackages: [\"@alinea/generated\"]\n}\n\nexport default nextConfig"
+              "code": "import {withAlinea} from 'alinea/next'\n\nconst nextConfig = {...}\n\nexport default withAlinea(nextConfig)"
             }
           ]
         }
@@ -371,6 +354,14 @@
           "name": "pnpm",
           "language": "shellscript",
           "code": "pnpm alinea dev"
+        },
+        {
+          "_id": "2nvS0mDMAOjffEPMa3RJpL5rzUe",
+          "_index": "a3",
+          "_type": "Variant",
+          "name": "bun",
+          "language": "shellscript",
+          "code": "bun alinea dev"
         }
       ]
     }

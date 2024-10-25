@@ -1,9 +1,7 @@
 import {cms} from '@/cms'
 import {Entry} from 'alinea/core/Entry'
-import dynamic from 'next/dynamic'
 import {Suspense} from 'react'
-
-const DemoPage = dynamic(() => import('./demo/DemoDashboard'), {ssr: false})
+import {DemoPage} from './demo/layout/DemoPage'
 
 export default async function Demo() {
   const entries = await cms.find({
