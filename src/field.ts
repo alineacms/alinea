@@ -1,3 +1,4 @@
+export * from 'alinea/core/field/CreateField'
 export {check} from 'alinea/field/check'
 export {code} from 'alinea/field/code'
 export {date} from 'alinea/field/date'

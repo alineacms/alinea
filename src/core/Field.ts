@@ -26,25 +26,16 @@ export type WithoutLabel<Options extends FieldOptions<any>> = Omit<
   'label'
 >
 
-export interface FieldMeta<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
-> {
-  options: Options
+export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
+  options: Options & FieldOptions<StoredValue>
   view: View<{
     field: Field<StoredValue, QueryValue, Mutator, Options>
   }>
   postProcess?: (value: StoredValue, loader: LinkResolver) => Promise<void>
 }
 
-export interface FieldData<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
-> extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
+export interface FieldData<StoredValue, QueryValue, Mutator, Options>
+  extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   shape: Shape<StoredValue, Mutator>
   referencedViews: Array<string>
 }
@@ -58,7 +49,7 @@ export class Field<
     StoredValue = any,
     QueryValue = any,
     Mutator = any,
-    Options extends FieldOptions<StoredValue> = FieldOptions<StoredValue>
+    Options = any
   >
   extends Expr<QueryValue>
   implements HasField

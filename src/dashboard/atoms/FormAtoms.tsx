@@ -1,4 +1,3 @@
-import type {FieldOptions} from 'alinea/core/Field'
 import {Field} from 'alinea/core/Field'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
@@ -20,7 +19,7 @@ export interface FieldInfo<
   StoredValue = any,
   QueryValue = any,
   Mutator = any,
-  Options extends FieldOptions<StoredValue> = FieldOptions<StoredValue>
+  Options = any
 > {
   key: string
   field: Field<StoredValue, QueryValue, Mutator, Options>
@@ -163,12 +162,7 @@ export class FormAtoms<T = any> {
     return this.fieldInfo(field).key
   }
 
-  fieldInfo<
-    StoredValue,
-    QueryValue,
-    Mutator,
-    Options extends FieldOptions<StoredValue>
-  >(
+  fieldInfo<StoredValue, QueryValue, Mutator, Options>(
     field: Field<StoredValue, QueryValue, Mutator, Options>
   ): FieldInfo<StoredValue, QueryValue, Mutator, Options> {
     const res = this.fields.get(Field.ref(field))

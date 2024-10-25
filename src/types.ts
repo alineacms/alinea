@@ -1,4 +1,3 @@
-export type {Config} from 'alinea/core/Config'
 export type {Infer} from 'alinea/core/Infer'
 export type {Root} from 'alinea/core/Root'
 export type {Schema} from 'alinea/core/Schema'
