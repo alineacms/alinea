@@ -12,17 +12,18 @@ export class ObjectField<Definition> extends RecordField<
   ObjectOptions<Definition>
 > {}
 
-export function object<Definition extends FieldsDefinition>(
+export function object<Fields extends FieldsDefinition>(
   label: string,
-  options: WithoutLabel<
-    {fields: Definition} & FieldOptions<Type.Infer<Definition>>
-  >
-): ObjectField<Definition> {
-  const fields: Type<Definition> = type('Object fields', {
+  options: WithoutLabel<{fields: Fields} & FieldOptions<Type.Infer<Fields>>>
+): ObjectField<Fields> & Fields {
+  const fields: Type<Fields> = type('Object fields', {
     fields: options.fields
   })
-  return new ObjectField(fields, {
-    options: {label, ...options, fields},
-    view: 'alinea/field/object/ObjectField.view#ObjectInput'
-  })
+  return Object.assign(
+    new ObjectField(fields, {
+      options: {label, ...options, fields},
+      view: 'alinea/field/object/ObjectField.view#ObjectInput'
+    }),
+    fields
+  )
 }
