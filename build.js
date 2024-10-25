@@ -65,6 +65,19 @@ function dirsOf(source) {
     })
 }
 
+const cjsModules = {
+  name: 'cjs-modules',
+  setup(build) {
+    build.onEnd(async () => {
+      await esbuild.build({
+        format: 'cjs',
+        entryPoints: ['./src/adapter/next/with-alinea.ts'],
+        outfile: './dist/next.cjs'
+      })
+    })
+  }
+}
+
 /** @type {import('esbuild').Plugin} */
 const bundleTs = {
   name: 'bundle-ts',
@@ -229,6 +242,7 @@ const externalize = {
       if (args.kind === 'entry-point') return
       if (args.path.endsWith('.scss') || args.path.endsWith('.json')) return
       if (!args.resolveDir.startsWith(src)) return
+      if (args.path.endsWith('.cjs')) return
       if (!args.path.endsWith('.js') && !args.path.endsWith('.mjs')) {
         console.error(`Missing file extension on local import: ${args.path}`)
         console.error(`In file: ${args.importer}`)
@@ -267,6 +281,10 @@ const targetPlugin = {
         './package.json': './package.json',
         '.': './dist/index.js',
         './css': './dist/index.css',
+        './next': {
+          require: './dist/next.cjs',
+          default: './dist/next.js'
+        },
         './*.cjs': './dist/*.cjs',
         './*': './dist/*.js'
       }
@@ -502,7 +520,8 @@ async function build({watch, test, report}) {
     jsEntry({watch, test, report}),
     bundleTs,
     ReporterPlugin.configure({name: 'alinea'}),
-    runPlugin
+    runPlugin,
+    cjsModules
   ]
   const context = await esbuild.context({
     bundle: true,

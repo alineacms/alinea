@@ -13,7 +13,7 @@ import {BlogPostMeta} from './blog/BlogPostMeta'
 const styles = styler(css)
 
 export interface BlogPostPageProps {
-  params: {slug: string}
+  params: Promise<{slug: string}>
 }
 
 export const dynamicParams = false
@@ -28,9 +28,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params
 }: BlogPostPageProps): Promise<Metadata> {
+  const {slug} = await params
   const page = await cms.get({
     type: BlogPost,
-    url: `/blog/${params.slug}`
+    url: `/blog/${slug}`
   })
   const openGraphImage = page.metadata?.openGraph.image
   return {
@@ -52,9 +53,10 @@ export async function generateMetadata({
 }
 
 export default async function BlogPostPage({params}: BlogPostPageProps) {
+  const {slug} = await params
   const page = await cms.get({
     type: BlogPost,
-    url: `/blog/${params.slug}`
+    url: `/blog/${slug}`
   })
   return (
     <PageContainer>

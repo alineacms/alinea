@@ -1,3 +1,4 @@
+import {withAlinea} from 'alinea/next'
 import {NextConfig} from 'next'
 
 const nextConfig: NextConfig = {
@@ -9,7 +10,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true
   },
-  serverExternalPackages: ['@alinea/generated'],
   async rewrites() {
     return [
       {
@@ -20,4 +20,4 @@ const nextConfig: NextConfig = {
   }
 }
 
-export default nextConfig
+export default withAlinea(nextConfig)

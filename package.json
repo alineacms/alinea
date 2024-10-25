@@ -108,6 +108,10 @@
     "./package.json": "./package.json",
     ".": "./dist/index.js",
     "./css": "./dist/index.css",
+    "./next": {
+      "require": "./dist/next.cjs",
+      "default": "./dist/next.js"
+    },
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js",
     "./cloud/view/CloudAuth": {
