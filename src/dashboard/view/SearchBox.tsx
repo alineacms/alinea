@@ -33,11 +33,9 @@ export function SearchBox() {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     return {
       select: undefined!,
-      filter: {
-        _workspace: workspace,
-        _root: root,
-        _locale: locale
-      },
+      workspace: workspace,
+      root: root,
+      locale: locale,
       search: terms
     }
   }, [workspace, root, search, locale])

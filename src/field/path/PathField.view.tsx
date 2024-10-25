@@ -40,14 +40,12 @@ export function PathInput({field}: PathInputProps) {
     if (!editor) return []
     return graph.find({
       select: Entry.path,
-      filter: {
-        _root: editor.activeVersion.root,
-        _workspace: editor.activeVersion.workspace,
-        _locale: editor.activeVersion.locale,
-        _parentId: editor.activeVersion.parentId ?? null,
-        _id: {isNot: editor.entryId},
-        _path: {or: {is: inputValue, startsWith: inputValue + '-'}}
-      },
+      root: editor.activeVersion.root,
+      workspace: editor.activeVersion.workspace,
+      locale: editor.activeVersion.locale,
+      parentId: editor.activeVersion.parentId ?? null,
+      id: {isNot: editor.entryId},
+      path: {or: {is: inputValue, startsWith: inputValue + '-'}},
       status: 'preferPublished'
     })
   }

@@ -30,7 +30,7 @@ export async function generateMetadata({
 }: BlogPostPageProps): Promise<Metadata> {
   const page = await cms.get({
     type: BlogPost,
-    filter: {_url: `/blog/${params.slug}`}
+    url: `/blog/${params.slug}`
   })
   const openGraphImage = page.metadata?.openGraph.image
   return {
@@ -54,7 +54,7 @@ export async function generateMetadata({
 export default async function BlogPostPage({params}: BlogPostPageProps) {
   const page = await cms.get({
     type: BlogPost,
-    filter: {_url: `/blog/${params.slug}`}
+    url: `/blog/${params.slug}`
   })
   return (
     <PageContainer>

@@ -45,7 +45,7 @@ async function getPage(params: DocPageParams) {
   return {
     framework,
     doc: await cms.get({
-      filter: {_url: url},
+      url,
       include: {
         ...Doc,
         id: Entry.id,
@@ -107,7 +107,7 @@ export default async function DocPage({params}: DocPageProps) {
   }
   const root = await cms.get({
     select,
-    filter: {_url: '/docs'}
+    url: '/docs'
   })
   const nav = await cms.find({
     location: cms.workspaces.main.pages.docs,

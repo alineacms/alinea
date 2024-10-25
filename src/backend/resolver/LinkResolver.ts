@@ -25,7 +25,7 @@ export class LinkResolver {
               entryId: Entry.id,
               projection: projection
             },
-            filter: {_id: {in: ids}}
+            id: {in: ids}
           }
         )
         const entries = (await query.all(this.store)) as Array<{

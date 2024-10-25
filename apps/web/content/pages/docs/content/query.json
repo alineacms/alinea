@@ -73,7 +73,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28hy8mAMZJiFhtaajix2fKGBKBE",
-      "code": "const entry = await cms.get({\n  type: HomePage,\n  filter: {_id: homePageId}\n})",
+      "code": "const entry = await cms.get({\n  type: HomePage,\n  id: homePageId\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -101,7 +101,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28hyQUttn286uRfAArTKdMWNJVb",
-      "code": "const blogPosts = await cms.find({\n  type: BlogPost,\n  filter: {_parentId: blogId}\n})",
+      "code": "const blogPosts = await cms.find({\n  type: BlogPost,\n  parentId: blogId\n})",
       "fileName": "",
       "language": "",
       "compact": false

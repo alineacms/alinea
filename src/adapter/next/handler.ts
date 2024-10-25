@@ -42,7 +42,7 @@ export function createHandler<Driver extends AvailableDrivers>(
         const url = await connection.resolve({
           first: true,
           select: Entry.url,
-          filter: {_id: info.entryId},
+          id: info.entryId,
           preview: payload ? {payload} : undefined
         })
         if (!url) return new Response('Not found', {status: 404})

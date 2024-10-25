@@ -126,9 +126,7 @@ export function EntryPickerModal({
             }
           }
         },
-        filter: {
-          _id: destination.parentId
-        },
+        id: destination.parentId,
         status: 'preferDraft'
       })
       return res?.parents.concat({

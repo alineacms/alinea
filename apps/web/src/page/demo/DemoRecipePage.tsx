@@ -42,6 +42,6 @@ DemoRecipePage.query = async (graph: Graph, entry: Entry) => {
   return graph.get({
     type: DemoRecipe,
     preview: {entry},
-    filter: {_path: entry.path}
+    path: entry.path
   })
 }

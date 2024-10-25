@@ -182,7 +182,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
           select: Entry.path
         }
       },
-      filter: {_id: parentId},
+      id: parentId,
       status: 'preferPublished'
     })
 
@@ -191,7 +191,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const path = slugify(basename(upload.file.name, extensionOriginal))
     const prev = await graph.first({
       select: Entry,
-      filter: {_parentId: parentId},
+      parentId: parentId,
       status: 'preferPublished'
     })
     const entryLocation = {

@@ -81,10 +81,8 @@ export const entryEditorAtoms = atomFamily(
       const graph = await get(graphAtom)
       let entry: EntryRow | null = await graph.first({
         select: Entry,
-        filter: {
-          _id: i18nId,
-          _locale: locale ?? undefined
-        },
+        id: i18nId,
+        locale: locale ?? undefined,
         status: 'preferDraft'
       })
       if (!entry) {
@@ -92,10 +90,8 @@ export const entryEditorAtoms = atomFamily(
         const preferredLanguage = searchParams.get('from')
         entry = await graph.first({
           select: Entry,
-          filter: {
-            _locale: preferredLanguage ?? undefined,
-            _i18nId: i18nId
-          },
+          locale: preferredLanguage ?? undefined,
+          i18nId: i18nId,
           status: 'preferDraft'
         })
       }
@@ -138,9 +134,7 @@ export const entryEditorAtoms = atomFamily(
             select: Entry.i18nId
           }
         },
-        filter: {
-          _id: entryId
-        },
+        id: entryId,
         status: 'all'
       })
       const withParents = await graph.first({
@@ -174,13 +168,14 @@ export const entryEditorAtoms = atomFamily(
         entry.parentId &&
         (await graph.first({
           select: Entry.i18nId,
-          filter: {_id: entry.parentId},
+          id: entry.parentId,
           status: 'preferDraft'
         }))
       const parentNeedsTranslation = parentLink
         ? !(await graph.find({
             select: Entry,
-            filter: {_i18nId: parentLink, _locale: locale},
+            i18nId: parentLink,
+            locale: locale,
             status: 'preferDraft'
           }))
         : false
@@ -338,7 +333,7 @@ export function createEntryEditor(entryData: EntryData) {
       activeVersion.parentId &&
       (await graph.get({
         select: Entry.i18nId,
-        filter: {_id: activeVersion.parentId},
+        id: activeVersion.parentId,
         status: 'preferDraft'
       }))
     if (activeVersion.parentId && !parentLink)
@@ -354,9 +349,7 @@ export function createEntryEditor(entryData: EntryData) {
               select: Entry.path
             }
           },
-          filter: {
-            _i18nId: parentLink
-          },
+          i18nId: parentLink,
           status: 'preferDraft'
         })
       : undefined
@@ -405,9 +398,7 @@ export function createEntryEditor(entryData: EntryData) {
               select: Entry.path
             }
           },
-          filter: {
-            _i18nId: entry.i18nId
-          },
+          i18nId: entry.i18nId,
           status: 'preferPublished'
         })
         for (const translation of translations) {

@@ -46,11 +46,9 @@ const editLoader = atomFamily(() => {
         root: Entry.root,
         workspace: Entry.workspace
       },
-      filter: {
-        _url: url,
-        _workspace: workspace,
-        _root: root
-      },
+      url: url,
+      workspace: workspace,
+      root: root,
       status: 'preferDraft'
     })
     if (!entry) return null

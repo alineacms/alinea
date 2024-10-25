@@ -16,7 +16,7 @@ import {urlPicker} from 'alinea/picker/url'
 import {EntryLink} from './EntryLink.js'
 import {UrlLink} from './UrlLink.js'
 
-export type AnyLink<InferredFields> =
+export type Link<InferredFields> =
   | EntryLink<InferredFields>
   | UrlLink<InferredFields>
   | FileLink<InferredFields>
@@ -28,8 +28,8 @@ export interface LinkOptions<Definition, Row> extends LinkFieldOptions<Row> {
 export function link<Fields>(
   label: Label,
   options: WithoutLabel<LinkOptions<Fields, Reference>> = {}
-): LinkField<Reference, AnyLink<Type.Infer<Fields>>> {
-  return createLink<Reference, AnyLink<Type.Infer<Fields>>>(label, {
+): LinkField<Reference, Link<Type.Infer<Fields>>> {
+  return createLink<Reference, Link<Type.Infer<Fields>>>(label, {
     ...options,
     pickers: {
       entry: entryPicker<EntryReference, Fields>({
@@ -49,7 +49,7 @@ export namespace link {
     label: Label,
     options: WithoutLabel<LinkOptions<Fields, Array<ListRow>>> = {}
   ) {
-    return createLinks<ListRow, AnyLink<Type.Infer<Fields>>>(label, {
+    return createLinks<ListRow, Link<Type.Infer<Fields>>>(label, {
       ...options,
       pickers: {
         entry: entryPicker<EntryReference, Fields>({

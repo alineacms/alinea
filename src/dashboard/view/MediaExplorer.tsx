@@ -62,9 +62,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
             title: Entry.title,
             parent: Entry.parentId
           },
-          filter: {
-            _id: parentId
-          },
+          id: parentId,
           status: 'preferDraft'
         }))
       return {...info, query}

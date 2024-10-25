@@ -72,7 +72,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     async () => {
       return graph.get({
         select: parentData,
-        filter: {_id: parentId},
+        id: parentId,
         status: 'preferDraft'
       })
     },
@@ -120,7 +120,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     } else {
       const parent = await graph.get({
         select: parentData,
-        filter: {_id: parentId},
+        id: parentId,
         status: 'preferDraft'
       })
       const parentType = parent && config.schema[parent.type]
@@ -222,7 +222,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const parentId = form.data().parent?.[EntryReference.entry]
     const parent = await graph.first({
       select: parentData,
-      filter: {_id: parentId},
+      id: parentId,
       status: 'preferPublished'
     })
     const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
@@ -235,7 +235,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const entryData = copyFrom
       ? await graph.first({
           select: Entry.data,
-          filter: {_id: copyFrom},
+          id: copyFrom,
           status: 'preferPublished'
         })
       : {}

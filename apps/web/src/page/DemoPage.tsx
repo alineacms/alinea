@@ -9,9 +9,7 @@ export default async function Demo() {
   const entries = await cms.find({
     select: Entry,
     orderBy: {asc: Entry.level},
-    filter: {
-      _workspace: 'demo'
-    }
+    location: cms.workspaces.demo
   })
   return (
     <Suspense>

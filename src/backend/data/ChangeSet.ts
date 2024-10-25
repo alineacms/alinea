@@ -162,9 +162,7 @@ export class ChangeSetCreator {
           select: {location: MediaFile.location}
         }
       },
-      filter: {
-        _id: entryId
-      },
+      id: entryId,
       status: 'preferPublished'
     })
     if (!result) return []

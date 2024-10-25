@@ -82,14 +82,12 @@ async function suffixPaths(
         const {entry} = mutation
         const conflictingPaths = await graph.find({
           select: Entry.path,
-          filter: {
-            _root: entry.root,
-            _workspace: entry.workspace,
-            _locale: entry.locale,
-            _parentId: entry.parentId ?? null,
-            _path: {
-              or: {is: entry.path, startsWith: entry.path + '-'}
-            }
+          root: entry.root,
+          workspace: entry.workspace,
+          locale: entry.locale,
+          parentId: entry.parentId ?? null,
+          path: {
+            or: {is: entry.path, startsWith: entry.path + '-'}
           },
           status: 'preferPublished'
         })

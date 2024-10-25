@@ -216,7 +216,7 @@
         {
           "_type": "CodeBlock",
           "_id": "2lFH4jKdDEEw2cDbg9YYUPdsOtw",
-          "code": "export const cms = createCMS({\n  // ... schema, workspaces\n\n  // Point to your Next.js website\n  baseUrl: {\n    development: 'http://localhost:3000'\n  },\n  handlerUrl: '/api/cms',\n  dashboardFile: 'admin.html',\n  \n  // Enable live previews\n  preview: true\n})",
+          "code": "export const cms = createCMS({\n  // ... schema, workspaces\n\n  baseUrl: {\n    // Point to your Next.js website\n    development: 'http://localhost:3000',\n    // If hosting on vercel you can use: process.env.VERCEL_URL\n    production: 'http://example.com'\n  },\n  handlerUrl: '/api/cms',\n  dashboardFile: 'admin.html',\n  \n  // Enable live previews\n  preview: true\n})",
           "fileName": "src/cms.tsx",
           "language": ""
         },

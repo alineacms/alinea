@@ -3,7 +3,7 @@ import * as cito from 'cito'
 import {Config} from './Config.js'
 import {EntryFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
-import {Filter} from './Filter.js'
+import {Condition, Filter} from './Filter.js'
 import {Page} from './Page.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
@@ -142,13 +142,30 @@ export declare class QuerySettings {
   /** Return the count of results found */
   count?: true
 
-  filter?: Filter<EntryFields>
+  /** Filter by id */
+  id?: Condition<string>
+  /** Filter by i18nId */
+  i18nId?: Condition<string>
+  /** Filter by parentId */
+  parentId?: Condition<string | null>
+  /** Filter by path */
+  path?: Condition<string>
+  /** Filter by url */
+  url?: Condition<string>
+  /** Filter by workspace */
+  workspace?: Condition<string> | Workspace
+  /** Filter by root */
+  root?: Condition<string> | Root
 
   /** Filter results by location */
   location?: Location
-  /** Filter results by locale */
-  locale?: string
+  /** Filter by locale */
+  locale?: string | null
 
+  /** Filter by fields */
+  filter?: Filter<EntryFields>
+
+  /** Filter by search terms */
   search?: string | Array<string>
 
   /** The time in seconds to poll for updates to content */
@@ -230,14 +247,16 @@ export class Graph {
     return <any>this.#resolver.resolve({...query, first: true})
   }
 
-  get<
+  async get<
     Selection extends SelectionGuard = undefined,
     Type extends TypeGuard = undefined,
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
   ): Promise<GetQueryResult<Selection, Type, Include>> {
-    return <any>this.#resolver.resolve({...query, get: true})
+    const result = await (<any>this.#resolver.resolve({...query, get: true}))
+    if (!result) throw new Error('Entry not found')
+    return result
   }
 
   count<

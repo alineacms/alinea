@@ -8,11 +8,19 @@ import {
   GraphQuery,
   Order,
   Projection,
+  QuerySettings,
   querySource,
   RelatedQuery,
   Status
 } from 'alinea/core/Graph'
-import {getExpr, HasExpr, hasExpr, hasField} from 'alinea/core/Internal'
+import {
+  getExpr,
+  HasExpr,
+  hasExpr,
+  hasField,
+  hasRoot,
+  hasWorkspace
+} from 'alinea/core/Internal'
 import {Schema} from 'alinea/core/Schema'
 import {getScope, Scope} from 'alinea/core/Scope'
 import {Type} from 'alinea/core/Type'
@@ -357,6 +365,28 @@ export class EntryResolver {
     }
   }
 
+  conditionEntryFields(ctx: ResolveContext, query: QuerySettings) {
+    const workspace =
+      query.workspace &&
+      typeof query.workspace === 'object' &&
+      hasWorkspace(query.workspace)
+        ? this.scope.nameOf(query.workspace)
+        : query.workspace
+    const root =
+      query.root && typeof query.root === 'object' && hasRoot(query.root)
+        ? this.scope.nameOf(query.root)
+        : query.root
+    return this.conditionFilter(ctx, {
+      _id: query.id,
+      _i18nId: query.i18nId,
+      _parentId: query.parentId,
+      _path: query.path,
+      _url: query.url,
+      _workspace: workspace,
+      _root: root
+    })
+  }
+
   conditionSearch(
     Table: typeof EntryRow,
     searchTerms: string | Array<string> | undefined
@@ -454,12 +484,14 @@ export class EntryResolver {
     let condition = and(
       preCondition,
       type ? this.conditionTypes(ctx, type as Type | Array<Type>) : undefined,
+      this.conditionEntryFields(ctx, query),
       this.conditionLocation(ctx.Table, ctx.location),
       this.conditionStatus(ctx.Table, ctx.status),
       querySource(query) === 'translations'
         ? undefined
         : this.conditionLocale(ctx.Table, ctx.locale),
-      this.conditionSearch(ctx.Table, search)
+      this.conditionSearch(ctx.Table, search),
+      filter && this.conditionFilter(ctx, filter)
     )
     if (skip) q = q.offset(skip)
     if (take) q = q.limit(take)
@@ -467,9 +499,7 @@ export class EntryResolver {
     let result = new Select({
       ...queryData,
       select: selection(toSelect),
-      where: filter
-        ? and(condition, this.conditionFilter(ctx, filter))
-        : condition
+      where: condition
     })
     if (groupBy)
       result = result.groupBy(

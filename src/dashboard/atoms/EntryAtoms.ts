@@ -102,9 +102,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
           select: data
         }
       },
-      filter: {
-        _i18nId: {in: search}
-      },
+      i18nId: {in: search},
       status: 'preferDraft'
     })
     for (const row of rows) {

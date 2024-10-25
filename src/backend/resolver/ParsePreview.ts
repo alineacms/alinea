@@ -27,9 +27,7 @@ export function createPreviewParser(db: Database) {
       const entry = await db.resolver.resolve({
         first: true,
         select: Entry,
-        filter: {
-          _id: update.entryId
-        },
+        id: update.entryId,
         status: 'preferDraft'
       })
       if (!entry) return

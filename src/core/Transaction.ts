@@ -11,6 +11,7 @@ import {createId} from './Id.js'
 import {Mutation, MutationType} from './Mutation.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
+import {getScope} from './Scope.js'
 import {EntryUrlMeta, Type} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {isImage} from './media/IsImage.js'
@@ -51,24 +52,28 @@ export class Operation {
   }
 }
 
-export interface UploadOptions {
+export interface UploadQuery {
+  file: File | [string, Uint8Array]
+  workspace?: string
+  root?: string
+  parentId?: string
   createPreview?(blob: Blob): Promise<ImagePreviewDetails>
 }
 
 export class UploadOperation extends Operation {
-  entryId = createId()
-  private parentId?: string
-  private workspace?: string
-  private root?: string
+  id = createId()
 
-  constructor(file: File | [string, Uint8Array], options: UploadOptions = {}) {
+  constructor(query: UploadQuery) {
     super(async (cms: CMS): Promise<Array<Mutation>> => {
+      const entryId = this.id
+      const {file, createPreview} = query
+      const {workspace: _workspace, root: _root, parentId: _parentId} = query
       const {config, connect} = cms
       const fileName = Array.isArray(file) ? file[0] : file.name
       const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
-      const workspace = this.workspace ?? Object.keys(config.workspaces)[0]
+      const workspace = _workspace ?? Object.keys(config.workspaces)[0]
       const root =
-        this.root ?? Workspace.defaultMediaRoot(config.workspaces[workspace])
+        _root ?? Workspace.defaultMediaRoot(config.workspaces[workspace])
       const extension = extname(fileName)
       const path = slugify(basename(fileName, extension))
       const directory = workspaceMediaDir(config, workspace)
@@ -76,11 +81,9 @@ export class UploadOperation extends Operation {
       const cnx = await connect()
       const info = await cnx.prepareUpload(uploadLocation)
       const previewData = isImage(fileName)
-        ? await options.createPreview?.(
-            file instanceof Blob ? file : new Blob([body])
-          )
+        ? await createPreview?.(file instanceof Blob ? file : new Blob([body]))
         : undefined
-      fetch(info.url, {method: info.method ?? 'POST', body}).then(
+      await fetch(info.url, {method: info.method ?? 'POST', body}).then(
         async result => {
           if (!result.ok)
             throw new HttpError(
@@ -89,10 +92,10 @@ export class UploadOperation extends Operation {
             )
         }
       )
-      const parent = this.parentId
+      const parent = _parentId
         ? await cms.first({
             select: Entry,
-            filter: {_id: this.parentId},
+            id: _parentId,
             status: 'preferPublished'
           })
         : null
@@ -117,7 +120,7 @@ export class UploadOperation extends Operation {
         'MediaFile',
         {
           path,
-          id: this.entryId,
+          id: entryId,
           workspace,
           root,
           data: entryData
@@ -129,7 +132,7 @@ export class UploadOperation extends Operation {
       return [
         {
           type: MutationType.Upload,
-          entryId: this.entryId,
+          entryId: entryId,
           url: info.previewUrl,
           file: info.location
         },
@@ -142,66 +145,55 @@ export class UploadOperation extends Operation {
       ]
     })
   }
-
-  setParent(parentId: string) {
-    this.parentId = parentId
-    return this
-  }
-
-  setWorkspace(workspace: string) {
-    this.workspace = workspace
-    return this
-  }
-
-  setRoot(root: string) {
-    this.root = root
-    return this
-  }
 }
 
 export class DeleteOp extends Operation {
-  constructor(protected entryId: string) {
+  constructor(protected entryIds: Array<string>) {
     super(async cms => {
-      const entry = await cms.get({
+      const entries = await cms.find({
         select: Entry,
-        filter: {_id: this.entryId},
+        id: {in: entryIds},
         status: 'preferPublished'
       })
-      const parentPaths = entryParentPaths(cms.config, entry)
-      const file = entryFileName(cms.config, entry, parentPaths)
-      return [
-        {
+      return entries.map(entry => {
+        const parentPaths = entryParentPaths(cms.config, entry)
+        const file = entryFileName(cms.config, entry, parentPaths)
+        return {
           type: MutationType.Remove,
-          entryId: this.entryId,
+          entryId: entry.id,
           file
         }
-      ]
+      })
     })
   }
 }
 
-export class EditOperation<Definition> extends Operation {
-  private entryData?: Partial<StoredRow<Definition>>
-  private changeStatus?: EntryStatus
+export interface UpdateQuery<Fields> {
+  id: string
+  type?: Type<Fields>
+  status?: Status
+  set?: Partial<StoredRow<Fields>>
+}
 
-  constructor(protected entryId: string) {
+export class UpdateOperation<Definition> extends Operation {
+  constructor(query: UpdateQuery<Definition>) {
     super(async cms => {
+      const {status: changeStatus, set} = query
+      const entryId = query.id
       let status: Status
-      if (this.changeStatus === EntryStatus.Draft) status = 'preferDraft'
-      else if (this.changeStatus === EntryStatus.Archived)
-        status = 'preferPublished'
-      else if (this.changeStatus === EntryStatus.Published)
-        status = 'preferDraft'
+      if (changeStatus === EntryStatus.Draft) status = 'preferDraft'
+      else if (changeStatus === EntryStatus.Archived) status = 'preferPublished'
+      else if (changeStatus === EntryStatus.Published) status = 'preferDraft'
       else status = 'preferPublished'
       const entry = await cms.get({
         select: Entry,
-        filter: {_id: this.entryId},
+        id: entryId,
         status
       })
       const parent = entry.parentId
         ? await cms.get({
             select: Entry,
-            filter: {_id: entry.parentId},
+            id: entry.parentId,
             status: 'preferPublished'
           })
         : undefined
@@ -214,11 +206,11 @@ export class EditOperation<Definition> extends Operation {
       )
       const type = cms.config.schema[entry.type]
       const mutations: Array<Mutation> = []
-      const createDraft = this.changeStatus === EntryStatus.Draft
+      const createDraft = changeStatus === EntryStatus.Draft
       if (createDraft)
         mutations.push({
           type: MutationType.Edit,
-          entryId: this.entryId,
+          entryId: entryId,
           file,
           entry: await createEntry(
             cms.config,
@@ -226,31 +218,31 @@ export class EditOperation<Definition> extends Operation {
             {
               ...entry,
               status: EntryStatus.Draft,
-              data: {...entry.data, ...this.entryData}
+              data: {...entry.data, ...set}
             },
             parent
           )
         })
-      else if (this.entryData)
+      else if (set)
         mutations.push({
           type: MutationType.Patch,
-          entryId: this.entryId,
+          entryId: entryId,
           file,
-          patch: this.entryData
+          patch: set
         })
-      switch (this.changeStatus) {
+      switch (changeStatus) {
         case EntryStatus.Published:
           mutations.push({
             type: MutationType.Publish,
             status: entry.status,
-            entryId: this.entryId,
+            entryId: entryId,
             file
           })
           break
         case EntryStatus.Archived:
           mutations.push({
             type: MutationType.Archive,
-            entryId: this.entryId,
+            entryId: entryId,
             file
           })
           break
@@ -258,63 +250,24 @@ export class EditOperation<Definition> extends Operation {
       return mutations
     })
   }
+}
 
-  set(entryData: Partial<StoredRow<Definition>>) {
-    this.entryData = {...this.entryData, ...entryData}
-    return this
-  }
-
-  draft() {
-    this.changeStatus = EntryStatus.Draft
-    return this
-  }
-
-  archive() {
-    this.changeStatus = EntryStatus.Archived
-    return this
-  }
-
-  publish() {
-    this.changeStatus = EntryStatus.Published
-    return this
-  }
+export interface CreateQuery<Fields> {
+  type: Type<Fields>
+  workspace?: string
+  root?: string
+  parentId?: string
+  locale?: string
+  set?: Partial<StoredRow<Fields>>
 }
 
 export class CreateOperation<Definition> extends Operation {
-  /** @internal */
-  entry: Partial<Entry>
-  private entryRow = async (cms: CMS) => {
-    const partial = this.entry
-    const type = this.type ? this.typeName(cms.config, this.type) : partial.type
-    if (!type) throw new TypeError(`Type is missing`)
-    const parent = await (this.parentRow
-      ? this.parentRow(cms)
-      : partial.parentId
-      ? cms.get({
-          select: Entry,
-          filter: {_id: partial.parentId},
-          status: 'preferPublished'
-        })
-      : undefined)
-    const previousIndex = await cms.first({
-      status: 'preferPublished',
-      select: Entry.index,
-      filter: {
-        _parentId: parent?.id ?? null
-      },
-      orderBy: {desc: Entry.index, caseSensitive: true}
-    })
-    const index = generateKeyBetween(previousIndex, null)
-    return createEntry(cms.config, type, {...partial, index}, parent)
-  }
+  id = createId()
 
-  constructor(
-    entry: Partial<Entry>,
-    private type?: Type<Definition>,
-    private parentRow?: (cms: CMS) => Promise<EntryRow>
-  ) {
+  constructor(query: CreateQuery<Definition>) {
     super(async (cms): Promise<Array<Mutation>> => {
-      const entry = await this.entryRow(cms)
+      const entryId = this.id
+      const entry = await entryRow()
       const parentPaths = entryParentPaths(cms.config, entry)
       const file = entryFileName(cms.config, entry, parentPaths)
       return [
@@ -325,45 +278,46 @@ export class CreateOperation<Definition> extends Operation {
           entry: entry
         }
       ]
+      async function entryRow() {
+        const {workspace, root, parentId, locale, set} = query
+        const typeName = getScope(cms.config).nameOf(query.type)
+        if (!typeName)
+          throw new Error(
+            `Type "${Type.label(query.type)}" not found in Schema`
+          )
+        const partial: Partial<EntryRow> = {
+          id: entryId,
+          type: typeName,
+          workspace,
+          root,
+          parentId,
+          locale,
+          data: set
+        }
+        let parent: EntryRow | undefined
+        try {
+          parent = await (parentId
+            ? cms.get({
+                select: Entry,
+                id: parentId,
+                status: 'preferPublished'
+              })
+            : undefined)
+        } catch {
+          throw new Error(
+            `Parent entry not found: ${parentId}, try commiting it first?`
+          )
+        }
+        const previousIndex = await cms.first({
+          status: 'preferPublished',
+          select: Entry.index,
+          parentId: parent?.id ?? null,
+          orderBy: {desc: Entry.index, caseSensitive: true}
+        })
+        const index = generateKeyBetween(previousIndex, null)
+        return createEntry(cms.config, typeName, {...partial, index}, parent)
+      }
     })
-    this.entry = {id: createId(), ...entry}
-  }
-
-  setParent(parentId: string) {
-    this.entry.parentId = parentId
-    return this
-  }
-
-  setWorkspace(workspace: string) {
-    this.entry.workspace = workspace
-    return this
-  }
-
-  setRoot(root: string) {
-    this.entry.root = root
-    return this
-  }
-
-  setLocale(locale: string | null) {
-    this.entry.locale = locale
-    return this
-  }
-
-  set(entryData: Partial<StoredRow<Definition>>) {
-    this.entry.data = {...this.entry.data, ...entryData}
-    return this
-  }
-
-  createChild<Definition>(type: Type<Definition>) {
-    return new CreateOperation({}, type, this.entryRow)
-  }
-
-  get id() {
-    return this.entry.id!
-  }
-
-  static fromType<Definition>(type: Type<Definition>) {
-    return new CreateOperation({}, type)
   }
 }
 

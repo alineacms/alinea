@@ -28,9 +28,7 @@ export const entrySummaryLoaderAtom = atom(async get => {
     const res = new Map()
     const entries: Array<EntrySummary> = await graph.find({
       select: selection,
-      filter: {
-        _id: {in: ids}
-      },
+      id: {in: ids},
       status: 'preferDraft'
     })
     for (const entry of entries) res.set(entry.entryId, entry)

@@ -23,7 +23,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({params}: GenericPageProps) {
   const page = await cms.first({
     type: Page,
-    filter: {_url: `/${params.slug}`}
+    url: `/${params.slug}`
   })
   if (!page) return notFound()
   return {title: page.metadata?.title || page.title}
@@ -32,7 +32,7 @@ export async function generateMetadata({params}: GenericPageProps) {
 export default async function GenericPage({params}: GenericPageProps) {
   const page = await cms.first({
     type: Page,
-    filter: {_url: `/${params.slug}`}
+    url: `/${params.slug}`
   })
   if (!page) return notFound()
   return (
