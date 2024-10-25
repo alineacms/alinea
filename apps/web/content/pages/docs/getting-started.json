@@ -272,7 +272,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Alinea generates a few files at build time which should not be cached when deployed in production. Add `@alinea/generated` to `serverComponentsExternalPackages` in your Next.js config file:"
+              "text": "Alinea generates a few files at build time which should not be cached when deployed in production. Add `@alinea/generated` to `serverExternalPackages` in your Next.js config file:"
             }
           ]
         },
@@ -287,7 +287,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "For Next.js versions below 15 you'll find the option under `experimental`."
+                  "text": "For Next.js versions below 15 you'll find the option under `experimental.serverComponentsExternalPackages`."
                 }
               ]
             }
@@ -303,7 +303,7 @@
               "_type": "Variant",
               "name": "next.config.js",
               "language": "tsx",
-              "code": "const nextConfig = {\n  // ... other options\n  serverComponentsExternalPackages: ['@alinea/generated']\n}\n\nmodule.exports = nextConfig"
+              "code": "const nextConfig = {\n  // ... other options\n  serverExternalPackages: ['@alinea/generated']\n}\n\nmodule.exports = nextConfig"
             },
             {
               "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",

@@ -34,13 +34,19 @@ async function requestOrigin() {
   return `${protocol}//${host}`
 }
 
-async function requestHeaders(): Promise<Headers> {
-  try {
-    const {getExpectedRequestStore} = await import(
-      'next/dist/client/components/request-async-storage.external.js'
+function requestHeaders(): Promise<Headers> {
+  return import(
+    // @ts-ignore
+    'next/dist/client/components/request-async-storage.external.js'
+  )
+    .catch(
+      () =>
+        import(
+          'next/dist/server/app-render/work-unit-async-storage.external.js'
+        )
     )
-    return getExpectedRequestStore('headers').headers
-  } catch {
-    return new Headers()
-  }
+    .then(
+      ({getExpectedRequestStore}) => getExpectedRequestStore('headers').headers
+    )
+    .catch(() => new Headers())
 }

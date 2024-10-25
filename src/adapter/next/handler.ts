@@ -34,7 +34,7 @@ export function createHandler<Driver extends AvailableDrivers>(
         const previewToken = searchParams.get('preview')
         if (!previewToken) return new Response('Not found', {status: 404})
         const info = await previews.verify(previewToken)
-        const cookie = cookies()
+        const cookie = await cookies()
         const connection = devUrl()
           ? await cms.connect()
           : handleBackend.connect(context)
@@ -51,7 +51,8 @@ export function createHandler<Driver extends AvailableDrivers>(
         // listening on all interfaces
         if (source.hostname === '0.0.0.0') source.hostname = 'localhost'
         const location = new URL(url, source.origin)
-        draftMode().enable()
+        const dm = await draftMode()
+        dm.enable()
         return new Response(`Redirecting...`, {
           status: 302,
           headers: {location: String(location)}

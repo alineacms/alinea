@@ -1,7 +1,7 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import {NextConfig} from 'next'
+
+const nextConfig: NextConfig = {
   reactStrictMode: false,
-  swcMinify: true,
   typescript: {
     // We check types in plenty other places, no need to waste time here
     ignoreBuildErrors: true
@@ -9,10 +9,8 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@alinea/generated']
-  },
-  rewrites() {
+  serverExternalPackages: ['@alinea/generated'],
+  async rewrites() {
     return [
       {
         source: '/docs\\::framework/:path*',
@@ -22,4 +20,4 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig
+export default nextConfig

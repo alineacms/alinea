@@ -6,9 +6,9 @@ import {notFound} from 'next/navigation'
 import {TextFieldView} from './blocks/TextFieldView'
 
 export interface GenericPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export const dynamicParams = false
@@ -21,18 +21,20 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({params}: GenericPageProps) {
+  const {slug} = await params
   const page = await cms.first({
     type: Page,
-    url: `/${params.slug}`
+    url: `/${slug}`
   })
   if (!page) return notFound()
   return {title: page.metadata?.title || page.title}
 }
 
 export default async function GenericPage({params}: GenericPageProps) {
+  const {slug} = await params
   const page = await cms.first({
     type: Page,
-    url: `/${params.slug}`
+    url: `/${slug}`
   })
   if (!page) return notFound()
   return (
