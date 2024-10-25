@@ -1,7 +1,6 @@
 import {Headers} from '@alinea/iso'
 import {Database} from 'alinea/backend/Database'
 import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
-import {generatedStore} from 'alinea/backend/store/GeneratedStore'
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
@@ -25,10 +24,16 @@ export class NextCMS<
 > extends CMS<Definition> {
   constructor(config: Definition, public baseUrl?: string) {
     let lastSync = 0
-    const database = PLazy.from(() =>
-      generatedStore.then(store => new Database(this.config, store))
-    )
-    const previewParser = PLazy.from(() => database.then(createPreviewParser))
+    const init = PLazy.from(async () => {
+      if (process.env.NEXT_RUNTIME === 'edge') throw 'assert'
+      const {generatedStore} = await import(
+        'alinea/backend/store/GeneratedStore'
+      )
+      const store = await generatedStore
+      const db = new Database(config, store)
+      const previews = createPreviewParser(db)
+      return {db, previews}
+    })
     super(config, async () => {
       const context = await requestContext(config)
       const client = new Client({
@@ -41,7 +46,6 @@ export class NextCMS<
         }
       })
       const clientResolve = client.resolve.bind(client)
-      const sync = () => database.then(db => db.syncWith(client))
       return assign(client, {
         async resolve(params: GraphQuery) {
           const isDev = Boolean(devUrl())
@@ -53,13 +57,14 @@ export class NextCMS<
             const payload = getPreviewPayloadFromCookies(cookie.getAll())
             if (payload) preview = {payload}
           }
-          if (isDev) return clientResolve({preview, ...params})
+          if (process.env.NEXT_RUNTIME === 'edge' || isDev)
+            return clientResolve({preview, ...params})
           const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
           const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
-          const db = await database
+          const {db, previews} = await init
+          const sync = () => db.syncWith(client)
           if (!isBuild) {
             if (preview) {
-              const previews = await previewParser
               preview = await previews.parse(
                 preview,
                 sync,

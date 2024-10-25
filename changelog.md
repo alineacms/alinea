@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.11.2]
+
+- Querying data in a Next.js edge route or middleware will forward the request
+  to your CMS handler. This will keep the code size of the edge route to a 
+  minimum.
+
 ## [0.11.1]
 
 - Fix RichTextEditor.addHtml not parsing marks correctly
