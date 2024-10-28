@@ -45,6 +45,7 @@ import {
   lt,
   lte,
   ne,
+  not,
   or,
   Select,
   selection,
@@ -468,6 +469,8 @@ export class EntryResolver {
             return and(...mapCondition([key, value]))
           case 'in':
             return inArray(field, value)
+          case 'notIn':
+            return not(inArray(field, value))
           default:
             throw new Error(`Unknown filter operator: "${op}"`)
         }
