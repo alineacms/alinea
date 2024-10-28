@@ -358,9 +358,9 @@ export function createEntryEditor(entryData: EntryData) {
     const parentPaths = parentData?.paths
       ? parentData.paths.concat(parentData.path)
       : []
-    const entryId = createId()
+    const id = createId()
     const entry = await getDraftEntry({
-      entryId,
+      id,
       status: EntryStatus.Published,
       parent: parentData?.entryId,
       parentPaths,
@@ -369,7 +369,7 @@ export function createEntryEditor(entryData: EntryData) {
     const mutation: Mutation = {
       type: MutationType.Create,
       file: entryFile(entry, parentPaths),
-      entryId,
+      entryId: id,
       entry
     }
     return set(transact, {
@@ -619,7 +619,7 @@ export function createEntryEditor(entryData: EntryData) {
     path?: string
     parentPaths?: Array<string>
     locale?: string | null
-    entryId?: string
+    id?: string
     parent?: string
   }
   async function getDraftEntry(
@@ -629,14 +629,14 @@ export function createEntryEditor(entryData: EntryData) {
     const status = options.status ?? activeVersion.status
     const locale = options.locale ?? activeVersion.locale
     const path = options.path ?? data.path ?? activeVersion.path
-    const entryId = options.entryId ?? activeVersion.id
+    const id = options.id ?? activeVersion.id
     const parent = options.parent ?? activeVersion.parentId
     const parentPaths =
       options.parentPaths ?? entryData.parents.map(p => p.path)
     const draftEntry = {
       ...activeVersion,
       ...data,
-      entryId,
+      id,
       parent,
       locale,
       path,
