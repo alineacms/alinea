@@ -1,10 +1,11 @@
 import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {ReactNode} from 'react'
 
 export interface PathOptions extends FieldOptions<string> {
   width?: number
   from?: string
-  help?: string
+  help?: ReactNode
   inline?: boolean
 }
 

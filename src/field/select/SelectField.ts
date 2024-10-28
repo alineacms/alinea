@@ -1,5 +1,6 @@
 import {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {ReactNode} from 'react'
 
 /** A string record with option labels */
 export type SelectItems<T extends string> = Record<T, string>
@@ -9,7 +10,7 @@ export interface SelectConfig<Key> extends FieldOptions<Key> {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: string
+  help?: ReactNode
   /** Display a minimal version */
   inline?: boolean
   /** Choose a custom placeholder (eg. 'Select an option')  */
