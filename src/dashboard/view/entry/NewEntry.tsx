@@ -238,7 +238,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
           id: copyFrom,
           status: 'preferPublished'
         })
-      : {}
+      : Type.initialValue(entryType)
     const entry = await createEntryRow(config, {
       id: entryId,
       ...data,

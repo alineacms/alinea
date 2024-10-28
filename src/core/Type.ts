@@ -80,6 +80,14 @@ export namespace Type {
     return res
   }
 
+  export function initialValue(type: Type) {
+    const res: Record<string, unknown> = {}
+    for (const [key, field] of entries(fields(type))) {
+      res[key] = Field.initialValue(field)
+    }
+    return res
+  }
+
   const TypeOptions = cito.object({
     view: cito.string.optional,
     summaryRow: cito.string.optional,

@@ -78,6 +78,10 @@ export namespace Field {
     return getField(field).options.label
   }
 
+  export function initialValue(field: HasField): unknown {
+    return getField(field).options.initialValue
+  }
+
   export function view<
     StoredValue,
     QueryValue,
