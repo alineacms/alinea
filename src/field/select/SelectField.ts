@@ -20,18 +20,23 @@ export interface SelectOptions<Key extends string> extends SelectConfig<Key> {
   options: Record<Key, string>
 }
 
-export class SelectField<Key extends string> extends ScalarField<
-  Key | null,
-  SelectOptions<Key>
+export class SelectField<Key extends string | null> extends ScalarField<
+  Key,
+  SelectOptions<NonNullable<Key>>
 > {}
 
-export function select<const Items extends Record<string, string>>(
+type AddNullable<Keys, Initial> = Initial extends undefined ? Keys | null : Keys
+
+export function select<
+  const Items extends Record<string, string>,
+  Initial extends keyof Items | undefined = undefined
+>(
   label: string,
   options: WithoutLabel<
     {options: Items} & SelectConfig<Extract<keyof Items, string>>
-  >
-): SelectField<Extract<keyof Items, string>> {
-  return new SelectField({
+  > & {initialValue?: Initial}
+): SelectField<AddNullable<Extract<keyof Items, string>, Initial>> {
+  return new SelectField<AddNullable<Extract<keyof Items, string>, Initial>>({
     options: {
       label,
       ...options

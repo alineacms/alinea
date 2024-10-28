@@ -22,8 +22,8 @@ import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {EntryLink, entry} from 'alinea/field/link'
-import {select} from 'alinea/field/select'
+import {entry, EntryLink} from 'alinea/field/link'
+import {select, SelectField} from 'alinea/field/select'
 import {text} from 'alinea/field/text'
 import {entryPicker} from 'alinea/picker/entry/EntryPicker'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
@@ -131,9 +131,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }
 
   const typeField = useMemo(() => {
-    const typeField = select<Record<string, any>>('Select type', {
+    const typeField: SelectField<string> = select('Select type', {
       options: {}
-    })
+    }) as any
     return track.options(typeField, async get => {
       const selectedParent = get(parentField)
       const parentId = selectedParent?.[EntryReference.entry]
