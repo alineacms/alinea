@@ -27,6 +27,7 @@ import {Field} from 'alinea/core/Field'
 import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Type} from 'alinea/core/Type'
+import {MediaFile} from 'alinea/core/media/MediaTypes'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
@@ -430,13 +431,15 @@ function useReferenceViewer() {
             id: Entry.id,
             i18nId: Entry.i18nId,
             workspace: Entry.workspace,
-            root: Entry.root
+            root: Entry.root,
+            location: MediaFile.location
           },
           id: reference[EntryReference.entry],
           status: 'preferDraft'
         })
         .then(entry => {
-          if (entry) window.open(`#${nav.entry(entry)}`, '_blank')
+          if (!entry) return
+          window.open(entry.location ?? `#${nav.entry(entry)}`, '_blank')
         })
     }
   }
