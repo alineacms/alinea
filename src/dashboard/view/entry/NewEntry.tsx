@@ -70,7 +70,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
     async () => {
-      return graph.get({
+      return graph.first({
         select: parentData,
         id: parentId,
         status: 'preferDraft'
