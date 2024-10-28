@@ -2,10 +2,9 @@ import styler from '@alinea/styler'
 import {Type} from 'alinea/core/Type'
 import {Chip, HStack, Loader, px} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
-import {useAtom, useAtomValue} from 'jotai'
+import {useAtomValue} from 'jotai'
 import {PropsWithChildren} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
-import {useWorkspace} from '../../hook/UseWorkspace.js'
 import {Head} from '../../util/Head.js'
 import {IconLink} from '../IconButton.js'
 import css from './EntryTitle.module.scss'
@@ -22,15 +21,12 @@ export function EntryTitle({
   editor,
   backLink
 }: PropsWithChildren<EntryTitleProps>) {
-  const {label} = useWorkspace()
   const selectedStatus = useAtomValue(editor.selectedStatus)
-  const [editMode, setEditMode] = useAtom(editor.editMode)
   const version = editor.statuses[selectedStatus]
   const type = editor.type
   const activeTitle = useAtomValue(editor.activeTitle)
   const title =
     selectedStatus === editor.activeStatus ? activeTitle : version.title
-  const hasChanges = useAtomValue(editor.hasChanges)
   const isLoading = useAtomValue(editor.isLoading)
   return (
     <>

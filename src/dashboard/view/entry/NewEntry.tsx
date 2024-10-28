@@ -44,7 +44,6 @@ const styles = styler(css)
 
 const parentData = {
   id: Entry.id,
-  i18nId: Entry.i18nId,
   type: Entry.type,
   path: Entry.path,
   url: Entry.url,
@@ -66,15 +65,19 @@ const titleField = text('Title', {autoFocus: true})
 
 function NewEntryForm({parentId}: NewEntryProps) {
   const config = useConfig()
+  const locale = useLocale()
   const graph = useAtomValue(graphAtom)
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
     async () => {
-      return graph.first({
-        select: parentData,
-        id: parentId,
-        status: 'preferDraft'
-      })
+      return parentId
+        ? graph.first({
+            select: parentData,
+            id: parentId,
+            locale,
+            status: 'preferDraft'
+          })
+        : null
     },
     {suspense: true, keepPreviousData: true, staleTime: 0}
   )
@@ -86,7 +89,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {pathname} = useLocation()
   const nav = useNav()
   const navigate = useNavigate()
-  const locale = useLocale()
   const mutate = useMutate()
   const {name: workspace} = useWorkspace()
   const containerTypes = entries(config.schema)
@@ -118,11 +120,13 @@ function NewEntryForm({parentId}: NewEntryProps) {
         ? Schema.contained(config.schema, root.contains)
         : keys(config.schema)
     } else {
-      const parent = await graph.get({
-        select: parentData,
-        id: parentId,
-        status: 'preferDraft'
-      })
+      const parent = parentId
+        ? await graph.get({
+            select: parentData,
+            id: parentId,
+            status: 'preferDraft'
+          })
+        : null
       const parentType = parent && config.schema[parent.type]
       if (parentType)
         return Schema.contained(config.schema, Type.contains(parentType))
@@ -220,11 +224,14 @@ function NewEntryForm({parentId}: NewEntryProps) {
       status: config.enableDrafts ? EntryStatus.Draft : EntryStatus.Published
     }
     const parentId = form.data().parent?.[EntryReference.entry]
-    const parent = await graph.first({
-      select: parentData,
-      id: parentId,
-      status: 'preferPublished'
-    })
+    const parent = parentId
+      ? await graph.first({
+          select: parentData,
+          id: parentId,
+          locale: locale,
+          status: 'preferPublished'
+        })
+      : null
     const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
     const filePath = entryFilepath(config, data, parentPaths)
     const childrenDir = entryChildrenDir(config, data, parentPaths)
@@ -253,7 +260,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
       level: parent ? parent.level + 1 : 0,
       parentDir: parentDir,
       childrenDir: childrenDir,
-      i18nId: root.i18n ? createId() : id,
       active: true,
       main: false,
       data: {...entryData, title, path},
@@ -263,13 +269,14 @@ function NewEntryForm({parentId}: NewEntryProps) {
       {
         type: MutationType.Create,
         entryId: entry.id,
+        locale: entry.locale,
         entry,
         file: entryFileName(config, data, parentPaths)
       }
     ]).then(() => {
       setIsCreating(false)
-      navigate(nav.entry({id: entry.i18nId}))
-      if (parent) updateEntries([parent.i18nId])
+      navigate(nav.entry({id: entry.id}))
+      if (parent) updateEntries([parent.id])
     })
   }
   return (

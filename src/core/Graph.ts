@@ -145,8 +145,6 @@ export declare class QuerySettings {
 
   /** Filter by id */
   id?: Condition<string>
-  /** Filter by i18nId */
-  i18nId?: Condition<string>
   /** Filter by parentId */
   parentId?: Condition<string | null>
   /** Filter by path */

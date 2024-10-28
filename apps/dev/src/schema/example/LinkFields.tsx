@@ -7,7 +7,7 @@ export const LinkFields = Config.document('Link fields', {
     entryWithCondition: Field.entry('With condition', {
       help: `Show only entries of type Fields in the main workspace`,
       location: {workspace: 'primary', root: 'fields'},
-      condition: {_type: 'Fields'}
+      condition: {_type: 'BasicFields'}
     }),
     linkMultiple: Field.link.multiple('Mixed links, multiple'),
     image: Field.image('Image link'),

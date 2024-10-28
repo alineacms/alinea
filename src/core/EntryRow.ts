@@ -1,6 +1,7 @@
 import {index, InferSelectModel, primaryKey, sql, Sql, table} from 'rado'
 import {Functions} from 'rado/core/expr/Functions'
 import {input, Input} from 'rado/core/expr/Input'
+import {coalesce} from 'rado/sqlite'
 import * as column from 'rado/universal/columns'
 import {createId} from './Id.js'
 
@@ -34,8 +35,6 @@ export const EntryRow = table(
     index: column.text().notNull(),
     parentId: column.text(),
 
-    // I18n
-    i18nId: column.text().notNull(),
     locale: column.text(),
 
     // Entries from which a new draft can be created are marked as active,
@@ -61,7 +60,7 @@ export const EntryRow = table(
   },
   EntryRow => {
     return {
-      primary: primaryKey(EntryRow.id, EntryRow.status),
+      primary: primaryKey(EntryRow.id, EntryRow.status, EntryRow.locale),
       rowHash: index().on(EntryRow.rowHash),
       type: index().on(EntryRow.type),
       parent: index().on(EntryRow.parentId),
@@ -73,9 +72,7 @@ export const EntryRow = table(
         EntryRow.root
       ),
       parentDir: index().on(EntryRow.parentDir),
-      childrenDir: index().on(EntryRow.childrenDir),
-      status: index().on(EntryRow.status),
-      i18nId: index().on(EntryRow.i18nId)
+      childrenDir: index().on(EntryRow.childrenDir)
     }
   }
 )
@@ -88,7 +85,13 @@ export function concat(...slices: Array<Input<string | null>>) {
 }
 
 export function entryVersionId(entry = EntryRow) {
-  return concat(entry.id, sql.value('.'), entry.status)
+  return concat(
+    entry.id,
+    sql.value('.'),
+    coalesce(entry.locale, 'null') as Sql<string>,
+    sql.value('.'),
+    entry.status
+  )
 }
 
 /**

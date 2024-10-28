@@ -42,8 +42,8 @@ async function entryTreeRoot(
   visibleTypes: Array<string>
 ): Promise<EntryTreeItem> {
   const children = await graph.find({
-    select: Entry.i18nId,
-    groupBy: Entry.i18nId,
+    select: Entry.id,
+    groupBy: Entry.id,
     orderBy: {asc: Entry.index, caseSensitive: true},
     filter: {
       _active: true,
@@ -75,8 +75,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const indexed = new Map<string, EntryTreeItem>()
     const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
     const data = {
-      id: Entry.i18nId,
-      entryId: Entry.id,
+      id: Entry.id,
       type: Entry.type,
       title: Entry.title,
       status: Entry.status,
@@ -90,10 +89,9 @@ const entryTreeItemLoaderAtom = atom(async get => {
       }
     }
     const rows = await graph.find({
-      groupBy: Entry.i18nId,
+      groupBy: Entry.id,
       select: {
-        id: Entry.i18nId,
-        entryId: Entry.id,
+        id: Entry.id,
         index: Entry.index,
         type: Entry.type,
         data,
@@ -102,7 +100,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
           select: data
         }
       },
-      i18nId: {in: search},
+      id: {in: search},
       status: 'preferDraft'
     })
     for (const row of rows) {
@@ -111,30 +109,28 @@ const entryTreeItemLoaderAtom = atom(async get => {
         asc: Entry.index,
         caseSensitive: true
       }
-      const ids = row.translations.map(row => row.entryId).concat(row.entryId)
       const children = await graph.find({
         select: {
-          locale: Entry.locale,
-          i18nId: Entry.i18nId
+          id: Entry.id,
+          locale: Entry.locale
         },
+        groupBy: Entry.id,
         orderBy,
         filter: {
-          _parentId: {in: ids},
+          _parentId: row.id,
           _type: {in: visibleTypes}
         },
         status: 'preferDraft'
       })
       const entries = [row.data].concat(row.translations)
       const translatedChildren = new Set(
-        children
-          .filter(child => child.locale === locale)
-          .map(child => child.i18nId)
+        children.filter(child => child.locale === locale).map(child => child.id)
       )
       const untranslated = new Set()
       const orderedChildren = children.filter(child => {
-        if (translatedChildren.has(child.i18nId)) return child.locale === locale
-        if (untranslated.has(child.i18nId)) return false
-        untranslated.add(child.i18nId)
+        if (translatedChildren.has(child.id)) return child.locale === locale
+        if (untranslated.has(child.id)) return false
+        untranslated.add(child.id)
         return true
       })
       indexed.set(row.id, {
@@ -142,7 +138,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
         type: row.type,
         index: row.index,
         entries,
-        children: [...new Set(orderedChildren.map(child => child.i18nId))]
+        children: [...new Set(orderedChildren.map(child => child.id))]
       })
     }
     const res: Array<EntryTreeItem | undefined> = []
@@ -184,7 +180,6 @@ export interface EntryTreeItem {
   type: string
   entries: Array<{
     id: string
-    entryId: string
     type: string
     title: string
     status: EntryStatus
@@ -246,7 +241,7 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
               for (const entry of child.getItemData().entries) {
                 mutations.push({
                   type: MutationType.Order,
-                  entryId: entry.entryId,
+                  entryId: entry.id,
                   file: entryFileName(config, entry, entry.parentPaths),
                   index: correctedIndexKey
                 })
@@ -257,7 +252,7 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
           for (const entry of dropping.getItemData().entries) {
             mutations.push({
               type: MutationType.Order,
-              entryId: entry.entryId,
+              entryId: entry.id,
               file: entryFileName(config, entry, entry.parentPaths),
               index: newIndexKey
             })

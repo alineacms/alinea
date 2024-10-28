@@ -59,9 +59,17 @@ test('index is correct', async () => {
 test('remove child entries', async () => {
   const example = createExample()
   const {Page, Container} = example.schema
-  const parent = Edit.create({type: Container})
-  const sub = Edit.create({type: Container, parentId: parent.id})
-  const entry = Edit.create({type: Page, parentId: sub.id})
+  const parent = Edit.create({type: Container, set: {title: 'Parent'}})
+  const sub = Edit.create({
+    type: Container,
+    parentId: parent.id,
+    set: {title: 'Sub'}
+  })
+  const entry = Edit.create({
+    type: Page,
+    parentId: sub.id,
+    set: {title: 'Deepest'}
+  })
   await example.commit(parent)
   await example.commit(sub)
   await example.commit(entry)

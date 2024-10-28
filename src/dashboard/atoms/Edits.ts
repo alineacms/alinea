@@ -5,6 +5,11 @@ import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
 import {yAtom} from './YAtom.js'
 
+interface EntryEditsKeys {
+  id: string
+  locale: string | null
+}
+
 export class Edits {
   /** The mutable doc that we are editing */
   doc = new Y.Doc()
@@ -18,9 +23,9 @@ export class Edits {
   /** Clear local changes, reset to source */
   resetChanges = atom(null, (get, set) => {
     set(this.hasChanges, false)
-    const copy = new Edits(this.id)
+    const copy = new Edits(this.keys)
     if (this.sourceUpdate) copy.applyRemoteUpdate(this.sourceUpdate)
-    set(entryEditsAtoms(this.id), copy)
+    set(entryEditsAtoms(this.keys), copy)
   })
   /** Whether we have a draft loaded */
   isLoading = yAtom(this.root, () => {
@@ -30,7 +35,7 @@ export class Edits {
     return this.getLocalUpdate()
   })
 
-  constructor(private id: string) {}
+  constructor(private keys: EntryEditsKeys) {}
 
   hasData() {
     return !this.root.keys().next().done
@@ -87,6 +92,9 @@ function createChangesAtom(yMap: Y.Map<unknown>) {
   return hasChanges
 }
 
-export const entryEditsAtoms = atomFamily((id: string) => {
-  return atom(new Edits(id))
-})
+export const entryEditsAtoms = atomFamily(
+  (keys: EntryEditsKeys) => {
+    return atom(new Edits(keys))
+  },
+  (a, b) => a.id === b.id && a.locale === b.locale
+)

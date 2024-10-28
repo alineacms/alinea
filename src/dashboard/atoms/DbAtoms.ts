@@ -158,12 +158,12 @@ export const graphAtom = atom(async get => {
 const changedAtom = atom<Array<string>>([])
 export const changedEntriesAtom = atom(
   get => get(changedAtom),
-  (get, set, i18nIds: Array<string>) => {
-    set(changedAtom, i18nIds)
-    for (const i18nId of i18nIds) set(entryRevisionAtoms(i18nId))
+  (get, set, ids: Array<string>) => {
+    set(changedAtom, ids)
+    for (const id of ids) set(entryRevisionAtoms(id))
   }
 )
-export const entryRevisionAtoms = atomFamily((i18nId: string) => {
+export const entryRevisionAtoms = atomFamily((id: string) => {
   const revision = atom(0)
   return atom(
     get => get(revision),

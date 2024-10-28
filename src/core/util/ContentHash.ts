@@ -29,7 +29,6 @@ export async function createRowHash(entry: Omit<EntryRow, 'rowHash'>) {
       `childrenDir ${entry.childrenDir}` +
       `index ${entry.index}` +
       `parent ${entry.parentId}` +
-      `i18nId ${entry.i18nId}` +
       `locale ${entry.locale}` +
       `fileHash ${entry.fileHash}` +
       `active ${entry.active}` +

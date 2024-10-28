@@ -138,6 +138,7 @@ export class UploadOperation extends Operation {
         },
         {
           type: MutationType.Create,
+          locale: entry.locale,
           entryId: entry.id,
           file: entryFile,
           entry
@@ -161,6 +162,7 @@ export class DeleteOp extends Operation {
         return {
           type: MutationType.Remove,
           entryId: entry.id,
+          locale: entry.locale,
           file
         }
       })
@@ -211,6 +213,7 @@ export class UpdateOperation<Definition> extends Operation {
         mutations.push({
           type: MutationType.Edit,
           entryId: entryId,
+          locale: entry.locale,
           file,
           entry: await createEntry(
             cms.config,
@@ -227,6 +230,7 @@ export class UpdateOperation<Definition> extends Operation {
         mutations.push({
           type: MutationType.Patch,
           entryId: entryId,
+          locale: entry.locale,
           file,
           patch: set
         })
@@ -234,6 +238,7 @@ export class UpdateOperation<Definition> extends Operation {
         case EntryStatus.Published:
           mutations.push({
             type: MutationType.Publish,
+            locale: entry.locale,
             status: entry.status,
             entryId: entryId,
             file
@@ -243,6 +248,7 @@ export class UpdateOperation<Definition> extends Operation {
           mutations.push({
             type: MutationType.Archive,
             entryId: entryId,
+            locale: entry.locale,
             file
           })
           break
@@ -274,6 +280,7 @@ export class CreateOperation<Definition> extends Operation {
         {
           type: MutationType.Create,
           entryId: entry.id,
+          locale: entry.locale,
           file,
           entry: entry
         }
@@ -345,7 +352,6 @@ async function createEntry(
   )
   const entryData = {title, path, ...partial.data}
   const id = partial.id ?? createId()
-  const i18nId = partial.i18nId ?? createId()
   const details = {
     id,
     status,
@@ -359,7 +365,6 @@ async function createEntry(
     parentId: parent?.id ?? null,
     locale,
     index: partial.index ?? 'a0',
-    i18nId,
     modifiedAt: 0,
     active: partial.active ?? true,
     main: partial.main ?? true,

@@ -41,6 +41,7 @@ import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {JsonLoader} from './loader/JsonLoader.js'
 import {EntryResolver} from './resolver/EntryResolver.js'
+import {is} from './util/ORM.js'
 
 interface Seed {
   type: string
@@ -99,14 +100,14 @@ export class Database implements Syncable {
     const {insert, remove} = await remote.sync(await this.contentHashes())
     return this.store.transaction(async tx => {
       const removed = await tx
-        .select(EntryRow.i18nId)
+        .select(EntryRow.id)
         .from(EntryRow)
         .where(inArray(EntryRow.rowHash, remove))
       await tx.delete(EntryRow).where(inArray(EntryRow.rowHash, remove))
       const changed = []
       for (const entry of insert) {
         await tx.insert(EntryRow).values(entry)
-        changed.push(entry.i18nId)
+        changed.push(entry.id)
       }
       await Database.index(tx)
       // This is for a local db, we didn't receive a commit hash here
@@ -150,7 +151,11 @@ export class Database implements Syncable {
         childrenDir: next.childrenDir,
         url: next.url
       })
-      .where(eq(EntryRow.id, entry.id), eq(EntryRow.status, entry.status))
+      .where(
+        eq(EntryRow.id, entry.id),
+        is(EntryRow.locale, entry.locale),
+        eq(EntryRow.status, entry.status)
+      )
 
     return this.updateChildren(tx, entry, next)
   }
@@ -183,7 +188,11 @@ export class Database implements Syncable {
           parentDir,
           url
         })
-        .where(eq(EntryRow.id, child.id), eq(EntryRow.status, child.status))
+        .where(
+          eq(EntryRow.id, child.id),
+          is(EntryRow.locale, child.locale),
+          eq(EntryRow.status, child.status)
+        )
     }
     return children
   }
@@ -197,6 +206,7 @@ export class Database implements Syncable {
       console.info(
         entry.url.padEnd(35),
         entry.id.padEnd(12),
+        (entry.locale ?? '').padEnd(5),
         entry.status.padEnd(12),
         entry.title
       )
@@ -211,7 +221,8 @@ export class Database implements Syncable {
       case MutationType.Create: {
         const condition = and(
           eq(EntryRow.id, mutation.entryId),
-          eq(EntryRow.status, mutation.entry.status)
+          eq(EntryRow.status, mutation.entry.status),
+          is(EntryRow.locale, mutation.entry.locale)
         )
         const current = await tx.select().from(EntryRow).where(condition).get()
         if (current) return
@@ -222,7 +233,8 @@ export class Database implements Syncable {
         const {entryId, entry} = mutation
         const condition = and(
           eq(EntryRow.id, entryId),
-          eq(EntryRow.status, entry.status)
+          eq(EntryRow.status, entry.status),
+          is(EntryRow.locale, entry.locale)
         )
         const current = await tx.select().from(EntryRow).where(condition).get()
         await tx.delete(EntryRow).where(condition)
@@ -235,9 +247,12 @@ export class Database implements Syncable {
           return this.updateHash(tx, condition).then(self =>
             this.updateHash(
               tx,
-              inArray(
-                EntryRow.id,
-                children.map(e => e.id)
+              and(
+                is(EntryRow.locale, entry.locale),
+                inArray(
+                  EntryRow.id,
+                  children.map(e => e.id)
+                )
               )
             ).then(children => self.concat(children))
           )
@@ -247,6 +262,7 @@ export class Database implements Syncable {
         const {patch} = mutation
         const condition = and(
           eq(EntryRow.id, mutation.entryId),
+          is(EntryRow.locale, mutation.locale),
           eq(EntryRow.main, true)
         )
         const current = await tx.select().from(EntryRow).where(condition).get()
@@ -260,10 +276,12 @@ export class Database implements Syncable {
       case MutationType.Archive: {
         const archived = and(
           eq(EntryRow.id, mutation.entryId),
+          is(EntryRow.locale, mutation.locale),
           eq(EntryRow.status, EntryStatus.Archived)
         )
         const condition = and(
           eq(EntryRow.id, mutation.entryId),
+          is(EntryRow.locale, mutation.locale),
           eq(EntryRow.status, EntryStatus.Published)
         )
         const published = await tx
@@ -291,6 +309,7 @@ export class Database implements Syncable {
           .where(
             and(
               eq(EntryRow.id, mutation.entryId),
+              is(EntryRow.locale, mutation.locale),
               eq(EntryRow.status, mutation.status)
             )
           )
@@ -298,6 +317,7 @@ export class Database implements Syncable {
         if (!promoting) return
         const condition = and(
           eq(EntryRow.id, mutation.entryId),
+          is(EntryRow.locale, mutation.locale),
           eq(EntryRow.status, EntryStatus.Published)
         )
         await tx.delete(EntryRow).where(condition)
@@ -306,9 +326,12 @@ export class Database implements Syncable {
           this.updateHash(tx, condition).then(rows => {
             return this.updateHash(
               tx,
-              inArray(
-                EntryRow.id,
-                children.map(e => e.id)
+              and(
+                is(EntryRow.locale, mutation.locale),
+                inArray(
+                  EntryRow.id,
+                  children.map(e => e.id)
+                )
               )
             ).then(r => rows.concat(r))
           })
@@ -319,7 +342,10 @@ export class Database implements Syncable {
         const statuses = await tx
           .select()
           .from(EntryRow)
-          .where(eq(EntryRow.id, mutation.entryId))
+          .where(
+            eq(EntryRow.id, mutation.entryId),
+            is(EntryRow.locale, mutation.locale)
+          )
         if (statuses.length === 0) return
         // Remove child entries
         for (const status of statuses) {
@@ -332,14 +358,22 @@ export class Database implements Syncable {
               )
             )
         }
-        await tx.delete(EntryRow).where(eq(EntryRow.id, mutation.entryId))
-        return async () => [statuses[0].i18nId]
+        await tx
+          .delete(EntryRow)
+          .where(
+            eq(EntryRow.id, mutation.entryId),
+            is(EntryRow.locale, mutation.locale)
+          )
+        return async () => [statuses[0].id]
       }
       case MutationType.Discard: {
         const existing = await tx
           .select()
           .from(EntryRow)
-          .where(eq(EntryRow.id, mutation.entryId))
+          .where(
+            eq(EntryRow.id, mutation.entryId),
+            is(EntryRow.locale, mutation.locale)
+          )
           .get()
         if (!existing) return
         await tx
@@ -347,14 +381,14 @@ export class Database implements Syncable {
           .where(
             and(
               eq(EntryRow.id, mutation.entryId),
+              is(EntryRow.locale, mutation.locale),
               eq(EntryRow.status, EntryStatus.Draft)
             )
           )
-        return async () => [existing.i18nId]
+        return async () => [existing.id]
       }
       case MutationType.Order: {
-        const condition = eq(EntryRow.id, mutation.entryId)
-        // Todo: apply this to other languages too
+        const condition = and(eq(EntryRow.id, mutation.entryId))
         await tx.update(EntryRow).set({index: mutation.index}).where(condition)
         return () => this.updateHash(tx, condition)
       }
@@ -406,14 +440,18 @@ export class Database implements Syncable {
     const entries = await tx.select().from(EntryRow).where(condition)
     for (const entry of entries) {
       const updated = await createEntryRow(this.config, entry)
-      changed.push(updated.i18nId)
+      changed.push(updated.id)
       await tx
         .update(EntryRow)
         .set({
           fileHash: updated.fileHash,
           rowHash: updated.rowHash
         })
-        .where(eq(EntryRow.id, entry.id), eq(EntryRow.status, entry.status))
+        .where(
+          eq(EntryRow.id, entry.id),
+          is(EntryRow.locale, entry.locale),
+          eq(EntryRow.status, entry.status)
+        )
     }
     return changed
   }
@@ -453,7 +491,6 @@ export class Database implements Syncable {
       .orderBy(EntryRow.rowHash)
     const all = contentHashes.join('')
     const contentHash = await createFileHash(new TextEncoder().encode(all))
-    const current = await tx.select().from(AlineaMeta).get()
     await tx.delete(AlineaMeta)
     await tx.insert(AlineaMeta).values({
       commitHash,
@@ -550,7 +587,6 @@ export class Database implements Syncable {
       level: parentDir === '/' ? 0 : segments.length,
       index: recordMeta.index,
       locale,
-      i18nId: recordMeta.i18nId ?? recordMeta.id,
 
       path: entryPath,
       title,
@@ -685,11 +721,15 @@ export class Database implements Syncable {
           }
           await tx
             .delete(EntryRow)
-            .where(eq(EntryRow.id, entry.id), eq(EntryRow.status, entry.status))
+            .where(
+              eq(EntryRow.id, entry.id),
+              is(EntryRow.locale, entry.locale),
+              eq(EntryRow.status, entry.status)
+            )
           seenSeeds.add(key)
           await tx.insert(EntryRow).values(withHash)
-          seenVersions.push(`${entry.id}.${entry.status}`)
-          inserted.push(`${entry.id}.${entry.status}`)
+          seenVersions.push(`${entry.id}.${entry.locale}.${entry.status}`)
+          inserted.push(`${entry.id}.${entry.locale}.${entry.status}`)
         } catch (e: any) {
           console.warn(`${e.message} @ ${file.filePath}`)
           process.exit(1)
@@ -700,7 +740,7 @@ export class Database implements Syncable {
           commitHash: '',
           mutations: [{changes, meta: undefined!}]
         })
-      const stableI18nIds = new Map<string, string>()
+      const stableIds = new Map<string, string>()
       for (const seed of this.seed.values()) {
         const key = seedKey(seed.workspace, seed.root, seed.filePath)
         if (seenSeeds.has(key)) continue
@@ -709,17 +749,16 @@ export class Database implements Syncable {
         if (!typeName) continue
         const root = this.config.workspaces[seed.workspace][seed.root]
         const {i18n} = Root.data(root)
-        let i18nId = createId()
+        let id = createId()
         if (i18n) {
           const [, locale, ...rest] = seed.filePath.split('/')
           const path = rest.join('/')
-          i18nId = stableI18nIds.get(path) ?? createId()
-          stableI18nIds.set(path, i18nId)
+          id = stableIds.get(path) ?? createId()
+          stableIds.set(path, id)
         }
         const entry = this.computeEntry(
           createRecord({
-            id: createId(),
-            i18nId,
+            id,
             type: typeName,
             index: 'a0',
             seeded: seed.filePath,
@@ -734,8 +773,10 @@ export class Database implements Syncable {
         const fileHash = await createFileHash(fileContents)
         const withHash = {...entry, fileHash, rowHash: ''}
         await tx.insert(EntryRow).values(withHash)
-        seenVersions.push(`${withHash.id}.${withHash.status}`)
-        inserted.push(`${entry.id}.${entry.status}`)
+        seenVersions.push(
+          `${withHash.id}.${withHash.locale}.${withHash.status}`
+        )
+        inserted.push(`${entry.id}.${entry.locale}.${entry.status}`)
         publishSeed.push({
           ...withHash,
           title: undefined!,
@@ -755,9 +796,8 @@ export class Database implements Syncable {
         .from(EntryRow)
         .where(removeCondition)
         .get()
-      await tx.delete(EntryRow).where(removeCondition)
+      if (rowsAffected! > 0) await tx.delete(EntryRow).where(removeCondition)
       const removed = rowsAffected ?? 0
-
       const noChanges = inserted.length === 0 && removed === 0
       if (noChanges) return
 
@@ -773,7 +813,11 @@ export class Database implements Syncable {
           .set({
             rowHash
           })
-          .where(eq(EntryRow.id, entry.id), eq(EntryRow.status, entry.status))
+          .where(
+            eq(EntryRow.id, entry.id),
+            is(EntryRow.locale, entry.locale),
+            eq(EntryRow.status, entry.status)
+          )
       }
       await this.writeMeta(tx, commitHash)
     })
@@ -830,19 +874,31 @@ namespace EntryRealm {
     builder
       .select()
       .from(Alt)
-      .where(eq(Alt.status, EntryStatus.Draft), eq(Alt.id, EntryRow.id))
+      .where(
+        eq(Alt.status, EntryStatus.Draft),
+        eq(Alt.locale, EntryRow.locale),
+        eq(Alt.id, EntryRow.id)
+      )
   )
   const hasPublished = exists(
     builder
       .select()
       .from(Alt)
-      .where(eq(Alt.status, EntryStatus.Published), eq(Alt.id, EntryRow.id))
+      .where(
+        eq(Alt.status, EntryStatus.Published),
+        eq(Alt.locale, EntryRow.locale),
+        eq(Alt.id, EntryRow.id)
+      )
   )
   const hasArchived = exists(
     builder
       .select()
       .from(Alt)
-      .where(eq(Alt.status, EntryStatus.Archived), eq(Alt.id, EntryRow.id))
+      .where(
+        eq(Alt.status, EntryStatus.Archived),
+        eq(Alt.locale, EntryRow.locale),
+        eq(Alt.id, EntryRow.id)
+      )
   )
   const isPublishedWithoutDraft = and(isPublished, not(hasDraft))
   const isArchivedWithoutDraftOrPublished = and(

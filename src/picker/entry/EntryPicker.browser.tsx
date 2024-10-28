@@ -51,7 +51,7 @@ interface PickerLocation {
   parentId?: string
   workspace: string
   root: string
-  locale?: string
+  locale?: string | null
 }
 
 const styles = styler(css)

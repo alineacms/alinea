@@ -34,6 +34,7 @@ import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
+import {useLocale} from 'alinea/dashboard/hook/UseLocale'
 import {useNav} from 'alinea/dashboard/hook/UseNav'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
@@ -421,6 +422,7 @@ function LinkInputRow({
 
 function useReferenceViewer() {
   const nav = useNav()
+  const locale = useLocale()
   const graph = useGraph()
   return (reference: Reference) => {
     if (UrlReference.isUrl(reference)) {
@@ -428,14 +430,14 @@ function useReferenceViewer() {
     } else if (EntryReference.isEntryReference(reference)) {
       graph
         .first({
+          id: reference[EntryReference.entry],
+          locale,
           select: {
             id: Entry.id,
-            i18nId: Entry.i18nId,
             workspace: Entry.workspace,
             root: Entry.root,
             location: MediaFile.location
           },
-          id: reference[EntryReference.entry],
           status: 'preferDraft'
         })
         .then(entry => {

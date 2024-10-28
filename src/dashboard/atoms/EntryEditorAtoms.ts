@@ -49,8 +49,8 @@ export enum EditMode {
 export type Version = Entry & {parents: Array<string>}
 
 interface EntryEditorParams {
+  id: string | undefined
   locale: string | null
-  i18nId: string | undefined
 }
 
 export enum EntryTransition {
@@ -73,16 +73,16 @@ const entryTransitionAtoms = atomFamily((id: string) => {
 })
 
 export const entryEditorAtoms = atomFamily(
-  ({locale, i18nId}: EntryEditorParams) => {
+  ({id, locale: searchLocale}: EntryEditorParams) => {
     return atom(async get => {
-      if (!i18nId) return undefined
+      if (!id) return undefined
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = await get(graphAtom)
       let entry: EntryRow | null = await graph.first({
         select: Entry,
-        id: i18nId,
-        locale: locale ?? undefined,
+        id,
+        locale: searchLocale,
         status: 'preferDraft'
       })
       if (!entry) {
@@ -91,15 +91,21 @@ export const entryEditorAtoms = atomFamily(
         entry = await graph.first({
           select: Entry,
           locale: preferredLanguage ?? undefined,
-          i18nId: i18nId,
+          id: id,
           status: 'preferDraft'
         })
       }
       if (!entry) return undefined
       const entryId = entry.id
-      get(entryRevisionAtoms(entry.i18nId))
+      const locale = entry.locale
+      get(entryRevisionAtoms(entry.id))
       const type = config.schema[entry.type]
-      const edits = get(entryEditsAtoms(entryId))
+      const edits = get(
+        entryEditsAtoms({
+          id: entry.id,
+          locale: entry.locale
+        })
+      )
 
       const loadDraft = client
         .getDraft(entryId)
@@ -131,9 +137,10 @@ export const entryEditorAtoms = atomFamily(
           ...Entry,
           parents: {
             parents: {},
-            select: Entry.i18nId
+            select: Entry.id
           }
         },
+        locale,
         id: entryId,
         status: 'all'
       })
@@ -142,43 +149,36 @@ export const entryEditorAtoms = atomFamily(
           parents: {
             parents: {},
             select: {
-              entryId: Entry.id,
+              id: Entry.id,
               path: Entry.path
             }
           }
         },
-        filter: {
-          _id: entryId
-        },
+        id: entryId,
+        locale,
         status: 'preferDraft'
       })
+      console.log(withParents)
       const translations = (await graph.find({
         select: {
           locale: Entry.locale,
           entryId: Entry.id
         },
+        id: entryId,
         filter: {
-          _locale: {isNot: null},
-          _id: {isNot: entryId},
-          _i18nId: i18nId
+          _locale: {isNot: locale}
         },
         status: 'preferDraft'
       })) as Array<{locale: string; entryId: string}>
       const parentLink =
         entry.parentId &&
         (await graph.first({
-          select: Entry.i18nId,
+          select: Entry.id,
           id: entry.parentId,
+          locale,
           status: 'preferDraft'
         }))
-      const parentNeedsTranslation = parentLink
-        ? !(await graph.find({
-            select: Entry,
-            i18nId: parentLink,
-            locale: locale,
-            status: 'preferDraft'
-          }))
-        : false
+      const parentNeedsTranslation = entry.parentId ? !parentLink : false
       if (versions.length === 0) return undefined
       const statuses = fromEntries(
         versions.map(version => [version.status, version])
@@ -200,11 +200,11 @@ export const entryEditorAtoms = atomFamily(
       })
     })
   },
-  (a, b) => a.locale === b.locale && a.i18nId === b.i18nId
+  (a, b) => a.locale === b.locale && a.id === b.id
 )
 
 export interface EntryData {
-  parents: Array<{entryId: string; path: string}>
+  parents: Array<{id: string; path: string}>
   client: Connection
   config: Config
   entryId: string
@@ -313,6 +313,7 @@ export function createEntryEditor(entryData: EntryData) {
     })
     const mutation: Mutation = {
       type: MutationType.Edit,
+      locale: activeVersion.locale,
       previousFile: entryFile(activeVersion),
       file: entryFile(entry),
       entryId: activeVersion.id,
@@ -332,7 +333,8 @@ export function createEntryEditor(entryData: EntryData) {
     const parentLink =
       activeVersion.parentId &&
       (await graph.get({
-        select: Entry.i18nId,
+        select: Entry.id,
+        locale,
         id: activeVersion.parentId,
         status: 'preferDraft'
       }))
@@ -340,7 +342,6 @@ export function createEntryEditor(entryData: EntryData) {
       throw new Error('Parent not found')
     const parentData = parentLink
       ? await graph.get({
-          locale,
           select: {
             entryId: Entry.id,
             path: Entry.path,
@@ -349,7 +350,8 @@ export function createEntryEditor(entryData: EntryData) {
               select: Entry.path
             }
           },
-          i18nId: parentLink,
+          id: parentLink,
+          locale,
           status: 'preferDraft'
         })
       : undefined
@@ -358,9 +360,8 @@ export function createEntryEditor(entryData: EntryData) {
     const parentPaths = parentData?.paths
       ? parentData.paths.concat(parentData.path)
       : []
-    const id = createId()
     const entry = await getDraftEntry({
-      id,
+      id: activeVersion.id,
       status: EntryStatus.Published,
       parent: parentData?.entryId,
       parentPaths,
@@ -368,8 +369,9 @@ export function createEntryEditor(entryData: EntryData) {
     })
     const mutation: Mutation = {
       type: MutationType.Create,
+      locale: entry.locale,
       file: entryFile(entry, parentPaths),
-      entryId: id,
+      entryId: activeVersion.id,
       entry
     }
     return set(transact, {
@@ -398,13 +400,15 @@ export function createEntryEditor(entryData: EntryData) {
               select: Entry.path
             }
           },
-          i18nId: entry.i18nId,
+          id: entry.id,
+          locale: entry.locale,
           status: 'preferPublished'
         })
         for (const translation of translations) {
           if (translation.locale === entry.locale) continue
           res.push({
             type: MutationType.Patch,
+            locale: translation.locale,
             file: entryFile(translation, translation.parentPaths),
             entryId: translation.id,
             patch: shared
@@ -446,6 +450,7 @@ export function createEntryEditor(entryData: EntryData) {
       previousFile: currentFile,
       file: editedFile,
       entryId: activeVersion.id,
+      locale: entry.locale,
       entry,
       update
     })
@@ -478,6 +483,7 @@ export function createEntryEditor(entryData: EntryData) {
       previousFile: editedFile,
       file: editedFile,
       entryId: activeVersion.id,
+      locale: entry.locale,
       entry,
       update
     }
@@ -496,6 +502,7 @@ export function createEntryEditor(entryData: EntryData) {
         type: MutationType.Publish,
         status: EntryStatus.Draft,
         entryId: activeVersion.id,
+        locale: activeVersion.locale,
         file: entryFile(activeVersion)
       }
     ]
@@ -513,6 +520,7 @@ export function createEntryEditor(entryData: EntryData) {
     const mutation: Mutation = {
       type: MutationType.Discard,
       entryId: activeVersion.id,
+      locale: activeVersion.locale,
       file: entryFile(activeVersion)
     }
     return set(transact, {
@@ -527,6 +535,7 @@ export function createEntryEditor(entryData: EntryData) {
     const mutation: Mutation = {
       type: MutationType.Archive,
       entryId: published.id,
+      locale: published.locale,
       file: entryFile(published)
     }
     return set(transact, {
@@ -542,6 +551,7 @@ export function createEntryEditor(entryData: EntryData) {
       type: MutationType.Publish,
       status: EntryStatus.Archived,
       entryId: archived.id,
+      locale: archived.locale,
       file: entryFile(archived)
     }
     return set(transact, {
@@ -561,11 +571,13 @@ export function createEntryEditor(entryData: EntryData) {
       {
         type: MutationType.Archive,
         entryId: published.id,
+        locale: published.locale,
         file: entryFile(published)
       },
       {
         type: MutationType.Remove,
         entryId: published.id,
+        locale: published.locale,
         file: entryFile({...published, status: EntryStatus.Archived})
       }
     ]
@@ -585,6 +597,7 @@ export function createEntryEditor(entryData: EntryData) {
     const mutation: Mutation = {
       type: MutationType.FileRemove,
       entryId: published.id,
+      locale: null,
       workspace: published.workspace,
       location:
         MEDIA_LOCATION in file
@@ -605,6 +618,7 @@ export function createEntryEditor(entryData: EntryData) {
     const mutation: Mutation = {
       type: MutationType.Remove,
       entryId: archived.id,
+      locale: archived.locale,
       file: entryFile(archived)
     }
     return set(transact, {

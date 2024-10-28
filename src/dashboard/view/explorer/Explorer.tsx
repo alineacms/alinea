@@ -28,7 +28,6 @@ export interface ExporerItemSelect {
   workspace: string
   root: string
   title: string
-  i18nId?: string
   childrenAmount?: number
 }
 

@@ -227,7 +227,6 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       seeded: null,
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
-      i18nId: entryId,
 
       level: parent ? parent.level + 1 : 0,
       parentDir: parentDir,
@@ -297,6 +296,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         {
           type: MutationType.Create,
           entryId: entry.id,
+          locale: null,
           file,
           entry
         },
@@ -318,6 +318,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       {
         type: MutationType.Edit,
         entryId: replace.entry.id,
+        locale: null,
         file: replace.entryFile,
         entry: newEntry
       },
@@ -330,6 +331,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       {
         type: MutationType.FileRemove,
         entryId: replace.entry.id,
+        locale: null,
         file: replace.entryFile,
         workspace: replace.entry.workspace,
         location:

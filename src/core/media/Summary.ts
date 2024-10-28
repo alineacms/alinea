@@ -6,7 +6,7 @@ export function summarySelection(schema: Schema) {
   const MediaFile = schema.MediaFile as typeof MediaFileType
   return {
     id: Entry.id,
-    i18nId: Entry.i18nId,
+    locale: Entry.locale,
     type: Entry.type,
     workspace: Entry.workspace,
     root: Entry.root,
@@ -23,7 +23,6 @@ export function summarySelection(schema: Schema) {
       parents: {},
       select: {
         id: Entry.id,
-        i18nId: Entry.i18nId,
         title: Entry.title
       }
     },
@@ -37,7 +36,6 @@ export function summarySelection(schema: Schema) {
 // To avoid circular warnings these are typed out instead of using the ReturnType
 export type SummaryProps = {
   id: string
-  i18nId: string
   type: string
   workspace: string
   root: string
@@ -55,7 +53,6 @@ export type SummaryProps = {
   height: number
   parents: Array<{
     id: string
-    i18nId: string
     title: string
   }>
   childrenAmount: number

@@ -16,7 +16,6 @@ export interface Entry {
   childrenDir: string
   index: string
   parentId: string | null
-  i18nId: string
   locale: string | null
   rowHash: string
   active: boolean
@@ -41,7 +40,6 @@ export const Entry = {
   childrenDir: new Expr<string>({type: 'entryField', name: 'childrenDir'}),
   index: new Expr<string>({type: 'entryField', name: 'index'}),
   parentId: new Expr<string | null>({type: 'entryField', name: 'parentId'}),
-  i18nId: new Expr<string>({type: 'entryField', name: 'i18nId'}),
   locale: new Expr<string | null>({type: 'entryField', name: 'locale'}),
   rowHash: new Expr<string>({type: 'entryField', name: 'rowHash'}),
   active: new Expr<boolean>({type: 'entryField', name: 'active'}),

@@ -59,6 +59,7 @@ import {getData, getTable, HasSql} from 'rado/core/Internal'
 import {bm25, snippet} from 'rado/sqlite'
 import type {Database} from '../Database.js'
 import {Store} from '../Store.js'
+import {is} from '../util/ORM.js'
 import {LinkResolver} from './LinkResolver.js'
 import {ResolveContext} from './ResolveContext.js'
 
@@ -209,10 +210,10 @@ export class EntryResolver {
         )
       case 'translations':
         return cursor.where(
-          eq(ctx.Table.i18nId, from.i18nId),
+          eq(ctx.Table.id, from.id),
           query.translations?.includeSelf
             ? undefined
-            : ne(ctx.Table.id, from.id)
+            : ne(ctx.Table.locale, from.locale)
         )
       case 'children':
         const Child = alias(EntryRow, 'Child')
@@ -226,8 +227,8 @@ export class EntryResolver {
             .from(Child)
             .where(
               eq(Child.id, from.id),
-              this.conditionStatus(Child, ctx.status),
-              this.conditionLocale(Child, ctx.locale)
+              is(Child.locale, from.locale),
+              this.conditionStatus(Child, ctx.status)
             )
             .unionAll(self =>
               builder
@@ -239,8 +240,8 @@ export class EntryResolver {
                 .from(Child)
                 .innerJoin(self, eq(self.entryId, Child.parentId))
                 .where(
+                  is(Child.locale, from.locale),
                   this.conditionStatus(Child, ctx.status),
-                  this.conditionLocale(Child, ctx.locale),
                   lt(
                     self.level,
                     Math.min(query.children?.depth ?? MAX_DEPTH, MAX_DEPTH)
@@ -255,7 +256,10 @@ export class EntryResolver {
           .limit(-1)
           .offset(1)
         return cursor
-          .where(inArray(ctx.Table.id, childrenIds))
+          .where(
+            inArray(ctx.Table.id, childrenIds),
+            is(ctx.Table.locale, from.locale)
+          )
           .orderBy(asc(ctx.Table.index))
       case 'parents':
         const Parent = alias(EntryRow, 'Parent')
@@ -269,8 +273,8 @@ export class EntryResolver {
             .from(Parent)
             .where(
               eq(Parent.id, from.id),
-              this.conditionStatus(Parent, ctx.status),
-              this.conditionLocale(Parent, ctx.locale)
+              is(Parent.locale, from.locale),
+              this.conditionStatus(Parent, ctx.status)
             )
             .unionAll(self =>
               builder
@@ -282,8 +286,8 @@ export class EntryResolver {
                 .from(Parent)
                 .innerJoin(self, eq(self.parent, Parent.id))
                 .where(
+                  is(Parent.locale, from.locale),
                   this.conditionStatus(Parent, ctx.status),
-                  this.conditionLocale(Parent, ctx.locale),
                   lt(
                     self.level,
                     Math.min(query.parents?.depth ?? MAX_DEPTH, MAX_DEPTH)
@@ -298,7 +302,10 @@ export class EntryResolver {
           .limit(-1)
           .offset(1)
         return cursor
-          .where(inArray(ctx.Table.id, parentIds))
+          .where(
+            inArray(ctx.Table.id, parentIds),
+            is(ctx.Table.locale, from.locale)
+          )
           .orderBy(asc(ctx.Table.level))
       default:
         return cursor.orderBy(asc(ctx.Table.index))
@@ -380,7 +387,6 @@ export class EntryResolver {
         : query.root
     return this.conditionFilter(ctx, {
       _id: query.id,
-      _i18nId: query.i18nId,
       _parentId: query.parentId,
       _path: query.path,
       _url: query.url,

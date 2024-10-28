@@ -32,7 +32,7 @@ import css from './EntryTree.module.scss'
 
 const styles = styler(css)
 
-function selectedEntry(locale: string | undefined, item: EntryTreeItem) {
+function selectedEntry(locale: string | null, item: EntryTreeItem) {
   return item.entries.find(entry => entry.locale === locale) ?? item.entries[0]
 }
 
@@ -127,11 +127,11 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
 }
 
 export interface EntryTreeProps {
-  i18nId?: string
+  id?: string
   selected?: Array<string>
 }
 
-export function EntryTree({i18nId: id, selected = []}: EntryTreeProps) {
+export function EntryTree({id, selected = []}: EntryTreeProps) {
   const root = useRoot()
   const {schema} = useConfig()
   const treeProvider = useEntryTreeProvider()
@@ -186,9 +186,9 @@ export function EntryTree({i18nId: id, selected = []}: EntryTreeProps) {
     }
   }, [treeProvider])
   useEffect(() => {
-    for (const i18nId of changed) {
+    for (const id of changed) {
       try {
-        const item = tree.getItemInstance(i18nId)
+        const item = tree.getItemInstance(id)
         if (!item) {
           tree.invalidateChildrenIds(rootId(root.name))
           continue
@@ -197,8 +197,8 @@ export function EntryTree({i18nId: id, selected = []}: EntryTreeProps) {
         const parentId = parent?.getId()
         if (parentId) tree.invalidateChildrenIds(parentId)
 
-        tree.invalidateChildrenIds(i18nId)
-        tree.invalidateItemData(i18nId)
+        tree.invalidateChildrenIds(id)
+        tree.invalidateItemData(id)
       } catch (e) {
         console.error(e)
       }

@@ -15,9 +15,9 @@ import {ContentView} from './pages/ContentView.js'
 const editorLoader = atomFamily(() => {
   return atom(async get => {
     const entryLocation = get(entryLocationAtom)
-    const locale = get(localeAtom) ?? null
+    const locale = get(localeAtom)
     return {
-      editor: await get(entryEditorAtoms({locale, i18nId: entryLocation?.id}))
+      editor: await get(entryEditorAtoms({locale, id: entryLocation?.id}))
     }
   })
 })
@@ -40,7 +40,6 @@ const editLoader = atomFamily(() => {
       select: {
         id: Entry.id,
         locale: Entry.locale,
-        i18nId: Entry.i18nId,
         root: Entry.root,
         workspace: Entry.workspace
       },

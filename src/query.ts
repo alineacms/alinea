@@ -10,7 +10,6 @@ export const id = Entry.id
 export const title = Entry.title
 export const type = Entry.type
 export const index = Entry.index
-export const i18nId = Entry.i18nId
 export const workspace = Entry.workspace
 export const root = Entry.root
 export const status = Entry.status
