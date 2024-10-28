@@ -6,14 +6,14 @@ import {configAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, graphAtom} from './DbAtoms.js'
 
 export interface EntrySummary {
-  entryId: string
+  id: string
   i18nId: string
   type: string
   workspace: string
   root: string
   title: string
   parents: Array<{
-    entryId: string
+    id: string
     i18nId: string
     title: string
   }>
@@ -31,7 +31,7 @@ export const entrySummaryLoaderAtom = atom(async get => {
       id: {in: ids},
       status: 'preferDraft'
     })
-    for (const entry of entries) res.set(entry.entryId, entry)
+    for (const entry of entries) res.set(entry.id, entry)
     return ids.map(id => res.get(id)) as typeof entries
   })
 })

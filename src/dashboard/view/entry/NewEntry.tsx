@@ -211,7 +211,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     if (!selected || !title) return
     setIsCreating(true)
     const path = slugify(title)
-    const entryId = createId()
+    const id = createId()
     const data = {
       workspace,
       root: root.name,
@@ -240,7 +240,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
         })
       : Type.initialValue(entryType)
     const entry = await createEntryRow(config, {
-      id: entryId,
+      id: id,
       ...data,
       filePath,
       type: selected,
@@ -253,7 +253,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       level: parent ? parent.level + 1 : 0,
       parentDir: parentDir,
       childrenDir: childrenDir,
-      i18nId: root.i18n ? createId() : entryId,
+      i18nId: root.i18n ? createId() : id,
       active: true,
       main: false,
       data: {...entryData, title, path},
@@ -268,7 +268,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       }
     ]).then(() => {
       setIsCreating(false)
-      navigate(nav.entry({entryId: entry.i18nId}))
+      navigate(nav.entry({id: entry.i18nId}))
       if (parent) updateEntries([parent.i18nId])
     })
   }

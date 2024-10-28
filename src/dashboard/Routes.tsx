@@ -17,9 +17,7 @@ const editorLoader = atomFamily(() => {
     const entryLocation = get(entryLocationAtom)
     const locale = get(localeAtom) ?? null
     return {
-      editor: await get(
-        entryEditorAtoms({locale, i18nId: entryLocation?.entryId})
-      )
+      editor: await get(entryEditorAtoms({locale, i18nId: entryLocation?.id}))
     }
   })
 })
@@ -40,7 +38,7 @@ const editLoader = atomFamily(() => {
     const graph = await get(graphAtom)
     const entry = await graph.first({
       select: {
-        entryId: Entry.id,
+        id: Entry.id,
         locale: Entry.locale,
         i18nId: Entry.i18nId,
         root: Entry.root,

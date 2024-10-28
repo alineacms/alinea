@@ -52,7 +52,7 @@ export function ContentView({editor}: ContentViewProps) {
             onClick={() =>
               navigate(
                 nav.create({
-                  entryId: editor?.activeVersion.i18nId,
+                  id: editor?.activeVersion.i18nId,
                   workspace: workspace.name,
                   root: root.name
                 })

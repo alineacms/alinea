@@ -66,7 +66,7 @@ export enum EntryTransition {
   DeleteArchived
 }
 
-const entryTransitionAtoms = atomFamily((entryId: string) => {
+const entryTransitionAtoms = atomFamily((id: string) => {
   return atom<{transition: EntryTransition; done: Promise<any>} | undefined>(
     undefined
   )

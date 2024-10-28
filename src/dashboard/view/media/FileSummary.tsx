@@ -29,8 +29,8 @@ export function FileSummaryRow(file: SummaryProps) {
             <Typo.Small>
               <HStack center gap={3}>
                 {file.parents
-                  .map<ReactNode>(({entryId, title}) => (
-                    <Fragment key={entryId}>{title}</Fragment>
+                  .map<ReactNode>(({id, title}) => (
+                    <Fragment key={id}>{title}</Fragment>
                   ))
                   .reduce((prev, curr) => [
                     prev,

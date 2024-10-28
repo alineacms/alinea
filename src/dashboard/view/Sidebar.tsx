@@ -73,7 +73,6 @@ export namespace Sidebar {
       isLarge ? simpleToggle : uniqueToggle,
       {nav: true, preview: isLarge}
     )
-    const {entryId: id} = useEntryLocation() || {}
     const {name: workspace} = useWorkspace()
 
     useNonInitialEffect(() => {

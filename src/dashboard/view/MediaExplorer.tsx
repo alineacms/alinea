@@ -75,7 +75,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const nav = useNav()
   const navigate = useNavigate()
   const backLink = data?.parent
-    ? nav.entry({entryId: data.parent})
+    ? nav.entry({id: data.parent})
     : editor
     ? nav.root({root: root.name})
     : undefined
@@ -103,7 +103,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
                 query={query}
                 type="thumb"
                 virtualized
-                onNavigate={entryId => navigate(nav.entry({entryId: entryId}))}
+                onNavigate={id => navigate(nav.entry({id: id}))}
               />
             </VStack>
           </HStack>

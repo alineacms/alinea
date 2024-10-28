@@ -160,10 +160,10 @@ export function FileEntry(props: EntryEditProps & {type: typeof MediaFile}) {
         backLink={
           editor.activeVersion.parentId
             ? nav.entry({
-                entryId: editor.activeVersion.parentId,
+                id: editor.activeVersion.parentId,
                 workspace: editor.activeVersion.workspace
               })
-            : nav.entry({entryId: undefined})
+            : nav.entry({id: undefined})
         }
       />
       <FormProvider form={form}>

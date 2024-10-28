@@ -1,5 +1,5 @@
 export type EntryLocation = {
-  entryId?: string
+  id?: string
   i18nId?: string
   workspace?: string
   root?: string
@@ -8,7 +8,7 @@ export type EntryLocation = {
 
 export const navMatchers = {
   matchEntry: '/entry/*',
-  matchEntryId: '/:action/:workspace/:root?/:entryId?',
+  matchEntryId: '/:action/:workspace/:root?/:id?',
   matchWorkspace: '/:action/:workspace',
   matchRoot: '/:action/:workspace/:root'
 } as const
@@ -18,15 +18,13 @@ export function dashboardNav(defaults: Partial<EntryLocation>) {
     const workspace = location?.workspace ?? defaults.workspace
     const root = location?.root ?? defaults.root
     const locale = 'locale' in location ? location.locale : defaults.locale
-    const id =
-      location.i18nId ??
-      ('entryId' in location ? location.entryId : defaults.entryId)
+    const id = location.i18nId ?? ('id' in location ? location.id : defaults.id)
     const rootLocation = locale ? `${root}:${locale}` : root
     if (!id && !root) return `/${workspace}`
     if (!id) return `/${workspace}/${rootLocation}`
     return `/${workspace}/${rootLocation}/${id}`
   }
-  function root({entryId, i18nId, ...location}: EntryLocation) {
+  function root({id, i18nId, ...location}: EntryLocation) {
     return entry(location)
   }
   function entry(location: EntryLocation) {

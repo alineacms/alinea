@@ -27,15 +27,6 @@ export function Langswitch({
         onChange={value => {
           if (!value) return
           onChange(value)
-          /*if (!value) return
-          navigate(
-            nav.entry({
-              entryId: entryLocation?.entryId,
-              workspace,
-              root: root.name,
-              locale: value
-            })
-          )*/
         }}
       >
         <div>

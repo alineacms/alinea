@@ -18,9 +18,9 @@ export class Edits {
   /** Clear local changes, reset to source */
   resetChanges = atom(null, (get, set) => {
     set(this.hasChanges, false)
-    const copy = new Edits(this.entryId)
+    const copy = new Edits(this.id)
     if (this.sourceUpdate) copy.applyRemoteUpdate(this.sourceUpdate)
-    set(entryEditsAtoms(this.entryId), copy)
+    set(entryEditsAtoms(this.id), copy)
   })
   /** Whether we have a draft loaded */
   isLoading = yAtom(this.root, () => {
@@ -30,7 +30,7 @@ export class Edits {
     return this.getLocalUpdate()
   })
 
-  constructor(private entryId: string) {}
+  constructor(private id: string) {}
 
   hasData() {
     return !this.root.keys().next().done
@@ -87,6 +87,6 @@ function createChangesAtom(yMap: Y.Map<unknown>) {
   return hasChanges
 }
 
-export const entryEditsAtoms = atomFamily((entryId: string) => {
-  return atom(new Edits(entryId))
+export const entryEditsAtoms = atomFamily((id: string) => {
+  return atom(new Edits(id))
 })

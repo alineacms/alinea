@@ -42,7 +42,7 @@ interface EntryTreeItemProps {
 }
 
 function EntryTreeItem({item, data}: EntryTreeItemProps) {
-  const {entryId} = useAtomValue(entryLocationAtom)
+  const {id: id} = useAtomValue(entryLocationAtom)
   const locale = useLocale()
   const {schema} = useConfig()
   const currentData = useRef<EntryTreeItem>(data)
@@ -56,7 +56,7 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
   const isUntranslated = locale && selected.locale !== locale
   const isArchived = selected.status === EntryStatus.Archived
   const isUnpublished = selected.status === EntryStatus.Archived
-  const isSelected = entryId && itemData.id === entryId
+  const isSelected = id && itemData.id === id
 
   return (
     <div
@@ -131,7 +131,7 @@ export interface EntryTreeProps {
   selected?: Array<string>
 }
 
-export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
+export function EntryTree({i18nId: id, selected = []}: EntryTreeProps) {
   const root = useRoot()
   const {schema} = useConfig()
   const treeProvider = useEntryTreeProvider()
@@ -150,13 +150,13 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     isItemFolder: item =>
       item.getItemData() && Boolean(item.getItemData().isFolder),
     onPrimaryAction: item => {
-      navigate(nav.entry({entryId: item.getId()}))
+      navigate(nav.entry({id: item.getId()}))
     },
     initialState: {
       expandedItems: selected
     },
     state: {
-      selectedItems: entryId ? [entryId] : []
+      selectedItems: id ? [id] : []
     },
     features: [
       asyncDataLoaderFeature as any,
