@@ -12,7 +12,7 @@ export const LinkFields = Config.document('Link fields', {
     linkMultiple: Field.link.multiple('Mixed links, multiple'),
     image: Field.image('Image link'),
     images: Field.image.multiple('Image link (multiple)'),
-    file: Field.entry('File link'),
+    file: Field.file('File link'),
     withFields: Field.entry('With extra fields', {
       fields: {
         fieldA: Field.text('Field A', {width: 0.5}),

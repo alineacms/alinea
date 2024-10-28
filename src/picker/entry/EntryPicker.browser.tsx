@@ -364,6 +364,7 @@ export function EntryPickerModal({
               }}
               max={max}
               toggleSelect={handleSelect}
+              onlyImages={type === 'image'}
             />
           )}
         </VStack>

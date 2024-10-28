@@ -69,6 +69,7 @@ export function SingleLinkInput<Row>({field}: LinkInputProps<Row>) {
     if (readOnly) return
     const selected = link[0]
     if (!pickFrom || !picker || !selected) return
+    if (selected[Reference.type] !== pickFrom) return
     mutator.replace(selected)
     setPickFrom(undefined)
   }
