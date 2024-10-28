@@ -200,7 +200,7 @@ export function EntryEdit({editor}: EntryEditProps) {
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
           {showHistory && <EntryHistory editor={editor} />}
-          <Tabs.Root>
+          <Tabs.Root style={{flex: 1}}>
             <EntryTitle
               editor={editor}
               backLink={
