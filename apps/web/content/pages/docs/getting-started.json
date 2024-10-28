@@ -174,7 +174,7 @@
               "_type": "Variant",
               "name": "npm",
               "language": "shellscript",
-              "code": "npx alinea init --next"
+              "code": "npx alinea init"
             },
             {
               "_id": "2YcrHzKowUENzFVBgP5M7hf1qT1",
@@ -182,7 +182,7 @@
               "_type": "Variant",
               "name": "yarn",
               "language": "shellscript",
-              "code": "yarn alinea init --next"
+              "code": "yarn alinea init"
             },
             {
               "_id": "2YcrJEDLa8oWOLJSSjsstOKg4Sl",
@@ -190,7 +190,7 @@
               "_type": "Variant",
               "name": "pnpm",
               "language": "shellscript",
-              "code": "pnpm alinea init --next"
+              "code": "pnpm alinea init"
             },
             {
               "_id": "2nvC5Pfk9WeObDYgbSL8GkJ0OZu",
@@ -198,7 +198,7 @@
               "_type": "Variant",
               "name": "bun",
               "language": "shellscript",
-              "code": "bun alinea init --next"
+              "code": "bun alinea init"
             }
           ]
         },
