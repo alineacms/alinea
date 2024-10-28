@@ -11,7 +11,7 @@ import {createExample} from './test/Example.js'
 
 test('create', async () => {
   const example = createExample()
-  const {Page} = example.schema
+  const {Page, Container} = example.schema
   const parent = Edit.create({
     type: Page,
     set: {title: 'New parent'}
@@ -23,6 +23,10 @@ test('create', async () => {
   })
   assert.is(result.id, parent.id)
   assert.is(result.title, 'New parent')
+  const multiType = await example.find({
+    type: [Page, Container]
+  })
+  assert.is(multiType.length, 11)
 })
 
 test('index is correct', async () => {

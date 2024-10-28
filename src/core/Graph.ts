@@ -4,6 +4,7 @@ import {Config} from './Config.js'
 import {EntryFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
 import {Condition, Filter} from './Filter.js'
+import {Infer} from './Infer.js'
 import {Page} from './Page.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
@@ -76,7 +77,7 @@ type InferResult<Selection, Types, Include> = Selection extends Expr<
   : Selection extends undefined
   ? Types extends undefined
     ? EntryFields & (Include extends undefined ? {} : InferSelection<Include>)
-    : Type.Infer<Types> &
+    : Infer<Types> &
         EntryFields &
         (Include extends undefined ? {} : InferSelection<Include>)
   : InferSelection<Selection>
@@ -229,7 +230,7 @@ export class Graph {
 
   find<
     Selection extends SelectionGuard = undefined,
-    Type extends TypeGuard = undefined,
+    const Type extends TypeGuard = undefined,
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
@@ -239,7 +240,7 @@ export class Graph {
 
   first<
     Selection extends SelectionGuard = undefined,
-    Type extends TypeGuard = undefined,
+    const Type extends TypeGuard = undefined,
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
@@ -249,7 +250,7 @@ export class Graph {
 
   async get<
     Selection extends SelectionGuard = undefined,
-    Type extends TypeGuard = undefined,
+    const Type extends TypeGuard = undefined,
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
@@ -261,7 +262,7 @@ export class Graph {
 
   count<
     Selection extends SelectionGuard = undefined,
-    Type extends TypeGuard = undefined,
+    const Type extends TypeGuard = undefined,
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>

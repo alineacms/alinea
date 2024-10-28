@@ -15,7 +15,9 @@ export type QueryRow<Definition> = {
     : never]: Definition[K] extends Expr<infer T> ? T : never
 }
 
-export type InferQueryValue<T> = T extends Type<infer Fields>
+export type InferQueryValue<T> = T extends Array<Type<infer X>>
+  ? InferQueryValue<X>
+  : T extends Type<infer Fields>
   ? QueryRow<Fields>
   : T extends Expr<infer QueryValue>
   ? QueryValue
