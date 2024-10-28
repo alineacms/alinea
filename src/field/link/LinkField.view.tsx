@@ -22,6 +22,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
+import {Entry} from 'alinea/core/Entry'
 import {Field} from 'alinea/core/Field'
 import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
@@ -31,15 +32,20 @@ import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField} from 'alinea/dashboard/editor/UseField'
+import {useGraph} from 'alinea/dashboard/hook/UseGraph'
+import {useNav} from 'alinea/dashboard/hook/UseNav'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
+import {EntryReference} from 'alinea/picker/entry/EntryReference'
+import {UrlReference} from 'alinea/picker/url/UrlPicker'
 import {TextLabel} from 'alinea/ui'
 import {Sink} from 'alinea/ui/Sink'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
+import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {CSSProperties, HTMLAttributes, Ref, Suspense, useState} from 'react'
 import {LinkField, LinksField} from './LinkField.js'
 import css from './LinkField.module.scss'
@@ -217,14 +223,15 @@ export function MultipleLinksInput<Row>({field}: LinksInputProps<Row>) {
                 <Sink.Root>
                   {value.map(reference => {
                     if (!options.pickers[reference[ListRow.type]]) return null
-                    const type = options.pickers[reference[ListRow.type]].fields
+                    const picker = options.pickers[reference[ListRow.type]]
+                    const type = picker.fields
                     return (
                       <LinkInputRowSortable
                         key={reference[ListRow.id]}
                         rowId={reference[ListRow.id]}
                         field={field}
                         fields={type}
-                        picker={options.pickers[reference[ListRow.type]]}
+                        picker={picker}
                         reference={reference as ListRow & Row}
                         onRemove={() => mutator.remove(reference[ListRow.id])}
                         onEdit={() => setPickFrom(reference)}
@@ -349,6 +356,7 @@ function LinkInputRow({
   multiple,
   ...rest
 }: LinkInputRowProps) {
+  const onView = useReferenceViewer()
   const RowView = picker.viewRow!
   const inner = (
     <div
@@ -380,6 +388,10 @@ function LinkInputRow({
         </div>
         {!readOnly && (
           <Sink.Options>
+            <IconButton
+              icon={IcRoundOpenInNew}
+              onClick={() => onView(reference)}
+            />
             <IconButton icon={IcRoundEdit} onClick={onEdit} />
             <IconButton icon={IcRoundClose} onClick={onRemove} />
           </Sink.Options>
@@ -403,4 +415,29 @@ function LinkInputRow({
       {inner}
     </FormRow>
   )
+}
+
+function useReferenceViewer() {
+  const nav = useNav()
+  const graph = useGraph()
+  return (reference: Reference) => {
+    if (UrlReference.isUrl(reference)) {
+      window.open(reference[UrlReference.url], '_blank')
+    } else if (EntryReference.isEntryReference(reference)) {
+      graph
+        .first({
+          select: {
+            id: Entry.id,
+            i18nId: Entry.i18nId,
+            workspace: Entry.workspace,
+            root: Entry.root
+          },
+          id: reference[EntryReference.entry],
+          status: 'preferDraft'
+        })
+        .then(entry => {
+          if (entry) window.open(`#${nav.entry(entry)}`, '_blank')
+        })
+    }
+  }
 }
