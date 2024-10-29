@@ -11,7 +11,7 @@ import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import {createFileHash, createRowHash} from 'alinea/core/util/ContentHash'
-import {entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
+import {entryFile, entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow, publishEntryRow} from 'alinea/core/util/EntryRows'
 import {entries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
@@ -643,6 +643,7 @@ export class Database implements Syncable {
     // updated with the generated json
     fix = false
   ): Promise<void> {
+    const v0Ids = new Map<string, string>()
     if (fix && !target) throw new TypeError(`Target expected if fix is true`)
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
@@ -687,7 +688,10 @@ export class Database implements Syncable {
         }
         try {
           const raw = JsonLoader.parse(this.config.schema, file.contents)
-          const {meta, data} = parseRecord(raw)
+          const {meta, data, v0Id} = parseRecord(raw)
+          if (v0Id) {
+            v0Ids.set(v0Id, meta.id)
+          }
           const seeded = meta.seeded
           const key = seedKey(
             file.workspace,
@@ -733,6 +737,24 @@ export class Database implements Syncable {
         } catch (e: any) {
           console.warn(`${e.message} @ ${file.filePath}`)
           process.exit(1)
+        }
+      }
+      if (fix && v0Ids.size > 0) {
+        const entries = await tx.select().from(EntryRow)
+        for (const entry of entries) {
+          const file = entryFile(this.config, entry)
+          entry.data = JSON.parse(JSON.stringify(entry.data), (key, value) => {
+            if (key === '_entry') return v0Ids.get(value) ?? value
+            return value
+          })
+          const contents = new TextDecoder().decode(
+            JsonLoader.format(this.config.schema, createRecord(entry))
+          )
+          changes.push({
+            type: ChangeType.Write,
+            file,
+            contents
+          })
         }
       }
       if (fix && changes.length > 0)

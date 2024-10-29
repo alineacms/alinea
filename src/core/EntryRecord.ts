@@ -46,7 +46,8 @@ export function parseRecord(record: EntryRecord) {
       root,
       seeded
     },
-    data
+    data,
+    v0Id: typeof i18nId === 'string' ? id : undefined
   }
 }
 

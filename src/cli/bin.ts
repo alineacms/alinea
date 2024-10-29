@@ -62,6 +62,16 @@ prog
     ensureReact()
     ensureEnv(args.dir)
     process.env.NODE_ENV = 'production'
+    if (args.fix) {
+      const {generate} = await import('./Generate.js')
+      return generate({
+        ...args,
+        cwd: args.dir,
+        base: args.base,
+        configFile: args.config,
+        cmd: 'build'
+      })
+    }
     const {serve} = await import('./Serve.js')
     return serve({
       ...args,
