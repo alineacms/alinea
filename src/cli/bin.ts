@@ -64,13 +64,18 @@ prog
     process.env.NODE_ENV = 'production'
     if (args.fix) {
       const {generate} = await import('./Generate.js')
-      return generate({
+      for await (const _ of generate({
         ...args,
         cwd: args.dir,
         base: args.base,
         configFile: args.config,
+        onAfterGenerate() {
+          process.exit(0)
+        },
         cmd: 'build'
-      })
+      })) {
+      }
+      return
     }
     const {serve} = await import('./Serve.js')
     return serve({
