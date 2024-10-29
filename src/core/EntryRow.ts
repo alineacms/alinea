@@ -1,7 +1,6 @@
 import {index, InferSelectModel, primaryKey, sql, Sql, table} from 'rado'
 import {Functions} from 'rado/core/expr/Functions'
 import {input, Input} from 'rado/core/expr/Input'
-import {coalesce} from 'rado/sqlite'
 import * as column from 'rado/universal/columns'
 import {createId} from './Id.js'
 
@@ -60,7 +59,7 @@ export const EntryRow = table(
   },
   EntryRow => {
     return {
-      primary: primaryKey(EntryRow.id, EntryRow.status, EntryRow.locale),
+      primary: primaryKey(EntryRow.id, EntryRow.locale, EntryRow.status),
       rowHash: index().on(EntryRow.rowHash),
       type: index().on(EntryRow.type),
       parent: index().on(EntryRow.parentId),
@@ -82,16 +81,6 @@ export function concat(...slices: Array<Input<string | null>>) {
     mysql: Functions.concat(...slices),
     default: sql.join(slices.map(input), sql` || `)
   }) as Sql<string>
-}
-
-export function entryVersionId(entry = EntryRow) {
-  return concat(
-    entry.id,
-    sql.value('.'),
-    coalesce(entry.locale, 'null') as Sql<string>,
-    sql.value('.'),
-    entry.status
-  )
 }
 
 /**

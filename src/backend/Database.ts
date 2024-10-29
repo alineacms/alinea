@@ -29,10 +29,12 @@ import {
   like,
   not,
   notInArray,
-  or
+  or,
+  sql
 } from 'rado'
 import {Builder} from 'rado/core/Builder'
-import {EntryRow, EntryStatus, entryVersionId} from '../core/EntryRow.js'
+import {coalesce} from 'rado/sqlite'
+import {EntryRow, EntryStatus} from '../core/EntryRow.js'
 import {AuthedContext, Target} from './Backend.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
@@ -41,7 +43,7 @@ import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {JsonLoader} from './loader/JsonLoader.js'
 import {EntryResolver} from './resolver/EntryResolver.js'
-import {is} from './util/ORM.js'
+import {is, values} from './util/ORM.js'
 
 interface Seed {
   type: string
@@ -50,6 +52,8 @@ interface Seed {
   filePath: string
   page: Page
 }
+
+type EntryKeys = [id: string, locale: string, status: string]
 
 function seedKey(workspace: string, root: string, filePath: string) {
   return `${workspace}.${root}.${filePath}`
@@ -533,7 +537,7 @@ export class Database implements Syncable {
     const [entryPath, entryStatus] = entryInfo(fileName)
     const segments = parentDir.split('/').filter(Boolean)
     const root = Root.data(this.config.workspaces[meta.workspace][meta.root])
-    let locale: string | null = null
+    let locale: string = ''
 
     if (root.i18n) {
       locale = segments.shift()!
@@ -652,16 +656,18 @@ export class Database implements Syncable {
     const publishSeed: Array<EntryRow> = []
 
     await this.store.transaction(async tx => {
-      const seenVersions: Array<string> = []
+      const seenVersions: Array<EntryKeys> = []
       const seenSeeds = new Set<string>()
-      const inserted = []
+      const inserted: Array<EntryKeys> = []
       //const endScan = timer('Scanning entries')
       const changes: Array<Change> = []
       for await (const file of source.entries()) {
         const fileHash = await createFileHash(file.contents)
         const exists = await tx
           .select({
-            versionId: entryVersionId(),
+            id: EntryRow.id,
+            locale: EntryRow.locale,
+            status: EntryRow.status,
             seeded: EntryRow.seeded
           })
           .from(EntryRow)
@@ -677,7 +683,7 @@ export class Database implements Syncable {
         // Todo: a config change but unchanged entry data will currently
         // fly under the radar
         if (!fix && exists) {
-          seenVersions.push(exists.versionId)
+          seenVersions.push([exists.id, exists.locale ?? 'null', exists.status])
           const key = seedKey(
             file.workspace,
             file.root,
@@ -732,8 +738,8 @@ export class Database implements Syncable {
             )
           seenSeeds.add(key)
           await tx.insert(EntryRow).values(withHash)
-          seenVersions.push(`${entry.id}.${entry.locale}.${entry.status}`)
-          inserted.push(`${entry.id}.${entry.locale}.${entry.status}`)
+          seenVersions.push([entry.id, entry.locale ?? 'null', entry.status])
+          inserted.push([entry.id, entry.locale ?? 'null', entry.status])
         } catch (e: any) {
           console.warn(`${e.message} @ ${file.filePath}`)
           process.exit(1)
@@ -795,10 +801,8 @@ export class Database implements Syncable {
         const fileHash = await createFileHash(fileContents)
         const withHash = {...entry, fileHash, rowHash: ''}
         await tx.insert(EntryRow).values(withHash)
-        seenVersions.push(
-          `${withHash.id}.${withHash.locale}.${withHash.status}`
-        )
-        inserted.push(`${entry.id}.${entry.locale}.${entry.status}`)
+        seenVersions.push([entry.id, entry.locale ?? 'null', entry.status])
+        inserted.push([entry.id, entry.locale ?? 'null', entry.status])
         publishSeed.push({
           ...withHash,
           title: undefined!,
@@ -812,7 +816,10 @@ export class Database implements Syncable {
       )*/
       if (seenVersions.length === 0) return
 
-      const removeCondition = notInArray(entryVersionId(EntryRow), seenVersions)
+      const removeCondition = sql<boolean>`(${EntryRow.id}, ${coalesce(
+        EntryRow.locale,
+        sql`'null'`
+      )}, ${EntryRow.status}) not in ${values(...seenVersions)}`
       const rowsAffected = await tx
         .select(count())
         .from(EntryRow)
@@ -824,10 +831,11 @@ export class Database implements Syncable {
       if (noChanges) return
 
       await Database.index(tx)
-      const entries = await tx
-        .select()
-        .from(EntryRow)
-        .where(inArray(entryVersionId(EntryRow), inserted))
+      const isInserted = sql<boolean>`(${EntryRow.id}, ${coalesce(
+        EntryRow.locale,
+        sql`'null'`
+      )}, ${EntryRow.status}) in ${values(...inserted)}`
+      const entries = await tx.select().from(EntryRow).where(isInserted)
       for (const entry of entries) {
         const rowHash = await createRowHash(entry)
         await tx
