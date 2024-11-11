@@ -1,5 +1,5 @@
 import {Client} from 'alinea/core/Client'
-import {Config} from 'alinea/core/Config'
+import {CMS} from 'alinea/core/CMS'
 import {useSetAtom} from 'jotai'
 import {ComponentType, useEffect, useState} from 'react'
 import {QueryClient} from 'react-query'
@@ -34,31 +34,30 @@ function setupDevReload({refresh, refetch, open, close}: DevReloadOptions) {
 }
 
 export type DevDashboardOptions = {
-  loadConfig: () => Promise<Config>
-  loadViews: () => Promise<Record<string, ComponentType>>
+  loadConfig: () => Promise<{cms: CMS; views: Record<string, ComponentType>}>
 }
 
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 
-export function DevDashboard({loadConfig, loadViews}: DevDashboardOptions) {
+export function DevDashboard({loadConfig}: DevDashboardOptions) {
   const [app, setApp] = useState<AppProps>()
   const [connected, setConnected] = useState(true)
   const forceDbUpdate = useSetAtom(dbUpdateAtom)
   async function getConfig() {
     // Reload css
     const link = document.querySelector(
-      'link[href^="/views.css"]'
+      'link[href^="/config.css"]'
     ) as HTMLLinkElement
     const copy = link.cloneNode() as HTMLLinkElement
-    copy.href = '/views.css?' + Math.random()
+    copy.href = '/config.css?' + Math.random()
     copy.onload = () => link.remove()
     link.after(copy)
-    const [config, views] = await Promise.all([loadConfig(), loadViews()])
+    const config = await loadConfig()
     const client = new Client({
-      config,
+      config: config.cms,
       url: new URL('/api', location.href).href
     })
-    return setApp({config, views, client})
+    return setApp({config: config.cms.config, views: config.views, client})
   }
   useEffect(() => {
     getConfig()

@@ -7,16 +7,10 @@ const element = scripts[scripts.length - 1]
 const into = document.createElement('div')
 into.id = 'root'
 element.parentElement.replaceChild(into, element)
-reactRender(jsx(DevDashboard, {loadConfig, loadViews}), into)
+reactRender(jsx(DevDashboard, {loadConfig}), into)
 
 async function loadConfig() {
   const exports = await import('/config.js?' + Math.random())
-  if ('cms' in exports) return exports.cms.config
-  throw new Error(`No config found in "/config.js"`)
-}
-
-async function loadViews() {
-  const exports = await import('/views.js?' + Math.random())
-  if ('views' in exports) return exports.views
-  throw new Error(`No views found in "/views.js"`)
+  if (!('cms' in exports)) throw new Error(`No config found in "/config.js"`)
+  return exports
 }
