@@ -1,4 +1,5 @@
 import {index, InferSelectModel, primaryKey, sql, Sql, table} from 'rado'
+import {column as createColumn} from 'rado/core/Column'
 import {Functions} from 'rado/core/expr/Functions'
 import {input, Input} from 'rado/core/expr/Input'
 import * as column from 'rado/universal/columns'
@@ -17,6 +18,12 @@ export const ALT_STATUS: Array<EntryStatus> = [
 
 export type EntryLinks = {[field: string]: Array<string>}
 
+function nocaseText() {
+  return createColumn<string | null>({
+    type: sql`text collate nocase`
+  })
+}
+
 export const EntryRow = table(
   'Entry',
   {
@@ -34,7 +41,7 @@ export const EntryRow = table(
     index: column.text().notNull(),
     parentId: column.text(),
 
-    locale: column.text(),
+    locale: nocaseText(),
 
     // Entries from which a new draft can be created are marked as active,
     // there is only one active entry per entryId
