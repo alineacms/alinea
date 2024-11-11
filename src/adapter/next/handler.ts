@@ -43,6 +43,7 @@ export function createHandler<Driver extends AvailableDrivers>(
           first: true,
           select: Entry.url,
           id: info.entryId,
+          locale: info.locale,
           preview: payload ? {payload} : undefined
         })
         if (!url) return new Response('Not found', {status: 404})

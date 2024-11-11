@@ -11,6 +11,7 @@ export interface PreviewPayload {
 export type PreviewRequest = PreviewPayload | {entry: EntryRow}
 
 export interface PreviewUpdate {
+  locale: string | null
   entryId: string
   contentHash: string
   status: string

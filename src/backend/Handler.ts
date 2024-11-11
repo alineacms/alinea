@@ -33,6 +33,7 @@ const PrepareBody = object({
 })
 
 const PreviewBody = object({
+  locale: string.nullable,
   entryId: string
 })
 
