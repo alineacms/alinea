@@ -54,7 +54,6 @@ export const entrySummaryAtoms = atomFamily(
       const loader = await get(entrySummaryLoaderAtom)
       // We clear the dataloader cache because we use the atom family cache
       const summaries = await loader.clear(keys.id).load(keys.id)
-      console.log(summaries)
       if (!summaries) return
       const summary =
         summaries[keys.locale ?? ''] ?? summaries[Object.keys(summaries)[0]]

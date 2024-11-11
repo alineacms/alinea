@@ -158,7 +158,6 @@ export const entryEditorAtoms = atomFamily(
         locale,
         status: 'preferDraft'
       })
-      console.log(withParents)
       const translations = (await graph.find({
         select: {
           locale: Entry.locale,
