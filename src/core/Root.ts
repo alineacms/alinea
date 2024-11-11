@@ -9,7 +9,7 @@ import {Type} from './Type.js'
 import {View} from './View.js'
 
 export interface RootI18n {
-  locales: Array<string>
+  locales: ReadonlyArray<string>
 }
 
 export interface RootMeta {
@@ -48,6 +48,14 @@ export namespace Root {
 
   export function defaultLocale(root: Root): string | undefined {
     return getRoot(root).i18n?.locales[0]
+  }
+
+  export function localeName(root: Root, name: string): string | undefined {
+    const {i18n} = getRoot(root)
+    if (!i18n) return
+    for (const locale of i18n.locales) {
+      if (locale.toLowerCase() === name.toLowerCase()) return locale
+    }
   }
 
   export function isRoot(value: any): value is Root {

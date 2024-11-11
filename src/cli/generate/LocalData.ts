@@ -79,7 +79,7 @@ export class LocalData implements Source, Target, Media {
         const {i18n} = Root.data(root)
         const locales = i18n?.locales || [undefined]
         for (const locale of locales) {
-          const targets = [locale ? `/${locale}` : '/']
+          const targets = [locale ? `/${locale.toLowerCase()}` : '/']
           while (targets.length > 0) {
             const target = targets.shift()!
             const [files, err] = await outcome(
@@ -105,6 +105,7 @@ export class LocalData implements Source, Target, Media {
                 batch.push(async (): Promise<SourceEntry> => {
                   const contents = await fs.readFile(location)
                   return {
+                    locale,
                     workspace: workspaceName,
                     root: rootName,
                     filePath,

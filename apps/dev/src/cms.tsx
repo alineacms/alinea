@@ -17,7 +17,7 @@ export const cms = createCMS({
         pages: Config.root('Languages', {
           icon: IcRoundTranslate,
           i18n: {
-            locales: ['en', 'fr', 'nl']
+            locales: ['en', 'fr', 'nl-BE', 'nl-NL']
           },
           children: {
             seededPath: Config.page({

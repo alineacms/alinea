@@ -8,7 +8,7 @@ import css from './LangSwitch.module.scss'
 const styles = styler(css)
 
 export interface LangswitchProps {
-  locales: Array<string>
+  locales: ReadonlyArray<string>
   selected: string
   onChange: (locale: string) => void
   inline?: boolean

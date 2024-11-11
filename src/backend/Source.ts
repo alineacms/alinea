@@ -1,4 +1,5 @@
 export interface SourceEntry {
+  locale: string | undefined
   workspace: string
   root: string
   filePath: string

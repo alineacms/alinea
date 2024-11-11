@@ -43,7 +43,7 @@ export function entryChildrenDir(
     throw new Error(`Entry has unknown phase: ${status}`)
   return (
     '/' +
-    (locale ? [locale] : [])
+    (locale ? [locale.toLowerCase()] : [])
       .concat(
         parentPaths
           .concat(path)
@@ -110,7 +110,7 @@ export function entryFile(config: Config, entry: EntryRow) {
 export function entryUrl(type: Type, meta: EntryUrlMeta) {
   const {entryUrl} = getType(type)
   if (entryUrl) return entryUrl(meta)
-  const segments = meta.locale ? [meta.locale] : []
+  const segments = meta.locale ? [meta.locale.toLowerCase()] : []
   return (
     '/' +
     segments

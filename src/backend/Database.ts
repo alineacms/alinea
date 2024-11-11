@@ -2,6 +2,7 @@ import {Config} from 'alinea/core/Config'
 import {SyncResponse, Syncable} from 'alinea/core/Connection'
 import {EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
+import {getRoot} from 'alinea/core/Internal'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Page} from 'alinea/core/Page'
 import {Resolver} from 'alinea/core/Resolver'
@@ -536,17 +537,17 @@ export class Database implements Syncable {
     const fileName = paths.basename(meta.filePath, extension)
     const [entryPath, entryStatus] = entryInfo(fileName)
     const segments = parentDir.split('/').filter(Boolean)
-    const root = Root.data(this.config.workspaces[meta.workspace][meta.root])
-    let locale: string = ''
+    const root = this.config.workspaces[meta.workspace][meta.root]
+    let locale: string | null = null
 
-    if (root.i18n) {
-      locale = segments.shift()!
-      if (!root.i18n.locales.includes(locale))
-        throw new Error(`invalid locale: "${locale}"`)
+    if (getRoot(root).i18n) {
+      const inSegment = segments.shift()!
+      locale = Root.localeName(root, inSegment) ?? null
+      if (!locale) throw new Error(`Invalid locale: "${inSegment}"`)
     }
 
     const type = this.config.schema[typeName]
-    if (!type) throw new Error(`invalid type: "${typeName}"`)
+    if (!type) throw new Error(`Invalid type: "${typeName}"`)
     if (seed && seed.type !== typeName)
       throw new Error(
         `Type mismatch between seed and file: "${seed.type}" !== "${typeName}"`
@@ -610,7 +611,7 @@ export class Database implements Syncable {
         const locales = i18n?.locales ?? [undefined]
         for (const locale of locales) {
           const pages: Array<readonly [string, Page]> = entries(root)
-          const target = locale ? `/${locale}` : '/'
+          const target = locale ? `/${locale.toLowerCase()}` : '/'
           while (pages.length > 0) {
             const [pagePath, page] = pages.shift()!
             const path = pagePath.split('/').map(slugify).join('/')
@@ -657,7 +658,7 @@ export class Database implements Syncable {
 
     await this.store.transaction(async tx => {
       const seenVersions: Array<EntryKeys> = []
-      const seenSeeds = new Set<string>()
+      const seenSeeds = new Map<string, string>()
       const inserted: Array<EntryKeys> = []
       //const endScan = timer('Scanning entries')
       const changes: Array<Change> = []
@@ -689,7 +690,7 @@ export class Database implements Syncable {
             file.root,
             exists.seeded ?? file.filePath
           )
-          seenSeeds.add(key)
+          seenSeeds.set(key, exists.id)
           continue
         }
         try {
@@ -736,7 +737,7 @@ export class Database implements Syncable {
               is(EntryRow.locale, entry.locale),
               eq(EntryRow.status, entry.status)
             )
-          seenSeeds.add(key)
+          seenSeeds.set(key, entry.id)
           await tx.insert(EntryRow).values(withHash)
           seenVersions.push([entry.id, entry.locale ?? 'null', entry.status])
           inserted.push([entry.id, entry.locale ?? 'null', entry.status])
@@ -771,7 +772,12 @@ export class Database implements Syncable {
       const stableIds = new Map<string, string>()
       for (const seed of this.seed.values()) {
         const key = seedKey(seed.workspace, seed.root, seed.filePath)
-        if (seenSeeds.has(key)) continue
+        const [, locale, ...rest] = seed.filePath.split('/')
+        const withoutLocale = rest.join('/')
+        if (seenSeeds.has(key)) {
+          stableIds.set(withoutLocale, seenSeeds.get(key)!)
+          continue
+        }
         const {type, fields} = Page.data(seed.page)
         const typeName = typeNames.get(type)
         if (!typeName) continue
@@ -779,10 +785,8 @@ export class Database implements Syncable {
         const {i18n} = Root.data(root)
         let id = createId()
         if (i18n) {
-          const [, locale, ...rest] = seed.filePath.split('/')
-          const path = rest.join('/')
-          id = stableIds.get(path) ?? createId()
-          stableIds.set(path, id)
+          id = stableIds.get(withoutLocale) ?? createId()
+          stableIds.set(withoutLocale, id)
         }
         const entry = this.computeEntry(
           createRecord({
