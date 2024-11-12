@@ -1,6 +1,7 @@
 import {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'
 import {useAtomValue} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import {ComponentType, useEffect, useState} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
@@ -27,13 +28,12 @@ interface EntryPreviewUrlProps {
 
 function EntryPreviewUrl({editor}: EntryPreviewUrlProps) {
   const config = useConfig()
-  const payload = useAtomValue(editor.previewPayload)
+  const payload = useAtomValue(unwrap(editor.previewPayload))
   const previewToken = useAtomValue(editor.previewToken)
   const previewSearch = `?preview=${previewToken}`
   const [api, setApi] = useState<LivePreview | undefined>(undefined)
   useEffect(() => {
-    if (!api) return
-    api.preview(payload)
+    if (payload) api?.preview(payload)
   }, [payload])
   const base = new URL(
     config.handlerUrl ?? '',
