@@ -1,18 +1,17 @@
 import type {WithoutLabel} from 'alinea/core/Field'
 import {Label} from 'alinea/core/Label'
-import {Reference} from 'alinea/core/Reference'
 import {Type} from 'alinea/core/Type'
 import type {ListRow} from 'alinea/core/shape/ListShape'
 import {FileLink, filePicker} from 'alinea/field/link/FileLink'
 import {
-  LinkField,
-  LinkFieldOptions,
   createLink,
-  createLinks
+  createLinks,
+  LinkField,
+  LinkFieldOptions
 } from 'alinea/field/link/LinkField'
 import {entryPicker} from 'alinea/picker/entry'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {urlPicker} from 'alinea/picker/url'
+import {urlPicker, UrlReference} from 'alinea/picker/url'
 import {EntryLink} from './EntryLink.js'
 import {UrlLink} from './UrlLink.js'
 
@@ -25,11 +24,13 @@ export interface LinkOptions<Definition, Row> extends LinkFieldOptions<Row> {
   fields?: Definition | Type<Definition>
 }
 
+type LinkRow = (EntryReference | UrlReference) & ListRow
+
 export function link<Fields>(
   label: Label,
-  options: WithoutLabel<LinkOptions<Fields, Reference>> = {}
-): LinkField<Reference, Link<Type.Infer<Fields>>> {
-  return createLink<Reference, Link<Type.Infer<Fields>>>(label, {
+  options: WithoutLabel<LinkOptions<Fields, LinkRow>> = {}
+): LinkField<LinkRow, Link<Type.Infer<Fields>>> {
+  return createLink<LinkRow, Link<Type.Infer<Fields>>>(label, {
     ...options,
     pickers: {
       entry: entryPicker<EntryReference, Fields>({
@@ -47,9 +48,9 @@ export function link<Fields>(
 export namespace link {
   export function multiple<Fields>(
     label: Label,
-    options: WithoutLabel<LinkOptions<Fields, Array<ListRow>>> = {}
+    options: WithoutLabel<LinkOptions<Fields, Array<LinkRow>>> = {}
   ) {
-    return createLinks<ListRow, Link<Type.Infer<Fields>>>(label, {
+    return createLinks<LinkRow, Link<Type.Infer<Fields>>>(label, {
       ...options,
       pickers: {
         entry: entryPicker<EntryReference, Fields>({

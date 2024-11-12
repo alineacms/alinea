@@ -34,7 +34,17 @@ export function createExample() {
       ...tabs(
         tab('Tab 1', {
           fields: {
-            name: path('Name')
+            name: path('Name'),
+            entryLink: link.multiple('Entry link'),
+            list: list('List field', {
+              schema: {
+                item: type('Item', {
+                  fields: {
+                    itemId: text('Item id')
+                  }
+                })
+              }
+            })
           }
         }),
         tab('Tab 2', {

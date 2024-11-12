@@ -4,6 +4,7 @@ import {ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import * as Edit from 'alinea/edit'
+import {translations} from 'alinea/query'
 import {readFileSync} from 'fs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
@@ -149,13 +150,11 @@ test('fetch translations', async () => {
     locale: 'en',
     location: example.workspaces.main.multiLanguage,
     select: {
-      translations: {
-        translations: {
-          includeSelf: true
-        },
+      translations: translations({
+        includeSelf: true,
         type: Page,
         select: Entry.locale
-      }
+      })
     },
     path: 'localised1'
   })
@@ -340,6 +339,42 @@ test('create multi language entries', async () => {
     id: entry.id
   })
   assert.is(result.url, '/en/localised2/new-entry')
+})
+
+test('filters', async () => {
+  const example = createExample()
+  const {Page} = example.schema
+  const entry = Edit.create({
+    type: Page,
+    set: {
+      title: 'New entry',
+      entryLink: Edit.links(Page.entryLink).addEntry('xyz').value(),
+      list: Edit.list(Page.list)
+        .add('item', {
+          itemId: 'item-1'
+        })
+        .value()
+    }
+  })
+  await example.commit(entry)
+  const result = await example.find({
+    type: Page,
+    filter: {
+      list: {includes: {itemId: 'item-1'}}
+    }
+  })
+  assert.is(result.length, 1)
+  const result2 = await example.find({
+    type: Page,
+    filter: {
+      entryLink: {
+        includes: {
+          _entry: 'xyz'
+        }
+      }
+    }
+  })
+  assert.is(result2.length, 1)
 })
 
 test.run()

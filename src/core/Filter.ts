@@ -1,33 +1,40 @@
-import {Expr} from './Expr.js'
-
 type Primitive = string | number | boolean | null
 
-type InferValue<T> = T extends Expr<infer V> ? V : T
+interface Ops<Value> {
+  is?: Value
+  isNot?: Value
+  in?: ReadonlyArray<Value>
+  notIn?: ReadonlyArray<Value>
+  gt?: Value
+  gte?: Value
+  lt?: Value
+  lte?: Value
+  startsWith?: string
+  or?: Condition<Value>
+}
 
-export type Condition<V> =
-  | {
-      is?: V
-      isNot?: V
-      in?: ReadonlyArray<V>
-      notIn?: ReadonlyArray<V>
-      gt?: V
-      gte?: V
-      lt?: V
-      lte?: V
-      startsWith?: string
-      or?: Condition<V>
-    }
-  | V
+interface ObjectOps<Fields> {
+  has?: Filter<Fields>
+}
+
+interface ArrayOps<Fields> {
+  includes?: Filter<Fields>
+}
+
+type FieldOps<Fields> = {
+  [K in keyof Fields]?: Condition<Fields[K]>
+}
+
+export type Condition<Value> = Value extends Primitive
+  ? Ops<Value> | Value
+  : Value extends Array<any>
+  ? ArrayOps<Value[0]>
+  : ObjectOps<Value>
 
 type AndCondition<Fields> = {and: Array<Filter<Fields> | undefined>}
 type OrCondition<Fields> = {or: Array<Filter<Fields> | undefined>}
-type FieldCondition<Fields> = {
-  [K in keyof Fields as InferValue<Fields[K]> extends Primitive
-    ? K
-    : never]?: Condition<InferValue<Fields[K]>>
-}
 
 export type Filter<Fields = unknown> =
   | AndCondition<Fields>
   | OrCondition<Fields>
-  | FieldCondition<Fields>
+  | FieldOps<Fields>

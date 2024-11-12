@@ -35,6 +35,7 @@ import {
   count,
   desc,
   eq,
+  exists,
   gt,
   gte,
   inArray,
@@ -54,7 +55,9 @@ import {
   sql
 } from 'rado'
 import {Builder} from 'rado/core/Builder'
+import {Functions} from 'rado/core/expr/Functions'
 import {input} from 'rado/core/expr/Input'
+import {jsonExpr} from 'rado/core/expr/Json'
 import {getData, getTable, HasSql} from 'rado/core/Internal'
 import {bm25, snippet} from 'rado/sqlite'
 import type {Database} from '../Database.js'
@@ -385,7 +388,7 @@ export class EntryResolver {
       query.root && typeof query.root === 'object' && hasRoot(query.root)
         ? this.scope.nameOf(query.root)
         : query.root
-    return this.conditionFilter(ctx, {
+    return this.conditionFilter(ctx, this.getField.bind(this), {
       _id: query.id,
       _parentId: query.parentId,
       _path: query.path,
@@ -414,35 +417,28 @@ export class EntryResolver {
     return eq(ctx.Table.type, this.scope.nameOf(types))
   }
 
-  conditionFilter(ctx: ResolveContext, filter: Filter): Sql<boolean> {
+  conditionFilter(
+    ctx: ResolveContext,
+    getField: (ctx: ResolveContext, name: string) => Sql,
+    filter: Filter
+  ): Sql<boolean> {
     const isOrFilter = orFilter.check(filter)
     if (isOrFilter)
       return or(
         ...filter.or
           .filter(Boolean)
-          .map(filter => this.conditionFilter(ctx, filter))
+          .map(filter => this.conditionFilter(ctx, getField, filter))
       )
     const isAndFilter = andFilter.check(filter)
     if (isAndFilter)
       return and(
         ...filter.and
           .filter(Boolean)
-          .map(filter => this.conditionFilter(ctx, filter))
+          .map(filter => this.conditionFilter(ctx, getField, filter))
       )
-    function filterField(ctx: ResolveContext, name: string): HasSql {
-      if (name.startsWith('_')) {
-        const entryProp = name.slice(1)
-        const key = entryProp as keyof EntryRow
-        if (!(key in ctx.Table)) throw new Error(`Unknown field: "${name}"`)
-        return ctx.Table[key]
-      }
-      return (<any>ctx.Table.data)[name]
-    }
-    const conditions = entries(filter).flatMap(function mapCondition(
-      this: void,
-      [key, value]
-    ): Array<Sql<boolean>> {
-      const field = filterField(ctx, key)
+    const mapCondition = ([field, value]: readonly [HasSql, unknown]): Array<
+      Sql<boolean>
+    > => {
       if (typeof value !== 'object' || !value)
         return value === undefined
           ? []
@@ -469,20 +465,58 @@ export class EntryResolver {
             if (Array.isArray(value))
               return or(
                 ...value.map((c: unknown) => {
-                  return and(...mapCondition([key, c]))
+                  return and(...mapCondition([field, c]))
                 })
               )
-            return and(...mapCondition([key, value]))
+            return and(...mapCondition([field, value]))
           case 'in':
             return inArray(field, value)
           case 'notIn':
             return not(inArray(field, value))
+          case 'has':
+            return this.conditionFilter(
+              ctx,
+              (_, name) => {
+                return (<any>field)[name]
+              },
+              value
+            )
+          case 'includes':
+            const expr = jsonExpr(sql`value`)
+            const condition = this.conditionFilter(
+              ctx,
+              (_, name) => {
+                return (<any>expr)[name]
+              },
+              value
+            )
+            return exists(
+              builder
+                .select(sql`1`)
+                .from(Functions.json_each(field))
+                .where(condition)
+            )
           default:
             throw new Error(`Unknown filter operator: "${op}"`)
         }
       })
-    })
+    }
+    const conditions = entries(filter)
+      .map(([key, value]) => {
+        return [getField(ctx, key), value] as const
+      })
+      .flatMap(mapCondition)
     return and(...conditions)
+  }
+
+  getField(ctx: ResolveContext, name: string) {
+    if (name.startsWith('_')) {
+      const entryProp = name.slice(1)
+      const key = entryProp as keyof EntryRow
+      if (!(key in ctx.Table)) throw new Error(`Unknown field: "${name}"`)
+      return ctx.Table[key]
+    }
+    return (<any>ctx.Table.data)[name]
   }
 
   query(ctx: ResolveContext, query: RelatedQuery<Projection>): Select<any> {
@@ -501,7 +535,7 @@ export class EntryResolver {
         ? undefined
         : this.conditionLocale(ctx.Table, ctx.locale),
       this.conditionSearch(ctx.Table, search),
-      filter && this.conditionFilter(ctx, filter)
+      filter && this.conditionFilter(ctx, this.getField.bind(this), filter)
     )
     if (skip) q = q.offset(skip)
     if (take) q = q.limit(take)

@@ -4,7 +4,7 @@ import {Config} from './Config.js'
 import {EntryFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
 import {Condition, Filter} from './Filter.js'
-import {Infer} from './Infer.js'
+import {Infer, StoredRow} from './Infer.js'
 import {Page} from './Page.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
@@ -15,11 +15,13 @@ import {Expand} from './util/Types.js'
 export type Location = Root | Workspace | Page | Array<string>
 type EmptyObject = Record<PropertyKey, never>
 
-type FieldsOf<Types> = Types extends Type<infer V>
-  ? V
-  : Types extends Array<any>
-  ? Types[number]
-  : unknown
+type FieldsOf<Types> = StoredRow<
+  Types extends Type<infer V>
+    ? V
+    : Types extends Array<any>
+    ? Types[number]
+    : unknown
+>
 
 export interface RelatedQuery<Selection = unknown, Types = unknown>
   extends GraphQuery<Selection, Types> {
