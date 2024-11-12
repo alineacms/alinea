@@ -82,15 +82,8 @@ type InferResult<Selection, Types, Include> = Selection extends Expr<
         (Include extends undefined ? {} : InferSelection<Include>)
   : InferSelection<Selection>
 
-type CountQueryResult<Selection, Types, Include> = number
-type GetQueryResult<Selection, Types, Include> = Expand<
+type QueryResult<Selection, Types, Include> = Expand<
   InferResult<Selection, Types, Include>
->
-type FirstQueryResult<Selection, Types, Include> = Expand<
-  InferResult<Selection, Types, Include>
-> | null
-type FindQueryResult<Selection, Types, Include> = Expand<
-  Array<InferResult<Selection, Types, Include>>
 >
 
 interface CountQuery<Selection, Types, Include>
@@ -108,17 +101,17 @@ interface GetQuery<Selection, Types, Include>
 }
 
 export type AnyQueryResult<Query extends GraphQuery> = Query extends CountQuery<
-  infer S,
-  infer T,
-  infer I
+  any,
+  any,
+  any
 >
-  ? CountQueryResult<S, T, I>
+  ? number
   : Query extends FirstQuery<infer S, infer T, infer I>
-  ? FirstQueryResult<S, T, I>
+  ? QueryResult<S, T, I> | null
   : Query extends GetQuery<infer S, infer T, infer I>
-  ? GetQueryResult<S, T, I>
+  ? QueryResult<S, T, I>
   : Query extends GraphQuery<infer S, infer T, infer I>
-  ? FindQueryResult<S, T, I>
+  ? Array<QueryResult<S, T, I>>
   : unknown
 
 export type Status =
@@ -232,7 +225,7 @@ export class Graph {
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
-  ): Promise<FindQueryResult<Selection, Type, Include>> {
+  ): Promise<Array<QueryResult<Selection, Type, Include>>> {
     return <any>this.#resolver.resolve(query)
   }
 
@@ -242,7 +235,7 @@ export class Graph {
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
-  ): Promise<FirstQueryResult<Selection, Type, Include>> {
+  ): Promise<QueryResult<Selection, Type, Include> | null> {
     return <any>this.#resolver.resolve({...query, first: true})
   }
 
@@ -252,7 +245,7 @@ export class Graph {
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
-  ): Promise<GetQueryResult<Selection, Type, Include>> {
+  ): Promise<QueryResult<Selection, Type, Include>> {
     const result = await (<any>this.#resolver.resolve({...query, get: true}))
     if (!result) throw new Error('Entry not found')
     return result
@@ -262,9 +255,7 @@ export class Graph {
     Selection extends SelectionGuard = undefined,
     const Type extends TypeGuard = undefined,
     Include extends IncludeGuard = undefined
-  >(
-    query: GraphQuery<Selection, Type, Include>
-  ): Promise<CountQueryResult<Selection, Type, Include>> {
+  >(query: GraphQuery<Selection, Type, Include>): Promise<number> {
     return <any>this.#resolver.resolve({...query, count: true})
   }
 }
