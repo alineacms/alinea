@@ -2,9 +2,10 @@ import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import {Auth} from './Auth.js'
+import {Entry} from './Entry.js'
 import {getWorkspace} from './Internal.js'
 import {Schema} from './Schema.js'
-import {Type} from './Type.js'
+import {EntryUrlMeta, Type} from './Type.js'
 import {Workspace, WorkspaceInternal} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
@@ -16,17 +17,22 @@ export interface Config {
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
 
-  /** A url which will be embedded in the dashboard for live previews */
+  /** Enable live previews */
   preview?: Preview
   /** Every edit will pass through a draft status before being published */
   enableDrafts?: boolean
   /** The interval in seconds at which the frontend will poll for updates */
   syncInterval?: number
 
-  /** The base url of the application */
+  /** The base url used for both handler and previews */
   baseUrl?: string | {development?: string; production?: string}
   /** The url of the handler endpoint */
   handlerUrl?: string
+  /** The url of the live preview */
+  previewUrl?: string | ((entry: Entry) => string)
+  /** A function to generate a URL for an entry */
+  entryUrl?: (meta: EntryUrlMeta) => string
+
   /** The folder where public assets are stored, defaults to /public */
   publicDir?: string
   /** Filename of the generated dashboard */

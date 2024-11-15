@@ -381,11 +381,12 @@ async function createEntry(
   const childrenDir = entryChildrenDir(config, details, parentPaths)
   const urlMeta: EntryUrlMeta = {
     locale,
-    path,
-    status,
-    parentPaths
+    path: parentPaths.concat(path),
+    type: typeName,
+    root,
+    workspace
   }
-  const url = entryUrl(type, urlMeta)
+  const url = entryUrl(config, urlMeta)
   return createEntryRow(config, {
     ...details,
     filePath,

@@ -69,7 +69,6 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
     },
     {suspense: true, keepPreviousData: true}
   )
-  console.log({data, root})
   const {query} = data!
   const title = data?.title || root.label
   const nav = useNav()

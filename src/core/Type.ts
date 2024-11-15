@@ -1,7 +1,6 @@
 import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
-import {EntryStatus} from './EntryRow.js'
 import {Expr} from './Expr.js'
 import {Field} from './Field.js'
 import {getType, hasType, HasType, internalType} from './Internal.js'
@@ -16,9 +15,10 @@ import {Expand} from './util/Types.js'
 import {View} from './View.js'
 
 export interface EntryUrlMeta {
-  status: EntryStatus
-  path: string
-  parentPaths: Array<string>
+  type: string
+  root: string
+  workspace: string
+  path: ReadonlyArray<string>
   locale?: string | null
 }
 
@@ -159,7 +159,7 @@ export interface TypeConfig<Definition> {
   summaryRow?: View<SummaryProps>
   /** A React component used to view a thumbnail of this type in the dashboard */
   summaryThumb?: View<SummaryProps>
-
+  /** A function to generate a URL for an entry of this type */
   entryUrl?: (meta: EntryUrlMeta) => string
 }
 

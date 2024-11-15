@@ -181,9 +181,9 @@ export class Database implements Syncable {
       const parentDir = next.childrenDir + child.parentDir.slice(dir.length)
       const parentPaths = parentDir.split('/').filter(Boolean)
       if (child.locale) parentPaths.shift()
-      const url = entryUrl(this.config.schema[child.type], {
+      const url = entryUrl(this.config, {
         ...child,
-        parentPaths
+        path: parentPaths.concat(child.path)
       })
       await tx
         .update(EntryRow)
@@ -558,9 +558,10 @@ export class Database implements Syncable {
 
     const urlMeta: EntryUrlMeta = {
       locale,
-      parentPaths: segments,
-      path: entryPath,
-      status: entryStatus
+      path: segments.concat(entryPath),
+      type: typeName,
+      root: meta.root,
+      workspace: meta.workspace
     }
 
     const pathData = entryPath === 'index' ? '' : entryPath
@@ -595,7 +596,7 @@ export class Database implements Syncable {
 
       path: entryPath,
       title,
-      url: entryUrl(type, urlMeta),
+      url: entryUrl(this.config, urlMeta),
 
       data: entryData,
       searchableText

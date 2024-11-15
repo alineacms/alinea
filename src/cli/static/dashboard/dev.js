@@ -7,7 +7,13 @@ const element = scripts[scripts.length - 1]
 const into = document.createElement('div')
 into.id = 'root'
 element.parentElement.replaceChild(into, element)
-reactRender(jsx(DevDashboard, {loadConfig}), into)
+reactRender(
+  jsx(DevDashboard, {
+    loadConfig,
+    alineaDev: process.env.ALINEA_DEV
+  }),
+  into
+)
 
 async function loadConfig() {
   const exports = await import('/config.js?' + Math.random())

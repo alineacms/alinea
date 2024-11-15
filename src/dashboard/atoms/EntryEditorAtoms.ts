@@ -662,12 +662,13 @@ export function createEntryEditor(entryData: EntryData) {
     const [entryPath] = entryInfo(fileName)
     const childrenDir = paths.join(parentDir, entryPath)
     const urlMeta: EntryUrlMeta = {
+      type: activeVersion.type,
       locale,
-      path,
-      status,
-      parentPaths
+      path: parentPaths.concat(path),
+      root: activeVersion.root,
+      workspace: activeVersion.workspace
     }
-    const url = entryUrl(type, urlMeta)
+    const url = entryUrl(config, urlMeta)
     return createEntryRow(config, {
       ...draftEntry,
       parentDir,

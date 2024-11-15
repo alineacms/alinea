@@ -50,12 +50,13 @@ export function publishEntryRow(config: Config, entry: EntryRow): EntryRow {
   const [entryPath] = entryInfo(fileName)
   const childrenDir = paths.join(parentDir, entryPath)
   const urlMeta: EntryUrlMeta = {
+    type: entry.type,
     locale: entry.locale,
-    path,
-    status: entry.status,
-    parentPaths
+    path: parentPaths.concat(path),
+    root: entry.root,
+    workspace: entry.workspace
   }
-  const url = entryUrl(config.schema[entry.type], urlMeta)
+  const url = entryUrl(config, urlMeta)
   return {
     ...entry,
     status: EntryStatus.Published,

@@ -19,6 +19,10 @@ export const cms = createCMS({
           i18n: {
             locales: ['en', 'fr', 'nl-BE', 'nl-NL']
           },
+          entryUrl({locale, path}) {
+            const prefix = locale === 'en' ? '/' : `/${locale}/`
+            return prefix + path.join('/')
+          },
           children: {
             seededPath: Config.page({
               type: schema.Page,

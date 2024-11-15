@@ -1,7 +1,7 @@
 import {Config} from '../Config.js'
 import {ALT_STATUS, EntryRow, EntryStatus} from '../EntryRow.js'
-import {getRoot, getType} from '../Internal.js'
-import {EntryUrlMeta, Type} from '../Type.js'
+import {getRoot, getType, getWorkspace} from '../Internal.js'
+import {EntryUrlMeta} from '../Type.js'
 import {Workspace} from '../Workspace.js'
 import {values} from './Objects.js'
 import {join} from './Paths.js'
@@ -107,17 +107,22 @@ export function entryFile(config: Config, entry: EntryRow) {
   return join(contentDir, entry.root, filePath)
 }
 
-export function entryUrl(type: Type, meta: EntryUrlMeta) {
-  const {entryUrl} = getType(type)
-  if (entryUrl) return entryUrl(meta)
+export function entryUrl(config: Config, meta: EntryUrlMeta) {
+  const type = config.schema[meta.type]
+  const {entryUrl: typeEntryUrl} = getType(type)
+  if (typeEntryUrl) return typeEntryUrl(meta)
+  const workspace = config.workspaces[meta.workspace]
+  const root = workspace[meta.root]
+  const {entryUrl: rootEntryUrl} = getRoot(root)
+  if (rootEntryUrl) return rootEntryUrl(meta)
+  const {entryUrl: workspaceEntryUrl} = getWorkspace(workspace)
+  if (workspaceEntryUrl) return workspaceEntryUrl(meta)
   const segments = meta.locale ? [meta.locale.toLowerCase()] : []
   return (
     '/' +
     segments
       .concat(
-        meta.parentPaths
-          .concat(meta.path)
-          .filter(segment => segment !== 'index' && segment !== '')
+        meta.path.filter(segment => segment !== 'index' && segment !== '')
       )
       .join('/')
   )

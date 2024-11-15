@@ -217,6 +217,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const path = slugify(title)
     const id = createId()
     const data = {
+      type: selected,
       workspace,
       root: root.name,
       locale: locale ?? null,
@@ -237,7 +238,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const childrenDir = entryChildrenDir(config, data, parentPaths)
     const parentDir = dirname(filePath)
     const entryType = config.schema[selected]!
-    const url = entryUrl(entryType, {...data, parentPaths})
+    const url = entryUrl(config, {...data, path: parentPaths.concat(path)})
     const copyFrom = form.data().copyFrom?.[EntryReference.entry]
     const entryData = copyFrom
       ? await graph.first({

@@ -5,7 +5,7 @@ import {Label} from './Label.js'
 import {Page} from './Page.js'
 import {Preview} from './Preview.js'
 import {Schema} from './Schema.js'
-import {Type} from './Type.js'
+import {EntryUrlMeta, Type} from './Type.js'
 import {View} from './View.js'
 
 export interface RootI18n {
@@ -20,6 +20,8 @@ export interface RootMeta {
   view?: View<{root: RootData}>
   isMediaRoot?: boolean
   preview?: Preview
+  /** A function to generate a URL for an entry in this root */
+  entryUrl?: (meta: EntryUrlMeta) => string
 }
 
 export interface ChildrenDefinition {

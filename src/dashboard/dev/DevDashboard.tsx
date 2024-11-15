@@ -35,11 +35,12 @@ function setupDevReload({refresh, refetch, open, close}: DevReloadOptions) {
 
 export type DevDashboardOptions = {
   loadConfig: () => Promise<{cms: CMS; views: Record<string, ComponentType>}>
+  alineaDev?: boolean
 }
 
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 
-export function DevDashboard({loadConfig}: DevDashboardOptions) {
+export function DevDashboard({loadConfig, alineaDev}: DevDashboardOptions) {
   const [app, setApp] = useState<AppProps>()
   const [connected, setConnected] = useState(true)
   const forceDbUpdate = useSetAtom(dbUpdateAtom)
@@ -74,6 +75,7 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
       queryClient={queryClient}
       dev={process.env.NODE_ENV === 'development'}
       {...app}
+      alineaDev={alineaDev}
     />
   )
 }

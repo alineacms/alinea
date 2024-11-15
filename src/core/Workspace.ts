@@ -8,6 +8,7 @@ import {
 } from './Internal.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
+import {EntryUrlMeta} from './Type.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
@@ -21,6 +22,8 @@ export interface WorkspaceMeta {
   color?: string
   icon?: ComponentType
   preview?: Preview
+  /** A function to generate a URL for an entry in this workspace */
+  entryUrl?: (meta: EntryUrlMeta) => string
 }
 
 type Roots = Record<string, Root>
