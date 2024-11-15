@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
 import {Reference} from 'alinea/core/Reference'
+import {ListRow} from 'alinea/core/shape/ListShape'
 import {track} from 'alinea/core/Tracker'
 import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
@@ -23,7 +24,7 @@ function linkForm(options: PickerOptions) {
     fields: {
       link: createLink('Link', {
         required: true,
-        initialValue: options.link as EntryReference
+        initialValue: options.link as EntryReference & ListRow
       }),
       description: text('Description', {
         help: 'Text to display inside the link element'
