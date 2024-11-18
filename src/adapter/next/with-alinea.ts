@@ -1,7 +1,14 @@
-import {NextConfig} from 'next/dist/types.js'
-import pkg from 'next/package.json'
+import type {NextConfig} from 'next/dist/types.js'
+import {readFileSync} from 'node:fs'
+import {createRequire} from 'node:module'
+import {resolve} from 'path'
 
 export function withAlinea(config: NextConfig): NextConfig {
+  // Ducktape this together so we can get the package.json contents regardless
+  // of .cjs, .mjs, compiled .ts or Node version
+  const require = createRequire(resolve('.'))
+  const pkgLocation = require.resolve('next/package.json')
+  const pkg = JSON.parse(readFileSync(pkgLocation, 'utf-8'))
   const majorVersion = Number(pkg.version.split('.')[0])
   if (majorVersion < 15)
     return {
@@ -11,7 +18,15 @@ export function withAlinea(config: NextConfig): NextConfig {
         serverComponentsExternalPackages: [
           ...(config.experimental?.serverComponentsExternalPackages ?? []),
           '@alinea/generated'
-        ]
+        ],
+        turbo: {
+          ...config.experimental?.turbo,
+          resolveAlias: {
+            ...config.experimental?.turbo?.resolveAlias,
+            'next/dist/server/app-render/work-unit-async-storage.external.js':
+              'next/dist/client/components/request-async-storage.external.js'
+          }
+        }
       }
     }
   return {
