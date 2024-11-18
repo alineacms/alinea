@@ -3,6 +3,7 @@ import {EntryFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
 import {Field} from './Field.js'
 import {Type} from './Type.js'
+import {ListRow} from './shape/ListShape.js'
 
 type QueryList<T> = Expand<
   UnionOfValues<{
@@ -13,7 +14,7 @@ type QueryList<T> = Expand<
 export type InferQueryValue<T> = T extends Array<Type<infer X>>
   ? InferQueryValue<X>
   : T extends Type<infer Fields>
-  ? Type.Infer<Fields> & EntryFields
+  ? Type.Infer<Fields>
   : T extends Expr<infer QueryValue>
   ? QueryValue
   : T extends Record<string, Type>
@@ -41,3 +42,14 @@ export type InferStoredValue<T> = T extends Type<infer Fields>
   : {}
 
 export type Infer<T> = InferQueryValue<T>
+
+export namespace Infer {
+  export type Entry<
+    T extends Type,
+    TypeName extends string = string
+  > = InferQueryValue<T> & Omit<EntryFields, '_type'> & {_type: TypeName}
+  export type ListItem<
+    T extends Type,
+    TypeName extends string = string
+  > = InferQueryValue<T> & Omit<ListRow, '_type'> & {_type: TypeName}
+}
