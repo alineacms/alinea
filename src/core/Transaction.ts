@@ -56,7 +56,7 @@ export interface UploadQuery {
   file: File | [string, Uint8Array]
   workspace?: string
   root?: string
-  parentId?: string
+  parentId?: string | null
   createPreview?(blob: Blob): Promise<ImagePreviewDetails>
 }
 
@@ -262,7 +262,7 @@ export interface CreateQuery<Fields> {
   type: Type<Fields>
   workspace?: string
   root?: string
-  parentId?: string
+  parentId?: string | null
   locale?: string
   set?: Partial<StoredRow<Fields>>
 }
