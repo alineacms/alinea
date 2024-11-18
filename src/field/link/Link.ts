@@ -24,7 +24,7 @@ export interface LinkOptions<Definition, Row> extends LinkFieldOptions<Row> {
   fields?: Definition | Type<Definition>
 }
 
-type LinkRow = (EntryReference | UrlReference) & ListRow
+export type LinkRow = (EntryReference | UrlReference) & ListRow
 
 export function link<Fields>(
   label: Label,
