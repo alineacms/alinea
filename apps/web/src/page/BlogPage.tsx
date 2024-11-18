@@ -5,7 +5,7 @@ import {Link} from '@/layout/nav/Link'
 import {BlogOverview} from '@/schema/BlogOverview'
 import {BlogPost} from '@/schema/BlogPost'
 import styler from '@alinea/styler'
-import {Query} from 'alinea'
+import {Entry} from 'alinea/core/Entry'
 import {VStack} from 'alinea/ui'
 import {MetadataRoute} from 'next'
 import css from './BlogPage.module.scss'
@@ -14,17 +14,23 @@ import {BlogPostMeta} from './blog/BlogPostMeta'
 const styles = styler(css)
 
 export default async function BlogPage() {
-  const overview = await cms.get(
-    Query(BlogOverview).select({
-      title: Query.title,
-      posts: Query.children(BlogPost).select({
-        ...Query.entry,
-        introduction: BlogPost.introduction,
-        author: BlogPost.author,
-        publishDate: BlogPost.publishDate
-      })
-    })
-  )
+  const overview = await cms.get({
+    type: BlogOverview,
+    select: {
+      title: BlogOverview.title,
+      posts: {
+        children: {},
+        type: BlogPost,
+        select: {
+          ...Entry,
+          id: Entry.id,
+          introduction: BlogPost.introduction,
+          author: BlogPost.author,
+          publishDate: BlogPost.publishDate
+        }
+      }
+    }
+  })
   return (
     <PageContainer>
       <PageContent>

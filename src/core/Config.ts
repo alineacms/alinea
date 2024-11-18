@@ -2,9 +2,10 @@ import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import {Auth} from './Auth.js'
+import {getWorkspace} from './Internal.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
-import {Workspace, WorkspaceData} from './Workspace.js'
+import {Workspace, WorkspaceInternal} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
 
@@ -17,7 +18,7 @@ export interface Config {
 
   /** A url which will be embedded in the dashboard for live previews */
   preview?: Preview
-  /** Every edit will pass through a draft phase before being published */
+  /** Every edit will pass through a draft status before being published */
   enableDrafts?: boolean
   /** The interval in seconds at which the frontend will poll for updates */
   syncInterval?: number
@@ -30,9 +31,6 @@ export interface Config {
   publicDir?: string
   /** Filename of the generated dashboard */
   dashboardFile?: string
-
-  /** @deprecated Use the publicDir and dashboardFile settings */
-  dashboard?: never
 
   auth?: Auth.View
 }
@@ -48,9 +46,9 @@ export namespace Config {
     if (result.includes('://')) return result
     return `https://${result}`
   }
-  export function mainWorkspace(config: Config): WorkspaceData {
+  export function mainWorkspace(config: Config): WorkspaceInternal {
     const key = Object.keys(config.workspaces)[0]
-    return Workspace.data(config.workspaces[key])
+    return getWorkspace(config.workspaces[key])
   }
 
   export function type(config: Config, name: string): Type | undefined {
@@ -79,10 +77,13 @@ export namespace Config {
   }
 }
 
+const normalized = new WeakSet()
+
 /** Create a new config instance */
 export function createConfig<Definition extends Config>(
   definition: Definition
 ) {
+  if (normalized.has(definition)) return definition
   if (definition.schema.MediaFile && definition.schema.MediaFile !== MediaFile)
     throw new Error(`"MediaFile" is a reserved Type name`)
   if (
@@ -91,11 +92,12 @@ export function createConfig<Definition extends Config>(
   )
     throw new Error(`"MediaLibrary" is a reserved Type name`)
   const res = {
+    auth: CloudAuthView,
     ...definition,
     publicDir: definition.publicDir ?? '/public',
-    schema: {...definition.schema, MediaLibrary, MediaFile},
-    auth: CloudAuthView
+    schema: {...definition.schema, MediaLibrary, MediaFile}
   }
   Config.validate(res)
+  normalized.add(res)
   return res
 }

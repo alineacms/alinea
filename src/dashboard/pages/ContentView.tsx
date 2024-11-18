@@ -5,6 +5,7 @@ import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useDashboard} from '../hook/UseDashboard.js'
+import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
@@ -28,6 +29,7 @@ export function ContentView({editor}: ContentViewProps) {
   const {views} = useDashboard()
   const workspace = useWorkspace()
   const root = useRoot()
+  const locale = useLocale()
   const {search} = useLocation()
   const EntryView =
     (editor?.view ? resolveView(views, editor.view) : EntryEdit) ?? EntryEdit
@@ -43,7 +45,7 @@ export function ContentView({editor}: ContentViewProps) {
         <SearchBox />
         {/*<RootHeader active={!editor} />*/}
         <EntryTree
-          i18nId={editor?.activeVersion.i18nId}
+          id={editor?.activeVersion.id}
           selected={editor?.activeVersion.parents}
         />
         <div className={styles.root.create()}>
@@ -52,7 +54,7 @@ export function ContentView({editor}: ContentViewProps) {
             onClick={() =>
               navigate(
                 nav.create({
-                  entryId: editor?.activeVersion.i18nId,
+                  id: editor?.activeVersion.id,
                   workspace: workspace.name,
                   root: root.name
                 })

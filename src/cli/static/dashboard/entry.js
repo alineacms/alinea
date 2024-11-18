@@ -14,6 +14,6 @@ export async function boot(handlerUrl) {
   into.id = 'root'
   element.parentElement.replaceChild(into, element)
   const config = cms.config
-  const client = new Client({url: handlerUrl})
+  const client = new Client({config, url: handlerUrl})
   reactRender(jsx(App, {config, views, client}), into)
 }

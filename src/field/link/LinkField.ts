@@ -6,13 +6,14 @@ import {ListField} from 'alinea/core/field/ListField'
 import {UnionField} from 'alinea/core/field/UnionField'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */
 export interface LinkFieldOptions<Value> extends FieldOptions<Value> {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: string
+  help?: ReactNode
   /** Display a minimal version */
   inline?: boolean
   max?: number

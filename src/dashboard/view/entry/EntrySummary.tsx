@@ -12,7 +12,7 @@ import css from './EntrySummary.module.scss'
 const styles = styler(css)
 
 export function EntrySummaryRow({
-  entryId,
+  id,
   title,
   type: typeName,
   parents
@@ -29,8 +29,8 @@ export function EntrySummaryRow({
             <Typo.Small>
               <HStack center gap={3}>
                 {parents
-                  .map<ReactNode>(({entryId, title}) => (
-                    <Fragment key={entryId}>{title}</Fragment>
+                  .map<ReactNode>(({id, title}) => (
+                    <Fragment key={id}>{title}</Fragment>
                   ))
                   .reduce((prev, curr, i) => [
                     prev,
@@ -53,7 +53,7 @@ export function EntrySummaryRow({
 }
 
 export function EntrySummaryThumb({
-  entryId,
+  id,
   title,
   type: typeName,
   parents
@@ -67,8 +67,8 @@ export function EntrySummaryThumb({
           <Typo.Small>
             <HStack center gap={3}>
               {parents
-                .map<ReactNode>(({entryId, title}) => (
-                  <Fragment key={entryId}>{title}</Fragment>
+                .map<ReactNode>(({id, title}) => (
+                  <Fragment key={id}>{title}</Fragment>
                 ))
                 .reduce((prev, curr, i) => [
                   prev,

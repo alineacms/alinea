@@ -38,13 +38,13 @@ export function NumberInput({field}: NumberInputProps) {
         className={styles.root.input()}
         defaultValue={defaultValue}
         onChange={({currentTarget}) => {
-          const value = tryParseNumber(currentTarget.value)
-          mutator(value)
+          const newValue = tryParseNumber(currentTarget.value)
+          if (newValue !== value) mutator(newValue)
         }}
         onBlur={({currentTarget}) => {
-          const value = tryParseNumber(currentTarget.value)
-          mutator(value)
-          currentTarget.value = String(value ?? '')
+          const newValue = tryParseNumber(currentTarget.value)
+          if (newValue !== value) mutator(newValue)
+          currentTarget.value = String(newValue ?? '')
         }}
         min={minValue}
         max={maxValue}

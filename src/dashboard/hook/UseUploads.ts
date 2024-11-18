@@ -1,6 +1,6 @@
 import {Connection} from 'alinea/core/Connection'
 import {Entry} from 'alinea/core/Entry'
-import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
 import {HttpError} from 'alinea/core/HttpError'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
@@ -171,29 +171,35 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const entryId = upload.info?.entryId ?? createId()
     const {parentId} = upload.to
     const buffer = await upload.file.arrayBuffer()
-    const parent = await graph.preferPublished.maybeGet(
-      Entry({entryId: parentId}).select({
+    const parent = await graph.first({
+      select: {
         level: Entry.level,
-        entryId: Entry.entryId,
+        entryId: Entry.id,
         url: Entry.url,
         path: Entry.path,
-        parentPaths({parents}) {
-          return parents().select(Entry.path)
+        parentPaths: {
+          parents: {},
+          select: Entry.path
         }
-      })
-    )
+      },
+      id: parentId,
+      status: 'preferPublished'
+    })
 
     const extensionOriginal = extname(upload.file.name)
     const extension = extensionOriginal.toLowerCase()
     const path = slugify(basename(upload.file.name, extensionOriginal))
-    const prev = await graph.preferPublished.maybeGet(Entry({parent: parentId}))
-
+    const prev = await graph.first({
+      select: Entry,
+      parentId: parentId,
+      status: 'preferPublished'
+    })
     const entryLocation = {
       workspace: upload.to.workspace,
       root: upload.to.root,
       locale: null,
       path: path,
-      phase: EntryPhase.Published
+      status: EntryStatus.Published
     }
     const filePath = entryFilepath(
       config,
@@ -213,16 +219,14 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const title = basename(upload.file.name, extensionOriginal)
     const entry = await createEntryRow<EntryRow<MediaFile>>(config, {
       ...entryLocation,
-      parent: parent?.entryId ?? null,
-      entryId: entryId,
+      parentId: parent?.entryId ?? null,
+      id: entryId,
       type: 'MediaFile',
       url: (parent ? parent.url : '') + '/' + path,
       title,
       seeded: null,
-      modifiedAt: Date.now(),
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
-      i18nId: entryId,
 
       level: parent ? parent.level + 1 : 0,
       parentDir: parentDir,
@@ -291,13 +295,14 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       await batchMutations(
         {
           type: MutationType.Create,
-          entryId: entry.entryId,
+          entryId: entry.id,
+          locale: null,
           file,
           entry
         },
         {
           type: MutationType.Upload,
-          entryId: entry.entryId,
+          entryId: entry.id,
           url: info.previewUrl,
           file: info.location
         }
@@ -312,19 +317,21 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     await batchMutations(
       {
         type: MutationType.Edit,
-        entryId: replace.entry.entryId,
+        entryId: replace.entry.id,
+        locale: null,
         file: replace.entryFile,
         entry: newEntry
       },
       {
         type: MutationType.Upload,
-        entryId: replace.entry.entryId,
+        entryId: replace.entry.id,
         url: info.previewUrl,
         file: info.location
       },
       {
         type: MutationType.FileRemove,
-        entryId: replace.entry.entryId,
+        entryId: replace.entry.id,
+        locale: null,
         file: replace.entryFile,
         workspace: replace.entry.workspace,
         location:

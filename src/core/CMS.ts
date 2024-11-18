@@ -1,8 +1,9 @@
 import {Config, createConfig} from './Config.js'
 import {Connection} from './Connection.js'
-import {Graph, GraphRealm} from './Graph.js'
-import {MediaFile, MediaLibrary} from './media/MediaTypes.js'
-import {PreviewRequest, ResolveParams, Resolver} from './Resolver.js'
+import {Graph} from './Graph.js'
+import type {MediaFile, MediaLibrary} from './media/MediaTypes.js'
+import {PreviewRequest} from './Preview.js'
+import {Resolver} from './Resolver.js'
 import {Operation} from './Transaction.js'
 
 export interface ConnectionContext {
@@ -11,23 +12,21 @@ export interface ConnectionContext {
   preview?: PreviewRequest
 }
 
-export class CMS<Definition extends Config = Config> extends GraphRealm {
-  graph: Graph
+export class CMS<Definition extends Config = Config> extends Graph {
   config: Definition
   connect: () => Promise<Connection>
 
   constructor(config: Definition, connect: () => Promise<Connection>) {
     const normalizedConfig = createConfig(config)
     const resolver: Resolver = {
-      resolve: async params => {
+      resolve: async query => {
         const connection = await connect()
-        return connection.resolve(params as ResolveParams)
+        return connection.resolve(query)
       }
     }
     super(normalizedConfig, resolver)
     this.connect = connect
     this.config = normalizedConfig
-    this.graph = new Graph(normalizedConfig, resolver)
   }
 
   async commit(...operations: Array<Operation>) {

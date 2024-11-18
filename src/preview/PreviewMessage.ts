@@ -1,4 +1,4 @@
-import type {PreviewMetadata, PreviewPayload} from 'alinea/core/Resolver'
+import {PreviewMetadata, PreviewPayload} from 'alinea/core/Preview'
 
 export enum PreviewAction {
   Ping = '[alinea-ping]',

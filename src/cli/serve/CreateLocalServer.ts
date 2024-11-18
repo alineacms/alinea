@@ -92,8 +92,7 @@ export function createLocalServer(
   const matcher = router.matcher()
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/dev',
-    config: configLocation,
-    views: viewsPlugin.entry
+    config: '#alinea/entry'
   }
   const tsconfigLocation = path.join(rootDir, 'tsconfig.json')
   const tsconfig = fs.existsSync(tsconfigLocation)
@@ -118,7 +117,12 @@ export function createLocalServer(
     ...buildOptions,
     plugins,
     alias: {
-      'alinea/next': 'alinea/core'
+      'alinea/next': 'alinea/core',
+      '#alinea/config': configLocation,
+      '#alinea/entry': `data:text/javascript,
+        export * from '#alinea/config'
+        export * from '${viewsPlugin.entry}'
+      `
     },
     external: ['@alinea/generated'],
     inject: ['alinea/cli/util/WarnPublicEnv'],
@@ -217,7 +221,7 @@ export function createLocalServer(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          <link href="/views.css" rel="stylesheet" />
+          <link href="/config.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
           <meta name="redirect_url" value="${handlerUrl}?auth=login" />

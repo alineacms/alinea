@@ -1,14 +1,12 @@
 import {Entry} from '../Entry.js'
-import {Projection} from '../pages/Projection.js'
-import {Query} from '../Query.js'
 import {Schema} from '../Schema.js'
 import {MediaFile as MediaFileType} from './MediaTypes.js'
 
 export function summarySelection(schema: Schema) {
   const MediaFile = schema.MediaFile as typeof MediaFileType
   return {
-    entryId: Entry.entryId,
-    i18nId: Entry.i18nId,
+    id: Entry.id,
+    locale: Entry.locale,
     type: Entry.type,
     workspace: Entry.workspace,
     root: Entry.root,
@@ -21,19 +19,23 @@ export function summarySelection(schema: Schema) {
     focus: MediaFile.focus,
     width: MediaFile.width,
     height: MediaFile.height,
-    parents: Query.parents().select({
-      entryId: Entry.entryId,
-      i18nId: Entry.i18nId,
-      title: Entry.title
-    }),
-    childrenAmount: Query.children().count()
-  } satisfies Projection
+    parents: {
+      parents: {},
+      select: {
+        id: Entry.id,
+        title: Entry.title
+      }
+    },
+    childrenAmount: {
+      children: {},
+      count: true as const
+    }
+  }
 }
 
 // To avoid circular warnings these are typed out instead of using the ReturnType
 export type SummaryProps = {
-  entryId: string
-  i18nId: string
+  id: string
   type: string
   workspace: string
   root: string
@@ -50,8 +52,7 @@ export type SummaryProps = {
   width: number
   height: number
   parents: Array<{
-    entryId: string
-    i18nId: string
+    id: string
     title: string
   }>
   childrenAmount: number

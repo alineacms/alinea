@@ -37,14 +37,13 @@ export function SidebarSettings() {
   const workspaces = Object.entries(config.workspaces)
   const defaultWorkspace = useMemo(
     () =>
-      select(
-        'Default workspace',
-        fromEntries(
+      select('Default workspace', {
+        options: fromEntries(
           entries(config.workspaces).map(([key, workspace]) => {
             return [key, (Workspace.label(workspace) as string) || key]
           })
         )
-      ),
+      }),
     [config.workspaces]
   )
   const toggleSchemePreference = useSetAtom(toggleSchemePreferenceAtom)

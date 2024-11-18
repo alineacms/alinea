@@ -1,28 +1,35 @@
 import {index, InferSelectModel, primaryKey, sql, Sql, table} from 'rado'
+import {column as createColumn} from 'rado/core/Column'
 import {Functions} from 'rado/core/expr/Functions'
 import {input, Input} from 'rado/core/expr/Input'
 import * as column from 'rado/universal/columns'
 import {createId} from './Id.js'
 
-export enum EntryPhase {
+export enum EntryStatus {
   Draft = 'draft',
   Published = 'published',
   Archived = 'archived'
 }
 
-export const ALT_STATUS: Array<EntryPhase> = [
-  EntryPhase.Draft,
-  EntryPhase.Archived
+export const ALT_STATUS: Array<EntryStatus> = [
+  EntryStatus.Draft,
+  EntryStatus.Archived
 ]
 
 export type EntryLinks = {[field: string]: Array<string>}
+
+function nocaseText() {
+  return createColumn<string | null>({
+    type: sql`text collate nocase`
+  })
+}
 
 export const EntryRow = table(
   'Entry',
   {
     // Entry data
-    entryId: column.text().$default(createId),
-    phase: column.text().notNull().$type<EntryPhase>(),
+    id: column.text().$default(createId),
+    status: column.text().notNull().$type<EntryStatus>(),
     title: column.text().notNull(),
     type: column.text().notNull(),
     seeded: column.text(),
@@ -32,11 +39,9 @@ export const EntryRow = table(
     root: column.text().notNull(),
 
     index: column.text().notNull(),
-    parent: column.text(),
+    parentId: column.text(),
 
-    // I18n
-    i18nId: column.text().notNull(),
-    locale: column.text(),
+    locale: nocaseText(),
 
     // Entries from which a new draft can be created are marked as active,
     // there is only one active entry per entryId
@@ -53,8 +58,7 @@ export const EntryRow = table(
     filePath: column.text().notNull(), // Filesystem location
     parentDir: column.text().notNull(), // Filesystem location
     childrenDir: column.text().notNull(), // Filesystem location
-    /** @deprecated */
-    modifiedAt: column.integer().notNull(),
+
     rowHash: column.text().notNull(),
     fileHash: column.text().notNull(),
     url: column.text().notNull(),
@@ -62,10 +66,10 @@ export const EntryRow = table(
   },
   EntryRow => {
     return {
-      primary: primaryKey(EntryRow.entryId, EntryRow.phase),
+      primary: primaryKey(EntryRow.id, EntryRow.locale, EntryRow.status),
       rowHash: index().on(EntryRow.rowHash),
       type: index().on(EntryRow.type),
-      parent: index().on(EntryRow.parent),
+      parent: index().on(EntryRow.parentId),
       url: index().on(EntryRow.url),
       path: index().on(EntryRow.path),
       fileIdentifier: index().on(
@@ -74,10 +78,7 @@ export const EntryRow = table(
         EntryRow.root
       ),
       parentDir: index().on(EntryRow.parentDir),
-      childrenDir: index().on(EntryRow.childrenDir),
-      // versionId: index().on(EntryRow.versionId),
-      phase: index().on(EntryRow.phase),
-      i18nId: index().on(EntryRow.i18nId)
+      childrenDir: index().on(EntryRow.childrenDir)
     }
   }
 )
@@ -87,10 +88,6 @@ export function concat(...slices: Array<Input<string | null>>) {
     mysql: Functions.concat(...slices),
     default: sql.join(slices.map(input), sql` || `)
   }) as Sql<string>
-}
-
-export function entryVersionId(entry = EntryRow) {
-  return concat(entry.entryId, sql.value('.'), entry.phase)
 }
 
 /**

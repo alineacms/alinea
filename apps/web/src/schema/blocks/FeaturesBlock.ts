@@ -5,7 +5,9 @@ export const FeaturesBlock = Config.type('Features', {
     items: Field.list('Items', {
       schema: {
         FeatureItem: Config.type('Item', {
-          text: Field.richText('Text')
+          fields: {
+            text: Field.richText('Text')
+          }
         })
       }
     })

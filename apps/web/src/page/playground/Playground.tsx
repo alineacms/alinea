@@ -68,7 +68,10 @@ type PreviewFieldProps = {
 }
 
 function PreviewField({field}: PreviewFieldProps) {
-  const formType = React.useMemo(() => type({fields: {field}}), [field])
+  const formType = React.useMemo(
+    () => type('Preview', {fields: {field}}),
+    [field]
+  )
   const form = dashboard.useForm(formType)
   return (
     <div style={{margin: 'auto', width: '100%'}}>
@@ -98,7 +101,7 @@ function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
   const inner = (
     <Editor
       // theme="vs-dark"
-      path="alinea.config.tsx"
+      path="cms.tsx"
       defaultLanguage="typescript"
       value={code}
       beforeMount={editorConfig}

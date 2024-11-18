@@ -1,8 +1,8 @@
-import {ComponentType} from 'react'
+import {ComponentType, ReactNode} from 'react'
 
 export type View<Props> =
   | string // Point to a component
-  | ComponentType<Props> // Inline a function component
+  | ((props: Props) => ReactNode) // Inline a function component
 
 export function resolveView<Props>(
   viewMap: Record<string, ComponentType<any>>,

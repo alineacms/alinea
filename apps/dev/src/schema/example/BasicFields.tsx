@@ -21,7 +21,12 @@ export const BasicFields = Config.document('Basic fields', {
     }),
     number: Field.number('Number field', {
       minValue: 0,
-      maxValue: 10
+      maxValue: 10,
+      help: (
+        <p>
+          A help text can contain <b>markup</b>
+        </p>
+      )
     }),
     check: Field.check('Check field', {description: 'Check me please'}),
     date: Field.date('Date field'),

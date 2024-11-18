@@ -1,11 +1,11 @@
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
 import {PickerProps, pickerWithView} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
-import {Expr} from 'alinea/core/pages/Expr'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {entries} from 'alinea/core/util/Objects'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
@@ -51,7 +51,7 @@ interface PickerLocation {
   parentId?: string
   workspace: string
   root: string
-  locale?: string
+  locale?: string | null
 }
 
 const styles = styler(css)
@@ -114,53 +114,61 @@ export function EntryPickerModal({
     ['picker-parents', destination, destinationLocale],
     async () => {
       if (!destination.parentId) return []
-      const drafts = graph.preferDraft
-      const query = destinationLocale
-        ? drafts.locale(destinationLocale)
-        : drafts
-      const res = await query.get(
-        Entry({entryId: destination.parentId}).select({
+      const res = await graph.get({
+        locale: destinationLocale,
+        select: {
           title: Entry.title,
-          parents({parents}) {
-            return parents().select({
-              id: Entry.entryId,
+          parents: {
+            parents: {},
+            select: {
+              id: Entry.id,
               title: Entry.title
-            })
+            }
           }
-        })
-      )
+        },
+        id: destination.parentId,
+        status: 'preferDraft'
+      })
       return res?.parents.concat({
         id: destination.parentId,
         title: res.title
       })
     }
   )
-  const cursor = useMemo(() => {
+  const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     if (!withNavigation && condition) {
-      return Entry()
-        .where(
-          condition,
-          location?.workspace ? Entry.workspace.is(location.workspace) : true,
-          location?.root ? Entry.root.is(location.root) : true,
-          destinationLocale ? Entry.locale.is(destinationLocale) : true
-        )
-        .search(...terms)
+      return {
+        select: Entry,
+        search: terms,
+        filter: {
+          and: [
+            condition,
+            {
+              _workspace: destination.workspace,
+              _root: destination.root,
+              _locale: destinationLocale
+            }
+          ]
+        }
+      }
     }
-    const rootCondition = Expr.and(
-      Entry.workspace.is(destination.workspace),
-      Entry.root.is(destination.root)
-    )
-    const destinationCondition =
-      terms.length === 0
-        ? Expr.and(rootCondition, Entry.parent.is(destination.parentId ?? null))
-        : rootCondition
-    const translatedCondition = destinationLocale
-      ? Expr.and(destinationCondition, Entry.locale.is(destinationLocale))
-      : destinationCondition
-    return Entry()
-      .where(condition || true, translatedCondition)
-      .search(...terms)
+    return {
+      select: Entry,
+      filter: {
+        and: [
+          condition,
+          {
+            _workspace: destination.workspace,
+            _root: destination.root,
+            _parentId:
+              terms.length === 0 ? destination.parentId ?? null : undefined,
+            _locale: destinationLocale
+          }
+        ]
+      },
+      search: terms
+    }
   }, [destination, destinationLocale, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
@@ -169,7 +177,7 @@ export function EntryPickerModal({
         const index = selected.findIndex(
           ref =>
             EntryReference.isEntryReference(ref) &&
-            ref[EntryReference.entry] === entry.entryId
+            ref[EntryReference.entry] === entry.id
         )
         let res = selected.slice()
         if (index === -1) {
@@ -177,7 +185,7 @@ export function EntryPickerModal({
             .concat({
               [Reference.id]: createId(),
               [Reference.type]: type,
-              [EntryReference.entry]: entry.entryId
+              [EntryReference.entry]: entry.id
             } as EntryReference)
             .slice(-(max || 0))
         } else {
@@ -327,7 +335,7 @@ export function EntryPickerModal({
             <div className={styles.root.results()}>
               <Explorer
                 virtualized
-                cursor={cursor}
+                query={query}
                 type={view}
                 selectable={showMedia ? ['MediaFile'] : true}
                 selection={selected}
@@ -356,6 +364,7 @@ export function EntryPickerModal({
               }}
               max={max}
               toggleSelect={handleSelect}
+              onlyImages={type === 'image'}
             />
           )}
         </VStack>

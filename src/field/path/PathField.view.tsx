@@ -2,10 +2,10 @@ import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
 import {pathSuffix} from 'alinea/core/util/EntryFilenames'
 import {isSeparator, slugify} from 'alinea/core/util/Slugs'
-import {InputLabel} from 'alinea/dashboard'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {px} from 'alinea/ui'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {useRef, useState} from 'react'
@@ -30,7 +30,7 @@ export function PathInput({field}: PathInputProps) {
   const hiddenRef = useRef<HTMLSpanElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const suffixRef = useRef<HTMLDivElement>(null)
-  const {value: source} = useField<string, string, unknown, any>(from)
+  const {value: source = ''} = useField<string, string, unknown, any>(from)
   const value = fieldValue ?? slugify(source)
   const [endsWithSeparator, setEndsWithSeparator] = useState(false)
   const inputValue = (value ?? '') + (endsWithSeparator ? '-' : '')
@@ -38,30 +38,20 @@ export function PathInput({field}: PathInputProps) {
 
   async function getConflictingPaths() {
     if (!editor) return []
-    const sameLocation = Entry.root
-      .is(editor.activeVersion.root)
-      .and(
-        Entry.workspace.is(editor.activeVersion.workspace),
-        Entry.locale.is(editor.activeVersion.locale)
-      )
-    const sameParent = Entry.parent.is(editor.activeVersion.parent ?? null)
-    const isExact = Entry.path.is(inputValue)
-    const startsWith = Entry.path.like(inputValue + '-%')
-    const isNotSelf = editor.entryId
-      ? Entry.entryId.isNot(editor.entryId)
-      : true
-    const condition = sameLocation.and(
-      sameParent,
-      isNotSelf,
-      isExact.or(startsWith)
-    )
-    return graph.preferPublished.find(
-      Entry().where(condition).select(Entry.path)
-    )
+    return graph.find({
+      select: Entry.path,
+      root: editor.activeVersion.root,
+      workspace: editor.activeVersion.workspace,
+      locale: editor.activeVersion.locale,
+      parentId: editor.activeVersion.parentId ?? null,
+      id: {isNot: editor.entryId},
+      path: {or: {is: inputValue, startsWith: inputValue + '-'}},
+      status: 'preferPublished'
+    })
   }
 
   const {data: conflictingPaths} = useQuery(
-    ['path', editor?.entryId, editor?.activeVersion.parent, inputValue],
+    ['path', editor?.entryId, editor?.activeVersion.parentId, inputValue],
     getConflictingPaths
   )
 

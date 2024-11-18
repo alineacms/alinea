@@ -17,14 +17,15 @@ export const cms = createCMS({
         pages: Config.root('Languages', {
           icon: IcRoundTranslate,
           i18n: {
-            locales: ['en', 'fr', 'nl']
+            locales: ['en', 'fr', 'nl-BE', 'nl-NL']
           },
-          entries: {
-            seededPath: Config.page(
-              schema.Page({
+          children: {
+            seededPath: Config.page({
+              type: schema.Page,
+              fields: {
                 title: 'Seeded page'
-              })
-            )
+              }
+            })
           }
         }),
         custom: Config.root('Custom', {

@@ -10,6 +10,7 @@ import {BodyFieldView} from '@/page/blocks/BodyFieldView'
 import {Doc} from '@/schema/Doc'
 import styler from '@alinea/styler'
 import {Query} from 'alinea'
+import {Entry} from 'alinea/core/Entry'
 import {HStack, VStack} from 'alinea/ui'
 import {Metadata, MetadataRoute} from 'next'
 import {WebTypo} from '../layout/WebTypo'
@@ -17,48 +18,53 @@ import css from './DocPage.module.scss'
 
 const styles = styler(css)
 
-interface DocPageParams {
+type DocPageParams = Promise<{
   slug: Array<string>
   framework: string
-}
+}>
 
 interface DocPageProps {
   params: DocPageParams
 }
 
 const summary = {
-  id: Query.id,
-  title: Query.title,
-  url: Query.url
+  id: Entry.id,
+  title: Entry.title,
+  url: Entry.url
 }
 
 async function getPage(params: DocPageParams) {
-  const slug = params.slug?.slice() ?? []
+  const {slug: slugParam, framework: frameworkParam} = await params
+  const slug = slugParam?.slice() ?? []
   const framework =
-    supportedFrameworks.find(f => f.name === params.framework) ??
+    supportedFrameworks.find(f => f.name === frameworkParam) ??
     supportedFrameworks[0]
-  if (params.framework && framework.name !== params.framework)
-    slug.unshift(params.framework)
+  if (frameworkParam && framework.name !== frameworkParam)
+    slug.unshift(frameworkParam)
   const pathname = slug.map(decodeURIComponent).join('/')
   const url = pathname ? `/docs/${pathname}` : '/docs'
   return {
     framework,
-    doc: await cms.get(
-      Query.whereUrl(url).select({
+    doc: await cms.get({
+      url,
+      include: {
         ...Doc,
-        id: Query.id,
-        level: Query.level,
-        parents: Query.parents().select(summary)
-      })
-    )
+        id: Entry.id,
+        level: Entry.level,
+        parents: Query.parents({
+          select: summary
+        })
+      }
+    })
   }
 }
 
 export const dynamicParams = false
 export async function generateStaticParams() {
-  const urls = await cms
-    .in(cms.workspaces.main.pages.docs)
-    .find(Query.select(Query.url))
+  const urls = await cms.find({
+    location: cms.workspaces.main.pages.docs,
+    select: Entry.url
+  })
   return urls
     .flatMap(url => {
       return supportedFrameworks
@@ -93,17 +99,21 @@ export async function generateMetadata({
 export default async function DocPage({params}: DocPageProps) {
   const {doc, framework} = await getPage(params)
   const select = {
-    id: Query.id,
-    type: Query.type,
-    url: Query.url,
-    title: Query.title,
+    id: Entry.id,
+    type: Entry.type,
+    url: Entry.url,
+    title: Entry.title,
     navigationTitle: Doc.navigationTitle,
-    parent: Query.parent
+    parent: Entry.parentId
   }
-  const root = await cms.get(Query.whereUrl('/docs').select(select))
-  const nav = await cms
-    .in(cms.workspaces.main.pages.docs)
-    .find(Query.select(select))
+  const root = await cms.get({
+    select,
+    url: '/docs'
+  })
+  const nav = await cms.find({
+    location: cms.workspaces.main.pages.docs,
+    select
+  })
   const entries = [
     root,
     ...nav.map(item => ({

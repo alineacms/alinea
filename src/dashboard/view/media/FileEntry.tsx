@@ -158,12 +158,12 @@ export function FileEntry(props: EntryEditProps & {type: typeof MediaFile}) {
       <EntryTitle
         editor={editor}
         backLink={
-          editor.activeVersion.parent
+          editor.activeVersion.parentId
             ? nav.entry({
-                entryId: editor.activeVersion.parent,
+                id: editor.activeVersion.parentId,
                 workspace: editor.activeVersion.workspace
               })
-            : nav.entry({entryId: undefined})
+            : nav.entry({id: undefined})
         }
       />
       <FormProvider form={form}>

@@ -108,7 +108,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     outDir: path.join(nodeModules, '@alinea/generated')
   }
   await copyStaticFiles(context)
-  let indexing: Emitter<Database>
+  let indexing!: Emitter<Database>
   const builder = compileConfig(context)
   const builds = genEffect(builder, () => indexing?.return())
   let afterGenerateCalled = false
@@ -151,7 +151,13 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       rootDir,
       dashboardUrl: await options.dashboardUrl
     })
-    indexing = fillCache(context, fileData, store, cms.config)
+    try {
+      indexing = fillCache(context, fileData, store, cms.config)
+    } catch (error: any) {
+      reportHalt(String(error.message ?? error))
+      if (cmd === 'build') process.exit(1)
+      continue
+    }
     for await (const db of indexing) {
       yield {cms, db, localData: fileData}
       if (onAfterGenerate && !afterGenerateCalled)

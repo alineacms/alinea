@@ -1,10 +1,7 @@
 import {Entry} from 'alinea/core'
 import {parseYDoc} from 'alinea/core/Doc'
 import {Draft} from 'alinea/core/Draft'
-import {EntryRow} from 'alinea/core/EntryRow'
-import {createSelection} from 'alinea/core/pages/CreateSelection'
-import {Realm} from 'alinea/core/pages/Realm'
-import {PreviewRequest} from 'alinea/core/Resolver'
+import {PreviewRequest} from 'alinea/core/Preview'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import * as Y from 'yjs'
 import {Database} from '../Database.js'
@@ -27,12 +24,12 @@ export function createPreviewParser(db: Database) {
         await sync()
         meta = await db.meta()
       }
-      const entry = (await db.resolver.resolve({
-        selection: createSelection(
-          Entry({entryId: update.entryId}).maybeFirst()
-        ),
-        realm: Realm.PreferDraft
-      })) as EntryRow | null
+      const entry = await db.resolver.resolve({
+        first: true,
+        select: Entry,
+        id: update.entryId,
+        status: 'preferDraft'
+      })
       if (!entry) return
       const cachedDraft = await drafts.get(update.entryId)
       let currentDraft: Draft | undefined

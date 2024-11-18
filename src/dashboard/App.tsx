@@ -102,7 +102,7 @@ function AppAuthenticated() {
               <Sidebar.Nav>
                 {Object.entries(roots).map(([key, root], i) => {
                   const isSelected = key === currentRoot
-                  const {entryId, ...location} = entryLocation
+                  const {id, ...location} = entryLocation
                   const link =
                     location.root === key
                       ? nav.entry(location)

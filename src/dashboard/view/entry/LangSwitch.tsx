@@ -8,7 +8,7 @@ import css from './LangSwitch.module.scss'
 const styles = styler(css)
 
 export interface LangswitchProps {
-  locales: Array<string>
+  locales: ReadonlyArray<string>
   selected: string
   onChange: (locale: string) => void
   inline?: boolean
@@ -27,15 +27,6 @@ export function Langswitch({
         onChange={value => {
           if (!value) return
           onChange(value)
-          /*if (!value) return
-          navigate(
-            nav.entry({
-              entryId: entryLocation?.entryId,
-              workspace,
-              root: root.name,
-              locale: value
-            })
-          )*/
         }}
       >
         <div>

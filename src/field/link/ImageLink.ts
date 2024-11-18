@@ -50,12 +50,15 @@ export interface ImageField<Fields = undefined>
     ImageLink<Type.Infer<Fields>>
   > {}
 
-const imageCondition = Entry.type.is('MediaFile').and(
-  MediaFile.extension.isIn([
-    ...imageExtensions,
-    ...imageExtensions.map(e => e.toUpperCase()) //Fix for historic files with case-insensitive extensions
-  ])
-)
+const imageCondition = {
+  _type: 'MediaFile',
+  extension: {
+    in: [
+      ...imageExtensions,
+      ...imageExtensions.map(e => e.toUpperCase()) //Fix for historic files with case-insensitive extensions
+    ]
+  }
+}
 
 function imagePicker<Fields>(
   multiple: boolean,
@@ -66,7 +69,8 @@ function imagePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'Image',
     title: multiple ? 'Select images' : 'Select an image',
-    condition: imageCondition.or(Entry.type.is('MediaLibrary')),
+    condition: {or: [imageCondition, {_type: 'MediaLibrary'}]},
+
     showMedia: true,
     defaultView: 'thumb',
     selection: ImageLink

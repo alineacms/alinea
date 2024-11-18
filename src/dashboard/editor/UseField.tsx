@@ -1,14 +1,11 @@
-import {Field, FieldOptions} from 'alinea/core'
+import {Field, FieldOptions} from 'alinea/core/Field'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect} from 'react'
 import {useFormContext} from '../atoms/FormAtoms.js'
 
-export function useField<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
->(field: Field<StoredValue, QueryValue, Mutator, Options> | string) {
+export function useField<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options> | string
+) {
   const form = useFormContext()
   const actual =
     typeof field === 'string'
@@ -34,34 +31,25 @@ export function useField<
   }
 }
 
-export function useFieldKey<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
->(field: Field<StoredValue, QueryValue, Mutator, Options>) {
+export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+) {
   const atoms = useFormContext()
   const key = atoms.keyOf(field)
   return key
 }
 
-export function useFieldOptions<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
->(field: Field<StoredValue, QueryValue, Mutator, Options>) {
+export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+): Options & FieldOptions<StoredValue> {
   const form = useFormContext()
   const info = form.fieldInfo(field)
-  return useAtomValue(info.options)
+  return useAtomValue(info.options) as Options & FieldOptions<StoredValue>
 }
 
-export function useFieldError<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
->(field: Field<StoredValue, QueryValue, Mutator, Options>) {
+export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+) {
   const form = useFormContext()
   const info = form.fieldInfo(field)
   const setError = useSetAtom(form.errors)
@@ -75,23 +63,17 @@ export function useFieldError<
   return error
 }
 
-export function useFieldValue<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
->(field: Field<StoredValue, QueryValue, Mutator, Options>) {
+export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+) {
   const form = useFormContext()
   const info = form.fieldInfo(field)
   return useAtomValue(info.value)
 }
 
-export function useFieldMutator<
-  StoredValue,
-  QueryValue,
-  Mutator,
-  Options extends FieldOptions<StoredValue>
->(field: Field<StoredValue, QueryValue, Mutator, Options>) {
+export function useFieldMutator<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+) {
   const form = useFormContext()
   const info = form.fieldInfo(field)
   return info.mutator

@@ -3,6 +3,7 @@ import {InferQueryValue, InferStoredValue} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
 import {ListField} from 'alinea/core/field/ListField'
 import type {ListRow} from 'alinea/core/shape/ListShape'
+import {ReactNode} from 'react'
 
 /** Optional settings to configure a list field */
 export interface ListOptions<Definitions extends Schema>
@@ -12,7 +13,7 @@ export interface ListOptions<Definitions extends Schema>
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: string
+  help?: ReactNode
   /** Display a minimal version */
   inline?: boolean
   /** Hide this list field */

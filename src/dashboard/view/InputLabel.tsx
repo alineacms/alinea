@@ -17,7 +17,7 @@ const styles = styler(css)
 
 export type LabelHeaderProps = {
   label: ReactNode
-  help?: string
+  help?: ReactNode
   size?: 'small' | 'medium' | 'large'
   focused?: boolean
   icon?: ComponentType
@@ -66,7 +66,7 @@ export const LabelHeader = memo(function LabelHeader({
 export interface InputLabelProps extends PropsWithChildren {
   label?: ReactNode
   asLabel?: boolean
-  help?: string
+  help?: ReactNode
   width?: number
   inline?: boolean
   collection?: boolean

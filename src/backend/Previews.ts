@@ -1,4 +1,5 @@
 export interface PreviewInfo {
+  locale: string | null
   entryId: string
 }
 

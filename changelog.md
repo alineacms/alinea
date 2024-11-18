@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0]
+
+- Add support for Next.js 15 and Turbopack.
+- Removed all previously deprecated options.
+- Next.js config changes are now bundled in a `withAlinea` export found in 
+  'alinea/next'.
+- Querying via `cms.find/get` is rewritten to take a single query object.
+  Have a look at the docs to see how to use the new query api.
+- Creating custom fields can now be done through `Field.create`.
+
 ## [0.11.2]
 
 - Querying data in a Next.js edge route or middleware will forward the request

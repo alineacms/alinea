@@ -80,19 +80,17 @@ async function suffixPaths(
     switch (mutation.type) {
       case MutationType.Create: {
         const {entry} = mutation
-        const sameLocation = Entry.root
-          .is(entry.root)
-          .and(
-            Entry.workspace.is(entry.workspace),
-            Entry.locale.is(entry.locale)
-          )
-        const sameParent = Entry.parent.is(entry.parent ?? null)
-        const isExact = Entry.path.is(entry.path)
-        const startsWith = Entry.path.like(entry.path + '-%')
-        const condition = sameLocation.and(sameParent, isExact.or(startsWith))
-        const conflictingPaths = await graph.preferPublished.find(
-          Entry().where(condition).select(Entry.path)
-        )
+        const conflictingPaths = await graph.find({
+          select: Entry.path,
+          root: entry.root,
+          workspace: entry.workspace,
+          locale: entry.locale,
+          parentId: entry.parentId ?? null,
+          path: {
+            or: {is: entry.path, startsWith: entry.path + '-'}
+          },
+          status: 'preferPublished'
+        })
         const suffix = pathSuffix(entry.path, conflictingPaths)
         if (suffix) {
           const updated = {
@@ -160,12 +158,12 @@ export const graphAtom = atom(async get => {
 const changedAtom = atom<Array<string>>([])
 export const changedEntriesAtom = atom(
   get => get(changedAtom),
-  (get, set, i18nIds: Array<string>) => {
-    set(changedAtom, i18nIds)
-    for (const i18nId of i18nIds) set(entryRevisionAtoms(i18nId))
+  (get, set, ids: Array<string>) => {
+    set(changedAtom, ids)
+    for (const id of ids) set(entryRevisionAtoms(id))
   }
 )
-export const entryRevisionAtoms = atomFamily((i18nId: string) => {
+export const entryRevisionAtoms = atomFamily((id: string) => {
   const revision = atom(0)
   return atom(
     get => get(revision),

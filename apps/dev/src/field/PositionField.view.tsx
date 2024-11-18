@@ -1,17 +1,8 @@
-import {FieldOptions, ScalarField} from 'alinea/core'
 import {InputLabel, useField} from 'alinea/dashboard'
 import {HStack, VStack} from 'alinea/ui'
 import {SVGProps, useState} from 'react'
+import {PositionField} from './PositionField.js'
 import css from './PositionField.module.css'
-
-export interface PositionOptions extends FieldOptions<Position> {}
-
-export interface Position {
-  x: number | null
-  y: number | null
-}
-
-class PositionField extends ScalarField<Position, PositionOptions> {}
 
 interface PositionInputProps {
   field: PositionField

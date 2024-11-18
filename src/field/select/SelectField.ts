@@ -1,5 +1,6 @@
 import {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {ReactNode} from 'react'
 
 /** A string record with option labels */
 export type SelectItems<T extends string> = Record<T, string>
@@ -9,7 +10,7 @@ export interface SelectConfig<Key> extends FieldOptions<Key> {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: string
+  help?: ReactNode
   /** Display a minimal version */
   inline?: boolean
   /** Choose a custom placeholder (eg. 'Select an option')  */
@@ -20,35 +21,26 @@ export interface SelectOptions<Key extends string> extends SelectConfig<Key> {
   options: Record<Key, string>
 }
 
-export class SelectField<Key extends string> extends ScalarField<
-  Key | null,
-  SelectOptions<Key>
+export class SelectField<Key extends string | null> extends ScalarField<
+  Key,
+  SelectOptions<NonNullable<Key>>
 > {}
 
-export function select<const Items extends Record<string, string>>(
+type AddNullable<Keys, Initial> = Initial extends undefined ? Keys | null : Keys
+
+export function select<
+  const Items extends Record<string, string>,
+  Initial extends keyof Items | undefined = undefined
+>(
   label: string,
-  items: WithoutLabel<
+  options: WithoutLabel<
     {options: Items} & SelectConfig<Extract<keyof Items, string>>
-  >
-): SelectField<Extract<keyof Items, string>>
-/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
-export function select<const Items extends Record<string, string>>(
-  label: string,
-  items: Items,
-  options?: WithoutLabel<SelectConfig<Extract<keyof Items, string>>>
-): SelectField<Extract<keyof Items, string>>
-export function select(
-  label: string,
-  itemsOrOptions: any,
-  options?: any
-): SelectField<any> {
-  const items = itemsOrOptions.options ?? itemsOrOptions
-  const fieldOptions = itemsOrOptions.options ? itemsOrOptions : options
-  return new SelectField({
+  > & {initialValue?: Initial}
+): SelectField<AddNullable<Extract<keyof Items, string>, Initial>> {
+  return new SelectField<AddNullable<Extract<keyof Items, string>, Initial>>({
     options: {
       label,
-      options: items,
-      ...fieldOptions
+      ...options
     },
     view: 'alinea/field/select/SelectField.view#SelectInput'
   })

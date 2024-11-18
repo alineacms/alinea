@@ -1,12 +1,14 @@
+import {Entry} from 'alinea/core/Entry'
+import {EntryFields} from 'alinea/core/EntryFields'
+import {Filter} from 'alinea/core/Filter'
+import {Projection} from 'alinea/core/Graph'
 import {Label} from 'alinea/core/Label'
 import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
-import {Type, type} from 'alinea/core/Type'
-import type {Condition} from 'alinea/core/pages/Expr'
-import {Projection} from 'alinea/core/pages/Projection'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
+import {Type, type} from 'alinea/core/Type'
 import {assign, keys} from 'alinea/core/util/Objects'
 import {EntryReference} from './EntryReference.js'
 
@@ -14,7 +16,7 @@ export interface EntryPickerOptions<Definition = {}> {
   selection: Projection
   defaultView?: 'row' | 'thumb'
   location?: {workspace: string; root: string}
-  condition?: Condition
+  condition?: Filter<EntryFields & Entry>
   withNavigation?: boolean
   showMedia?: boolean
   max?: number
@@ -28,7 +30,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
 ): Picker<Ref, EntryPickerOptions<Fields>> {
   const fieldType = Type.isType(options.fields)
     ? options.fields
-    : options.fields && type({fields: options.fields as any})
+    : options.fields && type('Entry fields', {fields: options.fields as any})
   const extra = fieldType && Type.shape(fieldType)
   return {
     shape: new RecordShape('Entry', {

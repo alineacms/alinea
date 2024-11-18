@@ -1,4 +1,5 @@
-import {Type, TypeTarget} from './Type.js'
+import {getType} from './Internal.js'
+import {Type} from './Type.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries, values} from './util/Objects.js'
@@ -8,8 +9,6 @@ const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
 export interface Schema<Definitions = {}> extends Record<string, Type> {}
 
 export namespace Schema {
-  export type Targets = Map<TypeTarget, string>
-
   export function referencedViews(schema: Schema): Array<string> {
     return values(schema).flatMap(type => Type.referencedViews(type))
   }
@@ -25,7 +24,7 @@ export namespace Schema {
             throw new Error(
               `Invalid Type name "${key}", use only a-z, A-Z, 0-9, and _`
             )
-          const {contains} = Type.meta(type)
+          const {contains} = getType(type)
           if (contains) {
             for (const inner of contains) {
               if (typeof inner === 'string') {
@@ -61,14 +60,6 @@ export namespace Schema {
     return shapesCache.get(schema)!
   }
 
-  export function targets(schema: Schema): Targets {
-    return new Map(
-      entries(schema).map(([key, type]) => {
-        return [Type.target(type), key]
-      })
-    )
-  }
-
   export function typeNames(schema: Schema): Map<Type, string> {
     return new Map(entries(schema).map(([key, type]) => [type, key]))
   }
@@ -96,13 +87,6 @@ export interface SchemaOptions<Definition> {
 }
 
 export function schema<Definition extends SchemaTypes>(
-  options: SchemaOptions<Definition>
-): Definition
-/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
-export function schema<Definition extends SchemaTypes>(
-  options: Definition
-): Definition
-export function schema<Definition>(
   options: SchemaOptions<Definition>
 ): Definition {
   return (options.types ?? options) as any

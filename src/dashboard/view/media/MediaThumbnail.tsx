@@ -10,7 +10,7 @@ const styles = styler(css)
 
 export type MediaThumbnailProps = {
   file: {
-    entryId: string
+    id: string
     title: string
     extension: string
     size: number

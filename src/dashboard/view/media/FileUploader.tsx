@@ -16,6 +16,7 @@ import css from './FileUploader.module.scss'
 const styles = styler(css)
 
 export interface FileUploaderProps {
+  onlyImages?: boolean
   destination?: UploadDestination
   max?: number
   toggleSelect?: (id: Entry) => void
@@ -23,6 +24,7 @@ export interface FileUploaderProps {
 }
 
 export function FileUploader({
+  onlyImages,
   destination,
   max,
   toggleSelect,
@@ -97,6 +99,11 @@ export function FileUploader({
                 className={styles.root.header.label.input()}
                 multiple={max !== 1}
                 onChange={handleFileInput}
+                accept={
+                  onlyImages
+                    ? 'image/jpeg, image/png, image/gif, image/webp, image/avif, image/heic, image/svg+xml'
+                    : undefined
+                }
               />
             )}
             <HStack center gap={8}>

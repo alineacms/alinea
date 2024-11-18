@@ -1,13 +1,13 @@
 import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {ScalarField} from 'alinea/core/field/ScalarField'
-import type {ComponentType} from 'react'
+import type {ComponentType, ReactNode} from 'react'
 
 /** Optional settings to configure a text field */
 export interface TextOptions extends FieldOptions<string> {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: string
+  help?: ReactNode
   /** Allow line breaks */
   multiline?: boolean
   /** Display a minimal version */

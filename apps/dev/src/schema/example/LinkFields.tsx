@@ -1,4 +1,4 @@
-import {Config, Field, Query} from 'alinea'
+import {Config, Field} from 'alinea'
 
 export const LinkFields = Config.document('Link fields', {
   fields: {
@@ -7,12 +7,12 @@ export const LinkFields = Config.document('Link fields', {
     entryWithCondition: Field.entry('With condition', {
       help: `Show only entries of type Fields in the main workspace`,
       location: {workspace: 'primary', root: 'fields'},
-      condition: Query.type.is('Fields')
+      condition: {_type: 'BasicFields'}
     }),
     linkMultiple: Field.link.multiple('Mixed links, multiple'),
     image: Field.image('Image link'),
     images: Field.image.multiple('Image link (multiple)'),
-    file: Field.entry('File link'),
+    file: Field.file('File link'),
     withFields: Field.entry('With extra fields', {
       fields: {
         fieldA: Field.text('Field A', {width: 0.5}),

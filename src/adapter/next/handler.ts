@@ -8,7 +8,6 @@ import {createHandler as createCoreHandler} from 'alinea/backend/Handler'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {Entry} from 'alinea/core/Entry'
-import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import {NextCMS} from './cms.js'
 import {devUrl, requestContext} from './context.js'
@@ -35,24 +34,26 @@ export function createHandler<Driver extends AvailableDrivers>(
         const previewToken = searchParams.get('preview')
         if (!previewToken) return new Response('Not found', {status: 404})
         const info = await previews.verify(previewToken)
-        const cookie = cookies()
+        const cookie = await cookies()
         const connection = devUrl()
           ? await cms.connect()
           : handleBackend.connect(context)
         const payload = getPreviewPayloadFromCookies(cookie.getAll())
-        const url = (await connection.resolve({
-          selection: createSelection(
-            Entry({entryId: info.entryId}).select(Entry.url).first()
-          ),
+        const url = await connection.resolve({
+          first: true,
+          select: Entry.url,
+          id: info.entryId,
+          locale: info.locale,
           preview: payload ? {payload} : undefined
-        })) as string | null
+        })
         if (!url) return new Response('Not found', {status: 404})
         const source = new URL(request.url)
         // Next.js incorrectly reports 0.0.0.0 as the hostname if the server is
         // listening on all interfaces
         if (source.hostname === '0.0.0.0') source.hostname = 'localhost'
         const location = new URL(url, source.origin)
-        draftMode().enable()
+        const dm = await draftMode()
+        dm.enable()
         return new Response(`Redirecting...`, {
           status: 302,
           headers: {location: String(location)}

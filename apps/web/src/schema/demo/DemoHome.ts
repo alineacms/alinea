@@ -11,7 +11,7 @@ export const DemoHome = Config.type('Home', {
       fields: {
         header: Field.object('Image', {
           fields: {
-            image: Field.link.image('Image', {inline: true}),
+            image: Field.image('Image', {inline: true}),
             credit: Field.richText('Credit')
           }
         }),

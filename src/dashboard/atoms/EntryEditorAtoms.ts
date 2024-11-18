@@ -1,13 +1,13 @@
 import {Config} from 'alinea/core/Config'
 import {Connection} from 'alinea/core/Connection'
-import {createYDoc, parseYDoc, ROOT_KEY} from 'alinea/core/Doc'
+import {createYDoc, DOC_KEY, parseYDoc} from 'alinea/core/Doc'
 import {Entry} from 'alinea/core/Entry'
-import {EntryPhase, EntryRow} from 'alinea/core/EntryRow'
+import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
 import {Graph} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
+import {getType} from 'alinea/core/Internal'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {Query} from 'alinea/core/Query'
 import {Root} from 'alinea/core/Root'
 import {EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
@@ -49,8 +49,8 @@ export enum EditMode {
 export type Version = Entry & {parents: Array<string>}
 
 interface EntryEditorParams {
+  id: string | undefined
   locale: string | null
-  i18nId: string | undefined
 }
 
 export enum EntryTransition {
@@ -66,37 +66,46 @@ export enum EntryTransition {
   DeleteArchived
 }
 
-const entryTransitionAtoms = atomFamily((entryId: string) => {
+const entryTransitionAtoms = atomFamily((id: string) => {
   return atom<{transition: EntryTransition; done: Promise<any>} | undefined>(
     undefined
   )
 })
 
 export const entryEditorAtoms = atomFamily(
-  ({locale, i18nId}: EntryEditorParams) => {
+  ({id, locale: searchLocale}: EntryEditorParams) => {
     return atom(async get => {
-      if (!i18nId) return undefined
+      if (!id) return undefined
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = await get(graphAtom)
-      const search = locale ? {i18nId, locale} : {i18nId}
-      let entry: EntryRow | null = await graph.preferDraft.maybeGet(
-        Entry(search)
-      )
+      let entry: EntryRow | null = await graph.first({
+        select: Entry,
+        id,
+        locale: searchLocale,
+        status: 'preferDraft'
+      })
       if (!entry) {
         const {searchParams} = get(locationAtom)
         const preferredLanguage = searchParams.get('from')
-        entry = await graph.preferDraft.maybeGet(
-          Entry({i18nId}).where(
-            preferredLanguage ? Entry.locale.is(preferredLanguage) : true
-          )
-        )
+        entry = await graph.first({
+          select: Entry,
+          locale: preferredLanguage ?? undefined,
+          id: id,
+          status: 'preferDraft'
+        })
       }
       if (!entry) return undefined
-      const entryId = entry.entryId
-      get(entryRevisionAtoms(entry.i18nId))
+      const entryId = entry.id
+      const locale = entry.locale
+      get(entryRevisionAtoms(entry.id))
       const type = config.schema[entry.type]
-      const edits = get(entryEditsAtoms(entryId))
+      const edits = get(
+        entryEditsAtoms({
+          id: entry.id,
+          locale: entry.locale
+        })
+      )
 
       const loadDraft = client
         .getDraft(entryId)
@@ -123,68 +132,84 @@ export const entryEditorAtoms = atomFamily(
 
       if (!edits.hasData()) await loadDraft
 
-      const versions = await graph.all.find(
-        Entry({entryId}).select({
+      const versions = await graph.find({
+        select: {
           ...Entry,
-          parents({parents}) {
-            return parents().select(Entry.i18nId)
+          parents: {
+            parents: {},
+            select: Entry.id
           }
-        })
-      )
-      const {parents} = await graph.preferDraft.get(
-        Entry({entryId}).select({
-          parents({parents}) {
-            return parents().select({entryId: Entry.entryId, path: Entry.path})
+        },
+        locale,
+        id: entryId,
+        status: 'all'
+      })
+      const withParents = await graph.first({
+        select: {
+          parents: {
+            parents: {},
+            select: {
+              id: Entry.id,
+              path: Entry.path
+            }
           }
-        })
-      )
-      const translations = (await graph.preferDraft.find(
-        Entry({i18nId})
-          .where(Entry.locale.isNotNull(), Entry.entryId.isNot(entryId))
-          .select({locale: Entry.locale, entryId: Entry.entryId})
-      )) as Array<{locale: string; entryId: string}>
+        },
+        id: entryId,
+        locale,
+        status: 'preferDraft'
+      })
+      const translations = (await graph.find({
+        select: {
+          locale: Entry.locale,
+          entryId: Entry.id
+        },
+        id: entryId,
+        filter: {
+          _locale: {isNot: locale}
+        },
+        status: 'preferDraft'
+      })) as Array<{locale: string; entryId: string}>
       const parentLink =
-        entry.parent &&
-        (await graph.preferDraft.get(
-          Entry({entryId: entry.parent}).select(Entry.i18nId)
-        ))
-      const parentNeedsTranslation = parentLink
-        ? !(await graph.preferDraft.maybeGet(
-            Entry({i18nId: parentLink, locale})
-          ))
-        : false
+        entry.parentId &&
+        (await graph.first({
+          select: Entry.id,
+          id: entry.parentId,
+          locale,
+          status: 'preferDraft'
+        }))
+      const parentNeedsTranslation = entry.parentId ? !parentLink : false
       if (versions.length === 0) return undefined
-      const phases = fromEntries(
-        versions.map(version => [version.phase, version])
-      ) as Record<EntryPhase, Version>
-      const availablePhases = values(EntryPhase).filter(
-        phase => phases[phase] !== undefined
+      const statuses = fromEntries(
+        versions.map(version => [version.status, version])
+      ) as Record<EntryStatus, Version>
+      const availableStatuses = values(EntryStatus).filter(
+        status => statuses[status] !== undefined
       )
       return createEntryEditor({
-        parents,
+        parents: withParents?.parents ?? [],
         translations,
         parentNeedsTranslation,
         client,
         config,
         entryId,
         versions,
-        phases,
-        availablePhases,
+        statuses: statuses,
+        availableStatuses: availableStatuses,
         edits
       })
     })
   },
-  (a, b) => a.locale === b.locale && a.i18nId === b.i18nId
+  (a, b) => a.locale === b.locale && a.id === b.id
 )
 
 export interface EntryData {
-  parents: Array<{entryId: string; path: string}>
+  parents: Array<{id: string; path: string}>
   client: Connection
   config: Config
   entryId: string
   versions: Array<Version>
-  phases: Record<EntryPhase, Version>
-  availablePhases: Array<EntryPhase>
+  statuses: Record<EntryStatus, Version>
+  availableStatuses: Array<EntryStatus>
   translations: Array<{locale: string; entryId: string}>
   parentNeedsTranslation: boolean
   edits: Edits
@@ -195,23 +220,23 @@ export type EntryEditor = ReturnType<typeof createEntryEditor>
 const showHistoryAtom = atom(false)
 
 export function createEntryEditor(entryData: EntryData) {
-  const {config, availablePhases, edits} = entryData
-  const activePhase = availablePhases[0]
-  const activeVersion = entryData.phases[activePhase]
+  const {config, availableStatuses, edits} = entryData
+  const activeStatus = availableStatuses[0]
+  const activeVersion = entryData.statuses[activeStatus]
   const type = config.schema[activeVersion.type]
   const docs = fromEntries(
-    entries(entryData.phases).map(([phase, version]) => [
-      phase,
+    entries(entryData.statuses).map(([status, version]) => [
+      status,
       createYDoc(type, version)
     ])
   )
   const yDoc = edits.doc
   const hasChanges = edits.hasChanges
   const draftEntry = keepPreviousData(
-    yAtom(edits.doc.getMap(ROOT_KEY), getDraftEntry)
+    yAtom(edits.doc.getMap(DOC_KEY), getDraftEntry)
   )
   const editMode = atom(EditMode.Editing)
-  const view = Type.meta(type).view
+  const view = getType(type).view
   const previewRevision = atom(
     undefined as {ref: string; file: string} | undefined
   )
@@ -223,18 +248,18 @@ export function createEntryEditor(entryData: EntryData) {
     }
   )
 
-  const transition = entryTransitionAtoms(activeVersion.entryId)
+  const transition = entryTransitionAtoms(activeVersion.id)
 
-  const phaseInUrl = atom(get => {
+  const statusInUrl = atom(get => {
     const {search} = get(locationAtom)
-    const phaseInSearch = search.slice(1)
-    if ((<Array<string>>availablePhases).includes(phaseInSearch))
-      return <EntryPhase>phaseInSearch
+    const statusInSearch = search.slice(1)
+    if ((<Array<string>>availableStatuses).includes(statusInSearch))
+      return <EntryStatus>statusInSearch
     return undefined
   })
 
-  const selectedPhase = atom(get => {
-    return get(phaseInUrl) ?? activePhase
+  const selectedStatus = atom(get => {
+    return get(statusInUrl) ?? activeStatus
   })
 
   function entryFile(entry: EntryRow, parentPaths?: Array<string>) {
@@ -282,14 +307,15 @@ export function createEntryEditor(entryData: EntryData) {
     const update = await encode(edits.getLocalUpdate())
     // Use the existing path, when the entry gets published the path will change
     const entry = await getDraftEntry({
-      phase: EntryPhase.Published,
+      status: EntryStatus.Published,
       path: activeVersion.path
     })
     const mutation: Mutation = {
       type: MutationType.Edit,
+      locale: activeVersion.locale,
       previousFile: entryFile(activeVersion),
       file: entryFile(entry),
-      entryId: activeVersion.entryId,
+      entryId: activeVersion.id,
       entry,
       update
     }
@@ -302,41 +328,49 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const saveTranslation = atom(null, async (get, set, locale: string) => {
-    const {preferDraft: active} = await get(graphAtom)
+    const graph = await get(graphAtom)
     const parentLink =
-      activeVersion.parent &&
-      (await active.get(
-        Entry({entryId: activeVersion.parent}).select(Entry.i18nId)
-      ))
-    if (activeVersion.parent && !parentLink) throw new Error('Parent not found')
+      activeVersion.parentId &&
+      (await graph.get({
+        select: Entry.id,
+        locale,
+        id: activeVersion.parentId,
+        status: 'preferDraft'
+      }))
+    if (activeVersion.parentId && !parentLink)
+      throw new Error('Parent not found')
     const parentData = parentLink
-      ? await active.locale(locale).get(
-          Entry({i18nId: parentLink}).select({
-            entryId: Entry.entryId,
+      ? await graph.get({
+          select: {
+            entryId: Entry.id,
             path: Entry.path,
-            paths({parents}) {
-              return parents().select(Entry.path)
+            paths: {
+              parents: {},
+              select: Entry.path
             }
-          })
-        )
+          },
+          id: parentLink,
+          locale,
+          status: 'preferDraft'
+        })
       : undefined
-    if (activeVersion.parent && !parentData)
+    if (activeVersion.parentId && !parentData)
       throw new Error('Parent not translated')
     const parentPaths = parentData?.paths
       ? parentData.paths.concat(parentData.path)
       : []
-    const entryId = createId()
     const entry = await getDraftEntry({
-      entryId,
-      phase: EntryPhase.Published,
+      id: activeVersion.id,
+      status: EntryStatus.Published,
       parent: parentData?.entryId,
       parentPaths,
       locale
     })
     const mutation: Mutation = {
       type: MutationType.Create,
+      locale: entry.locale,
       file: entryFile(entry, parentPaths),
-      entryId,
+      entryId: activeVersion.id,
       entry
     }
     return set(transact, {
@@ -357,18 +391,25 @@ export function createEntryEditor(entryData: EntryData) {
     if (i18n) {
       const shared = Type.sharedData(type, entry.data)
       if (shared) {
-        const translations = await graph.preferPublished.find(
-          Entry({i18nId: entry.i18nId}).select({
+        const translations = await graph.find({
+          select: {
             ...Entry,
-            parentPaths: Query.parents().select(Entry.path)
-          })
-        )
+            parentPaths: {
+              parents: {},
+              select: Entry.path
+            }
+          },
+          id: entry.id,
+          locale: entry.locale,
+          status: 'preferPublished'
+        })
         for (const translation of translations) {
           if (translation.locale === entry.locale) continue
           res.push({
             type: MutationType.Patch,
+            locale: translation.locale,
             file: entryFile(translation, translation.parentPaths),
-            entryId: translation.entryId,
+            entryId: translation.id,
             patch: shared
           })
         }
@@ -400,14 +441,15 @@ export function createEntryEditor(entryData: EntryData) {
     if (!set(confirmErrorsAtom)) return
     const currentFile = entryFile(activeVersion)
     const update = await encode(edits.getLocalUpdate())
-    const entry = await getDraftEntry({phase: EntryPhase.Published})
+    const entry = await getDraftEntry({status: EntryStatus.Published})
     const mutations: Array<Mutation> = []
     const editedFile = entryFile(entry)
     mutations.push({
       type: MutationType.Edit,
       previousFile: currentFile,
       file: editedFile,
-      entryId: activeVersion.entryId,
+      entryId: activeVersion.id,
+      locale: entry.locale,
       entry,
       update
     })
@@ -431,7 +473,7 @@ export function createEntryEditor(entryData: EntryData) {
     const update = await encode(edits.getLocalUpdate())
     // We're not restoring the previous path because that is unavailable
     const entry = await getDraftEntry({
-      phase: EntryPhase.Published,
+      status: EntryStatus.Published,
       path: activeVersion.path
     })
     const editedFile = entryFile(entry)
@@ -439,7 +481,8 @@ export function createEntryEditor(entryData: EntryData) {
       type: MutationType.Edit,
       previousFile: editedFile,
       file: editedFile,
-      entryId: activeVersion.entryId,
+      entryId: activeVersion.id,
+      locale: entry.locale,
       entry,
       update
     }
@@ -456,12 +499,13 @@ export function createEntryEditor(entryData: EntryData) {
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Publish,
-        phase: EntryPhase.Draft,
-        entryId: activeVersion.entryId,
+        status: EntryStatus.Draft,
+        entryId: activeVersion.id,
+        locale: activeVersion.locale,
         file: entryFile(activeVersion)
       }
     ]
-    const entry = entryData.phases[EntryPhase.Draft]
+    const entry = entryData.statuses[EntryStatus.Draft]
     const graph = await get(graphAtom)
     mutations.push(...(await persistSharedFields(graph, entry)))
     return set(transact, {
@@ -474,7 +518,8 @@ export function createEntryEditor(entryData: EntryData) {
   const discardDraft = atom(null, (get, set) => {
     const mutation: Mutation = {
       type: MutationType.Discard,
-      entryId: activeVersion.entryId,
+      entryId: activeVersion.id,
+      locale: activeVersion.locale,
       file: entryFile(activeVersion)
     }
     return set(transact, {
@@ -485,10 +530,11 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const archivePublished = atom(null, (get, set) => {
-    const published = entryData.phases[EntryPhase.Published]
+    const published = entryData.statuses[EntryStatus.Published]
     const mutation: Mutation = {
       type: MutationType.Archive,
-      entryId: published.entryId,
+      entryId: published.id,
+      locale: published.locale,
       file: entryFile(published)
     }
     return set(transact, {
@@ -499,11 +545,12 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const publishArchived = atom(null, (get, set) => {
-    const archived = entryData.phases[EntryPhase.Archived]
+    const archived = entryData.statuses[EntryStatus.Archived]
     const mutation: Mutation = {
       type: MutationType.Publish,
-      phase: EntryPhase.Archived,
-      entryId: archived.entryId,
+      status: EntryStatus.Archived,
+      entryId: archived.id,
+      locale: archived.locale,
       file: entryFile(archived)
     }
     return set(transact, {
@@ -518,17 +565,19 @@ export function createEntryEditor(entryData: EntryData) {
       'Are you sure you want to delete this folder and all its files?'
     )
     if (!result) return
-    const published = entryData.phases[EntryPhase.Published]
+    const published = entryData.statuses[EntryStatus.Published]
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Archive,
-        entryId: published.entryId,
+        entryId: published.id,
+        locale: published.locale,
         file: entryFile(published)
       },
       {
         type: MutationType.Remove,
-        entryId: published.entryId,
-        file: entryFile({...published, phase: EntryPhase.Archived})
+        entryId: published.id,
+        locale: published.locale,
+        file: entryFile({...published, status: EntryStatus.Archived})
       }
     ]
     return set(transact, {
@@ -542,11 +591,12 @@ export function createEntryEditor(entryData: EntryData) {
     // Prompt for confirmation
     const result = confirm('Are you sure you want to delete this file?')
     if (!result) return
-    const published = entryData.phases[EntryPhase.Published]
+    const published = entryData.statuses[EntryStatus.Published]
     const file = published.data as MediaFile
     const mutation: Mutation = {
       type: MutationType.FileRemove,
-      entryId: published.entryId,
+      entryId: published.id,
+      locale: null,
       workspace: published.workspace,
       location:
         MEDIA_LOCATION in file
@@ -563,10 +613,11 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const deleteArchived = atom(null, (get, set) => {
-    const archived = entryData.phases[EntryPhase.Archived]
+    const archived = entryData.statuses[EntryStatus.Archived]
     const mutation: Mutation = {
       type: MutationType.Remove,
-      entryId: archived.entryId,
+      entryId: archived.id,
+      locale: archived.locale,
       file: entryFile(archived)
     }
     return set(transact, {
@@ -577,32 +628,32 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   type DraftEntryOptions = {
-    phase?: EntryPhase
+    status?: EntryStatus
     path?: string
     parentPaths?: Array<string>
     locale?: string | null
-    entryId?: string
+    id?: string
     parent?: string
   }
   async function getDraftEntry(
     options: DraftEntryOptions = {}
   ): Promise<EntryRow> {
     const data = parseYDoc(type, yDoc)
-    const phase = options.phase ?? activeVersion.phase
+    const status = options.status ?? activeVersion.status
     const locale = options.locale ?? activeVersion.locale
     const path = options.path ?? data.path ?? activeVersion.path
-    const entryId = options.entryId ?? activeVersion.entryId
-    const parent = options.parent ?? activeVersion.parent
+    const id = options.id ?? activeVersion.id
+    const parent = options.parent ?? activeVersion.parentId
     const parentPaths =
       options.parentPaths ?? entryData.parents.map(p => p.path)
     const draftEntry = {
       ...activeVersion,
       ...data,
-      entryId,
+      id,
       parent,
       locale,
       path,
-      phase
+      status
     }
     const filePath = entryFilepath(config, draftEntry, parentPaths)
     const parentDir = paths.dirname(filePath)
@@ -613,7 +664,7 @@ export function createEntryEditor(entryData: EntryData) {
     const urlMeta: EntryUrlMeta = {
       locale,
       path,
-      phase,
+      status,
       parentPaths
     }
     const url = entryUrl(type, urlMeta)
@@ -657,8 +708,8 @@ export function createEntryEditor(entryData: EntryData) {
   )
 
   const selectedState = atom(get => {
-    const selected = get(selectedPhase)
-    if (selected === activePhase) return edits.doc
+    const selected = get(selectedStatus)
+    if (selected === activeStatus) return edits.doc
     return docs[selected]
   })
   const activeTitle = yAtom(edits.root, () => edits.root.get('title') as string)
@@ -674,18 +725,19 @@ export function createEntryEditor(entryData: EntryData) {
   const form = atom(get => {
     const doc = get(currentDoc)
     const readOnly = doc !== edits.doc ? true : undefined
-    return new FormAtoms(type, doc.getMap(ROOT_KEY), '', {readOnly})
+    return new FormAtoms(type, doc.getMap(DOC_KEY), '', {readOnly})
   })
 
   const yUpdate = debounceAtom(edits.yUpdate, 250)
   const previewPayload = atom(async get => {
     const {contentHash} = await get(dbMetaAtom)
     const update = get(yUpdate)
-    const phase = get(selectedPhase)
+    const status = get(selectedStatus)
     return encodePreviewPayload({
-      entryId: activeVersion.entryId,
+      locale: activeVersion.locale,
+      entryId: activeVersion.id,
       contentHash,
-      phase,
+      status: status,
       update
     })
   })
@@ -702,16 +754,19 @@ export function createEntryEditor(entryData: EntryData) {
 
   const previewToken = atom(async get => {
     const client = get(clientAtom)
-    return client.previewToken({entryId: entryData.entryId})
+    return client.previewToken({
+      locale: activeVersion.locale,
+      entryId: entryData.entryId
+    })
   })
 
   return {
     ...entryData,
     transition,
     revisionId: createId(),
-    activePhase,
-    phaseInUrl,
-    selectedPhase,
+    activeStatus,
+    statusInUrl,
+    selectedStatus,
     entryData,
     editMode,
     activeVersion,

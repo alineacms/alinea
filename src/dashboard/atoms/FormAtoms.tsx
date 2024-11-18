@@ -1,4 +1,3 @@
-import type {FieldOptions} from 'alinea/core/Field'
 import {Field} from 'alinea/core/Field'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
@@ -6,7 +5,7 @@ import {Atom, Getter, atom} from 'jotai'
 import {PropsWithChildren, createContext, useContext, useMemo} from 'react'
 import * as Y from 'yjs'
 
-import {ROOT_KEY, applyEntryData} from 'alinea/core/Doc'
+import {DOC_KEY, applyEntryData} from 'alinea/core/Doc'
 import {Section} from 'alinea/core/Section'
 import {
   FieldGetter,
@@ -20,7 +19,7 @@ export interface FieldInfo<
   StoredValue = any,
   QueryValue = any,
   Mutator = any,
-  Options extends FieldOptions<StoredValue> = FieldOptions<StoredValue>
+  Options = any
 > {
   key: string
   field: Field<StoredValue, QueryValue, Mutator, Options>
@@ -163,12 +162,7 @@ export class FormAtoms<T = any> {
     return this.fieldInfo(field).key
   }
 
-  fieldInfo<
-    StoredValue,
-    QueryValue,
-    Mutator,
-    Options extends FieldOptions<StoredValue>
-  >(
+  fieldInfo<StoredValue, QueryValue, Mutator, Options>(
     field: Field<StoredValue, QueryValue, Mutator, Options>
   ): FieldInfo<StoredValue, QueryValue, Mutator, Options> {
     const res = this.fields.get(Field.ref(field))
@@ -197,7 +191,7 @@ export function useForm<T>(
     if (options.initialValue) {
       applyEntryData(doc, type, {data: options.initialValue} as any)
     }
-    return new FormAtoms(type, doc.getMap(ROOT_KEY))
+    return new FormAtoms(type, doc.getMap(DOC_KEY))
   }, [type, options.doc])
 }
 

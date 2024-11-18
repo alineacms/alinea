@@ -1,23 +1,21 @@
 import type {WithoutLabel} from 'alinea/core/Field'
 import {Label} from 'alinea/core/Label'
-import {Reference} from 'alinea/core/Reference'
 import {Type} from 'alinea/core/Type'
 import type {ListRow} from 'alinea/core/shape/ListShape'
 import {FileLink, filePicker} from 'alinea/field/link/FileLink'
 import {
-  LinkFieldOptions,
   createLink,
-  createLinks
+  createLinks,
+  LinkField,
+  LinkFieldOptions
 } from 'alinea/field/link/LinkField'
 import {entryPicker} from 'alinea/picker/entry'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {urlPicker} from 'alinea/picker/url'
-import {EntryLink, entry as entryLink} from './EntryLink.js'
-import {file as fileLink} from './FileLink.js'
-import {image as imageLink} from './ImageLink.js'
-import {UrlLink, url as urlLink} from './UrlLink.js'
+import {urlPicker, UrlReference} from 'alinea/picker/url'
+import {EntryLink} from './EntryLink.js'
+import {UrlLink} from './UrlLink.js'
 
-export type AnyLink<InferredFields> =
+export type Link<InferredFields> =
   | EntryLink<InferredFields>
   | UrlLink<InferredFields>
   | FileLink<InferredFields>
@@ -26,11 +24,13 @@ export interface LinkOptions<Definition, Row> extends LinkFieldOptions<Row> {
   fields?: Definition | Type<Definition>
 }
 
+type LinkRow = (EntryReference | UrlReference) & ListRow
+
 export function link<Fields>(
   label: Label,
-  options: WithoutLabel<LinkOptions<Fields, Reference>> = {}
-) {
-  return createLink<Reference, AnyLink<Type.Infer<Fields>>>(label, {
+  options: WithoutLabel<LinkOptions<Fields, LinkRow>> = {}
+): LinkField<LinkRow, Link<Type.Infer<Fields>>> {
+  return createLink<LinkRow, Link<Type.Infer<Fields>>>(label, {
     ...options,
     pickers: {
       entry: entryPicker<EntryReference, Fields>({
@@ -48,9 +48,9 @@ export function link<Fields>(
 export namespace link {
   export function multiple<Fields>(
     label: Label,
-    options: WithoutLabel<LinkOptions<Fields, Array<ListRow>>> = {}
+    options: WithoutLabel<LinkOptions<Fields, Array<LinkRow>>> = {}
   ) {
-    return createLinks<ListRow, AnyLink<Type.Infer<Fields>>>(label, {
+    return createLinks<LinkRow, Link<Type.Infer<Fields>>>(label, {
       ...options,
       pickers: {
         entry: entryPicker<EntryReference, Fields>({
@@ -63,12 +63,4 @@ export namespace link {
       }
     })
   }
-  /** @deprecated Use Field.image */
-  export const image = imageLink
-  /** @deprecated Use Field.entry */
-  export const entry = entryLink
-  /** @deprecated Use Field.file */
-  export const file = fileLink
-  /** @deprecated Use Field.url */
-  export const url = urlLink
 }

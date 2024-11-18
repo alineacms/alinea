@@ -4,8 +4,9 @@ import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
+import {GraphQuery} from 'alinea/core/Graph'
 import {outcome} from 'alinea/core/Outcome'
-import {PreviewRequest, ResolveParams} from 'alinea/core/Resolver'
+import {PreviewRequest} from 'alinea/core/Preview'
 import {User} from 'alinea/core/User'
 import {assign} from 'alinea/core/util/Objects'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
@@ -36,6 +37,7 @@ export class NextCMS<
     super(config, async () => {
       const context = await requestContext(config)
       const client = new Client({
+        config: this.config,
         url: context.handlerUrl.href,
         applyAuth(init) {
           const headers = new Headers(init?.headers)
@@ -45,19 +47,21 @@ export class NextCMS<
       })
       const clientResolve = client.resolve.bind(client)
       return assign(client, {
-        async resolve(params: ResolveParams) {
+        async resolve(params: GraphQuery) {
           const isDev = Boolean(devUrl())
           let preview: PreviewRequest | undefined
-          const {cookies, draftMode} = await import('next/headers.js')
-          const [isDraft] = outcome(() => draftMode().isEnabled)
+          const {cookies, draftMode} = await import('next/headers')
+          const [isDraft] = await outcome(
+            async () => (await draftMode()).isEnabled
+          )
           if (isDraft) {
-            const cookie = cookies()
+            const cookie = await cookies()
             const payload = getPreviewPayloadFromCookies(cookie.getAll())
             if (payload) preview = {payload}
           }
           if (process.env.NEXT_RUNTIME === 'edge' || isDev)
             return clientResolve({preview, ...params})
-          const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
+          const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
           const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
           const {db, previews} = await init
           const sync = () => db.syncWith(client)
@@ -84,13 +88,14 @@ export class NextCMS<
   }
 
   async user(): Promise<User | undefined> {
-    const {cookies} = await import('next/headers.js')
+    const {cookies} = await import('next/headers')
     const context = await requestContext(this.config)
+    const cookie = await cookies()
     const client = new Client({
+      config: this.config,
       url: context.handlerUrl.href,
       applyAuth: init => {
         const headers = new Headers(init?.headers)
-        const cookie = cookies()
         const alinea = cookie
           .getAll()
           .filter(({name}) => name.startsWith('alinea'))
@@ -103,9 +108,9 @@ export class NextCMS<
   }
 
   previews = async ({widget, workspace, root}: PreviewProps) => {
-    const {draftMode} = await import('next/headers.js')
-    const {default: dynamic} = await import('next/dynamic.js')
-    const [isDraft] = outcome(() => draftMode().isEnabled)
+    const {draftMode} = await import('next/headers')
+    const {default: dynamic} = await import('next/dynamic')
+    const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
     if (!isDraft) return null
     const context = await requestContext(this.config)
     let file = this.config.dashboardFile ?? '/admin.html'

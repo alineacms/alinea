@@ -3,7 +3,6 @@
   "_type": "Docs",
   "_index": "Zm4",
   "_i18nId": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-  "_root": "pages",
   "title": "Configuration",
   "navigationTitle": "",
   "body": [
@@ -20,47 +19,10 @@
     {
       "_type": "CodeBlock",
       "_id": "2a4tC7lBmNMZUuJDec7zsG4st62",
-      "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  workspaces, schema, dashboard, preview\n})",
+      "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  schema, workspaces, ...\n})",
       "fileName": "cms.tsx",
       "language": "",
       "compact": false
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`workspaces`"
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Content can be bundled in separate "
-        },
-        {
-          "_type": "text",
-          "text": "Workspaces",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "2YkhLyWRcJ1TaBwxb1l8MIeWbGP",
-              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
-              "_link": "entry",
-              "title": ""
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": ". Defining at least one is required."
-        }
-      ]
     },
     {
       "_type": "heading",
@@ -105,7 +67,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`dashboard`"
+          "text": "`workspaces`"
         }
       ]
     },
@@ -115,16 +77,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "All configuration to generate the dashboard UI for "
+          "text": "Content can be bundled in separate "
         },
         {
           "_type": "text",
-          "text": "deployment",
+          "text": "Workspaces",
           "marks": [
             {
               "_type": "link",
-              "_id": "2a4zuVMFhDy0YU5LCzGUUqjpyeW",
-              "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
+              "_id": "2YkhLyWRcJ1TaBwxb1l8MIeWbGP",
+              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
               "_link": "entry",
               "title": ""
             }
@@ -132,7 +94,27 @@
         },
         {
           "_type": "text",
-          "text": " goes here."
+          "text": ". Defining at least one is required."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`baseUrl`"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The URL of the frontend where Alinea is used."
         }
       ]
     },
@@ -152,24 +134,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A url which is used in the dashboard for "
-        },
-        {
-          "_type": "text",
-          "text": "live previews",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "2a4lENV0tYD7pJsarKpb35IL4nG",
-              "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q",
-              "_link": "entry",
-              "title": ""
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": "."
+          "text": "Display an iframe with live previews on the side of the editor."
         }
       ]
     },
@@ -319,8 +284,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

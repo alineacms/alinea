@@ -1,9 +1,10 @@
 import {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {ReactNode} from 'react'
 
 export interface CodeFieldOptions extends FieldOptions<string> {
   width?: number
-  help?: string
+  help?: ReactNode
   inline?: boolean
   language?: string
 }

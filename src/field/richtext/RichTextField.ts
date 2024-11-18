@@ -2,6 +2,7 @@ import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {Schema} from 'alinea/core/Schema'
 import type {TextDoc} from 'alinea/core/TextDoc'
 import {RichTextField} from 'alinea/core/field/RichTextField'
+import {ReactNode} from 'react'
 
 /** Optional settings to configure a rich text field */
 export interface RichTextOptions<Blocks extends Schema>
@@ -11,7 +12,7 @@ export interface RichTextOptions<Blocks extends Schema>
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: string
+  help?: ReactNode
   /** Display a minimal version */
   inline?: boolean
   /** Index the text value of this field */
