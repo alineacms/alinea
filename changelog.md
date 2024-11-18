@@ -9,6 +9,8 @@
 - Querying via `cms.find/get` is rewritten to take a single query object.
   Have a look at the docs to see how to use the new query api.
 - Creating custom fields can now be done through `Field.create`.
+- Entries now have a single id. If you are upgrading and were using i18n you
+  can stabilize your ids by running `npx alinea build --fix`.
 
 ## [0.11.2]
 
