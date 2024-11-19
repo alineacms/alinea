@@ -4,13 +4,18 @@ import {createRequire} from 'node:module'
 import {resolve} from 'path'
 
 export function withAlinea(config: NextConfig): NextConfig {
-  // Ducktape this together so we can get the package.json contents regardless
-  // of .cjs, .mjs, compiled .ts or Node version
-  const require = createRequire(resolve('.'))
-  const pkgLocation = require.resolve('next/package.json')
-  const pkg = JSON.parse(readFileSync(pkgLocation, 'utf-8'))
-  const majorVersion = Number(pkg.version.split('.')[0])
-  if (majorVersion < 15)
+  let nextVersion = 15
+  try {
+    // Ducktape this together so we can get the package.json contents regardless
+    // of .cjs, .mjs, compiled .ts or Node version
+    const require = createRequire(resolve('./index.js'))
+    const pkgLocation = require.resolve('next/package.json')
+    const pkg = JSON.parse(readFileSync(pkgLocation, 'utf-8'))
+    nextVersion = Number(pkg.version.split('.')[0])
+  } catch {
+    console.warn(`Alinea could not determine Next.js version, assuming 15+`)
+  }
+  if (nextVersion < 15)
     return {
       ...config,
       experimental: {
@@ -31,6 +36,10 @@ export function withAlinea(config: NextConfig): NextConfig {
     }
   return {
     ...config,
+    serverExternalPackages: [
+      ...(config.serverExternalPackages ?? []),
+      '@alinea/generated'
+    ],
     experimental: {
       ...config.experimental,
       turbo: {
@@ -41,10 +50,6 @@ export function withAlinea(config: NextConfig): NextConfig {
             'next/dist/server/app-render/work-unit-async-storage.external.js'
         }
       }
-    },
-    serverExternalPackages: [
-      ...(config.serverExternalPackages ?? []),
-      '@alinea/generated'
-    ]
+    }
   }
 }
