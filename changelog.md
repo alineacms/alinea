@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3]
+- Only access normalized config in next cms adapter. This fixes an error
+  in production builds which would prevent you from querying media files.
+
 ## [1.0.2]
 - Tweak the withAlinea config function to work in all environments including 
   Next 14.
