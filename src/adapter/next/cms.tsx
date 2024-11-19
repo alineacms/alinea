@@ -22,7 +22,7 @@ export interface PreviewProps {
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  constructor(config: Definition, public baseUrl?: string) {
+  constructor(rawConfig: Definition, public baseUrl?: string) {
     let lastSync = 0
     const init = PLazy.from(async () => {
       if (process.env.NEXT_RUNTIME === 'edge') throw 'assert'
@@ -30,12 +30,12 @@ export class NextCMS<
         'alinea/backend/store/GeneratedStore'
       )
       const store = await generatedStore
-      const db = new Database(config, store)
+      const db = new Database(this.config, store)
       const previews = createPreviewParser(db)
       return {db, previews}
     })
-    super(config, async () => {
-      const context = await requestContext(config)
+    super(rawConfig, async () => {
+      const context = await requestContext(this.config)
       const client = new Client({
         config: this.config,
         url: context.handlerUrl.href,
