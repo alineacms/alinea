@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.0.2]
+- Tweak the withAlinea config function to work in all environments including 
+  Next 14.
+
+## [1.0.1]
+- Add the Infer.Entry and Infer.ListItem types which can be used to infer the 
+  type of an entry or list item from a query.
+
+  ```tsx
+  type Entry = Infer.Entry<typeof EntryType>
+  const entry: Entry = await cms.get({type: MyType})
+  type ListItem = Infer.ListItem<typeof ListType>
+  const list: Array<ListItem> = await cms.get({select: MyType.list})
+  ````
+
 ## [1.0.0]
 
 - Add support for Next.js 15 and Turbopack.
