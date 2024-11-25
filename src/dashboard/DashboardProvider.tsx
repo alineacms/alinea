@@ -11,7 +11,7 @@ import {ModalPortal} from './view/Modal.js'
 
 export interface DashboardProps {
   config: Config
-  views: Record<string, ComponentType>
+  views: Record<string, ComponentType<any>>
   client: Connection
   queryClient?: QueryClient
   fullPage?: boolean

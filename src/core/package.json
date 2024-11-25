@@ -6,6 +6,7 @@
     "htmlparser2": "^9.1.0",
     "p-lazy": "^4.0.0",
     "pretty-ms": "^8.0.0",
+    "y-protocols": "^1.0.6",
     "yjs": "^13.6.11"
   }
 }
