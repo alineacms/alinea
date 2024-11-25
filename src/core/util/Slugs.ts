@@ -3,6 +3,7 @@
 // which in this case would be followed by the emoji variation selector
 // For example we'll strip # but not #️⃣
 const strip = /([^\p{L}\p{N}\p{Emoji}\p{Emoji_Component}]|\p{P}(?!\u{fe0f}))+/gu
+const ignore = /[\'’]/g
 const separator = '-'
 const trim = new RegExp(`^${separator}+|${separator}+$`, 'g')
 
@@ -11,5 +12,9 @@ export function isSeparator(char: string): boolean {
 }
 
 export function slugify(input: string): string {
-  return input.replace(strip, separator).replace(trim, '').toLowerCase()
+  return input
+    .replace(ignore, '')
+    .replace(strip, separator)
+    .replace(trim, '')
+    .toLowerCase()
 }

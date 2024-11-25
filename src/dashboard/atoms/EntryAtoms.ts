@@ -3,13 +3,17 @@ import {
   DropTarget,
   ItemInstance
 } from '@headless-tree/core'
-import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {entryFileName} from 'alinea/core/EntryFilenames'
-import {GraphRealm} from 'alinea/core/Graph'
+import {EntryStatus} from 'alinea/core/EntryRow'
+import {Graph} from 'alinea/core/Graph'
+import {getType} from 'alinea/core/Internal'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {Projection} from 'alinea/core/pages/Projection'
-import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
+import {Type} from 'alinea/core/Type'
+import {entryFileName} from 'alinea/core/util/EntryFilenames'
+import {
+  generateKeyBetween,
+  generateNKeysBetween
+} from 'alinea/core/util/FractionalIndexing'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
 import {atom, useAtomValue} from 'jotai'
@@ -17,7 +21,7 @@ import {useMemo} from 'react'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {configAtom} from './DashboardAtoms.js'
 import {graphAtom, useMutate} from './DbAtoms.js'
-import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
+import {localeAtom, rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
 export function rootId(rootName: string) {
   return `@alinea/root-${rootName}`
@@ -26,31 +30,34 @@ export function rootId(rootName: string) {
 const visibleTypesAtom = atom(get => {
   const {schema} = get(configAtom)
   return entries(schema)
-    .filter(([_, type]) => !Type.meta(type).isHidden)
+    .filter(([_, type]) => !Type.isHidden(type))
     .map(([name]) => name)
 })
 
 async function entryTreeRoot(
-  active: GraphRealm,
+  graph: Graph,
+  status: 'preferDraft' | 'preferPublished',
   workspace: string,
   root: string,
   visibleTypes: Array<string>
 ): Promise<EntryTreeItem> {
-  const rootEntries = Entry()
-    .where(
-      Entry.workspace.is(workspace),
-      Entry.root.is(root),
-      Entry.parent.isNull(),
-      Entry.active,
-      Entry.type.isIn(visibleTypes)
-    )
-    .select(Entry.i18nId)
-    .groupBy(Entry.i18nId)
-    .orderBy(Entry.index.asc())
-  const children = await active.find(rootEntries)
+  const children = await graph.find({
+    select: Entry.id,
+    groupBy: Entry.id,
+    orderBy: {asc: Entry.index, caseSensitive: true},
+    filter: {
+      _active: true,
+      _workspace: workspace,
+      _root: root,
+      _parentId: null,
+      _type: {in: visibleTypes}
+    },
+    status
+  })
   return {
     id: rootId(root),
     index: '',
+    type: '',
     isFolder: true,
     entries: [],
     children
@@ -59,6 +66,7 @@ async function entryTreeRoot(
 
 const entryTreeItemLoaderAtom = atom(async get => {
   const graph = await get(graphAtom)
+  const locale = get(localeAtom)
   const visibleTypes = get(visibleTypesAtom)
   const {schema} = get(configAtom)
   const root = get(rootAtom)
@@ -67,45 +75,70 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const indexed = new Map<string, EntryTreeItem>()
     const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
     const data = {
-      id: Entry.i18nId,
-      entryId: Entry.entryId,
+      id: Entry.id,
       type: Entry.type,
       title: Entry.title,
-      phase: Entry.phase,
+      status: Entry.status,
       locale: Entry.locale,
       workspace: Entry.workspace,
       root: Entry.root,
       path: Entry.path,
-      parentPaths({parents}) {
-        return parents(Entry).select(Entry.path)
-      },
-      children({children}) {
-        return children(Entry)
-          .where(Entry.type.isIn(visibleTypes))
-          .select(Entry.i18nId)
-          .groupBy(Entry.i18nId)
-          .orderBy(Entry.index.asc())
+      parentPaths: {
+        parents: {},
+        select: Entry.path
       }
-    } satisfies Projection
-    const entries = Entry()
-      .select({
-        id: Entry.i18nId,
+    }
+    const rows = await graph.find({
+      groupBy: Entry.id,
+      select: {
+        id: Entry.id,
         index: Entry.index,
+        type: Entry.type,
         data,
-        translations({translations}) {
-          return translations().select(data)
+        translations: {
+          translations: {},
+          select: data
         }
-      })
-      .groupBy(Entry.i18nId)
-      .where(Entry.i18nId.isIn(search))
-    const rows = await graph.preferDraft.find(entries)
+      },
+      id: {in: search},
+      status: 'preferDraft'
+    })
     for (const row of rows) {
+      const type = schema[row.type]
+      const orderBy = getType(type).orderChildrenBy ?? {
+        asc: Entry.index,
+        caseSensitive: true
+      }
+      const children = await graph.find({
+        select: {
+          id: Entry.id,
+          locale: Entry.locale
+        },
+        groupBy: Entry.id,
+        orderBy,
+        filter: {
+          _parentId: row.id,
+          _type: {in: visibleTypes}
+        },
+        status: 'preferDraft'
+      })
       const entries = [row.data].concat(row.translations)
+      const translatedChildren = new Set(
+        children.filter(child => child.locale === locale).map(child => child.id)
+      )
+      const untranslated = new Set()
+      const orderedChildren = children.filter(child => {
+        if (translatedChildren.has(child.id)) return child.locale === locale
+        if (untranslated.has(child.id)) return false
+        untranslated.add(child.id)
+        return true
+      })
       indexed.set(row.id, {
         id: row.id,
+        type: row.type,
         index: row.index,
         entries,
-        children: [...new Set(entries.flatMap(entry => entry.children))]
+        children: [...new Set(orderedChildren.map(child => child.id))]
       })
     }
     const res: Array<EntryTreeItem | undefined> = []
@@ -113,7 +146,8 @@ const entryTreeItemLoaderAtom = atom(async get => {
       if (id === rootId(root.name)) {
         res.push(
           await entryTreeRoot(
-            graph.preferDraft,
+            graph,
+            'preferDraft',
             workspace.name,
             root.name,
             visibleTypes
@@ -143,12 +177,12 @@ const loaderAtom = atom(get => {
 export interface EntryTreeItem {
   id: string
   index: string
+  type: string
   entries: Array<{
     id: string
-    entryId: string
     type: string
     title: string
-    phase: EntryPhase
+    status: EntryStatus
     locale: string | null
     workspace: string
     root: string
@@ -175,22 +209,52 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
         const [dropping] = items
         if (childIndex === null) return
         if (dropping.getParent() !== parent) {
-          console.log('Todo: move entries')
+          console.warn('Todo: move entries')
           return
         }
-        const previous = parent.getChildren()[childIndex - 1]
-        const next = parent.getChildren()[childIndex]
-        const previousIndex = previous?.getItemData()?.index ?? null
-        const nextIndex = next?.getItemData()?.index ?? null
+        const children = parent.getChildren()
+        const previous = children[childIndex - 1]
+        const previousIndexKey = previous?.getItemData()?.index ?? null
+        const next = children
+          .slice(childIndex)
+          .find(
+            entry => !entry || entry?.getItemData().index !== previousIndexKey
+          )
+        const nextChildIndex = next ? children.indexOf(next) : undefined
+        const nextIndexKey = next?.getItemData()?.index ?? null
+
         try {
-          const newIndex = generateKeyBetween(previousIndex, nextIndex)
+          const brokenChildren = children.slice(childIndex, nextChildIndex)
+          const newIndexKey = generateKeyBetween(previousIndexKey, nextIndexKey)
           const mutations: Array<Mutation> = []
+
+          if (brokenChildren.length > 0) {
+            // Start by generating new, clean keys for broken children (children with duplicate keys)
+            const newKeys = generateNKeysBetween(
+              newIndexKey,
+              nextIndexKey,
+              brokenChildren.length
+            )
+            for (let i = 0; i < brokenChildren.length; i++) {
+              const child = brokenChildren[i]
+              const correctedIndexKey = newKeys[i]
+              for (const entry of child.getItemData().entries) {
+                mutations.push({
+                  type: MutationType.Order,
+                  entryId: entry.id,
+                  file: entryFileName(config, entry, entry.parentPaths),
+                  index: correctedIndexKey
+                })
+              }
+            }
+          }
+
           for (const entry of dropping.getItemData().entries) {
             mutations.push({
               type: MutationType.Order,
-              entryId: entry.entryId,
+              entryId: entry.id,
               file: entryFileName(config, entry, entry.parentPaths),
-              index: newIndex
+              index: newIndexKey
             })
           }
           mutate(mutations, true)

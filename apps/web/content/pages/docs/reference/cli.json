@@ -1,108 +1,109 @@
 {
+  "_id": "m5KGP-I5smg2S8o4A-j15",
+  "_type": "Doc",
+  "_index": "a0",
+  "_i18nId": "m5KGP-I5smg2S8o4A-j15",
+  "_root": "pages",
   "title": "CLI",
   "body": [
     {
-      "id": "-DXbyOqvbfbUVwbH8CNuJ",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "-DXbyOqvbfbUVwbH8CNuJ",
       "code": "Usage\n  $ alinea <command> [options]\n\nAvailable Commands\n  init     Copy a sample config file to the current directory\n  dev      Start development dashboard\n  build    Generate content cache\n\nFor more info, run any command with the `--help` flag\n  $ alinea build --help\n  $ alinea init --help\n\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Commands"
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "alinea init"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Creates an example config file. Run once during setup."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "alinea dev"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Starts a development server to display the alinea dashboard. It can be prepended to another development command to run it in parallel."
         }
       ]
     },
     {
-      "id": "XeX5lTJqsjNbbd4OwYOzD",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "XeX5lTJqsjNbbd4OwYOzD",
       "code": "// Example: start the dashboard and next development server\nalinea serve -- next dev",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "P1sIdtOUVmGJBcPNDrfmU",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "P1sIdtOUVmGJBcPNDrfmU",
       "code": "Options\n  -p, --port      Port to listen on\n  --production    Use production backend",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "alinea build"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "The build command indexes content and generates the `@alinea/generated` package. It's recommended to run it as part of the build step in your project."
         }
       ]
     },
     {
-      "id": "KipDFk3xI6h94TjE3Mhc_",
-      "type": "CodeBlock",
-      "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"alinea.config.tsx\"\n  --fix           Any missing or incorrect properties will be overwritten by their default",
+      "_type": "CodeBlock",
+      "_id": "KipDFk3xI6h94TjE3Mhc_",
+      "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"cms.ts\"\n  --fix           Any missing or incorrect properties will be overwritten by their default",
       "fileName": "",
       "language": "",
       "compact": false
@@ -116,10 +117,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "m5KGP-I5smg2S8o4A-j15",
-    "type": "Doc",
-    "index": "a0"
   }
 }

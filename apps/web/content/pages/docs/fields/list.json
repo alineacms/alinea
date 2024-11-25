@@ -1,42 +1,43 @@
 {
+  "_id": "268hhWIV6twxD4PMp03isLY6Pac",
+  "_type": "Doc",
+  "_index": "a1V",
+  "_i18nId": "268hhWIV6twxD4PMp03isLY6Pac",
   "title": "List",
+  "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A list field contains blocks of fields. Every block is configured using a specific type. These can be created using the schema and type functions as seen before."
         }
       ]
     },
     {
-      "id": "268j9BBXf8jwwZ427XxBT2O0snb",
-      "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.list('My list field', {\n  schema: alinea.schema({\n    Text: alinea.type('Text', {\n      title: alinea.text('Item title'),\n      text: alinea.richText('Item body text')\n    }),\n    Image: alinea.type('Image', {\n      image: alinea.image('Image')\n    })\n  })\n})",
+      "_type": "CodeBlock",
+      "_id": "268j9BBXf8jwwZ427XxBT2O0snb",
+      "code": "import {Config, Field} from 'alinea'\n\nField.list('My list field', {\n  schema: {\n    Text: Config.type('Text', {\n      fields: {\n        title: Field.text('Item title'),\n        text: Field.richText('Item body text')\n      }\n    }),\n    Image: Config.type('Image', {\n      fields: {image: Field.image('Image')}\n    })\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "MOMpcuuHwKl-kSmmbcKgx",
-      "type": "ExampleBlock",
-      "code": "export default alinea.type('List field', {\n  list: alinea.list('My list field', {\n    schema: alinea.schema({\n      Text: alinea.type('Text', {\n        title: alinea.text('Item title'),\n        text: alinea.richText('Item body text')\n      }),\n      Image: alinea.type('Image', {\n        image: alinea.image('Image')\n      })\n    })\n  })\n})"
+      "_type": "ExampleBlock",
+      "_id": "MOMpcuuHwKl-kSmmbcKgx",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type(\"List field\", {\n  fields: {\n    list: Field.list(\"My list field\", {\n      schema: {\n        Text: Config.type(\"Text\", {\n          fields: {\n            title: Field.text(\"Item title\"),\n            text: Field.richText(\"Item body text\"),\n          }\n        })\n        Image: Config.type(\"Image\", {\n          fields: { image: Field.image(\"Image\") }\n        })\n      }\n    })\n  }\n})\n"
     }
   ],
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "268hhWIV6twxD4PMp03isLY6Pac",
-    "type": "Doc",
-    "index": "a1V"
   }
 }

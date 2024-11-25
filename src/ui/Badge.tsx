@@ -1,9 +1,9 @@
+import styler from '@alinea/styler'
 import {PropsWithChildren} from 'react'
 import css from './Badge.module.scss'
-import {fromModule} from './util/Styler.js'
 import {px} from './util/Units.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type BadgeProps = PropsWithChildren<{
   amount?: number

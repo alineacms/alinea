@@ -1,11 +1,11 @@
 import sqlInit from '@alinea/sqlite-wasm'
 import {Store} from 'alinea/backend/Store'
 import * as idb from 'lib0/indexeddb.js'
-import prettyMilliseconds from 'pretty-ms'
-import {DriverOptions} from 'rado'
 import {connect} from 'rado/driver/sql.js'
+import pkg from '../../../package.json'
 
-const STORAGE_NAME = '@alinea/peristent.store'
+const STORAGE_NAME = `@alinea/peristent.store`
+const dbName = `db-${pkg.version}`
 
 export interface PersistentStore {
   store: Store
@@ -23,13 +23,25 @@ export async function createPersistentStore(): Promise<PersistentStore> {
     storagePromise,
     sqlitePromise
   ])
+
+  // Cleanup older versions, delete all databases except the current one
+  let store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
+  const databases = await idb.getAllKeys(store)
+  for (const name of databases) {
+    if (name !== dbName) {
+      await idb.del(store, name)
+    }
+  }
+
   // See if we have a blob available to initialize the database with
-  const [store] = idb.transact(storage, [STORAGE_NAME], 'readonly')
-  const buffer = await idb.get(store, 'db')
-  const init = ArrayBuffer.isView(buffer) ? buffer : undefined
+  store = idb.transact(storage, [STORAGE_NAME], 'readonly')[0]
+  const buffer = await idb.get(store, dbName)
+  const init =
+    buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : undefined
   let db = new Database(init)
-  const driverOptions: DriverOptions = {
-    logQuery(stmt, duration) {
+
+  /*const driverOptions =  {
+    logQuery(stmt: {sql: string, params(): Array<unknown>}, duration: number) {
       if (!stmt.sql.startsWith('SELECT')) return
       if (duration < 10) return
       const icon = duration < 100 ? '⚡' : '⚠️'
@@ -37,10 +49,10 @@ export async function createPersistentStore(): Promise<PersistentStore> {
         `${icon} Local query (${prettyMilliseconds(duration)})`
       )
       console.groupCollapsed('SQL')
-      console.log(stmt.sql)
+      console.info(stmt.sql)
       console.groupEnd()
       console.groupCollapsed('Params')
-      console.log(stmt.params())
+      console.info(stmt.params())
       console.groupEnd()
       console.groupCollapsed('Query plan')
       const explain = db.prepare(
@@ -54,26 +66,28 @@ export async function createPersistentStore(): Promise<PersistentStore> {
       console.groupEnd()
       console.groupEnd()
     }
-  }
+  }*/
+
   // Return an async connection so we can move the database to a worker later
   // without have to rewrite the dashboard
   const persistent = {
-    store: connect(db, driverOptions).toAsync(),
+    store: connect(db),
     async flush() {
-      const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
-      await idb.put(store, db.export(), 'db')
+      store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
+      await idb.put(store, db.export().buffer as ArrayBuffer, dbName)
     },
     clone() {
       const clone = new Database(db.export())
-      return connect(clone, driverOptions).toAsync()
+      return connect(clone)
     },
     async clear() {
-      const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
-      await idb.del(store, 'db')
+      store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
+      await idb.del(store, dbName)
       db = new Database()
-      persistent.store = connect(db, driverOptions).toAsync()
+      persistent.store = connect(db)
     }
   }
+
   return persistent
 }
 
@@ -89,6 +103,6 @@ function renderQueryPlan(plan: Array<QueryPlanItem>) {
     const parentDepth = depth.get(line.parent) || 0
     depth.set(line.id, parentDepth + 1)
     const indent = ' '.repeat(parentDepth * 2)
-    console.log(`${indent}${line.detail}`)
+    console.info(`${indent}${line.detail}`)
   }
 }

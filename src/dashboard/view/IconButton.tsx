@@ -1,10 +1,10 @@
-import {fromModule} from 'alinea/ui/util/Styler'
+import styler from '@alinea/styler'
 import {px} from 'alinea/ui/util/Units'
 import {ComponentType, forwardRef, HTMLAttributes, HTMLProps, Ref} from 'react'
 import {link} from '../util/HashRouter.js'
 import css from './IconButton.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type IconButtonProps = HTMLAttributes<HTMLButtonElement> & {
   icon: ComponentType

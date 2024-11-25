@@ -1,9 +1,8 @@
 {
-  "title": "Sub sub page 1",
-  "@alinea": {
-    "entryId": "2U6im8oflJeeqyCHTWFCjUEJfM9",
-    "type": "Page",
-    "index": "a0",
-    "i18nId": "2U6im6bHBYjLMg0r0QBR6VqCbGs"
-  }
+  "_id": "2U6im8oflJeeqyCHTWFCjUEJfM9",
+  "_type": "Page",
+  "_index": "a0",
+  "_i18nId": "2U6im6bHBYjLMg0r0QBR6VqCbGs",
+  "_root": "pages",
+  "title": "Sub sub page 1"
 }

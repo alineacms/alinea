@@ -1,4 +1,4 @@
-import {Shape} from 'alinea/core'
+import {Shape} from 'alinea/core/Shape'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {VStack} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
@@ -19,6 +19,7 @@ export function FieldsDiff({changes, targetA, targetB}: FieldsDiffProps) {
             <div key={key}>
               <InputLabel label={type.label}>
                 <FieldDiff
+                  FieldsDiff={FieldsDiff}
                   shape={type}
                   valueA={targetA?.[key]}
                   valueB={targetB?.[key]}

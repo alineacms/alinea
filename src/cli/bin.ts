@@ -27,6 +27,7 @@ prog
   .option('-c, --config', `Config file location`)
   .option('-d, --dir', `Root directory of the project`)
   .option('-p, --port', `Port to listen on`)
+  .option('-b, --base', `Base URL for previews`)
   .option('--production', `Use production backend`)
   .option('--dev', `Watch alinea sources`)
   .action(async args => {
@@ -39,8 +40,10 @@ prog
       ...args,
       alineaDev: args.dev,
       cwd: args.dir,
+      base: args.base,
       onAfterGenerate: forwardCommand,
-      configFile: args.config
+      configFile: args.config,
+      cmd: 'dev'
     })
   })
 
@@ -48,8 +51,8 @@ prog
   .alias('generate')
   .describe('Generate types and content cache')
   .option('-c, --config', `Config file location`)
-  .option('-w, --watch', `Watch for changes to source files`)
   .option('-d, --dir', `Root directory of the project`)
+  .option('-w, --watch', `Watch for changes to source files`)
   .option(
     '--fix',
     `Any missing or incorrect properties will be overwritten by their default`
@@ -59,15 +62,34 @@ prog
     ensureReact()
     ensureEnv(args.dir)
     process.env.NODE_ENV = 'production'
-    const {generate} = await import('./Generate.js')
-    for await ({} of generate({
-      cwd: args.dir,
-      watch: args.watch,
-      fix: args.fix,
-      onAfterGenerate: forwardCommand,
-      configFile: args.config
-    })) {
+    if (args.fix) {
+      const {generate} = await import('./Generate.js')
+      for await (const _ of generate({
+        ...args,
+        cwd: args.dir,
+        base: args.base,
+        configFile: args.config,
+        onAfterGenerate() {
+          process.exit(0)
+        },
+        cmd: 'build'
+      })) {
+      }
+      return
     }
+    const {serve} = await import('./Serve.js')
+    return serve({
+      ...args,
+      alineaDev: args.dev,
+      cwd: args.dir,
+      production: true,
+      onAfterGenerate: env => {
+        const isForwarding = forwardCommand(env)
+        if (!isForwarding) process.exit(0)
+      },
+      configFile: args.config,
+      cmd: 'build'
+    })
   })
 
 prog.parse(process.argv)

@@ -1,181 +1,170 @@
 {
+  "_id": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+  "_type": "Doc",
+  "_index": "ZwG",
+  "_i18nId": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+  "_root": "pages",
   "title": "Roots",
+  "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Roots help you organize content hierarchically in a tree. Pages can have subpages, subpages can have sub-subpages and so on. This hierarchy starts at a `Root`."
         }
       ]
     },
     {
-      "id": "28hkhm5hPbTobb7YrlwX7qCuNJE",
-      "type": "CodeBlock",
-      "code": "alinea.workspace('Main workspace', {\n  pages: alinea.root('Pages', {\n    // Configuration\n    [alinea.meta]: {\n      contains: ['HomePage', 'GenericPage'],\n      i18n: {\n        locales: ['en', 'fr', 'de']\n      }\n    }\n  })\n})",
+      "_type": "CodeBlock",
+      "_id": "28hkhm5hPbTobb7YrlwX7qCuNJE",
+      "code": "import {Config} from 'alinea'\n\nConfig.root('Pages', {\n  contains: ['HomePage', 'GenericPage'],\n  i18n: {\n    locales: ['en', 'fr', 'de']\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
+      "_type": "heading",
       "level": 2,
-      "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Roots should be defined within a "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Workspace",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2aAy4B81RXHCA8y06tSaep6CBen",
-                "data-entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2aAy4B81RXHCA8y06tSaep6CBen",
+              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`icon`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "An icon can be used to label a root in the sidebar. Icons are implemented as a React component. You can find icons on "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "Icones",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "qvoK8kMv_e7gV6hhapAn5",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://icones.js.org",
-                "target": "_blank",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "qvoK8kMv_e7gV6hhapAn5",
+              "href": "https://icones.js.org",
+              "target": "_blank"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " or install a package such as "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "react-icons",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "toXRTK13MpBaa1ijN3COj",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://react-icons.github.io/react-icons",
-                "target": "_blank",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "toXRTK13MpBaa1ijN3COj",
+              "href": "https://react-icons.github.io/react-icons",
+              "target": "_blank"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`contains`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "An array of strings containing the names of types that can be created at the root."
         }
       ]
     },
     {
-      "id": "28hlDtsmVPBtekQz2fiKZiQ0l7R",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "28hlDtsmVPBtekQz2fiKZiQ0l7R",
       "code": "// only entries of type Page can be created at the top of the tree\ncontains: ['Page']",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`i18n`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "An object with internationalization configuration. Locales is an array of strings, containing locales described by a key that will, by default, show up in the url structure as well."
         }
       ]
     },
     {
-      "id": "28hlSdI7ooykir1ldfHW4lLtIUL",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "28hlSdI7ooykir1ldfHW4lLtIUL",
       "code": "i18n: {\n  locales: ['en', 'fr', 'de']\n}",
       "fileName": "",
       "language": "",
@@ -190,10 +179,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "28hcdyq0sGJdgY6kM24NZd1XP5S",
-    "type": "Doc",
-    "index": "ZwG"
   }
 }

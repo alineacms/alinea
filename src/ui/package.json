@@ -2,7 +2,7 @@
   "name": "@alinea/ui",
   "type": "module",
   "devDependencies": {
-    "@headlessui/react": "^1.7.18",
+    "@headlessui/react": "^2.1.10",
     "color2k": "^1.2.4",
     "react-aria-components": "^1.0.1",
     "regexparam": "^2.0.1",

@@ -1,17 +1,18 @@
 import {ReporterPlugin} from '@esbx/reporter'
 import {getManifest} from '@esbx/workspaces'
-import {spawn} from 'child_process'
 import {dequal} from 'dequal'
 import esbuild from 'esbuild'
 import fsExtra from 'fs-extra'
 import glob from 'glob'
-import {builtinModules} from 'module'
+import {spawn} from 'node:child_process'
 import fs from 'node:fs'
+import {builtinModules} from 'node:module'
 import path from 'node:path'
 import {pathToFileURL} from 'node:url'
 import postcss from 'postcss'
 import postcssModules from 'postcss-modules'
 import pxtorem from 'postcss-pxtorem'
+import prettyBytes from 'pretty-bytes'
 import sade from 'sade'
 
 // Interestingly sass seems to outperform sass-embedded about 2x
@@ -35,9 +36,11 @@ const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
     'fs-extra',
-    '@alinea',
+    '@alinea/generated',
+    '@alinea/iso',
+    '@alinea/sqlite-wasm',
     'next',
-    '@remix-run',
+    'sharp',
     'react',
     'react-dom',
     'esbuild'
@@ -60,6 +63,19 @@ function dirsOf(source) {
       const wd = path.join(source, dirent.name)
       return [wd, ...dirsOf(wd)]
     })
+}
+
+const cjsModules = {
+  name: 'cjs-modules',
+  setup(build) {
+    build.onEnd(async () => {
+      await esbuild.build({
+        format: 'cjs',
+        entryPoints: ['./src/adapter/next/with-alinea.ts'],
+        outfile: './dist/next.cjs'
+      })
+    })
+  }
 }
 
 /** @type {import('esbuild').Plugin} */
@@ -120,6 +136,7 @@ const bundleTs = {
   }
 }
 
+const checkCycles = process.env.CHECK_CYCLES
 /** @type {import('esbuild').Plugin} */
 const internalPlugin = {
   name: 'internal',
@@ -127,11 +144,22 @@ const internalPlugin = {
     const cwd = process.cwd()
     const src = path.join(cwd, 'src')
     build.onResolve({filter: /^alinea\/.*/}, args => {
+      if (checkCycles) {
+        // Make this a relative path
+        const file = args.path.slice('alinea/'.length)
+        const localFile = path.join(src, file)
+        const target =
+          checkCycles === 'browser' ? BROWSER_TARGET : SERVER_TARGET
+        const targetFile = `${localFile}.${target}`
+        const hasTargetFile =
+          fs.existsSync(`${targetFile}.tsx`) ||
+          fs.existsSync(`${targetFile}.ts`)
+        const relative = hasTargetFile
+          ? `./${path.relative(args.resolveDir, targetFile)}.js`
+          : `./${path.relative(args.resolveDir, localFile)}.js`
+        return {path: relative, external: true}
+      }
       return {path: args.path, external: true}
-      /*return build.resolve('./' + path.join('src', file), {
-        kind: args.kind,
-        resolveDir: cwd
-      })*/
     })
   }
 }
@@ -214,7 +242,8 @@ const externalize = {
       if (args.kind === 'entry-point') return
       if (args.path.endsWith('.scss') || args.path.endsWith('.json')) return
       if (!args.resolveDir.startsWith(src)) return
-      if (!args.path.endsWith('.js')) {
+      if (args.path.endsWith('.cjs')) return
+      if (!args.path.endsWith('.js') && !args.path.endsWith('.mjs')) {
         console.error(`Missing file extension on local import: ${args.path}`)
         console.error(`In file: ${args.importer}`)
         process.exit(1)
@@ -252,6 +281,10 @@ const targetPlugin = {
         './package.json': './package.json',
         '.': './dist/index.js',
         './css': './dist/index.css',
+        './next': {
+          require: './dist/next.cjs',
+          default: './dist/next.js'
+        },
         './*.cjs': './dist/*.cjs',
         './*': './dist/*.js'
       }
@@ -279,7 +312,9 @@ const targetPlugin = {
   }
 }
 
-function jsEntry({watch, test}) {
+function jsEntry({watch, test, report}) {
+  const plugins = [sassJsPlugin, internalPlugin, externalize, cleanup]
+  if (report) plugins.push(reportSizePlugin)
   return {
     name: JS_ENTRY,
     setup(build) {
@@ -304,7 +339,7 @@ function jsEntry({watch, test}) {
           })
           if (!context || !dequal(currentFiles, files)) {
             context = await esbuild.context({
-              plugins: [sassJsPlugin, internalPlugin, externalize, cleanup],
+              plugins,
               format: 'esm',
               entryPoints: files,
               outdir: 'dist',
@@ -316,6 +351,7 @@ function jsEntry({watch, test}) {
               platform: 'neutral',
               mainFields: ['module', 'main'],
               alias: {
+                yjs: `./src/yjs.ts`,
                 // Mistakenly imported because it is used in the JSDocs
                 'y-protocols/awareness': `data:text/javascript,
                   export const Awareness = undefined
@@ -326,22 +362,6 @@ function jsEntry({watch, test}) {
                   import {crypto} from '@alinea/iso'
                   export const subtle = crypto.subtle
                   export const getRandomValues = crypto.getRandomValues.bind(crypto)`,
-
-                // Used in simple-git, but not ESM and not useful for us
-                '@kwsites/file-exists': `data:text/javascript,
-                  export function exists() {return true}
-                  export const FOLDER = undefined`,
-
-                // Used in simple-git, but not ESM and not useful for us
-                debug: `data:text/javascript,
-                  const instance = () => () => {}
-                  instance.extend = instance
-                  export default function debug() {
-                    return instance
-                  }
-                  debug.enable = () => {}
-                  debug.formatters = {}
-                `,
 
                 // Used in react-aria-components, not ESM
                 'use-sync-external-store/shim/index.js': `data:text/javascript,
@@ -454,18 +474,60 @@ const runPlugin = {
   }
 }
 
-async function build({watch, test}) {
+/** @type {import('esbuild').Plugin} */
+const reportSizePlugin = {
+  name: 'report-size',
+  setup(build) {
+    build.initialOptions.minify = true
+    build.onEnd(async result => {
+      if (result.errors.length > 0) return
+      const common = {
+        format: 'esm',
+        write: false,
+        bundle: true,
+        minify: true,
+        metafile: true,
+        logOverride: {
+          'ignored-bare-import': 'silent'
+        },
+        external
+      }
+      const server = await build.esbuild.build({
+        ...common,
+        platform: 'node',
+        entryPoints: {server: 'dist/index.js'},
+        tsconfigRaw: {}
+      })
+      console.info(
+        `Server output: ` +
+          prettyBytes(server.metafile.outputs['server.js'].bytes)
+      )
+      const dashboard = await build.esbuild.build({
+        ...common,
+        platform: 'browser',
+        entryPoints: {dashboard: 'dist/dashboard/App.js'},
+        tsconfigRaw: {}
+      })
+      console.info(
+        `Dashboard output: ` +
+          prettyBytes(dashboard.metafile.outputs['dashboard.js'].bytes)
+      )
+    })
+  }
+}
+
+async function build({watch, test, report}) {
   const plugins = [
     targetPlugin,
     cssEntry,
     sassCssPlugin,
     cleanup,
-    jsEntry({watch, test}),
+    jsEntry({watch, test, report}),
     bundleTs,
     ReporterPlugin.configure({name: 'alinea'}),
-    runPlugin
+    runPlugin,
+    cjsModules
   ]
-
   const context = await esbuild.context({
     bundle: true,
     entryPoints: [
@@ -479,20 +541,22 @@ async function build({watch, test}) {
     sourcemap: Boolean(watch),
     plugins
   })
+
   return watch
     ? context.watch()
     : context.rebuild().then(() => context.dispose())
 }
 
 async function runTests() {
-  const filter = (process.argv[3] || '').toLowerCase()
+  let filter = (process.argv.pop() || '').toLowerCase()
+  if (filter.startsWith('--')) filter = ''
   const files = glob.sync('dist/**/*.test.js')
   const modules = files.filter(file => {
     if (!filter) return true
     return path.basename(file).toLowerCase().includes(filter)
   })
   if (modules.length === 0) {
-    console.log(`No tests found for pattern "${filter}"`)
+    console.warn(`No tests found for pattern "${filter}"`)
     process.exit()
   }
   process.argv.push('.bin/uvu') // Trigger isCLI
@@ -510,6 +574,7 @@ async function runTests() {
 }
 
 sade('build', true)
+  .option('--report', `Report build stats`)
   .option('--test', `Run tests`)
   .option('--watch', `Watch for changes`)
   .action(async opts => {

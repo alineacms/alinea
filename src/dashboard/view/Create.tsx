@@ -1,11 +1,11 @@
+import styler from '@alinea/styler'
 import {HStack} from 'alinea/ui'
 import {IcRoundAddCircle} from 'alinea/ui/icons/IcRoundAddCircle'
-import {fromModule} from 'alinea/ui/util/Styler'
 import {ComponentType, HTMLAttributes, HTMLProps} from 'react'
 import {link} from '../util/HashRouter.js'
 import css from './Create.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export namespace Create {
   export interface RootProps extends HTMLAttributes<HTMLDivElement> {

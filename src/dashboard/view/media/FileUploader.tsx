@@ -1,5 +1,6 @@
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
-import {HStack, Icon, VStack, fromModule} from 'alinea/ui'
+import {HStack, Icon, VStack} from 'alinea/ui'
 import {IcOutlineCloudUpload} from 'alinea/ui/icons/IcOutlineCloudUpload'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
@@ -12,9 +13,10 @@ import {
 import {FileUploadRow} from './FileUploadRow.js'
 import css from './FileUploader.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface FileUploaderProps {
+  onlyImages?: boolean
   destination?: UploadDestination
   max?: number
   toggleSelect?: (id: Entry) => void
@@ -22,6 +24,7 @@ export interface FileUploaderProps {
 }
 
 export function FileUploader({
+  onlyImages,
   destination,
   max,
   toggleSelect,
@@ -96,6 +99,11 @@ export function FileUploader({
                 className={styles.root.header.label.input()}
                 multiple={max !== 1}
                 onChange={handleFileInput}
+                accept={
+                  onlyImages
+                    ? 'image/jpeg, image/png, image/gif, image/webp, image/avif, image/heic, image/svg+xml'
+                    : undefined
+                }
               />
             )}
             <HStack center gap={8}>

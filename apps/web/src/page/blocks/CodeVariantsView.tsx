@@ -1,11 +1,11 @@
 import {CodeVariantsBlock} from '@/schema/blocks/CodeVariantsBlock'
+import styler from '@alinea/styler'
 import {Infer} from 'alinea'
-import {fromModule} from 'alinea/ui'
 import {CodeVariantTabs} from './CodeVariantsView.client'
 import css from './CodeVariantsView.module.scss'
 import {codeHighlighter} from './code/CodeHighlighter'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface CodeVariantsViewProps
   extends Infer<typeof CodeVariantsBlock> {}

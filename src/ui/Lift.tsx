@@ -1,9 +1,9 @@
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
 import {HTMLProps} from 'react'
 import css from './Lift.module.scss'
 import {ElevationProvider} from './util/Elevation.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function Lift(props: HTMLProps<HTMLDivElement>) {
   return (

@@ -133,8 +133,10 @@
       font-weight: 600;
     }
 
+    &.is-archived &-label-itemname,
+    &.is-unpublished &-label-itemName,
     &.is-untranslated &-label-itemName {
-      opacity: 0.7;
+      opacity: 0.5;
     }
 
     &-arrow {

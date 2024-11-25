@@ -1,9 +1,10 @@
-import {Icon, fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {Icon} from 'alinea/ui'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import css from './EditModeToggle.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export enum EditMode {
   Editing = 'editing',

@@ -1,116 +1,105 @@
 {
+  "_id": "CC8aJ6-2U3s31micAzTLU",
+  "_type": "Page",
+  "_index": "a1",
+  "_i18nId": "CC8aJ6-2U3s31micAzTLU",
+  "_seeded": "/roadmap.json",
+  "_root": "pages",
   "title": "Roadmap",
   "body": [
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 1,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Roadmap"
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Short term"
         }
       ]
     },
     {
-      "type": "bulletList",
+      "_type": "bulletList",
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Polish UI ",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "#12",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "t9oNr3Hfz3WjcWxNFJN_M",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://github.com/alineacms/alinea/issues/12",
-                        "target": "_blank",
-                        "title": null
-                      }
+                      "_type": "link",
+                      "_id": "t9oNr3Hfz3WjcWxNFJN_M",
+                      "href": "https://github.com/alineacms/alinea/issues/12",
+                      "target": "_blank"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "#62",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "vsp7wf-gVufgAah4-LZRe",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://github.com/alineacms/alinea/issues/62",
-                        "target": "_blank",
-                        "title": null
-                      }
+                      "_type": "link",
+                      "_id": "vsp7wf-gVufgAah4-LZRe",
+                      "href": "https://github.com/alineacms/alinea/issues/62",
+                      "target": "_blank"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "#253",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "oy6ms3bMJ-hKGTdPg3QIy",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://github.com/alineacms/alinea/issues/253",
-                        "target": "_blank",
-                        "title": null
-                      }
+                      "_type": "link",
+                      "_id": "oy6ms3bMJ-hKGTdPg3QIy",
+                      "href": "https://github.com/alineacms/alinea/issues/253",
+                      "target": "_blank"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " ✔️",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 }
@@ -119,56 +108,51 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Reactive configuration",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "#163",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "awxsVLv9R5U3eyiylJ2sX",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://github.com/alineacms/alinea/issues/163",
-                        "target": "_blank",
-                        "title": null
-                      }
+                      "_type": "link",
+                      "_id": "awxsVLv9R5U3eyiylJ2sX",
+                      "href": "https://github.com/alineacms/alinea/issues/163",
+                      "target": "_blank"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " ✔️",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Support configuration that depends on the value of the field or values of the entry it belongs to. Example: hide or show a field based on the value of another field."
                 }
               ]
@@ -176,23 +160,23 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Examples/starters",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " for different frameworks (Gatsby, Astro, ..)"
                 }
               ]
@@ -200,39 +184,34 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Markdown, yaml",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " support "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "#10",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "GSCLH72gnuuVWEADvzqZ-",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://github.com/alineacms/alinea/issues/10",
-                        "target": "_blank",
-                        "title": null
-                      }
+                      "_type": "link",
+                      "_id": "GSCLH72gnuuVWEADvzqZ-",
+                      "href": "https://github.com/alineacms/alinea/issues/10",
+                      "target": "_blank"
                     }
                   ]
                 }
@@ -241,48 +220,43 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Full text search",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "#15",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "SHu9VxJVEnDDKiOuAemil",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://github.com/alineacms/alinea/issues/15",
-                        "target": "_blank",
-                        "title": null
-                      }
+                      "_type": "link",
+                      "_id": "SHu9VxJVEnDDKiOuAemil",
+                      "href": "https://github.com/alineacms/alinea/issues/15",
+                      "target": "_blank"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " ✔️",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 }
@@ -293,40 +267,39 @@
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Medium term"
         }
       ]
     },
     {
-      "type": "bulletList",
+      "_type": "bulletList",
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Instant publish ✔️",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Implement a mechanism to sync published entries"
                 }
               ]
@@ -334,47 +307,44 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "User roles",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "#114",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "2aBCMODzAMO0pnddOMef47j1vS2",
-                        "data-entry": null,
-                        "data-type": "url",
-                        "href": "https://github.com/alineacms/alinea/issues/114",
-                        "target": "_blank",
-                        "title": ""
-                      }
+                      "_type": "link",
+                      "_id": "2aBCMODzAMO0pnddOMef47j1vS2",
+                      "_link": "url",
+                      "href": "https://github.com/alineacms/alinea/issues/114",
+                      "target": "_blank",
+                      "title": ""
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Restrict user action based on their assigned role"
                 }
               ]
@@ -382,26 +352,26 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Files/images on CDN-backend",
                   "marks": [
                     {
-                      "type": "bold"
+                      "_type": "bold"
                     }
                   ]
                 },
                 {
-                  "type": "hardBreak"
+                  "_type": "hardBreak"
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Host media files externally"
                 }
               ]
@@ -419,12 +389,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "CC8aJ6-2U3s31micAzTLU",
-    "type": "Page",
-    "index": "a1",
-    "seeded": true,
-    "root": "pages"
   }
 }

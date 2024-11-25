@@ -1,9 +1,8 @@
 {
-  "title": "Custom page",
-  "@alinea": {
-    "entryId": "2YnhoPndWwLQXFYJzxk5TOKPzSl",
-    "type": "CustomPage",
-    "index": "a0",
-    "root": "custom"
-  }
+  "_id": "2YnhoPndWwLQXFYJzxk5TOKPzSl",
+  "_type": "CustomPage",
+  "_index": "a0",
+  "_i18nId": "2YnhoPndWwLQXFYJzxk5TOKPzSl",
+  "_root": "custom",
+  "title": "Custom page"
 }

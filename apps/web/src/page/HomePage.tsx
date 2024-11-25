@@ -14,22 +14,53 @@ import {PageContainer} from '@/layout/Page'
 import WebLayout from '@/layout/WebLayout'
 import {WebTypo} from '@/layout/WebTypo'
 import {Home} from '@/schema/Home'
+import styler from '@alinea/styler'
+import {Entry} from 'alinea/core/Entry'
 import {HStack, VStack} from 'alinea/ui/Stack'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
-import {fromModule} from 'alinea/ui/util/Styler'
 import {px} from 'alinea/ui/util/Units'
+import type {Metadata, MetadataRoute} from 'next'
 import {ComponentType, PropsWithChildren} from 'react'
 import {Link} from '../layout/nav/Link'
 import css from './HomePage.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
-export async function generateMetadata() {
-  const home = await cms.get(Home())
-  return {title: home.metadata?.title || home.title}
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await cms.get({
+    type: Home,
+    select: {
+      url: Entry.url,
+      title: Home.title,
+      metadata: Home.metadata
+    }
+  })
+  const appUrl = 'https://alinea.sh'
+  const title = page.metadata?.title || page.title
+  const ogTitle = page.metadata?.openGraph?.title || title
+  const ogDescription =
+    page.metadata?.openGraph?.description || page.metadata?.description
+  const openGraphImage = page.metadata?.openGraph.image
+
+  return {
+    metadataBase: new URL(appUrl),
+    title,
+    description: page.metadata?.description,
+    openGraph: {
+      url: appUrl + page.url,
+      siteName: page.metadata?.openGraph?.siteName,
+      title: ogTitle,
+      description: ogDescription,
+      images: openGraphImage?.src && {
+        url: openGraphImage.src,
+        width: openGraphImage.width,
+        height: openGraphImage.height
+      }
+    }
+  }
 }
 
 interface HighlightProps {
@@ -53,7 +84,7 @@ function Highlight({
 }
 
 export default async function HomePage() {
-  const home = await cms.get(Home())
+  const home = await cms.get({type: Home})
   return (
     <WebLayout footer={false}>
       <main className={styles.home()}>
@@ -66,9 +97,9 @@ export default async function HomePage() {
               <Hero.Title>{home.headline}</Hero.Title>
               <Hero.ByLine>{home.byline}</Hero.ByLine>
               <HStack gap={24} style={{paddingTop: px(20)}}>
-                {home.action?.url && (
-                  <Hero.Action href={home.action.url}>
-                    {home.action.label}
+                {home.action?.href && (
+                  <Hero.Action href={home.action.href}>
+                    {home.action.fields.label}
                   </Hero.Action>
                 )}
                 {/*<WebTypo.Link
@@ -396,4 +427,8 @@ export default async function HomePage() {
       </main>
     </WebLayout>
   )
+}
+
+HomePage.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/', priority: 1}]
 }

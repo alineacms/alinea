@@ -1,5 +1,7 @@
-import alinea from 'alinea'
+import {Config, Field} from 'alinea'
 
-export const ImageBlock = alinea.type('Image', {
-  image: alinea.image('Link', {inline: true})
+export const ImageBlock = Config.type('Image', {
+  fields: {
+    image: Field.image('Link', {inline: true})
+  }
 })

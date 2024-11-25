@@ -1,6 +1,7 @@
-import {Entry} from 'alinea/core'
+import styler from '@alinea/styler'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
-import {HStack, Stack, fromModule} from 'alinea/ui'
+import {HStack, Stack} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
@@ -12,9 +13,9 @@ import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {IconButton} from './IconButton.js'
 import css from './SearchBox.module.scss'
-import {Explorer} from './explorer/Explorer.js'
+import {Explorer, ExporerItemSelect} from './explorer/Explorer.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export const SearchBox = memo(function SearchBox() {
   const nav = useNav()
@@ -28,11 +29,15 @@ export const SearchBox = memo(function SearchBox() {
   const list = useFocusList({
     onClear: () => setSearch('')
   })
-  const cursor = useMemo(() => {
+  const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    return Entry({workspace, root})
-      .where(locale ? Entry.locale.is(locale) : true)
-      .search(...terms)
+    return {
+      select: undefined!,
+      workspace: workspace,
+      root: root,
+      locale: locale,
+      search: terms
+    }
   }, [workspace, root, search, locale])
   const [explorerView, setExplorerView] = useState<'row' | 'thumb'>('row')
   // If we navigate to another page (for example by selecting one of the items)
@@ -87,7 +92,7 @@ export const SearchBox = memo(function SearchBox() {
           <div className={styles.root.popover()}>
             <Explorer
               border={false}
-              cursor={cursor}
+              query={query}
               type={explorerView}
               toggleSelect={entry => navigate(nav.entry(entry))}
               max={25}

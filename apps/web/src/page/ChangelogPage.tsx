@@ -1,12 +1,13 @@
 import {PageContainer, PageContent} from '@/layout/Page'
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {MetadataRoute} from 'next'
 import fs from 'node:fs'
 import path from 'node:path'
 import {remark} from 'remark'
 import html from 'remark-html'
 import css from './ChangelogPage.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export const metadata = {
   title: 'Changelog'
@@ -31,4 +32,8 @@ export default async function Changelog() {
       </PageContent>
     </PageContainer>
   )
+}
+
+Changelog.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/changelog', priority: 0.5}]
 }

@@ -1,25 +1,27 @@
 import {ListRow, ListShape} from 'alinea/core/shape/ListShape'
 import {Sink} from 'alinea/ui/Sink'
+import {ComponentType} from 'react'
 import {ChangeBox} from './ChangeBox.js'
 import {diffList, diffRecord} from './DiffUtils.js'
-import {FieldsDiff} from './FieldsDiff.js'
+import {FieldsDiffProps} from './FieldsDiff.js'
 
 export type ListDiffProps = {
+  FieldsDiff: ComponentType<FieldsDiffProps>
   shape: ListShape<any>
   valueA: Array<ListRow>
   valueB: Array<ListRow>
 }
 
-export function ListDiff({shape, valueA, valueB}: ListDiffProps) {
+export function ListDiff({FieldsDiff, shape, valueA, valueB}: ListDiffProps) {
   const equals = (itemA: ListRow, itemB: ListRow) => {
-    return itemA.id === itemB.id
+    return itemA._id === itemB._id
   }
   const changes = diffList(valueA || [], valueB || [], equals)
   return (
     <Sink.Root>
       {changes.map((change, i) => {
         const block = change.value
-        const kind = shape.values[block.type]
+        const kind = shape.shapes[block[ListRow.type]]
         const compare =
           change.type === 'keep'
             ? [change.old, change.value]

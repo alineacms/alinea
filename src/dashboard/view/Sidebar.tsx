@@ -1,8 +1,10 @@
+import styler from '@alinea/styler'
 import {useWindowWidth} from '@react-hook/window-size'
-import {Root, Workspace} from 'alinea/core'
+import {Root} from 'alinea/core/Root'
+import {Workspace} from 'alinea/core/Workspace'
 import {entries} from 'alinea/core/util/Objects'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
-import {HStack, Icon, Stack, fromModule} from 'alinea/ui'
+import {HStack, Icon, Stack} from 'alinea/ui'
 import {Badge} from 'alinea/ui/Badge'
 import {Pane} from 'alinea/ui/Pane'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
@@ -28,14 +30,12 @@ import css from './Sidebar.module.scss'
 import {WorkspaceLabel} from './WorkspaceLabel.js'
 import {Langswitch} from './entry/LangSwitch.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 type Opened = {nav: boolean; preview: boolean}
 type OpenContext = [Opened, Dispatch<keyof Opened>]
 
 export namespace Sidebar {
-  // export const Root = styles.root.toElement('aside')
-
   const slots = createSlots()
   const opened = createContext<OpenContext | undefined>(undefined)
 
@@ -74,7 +74,6 @@ export namespace Sidebar {
       isLarge ? simpleToggle : uniqueToggle,
       {nav: true, preview: isLarge}
     )
-    const {entryId: id} = useEntryLocation() || {}
     const {name: workspace} = useWorkspace()
 
     useNonInitialEffect(() => {

@@ -1,7 +1,5 @@
-import {Connection} from 'alinea/core'
 import {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
-import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {Head} from 'alinea/dashboard/util/Head'
 import {Button, HStack, px, Typo, VStack} from 'alinea/ui'
@@ -16,15 +14,13 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {client} = useDashboard()
   if (!(client instanceof Client))
     throw new Error(`Cannot authenticate with non http client`)
+  const clientUrl = new URL(client.url, window.location.href)
   const {data, isError} = useQuery(
     ['auth.cloud'],
     () => {
-      return fetch(
-        joinPaths(client.options.url, Connection.routes.base, `/auth.cloud`),
-        {
-          credentials: 'include'
-        }
-      ).then<AuthResult>(res => res.json())
+      return fetch(new URL('?auth=status', clientUrl), {
+        credentials: 'include'
+      }).then<AuthResult>(res => res.json())
     },
     {keepPreviousData: true}
   )
@@ -45,10 +41,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
               </HStack>
               <Typo.P>
                 Alinea requires a{' '}
-                <Typo.Link
-                  href="https://alinea.sh/docs/deploy/exporting-the-dashboard"
-                  target="_blank"
-                >
+                <Typo.Link href="https://alinea.sh/docs/deploy" target="_blank">
                   handler
                 </Typo.Link>{' '}
                 to continue.
@@ -68,12 +61,8 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
           options => ({...options, credentials: 'same-origin'}),
           () => setSession(undefined)
         ),
-        end: async () => {
-          location.href = joinPaths(
-            client.options.url,
-            Connection.routes.base,
-            `/auth/logout`
-          )
+        async end() {
+          location.href = new URL('?auth=logout', clientUrl).href
         }
       })
       return null

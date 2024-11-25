@@ -1,13 +1,13 @@
 import {sql} from 'rado'
 import {Store} from '../Store.js'
 
-export function createEntrySearch(store: Store) {
-  return store(
+export function createEntrySearch(db: Store) {
+  return db.batch([
     sql`
       create virtual table if not exists EntrySearch using fts5(
         title, searchableText,
         content='Entry', 
-        tokenize='porter unicode61 remove_diacritics 2'
+        tokenize="unicode61 remove_diacritics 2 tokenchars '-_'"
       )
     `,
     sql`
@@ -45,5 +45,5 @@ export function createEntrySearch(store: Store) {
           );
         end
     `
-  )
+  ])
 }

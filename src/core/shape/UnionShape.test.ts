@@ -1,8 +1,8 @@
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import * as Y from 'alinea/yjs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
+import * as Y from 'yjs'
 import {UnionShape} from './UnionShape.js'
 
 const ROOT_KEY = '$root'
@@ -24,8 +24,8 @@ const shape = new UnionShape('Blocks', {
 })
 
 const value1 = {
-  id: 'unique0',
-  type: 'Block1',
+  _id: 'unique0',
+  _type: 'Block1',
   field1: 'a',
   blockInner: {
     field3: 'a',
@@ -35,8 +35,8 @@ const value1 = {
 }
 
 const value2 = {
-  id: 'unique1',
-  type: 'Block2',
+  _id: 'unique1',
+  _type: 'Block2',
   field1: '1',
   field5: '2',
   field6: undefined
@@ -49,7 +49,7 @@ test('apply', () => {
   doc.transact(() => {
     shape.applyY(value2, root, FIELD_KEY)
   })
-  const pass2 = shape.fromY(root.get(FIELD_KEY))
+  const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
   assert.equal(pass2, value2)
 })
 

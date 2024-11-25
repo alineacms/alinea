@@ -1,4 +1,4 @@
-import type {PreviewUpdate} from 'alinea/core/Resolver'
+import {PreviewMetadata, PreviewPayload} from 'alinea/core/Preview'
 
 export enum PreviewAction {
   Ping = '[alinea-ping]',
@@ -7,7 +7,8 @@ export enum PreviewAction {
   Refetch = '[alinea-refetch]',
   Previous = '[alinea-previous]',
   Next = '[alinea-next]',
-  Preview = '[alinea-preview]'
+  Preview = '[alinea-preview]',
+  Meta = '[alinea-meta]'
 }
 
 export type PreviewMessage =
@@ -17,4 +18,5 @@ export type PreviewMessage =
   | {action: PreviewAction.Refetch}
   | {action: PreviewAction.Previous}
   | {action: PreviewAction.Next}
-  | ({action: PreviewAction.Preview} & PreviewUpdate)
+  | ({action: PreviewAction.Preview} & PreviewPayload)
+  | ({action: PreviewAction.Meta} & PreviewMetadata)

@@ -1,19 +1,13 @@
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
-import {MediaSchema} from 'alinea/core/media/MediaSchema'
-import {ComponentType} from 'react'
+import {Preview} from 'alinea/core/Preview'
+import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import {Auth} from './Auth.js'
-import {Entry} from './Entry.js'
+import {getWorkspace} from './Internal.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
-import {Workspace, WorkspaceData} from './Workspace.js'
-
-export interface DashboardConfig {
-  handlerUrl: string
-  dashboardUrl: string
-  auth?: Auth.View
-  /** Compile all static assets for the dashboard to this dir */
-  staticFile?: string
-}
+import {Workspace, WorkspaceInternal} from './Workspace.js'
+import {isValidIdentifier} from './util/Identifiers.js'
+import {entries, values} from './util/Objects.js'
 
 /** Configuration options */
 export interface Config {
@@ -21,26 +15,40 @@ export interface Config {
   schema: Schema
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
+
   /** A url which will be embedded in the dashboard for live previews */
-  preview?: string | ComponentType<{entry: Entry; previewToken: string}>
-  /** Every edit will pass through a draft phase before being published */
+  preview?: Preview
+  /** Every edit will pass through a draft status before being published */
   enableDrafts?: boolean
   /** The interval in seconds at which the frontend will poll for updates */
   syncInterval?: number
 
-  /**
-    publicDir?: string
+  /** The base url of the application */
+  baseUrl?: string | {development?: string; production?: string}
+  /** The url of the handler endpoint */
+  handlerUrl?: string
+  /** The folder where public assets are stored, defaults to /public */
+  publicDir?: string
+  /** Filename of the generated dashboard */
   dashboardFile?: string
-  handlerUrl?: 
-  */
 
-  dashboard?: DashboardConfig
+  auth?: Auth.View
 }
 
 export namespace Config {
-  export function mainWorkspace(config: Config): WorkspaceData {
+  export function baseUrl(
+    config: Config,
+    env = (process.env.NODE_ENV as 'development' | 'production') ?? 'production'
+  ) {
+    const result =
+      typeof config.baseUrl === 'object' ? config.baseUrl[env] : config.baseUrl
+    if (!result) return result
+    if (result.includes('://')) return result
+    return `https://${result}`
+  }
+  export function mainWorkspace(config: Config): WorkspaceInternal {
     const key = Object.keys(config.workspaces)[0]
-    return Workspace.data(config.workspaces[key])
+    return getWorkspace(config.workspaces[key])
   }
 
   export function type(config: Config, name: string): Type | undefined {
@@ -48,32 +56,48 @@ export namespace Config {
   }
 
   export function hasAuth(config: Config): boolean {
-    return Boolean(config.dashboard?.auth)
+    return Boolean(config.auth)
+  }
+
+  export function validate(config: Config) {
+    Schema.validate(config.schema)
+    for (const [key, workspace] of entries(config.workspaces)) {
+      if (!isValidIdentifier(key))
+        throw new Error(
+          `Invalid Workspace name "${key}", use only a-z, A-Z, 0-9, and _`
+        )
+      Workspace.validate(workspace, config.schema)
+    }
+  }
+
+  export function referencedViews(config: Config): Array<string> {
+    return Schema.referencedViews(config.schema).concat(
+      values(config.workspaces).flatMap(Workspace.referencedViews)
+    )
   }
 }
+
+const normalized = new WeakSet()
 
 /** Create a new config instance */
 export function createConfig<Definition extends Config>(
   definition: Definition
 ) {
-  /*const publicDir = definition.publicDir ?? './public'
-  const staticFile = definition.dashboard?.staticFile
-  let dashboardFile = 'admin.html'
-  if (staticFile) {
-    if (staticFile.startsWith('public/'))
-      dashboardFile = staticFile.slice('public/'.length)
-    else
-      throw new Error(
-        `Usage of config.dashboard.staticFile is deprecated, please use config.dashboardFile`
-      )
-  }
-  const handlerUrl = definition.handlerUrl ?? definition.dashboard?.handlerUrl*/
-  return {
+  if (normalized.has(definition)) return definition
+  if (definition.schema.MediaFile && definition.schema.MediaFile !== MediaFile)
+    throw new Error(`"MediaFile" is a reserved Type name`)
+  if (
+    definition.schema.MediaLibrary &&
+    definition.schema.MediaLibrary !== MediaLibrary
+  )
+    throw new Error(`"MediaLibrary" is a reserved Type name`)
+  const res = {
+    auth: CloudAuthView,
     ...definition,
-    schema: {...MediaSchema, ...definition.schema},
-    dashboard: {
-      auth: CloudAuthView,
-      ...definition.dashboard
-    }
+    publicDir: definition.publicDir ?? '/public',
+    schema: {...definition.schema, MediaLibrary, MediaFile}
   }
+  Config.validate(res)
+  normalized.add(res)
+  return res
 }

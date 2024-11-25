@@ -1,5 +1,6 @@
-import {Revision} from 'alinea/backend/History'
-import {HStack, Icon, Loader, VStack, fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {Revision} from 'alinea/backend/Backend'
+import {HStack, Icon, Loader, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
@@ -9,7 +10,7 @@ import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {EntryEditProps} from '../EntryEdit.js'
 import css from './EntryHistory.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function EntryHistory({editor}: EntryEditProps) {
   return (

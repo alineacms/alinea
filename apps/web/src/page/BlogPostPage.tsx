@@ -1,42 +1,63 @@
-/* eslint-disable @next/next/no-img-element */
-
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
-import {TextView} from '@/page/blocks/TextBlockView'
+import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
-import {Entry} from 'alinea/core'
-import {fromModule} from 'alinea/ui'
-import {notFound} from 'next/navigation'
+import styler from '@alinea/styler'
+import {Entry} from 'alinea/core/Entry'
+import {Metadata, MetadataRoute} from 'next'
 import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface BlogPostPageProps {
-  params: {slug: string}
+  params: Promise<{slug: string}>
 }
 
 export const dynamicParams = false
 export async function generateStaticParams() {
-  const slugs = await cms.find(BlogPost().select(Entry.path))
+  const slugs = await cms.find({
+    type: BlogPost,
+    select: Entry.path
+  })
   return slugs.map(slug => ({slug}))
 }
 
-export async function generateMetadata({params}: BlogPostPageProps) {
-  const page = await cms.maybeGet(
-    BlogPost().where(Entry.url.is(`/blog/${params.slug}`))
-  )
-  if (!page) return notFound()
-  return {title: page.metadata?.title || page.title}
+export async function generateMetadata({
+  params
+}: BlogPostPageProps): Promise<Metadata> {
+  const {slug} = await params
+  const page = await cms.get({
+    type: BlogPost,
+    url: `/blog/${slug}`
+  })
+  const openGraphImage = page.metadata?.openGraph.image
+  return {
+    metadataBase: new URL('https://alinea.sh'),
+    title: page.metadata?.title || page.title,
+    description: page.metadata?.description || page.introduction,
+    openGraph: {
+      images: openGraphImage
+        ? [
+            {
+              url: openGraphImage.src,
+              width: openGraphImage.width,
+              height: openGraphImage.height
+            }
+          ]
+        : []
+    }
+  }
 }
 
 export default async function BlogPostPage({params}: BlogPostPageProps) {
-  const page = await cms.maybeGet(
-    BlogPost().where(Entry.url.is(`/blog/${params.slug}`))
-  )
-  if (!page) return notFound()
+  const {slug} = await params
+  const page = await cms.get({
+    type: BlogPost,
+    url: `/blog/${slug}`
+  })
   return (
     <PageContainer>
       <PageContent>
@@ -56,9 +77,14 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
             </WebTypo.H1>
             <BlogPostMeta {...page} />
           </header>
-          <TextView text={page.body} />
+          <TextFieldView text={page.body} />
         </article>
       </PageContent>
     </PageContainer>
   )
+}
+
+BlogPostPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  const pages = await generateStaticParams()
+  return pages.map(page => ({url: `/blog/${page.slug}`, priority: 0.9}))
 }

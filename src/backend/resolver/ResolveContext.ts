@@ -1,11 +1,11 @@
-import {EntryRow, EntryTable} from 'alinea/core/EntryRow'
-import {Realm} from 'alinea/core/pages/Realm'
-import {Table} from 'rado'
+import {EntryRow} from 'alinea/core/EntryRow'
+import {Status} from 'alinea/core/Graph'
+import {alias} from 'rado'
 
 interface ResolveContextData {
-  realm: Realm
+  status: Status
   location: Array<string>
-  locale: string | undefined
+  locale: string | undefined | null
   depth: number
   expr: ExprContext
 }
@@ -18,14 +18,14 @@ enum ExprContext {
 }
 
 export class ResolveContext {
-  table: Table<EntryTable>
+  table: typeof EntryRow
   constructor(private data: Partial<ResolveContextData>) {
-    this.table = EntryRow().as(`E${this.depth}`)
+    this.table = alias(EntryRow, `E${this.depth}`)
   }
 
   linkContext() {
     return new ResolveContext({
-      realm: this.realm
+      status: this.status
     })
   }
 
@@ -35,8 +35,8 @@ export class ResolveContext {
   get location() {
     return this.data.location ?? []
   }
-  get realm() {
-    return this.data.realm ?? Realm.Published
+  get status() {
+    return this.data.status ?? 'published'
   }
   get locale() {
     return this.data.locale

@@ -1,12 +1,5 @@
-import {
-  Chip,
-  HStack,
-  Icon,
-  Loader,
-  TextLabel,
-  VStack,
-  fromModule
-} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {Chip, HStack, Icon, Loader, TextLabel, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcBaselineErrorOutline} from 'alinea/ui/icons/IcBaselineErrorOutline'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
@@ -14,7 +7,7 @@ import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {Upload, UploadStatus} from '../../hook/UseUploads.js'
 import css from './FileUploadRow.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function FileUploadRow(upload: Upload) {
   return (

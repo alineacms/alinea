@@ -2,13 +2,14 @@
 
 import {WebTypo} from '@/layout/WebTypo'
 import {CodeVariantsBlock} from '@/schema/blocks/CodeVariantsBlock'
+import styler from '@alinea/styler'
 import {Infer} from 'alinea'
-import {HStack, fromModule} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import css from './CodeVariantsView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const preferenceAtom = atomWithStorage<string | undefined>(
   `@alinea/codevariant`,
@@ -25,7 +26,7 @@ export function CodeVariantTabs({variants}: Infer<typeof CodeVariantsBlock>) {
         {variants.map(variant => {
           return (
             <button
-              key={variant.id}
+              key={variant._id}
               className={styles.root.trigger({
                 selected: selectedVariant === variant.name
               })}
@@ -40,7 +41,7 @@ export function CodeVariantTabs({variants}: Infer<typeof CodeVariantsBlock>) {
       {variants.map(variant => {
         if (selectedVariant !== variant.name) return null
         return (
-          <div className={styles.root.code()} key={variant.id}>
+          <div className={styles.root.code()} key={variant._id}>
             {variant.code && (
               <WebTypo.Monospace
                 as="div"

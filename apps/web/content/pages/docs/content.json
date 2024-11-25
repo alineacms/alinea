@@ -1,49 +1,49 @@
 {
+  "_id": "28Ng5RzmZ2fHUVlVbAEv1l1oUUS",
+  "_type": "Docs",
+  "_index": "ZoG",
+  "_i18nId": "28Ng5RzmZ2fHUVlVbAEv1l1oUUS",
+  "_root": "pages",
   "title": "Content",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea generates files on your file system in a few places. "
         }
       ]
     },
     {
-      "type": "bulletList",
+      "_type": "bulletList",
       "content": [
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Content is published into a directory as JSON files. Note that "
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "we're considering",
                   "marks": [
                     {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "auApxINUu9KWCeMkWjA6S",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://github.com/alineacms/alinea/issues/10",
-                        "target": "_blank",
-                        "title": null
-                      }
+                      "_type": "link",
+                      "_id": "auApxINUu9KWCeMkWjA6S",
+                      "href": "https://github.com/alineacms/alinea/issues/10",
+                      "target": "_blank"
                     }
                   ]
                 },
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": " making these files more human editable in the future too."
                 }
               ]
@@ -51,14 +51,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "Media files are published in two places: a JSON file with metadata is placed with the content and the file itself is placed in a separate directory, typically `./public`."
                 }
               ]
@@ -66,14 +66,14 @@
           ]
         },
         {
-          "type": "listItem",
+          "_type": "listItem",
           "content": [
             {
-              "type": "paragraph",
+              "_type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
-                  "type": "text",
+                  "_type": "text",
                   "text": "A supporting Javascript library is generated inside the `@alinea/generated` package."
                 }
               ]
@@ -83,8 +83,8 @@
       ]
     },
     {
-      "id": "2Yl96Yghl2sIFoaL6JTF1bQCpAO",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "2Yl96Yghl2sIFoaL6JTF1bQCpAO",
       "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ pages // pages root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.json\n  ╰ file.json\n\n// A folder which is publicly available\npublic\n├ image.XYZ.png\n╰ file.XYZ.pdf\n\n// The alinea directory exports a Javascript library\n// which can be imported from @alinea/generated\nnode_modules/@alinea/generated\n├ ...\n├ config.js\n╰ store.js",
       "fileName": "",
       "language": "",
@@ -99,10 +99,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "28Ng5RzmZ2fHUVlVbAEv1l1oUUS",
-    "type": "Docs",
-    "index": "ZoG"
   }
 }

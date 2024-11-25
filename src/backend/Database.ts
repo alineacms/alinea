@@ -1,50 +1,72 @@
-import {JsonLoader, Media} from 'alinea/backend'
-import {
-  Config,
-  EntryUrlMeta,
-  PageSeed,
-  Root,
-  Schema,
-  SyncResponse,
-  Syncable,
-  Type,
-  Workspace,
-  createId,
-  slugify,
-  unreachable
-} from 'alinea/core'
-import {entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
-import {EntryRecord, META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import {Config} from 'alinea/core/Config'
+import {SyncResponse, Syncable} from 'alinea/core/Connection'
+import {EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
+import {createId} from 'alinea/core/Id'
+import {getRoot} from 'alinea/core/Internal'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {Page} from 'alinea/core/Page'
+import {Resolver} from 'alinea/core/Resolver'
+import {Root} from 'alinea/core/Root'
+import {Schema} from 'alinea/core/Schema'
+import {EntryUrlMeta, Type} from 'alinea/core/Type'
+import {Workspace} from 'alinea/core/Workspace'
+import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
+import {createFileHash, createRowHash} from 'alinea/core/util/ContentHash'
+import {entryFile, entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow, publishEntryRow} from 'alinea/core/util/EntryRows'
-import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
-import {Driver, Expr, Select, alias, create} from 'rado'
-import {exists} from 'rado/sqlite'
-import xxhash from 'xxhash-wasm'
-import {EntryPhase, EntryRow} from '../core/EntryRow.js'
+import {slugify} from 'alinea/core/util/Slugs'
+import {unreachable} from 'alinea/core/util/Types'
+import {
+  Sql,
+  alias,
+  and,
+  asc,
+  count,
+  eq,
+  exists,
+  inArray,
+  like,
+  not,
+  notInArray,
+  or,
+  sql
+} from 'rado'
+import {Builder} from 'rado/core/Builder'
+import {coalesce} from 'rado/sqlite'
+import {EntryRow, EntryStatus} from '../core/EntryRow.js'
+import {AuthedContext, Target} from './Backend.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
-import {Target} from './Target.js'
-import {ChangeSetCreator} from './data/ChangeSet.js'
+import {Change, ChangeType} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
-import {createFileHash, createRowHash} from './util/ContentHash.js'
+import {JsonLoader} from './loader/JsonLoader.js'
+import {EntryResolver} from './resolver/EntryResolver.js'
+import {is, values} from './util/ORM.js'
 
 interface Seed {
   type: string
   workspace: string
   root: string
   filePath: string
-  page: PageSeed
+  page: Page
+}
+
+type EntryKeys = [id: string, locale: string, status: string]
+
+function seedKey(workspace: string, root: string, filePath: string) {
+  return `${workspace}.${root}.${filePath}`
 }
 
 export class Database implements Syncable {
   seed: Map<string, Seed>
+  resolver: Resolver
 
   constructor(public config: Config, public store: Store) {
     this.seed = this.seedData()
+    this.resolver = new EntryResolver(this)
   }
 
   async syncRequired(contentHash: string): Promise<boolean> {
@@ -54,15 +76,16 @@ export class Database implements Syncable {
 
   async sync(contentHashes: Array<string>): Promise<SyncResponse> {
     return this.store.transaction(async tx => {
-      const insert = await tx(
-        EntryRow().where(EntryRow.rowHash.isNotIn(contentHashes))
-      )
+      const insert = await tx
+        .select()
+        .from(EntryRow)
+        .where(notInArray(EntryRow.rowHash, contentHashes))
+
       const keep = new Set(
-        await tx(
-          EntryRow()
-            .where(EntryRow.rowHash.isIn(contentHashes))
-            .select(EntryRow.rowHash)
-        )
+        await tx
+          .select(EntryRow.rowHash)
+          .from(EntryRow)
+          .where(inArray(EntryRow.rowHash, contentHashes))
       )
       const remove = contentHashes.filter(hash => !keep.has(hash))
       return {insert, remove}
@@ -70,7 +93,7 @@ export class Database implements Syncable {
   }
 
   async contentHashes() {
-    return this.store(EntryRow().select(EntryRow.rowHash))
+    return this.store.select(EntryRow.rowHash).from(EntryRow)
   }
 
   // Syncs data with a remote database, returning the i18nIds of changed entries
@@ -81,14 +104,15 @@ export class Database implements Syncable {
     if (!isRequired) return []
     const {insert, remove} = await remote.sync(await this.contentHashes())
     return this.store.transaction(async tx => {
-      const removed = await tx(
-        EntryRow().where(EntryRow.rowHash.isIn(remove)).select(EntryRow.i18nId)
-      )
-      await tx(EntryRow().delete().where(EntryRow.rowHash.isIn(remove)))
+      const removed = await tx
+        .select(EntryRow.id)
+        .from(EntryRow)
+        .where(inArray(EntryRow.rowHash, remove))
+      await tx.delete(EntryRow).where(inArray(EntryRow.rowHash, remove))
       const changed = []
       for (const entry of insert) {
-        await tx(EntryRow().insertOne(entry))
-        changed.push(entry.i18nId)
+        await tx.insert(EntryRow).values(entry)
+        changed.push(entry.id)
       }
       await Database.index(tx)
       // This is for a local db, we didn't receive a commit hash here
@@ -121,33 +145,36 @@ export class Database implements Syncable {
     })
   }
 
-  private async applyPublish(tx: Driver.Async, entry: EntryRow) {
+  private async applyPublish(tx: Store, entry: EntryRow) {
     const next = publishEntryRow(this.config, entry)
-    await tx(
-      EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
-        phase: EntryPhase.Published,
+    await tx
+      .update(EntryRow)
+      .set({
+        status: EntryStatus.Published,
         filePath: next.filePath,
         parentDir: next.parentDir,
         childrenDir: next.childrenDir,
         url: next.url
       })
-    )
+      .where(
+        eq(EntryRow.id, entry.id),
+        is(EntryRow.locale, entry.locale),
+        eq(EntryRow.status, entry.status)
+      )
+
     return this.updateChildren(tx, entry, next)
   }
 
-  private async updateChildren(
-    tx: Driver.Async,
-    previous: EntryRow,
-    next: EntryRow
-  ) {
+  private async updateChildren(tx: Store, previous: EntryRow, next: EntryRow) {
     const {childrenDir: dir} = previous
-    if (next.phase !== EntryPhase.Published || dir === next.childrenDir)
+    if (next.status !== EntryStatus.Published || dir === next.childrenDir)
       return []
-    const children = await tx(
-      EntryRow().where(
-        EntryRow.parentDir.is(dir).or(EntryRow.childrenDir.like(dir + '/%'))
+    const children = await tx
+      .select()
+      .from(EntryRow)
+      .where(
+        or(eq(EntryRow.parentDir, dir), like(EntryRow.childrenDir, `${dir}/%`))
       )
-    )
     for (const child of children) {
       const filePath = next.childrenDir + child.filePath.slice(dir.length)
       const childrenDir = next.childrenDir + child.childrenDir.slice(dir.length)
@@ -158,65 +185,79 @@ export class Database implements Syncable {
         ...child,
         parentPaths
       })
-      await tx(
-        EntryRow({entryId: child.entryId, phase: child.phase}).set({
+      await tx
+        .update(EntryRow)
+        .set({
           filePath,
           childrenDir,
           parentDir,
           url
         })
-      )
+        .where(
+          eq(EntryRow.id, child.id),
+          is(EntryRow.locale, child.locale),
+          eq(EntryRow.status, child.status)
+        )
     }
     return children
   }
 
   async logEntries() {
-    const entries = await this.store(
-      EntryRow().orderBy(EntryRow.url.asc(), EntryRow.index.asc())
-    )
+    const entries = await this.store
+      .select()
+      .from(EntryRow)
+      .orderBy(asc(EntryRow.url), asc(EntryRow.index))
     for (const entry of entries) {
-      console.log(
+      console.info(
         entry.url.padEnd(35),
-        entry.entryId.padEnd(12),
-        entry.phase.padEnd(12),
+        entry.id.padEnd(12),
+        (entry.locale ?? '').padEnd(5),
+        entry.status.padEnd(12),
         entry.title
       )
     }
   }
 
   private async applyMutation(
-    tx: Driver.Async,
+    tx: Store,
     mutation: Mutation
   ): Promise<(() => Promise<Array<string>>) | undefined> {
     switch (mutation.type) {
       case MutationType.Create: {
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: mutation.entry.phase
-        })
-        const current = await tx(row.maybeFirst())
+        const condition = and(
+          eq(EntryRow.id, mutation.entryId),
+          eq(EntryRow.status, mutation.entry.status),
+          is(EntryRow.locale, mutation.entry.locale)
+        )
+        const current = await tx.select().from(EntryRow).where(condition).get()
         if (current) return
-        await tx(EntryRow().insert(mutation.entry))
-        return () => this.updateHash(tx, row)
+        await tx.insert(EntryRow).values(mutation.entry)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Edit: {
         const {entryId, entry} = mutation
-        const row = EntryRow({
-          entryId,
-          phase: entry.phase
-        })
-        const current = await tx(row.maybeFirst())
-        await tx(row.delete(), EntryRow().insert(entry))
+        const condition = and(
+          eq(EntryRow.id, entryId),
+          eq(EntryRow.status, entry.status),
+          is(EntryRow.locale, entry.locale)
+        )
+        const current = await tx.select().from(EntryRow).where(condition).get()
+        await tx.delete(EntryRow).where(condition)
+        await tx.insert(EntryRow).values(entry)
         let children: Array<EntryRow> = []
-        if (entry.phase === EntryPhase.Published) {
+        if (entry.status === EntryStatus.Published) {
           if (current) children = await this.updateChildren(tx, current, entry)
         }
         return () => {
-          return this.updateHash(tx, row).then(self =>
+          return this.updateHash(tx, condition).then(self =>
             this.updateHash(
               tx,
-              EntryRow().where(
-                EntryRow.entryId.isIn(children.map(e => e.entryId))
+              and(
+                is(EntryRow.locale, entry.locale),
+                inArray(
+                  EntryRow.id,
+                  children.map(e => e.id)
+                )
               )
             ).then(children => self.concat(children))
           )
@@ -224,53 +265,78 @@ export class Database implements Syncable {
       }
       case MutationType.Patch: {
         const {patch} = mutation
-        const rows = EntryRow({entryId: mutation.entryId, main: true})
-        const current = await tx(rows.maybeFirst())
-        if (current) await tx(rows.set({data: {...current.data, patch}}))
-        return () => this.updateHash(tx, rows)
+        const condition = and(
+          eq(EntryRow.id, mutation.entryId),
+          is(EntryRow.locale, mutation.locale),
+          eq(EntryRow.main, true)
+        )
+        const current = await tx.select().from(EntryRow).where(condition).get()
+        if (current)
+          await tx
+            .update(EntryRow)
+            .set({data: {...current.data, patch}})
+            .where(condition)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Archive: {
-        const archived = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Archived
-        })
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Published
-        })
-        const published = await tx(row.maybeFirst())
+        const archived = and(
+          eq(EntryRow.id, mutation.entryId),
+          is(EntryRow.locale, mutation.locale),
+          eq(EntryRow.status, EntryStatus.Archived)
+        )
+        const condition = and(
+          eq(EntryRow.id, mutation.entryId),
+          is(EntryRow.locale, mutation.locale),
+          eq(EntryRow.status, EntryStatus.Published)
+        )
+        const published = await tx
+          .select()
+          .from(EntryRow)
+          .where(condition)
+          .get()
         if (!published) return
         const filePath =
-          published.filePath.slice(0, -5) + `.${EntryPhase.Archived}.json`
-        await tx(
-          archived.delete(),
-          row.set({
-            phase: EntryPhase.Archived,
+          published.filePath.slice(0, -5) + `.${EntryStatus.Archived}.json`
+        await tx.delete(EntryRow).where(archived)
+        await tx
+          .update(EntryRow)
+          .set({
+            status: EntryStatus.Archived,
             filePath
           })
-        )
+          .where(condition)
         return () => this.updateHash(tx, archived)
       }
       case MutationType.Publish: {
-        const promoting = await tx(
-          EntryRow({
-            entryId: mutation.entryId,
-            phase: mutation.phase
-          }).maybeFirst()
-        )
+        const promoting = await tx
+          .select()
+          .from(EntryRow)
+          .where(
+            and(
+              eq(EntryRow.id, mutation.entryId),
+              is(EntryRow.locale, mutation.locale),
+              eq(EntryRow.status, mutation.status)
+            )
+          )
+          .get()
         if (!promoting) return
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Published
-        })
-        await tx(row.delete())
+        const condition = and(
+          eq(EntryRow.id, mutation.entryId),
+          is(EntryRow.locale, mutation.locale),
+          eq(EntryRow.status, EntryStatus.Published)
+        )
+        await tx.delete(EntryRow).where(condition)
         const children = await this.applyPublish(tx, promoting)
         return () =>
-          this.updateHash(tx, row).then(rows => {
+          this.updateHash(tx, condition).then(rows => {
             return this.updateHash(
               tx,
-              EntryRow().where(
-                EntryRow.entryId.isIn(children.map(e => e.entryId))
+              and(
+                is(EntryRow.locale, mutation.locale),
+                inArray(
+                  EntryRow.id,
+                  children.map(e => e.id)
+                )
               )
             ).then(r => rows.concat(r))
           })
@@ -278,105 +344,126 @@ export class Database implements Syncable {
       case MutationType.FileRemove:
         if (mutation.replace) return
       case MutationType.Remove: {
-        const existing = await tx(
-          EntryRow({entryId: mutation.entryId}).maybeFirst()
-        )
-        if (!existing) return
-        const phases = await tx(EntryRow({entryId: mutation.entryId}))
-        // Remove child entries
-        for (const phase of phases) {
-          await tx(
-            EntryRow()
-              .delete()
-              .where(
-                EntryRow.parentDir
-                  .is(phase.childrenDir)
-                  .or(EntryRow.childrenDir.like(phase.childrenDir + '/%'))
-              )
+        const statuses = await tx
+          .select()
+          .from(EntryRow)
+          .where(
+            eq(EntryRow.id, mutation.entryId),
+            is(EntryRow.locale, mutation.locale)
           )
+        if (statuses.length === 0) return
+        // Remove child entries
+        for (const status of statuses) {
+          await tx
+            .delete(EntryRow)
+            .where(
+              or(
+                eq(EntryRow.parentDir, status.childrenDir),
+                like(EntryRow.childrenDir, status.childrenDir + '/%')
+              )
+            )
         }
-        await tx(EntryRow({entryId: mutation.entryId}).delete())
-        return async () => phases.map(e => e.i18nId).concat(existing.i18nId)
+        await tx
+          .delete(EntryRow)
+          .where(
+            eq(EntryRow.id, mutation.entryId),
+            is(EntryRow.locale, mutation.locale)
+          )
+        return async () => [statuses[0].id]
       }
       case MutationType.Discard: {
-        const existing = await tx(
-          EntryRow({entryId: mutation.entryId}).maybeFirst()
-        )
+        const existing = await tx
+          .select()
+          .from(EntryRow)
+          .where(
+            eq(EntryRow.id, mutation.entryId),
+            is(EntryRow.locale, mutation.locale)
+          )
+          .get()
         if (!existing) return
-        await tx(
-          EntryRow({
-            entryId: mutation.entryId,
-            phase: EntryPhase.Draft
-          }).delete()
-        )
-        return async () => [existing.i18nId]
+        await tx
+          .delete(EntryRow)
+          .where(
+            and(
+              eq(EntryRow.id, mutation.entryId),
+              is(EntryRow.locale, mutation.locale),
+              eq(EntryRow.status, EntryStatus.Draft)
+            )
+          )
+        return async () => [existing.id]
       }
       case MutationType.Order: {
-        const rows = EntryRow({entryId: mutation.entryId})
-        // Todo: apply this to other languages too
-        await tx(rows.set({index: mutation.index}))
-        return () => this.updateHash(tx, rows)
+        const condition = and(eq(EntryRow.id, mutation.entryId))
+        await tx.update(EntryRow).set({index: mutation.index}).where(condition)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Move: {
-        const rows = EntryRow({entryId: mutation.entryId})
-        await tx(
-          rows.set({
+        const condition = eq(EntryRow.id, mutation.entryId)
+        await tx
+          .update(EntryRow)
+          .set({
             index: mutation.index,
-            parent: mutation.parent,
+            parentId: mutation.parent,
             workspace: mutation.workspace,
             root: mutation.root
           })
-        )
+          .where(condition)
         // Todo: update file & children paths
-        return () => this.updateHash(tx, rows)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Upload: {
         // Until this mutation is applied the uploaded file won't be locally
         // available so the preview url is used. The fileHash is updated so that
         // syncing to the client after a successful deploy will overwrite this
         // change.
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Published
-        })
-        const existing = await tx(row.maybeFirst())
+        const condition = and(
+          eq(EntryRow.id, mutation.entryId),
+          eq(EntryRow.status, EntryStatus.Published)
+        )
+        const existing = await tx.select().from(EntryRow).where(condition).get()
         if (!existing) return
-        if (process.env.NODE_ENV !== 'develoment')
-          await tx(
-            row.set({
+        if (process.env.NODE_ENV !== 'development')
+          await tx
+            .update(EntryRow)
+            .set({
               data: {
                 ...existing.data,
                 location: mutation.url,
-                [Media.ORIGINAL_LOCATION]: existing.data.location
+                [MEDIA_LOCATION]: existing.data.location
               }
             })
-          )
-        return () => this.updateHash(tx, row)
+            .where(condition)
+        return () => this.updateHash(tx, condition)
       }
       default:
         throw unreachable(mutation)
     }
   }
 
-  async updateHash(tx: Driver.Async, selection: Select<EntryRow>) {
+  async updateHash(tx: Store, condition: Sql<boolean>) {
     const changed = []
-    const entries = await tx(selection)
+    const entries = await tx.select().from(EntryRow).where(condition)
     for (const entry of entries) {
       const updated = await createEntryRow(this.config, entry)
-      changed.push(updated.i18nId)
-      await tx(
-        EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
+      changed.push(updated.id)
+      await tx
+        .update(EntryRow)
+        .set({
           fileHash: updated.fileHash,
           rowHash: updated.rowHash
         })
-      )
+        .where(
+          eq(EntryRow.id, entry.id),
+          is(EntryRow.locale, entry.locale),
+          eq(EntryRow.status, entry.status)
+        )
     }
     return changed
   }
 
   async meta() {
     return (
-      (await this.store(AlineaMeta().maybeFirst())) ?? {
+      (await this.store.select().from(AlineaMeta).get()) ?? {
         commitHash: '',
         contentHash: '',
         modifiedAt: 0
@@ -384,42 +471,36 @@ export class Database implements Syncable {
     )
   }
 
-  static async index(tx: Driver.Async) {
-    const {Parent} = alias(EntryRow)
-    const res = await tx(
-      EntryRow().set({
-        parent: Parent({childrenDir: EntryRow.parentDir})
-          .select(Parent.entryId)
-          .maybeFirst(),
-        active: EntryRealm.isActive,
-        main: EntryRealm.isMain
-      })
-    )
+  static async index(tx: Store) {
+    const Parent = alias(EntryRow, 'Parent')
+    const parent = tx
+      .select(Parent.id)
+      .from(Parent)
+      .where(
+        eq(Parent.childrenDir, EntryRow.parentDir),
+        eq(Parent.workspace, EntryRow.workspace),
+        eq(Parent.root, EntryRow.root)
+      )
+    const res = await tx.update(EntryRow).set({
+      parentId: parent,
+      active: EntryRealm.isActive,
+      main: EntryRealm.isMain
+    })
     return res
   }
 
-  private async writeMeta(tx: Driver.Async, commitHash: string) {
-    const {create32} = await xxhash()
-    let hash = create32()
-    const contentHashes = await tx(
-      EntryRow().select(EntryRow.rowHash).orderBy(EntryRow.rowHash)
-    )
-    for (const c of contentHashes) hash = hash.update(c)
-    const contentHash = hash.digest().toString(16).padStart(8, '0')
-    const modifiedAt = await tx(
-      EntryRow()
-        .select(EntryRow.modifiedAt)
-        .orderBy(EntryRow.modifiedAt.desc())
-        .maybeFirst()
-    )
-    await tx(AlineaMeta().delete())
-    await tx(
-      AlineaMeta().insertOne({
-        commitHash,
-        contentHash,
-        modifiedAt: modifiedAt ?? 0
-      })
-    )
+  private async writeMeta(tx: Store, commitHash: string) {
+    const contentHashes = await tx
+      .select(EntryRow.rowHash)
+      .from(EntryRow)
+      .orderBy(EntryRow.rowHash)
+    const all = contentHashes.join('')
+    const contentHash = await createFileHash(new TextEncoder().encode(all))
+    await tx.delete(AlineaMeta)
+    await tx.insert(AlineaMeta).values({
+      commitHash,
+      contentHash
+    })
   }
 
   inited = false
@@ -427,10 +508,12 @@ export class Database implements Syncable {
     if (this.inited) return
     this.inited = true
     try {
-      await this.store.transaction(async tx => {
-        await tx(create(EntryRow, AlineaMeta))
-        await createEntrySearch(tx)
-      })
+      await this.store
+        .transaction(async tx => {
+          await tx.create(EntryRow, AlineaMeta)
+          await createEntrySearch(tx)
+        })
+        .catch(() => {})
       await this.meta()
     } catch (e) {
       this.inited = false
@@ -447,44 +530,46 @@ export class Database implements Syncable {
     },
     seed?: Seed
   ): Omit<EntryRow, 'rowHash' | 'fileHash'> {
-    const {[META_KEY]: alineaMeta, ...data} = record
-    const typeName = alineaMeta.type
+    const {meta: recordMeta, data} = parseRecord(record)
+    const typeName = recordMeta.type
     const parentDir = paths.dirname(meta.filePath)
     const extension = paths.extname(meta.filePath)
     const fileName = paths.basename(meta.filePath, extension)
-    const [entryPath, entryPhase] = entryInfo(fileName)
+    const [entryPath, entryStatus] = entryInfo(fileName)
     const segments = parentDir.split('/').filter(Boolean)
-    const root = Root.data(this.config.workspaces[meta.workspace][meta.root])
+    const root = this.config.workspaces[meta.workspace][meta.root]
     let locale: string | null = null
 
-    if (root.i18n) {
-      locale = segments.shift()!
-      if (!root.i18n.locales.includes(locale))
-        throw new Error(`invalid locale: "${locale}"`)
+    if (getRoot(root).i18n) {
+      const inSegment = segments.shift()!
+      locale = Root.localeName(root, inSegment) ?? null
+      if (!locale) throw new Error(`Invalid locale: "${inSegment}"`)
     }
 
     const type = this.config.schema[typeName]
-    if (!type) throw new Error(`invalid type: "${typeName}"`)
+    if (!type) throw new Error(`Invalid type: "${typeName}"`)
     if (seed && seed.type !== typeName)
       throw new Error(
         `Type mismatch between seed and file: "${seed.type}" !== "${typeName}"`
       )
     const childrenDir = paths.join(parentDir, entryPath)
 
-    if (!record[META_KEY].entryId) throw new Error(`missing id`)
+    if (!recordMeta.id) throw new Error(`missing id`)
 
     const urlMeta: EntryUrlMeta = {
       locale,
       parentPaths: segments,
       path: entryPath,
-      phase: entryPhase
+      status: entryStatus
     }
 
     const pathData = entryPath === 'index' ? '' : entryPath
-    const seedData = seed ? PageSeed.data(seed.page).partial : {}
+    const seedData = seed ? Page.data(seed.page).fields : {}
+    const title = record.title ?? seedData?.title ?? ''
     const entryData = {
       ...seedData,
       ...data,
+      title,
       path: pathData
     }
     const searchableText = Type.searchableText(type, entryData)
@@ -494,24 +579,22 @@ export class Database implements Syncable {
       filePath: meta.filePath,
       seeded: seed?.filePath ?? null,
 
-      modifiedAt: Date.now(), // file.modifiedAt,
       active: false,
       main: false,
 
-      entryId: alineaMeta.entryId,
-      phase: entryPhase,
-      type: alineaMeta.type,
+      id: recordMeta.id,
+      status: entryStatus,
+      type: recordMeta.type,
 
       parentDir,
       childrenDir,
-      parent: null,
+      parentId: null,
       level: parentDir === '/' ? 0 : segments.length,
-      index: alineaMeta.index,
+      index: recordMeta.index,
       locale,
-      i18nId: alineaMeta.i18nId ?? alineaMeta.entryId,
 
       path: entryPath,
-      title: record.title ?? seedData?.title ?? '',
+      title,
       url: entryUrl(type, urlMeta),
 
       data: entryData,
@@ -527,17 +610,18 @@ export class Database implements Syncable {
         const {i18n} = Root.data(root)
         const locales = i18n?.locales ?? [undefined]
         for (const locale of locales) {
-          const pages: Array<readonly [string, PageSeed]> = entries(root)
-          const target = locale ? `/${locale}` : '/'
+          const pages: Array<readonly [string, Page]> = entries(root)
+          const target = locale ? `/${locale.toLowerCase()}` : '/'
           while (pages.length > 0) {
             const [pagePath, page] = pages.shift()!
             const path = pagePath.split('/').map(slugify).join('/')
-            if (!PageSeed.isPageSeed(page)) continue
-            const {type} = PageSeed.data(page)
+            if (!Page.isPage(page)) continue
+            const {type} = Page.data(page)
             const filePath = paths.join(target, path) + '.json'
             const typeName = typeNames.get(type)
             if (!typeName) continue
-            res.set(filePath, {
+            const key = seedKey(workspaceName, rootName, filePath)
+            res.set(key, {
               type: typeName,
               workspace: workspaceName,
               root: rootName,
@@ -546,7 +630,7 @@ export class Database implements Syncable {
             })
             const children = entries(page).map(
               ([childPath, child]) =>
-                [paths.join(path, childPath), child as PageSeed] as const
+                [paths.join(path, childPath), child as Page] as const
             )
             pages.push(...children)
           }
@@ -559,93 +643,160 @@ export class Database implements Syncable {
   async fill(
     source: Source,
     commitHash: string,
-    target?: Target
+    target?: Target,
+    // If the generated json is different from the source, the source will be
+    // updated with the generated json
+    fix = false
   ): Promise<void> {
+    const v0Ids = new Map<string, string>()
+    if (fix && !target) throw new TypeError(`Target expected if fix is true`)
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
     await this.init()
     const typeNames = Schema.typeNames(this.config.schema)
     const publishSeed: Array<EntryRow> = []
 
-    await this.store.transaction(async query => {
-      const seenVersions: Array<string> = []
-      const seenSeeds = new Set<string>()
-      const inserted = []
+    await this.store.transaction(async tx => {
+      const seenVersions: Array<EntryKeys> = []
+      const seenSeeds = new Map<string, string>()
+      const inserted: Array<EntryKeys> = []
       //const endScan = timer('Scanning entries')
+      const changes: Array<Change> = []
       for await (const file of source.entries()) {
         const fileHash = await createFileHash(file.contents)
-        const exists = await query(
-          EntryRow({
-            fileHash: fileHash,
-            filePath: file.filePath,
-            workspace: file.workspace,
-            root: file.root
+        const exists = await tx
+          .select({
+            id: EntryRow.id,
+            locale: EntryRow.locale,
+            status: EntryRow.status,
+            seeded: EntryRow.seeded
           })
-            .select({
-              versionId: EntryRow.versionId,
-              seeded: EntryRow.seeded
-            })
-            .maybeFirst()
-        )
+          .from(EntryRow)
+
+          .where(
+            eq(EntryRow.filePath, file.filePath),
+            eq(EntryRow.workspace, file.workspace),
+            eq(EntryRow.root, file.root),
+            eq(EntryRow.fileHash, fileHash)
+          )
+          .get()
+
         // Todo: a config change but unchanged entry data will currently
         // fly under the radar
-        if (exists) {
-          seenVersions.push(exists.versionId)
-          if (exists.seeded) seenSeeds.add(exists.seeded)
-          else seenSeeds.add(file.filePath)
+        if (!fix && exists) {
+          seenVersions.push([exists.id, exists.locale ?? 'null', exists.status])
+          const key = seedKey(
+            file.workspace,
+            file.root,
+            exists.seeded ?? file.filePath
+          )
+          seenSeeds.set(key, exists.id)
           continue
         }
         try {
           const raw = JsonLoader.parse(this.config.schema, file.contents)
-          const record = EntryRecord(raw)
-          const seeded = record[META_KEY]?.seeded
-          const seed =
-            typeof seeded === 'string' ? this.seed.get(seeded) : undefined
+          const {meta, data, v0Id} = parseRecord(raw)
+          if (v0Id) {
+            v0Ids.set(v0Id, meta.id)
+          }
+          const seeded = meta.seeded
+          const key = seedKey(
+            file.workspace,
+            file.root,
+            typeof seeded === 'string' ? seeded : file.filePath
+          )
+          const seed = this.seed.get(key)
+          const record = createRecord({...meta, data})
           const entry = this.computeEntry(record, file, seed)
-
-          if (seed) seenSeeds.add(seed.filePath)
-          else seenSeeds.add(file.filePath)
-
-          await query(
-            EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
-          )
           const withHash: EntryRow = {...entry, fileHash, rowHash: ''}
-          seenVersions.push(
-            await query(
-              EntryRow().insert(withHash).returning(EntryRow.versionId)
+          if (fix) {
+            const fileContents = JsonLoader.format(this.config.schema, record)
+            const newHash = await createFileHash(fileContents)
+            if (fileHash !== newHash) {
+              const workspace = this.config.workspaces[entry.workspace]
+              const file = paths.join(
+                Workspace.data(workspace).source,
+                entry.root,
+                entry.filePath
+              )
+              const record = createRecord(entry)
+              const contents = new TextDecoder().decode(
+                JsonLoader.format(this.config.schema, record)
+              )
+              changes.push({
+                type: ChangeType.Write,
+                file,
+                contents
+              })
+            }
+          }
+          await tx
+            .delete(EntryRow)
+            .where(
+              eq(EntryRow.id, entry.id),
+              is(EntryRow.locale, entry.locale),
+              eq(EntryRow.status, entry.status)
             )
-          )
-          inserted.push(`${entry.entryId}.${entry.phase}`)
+          seenSeeds.set(key, entry.id)
+          await tx.insert(EntryRow).values(withHash)
+          seenVersions.push([entry.id, entry.locale ?? 'null', entry.status])
+          inserted.push([entry.id, entry.locale ?? 'null', entry.status])
         } catch (e: any) {
-          console.log(`> skipped ${file.filePath} — ${e.message}`)
+          console.warn(`${e.message} @ ${file.filePath}`)
+          process.exit(1)
         }
       }
-      const stableI18nIds = new Map<string, string>()
-      for (const [seedPath, seed] of this.seed.entries()) {
-        if (seenSeeds.has(seedPath)) continue
-        const {type, partial} = PageSeed.data(seed.page)
+      if (fix && v0Ids.size > 0) {
+        const entries = await tx.select().from(EntryRow)
+        for (const entry of entries) {
+          const file = entryFile(this.config, entry)
+          entry.data = JSON.parse(JSON.stringify(entry.data), (key, value) => {
+            if (key === '_entry') return v0Ids.get(value) ?? value
+            return value
+          })
+          const contents = new TextDecoder().decode(
+            JsonLoader.format(this.config.schema, createRecord(entry))
+          )
+          changes.push({
+            type: ChangeType.Write,
+            file,
+            contents
+          })
+        }
+      }
+      if (fix && changes.length > 0)
+        await target!.mutate({} as AuthedContext, {
+          commitHash: '',
+          mutations: [{changes, meta: undefined!}]
+        })
+      const stableIds = new Map<string, string>()
+      for (const seed of this.seed.values()) {
+        const key = seedKey(seed.workspace, seed.root, seed.filePath)
+        const [, locale, ...rest] = seed.filePath.split('/')
+        const withoutLocale = rest.join('/')
+        if (seenSeeds.has(key)) {
+          stableIds.set(withoutLocale, seenSeeds.get(key)!)
+          continue
+        }
+        const {type, fields} = Page.data(seed.page)
         const typeName = typeNames.get(type)
         if (!typeName) continue
         const root = this.config.workspaces[seed.workspace][seed.root]
         const {i18n} = Root.data(root)
-        let i18nId = createId()
+        let id = createId()
         if (i18n) {
-          const [, locale, ...rest] = seed.filePath.split('/')
-          const path = rest.join('/')
-          i18nId = stableI18nIds.get(path) ?? createId()
-          stableI18nIds.set(path, i18nId)
+          id = stableIds.get(withoutLocale) ?? createId()
+          stableIds.set(withoutLocale, id)
         }
         const entry = this.computeEntry(
-          {
-            title: partial.title ?? '',
-            [META_KEY]: {
-              entryId: createId(),
-              i18nId,
-              type: typeName,
-              index: 'a0',
-              seeded: seed.filePath
-            }
-          },
+          createRecord({
+            id,
+            type: typeName,
+            index: 'a0',
+            seeded: seed.filePath,
+            title: fields.title ?? '',
+            data: fields
+          }),
           seed,
           seed
         )
@@ -653,10 +804,9 @@ export class Database implements Syncable {
         const fileContents = JsonLoader.format(this.config.schema, record)
         const fileHash = await createFileHash(fileContents)
         const withHash = {...entry, fileHash, rowHash: ''}
-        seenVersions.push(
-          await query(EntryRow().insert(withHash).returning(EntryRow.versionId))
-        )
-        inserted.push(`${entry.entryId}.${entry.phase}`)
+        await tx.insert(EntryRow).values(withHash)
+        seenVersions.push([entry.id, entry.locale ?? 'null', entry.status])
+        inserted.push([entry.id, entry.locale ?? 'null', entry.status])
         publishSeed.push({
           ...withHash,
           title: undefined!,
@@ -670,87 +820,138 @@ export class Database implements Syncable {
       )*/
       if (seenVersions.length === 0) return
 
-      const {rowsAffected: removed} = await query(
-        EntryRow().delete().where(EntryRow.versionId.isNotIn(seenVersions))
-      )
+      const removeCondition = sql<boolean>`(${EntryRow.id}, ${coalesce(
+        EntryRow.locale,
+        sql`'null'`
+      )}, ${EntryRow.status}) not in ${values(...seenVersions)}`
+      const rowsAffected = await tx
+        .select(count())
+        .from(EntryRow)
+        .where(removeCondition)
+        .get()
+      if (rowsAffected! > 0) await tx.delete(EntryRow).where(removeCondition)
+      const removed = rowsAffected ?? 0
       const noChanges = inserted.length === 0 && removed === 0
       if (noChanges) return
-      // if (inserted) console.log(`> updated ${inserted} entries`)
-      // if (removed) console.log(`> removed ${removed} entries`)
 
-      //const endIndex = timer('Indexing entries')
-      await Database.index(query)
-      const entries = await query(
-        EntryRow().where(EntryRow.versionId.isIn(inserted))
-      )
+      await Database.index(tx)
+      const isInserted = sql<boolean>`(${EntryRow.id}, ${coalesce(
+        EntryRow.locale,
+        sql`'null'`
+      )}, ${EntryRow.status}) in ${values(...inserted)}`
+      const entries = await tx.select().from(EntryRow).where(isInserted)
       for (const entry of entries) {
         const rowHash = await createRowHash(entry)
-        await query(
-          EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
+        await tx
+          .update(EntryRow)
+          .set({
             rowHash
           })
-        )
+          .where(
+            eq(EntryRow.id, entry.id),
+            is(EntryRow.locale, entry.locale),
+            eq(EntryRow.status, entry.status)
+          )
       }
-      await this.writeMeta(query, commitHash)
+      await this.writeMeta(tx, commitHash)
     })
 
     if (target && publishSeed.length > 0) {
-      const changeSetCreator = new ChangeSetCreator(this.config)
-      const mutations = publishSeed.map((seed): Mutation => {
+      const changes = publishSeed.map((seed): Change => {
         const workspace = this.config.workspaces[seed.workspace]
         const file = paths.join(
           Workspace.data(workspace).source,
           seed.root,
           seed.filePath
         )
-        return {
-          type: MutationType.Create,
-          entryId: seed.entryId,
-          file: file,
-          entry: seed
-        }
+        const record = createRecord(seed)
+        const contents = new TextDecoder().decode(
+          JsonLoader.format(this.config.schema, record)
+        )
+        return {type: ChangeType.Write, file, contents}
       })
-      const changes = changeSetCreator.create(mutations)
-      await target.mutate(
-        {commitHash: '', mutations: changes},
-        {logger: new Logger('seed')}
-      )
+      await target.mutate({} as AuthedContext, {
+        commitHash: '',
+        mutations: [{changes, meta: undefined!}]
+      })
+    }
+  }
+
+  async preview<T>(
+    entry: EntryRow,
+    query: (tx: Store) => Promise<T>
+  ): Promise<T | undefined> {
+    try {
+      await this.store.transaction(async tx => {
+        // Temporarily add preview entry
+        await tx
+          .delete(EntryRow)
+          .where(eq(EntryRow.id, entry.id), eq(EntryRow.active, true))
+        await tx.insert(EntryRow).values(entry)
+        await Database.index(tx)
+        const result = await query(tx)
+        throw {result}
+      })
+    } catch (err: any) {
+      if (err.result) return err.result as T
     }
   }
 }
 
 namespace EntryRealm {
-  const {Alt} = alias(EntryRow)
-  const isDraft = EntryRow.phase.is(EntryPhase.Draft)
-  const isArchived = EntryRow.phase.is(EntryPhase.Archived)
-  const isPublished = EntryRow.phase.is(EntryPhase.Published)
+  const builder = new Builder()
+  const Alt = alias(EntryRow, 'Alt')
+  const isDraft = eq(EntryRow.status, EntryStatus.Draft)
+  const isArchived = eq(EntryRow.status, EntryStatus.Archived)
+  const isPublished = eq(EntryRow.status, EntryStatus.Published)
   const hasDraft = exists(
-    Alt({phase: EntryPhase.Draft, entryId: EntryRow.entryId})
+    builder
+      .select()
+      .from(Alt)
+      .where(
+        eq(Alt.status, EntryStatus.Draft),
+        eq(Alt.locale, EntryRow.locale),
+        eq(Alt.id, EntryRow.id)
+      )
   )
   const hasPublished = exists(
-    Alt({phase: EntryPhase.Published, entryId: EntryRow.entryId})
+    builder
+      .select()
+      .from(Alt)
+      .where(
+        eq(Alt.status, EntryStatus.Published),
+        eq(Alt.locale, EntryRow.locale),
+        eq(Alt.id, EntryRow.id)
+      )
   )
   const hasArchived = exists(
-    Alt({phase: EntryPhase.Archived, entryId: EntryRow.entryId})
+    builder
+      .select()
+      .from(Alt)
+      .where(
+        eq(Alt.status, EntryStatus.Archived),
+        eq(Alt.locale, EntryRow.locale),
+        eq(Alt.id, EntryRow.id)
+      )
   )
-  const isPublishedWithoutDraft = Expr.and(isPublished, hasDraft.not())
-  const isArchivedWithoutDraftOrPublished = Expr.and(
+  const isPublishedWithoutDraft = and(isPublished, not(hasDraft))
+  const isArchivedWithoutDraftOrPublished = and(
     isArchived,
-    hasDraft.not(),
-    hasPublished.not()
+    not(hasDraft),
+    not(hasPublished)
   )
-  export const isActive = Expr.or(
+  export const isActive = or(
     isDraft,
     isPublishedWithoutDraft,
     isArchivedWithoutDraftOrPublished
   )
-  const isArchivedWithoutPublished = Expr.and(isArchived, hasPublished.not())
-  const isDraftWithoutPublishedOrArchived = Expr.and(
+  const isArchivedWithoutPublished = and(isArchived, not(hasPublished))
+  const isDraftWithoutPublishedOrArchived = and(
     isDraft,
-    hasPublished.not(),
-    hasArchived.not()
+    not(hasPublished),
+    not(hasArchived)
   )
-  export const isMain = Expr.or(
+  export const isMain = or(
     isPublished,
     isArchivedWithoutPublished,
     isDraftWithoutPublishedOrArchived

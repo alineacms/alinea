@@ -1,4 +1,6 @@
-import {Config, Connection, Root, renderLabel} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {Connection} from 'alinea/core/Connection'
+import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
@@ -6,13 +8,13 @@ import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
-import {useEffect} from 'react'
+import {ComponentType, useEffect} from 'react'
 import {QueryClient} from 'react-query'
 import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
 import {router} from './Routes.js'
 import {sessionAtom} from './atoms/DashboardAtoms.js'
-import {dbHashAtom, useDbUpdater} from './atoms/DbAtoms.js'
+import {dbMetaAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
@@ -71,7 +73,7 @@ function AppAuthenticated() {
   const locale = useLocale()
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
-  const dbHash = useAtomValue(dbHashAtom)
+  const meta = useAtomValue(dbMetaAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -98,7 +100,7 @@ function AppAuthenticated() {
             <Sidebar.Nav>
               {Object.entries(roots).map(([key, root], i) => {
                 const isSelected = key === currentRoot
-                const {entryId, ...location} = entryLocation
+                const {id, ...location} = entryLocation
                 const link =
                   location.root === key
                     ? nav.entry(location)
@@ -113,7 +115,7 @@ function AppAuthenticated() {
                     key={key}
                     selected={isEntry && isSelected}
                     href={link}
-                    aria-label={renderLabel(label)}
+                    aria-label={label}
                   >
                     <Icon icon={icon ?? IcRoundDescription} />
                   </Sidebar.Nav.Item>
@@ -131,7 +133,7 @@ function AppAuthenticated() {
           {alineaDev && (
             <Statusbar.Root>
               <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                {dbHash}
+                {meta.contentHash}
               </Statusbar.Status>
             </Statusbar.Root>
           )}
@@ -145,7 +147,7 @@ function AppRoot() {
   const [session, setSession] = useAtom(sessionAtom)
   const {fullPage, config} = useDashboard()
   const {color} = Config.mainWorkspace(config)
-  const Auth = config.dashboard?.auth
+  const Auth = config.auth
   if (!session)
     return (
       <>
@@ -172,6 +174,7 @@ function AppRoot() {
 
 export interface AppProps {
   config: Config
+  views: Record<string, ComponentType<any>>
   client: Connection
   queryClient?: QueryClient
   fullPage?: boolean

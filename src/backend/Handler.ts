@@ -1,418 +1,379 @@
-import {Request, Response} from '@alinea/iso'
-import {
-  Auth,
-  Config,
-  Connection,
-  Draft,
-  Entry,
-  EntryPhase,
-  EntryRow,
-  PreviewUpdate,
-  ResolveDefaults,
-  Resolver,
-  SyncResponse,
-  parseYDoc
-} from 'alinea/core'
-import {EntryRecord} from 'alinea/core/EntryRecord'
+import {Database} from 'alinea/backend/Database'
+import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
+import {cloudBackend} from 'alinea/cloud/CloudBackend'
+import {CMS} from 'alinea/core/CMS'
+import {Connection} from 'alinea/core/Connection'
+import {Draft} from 'alinea/core/Draft'
+import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
-import {createSelection} from 'alinea/core/pages/CreateSelection'
-import {Realm} from 'alinea/core/pages/Realm'
-import {Selection} from 'alinea/core/pages/Selection'
-import {base64, base64url} from 'alinea/core/util/Encoding'
-import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
-import * as Y from 'alinea/yjs'
-import {Type, enums, object, string} from 'cito'
-import {unzlibSync} from 'fflate'
+import {PreviewUpdate} from 'alinea/core/Preview'
+import {getScope} from 'alinea/core/Scope'
+import {decode} from 'alinea/core/util/BufferToBase64'
+import {base64} from 'alinea/core/util/Encoding'
+import {assign} from 'alinea/core/util/Objects'
+import {array, object, string} from 'cito'
+import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
 import {mergeUpdatesV2} from 'yjs'
-import {Database} from './Database.js'
-import {DraftTransport, Drafts} from './Drafts.js'
-import {History, Revision} from './History.js'
-import {Media} from './Media.js'
-import {Pending} from './Pending.js'
-import {Previews} from './Previews'
-import {Target} from './Target.js'
+import {
+  AuthedContext,
+  Backend,
+  DraftTransport,
+  RequestContext
+} from './Backend.js'
+import {HandleAction} from './HandleAction.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
-import {EntryResolver} from './resolver/EntryResolver.js'
-import {Route, router} from './router/Router.js'
+import {createPreviewParser} from './resolver/ParsePreview.js'
+import {generatedStore} from './store/GeneratedStore.js'
 
 const limit = pLimit(1)
-
-export interface HandlerOptions {
-  config: Config
-  db: Database
-  previews: Previews
-  previewAuthToken: string
-  auth?: Auth.Server
-  target?: Target
-  media?: Media
-  drafts?: Drafts
-  history?: History
-  pending?: Pending
-  resolveDefaults?: ResolveDefaults
-}
-
-export class Handler implements Resolver {
-  connect: (ctx: Connection.Context) => Connection
-  router: Route<Request, Response | undefined>
-  changes: ChangeSetCreator
-  protected lastSync = 0
-  protected resolver: EntryResolver
-
-  constructor(public options: HandlerOptions) {
-    this.resolver = new EntryResolver(
-      options.db,
-      options.config.schema,
-      this.parsePreview.bind(this)
-    )
-    this.changes = new ChangeSetCreator(options.config)
-    const auth = options.auth ?? Auth.anonymous()
-    this.connect = ctx => new HandlerConnection(this, ctx)
-    this.router = createRouter(auth, this.connect)
-  }
-
-  resolve = async (params: Connection.ResolveParams) => {
-    const {resolveDefaults} = this.options
-    const resolveParams = {...resolveDefaults, ...params}
-    const {syncInterval} = resolveParams
-    await this.periodicSync(syncInterval)
-    return this.resolver.resolve(resolveParams)
-  }
-
-  protected previewAuth(): Connection.Context {
-    return {
-      logger: new Logger('parsePreview'),
-      token: this.options.previewAuthToken
-    }
-  }
-
-  async parsePreview(preview: PreviewUpdate) {
-    const {config} = this.options
-    await this.periodicSync()
-    const update = unzlibSync(base64url.parse(preview.update))
-    const entry = await this.resolver.resolve<EntryRow>({
-      selection: createSelection(
-        Entry({entryId: preview.entryId}).maybeFirst()
-      ),
-      realm: Realm.PreferDraft
-    })
-    if (!entry) return
-    const currentDraft = await this.options.drafts?.getDraft(
-      preview.entryId,
-      this.previewAuth()
-    )
-    const apply = currentDraft
-      ? mergeUpdatesV2([currentDraft.draft, update])
-      : update
-    const type = config.schema[entry.type]
-    if (!type) return
-    const doc = new Y.Doc()
-    Y.applyUpdateV2(doc, apply)
-    const entryData = parseYDoc(type, doc)
-    return {...entry, ...entryData, path: entry.path}
-  }
-
-  async periodicSync(syncInterval = 5) {
-    if (syncInterval === Infinity) return
-    const now = Date.now()
-    if (now - this.lastSync < syncInterval * 1000) return
-    this.lastSync = now
-    try {
-      await this.syncPending()
-    } catch {}
-  }
-
-  syncPending() {
-    return limit(async () => {
-      const {pending, db} = this.options
-      const meta = await db.meta()
-      if (!pending) return meta
-      try {
-        const toApply = await pending.pendingSince(
-          meta.commitHash,
-          this.previewAuth()
-        )
-        if (!toApply) return meta
-        await db.applyMutations(toApply.mutations, toApply.toCommitHash)
-      } catch (error) {
-        console.error(error)
-        console.warn('> could not sync pending mutations')
-      }
-      return db.meta()
-    })
-  }
-}
-
-class HandlerConnection implements Connection {
-  resolve: Resolver['resolve']
-
-  constructor(protected handler: Handler, protected ctx: Connection.Context) {
-    this.resolve = handler.resolve
-  }
-
-  // Target
-
-  async mutate(
-    mutations: Array<Mutation>,
-    retry = 0
-  ): Promise<{commitHash: string}> {
-    const {target, db} = this.handler.options
-    if (!target) throw new Error('Target not available')
-    const changeSet = this.handler.changes.create(mutations)
-    const {commitHash: fromCommitHash} = await this.handler.syncPending()
-    let toCommitHash: string
-    try {
-      const result = await target.mutate(
-        {commitHash: fromCommitHash, mutations: changeSet},
-        this.ctx
-      )
-      toCommitHash = result.commitHash
-    } catch (error: any) {
-      if ('expectedCommitHash' in error) {
-        // Attempt again after syncing
-        // Todo: this needs to be handled differently
-        if (retry >= 3) throw error
-        return this.mutate(mutations, retry + 1)
-      }
-      throw error
-    }
-    await db.applyMutations(mutations, toCommitHash)
-    const tasks = []
-    for (const mutation of mutations) {
-      switch (mutation.type) {
-        case MutationType.Edit:
-          tasks.push(this.persistEdit(mutation))
-          continue
-      }
-    }
-    await Promise.all(tasks)
-    return {commitHash: toCommitHash}
-  }
-
-  previewToken(): Promise<string> {
-    const {previews} = this.handler.options
-    const user = this.ctx.user
-    if (!user) throw new Error('Unauthorized, user not available')
-    return previews.sign(user)
-  }
-
-  // Media
-
-  prepareUpload(file: string): Promise<Connection.UploadResponse> {
-    const {media} = this.handler.options
-    if (!media) throw new Error('Media not available')
-    return media.prepareUpload(file, this.ctx)
-  }
-
-  // History
-
-  async revisions(file: string): Promise<Array<Revision>> {
-    const {history} = this.handler.options
-    if (!history) return []
-    return history.revisions(file, this.ctx)
-  }
-
-  async revisionData(file: string, revisionId: string): Promise<EntryRecord> {
-    const {history} = this.handler.options
-    if (!history) throw new Error('History not available')
-    return history.revisionData(file, revisionId, this.ctx)
-  }
-
-  // Syncable
-
-  async syncRequired(contentHash: string): Promise<boolean> {
-    const {db} = this.handler.options
-    await this.handler.syncPending()
-    return db.syncRequired(contentHash)
-  }
-
-  async sync(contentHashes: Array<string>): Promise<SyncResponse> {
-    const {db} = this.handler.options
-    await this.handler.syncPending()
-    return db.sync(contentHashes)
-  }
-
-  // Drafts
-
-  private async persistEdit(mutation: EditMutation) {
-    const {drafts} = this.handler.options
-    if (!drafts || !mutation.update) return
-    const update = base64.parse(mutation.update)
-    const currentDraft = await this.getDraft(mutation.entryId)
-    await this.storeDraft({
-      entryId: mutation.entryId,
-      fileHash: mutation.entry.fileHash,
-      draft: currentDraft
-        ? mergeUpdatesV2([currentDraft.draft, update])
-        : update
-    })
-  }
-
-  getDraft(entryId: string): Promise<Draft | undefined> {
-    const {drafts} = this.handler.options
-    if (!drafts) throw new Error('Drafts not available')
-    return drafts.getDraft(entryId, this.ctx)
-  }
-
-  storeDraft(draft: Draft): Promise<void> {
-    const {drafts} = this.handler.options
-    if (!drafts) throw new Error('Drafts not available')
-    return drafts.storeDraft(draft, this.ctx)
-  }
-}
-
-function respond<T>({result, logger}: LoggerResult<T>) {
-  return router.jsonResponse(result, {
-    headers: {'server-timing': Report.toServerTiming(logger.report())}
-  })
-}
-
-const ResolveBody: Type<Connection.ResolveParams> = object({
-  selection: Selection.adt,
-  locale: string.optional,
-  realm: enums(Realm),
-  preview: object({
-    entryId: string,
-    phase: enums(EntryPhase),
-    update: string
-  }).optional
-})
 
 const PrepareBody = object({
   filename: string
 })
 
-function createRouter(
-  auth: Auth.Server,
-  createApi: (context: Connection.Context) => Connection
-): Route<Request, Response | undefined> {
-  const matcher = router.startAt(Connection.routes.base)
-  async function context<T extends {request: Request; url: URL}>(
-    input: T
-  ): Promise<T & {ctx: Connection.Context; logger: Logger}> {
-    const logger = new Logger(`${input.request.method} ${input.url.pathname}`)
+const PreviewBody = object({
+  locale: string.nullable,
+  entryId: string
+})
+
+const SyncBody = array(string)
+
+export interface Handler {
+  (request: Request, context?: RequestContext): Promise<Response>
+}
+
+export interface HandlerWithConnect {
+  (request: Request, context: RequestContext): Promise<Response>
+  connect(context: RequestContext | AuthedContext): Connection
+}
+
+export function createHandler(
+  cms: CMS,
+  backend: Backend = cloudBackend(cms.config),
+  database = generatedStore.then(store => new Database(cms.config, store))
+): HandlerWithConnect {
+  const init = PLazy.from(async () => {
+    const db = await database
+    const previews = createPreviewParser(db)
+    const resolver = db.resolver
+    const changes = new ChangeSetCreator(
+      cms.config,
+      new Graph(cms.config, resolver)
+    )
+    let lastSync = 0
+
+    return {db, mutate, resolve, periodicSync, syncPending}
+
+    async function resolve(ctx: RequestContext, query: GraphQuery) {
+      if (!query.preview) {
+        await periodicSync(ctx, query.syncInterval)
+        return resolver.resolve(query as GraphQuery)
+      }
+      const preview = await previews.parse(
+        query.preview,
+        () => syncPending(ctx),
+        entryId => backend.drafts.get(ctx, entryId)
+      )
+      return resolver.resolve({
+        ...query,
+        preview: preview
+      })
+    }
+
+    function periodicSync(ctx: RequestContext, syncInterval = 60) {
+      if (syncInterval === Infinity) return
+      const now = Date.now()
+      if (now - lastSync < syncInterval * 1000) return Promise.resolve()
+      lastSync = now
+      return syncPending(ctx).catch(() => undefined)
+    }
+
+    function syncPending(ctx: RequestContext) {
+      return limit(async () => {
+        const meta = await db.meta()
+        if (!backend.pending) return meta
+        try {
+          const toApply = await backend.pending.since(ctx, meta.commitHash)
+          const total = toApply?.mutations.length ?? 0
+          console.info(`> sync ${total} pending mutations`)
+          if (!toApply) return meta
+          await db.applyMutations(toApply.mutations, toApply.toCommitHash)
+        } catch (error) {
+          console.error(error)
+          console.warn('> could not sync pending mutations')
+        }
+        return db.meta()
+      })
+    }
+
+    async function mutate(
+      ctx: AuthedContext,
+      mutations: Array<Mutation>,
+      retry = false
+    ): Promise<{commitHash: string}> {
+      const changeSet = await changes.create(mutations)
+      let fromCommitHash: string = await db.meta().then(meta => meta.commitHash)
+      try {
+        const result = await backend.target.mutate(ctx, {
+          commitHash: fromCommitHash,
+          mutations: changeSet
+        })
+        await db.applyMutations(mutations, result.commitHash)
+        const tasks = []
+        for (const mutation of mutations) {
+          switch (mutation.type) {
+            case MutationType.Edit:
+              tasks.push(persistEdit(ctx, mutation))
+              continue
+          }
+        }
+        await Promise.all(tasks)
+        return {commitHash: result.commitHash}
+      } catch (error: any) {
+        if ('expectedCommitHash' in error) {
+          if (retry) throw error
+          await syncPending(ctx)
+          return mutate(ctx, mutations, true)
+        }
+        throw error
+      }
+    }
+
+    async function persistEdit(ctx: AuthedContext, mutation: EditMutation) {
+      if (!mutation.update) return
+      const update = new Uint8Array(await decode(mutation.update))
+      const currentDraft = await backend.drafts.get(ctx, mutation.entryId)
+      const updatedDraft = currentDraft
+        ? mergeUpdatesV2([currentDraft.draft, update])
+        : update
+      const draft = {
+        entryId: mutation.entryId,
+        fileHash: mutation.entry.fileHash,
+        draft: updatedDraft
+      }
+      await backend.drafts.store(ctx, draft)
+      const {contentHash} = await db.meta()
+      previews.setDraft(mutation.entryId, {contentHash, draft})
+    }
+  })
+
+  return assign(handle, {connect})
+
+  function connect(context: RequestContext | AuthedContext): Connection {
     return {
-      ...input,
-      ctx: {...(await auth.contextFor(input.request)), logger},
-      logger
+      async user() {
+        return 'user' in context ? context.user : undefined
+      },
+      async resolve<Query extends GraphQuery>(
+        query: Query
+      ): Promise<AnyQueryResult<Query>> {
+        const {resolve} = await init
+        return resolve(context, query) as Promise<AnyQueryResult<Query>>
+      },
+      async previewToken(request: PreviewUpdate) {
+        const previews = new JWTPreviews(context.apiKey)
+        return previews.sign(request)
+      },
+      async prepareUpload(file: string) {
+        return backend.media.prepareUpload(context as AuthedContext, file)
+      },
+      async mutate(mutations: Array<Mutation>) {
+        const {mutate} = await init
+        return mutate(context as AuthedContext, mutations)
+      },
+      async syncRequired(contentHash: string) {
+        const {db} = await init
+        return db.syncRequired(contentHash)
+      },
+      async sync(contentHashes: Array<string>) {
+        const {db} = await init
+        return db.sync(contentHashes)
+      },
+      async revisions(file: string) {
+        return backend.history.list(context as AuthedContext, file)
+      },
+      async revisionData(file: string, revisionId: string) {
+        return backend.history.revision(
+          context as AuthedContext,
+          file,
+          revisionId
+        )
+      },
+      async getDraft(entryId: string) {
+        return backend.drafts.get(context as AuthedContext, entryId)
+      },
+      async storeDraft(draft: Draft) {
+        return backend.drafts.store(context as AuthedContext, draft)
+      }
     }
   }
-  return router(
-    auth.router,
 
-    matcher
-      .get(Connection.routes.previewToken())
-      .map(context)
-      .map(({ctx}) => {
-        const api = createApi(ctx)
-        return ctx.logger.result(api.previewToken())
+  async function handle(
+    request: Request,
+    context: RequestContext
+  ): Promise<Response> {
+    try {
+      const {db, resolve, mutate, periodicSync, syncPending} = await init
+      const previews = new JWTPreviews(context.apiKey)
+      const url = new URL(request.url)
+      const params = url.searchParams
+      const auth = params.get('auth')
+
+      if (auth) return backend.auth.authenticate(context, request)
+
+      const action = params.get('action') as HandleAction
+
+      const expectJson = () => {
+        const acceptsJson = request.headers
+          .get('accept')
+          ?.includes('application/json')
+        if (!acceptsJson) throw new Response('Expected JSON', {status: 400})
+      }
+
+      const body = PLazy.from(() => {
+        const isJson = request.headers
+          .get('content-type')
+          ?.includes('application/json')
+        if (!isJson) throw new Response('Expected JSON', {status: 400})
+        return request.json()
       })
-      .map(respond),
 
-    // History
+      const verified = PLazy.from(() => backend.auth.verify(context, request))
 
-    matcher
-      .get(Connection.routes.revisions())
-      .map(context)
-      .map(({ctx, url}) => {
-        const api = createApi(ctx)
-        const file = url.searchParams.get('file')!
-        const revisionId = url.searchParams.get('revisionId')
-        return ctx.logger.result<any>(
-          revisionId ? api.revisionData(file, revisionId) : api.revisions(file)
+      const internal = PLazy.from(async function verifyInternal(): Promise<
+        AuthedContext | RequestContext
+      > {
+        try {
+          return await verified
+        } catch {
+          const authorization = request.headers.get('authorization')
+          const bearer = authorization?.slice('Bearer '.length)
+          if (!context.apiKey) throw new Error('Missing API key')
+          if (bearer !== context.apiKey)
+            throw new Error('Expected matching api key')
+          return context
+        }
+      })
+
+      // Sign preview token
+      if (action === HandleAction.PreviewToken && request.method === 'POST') {
+        await verified
+        expectJson()
+        return Response.json(await previews.sign(PreviewBody(await body)))
+      }
+
+      // User
+      if (action === HandleAction.User && request.method === 'GET') {
+        expectJson()
+        try {
+          const {user} = await backend.auth.verify(context, request)
+          return Response.json(user)
+        } catch {
+          return Response.json(null)
+        }
+      }
+
+      // Resolve
+      if (action === HandleAction.Resolve && request.method === 'POST') {
+        const ctx = await internal
+        expectJson()
+        const raw = await request.text()
+        const scope = getScope(cms.config)
+        return Response.json((await resolve(ctx, scope.parse(raw))) ?? null)
+      }
+
+      // Pending
+      if (action === HandleAction.Pending && request.method === 'GET') {
+        const ctx = await internal
+        expectJson()
+        const commitHash = string(url.searchParams.get('commitHash'))
+        return Response.json(await backend.pending?.since(ctx, commitHash))
+      }
+
+      // History
+      if (action === HandleAction.History && request.method === 'GET') {
+        const ctx = await verified
+        expectJson()
+        const file = string(url.searchParams.get('file'))
+        const revisionId = string.nullable(url.searchParams.get('revisionId'))
+        const result = await (revisionId
+          ? backend.history.revision(ctx, file, revisionId)
+          : backend.history.list(ctx, file))
+        return Response.json(result ?? null)
+      }
+
+      // Syncable
+      if (action === HandleAction.Sync && request.method === 'GET') {
+        const ctx = await internal
+        expectJson()
+        const contentHash = string(url.searchParams.get('contentHash'))
+        if ('user' in ctx) await periodicSync(ctx)
+        else await syncPending(context)
+        return Response.json(await db.syncRequired(contentHash))
+      }
+
+      if (action === HandleAction.Sync && request.method === 'POST') {
+        const ctx = await internal
+        expectJson()
+        if ('user' in ctx) await periodicSync(ctx)
+        else await syncPending(context)
+        return Response.json(await db.sync(SyncBody(await body)))
+      }
+
+      // Media
+      if (action === HandleAction.Upload) {
+        const {media} = backend
+        const entryId = url.searchParams.get('entryId')
+        if (!entryId) {
+          const ctx = await verified
+          expectJson()
+          return Response.json(
+            await media.prepareUpload(ctx, PrepareBody(await body).filename)
+          )
+        }
+        const isPost = request.method === 'POST'
+        if (isPost) {
+          if (!media.handleUpload)
+            throw new Response('Bad Request', {status: 400})
+          const ctx = await verified
+          await media.handleUpload(ctx, entryId, await request.blob())
+          return new Response('OK', {status: 200})
+        }
+        if (!media.previewUpload)
+          throw new Response('Bad Request', {status: 400})
+        return media.previewUpload(context, entryId)
+      }
+
+      // Drafts
+      if (action === HandleAction.Draft && request.method === 'GET') {
+        const ctx = await internal
+        expectJson()
+        const entryId = string(url.searchParams.get('entryId'))
+        const draft = await backend.drafts.get(ctx, entryId)
+        return Response.json(
+          draft ? {...draft, draft: base64.stringify(draft.draft)} : null
         )
-      })
-      .map(respond),
+      }
 
-    matcher
-      .post(Connection.routes.resolve())
-      .map(context)
-      .map(router.parseJson)
-      .map(({ctx, body}) => {
-        // This validates the input, and throws if it's invalid
-        const api = createApi(ctx)
-        return ctx.logger.result(api.resolve(ResolveBody(body)))
-      })
-      .map(respond),
+      if (action === HandleAction.Draft && request.method === 'POST') {
+        expectJson()
+        const data = (await body) as DraftTransport
+        const draft = {...data, draft: base64.parse(data.draft)}
+        return Response.json(await backend.drafts.store(await verified, draft))
+      }
 
-    // Target
+      // Target
+      if (action === HandleAction.Mutate && request.method === 'POST') {
+        expectJson()
+        return Response.json(await mutate(await verified, await body))
+      }
+    } catch (error) {
+      if (error instanceof Response) return error
+      console.error(error)
+      return new Response('Internal Server Error', {status: 500})
+    }
 
-    matcher
-      .post(Connection.routes.mutate())
-      .map(context)
-      .map(router.parseJson)
-      .map(({ctx, body}) => {
-        const api = createApi(ctx)
-        if (!Array.isArray(body)) throw new Error('Expected array')
-        // Todo: validate mutations properly
-        return ctx.logger.result(api.mutate(body))
-      })
-      .map(respond),
-
-    // Syncable
-
-    matcher
-      .get(Connection.routes.sync())
-      .map(context)
-      .map(({ctx, url}) => {
-        const api = createApi(ctx)
-        const contentHash = url.searchParams.get('contentHash')!
-        return ctx.logger.result(api.syncRequired(contentHash))
-      })
-      .map(respond),
-
-    matcher
-      .post(Connection.routes.sync())
-      .map(context)
-      .map(router.parseJson)
-      .map(({ctx, body}) => {
-        const api = createApi(ctx)
-        if (!Array.isArray(body)) throw new Error(`Array expected`)
-        const contentHashes = body as Array<string>
-        return ctx.logger.result(api.sync(contentHashes))
-      })
-      .map(respond),
-
-    // Media
-
-    matcher
-      .post(Connection.routes.prepareUpload())
-      .map(context)
-      .map(router.parseJson)
-      .map(({ctx, body}) => {
-        const api = createApi(ctx)
-        const {filename} = PrepareBody(body)
-        return ctx.logger.result(api.prepareUpload(filename))
-      })
-      .map(respond),
-
-    // Drafts
-
-    matcher
-      .get(Connection.routes.draft())
-      .map(context)
-      .map(({ctx, url}) => {
-        const api = createApi(ctx)
-        const entryId = url.searchParams.get('entryId')!
-        return ctx.logger.result(
-          api.getDraft(entryId).then(draft => {
-            if (!draft) return null
-            return {...draft, draft: base64.stringify(draft.draft)}
-          })
-        )
-      })
-      .map(respond),
-
-    matcher
-      .post(Connection.routes.draft())
-      .map(context)
-      .map(router.parseJson)
-      .map(({ctx, body}) => {
-        const api = createApi(ctx)
-        const data = body as DraftTransport
-        const draft = {...data, draft: new Uint8Array(base64.parse(data.draft))}
-        return ctx.logger.result(api.storeDraft(draft))
-      })
-      .map(respond)
-  ).recover(router.reportError)
+    return new Response('Bad Request', {status: 400})
+  }
 }

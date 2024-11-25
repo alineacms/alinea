@@ -1,6 +1,11 @@
-import {HStack, Icon, Loader, fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {resolveView} from 'alinea/core/View'
+import {HStack, Icon, Loader} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
+import {useConfig} from '../hook/UseConfig.js'
+import {useDashboard} from '../hook/UseDashboard.js'
+import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
@@ -14,27 +19,33 @@ import {Sidebar} from '../view/Sidebar.js'
 import {NewEntry} from '../view/entry/NewEntry.js'
 import css from './ContentView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface ContentViewProps {
   editor?: EntryEditor
 }
 
 export function ContentView({editor}: ContentViewProps) {
+  const {views} = useDashboard()
   const workspace = useWorkspace()
   const root = useRoot()
+  const locale = useLocale()
   const {search} = useLocation()
-  const EntryView = editor?.view ?? EntryEdit
-  const RootView = root?.view ?? RootOverview
+  const EntryView =
+    (editor?.view ? resolveView(views, editor.view) : EntryEdit) ?? EntryEdit
+  const RootView =
+    (root?.view ? resolveView(views, root.view) : RootOverview) ?? RootOverview
   const nav = useNav()
   const navigate = useNavigate()
+  const {schema} = useConfig()
+  const type = editor && schema[editor.activeVersion.type]
   return (
     <>
       <Sidebar.Tree>
         <SearchBox />
         {/*<RootHeader active={!editor} />*/}
         <EntryTree
-          i18nId={editor?.activeVersion.i18nId}
+          id={editor?.activeVersion.id}
           selected={editor?.activeVersion.parents}
         />
         <div className={styles.root.create()}>
@@ -43,7 +54,7 @@ export function ContentView({editor}: ContentViewProps) {
             onClick={() =>
               navigate(
                 nav.create({
-                  entryId: editor?.activeVersion.i18nId,
+                  id: editor?.activeVersion.id,
                   workspace: workspace.name,
                   root: root.name
                 })
@@ -60,7 +71,11 @@ export function ContentView({editor}: ContentViewProps) {
       </Sidebar.Tree>
       {search === '?new' && <NewEntry parentId={editor?.entryId} />}
       <SuspenseBoundary name="content view" fallback={<Loader absolute />}>
-        {editor ? <EntryView editor={editor} /> : <RootView root={root} />}
+        {type && editor ? (
+          <EntryView type={type} editor={editor} />
+        ) : (
+          <RootView root={root} />
+        )}
       </SuspenseBoundary>
     </>
   )

@@ -1,9 +1,9 @@
+import styler from '@alinea/styler'
 import {HStack, px} from 'alinea/ui'
-import {fromModule} from 'alinea/ui/util/Styler'
 import {ComponentType, HTMLProps, PropsWithChildren} from 'react'
 import css from './Features.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function Features({
   children,

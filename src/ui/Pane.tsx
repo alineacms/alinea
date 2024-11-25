@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {
   HTMLAttributes,
   MouseEvent as ReactMouseEvent,
@@ -5,9 +6,8 @@ import {
   useRef
 } from 'react'
 import css from './Pane.module.scss'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 type DividerProps = {
   direction: 1 | -1

@@ -1,4 +1,5 @@
-import {Root, Workspace} from 'alinea/core'
+import {Root} from 'alinea/core/Root'
+import {Workspace} from 'alinea/core/Workspace'
 import {keys} from 'alinea/core/util/Objects'
 import {atom, useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
@@ -41,9 +42,9 @@ export const rootAtom = atom(get => {
   throw new Error(`No root found`)
 })
 
-export const preferredLanguageAtom = atomWithStorage<string | undefined>(
+export const preferredLanguageAtom = atomWithStorage<string | null>(
   `@alinea/locale`,
-  undefined
+  null
 )
 
 export const localeAtom = atom(get => {
@@ -51,7 +52,7 @@ export const localeAtom = atom(get => {
   const root = get(rootAtom)
   const config = get(configAtom)
   const {i18n} = root
-  if (!i18n) return
+  if (!i18n) return null
   const match = get(matchAtoms({route: navMatchers.matchRoot, loose: true}))
   const params: Record<string, string | undefined> = match ?? {}
   const {root: rootKey} = params
@@ -62,7 +63,9 @@ export const localeAtom = atom(get => {
   const preferredLanguage = get(preferredLanguageAtom)
   if (preferredLanguage && i18n.locales.includes(preferredLanguage))
     return preferredLanguage
-  return Root.defaultLocale(config.workspaces[workspace.name][root.name])
+  return (
+    Root.defaultLocale(config.workspaces[workspace.name][root.name]) ?? null
+  )
 })
 
 export const entryLocationAtom = atom(get => {

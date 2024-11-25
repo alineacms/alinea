@@ -1,8 +1,8 @@
 import {WebText} from '@/layout/WebText'
-import {BodyBlock} from '@/schema/blocks/BodyField'
+import {bodyField} from '@/schema/fields/BodyField'
+import styler from '@alinea/styler'
 import {Infer} from 'alinea'
-import {fromModule} from 'alinea/ui'
-import {ComponentType, Fragment} from 'react'
+import {ComponentType} from 'react'
 import {ChapterLinkView} from './ChapterLinkView'
 import {CodeBlockView} from './CodeBlockView'
 import {CodeVariantsView} from './CodeVariantsView'
@@ -10,26 +10,16 @@ import {ExampleBlockView} from './ExampleBlockView'
 import {FrameworkBlockView} from './FrameworkBlockView'
 import {ImageBlockView} from './ImageBlockView'
 import {NoticeView} from './NoticeView'
-import css from './TextBlockView.module.scss'
+import css from './TextFieldView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
-export interface BodyViewProps extends Infer<typeof BodyBlock> {
+export interface BodyViewProps {
+  body: Infer<ReturnType<typeof bodyField>>
   container?: ComponentType
 }
 
-export function BodyBlockView({body, container}: BodyViewProps) {
-  const Wrapper = container || Fragment
-  return (
-    <div className={styles.root()}>
-      <Wrapper>
-        <BodyView body={body} />
-      </Wrapper>
-    </div>
-  )
-}
-
-export function BodyView({body}: BodyViewProps) {
+export function BodyFieldView({body}: BodyViewProps) {
   return (
     <WebText
       doc={body}

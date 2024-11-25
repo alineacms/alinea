@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {
   ItemInstance,
   asyncDataLoaderFeature,
@@ -5,14 +6,14 @@ import {
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import {EntryPhase, Type} from 'alinea/core'
-import {Icon, fromModule, px} from 'alinea/ui'
+import {EntryStatus} from 'alinea/core/EntryRow'
+import {getType} from 'alinea/core/Internal'
+import {Icon, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
-import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
-import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
+import {IcRoundVisibilityOff} from 'alinea/ui/icons/IcRoundVisibilityOff'
 import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {changedEntriesAtom} from '../atoms/DbAtoms.js'
@@ -29,9 +30,9 @@ import {useRoot} from '../hook/UseRoot.js'
 import {useNavigate} from '../util/HashRouter.js'
 import css from './EntryTree.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
-function selectedEntry(locale: string | undefined, item: EntryTreeItem) {
+function selectedEntry(locale: string | null, item: EntryTreeItem) {
   return item.entries.find(entry => entry.locale === locale) ?? item.entries[0]
 }
 
@@ -41,7 +42,7 @@ interface EntryTreeItemProps {
 }
 
 function EntryTreeItem({item, data}: EntryTreeItemProps) {
-  const {entryId} = useAtomValue(entryLocationAtom)
+  const {id: id} = useAtomValue(entryLocationAtom)
   const locale = useLocale()
   const {schema} = useConfig()
   const currentData = useRef<EntryTreeItem>(data)
@@ -50,18 +51,21 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
   if (!itemData) return null
   currentData.current = itemData
   const selected = selectedEntry(locale, itemData)
-  const {icon} = Type.meta(schema[selected.type])
-  const isDraft = selected.phase === EntryPhase.Draft
+  const {icon} = getType(schema[selected.type])
+  const isDraft = selected.status === EntryStatus.Draft
   const isUntranslated = locale && selected.locale !== locale
-  const isArchived = selected.phase === EntryPhase.Archived
-  const isSelected = entryId && itemData.id === entryId
+  const isArchived = selected.status === EntryStatus.Archived
+  const isUnpublished = selected.status === EntryStatus.Archived
+  const isSelected = id && itemData.id === id
+
   return (
     <div
       {...item.getProps()}
       ref={item.registerElement}
       className={styles.tree.item({
-        untranslated: isUntranslated,
         selected: isSelected,
+        unpublished: isUnpublished,
+        untranslated: isUntranslated,
         drop: item.isDropTarget() && item.isDraggingOver(),
         dropAbove: item.isDropTargetAbove() && item.isDraggingOver(),
         dropBelow: item.isDropTargetBelow() && item.isDraggingOver()
@@ -77,7 +81,11 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
         <span className={styles.tree.item.icon()}>
           <Icon
             icon={
-              isUntranslated ? IcRoundTranslate : icon ?? IcOutlineDescription
+              isUntranslated
+                ? IcRoundTranslate
+                : isUnpublished
+                ? IcRoundVisibilityOff
+                : icon ?? IcOutlineDescription
             }
           />
         </span>
@@ -85,6 +93,24 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
         <span className={styles.tree.item.label.itemName()}>
           {selectedEntry(locale, itemData).title}
         </span>
+
+        {/* {isUntranslated && (
+          <span className={styles.tree.status({untranslated: true})}>
+            <Icon icon={IcRoundTranslate} size={16} />
+          </span>
+        )} */}
+
+        {/* {!isUntranslated && isDraft && (
+          <span className={styles.tree.status({draft: true})}>
+            <Icon icon={IcRoundEdit} size={16} />
+          </span>
+        )} */}
+
+        {/* {!isUntranslated && isArchived && (
+          <span className={styles.tree.status({archived: true})}>
+            <Icon icon={IcRoundArchive} size={16} />
+          </span>
+        )} */}
 
         {item.isFolder() && (
           <span className={styles.tree.item.arrow()}>
@@ -95,36 +121,19 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
             )}
           </span>
         )}
-
-        {/*isUntranslated && (
-            <span className={styles.tree.status()}>
-              <Icon icon={IcRoundTranslate} />
-            </span>
-          )*/}
-
-        {!isUntranslated && isDraft && (
-          <span className={styles.tree.status({draft: true})}>
-            <Icon icon={IcRoundEdit} />
-          </span>
-        )}
-
-        {!isUntranslated && isArchived && (
-          <span className={styles.tree.status({archived: true})}>
-            <Icon icon={IcRoundArchive} size={18} />
-          </span>
-        )}
       </button>
     </div>
   )
 }
 
 export interface EntryTreeProps {
-  i18nId?: string
+  id?: string
   selected?: Array<string>
 }
 
-export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
+export function EntryTree({id, selected = []}: EntryTreeProps) {
   const root = useRoot()
+  const {schema} = useConfig()
   const treeProvider = useEntryTreeProvider()
   const navigate = useNavigate()
   const nav = useNav()
@@ -141,13 +150,13 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     isItemFolder: item =>
       item.getItemData() && Boolean(item.getItemData().isFolder),
     onPrimaryAction: item => {
-      navigate(nav.entry({entryId: item.getId()}))
+      navigate(nav.entry({id: item.getId()}))
     },
     initialState: {
       expandedItems: selected
     },
     state: {
-      selectedItems: entryId ? [entryId] : []
+      selectedItems: id ? [id] : []
     },
     features: [
       asyncDataLoaderFeature as any,
@@ -169,11 +178,17 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   }, [selected.join()])
   useEffect(() => {
     tree.invalidateChildrenIds(rootId(root.name))
+    for (const item of tree.getItems()) {
+      const typeName: string = item.getItemData()?.type
+      const type = schema[typeName]
+      const {orderChildrenBy} = getType(type)
+      if (orderChildrenBy) tree.invalidateChildrenIds(item.getId())
+    }
   }, [treeProvider])
   useEffect(() => {
-    for (const i18nId of changed) {
+    for (const id of changed) {
       try {
-        const item = tree.getItemInstance(i18nId)
+        const item = tree.getItemInstance(id)
         if (!item) {
           tree.invalidateChildrenIds(rootId(root.name))
           continue
@@ -182,8 +197,8 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
         const parentId = parent?.getId()
         if (parentId) tree.invalidateChildrenIds(parentId)
 
-        tree.invalidateChildrenIds(i18nId)
-        tree.invalidateItemData(i18nId)
+        tree.invalidateChildrenIds(id)
+        tree.invalidateItemData(id)
       } catch (e) {
         console.error(e)
       }

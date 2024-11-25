@@ -1,7 +1,8 @@
-import {Workspace} from 'alinea/core'
+import styler from '@alinea/styler'
+import {Workspace} from 'alinea/core/Workspace'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
-import {select} from 'alinea/input'
-import {HStack, Icon, VStack, fromModule, px} from 'alinea/ui'
+import {select} from 'alinea/field'
+import {HStack, Icon, VStack, px} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcBaselineAccountCircle} from 'alinea/ui/icons/IcBaselineAccountCircle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -28,7 +29,7 @@ import {IconButton} from '../IconButton.js'
 import {Sidebar} from '../Sidebar.js'
 import css from './SidebarSettings.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function SidebarSettings() {
   const session = useSession()
@@ -39,14 +40,13 @@ export function SidebarSettings() {
   const workspaces = Object.entries(config.workspaces)
   const defaultWorkspace = useMemo(
     () =>
-      select(
-        'Default workspace',
-        fromEntries(
+      select('Default workspace', {
+        options: fromEntries(
           entries(config.workspaces).map(([key, workspace]) => {
             return [key, (Workspace.label(workspace) as string) || key]
           })
         )
-      ),
+      }),
     [config.workspaces]
   )
   const toggleSchemePreference = useSetAtom(toggleSchemePreferenceAtom)

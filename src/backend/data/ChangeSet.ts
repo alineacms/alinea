@@ -1,5 +1,8 @@
-import {Config, EntryPhase, EntryUrlMeta, Type, Workspace} from 'alinea/core'
-import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import {Entry} from 'alinea/core'
+import {Config} from 'alinea/core/Config'
+import {EntryRecord, createRecord} from 'alinea/core/EntryRecord'
+import {EntryStatus} from 'alinea/core/EntryRow'
+import {Graph} from 'alinea/core/Graph'
 import {
   ArchiveMutation,
   CreateMutation,
@@ -15,6 +18,9 @@ import {
   RemoveEntryMutation,
   UploadMutation
 } from 'alinea/core/Mutation'
+import {Type} from 'alinea/core/Type'
+import {Workspace} from 'alinea/core/Workspace'
+import {MediaFile} from 'alinea/core/media/MediaTypes'
 import {join} from 'alinea/core/util/Paths'
 import {JsonLoader} from '../loader/JsonLoader.js'
 
@@ -65,22 +71,7 @@ const decoder = new TextDecoder()
 const loader = JsonLoader
 
 export class ChangeSetCreator {
-  constructor(public config: Config) {}
-
-  entryLocation(
-    {locale, parentPaths, path, phase}: EntryUrlMeta,
-    extension: string
-  ) {
-    const segments = (locale ? [locale] : [])
-      .concat(
-        parentPaths
-          .concat(path)
-          .map(segment => (segment === '' ? 'index' : segment))
-      )
-      .join('/')
-    const phaseSegment = phase === EntryPhase.Published ? '' : `.${phase}`
-    return (segments + phaseSegment + extension).toLowerCase()
-  }
+  constructor(protected config: Config, protected graph: Graph) {}
 
   editChanges({previousFile, file, entry}: EditMutation): Array<Change> {
     const type = this.config.schema[entry.type]
@@ -123,8 +114,8 @@ export class ChangeSetCreator {
   }
 
   publishChanges({file}: PublishMutation): Array<Change> {
-    const draftFile = `.${EntryPhase.Draft}.json`
-    const archivedFiled = `.${EntryPhase.Archived}.json`
+    const draftFile = `.${EntryStatus.Draft}.json`
+    const archivedFiled = `.${EntryStatus.Archived}.json`
     if (file.endsWith(draftFile))
       return [
         {
@@ -152,31 +143,67 @@ export class ChangeSetCreator {
       {
         type: ChangeType.Rename,
         from: file,
-        to: file.slice(0, -fileEnd.length) + `.${EntryPhase.Archived}.json`
+        to: file.slice(0, -fileEnd.length) + `.${EntryStatus.Archived}.json`
       }
     ]
   }
 
-  removeChanges({file}: RemoveEntryMutation): Array<Change> {
-    if (!file.endsWith(`.${EntryPhase.Archived}.json`)) return []
+  async removeChanges({
+    entryId,
+    file
+  }: RemoveEntryMutation): Promise<Array<Change>> {
+    if (!file.endsWith(`.${EntryStatus.Archived}.json`)) return []
+    const result = await this.graph.first({
+      select: {
+        workspace: Entry.workspace,
+        files: {
+          type: MediaFile,
+          children: {depth: 999},
+          select: {location: MediaFile.location}
+        }
+      },
+      id: entryId,
+      status: 'preferPublished'
+    })
+    if (!result) return []
+    const {files, workspace} = result
+    const mediaDir =
+      Workspace.data(this.config.workspaces[workspace])?.mediaDir ?? ''
+    const removeFiles: Array<Change> = files.map(file => {
+      const binaryLocation = join(mediaDir, file.location)
+      return {
+        type: ChangeType.Delete,
+        file: binaryLocation
+      }
+    })
     return [
+      // Remove any media files in this location
+      ...removeFiles,
+      // Remove entry
       {type: ChangeType.Delete, file},
+      // Remove children
       {
         type: ChangeType.Delete,
-        file: file.slice(0, -`.${EntryPhase.Archived}.json`.length)
+        file: file.slice(0, -`.${EntryStatus.Archived}.json`.length)
       }
     ]
   }
 
   discardChanges({file}: DiscardDraftMutation): Array<Change> {
-    const fileEnd = `.${EntryPhase.Draft}.json`
+    const fileEnd = `.${EntryStatus.Draft}.json`
     if (!file.endsWith(fileEnd))
       throw new Error(`Cannot discard non-draft file: ${file}`)
     return [{type: ChangeType.Delete, file}]
   }
 
   orderChanges({file, index}: OrderMutation): Array<Change> {
-    return [{type: ChangeType.Patch, file, patch: {[META_KEY]: {index}}}]
+    return [
+      {
+        type: ChangeType.Patch,
+        file,
+        patch: {[EntryRecord.index]: index}
+      }
+    ]
   }
 
   moveChanges({
@@ -221,7 +248,7 @@ export class ChangeSetCreator {
     return [{type: ChangeType.Delete, file: mutation.file}, removeBinary]
   }
 
-  mutationChanges(mutation: Mutation): Array<Change> {
+  async mutationChanges(mutation: Mutation): Promise<Array<Change>> {
     switch (mutation.type) {
       case MutationType.Edit:
         return this.editChanges(mutation)
@@ -248,9 +275,10 @@ export class ChangeSetCreator {
     }
   }
 
-  create(mutations: Array<Mutation>): ChangeSet {
-    return mutations.map(meta => {
-      return {changes: this.mutationChanges(meta), meta}
-    })
+  async create(mutations: Array<Mutation>): Promise<ChangeSet> {
+    const res = []
+    for (const meta of mutations)
+      res.push({changes: await this.mutationChanges(meta), meta})
+    return res
   }
 }

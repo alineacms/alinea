@@ -22,6 +22,8 @@
   --alinea-fields-outline: var(--alinea-inner-outline);
   --alinea-fields-selected: var(--alinea-fields);
   --alinea-fields-focus: hsl(var(--alinea-hue), var(--alinea-saturation), 30%);
+  --alinea-fields-table: #3a4652;
+  --alinea-fields-header: #21282f;
   --alinea-focus-foreground: hsl(var(--alinea-negative));
   --alinea-content: linear-gradient(
     to bottom,
@@ -85,6 +87,8 @@
   --alinea-fields-selected: white;
   --alinea-fields-focus: var(--alinea-outline);
   --alinea-focus-foreground: var(--alinea-accent);
+  --alinea-fields-table: #ddd;
+  --alinea-fields-header: #f9f9f9;
   --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.2),

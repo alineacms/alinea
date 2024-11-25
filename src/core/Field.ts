@@ -1,10 +1,10 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
-import {Expr} from 'alinea/core/pages/Expr'
-import type {ComponentType} from 'react'
-import {Hint} from './Hint.js'
+import {Expr} from './Expr.js'
+import {getField, hasField, HasField, internalField} from './Internal.js'
 import {Shape} from './Shape.js'
+import {View} from './View.js'
 
-export interface FieldOptions<Value> {
+export interface FieldOptions<StoredValue> {
   /** A description of the field */
   label: string
   /** Hide this field in the dashboard */
@@ -12,13 +12,13 @@ export interface FieldOptions<Value> {
   /** Mark this field as read-only */
   readOnly?: boolean
   /** The initial value of the field */
-  initialValue?: Value
+  initialValue?: StoredValue
   /** The value of this field is shared across all languages */
   shared?: boolean
   /** Providing a value for this field is required */
   required?: boolean
   /** Validate the given value */
-  validate?(value: Value): boolean | string | undefined
+  validate?(value: StoredValue): boolean | string | undefined
 }
 
 export type WithoutLabel<Options extends FieldOptions<any>> = Omit<
@@ -26,93 +26,91 @@ export type WithoutLabel<Options extends FieldOptions<any>> = Omit<
   'label'
 >
 
-export interface FieldMeta<
-  Value,
-  Mutator,
-  Options extends FieldOptions<Value>
-> {
-  hint: Hint
-  options: Options
-  view?: FieldView<Value, Mutator, Options>
-  postProcess?: (value: Value, loader: LinkResolver) => Promise<void>
+export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
+  options: Options & FieldOptions<StoredValue>
+  view: View<{
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  }>
+  postProcess?: (value: StoredValue, loader: LinkResolver) => Promise<void>
 }
 
-export interface FieldData<Value, Mutator, Options extends FieldOptions<Value>>
-  extends FieldMeta<Value, Mutator, Options> {
-  shape: Shape<Value, Mutator>
+export interface FieldData<StoredValue, QueryValue, Mutator, Options>
+  extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
+  shape: Shape<StoredValue, Mutator>
+  referencedViews: Array<string>
 }
 
-export type FieldView<
-  Value,
-  Mutator,
-  Options extends FieldOptions<Value>
-> = ComponentType<{
-  field: Field<Value, Mutator, Options>
-}>
-
-export interface Field<Value, Mutator, Options extends FieldOptions<Value>>
-  extends Expr<Value> {
-  [Field.Data]: FieldData<Value, Mutator, Options>
-  [Field.Ref]: symbol
+export interface FieldInternal extends FieldData<any, any, any, any> {
+  ref: symbol
 }
 
+declare const brand: unique symbol
 export class Field<
-  Value = any,
-  Mutator = any,
-  Options extends FieldOptions<Value> = FieldOptions<Value>
-> {
-  static index = 0
-  constructor(data: FieldData<Value, Mutator, Options>) {
-    this[Field.Data] = data
-    this[Field.Ref] = Symbol(`Field.${data.options.label}.${Field.index++}`)
+    StoredValue = any,
+    QueryValue = any,
+    Mutator = any,
+    Options = any
+  >
+  extends Expr<QueryValue>
+  implements HasField
+{
+  declare [brand]: [StoredValue, QueryValue, Mutator, Options];
+
+  [internalField]: FieldInternal
+  constructor(data: FieldData<StoredValue, QueryValue, Mutator, Options>) {
+    super({type: 'field'})
+    this[internalField] = {ref: Symbol(), ...data}
   }
 }
 
 export namespace Field {
-  export const Data = Symbol.for('@alinea/Field.Data')
-  export const Ref = Symbol.for('@alinea/Field.Self')
-
-  export function provideView<
-    Value,
-    Mutator,
-    Options extends FieldOptions<Value>,
-    Factory extends (...args: Array<any>) => Field<Value, Mutator, Options>
-  >(view: FieldView<Value, Mutator, Options>, factory: Factory): Factory {
-    return ((...args: Array<any>) =>
-      new Field({...factory(...args)[Field.Data], view})) as Factory
-  }
-
   // Todo: because we wrap fields in an Expr proxy we need this
   // reference - but maybe we shouldn't wrap in the future
-  export function ref(field: Field): symbol {
-    return field[Field.Ref]
+  export function ref(field: HasField): symbol {
+    return getField(field).ref
   }
 
-  export function shape(field: Field<any, any>): Shape {
-    return field[Field.Data].shape
+  export function shape(field: HasField): Shape {
+    return getField(field).shape
   }
 
-  export function hint(field: Field): Hint {
-    return field[Field.Data].hint
+  export function label(field: HasField): string {
+    return getField(field).options.label
   }
 
-  export function label(field: Field): string {
-    return field[Field.Data].options.label
+  export function initialValue(field: HasField): unknown {
+    return getField(field).options.initialValue
   }
 
-  export function view<Value, Mutator, Options extends FieldOptions<Value>>(
-    field: Field<Value, Mutator, Options>
-  ): FieldView<Value, Mutator, Options> | undefined {
-    return field[Field.Data].view
+  export function view<
+    StoredValue,
+    QueryValue,
+    Mutator,
+    Options extends FieldOptions<StoredValue>
+  >(
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  ): View<{
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  }> {
+    return getField(field).view
   }
 
-  export function options<Value, Options extends FieldOptions<Value>>(
-    field: Field<Value, any, Options>
-  ): Options {
-    return field[Field.Data].options
+  export function referencedViews(field: Field): Array<string> {
+    const fieldView = Field.view(field)
+    if (typeof fieldView === 'string')
+      return [fieldView, ...getField(field).referencedViews]
+    return getField(field).referencedViews
+  }
+
+  export function options<
+    StoredValue,
+    QueryValue,
+    Options extends FieldOptions<StoredValue>
+  >(field: Field<StoredValue, QueryValue, any, Options>): Options {
+    return getField(field).options
   }
 
   export function isField(value: any): value is Field {
-    return value && Boolean(value[Field.Data])
+    return value && hasField(value)
   }
 }

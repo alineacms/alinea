@@ -3,16 +3,51 @@ import * as Y from 'yjs'
 import {Entry} from '../Entry.js'
 import {Label} from '../Label.js'
 import {Shape} from '../Shape.js'
-import {TextDoc, TextNode} from '../TextDoc.js'
-import type {Expr} from '../pages/Expr.js'
+import {
+  BlockNode,
+  ElementNode,
+  LinkMark,
+  Mark,
+  Node,
+  TextDoc,
+  TextNode
+} from '../TextDoc.js'
+import {MediaFile} from '../media/MediaTypes.js'
 import {entries, fromEntries, keys} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
 import {ScalarShape} from './ScalarShape.js'
 
+export enum RichTextElements {
+  h1 = 'h1',
+  h2 = 'h2',
+  h3 = 'h3',
+  h4 = 'h4',
+  h5 = 'h5',
+  h6 = 'h6',
+  p = 'p',
+  b = 'b',
+  i = 'i',
+  ul = 'ul',
+  ol = 'ol',
+  li = 'li',
+  a = 'a',
+  blockquote = 'blockquote',
+  hr = 'hr',
+  br = 'br',
+  small = 'small',
+  sup = 'sup',
+  sub = 'sub',
+  table = 'table',
+  tbody = 'tbody',
+  td = 'td',
+  th = 'th',
+  tr = 'tr'
+}
+
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
 function serialize(
   item: Y.XmlElement | Y.XmlText | Y.XmlHook
-): TextNode | Array<TextNode> {
+): Node | Array<Node> {
   // Todo: what is this thing?
   if (item instanceof Y.XmlHook) {
     return []
@@ -21,22 +56,29 @@ function serialize(
     const delta: Array<{insert: any; attributes: Record<string, any>}> =
       item.toDelta()
     return delta.map(d => {
-      const text: TextNode.Text = {
-        type: 'text',
-        text: d.insert
+      const text: TextNode = {
+        [Node.type]: 'text',
+        [TextNode.text]: d.insert
       }
       if (d.attributes) {
         text.marks = Object.keys(d.attributes).map(type => {
           const attrs = d.attributes[type]
-          const mark: TextNode.Mark = {type}
-          if (attrs && Object.keys(attrs).length) mark.attrs = attrs
+          const mark: Mark = {[Mark.type]: type}
+          if (attrs)
+            for (const [key, value] of Object.entries(attrs)) {
+              if (typeof value !== 'string') continue
+              if (key.startsWith('data-'))
+                mark[`_${key.slice('data-'.length)}`] = value
+              else mark[key] = value
+            }
           return mark
         })
       }
       return text
     })
   }
-  const res: TextNode.Element = {type: item.nodeName}
+  const res: ElementNode = {[Node.type]: item.nodeName}
+  if (typeof item.getAttributes !== 'function') return res
   const attrs = item.getAttributes()
   if (attrs && Object.keys(attrs).length) Object.assign(res, attrs)
   const children = item.toArray()
@@ -46,29 +88,46 @@ function serialize(
   return res
 }
 
-function unserializeMarks(marks: Array<TextNode.Mark>) {
-  return Object.fromEntries(marks.map(mark => [mark.type, {...mark.attrs}]))
+function unserializeMarks(marks: Array<Mark>) {
+  return Object.fromEntries(
+    marks.map(mark => {
+      const {[Mark.type]: type, ...attrs} = mark
+      const res = Object.fromEntries(
+        Object.entries(attrs).map(([key, value]) => {
+          if (key.startsWith('_')) return [`data-${key.slice(1)}`, value]
+          return [key, value]
+        })
+      )
+      return [type, res]
+    })
+  )
 }
 
-function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
-  switch (node.type) {
-    case 'text': {
-      const {text, marks} = node as TextNode.Text
+function unserialize(nodes: Array<Node>): Array<Y.XmlText | Y.XmlElement> {
+  const result = []
+  for (const node of nodes) {
+    if (Node.isText(node)) {
+      const text = node[TextNode.text]
+      const marks = node[TextNode.marks]
       const type = new Y.XmlText()
       if (text) type.insert(0, text, marks && unserializeMarks(marks))
-      return type
-    }
-    default: {
-      const {type, content, ...attrs} = node as TextNode.Element
+      result.push(type)
+    } else if (Node.isElement(node)) {
+      const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
       const element = new Y.XmlElement(type)
       for (const key in attrs) {
         const val = attrs[key]
         if (val) element.setAttribute(key, val)
       }
-      if (content) element.insert(0, content.map(unserialize))
-      return element
+      if (content) element.insert(0, unserialize(content))
+      result.push(element)
+    } else if (Node.isBlock(node)) {
+      const element = new Y.XmlElement(node[Node.type])
+      element.setAttribute(BlockNode.id, node[BlockNode.id])
+      result.push(element)
     }
   }
+  return result
 }
 
 export type RichTextMutator<R> = {
@@ -87,29 +146,30 @@ export interface TextDocSelected<Blocks> {
   linked: Array<{id: string; url: string}>
 }
 
-let linkInfoFields = undefined! as {
-  url: Expr<string>
-  location: Expr<string>
+const linkInfoFields = {
+  url: Entry.url,
+  location: MediaFile.location
 }
 
 export class RichTextShape<Blocks>
   implements Shape<TextDoc<Blocks>, RichTextMutator<Blocks>>
 {
-  values: Record<string, RecordShape>
+  blocks: Record<string, RecordShape>
   constructor(
     public label: Label,
     public shapes?: Record<string, RecordShape>,
     public initialValue?: TextDoc<Blocks>,
     public searchable?: boolean
   ) {
-    this.values = shapes
+    this.blocks = shapes
       ? fromEntries(
           entries(shapes).map(([key, value]) => {
             return [
               key,
               new RecordShape(value.label, {
-                type: new ScalarShape('Type'),
-                ...value.properties
+                [Node.type]: new ScalarShape('Type'),
+                [BlockNode.id]: new ScalarShape('Id'),
+                ...value.shapes
               })
             ]
           })
@@ -120,85 +180,134 @@ export class RichTextShape<Blocks>
     return this.initialValue ?? ([] as TextDoc<Blocks>)
   }
   toXml(rows: TextDoc<Blocks>) {
-    const types = this.values
-    return rows
-      .map(row => {
-        return row.type in types ? {type: row.type, id: (row as any).id} : row
-      })
-      .map(unserialize)
+    return unserialize(rows)
+  }
+  toV1(value: any): TextDoc<Blocks> {
+    if (!Array.isArray(value)) return []
+    return value.map(this.normalizeRow)
+  }
+  private normalizeRow = (row: Node) => {
+    if (Node.type in row) return row
+    const {type, ...data} = row as any
+    if (type === 'text') {
+      const updated = {[Node.type]: 'text', [TextNode.text]: data.text}
+      if (!data.marks) return updated
+      return {
+        ...updated,
+        [TextNode.marks]: data.marks.map((mark: any) => {
+          const {type, attrs} = mark
+          if (type !== 'link') return {[Mark.type]: type, ...attrs}
+          const {
+            ['data-id']: id,
+            ['data-entry']: entry,
+            ['data-type']: link,
+            ...rest
+          } = attrs
+          const res: Record<string, string> = {}
+          if (type) res[Mark.type] = type
+          if (id) res[LinkMark.id] = id
+          if (entry) res[LinkMark.entry] = entry
+          if (link) res[LinkMark.link] = link
+          for (const [key, value] of entries(rest))
+            if (typeof value === 'string') res[key] = rest[key]
+          return res
+        })
+      }
+    }
+
+    const shape = this.blocks[type]
+    if (shape) {
+      return {
+        [Node.type]: type,
+        [BlockNode.id]: data.id,
+        ...shape.toV1(data)
+      }
+    }
+    const {content, ...rest} = data
+    if (type === 'heading' && rest.textAlign === 'left') delete rest.textAlign
+    const res = {[Node.type]: type, ...rest}
+    if (content) res[ElementNode.content] = content.map(this.normalizeRow)
+    return res
   }
   toY(value: TextDoc<Blocks>) {
     const map = new Y.Map()
     const text = new Y.XmlFragment()
     map.set('$text', text)
-    const types = this.values
+    const types = this.blocks
     if (!Array.isArray(value)) return map
     for (const node of value) {
-      const type = types[node.type]
-      if (type && 'id' in node) map.set(node.id, type.toY(node as any))
+      if (!Node.isBlock(node)) continue
+      const type = types[node[Node.type]]
+      map.set(node[BlockNode.id], type.toY(node))
     }
     text.insert(0, this.toXml(value))
     return map
   }
-  fromY(value: Y.Map<any>): TextDoc<Blocks> {
-    if (!value) return []
-    const text: Y.XmlFragment = value.get('$text')
-    const types = this.values ?? {}
+  fromY(map: Y.Map<any>): TextDoc<Blocks> {
+    if (!map) return []
+    const text: Y.XmlFragment = map.get('$text')
+    const types = this.blocks ?? {}
     const content = text?.toArray()?.map(serialize)?.flat() || []
+    const [first] = content
     const isEmpty =
       content.length === 1 &&
-      content[0].type === 'paragraph' &&
-      content[0].content?.length === 0
+      Node.isElement(first) &&
+      first[Node.type] === 'paragraph' &&
+      first[ElementNode.content]?.length === 0
     if (isEmpty) return []
-    return content.map((node): TextNode<Blocks> => {
-      const shape = types[node.type]
-      if (shape && 'id' in node) {
-        return {
-          id: node.id,
-          type: node.type,
-          ...shape.fromY(value.get(node.id))
-        } as TextNode.Element<Blocks>
+    return content.map((node): Node => {
+      if (Node.isBlock(node)) {
+        const shape = types[node[Node.type]]
+        if (shape)
+          return {
+            [Node.type]: node[Node.type],
+            [BlockNode.id]: node[BlockNode.id],
+            ...shape.fromY(map.get(node[BlockNode.id]))
+          } satisfies BlockNode
       }
-      return node as TextNode<Blocks>
+      if (Node.isElement(node)) {
+        if (node[Node.type] === 'heading') {
+          if (node.textAlign === 'left') delete node.textAlign
+        }
+      }
+      return node
     })
   }
   applyY(value: TextDoc<Blocks>, parent: Y.Map<any>, key: string): void {
     // Sync blocks
     const current: Y.Map<any> | undefined = parent.get(key)
     if (!current || !value) return void parent.set(key, this.toY(value))
-    const blocks = value.filter(
-      row => this.values?.[row.type] && 'id' in row
-    ) as Array<TextNode.Element<any>>
+    const blocks = value.filter(Node.isBlock)
     const currentKeys = new Set(
       [...current.keys()].filter(key => key !== '$text')
     )
-    const valueKeys = new Set(blocks.map(row => row.id))
+    const valueKeys = new Set(blocks.map(row => row[BlockNode.id]))
     const removed = [...currentKeys].filter(key => !valueKeys.has(key))
     const added = [...valueKeys].filter(key => !currentKeys.has(key))
     const changed = [...valueKeys].filter(key => currentKeys.has(key))
     for (const id of removed) current.delete(id)
     for (const id of added) {
-      const row = blocks.find(row => row.id === id)
+      const row = blocks.find(row => row[BlockNode.id] === id)
       if (!row) continue
-      const type = row.type
-      const rowType = this.values[type]
+      const type = row[Node.type]
+      const rowType = this.blocks[type]
       if (!rowType) continue
       current.set(id, rowType.toY(row))
     }
     for (const id of changed) {
-      const row = blocks.find(row => row.id === id)
+      const row = blocks.find(row => row[BlockNode.id] === id)
       if (!row) continue
-      const type = row.type
+      const type = row[Node.type]
       const currentRow = current.get(id)
       if (!currentRow) continue
-      const currentType = currentRow.get('type')
+      const currentType = currentRow.get(Node.type)
       // This shouldn't normally happen unless we manually change the type
       if (currentType !== type) {
         current.delete(id)
-        current.set(id, this.values[type].toY(row))
+        current.set(id, this.blocks[type].toY(row))
         continue
       }
-      const rowType = this.values[type]
+      const rowType = this.blocks[type]
       if (!rowType) continue
       rowType.applyY(row, current, id)
     }
@@ -206,7 +315,7 @@ export class RichTextShape<Blocks>
     // Sync text by simply matching each row.
     // Todo: This must be improved by diffing to enable continuous editing
     // during deploys without losing all text context
-    function syncText(source: Y.XmlText, target: TextNode.Text) {
+    function syncText(source: Y.XmlText, target: TextNode) {
       const {text = '', marks = []} = target
       const str = Y.Text.prototype.toString.call(source)
       if (text === str) {
@@ -216,19 +325,17 @@ export class RichTextShape<Blocks>
         source.insert(0, text, unserializeMarks(marks))
       }
     }
-    const syncElement = (
-      source: Y.XmlElement,
-      target: TextNode.Element<any>
-    ) => {
-      const {type, content, ...attrs} = target
-      const isBlock = type in this.values
-      const keysToHandle = isBlock ? ['id'] : keys(attrs)
-      for (const key of keysToHandle)
+    const syncElement = (source: Y.XmlElement, target: ElementNode) => {
+      const {[Node.type]: type, content, ...attrs} = target
+      const keysToHandle = keys(attrs)
+      for (const key of keys(attrs))
         source.setAttribute(key, attrs[key] as string)
-      if (isBlock) return
       for (const key of keys(source.getAttributes()))
         if (!keysToHandle.includes(key)) source.removeAttribute(key)
       syncNodes(source, content ?? [])
+    }
+    const syncBlock = (source: Y.XmlElement, target: BlockNode) => {
+      source.setAttribute(BlockNode.id, target[BlockNode.id])
     }
     const syncNodes = (source: Y.XmlElement, value: TextDoc<any>) => {
       let i = 0
@@ -240,17 +347,19 @@ export class RichTextShape<Blocks>
           continue
         }
         const typeA = node instanceof Y.XmlText ? 'text' : node.nodeName
-        const typeB = row.type
+        const typeB = row[Node.type]
         if (typeA !== typeB) {
           source.delete(i)
           source.insert(i, this.toXml([row]))
           continue
         }
-        if (typeA === 'text') {
-          syncText(node as Y.XmlText, row as TextNode.Text)
-          continue
+        if (Node.isText(row)) {
+          syncText(node as Y.XmlText, row)
+        } else if (Node.isElement(row)) {
+          syncElement(node as Y.XmlElement, row)
+        } else if (Node.isBlock(row)) {
+          syncBlock(node as Y.XmlElement, row)
         }
-        syncElement(node as Y.XmlElement, row as TextNode.Element<any>)
       }
       while (source.length > i) source.delete(i)
     }
@@ -276,43 +385,44 @@ export class RichTextShape<Blocks>
       map,
       fragment: map.get('$text'),
       insert: (id: string, block: string) => {
-        if (!this.values) throw new Error('No types defined')
-        const shape = this.values[block]
-        const row = {...shape.create(), id, type: block}
-        map.set(id, shape.toY(row))
+        if (!this.blocks) throw new Error('No types defined')
+        const shape = this.blocks[block]
+        map.set(
+          id,
+          shape.toY({
+            ...shape.create(),
+            [Node.type]: block,
+            [BlockNode.id]: id
+          })
+        )
       }
     }
   }
   async applyLinks(doc: TextDoc<Blocks>, loader: LinkResolver): Promise<void> {
     if (!Array.isArray(doc)) return
-    const links = new Map<TextNode.Mark, string>()
+    const links = new Map<Mark, string>()
     iterMarks(doc, mark => {
-      if (mark.type !== 'link') return
-      const id = mark.attrs!['data-entry']
-      if (id) links.set(mark, id)
+      if (mark[Mark.type] !== 'link') return
+      const entryId = mark[LinkMark.entry]
+      if (entryId) links.set(mark, entryId)
     })
     async function loadLinks() {
       const linkIds = Array.from(new Set(links.values()))
-      linkInfoFields ??= {
-        url: Entry.url,
-        // This is MediaFile.location - but we're avoiding circular imports here
-        location: (Entry.data as any).get('location')
-      }
       const entries = await loader.resolveLinks(linkInfoFields, linkIds)
       const info = new Map(linkIds.map((id, i) => [id, entries[i]]))
-      for (const [mark, id] of links) {
-        const type = mark.attrs!['data-type'] as 'entry' | 'file' | undefined
-        const data = info.get(id)
-        if (data)
-          mark.attrs!['href'] = type === 'file' ? data.location : data.url
+      for (const [mark, entryId] of links) {
+        const type = mark![LinkMark.link] as 'entry' | 'file' | undefined
+        const data = info.get(entryId)
+        if (data) mark!['href'] = type === 'file' ? data.location : data.url
       }
     }
     await Promise.all(
       [loadLinks()].concat(
         doc.flatMap(row => {
-          const subType = this.values?.[row.type]
-          if (!subType) return []
-          return [subType.applyLinks(row, loader)]
+          if (!this.blocks || !Node.isBlock(row)) return []
+          const shape = this.blocks[row[Node.type]]
+          if (!shape) return []
+          return [shape.applyLinks(row, loader)]
         })
       )
     )
@@ -327,56 +437,24 @@ export class RichTextShape<Blocks>
     }, '')
   }
 
-  textOf(node: TextNode<any>): string {
-    if (this.values[node.type]) {
-      const shape = this.values[node.type]
-      return shape.searchableText(node)
-    }
-    if (node.type === 'text') return node.text ? ' ' + node.text : ''
-    if ('content' in node && Array.isArray(node.content)) {
+  textOf(node: Node): string {
+    if (Node.isText(node)) {
+      return node.text ? ' ' + node.text : ''
+    } else if (Node.isElement(node) && node.content) {
       return node.content.reduce((acc, node) => {
         return acc + this.textOf(node)
       }, '')
+    } else if (Node.isBlock(node)) {
+      const shape = this.blocks[node[Node.type]]
+      if (shape) return shape.searchableText(node)
     }
     return ''
   }
 }
 
-function iterMarks(doc: TextDoc<any>, fn: (mark: TextNode.Mark) => void) {
+function iterMarks(doc: TextDoc<any>, fn: (mark: Mark) => void) {
   for (const row of doc) {
-    if (row.marks) row.marks.forEach(fn)
-    if (!TextNode.isElement(row)) continue
-    if (row.content) iterMarks(row.content, fn)
+    if (Node.isText(row)) row.marks?.forEach(fn)
+    else if (Node.isElement(row) && row.content) iterMarks(row.content, fn)
   }
 }
-
-/*
-
-HTML parser 
-
-const fragment = new Y.XmlFragment()
-if (typeof value !== 'string') return fragment
-let parents: Array<Y.XmlFragment> = [fragment]
-const parser = new Parser({
-  onopentag(name, attributes) {
-    const node = new Y.XmlElement(name)
-    for (const key of Object.keys(attributes))
-      node.setAttribute(key, attributes[key])
-    const parent = parents[parents.length - 1]
-    parent.insert(parent.length, [node])
-    parents.push(node)
-  },
-  ontext(text) {
-    const parent = parents[parents.length - 1]
-    parent.insert(parent.length, [new Y.XmlText(text)])
-  },
-  onclosetag() {
-    parents.pop()
-  }
-})
-parser.write(value)
-parser.end()
-return fragment
-
-
-*/

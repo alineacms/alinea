@@ -1,19 +1,16 @@
-import {Media} from 'alinea/backend/Media'
-import {createFileHash} from 'alinea/backend/util/ContentHash'
-import {
-  Connection,
-  Entry,
-  EntryPhase,
-  EntryRow,
-  HttpError,
-  Workspace,
-  slugify
-} from 'alinea/core'
-import {entryFileName, entryFilepath} from 'alinea/core/EntryFilenames'
+import {Connection} from 'alinea/core/Connection'
+import {Entry} from 'alinea/core/Entry'
+import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
+import {HttpError} from 'alinea/core/HttpError'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
-import {base64} from 'alinea/core/util/Encoding'
+import {Workspace} from 'alinea/core/Workspace'
+import {createPreview} from 'alinea/core/media/CreatePreview.browser'
+import {isImage} from 'alinea/core/media/IsImage'
+import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
+import {type MediaFile} from 'alinea/core/media/MediaTypes'
+import {createFileHash} from 'alinea/core/util/ContentHash'
+import {entryFileName, entryFilepath} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {
@@ -23,12 +20,10 @@ import {
   join,
   normalize
 } from 'alinea/core/util/Paths'
-import {rgba, toHex} from 'color2k'
+import {slugify} from 'alinea/core/util/Slugs'
 import {atom, useAtom, useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
 import {useEffect} from 'react'
-import smartcrop from 'smartcrop'
-import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {useMutate} from '../atoms/DbAtoms.js'
 import {errorAtom} from '../atoms/ErrorAtoms.js'
 import {withResolvers} from '../util/WithResolvers.js'
@@ -65,7 +60,7 @@ export interface Upload {
   thumbHash?: string
   width?: number
   height?: number
-  result?: Media.File
+  result?: EntryRow<MediaFile>
   error?: Error
   replace?: {entry: EntryRow; entryFile: string}
 }
@@ -85,78 +80,20 @@ const tasker = {
 
 async function process(
   upload: Upload,
-  publishUpload: (upload: Upload) => Promise<Media.File>,
+  publishUpload: (upload: Upload) => Promise<EntryRow<MediaFile>>,
   client: Connection
 ): Promise<Upload> {
   switch (upload.status) {
     case UploadStatus.Queued:
-      const isImage = Media.isImage(upload.file.name)
-      const next = isImage
+      const next = isImage(upload.file.name)
         ? UploadStatus.CreatingPreview
         : UploadStatus.Uploading
       return {...upload, status: next}
     case UploadStatus.CreatingPreview: {
-      const url = URL.createObjectURL(upload.file)
-
-      // Load the image
-      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const image = new Image()
-        image.onload = () => resolve(image)
-        image.onerror = err => reject(err)
-        image.src = url
-      }).finally(() => URL.revokeObjectURL(url))
-
-      const size = Math.max(image.width, image.height)
-
-      // Scale the image to 100x100 maximum size
-      const thumbW = Math.round((100 * image.width) / size)
-      const thumbH = Math.round((100 * image.height) / size)
-      const thumbCanvas = document.createElement('canvas')
-      const thumbContext = thumbCanvas.getContext('2d')!
-      thumbCanvas.width = thumbW
-      thumbCanvas.height = thumbH
-      thumbContext.drawImage(image, 0, 0, thumbW, thumbH)
-
-      // Calculate thumbhash
-      const pixels = thumbContext.getImageData(0, 0, thumbW, thumbH)
-      const thumbHash = rgbaToThumbHash(thumbW, thumbH, pixels.data)
-
-      // Get the average color via thumbhash
-      const {r, g, b, a} = thumbHashToAverageRGBA(thumbHash)
-      const averageColor = toHex(rgba(r * 255, g * 255, b * 255, a))
-
-      // Create webp preview image
-      const previewW = Math.min(
-        Math.round((160 * image.width) / size),
-        image.width
-      )
-      const previewH = Math.min(
-        Math.round((160 * image.height) / size),
-        image.height
-      )
-      const previewCanvas = document.createElement('canvas')
-      const previewContext = previewCanvas.getContext('2d')!
-      previewContext.imageSmoothingEnabled = true
-      previewContext.imageSmoothingQuality = 'high'
-      previewCanvas.width = previewW
-      previewCanvas.height = previewH
-      previewContext.drawImage(image, 0, 0, previewW, previewH)
-      const preview = previewCanvas.toDataURL('image/webp')
-
-      const crop = await smartcrop.crop(image, {width: 100, height: 100})
-      const focus = {
-        x: (crop.topCrop.x + crop.topCrop.width / 2) / image.width,
-        y: (crop.topCrop.y + crop.topCrop.height / 2) / image.height
-      }
-
+      const previewData = await createPreview(upload.file)
       return {
         ...upload,
-        preview,
-        averageColor,
-        focus,
-        thumbHash: base64.stringify(thumbHash),
-        width: image.naturalWidth,
-        height: image.naturalHeight,
+        ...previewData,
         status: UploadStatus.Uploading
       }
     }
@@ -166,8 +103,8 @@ async function process(
       const path = slugify(basename(fileName, extension))
       const file = join(upload.to.directory, path + extension)
       const info = await client.prepareUpload(file)
-      await fetch(info.upload.url, {
-        method: info.upload.method ?? 'POST',
+      await fetch(info.url, {
+        method: info.method ?? 'POST',
         body: upload.file
       }).then(async result => {
         if (!result.ok)
@@ -179,8 +116,6 @@ async function process(
       return {...upload, info, status: UploadStatus.Uploaded}
     }
     case UploadStatus.Uploaded: {
-      const {replace} = upload
-      const info = upload.info!
       const entry = await publishUpload(upload)
       return {...upload, result: entry, status: UploadStatus.Done}
     }
@@ -236,28 +171,35 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const entryId = upload.info?.entryId ?? createId()
     const {parentId} = upload.to
     const buffer = await upload.file.arrayBuffer()
-    const parent = await graph.preferPublished.maybeGet(
-      Entry({entryId: parentId}).select({
+    const parent = await graph.first({
+      select: {
         level: Entry.level,
-        entryId: Entry.entryId,
+        entryId: Entry.id,
         url: Entry.url,
         path: Entry.path,
-        parentPaths({parents}) {
-          return parents().select(Entry.path)
+        parentPaths: {
+          parents: {},
+          select: Entry.path
         }
-      })
-    )
+      },
+      id: parentId,
+      status: 'preferPublished'
+    })
 
-    const extension = extname(upload.file.name)
-    const path = slugify(basename(upload.file.name, extension))
-    const prev = await graph.preferPublished.maybeGet(Entry({parent: parentId}))
-
+    const extensionOriginal = extname(upload.file.name)
+    const extension = extensionOriginal.toLowerCase()
+    const path = slugify(basename(upload.file.name, extensionOriginal))
+    const prev = await graph.first({
+      select: Entry,
+      parentId: parentId,
+      status: 'preferPublished'
+    })
     const entryLocation = {
       workspace: upload.to.workspace,
       root: upload.to.root,
       locale: null,
       path: path,
-      phase: EntryPhase.Published
+      status: EntryStatus.Published
     }
     const filePath = entryFilepath(
       config,
@@ -274,19 +216,17 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         : location
 
     const hash = await createFileHash(new Uint8Array(buffer))
-    const title = basename(upload.file.name, extension)
-    const entry = await createEntryRow<Media.File>(config, {
+    const title = basename(upload.file.name, extensionOriginal)
+    const entry = await createEntryRow<EntryRow<MediaFile>>(config, {
       ...entryLocation,
-      parent: parent?.entryId ?? null,
-      entryId: entryId,
+      parentId: parent?.entryId ?? null,
+      id: entryId,
       type: 'MediaFile',
       url: (parent ? parent.url : '') + '/' + path,
       title,
       seeded: null,
-      modifiedAt: Date.now(),
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
-      i18nId: entryId,
 
       level: parent ? parent.level + 1 : 0,
       parentDir: parentDir,
@@ -337,7 +277,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         if (next.error) {
           setErrorAtom(next.error.message, next.error)
         }
-        const result = next.result as Media.Image | undefined
+        const result = next.result as EntryRow<MediaImage> | undefined
         if (!result) break
         onSelect?.(result)
         break
@@ -355,20 +295,21 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       await batchMutations(
         {
           type: MutationType.Create,
-          entryId: entry.entryId,
+          entryId: entry.id,
+          locale: null,
           file,
           entry
         },
         {
           type: MutationType.Upload,
-          entryId: entry.entryId,
+          entryId: entry.id,
           url: info.previewUrl,
           file: info.location
         }
       )
       return entry
     }
-    const newEntry = await createEntryRow<Media.File>(config, {
+    const newEntry = await createEntryRow<EntryRow<MediaFile>>(config, {
       ...replace.entry,
       data: {...entry.data, title: replace.entry.title}
     })
@@ -376,24 +317,26 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     await batchMutations(
       {
         type: MutationType.Edit,
-        entryId: replace.entry.entryId,
+        entryId: replace.entry.id,
+        locale: null,
         file: replace.entryFile,
         entry: newEntry
       },
       {
         type: MutationType.Upload,
-        entryId: replace.entry.entryId,
+        entryId: replace.entry.id,
         url: info.previewUrl,
         file: info.location
       },
       {
         type: MutationType.FileRemove,
-        entryId: replace.entry.entryId,
+        entryId: replace.entry.id,
+        locale: null,
         file: replace.entryFile,
         workspace: replace.entry.workspace,
         location:
-          Media.ORIGINAL_LOCATION in mediaFile
-            ? (mediaFile[Media.ORIGINAL_LOCATION] as string)
+          MEDIA_LOCATION in mediaFile
+            ? (mediaFile[MEDIA_LOCATION] as string)
             : mediaFile.location,
         replace: true
       }

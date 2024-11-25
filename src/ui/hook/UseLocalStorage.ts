@@ -11,7 +11,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       if (typeof window !== 'undefined')
         window.localStorage.setItem(key, JSON.stringify(value))
     } catch (error) {
-      console.log(error)
+      console.error(error)
     }
   }
 
@@ -20,7 +20,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       const item = window.localStorage.getItem(key)
       setStoredValue(item ? JSON.parse(item) : initialValue)
     } catch (error) {
-      console.log(error)
+      console.error(error)
     }
   }
   // Listen to changes to the value

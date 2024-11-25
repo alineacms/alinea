@@ -1,82 +1,99 @@
 {
+  "_id": "28NgMpMQkmTy4uyFhPj8z4XVqml",
+  "_type": "Docs",
+  "_index": "Zp",
+  "_i18nId": "28NgMpMQkmTy4uyFhPj8z4XVqml",
   "title": "Deploy",
+  "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
-          "text": "Once you're ready to deploy to production it's time to hook up Alinea to a backend. Alinea exposes a handler that can be hosted on most Javascript runtimes (Node.js or edge/serverless functions). The handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository."
+          "_type": "text",
+          "text": "Once you're ready to deploy to production it's time to hook up Alinea to a backend. The Alinea handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository."
         }
       ]
     },
     {
-      "id": "2YlDZu3VCLyEtX1gTkP607rdN1C",
-      "type": "FrameworkBlock",
+      "_type": "FrameworkBlock",
+      "_id": "2YlDZu3VCLyEtX1gTkP607rdN1C",
       "next": [
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
-              "text": "Create the CMS handler in the app folder."
-            }
-          ]
-        },
-        {
-          "id": "2YlDbsyYSV7KaOpdP3SlyFKbgQf",
-          "type": "CodeBlock",
-          "code": "import {cms} from '@/cms'\n\nexport const GET = cms.backendHandler\nexport const POST = cms.backendHandler",
-          "fileName": "app/api/cms/[...slug]/route.ts",
-          "language": "",
-          "compact": false
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
+              "_type": "text",
               "text": "Update your "
             },
             {
-              "type": "text",
+              "_type": "text",
               "text": "CMS config",
               "marks": [
                 {
-                  "type": "link",
-                  "attrs": {
-                    "data-id": "2YlC927lwX5hfm2G9JHx9j3yRux",
-                    "data-entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-                    "data-type": "entry",
-                    "href": null,
-                    "title": ""
-                  }
+                  "_type": "link",
+                  "_id": "2YlC927lwX5hfm2G9JHx9j3yRux",
+                  "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+                  "_link": "entry",
+                  "title": ""
                 }
               ]
             },
             {
-              "type": "text",
-              "text": " to inform Alinea where the handler is located and where to generate the admin dashboard."
+              "_type": "text",
+              "text": " to inform Alinea where to generate the admin dashboard."
             }
           ]
         },
         {
-          "id": "2YlDwmJLzaL93bp5gYZmshbJG1P",
-          "type": "CodeBlock",
-          "code": "export const cms = createNextCMS({\n  // schema and workspaces ...\n  dashboard: {\n    handlerUrl: '/api/cms',\n    staticFile: 'public/admin.html',\n    dashboardUrl: '/admin.html'\n  }\n})",
+          "_type": "CodeBlock",
+          "_id": "2YlDwmJLzaL93bp5gYZmshbJG1P",
+          "code": "export const cms = createCMS({\n  // ...\n  handlerUrl: '/api/cms',\n  dashboardFile: 'admin.html'\n})",
           "fileName": "",
           "language": "",
           "compact": false
         },
         {
-          "type": "paragraph",
+          "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
-              "type": "text",
+              "_type": "text",
+              "text": "While building your project, an admin folder will be created together with the `dashboardFile` as defined within your "
+            },
+            {
+              "_type": "text",
+              "text": "CMS config",
+              "marks": [
+                {
+                  "_type": "link",
+                  "_id": "2eM1iHgXBo49fVD4NaBDbLI7XpI",
+                  "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+                  "_link": "entry"
+                }
+              ]
+            },
+            {
+              "_type": "text",
+              "text": ". Exclude the admin path and the staticFile from git by adding them to your `.gitignore` file:"
+            }
+          ]
+        },
+        {
+          "_type": "CodeBlock",
+          "_id": "2eM0q5z6cky9xrlPsHoH5ltj1A6",
+          "code": "/public/admin*",
+          "fileName": ".gitignore",
+          "language": ""
+        },
+        {
+          "_type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "_type": "text",
               "text": "Deploy your code and follow the instructions on `/admin.html` to configure your backend."
             }
           ]
@@ -89,14 +106,10 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "28NgMpMQkmTy4uyFhPj8z4XVqml",
-    "type": "Docs",
-    "index": "Zp"
   }
 }

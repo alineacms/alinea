@@ -1,11 +1,15 @@
-import alinea from 'alinea'
+import {Config, Field} from 'alinea'
 
-export const FeaturesBlock = alinea.type('Features', {
-  items: alinea.list('Items', {
-    schema: alinea.schema({
-      FeatureItem: alinea.type('Item', {
-        text: alinea.richText('Text')
-      })
+export const FeaturesBlock = Config.type('Features', {
+  fields: {
+    items: Field.list('Items', {
+      schema: {
+        FeatureItem: Config.type('Item', {
+          fields: {
+            text: Field.richText('Text')
+          }
+        })
+      }
     })
-  })
+  }
 })

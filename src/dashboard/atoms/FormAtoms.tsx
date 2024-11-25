@@ -1,31 +1,31 @@
-import {
-  Field,
-  FieldGetter,
-  FieldOptions,
-  ROOT_KEY,
-  Section,
-  Type,
-  ValueTracker,
-  applyEntryData,
-  optionTrackerOf,
-  valueTrackerOf
-} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
+import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {Atom, Getter, atom} from 'jotai'
 import {PropsWithChildren, createContext, useContext, useMemo} from 'react'
 import * as Y from 'yjs'
 
+import {DOC_KEY, applyEntryData} from 'alinea/core/Doc'
+import {Section} from 'alinea/core/Section'
+import {
+  FieldGetter,
+  ValueTracker,
+  optionTrackerOf,
+  valueTrackerOf
+} from 'alinea/core/Tracker'
 import {unwrap} from 'jotai/utils'
 
 export interface FieldInfo<
-  Value = any,
+  StoredValue = any,
+  QueryValue = any,
   Mutator = any,
-  Options extends FieldOptions<Value> = FieldOptions<Value>
+  Options = any
 > {
   key: string
-  field: Field<Value, Mutator, Options>
-  value: Atom<Value>
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+  value: Atom<StoredValue>
   options: Atom<Options | Promise<Options>>
+  error: Atom<boolean | string | undefined>
   mutator: Mutator
 }
 
@@ -93,11 +93,25 @@ export class FormAtoms<T = any> {
             : atom(defaultOptions)
           const valueTracker = valueTrackerOf(field)
           const value = this.valueAtom(field, key, valueTracker)
+          const error = atom(get => {
+            const {validate, required} = get(options)
+            if (validate) {
+              const res = validate(get(value))
+              if (typeof res === 'boolean') return !res
+              return res
+            } else if (required) {
+              const current = get(value)
+              if (current === undefined || current === null) return true
+              if (typeof current === 'string' && current === '') return true
+              if (Array.isArray(current) && current.length === 0) return true
+            }
+          })
           this.fields.set(ref, {
             key,
             field,
             value,
             mutator,
+            error,
             options
           })
         }
@@ -148,16 +162,16 @@ export class FormAtoms<T = any> {
     return this.fieldInfo(field).key
   }
 
-  fieldInfo<Value, Mutator, Options extends FieldOptions<Value>>(
-    field: Field<Value, Mutator, Options>
-  ): FieldInfo<Value, Mutator, Options> {
+  fieldInfo<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  ): FieldInfo<StoredValue, QueryValue, Mutator, Options> {
     const res = this.fields.get(Field.ref(field))
     const label = Field.label(field)
     if (!res) {
       if (this.options.parent) return this.options.parent.fieldInfo(field)
       throw new Error(`Field not found: ${label}`)
     }
-    return res as FieldInfo<Value, Mutator, Options>
+    return res as FieldInfo<StoredValue, QueryValue, Mutator, Options>
   }
 }
 
@@ -177,7 +191,7 @@ export function useForm<T>(
     if (options.initialValue) {
       applyEntryData(doc, type, {data: options.initialValue} as any)
     }
-    return new FormAtoms(type, doc.getMap(ROOT_KEY))
+    return new FormAtoms(type, doc.getMap(DOC_KEY))
   }, [type, options.doc])
 }
 

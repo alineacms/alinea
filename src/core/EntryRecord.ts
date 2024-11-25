@@ -1,53 +1,70 @@
-import {object, string} from 'cito'
 import {EntryRow} from './EntryRow.js'
 
-export const META_KEY = '@alinea'
-
-export type EntryMeta = typeof EntryMeta.infer
-export const EntryMeta = object(
-  class {
-    entryId = string
-    i18nId? = string.optional
-    type = string
-    index = string
-    root? = string.optional
-    seeded? = string.optional
-  }
-)
+export interface EntryMeta {
+  _id: string
+  _type: string
+  _index: string
+  _root?: string
+  _seeded?: string
+}
 
 // The data structure as stored in json files on disk
-export type EntryRecord = typeof EntryRecord.infer & {
+export interface EntryRecord extends EntryMeta {
   [field: string]: unknown
 }
-export const EntryRecord = object(
-  class {
-    title = string.optional;
-    [META_KEY] = EntryMeta
-    // ... fields
-  }
-)
 
-interface RequiredEntryFields extends Partial<EntryRow> {
-  entryId: string
+export namespace EntryRecord {
+  export const id = '_id' satisfies keyof EntryMeta
+  export const type = '_type' satisfies keyof EntryMeta
+  export const index = '_index' satisfies keyof EntryMeta
+  export const root = '_root' satisfies keyof EntryMeta
+  export const seeded = '_seeded' satisfies keyof EntryMeta
+}
+
+export interface RequiredEntryFields extends Partial<EntryRow> {
+  id: string
   type: string
   index: string
-  title: string
   data: Record<string, any>
 }
 
-export function createRecord(entry: RequiredEntryFields): EntryRecord {
-  const {path, title = entry.title, ...data} = entry.data
-  const meta: EntryMeta = {
-    entryId: entry.entryId,
-    type: entry.type,
-    index: entry.index
-  }
-  if (entry.seeded) meta.seeded = entry.seeded
-  if (entry.locale && entry.i18nId) meta.i18nId = entry.i18nId
-  if (!entry.parent) meta.root = entry.root
+export function parseRecord(record: EntryRecord) {
+  const {
+    [EntryRecord.id]: id,
+    [EntryRecord.type]: type,
+    [EntryRecord.index]: index,
+    _i18nId: i18nId,
+    [EntryRecord.root]: root,
+    [EntryRecord.seeded]: seeded,
+    ...data
+  } = record
   return {
-    title,
-    ...data,
-    [META_KEY]: meta
+    meta: {
+      id: (i18nId as string) ?? id,
+      type,
+      index,
+      root,
+      seeded
+    },
+    data,
+    v0Id: typeof i18nId === 'string' ? id : undefined
   }
+}
+
+export function createRecord(entry: RequiredEntryFields): EntryRecord {
+  const {path = entry.path, title = entry.title, ...data} = entry.data
+  const id = entry.id
+  const meta: EntryRecord = {
+    [EntryRecord.id]: id,
+    [EntryRecord.type]: entry.type,
+    [EntryRecord.index]: entry.index
+  }
+  if (entry.seeded) meta[EntryRecord.seeded] = entry.seeded
+  if (!entry.parentId) meta[EntryRecord.root] = entry.root
+  return {
+    ...meta,
+    title,
+    // path,
+    ...data
+  } as EntryRecord
 }

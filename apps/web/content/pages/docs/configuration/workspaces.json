@@ -1,139 +1,174 @@
 {
+  "_id": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+  "_type": "Docs",
+  "_index": "Zw",
+  "_i18nId": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+  "_root": "pages",
   "title": "Workspaces",
+  "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
-          "text": "Workspaces allow you to structure content into logical categories. For example it is possible to power mutliple websites with a single CMS dashboard by using a workspace per website. Editors can easily switch workspaces in the dashboard."
+          "_type": "text",
+          "text": "Workspaces allow you to structure content into logical categories. For example it is possible to power multiple websites with a single CMS dashboard by using a workspace per website. Editors can easily switch workspaces in the dashboard."
         }
       ]
     },
     {
-      "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
-      "type": "CodeBlock",
-      "code": "export const cms = createCMS({\n  workspaces: {\n    // Define a main workspace\n    main: alinea.workspace('Main workspace', {\n      // Define Roots\n      pages: alinea.root('Pages'),\n      media: alinea.media(),\n      // Workspace configuration\n      [alinea.meta]: {\n        color: '#3F61E8',\n        source: 'content',\n        mediaDir: 'public'\n      }\n    })\n  }\n})",
-      "fileName": "cms.tsx",
+      "_type": "CodeBlock",
+      "_id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
+      "code": "import {Config} from 'alinea'\n\nConfig.workspace('Main workspace', {\n  source: 'content',\n  color: '#3F61E8',\n  mediaDir: 'public',\n  roots: {\n    // Website pages can be managed within this Root\n    pages: Config.root('Pages'),\n    // Image and file uploads will end up here\n    media: Config.media()\n  }\n})",
+      "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
+      "_type": "heading",
       "level": 2,
-      "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Workspaces should be defined in your "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "CMS config",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2aB37bqwCoFd6oFLcZmHCOgUcSJ",
-                "data-entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2aB37bqwCoFd6oFLcZmHCOgUcSJ",
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
+          "text": "`roots`"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An object containing "
+        },
+        {
+          "_type": "text",
+          "text": "Roots",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2c5D0rdh3wpYg35vLkio0mOCncI",
+              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+              "_link": "entry"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
           "text": "`color`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Pick a theme color this workspace."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`source`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A directory in which published content is stored."
         }
       ]
     },
     {
-      "id": "28hgVxGUBKpMWwiKvfkoBZmYX15",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "28hgVxGUBKpMWwiKvfkoBZmYX15",
       "code": "// content is stored in the `content` directory\nsource: './content'",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`mediaDir`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A directory in which uploaded files are placed. In case you're using Alinea to manage web content this will often point to a directory that is made publicly available so an url can be created to download or display the file."
         }
       ]
     },
     {
-      "id": "28hgYn07WY7s77bPgYhtBluKjAT",
-      "type": "CodeBlock",
+      "_type": "CodeBlock",
+      "_id": "28hgYn07WY7s77bPgYhtBluKjAT",
       "code": "// uploaded files are placed in the `public` folder\nmediaDir: './public'",
       "fileName": "",
       "language": "",
@@ -148,10 +183,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "259EzPfnSUaKOrNL1S2bpIpMdKl",
-    "type": "Docs",
-    "index": "Zw"
   }
 }

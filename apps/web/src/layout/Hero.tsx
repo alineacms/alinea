@@ -1,13 +1,13 @@
+import styler from '@alinea/styler'
 import {HStack} from 'alinea/ui/Stack'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
-import {fromModule} from 'alinea/ui/util/Styler'
 import Link, {LinkProps} from 'next/link'
 import {HTMLProps, PropsWithChildren} from 'react'
 import css from './Hero.module.scss'
 import {PageContainer} from './Page'
 import {WebTypo} from './WebTypo'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const BG_HEIGHT = 80
 
@@ -37,7 +37,13 @@ export namespace Hero {
       />
     )
   }
-  export const ByLine = styles.byLine.toElement('p')
+
+  export function ByLine(
+    props: PropsWithChildren<HTMLProps<HTMLParagraphElement>>
+  ) {
+    return <p {...props} className={styles.byLine(styler.merge(props))} />
+  }
+
   export function Action({
     children,
     href,

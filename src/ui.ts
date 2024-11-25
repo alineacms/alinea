@@ -12,5 +12,4 @@ export * from './ui/TextLabel.js'
 export * from './ui/Typo.js'
 
 export * from './ui/util/ImageBlurUrl.js'
-export * from './ui/util/Styler.js'
 export * from './ui/util/Units.js'

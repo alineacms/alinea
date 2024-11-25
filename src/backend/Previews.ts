@@ -1,6 +1,9 @@
-import {User} from 'alinea/core'
+export interface PreviewInfo {
+  locale: string | null
+  entryId: string
+}
 
 export interface Previews {
-  sign(data: User): Promise<string>
-  verify(token: string): Promise<User>
+  sign(data: PreviewInfo): Promise<string>
+  verify(token: string): Promise<PreviewInfo>
 }

@@ -1,24 +1,30 @@
-import {Schema, Type, View} from 'alinea/core'
+import styler from '@alinea/styler'
+import {getType} from 'alinea/core/Internal'
+import {SummaryProps} from 'alinea/core/media/Summary'
+import {Schema} from 'alinea/core/Schema'
+import {resolveView} from 'alinea/core/View'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {Icon, fromModule} from 'alinea/ui'
+import {Icon} from 'alinea/ui'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
+import {ComponentType} from 'react'
+import {useDashboard} from '../../hook/UseDashboard.js'
 import {useExplorer} from '../../hook/UseExplorer.js'
 import {useFocusListItem} from '../../hook/UseFocusList.js'
 import {useNav} from '../../hook/UseNav.js'
 import {ExporerItemSelect} from './Explorer.js'
 import css from './ExplorerItem.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface ExplorerItemProps {
   schema: Schema
   entry: ExporerItemSelect
   summaryView: 'summaryRow' | 'summaryThumb'
-  defaultView: View<ExporerItemSelect, any>
+  defaultView: ComponentType<SummaryProps>
 }
 
 export function ExplorerItem({
@@ -28,12 +34,14 @@ export function ExplorerItem({
   defaultView
 }: ExplorerItemProps) {
   const nav = useNav()
+  const {views} = useDashboard()
   const explorer = useExplorer()
   const itemRef = useFocusListItem<HTMLDivElement>(() =>
     explorer?.onSelect(entry)
   )
   const type = schema[entry.type]
-  const View: any = (type && Type.meta(type)[summaryView]) || defaultView
+  const typeView = type && getType(type)[summaryView]
+  const View: any = typeView ? resolveView(views, typeView) : defaultView
   const isSelectable =
     explorer.selectable === true ||
     (Array.isArray(explorer.selectable) &&
@@ -47,19 +55,21 @@ export function ExplorerItem({
   const isSelected = Boolean(
     isSelectable &&
       explorer.selection.find(
-        v => EntryReference.isEntryReference(v) && v.entry === entry.entryId
+        v =>
+          EntryReference.isEntryReference(v) &&
+          v[EntryReference.entry] === entry.id
       )
   )
   const childrenAmount = entry.childrenAmount ?? 0
 
   function navigateTo() {
-    explorer.onNavigate?.(entry.entryId)
+    explorer.onNavigate?.(entry.id)
   }
 
   return (
     <div
       ref={itemRef}
-      key={entry.entryId}
+      key={entry.id}
       className={styles.root(summaryView === 'summaryRow' ? 'row' : 'thumb', {
         selected: isSelected,
         border: explorer.border

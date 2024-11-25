@@ -1,9 +1,14 @@
-import {Field, Section, Type} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
+import {Section} from 'alinea/core/Section'
+import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
+import {resolveView} from 'alinea/core/View'
 import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
+import {ErrorMessage} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {VStack} from 'alinea/ui/Stack'
 import {FormAtoms, FormProvider} from '../atoms/FormAtoms.js'
+import {useDashboard} from '../hook/UseDashboard.js'
 import {ErrorBoundary} from '../view/ErrorBoundary.js'
 
 export type InputFormProps = {
@@ -11,11 +16,13 @@ export type InputFormProps = {
 } & ({type: Type; form?: undefined} | {form: FormAtoms<any>; type?: undefined})
 
 export function InputForm(props: InputFormProps) {
+  const {views} = useDashboard()
   const type = props.type ?? props.form.type
   const inner = (
     <VStack gap={20}>
       {Type.sections(type).map((section, i) => {
-        const View = Section.view(section)
+        const view = Section.view(section)
+        const View = view ? resolveView(views, view) : undefined
         if (View) return <View section={section} key={i} />
         return (
           <div key={i} style={{display: 'contents'}}>
@@ -47,7 +54,9 @@ export interface MissingViewProps {
 }
 
 export function MissingView({field}: MissingViewProps) {
-  return <div>Missing view for field: {Field.label(field)}</div>
+  return (
+    <ErrorMessage error={`Missing view for field: ${Field.label(field)}`} />
+  )
 }
 
 export interface InputFieldProps<V, M> {
@@ -55,8 +64,10 @@ export interface InputFieldProps<V, M> {
 }
 
 export function InputField<V, M>({field}: InputFieldProps<V, M>) {
-  const View = field[Field.Data].view
+  const {views} = useDashboard()
+  const view = Field.view(field)
   const options = useFieldOptions(field)
+  const View = resolveView(views, view)
   if (!View) return <MissingView field={field} />
   if (options.hidden) return null
   return (

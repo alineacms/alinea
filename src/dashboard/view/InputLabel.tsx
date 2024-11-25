@@ -1,16 +1,23 @@
-import {Icon, fromModule, px} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {Icon, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
-import {ComponentType, PropsWithChildren, forwardRef, memo} from 'react'
+import {
+  ComponentType,
+  PropsWithChildren,
+  ReactNode,
+  forwardRef,
+  memo
+} from 'react'
 import css from './InputLabel.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type LabelHeaderProps = {
-  label: string
-  help?: string
+  label: ReactNode
+  help?: ReactNode
   size?: 'small' | 'medium' | 'large'
   focused?: boolean
   icon?: ComponentType
@@ -56,10 +63,10 @@ export const LabelHeader = memo(function LabelHeader({
   )
 })
 
-export interface LabelProps extends PropsWithChildren {
-  label?: string
+export interface InputLabelProps extends PropsWithChildren {
+  label?: ReactNode
   asLabel?: boolean
-  help?: string
+  help?: ReactNode
   width?: number
   inline?: boolean
   collection?: boolean
@@ -75,7 +82,7 @@ export interface LabelProps extends PropsWithChildren {
 }
 
 /** Label for an input */
-export const InputLabel = forwardRef<HTMLElement, LabelProps>(
+export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
   function InputLabel(
     {
       children,

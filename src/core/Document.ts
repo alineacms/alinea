@@ -1,40 +1,42 @@
-import {metadata} from 'alinea/input/metadata'
-import {PathField, path} from 'alinea/input/path'
-import {tab, tabs} from 'alinea/input/tabs'
-import {TextField, text} from 'alinea/input/text'
-import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {MetadataField, metadata as createMetadata} from 'alinea/field/metadata'
+import {PathField, path as createPath} from 'alinea/field/path'
+import {tab, tabs} from 'alinea/field/tabs'
+import {TextField, text} from 'alinea/field/text'
+import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {IcRoundShare} from 'alinea/ui/icons/IcRoundShare'
-import {Label} from './Label.js'
-import {Meta} from './Meta.js'
-import {Type, TypeDefinition, type} from './Type.js'
+import {FieldsDefinition, Type, TypeConfig, type} from './Type.js'
 
-type Document<Definition> = {
+export type Document = {
   title: TextField
   path: PathField
-  metadata: ReturnType<typeof metadata>
-} & Definition
+  metadata: MetadataField
+}
 
-export function document<Definition extends TypeDefinition>(
-  label: Label,
-  definition: Definition
-): Type<Document<Definition>> {
+function documentFields() {
+  return {
+    title: text('Title', {required: true, width: 0.5}),
+    path: createPath('Path', {required: true, width: 0.5}),
+    metadata: createMetadata()
+  }
+}
+
+export function document<Fields extends FieldsDefinition>(
+  label: string,
+  {fields, ...config}: TypeConfig<Fields>
+): Type<Document & Fields> {
+  const {title, path, metadata} = documentFields()
+  const fieldsWithMeta: Document & Fields = <any>tabs(
+    tab('Document', {
+      icon: IcRoundDescription,
+      fields: {title, path, ...fields}
+    }),
+    tab('Metadata', {
+      icon: IcRoundShare,
+      fields: {metadata}
+    })
+  )
   return type(label, {
-    ...tabs(
-      tab('Document', {
-        title: text('Title', {required: true, width: 0.5}),
-        path: path('Path', {required: true, width: 0.5}),
-        ...definition,
-        [Meta]: {
-          icon: IcRoundInsertDriveFile
-        }
-      }),
-      tab('Metadata', {
-        metadata: metadata(),
-        [Meta]: {
-          icon: IcRoundShare
-        }
-      })
-    ),
-    [Meta]: definition[Meta]
-  }) as any
+    ...config,
+    fields: fieldsWithMeta
+  })
 }

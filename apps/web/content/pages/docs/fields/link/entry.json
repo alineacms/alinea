@@ -1,135 +1,131 @@
 {
+  "_id": "2aiLjrXSg8gyirKnw9LmYKwsW2O",
+  "_type": "Doc",
+  "_index": "a0",
+  "_i18nId": "2aiLjrXSg8gyirKnw9LmYKwsW2O",
   "title": "Entry",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "The entry field can be used to link to an internal page."
         }
       ]
     },
     {
-      "id": "2aiLnCCudPz6D0aNgADlzuObGEs",
-      "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.entry('Single entry link')\n\nalinea.entry.multiple('Multiple entry links')",
+      "_type": "CodeBlock",
+      "_id": "2aiLnCCudPz6D0aNgADlzuObGEs",
+      "code": "import {Field} from 'alinea'\n\nField.entry('Single entry link')\n\nField.entry.multiple('Multiple entry links')",
       "fileName": "",
       "language": ""
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration"
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`max`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Limit the amount of rows in case of multiple links."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`defaultView`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Preset the UI to show rows or thumbnails (possible values: \"row\", \"thumb\")"
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`condition`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
-          "text": "Limit the pages shown in the explorer to this condition. Conditions can be built using fields in the same way as when "
+          "_type": "text",
+          "text": "Limit the pages shown in the explorer to this condition. Conditions can be built using fields in the same way as described in the "
         },
         {
-          "type": "text",
-          "text": "querying data",
+          "_type": "text",
+          "text": "querying content",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2aiNCLRQGpHXGPYZuNFjIInGujs",
-                "data-entry": null,
-                "data-type": "url",
-                "href": "/docs/content/query#querying-specific-pages",
-                "target": "_self",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "2aiNCLRQGpHXGPYZuNFjIInGujs",
+              "_link": "url",
+              "href": "/docs/content/query#querying-specific-pages",
+              "target": "_self"
             }
           ]
         },
         {
-          "type": "text",
-          "text": ". "
+          "_type": "text",
+          "text": " chapter. "
         }
       ]
     },
     {
-      "id": "2aiNY0EOVAiPH085iK0NelgMfhO",
-      "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\nimport {Entry} from 'alinea/core'\n\nalinea.entry('Link to author', {\n  condition: Entry.type.is('Author')\n})",
+      "_type": "CodeBlock",
+      "_id": "2aiNY0EOVAiPH085iK0NelgMfhO",
+      "code": "import {Field, Query} from 'alinea'\n\nField.entry('Link to author', {\n  condition: Query.type.is('Author')\n})",
       "fileName": "",
       "language": ""
     }
   ],
   "metadata": {
+    "title": "",
+    "description": "",
     "openGraph": {
-      "image": {}
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "2aiLjrXSg8gyirKnw9LmYKwsW2O",
-    "type": "Doc",
-    "index": "a0"
   }
 }

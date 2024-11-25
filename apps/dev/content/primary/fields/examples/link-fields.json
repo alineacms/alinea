@@ -1,0 +1,55 @@
+{
+  "_id": "2dgg6MP0uZIrdG8zhknFbkdF7yg",
+  "_type": "LinkFields",
+  "_index": "Zz",
+  "_i18nId": "2dgg6MP0uZIrdG8zhknFbkdF7yg",
+  "title": "Link fields",
+  "externalLink": {},
+  "entry": {},
+  "entryWithCondition": {},
+  "linkMultiple": [
+    {
+      "_id": "2mBuT1TZFS5gx3z62yF4hh6X6SJ",
+      "_index": "a0",
+      "_type": "url",
+      "_url": "https://example.com",
+      "_title": "",
+      "_target": "_blank"
+    },
+    {
+      "_id": "2mBuTPPHUh1mUu1kRVtWMxvSFGs",
+      "_index": "a1",
+      "_type": "url",
+      "_url": "https://example.com",
+      "_title": "",
+      "_target": "_blank"
+    },
+    {
+      "_id": "2mBuUMTZMHyBXwcsKDKcL35k0k0",
+      "_index": "a2",
+      "_type": "entry",
+      "_entry": "2dgfSWKFaEqxaimsO32A1sR9iMw"
+    },
+    {
+      "_id": "2mBuUHMu7Pln9Gx4EWQTWQP6kOq",
+      "_index": "a3",
+      "_type": "entry",
+      "_entry": "2aUFgENnh2qSfIWH1sHV5We80G3"
+    }
+  ],
+  "image": {},
+  "images": [],
+  "file": {},
+  "withFields": {},
+  "multipleWithFields": [],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

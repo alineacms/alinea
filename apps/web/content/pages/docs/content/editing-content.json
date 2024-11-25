@@ -1,0 +1,192 @@
+{
+  "_id": "2bwoBrTOuERj2E8r7yuNglC0H6G",
+  "_type": "Doc",
+  "_index": "a1G",
+  "_i18nId": "2bwoBrTOuERj2E8r7yuNglC0H6G",
+  "title": "Editing content",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Your CMS instance has methods to create and update content. During development these will update the file system directly, while in production the changes will result in a new git commit."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Creating Entries"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "New Entries can be created using the `create` function."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2bww0XuSHzm0f72kxNM5cQlVLvI",
+      "code": "import {Edit} from 'alinea'\n\n// Start a transaction to create a new entry of type BlogPost\nconst post = Edit.create({\n  type: BlogPost,\n  set: {\n    title: 'A new blog post',\n    body: 'Hello world'\n  }\n})\n\n// The new entry ID can be read before comitting\nconsole.log(`Creating post with id: ${post.id}`)\n\n// Save the changes\nawait cms.commit(post)",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Creating children"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Set the `_parentId` property to nest children under a parent."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2c4tj6ItJDix4tpGojE9LGn0fTo",
+      "code": "import {Edit} from 'alinea'\n\nconst blog = Edit.create({\n  type: Blog,\n  set: {title: 'Blog'}\n})\nawait cms.commit(blog)\n\nconst posts = postData.map(data =>\n  Edit.create({\n    type: BlogPost,\n    parentId: blog.id, \n    set: {\n      title: data.title\n    }\n  })\n)\nawait cms.commit(...posts)",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Update Fields"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entry fields can be edited using the `update` function. Optionally pass the entry Type if you want to update its fields."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2bx3AJ8D93WgmthX8tiEqZura9X",
+      "code": "import {Edit, Query} from 'alinea'\n\n// Select the first blog post\nconst post = await cms.get({\n  type: BlogPost\n})\n\n// Edit a field and save\nconst update = Edit.update({\n  id: post._id,\n  type: BlogPost,\n  set: {\n    body: 'New body text'\n  }\n})\n\nawait cms.commit(update)",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Constructing field values"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Some fields contain values that are more complex than a string. The Edit namespace contains helper functions to construct these. In this example we construct the value of a List Field."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2c4t1IBcmwpjaS3YqNaJQxRpWss",
+      "code": "const richTextField = richText('Item body text');\nconst listField = list('My list field', {\n  schema: {\n    Text: type('Text', {\n      title: text('Item title'),\n      text: richText,\n    })\n  }\n})\nconst rowText = Edit.richText(richTextField)\n  .addHtml(`\n    <h1>Main heading</h1>\n    <p>A rich text value parsed from HTML.</p>\n  `)\n  .value()\nconst listValue = Edit.list(listField)\n  .add('Text', {\n    title: 'The row title',\n    text: rowText,\n  })\n  .value()\nconst update = Edit.update({\n  id: entryId,\n  type: TypeWithList,\n  set: {list: listValue}\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "File uploads"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Files can be uploaded using the upload function."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2bx3SNjDfXQsRSkJYEUX5GY3qg9",
+      "code": "import {Edit} from 'alinea'\n\nconst file = new File(['content'], 'test.txt')\nconst upload = Edit.upload({file})\n\n// The new entry ID can be read before comitting\nconsole.log(`Creating post with id: ${upload.id}`)\n\n// Upload file and save file metadata\nawait cms.commit(upload)",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Creating image previews"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea can create all the metadata for images (such as previews) by passing a `createPreview` function. On the server this will use the `sharp` package to read image data. The package will need to be installed separately."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2bxKAtZiQcruhSmRPO9PldQZ3mR",
+      "code": "import {Edit} from 'alinea'\nimport {createPreview} from 'alinea/core/media/CreatePreview'\nimport fs from 'node:fs'\n\nconst file = new File([\n  fs.readFileSync('./test.png')\n], 'test.png')\nconst upload = Edit.upload({\n  file, createPreview\n})\nawait cms.commit(upload)",
+      "fileName": "",
+      "language": ""
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

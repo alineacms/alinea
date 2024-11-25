@@ -1,49 +1,46 @@
 {
+  "_id": "c1qjY2L4hq8JWfscRb_dD",
+  "_type": "Doc",
+  "_index": "ZoV",
+  "_i18nId": "c1qjY2L4hq8JWfscRb_dD",
+  "_root": "pages",
   "title": "Alinea Cloud",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Alinea.cloud",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "4RHJhMZXGQ13vbHvC7egE",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://www.alinea.cloud",
-                "target": "_blank",
-                "title": null
-              }
+              "_type": "link",
+              "_id": "4RHJhMZXGQ13vbHvC7egE",
+              "href": "https://www.alinea.cloud",
+              "target": "_blank"
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " provides a cloud service to set up a backend in a few clicks. It takes care of authentication, inviting other users to collaborate, and pushing changes to your git repository. After "
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": "exporting the handler and static files",
           "marks": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "2YlEhUcMm8GgmJorhjRWUVpZ6TI",
-                "data-entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
+              "_type": "link",
+              "_id": "2YlEhUcMm8GgmJorhjRWUVpZ6TI",
+              "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
+              "_link": "entry",
+              "title": ""
             }
           ]
         },
         {
-          "type": "text",
+          "_type": "text",
           "text": " you can follow the instructions by navigating to your admin dashboard (/admin.html)."
         }
       ]
@@ -57,10 +54,5 @@
       "image": {},
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "c1qjY2L4hq8JWfscRb_dD",
-    "type": "Doc",
-    "index": "ZoV"
   }
 }

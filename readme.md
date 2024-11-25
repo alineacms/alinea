@@ -36,9 +36,16 @@ npx alinea dev
 Configure alinea in `cms.tsx`
 
 ```tsx
-const BlogPost = alinea.type('Blog post', {
-  title: alinea.text('Blog entry title'),
-  body: alinea.richText('Body text')
+import {Config, Field} from 'alinea'
+
+const Blog = Config.document('Blog', {
+  contains: ['BlogPost']
+})
+const BlogPost = Config.document('Blog post', {
+  fields: {
+    title: Field.text('Blog entry title'),
+    body: Field.richText('Body text')
+  }
 })
 ```
 
@@ -46,18 +53,25 @@ const BlogPost = alinea.type('Blog post', {
 
 ## Query
 
-Retrieve content fully-typed and filter, order, limit and join as needed.  
+Retrieve content fully-typed and filter, order, limit as needed.  
 Select only the fields you need.
 
 ```tsx
-import {cms} from '@/cms'
+import {Query} from 'alinea'
 
 console.log(
-  await cms.find(
-    BlogPost()
-      .where(BlogPost.author.is('Me'))
-      .select({title: BlogPost.title})
-  )
+  await cms.get({
+    type: Blog,
+    select: {
+      title: Blog.title,
+      posts: Query.children({
+        type: BlogPost,
+        select: {
+          title: BlogPost.title
+        }
+      })
+    }
+  })
 )
 ```
 

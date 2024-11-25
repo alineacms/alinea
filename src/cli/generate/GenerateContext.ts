@@ -1,4 +1,5 @@
 export interface GenerateContext {
+  cmd: 'dev' | 'build'
   wasmCache: boolean
   rootDir: string
   configLocation: string
@@ -6,6 +7,5 @@ export interface GenerateContext {
   staticDir: string
   quiet: boolean
   outDir: string
-  watch: boolean
   fix: boolean
 }

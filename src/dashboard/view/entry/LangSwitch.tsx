@@ -1,4 +1,5 @@
-import {HStack, Icon, fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {HStack, Icon} from 'alinea/ui'
 import {IcRoundLanguage} from 'alinea/ui/icons/IcRoundLanguage'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {
@@ -10,10 +11,10 @@ import {
 } from 'react-aria-components'
 import css from './LangSwitch.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface LangswitchProps {
-  locales: Array<string>
+  locales: ReadonlyArray<string>
   selected: string
   onChange: (locale: string) => void
   inline?: boolean
@@ -32,6 +33,7 @@ export function Langswitch({
         aria-label="Language"
         selectedKey={selected}
         onSelectionChange={value => {
+          if (!value) return
           onChange(value as string)
         }}
       >

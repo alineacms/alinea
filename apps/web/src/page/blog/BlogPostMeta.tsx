@@ -1,8 +1,9 @@
+import styler from '@alinea/styler'
 import {UrlReference} from 'alinea'
-import {HStack, fromModule} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
 import css from './BlogPostMeta.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface BlogPostMetaProps {
   publishDate: string
@@ -24,13 +25,14 @@ export function BlogPostMeta({publishDate, author}: BlogPostMetaProps) {
       {author && (
         <HStack center gap={8}>
           By
-          <a href={author.url.url} className={styles.root.author.url()}>
+          <a href={author.url._url} className={styles.root.author.url()}>
             <HStack center gap={8}>
               {author.avatar && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   alt="Author avatar"
                   className={styles.root.author.avatar()}
-                  src={author.avatar.url}
+                  src={author.avatar._url}
                 />
               )}
               {author.name}

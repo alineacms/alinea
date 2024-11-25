@@ -1,8 +1,11 @@
-import alinea, {createCMS} from 'alinea'
+import {Config, Field} from 'alinea'
+import {createCMS} from 'alinea/core'
 
-const Page = alinea.type('Page', {
-  title: alinea.text('Title'),
-  path: alinea.path('Path')
+const Page = Config.type('Page', {
+  fields: {
+    title: Field.text('Title'),
+    path: Field.path('Path')
+  }
 })
 
 export const cms = createCMS({
@@ -10,21 +13,22 @@ export const cms = createCMS({
     Page
   },
   workspaces: {
-    main: alinea.workspace('Example', {
-      pages: alinea.root('Example project', {
-        welcome: alinea.page(
-          Page({
-            title: 'Welcome'
-          })
-        ),
-        [alinea.meta]: {
-          contains: ['Page']
-        }
-      }),
-      media: alinea.media(),
-      [alinea.meta]: {
-        source: 'content',
-        mediaDir: 'public'
+    main: Config.workspace('Example', {
+      source: 'content',
+      mediaDir: 'public',
+      roots: {
+        site: Config.root('Example site', {
+          contains: ['Page'],
+          children: {
+            welcome: Config.page({
+              type: Page,
+              fields: {
+                title: 'Welcome'
+              }
+            })
+          }
+        }),
+        media: Config.media()
       }
     })
   }

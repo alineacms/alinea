@@ -1,9 +1,12 @@
-import {Picker, PickerProps, Root, WorkspaceData, createId} from 'alinea/core'
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
-import {workspaceMediaDir} from 'alinea/core/EntryFilenames'
+import {QueryWithResult} from 'alinea/core/Graph'
+import {createId} from 'alinea/core/Id'
+import {PickerProps, pickerWithView} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
-import {isMediaRoot} from 'alinea/core/media/MediaRoot'
-import {and} from 'alinea/core/pages/Expr'
+import {Root} from 'alinea/core/Root'
+import {Workspace} from 'alinea/core/Workspace'
+import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {entries} from 'alinea/core/util/Objects'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
@@ -20,16 +23,7 @@ import {
   ExporerItemSelect
 } from 'alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
-import {
-  Button,
-  HStack,
-  Icon,
-  Loader,
-  Stack,
-  TextLabel,
-  VStack,
-  fromModule
-} from 'alinea/ui'
+import {Button, HStack, Icon, Loader, Stack, TextLabel, VStack} from 'alinea/ui'
 import {Menu, MenuItem} from 'alinea/ui/Menu'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
@@ -48,7 +42,7 @@ import {EntryReference} from './EntryReference.js'
 
 export * from './EntryPicker.js'
 
-export const entryPicker = Picker.withView(createEntryPicker, {
+export const entryPicker = pickerWithView(createEntryPicker, {
   view: EntryPickerModal,
   viewRow: EntryPickerRow
 })
@@ -57,16 +51,10 @@ interface PickerLocation {
   parentId?: string
   workspace: string
   root: string
-  locale?: string
+  locale?: string | null
 }
 
-const styles = fromModule(css)
-
-function mediaRoot(workspace: WorkspaceData & {name: string}): string {
-  for (const [name, root] of entries(workspace.roots))
-    if (isMediaRoot(root)) return name
-  throw new Error(`Workspace ${workspace.name} has no media root`)
-}
+const styles = styler(css)
 
 export interface EntryPickerModalProps
   extends PickerProps<EntryPickerOptions> {}
@@ -83,6 +71,7 @@ export function EntryPickerModal({
   const {
     title,
     defaultView,
+    location,
     max,
     condition,
     withNavigation = true,
@@ -95,63 +84,91 @@ export function EntryPickerModal({
   const [selected, setSelected] = useState<Array<Reference>>(
     () => selection || []
   )
-  const workspace = useWorkspace()
-  const {name: root} = useRoot()
+  const {name: currentWorkspace} = useWorkspace()
+  const {name: currentRoot} = useRoot()
   const locale = useLocale()
   const [destination, setDestination] = useState<PickerLocation>({
-    workspace: workspace.name,
-    root: showMedia ? mediaRoot(workspace) : root,
+    workspace: currentWorkspace,
+    root: showMedia
+      ? Workspace.defaultMediaRoot(config.workspaces[currentWorkspace])
+      : currentRoot,
+    ...location,
     locale: locale
   })
-  const destinationRoot = Root.data(workspace.roots[destination.root])
+  const workspace = config.workspaces[destination.workspace]
+  const workspaceData = Workspace.data(workspace)
+  const updateDestination = useCallback(
+    (update: PickerLocation) => {
+      setDestination(current => ({...update, ...location}))
+    },
+    [location, setDestination]
+  )
+  const destinationRoot = Root.data(workspace[destination.root])
+  const locales = destinationRoot.i18n?.locales
   const destinationLocale = !destinationRoot.i18n
     ? undefined
-    : destination.locale ?? destinationRoot.i18n.locales[0]
+    : locales && destination.locale && locales.includes(destination.locale)
+    ? destination.locale
+    : destinationRoot.i18n.locales[0]
   const {data: parentEntries} = useQuery(
     ['picker-parents', destination, destinationLocale],
     async () => {
       if (!destination.parentId) return []
-      const drafts = graph.preferDraft
-      const query = destinationLocale
-        ? drafts.locale(destinationLocale)
-        : drafts
-      const res = await query.get(
-        Entry({entryId: destination.parentId}).select({
+      const res = await graph.get({
+        locale: destinationLocale,
+        select: {
           title: Entry.title,
-          parents({parents}) {
-            return parents().select({
-              id: Entry.entryId,
+          parents: {
+            parents: {},
+            select: {
+              id: Entry.id,
               title: Entry.title
-            })
+            }
           }
-        })
-      )
+        },
+        id: destination.parentId,
+        status: 'preferDraft'
+      })
       return res?.parents.concat({
         id: destination.parentId,
         title: res.title
       })
     }
   )
-  const cursor = useMemo(() => {
+  const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    if (!withNavigation && condition)
-      return Entry()
-        .where(condition, Entry.locale.is(locale ?? null))
-        .search(...terms)
-    const rootCondition = and(
-      Entry.workspace.is(destination.workspace),
-      Entry.root.is(destination.root)
-    )
-    const destinationCondition =
-      terms.length === 0
-        ? and(rootCondition, Entry.parent.is(destination.parentId ?? null))
-        : rootCondition
-    const translatedCondition = destinationLocale
-      ? and(destinationCondition, Entry.locale.is(destinationLocale))
-      : destinationCondition
-    return Entry()
-      .where(translatedCondition)
-      .search(...terms)
+    if (!withNavigation && condition) {
+      return {
+        select: Entry,
+        search: terms,
+        filter: {
+          and: [
+            condition,
+            {
+              _workspace: destination.workspace,
+              _root: destination.root,
+              _locale: destinationLocale
+            }
+          ]
+        }
+      }
+    }
+    return {
+      select: Entry,
+      filter: {
+        and: [
+          condition,
+          {
+            _workspace: destination.workspace,
+            _root: destination.root,
+            _parentId:
+              terms.length === 0 ? destination.parentId ?? null : undefined,
+            _locale: destinationLocale
+          }
+        ]
+      },
+      search: terms
+    }
   }, [destination, destinationLocale, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
@@ -159,15 +176,16 @@ export function EntryPickerModal({
       setSelected(selected => {
         const index = selected.findIndex(
           ref =>
-            EntryReference.isEntryReference(ref) && ref.entry === entry.entryId
+            EntryReference.isEntryReference(ref) &&
+            ref[EntryReference.entry] === entry.id
         )
         let res = selected.slice()
         if (index === -1) {
           res = res
             .concat({
-              id: createId(),
-              type,
-              entry: entry.entryId
+              [Reference.id]: createId(),
+              [Reference.type]: type,
+              [EntryReference.entry]: entry.id
             } as EntryReference)
             .slice(-(max || 0))
         } else {
@@ -187,7 +205,7 @@ export function EntryPickerModal({
   }
 
   function toRoot() {
-    setDestination({...destination, parentId: undefined})
+    updateDestination({...destination, parentId: undefined})
   }
 
   function goUp() {
@@ -198,7 +216,7 @@ export function EntryPickerModal({
     if (parentIndex === undefined) return
     const parent = parentEntries?.[parentIndex - 1]
     if (!parent) return toRoot()
-    setDestination({...destination, parentId: parent.id})
+    updateDestination({...destination, parentId: parent.id})
   }
 
   return (
@@ -212,38 +230,42 @@ export function EntryPickerModal({
                 {withNavigation && (
                   <Breadcrumbs>
                     <BreadcrumbsItem>
-                      <button onClick={toRoot}>{workspace.label}</button>
+                      <button onClick={toRoot}>{workspaceData.label}</button>
                     </BreadcrumbsItem>
                     <BreadcrumbsItem>
-                      <Menu
-                        onAction={name => {
-                          setDestination({
-                            workspace: destination.workspace,
-                            root: name as string
-                          })
-                        }}
-                        label={
-                          <HStack center gap={4}>
-                            {Root.label(workspace.roots[destination.root])}
-                            <Icon icon={IcRoundUnfoldMore} />
-                          </HStack>
-                        }
-                      >
-                        {entries(workspace.roots).map(([name, root]) => {
-                          return (
-                            <MenuItem key={name} id={name}>
-                              {Root.label(root)}
-                            </MenuItem>
-                          )
-                        })}
-                      </Menu>
+                      {location ? (
+                        Root.label(workspace[destination.root])
+                      ) : (
+                        <Menu
+                          onAction={name => {
+                            setDestination({
+                              workspace: destination.workspace,
+                              root: name as string
+                            })
+                          }}
+                          label={
+                            <HStack center gap={4}>
+                              {Root.label(workspace[destination.root])}
+                              <Icon icon={IcRoundUnfoldMore} />
+                            </HStack>
+                          }
+                        >
+                          {entries(workspace).map(([name, root]) => {
+                            return (
+                              <MenuItem key={name} id={name}>
+                                {Root.label(root)}
+                              </MenuItem>
+                            )
+                          })}
+                        </Menu>
+                      )}
                       {destinationRoot.i18n && (
                         <Langswitch
                           inline
                           selected={destinationLocale!}
                           locales={destinationRoot.i18n.locales}
                           onChange={locale => {
-                            setDestination({
+                            updateDestination({
                               ...destination,
                               parentId: undefined,
                               locale
@@ -258,7 +280,10 @@ export function EntryPickerModal({
                           <BreadcrumbsItem key={id}>
                             <button
                               onClick={() => {
-                                setDestination({...destination, parentId: id})
+                                updateDestination({
+                                  ...destination,
+                                  parentId: id
+                                })
                               }}
                             >
                               {title}
@@ -307,17 +332,20 @@ export function EntryPickerModal({
             <div className={styles.root.results()}>
               <Explorer
                 virtualized
-                cursor={cursor}
+                query={query}
                 type={view}
                 selectable={showMedia ? ['MediaFile'] : true}
                 selection={selected}
                 toggleSelect={handleSelect}
                 showMedia={showMedia}
                 onNavigate={
-                  search
+                  search && !showMedia
                     ? undefined
                     : entryId => {
-                        setDestination({...destination, parentId: entryId})
+                        if (showMedia && search) {
+                          setSearch('')
+                        }
+                        updateDestination({...destination, parentId: entryId})
                       }
                 }
                 withNavigation={withNavigation}
@@ -333,6 +361,7 @@ export function EntryPickerModal({
               }}
               max={max}
               toggleSelect={handleSelect}
+              onlyImages={type === 'image'}
             />
           )}
         </VStack>

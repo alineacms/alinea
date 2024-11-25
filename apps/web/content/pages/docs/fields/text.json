@@ -1,79 +1,80 @@
 {
+  "_id": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
+  "_type": "Doc",
+  "_index": "a0",
+  "_i18nId": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
   "title": "Text",
   "navigationTitle": "",
   "body": [
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "A text field is used to input textual data."
         }
       ]
     },
     {
-      "id": "267RNY6ruMlaKYh8ADfzxtq0jnA",
-      "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})",
+      "_type": "CodeBlock",
+      "_id": "267RNY6ruMlaKYh8ADfzxtq0jnA",
+      "code": "import {Field} from 'alinea'\n\nField.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
-      "id": "kLT1p_gpGFN1L9rIy9e5E",
-      "type": "ExampleBlock",
-      "code": "export default alinea.type('Text field', {\n  text: alinea.text('My text field', {\n    help: 'This is an example field',\n    multiline: true,\n    initialValue: 'A text value'\n  })\n})"
+      "_type": "ExampleBlock",
+      "_id": "kLT1p_gpGFN1L9rIy9e5E",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Text field', {\n  fields: {\n    text: Field.text('My text field', {\n      help: 'This is an example field',\n      multiline: true,\n      initialValue: 'A text value'\n    })\n  }\n})"
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 2,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Configuration"
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`searchable`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Index the content of this field so it can be found in a search query."
         }
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
+      "_type": "heading",
       "level": 3,
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "`autoFocus`"
         }
       ]
     },
     {
-      "type": "paragraph",
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
-          "type": "text",
+          "_type": "text",
           "text": "Focus this input automatically"
         }
       ]
@@ -83,14 +84,10 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
-  },
-  "@alinea": {
-    "entryId": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
-    "type": "Doc",
-    "index": "a0"
   }
 }

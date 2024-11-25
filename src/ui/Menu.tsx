@@ -1,9 +1,9 @@
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
 import {ReactNode} from 'react'
 import * as rac from 'react-aria-components'
 import css from './Menu.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface MenuProps<T>
   extends rac.MenuProps<T>,

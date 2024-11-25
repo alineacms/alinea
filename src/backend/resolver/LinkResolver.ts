@@ -1,18 +1,10 @@
-import {Entry} from 'alinea/core'
-import {createSelection} from 'alinea/core/pages/CreateSelection'
-import {Projection} from 'alinea/core/pages/Projection'
-import {Realm} from 'alinea/core/pages/Realm'
-import {serializeSelection} from 'alinea/core/pages/Serialize'
+import {Entry} from 'alinea/core/Entry'
+import type {InferProjection, Projection} from 'alinea/core/Graph'
+import {Status} from 'alinea/core/Graph'
 import DataLoader from 'dataloader'
-import {Query} from 'rado'
 import {Store} from '../Store.js'
 import type {EntryResolver} from './EntryResolver.js'
 import {ResolveContext} from './ResolveContext.js'
-
-interface LinkData {
-  entryId: string
-  projection: any
-}
 
 export class LinkResolver {
   loaders = new Map<Projection, DataLoader<string, object>>()
@@ -20,26 +12,26 @@ export class LinkResolver {
   constructor(
     public resolver: EntryResolver,
     public store: Store,
-    public realm: Realm
+    public status: Status
   ) {}
 
   load(projection: Projection) {
     return new DataLoader<string, object>(
       async (ids: ReadonlyArray<string>) => {
-        const selection = createSelection(
-          Entry().where(Entry.entryId.isIn(ids)).select({
-            entryId: Entry.entryId,
-            projection: projection
-          })
+        const query = this.resolver.query(
+          new ResolveContext({status: this.status}),
+          {
+            select: {
+              entryId: Entry.id,
+              projection: projection
+            },
+            id: {in: ids}
+          }
         )
-        serializeSelection(this.resolver.targets, selection)
-        const query = new Query<Array<LinkData>>(
-          this.resolver.query(
-            new ResolveContext({realm: this.realm}),
-            selection
-          )
-        )
-        const entries = await this.store(query)
+        const entries = (await query.all(this.store)) as Array<{
+          entryId: string
+          projection: any
+        }>
         const results = new Map(
           entries.map(entry => [entry.entryId, entry.projection])
         )
@@ -51,7 +43,7 @@ export class LinkResolver {
   resolveLinks<P extends Projection>(
     projection: P,
     entryIds: ReadonlyArray<string>
-  ): Promise<Array<Projection.Infer<P> | undefined>> {
+  ): Promise<Array<InferProjection<P> | undefined>> {
     if (this.loaders.has(projection))
       return this.loaders.get(projection)!.loadMany(entryIds).then(skipErrors)
     const loader = this.load(projection)

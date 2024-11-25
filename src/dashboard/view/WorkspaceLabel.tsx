@@ -1,16 +1,16 @@
-import {Label} from 'alinea/core'
-import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {HStack, Icon, TextLabel} from 'alinea/ui'
 import {LogoShape} from 'alinea/ui/branding/LogoShape'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {contrastColor} from 'alinea/ui/util/ContrastColor'
 import {ComponentType} from 'react'
 import css from './WorkspaceLabel.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type WorkspaceLabelProps = {
   color?: string
-  label: Label
+  label: string
   icon?: ComponentType
 }
 

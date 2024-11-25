@@ -1,67 +1,128 @@
+import * as cito from 'cito'
 import type {ComponentType} from 'react'
+import {getRoot, hasRoot, HasRoot, internalRoot} from './Internal.js'
 import {Label} from './Label.js'
-import {Meta, StripMeta} from './Meta.js'
-import {PageSeed} from './Page.js'
+import {Page} from './Page.js'
+import {Preview} from './Preview.js'
+import {Schema} from './Schema.js'
+import {Type} from './Type.js'
+import {View} from './View.js'
+
 export interface RootI18n {
-  locales: Array<string>
+  locales: ReadonlyArray<string>
 }
 
 export interface RootMeta {
-  contains?: Array<string>
+  contains?: Array<string | Type>
   icon?: ComponentType
   i18n?: RootI18n
-  /** A React component used to view this root in the dashboard */
-  view?: ComponentType<{root: RootData}>
+  /** Point to a React component used to view this root in the dashboard */
+  view?: View<{root: RootData}>
+  isMediaRoot?: boolean
+  preview?: Preview
 }
 
-export interface RootDefinition {
-  [key: string]: PageSeed
-  [Meta]?: RootMeta
+export interface ChildrenDefinition {
+  [key: string]: Page
 }
 
 export interface RootData extends RootMeta {
-  label: Label
+  label: string
 }
 
-type Seed = Record<string, PageSeed>
-
-export type Root<Definition extends Seed = Seed> = Definition & {
-  [Root.Data]: RootData
-}
+export type Root<Children extends ChildrenDefinition = ChildrenDefinition> =
+  Children & HasRoot
 
 export namespace Root {
-  export const Data = Symbol.for('@alinea/Root.Data')
-
   export function label(root: Root): Label {
-    return root[Root.Data].label
+    return getRoot(root).label
   }
 
   export function data(root: Root): RootData {
-    return root[Root.Data]
+    return getRoot(root)
+  }
+
+  export function preview(root: Root): Preview | undefined {
+    return getRoot(root).preview
   }
 
   export function defaultLocale(root: Root): string | undefined {
-    return root[Root.Data].i18n?.locales[0]
+    return getRoot(root).i18n?.locales[0]
+  }
+
+  export function localeName(root: Root, name: string): string | undefined {
+    const {i18n} = getRoot(root)
+    if (!i18n) return
+    for (const locale of i18n.locales) {
+      if (locale.toLowerCase() === name.toLowerCase()) return locale
+    }
   }
 
   export function isRoot(value: any): value is Root {
-    return Boolean(value && value[Root.Data])
+    return Boolean(value && hasRoot(value))
   }
-}
 
-export function root<Definition extends RootDefinition>(
-  label: Label,
-  definition: Definition
-): Root<StripMeta<Definition>> {
-  return {
-    ...definition,
-    [Root.Data]: {
-      label,
-      ...definition[Meta]
+  export function isMediaRoot(root: Root): boolean {
+    return Boolean(getRoot(root).isMediaRoot)
+  }
+
+  const RootOptions = cito.object({
+    label: cito.string,
+    i18n: cito.object({
+      locales: cito.array(cito.string)
+    }).optional,
+    view: cito.string.optional,
+    isMediaRoot: cito.boolean.optional
+  })
+
+  export function validate(root: Root, workspaceLabel: string, schema: Schema) {
+    const {contains} = getRoot(root)
+    const keyOfType = Schema.typeNames(schema)
+    if (contains) {
+      for (const inner of contains) {
+        if (typeof inner === 'string') {
+          if (!schema[inner])
+            throw new Error(
+              `Root "${label(
+                root
+              )}" in workspace "${workspaceLabel}" contains "${inner}", but that Type does not exist`
+            )
+        } else {
+          const hasType = keyOfType.has(inner)
+          if (!hasType)
+            throw new Error(
+              `Root "${label(
+                root
+              )}" in workspace "${workspaceLabel}" contains "${Type.label(
+                inner
+              )}", but that Type does not exist`
+            )
+        }
+      }
     }
   }
+
+  export function referencedViews(root: Root): Array<string> {
+    const {view} = data(root)
+    return typeof view === 'string' ? [view] : []
+  }
 }
 
-export namespace root {
-  export const meta: typeof Meta = Meta
+export interface RootOptions<Children> extends RootMeta {
+  children?: Children
+}
+
+export interface RootInternal extends RootOptions<ChildrenDefinition> {
+  label: string
+}
+
+export function root<Entries extends ChildrenDefinition>(
+  label: string,
+  config: RootOptions<Entries> = {}
+): Root<Entries> {
+  const instance = <Root<Entries>>{
+    ...config.children,
+    [internalRoot]: {...config, label}
+  }
+  return instance
 }
