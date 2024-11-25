@@ -50,12 +50,12 @@ const parentData = {
   level: Entry.level,
   parent: Entry.parentId,
   parentPaths: {
-    parents: {},
+    edge: 'parents' as const,
     select: Entry.path
   },
   childrenIndex: {
     first: true as const,
-    children: {},
+    edge: 'children' as const,
     select: Entry.index,
     orderBy: {asc: Entry.index, caseSensitive: true}
   }

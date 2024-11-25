@@ -119,7 +119,7 @@ export function EntryPickerModal({
         select: {
           title: Entry.title,
           parents: {
-            parents: {},
+            edge: 'parents',
             select: {
               id: Entry.id,
               title: Entry.title

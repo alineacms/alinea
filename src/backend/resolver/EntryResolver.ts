@@ -5,12 +5,12 @@ import {Expr} from 'alinea/core/Expr'
 import {Field} from 'alinea/core/Field'
 import {Filter} from 'alinea/core/Filter'
 import {
+  EdgeQuery,
   GraphQuery,
   Order,
   Projection,
   QuerySettings,
   querySource,
-  RelatedQuery,
   Status
 } from 'alinea/core/Graph'
 import {
@@ -58,7 +58,7 @@ import {Builder} from 'rado/core/Builder'
 import {Functions} from 'rado/core/expr/Functions'
 import {input} from 'rado/core/expr/Input'
 import {jsonExpr} from 'rado/core/expr/Json'
-import {getData, getTable, HasSql} from 'rado/core/Internal'
+import {getData, getTable, HasSql, internalTarget} from 'rado/core/Internal'
 import {bm25, snippet} from 'rado/sqlite'
 import type {Database} from '../Database.js'
 import {Store} from '../Store.js'
@@ -108,15 +108,19 @@ export class EntryResolver {
     }
   }
 
+  field(table: typeof EntryRow, field: Expr): HasSql<any> {
+    const name = this.scope.nameOf(field)
+    if (!name) throw new Error(`Expression has no name ${field}`)
+    const isEntryField = name === 'path' || name === 'type'
+    if (isEntryField) return table[name]
+    return (<any>table.data)[name]
+  }
+
   expr(ctx: ResolveContext, expr: Expr): HasSql<any> {
     const internal = getExpr(expr)
     switch (internal.type) {
       case 'field':
-        const name = this.scope.nameOf(expr)
-        if (!name) throw new Error(`Expression has no name ${expr}`)
-        const isEntryField = name === 'path' || name === 'type'
-        if (isEntryField) return ctx.Table[name]
-        return (<any>ctx.Table.data)[name]
+        return this.field(ctx.Table, expr)
       case 'entryField':
         return ctx.Table[internal.name as keyof EntryRow]
       case 'call':
@@ -161,7 +165,7 @@ export class EntryResolver {
           return [key, this.selectProjection(ctx, value as Projection)]
         })
       )
-    const related = value as RelatedQuery<Projection>
+    const related = value as object as EdgeQuery<Projection>
     const isSingle = this.isSingleResult(related)
     const query = this.query(ctx, related)
     return isSingle ? include.one(query) : include(query)
@@ -176,7 +180,7 @@ export class EntryResolver {
     return this.selectProjection(ctx, fromEntries(entries(fields)))
   }
 
-  querySource(ctx: ResolveContext, query: RelatedQuery): Select<any> {
+  querySource(ctx: ResolveContext, query: EdgeQuery): Select<any> {
     const hasSearch = Boolean(query.search?.length)
     const {aliased} = getTable(ctx.Table)
     const cursor = hasSearch
@@ -189,7 +193,7 @@ export class EntryResolver {
           )
       : builder.select().from(ctx.Table)
     const from = alias(EntryRow, `E${ctx.depth - 1}`) // .as(source.id)
-    switch (querySource(query)) {
+    switch (query.edge) {
       case 'parent':
         return cursor.where(eq(ctx.Table.id, from.parentId)).limit(1)
       case 'next':
@@ -209,14 +213,12 @@ export class EntryResolver {
       case 'siblings':
         return cursor.where(
           eq(ctx.Table.parentId, from.parentId),
-          query.siblings?.includeSelf ? undefined : ne(ctx.Table.id, from.id)
+          query?.includeSelf ? undefined : ne(ctx.Table.id, from.id)
         )
       case 'translations':
         return cursor.where(
           eq(ctx.Table.id, from.id),
-          query.translations?.includeSelf
-            ? undefined
-            : ne(ctx.Table.locale, from.locale)
+          query?.includeSelf ? undefined : ne(ctx.Table.locale, from.locale)
         )
       case 'children':
         const Child = alias(EntryRow, 'Child')
@@ -245,10 +247,7 @@ export class EntryResolver {
                 .where(
                   is(Child.locale, from.locale),
                   this.conditionStatus(Child, ctx.status),
-                  lt(
-                    self.level,
-                    Math.min(query.children?.depth ?? MAX_DEPTH, MAX_DEPTH)
-                  )
+                  lt(self.level, Math.min(query?.depth ?? MAX_DEPTH, MAX_DEPTH))
                 )
             )
         )
@@ -291,10 +290,7 @@ export class EntryResolver {
                 .where(
                   is(Parent.locale, from.locale),
                   this.conditionStatus(Parent, ctx.status),
-                  lt(
-                    self.level,
-                    Math.min(query.parents?.depth ?? MAX_DEPTH, MAX_DEPTH)
-                  )
+                  lt(self.level, Math.min(query?.depth ?? MAX_DEPTH, MAX_DEPTH))
                 )
             )
         )
@@ -310,6 +306,14 @@ export class EntryResolver {
             is(ctx.Table.locale, from.locale)
           )
           .orderBy(asc(ctx.Table.level))
+      case 'link':
+        const linkedField = this.field(from, query.field)
+        return cursor
+          .innerJoin(
+            {[internalTarget]: sql`json_each(${linkedField}) as lF`} as any,
+            eq(ctx.Table.id, sql`lF.value->>'_entry'`)
+          )
+          .orderBy(asc(sql`lF.id`))
       default:
         return cursor.orderBy(asc(ctx.Table.index))
     }
@@ -388,7 +392,7 @@ export class EntryResolver {
       query.root && typeof query.root === 'object' && hasRoot(query.root)
         ? this.scope.nameOf(query.root)
         : query.root
-    return this.conditionFilter(ctx, this.getField.bind(this), {
+    return this.conditionFilter(ctx, this.filterField.bind(this), {
       _id: query.id,
       _parentId: query.parentId,
       _path: query.path,
@@ -509,7 +513,7 @@ export class EntryResolver {
     return and(...conditions)
   }
 
-  getField(ctx: ResolveContext, name: string) {
+  filterField(ctx: ResolveContext, name: string) {
     if (name.startsWith('_')) {
       const entryProp = name.slice(1)
       const key = entryProp as keyof EntryRow
@@ -519,10 +523,10 @@ export class EntryResolver {
     return (<any>ctx.Table.data)[name]
   }
 
-  query(ctx: ResolveContext, query: RelatedQuery<Projection>): Select<any> {
+  query(ctx: ResolveContext, query: GraphQuery<Projection>): Select<any> {
     const {type, filter, skip, take, orderBy, groupBy, first, search} = query
     ctx = ctx.increaseDepth().none
-    let q = this.querySource(ctx, query)
+    let q = this.querySource(ctx, query as EdgeQuery<Projection>)
     const queryData = getData(q)
     let preCondition = queryData.where as HasSql<boolean>
     let condition = and(
@@ -535,7 +539,7 @@ export class EntryResolver {
         ? undefined
         : this.conditionLocale(ctx.Table, ctx.locale),
       this.conditionSearch(ctx.Table, search),
-      filter && this.conditionFilter(ctx, this.getField.bind(this), filter)
+      filter && this.conditionFilter(ctx, this.filterField.bind(this), filter)
     )
     if (skip) q = q.offset(skip)
     if (take) q = q.limit(take)
@@ -559,9 +563,13 @@ export class EntryResolver {
     return result
   }
 
-  isSingleResult(query: RelatedQuery): boolean {
+  isSingleResult(query: EdgeQuery): boolean {
     return Boolean(
-      query.first || query.get || query.parent || query.next || query.previous
+      query.first ||
+        query.get ||
+        query.edge === 'parent' ||
+        query.edge === 'next' ||
+        query.edge === 'previous'
     )
   }
 
@@ -586,26 +594,31 @@ export class EntryResolver {
     ctx: PostContext,
     interim: Interim,
     query: GraphQuery<Projection>
-  ) {
+  ): Promise<void> {
     if (!interim) return
     const selected = this.projection(query)
-    if (selected && hasExpr(selected))
-      return this.postExpr(ctx, interim, selected)
+    if (hasExpr(selected)) return this.postExpr(ctx, interim, selected)
+    if (querySource(selected))
+      return this.post(ctx, interim, selected as EdgeQuery<Projection>)
     await Promise.all(
       entries(selected).map(([key, value]) => {
         const source = querySource(value)
         if (source)
-          return this.post(ctx, interim[key], value as RelatedQuery<Projection>)
+          return this.post(ctx, interim[key], value as EdgeQuery<Projection>)
         return this.postExpr(ctx, interim[key], value as Expr)
       })
     )
   }
 
-  post(ctx: PostContext, interim: Interim, input: RelatedQuery<Projection>) {
+  async post(
+    ctx: PostContext,
+    interim: Interim,
+    input: EdgeQuery<Projection>
+  ): Promise<void> {
     if (input.count === true) return
     const isSingle = this.isSingleResult(input)
     if (isSingle) return this.postRow(ctx, interim, input)
-    return Promise.all(interim.map((row: any) => this.postRow(ctx, row, input)))
+    await Promise.all(interim.map((row: any) => this.postRow(ctx, row, input)))
   }
 
   resolve = async <T>(query: GraphQuery): Promise<T> => {
@@ -616,14 +629,14 @@ export class EntryResolver {
       ...query,
       location
     })
-    const dbQuery = this.query(ctx, query as GraphQuery<Projection>)
-    const singleResult = this.isSingleResult(query)
+    const asEdge = query as EdgeQuery<Projection>
+    const dbQuery = this.query(ctx, asEdge)
+    const singleResult = this.isSingleResult(asEdge)
     const transact = async (tx: Store): Promise<T> => {
       const rows = await dbQuery.all(tx)
       const linkResolver = new LinkResolver(this, tx, ctx.status)
       const result = singleResult ? rows[0] ?? null : rows
-      if (result)
-        await this.post({linkResolver}, result, query as GraphQuery<Projection>)
+      if (result) await this.post({linkResolver}, result, asEdge)
       return result as T
     }
     if (query.preview) {

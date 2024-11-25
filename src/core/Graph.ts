@@ -1,15 +1,14 @@
 import {Root, Workspace} from 'alinea/types'
-import * as cito from 'cito'
 import {Config} from './Config.js'
 import {EntryFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
 import {Condition, Filter} from './Filter.js'
 import {Infer, StoredRow} from './Infer.js'
+import {HasField} from './Internal.js'
 import {Page} from './Page.js'
 import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
 import {Type} from './Type.js'
-import {hasExact} from './util/Checks.js'
 import {Expand} from './util/Types.js'
 
 export type Location = Root | Workspace | Page | Array<string>
@@ -23,35 +22,68 @@ type FieldsOf<Types> = StoredRow<
     : unknown
 >
 
-export interface RelatedQuery<Selection = unknown, Types = unknown>
-  extends GraphQuery<Selection, Types> {
-  translations?: EmptyObject | {includeSelf: boolean | undefined}
-  children?: EmptyObject | {depth: number | undefined}
-  parents?: EmptyObject | {depth: number | undefined}
-  siblings?: EmptyObject | {includeSelf: boolean | undefined}
-
-  parent?: EmptyObject
-  next?: EmptyObject
-  previous?: EmptyObject
+export interface EdgeTranslations {
+  edge: 'translations'
+  includeSelf?: boolean
 }
 
-type IsRelated =
-  | {translations: EmptyObject | {includeSelf: boolean | undefined}}
-  | {children: EmptyObject | {depth: number | undefined}}
-  | {parents: EmptyObject | {depth: number | undefined}}
-  | {siblings: EmptyObject | {includeSelf: boolean | undefined}}
-  | {parent: EmptyObject}
-  | {next: EmptyObject}
-  | {previous: EmptyObject}
-
-interface ToSelect {
-  [key: string]:
-    | Expr<any>
-    | RelatedQuery<ToSelect | Expr<any>, Type | Array<Type>>
-    | ToSelect
+export interface EdgeChildren {
+  edge: 'children'
+  depth?: number
 }
 
-export type Projection = ToSelect | Expr<any>
+export interface EdgeParents {
+  edge: 'parents'
+  depth?: number
+}
+
+export interface EdgeSiblings {
+  edge: 'siblings'
+  includeSelf?: boolean
+}
+
+export interface EdgeParent {
+  edge: 'parent'
+}
+
+export interface EdgeNext {
+  edge: 'next'
+}
+
+export interface EdgePrevious {
+  edge: 'previous'
+}
+
+export interface EdgeLink {
+  edge: 'link'
+  field: HasField & Expr
+}
+
+export type Edge =
+  | EdgeTranslations
+  | EdgeChildren
+  | EdgeParents
+  | EdgeSiblings
+  | EdgeParent
+  | EdgeNext
+  | EdgePrevious
+  | EdgeLink
+
+export type EdgeQuery<
+  Selection = unknown,
+  Types = unknown,
+  Include = unknown
+> = GraphQuery<Selection, Types, Include> & Edge
+
+type SelectContent =
+  | Expr<any>
+  | EdgeQuery<SelectObject | Expr<any>, Type | Array<Type>>
+
+interface SelectObject {
+  [key: string]: Projection
+}
+
+export type Projection = SelectContent | SelectObject
 export type InferProjection<Selection> = InferSelection<Selection>
 
 export interface Order {
@@ -60,15 +92,13 @@ export interface Order {
   caseSensitive?: boolean
 }
 
-type InferSelection<Selection> = Selection extends Expr<infer V>
+type InferSelection<Selection> = Selection extends GraphQuery & Edge
+  ? Expand<AnyQueryResult<Selection>>
+  : Selection extends Expr<infer V>
   ? V
   : {
       [K in keyof Selection]: Selection[K] extends Type<infer V>
         ? Type.Infer<V>
-        : Selection[K] extends Expr<infer V>
-        ? V
-        : Selection[K] extends GraphQuery & IsRelated
-        ? Expand<AnyQueryResult<Selection[K]>>
         : InferSelection<Selection[K]>
     }
 
@@ -210,7 +240,7 @@ export interface GraphQuery<
 
 export type SelectionGuard = Projection | undefined
 export type TypeGuard = Type | Array<Type> | undefined
-export type IncludeGuard = ToSelect | undefined
+export type IncludeGuard = SelectObject | undefined
 
 export class Graph {
   #resolver: Resolver
@@ -260,32 +290,8 @@ export class Graph {
   }
 }
 
-const plainObject = cito.type((value): value is object => {
-  return value?.constructor === Object
-})
-const emptySource = plainObject.and(hasExact([]))
-const depthSource = cito
-  .object({depth: cito.number.optional})
-  .and(hasExact(['depth']))
-const includeSource = cito
-  .object({includeSelf: cito.boolean.optional})
-  .and(hasExact(['includeSelf']))
-const translationsSource = cito.object({translations: includeSource})
-const childrenSource = cito.object({children: depthSource})
-const parentsSource = cito.object({parents: depthSource})
-const siblingsSource = cito.object({siblings: includeSource})
-
-const parentSource = cito.object({parent: emptySource})
-const nextSource = cito.object({next: emptySource})
-const prevSource = cito.object({previous: emptySource})
-
 export function querySource(query: unknown) {
   if (query?.constructor !== Object) return
-  if (translationsSource.check(query)) return 'translations'
-  if (childrenSource.check(query)) return 'children'
-  if (parentsSource.check(query)) return 'parents'
-  if (siblingsSource.check(query)) return 'siblings'
-  if (parentSource.check(query)) return 'parent'
-  if (nextSource.check(query)) return 'next'
-  if (prevSource.check(query)) return 'previous'
+  const related = (<Edge>query).edge
+  return related
 }

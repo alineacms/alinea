@@ -1,4 +1,11 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import {
+  EdgeQuery,
+  GraphQuery,
+  IncludeGuard,
+  SelectionGuard,
+  TypeGuard
+} from 'alinea/core/Graph'
 import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Schema} from 'alinea/core/Schema'
@@ -57,7 +64,17 @@ export function createLink<StoredValue extends Reference, QueryValue>(
 export class LinksField<
   StoredValue extends ListRow,
   QueryValue
-> extends ListField<StoredValue, QueryValue, LinkOptions<Array<StoredValue>>> {}
+> extends ListField<StoredValue, QueryValue, LinkOptions<Array<StoredValue>>> {
+  find<
+    Selection extends SelectionGuard = undefined,
+    Type extends TypeGuard = undefined,
+    Include extends IncludeGuard = undefined
+  >(
+    query: GraphQuery<Selection, Type, Include>
+  ): EdgeQuery<Selection, Type, Include> {
+    return {edge: 'link', field: this, ...query}
+  }
+}
 
 /** Create a link field configuration */
 export function createLinks<StoredValue extends ListRow, QueryValue>(

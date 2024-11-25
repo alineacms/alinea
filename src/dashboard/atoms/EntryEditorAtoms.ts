@@ -136,7 +136,7 @@ export const entryEditorAtoms = atomFamily(
         select: {
           ...Entry,
           parents: {
-            parents: {},
+            edge: 'parents',
             select: Entry.id
           }
         },
@@ -147,7 +147,7 @@ export const entryEditorAtoms = atomFamily(
       const withParents = await graph.first({
         select: {
           parents: {
-            parents: {},
+            edge: 'parents',
             select: {
               id: Entry.id,
               path: Entry.path
@@ -345,7 +345,7 @@ export function createEntryEditor(entryData: EntryData) {
             entryId: Entry.id,
             path: Entry.path,
             paths: {
-              parents: {},
+              edge: 'parents',
               select: Entry.path
             }
           },
@@ -395,7 +395,7 @@ export function createEntryEditor(entryData: EntryData) {
           select: {
             ...Entry,
             parentPaths: {
-              parents: {},
+              edge: 'parents',
               select: Entry.path
             }
           },

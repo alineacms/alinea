@@ -20,14 +20,14 @@ export function summarySelection(schema: Schema) {
     width: MediaFile.width,
     height: MediaFile.height,
     parents: {
-      parents: {},
+      edge: 'parents' as const,
       select: {
         id: Entry.id,
         title: Entry.title
       }
     },
     childrenAmount: {
-      children: {},
+      edge: 'children' as const,
       count: true as const
     }
   }
