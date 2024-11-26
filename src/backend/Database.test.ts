@@ -377,4 +377,20 @@ test('filters', async () => {
   assert.is(result2.length, 1)
 })
 
+test('remove field contents', async () => {
+  const example = createExample()
+  const {Page} = example.schema
+  const entry = await example.create({
+    type: Page,
+    set: {title: 'xyz', name: 'test'}
+  })
+  const updated = await example.update({
+    type: Page,
+    id: entry._id,
+    set: {name: undefined}
+  })
+  assert.is(updated.title, 'xyz')
+  assert.is(updated.name, null)
+})
+
 test.run()
