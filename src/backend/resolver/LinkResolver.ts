@@ -53,8 +53,8 @@ export class LinkResolver {
     function skipErrors(results: Array<any>) {
       return results.map(result => {
         if (result instanceof Error) {
-          console.error(result)
-          return undefined
+          Error.captureStackTrace(result)
+          throw result
         }
         return result
       })
