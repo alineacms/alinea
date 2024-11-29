@@ -40,7 +40,7 @@ import {RichTextToolbar} from './RichTextToolbar.js'
 const styles = styler(css)
 
 type NodeViewProps = {
-  node: {attrs: {[BlockNode.id]: string}}
+  node: {attrs: {[BlockNode.id]?: string}}
   deleteNode: () => void
 }
 
