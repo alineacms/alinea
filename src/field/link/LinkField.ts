@@ -80,7 +80,7 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
       for (const row of rows) {
         const type = row[ListRow.type]
         const picker = options.pickers[type]
-        if (!picker) return
+        if (!picker) continue
         if (picker.postProcess) tasks.push(picker.postProcess(row, loader))
       }
       await Promise.all(tasks)

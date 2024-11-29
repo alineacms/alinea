@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.4]
+- Fix removing field contents in `Edit.update`. Pass an undefined value to remove
+  field contents: 
+
+  ````tsx
+  await cms.commit(
+    Edit.update({
+      id: '...',
+      set: {removeMe: undefined}
+    })
+  )
+  ````
+- Fix processing link data correctly even it contains legacy data
+
 ## [1.0.3]
 - Only access normalized config in next cms adapter. This fixes an error
   in production builds which would prevent you from querying media files.

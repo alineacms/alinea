@@ -25,6 +25,7 @@ import {
 } from './util/EntryFilenames.js'
 import {createEntryRow, entryParentPaths} from './util/EntryRows.js'
 import {generateKeyBetween} from './util/FractionalIndexing.js'
+import {entries, fromEntries} from './util/Objects.js'
 import {basename, extname, join, normalize} from './util/Paths.js'
 import {slugify} from './util/Slugs.js'
 
@@ -172,6 +173,7 @@ export class DeleteOp extends Operation {
 
 export interface UpdateQuery<Fields> {
   id: string
+  locale?: string | null
   type?: Type<Fields>
   status?: Status
   set?: Partial<StoredRow<Fields>>
@@ -190,12 +192,14 @@ export class UpdateOperation<Definition> extends Operation {
       const entry = await cms.get({
         select: Entry,
         id: entryId,
+        locale: query.locale,
         status
       })
       const parent = entry.parentId
         ? await cms.get({
             select: Entry,
             id: entry.parentId,
+            locale: query.locale,
             status: 'preferPublished'
           })
         : undefined
@@ -232,7 +236,9 @@ export class UpdateOperation<Definition> extends Operation {
           entryId: entryId,
           locale: entry.locale,
           file,
-          patch: set
+          patch: fromEntries(
+            entries(set).map(([key, value]) => [key, value ?? null])
+          )
         })
       switch (changeStatus) {
         case EntryStatus.Published:
