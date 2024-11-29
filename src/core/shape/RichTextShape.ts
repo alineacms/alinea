@@ -404,7 +404,7 @@ export class RichTextShape<Blocks>
     iterMarks(doc, mark => {
       if (mark[Mark.type] !== 'link') return
       const entryId = mark[LinkMark.entry]
-      if (entryId) links.set(mark, entryId)
+      if (typeof entryId === 'string') links.set(mark, entryId)
     })
     async function loadLinks() {
       const linkIds = Array.from(new Set(links.values()))
