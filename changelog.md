@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.7]
+- Fix querying linked entries without locale
+
 ## [1.0.6]
 - Fix querying linked entries - the requested locale was not passed
 
