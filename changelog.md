@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.6]
+- Fix querying linked entries - the requested locale was not passed
+
 ## [1.0.5]
 - Alinea will now fail if linked entries cannot be resolved during querying.
   Before it would log the error but continue - but this is rarely desired.
