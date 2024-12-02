@@ -1,6 +1,5 @@
 import {Entry} from 'alinea/core/Entry'
 import type {InferProjection, Projection} from 'alinea/core/Graph'
-import {Status} from 'alinea/core/Graph'
 import DataLoader from 'dataloader'
 import {Store} from '../Store.js'
 import type {EntryResolver} from './EntryResolver.js'
@@ -12,14 +11,17 @@ export class LinkResolver {
   constructor(
     public resolver: EntryResolver,
     public store: Store,
-    public status: Status
+    private ctx: ResolveContext
   ) {}
 
   load(projection: Projection) {
     return new DataLoader<string, object>(
       async (ids: ReadonlyArray<string>) => {
         const query = this.resolver.query(
-          new ResolveContext({status: this.status}),
+          new ResolveContext({
+            locale: this.ctx.locale,
+            status: this.ctx.status
+          }),
           {
             select: {
               entryId: Entry.id,
