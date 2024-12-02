@@ -17,9 +17,11 @@ export class LinkResolver {
   load(projection: Projection) {
     return new DataLoader<string, object>(
       async (ids: ReadonlyArray<string>) => {
+        const _locale = this.ctx.locale && {
+          or: [this.ctx.locale, null]
+        }
         const query = this.resolver.query(
           new ResolveContext({
-            locale: this.ctx.locale,
             status: this.ctx.status
           }),
           {
@@ -27,6 +29,7 @@ export class LinkResolver {
               entryId: Entry.id,
               projection: projection
             },
+            filter: {_locale},
             id: {in: ids}
           }
         )
