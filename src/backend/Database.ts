@@ -836,23 +836,26 @@ export class Database implements Syncable {
       if (noChanges) return
 
       await Database.index(tx)
-      const isInserted = sql<boolean>`(${EntryRow.id}, ${coalesce(
-        EntryRow.locale,
-        sql`'null'`
-      )}, ${EntryRow.status}) in ${values(...inserted)}`
-      const entries = await tx.select().from(EntryRow).where(isInserted)
-      for (const entry of entries) {
-        const rowHash = await createRowHash(entry)
-        await tx
-          .update(EntryRow)
-          .set({
-            rowHash
-          })
-          .where(
-            eq(EntryRow.id, entry.id),
-            is(EntryRow.locale, entry.locale),
-            eq(EntryRow.status, entry.status)
-          )
+
+      if (inserted.length > 0) {
+        const isInserted = sql<boolean>`(${EntryRow.id}, ${coalesce(
+          EntryRow.locale,
+          sql`'null'`
+        )}, ${EntryRow.status}) in ${values(...inserted)}`
+        const entries = await tx.select().from(EntryRow).where(isInserted)
+        for (const entry of entries) {
+          const rowHash = await createRowHash(entry)
+          await tx
+            .update(EntryRow)
+            .set({
+              rowHash
+            })
+            .where(
+              eq(EntryRow.id, entry.id),
+              is(EntryRow.locale, entry.locale),
+              eq(EntryRow.status, entry.status)
+            )
+        }
       }
       await this.writeMeta(tx, commitHash)
     })

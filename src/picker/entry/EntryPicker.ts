@@ -15,7 +15,11 @@ import {EntryReference} from './EntryReference.js'
 export interface EntryPickerOptions<Definition = {}> {
   selection: Projection
   defaultView?: 'row' | 'thumb'
+  /** Show entries from a specific workspace/root */
   location?: {workspace: string; root: string}
+  /** Choose from direct children of the currently edited entry */
+  pickChildren?: boolean
+  /** Filter entries by a condition */
   condition?: Filter<EntryFields & Entry>
   withNavigation?: boolean
   showMedia?: boolean

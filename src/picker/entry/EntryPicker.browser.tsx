@@ -9,6 +9,7 @@ import {Workspace} from 'alinea/core/Workspace'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {entries} from 'alinea/core/util/Objects'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
+import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {useLocale} from 'alinea/dashboard/hook/UseLocale'
@@ -68,11 +69,13 @@ export function EntryPickerModal({
 }: EntryPickerModalProps) {
   const config = useConfig()
   const graph = useGraph()
+  const editor = useEntryEditor()
   const {
     title,
     defaultView,
     location,
     max,
+    pickChildren,
     condition,
     withNavigation = true,
     showMedia
@@ -89,6 +92,7 @@ export function EntryPickerModal({
   const locale = useLocale()
   const [destination, setDestination] = useState<PickerLocation>({
     workspace: currentWorkspace,
+    parentId: pickChildren ? editor?.entryId : undefined,
     root: showMedia
       ? Workspace.defaultMediaRoot(config.workspaces[currentWorkspace])
       : currentRoot,
@@ -137,7 +141,7 @@ export function EntryPickerModal({
   )
   const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    if (!withNavigation && condition) {
+    if (!withNavigation && condition && !pickChildren) {
       return {
         select: Entry,
         search: terms,

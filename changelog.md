@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.5]
+- Alinea will now fail if linked entries cannot be resolved during querying.
+  Before it would log the error but continue - but this is rarely desired.
+
 ## [1.0.4]
 - Fix removing field contents in `Edit.update`. Pass an undefined value to remove
   field contents: 
