@@ -1,6 +1,6 @@
 import {Request, Response} from '@alinea/iso'
 import {Connection} from 'alinea/core/Connection'
-import {Draft} from 'alinea/core/Draft'
+import {Draft, DraftKey} from 'alinea/core/Draft'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
 import {User} from 'alinea/core/User'
@@ -38,13 +38,14 @@ export interface Media {
 
 export interface DraftTransport {
   entryId: string
+  locale: string | null
   commitHash: string
   fileHash: string
   draft: string
 }
 
 export interface Drafts {
-  get(ctx: RequestContext, entryId: string): Promise<Draft | undefined>
+  get(ctx: RequestContext, draftKey: DraftKey): Promise<Draft | undefined>
   store(ctx: AuthedContext, draft: Draft): Promise<void>
 }
 

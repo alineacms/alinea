@@ -1,6 +1,6 @@
 import {Entry} from 'alinea/core'
 import {parseYDoc} from 'alinea/core/Doc'
-import {Draft} from 'alinea/core/Draft'
+import {Draft, DraftKey, formatDraftKey} from 'alinea/core/Draft'
 import {PreviewRequest} from 'alinea/core/Preview'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import * as Y from 'yjs'
@@ -8,14 +8,14 @@ import {Database} from '../Database.js'
 
 export function createPreviewParser(db: Database) {
   const drafts = new Map<
-    string,
+    DraftKey,
     Promise<{contentHash: string; draft?: Draft}>
   >()
   return {
     async parse(
       preview: PreviewRequest,
       sync: () => Promise<unknown>,
-      getDraft: (entryId: string) => Promise<Draft | undefined>
+      getDraft: (draftKey: DraftKey) => Promise<Draft | undefined>
     ): Promise<PreviewRequest | undefined> {
       if (!(preview && 'payload' in preview)) return preview
       const update = await decodePreviewPayload(preview.payload)
@@ -28,18 +28,20 @@ export function createPreviewParser(db: Database) {
         first: true,
         select: Entry,
         id: update.entryId,
+        locale: update.locale,
         status: 'preferDraft'
       })
       if (!entry) return
-      const cachedDraft = await drafts.get(update.entryId)
+      const key = formatDraftKey(entry)
+      const cachedDraft = await drafts.get(key)
       let currentDraft: Draft | undefined
       if (cachedDraft?.contentHash === meta.contentHash) {
         currentDraft = cachedDraft.draft
       } else {
         try {
-          const pending = getDraft(update.entryId)
+          const pending = getDraft(key)
           drafts.set(
-            update.entryId,
+            key,
             pending.then(draft => ({contentHash: meta.contentHash, draft}))
           )
           currentDraft = await pending
@@ -57,8 +59,8 @@ export function createPreviewParser(db: Database) {
       const entryData = parseYDoc(type, doc)
       return {entry: {...entry, ...entryData, path: entry.path}}
     },
-    setDraft(entryId: string, input: {contentHash: string; draft?: Draft}) {
-      drafts.set(entryId, Promise.resolve(input))
+    setDraft(key: DraftKey, input: {contentHash: string; draft?: Draft}) {
+      drafts.set(key, Promise.resolve(input))
     }
   }
 }

@@ -890,7 +890,11 @@ export class Database implements Syncable {
         // Temporarily add preview entry
         await tx
           .delete(EntryRow)
-          .where(eq(EntryRow.id, entry.id), eq(EntryRow.active, true))
+          .where(
+            eq(EntryRow.id, entry.id),
+            is(EntryRow.locale, entry.locale),
+            eq(EntryRow.active, true)
+          )
         await tx.insert(EntryRow).values(entry)
         await Database.index(tx)
         const result = await query(tx)

@@ -14,6 +14,7 @@ import {
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {router} from 'alinea/backend/router/Router'
 import {Config} from 'alinea/core/Config'
+import {formatDraftKey, parseDraftKey} from 'alinea/core/Draft'
 import {HttpError} from 'alinea/core/HttpError'
 import {outcome, Outcome, OutcomeJSON} from 'alinea/core/Outcome'
 import {User} from 'alinea/core/User'
@@ -245,15 +246,17 @@ export function cloudBackend(config: Config): Backend {
     }
   }
   const drafts: Drafts = {
-    async get(ctx, entryId) {
+    async get(ctx, key) {
       if (!validApiKey(ctx.apiKey)) return
+      const {entryId, locale} = parseDraftKey(key)
       type CloudDraft = {fileHash: string; update: string; commitHash: string}
       const data = await parseOutcome<CloudDraft | null>(
-        fetch(cloudConfig.drafts + '/' + entryId, json({headers: bearer(ctx)}))
+        fetch(cloudConfig.drafts + '/' + key, json({headers: bearer(ctx)}))
       )
       return data?.update
         ? {
             entryId,
+            locale,
             commitHash: data.commitHash,
             fileHash: data.fileHash,
             draft: base64.parse(data.update)
@@ -261,9 +264,10 @@ export function cloudBackend(config: Config): Backend {
         : undefined
     },
     store(ctx, draft) {
+      const key = formatDraftKey({id: draft.entryId, locale: draft.locale})
       return parseOutcome(
         fetch(
-          cloudConfig.drafts + '/' + draft.entryId,
+          cloudConfig.drafts + '/' + key,
           json({
             method: 'PUT',
             headers: bearer(ctx),

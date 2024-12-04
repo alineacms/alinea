@@ -1,6 +1,7 @@
 import {Config} from 'alinea/core/Config'
 import {Connection} from 'alinea/core/Connection'
 import {createYDoc, DOC_KEY, parseYDoc} from 'alinea/core/Doc'
+import {formatDraftKey} from 'alinea/core/Draft'
 import {Entry} from 'alinea/core/Entry'
 import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
@@ -106,9 +107,9 @@ export const entryEditorAtoms = atomFamily(
           locale: entry.locale
         })
       )
-
+      const key = formatDraftKey(entry)
       const loadDraft = client
-        .getDraft(entryId)
+        .getDraft(key)
         .then(draft => {
           if (draft) {
             edits.applyRemoteUpdate(draft.draft)

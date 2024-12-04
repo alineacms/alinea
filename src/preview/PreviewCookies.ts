@@ -12,7 +12,7 @@ export async function setPreviewCookies(
   try {
     const expiry = new Date(Date.now() + expiresIn)
     for (const {name, value} of chunks)
-      document.cookie = `${name}=${value};expires=${expiry.toUTCString()}`
+      document.cookie = `${name}=${value};path=/;expires=${expiry.toUTCString()}`
     return true
   } catch {
     return false
