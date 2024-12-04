@@ -1,6 +1,6 @@
 import {cms} from '@/cms'
 import styler, {Styler} from '@alinea/styler'
-import {AnyLink} from 'alinea'
+import {Link as AnyLink} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
 import {HStack, Stack} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'

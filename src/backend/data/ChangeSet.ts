@@ -157,8 +157,9 @@ export class ChangeSetCreator {
       select: {
         workspace: Entry.workspace,
         files: {
+          edge: 'children',
+          depth: 999,
           type: MediaFile,
-          children: {depth: 999},
           select: {location: MediaFile.location}
         }
       },

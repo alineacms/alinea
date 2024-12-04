@@ -178,7 +178,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         url: Entry.url,
         path: Entry.path,
         parentPaths: {
-          parents: {},
+          edge: 'parents',
           select: Entry.path
         }
       },

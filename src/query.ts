@@ -25,8 +25,7 @@ export function children<
   Type extends TypeGuard = undefined,
   Include extends IncludeGuard = undefined
 >(query: GraphQuery<Selection, Type, Include> & {depth?: number}) {
-  const {depth, ...rest} = query
-  return {children: {depth}, ...rest}
+  return {edge: 'children' as const, ...query}
 }
 
 export function parents<
@@ -34,8 +33,7 @@ export function parents<
   Type extends TypeGuard = undefined,
   Include extends IncludeGuard = undefined
 >(query: GraphQuery<Selection, Type, Include> & {depth?: number}) {
-  const {depth, ...rest} = query
-  return {parents: {depth}, ...rest}
+  return {edge: 'parents' as const, ...query}
 }
 
 export function translations<
@@ -43,8 +41,7 @@ export function translations<
   Type extends TypeGuard = undefined,
   Include extends IncludeGuard = undefined
 >(query: GraphQuery<Selection, Type, Include> & {includeSelf?: boolean}) {
-  const {includeSelf, ...rest} = query
-  return {translations: {includeSelf}, ...rest}
+  return {edge: 'translations' as const, ...query}
 }
 
 export function parent<
@@ -52,7 +49,7 @@ export function parent<
   Type extends TypeGuard = undefined,
   Include extends IncludeGuard = undefined
 >(query: GraphQuery<Selection, Type, Include>) {
-  return {parent: {}, ...query}
+  return {edge: 'parent' as const, ...query}
 }
 
 export function next<
@@ -60,7 +57,7 @@ export function next<
   Type extends TypeGuard = undefined,
   Include extends IncludeGuard = undefined
 >(query: GraphQuery<Selection, Type, Include>) {
-  return {next: {}, ...query}
+  return {edge: 'next' as const, ...query}
 }
 
 export function previous<
@@ -68,7 +65,7 @@ export function previous<
   Type extends TypeGuard = undefined,
   Include extends IncludeGuard = undefined
 >(query: GraphQuery<Selection, Type, Include>) {
-  return {previous: {}, ...query}
+  return {edge: 'previous' as const, ...query}
 }
 
 export function siblings<
@@ -76,6 +73,5 @@ export function siblings<
   Type extends TypeGuard = undefined,
   Include extends IncludeGuard = undefined
 >(query: GraphQuery<Selection, Type, Include> & {includeSelf?: boolean}) {
-  const {includeSelf, ...rest} = query
-  return {siblings: {includeSelf}, ...rest}
+  return {edge: 'siblings' as const, ...query}
 }

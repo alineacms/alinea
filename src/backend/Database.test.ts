@@ -164,7 +164,7 @@ test('fetch translations', async () => {
     location: example.workspaces.main.multiLanguage,
     select: {
       translations: {
-        translations: {},
+        edge: 'translations',
         type: Page,
         select: Entry.locale
       }
