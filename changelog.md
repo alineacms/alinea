@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.8]
+- Fix live previews for translated entries
+
 ## [1.0.7]
 - Fix querying linked entries without locale
 
