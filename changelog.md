@@ -2,6 +2,7 @@
 
 ## [1.0.9]
 - Fix skip/take for queries which were not used
+- Disable navigation in the internal link picker if a condition is used
 
 ## [1.0.8]
 - Fix live previews for translated entries
