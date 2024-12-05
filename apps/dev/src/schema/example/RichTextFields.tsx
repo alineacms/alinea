@@ -18,6 +18,7 @@ export const RichTextFields = Config.document('Rich text fields', {
     }),
     makeRO: Field.check('Make read-only'),
     nested: Field.richText('With nested blocks', {
+      enableTables: true,
       schema: {
         Inner: Config.type('Inner', {
           fields: {

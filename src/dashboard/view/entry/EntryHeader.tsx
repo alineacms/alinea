@@ -3,7 +3,7 @@ import {EntryStatus} from 'alinea/core/EntryRow'
 import {entryFile, workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {Menu, MenuItem} from 'alinea/ui/Menu'
 import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
 import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
 import {IcOutlineKeyboardTab} from 'alinea/ui/icons/IcOutlineKeyboardTab'
@@ -19,7 +19,7 @@ import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useState} from 'react'
+import {ReactNode, useState} from 'react'
 import {useQueryClient} from 'react-query'
 import {EntryEditor, EntryTransition} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
@@ -149,63 +149,39 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     input.click()
   }
 
-  const options =
-    variant === 'draft' ? (
-      <DropdownMenu.Item
-        className={styles.root.action()}
-        onClick={discardDraft}
-      >
-        Remove draft
-      </DropdownMenu.Item>
-    ) : variant === EntryStatus.Published && !editor.activeVersion.seeded ? (
-      isMediaFile ? (
-        <>
-          <DropdownMenu.Item
-            className={styles.root.action()}
-            onClick={replaceFile}
-          >
-            Replace
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className={styles.root.action()}
-            onClick={deleteFileAndNavigate}
-          >
-            Delete
-          </DropdownMenu.Item>
-        </>
-      ) : isMediaLibrary ? (
-        <>
-          <DropdownMenu.Item
-            className={styles.root.action()}
-            onClick={deleteMediaLibraryAndNavigate}
-          >
-            Delete
-          </DropdownMenu.Item>
-        </>
-      ) : (
-        <DropdownMenu.Item
-          className={styles.root.action()}
-          onClick={archivePublished}
-        >
-          Archive
-        </DropdownMenu.Item>
-      )
-    ) : variant === EntryStatus.Archived ? (
-      <>
-        <DropdownMenu.Item
-          className={styles.root.action()}
-          onClick={publishArchived}
-        >
-          Publish
-        </DropdownMenu.Item>
-        <DropdownMenu.Item
-          className={styles.root.action()}
-          onClick={deleteArchived}
-        >
-          Delete
-        </DropdownMenu.Item>
-      </>
-    ) : null
+  const menuItems: Array<{id: string; action(): void; label: ReactNode}> = []
+  if (!isMediaFile) {
+    menuItems.push({
+      id: 'history',
+      action: () => setShowHistory(!showHistory),
+      label: `${showHistory ? 'Hide' : 'Show'} history`
+    })
+  }
+  if (variant === 'draft') {
+    menuItems.push({id: 'draft', action: discardDraft, label: 'Remove draft'})
+  } else if (
+    variant === EntryStatus.Published &&
+    !editor.activeVersion.seeded
+  ) {
+    if (isMediaFile) {
+      menuItems.push({id: 'replace', action: replaceFile, label: 'Replace'})
+      menuItems.push({
+        id: 'delete',
+        action: deleteFileAndNavigate,
+        label: 'Delete'
+      })
+    } else {
+      menuItems.push({
+        id: 'archive',
+        action: archivePublished,
+        label: 'Archive'
+      })
+    }
+  } else if (variant === EntryStatus.Archived) {
+    menuItems.push({id: 'publish', action: publishArchived, label: 'Publish'})
+    menuItems.push({id: 'delete', action: deleteArchived, label: 'Delete'})
+  }
+
   return (
     <>
       {isReplacing && <FileUploader />}
@@ -221,8 +197,9 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
 
           <Icon icon={variantIcon[variant]} size={18} />
 
-          <DropdownMenu.Root bottom>
-            <DropdownMenu.Trigger className={styles.root.description.title()}>
+          <Menu
+            onAction={href => navigate(href as string)}
+            label={
               <HStack center gap={4}>
                 <span>
                   {variant === 'transition'
@@ -233,32 +210,18 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                   <Icon icon={IcRoundUnfoldMore} />
                 )}
               </HStack>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Items>
-              {hasChanges && (
-                <DropdownMenu.Item
-                  onClick={() => {
-                    navigate(pathname)
-                  }}
-                >
-                  Editing
-                </DropdownMenu.Item>
-              )}
-              {!previewRevision &&
-                editor.availableStatuses.map(status => {
-                  return (
-                    <DropdownMenu.Item
-                      key={status}
-                      onClick={() => {
-                        navigate(`${pathname}?${status}`)
-                      }}
-                    >
-                      {variantDescription[status]}
-                    </DropdownMenu.Item>
-                  )
-                })}
-            </DropdownMenu.Items>
-          </DropdownMenu.Root>
+            }
+          >
+            {hasChanges && <MenuItem id={pathname}>Editing</MenuItem>}
+            {!previewRevision &&
+              editor.availableStatuses.map(status => {
+                return (
+                  <MenuItem key={status} id={`${pathname}?${status}`}>
+                    {variantDescription[status]}
+                  </MenuItem>
+                )
+              })}
+          </Menu>
 
           {editable &&
             !currentTransition &&
@@ -366,22 +329,25 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                     </Button>
                   )}
 
-                  <DropdownMenu.Root bottom left>
-                    <DropdownMenu.Trigger className={styles.root.more(variant)}>
-                      <Icon icon={IcRoundMoreVert} />
-                    </DropdownMenu.Trigger>
-
-                    <DropdownMenu.Items>
-                      {!isMediaFile && !isMediaLibrary && (
-                        <DropdownMenu.Item
-                          onClick={() => setShowHistory(!showHistory)}
-                        >
-                          {showHistory ? 'Hide' : 'Show'} history
-                        </DropdownMenu.Item>
-                      )}
-                      {options}
-                    </DropdownMenu.Items>
-                  </DropdownMenu.Root>
+                  <Menu
+                    placement="bottom right"
+                    label={
+                      <div className={styles.root.more(variant)}>
+                        <Icon icon={IcRoundMoreVert} />
+                      </div>
+                    }
+                    onAction={id => {
+                      menuItems.find(item => item.id === id)?.action()
+                    }}
+                  >
+                    {menuItems.map(({id, label}) => {
+                      return (
+                        <MenuItem key={id} id={id}>
+                          {label}
+                        </MenuItem>
+                      )
+                    })}
+                  </Menu>
                 </>
               )}
               <button
