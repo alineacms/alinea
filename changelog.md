@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.9]
+- Fix skip/take for queries which were not used
+
 ## [1.0.8]
 - Fix live previews for translated entries
 
