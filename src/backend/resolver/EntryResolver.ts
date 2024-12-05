@@ -523,6 +523,8 @@ export class EntryResolver {
     const {type, filter, skip, take, orderBy, groupBy, first, search} = query
     ctx = ctx.increaseDepth().none
     let q = this.querySource(ctx, query)
+    if (skip) q = q.offset(skip)
+    if (take) q = q.limit(take)
     const queryData = getData(q)
     let preCondition = queryData.where as HasSql<boolean>
     let condition = and(
@@ -537,8 +539,6 @@ export class EntryResolver {
       this.conditionSearch(ctx.Table, search),
       filter && this.conditionFilter(ctx, this.getField.bind(this), filter)
     )
-    if (skip) q = q.offset(skip)
-    if (take) q = q.limit(take)
     const toSelect = this.select(ctx.select, query)
     let result = new Select({
       ...queryData,

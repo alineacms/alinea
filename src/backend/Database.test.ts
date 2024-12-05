@@ -393,4 +393,21 @@ test('remove field contents', async () => {
   assert.is(updated.name, null)
 })
 
+test('take/skip', async () => {
+  const example = createExample()
+  const {Page} = example.schema
+  const lastTwo = await example.find({
+    root: example.workspaces.main.pages,
+    skip: 1,
+    take: 2
+  })
+  assert.is(lastTwo.length, 2)
+  const lastOne = await example.find({
+    root: example.workspaces.main.pages,
+    skip: 2,
+    take: 1
+  })
+  assert.is(lastOne.length, 1)
+})
+
 test.run()
