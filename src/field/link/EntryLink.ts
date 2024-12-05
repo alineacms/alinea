@@ -46,9 +46,7 @@ export function entry<Fields = undefined>(
     pickers: {
       entry: entryPicker({
         ...options,
-        withNavigation: Boolean(
-          options.location || (!options.condition && !options.pickChildren)
-        ),
+        withNavigation: Boolean(!options.condition && !options.pickChildren),
         title: 'Select a page',
         max: 1,
         selection: EntryLink
@@ -75,9 +73,7 @@ export namespace entry {
       pickers: {
         entry: entryPicker<EntryReference, Fields>({
           ...options,
-          withNavigation: Boolean(
-            options.location || (!options.condition && !options.pickChildren)
-          ),
+          withNavigation: Boolean(!options.condition && !options.pickChildren),
           title: 'Select a page',
           selection: EntryLink
         })

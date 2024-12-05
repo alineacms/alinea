@@ -77,7 +77,7 @@ export function EntryPickerModal({
     max,
     pickChildren,
     condition,
-    withNavigation = true,
+    withNavigation,
     showMedia
   } = options
   const [search, setSearch] = useState('')
@@ -141,22 +141,7 @@ export function EntryPickerModal({
   )
   const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    if (!withNavigation && condition && !pickChildren) {
-      return {
-        select: Entry,
-        search: terms,
-        filter: {
-          and: [
-            condition,
-            {
-              _workspace: destination.workspace,
-              _root: destination.root,
-              _locale: destinationLocale
-            }
-          ]
-        }
-      }
-    }
+    const showAll = terms.length === 0 || condition || pickChildren
     return {
       select: Entry,
       filter: {
@@ -165,8 +150,7 @@ export function EntryPickerModal({
           {
             _workspace: destination.workspace,
             _root: destination.root,
-            _parentId:
-              terms.length === 0 ? destination.parentId ?? null : undefined,
+            _parentId: showAll ? undefined : destination.parentId ?? null,
             _locale: destinationLocale
           }
         ]
