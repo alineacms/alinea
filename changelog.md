@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.10]
+- Fix handling mutation retries based on the http status code received.
+
 ## [1.0.9]
 - Fix skip/take for queries which were not used
 - Disable navigation in the internal link picker if a condition is used
