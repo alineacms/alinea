@@ -5,13 +5,21 @@
   flex-direction: column;
 
   &-tabs {
-    margin: auto;
-    padding: 0 calc(var(--alinea-main-padding-x) - 8px);
-    padding-bottom: 2px;
-    max-width: var(--alinea-main-width);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex-grow: 1;
+    min-width: 0;
 
-    @include ml {
-      margin-top: -16px;
+    &-header {
+      margin: auto;
+      padding: 0 calc(var(--alinea-main-padding-x) - 8px);
+      padding-bottom: 2px;
+      max-width: var(--alinea-main-width);
+
+      @include ml {
+        margin-top: -16px;
+      }
     }
   }
 }

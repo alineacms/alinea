@@ -30,7 +30,6 @@ import {SuspenseBoundary} from './util/SuspenseBoundary.js'
 import {ErrorBoundary} from './view/ErrorBoundary.js'
 import {Modal} from './view/Modal.js'
 import {Sidebar} from './view/Sidebar.js'
-import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
 import {SidebarSettings} from './view/sidebar/SidebarSettings.js'
 
@@ -86,61 +85,59 @@ function AppAuthenticated() {
         </Modal>
       )}
       <Statusbar.Provider>
-        <Toolbar.Provider>
-          <Sidebar.Provider>
-            <Head>
-              <FavIcon color={color} />
-            </Head>
-            <div
-              style={{
-                flex: '1',
-                display: 'flex',
-                minHeight: 0,
-                position: 'relative'
-              }}
-            >
-              <Sidebar.Nav>
-                {Object.entries(roots).map(([key, root], i) => {
-                  const isSelected = key === currentRoot
-                  const {id, ...location} = entryLocation
-                  const link =
-                    location.root === key
-                      ? nav.entry(location)
-                      : nav.root({
-                          workspace,
-                          root: key,
-                          locale: preferredLanguage
-                        })
-                  const {label, icon} = Root.data(root)
-                  return (
-                    <Sidebar.Nav.Item
-                      key={key}
-                      selected={isEntry && isSelected}
-                      href={link}
-                      aria-label={label}
-                    >
-                      <Icon icon={icon ?? IcRoundDescription} />
-                    </Sidebar.Nav.Item>
-                  )
-                })}
-                {/*<DraftsButton />*/}
-                <SidebarSettings />
-              </Sidebar.Nav>
-              <ErrorBoundary>
-                <SuspenseBoundary name="main" fallback={<Loader absolute />}>
-                  <RouteView fallback={null} />
-                </SuspenseBoundary>
-              </ErrorBoundary>
-            </div>
-            {alineaDev && (
-              <Statusbar.Root>
-                <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                  {meta.contentHash}
-                </Statusbar.Status>
-              </Statusbar.Root>
-            )}
-          </Sidebar.Provider>
-        </Toolbar.Provider>
+        <Sidebar.Provider>
+          <Head>
+            <FavIcon color={color} />
+          </Head>
+          <div
+            style={{
+              flex: '1',
+              display: 'flex',
+              minHeight: 0,
+              position: 'relative'
+            }}
+          >
+            <Sidebar.Nav>
+              {Object.entries(roots).map(([key, root], i) => {
+                const isSelected = key === currentRoot
+                const {id, ...location} = entryLocation
+                const link =
+                  location.root === key
+                    ? nav.entry(location)
+                    : nav.root({
+                        workspace,
+                        root: key,
+                        locale: preferredLanguage
+                      })
+                const {label, icon} = Root.data(root)
+                return (
+                  <Sidebar.Nav.Item
+                    key={key}
+                    selected={isEntry && isSelected}
+                    href={link}
+                    aria-label={label}
+                  >
+                    <Icon icon={icon ?? IcRoundDescription} />
+                  </Sidebar.Nav.Item>
+                )
+              })}
+              {/*<DraftsButton />*/}
+              <SidebarSettings />
+            </Sidebar.Nav>
+            <ErrorBoundary>
+              <SuspenseBoundary name="main" fallback={<Loader absolute />}>
+                <RouteView fallback={null} />
+              </SuspenseBoundary>
+            </ErrorBoundary>
+          </div>
+          {alineaDev && (
+            <Statusbar.Root>
+              <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                {meta.contentHash}
+              </Statusbar.Status>
+            </Statusbar.Root>
+          )}
+        </Sidebar.Provider>
       </Statusbar.Provider>
     </>
   )

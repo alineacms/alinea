@@ -174,7 +174,9 @@
     padding: 6px 12px 6px 6px;
 
     &:focus,
+    &:focus-visible,
     &:hover {
+      outline: none;
       background: var(--alinea-highlight);
     }
   }

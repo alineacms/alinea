@@ -5,7 +5,7 @@ import {HStack, Stack} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
-import {useLayoutEffect, useMemo, useState} from 'react'
+import {memo, useLayoutEffect, useMemo, useState} from 'react'
 import {useFocusList} from '../hook/UseFocusList.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
@@ -17,7 +17,7 @@ import {Explorer, ExporerItemSelect} from './explorer/Explorer.js'
 
 const styles = styler(css)
 
-export function SearchBox() {
+export const SearchBox = memo(function SearchBox() {
   const nav = useNav()
   const navigate = useNavigate()
   const location = useLocation()
@@ -102,4 +102,4 @@ export function SearchBox() {
       </list.Container>
     </div>
   )
-}
+})

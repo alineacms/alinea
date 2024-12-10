@@ -1,10 +1,11 @@
 import {btoa} from 'alinea/core/util/Encoding'
+import {memo} from 'react'
 import {useContrastColor} from '../hook/UseContrastColor.js'
 
 type FavIconProps = {
   color: string
 }
-export function FavIcon({color}: FavIconProps) {
+export const FavIcon = memo(function FavIcon({color}: FavIconProps) {
   const accentColorForeground = useContrastColor(color)
 
   const favicon = btoa(
@@ -51,4 +52,4 @@ export function FavIcon({color}: FavIconProps) {
       href={`data:image/svg+xml;base64,${favicon}`}
     />
   )
-}
+})
