@@ -1,6 +1,8 @@
 @import '@alinea/ui/style.scss';
 
 .root {
+  container-type: inline-size;
+  container-name: lift;
   background: var(--alinea-background);
   box-shadow: 0 0 1.4px var(--alinea-shadow), 0 2px 3.5px var(--alinea-shadow);
   transition: box-shadow 0.25s ease-out;
