@@ -5,6 +5,7 @@ import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'
 import {Draft, DraftKey, formatDraftKey} from 'alinea/core/Draft'
 import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
+import {HttpError} from 'alinea/core/HttpError'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {PreviewUpdate} from 'alinea/core/Preview'
 import {getScope} from 'alinea/core/Scope'
@@ -131,8 +132,8 @@ export function createHandler(
         await Promise.all(tasks)
         return {commitHash: result.commitHash}
       } catch (error: any) {
-        if ('expectedCommitHash' in error) {
-          if (retry) throw error
+        if (retry) throw error
+        if (error instanceof HttpError && error.code === 409) {
           await syncPending(ctx)
           return mutate(ctx, mutations, true)
         }
