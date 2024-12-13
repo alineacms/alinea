@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.11]
 - Fix navigation tree in link picker
 - Set the default depth of querying children to 1
 
