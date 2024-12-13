@@ -203,20 +203,21 @@ export class Database implements Syncable {
     return children
   }
 
-  async logEntries() {
+  async logEntries(
+    keys: Array<keyof EntryRow> = [
+      'url',
+      'id',
+      'parentId',
+      'locale',
+      'status',
+      'title'
+    ]
+  ) {
     const entries = await this.store
       .select()
       .from(EntryRow)
       .orderBy(asc(EntryRow.url), asc(EntryRow.index))
-    for (const entry of entries) {
-      console.info(
-        entry.url.padEnd(35),
-        entry.id.padEnd(12),
-        (entry.locale ?? '').padEnd(5),
-        entry.status.padEnd(12),
-        entry.title
-      )
-    }
+    console.table(entries, keys)
   }
 
   private async applyMutation(
@@ -246,9 +247,8 @@ export class Database implements Syncable {
         await tx.delete(EntryRow).where(condition)
         await tx.insert(EntryRow).values(entry)
         let children: Array<EntryRow> = []
-        if (entry.status === EntryStatus.Published) {
-          if (current) children = await this.updateChildren(tx, current, entry)
-        }
+        if (entry.status === EntryStatus.Published && current)
+          children = await this.updateChildren(tx, current, entry)
         return () => {
           return this.updateHash(tx, condition).then(self =>
             this.updateHash(
@@ -301,12 +301,21 @@ export class Database implements Syncable {
         await tx.delete(EntryRow).where(archived)
         await tx
           .update(EntryRow)
-          .set({
-            status: EntryStatus.Archived,
-            filePath
-          })
+          .set({status: EntryStatus.Archived, filePath})
           .where(condition)
-        return () => this.updateHash(tx, archived)
+        const children = await tx
+          .update(EntryRow)
+          .set({status: EntryStatus.Archived})
+          .where(
+            eq(EntryRow.status, EntryStatus.Published),
+            or(
+              eq(EntryRow.parentDir, published.childrenDir),
+              like(EntryRow.childrenDir, published.childrenDir + '/%')
+            )
+          )
+          .returning(EntryRow.id)
+        return () =>
+          this.updateHash(tx, or(archived, inArray(EntryRow.id, children)))
       }
       case MutationType.Publish: {
         const promoting = await tx
@@ -673,7 +682,6 @@ export class Database implements Syncable {
             seeded: EntryRow.seeded
           })
           .from(EntryRow)
-
           .where(
             eq(EntryRow.filePath, file.filePath),
             eq(EntryRow.workspace, file.workspace),
@@ -697,9 +705,7 @@ export class Database implements Syncable {
         try {
           const raw = JsonLoader.parse(this.config.schema, file.contents)
           const {meta, data, v0Id} = parseRecord(raw)
-          if (v0Id) {
-            v0Ids.set(v0Id, meta.id)
-          }
+          if (v0Id) v0Ids.set(v0Id, meta.id)
           const seeded = meta.seeded
           const key = seedKey(
             file.workspace,
@@ -743,6 +749,7 @@ export class Database implements Syncable {
           seenVersions.push([entry.id, entry.locale ?? 'null', entry.status])
           inserted.push([entry.id, entry.locale ?? 'null', entry.status])
         } catch (e: any) {
+          // Reminder: this runs browser side too so cannot use reportHalt here
           console.warn(`${e.message} @ ${file.filePath}`)
           process.exit(1)
         }
@@ -842,14 +849,26 @@ export class Database implements Syncable {
           EntryRow.locale,
           sql`'null'`
         )}, ${EntryRow.status}) in ${values(...inserted)}`
+        const archivedPaths = await tx
+          .select(EntryRow.childrenDir)
+          .from(EntryRow)
+          .where(eq(EntryRow.status, EntryStatus.Archived))
+        for (const archivedPath of archivedPaths) {
+          const isChildOf = or(
+            eq(EntryRow.parentDir, archivedPath),
+            like(EntryRow.childrenDir, archivedPath + '/%')
+          )
+          await tx
+            .update(EntryRow)
+            .set({status: EntryStatus.Archived})
+            .where(isChildOf, eq(EntryRow.status, EntryStatus.Published))
+        }
         const entries = await tx.select().from(EntryRow).where(isInserted)
         for (const entry of entries) {
           const rowHash = await createRowHash(entry)
           await tx
             .update(EntryRow)
-            .set({
-              rowHash
-            })
+            .set({rowHash})
             .where(
               eq(EntryRow.id, entry.id),
               is(EntryRow.locale, entry.locale),
