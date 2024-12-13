@@ -147,7 +147,10 @@ export function EntryPickerModal({
         {
           _workspace: destination.workspace,
           _root: destination.root,
-          _parentId: withNavigation ? destination.parentId ?? null : undefined,
+          _parentId:
+            withNavigation || pickChildren
+              ? destination.parentId ?? null
+              : undefined,
           _locale: destinationLocale
         }
       ]
