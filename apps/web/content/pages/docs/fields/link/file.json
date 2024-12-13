@@ -2,8 +2,6 @@
   "_id": "tlhZ01MHUjv3Od172Ew6w",
   "_type": "Doc",
   "_index": "a2Bd",
-  "_i18nId": "tlhZ01MHUjv3Od172Ew6w",
-  "_root": "pages",
   "title": "File",
   "navigationTitle": "",
   "body": [
@@ -28,7 +26,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "2Yks376YZg3E6MZZHv9KcuYgQos",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('File field', {\n  file: Field.file('Single file link'),\n\n  fileMultiple: Field.file.multiple('Multiple file links')\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('File field', {\n  fields: {\n    file: Field.file('Single file link'),\n    fileMultiple: Field.file.multiple('Multiple file links')\n  }\n})"
     },
     {
       "_type": "heading",
@@ -77,8 +75,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
