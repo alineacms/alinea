@@ -175,7 +175,7 @@ export const entryEditorAtoms = atomFamily(
         (await graph.first({
           select: Entry.id,
           id: entry.parentId,
-          locale,
+          locale: searchLocale,
           status: 'preferDraft'
         }))
       const parentNeedsTranslation = entry.parentId ? !parentLink : false

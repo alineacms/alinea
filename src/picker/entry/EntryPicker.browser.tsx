@@ -77,7 +77,6 @@ export function EntryPickerModal({
     max,
     pickChildren,
     condition,
-    withNavigation,
     showMedia
   } = options
   const [search, setSearch] = useState('')
@@ -139,6 +138,7 @@ export function EntryPickerModal({
       })
     }
   )
+  const withNavigation = Boolean(!options.condition && !options.pickChildren)
   const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     const filter = {

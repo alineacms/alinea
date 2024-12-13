@@ -12,16 +12,19 @@ import {Type, type} from 'alinea/core/Type'
 import {assign, keys} from 'alinea/core/util/Objects'
 import {EntryReference} from './EntryReference.js'
 
-export interface EntryPickerOptions<Definition = {}> {
-  selection: Projection
-  defaultView?: 'row' | 'thumb'
+export interface EntryPickerConditions {
   /** Show entries from a specific workspace/root */
   location?: {workspace: string; root: string}
   /** Choose from direct children of the currently edited entry */
   pickChildren?: boolean
   /** Filter entries by a condition */
   condition?: Filter<EntryFields & Entry>
-  withNavigation?: boolean
+}
+
+export interface EntryPickerOptions<Definition = {}>
+  extends EntryPickerConditions {
+  selection: Projection
+  defaultView?: 'row' | 'thumb'
   showMedia?: boolean
   max?: number
   label?: string

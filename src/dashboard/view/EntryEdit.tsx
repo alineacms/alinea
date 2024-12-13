@@ -226,11 +226,9 @@ export function EntryEdit({editor}: EntryEditProps) {
                     title="Untranslated"
                     variant="untranslated"
                   >
-                    This page has not yet been translated to this language,
-                    <br />
                     {editor.parentNeedsTranslation
-                      ? 'please translate the parent page first.'
-                      : 'please enter the details below and save to start translating.'}
+                      ? 'Translate the parent page first.'
+                      : 'Enter the details below and save to start translating.'}
                   </EntryNotice>
                 </div>
               )}
