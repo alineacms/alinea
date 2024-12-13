@@ -1,5 +1,8 @@
 # Changelog
 
+## [Unreleased]
+- Fix navigation tree in link picker
+
 ## [1.0.10]
 - Fix handling mutation retries based on the http status code received.
 

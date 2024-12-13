@@ -141,23 +141,23 @@ export function EntryPickerModal({
   )
   const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    const showAll = terms.length === 0 || condition || pickChildren
+    const filter = {
+      and: [
+        condition,
+        {
+          _workspace: destination.workspace,
+          _root: destination.root,
+          _parentId: withNavigation ? destination.parentId ?? null : undefined,
+          _locale: destinationLocale
+        }
+      ]
+    }
     return {
       select: Entry,
-      filter: {
-        and: [
-          condition,
-          {
-            _workspace: destination.workspace,
-            _root: destination.root,
-            _parentId: showAll ? undefined : destination.parentId ?? null,
-            _locale: destinationLocale
-          }
-        ]
-      },
+      filter: filter,
       search: terms
     }
-  }, [destination, destinationLocale, search, condition])
+  }, [withNavigation, destination, destinationLocale, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
     (entry: ExporerItemSelect) => {
@@ -186,7 +186,7 @@ export function EntryPickerModal({
         return res
       })
     },
-    [setSelected, max]
+    [onConfirm, type, max]
   )
   function handleConfirm() {
     onConfirm(selected)
@@ -265,23 +265,22 @@ export function EntryPickerModal({
                         />
                       )}
                     </BreadcrumbsItem>
-                    {!search &&
-                      parentEntries?.map(({id, title}) => {
-                        return (
-                          <BreadcrumbsItem key={id}>
-                            <button
-                              onClick={() => {
-                                updateDestination({
-                                  ...destination,
-                                  parentId: id
-                                })
-                              }}
-                            >
-                              {title}
-                            </button>
-                          </BreadcrumbsItem>
-                        )
-                      })}
+                    {parentEntries?.map(({id, title}) => {
+                      return (
+                        <BreadcrumbsItem key={id}>
+                          <button
+                            onClick={() => {
+                              updateDestination({
+                                ...destination,
+                                parentId: id
+                              })
+                            }}
+                          >
+                            {title}
+                          </button>
+                        </BreadcrumbsItem>
+                      )
+                    })}
                   </Breadcrumbs>
                 )}
                 <h2>
