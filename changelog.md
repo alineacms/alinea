@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 - Fix navigation tree in link picker
+- Set the default depth of querying children to 1
 
 ## [1.0.10]
 - Fix handling mutation retries based on the http status code received.

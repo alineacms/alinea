@@ -247,7 +247,7 @@ export class EntryResolver {
                   this.conditionStatus(Child, ctx.status),
                   lt(
                     self.level,
-                    Math.min(query.children?.depth ?? MAX_DEPTH, MAX_DEPTH)
+                    Math.min(query.children?.depth ?? 1, MAX_DEPTH)
                   )
                 )
             )
