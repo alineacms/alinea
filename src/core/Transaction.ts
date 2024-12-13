@@ -25,6 +25,7 @@ import {
 } from './util/EntryFilenames.js'
 import {createEntryRow, entryParentPaths} from './util/EntryRows.js'
 import {generateKeyBetween} from './util/FractionalIndexing.js'
+import {entries, fromEntries} from './util/Objects.js'
 import {basename, extname, join, normalize} from './util/Paths.js'
 import {slugify} from './util/Slugs.js'
 
@@ -212,13 +213,20 @@ export class UpdateOperation<Definition> extends Operation {
       const type = cms.config.schema[current.type]
       const mutations: Array<Mutation> = []
       const createDraft = changeStatus === EntryStatus.Draft
+      const fieldUpdates =
+        set &&
+        fromEntries(
+          entries(set).map(([key, value]) => {
+            return [key, value ?? null]
+          })
+        )
       const entry = await createEntry(
         cms.config,
         this.typeName(cms.config, type),
         {
           ...current,
-          status: EntryStatus.Draft,
-          data: {...current.data, ...set}
+          status: createDraft ? EntryStatus.Draft : current.status,
+          data: {...current.data, ...fieldUpdates}
         },
         parent
       )
