@@ -19,6 +19,8 @@ export interface EntryPickerConditions {
   pickChildren?: boolean
   /** Filter entries by a condition */
   condition?: Filter<EntryFields & Entry>
+  /** Enable entry picker navigation */
+  enableNavigation?: boolean
 }
 
 export interface EntryPickerOptions<Definition = {}>
