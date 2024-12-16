@@ -5,7 +5,7 @@ import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'
 import {Draft, DraftKey, formatDraftKey} from 'alinea/core/Draft'
 import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
-import {HttpError} from 'alinea/core/HttpError'
+import {ErrorCode, HttpError} from 'alinea/core/HttpError'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {PreviewUpdate} from 'alinea/core/Preview'
 import {getScope} from 'alinea/core/Scope'
@@ -96,9 +96,11 @@ export function createHandler(
         if (!backend.pending) return meta
         try {
           const toApply = await backend.pending.since(ctx, meta.commitHash)
-          const total = toApply?.mutations.length ?? 0
-          console.info(`> sync ${total} pending mutations`)
+          console.info(`> nothing to sync from ${meta.commitHash}`)
           if (!toApply) return meta
+          console.info(
+            `> sync ${toApply.mutations.length} pending mutations, from ${meta.commitHash} to ${toApply.toCommitHash}`
+          )
           await db.applyMutations(toApply.mutations, toApply.toCommitHash)
         } catch (error) {
           console.error(error)
@@ -133,7 +135,7 @@ export function createHandler(
         return {commitHash: result.commitHash}
       } catch (error: any) {
         if (retry) throw error
-        if (error instanceof HttpError && error.code === 409) {
+        if (error instanceof HttpError && error.code === ErrorCode.Conflict) {
           await syncPending(ctx)
           return mutate(ctx, mutations, true)
         }

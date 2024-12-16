@@ -124,6 +124,10 @@ export class Database implements Syncable {
 
   async applyMutations(mutations: Array<Mutation>, commitHash?: string) {
     const hash = commitHash ?? (await this.meta()).commitHash
+    if (mutations.length === 0) {
+      if (commitHash) await this.writeMeta(this.store, commitHash)
+      return []
+    }
     return this.store.transaction(async tx => {
       const reHash = []
       for (const mutation of mutations) {
