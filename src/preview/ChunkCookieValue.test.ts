@@ -10,14 +10,14 @@ test('Chunk value into multiple cookies', () => {
     {name: 'foo-0', value: 'abc'}
   ])
 
-  const res2 = chunkCookieValue('foo', value, 8)
+  const res2 = chunkCookieValue('foo', value, 7)
   assert.equal(res2, [
     {name: 'foo', value: '2'},
     {name: 'foo-0', value: 'ab'},
     {name: 'foo-1', value: 'c'}
   ])
 
-  const res3 = chunkCookieValue('foo', value, 7)
+  const res3 = chunkCookieValue('foo', value, 6)
   assert.equal(res3, [
     {name: 'foo', value: '3'},
     {name: 'foo-0', value: 'a'},

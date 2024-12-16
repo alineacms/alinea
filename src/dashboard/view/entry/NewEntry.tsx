@@ -99,11 +99,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const root = useRoot()
   const parentField = useMemo(() => {
     return entry('Parent', {
-      location: {
-        workspace,
-        root: root.name
-      },
+      location: {workspace, root: root.name},
       condition: {_type: {in: containerTypes}},
+      enableNavigation: true,
       initialValue: preselectedId
         ? {
             [Reference.id]: 'parent',
@@ -166,7 +164,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
         pickers: {
           entry: entryPicker({
             condition: {_type: type},
-            withNavigation: false,
             title: 'Copy content from',
             max: 1,
             selection: EntryLink

@@ -10,7 +10,7 @@ const fields = type('Field', {
     code: code('Code'),
     disabled: code('Code (read-only)', {
       readOnly: true,
-      initialValue: `console.log('Hello world!')`
+      initialValue: `console.info('Hello world!')`
     })
   }
 })

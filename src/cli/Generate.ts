@@ -3,12 +3,14 @@ import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
+import {EntryRow} from 'alinea/core/EntryRow'
 import {genEffect} from 'alinea/core/util/Async'
 import {basename, join} from 'alinea/core/util/Paths'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
+import {count} from 'rado'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
@@ -128,7 +130,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         process.exit(1)
       }
     }
-    const write = async () => {
+    const write = async (recordCount: number) => {
       let dbSize = 0
       if (cmd === 'build') {
         ;[, dbSize] = await Promise.all([
@@ -142,7 +144,9 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       const duration = performance.now() - now
       if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
       else message += `${duration.toFixed(0)}ms`
-      if (dbSize > 0) message += ` (db ${prettyBytes(dbSize)})`
+      if (dbSize > 0)
+        message += ` (db ${prettyBytes(dbSize)}, ${recordCount} records)`
+      else message += ` (${recordCount} records)`
       return message
     }
     const fileData = new LocalData({
@@ -160,8 +164,9 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     }
     for await (const db of indexing) {
       yield {cms, db, localData: fileData}
-      if (onAfterGenerate && !afterGenerateCalled)
-        await write().then(
+      if (onAfterGenerate && !afterGenerateCalled) {
+        const recordCount = await db.store.select(count()).from(EntryRow).get()
+        await write(recordCount ?? 0).then(
           message => {
             afterGenerateCalled = true
             onAfterGenerate(message)
@@ -171,6 +176,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
             if (cmd === 'build') process.exit(1)
           }
         )
+      }
     }
   }
 }

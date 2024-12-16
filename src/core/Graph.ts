@@ -79,7 +79,9 @@ type InferResult<Selection, Types, Include> = Selection extends Expr<
   : Selection extends undefined
   ? Types extends undefined
     ? EntryFields & (Include extends undefined ? {} : InferSelection<Include>)
-    : Infer<Types> & (Include extends undefined ? {} : InferSelection<Include>)
+    : EntryFields &
+        Infer<Types> &
+        (Include extends undefined ? {} : InferSelection<Include>)
   : InferSelection<Selection>
 
 type QueryResult<Selection, Types, Include> = Expand<

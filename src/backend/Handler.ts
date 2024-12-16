@@ -3,8 +3,9 @@ import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'
-import {Draft} from 'alinea/core/Draft'
+import {Draft, DraftKey, formatDraftKey} from 'alinea/core/Draft'
 import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
+import {ErrorCode, HttpError} from 'alinea/core/HttpError'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {PreviewUpdate} from 'alinea/core/Preview'
 import {getScope} from 'alinea/core/Scope'
@@ -95,9 +96,11 @@ export function createHandler(
         if (!backend.pending) return meta
         try {
           const toApply = await backend.pending.since(ctx, meta.commitHash)
-          const total = toApply?.mutations.length ?? 0
-          console.info(`> sync ${total} pending mutations`)
+          console.info(`> nothing to sync from ${meta.commitHash}`)
           if (!toApply) return meta
+          console.info(
+            `> sync ${toApply.mutations.length} pending mutations, from ${meta.commitHash} to ${toApply.toCommitHash}`
+          )
           await db.applyMutations(toApply.mutations, toApply.toCommitHash)
         } catch (error) {
           console.error(error)
@@ -131,8 +134,8 @@ export function createHandler(
         await Promise.all(tasks)
         return {commitHash: result.commitHash}
       } catch (error: any) {
-        if ('expectedCommitHash' in error) {
-          if (retry) throw error
+        if (retry) throw error
+        if (error instanceof HttpError && error.code === ErrorCode.Conflict) {
           await syncPending(ctx)
           return mutate(ctx, mutations, true)
         }
@@ -143,18 +146,22 @@ export function createHandler(
     async function persistEdit(ctx: AuthedContext, mutation: EditMutation) {
       if (!mutation.update) return
       const update = new Uint8Array(await decode(mutation.update))
-      const currentDraft = await backend.drafts.get(ctx, mutation.entryId)
+      const currentDraft = await backend.drafts.get(
+        ctx,
+        formatDraftKey(mutation.entry)
+      )
       const updatedDraft = currentDraft
         ? mergeUpdatesV2([currentDraft.draft, update])
         : update
       const draft = {
         entryId: mutation.entryId,
+        locale: mutation.locale,
         fileHash: mutation.entry.fileHash,
         draft: updatedDraft
       }
       await backend.drafts.store(ctx, draft)
       const {contentHash} = await db.meta()
-      previews.setDraft(mutation.entryId, {contentHash, draft})
+      previews.setDraft(formatDraftKey(mutation.entry), {contentHash, draft})
     }
   })
 
@@ -200,8 +207,8 @@ export function createHandler(
           revisionId
         )
       },
-      async getDraft(entryId: string) {
-        return backend.drafts.get(context as AuthedContext, entryId)
+      async getDraft(key) {
+        return backend.drafts.get(context as AuthedContext, key)
       },
       async storeDraft(draft: Draft) {
         return backend.drafts.store(context as AuthedContext, draft)
@@ -349,8 +356,8 @@ export function createHandler(
       if (action === HandleAction.Draft && request.method === 'GET') {
         const ctx = await internal
         expectJson()
-        const entryId = string(url.searchParams.get('entryId'))
-        const draft = await backend.drafts.get(ctx, entryId)
+        const key = string(url.searchParams.get('key')) as DraftKey
+        const draft = await backend.drafts.get(ctx, key)
         return Response.json(
           draft ? {...draft, draft: base64.stringify(draft.draft)} : null
         )

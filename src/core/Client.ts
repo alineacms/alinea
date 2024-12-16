@@ -4,7 +4,7 @@ import {HandleAction} from 'alinea/backend/HandleAction'
 import {PreviewInfo} from 'alinea/backend/Previews'
 import {Config} from './Config.js'
 import {Connection, SyncResponse} from './Connection.js'
-import {Draft} from './Draft.js'
+import {Draft, DraftKey} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
@@ -120,8 +120,8 @@ export class Client implements Connection {
 
   // Drafts
 
-  getDraft(entryId: string): Promise<Draft | undefined> {
-    return this.#requestJson({action: HandleAction.Draft, entryId})
+  getDraft(key: DraftKey): Promise<Draft | undefined> {
+    return this.#requestJson({action: HandleAction.Draft, key})
       .then<DraftTransport | null>(this.#failOnHttpError)
       .then(draft =>
         draft ? {...draft, draft: base64.parse(draft.draft)} : undefined

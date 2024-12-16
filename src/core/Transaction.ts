@@ -25,6 +25,7 @@ import {
 } from './util/EntryFilenames.js'
 import {createEntryRow, entryParentPaths} from './util/EntryRows.js'
 import {generateKeyBetween} from './util/FractionalIndexing.js'
+import {entries, fromEntries} from './util/Objects.js'
 import {basename, extname, join, normalize} from './util/Paths.js'
 import {slugify} from './util/Slugs.js'
 
@@ -172,6 +173,7 @@ export class DeleteOp extends Operation {
 
 export interface UpdateQuery<Fields> {
   id: string
+  locale?: string | null
   type?: Type<Fields>
   status?: Status
   set?: Partial<StoredRow<Fields>>
@@ -187,59 +189,61 @@ export class UpdateOperation<Definition> extends Operation {
       else if (changeStatus === EntryStatus.Archived) status = 'preferPublished'
       else if (changeStatus === EntryStatus.Published) status = 'preferDraft'
       else status = 'preferPublished'
-      const entry = await cms.get({
+      const current = await cms.get({
         select: Entry,
         id: entryId,
+        locale: query.locale,
         status
       })
-      const parent = entry.parentId
+      const parent = current.parentId
         ? await cms.get({
             select: Entry,
-            id: entry.parentId,
+            id: current.parentId,
+            locale: query.locale,
             status: 'preferPublished'
           })
         : undefined
-      const parentPaths = entryParentPaths(cms.config, entry)
+      const parentPaths = entryParentPaths(cms.config, current)
 
       const file = entryFileName(
         cms.config,
-        {...entry, status: entry.status},
+        {...current, status: current.status},
         parentPaths
       )
-      const type = cms.config.schema[entry.type]
+      const type = cms.config.schema[current.type]
       const mutations: Array<Mutation> = []
       const createDraft = changeStatus === EntryStatus.Draft
-      if (createDraft)
+      const fieldUpdates =
+        set &&
+        fromEntries(
+          entries(set).map(([key, value]) => {
+            return [key, value ?? null]
+          })
+        )
+      const entry = await createEntry(
+        cms.config,
+        this.typeName(cms.config, type),
+        {
+          ...current,
+          status: createDraft ? EntryStatus.Draft : current.status,
+          data: {...current.data, ...fieldUpdates}
+        },
+        parent
+      )
+      if (createDraft || set)
         mutations.push({
           type: MutationType.Edit,
           entryId: entryId,
-          locale: entry.locale,
+          locale: current.locale,
           file,
-          entry: await createEntry(
-            cms.config,
-            this.typeName(cms.config, type),
-            {
-              ...entry,
-              status: EntryStatus.Draft,
-              data: {...entry.data, ...set}
-            },
-            parent
-          )
-        })
-      else if (set)
-        mutations.push({
-          type: MutationType.Patch,
-          entryId: entryId,
-          locale: entry.locale,
-          file,
-          patch: set
+          entry
         })
       switch (changeStatus) {
         case EntryStatus.Published:
           mutations.push({
             type: MutationType.Publish,
-            locale: entry.locale,
-            status: entry.status,
+            locale: current.locale,
+            status: current.status,
             entryId: entryId,
             file
           })
@@ -248,7 +252,7 @@ export class UpdateOperation<Definition> extends Operation {
           mutations.push({
             type: MutationType.Archive,
             entryId: entryId,
-            locale: entry.locale,
+            locale: current.locale,
             file
           })
           break

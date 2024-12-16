@@ -247,7 +247,7 @@ export class EntryResolver {
                   this.conditionStatus(Child, ctx.status),
                   lt(
                     self.level,
-                    Math.min(query.children?.depth ?? MAX_DEPTH, MAX_DEPTH)
+                    Math.min(query.children?.depth ?? 1, MAX_DEPTH)
                   )
                 )
             )
@@ -523,6 +523,8 @@ export class EntryResolver {
     const {type, filter, skip, take, orderBy, groupBy, first, search} = query
     ctx = ctx.increaseDepth().none
     let q = this.querySource(ctx, query)
+    if (skip) q = q.offset(skip)
+    if (take) q = q.limit(take)
     const queryData = getData(q)
     let preCondition = queryData.where as HasSql<boolean>
     let condition = and(
@@ -537,8 +539,6 @@ export class EntryResolver {
       this.conditionSearch(ctx.Table, search),
       filter && this.conditionFilter(ctx, this.getField.bind(this), filter)
     )
-    if (skip) q = q.offset(skip)
-    if (take) q = q.limit(take)
     const toSelect = this.select(ctx.select, query)
     let result = new Select({
       ...queryData,
@@ -620,7 +620,7 @@ export class EntryResolver {
     const singleResult = this.isSingleResult(query)
     const transact = async (tx: Store): Promise<T> => {
       const rows = await dbQuery.all(tx)
-      const linkResolver = new LinkResolver(this, tx, ctx.status)
+      const linkResolver = new LinkResolver(this, tx, ctx)
       const result = singleResult ? rows[0] ?? null : rows
       if (result)
         await this.post({linkResolver}, result, query as GraphQuery<Projection>)

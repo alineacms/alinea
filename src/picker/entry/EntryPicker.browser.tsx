@@ -9,6 +9,7 @@ import {Workspace} from 'alinea/core/Workspace'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {entries} from 'alinea/core/util/Objects'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
+import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {useLocale} from 'alinea/dashboard/hook/UseLocale'
@@ -68,13 +69,14 @@ export function EntryPickerModal({
 }: EntryPickerModalProps) {
   const config = useConfig()
   const graph = useGraph()
+  const editor = useEntryEditor()
   const {
     title,
     defaultView,
     location,
     max,
+    pickChildren,
     condition,
-    withNavigation = true,
     showMedia
   } = options
   const [search, setSearch] = useState('')
@@ -89,6 +91,7 @@ export function EntryPickerModal({
   const locale = useLocale()
   const [destination, setDestination] = useState<PickerLocation>({
     workspace: currentWorkspace,
+    parentId: pickChildren ? editor?.entryId : undefined,
     root: showMedia
       ? Workspace.defaultMediaRoot(config.workspaces[currentWorkspace])
       : currentRoot,
@@ -135,41 +138,30 @@ export function EntryPickerModal({
       })
     }
   )
+  const withNavigation =
+    options.enableNavigation || (!options.condition && !options.pickChildren)
   const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    if (!withNavigation && condition) {
-      return {
-        select: Entry,
-        search: terms,
-        filter: {
-          and: [
-            condition,
-            {
-              _workspace: destination.workspace,
-              _root: destination.root,
-              _locale: destinationLocale
-            }
-          ]
+    const filter = {
+      and: [
+        condition,
+        {
+          _workspace: destination.workspace,
+          _root: destination.root,
+          _parentId:
+            withNavigation || pickChildren
+              ? destination.parentId ?? null
+              : undefined,
+          _locale: destinationLocale
         }
-      }
+      ]
     }
     return {
       select: Entry,
-      filter: {
-        and: [
-          condition,
-          {
-            _workspace: destination.workspace,
-            _root: destination.root,
-            _parentId:
-              terms.length === 0 ? destination.parentId ?? null : undefined,
-            _locale: destinationLocale
-          }
-        ]
-      },
+      filter: filter,
       search: terms
     }
-  }, [destination, destinationLocale, search, condition])
+  }, [withNavigation, destination, destinationLocale, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
     (entry: ExporerItemSelect) => {
@@ -198,7 +190,7 @@ export function EntryPickerModal({
         return res
       })
     },
-    [setSelected, max]
+    [onConfirm, type, max]
   )
   function handleConfirm() {
     onConfirm(selected)
@@ -274,23 +266,22 @@ export function EntryPickerModal({
                         />
                       )}
                     </BreadcrumbsItem>
-                    {!search &&
-                      parentEntries?.map(({id, title}) => {
-                        return (
-                          <BreadcrumbsItem key={id}>
-                            <button
-                              onClick={() => {
-                                updateDestination({
-                                  ...destination,
-                                  parentId: id
-                                })
-                              }}
-                            >
-                              {title}
-                            </button>
-                          </BreadcrumbsItem>
-                        )
-                      })}
+                    {parentEntries?.map(({id, title}) => {
+                      return (
+                        <BreadcrumbsItem key={id}>
+                          <button
+                            onClick={() => {
+                              updateDestination({
+                                ...destination,
+                                parentId: id
+                              })
+                            }}
+                          >
+                            {title}
+                          </button>
+                        </BreadcrumbsItem>
+                      )
+                    })}
                   </Breadcrumbs>
                 )}
                 <h2>

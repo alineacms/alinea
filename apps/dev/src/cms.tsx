@@ -15,6 +15,7 @@ export const cms = createCMS({
           icon: IcRoundUploadFile
         }),
         pages: Config.root('Languages', {
+          contains: [schema.Page, schema.Folder, schema.LinkFields],
           icon: IcRoundTranslate,
           i18n: {
             locales: ['en', 'fr', 'nl-BE', 'nl-NL']
@@ -29,7 +30,7 @@ export const cms = createCMS({
           }
         }),
         custom: Config.root('Custom', {
-          contains: ['CustomPage'],
+          contains: [schema.CustomPage],
           view: './src/CustomRootView.tsx#CustomRootView'
         }),
         media: Config.media()

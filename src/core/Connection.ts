@@ -1,7 +1,7 @@
 import {Revision} from 'alinea/backend/Backend'
 import {PreviewInfo} from 'alinea/backend/Previews'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
-import {Draft} from './Draft.js'
+import {Draft, DraftKey} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
 import {AnyQueryResult, GraphQuery} from './Graph.js'
@@ -31,7 +31,7 @@ export interface Connection extends Syncable {
     file: string,
     revisionId: string
   ): Promise<EntryRecord | undefined>
-  getDraft(entryId: string): Promise<Draft | undefined>
+  getDraft(draftKey: DraftKey): Promise<Draft | undefined>
   storeDraft(draft: Draft): Promise<void>
 }
 

@@ -13,8 +13,7 @@ export function chunkCookieValue(
     batch = 0
   while (position < cookieValue.length) {
     const name = `${cookieName}-${batch}`
-    const prefix = `${name}=`
-    const amount = maxLength - prefix.length
+    const amount = maxLength - name.length
     if (amount <= 0) throw new Error('Max length is not sufficient')
     const value = cookieValue.substring(position, position + amount)
     position += amount
