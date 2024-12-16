@@ -6,7 +6,6 @@ import {entries} from 'alinea/core/util/Objects'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {HStack, Icon, Stack} from 'alinea/ui'
 import {Badge} from 'alinea/ui/Badge'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {Pane} from 'alinea/ui/Pane'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
@@ -19,6 +18,8 @@ import {
   useContext,
   useReducer
 } from 'react'
+
+import {Menu, MenuItem} from 'alinea/ui/Menu'
 import {useConfig} from '../hook/UseConfig.js'
 import {useEntryLocation} from '../hook/UseEntryLocation.js'
 import {useLocale} from '../hook/UseLocale.js'
@@ -124,9 +125,9 @@ export namespace Sidebar {
     return (
       <HStack as="header" center gap={12} className={styles.navHeader()}>
         {workspaces.length > 1 ? (
-          <DropdownMenu.Root bottom>
-            <DropdownMenu.Trigger>
-              <HStack center gap={4}>
+          <Menu
+            label={
+              <HStack center gap={4} className={styles.navHeader.workspace()}>
                 <WorkspaceLabel
                   label={workspace.label}
                   color={workspace.color}
@@ -134,31 +135,30 @@ export namespace Sidebar {
                 />
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
-            </DropdownMenu.Trigger>
-
-            <DropdownMenu.Items>
-              {workspaces.map(([key, workspace]) => {
-                const {roots, label, color, icon} = Workspace.data(workspace)
-                const [name, root] = entries(roots)[0]
-                return (
-                  <DropdownMenu.Item
-                    key={key}
-                    onClick={() =>
-                      navigate(
-                        nav.entry({
-                          workspace: key,
-                          root: name,
-                          locale: Root.defaultLocale(root)
-                        })
-                      )
-                    }
-                  >
-                    <WorkspaceLabel label={label} color={color} icon={icon} />
-                  </DropdownMenu.Item>
-                )
-              })}
-            </DropdownMenu.Items>
-          </DropdownMenu.Root>
+            }
+            onAction={key => {
+              const name = key as string
+              const workspace = config.workspaces[name]
+              const {roots} = Workspace.data(workspace)
+              const [, root] = entries(roots)[0]
+              navigate(
+                nav.entry({
+                  workspace: name,
+                  root: name,
+                  locale: Root.defaultLocale(root)
+                })
+              )
+            }}
+          >
+            {workspaces.map(([key, workspace]) => {
+              const {label, color, icon} = Workspace.data(workspace)
+              return (
+                <MenuItem key={key} id={key}>
+                  <WorkspaceLabel label={label} color={color} icon={icon} />
+                </MenuItem>
+              )
+            })}
+          </Menu>
         ) : (
           <a
             {...link(nav.root({workspace: workspace.name}))}
@@ -209,12 +209,24 @@ export namespace Sidebar {
   }
 
   export namespace Nav {
-    export type ItemProps = PropsWithChildren<
-      HTMLProps<HTMLAnchorElement> & {selected?: boolean; badge?: number}
-    >
-    export function Item({children, selected, badge, ...props}: ItemProps) {
+    export type ItemProps = PropsWithChildren<{
+      as?: keyof JSX.IntrinsicElements | React.ComponentType<any>
+      selected?: boolean
+      badge?: number
+      href?: string
+      className?: string
+      style?: React.CSSProperties
+    }>
+    export const item = styles.nav.menu.item
+    export function Item({
+      as: Tag = 'a',
+      children,
+      selected,
+      badge,
+      ...props
+    }: ItemProps) {
       return (
-        <a
+        <Tag
           {...props}
           {...link(props.href)}
           className={styles.nav.menu.item.mergeProps(props)({selected})}
@@ -224,7 +236,7 @@ export namespace Sidebar {
               {children}
             </Badge>
           </div>
-        </a>
+        </Tag>
       )
     }
   }

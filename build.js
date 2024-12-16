@@ -361,7 +361,12 @@ function jsEntry({watch, test, report}) {
                 'lib0/webcrypto': `data:text/javascript,
                   import {crypto} from '@alinea/iso'
                   export const subtle = crypto.subtle
-                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`
+                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`,
+
+                // Used in react-aria-components, not ESM
+                'use-sync-external-store/shim/index.js': `data:text/javascript,
+                  export {useSyncExternalStore} from 'react'
+                `
               },
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33

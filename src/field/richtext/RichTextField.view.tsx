@@ -22,13 +22,13 @@ import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, Icon, px, TextLabel} from 'alinea/ui'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
+import {Menu, MenuItem} from 'alinea/ui/Menu'
 import {Sink} from 'alinea/ui/Sink'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
@@ -112,29 +112,15 @@ type InsertMenuProps = {
 }
 
 function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
-  const id = createId()
   if (!schema) return null
   const blocks = entries(schema).map(([key, type]) => {
     return (
-      <DropdownMenu.Item
-        key={key}
-        onClick={() => {
-          onInsert(id, key)
-          editor
-            .chain()
-            .focus()
-            .insertContent({
-              type: key,
-              attrs: {[BlockNode.id]: id}
-            })
-            .run()
-        }}
-      >
+      <MenuItem key={key} id={key}>
         <HStack center gap={8}>
           <Icon icon={getType(type).icon ?? IcRoundAddCircle} />
           <TextLabel label={Type.label(type)} />
         </HStack>
-      </DropdownMenu.Item>
+      </MenuItem>
     )
   })
   return (
@@ -145,13 +131,22 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
         maxWidth: 'none'
       }}
     >
-      <DropdownMenu.Root bottom>
-        <DropdownMenu.Trigger className={styles.insert.trigger()}>
-          <Icon icon={IcRoundAddCircle} />
-          <span>Insert block</span>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Items>{blocks}</DropdownMenu.Items>
-      </DropdownMenu.Root>
+      <Menu
+        label={
+          <div className={styles.insert.trigger()}>
+            <Icon icon={IcRoundAddCircle} />
+            <span>Insert block</span>
+          </div>
+        }
+        onAction={selected => {
+          const key = selected as string
+          const id = createId()
+          onInsert(id, key as string)
+          editor.chain().focus().insertContent({type: key, attrs: {id}}).run()
+        }}
+      >
+        {blocks}
+      </Menu>
     </FloatingMenu>
   )
 }
