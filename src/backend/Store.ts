@@ -1,3 +1,3 @@
-import {Database} from 'rado'
+import {SyncDatabase} from 'rado'
 
-export type Store = Database
+export type Store = SyncDatabase<'sqlite'>

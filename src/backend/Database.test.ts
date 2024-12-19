@@ -57,29 +57,63 @@ test('index is correct', async () => {
   assert.is(entries[1]._index, second)
 })
 
+test('archive child entries', async () => {
+  const example = createExample()
+  const {Page, Container} = example.schema
+  const parent = await example.create({type: Container, set: {title: 'Parent'}})
+  const sub = await example.create({
+    type: Container,
+    parentId: parent._id,
+    set: {title: 'Sub'}
+  })
+  const entry = await example.create({
+    type: Page,
+    parentId: sub._id,
+    set: {title: 'Deepest'}
+  })
+  assert.is(entry._parentId, sub._id)
+  await example.update({id: parent._id, status: EntryStatus.Archived})
+  assert.not.ok(
+    await example.first({id: parent._id}),
+    'Parent entry should be archived'
+  )
+  assert.not.ok(
+    await example.first({id: sub._id}),
+    'Sub entry should be archived'
+  )
+  assert.not.ok(
+    await example.first({id: entry._id}),
+    'Deepest entry should be archived'
+  )
+  await example.update({id: parent._id, status: EntryStatus.Published})
+  assert.ok(
+    await example.first({id: parent._id}),
+    'Parent entry should be published'
+  )
+  assert.ok(await example.first({id: sub._id}), 'Sub entry should be published')
+  assert.ok(
+    await example.first({id: entry._id}),
+    'Deepest entry should be published'
+  )
+})
+
 test('remove child entries', async () => {
   const example = createExample()
   const {Page, Container} = example.schema
-  const parent = Edit.create({type: Container, set: {title: 'Parent'}})
-  const sub = Edit.create({
+  const parent = await example.create({type: Container, set: {title: 'Parent'}})
+  const sub = await example.create({
     type: Container,
-    parentId: parent.id,
+    parentId: parent._id,
     set: {title: 'Sub'}
   })
-  const entry = Edit.create({
+  const entry = await example.create({
     type: Page,
-    parentId: sub.id,
+    parentId: sub._id,
     set: {title: 'Deepest'}
   })
-  await example.commit(parent)
-  await example.commit(sub)
-  await example.commit(entry)
-  const res1 = await example.get({
-    id: entry.id
-  })
-  assert.is(res1._parentId, sub.id)
-  await example.commit(Edit.remove(parent.id))
-  const res2 = await example.first({id: entry.id})
+  assert.is(entry._parentId, sub._id)
+  await example.remove(parent._id)
+  const res2 = await example.first({id: entry._id})
   assert.not.ok(res2)
 })
 

@@ -67,10 +67,9 @@ export function EntryEdit({editor}: EntryEditProps) {
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedStatus])
-  const untranslated = locale && locale !== editor.activeVersion.locale
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
-    !untranslated && hasChanges
+    !editor.untranslated && hasChanges
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
@@ -93,7 +92,7 @@ export function EntryEdit({editor}: EntryEditProps) {
           alert('todo')
           return
         }
-        if (untranslated && hasChanges) {
+        if (editor.untranslated && hasChanges) {
           translate()
         } else if (config.enableDrafts) {
           if (hasChanges) saveDraft()
@@ -219,7 +218,7 @@ export function EntryEdit({editor}: EntryEditProps) {
               )}
             </EntryTitle>
             <Main.Container>
-              {untranslated && (
+              {editor.untranslated && (
                 <div>
                   <EntryNotice
                     icon={IcRoundTranslate}
