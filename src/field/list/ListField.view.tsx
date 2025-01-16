@@ -35,6 +35,8 @@ import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {Icon, TextLabel} from 'alinea/ui'
+import IcBaselineContentCopy from 'alinea/ui/icons/IcBaselineContentCopy'
+import IcBaselineContentPasteGo from 'alinea/ui/icons/IcBaselineContentPasteGo'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import IcRoundAdd from 'alinea/ui/icons/IcRoundAdd'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -42,6 +44,8 @@ import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {Sink} from 'alinea/ui/Sink'
+import {useAtom} from 'jotai'
+import {atomWithStorage} from 'jotai/utils'
 import {
   CSSProperties,
   HTMLAttributes,
@@ -54,6 +58,11 @@ import css from './ListField.module.scss'
 
 const styles = styler(css)
 
+const copyAtom = atomWithStorage<ListRow | undefined>(
+  `@alinea/copypaste`,
+  undefined
+)
+
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   const {isSorting, wasSorting} = args
   if (isSorting || wasSorting) return defaultAnimateLayoutChanges(args)
@@ -61,7 +70,7 @@ function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
 }
 
 function ListInputRowSortable(props: ListInputRowProps) {
-  const {onCreate} = props
+  const {onCreate, onPaste} = props
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
       animateLayoutChanges,
@@ -80,6 +89,7 @@ function ListInputRowSortable(props: ListInputRowProps) {
       {...attributes}
       isDragging={isDragging}
       onCreate={onCreate}
+      onPaste={onPaste}
     />
   )
 }
@@ -92,6 +102,7 @@ type ListInputRowProps = PropsWithChildren<
     readOnly?: boolean
     onMove?: (direction: 1 | -1) => void
     onDelete?: () => void
+    onCopyBlock?: () => void
     handle?: DraggableSyntheticListeners
     // React ts types force our hand here since it's a generic component,
     // and forwardRef does not forward generics.
@@ -99,6 +110,7 @@ type ListInputRowProps = PropsWithChildren<
     rootRef?: Ref<HTMLDivElement>
     isDragOverlay?: boolean
     onCreate?: (type: string) => void
+    onPasteBlock?: (data: ListRow) => void
     firstRow?: boolean
   } & HTMLAttributes<HTMLDivElement>
 >
@@ -108,12 +120,14 @@ function ListInputRow({
   schema,
   onMove,
   onDelete,
+  onCopyBlock,
   handle,
   rootRef,
   isDragging,
   isDragOverlay,
   readOnly,
   onCreate,
+  onPasteBlock,
   firstRow,
   ...rest
 }: ListInputRowProps) {
@@ -141,6 +155,10 @@ function ListInputRow({
             onCreate!(type)
             setShowInsert(false)
           }}
+          onPaste={(data: ListRow) => {
+            if (onPasteBlock) onPasteBlock(data)
+            setShowInsert(false)
+          }}
         />
       )}
       <Sink.Header>
@@ -154,19 +172,29 @@ function ListInputRow({
         <Sink.Title>
           <TextLabel label={Type.label(type)} />
         </Sink.Title>
-        {!readOnly && (
-          <Sink.Options>
+        <Sink.Options>
+          {onCopyBlock !== undefined && (
             <IconButton
-              icon={IcRoundKeyboardArrowUp}
-              onClick={() => onMove?.(-1)}
+              icon={IcBaselineContentCopy}
+              onClick={() => {
+                onCopyBlock()
+              }}
             />
-            <IconButton
-              icon={IcRoundKeyboardArrowDown}
-              onClick={() => onMove?.(1)}
-            />
-            <IconButton icon={IcRoundClose} onClick={onDelete} />
-          </Sink.Options>
-        )}
+          )}
+          {!readOnly && (
+            <>
+              <IconButton
+                icon={IcRoundKeyboardArrowUp}
+                onClick={() => onMove?.(-1)}
+              />
+              <IconButton
+                icon={IcRoundKeyboardArrowDown}
+                onClick={() => onMove?.(1)}
+              />
+              <IconButton icon={IcRoundClose} onClick={onDelete} />
+            </>
+          )}
+        </Sink.Options>
       </Sink.Header>
       <Sink.Content>
         <InputForm type={type} />
@@ -179,15 +207,22 @@ interface ListCreateRowProps {
   schema: Schema
   readOnly?: boolean
   inline?: boolean
-  onCreate: (type: string) => void
+  onCreate: (type: string, data?: ListRow) => void
+  onPaste: (data: ListRow) => void
 }
 
 function ListCreateRow({
   schema,
   readOnly,
   inline,
-  onCreate
+  onCreate,
+  onPaste
 }: ListCreateRowProps) {
+  const [pasted] = useAtom(copyAtom)
+  const canPaste =
+    pasted && entries(schema).some(([key]) => key === pasted._type)
+
+  console.log(entries(schema).map(([key, type]) => key))
   return (
     <div className={styles.create({inline})}>
       <Create.Root disabled={readOnly}>
@@ -202,6 +237,15 @@ function ListCreateRow({
             </Create.Button>
           )
         })}
+        {canPaste && (
+          <Create.Button
+            icon={IcBaselineContentPasteGo}
+            onClick={() => onPaste(pasted)}
+            mod="paste"
+          >
+            <TextLabel label="Paste block" />
+          </Create.Button>
+        )}
       </Create.Root>
     </div>
   )
@@ -238,6 +282,7 @@ export function ListInput({field}: ListInputProps) {
   const {schema, readOnly} = options
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row._id)
+  const [, setPasted] = useAtom(copyAtom)
   const [dragging, setDragging] = useState<ListRow | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -285,6 +330,10 @@ export function ListInput({field}: ListInputProps) {
                         row={row}
                         schema={schema}
                         readOnly={readOnly}
+                        onCopyBlock={() => {
+                          const data = mutator.read(row._id)
+                          setPasted(data)
+                        }}
                         onMove={direction => {
                           if (readOnly) return
                           mutator.move(i, i + direction)
@@ -297,6 +346,11 @@ export function ListInput({field}: ListInputProps) {
                           if (readOnly) return
                           mutator.push({_type: type} as any, i)
                         }}
+                        onPasteBlock={(data: ListRow) => {
+                          if (readOnly) return
+                          const {_id, _index, ...rest} = data
+                          mutator.push(rest)
+                        }}
                         firstRow={i === 0}
                       />
                     </FormRow>
@@ -305,7 +359,11 @@ export function ListInput({field}: ListInputProps) {
                 <ListCreateRow
                   schema={schema}
                   readOnly={readOnly}
-                  onCreate={(type: string) => {
+                  onPaste={(data: ListRow) => {
+                    const {_id, _index, ...rest} = data
+                    mutator.push(rest)
+                  }}
+                  onCreate={(type: string, data?: ListRow) => {
                     if (readOnly) return
                     mutator.push({_type: type} as any)
                   }}
