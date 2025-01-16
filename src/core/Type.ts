@@ -38,6 +38,9 @@ export namespace Type {
   export function contains(type: Type): Array<string | Type> {
     return getType(type).contains ?? []
   }
+  export function insertOrder(type: Type): 'top' | 'bottom' | 'free' {
+    return getType(type).insertOrder ?? 'free'
+  }
 
   export function isHidden(type: Type): boolean {
     return Boolean(getType(type).hidden)
@@ -159,6 +162,9 @@ export interface TypeConfig<Definition> {
   summaryRow?: View<SummaryProps>
   /** A React component used to view a thumbnail of this type in the dashboard */
   summaryThumb?: View<SummaryProps>
+
+  /** The position where new children will be inserted */
+  insertOrder?: 'top' | 'bottom' | 'free'
 
   entryUrl?: (meta: EntryUrlMeta) => string
 }

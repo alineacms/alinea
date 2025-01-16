@@ -53,11 +53,17 @@ const parentData = {
     parents: {},
     select: Entry.path
   },
-  childrenIndex: {
+  firstChildIndex: {
     first: true as const,
     children: {},
     select: Entry.index,
     orderBy: {asc: Entry.index, caseSensitive: true}
+  },
+  lastChildIndex: {
+    first: true as const,
+    children: {},
+    select: Entry.index,
+    orderBy: {desc: Entry.index, caseSensitive: true}
   }
 }
 
@@ -133,6 +139,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }
 
   const typeField = useMemo(() => {
+    console.log('Config', config)
+    console.log('Parent', parent)
     const typeField: SelectField<string> = select('Select type', {
       options: {}
     }) as any
@@ -151,6 +159,35 @@ function NewEntryForm({parentId}: NewEntryProps) {
               return [key, (Type.label(type) || key) as string]
             })
         )
+      }
+    })
+  }, [])
+
+  const insertOrderField = useMemo(() => {
+    const insertOrderField: SelectField<'top' | 'bottom'> = select(
+      'Insert order',
+      {
+        initialValue: 'top',
+        options: {
+          top: 'At the top of the list',
+          bottom: 'At the bottom of the list'
+        }
+      }
+    )
+    return track.options(insertOrderField, async get => {
+      const selectedParent = get(parentField)
+      const parentId = selectedParent?.[EntryReference.entry]
+      const parent = await graph.get({
+        select: {
+          type: Entry.type
+        },
+        id: parentId,
+        status: 'preferDraft'
+      })
+      const parentType = parent && config.schema[parent.type]
+      const parentInsertOrder = Type.insertOrder(parentType)
+      return {
+        hidden: parentInsertOrder !== 'free'
       }
     })
   }, [])
@@ -183,6 +220,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
           parent: parentField,
           title: titleField,
           type: typeField,
+          order: insertOrderField,
           copyFrom: copyFromField
         }
       }),
@@ -229,6 +267,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
           status: 'preferPublished'
         })
       : null
+    const parentType = parent && config.schema[parent.type]
     const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
     const filePath = entryFilepath(config, data, parentPaths)
     const childrenDir = entryChildrenDir(config, data, parentPaths)
@@ -243,6 +282,16 @@ function NewEntryForm({parentId}: NewEntryProps) {
           status: 'preferPublished'
         })
       : Type.initialValue(entryType)
+
+    const parentInsertOrder = parentType ? Type.insertOrder(parentType) : 'free'
+    let index = generateKeyBetween(null, parent?.firstChildIndex || null)
+    if (
+      parentInsertOrder === 'bottom' ||
+      (parentInsertOrder === 'free' && form.data().order === 'bottom')
+    ) {
+      index = generateKeyBetween(parent?.lastChildIndex || null, null)
+    }
+
     const entry = await createEntryRow(config, {
       id: id,
       ...data,
@@ -251,7 +300,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       path,
       title,
       url,
-      index: generateKeyBetween(null, parent?.childrenIndex || null),
+      index,
       parentId: parent?.id ?? null,
       seeded: null,
       level: parent ? parent.level + 1 : 0,
