@@ -221,8 +221,6 @@ function ListCreateRow({
   const [pasted] = useAtom(copyAtom)
   const canPaste =
     pasted && entries(schema).some(([key]) => key === pasted._type)
-
-  console.log(entries(schema).map(([key, type]) => key))
   return (
     <div className={styles.create({inline})}>
       <Create.Root disabled={readOnly}>
