@@ -10,4 +10,3 @@ export function IcRoundAdd(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundAdd
