@@ -15,12 +15,7 @@ async function setup(cwd: string) {
 }
 
 async function run(cwd: string) {
-  // process.env.NODE_ENV = 'development'
   await init({cwd, quiet: true, next: true})
-  /*const cms = await loadCMS(path.join(cwd, '.alinea'))
-  const welcome = await cms.get(Page())
-  console.log(welcome)
-  assert.ok(welcome)*/
 }
 
 suite(import.meta, test => {

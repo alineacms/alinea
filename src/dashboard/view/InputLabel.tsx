@@ -1,4 +1,5 @@
-import {Icon, fromModule, px} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {Icon, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
@@ -12,11 +13,11 @@ import {
 } from 'react'
 import css from './InputLabel.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type LabelHeaderProps = {
   label: ReactNode
-  help?: string
+  help?: ReactNode
   size?: 'small' | 'medium' | 'large'
   focused?: boolean
   icon?: ComponentType
@@ -65,7 +66,7 @@ export const LabelHeader = memo(function LabelHeader({
 export interface InputLabelProps extends PropsWithChildren {
   label?: ReactNode
   asLabel?: boolean
-  help?: string
+  help?: ReactNode
   width?: number
   inline?: boolean
   collection?: boolean

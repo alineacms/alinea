@@ -1,12 +1,13 @@
+import styler from '@alinea/styler'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {ImageLink, TextDoc} from 'alinea'
-import {HStack, fromModule, imageBlurUrl} from 'alinea/ui'
+import {HStack, imageBlurUrl} from 'alinea/ui'
 import Image from 'next/image'
 import Link from 'next/link'
 import css from './DemoHeader.module.scss'
 import {DemoText} from './DemoText'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface DemoHeaderProps {
   image?: ImageLink

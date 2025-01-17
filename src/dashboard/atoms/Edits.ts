@@ -1,9 +1,14 @@
-import {ROOT_KEY} from 'alinea/core/Doc'
+import {DOC_KEY} from 'alinea/core/Doc'
 import {Type} from 'alinea/core/Type'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
 import {yAtom} from './YAtom.js'
+
+interface EntryEditsKeys {
+  id: string
+  locale: string | null
+}
 
 export class Edits {
   /** The mutable doc that we are editing */
@@ -12,15 +17,15 @@ export class Edits {
   sourceVector: Uint8Array | undefined
   sourceUpdate: Uint8Array | undefined
   /** The root map containing field data */
-  root = this.doc.getMap(ROOT_KEY)
+  root = this.doc.getMap(DOC_KEY)
   /** Did we make any local changes? */
   hasChanges = createChangesAtom(this.root)
   /** Clear local changes, reset to source */
   resetChanges = atom(null, (get, set) => {
     set(this.hasChanges, false)
-    const copy = new Edits(this.entryId)
+    const copy = new Edits(this.keys)
     if (this.sourceUpdate) copy.applyRemoteUpdate(this.sourceUpdate)
-    set(entryEditsAtoms(this.entryId), copy)
+    set(entryEditsAtoms(this.keys), copy)
   })
   /** Whether we have a draft loaded */
   isLoading = yAtom(this.root, () => {
@@ -30,7 +35,7 @@ export class Edits {
     return this.getLocalUpdate()
   })
 
-  constructor(private entryId: string) {}
+  constructor(private keys: EntryEditsKeys) {}
 
   hasData() {
     return !this.root.keys().next().done
@@ -63,7 +68,7 @@ export class Edits {
     const clientID = this.doc.clientID
     this.doc.clientID = 1
     this.doc.transact(() => {
-      Type.shape(type).applyY(entryData, this.doc, ROOT_KEY)
+      Type.shape(type).applyY(entryData, this.doc, DOC_KEY)
     }, 'self')
     this.doc.clientID = clientID
   }
@@ -87,6 +92,9 @@ function createChangesAtom(yMap: Y.Map<unknown>) {
   return hasChanges
 }
 
-export const entryEditsAtoms = atomFamily((entryId: string) => {
-  return atom(new Edits(entryId))
-})
+export const entryEditsAtoms = atomFamily(
+  (keys: EntryEditsKeys) => {
+    return atom(new Edits(keys))
+  },
+  (a, b) => a.id === b.id && a.locale === b.locale
+)

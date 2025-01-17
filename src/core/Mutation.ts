@@ -1,4 +1,4 @@
-import {EntryPhase, EntryRow} from './EntryRow.js'
+import {EntryRow, EntryStatus} from './EntryRow.js'
 
 export enum MutationProgress {
   Finished = 'finished',
@@ -41,6 +41,7 @@ export type Mutation =
 export interface EditMutation {
   type: MutationType.Edit
   entryId: string
+  locale: string | null
   file: string
   entry: EntryRow
   previousFile?: string
@@ -50,6 +51,7 @@ export interface EditMutation {
 export interface CreateMutation {
   type: MutationType.Create
   entryId: string
+  locale: string | null
   file: string
   entry: EntryRow
 }
@@ -57,31 +59,36 @@ export interface CreateMutation {
 export interface PublishMutation {
   type: MutationType.Publish
   entryId: string
-  phase: EntryPhase
+  locale: string | null
+  status: EntryStatus
   file: string
 }
 
 export interface ArchiveMutation {
   type: MutationType.Archive
   entryId: string
+  locale: string | null
   file: string
 }
 
 export interface RemoveEntryMutation {
   type: MutationType.Remove
   entryId: string
+  locale: string | null
   file: string
 }
 
 export interface DiscardDraftMutation {
   type: MutationType.Discard
   entryId: string
+  locale: string | null
   file: string
 }
 
 export interface PatchMutation {
   type: MutationType.Patch
   entryId: string
+  locale: string | null
   file: string
   patch: object
 }
@@ -96,6 +103,7 @@ export interface OrderMutation {
 export interface MoveMutation {
   type: MutationType.Move
   entryId: string
+  locale: string | null
   entryType: string
   fromFile: string
   toFile: string
@@ -115,6 +123,7 @@ export interface UploadMutation {
 export interface FileRemoveMutation {
   type: MutationType.FileRemove
   entryId: string
+  locale: string | null
   file: string
   workspace: string
   location: string

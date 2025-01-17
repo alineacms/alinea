@@ -3,29 +3,18 @@ import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'
-import {parseYDoc} from 'alinea/core/Doc'
-import {Draft} from 'alinea/core/Draft'
-import {Entry} from 'alinea/core/Entry'
-import {EntryRow} from 'alinea/core/EntryRow'
-import {Graph} from 'alinea/core/Graph'
+import {Draft, DraftKey, formatDraftKey} from 'alinea/core/Draft'
+import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
+import {ErrorCode, HttpError} from 'alinea/core/HttpError'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
-import {
-  PreviewPayload,
-  PreviewUpdate,
-  ResolveParams,
-  ResolveRequest
-} from 'alinea/core/Resolver'
-import {createSelection} from 'alinea/core/pages/CreateSelection'
-import {Realm} from 'alinea/core/pages/Realm'
-import {Selection} from 'alinea/core/pages/ResolveData'
+import {PreviewUpdate} from 'alinea/core/Preview'
+import {getScope} from 'alinea/core/Scope'
 import {decode} from 'alinea/core/util/BufferToBase64'
-import {base64, base64url} from 'alinea/core/util/Encoding'
+import {base64} from 'alinea/core/util/Encoding'
 import {assign} from 'alinea/core/util/Objects'
-import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
-import {Type, array, enums, object, string} from 'cito'
+import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
-import * as Y from 'yjs'
 import {mergeUpdatesV2} from 'yjs'
 import {
   AuthedContext,
@@ -33,40 +22,24 @@ import {
   DraftTransport,
   RequestContext
 } from './Backend.js'
+import {HandleAction} from './HandleAction.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
-import {EntryResolver} from './resolver/EntryResolver.js'
+import {createPreviewParser} from './resolver/ParsePreview.js'
 import {generatedStore} from './store/GeneratedStore.js'
 
 const limit = pLimit(1)
-
-const ResolveBody: Type<ResolveParams> = object({
-  selection: Selection.adt,
-  realm: enums(Realm).optional,
-  locale: string.optional,
-  preview: object({payload: string}).optional
-})
 
 const PrepareBody = object({
   filename: string
 })
 
 const PreviewBody = object({
+  locale: string.nullable,
   entryId: string
 })
 
 const SyncBody = array(string)
 
-export enum HandleAction {
-  User = 'user',
-  Resolve = 'resolve',
-  Pending = 'pending',
-  Sync = 'sync',
-  Draft = 'draft',
-  History = 'history',
-  PreviewToken = 'previewToken',
-  Mutate = 'mutate',
-  Upload = 'upload'
-}
 export interface Handler {
   (request: Request, context?: RequestContext): Promise<Response>
 }
@@ -83,28 +56,29 @@ export function createHandler(
 ): HandlerWithConnect {
   const init = PLazy.from(async () => {
     const db = await database
-    const resolver = new EntryResolver(db, cms.schema)
+    const previews = createPreviewParser(db)
+    const resolver = db.resolver
     const changes = new ChangeSetCreator(
       cms.config,
       new Graph(cms.config, resolver)
     )
-    const drafts = new Map<
-      string,
-      Promise<{contentHash: string; draft?: Draft}>
-    >()
     let lastSync = 0
 
-    return {db, mutate, resolve, syncPending}
+    return {db, mutate, resolve, periodicSync, syncPending}
 
-    async function resolve(ctx: RequestContext, params: ResolveParams) {
-      if (!params.preview) {
-        await periodicSync(ctx, params.syncInterval)
-        return resolver.resolve(params as ResolveRequest)
+    async function resolve(ctx: RequestContext, query: GraphQuery) {
+      if (!query.preview) {
+        await periodicSync(ctx, query.syncInterval)
+        return resolver.resolve(query as GraphQuery)
       }
-      const entry = params.preview && (await parsePreview(ctx, params.preview))
+      const preview = await previews.parse(
+        query.preview,
+        () => syncPending(ctx),
+        entryId => backend.drafts.get(ctx, entryId)
+      )
       return resolver.resolve({
-        ...params,
-        preview: entry && {entry}
+        ...query,
+        preview: preview
       })
     }
 
@@ -122,9 +96,11 @@ export function createHandler(
         if (!backend.pending) return meta
         try {
           const toApply = await backend.pending.since(ctx, meta.commitHash)
-          const total = toApply?.mutations.length ?? 0
-          console.info(`> sync ${total} pending mutations`)
+          console.info(`> nothing to sync from ${meta.commitHash}`)
           if (!toApply) return meta
+          console.info(
+            `> sync ${toApply.mutations.length} pending mutations, from ${meta.commitHash} to ${toApply.toCommitHash}`
+          )
           await db.applyMutations(toApply.mutations, toApply.toCommitHash)
         } catch (error) {
           console.error(error)
@@ -158,8 +134,8 @@ export function createHandler(
         await Promise.all(tasks)
         return {commitHash: result.commitHash}
       } catch (error: any) {
-        if ('expectedCommitHash' in error) {
-          if (retry) throw error
+        if (retry) throw error
+        if (error instanceof HttpError && error.code === ErrorCode.Conflict) {
           await syncPending(ctx)
           return mutate(ctx, mutations, true)
         }
@@ -170,62 +146,22 @@ export function createHandler(
     async function persistEdit(ctx: AuthedContext, mutation: EditMutation) {
       if (!mutation.update) return
       const update = new Uint8Array(await decode(mutation.update))
-      const currentDraft = await backend.drafts.get(ctx, mutation.entryId)
+      const currentDraft = await backend.drafts.get(
+        ctx,
+        formatDraftKey(mutation.entry)
+      )
       const updatedDraft = currentDraft
         ? mergeUpdatesV2([currentDraft.draft, update])
         : update
       const draft = {
         entryId: mutation.entryId,
+        locale: mutation.locale,
         fileHash: mutation.entry.fileHash,
         draft: updatedDraft
       }
       await backend.drafts.store(ctx, draft)
       const {contentHash} = await db.meta()
-      drafts.set(mutation.entryId, Promise.resolve({contentHash, draft}))
-    }
-
-    async function parsePreview(
-      ctx: RequestContext,
-      preview: PreviewPayload
-    ): Promise<EntryRow | undefined> {
-      const update = await decodePreviewPayload(preview.payload)
-      let meta = await db.meta()
-      if (update.contentHash !== meta.contentHash) {
-        await syncPending(ctx)
-        meta = await db.meta()
-      }
-      const entry = await resolver.resolve<EntryRow>({
-        selection: createSelection(
-          Entry({entryId: update.entryId}).maybeFirst()
-        ),
-        realm: Realm.PreferDraft
-      })
-      if (!entry) return
-      const cachedDraft = await drafts.get(update.entryId)
-      let currentDraft: Draft | undefined
-      if (cachedDraft?.contentHash === meta.contentHash) {
-        currentDraft = cachedDraft.draft
-      } else {
-        try {
-          const pending = backend.drafts.get(ctx, update.entryId)
-          drafts.set(
-            update.entryId,
-            pending.then(draft => ({contentHash: meta.contentHash, draft}))
-          )
-          currentDraft = await pending
-        } catch (error) {
-          console.warn('> could not fetch draft', error)
-        }
-      }
-      const apply = currentDraft
-        ? mergeUpdatesV2([currentDraft.draft, update.update])
-        : update.update
-      const type = cms.config.schema[entry.type]
-      if (!type) return
-      const doc = new Y.Doc()
-      Y.applyUpdateV2(doc, apply)
-      const entryData = parseYDoc(type, doc)
-      return {...entry, ...entryData, path: entry.path}
+      previews.setDraft(formatDraftKey(mutation.entry), {contentHash, draft})
     }
   })
 
@@ -236,9 +172,11 @@ export function createHandler(
       async user() {
         return 'user' in context ? context.user : undefined
       },
-      async resolve(params: ResolveParams) {
+      async resolve<Query extends GraphQuery>(
+        query: Query
+      ): Promise<AnyQueryResult<Query>> {
         const {resolve} = await init
-        return resolve(context, params)
+        return resolve(context, query) as Promise<AnyQueryResult<Query>>
       },
       async previewToken(request: PreviewUpdate) {
         const previews = new JWTPreviews(context.apiKey)
@@ -269,8 +207,8 @@ export function createHandler(
           revisionId
         )
       },
-      async getDraft(entryId: string) {
-        return backend.drafts.get(context as AuthedContext, entryId)
+      async getDraft(key) {
+        return backend.drafts.get(context as AuthedContext, key)
       },
       async storeDraft(draft: Draft) {
         return backend.drafts.store(context as AuthedContext, draft)
@@ -283,7 +221,7 @@ export function createHandler(
     context: RequestContext
   ): Promise<Response> {
     try {
-      const {db, resolve, mutate, syncPending} = await init
+      const {db, resolve, mutate, periodicSync, syncPending} = await init
       const previews = new JWTPreviews(context.apiKey)
       const url = new URL(request.url)
       const params = url.searchParams
@@ -310,9 +248,11 @@ export function createHandler(
 
       const verified = PLazy.from(() => backend.auth.verify(context, request))
 
-      const internal = PLazy.from(async function verifyInternal() {
+      const internal = PLazy.from(async function verifyInternal(): Promise<
+        AuthedContext | RequestContext
+      > {
         try {
-          return await backend.auth.verify(context, request)
+          return await verified
         } catch {
           const authorization = request.headers.get('authorization')
           const bearer = authorization?.slice('Bearer '.length)
@@ -322,6 +262,13 @@ export function createHandler(
           return context
         }
       })
+
+      // Sign preview token
+      if (action === HandleAction.PreviewToken && request.method === 'POST') {
+        await verified
+        expectJson()
+        return Response.json(await previews.sign(PreviewBody(await body)))
+      }
 
       // User
       if (action === HandleAction.User && request.method === 'GET') {
@@ -334,35 +281,21 @@ export function createHandler(
         }
       }
 
-      // These actions can be run internally or by a user
+      // Resolve
       if (action === HandleAction.Resolve && request.method === 'POST') {
         const ctx = await internal
         expectJson()
-        return Response.json(
-          (await resolve(ctx, ResolveBody(await body))) ?? null
-        )
+        const raw = await request.text()
+        const scope = getScope(cms.config)
+        return Response.json((await resolve(ctx, scope.parse(raw))) ?? null)
       }
+
+      // Pending
       if (action === HandleAction.Pending && request.method === 'GET') {
         const ctx = await internal
         expectJson()
         const commitHash = string(url.searchParams.get('commitHash'))
         return Response.json(await backend.pending?.since(ctx, commitHash))
-      }
-      if (action === HandleAction.Draft && request.method === 'GET') {
-        const ctx = await internal
-        expectJson()
-        const entryId = string(url.searchParams.get('entryId'))
-        const draft = await backend.drafts.get(ctx, entryId)
-        return Response.json(
-          draft ? {...draft, draft: base64url.stringify(draft.draft)} : null
-        )
-      }
-
-      // Sign preview token
-      if (action === HandleAction.PreviewToken && request.method === 'POST') {
-        await verified
-        expectJson()
-        return Response.json(await previews.sign(PreviewBody(await body)))
       }
 
       // History
@@ -379,47 +312,57 @@ export function createHandler(
 
       // Syncable
       if (action === HandleAction.Sync && request.method === 'GET') {
-        await verified
+        const ctx = await internal
         expectJson()
         const contentHash = string(url.searchParams.get('contentHash'))
-        await syncPending(context)
+        if ('user' in ctx) await periodicSync(ctx)
+        else await syncPending(context)
         return Response.json(await db.syncRequired(contentHash))
       }
 
       if (action === HandleAction.Sync && request.method === 'POST') {
-        await verified
+        const ctx = await internal
         expectJson()
-        await syncPending(context)
+        if ('user' in ctx) await periodicSync(ctx)
+        else await syncPending(context)
         return Response.json(await db.sync(SyncBody(await body)))
       }
 
       // Media
       if (action === HandleAction.Upload) {
+        const {media} = backend
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
           const ctx = await verified
           expectJson()
           return Response.json(
-            await backend.media.prepareUpload(
-              ctx,
-              PrepareBody(await body).filename
-            )
+            await media.prepareUpload(ctx, PrepareBody(await body).filename)
           )
         }
         const isPost = request.method === 'POST'
         if (isPost) {
-          if (!backend.media.handleUpload)
+          if (!media.handleUpload)
             throw new Response('Bad Request', {status: 400})
           const ctx = await verified
-          await backend.media.handleUpload(ctx, entryId, await request.blob())
+          await media.handleUpload(ctx, entryId, await request.blob())
           return new Response('OK', {status: 200})
         }
-        if (!backend.media.previewUpload)
+        if (!media.previewUpload)
           throw new Response('Bad Request', {status: 400})
-        return backend.media.previewUpload(context, entryId)
+        return media.previewUpload(context, entryId)
       }
 
       // Drafts
+      if (action === HandleAction.Draft && request.method === 'GET') {
+        const ctx = await internal
+        expectJson()
+        const key = string(url.searchParams.get('key')) as DraftKey
+        const draft = await backend.drafts.get(ctx, key)
+        return Response.json(
+          draft ? {...draft, draft: base64.stringify(draft.draft)} : null
+        )
+      }
+
       if (action === HandleAction.Draft && request.method === 'POST') {
         expectJson()
         const data = (await body) as DraftTransport

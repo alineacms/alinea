@@ -1,10 +1,10 @@
 import {Backend} from 'alinea/backend/Backend'
 import {createHandler} from 'alinea/backend/Handler'
-import {HttpRouter} from 'alinea/backend/router/Router'
 import {gitUser} from 'alinea/backend/util/ExecGit'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import {cloudDebug} from 'alinea/cloud/CloudDebug'
 import {CMS} from 'alinea/core/CMS'
+import {genEffect} from 'alinea/core/util/Async'
 import {BuildOptions} from 'esbuild'
 import path from 'node:path'
 import pkg from '../../package.json'
@@ -19,6 +19,7 @@ import {ServeContext} from './serve/ServeContext.js'
 import {startServer} from './serve/StartServer.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
+import {bold, cyan, gray, reportHalt} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -49,7 +50,11 @@ export async function serve(options: ServeOptions): Promise<void> {
   const configLocation = configFile
     ? path.join(path.resolve(cwd), configFile)
     : findConfigFile(cwd)
-  if (!configLocation) throw new Error(`No config file specified`)
+
+  if (!configLocation) {
+    reportHalt(`No Alinea config file found @ ${cwd}`)
+    process.exit(1)
+  }
 
   const preferredPort = options.port ? Number(options.port) : 4500
   const server = startServer(preferredPort, 0, cmd === 'build')
@@ -57,6 +62,8 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   const rootDir = path.resolve(cwd)
   const context: ServeContext = {
+    cmd,
+    configLocation,
     rootDir,
     base,
     staticDir,
@@ -72,50 +79,58 @@ export async function serve(options: ServeOptions): Promise<void> {
     liveReload: new LiveReload()
   }
 
-  server.then(async () => {
-    process.stdout.write(`  \x1b[36mɑ Alinea  ${pkg.version}\x1b[39m `)
-    if (cmd === 'dev')
-      console.log(`\n  - Local CMS:    ${await dashboardUrl}\n`)
-  })
+  const drafts = new MemoryDrafts()
+  let currentCMS: CMS | undefined
+  let serveController = new AbortController()
+  let localServer:
+    | {
+        close(): void
+        handle(input: Request): Promise<Response>
+      }
+    | undefined
 
-  const gen = generate({
+  const fileEmitter = generate({
     ...options,
     dashboardUrl,
     watch: cmd === 'dev',
-    onAfterGenerate() {
+    onAfterGenerate(msg) {
       dashboardUrl.then(url => {
+        const version = gray(pkg.version)
+        const header = `  ${cyan(bold('ɑ'))} Alinea ${version}\n`
+        const connector = gray(cmd === 'dev' ? '├' : '╰')
+        const details = `  ${connector} ${gray(msg)}\n`
+        const footer =
+          cmd === 'dev' ? `  ${gray('╰')} Local CMS:    ${url}\n\n` : '\n'
+        process.stdout.write(header + details + footer)
         options.onAfterGenerate?.({
-          ALINEA_BASE_URL: base ?? '',
           ALINEA_DEV_SERVER: url
         })
       })
     }
-  })[Symbol.asyncIterator]()
-  const drafts = new MemoryDrafts()
-  let nextGen = gen.next()
-  let cms: CMS | undefined
-  let handleRequest!: HttpRouter
+  })
+
+  const generateFiles = genEffect(fileEmitter, () => {
+    serveController.abort()
+    serveController = new AbortController()
+  })
 
   const user = await gitUser(rootDir)
 
-  while (true) {
-    const current = await nextGen
-    if (!current.value) return
-    const {cms: currentCMS, localData: fileData, db} = current.value
+  for await (const {cms, localData: fileData, db} of generateFiles) {
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
-      const history = new GitHistory(currentCMS.config, rootDir)
+      const history = new GitHistory(cms.config, rootDir)
       const backend = createBackend()
-      const handleApi = createHandler(currentCMS, backend, Promise.resolve(db))
-      handleRequest = createLocalServer(context, handleApi, user)
-      cms = currentCMS
-      context.liveReload.reload('refresh')
+      const handleApi = createHandler(cms, backend, Promise.resolve(db))
+      if (localServer) localServer.close()
+      localServer = createLocalServer(context, cms, handleApi, user)
+      currentCMS = cms
 
       function createBackend(): Backend {
         if (process.env.ALINEA_CLOUD_DEBUG)
-          return cloudDebug(currentCMS.config, rootDir)
-        if (process.env.ALINEA_CLOUD_URL) return cloudBackend(currentCMS.config)
+          return cloudDebug(cms.config, rootDir)
+        if (process.env.ALINEA_CLOUD_URL) return cloudBackend(cms.config)
         return {
           auth: localAuth(rootDir),
           target: fileData,
@@ -125,14 +140,13 @@ export async function serve(options: ServeOptions): Promise<void> {
         }
       }
     }
-    const abortController = new AbortController()
-    nextGen = gen.next()
-    nextGen.then(({done}) => {
-      if (!done) abortController.abort()
-    })
+
     const {serve} = await server
-    for await (const {request, respondWith} of serve(abortController)) {
-      handleRequest(request).then(respondWith)
+    for await (const {request, respondWith} of serve(serveController)) {
+      localServer!.handle(request).then(respondWith)
     }
   }
+
+  const {close} = await server
+  close()
 }

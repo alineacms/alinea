@@ -1,8 +1,9 @@
+import styler from '@alinea/styler'
 import {EntryRow} from 'alinea/core/EntryRow'
 import {isImage} from 'alinea/core/media/IsImage'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import {MediaFile} from 'alinea/core/media/MediaTypes'
-import {Typo, fromModule} from 'alinea/ui'
+import {Typo} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {Main} from 'alinea/ui/Main'
 import {Property} from 'alinea/ui/Property'
@@ -19,7 +20,7 @@ import {EntryHeader} from '../entry/EntryHeader.js'
 import {EntryTitle} from '../entry/EntryTitle.js'
 import css from './FileEntry.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 interface Pos {
   x?: number
@@ -157,12 +158,12 @@ export function FileEntry(props: EntryEditProps & {type: typeof MediaFile}) {
       <EntryTitle
         editor={editor}
         backLink={
-          editor.activeVersion.parent
+          editor.activeVersion.parentId
             ? nav.entry({
-                entryId: editor.activeVersion.parent,
+                id: editor.activeVersion.parentId,
                 workspace: editor.activeVersion.workspace
               })
-            : nav.entry({entryId: undefined})
+            : nav.entry({id: undefined})
         }
       />
       <FormProvider form={form}>

@@ -1,6 +1,7 @@
-import {EntryPhase} from 'alinea/core/EntryRow'
+import styler from '@alinea/styler'
+import {EntryStatus} from 'alinea/core/EntryRow'
 import {entryFile, workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
-import {Button, HStack, Icon, Stack, fromModule, px} from 'alinea/ui'
+import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
@@ -32,7 +33,7 @@ import {FileUploader} from '../media/FileUploader.js'
 import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const variantDescription = {
   draft: 'Draft',
@@ -74,10 +75,10 @@ export interface EntryHeaderProps {
 export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const config = useConfig()
   const locale = useLocale()
-  const phaseInUrl = useAtomValue(editor.phaseInUrl)
-  const selectedPhase = useAtomValue(editor.selectedPhase)
+  const statusInUrl = useAtomValue(editor.statusInUrl)
+  const selectedStatus = useAtomValue(editor.selectedStatus)
   const previewRevision = useAtomValue(editor.previewRevision)
-  const isActivePhase = editor.activePhase === selectedPhase
+  const isActiveStatus = editor.activeStatus === selectedStatus
   const isMediaFile = editor.activeVersion.type === 'MediaFile'
   const isMediaLibrary = editor.activeVersion.type === 'MediaLibrary'
   const hasChanges = useAtomValue(editor.hasChanges)
@@ -89,9 +90,9 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     ? 'revision'
     : untranslated
     ? 'untranslated'
-    : hasChanges && !phaseInUrl
+    : hasChanges && !statusInUrl
     ? 'editing'
-    : selectedPhase
+    : selectedStatus
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const publishDraft = useSetAtom(editor.publishDraft)
@@ -135,7 +136,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     input.onchange = async () => {
       const file = input.files![0]
       const destination = {
-        parentId: editor.activeVersion.parent ?? undefined,
+        parentId: editor.activeVersion.parentId ?? undefined,
         workspace: editor.activeVersion.workspace,
         root: editor.activeVersion.root,
         directory: workspaceMediaDir(config, editor.activeVersion.workspace)
@@ -156,7 +157,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
       >
         Remove draft
       </DropdownMenu.Item>
-    ) : variant === EntryPhase.Published && !editor.activeVersion.seeded ? (
+    ) : variant === EntryStatus.Published && !editor.activeVersion.seeded ? (
       isMediaFile ? (
         <>
           <DropdownMenu.Item
@@ -189,7 +190,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           Archive
         </DropdownMenu.Item>
       )
-    ) : variant === EntryPhase.Archived ? (
+    ) : variant === EntryStatus.Archived ? (
       <>
         <DropdownMenu.Item
           className={styles.root.action()}
@@ -228,7 +229,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                     ? transitions[currentTransition!]
                     : variantDescription[variant]}
                 </span>
-                {!previewRevision && editor.availablePhases.length > 1 && (
+                {!previewRevision && editor.availableStatuses.length > 1 && (
                   <Icon icon={IcRoundUnfoldMore} />
                 )}
               </HStack>
@@ -244,15 +245,15 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 </DropdownMenu.Item>
               )}
               {!previewRevision &&
-                editor.availablePhases.map(phase => {
+                editor.availableStatuses.map(status => {
                   return (
                     <DropdownMenu.Item
-                      key={phase}
+                      key={status}
                       onClick={() => {
-                        navigate(`${pathname}?${phase}`)
+                        navigate(`${pathname}?${status}`)
                       }}
                     >
-                      {variantDescription[phase]}
+                      {variantDescription[status]}
                     </DropdownMenu.Item>
                   )
                 })}
@@ -262,7 +263,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           {editable &&
             !currentTransition &&
             !hasChanges &&
-            isActivePhase &&
+            isActiveStatus &&
             !untranslated &&
             !previewRevision && (
               <>
@@ -275,8 +276,8 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
 
           {!currentTransition &&
             !hasChanges &&
-            !isActivePhase &&
-            editor.availablePhases.includes(EntryPhase.Draft) && (
+            !isActiveStatus &&
+            editor.availableStatuses.includes(EntryStatus.Draft) && (
               <>
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>
@@ -354,7 +355,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                   )}
                   {!untranslated &&
                     !hasChanges &&
-                    selectedPhase === 'draft' && (
+                    selectedStatus === 'draft' && (
                       <Button icon={IcRoundCheck} onClick={publishDraft}>
                         Publish draft
                       </Button>

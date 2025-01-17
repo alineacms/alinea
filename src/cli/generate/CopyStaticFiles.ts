@@ -13,7 +13,7 @@ const packageJson = {
 }
 
 export async function copyStaticFiles({outDir}: GenerateContext) {
-  await fs.mkdir(outDir, {recursive: true}).catch(console.log)
+  await fs.mkdir(outDir, {recursive: true}).catch(console.error)
 
   await fs.writeFile(
     path.join(outDir, 'release.js'),
@@ -23,7 +23,6 @@ export async function copyStaticFiles({outDir}: GenerateContext) {
     path.join(outDir, 'package.json'),
     JSON.stringify(packageJson, null, 2)
   )
-  await writeFileIfContentsDiffer(path.join(outDir, 'config.css'), ``)
   // await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)*/
   await writeFileIfContentsDiffer(
     path.join(outDir, '.keep'),

@@ -3,6 +3,10 @@ import {BuildOptions} from 'esbuild'
 export const buildOptions: BuildOptions = {
   jsx: 'automatic',
   loader: {
+    // CSS
+    '.module.css': 'local-css',
+    '.css': 'css',
+
     // Images
     '.png': 'file',
     '.svg': 'file',

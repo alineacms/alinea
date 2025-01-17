@@ -15,29 +15,23 @@ export const cms = createCMS({
           icon: IcRoundUploadFile
         }),
         pages: Config.root('Languages', {
+          contains: [schema.Page, schema.Folder, schema.LinkFields],
           icon: IcRoundTranslate,
           i18n: {
-            locales: ['en', 'fr', 'nl']
+            locales: ['en', 'fr', 'nl-BE', 'nl-NL']
           },
-          entries: {
-            seededPath: Config.page(
-              schema.Page({
+          children: {
+            seededPath: Config.page({
+              type: schema.Page,
+              fields: {
                 title: 'Seeded page'
-              })
-            )
+              }
+            })
           }
         }),
         custom: Config.root('Custom', {
-          contains: ['CustomPage'],
-          view() {
-            return (
-              <div
-                style={{width: '100%', height: '100%', background: 'yellow'}}
-              >
-                Custom root view
-              </div>
-            )
-          }
+          contains: [schema.CustomPage],
+          view: './src/CustomRootView.tsx#CustomRootView'
         }),
         media: Config.media()
       }

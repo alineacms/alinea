@@ -1,5 +1,85 @@
 # Changelog
 
+## [1.0.11]
+- Fix navigation tree in link picker
+- Set the default depth of querying children to 1
+
+## [1.0.10]
+- Fix handling mutation retries based on the http status code received.
+
+## [1.0.9]
+- Fix skip/take for queries which were not used
+- Disable navigation in the internal link picker if a condition is used
+
+## [1.0.8]
+- Fix live previews for translated entries
+
+## [1.0.7]
+- Fix querying linked entries without locale
+
+## [1.0.6]
+- Fix querying linked entries - the requested locale was not passed
+
+## [1.0.5]
+- Alinea will now fail if linked entries cannot be resolved during querying.
+  Before it would log the error but continue - but this is rarely desired.
+
+## [1.0.4]
+- Fix removing field contents in `Edit.update`. Pass an undefined value to remove
+  field contents: 
+
+  ````tsx
+  await cms.commit(
+    Edit.update({
+      id: '...',
+      set: {removeMe: undefined}
+    })
+  )
+  ````
+- Fix processing link data correctly even it contains legacy data
+
+## [1.0.3]
+- Only access normalized config in next cms adapter. This fixes an error
+  in production builds which would prevent you from querying media files.
+
+## [1.0.2]
+- Tweak the withAlinea config function to work in all environments including 
+  Next 14.
+
+## [1.0.1]
+- Add the Infer.Entry and Infer.ListItem types which can be used to infer the 
+  type of an entry or list item from a query.
+
+  ```tsx
+  type Entry = Infer.Entry<typeof EntryType>
+  const entry: Entry = await cms.get({type: MyType})
+  type ListItem = Infer.ListItem<typeof ListType>
+  const list: Array<ListItem> = await cms.get({select: MyType.list})
+  ````
+
+## [1.0.0]
+
+- Add support for Next.js 15 and Turbopack.
+- Removed all previously deprecated options.
+- Next.js config changes are now bundled in a `withAlinea` export found in 
+  'alinea/next'.
+- Querying via `cms.find/get` is rewritten to take a single query object.
+  Have a look at the docs to see how to use the new query api.
+- Creating custom fields can now be done through `Field.create`.
+- Entries now have a single id. If you are upgrading and were using i18n you
+  can stabilize your ids by running `npx alinea build --fix`.
+
+## [0.11.2]
+
+- Querying data in a Next.js edge route or middleware will forward the request
+  to your CMS handler. This will keep the code size of the edge route to a 
+  minimum.
+
+## [0.11.1]
+
+- Fix RichTextEditor.addHtml not parsing marks correctly
+- Fix index on entry creation
+
 ## [0.11.0]
 
 - The cms handler has been rewritten to handle both backend and previews. This 
@@ -18,8 +98,8 @@
   export const POST = handler
   ```
 
-  This release also requires you to restructure you Alinea config file.
-  The dashboard property is replace by the `baseUrl`, `handlerUrl` and 
+  This release also requires you to restructure your Alinea config file.
+  The dashboard property is replaced by the `baseUrl`, `handlerUrl` and 
   `dashboardFile` properties.
 
   ```tsx
@@ -43,8 +123,10 @@
   const cms = createCMS({
     // ... schema and workspaces
     baseUrl: {
-      // Point this to you Next.js website
+      // Point this to your local frontend
       development: 'http://localhost:3000'
+      // If hosting on vercel you can use: process.env.VERCEL_URL
+      production: 'http://example.com'
     },
     handlerUrl: '/api/cms',
     dashboardFile: 'admin.html',

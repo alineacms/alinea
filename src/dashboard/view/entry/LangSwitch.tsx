@@ -1,13 +1,14 @@
+import styler from '@alinea/styler'
 import {Listbox} from '@headlessui/react'
-import {HStack, Icon, fromModule} from 'alinea/ui'
+import {HStack, Icon} from 'alinea/ui'
 import {IcRoundLanguage} from 'alinea/ui/icons/IcRoundLanguage'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import css from './LangSwitch.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface LangswitchProps {
-  locales: Array<string>
+  locales: ReadonlyArray<string>
   selected: string
   onChange: (locale: string) => void
   inline?: boolean
@@ -26,15 +27,6 @@ export function Langswitch({
         onChange={value => {
           if (!value) return
           onChange(value)
-          /*if (!value) return
-          navigate(
-            nav.entry({
-              entryId: entryLocation?.entryId,
-              workspace,
-              root: root.name,
-              locale: value
-            })
-          )*/
         }}
       >
         <div>

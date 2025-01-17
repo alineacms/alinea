@@ -1,24 +1,35 @@
 import {Drafts, Media, Pending, Target} from 'alinea/backend/Backend'
+import {parseDraftKey} from 'alinea/core/Draft'
 import {createId} from 'alinea/core/Id'
 import {Mutation} from 'alinea/core/Mutation'
 import {basename, extname} from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import PLazy from 'p-lazy'
-import {asc, Database, eq, gt, table} from 'rado'
+import {asc, Database, eq, gt, primaryKey, table} from 'rado'
 import {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData.js'
 import * as column from 'rado/universal/columns'
-import {HandleAction} from '../Handler.js'
+import {HandleAction} from '../HandleAction.js'
+import {is} from '../util/ORM.js'
 
 export interface DatabaseOptions {
   db: Database
   target: Target
 }
 
-const Draft = table('alinea_draft', {
-  entryId: column.text().primaryKey(),
-  fileHash: column.text().notNull(),
-  draft: column.blob().notNull()
-})
+const Draft = table(
+  'alinea_draft',
+  {
+    entryId: column.text().notNull(),
+    locale: column.text(),
+    fileHash: column.text().notNull(),
+    draft: column.blob().notNull()
+  },
+  Draft => {
+    return {
+      primary: primaryKey(Draft.entryId, Draft.locale)
+    }
+  }
+)
 
 const Mutation = table('alinea_mutation', {
   id: column.id(),
@@ -38,12 +49,13 @@ export function databaseApi(options: DatabaseOptions) {
     return options.db
   })
   const drafts: Drafts = {
-    async get(ctx, entryId) {
+    async get(ctx, key) {
+      const {entryId, locale} = parseDraftKey(key)
       const db = await setup
       const found = await db
         .select()
         .from(Draft)
-        .where(eq(Draft.entryId, entryId))
+        .where(eq(Draft.entryId, entryId), is(Draft.locale, locale))
         .get()
       return found ?? undefined
     },

@@ -1,11 +1,12 @@
 import {Link} from '@/layout/nav/Link'
 import {ChapterLinkBlock} from '@/schema/blocks/ChapterLinkBlock'
+import styler from '@alinea/styler'
 import {Infer} from 'alinea'
-import {fromModule, HStack, Stack} from 'alinea/ui'
+import {HStack, Stack} from 'alinea/ui'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import css from './ChapterLinkView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function ChapterLinkView({link}: Infer<typeof ChapterLinkBlock>) {
   if (!link || !link.href) return null

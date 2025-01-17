@@ -3,21 +3,24 @@ import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore.server'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
+import {EntryRow} from 'alinea/core/EntryRow'
+import {genEffect} from 'alinea/core/util/Async'
 import {basename, join} from 'alinea/core/util/Paths'
-import {BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
+import {count} from 'rado'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
 import {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
-import {loadCMS} from './generate/LoadConfig.js'
 import {LocalData} from './generate/LocalData.js'
 import {dirname} from './util/Dirname.js'
+import {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
+import {reportHalt} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
@@ -32,17 +35,23 @@ export interface GenerateOptions {
   fix?: boolean
   wasmCache?: boolean
   quiet?: boolean
-  onAfterGenerate?: (env?: Record<string, string>) => void
+  onAfterGenerate?: (buildMessage: string) => void
   dashboardUrl?: Promise<string>
 }
 
-async function generatePackage(context: GenerateContext, config: Config) {
+async function generatePackage(context: GenerateContext, cms: CMS) {
+  const {config} = cms
   if (!config.dashboardFile) return
   const staticFile = config.dashboardFile
     ? join(config.publicDir, config.dashboardFile)
     : undefined
   if (!staticFile) return
-  await generateDashboard(context, config.handlerUrl ?? '/api/cms', staticFile)
+  await generateDashboard(
+    context,
+    cms,
+    config.handlerUrl ?? '/api/cms',
+    staticFile
+  )
   return basename(staticFile)
 }
 
@@ -73,10 +82,15 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     onAfterGenerate
   } = options
 
+  const now = performance.now()
+
   const configLocation = configFile
     ? path.join(path.resolve(cwd), configFile)
     : findConfigFile(cwd)
   if (!configLocation) throw new Error(`No config file specified`)
+  const location = path
+    .relative(process.cwd(), configLocation)
+    .replace(/\\/g, '/')
   const rootDir = path.resolve(cwd)
   const configDir = path.dirname(configLocation)
 
@@ -85,6 +99,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     : path.join(alineaPackageDir, 'node_modules')
 
   const context: GenerateContext = {
+    cmd,
     wasmCache,
     rootDir: rootDir,
     staticDir,
@@ -92,61 +107,76 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configDir,
     configLocation,
     fix: options.fix || false,
-    outDir: path.join(nodeModules, '@alinea/generated'),
-    watch: cmd === 'dev' || false
+    outDir: path.join(nodeModules, '@alinea/generated')
   }
   await copyStaticFiles(context)
-  const builds = compileConfig(context)[Symbol.asyncIterator]()
-  let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
+  let indexing!: Emitter<Database>
+  const builder = compileConfig(context)
+  const builds = genEffect(builder, () => indexing?.return())
   let afterGenerateCalled = false
 
   function writeStore(data: Uint8Array) {
     return exportStore(data, join(context.outDir, 'store.js'))
   }
   const [store, storeData] = await createDb()
-  while (true) {
-    const {done} = await nextBuild
-    nextBuild = builds.next()
-    try {
-      const cms = await loadCMS(context.outDir)
-      const write = async () => {
-        const [adminFile, dbSize] = await Promise.all([
-          generatePackage(context, cms.config),
+  for await (const cms of builds) {
+    if (cmd === 'build') {
+      const handlerUrl = cms.config.handlerUrl
+      const baseUrl = Config.baseUrl(cms.config, 'production')
+      if (handlerUrl && !baseUrl) {
+        reportHalt(
+          'No baseUrl was set for the production build in Alinea config'
+        )
+        process.exit(1)
+      }
+    }
+    const write = async (recordCount: number) => {
+      let dbSize = 0
+      if (cmd === 'build') {
+        ;[, dbSize] = await Promise.all([
+          generatePackage(context, cms),
           writeStore(storeData())
         ])
-        if (cmd !== 'build') return
-        let message = 'generated '
-        if (adminFile) message += `${adminFile} and `
-        message += `db (${prettyBytes(dbSize)})`
-        console.log(`\x1b[90m${message}\x1b[39m`)
+      } else {
+        await writeStore(new Uint8Array())
       }
-
-      const fileData = new LocalData({
-        config: cms.config,
-        fs: fs.promises,
-        rootDir,
-        dashboardUrl: await options.dashboardUrl
-      })
-      for await (const db of fillCache(
-        context,
-        fileData,
-        store,
-        cms.config,
-        nextBuild
-      )) {
-        yield {cms, db, localData: fileData}
-        if (onAfterGenerate && !afterGenerateCalled) {
-          afterGenerateCalled = true
-          await write()
-          onAfterGenerate()
-        }
+      let message = `${cmd} ${location} in `
+      const duration = performance.now() - now
+      if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
+      else message += `${duration.toFixed(0)}ms`
+      if (dbSize > 0)
+        message += ` (db ${prettyBytes(dbSize)}, ${recordCount} records)`
+      else message += ` (${recordCount} records)`
+      return message
+    }
+    const fileData = new LocalData({
+      config: cms.config,
+      fs: fs.promises,
+      rootDir,
+      dashboardUrl: await options.dashboardUrl
+    })
+    try {
+      indexing = fillCache(context, fileData, store, cms.config)
+    } catch (error: any) {
+      reportHalt(String(error.message ?? error))
+      if (cmd === 'build') process.exit(1)
+      continue
+    }
+    for await (const db of indexing) {
+      yield {cms, db, localData: fileData}
+      if (onAfterGenerate && !afterGenerateCalled) {
+        const recordCount = await db.store.select(count()).from(EntryRow).get()
+        await write(recordCount ?? 0).then(
+          message => {
+            afterGenerateCalled = true
+            onAfterGenerate(message)
+          },
+          () => {
+            reportHalt('Alinea failed to write dashboard files')
+            if (cmd === 'build') process.exit(1)
+          }
+        )
       }
-      if (done && !afterGenerateCalled) {
-        await write()
-        break
-      }
-    } catch (e: any) {
-      console.error(e)
     }
   }
 }

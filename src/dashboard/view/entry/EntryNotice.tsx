@@ -1,9 +1,10 @@
-import {HStack, Icon, fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {HStack, Icon} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {ComponentType, PropsWithChildren, ReactNode} from 'react'
 import css from './EntryNotice.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface EntryNoticeProps {
   icon?: ComponentType

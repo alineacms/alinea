@@ -1,13 +1,14 @@
 import {cms} from '@/cms'
-import {Query} from 'alinea'
-import dynamic from 'next/dynamic'
+import {Entry} from 'alinea/core/Entry'
 import {Suspense} from 'react'
-
-const DemoPage = dynamic(() => import('./demo/DemoDashboard'), {ssr: false})
+import {DemoPage} from './demo/layout/DemoPage'
 
 export default async function Demo() {
-  const query = Query.whereWorkspace('demo').orderBy(Query.level.asc())
-  const entries = await cms.find(query)
+  const entries = await cms.find({
+    select: Entry,
+    orderBy: {asc: Entry.level},
+    location: cms.workspaces.demo
+  })
   return (
     <Suspense>
       <DemoPage entries={entries} />

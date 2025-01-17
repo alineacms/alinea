@@ -1,9 +1,9 @@
+import styler from '@alinea/styler'
 import {ComponentType, HTMLAttributes, ReactNode} from 'react'
 import css from './Icon.module.scss'
-import {fromModule} from './util/Styler.js'
 import {px} from './util/Units.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type IconProps = {
   icon: ComponentType | ReactNode

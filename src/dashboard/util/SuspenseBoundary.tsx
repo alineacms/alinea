@@ -6,7 +6,7 @@ interface LogMsgProps {
 
 function LogMsg({name, children}: PropsWithChildren<LogMsgProps>) {
   useEffect(() => {
-    console.log(`SuspenseBoundary ${name} fallback triggered`)
+    console.info(`SuspenseBoundary ${name} fallback triggered`)
   }, [])
   return children
 }

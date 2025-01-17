@@ -16,8 +16,8 @@ export async function createFileHash(data: Uint8Array) {
 export async function createRowHash(entry: Omit<EntryRow, 'rowHash'>) {
   const encoder = new TextEncoder()
   const data = encoder.encode(
-    `entryId ${entry.entryId}` +
-      `phase ${entry.phase}` +
+    `entryId ${entry.id}` +
+      `status ${entry.status}` +
       `title ${entry.title}` +
       `type ${entry.type}` +
       `seeded ${entry.seeded}` +
@@ -28,8 +28,7 @@ export async function createRowHash(entry: Omit<EntryRow, 'rowHash'>) {
       `parentDir ${entry.parentDir}` +
       `childrenDir ${entry.childrenDir}` +
       `index ${entry.index}` +
-      `parent ${entry.parent}` +
-      `i18nId ${entry.i18nId}` +
+      `parent ${entry.parentId}` +
       `locale ${entry.locale}` +
       `fileHash ${entry.fileHash}` +
       `active ${entry.active}` +

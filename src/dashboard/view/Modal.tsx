@@ -1,11 +1,11 @@
+import styler from '@alinea/styler'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
-import {fromModule} from 'alinea/ui/util/Styler'
 import {PropsWithChildren, useRef} from 'react'
 import {createPortal} from 'react-dom'
 import css from './Modal.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 let modalTarget: Element | null = null
 

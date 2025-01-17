@@ -1,11 +1,11 @@
+import styler from '@alinea/styler'
 import {VStack} from 'alinea/ui/Stack'
-import {fromModule} from 'alinea/ui/util/Styler'
 import {HTMLProps} from 'react'
 import {Action} from '../Action'
 import {WebTypo} from '../WebTypo'
 import css from './Newsletter.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function Newsletter(props: HTMLProps<HTMLFormElement>) {
   return (

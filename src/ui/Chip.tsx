@@ -1,10 +1,10 @@
+import styler from '@alinea/styler'
 import type {ComponentType} from 'react'
 import css from './Chip.module.scss'
 import {Icon} from './Icon.js'
 import {HStack, StackProps} from './Stack.js'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type ChipProps = StackProps & {
   icon?: ComponentType

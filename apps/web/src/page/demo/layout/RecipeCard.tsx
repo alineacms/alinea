@@ -1,17 +1,18 @@
+import styler from '@alinea/styler'
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import {ImageLink, TextDoc} from 'alinea'
-import {HStack, Stack, VStack, fromModule, imageBlurUrl} from 'alinea/ui'
+import {HStack, Stack, VStack, imageBlurUrl} from 'alinea/ui'
 import Image from 'next/image'
 import Link from 'next/link'
 import {DemoText} from './DemoText'
 import {DemoTypo} from './DemoType'
 import css from './RecipeCard.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface RecipeCardProps {
+  _url: string
   title: string
-  url: string
   header: {
     image?: ImageLink
     credit?: TextDoc
@@ -23,7 +24,7 @@ export function RecipeCard(recipe: RecipeCardProps) {
   const image = recipe.header?.image
   const blurUrl = image && imageBlurUrl(image)
   return (
-    <Link href={recipe.url}>
+    <Link href={recipe._url}>
       <div className={styles.root()}>
         <header className={styles.root.header()}>
           {image && (

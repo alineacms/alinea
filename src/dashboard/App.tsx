@@ -8,7 +8,7 @@ import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
-import {useEffect} from 'react'
+import {ComponentType, useEffect} from 'react'
 import {QueryClient} from 'react-query'
 import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
@@ -102,7 +102,7 @@ function AppAuthenticated() {
               <Sidebar.Nav>
                 {Object.entries(roots).map(([key, root], i) => {
                   const isSelected = key === currentRoot
-                  const {entryId, ...location} = entryLocation
+                  const {id, ...location} = entryLocation
                   const link =
                     location.root === key
                       ? nav.entry(location)
@@ -177,6 +177,7 @@ function AppRoot() {
 
 export interface AppProps {
   config: Config
+  views: Record<string, ComponentType<any>>
   client: Connection
   queryClient?: QueryClient
   fullPage?: boolean

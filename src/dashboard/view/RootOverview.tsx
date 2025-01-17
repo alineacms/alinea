@@ -1,11 +1,12 @@
+import styler from '@alinea/styler'
 import {RootData} from 'alinea/core/Root'
-import {Icon, TextLabel, Typo, fromModule} from 'alinea/ui'
+import {Icon, TextLabel, Typo} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {Head} from '../util/Head.js'
 import css from './RootOverview.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface RootOverviewProps {
   root: RootData

@@ -1,6 +1,7 @@
-import {PreviewMetadata} from 'alinea/core/Resolver'
+import styler from '@alinea/styler'
+import {PreviewMetadata} from 'alinea/core/Preview'
 import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
-import {HStack, Loader, Typo, fromModule, px} from 'alinea/ui'
+import {HStack, Loader, Typo, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
@@ -18,7 +19,7 @@ import {
 import {LivePreview} from '../entry/EntryPreview.js'
 import css from './BrowserPreview.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface BrowserPreviewProps {
   url: string

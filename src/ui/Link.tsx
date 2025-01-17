@@ -1,9 +1,9 @@
+import styler from '@alinea/styler'
 import type {LinkHTMLAttributes} from 'react'
 import {link} from '../dashboard/util/HashRouter.js'
 import css from './Link.module.scss'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type LinkProps = {
   href: string

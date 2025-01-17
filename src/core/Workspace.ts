@@ -1,11 +1,16 @@
 import {Preview} from 'alinea/core/Preview'
 import type {ComponentType} from 'react'
-import {Meta, StripMeta} from './Meta.js'
+import {
+  getWorkspace,
+  hasWorkspace,
+  HasWorkspace,
+  internalWorkspace
+} from './Internal.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries} from './util/Objects.js'
+import {entries, values} from './util/Objects.js'
 
 export interface WorkspaceMeta {
   /** A directory which contains the json entry files */
@@ -18,56 +23,45 @@ export interface WorkspaceMeta {
   preview?: Preview
 }
 
-export interface WorkspaceData extends WorkspaceMeta {
-  label: string
-  roots: Roots
-  color: string
-}
-
 type Roots = Record<string, Root>
 
-export interface WorkspaceDefinition {
+export interface RootsDefinition {
   [key: string]: Root
-  [Meta]?: WorkspaceMeta
 }
 
-export type Workspace<Definition extends Roots = Roots> = Definition & {
-  [Workspace.Data]: WorkspaceData
-}
+export type Workspace<Definition extends Roots = Roots> = Definition &
+  HasWorkspace
 
 export namespace Workspace {
-  export const Data = Symbol.for('@alinea/Workspace.Data')
-  export const Meta = Symbol.for('@alinea/Workspace.Meta')
-
-  export function data(workspace: Workspace): WorkspaceData {
-    return workspace[Workspace.Data]
+  export function data(workspace: Workspace): WorkspaceInternal {
+    return getWorkspace(workspace)
   }
 
   export function roots(workspace: Workspace): Roots {
-    return workspace[Workspace.Data].roots
+    return getWorkspace(workspace).roots
   }
 
   export function label(workspace: Workspace): string {
-    return workspace[Workspace.Data].label
+    return getWorkspace(workspace).label
   }
 
   export function preview(workspace: Workspace): Preview | undefined {
-    return workspace[Workspace.Data].preview
+    return getWorkspace(workspace).preview
   }
 
   export function isWorkspace(value: any): value is Workspace {
-    return Boolean(value && value[Workspace.Data])
+    return Boolean(value && hasWorkspace(value))
   }
 
   export function defaultMediaRoot(workspace: Workspace): string {
-    const {roots} = workspace[Workspace.Data]
+    const {roots} = getWorkspace(workspace)
     for (const [name, root] of entries(roots))
       if (Root.isMediaRoot(root)) return name
     throw new Error(`Workspace has no media root`)
   }
 
   export function defaultRoot(workspace: Workspace): string {
-    return Object.keys(workspace[Workspace.Data].roots)[0]
+    return Object.keys(getWorkspace(workspace).roots)[0]
   }
 
   export function validate(workspace: Workspace, schema: Schema) {
@@ -81,44 +75,35 @@ export namespace Workspace {
       Root.validate(root, label(workspace), schema)
     }
   }
-}
 
-export interface WorkspaceOptions<Definition> extends WorkspaceMeta {
-  roots: Definition
-}
-
-/** Create a workspace */
-export function workspace<Definition extends WorkspaceDefinition>(
-  /** The name of the workspace */
-  label: string,
-  definition: WorkspaceOptions<Definition>
-): Workspace<Definition>
-/** @deprecated See https://github.com/alineacms/alinea/issues/373 */
-export function workspace<Definition extends WorkspaceDefinition>(
-  /** The name of the workspace */
-  label: string,
-  definition: Definition
-): Workspace<StripMeta<Definition>>
-export function workspace<Definition extends WorkspaceDefinition>(
-  /** The name of the workspace */
-  label: string,
-  definition: WorkspaceOptions<Definition> | Definition
-) {
-  const isOptions = 'roots' in definition && !Root.isRoot(definition.roots)
-  const def: any = definition
-  const roots = isOptions ? def.roots : def
-  const options: WorkspaceMeta = (isOptions ? def : def[Meta]) ?? {}
-  return {
-    ...roots,
-    [Workspace.Data]: {
-      label,
-      roots,
-      ...options,
-      color: options.color ?? getRandomColor(JSON.stringify(label))
-    }
+  export function referencedViews(workspace: Workspace) {
+    return values(roots(workspace)).flatMap(Root.referencedViews)
   }
 }
 
-export namespace workspace {
-  export const meta: typeof Meta = Meta
+export interface WorkspaceConfig<Definition> extends WorkspaceMeta {
+  roots: Definition
+}
+
+export interface WorkspaceInternal extends WorkspaceConfig<RootsDefinition> {
+  label: string
+  color: string
+}
+
+/** Create a workspace */
+export function workspace<Roots extends RootsDefinition>(
+  /** The name of the workspace */
+  label: string,
+  config: WorkspaceConfig<Roots>
+): Workspace<Roots> {
+  const roots = config.roots
+  const instance = {
+    ...roots,
+    [internalWorkspace]: {
+      ...config,
+      label,
+      color: config.color ?? getRandomColor(JSON.stringify(label))
+    }
+  }
+  return instance
 }

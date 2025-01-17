@@ -1,5 +1,6 @@
 import {Field, FieldMeta, FieldOptions} from '../Field.js'
-import {RecordMutator, RecordShape} from '../shape/RecordShape.js'
+import {Type} from '../Type.js'
+import {RecordMutator} from '../shape/RecordShape.js'
 
 export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
   Row,
@@ -8,9 +9,13 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
   Options
 > {
   constructor(
-    shape: RecordShape<any>,
+    type: Type,
     meta: FieldMeta<Row, Row, RecordMutator<Row>, Options>
   ) {
-    super({shape, ...meta})
+    super({
+      shape: Type.shape(type) as any,
+      referencedViews: Type.referencedViews(type),
+      ...meta
+    })
   }
 }

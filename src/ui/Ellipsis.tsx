@@ -1,8 +1,8 @@
+import styler from '@alinea/styler'
 import {HTMLProps, memo} from 'react'
 import css from './Ellipsis.module.scss'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export const Ellipsis = memo(function Ellipsis({
   children,

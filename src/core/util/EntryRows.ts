@@ -1,7 +1,7 @@
 import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {Config} from '../Config.js'
 import {createRecord} from '../EntryRecord.js'
-import {EntryPhase, EntryRow} from '../EntryRow.js'
+import {EntryRow, EntryStatus} from '../EntryRow.js'
 import {Root} from '../Root.js'
 import {EntryUrlMeta, Type} from '../Type.js'
 import {createFileHash, createRowHash} from './ContentHash.js'
@@ -40,7 +40,7 @@ export function publishEntryRow(config: Config, entry: EntryRow): EntryRow {
     {
       ...entry,
       path,
-      phase: EntryPhase.Published
+      status: EntryStatus.Published
     },
     parentPaths
   )
@@ -52,13 +52,13 @@ export function publishEntryRow(config: Config, entry: EntryRow): EntryRow {
   const urlMeta: EntryUrlMeta = {
     locale: entry.locale,
     path,
-    phase: entry.phase,
+    status: entry.status,
     parentPaths
   }
   const url = entryUrl(config.schema[entry.type], urlMeta)
   return {
     ...entry,
-    phase: EntryPhase.Published,
+    status: EntryStatus.Published,
     path,
     filePath,
     parentDir,

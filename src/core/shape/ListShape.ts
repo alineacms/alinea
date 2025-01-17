@@ -33,6 +33,7 @@ export interface ListMutator<Row> {
   push(row: Omit<Row, '_id' | '_index'>, insertAt?: number): void
   remove(id: string): void
   move(oldIndex: number, newIndex: number): void
+  read(id: string): Row | undefined
 }
 
 export class ListShape<Row extends ListRow>
@@ -208,6 +209,11 @@ export class ListShape<Row extends ListRow>
         const index = generateKeyBetween(a, b)
         const row = record.get(from[ListRow.id])
         row.set(ListRow.index, index)
+      },
+      read: (id: string): Row | undefined => {
+        const record = parent.get(key)
+        const rows: Array<Row> = this.fromY(record) as any
+        return rows.find(row => row._id === id)
       }
     }
     return res

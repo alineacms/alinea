@@ -1,8 +1,8 @@
 import {
   Blob,
-  Response,
+  CompressionStream,
   DecompressionStream,
-  CompressionStream
+  Response
 } from '@alinea/iso'
 // Source: https://github.com/WebReflection/buffer-to-base64
 

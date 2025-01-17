@@ -12,12 +12,12 @@ export const Home = Config.document('Home', {
         fields: {
           headline: Field.text('Headline', {multiline: true, required: true}),
           byline: Field.text('Byline', {multiline: true, required: true}),
-          action: Field.link.entry('Action', {
+          action: Field.entry('Action', {
             fields: {
               label: Field.text('Button label')
             }
           }),
-          screenshot: Field.link.image('Screenshot'),
+          screenshot: Field.image('Screenshot'),
           introduction: Field.object('Introduction', {
             fields: {
               text: Field.richText('Text')

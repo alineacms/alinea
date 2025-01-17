@@ -1,11 +1,12 @@
 import {IcOutlineInfo} from '@/icons'
 import {WebText} from '@/layout/WebText'
 import {NoticeBlock} from '@/schema/blocks/NoticeBlock'
+import styler from '@alinea/styler'
 import {Infer} from 'alinea'
-import {fromModule, HStack} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
 import css from './NoticeView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function NoticeView({level, body}: Infer<typeof NoticeBlock>) {
   return (

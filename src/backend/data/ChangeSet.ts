@@ -1,6 +1,7 @@
+import {Entry} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {EntryRecord, createRecord} from 'alinea/core/EntryRecord'
-import {EntryPhase} from 'alinea/core/EntryRow'
+import {EntryStatus} from 'alinea/core/EntryRow'
 import {Graph} from 'alinea/core/Graph'
 import {
   ArchiveMutation,
@@ -17,7 +18,6 @@ import {
   RemoveEntryMutation,
   UploadMutation
 } from 'alinea/core/Mutation'
-import {Query} from 'alinea/core/Query'
 import {Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {MediaFile} from 'alinea/core/media/MediaTypes'
@@ -114,8 +114,8 @@ export class ChangeSetCreator {
   }
 
   publishChanges({file}: PublishMutation): Array<Change> {
-    const draftFile = `.${EntryPhase.Draft}.json`
-    const archivedFiled = `.${EntryPhase.Archived}.json`
+    const draftFile = `.${EntryStatus.Draft}.json`
+    const archivedFiled = `.${EntryStatus.Archived}.json`
     if (file.endsWith(draftFile))
       return [
         {
@@ -143,7 +143,7 @@ export class ChangeSetCreator {
       {
         type: ChangeType.Rename,
         from: file,
-        to: file.slice(0, -fileEnd.length) + `.${EntryPhase.Archived}.json`
+        to: file.slice(0, -fileEnd.length) + `.${EntryStatus.Archived}.json`
       }
     ]
   }
@@ -152,15 +152,21 @@ export class ChangeSetCreator {
     entryId,
     file
   }: RemoveEntryMutation): Promise<Array<Change>> {
-    if (!file.endsWith(`.${EntryPhase.Archived}.json`)) return []
-    const {workspace, files} = await this.graph.preferPublished.get(
-      Query.whereId(entryId).select({
-        workspace: Query.workspace,
-        files: Query.children<typeof MediaFile>(undefined!, 999).where(
-          Query.type.is('MediaFile')
-        )
-      })
-    )
+    if (!file.endsWith(`.${EntryStatus.Archived}.json`)) return []
+    const result = await this.graph.first({
+      select: {
+        workspace: Entry.workspace,
+        files: {
+          type: MediaFile,
+          children: {depth: 999},
+          select: {location: MediaFile.location}
+        }
+      },
+      id: entryId,
+      status: 'preferPublished'
+    })
+    if (!result) return []
+    const {files, workspace} = result
     const mediaDir =
       Workspace.data(this.config.workspaces[workspace])?.mediaDir ?? ''
     const removeFiles: Array<Change> = files.map(file => {
@@ -178,13 +184,13 @@ export class ChangeSetCreator {
       // Remove children
       {
         type: ChangeType.Delete,
-        file: file.slice(0, -`.${EntryPhase.Archived}.json`.length)
+        file: file.slice(0, -`.${EntryStatus.Archived}.json`.length)
       }
     ]
   }
 
   discardChanges({file}: DiscardDraftMutation): Array<Change> {
-    const fileEnd = `.${EntryPhase.Draft}.json`
+    const fileEnd = `.${EntryStatus.Draft}.json`
     if (!file.endsWith(fileEnd))
       throw new Error(`Cannot discard non-draft file: ${file}`)
     return [{type: ChangeType.Delete, file}]

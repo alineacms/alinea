@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
+import {reportHalt} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -40,7 +41,7 @@ export async function init(options: InitOptions) {
   const {cwd = process.cwd(), quiet = false} = options
   const configLocation = findConfigFile(cwd)
   if (configLocation) {
-    console.log(`> An alinea config file already exists in ${cwd}`)
+    reportHalt(`An alinea config file already exists in ${cwd}`)
     process.exit(1)
   }
   await fs.mkdir(path.join(cwd, 'content/pages'), {recursive: true})
@@ -48,13 +49,11 @@ export async function init(options: InitOptions) {
     path.join(cwd, 'content/pages/welcome.json'),
     JSON.stringify(
       {
-        id: createId(),
-        type: 'Page',
-        title: 'Welcome',
-        alinea: {
-          index: 'a0',
-          seeded: 'welcome.json'
-        }
+        _id: createId(),
+        _type: 'Page',
+        _index: 'a0',
+        _seeded: 'welcome.json',
+        title: 'Welcome'
       },
       null,
       2
@@ -65,30 +64,29 @@ export async function init(options: InitOptions) {
     path.join(__dirname, 'static/init/cms.js'),
     'utf-8'
   )
+  const pm = await detectPm()
+  const runner = pm === 'npm' ? 'npx' : pm
+  let [pkg] = await outcome(
+    fs.readFile(path.join(cwd, 'package.json'), 'utf-8')
+  )
+  if (pkg) {
+    pkg = pkg.replace('"dev": "', '"dev": "alinea dev -- ')
+    pkg = pkg.replace('"build": "', '"build": "alinea build -- ')
+    await fs.writeFile(path.join(cwd, 'package.json'), pkg)
+    try {
+      const isNext = JSON.parse(pkg).dependencies?.next
+      if (isNext) options.next = true
+    } catch {}
+  }
   const configFileContents = options.next
     ? configFile.replaceAll('alinea/core', 'alinea/next')
     : configFile
   const hasSrcDir = (await outcome(fs.stat(path.join(cwd, 'src')))).isSuccess()
-  const configFileLocation = path.join(
-    cwd,
-    hasSrcDir ? 'src/cms.tsx' : 'cms.tsx'
-  )
+  const configFileLocation = path.join(cwd, hasSrcDir ? 'src/cms.ts' : 'cms.ts')
   await fs.writeFile(configFileLocation, configFileContents)
-  const pm = await detectPm()
-  if (options.next) {
-    let [pkg] = await outcome(
-      fs.readFile(path.join(cwd, 'package.json'), 'utf-8')
-    )
-    if (pkg) {
-      pkg = pkg.replace('"dev": "', '"dev": "alinea dev -- ')
-      pkg = pkg.replace('"build": "', '"build": "alinea build -- ')
-      await fs.writeFile(path.join(cwd, 'package.json'), pkg)
-    }
-  }
-  const runner = pm === 'npm' ? 'npx' : pm
   const command = `${runner} alinea dev`
   if (!quiet)
-    console.log(
+    console.info(
       'Alinea initialized. You can open the dashboard with `' + command + '`'
     )
 }

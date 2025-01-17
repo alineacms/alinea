@@ -25,12 +25,12 @@ function now() {
 export namespace Report {
   export function toConsole(report: Report, prefix = '') {
     if (prefix && !isConsole) output(prefix)
-    console.log(`${report.name} in ${prettyMilliseconds(report.duration)}`)
+    console.info(`${report.name} in ${prettyMilliseconds(report.duration)}`)
     for (const log of report.logs) {
       if ('name' in log) toConsole(log, ' '.repeat(prefix.length) + '└ ')
       else {
         if (prefix && !isConsole) output(prefix)
-        console.log(...log.args)
+        console.info(...log.args)
       }
     }
   }
@@ -87,7 +87,7 @@ export class Logger {
       this.startProgress = undefined
       // Report.toConsole(this.report(), '└ ')
     } else {
-      console.log(`> ${message}`)
+      console.info(`> ${message}`)
     }
   }
 

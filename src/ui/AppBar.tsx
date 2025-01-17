@@ -1,11 +1,11 @@
+import styler from '@alinea/styler'
 import {ComponentType, HTMLAttributes} from 'react'
 import css from './AppBar.module.scss'
 import {Icon} from './Icon.js'
 import {HStack} from './Stack.js'
 import {PropsWithAs} from './util/PropsWithAs.js'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export namespace AppBar {
   export interface RootProps extends HTMLAttributes<HTMLElement> {

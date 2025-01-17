@@ -1,15 +1,16 @@
+import styler from '@alinea/styler'
 import {link} from 'alinea/dashboard/util/HashRouter'
-import {fromModule, px} from 'alinea/ui'
+import {px} from 'alinea/ui'
 import {useContrastColor} from 'alinea/ui/hook/UseContrastColor'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {useNav} from '../../hook/UseNav.js'
 import css from './MediaThumbnail.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type MediaThumbnailProps = {
   file: {
-    entryId: string
+    id: string
     title: string
     extension: string
     size: number

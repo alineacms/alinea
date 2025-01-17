@@ -117,7 +117,7 @@ button {
   font-style: bold;
   font-display: block;
   font-weight: 700;
-  src: url('~@fontsource/poppins/files/poppins-latin-700-normal.woff2')
+  src: url('../../../node_modules/@fontsource/poppins/files/poppins-latin-700-normal.woff2')
     format('woff2');
 }
 
@@ -126,7 +126,7 @@ button {
   font-style: normal;
   font-display: block;
   font-weight: 400;
-  src: url('~@fontsource/inter/files/inter-latin-400-normal.woff2')
+  src: url('../../../node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2')
     format('woff2');
 }
 
@@ -135,7 +135,7 @@ button {
   font-style: normal;
   font-display: block;
   font-weight: 700;
-  src: url('~@fontsource/inter/files/inter-latin-700-normal.woff2')
+  src: url('../../../node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2')
     format('woff2');
 }
 
@@ -144,7 +144,7 @@ button {
   font-style: normal;
   font-display: block;
   font-weight: 600;
-  src: url('~@fontsource/inter/files/inter-latin-600-normal.woff2')
+  src: url('../../../node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2')
     format('woff2');
 }
 
@@ -153,6 +153,6 @@ button {
   font-style: normal;
   font-display: block;
   font-weight: 400;
-  src: url('~@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2')
+  src: url('../../../node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2')
     format('woff2');
 }

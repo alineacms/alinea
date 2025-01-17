@@ -1,7 +1,7 @@
 import {Config} from 'alinea/core/Config'
 import {Connection} from 'alinea/core/Connection'
 import {useAtomValue} from 'jotai'
-import {PropsWithChildren} from 'react'
+import {ComponentType, PropsWithChildren} from 'react'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {
   queryClientAtom,
@@ -11,6 +11,7 @@ import {ModalPortal} from './view/Modal.js'
 
 export interface DashboardProps {
   config: Config
+  views: Record<string, ComponentType<any>>
   client: Connection
   queryClient?: QueryClient
   fullPage?: boolean

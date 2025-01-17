@@ -3,29 +3,36 @@ import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
 import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
-import {Query} from 'alinea'
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {Entry} from 'alinea/core/Entry'
 import {Metadata, MetadataRoute} from 'next'
 import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface BlogPostPageProps {
-  params: {slug: string}
+  params: Promise<{slug: string}>
 }
 
 export const dynamicParams = false
 export async function generateStaticParams() {
-  const slugs = await cms.find(Query(BlogPost).select(Query.path))
+  const slugs = await cms.find({
+    type: BlogPost,
+    select: Entry.path
+  })
   return slugs.map(slug => ({slug}))
 }
 
 export async function generateMetadata({
   params
 }: BlogPostPageProps): Promise<Metadata> {
-  const page = await cms.get(Query(BlogPost).whereUrl(`/blog/${params.slug}`))
+  const {slug} = await params
+  const page = await cms.get({
+    type: BlogPost,
+    url: `/blog/${slug}`
+  })
   const openGraphImage = page.metadata?.openGraph.image
   return {
     metadataBase: new URL('https://alinea.sh'),
@@ -46,7 +53,11 @@ export async function generateMetadata({
 }
 
 export default async function BlogPostPage({params}: BlogPostPageProps) {
-  const page = await cms.get(Query(BlogPost).whereUrl(`/blog/${params.slug}`))
+  const {slug} = await params
+  const page = await cms.get({
+    type: BlogPost,
+    url: `/blog/${slug}`
+  })
   return (
     <PageContainer>
       <PageContent>

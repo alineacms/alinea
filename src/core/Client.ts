@@ -1,13 +1,15 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
 import {DraftTransport, Revision} from 'alinea/backend/Backend'
-import {HandleAction} from 'alinea/backend/Handler'
+import {HandleAction} from 'alinea/backend/HandleAction'
 import {PreviewInfo} from 'alinea/backend/Previews'
+import {Config} from './Config.js'
 import {Connection, SyncResponse} from './Connection.js'
-import {Draft} from './Draft.js'
+import {Draft, DraftKey} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
+import {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {Mutation} from './Mutation.js'
-import {ResolveDefaults, ResolveParams} from './Resolver.js'
+import {getScope} from './Scope.js'
 import {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
@@ -16,10 +18,10 @@ export type AuthenticateRequest = (
 ) => RequestInit | undefined
 
 export interface ClientOptions {
+  config: Config
   url: string
   applyAuth?: AuthenticateRequest
   unauthorized?: () => void
-  resolveDefaults?: ResolveDefaults
 }
 
 export class Client implements Connection {
@@ -58,13 +60,15 @@ export class Client implements Connection {
       .then(user => user ?? undefined)
   }
 
-  resolve(params: ResolveParams): Promise<unknown> {
-    const {resolveDefaults} = this.#options
-    const body = JSON.stringify({...resolveDefaults, ...params})
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    const scope = getScope(this.#options.config)
+    const body = scope.stringify(query)
     return this.#requestJson(
       {action: HandleAction.Resolve},
       {method: 'POST', body}
-    ).then(this.#failOnHttpError)
+    ).then<AnyQueryResult<Query>>(this.#failOnHttpError)
   }
 
   mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
@@ -116,13 +120,11 @@ export class Client implements Connection {
 
   // Drafts
 
-  getDraft(entryId: string): Promise<Draft | undefined> {
-    return this.#requestJson({action: HandleAction.Draft, entryId})
+  getDraft(key: DraftKey): Promise<Draft | undefined> {
+    return this.#requestJson({action: HandleAction.Draft, key})
       .then<DraftTransport | null>(this.#failOnHttpError)
       .then(draft =>
-        draft
-          ? {...draft, draft: new Uint8Array(base64.parse(draft.draft))}
-          : undefined
+        draft ? {...draft, draft: base64.parse(draft.draft)} : undefined
       )
   }
 

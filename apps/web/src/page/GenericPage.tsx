@@ -1,35 +1,41 @@
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {Page} from '@/schema/Page'
-import {Query} from 'alinea'
 import type {MetadataRoute} from 'next'
 import {notFound} from 'next/navigation'
 import {TextFieldView} from './blocks/TextFieldView'
 
 export interface GenericPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export const dynamicParams = false
 export async function generateStaticParams() {
-  const slugs = await cms.find(Query(Page).select(Query.path))
+  const slugs = await cms.find({
+    type: Page,
+    select: Page.path
+  })
   return slugs.map(slug => ({slug}))
 }
 
 export async function generateMetadata({params}: GenericPageProps) {
-  const page = await cms.maybeGet(
-    Query(Page).where(Query.url.is(`/${params.slug}`))
-  )
+  const {slug} = await params
+  const page = await cms.first({
+    type: Page,
+    url: `/${slug}`
+  })
   if (!page) return notFound()
   return {title: page.metadata?.title || page.title}
 }
 
 export default async function GenericPage({params}: GenericPageProps) {
-  const page = await cms.maybeGet(
-    Query(Page).where(Query.url.is(`/${params.slug}`))
-  )
+  const {slug} = await params
+  const page = await cms.first({
+    type: Page,
+    url: `/${slug}`
+  })
   if (!page) return notFound()
   return (
     <PageContainer>

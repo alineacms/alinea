@@ -104,10 +104,23 @@ export function registerPreviewWidget() {
       display: flex;
       color: #bf1029;
     }
+    .is-loading .connection {
+      display: flex;
+      color: #5763E6;
+      animation: pulse 1s linear infinite;
+    }
     .separator {
       display: block;
       border-left: 1px solid #E4E4E7;
       height: 16px;
+    }
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
     }
     @keyframes fade-in {
       from {
@@ -141,6 +154,7 @@ export function registerPreviewWidget() {
           if (this.#editButton) this.#editButton.href = value ?? ''
           return
         case 'livePreview':
+          this.#previews?.classList.toggle('is-loading', value === 'loading')
           this.#previews?.classList.toggle(
             'is-connected',
             value === 'connected'
@@ -233,7 +247,7 @@ declare global {
       ['alinea-preview']: DOMAttributes<HTMLElement> & {
         adminUrl: string
         editUrl: string
-        livePreview?: 'connected' | 'warning'
+        livePreview?: 'connected' | 'warning' | 'loading'
       }
     }
   }

@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import type {
   ComponentProps,
   ComponentType,
@@ -7,9 +8,8 @@ import type {
 import css from './Button.module.scss'
 import {Icon} from './Icon.js'
 import {HStack} from './Stack.js'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type ButtonProps<T extends ElementType> = PropsWithChildren<
   {

@@ -1,9 +1,10 @@
-import {fromModule, HStack} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {HStack} from 'alinea/ui'
 import Link from 'next/link'
 import {Fragment} from 'react'
 import css from './Breadcrumbs.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 type Parent = {
   id: string
