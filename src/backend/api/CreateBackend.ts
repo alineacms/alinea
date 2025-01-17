@@ -14,18 +14,31 @@ export type AvailableDrivers =
   | 'sql.js'
   | '@libsql/client'
 
-export interface BackendOptions<Driver extends AvailableDrivers> {
+type DatabaseClient<Driver extends AvailableDrivers> = Parameters<
+  (typeof driver)[Driver]
+>[0]
+type DatabaseOption<Driver extends AvailableDrivers> = {
+  driver: Driver
+  client: DatabaseClient<Driver>
+}
+
+export type DatabaseDeclaration =
+  | DatabaseOption<'d1'>
+  | DatabaseOption<'mysql2'>
+  | DatabaseOption<'@neondatabase/serverless'>
+  | DatabaseOption<'@vercel/postgres'>
+  | DatabaseOption<'pg'>
+  | DatabaseOption<'@electric-sql/pglite'>
+  | DatabaseOption<'sql.js'>
+  | DatabaseOption<'@libsql/client'>
+
+export interface BackendOptions {
   auth(username: string, password: string): boolean | Promise<boolean>
-  database: {
-    driver: Driver
-    client: Parameters<(typeof driver)[Driver]>[0]
-  }
+  database: DatabaseDeclaration
   github: GithubOptions
 }
 
-export function createBackend<Driver extends AvailableDrivers>(
-  options: BackendOptions<Driver>
-): Backend {
+export function createBackend(options: BackendOptions): Backend {
   const ghApi = githubApi(options.github)
   const db = driver[options.database.driver](options.database.client)
   const dbApi = databaseApi({...options, db, target: ghApi.target})

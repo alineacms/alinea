@@ -161,7 +161,7 @@ export class DeleteOp extends Operation {
         const parentPaths = entryParentPaths(cms.config, entry)
         const file = entryFileName(cms.config, entry, parentPaths)
         return {
-          type: MutationType.Remove,
+          type: MutationType.RemoveEntry,
           entryId: entry.id,
           locale: entry.locale,
           file

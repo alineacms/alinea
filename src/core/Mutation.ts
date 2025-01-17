@@ -12,12 +12,12 @@ export enum MutationType {
   Create = 'create',
   Publish = 'publish',
   Archive = 'archive',
-  Discard = 'discard',
-  Remove = 'remove',
+  RemoveDraft = 'discard',
+  RemoveEntry = 'remove',
   Order = 'order',
   Move = 'move',
   Upload = 'upload',
-  FileRemove = 'file-remove'
+  RemoveFile = 'file-remove'
 }
 
 export type PendingMutation = Mutation & {
@@ -26,19 +26,19 @@ export type PendingMutation = Mutation & {
 }
 
 export type Mutation =
-  | EditMutation
-  | PatchMutation
   | CreateMutation
+  | UpdateMutation
+  | PatchMutation
   | PublishMutation
   | ArchiveMutation
+  | RemoveDraftMutation
   | RemoveEntryMutation
-  | DiscardDraftMutation
+  | RemoveFileMutation
   | OrderMutation
   | MoveMutation
   | UploadMutation
-  | FileRemoveMutation
 
-export interface EditMutation {
+export interface UpdateMutation {
   type: MutationType.Edit
   entryId: string
   locale: string | null
@@ -72,14 +72,14 @@ export interface ArchiveMutation {
 }
 
 export interface RemoveEntryMutation {
-  type: MutationType.Remove
+  type: MutationType.RemoveEntry
   entryId: string
   locale: string | null
   file: string
 }
 
-export interface DiscardDraftMutation {
-  type: MutationType.Discard
+export interface RemoveDraftMutation {
+  type: MutationType.RemoveDraft
   entryId: string
   locale: string | null
   file: string
@@ -120,8 +120,8 @@ export interface UploadMutation {
   file: string
 }
 
-export interface FileRemoveMutation {
-  type: MutationType.FileRemove
+export interface RemoveFileMutation {
+  type: MutationType.RemoveFile
   entryId: string
   locale: string | null
   file: string

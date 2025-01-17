@@ -1,12 +1,13 @@
 import {Database} from 'alinea/backend/Database'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
+import {Entry} from 'alinea/core'
 import {CMS} from 'alinea/core/CMS'
 import {Connection} from 'alinea/core/Connection'
 import {Draft, DraftKey, formatDraftKey} from 'alinea/core/Draft'
 import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
 import {ErrorCode, HttpError} from 'alinea/core/HttpError'
-import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
+import {Mutation, MutationType, UpdateMutation} from 'alinea/core/Mutation'
 import {PreviewUpdate} from 'alinea/core/Preview'
 import {getScope} from 'alinea/core/Scope'
 import {decode} from 'alinea/core/util/BufferToBase64'
@@ -49,11 +50,31 @@ export interface HandlerWithConnect {
   connect(context: RequestContext | AuthedContext): Connection
 }
 
-export function createHandler(
-  cms: CMS,
-  backend: Backend = cloudBackend(cms.config),
-  database = generatedStore.then(store => new Database(cms.config, store))
-): HandlerWithConnect {
+export type HookResponse<T = void> = void | T | Promise<T> | Promise<void>
+
+export interface HandlerHooks {
+  beforeCreate?(entry: Entry): HookResponse<Entry>
+  afterCreate?(entry: Entry): HookResponse
+  beforeUpdate?(entry: Entry): HookResponse<Entry>
+  afterUpdate?(entry: Entry): HookResponse
+  beforeArchive?(entryId: string): HookResponse
+  afterArchive?(entryId: string): HookResponse
+  beforeRemove?(entryId: string): HookResponse
+  afterRemove?(entryId: string): HookResponse
+}
+
+export interface HandlerOptions extends HandlerHooks {
+  cms: CMS
+  backend?: Backend
+  database?: Promise<Database>
+}
+
+export function createHandler({
+  cms,
+  backend = cloudBackend(cms.config),
+  database = generatedStore.then(store => new Database(cms.config, store)),
+  ...hooks
+}: HandlerOptions): HandlerWithConnect {
   const init = PLazy.from(async () => {
     const db = await database
     const previews = createPreviewParser(db)
@@ -115,23 +136,65 @@ export function createHandler(
       mutations: Array<Mutation>,
       retry = false
     ): Promise<{commitHash: string}> {
-      const changeSet = await changes.create(mutations)
       let fromCommitHash: string = await db.meta().then(meta => meta.commitHash)
       try {
+        for (const mutation of mutations) {
+          switch (mutation.type) {
+            case MutationType.Create: {
+              if (!hooks.beforeCreate) continue
+              const maybeEntry = await hooks.beforeCreate(mutation.entry)
+              if (maybeEntry) mutation.entry.data = maybeEntry.data
+              continue
+            }
+            case MutationType.Edit: {
+              if (!hooks.beforeUpdate) continue
+              const maybeEntry = await hooks.beforeUpdate(mutation.entry)
+              if (maybeEntry) mutation.entry.data = maybeEntry.data
+              continue
+            }
+            case MutationType.Archive: {
+              if (!hooks.beforeArchive) continue
+              await hooks.beforeArchive(mutation.entryId)
+              continue
+            }
+            case MutationType.RemoveEntry: {
+              if (!hooks.beforeRemove) continue
+              await hooks.beforeRemove(mutation.entryId)
+              continue
+            }
+          }
+        }
+        const changeSet = await changes.create(mutations)
         const result = await backend.target.mutate(ctx, {
           commitHash: fromCommitHash,
           mutations: changeSet
         })
         await db.applyMutations(mutations, result.commitHash)
-        const tasks = []
         for (const mutation of mutations) {
           switch (mutation.type) {
-            case MutationType.Edit:
-              tasks.push(persistEdit(ctx, mutation))
+            case MutationType.Create: {
+              if (!hooks.afterCreate) continue
+              await hooks.afterCreate(mutation.entry)
               continue
+            }
+            case MutationType.Edit: {
+              await persistEdit(ctx, mutation)
+              if (!hooks.afterUpdate) continue
+              await hooks.afterUpdate(mutation.entry)
+              continue
+            }
+            case MutationType.Archive: {
+              if (!hooks.afterArchive) continue
+              await hooks.afterArchive(mutation.entryId)
+              continue
+            }
+            case MutationType.RemoveEntry: {
+              if (!hooks.afterRemove) continue
+              await hooks.afterRemove(mutation.entryId)
+              continue
+            }
           }
         }
-        await Promise.all(tasks)
         return {commitHash: result.commitHash}
       } catch (error: any) {
         if (retry) throw error
@@ -143,7 +206,7 @@ export function createHandler(
       }
     }
 
-    async function persistEdit(ctx: AuthedContext, mutation: EditMutation) {
+    async function persistEdit(ctx: AuthedContext, mutation: UpdateMutation) {
       if (!mutation.update) return
       const update = new Uint8Array(await decode(mutation.update))
       const currentDraft = await backend.drafts.get(
