@@ -142,13 +142,13 @@ export function createHandler({
           switch (mutation.type) {
             case MutationType.Create: {
               if (!hooks.beforeCreate) continue
-              const maybeEntry = await hooks.beforeCreate(mutation.entry)
+              const maybeEntry = await hooks.beforeCreate({...mutation.entry})
               if (maybeEntry) mutation.entry.data = maybeEntry.data
               continue
             }
             case MutationType.Edit: {
               if (!hooks.beforeUpdate) continue
-              const maybeEntry = await hooks.beforeUpdate(mutation.entry)
+              const maybeEntry = await hooks.beforeUpdate({...mutation.entry})
               if (maybeEntry) mutation.entry.data = maybeEntry.data
               continue
             }
