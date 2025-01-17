@@ -16,4 +16,3 @@ export function IcBaselineContentCopy(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcBaselineContentCopy

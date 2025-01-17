@@ -20,4 +20,3 @@ export function IcBaselineContentPasteGo(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcBaselineContentPasteGo
