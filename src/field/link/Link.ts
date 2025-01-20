@@ -9,7 +9,7 @@ import {
   LinkField,
   LinkFieldOptions
 } from 'alinea/field/link/LinkField'
-import {entryPicker} from 'alinea/picker/entry'
+import {entryPicker, EntryPickerConditions} from 'alinea/picker/entry'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {urlPicker, UrlReference} from 'alinea/picker/url'
 import {EntryLink} from './EntryLink.js'
@@ -20,7 +20,9 @@ export type Link<InferredFields> =
   | UrlLink<InferredFields>
   | FileLink<InferredFields>
 
-export interface LinkOptions<Definition, Row> extends LinkFieldOptions<Row> {
+export interface LinkOptions<Definition, Row>
+  extends LinkFieldOptions<Row>,
+    EntryPickerConditions {
   fields?: Definition | Type<Definition>
 }
 

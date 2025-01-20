@@ -20,7 +20,6 @@ export namespace UnionRow {
 
 export interface UnionMutator<T extends UnionRow> {
   replace: (v: T | undefined) => void
-  set: <K extends keyof T>(k: K, v: T[K]) => void
 }
 
 export class UnionShape<T extends UnionRow>
@@ -86,25 +85,26 @@ export class UnionShape<T extends UnionRow>
   }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {
-      const observe = (event: Y.YMapEvent<any>) => {
-        if (event.keysChanged.has(key)) fun()
+      const observe = (events: Array<Y.YEvent<any>>, tx: Y.Transaction) => {
+        if (tx.origin === 'self') return
+        const self = parent.get(key)
+        for (const event of events) {
+          if (event.target === parent && event.keys.has(key)) return fun()
+          if (event.target === self) return fun()
+        }
       }
-      parent.observe(observe)
-      return () => parent.unobserve(observe)
+      parent.observeDeep(observe)
+      return () => parent.unobserveDeep(observe)
     }
   }
   mutator(parent: Y.Map<any>, key: string): UnionMutator<T> {
     return {
-      replace: (v: T | undefined) => {
-        if (!v) parent.set(key, null)
-        else parent.set(key, this.toY(v))
-      },
-      set: (k: any, v: any) => {
-        const record = parent.get(key)
-        const type = record.get(UnionRow.type)
+      replace: (value: T | undefined) => {
+        if (!value) return parent.set(key, null)
+        const type = value[UnionRow.type]
         const shape = this.shapes[type]
         if (!shape) throw new Error(`Could not find type "${type}"`)
-        record.set(k, shape.toY(v as object))
+        shape.applyY(value, parent, key)
       }
     }
   }

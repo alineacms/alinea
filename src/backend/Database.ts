@@ -34,6 +34,7 @@ import {
   sql
 } from 'rado'
 import {Builder} from 'rado/core/Builder'
+import {Functions} from 'rado/core/expr/Functions'
 import {coalesce} from 'rado/sqlite'
 import {EntryRow, EntryStatus} from '../core/EntryRow.js'
 import {AuthedContext, Target} from './Backend.js'
@@ -123,6 +124,10 @@ export class Database implements Syncable {
 
   async applyMutations(mutations: Array<Mutation>, commitHash?: string) {
     const hash = commitHash ?? (await this.meta()).commitHash
+    if (mutations.length === 0) {
+      if (commitHash) await this.writeMeta(this.store, commitHash)
+      return []
+    }
     return this.store.transaction(async tx => {
       const reHash = []
       for (const mutation of mutations) {
@@ -270,12 +275,12 @@ export class Database implements Syncable {
           is(EntryRow.locale, mutation.locale),
           eq(EntryRow.main, true)
         )
-        const current = await tx.select().from(EntryRow).where(condition).get()
-        if (current)
-          await tx
-            .update(EntryRow)
-            .set({data: {...current.data, patch}})
-            .where(condition)
+        await tx
+          .update(EntryRow)
+          .set({
+            data: Functions.json_patch(EntryRow.data, JSON.stringify(patch))
+          })
+          .where(condition)
         return () => this.updateHash(tx, condition)
       }
       case MutationType.Archive: {
@@ -835,23 +840,26 @@ export class Database implements Syncable {
       if (noChanges) return
 
       await Database.index(tx)
-      const isInserted = sql<boolean>`(${EntryRow.id}, ${coalesce(
-        EntryRow.locale,
-        sql`'null'`
-      )}, ${EntryRow.status}) in ${values(...inserted)}`
-      const entries = await tx.select().from(EntryRow).where(isInserted)
-      for (const entry of entries) {
-        const rowHash = await createRowHash(entry)
-        await tx
-          .update(EntryRow)
-          .set({
-            rowHash
-          })
-          .where(
-            eq(EntryRow.id, entry.id),
-            is(EntryRow.locale, entry.locale),
-            eq(EntryRow.status, entry.status)
-          )
+
+      if (inserted.length > 0) {
+        const isInserted = sql<boolean>`(${EntryRow.id}, ${coalesce(
+          EntryRow.locale,
+          sql`'null'`
+        )}, ${EntryRow.status}) in ${values(...inserted)}`
+        const entries = await tx.select().from(EntryRow).where(isInserted)
+        for (const entry of entries) {
+          const rowHash = await createRowHash(entry)
+          await tx
+            .update(EntryRow)
+            .set({
+              rowHash
+            })
+            .where(
+              eq(EntryRow.id, entry.id),
+              is(EntryRow.locale, entry.locale),
+              eq(EntryRow.status, entry.status)
+            )
+        }
       }
       await this.writeMeta(tx, commitHash)
     })
@@ -886,7 +894,11 @@ export class Database implements Syncable {
         // Temporarily add preview entry
         await tx
           .delete(EntryRow)
-          .where(eq(EntryRow.id, entry.id), eq(EntryRow.active, true))
+          .where(
+            eq(EntryRow.id, entry.id),
+            is(EntryRow.locale, entry.locale),
+            eq(EntryRow.active, true)
+          )
         await tx.insert(EntryRow).values(entry)
         await Database.index(tx)
         const result = await query(tx)

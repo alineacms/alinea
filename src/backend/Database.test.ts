@@ -377,4 +377,37 @@ test('filters', async () => {
   assert.is(result2.length, 1)
 })
 
+test('remove field contents', async () => {
+  const example = createExample()
+  const {Page} = example.schema
+  const entry = await example.create({
+    type: Page,
+    set: {title: 'xyz', name: 'test'}
+  })
+  const updated = await example.update({
+    type: Page,
+    id: entry._id,
+    set: {name: undefined}
+  })
+  assert.is(updated.title, 'xyz')
+  assert.is(updated.name, null)
+})
+
+test('take/skip', async () => {
+  const example = createExample()
+  const {Page} = example.schema
+  const lastTwo = await example.find({
+    root: example.workspaces.main.pages,
+    skip: 1,
+    take: 2
+  })
+  assert.is(lastTwo.length, 2)
+  const lastOne = await example.find({
+    root: example.workspaces.main.pages,
+    skip: 2,
+    take: 1
+  })
+  assert.is(lastOne.length, 1)
+})
+
 test.run()

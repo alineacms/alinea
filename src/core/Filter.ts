@@ -10,7 +10,7 @@ interface Ops<Value> {
   lt?: Value
   lte?: Value
   startsWith?: string
-  or?: Condition<Value>
+  or?: Condition<Value> | Array<Condition<Value>>
 }
 
 interface ObjectOps<Fields> {
@@ -25,9 +25,9 @@ type FieldOps<Fields> = {
   [K in keyof Fields]?: Condition<Fields[K]>
 }
 
-export type Condition<Value> = Value extends Primitive
+export type Condition<Value> = [Value] extends [Primitive]
   ? Ops<Value> | Value
-  : Value extends Array<any>
+  : [Value] extends [Array<any>]
   ? ArrayOps<Value[0]>
   : ObjectOps<Value>
 

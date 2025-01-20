@@ -5,7 +5,7 @@
     "cito": "^0.3.3",
     "dataloader": "^2.1.0",
     "pretty-ms": "^8.0.0",
-    "rado": "^1.0.12",
+    "rado": "^1.0.14",
     "regexparam": "^2.0.1"
   }
 }

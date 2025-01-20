@@ -36,6 +36,7 @@ import {useField} from 'alinea/dashboard/editor/UseField'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {useLocale} from 'alinea/dashboard/hook/UseLocale'
 import {useNav} from 'alinea/dashboard/hook/UseNav'
+import {SuspenseBoundary} from 'alinea/dashboard/util/SuspenseBoundary'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
@@ -80,13 +81,15 @@ export function SingleLinkInput<Row>({field}: LinkInputProps<Row>) {
   return (
     <>
       {PickerView && (
-        <PickerView
-          type={pickFrom!}
-          options={picker.options}
-          selection={[value]}
-          onConfirm={handleConfirm}
-          onCancel={() => setPickFrom(undefined)}
-        />
+        <SuspenseBoundary name="picker">
+          <PickerView
+            type={pickFrom!}
+            options={picker.options}
+            selection={[value]}
+            onConfirm={handleConfirm}
+            onCancel={() => setPickFrom(undefined)}
+          />
+        </SuspenseBoundary>
       )}
       <InputLabel {...options} error={error} icon={IcRoundLink}>
         <div className={styles.root()}>

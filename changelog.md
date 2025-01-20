@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.0.11]
+- Fix navigation tree in link picker
+- Set the default depth of querying children to 1
+
+## [1.0.10]
+- Fix handling mutation retries based on the http status code received.
+
+## [1.0.9]
+- Fix skip/take for queries which were not used
+- Disable navigation in the internal link picker if a condition is used
+
+## [1.0.8]
+- Fix live previews for translated entries
+
+## [1.0.7]
+- Fix querying linked entries without locale
+
+## [1.0.6]
+- Fix querying linked entries - the requested locale was not passed
+
+## [1.0.5]
+- Alinea will now fail if linked entries cannot be resolved during querying.
+  Before it would log the error but continue - but this is rarely desired.
+
+## [1.0.4]
+- Fix removing field contents in `Edit.update`. Pass an undefined value to remove
+  field contents: 
+
+  ````tsx
+  await cms.commit(
+    Edit.update({
+      id: '...',
+      set: {removeMe: undefined}
+    })
+  )
+  ````
+- Fix processing link data correctly even it contains legacy data
+
 ## [1.0.3]
 - Only access normalized config in next cms adapter. This fixes an error
   in production builds which would prevent you from querying media files.

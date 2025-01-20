@@ -19,6 +19,7 @@ export namespace Create {
 
   export type Props = {
     icon?: ComponentType
+    mod?: 'paste'
   }
 
   export function Link({
@@ -44,13 +45,14 @@ export namespace Create {
   export function Button({
     children,
     icon: Icon,
+    mod,
     ...props
   }: HTMLAttributes<HTMLButtonElement> & Props) {
     return (
       <button
         type="button"
         {...props}
-        className={styles.button.mergeProps(props)()}
+        className={styles.button.mergeProps(props)(mod)}
       >
         <HStack center gap={8}>
           {Icon ? (

@@ -247,7 +247,7 @@ export class EntryResolver {
                 .where(
                   is(Child.locale, from.locale),
                   this.conditionStatus(Child, ctx.status),
-                  lt(self.level, Math.min(query?.depth ?? MAX_DEPTH, MAX_DEPTH))
+                  lt(self.level, Math.min(query?.depth ?? 1, MAX_DEPTH))
                 )
             )
         )
@@ -527,6 +527,8 @@ export class EntryResolver {
     const {type, filter, skip, take, orderBy, groupBy, first, search} = query
     ctx = ctx.increaseDepth().none
     let q = this.querySource(ctx, query as EdgeQuery<Projection>)
+    if (skip) q = q.offset(skip)
+    if (take) q = q.limit(take)
     const queryData = getData(q)
     let preCondition = queryData.where as HasSql<boolean>
     let condition = and(
@@ -541,8 +543,6 @@ export class EntryResolver {
       this.conditionSearch(ctx.Table, search),
       filter && this.conditionFilter(ctx, this.filterField.bind(this), filter)
     )
-    if (skip) q = q.offset(skip)
-    if (take) q = q.limit(take)
     const toSelect = this.select(ctx.select, query)
     let result = new Select({
       ...queryData,
@@ -634,7 +634,7 @@ export class EntryResolver {
     const singleResult = this.isSingleResult(asEdge)
     const transact = async (tx: Store): Promise<T> => {
       const rows = await dbQuery.all(tx)
-      const linkResolver = new LinkResolver(this, tx, ctx.status)
+      const linkResolver = new LinkResolver(this, tx, ctx)
       const result = singleResult ? rows[0] ?? null : rows
       if (result) await this.post({linkResolver}, result, asEdge)
       return result as T
