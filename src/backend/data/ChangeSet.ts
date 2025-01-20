@@ -6,16 +6,16 @@ import {Graph} from 'alinea/core/Graph'
 import {
   ArchiveMutation,
   CreateMutation,
-  DiscardDraftMutation,
-  EditMutation,
-  FileRemoveMutation,
   MoveMutation,
   Mutation,
   MutationType,
   OrderMutation,
   PatchMutation,
   PublishMutation,
+  RemoveDraftMutation,
   RemoveEntryMutation,
+  RemoveFileMutation,
+  UpdateMutation,
   UploadMutation
 } from 'alinea/core/Mutation'
 import {Type} from 'alinea/core/Type'
@@ -73,7 +73,7 @@ const loader = JsonLoader
 export class ChangeSetCreator {
   constructor(protected config: Config, protected graph: Graph) {}
 
-  editChanges({previousFile, file, entry}: EditMutation): Array<Change> {
+  editChanges({previousFile, file, entry}: UpdateMutation): Array<Change> {
     const type = this.config.schema[entry.type]
     if (!type)
       throw new Error(`Cannot publish entry of unknown type: ${entry.type}`)
@@ -190,7 +190,7 @@ export class ChangeSetCreator {
     ]
   }
 
-  discardChanges({file}: DiscardDraftMutation): Array<Change> {
+  discardChanges({file}: RemoveDraftMutation): Array<Change> {
     const fileEnd = `.${EntryStatus.Draft}.json`
     if (!file.endsWith(fileEnd))
       throw new Error(`Cannot discard non-draft file: ${file}`)
@@ -240,7 +240,7 @@ export class ChangeSetCreator {
     return [{type: ChangeType.Upload, file: mutation.file, url: mutation.url}]
   }
 
-  fileRemoveChanges(mutation: FileRemoveMutation): Array<Change> {
+  fileRemoveChanges(mutation: RemoveFileMutation): Array<Change> {
     const mediaDir =
       Workspace.data(this.config.workspaces[mutation.workspace])?.mediaDir ?? ''
     const binaryLocation = join(mediaDir, mutation.location)
@@ -261,9 +261,9 @@ export class ChangeSetCreator {
         return this.publishChanges(mutation)
       case MutationType.Archive:
         return this.archiveChanges(mutation)
-      case MutationType.Remove:
+      case MutationType.RemoveEntry:
         return this.removeChanges(mutation)
-      case MutationType.Discard:
+      case MutationType.RemoveDraft:
         return this.discardChanges(mutation)
       case MutationType.Order:
         return this.orderChanges(mutation)
@@ -271,7 +271,7 @@ export class ChangeSetCreator {
         return this.moveChanges(mutation)
       case MutationType.Upload:
         return this.fileUploadChanges(mutation)
-      case MutationType.FileRemove:
+      case MutationType.RemoveFile:
         return this.fileRemoveChanges(mutation)
     }
   }

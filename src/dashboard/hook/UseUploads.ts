@@ -331,7 +331,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         file: info.location
       },
       {
-        type: MutationType.FileRemove,
+        type: MutationType.RemoveFile,
         entryId: replace.entry.id,
         locale: null,
         file: replace.entryFile,

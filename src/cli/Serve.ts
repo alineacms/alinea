@@ -122,7 +122,11 @@ export async function serve(options: ServeOptions): Promise<void> {
     } else {
       const history = new GitHistory(cms.config, rootDir)
       const backend = createBackend()
-      const handleApi = createHandler(cms, backend, Promise.resolve(db))
+      const handleApi = createHandler({
+        cms,
+        backend,
+        database: Promise.resolve(db)
+      })
       if (localServer) localServer.close()
       localServer = createLocalServer(context, cms, handleApi, user)
       currentCMS = cms
