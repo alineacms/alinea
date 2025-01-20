@@ -163,11 +163,10 @@ suite(import.meta, test => {
       locale: 'en',
       location: example.workspaces.main.multiLanguage,
       select: {
-        translations: {
-          translations: {},
+        translations: translations({
           type: Page,
           select: Entry.locale
-        }
+        })
       },
       path: 'localised1'
     })
@@ -395,7 +394,6 @@ suite(import.meta, test => {
 
   test('take/skip', async () => {
     const example = createExample()
-    const {Page} = example.schema
     const lastTwo = await example.find({
       root: example.workspaces.main.pages,
       skip: 1,
