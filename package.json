@@ -42,8 +42,16 @@
     "dist"
   ],
   "workspaces": [
-    "apps/*",
-    "src/*"
+    "apps/web",
+    "apps/dev",
+    "src/adapter",
+    "src/backend",
+    "src/cli",
+    "src/core",
+    "src/dashboard",
+    "src/ui",
+    "src/auth/passwordless",
+    "src/field/richtext"
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.3",
