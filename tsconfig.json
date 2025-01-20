@@ -7,16 +7,19 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "noEmit": true,
     "jsx": "react-jsx",
     "moduleDetection": "force",
     "incremental": true,
     "outDir": "dist",
+    "rootDir": "src",
     "skipLibCheck": true,
     "preserveWatchOutput": true,
+    "plugins": [{"name": "typescript-plugin-css-modules"}],
     "paths": {
-      "alinea/*": ["./src/*.js"]
-    }
+      "alinea/*": ["./src/*"]
+    },
+    "declaration": true,
+    "emitDeclarationOnly": true
   },
   "include": ["src"]
 }

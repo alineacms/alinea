@@ -17,17 +17,17 @@
     "test": "bun build.ts --test",
     "stories": "ladle serve",
     "demo": "bun build.ts --watch -- bun dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
-    "build": "tsc -p tsconfig.build.json && bun build.ts",
+    "build": "tsc && bun build.ts",
     "cycles:server": "CHECK_CYCLES=server bun build.ts && madge --warning --circular dist/index.js",
     "cycles:browser": "CHECK_CYCLES=browser bun build.ts && madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
     "alinea": "bun build.ts && bun dist/cli.js",
     "build:alinea": "bun run build",
-    "type": "tsc -p tsconfig.build.json --diagnostics",
-    "dev:check": "tsc -p tsconfig.build.json -w",
-    "dev:run": "bun build.ts --watch -- bun --watch dev.js --dir apps/dev",
-    "web:run": "bun build.ts --watch -- bun dev.js -- bun --filter='@alinea/web' dev",
+    "type": "tsc --diagnostics",
+    "dev:check": "tsc -w",
+    "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev",
+    "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev",
     "dev:stories": "ladle serve --stories \"src/**/*.stories.tsx\"",
-    "trace": "tsc -p tsconfig.build.json --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
+    "trace": "tsc --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "prepublishOnly": "bun run build"
   },
   "sideEffects": false,
@@ -42,15 +42,8 @@
     "dist"
   ],
   "workspaces": [
-    "apps/web",
-    "apps/dev",
-    "src/adapter",
-    "src/backend",
-    "src/cli",
-    "src/core",
-    "src/dashboard",
-    "src/ui",
-    "src/field/richtext"
+    "apps/*",
+    "src/*"
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.3",
@@ -93,7 +86,6 @@
   },
   "packageManager": "yarn@4.5.0",
   "resolutions": {
-    "esbuild": "0.20.1",
     "yjs": "13.6.11",
     "lib0": "0.2.88"
   },

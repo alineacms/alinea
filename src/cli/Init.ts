@@ -81,7 +81,7 @@ export async function init(options: InitOptions) {
   const configFileContents = options.next
     ? configFile.replaceAll('alinea/core', 'alinea/next')
     : configFile
-  const hasSrcDir = (await outcome(fs.stat(path.join(cwd, 'src')))).isSuccess()
+  const hasSrcDir = await fs.exists(path.join(cwd, 'src'))
   const configFileLocation = path.join(cwd, hasSrcDir ? 'src/cms.ts' : 'cms.ts')
   await fs.writeFile(configFileLocation, configFileContents)
   const command = `${runner} alinea dev`
