@@ -306,7 +306,7 @@ export class EntryResolver {
             is(ctx.Table.locale, from.locale)
           )
           .orderBy(asc(ctx.Table.level))
-      case 'link':
+      case 'entryMultiple': {
         const linkedField = this.field(from, query.field)
         return cursor
           .innerJoin(
@@ -314,6 +314,11 @@ export class EntryResolver {
             eq(ctx.Table.id, sql`lF.value->>'_entry'`)
           )
           .orderBy(asc(sql`lF.id`))
+      }
+      case 'entrySingle': {
+        const linkedField = this.field(from, query.field)
+        return cursor.where(eq(ctx.Table.id, sql`${linkedField}->>'_entry'`))
+      }
       default:
         return cursor.orderBy(asc(ctx.Table.index))
     }
@@ -567,6 +572,7 @@ export class EntryResolver {
     return Boolean(
       query.first ||
         query.get ||
+        query.count ||
         query.edge === 'parent' ||
         query.edge === 'next' ||
         query.edge === 'previous'

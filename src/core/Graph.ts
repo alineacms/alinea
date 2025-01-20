@@ -54,8 +54,13 @@ export interface EdgePrevious {
   edge: 'previous'
 }
 
-export interface EdgeLink {
-  edge: 'link'
+export interface EdgeEntries {
+  edge: 'entryMultiple'
+  field: HasField & Expr
+}
+
+export interface EdgeEntry {
+  edge: 'entrySingle'
   field: HasField & Expr
 }
 
@@ -67,7 +72,8 @@ export type Edge =
   | EdgeParent
   | EdgeNext
   | EdgePrevious
-  | EdgeLink
+  | EdgeEntries
+  | EdgeEntry
 
 export type EdgeQuery<
   Selection = unknown,
@@ -138,10 +144,10 @@ export type AnyQueryResult<Query extends GraphQuery> = Query extends CountQuery<
   any
 >
   ? number
-  : Query extends FirstQuery<infer S, infer T, infer I>
-  ? QueryResult<S, T, I> | null
   : Query extends GetQuery<infer S, infer T, infer I>
   ? QueryResult<S, T, I>
+  : Query extends FirstQuery<infer S, infer T, infer I>
+  ? QueryResult<S, T, I> | null
   : Query extends GraphQuery<infer S, infer T, infer I>
   ? Array<QueryResult<S, T, I>>
   : unknown

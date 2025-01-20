@@ -33,7 +33,17 @@ export interface LinkOptions<Value> extends LinkFieldOptions<Value> {
 export class LinkField<
   StoredValue extends Reference,
   QueryValue
-> extends UnionField<StoredValue, QueryValue, LinkOptions<StoredValue>> {}
+> extends UnionField<StoredValue, QueryValue, LinkOptions<StoredValue>> {
+  first<
+    Selection extends SelectionGuard = undefined,
+    const Type extends TypeGuard = undefined,
+    Include extends IncludeGuard = undefined
+  >(
+    query: GraphQuery<Selection, Type, Include>
+  ): EdgeQuery<Selection, Type, Include> & {first: true} {
+    return {edge: 'entrySingle', first: true, field: this, ...query}
+  }
+}
 
 export function createLink<StoredValue extends Reference, QueryValue>(
   label: string,
@@ -72,7 +82,27 @@ export class LinksField<
   >(
     query: GraphQuery<Selection, Type, Include>
   ): EdgeQuery<Selection, Type, Include> {
-    return {edge: 'link', field: this, ...query}
+    return {edge: 'entryMultiple', field: this, ...query}
+  }
+
+  first<
+    Selection extends SelectionGuard = undefined,
+    const Type extends TypeGuard = undefined,
+    Include extends IncludeGuard = undefined
+  >(
+    query?: GraphQuery<Selection, Type, Include>
+  ): EdgeQuery<Selection, Type, Include> & {first: true} {
+    return {edge: 'entryMultiple', first: true, field: this, ...query}
+  }
+
+  count<
+    Selection extends SelectionGuard = undefined,
+    const Type extends TypeGuard = undefined,
+    Include extends IncludeGuard = undefined
+  >(
+    query?: GraphQuery<Selection, Type, Include>
+  ): EdgeQuery<Selection, Type, Include> & {count: true} {
+    return {edge: 'entryMultiple', count: true, field: this, ...query}
   }
 }
 
