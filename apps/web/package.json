@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev -H 0.0.0.0 --turbo",
+    "dev": "next dev -H 0.0.0.0",
     "dev:test": "yarn build:alinea && alinea dev -- next dev",
     "build": "yarn build:alinea && alinea build -- next build",
     "start": "next start",
@@ -16,7 +16,7 @@
     "@vercel/postgres": "^0.10.0",
     "alinea": "0.0.0",
     "lz-string": "^1.4.4",
-    "next": "^15.0.1",
+    "next": "^15.1.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-string-replace": "^1.0.0",

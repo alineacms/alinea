@@ -58,7 +58,7 @@
         "@vercel/postgres": "^0.10.0",
         "alinea": "0.0.0",
         "lz-string": "^1.4.4",
-        "next": "^15.0.1",
+        "next": "^15.1.5",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-string-replace": "^1.0.0",
@@ -189,7 +189,7 @@
 
     "@alinea/ui": ["@alinea/ui@workspace:src/ui", { "devDependencies": { "color2k": "^1.2.4", "regexparam": "^2.0.1", "use-error-boundary": "^2.0.6" } }],
 
-    "@alinea/web": ["@alinea/web@workspace:apps/web", { "dependencies": { "@monaco-editor/react": "^4.4.5", "@vercel/postgres": "^0.10.0", "alinea": "0.0.0", "lz-string": "^1.4.4", "next": "^15.0.1", "react": "^18.3.1", "react-dom": "^18.3.1", "react-string-replace": "^1.0.0", "remark": "^14.0.2", "remark-html": "^15.0.1", "shiki": "^0.10.1", "use-clipboard-copy": "^0.2.0" }, "devDependencies": { "@fontsource/inter": "5.0.1", "@fontsource/jetbrains-mono": "5.0.1", "@fontsource/poppins": "5.0.1", "@types/node": "^22.5.2", "@types/react": "^18.2.13", "eslint": "8.39.0", "eslint-config-next": "13.4.0", "raw-loader": "^4.0.2", "tsx": "^4.7.0", "typescript": "^5.6.2" } }],
+    "@alinea/web": ["@alinea/web@workspace:apps/web", { "dependencies": { "@monaco-editor/react": "^4.4.5", "@vercel/postgres": "^0.10.0", "alinea": "0.0.0", "lz-string": "^1.4.4", "next": "^15.1.5", "react": "^18.3.1", "react-dom": "^18.3.1", "react-string-replace": "^1.0.0", "remark": "^14.0.2", "remark-html": "^15.0.1", "shiki": "^0.10.1", "use-clipboard-copy": "^0.2.0" }, "devDependencies": { "@fontsource/inter": "5.0.1", "@fontsource/jetbrains-mono": "5.0.1", "@fontsource/poppins": "5.0.1", "@types/node": "^22.5.2", "@types/react": "^18.2.13", "eslint": "8.39.0", "eslint-config-next": "13.4.0", "raw-loader": "^4.0.2", "tsx": "^4.7.0", "typescript": "^5.6.2" } }],
 
     "@ampproject/remapping": ["@ampproject/remapping@2.3.0", "", { "dependencies": { "@jridgewell/gen-mapping": "^0.3.5", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw=="],
 
