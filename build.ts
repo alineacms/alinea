@@ -1,7 +1,7 @@
 import {ReporterPlugin} from '@esbx/reporter'
 import {getManifest} from '@esbx/workspaces'
 import {dequal} from 'dequal'
-import esbuild from 'esbuild'
+import esbuild, {BuildContext, BuildOptions, Plugin} from 'esbuild'
 import fsExtra from 'fs-extra'
 import glob from 'glob'
 import {spawn} from 'node:child_process'
@@ -14,9 +14,7 @@ import postcssModules from 'postcss-modules'
 import pxtorem from 'postcss-pxtorem'
 import prettyBytes from 'pretty-bytes'
 import sade from 'sade'
-
-// Interestingly sass seems to outperform sass-embedded about 2x
-import * as sass from 'sass'
+import * as sass from 'sass-embedded'
 
 const BROWSER_TARGET = 'browser'
 const SERVER_TARGET = 'server'
@@ -25,12 +23,8 @@ const JS_ENTRY = 'js-entry'
 
 const isWindows = process.platform === 'win32'
 const prefix = 'alinea/'
-const resolveAlinea = {
-  findFileUrl(url) {
-    if (!url.startsWith(prefix)) return null
-    return pathToFileURL('src/' + url.slice(prefix.length))
-  }
-}
+
+const sassCompiler = await sass.initAsyncCompiler()
 
 const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
@@ -46,26 +40,35 @@ const external = builtinModules
     'esbuild'
   ])
 
-const scssOptions = {
+const scssOptions: sass.Options<'async'> = {
   loadPaths: ['./node_modules'],
-  importers: [resolveAlinea]
+  quietDeps: true,
+  silenceDeprecations: ['import'],
+  importers: [
+    {
+      findFileUrl(url) {
+        if (!url.startsWith(prefix)) return null
+        return pathToFileURL('src/' + url.slice(prefix.length)) as URL
+      }
+    }
+  ]
 }
 
-function hash(files) {
+function hash(files: Array<string>) {
   return files.map(file => fs.statSync(file).mtimeMs).join('-')
 }
 
-function dirsOf(source) {
+function dirsOf(source: string) {
   const contents = fs.readdirSync(source, {withFileTypes: true})
   return contents
     .filter(dirent => dirent.isDirectory())
-    .flatMap(dirent => {
+    .flatMap((dirent): Array<string> => {
       const wd = path.join(source, dirent.name)
       return [wd, ...dirsOf(wd)]
     })
 }
 
-const cjsModules = {
+const cjsModules: Plugin = {
   name: 'cjs-modules',
   setup(build) {
     build.onEnd(async () => {
@@ -78,8 +81,7 @@ const cjsModules = {
   }
 }
 
-/** @type {import('esbuild').Plugin} */
-const bundleTs = {
+const bundleTs: Plugin = {
   name: 'bundle-ts',
   setup(build) {
     build.onEnd(() => {
@@ -137,8 +139,8 @@ const bundleTs = {
 }
 
 const checkCycles = process.env.CHECK_CYCLES
-/** @type {import('esbuild').Plugin} */
-const internalPlugin = {
+
+const internalPlugin: Plugin = {
   name: 'internal',
   setup(build) {
     const cwd = process.cwd()
@@ -164,8 +166,7 @@ const internalPlugin = {
   }
 }
 
-/** @type {import('esbuild').Plugin} */
-const sassJsPlugin = {
+const sassJsPlugin: Plugin = {
   name: 'js-sass',
   setup(build) {
     build.onLoad({filter: /\.scss$/}, async args => {
@@ -176,8 +177,7 @@ const sassJsPlugin = {
   }
 }
 
-/** @type {import('esbuild').Plugin} */
-const sassCssPlugin = {
+const sassCssPlugin: Plugin = {
   name: 'css-sass',
   setup(build) {
     build.onLoad({filter: /\.scss$/}, async args => {
@@ -187,12 +187,11 @@ const sassCssPlugin = {
   }
 }
 
-/** @type {import('esbuild').Plugin} */
-const cleanup = {
+const cleanup: Plugin = {
   name: 'cleanup',
   setup(build) {
     build.initialOptions.metafile = true
-    let prevOutputs
+    let prevOutputs: Set<string>
     build.onEnd(result => {
       if (!result.metafile) return
       const outputs = new Set(Object.keys(result.metafile.outputs))
@@ -205,8 +204,7 @@ const cleanup = {
   }
 }
 
-/** @type {import('esbuild').Plugin} */
-const cssEntry = {
+const cssEntry: Plugin = {
   name: CSS_ENTRY,
   setup(build) {
     build.onResolve({filter: new RegExp(`^${CSS_ENTRY}$`)}, args => ({
@@ -232,8 +230,7 @@ const cssEntry = {
   }
 }
 
-/** @type {import('esbuild').Plugin} */
-const externalize = {
+const externalize: Plugin = {
   name: 'externalize',
   setup(build) {
     const cwd = process.cwd()
@@ -253,8 +250,7 @@ const externalize = {
   }
 }
 
-/** @type {import('esbuild').Plugin} */
-const targetPlugin = {
+const targetPlugin: Plugin = {
   name: 'target',
   setup(build) {
     const browserFiles = new Set()
@@ -277,7 +273,7 @@ const targetPlugin = {
           file.slice('src/'.length, -`.${SERVER_TARGET}.ts`.length)
         )
       const pkg = getManifest('.')
-      const exports = {
+      const exports: Record<string, string | Record<string, string>> = {
         './package.json': './package.json',
         '.': './dist/index.js',
         './css': './dist/index.css',
@@ -312,14 +308,22 @@ const targetPlugin = {
   }
 }
 
-function jsEntry({watch, test, report}) {
+function jsEntry({
+  watch,
+  test,
+  report
+}: {
+  watch: boolean
+  test: boolean
+  report: boolean
+}): Plugin {
   const plugins = [sassJsPlugin, internalPlugin, externalize, cleanup]
   if (report) plugins.push(reportSizePlugin)
   return {
     name: JS_ENTRY,
     setup(build) {
-      let context,
-        currentFiles = []
+      let context: BuildContext
+      let currentFiles: Array<string> = []
       build.onResolve({filter: new RegExp(`^${JS_ENTRY}$`)}, args => ({
         path: args.path,
         namespace: JS_ENTRY
@@ -409,13 +413,24 @@ const postCssPlugins = [
   })
 ]
 
-async function processScss(file) {
+type ProcessScssResult = {
+  key: string
+  css: string
+  watchFiles: string[]
+  isModule?: boolean
+  json?: string
+}
+
+async function processScss(file: string): Promise<ProcessScssResult> {
   const prev = sassCache.get(file)
   if (prev) {
     const key = hash(prev.watchFiles)
     if (key === prev.key) return prev
   }
-  const {css, loadedUrls, sourceMap} = sass.compile(file, scssOptions)
+  const {css, loadedUrls, sourceMap} = await sassCompiler.compileAsync(
+    file,
+    scssOptions
+  )
   const watchFiles = loadedUrls.map(url => {
     return url.pathname.substring(isWindows ? 1 : 0)
   })
@@ -452,7 +467,7 @@ function forwardCmd() {
   return command.join(' ')
 }
 
-const runPlugin = {
+const runPlugin: Plugin = {
   name: 'run',
   setup(build) {
     let isStarted = false
@@ -470,8 +485,7 @@ const runPlugin = {
   }
 }
 
-/** @type {import('esbuild').Plugin} */
-const reportSizePlugin = {
+const reportSizePlugin: Plugin = {
   name: 'report-size',
   setup(build) {
     build.initialOptions.minify = true
@@ -487,7 +501,7 @@ const reportSizePlugin = {
           'ignored-bare-import': 'silent'
         },
         external
-      }
+      } satisfies BuildOptions
       const server = await build.esbuild.build({
         ...common,
         platform: 'node',
@@ -512,7 +526,15 @@ const reportSizePlugin = {
   }
 }
 
-async function build({watch, test, report}) {
+async function build({
+  watch,
+  test,
+  report
+}: {
+  watch: boolean
+  test: boolean
+  report: boolean
+}): Promise<void> {
   const plugins = [
     targetPlugin,
     cssEntry,
@@ -543,7 +565,7 @@ async function build({watch, test, report}) {
     : context.rebuild().then(() => context.dispose())
 }
 
-async function runTests() {
+async function runTests(): Promise<void> {
   let filter = (process.argv.pop() || '').toLowerCase()
   if (filter.startsWith('--')) filter = ''
   const files = glob.sync('dist/**/*.test.js')
@@ -557,10 +579,11 @@ async function runTests() {
   }
   process.argv.push('.bin/uvu') // Trigger isCLI
   const {exec} = await import('uvu')
-  globalThis.UVU_DEFER = 1
+  const global = globalThis as any
+  global.UVU_DEFER = 1
   for (const [idx, m] of modules.entries()) {
-    globalThis.UVU_INDEX = idx
-    globalThis.UVU_QUEUE.push([path.basename(m)])
+    global.UVU_INDEX = idx
+    global.UVU_QUEUE.push([path.basename(m)])
     await import('./' + m)
   }
   return exec().catch(error => {
@@ -576,5 +599,6 @@ sade('build', true)
   .action(async opts => {
     await build(opts)
     if (opts.test) return runTests()
+    if (!opts.watch) sassCompiler.dispose()
   })
   .parse(process.argv)

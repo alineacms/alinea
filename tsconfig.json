@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "moduleDetection": "force",
+    "incremental": true,
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "preserveWatchOutput": true,
+    "paths": {
+      "alinea/*": ["./src/*.js"]
+    }
+  },
+  "include": ["src"]
+}

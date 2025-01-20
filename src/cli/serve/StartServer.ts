@@ -36,21 +36,17 @@ async function startBunServer(
     })
     return {
       port,
+      close() {
+        server.stop()
+      },
       async *serve(abortController?: AbortController) {
         if (abortController)
           abortController.signal.addEventListener(
             'abort',
-            () => {
-              messages.cancel()
-            },
+            () => messages.return(),
             true
           )
-        try {
-          yield* messages
-        } catch (e) {
-          if (e === Emitter.CANCELLED) return
-          throw e
-        }
+        yield* messages
       }
     }
   } catch (err: any) {
@@ -101,11 +97,7 @@ async function startNodeServer(
               () => messages.return(),
               true
             )
-          try {
-            yield* messages
-          } catch (e) {
-            throw e
-          }
+          yield* messages
         }
       }
     })
