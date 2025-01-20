@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0]
+- Add a copy and paste button to List field blocks
+- Update link properties condition and location to be dynamic. The contents
+  can be set by using a function.
+  
 ## [1.0.11]
 - Fix navigation tree in link picker
 - Set the default depth of querying children to 1
