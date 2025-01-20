@@ -50,7 +50,6 @@
     "src/core",
     "src/dashboard",
     "src/ui",
-    "src/auth/passwordless",
     "src/field/richtext"
   ],
   "dependencies": {
