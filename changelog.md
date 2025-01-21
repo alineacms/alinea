@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1]
+- Fix the query result type of `Query.parent`, `Query.next` and `Query.previous`
+  which were incorrectly typed as an `Array`.
+
 ## [1.1.0]
 - Add a copy and paste button to List field blocks
 - Update link properties condition and location to be dynamic. The contents
