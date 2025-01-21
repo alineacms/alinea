@@ -1,7 +1,11 @@
 import {ReporterPlugin} from '@esbx/reporter'
 import {getManifest} from '@esbx/workspaces'
 import {dequal} from 'dequal'
-import esbuild, {BuildContext, BuildOptions, Plugin} from 'esbuild'
+import esbuild, {
+  type BuildContext,
+  type BuildOptions,
+  type Plugin
+} from 'esbuild'
 import fsExtra from 'fs-extra'
 import glob from 'glob'
 import {spawn} from 'node:child_process'
