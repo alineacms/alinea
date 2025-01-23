@@ -38,7 +38,7 @@ export namespace Type {
   export function contains(type: Type): Array<string | Type> {
     return getType(type).contains ?? []
   }
-  export function insertOrder(type: Type): 'top' | 'bottom' | 'free' {
+  export function insertOrder(type: Type): 'first' | 'last' | 'free' {
     return getType(type).insertOrder ?? 'free'
   }
 
@@ -164,7 +164,7 @@ export interface TypeConfig<Definition> {
   summaryThumb?: View<SummaryProps>
 
   /** The position where new children will be inserted */
-  insertOrder?: 'top' | 'bottom' | 'free'
+  insertOrder?: 'first' | 'last' | 'free'
 
   entryUrl?: (meta: EntryUrlMeta) => string
 }

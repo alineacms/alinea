@@ -139,8 +139,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }
 
   const typeField = useMemo(() => {
-    console.log('Config', config)
-    console.log('Parent', parent)
     const typeField: SelectField<string> = select('Select type', {
       options: {}
     }) as any
@@ -164,13 +162,13 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }, [])
 
   const insertOrderField = useMemo(() => {
-    const insertOrderField: SelectField<'top' | 'bottom'> = select(
+    const insertOrderField: SelectField<'first' | 'last'> = select(
       'Insert order',
       {
-        initialValue: 'top',
+        initialValue: 'last',
         options: {
-          top: 'At the top of the list',
-          bottom: 'At the bottom of the list'
+          first: 'At the top of the list',
+          last: 'At the bottom of the list'
         }
       }
     )
@@ -286,8 +284,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const parentInsertOrder = parentType ? Type.insertOrder(parentType) : 'free'
     let index = generateKeyBetween(null, parent?.firstChildIndex || null)
     if (
-      parentInsertOrder === 'bottom' ||
-      (parentInsertOrder === 'free' && form.data().order === 'bottom')
+      parentInsertOrder === 'last' ||
+      (parentInsertOrder === 'free' && form.data().order === 'last')
     ) {
       index = generateKeyBetween(parent?.lastChildIndex || null, null)
     }
