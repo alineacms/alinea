@@ -107,16 +107,14 @@ type InferSelection<Selection> = Selection extends GraphQuery & Edge
         : InferSelection<Selection[K]>
     }
 
-type InferResult<Selection, Types, Include> = Selection extends Expr<
-  infer Value
->
-  ? Value
-  : Selection extends undefined
+type InferResult<Selection, Types, Include> = Selection extends undefined
   ? Types extends undefined
     ? EntryFields & (Include extends undefined ? {} : InferSelection<Include>)
     : EntryFields &
         Infer<Types> &
         (Include extends undefined ? {} : InferSelection<Include>)
+  : Selection extends Expr<infer Value>
+  ? Value
   : InferSelection<Selection>
 
 type QueryResult<Selection, Types, Include> = Expand<
