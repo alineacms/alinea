@@ -27,6 +27,7 @@ import {select, SelectField} from 'alinea/field/select'
 import {text} from 'alinea/field/text'
 import {entryPicker} from 'alinea/picker/entry/EntryPicker'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
+import {children, parents} from 'alinea/query'
 import {Button, Loader} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
 import {useAtomValue, useSetAtom} from 'jotai'
@@ -49,22 +50,19 @@ const parentData = {
   url: Entry.url,
   level: Entry.level,
   parent: Entry.parentId,
-  parentPaths: {
-    edge: 'parents' as const,
+  parentPaths: parents({
     select: Entry.path
-  },
-  firstChildIndex: {
-    first: true as const,
-    edge: 'children' as const,
+  }),
+  firstChildIndex: children({
+    take: 1,
     select: Entry.index,
     orderBy: {asc: Entry.index, caseSensitive: true}
-  },
-  lastChildIndex: {
-    first: true as const,
-    children: {},
+  }),
+  lastChildIndex: children({
+    take: 1,
     select: Entry.index,
     orderBy: {desc: Entry.index, caseSensitive: true}
-  }
+  })
 }
 
 const titleField = text('Title', {autoFocus: true})
@@ -282,12 +280,12 @@ function NewEntryForm({parentId}: NewEntryProps) {
       : Type.initialValue(entryType)
 
     const parentInsertOrder = parentType ? Type.insertOrder(parentType) : 'free'
-    let index = generateKeyBetween(null, parent?.firstChildIndex || null)
+    let index = generateKeyBetween(null, parent?.firstChildIndex[0] || null)
     if (
       parentInsertOrder === 'last' ||
       (parentInsertOrder === 'free' && form.data().order === 'last')
     ) {
-      index = generateKeyBetween(parent?.lastChildIndex || null, null)
+      index = generateKeyBetween(parent?.lastChildIndex[0] || null, null)
     }
 
     const entry = await createEntryRow(config, {
