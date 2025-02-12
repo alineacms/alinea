@@ -5,6 +5,7 @@ import {Link} from '@/layout/nav/Link'
 import {BlogOverview} from '@/schema/BlogOverview'
 import {BlogPost} from '@/schema/BlogPost'
 import styler from '@alinea/styler'
+import {Query} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
 import {VStack} from 'alinea/ui'
 import {MetadataRoute} from 'next'
@@ -18,8 +19,7 @@ export default async function BlogPage() {
     type: BlogOverview,
     select: {
       title: BlogOverview.title,
-      posts: {
-        children: {},
+      posts: Query.children({
         type: BlogPost,
         select: {
           ...Entry,
@@ -28,7 +28,7 @@ export default async function BlogPage() {
           author: BlogPost.author,
           publishDate: BlogPost.publishDate
         }
-      }
+      })
     }
   })
   return (

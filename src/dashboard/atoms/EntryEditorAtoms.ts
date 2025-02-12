@@ -137,7 +137,7 @@ export const entryEditorAtoms = atomFamily(
         select: {
           ...Entry,
           parents: {
-            parents: {},
+            edge: 'parents',
             select: Entry.id
           }
         },
@@ -148,7 +148,7 @@ export const entryEditorAtoms = atomFamily(
       const withParents = await graph.first({
         select: {
           parents: {
-            parents: {},
+            edge: 'parents',
             select: {
               id: Entry.id,
               path: Entry.path
@@ -346,7 +346,7 @@ export function createEntryEditor(entryData: EntryData) {
             entryId: Entry.id,
             path: Entry.path,
             paths: {
-              parents: {},
+              edge: 'parents',
               select: Entry.path
             }
           },
@@ -396,7 +396,7 @@ export function createEntryEditor(entryData: EntryData) {
           select: {
             ...Entry,
             parentPaths: {
-              parents: {},
+              edge: 'parents',
               select: Entry.path
             }
           },
@@ -518,7 +518,7 @@ export function createEntryEditor(entryData: EntryData) {
 
   const discardDraft = atom(null, (get, set) => {
     const mutation: Mutation = {
-      type: MutationType.Discard,
+      type: MutationType.RemoveDraft,
       entryId: activeVersion.id,
       locale: activeVersion.locale,
       file: entryFile(activeVersion)
@@ -575,7 +575,7 @@ export function createEntryEditor(entryData: EntryData) {
         file: entryFile(published)
       },
       {
-        type: MutationType.Remove,
+        type: MutationType.RemoveEntry,
         entryId: published.id,
         locale: published.locale,
         file: entryFile({...published, status: EntryStatus.Archived})
@@ -595,7 +595,7 @@ export function createEntryEditor(entryData: EntryData) {
     const published = entryData.statuses[EntryStatus.Published]
     const file = published.data as MediaFile
     const mutation: Mutation = {
-      type: MutationType.FileRemove,
+      type: MutationType.RemoveFile,
       entryId: published.id,
       locale: null,
       workspace: published.workspace,
@@ -616,7 +616,7 @@ export function createEntryEditor(entryData: EntryData) {
   const deleteArchived = atom(null, (get, set) => {
     const archived = entryData.statuses[EntryStatus.Archived]
     const mutation: Mutation = {
-      type: MutationType.Remove,
+      type: MutationType.RemoveEntry,
       entryId: archived.id,
       locale: archived.locale,
       file: entryFile(archived)

@@ -346,9 +346,9 @@ export class Database implements Syncable {
             ).then(r => rows.concat(r))
           })
       }
-      case MutationType.FileRemove:
+      case MutationType.RemoveFile:
         if (mutation.replace) return
-      case MutationType.Remove: {
+      case MutationType.RemoveEntry: {
         const statuses = await tx
           .select()
           .from(EntryRow)
@@ -376,7 +376,7 @@ export class Database implements Syncable {
           )
         return async () => [statuses[0].id]
       }
-      case MutationType.Discard: {
+      case MutationType.RemoveDraft: {
         const existing = await tx
           .select()
           .from(EntryRow)

@@ -53,7 +53,7 @@ export function createCMS<Definition extends Config>(
     })
   )
   const handle = PLazy.from(async () => {
-    return createHandler(cms, await backend, db)
+    return createHandler({cms, backend: await backend, database: db})
   })
   const cms: CMS<Definition> = new CMS(config, async () => {
     const {connect} = await handle

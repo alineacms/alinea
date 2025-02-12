@@ -164,7 +164,7 @@ test('fetch translations', async () => {
     location: example.workspaces.main.multiLanguage,
     select: {
       translations: {
-        translations: {},
+        edge: 'translations',
         type: Page,
         select: Entry.locale
       }
@@ -395,7 +395,6 @@ test('remove field contents', async () => {
 
 test('take/skip', async () => {
   const example = createExample()
-  const {Page} = example.schema
   const lastTwo = await example.find({
     root: example.workspaces.main.pages,
     skip: 1,
