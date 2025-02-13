@@ -36,15 +36,19 @@ export function outcome<Run extends OutcomeRunner>(
   try {
     if (typeof run === 'function') {
       const result = run()
-      if (result instanceof Promise) return outcome(result) as any
+      if (isPromiseLike(result)) return outcome(result) as any
       return Outcome.Success(result) as any
     }
-    if (run instanceof Promise)
+    if (isPromiseLike(run))
       return run.then(Outcome.Success).catch(Outcome.Failure) as any
     return Outcome.Success(run) as any
   } catch (e: any) {
     return Outcome.Failure(e) as any
   }
+}
+
+function isPromiseLike(value: any): value is Promise<unknown> {
+  return value && typeof value === 'object' && 'then' in value
 }
 
 export namespace outcome {
