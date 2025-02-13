@@ -27,6 +27,7 @@ import {select, SelectField} from 'alinea/field/select'
 import {text} from 'alinea/field/text'
 import {entryPicker} from 'alinea/picker/entry/EntryPicker'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
+import {children, parents} from 'alinea/query'
 import {Button, Loader} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
 import {useAtomValue, useSetAtom} from 'jotai'
@@ -49,16 +50,19 @@ const parentData = {
   url: Entry.url,
   level: Entry.level,
   parent: Entry.parentId,
-  parentPaths: {
-    edge: 'parents' as const,
+  parentPaths: parents({
     select: Entry.path
-  },
-  childrenIndex: {
-    first: true as const,
-    edge: 'children' as const,
+  }),
+  firstChildIndex: children({
+    take: 1,
     select: Entry.index,
     orderBy: {asc: Entry.index, caseSensitive: true}
-  }
+  }),
+  lastChildIndex: children({
+    take: 1,
+    select: Entry.index,
+    orderBy: {desc: Entry.index, caseSensitive: true}
+  })
 }
 
 const titleField = text('Title', {autoFocus: true})
@@ -155,6 +159,35 @@ function NewEntryForm({parentId}: NewEntryProps) {
     })
   }, [])
 
+  const insertOrderField = useMemo(() => {
+    const insertOrderField: SelectField<'first' | 'last'> = select(
+      'Insert order',
+      {
+        initialValue: 'last',
+        options: {
+          first: 'At the top of the list',
+          last: 'At the bottom of the list'
+        }
+      }
+    )
+    return track.options(insertOrderField, async get => {
+      const selectedParent = get(parentField)
+      const parentId = selectedParent?.[EntryReference.entry]
+      const parent = await graph.get({
+        select: {
+          type: Entry.type
+        },
+        id: parentId,
+        status: 'preferDraft'
+      })
+      const parentType = parent && config.schema[parent.type]
+      const parentInsertOrder = Type.insertOrder(parentType)
+      return {
+        hidden: parentInsertOrder !== 'free'
+      }
+    })
+  }, [])
+
   const copyFromField = useMemo(() => {
     const copyFromField = entry('Copy content from')
     return track.options(copyFromField, get => {
@@ -183,6 +216,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
           parent: parentField,
           title: titleField,
           type: typeField,
+          order: insertOrderField,
           copyFrom: copyFromField
         }
       }),
@@ -229,6 +263,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
           status: 'preferPublished'
         })
       : null
+    const parentType = parent && config.schema[parent.type]
     const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
     const filePath = entryFilepath(config, data, parentPaths)
     const childrenDir = entryChildrenDir(config, data, parentPaths)
@@ -243,6 +278,16 @@ function NewEntryForm({parentId}: NewEntryProps) {
           status: 'preferPublished'
         })
       : Type.initialValue(entryType)
+
+    const parentInsertOrder = parentType ? Type.insertOrder(parentType) : 'free'
+    let index = generateKeyBetween(null, parent?.firstChildIndex[0] || null)
+    if (
+      parentInsertOrder === 'last' ||
+      (parentInsertOrder === 'free' && form.data().order === 'last')
+    ) {
+      index = generateKeyBetween(parent?.lastChildIndex[0] || null, null)
+    }
+
     const entry = await createEntryRow(config, {
       id: id,
       ...data,
@@ -251,7 +296,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       path,
       title,
       url,
-      index: generateKeyBetween(null, parent?.childrenIndex || null),
+      index,
       parentId: parent?.id ?? null,
       seeded: null,
       level: parent ? parent.level + 1 : 0,
