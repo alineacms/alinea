@@ -21,7 +21,6 @@
     "cycles:server": "CHECK_CYCLES=server bun build.ts && madge --warning --circular dist/index.js",
     "cycles:browser": "CHECK_CYCLES=browser bun build.ts && madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
     "alinea": "bun build.ts && bun dist/cli.js",
-    "build:alinea": "bun run build",
     "type": "tsc --diagnostics",
     "dev:check": "tsc -w",
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev",

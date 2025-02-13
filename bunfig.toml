@@ -1,5 +1,2 @@
-[run]
-bun = true
-
 [test]
 root = "./src"

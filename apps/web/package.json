@@ -5,8 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "dev:test": "yarn build:alinea && alinea dev -- next dev",
-    "build": "yarn build:alinea && alinea build -- next build",
+    "build": "bun run --cwd ../.. build && alinea build -- next build",
     "start": "next start",
     "lint": "next lint",
     "seed": "alinea build -- tsx src/seed.ts"
