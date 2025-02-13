@@ -12,7 +12,6 @@ import {Type} from './Type.js'
 import {Expand} from './util/Types.js'
 
 export type Location = Root | Workspace | Page | Array<string>
-type EmptyObject = Record<PropertyKey, never>
 
 type FieldsOf<Types> = StoredRow<
   Types extends Type<infer V>
@@ -108,16 +107,14 @@ type InferSelection<Selection> = Selection extends GraphQuery & Edge
         : InferSelection<Selection[K]>
     }
 
-type InferResult<Selection, Types, Include> = Selection extends Expr<
-  infer Value
->
-  ? Value
-  : Selection extends undefined
+type InferResult<Selection, Types, Include> = Selection extends undefined
   ? Types extends undefined
     ? EntryFields & (Include extends undefined ? {} : InferSelection<Include>)
     : EntryFields &
         Infer<Types> &
         (Include extends undefined ? {} : InferSelection<Include>)
+  : Selection extends Expr<infer Value>
+  ? Value
   : InferSelection<Selection>
 
 type QueryResult<Selection, Types, Include> = Expand<
@@ -130,9 +127,10 @@ interface CountQuery<Selection, Types, Include>
 }
 type FirstQuery<Selection, Types, Include> =
   | (GraphQuery<Selection, Types, Include> & {first: true})
-  | (GraphQuery<Selection, Types, Include> & {next: EmptyObject})
-  | (GraphQuery<Selection, Types, Include> & {previous: EmptyObject})
-  | (GraphQuery<Selection, Types, Include> & {parent: EmptyObject})
+  | (GraphQuery<Selection, Types, Include> & {edge: 'parent'})
+  | (GraphQuery<Selection, Types, Include> & {edge: 'next'})
+  | (GraphQuery<Selection, Types, Include> & {edge: 'previous'})
+
 interface GetQuery<Selection, Types, Include>
   extends GraphQuery<Selection, Types, Include> {
   get: true

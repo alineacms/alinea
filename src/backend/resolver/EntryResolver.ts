@@ -111,7 +111,7 @@ export class EntryResolver {
   field(table: typeof EntryRow, field: Expr): HasSql<any> {
     const name = this.scope.nameOf(field)
     if (!name) throw new Error(`Expression has no name ${field}`)
-    const isEntryField = name === 'path' || name === 'type'
+    const isEntryField = name === 'path' || name === 'title'
     if (isEntryField) return table[name]
     return (<any>table.data)[name]
   }

@@ -44,6 +44,14 @@ export function translations<
   return {edge: 'translations' as const, ...query}
 }
 
+export function siblings<
+  Selection extends SelectionGuard = undefined,
+  Type extends TypeGuard = undefined,
+  Include extends IncludeGuard = undefined
+>(query: GraphQuery<Selection, Type, Include> & {includeSelf?: boolean}) {
+  return {edge: 'siblings' as const, ...query}
+}
+
 export function parent<
   Selection extends SelectionGuard = undefined,
   Type extends TypeGuard = undefined,
@@ -66,12 +74,4 @@ export function previous<
   Include extends IncludeGuard = undefined
 >(query: GraphQuery<Selection, Type, Include>) {
   return {edge: 'previous' as const, ...query}
-}
-
-export function siblings<
-  Selection extends SelectionGuard = undefined,
-  Type extends TypeGuard = undefined,
-  Include extends IncludeGuard = undefined
->(query: GraphQuery<Selection, Type, Include> & {includeSelf?: boolean}) {
-  return {edge: 'siblings' as const, ...query}
 }
