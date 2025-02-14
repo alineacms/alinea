@@ -75,6 +75,7 @@ export interface EntryHeaderProps {
 export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const config = useConfig()
   const locale = useLocale()
+  const {canPublish, untranslated, parentNeedsTranslation} = editor
   const statusInUrl = useAtomValue(editor.statusInUrl)
   const selectedStatus = useAtomValue(editor.selectedStatus)
   const previewRevision = useAtomValue(editor.previewRevision)
@@ -83,7 +84,6 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const isMediaLibrary = editor.activeVersion.type === 'MediaLibrary'
   const hasChanges = useAtomValue(editor.hasChanges)
   const currentTransition = useAtomValue(editor.transition)?.transition
-  const untranslated = locale && locale !== editor.activeVersion.locale
   const variant = currentTransition
     ? 'transition'
     : previewRevision
@@ -192,12 +192,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
       )
     ) : variant === EntryStatus.Archived ? (
       <>
-        <DropdownMenu.Item
-          className={styles.root.action()}
-          onClick={publishArchived}
-        >
-          Publish
-        </DropdownMenu.Item>
+        {canPublish && (
+          <DropdownMenu.Item
+            className={styles.root.action()}
+            onClick={publishArchived}
+          >
+            Publish
+          </DropdownMenu.Item>
+        )}
         <DropdownMenu.Item
           className={styles.root.action()}
           onClick={deleteArchived}
@@ -265,7 +267,8 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             !hasChanges &&
             isActiveStatus &&
             !untranslated &&
-            !previewRevision && (
+            !previewRevision &&
+            canPublish && (
               <>
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>
@@ -288,7 +291,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
 
           {!currentTransition &&
             untranslated &&
-            !editor.parentNeedsTranslation &&
+            !parentNeedsTranslation &&
             !hasChanges && (
               <>
                 <span className={styles.root.description.separator()} />
