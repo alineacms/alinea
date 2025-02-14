@@ -66,12 +66,18 @@ test('archive child entries', async () => {
     parentId: parent._id,
     set: {title: 'Sub'}
   })
-  const entry = await example.create({
+  const entry1 = await example.create({
     type: Page,
     parentId: sub._id,
     set: {title: 'Deepest'}
   })
-  assert.is(entry._parentId, sub._id)
+  const entry2 = await example.create({
+    type: Page,
+    parentId: sub._id,
+    status: EntryStatus.Archived,
+    set: {title: 'Deepest 2'}
+  })
+  assert.is(entry1._parentId, sub._id)
   await example.update({id: parent._id, status: EntryStatus.Archived})
   assert.not.ok(
     await example.first({id: parent._id}),
@@ -82,8 +88,12 @@ test('archive child entries', async () => {
     'Sub entry should be archived'
   )
   assert.not.ok(
-    await example.first({id: entry._id}),
-    'Deepest entry should be archived'
+    await example.first({id: entry1._id}),
+    'Entry 1 should be archived'
+  )
+  assert.not.ok(
+    await example.first({id: entry2._id}),
+    'Entry 2 should be archived'
   )
   await example.update({id: parent._id, status: EntryStatus.Published})
   assert.ok(
@@ -92,8 +102,12 @@ test('archive child entries', async () => {
   )
   assert.ok(await example.first({id: sub._id}), 'Sub entry should be published')
   assert.ok(
-    await example.first({id: entry._id}),
-    'Deepest entry should be published'
+    await example.first({id: entry1._id}),
+    'Entry 1 should be published'
+  )
+  assert.not.ok(
+    await example.first({id: entry2._id}),
+    'Entry 2 should still be archived'
   )
 })
 

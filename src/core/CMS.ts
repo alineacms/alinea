@@ -63,7 +63,8 @@ export class CMS<Definition extends Config = Config> extends Graph {
     return this.get({
       type: query.type,
       id: op.id,
-      locale: query.locale
+      locale: query.locale,
+      status: query.status
     })
   }
 

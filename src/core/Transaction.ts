@@ -268,6 +268,7 @@ export interface CreateQuery<Fields> {
   root?: string
   parentId?: string | null
   locale?: string
+  status?: EntryStatus
   set?: Partial<StoredRow<Fields>>
 }
 
@@ -290,7 +291,7 @@ export class CreateOperation<Definition> extends Operation {
         }
       ]
       async function entryRow() {
-        const {workspace, root, parentId, locale, set} = query
+        const {workspace, root, parentId, locale, set, status} = query
         const typeName = getScope(cms.config).nameOf(query.type)
         if (!typeName)
           throw new Error(
@@ -298,6 +299,7 @@ export class CreateOperation<Definition> extends Operation {
           )
         const partial: Partial<EntryRow> = {
           id: entryId,
+          status,
           type: typeName,
           workspace,
           root,

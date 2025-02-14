@@ -166,14 +166,16 @@ export class Database implements Syncable {
         is(EntryRow.locale, entry.locale),
         eq(EntryRow.status, entry.status)
       )
-
     return this.updateChildren(tx, entry, next)
   }
 
   private async updateChildren(tx: Store, previous: EntryRow, next: EntryRow) {
     const {childrenDir: dir} = previous
-    if (next.status !== EntryStatus.Published || dir === next.childrenDir)
-      return []
+    const publishing = next.status === EntryStatus.Published
+    const unarchive = previous.status === EntryStatus.Archived
+    const pathChanged = dir !== next.childrenDir
+    const needsUpdate = publishing && (unarchive || pathChanged)
+    if (!needsUpdate) return []
     const children = await tx
       .select()
       .from(EntryRow)
@@ -190,13 +192,17 @@ export class Database implements Syncable {
         ...child,
         parentPaths
       })
+      const extension = paths.extname(child.filePath)
+      const fileName = paths.basename(child.filePath, extension)
+      const [, status] = entryInfo(fileName)
       await tx
         .update(EntryRow)
         .set({
           filePath,
           childrenDir,
           parentDir,
-          url
+          url,
+          status
         })
         .where(
           eq(EntryRow.id, child.id),
