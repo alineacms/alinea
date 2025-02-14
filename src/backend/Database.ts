@@ -209,10 +209,18 @@ export class Database implements Syncable {
 
   async logEntries() {
     const entries = await this.store
-      .select()
+      .select({
+        id: EntryRow.id,
+        url: EntryRow.url,
+        locale: EntryRow.locale,
+        status: EntryRow.status,
+        title: EntryRow.title,
+        filePath: EntryRow.filePath
+      })
       .from(EntryRow)
       .orderBy(asc(EntryRow.url), asc(EntryRow.index))
-    for (const entry of entries) {
+    console.table(entries)
+    /*for (const entry of entries) {
       console.info(
         entry.url.padEnd(35),
         entry.id.padEnd(12),
@@ -220,7 +228,7 @@ export class Database implements Syncable {
         entry.status.padEnd(12),
         entry.title
       )
-    }
+    }*/
   }
 
   private async applyMutation(
@@ -883,6 +891,7 @@ export class Database implements Syncable {
         mutations: [{changes, meta: undefined!}]
       })
     }
+    await this.logEntries()
   }
 
   async preview<T>(
