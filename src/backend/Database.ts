@@ -220,15 +220,6 @@ export class Database implements Syncable {
       .from(EntryRow)
       .orderBy(asc(EntryRow.url), asc(EntryRow.index))
     console.table(entries)
-    /*for (const entry of entries) {
-      console.info(
-        entry.url.padEnd(35),
-        entry.id.padEnd(12),
-        (entry.locale ?? '').padEnd(5),
-        entry.status.padEnd(12),
-        entry.title
-      )
-    }*/
   }
 
   private async applyMutation(
@@ -891,7 +882,6 @@ export class Database implements Syncable {
         mutations: [{changes, meta: undefined!}]
       })
     }
-    await this.logEntries()
   }
 
   async preview<T>(
