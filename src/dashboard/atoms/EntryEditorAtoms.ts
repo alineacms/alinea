@@ -759,6 +759,7 @@ export function createEntryEditor(entryData: EntryData) {
   const isLoading = edits.isLoading
 
   const preview =
+    Type.preview(type) ??
     Root.preview(
       config.workspaces[activeVersion.workspace][activeVersion.root]
     ) ??

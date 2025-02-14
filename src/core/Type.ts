@@ -8,6 +8,7 @@ import {getType, hasType, HasType, internalType} from './Internal.js'
 import {Label} from './Label.js'
 import {SummaryProps} from './media/Summary.js'
 import {OrderBy} from './OrderBy.js'
+import {Preview} from './Preview.js'
 import {section, Section} from './Section.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
@@ -91,6 +92,10 @@ export namespace Type {
     return res
   }
 
+  export function preview(type: Type): Preview | undefined {
+    return getType(type).preview
+  }
+
   const TypeOptions = cito.object({
     view: cito.string.optional,
     summaryRow: cito.string.optional,
@@ -167,6 +172,8 @@ export interface TypeConfig<Definition> {
   insertOrder?: 'first' | 'last' | 'free'
 
   entryUrl?: (meta: EntryUrlMeta) => string
+
+  preview?: Preview
 }
 
 export interface TypeInternal extends TypeConfig<FieldsDefinition> {
