@@ -2,6 +2,7 @@ import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import {getRoot, hasRoot, HasRoot, internalRoot} from './Internal.js'
 import {Label} from './Label.js'
+import {OrderBy} from './OrderBy.js'
 import {Page} from './Page.js'
 import {Preview} from './Preview.js'
 import {Schema} from './Schema.js'
@@ -13,7 +14,10 @@ export interface RootI18n {
 }
 
 export interface RootMeta {
+  /** Accepts entries of these types as children */
   contains?: Array<string | Type>
+  /** Order children entries in the sidebar content tree */
+  orderChildrenBy?: OrderBy | Array<OrderBy>
   icon?: ComponentType
   i18n?: RootI18n
   /** Point to a React component used to view this root in the dashboard */

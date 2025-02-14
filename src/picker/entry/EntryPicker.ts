@@ -1,7 +1,6 @@
-import {Entry} from 'alinea/core/Entry'
 import {EntryFields} from 'alinea/core/EntryFields'
 import {Filter} from 'alinea/core/Filter'
-import {Projection} from 'alinea/core/Graph'
+import {Graph, Projection} from 'alinea/core/Graph'
 import {Label} from 'alinea/core/Label'
 import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
@@ -12,14 +11,34 @@ import {Type, type} from 'alinea/core/Type'
 import {assign, keys} from 'alinea/core/util/Objects'
 import {EntryReference} from './EntryReference.js'
 
+export interface EditorInfo {
+  graph: Graph
+  entry: {
+    id: string
+    type: string
+    workspace: string
+    root: string
+    parentId: string | null
+    locale: string | null
+  }
+}
+
+export interface EditorLocation {
+  parentId?: string
+  workspace: string
+  root: string
+}
+
+type DynamicOption<T> = T | ((info: EditorInfo) => T | Promise<T>)
+
 export interface EntryPickerConditions {
-  /** Show entries from a specific workspace/root */
-  location?: {workspace: string; root: string}
-  /** Choose from direct children of the currently edited entry */
+  /** Choose from a flat list of direct children of the currently edited entry */
   pickChildren?: boolean
-  /** Filter entries by a condition */
-  condition?: Filter<EntryFields & Entry>
-  /** Enable entry picker navigation */
+  /** Set the initial location in which the entry picker is opened */
+  location?: DynamicOption<EditorLocation>
+  /** Filter entries by a condition, this results in a flat list of options */
+  condition?: DynamicOption<Filter<EntryFields>>
+  /** @internal Enable entry picker navigation */
   enableNavigation?: boolean
 }
 

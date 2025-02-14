@@ -12,7 +12,7 @@ import {IcOutlineTableRows} from 'alinea/ui/icons/IcOutlineTableRows'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, useEffect, useRef} from 'react'
+import {Suspense, useEffect, useRef, useState} from 'react'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {FormProvider} from '../atoms/FormAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
@@ -60,6 +60,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   const config = useConfig()
   const {isPreviewOpen} = useSidebar()
   const nav = useNav()
+  const [rootTab, setRootTab] = useState<number>()
   const mode = useAtomValue(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
   const selectedStatus = useAtomValue(editor.selectedStatus)
@@ -113,6 +114,13 @@ export function EntryEdit({editor}: EntryEditProps) {
   const tabs: TabsSection | false =
     hasRootTabs && (sections[0][Section.Data] as TabsSection)
   const visibleTypes = tabs && tabs.types.filter(type => !Type.isHidden(type))
+
+  let selectedRootTab = 0
+  if (hasRootTabs && visibleTypes !== false && rootTab !== undefined) {
+    selectedRootTab = rootTab
+    if (rootTab >= visibleTypes.length) selectedRootTab = 0
+  }
+
   useEffect(() => {
     if (isBlocking && !isNavigationChange) confirm?.()
   }, [isBlocking, isNavigationChange, confirm])
@@ -199,7 +207,11 @@ export function EntryEdit({editor}: EntryEditProps) {
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
           {showHistory && <EntryHistory editor={editor} />}
-          <Tabs.Root style={{flex: 1}}>
+          <Tabs.Root
+            style={{flex: 1}}
+            selectedIndex={selectedRootTab}
+            onChange={index => setRootTab(index)}
+          >
             <EntryTitle
               editor={editor}
               backLink={

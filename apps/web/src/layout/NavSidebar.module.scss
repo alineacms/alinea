@@ -15,6 +15,7 @@
   // border-right: 1px solid hsla(var(--web-negative-hsl), 0.09);
   display: flex;
   flex-direction: column;
+  @include scrollbar;
 
   &.is-fluid {
     width: auto;
@@ -33,6 +34,4 @@
   @media (max-width: 980px) {
     display: none;
   }
-
-  @include scrollbar;
 }

@@ -301,7 +301,9 @@ export function cloudBackend(config: Config): Backend {
   const pending: Pending = {
     async since(ctx, commitHash) {
       if (!validApiKey(ctx.apiKey)) return
-      return parseOutcome<Array<{commitHashTo: string; mutations: ChangeSet}>>(
+      return parseOutcome<
+        Array<{commitHashTo: string; mutations: ChangeSet | null}>
+      >(
         fetch(
           cloudConfig.pending + '?' + new URLSearchParams({since: commitHash}),
           json({headers: bearer(ctx)})
@@ -310,8 +312,8 @@ export function cloudBackend(config: Config): Backend {
         if (pending.length === 0) return undefined
         return {
           toCommitHash: pending[pending.length - 1].commitHashTo,
-          mutations: pending.flatMap(mutate =>
-            mutate.mutations.flatMap(m => m.meta)
+          mutations: pending.flatMap(
+            mutate => mutate.mutations?.flatMap(m => m.meta) ?? []
           )
         }
       })

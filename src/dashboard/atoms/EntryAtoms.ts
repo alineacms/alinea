@@ -6,7 +6,7 @@ import {
 import {Entry} from 'alinea/core/Entry'
 import {EntryStatus} from 'alinea/core/EntryRow'
 import {Graph} from 'alinea/core/Graph'
-import {getType} from 'alinea/core/Internal'
+import {getRoot, getType} from 'alinea/core/Internal'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Type} from 'alinea/core/Type'
 import {entryFileName} from 'alinea/core/util/EntryFilenames'
@@ -38,24 +38,29 @@ async function entryTreeRoot(
   graph: Graph,
   status: 'preferDraft' | 'preferPublished',
   workspace: string,
-  root: string,
+  rootName: string,
   visibleTypes: Array<string>
 ): Promise<EntryTreeItem> {
+  const root = graph.config.workspaces[workspace][rootName]
+  const orderBy = getRoot(root).orderChildrenBy ?? {
+    asc: Entry.index,
+    caseSensitive: true
+  }
   const children = await graph.find({
     select: Entry.id,
     groupBy: Entry.id,
-    orderBy: {asc: Entry.index, caseSensitive: true},
+    orderBy,
     filter: {
       _active: true,
       _workspace: workspace,
-      _root: root,
+      _root: rootName,
       _parentId: null,
       _type: {in: visibleTypes}
     },
     status
   })
   return {
-    id: rootId(root),
+    id: rootId(rootName),
     index: '',
     type: '',
     isFolder: true,
@@ -84,7 +89,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       root: Entry.root,
       path: Entry.path,
       parentPaths: {
-        parents: {},
+        edge: 'parents' as const,
         select: Entry.path
       }
     }
@@ -96,7 +101,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
         type: Entry.type,
         data,
         translations: {
-          translations: {},
+          edge: 'translations',
           select: data
         }
       },

@@ -171,20 +171,22 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const entryId = upload.info?.entryId ?? createId()
     const {parentId} = upload.to
     const buffer = await upload.file.arrayBuffer()
-    const parent = await graph.first({
-      select: {
-        level: Entry.level,
-        entryId: Entry.id,
-        url: Entry.url,
-        path: Entry.path,
-        parentPaths: {
-          parents: {},
-          select: Entry.path
-        }
-      },
-      id: parentId,
-      status: 'preferPublished'
-    })
+    const parent = parentId
+      ? await graph.first({
+          select: {
+            level: Entry.level,
+            entryId: Entry.id,
+            url: Entry.url,
+            path: Entry.path,
+            parentPaths: {
+              edge: 'parents',
+              select: Entry.path
+            }
+          },
+          id: parentId,
+          status: 'preferPublished'
+        })
+      : null
 
     const extensionOriginal = extname(upload.file.name)
     const extension = extensionOriginal.toLowerCase()
@@ -329,7 +331,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         file: info.location
       },
       {
-        type: MutationType.FileRemove,
+        type: MutationType.RemoveFile,
         entryId: replace.entry.id,
         locale: null,
         file: replace.entryFile,

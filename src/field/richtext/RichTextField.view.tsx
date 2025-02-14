@@ -40,7 +40,7 @@ import {RichTextToolbar} from './RichTextToolbar.js'
 const styles = styler(css)
 
 type NodeViewProps = {
-  node: {attrs: {[BlockNode.id]: string}}
+  node: {attrs: {[BlockNode.id]?: string}}
   deleteNode: () => void
 }
 
@@ -49,6 +49,7 @@ function typeExtension(field: Field, name: string, type: Type) {
     const {[BlockNode.id]: id} = node.attrs
     const meta = getType(type)
     const {readOnly} = useFieldOptions(field)
+    if (!id) return null
     return (
       <FormRow field={field} type={type} rowId={id} readOnly={readOnly}>
         <NodeViewWrapper>

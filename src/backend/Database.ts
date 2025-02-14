@@ -124,6 +124,10 @@ export class Database implements Syncable {
 
   async applyMutations(mutations: Array<Mutation>, commitHash?: string) {
     const hash = commitHash ?? (await this.meta()).commitHash
+    if (mutations.length === 0) {
+      if (commitHash) await this.writeMeta(this.store, commitHash)
+      return []
+    }
     return this.store.transaction(async tx => {
       const reHash = []
       for (const mutation of mutations) {
@@ -203,21 +207,19 @@ export class Database implements Syncable {
     return children
   }
 
-  async logEntries(
-    keys: Array<keyof EntryRow> = [
-      'url',
-      'id',
-      'parentId',
-      'locale',
-      'status',
-      'title'
-    ]
-  ) {
+  async logEntries() {
     const entries = await this.store
-      .select()
+      .select({
+        id: EntryRow.id,
+        url: EntryRow.url,
+        locale: EntryRow.locale,
+        status: EntryRow.status,
+        title: EntryRow.title,
+        filePath: EntryRow.filePath
+      })
       .from(EntryRow)
       .orderBy(asc(EntryRow.url), asc(EntryRow.index))
-    console.table(entries, keys)
+    console.table(entries)
   }
 
   private async applyMutation(
@@ -351,9 +353,9 @@ export class Database implements Syncable {
             ).then(r => rows.concat(r))
           })
       }
-      case MutationType.FileRemove:
+      case MutationType.RemoveFile:
         if (mutation.replace) return
-      case MutationType.Remove: {
+      case MutationType.RemoveEntry: {
         const statuses = await tx
           .select()
           .from(EntryRow)
@@ -381,7 +383,7 @@ export class Database implements Syncable {
           )
         return async () => [statuses[0].id]
       }
-      case MutationType.Discard: {
+      case MutationType.RemoveDraft: {
         const existing = await tx
           .select()
           .from(EntryRow)

@@ -1,6 +1,19 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.2]
+- Adjust the inferred results of `cms.find` and `cms.get` so they work reliable
+  in non-strict Typescript codebases as well.
+
+## [1.1.1]
+- Fix the query result type of `Query.parent`, `Query.next` and `Query.previous`
+  which were incorrectly typed as an `Array`.
+
+## [1.1.0]
+- Add a copy and paste button to List field blocks
+- Update link properties condition and location to be dynamic. The contents
+  can be set by using a function.
+  
+## [1.0.11]
 - Fix navigation tree in link picker
 - Set the default depth of querying children to 1
 

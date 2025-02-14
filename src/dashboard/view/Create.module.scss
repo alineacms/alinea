@@ -43,6 +43,10 @@
     position: relative;
   }
 
+  &.is-paste {
+    border: 1px solid currentColor;
+  }
+
   &:hover {
     color: var(--alinea-button-foreground);
     background: var(--alinea-button-background);
