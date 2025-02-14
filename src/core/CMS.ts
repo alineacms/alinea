@@ -64,7 +64,7 @@ export class CMS<Definition extends Config = Config> extends Graph {
       type: query.type,
       id: op.id,
       locale: query.locale,
-      status: query.status
+      status: 'preferPublished'
     })
   }
 
