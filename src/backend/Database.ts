@@ -234,6 +234,20 @@ export class Database implements Syncable {
   ): Promise<(() => Promise<Array<string>>) | undefined> {
     switch (mutation.type) {
       case MutationType.Create: {
+        const {entry} = mutation
+        let status = entry.status
+        if (entry.parentId) {
+          const parent = await tx
+            .select()
+            .from(EntryRow)
+            .where(
+              eq(EntryRow.id, entry.parentId),
+              is(EntryRow.locale, mutation.locale),
+              is(EntryRow.main, true)
+            )
+            .get()
+          status = parent?.status ?? status
+        }
         const condition = and(
           eq(EntryRow.id, mutation.entryId),
           eq(EntryRow.status, mutation.entry.status),
@@ -241,7 +255,7 @@ export class Database implements Syncable {
         )
         const current = await tx.select().from(EntryRow).where(condition).get()
         if (current) return
-        await tx.insert(EntryRow).values(mutation.entry)
+        await tx.insert(EntryRow).values({...mutation.entry, status})
         return () => this.updateHash(tx, condition)
       }
       case MutationType.Edit: {
