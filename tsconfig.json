@@ -7,20 +7,19 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "moduleDetection": "force",
+    "incremental": true,
     "outDir": "dist",
+    "rootDir": "src",
     "skipLibCheck": true,
     "preserveWatchOutput": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "paths": {
-      "alinea/*": ["./src/*.js"]
+      "alinea/*": ["./src/*"]
     },
-    "baseUrl": ".",
-    "rootDir": "src",
-    "moduleDetection": "force",
-    "incremental": true
+    "declaration": true,
+    "emitDeclarationOnly": true
   },
   "include": ["src"]
 }
