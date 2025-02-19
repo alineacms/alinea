@@ -1,4 +1,3 @@
-import {Headers} from '@alinea/iso'
 import {Database} from 'alinea/backend/Database'
 import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
 import {Client} from 'alinea/core/Client'
@@ -39,11 +38,7 @@ export class NextCMS<
       const client = new Client({
         config: this.config,
         url: context.handlerUrl.href,
-        applyAuth(init) {
-          const headers = new Headers(init?.headers)
-          headers.set('Authorization', `Bearer ${context.apiKey}`)
-          return {...init, headers}
-        }
+        applyAuth: context.applyAuth
       })
       const clientResolve = client.resolve.bind(client)
       return assign(client, {
@@ -88,22 +83,7 @@ export class NextCMS<
   }
 
   async user(): Promise<User | undefined> {
-    const {cookies} = await import('next/headers')
-    const context = await requestContext(this.config)
-    const cookie = await cookies()
-    const client = new Client({
-      config: this.config,
-      url: context.handlerUrl.href,
-      applyAuth: init => {
-        const headers = new Headers(init?.headers)
-        const alinea = cookie
-          .getAll()
-          .filter(({name}) => name.startsWith('alinea'))
-        for (const {name, value} of alinea)
-          headers.append('cookie', `${name}=${value}`)
-        return {...init, headers}
-      }
-    })
+    const client = await this.connect()
     return client.user()
   }
 

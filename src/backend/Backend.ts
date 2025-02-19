@@ -1,4 +1,5 @@
 import {Request, Response} from '@alinea/iso'
+import {AuthenticateRequest} from 'alinea/core/Client'
 import {Connection} from 'alinea/core/Connection'
 import {Draft, DraftKey} from 'alinea/core/Draft'
 import {EntryRecord} from 'alinea/core/EntryRecord'
@@ -8,6 +9,7 @@ import {User} from 'alinea/core/User'
 export interface RequestContext {
   handlerUrl: URL
   apiKey: string
+  applyAuth?: AuthenticateRequest
 }
 
 export interface AuthedContext extends RequestContext {
