@@ -1,9 +1,9 @@
 import {ListShape} from 'alinea/core/shape/ListShape'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import * as Y from 'alinea/yjs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
+import * as Y from 'yjs'
 
 const ROOT_KEY = '$root'
 const FIELD_KEY = '$doc'
@@ -89,7 +89,7 @@ test('apply', () => {
   doc.transact(() => {
     shape.applyY(value2, root, FIELD_KEY)
   })
-  const pass2 = shape.fromY(root.get(FIELD_KEY))
+  const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
   assert.equal(pass2, value2)
 })
 

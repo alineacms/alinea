@@ -5,13 +5,29 @@
   "_i18nId": "2dgfhj4jZy1ouxya8e6BBIoLyoa",
   "title": "Conditional fields",
   "rootField": "a",
-  "nestedList": [],
+  "nestedList": [
+    {
+      "_id": "2mWG5FYuj8KxeEbQ3urZDq5NxeR",
+      "_index": "a0",
+      "_type": "Row",
+      "a": "",
+      "b": ""
+    },
+    {
+      "_id": "2mWG5S9Wdf8yG5DhE3l8UKc3PoC",
+      "_index": "a1",
+      "_type": "Row",
+      "a": "",
+      "b": ""
+    }
+  ],
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

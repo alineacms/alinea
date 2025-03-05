@@ -3,6 +3,7 @@
 // @ts-ignore
 import declarations from '!!raw-loader!./alinea.d.ts.txt'
 import {Logo} from '@/layout/branding/Logo'
+import styler from '@alinea/styler'
 import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import {createExample} from 'alinea/backend/test/Example'
@@ -14,19 +15,12 @@ import {Type, type} from 'alinea/core/Type'
 import 'alinea/css'
 import * as dashboard from 'alinea/dashboard'
 import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
+import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
 import {Viewport} from 'alinea/dashboard/view/Viewport'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
-import {
-  HStack,
-  Loader,
-  Stack,
-  TextLabel,
-  Typo,
-  VStack,
-  fromModule
-} from 'alinea/ui'
+import {HStack, Loader, Stack, TextLabel, Typo, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Pane} from 'alinea/ui/Pane'
 import lzstring from 'lz-string'
@@ -38,11 +32,15 @@ import type typescript from 'typescript'
 import {useClipboard} from 'use-clipboard-copy'
 import css from './Playground.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
-const defaultValue = `export default alinea.type('Type', {
-  title: alinea.text('Title', {width: 0.5}),
-  path: alinea.path('Path', {width: 0.5})
+const defaultValue = `import {Config, Field} from 'alinea'
+
+export default Config.type('Type', {
+  fields: {
+    title: Field.text('Title', {width: 0.5}),
+    path: Field.path('Path', {width: 0.5})
+  }
 })`
 
 type PreviewTypeProps = {
@@ -70,7 +68,10 @@ type PreviewFieldProps = {
 }
 
 function PreviewField({field}: PreviewFieldProps) {
-  const formType = React.useMemo(() => type({fields: {field}}), [field])
+  const formType = React.useMemo(
+    () => type('Preview', {fields: {field}}),
+    [field]
+  )
   const form = dashboard.useForm(formType)
   return (
     <div style={{margin: 'auto', width: '100%'}}>
@@ -100,7 +101,7 @@ function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
   const inner = (
     <Editor
       // theme="vs-dark"
-      path="alinea.config.tsx"
+      path="cms.tsx"
       defaultLanguage="typescript"
       value={code}
       beforeMount={editorConfig}
@@ -126,7 +127,7 @@ function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
 
 const ts = trigger<typeof typescript>()
 const example = createExample()
-const connection = example.connection()
+const connection = example.connect()
 
 export default function Playground() {
   const [view, setView] = useState<'both' | 'preview' | 'source'>(() => {
@@ -202,8 +203,14 @@ export default function Playground() {
     compile(code)
   }, [code])
   const client = React.use(connection)
+  if (state.error) console.error(state.error)
   return (
-    <DashboardProvider dev client={client} config={example.config}>
+    <DashboardProvider
+      dev
+      client={client}
+      config={example.config}
+      views={defaultViews}
+    >
       <Script
         src="https://cdn.jsdelivr.net/npm/typescript@5.1.3/lib/typescript.min.js"
         onLoad={() => {

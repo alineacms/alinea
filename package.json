@@ -2,6 +2,11 @@
   "bin": "./dist/cli.js",
   "name": "alinea",
   "version": "0.0.0",
+  "description": "Headless git-based CMS",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alineacms/alinea.git"
+  },
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -10,7 +15,7 @@
     "stories": "ladle serve",
     "demo": "node build.js --watch -- node dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
     "build": "tsc && node build.js",
-    "cycles:server": "CHECK_CYCLES=server node build.js && madge --warning --circular dist/index.js dist/backend.js",
+    "cycles:server": "CHECK_CYCLES=server node build.js && madge --warning --circular dist/index.js",
     "cycles:browser": "CHECK_CYCLES=browser node build.js && madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
     "alinea": "node build.js && node dist/cli.js",
     "build:alinea": "node build.js",
@@ -43,6 +48,7 @@
   "workspaces": [
     "apps/web",
     "apps/dev",
+    "src/adapter",
     "src/backend",
     "src/cli",
     "src/core",
@@ -53,22 +59,23 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.2",
-    "@alinea/sqlite-wasm": "^0.1.16",
-    "esbuild": "^0.20.1"
+    "@alinea/sqlite-wasm": "^0.1.18",
+    "esbuild": "^0.23.1"
   },
   "peerDependencies": {
     "react": "*",
     "react-dom": "*"
   },
   "devDependencies": {
+    "@alinea/styler": "^1.0.3",
     "@esbx/reporter": "^0.0.20",
     "@esbx/target": "^0.0.20",
     "@esbx/util": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",
-    "@ladle/react": "^4.0.2",
+    "@ladle/react": "^4.1.2",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
-    "@types/node": "20.0.0",
+    "@types/node": "^22.5.2",
     "@types/react": "^18.2.13",
     "@types/react-dom": "^18.2.6",
     "@types/sql.js": "^1.4.4",
@@ -81,16 +88,17 @@
     "npm-run-all": "^4.1.5",
     "postcss-modules": "^6.0.0",
     "postcss-pxtorem": "^6.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "sass": "^1.63.4",
     "sharp": "0.32.6",
     "speedscope": "^1.14.0",
-    "typescript": "^5.4.5",
+    "typescript": "^5.6.2",
     "typescript-plugin-css-modules": "^5.0.2",
-    "uvu": "^0.5.1"
+    "uvu": "^0.5.1",
+    "yjs-src": "npm:yjs@13.6.11"
   },
-  "packageManager": "yarn@4.1.0",
+  "packageManager": "yarn@4.5.0",
   "resolutions": {
     "esbuild": "0.20.1",
     "yjs": "13.6.11",
@@ -100,6 +108,10 @@
     "./package.json": "./package.json",
     ".": "./dist/index.js",
     "./css": "./dist/index.css",
+    "./next": {
+      "require": "./dist/next.cjs",
+      "default": "./dist/next.js"
+    },
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js",
     "./cloud/view/CloudAuth": {
@@ -112,95 +124,10 @@
       "browser": "./dist/core/media/CreatePreview.browser.js",
       "default": "./dist/core/media/CreatePreview.js"
     },
-    "./core/media/MediaRoot": {
-      "worker": "./dist/core/media/MediaRoot.js",
-      "browser": "./dist/core/media/MediaRoot.browser.js",
-      "default": "./dist/core/media/MediaRoot.js"
-    },
-    "./core/media/MediaTypes": {
-      "worker": "./dist/core/media/MediaTypes.js",
-      "browser": "./dist/core/media/MediaTypes.browser.js",
-      "default": "./dist/core/media/MediaTypes.js"
-    },
     "./dashboard/view/Preview": {
       "worker": "./dist/dashboard/view/Preview.js",
       "browser": "./dist/dashboard/view/Preview.browser.js",
       "default": "./dist/dashboard/view/Preview.js"
-    },
-    "./field/check/CheckField": {
-      "worker": "./dist/field/check/CheckField.js",
-      "browser": "./dist/field/check/CheckField.browser.js",
-      "default": "./dist/field/check/CheckField.js"
-    },
-    "./field/code/CodeField": {
-      "worker": "./dist/field/code/CodeField.js",
-      "browser": "./dist/field/code/CodeField.browser.js",
-      "default": "./dist/field/code/CodeField.js"
-    },
-    "./field/date/DateField": {
-      "worker": "./dist/field/date/DateField.js",
-      "browser": "./dist/field/date/DateField.browser.js",
-      "default": "./dist/field/date/DateField.js"
-    },
-    "./field/json/JsonField": {
-      "worker": "./dist/field/json/JsonField.js",
-      "browser": "./dist/field/json/JsonField.browser.js",
-      "default": "./dist/field/json/JsonField.js"
-    },
-    "./field/link/LinkField": {
-      "worker": "./dist/field/link/LinkField.js",
-      "browser": "./dist/field/link/LinkField.browser.js",
-      "default": "./dist/field/link/LinkField.js"
-    },
-    "./field/list/ListField": {
-      "worker": "./dist/field/list/ListField.js",
-      "browser": "./dist/field/list/ListField.browser.js",
-      "default": "./dist/field/list/ListField.js"
-    },
-    "./field/metadata/MetadataField": {
-      "worker": "./dist/field/metadata/MetadataField.js",
-      "browser": "./dist/field/metadata/MetadataField.browser.js",
-      "default": "./dist/field/metadata/MetadataField.js"
-    },
-    "./field/number/NumberField": {
-      "worker": "./dist/field/number/NumberField.js",
-      "browser": "./dist/field/number/NumberField.browser.js",
-      "default": "./dist/field/number/NumberField.js"
-    },
-    "./field/object/ObjectField": {
-      "worker": "./dist/field/object/ObjectField.js",
-      "browser": "./dist/field/object/ObjectField.browser.js",
-      "default": "./dist/field/object/ObjectField.js"
-    },
-    "./field/path/PathField": {
-      "worker": "./dist/field/path/PathField.js",
-      "browser": "./dist/field/path/PathField.browser.js",
-      "default": "./dist/field/path/PathField.js"
-    },
-    "./field/richtext/RichTextField": {
-      "worker": "./dist/field/richtext/RichTextField.js",
-      "browser": "./dist/field/richtext/RichTextField.browser.js",
-      "default": "./dist/field/richtext/RichTextField.js"
-    },
-    "./field/select/SelectField": {
-      "worker": "./dist/field/select/SelectField.js",
-      "browser": "./dist/field/select/SelectField.browser.js",
-      "default": "./dist/field/select/SelectField.js"
-    },
-    "./field/tabs/Tabs": {
-      "worker": "./dist/field/tabs/Tabs.js",
-      "browser": "./dist/field/tabs/Tabs.browser.js",
-      "default": "./dist/field/tabs/Tabs.js"
-    },
-    "./field/text/TextField": {
-      "worker": "./dist/field/text/TextField.js",
-      "browser": "./dist/field/text/TextField.browser.js",
-      "default": "./dist/field/text/TextField.js"
-    },
-    "./field/view/View": {
-      "worker": "./dist/field/view/View.js",
-      "browser": "./dist/field/view/View.browser.js",
-      "default": "./dist/field/view/View.js"
     },
     "./picker/entry/EntryPicker": {
       "worker": "./dist/picker/entry/EntryPicker.js",
@@ -212,25 +139,10 @@
       "browser": "./dist/picker/url/UrlPicker.browser.js",
       "default": "./dist/picker/url/UrlPicker.js"
     },
-    "./auth/passwordless/PasswordLessAuth": {
-      "worker": "./dist/auth/passwordless/PasswordLessAuth.server.js",
-      "browser": "./dist/auth/passwordless/PasswordLessAuth.js",
-      "default": "./dist/auth/passwordless/PasswordLessAuth.server.js"
-    },
     "./cli/util/ExportStore": {
       "worker": "./dist/cli/util/ExportStore.server.js",
       "browser": "./dist/cli/util/ExportStore.js",
       "default": "./dist/cli/util/ExportStore.server.js"
-    },
-    "./core/driver/DefaultDriver": {
-      "worker": "./dist/core/driver/DefaultDriver.server.js",
-      "browser": "./dist/core/driver/DefaultDriver.js",
-      "default": "./dist/core/driver/DefaultDriver.server.js"
-    },
-    "./core/driver/NextDriver": {
-      "worker": "./dist/core/driver/NextDriver.server.js",
-      "browser": "./dist/core/driver/NextDriver.js",
-      "default": "./dist/core/driver/NextDriver.server.js"
     }
   }
 }

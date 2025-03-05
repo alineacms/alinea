@@ -1,16 +1,15 @@
-import {renderLabel} from 'alinea/core/Label'
+import styler from '@alinea/styler'
 import {Type} from 'alinea/core/Type'
-import {Chip, HStack, Loader, fromModule, px} from 'alinea/ui'
+import {Chip, HStack, Loader, px} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
-import {useAtom, useAtomValue} from 'jotai'
+import {useAtomValue} from 'jotai'
 import {PropsWithChildren} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
-import {useWorkspace} from '../../hook/UseWorkspace.js'
 import {Head} from '../../util/Head.js'
 import {IconLink} from '../IconButton.js'
 import css from './EntryTitle.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface EntryTitleProps {
   editor: EntryEditor
@@ -22,15 +21,12 @@ export function EntryTitle({
   editor,
   backLink
 }: PropsWithChildren<EntryTitleProps>) {
-  const {label} = useWorkspace()
-  const selectedPhase = useAtomValue(editor.selectedPhase)
-  const [editMode, setEditMode] = useAtom(editor.editMode)
-  const version = editor.phases[selectedPhase]
+  const selectedStatus = useAtomValue(editor.selectedStatus)
+  const version = editor.statuses[selectedStatus]
   const type = editor.type
   const activeTitle = useAtomValue(editor.activeTitle)
   const title =
-    selectedPhase === editor.activePhase ? activeTitle : version.title
-  const hasChanges = useAtomValue(editor.hasChanges)
+    selectedStatus === editor.activeStatus ? activeTitle : version.title
   const isLoading = useAtomValue(editor.isLoading)
   return (
     <>
@@ -50,20 +46,9 @@ export function EntryTitle({
             <h1 className={styles.root.title()}>
               <span>{title}</span>
             </h1>
-            <Chip>{renderLabel(Type.label(type))}</Chip>
+            <Chip>{Type.label(type)}</Chip>
             {isLoading && <Loader size={15} />}
           </HStack>
-          {/*<IconButton icon={MdOutlineMoreHoriz} />*/}
-          {/*<Stack.Right>
-            {(hasChanges ||
-              (editor.availablePhases.includes(EntryPhase.Draft) &&
-                editor.availablePhases.length > 1)) && (
-              <EditModeToggle
-                mode={editMode}
-                onChange={mode => setEditMode(mode)}
-              />
-            )}
-          </Stack.Right>*/}
         </HStack>
         {children}
       </div>

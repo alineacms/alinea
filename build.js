@@ -1,12 +1,12 @@
 import {ReporterPlugin} from '@esbx/reporter'
 import {getManifest} from '@esbx/workspaces'
-import {spawn} from 'child_process'
 import {dequal} from 'dequal'
 import esbuild from 'esbuild'
 import fsExtra from 'fs-extra'
 import glob from 'glob'
-import {builtinModules} from 'module'
+import {spawn} from 'node:child_process'
 import fs from 'node:fs'
+import {builtinModules} from 'node:module'
 import path from 'node:path'
 import {pathToFileURL} from 'node:url'
 import postcss from 'postcss'
@@ -36,10 +36,11 @@ const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
     'fs-extra',
-    '@alinea',
+    '@alinea/generated',
+    '@alinea/iso',
+    '@alinea/sqlite-wasm',
     'next',
     'sharp',
-    '@remix-run',
     'react',
     'react-dom',
     'esbuild'
@@ -62,6 +63,19 @@ function dirsOf(source) {
       const wd = path.join(source, dirent.name)
       return [wd, ...dirsOf(wd)]
     })
+}
+
+const cjsModules = {
+  name: 'cjs-modules',
+  setup(build) {
+    build.onEnd(async () => {
+      await esbuild.build({
+        format: 'cjs',
+        entryPoints: ['./src/adapter/next/with-alinea.ts'],
+        outfile: './dist/next.cjs'
+      })
+    })
+  }
 }
 
 /** @type {import('esbuild').Plugin} */
@@ -228,7 +242,8 @@ const externalize = {
       if (args.kind === 'entry-point') return
       if (args.path.endsWith('.scss') || args.path.endsWith('.json')) return
       if (!args.resolveDir.startsWith(src)) return
-      if (!args.path.endsWith('.js')) {
+      if (args.path.endsWith('.cjs')) return
+      if (!args.path.endsWith('.js') && !args.path.endsWith('.mjs')) {
         console.error(`Missing file extension on local import: ${args.path}`)
         console.error(`In file: ${args.importer}`)
         process.exit(1)
@@ -266,6 +281,10 @@ const targetPlugin = {
         './package.json': './package.json',
         '.': './dist/index.js',
         './css': './dist/index.css',
+        './next': {
+          require: './dist/next.cjs',
+          default: './dist/next.js'
+        },
         './*.cjs': './dist/*.cjs',
         './*': './dist/*.js'
       }
@@ -332,6 +351,7 @@ function jsEntry({watch, test, report}) {
               platform: 'neutral',
               mainFields: ['module', 'main'],
               alias: {
+                yjs: `./src/yjs.ts`,
                 // Mistakenly imported because it is used in the JSDocs
                 'y-protocols/awareness': `data:text/javascript,
                   export const Awareness = undefined
@@ -341,23 +361,7 @@ function jsEntry({watch, test, report}) {
                 'lib0/webcrypto': `data:text/javascript,
                   import {crypto} from '@alinea/iso'
                   export const subtle = crypto.subtle
-                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`,
-
-                // Used in simple-git, but not ESM and not useful for us
-                '@kwsites/file-exists': `data:text/javascript,
-                  export function exists() {return true}
-                  export const FOLDER = undefined`,
-
-                // Used in simple-git, but not ESM and not useful for us
-                debug: `data:text/javascript,
-                  const instance = () => () => {}
-                  instance.extend = instance
-                  export default function debug() {
-                    return instance
-                  }
-                  debug.enable = () => {}
-                  debug.formatters = {}
-                `
+                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`
               },
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33
@@ -489,7 +493,7 @@ const reportSizePlugin = {
         entryPoints: {server: 'dist/index.js'},
         tsconfigRaw: {}
       })
-      console.log(
+      console.info(
         `Server output: ` +
           prettyBytes(server.metafile.outputs['server.js'].bytes)
       )
@@ -499,7 +503,7 @@ const reportSizePlugin = {
         entryPoints: {dashboard: 'dist/dashboard/App.js'},
         tsconfigRaw: {}
       })
-      console.log(
+      console.info(
         `Dashboard output: ` +
           prettyBytes(dashboard.metafile.outputs['dashboard.js'].bytes)
       )
@@ -516,7 +520,8 @@ async function build({watch, test, report}) {
     jsEntry({watch, test, report}),
     bundleTs,
     ReporterPlugin.configure({name: 'alinea'}),
-    runPlugin
+    runPlugin,
+    cjsModules
   ]
   const context = await esbuild.context({
     bundle: true,
@@ -546,7 +551,7 @@ async function runTests() {
     return path.basename(file).toLowerCase().includes(filter)
   })
   if (modules.length === 0) {
-    console.log(`No tests found for pattern "${filter}"`)
+    console.warn(`No tests found for pattern "${filter}"`)
     process.exit()
   }
   process.argv.push('.bin/uvu') // Trigger isCLI

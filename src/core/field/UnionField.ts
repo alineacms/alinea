@@ -1,4 +1,5 @@
 import {Field, FieldMeta, FieldOptions} from '../Field.js'
+import {Schema} from '../Schema.js'
 import {RecordShape} from '../shape/RecordShape.js'
 import {UnionMutator, UnionRow, UnionShape} from '../shape/UnionShape.js'
 
@@ -8,7 +9,8 @@ export class UnionField<
   Options extends FieldOptions<StoredValue>
 > extends Field<StoredValue, QueryValue, UnionMutator<StoredValue>, Options> {
   constructor(
-    shapes: {[key: string]: RecordShape<any>},
+    schema: Schema,
+    shapes: Record<string, RecordShape<any>>,
     meta: FieldMeta<StoredValue, QueryValue, UnionMutator<StoredValue>, Options>
   ) {
     super({
@@ -18,6 +20,7 @@ export class UnionField<
         meta.options.initialValue,
         meta.postProcess
       ),
+      referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta
     })
   }

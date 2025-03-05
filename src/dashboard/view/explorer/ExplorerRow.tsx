@@ -1,43 +1,48 @@
-import {EntryRow} from 'alinea/core/EntryRow'
+import styler from '@alinea/styler'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {Schema} from 'alinea/core/Schema'
-import {View} from 'alinea/core/View'
-import {Cursor} from 'alinea/core/pages/Cursor'
-import {fromModule} from 'alinea/ui'
+import {SummaryProps} from 'alinea/core/media/Summary'
 import {useAtomValue} from 'jotai'
-import {memo} from 'react'
+import {ComponentType, memo} from 'react'
 import {useQuery} from 'react-query'
 import {graphAtom} from '../../atoms/DbAtoms.js'
+import {ExporerItemSelect} from './Explorer.js'
 import {ExplorerItem} from './ExplorerItem.js'
 import css from './ExplorerRow.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type ExplorerRowProps = {
   schema: Schema
-  cursor: Cursor.Find<EntryRow>
+  query: QueryWithResult<ExporerItemSelect>
   batchSize: number
   amount: number
   from: number
   summaryView: 'summaryRow' | 'summaryThumb'
-  defaultView: View<EntryRow, any>
+  defaultView: ComponentType<SummaryProps>
 }
 
 export const ExplorerRow = memo(function ExplorerRow({
   schema,
-  cursor,
+  query,
   batchSize,
   amount,
   from,
   summaryView,
   defaultView
 }: ExplorerRowProps) {
-  const {preferDraft: active} = useAtomValue(graphAtom)
+  const graph = useAtomValue(graphAtom)
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
   const {data} = useQuery(
-    ['explorer', 'batch', cursor, batchSize, start],
+    ['explorer', 'batch', query, batchSize, start],
     async () => {
-      return active.find(cursor.skip(start * batchSize).take(batchSize))
+      return graph.find({
+        ...query,
+        skip: start * batchSize,
+        take: batchSize,
+        status: 'preferDraft'
+      })
     },
     {refetchOnWindowFocus: false, keepPreviousData: true, staleTime: 10000}
   )
@@ -55,7 +60,7 @@ export const ExplorerRow = memo(function ExplorerRow({
           if (!entry) return null
           return (
             <ExplorerItem
-              key={entry.entryId}
+              key={entry.id}
               schema={schema}
               entry={entry}
               summaryView={summaryView}

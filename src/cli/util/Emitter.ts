@@ -1,17 +1,20 @@
 export interface Emitter<T> extends AsyncIterable<T> {
   emit(value: T): void
   throw(error: any): void
-  cancel(): void
   return(): void
-}
-
-export namespace Emitter {
-  export const CANCELLED = 'EMIT_CANCELLED'
 }
 
 type QueueItem<T> = {type: 'emit' | 'error' | 'finish'; value?: T}
 
-export function createEmitter<T>(): Emitter<T> {
+export interface EmitterOptions {
+  onReturn?: () => void
+  onThrow?: (error: any) => void
+}
+
+export function createEmitter<T>({
+  onReturn,
+  onThrow
+}: EmitterOptions = {}): Emitter<T> {
   const queue: Array<QueueItem<T>> = []
   let resolve: (() => void) | undefined
 
@@ -43,13 +46,12 @@ export function createEmitter<T>(): Emitter<T> {
   return {
     emit: (value: T) => push({type: 'emit', value}),
     throw(e: any) {
+      onThrow?.(e)
       push({type: 'error', value: e})
     },
-    cancel() {
-      this.throw(Emitter.CANCELLED)
-    },
     return() {
-      queue.push({type: 'finish'})
+      onReturn?.()
+      push({type: 'finish'})
     },
     [Symbol.asyncIterator]() {
       return iterator

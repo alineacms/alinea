@@ -1,17 +1,20 @@
-import {Field, FieldMeta, FieldOptions} from '../Field.js'
+import {Field, FieldMeta} from '../Field.js'
 import {ScalarShape} from '../shape/ScalarShape.js'
 
-export class ScalarField<
+export class ScalarField<Value, Options> extends Field<
   Value,
-  Options extends FieldOptions<Value> & {searchable?: boolean}
-> extends Field<Value, Value, (value: Value) => void, Options> {
+  Value,
+  (value: Value) => void,
+  Options
+> {
   constructor(meta: FieldMeta<Value, Value, (value: Value) => void, Options>) {
     super({
       shape: new ScalarShape(
         meta.options.label,
         meta.options.initialValue,
-        meta.options.searchable
+        (meta.options as {searchable?: boolean}).searchable
       ),
+      referencedViews: [],
       ...meta
     })
   }

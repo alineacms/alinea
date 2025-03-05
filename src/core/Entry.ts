@@ -1,10 +1,10 @@
-import {EntryPhase, EntryRow} from './EntryRow.js'
-import {Target} from './pages/Target.js'
+import {EntryRow, EntryStatus} from './EntryRow.js'
+import {Expr} from './Expr.js'
 import {Expand} from './util/Types.js'
 
 export interface Entry {
-  entryId: string
-  phase: EntryPhase
+  id: string
+  status: EntryStatus
   title: string
   type: string
   seeded: string | null
@@ -15,10 +15,8 @@ export interface Entry {
   parentDir: string
   childrenDir: string
   index: string
-  parent: string | null
-  i18nId: string
+  parentId: string | null
   locale: string | null
-  modifiedAt: number
   rowHash: string
   active: boolean
   main: boolean
@@ -28,7 +26,30 @@ export interface Entry {
   data: Record<string, any>
   searchableText: string
 }
-export const Entry = Target.create<Entry>({})
+export const Entry = {
+  id: new Expr<string>({type: 'entryField', name: 'id'}),
+  status: new Expr<EntryStatus>({type: 'entryField', name: 'status'}),
+  title: new Expr<string>({type: 'entryField', name: 'title'}),
+  type: new Expr<string>({type: 'entryField', name: 'type'}),
+  seeded: new Expr<string | null>({type: 'entryField', name: 'seeded'}),
+  workspace: new Expr<string>({type: 'entryField', name: 'workspace'}),
+  root: new Expr<string>({type: 'entryField', name: 'root'}),
+  level: new Expr<number>({type: 'entryField', name: 'level'}),
+  filePath: new Expr<string>({type: 'entryField', name: 'filePath'}),
+  parentDir: new Expr<string>({type: 'entryField', name: 'parentDir'}),
+  childrenDir: new Expr<string>({type: 'entryField', name: 'childrenDir'}),
+  index: new Expr<string>({type: 'entryField', name: 'index'}),
+  parentId: new Expr<string | null>({type: 'entryField', name: 'parentId'}),
+  locale: new Expr<string | null>({type: 'entryField', name: 'locale'}),
+  rowHash: new Expr<string>({type: 'entryField', name: 'rowHash'}),
+  active: new Expr<boolean>({type: 'entryField', name: 'active'}),
+  main: new Expr<boolean>({type: 'entryField', name: 'main'}),
+  path: new Expr<string>({type: 'entryField', name: 'path'}),
+  fileHash: new Expr<string>({type: 'entryField', name: 'fileHash'}),
+  url: new Expr<string>({type: 'entryField', name: 'url'}),
+  data: new Expr<Record<string, any>>({type: 'entryField', name: 'data'}),
+  searchableText: new Expr<string>({type: 'entryField', name: 'searchableText'})
+}
 
 // We can't export the inferred type because the rado depencency types are
 // not included in distribution. At least we'll get a type error here if the

@@ -1,13 +1,13 @@
+import * as schema from '@/schema'
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/next'
-import * as schema from './schema'
 
 const pages = Config.root('Pages', {
   contains: ['Page', 'Home'],
-  entries: {
-    index: Config.page(schema.Home),
-    roadmap: Config.page(schema.Page),
-    docs: Config.page(schema.Docs)
+  children: {
+    index: Config.page({type: schema.Home}),
+    roadmap: Config.page({type: schema.Page}),
+    docs: Config.page({type: schema.Docs})
   }
 })
 
@@ -40,27 +40,25 @@ const demo = Config.workspace('Demo', {
   roots: {
     pages: Config.root('Demo', {
       contains: ['DemoHome', 'DemoRecipes'],
-      entries: {
-        index: Config.page(schema.DemoHome({title: 'Home'})),
-        recipes: Config.page(schema.DemoRecipes({title: 'Recipes'}))
+      children: {
+        index: Config.page({type: schema.DemoHome, fields: {title: 'Home'}}),
+        recipes: Config.page({
+          type: schema.DemoRecipes,
+          fields: {title: 'Recipes'}
+        })
       }
     }),
     media: Config.media()
   }
 })
-
-const config = Config.create({
+export const cms = createCMS({
   schema,
   workspaces: {main, demo},
-  dashboard: {
-    dashboardUrl: '/admin.html',
-    handlerUrl: '/api/cms',
-    staticFile: 'public/admin.html'
+  baseUrl: {
+    production: process.env.VERCEL_URL ?? 'alinea.sh',
+    development: 'http://localhost:3000'
   },
-  preview:
-    process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000/api/preview'
-      : '/api/preview'
+  handlerUrl: '/api/cms',
+  dashboardFile: 'admin.html',
+  preview: true
 })
-
-export const cms = createCMS(config)

@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {autoUpdate, flip, offset, useFloating} from '@floating-ui/react-dom'
 import {Menu} from '@headlessui/react'
 import {
@@ -7,9 +8,8 @@ import {
   useContext
 } from 'react'
 import css from './DropdownMenu.module.scss'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export namespace DropdownMenu {
   const floatingContext = createContext<ReturnType<typeof useFloating>>(

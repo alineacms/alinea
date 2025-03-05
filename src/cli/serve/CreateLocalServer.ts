@@ -1,14 +1,19 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
-import {Handler} from 'alinea/backend'
-import {HttpRouter, router} from 'alinea/backend/router/Router'
-import {cloudUrl} from 'alinea/cloud/server/CloudConfig'
+import {HandlerWithConnect} from 'alinea/backend/Handler'
+import {router} from 'alinea/backend/router/Router'
+import {cloudUrl} from 'alinea/cloud/CloudConfig'
+import {CMS} from 'alinea/core/CMS'
 import {Trigger, trigger} from 'alinea/core/Trigger'
 import {User} from 'alinea/core/User'
-import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
+import {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
 import {Readable} from 'node:stream'
+import {buildEmitter} from '../build/BuildEmitter.js'
+import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
+import {reportHalt} from '../util/Report.js'
+import {viewsPlugin} from '../util/ViewsPlugin.js'
 import {ServeContext} from './ServeContext.js'
 
 type BuildDetails = Map<string, OutputFile>
@@ -60,23 +65,43 @@ function buildFiles(outdir: string, result: BuildResult) {
 
 export function createLocalServer(
   {
-    rootDir: cwd,
+    cmd,
+    configLocation,
+    rootDir,
     staticDir,
     alineaDev,
     buildOptions,
     production,
     liveReload
   }: ServeContext,
-  handler: Handler,
+  cms: CMS,
+  handleApi: HandlerWithConnect,
   user: User
-): HttpRouter {
+): {
+  close(): void
+  handle(input: Request): Promise<Response>
+} {
+  function devHandler(request: Request) {
+    return handleApi(request, {
+      handlerUrl: new URL(request.url.split('?')[0]),
+      apiKey: 'dev'
+    })
+  }
+  if (cmd === 'build') return {close() {}, handle: devHandler}
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
-  const entry = `alinea/cli/static/dashboard/dev`
-  const altConfig = path.join(cwd, 'tsconfig.alinea.json')
-  const tsconfig = fs.existsSync(altConfig) ? altConfig : undefined
-  let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
-    initial = true
+  const entryPoints = {
+    entry: 'alinea/cli/static/dashboard/dev',
+    config: '#alinea/entry'
+  }
+  const tsconfigLocation = path.join(rootDir, 'tsconfig.json')
+  const tsconfig = fs.existsSync(tsconfigLocation)
+    ? tsconfigLocation
+    : undefined
+  let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>()
+  let initial = true
+  const plugins = buildOptions?.plugins || []
+  plugins.push(viewsPlugin(rootDir, cms), ignorePlugin)
   const config = {
     format: 'esm',
     target: 'esnext',
@@ -86,18 +111,24 @@ export function createLocalServer(
     sourcemap: true,
     outdir: devDir,
     bundle: true,
-    absWorkingDir: cwd,
-    entryPoints: {
-      config: '@alinea/generated/config.js',
-      entry
-    },
+    absWorkingDir: rootDir,
+    entryPoints,
     platform: 'browser',
     ...buildOptions,
-    plugins: buildOptions?.plugins || [],
+    plugins,
+    alias: {
+      'alinea/next': 'alinea/core',
+      '#alinea/config': configLocation,
+      '#alinea/entry': `data:text/javascript,
+        export * from '#alinea/config'
+        export * from '${viewsPlugin.entry}'
+      `
+    },
+    external: ['@alinea/generated'],
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
       'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
-      'process.env.NODE_ENV': production ? "'production'" : "'development'",
+      'process.env.NODE_ENV': production ? '"production"' : '"development"',
       'process.env.ALINEA_CLOUD_URL': cloudUrl
         ? JSON.stringify(cloudUrl)
         : 'undefined',
@@ -110,24 +141,23 @@ export function createLocalServer(
     write: false
   } satisfies BuildOptions
 
-  config.plugins.push({
-    name: 'files',
-    setup(build) {
-      build.onStart(() => {
+  const builder = buildEmitter(config)
+
+  ;(async () => {
+    for await (const {type, result} of builder) {
+      if (type === 'start') {
         if (initial) initial = false
         else currentBuild = trigger<BuildDetails>()
-      })
-      build.onEnd(result => {
+      } else {
         if (result.errors.length) {
-          console.log('> building alinea dashboard failed')
+          reportHalt('Building Alinea dashboard failed')
+        } else {
+          currentBuild.resolve(buildFiles(devDir, result))
+          liveReload.reload(alineaDev ? 'reload' : 'refresh')
         }
-        currentBuild.resolve(buildFiles(devDir, result))
-        if (alineaDev) liveReload.reload('reload')
-      })
+      }
     }
-  })
-
-  esbuild.context(config).then(ctx => ctx.watch())
+  })()
 
   async function serveBrowserBuild(
     request: Request
@@ -153,11 +183,10 @@ export function createLocalServer(
 
   const httpRouter = router(
     matcher.get('/~dev').map((): Response => {
-      const stream = new ReadableStream({
+      const stream = new ReadableStream<string>({
         start(controller) {
           liveReload.register({
-            // Todo: check types here
-            write: v => controller.enqueue(v as any),
+            write: v => controller.enqueue(v),
             close: () => controller.close()
           })
         }
@@ -171,45 +200,47 @@ export function createLocalServer(
         }
       })
     }),
-    matcher.post('/upload').map(async ({request, url}) => {
+    router.queryMatcher.post('/upload').map(async ({request, url}) => {
       if (!request.body) return new Response('No body', {status: 400})
       const file = url.searchParams.get('file')!
-      const dir = path.join(cwd, path.dirname(file))
+      const dir = path.join(rootDir, path.dirname(file))
       await fs.promises.mkdir(dir, {recursive: true})
       await fs.promises.writeFile(
-        path.join(cwd, file),
+        path.join(rootDir, file),
         Readable.fromWeb(request.body as any)
       )
       return new Response('Upload ok')
     }),
-    matcher.get('/preview').map(async ({request, url}) => {
-      return new Response()
-    }),
     router.compress(
+      matcher.all('/api').map(async ({url, request}) => {
+        return devHandler(request)
+      }),
       matcher.get('/').map(({url}): Response => {
         const handlerUrl = `${url.protocol}//${url.host}`
         return new Response(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          <link href="/entry.css" rel="stylesheet" />
+          <link href="/config.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
-          <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
+          <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
+          <meta name="redirect_url" value="${handlerUrl}?auth=login" />
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,
-          {
-            headers: {'content-type': 'text/html'}
-          }
+          {headers: {'content-type': 'text/html'}}
         )
       }),
-      handler.router,
       serveBrowserBuild
     )
   ).notFound(() => new Response('Not found', {status: 404}))
 
-  return async (request: Request) => {
-    return (await httpRouter.handle(request))!
+  return {
+    close() {
+      builder.return()
+    },
+    async handle(request: Request) {
+      return (await httpRouter.handle(request))!
+    }
   }
 }

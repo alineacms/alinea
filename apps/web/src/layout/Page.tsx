@@ -1,9 +1,9 @@
-import {fromModule} from 'alinea/ui/util/Styler'
+import styler from '@alinea/styler'
 import {HTMLAttributes, PropsWithChildren, ReactNode} from 'react'
 import {NavSidebar} from './NavSidebar'
 import css from './Page.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type PageTheme = 'system' | 'dark' | 'light'
 

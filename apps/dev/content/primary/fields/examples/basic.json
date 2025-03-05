@@ -7,12 +7,14 @@
   "text": "",
   "hello": "",
   "richText": [],
+  "number": 12,
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

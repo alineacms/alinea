@@ -1,8 +1,8 @@
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
 import NextImage, {ImageProps as NextImageProps} from 'next/image'
 import css from './Image.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type ImageProps = Omit<NextImageProps, 'sizes'> & {
   sizes: string

@@ -7,28 +7,32 @@ import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
 const fields = type('Tabs', {
-  ...tabs(
-    tab('Tab 1', {
-      field1: text('Text field 1')
-    }),
-    tab('Tab 2', {
-      field2: text('Text field 2')
-    }),
-    tab('Long tab name', {
-      field3: text('Text field 3'),
-      ...tabs(
-        tab('Inner tab 1', {
-          fieldA: text('Text field 1')
-        }),
-        tab('Inner tab 2', {
-          fieldB: text('Text field 2')
-        }),
-        tab('Inner long tab name', {
-          fieldC: text('Text field 3')
-        })
-      )
-    })
-  )
+  fields: {
+    ...tabs(
+      tab('Tab 1', {
+        fields: {field1: text('Text field 1')}
+      }),
+      tab('Tab 2', {
+        fields: {field2: text('Text field 2')}
+      }),
+      tab('Long tab name', {
+        fields: {
+          field3: text('Text field 3'),
+          ...tabs(
+            tab('Inner tab 1', {
+              fields: {fieldA: text('Text field 1')}
+            }),
+            tab('Inner tab 2', {
+              fields: {fieldB: text('Text field 2')}
+            }),
+            tab('Inner long tab name', {
+              fields: {fieldC: text('Text field 3')}
+            })
+          )
+        }
+      })
+    )
+  }
 })
 
 export function TabsField() {

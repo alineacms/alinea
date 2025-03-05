@@ -1,6 +1,7 @@
 'use client'
 
-import {fromModule, HStack} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {HStack} from 'alinea/ui'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import Link from 'next/link'
@@ -10,7 +11,7 @@ import {getFramework} from './Frameworks'
 import css from './NavTree.module.scss'
 import {Nav, NavItem, nestNav} from './NestNav'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 function useNavTree(nav: Nav) {
   return useMemo(() => nestNav(nav), [nav])

@@ -1,6 +1,6 @@
 import {Reference} from 'alinea/core/Reference'
 import {UrlReference} from 'alinea/picker/url'
-import {fromModule, HStack, Icon, px, Typo} from 'alinea/ui'
+import {HStack, Icon, px, Typo} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcAlignCenter} from 'alinea/ui/icons/IcAlignCenter'
 import {IcAlignJustify} from 'alinea/ui/icons/IcAlignJustify'
@@ -18,6 +18,7 @@ import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 /*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
 import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
+import styler from '@alinea/styler'
 import {Editor} from '@tiptap/react'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
@@ -37,7 +38,7 @@ import {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import css from './RichTextToolbar.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 enum Styles {
   paragraph = 'Normal text',

@@ -1,5 +1,6 @@
 import {DemoRecipe} from '@/schema'
-import {Infer, Query} from 'alinea'
+import {Entry} from 'alinea/core/Entry'
+import {Graph} from 'alinea/core/Graph'
 import {DemoHeader} from './layout/DemoHeader'
 import {DemoLayout} from './layout/DemoLayout'
 import {DemoPage} from './layout/DemoPage'
@@ -12,7 +13,7 @@ export function DemoRecipePage({
   intro,
   ingredients,
   instructions
-}: Infer<typeof DemoRecipePage.fragment>) {
+}: Awaited<ReturnType<typeof DemoRecipePage.query>>) {
   return (
     <DemoLayout>
       <DemoHeader {...header} />
@@ -37,4 +38,10 @@ export function DemoRecipePage({
   )
 }
 
-DemoRecipePage.fragment = Query(DemoRecipe).first()
+DemoRecipePage.query = async (graph: Graph, entry: Entry) => {
+  return graph.get({
+    type: DemoRecipe,
+    preview: {entry},
+    path: entry.path
+  })
+}

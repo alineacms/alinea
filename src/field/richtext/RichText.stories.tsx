@@ -72,10 +72,12 @@ const lipsumDoc: TextDoc = [
   }
 ]
 
-const fields = type({
-  richText: richText('Rich text example', {
-    initialValue: lipsumDoc
-  })
+const fields = type('Fields', {
+  fields: {
+    richText: richText('Rich text example', {
+      initialValue: lipsumDoc
+    })
+  }
 })
 
 export function RichTextField() {

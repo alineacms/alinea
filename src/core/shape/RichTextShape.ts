@@ -78,6 +78,7 @@ function serialize(
     })
   }
   const res: ElementNode = {[Node.type]: item.nodeName}
+  if (typeof item.getAttributes !== 'function') return res
   const attrs = item.getAttributes()
   if (attrs && Object.keys(attrs).length) Object.assign(res, attrs)
   const children = item.toArray()
@@ -102,28 +103,31 @@ function unserializeMarks(marks: Array<Mark>) {
   )
 }
 
-function unserialize(node: Node): Y.XmlText | Y.XmlElement {
-  if (Node.isText(node)) {
-    const text = node[TextNode.text]
-    const marks = node[TextNode.marks]
-    const type = new Y.XmlText()
-    if (text) type.insert(0, text, marks && unserializeMarks(marks))
-    return type
-  } else if (Node.isElement(node)) {
-    const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
-    const element = new Y.XmlElement(type)
-    for (const key in attrs) {
-      const val = attrs[key]
-      if (val) element.setAttribute(key, val)
+function unserialize(nodes: Array<Node>): Array<Y.XmlText | Y.XmlElement> {
+  const result = []
+  for (const node of nodes) {
+    if (Node.isText(node)) {
+      const text = node[TextNode.text]
+      const marks = node[TextNode.marks]
+      const type = new Y.XmlText()
+      if (text) type.insert(0, text, marks && unserializeMarks(marks))
+      result.push(type)
+    } else if (Node.isElement(node)) {
+      const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
+      const element = new Y.XmlElement(type)
+      for (const key in attrs) {
+        const val = attrs[key]
+        if (val) element.setAttribute(key, val)
+      }
+      if (content) element.insert(0, unserialize(content))
+      result.push(element)
+    } else if (Node.isBlock(node)) {
+      const element = new Y.XmlElement(node[Node.type])
+      element.setAttribute(BlockNode.id, node[BlockNode.id])
+      result.push(element)
     }
-    if (content) element.insert(0, content.map(unserialize))
-    return element
-  } else if (Node.isBlock(node)) {
-    const element = new Y.XmlElement(node[Node.type])
-    element.setAttribute(BlockNode.id, node[BlockNode.id])
-    return element
   }
-  throw new Error('Invalid node')
+  return result
 }
 
 export type RichTextMutator<R> = {
@@ -176,7 +180,7 @@ export class RichTextShape<Blocks>
     return this.initialValue ?? ([] as TextDoc<Blocks>)
   }
   toXml(rows: TextDoc<Blocks>) {
-    return rows.map(unserialize)
+    return unserialize(rows)
   }
   toV1(value: any): TextDoc<Blocks> {
     if (!Array.isArray(value)) return []
@@ -400,7 +404,7 @@ export class RichTextShape<Blocks>
     iterMarks(doc, mark => {
       if (mark[Mark.type] !== 'link') return
       const entryId = mark[LinkMark.entry]
-      if (entryId) links.set(mark, entryId)
+      if (typeof entryId === 'string') links.set(mark, entryId)
     })
     async function loadLinks() {
       const linkIds = Array.from(new Set(links.values()))

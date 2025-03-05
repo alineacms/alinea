@@ -14,29 +14,30 @@ import {PageContainer} from '@/layout/Page'
 import WebLayout from '@/layout/WebLayout'
 import {WebTypo} from '@/layout/WebTypo'
 import {Home} from '@/schema/Home'
-import {Query} from 'alinea'
+import styler from '@alinea/styler'
+import {Entry} from 'alinea/core/Entry'
 import {HStack, VStack} from 'alinea/ui/Stack'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
-import {fromModule} from 'alinea/ui/util/Styler'
 import {px} from 'alinea/ui/util/Units'
 import type {Metadata, MetadataRoute} from 'next'
 import {ComponentType, PropsWithChildren} from 'react'
 import {Link} from '../layout/nav/Link'
 import css from './HomePage.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await cms.get(
-    Query(Home).select({
-      url: (Query as any).url,
-      title: (Query as any).title,
-      metadata: (Home as any).metadata
-    })
-  )
+  const page = await cms.get({
+    type: Home,
+    select: {
+      url: Entry.url,
+      title: Home.title,
+      metadata: Home.metadata
+    }
+  })
   const appUrl = 'https://alinea.sh'
   const title = page.metadata?.title || page.title
   const ogTitle = page.metadata?.openGraph?.title || title
@@ -83,7 +84,7 @@ function Highlight({
 }
 
 export default async function HomePage() {
-  const home = await cms.get(Home())
+  const home = await cms.get({type: Home})
   return (
     <WebLayout footer={false}>
       <main className={styles.home()}>

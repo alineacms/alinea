@@ -6,11 +6,13 @@ import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
 const fields = type('Field', {
-  code: code('Code'),
-  disabled: code('Code (read-only)', {
-    readOnly: true,
-    initialValue: `console.log('Hello world!')`
-  })
+  fields: {
+    code: code('Code'),
+    disabled: code('Code (read-only)', {
+      readOnly: true,
+      initialValue: `console.info('Hello world!')`
+    })
+  }
 })
 
 export function CodeField() {

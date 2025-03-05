@@ -1,17 +1,17 @@
 'use client'
 
+import styler from '@alinea/styler'
 import {HStack, Stack, VStack} from 'alinea/ui/Stack'
 import {IcOutlineDarkMode} from 'alinea/ui/icons/IcOutlineDarkMode'
 import {IcOutlineLightMode} from 'alinea/ui/icons/IcOutlineLightMode'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
-import {fromModule} from 'alinea/ui/util/Styler'
 import Link from 'next/link'
 import css from './Footer.module.scss'
 import {PageContainer, PageTheme} from './Page'
 import {WebTypo} from './WebTypo'
 import {Newsletter} from './engage/Newsletter'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface FooterProps {
   theme: PageTheme

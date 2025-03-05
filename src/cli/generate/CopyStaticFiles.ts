@@ -1,3 +1,4 @@
+import {createId} from 'alinea/core/Id'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
@@ -12,12 +13,16 @@ const packageJson = {
 }
 
 export async function copyStaticFiles({outDir}: GenerateContext) {
-  await fs.mkdir(outDir, {recursive: true}).catch(console.log)
+  await fs.mkdir(outDir, {recursive: true}).catch(console.error)
+
+  await fs.writeFile(
+    path.join(outDir, 'release.js'),
+    `export const release = ${JSON.stringify(createId())}`
+  )
   await fs.writeFile(
     path.join(outDir, 'package.json'),
     JSON.stringify(packageJson, null, 2)
   )
-  await writeFileIfContentsDiffer(path.join(outDir, 'config.css'), ``)
   // await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)*/
   await writeFileIfContentsDiffer(
     path.join(outDir, '.keep'),

@@ -1,6 +1,8 @@
 import {DemoHome, DemoRecipe} from '@/schema'
-import {Infer, Query} from 'alinea'
-import {VStack, fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {Entry} from 'alinea/core/Entry'
+import {Graph} from 'alinea/core/Graph'
+import {VStack} from 'alinea/ui'
 import css from './DemoHomePage.module.scss'
 import {DemoHeader} from './layout/DemoHeader'
 import {DemoLayout} from './layout/DemoLayout'
@@ -9,12 +11,12 @@ import {DemoText} from './layout/DemoText'
 import {DemoTypo} from './layout/DemoType'
 import {RecipeCard} from './layout/RecipeCard'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function DemoHomePage({
   hero,
   recipes
-}: Infer<typeof DemoHomePage.fragment>) {
+}: Awaited<ReturnType<typeof DemoHomePage.query>>) {
   return (
     <DemoLayout>
       <DemoHeader {...hero.header} />
@@ -29,7 +31,7 @@ export function DemoHomePage({
 
           <VStack gap={20}>
             {recipes.map(recipe => {
-              return <RecipeCard key={recipe.id} {...recipe} />
+              return <RecipeCard key={recipe._id} {...recipe} />
             })}
           </VStack>
         </DemoPage.Container>
@@ -38,13 +40,18 @@ export function DemoHomePage({
   )
 }
 
-DemoHomePage.fragment = Query(DemoHome)
-  .select({
-    hero: DemoHome.hero,
-    recipes: Query(DemoRecipe).select({
-      id: Query.id,
-      url: Query.url,
-      ...DemoRecipe
+DemoHomePage.query = async (graph: Graph, entry: Entry) => {
+  return {
+    hero: await graph.get({
+      preview: {entry},
+      type: DemoHome,
+      select: DemoHome.hero
+    }),
+    recipes: await graph.find({
+      type: DemoRecipe,
+      filter: {
+        _workspace: 'demo'
+      }
     })
-  })
-  .first()
+  }
+}

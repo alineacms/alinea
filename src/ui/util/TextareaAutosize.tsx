@@ -1,8 +1,8 @@
+import styler from '@alinea/styler'
 import {HTMLProps} from 'react'
-import {fromModule} from './Styler.js'
 import css from './TextareaAutosize.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function TextareaAutosize(props: HTMLProps<HTMLTextAreaElement>) {
   return (

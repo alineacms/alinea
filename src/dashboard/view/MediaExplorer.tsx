@@ -1,10 +1,14 @@
-import {fromModule, HStack, TextLabel, VStack} from 'alinea/ui'
+import {HStack, TextLabel, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {useMemo} from 'react'
 import {useQuery} from 'react-query'
 //import {EntryProperty} from '../draft/EntryProperty.js'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
+import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
+import {EntryFields} from 'alinea/core/EntryFields'
+import {Filter} from 'alinea/core/Filter'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {RootData} from 'alinea/core/Root'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {EntryHeader} from 'alinea/dashboard/view/entry/EntryHeader'
@@ -18,12 +22,12 @@ import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {Head} from '../util/Head.js'
-import {Explorer} from './explorer/Explorer.js'
+import {Explorer, ExporerItemSelect} from './explorer/Explorer.js'
 import {IconLink} from './IconButton.js'
 import {FileUploader} from './media/FileUploader.js'
 import css from './MediaExplorer.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface MediaExplorerProps {
   editor?: EntryEditor
@@ -36,38 +40,41 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const workspace = useWorkspace()
   const root = useRoot()
   const graph = useAtomValue(graphAtom)
-  const condition = useMemo(() => {
-    return parentId
-      ? Entry.parent.is(parentId)
-      : Entry.root
-          .is(root.name)
-          .and(Entry.workspace.is(workspace.name))
-          .and(Entry.parent.isNull())
+  const condition = useMemo((): Filter<EntryFields> => {
+    return {
+      _root: root.name,
+      _workspace: workspace.name,
+      _parentId: parentId ?? null
+    }
   }, [workspace, root, parentId])
   const {data} = useQuery(
     ['explorer', 'media', 'total', condition],
     async () => {
-      const cursor = Entry()
-        .where(condition)
-        .orderBy(Entry.type.desc(), Entry.entryId.desc())
-      const info = await graph.preferDraft.maybeGet(
-        Entry({entryId: parentId})
-          .select({
+      const query: QueryWithResult<ExporerItemSelect> = {
+        select: undefined!,
+        orderBy: [{desc: Entry.type}, {desc: Entry.id}],
+        filter: condition
+      }
+      const info =
+        parentId &&
+        (await graph.first({
+          select: {
             title: Entry.title,
-            parent: Entry.parent
-          })
-          .maybeFirst()
-      )
-      return {...info, cursor}
+            parent: Entry.parentId
+          },
+          id: parentId,
+          status: 'preferDraft'
+        }))
+      return {...info, query}
     },
     {suspense: true, keepPreviousData: true}
   )
-  const {cursor} = data!
+  const {query} = data!
   const title = data?.title || root.label
   const nav = useNav()
   const navigate = useNavigate()
   const backLink = data?.parent
-    ? nav.entry({entryId: data.parent})
+    ? nav.entry({id: data.parent})
     : editor
     ? nav.root({root: root.name})
     : undefined
@@ -92,10 +99,10 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
                 </HStack>
               </header>
               <Explorer
-                cursor={cursor}
+                query={query}
                 type="thumb"
                 virtualized
-                onNavigate={entryId => navigate(nav.entry({entryId: entryId}))}
+                onNavigate={id => navigate(nav.entry({id: id}))}
               />
             </VStack>
           </HStack>

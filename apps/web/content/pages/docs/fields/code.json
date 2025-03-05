@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a2C",
   "_i18nId": "BUQj_NQqEq7YYO1nevx1o",
-  "_root": "pages",
   "title": "Code",
   "navigationTitle": "",
   "body": [
@@ -28,15 +27,16 @@
     {
       "_type": "ExampleBlock",
       "_id": "qsJHS5HxiYf1Hs8eUOG6M",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Code field', {\n  fields: {\n    code: alinea.code('My code field', {\n      help: 'Paste your code here'\n    })\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Code field', {\n  fields: {\n    code: Field.code('My code field', {\n      help: 'Paste your code here'\n    })\n  }\n})"
     }
   ],
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

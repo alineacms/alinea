@@ -1,10 +1,10 @@
+import styler from '@alinea/styler'
 import {assign} from 'alinea/core/util/Objects'
 import {HTMLProps, ReactNode, Ref, forwardRef} from 'react'
 import {Loader} from './Loader.js'
 import css from './Main.module.scss'
-import {fromModule} from './util/Styler.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface MainProps extends HTMLProps<HTMLDivElement> {
   head?: ReactNode
@@ -43,7 +43,9 @@ function MainRoot(
   )
 }
 
-const MainContainer = styles.container.toElement('div')
+function MainContainer(props: HTMLProps<HTMLDivElement>) {
+  return <div {...props} className={styles.container(styler.merge(props))} />
+}
 
 export const Main = assign(forwardRef(MainRoot), {
   Container: MainContainer

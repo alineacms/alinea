@@ -1,4 +1,4 @@
-import {base64} from 'alinea/core/util/Encoding'
+import {encode} from 'alinea/core/util/BufferToBase64'
 import {promises as fs} from 'node:fs'
 import path, {dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -80,27 +80,31 @@ function embedInWasm(data: Uint8Array) {
   `
 }
 
-function embedInJs(source: string, data: Uint8Array) {
-  return source.replace('$DB', base64.stringify(data))
+async function embedInJs(source: string, data: Uint8Array) {
+  return source.replace('$DB', await encode(data))
 }
 
 export async function exportStore(
   data: Uint8Array,
   location: string,
   asWasm = false
-) {
+): Promise<number> {
   const staticDir = path.join(__dirname, '../static')
   const source = await fs.readFile(
     path.join(staticDir, `store.${asWasm ? 'wasm' : 'embed'}.js`),
     'utf-8'
   )
   if (!asWasm) {
-    await fs.writeFile(location, embedInJs(source, data))
+    const payload = await embedInJs(source, data)
+    await fs.writeFile(location, payload)
+    return payload.length
   } else {
     await fs.writeFile(
       location,
       source.replace('$WASM', path.basename(location) + '.wasm')
     )
-    await fs.writeFile(location + '.wasm', embedInWasm(data))
+    const payload = embedInWasm(data)
+    await fs.writeFile(location + '.wasm', payload)
+    return payload.length
   }
 }

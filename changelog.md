@@ -1,5 +1,174 @@
 # Changelog
 
+## [1.2.0]
+- Archiving an entry results in archived children entries as well.
+
+## [1.1.2]
+- Adjust the inferred results of `cms.find` and `cms.get` so they work reliable
+  in non-strict Typescript codebases as well.
+
+## [1.1.1]
+- Fix the query result type of `Query.parent`, `Query.next` and `Query.previous`
+  which were incorrectly typed as an `Array`.
+
+## [1.1.0]
+- Add a copy and paste button to List field blocks
+- Update link properties condition and location to be dynamic. The contents
+  can be set by using a function.
+  
+## [1.0.11]
+- Fix navigation tree in link picker
+- Set the default depth of querying children to 1
+
+## [1.0.10]
+- Fix handling mutation retries based on the http status code received.
+
+## [1.0.9]
+- Fix skip/take for queries which were not used
+- Disable navigation in the internal link picker if a condition is used
+
+## [1.0.8]
+- Fix live previews for translated entries
+
+## [1.0.7]
+- Fix querying linked entries without locale
+
+## [1.0.6]
+- Fix querying linked entries - the requested locale was not passed
+
+## [1.0.5]
+- Alinea will now fail if linked entries cannot be resolved during querying.
+  Before it would log the error but continue - but this is rarely desired.
+
+## [1.0.4]
+- Fix removing field contents in `Edit.update`. Pass an undefined value to remove
+  field contents: 
+
+  ````tsx
+  await cms.commit(
+    Edit.update({
+      id: '...',
+      set: {removeMe: undefined}
+    })
+  )
+  ````
+- Fix processing link data correctly even it contains legacy data
+
+## [1.0.3]
+- Only access normalized config in next cms adapter. This fixes an error
+  in production builds which would prevent you from querying media files.
+
+## [1.0.2]
+- Tweak the withAlinea config function to work in all environments including 
+  Next 14.
+
+## [1.0.1]
+- Add the Infer.Entry and Infer.ListItem types which can be used to infer the 
+  type of an entry or list item from a query.
+
+  ```tsx
+  type Entry = Infer.Entry<typeof EntryType>
+  const entry: Entry = await cms.get({type: MyType})
+  type ListItem = Infer.ListItem<typeof ListType>
+  const list: Array<ListItem> = await cms.get({select: MyType.list})
+  ````
+
+## [1.0.0]
+
+- Add support for Next.js 15 and Turbopack.
+- Removed all previously deprecated options.
+- Next.js config changes are now bundled in a `withAlinea` export found in 
+  'alinea/next'.
+- Querying via `cms.find/get` is rewritten to take a single query object.
+  Have a look at the docs to see how to use the new query api.
+- Creating custom fields can now be done through `Field.create`.
+- Entries now have a single id. If you are upgrading and were using i18n you
+  can stabilize your ids by running `npx alinea build --fix`.
+
+## [0.11.2]
+
+- Querying data in a Next.js edge route or middleware will forward the request
+  to your CMS handler. This will keep the code size of the edge route to a 
+  minimum.
+
+## [0.11.1]
+
+- Fix RichTextEditor.addHtml not parsing marks correctly
+- Fix index on entry creation
+
+## [0.11.0]
+
+- The cms handler has been rewritten to handle both backend and previews. This 
+  requires updating your handler route. In the case of Next.js you can replace
+  both `app/api/cms/[...slug]/route.ts` and `/app/api/preview.ts` with the 
+  following:
+
+  ```tsx
+  // app/api/cms/route.ts
+  import {cms} from '@/cms'
+  import {createHandler} from 'alinea/next'
+
+  const handler = createHandler(cms)
+
+  export const GET = handler
+  export const POST = handler
+  ```
+
+  This release also requires you to restructure your Alinea config file.
+  The dashboard property is replaced by the `baseUrl`, `handlerUrl` and 
+  `dashboardFile` properties.
+
+  ```tsx
+  // cms.tsx
+
+  // Previously:
+  const cms = createCMS({
+    // ... schema and workspaces
+    dashboard: {
+      dashboardUrl: '/admin.html',
+      handlerUrl: '/api/cms',
+      staticFile: 'public/admin.html'
+    },
+    preview:
+      process.env.NODE_ENV === 'development'
+        ? 'http://localhost:3000/api/preview'
+        : '/api/preview'
+  })
+
+  // Becomes:
+  const cms = createCMS({
+    // ... schema and workspaces
+    baseUrl: {
+      // Point this to your local frontend
+      development: 'http://localhost:3000'
+      // If hosting on vercel you can use: process.env.VERCEL_URL
+      production: 'http://example.com'
+    },
+    handlerUrl: '/api/cms',
+    dashboardFile: 'admin.html',
+    // Optionally supply the public folder with
+    publicDir: 'public',
+    // Enable previews which are handled via handlerUrl
+    preview: true
+  })
+  ```
+
+
+## [0.10.1]
+
+- Use buffer-to-base64 to compress store data written to disk
+- Improve live previews, fetch data only when needed
+
+## [0.10.0]
+
+- Removed deprecated `createNextCMS` and `createCMS` from the `alinea` package
+  root. Instead use the `createCMS` function from `alinea/core` or
+  `alinea/next`.
+
+## [0.9.14]
+
+- Avoid importing the 'next' package if we're not using next
+
 ## [0.9.13]
 
 - Introduced share previews from metadata fields which are fetched live from the preview iframe window

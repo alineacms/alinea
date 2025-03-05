@@ -1,7 +1,7 @@
 import {WebText} from '@/layout/WebText'
 import {bodyField} from '@/schema/fields/BodyField'
+import styler from '@alinea/styler'
 import {Infer} from 'alinea'
-import {fromModule} from 'alinea/ui'
 import {ComponentType} from 'react'
 import {ChapterLinkView} from './ChapterLinkView'
 import {CodeBlockView} from './CodeBlockView'
@@ -12,7 +12,7 @@ import {ImageBlockView} from './ImageBlockView'
 import {NoticeView} from './NoticeView'
 import css from './TextFieldView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface BodyViewProps {
   body: Infer<ReturnType<typeof bodyField>>

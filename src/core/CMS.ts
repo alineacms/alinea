@@ -1,68 +1,91 @@
 import {Config, createConfig} from './Config.js'
 import {Connection} from './Connection.js'
-import {Graph, GraphRealm} from './Graph.js'
+import {Graph} from './Graph.js'
+import {MediaFile, MediaLibrary} from './media/MediaTypes.js'
+import {PreviewRequest} from './Preview.js'
 import {Resolver} from './Resolver.js'
-import {Root} from './Root.js'
-import {Operation, Transaction} from './Transaction.js'
-import {Workspace} from './Workspace.js'
-import {entries} from './util/Objects.js'
+import {
+  CreateOperation,
+  CreateQuery,
+  DeleteOp,
+  Operation,
+  UpdateOperation,
+  UpdateQuery,
+  UploadOperation,
+  UploadQuery
+} from './Transaction.js'
 
-type Attachment = Workspace | Root
-const attached = new WeakMap<Attachment, CMS>()
+export interface ConnectionContext {
+  apiKey?: string
+  accessToken?: string
+  preview?: PreviewRequest
+}
 
-export abstract class CMS extends GraphRealm {
-  graph: Graph
-  config: Config
+export class CMS<Definition extends Config = Config> extends Graph {
+  config: Definition
+  connect: () => Promise<Connection>
 
-  constructor(config: Config) {
+  constructor(config: Definition, connect: () => Promise<Connection>) {
     const normalizedConfig = createConfig(config)
     const resolver: Resolver = {
-      resolve: params => {
-        return this.resolver().then(r => r.resolve(params))
+      resolve: async query => {
+        const connection = await connect()
+        return connection.resolve(query)
       }
     }
     super(normalizedConfig, resolver)
+    this.connect = connect
     this.config = normalizedConfig
-    this.graph = new Graph(normalizedConfig, resolver)
-    //this.#attach(config)
   }
 
-  abstract resolver(): Promise<Resolver>
-  abstract connection(): Promise<Connection>
-
-  commit(...operations: Array<Operation>) {
-    return Transaction.commit(
-      this,
-      operations.map(op => op[Operation.Data]).flat()
+  async commit(...operations: Array<Operation>) {
+    const mutations = await Promise.all(
+      operations.flatMap(op => op[Operation.Data](this))
     )
+    const cnx = await this.connect()
+    return cnx.mutate(mutations.flat())
   }
 
-  #attach(config: Config) {
-    for (const [name, workspace] of entries(config.workspaces)) {
-      if (attached.has(workspace))
-        throw new Error(`Workspace is already attached to a CMS: ${name}`)
-      attached.set(workspace, this)
-      for (const [name, root] of entries(workspace)) {
-        if (attached.has(root))
-          throw new Error(`Root is already attached to a CMS: ${name}`)
-        attached.set(root, this)
-      }
-    }
+  async update<Definition>(query: UpdateQuery<Definition>) {
+    const op = new UpdateOperation<Definition>(query)
+    await this.commit(op)
+    return this.get({
+      type: query.type,
+      id: query.id,
+      locale: query.locale,
+      status: query.status
+    })
   }
 
-  get schema() {
-    return this.config.schema
+  async create<Definition>(query: CreateQuery<Definition>) {
+    const op = new CreateOperation<Definition>(query)
+    await this.commit(op)
+    return this.get({
+      type: query.type,
+      id: op.id,
+      locale: query.locale,
+      status: 'preferPublished'
+    })
   }
 
-  get workspaces() {
+  async remove(...entryIds: Array<string>): Promise<void> {
+    await this.commit(new DeleteOp(entryIds))
+  }
+
+  async upload(query: UploadQuery) {
+    const op = new UploadOperation(query)
+    await this.commit(op)
+    return this.get({type: MediaFile, id: op.id})
+  }
+
+  get schema(): Definition['schema'] & {
+    MediaFile: typeof MediaFile
+    MediaLibrary: typeof MediaLibrary
+  } {
+    return this.config.schema as any
+  }
+
+  get workspaces(): Definition['workspaces'] {
     return this.config.workspaces
-  }
-}
-
-export namespace CMS {
-  export function instanceFor(attachment: Attachment): CMS {
-    const cms = attached.get(attachment)
-    if (!cms) throw new Error(`No CMS attached to ${attachment}`)
-    return cms
   }
 }

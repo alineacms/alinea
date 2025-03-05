@@ -1,8 +1,10 @@
-import {EntryPhase} from 'alinea/core/EntryRow'
+import styler from '@alinea/styler'
+import {EntryStatus} from 'alinea/core/EntryRow'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
-import {TabsHeader, TabsSection} from 'alinea/field/tabs/Tabs.browser'
-import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
+import {TabsSection} from 'alinea/field/tabs/Tabs'
+import {TabsHeader} from 'alinea/field/tabs/Tabs.view'
+import {Button, HStack, Stack, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {Tabs} from 'alinea/ui/Tabs'
@@ -10,7 +12,7 @@ import {IcOutlineTableRows} from 'alinea/ui/icons/IcOutlineTableRows'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, useEffect, useRef} from 'react'
+import {Suspense, useEffect, useRef, useState} from 'react'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {FormProvider} from '../atoms/FormAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
@@ -35,15 +37,15 @@ import {EntryTitle} from './entry/EntryTitle.js'
 import {FieldToolbar} from './entry/FieldToolbar.js'
 import {BrowserPreviewMetaProvider} from './preview/BrowserPreview.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 function ShowChanges({editor}: EntryEditProps) {
   const draftEntry = useAtomValue(editor.draftEntry)
   const hasChanges = useAtomValue(editor.hasChanges)
   const compareTo = hasChanges
     ? editor.activeVersion
-    : editor.phases[
-        editor.availablePhases.find(phase => phase !== EntryPhase.Draft)!
+    : editor.statuses[
+        editor.availableStatuses.find(status => status !== EntryStatus.Draft)!
       ]
   return <EntryDiff entryA={compareTo} entryB={draftEntry} />
 }
@@ -58,17 +60,17 @@ export function EntryEdit({editor}: EntryEditProps) {
   const config = useConfig()
   const {isPreviewOpen} = useSidebar()
   const nav = useNav()
+  const [rootTab, setRootTab] = useState<number>()
   const mode = useAtomValue(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
-  const selectedPhase = useAtomValue(editor.selectedPhase)
+  const selectedStatus = useAtomValue(editor.selectedStatus)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
-  }, [editor.entryId, mode, selectedPhase])
-  const untranslated = locale && locale !== editor.activeVersion.locale
+  }, [editor.entryId, mode, selectedStatus])
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
-    !untranslated && hasChanges
+    !editor.untranslated && hasChanges
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
@@ -91,11 +93,11 @@ export function EntryEdit({editor}: EntryEditProps) {
           alert('todo')
           return
         }
-        if (untranslated && hasChanges) {
+        if (editor.untranslated && hasChanges) {
           translate()
         } else if (config.enableDrafts) {
           if (hasChanges) saveDraft()
-          else if (selectedPhase === EntryPhase.Draft) publishDraft()
+          else if (selectedStatus === EntryStatus.Draft) publishDraft()
         } else {
           if (hasChanges) publishEdits()
         }
@@ -112,6 +114,13 @@ export function EntryEdit({editor}: EntryEditProps) {
   const tabs: TabsSection | false =
     hasRootTabs && (sections[0][Section.Data] as TabsSection)
   const visibleTypes = tabs && tabs.types.filter(type => !Type.isHidden(type))
+
+  let selectedRootTab = 0
+  if (hasRootTabs && visibleTypes !== false && rootTab !== undefined) {
+    selectedRootTab = rootTab
+    if (rootTab >= visibleTypes.length) selectedRootTab = 0
+  }
+
   useEffect(() => {
     if (isBlocking && !isNavigationChange) confirm?.()
   }, [isBlocking, isNavigationChange, confirm])
@@ -198,16 +207,20 @@ export function EntryEdit({editor}: EntryEditProps) {
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
           {showHistory && <EntryHistory editor={editor} />}
-          <Tabs.Root>
+          <Tabs.Root
+            style={{flex: 1}}
+            selectedIndex={selectedRootTab}
+            onChange={index => setRootTab(index)}
+          >
             <EntryTitle
               editor={editor}
               backLink={
-                editor.activeVersion.parent
+                editor.activeVersion.parentId
                   ? nav.entry({
-                      entryId: editor.activeVersion.parent,
+                      id: editor.activeVersion.parentId,
                       workspace: editor.activeVersion.workspace
                     })
-                  : nav.entry({entryId: undefined})
+                  : nav.entry({id: undefined})
               }
             >
               {hasRootTabs && (
@@ -217,18 +230,16 @@ export function EntryEdit({editor}: EntryEditProps) {
               )}
             </EntryTitle>
             <Main.Container>
-              {untranslated && (
+              {editor.untranslated && (
                 <div>
                   <EntryNotice
                     icon={IcRoundTranslate}
                     title="Untranslated"
                     variant="untranslated"
                   >
-                    This page has not yet been translated to this language,
-                    <br />
                     {editor.parentNeedsTranslation
-                      ? 'please translate the parent page first.'
-                      : 'please enter the details below and save to start translating.'}
+                      ? 'Translate the parent page first.'
+                      : 'Enter the details below and save to start translating.'}
                   </EntryNotice>
                 </div>
               )}

@@ -15,9 +15,11 @@ export function useSetDashboardOptions(options: AppProps) {
   useHydrateAtoms([[dashboardOptionsAtom, options]])
 
   const {client, config, dev} = options
-  const auth = config.dashboard?.auth
+  const auth = config.auth
   if (dev || !auth) {
-    const userData = process.env.ALINEA_USER as string | undefined
+    const userData =
+      typeof process !== 'undefined' &&
+      (process.env.ALINEA_USER as string | undefined)
     useHydrateAtoms([
       [
         sessionAtom,

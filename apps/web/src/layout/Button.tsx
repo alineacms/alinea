@@ -1,9 +1,10 @@
-import {fromModule, HStack, Icon} from 'alinea/ui'
+import styler from '@alinea/styler'
+import {HStack, Icon} from 'alinea/ui'
 import Link, {LinkProps} from 'next/link'
 import {ComponentType, PropsWithChildren} from 'react'
 import css from './Button.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type ButtonProps = PropsWithChildren<LinkProps> & {
   className?: string

@@ -83,6 +83,12 @@ export const Link = Mark.create<LinkOptions>({
     ]
   },
 
+  addKeyboardShortcuts() {
+    return {
+      'Mod-k': () => this.editor.commands.setLink({})
+    }
+  },
+
   addCommands() {
     return {
       setLink:

@@ -1,7 +1,7 @@
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import * as Y from 'alinea/yjs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
+import * as Y from 'yjs'
 
 const ROOT_KEY = '$root'
 const FIELD_KEY = '$doc'

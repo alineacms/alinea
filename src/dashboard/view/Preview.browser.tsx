@@ -1,9 +1,9 @@
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
 import {PropsWithChildren} from 'react'
 import css from './Preview.module.scss'
 import {Sidebar} from './Sidebar.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type PreviewProps = PropsWithChildren<{}>
 

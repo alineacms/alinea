@@ -1,4 +1,3 @@
-import {Hint} from 'alinea/core/Hint'
 import {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Type, type} from 'alinea/core/Type'
@@ -33,7 +32,7 @@ export function urlPicker<Fields>(
 ): Picker<UrlReference> {
   const fieldType = Type.isType(options.fields)
     ? options.fields
-    : options.fields && type({fields: options.fields as any})
+    : options.fields && type('URL fields', {fields: options.fields as any})
   const extra = fieldType && Type.shape(fieldType)
   return {
     shape: new RecordShape('Url', {
@@ -43,7 +42,6 @@ export function urlPicker<Fields>(
       [UrlReference.title]: new ScalarShape('Title'),
       [UrlReference.target]: new ScalarShape('Target')
     }).concat(extra),
-    hint: Hint.Extern({name: 'UrlReference', package: 'alinea/picker/url'}),
     label: 'External website',
     handlesMultiple: false,
     fields: fieldType,

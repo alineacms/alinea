@@ -1,6 +1,5 @@
 import {Entry} from 'alinea/core/Entry'
 import type {WithoutLabel} from 'alinea/core/Field'
-import {Hint} from 'alinea/core/Hint'
 import {InferStoredValue} from 'alinea/core/Infer'
 import {Label} from 'alinea/core/Label'
 import {Type} from 'alinea/core/Type'
@@ -17,8 +16,6 @@ import {EntryReference} from 'alinea/picker/entry/EntryReference'
 
 export interface FileLink<InferredFields = undefined> extends EntryReference {
   title: string
-  /** @deprecated Use href */
-  url: string
   href: string
   extension: string
   size: number
@@ -33,24 +30,21 @@ export namespace FileLink {
   export const size = MediaFile.size
 }
 
-const fileCondition = Entry.type
-  .is('MediaFile')
-  .and(MediaFile.extension.isNotIn(imageExtensions))
+const fileCondition = {
+  _type: 'MediaFile',
+  extension: {notIn: imageExtensions}
+}
 
 export function filePicker<Fields>(
   multiple: boolean,
-  options: Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'>
+  options: Omit<EntryPickerOptions<Fields>, 'selection'>
 ) {
   return entryPicker<EntryReference, Fields>({
     ...options,
-    hint: Hint.Extern({
-      name: 'FileReference',
-      package: 'alinea/picker/entry'
-    }),
     max: multiple ? undefined : 1,
     label: 'File',
     title: multiple ? 'Select files' : 'Select a file',
-    condition: fileCondition.or(Entry.type.is('MediaLibrary')),
+    condition: {or: [fileCondition, {_type: 'MediaLibrary'}]},
     showMedia: true,
     defaultView: 'thumb',
     selection: FileLink
@@ -59,7 +53,7 @@ export function filePicker<Fields>(
 
 export interface FileOptions<Fields>
   extends LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
-    Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
+    Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
 export function file<Fields = undefined>(
   label: Label,
@@ -79,7 +73,7 @@ export namespace file {
     extends LinkFieldOptions<
         Array<EntryReference & ListRow & InferStoredValue<Fields>>
       >,
-      Omit<EntryPickerOptions<Fields>, 'label' | 'hint' | 'selection'> {}
+      Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
   export function multiple<Fields = undefined>(
     label: Label,

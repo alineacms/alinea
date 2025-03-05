@@ -1,4 +1,4 @@
-import {EntryPhase, EntryRow} from './EntryRow.js'
+import {EntryRow, EntryStatus} from './EntryRow.js'
 
 export enum MutationProgress {
   Finished = 'finished',
@@ -12,12 +12,12 @@ export enum MutationType {
   Create = 'create',
   Publish = 'publish',
   Archive = 'archive',
-  Discard = 'discard',
-  Remove = 'remove',
+  RemoveDraft = 'discard',
+  RemoveEntry = 'remove',
   Order = 'order',
   Move = 'move',
   Upload = 'upload',
-  FileRemove = 'file-remove'
+  RemoveFile = 'file-remove'
 }
 
 export type PendingMutation = Mutation & {
@@ -26,21 +26,22 @@ export type PendingMutation = Mutation & {
 }
 
 export type Mutation =
-  | EditMutation
-  | PatchMutation
   | CreateMutation
+  | UpdateMutation
+  | PatchMutation
   | PublishMutation
   | ArchiveMutation
+  | RemoveDraftMutation
   | RemoveEntryMutation
-  | DiscardDraftMutation
+  | RemoveFileMutation
   | OrderMutation
   | MoveMutation
   | UploadMutation
-  | FileRemoveMutation
 
-export interface EditMutation {
+export interface UpdateMutation {
   type: MutationType.Edit
   entryId: string
+  locale: string | null
   file: string
   entry: EntryRow
   previousFile?: string
@@ -50,6 +51,7 @@ export interface EditMutation {
 export interface CreateMutation {
   type: MutationType.Create
   entryId: string
+  locale: string | null
   file: string
   entry: EntryRow
 }
@@ -57,31 +59,36 @@ export interface CreateMutation {
 export interface PublishMutation {
   type: MutationType.Publish
   entryId: string
-  phase: EntryPhase
+  locale: string | null
+  status: EntryStatus
   file: string
 }
 
 export interface ArchiveMutation {
   type: MutationType.Archive
   entryId: string
+  locale: string | null
   file: string
 }
 
 export interface RemoveEntryMutation {
-  type: MutationType.Remove
+  type: MutationType.RemoveEntry
   entryId: string
+  locale: string | null
   file: string
 }
 
-export interface DiscardDraftMutation {
-  type: MutationType.Discard
+export interface RemoveDraftMutation {
+  type: MutationType.RemoveDraft
   entryId: string
+  locale: string | null
   file: string
 }
 
 export interface PatchMutation {
   type: MutationType.Patch
   entryId: string
+  locale: string | null
   file: string
   patch: object
 }
@@ -96,6 +103,7 @@ export interface OrderMutation {
 export interface MoveMutation {
   type: MutationType.Move
   entryId: string
+  locale: string | null
   entryType: string
   fromFile: string
   toFile: string
@@ -112,9 +120,10 @@ export interface UploadMutation {
   file: string
 }
 
-export interface FileRemoveMutation {
-  type: MutationType.FileRemove
+export interface RemoveFileMutation {
+  type: MutationType.RemoveFile
   entryId: string
+  locale: string | null
   file: string
   workspace: string
   location: string

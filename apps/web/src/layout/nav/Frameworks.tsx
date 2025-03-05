@@ -9,8 +9,8 @@ export const supportedFrameworks = [
     link(url: string) {
       return url
     }
-  },
-  {
+  }
+  /*{
     name: 'js',
     icon: TablerBrandJavascript,
     label: 'Vanilla js',
@@ -18,7 +18,7 @@ export const supportedFrameworks = [
       if (url === '/docs') return '/docs:js'
       return url.replace('/docs/', '/docs:js/')
     }
-  }
+  }*/
 ]
 
 function selectedFramework(

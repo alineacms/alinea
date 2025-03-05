@@ -2,11 +2,11 @@ import {cms} from '@/cms'
 import '@/global.scss'
 import {Footer} from '@/layout/Footer'
 import {Header} from '@/layout/Header'
-import {fromModule} from 'alinea/ui'
+import styler from '@alinea/styler'
 import {PropsWithChildren} from 'react'
 import css from './WebLayout.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export const metadata = {
   title: 'Alinea'

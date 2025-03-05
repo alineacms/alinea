@@ -36,6 +36,7 @@ test('symbols', () => {
     slugify('a!b@c#$d%e^f&g*h(i)j-k_l+m=n_o[p]q{r}'),
     'a-b-c-d-e-f-g-h-i-j-k-l-m-n-o-p-q-r'
   )
+  assert.is(slugify("that's"), 'thats')
 })
 
 test.run()

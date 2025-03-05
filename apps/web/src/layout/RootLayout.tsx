@@ -17,6 +17,7 @@ const favicon = btoa(
 export default async function RootLayout({children}: PropsWithChildren) {
   return (
     <html lang="en">
+      {/* eslint-disable-next-line @next/next/no-head-element */}
       <head>
         <meta name="theme-color" content={color} />
         <style>

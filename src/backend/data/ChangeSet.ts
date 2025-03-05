@@ -1,23 +1,23 @@
+import {Entry} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {EntryRecord, createRecord} from 'alinea/core/EntryRecord'
-import {EntryPhase} from 'alinea/core/EntryRow'
+import {EntryStatus} from 'alinea/core/EntryRow'
 import {Graph} from 'alinea/core/Graph'
 import {
   ArchiveMutation,
   CreateMutation,
-  DiscardDraftMutation,
-  EditMutation,
-  FileRemoveMutation,
   MoveMutation,
   Mutation,
   MutationType,
   OrderMutation,
   PatchMutation,
   PublishMutation,
+  RemoveDraftMutation,
   RemoveEntryMutation,
+  RemoveFileMutation,
+  UpdateMutation,
   UploadMutation
 } from 'alinea/core/Mutation'
-import {Query} from 'alinea/core/Query'
 import {Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {MediaFile} from 'alinea/core/media/MediaTypes'
@@ -73,7 +73,7 @@ const loader = JsonLoader
 export class ChangeSetCreator {
   constructor(protected config: Config, protected graph: Graph) {}
 
-  editChanges({previousFile, file, entry}: EditMutation): Array<Change> {
+  editChanges({previousFile, file, entry}: UpdateMutation): Array<Change> {
     const type = this.config.schema[entry.type]
     if (!type)
       throw new Error(`Cannot publish entry of unknown type: ${entry.type}`)
@@ -114,8 +114,8 @@ export class ChangeSetCreator {
   }
 
   publishChanges({file}: PublishMutation): Array<Change> {
-    const draftFile = `.${EntryPhase.Draft}.json`
-    const archivedFiled = `.${EntryPhase.Archived}.json`
+    const draftFile = `.${EntryStatus.Draft}.json`
+    const archivedFiled = `.${EntryStatus.Archived}.json`
     if (file.endsWith(draftFile))
       return [
         {
@@ -143,7 +143,7 @@ export class ChangeSetCreator {
       {
         type: ChangeType.Rename,
         from: file,
-        to: file.slice(0, -fileEnd.length) + `.${EntryPhase.Archived}.json`
+        to: file.slice(0, -fileEnd.length) + `.${EntryStatus.Archived}.json`
       }
     ]
   }
@@ -152,15 +152,22 @@ export class ChangeSetCreator {
     entryId,
     file
   }: RemoveEntryMutation): Promise<Array<Change>> {
-    if (!file.endsWith(`.${EntryPhase.Archived}.json`)) return []
-    const {workspace, files} = await this.graph.preferPublished.get(
-      Query.whereId(entryId).select({
-        workspace: Query.workspace,
-        files: Query.children<typeof MediaFile>(undefined!, 999).where(
-          Query.type.is('MediaFile')
-        )
-      })
-    )
+    if (!file.endsWith(`.${EntryStatus.Archived}.json`)) return []
+    const result = await this.graph.first({
+      select: {
+        workspace: Entry.workspace,
+        files: {
+          edge: 'children',
+          depth: 999,
+          type: MediaFile,
+          select: {location: MediaFile.location}
+        }
+      },
+      id: entryId,
+      status: 'preferPublished'
+    })
+    if (!result) return []
+    const {files, workspace} = result
     const mediaDir =
       Workspace.data(this.config.workspaces[workspace])?.mediaDir ?? ''
     const removeFiles: Array<Change> = files.map(file => {
@@ -178,13 +185,13 @@ export class ChangeSetCreator {
       // Remove children
       {
         type: ChangeType.Delete,
-        file: file.slice(0, -`.${EntryPhase.Archived}.json`.length)
+        file: file.slice(0, -`.${EntryStatus.Archived}.json`.length)
       }
     ]
   }
 
-  discardChanges({file}: DiscardDraftMutation): Array<Change> {
-    const fileEnd = `.${EntryPhase.Draft}.json`
+  discardChanges({file}: RemoveDraftMutation): Array<Change> {
+    const fileEnd = `.${EntryStatus.Draft}.json`
     if (!file.endsWith(fileEnd))
       throw new Error(`Cannot discard non-draft file: ${file}`)
     return [{type: ChangeType.Delete, file}]
@@ -234,7 +241,7 @@ export class ChangeSetCreator {
     return [{type: ChangeType.Upload, file: mutation.file, url: mutation.url}]
   }
 
-  fileRemoveChanges(mutation: FileRemoveMutation): Array<Change> {
+  fileRemoveChanges(mutation: RemoveFileMutation): Array<Change> {
     const mediaDir =
       Workspace.data(this.config.workspaces[mutation.workspace])?.mediaDir ?? ''
     const binaryLocation = join(mediaDir, mutation.location)
@@ -255,9 +262,9 @@ export class ChangeSetCreator {
         return this.publishChanges(mutation)
       case MutationType.Archive:
         return this.archiveChanges(mutation)
-      case MutationType.Remove:
+      case MutationType.RemoveEntry:
         return this.removeChanges(mutation)
-      case MutationType.Discard:
+      case MutationType.RemoveDraft:
         return this.discardChanges(mutation)
       case MutationType.Order:
         return this.orderChanges(mutation)
@@ -265,7 +272,7 @@ export class ChangeSetCreator {
         return this.moveChanges(mutation)
       case MutationType.Upload:
         return this.fileUploadChanges(mutation)
-      case MutationType.FileRemove:
+      case MutationType.RemoveFile:
         return this.fileRemoveChanges(mutation)
     }
   }

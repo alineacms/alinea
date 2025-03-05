@@ -1,6 +1,7 @@
-import {PreviewMetadata} from 'alinea/core/Resolver'
+import styler from '@alinea/styler'
+import {PreviewMetadata} from 'alinea/core/Preview'
 import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
-import {HStack, Loader, Typo, fromModule, px} from 'alinea/ui'
+import {HStack, Loader, Typo, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
@@ -18,7 +19,7 @@ import {
 import {LivePreview} from '../entry/EntryPreview.js'
 import css from './BrowserPreview.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface BrowserPreviewProps {
   url: string
@@ -72,14 +73,15 @@ export function BrowserPreview({
 
     function handleMessage(event: MessageEvent<PreviewMessage>) {
       if (!event.data || typeof event.data !== 'object') return
-      if (event.data.action === PreviewAction.Pong) {
-        console.log('[Alinea preview window detected]')
+      if (event.data.action === PreviewAction.Ping) {
+        console.info('[Alinea preview window detected]')
         hasPreviewListener.current = true
         registerLivePreview({
-          preview(update) {
-            post({action: PreviewAction.Preview, ...update})
+          preview(payload) {
+            post({action: PreviewAction.Preview, payload})
           }
         })
+        post({action: PreviewAction.Pong})
       }
       if (event.data.action === PreviewAction.Meta) {
         metaContext.setMetadata(event.data)
@@ -136,11 +138,6 @@ export function BrowserPreview({
           src={url}
           onLoad={() => {
             setLoading(false)
-            try {
-              post({action: PreviewAction.Ping})
-            } catch (e) {
-              hasPreviewListener.current = false
-            }
           }}
         />
       </div>

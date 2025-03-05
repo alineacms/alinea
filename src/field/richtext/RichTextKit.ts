@@ -1,3 +1,4 @@
+import styler from '@alinea/styler'
 import {Extension} from '@tiptap/core'
 import Blockquote from '@tiptap/extension-blockquote'
 import Bold from '@tiptap/extension-bold'
@@ -22,12 +23,11 @@ import TableHeader from '@tiptap/extension-table-header'
 import TableRow from '@tiptap/extension-table-row'
 import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
-import {fromModule} from 'alinea/ui'
 import css from './RichTextKit.module.scss'
 import {Link} from './extensions/Link.js'
 import Small from './extensions/Small.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 // These come from the tiptap starter kit, but we omit:
 // code, codeblock -> these can be achieved using a block

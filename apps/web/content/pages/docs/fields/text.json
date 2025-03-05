@@ -3,7 +3,6 @@
   "_type": "Doc",
   "_index": "a0",
   "_i18nId": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
-  "_root": "pages",
   "title": "Text",
   "navigationTitle": "",
   "body": [
@@ -28,7 +27,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "kLT1p_gpGFN1L9rIy9e5E",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Text field', {\n  text: Field.text('My text field', {\n    help: 'This is an example field',\n    multiline: true,\n    initialValue: 'A text value'\n  })\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Text field', {\n  fields: {\n    text: Field.text('My text field', {\n      help: 'This is an example field',\n      multiline: true,\n      initialValue: 'A text value'\n    })\n  }\n})"
     },
     {
       "_type": "heading",
@@ -85,8 +84,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

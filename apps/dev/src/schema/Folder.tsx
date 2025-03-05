@@ -1,13 +1,13 @@
 import {Config, Field} from 'alinea'
+import {Page} from './Page.js'
+import {LinkFields} from './example/LinkFields.js'
 
-export const Folder = Config.type('Folder', {
-  isContainer: true,
+export const Folder = Config.document('Folder', {
+  contains: ['Folder', Page, LinkFields],
   fields: {
-    title: Field.text('Title', {
-      width: 0.5
-    }),
-    path: Field.path('Path', {
-      width: 0.5
+    childrenLink: Field.entry('Pick children', {
+      help: `Show only children of the current entry`,
+      pickChildren: true
     })
   }
 })

@@ -1,6 +1,8 @@
 import {cms} from '@/cms'
-import {AnyLink, Query} from 'alinea'
-import {HStack, Stack, Styler, fromModule} from 'alinea/ui'
+import styler, {Styler} from '@alinea/styler'
+import {Link as AnyLink} from 'alinea'
+import {Entry} from 'alinea/core/Entry'
+import {HStack, Stack} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
@@ -14,12 +16,15 @@ import {Logo} from './branding/Logo'
 import {Link} from './nav/Link'
 import {NavTree} from './nav/NavTree'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export type HeaderLink = AnyLink<{label: string; active: string}>
 
 export async function Header() {
-  const links = await cms.get(Query(Home).select(Home.links))
+  const links = await cms.get({
+    type: Home,
+    select: Home.links
+  })
   return (
     <>
       <input
@@ -47,9 +52,16 @@ export async function Header() {
 }
 
 async function MobileNav() {
-  const docs = await cms
-    .in(cms.workspaces.main.pages.docs)
-    .find(Query.select(Query.entry))
+  const docs = await cms.find({
+    location: cms.workspaces.main.pages.docs,
+    select: {
+      id: Entry.id,
+      type: Entry.type,
+      url: Entry.url,
+      title: Entry.title,
+      parent: Entry.parentId
+    }
+  })
   const tree = [
     {id: 'home', url: '/', title: 'Home'},
     {id: 'roadmap', url: '/roadmap', title: 'Roadmap'},

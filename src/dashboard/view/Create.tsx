@@ -1,11 +1,11 @@
+import styler from '@alinea/styler'
 import {HStack} from 'alinea/ui'
 import {IcRoundAddCircle} from 'alinea/ui/icons/IcRoundAddCircle'
-import {fromModule} from 'alinea/ui/util/Styler'
 import {ComponentType, HTMLAttributes, HTMLProps} from 'react'
 import {link} from '../util/HashRouter.js'
 import css from './Create.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export namespace Create {
   export interface RootProps extends HTMLAttributes<HTMLDivElement> {
@@ -19,6 +19,7 @@ export namespace Create {
 
   export type Props = {
     icon?: ComponentType
+    mod?: 'paste'
   }
 
   export function Link({
@@ -44,13 +45,14 @@ export namespace Create {
   export function Button({
     children,
     icon: Icon,
+    mod,
     ...props
   }: HTMLAttributes<HTMLButtonElement> & Props) {
     return (
       <button
         type="button"
         {...props}
-        className={styles.button.mergeProps(props)()}
+        className={styles.button.mergeProps(props)(mod)}
       >
         <HStack center gap={8}>
           {Icon ? (

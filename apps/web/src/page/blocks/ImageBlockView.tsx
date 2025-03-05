@@ -1,10 +1,11 @@
 import {ImageBlock} from '@/schema/blocks/ImageBlock'
+import styler from '@alinea/styler'
 import {Infer} from 'alinea'
-import {fromModule, imageBlurUrl} from 'alinea/ui'
+import {imageBlurUrl} from 'alinea/ui'
 import Image from 'next/image'
 import css from './ImageBlockView.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export function ImageBlockView({image}: Infer<typeof ImageBlock>) {
   const blurUrl = imageBlurUrl(image)

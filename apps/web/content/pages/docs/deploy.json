@@ -12,7 +12,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Once you're ready to deploy to production it's time to hook up Alinea to a backend. Alinea exposes a handler that can be hosted on most Javascript runtimes (Node.js or edge/serverless functions). The handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository."
+          "text": "Once you're ready to deploy to production it's time to hook up Alinea to a backend. The Alinea handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository."
         }
       ]
     },
@@ -20,24 +20,6 @@
       "_type": "FrameworkBlock",
       "_id": "2YlDZu3VCLyEtX1gTkP607rdN1C",
       "next": [
-        {
-          "_type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "_type": "text",
-              "text": "Create the CMS handler in the app folder."
-            }
-          ]
-        },
-        {
-          "_type": "CodeBlock",
-          "_id": "2YlDbsyYSV7KaOpdP3SlyFKbgQf",
-          "code": "import {cms} from '@/cms'\n\nexport const GET = cms.backendHandler\nexport const POST = cms.backendHandler",
-          "fileName": "app/api/cms/[...slug]/route.ts",
-          "language": "",
-          "compact": false
-        },
         {
           "_type": "paragraph",
           "textAlign": "left",
@@ -61,14 +43,14 @@
             },
             {
               "_type": "text",
-              "text": " to inform Alinea where the handler is located and where to generate the admin dashboard."
+              "text": " to inform Alinea where to generate the admin dashboard."
             }
           ]
         },
         {
           "_type": "CodeBlock",
           "_id": "2YlDwmJLzaL93bp5gYZmshbJG1P",
-          "code": "export const cms = createCMS({\n  // schema and workspaces ...\n  dashboard: {\n    handlerUrl: '/api/cms',\n    staticFile: 'public/admin.html',\n    dashboardUrl: '/admin.html'\n  }\n})",
+          "code": "export const cms = createCMS({\n  // ...\n  handlerUrl: '/api/cms',\n  dashboardFile: 'admin.html'\n})",
           "fileName": "",
           "language": "",
           "compact": false
@@ -79,7 +61,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "While building your project, an admin folder will be created together with the staticFile as defined within your "
+              "text": "While building your project, an admin folder will be created together with the `dashboardFile` as defined within your "
             },
             {
               "_type": "text",
@@ -124,8 +106,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

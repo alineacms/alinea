@@ -1,8 +1,9 @@
+import styler from '@alinea/styler'
 import useSize from '@react-hook/size'
+import {QueryWithResult} from 'alinea/core/Graph'
 import {Reference} from 'alinea/core/Reference'
-import {View} from 'alinea/core/View'
-import {Cursor} from 'alinea/core/pages/Cursor'
-import {Loader, fromModule} from 'alinea/ui'
+import {summarySelection} from 'alinea/core/media/Summary'
+import {Loader} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
@@ -14,7 +15,7 @@ import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
 import css from './Explorer.module.scss'
 import {ExplorerRow} from './ExplorerRow.js'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 const defaultSummaryView = {
   summaryRow: EntrySummaryRow,
@@ -22,24 +23,23 @@ const defaultSummaryView = {
 }
 
 export interface ExporerItemSelect {
-  entryId: string
+  id: string
   type: string
   workspace: string
   root: string
   title: string
-  i18nId?: string
   childrenAmount?: number
 }
 
 export interface ExplorerProps {
-  cursor: Cursor.Find<ExporerItemSelect>
+  query: QueryWithResult<ExporerItemSelect>
   type: 'row' | 'thumb'
   virtualized?: boolean
   max?: number
   selectable?: Array<string> | boolean
   selection?: Array<Reference>
   toggleSelect?: (entry: ExporerItemSelect) => void
-  onNavigate?: (entryId: string) => void
+  onNavigate?: (id: string) => void
   showMedia?: boolean
   withNavigation?: boolean
   border?: boolean
@@ -47,7 +47,7 @@ export interface ExplorerProps {
 
 export function Explorer({
   type,
-  cursor,
+  query,
   virtualized,
   max,
   selectable,
@@ -68,25 +68,24 @@ export function Explorer({
   }, [changed])
 
   const {data, isLoading} = useQuery(
-    ['explorer', type, cursor, max],
+    ['explorer', type, query, max],
     async () => {
       const summaryView = type === 'row' ? 'summaryRow' : 'summaryThumb'
       const defaultView = defaultSummaryView[summaryView]
-      const selection = View.getSelection(
-        schema,
-        summaryView,
-        defaultView.selection()
-      )
-      const total = await graph.preferDraft.count(cursor)
-      const select = new Cursor.Find<any>({
-        ...cursor[Cursor.Data],
-        select: selection
+      const selection = summarySelection(schema)
+      const total = await graph.count({
+        ...query,
+        status: 'preferDraft'
       })
+      const querySelection: QueryWithResult<ExporerItemSelect> = {
+        ...query,
+        select: selection as any
+      }
       return {
         type,
         total: max ? Math.min(max, total) : total,
         selection,
-        cursor: select,
+        query: querySelection,
         summaryView,
         defaultView
       } as const
@@ -129,7 +128,7 @@ export function Explorer({
                     <div key={index} style={{...style, height, flexShrink: 0}}>
                       <ExplorerRow
                         schema={schema}
-                        cursor={data.cursor}
+                        query={data.query}
                         amount={perRow}
                         from={from}
                         batchSize={batchSize}
@@ -149,7 +148,7 @@ export function Explorer({
                     <div key={index} style={{height, flexShrink: 0}}>
                       <ExplorerRow
                         schema={schema}
-                        cursor={data.cursor}
+                        query={data.query}
                         amount={perRow}
                         from={from}
                         batchSize={batchSize}

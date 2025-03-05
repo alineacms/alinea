@@ -11,13 +11,13 @@ Alinea is a modern content management system.
 
 ## Get started
 
-Install alinea in your project directory
+Install Alinea in your project directory
 
 ```sh
 npm install alinea
 ```
 
-Initialize alinea's config file
+Initialize Alinea's config file
 
 ```sh
 npx alinea init --next
@@ -33,19 +33,20 @@ npx alinea dev
 
 ## Configure
 
-Configure alinea in `cms.tsx`
+Configure Alinea in `cms.tsx`
 
 ```tsx
 import {Config, Field} from 'alinea'
 
-const Blog = Config.document('Blog', {
-  contains: ['BlogPost']
-})
 const BlogPost = Config.document('Blog post', {
   fields: {
     title: Field.text('Blog entry title'),
     body: Field.richText('Body text')
   }
+})
+
+const Blog = Config.document('Blog', {
+  contains: [BlogPost]
 })
 ```
 
@@ -59,14 +60,20 @@ Select only the fields you need.
 ```tsx
 import {Query} from 'alinea'
 
-const blogAndPosts = Query(Blog).select({
-  title: Blog.title,
-  posts: Query.children(BlogPost).select({
-    title: BlogPost.title
+console.log(
+  await cms.get({
+    type: Blog,
+    select: {
+      title: Blog.title,
+      posts: Query.children({
+        type: BlogPost,
+        select: {
+          title: BlogPost.title
+        }
+      })
+    }
   })
-})
-
-console.log(await cms.get(blogAndPosts))
+)
 ```
 
 [See the full api →](https://alinea.sh/docs/content/query)

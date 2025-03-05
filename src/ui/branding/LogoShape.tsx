@@ -1,8 +1,8 @@
+import styler from '@alinea/styler'
 import {HTMLProps} from 'react'
-import {fromModule} from '../util/Styler.js'
 import css from './LogoShape.module.scss'
 
-const styles = fromModule(css)
+const styles = styler(css)
 
 export interface LogoShapeProps extends HTMLProps<HTMLDivElement> {
   foreground?: string
