@@ -425,28 +425,27 @@ export class Database implements Syncable {
         return async () => [existing.id]
       }
       case MutationType.Order: {
-        const rows = EntryRow({entryId: mutation.entryId})
-        await tx(rows.set({index: mutation.index}))
-        return () => this.updateHash(tx, rows)
+        const condition = eq(EntryRow.id, mutation.entryId)
+        await tx.update(EntryRow).set({index: mutation.index}).where(condition)
+        return () => this.updateHash(tx, condition)
       }
       case MutationType.Move: {
         const extension = paths.extname(mutation.toFile)
         const fileName = paths.basename(mutation.toFile, extension)
         const [entryPath, entryPhase] = entryInfo(fileName)
-        const rows = EntryRow({entryId: mutation.entryId, phase: entryPhase})
-        const current = await tx(rows)
+        const condition = and(eq(EntryRow.id, mutation.entryId))
+        const current = await tx.select().from(EntryRow).where(condition)
         const parentDir = paths.dirname(mutation.toFile)
         const childrenDir = paths.join(parentDir, entryPath)
-        const phaseSegment =
-          entryPhase === EntryPhase.Published ? '' : `.${entryPhase}`
-        const filePath = (childrenDir + phaseSegment + '.json').toLowerCase()
+        const status =
+          entryPhase === EntryStatus.Published ? '' : `.${entryPhase}`
+        const filePath = (childrenDir + status + '.json').toLowerCase()
         const parent = mutation.parent
-          ? await tx(
-              EntryRow({
-                entryId: mutation.parent,
-                phase: EntryPhase.Published
-              }).first()
-            )
+          ? await tx
+              .select()
+              .from(EntryRow)
+              .where(eq(EntryRow.id, mutation.parent), eq(EntryRow.main, true))
+              .get()
           : null
 
         await tx(
