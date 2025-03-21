@@ -1,11 +1,10 @@
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
+import {suite} from '@alinea/suite'
 import {trigger} from './Trigger.js'
 
-test('root', async () => {
-  const number = trigger<number>()
-  number.resolve(123)
-  assert.is(await number, 123)
+suite(import.meta, test => {
+  test('root', async () => {
+    const number = trigger<number>()
+    number.resolve(123)
+    test.is(await number, 123)
+  })
 })
-
-test.run()

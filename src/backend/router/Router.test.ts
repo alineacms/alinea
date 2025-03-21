@@ -1,7 +1,6 @@
-import {Request, Response} from '@alinea/iso'
-import {router} from 'alinea/backend/router/Router'
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
+import { Request, Response } from '@alinea/iso'
+import { suite } from '@alinea/suite'
+import { router } from 'alinea/backend/router/Router'
 
 const matcher = router.matcher()
 
@@ -11,14 +10,14 @@ const {handle} = router(
   matcher.get('/param/:id').map(({params}) => new Response(params.id as string))
 )
 
-test('root', async () => {
-  const response = await handle(new Request('http://localhost'))
-  assert.is(await response?.text(), 'root')
-})
+suite(import.meta, test => {
+  test('root', async () => {
+    const response = await handle(new Request('http://localhost'))
+    test.is(await response?.text(), 'root')
+  })
 
-test('param', async () => {
-  const response = await handle(new Request('http://localhost/param/123'))
-  assert.is(await response?.text(), '123')
+  test('param', async () => {
+    const response = await handle(new Request('http://localhost/param/123'))
+    test.is(await response?.text(), '123')
+  })
 })
-
-test.run()
