@@ -88,7 +88,8 @@
     "typescript": "5.6.2",
     "typescript-plugin-css-modules": "^5.0.2",
     "uvu": "^0.5.1",
-    "yjs-src": "npm:yjs@13.6.11"
+    "yjs-src": "npm:yjs@13.6.11",
+    "alinea": "link:."
   },
   "packageManager": "yarn@4.5.0",
   "resolutions": {

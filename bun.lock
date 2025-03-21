@@ -22,6 +22,7 @@
         "@types/sql.js": "^1.4.4",
         "@typescript/analyze-trace": "^0.9.1",
         "@ungap/with-resolvers": "^0.1.0",
+        "alinea": "link:.",
         "glob": "^7.2.0",
         "madge": "^6.1.0",
         "npm-run-all": "^4.1.5",
@@ -46,9 +47,6 @@
     "apps/dev": {
       "name": "@alinea/dev",
       "version": "0.0.0",
-      "dependencies": {
-        "alinea": "0.0.0",
-      },
     },
     "apps/web": {
       "name": "@alinea/web",
@@ -56,7 +54,6 @@
       "dependencies": {
         "@monaco-editor/react": "^4.4.5",
         "@vercel/postgres": "^0.10.0",
-        "alinea": "0.0.0",
         "lz-string": "^1.4.4",
         "next": "^15.1.5",
         "react": "^18.3.1",
@@ -819,7 +816,7 @@
 
     "ajv-keywords": ["ajv-keywords@3.5.2", "", { "peerDependencies": { "ajv": "^6.9.1" } }, "sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ=="],
 
-    "alinea": ["alinea@0.0.0", "", {}, "sha512-3We14WqBSg4SoNFai3x6T5BVzu1cCYPv/nbI6WH3Nfz/m9eN9D0rXFzl2M/8J81PXPs9H+PaCtmRrsWr1U1RTA=="],
+    "alinea": ["alinea@link:.", { "bin": "./dist/cli.js" }],
 
     "ansi-align": ["ansi-align@3.0.1", "", { "dependencies": { "string-width": "^4.1.0" } }, "sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w=="],
 
