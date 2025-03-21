@@ -151,7 +151,8 @@ export const entryEditorAtoms = atomFamily(
             edge: 'parents',
             select: {
               id: Entry.id,
-              path: Entry.path
+              path: Entry.path,
+              status: Entry.status
             }
           }
         },
@@ -178,7 +179,14 @@ export const entryEditorAtoms = atomFamily(
           locale: searchLocale,
           status: 'preferDraft'
         }))
+      const untranslated = Boolean(
+        entry.locale && searchLocale !== entry.locale
+      )
       const parentNeedsTranslation = entry.parentId ? !parentLink : false
+      const parents = withParents?.parents ?? []
+      const canPublish = parents.every(
+        parent => parent.status === EntryStatus.Published
+      )
       if (versions.length === 0) return undefined
       const statuses = fromEntries(
         versions.map(version => [version.status, version])
@@ -187,8 +195,10 @@ export const entryEditorAtoms = atomFamily(
         status => statuses[status] !== undefined
       )
       return createEntryEditor({
-        parents: withParents?.parents ?? [],
+        parents,
+        canPublish,
         translations,
+        untranslated,
         parentNeedsTranslation,
         client,
         config,
@@ -204,7 +214,7 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
-  parents: Array<{id: string; path: string}>
+  parents: Array<{id: string; path: string; status: EntryStatus}>
   client: Connection
   config: Config
   entryId: string
@@ -212,6 +222,8 @@ export interface EntryData {
   statuses: Record<EntryStatus, Version>
   availableStatuses: Array<EntryStatus>
   translations: Array<{locale: string; entryId: string}>
+  untranslated: boolean
+  canPublish: boolean
   parentNeedsTranslation: boolean
   edits: Edits
 }
@@ -725,7 +737,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
   const form = atom(get => {
     const doc = get(currentDoc)
-    const readOnly = doc !== edits.doc ? true : undefined
+    const readOnly = doc !== edits.doc ? true : !entryData.canPublish
     return new FormAtoms(type, doc.getMap(DOC_KEY), '', {readOnly})
   })
 
@@ -747,6 +759,7 @@ export function createEntryEditor(entryData: EntryData) {
   const isLoading = edits.isLoading
 
   const preview =
+    Type.preview(type) ??
     Root.preview(
       config.workspaces[activeVersion.workspace][activeVersion.root]
     ) ??

@@ -1,5 +1,5 @@
 {
-  "lockfileVersion": 0,
+  "lockfileVersion": 1,
   "workspaces": {
     "": {
       "name": "alinea",
@@ -10,7 +10,7 @@
       },
       "devDependencies": {
         "@alinea/styler": "^1.0.3",
-        "@alinea/suite": "^0.4.0",
+        "@alinea/suite": "^0.6.2",
         "@esbx/reporter": "^0.0.20",
         "@esbx/workspaces": "^0.0.20",
         "@ladle/react": "^4.1.2",
@@ -201,19 +201,19 @@
   "packages": {
     "@adobe/css-tools": ["@adobe/css-tools@4.3.3", "", {}, "sha512-rE0Pygv0sEZ4vBWHlAgJLGDU7Pm8xoO6p3wsEceb7GYAjScrOHpEo8KK/eVkAcnSM+slAEtXjA2JpdjLp4fJQQ=="],
 
-    "@alinea/adapter": ["@alinea/adapter@workspace:src/adapter", { "devDependencies": { "cookie-es": "^1.2.2" } }],
+    "@alinea/adapter": ["@alinea/adapter@workspace:src/adapter"],
 
-    "@alinea/backend": ["@alinea/backend@workspace:src/backend", { "devDependencies": { "cito": "^0.3.3", "dataloader": "^2.1.0", "pretty-ms": "^8.0.0", "rado": "^1.0.14", "regexparam": "^2.0.1" } }],
+    "@alinea/backend": ["@alinea/backend@workspace:src/backend"],
 
-    "@alinea/cli": ["@alinea/cli@workspace:src/cli", { "dependencies": { "esbuild": "^0.23.1" }, "devDependencies": { "@types/escape-html": "^1.0.2", "@types/sade": "^1.7.3", "buffer-to-base64": "^0.1.5", "compare-versions": "^4.1.3", "escape-html": "^1.0.3", "get-tsconfig": "^4.6.0", "pid-port": "^1.0.0", "sade": "^1.8.1" } }],
+    "@alinea/cli": ["@alinea/cli@workspace:src/cli"],
 
-    "@alinea/core": ["@alinea/core@workspace:src/core", { "devDependencies": { "cito": "^0.3.3", "htmlparser2": "^9.1.0", "p-lazy": "^4.0.0", "pretty-ms": "^8.0.0", "y-protocols": "^1.0.6", "yjs": "^13.6.11" } }],
+    "@alinea/core": ["@alinea/core@workspace:src/core"],
 
-    "@alinea/dashboard": ["@alinea/dashboard@workspace:src/dashboard", { "devDependencies": { "@dnd-kit/core": "^3.1.1", "@dnd-kit/sortable": "^4.0.0", "@dnd-kit/utilities": "^2.0.0", "@floating-ui/react-dom": "^0.7.1", "@headless-tree/core": "^0.0.8", "@headless-tree/react": "^0.0.7", "@headlessui/react": "^2.1.10", "@react-hook/size": "^2.1.2", "@react-hook/window-size": "^3.0.7", "@types/debounce-promise": "^3.1.8", "@types/diff-match-patch": "^1.0.32", "color2k": "^1.2.4", "dataloader": "^2.1.0", "debounce-promise": "^3.1.2", "diff-match-patch": "^1.0.5", "jotai": "^2.4.2", "lib0": "^0.2.88", "p-limit": "^4.0.0", "pretty-bytes": "^6.0.0", "react-query": "^3.39.1", "react-tiny-virtual-list": "^2.2.0", "smartcrop": "^2.0.5", "thumbhash": "^0.1.1" } }],
+    "@alinea/dashboard": ["@alinea/dashboard@workspace:src/dashboard"],
 
-    "@alinea/dev": ["@alinea/dev@workspace:apps/dev", { "dependencies": { "alinea": "0.0.0" } }],
+    "@alinea/dev": ["@alinea/dev@workspace:apps/dev"],
 
-    "@alinea/field.richtext": ["@alinea/field.richtext@workspace:src/field/richtext", { "devDependencies": { "@tiptap/core": "^2.1.16", "@tiptap/extension-blockquote": "^2.1.16", "@tiptap/extension-bold": "^2.1.16", "@tiptap/extension-bullet-list": "^2.1.16", "@tiptap/extension-collaboration": "^2.1.16", "@tiptap/extension-document": "^2.1.16", "@tiptap/extension-dropcursor": "^2.1.16", "@tiptap/extension-floating-menu": "^2.1.16", "@tiptap/extension-gapcursor": "^2.1.16", "@tiptap/extension-hard-break": "^2.1.16", "@tiptap/extension-heading": "^2.1.16", "@tiptap/extension-horizontal-rule": "^2.1.16", "@tiptap/extension-italic": "^2.1.16", "@tiptap/extension-list-item": "^2.1.16", "@tiptap/extension-ordered-list": "^2.1.16", "@tiptap/extension-paragraph": "^2.1.16", "@tiptap/extension-strike": "^2.1.16", "@tiptap/extension-subscript": "^2.2.4", "@tiptap/extension-superscript": "^2.2.4", "@tiptap/extension-table": "^2.1.16", "@tiptap/extension-table-cell": "^2.1.16", "@tiptap/extension-table-header": "^2.1.16", "@tiptap/extension-table-row": "^2.1.16", "@tiptap/extension-text": "^2.1.16", "@tiptap/extension-text-align": "^2.1.16", "@tiptap/pm": "^2.1.16", "@tiptap/react": "^2.1.16", "y-prosemirror": "^1.2.2" } }],
+    "@alinea/field.richtext": ["@alinea/field.richtext@workspace:src/field/richtext"],
 
     "@alinea/iso": ["@alinea/iso@0.3.3", "", {}, "sha512-ftRGW2+sM/9SBbn3zF6hXICNluEInaAMw49IHGKCUBkrsn0SN8mG/+bK1iz9+ibE1Dto736KwDfr3lcBVN5t8g=="],
 
@@ -221,11 +221,11 @@
 
     "@alinea/styler": ["@alinea/styler@1.0.3", "", {}, "sha512-u248xCGPYuGAsC2Z83Jyxplcc92Ai1IdeoZiBmr9HY/yGRSLZAxteStg4ErLOi8BnQQ9g72oEbgK3GJ7wU71zA=="],
 
-    "@alinea/suite": ["@alinea/suite@0.4.0", "", {}, "sha512-4kwLqPYnMwGXZ6CZWkFFqu1kC0kRIz5AHlsJwQpSjFu6ETDWvC83WlZ25FGaPP3KRX9CShmBXplAcOcHGxrX9A=="],
+    "@alinea/suite": ["@alinea/suite@0.6.2", "", {}, "sha512-UEYs2OLLb5DCMVE/0C8AAhP+xjKdOujbfL+NIXtcCW0dyeQqxjRVVFu+JH5VsjNxkx9ZNgId0fU4HkoKRU49CQ=="],
 
-    "@alinea/ui": ["@alinea/ui@workspace:src/ui", { "devDependencies": { "color2k": "^1.2.4", "regexparam": "^2.0.1", "use-error-boundary": "^2.0.6" } }],
+    "@alinea/ui": ["@alinea/ui@workspace:src/ui"],
 
-    "@alinea/web": ["@alinea/web@workspace:apps/web", { "dependencies": { "@monaco-editor/react": "^4.4.5", "@vercel/postgres": "^0.10.0", "alinea": "0.0.0", "lz-string": "^1.4.4", "next": "^15.1.5", "react": "^18.3.1", "react-dom": "^18.3.1", "react-string-replace": "^1.0.0", "remark": "^14.0.2", "remark-html": "^15.0.1", "shiki": "^0.10.1", "use-clipboard-copy": "^0.2.0" }, "devDependencies": { "@fontsource/inter": "5.0.1", "@fontsource/jetbrains-mono": "5.0.1", "@fontsource/poppins": "5.0.1", "@types/node": "^22.5.2", "@types/react": "^18.2.13", "eslint": "8.39.0", "eslint-config-next": "13.4.0", "raw-loader": "^4.0.2", "tsx": "^4.7.0", "typescript": "^5.6.2" } }],
+    "@alinea/web": ["@alinea/web@workspace:apps/web"],
 
     "@ampproject/remapping": ["@ampproject/remapping@2.3.0", "", { "dependencies": { "@jridgewell/gen-mapping": "^0.3.5", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw=="],
 

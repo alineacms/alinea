@@ -141,6 +141,7 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
   const tree = useTree<EntryTreeItem>({
     rootItemId: rootId(root.name),
     canDropInbetween: true,
+    canDrag: items => treeProvider.canDrag(items),
     onDrop(items, target) {
       return treeProvider.onDrop(items, target)
     },

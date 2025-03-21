@@ -2,7 +2,6 @@
   "_id": "2aiLjrXSg8gyirKnw9LmYKwsW2O",
   "_type": "Doc",
   "_index": "a0",
-  "_i18nId": "2aiLjrXSg8gyirKnw9LmYKwsW2O",
   "title": "Entry",
   "navigationTitle": "",
   "body": [
@@ -113,7 +112,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2aiNY0EOVAiPH085iK0NelgMfhO",
-      "code": "import {Field, Query} from 'alinea'\n\nField.entry('Link to author', {\n  condition: Query.type.is('Author')\n})",
+      "code": "import {Field, Query} from 'alinea'\n\nField.entry('Link to author', {\n  condition: {_type: 'Author'}\n})",
       "fileName": "",
       "language": ""
     }

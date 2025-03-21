@@ -5,6 +5,7 @@ import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {GraphQuery} from 'alinea/core/Graph'
+import {Mutation} from 'alinea/core/Mutation'
 import {outcome} from 'alinea/core/Outcome'
 import {PreviewRequest} from 'alinea/core/Preview'
 import {User} from 'alinea/core/User'
@@ -36,17 +37,41 @@ export class NextCMS<
     })
     super(rawConfig, async () => {
       const context = await requestContext(this.config)
-      const client = new Client({
-        config: this.config,
-        url: context.handlerUrl.href,
-        applyAuth(init) {
-          const headers = new Headers(init?.headers)
-          headers.set('Authorization', `Bearer ${context.apiKey}`)
-          return {...init, headers}
-        }
+      const createClient = (applyAuth: (init?: RequestInit) => RequestInit) => {
+        return new Client({
+          config: this.config,
+          url: context.handlerUrl.href,
+          applyAuth
+        })
+      }
+      const apiClient = createClient(init => {
+        const headers = new Headers(init?.headers)
+        headers.set('Authorization', `Bearer ${context.apiKey}`)
+        return {...init, headers}
       })
-      const clientResolve = client.resolve.bind(client)
-      return assign(client, {
+      const clientResolve = apiClient.resolve.bind(apiClient)
+      const clientForUser = async () => {
+        const {cookies} = await import('next/headers')
+        const cookie = await cookies()
+        return createClient(init => {
+          const headers = new Headers(init?.headers)
+          const alinea = cookie
+            .getAll()
+            .filter(({name}) => name.startsWith('alinea'))
+          for (const {name, value} of alinea)
+            headers.append('cookie', `${name}=${value}`)
+          return {...init, headers}
+        })
+      }
+      return assign(apiClient, {
+        async user() {
+          const client = await clientForUser()
+          return client.user()
+        },
+        async mutate(mutations: Array<Mutation>) {
+          const client = await clientForUser()
+          return client.mutate(mutations)
+        },
         async resolve(params: GraphQuery) {
           const isDev = Boolean(devUrl())
           let preview: PreviewRequest | undefined
@@ -64,13 +89,13 @@ export class NextCMS<
           const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
           const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
           const {db, previews} = await init
-          const sync = () => db.syncWith(client)
+          const sync = () => db.syncWith(apiClient)
           if (!isBuild) {
             if (preview) {
               preview = await previews.parse(
                 preview,
                 sync,
-                client.getDraft.bind(client)
+                apiClient.getDraft.bind(apiClient)
               )
             } else {
               const syncInterval = params.syncInterval ?? 60
@@ -88,22 +113,7 @@ export class NextCMS<
   }
 
   async user(): Promise<User | undefined> {
-    const {cookies} = await import('next/headers')
-    const context = await requestContext(this.config)
-    const cookie = await cookies()
-    const client = new Client({
-      config: this.config,
-      url: context.handlerUrl.href,
-      applyAuth: init => {
-        const headers = new Headers(init?.headers)
-        const alinea = cookie
-          .getAll()
-          .filter(({name}) => name.startsWith('alinea'))
-        for (const {name, value} of alinea)
-          headers.append('cookie', `${name}=${value}`)
-        return {...init, headers}
-      }
-    })
+    const client = await this.connect()
     return client.user()
   }
 

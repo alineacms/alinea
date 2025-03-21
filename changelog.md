@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.2.0]
+- Archiving an entry results in archived children entries as well.
+
 ## [1.1.2]
 - Adjust the inferred results of `cms.find` and `cms.get` so they work reliable
   in non-strict Typescript codebases as well.

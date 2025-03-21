@@ -15,6 +15,7 @@ import {
   generateNKeysBetween
 } from 'alinea/core/util/FractionalIndexing'
 import {entries} from 'alinea/core/util/Objects'
+import {parents} from 'alinea/query'
 import DataLoader from 'dataloader'
 import {atom, useAtomValue} from 'jotai'
 import {useMemo} from 'react'
@@ -88,10 +89,12 @@ const entryTreeItemLoaderAtom = atom(async get => {
       workspace: Entry.workspace,
       root: Entry.root,
       path: Entry.path,
-      parentPaths: {
-        edge: 'parents' as const,
-        select: Entry.path
-      }
+      parents: parents({
+        select: {
+          path: Entry.path,
+          type: Entry.type
+        }
+      })
     }
     const rows = await graph.find({
       groupBy: Entry.id,
@@ -109,6 +112,10 @@ const entryTreeItemLoaderAtom = atom(async get => {
       status: 'preferDraft'
     })
     for (const row of rows) {
+      const canDrag =
+        row.data.parents.length > 0
+          ? !getType(schema[row.data.parents.at(-1)!.type]).orderChildrenBy
+          : true
       const type = schema[row.type]
       const orderBy = getType(type).orderChildrenBy ?? {
         asc: Entry.index,
@@ -143,6 +150,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
         type: row.type,
         index: row.index,
         entries,
+        canDrag,
         children: [...new Set(orderedChildren.map(child => child.id))]
       })
     }
@@ -192,13 +200,15 @@ export interface EntryTreeItem {
     workspace: string
     root: string
     path: string
-    parentPaths: Array<string>
+    parents: Array<{path: string; type: string}>
   }>
   isFolder?: boolean
+  canDrag?: boolean
   children: Array<string>
 }
 
 export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
+  canDrag(item: Array<ItemInstance<EntryTreeItem>>): boolean
   onDrop(
     items: Array<ItemInstance<EntryTreeItem>>,
     target: DropTarget<EntryTreeItem>
@@ -209,6 +219,12 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
   const {config} = useDashboard()
   return useMemo(() => {
     return {
+      canDrag(items) {
+        return items.every(item => {
+          const data = item.getItemData()
+          return data.canDrag
+        })
+      },
       onDrop(items, {item: parent, childIndex, insertionIndex}) {
         if (items.length !== 1) return
         const [dropping] = items
@@ -247,7 +263,11 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
                 mutations.push({
                   type: MutationType.Order,
                   entryId: entry.id,
-                  file: entryFileName(config, entry, entry.parentPaths),
+                  file: entryFileName(
+                    config,
+                    entry,
+                    entry.parents.map(p => p.path)
+                  ),
                   index: correctedIndexKey
                 })
               }
@@ -258,7 +278,11 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
             mutations.push({
               type: MutationType.Order,
               entryId: entry.id,
-              file: entryFileName(config, entry, entry.parentPaths),
+              file: entryFileName(
+                config,
+                entry,
+                entry.parents.map(p => p.path)
+              ),
               index: newIndexKey
             })
           }
