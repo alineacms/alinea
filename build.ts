@@ -569,40 +569,11 @@ async function build({
     : context.rebuild().then(() => context.dispose())
 }
 
-async function runTests(): Promise<void> {
-  let filter = (process.argv.pop() || '').toLowerCase()
-  if (filter.startsWith('--')) filter = ''
-  const files = glob.sync('dist/**/*.test.js')
-  const modules = files.filter(file => {
-    if (!filter) return true
-    return path.basename(file).toLowerCase().includes(filter)
-  })
-  if (modules.length === 0) {
-    console.warn(`No tests found for pattern "${filter}"`)
-    process.exit()
-  }
-  process.argv.push('.bin/uvu') // Trigger isCLI
-  const {exec} = await import('uvu')
-  const global = globalThis as any
-  global.UVU_DEFER = 1
-  for (const [idx, m] of modules.entries()) {
-    global.UVU_INDEX = idx
-    global.UVU_QUEUE.push([path.basename(m)])
-    await import('./' + m)
-  }
-  return exec().catch(error => {
-    console.error(error.stack || error.message)
-    process.exit(1)
-  })
-}
-
 sade('build', true)
   .option('--report', `Report build stats`)
-  .option('--test', `Run tests`)
   .option('--watch', `Watch for changes`)
   .action(async opts => {
     await build(opts)
-    if (opts.test) return runTests()
     if (!opts.watch) sassCompiler.dispose()
   })
   .parse(process.argv)
