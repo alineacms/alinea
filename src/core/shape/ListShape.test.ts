@@ -81,43 +81,43 @@ const value2 = [
   }
 ]
 
-suite(import.meta, test => {
-  test('apply', () => {
-    const doc = new Y.Doc()
-    const root = doc.getMap(ROOT_KEY)
-    root.set(FIELD_KEY, shape.toY(value1))
-    doc.transact(() => {
-      shape.applyY(value2, root, FIELD_KEY)
-    })
-    const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
-    test.equal(pass2, value2)
-  })
+const test = suite(import.meta)
 
-  test('normalize', () => {
-    const oldValue = [
-      {
-        id: 'unique1',
-        type: 'Block1',
-        index: 'a0',
-        field1: '00',
-        blockInner: {
-          field3: 'a',
-          field4: 'c'
-        }
-      }
-    ]
-    const pass = shape.toV1(oldValue)
-    test.equal(pass, [
-      {
-        _id: 'unique1',
-        _type: 'Block1',
-        _index: 'a0',
-        field1: '00',
-        blockInner: {
-          field3: 'a',
-          field4: 'c'
-        }
-      }
-    ])
+test('apply', () => {
+  const doc = new Y.Doc()
+  const root = doc.getMap(ROOT_KEY)
+  root.set(FIELD_KEY, shape.toY(value1))
+  doc.transact(() => {
+    shape.applyY(value2, root, FIELD_KEY)
   })
+  const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
+  test.equal(pass2, value2)
+})
+
+test('normalize', () => {
+  const oldValue = [
+    {
+      id: 'unique1',
+      type: 'Block1',
+      index: 'a0',
+      field1: '00',
+      blockInner: {
+        field3: 'a',
+        field4: 'c'
+      }
+    }
+  ]
+  const pass = shape.toV1(oldValue)
+  test.equal(pass, [
+    {
+      _id: 'unique1',
+      _type: 'Block1',
+      _index: 'a0',
+      field1: '00',
+      blockInner: {
+        field3: 'a',
+        field4: 'c'
+      }
+    }
+  ])
 })

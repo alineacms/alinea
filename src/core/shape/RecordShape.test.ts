@@ -31,15 +31,15 @@ const value2 = {
   }
 }
 
-suite(import.meta, test => {
-  test('apply', () => {
-    const doc = new Y.Doc()
-    const root = doc.getMap(ROOT_KEY)
-    root.set(FIELD_KEY, shape.toY(value1))
-    doc.transact(() => {
-      shape.applyY(value2, root, FIELD_KEY)
-    })
-    const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
-    test.equal(pass2, value2)
+const test = suite(import.meta)
+
+test('apply', () => {
+  const doc = new Y.Doc()
+  const root = doc.getMap(ROOT_KEY)
+  root.set(FIELD_KEY, shape.toY(value1))
+  doc.transact(() => {
+    shape.applyY(value2, root, FIELD_KEY)
   })
+  const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
+  test.equal(pass2, value2)
 })

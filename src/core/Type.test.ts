@@ -42,9 +42,9 @@ const value = {
   ]
 }
 
-suite(import.meta, test => {
-  test('Searchable text', () => {
-    const text = Type.searchableText(Test, value)
-    test.is(text, 'B D Rich text Lorem ipsum')
-  })
+const test = suite(import.meta)
+
+test('Searchable text', () => {
+  const text = Type.searchableText(Test, value)
+  test.is(text, 'B D Rich text Lorem ipsum')
 })
