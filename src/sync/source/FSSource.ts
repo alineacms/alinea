@@ -1,0 +1,95 @@
+import fs from 'node:fs/promises'
+import path from 'node:path/posix'
+import type {Change} from '../Change.ts'
+import {hashBlob} from '../GitUtils.ts'
+import {Source} from '../Source.ts'
+import {ReadonlyTree, WriteableTree} from '../Tree.ts'
+import {assert} from '../Utils.ts'
+import {type CommitRequest, checkCommit} from '../alinea/CommitRequest.ts'
+
+export class FSSource extends Source {
+  #current: ReadonlyTree = ReadonlyTree.EMPTY
+  #cwd: string
+  #locations = new Map<string, string>()
+  #lastModified = new Map<string, number>()
+
+  constructor(cwd: string) {
+    super()
+    this.#cwd = cwd
+  }
+
+  async getTree() {
+    const current = this.#current
+    const builder = new WriteableTree()
+    const files = await fs.readdir(this.#cwd, {
+      recursive: true
+    })
+    const tasks = files.map(async file => {
+      const filePath = file.replaceAll('\\', '/')
+      const fullPath = path.join(this.#cwd, filePath)
+      const stat = await fs.stat(fullPath)
+      if (!stat.isFile()) return
+      const previouslyModified = this.#lastModified.get(filePath)
+      if (previouslyModified && stat.mtimeMs === previouslyModified) {
+        const previous = current.get(filePath)
+        if (previous && typeof previous.sha === 'string') {
+          builder.add(filePath, previous.sha)
+          return
+        }
+      }
+      const contents = await fs.readFile(fullPath)
+      const sha = await hashBlob(contents)
+      this.#locations.set(sha, filePath)
+      this.#lastModified.set(filePath, stat.mtimeMs)
+      builder.add(filePath, sha)
+    })
+    await Promise.all(tasks)
+    const tree = await builder.compile()
+    const diff = current.diff(tree)
+    if (diff.length === 0) return current
+    this.#current = tree
+    return tree
+  }
+
+  async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
+    const current = await this.getTree()
+    return current.sha === sha ? undefined : current
+  }
+
+  async getBlob(sha: string): Promise<Uint8Array> {
+    const path = this.#locations.get(sha)
+    assert(path, `Missing path for blob ${sha}`)
+    return fs.readFile(`${this.#cwd}/${path}`)
+  }
+
+  async applyChanges(changes: Array<Change>) {
+    await Promise.all(
+      changes.map(async change => {
+        switch (change.op) {
+          case 'delete': {
+            return fs.unlink(`${this.#cwd}/${change.path}`)
+          }
+          case 'add': {
+            const {contents} = change
+            assert(contents, 'Missing contents')
+            const dir = path.dirname(change.path)
+            await fs.mkdir(`${this.#cwd}/${dir}`, {recursive: true})
+            return fs.writeFile(`${this.#cwd}/${change.path}`, contents)
+          }
+        }
+      })
+    )
+  }
+
+  async commit(request: CommitRequest) {
+    const local = await this.getTree()
+    checkCommit(local, request)
+    const treeChanges = request.changes.filter(
+      change => change.op !== 'uploadFile' && change.op !== 'removeFile'
+    )
+    await this.applyChanges(treeChanges)
+    const tree = local.clone()
+    tree.applyChanges(treeChanges)
+    return tree.getSha()
+  }
+}
