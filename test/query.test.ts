@@ -1,15 +1,20 @@
 import {suite} from '@alinea/suite'
 import {Edit} from 'alinea'
 import {EntryDB} from 'alinea/sync/db/EntryDB'
-import {config} from './example.ts'
+import {config} from './example.js'
 
 const test = suite(import.meta)
 
-const db = new EntryDB(config)
-await db.sync()
 const {Page} = config.schema
 
+async function createDb() {
+  const db = new EntryDB(config)
+  await db.sync()
+  return db
+}
+
 test('filters', async () => {
+  const db = await createDb()
   const entry = await db.create({
     type: Page,
     set: {
@@ -42,15 +47,17 @@ test('filters', async () => {
   test.is(result2.length, 1)
 })
 
-test('take/skip', async () => {
+test.only('take/skip', async () => {
+  const db = await createDb()
   const lastTwo = await db.find({
-    root: db.workspaces.main.pages,
+    root: config.workspaces.main.pages,
     skip: 1,
     take: 2
   })
+  console.log(lastTwo)
   test.is(lastTwo.length, 2)
   const lastOne = await db.find({
-    root: db.workspaces.main.pages,
+    root: config.workspaces.main.pages,
     skip: 2,
     take: 1
   })

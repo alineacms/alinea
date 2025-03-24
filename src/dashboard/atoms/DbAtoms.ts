@@ -142,7 +142,7 @@ export const mutateAtom = atom(
 
 export const dbUpdateAtom = atom(
   null,
-  async (get, set, force = false) => {
+  async (get, set, force: boolean = false) => {
     const {sync} = await get(localDbAtom)
     const changed = await sync(force)
     set(changedEntriesAtom, changed)

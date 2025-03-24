@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "noEmit": true,
+    "declaration": false,
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "node",
@@ -13,15 +14,11 @@
     "moduleDetection": "force",
     "incremental": true,
     "jsx": "react-jsx",
-    "tsBuildInfoFile": null
-  },
-  "references": [
-    {
-      "path": "./tsconfig.build.json"
-    },
-    {
-      "path": "./tsconfig.test.json"
+    "paths": {
+      "alinea": ["./src/index.ts"],
+      "alinea/*": ["./src/*"]
     }
-  ],
-  "files": []
+  },
+  "references": [{"path": "./tsconfig.build.json"}],
+  "include": ["src", "test"]
 }

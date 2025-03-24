@@ -1,6 +1,6 @@
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/core'
-import * as schema from './schema/index.ts'
+import * as schema from './schema/index.js'
 
 const demo = Config.workspace('Demo', {
   color: '#FFA500',
@@ -8,7 +8,7 @@ const demo = Config.workspace('Demo', {
   source: 'content/demo',
   roots: {
     pages: Config.root('Demo', {
-      contains: ['DemoHome', 'DemoRecipes'],
+      contains: ['DemoHome', 'DemoRecipes']
       /*children: {
         index: Config.page({type: schema.DemoHome, fields: {title: 'Home'}}),
         recipes: Config.page({
@@ -22,7 +22,7 @@ const demo = Config.workspace('Demo', {
 })
 export const cms = createCMS({
   schema,
-  workspaces: { demo},
+  workspaces: {demo},
   baseUrl: {
     production: process.env.VERCEL_URL ?? 'alinea.sh',
     development: 'http://localhost:3000'

@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config, Query} from 'alinea'
 import {createCMS} from 'alinea/core'
-import {EntryDB} from 'alinea/sync/alinea/EntryDB'
+import {EntryDB} from 'alinea/sync/db/EntryDB'
 
 const test = suite(import.meta)
 

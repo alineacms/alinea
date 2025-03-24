@@ -1,3 +1,3 @@
-export * from './DemoHome.ts'
-export * from './DemoRecipe.ts'
-export * from './DemoRecipes.ts'
+export * from './DemoHome.js'
+export * from './DemoRecipe.js'
+export * from './DemoRecipes.js'

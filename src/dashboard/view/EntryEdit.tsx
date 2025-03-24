@@ -111,12 +111,13 @@ export function EntryEdit({editor}: EntryEditProps) {
   const sections = Type.sections(editor.type)
   const hasRootTabs =
     sections.length === 1 && sections[0][Section.Data] instanceof TabsSection
-  const tabs: TabsSection | false =
-    hasRootTabs && (sections[0][Section.Data] as TabsSection)
+  const tabs: TabsSection | undefined = hasRootTabs
+    ? (sections[0][Section.Data] as TabsSection)
+    : undefined
   const visibleTypes = tabs?.types.filter(type => !Type.isHidden(type))
 
   let selectedRootTab = 0
-  if (hasRootTabs && visibleTypes !== false && rootTab !== undefined) {
+  if (hasRootTabs && visibleTypes && rootTab !== undefined) {
     selectedRootTab = rootTab
     if (rootTab >= visibleTypes.length) selectedRootTab = 0
   }
