@@ -1,6 +1,7 @@
 import {Config, Field} from 'alinea'
 import {createMediaRoot} from 'alinea/core/media/MediaRoot'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
+import {EntryDB} from 'alinea/sync/db/EntryDB'
 
 const Page = Config.document('Type', {
   contains: ['Page'],
@@ -220,3 +221,9 @@ export const config = Config.create({
   schema: {Fields, Page, Container},
   workspaces: {main}
 })
+
+export async function createExample() {
+  const db = new EntryDB(config)
+  await db.sync()
+  return db
+}

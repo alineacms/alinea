@@ -455,8 +455,8 @@ export class EntryResolver implements Resolver {
         return 0
       })
     }
-    if (take) results.splice(take)
     if (skip) results.splice(0, skip)
+    if (take) results.splice(take)
     if (groupBy) {
       assert(!Array.isArray(groupBy), 'groupBy must be a single field')
       const groups = new Map<unknown, Entry>()

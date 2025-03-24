@@ -377,8 +377,8 @@ test('create multi language entries', async () => {
   test.is(result.url, '/en/localised2/new-entry')
 })
 
-const example = createExample()
-test.only('filters', async () => {
+test('filters', async () => {
+  const example = createExample()
   const {Page} = example.schema
   const entry = Edit.create({
     type: Page,

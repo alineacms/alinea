@@ -47,14 +47,13 @@ test('filters', async () => {
   test.is(result2.length, 1)
 })
 
-test.only('take/skip', async () => {
+test('take/skip', async () => {
   const db = await createDb()
   const lastTwo = await db.find({
     root: config.workspaces.main.pages,
     skip: 1,
     take: 2
   })
-  console.log(lastTwo)
   test.is(lastTwo.length, 2)
   const lastOne = await db.find({
     root: config.workspaces.main.pages,
