@@ -6,7 +6,7 @@ import type {StoredRow} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
 import {keys} from 'alinea/core/util/Objects'
-import type {Mutation} from './Mutation.ts'
+import type {Mutation} from './Mutation.js'
 
 type Awaitable<T> = T | Promise<T>
 type Task = (graph: Graph) => Awaitable<Array<Mutation>>

@@ -11,12 +11,12 @@ import {validateOrderKey} from 'alinea/core/util/FractionalIndexing'
 import {entries, keys} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
-import type {Change} from '../Change.ts'
-import type {Source} from '../Source.ts'
-import {ReadonlyTree} from '../Tree.ts'
-import {assert, compareStrings} from '../Utils.ts'
-import {EntryResolver} from './EntryResolver.ts'
-import {EntryTransaction} from './EntryTransaction.ts'
+import type {Change} from '../Change.js'
+import type {Source} from '../Source.js'
+import {ReadonlyTree} from '../Tree.js'
+import {assert, compareStrings} from '../Utils.js'
+import {EntryResolver} from './EntryResolver.js'
+import {EntryTransaction} from './EntryTransaction.js'
 
 export class EntryIndex {
   entries = Array<Entry>()

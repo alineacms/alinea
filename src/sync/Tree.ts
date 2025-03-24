@@ -1,6 +1,6 @@
-import type {Change} from './Change.ts'
-import {hashTree, serializeTreeEntries} from './GitUtils.ts'
-import {assert, compareStrings} from './Utils.ts'
+import type {Change} from './Change.js'
+import {hashTree, serializeTreeEntries} from './GitUtils.js'
+import {assert, compareStrings} from './Utils.js'
 
 export interface FlatTreeEntry {
   path: string

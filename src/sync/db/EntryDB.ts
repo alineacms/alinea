@@ -1,12 +1,12 @@
 import type {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'
 import {Graph} from 'alinea/core/Graph'
-import type {Source} from '../Source.ts'
-import {MemorySource} from '../source/MemorySource.ts'
-import {EntryIndex} from './EntryIndex.ts'
-import {EntryResolver} from './EntryResolver.ts'
-import type {EntryTarget} from './EntryTarget.ts'
-import {EntryTransaction} from './EntryTransaction.ts'
+import type {Source} from '../Source.js'
+import {MemorySource} from '../source/MemorySource.js'
+import {EntryIndex} from './EntryIndex.js'
+import {EntryResolver} from './EntryResolver.js'
+import type {EntryTarget} from './EntryTarget.js'
+import {EntryTransaction} from './EntryTransaction.js'
 import {
   ArchiveOperation,
   type ArchiveQuery,
@@ -20,7 +20,7 @@ import {
   type PublishQuery,
   UpdateOperation,
   type UpdateQuery
-} from './Operation.ts'
+} from './Operation.js'
 
 export class EntryDB extends Graph {
   #index: EntryIndex

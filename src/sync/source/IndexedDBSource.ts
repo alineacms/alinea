@@ -1,6 +1,6 @@
-import type {Change} from '../Change.ts'
-import {Source} from '../Source.ts'
-import {ReadonlyTree} from '../Tree.ts'
+import type {Change} from '../Change.js'
+import {Source} from '../Source.js'
+import {ReadonlyTree} from '../Tree.js'
 
 export class IndexedDBSource extends Source {
   #db: Promise<IDBDatabase>

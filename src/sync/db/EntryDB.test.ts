@@ -1,14 +1,13 @@
 import {suite} from '@alinea/suite'
 import {Entry} from 'alinea/core'
 import {assign} from 'alinea/core/util/Objects'
-import {cms} from '../../test/cms.tsx'
-import {DemoRecipe} from '../../test/schema/DemoRecipe.ts'
-import {FSSource} from '../source/FSSource.ts'
-import {MemorySource} from '../source/MemorySource.ts'
-import type {CommitRequest} from './CommitRequest.ts'
-import {EntryDB} from './EntryDB.ts'
+import {cms} from '../../../test/cms'
+import {FSSource} from '../source/FSSource.js'
+import {MemorySource} from '../source/MemorySource.js'
+import type {CommitRequest} from './CommitRequest.js'
+import {EntryDB} from './EntryDB.js'
 
-const dir = 'test/demo'
+const dir = 'apps/web/content/demo'
 const source = new FSSource(dir)
 const from = new MemorySource()
 const into = new MemorySource()
@@ -35,8 +34,10 @@ const test = suite(import.meta, {
   }
 })
 
+const {schema} = cms
+const {DemoRecipe} = schema
+
 test('create entry', async () => {
-  const {schema} = cms
   const parent = await db.get({
     type: schema.DemoRecipes
   })
@@ -50,7 +51,6 @@ test('create entry', async () => {
 })
 
 test('remove entry', async () => {
-  const {schema} = cms
   const parent = await db.get({
     type: schema.DemoRecipes
   })
@@ -66,7 +66,6 @@ test('remove entry', async () => {
 })
 
 test('update entry', async () => {
-  const {schema} = cms
   const chocolateChip = await db.get({
     type: schema.DemoRecipe,
     path: 'chocolate-chip'
@@ -81,7 +80,6 @@ test('update entry', async () => {
 })
 
 test('update path', async () => {
-  const {schema} = cms
   const chocolateChip = await db.get({
     type: schema.DemoRecipe,
     path: 'chocolate-chip'
@@ -117,7 +115,6 @@ test('update path', async () => {
 })
 
 test('change order', async () => {
-  const {schema} = cms
   const parent = await db.create({
     type: schema.DemoRecipes,
     set: {title: 'Recipes'}

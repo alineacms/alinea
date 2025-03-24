@@ -10,7 +10,13 @@ import {
 } from 'alinea/core/TextDoc'
 import type {RichTextElements} from 'alinea/core/shape/RichTextShape'
 import {slugify} from 'alinea/core/util/Slugs'
-import {type ComponentType, Fragment, type ReactElement, isValidElement} from 'react'
+import {
+  type ComponentType,
+  Fragment,
+  type ReactElement,
+  type ReactNode,
+  isValidElement
+} from 'react'
 
 type Element = keyof typeof RichTextElements
 
@@ -92,44 +98,43 @@ type RichTextNodeViewProps<T> = {
 function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
   if (Node.isText(node)) {
     const {[TextNode.text]: text, [TextNode.marks]: marks} = node
-    const content =
+    const content: ReactNode =
       typeof views.text === 'function' ? <views.text>{text}</views.text> : text
     const wrappers =
       marks?.map(mark => nodeElement(mark[Mark.type], mark)) || []
-    return wrappers.reduce(
-      (children, element) => {
-        if (!element?.type) return children
-        const View: any = views[element.type]
-        if (View && !isValidElement(View)) {
-          return <View {...element.props}>{children}</View>
-        }
-          const node = View ?? element
-          return (
-            <node.type {...element?.props} {...(node.props as object)}>
-              {children}
-            </node.type>
-          )
-      },
-      content
-    )
-  }if (Node.isElement(node)) {
+    return wrappers.reduce((children, element) => {
+      if (!element?.type) return children
+      const View: any = views[element.type]
+      if (View && !isValidElement(View)) {
+        return <View {...element.props}>{children}</View>
+      }
+      const node = View ?? element
+      return (
+        <node.type {...element?.props} {...(node.props as object)}>
+          {children}
+        </node.type>
+      )
+    }, content)
+  }
+  if (Node.isElement(node)) {
     const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
     const element = nodeElement(type, attrs, content)
     const View: any = views[element?.type || type]
     const inner =
-      content?.map((node, i) => (
+      content?.map((node: Node, i: number) => (
         <RichTextNodeView key={i} views={views} node={node} />
       )) || null
     if (View && !isValidElement(View)) {
       return <View {...(element?.props || attrs)}>{inner}</View>
     }
-      const node = View ?? element ?? {type: Fragment}
-      return (
-        <node.type {...element?.props} {...(node.props as object)}>
-          {inner}
-        </node.type>
-      )
-  }if (Node.isBlock(node)) {
+    const el = View ?? element ?? {type: Fragment}
+    return (
+      <el.type {...element?.props} {...(el.props as object)}>
+        {inner}
+      </el.type>
+    )
+  }
+  if (Node.isBlock(node)) {
     const {[Node.type]: type, [BlockNode.id]: id, ...attrs} = node
     const View: any = views[type]
     if (!View) return null

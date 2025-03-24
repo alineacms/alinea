@@ -1,11 +1,11 @@
 import {suite} from '@alinea/suite'
-import {cms} from '../../test/cms.tsx'
-import {FSSource} from '../source/FSSource.ts'
-import {EntryIndex} from './EntryIndex.ts'
+import {cms} from '../../../test/cms.js'
+import {FSSource} from '../source/FSSource.js'
+import {EntryIndex} from './EntryIndex.js'
 
 const test = suite(import.meta)
 
-const dir = 'test/demo'
+const dir = 'apps/web/content/demo'
 const source = new FSSource(dir)
 
 const index = new EntryIndex(cms.config)

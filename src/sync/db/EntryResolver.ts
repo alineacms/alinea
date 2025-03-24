@@ -29,9 +29,9 @@ import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
-import {assert, compareStrings} from '../Utils.ts'
-import type {EntryIndex} from './EntryIndex.ts'
-import {LinkResolver} from './LinkResolver.ts'
+import {assert, compareStrings} from '../Utils.js'
+import type {EntryIndex} from './EntryIndex.js'
+import {LinkResolver} from './LinkResolver.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))
 const andFilter = cito
@@ -400,7 +400,12 @@ export class EntryResolver implements Resolver {
         query.locale ?? ctx.locale
       )
       if (source !== 'translations' && !matchesLocale) return false
-      return this.conditionEntryFields(entry, query)
+      const matchesEntryFields = this.conditionEntryFields(entry, query)
+      if (!matchesEntryFields) return false
+      if (!query.filter) return true
+      return this.conditionFilter(query.filter ?? {}, name =>
+        this.getField(entry, name)
+      )
     }
   }
 

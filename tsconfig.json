@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "noEmit": true,
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "node",
@@ -7,19 +8,20 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "jsx": "react-jsx",
-    "moduleDetection": "force",
-    "incremental": true,
-    "outDir": "dist",
-    "rootDir": "src",
     "skipLibCheck": true,
     "preserveWatchOutput": true,
-    "plugins": [{"name": "typescript-plugin-css-modules"}],
-    "paths": {
-      "alinea/*": ["./src/*"]
-    },
-    "declaration": true,
-    "emitDeclarationOnly": true
+    "moduleDetection": "force",
+    "incremental": true,
+    "jsx": "react-jsx",
+    "tsBuildInfoFile": null
   },
-  "include": ["src"]
+  "references": [
+    {
+      "path": "./tsconfig.build.json"
+    },
+    {
+      "path": "./tsconfig.test.json"
+    }
+  ],
+  "files": []
 }

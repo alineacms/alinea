@@ -5,10 +5,10 @@ import {
   hashTree,
   parseTreeEntries,
   serializeTreeEntries
-} from './GitUtils.ts'
-import type {Tree} from './Tree.ts'
-import {concatUint8Arrays, hexToBytes} from './Utils.ts'
-import {sha1Hash} from './Utils.ts'
+} from './GitUtils.js'
+import type {Tree} from './Tree.js'
+import {concatUint8Arrays, hexToBytes} from './Utils.js'
+import {sha1Hash} from './Utils.js'
 
 const test = suite(import.meta)
 

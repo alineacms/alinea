@@ -10,13 +10,13 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
-import {SourceTransaction} from '../Source.ts'
-import type {Source} from '../Source.ts'
-import type {ReadonlyTree} from '../Tree.ts'
-import {assert, compareStrings} from '../Utils.ts'
-import type {CommitChange} from './CommitRequest.ts'
-import type {EntryIndex} from './EntryIndex.ts'
-import type {EntryTarget} from './EntryTarget.ts'
+import {SourceTransaction} from '../Source.js'
+import type {Source} from '../Source.js'
+import type {ReadonlyTree} from '../Tree.js'
+import {assert, compareStrings} from '../Utils.js'
+import type {CommitChange} from './CommitRequest.js'
+import type {EntryIndex} from './EntryIndex.js'
+import type {EntryTarget} from './EntryTarget.js'
 import type {
   ArchiveMutation,
   CreateMutation,
@@ -27,7 +27,7 @@ import type {
   RemoveMutation,
   UpdateMutation,
   UploadFileMutation
-} from './Mutation.ts'
+} from './Mutation.js'
 
 type Op<T> = Omit<T, 'op'>
 

@@ -1,6 +1,6 @@
-import type {Change} from './Change.ts'
-import {hashBlob} from './GitUtils.ts'
-import type {ReadonlyTree, WriteableTree} from './Tree.ts'
+import type {Change} from './Change.js'
+import {hashBlob} from './GitUtils.js'
+import type {ReadonlyTree, WriteableTree} from './Tree.js'
 
 export abstract class Source {
   abstract getTree(): Promise<ReadonlyTree>

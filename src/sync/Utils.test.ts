@@ -5,7 +5,7 @@ import {
   concatUint8Arrays,
   hexToBytes,
   sha1Hash
-} from './Utils.ts'
+} from './Utils.js'
 
 it('should not throw an error for truthy values', () => {
   expect(() => assert(true)).not.toThrow()

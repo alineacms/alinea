@@ -1,8 +1,8 @@
-import type {Change} from '../Change.ts'
-import {hashBlob} from '../GitUtils.ts'
-import {Source} from '../Source.ts'
-import {ReadonlyTree} from '../Tree.ts'
-import {assert} from '../Utils.ts'
+import type {Change} from '../Change.js'
+import {hashBlob} from '../GitUtils.js'
+import {Source} from '../Source.js'
+import {ReadonlyTree} from '../Tree.js'
+import {assert} from '../Utils.js'
 
 export class MemorySource extends Source {
   #tree: ReadonlyTree

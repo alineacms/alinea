@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "plugins": [{"name": "typescript-plugin-css-modules"}],
+    "paths": {
+      "alinea": ["./src/index.ts"],
+      "alinea/*": ["./src/*"]
+    },
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "composite": true
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
+}

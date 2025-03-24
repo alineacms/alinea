@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
-import type {Change} from '../Change.ts'
-import {hashBlob} from '../GitUtils.ts'
-import {Source} from '../Source.ts'
-import {ReadonlyTree, WriteableTree} from '../Tree.ts'
-import {assert} from '../Utils.ts'
-import {type CommitRequest, checkCommit} from '../alinea/CommitRequest.ts'
+import type {Change} from '../Change.js'
+import {hashBlob} from '../GitUtils.js'
+import {Source} from '../Source.js'
+import {ReadonlyTree, WriteableTree} from '../Tree.js'
+import {assert} from '../Utils.js'
+import {type CommitRequest, checkCommit} from '../db/CommitRequest.js'
 
 export class FSSource extends Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY

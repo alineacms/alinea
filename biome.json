@@ -34,7 +34,8 @@
         "noNonNullAssertion": "off",
         "useEnumInitializers": "off",
         "noParameterAssign": "off",
-        "useShorthandFunctionType": "off"
+        "useShorthandFunctionType": "off",
+        "noInferrableTypes": "off"
       },
       "complexity": {
         "noBannedTypes": "off"
@@ -61,7 +62,8 @@
   },
   "files": {
     "include": [
-      "src"
+      "src",
+      "test"
     ]
   }
 }

@@ -2,16 +2,16 @@ import {suite} from '@alinea/suite'
 import {Query} from 'alinea'
 import {Entry} from 'alinea/core'
 import {MediaFile} from 'alinea/core/media/MediaTypes'
-import {cms} from '../../test/cms.tsx'
-import {DemoRecipe} from '../../test/schema/DemoRecipe.ts'
-import {DemoRecipes} from '../../test/schema/DemoRecipes.ts'
-import {FSSource} from '../source/FSSource.ts'
-import {EntryIndex} from './EntryIndex.ts'
-import {EntryResolver} from './EntryResolver.ts'
+import {cms} from '../../../test/cms.js'
+import {DemoRecipe} from '../../../test/schema/DemoRecipe.js'
+import {DemoRecipes} from '../../../test/schema/DemoRecipes.js'
+import {FSSource} from '../source/FSSource.js'
+import {EntryIndex} from './EntryIndex.js'
+import {EntryResolver} from './EntryResolver.js'
 
 const test = suite(import.meta)
 
-const dir = 'test/demo'
+const dir = 'apps/web/content/demo'
 const source = new FSSource(dir)
 
 const index = new EntryIndex(cms.config)
@@ -180,7 +180,7 @@ test('preview existing entry', async () => {
     select: Entry,
     first: true,
     preview: {
-      entry: {...entry, title: 'Chocolate chip preview'}
+      entry: {...entry!, title: 'Chocolate chip preview'}
     }
   })
   test.is(entry2!.title, 'Chocolate chip preview')

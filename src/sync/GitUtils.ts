@@ -1,4 +1,4 @@
-import type {Entry} from './Tree.ts'
+import type {Entry} from './Tree.js'
 import {
   assert,
   bytesToHex,
@@ -6,7 +6,7 @@ import {
   concatUint8Arrays,
   hexToBytes,
   sha1Hash
-} from './Utils.ts'
+} from './Utils.js'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()

@@ -1,12 +1,12 @@
 import {suite} from '@alinea/suite'
-import {FSSource} from './FSSource.ts'
-import {GithubSource} from './GithubSource.ts'
+import {FSSource} from './FSSource.js'
+import {GithubSource} from './GithubSource.js'
 
 const test = suite(import.meta)
 
 test('sync', async () => {
   if (!process.env.GITHUB_AUTH_TOKEN) return
-  const dir = 'test/demo'
+  const dir = 'apps/web/content/demo'
   const fsSource = new FSSource(dir)
   const ghSource = new GithubSource({
     owner: 'alineacms',

@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs'
 import {suite} from '@alinea/suite'
 import {Entry} from 'alinea/core'
 import {EntryStatus} from 'alinea/core/EntryRow'
@@ -6,7 +7,6 @@ import {createPreview} from 'alinea/core/media/CreatePreview'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import * as Edit from 'alinea/edit'
 import {translations} from 'alinea/query'
-import {readFileSync} from 'node:fs'
 import {createExample} from './test/Example.js'
 
 const test = suite(import.meta)
@@ -377,8 +377,8 @@ test('create multi language entries', async () => {
   test.is(result.url, '/en/localised2/new-entry')
 })
 
-test('filters', async () => {
-  const example = createExample()
+const example = createExample()
+test.only('filters', async () => {
   const {Page} = example.schema
   const entry = Edit.create({
     type: Page,
