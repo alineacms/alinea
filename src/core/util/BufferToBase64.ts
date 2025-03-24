@@ -17,7 +17,7 @@ export const decode = (
   format: CompressionFormat | '' = 'deflate'
 ) => {
   for (
-    var blob,
+    let blob,
       str = atob(btoa),
       {length} = str,
       buffer = new Uint8Array(length),
@@ -45,7 +45,7 @@ export const encode = async (
   format: CompressionFormat | '' = 'deflate'
 ) => {
   for (
-    var blob = new Blob([buffer]),
+    let blob = new Blob([buffer]),
       res = format
         ? new Response(blob.stream().pipeThrough(new CompressionStream(format)))
         : blob,

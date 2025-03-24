@@ -1,14 +1,14 @@
-import {Auth, Backend} from 'alinea/backend/Backend'
+import type {Auth, Backend} from 'alinea/backend/Backend'
 import {memoryBackend} from 'alinea/backend/data/MemoryBackend'
 import {Database} from 'alinea/backend/Database'
 import {createHandler} from 'alinea/backend/Handler'
-import {Store} from 'alinea/backend/Store'
+import type {Store} from 'alinea/backend/Store'
 import {createStore} from 'alinea/backend/store/CreateStore'
 import {CMS} from 'alinea/core/CMS'
-import {Config, createConfig} from 'alinea/core/Config'
+import {type Config, createConfig} from 'alinea/core/Config'
 import {createId} from 'alinea/core/Id'
 import {localUser} from 'alinea/core/User'
-import {AddressInfo} from 'node:net'
+import type {AddressInfo} from 'node:net'
 import PLazy from 'p-lazy'
 
 const auth: Auth = {
@@ -68,7 +68,7 @@ export function createCMS<Definition extends Config>(
 }
 
 async function listenForUpload(): Promise<{url: string}> {
-  const {createServer} = await import('http')
+  const {createServer} = await import('node:http')
   const server = createServer((req, res) => {
     res.end()
     server.close()

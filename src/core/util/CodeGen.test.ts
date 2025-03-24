@@ -15,7 +15,7 @@ test('dedent', () => {
 })
 
 test('indent insert', () => {
-  const inner = `a\nb`
+  const inner = 'a\nb'
   test.is(
     code`
       block {

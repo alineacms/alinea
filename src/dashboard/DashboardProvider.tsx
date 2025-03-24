@@ -1,8 +1,8 @@
-import {Config} from 'alinea/core/Config'
-import {Connection} from 'alinea/core/Connection'
+import type {Config} from 'alinea/core/Config'
+import type {Connection} from 'alinea/core/Connection'
 import {useAtomValue} from 'jotai'
-import {ComponentType, PropsWithChildren} from 'react'
-import {QueryClient, QueryClientProvider} from 'react-query'
+import type {ComponentType, PropsWithChildren} from 'react'
+import {type QueryClient, QueryClientProvider} from 'react-query'
 import {
   queryClientAtom,
   useSetDashboardOptions

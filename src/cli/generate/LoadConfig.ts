@@ -14,6 +14,6 @@ export async function loadCMS(outDir: string): Promise<CMS> {
   const exports = await import(outFile)
   if ('cms' in exports && exports.cms instanceof CMS) return exports.cms
   if ('default' in exports)
-    throw new Error(`No export named cms found, did you export it as default?`)
-  throw new Error(`No export named cms found`)
+    throw new Error('No export named cms found, did you export it as default?')
+  throw new Error('No export named cms found')
 }

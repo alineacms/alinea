@@ -21,7 +21,7 @@ import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
-import {EntryEditor, EntryTransition} from '../../atoms/EntryEditorAtoms.js'
+import {type EntryEditor, EntryTransition} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useEntryLocation} from '../../hook/UseEntryLocation.js'
@@ -87,12 +87,12 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const variant = currentTransition
     ? 'transition'
     : previewRevision
-    ? 'revision'
-    : untranslated
-    ? 'untranslated'
-    : hasChanges && !statusInUrl
-    ? 'editing'
-    : selectedStatus
+      ? 'revision'
+      : untranslated
+        ? 'untranslated'
+        : hasChanges && !statusInUrl
+          ? 'editing'
+          : selectedStatus
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const publishDraft = useSetAtom(editor.publishDraft)
@@ -302,7 +302,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                       selected={editor.activeVersion.locale!}
                       locales={editor.translations.map(({locale}) => locale)}
                       onChange={locale => {
-                        navigate(pathname + `?from=` + locale)
+                        navigate(`${pathname}?from=${locale}`)
                       }}
                     />
                   </HStack>

@@ -1,5 +1,5 @@
 import {Entry} from 'alinea/core/Entry'
-import {EntryLocation} from 'alinea/dashboard/DashboardNav'
+import type {EntryLocation} from 'alinea/dashboard/DashboardNav'
 import {graphAtom} from 'alinea/dashboard/atoms/DbAtoms'
 import {locationAtom, useNavigate} from 'alinea/dashboard/atoms/LocationAtoms'
 import {useNav} from 'alinea/dashboard/hook/UseNav'

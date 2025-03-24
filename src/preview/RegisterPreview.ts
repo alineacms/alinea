@@ -1,5 +1,5 @@
 import type {PreviewMetadata, PreviewPayload} from 'alinea/core/Preview'
-import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
+import {PreviewAction, type PreviewMessage} from 'alinea/preview/PreviewMessage'
 
 export interface PreviewApi {
   preview(update: PreviewPayload): Promise<void>
@@ -9,7 +9,7 @@ export interface PreviewApi {
 export function registerPreview(api: PreviewApi) {
   if (typeof window === 'undefined') return
   let observer: MutationObserver | null = null
-  if (window.location != window.parent.location) {
+  if (window.location !== window.parent.location) {
     window.parent.postMessage({action: PreviewAction.Ping}, '*')
     addEventListener('message', handleMessage)
     console.info('[Alinea preview listener attached]')

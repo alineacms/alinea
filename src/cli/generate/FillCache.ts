@@ -1,12 +1,12 @@
 import {Database} from 'alinea/backend/Database'
-import {Store} from 'alinea/backend/Store'
-import {Config} from 'alinea/core/Config'
+import type {Store} from 'alinea/backend/Store'
+import type {Config} from 'alinea/core/Config'
 import pLimit from 'p-limit'
 import {getCommitSha} from '../util/CommitSha.js'
-import {createEmitter, Emitter} from '../util/Emitter.js'
+import {createEmitter, type Emitter} from '../util/Emitter.js'
 import {createWatcher} from '../util/Watcher.js'
-import {GenerateContext} from './GenerateContext.js'
-import {LocalData} from './LocalData.js'
+import type {GenerateContext} from './GenerateContext.js'
+import type {LocalData} from './LocalData.js'
 
 const dbCache = new WeakMap<Config, Database>()
 

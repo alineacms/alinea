@@ -1,9 +1,9 @@
-import fs from 'node:fs/promises'
 import {suite} from '@alinea/suite'
-import demoTree from '../test/demo.json' with {type: 'json'}
-import {Index} from './Index.ts'
-import {ReadonlyTree} from './Tree.ts'
-import {MemorySource} from './source/MemorySource.ts'
+import fs from 'node:fs/promises'
+import {Index} from './Index.js'
+import {ReadonlyTree} from './Tree.js'
+import {MemorySource} from './source/MemorySource.js'
+import demoTree from './test/demo.json' with {type: 'json'}
 
 const test = suite(import.meta)
 

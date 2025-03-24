@@ -6,7 +6,7 @@ import {createPreview} from 'alinea/core/media/CreatePreview'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import * as Edit from 'alinea/edit'
 import {translations} from 'alinea/query'
-import {readFileSync} from 'fs'
+import {readFileSync} from 'node:fs'
 import {createExample} from './test/Example.js'
 
 const test = suite(import.meta)

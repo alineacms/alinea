@@ -1,7 +1,7 @@
-import {Config} from '../Config.js'
-import {ALT_STATUS, EntryRow, EntryStatus} from '../EntryRow.js'
+import type {Config} from '../Config.js'
+import {ALT_STATUS, type EntryRow, EntryStatus} from '../EntryRow.js'
 import {getRoot, getType} from '../Internal.js'
-import {EntryUrlMeta, Type} from '../Type.js'
+import type {EntryUrlMeta, Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
 import {values} from './Objects.js'
 import {join} from './Paths.js'
@@ -38,18 +38,17 @@ export function entryChildrenDir(
   if (!root) throw new Error(`Root "${entry.root}" does not exist`)
   const hasI18n = getRoot(root).i18n
   const {locale, path, status} = entry
-  if (hasI18n && !locale) throw new Error(`Entry is missing locale`)
+  if (hasI18n && !locale) throw new Error('Entry is missing locale')
   if (!values(EntryStatus).includes(status))
     throw new Error(`Entry has unknown phase: ${status}`)
   return (
-    '/' +
-    (locale ? [locale.toLowerCase()] : [])
+    `/${(locale ? [locale.toLowerCase()] : [])
       .concat(
         parentPaths
           .concat(path)
           .map(segment => (segment === '' ? 'index' : segment))
       )
-      .join('/')
+      .join('/')}`
   )
 }
 
@@ -64,14 +63,13 @@ export function entryFilepath(
   },
   parentPaths: Array<string>
 ): string {
-  const {status: status} = entry
+  const {status} = entry
   if (!values(EntryStatus).includes(status))
     throw new Error(`Entry has unknown phase: ${status}`)
   const statusSegment = status === EntryStatus.Published ? '' : `.${status}`
   const location = (
-    entryChildrenDir(config, entry, parentPaths) +
-    statusSegment +
-    '.json'
+    `${entryChildrenDir(config, entry, parentPaths) +
+    statusSegment}.json`
   ).toLowerCase()
   return location
 }
@@ -112,14 +110,13 @@ export function entryUrl(type: Type, meta: EntryUrlMeta) {
   if (entryUrl) return entryUrl(meta)
   const segments = meta.locale ? [meta.locale.toLowerCase()] : []
   return (
-    '/' +
-    segments
+    `/${segments
       .concat(
         meta.parentPaths
           .concat(meta.path)
           .filter(segment => segment !== 'index' && segment !== '')
       )
-      .join('/')
+      .join('/')}`
   )
 }
 

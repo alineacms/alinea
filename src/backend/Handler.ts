@@ -1,14 +1,14 @@
 import {Database} from 'alinea/backend/Database'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
-import {Entry} from 'alinea/core'
-import {CMS} from 'alinea/core/CMS'
-import {Connection} from 'alinea/core/Connection'
-import {Draft, DraftKey, formatDraftKey} from 'alinea/core/Draft'
-import {AnyQueryResult, Graph, GraphQuery} from 'alinea/core/Graph'
+import type {Entry} from 'alinea/core'
+import type {CMS} from 'alinea/core/CMS'
+import type {Connection} from 'alinea/core/Connection'
+import {type Draft, type DraftKey, formatDraftKey} from 'alinea/core/Draft'
+import {type AnyQueryResult, Graph, type GraphQuery} from 'alinea/core/Graph'
 import {ErrorCode, HttpError} from 'alinea/core/HttpError'
-import {Mutation, MutationType, UpdateMutation} from 'alinea/core/Mutation'
-import {PreviewUpdate} from 'alinea/core/Preview'
+import {type Mutation, MutationType, type UpdateMutation} from 'alinea/core/Mutation'
+import type {PreviewUpdate} from 'alinea/core/Preview'
 import {getScope} from 'alinea/core/Scope'
 import {decode} from 'alinea/core/util/BufferToBase64'
 import {base64} from 'alinea/core/util/Encoding'
@@ -17,7 +17,7 @@ import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
 import {mergeUpdatesV2} from 'yjs'
-import {
+import type {
   AuthedContext,
   Backend,
   DraftTransport,
@@ -104,7 +104,7 @@ export function createHandler({
     }
 
     function periodicSync(ctx: RequestContext, syncInterval = 60) {
-      if (syncInterval === Infinity) return
+      if (syncInterval === Number.POSITIVE_INFINITY) return
       const now = Date.now()
       if (now - lastSync < syncInterval * 1000) return Promise.resolve()
       lastSync = now
@@ -136,7 +136,7 @@ export function createHandler({
       mutations: Array<Mutation>,
       retry = false
     ): Promise<{commitHash: string}> {
-      let fromCommitHash: string = await db.meta().then(meta => meta.commitHash)
+      const fromCommitHash: string = await db.meta().then(meta => meta.commitHash)
       try {
         for (const mutation of mutations) {
           switch (mutation.type) {

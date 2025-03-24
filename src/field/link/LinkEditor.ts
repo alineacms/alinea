@@ -1,13 +1,12 @@
 import {createId} from 'alinea/core/Id'
 import {Reference} from 'alinea/core/Reference'
 import {ListEditor} from 'alinea/core/field/ListField'
-import {ListRow} from 'alinea/core/shape/ListShape'
+import type {ListRow} from 'alinea/core/shape/ListShape'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url/UrlPicker'
 
 export class LinkEditor<StoredValue extends Reference> {
   row?: StoredValue
-  constructor() {}
 
   add(type: StoredValue['_type'], value: Omit<StoredValue, '_type' | '_id'>) {
     this.row = {

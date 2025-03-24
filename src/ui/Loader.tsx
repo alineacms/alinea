@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {HTMLAttributes} from 'react'
+import type {HTMLAttributes} from 'react'
 import css from './Loader.module.scss'
 
 const styles = styler(css)
@@ -16,7 +16,7 @@ export function Loader({light, absolute, size = 22, ...props}: LoaderProps) {
       style={{fontSize: size}}
       className={styles.loader.mergeProps(props)({absolute})}
     >
-      <div {...props} className={styles.loader.inner()}></div>
+      <div {...props} className={styles.loader.inner()} />
     </div>
   )
 }

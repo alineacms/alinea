@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {HStack} from 'alinea/ui'
-import {UrlReference} from './UrlPicker.js'
+import type {UrlReference} from './UrlPicker.js'
 import css from './UrlPickerRow.module.scss'
 
 const styles = styler(css)

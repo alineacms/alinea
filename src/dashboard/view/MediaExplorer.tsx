@@ -6,23 +6,23 @@ import {useQuery} from 'react-query'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
-import {EntryFields} from 'alinea/core/EntryFields'
-import {Filter} from 'alinea/core/Filter'
-import {QueryWithResult} from 'alinea/core/Graph'
-import {RootData} from 'alinea/core/Root'
+import type {EntryFields} from 'alinea/core/EntryFields'
+import type {Filter} from 'alinea/core/Filter'
+import type {QueryWithResult} from 'alinea/core/Graph'
+import type {RootData} from 'alinea/core/Root'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {EntryHeader} from 'alinea/dashboard/view/entry/EntryHeader'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtomValue} from 'jotai'
 import {graphAtom} from '../atoms/DbAtoms.js'
-import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
+import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useNavigate} from '../atoms/LocationAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {Head} from '../util/Head.js'
-import {Explorer, ExporerItemSelect} from './explorer/Explorer.js'
+import {Explorer, type ExporerItemSelect} from './explorer/Explorer.js'
 import {IconLink} from './IconButton.js'
 import {FileUploader} from './media/FileUploader.js'
 import css from './MediaExplorer.module.scss'
@@ -76,8 +76,8 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const backLink = data?.parent
     ? nav.entry({id: data.parent})
     : editor
-    ? nav.root({root: root.name})
-    : undefined
+      ? nav.root({root: root.name})
+      : undefined
   return (
     <>
       <Main className={styles.root()} scrollable={false}>

@@ -1,4 +1,4 @@
-import {EntryRow, EntryStatus} from './EntryRow.js'
+import type {EntryRow, EntryStatus} from './EntryRow.js'
 
 export enum MutationProgress {
   Finished = 'finished',

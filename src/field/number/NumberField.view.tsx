@@ -3,7 +3,7 @@ import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {IcRoundNumbers} from 'alinea/ui/icons/IcRoundNumbers'
 import {useEffect, useRef} from 'react'
-import {NumberField} from './NumberField.js'
+import type {NumberField} from './NumberField.js'
 import css from './NumberField.module.scss'
 
 const styles = styler(css)
@@ -13,8 +13,8 @@ export interface NumberInputProps {
 }
 
 function tryParseNumber(input: string) {
-  const value = parseFloat(input)
-  return isNaN(value) ? null : value
+  const value = Number.parseFloat(input)
+  return Number.isNaN(value) ? null : value
 }
 
 export function NumberInput({field}: NumberInputProps) {

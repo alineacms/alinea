@@ -1,4 +1,4 @@
-import {RequestContext} from 'alinea/backend/Backend'
+import type {RequestContext} from 'alinea/backend/Backend'
 import {generatedRelease} from 'alinea/backend/store/GeneratedRelease'
 import {Config} from 'alinea/core/Config'
 
@@ -12,7 +12,7 @@ export async function requestContext(config: Config): Promise<RequestContext> {
     apiKey:
       process.env.NODE_ENV === 'development'
         ? 'dev'
-        : process.env.ALINEA_API_KEY ?? (await generatedRelease)
+        : (process.env.ALINEA_API_KEY ?? (await generatedRelease))
   }
 }
 
@@ -30,7 +30,7 @@ async function requestOrigin() {
   const headers = await requestHeaders()
   const host = headers.get('x-forwarded-host') ?? headers.get('host')
   const proto = headers.get('x-forwarded-proto') ?? 'https'
-  const protocol = proto.endsWith(':') ? proto : proto + ':'
+  const protocol = proto.endsWith(':') ? proto : `${proto}:`
   return `${protocol}//${host}`
 }
 

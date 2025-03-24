@@ -1,11 +1,11 @@
-import {Workspace} from 'alinea/types'
-import {Config} from './Config.js'
+import type {Workspace} from 'alinea/types'
+import type {Config} from './Config.js'
 import {Expr} from './Expr.js'
-import {Field} from './Field.js'
+import type {Field} from './Field.js'
 import {getExpr, hasExpr} from './Internal.js'
-import {Page} from './Page.js'
-import {Root} from './Root.js'
-import {Type} from './Type.js'
+import type {Page} from './Page.js'
+import type {Root} from './Root.js'
+import type {Type} from './Type.js'
 import {entries} from './util/Objects.js'
 
 const scopes = new WeakMap()
@@ -61,7 +61,7 @@ export class Scope {
         if (props.length === 1) {
           const [key] = props
           if (key === ENTITY_KEY) return this.#keys.get(value[key])
-          else if (key === EXPR_KEY) return new Expr(value[key])
+          if (key === EXPR_KEY) return new Expr(value[key])
         }
       }
       return value

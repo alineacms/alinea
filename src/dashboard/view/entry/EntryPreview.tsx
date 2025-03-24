@@ -1,9 +1,9 @@
 import {Config} from 'alinea/core/Config'
-import {Entry} from 'alinea/core/Entry'
+import type {Entry} from 'alinea/core/Entry'
 import {useAtomValue} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {ComponentType, useEffect, useState} from 'react'
-import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
+import {type ComponentType, useEffect, useState} from 'react'
+import type {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {BrowserPreview} from '../preview/BrowserPreview.js'
 

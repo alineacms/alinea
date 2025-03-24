@@ -6,8 +6,6 @@ type Client = {
 export class LiveReload {
   clients: Array<Client> = []
 
-  constructor() {}
-
   reload(type: 'refetch' | 'refresh' | 'reload') {
     for (const client of this.clients) {
       client.write(`data: ${type}\n\n`)

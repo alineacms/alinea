@@ -1,13 +1,13 @@
-import {
+import type {
   AsyncTreeDataLoader,
   DropTarget,
   ItemInstance
 } from '@headless-tree/core'
 import {Entry} from 'alinea/core/Entry'
-import {EntryStatus} from 'alinea/core/EntryRow'
-import {Graph} from 'alinea/core/Graph'
+import type {EntryStatus} from 'alinea/core/EntryRow'
+import type {Graph} from 'alinea/core/Graph'
 import {getRoot, getType} from 'alinea/core/Internal'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {type Mutation, MutationType} from 'alinea/core/Mutation'
 import {Type} from 'alinea/core/Type'
 import {entryFileName} from 'alinea/core/util/EntryFilenames'
 import {

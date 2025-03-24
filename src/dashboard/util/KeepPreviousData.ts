@@ -1,4 +1,4 @@
-import {Atom, atom} from 'jotai'
+import {type Atom, atom} from 'jotai'
 
 // Suspend if we have no data, but keep previous data while loading new data
 export function keepPreviousData<Value, T extends Atom<Promise<Value>>>(

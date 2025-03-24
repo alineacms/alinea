@@ -1,5 +1,5 @@
 import {connect} from 'rado/driver/sql.js'
-import {Store} from '../Store.js'
+import type {Store} from '../Store.js'
 
 export async function createStore(data?: Uint8Array): Promise<Store> {
   const {default: sqlInit} = await import('@alinea/sqlite-wasm')

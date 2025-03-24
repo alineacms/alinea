@@ -1,6 +1,6 @@
 import {Response} from '@alinea/iso'
 import {AuthAction} from 'alinea/backend/Auth'
-import {
+import type {
   Auth,
   AuthedContext,
   Backend,
@@ -11,13 +11,13 @@ import {
   RequestContext,
   Target
 } from 'alinea/backend/Backend'
-import {ChangeSet} from 'alinea/backend/data/ChangeSet'
+import type {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {router} from 'alinea/backend/router/Router'
-import {Config} from 'alinea/core/Config'
+import type {Config} from 'alinea/core/Config'
 import {formatDraftKey, parseDraftKey} from 'alinea/core/Draft'
 import {HttpError} from 'alinea/core/HttpError'
-import {outcome, Outcome, OutcomeJSON} from 'alinea/core/Outcome'
-import {User} from 'alinea/core/User'
+import {outcome, Outcome, type OutcomeJSON} from 'alinea/core/Outcome'
+import type {User} from 'alinea/core/User'
 import {base64} from 'alinea/core/util/Encoding'
 import {verify} from 'alinea/core/util/JWT'
 import {Workspace} from 'alinea/core/Workspace'
@@ -56,7 +56,7 @@ export function cloudBackend(config: Config): Backend {
       const url = new URL(request.url)
       const action = url.searchParams.get('auth')
       let dashboardPath = config.dashboardFile ?? '/admin.html'
-      if (!dashboardPath.startsWith('/')) dashboardPath = '/' + dashboardPath
+      if (!dashboardPath.startsWith('/')) dashboardPath = `/${dashboardPath}`
       const dashboardUrl = new URL(dashboardPath, url)
       switch (action) {
         // We start by asking our backend whether we have:
@@ -64,7 +64,7 @@ export function cloudBackend(config: Config): Backend {
         // - no user, but a valid api key => we can redirect to cloud login
         // - no api key => display a message to setup backend
         case AuthAction.Status: {
-          const token = ctx.apiKey && ctx.apiKey.split('_')[1]
+          const token = ctx.apiKey?.split('_')[1]
           if (!token)
             return Response.json({
               type: AuthResultType.MissingApiKey,
@@ -251,7 +251,7 @@ export function cloudBackend(config: Config): Backend {
       const {entryId, locale} = parseDraftKey(key)
       type CloudDraft = {fileHash: string; update: string; commitHash: string}
       const data = await parseOutcome<CloudDraft | null>(
-        fetch(cloudConfig.drafts + '/' + key, json({headers: bearer(ctx)}))
+        fetch(`${cloudConfig.drafts}/${key}`, json({headers: bearer(ctx)}))
       )
       return data?.update
         ? {
@@ -267,7 +267,7 @@ export function cloudBackend(config: Config): Backend {
       const key = formatDraftKey({id: draft.entryId, locale: draft.locale})
       return parseOutcome(
         fetch(
-          cloudConfig.drafts + '/' + key,
+          `${cloudConfig.drafts}/${key}`,
           json({
             method: 'PUT',
             headers: bearer(ctx),
@@ -284,7 +284,7 @@ export function cloudBackend(config: Config): Backend {
     async list(ctx, file) {
       return parseOutcome(
         fetch(
-          cloudConfig.history + '?' + new URLSearchParams({file}),
+          `${cloudConfig.history}?${new URLSearchParams({file})}`,
           json({headers: bearer(ctx)})
         )
       )
@@ -292,7 +292,7 @@ export function cloudBackend(config: Config): Backend {
     async revision(ctx, file, ref) {
       return parseOutcome(
         fetch(
-          cloudConfig.history + '?' + new URLSearchParams({file, ref}),
+          `${cloudConfig.history}?${new URLSearchParams({file, ref})}`,
           json({headers: bearer(ctx)})
         )
       )
@@ -305,7 +305,7 @@ export function cloudBackend(config: Config): Backend {
         Array<{commitHashTo: string; mutations: ChangeSet | null}>
       >(
         fetch(
-          cloudConfig.pending + '?' + new URLSearchParams({since: commitHash}),
+          `${cloudConfig.pending}?${new URLSearchParams({since: commitHash})}`,
           json({headers: bearer(ctx)})
         )
       ).then(pending => {

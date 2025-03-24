@@ -1,18 +1,18 @@
-import {Blob, File} from '@alinea/iso'
-import {StoredRow} from 'alinea/core/Infer'
-import {ImagePreviewDetails} from 'alinea/core/media/CreatePreview'
+import {Blob, type File} from '@alinea/iso'
+import type {StoredRow} from 'alinea/core/Infer'
+import type {ImagePreviewDetails} from 'alinea/core/media/CreatePreview'
 import type {CMS} from './CMS.js'
-import {Config} from './Config.js'
+import type {Config} from './Config.js'
 import {Entry} from './Entry.js'
-import {EntryRow, EntryStatus} from './EntryRow.js'
-import {Status} from './Graph.js'
+import {type EntryRow, EntryStatus} from './EntryRow.js'
+import type {Status} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {createId} from './Id.js'
-import {Mutation, MutationType} from './Mutation.js'
+import {type Mutation, MutationType} from './Mutation.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getScope} from './Scope.js'
-import {EntryUrlMeta, Type} from './Type.js'
+import {type EntryUrlMeta, Type} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {isImage} from './media/IsImage.js'
 import {createFileHash} from './util/ContentHash.js'
@@ -89,7 +89,7 @@ export class UploadOperation extends Operation {
           if (!result.ok)
             throw new HttpError(
               result.status,
-              `Could not reach server for upload`
+              'Could not reach server for upload'
             )
         }
       )

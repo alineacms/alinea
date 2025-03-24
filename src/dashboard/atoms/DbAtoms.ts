@@ -1,8 +1,8 @@
 import {Database} from 'alinea/backend/Database'
-import {Config} from 'alinea/core/Config'
+import type {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'
 import {Graph} from 'alinea/core/Graph'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {type Mutation, MutationType} from 'alinea/core/Mutation'
 import {
   applySuffix,
   entryFileName,
@@ -87,7 +87,7 @@ async function suffixPaths(
           locale: entry.locale,
           parentId: entry.parentId ?? null,
           path: {
-            or: {is: entry.path, startsWith: entry.path + '-'}
+            or: {is: entry.path, startsWith: `${entry.path}-`}
           },
           status: 'preferPublished'
         })
@@ -142,7 +142,7 @@ export const mutateAtom = atom(
 
 export const dbUpdateAtom = atom(
   null,
-  async (get, set, force: boolean = false) => {
+  async (get, set, force = false) => {
     const {sync} = await get(localDbAtom)
     const changed = await sync(force)
     set(changedEntriesAtom, changed)

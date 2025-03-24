@@ -1,4 +1,4 @@
-import {HasExpr, internalExpr} from './Internal.js'
+import {type HasExpr, internalExpr} from './Internal.js'
 
 declare const brand: unique symbol
 export class Expr<Value = unknown> implements HasExpr {

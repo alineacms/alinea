@@ -1,8 +1,8 @@
-import {ComponentType} from 'react'
+import type {ComponentType} from 'react'
 import {Field} from './Field.js'
 import {assign, create, defineProperty, entries} from './util/Objects.js'
 import {rowId} from './util/RowId.js'
-import {View} from './View.js'
+import type {View} from './View.js'
 
 export interface SectionDefinition {
   [key: string]: Field<any, any> | Section
@@ -50,7 +50,7 @@ export namespace Section {
   }
 
   export function isSection(value: any): value is Section {
-    return Boolean(value && value[Section.Data])
+    return Boolean(value?.[Section.Data])
   }
 }
 

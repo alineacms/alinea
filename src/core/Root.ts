@@ -1,13 +1,13 @@
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
-import {getRoot, hasRoot, HasRoot, internalRoot} from './Internal.js'
-import {Label} from './Label.js'
-import {OrderBy} from './OrderBy.js'
-import {Page} from './Page.js'
-import {Preview} from './Preview.js'
+import {getRoot, hasRoot, type HasRoot, internalRoot} from './Internal.js'
+import type {Label} from './Label.js'
+import type {OrderBy} from './OrderBy.js'
+import type {Page} from './Page.js'
+import type {Preview} from './Preview.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
-import {View} from './View.js'
+import type {View} from './View.js'
 
 export interface RootI18n {
   locales: ReadonlyArray<string>

@@ -60,6 +60,7 @@
   "devDependencies": {
     "@alinea/styler": "^1.0.3",
     "@alinea/suite": "^0.6.2",
+    "@biomejs/biome": "^1.9.4",
     "@esbx/reporter": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",
     "@ladle/react": "^4.1.2",

@@ -1,7 +1,7 @@
-import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
+import type {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
-import {Label} from '../Label.js'
-import {Shape} from '../Shape.js'
+import type {Label} from '../Label.js'
+import type {Shape} from '../Shape.js'
 import {entries, keys} from '../util/Objects.js'
 
 export type RecordMutator<T> = {

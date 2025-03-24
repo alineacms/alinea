@@ -1,4 +1,4 @@
-import {Atom, WritableAtom, atom} from 'jotai'
+import {type Atom, type WritableAtom, atom} from 'jotai'
 
 export function debounceAtom<Value>(
   readable: Atom<Value>,

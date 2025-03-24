@@ -1,7 +1,7 @@
-import {index, InferSelectModel, primaryKey, sql, Sql, table} from 'rado'
+import {index, type InferSelectModel, primaryKey, sql, type Sql, table} from 'rado'
 import {column as createColumn} from 'rado/core/Column'
 import {Functions} from 'rado/core/expr/Functions'
-import {input, Input} from 'rado/core/expr/Input'
+import {input, type Input} from 'rado/core/expr/Input'
 import * as column from 'rado/universal/columns'
 import {createId} from './Id.js'
 

@@ -1,11 +1,11 @@
 import styler from '@alinea/styler'
-import {PreviewMetadata} from 'alinea/core/Preview'
+import type {PreviewMetadata} from 'alinea/core/Preview'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {usePreviewMetadata} from 'alinea/dashboard/view/preview/BrowserPreview'
-import {MetadataField} from './MetadataField.js'
+import type {MetadataField} from './MetadataField.js'
 import css from './MetadataField.module.scss'
 
 const styles = styler(css)
@@ -67,10 +67,10 @@ const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
             </p>
           </div>
         </div>
-        <h3 className={styles.searchengine.title()}>{metaTags['title']}</h3>
-        {metaTags['description'] && (
+        <h3 className={styles.searchengine.title()}>{metaTags.title}</h3>
+        {metaTags.description && (
           <p className={styles.searchengine.description()}>
-            {metaTags['description']?.substring(0, 160)}
+            {metaTags.description?.substring(0, 160)}
           </p>
         )}
       </div>
@@ -94,7 +94,7 @@ const OpenGraphPreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
           </p>
           <div className={styles.opengraph.body.content()}>
             <h3 className={styles.opengraph.body.content.title()}>
-              {metaTags['og:title'] || metaTags['title']}
+              {metaTags['og:title'] || metaTags.title}
             </h3>
             <p className={styles.opengraph.body.content.description()}>
               {metaTags['og:description']}

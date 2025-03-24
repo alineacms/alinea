@@ -1,14 +1,14 @@
-import {Connection} from 'alinea/core/Connection'
+import type {Connection} from 'alinea/core/Connection'
 import {Entry} from 'alinea/core/Entry'
-import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
+import {type EntryRow, EntryStatus} from 'alinea/core/EntryRow'
 import {HttpError} from 'alinea/core/HttpError'
 import {createId} from 'alinea/core/Id'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {type Mutation, MutationType} from 'alinea/core/Mutation'
 import {Workspace} from 'alinea/core/Workspace'
 import {createPreview} from 'alinea/core/media/CreatePreview.browser'
 import {isImage} from 'alinea/core/media/IsImage'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
-import {type MediaFile} from 'alinea/core/media/MediaTypes'
+import type {MediaFile} from 'alinea/core/media/MediaTypes'
 import {createFileHash} from 'alinea/core/util/ContentHash'
 import {entryFileName, entryFilepath} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
@@ -65,7 +65,7 @@ export interface Upload {
   replace?: {entry: EntryRow; entryFile: string}
 }
 
-const defaultTasker = pLimit(Infinity)
+const defaultTasker = pLimit(Number.POSITIVE_INFINITY)
 const cpuTasker = pLimit(1)
 const networkTasker = pLimit(8)
 const batchTasker = pLimit(1)
@@ -84,11 +84,12 @@ async function process(
   client: Connection
 ): Promise<Upload> {
   switch (upload.status) {
-    case UploadStatus.Queued:
+    case UploadStatus.Queued: {
       const next = isImage(upload.file.name)
         ? UploadStatus.CreatingPreview
         : UploadStatus.Uploading
       return {...upload, status: next}
+    }
     case UploadStatus.CreatingPreview: {
       const previewData = await createPreview(upload.file)
       return {
@@ -110,7 +111,7 @@ async function process(
         if (!result.ok)
           throw new HttpError(
             result.status,
-            `Could not reach server for upload`
+            'Could not reach server for upload'
           )
       })
       return {...upload, info, status: UploadStatus.Uploaded}
@@ -224,7 +225,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       parentId: parent?.entryId ?? null,
       id: entryId,
       type: 'MediaFile',
-      url: (parent ? parent.url : '') + '/' + path,
+      url: `${parent ? parent.url : ''}/${path}`,
       title,
       seeded: null,
       searchableText: '',
@@ -283,9 +284,8 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         if (!result) break
         onSelect?.(result)
         break
-      } else {
-        upload = next
       }
+        upload = next
     }
   }
 

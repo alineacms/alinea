@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {
-  ItemInstance,
+  type ItemInstance,
   asyncDataLoaderFeature,
   dragAndDropFeature,
   selectionFeature
@@ -18,7 +18,7 @@ import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {changedEntriesAtom} from '../atoms/DbAtoms.js'
 import {
-  EntryTreeItem,
+  type EntryTreeItem,
   rootId,
   useEntryTreeProvider
 } from '../atoms/EntryAtoms.js'
@@ -42,7 +42,7 @@ interface EntryTreeItemProps {
 }
 
 function EntryTreeItem({item, data}: EntryTreeItemProps) {
-  const {id: id} = useAtomValue(entryLocationAtom)
+  const {id} = useAtomValue(entryLocationAtom)
   const locale = useLocale()
   const {schema} = useConfig()
   const currentData = useRef<EntryTreeItem>(data)
@@ -84,8 +84,8 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
               isUntranslated
                 ? IcRoundTranslate
                 : isUnpublished
-                ? IcRoundVisibilityOff
-                : icon ?? IcOutlineDescription
+                  ? IcRoundVisibilityOff
+                  : (icon ?? IcOutlineDescription)
             }
           />
         </span>

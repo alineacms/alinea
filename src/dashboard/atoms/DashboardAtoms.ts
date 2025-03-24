@@ -1,11 +1,11 @@
-import {Connection} from 'alinea/core/Connection'
-import {Session} from 'alinea/core/Session'
-import {User, localUser} from 'alinea/core/User'
+import type {Connection} from 'alinea/core/Connection'
+import type {Session} from 'alinea/core/Session'
+import {type User, localUser} from 'alinea/core/User'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import {useEffect} from 'react'
 import {QueryClient} from 'react-query'
-import {AppProps} from '../App.js'
+import type {AppProps} from '../App.js'
 
 export const sessionAtom = atom(undefined! as Session | undefined)
 

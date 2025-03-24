@@ -1,4 +1,4 @@
-import {BuildOptions} from 'esbuild'
+import type {BuildOptions} from 'esbuild'
 
 export const buildOptions: BuildOptions = {
   jsx: 'automatic',

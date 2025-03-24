@@ -1,15 +1,15 @@
-import {Root, Workspace} from 'alinea/types'
-import {Config} from './Config.js'
-import {EntryFields} from './EntryFields.js'
-import {Expr} from './Expr.js'
-import {Condition, Filter} from './Filter.js'
-import {Infer, StoredRow} from './Infer.js'
-import {HasField} from './Internal.js'
-import {Page} from './Page.js'
-import {PreviewRequest} from './Preview.js'
-import {Resolver} from './Resolver.js'
-import {Type} from './Type.js'
-import {Expand} from './util/Types.js'
+import type {Root, Workspace} from 'alinea/types'
+import type {Config} from './Config.js'
+import type {EntryFields} from './EntryFields.js'
+import type {Expr} from './Expr.js'
+import type {Condition, Filter} from './Filter.js'
+import type {Infer, StoredRow} from './Infer.js'
+import type {HasField} from './Internal.js'
+import type {Page} from './Page.js'
+import type {PreviewRequest} from './Preview.js'
+import type {Resolver} from './Resolver.js'
+import type {Type} from './Type.js'
+import type {Expand} from './util/Types.js'
 
 export type Location = Root | Workspace | Page | Array<string>
 
@@ -17,8 +17,8 @@ type FieldsOf<Types> = StoredRow<
   Types extends Type<infer V>
     ? V
     : Types extends Array<any>
-    ? Types[number]
-    : unknown
+      ? Types[number]
+      : unknown
 >
 
 export interface EdgeTranslations {
@@ -100,12 +100,12 @@ export interface Order {
 type InferSelection<Selection> = Selection extends GraphQuery & Edge
   ? Expand<AnyQueryResult<Selection>>
   : Selection extends Expr<infer V>
-  ? V
-  : {
-      [K in keyof Selection]: Selection[K] extends Type<infer V>
-        ? Type.Infer<V>
-        : InferSelection<Selection[K]>
-    }
+    ? V
+    : {
+        [K in keyof Selection]: Selection[K] extends Type<infer V>
+          ? Type.Infer<V>
+          : InferSelection<Selection[K]>
+      }
 
 type InferResult<Selection, Types, Include> = Selection extends undefined
   ? Types extends undefined
@@ -114,8 +114,8 @@ type InferResult<Selection, Types, Include> = Selection extends undefined
         Infer<Types> &
         (Include extends undefined ? {} : InferSelection<Include>)
   : Selection extends Expr<infer Value>
-  ? Value
-  : InferSelection<Selection>
+    ? Value
+    : InferSelection<Selection>
 
 type QueryResult<Selection, Types, Include> = Expand<
   InferResult<Selection, Types, Include>
@@ -143,12 +143,12 @@ export type AnyQueryResult<Query extends GraphQuery> = Query extends CountQuery<
 >
   ? number
   : Query extends GetQuery<infer S, infer T, infer I>
-  ? QueryResult<S, T, I>
-  : Query extends FirstQuery<infer S, infer T, infer I>
-  ? QueryResult<S, T, I> | null
-  : Query extends GraphQuery<infer S, infer T, infer I>
-  ? Array<QueryResult<S, T, I>>
-  : unknown
+    ? QueryResult<S, T, I>
+    : Query extends FirstQuery<infer S, infer T, infer I>
+      ? QueryResult<S, T, I> | null
+      : Query extends GraphQuery<infer S, infer T, infer I>
+        ? Array<QueryResult<S, T, I>>
+        : unknown
 
 export type Status =
   /** Only published entries */
@@ -251,7 +251,10 @@ export type IncludeGuard = SelectObject | undefined
 export class Graph {
   #resolver: Resolver
 
-  constructor(public config: Config, resolver: Resolver) {
+  constructor(
+    public config: Config,
+    resolver: Resolver
+  ) {
     this.#resolver = resolver
   }
 

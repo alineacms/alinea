@@ -1,5 +1,5 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {
+import type {
   EdgeQuery,
   GraphQuery,
   IncludeGuard,
@@ -8,12 +8,12 @@ import {
 } from 'alinea/core/Graph'
 import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
-import {Schema} from 'alinea/core/Schema'
+import type {Schema} from 'alinea/core/Schema'
 import {ListField} from 'alinea/core/field/ListField'
 import {UnionField} from 'alinea/core/field/UnionField'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
-import {ReactNode} from 'react'
+import type {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */
 export interface LinkFieldOptions<Value> extends FieldOptions<Value> {

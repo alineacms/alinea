@@ -1,9 +1,9 @@
-import {Request, Response} from '@alinea/iso'
-import {Connection} from 'alinea/core/Connection'
-import {Draft, DraftKey} from 'alinea/core/Draft'
-import {EntryRecord} from 'alinea/core/EntryRecord'
-import {Mutation} from 'alinea/core/Mutation'
-import {User} from 'alinea/core/User'
+import type {Request, Response} from '@alinea/iso'
+import type {Connection} from 'alinea/core/Connection'
+import type {Draft, DraftKey} from 'alinea/core/Draft'
+import type {EntryRecord} from 'alinea/core/EntryRecord'
+import type {Mutation} from 'alinea/core/Mutation'
+import type {User} from 'alinea/core/User'
 
 export interface RequestContext {
   handlerUrl: URL

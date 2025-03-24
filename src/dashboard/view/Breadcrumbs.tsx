@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import {HStack, Icon} from 'alinea/ui'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
-import {Fragment, PropsWithChildren} from 'react'
+import {Fragment, type PropsWithChildren} from 'react'
 import css from './Breadcrumbs.module.scss'
 
 const styles = styler(css)

@@ -1,6 +1,6 @@
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
-import {Config} from 'alinea/core/Config'
+import type {Config} from 'alinea/core/Config'
 import {previewContext} from './previewContext.js'
 
 export class VanillaCMS<

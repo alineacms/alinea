@@ -1,4 +1,4 @@
-import {Auth} from 'alinea/backend/Backend'
+import type {Auth} from 'alinea/backend/Backend'
 import {gitUser} from 'alinea/backend/util/ExecGit'
 
 export function localAuth(rootDir: string): Auth {

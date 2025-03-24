@@ -1,7 +1,7 @@
 import {Entry} from 'alinea/core/Entry'
 import type {InferProjection, Projection} from 'alinea/core/Graph'
 import DataLoader from 'dataloader'
-import {Store} from '../Store.js'
+import type {Store} from '../Store.js'
 import type {EntryResolver} from './EntryResolver.js'
 import {ResolveContext} from './ResolveContext.js'
 

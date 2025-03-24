@@ -1,13 +1,13 @@
 import styler from '@alinea/styler'
-import {Revision} from 'alinea/backend/Backend'
+import type {Revision} from 'alinea/backend/Backend'
 import {HStack, Icon, Loader, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
 import {useAtom, useAtomValue} from 'jotai'
 import {Suspense} from 'react'
-import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
-import {EntryEditProps} from '../EntryEdit.js'
+import type {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
+import type {EntryEditProps} from '../EntryEdit.js'
 import css from './EntryHistory.module.scss'
 
 const styles = styler(css)

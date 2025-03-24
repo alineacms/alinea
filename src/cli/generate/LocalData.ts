@@ -1,11 +1,11 @@
-import {AuthedContext, Media, Target} from 'alinea/backend/Backend'
-import {FS} from 'alinea/backend/FS'
-import {Source, SourceEntry, WatchFiles} from 'alinea/backend/Source'
+import type {AuthedContext, Media, Target} from 'alinea/backend/Backend'
+import type {FS} from 'alinea/backend/FS'
+import type {Source, SourceEntry, WatchFiles} from 'alinea/backend/Source'
 import {ChangeType} from 'alinea/backend/data/ChangeSet'
 import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {applyJsonPatch} from 'alinea/backend/util/JsonPatch'
-import {Config} from 'alinea/core/Config'
-import {Connection} from 'alinea/core/Connection'
+import type {Config} from 'alinea/core/Config'
+import type {Connection} from 'alinea/core/Connection'
 import {createId} from 'alinea/core/Id'
 import {outcome} from 'alinea/core/Outcome'
 import {Root} from 'alinea/core/Root'
@@ -181,7 +181,7 @@ export class LocalData implements Source, Target, Media {
   ): Promise<Connection.UploadResponse> {
     const {dashboardUrl} = this.options
     if (!dashboardUrl)
-      throw new Error(`Cannot prepare upload without dashboard url`)
+      throw new Error('Cannot prepare upload without dashboard url')
     const entryId = createId()
     const dir = dirname(file)
     const extension = extname(file).toLowerCase()

@@ -1,4 +1,4 @@
-import esbuild, {Plugin} from 'esbuild'
+import esbuild, {type Plugin} from 'esbuild'
 
 interface ToWatch {
   dirs: Array<string>

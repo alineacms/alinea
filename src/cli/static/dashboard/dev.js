@@ -10,7 +10,7 @@ element.parentElement.replaceChild(into, element)
 reactRender(jsx(DevDashboard, {loadConfig}), into)
 
 async function loadConfig() {
-  const exports = await import('/config.js?' + Math.random())
+  const exports = await import(`/config.js?${Math.random()}`)
   if (!('cms' in exports)) throw new Error(`No config found in "/config.js"`)
   return exports
 }

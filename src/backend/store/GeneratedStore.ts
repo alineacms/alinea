@@ -1,6 +1,6 @@
 import {decode} from 'alinea/core/util/BufferToBase64'
 import PLazy from 'p-lazy'
-import {Store} from '../Store.js'
+import type {Store} from '../Store.js'
 import {createStore} from './CreateStore.js'
 
 export const generatedStore: Promise<Store> = PLazy.from(async () => {

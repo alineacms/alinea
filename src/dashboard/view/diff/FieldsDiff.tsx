@@ -1,4 +1,4 @@
-import {Shape} from 'alinea/core/Shape'
+import type {Shape} from 'alinea/core/Shape'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {VStack} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'

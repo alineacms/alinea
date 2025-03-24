@@ -1,4 +1,4 @@
-import {EntryRow} from './EntryRow.js'
+import type {EntryRow} from './EntryRow.js'
 
 export interface EntryMeta {
   _id: string

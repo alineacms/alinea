@@ -22,7 +22,7 @@ export class DeepMap<Keys extends ReadonlyArray<any>, V> {
 
   #clearBranch(branch: Map<any, any>) {
     if (this.#leaves.has(branch)) this.#leaves.delete(branch)
-    for (let map of branch.values()) this.#clearBranch(map)
+    for (const map of branch.values()) this.#clearBranch(map)
     return branch.clear()
   }
 

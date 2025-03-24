@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {JSONContent, mergeAttributes, Node as TipTapNode} from '@tiptap/core'
+import {type JSONContent, mergeAttributes, Node as TipTapNode} from '@tiptap/core'
 import {Collaboration} from '@tiptap/extension-collaboration'
 import {
   Editor,
@@ -8,11 +8,11 @@ import {
   NodeViewWrapper,
   ReactNodeViewRenderer
 } from '@tiptap/react'
-import {Field} from 'alinea/core/Field'
-import {RichTextField} from 'alinea/core/field/RichTextField'
+import type {Field} from 'alinea/core/Field'
+import type {RichTextField} from 'alinea/core/field/RichTextField'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
-import {Schema} from 'alinea/core/Schema'
+import type {Schema} from 'alinea/core/Schema'
 import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
@@ -32,7 +32,7 @@ import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
 import {Sink} from 'alinea/ui/Sink'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
-import {RichTextOptions} from './RichTextField.js'
+import type {RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
 import {RichTextKit} from './RichTextKit.js'
 import {RichTextToolbar} from './RichTextToolbar.js'

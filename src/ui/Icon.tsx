@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {ComponentType, HTMLAttributes, ReactNode} from 'react'
+import type {ComponentType, HTMLAttributes, ReactNode} from 'react'
 import css from './Icon.module.scss'
 import {px} from './util/Units.js'
 

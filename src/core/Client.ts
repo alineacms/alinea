@@ -1,16 +1,16 @@
-import {AbortController, fetch, Response} from '@alinea/iso'
-import {DraftTransport, Revision} from 'alinea/backend/Backend'
+import {AbortController, fetch, type Response} from '@alinea/iso'
+import type {DraftTransport, Revision} from 'alinea/backend/Backend'
 import {HandleAction} from 'alinea/backend/HandleAction'
-import {PreviewInfo} from 'alinea/backend/Previews'
-import {Config} from './Config.js'
-import {Connection, SyncResponse} from './Connection.js'
-import {Draft, DraftKey} from './Draft.js'
-import {EntryRecord} from './EntryRecord.js'
-import {AnyQueryResult, GraphQuery} from './Graph.js'
+import type {PreviewInfo} from 'alinea/backend/Previews'
+import type {Config} from './Config.js'
+import type {Connection, SyncResponse} from './Connection.js'
+import type {Draft, DraftKey} from './Draft.js'
+import type {EntryRecord} from './EntryRecord.js'
+import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
-import {Mutation} from './Mutation.js'
+import type {Mutation} from './Mutation.js'
 import {getScope} from './Scope.js'
-import {User} from './User.js'
+import type {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
 export type AuthenticateRequest = (
@@ -145,7 +145,7 @@ export class Client implements Connection {
     const {url, applyAuth = v => v, unauthorized} = this.#options
     const controller = new AbortController()
     const signal = controller.signal
-    const location = url + '?' + new URLSearchParams(params).toString()
+    const location = `${url}?${new URLSearchParams(params).toString()}`
     const promise = fetch(location, {
       ...applyAuth(init),
       signal

@@ -1,18 +1,18 @@
-import {Config, createConfig} from './Config.js'
-import {Connection} from './Connection.js'
+import {type Config, createConfig} from './Config.js'
+import type {Connection} from './Connection.js'
 import {Graph} from './Graph.js'
-import {MediaFile, MediaLibrary} from './media/MediaTypes.js'
-import {PreviewRequest} from './Preview.js'
-import {Resolver} from './Resolver.js'
+import {MediaFile, type MediaLibrary} from './media/MediaTypes.js'
+import type {PreviewRequest} from './Preview.js'
+import type {Resolver} from './Resolver.js'
 import {
   CreateOperation,
-  CreateQuery,
+  type CreateQuery,
   DeleteOp,
   Operation,
   UpdateOperation,
-  UpdateQuery,
+  type UpdateQuery,
   UploadOperation,
-  UploadQuery
+  type UploadQuery
 } from './Transaction.js'
 
 export interface ConnectionContext {

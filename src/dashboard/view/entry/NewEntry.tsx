@@ -23,7 +23,7 @@ import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {entry, EntryLink} from 'alinea/field/link'
-import {select, SelectField} from 'alinea/field/select'
+import {select, type SelectField} from 'alinea/field/select'
 import {text} from 'alinea/field/text'
 import {entryPicker} from 'alinea/picker/entry/EntryPicker'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
@@ -31,7 +31,7 @@ import {children, parents} from 'alinea/query'
 import {Button, Loader} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {FormEvent, Suspense, useEffect, useMemo, useState} from 'react'
+import {type FormEvent, Suspense, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {changedEntriesAtom, graphAtom, useMutate} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
@@ -121,7 +121,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       return root.contains
         ? Schema.contained(config.schema, root.contains)
         : keys(config.schema)
-    } else {
+    }
       const parent = parentId
         ? await graph.get({
             select: parentData,
@@ -133,7 +133,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
       if (parentType)
         return Schema.contained(config.schema, Type.contains(parentType))
       return keys(config.schema)
-    }
   }
 
   const typeField = useMemo(() => {

@@ -1,6 +1,6 @@
 import type {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
-import * as Y from 'yjs'
-import {Label} from './Label.js'
+import type * as Y from 'yjs'
+import type {Label} from './Label.js'
 
 type YType = Y.Map<any>
 

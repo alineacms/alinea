@@ -23,7 +23,7 @@ declare module 'tiny-tree' {
     get(key: K): V | undefined;
     getByIndex(index: number): V | undefined;
     toArray(bounds?: Bounds<K>): [K, V][];
-    toArray(bounds?: Bounds<K>, valuesOnly: true): V[];
+    toArray(bounds: Bounds<K>, valuesOnly: true): V[];
     toArrayByIndex(start: number, count: number, valuesOnly?: boolean): [K, V][] | V[];
     set(key: K, value: V): void;
     bulkLoad(data: [K, V][]): void;

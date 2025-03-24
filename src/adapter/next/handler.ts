@@ -1,8 +1,8 @@
-import {BackendOptions, createBackend} from 'alinea/backend/api/CreateBackend'
-import {Backend} from 'alinea/backend/Backend'
+import {type BackendOptions, createBackend} from 'alinea/backend/api/CreateBackend'
+import type {Backend} from 'alinea/backend/Backend'
 import {
   createHandler as createCoreHandler,
-  HandlerHooks
+  type HandlerHooks
 } from 'alinea/backend/Handler'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
@@ -70,7 +70,7 @@ export function createHandler(
         const location = new URL(url, source.origin)
         const dm = await draftMode()
         dm.enable()
-        return new Response(`Redirecting...`, {
+        return new Response('Redirecting...', {
           status: 302,
           headers: {location: String(location)}
         })

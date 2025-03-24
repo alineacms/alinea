@@ -1,10 +1,10 @@
 import {Entry} from 'alinea/core'
 import {parseYDoc} from 'alinea/core/Doc'
-import {Draft, DraftKey, formatDraftKey} from 'alinea/core/Draft'
-import {PreviewRequest} from 'alinea/core/Preview'
+import {type Draft, type DraftKey, formatDraftKey} from 'alinea/core/Draft'
+import type {PreviewRequest} from 'alinea/core/Preview'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import * as Y from 'yjs'
-import {Database} from '../Database.js'
+import type {Database} from '../Database.js'
 
 export function createPreviewParser(db: Database) {
   const drafts = new Map<

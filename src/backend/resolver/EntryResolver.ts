@@ -1,29 +1,29 @@
 import {EntryFields} from 'alinea/core/EntryFields'
 import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
-import {Expr} from 'alinea/core/Expr'
+import type {Expr} from 'alinea/core/Expr'
 import {Field} from 'alinea/core/Field'
-import {Filter} from 'alinea/core/Filter'
+import type {Filter} from 'alinea/core/Filter'
 import {
-  EdgeQuery,
-  GraphQuery,
-  Order,
-  Projection,
-  QuerySettings,
+  type EdgeQuery,
+  type GraphQuery,
+  type Order,
+  type Projection,
+  type QuerySettings,
   querySource,
-  Status
+  type Status
 } from 'alinea/core/Graph'
 import {
   getExpr,
-  HasExpr,
+  type HasExpr,
   hasExpr,
   hasField,
   hasRoot,
   hasWorkspace
 } from 'alinea/core/Internal'
-import {Schema} from 'alinea/core/Schema'
-import {getScope, Scope} from 'alinea/core/Scope'
-import {Type} from 'alinea/core/Type'
+import type {Schema} from 'alinea/core/Schema'
+import {getScope, type Scope} from 'alinea/core/Scope'
+import type {Type} from 'alinea/core/Type'
 import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
@@ -50,18 +50,18 @@ import {
   or,
   Select,
   selection,
-  SelectionInput,
-  Sql,
+  type SelectionInput,
+  type Sql,
   sql
 } from 'rado'
 import {Builder} from 'rado/core/Builder'
 import {Functions} from 'rado/core/expr/Functions'
 import {input} from 'rado/core/expr/Input'
 import {jsonExpr} from 'rado/core/expr/Json'
-import {getData, getTable, HasSql, internalTarget} from 'rado/core/Internal'
+import {getData, getTable, type HasSql, internalTarget} from 'rado/core/Internal'
 import {bm25, snippet} from 'rado/sqlite'
 import type {Database} from '../Database.js'
-import {Store} from '../Store.js'
+import type {Store} from '../Store.js'
 import {is} from '../util/ORM.js'
 import {LinkResolver} from './LinkResolver.js'
 import {ResolveContext} from './ResolveContext.js'
@@ -220,7 +220,7 @@ export class EntryResolver {
           eq(ctx.Table.id, from.id),
           query?.includeSelf ? undefined : ne(ctx.Table.locale, from.locale)
         )
-      case 'children':
+      case 'children': {
         const Child = alias(EntryRow, 'Child')
         const children = builder.$with('children').as(
           builder
@@ -263,7 +263,8 @@ export class EntryResolver {
             is(ctx.Table.locale, from.locale)
           )
           .orderBy(asc(ctx.Table.index))
-      case 'parents':
+      }
+      case 'parents': {
         const Parent = alias(EntryRow, 'Parent')
         const parents = builder.$with('parents').as(
           builder
@@ -306,6 +307,7 @@ export class EntryResolver {
             is(ctx.Table.locale, from.locale)
           )
           .orderBy(asc(ctx.Table.level))
+      }
       case 'entryMultiple': {
         const linkedField = this.field(from, query.field)
         return cursor
@@ -490,7 +492,7 @@ export class EntryResolver {
               },
               value
             )
-          case 'includes':
+          case 'includes': {
             const expr = jsonExpr(sql`value`)
             const condition = this.conditionFilter(
               ctx,
@@ -505,6 +507,7 @@ export class EntryResolver {
                 .from(Functions.json_each(field))
                 .where(condition)
             )
+          }
           default:
             throw new Error(`Unknown filter operator: "${op}"`)
         }
@@ -535,8 +538,8 @@ export class EntryResolver {
     if (skip) q = q.offset(skip)
     if (take) q = q.limit(take)
     const queryData = getData(q)
-    let preCondition = queryData.where as HasSql<boolean>
-    let condition = and(
+    const preCondition = queryData.where as HasSql<boolean>
+    const condition = and(
       preCondition,
       type ? this.conditionTypes(ctx, type as Type | Array<Type>) : undefined,
       this.conditionEntryFields(ctx, query),
@@ -641,7 +644,7 @@ export class EntryResolver {
     const transact = async (tx: Store): Promise<T> => {
       const rows = await dbQuery.all(tx)
       const linkResolver = new LinkResolver(this, tx, ctx)
-      const result = singleResult ? rows[0] ?? null : rows
+      const result = singleResult ? (rows[0] ?? null) : rows
       if (result) await this.post({linkResolver}, result, asEdge)
       return result as T
     }

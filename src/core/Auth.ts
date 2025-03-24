@@ -1,5 +1,5 @@
 import type {ComponentType} from 'react'
-import {Session} from './Session.js'
+import type {Session} from './Session.js'
 
 export namespace Auth {
   export type ViewProps = {setSession: (session: Session | undefined) => void}

@@ -1,9 +1,9 @@
-import {CMS} from 'alinea/core/CMS'
+import type {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {code} from 'alinea/core/util/CodeGen'
 import {keys} from 'alinea/core/util/Objects'
 import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
-import {Plugin} from 'esbuild'
+import type {Plugin} from 'esbuild'
 
 export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
   return {
@@ -15,7 +15,7 @@ export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
         )
       )
       const entry =
-        [...views]
+        `${[...views]
           .map((view, index) => {
             const separatorIndex = view.slice(1).lastIndexOf('#')
             const pkg =
@@ -25,9 +25,7 @@ export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
             const alias = `view_${index}`
             return `import {${name} as ${alias}} from ${JSON.stringify(pkg)}`
           })
-          .join('\n') +
-        '\n' +
-        code`
+          .join('\n')}\n${code`
           import 'alinea/css'
           export const views = {
             ${[...views]
@@ -37,7 +35,7 @@ export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
               })
               .join(',\n')}
           }
-        `
+        `}`
       build.onResolve({filter: new RegExp(`^${viewsPlugin.entry}$`)}, args => {
         return {path: args.path, namespace: viewsPlugin.entry}
       })

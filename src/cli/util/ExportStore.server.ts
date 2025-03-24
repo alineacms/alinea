@@ -6,11 +6,11 @@ import {fileURLToPath} from 'node:url'
 // Source: https://gist.github.com/miklund/79c1f3eb129ea5689c03c41d17922c14
 
 function signedLEB128(value: number) {
-  var v = [],
-    size = Math.ceil(Math.log2(Math.abs(value))),
-    more = true,
-    isNegative = value < 0,
-    b = 0
+  const v = []
+  const size = Math.ceil(Math.log2(Math.abs(value)))
+  let more = true
+  const isNegative = value < 0
+  let b = 0
   while (more) {
     b = value & 127
     value = value >> 7
@@ -19,8 +19,8 @@ function signedLEB128(value: number) {
       value = value | -(1 << (size - 7))
     }
     if (
-      (value == 0 && (b & 0x40) == 0) ||
-      (value == -1 && (b & 0x40) == 0x40)
+      (value === 0 && (b & 0x40) === 0) ||
+      (value === -1 && (b & 0x40) === 0x40)
     ) {
       more = false
     } else {
@@ -32,18 +32,18 @@ function signedLEB128(value: number) {
 }
 
 function unsignedLEB128(value: number, padding?: number) {
-  var v = [],
-    b = 0
+  const v = []
+  let b = 0
   padding = padding || 0
   do {
     b = value & 127
     value = value >> 7
-    if (value != 0 || padding > 0) {
+    if (value !== 0 || padding > 0) {
       b = b | 128
     }
     v.push(b)
     padding--
-  } while (value != 0 || padding > -1)
+  } while (value !== 0 || padding > -1)
   return Buffer.from(v)
 }
 
@@ -51,7 +51,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 function bin(strings: ReadonlyArray<string>, ...inserts: Array<Buffer>) {
   const res: Array<Buffer> = []
-  strings.forEach(function (str, i) {
+  strings.forEach((str, i) => {
     res.push(
       Buffer.from(str.replace(/\/\/(.*?)\n/g, '').replace(/\s/g, ''), 'hex')
     )
@@ -98,13 +98,12 @@ export async function exportStore(
     const payload = await embedInJs(source, data)
     await fs.writeFile(location, payload)
     return payload.length
-  } else {
+  }
     await fs.writeFile(
       location,
-      source.replace('$WASM', path.basename(location) + '.wasm')
+      source.replace('$WASM', `${path.basename(location)}.wasm`)
     )
     const payload = embedInWasm(data)
-    await fs.writeFile(location + '.wasm', payload)
+    await fs.writeFile(`${location}.wasm`, payload)
     return payload.length
-  }
 }

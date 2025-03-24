@@ -1,4 +1,4 @@
-import {
+import type {
   Auth,
   Backend,
   Drafts,
@@ -9,9 +9,9 @@ import {
 } from 'alinea/backend/Backend'
 import {gitUser} from 'alinea/backend/util/ExecGit'
 import {GitHistory} from 'alinea/cli/serve/GitHistory'
-import {Config} from 'alinea/core/Config'
-import {Connection} from 'alinea/core/Connection'
-import {Draft} from 'alinea/core/Draft'
+import type {Config} from 'alinea/core/Config'
+import type {Connection} from 'alinea/core/Connection'
+import type {Draft} from 'alinea/core/Draft'
 import {createId} from 'alinea/core/Id'
 
 const latency = 0
@@ -47,7 +47,7 @@ export function cloudDebug(config: Config, rootDir: string): Backend {
   }
   const media: Media = {
     prepareUpload(ctx, file) {
-      throw new Error(`Not implemented`)
+      throw new Error('Not implemented')
     }
   }
   const drafts: Drafts = {

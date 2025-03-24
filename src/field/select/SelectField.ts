@@ -1,6 +1,6 @@
-import {FieldOptions, WithoutLabel} from 'alinea/core'
+import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
-import {ReactNode} from 'react'
+import type {ReactNode} from 'react'
 
 /** A string record with option labels */
 export type SelectItems<T extends string> = Record<T, string>

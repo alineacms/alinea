@@ -4,11 +4,11 @@ import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
-import {GraphQuery} from 'alinea/core/Graph'
-import {Mutation} from 'alinea/core/Mutation'
+import type {GraphQuery} from 'alinea/core/Graph'
+import type {Mutation} from 'alinea/core/Mutation'
 import {outcome} from 'alinea/core/Outcome'
-import {PreviewRequest} from 'alinea/core/Preview'
-import {User} from 'alinea/core/User'
+import type {PreviewRequest} from 'alinea/core/Preview'
+import type {User} from 'alinea/core/User'
 import {assign} from 'alinea/core/util/Objects'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import PLazy from 'p-lazy'
@@ -23,7 +23,10 @@ export interface PreviewProps {
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  constructor(rawConfig: Definition, public baseUrl?: string) {
+  constructor(
+    rawConfig: Definition,
+    public baseUrl?: string
+  ) {
     let lastSync = 0
     const init = PLazy.from(async () => {
       if (process.env.NEXT_RUNTIME === 'edge') throw 'assert'

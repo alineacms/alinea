@@ -1,9 +1,9 @@
-import {ListRow, ListShape} from 'alinea/core/shape/ListShape'
+import {ListRow, type ListShape} from 'alinea/core/shape/ListShape'
 import {Sink} from 'alinea/ui/Sink'
-import {ComponentType} from 'react'
+import type {ComponentType} from 'react'
 import {ChangeBox} from './ChangeBox.js'
 import {diffList, diffRecord} from './DiffUtils.js'
-import {FieldsDiffProps} from './FieldsDiff.js'
+import type {FieldsDiffProps} from './FieldsDiff.js'
 
 export type ListDiffProps = {
   FieldsDiff: ComponentType<FieldsDiffProps>
@@ -26,8 +26,8 @@ export function ListDiff({FieldsDiff, shape, valueA, valueB}: ListDiffProps) {
           change.type === 'keep'
             ? [change.old, change.value]
             : change.type === 'removal'
-            ? [change.value, {}]
-            : [{}, change.value]
+              ? [change.value, {}]
+              : [{}, change.value]
         const changes = diffRecord(kind, compare[0], compare[1])
         if (changes.length === 0) return <ChangeBox change="equal" key={i} />
         return (

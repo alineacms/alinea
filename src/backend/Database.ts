@@ -1,14 +1,14 @@
-import {Config} from 'alinea/core/Config'
-import {SyncResponse, Syncable} from 'alinea/core/Connection'
-import {EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
+import type {Config} from 'alinea/core/Config'
+import type {SyncResponse, Syncable} from 'alinea/core/Connection'
+import {type EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
 import {getRoot} from 'alinea/core/Internal'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {type Mutation, MutationType} from 'alinea/core/Mutation'
 import {Page} from 'alinea/core/Page'
-import {Resolver} from 'alinea/core/Resolver'
+import type {Resolver} from 'alinea/core/Resolver'
 import {Root} from 'alinea/core/Root'
 import {Schema} from 'alinea/core/Schema'
-import {EntryUrlMeta, Type} from 'alinea/core/Type'
+import {type EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import {createFileHash, createRowHash} from 'alinea/core/util/ContentHash'
@@ -19,7 +19,7 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
 import {
-  Sql,
+  type Sql,
   alias,
   and,
   asc,
@@ -37,10 +37,10 @@ import {Builder} from 'rado/core/Builder'
 import {Functions} from 'rado/core/expr/Functions'
 import {coalesce} from 'rado/sqlite'
 import {EntryRow, EntryStatus} from '../core/EntryRow.js'
-import {AuthedContext, Target} from './Backend.js'
-import {Source} from './Source.js'
-import {Store} from './Store.js'
-import {Change, ChangeType} from './data/ChangeSet.js'
+import type {AuthedContext, Target} from './Backend.js'
+import type {Source} from './Source.js'
+import type {Store} from './Store.js'
+import {type Change, ChangeType} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {JsonLoader} from './loader/JsonLoader.js'
@@ -65,7 +65,10 @@ export class Database implements Syncable {
   seed: Map<string, Seed>
   resolver: Resolver
 
-  constructor(public config: Config, public store: Store) {
+  constructor(
+    public config: Config,
+    public store: Store
+  ) {
     this.seed = this.seedData()
     this.resolver = new EntryResolver(this)
   }
@@ -319,7 +322,7 @@ export class Database implements Syncable {
           .get()
         if (!published) return
         const filePath =
-          published.filePath.slice(0, -5) + `.${EntryStatus.Archived}.json`
+          `${published.filePath.slice(0, -5)}.${EntryStatus.Archived}.json`
         await tx.delete(EntryRow).where(archived)
         await tx
           .update(EntryRow)
@@ -332,7 +335,7 @@ export class Database implements Syncable {
             eq(EntryRow.status, EntryStatus.Published),
             or(
               eq(EntryRow.parentDir, published.childrenDir),
-              like(EntryRow.childrenDir, published.childrenDir + '/%')
+              like(EntryRow.childrenDir, `${published.childrenDir}/%`)
             )
           )
           .returning(EntryRow.id)
@@ -391,7 +394,7 @@ export class Database implements Syncable {
             .where(
               or(
                 eq(EntryRow.parentDir, status.childrenDir),
-                like(EntryRow.childrenDir, status.childrenDir + '/%')
+                like(EntryRow.childrenDir, `${status.childrenDir}/%`)
               )
             )
         }
@@ -586,7 +589,7 @@ export class Database implements Syncable {
       )
     const childrenDir = paths.join(parentDir, entryPath)
 
-    if (!recordMeta.id) throw new Error(`missing id`)
+    if (!recordMeta.id) throw new Error('missing id')
 
     const urlMeta: EntryUrlMeta = {
       locale,
@@ -649,7 +652,7 @@ export class Database implements Syncable {
             const path = pagePath.split('/').map(slugify).join('/')
             if (!Page.isPage(page)) continue
             const {type} = Page.data(page)
-            const filePath = paths.join(target, path) + '.json'
+            const filePath = `${paths.join(target, path)}.json`
             const typeName = typeNames.get(type)
             if (!typeName) continue
             const key = seedKey(workspaceName, rootName, filePath)
@@ -681,7 +684,7 @@ export class Database implements Syncable {
     fix = false
   ): Promise<void> {
     const v0Ids = new Map<string, string>()
-    if (fix && !target) throw new TypeError(`Target expected if fix is true`)
+    if (fix && !target) throw new TypeError('Target expected if fix is true')
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
     await this.init()
@@ -878,7 +881,7 @@ export class Database implements Syncable {
         for (const archivedPath of archivedPaths) {
           const isChildOf = or(
             eq(EntryRow.parentDir, archivedPath),
-            like(EntryRow.childrenDir, archivedPath + '/%')
+            like(EntryRow.childrenDir, `${archivedPath}/%`)
           )
           await tx
             .update(EntryRow)

@@ -1,4 +1,4 @@
-import {InferSelectModel, table} from 'rado'
+import {type InferSelectModel, table} from 'rado'
 import * as column from 'rado/universal/columns'
 
 export const AlineaMeta = table('AlineaMeta', {

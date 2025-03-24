@@ -87,6 +87,6 @@ export async function init(options: InitOptions) {
   const command = `${runner} alinea dev`
   if (!quiet)
     console.info(
-      'Alinea initialized. You can open the dashboard with `' + command + '`'
+      `Alinea initialized. You can open the dashboard with \`${command}\``
     )
 }

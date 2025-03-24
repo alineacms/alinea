@@ -1,7 +1,7 @@
 import {AuthResultType} from 'alinea/cloud/AuthResult'
 import {atob} from 'alinea/core/util/Encoding'
 import {AuthAction} from '../Auth.js'
-import {Auth, AuthedContext} from '../Backend.js'
+import type {Auth, AuthedContext} from '../Backend.js'
 
 export function basicAuth(
   verify: (username: string, password: string) => boolean | Promise<boolean>

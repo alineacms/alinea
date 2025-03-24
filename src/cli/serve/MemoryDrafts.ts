@@ -1,5 +1,5 @@
-import {Drafts, RequestContext} from 'alinea/backend/Backend'
-import {Draft} from 'alinea/core/Draft'
+import type {Drafts, RequestContext} from 'alinea/backend/Backend'
+import type {Draft} from 'alinea/core/Draft'
 
 export class MemoryDrafts implements Drafts {
   drafts = new Map<string, Draft>()

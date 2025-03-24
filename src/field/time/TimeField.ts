@@ -1,6 +1,6 @@
-import {FieldOptions, WithoutLabel} from 'alinea/core'
+import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
-import {ReactNode} from 'react'
+import type {ReactNode} from 'react'
 
 /** Optional settings to configure a time field */
 export interface TimeOptions extends FieldOptions<string> {

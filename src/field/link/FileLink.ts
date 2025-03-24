@@ -1,18 +1,18 @@
 import {Entry} from 'alinea/core/Entry'
 import type {WithoutLabel} from 'alinea/core/Field'
-import {InferStoredValue} from 'alinea/core/Infer'
-import {Label} from 'alinea/core/Label'
-import {Type} from 'alinea/core/Type'
+import type {InferStoredValue} from 'alinea/core/Infer'
+import type {Label} from 'alinea/core/Label'
+import type {Type} from 'alinea/core/Type'
 import {imageExtensions} from 'alinea/core/media/IsImage'
 import {MediaFile} from 'alinea/core/media/MediaTypes'
 import type {ListRow} from 'alinea/core/shape/ListShape'
 import {
-  LinkFieldOptions,
+  type LinkFieldOptions,
   createLink,
   createLinks
 } from 'alinea/field/link/LinkField'
-import {EntryPickerOptions, entryPicker} from 'alinea/picker/entry'
-import {EntryReference} from 'alinea/picker/entry/EntryReference'
+import {type EntryPickerOptions, entryPicker} from 'alinea/picker/entry'
+import type {EntryReference} from 'alinea/picker/entry/EntryReference'
 
 export interface FileLink<InferredFields = undefined> extends EntryReference {
   title: string

@@ -1,12 +1,12 @@
-import {Revision} from 'alinea/backend/Backend'
-import {PreviewInfo} from 'alinea/backend/Previews'
-import {ChangeSet} from 'alinea/backend/data/ChangeSet'
-import {Draft, DraftKey} from './Draft.js'
-import {EntryRecord} from './EntryRecord.js'
-import {EntryRow} from './EntryRow.js'
-import {AnyQueryResult, GraphQuery} from './Graph.js'
-import {Mutation} from './Mutation.js'
-import {User} from './User.js'
+import type {Revision} from 'alinea/backend/Backend'
+import type {PreviewInfo} from 'alinea/backend/Previews'
+import type {ChangeSet} from 'alinea/backend/data/ChangeSet'
+import type {Draft, DraftKey} from './Draft.js'
+import type {EntryRecord} from './EntryRecord.js'
+import type {EntryRow} from './EntryRow.js'
+import type {AnyQueryResult, GraphQuery} from './Graph.js'
+import type {Mutation} from './Mutation.js'
+import type {User} from './User.js'
 
 export interface SyncResponse {
   insert: Array<EntryRow>

@@ -1,16 +1,16 @@
-import {Infer} from 'alinea/core/Infer'
-import {Schema} from 'alinea/core/Schema'
+import type {Infer} from 'alinea/core/Infer'
+import type {Schema} from 'alinea/core/Schema'
 import {
   BlockNode,
   ElementNode,
   Mark,
   Node,
-  TextDoc,
+  type TextDoc,
   TextNode
 } from 'alinea/core/TextDoc'
-import {RichTextElements} from 'alinea/core/shape/RichTextShape'
+import type {RichTextElements} from 'alinea/core/shape/RichTextShape'
 import {slugify} from 'alinea/core/util/Slugs'
-import {ComponentType, Fragment, ReactElement, isValidElement} from 'react'
+import {type ComponentType, Fragment, type ReactElement, isValidElement} from 'react'
 
 type Element = keyof typeof RichTextElements
 
@@ -33,11 +33,12 @@ function nodeElement(
       attributes?.textAlign === 'left' ? undefined : attributes?.textAlign
   }
   switch (type) {
-    case 'heading':
+    case 'heading': {
       const Tag = `h${attributes?.level || 1}` as 'h1'
       const id =
         attributes?.id ?? (content ? slugify(textContent(content)) : undefined)
       return <Tag style={style} id={id} />
+    }
     case 'paragraph':
       return <p style={style} />
     case 'bold':
@@ -62,13 +63,14 @@ function nodeElement(
       return <sub />
     case 'superscript':
       return <sup />
-    case 'link':
+    case 'link': {
       const props = {
         href: attributes?.href,
         target: attributes?.target,
         title: attributes?.title
       }
       return <a {...props} />
+    }
     case 'table':
       return <table />
     case 'tableBody':
@@ -94,21 +96,23 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
       typeof views.text === 'function' ? <views.text>{text}</views.text> : text
     const wrappers =
       marks?.map(mark => nodeElement(mark[Mark.type], mark)) || []
-    return wrappers.reduce((children, element) => {
-      if (!element?.type) return <Fragment>{children}</Fragment>
-      const View: any = views[element.type]
-      if (View && !isValidElement(View)) {
-        return <View {...element.props}>{children}</View>
-      } else {
-        const node = View ?? element
-        return (
-          <node.type {...element?.props} {...(node.props as object)}>
-            {children}
-          </node.type>
-        )
-      }
-    }, <Fragment>{content}</Fragment>)
-  } else if (Node.isElement(node)) {
+    return wrappers.reduce(
+      (children, element) => {
+        if (!element?.type) return children
+        const View: any = views[element.type]
+        if (View && !isValidElement(View)) {
+          return <View {...element.props}>{children}</View>
+        }
+          const node = View ?? element
+          return (
+            <node.type {...element?.props} {...(node.props as object)}>
+              {children}
+            </node.type>
+          )
+      },
+      content
+    )
+  }if (Node.isElement(node)) {
     const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
     const element = nodeElement(type, attrs, content)
     const View: any = views[element?.type || type]
@@ -118,15 +122,14 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
       )) || null
     if (View && !isValidElement(View)) {
       return <View {...(element?.props || attrs)}>{inner}</View>
-    } else {
+    }
       const node = View ?? element ?? {type: Fragment}
       return (
         <node.type {...element?.props} {...(node.props as object)}>
           {inner}
         </node.type>
       )
-    }
-  } else if (Node.isBlock(node)) {
+  }if (Node.isBlock(node)) {
     const {[Node.type]: type, [BlockNode.id]: id, ...attrs} = node
     const View: any = views[type]
     if (!View) return null

@@ -1,5 +1,5 @@
 import {EntryRow} from 'alinea/core/EntryRow'
-import {Status} from 'alinea/core/Graph'
+import type {Status} from 'alinea/core/Graph'
 import {alias} from 'rado'
 
 interface ResolveContextData {

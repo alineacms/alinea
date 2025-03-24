@@ -1,6 +1,6 @@
-import {Request, Response} from '@alinea/iso'
+import type {Request, Response} from '@alinea/iso'
 import {fromNodeRequest, respondTo} from 'alinea/backend/router/NodeHandler'
-import http, {IncomingMessage, ServerResponse} from 'node:http'
+import http, {type IncomingMessage, type ServerResponse} from 'node:http'
 import {createEmitter} from '../util/Emitter.js'
 
 interface RequestEvent {

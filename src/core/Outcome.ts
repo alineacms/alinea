@@ -17,18 +17,18 @@ type Pair<T> = [T, undefined] | [undefined, Error]
 type OutcomeReturn<T> = T extends () => Promise<infer X>
   ? Promise<Outcome<X>>
   : T extends () => infer X
-  ? Outcome<X>
-  : T extends Promise<infer X>
-  ? Promise<Outcome<X>>
-  : Outcome<T>
+    ? Outcome<X>
+    : T extends Promise<infer X>
+      ? Promise<Outcome<X>>
+      : Outcome<T>
 
 type OutcomeResult<T> = T extends () => Promise<any>
   ? Promise<boolean>
   : T extends () => any
-  ? boolean
-  : T extends Promise<any>
-  ? Promise<boolean>
-  : boolean
+    ? boolean
+    : T extends Promise<any>
+      ? Promise<boolean>
+      : boolean
 
 export function outcome<Run extends OutcomeRunner>(
   run: Run

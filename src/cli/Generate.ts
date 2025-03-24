@@ -1,7 +1,7 @@
-import {Database} from 'alinea/backend/Database'
-import {Store} from 'alinea/backend/Store'
+import type {Database} from 'alinea/backend/Database'
+import type {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore.server'
-import {CMS} from 'alinea/core/CMS'
+import type {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {EntryRow} from 'alinea/core/EntryRow'
 import {genEffect} from 'alinea/core/util/Async'
@@ -14,11 +14,11 @@ import {count} from 'rado'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
-import {GenerateContext} from './generate/GenerateContext.js'
+import type {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
 import {LocalData} from './generate/LocalData.js'
 import {dirname} from './util/Dirname.js'
-import {Emitter} from './util/Emitter.js'
+import type {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 import {reportHalt} from './util/Report.js'
 
@@ -87,7 +87,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const configLocation = configFile
     ? path.join(path.resolve(cwd), configFile)
     : findConfigFile(cwd)
-  if (!configLocation) throw new Error(`No config file specified`)
+  if (!configLocation) throw new Error('No config file specified')
   const location = path
     .relative(process.cwd(), configLocation)
     .replace(/\\/g, '/')

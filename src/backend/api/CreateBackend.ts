@@ -1,8 +1,8 @@
-import {Backend} from 'alinea/backend/Backend'
+import type {Backend} from 'alinea/backend/Backend'
 import * as driver from 'rado/driver'
 import {basicAuth} from './BasicAuth.js'
 import {databaseApi} from './DatabaseApi.js'
-import {githubApi, GithubOptions} from './GithubApi.js'
+import {githubApi, type GithubOptions} from './GithubApi.js'
 
 export type AvailableDrivers =
   | 'd1'

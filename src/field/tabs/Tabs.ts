@@ -1,9 +1,9 @@
 import {Field} from 'alinea/core/Field'
 import {
-  Section,
+  type Section,
   section,
-  SectionData,
-  SectionDefinition
+  type SectionData,
+  type SectionDefinition
 } from 'alinea/core/Section'
 import {Type, type} from 'alinea/core/Type'
 import {entries, fromEntries} from 'alinea/core/util/Objects'

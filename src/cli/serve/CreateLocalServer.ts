@@ -1,11 +1,11 @@
-import {ReadableStream, Request, Response} from '@alinea/iso'
-import {HandlerWithConnect} from 'alinea/backend/Handler'
+import {ReadableStream, type Request, Response} from '@alinea/iso'
+import type {HandlerWithConnect} from 'alinea/backend/Handler'
 import {router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/CloudConfig'
-import {CMS} from 'alinea/core/CMS'
-import {Trigger, trigger} from 'alinea/core/Trigger'
-import {User} from 'alinea/core/User'
-import {BuildOptions, BuildResult, OutputFile} from 'esbuild'
+import type {CMS} from 'alinea/core/CMS'
+import {type Trigger, trigger} from 'alinea/core/Trigger'
+import type {User} from 'alinea/core/User'
+import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
 import {Readable} from 'node:stream'
@@ -14,7 +14,7 @@ import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {reportHalt} from '../util/Report.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
-import {ServeContext} from './ServeContext.js'
+import type {ServeContext} from './ServeContext.js'
 
 type BuildDetails = Map<string, OutputFile>
 
@@ -142,7 +142,6 @@ export function createLocalServer(
   } satisfies BuildOptions
 
   const builder = buildEmitter(config)
-
   ;(async () => {
     for await (const {type, result} of builder) {
       if (type === 'start') {
@@ -162,7 +161,7 @@ export function createLocalServer(
   async function serveBrowserBuild(
     request: Request
   ): Promise<Response | undefined> {
-    let result = await currentBuild
+    const result = await currentBuild
     if (!result) return new Response('Build failed', {status: 500})
     const url = new URL(request.url)
     const fileName = url.pathname.toLowerCase()

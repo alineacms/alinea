@@ -1,22 +1,22 @@
 import {Entry} from 'alinea/core'
-import {Config} from 'alinea/core/Config'
+import type {Config} from 'alinea/core/Config'
 import {EntryRecord, createRecord} from 'alinea/core/EntryRecord'
 import {EntryStatus} from 'alinea/core/EntryRow'
-import {Graph} from 'alinea/core/Graph'
+import type {Graph} from 'alinea/core/Graph'
 import {
-  ArchiveMutation,
-  CreateMutation,
-  MoveMutation,
-  Mutation,
+  type ArchiveMutation,
+  type CreateMutation,
+  type MoveMutation,
+  type Mutation,
   MutationType,
-  OrderMutation,
-  PatchMutation,
-  PublishMutation,
-  RemoveDraftMutation,
-  RemoveEntryMutation,
-  RemoveFileMutation,
-  UpdateMutation,
-  UploadMutation
+  type OrderMutation,
+  type PatchMutation,
+  type PublishMutation,
+  type RemoveDraftMutation,
+  type RemoveEntryMutation,
+  type RemoveFileMutation,
+  type UpdateMutation,
+  type UploadMutation
 } from 'alinea/core/Mutation'
 import {Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
@@ -71,7 +71,10 @@ const decoder = new TextDecoder()
 const loader = JsonLoader
 
 export class ChangeSetCreator {
-  constructor(protected config: Config, protected graph: Graph) {}
+  constructor(
+    protected config: Config,
+    protected graph: Graph
+  ) {}
 
   editChanges({previousFile, file, entry}: UpdateMutation): Array<Change> {
     const type = this.config.schema[entry.type]
@@ -121,7 +124,7 @@ export class ChangeSetCreator {
         {
           type: ChangeType.Rename,
           from: file,
-          to: file.slice(0, -draftFile.length) + '.json'
+          to: `${file.slice(0, -draftFile.length)}.json`
         }
       ]
     if (file.endsWith(archivedFiled))
@@ -129,7 +132,7 @@ export class ChangeSetCreator {
         {
           type: ChangeType.Rename,
           from: file,
-          to: file.slice(0, -archivedFiled.length) + '.json'
+          to: `${file.slice(0, -archivedFiled.length)}.json`
         }
       ]
     throw new Error(`Cannot publish file: ${file}`)
@@ -143,7 +146,7 @@ export class ChangeSetCreator {
       {
         type: ChangeType.Rename,
         from: file,
-        to: file.slice(0, -fileEnd.length) + `.${EntryStatus.Archived}.json`
+        to: `${file.slice(0, -fileEnd.length)}.${EntryStatus.Archived}.json`
       }
     ]
   }

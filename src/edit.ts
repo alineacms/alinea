@@ -1,19 +1,19 @@
-import {Reference} from 'alinea/core/Reference'
-import {TextDoc} from 'alinea/core/TextDoc'
+import type {Reference} from 'alinea/core/Reference'
+import type {TextDoc} from 'alinea/core/TextDoc'
 import {
   CreateOperation,
-  CreateQuery,
+  type CreateQuery,
   DeleteOp,
   UpdateOperation,
-  UpdateQuery,
+  type UpdateQuery,
   UploadOperation,
-  UploadQuery
+  type UploadQuery
 } from 'alinea/core/Transaction'
-import {ListEditor, ListField} from 'alinea/core/field/ListField'
-import {RichTextEditor, RichTextField} from 'alinea/core/field/RichTextField'
+import {ListEditor, type ListField} from 'alinea/core/field/ListField'
+import {RichTextEditor, type RichTextField} from 'alinea/core/field/RichTextField'
 import type {ListRow} from 'alinea/core/shape/ListShape'
 import {LinkEditor, LinksEditor} from 'alinea/field/link/LinkEditor'
-import {LinkField, LinksField} from 'alinea/field/link/LinkField'
+import type {LinkField, LinksField} from 'alinea/field/link/LinkField'
 
 export function update<Definition>(
   query: UpdateQuery<Definition>

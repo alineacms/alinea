@@ -1,6 +1,6 @@
 import {getType} from './Internal.js'
 import {Type} from './Type.js'
-import {RecordShape} from './shape/RecordShape.js'
+import type {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries, values} from './util/Objects.js'
 
@@ -19,7 +19,7 @@ export namespace Schema {
       switch (key) {
         case 'Entry':
           throw new Error(`${key} is a reserved Type name`)
-        default:
+        default: {
           if (!isValidIdentifier(key))
             throw new Error(
               `Invalid Type name "${key}", use only a-z, A-Z, 0-9, and _`
@@ -43,6 +43,7 @@ export namespace Schema {
               }
             }
           }
+        }
       }
     }
   }

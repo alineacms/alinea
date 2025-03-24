@@ -1,5 +1,5 @@
 import * as Y from 'yjs'
-import {EntryRow} from './EntryRow.js'
+import type {EntryRow} from './EntryRow.js'
 import {Field} from './Field.js'
 import {Type} from './Type.js'
 import {entries} from './util/Objects.js'

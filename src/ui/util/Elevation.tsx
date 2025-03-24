@@ -1,4 +1,4 @@
-import {PropsWithChildren, createContext, useContext} from 'react'
+import {type PropsWithChildren, createContext, useContext} from 'react'
 
 type Parent = 'sink' | 'lift'
 interface Elevation {

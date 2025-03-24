@@ -1,5 +1,5 @@
 import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
-import {CMS} from 'alinea/core/CMS'
+import type {CMS} from 'alinea/core/CMS'
 import {createId} from 'alinea/core/Id'
 import {code} from 'alinea/core/util/CodeGen'
 import esbuild from 'esbuild'
@@ -10,7 +10,7 @@ import {buildOptions} from '../build/BuildOptions.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
-import {GenerateContext} from './GenerateContext.js'
+import type {GenerateContext} from './GenerateContext.js'
 
 export async function generateDashboard(
   {configLocation, rootDir, configDir}: GenerateContext,
@@ -20,7 +20,7 @@ export async function generateDashboard(
 ) {
   if (!staticFile.endsWith('.html'))
     throw new Error(
-      `The staticFile option in config.dashboard must point to an .html file (include the extension)`
+      'The staticFile option in config.dashboard must point to an .html file (include the extension)'
     )
   const revision = createId()
   const entryPoints = {
@@ -58,7 +58,7 @@ export async function generateDashboard(
     tsconfig,
     logLevel: 'error'
   })
-  const baseUrl = './' + escapeHtml(basename)
+  const baseUrl = `./${escapeHtml(basename)}`
   await writeFileIfContentsDiffer(
     path.join(rootDir, staticFile),
     code`

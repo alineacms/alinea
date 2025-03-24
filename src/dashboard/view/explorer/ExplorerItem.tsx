@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import {getType} from 'alinea/core/Internal'
-import {SummaryProps} from 'alinea/core/media/Summary'
-import {Schema} from 'alinea/core/Schema'
+import type {SummaryProps} from 'alinea/core/media/Summary'
+import type {Schema} from 'alinea/core/Schema'
 import {resolveView} from 'alinea/core/View'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
@@ -10,12 +10,12 @@ import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
-import {ComponentType} from 'react'
+import type {ComponentType} from 'react'
 import {useDashboard} from '../../hook/UseDashboard.js'
 import {useExplorer} from '../../hook/UseExplorer.js'
 import {useFocusListItem} from '../../hook/UseFocusList.js'
 import {useNav} from '../../hook/UseNav.js'
-import {ExporerItemSelect} from './Explorer.js'
+import type {ExporerItemSelect} from './Explorer.js'
 import css from './ExplorerItem.module.scss'
 
 const styles = styler(css)
@@ -50,8 +50,8 @@ export function ExplorerItem({
   const props = isSelectable
     ? {}
     : explorer.selectable
-    ? {onClick: navigateTo}
-    : link(nav.entry(entry))
+      ? {onClick: navigateTo}
+      : link(nav.entry(entry))
   const isSelected = Boolean(
     isSelectable &&
       explorer.selection.find(
@@ -74,7 +74,6 @@ export function ExplorerItem({
         selected: isSelected,
         border: explorer.border
       })}
-      tabIndex={0}
     >
       <div className={styles.root.inner()}>
         <Tag

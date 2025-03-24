@@ -1,4 +1,4 @@
-import {Auth} from 'alinea/core/Auth'
+import type {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {Head} from 'alinea/dashboard/util/Head'
@@ -8,12 +8,12 @@ import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {Loader} from 'alinea/ui/Loader'
 import {useQuery} from 'react-query'
-import {AuthResult, AuthResultType} from '../AuthResult.js'
+import {type AuthResult, AuthResultType} from '../AuthResult.js'
 
 export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {client} = useDashboard()
   if (!(client instanceof Client))
-    throw new Error(`Cannot authenticate with non http client`)
+    throw new Error('Cannot authenticate with non http client')
   const clientUrl = new URL(client.url, window.location.href)
   const {data, isError} = useQuery(
     ['auth.cloud'],
@@ -68,9 +68,8 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       return null
     case AuthResultType.UnAuthenticated:
       location.href =
-        data.redirect +
-        `&from=${encodeURIComponent(
-          location.protocol + '//' + location.host + location.pathname
+        `${data.redirect}&from=${encodeURIComponent(
+          `${location.protocol}//${location.host}${location.pathname}`
         )}`
       return null
     case AuthResultType.MissingApiKey:
@@ -106,10 +105,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                   <Button
                     as="a"
                     href={`${data.setupUrl}?from=${encodeURIComponent(
-                      location.protocol +
-                        '//' +
-                        location.host +
-                        location.pathname
+                      `${location.protocol}//${location.host}${location.pathname}`
                     )}`}
                     iconRight={IcRoundArrowForward}
                   >

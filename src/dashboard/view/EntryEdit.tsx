@@ -13,7 +13,7 @@ import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useEffect, useRef, useState} from 'react'
-import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
+import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {FormProvider} from '../atoms/FormAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {InputForm} from '../editor/InputForm.js'
@@ -113,7 +113,7 @@ export function EntryEdit({editor}: EntryEditProps) {
     sections.length === 1 && sections[0][Section.Data] instanceof TabsSection
   const tabs: TabsSection | false =
     hasRootTabs && (sections[0][Section.Data] as TabsSection)
-  const visibleTypes = tabs && tabs.types.filter(type => !Type.isHidden(type))
+  const visibleTypes = tabs?.types.filter(type => !Type.isHidden(type))
 
   let selectedRootTab = 0
   if (hasRootTabs && visibleTypes !== false && rootTab !== undefined) {

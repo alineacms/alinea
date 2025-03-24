@@ -1,9 +1,9 @@
 import {MemoryDrafts} from 'alinea/cli/serve/MemoryDrafts'
-import {Connection} from 'alinea/core/Connection'
+import type {Connection} from 'alinea/core/Connection'
 import {createId} from 'alinea/core/Id'
 import {localUser} from 'alinea/core/User'
-import {Auth, Backend, History, Media, Target} from '../Backend.js'
-import {Database} from '../Database.js'
+import type {Auth, Backend, History, Media, Target} from '../Backend.js'
+import type {Database} from '../Database.js'
 
 export function memoryBackend(db: Database): Backend {
   const pending: Array<Connection.MutateParams & {toCommitHash: string}> = []
@@ -26,7 +26,7 @@ export function memoryBackend(db: Database): Backend {
   }
   const media: Media = {
     prepareUpload(ctx, file) {
-      throw new Error(`Not implemented`)
+      throw new Error('Not implemented')
     }
   }
   const drafts = new MemoryDrafts()
@@ -35,7 +35,7 @@ export function memoryBackend(db: Database): Backend {
       return []
     },
     async revision(ctx, file, ref) {
-      throw new Error(`Not implemented`)
+      throw new Error('Not implemented')
     }
   }
   return {

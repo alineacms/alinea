@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
-import {Popover, PopoverButtonProps} from '@headlessui/react'
-import {HTMLAttributes, PropsWithChildren} from 'react'
+import {Popover, type PopoverButtonProps} from '@headlessui/react'
+import type {HTMLAttributes, PropsWithChildren} from 'react'
 import css from './PopoverMenu.module.scss'
 
 const styles = styler(css)

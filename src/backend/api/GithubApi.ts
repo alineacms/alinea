@@ -1,10 +1,10 @@
-import {Connection} from 'alinea/core/Connection'
-import {EntryRecord} from 'alinea/core/EntryRecord'
+import type {Connection} from 'alinea/core/Connection'
+import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
 import {base64, btoa} from 'alinea/core/util/Encoding'
 import {join} from 'alinea/core/util/Paths'
-import {AuthedContext, History, Revision, Target} from '../Backend.js'
-import {Change, ChangeType} from '../data/ChangeSet.js'
+import type {AuthedContext, History, Revision, Target} from '../Backend.js'
+import {type Change, ChangeType} from '../data/ChangeSet.js'
 import {applyJsonPatch} from '../util/JsonPatch.js'
 
 export interface GithubOptions {
