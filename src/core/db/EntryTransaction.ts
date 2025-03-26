@@ -10,13 +10,12 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
-import {SourceTransaction, syncWith} from '../source/Source.js'
+import {SourceTransaction} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
 import type {CommitChange} from './CommitRequest.js'
 import type {EntryIndex} from './EntryIndex.js'
-import type {EntryTarget} from './EntryTarget.js'
 import type {
   ArchiveMutation,
   CreateMutation,
@@ -361,53 +360,14 @@ export class EntryTransaction {
     }
   }
 
-  async compile() {
-    const {from, into, changes, rollback} = await this.#tx.compile()
+  async toRequest() {
+    const {from, into, changes} = await this.#tx.compile()
     return {
-      from,
-      into,
+      fromSha: from.sha,
+      intoSha: into.sha,
       description: this.description(),
       checks: this.#checks,
-      fileChanges: this.#fileChanges,
-      changes: changes,
-      rollback: rollback
-    }
-  }
-
-  async commit(): Promise<string> {
-    const {from, into, changes} = await this.compile()
-    assert(this.#index.sha === from.sha, 'Index and tree must match')
-    await this.#source.applyChanges(changes)
-    return this.#index.indexChanges(into, changes)
-  }
-
-  async attempt(remote: EntryTarget): Promise<string> {
-    const {from, into, description, checks, changes, rollback, fileChanges} =
-      await this.compile()
-    assert(this.#index.sha === from.sha, 'Index and tree must match')
-    await this.#index.indexChanges(into, changes)
-    try {
-      const sha = await remote.commit({
-        fromSha: from.sha,
-        intoSha: into.sha,
-        description: description,
-        checks: checks,
-        changes: fileChanges.concat(changes)
-      })
-      if (sha === into.sha) {
-        await this.#source.applyChanges(changes)
-        return sha
-      }
-      await syncWith(this.#source, remote)
-      return this.#index.syncWith(this.#source)
-    } catch (error) {
-      if (error instanceof ShaMismatchError) {
-        const localSha = await this.#index.syncWith(remote)
-        if (localSha === error.actual) return this.attempt(remote)
-      }
-      await this.#source.applyChanges(rollback)
-      await this.#index.indexChanges(from, rollback)
-      throw error
+      changes: this.#fileChanges.concat(changes)
     }
   }
 }

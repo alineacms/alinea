@@ -1,16 +1,17 @@
-import {AbortController, fetch, type Response} from '@alinea/iso'
+import {AbortController, type Response, fetch} from '@alinea/iso'
 import type {DraftTransport, Revision} from 'alinea/backend/Backend'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
 import type {Config} from './Config.js'
-import type {Connection, SyncResponse} from './Connection.js'
+import type {Connection} from './Connection.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
-import type {Mutation} from './Mutation.js'
 import {getScope} from './Scope.js'
 import type {User} from './User.js'
+import type {CommitRequest} from './db/CommitRequest.js'
+import {ReadonlyTree, type Tree} from './source/Tree.js'
 import {base64} from './util/Encoding.js'
 
 export type AuthenticateRequest = (
@@ -71,12 +72,12 @@ export class Client implements Connection {
     ).then<AnyQueryResult<Query>>(this.#failOnHttpError)
   }
 
-  mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
+  /*mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
       {method: 'POST', body: JSON.stringify(mutations)}
     ).then<{commitHash: string}>(this.#failOnHttpError)
-  }
+  }*/
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
     return new Client({...this.#options, applyAuth, unauthorized})
@@ -102,9 +103,45 @@ export class Client implements Connection {
       .then(res => res ?? undefined)
   }
 
-  // Syncable
+  // Source
 
-  syncRequired(contentHash: string): Promise<boolean> {
+  /*getTree(): Promise<ReadonlyTree> {
+    return this.#requestJson({
+      action: HandleAction.Tree
+    })
+      .then<Tree>(this.#failOnHttpError)
+      .then(tree => new ReadonlyTree(tree))
+  }*/
+
+  getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
+    return this.#requestJson({
+      action: HandleAction.Tree,
+      sha
+    })
+      .then<Tree | null>(this.#failOnHttpError)
+      .then(tree => (tree ? new ReadonlyTree(tree) : undefined))
+  }
+
+  getBlob(sha: string): Promise<Uint8Array> {
+    return this.#request({
+      action: HandleAction.Blob,
+      sha
+    })
+      .then<Response>(this.#failOnHttpError)
+      .then(response => response.arrayBuffer())
+      .then(buffer => new Uint8Array(buffer))
+  }
+
+  // Commit
+
+  commit(request: CommitRequest): Promise<string> {
+    return this.#requestJson(
+      {action: HandleAction.Commit},
+      {method: 'POST', body: JSON.stringify(request)}
+    ).then<string>(this.#failOnHttpError)
+  }
+
+  /*syncRequired(contentHash: string): Promise<boolean> {
     return this.#requestJson({
       action: HandleAction.Sync,
       contentHash
@@ -116,7 +153,7 @@ export class Client implements Connection {
       {action: HandleAction.Sync},
       {method: 'POST', body: JSON.stringify(contentHashes)}
     ).then<SyncResponse>(this.#failOnHttpError)
-  }
+  }*/
 
   // Drafts
 
@@ -139,7 +176,7 @@ export class Client implements Connection {
   }
 
   #request(
-    params: {action: HandleAction},
+    params: {action: HandleAction; [key: string]: string},
     init?: RequestInit
   ): Promise<Response> {
     const {url, applyAuth = v => v, unauthorized} = this.#options
@@ -202,7 +239,7 @@ export class Client implements Connection {
   }
 
   async #failOnHttpError<T>(res: Response, expectJson = true): Promise<T> {
-    if (res.ok) return expectJson ? res.json() : undefined
+    if (res.ok) return expectJson ? res.json() : undefined!
     const text = await res.text()
     throw new HttpError(res.status, text || res.statusText)
   }

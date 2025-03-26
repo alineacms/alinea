@@ -55,7 +55,7 @@ export class EntryIndex {
     const changes = await bundleContents(source, this.#tree.diff(tree))
     if (changes.length === 0) return tree.sha
     //for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
-    return this.indexChanges(tree, changes)
+    return this.indexChanges(changes)
   }
 
   async seed(source: Source) {
@@ -86,10 +86,10 @@ export class EntryIndex {
     return new EntryTransaction(this.#config, this, source, from)
   }
 
-  async indexChanges(tree: ReadonlyTree, changes: Array<Change>) {
+  async indexChanges(changes: Array<Change>) {
     this.#applyChanges(changes)
-    this.#tree = tree
-    return tree.sha
+    this.#tree = await this.#tree.withChanges(changes)
+    return this.#tree.sha
   }
 
   #applyChanges(changes: Array<Change>) {

@@ -2,11 +2,12 @@ import {Entry} from 'alinea/core'
 import {parseYDoc} from 'alinea/core/Doc'
 import {type Draft, type DraftKey, formatDraftKey} from 'alinea/core/Draft'
 import type {PreviewRequest} from 'alinea/core/Preview'
+import type {EntryTarget} from 'alinea/core/db/EntryTarget.js'
+import type {LocalDB} from 'alinea/core/db/LocalDB.js'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import * as Y from 'yjs'
-import type {Database} from '../Database.js'
 
-export function createPreviewParser(db: Database) {
+export function createPreviewParser(local: LocalDB, remote: EntryTarget) {
   const drafts = new Map<
     DraftKey,
     Promise<{contentHash: string; draft?: Draft}>
@@ -14,18 +15,15 @@ export function createPreviewParser(db: Database) {
   return {
     async parse(
       preview: PreviewRequest,
-      sync: () => Promise<unknown>,
       getDraft: (draftKey: DraftKey) => Promise<Draft | undefined>
     ): Promise<PreviewRequest | undefined> {
       if (!(preview && 'payload' in preview)) return preview
       const update = await decodePreviewPayload(preview.payload)
-      let meta = await db.meta()
-      if (update.contentHash !== meta.contentHash) {
-        await sync()
-        meta = await db.meta()
+      if (update.contentHash !== local.sha) {
+        await local.syncWith(remote)
+        if (update.contentHash !== local.sha) return
       }
-      const entry = await db.resolver.resolve({
-        first: true,
+      const entry = await local.first({
         select: Entry,
         id: update.entryId,
         locale: update.locale,
@@ -35,14 +33,14 @@ export function createPreviewParser(db: Database) {
       const key = formatDraftKey(entry)
       const cachedDraft = await drafts.get(key)
       let currentDraft: Draft | undefined
-      if (cachedDraft?.contentHash === meta.contentHash) {
+      if (cachedDraft?.contentHash === local.sha) {
         currentDraft = cachedDraft.draft
       } else {
         try {
           const pending = getDraft(key)
           drafts.set(
             key,
-            pending.then(draft => ({contentHash: meta.contentHash, draft}))
+            pending.then(draft => ({contentHash: local.sha, draft}))
           )
           currentDraft = await pending
         } catch (error) {
@@ -52,7 +50,7 @@ export function createPreviewParser(db: Database) {
       const apply = currentDraft
         ? Y.mergeUpdatesV2([currentDraft.draft, update.update])
         : update.update
-      const type = db.config.schema[entry.type]
+      const type = local.config.schema[entry.type]
       if (!type) return
       const doc = new Y.Doc()
       Y.applyUpdateV2(doc, apply)

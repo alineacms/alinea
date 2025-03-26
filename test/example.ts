@@ -1,5 +1,5 @@
 import {Config, Field} from 'alinea'
-import {EntryDB} from 'alinea/core/db/EntryDB'
+import {LocalDB} from 'alinea/core/db/LocalDB.js'
 import {createMediaRoot} from 'alinea/core/media/MediaRoot'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 
@@ -223,7 +223,7 @@ export const config = Config.create({
 })
 
 export async function createExample() {
-  const db = new EntryDB(config)
+  const db = new LocalDB(config)
   await db.sync()
   return db
 }

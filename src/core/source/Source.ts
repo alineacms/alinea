@@ -2,15 +2,18 @@ import type {Change} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {ReadonlyTree, WriteableTree} from './Tree.js'
 
-export interface Source {
-  getTree(): Promise<ReadonlyTree>
+export interface SyncableSource {
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
   getBlob(sha: string): Promise<Uint8Array>
+}
+
+export interface Source extends SyncableSource {
+  getTree(): Promise<ReadonlyTree>
   applyChanges(changes: Array<Change>): Promise<void>
 }
 
 export async function bundleContents(
-  source: Source,
+  source: SyncableSource,
   changes: Array<Change>
 ): Promise<Array<Change>> {
   const shas = Array.from(
@@ -34,7 +37,7 @@ export async function bundleContents(
 
 export async function diff(
   source: Source,
-  remote: Source
+  remote: SyncableSource
 ): Promise<Array<Change>> {
   const localTree = await source.getTree()
   const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
@@ -45,7 +48,7 @@ export async function diff(
 
 export async function syncWith(
   source: Source,
-  remote: Source
+  remote: SyncableSource
 ): Promise<Array<Change>> {
   const changes = await diff(source, remote)
   await source.applyChanges(changes)

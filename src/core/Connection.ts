@@ -5,8 +5,9 @@ import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {EntryRow} from './EntryRow.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
-import type {Mutation} from './Mutation.js'
 import type {User} from './User.js'
+import type {CommitRequest} from './db/CommitRequest.js'
+import type {SyncableSource} from './source/Source.js'
 
 export interface SyncResponse {
   insert: Array<EntryRow>
@@ -18,13 +19,14 @@ export interface Syncable {
   sync(contentHashes: Array<string>): Promise<SyncResponse>
 }
 
-export interface Connection extends Syncable {
+export interface Connection extends SyncableSource {
+  //mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
+  commit(request: CommitRequest): Promise<string>
   user(): Promise<User | undefined>
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>>
   previewToken(request: PreviewInfo): Promise<string>
-  mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>
   revisionData(

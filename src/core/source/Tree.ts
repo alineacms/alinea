@@ -170,6 +170,12 @@ export class ReadonlyTree extends TreeBase<ReadonlyNode> {
     }
   }
 
+  withChanges(changes: Array<Change>): Promise<ReadonlyTree> {
+    const result = this.clone()
+    result.applyChanges(changes)
+    return result.compile()
+  }
+
   #flatEntries(prefix: string) {
     return Array.from(this.nodes, ([key, entry]): Array<FlatTreeEntry> => {
       const self = {

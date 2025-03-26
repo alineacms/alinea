@@ -1,5 +1,8 @@
 import type {AddChange, DeleteChange} from '../source/Change.js'
+import {} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
+import type {EntryTarget} from './EntryTarget.js'
+import type {LocalDB} from './LocalDB.js'
 import type {RemoveFileMutation, UploadFileMutation} from './Mutation.js'
 
 export type CommitChange =
@@ -25,5 +28,25 @@ export function checkCommit(tree: ReadonlyTree, request: CommitRequest): void {
     const entry = tree.get(path)
     if (!entry) throw new Error(`Missing entry for ${path}`)
     if (entry.sha !== sha) throw new Error(`Entry ${path} has changed`)
+  }
+}
+
+export async function attemptCommit(
+  local: LocalDB,
+  remote: EntryTarget,
+  request: CommitRequest
+): Promise<void> {
+  const sourceChanges = request.changes.filter(
+    change => change.op === 'add' || change.op === 'delete'
+  )
+  await local.indexChanges(sourceChanges)
+  try {
+    const sha = await remote.commit(request)
+    if (sha === request.intoSha) {
+      await local.applyChanges(sourceChanges)
+      return
+    }
+  } finally {
+    await local.syncWith(remote)
   }
 }

@@ -132,13 +132,11 @@ function AppAuthenticated() {
                 </SuspenseBoundary>
               </ErrorBoundary>
             </div>
-            {alineaDev && (
-              <Statusbar.Root>
-                <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                  {meta.contentHash}
-                </Statusbar.Status>
-              </Statusbar.Root>
-            )}
+            <Statusbar.Root>
+              <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                {meta.contentHash}
+              </Statusbar.Status>
+            </Statusbar.Root>
           </Sidebar.Provider>
         </Toolbar.Provider>
       </Statusbar.Provider>

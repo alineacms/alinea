@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config, Query} from 'alinea'
 import {createCMS} from 'alinea/core'
-import {EntryDB} from 'alinea/core/db/EntryDB'
+import {LocalDB} from 'alinea/core/db/LocalDB'
 
 const test = suite(import.meta)
 
@@ -28,7 +28,7 @@ const cms = createCMS({
 })
 
 test('seeding', async () => {
-  const db = new EntryDB(cms.config)
+  const db = new LocalDB(cms.config)
   await db.sync()
   const page1EN = await db.first({
     type: Page,
@@ -45,7 +45,7 @@ test('seeding', async () => {
 })
 
 test('create entries', async () => {
-  const db = new EntryDB(cms.config)
+  const db = new LocalDB(cms.config)
   await test.throws(
     () => db.create({type: Page, set: {title: 'x'}}),
     'Invalid locale'

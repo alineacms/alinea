@@ -1,6 +1,6 @@
 import {suite} from '@alinea/suite'
 import {Edit} from 'alinea'
-import {EntryDB} from 'alinea/core/db/EntryDB.js'
+import {LocalDB} from 'alinea/core/db/LocalDB.js'
 import {config} from './example.js'
 
 const test = suite(import.meta)
@@ -8,7 +8,7 @@ const test = suite(import.meta)
 const {Page} = config.schema
 
 async function createDb() {
-  const db = new EntryDB(config)
+  const db = new LocalDB(config)
   await db.sync()
   return db
 }

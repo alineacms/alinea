@@ -2,8 +2,9 @@ import type {Request, Response} from '@alinea/iso'
 import type {Connection} from 'alinea/core/Connection'
 import type {Draft, DraftKey} from 'alinea/core/Draft'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
-import type {Mutation} from 'alinea/core/Mutation'
 import type {User} from 'alinea/core/User'
+import type {CommitRequest} from 'alinea/core/db/CommitRequest.js'
+import type {ReadonlyTree} from 'alinea/core/source/Tree.js'
 
 export interface RequestContext {
   handlerUrl: URL
@@ -16,10 +17,12 @@ export interface AuthedContext extends RequestContext {
 }
 
 export interface Target {
-  mutate(
-    ctx: AuthedContext,
-    params: Connection.MutateParams
-  ): Promise<{commitHash: string}>
+  getTreeIfDifferent(
+    ctx: RequestContext,
+    sha: string
+  ): Promise<ReadonlyTree | undefined>
+  getBlob(ctx: RequestContext, sha: string): Promise<Uint8Array>
+  commit(ctx: RequestContext, request: CommitRequest): Promise<string>
 }
 
 export interface Auth {
@@ -66,18 +69,10 @@ export interface History {
   ): Promise<EntryRecord | undefined>
 }
 
-export interface Pending {
-  since(
-    ctx: RequestContext,
-    commitHash: string
-  ): Promise<{toCommitHash: string; mutations: Array<Mutation>} | undefined>
-}
-
 export interface Backend {
   auth: Auth
   target: Target
   media: Media
   drafts: Drafts
   history: History
-  pending?: Pending
 }

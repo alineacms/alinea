@@ -1,22 +1,21 @@
-import {Database} from 'alinea/backend/Database'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {cloudBackend} from 'alinea/cloud/CloudBackend'
 import type {Entry} from 'alinea/core'
 import type {CMS} from 'alinea/core/CMS'
-import type {Connection} from 'alinea/core/Connection'
-import {type Draft, type DraftKey, formatDraftKey} from 'alinea/core/Draft'
-import {type AnyQueryResult, Graph, type GraphQuery} from 'alinea/core/Graph'
-import {ErrorCode, HttpError} from 'alinea/core/HttpError'
-import {type Mutation, MutationType, type UpdateMutation} from 'alinea/core/Mutation'
-import type {PreviewUpdate} from 'alinea/core/Preview'
+import type {DraftKey} from 'alinea/core/Draft'
+import type {GraphQuery} from 'alinea/core/Graph'
+import {} from 'alinea/core/HttpError'
 import {getScope} from 'alinea/core/Scope'
-import {decode} from 'alinea/core/util/BufferToBase64'
+import {
+  type CommitRequest,
+  attemptCommit
+} from 'alinea/core/db/CommitRequest.js'
+import {LocalDB} from 'alinea/core/db/LocalDB.js'
+import type {Source} from 'alinea/core/source/Source'
 import {base64} from 'alinea/core/util/Encoding'
-import {assign} from 'alinea/core/util/Objects'
-import {array, object, string} from 'cito'
+import {object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
-import {mergeUpdatesV2} from 'yjs'
 import type {
   AuthedContext,
   Backend,
@@ -24,9 +23,8 @@ import type {
   RequestContext
 } from './Backend.js'
 import {HandleAction} from './HandleAction.js'
-import {ChangeSetCreator} from './data/ChangeSet.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
-import {generatedStore} from './store/GeneratedStore.js'
+import {generatedSource} from './store/GeneratedSource.js'
 
 const limit = pLimit(1)
 
@@ -39,15 +37,8 @@ const PreviewBody = object({
   entryId: string
 })
 
-const SyncBody = array(string)
-
 export interface Handler {
-  (request: Request, context?: RequestContext): Promise<Response>
-}
-
-export interface HandlerWithConnect {
   (request: Request, context: RequestContext): Promise<Response>
-  connect(context: RequestContext | AuthedContext): Connection
 }
 
 export type HookResponse<T = void> = void | T | Promise<T> | Promise<void>
@@ -66,147 +57,23 @@ export interface HandlerHooks {
 export interface HandlerOptions extends HandlerHooks {
   cms: CMS
   backend?: Backend
-  database?: Promise<Database>
+  source?: Promise<Source>
 }
 
 export function createHandler({
   cms,
   backend = cloudBackend(cms.config),
-  database = generatedStore.then(store => new Database(cms.config, store)),
+  source = generatedSource,
   ...hooks
-}: HandlerOptions): HandlerWithConnect {
-  const init = PLazy.from(async () => {
-    const db = await database
-    const previews = createPreviewParser(db)
-    const resolver = db.resolver
-    const changes = new ChangeSetCreator(
-      cms.config,
-      new Graph(cms.config, resolver)
-    )
-    let lastSync = 0
+}: HandlerOptions): Handler {
+  let lastSync = 0
 
-    return {db, mutate, resolve, periodicSync, syncPending}
-
-    async function resolve(ctx: RequestContext, query: GraphQuery) {
-      if (!query.preview) {
-        await periodicSync(ctx, query.syncInterval)
-        return resolver.resolve(query as GraphQuery)
-      }
-      const preview = await previews.parse(
-        query.preview,
-        () => syncPending(ctx),
-        entryId => backend.drafts.get(ctx, entryId)
-      )
-      return resolver.resolve({
-        ...query,
-        preview: preview
-      })
-    }
-
-    function periodicSync(ctx: RequestContext, syncInterval = 60) {
-      if (syncInterval === Number.POSITIVE_INFINITY) return
-      const now = Date.now()
-      if (now - lastSync < syncInterval * 1000) return Promise.resolve()
-      lastSync = now
-      return syncPending(ctx).catch(() => undefined)
-    }
-
-    function syncPending(ctx: RequestContext) {
-      return limit(async () => {
-        const meta = await db.meta()
-        if (!backend.pending) return meta
-        try {
-          const toApply = await backend.pending.since(ctx, meta.commitHash)
-          console.info(`> nothing to sync from ${meta.commitHash}`)
-          if (!toApply) return meta
-          console.info(
-            `> sync ${toApply.mutations.length} pending mutations, from ${meta.commitHash} to ${toApply.toCommitHash}`
-          )
-          await db.applyMutations(toApply.mutations, toApply.toCommitHash)
-        } catch (error) {
-          console.error(error)
-          console.warn('> could not sync pending mutations')
-        }
-        return db.meta()
-      })
-    }
-
-    async function mutate(
-      ctx: AuthedContext,
-      mutations: Array<Mutation>,
-      retry = false
-    ): Promise<{commitHash: string}> {
-      const fromCommitHash: string = await db.meta().then(meta => meta.commitHash)
-      try {
-        for (const mutation of mutations) {
-          switch (mutation.type) {
-            case MutationType.Create: {
-              if (!hooks.beforeCreate) continue
-              const maybeEntry = await hooks.beforeCreate({...mutation.entry})
-              if (maybeEntry) mutation.entry.data = maybeEntry.data
-              continue
-            }
-            case MutationType.Edit: {
-              if (!hooks.beforeUpdate) continue
-              const maybeEntry = await hooks.beforeUpdate({...mutation.entry})
-              if (maybeEntry) mutation.entry.data = maybeEntry.data
-              continue
-            }
-            case MutationType.Archive: {
-              if (!hooks.beforeArchive) continue
-              await hooks.beforeArchive(mutation.entryId)
-              continue
-            }
-            case MutationType.RemoveEntry: {
-              if (!hooks.beforeRemove) continue
-              await hooks.beforeRemove(mutation.entryId)
-              continue
-            }
-          }
-        }
-        const changeSet = await changes.create(mutations)
-        const result = await backend.target.mutate(ctx, {
-          commitHash: fromCommitHash,
-          mutations: changeSet
-        })
-        await db.applyMutations(mutations, result.commitHash)
-        for (const mutation of mutations) {
-          switch (mutation.type) {
-            case MutationType.Create: {
-              if (!hooks.afterCreate) continue
-              await hooks.afterCreate(mutation.entry)
-              continue
-            }
-            case MutationType.Edit: {
-              await persistEdit(ctx, mutation)
-              if (!hooks.afterUpdate) continue
-              await hooks.afterUpdate(mutation.entry)
-              continue
-            }
-            case MutationType.Archive: {
-              if (!hooks.afterArchive) continue
-              await hooks.afterArchive(mutation.entryId)
-              continue
-            }
-            case MutationType.RemoveEntry: {
-              if (!hooks.afterRemove) continue
-              await hooks.afterRemove(mutation.entryId)
-              continue
-            }
-          }
-        }
-        return {commitHash: result.commitHash}
-      } catch (error: any) {
-        if (retry) throw error
-        if (error instanceof HttpError && error.code === ErrorCode.Conflict) {
-          await syncPending(ctx)
-          return mutate(ctx, mutations, true)
-        }
-        throw error
-      }
-    }
-
-    async function persistEdit(ctx: AuthedContext, mutation: UpdateMutation) {
+  const localDb = PLazy.from(async () => {
+    const source = await generatedSource
+    const local = new LocalDB(cms.config, source)
+    await local.sync()
+    return local
+    /*    async function persistEdit(ctx: AuthedContext, mutation: UpdateMutation) {
       if (!mutation.update) return
       const update = new Uint8Array(await decode(mutation.update))
       const currentDraft = await backend.drafts.get(
@@ -225,66 +92,33 @@ export function createHandler({
       await backend.drafts.store(ctx, draft)
       const {contentHash} = await db.meta()
       previews.setDraft(formatDraftKey(mutation.entry), {contentHash, draft})
-    }
+    }*/
   })
 
-  return assign(handle, {connect})
-
-  function connect(context: RequestContext | AuthedContext): Connection {
-    return {
-      async user() {
-        return 'user' in context ? context.user : undefined
-      },
-      async resolve<Query extends GraphQuery>(
-        query: Query
-      ): Promise<AnyQueryResult<Query>> {
-        const {resolve} = await init
-        return resolve(context, query) as Promise<AnyQueryResult<Query>>
-      },
-      async previewToken(request: PreviewUpdate) {
-        const previews = new JWTPreviews(context.apiKey)
-        return previews.sign(request)
-      },
-      async prepareUpload(file: string) {
-        return backend.media.prepareUpload(context as AuthedContext, file)
-      },
-      async mutate(mutations: Array<Mutation>) {
-        const {mutate} = await init
-        return mutate(context as AuthedContext, mutations)
-      },
-      async syncRequired(contentHash: string) {
-        const {db} = await init
-        return db.syncRequired(contentHash)
-      },
-      async sync(contentHashes: Array<string>) {
-        const {db} = await init
-        return db.sync(contentHashes)
-      },
-      async revisions(file: string) {
-        return backend.history.list(context as AuthedContext, file)
-      },
-      async revisionData(file: string, revisionId: string) {
-        return backend.history.revision(
-          context as AuthedContext,
-          file,
-          revisionId
-        )
-      },
-      async getDraft(key) {
-        return backend.drafts.get(context as AuthedContext, key)
-      },
-      async storeDraft(draft: Draft) {
-        return backend.drafts.store(context as AuthedContext, draft)
-      }
-    }
-  }
-
-  async function handle(
+  return async function handle(
     request: Request,
     context: RequestContext
   ): Promise<Response> {
+    const local = await localDb
+    const target = backend.target
+    const remote = {
+      getTreeIfDifferent: target.getTreeIfDifferent.bind(target, context),
+      getBlob: target.getBlob.bind(target, context),
+      commit: target.commit.bind(target, context)
+    }
+    const previewParser = createPreviewParser(local, remote)
+
+    function periodicSync(syncInterval = 60) {
+      return limit(async () => {
+        if (syncInterval === Number.POSITIVE_INFINITY) return
+        const now = Date.now()
+        if (now - lastSync < syncInterval * 1000) return
+        lastSync = now
+        await local.syncWith(remote)
+      })
+    }
+
     try {
-      const {db, resolve, mutate, periodicSync, syncPending} = await init
       const previews = new JWTPreviews(context.apiKey)
       const url = new URL(request.url)
       const params = url.searchParams
@@ -350,15 +184,23 @@ export function createHandler({
         expectJson()
         const raw = await request.text()
         const scope = getScope(cms.config)
-        return Response.json((await resolve(ctx, scope.parse(raw))) ?? null)
+        const query = scope.parse(raw) as GraphQuery
+        if (!query.preview) {
+          await periodicSync(query.syncInterval)
+        } else {
+          const preview = await previewParser.parse(query.preview, entryId =>
+            backend.drafts.get(ctx, entryId)
+          )
+          query.preview = preview
+        }
+        return Response.json((await local.resolve(query)) ?? null)
       }
 
-      // Pending
-      if (action === HandleAction.Pending && request.method === 'GET') {
-        const ctx = await internal
+      if (action === HandleAction.Commit && request.method === 'POST') {
+        const ctx = await verified
         expectJson()
-        const commitHash = string(url.searchParams.get('commitHash'))
-        return Response.json(await backend.pending?.since(ctx, commitHash))
+        const request: CommitRequest = await body
+        return Response.json(await attemptCommit(local, remote, request))
       }
 
       // History
@@ -374,21 +216,22 @@ export function createHandler({
       }
 
       // Syncable
-      if (action === HandleAction.Sync && request.method === 'GET') {
+
+      if (action === HandleAction.Tree && request.method === 'GET') {
         const ctx = await internal
         expectJson()
-        const contentHash = string(url.searchParams.get('contentHash'))
-        if ('user' in ctx) await periodicSync(ctx)
-        else await syncPending(context)
-        return Response.json(await db.syncRequired(contentHash))
+        const sha = string(url.searchParams.get('sha'))
+        await periodicSync()
+        return Response.json(await local.getTreeIfDifferent(sha))
       }
 
-      if (action === HandleAction.Sync && request.method === 'POST') {
-        const ctx = await internal
-        expectJson()
-        if ('user' in ctx) await periodicSync(ctx)
-        else await syncPending(context)
-        return Response.json(await db.sync(SyncBody(await body)))
+      if (action === HandleAction.Blob && request.method === 'GET') {
+        const ctx = await verified
+        const sha = string(url.searchParams.get('sha'))
+        await periodicSync()
+        return new Response(await local.getBlob(sha), {
+          headers: {'content-type': 'application/octet-stream'}
+        })
       }
 
       // Media
@@ -431,12 +274,6 @@ export function createHandler({
         const data = (await body) as DraftTransport
         const draft = {...data, draft: base64.parse(data.draft)}
         return Response.json(await backend.drafts.store(await verified, draft))
-      }
-
-      // Target
-      if (action === HandleAction.Mutate && request.method === 'POST') {
-        expectJson()
-        return Response.json(await mutate(await verified, await body))
       }
     } catch (error) {
       if (error instanceof Response) return error
