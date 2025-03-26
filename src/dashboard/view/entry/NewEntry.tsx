@@ -1,6 +1,5 @@
 import styler from '@alinea/styler'
-import {Entry} from 'alinea/core/Entry'
-import {EntryStatus} from 'alinea/core/EntryRow'
+import {Entry, type EntryStatus} from 'alinea/core/Entry'
 import {createId} from 'alinea/core/Id'
 import {MutationType} from 'alinea/core/Mutation'
 import {Reference} from 'alinea/core/Reference'
@@ -22,8 +21,8 @@ import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {entry, EntryLink} from 'alinea/field/link'
-import {select, type SelectField} from 'alinea/field/select'
+import {EntryLink, entry} from 'alinea/field/link'
+import {type SelectField, select} from 'alinea/field/select'
 import {text} from 'alinea/field/text'
 import {entryPicker} from 'alinea/picker/entry/EntryPicker'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
@@ -122,17 +121,17 @@ function NewEntryForm({parentId}: NewEntryProps) {
         ? Schema.contained(config.schema, root.contains)
         : keys(config.schema)
     }
-      const parent = parentId
-        ? await graph.get({
-            select: parentData,
-            id: parentId,
-            status: 'preferDraft'
-          })
-        : null
-      const parentType = parent && config.schema[parent.type]
-      if (parentType)
-        return Schema.contained(config.schema, Type.contains(parentType))
-      return keys(config.schema)
+    const parent = parentId
+      ? await graph.get({
+          select: parentData,
+          id: parentId,
+          status: 'preferDraft'
+        })
+      : null
+    const parentType = parent && config.schema[parent.type]
+    if (parentType)
+      return Schema.contained(config.schema, Type.contains(parentType))
+    return keys(config.schema)
   }
 
   const typeField = useMemo(() => {
@@ -251,7 +250,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       root: root.name,
       locale: locale ?? null,
       path,
-      status: config.enableDrafts ? EntryStatus.Draft : EntryStatus.Published
+      status: (config.enableDrafts ? 'draft' : 'published') as EntryStatus
     }
     const parentId = form.data().parent?.[EntryReference.entry]
     const parent = parentId

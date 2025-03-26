@@ -1,7 +1,7 @@
 import type {Config} from 'alinea/core/Config'
 import type {Entry} from 'alinea/core/Entry'
+import type {EntryStatus} from 'alinea/core/Entry'
 import {createRecord} from 'alinea/core/EntryRecord'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import {createId} from 'alinea/core/Id'
 import {getRoot} from 'alinea/core/Internal'
 import {pathSuffix} from 'alinea/core/util/EntryFilenames'
@@ -159,14 +159,14 @@ export class EntryTransaction {
     this.#checks.push([entry.filePath, entry.fileHash])
     const childrenDir = paths.join(entry.parentDir, path)
     const filePath = `${childrenDir}.json`
-    if (entry.status === EntryStatus.Published) {
+    if (entry.status === 'published') {
       if (filePath !== entry.filePath) {
         // Rename children and other statuses
         const versions = index.findMany(entry => {
           return (
             entry.id === id &&
             entry.locale === locale &&
-            entry.status !== EntryStatus.Published
+            entry.status !== 'published'
           )
         })
         for (const version of versions)
@@ -206,15 +206,12 @@ export class EntryTransaction {
       return (
         entry.id === id &&
         entry.locale === locale &&
-        entry.status === EntryStatus.Published
+        entry.status === 'published'
       )
     })
     assert(entry, `Entry not found: ${id}`)
     this.#checks.push([entry.filePath, entry.fileHash])
-    this.#tx.rename(
-      entry.filePath,
-      `${entry.childrenDir}.${EntryStatus.Archived}.json`
-    )
+    this.#tx.rename(entry.filePath, `${entry.childrenDir}.${'archived'}.json`)
     this.#messages.push(this.#reportOp('archive', entry.title))
     return this
   }
@@ -268,7 +265,7 @@ export class EntryTransaction {
           ? `$root/${entry.locale}`
           : root
       const childrenDir = paths.join(parentDir, entry.path)
-      const filePath = `${childrenDir}${entry.status === EntryStatus.Published ? '' : `.${entry.status}`}.json`
+      const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
       const record = createRecord({
         id,
         type: entry.type,

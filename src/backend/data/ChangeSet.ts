@@ -1,7 +1,6 @@
 import {Entry} from 'alinea/core'
 import type {Config} from 'alinea/core/Config'
 import {EntryRecord, createRecord} from 'alinea/core/EntryRecord'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import type {Graph} from 'alinea/core/Graph'
 import {
   type ArchiveMutation,
@@ -117,8 +116,8 @@ export class ChangeSetCreator {
   }
 
   publishChanges({file}: PublishMutation): Array<Change> {
-    const draftFile = `.${EntryStatus.Draft}.json`
-    const archivedFiled = `.${EntryStatus.Archived}.json`
+    const draftFile = `.${'draft'}.json`
+    const archivedFiled = `.${'archived'}.json`
     if (file.endsWith(draftFile))
       return [
         {
@@ -146,7 +145,7 @@ export class ChangeSetCreator {
       {
         type: ChangeType.Rename,
         from: file,
-        to: `${file.slice(0, -fileEnd.length)}.${EntryStatus.Archived}.json`
+        to: `${file.slice(0, -fileEnd.length)}.${'archived'}.json`
       }
     ]
   }
@@ -155,7 +154,7 @@ export class ChangeSetCreator {
     entryId,
     file
   }: RemoveEntryMutation): Promise<Array<Change>> {
-    if (!file.endsWith(`.${EntryStatus.Archived}.json`)) return []
+    if (!file.endsWith(`.${'archived'}.json`)) return []
     const result = await this.graph.first({
       select: {
         workspace: Entry.workspace,
@@ -188,13 +187,13 @@ export class ChangeSetCreator {
       // Remove children
       {
         type: ChangeType.Delete,
-        file: file.slice(0, -`.${EntryStatus.Archived}.json`.length)
+        file: file.slice(0, -`.${'archived'}.json`.length)
       }
     ]
   }
 
   discardChanges({file}: RemoveDraftMutation): Array<Change> {
-    const fileEnd = `.${EntryStatus.Draft}.json`
+    const fileEnd = `.${'draft'}.json`
     if (!file.endsWith(fileEnd))
       throw new Error(`Cannot discard non-draft file: ${file}`)
     return [{type: ChangeType.Delete, file}]

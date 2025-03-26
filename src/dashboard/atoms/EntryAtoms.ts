@@ -4,7 +4,7 @@ import type {
   ItemInstance
 } from '@headless-tree/core'
 import {Entry} from 'alinea/core/Entry'
-import type {EntryStatus} from 'alinea/core/EntryRow'
+import type {EntryStatus} from 'alinea/core/Entry'
 import type {Graph} from 'alinea/core/Graph'
 import {getRoot, getType} from 'alinea/core/Internal'
 import {type Mutation, MutationType} from 'alinea/core/Mutation'

@@ -2,7 +2,6 @@ import type {Type} from 'alinea'
 import type {Config} from 'alinea/core/Config'
 import type {Entry} from 'alinea/core/Entry'
 import {EntryFields} from 'alinea/core/EntryFields'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import type {Expr} from 'alinea/core/Expr'
 import {Field} from 'alinea/core/Field'
 import type {Condition, Filter} from 'alinea/core/Filter'
@@ -338,11 +337,11 @@ export class EntryResolver implements Resolver {
   conditionStatus(entry: Entry, status: Status): boolean {
     switch (status) {
       case 'published':
-        return entry.status === EntryStatus.Published
+        return entry.status === 'published'
       case 'draft':
-        return entry.status === EntryStatus.Draft
+        return entry.status === 'draft'
       case 'archived':
-        return entry.status === EntryStatus.Archived
+        return entry.status === 'archived'
       case 'preferDraft':
         return entry.active
       case 'preferPublished':

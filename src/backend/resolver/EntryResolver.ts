@@ -1,5 +1,5 @@
 import {EntryFields} from 'alinea/core/EntryFields'
-import {EntryRow, EntryStatus} from 'alinea/core/EntryRow'
+import {EntryRow} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import type {Expr} from 'alinea/core/Expr'
 import {Field} from 'alinea/core/Field'
@@ -10,25 +10,28 @@ import {
   type Order,
   type Projection,
   type QuerySettings,
-  querySource,
-  type Status
+  type Status,
+  querySource
 } from 'alinea/core/Graph'
 import {
-  getExpr,
   type HasExpr,
+  getExpr,
   hasExpr,
   hasField,
   hasRoot,
   hasWorkspace
 } from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
-import {getScope, type Scope} from 'alinea/core/Scope'
+import {type Scope, getScope} from 'alinea/core/Scope'
 import type {Type} from 'alinea/core/Type'
 import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
 import {
+  Select,
+  type SelectionInput,
+  type Sql,
   alias,
   and,
   asc,
@@ -48,17 +51,19 @@ import {
   ne,
   not,
   or,
-  Select,
   selection,
-  type SelectionInput,
-  type Sql,
   sql
 } from 'rado'
 import {Builder} from 'rado/core/Builder'
+import {
+  type HasSql,
+  getData,
+  getTable,
+  internalTarget
+} from 'rado/core/Internal'
 import {Functions} from 'rado/core/expr/Functions'
 import {input} from 'rado/core/expr/Input'
 import {jsonExpr} from 'rado/core/expr/Json'
-import {getData, getTable, type HasSql, internalTarget} from 'rado/core/Internal'
 import {bm25, snippet} from 'rado/sqlite'
 import type {Database} from '../Database.js'
 import type {Store} from '../Store.js'
@@ -354,11 +359,11 @@ export class EntryResolver {
   conditionStatus(Table: typeof EntryRow, status: Status) {
     switch (status) {
       case 'published':
-        return eq(Table.status, EntryStatus.Published)
+        return eq(Table.status, 'published')
       case 'draft':
-        return eq(Table.status, EntryStatus.Draft)
+        return eq(Table.status, 'draft')
       case 'archived':
-        return eq(Table.status, EntryStatus.Archived)
+        return eq(Table.status, 'archived')
       case 'preferDraft':
         return Table.active
       case 'preferPublished':

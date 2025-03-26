@@ -1,6 +1,10 @@
 import type {Config} from 'alinea/core/Config'
 import type {SyncResponse, Syncable} from 'alinea/core/Connection'
-import {type EntryRecord, createRecord, parseRecord} from 'alinea/core/EntryRecord'
+import {
+  type EntryRecord,
+  createRecord,
+  parseRecord
+} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
 import {getRoot} from 'alinea/core/Internal'
 import {type Mutation, MutationType} from 'alinea/core/Mutation'
@@ -36,7 +40,7 @@ import {
 import {Builder} from 'rado/core/Builder'
 import {Functions} from 'rado/core/expr/Functions'
 import {coalesce} from 'rado/sqlite'
-import {EntryRow, EntryStatus} from '../core/EntryRow.js'
+import {EntryRow} from '../core/EntryRow.js'
 import type {AuthedContext, Target} from './Backend.js'
 import type {Source} from './Source.js'
 import type {Store} from './Store.js'
@@ -158,7 +162,7 @@ export class Database implements Syncable {
     await tx
       .update(EntryRow)
       .set({
-        status: EntryStatus.Published,
+        status: 'published',
         filePath: next.filePath,
         parentDir: next.parentDir,
         childrenDir: next.childrenDir,
@@ -174,8 +178,8 @@ export class Database implements Syncable {
 
   private async updateChildren(tx: Store, previous: EntryRow, next: EntryRow) {
     const {childrenDir: dir} = previous
-    const publishing = next.status === EntryStatus.Published
-    const unarchive = previous.status === EntryStatus.Archived
+    const publishing = next.status === 'published'
+    const unarchive = previous.status === 'archived'
     const pathChanged = dir !== next.childrenDir
     const needsUpdate = publishing && (unarchive || pathChanged)
     if (!needsUpdate) return []
@@ -272,7 +276,7 @@ export class Database implements Syncable {
         await tx.delete(EntryRow).where(condition)
         await tx.insert(EntryRow).values(entry)
         let children: Array<EntryRow> = []
-        if (entry.status === EntryStatus.Published && current)
+        if (entry.status === 'published' && current)
           children = await this.updateChildren(tx, current, entry)
         return () => {
           return this.updateHash(tx, condition).then(self =>
@@ -308,12 +312,12 @@ export class Database implements Syncable {
         const archived = and(
           eq(EntryRow.id, mutation.entryId),
           is(EntryRow.locale, mutation.locale),
-          eq(EntryRow.status, EntryStatus.Archived)
+          eq(EntryRow.status, 'archived')
         )
         const condition = and(
           eq(EntryRow.id, mutation.entryId),
           is(EntryRow.locale, mutation.locale),
-          eq(EntryRow.status, EntryStatus.Published)
+          eq(EntryRow.status, 'published')
         )
         const published = await tx
           .select()
@@ -321,18 +325,17 @@ export class Database implements Syncable {
           .where(condition)
           .get()
         if (!published) return
-        const filePath =
-          `${published.filePath.slice(0, -5)}.${EntryStatus.Archived}.json`
+        const filePath = `${published.filePath.slice(0, -5)}.${'archived'}.json`
         await tx.delete(EntryRow).where(archived)
         await tx
           .update(EntryRow)
-          .set({status: EntryStatus.Archived, filePath})
+          .set({status: 'archived', filePath})
           .where(condition)
         const children = await tx
           .update(EntryRow)
-          .set({status: EntryStatus.Archived})
+          .set({status: 'archived'})
           .where(
-            eq(EntryRow.status, EntryStatus.Published),
+            eq(EntryRow.status, 'published'),
             or(
               eq(EntryRow.parentDir, published.childrenDir),
               like(EntryRow.childrenDir, `${published.childrenDir}/%`)
@@ -358,7 +361,7 @@ export class Database implements Syncable {
         const condition = and(
           eq(EntryRow.id, mutation.entryId),
           is(EntryRow.locale, mutation.locale),
-          eq(EntryRow.status, EntryStatus.Published)
+          eq(EntryRow.status, 'published')
         )
         await tx.delete(EntryRow).where(condition)
         const children = await this.applyPublish(tx, promoting)
@@ -422,7 +425,7 @@ export class Database implements Syncable {
             and(
               eq(EntryRow.id, mutation.entryId),
               is(EntryRow.locale, mutation.locale),
-              eq(EntryRow.status, EntryStatus.Draft)
+              eq(EntryRow.status, 'draft')
             )
           )
         return async () => [existing.id]
@@ -453,7 +456,7 @@ export class Database implements Syncable {
         // change.
         const condition = and(
           eq(EntryRow.id, mutation.entryId),
-          eq(EntryRow.status, EntryStatus.Published)
+          eq(EntryRow.status, 'published')
         )
         const existing = await tx.select().from(EntryRow).where(condition).get()
         if (!existing) return
@@ -877,7 +880,7 @@ export class Database implements Syncable {
         const archivedPaths = await tx
           .select(EntryRow.childrenDir)
           .from(EntryRow)
-          .where(eq(EntryRow.status, EntryStatus.Archived))
+          .where(eq(EntryRow.status, 'archived'))
         for (const archivedPath of archivedPaths) {
           const isChildOf = or(
             eq(EntryRow.parentDir, archivedPath),
@@ -885,8 +888,8 @@ export class Database implements Syncable {
           )
           await tx
             .update(EntryRow)
-            .set({status: EntryStatus.Archived})
-            .where(isChildOf, eq(EntryRow.status, EntryStatus.Published))
+            .set({status: 'archived'})
+            .where(isChildOf, eq(EntryRow.status, 'published'))
         }
         const entries = await tx.select().from(EntryRow).where(isInserted)
         for (const entry of entries) {
@@ -953,15 +956,15 @@ export class Database implements Syncable {
 namespace EntryRealm {
   const builder = new Builder()
   const Alt = alias(EntryRow, 'Alt')
-  const isDraft = eq(EntryRow.status, EntryStatus.Draft)
-  const isArchived = eq(EntryRow.status, EntryStatus.Archived)
-  const isPublished = eq(EntryRow.status, EntryStatus.Published)
+  const isDraft = eq(EntryRow.status, 'draft')
+  const isArchived = eq(EntryRow.status, 'archived')
+  const isPublished = eq(EntryRow.status, 'published')
   const hasDraft = exists(
     builder
       .select()
       .from(Alt)
       .where(
-        eq(Alt.status, EntryStatus.Draft),
+        eq(Alt.status, 'draft'),
         eq(Alt.locale, EntryRow.locale),
         eq(Alt.id, EntryRow.id)
       )
@@ -971,7 +974,7 @@ namespace EntryRealm {
       .select()
       .from(Alt)
       .where(
-        eq(Alt.status, EntryStatus.Published),
+        eq(Alt.status, 'published'),
         eq(Alt.locale, EntryRow.locale),
         eq(Alt.id, EntryRow.id)
       )
@@ -981,7 +984,7 @@ namespace EntryRealm {
       .select()
       .from(Alt)
       .where(
-        eq(Alt.status, EntryStatus.Archived),
+        eq(Alt.status, 'archived'),
         eq(Alt.locale, EntryRow.locale),
         eq(Alt.id, EntryRow.id)
       )

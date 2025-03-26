@@ -4,7 +4,8 @@ import type {ImagePreviewDetails} from 'alinea/core/media/CreatePreview'
 import type {CMS} from './CMS.js'
 import type {Config} from './Config.js'
 import {Entry} from './Entry.js'
-import {type EntryRow, EntryStatus} from './EntryRow.js'
+import type {EntryStatus} from './Entry.js'
+import type {EntryRow} from './EntryRow.js'
 import type {Status} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {createId} from './Id.js'
@@ -185,9 +186,9 @@ export class UpdateOperation<Definition> extends Operation {
       const {status: changeStatus, set} = query
       const entryId = query.id
       let status: Status
-      if (changeStatus === EntryStatus.Draft) status = 'preferDraft'
-      else if (changeStatus === EntryStatus.Archived) status = 'preferPublished'
-      else if (changeStatus === EntryStatus.Published) status = 'preferDraft'
+      if (changeStatus === 'draft') status = 'preferDraft'
+      else if (changeStatus === 'archived') status = 'preferPublished'
+      else if (changeStatus === 'published') status = 'preferDraft'
       else status = 'preferPublished'
       const current = await cms.get({
         select: Entry,
@@ -212,7 +213,7 @@ export class UpdateOperation<Definition> extends Operation {
       )
       const type = cms.config.schema[current.type]
       const mutations: Array<Mutation> = []
-      const createDraft = changeStatus === EntryStatus.Draft
+      const createDraft = changeStatus === 'draft'
       const fieldUpdates =
         set &&
         fromEntries(
@@ -225,7 +226,7 @@ export class UpdateOperation<Definition> extends Operation {
         this.typeName(cms.config, type),
         {
           ...current,
-          status: createDraft ? EntryStatus.Draft : current.status,
+          status: createDraft ? 'draft' : current.status,
           data: {...current.data, ...fieldUpdates}
         },
         parent
@@ -239,7 +240,7 @@ export class UpdateOperation<Definition> extends Operation {
           entry
         })
       switch (changeStatus) {
-        case EntryStatus.Published:
+        case 'published':
           mutations.push({
             type: MutationType.Publish,
             locale: current.locale,
@@ -248,7 +249,7 @@ export class UpdateOperation<Definition> extends Operation {
             file
           })
           break
-        case EntryStatus.Archived:
+        case 'archived':
           mutations.push({
             type: MutationType.Archive,
             entryId: entryId,
@@ -351,10 +352,9 @@ async function createEntry(
     Root.defaultLocale(config.workspaces[workspace][root]) ??
     null
   const title = partial.data?.title ?? partial.title ?? 'Entry'
-  const status = partial.status ?? EntryStatus.Published
+  const status = partial.status ?? 'published'
   const path = slugify(
-    (status === EntryStatus.Published && partial.data?.path) ||
-      (partial.path ?? title)
+    (status === 'published' && partial.data?.path) || (partial.path ?? title)
   )
   const entryData = {title, path, ...partial.data}
   const id = partial.id ?? createId()

@@ -1,9 +1,10 @@
 import type {Config} from 'alinea/core/Config'
 import type {Connection} from 'alinea/core/Connection'
-import {createYDoc, DOC_KEY, parseYDoc} from 'alinea/core/Doc'
+import {DOC_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
 import {formatDraftKey} from 'alinea/core/Draft'
 import {Entry} from 'alinea/core/Entry'
-import {type EntryRow, EntryStatus} from 'alinea/core/EntryRow'
+import type {EntryStatus} from 'alinea/core/Entry'
+import type {EntryRow} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
 import type {Graph} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
@@ -22,7 +23,7 @@ import {
   entryUrl
 } from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
-import {entries, fromEntries, values} from 'alinea/core/util/Objects'
+import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
@@ -184,16 +185,16 @@ export const entryEditorAtoms = atomFamily(
       )
       const parentNeedsTranslation = entry.parentId ? !parentLink : false
       const parents = withParents?.parents ?? []
-      const canPublish = parents.every(
-        parent => parent.status === EntryStatus.Published
-      )
+      const canPublish = parents.every(parent => parent.status === 'published')
       if (versions.length === 0) return undefined
       const statuses = fromEntries(
         versions.map(version => [version.status, version])
       ) as Record<EntryStatus, Version>
-      const availableStatuses = values(EntryStatus).filter(
-        status => statuses[status] !== undefined
-      )
+      const availableStatuses = Array<EntryStatus>(
+        'draft',
+        'published',
+        'archived'
+      ).filter(status => statuses[status] !== undefined)
       return createEntryEditor({
         parents,
         canPublish,
@@ -320,7 +321,7 @@ export function createEntryEditor(entryData: EntryData) {
     const update = await encode(edits.getLocalUpdate())
     // Use the existing path, when the entry gets published the path will change
     const entry = await getDraftEntry({
-      status: EntryStatus.Published,
+      status: 'published',
       path: activeVersion.path
     })
     const mutation: Mutation = {
@@ -374,7 +375,7 @@ export function createEntryEditor(entryData: EntryData) {
       : []
     const entry = await getDraftEntry({
       id: activeVersion.id,
-      status: EntryStatus.Published,
+      status: 'published',
       parent: parentData?.entryId,
       parentPaths,
       locale
@@ -454,7 +455,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!set(confirmErrorsAtom)) return
     const currentFile = entryFile(activeVersion)
     const update = await encode(edits.getLocalUpdate())
-    const entry = await getDraftEntry({status: EntryStatus.Published})
+    const entry = await getDraftEntry({status: 'published'})
     const mutations: Array<Mutation> = []
     const editedFile = entryFile(entry)
     mutations.push({
@@ -486,7 +487,7 @@ export function createEntryEditor(entryData: EntryData) {
     const update = await encode(edits.getLocalUpdate())
     // We're not restoring the previous path because that is unavailable
     const entry = await getDraftEntry({
-      status: EntryStatus.Published,
+      status: 'published',
       path: activeVersion.path
     })
     const editedFile = entryFile(entry)
@@ -512,13 +513,13 @@ export function createEntryEditor(entryData: EntryData) {
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Publish,
-        status: EntryStatus.Draft,
+        status: 'draft',
         entryId: activeVersion.id,
         locale: activeVersion.locale,
         file: entryFile(activeVersion)
       }
     ]
-    const entry = entryData.statuses[EntryStatus.Draft]
+    const entry = entryData.statuses['draft']
     const graph = await get(graphAtom)
     mutations.push(...(await persistSharedFields(graph, entry)))
     return set(transact, {
@@ -543,7 +544,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const archivePublished = atom(null, (get, set) => {
-    const published = entryData.statuses[EntryStatus.Published]
+    const published = entryData.statuses['published']
     const mutation: Mutation = {
       type: MutationType.Archive,
       entryId: published.id,
@@ -558,10 +559,10 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const publishArchived = atom(null, (get, set) => {
-    const archived = entryData.statuses[EntryStatus.Archived]
+    const archived = entryData.statuses['archived']
     const mutation: Mutation = {
       type: MutationType.Publish,
-      status: EntryStatus.Archived,
+      status: 'archived',
       entryId: archived.id,
       locale: archived.locale,
       file: entryFile(archived)
@@ -578,7 +579,7 @@ export function createEntryEditor(entryData: EntryData) {
       'Are you sure you want to delete this folder and all its files?'
     )
     if (!result) return
-    const published = entryData.statuses[EntryStatus.Published]
+    const published = entryData.statuses['published']
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Archive,
@@ -590,7 +591,7 @@ export function createEntryEditor(entryData: EntryData) {
         type: MutationType.RemoveEntry,
         entryId: published.id,
         locale: published.locale,
-        file: entryFile({...published, status: EntryStatus.Archived})
+        file: entryFile({...published, status: 'archived'})
       }
     ]
     return set(transact, {
@@ -604,7 +605,7 @@ export function createEntryEditor(entryData: EntryData) {
     // Prompt for confirmation
     const result = confirm('Are you sure you want to delete this file?')
     if (!result) return
-    const published = entryData.statuses[EntryStatus.Published]
+    const published = entryData.statuses['published']
     const file = published.data as MediaFile
     const mutation: Mutation = {
       type: MutationType.RemoveFile,
@@ -626,7 +627,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const deleteArchived = atom(null, (get, set) => {
-    const archived = entryData.statuses[EntryStatus.Archived]
+    const archived = entryData.statuses['archived']
     const mutation: Mutation = {
       type: MutationType.RemoveEntry,
       entryId: archived.id,

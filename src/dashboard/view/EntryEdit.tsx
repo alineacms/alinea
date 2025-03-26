@@ -1,5 +1,4 @@
 import styler from '@alinea/styler'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {TabsSection} from 'alinea/field/tabs/Tabs'
@@ -45,7 +44,7 @@ function ShowChanges({editor}: EntryEditProps) {
   const compareTo = hasChanges
     ? editor.activeVersion
     : editor.statuses[
-        editor.availableStatuses.find(status => status !== EntryStatus.Draft)!
+        editor.availableStatuses.find(status => status !== 'draft')!
       ]
   return <EntryDiff entryA={compareTo} entryB={draftEntry} />
 }
@@ -97,7 +96,7 @@ export function EntryEdit({editor}: EntryEditProps) {
           translate()
         } else if (config.enableDrafts) {
           if (hasChanges) saveDraft()
-          else if (selectedStatus === EntryStatus.Draft) publishDraft()
+          else if (selectedStatus === 'draft') publishDraft()
         } else {
           if (hasChanges) publishEdits()
         }

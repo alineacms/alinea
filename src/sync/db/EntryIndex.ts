@@ -1,7 +1,7 @@
 import type {Config} from 'alinea/core/Config'
 import type {Entry} from 'alinea/core/Entry'
+import type {EntryStatus} from 'alinea/core/Entry'
 import {type EntryRecord, parseRecord} from 'alinea/core/EntryRecord'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import {getRoot} from 'alinea/core/Internal'
 import {Page} from 'alinea/core/Page'
 import {Schema} from 'alinea/core/Schema'
@@ -264,17 +264,15 @@ class EntryNode {
     // Per ID: all have locale or none have locale
     if (locale === null) assert(this.locales.size === 1)
     // Per ID&locale: one of published or archived, but not both
-    if (entry.status === EntryStatus.Published) {
-      assert(!versions.has(EntryStatus.Archived))
+    if (entry.status === 'published') {
+      assert(!versions.has('archived'))
       // Per ID&locale&published: all parents are published
       if (this.#parent)
-        assert(this.#parent.locales.get(locale)?.get(EntryStatus.Published))
+        assert(this.#parent.locales.get(locale)?.get('published'))
     }
-    if (entry.status === EntryStatus.Archived)
-      assert(!versions.has(EntryStatus.Published))
+    if (entry.status === 'archived') assert(!versions.has('published'))
     // Per ID&locale: only one draft
-    if (entry.status === EntryStatus.Draft)
-      assert(!versions.has(EntryStatus.Draft))
+    if (entry.status === 'draft') assert(!versions.has('draft'))
     const [other] = versions.values()
     // Per ID&locale: all have same path
     if (other) assert(other.path === entry.path)
@@ -286,12 +284,12 @@ class EntryNode {
   sync() {
     for (const [locale, versions] of this.locales) {
       for (const [status, version] of versions) {
-        const isDraft = status === EntryStatus.Draft
-        const isPublished = status === EntryStatus.Published
-        const isArchived = status === EntryStatus.Archived
-        const hasDraft = versions.has(EntryStatus.Draft)
-        const hasPublished = versions.has(EntryStatus.Published)
-        const hasArchived = versions.has(EntryStatus.Archived)
+        const isDraft = status === 'draft'
+        const isPublished = status === 'published'
+        const isArchived = status === 'archived'
+        const hasDraft = versions.has('draft')
+        const hasPublished = versions.has('published')
+        const hasArchived = versions.has('archived')
         const active =
           isDraft ||
           (isPublished && !hasDraft) ||

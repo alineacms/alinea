@@ -1,4 +1,4 @@
-import type {EntryStatus} from 'alinea/core/EntryRow'
+import type {EntryStatus} from 'alinea/core/Entry'
 
 export type Mutation =
   | CreateMutation

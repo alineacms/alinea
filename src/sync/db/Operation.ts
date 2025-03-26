@@ -1,5 +1,5 @@
 import type {Config} from 'alinea/core/Config'
-import type {EntryStatus} from 'alinea/core/EntryRow'
+import type {EntryStatus} from 'alinea/core/Entry'
 import type {Graph} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
 import type {StoredRow} from 'alinea/core/Infer'

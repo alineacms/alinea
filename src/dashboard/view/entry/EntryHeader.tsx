@@ -1,7 +1,6 @@
 import styler from '@alinea/styler'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import {entryFile, workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
-import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
+import {Button, HStack, Icon, Stack, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
@@ -21,7 +20,10 @@ import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
-import {type EntryEditor, EntryTransition} from '../../atoms/EntryEditorAtoms.js'
+import {
+  type EntryEditor,
+  EntryTransition
+} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useEntryLocation} from '../../hook/UseEntryLocation.js'
@@ -157,7 +159,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
       >
         Remove draft
       </DropdownMenu.Item>
-    ) : variant === EntryStatus.Published && !editor.activeVersion.seeded ? (
+    ) : variant === 'published' && !editor.activeVersion.seeded ? (
       isMediaFile ? (
         <>
           <DropdownMenu.Item
@@ -190,7 +192,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           Archive
         </DropdownMenu.Item>
       )
-    ) : variant === EntryStatus.Archived ? (
+    ) : variant === 'archived' ? (
       <>
         {canPublish && (
           <DropdownMenu.Item
@@ -280,7 +282,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           {!currentTransition &&
             !hasChanges &&
             !isActiveStatus &&
-            editor.availableStatuses.includes(EntryStatus.Draft) && (
+            editor.availableStatuses.includes('draft') && (
               <>
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>

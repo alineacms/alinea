@@ -1,7 +1,6 @@
 import {readFileSync} from 'node:fs'
 import {suite} from '@alinea/suite'
 import {Entry} from 'alinea/core'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import {ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
@@ -78,16 +77,16 @@ test('archive child entries', async () => {
   const entry2 = await example.create({
     type: Page,
     parentId: sub._id,
-    status: EntryStatus.Archived,
+    status: 'archived',
     set: {title: 'Deepest 2'}
   })
   test.is(entry1._parentId, sub._id)
-  await example.update({id: parent._id, status: EntryStatus.Archived})
+  await example.update({id: parent._id, status: 'archived'})
   test.not.ok(await example.first({id: parent._id}))
   test.not.ok(await example.first({id: sub._id}))
   test.not.ok(await example.first({id: entry1._id}))
   test.not.ok(await example.first({id: entry2._id}))
-  await example.update({id: parent._id, status: EntryStatus.Published})
+  await example.update({id: parent._id, status: 'published'})
   test.ok(await example.first({id: parent._id}))
   test.ok(await example.first({id: sub._id}))
   test.ok(await example.first({id: entry1._id}))
@@ -234,7 +233,7 @@ test('change published path for entry with language', async () => {
     path: 'localised3',
     status: 'archived'
   })
-  test.is(localised3Archived.status, EntryStatus.Archived)
+  test.is(localised3Archived.status, 'archived')
 
   // And publish again
   await example.commit(

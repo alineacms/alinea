@@ -6,7 +6,6 @@ import {
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import {getType} from 'alinea/core/Internal'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
@@ -52,10 +51,10 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
   currentData.current = itemData
   const selected = selectedEntry(locale, itemData)
   const {icon} = getType(schema[selected.type])
-  const isDraft = selected.status === EntryStatus.Draft
+  const isDraft = selected.status === 'draft'
   const isUntranslated = locale && selected.locale !== locale
-  const isArchived = selected.status === EntryStatus.Archived
-  const isUnpublished = selected.status === EntryStatus.Archived
+  const isArchived = selected.status === 'archived'
+  const isUnpublished = selected.status === 'archived'
   const isSelected = id && itemData.id === id
 
   return (
