@@ -10,10 +10,10 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
-import {SourceTransaction} from '../Source.js'
-import type {Source} from '../Source.js'
-import type {ReadonlyTree} from '../Tree.js'
-import {assert, compareStrings} from '../Utils.js'
+import {SourceTransaction, syncWith} from '../source/Source.js'
+import type {Source} from '../source/Source.js'
+import type {ReadonlyTree} from '../source/Tree.js'
+import {assert, compareStrings} from '../source/Utils.js'
 import type {CommitChange} from './CommitRequest.js'
 import type {EntryIndex} from './EntryIndex.js'
 import type {EntryTarget} from './EntryTarget.js'
@@ -398,7 +398,7 @@ export class EntryTransaction {
         await this.#source.applyChanges(changes)
         return sha
       }
-      this.#source.syncWith(remote)
+      await syncWith(this.#source, remote)
       return this.#index.syncWith(this.#source)
     } catch (error) {
       if (error instanceof ShaMismatchError) {

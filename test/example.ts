@@ -1,7 +1,7 @@
 import {Config, Field} from 'alinea'
+import {EntryDB} from 'alinea/core/db/EntryDB'
 import {createMediaRoot} from 'alinea/core/media/MediaRoot'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
-import {EntryDB} from 'alinea/sync/db/EntryDB'
 
 const Page = Config.document('Type', {
   contains: ['Page'],

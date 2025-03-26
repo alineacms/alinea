@@ -113,6 +113,7 @@
       "name": "@alinea/core",
       "devDependencies": {
         "cito": "^0.3.3",
+        "fake-indexeddb": "^6.0.0",
         "htmlparser2": "^9.1.0",
         "p-lazy": "^4.0.0",
         "pretty-ms": "^8.0.0",
@@ -182,12 +183,6 @@
         "y-prosemirror": "^1.2.2",
       },
     },
-    "src/sync": {
-      "name": "@alinea/sync",
-      "devDependencies": {
-        "fake-indexeddb": "^6.0.0",
-      },
-    },
     "src/ui": {
       "name": "@alinea/ui",
       "devDependencies": {
@@ -225,8 +220,6 @@
     "@alinea/styler": ["@alinea/styler@1.0.3", "", {}, "sha512-u248xCGPYuGAsC2Z83Jyxplcc92Ai1IdeoZiBmr9HY/yGRSLZAxteStg4ErLOi8BnQQ9g72oEbgK3GJ7wU71zA=="],
 
     "@alinea/suite": ["@alinea/suite@0.6.2", "", {}, "sha512-UEYs2OLLb5DCMVE/0C8AAhP+xjKdOujbfL+NIXtcCW0dyeQqxjRVVFu+JH5VsjNxkx9ZNgId0fU4HkoKRU49CQ=="],
-
-    "@alinea/sync": ["@alinea/sync@workspace:src/sync"],
 
     "@alinea/ui": ["@alinea/ui@workspace:src/ui"],
 

@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import treeExample from '../../test/exampleTree.json' with {type: 'json'}
+import treeExample from '../../../test/exampleTree.json' with {type: 'json'}
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 
 const test = suite(import.meta)

@@ -1,4 +1,5 @@
 import {suite} from '@alinea/suite'
+import {diff} from '../source/Source.js'
 import {FSSource} from './FSSource.js'
 import {GithubSource} from './GithubSource.js'
 
@@ -15,6 +16,6 @@ test('sync', async () => {
     authToken: process.env.GITHUB_AUTH_TOKEN!,
     cwd: 'apps/web/content/demo'
   })
-  const changes = await fsSource.diff(ghSource)
+  const changes = await diff(fsSource, ghSource)
   test.is(changes.length, 0)
 })

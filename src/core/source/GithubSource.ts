@@ -1,7 +1,7 @@
-import type {Change} from '../Change.js'
-import {Source} from '../Source.js'
-import {ReadonlyTree} from '../Tree.js'
-import {assert} from '../Utils.js'
+import type {Change} from './Change.js'
+import type {Source} from './Source.js'
+import {ReadonlyTree} from './Tree.js'
+import {assert} from './Utils.js'
 
 export interface GithubOptions {
   authToken: string
@@ -11,12 +11,11 @@ export interface GithubOptions {
   cwd: string
 }
 
-export class GithubSource extends Source {
+export class GithubSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #options: GithubOptions
 
   constructor(options: GithubOptions) {
-    super()
     this.#options = options
   }
 

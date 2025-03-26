@@ -1,9 +1,10 @@
 import {suite} from '@alinea/suite'
-import {Entry} from 'alinea/core'
-import {assign} from 'alinea/core/util/Objects'
 import {cms} from '../../../test/cms'
+import {Entry} from '../Entry.js'
 import {FSSource} from '../source/FSSource.js'
 import {MemorySource} from '../source/MemorySource.js'
+import {syncWith} from '../source/Source.js'
+import {assign} from '../util/Objects'
 import type {CommitRequest} from './CommitRequest.js'
 import {EntryDB} from './EntryDB.js'
 
@@ -28,8 +29,8 @@ const db = new EntryDB(cms.config, from, remote)
 
 const test = suite(import.meta, {
   async beforeEach() {
-    await remote.syncWith(source)
-    await from.syncWith(source)
+    await syncWith(remote, source)
+    await syncWith(from, source)
     await db.sync()
   }
 })

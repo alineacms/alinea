@@ -2,52 +2,59 @@ import type {Change} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {ReadonlyTree, WriteableTree} from './Tree.js'
 
-export abstract class Source {
-  abstract getTree(): Promise<ReadonlyTree>
-  abstract getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
-  abstract getBlob(sha: string): Promise<Uint8Array>
-  abstract applyChanges(changes: Array<Change>): Promise<void>
+export interface Source {
+  getTree(): Promise<ReadonlyTree>
+  getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
+  getBlob(sha: string): Promise<Uint8Array>
+  applyChanges(changes: Array<Change>): Promise<void>
+}
 
-  async bundleContents(changes: Array<Change>): Promise<Array<Change>> {
-    const shas = Array.from(
-      new Set(
-        changes
-          .filter(change => change.op !== 'delete')
-          .map(change => change.sha)
-      )
+export async function bundleContents(
+  source: Source,
+  changes: Array<Change>
+): Promise<Array<Change>> {
+  const shas = Array.from(
+    new Set(
+      changes.filter(change => change.op !== 'delete').map(change => change.sha)
     )
-    const blobs = new Map(
-      await Promise.all(
-        shas.map(async sha => [sha, await this.getBlob(sha)] as const)
-      )
+  )
+  const blobs = new Map(
+    await Promise.all(
+      shas.map(async sha => [sha, await source.getBlob(sha)] as const)
     )
-    return changes.map(change => {
-      if (change.op === 'delete') return change
-      return {
-        ...change,
-        contents: blobs.get(change.sha)
-      }
-    })
-  }
+  )
+  return changes.map(change => {
+    if (change.op === 'delete') return change
+    return {
+      ...change,
+      contents: blobs.get(change.sha)
+    }
+  })
+}
 
-  async diff(remote: Source): Promise<Array<Change>> {
-    const localTree = await this.getTree()
-    const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
-    if (!remoteTree) return []
-    const changes = localTree.diff(remoteTree)
-    return remote.bundleContents(changes)
-  }
+export async function diff(
+  source: Source,
+  remote: Source
+): Promise<Array<Change>> {
+  const localTree = await source.getTree()
+  const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
+  if (!remoteTree) return []
+  const changes = localTree.diff(remoteTree)
+  return bundleContents(remote, changes)
+}
 
-  async syncWith(remote: Source): Promise<Array<Change>> {
-    const changes = await this.diff(remote)
-    await this.applyChanges(changes)
-    return changes
-  }
+export async function syncWith(
+  source: Source,
+  remote: Source
+): Promise<Array<Change>> {
+  const changes = await diff(source, remote)
+  await source.applyChanges(changes)
+  return changes
+}
 
-  async transaction(): Promise<SourceTransaction> {
-    const from = await this.getTree()
-    return new SourceTransaction(this, from)
-  }
+export async function transaction(source: Source): Promise<SourceTransaction> {
+  const from = await source.getTree()
+  return new SourceTransaction(source, from)
 }
 
 export class SourceTransaction {

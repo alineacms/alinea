@@ -1,10 +1,10 @@
-import type {Change} from '../Change.js'
-import {hashBlob} from '../GitUtils.js'
-import {Source} from '../Source.js'
-import {ReadonlyTree} from '../Tree.js'
-import {assert} from '../Utils.js'
+import type {Change} from './Change.js'
+import {hashBlob} from './GitUtils.js'
+import type {Source} from './Source.js'
+import {ReadonlyTree} from './Tree.js'
+import {assert} from './Utils.js'
 
-export class MemorySource extends Source {
+export class MemorySource implements Source {
   #tree: ReadonlyTree
   #blobs = new Map<string, Uint8Array>()
 
@@ -12,7 +12,6 @@ export class MemorySource extends Source {
     tree = ReadonlyTree.EMPTY,
     blobs: Map<string, Uint8Array> = new Map()
   ) {
-    super()
     this.#tree = tree
     this.#blobs = blobs
   }

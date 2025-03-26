@@ -1,4 +1,4 @@
-import type {EntryStatus} from 'alinea/core/Entry'
+import type {EntryStatus} from '../Entry.js'
 
 export type Mutation =
   | CreateMutation

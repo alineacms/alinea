@@ -1,5 +1,5 @@
-import type {AddChange, DeleteChange} from '../Change.js'
-import type {ReadonlyTree} from '../Tree.js'
+import type {AddChange, DeleteChange} from '../source/Change.js'
+import type {ReadonlyTree} from '../source/Tree.js'
 import type {RemoveFileMutation, UploadFileMutation} from './Mutation.js'
 
 export type CommitChange =

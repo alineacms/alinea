@@ -1,7 +1,0 @@
-{
-  "name": "@alinea/sync",
-  "type": "module",
-  "devDependencies": {
-    "fake-indexeddb": "^6.0.0"
-  }
-}

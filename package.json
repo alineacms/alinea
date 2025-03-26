@@ -46,7 +46,6 @@
     "src/core",
     "src/dashboard",
     "src/ui",
-    "src/sync",
     "src/field/richtext"
   ],
   "dependencies": {

@@ -1,20 +1,19 @@
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
-import type {Change} from '../Change.js'
-import {hashBlob} from '../GitUtils.js'
-import {Source} from '../Source.js'
-import {ReadonlyTree, WriteableTree} from '../Tree.js'
-import {assert} from '../Utils.js'
 import {type CommitRequest, checkCommit} from '../db/CommitRequest.js'
+import type {Change} from './Change.js'
+import {hashBlob} from './GitUtils.js'
+import type {Source} from './Source.js'
+import {ReadonlyTree, WriteableTree} from './Tree.js'
+import {assert} from './Utils.js'
 
-export class FSSource extends Source {
+export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #cwd: string
   #locations = new Map<string, string>()
   #lastModified = new Map<string, number>()
 
   constructor(cwd: string) {
-    super()
     this.#cwd = cwd
   }
 

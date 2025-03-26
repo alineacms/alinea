@@ -28,7 +28,7 @@ import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
-import {assert, compareStrings} from '../Utils.js'
+import {assert, compareStrings} from '../source/Utils.js'
 import type {EntryIndex} from './EntryIndex.js'
 import {LinkResolver} from './LinkResolver.js'
 

@@ -11,10 +11,10 @@ import {validateOrderKey} from 'alinea/core/util/FractionalIndexing'
 import {entries, keys} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
-import type {Change} from '../Change.js'
-import type {Source} from '../Source.js'
-import {ReadonlyTree} from '../Tree.js'
-import {assert, compareStrings} from '../Utils.js'
+import type {Change} from '../source/Change.js'
+import {type Source, bundleContents} from '../source/Source.js'
+import {ReadonlyTree} from '../source/Tree.js'
+import {assert, compareStrings} from '../source/Utils.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 
@@ -52,7 +52,7 @@ export class EntryIndex {
 
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
-    const changes = await source.bundleContents(this.#tree.diff(tree))
+    const changes = await bundleContents(source, this.#tree.diff(tree))
     if (changes.length === 0) return tree.sha
     //for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
     return this.indexChanges(tree, changes)

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import {suite} from '@alinea/suite'
 import demoTree from '../../../test/demo.json' with {type: 'json'}
-import {ReadonlyTree} from '../Tree.js'
+import {ReadonlyTree} from '../source/Tree.js'
 import {MemorySource} from './MemorySource.js'
 
 const test = suite(import.meta)

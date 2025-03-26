@@ -1,12 +1,11 @@
-import type {Change} from '../Change.js'
-import {Source} from '../Source.js'
-import {ReadonlyTree} from '../Tree.js'
+import type {Change} from './Change.js'
+import type {Source} from './Source.js'
+import {ReadonlyTree} from './Tree.js'
 
-export class IndexedDBSource extends Source {
+export class IndexedDBSource implements Source {
   #db: Promise<IDBDatabase>
 
   constructor(indexedDB: IDBFactory, name: string) {
-    super()
     this.#db = new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open(name)
       request.onsuccess = () => resolve(request.result)

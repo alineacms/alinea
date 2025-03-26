@@ -1,8 +1,8 @@
 import type {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'
 import {Graph} from 'alinea/core/Graph'
-import type {Source} from '../Source.js'
 import {MemorySource} from '../source/MemorySource.js'
+import {type Source, syncWith} from '../source/Source.js'
 import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver} from './EntryResolver.js'
 import type {EntryTarget} from './EntryTarget.js'
@@ -102,7 +102,7 @@ export class EntryDB extends Graph {
   }
 
   async syncWithRemote() {
-    if (this.#remote) await this.#source.syncWith(this.#remote)
+    if (this.#remote) await syncWith(this.#source, this.#remote)
     return this.sync()
   }
 
