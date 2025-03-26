@@ -1,7 +1,7 @@
-import type {Graph} from 'alinea/core/Graph.js'
+import type {LocalDB} from 'alinea/core/db/LocalDB.js'
 import {useAtomValue} from 'jotai'
 import {dbAtom} from '../atoms/DbAtoms.js'
 
-export function useGraph(): Graph {
+export function useDb(): LocalDB {
   return useAtomValue(dbAtom)
 }

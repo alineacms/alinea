@@ -32,12 +32,7 @@ import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {
-  dbMetaAtom,
-  entryRevisionAtoms,
-  graphAtom,
-  mutateAtom
-} from './DbAtoms.js'
+import {dbAtom, entryRevisionAtoms} from './DbAtoms.js'
 import {type Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
@@ -80,7 +75,7 @@ export const entryEditorAtoms = atomFamily(
       if (!id) return undefined
       const config = get(configAtom)
       const client = get(clientAtom)
-      const graph = await get(graphAtom)
+      const graph = await get(dbAtom)
       let entry: EntryRow | null = await graph.first({
         select: Entry,
         id,

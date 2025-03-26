@@ -1,7 +1,3 @@
-import {HStack, TextLabel, VStack} from 'alinea/ui'
-import {Main} from 'alinea/ui/Main'
-import {useMemo} from 'react'
-import {useQuery} from 'react-query'
 //import {EntryProperty} from '../draft/EntryProperty.js'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
 import styler from '@alinea/styler'
@@ -12,20 +8,23 @@ import type {QueryWithResult} from 'alinea/core/Graph'
 import type {RootData} from 'alinea/core/Root'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {EntryHeader} from 'alinea/dashboard/view/entry/EntryHeader'
+import {HStack, TextLabel, VStack} from 'alinea/ui'
+import {Main} from 'alinea/ui/Main'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
-import {useAtomValue} from 'jotai'
-import {graphAtom} from '../atoms/DbAtoms.js'
+import {useMemo} from 'react'
+import {useQuery} from 'react-query'
 import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useNavigate} from '../atoms/LocationAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
+import {useGraph} from '../hook/UseGraph.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {Head} from '../util/Head.js'
-import {Explorer, type ExporerItemSelect} from './explorer/Explorer.js'
 import {IconLink} from './IconButton.js'
-import {FileUploader} from './media/FileUploader.js'
 import css from './MediaExplorer.module.scss'
+import {Explorer, type ExporerItemSelect} from './explorer/Explorer.js'
+import {FileUploader} from './media/FileUploader.js'
 
 const styles = styler(css)
 
@@ -39,7 +38,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const parentId = editor?.entryId
   const workspace = useWorkspace()
   const root = useRoot()
-  const graph = useAtomValue(graphAtom)
+  const graph = useGraph()
   const condition = useMemo((): Filter<EntryFields> => {
     return {
       _root: root.name,

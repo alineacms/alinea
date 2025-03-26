@@ -1,6 +1,6 @@
 import {Entry} from 'alinea/core/Entry'
 import type {EntryLocation} from 'alinea/dashboard/DashboardNav'
-import {graphAtom} from 'alinea/dashboard/atoms/DbAtoms'
+import {dbAtom} from 'alinea/dashboard/atoms/DbAtoms'
 import {locationAtom, useNavigate} from 'alinea/dashboard/atoms/LocationAtoms'
 import {useNav} from 'alinea/dashboard/hook/UseNav'
 import {Loader} from 'alinea/ui'
@@ -35,7 +35,7 @@ const editLoader = atomFamily(() => {
     const url = searchParams.get('url')!
     const workspace = searchParams.get('workspace') ?? undefined
     const root = searchParams.get('root') ?? undefined
-    const graph = await get(graphAtom)
+    const graph = await get(dbAtom)
     const entry = await graph.first({
       select: {
         id: Entry.id,

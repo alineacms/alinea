@@ -3,7 +3,7 @@ import DataLoader from 'dataloader'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {configAtom} from './DashboardAtoms.js'
-import {entryRevisionAtoms, graphAtom} from './DbAtoms.js'
+import {dbAtom, entryRevisionAtoms} from './DbAtoms.js'
 
 export interface EntrySummary {
   id: string
@@ -20,7 +20,7 @@ export interface EntrySummary {
 }
 
 export const entrySummaryLoaderAtom = atom(async get => {
-  const graph = await get(graphAtom)
+  const graph = await get(dbAtom)
   const {schema} = get(configAtom)
   const selection = summarySelection(schema)
   return new DataLoader(

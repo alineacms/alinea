@@ -32,8 +32,9 @@ import {Link} from 'alinea/ui/Link'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {type FormEvent, Suspense, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
-import {changedEntriesAtom, graphAtom, useMutate} from '../../atoms/DbAtoms.js'
+import {changedEntriesAtom} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
+import {useDb} from '../../hook/UseDb.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {useRoot} from '../../hook/UseRoot.js'
@@ -69,12 +70,12 @@ const titleField = text('Title', {autoFocus: true})
 function NewEntryForm({parentId}: NewEntryProps) {
   const config = useConfig()
   const locale = useLocale()
-  const graph = useAtomValue(graphAtom)
+  const db = useDb()
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
     async () => {
       return parentId
-        ? graph.first({
+        ? db.first({
             select: parentData,
             id: parentId,
             locale,
@@ -92,7 +93,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {pathname} = useLocation()
   const nav = useNav()
   const navigate = useNavigate()
-  const mutate = useMutate()
   const {name: workspace} = useWorkspace()
   const containerTypes = entries(config.schema)
     .filter(([, type]) => {
@@ -122,7 +122,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
         : keys(config.schema)
     }
     const parent = parentId
-      ? await graph.get({
+      ? await db.get({
           select: parentData,
           id: parentId,
           status: 'preferDraft'
@@ -171,7 +171,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     return track.options(insertOrderField, async get => {
       const selectedParent = get(parentField)
       const parentId = selectedParent?.[EntryReference.entry]
-      const parent = await graph.get({
+      const parent = await db.get({
         select: {
           type: Entry.type
         },
@@ -254,7 +254,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     }
     const parentId = form.data().parent?.[EntryReference.entry]
     const parent = parentId
-      ? await graph.first({
+      ? await db.first({
           select: parentData,
           id: parentId,
           locale: locale,
@@ -270,7 +270,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const url = entryUrl(entryType, {...data, parentPaths})
     const copyFrom = form.data().copyFrom?.[EntryReference.entry]
     const entryData = copyFrom
-      ? await graph.first({
+      ? await db.first({
           select: Entry.data,
           id: copyFrom,
           status: 'preferPublished'
