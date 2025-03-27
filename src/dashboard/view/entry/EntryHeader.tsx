@@ -7,17 +7,19 @@ import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
 import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
 import {IcOutlineKeyboardTab} from 'alinea/ui/icons/IcOutlineKeyboardTab'
-import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
+import {IcRoundHistory} from 'alinea/ui/icons/IcRoundHistory'
 import {IcRoundMenu} from 'alinea/ui/icons/IcRoundMenu'
 import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
 import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
+import {IcRoundUpdate} from 'alinea/ui/icons/IcRoundUpdate'
+import {IcRoundVisibility} from 'alinea/ui/icons/IcRoundVisibility'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
@@ -60,7 +62,7 @@ const transitions = {
 const variantIcon = {
   draft: IcOutlineDrafts,
   editing: IcRoundEdit,
-  published: IcOutlineRemoveRedEye,
+  published: IcRoundVisibility,
   archived: IcRoundArchive,
   untranslated: IcRoundTranslate,
   revision: IcRoundPublishedWithChanges,
@@ -164,12 +166,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={replaceFile}
           >
+            <Icon icon={IcRoundUpdate} />
             Replace
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={deleteFileAndNavigate}
           >
+            <Icon icon={IcRoundDelete} />
             Delete
           </DropdownMenu.Item>
         </>
@@ -179,6 +183,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={deleteMediaLibraryAndNavigate}
           >
+            <Icon icon={IcRoundDelete} />
             Delete
           </DropdownMenu.Item>
         </>
@@ -187,6 +192,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           className={styles.root.action()}
           onClick={archivePublished}
         >
+          <Icon icon={IcRoundArchive} />
           Archive
         </DropdownMenu.Item>
       )
@@ -197,6 +203,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={publishArchived}
           >
+            <Icon icon={IcRoundVisibility} />
             Publish
           </DropdownMenu.Item>
         )}
@@ -204,6 +211,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           className={styles.root.action()}
           onClick={deleteArchived}
         >
+          <Icon icon={IcRoundDelete} />
           Delete
         </DropdownMenu.Item>
       </>
@@ -370,7 +378,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                   )}
 
                   <DropdownMenu.Root bottom left>
-                    <DropdownMenu.Trigger className={styles.root.more(variant)}>
+                    <DropdownMenu.Trigger
+                      className={styles.root.more(variant)}
+                      title={
+                        isMediaFile || isMediaLibrary
+                          ? 'Media actions'
+                          : 'Entry actions'
+                      }
+                    >
                       <Icon icon={IcRoundMoreVert} />
                     </DropdownMenu.Trigger>
 
@@ -379,6 +394,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                         <DropdownMenu.Item
                           onClick={() => setShowHistory(!showHistory)}
                         >
+                          <Icon icon={IcRoundHistory} />
                           {showHistory ? 'Hide' : 'Show'} history
                         </DropdownMenu.Item>
                       )}
