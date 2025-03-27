@@ -167,6 +167,7 @@ function ListInputRow({
             icon={getType(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
+            title="Drag and drop to reorder"
           />
         </Sink.Options>
         <Sink.Title>
@@ -179,6 +180,7 @@ function ListInputRow({
               onClick={() => {
                 onCopyBlock()
               }}
+              title="Copy block"
             />
           )}
           {!readOnly && (
@@ -186,12 +188,18 @@ function ListInputRow({
               <IconButton
                 icon={IcRoundKeyboardArrowUp}
                 onClick={() => onMove?.(-1)}
+                title="Move up"
               />
               <IconButton
                 icon={IcRoundKeyboardArrowDown}
                 onClick={() => onMove?.(1)}
+                title="Move down"
               />
-              <IconButton icon={IcRoundClose} onClick={onDelete} />
+              <IconButton
+                icon={IcRoundClose}
+                onClick={onDelete}
+                title="Delete block"
+              />
             </>
           )}
         </Sink.Options>
