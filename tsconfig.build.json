@@ -5,7 +5,6 @@
     "emitDeclarationOnly": true,
     "outDir": "dist",
     "rootDir": "src",
-    "plugins": [{"name": "typescript-plugin-css-modules"}],
     "declaration": true,
     "composite": true
   },

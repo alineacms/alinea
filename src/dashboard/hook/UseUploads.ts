@@ -1,30 +1,22 @@
 import type {Connection} from 'alinea/core/Connection'
 import {Entry, type EntryStatus} from 'alinea/core/Entry'
 import type {EntryRow} from 'alinea/core/EntryRow'
-import {HttpError} from 'alinea/core/HttpError'
 import {createId} from 'alinea/core/Id'
 import {type Mutation, MutationType} from 'alinea/core/Mutation'
 import {Workspace} from 'alinea/core/Workspace'
-import {createPreview} from 'alinea/core/media/CreatePreview.browser'
-import {isImage} from 'alinea/core/media/IsImage'
+import type {LocalDB} from 'alinea/core/db/LocalDB.js'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import type {MediaFile} from 'alinea/core/media/MediaTypes'
 import {createFileHash} from 'alinea/core/util/ContentHash'
 import {entryFileName, entryFilepath} from 'alinea/core/util/EntryFilenames'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
-import {
-  basename,
-  dirname,
-  extname,
-  join,
-  normalize
-} from 'alinea/core/util/Paths'
+import {basename, dirname, extname, normalize} from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
-import {atom, useAtom, useSetAtom} from 'jotai'
+import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
 import {useEffect} from 'react'
-import {useMutate} from '../atoms/DbAtoms.js'
+import {dbAtom} from '../atoms/DbAtoms.js'
 import {errorAtom} from '../atoms/ErrorAtoms.js'
 import {withResolvers} from '../util/WithResolvers.js'
 import {useConfig} from './UseConfig.js'
@@ -65,67 +57,9 @@ export interface Upload {
   replace?: {entry: EntryRow; entryFile: string}
 }
 
-const defaultTasker = pLimit(Number.POSITIVE_INFINITY)
-const cpuTasker = pLimit(1)
-const networkTasker = pLimit(8)
 const batchTasker = pLimit(1)
 
-const tasker = {
-  [UploadStatus.Queued]: defaultTasker,
-  [UploadStatus.CreatingPreview]: cpuTasker,
-  [UploadStatus.Uploading]: networkTasker,
-  [UploadStatus.Uploaded]: defaultTasker,
-  [UploadStatus.Done]: defaultTasker
-}
-
-async function process(
-  upload: Upload,
-  publishUpload: (upload: Upload) => Promise<EntryRow<MediaFile>>,
-  client: Connection
-): Promise<Upload> {
-  switch (upload.status) {
-    case UploadStatus.Queued: {
-      const next = isImage(upload.file.name)
-        ? UploadStatus.CreatingPreview
-        : UploadStatus.Uploading
-      return {...upload, status: next}
-    }
-    case UploadStatus.CreatingPreview: {
-      const previewData = await createPreview(upload.file)
-      return {
-        ...upload,
-        ...previewData,
-        status: UploadStatus.Uploading
-      }
-    }
-    case UploadStatus.Uploading: {
-      const fileName = upload.file.name
-      const extension = extname(fileName)
-      const path = slugify(basename(fileName, extension))
-      const file = join(upload.to.directory, path + extension)
-      const info = await client.prepareUpload(file)
-      await fetch(info.url, {
-        method: info.method ?? 'POST',
-        body: upload.file
-      }).then(async result => {
-        if (!result.ok)
-          throw new HttpError(
-            result.status,
-            'Could not reach server for upload'
-          )
-      })
-      return {...upload, info, status: UploadStatus.Uploaded}
-    }
-    case UploadStatus.Uploaded: {
-      const entry = await publishUpload(upload)
-      return {...upload, result: entry, status: UploadStatus.Done}
-    }
-    case UploadStatus.Done:
-      throw new Error('Should not end up here')
-  }
-}
-
-function createBatch(mutate: (mutations: Array<Mutation>) => Promise<void>) {
+function createBatch(db: LocalDB) {
   let trigger = withResolvers()
   let nextRun: any = undefined
   const batch = [] as Array<Mutation>
@@ -154,10 +88,10 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
   const config = useConfig()
   const graph = useGraph()
   const {cnx: client} = useSession()
-  const mutate = useMutate()
+  const db = useAtomValue(dbAtom)
   const setErrorAtom = useSetAtom(errorAtom)
   const [uploads, setUploads] = useAtom(uploadsAtom)
-  const batch = createBatch(mutate)
+  const batch = createBatch(db)
 
   useEffect(() => {
     // Clear upload list on unmount
@@ -351,6 +285,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     to: UploadDestination,
     replace?: {entry: EntryRow; entryFile: string}
   ) {
+    throw new Error('Not implemented')
     const uploads: Array<Upload> = Array.from(files).map(file => {
       return {id: createId(), file, to, replace, status: UploadStatus.Queued}
     })

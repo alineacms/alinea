@@ -4,32 +4,18 @@ import {Entry} from '../Entry.js'
 import {FSSource} from '../source/FSSource.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {syncWith} from '../source/Source.js'
-import {assign} from '../util/Objects'
-import type {CommitRequest} from './CommitRequest.js'
-import {EntryDB} from './EntryDB.js'
+import {LocalDB} from './LocalDB.js'
 
 const dir = 'apps/web/content/demo'
 const source = new FSSource(dir)
 const from = new MemorySource()
 const into = new MemorySource()
 
-const remote = assign(into, {
-  async commit(request: CommitRequest) {
-    const entryChanges = request.changes.filter(
-      change => change.op === 'add' || change.op === 'delete'
-    )
-    await into.applyChanges(entryChanges)
-    //console.log(request.description)
-    //for (const {op, path} of entryChanges) console.log(`comm> ${op} ${path}`)
-    return request.intoSha
-  }
-})
-
-const db = new EntryDB(cms.config, from, remote)
+const db = new LocalDB(cms.config, from)
 
 const test = suite(import.meta, {
   async beforeEach() {
-    await syncWith(remote, source)
+    await syncWith(into, source)
     await syncWith(from, source)
     await db.sync()
   }

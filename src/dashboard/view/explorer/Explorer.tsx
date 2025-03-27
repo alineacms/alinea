@@ -4,11 +4,12 @@ import type {QueryWithResult} from 'alinea/core/Graph'
 import type {Reference} from 'alinea/core/Reference'
 import {summarySelection} from 'alinea/core/media/Summary'
 import {Loader} from 'alinea/ui'
+import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect.js'
 import {useAtomValue} from 'jotai'
-import {useEffect, useRef} from 'react'
+import {useRef} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
-import {changedEntriesAtom, graphAtom} from '../../atoms/DbAtoms.js'
+import {dbAtom, dbMetaAtom} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {ExplorerProvider} from '../../hook/UseExplorer.js'
 import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
@@ -59,12 +60,13 @@ export function Explorer({
   border = true
 }: ExplorerProps) {
   const {schema} = useConfig()
-  const graph = useAtomValue(graphAtom)
+  const graph = useAtomValue(dbAtom)
 
   const queryClient = useQueryClient()
-  const changed = useAtomValue(changedEntriesAtom)
-  useEffect(() => {
-    if (changed.length > 0) queryClient.invalidateQueries('explorer')
+  const changed = useAtomValue(dbMetaAtom)
+  // Todo: this can be done more granular
+  useNonInitialEffect(() => {
+    queryClient.invalidateQueries('explorer')
   }, [changed])
 
   const {data, isLoading} = useQuery(

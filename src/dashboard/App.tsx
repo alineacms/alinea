@@ -74,7 +74,7 @@ function AppAuthenticated() {
   const locale = useLocale()
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
-  const meta = useAtomValue(dbMetaAtom)
+  const sha = useAtomValue(dbMetaAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -134,7 +134,7 @@ function AppAuthenticated() {
             </div>
             <Statusbar.Root>
               <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                {meta.contentHash}
+                {sha}
               </Statusbar.Status>
             </Statusbar.Root>
           </Sidebar.Provider>

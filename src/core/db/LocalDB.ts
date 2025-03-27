@@ -1,4 +1,5 @@
 import type {Config} from '../Config.js'
+import type {Connection} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import {type AnyQueryResult, Graph, type GraphQuery} from '../Graph.js'
 import type {Resolver} from '../Resolver.js'
@@ -27,8 +28,8 @@ import {
 } from './Operation.js'
 
 export class LocalDB extends Graph implements Resolver {
+  public index: EntryIndex
   protected source: Source
-  protected index: EntryIndex
   #resolver: EntryResolver
 
   constructor(config: Config, source: Source = new MemorySource()) {
@@ -149,5 +150,9 @@ export class LocalDB extends Graph implements Resolver {
     )
     await this.applyChanges(sourceChanges)
     return this.sync()
+  }
+
+  async prepareUpload(file: string): Promise<Connection.UploadResponse> {
+    throw new Error('Uploads not supported on local DB')
   }
 }

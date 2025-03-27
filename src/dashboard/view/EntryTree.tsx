@@ -35,12 +35,12 @@ function selectedEntry(locale: string | null, item: EntryTreeItem) {
   return item.entries.find(entry => entry.locale === locale) ?? item.entries[0]
 }
 
-interface EntryTreeItemProps {
+interface TreeItemProps {
   item: ItemInstance<EntryTreeItem>
   data: EntryTreeItem
 }
 
-function EntryTreeItem({item, data}: EntryTreeItemProps) {
+function TreeItem({item, data}: TreeItemProps) {
   const {id} = useAtomValue(entryLocationAtom)
   const locale = useLocale()
   const {schema} = useConfig()
@@ -73,6 +73,7 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
       data-id={item.getId()}
     >
       <button
+        type="button"
         className={styles.tree.item.label()}
         title={selectedEntry(locale, itemData).title}
         style={{paddingLeft: px((item.getItemMeta().level + 1) * 12)}}
@@ -209,7 +210,7 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
       <div ref={tree.registerElement} className={styles.tree()}>
         {tree.getItems().map((item, i) => {
           const data = item.getItemData()
-          return <EntryTreeItem key={item.getId()} item={item} data={data} />
+          return <TreeItem key={item.getId()} item={item} data={data} />
         })}
       </div>
     </>

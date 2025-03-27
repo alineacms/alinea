@@ -20,12 +20,11 @@ export interface Syncable {
 }
 
 export interface Connection extends SyncableSource {
-  //mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
-  commit(request: CommitRequest): Promise<string>
-  user(): Promise<User | undefined>
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>>
+  commit(request: CommitRequest): Promise<string>
+  user(): Promise<User | undefined>
   previewToken(request: PreviewInfo): Promise<string>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>

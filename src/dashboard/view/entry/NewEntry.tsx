@@ -1,21 +1,12 @@
 import styler from '@alinea/styler'
-import {Entry, type EntryStatus} from 'alinea/core/Entry'
+import {Entry} from 'alinea/core/Entry'
 import {createId} from 'alinea/core/Id'
-import {MutationType} from 'alinea/core/Mutation'
 import {Reference} from 'alinea/core/Reference'
 import {Schema} from 'alinea/core/Schema'
 import {track} from 'alinea/core/Tracker'
 import {Type, type} from 'alinea/core/Type'
-import {
-  entryChildrenDir,
-  entryFileName,
-  entryFilepath,
-  entryUrl
-} from 'alinea/core/util/EntryFilenames'
-import {createEntryRow} from 'alinea/core/util/EntryRows'
-import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
+import {} from 'alinea/core/util/EntryFilenames'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
-import {dirname} from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
@@ -29,10 +20,9 @@ import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {children, parents} from 'alinea/query'
 import {Button, Loader} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValue} from 'jotai'
 import {type FormEvent, Suspense, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
-import {changedEntriesAtom} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useDb} from '../../hook/UseDb.js'
 import {useLocale} from '../../hook/UseLocale.js'
@@ -205,7 +195,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }, [])
 
   const [isCreating, setIsCreating] = useState(false)
-  const updateEntries = useSetAtom(changedEntriesAtom)
 
   const formType = useMemo(
     () =>
@@ -245,29 +234,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
     setIsCreating(true)
     const path = slugify(title)
     const id = createId()
-    const data = {
-      workspace,
-      root: root.name,
-      locale: locale ?? null,
-      path,
-      status: (config.enableDrafts ? 'draft' : 'published') as EntryStatus
-    }
     const parentId = form.data().parent?.[EntryReference.entry]
-    const parent = parentId
-      ? await db.first({
-          select: parentData,
-          id: parentId,
-          locale: locale,
-          status: 'preferPublished'
-        })
-      : null
-    const parentType = parent && config.schema[parent.type]
-    const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
-    const filePath = entryFilepath(config, data, parentPaths)
-    const childrenDir = entryChildrenDir(config, data, parentPaths)
-    const parentDir = dirname(filePath)
     const entryType = config.schema[selected]!
-    const url = entryUrl(entryType, {...data, parentPaths})
     const copyFrom = form.data().copyFrom?.[EntryReference.entry]
     const entryData = copyFrom
       ? await db.first({
@@ -276,47 +244,19 @@ function NewEntryForm({parentId}: NewEntryProps) {
           status: 'preferPublished'
         })
       : Type.initialValue(entryType)
-
-    const parentInsertOrder = parentType ? Type.insertOrder(parentType) : 'free'
-    let index = generateKeyBetween(null, parent?.firstChildIndex[0] || null)
-    if (
-      parentInsertOrder === 'last' ||
-      (parentInsertOrder === 'free' && form.data().order === 'last')
-    ) {
-      index = generateKeyBetween(parent?.lastChildIndex[0] || null, null)
-    }
-
-    const entry = await createEntryRow(config, {
+    db.create({
+      type: entryType,
       id: id,
-      ...data,
-      filePath,
-      type: selected,
-      path,
-      title,
-      url,
-      index,
-      parentId: parent?.id ?? null,
-      seeded: null,
-      level: parent ? parent.level + 1 : 0,
-      parentDir: parentDir,
-      childrenDir: childrenDir,
-      active: true,
-      main: false,
-      data: {...entryData, title, path},
-      searchableText: ''
-    })
-    return mutate([
-      {
-        type: MutationType.Create,
-        entryId: entry.id,
-        locale: entry.locale,
-        entry,
-        file: entryFileName(config, data, parentPaths)
-      }
-    ]).then(() => {
+      insertOrder: form.data().order,
+      parentId: parentId,
+      locale: locale,
+      root: root.name,
+      workspace: workspace,
+      status: config.enableDrafts ? 'draft' : 'published',
+      set: {...entryData, title, path}
+    }).then(entry => {
       setIsCreating(false)
-      navigate(nav.entry({id: entry.id}))
-      if (parent) updateEntries([parent.id])
+      navigate(nav.entry({id: entry._id}))
     })
   }
   return (

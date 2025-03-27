@@ -18,7 +18,21 @@ import {assert, compareStrings} from '../source/Utils.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 
-export class EntryIndex {
+export class IndexUpdate extends Event {
+  static readonly type = 'index'
+  constructor(public readonly sha: string) {
+    super(IndexUpdate.type)
+  }
+}
+
+export class EntryUpdate extends Event {
+  static readonly type = 'entry'
+  constructor(public readonly id: string) {
+    super(EntryUpdate.type)
+  }
+}
+
+export class EntryIndex extends EventTarget {
   entries = Array<Entry>()
   byPath = new Map<string, EntryNode>()
   byId = new Map<string, EntryNode>()
@@ -29,6 +43,7 @@ export class EntryIndex {
   resolver: EntryResolver
 
   constructor(config: Config) {
+    super()
     const workspaces = keys(config.workspaces)
     assert(workspaces.length === 1, 'Multiple workspaces not supported')
     this.#config = config
@@ -67,7 +82,7 @@ export class EntryIndex {
       } else {
         const tx = await this.transaction(source)
         const parentNode = this.byPath.get(getNodePath(paths.dirname(filePath)))
-        await tx
+        const request = await tx
           .create({
             parentId: parentNode?.id ?? null,
             locale,
@@ -76,7 +91,10 @@ export class EntryIndex {
             root,
             data
           })
-          .commit()
+          .toRequest()
+        await source.applyChanges(
+          request.changes.filter(change => change.op === 'add')
+        )
       }
     }
   }
@@ -87,9 +105,12 @@ export class EntryIndex {
   }
 
   async indexChanges(changes: Array<Change>) {
+    if (changes.length === 0) return this.#tree.sha
     this.#applyChanges(changes)
     this.#tree = await this.#tree.withChanges(changes)
-    return this.#tree.sha
+    const sha = this.#tree.sha
+    this.dispatchEvent(new IndexUpdate(sha))
+    return sha
   }
 
   #applyChanges(changes: Array<Change>) {
@@ -134,9 +155,12 @@ export class EntryIndex {
       }
     }
     for (const node of recompute) node.sync()
+
     this.entries = Array.from(this.byId.values(), node => node.entries)
       .flat()
       .sort((a, b) => compareStrings(a.index, b.index))
+
+    for (const node of recompute) this.dispatchEvent(new EntryUpdate(node.id))
   }
 
   #parseEntry({sha, file, contents}: ParseRequest): Entry {
