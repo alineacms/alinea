@@ -1,3 +1,4 @@
+import {suite} from '@alinea/suite'
 import {Entry} from 'alinea/core'
 import {EntryStatus} from 'alinea/core/EntryRow'
 import {ElementNode, Node, TextNode} from 'alinea/core/TextDoc'
@@ -6,9 +7,9 @@ import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import * as Edit from 'alinea/edit'
 import {translations} from 'alinea/query'
 import {readFileSync} from 'fs'
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
 import {createExample} from './test/Example.js'
+
+const test = suite(import.meta)
 
 test('create', async () => {
   const example = createExample()
@@ -22,12 +23,12 @@ test('create', async () => {
     select: Entry,
     id: parent.id
   })
-  assert.is(result.id, parent.id)
-  assert.is(result.title, 'New parent')
+  test.is(result.id, parent.id)
+  test.is(result.title, 'New parent')
   const multiType = await example.find({
     type: [Page, Container]
   })
-  assert.is(multiType.length, 11)
+  test.is(multiType.length, 11)
 })
 
 test('index is correct', async () => {
@@ -51,16 +52,19 @@ test('index is correct', async () => {
   })
   const first = generateKeyBetween(null, null)
   const second = generateKeyBetween(first, null)
-  assert.is(entries[0]._id, entryA.id)
-  assert.is(entries[0]._index, first)
-  assert.is(entries[1]._id, entryB.id)
-  assert.is(entries[1]._index, second)
+  test.is(entries[0]._id, entryA.id)
+  test.is(entries[0]._index, first)
+  test.is(entries[1]._id, entryB.id)
+  test.is(entries[1]._index, second)
 })
 
 test('archive child entries', async () => {
   const example = createExample()
   const {Page, Container} = example.schema
-  const parent = await example.create({type: Container, set: {title: 'Parent'}})
+  const parent = await example.create({
+    type: Container,
+    set: {title: 'Parent'}
+  })
   const sub = await example.create({
     type: Container,
     parentId: parent._id,
@@ -77,58 +81,43 @@ test('archive child entries', async () => {
     status: EntryStatus.Archived,
     set: {title: 'Deepest 2'}
   })
-  assert.is(entry1._parentId, sub._id)
+  test.is(entry1._parentId, sub._id)
   await example.update({id: parent._id, status: EntryStatus.Archived})
-  assert.not.ok(
-    await example.first({id: parent._id}),
-    'Parent entry should be archived'
-  )
-  assert.not.ok(
-    await example.first({id: sub._id}),
-    'Sub entry should be archived'
-  )
-  assert.not.ok(
-    await example.first({id: entry1._id}),
-    'Entry 1 should be archived'
-  )
-  assert.not.ok(
-    await example.first({id: entry2._id}),
-    'Entry 2 should be archived'
-  )
+  test.not.ok(await example.first({id: parent._id}))
+  test.not.ok(await example.first({id: sub._id}))
+  test.not.ok(await example.first({id: entry1._id}))
+  test.not.ok(await example.first({id: entry2._id}))
   await example.update({id: parent._id, status: EntryStatus.Published})
-  assert.ok(
-    await example.first({id: parent._id}),
-    'Parent entry should be published'
-  )
-  assert.ok(await example.first({id: sub._id}), 'Sub entry should be published')
-  assert.ok(
-    await example.first({id: entry1._id}),
-    'Entry 1 should be published'
-  )
-  assert.not.ok(
-    await example.first({id: entry2._id}),
-    'Entry 2 should still be archived'
-  )
+  test.ok(await example.first({id: parent._id}))
+  test.ok(await example.first({id: sub._id}))
+  test.ok(await example.first({id: entry1._id}))
+  test.not.ok(await example.first({id: entry2._id}))
 })
 
 test('remove child entries', async () => {
   const example = createExample()
   const {Page, Container} = example.schema
-  const parent = await example.create({type: Container, set: {title: 'Parent'}})
-  const sub = await example.create({
+  const parent = Edit.create({type: Container, set: {title: 'Parent'}})
+  const sub = Edit.create({
     type: Container,
-    parentId: parent._id,
+    parentId: parent.id,
     set: {title: 'Sub'}
   })
-  const entry = await example.create({
+  const entry = Edit.create({
     type: Page,
-    parentId: sub._id,
+    parentId: sub.id,
     set: {title: 'Deepest'}
   })
-  assert.is(entry._parentId, sub._id)
-  await example.remove(parent._id)
-  const res2 = await example.first({id: entry._id})
-  assert.not.ok(res2)
+  await example.commit(parent)
+  await example.commit(sub)
+  await example.commit(entry)
+  const res1 = await example.get({
+    id: entry.id
+  })
+  test.is(res1._parentId, sub.id)
+  await example.commit(Edit.remove(parent.id))
+  const res2 = await example.first({id: entry.id})
+  test.not.ok(res2)
 })
 
 test('change draft path', async () => {
@@ -149,7 +138,7 @@ test('change draft path', async () => {
     select: Entry,
     id: parent.id
   })
-  assert.is(resParent0.url, '/parent')
+  test.is(resParent0.url, '/parent')
   // Changing entry paths in draft should not have an influence on
   // computed properties such as url, filePath etc. until we publish.
   await example.commit(
@@ -165,12 +154,12 @@ test('change draft path', async () => {
     id: parent.id,
     status: 'draft'
   })
-  assert.is(resParent1.url, '/parent')
+  test.is(resParent1.url, '/parent')
   const res1 = await example.get({
     select: Entry,
     id: sub.id
   })
-  assert.is(res1.url, '/parent/sub')
+  test.is(res1.url, '/parent/sub')
 
   // Once we publish, the computed properties should be updated.
   await example.commit(
@@ -183,12 +172,12 @@ test('change draft path', async () => {
     select: Entry,
     id: parent.id
   })
-  assert.is(resParent2.url, '/new-path')
+  test.is(resParent2.url, '/new-path')
   const res2 = await example.get({
     select: Entry,
     id: sub.id
   })
-  assert.is(res2.url, '/new-path/sub')
+  test.is(res2.url, '/new-path/sub')
 })
 
 test('fetch translations', async () => {
@@ -206,20 +195,19 @@ test('fetch translations', async () => {
     },
     path: 'localised1'
   })
-  assert.equal(res.translations, ['en', 'fr'])
+  test.equal(res.translations, ['en', 'fr'])
   res = await example.get({
     locale: 'en',
     location: example.workspaces.main.multiLanguage,
     select: {
-      translations: {
-        edge: 'translations',
+      translations: translations({
         type: Page,
         select: Entry.locale
-      }
+      })
     },
     path: 'localised1'
   })
-  assert.equal(res.translations, ['fr'])
+  test.equal(res.translations, ['fr'])
 })
 
 test('change published path for entry with language', async () => {
@@ -230,7 +218,7 @@ test('change published path for entry with language', async () => {
     select: Entry,
     path: 'localised3'
   })
-  assert.is(localised3.url, '/en/localised2/localised3')
+  test.is(localised3.url, '/en/localised2/localised3')
 
   // Archive localised3
   await example.commit(
@@ -246,7 +234,7 @@ test('change published path for entry with language', async () => {
     path: 'localised3',
     status: 'archived'
   })
-  assert.is(localised3Archived.status, EntryStatus.Archived)
+  test.is(localised3Archived.status, EntryStatus.Archived)
 
   // And publish again
   await example.commit(
@@ -260,7 +248,7 @@ test('change published path for entry with language', async () => {
     path: 'localised3',
     select: Entry
   })
-  assert.is(localised3Publish.url, '/en/localised2/localised3')
+  test.is(localised3Publish.url, '/en/localised2/localised3')
 })
 
 test('file upload', async () => {
@@ -273,8 +261,8 @@ test('file upload', async () => {
     select: Entry,
     id: upload.id
   })
-  assert.is(result.title, 'test')
-  assert.is(result.root, 'media')
+  test.is(result.title, 'test')
+  test.is(result.root, 'media')
 })
 
 test('image upload', async () => {
@@ -291,11 +279,11 @@ test('image upload', async () => {
     select: Entry,
     id: upload.id
   })
-  assert.is(result.title, 'test')
-  assert.is(result.root, 'media')
-  assert.is(result.data.width, 2880)
-  assert.is(result.data.height, 1422)
-  assert.is(result.data.averageColor, '#4b4f59')
+  test.is(result.title, 'test')
+  test.is(result.root, 'media')
+  test.is(result.data.width, 2880)
+  test.is(result.data.height, 1422)
+  test.is(result.data.averageColor, '#4b4f59')
 })
 
 test('field creators', async () => {
@@ -329,7 +317,7 @@ test('field creators', async () => {
   })
   const res = listRes[0]
   if (res[Node.type] !== 'Text') throw new Error('Expected Text')
-  assert.equal(res.text[0], {
+  test.equal(res.text[0], {
     [Node.type]: 'heading',
     level: 1,
     [ElementNode.content]: [{[Node.type]: 'text', [TextNode.text]: 'Test'}]
@@ -357,13 +345,13 @@ test('remove media library and files', async () => {
     select: Entry,
     id: upload.id
   })
-  assert.is(result.parentId, library.id)
-  assert.is(result.root, 'media')
+  test.is(result.parentId, library.id)
+  test.is(result.root, 'media')
   await example.commit(Edit.remove(library.id))
   const result2 = await example.first({
     id: upload.id
   })
-  assert.not.ok(result2)
+  test.not.ok(result2)
 })
 
 test('create multi language entries', async () => {
@@ -386,7 +374,7 @@ test('create multi language entries', async () => {
     select: Entry,
     id: entry.id
   })
-  assert.is(result.url, '/en/localised2/new-entry')
+  test.is(result.url, '/en/localised2/new-entry')
 })
 
 test('filters', async () => {
@@ -411,7 +399,7 @@ test('filters', async () => {
       list: {includes: {itemId: 'item-1'}}
     }
   })
-  assert.is(result.length, 1)
+  test.is(result.length, 1)
   const result2 = await example.find({
     type: Page,
     filter: {
@@ -422,7 +410,7 @@ test('filters', async () => {
       }
     }
   })
-  assert.is(result2.length, 1)
+  test.is(result2.length, 1)
 })
 
 test('remove field contents', async () => {
@@ -437,8 +425,8 @@ test('remove field contents', async () => {
     id: entry._id,
     set: {name: undefined}
   })
-  assert.is(updated.title, 'xyz')
-  assert.is(updated.name, null)
+  test.is(updated.title, 'xyz')
+  test.is(updated.name, null)
 })
 
 test('take/skip', async () => {
@@ -448,13 +436,11 @@ test('take/skip', async () => {
     skip: 1,
     take: 2
   })
-  assert.is(lastTwo.length, 2)
+  test.is(lastTwo.length, 2)
   const lastOne = await example.find({
     root: example.workspaces.main.pages,
     skip: 2,
     take: 1
   })
-  assert.is(lastOne.length, 1)
+  test.is(lastOne.length, 1)
 })
-
-test.run()
