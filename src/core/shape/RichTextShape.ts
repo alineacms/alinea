@@ -1,4 +1,4 @@
-import type {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
+import type {LinkResolver} from 'alinea/core/db/LinkResolver'
 import * as Y from 'yjs'
 import {Entry} from '../Entry.js'
 import type {Label} from '../Label.js'
@@ -224,7 +224,8 @@ export class RichTextShape<Blocks>
       }
     }
     const {content, ...rest} = data
-    if (type === 'heading' && rest.textAlign === 'left') rest.textAlign = undefined
+    if (type === 'heading' && rest.textAlign === 'left')
+      rest.textAlign = undefined
     const res = {[Node.type]: type, ...rest}
     if (content) res[ElementNode.content] = content.map(this.normalizeRow)
     return res
@@ -440,11 +441,13 @@ export class RichTextShape<Blocks>
   textOf(node: Node): string {
     if (Node.isText(node)) {
       return node.text ? ` ${node.text}` : ''
-    }if (Node.isElement(node) && node.content) {
+    }
+    if (Node.isElement(node) && node.content) {
       return node.content.reduce((acc, node) => {
         return acc + this.textOf(node)
       }, '')
-    }if (Node.isBlock(node)) {
+    }
+    if (Node.isBlock(node)) {
       const shape = this.blocks[node[Node.type]]
       if (shape) return shape.searchableText(node)
     }

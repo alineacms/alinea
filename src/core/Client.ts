@@ -1,9 +1,9 @@
 import {AbortController, type Response, fetch} from '@alinea/iso'
-import type {DraftTransport, Revision} from 'alinea/backend/Backend'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
+import type {DraftTransport, Revision} from 'alinea/core/Connection'
 import type {Config} from './Config.js'
-import type {Connection} from './Connection.js'
+import type {Connection, UploadResponse} from './Connection.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
@@ -11,6 +11,7 @@ import {HttpError} from './HttpError.js'
 import {getScope} from './Scope.js'
 import type {User} from './User.js'
 import type {CommitRequest} from './db/CommitRequest.js'
+import type {Mutation} from './db/Mutation.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
 import {base64} from './util/Encoding.js'
 
@@ -45,14 +46,14 @@ export class Client implements Connection {
     ).then<string>(this.#failOnHttpError)
   }
 
-  prepareUpload(file: string): Promise<Connection.UploadResponse> {
+  prepareUpload(file: string): Promise<UploadResponse> {
     return this.#requestJson(
       {action: HandleAction.Upload},
       {
         method: 'POST',
         body: JSON.stringify({filename: file})
       }
-    ).then<Connection.UploadResponse>(this.#failOnHttpError)
+    ).then<UploadResponse>(this.#failOnHttpError)
   }
 
   user(): Promise<User | undefined> {
@@ -72,12 +73,14 @@ export class Client implements Connection {
     ).then<AnyQueryResult<Query>>(this.#failOnHttpError)
   }
 
-  /*mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
+  mutate(mutations: Array<Mutation>): Promise<void> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
       {method: 'POST', body: JSON.stringify(mutations)}
-    ).then<{commitHash: string}>(this.#failOnHttpError)
-  }*/
+    )
+      .then<null>(this.#failOnHttpError)
+      .then(() => void 0)
+  }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
     return new Client({...this.#options, applyAuth, unauthorized})

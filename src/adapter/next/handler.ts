@@ -1,43 +1,42 @@
-import {type BackendOptions, createBackend} from 'alinea/backend/api/CreateBackend'
-import type {Backend} from 'alinea/backend/Backend'
 import {
-  createHandler as createCoreHandler,
-  type HandlerHooks
+  type HandlerHooks,
+  createHandler as createCoreHandler
 } from 'alinea/backend/Handler'
+import {
+  type BackendOptions,
+  createBackend
+} from 'alinea/backend/api/CreateBackend'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
-import {cloudBackend} from 'alinea/cloud/CloudBackend'
+import {CloudRemote} from 'alinea/cloud/CloudRemote.js'
+import type {RemoteConnection} from 'alinea/core/Connection'
 import {Entry} from 'alinea/core/Entry'
+import type {Resolver} from 'alinea/core/Resolver'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import {NextCMS} from './cms.js'
-import {devUrl, requestContext} from './context.js'
+import {requestContext} from './context.js'
 
 type Handler = (request: Request) => Promise<Response>
 const handlers = new WeakMap<NextCMS, Handler>()
 
 export interface NextHandlerOptions extends HandlerHooks {
   cms: NextCMS
-  backend?: BackendOptions | Backend
+  backend?: BackendOptions
+  remote?: RemoteConnection
 }
 
-export function createHandler(cms: NextCMS): Handler
-export function createHandler(options: NextHandlerOptions): Handler
-/** @deprecated */
-export function createHandler(
-  cms: NextCMS,
-  backend: BackendOptions | Backend
-): Handler
-export function createHandler(
-  input: NextCMS | NextHandlerOptions,
-  backend?: BackendOptions | Backend
-): Handler {
-  const options = input instanceof NextCMS ? {cms: input, backend} : input
-  const providedBackend = options.backend ?? cloudBackend(options.cms)
+export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
+  const options = input instanceof NextCMS ? {cms: input} : input
+  const remote =
+    options.remote ??
+    (options.backend
+      ? createBackend(options.backend)
+      : new CloudRemote(options.cms))
   if (handlers.has(options.cms)) return handlers.get(options.cms)!
-  const api =
-    'database' in providedBackend
-      ? createBackend(providedBackend)
-      : providedBackend
-  const handleBackend = createCoreHandler({...options, backend: api})
+  const handleBackend = createCoreHandler({
+    ...options,
+    remote,
+    db: options.cms.db
+  })
   const handle: Handler = async request => {
     try {
       const context = await requestContext(options.cms.config)
@@ -51,11 +50,11 @@ export function createHandler(
         if (!previewToken) return new Response('Not found', {status: 404})
         const info = await previews.verify(previewToken)
         const cookie = await cookies()
-        const connection = devUrl()
-          ? await options.cms.connect()
-          : handleBackend.connect(context)
+        const resolver: Resolver = context.isDev
+          ? options.cms
+          : await options.cms.db
         const payload = getPreviewPayloadFromCookies(cookie.getAll())
-        const url = await connection.resolve({
+        const url = await resolver.resolve({
           first: true,
           select: Entry.url,
           id: info.entryId,

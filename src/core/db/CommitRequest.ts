@@ -1,7 +1,6 @@
+import type {CommitApi, SyncApi} from '../Connection.js'
 import type {AddChange, DeleteChange} from '../source/Change.js'
-import {} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
-import type {EntryTarget} from './EntryTarget.js'
 import type {LocalDB} from './LocalDB.js'
 import type {RemoveFileMutation, UploadFileMutation} from './Mutation.js'
 
@@ -33,12 +32,20 @@ export function checkCommit(tree: ReadonlyTree, request: CommitRequest): void {
 
 export async function attemptCommit(
   local: LocalDB,
-  remote: EntryTarget,
+  remote: CommitApi & SyncApi,
   request: CommitRequest
 ): Promise<void> {
-  const sourceChanges = request.changes.filter(
-    change => change.op === 'add' || change.op === 'delete'
-  )
+  const sourceChanges = request.changes
+    .filter(change => change.op === 'addContent' || change.op === 'delete')
+    .map(change => {
+      if (change.op === 'addContent')
+        return {
+          ...change,
+          op: 'add' as const,
+          contents: new TextEncoder().encode(change.contents)
+        }
+      return change
+    })
   await local.indexChanges(sourceChanges)
   try {
     const sha = await remote.commit(request)

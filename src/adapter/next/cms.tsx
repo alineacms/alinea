@@ -1,18 +1,20 @@
 import {Headers} from '@alinea/iso'
-import {Database} from 'alinea/backend/Database'
 import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
-import {Client} from 'alinea/core/Client'
+import {generatedSource} from 'alinea/backend/store/GeneratedSource.js'
+import {COOKIE_NAME} from 'alinea/cloud/CloudBackend'
 import {CMS} from 'alinea/core/CMS'
-import {Config} from 'alinea/core/Config'
+import {Client} from 'alinea/core/Client'
+import type {Config} from 'alinea/core/Config'
+import type {UploadResponse} from 'alinea/core/Connection.js'
 import type {GraphQuery} from 'alinea/core/Graph'
-import type {Mutation} from 'alinea/core/Mutation'
 import {outcome} from 'alinea/core/Outcome'
 import type {PreviewRequest} from 'alinea/core/Preview'
 import type {User} from 'alinea/core/User'
-import {assign} from 'alinea/core/util/Objects'
+import {LocalDB} from 'alinea/core/db/LocalDB.js'
+import type {Mutation} from 'alinea/core/db/Mutation.js'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import PLazy from 'p-lazy'
-import {devUrl, requestContext} from './context.js'
+import {requestContext} from './context.js'
 
 export interface PreviewProps {
   widget?: boolean
@@ -23,101 +25,100 @@ export interface PreviewProps {
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  constructor(
-    rawConfig: Definition,
-    public baseUrl?: string
-  ) {
-    let lastSync = 0
-    const init = PLazy.from(async () => {
-      if (process.env.NEXT_RUNTIME === 'edge') throw 'assert'
-      const {generatedStore} = await import(
-        'alinea/backend/store/GeneratedStore'
-      )
-      const store = await generatedStore
-      const db = new Database(this.config, store)
-      const previews = createPreviewParser(db)
-      return {db, previews}
-    })
-    super(rawConfig, async () => {
-      const context = await requestContext(this.config)
-      const createClient = (applyAuth: (init?: RequestInit) => RequestInit) => {
-        return new Client({
-          config: this.config,
-          url: context.handlerUrl.href,
-          applyAuth
-        })
-      }
-      const apiClient = createClient(init => {
+  lastSync = 0
+
+  db = PLazy.from(async () => {
+    if (process.env.NEXT_RUNTIME === 'edge')
+      throw new Error('Local db not availble in edge')
+    const source = await generatedSource
+    const db = new LocalDB(this.config, source)
+    await db.sync()
+    return db
+  })
+
+  init = PLazy.from(async () => {
+    const db = await this.db
+    const previews = createPreviewParser(db)
+    return {db, previews}
+  })
+
+  constructor(config: Definition) {
+    super(config)
+  }
+
+  async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
+    const {isDev, handlerUrl, apiKey} = await requestContext(this.config)
+    const client = new Client({
+      config: this.config,
+      url: handlerUrl.href,
+      applyAuth: init => {
         const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${context.apiKey}`)
+        headers.set('Authorization', `Bearer ${apiKey}`)
         return {...init, headers}
-      })
-      const clientResolve = apiClient.resolve.bind(apiClient)
-      const clientForUser = async () => {
-        const {cookies} = await import('next/headers')
-        const cookie = await cookies()
-        return createClient(init => {
-          const headers = new Headers(init?.headers)
-          const alinea = cookie
-            .getAll()
-            .filter(({name}) => name.startsWith('alinea'))
-          for (const {name, value} of alinea)
-            headers.append('cookie', `${name}=${value}`)
-          return {...init, headers}
-        })
       }
-      return assign(apiClient, {
-        async user() {
-          const client = await clientForUser()
-          return client.user()
-        },
-        async mutate(mutations: Array<Mutation>) {
-          const client = await clientForUser()
-          return client.mutate(mutations)
-        },
-        async resolve(params: GraphQuery) {
-          const isDev = Boolean(devUrl())
-          let preview: PreviewRequest | undefined
-          const {cookies, draftMode} = await import('next/headers')
-          const [isDraft] = await outcome(
-            async () => (await draftMode()).isEnabled
-          )
-          if (isDraft) {
-            const cookie = await cookies()
-            const payload = getPreviewPayloadFromCookies(cookie.getAll())
-            if (payload) preview = {payload}
-          }
-          if (process.env.NEXT_RUNTIME === 'edge' || isDev)
-            return clientResolve({preview, ...params})
-          const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
-          const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
-          const {db, previews} = await init
-          const sync = () => db.syncWith(apiClient)
-          if (!isBuild) {
-            if (preview) {
-              preview = await previews.parse(
-                preview,
-                sync,
-                apiClient.getDraft.bind(apiClient)
-              )
-            } else {
-              const syncInterval = params.syncInterval ?? 60
-              const now = Date.now()
-              if (now - lastSync >= syncInterval * 1000) {
-                lastSync = now
-                await sync()
-              }
-            }
-          }
-          return db.resolver.resolve({preview, ...params})
+    })
+    let preview: PreviewRequest | undefined
+    const {cookies, draftMode} = await import('next/headers')
+    const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
+    if (isDraft) {
+      const cookie = await cookies()
+      const payload = getPreviewPayloadFromCookies(cookie.getAll())
+      if (payload) preview = {payload}
+    }
+    if (process.env.NEXT_RUNTIME === 'edge' || isDev)
+      return client.resolve({preview, ...query})
+    const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
+    const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+    const {db, previews} = await this.init
+    const sync = () => db.syncWith(client).catch(console.error)
+    if (!isBuild) {
+      if (preview) {
+        preview = await previews.parse(
+          preview,
+          sync,
+          client.getDraft.bind(client)
+        )
+      } else {
+        const syncInterval = query.syncInterval ?? 60
+        const now = Date.now()
+        if (now - this.lastSync >= syncInterval * 1000) {
+          this.lastSync = now
+          await sync()
         }
-      })
+      }
+    }
+    return db.resolve({preview, ...query})
+  }
+
+  async #authenticatedClient() {
+    const {handlerUrl} = await requestContext(this.config)
+    const {cookies} = await import('next/headers')
+    const cookie = await cookies()
+    const accessToken = cookie.get(COOKIE_NAME)
+    return new Client({
+      config: this.config,
+      url: handlerUrl.href,
+      applyAuth: init => {
+        const headers = new Headers(init?.headers)
+        headers.set('Authorization', `Bearer ${accessToken}`)
+        return {...init, headers}
+      }
     })
   }
 
   async user(): Promise<User | undefined> {
-    const client = await this.connect()
+    const client = await this.#authenticatedClient()
     return client.user()
+  }
+
+  async mutate(mutations: Array<Mutation>): Promise<void> {
+    const client = await this.#authenticatedClient()
+    return client.mutate(mutations)
+  }
+
+  async prepareUpload(file: string): Promise<UploadResponse> {
+    const client = await this.#authenticatedClient()
+    return client.prepareUpload(file)
   }
 
   previews = async ({widget, workspace, root}: PreviewProps) => {
@@ -125,16 +126,18 @@ export class NextCMS<
     const {default: dynamic} = await import('next/dynamic')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
     if (!isDraft) return null
-    const context = await requestContext(this.config)
+    const {isDev, handlerUrl} = await requestContext(this.config)
     let file = this.config.dashboardFile ?? '/admin.html'
     if (!file.startsWith('/')) file = `/${file}`
-    const dashboardUrl = devUrl() ?? new URL(file, context.handlerUrl).href
+    const dashboardUrl = isDev
+      ? new URL('/', handlerUrl)
+      : new URL(file, handlerUrl)
     const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false
     })
     return (
       <NextPreviews
-        dashboardUrl={dashboardUrl}
+        dashboardUrl={dashboardUrl.href}
         widget={widget}
         workspace={workspace}
         root={root}
@@ -146,6 +149,5 @@ export class NextCMS<
 export function createCMS<Definition extends Config>(
   config: Definition
 ): NextCMS<Definition> {
-  const baseUrl = process.env.ALINEA_BASE_URL ?? Config.baseUrl(config)
-  return new NextCMS(config, baseUrl)
+  return new NextCMS(config)
 }

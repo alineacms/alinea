@@ -38,10 +38,12 @@ export interface Config {
 export namespace Config {
   export function baseUrl(
     config: Config,
-    env = (process.env.NODE_ENV as 'development' | 'production') ?? 'production'
+    env = process.env.NODE_ENV ?? 'production'
   ) {
     const result =
-      typeof config.baseUrl === 'object' ? config.baseUrl[env] : config.baseUrl
+      typeof config.baseUrl === 'object'
+        ? (config.baseUrl as Record<string, string>)[env]
+        : config.baseUrl
     if (!result) return result
     if (result.includes('://')) return result
     return `https://${result}`

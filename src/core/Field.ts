@@ -1,6 +1,6 @@
-import type {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
+import type {LinkResolver} from 'alinea/core/db/LinkResolver'
 import {Expr} from './Expr.js'
-import {getField, hasField, type HasField, internalField} from './Internal.js'
+import {type HasField, getField, hasField, internalField} from './Internal.js'
 import type {Shape} from './Shape.js'
 import type {View} from './View.js'
 

@@ -14,7 +14,7 @@ export interface ExportedSource {
 
 export async function exportSource(source: Source): Promise<ExportedSource> {
   const tree = await source.getTree()
-  const shas = Array.from(tree.index(), ([, sha]) => sha)
+  const shas = Array.from(tree.fileIndex(), ([, sha]) => sha)
   const blobs = fromEntries(
     await Promise.all(
       shas.map(

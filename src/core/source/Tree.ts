@@ -31,6 +31,7 @@ interface EntryNode extends Entry {
 }
 
 export class Leaf {
+  type = 'blob' as const
   readonly name: string
   readonly sha: string
   readonly mode: string
@@ -54,6 +55,7 @@ export class Leaf {
 const EMPTY_TREE_SHA = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
 
 class TreeBase<Node extends TreeBase<Node>> {
+  type = 'tree' as const
   sha: string | undefined
   readonly mode: string = '040000'
   protected nodes = new Map<string, Node | Leaf>()
@@ -101,7 +103,24 @@ class TreeBase<Node extends TreeBase<Node>> {
     return this.nodes.has(name)
   }
 
-  index(): Map<string, string> {
+  *[Symbol.iterator](): IterableIterator<[string, Node | Leaf]> {
+    for (const [name, entry] of this.nodes) {
+      yield [name, entry] as const
+      if (entry instanceof TreeBase)
+        for (const [childName, child] of entry)
+          yield [`${name}/${childName}`, child]
+    }
+  }
+
+  *paths(): Iterable<string> {
+    for (const [name, entry] of this.nodes) {
+      yield name
+      if (entry instanceof TreeBase)
+        for (const path of entry.paths()) yield `${name}/${path}`
+    }
+  }
+
+  fileIndex(): Map<string, string> {
     return new Map(this.#fileEntries(''))
   }
 
@@ -115,8 +134,8 @@ class TreeBase<Node extends TreeBase<Node>> {
 
   // Todo: check modes
   diff(that: TreeBase<any>): Array<Change> {
-    const local = this.index()
-    const remote = that.index()
+    const local = this.fileIndex()
+    const remote = that.fileIndex()
     const changes: Array<Change> = []
     const paths = new Set(
       [...local.keys(), ...remote.keys()].sort(compareStrings)
@@ -176,10 +195,10 @@ export class ReadonlyTree extends TreeBase<ReadonlyNode> {
     return result.compile()
   }
 
-  #flatEntries(prefix: string) {
+  #flatEntries(prefix: string): Array<FlatTreeEntry> {
     return Array.from(this.nodes, ([key, entry]): Array<FlatTreeEntry> => {
-      const self = {
-        type: entry instanceof ReadonlyNode ? 'tree' : 'blob',
+      const self: FlatTreeEntry = {
+        type: entry.type,
         path: prefix + key,
         mode: entry.mode,
         sha: entry.sha

@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import type {Revision} from 'alinea/backend/Backend'
+import type {Revision} from 'alinea/core/Connection'
 import {HStack, Icon, Loader, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
@@ -51,6 +51,7 @@ function RevisionItem({editor, revision, isCurrent}: RevisionItemProps) {
   const [previewRevision, setPreviewRevision] = useAtom(editor.previewRevision)
   return (
     <button
+      type="button"
       key={revision.ref}
       title={revision.description}
       className={styles.list.revision({

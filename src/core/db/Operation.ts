@@ -13,11 +13,11 @@ import {workspaceMediaDir} from '../util/EntryFilenames.js'
 import {keys} from '../util/Objects.js'
 import {basename, extname, join, normalize} from '../util/Paths.js'
 import {slugify} from '../util/Slugs.js'
-import type {LocalDB} from './LocalDB.js'
 import type {Mutation} from './Mutation.js'
+import type {WriteableGraph} from './WriteableGraph.js'
 
 type Awaitable<T> = T | Promise<T>
-type Task = (graph: LocalDB) => Awaitable<Array<Mutation>>
+type Task = (graph: WriteableGraph) => Awaitable<Array<Mutation>>
 
 export class Operation {
   constructor(public task: Task) {}
@@ -46,10 +46,10 @@ function typeName(config: Config, type: Type) {
 export class CreateOperation<Fields> extends Operation {
   id: string
   constructor(op: CreateQuery<Fields>) {
-    super((graph): Array<Mutation> => {
-      const workspaces = keys(graph.config.workspaces)
+    super(({config}): Array<Mutation> => {
+      const workspaces = keys(config.workspaces)
       const workspace = op.workspace ?? workspaces[0]
-      const roots = keys(graph.config.workspaces[workspace])
+      const roots = keys(config.workspaces[workspace])
       const root = op.root ?? roots[0]
       return [
         {
@@ -57,7 +57,7 @@ export class CreateOperation<Fields> extends Operation {
           id: this.id,
           locale: op.locale ?? null,
           parentId: op.parentId ?? null,
-          type: typeName(graph.config, op.type),
+          type: typeName(config, op.type),
           root,
           workspace,
           data: op.set ?? {},
@@ -162,8 +162,7 @@ export class UploadOperation extends Operation {
   id = createId()
 
   constructor(query: UploadQuery) {
-    super(async (db): Promise<Array<Mutation>> => {
-      const {config} = db
+    super(async ({config, prepareUpload}): Promise<Array<Mutation>> => {
       const entryId = this.id
       const {file, createPreview} = query
       const {workspace: _workspace, root: _root, parentId: _parentId} = query
@@ -176,7 +175,7 @@ export class UploadOperation extends Operation {
       const path = slugify(basename(fileName, extension))
       const directory = workspaceMediaDir(config, workspace)
       const uploadLocation = join(directory, path + extension)
-      const info = await db.prepareUpload(uploadLocation)
+      const info = await prepareUpload(uploadLocation)
       const previewData = isImage(fileName)
         ? await createPreview?.(file instanceof Blob ? file : new Blob([body]))
         : undefined

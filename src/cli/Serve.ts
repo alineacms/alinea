@@ -1,19 +1,19 @@
-import type {Backend} from 'alinea/backend/Backend'
+import path from 'node:path'
 import {createHandler} from 'alinea/backend/Handler'
+import {createRemote} from 'alinea/backend/api/CreateBackend.js'
 import {gitUser} from 'alinea/backend/util/ExecGit'
-import {cloudBackend} from 'alinea/cloud/CloudBackend'
-import {cloudDebug} from 'alinea/cloud/CloudDebug'
+import {CloudRemote} from 'alinea/cloud/CloudRemote.js'
 import type {CMS} from 'alinea/core/CMS'
+import type {RemoteConnection} from 'alinea/core/Connection.js'
 import {genEffect} from 'alinea/core/util/Async'
 import type {BuildOptions} from 'esbuild'
-import path from 'node:path'
 import pkg from '../../package.json'
 import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
 import {createLocalServer} from './serve/CreateLocalServer.js'
 import {GitHistory} from './serve/GitHistory.js'
 import {LiveReload} from './serve/LiveReload.js'
-import {localAuth} from './serve/LocalAuth.js'
+import {LocalAuth} from './serve/LocalAuth.js'
 import {MemoryDrafts} from './serve/MemoryDrafts.js'
 import type {ServeContext} from './serve/ServeContext.js'
 import {startServer} from './serve/StartServer.js'
@@ -114,9 +114,10 @@ export async function serve(options: ServeOptions): Promise<void> {
     serveController = new AbortController()
   })
 
-  const user = await gitUser(rootDir)
+  const user = gitUser(rootDir)
+  const auth = new LocalAuth(user)
 
-  for await (const {cms, localData: fileData, db} of generateFiles) {
+  for await (const {cms, db} of generateFiles) {
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
@@ -124,24 +125,16 @@ export async function serve(options: ServeOptions): Promise<void> {
       const backend = createBackend()
       const handleApi = createHandler({
         cms,
-        backend,
-        database: Promise.resolve(db)
+        remote: backend,
+        db
       })
       if (localServer) localServer.close()
-      localServer = createLocalServer(context, cms, handleApi, user)
+      localServer = createLocalServer(context, cms, handleApi, await user)
       currentCMS = cms
 
-      function createBackend(): Backend {
-        if (process.env.ALINEA_CLOUD_DEBUG)
-          return cloudDebug(cms.config, rootDir)
-        if (process.env.ALINEA_CLOUD_URL) return cloudBackend(cms.config)
-        return {
-          auth: localAuth(rootDir),
-          target: fileData,
-          media: fileData,
-          drafts,
-          history
-        }
+      function createBackend(): RemoteConnection {
+        if (process.env.ALINEA_CLOUD_URL) return new CloudRemote(cms.config)
+        return createRemote(auth, db, drafts, history)
       }
     }
 

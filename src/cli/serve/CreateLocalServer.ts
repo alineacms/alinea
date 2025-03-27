@@ -1,14 +1,14 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import {Readable} from 'node:stream'
 import {ReadableStream, type Request, Response} from '@alinea/iso'
-import type {HandlerWithConnect} from 'alinea/backend/Handler'
+import type {Handler} from 'alinea/backend/Handler'
 import {router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/CloudConfig'
 import type {CMS} from 'alinea/core/CMS'
 import {type Trigger, trigger} from 'alinea/core/Trigger'
 import type {User} from 'alinea/core/User'
 import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
-import fs from 'node:fs'
-import path from 'node:path'
-import {Readable} from 'node:stream'
 import {buildEmitter} from '../build/BuildEmitter.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
@@ -75,7 +75,7 @@ export function createLocalServer(
     liveReload
   }: ServeContext,
   cms: CMS,
-  handleApi: HandlerWithConnect,
+  handleApi: Handler,
   user: User
 ): {
   close(): void
@@ -83,6 +83,7 @@ export function createLocalServer(
 } {
   function devHandler(request: Request) {
     return handleApi(request, {
+      isDev: true,
       handlerUrl: new URL(request.url.split('?')[0]),
       apiKey: 'dev'
     })

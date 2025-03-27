@@ -7,7 +7,6 @@ import type {Infer, StoredRow} from './Infer.js'
 import type {HasField} from './Internal.js'
 import type {Page} from './Page.js'
 import type {PreviewRequest} from './Preview.js'
-import type {Resolver} from './Resolver.js'
 import type {Type} from './Type.js'
 import type {Expand} from './util/Types.js'
 
@@ -248,15 +247,11 @@ export type SelectionGuard = Projection | undefined
 export type TypeGuard = Type | Array<Type> | undefined
 export type IncludeGuard = SelectObject | undefined
 
-export class Graph {
-  #resolver: Resolver
-
-  constructor(
-    public config: Config,
-    resolver: Resolver
-  ) {
-    this.#resolver = resolver
-  }
+export abstract class Graph {
+  abstract config: Config
+  abstract resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>>
 
   find<
     Selection extends SelectionGuard = undefined,
@@ -265,7 +260,7 @@ export class Graph {
   >(
     query: GraphQuery<Selection, Type, Include>
   ): Promise<Array<QueryResult<Selection, Type, Include>>> {
-    return <any>this.#resolver.resolve(query)
+    return <any>this.resolve(query)
   }
 
   first<
@@ -275,7 +270,7 @@ export class Graph {
   >(
     query: GraphQuery<Selection, Type, Include>
   ): Promise<QueryResult<Selection, Type, Include> | null> {
-    return <any>this.#resolver.resolve({...query, first: true})
+    return <any>this.resolve({...query, first: true})
   }
 
   async get<
@@ -285,7 +280,7 @@ export class Graph {
   >(
     query: GraphQuery<Selection, Type, Include>
   ): Promise<QueryResult<Selection, Type, Include>> {
-    const result = await (<any>this.#resolver.resolve({...query, get: true}))
+    const result = await (<any>this.resolve({...query, get: true}))
     if (!result) throw new Error('Entry not found')
     return result
   }
@@ -295,7 +290,7 @@ export class Graph {
     const Type extends TypeGuard = undefined,
     Include extends IncludeGuard = undefined
   >(query: GraphQuery<Selection, Type, Include>): Promise<number> {
-    return <any>this.#resolver.resolve({...query, count: true})
+    return <any>this.resolve({...query, count: true})
   }
 }
 

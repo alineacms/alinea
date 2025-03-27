@@ -1,22 +1,19 @@
-import type {Database} from 'alinea/backend/Database'
-import type {Store} from 'alinea/backend/Store'
-import {exportStore} from 'alinea/cli/util/ExportStore.server'
-import type {CMS} from 'alinea/core/CMS'
-import {Config} from 'alinea/core/Config'
-import {EntryRow} from 'alinea/core/EntryRow'
-import {genEffect} from 'alinea/core/util/Async'
-import {basename, join} from 'alinea/core/util/Paths'
-import fs from 'node:fs'
+import * as fsp from 'node:fs/promises'
 import {createRequire} from 'node:module'
 import path from 'node:path'
+import type {Store} from 'alinea/backend/Store'
+import type {CMS} from 'alinea/core/CMS'
+import {Config} from 'alinea/core/Config'
+import {exportSource} from 'alinea/core/source/SourceExport.js'
+import {genEffect} from 'alinea/core/util/Async'
+import {basename, join} from 'alinea/core/util/Paths'
 import prettyBytes from 'pretty-bytes'
-import {count} from 'rado'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
+import {DevDB} from './generate/DevDB.js'
 import {fillCache} from './generate/FillCache.js'
 import type {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
-import {LocalData} from './generate/LocalData.js'
 import {dirname} from './util/Dirname.js'
 import type {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
@@ -67,8 +64,7 @@ async function createDb(): Promise<[Store, () => Uint8Array]> {
 export async function* generate(options: GenerateOptions): AsyncGenerator<
   {
     cms: CMS
-    db: Database
-    localData: LocalData
+    db: DevDB
   },
   void
 > {
@@ -110,15 +106,17 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     outDir: path.join(nodeModules, '@alinea/generated')
   }
   await copyStaticFiles(context)
-  let indexing!: Emitter<Database>
+  let indexing!: Emitter<DevDB>
   const builder = compileConfig(context)
   const builds = genEffect(builder, () => indexing?.return())
   let afterGenerateCalled = false
 
-  function writeStore(data: Uint8Array) {
-    return exportStore(data, join(context.outDir, 'store.js'))
+  async function writeStore(db: DevDB) {
+    const exported = await exportSource(db.source)
+    const data = JSON.stringify(exported, null, 2)
+    await fsp.writeFile(join(context.outDir, 'source.json'), data)
+    return data.length
   }
-  const [store, storeData] = await createDb()
   for await (const cms of builds) {
     if (cmd === 'build') {
       const handlerUrl = cms.config.handlerUrl
@@ -135,10 +133,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       if (cmd === 'build') {
         ;[, dbSize] = await Promise.all([
           generatePackage(context, cms),
-          writeStore(storeData())
+          writeStore(db)
         ])
       } else {
-        await writeStore(new Uint8Array())
+        // sync: skip this?
+        await writeStore(db)
       }
       let message = `${cmd} ${location} in `
       const duration = performance.now() - now
@@ -149,23 +148,22 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       else message += ` (${recordCount} records)`
       return message
     }
-    const fileData = new LocalData({
+    const db = new DevDB({
       config: cms.config,
-      fs: fs.promises,
       rootDir,
       dashboardUrl: await options.dashboardUrl
     })
     try {
-      indexing = fillCache(context, fileData, store, cms.config)
+      indexing = fillCache(db)
     } catch (error: any) {
       reportHalt(String(error.message ?? error))
       if (cmd === 'build') process.exit(1)
       continue
     }
     for await (const db of indexing) {
-      yield {cms, db, localData: fileData}
+      yield {cms, db}
       if (onAfterGenerate && !afterGenerateCalled) {
-        const recordCount = await db.store.select(count()).from(EntryRow).get()
+        const recordCount = await db.count({})
         await write(recordCount ?? 0).then(
           message => {
             afterGenerateCalled = true

@@ -1,4 +1,7 @@
-import type {Connection} from 'alinea/core/Connection'
+// @ts-nocheck
+// sync: fixme
+
+import type {UploadResponse} from 'alinea/core/Connection'
 import {Entry, type EntryStatus} from 'alinea/core/Entry'
 import type {EntryRow} from 'alinea/core/EntryRow'
 import {createId} from 'alinea/core/Id'
@@ -45,7 +48,7 @@ export interface Upload {
   file: File
   to: UploadDestination
   status: UploadStatus
-  info?: Connection.UploadResponse
+  info?: UploadResponse
   preview?: string
   averageColor?: string
   focus?: {x: number; y: number}

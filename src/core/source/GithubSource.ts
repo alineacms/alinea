@@ -1,21 +1,20 @@
-import type {Change} from './Change.js'
-import type {Source} from './Source.js'
+import type {RemoteSource} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
 import {assert} from './Utils.js'
 
-export interface GithubOptions {
+export interface GithubSourceOptions {
   authToken: string
   owner: string
   repo: string
   branch: string
-  cwd: string
+  contentDir: string
 }
 
-export class GithubSource implements Source {
+export class GithubSource implements RemoteSource {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
-  #options: GithubOptions
+  #options: GithubSourceOptions
 
-  constructor(options: GithubOptions) {
+  constructor(options: GithubSourceOptions) {
     this.#options = options
   }
 
@@ -27,8 +26,8 @@ export class GithubSource implements Source {
   }
 
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
-    const {cwd, owner, repo, branch, authToken} = this.#options
-    const parentDir = cwd.split('/').slice(0, -1).join('/')
+    const {contentDir, owner, repo, branch, authToken} = this.#options
+    const parentDir = contentDir.split('/').slice(0, -1).join('/')
     const parentInfo = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/${parentDir}?ref=${branch}`,
       {headers: {Authorization: `Bearer ${authToken}`}}
@@ -36,8 +35,8 @@ export class GithubSource implements Source {
     assert(parentInfo.ok, `Failed to get parent: ${parentInfo.statusText}`)
     const parents = await parentInfo.json()
     assert(Array.isArray(parents))
-    const parent = parents.find(entry => entry.path === cwd)
-    assert(parent, `Failed to find parent: ${cwd}`)
+    const parent = parents.find(entry => entry.path === contentDir)
+    assert(parent, `Failed to find parent: ${contentDir}`)
     assert(typeof parent.sha === 'string')
     if (parent.sha === sha) return undefined
     const treeInfo = await fetch(
@@ -63,9 +62,5 @@ export class GithubSource implements Source {
     assert(typeof blobData.content === 'string')
     assert(blobData.size > 0)
     return Uint8Array.from(atob(blobData.content), c => c.charCodeAt(0))
-  }
-
-  async applyChanges(changes: Array<Change>) {
-    throw new Error('Not implemented')
   }
 }

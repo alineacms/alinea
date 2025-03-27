@@ -2,12 +2,11 @@ import {Entry} from 'alinea/core'
 import {parseYDoc} from 'alinea/core/Doc'
 import {type Draft, type DraftKey, formatDraftKey} from 'alinea/core/Draft'
 import type {PreviewRequest} from 'alinea/core/Preview'
-import type {EntryTarget} from 'alinea/core/db/EntryTarget.js'
 import type {LocalDB} from 'alinea/core/db/LocalDB.js'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import * as Y from 'yjs'
 
-export function createPreviewParser(local: LocalDB, remote: EntryTarget) {
+export function createPreviewParser(local: LocalDB) {
   const drafts = new Map<
     DraftKey,
     Promise<{contentHash: string; draft?: Draft}>
@@ -15,12 +14,13 @@ export function createPreviewParser(local: LocalDB, remote: EntryTarget) {
   return {
     async parse(
       preview: PreviewRequest,
+      sync: () => Promise<unknown>,
       getDraft: (draftKey: DraftKey) => Promise<Draft | undefined>
     ): Promise<PreviewRequest | undefined> {
       if (!(preview && 'payload' in preview)) return preview
       const update = await decodePreviewPayload(preview.payload)
       if (update.contentHash !== local.sha) {
-        await local.syncWith(remote)
+        await sync()
         if (update.contentHash !== local.sha) return
       }
       const entry = await local.first({

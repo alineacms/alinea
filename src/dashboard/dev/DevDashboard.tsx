@@ -8,7 +8,7 @@ import {dbAtom} from '../atoms/DbAtoms.js'
 
 type DevReloadOptions = {
   refresh: () => Promise<void>
-  refetch: () => void
+  refetch: () => Promise<void>
   open: () => void
   close: () => void
 }
@@ -59,11 +59,12 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
     })
     return setApp({config: config.cms.config, views: config.views, client})
   }
+  const forceDbUpdate = () => db.syncWithRemote().then(() => void 0)
   useEffect(() => {
     getConfig()
     return setupDevReload({
-      refresh: () => db.syncWithRemote(),
-      refetch: () => db.syncWithRemote(),
+      refresh: () => getConfig().then(() => forceDbUpdate()),
+      refetch: () => forceDbUpdate(),
       open: () => setConnected(true),
       close: () => setConnected(false)
     })

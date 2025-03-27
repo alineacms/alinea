@@ -1,4 +1,4 @@
-import type {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
+import type {LinkResolver} from 'alinea/core/db/LinkResolver'
 import * as Y from 'yjs'
 import {createId} from '../Id.js'
 import type {Label} from '../Label.js'

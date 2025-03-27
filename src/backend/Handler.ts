@@ -1,7 +1,13 @@
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
-import {cloudBackend} from 'alinea/cloud/CloudBackend'
+import {CloudRemote} from 'alinea/cloud/CloudRemote'
 import type {Entry} from 'alinea/core'
 import type {CMS} from 'alinea/core/CMS'
+import type {
+  AuthedContext,
+  DraftTransport,
+  RemoteConnection,
+  RequestContext
+} from 'alinea/core/Connection'
 import type {DraftKey} from 'alinea/core/Draft'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {} from 'alinea/core/HttpError'
@@ -10,21 +16,13 @@ import {
   type CommitRequest,
   attemptCommit
 } from 'alinea/core/db/CommitRequest.js'
-import {LocalDB} from 'alinea/core/db/LocalDB.js'
-import type {Source} from 'alinea/core/source/Source'
+import type {LocalDB} from 'alinea/core/db/LocalDB.js'
 import {base64} from 'alinea/core/util/Encoding'
 import {object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
-import type {
-  AuthedContext,
-  Backend,
-  DraftTransport,
-  RequestContext
-} from './Backend.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
-import {generatedSource} from './store/GeneratedSource.js'
 
 const limit = pLimit(1)
 
@@ -56,57 +54,24 @@ export interface HandlerHooks {
 
 export interface HandlerOptions extends HandlerHooks {
   cms: CMS
-  backend?: Backend
-  source?: Promise<Source>
+  db: LocalDB | Promise<LocalDB>
+  remote?: RemoteConnection
 }
 
 export function createHandler({
   cms,
-  backend = cloudBackend(cms.config),
-  source = generatedSource,
+  remote = new CloudRemote(cms.config),
+  db,
   ...hooks
 }: HandlerOptions): Handler {
   let lastSync = 0
-
-  const localDb = PLazy.from(async () => {
-    const source = await generatedSource
-    const local = new LocalDB(cms.config, source)
-    await local.sync()
-    return local
-    /*    async function persistEdit(ctx: AuthedContext, mutation: UpdateMutation) {
-      if (!mutation.update) return
-      const update = new Uint8Array(await decode(mutation.update))
-      const currentDraft = await backend.drafts.get(
-        ctx,
-        formatDraftKey(mutation.entry)
-      )
-      const updatedDraft = currentDraft
-        ? mergeUpdatesV2([currentDraft.draft, update])
-        : update
-      const draft = {
-        entryId: mutation.entryId,
-        locale: mutation.locale,
-        fileHash: mutation.entry.fileHash,
-        draft: updatedDraft
-      }
-      await backend.drafts.store(ctx, draft)
-      const {contentHash} = await db.meta()
-      previews.setDraft(formatDraftKey(mutation.entry), {contentHash, draft})
-    }*/
-  })
 
   return async function handle(
     request: Request,
     context: RequestContext
   ): Promise<Response> {
-    const local = await localDb
-    const target = backend.target
-    const remote = {
-      getTreeIfDifferent: target.getTreeIfDifferent.bind(target, context),
-      getBlob: target.getBlob.bind(target, context),
-      commit: target.commit.bind(target, context)
-    }
-    const previewParser = createPreviewParser(local, remote)
+    const local = await db
+    const previewParser = createPreviewParser(local)
 
     function periodicSync(syncInterval = 60) {
       return limit(async () => {
@@ -124,7 +89,7 @@ export function createHandler({
       const params = url.searchParams
       const auth = params.get('auth')
 
-      if (auth) return backend.auth.authenticate(context, request)
+      if (auth) return remote.authenticate(request, context)
 
       const action = params.get('action') as HandleAction
 
@@ -143,7 +108,7 @@ export function createHandler({
         return request.json()
       })
 
-      const verified = PLazy.from(() => backend.auth.verify(context, request))
+      const verified = PLazy.from(() => remote.verify(request, context))
 
       const internal = PLazy.from(async function verifyInternal(): Promise<
         AuthedContext | RequestContext
@@ -171,7 +136,7 @@ export function createHandler({
       if (action === HandleAction.User && request.method === 'GET') {
         expectJson()
         try {
-          const {user} = await backend.auth.verify(context, request)
+          const {user} = await remote.verify(request, context)
           return Response.json(user)
         } catch {
           return Response.json(null)
@@ -188,8 +153,10 @@ export function createHandler({
         if (!query.preview) {
           await periodicSync(query.syncInterval)
         } else {
-          const preview = await previewParser.parse(query.preview, entryId =>
-            backend.drafts.get(ctx, entryId)
+          const preview = await previewParser.parse(
+            query.preview,
+            () => local.syncWith(remote),
+            entryId => remote.getDraft(entryId, ctx)
           )
           query.preview = preview
         }
@@ -210,8 +177,8 @@ export function createHandler({
         const file = string(url.searchParams.get('file'))
         const revisionId = string.nullable(url.searchParams.get('revisionId'))
         const result = await (revisionId
-          ? backend.history.revision(ctx, file, revisionId)
-          : backend.history.list(ctx, file))
+          ? remote.revisionData(file, revisionId, ctx)
+          : remote.revisions(file, ctx))
         return Response.json(result ?? null)
       }
 
@@ -236,26 +203,25 @@ export function createHandler({
 
       // Media
       if (action === HandleAction.Upload) {
-        const {media} = backend
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
           const ctx = await verified
           expectJson()
           return Response.json(
-            await media.prepareUpload(ctx, PrepareBody(await body).filename)
+            await remote.prepareUpload(PrepareBody(await body).filename, ctx)
           )
         }
         const isPost = request.method === 'POST'
         if (isPost) {
-          if (!media.handleUpload)
-            throw new Response('Bad Request', {status: 400})
           const ctx = await verified
-          await media.handleUpload(ctx, entryId, await request.blob())
+          if (!remote.handleUpload)
+            throw new Response('Bad Request', {status: 400})
+          await remote.handleUpload(entryId, await request.blob(), ctx)
           return new Response('OK', {status: 200})
         }
-        if (!media.previewUpload)
+        if (!remote.previewUpload)
           throw new Response('Bad Request', {status: 400})
-        return media.previewUpload(context, entryId)
+        return remote.previewUpload(entryId, context)
       }
 
       // Drafts
@@ -263,7 +229,7 @@ export function createHandler({
         const ctx = await internal
         expectJson()
         const key = string(url.searchParams.get('key')) as DraftKey
-        const draft = await backend.drafts.get(ctx, key)
+        const draft = await remote.getDraft(key, ctx)
         return Response.json(
           draft ? {...draft, draft: base64.stringify(draft.draft)} : null
         )
@@ -273,7 +239,7 @@ export function createHandler({
         expectJson()
         const data = (await body) as DraftTransport
         const draft = {...data, draft: base64.parse(data.draft)}
-        return Response.json(await backend.drafts.store(await verified, draft))
+        return Response.json(await remote.storeDraft(draft, await verified))
       }
     } catch (error) {
       if (error instanceof Response) return error

@@ -1,3 +1,6 @@
+// @ts-nocheck
+// sync: fixme
+
 import type {Config} from 'alinea/core/Config'
 import type {Connection} from 'alinea/core/Connection'
 import {DOC_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
