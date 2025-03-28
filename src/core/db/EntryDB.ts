@@ -1,7 +1,7 @@
 import type {Config} from '../Config.js'
 import type {Connection, UploadResponse} from '../Connection.js'
 import type {Source} from '../source/Source.js'
-import type {CommitRequest} from './CommitRequest.js'
+import {type CommitRequest, sourceChanges} from './CommitRequest.js'
 import {LocalDB} from './LocalDB.js'
 
 export class EntryDB extends LocalDB {
@@ -18,14 +18,12 @@ export class EntryDB extends LocalDB {
 
   async commit(request: CommitRequest): Promise<string> {
     const remote = await this.connect()
-    const sourceChanges = request.changes.filter(
-      change => change.op === 'add' || change.op === 'delete'
-    )
-    await this.indexChanges(sourceChanges)
+    const contentChanges = sourceChanges(request.changes)
+    await this.indexChanges(contentChanges)
     try {
       const sha = await remote.commit(request)
       if (sha === request.intoSha) {
-        await this.applyChanges(sourceChanges)
+        await this.applyChanges(contentChanges)
         return this.sha
       }
     } finally {

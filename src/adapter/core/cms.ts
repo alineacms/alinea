@@ -1,23 +1,25 @@
 import {CMS} from 'alinea/core/CMS'
-import {Client} from 'alinea/core/Client'
 import type {Config} from 'alinea/core/Config'
-import {MemorySource} from 'alinea/core/source/MemorySource'
-import {previewContext} from './previewContext.js'
+import type {UploadResponse} from 'alinea/core/Connection.js'
+import type {AnyQueryResult, GraphQuery} from 'alinea/core/Graph.js'
+import type {Mutation} from 'alinea/core/db/Mutation.js'
 
-export class VanillaCMS<
+export class CoreCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  async getContext() {
-    return previewContext(this)
+  async resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    throw new Error('Not implemented')
+  }
+  async mutate(mutations: Array<Mutation>): Promise<void> {
+    throw new Error('Not implemented')
+  }
+  async prepareUpload(file: string): Promise<UploadResponse> {
+    throw new Error('Not implemented')
   }
 }
 
 export function createCMS<Definition extends Config>(config: Definition) {
-  const devUrl = process.env.ALINEA_DEV_SERVER
-  const cms: VanillaCMS<Definition> = new VanillaCMS(
-    config,
-    new MemorySource(),
-    async () => new Client({config: cms.config, url: devUrl ?? '/api/cms'})
-  )
-  return cms
+  return new CoreCMS(config)
 }

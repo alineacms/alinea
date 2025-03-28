@@ -15,6 +15,7 @@ import type {Change} from '../source/Change.js'
 import {type Source, bundleContents} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
+import {sourceChanges} from './CommitRequest.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 
@@ -92,9 +93,7 @@ export class EntryIndex extends EventTarget {
             data
           })
           .toRequest()
-        await source.applyChanges(
-          request.changes.filter(change => change.op === 'add')
-        )
+        await source.applyChanges(sourceChanges(request.changes))
       }
     }
   }
@@ -361,7 +360,11 @@ class EntryNode {
     assert(a.type === b.type, 'Type mismatch')
     // Per ID: all have same index, index is valid fractional index
     validateOrderKey(a.index)
-    assert(a.index === b.index, 'Index mismatch')
+    console.log(a, b)
+    assert(
+      a.index === b.index,
+      `Index mismatch ${a.filePath} (${a.index}) != ${b.filePath} (${b.index})`
+    )
   }
 }
 

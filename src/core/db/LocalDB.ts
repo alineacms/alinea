@@ -6,7 +6,7 @@ import type {Change} from '../source/Change.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {syncWith} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
-import type {CommitRequest} from './CommitRequest.js'
+import {type CommitRequest, sourceChanges} from './CommitRequest.js'
 import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
@@ -92,10 +92,8 @@ export class LocalDB extends WriteableGraph {
   }
 
   async commit(request: CommitRequest) {
-    const sourceChanges = request.changes.filter(
-      change => change.op === 'add' || change.op === 'delete'
-    )
-    await this.applyChanges(sourceChanges)
+    const contentChanges = sourceChanges(request.changes)
+    await this.applyChanges(contentChanges)
     return this.sync()
   }
 

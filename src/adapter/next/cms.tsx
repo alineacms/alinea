@@ -1,7 +1,7 @@
 import {Headers} from '@alinea/iso'
 import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
 import {generatedSource} from 'alinea/backend/store/GeneratedSource.js'
-import {COOKIE_NAME} from 'alinea/cloud/CloudBackend'
+import {COOKIE_NAME} from 'alinea/cloud/CloudRemote'
 import {CMS} from 'alinea/core/CMS'
 import {Client} from 'alinea/core/Client'
 import type {Config} from 'alinea/core/Config'

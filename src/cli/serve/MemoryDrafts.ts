@@ -1,4 +1,4 @@
-import type {DraftsApi} from 'alinea/core/Connection.js'
+import type {DraftsApi} from 'alinea/core/Connection'
 import type {Draft} from 'alinea/core/Draft'
 
 export class MemoryDrafts implements DraftsApi {

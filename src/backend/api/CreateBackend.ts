@@ -49,10 +49,11 @@ export function createBackend(options: BackendOptions): RemoteConnection {
 export function createRemote(
   ...impl: Array<Partial<RemoteConnection>>
 ): RemoteConnection {
-  const call = (name: string) => {
-    const use = impl.find(i => name in i)
+  const reversed = impl.reverse()
+  const call = (name: keyof RemoteConnection): any => {
+    const use = reversed.find(i => name in i)
     return use
-      ? (<any>use)[name].bind(use)
+      ? use[name]!.bind(use)
       : () => {
           throw new Error(`Backend does not implement ${name}`)
         }

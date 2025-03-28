@@ -1,17 +1,18 @@
-import {EntryDB} from 'alinea/core/db/EntryDB.js'
-import {IndexUpdate} from 'alinea/core/db/EntryIndex.js'
-import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource.js'
+import {EntryDB} from 'alinea/core/db/EntryDB'
+import {IndexUpdate} from 'alinea/core/db/EntryIndex'
+import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource'
 import {atom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {useEffect} from 'react'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
 
-const source = new IndexedDBSource(window.indexedDB, 'alinea')
+// sync: why is this file somehow in the import path of the serve cli?
+const source = atom(() => new IndexedDBSource(window.indexedDB, 'alinea'))
 
 const localDb = atom(get => {
   const config = get(configAtom)
   const client = get(clientAtom)
-  return new EntryDB(config, source, async () => client)
+  return new EntryDB(config, get(source), async () => client)
 })
 
 export const dbAtom = atom(async get => {

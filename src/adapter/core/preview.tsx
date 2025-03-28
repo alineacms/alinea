@@ -1,11 +1,11 @@
 import type {ConnectionContext} from 'alinea/core/CMS'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import {parse} from 'cookie-es'
-import type {VanillaCMS} from './cms.js'
+import type {CoreCMS} from './cms.js'
 import {previewStore} from './previewContext.js'
 
 export async function preview<T>(
-  cms: VanillaCMS,
+  cms: CoreCMS,
   request: Request,
   run: () => Promise<T>
 ): Promise<T> {

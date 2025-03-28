@@ -3,7 +3,7 @@ import type {
   AuthedContext,
   RequestContext
 } from 'alinea/core/Connection'
-import type {User} from 'alinea/core/User.js'
+import type {User} from 'alinea/core/User'
 
 export class LocalAuth implements AuthApi {
   #user: Promise<User>

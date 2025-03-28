@@ -14,7 +14,7 @@ import {SourceTransaction} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
-import type {CommitChange} from './CommitRequest.js'
+import {type CommitChange, commitChanges} from './CommitRequest.js'
 import type {EntryIndex} from './EntryIndex.js'
 import type {
   ArchiveMutation,
@@ -367,7 +367,7 @@ export class EntryTransaction {
       intoSha: into.sha,
       description: this.description(),
       checks: this.#checks,
-      changes: this.#fileChanges.concat(changes)
+      changes: this.#fileChanges.concat(commitChanges(changes))
     }
   }
 }

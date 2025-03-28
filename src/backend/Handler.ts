@@ -10,13 +10,9 @@ import type {
 } from 'alinea/core/Connection'
 import type {DraftKey} from 'alinea/core/Draft'
 import type {GraphQuery} from 'alinea/core/Graph'
-import {} from 'alinea/core/HttpError'
 import {getScope} from 'alinea/core/Scope'
-import {
-  type CommitRequest,
-  attemptCommit
-} from 'alinea/core/db/CommitRequest.js'
-import type {LocalDB} from 'alinea/core/db/LocalDB.js'
+import {type CommitRequest, attemptCommit} from 'alinea/core/db/CommitRequest'
+import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {base64} from 'alinea/core/util/Encoding'
 import {object, string} from 'cito'
 import PLazy from 'p-lazy'

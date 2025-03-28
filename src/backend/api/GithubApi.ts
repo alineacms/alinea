@@ -1,4 +1,10 @@
-import type {CommitApi, HistoryApi, SyncApi} from 'alinea/core/Connection'
+import type {
+  AuthedContext,
+  CommitApi,
+  HistoryApi,
+  Revision,
+  SyncApi
+} from 'alinea/core/Connection'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
 import type {CommitChange, CommitRequest} from 'alinea/core/db/CommitRequest.js'
@@ -8,7 +14,6 @@ import {
 } from 'alinea/core/source/GithubSource'
 import {base64, btoa} from 'alinea/core/util/Encoding'
 import {join} from 'alinea/core/util/Paths'
-import type {AuthedContext, Revision} from '../Backend.js'
 
 export interface GithubOptions extends GithubSourceOptions {
   rootDir: string
@@ -192,7 +197,7 @@ async function processChanges(
         })
         break
       }
-      case 'delete': {
+      case 'deleteContent': {
         const file = join(contentDir, change.path)
         deletions.push({path: file})
         break

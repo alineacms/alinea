@@ -1,12 +1,12 @@
 import * as fsp from 'node:fs/promises'
 import {Config} from 'alinea/core/Config'
 import type {UploadResponse} from 'alinea/core/Connection'
-import {createId} from 'alinea/core/Id.js'
+import {createId} from 'alinea/core/Id'
 import {getWorkspace} from 'alinea/core/Internal'
 import type {CommitRequest} from 'alinea/core/db/CommitRequest'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import {FSSource} from 'alinea/core/source/FSSource'
-import {assert} from 'alinea/core/source/Utils.js'
+import {assert} from 'alinea/core/source/Utils'
 import {values} from 'alinea/core/util/Objects'
 import {
   basename,
@@ -14,8 +14,8 @@ import {
   dirname,
   extname,
   join
-} from 'alinea/core/util/Paths.js'
-import {slugify} from 'alinea/core/util/Slugs.js'
+} from 'alinea/core/util/Paths'
+import {slugify} from 'alinea/core/util/Slugs'
 
 export interface DevDBOptions {
   config: Config

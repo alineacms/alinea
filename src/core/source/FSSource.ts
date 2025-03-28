@@ -1,6 +1,10 @@
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
-import {type CommitRequest, checkCommit} from '../db/CommitRequest.js'
+import {
+  type CommitRequest,
+  checkCommit,
+  sourceChanges
+} from '../db/CommitRequest.js'
 import type {Change} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {Source} from './Source.js'
@@ -83,12 +87,10 @@ export class FSSource implements Source {
   async commit(request: CommitRequest) {
     const local = await this.getTree()
     checkCommit(local, request)
-    const treeChanges = request.changes.filter(
-      change => change.op !== 'uploadFile' && change.op !== 'removeFile'
-    )
-    await this.applyChanges(treeChanges)
+    const contentChanges = sourceChanges(request.changes)
+    await this.applyChanges(contentChanges)
     const tree = local.clone()
-    tree.applyChanges(treeChanges)
+    tree.applyChanges(contentChanges)
     return tree.getSha()
   }
 }
