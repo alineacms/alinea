@@ -15,11 +15,11 @@ export interface AuthApi {
 export interface RemoteConnection extends Connection, AuthApi {}
 
 export interface LocalConnection extends Connection {
-  previewToken(request: PreviewInfo): Promise<string>
+  mutate(mutations: Array<Mutation>, ctx?: RequestContext): Promise<string>
+  previewToken(request: PreviewInfo, ctx?: RequestContext): Promise<string>
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>>
-  mutate(mutations: Array<Mutation>): Promise<void>
   user(): Promise<User | undefined>
 }
 

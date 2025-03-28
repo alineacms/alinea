@@ -1,5 +1,5 @@
 import type {Config} from 'alinea/core/Config'
-import type {Connection} from 'alinea/core/Connection'
+import type {LocalConnection} from 'alinea/core/Connection'
 import {useAtomValue} from 'jotai'
 import type {ComponentType, PropsWithChildren} from 'react'
 import {type QueryClient, QueryClientProvider} from 'react-query'
@@ -12,7 +12,7 @@ import {ModalPortal} from './view/Modal.js'
 export interface DashboardProps {
   config: Config
   views: Record<string, ComponentType<any>>
-  client: Connection
+  client: LocalConnection
   queryClient?: QueryClient
   fullPage?: boolean
   dev?: boolean

@@ -111,7 +111,7 @@ export class NextCMS<
     return client.user()
   }
 
-  async mutate(mutations: Array<Mutation>): Promise<void> {
+  async mutate(mutations: Array<Mutation>): Promise<string> {
     const client = await this.#authenticatedClient()
     return client.mutate(mutations)
   }

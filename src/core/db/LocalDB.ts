@@ -83,12 +83,16 @@ export class LocalDB extends WriteableGraph {
     console.table(entries)
   }
 
-  async mutate(mutations: Array<Mutation>) {
+  async request(mutations: Array<Mutation>) {
     const from = await this.source.getTree()
     const tx = new EntryTransaction(this.config, this.index, this.source, from)
     tx.apply(mutations)
-    const request = await tx.toRequest()
-    await this.commit(request)
+    return tx.toRequest()
+  }
+
+  async mutate(mutations: Array<Mutation>): Promise<string> {
+    const request = await this.request(mutations)
+    return this.commit(request)
   }
 
   async commit(request: CommitRequest) {

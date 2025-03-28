@@ -1,9 +1,9 @@
 import {Response} from '@alinea/iso'
 import {AuthAction} from 'alinea/backend/Auth'
-import type {AuthedContext} from 'alinea/backend/Backend'
 import {router} from 'alinea/backend/router/Router'
 import type {Config} from 'alinea/core/Config'
 import type {
+  AuthedContext,
   RemoteConnection,
   RequestContext,
   Revision

@@ -11,7 +11,7 @@ import type {
 import type {DraftKey} from 'alinea/core/Draft'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {getScope} from 'alinea/core/Scope'
-import {type CommitRequest, attemptCommit} from 'alinea/core/db/CommitRequest'
+import {} from 'alinea/core/db/CommitRequest'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {base64} from 'alinea/core/util/Encoding'
 import {object, string} from 'cito'
@@ -159,13 +159,25 @@ export function createHandler({
         return Response.json((await local.resolve(query)) ?? null)
       }
 
-      if (action === HandleAction.Commit && request.method === 'POST') {
+      if (action === HandleAction.Mutate && request.method === 'POST') {
         const ctx = await verified
+        expectJson()
+        const mutations = await body
+        const request = await local.request(mutations)
+        await remote.commit(request, ctx)
+        await local.commit(request)
+        const sha = await local.syncWith(remote)
+        return Response.json(sha)
+      }
+
+      if (action === HandleAction.Commit && request.method === 'POST') {
+        throw new Error('Mutations expected')
+        /*const ctx = await verified
         expectJson()
         const request: CommitRequest = await body
         return Response.json(
           (await attemptCommit(local, remote, request)) ?? null
-        )
+        )*/
       }
 
       // History

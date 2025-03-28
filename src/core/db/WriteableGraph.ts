@@ -8,17 +8,21 @@ import {
   CreateOperation,
   type CreateQuery,
   DeleteOp,
+  DiscardOp,
+  type DiscardQuery,
   MoveOperation,
   type MoveQuery,
   type Operation,
   PublishOperation,
   type PublishQuery,
   UpdateOperation,
-  type UpdateQuery
+  type UpdateQuery,
+  UploadOperation,
+  type UploadQuery
 } from './Operation.js'
 
 export abstract class WriteableGraph extends Graph {
-  abstract mutate(mutations: Array<Mutation>): Promise<void>
+  abstract mutate(mutations: Array<Mutation>): Promise<string>
   abstract prepareUpload(file: string): Promise<UploadResponse>
 
   async create<Definition>(create: CreateQuery<Definition>) {
@@ -61,6 +65,19 @@ export abstract class WriteableGraph extends Graph {
     return this.get({
       id: query.id,
       select: {index: Entry.index}
+    })
+  }
+
+  async discard(query: DiscardQuery) {
+    const op = new DiscardOp(query)
+    await this.#commitOps(op)
+  }
+
+  async upload(query: UploadQuery) {
+    const op = new UploadOperation(query)
+    await this.#commitOps(op)
+    return this.get({
+      id: op.id
     })
   }
 

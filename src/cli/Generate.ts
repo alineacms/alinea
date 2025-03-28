@@ -125,9 +125,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           generatePackage(context, cms),
           writeStore(db)
         ])
-      } else {
-        // sync: skip this?
-        await writeStore(db)
       }
       let message = `${cmd} ${location} in `
       const duration = performance.now() - now

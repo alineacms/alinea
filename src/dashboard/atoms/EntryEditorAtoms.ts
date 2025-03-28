@@ -1,6 +1,3 @@
-// @ts-nocheck
-// sync: fixme
-
 import type {Config} from 'alinea/core/Config'
 import type {Connection} from 'alinea/core/Connection'
 import {DOC_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
@@ -9,15 +6,11 @@ import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
 import type {EntryRow} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
-import type {Graph} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
-import {type Mutation, MutationType} from 'alinea/core/Mutation'
 import {Root} from 'alinea/core/Root'
 import {type EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
-import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
-import type {MediaFile} from 'alinea/core/media/MediaTypes'
 import {encode} from 'alinea/core/util/BufferToBase64'
 import {
   entryFileName,
@@ -316,43 +309,31 @@ export function createEntryEditor(entryData: EntryData) {
   )
 
   const saveDraft = atom(null, async (get, set) => {
+    // sync: store update in draft right here
     const update = await encode(edits.getLocalUpdate())
     // Use the existing path, when the entry gets published the path will change
+    const db = await get(dbAtom)
     const entry = await getDraftEntry({
       status: 'published',
       path: activeVersion.path
     })
-    const mutation: Mutation = {
-      type: MutationType.Edit,
-      locale: activeVersion.locale,
-      previousFile: entryFile(activeVersion),
-      file: entryFile(entry),
-      entryId: activeVersion.id,
-      entry,
-      update
-    }
-    return set(transact, {
-      clearChanges: true,
-      transition: EntryTransition.SaveDraft,
-      action: () => set(mutateAtom, [mutation]),
-      errorMessage: 'Could not complete save action, please try again later'
+    return db.create({
+      type,
+      id: entry.id,
+      locale: entry.locale,
+      status: 'draft',
+      set: {
+        ...entry,
+        data: entry.data
+      }
     })
   })
 
   const saveTranslation = atom(null, async (get, set, locale: string) => {
-    const graph = await get(graphAtom)
-    const parentLink =
-      activeVersion.parentId &&
-      (await graph.get({
-        select: Entry.id,
-        locale,
-        id: activeVersion.parentId,
-        status: 'preferDraft'
-      }))
-    if (activeVersion.parentId && !parentLink)
-      throw new Error('Parent not found')
-    const parentData = parentLink
-      ? await graph.get({
+    const db = await get(dbAtom)
+    const parentId = activeVersion.parentId
+    const parentData = parentId
+      ? await db.get({
           select: {
             entryId: Entry.id,
             path: Entry.path,
@@ -361,13 +342,12 @@ export function createEntryEditor(entryData: EntryData) {
               select: Entry.path
             }
           },
-          id: parentLink,
+          id: parentId,
           locale,
           status: 'preferDraft'
         })
       : undefined
-    if (activeVersion.parentId && !parentData)
-      throw new Error('Parent not translated')
+    if (parentId && !parentData) throw new Error('Parent not translated')
     const parentPaths = parentData?.paths
       ? parentData.paths.concat(parentData.path)
       : []
@@ -378,23 +358,20 @@ export function createEntryEditor(entryData: EntryData) {
       parentPaths,
       locale
     })
-    const mutation: Mutation = {
-      type: MutationType.Create,
-      locale: entry.locale,
-      file: entryFile(entry, parentPaths),
-      entryId: activeVersion.id,
-      entry
-    }
-    return set(transact, {
-      clearChanges: true,
-      transition: EntryTransition.SaveTranslation,
-      action: () => set(mutateAtom, [mutation]),
-      errorMessage:
-        'Could not complete translate action, please try again later'
+    return db.create({
+      type,
+      id: entry.id,
+      parentId,
+      locale,
+      status: 'published',
+      set: {
+        ...entry,
+        data: entry.data
+      }
     })
   })
 
-  async function persistSharedFields(
+  /*async function persistSharedFields(
     graph: Graph,
     entry: EntryRow
   ): Promise<Array<Mutation>> {
@@ -428,7 +405,7 @@ export function createEntryEditor(entryData: EntryData) {
       }
     }
     return res
-  }
+  }*/
 
   const errorsAtom = atom(get => {
     return get(get(form).errors)
@@ -451,12 +428,22 @@ export function createEntryEditor(entryData: EntryData) {
 
   const publishEdits = atom(null, async (get, set) => {
     if (!set(confirmErrorsAtom)) return
-    const currentFile = entryFile(activeVersion)
+    const db = await get(dbAtom)
+    // sync: store update in draft right here
+    // sync: persist shared fields here (or on the server?)
     const update = await encode(edits.getLocalUpdate())
     const entry = await getDraftEntry({status: 'published'})
-    const mutations: Array<Mutation> = []
-    const editedFile = entryFile(entry)
-    mutations.push({
+    return db.update({
+      type,
+      id: entry.id,
+      locale: entry.locale,
+      status: 'published',
+      set: {
+        ...entry,
+        data: entry.data
+      }
+    })
+    /*mutations.push({
       type: MutationType.Edit,
       previousFile: currentFile,
       file: editedFile,
@@ -472,7 +459,7 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.PublishEdits,
       action: () => set(mutateAtom, mutations),
       errorMessage: 'Could not complete publish action, please try again later'
-    })
+    })*/
   })
 
   const restoreRevision = atom(null, async (get, set) => {
@@ -480,15 +467,27 @@ export function createEntryEditor(entryData: EntryData) {
     if (!revision) return
     const data = await get(revisionData(revision))
     if (!data) return
+    const db = await get(dbAtom)
     const {edits} = entryData
     edits.applyEntryData(type, data)
     const update = await encode(edits.getLocalUpdate())
-    // We're not restoring the previous path because that is unavailable
+    // sync: store update in draft right here
+    // sync: persist shared fields here (or on the server?)
     const entry = await getDraftEntry({
       status: 'published',
       path: activeVersion.path
     })
-    const editedFile = entryFile(entry)
+    return db.update({
+      type,
+      id: entry.id,
+      locale: entry.locale,
+      status: 'published',
+      set: {
+        ...entry,
+        data: entry.data
+      }
+    })
+    /*const editedFile = entryFile(entry)
     const mutation: Mutation = {
       type: MutationType.Edit,
       previousFile: editedFile,
@@ -503,12 +502,20 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.RestoreRevision,
       action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete publish action, please try again later'
-    })
+    })*/
   })
 
   const publishDraft = atom(null, async (get, set) => {
+    // sync: store update in draft right here
+    // sync: persist shared fields here (or on the server?)
     if (!set(confirmErrorsAtom)) return
-    const mutations: Array<Mutation> = [
+    const db = await get(dbAtom)
+    return db.publish({
+      id: activeVersion.id,
+      locale: activeVersion.locale,
+      status: 'draft'
+    })
+    /*const mutations: Array<Mutation> = [
       {
         type: MutationType.Publish,
         status: 'draft',
@@ -524,11 +531,17 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.PublishDraft,
       action: () => set(mutateAtom, mutations),
       errorMessage: 'Could not complete publish action, please try again later'
-    })
+    })*/
   })
 
-  const discardDraft = atom(null, (get, set) => {
-    const mutation: Mutation = {
+  const discardDraft = atom(null, async (get, set) => {
+    const db = await get(dbAtom)
+    return db.discard({
+      id: activeVersion.id,
+      locale: activeVersion.locale,
+      status: 'draft'
+    })
+    /*const mutation: Mutation = {
       type: MutationType.RemoveDraft,
       entryId: activeVersion.id,
       locale: activeVersion.locale,
@@ -538,11 +551,16 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.DiscardDraft,
       action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete discard action, please try again later'
-    })
+    })*/
   })
 
-  const archivePublished = atom(null, (get, set) => {
-    const published = entryData.statuses['published']
+  const archivePublished = atom(null, async (get, set) => {
+    const db = await get(dbAtom)
+    return db.archive({
+      id: activeVersion.id,
+      locale: activeVersion.locale
+    })
+    /*const published = entryData.statuses['published']
     const mutation: Mutation = {
       type: MutationType.Archive,
       entryId: published.id,
@@ -553,11 +571,17 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.ArchivePublished,
       action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete archive action, please try again later'
-    })
+    })*/
   })
 
-  const publishArchived = atom(null, (get, set) => {
-    const archived = entryData.statuses['archived']
+  const publishArchived = atom(null, async (get, set) => {
+    const db = await get(dbAtom)
+    return db.publish({
+      id: activeVersion.id,
+      locale: activeVersion.locale,
+      status: 'archived'
+    })
+    /*const archived = entryData.statuses['archived']
     const mutation: Mutation = {
       type: MutationType.Publish,
       status: 'archived',
@@ -569,15 +593,17 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.PublishArchived,
       action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete publish action, please try again later'
-    })
+    })*/
   })
 
-  const deleteMediaLibrary = atom(null, (get, set) => {
+  const deleteMediaLibrary = atom(null, async (get, set) => {
     const result = confirm(
       'Are you sure you want to delete this folder and all its files?'
     )
     if (!result) return
-    const published = entryData.statuses['published']
+    const db = await get(dbAtom)
+    return db.remove(activeVersion.id)
+    /*const published = entryData.statuses['published']
     const mutations: Array<Mutation> = [
       {
         type: MutationType.Archive,
@@ -596,14 +622,16 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.DeleteArchived,
       action: () => set(mutateAtom, mutations),
       errorMessage: 'Could not complete delete action, please try again later'
-    })
+    })*/
   })
 
-  const deleteFile = atom(null, (get, set) => {
+  const deleteFile = atom(null, async (get, set) => {
     // Prompt for confirmation
     const result = confirm('Are you sure you want to delete this file?')
     if (!result) return
-    const published = entryData.statuses['published']
+    const db = await get(dbAtom)
+    return db.remove(activeVersion.id)
+    /*const published = entryData.statuses['published']
     const file = published.data as MediaFile
     const mutation: Mutation = {
       type: MutationType.RemoveFile,
@@ -621,11 +649,13 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.DeleteFile,
       action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete delete action, please try again later'
-    })
+    })*/
   })
 
-  const deleteArchived = atom(null, (get, set) => {
-    const archived = entryData.statuses['archived']
+  const deleteArchived = atom(null, async (get, set) => {
+    const db = await get(dbAtom)
+    return db.remove(activeVersion.id)
+    /*const archived = entryData.statuses['archived']
     const mutation: Mutation = {
       type: MutationType.RemoveEntry,
       entryId: archived.id,
@@ -636,7 +666,7 @@ export function createEntryEditor(entryData: EntryData) {
       transition: EntryTransition.DeleteArchived,
       action: () => set(mutateAtom, [mutation]),
       errorMessage: 'Could not complete delete action, please try again later'
-    })
+    })*/
   })
 
   type DraftEntryOptions = {

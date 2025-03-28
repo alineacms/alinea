@@ -12,7 +12,7 @@ export class CoreCMS<
   ): Promise<AnyQueryResult<Query>> {
     throw new Error('Not implemented')
   }
-  async mutate(mutations: Array<Mutation>): Promise<void> {
+  async mutate(mutations: Array<Mutation>): Promise<string> {
     throw new Error('Not implemented')
   }
   async prepareUpload(file: string): Promise<UploadResponse> {

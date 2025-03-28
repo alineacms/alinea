@@ -1,9 +1,13 @@
 import {AbortController, type Response, fetch} from '@alinea/iso'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
-import type {DraftTransport, Revision} from 'alinea/core/Connection'
+import type {
+  DraftTransport,
+  LocalConnection,
+  Revision
+} from 'alinea/core/Connection'
 import type {Config} from './Config.js'
-import type {Connection, UploadResponse} from './Connection.js'
+import type {UploadResponse} from './Connection.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
@@ -26,7 +30,7 @@ export interface ClientOptions {
   unauthorized?: () => void
 }
 
-export class Client implements Connection {
+export class Client implements LocalConnection {
   #options: ClientOptions
   constructor(options: ClientOptions) {
     this.#options = options
@@ -73,13 +77,11 @@ export class Client implements Connection {
     ).then<AnyQueryResult<Query>>(this.#failOnHttpError)
   }
 
-  mutate(mutations: Array<Mutation>): Promise<void> {
+  mutate(mutations: Array<Mutation>): Promise<string> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
       {method: 'POST', body: JSON.stringify(mutations)}
-    )
-      .then<null>(this.#failOnHttpError)
-      .then(() => void 0)
+    ).then<string>(this.#failOnHttpError)
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {

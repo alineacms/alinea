@@ -83,6 +83,25 @@ export class DeleteOp extends Operation {
   }
 }
 
+export interface DiscardQuery {
+  id: string
+  locale: string | null
+  status: 'draft' | 'archived' | 'published'
+}
+
+export class DiscardOp extends Operation {
+  constructor(query: DiscardQuery) {
+    super((): Array<Mutation> => {
+      return [
+        {
+          op: 'remove',
+          ...query
+        }
+      ]
+    })
+  }
+}
+
 export interface UpdateQuery<Fields> {
   type?: Type<Fields>
   id: string
@@ -93,8 +112,9 @@ export interface UpdateQuery<Fields> {
 
 export class UpdateOperation<Definition> extends Operation {
   constructor(query: UpdateQuery<Definition>) {
-    super((): Array<Mutation> => {
+    super((db): Array<Mutation> => {
       const {status = 'published', locale = null, id, set} = query
+      // If th
       return [
         {
           op: 'update',
@@ -235,6 +255,10 @@ export function create<Definition>(query: CreateQuery<Definition>) {
 
 export function remove(...entryIds: Array<string>) {
   return new DeleteOp(entryIds)
+}
+
+export function discard(query: DiscardQuery) {
+  return new DiscardOp(query)
 }
 
 export function upload(query: UploadQuery) {

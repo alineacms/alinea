@@ -1,5 +1,5 @@
 import {Config} from 'alinea/core/Config'
-import type {Connection} from 'alinea/core/Connection'
+import type {LocalConnection} from 'alinea/core/Connection'
 import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
@@ -176,7 +176,7 @@ function AppRoot() {
 export interface AppProps {
   config: Config
   views: Record<string, ComponentType<any>>
-  client: Connection
+  client: LocalConnection
   queryClient?: QueryClient
   fullPage?: boolean
   dev?: boolean

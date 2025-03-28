@@ -1,4 +1,4 @@
-import type {Connection} from 'alinea/core/Connection'
+import type {LocalConnection} from 'alinea/core/Connection'
 import type {Session} from 'alinea/core/Session'
 import {type User, localUser} from 'alinea/core/User'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
@@ -42,7 +42,7 @@ export const queryClientAtom = atom(
   new QueryClient({defaultOptions: {queries: {retry: false}}})
 )
 
-export const clientAtom = atom<Connection>(get => {
+export const clientAtom = atom<LocalConnection>(get => {
   return get(dashboardOptionsAtom).client
 })
 
