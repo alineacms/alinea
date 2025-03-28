@@ -163,7 +163,9 @@ export function createHandler({
         const ctx = await verified
         expectJson()
         const request: CommitRequest = await body
-        return Response.json(await attemptCommit(local, remote, request))
+        return Response.json(
+          (await attemptCommit(local, remote, request)) ?? null
+        )
       }
 
       // History
@@ -185,7 +187,7 @@ export function createHandler({
         expectJson()
         const sha = string(url.searchParams.get('sha'))
         await periodicSync()
-        return Response.json(await local.getTreeIfDifferent(sha))
+        return Response.json((await local.getTreeIfDifferent(sha)) ?? null)
       }
 
       if (action === HandleAction.Blob && request.method === 'GET') {

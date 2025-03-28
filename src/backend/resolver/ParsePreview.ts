@@ -2,7 +2,7 @@ import {Entry} from 'alinea/core'
 import {parseYDoc} from 'alinea/core/Doc'
 import {type Draft, type DraftKey, formatDraftKey} from 'alinea/core/Draft'
 import type {PreviewRequest} from 'alinea/core/Preview'
-import type {LocalDB} from 'alinea/core/db/LocalDB.js'
+import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
 import * as Y from 'yjs'
 

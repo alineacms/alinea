@@ -34,12 +34,12 @@ export class EntryUpdate extends Event {
 }
 
 export class EntryIndex extends EventTarget {
+  tree = ReadonlyTree.EMPTY
   entries = Array<Entry>()
   byPath = new Map<string, EntryNode>()
   byId = new Map<string, EntryNode>()
   #config: Config
   #workspace: string
-  #tree = ReadonlyTree.EMPTY
   #seeds: Map<string, Seed>
   resolver: EntryResolver
 
@@ -54,7 +54,7 @@ export class EntryIndex extends EventTarget {
   }
 
   get sha() {
-    return this.#tree.sha
+    return this.tree.sha
   }
 
   findFirst(filter: (entry: Entry) => boolean): Entry | undefined {
@@ -68,7 +68,7 @@ export class EntryIndex extends EventTarget {
 
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
-    const changes = await bundleContents(source, this.#tree.diff(tree))
+    const changes = await bundleContents(source, this.tree.diff(tree))
     if (changes.length === 0) return tree.sha
     //for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
     return this.indexChanges(changes)
@@ -93,7 +93,10 @@ export class EntryIndex extends EventTarget {
             data
           })
           .toRequest()
-        await source.applyChanges(sourceChanges(request.changes))
+        const contentChanges = sourceChanges(request.changes)
+        console.log(contentChanges)
+        await source.applyChanges(contentChanges)
+        await this.indexChanges(contentChanges)
       }
     }
   }
@@ -104,10 +107,10 @@ export class EntryIndex extends EventTarget {
   }
 
   async indexChanges(changes: Array<Change>) {
-    if (changes.length === 0) return this.#tree.sha
+    if (changes.length === 0) return this.tree.sha
     this.#applyChanges(changes)
-    this.#tree = await this.#tree.withChanges(changes)
-    const sha = this.#tree.sha
+    this.tree = await this.tree.withChanges(changes)
+    const sha = this.tree.sha
     this.dispatchEvent(new IndexUpdate(sha))
     return sha
   }
@@ -360,7 +363,6 @@ class EntryNode {
     assert(a.type === b.type, 'Type mismatch')
     // Per ID: all have same index, index is valid fractional index
     validateOrderKey(a.index)
-    console.log(a, b)
     assert(
       a.index === b.index,
       `Index mismatch ${a.filePath} (${a.index}) != ${b.filePath} (${b.index})`
@@ -405,13 +407,13 @@ function entrySeeds(config: Config): Map<string, Seed> {
       const locales = i18n?.locales ?? [undefined]
       for (const locale of locales) {
         const pages: Array<readonly [string, Page]> = entries(root)
-        const target = locale ? `/${locale.toLowerCase()}` : '/'
+        const target = locale ? `/${locale.toLowerCase()}` : ''
         while (pages.length > 0) {
           const [pagePath, page] = pages.shift()!
           const path = pagePath.split('/').map(slugify).join('/')
           if (!Page.isPage(page)) continue
           const {type, fields = {}} = Page.data(page)
-          const filePath = `${target}/${path}.json`
+          const filePath = getNodePath(`${rootName}${target}/${path}.json`)
           const typeName = typeNames.get(type)
           if (!typeName) continue
           result.set(filePath, {
@@ -421,6 +423,7 @@ function entrySeeds(config: Config): Map<string, Seed> {
             root: rootName,
             data: {
               ...fields,
+              path,
               title: fields.title ?? path
             }
           })

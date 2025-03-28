@@ -1,6 +1,6 @@
 import {suite} from '@alinea/suite'
 import {Edit} from 'alinea'
-import {LocalDB} from 'alinea/core/db/LocalDB.js'
+import {LocalDB} from 'alinea/core/db/LocalDB'
 import {config} from './example.js'
 
 const test = suite(import.meta)

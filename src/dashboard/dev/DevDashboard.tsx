@@ -1,10 +1,10 @@
 import type {CMS} from 'alinea/core/CMS'
 import {Client} from 'alinea/core/Client'
-import {useAtomValue} from 'jotai'
+import {useSetAtom} from 'jotai'
 import {type ComponentType, useEffect, useState} from 'react'
 import {QueryClient} from 'react-query'
 import {App, type AppProps} from '../App.js'
-import {dbAtom} from '../atoms/DbAtoms.js'
+import {dbUpdateAtom} from '../atoms/DbAtoms.js'
 
 type DevReloadOptions = {
   refresh: () => Promise<void>
@@ -42,7 +42,7 @@ const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 export function DevDashboard({loadConfig}: DevDashboardOptions) {
   const [app, setApp] = useState<AppProps>()
   const [connected, setConnected] = useState(true)
-  const db = useAtomValue(dbAtom)
+  const forceDbUpdate = useSetAtom(dbUpdateAtom)
   async function getConfig() {
     // Reload css
     const link = document.querySelector(
@@ -59,7 +59,6 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
     })
     return setApp({config: config.cms.config, views: config.views, client})
   }
-  const forceDbUpdate = () => db.syncWithRemote().then(() => void 0)
   useEffect(() => {
     getConfig()
     return setupDevReload({

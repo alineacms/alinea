@@ -31,6 +31,7 @@ export interface WatchFiles {
 export class DevDB extends LocalDB {
   source: FSSource
   #options: DevDBOptions
+  #contentDir: string
 
   constructor(options: DevDBOptions) {
     const workspace = Config.mainWorkspace(options.config)
@@ -39,14 +40,14 @@ export class DevDB extends LocalDB {
     super(options.config, source)
     this.#options = options
     this.source = source
+    this.#contentDir = contentDir
   }
 
   async watchFiles() {
-    const {rootDir} = this.#options
     const tree = await this.source.getTree()
     const res: WatchFiles = {files: [], dirs: []}
     for (const [path, node] of tree) {
-      const fullPath = join(rootDir, path)
+      const fullPath = join(this.#contentDir, path)
       if (node.type === 'tree') res.dirs.push(fullPath)
       else res.files.push(fullPath)
     }

@@ -1,5 +1,5 @@
-import {MemorySource} from 'alinea/core/source/MemorySource.js'
-import {importSource} from 'alinea/core/source/SourceExport.js'
+import {MemorySource} from 'alinea/core/source/MemorySource'
+import {importSource} from 'alinea/core/source/SourceExport'
 import PLazy from 'p-lazy'
 
 export const generatedSource: Promise<MemorySource> = PLazy.from(async () => {

@@ -134,7 +134,7 @@ function AppAuthenticated() {
             </div>
             <Statusbar.Root>
               <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                {sha}
+                {sha.slice(0, 7)}
               </Statusbar.Status>
             </Statusbar.Root>
           </Sidebar.Provider>

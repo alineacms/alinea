@@ -6,9 +6,9 @@
   "typescript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifier": "project-relative",
   "editor.codeActionsOnSave": {
-    //"quickfix.biome": "explicit",
-    //"source.organizeImports.biome": "explicit",
-    //"source.organizeImports": "never"
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit",
+    "source.organizeImports": "never"
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "[typescript]": {

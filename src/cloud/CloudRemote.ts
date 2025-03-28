@@ -14,13 +14,13 @@ import {
   formatDraftKey,
   parseDraftKey
 } from 'alinea/core/Draft'
-import type {EntryRecord} from 'alinea/core/EntryRecord.js'
+import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
 import {Outcome, type OutcomeJSON, outcome} from 'alinea/core/Outcome'
 import type {User} from 'alinea/core/User'
 import {Workspace} from 'alinea/core/Workspace'
 import type {CommitRequest} from 'alinea/core/db/CommitRequest'
-import type {ReadonlyTree} from 'alinea/core/source/Tree.js'
+import type {ReadonlyTree} from 'alinea/core/source/Tree'
 import {base64} from 'alinea/core/util/Encoding'
 import {verify} from 'alinea/core/util/JWT'
 import PLazy from 'p-lazy'

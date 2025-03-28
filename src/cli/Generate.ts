@@ -1,7 +1,6 @@
 import * as fsp from 'node:fs/promises'
 import {createRequire} from 'node:module'
 import path from 'node:path'
-import type {Store} from 'alinea/backend/Store'
 import type {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {exportSource} from 'alinea/core/source/SourceExport'
@@ -50,15 +49,6 @@ async function generatePackage(context: GenerateContext, cms: CMS) {
     staticFile
   )
   return basename(staticFile)
-}
-
-async function createDb(): Promise<[Store, () => Uint8Array]> {
-  const {default: sqlite} = await import('@alinea/sqlite-wasm')
-  const {Database} = await sqlite()
-  const {connect} = await import('rado/driver/sql.js')
-  const db = new Database()
-  const store = connect(db)
-  return [store, () => db.export()]
 }
 
 export async function* generate(options: GenerateOptions): AsyncGenerator<

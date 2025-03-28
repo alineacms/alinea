@@ -1,8 +1,8 @@
 import type {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {code} from 'alinea/core/util/CodeGen'
-import {keys} from 'alinea/core/util/Objects'
-import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
+import {values} from 'alinea/core/util/Objects'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {Plugin} from 'esbuild'
 
 export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
@@ -10,22 +10,21 @@ export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
     name: viewsPlugin.entry,
     setup(build) {
       const views = new Set(
-        keys(defaultViews).concat(
+        values(viewKeys).concat(
           Config.referencedViews(cms.config).filter(Boolean) as Array<string>
         )
       )
-      const entry =
-        `${[...views]
-          .map((view, index) => {
-            const separatorIndex = view.slice(1).lastIndexOf('#')
-            const pkg =
-              separatorIndex > -1 ? view.slice(0, separatorIndex + 1) : view
-            const name =
-              separatorIndex > -1 ? view.slice(separatorIndex + 2) : 'default'
-            const alias = `view_${index}`
-            return `import {${name} as ${alias}} from ${JSON.stringify(pkg)}`
-          })
-          .join('\n')}\n${code`
+      const entry = `${[...views]
+        .map((view, index) => {
+          const separatorIndex = view.slice(1).lastIndexOf('#')
+          const pkg =
+            separatorIndex > -1 ? view.slice(0, separatorIndex + 1) : view
+          const name =
+            separatorIndex > -1 ? view.slice(separatorIndex + 2) : 'default'
+          const alias = `view_${index}`
+          return `import {${name} as ${alias}} from ${JSON.stringify(pkg)}`
+        })
+        .join('\n')}\n${code`
           import 'alinea/css'
           export const views = {
             ${[...views]

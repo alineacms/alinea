@@ -7,7 +7,7 @@ import type {
 } from 'alinea/core/Connection'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
-import type {CommitChange, CommitRequest} from 'alinea/core/db/CommitRequest.js'
+import type {CommitChange, CommitRequest} from 'alinea/core/db/CommitRequest'
 import {
   GithubSource,
   type GithubSourceOptions

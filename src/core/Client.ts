@@ -108,14 +108,6 @@ export class Client implements Connection {
 
   // Source
 
-  /*getTree(): Promise<ReadonlyTree> {
-    return this.#requestJson({
-      action: HandleAction.Tree
-    })
-      .then<Tree>(this.#failOnHttpError)
-      .then(tree => new ReadonlyTree(tree))
-  }*/
-
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
     return this.#requestJson({
       action: HandleAction.Tree,
@@ -130,7 +122,7 @@ export class Client implements Connection {
       action: HandleAction.Blob,
       sha
     })
-      .then<Response>(this.#failOnHttpError)
+      .then(response => this.#failOnHttpError<Response>(response, false))
       .then(response => response.arrayBuffer())
       .then(buffer => new Uint8Array(buffer))
   }
@@ -143,20 +135,6 @@ export class Client implements Connection {
       {method: 'POST', body: JSON.stringify(request)}
     ).then<string>(this.#failOnHttpError)
   }
-
-  /*syncRequired(contentHash: string): Promise<boolean> {
-    return this.#requestJson({
-      action: HandleAction.Sync,
-      contentHash
-    }).then<boolean>(this.#failOnHttpError)
-  }
-
-  sync(contentHashes: Array<string>): Promise<SyncResponse> {
-    return this.#requestJson(
-      {action: HandleAction.Sync},
-      {method: 'POST', body: JSON.stringify(contentHashes)}
-    ).then<SyncResponse>(this.#failOnHttpError)
-  }*/
 
   // Drafts
 
@@ -241,8 +219,11 @@ export class Client implements Connection {
     })
   }
 
-  async #failOnHttpError<T>(res: Response, expectJson = true): Promise<T> {
-    if (res.ok) return expectJson ? res.json() : undefined!
+  async #failOnHttpError<T = Response>(
+    res: Response,
+    expectJson = true
+  ): Promise<T> {
+    if (res.ok) return (expectJson ? res.json() : res) as T
     const text = await res.text()
     throw new HttpError(res.status, text || res.statusText)
   }

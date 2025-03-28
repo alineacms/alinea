@@ -10,7 +10,7 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
-import {SourceTransaction} from '../source/Source.js'
+import {diff, SourceTransaction} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
@@ -35,7 +35,6 @@ export class EntryTransaction {
   #messages = Array<string>()
   #config: Config
   #index: EntryIndex
-  #source: Source
   #tx: SourceTransaction
   #fileChanges = Array<CommitChange>()
 
@@ -45,10 +44,12 @@ export class EntryTransaction {
     source: Source,
     from: ReadonlyTree
   ) {
-    assert(index.sha === from.sha, 'Index and tree must match')
+    if (index.sha !== from.sha) {
+      console.log(index.tree.diff(from))
+      throw new ShaMismatchError(index.sha, from.sha)
+    }
     this.#config = config
     this.#index = index
-    this.#source = source
     this.#tx = new SourceTransaction(source, from)
   }
 
@@ -104,7 +105,7 @@ export class EntryTransaction {
     const parentDir = parent
       ? parent.childrenDir
       : locale !== null
-        ? `${root}/${locale}`
+        ? `${root}/${locale.toLowerCase()}`
         : root
     const filePath = paths.join(
       parentDir,

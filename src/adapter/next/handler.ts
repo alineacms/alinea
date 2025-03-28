@@ -7,7 +7,7 @@ import {
   createBackend
 } from 'alinea/backend/api/CreateBackend'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
-import {CloudRemote} from 'alinea/cloud/CloudRemote.js'
+import {CloudRemote} from 'alinea/cloud/CloudRemote'
 import type {RemoteConnection} from 'alinea/core/Connection'
 import {Entry} from 'alinea/core/Entry'
 import type {Resolver} from 'alinea/core/Resolver'

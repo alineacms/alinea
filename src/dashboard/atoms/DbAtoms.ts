@@ -6,19 +6,23 @@ import {atomFamily} from 'jotai/utils'
 import {useEffect} from 'react'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
 
-// sync: why is this file somehow in the import path of the serve cli?
-const source = atom(() => new IndexedDBSource(window.indexedDB, 'alinea'))
+const source = new IndexedDBSource(window.indexedDB, 'alinea')
 
 const localDb = atom(get => {
   const config = get(configAtom)
   const client = get(clientAtom)
-  return new EntryDB(config, get(source), async () => client)
+  return new EntryDB(config, source, async () => client)
 })
 
 export const dbAtom = atom(async get => {
   const local = get(localDb)
   await local.syncWithRemote()
   return local
+})
+
+export const dbUpdateAtom = atom(null, async (get, set) => {
+  const db = await get(dbAtom)
+  await db.syncWithRemote()
 })
 
 const dbSha = atom('')

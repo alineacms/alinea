@@ -3,7 +3,7 @@ import type {
   DraftsApi,
   UploadResponse,
   UploadsApi
-} from 'alinea/core/Connection.js'
+} from 'alinea/core/Connection'
 import {type Draft, type DraftKey, parseDraftKey} from 'alinea/core/Draft'
 import {createId} from 'alinea/core/Id'
 import {basename, extname} from 'alinea/core/util/Paths'

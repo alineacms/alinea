@@ -17,23 +17,24 @@ import {SelectInput} from 'alinea/field/select/SelectField.view'
 import {TabsView} from 'alinea/field/tabs/Tabs.view'
 import {TextInput} from 'alinea/field/text/TextField.view'
 import {TimeInput} from 'alinea/field/time/TimeField.view'
+import {viewKeys} from './ViewKeys.js'
 
 export const defaultViews = {
-  'alinea/field/check/CheckField.view#CheckInput': CheckInput,
-  'alinea/field/code/CodeField.view#CodeInput': CodeInput,
-  'alinea/field/date/DateField.view#DateInput': DateInput,
-  'alinea/field/hidden/HiddenField.view#HiddenInput': HiddenInput,
-  'alinea/field/json/JsonField.view#JsonInput': JsonInput,
-  'alinea/field/link/LinkField.view#SingleLinkInput': SingleLinkInput,
-  'alinea/field/link/LinkField.view#MultipleLinksInput': MultipleLinksInput,
-  'alinea/field/list/ListField.view#ListInput': ListInput,
-  'alinea/field/metadata/MetadataField.view#MetadataInput': MetadataInput,
-  'alinea/field/number/NumberField.view#NumberInput': NumberInput,
-  'alinea/field/object/ObjectField.view#ObjectInput': ObjectInput,
-  'alinea/field/path/PathField.view#PathInput': PathInput,
-  'alinea/field/richtext/RichTextField.view#RichTextInput': RichTextInput,
-  'alinea/field/select/SelectField.view#SelectInput': SelectInput,
-  'alinea/field/tabs/Tabs.view#TabsView': TabsView,
-  'alinea/field/text/TextField.view#TextInput': TextInput,
-  'alinea/field/time/TimeField.view#TimeInput': TimeInput
+  [viewKeys.CheckInput]: CheckInput,
+  [viewKeys.CodeInput]: CodeInput,
+  [viewKeys.DateInput]: DateInput,
+  [viewKeys.HiddenInput]: HiddenInput,
+  [viewKeys.JsonInput]: JsonInput,
+  [viewKeys.SingleLinkInput]: SingleLinkInput,
+  [viewKeys.MultipleLinksInput]: MultipleLinksInput,
+  [viewKeys.ListInput]: ListInput,
+  [viewKeys.MetadataInput]: MetadataInput,
+  [viewKeys.NumberInput]: NumberInput,
+  [viewKeys.ObjectInput]: ObjectInput,
+  [viewKeys.PathInput]: PathInput,
+  [viewKeys.RichTextInput]: RichTextInput,
+  [viewKeys.SelectInput]: SelectInput,
+  [viewKeys.TabsView]: TabsView,
+  [viewKeys.TextInput]: TextInput,
+  [viewKeys.TimeInput]: TimeInput
 }
