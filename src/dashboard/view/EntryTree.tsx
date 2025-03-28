@@ -7,6 +7,7 @@ import {
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
 import {getType} from 'alinea/core/Internal'
+import {EntryUpdate} from 'alinea/core/db/EntryIndex'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -15,7 +16,7 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundVisibilityOff} from 'alinea/ui/icons/IcRoundVisibilityOff'
 import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
-import {changedEntriesAtom} from '../atoms/DbAtoms.js'
+import {dbAtom} from '../atoms/DbAtoms.js'
 import {
   type EntryTreeItem,
   rootId,
@@ -133,6 +134,7 @@ export interface EntryTreeProps {
 
 export function EntryTree({id, selected = []}: EntryTreeProps) {
   const root = useRoot()
+  const db = useAtomValue(dbAtom)
   const {schema} = useConfig()
   const treeProvider = useEntryTreeProvider()
   const navigate = useNavigate()
@@ -166,7 +168,6 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
       // hotkeysCoreFeature
     ]
   })
-  const changed = useAtomValue(changedEntriesAtom)
   useEffect(() => {
     ;(async () => {
       for (const id of selected) {
@@ -187,13 +188,14 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
     }
   }, [treeProvider])
   useEffect(() => {
-    for (const id of changed) {
+    db.index.addEventListener(EntryUpdate.type, listen)
+    return () => db.index.removeEventListener(EntryUpdate.type, listen)
+    function listen(event: Event) {
+      if (!(event instanceof EntryUpdate)) return
+      const id = event.id
       try {
         const item = tree.getItemInstance(id)
-        if (!item) {
-          tree.invalidateChildrenIds(rootId(root.name))
-          continue
-        }
+        if (!item) return
         const parent = item.getParent()
         const parentId = parent?.getId()
         if (parentId) tree.invalidateChildrenIds(parentId)
@@ -204,7 +206,7 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
         console.error(e)
       }
     }
-  }, [changed])
+  }, [db])
   return (
     <>
       <div ref={tree.registerElement} className={styles.tree()}>

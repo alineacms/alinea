@@ -7,7 +7,7 @@ import {Page} from 'alinea/core/Page'
 import {Schema} from 'alinea/core/Schema'
 import type {EntryUrlMeta} from 'alinea/core/Type'
 import {entryInfo} from 'alinea/core/util/EntryFilenames'
-import {validateOrderKey} from 'alinea/core/util/FractionalIndexing'
+import {isValidOrderKey} from 'alinea/core/util/FractionalIndexing'
 import {entries, keys} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
@@ -94,7 +94,6 @@ export class EntryIndex extends EventTarget {
           })
           .toRequest()
         const contentChanges = sourceChanges(request.changes)
-        console.log(contentChanges)
         await source.applyChanges(contentChanges)
         await this.indexChanges(contentChanges)
       }
@@ -289,12 +288,25 @@ class EntryNode {
 
     // Per ID: all have locale or none have locale
     if (locale === null) assert(this.locales.size === 1)
+
+    if (this.#parent) {
+      const hasArchived = this.#parent.locales.get(locale)?.get('archived')
+      if (hasArchived) {
+        entry.status = 'archived'
+      } else {
+        const hasDraft = this.#parent.locales.get(locale)?.get('draft')
+        // Per ID&locale&published: all parents are published
+        if (hasDraft)
+          assert(
+            entry.status === 'draft',
+            `Entry ${entry.filePath} needs a published parent`
+          )
+      }
+    }
+
     // Per ID&locale: one of published or archived, but not both
     if (entry.status === 'published') {
       assert(!versions.has('archived'))
-      // Per ID&locale&published: all parents are published
-      if (this.#parent)
-        assert(this.#parent.locales.get(locale)?.get('published'))
     }
     if (entry.status === 'archived') assert(!versions.has('published'))
     // Per ID&locale: only one draft
@@ -362,7 +374,7 @@ class EntryNode {
     // Per ID: all have same type
     assert(a.type === b.type, 'Type mismatch')
     // Per ID: all have same index, index is valid fractional index
-    validateOrderKey(a.index)
+    assert(isValidOrderKey(a.index), 'Invalid index')
     assert(
       a.index === b.index,
       `Index mismatch ${a.filePath} (${a.index}) != ${b.filePath} (${b.index})`
@@ -375,7 +387,9 @@ function getNodePath(filePath: string) {
   const dir = filePath.slice(0, lastSlash)
   const name = filePath.slice(lastSlash + 1)
   const lastDot = name.lastIndexOf('.')
-  const base = name.slice(0, lastDot)
+  let base = name.slice(0, lastDot)
+  if (base.endsWith('.archived')) base = base.slice(0, -'.archived'.length)
+  if (base.endsWith('.draft')) base = base.slice(0, -'.draft'.length)
   return `${dir}/${base}`
 }
 

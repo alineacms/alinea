@@ -1,5 +1,5 @@
 import {EntryDB} from 'alinea/core/db/EntryDB'
-import {IndexUpdate} from 'alinea/core/db/EntryIndex'
+import {EntryUpdate, IndexUpdate} from 'alinea/core/db/EntryIndex'
 import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource'
 import {atom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
@@ -45,15 +45,27 @@ export const changedEntriesAtom = atom(
   get => get(changedAtom),
   (get, set, ids: Array<string>) => {
     set(changedAtom, ids)
-    for (const id of ids) set(entryRevisionAtoms(id))
+    //for (const id of ids) set(entryRevisionAtoms(id))
   }
 )
 export const entryRevisionAtoms = atomFamily((id: string) => {
-  const revision = atom(0)
-  return atom(
-    get => get(revision),
-    (get, set) => set(revision, i => i + 1)
+  const index = atom(0)
+  const revision = atom(
+    get => get(index),
+    (get, set) => {
+      const local = get(localDb)
+      const markEntry = (event: Event) => {
+        if (event instanceof EntryUpdate && event.id === id)
+          set(index, i => i + 1)
+      }
+      local.index.addEventListener(EntryUpdate.type, markEntry)
+      return () => {
+        local.index.removeEventListener(EntryUpdate.type, markEntry)
+      }
+    }
   )
+  revision.onMount = init => init()
+  return atom(get => get(revision))
 })
 
 export function useDbUpdater(everySeconds = 30) {

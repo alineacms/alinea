@@ -63,10 +63,12 @@ export class DevDB extends LocalDB {
   }
 
   async commit(request: CommitRequest): Promise<string> {
+    if (this.sha === request.intoSha) return this.sha
+    if (this.sha !== request.fromSha) throw new Error('Invalid commit request')
     const {rootDir} = this.#options
     for (const change of request.changes) {
       switch (change.op) {
-        // Uploaded files are will be put in the right folder by the server
+        // Uploaded files will be put in the right folder by the server
         // during upload
         case 'removeFile': {
           const location = join(rootDir, change.location)

@@ -177,6 +177,7 @@ export const entryEditorAtoms = atomFamily(
       const parentNeedsTranslation = entry.parentId ? !parentLink : false
       const parents = withParents?.parents ?? []
       const canPublish = parents.every(parent => parent.status === 'published')
+      console.log({canPublish, parents})
       if (versions.length === 0) return undefined
       const statuses = fromEntries(
         versions.map(version => [version.status, version])
@@ -322,10 +323,7 @@ export function createEntryEditor(entryData: EntryData) {
       id: entry.id,
       locale: entry.locale,
       status: 'draft',
-      set: {
-        ...entry,
-        data: entry.data
-      }
+      set: entry.data
     })
   })
 
@@ -364,10 +362,7 @@ export function createEntryEditor(entryData: EntryData) {
       parentId,
       locale,
       status: 'published',
-      set: {
-        ...entry,
-        data: entry.data
-      }
+      set: entry.data
     })
   })
 
@@ -438,10 +433,7 @@ export function createEntryEditor(entryData: EntryData) {
       id: entry.id,
       locale: entry.locale,
       status: 'published',
-      set: {
-        ...entry,
-        data: entry.data
-      }
+      set: entry.data
     })
     /*mutations.push({
       type: MutationType.Edit,
@@ -482,10 +474,7 @@ export function createEntryEditor(entryData: EntryData) {
       id: entry.id,
       locale: entry.locale,
       status: 'published',
-      set: {
-        ...entry,
-        data: entry.data
-      }
+      set: entry.data
     })
     /*const editedFile = entryFile(entry)
     const mutation: Mutation = {

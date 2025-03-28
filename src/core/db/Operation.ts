@@ -182,20 +182,20 @@ export class UploadOperation extends Operation {
   id = createId()
 
   constructor(query: UploadQuery) {
-    super(async ({config, prepareUpload}): Promise<Array<Mutation>> => {
+    super(async (db): Promise<Array<Mutation>> => {
       const entryId = this.id
       const {file, createPreview} = query
       const {workspace: _workspace, root: _root, parentId: _parentId} = query
       const fileName = Array.isArray(file) ? file[0] : file.name
       const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
-      const workspace = _workspace ?? Object.keys(config.workspaces)[0]
+      const workspace = _workspace ?? Object.keys(db.config.workspaces)[0]
       const root =
-        _root ?? Workspace.defaultMediaRoot(config.workspaces[workspace])
+        _root ?? Workspace.defaultMediaRoot(db.config.workspaces[workspace])
       const extension = extname(fileName)
       const path = slugify(basename(fileName, extension))
-      const directory = workspaceMediaDir(config, workspace)
+      const directory = workspaceMediaDir(db.config, workspace)
       const uploadLocation = join(directory, path + extension)
-      const info = await prepareUpload(uploadLocation)
+      const info = await db.prepareUpload(uploadLocation)
       const previewData = isImage(fileName)
         ? await createPreview?.(file instanceof Blob ? file : new Blob([body]))
         : undefined
@@ -210,7 +210,7 @@ export class UploadOperation extends Operation {
       )
       const title = basename(fileName, extension)
       const hash = await createFileHash(new Uint8Array(body))
-      const {mediaDir} = Workspace.data(config.workspaces[workspace])
+      const {mediaDir} = Workspace.data(db.config.workspaces[workspace])
       const prefix = mediaDir && normalize(mediaDir)
       const fileLocation =
         prefix && info.location.startsWith(prefix)
