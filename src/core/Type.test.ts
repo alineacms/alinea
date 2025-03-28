@@ -1,7 +1,6 @@
+import {suite} from '@alinea/suite'
 import {Type, type} from 'alinea/core/Type'
 import {list, richText, text} from 'alinea/field'
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
 import {ElementNode, Node, TextNode} from './TextDoc.js'
 import {ListRow} from './shape/ListShape.js'
 
@@ -43,9 +42,9 @@ const value = {
   ]
 }
 
+const test = suite(import.meta)
+
 test('Searchable text', () => {
   const text = Type.searchableText(Test, value)
-  assert.is(text, 'B D Rich text Lorem ipsum')
+  test.is(text, 'B D Rich text Lorem ipsum')
 })
-
-test.run()

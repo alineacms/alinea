@@ -1,5 +1,5 @@
-import {Reference} from 'alinea/core/Reference'
-import {UrlReference} from 'alinea/picker/url'
+import type {Reference} from 'alinea/core/Reference'
+import type {UrlReference} from 'alinea/picker/url'
 import {HStack, Icon, px, Typo} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcAlignCenter} from 'alinea/ui/icons/IcAlignCenter'
@@ -19,7 +19,7 @@ import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 /*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
 import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
 import styler from '@alinea/styler'
-import {Editor} from '@tiptap/react'
+import type {Editor} from '@tiptap/react'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {IcRoundSubscript} from 'alinea/ui/icons/IcRoundSubscript'
@@ -33,8 +33,8 @@ import {TableInsertColumnAfter} from 'alinea/ui/icons/TableInsertColumnAfter'
 import {TableInsertColumnBefore} from 'alinea/ui/icons/TableInsertColumnBefore'
 import {TableInsertRowAfter} from 'alinea/ui/icons/TableInsertRowAfter'
 import {TableInsertRowBefore} from 'alinea/ui/icons/TableInsertRowBefore'
-import {forwardRef, Ref} from 'react'
-import {PickTextLinkFunc} from './PickTextLink.js'
+import {forwardRef, type Ref} from 'react'
+import type {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import css from './RichTextToolbar.module.scss'
 
@@ -76,14 +76,14 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
   const selectedStyle = editor.isActive('heading', {level: 1})
     ? 'h1'
     : editor.isActive('heading', {level: 2})
-    ? 'h2'
-    : editor.isActive('heading', {level: 3})
-    ? 'h3'
-    : editor.isActive('heading', {level: 4})
-    ? 'h4'
-    : editor.isActive('heading', {level: 5})
-    ? 'h5'
-    : 'paragraph'
+      ? 'h2'
+      : editor.isActive('heading', {level: 3})
+        ? 'h3'
+        : editor.isActive('heading', {level: 4})
+          ? 'h4'
+          : editor.isActive('heading', {level: 5})
+            ? 'h5'
+            : 'paragraph'
 
   const selectedTable = editor.isActive('table')
 
@@ -315,10 +315,10 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                     editor.isActive({textAlign: 'center'})
                       ? IcAlignCenter
                       : editor.isActive({textAlign: 'right'})
-                      ? IcAlignRight
-                      : editor.isActive({textAlign: 'justify'})
-                      ? IcAlignJustify
-                      : IcAlignLeft
+                        ? IcAlignRight
+                        : editor.isActive({textAlign: 'justify'})
+                          ? IcAlignJustify
+                          : IcAlignLeft
                   }
                   size={18}
                 />

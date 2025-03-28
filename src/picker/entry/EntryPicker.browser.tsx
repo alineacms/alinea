@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
-import {QueryWithResult} from 'alinea/core/Graph'
+import type {QueryWithResult} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
-import {PickerProps, pickerWithView} from 'alinea/core/Picker'
+import {type PickerProps, pickerWithView} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
@@ -21,7 +21,7 @@ import {Modal} from 'alinea/dashboard/view/Modal'
 import {Langswitch} from 'alinea/dashboard/view/entry/LangSwitch'
 import {
   Explorer,
-  ExporerItemSelect
+  type ExporerItemSelect
 } from 'alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
 import {Button, HStack, Icon, Loader, Stack, TextLabel, VStack} from 'alinea/ui'
@@ -34,8 +34,8 @@ import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {Suspense, useCallback, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {
-  EditorInfo,
-  EntryPickerOptions,
+  type EditorInfo,
+  type EntryPickerOptions,
   entryPicker as createEntryPicker
 } from './EntryPicker.js'
 import css from './EntryPicker.module.scss'
@@ -114,8 +114,8 @@ export function EntryPickerModal({
   const destinationLocale = !destinationRoot.i18n
     ? undefined
     : locales && destination.locale && locales.includes(destination.locale)
-    ? destination.locale
-    : destinationRoot.i18n.locales[0]
+      ? destination.locale
+      : destinationRoot.i18n.locales[0]
   const {data: parentEntries} = useQuery(
     ['picker-parents', destination, destinationLocale],
     async () => {
@@ -164,7 +164,7 @@ export function EntryPickerModal({
           _root: destination.root,
           _parentId:
             withNavigation || pickChildren
-              ? destination.parentId ?? null
+              ? (destination.parentId ?? null)
               : undefined,
           _locale: destinationLocale
         }
@@ -326,7 +326,6 @@ export function EntryPickerModal({
                 onChange={event => setSearch(event.target.value)}
                 className={styles.root.search.input()}
                 {...list.focusProps}
-                autoFocus
               />
               <Stack.Right>
                 <HStack gap={16}>

@@ -1,4 +1,4 @@
-import {Atom, atom} from 'jotai'
+import {type Atom, atom} from 'jotai'
 import {loadable} from 'jotai/utils'
 
 export interface LoaderState<T> {

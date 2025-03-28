@@ -17,18 +17,18 @@ type Pair<T> = [T, undefined] | [undefined, Error]
 type OutcomeReturn<T> = T extends () => Promise<infer X>
   ? Promise<Outcome<X>>
   : T extends () => infer X
-  ? Outcome<X>
-  : T extends Promise<infer X>
-  ? Promise<Outcome<X>>
-  : Outcome<T>
+    ? Outcome<X>
+    : T extends Promise<infer X>
+      ? Promise<Outcome<X>>
+      : Outcome<T>
 
 type OutcomeResult<T> = T extends () => Promise<any>
   ? Promise<boolean>
   : T extends () => any
-  ? boolean
-  : T extends Promise<any>
-  ? Promise<boolean>
-  : boolean
+    ? boolean
+    : T extends Promise<any>
+      ? Promise<boolean>
+      : boolean
 
 export function outcome<Run extends OutcomeRunner>(
   run: Run
@@ -36,15 +36,19 @@ export function outcome<Run extends OutcomeRunner>(
   try {
     if (typeof run === 'function') {
       const result = run()
-      if (result instanceof Promise) return outcome(result) as any
+      if (isPromiseLike(result)) return outcome(result) as any
       return Outcome.Success(result) as any
     }
-    if (run instanceof Promise)
+    if (isPromiseLike(run))
       return run.then(Outcome.Success).catch(Outcome.Failure) as any
     return Outcome.Success(run) as any
   } catch (e: any) {
     return Outcome.Failure(e) as any
   }
+}
+
+function isPromiseLike(value: any): value is Promise<unknown> {
+  return value && typeof value === 'object' && 'then' in value
 }
 
 export namespace outcome {

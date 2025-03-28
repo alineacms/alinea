@@ -1,5 +1,5 @@
 import {Entry} from 'alinea/core/Entry'
-import {
+import type {
   GraphQuery,
   IncludeGuard,
   SelectionGuard,

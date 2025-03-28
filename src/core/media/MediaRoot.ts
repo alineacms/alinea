@@ -1,6 +1,6 @@
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
-import {Page} from '../Page.js'
-import {Root, root} from '../Root.js'
+import type {Page} from '../Page.js'
+import {type Root, root} from '../Root.js'
 
 export type MediaRoot<Children extends Record<string, Page>> = Root<Children>
 

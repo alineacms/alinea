@@ -7,5 +7,8 @@ export enum HandleAction {
   History = 'history',
   PreviewToken = 'previewToken',
   Mutate = 'mutate',
-  Upload = 'upload'
+  Upload = 'upload',
+  Tree = 'tree',
+  Commit = 'commit',
+  Blob = 'blob'
 }

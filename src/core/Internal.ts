@@ -1,8 +1,8 @@
-import {ExprInternal} from './Expr.js'
-import {FieldInternal} from './Field.js'
-import {RootInternal} from './Root.js'
-import {TypeInternal} from './Type.js'
-import {WorkspaceInternal} from './Workspace.js'
+import type {ExprInternal} from './Expr.js'
+import type {FieldInternal} from './Field.js'
+import type {RootInternal} from './Root.js'
+import type {TypeInternal} from './Type.js'
+import type {WorkspaceInternal} from './Workspace.js'
 
 // The choice of types over interfaces is to work around
 // microsoft/TypeScript#15300

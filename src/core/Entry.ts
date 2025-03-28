@@ -1,6 +1,13 @@
-import {EntryRow, EntryStatus} from './EntryRow.js'
+import type {EntryRow} from './EntryRow.js'
 import {Expr} from './Expr.js'
-import {Expand} from './util/Types.js'
+import type {Expand} from './util/Types.js'
+
+export type EntryStatus = 'draft' | 'published' | 'archived'
+export const entryStatuses = Array<EntryStatus>(
+  'draft',
+  'published',
+  'archived'
+)
 
 export interface Entry {
   id: string

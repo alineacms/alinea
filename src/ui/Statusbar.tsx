@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import type {ComponentType} from 'react'
-import {PropsWithChildren} from 'react'
+import type {PropsWithChildren} from 'react'
 import {Icon} from './Icon.js'
 import {HStack} from './Stack.js'
 import css from './Statusbar.module.scss'

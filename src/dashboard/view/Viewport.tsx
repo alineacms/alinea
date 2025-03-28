@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {useContrastColor} from 'alinea/ui/hook/UseContrastColor'
-import {HTMLProps, PropsWithChildren, useEffect, useLayoutEffect} from 'react'
+import {type HTMLProps, type PropsWithChildren, useEffect, useLayoutEffect} from 'react'
 import {usePreferences} from '../hook/UsePreferences.js'
 import css from './Viewport.module.scss'
 

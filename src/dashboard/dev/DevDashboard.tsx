@@ -1,14 +1,14 @@
+import type {CMS} from 'alinea/core/CMS'
 import {Client} from 'alinea/core/Client'
-import {CMS} from 'alinea/core/CMS'
 import {useSetAtom} from 'jotai'
-import {ComponentType, useEffect, useState} from 'react'
+import {type ComponentType, useEffect, useState} from 'react'
 import {QueryClient} from 'react-query'
-import {App, AppProps} from '../App.js'
+import {App, type AppProps} from '../App.js'
 import {dbUpdateAtom} from '../atoms/DbAtoms.js'
 
 type DevReloadOptions = {
   refresh: () => Promise<void>
-  refetch: () => void
+  refetch: () => Promise<void>
   open: () => void
   close: () => void
 }
@@ -49,7 +49,7 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
       'link[href^="/config.css"]'
     ) as HTMLLinkElement
     const copy = link.cloneNode() as HTMLLinkElement
-    copy.href = '/config.css?' + Math.random()
+    copy.href = `/config.css?${Math.random()}`
     copy.onload = () => link.remove()
     link.after(copy)
     const config = await loadConfig()
@@ -62,8 +62,8 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
   useEffect(() => {
     getConfig()
     return setupDevReload({
-      refresh: () => getConfig().then(() => forceDbUpdate(true)),
-      refetch: () => forceDbUpdate(true),
+      refresh: () => getConfig().then(() => forceDbUpdate()),
+      refetch: () => forceDbUpdate(),
       open: () => setConnected(true),
       close: () => setConnected(false)
     })

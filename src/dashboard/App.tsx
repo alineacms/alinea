@@ -1,5 +1,5 @@
 import {Config} from 'alinea/core/Config'
-import {Connection} from 'alinea/core/Connection'
+import type {LocalConnection} from 'alinea/core/Connection'
 import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
@@ -8,8 +8,8 @@ import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
-import {ComponentType, useEffect} from 'react'
-import {QueryClient} from 'react-query'
+import {type ComponentType, useEffect} from 'react'
+import type {QueryClient} from 'react-query'
 import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
 import {router} from './Routes.js'
@@ -74,7 +74,7 @@ function AppAuthenticated() {
   const locale = useLocale()
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
-  const meta = useAtomValue(dbMetaAtom)
+  const sha = useAtomValue(dbMetaAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -132,13 +132,11 @@ function AppAuthenticated() {
                 </SuspenseBoundary>
               </ErrorBoundary>
             </div>
-            {alineaDev && (
-              <Statusbar.Root>
-                <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                  {meta.contentHash}
-                </Statusbar.Status>
-              </Statusbar.Root>
-            )}
+            <Statusbar.Root>
+              <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                {sha.slice(0, 7)}
+              </Statusbar.Status>
+            </Statusbar.Root>
           </Sidebar.Provider>
         </Toolbar.Provider>
       </Statusbar.Provider>
@@ -178,7 +176,7 @@ function AppRoot() {
 export interface AppProps {
   config: Config
   views: Record<string, ComponentType<any>>
-  client: Connection
+  client: LocalConnection
   queryClient?: QueryClient
   fullPage?: boolean
   dev?: boolean

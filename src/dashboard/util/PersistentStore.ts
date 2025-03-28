@@ -1,10 +1,10 @@
 import sqlInit from '@alinea/sqlite-wasm'
-import {Store} from 'alinea/backend/Store'
+import type {Store} from 'alinea/backend/Store'
 import * as idb from 'lib0/indexeddb.js'
 import {connect} from 'rado/driver/sql.js'
 import pkg from '../../../package.json'
 
-const STORAGE_NAME = `@alinea/peristent.store`
+const STORAGE_NAME = '@alinea/peristent.store'
 const dbName = `db-${pkg.version}`
 
 export interface PersistentStore {
@@ -74,7 +74,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
     store: connect(db),
     async flush() {
       store = idb.transact(storage, [STORAGE_NAME], 'readwrite')[0]
-      await idb.put(store, db.export().buffer as ArrayBuffer, dbName)
+      await idb.put(store, db.export() as any, dbName)
     },
     clone() {
       const clone = new Database(db.export())

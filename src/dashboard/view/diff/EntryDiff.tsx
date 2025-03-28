@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {EntryRow} from 'alinea/core/EntryRow'
+import type {EntryRow} from 'alinea/core/EntryRow'
 import {Type} from 'alinea/core/Type'
 import {Chip, TextLabel} from 'alinea/ui'
 import {useConfig} from '../../hook/UseConfig.js'

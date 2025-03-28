@@ -12,7 +12,7 @@ function base62(view: DataView) {
   if (view.byteLength !== 20) {
     throw new Error('incorrect buffer size')
   }
-  let str = new Array(27).fill('0')
+  const str = new Array(27).fill('0')
   let n = 27
   let bp = new Array(5)
   bp[0] = view.getUint32(0, false)
@@ -24,14 +24,14 @@ function base62(view: DataView) {
   const srcBase = 4294967296n
   const dstBase = 62n
 
-  while (bp.length != 0) {
-    let quotient = []
+  while (bp.length !== 0) {
+    const quotient = []
     let remainder = 0
 
     for (const c of bp) {
-      let value = BigInt(c) + BigInt(remainder) * srcBase
+      const value = BigInt(c) + BigInt(remainder) * srcBase
 
-      let digit = value / dstBase
+      const digit = value / dstBase
 
       remainder = Number(value % dstBase)
 
@@ -82,12 +82,12 @@ function debase62(str: string) {
   }
   let n = 20
   while (bp.length !== 0) {
-    let quotient = []
+    const quotient = []
     let remainder = 0n
 
     for (const c of bp) {
-      let value = BigInt(c) + BigInt(remainder) * srcBase
-      let digit = value / dstBase
+      const value = BigInt(c) + BigInt(remainder) * srcBase
+      const digit = value / dstBase
       remainder = value % dstBase
 
       if (quotient.length !== 0 || digit !== 0n) {
@@ -161,7 +161,7 @@ function generate(desc = false, timestamp = Date.now()) {
   for (const b of rnd) {
     view.setUint8(offset++, b)
   }
-  if (desc) return 'z' + base62(view)
+  if (desc) return `z${base62(view)}`
   return base62(view)
 }
 
@@ -174,8 +174,8 @@ function parse(ksuid: string) {
   if (ksuid.length > 28 || ksuid.length < 27) {
     throw new Error(`Incorrect length: ${ksuid.length}, expected 27 or 28`)
   }
-  const desc = ksuid.length === 28 && ksuid[0] == 'z'
-  if (ksuid.length === 28 && ksuid[0] != 'z') {
+  const desc = ksuid.length === 28 && ksuid[0] === 'z'
+  if (ksuid.length === 28 && ksuid[0] !== 'z') {
     throw new Error(`KSUID is 28 symbol, but first char is not "z"`)
   }
   const buf = debase62(desc ? ksuid.slice(1, 28) : ksuid)

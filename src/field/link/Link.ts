@@ -1,19 +1,19 @@
 import type {WithoutLabel} from 'alinea/core/Field'
-import {Label} from 'alinea/core/Label'
-import {Type} from 'alinea/core/Type'
+import type {Label} from 'alinea/core/Label'
+import type {Type} from 'alinea/core/Type'
 import type {ListRow} from 'alinea/core/shape/ListShape'
-import {FileLink, filePicker} from 'alinea/field/link/FileLink'
+import {type FileLink, filePicker} from 'alinea/field/link/FileLink'
 import {
   createLink,
   createLinks,
-  LinkField,
-  LinkFieldOptions
+  type LinkField,
+  type LinkFieldOptions
 } from 'alinea/field/link/LinkField'
-import {entryPicker, EntryPickerConditions} from 'alinea/picker/entry'
-import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {urlPicker, UrlReference} from 'alinea/picker/url'
+import {entryPicker, type EntryPickerConditions} from 'alinea/picker/entry'
+import type {EntryReference} from 'alinea/picker/entry/EntryReference'
+import {urlPicker, type UrlReference} from 'alinea/picker/url'
 import {EntryLink} from './EntryLink.js'
-import {UrlLink} from './UrlLink.js'
+import type {UrlLink} from './UrlLink.js'
 
 export type Link<InferredFields> =
   | EntryLink<InferredFields>

@@ -1,12 +1,12 @@
 import styler from '@alinea/styler'
-import {Entry} from 'alinea/core/Entry'
+import type {Entry} from 'alinea/core/Entry'
 import {HStack, Icon, VStack} from 'alinea/ui'
 import {IcOutlineCloudUpload} from 'alinea/ui/icons/IcOutlineCloudUpload'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
-import {ChangeEvent, useEffect, useState} from 'react'
+import {type ChangeEvent, useEffect, useState} from 'react'
 import {
-  UploadDestination,
+  type UploadDestination,
   UploadStatus,
   useUploads
 } from '../../hook/UseUploads.js'

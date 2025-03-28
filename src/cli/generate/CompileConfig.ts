@@ -1,13 +1,12 @@
-import {BuildOptions} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
+import type {BuildOptions} from 'esbuild'
 import {buildEmitter} from '../build/BuildEmitter.js'
 import {buildOptions} from '../build/BuildOptions.js'
 import {externalPlugin} from '../util/ExternalPlugin.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
-import {reportHalt} from '../util/Report.js'
-import {GenerateContext} from './GenerateContext.js'
+import type {GenerateContext} from './GenerateContext.js'
 import {loadCMS} from './LoadConfig.js'
 
 function buildConfig(ctx: GenerateContext): BuildOptions {
@@ -34,7 +33,7 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
 
 export async function* compileConfig(ctx: GenerateContext) {
   const {outDir, configLocation, cmd} = ctx
-  let config = buildConfig(ctx)
+  const config = buildConfig(ctx)
   const location = path
     .relative(process.cwd(), configLocation)
     .replace(/\\/g, '/')
@@ -45,7 +44,7 @@ export async function* compileConfig(ctx: GenerateContext) {
     sourcemap: true
   })
   const halt = (message: string, error?: Error) => {
-    reportHalt(message, error)
+    halt(message, error)
     if (cmd === 'dev') return
     builds.return()
   }

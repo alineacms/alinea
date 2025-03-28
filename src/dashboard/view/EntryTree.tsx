@@ -1,13 +1,13 @@
 import styler from '@alinea/styler'
 import {
-  ItemInstance,
+  type ItemInstance,
   asyncDataLoaderFeature,
   dragAndDropFeature,
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import {getType} from 'alinea/core/Internal'
+import {EntryUpdate} from 'alinea/core/db/EntryIndex'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -16,9 +16,9 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundVisibilityOff} from 'alinea/ui/icons/IcRoundVisibilityOff'
 import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
-import {changedEntriesAtom} from '../atoms/DbAtoms.js'
+import {dbAtom} from '../atoms/DbAtoms.js'
 import {
-  EntryTreeItem,
+  type EntryTreeItem,
   rootId,
   useEntryTreeProvider
 } from '../atoms/EntryAtoms.js'
@@ -36,13 +36,13 @@ function selectedEntry(locale: string | null, item: EntryTreeItem) {
   return item.entries.find(entry => entry.locale === locale) ?? item.entries[0]
 }
 
-interface EntryTreeItemProps {
+interface TreeItemProps {
   item: ItemInstance<EntryTreeItem>
   data: EntryTreeItem
 }
 
-function EntryTreeItem({item, data}: EntryTreeItemProps) {
-  const {id: id} = useAtomValue(entryLocationAtom)
+function TreeItem({item, data}: TreeItemProps) {
+  const {id} = useAtomValue(entryLocationAtom)
   const locale = useLocale()
   const {schema} = useConfig()
   const currentData = useRef<EntryTreeItem>(data)
@@ -52,10 +52,10 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
   currentData.current = itemData
   const selected = selectedEntry(locale, itemData)
   const {icon} = getType(schema[selected.type])
-  const isDraft = selected.status === EntryStatus.Draft
+  const isDraft = selected.status === 'draft'
   const isUntranslated = locale && selected.locale !== locale
-  const isArchived = selected.status === EntryStatus.Archived
-  const isUnpublished = selected.status === EntryStatus.Archived
+  const isArchived = selected.status === 'archived'
+  const isUnpublished = selected.status === 'archived'
   const isSelected = id && itemData.id === id
 
   return (
@@ -74,6 +74,7 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
       data-id={item.getId()}
     >
       <button
+        type="button"
         className={styles.tree.item.label()}
         title={selectedEntry(locale, itemData).title}
         style={{paddingLeft: px((item.getItemMeta().level + 1) * 12)}}
@@ -84,8 +85,8 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
               isUntranslated
                 ? IcRoundTranslate
                 : isUnpublished
-                ? IcRoundVisibilityOff
-                : icon ?? IcOutlineDescription
+                  ? IcRoundVisibilityOff
+                  : (icon ?? IcOutlineDescription)
             }
           />
         </span>
@@ -133,6 +134,7 @@ export interface EntryTreeProps {
 
 export function EntryTree({id, selected = []}: EntryTreeProps) {
   const root = useRoot()
+  const db = useAtomValue(dbAtom)
   const {schema} = useConfig()
   const treeProvider = useEntryTreeProvider()
   const navigate = useNavigate()
@@ -166,7 +168,6 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
       // hotkeysCoreFeature
     ]
   })
-  const changed = useAtomValue(changedEntriesAtom)
   useEffect(() => {
     ;(async () => {
       for (const id of selected) {
@@ -187,13 +188,14 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
     }
   }, [treeProvider])
   useEffect(() => {
-    for (const id of changed) {
+    db.index.addEventListener(EntryUpdate.type, listen)
+    return () => db.index.removeEventListener(EntryUpdate.type, listen)
+    function listen(event: Event) {
+      if (!(event instanceof EntryUpdate)) return
+      const id = event.id
       try {
         const item = tree.getItemInstance(id)
-        if (!item) {
-          tree.invalidateChildrenIds(rootId(root.name))
-          continue
-        }
+        if (!item) return
         const parent = item.getParent()
         const parentId = parent?.getId()
         if (parentId) tree.invalidateChildrenIds(parentId)
@@ -204,13 +206,13 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
         console.error(e)
       }
     }
-  }, [changed])
+  }, [db])
   return (
     <>
       <div ref={tree.registerElement} className={styles.tree()}>
         {tree.getItems().map((item, i) => {
           const data = item.getItemData()
-          return <EntryTreeItem key={item.getId()} item={item} data={data} />
+          return <TreeItem key={item.getId()} item={item} data={data} />
         })}
       </div>
     </>

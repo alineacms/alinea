@@ -1,6 +1,6 @@
-import {Field, FieldOptions, WithoutLabel} from '../Field.js'
-import {Expand} from '../util/Types.js'
-import {View} from '../View.js'
+import type {Field, FieldOptions, WithoutLabel} from '../Field.js'
+import type {Expand} from '../util/Types.js'
+import type {View} from '../View.js'
 import {ScalarField} from './ScalarField.js'
 
 export interface Create<Value, Options = object>

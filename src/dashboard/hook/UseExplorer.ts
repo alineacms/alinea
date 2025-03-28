@@ -1,6 +1,6 @@
-import {Reference} from 'alinea/core/Reference'
+import type {Reference} from 'alinea/core/Reference'
 import {createContext, useContext} from 'react'
-import {ExporerItemSelect} from '../view/explorer/Explorer.js'
+import type {ExporerItemSelect} from '../view/explorer/Explorer.js'
 
 type ExplorerContext = {
   selectable?: Array<string> | boolean

@@ -4,7 +4,7 @@ import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {base64} from '../util/Encoding.js'
 import type {ImagePreviewDetails} from './CreatePreview.js'
 
-export {ImagePreviewDetails}
+export type {ImagePreviewDetails}
 
 export async function createPreview(blob: Blob): Promise<ImagePreviewDetails> {
   const url = URL.createObjectURL(blob)

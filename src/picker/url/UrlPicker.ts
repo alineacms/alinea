@@ -1,4 +1,4 @@
-import {Picker} from 'alinea/core/Picker'
+import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Type, type} from 'alinea/core/Type'
 import {ListRow} from 'alinea/core/shape/ListShape'

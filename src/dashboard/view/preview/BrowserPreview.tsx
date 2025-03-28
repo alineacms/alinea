@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
-import {PreviewMetadata} from 'alinea/core/Preview'
-import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
+import type {PreviewMetadata} from 'alinea/core/Preview'
+import {PreviewAction, type PreviewMessage} from 'alinea/preview/PreviewMessage'
 import {HStack, Loader, Typo, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
@@ -9,14 +9,14 @@ import {IcRoundLock} from 'alinea/ui/icons/IcRoundLock'
 import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {IcRoundRefresh} from 'alinea/ui/icons/IcRoundRefresh'
 import {
-  PropsWithChildren,
+  type PropsWithChildren,
   createContext,
   useContext,
   useEffect,
   useRef,
   useState
 } from 'react'
-import {LivePreview} from '../entry/EntryPreview.js'
+import type {LivePreview} from '../entry/EntryPreview.js'
 import css from './BrowserPreview.module.scss'
 
 const styles = styler(css)
@@ -191,7 +191,7 @@ export function BrowserPreview({
           <AppBar.Item
             as="a"
             icon={IcRoundOpenInNew}
-            href={url + '&full'}
+            href={`${url}&full`}
             target="_blank"
           />
         </HStack>

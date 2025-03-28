@@ -1,4 +1,4 @@
-import {Atom, atom} from 'jotai'
+import {type Atom, atom} from 'jotai'
 
 const cached = new WeakMap<Atom<any>, any>()
 

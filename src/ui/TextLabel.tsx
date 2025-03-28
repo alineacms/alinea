@@ -1,4 +1,4 @@
-import {HTMLProps} from 'react'
+import type {HTMLProps} from 'react'
 
 export type TextLabelProps = {
   label: string

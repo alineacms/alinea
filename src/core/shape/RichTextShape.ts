@@ -1,15 +1,15 @@
-import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
+import type {LinkResolver} from 'alinea/core/db/LinkResolver'
 import * as Y from 'yjs'
 import {Entry} from '../Entry.js'
-import {Label} from '../Label.js'
-import {Shape} from '../Shape.js'
+import type {Label} from '../Label.js'
+import type {Shape} from '../Shape.js'
 import {
   BlockNode,
   ElementNode,
   LinkMark,
   Mark,
   Node,
-  TextDoc,
+  type TextDoc,
   TextNode
 } from '../TextDoc.js'
 import {MediaFile} from '../media/MediaTypes.js'
@@ -83,7 +83,7 @@ function serialize(
   if (attrs && Object.keys(attrs).length) Object.assign(res, attrs)
   const children = item.toArray()
   if (children.length) {
-    res.content = children.map(serialize).flat()
+    res.content = children.flatMap(serialize)
   }
   return res
 }
@@ -198,9 +198,9 @@ export class RichTextShape<Blocks>
           const {type, attrs} = mark
           if (type !== 'link') return {[Mark.type]: type, ...attrs}
           const {
-            ['data-id']: id,
-            ['data-entry']: entry,
-            ['data-type']: link,
+            'data-id': id,
+            'data-entry': entry,
+            'data-type': link,
             ...rest
           } = attrs
           const res: Record<string, string> = {}
@@ -224,7 +224,8 @@ export class RichTextShape<Blocks>
       }
     }
     const {content, ...rest} = data
-    if (type === 'heading' && rest.textAlign === 'left') delete rest.textAlign
+    if (type === 'heading' && rest.textAlign === 'left')
+      rest.textAlign = undefined
     const res = {[Node.type]: type, ...rest}
     if (content) res[ElementNode.content] = content.map(this.normalizeRow)
     return res
@@ -247,7 +248,7 @@ export class RichTextShape<Blocks>
     if (!map) return []
     const text: Y.XmlFragment = map.get('$text')
     const types = this.blocks ?? {}
-    const content = text?.toArray()?.map(serialize)?.flat() || []
+    const content = text?.toArray()?.flatMap(serialize) || []
     const [first] = content
     const isEmpty =
       content.length === 1 &&
@@ -267,7 +268,7 @@ export class RichTextShape<Blocks>
       }
       if (Node.isElement(node)) {
         if (node[Node.type] === 'heading') {
-          if (node.textAlign === 'left') delete node.textAlign
+          if (node.textAlign === 'left') node.textAlign = undefined
         }
       }
       return node
@@ -413,7 +414,7 @@ export class RichTextShape<Blocks>
       for (const [mark, entryId] of links) {
         const type = mark![LinkMark.link] as 'entry' | 'file' | undefined
         const data = info.get(entryId)
-        if (data) mark!['href'] = type === 'file' ? data.location : data.url
+        if (data) mark!.href = type === 'file' ? data.location : data.url
       }
     }
     await Promise.all(
@@ -429,7 +430,7 @@ export class RichTextShape<Blocks>
   }
 
   searchableText(value: TextDoc<Blocks>): string {
-    let res = ''
+    const res = ''
     if (!this.searchable) return res
     if (!Array.isArray(value)) return res
     return value.reduce((acc, node) => {
@@ -439,12 +440,14 @@ export class RichTextShape<Blocks>
 
   textOf(node: Node): string {
     if (Node.isText(node)) {
-      return node.text ? ' ' + node.text : ''
-    } else if (Node.isElement(node) && node.content) {
+      return node.text ? ` ${node.text}` : ''
+    }
+    if (Node.isElement(node) && node.content) {
       return node.content.reduce((acc, node) => {
         return acc + this.textOf(node)
       }, '')
-    } else if (Node.isBlock(node)) {
+    }
+    if (Node.isBlock(node)) {
       const shape = this.blocks[node[Node.type]]
       if (shape) return shape.searchableText(node)
     }

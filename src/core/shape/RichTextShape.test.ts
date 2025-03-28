@@ -1,8 +1,8 @@
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {RichTextShape} from 'alinea/core/shape/RichTextShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
+
+import {suite} from '@alinea/suite'
 import * as Y from 'yjs'
 import {BlockNode, Node} from '../TextDoc.js'
 
@@ -162,6 +162,8 @@ const value5 = [
   }
 ]
 
+const test = suite(import.meta)
+
 test('serialize', () => {
   // Changes are not reflected in Y types until mounted in a Y.Doc
   const doc = new Y.Doc()
@@ -169,7 +171,7 @@ test('serialize', () => {
   const root = doc.getMap(ROOT_KEY)
   root.set(FIELD_KEY, yType)
   const pass2 = shape.fromY(yType)
-  assert.equal(pass2, value1)
+  test.equal(pass2, value1)
 })
 
 test('apply over empty', () => {
@@ -177,7 +179,7 @@ test('apply over empty', () => {
   const root = doc.getMap(ROOT_KEY)
   shape.applyY(value1, root, FIELD_KEY)
   const pass1 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
-  assert.equal(pass1, value1)
+  test.equal(pass1, value1)
 })
 
 test('apply over existing', () => {
@@ -188,7 +190,7 @@ test('apply over existing', () => {
     shape.applyY(value2, root, FIELD_KEY)
   })
   const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
-  assert.equal(pass2, value2)
+  test.equal(pass2, value2)
 })
 
 test('update marks', () => {
@@ -200,7 +202,7 @@ test('update marks', () => {
     shape.applyY(value5, root, FIELD_KEY)
   })
   const pass3 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
-  assert.equal(pass3, value5)
+  test.equal(pass3, value5)
 })
 
 test('normalize', () => {
@@ -236,7 +238,5 @@ test('normalize', () => {
     }
   ]
   const normalized = shape.toV1(old)
-  assert.equal(normalized, value1)
+  test.equal(normalized, value1)
 })
-
-test.run()

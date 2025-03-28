@@ -1,9 +1,9 @@
-import {Config} from '../Config.js'
-import {ALT_STATUS, EntryRow, EntryStatus} from '../EntryRow.js'
+import type {Config} from '../Config.js'
+import {type EntryStatus, entryStatuses} from '../Entry.js'
+import {ALT_STATUS, type EntryRow} from '../EntryRow.js'
 import {getRoot, getType} from '../Internal.js'
-import {EntryUrlMeta, Type} from '../Type.js'
+import type {EntryUrlMeta, Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
-import {values} from './Objects.js'
 import {join} from './Paths.js'
 
 export function workspaceMediaDir(config: Config, workspace: string): string {
@@ -17,7 +17,7 @@ export function entryInfo(
   const status = ALT_STATUS.find(s => fileName.endsWith(`.${s}`))
   if (status) return [fileName.slice(0, -status.length - 1), status]
   // Otherwise, it's published
-  return [fileName, EntryStatus.Published]
+  return [fileName, 'published']
 }
 
 export function entryChildrenDir(
@@ -38,19 +38,16 @@ export function entryChildrenDir(
   if (!root) throw new Error(`Root "${entry.root}" does not exist`)
   const hasI18n = getRoot(root).i18n
   const {locale, path, status} = entry
-  if (hasI18n && !locale) throw new Error(`Entry is missing locale`)
-  if (!values(EntryStatus).includes(status))
+  if (hasI18n && !locale) throw new Error('Entry is missing locale')
+  if (!entryStatuses.includes(status))
     throw new Error(`Entry has unknown phase: ${status}`)
-  return (
-    '/' +
-    (locale ? [locale.toLowerCase()] : [])
-      .concat(
-        parentPaths
-          .concat(path)
-          .map(segment => (segment === '' ? 'index' : segment))
-      )
-      .join('/')
-  )
+  return `/${(locale ? [locale.toLowerCase()] : [])
+    .concat(
+      parentPaths
+        .concat(path)
+        .map(segment => (segment === '' ? 'index' : segment))
+    )
+    .join('/')}`
 }
 
 export function entryFilepath(
@@ -64,15 +61,13 @@ export function entryFilepath(
   },
   parentPaths: Array<string>
 ): string {
-  const {status: status} = entry
-  if (!values(EntryStatus).includes(status))
+  const {status} = entry
+  if (!entryStatuses.includes(status))
     throw new Error(`Entry has unknown phase: ${status}`)
-  const statusSegment = status === EntryStatus.Published ? '' : `.${status}`
-  const location = (
-    entryChildrenDir(config, entry, parentPaths) +
-    statusSegment +
-    '.json'
-  ).toLowerCase()
+  const statusSegment = status === 'published' ? '' : `.${status}`
+  const location = `${
+    entryChildrenDir(config, entry, parentPaths) + statusSegment
+  }.json`.toLowerCase()
   return location
 }
 
@@ -111,16 +106,13 @@ export function entryUrl(type: Type, meta: EntryUrlMeta) {
   const {entryUrl} = getType(type)
   if (entryUrl) return entryUrl(meta)
   const segments = meta.locale ? [meta.locale.toLowerCase()] : []
-  return (
-    '/' +
-    segments
-      .concat(
-        meta.parentPaths
-          .concat(meta.path)
-          .filter(segment => segment !== 'index' && segment !== '')
-      )
-      .join('/')
-  )
+  return `/${segments
+    .concat(
+      meta.parentPaths
+        .concat(meta.path)
+        .filter(segment => segment !== 'index' && segment !== '')
+    )
+    .join('/')}`
 }
 
 export function pathSuffix(

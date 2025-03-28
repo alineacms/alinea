@@ -12,10 +12,10 @@ async function getWasmInstance(exports, imports) {
     return WebAssembly.instantiate(module, imports)
   }
   if (exports && typeof exports === 'object') {
-    if (imports) throw new Error(`Cannot instantiate wasm module with imports`)
+    if (imports) throw new Error('Cannot instantiate wasm module with imports')
     return {exports}
   }
-  throw new Error(`Unable to load wasm module`)
+  throw new Error('Unable to load wasm module')
 }
 
 export function createStore() {

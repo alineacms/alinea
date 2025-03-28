@@ -1,29 +1,29 @@
 import styler from '@alinea/styler'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import {entryFile, workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
-import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
+import {Button, HStack, Icon, Stack, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
 import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
 import {IcOutlineKeyboardTab} from 'alinea/ui/icons/IcOutlineKeyboardTab'
+import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
-import {IcRoundHistory} from 'alinea/ui/icons/IcRoundHistory'
 import {IcRoundMenu} from 'alinea/ui/icons/IcRoundMenu'
 import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
 import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {IcRoundUpdate} from 'alinea/ui/icons/IcRoundUpdate'
-import {IcRoundVisibility} from 'alinea/ui/icons/IcRoundVisibility'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
-import {EntryEditor, EntryTransition} from '../../atoms/EntryEditorAtoms.js'
+import {
+  type EntryEditor,
+  EntryTransition
+} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useEntryLocation} from '../../hook/UseEntryLocation.js'
@@ -62,7 +62,7 @@ const transitions = {
 const variantIcon = {
   draft: IcOutlineDrafts,
   editing: IcRoundEdit,
-  published: IcRoundVisibility,
+  published: IcOutlineRemoveRedEye,
   archived: IcRoundArchive,
   untranslated: IcRoundTranslate,
   revision: IcRoundPublishedWithChanges,
@@ -89,12 +89,12 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const variant = currentTransition
     ? 'transition'
     : previewRevision
-    ? 'revision'
-    : untranslated
-    ? 'untranslated'
-    : hasChanges && !statusInUrl
-    ? 'editing'
-    : selectedStatus
+      ? 'revision'
+      : untranslated
+        ? 'untranslated'
+        : hasChanges && !statusInUrl
+          ? 'editing'
+          : selectedStatus
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const publishDraft = useSetAtom(editor.publishDraft)
@@ -159,21 +159,19 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
       >
         Remove draft
       </DropdownMenu.Item>
-    ) : variant === EntryStatus.Published && !editor.activeVersion.seeded ? (
+    ) : variant === 'published' && !editor.activeVersion.seeded ? (
       isMediaFile ? (
         <>
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={replaceFile}
           >
-            <Icon icon={IcRoundUpdate} />
             Replace
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={deleteFileAndNavigate}
           >
-            <Icon icon={IcRoundDelete} />
             Delete
           </DropdownMenu.Item>
         </>
@@ -183,7 +181,6 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={deleteMediaLibraryAndNavigate}
           >
-            <Icon icon={IcRoundDelete} />
             Delete
           </DropdownMenu.Item>
         </>
@@ -192,18 +189,16 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           className={styles.root.action()}
           onClick={archivePublished}
         >
-          <Icon icon={IcRoundArchive} />
           Archive
         </DropdownMenu.Item>
       )
-    ) : variant === EntryStatus.Archived ? (
+    ) : variant === 'archived' ? (
       <>
         {canPublish && (
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={publishArchived}
           >
-            <Icon icon={IcRoundVisibility} />
             Publish
           </DropdownMenu.Item>
         )}
@@ -211,7 +206,6 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           className={styles.root.action()}
           onClick={deleteArchived}
         >
-          <Icon icon={IcRoundDelete} />
           Delete
         </DropdownMenu.Item>
       </>
@@ -288,7 +282,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           {!currentTransition &&
             !hasChanges &&
             !isActiveStatus &&
-            editor.availableStatuses.includes(EntryStatus.Draft) && (
+            editor.availableStatuses.includes('draft') && (
               <>
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>
@@ -310,7 +304,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                       selected={editor.activeVersion.locale!}
                       locales={editor.translations.map(({locale}) => locale)}
                       onChange={locale => {
-                        navigate(pathname + `?from=` + locale)
+                        navigate(`${pathname}?from=${locale}`)
                       }}
                     />
                   </HStack>
@@ -378,14 +372,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                   )}
 
                   <DropdownMenu.Root bottom left>
-                    <DropdownMenu.Trigger
-                      className={styles.root.more(variant)}
-                      title={
-                        isMediaFile || isMediaLibrary
-                          ? 'Media actions'
-                          : 'Entry actions'
-                      }
-                    >
+                    <DropdownMenu.Trigger className={styles.root.more(variant)}>
                       <Icon icon={IcRoundMoreVert} />
                     </DropdownMenu.Trigger>
 
@@ -394,7 +381,6 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                         <DropdownMenu.Item
                           onClick={() => setShowHistory(!showHistory)}
                         >
-                          <Icon icon={IcRoundHistory} />
                           {showHistory ? 'Hide' : 'Show'} history
                         </DropdownMenu.Item>
                       )}

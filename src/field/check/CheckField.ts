@@ -1,6 +1,6 @@
-import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {ScalarField} from 'alinea/core/field/ScalarField'
-import {ReactNode} from 'react'
+import type {ReactNode} from 'react'
 
 /** Optional settings to configure a text field */
 export interface CheckOptions extends FieldOptions<boolean> {

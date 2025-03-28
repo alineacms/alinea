@@ -7,7 +7,7 @@ import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {ErrorMessage} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {VStack} from 'alinea/ui/Stack'
-import {FormAtoms, FormProvider} from '../atoms/FormAtoms.js'
+import {type FormAtoms, FormProvider} from '../atoms/FormAtoms.js'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {ErrorBoundary} from '../view/ErrorBoundary.js'
 

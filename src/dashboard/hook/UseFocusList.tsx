@@ -1,8 +1,8 @@
 import {
   createContext,
-  KeyboardEvent,
-  PropsWithChildren,
-  Ref,
+  type KeyboardEvent,
+  type PropsWithChildren,
+  type Ref,
   useContext,
   useLayoutEffect,
   useMemo,

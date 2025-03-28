@@ -28,8 +28,8 @@ type FieldOps<Fields> = {
 export type Condition<Value> = [Value] extends [Primitive]
   ? Ops<Value> | Value
   : [Value] extends [Array<any>]
-  ? ArrayOps<Value[0]>
-  : ObjectOps<Value>
+    ? ArrayOps<Value[0]>
+    : ObjectOps<Value>
 
 type AndCondition<Fields> = {and: Array<Filter<Fields> | undefined>}
 type OrCondition<Fields> = {or: Array<Filter<Fields> | undefined>}

@@ -1,4 +1,4 @@
-import {PropsWithChildren} from 'react'
+import type {PropsWithChildren} from 'react'
 import {createPortal} from 'react-dom'
 
 export function Head({children}: PropsWithChildren<{}>) {

@@ -2,7 +2,7 @@ import {createId} from 'alinea/core/Id'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
-import {GenerateContext} from './GenerateContext.js'
+import type {GenerateContext} from './GenerateContext.js'
 
 const packageJson = {
   private: true,

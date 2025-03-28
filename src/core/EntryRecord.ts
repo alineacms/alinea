@@ -1,4 +1,4 @@
-import {EntryRow} from './EntryRow.js'
+import type {EntryRow} from './EntryRow.js'
 
 export interface EntryMeta {
   _id: string
@@ -64,7 +64,7 @@ export function createRecord(entry: RequiredEntryFields): EntryRecord {
   return {
     ...meta,
     title,
-    // path,
+    //path,
     ...data
   } as EntryRecord
 }

@@ -1,10 +1,10 @@
 import {
-  CSSProperties,
+  type CSSProperties,
   forwardRef,
-  HTMLAttributes,
-  HTMLProps,
-  PropsWithChildren,
-  PropsWithRef,
+  type HTMLAttributes,
+  type HTMLProps,
+  type PropsWithChildren,
+  type PropsWithRef,
   useMemo
 } from 'react'
 import {px} from './util/Units.js'
@@ -38,35 +38,34 @@ function stack(props: StackProps) {
   return styles
 }
 
-export const VStack = forwardRef<HTMLDivElement, StackProps>(function VStack(
-  props,
-  ref
-) {
-  const {
-    children,
-    as: tag = 'div',
-    gap,
-    align,
-    direction,
-    justify,
-    center,
-    wrap,
-    full,
-    ...rest
-  } = props
-  const key = `${gap}-${align}-${direction}-${justify}-${center}-${wrap}-${full}`
-  const Tag = tag as any
-  const style = useMemo(() => {
-    return stack(props)
-  }, [key])
-  const inner = (
-    <Tag {...rest} style={{...style, ...props.style}} ref={ref}>
-      {children}
-    </Tag>
-  )
-  if (!wrap) return inner
-  return <div>{inner}</div>
-})
+export const VStack = forwardRef<HTMLDivElement, StackProps>(
+  function VStack(props, ref) {
+    const {
+      children,
+      as: tag = 'div',
+      gap,
+      align,
+      direction,
+      justify,
+      center,
+      wrap,
+      full,
+      ...rest
+    } = props
+    const key = `${gap}-${align}-${direction}-${justify}-${center}-${wrap}-${full}`
+    const Tag = tag as any
+    const style = useMemo(() => {
+      return stack(props)
+    }, [key])
+    const inner = (
+      <Tag {...rest} style={{...style, ...props.style}} ref={ref}>
+        {children}
+      </Tag>
+    )
+    if (!wrap) return inner
+    return <div>{inner}</div>
+  }
+)
 
 export const HStack: typeof VStack = forwardRef(function HStack(props, ref) {
   return <VStack direction="row" {...props} ref={ref} />

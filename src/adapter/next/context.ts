@@ -1,52 +1,23 @@
-import {RequestContext} from 'alinea/backend/Backend'
 import {generatedRelease} from 'alinea/backend/store/GeneratedRelease'
 import {Config} from 'alinea/core/Config'
-
-export function devUrl() {
-  return process.env.ALINEA_DEV_SERVER
-}
+import type {RequestContext} from 'alinea/core/Connection'
 
 export async function requestContext(config: Config): Promise<RequestContext> {
+  const apiKey =
+    process.env.NODE_ENV === 'development'
+      ? 'dev'
+      : (process.env.ALINEA_API_KEY ?? (await generatedRelease))
+  const dev = process.env.ALINEA_DEV_SERVER
+  if (dev) return {isDev: true, handlerUrl: new URL('/api', dev), apiKey}
+  const nodeEnv = process.env.NODE_ENV
+  const baseUrl = Config.baseUrl(config, nodeEnv)
+  if (!baseUrl) throw new Error(`Missing baseUrl in config for ${nodeEnv}`)
   return {
-    handlerUrl: await handlerUrl(config),
+    isDev: false,
+    handlerUrl: new URL(config.handlerUrl ?? '/api/cms', baseUrl),
     apiKey:
       process.env.NODE_ENV === 'development'
         ? 'dev'
-        : process.env.ALINEA_API_KEY ?? (await generatedRelease)
+        : (process.env.ALINEA_API_KEY ?? (await generatedRelease))
   }
-}
-
-async function handlerUrl(config: Config) {
-  const baseUrl = Config.baseUrl(config)
-  return devUrl()
-    ? new URL('/api', devUrl())
-    : new URL(
-        config.handlerUrl ?? '/api/cms',
-        baseUrl ?? (await requestOrigin())
-      )
-}
-
-async function requestOrigin() {
-  const headers = await requestHeaders()
-  const host = headers.get('x-forwarded-host') ?? headers.get('host')
-  const proto = headers.get('x-forwarded-proto') ?? 'https'
-  const protocol = proto.endsWith(':') ? proto : proto + ':'
-  return `${protocol}//${host}`
-}
-
-function requestHeaders(): Promise<Headers> {
-  return import(
-    // @ts-ignore
-    'next/dist/client/components/request-async-storage.external.js'
-  )
-    .catch(
-      () =>
-        import(
-          'next/dist/server/app-render/work-unit-async-storage.external.js'
-        )
-    )
-    .then(
-      ({getExpectedRequestStore}) => getExpectedRequestStore('headers').headers
-    )
-    .catch(() => new Headers())
 }

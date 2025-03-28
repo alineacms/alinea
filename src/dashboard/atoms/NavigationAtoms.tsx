@@ -3,7 +3,7 @@ import {Workspace} from 'alinea/core/Workspace'
 import {keys} from 'alinea/core/util/Objects'
 import {atom, useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
-import {EntryLocation, dashboardNav, navMatchers} from '../DashboardNav.js'
+import {type EntryLocation, dashboardNav, navMatchers} from '../DashboardNav.js'
 import {configAtom} from './DashboardAtoms.js'
 import {matchAtoms} from './LocationAtoms.js'
 import {workspacePreferenceAtom} from './PreferencesAtoms.js'
@@ -23,7 +23,7 @@ export const workspaceAtom = atom(get => {
   for (const name of requested)
     if (name && config.workspaces[name])
       return {name, ...Workspace.data(config.workspaces[name])}
-  throw new Error(`No workspace found`)
+  throw new Error('No workspace found')
 })
 
 function parseRootPath(path: string) {
@@ -39,11 +39,11 @@ export const rootAtom = atom(get => {
   for (const name of requested)
     if (name && workspace.roots[name])
       return {name, ...Root.data(workspace.roots[name])}
-  throw new Error(`No root found`)
+  throw new Error('No root found')
 })
 
 export const preferredLanguageAtom = atomWithStorage<string | null>(
-  `@alinea/locale`,
+  '@alinea/locale',
   null
 )
 
