@@ -186,7 +186,11 @@ export class EntryIndex extends EventTarget {
       throw new Error(`Failed to parse JSON: ${file}`)
     }
     assert(typeof raw === 'object')
-    const {meta: record, data} = parseRecord(raw as EntryRecord)
+    const {meta: record, data: fields} = parseRecord(raw as EntryRecord)
+    const data: Record<string, unknown> = {
+      ...fields,
+      path
+    }
     const id = record.id
     const type = record.type
     const index = record.index

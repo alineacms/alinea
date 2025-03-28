@@ -177,7 +177,6 @@ export const entryEditorAtoms = atomFamily(
       const parentNeedsTranslation = entry.parentId ? !parentLink : false
       const parents = withParents?.parents ?? []
       const canPublish = parents.every(parent => parent.status === 'published')
-      console.log({canPublish, parents})
       if (versions.length === 0) return undefined
       const statuses = fromEntries(
         versions.map(version => [version.status, version])

@@ -5,6 +5,7 @@ import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import * as schema from './schema'
 
 export const cms = createCMS({
+  enableDrafts: true,
   schema,
   workspaces: {
     primary: Config.workspace('Primary workspace', {

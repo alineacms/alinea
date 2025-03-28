@@ -64,7 +64,7 @@ export function createRecord(entry: RequiredEntryFields): EntryRecord {
   return {
     ...meta,
     title,
-    // path,
+    //path,
     ...data
   } as EntryRecord
 }
