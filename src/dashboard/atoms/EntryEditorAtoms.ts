@@ -366,42 +366,6 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  /*async function persistSharedFields(
-    graph: Graph,
-    entry: EntryRow
-  ): Promise<Array<Mutation>> {
-    const res: Array<Mutation> = []
-    const {i18n} = Root.data(config.workspaces[entry.workspace][entry.root])
-    if (i18n) {
-      const shared = Type.sharedData(type, entry.data)
-      if (shared) {
-        const translations = await graph.find({
-          select: {
-            ...Entry,
-            parentPaths: {
-              edge: 'parents',
-              select: Entry.path
-            }
-          },
-          id: entry.id,
-          locale: entry.locale,
-          status: 'preferPublished'
-        })
-        for (const translation of translations) {
-          if (translation.locale === entry.locale) continue
-          res.push({
-            type: MutationType.Patch,
-            locale: translation.locale,
-            file: entryFile(translation, translation.parentPaths),
-            entryId: translation.id,
-            patch: shared
-          })
-        }
-      }
-    }
-    return res
-  }*/
-
   const errorsAtom = atom(get => {
     return get(get(form).errors)
   })

@@ -4,13 +4,14 @@ import type {EntryStatus} from 'alinea/core/Entry'
 import {createRecord} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
 import {getRoot} from 'alinea/core/Internal'
+import {Type} from 'alinea/core/Type'
 import {pathSuffix} from 'alinea/core/util/EntryFilenames'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
-import {diff, SourceTransaction} from '../source/Source.js'
+import {SourceTransaction} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
@@ -44,10 +45,7 @@ export class EntryTransaction {
     source: Source,
     from: ReadonlyTree
   ) {
-    if (index.sha !== from.sha) {
-      console.log(index.tree.diff(from))
-      throw new ShaMismatchError(index.sha, from.sha)
-    }
+    if (index.sha !== from.sha) throw new ShaMismatchError(index.sha, from.sha)
     this.#config = config
     this.#index = index
     this.#tx = new SourceTransaction(source, from)
@@ -128,6 +126,23 @@ export class EntryTransaction {
         next?.index ?? null
       )
     }
+    if (locale !== null && status === 'published') {
+      // Start from other locales if found
+      const from = index.findFirst(entry => {
+        return (
+          entry.id === id &&
+          entry.locale !== locale &&
+          entry.status === 'published'
+        )
+      })
+      if (from) {
+        const typeInstance = this.#config.schema[type]
+        assert(typeInstance, `Type not found: ${type}`)
+        const shared = Type.sharedData(typeInstance, from.data)
+        data = {...shared, ...data}
+      }
+      this.#persistSharedFields(id, locale, type, data)
+    }
     const record = createRecord({id, type, index: newIndex, data})
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
     this.#tx.add(filePath, contents)
@@ -149,6 +164,9 @@ export class EntryTransaction {
       })
     )
     const data = {...entry.data, ...fieldUpdates}
+    if (locale !== null && status === 'published') {
+      this.#persistSharedFields(id, locale, entry.type, data)
+    }
     const record = createRecord({
       id,
       type: entry.type,
@@ -184,6 +202,42 @@ export class EntryTransaction {
     this.#tx.add(filePath, contents)
     this.#messages.push(this.#reportOp('update', entry.title))
     return this
+  }
+
+  #persistSharedFields(
+    id: string,
+    locale: string,
+    type: string,
+    data: Record<string, unknown>
+  ) {
+    const index = this.#index
+    const typeInstance = this.#config.schema[type]
+    assert(type, `Type not found: ${type}`)
+    const shared = Type.sharedData(typeInstance, data)
+    if (shared) {
+      const translations = index.findMany(entry => {
+        return (
+          entry.id === id &&
+          (entry.locale !== locale || entry.status !== 'published')
+        )
+      })
+      for (const translation of translations) {
+        this.#checks.push([translation.filePath, translation.fileHash])
+        const record = createRecord({
+          id,
+          type: translation.type,
+          index: translation.index,
+          data: {
+            ...translation.data,
+            ...shared
+          }
+        })
+        const contents = new TextEncoder().encode(
+          JSON.stringify(record, null, 2)
+        )
+        this.#tx.add(translation.filePath, contents)
+      }
+    }
   }
 
   publish({id, locale, status}: Op<PublishMutation>) {

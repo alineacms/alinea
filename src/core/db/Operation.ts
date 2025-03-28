@@ -112,9 +112,8 @@ export interface UpdateQuery<Fields> {
 
 export class UpdateOperation<Definition> extends Operation {
   constructor(query: UpdateQuery<Definition>) {
-    super((db): Array<Mutation> => {
+    super((): Array<Mutation> => {
       const {status = 'published', locale = null, id, set} = query
-      // If th
       return [
         {
           op: 'update',
