@@ -1,3 +1,4 @@
+import {reportWarning} from 'alinea/cli/util/Report'
 import type {Config} from 'alinea/core/Config'
 import type {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
@@ -376,10 +377,14 @@ class EntryNode {
     assert(a.type === b.type, 'Type mismatch')
     // Per ID: all have same index, index is valid fractional index
     assert(isValidOrderKey(a.index), 'Invalid index')
-    assert(
-      a.index === b.index,
-      `Index mismatch ${a.filePath} (${a.index}) != ${b.filePath} (${b.index})`
-    )
+    if (a.index !== b.index) {
+      reportWarning(
+        `These translations have a different _index field (${a.index} != ${b.index})`,
+        a.filePath,
+        b.filePath
+      )
+      b.index = a.index
+    }
   }
 }
 

@@ -16,7 +16,7 @@ import {generateDashboard} from './generate/GenerateDashboard.js'
 import {dirname} from './util/Dirname.js'
 import type {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
-import {reportHalt} from './util/Report.js'
+import {reportError} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
@@ -112,7 +112,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       const handlerUrl = cms.config.handlerUrl
       const baseUrl = Config.baseUrl(cms.config, 'production')
       if (handlerUrl && !baseUrl) {
-        reportHalt(
+        reportError(
           'No baseUrl was set for the production build in Alinea config'
         )
         process.exit(1)
@@ -143,7 +143,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     try {
       indexing = fillCache(db)
     } catch (error: any) {
-      reportHalt(String(error.message ?? error))
+      reportError(String(error.message ?? error))
       if (cmd === 'build') process.exit(1)
       continue
     }
@@ -157,7 +157,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
             onAfterGenerate(message)
           },
           () => {
-            reportHalt('Alinea failed to write dashboard files')
+            reportError('Alinea failed to write dashboard files')
             if (cmd === 'build') process.exit(1)
           }
         )

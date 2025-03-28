@@ -12,7 +12,7 @@ import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import {buildEmitter} from '../build/BuildEmitter.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
-import {reportHalt} from '../util/Report.js'
+import {reportError} from '../util/Report.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
 import type {ServeContext} from './ServeContext.js'
 
@@ -150,7 +150,7 @@ export function createLocalServer(
         else currentBuild = trigger<BuildDetails>()
       } else {
         if (result.errors.length) {
-          reportHalt('Building Alinea dashboard failed')
+          reportError('Building Alinea dashboard failed')
         } else {
           currentBuild.resolve(buildFiles(devDir, result))
           liveReload.reload(alineaDev ? 'reload' : 'refresh')

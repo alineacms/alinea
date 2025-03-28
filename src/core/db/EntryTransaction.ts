@@ -6,7 +6,10 @@ import {createId} from 'alinea/core/Id'
 import {getRoot} from 'alinea/core/Internal'
 import {Type} from 'alinea/core/Type'
 import {pathSuffix} from 'alinea/core/util/EntryFilenames'
-import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
+import {
+  generateKeyBetween,
+  generateNKeysBetween
+} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
@@ -298,6 +301,46 @@ export class EntryTransaction {
         previous?.index ?? null,
         next?.index ?? null
       )
+      if (next) {
+        const duplicateSiblings = new Set(
+          Array.from(
+            index.findMany(entry => {
+              const sameParent =
+                entry.workspace === workspace &&
+                entry.root === root &&
+                entry.parentId === parentId
+              return (
+                sameParent && entry.index === next.index && entry.id !== next.id
+              )
+            }),
+            entry => entry.id
+          )
+        )
+        const newKeys = generateNKeysBetween(
+          newIndex,
+          next.index,
+          duplicateSiblings.size
+        )
+        let i = 0
+        for (const id of duplicateSiblings) {
+          const node = index.byId.get(id)
+          assert(node)
+          for (const child of node.byFile.values()) {
+            const newKey = newKeys[i]
+            const record = createRecord({
+              id,
+              type: child.type,
+              index: newKey,
+              data: child.data
+            })
+            const contents = new TextEncoder().encode(
+              JSON.stringify(record, null, 2)
+            )
+            this.#tx.add(child.filePath, contents)
+          }
+          i++
+        }
+      }
       const parent = parentId
         ? index.findFirst(e => {
             return e.id === parentId && e.locale === entry.locale
