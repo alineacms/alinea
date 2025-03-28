@@ -29,7 +29,7 @@ export class NextCMS<
 
   db = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
-      throw new Error('Local db not availble in edge')
+      throw new Error('Local db not available in edge')
     const source = await generatedSource
     const db = new LocalDB(this.config, source)
     await db.sync()
