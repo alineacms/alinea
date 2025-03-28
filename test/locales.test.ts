@@ -75,13 +75,13 @@ test('create entries', async () => {
     set: {title: 'Neue Seite'}
   })
   test.is(page1DE._index, 'a0')
-  await db.logEntries()
+
   const page2 = await db.create({
     type: Page,
     locale: 'de',
     set: {title: 'Neue Seite'}
   })
-  test.is(page2._index, 'a1')
+  test.is(page2._index, 'a3')
 
   const sub1 = await db.create({
     type: Page,

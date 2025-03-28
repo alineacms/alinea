@@ -82,7 +82,8 @@ export class EntryIndex extends EventTarget {
         assert(node.type === type, 'Type mismatch')
       } else {
         const tx = await this.transaction(source)
-        const parentNode = this.byPath.get(getNodePath(paths.dirname(filePath)))
+        const parentPath = paths.dirname(filePath)
+        const parentNode = this.byPath.get(getNodePath(parentPath))
         const request = await tx
           .create({
             parentId: parentNode?.id ?? null,
@@ -387,7 +388,7 @@ function getNodePath(filePath: string) {
   const dir = filePath.slice(0, lastSlash)
   const name = filePath.slice(lastSlash + 1)
   const lastDot = name.lastIndexOf('.')
-  let base = name.slice(0, lastDot)
+  let base = lastDot === -1 ? name : name.slice(0, lastDot)
   if (base.endsWith('.archived')) base = base.slice(0, -'.archived'.length)
   if (base.endsWith('.draft')) base = base.slice(0, -'.draft'.length)
   return `${dir}/${base}`
