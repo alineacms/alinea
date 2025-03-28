@@ -77,7 +77,8 @@ export class LocalDB extends WriteableGraph {
         parentId: Entry.parentId,
         locale: Entry.locale,
         status: Entry.status,
-        path: Entry.path
+        path: Entry.path,
+        index: Entry.index
       }
     })
     console.table(entries)
