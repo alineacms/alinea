@@ -1,40 +1,29 @@
-import {EntryDB} from 'alinea/core/db/EntryDB'
-import {EntryUpdate, IndexUpdate} from 'alinea/core/db/EntryIndex'
-import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource'
+import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import {atom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {useEffect} from 'react'
-import {clientAtom, configAtom} from './DashboardAtoms.js'
+import {dashboardOptionsAtom} from './DashboardAtoms.js'
 
-const source = new IndexedDBSource(window.indexedDB, 'alinea')
-
-const localDb = atom(get => {
-  const config = get(configAtom)
-  const client = get(clientAtom)
-  return new EntryDB(config, source, async () => client)
-})
-
-export const dbAtom = atom(async get => {
-  const local = get(localDb)
-  await local.syncWithRemote()
-  return local
+export const dbAtom = atom(get => {
+  return get(dashboardOptionsAtom).db
 })
 
 export const dbUpdateAtom = atom(null, async (get, set) => {
-  const db = await get(dbAtom)
-  await db.syncWithRemote()
+  const db = get(dbAtom)
+  await db.sync()
 })
 
 const dbSha = atom('')
 export const dbMetaAtom = atom(
   get => get(dbSha),
   (get, set) => {
-    const local = get(localDb)
-    const setIndex = () => set(dbSha, local.sha)
-    local.index.addEventListener(IndexUpdate.type, setIndex)
-    setIndex()
+    const local = get(dbAtom)
+    const setIndex = (event: Event) => {
+      if (event instanceof IndexEvent) set(dbSha, event.subject)
+    }
+    local.index.addEventListener(IndexEvent.INDEX, setIndex)
     return () => {
-      local.index.removeEventListener(IndexUpdate.type, setIndex)
+      local.index.removeEventListener(IndexEvent.INDEX, setIndex)
     }
   }
 )
@@ -53,14 +42,14 @@ export const entryRevisionAtoms = atomFamily((id: string) => {
   const revision = atom(
     get => get(index),
     (get, set) => {
-      const local = get(localDb)
+      const local = get(dbAtom)
       const markEntry = (event: Event) => {
-        if (event instanceof EntryUpdate && event.id === id)
+        if (event instanceof IndexEvent && event.subject === id)
           set(index, i => i + 1)
       }
-      local.index.addEventListener(EntryUpdate.type, markEntry)
+      local.index.addEventListener(IndexEvent.ENTRY, markEntry)
       return () => {
-        local.index.removeEventListener(EntryUpdate.type, markEntry)
+        local.index.removeEventListener(IndexEvent.ENTRY, markEntry)
       }
     }
   )
@@ -70,7 +59,7 @@ export const entryRevisionAtoms = atomFamily((id: string) => {
 
 export function useDbUpdater(everySeconds = 30) {
   const db = useAtomValue(dbAtom)
-  const forceDbUpdate = () => db.syncWithRemote()
+  const forceDbUpdate = () => db.sync()
   useEffect(() => {
     let interval: any = 0
     interval = setInterval(forceDbUpdate, everySeconds * 1000)

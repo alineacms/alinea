@@ -1,7 +1,7 @@
-import type {EntryDB} from 'alinea/core/db/EntryDB'
+import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {useAtomValue} from 'jotai'
 import {dbAtom} from '../atoms/DbAtoms.js'
 
-export function useDb(): EntryDB {
+export function useDb(): WriteableGraph {
   return useAtomValue(dbAtom)
 }

@@ -1,6 +1,7 @@
 import {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
 import {Root} from 'alinea/core/Root'
+import type {WorkerDB} from 'alinea/core/db/WorkerDB'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
@@ -174,6 +175,7 @@ function AppRoot() {
 }
 
 export interface AppProps {
+  db: WorkerDB
   config: Config
   views: Record<string, ComponentType<any>>
   client: LocalConnection

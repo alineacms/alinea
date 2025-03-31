@@ -46,6 +46,11 @@ export class NextCMS<
     super(config)
   }
 
+  async sync() {
+    const {db} = await this.init
+    return db.sync()
+  }
+
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     const {isDev, handlerUrl, apiKey} = await requestContext(this.config)
     const client = new Client({

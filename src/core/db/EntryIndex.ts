@@ -19,20 +19,7 @@ import {assert, compareStrings} from '../source/Utils.js'
 import {sourceChanges} from './CommitRequest.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
-
-export class IndexUpdate extends Event {
-  static readonly type = 'index'
-  constructor(public readonly sha: string) {
-    super(IndexUpdate.type)
-  }
-}
-
-export class EntryUpdate extends Event {
-  static readonly type = 'entry'
-  constructor(public readonly id: string) {
-    super(EntryUpdate.type)
-  }
-}
+import {IndexEvent} from './IndexEvent.js'
 
 export class EntryIndex extends EventTarget {
   tree = ReadonlyTree.EMPTY
@@ -112,7 +99,7 @@ export class EntryIndex extends EventTarget {
     this.#applyChanges(changes)
     this.tree = await this.tree.withChanges(changes)
     const sha = this.tree.sha
-    this.dispatchEvent(new IndexUpdate(sha))
+    this.dispatchEvent(new IndexEvent('index', sha))
     return sha
   }
 
@@ -163,7 +150,8 @@ export class EntryIndex extends EventTarget {
       .flat()
       .sort((a, b) => compareStrings(a.index, b.index))
 
-    for (const node of recompute) this.dispatchEvent(new EntryUpdate(node.id))
+    for (const node of recompute)
+      this.dispatchEvent(new IndexEvent('entry', node.id))
   }
 
   #parseEntry({sha, file, contents}: ParseRequest): Entry {

@@ -1,5 +1,6 @@
 import type {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
+import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {useAtomValue} from 'jotai'
 import type {ComponentType, PropsWithChildren} from 'react'
 import {type QueryClient, QueryClientProvider} from 'react-query'
@@ -10,6 +11,7 @@ import {
 import {ModalPortal} from './view/Modal.js'
 
 export interface DashboardProps {
+  db: WriteableGraph
   config: Config
   views: Record<string, ComponentType<any>>
   client: LocalConnection

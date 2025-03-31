@@ -96,7 +96,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     onAfterGenerate(msg) {
       dashboardUrl.then(url => {
         const version = gray(pkg.version)
-        const header = `  ${cyan(bold('ɑ'))} Alinea ${version}\n`
+        const header = `  ${cyan(bold('ɑ alinea'))} ${version}\n`
         const connector = gray(cmd === 'dev' ? '├' : '╰')
         const details = `  ${connector} ${gray(msg)}\n`
         const footer =

@@ -1,11 +1,11 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
 import type {CMS} from 'alinea/core/CMS'
 import {createId} from 'alinea/core/Id'
 import {code} from 'alinea/core/util/CodeGen'
 import esbuild from 'esbuild'
 import escapeHtml from 'escape-html'
-import fs from 'node:fs'
-import path from 'node:path'
 import {buildOptions} from '../build/BuildOptions.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
@@ -51,6 +51,7 @@ export async function generateDashboard(
     external: ['@alinea/generated'],
     define: {
       'process.env.NODE_ENV': '"production"',
+      'process.env.ALINEA_BUILD_ID': JSON.stringify(revision),
       ...publicDefines(process.env)
     },
     ...buildOptions,

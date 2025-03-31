@@ -7,6 +7,9 @@ import type {Mutation} from 'alinea/core/db/Mutation'
 export class CoreCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
+  async sync(): Promise<string> {
+    throw new Error('Not implemented')
+  }
   async resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {

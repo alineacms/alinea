@@ -22,6 +22,7 @@ import {
 } from './Operation.js'
 
 export abstract class WriteableGraph extends Graph {
+  abstract sync(): Promise<string>
   abstract mutate(mutations: Array<Mutation>): Promise<string>
   abstract prepareUpload(file: string): Promise<UploadResponse>
 

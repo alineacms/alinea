@@ -18,6 +18,7 @@ export function UIStory({fullWidth, fullHeight, children}: UIStoryProps) {
   return (
     <DashboardProvider
       dev
+      db={undefined!}
       config={undefined!}
       client={client}
       views={defaultViews}

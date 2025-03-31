@@ -1,14 +1,14 @@
 import type {CMS} from 'alinea/core/CMS'
 import {Client} from 'alinea/core/Client'
-import {useSetAtom} from 'jotai'
+import {WorkerDB} from 'alinea/core/db/WorkerDB'
 import {type ComponentType, useEffect, useState} from 'react'
 import {QueryClient} from 'react-query'
 import {App, type AppProps} from '../App.js'
-import {dbUpdateAtom} from '../atoms/DbAtoms.js'
+import type {DBWorker} from '../Worker.js'
 
 type DevReloadOptions = {
-  refresh: () => Promise<void>
-  refetch: () => Promise<void>
+  refresh: (revision: string) => Promise<unknown>
+  refetch: () => Promise<unknown>
   open: () => void
   close: () => void
 }
@@ -17,13 +17,14 @@ function setupDevReload({refresh, refetch, open, close}: DevReloadOptions) {
   const source = new EventSource('/~dev')
   source.onmessage = e => {
     console.info(`[reload] received ${e.data}`)
-    switch (e.data) {
+    const info = JSON.parse(e.data)
+    switch (info.type) {
       case 'refetch':
         return refetch()
       case 'reload':
         return window.location.reload()
       default:
-        return refresh()
+        return refresh(info.revision)
     }
   }
   source.onopen = open
@@ -33,37 +34,52 @@ function setupDevReload({refresh, refetch, open, close}: DevReloadOptions) {
   }
 }
 
-export type DevDashboardOptions = {
-  loadConfig: () => Promise<{cms: CMS; views: Record<string, ComponentType>}>
+export interface DevDashboardOptions {
+  loadConfig(
+    revision: string
+  ): Promise<{cms: CMS; views: Record<string, ComponentType>}>
+  dbWorker: DBWorker
+  index: EventTarget
 }
 
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
+const initialRevision = process.env.ALINEA_BUILD_ID as string
 
-export function DevDashboard({loadConfig}: DevDashboardOptions) {
+export function DevDashboard({
+  loadConfig,
+  dbWorker,
+  index
+}: DevDashboardOptions) {
   const [app, setApp] = useState<AppProps>()
-  const [connected, setConnected] = useState(true)
-  const forceDbUpdate = useSetAtom(dbUpdateAtom)
-  async function getConfig() {
+  const [connected, setConnected] = useState(false)
+  async function getConfig(revision = initialRevision) {
     // Reload css
     const link = document.querySelector(
       'link[href^="/config.css"]'
     ) as HTMLLinkElement
     const copy = link.cloneNode() as HTMLLinkElement
-    copy.href = `/config.css?${Math.random()}`
+    copy.href = `/config.css?${revision}`
     copy.onload = () => link.remove()
     link.after(copy)
-    const config = await loadConfig()
+    const config = await loadConfig(revision)
+    const handlerUrl = new URL('/api', location.href).href
     const client = new Client({
       config: config.cms,
-      url: new URL('/api', location.href).href
+      url: handlerUrl
     })
-    return setApp({config: config.cms.config, views: config.views, client})
+    await dbWorker.load(handlerUrl, revision)
+    return setApp({
+      db: new WorkerDB(config.cms.config, dbWorker, client, index),
+      config: config.cms.config,
+      views: config.views,
+      client
+    })
   }
   useEffect(() => {
     getConfig()
     return setupDevReload({
-      refresh: () => getConfig().then(() => forceDbUpdate()),
-      refetch: () => forceDbUpdate(),
+      refresh: getConfig,
+      refetch: () => dbWorker.sync(),
       open: () => setConnected(true),
       close: () => setConnected(false)
     })

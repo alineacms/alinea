@@ -1,5 +1,10 @@
-import esbuild, {type BuildContext, type BuildOptions, type BuildResult} from 'esbuild'
-import {createEmitter, type Emitter} from '../util/Emitter.js'
+import {createId} from 'alinea/core/Id'
+import esbuild, {
+  type BuildContext,
+  type BuildOptions,
+  type BuildResult
+} from 'esbuild'
+import {type Emitter, createEmitter} from '../util/Emitter.js'
 
 export type BuildInfo =
   | {type: 'start'; result: undefined}
@@ -14,9 +19,14 @@ export function buildEmitter(config: BuildOptions): Emitter<BuildInfo> {
       canceled = true
     }
   })
+  const revision = createId()
   esbuild
     .context({
       ...config,
+      define: {
+        ...config.define,
+        'process.env.ALINEA_BUILD_ID': JSON.stringify(revision)
+      },
       plugins: [
         ...(config.plugins || []),
         {
