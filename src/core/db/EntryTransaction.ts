@@ -358,7 +358,7 @@ export class EntryTransaction {
       const parentDir = parent
         ? parent.childrenDir
         : entry.locale
-          ? `$root/${entry.locale}`
+          ? `${root}/${entry.locale}`
           : root
       const childrenDir = paths.join(parentDir, entry.path)
       const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
@@ -369,11 +369,11 @@ export class EntryTransaction {
         data: entry.data
       })
       const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
-      this.#tx.add(filePath, contents)
       if (toParent || toRoot) {
         this.#tx.remove(entry.filePath)
         this.#tx.rename(entry.childrenDir, childrenDir)
       }
+      this.#tx.add(filePath, contents)
     }
     this.#messages.push(this.#reportOp('move', info!.title))
     return this

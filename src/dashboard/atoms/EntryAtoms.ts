@@ -55,6 +55,7 @@ async function entryTreeRoot(
     index: '',
     type: '',
     isFolder: true,
+    isRoot: true,
     entries: [],
     children
   }
@@ -190,6 +191,7 @@ export interface EntryTreeItem {
     parents: Array<{path: string; type: string}>
   }>
   isFolder?: boolean
+  isRoot?: boolean
   canDrag?: boolean
   children: Array<string>
 }
@@ -214,21 +216,25 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
       onDrop(items, {item: parent, childIndex, insertionIndex}) {
         if (items.length !== 1) return
         const [dropping] = items
-        if (childIndex === null) return
-        if (dropping.getParent() !== parent) {
-          console.warn('Todo: move entries')
-          return
-        }
         const children = parent.getChildren()
-        const previous = children[childIndex - 1]
+        const previous = childIndex ? children[childIndex - 1] : null
         const after = previous ? previous.getId() : null
+        const newParent = dropping.getParent() !== parent
+        const toRoot = parent.getId().startsWith('@alinea')
+          ? dropping.getItemData().entries[0].root
+          : undefined
+        const toParent = !toRoot && newParent ? parent.getId() : undefined
         console.log({
           id: dropping.getId(),
-          after
+          after,
+          toParent,
+          toRoot
         })
         db.move({
           id: dropping.getId(),
-          after
+          after,
+          toParent,
+          toRoot
         })
       },
       async getItem(id): Promise<EntryTreeItem> {
