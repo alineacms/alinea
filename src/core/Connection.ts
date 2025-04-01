@@ -15,7 +15,10 @@ export interface AuthApi {
 export interface RemoteConnection extends Connection, AuthApi {}
 
 export interface LocalConnection extends Connection {
-  mutate(mutations: Array<Mutation>, ctx?: RequestContext): Promise<string>
+  mutate(
+    mutations: Array<Mutation>,
+    ctx?: RequestContext
+  ): Promise<{sha: string}>
   previewToken(request: PreviewInfo, ctx?: RequestContext): Promise<string>
   resolve<Query extends GraphQuery>(
     query: Query

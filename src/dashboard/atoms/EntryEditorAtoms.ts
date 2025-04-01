@@ -730,7 +730,7 @@ export function createEntryEditor(entryData: EntryData) {
     return encodePreviewPayload({
       locale: activeVersion.locale,
       entryId: activeVersion.id,
-      contentHash: sha,
+      contentHash: sha ?? '',
       status: status,
       update
     })

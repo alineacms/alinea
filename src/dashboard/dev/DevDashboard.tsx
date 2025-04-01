@@ -1,10 +1,10 @@
 import type {CMS} from 'alinea/core/CMS'
 import {Client} from 'alinea/core/Client'
-import {WorkerDB} from 'alinea/core/db/WorkerDB'
+import {WorkerDB} from 'alinea/core/worker/WorkerDB'
 import {type ComponentType, useEffect, useState} from 'react'
 import {QueryClient} from 'react-query'
+import type {DashboardWorker} from '../../core/worker/LoadWorker.js'
 import {App, type AppProps} from '../App.js'
-import type {DBWorker} from '../Worker.js'
 
 type DevReloadOptions = {
   refresh: (revision: string) => Promise<unknown>
@@ -38,7 +38,7 @@ export interface DevDashboardOptions {
   loadConfig(
     revision: string
   ): Promise<{cms: CMS; views: Record<string, ComponentType>}>
-  dbWorker: DBWorker
+  dbWorker: DashboardWorker
   index: EventTarget
 }
 

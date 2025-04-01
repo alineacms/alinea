@@ -1,3 +1,4 @@
+import type {Stats} from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
 import {
@@ -30,8 +31,13 @@ export class FSSource implements Source {
     const tasks = files.map(async file => {
       const filePath = file.replaceAll('\\', '/')
       const fullPath = path.join(this.#cwd, filePath)
-      const stat = await fs.stat(fullPath)
-      if (!stat.isFile()) return
+      let stat: Stats
+      try {
+        stat = await fs.stat(fullPath)
+        if (!stat.isFile()) return
+      } catch {
+        return
+      }
       const previouslyModified = this.#lastModified.get(filePath)
       if (previouslyModified && stat.mtimeMs === previouslyModified) {
         const previous = current.get(filePath)
@@ -40,11 +46,13 @@ export class FSSource implements Source {
           return
         }
       }
-      const contents = await fs.readFile(fullPath)
-      const sha = await hashBlob(contents)
-      this.#locations.set(sha, filePath)
-      this.#lastModified.set(filePath, stat.mtimeMs)
-      builder.add(filePath, sha)
+      try {
+        const contents = await fs.readFile(fullPath)
+        const sha = await hashBlob(contents)
+        this.#locations.set(sha, filePath)
+        this.#lastModified.set(filePath, stat.mtimeMs)
+        builder.add(filePath, sha)
+      } catch {}
     })
     await Promise.all(tasks)
     const tree = await builder.compile()

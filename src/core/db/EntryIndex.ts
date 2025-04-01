@@ -19,7 +19,7 @@ import {assert, compareStrings} from '../source/Utils.js'
 import {sourceChanges} from './CommitRequest.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
-import {IndexEvent} from './IndexEvent.js'
+import {EntryUpdate, IndexUpdate} from './IndexEvent.js'
 
 export class EntryIndex extends EventTarget {
   tree = ReadonlyTree.EMPTY
@@ -99,7 +99,7 @@ export class EntryIndex extends EventTarget {
     this.#applyChanges(changes)
     this.tree = await this.tree.withChanges(changes)
     const sha = this.tree.sha
-    this.dispatchEvent(new IndexEvent('index', sha))
+    this.dispatchEvent(new IndexUpdate(sha))
     return sha
   }
 
@@ -135,7 +135,10 @@ export class EntryIndex extends EventTarget {
             contents: contents
           })
           const node = this.byId.get(entry.id) ?? new EntryNode(entry)
-          if (parent) node.setParent(parent)
+          if (parent) {
+            node.setParent(parent)
+            recompute.add(parent)
+          }
           node.add(entry)
           this.byPath.set(nodePath, node)
           this.byId.set(entry.id, node)
@@ -150,8 +153,7 @@ export class EntryIndex extends EventTarget {
       .flat()
       .sort((a, b) => compareStrings(a.index, b.index))
 
-    for (const node of recompute)
-      this.dispatchEvent(new IndexEvent('entry', node.id))
+    for (const node of recompute) this.dispatchEvent(new EntryUpdate(node.id))
   }
 
   #parseEntry({sha, file, contents}: ParseRequest): Entry {

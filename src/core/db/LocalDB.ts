@@ -11,7 +11,6 @@ import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import type {Mutation} from './Mutation.js'
-import {} from './Operation.js'
 import {WriteableGraph} from './WriteableGraph.js'
 
 export class LocalDB extends WriteableGraph {
@@ -91,7 +90,7 @@ export class LocalDB extends WriteableGraph {
     return tx.toRequest()
   }
 
-  async mutate(mutations: Array<Mutation>): Promise<string> {
+  async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     const request = await this.request(mutations)
     return this.commit(request)
   }
@@ -99,7 +98,7 @@ export class LocalDB extends WriteableGraph {
   async commit(request: CommitRequest) {
     const contentChanges = sourceChanges(request.changes)
     await this.applyChanges(contentChanges)
-    return this.sync()
+    return {sha: await this.sync()}
   }
 
   async prepareUpload(file: string): Promise<UploadResponse> {

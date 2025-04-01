@@ -1,5 +1,5 @@
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
-import {loadWorker} from 'alinea/dashboard/Worker'
+import {EntryUpdate, IndexUpdate} from 'alinea/core/db/IndexEvent'
+import {loadWorker} from 'alinea/core/worker/LoadWorker'
 import {DevDashboard} from 'alinea/dashboard/dev/DevDashboard'
 import * as Comlink from 'comlink'
 import {createRoot} from 'react-dom/client'
@@ -13,9 +13,15 @@ if (inWorker) {
 } else {
   const worker = new SharedWorker(import.meta.url, {type: 'module'})
   const index = new EventTarget()
-  worker.port.addEventListener('message', ({data}) => {
-    if (data.type === IndexEvent.ENTRY || data.type === IndexEvent.INDEX)
-      index.dispatchEvent(new IndexEvent(data.type, data.subject))
+  worker.port.addEventListener('message', event => {
+    switch (event.data.type) {
+      case IndexUpdate.type:
+        console.log('Index update', event.data.sha)
+        return index.dispatchEvent(new IndexUpdate(event.data.sha))
+      case EntryUpdate.type:
+        console.log('Entry update', event.data.id)
+        return index.dispatchEvent(new EntryUpdate(event.data.id))
+    }
   })
   const dbWorker = Comlink.wrap(worker.port)
   const scripts = document.getElementsByTagName('script')

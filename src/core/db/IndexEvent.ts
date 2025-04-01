@@ -1,10 +1,19 @@
 export class IndexEvent extends Event {
-  static readonly INDEX = 'index'
-  static readonly ENTRY = 'entry'
-  constructor(
-    type: 'index' | 'entry',
-    public readonly subject: string
-  ) {
+  constructor(type: IndexUpdate['type'] | EntryUpdate['type']) {
     super(type)
+  }
+}
+
+export class IndexUpdate extends IndexEvent {
+  static readonly type = 'index'
+  constructor(public sha: string) {
+    super(IndexUpdate.type)
+  }
+}
+
+export class EntryUpdate extends IndexEvent {
+  static readonly type = 'entry'
+  constructor(public id: string) {
+    super(EntryUpdate.type)
   }
 }

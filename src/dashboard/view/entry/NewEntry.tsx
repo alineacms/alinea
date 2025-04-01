@@ -5,7 +5,6 @@ import {Reference} from 'alinea/core/Reference'
 import {Schema} from 'alinea/core/Schema'
 import {track} from 'alinea/core/Tracker'
 import {Type, type} from 'alinea/core/Type'
-import {} from 'alinea/core/util/EntryFilenames'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {slugify} from 'alinea/core/util/Slugs'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
@@ -17,7 +16,7 @@ import {type SelectField, select} from 'alinea/field/select'
 import {text} from 'alinea/field/text'
 import {entryPicker} from 'alinea/picker/entry/EntryPicker'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {children, parents} from 'alinea/query'
+import {parents} from 'alinea/query'
 import {Button, Loader} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
 import {useAtomValue} from 'jotai'
@@ -42,16 +41,6 @@ const parentData = {
   parent: Entry.parentId,
   parentPaths: parents({
     select: Entry.path
-  }),
-  firstChildIndex: children({
-    take: 1,
-    select: Entry.index,
-    orderBy: {asc: Entry.index, caseSensitive: true}
-  }),
-  lastChildIndex: children({
-    take: 1,
-    select: Entry.index,
-    orderBy: {desc: Entry.index, caseSensitive: true}
   })
 }
 

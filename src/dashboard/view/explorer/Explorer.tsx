@@ -63,11 +63,11 @@ export function Explorer({
   const graph = useAtomValue(dbAtom)
 
   const queryClient = useQueryClient()
-  const changed = useAtomValue(dbMetaAtom)
+  const sha = useAtomValue(dbMetaAtom)
   // Todo: this can be done more granular
   useNonInitialEffect(() => {
     queryClient.invalidateQueries('explorer')
-  }, [changed])
+  }, [sha])
 
   const {data, isLoading} = useQuery(
     ['explorer', type, query, max],

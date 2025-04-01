@@ -18,24 +18,31 @@ export class EntryDB extends LocalDB {
     this.connect = connect
   }
 
-  async mutate(mutations: Array<Mutation>): Promise<string> {
-    const remote = await this.connect()
+  async mutate(
+    mutations: Array<Mutation>
+  ): Promise<{sha: string; remote: Promise<string>}> {
     const from = await this.source.getTree()
     const tx = new EntryTransaction(this.config, this.index, this.source, from)
     tx.apply(mutations)
     const request = await tx.toRequest()
     const contentChanges = sourceChanges(request.changes)
-    await this.indexChanges(contentChanges)
-    try {
-      await remote.mutate(mutations)
-      await this.applyChanges(contentChanges)
-    } finally {
-      await this.syncWithRemote()
+    const sha = this.indexChanges(contentChanges)
+    return {
+      sha: await sha,
+      remote: sha.then(async () => {
+        try {
+          const remote = await this.connect()
+          await remote.mutate(mutations)
+          await this.applyChanges(contentChanges)
+        } finally {
+          await this.syncWithRemote()
+        }
+        return this.sha
+      })
     }
-    return this.sha
   }
 
-  async commit(request: CommitRequest): Promise<string> {
+  async commit(request: CommitRequest): Promise<{sha: string}> {
     throw new Error('This must be implemented on the server')
   }
 

@@ -1,4 +1,4 @@
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {EntryUpdate, IndexUpdate} from 'alinea/core/db/IndexEvent'
 import {atom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {useEffect} from 'react'
@@ -13,17 +13,20 @@ export const dbUpdateAtom = atom(null, async (get, set) => {
   await db.sync()
 })
 
-const dbSha = atom('')
+const metaAtom = atom<string | undefined>()
 export const dbMetaAtom = atom(
-  get => get(dbSha),
+  get => get(metaAtom),
   (get, set) => {
     const local = get(dbAtom)
-    const setIndex = (event: Event) => {
-      if (event instanceof IndexEvent) set(dbSha, event.subject)
+    const listen = (event: Event) => {
+      if (event instanceof IndexUpdate) set(metaAtom, event.sha)
     }
-    local.index.addEventListener(IndexEvent.INDEX, setIndex)
+    local.index.addEventListener(IndexUpdate.type, listen)
+    local.sync().then(sha => {
+      set(metaAtom, sha)
+    })
     return () => {
-      local.index.removeEventListener(IndexEvent.INDEX, setIndex)
+      local.index.removeEventListener(IndexUpdate.type, listen)
     }
   }
 )
@@ -44,12 +47,12 @@ export const entryRevisionAtoms = atomFamily((id: string) => {
     (get, set) => {
       const local = get(dbAtom)
       const markEntry = (event: Event) => {
-        if (event instanceof IndexEvent && event.subject === id)
+        if (event instanceof EntryUpdate && event.id === id)
           set(index, i => i + 1)
       }
-      local.index.addEventListener(IndexEvent.ENTRY, markEntry)
+      local.index.addEventListener(EntryUpdate.type, markEntry)
       return () => {
-        local.index.removeEventListener(IndexEvent.ENTRY, markEntry)
+        local.index.removeEventListener(EntryUpdate.type, markEntry)
       }
     }
   )

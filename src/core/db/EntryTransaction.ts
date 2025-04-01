@@ -17,7 +17,7 @@ import {unreachable} from 'alinea/core/util/Types'
 import {SourceTransaction} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
-import {assert, compareStrings} from '../source/Utils.js'
+import {assert} from '../source/Utils.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
 import type {EntryIndex} from './EntryIndex.js'
 import type {
@@ -276,71 +276,70 @@ export class EntryTransaction {
   move({id, after, toParent, toRoot}: Op<MoveMutation>) {
     const index = this.#index
     const entries = Array.from(index.findMany(entry => entry.id === id))
-    const previous = after ? index.findFirst(entry => entry.id === after) : null
     assert(entries.length > 0, `Entry not found: ${id}`)
     const parentId = toRoot ? null : (toParent ?? entries[0].parentId)
     const root = toRoot ?? entries[0].root
     const workspace = entries[0].workspace
-    assert(
-      previous === null || previous?.parentId === parentId,
-      'Cannot move entry to a different parent'
+    const siblings = new Map(
+      Array.from(
+        index.findMany(entry => {
+          return (
+            entry.workspace === workspace &&
+            entry.root === root &&
+            entry.parentId === parentId &&
+            entry.id !== id
+          )
+        })
+      ).map(entry => [entry.id, entry])
     )
-    let info: Entry | undefined
-    for (const entry of entries) {
-      info = entry
-      const next = index.findFirst(entry => {
-        const sameParent =
-          entry.workspace === workspace &&
-          entry.root === root &&
-          entry.parentId === parentId
-        return (
-          sameParent && compareStrings(entry.index, previous?.index ?? '') > 0
-        )
-      })
-      const newIndex = generateKeyBetween(
+    if (after) assert(siblings.has(after))
+    const siblingList = Array.from(siblings.values())
+    const previousIndex = after
+      ? siblingList.findIndex(entry => entry.id === after)
+      : -1
+    const nextIndex = previousIndex + 1
+    const previous = siblingList[previousIndex] ?? null
+    const next = siblingList[nextIndex] ?? null
+    const seen = new Set()
+    const hasDuplicates = siblingList.some(entry => {
+      const wasSeen = seen.has(entry.index)
+      if (wasSeen) return true
+      seen.add(entry.index)
+      return false
+    })
+    let newIndex: string
+    if (hasDuplicates) {
+      const self = index.findFirst(entry => entry.id === id)
+      assert(self, `Entry not found: ${id}`)
+      siblingList.splice(previousIndex + 1, 0, self)
+      const newKeys = generateNKeysBetween(null, null, siblingList.length)
+      for (const [i, key] of newKeys.entries()) {
+        const id = siblingList[i].id
+        const node = index.byId.get(id)
+        assert(node)
+        for (const child of node.byFile.values()) {
+          const record = createRecord({
+            id,
+            type: child.type,
+            index: key,
+            data: child.data
+          })
+          const contents = new TextEncoder().encode(
+            JSON.stringify(record, null, 2)
+          )
+          this.#tx.add(child.filePath, contents)
+        }
+      }
+      newIndex = newKeys[previousIndex + 1]
+    } else {
+      newIndex = generateKeyBetween(
         previous?.index ?? null,
         next?.index ?? null
       )
-      if (next) {
-        const duplicateSiblings = new Set(
-          Array.from(
-            index.findMany(entry => {
-              const sameParent =
-                entry.workspace === workspace &&
-                entry.root === root &&
-                entry.parentId === parentId
-              return (
-                sameParent && entry.index === next.index && entry.id !== next.id
-              )
-            }),
-            entry => entry.id
-          )
-        )
-        const newKeys = generateNKeysBetween(
-          newIndex,
-          next.index,
-          duplicateSiblings.size
-        )
-        let i = 0
-        for (const id of duplicateSiblings) {
-          const node = index.byId.get(id)
-          assert(node)
-          for (const child of node.byFile.values()) {
-            const newKey = newKeys[i]
-            const record = createRecord({
-              id,
-              type: child.type,
-              index: newKey,
-              data: child.data
-            })
-            const contents = new TextEncoder().encode(
-              JSON.stringify(record, null, 2)
-            )
-            this.#tx.add(child.filePath, contents)
-          }
-          i++
-        }
-      }
+    }
+    let info: Entry | undefined
+    for (const entry of entries) {
+      info = entry
       const parent = parentId
         ? index.findFirst(e => {
             return e.id === parentId && e.locale === entry.locale

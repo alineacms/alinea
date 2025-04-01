@@ -36,10 +36,7 @@ async function entryTreeRoot(
   visibleTypes: Array<string>
 ): Promise<EntryTreeItem> {
   const root = graph.config.workspaces[workspace][rootName]
-  const orderBy = getRoot(root).orderChildrenBy ?? {
-    asc: Entry.index,
-    caseSensitive: true
-  }
+  const orderBy = getRoot(root).orderChildrenBy
   const children = await graph.find({
     select: Entry.id,
     groupBy: Entry.id,
@@ -110,10 +107,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
           ? !getType(schema[row.data.parents.at(-1)!.type]).orderChildrenBy
           : true
       const type = schema[row.type]
-      const orderBy = getType(type).orderChildrenBy ?? {
-        asc: Entry.index,
-        caseSensitive: true
-      }
+      const orderBy = getType(type).orderChildrenBy
       const children = await graph.find({
         select: {
           id: Entry.id,
@@ -228,6 +222,10 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
         const children = parent.getChildren()
         const previous = children[childIndex - 1]
         const after = previous ? previous.getId() : null
+        console.log({
+          id: dropping.getId(),
+          after
+        })
         db.move({
           id: dropping.getId(),
           after

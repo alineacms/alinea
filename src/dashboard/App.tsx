@@ -1,7 +1,7 @@
 import {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
 import {Root} from 'alinea/core/Root'
-import type {WorkerDB} from 'alinea/core/db/WorkerDB'
+import type {WorkerDB} from 'alinea/core/worker/WorkerDB'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
@@ -134,9 +134,15 @@ function AppAuthenticated() {
               </ErrorBoundary>
             </div>
             <Statusbar.Root>
-              <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                {sha.slice(0, 7)}
-              </Statusbar.Status>
+              {sha ? (
+                <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                  {sha.slice(0, 7)}
+                </Statusbar.Status>
+              ) : (
+                <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                  Syncing
+                </Statusbar.Status>
+              )}
             </Statusbar.Root>
           </Sidebar.Provider>
         </Toolbar.Provider>

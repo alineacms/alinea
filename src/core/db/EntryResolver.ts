@@ -442,11 +442,10 @@ export class EntryResolver implements Resolver {
             typeof valueA === 'number' && typeof valueB === 'number'
           if (strings) {
             const compare = order.caseSensitive
-              ? valueA.localeCompare(valueB)
-              : compareStrings(valueA, valueB)
+              ? compareStrings(valueA, valueB)
+              : valueA.localeCompare(valueB)
             if (compare !== 0) return order.asc ? compare : -compare
-          }
-          if (numbers) {
+          } else if (numbers) {
             if (valueA !== valueB)
               return order.asc ? valueA - valueB : valueB - valueA
           }

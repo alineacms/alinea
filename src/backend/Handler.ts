@@ -61,13 +61,18 @@ export function createHandler({
   ...hooks
 }: HandlerOptions): Handler {
   let lastSync = 0
-
+  const previewParser = PLazy.from(async () => {
+    const local = await db
+    return createPreviewParser(local)
+  })
   return async function handle(
     request: Request,
     context: RequestContext
   ): Promise<Response> {
     const local = await db
-    const previewParser = createPreviewParser(local)
+    const simulateLatency = process.env.ALINEA_LATENCY
+
+    if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
     function periodicSync(syncInterval = 60) {
       return limit(async () => {
@@ -149,7 +154,8 @@ export function createHandler({
         if (!query.preview) {
           await periodicSync(query.syncInterval)
         } else {
-          const preview = await previewParser.parse(
+          const {parse} = await previewParser
+          const preview = await parse(
             query.preview,
             () => local.syncWith(remote),
             entryId => remote.getDraft(entryId, ctx)

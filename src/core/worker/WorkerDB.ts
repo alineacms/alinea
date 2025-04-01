@@ -1,18 +1,19 @@
-import type {DBWorker} from 'alinea/dashboard/Worker'
 import type {Config} from '../Config.js'
 import type {Connection, UploadResponse} from '../Connection.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
+import {createId} from '../Id.js'
 import {getScope} from '../Scope.js'
-import type {Mutation} from './Mutation.js'
-import {WriteableGraph} from './WriteableGraph.js'
+import type {Mutation} from '../db/Mutation.js'
+import {WriteableGraph} from '../db/WriteableGraph.js'
+import type {DashboardWorker} from './LoadWorker.js'
 
 export class WorkerDB extends WriteableGraph {
-  #worker: DBWorker
+  #worker: DashboardWorker
   #client: Connection
 
   constructor(
     public config: Config,
-    worker: DBWorker,
+    worker: DashboardWorker,
     client: Connection,
     public index: EventTarget
   ) {
@@ -21,8 +22,9 @@ export class WorkerDB extends WriteableGraph {
     this.#client = client
   }
 
-  mutate(mutations: Array<Mutation>): Promise<string> {
-    return this.#worker.mutate(mutations)
+  async mutate(mutations: Array<Mutation>): Promise<{id: string; sha: string}> {
+    const id = createId()
+    return {id, sha: await this.#worker.queue(id, mutations)}
   }
 
   resolve<Query extends GraphQuery>(

@@ -77,11 +77,11 @@ export class Client implements LocalConnection {
     ).then<AnyQueryResult<Query>>(this.#failOnHttpError)
   }
 
-  mutate(mutations: Array<Mutation>): Promise<string> {
+  mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
       {method: 'POST', body: JSON.stringify(mutations)}
-    ).then<string>(this.#failOnHttpError)
+    ).then<{sha: string}>(this.#failOnHttpError)
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {

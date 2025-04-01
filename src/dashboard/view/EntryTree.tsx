@@ -7,7 +7,7 @@ import {
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
 import {getType} from 'alinea/core/Internal'
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {EntryUpdate, IndexUpdate} from 'alinea/core/db/IndexEvent'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -93,6 +93,7 @@ function TreeItem({item, data}: TreeItemProps) {
 
         <span className={styles.tree.item.label.itemName()}>
           {selectedEntry(locale, itemData).title}
+          <span> {itemData.index}</span>
         </span>
 
         {/* {isUntranslated && (
@@ -188,12 +189,19 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
     }
   }, [treeProvider])
   useEffect(() => {
-    //db.index.addEventListener(EntryUpdate.type, listen)
-    //return () => db.index.removeEventListener(EntryUpdate.type, listen)
+    db.index.addEventListener(IndexUpdate.type, listen)
+    return () => db.index.removeEventListener(IndexUpdate.type, listen)
     function listen(event: Event) {
-      if (!(event instanceof IndexEvent)) return
-      if (event.type !== IndexEvent.ENTRY) return
-      const id = event.subject
+      tree.invalidateChildrenIds(rootId(root.name))
+    }
+  }, [db])
+  useEffect(() => {
+    db.index.addEventListener(EntryUpdate.type, listen)
+    return () => db.index.removeEventListener(EntryUpdate.type, listen)
+    function listen(event: Event) {
+      if (!(event instanceof EntryUpdate)) return
+      console.log(event)
+      const id = event.id
       try {
         const item = tree.getItemInstance(id)
         if (!item) return
