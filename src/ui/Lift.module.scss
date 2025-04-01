@@ -9,6 +9,11 @@
     padding: 6px 10px 10px 10px;
   }
 
+  @supports (contain: inline-size) {
+    container-name: lift;
+    container-type: inline-size;
+  }
+
   &:empty {
     display: none;
   }
