@@ -62,8 +62,8 @@ export class DevDB extends LocalDB {
     return mediaDirs.some(dir => contains(join(rootDir, dir), file))
   }
 
-  async commit(request: CommitRequest): Promise<string> {
-    if (this.sha === request.intoSha) return this.sha
+  async commit(request: CommitRequest): Promise<{sha: string}> {
+    if (this.sha === request.intoSha) return {sha: this.sha}
     if (this.sha !== request.fromSha) throw new Error('Invalid commit request')
     const {rootDir} = this.#options
     for (const change of request.changes) {

@@ -188,7 +188,7 @@ export class EntryIndex extends EventTarget {
 
     const root = segments[0]
     const rootConfig = this.#config.workspaces[workspace][root]
-    assert(rootConfig, 'Invalid root')
+    assert(rootConfig, `Invalid root: ${root}`)
     const hasI18n = getRoot(rootConfig).i18n
     const locale = hasI18n ? segments[1] : null
 
@@ -233,7 +233,6 @@ interface ParseRequest {
 
 class EntryNode {
   id: string
-  index: string
   type: string
   byFile = new Map<string, Entry>()
   locales = new Map<string | null, Map<EntryStatus, Entry>>()
@@ -241,8 +240,10 @@ class EntryNode {
   #children = Array<EntryNode>()
   constructor(from: Entry) {
     this.id = from.id
-    this.index = from.index
     this.type = from.type
+  }
+  get index() {
+    return this.entries[0]!.index
   }
   setParent(parent: EntryNode) {
     if (this.#parent === parent) return
@@ -342,6 +343,14 @@ class EntryNode {
           parentPaths
         })
         version.url = url
+
+        // Per ID: all have same index, index is valid fractional index
+        assert(isValidOrderKey(version.index), 'Invalid index')
+        if (version.index !== this.index)
+          reportWarning(
+            `This translation has a different _index field (${version.index} != ${this.index})`,
+            version.filePath
+          )
       }
     }
     for (const node of this.#children) node.sync()
@@ -369,16 +378,6 @@ class EntryNode {
     assert(a.root === b.root, 'Root mismatch')
     // Per ID: all have same type
     assert(a.type === b.type, 'Type mismatch')
-    // Per ID: all have same index, index is valid fractional index
-    assert(isValidOrderKey(a.index), 'Invalid index')
-    if (a.index !== b.index) {
-      reportWarning(
-        `These translations have a different _index field (${a.index} != ${b.index})`,
-        a.filePath,
-        b.filePath
-      )
-      b.index = a.index
-    }
   }
 }
 

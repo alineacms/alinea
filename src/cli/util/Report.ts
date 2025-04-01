@@ -10,12 +10,10 @@ export function reportFatal(...messages: Array<string>) {
   console[isBrowser ? 'error' : 'log'](message)
 }
 
-export function reportError(message: string, error?: Error) {
-  const messages = Array<string>(message)
-  if (error) {
-    const stack = error.stack?.split('\n').slice(1)
-    if (stack) messages.push(...stack.map(line => line.trim()))
-  }
+export function reportError(error: Error) {
+  const messages = Array<string>(error.message)
+  const stack = error.stack?.split('\n').slice(1)
+  if (stack) messages.push(...stack.map(line => line.trim()))
   return reportFatal(...messages)
 }
 
