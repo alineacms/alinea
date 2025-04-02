@@ -104,7 +104,7 @@ export class EntryIndex extends EventTarget {
   }
 
   #applyChanges(changes: Array<Change>) {
-    const recompute = new Set<EntryNode>()
+    const recompute = new Set<string>()
     for (const change of changes) {
       if (!change.path.endsWith('.json')) continue
       const nodePath = getNodePath(change.path)
@@ -119,7 +119,7 @@ export class EntryIndex extends EventTarget {
             `SHA mismatch: ${entry.fileHash} != ${change.sha}`
           )
           if (node.remove(change.path) === 0) this.byId.delete(node.id)
-          else recompute.add(node)
+          else recompute.add(node.id)
           this.byPath.delete(nodePath)
           break
         }
@@ -135,25 +135,35 @@ export class EntryIndex extends EventTarget {
             contents: contents
           })
           const node = this.byId.get(entry.id) ?? new EntryNode(entry)
-          if (parent) {
-            node.setParent(parent)
-            recompute.add(parent)
-          }
-          node.add(entry)
+          node.add(entry, parent)
+          if (parent) recompute.add(parent.id)
+          else recompute.add(node.id)
           this.byPath.set(nodePath, node)
           this.byId.set(entry.id, node)
-          recompute.add(node)
           break
         }
       }
     }
-    for (const node of recompute) node.sync()
 
-    this.entries = Array.from(this.byId.values(), node => node.entries)
-      .flat()
-      .sort((a, b) => compareStrings(a.index, b.index))
+    const entries = Array<Entry>()
+    for (const [id, node] of this.byId) {
+      let needsSync = recompute.has(id)
+      let parentId = node.parentId
+      while (!needsSync && parentId) {
+        const parent = this.byId.get(parentId)
+        assert(parent)
+        needsSync = recompute.has(parent.id)
+        parentId = parent.parentId
+      }
+      if (needsSync) {
+        node.sync(this.byId)
+        recompute.add(id)
+      }
+      entries.push(...node.entries)
+    }
+    this.entries = entries.sort((a, b) => compareStrings(a.index, b.index))
 
-    for (const node of recompute) this.dispatchEvent(new EntryUpdate(node.id))
+    for (const id of recompute) this.dispatchEvent(new EntryUpdate(id))
   }
 
   #parseEntry({sha, file, contents}: ParseRequest): Entry {
@@ -236,46 +246,22 @@ class EntryNode {
   type: string
   byFile = new Map<string, Entry>()
   locales = new Map<string | null, Map<EntryStatus, Entry>>()
-  #parent: EntryNode | undefined
-  #children = Array<EntryNode>()
   constructor(from: Entry) {
     this.id = from.id
     this.type = from.type
   }
   get index() {
-    return this.entries[0]!.index
+    const [entry] = this.byFile.values()
+    return entry.index
   }
-  setParent(parent: EntryNode) {
-    if (this.#parent === parent) return
-    // Per ID: all point to same parent/root
-    assert(!this.#parent, 'Node has different parent')
-    parent.addChild(this)
-    this.#parent = parent
-  }
-  addChild(node: EntryNode) {
-    const index = this.#children.indexOf(node)
-    const [path] = this.byFile.keys()
-    assert(index === -1, `Child already exists ${path}`)
-    this.#children = [...this.#children, node].sort((a, b) =>
-      compareStrings(a.index, b.index)
-    )
-  }
-  removeChild(node: EntryNode) {
-    const index = this.#children.indexOf(node)
-    // Assert here? ...
-    if (index === -1) return
-    this.#children.splice(index, 1)
+  get parentId() {
+    const [entry] = this.byFile.values()
+    return entry.parentId
   }
   get entries() {
     return Array.from(this.byFile.values())
   }
-  get parentEntries() {
-    return this.#parent?.entries ?? []
-  }
-  get childrenEntries() {
-    return this.#children.flatMap(node => node.entries)
-  }
-  add(entry: Entry) {
+  add(entry: Entry, parent: EntryNode | undefined) {
     if (this.byFile.has(entry.filePath)) this.remove(entry.filePath)
     const [from] = this.byFile.values()
     if (from) this.#validate(from, entry)
@@ -286,12 +272,12 @@ class EntryNode {
     // Per ID: all have locale or none have locale
     if (locale === null) assert(this.locales.size === 1)
 
-    if (this.#parent) {
-      const hasArchived = this.#parent.locales.get(locale)?.get('archived')
+    if (parent) {
+      const hasArchived = parent.locales.get(locale)?.get('archived')
       if (hasArchived) {
         entry.status = 'archived'
       } else {
-        const hasDraft = this.#parent.locales.get(locale)?.get('draft')
+        const hasDraft = parent.locales.get(locale)?.get('draft')
         // Per ID&locale&published: all parents are published
         if (hasDraft)
           assert(
@@ -312,12 +298,15 @@ class EntryNode {
     // Per ID&locale: all have same path
     if (other) assert(other.path === entry.path)
 
-    entry.parentId = this.#parent ? this.#parent.id : null
+    entry.parentId = parent ? parent.id : null
     versions.set(entry.status, entry)
     this.byFile.set(entry.filePath, entry)
   }
-  sync() {
+  sync(byId: Map<string, EntryNode>) {
+    const parent = this.parentId ? byId.get(this.parentId) : undefined
+
     for (const [locale, versions] of this.locales) {
+      const parentIsArchived = parent?.locales.get(locale)?.get('archived')
       for (const [status, version] of versions) {
         const isDraft = status === 'draft'
         const isPublished = status === 'published'
@@ -343,6 +332,7 @@ class EntryNode {
           parentPaths
         })
         version.url = url
+        version.status = parentIsArchived ? 'archived' : status
 
         // Per ID: all have same index, index is valid fractional index
         assert(isValidOrderKey(version.index), 'Invalid index')
@@ -353,7 +343,6 @@ class EntryNode {
           )
       }
     }
-    for (const node of this.#children) node.sync()
   }
   has(filePath: string) {
     return this.byFile.has(filePath)
@@ -367,10 +356,6 @@ class EntryNode {
     versions.delete(entry.status)
     if (versions.size === 0) this.locales.delete(locale)
     this.byFile.delete(filePath)
-    if (this.byFile.size === 0) {
-      const parent = this.#parent
-      if (parent) parent.removeChild(this)
-    }
     return this.byFile.size
   }
   #validate(a: Entry, b: Entry) {

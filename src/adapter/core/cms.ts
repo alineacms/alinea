@@ -15,7 +15,7 @@ export class CoreCMS<
   ): Promise<AnyQueryResult<Query>> {
     throw new Error('Not implemented')
   }
-  async mutate(mutations: Array<Mutation>): Promise<string> {
+  async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     throw new Error('Not implemented')
   }
   async prepareUpload(file: string): Promise<UploadResponse> {

@@ -1,11 +1,11 @@
-import type {Config} from '../Config.js'
-import type {Connection, UploadResponse} from '../Connection.js'
-import type {AnyQueryResult, GraphQuery} from '../Graph.js'
-import {createId} from '../Id.js'
-import {getScope} from '../Scope.js'
-import type {Mutation} from '../db/Mutation.js'
-import {WriteableGraph} from '../db/WriteableGraph.js'
-import type {DashboardWorker} from './LoadWorker.js'
+import type {Config} from 'alinea/core/Config'
+import type {Connection, UploadResponse} from 'alinea/core/Connection'
+import type {AnyQueryResult, GraphQuery} from 'alinea/core/Graph'
+import {createId} from 'alinea/core/Id'
+import {getScope} from 'alinea/core/Scope'
+import type {Mutation} from 'alinea/core/db/Mutation'
+import {WriteableGraph} from 'alinea/core/db/WriteableGraph'
+import type {DashboardWorker} from './DashboardWorker.js'
 
 export class WorkerDB extends WriteableGraph {
   #worker: DashboardWorker

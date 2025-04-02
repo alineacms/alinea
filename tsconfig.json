@@ -18,7 +18,8 @@
     "paths": {
       "alinea": ["./src/index.ts"],
       "alinea/*": ["./src/*"]
-    }
+    },
+    "lib": ["dom", "webworker"]
   },
   "references": [{"path": "./tsconfig.build.json"}],
   "include": ["src", "test"]

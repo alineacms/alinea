@@ -183,7 +183,7 @@ function AppRoot() {
 export interface AppProps {
   db: WorkerDB
   config: Config
-  views: Record<string, ComponentType<any>>
+  views: Record<string, ComponentType>
   client: LocalConnection
   queryClient?: QueryClient
   fullPage?: boolean

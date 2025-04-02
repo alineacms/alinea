@@ -69,6 +69,7 @@
     "@types/glob": "^7.1.4",
     "@types/react": "^18.2.13",
     "@types/react-dom": "^18.2.6",
+    "@types/sharedworker": "^0.0.154",
     "@types/sql.js": "^1.4.4",
     "@typescript/analyze-trace": "^0.9.1",
     "@ungap/with-resolvers": "^0.1.0",
