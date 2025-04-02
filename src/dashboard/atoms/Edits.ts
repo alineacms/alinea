@@ -65,7 +65,6 @@ export class Edits {
 
   /** Update entry field data */
   applyEntryData(type: Type, entryData: Record<string, any>) {
-    console.log({entryData})
     const clientID = this.doc.clientID
     this.doc.clientID = 1
     this.doc.transact(() => {

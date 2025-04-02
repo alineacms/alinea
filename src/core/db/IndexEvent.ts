@@ -1,19 +1,11 @@
 export class IndexEvent extends Event {
-  constructor(type: IndexUpdate['type'] | EntryUpdate['type']) {
-    super(type)
-  }
-}
-
-export class IndexUpdate extends IndexEvent {
   static readonly type = 'index'
-  constructor(public sha: string) {
-    super(IndexUpdate.type)
+  constructor(public data: IndexOp) {
+    super(IndexEvent.type)
   }
 }
 
-export class EntryUpdate extends IndexEvent {
-  static readonly type = 'entry'
-  constructor(public id: string) {
-    super(EntryUpdate.type)
-  }
-}
+export type IndexOp =
+  | {op: 'index'; sha: string}
+  | {op: 'entry'; id: string}
+  | {op: 'mutate'; id: string; status: 'success' | 'failure'; error?: Error}

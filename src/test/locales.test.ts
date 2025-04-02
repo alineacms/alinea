@@ -59,7 +59,7 @@ test('create entries', async () => {
     locale: 'en',
     set: {title: 'New Page'}
   })
-  test.is(page1._index, 'a0')
+  test.is(page1._index, 'a2')
 
   // We shouldn't be able to create an entry of the same locale and status
   await test.throws(
@@ -74,7 +74,7 @@ test('create entries', async () => {
     locale: 'de',
     set: {title: 'Neue Seite'}
   })
-  test.is(page1DE._index, 'a0')
+  test.is(page1DE._index, 'a2')
 
   const page2 = await db.create({
     type: Page,

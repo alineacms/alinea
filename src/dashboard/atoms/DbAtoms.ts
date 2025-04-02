@@ -1,4 +1,4 @@
-import {EntryUpdate, IndexUpdate} from 'alinea/core/db/IndexEvent'
+import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import {atom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {useEffect} from 'react'
@@ -19,14 +19,15 @@ export const dbMetaAtom = atom(
   (get, set) => {
     const local = get(dbAtom)
     const listen = (event: Event) => {
-      if (event instanceof IndexUpdate) set(metaAtom, event.sha)
+      if (event instanceof IndexEvent && event.data.op === 'index')
+        set(metaAtom, event.data.sha)
     }
-    local.index.addEventListener(IndexUpdate.type, listen)
+    local.events.addEventListener(IndexEvent.type, listen)
     local.sync().then(sha => {
       set(metaAtom, sha)
     })
     return () => {
-      local.index.removeEventListener(IndexUpdate.type, listen)
+      local.events.removeEventListener(IndexEvent.type, listen)
     }
   }
 )
@@ -47,12 +48,16 @@ export const entryRevisionAtoms = atomFamily((id: string) => {
     (get, set) => {
       const local = get(dbAtom)
       const markEntry = (event: Event) => {
-        if (event instanceof EntryUpdate && event.id === id)
+        if (
+          event instanceof IndexEvent &&
+          event.data.op === 'entry' &&
+          event.data.id === id
+        )
           set(index, i => i + 1)
       }
-      local.index.addEventListener(EntryUpdate.type, markEntry)
+      local.events.addEventListener(IndexEvent.type, markEntry)
       return () => {
-        local.index.removeEventListener(EntryUpdate.type, markEntry)
+        local.events.removeEventListener(IndexEvent.type, markEntry)
       }
     }
   )

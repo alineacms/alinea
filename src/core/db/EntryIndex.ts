@@ -6,12 +6,13 @@ import {type EntryRecord, parseRecord} from 'alinea/core/EntryRecord'
 import {getRoot} from 'alinea/core/Internal'
 import {Page} from 'alinea/core/Page'
 import {Schema} from 'alinea/core/Schema'
-import type {EntryUrlMeta} from 'alinea/core/Type'
+import {type EntryUrlMeta, Type} from 'alinea/core/Type'
 import {entryInfo} from 'alinea/core/util/EntryFilenames'
 import {isValidOrderKey} from 'alinea/core/util/FractionalIndexing'
 import {entries, keys} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
+import MiniSearch from 'minisearch'
 import type {Change} from '../source/Change.js'
 import {type Source, bundleContents} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
@@ -19,17 +20,21 @@ import {assert, compareStrings} from '../source/Utils.js'
 import {sourceChanges} from './CommitRequest.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
-import {EntryUpdate, IndexUpdate} from './IndexEvent.js'
+import {IndexEvent} from './IndexEvent.js'
+
+const SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u
+const DIACRITIC = /\p{Diacritic}/gu
 
 export class EntryIndex extends EventTarget {
   tree = ReadonlyTree.EMPTY
   entries = Array<Entry>()
   byPath = new Map<string, EntryNode>()
   byId = new Map<string, EntryNode>()
+  resolver: EntryResolver
   #config: Config
   #workspace: string
   #seeds: Map<string, Seed>
-  resolver: EntryResolver
+  #search: MiniSearch
 
   constructor(config: Config) {
     super()
@@ -39,6 +44,27 @@ export class EntryIndex extends EventTarget {
     this.#workspace = workspaces[0]
     this.#seeds = entrySeeds(config)
     this.resolver = new EntryResolver(config, this)
+    this.#search = new MiniSearch({
+      fields: ['title', 'searchableText'],
+      storeFields: ['entry'],
+      tokenize(text) {
+        return text
+          .normalize('NFD')
+          .replace(DIACRITIC, '')
+          .split(SPACE_OR_PUNCTUATION)
+      }
+    })
+  }
+
+  search(terms: string, condition?: (entry: Entry) => boolean): Array<Entry> {
+    return this.#search
+      .search(terms, {
+        prefix: true,
+        fuzzy: 0.2,
+        boost: {title: 2},
+        filter: condition && (result => condition(result.entry))
+      })
+      .map(result => result.entry)
   }
 
   get sha() {
@@ -99,7 +125,7 @@ export class EntryIndex extends EventTarget {
     this.#applyChanges(changes)
     this.tree = await this.tree.withChanges(changes)
     const sha = this.tree.sha
-    this.dispatchEvent(new IndexUpdate(sha))
+    this.dispatchEvent(new IndexEvent({op: 'index', sha}))
     return sha
   }
 
@@ -124,6 +150,7 @@ export class EntryIndex extends EventTarget {
           } else {
             recompute.add(node.id)
           }
+          this.#search.discard(change.path)
           break
         }
         case 'add': {
@@ -143,6 +170,13 @@ export class EntryIndex extends EventTarget {
           else recompute.add(node.id)
           this.byPath.set(nodePath, node)
           this.byId.set(entry.id, node)
+          if (this.#search.has(change.path)) this.#search.discard(change.path)
+          this.#search.add({
+            id: change.path,
+            title: entry.title,
+            searchableText: entry.searchableText,
+            entry
+          })
           break
         }
       }
@@ -165,8 +199,8 @@ export class EntryIndex extends EventTarget {
       entries.push(...node.entries)
     }
     this.entries = entries.sort((a, b) => compareStrings(a.index, b.index))
-
-    for (const id of recompute) this.dispatchEvent(new EntryUpdate(id))
+    for (const id of recompute)
+      this.dispatchEvent(new IndexEvent({op: 'entry', id}))
   }
 
   #parseEntry({sha, file, contents}: ParseRequest): Entry {
@@ -204,6 +238,8 @@ export class EntryIndex extends EventTarget {
     assert(rootConfig, `Invalid root: ${root}`)
     const hasI18n = getRoot(rootConfig).i18n
     const locale = hasI18n ? segments[1] : null
+    const entryType = this.#config.schema[type]
+    const searchableText = Type.searchableText(entryType, data)
 
     return {
       rowHash: sha,
@@ -228,12 +264,12 @@ export class EntryIndex extends EventTarget {
       path,
       title,
       data,
+      searchableText,
 
       // Derived
       url: '',
       active: false,
-      main: false,
-      searchableText: ''
+      main: false
     }
   }
 }

@@ -1,11 +1,12 @@
 import type {Client} from 'alinea/core/Client'
 import type {Config} from 'alinea/core/Config'
-import {EntryUpdate, IndexUpdate} from 'alinea/core/db/IndexEvent'
+import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource'
 import * as Comlink from 'comlink'
 import type {ComponentType} from 'react'
 import {createRoot} from 'react-dom/client'
 import {App} from '../App.js'
-import type {DashboardWorker} from './DashboardWorker.js'
+import {DashboardWorker} from './DashboardWorker.js'
 import {loadWorker} from './LoadWorker.js'
 import {WorkerDB} from './WorkerDB.js'
 
@@ -24,7 +25,15 @@ export async function boot(gen: ConfigGenerator) {
   if (inWorker) {
     loadWorker(gen)
   } else {
-    const {worker, events} = createWorker()
+    let events: EventTarget
+    let worker: DashboardWorker
+    try {
+      ;[events, worker] = createSharedWorker()
+    } catch (error) {
+      console.warn('Shared worker not supported, falling back to local worker.')
+      const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
+      events = worker = new DashboardWorker(source)
+    }
     const scripts = document.getElementsByTagName('script')
     const element = scripts[scripts.length - 1]
     const into = document.createElement('div')
@@ -42,25 +51,22 @@ export async function boot(gen: ConfigGenerator) {
         link.after(copy)
       }
       const db = new WorkerDB(batch.config, worker, batch.client, events)
+      const isLocal = worker instanceof DashboardWorker
+      if (isLocal) await worker.load(batch.revision, batch.config, batch.client)
       root.render(<App db={db} {...batch} />)
     }
   }
 }
 
-function createWorker(): {worker: DashboardWorker; events: EventTarget} {
-  const worker = new SharedWorker(import.meta.url, {type: 'module'})
+function createSharedWorker(): [EventTarget, DashboardWorker] {
   const events = new EventTarget()
-  worker.port.addEventListener('message', event => {
-    switch (event.data.type) {
-      case IndexUpdate.type:
-        console.info('Index update', event.data.sha)
-        return events.dispatchEvent(new IndexUpdate(event.data.sha))
-      case EntryUpdate.type:
-        console.info('Entry update', event.data.id)
-        return events.dispatchEvent(new EntryUpdate(event.data.id))
+  const worker = new SharedWorker(import.meta.url, {type: 'module'})
+  worker.port.addEventListener('message', ({data}) => {
+    if (data.type === IndexEvent.type) {
+      events.dispatchEvent(new IndexEvent(data.data))
     }
   })
-  return {worker: Comlink.wrap(worker.port) as any, events}
+  return [events, Comlink.wrap(worker.port) as any] as const
 }
 
 function isWorkerScope() {

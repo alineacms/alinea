@@ -7,7 +7,8 @@ import {
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
 import {getType} from 'alinea/core/Internal'
-import {EntryUpdate, IndexUpdate} from 'alinea/core/db/IndexEvent'
+import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {assert} from 'alinea/core/source/Utils'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -188,29 +189,28 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
     }
   }, [treeProvider])
   useEffect(() => {
-    db.index.addEventListener(IndexUpdate.type, listen)
-    return () => db.index.removeEventListener(IndexUpdate.type, listen)
+    db.events.addEventListener(IndexEvent.type, listen)
+    return () => db.events.removeEventListener(IndexEvent.type, listen)
     function listen(event: Event) {
-      tree.invalidateChildrenIds(rootId(root.name))
-    }
-  }, [db])
-  useEffect(() => {
-    db.index.addEventListener(EntryUpdate.type, listen)
-    return () => db.index.removeEventListener(EntryUpdate.type, listen)
-    function listen(event: Event) {
-      if (!(event instanceof EntryUpdate)) return
-      const id = event.id
-      try {
-        const item = tree.getItemInstance(id)
-        if (!item) return
-        const parent = item.getParent()
-        const parentId = parent?.getId()
-        if (parentId) tree.invalidateChildrenIds(parentId)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        tree.invalidateChildrenIds(id)
-        tree.invalidateItemData(id)
+      assert(event instanceof IndexEvent)
+      switch (event.data.op) {
+        case 'index':
+          return tree.invalidateChildrenIds(rootId(root.name))
+        case 'entry': {
+          const id = event.data.id
+          try {
+            const item = tree.getItemInstance(id)
+            if (!item) return
+            const parent = item.getParent()
+            const parentId = parent?.getId()
+            if (parentId) tree.invalidateChildrenIds(parentId)
+          } catch (e) {
+            console.error(e)
+          } finally {
+            tree.invalidateChildrenIds(id)
+            tree.invalidateItemData(id)
+          }
+        }
       }
     }
   }, [db])

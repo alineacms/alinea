@@ -3,6 +3,7 @@ import {Config, Field} from 'alinea'
 export const RichTextFields = Config.document('Rich text fields', {
   fields: {
     withInitial: Field.richText('With initial value', {
+      searchable: true,
       required: true,
       initialValue: [
         {
@@ -18,13 +19,16 @@ export const RichTextFields = Config.document('Rich text fields', {
     }),
     makeRO: Field.check('Make read-only'),
     nested: Field.richText('With nested blocks', {
+      searchable: true,
       schema: {
         Inner: Config.type('Inner', {
           fields: {
             checkbox1: Field.check('Checkbox 1'),
             checkbox2: Field.check('Checkbox 2'),
             title: Field.text('Title'),
-            content: Field.richText('Inner rich text')
+            content: Field.richText('Inner rich text', {
+              searchable: true
+            })
           }
         }),
 

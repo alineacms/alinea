@@ -3,7 +3,7 @@ import type {Config} from 'alinea/core/Config'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {getScope} from 'alinea/core/Scope'
 import {trigger} from 'alinea/core/Trigger'
-import {EntryUpdate, IndexUpdate} from 'alinea/core/db/IndexEvent'
+import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import type {Mutation} from 'alinea/core/db/Mutation'
 import type {Source} from 'alinea/core/source/Source'
@@ -23,23 +23,17 @@ export class MutateEvent extends Event {
 const local = pLimit(1)
 const remote = pLimit(1)
 
-export class DashboardWorker {
-  #ports = new Set<MessagePort>()
+export class DashboardWorker extends EventTarget {
   #source: Source
   #localDB: LocalDB | undefined
   #localClient: Client | undefined
   #nextLoad = trigger<{db: LocalDB; client: Client}>()
   #defer: Function | undefined
   #currentRevision: string | undefined
-  #lastWrite: Promise<unknown> | undefined
 
   constructor(source: Source) {
+    super()
     this.#source = source
-  }
-
-  add(port: MessagePort) {
-    this.#ports.add(port)
-    return this
   }
 
   get #db() {
@@ -72,27 +66,21 @@ export class DashboardWorker {
       return client
         .mutate(mutations)
         .then(() => {
-          this.#dispatch(new MutateEvent(id, 'success'))
+          this.dispatchEvent(
+            new IndexEvent({op: 'mutate', id, status: 'success'})
+          )
         })
         .catch(error => {
           console.error(error)
-          this.#dispatch(new MutateEvent(id, 'failure', error))
+          this.dispatchEvent(
+            new IndexEvent({op: 'mutate', id, status: 'failure', error})
+          )
         })
         .finally(() => {
           this.sync()
         })
     })
     return sha
-  }
-
-  #dispatch(event: Event) {
-    for (const port of this.#ports) {
-      try {
-        port.postMessage({...event, type: event.type})
-      } catch {
-        this.#ports.delete(port)
-      }
-    }
   }
 
   async resolve(raw: string): Promise<unknown> {
@@ -114,12 +102,13 @@ export class DashboardWorker {
       this.#nextLoad.resolve({db, client})
       this.#localDB = db
       this.#localClient = client
-      const listen = (event: Event) => this.#dispatch(event)
-      db.index.addEventListener(IndexUpdate.type, listen)
-      db.index.addEventListener(EntryUpdate.type, listen)
+      const listen = (event: Event) => {
+        if (event instanceof IndexEvent)
+          this.dispatchEvent(new IndexEvent(event.data))
+      }
+      db.index.addEventListener(IndexEvent.type, listen)
       this.#defer = () => {
-        db.index.removeEventListener(IndexUpdate.type, listen)
-        db.index.removeEventListener(EntryUpdate.type, listen)
+        db.index.removeEventListener(IndexEvent.type, listen)
       }
     } catch (error) {
       this.#nextLoad.reject(new Error('Failed to load database'))

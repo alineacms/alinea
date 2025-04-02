@@ -15,7 +15,7 @@ export class WorkerDB extends WriteableGraph {
     public config: Config,
     worker: DashboardWorker,
     client: Connection,
-    public index: EventTarget
+    public events: EventTarget
   ) {
     super()
     this.#worker = worker
