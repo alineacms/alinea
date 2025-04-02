@@ -63,7 +63,8 @@ export class EntryTransaction {
     parentId = null,
     id = createId(),
     insertOrder = 'last',
-    status = 'published'
+    status = 'published',
+    overwrite = false
   }: Op<CreateMutation>) {
     const index = this.#index
     const rootConfig = this.#config.workspaces[workspace][root]
@@ -88,11 +89,10 @@ export class EntryTransaction {
       })
     )
     assert(typeof data === 'object', 'Invalid data')
-    const title = data.title
+    const title = data.title ?? data.path
     assert(typeof title === 'string', 'Missing title')
     let path = slugify(typeof data.path === 'string' ? data.path : title)
     assert(path.length > 0, 'Invalid path')
-    // Check if this path is in use within the same parent
     const conflictingPaths = siblings
       .filter(entry => {
         return (
@@ -104,6 +104,8 @@ export class EntryTransaction {
       .map(entry => entry.path)
     const suffix = pathSuffix(path, conflictingPaths)
     if (suffix !== undefined) path = `${path}-${suffix}`
+    const existing = index.byId.get(id)
+    if (existing) path = existing.pathOf(locale) ?? path
     const parentDir = parent
       ? parent.childrenDir
       : locale !== null
@@ -113,11 +115,11 @@ export class EntryTransaction {
       parentDir,
       `${path}${status === 'published' ? '' : `.${status}`}.json`
     )
-    const existing = index.byId.get(id)
     const hasSameVersion = existing?.locales
       .get(locale)
       ?.has(status as EntryStatus)
-    assert(!hasSameVersion, 'Cannot create duplicate entry')
+    const warnDuplicate = !overwrite && hasSameVersion
+    assert(!warnDuplicate, 'Cannot create duplicate entry')
     let newIndex: string
     if (existing) {
       newIndex = existing.index
@@ -147,7 +149,7 @@ export class EntryTransaction {
       }
       this.#persistSharedFields(id, locale, type, data)
     }
-    const record = createRecord({id, type, index: newIndex, data})
+    const record = createRecord({id, type, index: newIndex, path, data})
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
     this.#tx.add(filePath, contents)
     this.#messages.push(this.#reportOp('create', title))
@@ -175,6 +177,7 @@ export class EntryTransaction {
       id,
       type: entry.type,
       index: entry.index,
+      path: entry.path,
       data
     })
     const path = slugify((data.path as string) ?? entry.data.path ?? entry.path)
@@ -231,6 +234,7 @@ export class EntryTransaction {
           id,
           type: translation.type,
           index: translation.index,
+          path: translation.path,
           data: {
             ...translation.data,
             ...shared
@@ -252,8 +256,36 @@ export class EntryTransaction {
       )
     })
     assert(entry, `Entry not found: ${id}`)
+    const pathChange = entry.data.path && entry.data.path !== entry.path
+    const path = entry.data.path ?? entry.path
+    const childrenDir = paths.join(entry.parentDir, path)
     this.#checks.push([entry.filePath, entry.fileHash])
-    this.#tx.rename(entry.filePath, `${entry.childrenDir}.json`)
+    this.#tx.remove(entry.filePath)
+    const record = createRecord({...entry, path})
+    const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
+    this.#tx.add(`${childrenDir}.json`, contents)
+    if (pathChange) {
+      this.#tx.remove(`${entry.parentDir}/${entry.path}.json`)
+      this.#tx.rename(entry.childrenDir, childrenDir)
+      const versions = index.findMany(entry => {
+        return (
+          entry.id === id &&
+          entry.locale === locale &&
+          entry.status !== 'published' &&
+          entry.status !== status
+        )
+      })
+      for (const version of versions) {
+        this.#tx.rename(
+          version.filePath,
+          paths.join(entry.parentDir, `${path}.${version.status}.json`)
+        )
+        this.#tx.rename(
+          version.childrenDir,
+          paths.join(entry.parentDir, `${path}`)
+        )
+      }
+    }
     this.#messages.push(this.#reportOp('publish', entry.title))
     return this
   }
@@ -323,6 +355,7 @@ export class EntryTransaction {
             id,
             type: child.type,
             index: key,
+            path: child.path,
             data: child.data
           })
           const contents = new TextEncoder().encode(
@@ -367,6 +400,7 @@ export class EntryTransaction {
         id,
         type: entry.type,
         index: newIndex,
+        path: entry.path,
         data: entry.data
       })
       const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
@@ -391,7 +425,7 @@ export class EntryTransaction {
     for (const entry of entries) {
       this.#checks.push([entry.filePath, entry.fileHash])
       this.#tx.remove(entry.filePath)
-      this.#tx.remove(entry.childrenDir)
+      if (entry.status !== 'draft') this.#tx.remove(entry.childrenDir)
       info = entry
     }
     assert(info, `Entry not found: ${id}`)

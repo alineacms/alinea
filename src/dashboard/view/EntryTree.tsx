@@ -199,7 +199,6 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
     return () => db.index.removeEventListener(EntryUpdate.type, listen)
     function listen(event: Event) {
       if (!(event instanceof EntryUpdate)) return
-      console.log(event)
       const id = event.id
       try {
         const item = tree.getItemInstance(id)
@@ -207,11 +206,11 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
         const parent = item.getParent()
         const parentId = parent?.getId()
         if (parentId) tree.invalidateChildrenIds(parentId)
-
-        tree.invalidateChildrenIds(id)
-        tree.invalidateItemData(id)
       } catch (e) {
         console.error(e)
+      } finally {
+        tree.invalidateChildrenIds(id)
+        tree.invalidateItemData(id)
       }
     }
   }, [db])

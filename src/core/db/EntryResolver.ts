@@ -64,8 +64,8 @@ export class EntryResolver implements Resolver {
   field(entry: Entry, field: Expr): unknown {
     const name = this.#scope.nameOf(field)
     if (!name) throw new Error(`Expression has no name ${field}`)
-    const isEntryField = name === 'path' || name === 'title'
-    if (isEntryField) return entry[name]
+    /*const isEntryField = name === 'path' || name === 'title'
+    if (isEntryField) return entry[name]*/
     return entry.data[name]
   }
 

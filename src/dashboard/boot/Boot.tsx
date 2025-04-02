@@ -53,10 +53,10 @@ function createWorker(): {worker: DashboardWorker; events: EventTarget} {
   worker.port.addEventListener('message', event => {
     switch (event.data.type) {
       case IndexUpdate.type:
-        console.log('Index update', event.data.sha)
+        console.info('Index update', event.data.sha)
         return events.dispatchEvent(new IndexUpdate(event.data.sha))
       case EntryUpdate.type:
-        console.log('Entry update', event.data.id)
+        console.info('Entry update', event.data.id)
         return events.dispatchEvent(new EntryUpdate(event.data.id))
     }
   })

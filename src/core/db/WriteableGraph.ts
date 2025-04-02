@@ -33,7 +33,12 @@ export abstract class WriteableGraph extends Graph {
       id: op.id,
       type: create.type,
       locale: create.locale,
-      status: 'preferPublished'
+      status:
+        create.status === 'draft'
+          ? 'preferDraft'
+          : create.status === 'archived'
+            ? 'archived'
+            : 'preferPublished'
     })
   }
 

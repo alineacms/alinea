@@ -71,5 +71,9 @@ export class IndexedDBSource implements Source {
           blobs.delete(change.sha)
           break
       }
+    return new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = event => reject((event.target as IDBRequest).error)
+    })
   }
 }

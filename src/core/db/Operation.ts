@@ -33,6 +33,7 @@ export interface CreateQuery<Fields> {
   status?: 'draft' | 'published' | 'archived'
   set: Partial<StoredRow<Fields>>
   insertOrder?: 'first' | 'last'
+  overwrite?: boolean
 }
 
 function typeName(config: Config, type: Type) {
@@ -62,7 +63,8 @@ export class CreateOperation<Fields> extends Operation {
           workspace,
           data: op.set ?? {},
           insertOrder: op.insertOrder,
-          status: op.status
+          status: op.status,
+          overwrite: op.overwrite
         }
       ]
     })
@@ -85,7 +87,7 @@ export class DeleteOp extends Operation {
 
 export interface DiscardQuery {
   id: string
-  locale: string | null
+  locale?: string | null
   status: 'draft' | 'archived' | 'published'
 }
 

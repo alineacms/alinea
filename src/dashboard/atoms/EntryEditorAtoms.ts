@@ -24,7 +24,7 @@ import * as paths from 'alinea/core/util/Paths'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
 import {encodePreviewPayload} from 'alinea/preview/PreviewPayload'
-import {atom} from 'jotai'
+import {type Getter, type Setter, atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
@@ -275,36 +275,25 @@ export function createEntryEditor(entryData: EntryData) {
     )
   }
 
-  const transact = atom(
+  type Action = {
+    result: Promise<unknown>
+    errorMessage: string
+    clearChanges?: boolean
+  }
+  const action = atom(
     null,
-    async (
-      get,
-      set,
-      options: {
-        clearChanges?: boolean
-        transition: EntryTransition
-        errorMessage: string
-        action: () => Promise<void>
-      }
+    (
+      get: Getter,
+      set: Setter,
+      {result, errorMessage, clearChanges = false}: Action
     ) => {
-      const currentTransition = get(transition)
-      if (currentTransition) await currentTransition.done
-      const currentChanges = get(hasChanges)
-      if (options.clearChanges) set(hasChanges, false)
-      const done = options
-        .action()
+      return result
+        .then(() => {
+          if (clearChanges) set(hasChanges, false)
+        })
         .catch(error => {
-          if (options.clearChanges) set(hasChanges, currentChanges)
-          set(errorAtom, options.errorMessage, error)
+          set(errorAtom, errorMessage, error)
         })
-        .finally(() => {
-          //clearTimeout(timeout)
-          set(transition, undefined)
-        })
-      //const timeout = setTimeout(() => {
-      set(transition, {transition: options.transition, done})
-      //}, 250)
-      return done
     }
   )
 
@@ -312,22 +301,27 @@ export function createEntryEditor(entryData: EntryData) {
     // sync: store update in draft right here
     const update = await encode(edits.getLocalUpdate())
     // Use the existing path, when the entry gets published the path will change
-    const db = await get(dbAtom)
+    const db = get(dbAtom)
     const entry = await getDraftEntry({
       status: 'published',
       path: activeVersion.path
     })
-    return db.create({
-      type,
-      id: entry.id,
-      locale: entry.locale,
-      status: 'draft',
-      set: entry.data
+    return set(action, {
+      result: db.create({
+        type,
+        id: entry.id,
+        locale: entry.locale,
+        status: 'draft',
+        set: entry.data,
+        overwrite: true
+      }),
+      errorMessage: 'Could not complete draft action, please try again later',
+      clearChanges: true
     })
   })
 
   const saveTranslation = atom(null, async (get, set, locale: string) => {
-    const db = await get(dbAtom)
+    const db = get(dbAtom)
     const parentId = activeVersion.parentId
     const parentData = parentId
       ? await db.get({
@@ -355,13 +349,19 @@ export function createEntryEditor(entryData: EntryData) {
       parentPaths,
       locale
     })
-    return db.create({
-      type,
-      id: entry.id,
-      parentId,
-      locale,
-      status: 'published',
-      set: entry.data
+
+    return set(action, {
+      result: db.create({
+        type,
+        id: entry.id,
+        parentId,
+        locale,
+        status: 'published',
+        set: entry.data
+      }),
+      errorMessage:
+        'Could not complete translate action, please try again later',
+      clearChanges: true
     })
   })
 
@@ -386,35 +386,22 @@ export function createEntryEditor(entryData: EntryData) {
 
   const publishEdits = atom(null, async (get, set) => {
     if (!set(confirmErrorsAtom)) return
-    const db = await get(dbAtom)
+    const db = get(dbAtom)
     // sync: store update in draft right here
     // sync: persist shared fields here (or on the server?)
     const update = await encode(edits.getLocalUpdate())
     const entry = await getDraftEntry({status: 'published'})
-    return db.update({
-      type,
-      id: entry.id,
-      locale: entry.locale,
-      status: 'published',
-      set: entry.data
+    return set(action, {
+      result: db.update({
+        type,
+        id: entry.id,
+        locale: entry.locale,
+        status: 'published',
+        set: entry.data
+      }),
+      errorMessage: 'Could not complete publish action, please try again later',
+      clearChanges: true
     })
-    /*mutations.push({
-      type: MutationType.Edit,
-      previousFile: currentFile,
-      file: editedFile,
-      entryId: activeVersion.id,
-      locale: entry.locale,
-      entry,
-      update
-    })
-    const graph = await get(graphAtom)
-    mutations.push(...(await persistSharedFields(graph, entry)))
-    return set(transact, {
-      clearChanges: true,
-      transition: EntryTransition.PublishEdits,
-      action: () => set(mutateAtom, mutations),
-      errorMessage: 'Could not complete publish action, please try again later'
-    })*/
   })
 
   const restoreRevision = atom(null, async (get, set) => {
@@ -422,7 +409,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!revision) return
     const data = await get(revisionData(revision))
     if (!data) return
-    const db = await get(dbAtom)
+    const db = get(dbAtom)
     const {edits} = entryData
     edits.applyEntryData(type, data)
     const update = await encode(edits.getLocalUpdate())
@@ -432,120 +419,67 @@ export function createEntryEditor(entryData: EntryData) {
       status: 'published',
       path: activeVersion.path
     })
-    return db.update({
-      type,
-      id: entry.id,
-      locale: entry.locale,
-      status: 'published',
-      set: entry.data
+    return set(action, {
+      result: db.update({
+        type,
+        id: entry.id,
+        locale: entry.locale,
+        status: 'published',
+        set: entry.data
+      }),
+      errorMessage: 'Could not complete publish action, please try again later',
+      clearChanges: true
     })
-    /*const editedFile = entryFile(entry)
-    const mutation: Mutation = {
-      type: MutationType.Edit,
-      previousFile: editedFile,
-      file: editedFile,
-      entryId: activeVersion.id,
-      locale: entry.locale,
-      entry,
-      update
-    }
-    return set(transact, {
-      clearChanges: true,
-      transition: EntryTransition.RestoreRevision,
-      action: () => set(mutateAtom, [mutation]),
-      errorMessage: 'Could not complete publish action, please try again later'
-    })*/
   })
 
   const publishDraft = atom(null, async (get, set) => {
     // sync: store update in draft right here
     // sync: persist shared fields here (or on the server?)
     if (!set(confirmErrorsAtom)) return
-    const db = await get(dbAtom)
-    return db.publish({
-      id: activeVersion.id,
-      locale: activeVersion.locale,
-      status: 'draft'
-    })
-    /*const mutations: Array<Mutation> = [
-      {
-        type: MutationType.Publish,
-        status: 'draft',
-        entryId: activeVersion.id,
+    const db = get(dbAtom)
+    return set(action, {
+      result: db.publish({
+        id: activeVersion.id,
         locale: activeVersion.locale,
-        file: entryFile(activeVersion)
-      }
-    ]
-    const entry = entryData.statuses['draft']
-    const graph = await get(graphAtom)
-    mutations.push(...(await persistSharedFields(graph, entry)))
-    return set(transact, {
-      transition: EntryTransition.PublishDraft,
-      action: () => set(mutateAtom, mutations),
+        status: 'draft'
+      }),
       errorMessage: 'Could not complete publish action, please try again later'
-    })*/
+    })
   })
 
   const discardDraft = atom(null, async (get, set) => {
-    const db = await get(dbAtom)
-    return db.discard({
-      id: activeVersion.id,
-      locale: activeVersion.locale,
-      status: 'draft'
-    })
-    /*const mutation: Mutation = {
-      type: MutationType.RemoveDraft,
-      entryId: activeVersion.id,
-      locale: activeVersion.locale,
-      file: entryFile(activeVersion)
-    }
-    return set(transact, {
-      transition: EntryTransition.DiscardDraft,
-      action: () => set(mutateAtom, [mutation]),
+    const db = get(dbAtom)
+    return set(action, {
+      result: db.discard({
+        id: activeVersion.id,
+        locale: activeVersion.locale,
+        status: 'draft'
+      }),
       errorMessage: 'Could not complete discard action, please try again later'
-    })*/
+    })
   })
 
   const archivePublished = atom(null, async (get, set) => {
-    const db = await get(dbAtom)
-    return db.archive({
-      id: activeVersion.id,
-      locale: activeVersion.locale
-    })
-    /*const published = entryData.statuses['published']
-    const mutation: Mutation = {
-      type: MutationType.Archive,
-      entryId: published.id,
-      locale: published.locale,
-      file: entryFile(published)
-    }
-    return set(transact, {
-      transition: EntryTransition.ArchivePublished,
-      action: () => set(mutateAtom, [mutation]),
+    const db = get(dbAtom)
+    return set(action, {
+      result: db.archive({
+        id: activeVersion.id,
+        locale: activeVersion.locale
+      }),
       errorMessage: 'Could not complete archive action, please try again later'
-    })*/
+    })
   })
 
   const publishArchived = atom(null, async (get, set) => {
-    const db = await get(dbAtom)
-    return db.publish({
-      id: activeVersion.id,
-      locale: activeVersion.locale,
-      status: 'archived'
-    })
-    /*const archived = entryData.statuses['archived']
-    const mutation: Mutation = {
-      type: MutationType.Publish,
-      status: 'archived',
-      entryId: archived.id,
-      locale: archived.locale,
-      file: entryFile(archived)
-    }
-    return set(transact, {
-      transition: EntryTransition.PublishArchived,
-      action: () => set(mutateAtom, [mutation]),
+    const db = get(dbAtom)
+    return set(action, {
+      result: db.publish({
+        id: activeVersion.id,
+        locale: activeVersion.locale,
+        status: 'archived'
+      }),
       errorMessage: 'Could not complete publish action, please try again later'
-    })*/
+    })
   })
 
   const deleteMediaLibrary = atom(null, async (get, set) => {
@@ -553,8 +487,11 @@ export function createEntryEditor(entryData: EntryData) {
       'Are you sure you want to delete this folder and all its files?'
     )
     if (!result) return
-    const db = await get(dbAtom)
-    return db.remove(activeVersion.id)
+    const db = get(dbAtom)
+    return set(action, {
+      result: db.remove(activeVersion.id),
+      errorMessage: 'Could not complete delete action, please try again later'
+    })
     /*const published = entryData.statuses['published']
     const mutations: Array<Mutation> = [
       {
@@ -581,8 +518,11 @@ export function createEntryEditor(entryData: EntryData) {
     // Prompt for confirmation
     const result = confirm('Are you sure you want to delete this file?')
     if (!result) return
-    const db = await get(dbAtom)
-    return db.remove(activeVersion.id)
+    const db = get(dbAtom)
+    return set(action, {
+      result: db.remove(activeVersion.id),
+      errorMessage: 'Could not complete delete action, please try again later'
+    })
     /*const published = entryData.statuses['published']
     const file = published.data as MediaFile
     const mutation: Mutation = {
@@ -605,8 +545,12 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const deleteArchived = atom(null, async (get, set) => {
-    const db = await get(dbAtom)
-    return db.remove(activeVersion.id)
+    const db = get(dbAtom)
+    return set(action, {
+      result: db.remove(activeVersion.id),
+      errorMessage: 'Could not complete delete action, please try again later'
+    })
+
     /*const archived = entryData.statuses['archived']
     const mutation: Mutation = {
       type: MutationType.RemoveEntry,

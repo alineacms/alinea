@@ -1,4 +1,3 @@
-import {} from 'alinea/core/db/IndexEvent'
 import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource'
 import * as Comlink from 'comlink'
 import type {ConfigGenerator} from './Boot.js'

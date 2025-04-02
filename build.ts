@@ -149,10 +149,10 @@ const internalPlugin: Plugin = {
   setup(build) {
     const cwd = process.cwd()
     const src = path.join(cwd, 'src')
-    build.onResolve({filter: /^alinea\/.*/}, args => {
+    build.onResolve({filter: /^alinea.*/}, args => {
       if (checkCycles) {
         // Make this a relative path
-        const file = args.path.slice('alinea/'.length)
+        const file = args.path === 'alinea' ? 'index' : args.path.slice('alinea/'.length)
         const localFile = path.join(src, file)
         const target =
           checkCycles === 'browser' ? BROWSER_TARGET : SERVER_TARGET

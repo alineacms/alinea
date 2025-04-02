@@ -58,7 +58,7 @@ export class EntryIndex extends EventTarget {
     const tree = await source.getTree()
     const changes = await bundleContents(source, this.tree.diff(tree))
     if (changes.length === 0) return tree.sha
-    //for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
+    // for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
     return this.indexChanges(changes)
   }
 
@@ -118,9 +118,12 @@ export class EntryIndex extends EventTarget {
             entry.fileHash === change.sha,
             `SHA mismatch: ${entry.fileHash} != ${change.sha}`
           )
-          if (node.remove(change.path) === 0) this.byId.delete(node.id)
-          else recompute.add(node.id)
-          this.byPath.delete(nodePath)
+          if (node.remove(change.path) === 0) {
+            this.byId.delete(node.id)
+            this.byPath.delete(nodePath)
+          } else {
+            recompute.add(node.id)
+          }
           break
         }
         case 'add': {
@@ -151,7 +154,7 @@ export class EntryIndex extends EventTarget {
       let parentId = node.parentId
       while (!needsSync && parentId) {
         const parent = this.byId.get(parentId)
-        assert(parent)
+        if (!parent) break
         needsSync = recompute.has(parent.id)
         parentId = parent.parentId
       }
@@ -188,8 +191,8 @@ export class EntryIndex extends EventTarget {
     assert(typeof raw === 'object')
     const {meta: record, data: fields} = parseRecord(raw as EntryRecord)
     const data: Record<string, unknown> = {
-      ...fields,
-      path
+      path,
+      ...fields
     }
     const id = record.id
     const type = record.type
@@ -261,6 +264,13 @@ class EntryNode {
   get entries() {
     return Array.from(this.byFile.values())
   }
+  pathOf(locale: string | null): string | undefined {
+    const versions = this.locales.get(locale)
+    if (!versions) return
+    const [version] = versions.values()
+    if (!version) return
+    return version.path
+  }
   add(entry: Entry, parent: EntryNode | undefined) {
     if (this.byFile.has(entry.filePath)) this.remove(entry.filePath)
     const [from] = this.byFile.values()
@@ -294,9 +304,6 @@ class EntryNode {
     if (entry.status === 'archived') assert(!versions.has('published'))
     // Per ID&locale: only one draft
     if (entry.status === 'draft') assert(!versions.has('draft'))
-    const [other] = versions.values()
-    // Per ID&locale: all have same path
-    if (other) assert(other.path === entry.path)
 
     entry.parentId = parent ? parent.id : null
     versions.set(entry.status, entry)
@@ -307,7 +314,13 @@ class EntryNode {
 
     for (const [locale, versions] of this.locales) {
       const parentIsArchived = parent?.locales.get(locale)?.get('archived')
+      let path: string
       for (const [status, version] of versions) {
+        path ??= version.path
+        assert(
+          version.path === path,
+          `Invalid path: ${version.path} != ${path}`
+        )
         const isDraft = status === 'draft'
         const isPublished = status === 'published'
         const isArchived = status === 'archived'

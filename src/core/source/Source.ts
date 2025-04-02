@@ -90,9 +90,10 @@ export class SourceTransaction {
   }
 
   rename(from: string, to: string) {
-    this.#tasks.push(() => {
-      this.#into.rename(from, to)
-    })
+    if (from !== to)
+      this.#tasks.push(() => {
+        this.#into.rename(from, to)
+      })
     return this
   }
 
@@ -112,7 +113,6 @@ export class SourceTransaction {
           .filter(sha => !this.#blobs.has(sha))
       )
     )
-
     const blobs = new Map(
       await Promise.all(
         fromSource.map(

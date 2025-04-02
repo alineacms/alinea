@@ -224,12 +224,6 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
           ? dropping.getItemData().entries[0].root
           : undefined
         const toParent = !toRoot && newParent ? parent.getId() : undefined
-        console.log({
-          id: dropping.getId(),
-          after,
-          toParent,
-          toRoot
-        })
         db.move({
           id: dropping.getId(),
           after,

@@ -84,6 +84,7 @@ export class LocalDB extends WriteableGraph {
   }
 
   async request(mutations: Array<Mutation>) {
+    await this.sync()
     const from = await this.source.getTree()
     const tx = new EntryTransaction(this.config, this.index, this.source, from)
     tx.apply(mutations)

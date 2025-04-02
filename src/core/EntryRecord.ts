@@ -61,10 +61,12 @@ export function createRecord(entry: RequiredEntryFields): EntryRecord {
   }
   if (entry.seeded) meta[EntryRecord.seeded] = entry.seeded
   if (!entry.parentId) meta[EntryRecord.root] = entry.root
-  return {
+  const result = {
     ...meta,
     title,
-    //path,
+    path,
     ...data
   } as EntryRecord
+  if (path !== entry.path) result.path = path
+  return result
 }

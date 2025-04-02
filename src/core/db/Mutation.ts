@@ -21,6 +21,7 @@ export interface CreateMutation {
   id?: string
   insertOrder?: 'first' | 'last'
   status?: 'draft' | 'archived' | 'published'
+  overwrite?: boolean
 }
 
 export interface UpdateMutation {
