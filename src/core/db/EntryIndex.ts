@@ -277,9 +277,9 @@ class EntryNode {
       if (hasArchived) {
         entry.status = 'archived'
       } else {
-        const hasDraft = parent.locales.get(locale)?.get('draft')
+        const hasPublished = parent.locales.get(locale)?.get('published')
         // Per ID&locale&published: all parents are published
-        if (hasDraft)
+        if (!hasPublished)
           assert(
             entry.status === 'draft',
             `Entry ${entry.filePath} needs a published parent`

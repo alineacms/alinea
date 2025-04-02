@@ -93,7 +93,6 @@ function TreeItem({item, data}: TreeItemProps) {
 
         <span className={styles.tree.item.label.itemName()}>
           {selectedEntry(locale, itemData).title}
-          <span> {itemData.index}</span>
         </span>
 
         {/* {isUntranslated && (

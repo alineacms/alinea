@@ -131,11 +131,11 @@ export class Client implements LocalConnection {
 
   // Commit
 
-  commit(request: CommitRequest): Promise<string> {
+  commit(request: CommitRequest): Promise<{sha: string}> {
     return this.#requestJson(
       {action: HandleAction.Commit},
       {method: 'POST', body: JSON.stringify(request)}
-    ).then<string>(this.#failOnHttpError)
+    ).then<{sha: string}>(this.#failOnHttpError)
   }
 
   // Drafts

@@ -1,13 +1,13 @@
 import type {Client} from 'alinea/core/Client'
 import type {Config} from 'alinea/core/Config'
 import {EntryUpdate, IndexUpdate} from 'alinea/core/db/IndexEvent'
-import {WorkerDB} from 'alinea/core/worker/WorkerDB'
 import * as Comlink from 'comlink'
 import type {ComponentType} from 'react'
 import {createRoot} from 'react-dom/client'
 import {App} from '../App.js'
 import type {DashboardWorker} from './DashboardWorker.js'
 import {loadWorker} from './LoadWorker.js'
+import {WorkerDB} from './WorkerDB.js'
 
 export interface ConfigBatch {
   dev: boolean

@@ -22,6 +22,6 @@ test('move in between duplicate indexes', async () => {
   })
   test.equal(
     siblings.map(entry => entry._index),
-    ['Zw', 'ZwV', 'Zx', 'Zz', 'a0']
+    ['a0', 'a1', 'a2', 'a3', 'a4']
   )
 })

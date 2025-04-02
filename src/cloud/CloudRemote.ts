@@ -69,7 +69,10 @@ export class CloudRemote implements RemoteConnection {
     throw new Error('Method not implemented.')
   }
 
-  async commit(request: CommitRequest, ctx: RequestContext): Promise<string> {
+  async commit(
+    request: CommitRequest,
+    ctx: RequestContext
+  ): Promise<{sha: string}> {
     throw new Error('Method not implemented.')
   }
 

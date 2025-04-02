@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {cms} from '../../../test/cms.js'
+import {cms} from '../../test/cms.js'
 import {FSSource} from '../source/FSSource.js'
 import {EntryIndex} from './EntryIndex.js'
 

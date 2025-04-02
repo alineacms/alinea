@@ -19,7 +19,7 @@ import type {ServeContext} from './serve/ServeContext.js'
 import {startServer} from './serve/StartServer.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
-import {bold, cyan, gray, reportError} from './util/Report.js'
+import {bold, cyan, gray, reportFatal} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -52,7 +52,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     : findConfigFile(cwd)
 
   if (!configLocation) {
-    reportError(`No Alinea config file found @ ${cwd}`)
+    reportFatal(`No Alinea config file found @ ${cwd}`)
     process.exit(1)
   }
 

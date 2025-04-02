@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import demoTree from '../../../test/demo.json' with {type: 'json'}
+import demoTree from '../../test/demo.json' with {type: 'json'}
 import {FSSource} from './FSSource.js'
 import {ReadonlyTree} from './Tree.js'
 

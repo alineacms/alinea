@@ -4,7 +4,7 @@ import {createId} from 'alinea/core/Id'
 import {outcome} from 'alinea/core/Outcome'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
-import {reportError} from './util/Report.js'
+import {reportFatal} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -41,7 +41,7 @@ export async function init(options: InitOptions) {
   const {cwd = process.cwd(), quiet = false} = options
   const configLocation = findConfigFile(cwd)
   if (configLocation) {
-    reportError(`An alinea config file already exists in ${cwd}`)
+    reportFatal(`An alinea config file already exists in ${cwd}`)
     process.exit(1)
   }
   await fs.mkdir(path.join(cwd, 'content/pages'), {recursive: true})

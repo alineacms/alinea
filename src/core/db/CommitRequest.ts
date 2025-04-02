@@ -87,7 +87,7 @@ export async function attemptCommit(
   const contentChanges = sourceChanges(request.changes)
   await local.indexChanges(contentChanges)
   try {
-    const sha = await remote.commit(request)
+    const {sha} = await remote.commit(request)
     if (sha === request.intoSha) {
       await local.applyChanges(contentChanges)
       return

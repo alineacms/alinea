@@ -29,12 +29,15 @@ export class GithubApi
     this.#options = options
   }
 
-  async commit(request: CommitRequest, ctx: AuthedContext): Promise<string> {
+  async commit(
+    request: CommitRequest,
+    ctx: AuthedContext
+  ): Promise<{sha: string}> {
     let commitMessage = request.description
     if (ctx.user.email && ctx.user.name)
       commitMessage += `\nCo-authored-by: ${ctx.user.name} <${ctx.user.email}>`
     await applyChangesToRepo(this.#options, request.changes, commitMessage)
-    return this.getTree().then(tree => tree.sha)
+    return this.getTree().then(tree => ({sha: tree.sha}))
   }
 
   async revisions(file: string): Promise<Array<Revision>> {

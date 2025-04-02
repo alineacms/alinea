@@ -30,6 +30,7 @@ async function* getConfig(): ConfigGenerator {
             case 'refresh':
               return resolve(info.revision)
             case 'reload':
+              if (typeof window === 'undefined') return resolve(info.revision)
               return window.location.reload()
             case 'refetch':
               return resolve(revision)

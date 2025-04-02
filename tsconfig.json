@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
-    "noEmit": true,
-    "declaration": false,
+    "emitDeclarationOnly": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "node",
@@ -19,8 +21,7 @@
       "alinea": ["./src/index.ts"],
       "alinea/*": ["./src/*"]
     },
-    "lib": ["dom", "webworker"]
+    "lib": ["dom.iterable", "dom", "webworker"]
   },
-  "references": [{"path": "./tsconfig.build.json"}],
-  "include": ["src", "test"]
+  "include": ["src"]
 }

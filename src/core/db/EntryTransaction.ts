@@ -96,6 +96,7 @@ export class EntryTransaction {
     const conflictingPaths = siblings
       .filter(entry => {
         return (
+          entry.id !== id &&
           entry.locale === locale &&
           (entry.path === path || entry.path.startsWith(`${path}-`))
         )
