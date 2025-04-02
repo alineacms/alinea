@@ -72,6 +72,10 @@ export class DevDB extends LocalDB {
         // during upload
         case 'removeFile': {
           const location = join(rootDir, change.location)
+          assert(
+            this.isInMediaLocation(location),
+            `Invalid media location: ${location}`
+          )
           await fsp.rm(location, {force: true})
         }
       }

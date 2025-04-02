@@ -128,11 +128,6 @@
       "worker": "./dist/picker/url/UrlPicker.js",
       "browser": "./dist/picker/url/UrlPicker.browser.js",
       "default": "./dist/picker/url/UrlPicker.js"
-    },
-    "./cli/util/ExportStore": {
-      "worker": "./dist/cli/util/ExportStore.server.js",
-      "browser": "./dist/cli/util/ExportStore.js",
-      "default": "./dist/cli/util/ExportStore.server.js"
     }
   }
 }

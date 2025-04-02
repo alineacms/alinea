@@ -3,7 +3,7 @@ import type {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
 import {createRecord} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
-import {getRoot} from 'alinea/core/Internal'
+import {getRoot, getWorkspace} from 'alinea/core/Internal'
 import {Type} from 'alinea/core/Type'
 import {pathSuffix} from 'alinea/core/util/EntryFilenames'
 import {
@@ -427,6 +427,11 @@ export class EntryTransaction {
       this.#tx.remove(entry.filePath)
       if (entry.status !== 'draft') this.#tx.remove(entry.childrenDir)
       info = entry
+      if (entry.type === 'MediaFile') {
+        const workspace = this.#config.workspaces[entry.workspace]
+        const mediaDir = getWorkspace(workspace).mediaDir
+        this.removeFile({location: paths.join(mediaDir, entry.data.location)})
+      }
     }
     assert(info, `Entry not found: ${id}`)
     this.#messages.push(this.#reportOp('remove', info.title))
@@ -434,6 +439,7 @@ export class EntryTransaction {
   }
 
   removeFile(mutation: Op<RemoveFileMutation>) {
+    assert(mutation.location, 'Missing location')
     this.#messages.push(this.#reportOp('remove', mutation.location))
     this.#fileChanges.push({op: 'removeFile', ...mutation})
     return this

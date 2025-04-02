@@ -11,7 +11,6 @@ import type {
 import type {DraftKey} from 'alinea/core/Draft'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {getScope} from 'alinea/core/Scope'
-import {} from 'alinea/core/db/CommitRequest'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {base64} from 'alinea/core/util/Encoding'
 import {object, string} from 'cito'
@@ -170,9 +169,13 @@ export function createHandler({
         expectJson()
         const mutations = await body
         const request = await local.request(mutations)
-        await remote.commit(request, ctx)
-        await local.commit(request)
-        const sha = await local.syncWith(remote)
+        let sha: string
+        try {
+          await remote.commit(request, ctx)
+          await local.commit(request)
+        } finally {
+          sha = await local.syncWith(remote)
+        }
         return Response.json(sha)
       }
 
