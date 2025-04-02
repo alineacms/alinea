@@ -106,6 +106,16 @@ export class EntryTransaction {
     if (suffix !== undefined) path = `${path}-${suffix}`
     const existing = index.byId.get(id)
     if (existing) path = existing.pathOf(locale) ?? path
+    if (overwrite && existing?.type === 'MediaFile') {
+      const [prev] = existing.entries
+      assert(prev, 'Previous entry not found')
+      this.removeFile({
+        location: paths.join(
+          getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
+          prev.data.location
+        )
+      })
+    }
     const parentDir = parent
       ? parent.childrenDir
       : locale !== null

@@ -271,17 +271,16 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
   async function upload(
     files: Array<File>,
     to: UploadDestination,
-    replace?: {entry: EntryRow; entryFile: string}
+    replaceId?: string
   ) {
     for (const file of files) {
-      // sync: fixme
-      if (replace) throw new Error('Not implemented')
       await db.upload({
         file,
         createPreview,
         parentId: to.parentId,
         workspace: to.workspace,
-        root: to.root
+        root: to.root,
+        replaceId: replaceId
       })
     }
     /*const uploads: Array<Upload> = Array.from(files).map(file => {

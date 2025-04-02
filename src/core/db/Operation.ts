@@ -177,10 +177,11 @@ export interface UploadQuery {
   root?: string
   parentId?: string | null
   createPreview?(blob: Blob): Promise<ImagePreviewDetails>
+  replaceId?: string
 }
 
 export class UploadOperation extends Operation {
-  id = createId()
+  id: string
 
   constructor(query: UploadQuery) {
     super(async (db): Promise<Array<Mutation>> => {
@@ -201,7 +202,7 @@ export class UploadOperation extends Operation {
         ? await createPreview?.(file instanceof Blob ? file : new Blob([body]))
         : undefined
       await fetch(info.url, {method: info.method ?? 'POST', body}).then(
-        async result => {
+        result => {
           if (!result.ok)
             throw new HttpError(
               result.status,
@@ -237,10 +238,12 @@ export class UploadOperation extends Operation {
           size: body.byteLength,
           hash,
           ...previewData
-        }
+        },
+        overwrite: query.replaceId !== undefined
       }
       return [uploadFile, createEntry]
     })
+    this.id = query.replaceId ?? createId()
   }
 }
 

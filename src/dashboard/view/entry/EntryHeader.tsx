@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {entryFile, workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
+import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {Button, HStack, Icon, Stack, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -143,10 +143,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         root: editor.activeVersion.root,
         directory: workspaceMediaDir(config, editor.activeVersion.workspace)
       }
-      await upload([file], destination, {
-        entry: editor.activeVersion,
-        entryFile: entryFile(config, editor.activeVersion)
-      })
+      await upload([file], destination, editor.entryId)
     }
     input.click()
   }
@@ -216,6 +213,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
       <AppBar.Root className={styles.root()} variant={variant}>
         <HStack center gap={12} className={styles.root.description()}>
           <button
+            type="button"
             title="Display menu"
             onClick={() => toggleNav()}
             className={styles.root.menuToggle()}
@@ -329,6 +327,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
 
               <div className={styles.root.description.action()}>
                 <button
+                  type="button"
                   className={styles.root.description.action.button()}
                   onClick={discardEdits}
                 >
@@ -390,6 +389,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 </>
               )}
               <button
+                type="button"
                 title="Display preview"
                 onClick={() => togglePreview()}
                 style={{cursor: 'pointer'}}
