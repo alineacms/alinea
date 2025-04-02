@@ -183,6 +183,7 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
     tree.invalidateChildrenIds(rootId(root.name))
     for (const item of tree.getItems()) {
       const typeName: string = item.getItemData()?.type
+      if (!typeName) continue
       const type = schema[typeName]
       const {orderChildrenBy} = getType(type)
       if (orderChildrenBy) tree.invalidateChildrenIds(item.getId())
