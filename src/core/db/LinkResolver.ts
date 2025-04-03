@@ -1,5 +1,10 @@
 import type {InferProjection, Projection} from 'alinea/core/Graph'
-import type {EntryResolver, ResolveContext} from './EntryResolver.js'
+import type {Entry} from '../Entry.js'
+import {
+  type EntryResolver,
+  type ResolveContext,
+  conditionStatus
+} from './EntryResolver.js'
 
 export class LinkResolver {
   constructor(
@@ -11,13 +16,16 @@ export class LinkResolver {
     projection: P,
     entryIds: ReadonlyArray<string>
   ): Promise<Array<InferProjection<P> | undefined>> {
-    return this.resolver.resolve(
-      {
-        select: projection,
-        filter: {_locale: this.ctx.locale},
-        id: {in: entryIds}
-      },
-      this.ctx.entries
-    ) as any
+    const entries = Array<Entry>()
+    for (const id of entryIds) {
+      const node = this.resolver.index.byId.get(id)
+      if (!node) continue
+      const versions = node.locales.get(this.ctx.locale ?? null)
+      if (!versions) continue
+      for (const version of versions.values()) {
+        if (conditionStatus(version, this.ctx.status)) entries.push(version)
+      }
+    }
+    return this.resolver.resolve({select: projection}, entries) as any
   }
 }

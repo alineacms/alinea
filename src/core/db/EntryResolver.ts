@@ -44,12 +44,12 @@ export interface PostContext {
 }
 
 export class EntryResolver implements Resolver {
+  index: EntryIndex
   #scope: Scope
-  #index: EntryIndex
 
   constructor(config: Config, index: EntryIndex) {
     this.#scope = getScope(config)
-    this.#index = index
+    this.index = index
   }
 
   call(entry: Entry, internal: {method: string; args: Array<Expr>}): unknown {
@@ -423,7 +423,7 @@ export class EntryResolver implements Resolver {
       ? (entry: Entry) => preFilter(entry) && postFilter(entry)
       : postFilter
     if (search) {
-      results = this.#index.search(
+      results = this.index.search(
         Array.isArray(search) ? search.join(' ') : search,
         condition
       )
@@ -537,7 +537,7 @@ export class EntryResolver implements Resolver {
 
   async resolve<Query extends GraphQuery>(
     query: Query,
-    entries = this.#index.entries
+    entries = this.index.entries
   ): Promise<AnyQueryResult<Query>> {
     const {preview} = query
     const previewEntry =
@@ -560,4 +560,21 @@ export interface ResolveContext {
   entries: Array<Entry>
   status: Status
   locale?: string | null
+}
+
+export function conditionStatus(entry: Entry, status: Status): boolean {
+  switch (status) {
+    case 'published':
+      return entry.status === 'published'
+    case 'draft':
+      return entry.status === 'draft'
+    case 'archived':
+      return entry.status === 'archived'
+    case 'preferDraft':
+      return entry.active
+    case 'preferPublished':
+      return entry.main
+    case 'all':
+      return true
+  }
 }
