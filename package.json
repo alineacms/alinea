@@ -24,7 +24,7 @@
     "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "prepublishOnly": "bun run build",
-    "postinstall": "symlink-dir . node_modules/alinea"
+    "postinstall": "symlink-dir . node_modules/alinea || true"
   },
   "sideEffects": false,
   "typesVersions": {
