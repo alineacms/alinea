@@ -4,7 +4,7 @@ import type {Entry} from 'alinea/core/Entry'
 import {EntryFields} from 'alinea/core/EntryFields'
 import type {Expr} from 'alinea/core/Expr'
 import {Field} from 'alinea/core/Field'
-import type {AnyCondition, Condition, Filter} from 'alinea/core/Filter'
+import type {AnyCondition, Filter} from 'alinea/core/Filter'
 import {
   type AnyQueryResult,
   type EdgeQuery,
@@ -14,14 +14,7 @@ import {
   type Status,
   querySource
 } from 'alinea/core/Graph'
-import {
-  type HasExpr,
-  getExpr,
-  hasExpr,
-  hasField,
-  hasRoot,
-  hasWorkspace
-} from 'alinea/core/Internal'
+import {type HasExpr, getExpr, hasExpr, hasField} from 'alinea/core/Internal'
 import type {Resolver} from 'alinea/core/Resolver'
 import {type Scope, getScope} from 'alinea/core/Scope'
 import {hasExact} from 'alinea/core/util/Checks'
@@ -222,184 +215,34 @@ export class EntryResolver implements Resolver {
     return this.selectProjection(ctx, entry, fromEntries(entries(fields)))
   }
 
-  getField(entry: Entry, name: string): unknown {
-    if (name.startsWith('_')) {
-      const entryProp = name.slice(1) as keyof Entry
-      return entry[entryProp]
-    }
-    return entry.data[name]
-  }
-
-  conditionFilter(
-    filter: Filter,
-    getField: (name: string) => unknown
-  ): boolean {
-    const isOrFilter = orFilter.check(filter)
-    if (isOrFilter)
-      return filter.or
-        .filter(Boolean)
-        .some(filter => this.conditionFilter(filter, getField))
-
-    const isAndFilter = andFilter.check(filter)
-    if (isAndFilter)
-      return filter.and
-        .filter(Boolean)
-        .every(filter => this.conditionFilter(filter, getField))
-
-    const check = (field: any, condition: Condition<unknown>): boolean => {
-      if (typeof condition !== 'object' || !condition)
-        return condition === undefined ? true : field === condition
-      return entries(condition).every(([op, inner]) => {
-        switch (op) {
-          case 'is':
-            return field === inner
-          case 'isNot':
-            return field !== inner
-          case 'gt':
-            return field > inner
-          case 'gte':
-            return field >= inner
-          case 'lt':
-            return field < inner
-          case 'lte':
-            return field <= inner
-          case 'startsWith':
-            return field.startsWith(inner)
-          case 'or':
-            if (Array.isArray(inner))
-              return inner.some(value => check(field, value))
-            return check(field, inner)
-          case 'in':
-            return inner.includes(field)
-          case 'notIn':
-            return !inner.includes(field)
-          case 'has':
-            return (
-              inner &&
-              this.conditionFilter(inner, (name: string) => field[name])
-            )
-          case 'includes':
-            return (
-              Array.isArray(field) &&
-              field.some(value =>
-                this.conditionFilter(inner, (name: string) => value[name])
-              )
-            )
-          default:
-            throw new Error(`Unknown filter operator: "${op}"`)
-        }
-      })
-    }
-    for (const [key, condition] of entries(filter)) {
-      if (!check(getField(key), condition as Condition<unknown>)) return false
-    }
-    return true
-  }
-
-  conditionEntryFields(entry: Entry, query: QuerySettings): boolean {
-    const workspace =
-      query.workspace &&
-      typeof query.workspace === 'object' &&
-      hasWorkspace(query.workspace)
-        ? this.#scope.nameOf(query.workspace)
-        : query.workspace
-    const root =
-      query.root && typeof query.root === 'object' && hasRoot(query.root)
-        ? this.#scope.nameOf(query.root)
-        : query.root
-    return this.conditionFilter(
-      {
-        _id: query.id,
-        _parentId: query.parentId,
-        _path: query.path,
-        _url: query.url,
-        _workspace: workspace,
-        _root: root
-      },
-      name => this.getField(entry, name)
-    )
-  }
-
-  conditionLocale(entry: Entry, locale: string | null | undefined): boolean {
-    if (locale === null) return entry.locale === null
-    if (!locale) return true
-    return entry.locale === locale
-  }
-
-  conditionStatus(entry: Entry, status: Status): boolean {
-    switch (status) {
-      case 'published':
-        return entry.status === 'published'
-      case 'draft':
-        return entry.status === 'draft'
-      case 'archived':
-        return entry.status === 'archived'
-      case 'preferDraft':
-        return entry.active
-      case 'preferPublished':
-        return entry.main
-      case 'all':
-        return true
-    }
-  }
-
-  conditionLocation(entry: Entry, location: Array<string>): boolean {
-    switch (location.length) {
-      case 1:
-        return entry.workspace === location[0]
-      case 2:
-        return entry.workspace === location[0] && entry.root === location[1]
-      case 3:
-        return (
-          entry.workspace === location[0] &&
-          entry.root === location[1] &&
-          entry.parentDir.startsWith(`/${location[2]}`)
-        )
-      default:
-        return true
-    }
-  }
-
-  conditionTypes(entry: Entry, types: Type | Array<Type>): boolean {
-    if (Array.isArray(types)) {
-      const names = types.map(type => this.#scope.nameOf(type))
-      return names.includes(entry.type)
-    }
-    return entry.type === this.#scope.nameOf(types)
-  }
-
   condition(ctx: ResolveContext, query: GraphQuery) {
     const location = Array.isArray(query.location)
       ? query.location
       : query.location && this.#scope.locationOf(query.location)
-    const checkLocation = location && locationChecker(location)
     const checkStatus = query.status && statusChecker(query.status)
+    const checkLocation = location && locationChecker(location)
+    const locale = query.locale ?? ctx.locale
+    const checkLocale = locale !== undefined && localeChecker(locale)
+    const checkType =
+      Boolean(query.type) &&
+      typeChecker(
+        Array.isArray(query.type)
+          ? query.type.map(type => this.#scope.nameOf(type)!)
+          : this.#scope.nameOf(query.type as any)!
+      )
+    const source = querySource(query)
+    const checkEntry = entryChecker(query)
     const checkFilter = query.filter && filterChecker(query.filter)
     return (entry: Entry) => {
-      const matchesStatus = this.conditionStatus(
-        entry,
-        query.status ?? ctx.status ?? 'published'
-      )
-      if (!matchesStatus) return false
-      const matchesLocation =
-        !location || this.conditionLocation(entry, location)
-      if (!matchesLocation) return false
-      const matchesType =
-        !query.type ||
-        this.conditionTypes(entry, query.type as Type | Array<Type>)
-      if (!matchesType) return false
-      const source = querySource(query)
-      const matchesLocale = this.conditionLocale(
-        entry,
-        query.locale ?? ctx.locale
-      )
+      if (checkStatus && !checkStatus(entry)) return false
+      if (checkLocation && !checkLocation(entry)) return false
+      if (checkLocale && !checkLocale(entry)) return false
+      if (checkType && !checkType(entry)) return false
+      const matchesLocale = checkLocale ? checkLocale(entry) : true
       if (source !== 'translations' && !matchesLocale) return false
-      const matchesEntryFields = this.conditionEntryFields(entry, query)
-      if (!matchesEntryFields) return false
-      if (!query.filter) return true
-      return this.conditionFilter(query.filter ?? {}, name =>
-        this.getField(entry, name)
-      )
+      if (checkEntry && !checkEntry(entry)) return false
+      if (checkFilter && !checkFilter(entry.data)) return false
+      return true
     }
   }
 
@@ -586,6 +429,31 @@ interface Check {
   (input: any): boolean
 }
 
+function entryChecker(query: QuerySettings): Check {
+  const checkId = query.id && filterChecker(query.id)
+  const checkParentId = query.parentId && filterChecker(query.parentId)
+  const checkPath = query.path && filterChecker(query.path)
+  const checkUrl = query.url && filterChecker(query.url)
+  const checkWorkspace = query.workspace && filterChecker(query.workspace)
+  const checkRoot = query.root && filterChecker(query.root)
+  return (entry: Entry) => {
+    if (checkId && !checkId(entry.id)) return false
+    if (checkParentId && !checkParentId(entry.parentId)) return false
+    if (checkPath && !checkPath(entry.path)) return false
+    if (checkUrl && !checkUrl(entry.url)) return false
+    if (checkWorkspace && !checkWorkspace(entry.workspace)) return false
+    if (checkRoot && !checkRoot(entry.root)) return false
+    return true
+  }
+}
+
+function typeChecker(type: Array<string> | string): Check {
+  if (Array.isArray(type)) {
+    return entry => type.includes(entry.type)
+  }
+  return entry => entry.type === type
+}
+
 function locationChecker(location: Array<string>): Check {
   switch (location.length) {
     case 1:
@@ -601,6 +469,10 @@ function locationChecker(location: Array<string>): Check {
     default:
       return entry => true
   }
+}
+
+function localeChecker(locale: string | null): Check {
+  return entry => entry.locale === locale
 }
 
 function filterChecker(filter: Filter): Check {
@@ -633,6 +505,10 @@ function filterChecker(filter: Filter): Check {
 function createConditions(ops: AnyCondition<any>): Array<Check> {
   const conditions = Array<Check>()
   for (const [name, op] of entries(ops)) {
+    if (typeof op !== 'object' || op === null) {
+      conditions.push(input => input[name] === op)
+      continue
+    }
     const inner = op as AnyCondition<any>
     if (inner.is !== undefined)
       conditions.push(input => input[name] === inner.is)
