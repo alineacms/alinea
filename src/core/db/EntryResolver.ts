@@ -4,7 +4,7 @@ import type {Entry} from 'alinea/core/Entry'
 import {EntryFields} from 'alinea/core/EntryFields'
 import type {Expr} from 'alinea/core/Expr'
 import {Field} from 'alinea/core/Field'
-import type {Condition, Filter} from 'alinea/core/Filter'
+import type {AnyCondition, Condition, Filter} from 'alinea/core/Filter'
 import {
   type AnyQueryResult,
   type EdgeQuery,
@@ -372,6 +372,9 @@ export class EntryResolver implements Resolver {
     const location = Array.isArray(query.location)
       ? query.location
       : query.location && this.#scope.locationOf(query.location)
+    const checkLocation = location && locationChecker(location)
+    const checkStatus = query.status && statusChecker(query.status)
+    const checkFilter = query.filter && filterChecker(query.filter)
     return (entry: Entry) => {
       const matchesStatus = this.conditionStatus(
         entry,
@@ -562,19 +565,119 @@ export interface ResolveContext {
   locale?: string | null
 }
 
-export function conditionStatus(entry: Entry, status: Status): boolean {
+export function statusChecker(status: Status): Check {
   switch (status) {
     case 'published':
-      return entry.status === 'published'
+      return entry => entry.status === 'published'
     case 'draft':
-      return entry.status === 'draft'
+      return entry => entry.status === 'draft'
     case 'archived':
-      return entry.status === 'archived'
+      return entry => entry.status === 'archived'
     case 'preferDraft':
-      return entry.active
+      return entry => entry.active
     case 'preferPublished':
-      return entry.main
+      return entry => entry.main
     case 'all':
-      return true
+      return entry => true
   }
+}
+
+interface Check {
+  (input: any): boolean
+}
+
+function locationChecker(location: Array<string>): Check {
+  switch (location.length) {
+    case 1:
+      return entry => entry.workspace === location[0]
+    case 2:
+      return entry =>
+        entry.workspace === location[0] && entry.root === location[1]
+    case 3:
+      return entry =>
+        entry.workspace === location[0] &&
+        entry.root === location[1] &&
+        entry.parentDir.startsWith(`/${location[2]}`)
+    default:
+      return entry => true
+  }
+}
+
+function filterChecker(filter: Filter): Check {
+  const isOrFilter = orFilter.check(filter)
+  if (isOrFilter) {
+    const or = filter.or.filter(Boolean).map(filterChecker)
+    return input => {
+      for (const fn of or) if (fn(input)) return true
+      return false
+    }
+  }
+  const isAndFilter = andFilter.check(filter)
+  if (isAndFilter) {
+    const and = filter.and.filter(Boolean).map(filterChecker)
+    return input => {
+      for (const fn of and) if (!fn(input)) return false
+      return true
+    }
+  }
+  if (typeof filter !== 'object' || !filter) {
+    return input => input === filter
+  }
+  const conditions = createConditions(filter)
+  return input => {
+    for (const condition of conditions) if (!condition(input)) return false
+    return true
+  }
+}
+
+function createConditions(ops: AnyCondition<any>): Array<Check> {
+  const conditions = Array<Check>()
+  for (const [name, op] of entries(ops)) {
+    const inner = op as AnyCondition<any>
+    if (inner.is !== undefined)
+      conditions.push(input => input[name] === inner.is)
+    if (inner.isNot !== undefined)
+      conditions.push(input => input[name] !== inner.isNot)
+    const inOp = inner.in
+    if (Array.isArray(inOp))
+      conditions.push(input => inOp.includes(input[name]))
+    const notInOp = inner.notIn
+    if (Array.isArray(notInOp))
+      conditions.push(input => !notInOp.includes(input[name]))
+    if (inner.gt !== undefined) conditions.push(input => input[name] > inner.gt)
+    if (inner.gte !== undefined)
+      conditions.push(input => input[name] >= inner.gte)
+    if (inner.lt !== undefined) conditions.push(input => input[name] < inner.lt)
+    if (inner.lte !== undefined)
+      conditions.push(input => input[name] <= inner.lte)
+    if (inner.startsWith)
+      conditions.push(
+        input =>
+          typeof input[name] === 'string' &&
+          input[name].startsWith(inner.startsWith as string)
+      )
+    const orOp = inner.or
+    if (orOp) {
+      const inner = Array.isArray(orOp)
+        ? orOp.flatMap(createConditions)
+        : createConditions(orOp)
+      conditions.push(input => {
+        for (const condition of inner) if (condition(input)) return true
+        return false
+      })
+    }
+    if (inner.has) {
+      const has = filterChecker(inner.has)
+      conditions.push(input => has(input[name]))
+    }
+    if (inner.includes) {
+      const includes = filterChecker(inner.includes)
+      conditions.push(input => {
+        if (!Array.isArray(input[name])) return false
+        for (const item of input[name]) if (includes(item)) return true
+        return false
+      })
+    }
+  }
+  return conditions
 }
