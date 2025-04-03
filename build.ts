@@ -19,6 +19,9 @@ import pxtorem from 'postcss-pxtorem'
 import prettyBytes from 'pretty-bytes'
 import sade from 'sade'
 import * as sass from 'sass-embedded'
+import {sync} from 'symlink-dir'
+
+sync('.', 'node_modules/alinea')
 
 const BROWSER_TARGET = 'browser'
 const SERVER_TARGET = 'server'
