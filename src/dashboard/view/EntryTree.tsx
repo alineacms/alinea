@@ -9,6 +9,7 @@ import {useTree} from '@headless-tree/react'
 import {getType} from 'alinea/core/Internal'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import {assert} from 'alinea/core/source/Utils'
+import {debounce} from 'alinea/core/util/Debounce'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -190,9 +191,10 @@ export function EntryTree({id, selected = []}: EntryTreeProps) {
     }
   }, [treeProvider])
   useEffect(() => {
+    const listen = debounce(refresh, 0)
     db.events.addEventListener(IndexEvent.type, listen)
     return () => db.events.removeEventListener(IndexEvent.type, listen)
-    function listen(event: Event) {
+    function refresh(event: Event) {
       assert(event instanceof IndexEvent)
       switch (event.data.op) {
         case 'index':
