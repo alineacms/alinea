@@ -274,7 +274,10 @@ export class EntryResolver implements Resolver {
           case 'notIn':
             return !inner.includes(field)
           case 'has':
-            return this.conditionFilter(inner, (name: string) => field[name])
+            return (
+              inner &&
+              this.conditionFilter(inner, (name: string) => field[name])
+            )
           case 'includes':
             return (
               Array.isArray(field) &&
