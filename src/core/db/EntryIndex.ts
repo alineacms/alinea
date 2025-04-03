@@ -9,7 +9,7 @@ import {Schema} from 'alinea/core/Schema'
 import {type EntryUrlMeta, Type} from 'alinea/core/Type'
 import {entryInfo} from 'alinea/core/util/EntryFilenames'
 import {isValidOrderKey} from 'alinea/core/util/FractionalIndexing'
-import {entries, keys} from 'alinea/core/util/Objects'
+import {entries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
@@ -32,16 +32,12 @@ export class EntryIndex extends EventTarget {
   byId = new Map<string, EntryNode>()
   resolver: EntryResolver
   #config: Config
-  #workspace: string
   #seeds: Map<string, Seed>
   #search: MiniSearch
 
   constructor(config: Config) {
     super()
-    const workspaces = keys(config.workspaces)
-    assert(workspaces.length === 1, 'Multiple workspaces not supported')
     this.#config = config
-    this.#workspace = workspaces[0]
     this.#seeds = entrySeeds(config)
     this.resolver = new EntryResolver(config, this)
     this.#search = new MiniSearch({
@@ -204,7 +200,6 @@ export class EntryIndex extends EventTarget {
   }
 
   #parseEntry({sha, file, contents}: ParseRequest): Entry {
-    const workspace = this.#workspace
     const segments = file.split('/')
     const baseName = segments.at(-1)
     assert(baseName)
@@ -233,11 +228,14 @@ export class EntryIndex extends EventTarget {
     const index = record.index
     const title = data.title as string
 
-    const root = segments[0]
-    const rootConfig = this.#config.workspaces[workspace][root]
+    const workspace = segments[0]
+    const workspaceConfig = this.#config.workspaces[workspace]
+    assert(workspaceConfig, `Invalid workspace: ${workspace} in ${file}`)
+    const root = segments[1]
+    const rootConfig = workspaceConfig[root]
     assert(rootConfig, `Invalid root: ${root}`)
     const hasI18n = getRoot(rootConfig).i18n
-    const locale = hasI18n ? segments[1] : null
+    const locale = hasI18n ? segments[2] : null
     const entryType = this.#config.schema[type]
     const searchableText = Type.searchableText(entryType, data)
 
@@ -257,7 +255,7 @@ export class EntryIndex extends EventTarget {
       parentDir,
       childrenDir,
       parentId: null,
-      level: segments.length - (hasI18n ? 2 : 1),
+      level: segments.length - (hasI18n ? 3 : 2),
       index,
       locale,
 
@@ -373,7 +371,7 @@ class EntryNode {
           (isDraft && !hasPublished && !hasArchived)
         version.active = active
         version.main = main
-        const parentPaths = version.parentDir.split('/').slice(locale ? 2 : 1)
+        const parentPaths = version.parentDir.split('/').slice(locale ? 3 : 2)
         const url = entryUrl({
           locale,
           status,
@@ -460,7 +458,9 @@ function entrySeeds(config: Config): Map<string, Seed> {
           const path = pagePath.split('/').map(slugify).join('/')
           if (!Page.isPage(page)) continue
           const {type, fields = {}} = Page.data(page)
-          const filePath = getNodePath(`${rootName}${target}/${path}.json`)
+          const filePath = getNodePath(
+            `${workspaceName}/${rootName}${target}/${path}.json`
+          )
           const typeName = typeNames.get(type)
           if (!typeName) continue
           result.set(filePath, {

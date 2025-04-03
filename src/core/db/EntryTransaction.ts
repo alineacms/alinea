@@ -119,8 +119,8 @@ export class EntryTransaction {
     const parentDir = parent
       ? parent.childrenDir
       : locale !== null
-        ? `${root}/${locale.toLowerCase()}`
-        : root
+        ? `${workspace}/${root}/${locale.toLowerCase()}`
+        : `${workspace}/${root}`
     const filePath = paths.join(
       parentDir,
       `${path}${status === 'published' ? '' : `.${status}`}.json`
@@ -402,8 +402,8 @@ export class EntryTransaction {
       const parentDir = parent
         ? parent.childrenDir
         : entry.locale
-          ? `${root}/${entry.locale}`
-          : root
+          ? `${workspace}/${root}/${entry.locale}`
+          : `${workspace}/${root}`
       const childrenDir = paths.join(parentDir, entry.path)
       const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
       const record = createRecord({

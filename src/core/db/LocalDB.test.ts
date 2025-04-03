@@ -1,13 +1,15 @@
 import {suite} from '@alinea/suite'
 import {cms} from '../../test/cms'
 import {Entry} from '../Entry.js'
+import {CombinedSource} from '../source/CombinedSource.js'
 import {FSSource} from '../source/FSSource.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {syncWith} from '../source/Source.js'
 import {LocalDB} from './LocalDB.js'
 
 const dir = 'apps/web/content/demo'
-const source = new FSSource(dir)
+const demo = new FSSource(dir)
+const source = new CombinedSource({demo})
 const from = new MemorySource()
 const into = new MemorySource()
 

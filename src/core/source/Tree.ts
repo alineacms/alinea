@@ -32,7 +32,7 @@ interface EntryNode extends Entry {
 }
 
 export class Leaf {
-  type = 'blob' as const
+  readonly type = 'blob' as const
   readonly sha: string
   readonly mode: string
 
@@ -55,7 +55,7 @@ export class Leaf {
 const EMPTY_TREE_SHA = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
 
 class TreeBase<Node extends TreeBase<Node>> {
-  type = 'tree' as const
+  readonly type = 'tree' as const
   readonly mode: string = '040000'
   sha: string | undefined
   protected nodes = new Map<string, Node | Leaf>()
@@ -159,8 +159,8 @@ class TreeBase<Node extends TreeBase<Node>> {
 }
 
 export class ReadonlyTree extends TreeBase<ReadonlyTree> {
-  sha: string
-  static EMPTY = new ReadonlyTree({sha: EMPTY_TREE_SHA, entries: []})
+  readonly sha: string
+  static readonly EMPTY = new ReadonlyTree({sha: EMPTY_TREE_SHA, entries: []})
 
   constructor({sha, entries}: Tree) {
     super(sha)

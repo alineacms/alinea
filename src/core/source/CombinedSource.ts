@@ -1,16 +1,19 @@
-import {entries} from '../util/Objects.js'
+import {entries, keys} from '../util/Objects.js'
 import type {Change} from './Change.js'
 import type {Source} from './Source.js'
 import {type ReadonlyTree, WriteableTree} from './Tree.js'
 import {assert, splitPath} from './Utils.js'
 
 export class CombinedSource implements Source {
+  #only: Source | undefined
   #builder = new WriteableTree()
   #shas = new Map<string, string>()
   #sources: Record<string, Source>
 
   constructor(sources: Record<string, Source>) {
     this.#sources = sources
+    const [first] = keys(sources)
+    if (keys(sources).length === 1) this.#only = sources[first]
   }
 
   async getTree() {
@@ -33,6 +36,7 @@ export class CombinedSource implements Source {
   }
 
   async getBlob(sha: string): Promise<Uint8Array> {
+    if (this.#only) return this.#only.getBlob(sha)
     const tree = await this.getTree()
     for (const [name, source] of entries(this.#sources)) {
       const sub = tree.getNode(name)

@@ -59,7 +59,6 @@ export class DashboardWorker extends EventTarget {
   }
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
-    console.log({id, mutations})
     const sha = await this.#apply(mutations)
     remote(async () => {
       const client = await this.#client

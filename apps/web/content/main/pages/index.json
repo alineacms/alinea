@@ -2,10 +2,8 @@
   "_id": "home",
   "_type": "Home",
   "_index": "Zx",
-  "_i18nId": "home",
-  "_seeded": "/index.json",
-  "_root": "pages",
   "title": "Homepage",
+  "path": "index",
   "headline": "Git-based CMS\nBuilt for Next.js",
   "byline": "Open source headless CMS with minimal setup.\nFully typed content right in your repository.",
   "action": {

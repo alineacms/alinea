@@ -1,13 +1,14 @@
 import * as fsp from 'node:fs/promises'
-import {Config} from 'alinea/core/Config'
+import type {Config} from 'alinea/core/Config'
 import type {UploadResponse} from 'alinea/core/Connection'
 import {createId} from 'alinea/core/Id'
 import {getWorkspace} from 'alinea/core/Internal'
 import {type CommitRequest, checkCommit} from 'alinea/core/db/CommitRequest'
 import {LocalDB} from 'alinea/core/db/LocalDB'
+import {CombinedSource} from 'alinea/core/source/CombinedSource'
 import {FSSource} from 'alinea/core/source/FSSource'
 import {assert} from 'alinea/core/source/Utils'
-import {values} from 'alinea/core/util/Objects'
+import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {
   basename,
   contains,
@@ -29,25 +30,30 @@ export interface WatchFiles {
 }
 
 export class DevDB extends LocalDB {
-  source: FSSource
+  source: CombinedSource
   #options: DevDBOptions
-  #contentDir: string
 
   constructor(options: DevDBOptions) {
-    const workspace = Config.mainWorkspace(options.config)
-    const contentDir = join(options.rootDir, workspace.source)
-    const source = new FSSource(contentDir)
+    const sources = fromEntries(
+      entries(options.config.workspaces).map(([name, workspace]) => {
+        const dir = getWorkspace(workspace).source
+        return [name, new FSSource(join(options.rootDir, dir))]
+      })
+    )
+    const source = new CombinedSource(sources)
     super(options.config, source)
     this.#options = options
     this.source = source
-    this.#contentDir = contentDir
   }
 
   async watchFiles() {
+    const {config} = this.#options
     const tree = await this.source.getTree()
     const res: WatchFiles = {files: [], dirs: []}
     for (const [path, node] of tree) {
-      const fullPath = join(this.#contentDir, path)
+      const [workspace, ...rest] = path.split('/')
+      const contentDir = getWorkspace(config.workspaces[workspace]).source
+      const fullPath = join(contentDir, rest.join('/'))
       if (node.type === 'tree') res.dirs.push(fullPath)
       else res.files.push(fullPath)
     }
