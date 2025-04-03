@@ -4,22 +4,26 @@
 import declarations from '!!raw-loader!./alinea.d.ts.txt'
 import {Logo} from '@/layout/branding/Logo'
 import styler from '@alinea/styler'
-import Editor, {Monaco} from '@monaco-editor/react'
+import Editor, {type Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
-import {createExample} from 'alinea/backend/test/Example'
 import * as core from 'alinea/core'
-import {Field} from 'alinea/core/Field'
+import type {Field} from 'alinea/core/Field'
 import {outcome} from 'alinea/core/Outcome'
 import {trigger} from 'alinea/core/Trigger'
 import {Type, type} from 'alinea/core/Type'
 import 'alinea/css'
+import {TestDB} from 'alinea/core/db/TestDB'
+import {MemorySource} from 'alinea/core/source/MemorySource'
 import * as dashboard from 'alinea/dashboard'
 import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
+import {DashboardWorker} from 'alinea/dashboard/boot/DashboardWorker'
+import {WorkerDB} from 'alinea/dashboard/boot/WorkerDB'
 import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
 import {Viewport} from 'alinea/dashboard/view/Viewport'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
+import {cms} from 'alinea/test/cms'
 import {HStack, Loader, Stack, TextLabel, Typo, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Pane} from 'alinea/ui/Pane'
@@ -53,7 +57,7 @@ function PreviewType({type}: PreviewTypeProps) {
   state.current = form.data()
   const label = Type.label(type)
   return (
-    <div style={{margin: 'auto', width: '100%', padding: `20px 0`}}>
+    <div style={{margin: 'auto', width: '100%', padding: '20px 0'}}>
       <Typo.H1>
         <TextLabel label={label} />
       </Typo.H1>
@@ -82,11 +86,11 @@ function PreviewField({field}: PreviewFieldProps) {
 
 function editorConfig(monaco: Monaco) {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-    jsx: 'preserve',
+    jsx: 'preserve' as any,
     typeRoots: ['node_modules/@types']
   })
   monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    `declare var alinea: typeof import('alinea').alinea;\n` + declarations,
+    `declare var alinea: typeof import('alinea').alinea;\n${declarations}`,
     'file:///node_modules/@types/alinea/index.d.ts'
   )
 }
@@ -126,8 +130,14 @@ function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
 }
 
 const ts = trigger<typeof typescript>()
-const example = createExample()
-const connection = example.connect()
+const source = new MemorySource()
+const client = new TestDB(cms.config, source)
+const workerDB = new WorkerDB(
+  cms.config,
+  new DashboardWorker(source),
+  client,
+  client.index
+)
 
 export default function Playground() {
   const [view, setView] = useState<'both' | 'preview' | 'source'>(() => {
@@ -191,8 +201,7 @@ export default function Playground() {
     }
   }
   function handleShare() {
-    window.location.hash =
-      '#code/' + lzstring.compressToEncodedURIComponent(code)
+    window.location.hash = `#code/${lzstring.compressToEncodedURIComponent(code)}`
     clipboard.copy(window.location.href)
   }
   function handleReset() {
@@ -202,13 +211,13 @@ export default function Playground() {
   useEffect(() => {
     compile(code)
   }, [code])
-  const client = React.use(connection)
   if (state.error) console.error(state.error)
   return (
     <DashboardProvider
       dev
+      db={workerDB}
       client={client}
-      config={example.config}
+      config={client.config}
       views={defaultViews}
     >
       <Script
@@ -274,6 +283,7 @@ export default function Playground() {
                 <Logo />
               </Link>
               <button
+                type="button"
                 className={styles.root.footer.button({
                   active: view === 'source'
                 })}
@@ -282,6 +292,7 @@ export default function Playground() {
                 Editor
               </button>
               <button
+                type="button"
                 className={styles.root.footer.button({
                   active: view === 'preview'
                 })}
@@ -290,6 +301,7 @@ export default function Playground() {
                 Preview
               </button>
               <button
+                type="button"
                 className={styles.root.footer.button({
                   active: view === 'both'
                 })}
@@ -299,6 +311,7 @@ export default function Playground() {
               </button>
               <Stack.Center />
               <button
+                type="button"
                 className={styles.root.footer.button()}
                 onClick={handleShare}
               >
@@ -306,6 +319,7 @@ export default function Playground() {
               </button>
               {window.top === window.self ? (
                 <button
+                  type="button"
                   className={styles.root.footer.button()}
                   onClick={handleReset}
                 >
@@ -316,6 +330,7 @@ export default function Playground() {
                   className={styles.root.footer.button()}
                   href={location.href}
                   target="_blank"
+                  rel="noreferrer"
                 >
                   Open in new tab
                 </a>
