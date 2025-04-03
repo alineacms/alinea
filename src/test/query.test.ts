@@ -45,6 +45,11 @@ test('filters', async () => {
     }
   })
   test.is(result2.length, 1)
+  const result3 = await db.find({
+    type: Page,
+    id: {in: ['a', 'b', 'c']}
+  })
+  test.is(result3.length, 0)
 })
 
 test('take/skip', async () => {

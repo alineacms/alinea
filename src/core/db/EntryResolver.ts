@@ -232,7 +232,12 @@ export class EntryResolver implements Resolver {
       )
     const source = querySource(query)
     const checkEntry = entryChecker(query)
-    const checkFilter = query.filter && filterChecker(query.filter)
+    const checkFilter =
+      query.filter &&
+      filterChecker(query.filter, (entry, name) => {
+        if (name.startsWith('_')) return entry[name.slice(1)]
+        return entry.data[name]
+      })
     return (entry: Entry) => {
       if (checkStatus && !checkStatus(entry)) return false
       if (checkLocation && !checkLocation(entry)) return false
@@ -241,7 +246,7 @@ export class EntryResolver implements Resolver {
       const matchesLocale = checkLocale ? checkLocale(entry) : true
       if (source !== 'translations' && !matchesLocale) return false
       if (checkEntry && !checkEntry(entry)) return false
-      if (checkFilter && !checkFilter(entry.data)) return false
+      if (checkFilter && !checkFilter(entry)) return false
       return true
     }
   }
@@ -430,21 +435,14 @@ interface Check {
 }
 
 function entryChecker(query: QuerySettings): Check {
-  const checkId = query.id && filterChecker(query.id)
-  const checkParentId = query.parentId && filterChecker(query.parentId)
-  const checkPath = query.path && filterChecker(query.path)
-  const checkUrl = query.url && filterChecker(query.url)
-  const checkWorkspace = query.workspace && filterChecker(query.workspace)
-  const checkRoot = query.root && filterChecker(query.root)
-  return (entry: Entry) => {
-    if (checkId && !checkId(entry.id)) return false
-    if (checkParentId && !checkParentId(entry.parentId)) return false
-    if (checkPath && !checkPath(entry.path)) return false
-    if (checkUrl && !checkUrl(entry.url)) return false
-    if (checkWorkspace && !checkWorkspace(entry.workspace)) return false
-    if (checkRoot && !checkRoot(entry.root)) return false
-    return true
-  }
+  return filterChecker({
+    id: query.id,
+    parentId: query.parentId,
+    path: query.path,
+    url: query.url,
+    workspace: query.workspace,
+    root: query.root
+  })
 }
 
 function typeChecker(type: Array<string> | string): Check {
@@ -475,10 +473,13 @@ function localeChecker(locale: string | null): Check {
   return entry => entry.locale === locale
 }
 
-function filterChecker(filter: Filter): Check {
+function filterChecker(
+  filter: Filter,
+  getField = (input: any, name: string) => input[name]
+): Check {
   const isOrFilter = orFilter.check(filter)
   if (isOrFilter) {
-    const or = filter.or.filter(Boolean).map(filterChecker)
+    const or = filter.or.filter(Boolean).map(op => filterChecker(op, getField))
     return input => {
       for (const fn of or) if (fn(input)) return true
       return false
@@ -486,57 +487,67 @@ function filterChecker(filter: Filter): Check {
   }
   const isAndFilter = andFilter.check(filter)
   if (isAndFilter) {
-    const and = filter.and.filter(Boolean).map(filterChecker)
+    const and = filter.and
+      .filter(Boolean)
+      .map(op => filterChecker(op, getField))
     return input => {
       for (const fn of and) if (!fn(input)) return false
       return true
     }
   }
-  if (typeof filter !== 'object' || !filter) {
+  if (typeof filter !== 'object' || filter === null) {
     return input => input === filter
   }
-  const conditions = createConditions(filter)
+  const conditions = createConditions(filter, getField)
   return input => {
     for (const condition of conditions) if (!condition(input)) return false
     return true
   }
 }
 
-function createConditions(ops: AnyCondition<any>): Array<Check> {
+function createConditions(
+  ops: AnyCondition<any>,
+  getField: (input: any, name: string) => any
+): Array<Check> {
   const conditions = Array<Check>()
   for (const [name, op] of entries(ops)) {
+    if (op === undefined) continue
     if (typeof op !== 'object' || op === null) {
-      conditions.push(input => input[name] === op)
+      conditions.push(input => getField(input, name) === op)
       continue
     }
     const inner = op as AnyCondition<any>
     if (inner.is !== undefined)
-      conditions.push(input => input[name] === inner.is)
+      conditions.push(input => getField(input, name) === inner.is)
     if (inner.isNot !== undefined)
-      conditions.push(input => input[name] !== inner.isNot)
+      conditions.push(input => getField(input, name) !== inner.isNot)
     const inOp = inner.in
     if (Array.isArray(inOp))
-      conditions.push(input => inOp.includes(input[name]))
+      conditions.push(input => inOp.includes(getField(input, name)))
     const notInOp = inner.notIn
     if (Array.isArray(notInOp))
-      conditions.push(input => !notInOp.includes(input[name]))
-    if (inner.gt !== undefined) conditions.push(input => input[name] > inner.gt)
+      conditions.push(input => !notInOp.includes(getField(input, name)))
+    if (inner.gt !== undefined)
+      conditions.push(input => getField(input, name) > inner.gt)
     if (inner.gte !== undefined)
-      conditions.push(input => input[name] >= inner.gte)
-    if (inner.lt !== undefined) conditions.push(input => input[name] < inner.lt)
+      conditions.push(input => getField(input, name) >= inner.gte)
+    if (inner.lt !== undefined)
+      conditions.push(input => getField(input, name) < inner.lt)
     if (inner.lte !== undefined)
-      conditions.push(input => input[name] <= inner.lte)
+      conditions.push(input => getField(input, name) <= inner.lte)
     if (inner.startsWith)
-      conditions.push(
-        input =>
-          typeof input[name] === 'string' &&
-          input[name].startsWith(inner.startsWith as string)
-      )
+      conditions.push(input => {
+        const field = getField(input, name)
+        return (
+          typeof field === 'string' &&
+          field.startsWith(inner.startsWith as string)
+        )
+      })
     const orOp = inner.or
     if (orOp) {
       const inner = Array.isArray(orOp)
-        ? orOp.flatMap(createConditions)
-        : createConditions(orOp)
+        ? orOp.flatMap(op => createConditions(op, getField))
+        : createConditions(orOp, getField)
       conditions.push(input => {
         for (const condition of inner) if (condition(input)) return true
         return false
@@ -544,13 +555,14 @@ function createConditions(ops: AnyCondition<any>): Array<Check> {
     }
     if (inner.has) {
       const has = filterChecker(inner.has)
-      conditions.push(input => has(input[name]))
+      conditions.push(input => has(getField(input, name)))
     }
     if (inner.includes) {
       const includes = filterChecker(inner.includes)
       conditions.push(input => {
-        if (!Array.isArray(input[name])) return false
-        for (const item of input[name]) if (includes(item)) return true
+        const field = getField(input, name)
+        if (!Array.isArray(field)) return false
+        for (const item of field) if (includes(item)) return true
         return false
       })
     }
