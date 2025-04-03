@@ -388,7 +388,6 @@ export function createEntryEditor(entryData: EntryData) {
     if (!set(confirmErrorsAtom)) return
     const db = get(dbAtom)
     // sync: store update in draft right here
-    // sync: persist shared fields here (or on the server?)
     const update = await encode(edits.getLocalUpdate())
     const entry = await getDraftEntry({status: 'published'})
     return set(action, {
@@ -414,7 +413,6 @@ export function createEntryEditor(entryData: EntryData) {
     edits.applyEntryData(type, data)
     const update = await encode(edits.getLocalUpdate())
     // sync: store update in draft right here
-    // sync: persist shared fields here (or on the server?)
     const entry = await getDraftEntry({
       status: 'published',
       path: activeVersion.path
@@ -434,7 +432,6 @@ export function createEntryEditor(entryData: EntryData) {
 
   const publishDraft = atom(null, async (get, set) => {
     // sync: store update in draft right here
-    // sync: persist shared fields here (or on the server?)
     if (!set(confirmErrorsAtom)) return
     const db = get(dbAtom)
     return set(action, {

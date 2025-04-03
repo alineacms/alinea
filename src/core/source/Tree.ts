@@ -1,12 +1,15 @@
 import type {Change} from './Change.js'
 import {hashTree, serializeTreeEntries} from './GitUtils.js'
-import {assert, compareStrings} from './Utils.js'
+import {assert, compareStrings, splitPath} from './Utils.js'
 
-export interface FlatTreeEntry {
-  path: string
-  mode: string
-  type: string
+export interface BaseEntry {
   sha: string
+  mode: string
+}
+
+export interface FlatTreeEntry extends BaseEntry {
+  type: string
+  path: string
 }
 
 export interface FlatTree {
@@ -19,10 +22,8 @@ export interface Tree {
   entries: Array<Entry>
 }
 
-export interface Entry {
+export interface Entry extends BaseEntry {
   name: string
-  sha: string
-  mode: string
   entries?: Array<Entry>
 }
 
@@ -32,22 +33,21 @@ interface EntryNode extends Entry {
 
 export class Leaf {
   type = 'blob' as const
-  readonly name: string
   readonly sha: string
   readonly mode: string
 
-  constructor({name, sha, mode}: Entry) {
-    this.name = name
+  constructor({sha, mode}: BaseEntry) {
+    if (mode !== '100644' && mode !== '100755')
+      throw new Error(`Invalid mode for leaf: ${mode}`)
     this.sha = sha
     this.mode = mode
   }
 
-  clone(rename?: string): Leaf {
-    if (rename) return new Leaf({...this, name: rename})
+  clone(): Leaf {
     return this
   }
 
-  toJSON(): Entry {
+  toJSON(): BaseEntry {
     return {...this}
   }
 }
@@ -56,18 +56,12 @@ const EMPTY_TREE_SHA = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
 
 class TreeBase<Node extends TreeBase<Node>> {
   type = 'tree' as const
-  sha: string | undefined
   readonly mode: string = '040000'
+  sha: string | undefined
   protected nodes = new Map<string, Node | Leaf>()
 
-  constructor({sha, entries}: Tree, makeNode: (entry: EntryNode) => Node) {
+  constructor(sha?: string) {
     this.sha = sha
-    for (const entry of entries) {
-      this.nodes.set(
-        entry.name,
-        entry.entries ? makeNode(entry as EntryNode) : new Leaf(entry)
-      )
-    }
   }
 
   get(path: string): Node | Leaf | undefined {
@@ -103,6 +97,17 @@ class TreeBase<Node extends TreeBase<Node>> {
     return this.nodes.has(name)
   }
 
+  hasSha(sha: string): boolean {
+    for (const node of this.nodes.values()) {
+      if (node instanceof TreeBase) {
+        if (node.hasSha(sha)) return true
+      } else if (node.sha === sha) {
+        return true
+      }
+    }
+    return false
+  }
+
   *[Symbol.iterator](): IterableIterator<[string, Node | Leaf]> {
     for (const [name, entry] of this.nodes) {
       yield [name, entry] as const
@@ -120,22 +125,21 @@ class TreeBase<Node extends TreeBase<Node>> {
     }
   }
 
-  fileIndex(): Map<string, string> {
-    return new Map(this.#fileEntries(''))
+  index(): Map<string, string> {
+    return new Map(this.fileIndex(''))
   }
 
-  #fileEntries(prefix: string) {
+  fileIndex(prefix: string) {
     return Array.from(this.nodes, ([key, entry]): Array<[string, string]> => {
-      if (entry instanceof TreeBase)
-        return entry.#fileEntries(`${prefix}${key}/`)
+      if (entry instanceof TreeBase) return entry.fileIndex(`${prefix}${key}/`)
       return [[prefix + key, entry.sha]]
     }).flat()
   }
 
   // Todo: check modes
   diff(that: TreeBase<any>): Array<Change> {
-    const local = this.fileIndex()
-    const remote = that.fileIndex()
+    const local = this.index()
+    const remote = that.index()
     const changes: Array<Change> = []
     const paths = new Set(
       [...local.keys(), ...remote.keys()].sort(compareStrings)
@@ -154,17 +158,26 @@ class TreeBase<Node extends TreeBase<Node>> {
   }
 }
 
-export class ReadonlyTree extends TreeBase<ReadonlyNode> {
+export class ReadonlyTree extends TreeBase<ReadonlyTree> {
   sha: string
   static EMPTY = new ReadonlyTree({sha: EMPTY_TREE_SHA, entries: []})
 
-  constructor(source: Tree) {
-    super(source, entry => new ReadonlyNode(entry))
-    this.sha = source.sha
+  constructor({sha, entries}: Tree) {
+    super(sha)
+    this.sha = sha
+    for (const entry of entries) {
+      this.nodes.set(
+        entry.name,
+        entry.entries ? new ReadonlyTree(entry as EntryNode) : new Leaf(entry)
+      )
+    }
   }
 
   get entries(): Array<Entry> {
-    return [...this.nodes.values()].map(entry => entry.toJSON())
+    return [...this.nodes.entries()].map(([name, entry]) => ({
+      name,
+      ...entry.toJSON()
+    }))
   }
 
   clone(): WriteableTree {
@@ -178,8 +191,8 @@ export class ReadonlyTree extends TreeBase<ReadonlyNode> {
     return this.sha === other.sha
   }
 
-  toJSON(): Tree {
-    return {sha: this.sha, entries: this.entries}
+  toJSON() {
+    return {sha: this.sha, mode: this.mode, entries: this.entries}
   }
 
   flat() {
@@ -231,38 +244,18 @@ export class ReadonlyTree extends TreeBase<ReadonlyNode> {
   }
 }
 
-export class ReadonlyNode extends ReadonlyTree {
-  readonly name: string
-  readonly mode = '040000'
-
-  constructor({name, sha, entries}: Entry) {
-    assert(entries)
-    super({sha, entries})
-    this.name = name
-  }
-
-  clone(rename?: string): WriteableNode {
-    return new WriteableNode(rename ?? this.name, this)
-  }
-
-  toJSON() {
-    return {
-      name: this.name,
-      sha: this.sha,
-      mode: this.mode,
-      entries: this.entries
+export class WriteableTree extends TreeBase<WriteableTree> {
+  constructor({sha, entries}: Tree = {sha: EMPTY_TREE_SHA, entries: []}) {
+    super(sha)
+    for (const entry of entries) {
+      this.nodes.set(
+        entry.name,
+        entry.entries ? new WriteableTree(entry as EntryNode) : new Leaf(entry)
+      )
     }
   }
-}
 
-export class WriteableTree extends TreeBase<WriteableNode> {
-  readonly mode = '040000'
-
-  constructor({sha, entries}: Tree = {sha: EMPTY_TREE_SHA, entries: []}) {
-    super({sha, entries}, entry => new WriteableNode(entry.name, entry))
-  }
-
-  add(path: string, input: WriteableNode | Leaf | string): void {
+  add(path: string, input: {clone(): WriteableTree | Leaf} | string): void {
     this.sha = undefined
     const [name, rest] = splitPath(path)
     if (rest) {
@@ -272,24 +265,22 @@ export class WriteableTree extends TreeBase<WriteableNode> {
       const node =
         typeof input === 'string'
           ? new Leaf({
-              name: path,
               sha: input,
               mode: '100644'
             })
-          : input
+          : input.clone()
       this.nodes.set(name, node)
     }
   }
 
-  #makeNode(segment: string): WriteableNode {
+  #makeNode(segment: string): WriteableTree {
     this.sha = undefined
-    if (!this.nodes.has(segment))
-      this.nodes.set(segment, new WriteableNode(segment))
+    if (!this.nodes.has(segment)) this.nodes.set(segment, new WriteableTree())
     return this.getNode(segment)
   }
 
   #getNode(segment: string) {
-    return this.nodes.get(segment) as WriteableNode | undefined
+    return this.nodes.get(segment) as WriteableTree | undefined
   }
 
   remove(path: string): number {
@@ -310,8 +301,7 @@ export class WriteableTree extends TreeBase<WriteableNode> {
     const entry = this.get(from)
     if (!entry) return
     this.remove(from)
-    const name = to.slice(to.lastIndexOf('/') + 1)
-    this.add(to, entry.clone(name))
+    this.add(to, entry.clone())
   }
 
   applyChanges(changes: Array<Change>): void {
@@ -351,12 +341,12 @@ export class WriteableTree extends TreeBase<WriteableNode> {
 
   async #treeEntries(): Promise<Array<Entry>> {
     const entries = Array<Entry>()
-    for (const node of this.nodes.values()) {
-      if (node instanceof WriteableNode) {
+    for (const [name, node] of this.nodes.entries()) {
+      if (node instanceof TreeBase) {
         const entry = await node.#getTree()
-        entries.push({...node, ...entry})
+        entries.push({name, ...node, ...entry})
       } else {
-        entries.push(node)
+        entries.push({name, ...node})
       }
     }
     return entries
@@ -376,31 +366,4 @@ export class WriteableTree extends TreeBase<WriteableNode> {
     result.sha = this.sha
     return result
   }
-}
-
-export class WriteableNode extends WriteableTree {
-  readonly mode = '040000'
-
-  constructor(
-    public name: string,
-    source?: Tree
-  ) {
-    super(source)
-    this.name = name
-  }
-
-  clone(rename?: string): WriteableNode {
-    const result = new WriteableNode(rename ?? this.name)
-    for (const [name, entry] of this.nodes) result.add(name, entry.clone())
-    result.sha = this.sha
-    return result
-  }
-}
-
-function splitPath(path: string): [name: string, rest: string | undefined] {
-  const firstSlash = path.indexOf('/')
-  if (firstSlash === -1) return [path, undefined]
-  const name = path.slice(0, firstSlash)
-  const rest = path.slice(firstSlash + 1)
-  return [name, rest]
 }

@@ -60,3 +60,13 @@ export function bytesToHex(bytes: Uint8Array): string {
 export function compareStrings(a: string, b: string) {
   return -(a < b) || +(a > b)
 }
+
+export function splitPath(
+  path: string
+): [name: string, rest: string | undefined] {
+  const firstSlash = path.indexOf('/')
+  if (firstSlash === -1) return [path, undefined]
+  const name = path.slice(0, firstSlash)
+  const rest = path.slice(firstSlash + 1)
+  return [name, rest]
+}

@@ -3,7 +3,7 @@ import {Config} from 'alinea/core/Config'
 import type {UploadResponse} from 'alinea/core/Connection'
 import {createId} from 'alinea/core/Id'
 import {getWorkspace} from 'alinea/core/Internal'
-import type {CommitRequest} from 'alinea/core/db/CommitRequest'
+import {type CommitRequest, checkCommit} from 'alinea/core/db/CommitRequest'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import {FSSource} from 'alinea/core/source/FSSource'
 import {assert} from 'alinea/core/source/Utils'
@@ -64,7 +64,14 @@ export class DevDB extends LocalDB {
 
   async commit(request: CommitRequest): Promise<{sha: string}> {
     if (this.sha === request.intoSha) return {sha: this.sha}
-    if (this.sha !== request.fromSha) throw new Error('Invalid commit request')
+    if (this.sha !== request.fromSha) {
+      const tree = await this.source.getTree()
+
+      // Run checks to see if we can commit anyway. This is still not atomic in
+      // any sense because filesystem changes can happen in between the check
+      // and the commit but it should be good enough for now.
+      checkCommit(tree, request)
+    }
     const {rootDir} = this.#options
     for (const change of request.changes) {
       switch (change.op) {

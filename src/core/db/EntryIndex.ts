@@ -137,9 +137,9 @@ export class EntryIndex extends EventTarget {
       switch (change.op) {
         case 'delete': {
           const node = this.byPath.get(nodePath)
-          assert(node, `Entry not found: ${change.path}`)
+          if (!node) continue
           const entry = node.byFile.get(change.path)
-          assert(entry, `File not found: ${change.path}`)
+          if (!entry) continue
           assert(
             entry.fileHash === change.sha,
             `SHA mismatch: ${entry.fileHash} != ${change.sha}`
