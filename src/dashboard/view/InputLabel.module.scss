@@ -3,12 +3,24 @@
   vertical-align: top;
 
   &:not([style*='width: 100%']) {
-    @media (max-width: 1024px) {
-      width: 50% !important;
+    @supports not (contain: inline-size) {
+      @media (max-width: 1024px) {
+        width: 50% !important;
+      }
+
+      @media (max-width: 768px) {
+        width: 100% !important;
+      }
     }
 
-    @media (max-width: 768px) {
-      width: 100% !important;
+    @supports (contain: inline-size) {
+      @container lift (max-width: 480px) {
+        width: 50% !important;
+      }
+
+      @container lift (max-width: 320px) {
+        width: 100% !important;
+      }
     }
   }
 

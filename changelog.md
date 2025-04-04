@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.1]
+- Added a preview property to TypeConfig to disable the preview on Type level 
+  (#407)
+- UI tweaks
+
 ## [1.2.0]
 - Archiving an entry results in archived children entries as well.
 
