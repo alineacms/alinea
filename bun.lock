@@ -130,8 +130,8 @@
         "@dnd-kit/sortable": "^4.0.0",
         "@dnd-kit/utilities": "^2.0.0",
         "@floating-ui/react-dom": "^0.7.1",
-        "@headless-tree/core": "^0.0.8",
-        "@headless-tree/react": "^0.0.7",
+        "@headless-tree/core": "^0.0.15",
+        "@headless-tree/react": "^0.0.15",
         "@headlessui/react": "^2.1.10",
         "@react-hook/size": "^2.1.2",
         "@react-hook/window-size": "^3.0.7",
@@ -393,9 +393,9 @@
 
     "@fontsource/poppins": ["@fontsource/poppins@5.0.1", "", {}, "sha512-meHDJ+t2NrfiKdcQefv+CYGcup8ZHXoSzOwRV3RolmGXG4569y9zL/lV8qMe3q8WdqSn8CAyRoJKxZXEkPBcAg=="],
 
-    "@headless-tree/core": ["@headless-tree/core@0.0.8", "", {}, "sha512-plv+raYYYYQvnmTdXOcC/lF4eVrc3SIaDG+BJv70WgGtkr6RavkKcKZdlyE9AdTqbeFKF8LOVJdba9okTEdFhw=="],
+    "@headless-tree/core": ["@headless-tree/core@0.0.15", "", {}, "sha512-tWzBP/NqIqYo5xgRf/WpspOvSx4geHuPje+QtawplhoCb8Jtu0u01bE8d+8vMSlcOQrWW2f74igMYPqWPu+UEQ=="],
 
-    "@headless-tree/react": ["@headless-tree/react@0.0.7", "", { "peerDependencies": { "@headless-tree/core": "*", "react": "*", "react-dom": "*" } }, "sha512-Ps3CsuNs3pqzEm5g1dm/jiYE6oM/mtgRf+7z2nWpPL+7n+ev2b28+kKguu18bdl0G8KirXOmC7xIaF7UpCGHcw=="],
+    "@headless-tree/react": ["@headless-tree/react@0.0.15", "", { "peerDependencies": { "@headless-tree/core": "*", "react": "*", "react-dom": "*" } }, "sha512-iZP7mDbOEdc5QYDzZ6r4/6jxmV9DajS48bXwaTy088/mNebJcwuDAwE1/pGYAhvo4VcnG/LR4maAZYWaZlrPGw=="],
 
     "@headlessui/react": ["@headlessui/react@2.2.0", "", { "dependencies": { "@floating-ui/react": "^0.26.16", "@react-aria/focus": "^3.17.1", "@react-aria/interactions": "^3.21.3", "@tanstack/react-virtual": "^3.8.1" }, "peerDependencies": { "react": "^18 || ^19 || ^19.0.0-rc", "react-dom": "^18 || ^19 || ^19.0.0-rc" } }, "sha512-RzCEg+LXsuI7mHiSomsu/gBJSjpupm6A1qIZ5sWjd7JhARNlMiSA4kKfJpCKwU9tE+zMRterhhrP74PvfJrpXQ=="],
 

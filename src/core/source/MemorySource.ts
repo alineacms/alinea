@@ -24,10 +24,14 @@ export class MemorySource implements Source {
     return this.#tree.sha === sha ? undefined : this.#tree
   }
 
-  async getBlob(sha: string) {
-    const blob = this.#blobs.get(sha)
-    assert(blob, `Blob not found: ${sha}`)
-    return blob
+  async getBlobs(
+    shas: Array<string>
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+    return shas.map(sha => {
+      const blob = this.#blobs.get(sha)
+      assert(blob, `Blob not found: ${sha}`)
+      return [sha, blob]
+    })
   }
 
   async addBlob(contents: Uint8Array) {

@@ -97,17 +97,6 @@ class TreeBase<Node extends TreeBase<Node>> {
     return this.nodes.has(name)
   }
 
-  hasSha(sha: string): boolean {
-    for (const node of this.nodes.values()) {
-      if (node instanceof TreeBase) {
-        if (node.hasSha(sha)) return true
-      } else if (node.sha === sha) {
-        return true
-      }
-    }
-    return false
-  }
-
   *[Symbol.iterator](): IterableIterator<[string, Node | Leaf]> {
     for (const [name, entry] of this.nodes) {
       yield [name, entry] as const
@@ -161,15 +150,18 @@ class TreeBase<Node extends TreeBase<Node>> {
 export class ReadonlyTree extends TreeBase<ReadonlyTree> {
   readonly sha: string
   static readonly EMPTY = new ReadonlyTree({sha: EMPTY_TREE_SHA, entries: []})
+  #shas = new Set<string>()
 
   constructor({sha, entries}: Tree) {
     super(sha)
     this.sha = sha
     for (const entry of entries) {
-      this.nodes.set(
-        entry.name,
-        entry.entries ? new ReadonlyTree(entry as EntryNode) : new Leaf(entry)
-      )
+      const node = entry.entries
+        ? new ReadonlyTree(entry as EntryNode)
+        : new Leaf(entry)
+      if (node instanceof Leaf) this.#shas.add(node.sha)
+      else for (const sha of node.#shas) this.#shas.add(sha)
+      this.nodes.set(entry.name, node)
     }
   }
 
@@ -178,6 +170,10 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
       name,
       ...entry.toJSON()
     }))
+  }
+
+  hasSha(sha: string): boolean {
+    return this.#shas.has(sha)
   }
 
   clone(): WriteableTree {

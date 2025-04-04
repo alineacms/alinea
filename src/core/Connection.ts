@@ -31,7 +31,10 @@ export interface SyncApi {
     sha: string,
     ctx?: RequestContext
   ): Promise<ReadonlyTree | undefined>
-  getBlob(sha: string, ctx?: RequestContext): Promise<Uint8Array>
+  getBlobs(
+    shas: Array<string>,
+    ctx?: RequestContext
+  ): Promise<Array<[sha: string, blob: Uint8Array]>>
 }
 
 export interface CommitApi {

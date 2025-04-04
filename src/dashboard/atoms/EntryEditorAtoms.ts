@@ -665,7 +665,7 @@ export function createEntryEditor(entryData: EntryData) {
 
   const yUpdate = debounceAtom(edits.yUpdate, 250)
   const previewPayload = atom(async get => {
-    const sha = get(dbMetaAtom)
+    const sha = await get(dbMetaAtom)
     const update = get(yUpdate)
     const status = get(selectedStatus)
     return encodePreviewPayload({

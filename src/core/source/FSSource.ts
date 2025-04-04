@@ -67,10 +67,16 @@ export class FSSource implements Source {
     return current.sha === sha ? undefined : current
   }
 
-  async getBlob(sha: string): Promise<Uint8Array> {
-    const path = this.#locations.get(sha)
-    assert(path, `Missing path for blob ${sha}`)
-    return fs.readFile(`${this.#cwd}/${path}`)
+  async getBlobs(
+    shas: Array<string>
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+    return Promise.all(
+      shas.map(async (sha): Promise<[sha: string, blob: Uint8Array]> => {
+        const path = this.#locations.get(sha)
+        assert(path, `Missing path for blob ${sha}`)
+        return [sha, await fs.readFile(`${this.#cwd}/${path}`)]
+      })
+    )
   }
 
   async applyChanges(changes: Array<Change>) {

@@ -31,7 +31,7 @@ test('combined source', async () => {
   const tree = await combined.getTree()
   test.ok(tree.has('a/hello1.txt'))
   test.ok(tree.has('b/lorem.txt'))
-  const blob = await combined.getBlob(helloSha)
+  const [[, blob]] = await combined.getBlobs([helloSha])
   test.equal(blob, hello)
 
   await test.throws(
