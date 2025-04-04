@@ -1,10 +1,10 @@
-import {createId} from 'alinea/core/Id'
-import {outcome} from 'alinea/core/Outcome'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import {createId} from 'alinea/core/Id'
+import {outcome} from 'alinea/core/Outcome'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
-import {reportHalt} from './util/Report.js'
+import {reportFatal} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -41,7 +41,7 @@ export async function init(options: InitOptions) {
   const {cwd = process.cwd(), quiet = false} = options
   const configLocation = findConfigFile(cwd)
   if (configLocation) {
-    reportHalt(`An alinea config file already exists in ${cwd}`)
+    reportFatal(`An alinea config file already exists in ${cwd}`)
     process.exit(1)
   }
   await fs.mkdir(path.join(cwd, 'content/pages'), {recursive: true})
@@ -81,12 +81,12 @@ export async function init(options: InitOptions) {
   const configFileContents = options.next
     ? configFile.replaceAll('alinea/core', 'alinea/next')
     : configFile
-  const hasSrcDir = (await outcome(fs.stat(path.join(cwd, 'src')))).isSuccess()
+  const hasSrcDir = await fs.exists(path.join(cwd, 'src'))
   const configFileLocation = path.join(cwd, hasSrcDir ? 'src/cms.ts' : 'cms.ts')
   await fs.writeFile(configFileLocation, configFileContents)
   const command = `${runner} alinea dev`
   if (!quiet)
     console.info(
-      'Alinea initialized. You can open the dashboard with `' + command + '`'
+      `Alinea initialized. You can open the dashboard with \`${command}\``
     )
 }

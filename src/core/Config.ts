@@ -1,11 +1,11 @@
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
-import {Preview} from 'alinea/core/Preview'
+import type {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
-import {Auth} from './Auth.js'
+import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
 import {Schema} from './Schema.js'
-import {Type} from './Type.js'
-import {Workspace, WorkspaceInternal} from './Workspace.js'
+import type {Type} from './Type.js'
+import {Workspace, type WorkspaceInternal} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
 
@@ -38,10 +38,12 @@ export interface Config {
 export namespace Config {
   export function baseUrl(
     config: Config,
-    env = (process.env.NODE_ENV as 'development' | 'production') ?? 'production'
+    env = process.env.NODE_ENV ?? 'production'
   ) {
     const result =
-      typeof config.baseUrl === 'object' ? config.baseUrl[env] : config.baseUrl
+      typeof config.baseUrl === 'object'
+        ? (config.baseUrl as Record<string, string>)[env]
+        : config.baseUrl
     if (!result) return result
     if (result.includes('://')) return result
     return `https://${result}`

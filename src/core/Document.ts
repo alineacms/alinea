@@ -1,10 +1,10 @@
-import {MetadataField, metadata as createMetadata} from 'alinea/field/metadata'
-import {PathField, path as createPath} from 'alinea/field/path'
+import {type MetadataField, metadata as createMetadata} from 'alinea/field/metadata'
+import {type PathField, path as createPath} from 'alinea/field/path'
 import {tab, tabs} from 'alinea/field/tabs'
-import {TextField, text} from 'alinea/field/text'
+import {type TextField, text} from 'alinea/field/text'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {IcRoundShare} from 'alinea/ui/icons/IcRoundShare'
-import {FieldsDefinition, Type, TypeConfig, type} from './Type.js'
+import {type FieldsDefinition, type Type, type TypeConfig, type} from './Type.js'
 
 export type Document = {
   title: TextField

@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {RootData} from 'alinea/core/Root'
+import type {RootData} from 'alinea/core/Root'
 import {Icon, TextLabel, Typo} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'

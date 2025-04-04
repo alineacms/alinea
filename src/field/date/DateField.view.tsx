@@ -2,7 +2,7 @@ import styler from '@alinea/styler'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {IcRoundDateRange} from 'alinea/ui/icons/IcRoundDateRange'
-import {DateField} from './DateField.js'
+import type {DateField} from './DateField.js'
 import css from './DateField.module.scss'
 
 const styles = styler(css)
@@ -20,7 +20,6 @@ export function DateInput({field}: DateInputProps) {
         type="date"
         value={value ?? ''}
         onChange={e => mutator(e.currentTarget.value)}
-        autoFocus={options.autoFocus}
         readOnly={options.readOnly}
       />
     </InputLabel>

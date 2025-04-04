@@ -1,5 +1,5 @@
 import {crypto} from '@alinea/iso'
-import {EntryRow} from '../EntryRow.js'
+import type {EntryRow} from '../EntryRow.js'
 
 export function toHex(buffer: ArrayBuffer) {
   return Array.from(new Uint8Array(buffer))

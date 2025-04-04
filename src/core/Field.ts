@@ -1,8 +1,8 @@
-import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
+import type {LinkResolver} from 'alinea/core/db/LinkResolver'
 import {Expr} from './Expr.js'
-import {getField, hasField, HasField, internalField} from './Internal.js'
-import {Shape} from './Shape.js'
-import {View} from './View.js'
+import {type HasField, getField, hasField, internalField} from './Internal.js'
+import type {Shape} from './Shape.js'
+import type {View} from './View.js'
 
 export interface FieldOptions<StoredValue> {
   /** A description of the field */

@@ -1,13 +1,13 @@
-import {Preview} from 'alinea/core/Preview'
+import type {Preview} from 'alinea/core/Preview'
 import type {ComponentType} from 'react'
 import {
   getWorkspace,
   hasWorkspace,
-  HasWorkspace,
+  type HasWorkspace,
   internalWorkspace
 } from './Internal.js'
 import {Root} from './Root.js'
-import {Schema} from './Schema.js'
+import type {Schema} from './Schema.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
@@ -57,7 +57,7 @@ export namespace Workspace {
     const {roots} = getWorkspace(workspace)
     for (const [name, root] of entries(roots))
       if (Root.isMediaRoot(root)) return name
-    throw new Error(`Workspace has no media root`)
+    throw new Error('Workspace has no media root')
   }
 
   export function defaultRoot(workspace: Workspace): string {

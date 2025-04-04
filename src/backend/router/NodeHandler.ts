@@ -1,5 +1,5 @@
-import {Headers, Request, Response} from '@alinea/iso'
-import http from 'node:http'
+import {Headers, Request, type Response} from '@alinea/iso'
+import type http from 'node:http'
 import type {Writable} from 'node:stream'
 import {TLSSocket} from 'node:tls'
 

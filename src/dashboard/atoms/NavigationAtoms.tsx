@@ -3,12 +3,12 @@ import {Workspace} from 'alinea/core/Workspace'
 import {keys} from 'alinea/core/util/Objects'
 import {atom, useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
-import {EntryLocation, dashboardNav, navMatchers} from '../DashboardNav.js'
+import {type EntryLocation, dashboardNav, navMatchers} from '../DashboardNav.js'
 import {configAtom} from './DashboardAtoms.js'
 import {matchAtoms} from './LocationAtoms.js'
 import {workspacePreferenceAtom} from './PreferencesAtoms.js'
 
-export const workspaceAtom = atom(get => {
+const workspaceNameAtom = atom(get => {
   const config = get(configAtom)
   const match = get(
     matchAtoms({route: navMatchers.matchWorkspace, loose: true})
@@ -20,30 +20,41 @@ export const workspaceAtom = atom(get => {
     workspacePreference,
     keys(config.workspaces)[0]
   ]
-  for (const name of requested)
-    if (name && config.workspaces[name])
-      return {name, ...Workspace.data(config.workspaces[name])}
-  throw new Error(`No workspace found`)
+  for (const name of requested) if (name && config.workspaces[name]) return name
+  throw new Error('No workspace found')
+})
+
+export const workspaceAtom = atom(get => {
+  const config = get(configAtom)
+  const name = get(workspaceNameAtom)
+  return {name, ...Workspace.data(config.workspaces[name])}
 })
 
 function parseRootPath(path: string) {
   return path.split(':') as [string, string | undefined]
 }
 
-export const rootAtom = atom(get => {
+const rootNameAtom = atom(get => {
   const workspace = get(workspaceAtom)
   const match = get(matchAtoms({route: navMatchers.matchRoot, loose: true}))
   const params: Record<string, string | undefined> = match ?? {}
   const requestedRoot = params.root ? parseRootPath(params.root)[0] : undefined
   const requested = [requestedRoot, keys(workspace.roots)[0]]
-  for (const name of requested)
-    if (name && workspace.roots[name])
-      return {name, ...Root.data(workspace.roots[name])}
-  throw new Error(`No root found`)
+  for (const name of requested) if (name && workspace.roots[name]) return name
+  throw new Error('No root found')
+})
+
+export const rootAtom = atom(get => {
+  const config = get(configAtom)
+  const workspace = get(workspaceAtom)
+  const name = get(rootNameAtom)
+  const root = workspace.roots[name]
+  if (!root) throw new Error('No root found')
+  return {name, ...Root.data(config.workspaces[workspace.name][name])}
 })
 
 export const preferredLanguageAtom = atomWithStorage<string | null>(
-  `@alinea/locale`,
+  '@alinea/locale',
   null
 )
 

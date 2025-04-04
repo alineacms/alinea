@@ -1,7 +1,7 @@
 import {hidden} from 'alinea/field/hidden'
 import {text} from 'alinea/field/text/TextField'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
-import {Type, type} from '../Type.js'
+import {type Type, type} from '../Type.js'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {

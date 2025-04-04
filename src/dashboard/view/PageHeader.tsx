@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {HTMLProps} from 'react'
+import type {HTMLProps} from 'react'
 import css from './PageHeader.module.scss'
 
 const styles = styler(css)

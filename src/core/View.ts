@@ -1,4 +1,4 @@
-import {ComponentType, ReactNode} from 'react'
+import type {ComponentType, ReactNode} from 'react'
 
 export type View<Props> =
   | string // Point to a component

@@ -1,4 +1,4 @@
-import {RecordShape} from 'alinea/core/shape/RecordShape'
+import type {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 
 export function equals(a: any, b: any) {
@@ -33,7 +33,7 @@ export function computeLcs<T>(
   const lcs: Array<Array<number>> = Array.from(Array(n + 1), () => Array(m + 1))
   for (let i = 0; i <= n; i++) {
     for (let j = 0; j <= m; j++) {
-      if (i == 0 || j == 0) {
+      if (i === 0 || j === 0) {
         lcs[i][j] = 0
       } else if (equals(a[i - 1], b[j - 1])) {
         lcs[i][j] = 1 + lcs[i - 1][j - 1]
@@ -87,8 +87,7 @@ export function diffRecord(kind: RecordShape, targetA: any, targetB: any) {
   return types.filter(([key, type]) => {
     if (type instanceof ScalarShape) {
       return targetA?.[key] !== targetB?.[key]
-    } else {
-      return !equals(targetA?.[key], targetB?.[key])
     }
+      return !equals(targetA?.[key], targetB?.[key])
   })
 }

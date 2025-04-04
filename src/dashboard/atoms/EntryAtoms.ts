@@ -1,32 +1,23 @@
-import {
-  AsyncTreeDataLoader,
-  DropTarget,
-  ItemInstance
+import type {
+  DragTarget,
+  ItemInstance,
+  TreeDataLoader
 } from '@headless-tree/core'
 import {Entry} from 'alinea/core/Entry'
-import {EntryStatus} from 'alinea/core/EntryRow'
-import {Graph} from 'alinea/core/Graph'
+import type {EntryStatus} from 'alinea/core/Entry'
+import type {Graph} from 'alinea/core/Graph'
 import {getRoot, getType} from 'alinea/core/Internal'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Type} from 'alinea/core/Type'
-import {entryFileName} from 'alinea/core/util/EntryFilenames'
-import {
-  generateKeyBetween,
-  generateNKeysBetween
-} from 'alinea/core/util/FractionalIndexing'
 import {entries} from 'alinea/core/util/Objects'
 import {parents} from 'alinea/query'
 import DataLoader from 'dataloader'
 import {atom, useAtomValue} from 'jotai'
 import {useMemo} from 'react'
-import {useDashboard} from '../hook/UseDashboard.js'
 import {configAtom} from './DashboardAtoms.js'
-import {graphAtom, useMutate} from './DbAtoms.js'
+import {dbAtom} from './DbAtoms.js'
 import {localeAtom, rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
-export function rootId(rootName: string) {
-  return `@alinea/root-${rootName}`
-}
+export const ROOT_ID = '@alinea/root'
 
 const visibleTypesAtom = atom(get => {
   const {schema} = get(configAtom)
@@ -43,10 +34,7 @@ async function entryTreeRoot(
   visibleTypes: Array<string>
 ): Promise<EntryTreeItem> {
   const root = graph.config.workspaces[workspace][rootName]
-  const orderBy = getRoot(root).orderChildrenBy ?? {
-    asc: Entry.index,
-    caseSensitive: true
-  }
+  const orderBy = getRoot(root).orderChildrenBy
   const children = await graph.find({
     select: Entry.id,
     groupBy: Entry.id,
@@ -61,17 +49,18 @@ async function entryTreeRoot(
     status
   })
   return {
-    id: rootId(rootName),
+    id: ROOT_ID,
     index: '',
     type: '',
     isFolder: true,
+    isRoot: true,
     entries: [],
     children
   }
 }
 
-const entryTreeItemLoaderAtom = atom(async get => {
-  const graph = await get(graphAtom)
+const loaderAtom = atom(async get => {
+  const graph = get(dbAtom)
   const locale = get(localeAtom)
   const visibleTypes = get(visibleTypesAtom)
   const {schema} = get(configAtom)
@@ -79,7 +68,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
   const workspace = get(workspaceAtom)
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
     const indexed = new Map<string, EntryTreeItem>()
-    const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
+    const search = (ids as Array<string>).filter(id => id !== ROOT_ID)
     const data = {
       id: Entry.id,
       type: Entry.type,
@@ -117,10 +106,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
           ? !getType(schema[row.data.parents.at(-1)!.type]).orderChildrenBy
           : true
       const type = schema[row.type]
-      const orderBy = getType(type).orderChildrenBy ?? {
-        asc: Entry.index,
-        caseSensitive: true
-      }
+      const orderBy = getType(type).orderChildrenBy
       const children = await graph.find({
         select: {
           id: Entry.id,
@@ -156,7 +142,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     }
     const res: Array<EntryTreeItem | undefined> = []
     for (const id of ids) {
-      if (id === rootId(root.name)) {
+      if (id === ROOT_ID) {
         res.push(
           await entryTreeRoot(
             graph,
@@ -175,16 +161,11 @@ const entryTreeItemLoaderAtom = atom(async get => {
       }
       const typeName = entry.entries[0].type
       const type = schema[typeName]
-      const isFolder = Type.isContainer(type)
+      const isFolder = Type.isContainer(type) && entry.children.length > 0
       res.push({...entry, isFolder})
     }
     return res
   })
-})
-
-const loaderAtom = atom(get => {
-  // Don't return the Promise directly because that causes Jotai to suspend
-  return {loader: get(entryTreeItemLoaderAtom)}
 })
 
 export interface EntryTreeItem {
@@ -203,20 +184,20 @@ export interface EntryTreeItem {
     parents: Array<{path: string; type: string}>
   }>
   isFolder?: boolean
+  isRoot?: boolean
   canDrag?: boolean
   children: Array<string>
 }
 
-export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
+export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
   canDrag(item: Array<ItemInstance<EntryTreeItem>>): boolean
   onDrop(
     items: Array<ItemInstance<EntryTreeItem>>,
-    target: DropTarget<EntryTreeItem>
+    target: DragTarget<EntryTreeItem>
   ): void
 } {
-  const {loader} = useAtomValue(loaderAtom)
-  const mutate = useMutate()
-  const {config} = useDashboard()
+  const loader = useAtomValue(loaderAtom)
+  const db = useAtomValue(dbAtom)
   return useMemo(() => {
     return {
       canDrag(items) {
@@ -225,74 +206,30 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
           return data.canDrag
         })
       },
-      onDrop(items, {item: parent, childIndex, insertionIndex}) {
+      onDrop(items, target) {
+        const {item: parent} = target
         if (items.length !== 1) return
         const [dropping] = items
-        if (childIndex === null) return
-        if (dropping.getParent() !== parent) {
-          console.warn('Todo: move entries')
-          return
-        }
         const children = parent.getChildren()
-        const previous = children[childIndex - 1]
-        const previousIndexKey = previous?.getItemData()?.index ?? null
-        const next = children
-          .slice(childIndex)
-          .find(
-            entry => !entry || entry?.getItemData().index !== previousIndexKey
-          )
-        const nextChildIndex = next ? children.indexOf(next) : undefined
-        const nextIndexKey = next?.getItemData()?.index ?? null
-
-        try {
-          const brokenChildren = children.slice(childIndex, nextChildIndex)
-          const newIndexKey = generateKeyBetween(previousIndexKey, nextIndexKey)
-          const mutations: Array<Mutation> = []
-
-          if (brokenChildren.length > 0) {
-            // Start by generating new, clean keys for broken children (children with duplicate keys)
-            const newKeys = generateNKeysBetween(
-              newIndexKey,
-              nextIndexKey,
-              brokenChildren.length
-            )
-            for (let i = 0; i < brokenChildren.length; i++) {
-              const child = brokenChildren[i]
-              const correctedIndexKey = newKeys[i]
-              for (const entry of child.getItemData().entries) {
-                mutations.push({
-                  type: MutationType.Order,
-                  entryId: entry.id,
-                  file: entryFileName(
-                    config,
-                    entry,
-                    entry.parents.map(p => p.path)
-                  ),
-                  index: correctedIndexKey
-                })
-              }
-            }
-          }
-
-          for (const entry of dropping.getItemData().entries) {
-            mutations.push({
-              type: MutationType.Order,
-              entryId: entry.id,
-              file: entryFileName(
-                config,
-                entry,
-                entry.parents.map(p => p.path)
-              ),
-              index: newIndexKey
-            })
-          }
-          mutate(mutations, true)
-        } catch (err) {
-          console.error(err)
-        }
+        const previous =
+          'childIndex' in target ? children[target.childIndex - 1] : null
+        const after = previous ? previous.getId() : null
+        const newParent = dropping.getParent() !== parent
+        const toRoot = parent.getId().startsWith('@alinea')
+          ? dropping.getItemData().entries[0].root
+          : undefined
+        const toParent = !toRoot && newParent ? parent.getId() : undefined
+        db.move({
+          id: dropping.getId(),
+          after,
+          toParent,
+          toRoot
+        })
       },
       async getItem(id): Promise<EntryTreeItem> {
-        return (await (await loader).clear(id).load(id))!
+        const data = await loader.clear(id).load(id)
+        if (!data) throw new Error(`Item ${id} not found`)
+        return data
       },
       async getChildren(id): Promise<Array<string>> {
         return this.getItem(id).then(item => item?.children ?? [])

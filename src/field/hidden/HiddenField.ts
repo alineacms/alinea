@@ -1,4 +1,4 @@
-import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Internal representation of a text field */

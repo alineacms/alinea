@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {Tab} from '@headlessui/react'
-import {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
+import type {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
 import liftCss from './Lift.module.scss'
 import css from './Tabs.module.scss'
 

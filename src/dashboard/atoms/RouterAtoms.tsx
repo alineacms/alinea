@@ -1,8 +1,8 @@
-import {Atom, PrimitiveAtom, atom, useAtomValue, useSetAtom} from 'jotai'
+import {type Atom, type PrimitiveAtom, atom, useAtomValue, useSetAtom} from 'jotai'
 import {
-  FunctionComponent,
-  PropsWithChildren,
-  ReactNode,
+  type FunctionComponent,
+  type PropsWithChildren,
+  type ReactNode,
   createContext,
   useContext,
   useEffect,

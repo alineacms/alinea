@@ -1,5 +1,5 @@
-import {PropsWithChildren, createContext, useContext} from 'react'
-import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
+import {type PropsWithChildren, createContext, useContext} from 'react'
+import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 
 const ctx = createContext(undefined as EntryEditor | undefined)
 

@@ -1,8 +1,8 @@
 import {Parser} from 'htmlparser2'
-import {Field, FieldMeta, FieldOptions} from '../Field.js'
+import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {Schema} from '../Schema.js'
-import {ElementNode, Mark, TextDoc, TextNode} from '../TextDoc.js'
-import {RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
+import type {ElementNode, Mark, TextDoc, TextNode} from '../TextDoc.js'
+import {type RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
 
 export class RichTextField<
   Blocks,
@@ -58,10 +58,11 @@ function mapNode(
     case 'h3':
     case 'h4':
     case 'h5':
-    case 'h6':
+    case 'h6': {
       const type = 'heading'
       const level = Number(name.slice(1))
       return {_type: type, level, content: []}
+    }
     case 'p':
       return {_type: 'paragraph', content: []}
     case 'ul':
@@ -113,7 +114,7 @@ function mapMark(
 export function parseHTML(html: string): TextDoc<any> {
   const doc: TextDoc<any> = []
   if (typeof html !== 'string') return doc
-  let parents: Array<{tag: string; doc?: TextDoc<any>}> = [
+  const parents: Array<{tag: string; doc?: TextDoc<any>}> = [
     {tag: undefined!, doc}
   ]
   let marks: Array<Mark> = []

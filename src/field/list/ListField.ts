@@ -1,9 +1,9 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {InferQueryValue, InferStoredValue} from 'alinea/core/Infer'
+import type {InferQueryValue, InferStoredValue} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
 import {ListField} from 'alinea/core/field/ListField'
 import type {ListRow} from 'alinea/core/shape/ListShape'
-import {ReactNode} from 'react'
+import type {ReactNode} from 'react'
 
 /** Optional settings to configure a list field */
 export interface ListOptions<Definitions extends Schema>

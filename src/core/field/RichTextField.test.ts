@@ -1,14 +1,15 @@
+import {suite} from '@alinea/suite'
 import {RichTextEditor} from 'alinea/core'
-import {TextDoc} from 'alinea/core/TextDoc'
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
+import type {TextDoc} from 'alinea/core/TextDoc'
+
+const test = suite(import.meta)
 
 test('parse html nodes & marks', async () => {
   const editor = new RichTextEditor()
   const html =
     '<p><strong><i>bold</i></strong><em>italic</em><b></b><u>underline</u> <s>strike</s> <a href="https://example.com">link</a></p>'
   editor.addHtml(html)
-  assert.equal(editor.value(), [
+  test.equal(editor.value(), [
     {
       _type: 'paragraph',
       content: [
@@ -31,5 +32,3 @@ test('parse html nodes & marks', async () => {
     }
   ] satisfies TextDoc)
 })
-
-test.run()

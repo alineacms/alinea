@@ -3,7 +3,9 @@
   "type": "module",
   "devDependencies": {
     "cito": "^0.3.3",
+    "fake-indexeddb": "^6.0.0",
     "htmlparser2": "^9.1.0",
+    "minisearch": "^7.1.2",
     "p-lazy": "^4.0.0",
     "pretty-ms": "^8.0.0",
     "y-protocols": "^1.0.6",

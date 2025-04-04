@@ -5,6 +5,7 @@ import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import * as schema from './schema'
 
 export const cms = createCMS({
+  enableDrafts: true,
   schema,
   workspaces: {
     primary: Config.workspace('Primary workspace', {
@@ -35,14 +36,14 @@ export const cms = createCMS({
         }),
         media: Config.media()
       }
-    }),
-    secondary: Config.workspace('Secondary workspace', {
+    })
+    /*secondary: Config.workspace('Secondary workspace', {
       source: 'content/secondary',
       roots: {
         pages: Config.root('Pages', {
           contains: ['Page', 'Folder']
         })
       }
-    })
+    })*/
   }
 })
