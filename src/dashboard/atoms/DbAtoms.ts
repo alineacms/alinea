@@ -8,14 +8,17 @@ export const dbAtom = atom(get => {
   return get(dashboardOptionsAtom).db
 })
 
-export const dbUpdateAtom = atom(null, async (get, set) => {
+export const dbInitialSync = atom(get => {
   const db = get(dbAtom)
-  await db.sync()
+  return db.sync()
 })
 
-const metaAtom = atom<string | undefined>()
+const metaAtom = atom<string>()
 export const dbMetaAtom = atom(
-  get => get(metaAtom),
+  async get => {
+    const local = get(dbAtom)
+    return get(metaAtom) ?? local.sync()
+  },
   (get, set) => {
     const local = get(dbAtom)
     const listen = (event: Event) => {
@@ -23,9 +26,6 @@ export const dbMetaAtom = atom(
         set(metaAtom, event.data.sha)
     }
     local.events.addEventListener(IndexEvent.type, listen)
-    local.sync().then(sha => {
-      set(metaAtom, sha)
-    })
     return () => {
       local.events.removeEventListener(IndexEvent.type, listen)
     }

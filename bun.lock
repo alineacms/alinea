@@ -195,8 +195,8 @@
     },
   },
   "overrides": {
-    "lib0": "0.2.88",
     "yjs": "13.6.11",
+    "lib0": "0.2.88",
   },
   "packages": {
     "@adobe/css-tools": ["@adobe/css-tools@4.3.3", "", {}, "sha512-rE0Pygv0sEZ4vBWHlAgJLGDU7Pm8xoO6p3wsEceb7GYAjScrOHpEo8KK/eVkAcnSM+slAEtXjA2JpdjLp4fJQQ=="],
