@@ -45,8 +45,8 @@ export function ContentView({editor}: ContentViewProps) {
         <SearchBox />
         {/*<RootHeader active={!editor} />*/}
         <EntryTree
-          id={editor?.activeVersion.id}
-          selected={editor?.activeVersion.parents}
+          selectedId={editor?.activeVersion.id}
+          expanded={editor?.activeVersion.parents}
         />
         <div className={styles.root.create()}>
           <button

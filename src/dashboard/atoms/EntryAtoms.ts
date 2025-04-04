@@ -1,7 +1,7 @@
 import type {
-  AsyncTreeDataLoader,
-  DropTarget,
-  ItemInstance
+  DragTarget,
+  ItemInstance,
+  TreeDataLoader
 } from '@headless-tree/core'
 import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
@@ -196,11 +196,11 @@ export interface EntryTreeItem {
   children: Array<string>
 }
 
-export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
+export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
   canDrag(item: Array<ItemInstance<EntryTreeItem>>): boolean
   onDrop(
     items: Array<ItemInstance<EntryTreeItem>>,
-    target: DropTarget<EntryTreeItem>
+    target: DragTarget<EntryTreeItem>
   ): void
 } {
   const {loader} = useAtomValue(loaderAtom)
@@ -213,11 +213,13 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
           return data.canDrag
         })
       },
-      onDrop(items, {item: parent, childIndex, insertionIndex}) {
+      onDrop(items, target) {
+        const {item: parent} = target
         if (items.length !== 1) return
         const [dropping] = items
         const children = parent.getChildren()
-        const previous = childIndex ? children[childIndex - 1] : null
+        const previous =
+          'childIndex' in target ? children[target.childIndex - 1] : null
         const after = previous ? previous.getId() : null
         const newParent = dropping.getParent() !== parent
         const toRoot = parent.getId().startsWith('@alinea')
