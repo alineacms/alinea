@@ -17,9 +17,7 @@ import {configAtom} from './DashboardAtoms.js'
 import {dbAtom} from './DbAtoms.js'
 import {localeAtom, rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
-export function rootId(rootName: string) {
-  return `@alinea/root-${rootName}`
-}
+export const ROOT_ID = '@alinea/root'
 
 const visibleTypesAtom = atom(get => {
   const {schema} = get(configAtom)
@@ -51,7 +49,7 @@ async function entryTreeRoot(
     status
   })
   return {
-    id: rootId(rootName),
+    id: ROOT_ID,
     index: '',
     type: '',
     isFolder: true,
@@ -61,8 +59,8 @@ async function entryTreeRoot(
   }
 }
 
-const entryTreeItemLoaderAtom = atom(async get => {
-  const graph = await get(dbAtom)
+const loaderAtom = atom(async get => {
+  const graph = get(dbAtom)
   const locale = get(localeAtom)
   const visibleTypes = get(visibleTypesAtom)
   const {schema} = get(configAtom)
@@ -70,7 +68,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
   const workspace = get(workspaceAtom)
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
     const indexed = new Map<string, EntryTreeItem>()
-    const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
+    const search = (ids as Array<string>).filter(id => id !== ROOT_ID)
     const data = {
       id: Entry.id,
       type: Entry.type,
@@ -144,7 +142,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     }
     const res: Array<EntryTreeItem | undefined> = []
     for (const id of ids) {
-      if (id === rootId(root.name)) {
+      if (id === ROOT_ID) {
         res.push(
           await entryTreeRoot(
             graph,
@@ -163,16 +161,11 @@ const entryTreeItemLoaderAtom = atom(async get => {
       }
       const typeName = entry.entries[0].type
       const type = schema[typeName]
-      const isFolder = Type.isContainer(type)
+      const isFolder = Type.isContainer(type) && entry.children.length > 0
       res.push({...entry, isFolder})
     }
     return res
   })
-})
-
-const loaderAtom = atom(get => {
-  // Don't return the Promise directly because that causes Jotai to suspend
-  return {loader: get(entryTreeItemLoaderAtom)}
 })
 
 export interface EntryTreeItem {
@@ -203,7 +196,7 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
     target: DragTarget<EntryTreeItem>
   ): void
 } {
-  const {loader} = useAtomValue(loaderAtom)
+  const loader = useAtomValue(loaderAtom)
   const db = useAtomValue(dbAtom)
   return useMemo(() => {
     return {
@@ -234,7 +227,9 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         })
       },
       async getItem(id): Promise<EntryTreeItem> {
-        return (await (await loader).clear(id).load(id))!
+        const data = await loader.clear(id).load(id)
+        if (!data) throw new Error(`Item ${id} not found`)
+        return data
       },
       async getChildren(id): Promise<Array<string>> {
         return this.getItem(id).then(item => item?.children ?? [])

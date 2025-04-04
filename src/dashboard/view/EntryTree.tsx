@@ -22,13 +22,12 @@ import {forwardRef, memo, useEffect} from 'react'
 import {dbAtom} from '../atoms/DbAtoms.js'
 import {
   type EntryTreeItem,
-  rootId,
+  ROOT_ID,
   useEntryTreeProvider
 } from '../atoms/EntryAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
-import {useRoot} from '../hook/UseRoot.js'
 import {useNavigate} from '../util/HashRouter.js'
 import css from './EntryTree.module.scss'
 
@@ -132,7 +131,6 @@ export interface EntryTreeProps {
 }
 
 export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
-  const root = useRoot()
   const db = useAtomValue(dbAtom)
   const {schema} = useConfig()
   const treeProvider = useEntryTreeProvider()
@@ -140,16 +138,14 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
   const nav = useNav()
   const locale = useLocale()
   const tree = useTree<EntryTreeItem>({
-    rootItemId: rootId(root.name),
+    rootItemId: ROOT_ID,
     canDrag: items => treeProvider.canDrag(items),
     onDrop(items, target) {
       return treeProvider.onDrop(items, target)
     },
     dataLoader: treeProvider,
-    getItemName: item =>
-      item.getItemData() && selectedEntry(locale, item.getItemData()).title,
-    isItemFolder: item =>
-      item.getItemData() && Boolean(item.getItemData().isFolder),
+    getItemName: item => selectedEntry(locale, item.getItemData()).title,
+    isItemFolder: item => Boolean(item.getItemData().isFolder),
     onPrimaryAction: item => {
       navigate(nav.entry({id: item.getId()}))
     },
@@ -167,19 +163,19 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       // hotkeysCoreFeature
     ]
   })
-  /*useEffect(() => {
+  useEffect(() => {
     ;(async () => {
-      for (const id of selected) {
-        await treeProvider
-          .getChildren(id)
-          .then(() => new Promise(requestAnimationFrame))
-        tree.expandItem(id)
+      for (const id of expanded) {
+        await treeProvider.getChildren(id)
+        await new Promise(requestAnimationFrame)
+        tree.getItemInstance(id).expand()
       }
     })()
-  }, [selected.join()])*/
+  }, [expanded.join()])
   useEffect(() => {
+    tree.getItemInstance(ROOT_ID).invalidateChildrenIds()
+    //tree.getItemInstance(rootId(root.name)).invalidateChildrenIds()
     for (const item of tree.getItems()) {
-      // tree.getItemInstance(rootId(root.name)).invalidateChildrenIds()
       const typeName: string = item.getItemData()?.type
       if (!typeName) continue
       const type = schema[typeName]
@@ -197,7 +193,7 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       assert(event instanceof IndexEvent)
       switch (event.data.op) {
         case 'index':
-          return tree.getItemInstance(rootId(root.name)).invalidateChildrenIds()
+          return tree.getItemInstance(ROOT_ID).invalidateChildrenIds()
         case 'entry': {
           const id = event.data.id
           try {
@@ -216,7 +212,7 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
   }, [db])
   return (
     <>
-      <div ref={tree.registerElement} className={styles.tree()}>
+      <div {...tree.getContainerProps()} className={styles.tree()}>
         {tree.getItems().map((item, i) => {
           const id = item.getId()
           const data = item.getItemData()
