@@ -37,19 +37,33 @@ export class IndexedDBSource implements Source {
     return current.sha === sha ? undefined : current
   }
 
-  async getBlob(sha: string) {
+  async getBlobs(
+    shas: Array<string>
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
     const db = await this.#db
-    return new Promise<Uint8Array>((resolve, reject) => {
-      const transaction = db.transaction(['blobs'], 'readonly')
-      const store = transaction.objectStore('blobs')
-      const request = store.get(sha)
-      request.onsuccess = event => {
-        const entry = (event.target as IDBRequest).result
-        if (entry) resolve(entry)
-        else reject(new Error(`Blob not found: ${sha}`))
+    return new Promise<Array<[sha: string, blob: Uint8Array]>>(
+      (resolve, reject) => {
+        const transaction = db.transaction(['blobs'], 'readonly')
+        const store = transaction.objectStore('blobs')
+        const blobs: Array<[sha: string, blob: Uint8Array]> = []
+        const tasks = Array<Promise<void>>()
+        for (const sha of shas) {
+          const request = store.get(sha)
+          tasks.push(
+            new Promise<void>(resolve => {
+              request.onsuccess = event => {
+                const entry = (event.target as IDBRequest).result
+                if (entry) blobs.push([sha, entry])
+                resolve()
+              }
+              request.onerror = event =>
+                reject((event.target as IDBRequest).error)
+            })
+          )
+        }
+        transaction.oncomplete = () => resolve(blobs)
       }
-      request.onerror = event => reject((event.target as IDBRequest).error)
-    })
+    )
   }
 
   async applyChanges(changes: Array<Change>) {

@@ -13,7 +13,7 @@ import type {GraphQuery} from 'alinea/core/Graph'
 import {getScope} from 'alinea/core/Scope'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {base64} from 'alinea/core/util/Encoding'
-import {object, string} from 'cito'
+import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
 import {HandleAction} from './HandleAction.js'
@@ -211,13 +211,16 @@ export function createHandler({
         return Response.json((await local.getTreeIfDifferent(sha)) ?? null)
       }
 
-      if (action === HandleAction.Blob && request.method === 'GET') {
+      if (action === HandleAction.Blob && request.method === 'POST') {
         const ctx = await verified
-        const sha = string(url.searchParams.get('sha'))
+        const {shas} = object({shas: array(string)})(await body)
         await periodicSync()
-        return new Response(await local.getBlob(sha), {
-          headers: {'content-type': 'application/octet-stream'}
-        })
+        const blobs = await remote.getBlobs(shas, ctx)
+        const formData = new FormData()
+        for (const [sha, blob] of blobs) {
+          formData.append(sha, new Blob([blob]), sha)
+        }
+        return new Response(formData)
       }
 
       // Media

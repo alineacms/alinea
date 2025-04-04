@@ -119,14 +119,33 @@ export class Client implements LocalConnection {
       .then(tree => (tree ? new ReadonlyTree(tree) : undefined))
   }
 
-  getBlob(sha: string): Promise<Uint8Array> {
-    return this.#request({
-      action: HandleAction.Blob,
-      sha
-    })
+  getBlobs(
+    shas: Array<string>
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+    return this.#request(
+      {action: HandleAction.Blob},
+      {
+        method: 'POST',
+        body: JSON.stringify({shas}),
+        headers: {
+          'content-type': 'application/json',
+          accept: 'multipart/form-data'
+        }
+      }
+    )
       .then(response => this.#failOnHttpError<Response>(response, false))
-      .then(response => response.arrayBuffer())
-      .then(buffer => new Uint8Array(buffer))
+      .then(response => response.formData())
+      .then(async form => {
+        const blobs: Array<[sha: string, blob: Uint8Array]> = []
+        for (const [key, value] of form.entries()) {
+          if (value instanceof Blob) {
+            const sha = key.slice(0, 40)
+            const blob = new Uint8Array(await value.arrayBuffer())
+            blobs.push([sha, blob])
+          }
+        }
+        return blobs
+      })
   }
 
   // Commit

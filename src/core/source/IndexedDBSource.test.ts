@@ -24,7 +24,7 @@ test('indexeddb source', async () => {
   const idbSource = new IndexedDBSource(indexedDB, 'test')
   await syncWith(idbSource, memorySource)
   for (const [sha, contents] of blobs) {
-    const fromSource = await idbSource.getBlob(sha)
+    const [[, fromSource]] = await idbSource.getBlobs([sha])
     test.equal(fromSource, contents)
   }
   const idbTree = await idbSource.getTree()

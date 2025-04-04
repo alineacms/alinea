@@ -52,8 +52,8 @@ export class LocalDB extends WriteableGraph {
     return this.source.getTreeIfDifferent(sha)
   }
 
-  getBlob(sha: string) {
-    return this.source.getBlob(sha)
+  getBlobs(shas: Array<string>) {
+    return this.source.getBlobs(shas)
   }
 
   async sync() {

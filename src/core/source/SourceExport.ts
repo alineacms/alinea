@@ -15,13 +15,7 @@ export interface ExportedSource {
 export async function exportSource(source: Source): Promise<ExportedSource> {
   const tree = await source.getTree()
   const shas = Array.from(tree.index(), ([, sha]) => sha)
-  const blobs = fromEntries(
-    await Promise.all(
-      shas.map(
-        async sha => [sha, decoder.decode(await source.getBlob(sha))] as const
-      )
-    )
-  )
+  const blobs = fromEntries(await source.getBlobs(shas))
   return {
     tree: tree.toJSON(),
     blobs: await base64.encode(encoder.encode(JSON.stringify(blobs)))

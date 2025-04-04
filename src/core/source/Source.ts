@@ -4,7 +4,7 @@ import type {ReadonlyTree, WriteableTree} from './Tree.js'
 
 export interface RemoteSource {
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
-  getBlob(sha: string): Promise<Uint8Array>
+  getBlobs(shas: Array<string>): Promise<Array<[sha: string, blob: Uint8Array]>>
 }
 
 export interface Source extends RemoteSource {
@@ -21,11 +21,7 @@ export async function bundleContents(
       changes.filter(change => change.op !== 'delete').map(change => change.sha)
     )
   )
-  const blobs = new Map(
-    await Promise.all(
-      shas.map(async sha => [sha, await source.getBlob(sha)] as const)
-    )
-  )
+  const blobs = new Map(await source.getBlobs(shas))
   return changes.map(change => {
     if (change.op === 'delete') return change
     return {
@@ -113,13 +109,7 @@ export class SourceTransaction {
           .filter(sha => !this.#blobs.has(sha))
       )
     )
-    const blobs = new Map(
-      await Promise.all(
-        fromSource.map(
-          async sha => [sha, await this.#source.getBlob(sha)] as const
-        )
-      )
-    )
+    const blobs = new Map(await this.#source.getBlobs(fromSource))
     const bundleContents = (change: Change) => {
       if (change.op === 'delete') return change
       const contents = this.#blobs.get(change.sha) ?? blobs.get(change.sha)

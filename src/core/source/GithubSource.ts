@@ -1,6 +1,9 @@
+import pLimit from 'p-limit'
 import type {RemoteSource} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
 import {assert} from './Utils.js'
+
+const limit = pLimit(8)
 
 export interface GithubSourceOptions {
   authToken: string
@@ -50,17 +53,28 @@ export class GithubSource implements RemoteSource {
     return tree
   }
 
-  async getBlob(sha: string): Promise<Uint8Array> {
+  async getBlobs(
+    shas: Array<string>
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
     const {owner, repo, authToken} = this.#options
-    const blobInfo = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
-      {headers: {Authorization: `Bearer ${authToken}`}}
+    return Promise.all(
+      shas.map(sha =>
+        limit(async (): Promise<[sha: string, blob: Uint8Array]> => {
+          const blobInfo = await fetch(
+            `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
+            {headers: {Authorization: `Bearer ${authToken}`}}
+          )
+          assert(blobInfo.ok, `Failed to get blob: ${blobInfo.statusText}`)
+          const blobData = await blobInfo.json()
+          assert(blobData.encoding === 'base64')
+          assert(typeof blobData.content === 'string')
+          assert(blobData.size > 0)
+          return [
+            sha,
+            Uint8Array.from(atob(blobData.content), c => c.charCodeAt(0))
+          ]
+        })
+      )
     )
-    assert(blobInfo.ok, `Failed to get blob: ${blobInfo.statusText}`)
-    const blobData = await blobInfo.json()
-    assert(blobData.encoding === 'base64')
-    assert(typeof blobData.content === 'string')
-    assert(blobData.size > 0)
-    return Uint8Array.from(atob(blobData.content), c => c.charCodeAt(0))
   }
 }

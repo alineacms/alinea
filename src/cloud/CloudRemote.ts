@@ -65,7 +65,10 @@ export class CloudRemote implements RemoteConnection {
     throw new Error('Method not implemented.')
   }
 
-  async getBlob(sha: string, ctx: RequestContext): Promise<Uint8Array> {
+  async getBlobs(
+    shas: Array<string>,
+    ctx: RequestContext
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
     throw new Error('Method not implemented.')
   }
 

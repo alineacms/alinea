@@ -35,14 +35,26 @@ export class CombinedSource implements Source {
     return tree
   }
 
-  async getBlob(sha: string): Promise<Uint8Array> {
-    if (this.#only) return this.#only.getBlob(sha)
+  async getBlobs(
+    shas: Array<string>
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+    if (this.#only) return this.#only.getBlobs(shas)
     const tree = await this.getTree()
+    const perSource = new Map<Source, Array<string>>()
     for (const [name, source] of entries(this.#sources)) {
       const sub = tree.getNode(name)
-      if (sub.hasSha(sha)) return source.getBlob(sha)
+      for (const sha of shas) {
+        if (!sub.hasSha(sha)) continue
+        const sourceShas = perSource.get(source) ?? []
+        sourceShas.push(sha)
+        perSource.set(source, sourceShas)
+      }
     }
-    throw new Error(`Blob ${sha} not found in any source`)
+    return Promise.all(
+      Array.from(perSource.entries()).flatMap(async ([source, shas]) => {
+        return source.getBlobs(shas)
+      })
+    ).then(res => res.flat())
   }
 
   async applyChanges(changes: Array<Change>) {

@@ -62,7 +62,7 @@ export function createRemote(
     authenticate: call('authenticate'),
     verify: call('verify'),
     getTreeIfDifferent: call('getTreeIfDifferent'),
-    getBlob: call('getBlob'),
+    getBlobs: call('getBlobs'),
     commit: call('commit'),
     revisions: call('revisions'),
     revisionData: call('revisionData'),
