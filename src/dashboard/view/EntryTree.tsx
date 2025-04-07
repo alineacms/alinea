@@ -140,7 +140,7 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
   const navigate = useNavigate()
   const nav = useNav()
   const locale = useLocale()
-  const [scrollTo, setScrollTo] = useState(0)
+  const [scrollTo, setScrollTo] = useState<string>()
   const tree = useTree<EntryTreeItem>({
     rootItemId: ROOT_ID,
     canDrag: items => treeProvider.canDrag(items),
@@ -161,8 +161,7 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       selectedItems: selectedId ? [selectedId] : []
     },
     scrollToItem: item => {
-      const index = item.getItemMeta().index
-      setScrollTo(index)
+      setScrollTo(item.getId())
     },
     features: [
       asyncDataLoaderFeature,
@@ -210,12 +209,10 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     }
   }, [db])
   const items = tree.getItems()
-  for (const item of items) {
-    // Start loading these here. Headless tree will update its own state in this
-    // function call which we don't want to happen while rendering the virtual
-    // list because react will complain.
-    item.getItemData()
-  }
+  // Start loading these here. Headless tree will update its own state in this
+  // function call which we don't want to happen while rendering the virtual
+  // list because react will complain.
+  const loadedItems = items.filter(item => item.getItemData())
   const containerRef = useRef(null)
   const [containerWidth, containerHeight] = useSize(containerRef)
   return (
@@ -230,14 +227,17 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
           width="100%"
           height={containerHeight}
           overscanCount={2}
-          itemCount={items.length}
+          itemCount={loadedItems.length}
           itemSize={32}
-          scrollToIndex={scrollTo}
+          scrollToIndex={
+            scrollTo
+              ? loadedItems.findIndex(item => item.getId() === scrollTo)
+              : undefined
+          }
           renderItem={({index, style}) => {
-            const item = items[index]
+            const item = loadedItems[index]
             const id = item.getId()
             const data = item.getItemData()
-            if (!data) return null
             const title = item.getItemName()
             const selected = selectedEntry(locale, data)
             return (
