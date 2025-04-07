@@ -182,20 +182,15 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     function refresh(event: Event) {
       assert(event instanceof IndexEvent)
       switch (event.data.op) {
-        case 'index':
-          return tree.getItemInstance(ROOT_ID).invalidateChildrenIds()
         case 'entry': {
           const id = event.data.id
-          try {
+          const ids = treeProvider.invalidate(id)
+          for (const id of ids) {
             const item = tree.getItemInstance(id)
-            if (!item) return
-            const parent = item.getParent()
+            item.invalidateItemData()
             item.invalidateChildrenIds()
-            parent?.invalidateChildrenIds()
-          } catch (e) {
-            console.error(e)
-          } finally {
           }
+          return
         }
       }
     }

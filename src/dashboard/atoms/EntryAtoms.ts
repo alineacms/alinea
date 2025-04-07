@@ -5,17 +5,19 @@ import type {
 } from '@headless-tree/core'
 import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
-import type {Graph} from 'alinea/core/Graph'
-import {getRoot, getType} from 'alinea/core/Internal'
+import {getType} from 'alinea/core/Internal'
+import {type Trigger, trigger} from 'alinea/core/Trigger'
 import {Type} from 'alinea/core/Type'
+import {debounce} from 'alinea/core/util/Debounce'
 import {entries} from 'alinea/core/util/Objects'
-import {parents} from 'alinea/query'
-import DataLoader from 'dataloader'
+import {children, translations} from 'alinea/query'
 import {atom, useAtomValue} from 'jotai'
 import {useMemo} from 'react'
+import {useGraph} from '../hook/UseGraph.js'
+import {useRoot} from '../hook/UseRoot.js'
+import {useWorkspace} from '../hook/UseWorkspace.js'
 import {configAtom} from './DashboardAtoms.js'
 import {dbAtom} from './DbAtoms.js'
-import {localeAtom, rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
 export const ROOT_ID = '@alinea/root'
 
@@ -26,150 +28,138 @@ const visibleTypesAtom = atom(get => {
     .map(([name]) => name)
 })
 
-async function entryTreeRoot(
-  graph: Graph,
-  status: 'preferDraft' | 'preferPublished',
-  workspace: string,
-  rootName: string,
-  visibleTypes: Array<string>
-): Promise<EntryTreeItem> {
-  const root = graph.config.workspaces[workspace][rootName]
-  const orderBy = getRoot(root).orderChildrenBy
-  const children = await graph.find({
-    select: Entry.id,
-    groupBy: Entry.id,
-    orderBy,
-    filter: {
-      _active: true,
-      _workspace: workspace,
-      _root: rootName,
-      _parentId: null,
-      _type: {in: visibleTypes}
-    },
-    status
-  })
-  return {
-    id: ROOT_ID,
-    index: '',
-    type: '',
-    isFolder: true,
-    isRoot: true,
-    entries: [],
-    children
-  }
-}
-
-const loaderAtom = atom(async get => {
-  const graph = get(dbAtom)
-  const locale = get(localeAtom)
-  const visibleTypes = get(visibleTypesAtom)
-  const {schema} = get(configAtom)
-  const root = get(rootAtom)
-  const workspace = get(workspaceAtom)
-  return new DataLoader(async (ids: ReadonlyArray<string>) => {
-    const indexed = new Map<string, EntryTreeItem>()
-    const search = (ids as Array<string>).filter(id => id !== ROOT_ID)
-    const data = {
-      id: Entry.id,
-      type: Entry.type,
-      title: Entry.title,
-      status: Entry.status,
-      locale: Entry.locale,
-      workspace: Entry.workspace,
-      root: Entry.root,
-      path: Entry.path,
-      parents: parents({
-        select: {
-          path: Entry.path,
-          type: Entry.type
-        }
+function useTreeEntries() {
+  const graph = useGraph()
+  const workspace = useWorkspace()
+  const root = useRoot()
+  const visibleTypes = useAtomValue(visibleTypesAtom)
+  const {loading, finished, isFetching} = useMemo(() => {
+    const loading = new Map<string, Trigger<EntryTreeItem>>()
+    const finished = new Map<string, EntryTreeItem>()
+    const isFetching = new WeakSet<Promise<EntryTreeItem>>()
+    return {loading, finished, isFetching}
+  }, [])
+  return useMemo(() => {
+    const loadBatch = debounce(() => {
+      const toLoad = Array.from(loading).filter(([id, trigger]) => {
+        return !isFetching.has(trigger)
       })
-    }
-    const rows = await graph.find({
-      groupBy: Entry.id,
-      select: {
+      if (toLoad.length === 0) return
+      let loadRoot: Trigger<EntryTreeItem> | undefined
+      for (const [id, trigger] of toLoad) {
+        if (id === ROOT_ID) loadRoot = trigger
+        isFetching.add(trigger)
+      }
+      const data = {
+        id: Entry.id,
+        type: Entry.type,
+        title: Entry.title,
+        status: Entry.status,
+        locale: Entry.locale,
+        workspace: Entry.workspace,
+        root: Entry.root,
+        path: Entry.path,
+        parentId: Entry.parentId
+      }
+      const select = {
         id: Entry.id,
         index: Entry.index,
         type: Entry.type,
+        parentId: Entry.parentId,
         data,
-        translations: {
-          edge: 'translations',
-          select: data
-        }
-      },
-      id: {in: search},
-      status: 'preferDraft'
-    })
-    for (const row of rows) {
-      const canDrag =
-        row.data.parents.length > 0
-          ? !getType(schema[row.data.parents.at(-1)!.type]).orderChildrenBy
-          : true
-      const type = schema[row.type]
-      const orderBy = getType(type).orderChildrenBy
-      const children = await graph.find({
-        select: {
-          id: Entry.id,
-          locale: Entry.locale
-        },
+        translations: translations({select: data}),
+        children: children({select: Entry.id})
+      }
+      if (loadRoot) {
+        graph
+          .find({
+            groupBy: Entry.id,
+            workspace: workspace.name,
+            root: root.name,
+            parentId: null,
+            select: Entry.id,
+            status: 'preferDraft'
+          })
+          .then(children => {
+            console.log(children)
+            const result = {
+              id: ROOT_ID,
+              parentId: null,
+              index: '',
+              type: '',
+              isFolder: true,
+              isRoot: true,
+              entries: [],
+              children
+            }
+            loadRoot.resolve(result)
+            finished.set(ROOT_ID, result)
+          })
+      }
+      const ids = toLoad.filter(([id]) => id !== ROOT_ID).map(([id]) => id)
+      const rows = graph.find({
         groupBy: Entry.id,
-        orderBy,
-        filter: {
-          _parentId: row.id,
-          _type: {in: visibleTypes}
-        },
+        workspace: workspace.name,
+        root: root.name,
+        select,
+        filter: {_id: {in: ids}},
         status: 'preferDraft'
       })
-      const entries = [row.data].concat(row.translations)
-      const translatedChildren = new Set(
-        children.filter(child => child.locale === locale).map(child => child.id)
-      )
-      const untranslated = new Set()
-      const orderedChildren = children.filter(child => {
-        if (translatedChildren.has(child.id)) return child.locale === locale
-        if (untranslated.has(child.id)) return false
-        untranslated.add(child.id)
-        return true
+      rows.then(rows => {
+        for (const row of rows) {
+          const parent = row.parentId ? finished.get(row.parentId) : null
+          const canDrag = parent
+            ? !getType(graph.config.schema[parent.type]).orderChildrenBy
+            : true
+          const entries = [row.data].concat(row.translations)
+          const typeName = row.data.type
+          const type = graph.config.schema[typeName]
+          const isFolder = Type.isContainer(type) && row.children.length > 0
+          const result = {...row, canDrag, entries, isFolder}
+          const trigger = loading.get(row.id)!
+          finished.set(row.id, result)
+          trigger.resolve(result)
+        }
       })
-      indexed.set(row.id, {
-        id: row.id,
-        type: row.type,
-        index: row.index,
-        entries,
-        canDrag,
-        children: [...new Set(orderedChildren.map(child => child.id))]
-      })
+    }, 0)
+
+    function getItem(id: string) {
+      if (finished.has(id)) return finished.get(id)!
+      if (loading.has(id)) return loading.get(id)!
+      const result = trigger<EntryTreeItem>()
+      loading.set(id, result)
+      loadBatch()
+      return result
     }
-    const res: Array<EntryTreeItem | undefined> = []
-    for (const id of ids) {
-      if (id === ROOT_ID) {
-        res.push(
-          await entryTreeRoot(
-            graph,
-            'preferDraft',
-            workspace.name,
-            root.name,
-            visibleTypes
-          )
-        )
-        continue
-      }
-      const entry = indexed.get(id)!
-      if (!entry) {
-        res.push(undefined)
-        continue
-      }
-      const typeName = entry.entries[0].type
-      const type = schema[typeName]
-      const isFolder = Type.isContainer(type) && entry.children.length > 0
-      res.push({...entry, isFolder})
+
+    function getChildren(id: string) {
+      const item = getItem(id)
+      if (item instanceof Promise) return item.then(item => item.children)
+      return item.children
     }
-    return res
-  })
-})
+
+    function invalidate(id: string) {
+      const result = new Set([id])
+      loading.delete(ROOT_ID)
+      result.add(ROOT_ID)
+      loading.delete(id)
+      for (const item of finished.values()) {
+        if (item.children.includes(id)) {
+          loading.delete(item.id)
+          result.add(item.id)
+        }
+      }
+      console.log(result)
+      return [...result]
+    }
+
+    return {getItem, getChildren, invalidate}
+  }, [workspace, root])
+}
 
 export interface EntryTreeItem {
   id: string
+  parentId: string | null
   index: string
   type: string
   entries: Array<{
@@ -181,7 +171,6 @@ export interface EntryTreeItem {
     workspace: string
     root: string
     path: string
-    parents: Array<{path: string; type: string}>
   }>
   isFolder?: boolean
   isRoot?: boolean
@@ -190,16 +179,18 @@ export interface EntryTreeItem {
 }
 
 export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
+  invalidate(id: string): Array<string>
   canDrag(item: Array<ItemInstance<EntryTreeItem>>): boolean
   onDrop(
     items: Array<ItemInstance<EntryTreeItem>>,
     target: DragTarget<EntryTreeItem>
   ): void
 } {
-  const loader = useAtomValue(loaderAtom)
+  const entries = useTreeEntries()
   const db = useAtomValue(dbAtom)
   return useMemo(() => {
     return {
+      ...entries,
       canDrag(items) {
         return items.every(item => {
           const data = item.getItemData()
@@ -215,9 +206,10 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
           'childIndex' in target ? children[target.childIndex - 1] : null
         const after = previous ? previous.getId() : null
         const newParent = dropping.getParent() !== parent
-        const toRoot = parent.getId().startsWith('@alinea')
-          ? dropping.getItemData().entries[0].root
-          : undefined
+        const toRoot =
+          parent.getId() === ROOT_ID
+            ? dropping.getItemData().entries[0].root
+            : undefined
         const toParent = !toRoot && newParent ? parent.getId() : undefined
         db.move({
           id: dropping.getId(),
@@ -225,15 +217,7 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
           toParent,
           toRoot
         })
-      },
-      async getItem(id): Promise<EntryTreeItem> {
-        const data = await loader.clear(id).load(id)
-        if (!data) throw new Error(`Item ${id} not found`)
-        return data
-      },
-      async getChildren(id): Promise<Array<string>> {
-        return this.getItem(id).then(item => item?.children ?? [])
       }
     }
-  }, [loader])
+  }, [db, entries])
 }

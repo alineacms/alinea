@@ -47,13 +47,13 @@ export class DevDB extends LocalDB {
   }
 
   async watchFiles() {
-    const {config} = this.#options
+    const {rootDir, config} = this.#options
     const tree = await this.source.getTree()
     const res: WatchFiles = {files: [], dirs: []}
     for (const [path, node] of tree) {
       const [workspace, ...rest] = path.split('/')
       const contentDir = getWorkspace(config.workspaces[workspace]).source
-      const fullPath = join(contentDir, rest.join('/'))
+      const fullPath = join(rootDir, contentDir, rest.join('/'))
       if (node.type === 'tree') res.dirs.push(fullPath)
       else res.files.push(fullPath)
     }
