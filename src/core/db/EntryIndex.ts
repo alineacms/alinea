@@ -6,8 +6,8 @@ import {type EntryRecord, parseRecord} from 'alinea/core/EntryRecord'
 import {getRoot} from 'alinea/core/Internal'
 import {Page} from 'alinea/core/Page'
 import {Schema} from 'alinea/core/Schema'
-import {type EntryUrlMeta, Type} from 'alinea/core/Type'
-import {entryInfo} from 'alinea/core/util/EntryFilenames'
+import {Type} from 'alinea/core/Type'
+import {entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
 import {isValidOrderKey} from 'alinea/core/util/FractionalIndexing'
 import {entries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
@@ -160,7 +160,8 @@ export class EntryIndex extends EventTarget {
             file: change.path,
             contents: contents
           })
-          const node = this.byId.get(entry.id) ?? new EntryNode(entry)
+          const node =
+            this.byId.get(entry.id) ?? new EntryNode(this.#config, entry)
           node.add(entry, parent)
           if (parent) recompute.add(parent.id)
           else recompute.add(node.id)
@@ -279,11 +280,13 @@ interface ParseRequest {
 }
 
 class EntryNode {
+  #config: Config
   id: string
   type: string
   byFile = new Map<string, Entry>()
   locales = new Map<string | null, Map<EntryStatus, Entry>>()
-  constructor(from: Entry) {
+  constructor(config: Config, from: Entry) {
+    this.#config = config
     this.id = from.id
     this.type = from.type
   }
@@ -372,7 +375,8 @@ class EntryNode {
         version.active = active
         version.main = main
         const parentPaths = version.parentDir.split('/').slice(locale ? 3 : 2)
-        const url = entryUrl({
+        const type = this.#config.schema[version.type]
+        const url = entryUrl(type, {
           locale,
           status,
           path: version.path,
@@ -422,17 +426,6 @@ function getNodePath(filePath: string) {
   if (base.endsWith('.archived')) base = base.slice(0, -'.archived'.length)
   if (base.endsWith('.draft')) base = base.slice(0, -'.draft'.length)
   return `${dir}/${base}`
-}
-
-function entryUrl(meta: EntryUrlMeta) {
-  const segments = meta.locale ? [meta.locale.toLowerCase()] : []
-  return `/${segments
-    .concat(
-      meta.parentPaths
-        .concat(meta.path)
-        .filter(segment => segment !== 'index' && segment !== '')
-    )
-    .join('/')}`
 }
 
 interface Seed {
