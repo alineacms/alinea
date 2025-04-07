@@ -1,13 +1,11 @@
 import styler from '@alinea/styler'
 import {
   asyncDataLoaderFeature,
-  buildProxiedInstance,
   dragAndDropFeature,
   propMemoizationFeature,
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import useSize from '@react-hook/size'
 import {getType} from 'alinea/core/Internal'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import {assert} from 'alinea/core/source/Utils'
@@ -20,8 +18,7 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundVisibilityOff} from 'alinea/ui/icons/IcRoundVisibilityOff'
 import {useAtomValue} from 'jotai'
 import type {HTMLProps} from 'react'
-import {forwardRef, memo, useEffect, useRef, useState} from 'react'
-import VirtualList from 'react-tiny-virtual-list'
+import {forwardRef, memo, useEffect} from 'react'
 import {dbAtom} from '../atoms/DbAtoms.js'
 import {
   type EntryTreeItem,
@@ -140,7 +137,6 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
   const navigate = useNavigate()
   const nav = useNav()
   const locale = useLocale()
-  const [scrollTo, setScrollTo] = useState(0)
   const tree = useTree<EntryTreeItem>({
     rootItemId: ROOT_ID,
     canDrag: items => treeProvider.canDrag(items),
@@ -148,7 +144,6 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       return treeProvider.onDrop(items, target)
     },
     dataLoader: treeProvider,
-    instanceBuilder: buildProxiedInstance,
     getItemName: item => selectedEntry(locale, item.getItemData()).title,
     isItemFolder: item => Boolean(item.getItemData().isFolder),
     onPrimaryAction: item => {
@@ -160,10 +155,6 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     state: {
       selectedItems: selectedId ? [selectedId] : []
     },
-    scrollToItem: item => {
-      const index = item.getItemMeta().index
-      setScrollTo(index)
-    },
     features: [
       asyncDataLoaderFeature,
       selectionFeature,
@@ -173,7 +164,17 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     ]
   })
   useEffect(() => {
+    ;(async () => {
+      for (const id of expanded) {
+        await treeProvider.getChildren(id)
+        await new Promise(requestAnimationFrame)
+        tree.getItemInstance(id).expand()
+      }
+    })()
+  }, [expanded.join()])
+  useEffect(() => {
     tree.getItemInstance(ROOT_ID).invalidateChildrenIds()
+    //tree.getItemInstance(rootId(root.name)).invalidateChildrenIds()
     for (const item of tree.getItems()) {
       const typeName: string = item.getItemData()?.type
       if (!typeName) continue
@@ -209,64 +210,39 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       }
     }
   }, [db])
-  const items = tree.getItems()
-  for (const item of items) {
-    // Start loading these here. Headless tree will update its own state in this
-    // function call which we don't want to happen while rendering the virtual
-    // list because react will complain.
-    item.getItemData()
-  }
-  const containerRef = useRef(null)
-  const [containerWidth, containerHeight] = useSize(containerRef)
   return (
     <>
-      <div
-        {...tree.getContainerProps()}
-        ref={containerRef}
-        style={{flex: '1 1 0', minHeight: 0}}
-      >
-        <VirtualList
-          className={styles.tree()}
-          width="100%"
-          height={containerHeight}
-          overscanCount={2}
-          itemCount={items.length}
-          itemSize={32}
-          scrollToIndex={scrollTo}
-          renderItem={({index, style}) => {
-            const item = items[index]
-            const id = item.getId()
-            const data = item.getItemData()
-            if (!data) return null
-            const title = item.getItemName()
-            const selected = selectedEntry(locale, data)
-            return (
-              <div key={index} style={{...style}}>
-                <TreeItem
-                  key={id}
-                  id={id}
-                  type={data.type}
-                  locale={selected.locale}
-                  title={title}
-                  isSelected={selectedId === id}
-                  isFolder={item.isFolder()}
-                  isExpanded={item.isExpanded()}
-                  isUntranslated={selected.locale !== locale}
-                  isUnpublished={selected.status === 'archived'}
-                  isDragTarget={item.isDragTarget() && item.isDraggingOver()}
-                  isDragTargetAbove={
-                    item.isDragTargetAbove() && item.isDraggingOver()
-                  }
-                  isDragTargetBelow={
-                    item.isDragTargetBelow() && item.isDraggingOver()
-                  }
-                  level={item.getItemMeta().level}
-                  {...item.getProps()}
-                />
-              </div>
-            )
-          }}
-        />
+      <div {...tree.getContainerProps()} className={styles.tree()}>
+        {tree.getItems().map((item, i) => {
+          const id = item.getId()
+          const data = item.getItemData()
+          if (!data) return null
+          const title = item.getItemName()
+          const selected = selectedEntry(locale, data)
+          return (
+            <TreeItem
+              key={id}
+              id={id}
+              type={data.type}
+              locale={selected.locale}
+              title={title}
+              isSelected={selectedId === id}
+              isFolder={item.isFolder()}
+              isExpanded={item.isExpanded()}
+              isUntranslated={selected.locale !== locale}
+              isUnpublished={selected.status === 'archived'}
+              isDragTarget={item.isDragTarget() && item.isDraggingOver()}
+              isDragTargetAbove={
+                item.isDragTargetAbove() && item.isDraggingOver()
+              }
+              isDragTargetBelow={
+                item.isDragTargetBelow() && item.isDraggingOver()
+              }
+              level={item.getItemMeta().level}
+              {...item.getProps()}
+            />
+          )
+        })}
       </div>
     </>
   )
