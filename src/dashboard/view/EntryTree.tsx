@@ -164,17 +164,7 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     ]
   })
   useEffect(() => {
-    ;(async () => {
-      for (const id of expanded) {
-        await treeProvider.getChildren(id)
-        await new Promise(requestAnimationFrame)
-        tree.getItemInstance(id).expand()
-      }
-    })()
-  }, [expanded.join()])
-  useEffect(() => {
     tree.getItemInstance(ROOT_ID).invalidateChildrenIds()
-    //tree.getItemInstance(rootId(root.name)).invalidateChildrenIds()
     for (const item of tree.getItems()) {
       const typeName: string = item.getItemData()?.type
       if (!typeName) continue
@@ -210,13 +200,13 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       }
     }
   }, [db])
+  const loaded = tree.getItems().filter(item => item.getItemData())
   return (
     <>
       <div {...tree.getContainerProps()} className={styles.tree()}>
-        {tree.getItems().map((item, i) => {
+        {loaded.map(item => {
           const id = item.getId()
           const data = item.getItemData()
-          if (!data) return null
           const title = item.getItemName()
           const selected = selectedEntry(locale, data)
           return (
