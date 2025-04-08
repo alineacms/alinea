@@ -1,9 +1,9 @@
 import styler from '@alinea/styler'
 import {
-  asyncDataLoaderFeature,
   dragAndDropFeature,
   propMemoizationFeature,
-  selectionFeature
+  selectionFeature,
+  syncDataLoaderFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
 import {getType} from 'alinea/core/Internal'
@@ -24,7 +24,7 @@ import {
   type EntryTreeItem,
   ROOT_ID,
   useEntryTreeProvider
-} from '../atoms/EntryAtoms.js'
+} from '../atoms/EntryTreeAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
@@ -34,6 +34,7 @@ import css from './EntryTree.module.scss'
 const styles = styler(css)
 
 function selectedEntry(locale: string | null, item: EntryTreeItem) {
+  console.log(item)
   return item.entries.find(entry => entry.locale === locale) ?? item.entries[0]
 }
 
@@ -133,7 +134,7 @@ export interface EntryTreeProps {
 export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
   const db = useAtomValue(dbAtom)
   const {schema} = useConfig()
-  const treeProvider = useEntryTreeProvider()
+  const treeProvider = useEntryTreeProvider(selectedId, expanded)
   const navigate = useNavigate()
   const nav = useNav()
   const locale = useLocale()
@@ -150,13 +151,14 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       navigate(nav.entry({id: item.getId()}))
     },
     initialState: {
-      expandedItems: expanded
+      expandedItems: treeProvider.expanded
     },
     state: {
       selectedItems: selectedId ? [selectedId] : []
     },
     features: [
-      asyncDataLoaderFeature,
+      syncDataLoaderFeature,
+      //asyncDataLoaderFeature,
       selectionFeature,
       dragAndDropFeature,
       propMemoizationFeature
@@ -164,7 +166,8 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     ]
   })
   useEffect(() => {
-    tree.getItemInstance(ROOT_ID).invalidateChildrenIds()
+    tree.rebuildTree()
+    /*tree.getItemInstance(ROOT_ID).invalidateChildrenIds()
     for (const item of tree.getItems()) {
       const typeName: string = item.getItemData()?.type
       if (!typeName) continue
@@ -173,7 +176,7 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       if (orderChildrenBy) {
         item.invalidateChildrenIds()
       }
-    }
+    }*/
   }, [treeProvider])
   useEffect(() => {
     const listen = debounce(refresh, 0)

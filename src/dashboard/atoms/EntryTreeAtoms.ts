@@ -6,20 +6,105 @@ import type {
 import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
 import {getType} from 'alinea/core/Internal'
-import {type Trigger, trigger} from 'alinea/core/Trigger'
+import {} from 'alinea/core/Trigger'
 import {Type} from 'alinea/core/Type'
-import {debounce} from 'alinea/core/util/Debounce'
 import {entries} from 'alinea/core/util/Objects'
-import {children, translations} from 'alinea/query'
-import {atom, useAtomValue} from 'jotai'
-import {useMemo} from 'react'
-import {useGraph} from '../hook/UseGraph.js'
-import {useRoot} from '../hook/UseRoot.js'
-import {useWorkspace} from '../hook/UseWorkspace.js'
+import {parent, translations} from 'alinea/query'
+import DataLoader from 'dataloader'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atomFamily, unwrap} from 'jotai/utils'
+import {useEffect, useMemo} from 'react'
 import {configAtom} from './DashboardAtoms.js'
-import {dbAtom} from './DbAtoms.js'
+import {dbAtom, entryRevisionAtoms} from './DbAtoms.js'
+import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
 export const ROOT_ID = '@alinea/root'
+
+export interface EntryTreeItem {
+  id: string
+  parentId: string | null
+  index: string
+  type: string
+  entries: Array<{
+    id: string
+    type: string
+    title: string
+    status: EntryStatus
+    locale: string | null
+    workspace: string
+    root: string
+    path: string
+  }>
+  isFolder?: boolean
+  isRoot?: boolean
+  canDrag?: boolean
+  // children: Array<string>
+}
+
+const childrenLoaderAtom = atom(get => {
+  const graph = get(dbAtom)
+  const workspace = get(workspaceAtom)
+  const root = get(rootAtom)
+  return new DataLoader<string, Array<EntryTreeItem>>(
+    async (parentIds: ReadonlyArray<string>) => {
+      const data = {
+        id: Entry.id,
+        type: Entry.type,
+        title: Entry.title,
+        status: Entry.status,
+        locale: Entry.locale,
+        workspace: Entry.workspace,
+        root: Entry.root,
+        path: Entry.path,
+        parentId: Entry.parentId
+      }
+      const select = {
+        id: Entry.id,
+        index: Entry.index,
+        type: Entry.type,
+        parentId: Entry.parentId,
+        data,
+        translations: translations({select: data}),
+        parentType: parent({select: Entry.type})
+      }
+      const rows = await graph.find({
+        groupBy: Entry.id,
+        workspace: workspace.name,
+        root: root.name,
+        select,
+        parentId: {in: parentIds.map(id => (id === ROOT_ID ? null : id))},
+        status: 'preferDraft'
+      })
+      return parentIds.map(parentId => {
+        const children = rows.filter(
+          row => row.parentId === (parentId === ROOT_ID ? null : parentId)
+        )
+        return children.map(child => {
+          const canDrag = child.parentType
+            ? !getType(graph.config.schema[child.parentType]).orderChildrenBy
+            : true
+          const entries = [child.data].concat(child.translations)
+          const typeName = child.data.type
+          const type = graph.config.schema[typeName]
+          const isFolder = Type.isContainer(type)
+          const result = {...child, canDrag, entries, isFolder}
+          return result
+        })
+      })
+    }
+  )
+})
+
+const childrenOf = atomFamily((parentId: string) => {
+  return atom(async get => {
+    const loader = get(childrenLoaderAtom)
+    // We clear the dataloader cache because we use the atom family cache
+    const children = await loader.clear(parentId).load(parentId)
+    if (parentId !== null) get(entryRevisionAtoms(parentId))
+    for (const child of children) get(entryRevisionAtoms(child.id))
+    return children
+  })
+})
 
 const visibleTypesAtom = atom(get => {
   const {schema} = get(configAtom)
@@ -28,6 +113,95 @@ const visibleTypesAtom = atom(get => {
     .map(([name]) => name)
 })
 
+export interface EntryTreeProvider extends TreeDataLoader<EntryTreeItem> {
+  invalidate(id: string): Array<string>
+  canDrag(item: Array<ItemInstance<EntryTreeItem>>): boolean
+  onDrop(
+    items: Array<ItemInstance<EntryTreeItem>>,
+    target: DragTarget<EntryTreeItem>
+  ): void
+}
+
+const expandedAtom = atom(Array<string>())
+
+const treeAtom = unwrap(
+  atom(async get => {
+    const expanded = get(expandedAtom)
+    console.log(expanded)
+    const parentIds = Array<string>(ROOT_ID, ...expanded)
+    const byParent = new Map(
+      await Promise.all(
+        parentIds.map(async parentId => {
+          return [parentId, await get(childrenOf(parentId))] as const
+        })
+      )
+    )
+    const byId = new Map(
+      [...byParent.values()].flatMap(children =>
+        children.map(child => [child.id, child] as const)
+      )
+    )
+    return {expanded, byId, byParent}
+  }),
+  prev => prev
+)
+
+export function useEntryTreeProvider(
+  selectedId: string | undefined,
+  expanded: Array<string>
+): EntryTreeProvider {
+  const db = useAtomValue(dbAtom)
+  const tree = useAtomValue(treeAtom)
+  const setExpanded = useSetAtom(expandedAtom)
+
+  useEffect(() => {
+    setExpanded(expanded)
+  }, [expanded.join()])
+
+  return useMemo(() => {
+    return {
+      expanded: tree?.expanded ?? [],
+      invalidate() {
+        return Array<string>()
+      },
+      getItem(id: string) {
+        if (!tree?.byId.has(id)) throw new Error('Item not found: ' + id)
+        return tree?.byId.get(id)
+      },
+      getChildren(parentId: string) {
+        return tree?.byParent.get(parentId)?.map(child => child.id) ?? []
+      },
+      canDrag(items) {
+        return items.every(item => {
+          const data = item.getItemData()
+          return data.canDrag
+        })
+      },
+      onDrop(items, target) {
+        const {item: parent} = target
+        if (items.length !== 1) return
+        const [dropping] = items
+        const children = parent.getChildren()
+        const previous =
+          'childIndex' in target ? children[target.childIndex - 1] : null
+        const after = previous ? previous.getId() : null
+        const newParent = dropping.getParent() !== parent
+        const toRoot =
+          parent.getId() === ROOT_ID
+            ? dropping.getItemData().entries[0].root
+            : undefined
+        const toParent = !toRoot && newParent ? parent.getId() : undefined
+        db.move({
+          id: dropping.getId(),
+          after,
+          toParent,
+          toRoot
+        })
+      }
+    }
+  }, [db, tree])
+}
+/*
 function useTreeEntries() {
   const graph = useGraph()
   const workspace = useWorkspace()
@@ -175,17 +349,21 @@ export interface EntryTreeItem {
   isFolder?: boolean
   isRoot?: boolean
   canDrag?: boolean
-  children: Array<string>
+  // children: Array<string>
 }
 
-export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
+export interface EntryTreeProvider extends TreeDataLoader<EntryTreeItem> {
   invalidate(id: string): Array<string>
   canDrag(item: Array<ItemInstance<EntryTreeItem>>): boolean
   onDrop(
     items: Array<ItemInstance<EntryTreeItem>>,
     target: DragTarget<EntryTreeItem>
   ): void
-} {
+}
+
+export function useEntryTreeProvider(
+  expanded: ReadonlyArray<string>
+): EntryTreeProvider {
   const entries = useTreeEntries()
   const db = useAtomValue(dbAtom)
   return useMemo(() => {
@@ -221,3 +399,4 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
     }
   }, [db, entries])
 }
+*/
