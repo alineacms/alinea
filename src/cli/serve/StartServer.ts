@@ -1,7 +1,8 @@
+import http, {type IncomingMessage, type ServerResponse} from 'node:http'
 import type {Request, Response} from '@alinea/iso'
 import {fromNodeRequest, respondTo} from 'alinea/backend/router/NodeHandler'
-import http, {type IncomingMessage, type ServerResponse} from 'node:http'
 import {createEmitter} from '../util/Emitter.js'
+import {reportWarning} from '../util/Report.js'
 
 interface RequestEvent {
   request: Request
@@ -54,8 +55,8 @@ async function startBunServer(
     const incrementedPort = port + 1
     if (err.code === 'EADDRINUSE' && incrementedPort < 65535) {
       if (!silent)
-        console.log(
-          `> Port ${port} is in use, attempting ${incrementedPort} instead`
+        reportWarning(
+          `Port ${port} is in use, attempting ${incrementedPort} instead`
         )
       return startBunServer(incrementedPort, attempt++, silent)
     }
@@ -106,8 +107,8 @@ async function startNodeServer(
       const incrementedPort = port + 1
       if (err.code === 'EADDRINUSE' && incrementedPort < 65535) {
         if (!silent)
-          console.info(
-            `> Port ${port} is in use, attempting ${incrementedPort} instead`
+          reportWarning(
+            `Port ${port} is in use, attempting ${incrementedPort} instead`
           )
         return startNodeServer(incrementedPort, attempt++, silent)
       }
