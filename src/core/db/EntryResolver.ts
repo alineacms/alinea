@@ -273,7 +273,7 @@ export class EntryResolver implements Resolver {
     const condition = preFilter
       ? (entry: Entry) => preFilter(entry) && postFilter(entry)
       : postFilter
-    if (search) {
+    if (search && search.length > 0) {
       results = this.index.search(
         Array.isArray(search) ? search.join(' ') : search,
         condition
@@ -282,7 +282,6 @@ export class EntryResolver implements Resolver {
       results = results.filter(condition)
     }
     const isSingle = this.isSingleResult(query as EdgeQuery)
-    if (count) return results.length
     if (orderBy) {
       const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
       results.sort((a, b) => {
@@ -318,6 +317,7 @@ export class EntryResolver implements Resolver {
       }
       results = Array.from(groups.values())
     }
+    if (count) return results.length
     if (isSingle) return this.select(ctx, results[0], query)
     return results.map(entry => this.select(ctx, entry, query))
   }
