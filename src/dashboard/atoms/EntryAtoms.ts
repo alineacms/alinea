@@ -9,9 +9,10 @@ import type {Graph} from 'alinea/core/Graph'
 import {getRoot, getType} from 'alinea/core/Internal'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
-import {parents} from 'alinea/query'
+import {parents, translations} from 'alinea/query'
 import DataLoader from 'dataloader'
 import {atom, useAtomValue} from 'jotai'
+import PLazy from 'p-lazy'
 import {useMemo} from 'react'
 import {configAtom} from './DashboardAtoms.js'
 import {dbAtom} from './DbAtoms.js'
@@ -35,7 +36,7 @@ async function entryTreeRoot(
 ): Promise<EntryTreeItem> {
   const root = graph.config.workspaces[workspace][rootName]
   const orderBy = getRoot(root).orderChildrenBy
-  const children = await graph.find({
+  const children = graph.find({
     select: Entry.id,
     groupBy: Entry.id,
     orderBy,
@@ -92,10 +93,9 @@ const loaderAtom = atom(async get => {
         index: Entry.index,
         type: Entry.type,
         data,
-        translations: {
-          edge: 'translations',
+        translations: translations({
           select: data
-        }
+        })
       },
       id: {in: search},
       status: 'preferDraft'
@@ -107,37 +107,42 @@ const loaderAtom = atom(async get => {
           : true
       const type = schema[row.type]
       const orderBy = getType(type).orderChildrenBy
-      const children = await graph.find({
-        select: {
-          id: Entry.id,
-          locale: Entry.locale
-        },
-        groupBy: Entry.id,
-        orderBy,
-        filter: {
-          _parentId: row.id,
-          _type: {in: visibleTypes}
-        },
-        status: 'preferDraft'
+      const getChildren = PLazy.from(async () => {
+        const children = await graph.find({
+          select: {
+            id: Entry.id,
+            locale: Entry.locale
+          },
+          groupBy: Entry.id,
+          orderBy,
+          filter: {
+            _parentId: row.id,
+            _type: {in: visibleTypes}
+          },
+          status: 'preferDraft'
+        })
+        const translatedChildren = new Set(
+          children
+            .filter(child => child.locale === locale)
+            .map(child => child.id)
+        )
+        const orderedChildren = children.filter(child => {
+          if (translatedChildren.has(child.id)) return child.locale === locale
+          if (untranslated.has(child.id)) return false
+          untranslated.add(child.id)
+          return true
+        })
+        return [...new Set(orderedChildren.map(child => child.id))]
       })
       const entries = [row.data].concat(row.translations)
-      const translatedChildren = new Set(
-        children.filter(child => child.locale === locale).map(child => child.id)
-      )
       const untranslated = new Set()
-      const orderedChildren = children.filter(child => {
-        if (translatedChildren.has(child.id)) return child.locale === locale
-        if (untranslated.has(child.id)) return false
-        untranslated.add(child.id)
-        return true
-      })
       indexed.set(row.id, {
         id: row.id,
         type: row.type,
         index: row.index,
         entries,
         canDrag,
-        children: [...new Set(orderedChildren.map(child => child.id))]
+        children: getChildren
       })
     }
     const res: Array<EntryTreeItem | undefined> = []
@@ -161,7 +166,7 @@ const loaderAtom = atom(async get => {
       }
       const typeName = entry.entries[0].type
       const type = schema[typeName]
-      const isFolder = Type.isContainer(type) && entry.children.length > 0
+      const isFolder = Type.isContainer(type)
       res.push({...entry, isFolder})
     }
     return res
@@ -186,7 +191,7 @@ export interface EntryTreeItem {
   isFolder?: boolean
   isRoot?: boolean
   canDrag?: boolean
-  children: Array<string>
+  children: Promise<Array<string>>
 }
 
 export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
