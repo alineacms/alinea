@@ -105,9 +105,10 @@ const loaderAtom = atom(async get => {
         row.data.parents.length > 0
           ? !getType(schema[row.data.parents.at(-1)!.type]).orderChildrenBy
           : true
-      const type = schema[row.type]
-      const orderBy = getType(type).orderChildrenBy
-      const getChildren = PLazy.from(async () => {
+      const children = PLazy.from(async () => {
+        const type = schema[row.type]
+        const orderBy = getType(type).orderChildrenBy
+        const untranslated = new Set()
         const children = await graph.find({
           select: {
             id: Entry.id,
@@ -135,14 +136,13 @@ const loaderAtom = atom(async get => {
         return [...new Set(orderedChildren.map(child => child.id))]
       })
       const entries = [row.data].concat(row.translations)
-      const untranslated = new Set()
       indexed.set(row.id, {
         id: row.id,
         type: row.type,
         index: row.index,
         entries,
         canDrag,
-        children: getChildren
+        children
       })
     }
     const res: Array<EntryTreeItem | undefined> = []
