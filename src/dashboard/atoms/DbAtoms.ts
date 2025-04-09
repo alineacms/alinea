@@ -33,14 +33,30 @@ export const dbMetaAtom = atom(
 )
 dbMetaAtom.onMount = init => init()
 
-const changedAtom = atom<Array<string>>([])
-export const changedEntriesAtom = atom(
-  get => get(changedAtom),
-  (get, set, ids: Array<string>) => {
-    set(changedAtom, ids)
-    //for (const id of ids) set(entryRevisionAtoms(id))
+const pendingMutations = atom(0)
+export const pendingAtom = atom(
+  get => get(pendingMutations),
+  (get, set) => {
+    const local = get(dbAtom)
+    const listen = (event: Event) => {
+      if (event instanceof IndexEvent && event.data.op === 'mutate') {
+        const {data} = event
+        set(pendingMutations, current => {
+          let newPending = current
+          if (data.status === 'pending') newPending++
+          else newPending--
+          return newPending > 0 ? newPending : 0
+        })
+      }
+    }
+    local.events.addEventListener(IndexEvent.type, listen)
+    return () => {
+      local.events.removeEventListener(IndexEvent.type, listen)
+    }
   }
 )
+pendingAtom.onMount = init => init()
+
 export const entryRevisionAtoms = atomFamily((id: string) => {
   const index = atom(0)
   const revision = atom(

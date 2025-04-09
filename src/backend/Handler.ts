@@ -171,8 +171,8 @@ export function createHandler({
         const request = await local.request(mutations)
         let sha: string
         try {
-          await remote.commit(request, ctx)
-          await local.commit(request)
+          await remote.write(request, ctx)
+          await local.write(request)
         } finally {
           sha = await local.syncWith(remote)
         }

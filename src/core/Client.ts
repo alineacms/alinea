@@ -119,9 +119,10 @@ export class Client implements LocalConnection {
       .then(tree => (tree ? new ReadonlyTree(tree) : undefined))
   }
 
-  getBlobs(
+  async getBlobs(
     shas: Array<string>
   ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+    if (shas.length === 0) return []
     return this.#request(
       {action: HandleAction.Blob},
       {
@@ -150,7 +151,7 @@ export class Client implements LocalConnection {
 
   // Commit
 
-  commit(request: CommitRequest): Promise<{sha: string}> {
+  write(request: CommitRequest): Promise<{sha: string}> {
     return this.#requestJson(
       {action: HandleAction.Commit},
       {method: 'POST', body: JSON.stringify(request)}

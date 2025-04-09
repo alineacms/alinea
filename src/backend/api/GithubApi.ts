@@ -29,7 +29,7 @@ export class GithubApi
     this.#options = options
   }
 
-  async commit(
+  async write(
     request: CommitRequest,
     ctx: AuthedContext
   ): Promise<{sha: string}> {

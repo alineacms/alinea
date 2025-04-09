@@ -12,7 +12,7 @@ import {
   type Projection,
   type QuerySettings,
   type Status,
-  querySource
+  querySource as queryEdge
 } from 'alinea/core/Graph'
 import {type HasExpr, getExpr, hasExpr, hasField} from 'alinea/core/Internal'
 import type {Resolver} from 'alinea/core/Resolver'
@@ -65,8 +65,12 @@ export class EntryResolver implements Resolver {
   expr(entry: Entry, expr: Expr): unknown {
     const internal = getExpr(expr)
     switch (internal.type) {
-      case 'field':
-        return this.field(entry, expr)
+      case 'field': {
+        const result = this.field(entry, expr)
+        if (result && typeof result === 'object' && !Array.isArray(result))
+          return {...result}
+        return result
+      }
       case 'entryField':
         return entry[internal.name as keyof Entry]
       case 'call':
@@ -188,7 +192,7 @@ export class EntryResolver implements Resolver {
     value: Projection
   ): unknown {
     if (value && hasExpr(value)) return this.expr(entry, value as Expr)
-    const source = querySource(value)
+    const source = queryEdge(value)
     if (!source)
       return fromEntries(
         entries(value).map(([key, value]) => {
@@ -212,7 +216,7 @@ export class EntryResolver implements Resolver {
     if (query.select && hasExpr(query.select))
       return this.expr(entry, query.select as Expr)
     const fields = this.projection(query)
-    return this.selectProjection(ctx, entry, fromEntries(entries(fields)))
+    return this.selectProjection(ctx, entry, fields)
   }
 
   condition(ctx: ResolveContext, query: GraphQuery) {
@@ -230,7 +234,7 @@ export class EntryResolver implements Resolver {
           ? query.type.map(type => this.#scope.nameOf(type)!)
           : this.#scope.nameOf(query.type as any)!
       )
-    const source = querySource(query)
+    const source = queryEdge(query)
     const checkEntry = entryChecker(query)
     const checkFilter =
       query.filter &&
@@ -347,11 +351,11 @@ export class EntryResolver implements Resolver {
     if (!interim) return
     const selected = this.projection(query)
     if (hasExpr(selected)) return this.postExpr(ctx, interim, selected)
-    if (querySource(selected))
+    if (queryEdge(selected))
       return this.post(ctx, interim, selected as EdgeQuery<Projection>)
     await Promise.all(
       entries(selected).map(([key, value]) => {
-        const source = querySource(value)
+        const source = queryEdge(value)
         if (source)
           return this.post(ctx, interim[key], value as EdgeQuery<Projection>)
         return this.postExpr(ctx, interim[key], value as Expr)

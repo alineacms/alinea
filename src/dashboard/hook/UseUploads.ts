@@ -1,7 +1,8 @@
 import type {UploadResponse} from 'alinea/core/Connection'
 import type {EntryRow} from 'alinea/core/EntryRow'
+import {UploadOperation} from 'alinea/core/db/Operation'
 import {createPreview} from 'alinea/core/media/CreatePreview'
-import type {MediaFile} from 'alinea/core/media/MediaTypes'
+import {MediaFile} from 'alinea/core/media/MediaTypes'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
 import {useEffect} from 'react'
@@ -273,21 +274,60 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     to: UploadDestination,
     replaceId?: string
   ) {
-    for (const file of files) {
-      await db.upload({
-        file,
-        createPreview,
-        parentId: to.parentId,
-        workspace: to.workspace,
-        root: to.root,
-        replaceId: replaceId
-      })
-    }
-    /*const uploads: Array<Upload> = Array.from(files).map(file => {
-      return {id: createId(), file, to, replace, status: UploadStatus.Queued}
+    const ops = Array.from(
+      files,
+      file =>
+        new UploadOperation({
+          file,
+          createPreview,
+          parentId: to.parentId,
+          workspace: to.workspace,
+          root: to.root,
+          replaceId: replaceId
+        })
+    )
+    const ids = ops.map(_ => _.id)
+    const uploads: Array<Upload> = ops.map((op, index) => {
+      return {
+        id: op.id,
+        file: files[index],
+        to,
+        replaceId,
+        status: UploadStatus.Queued
+      }
     })
     setUploads(current => [...uploads, ...current])
-    return Promise.all(uploads.map(uploadFile))*/
+    try {
+      await db.commit(...ops)
+      const files = await db.find({
+        type: MediaFile,
+        id: {in: ids}
+      })
+      setUploads(current =>
+        current.map((upload): Upload => {
+          const entry = files.find(file => file._id === upload.id)
+          if (!entry) return upload
+          return {
+            ...upload,
+            status: UploadStatus.Done,
+            preview: entry.preview,
+            averageColor: entry.averageColor,
+            focus: entry.focus,
+            thumbHash: entry.thumbHash,
+            width: entry.width,
+            height: entry.height
+          }
+        })
+      )
+    } catch (error) {
+      setUploads(current =>
+        current.map((upload): Upload => {
+          if (ids.includes(upload.id))
+            return {...upload, status: UploadStatus.Done, error: error as Error}
+          return upload
+        })
+      )
+    }
   }
 
   return {upload, uploads}

@@ -50,6 +50,7 @@ export function ContentView({editor}: ContentViewProps) {
         />
         <div className={styles.root.create()}>
           <button
+            type="button"
             className={styles.root.create.button()}
             onClick={() =>
               navigate(

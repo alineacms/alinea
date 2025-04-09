@@ -84,7 +84,7 @@ export class FSSource implements Source {
       changes.map(async change => {
         switch (change.op) {
           case 'delete': {
-            return fs.unlink(`${this.#cwd}/${change.path}`)
+            return fs.unlink(`${this.#cwd}/${change.path}`).catch(() => {})
           }
           case 'add': {
             const {contents} = change
@@ -100,7 +100,7 @@ export class FSSource implements Source {
     )
   }
 
-  async commit(request: CommitRequest) {
+  async write(request: CommitRequest) {
     const local = await this.getTree()
     checkCommit(local, request)
     const contentChanges = sourceChanges(request.changes)

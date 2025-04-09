@@ -47,13 +47,13 @@ export class DevDB extends LocalDB {
   }
 
   async watchFiles() {
-    const {config} = this.#options
+    const {rootDir, config} = this.#options
     const tree = await this.source.getTree()
     const res: WatchFiles = {files: [], dirs: []}
     for (const [path, node] of tree) {
       const [workspace, ...rest] = path.split('/')
       const contentDir = getWorkspace(config.workspaces[workspace]).source
-      const fullPath = join(contentDir, rest.join('/'))
+      const fullPath = join(rootDir, contentDir, rest.join('/'))
       if (node.type === 'tree') res.dirs.push(fullPath)
       else res.files.push(fullPath)
     }
@@ -68,7 +68,7 @@ export class DevDB extends LocalDB {
     return mediaDirs.some(dir => contains(join(rootDir, dir), file))
   }
 
-  async commit(request: CommitRequest): Promise<{sha: string}> {
+  async write(request: CommitRequest): Promise<{sha: string}> {
     if (this.sha === request.intoSha) return {sha: this.sha}
     if (this.sha !== request.fromSha) {
       const tree = await this.source.getTree()
@@ -93,7 +93,7 @@ export class DevDB extends LocalDB {
         }
       }
     }
-    return super.commit(request)
+    return super.write(request)
   }
 
   async prepareUpload(file: string): Promise<UploadResponse> {

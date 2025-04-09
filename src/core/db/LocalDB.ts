@@ -93,10 +93,10 @@ export class LocalDB extends WriteableGraph {
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     const request = await this.request(mutations)
-    return this.commit(request)
+    return this.write(request)
   }
 
-  async commit(request: CommitRequest): Promise<{sha: string}> {
+  async write(request: CommitRequest): Promise<{sha: string}> {
     const contentChanges = sourceChanges(request.changes)
     await this.applyChanges(contentChanges)
     return {sha: await this.sync()}

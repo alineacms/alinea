@@ -1,6 +1,6 @@
 import {cms} from '@/cms'
-import styler, {Styler} from '@alinea/styler'
-import {Link as AnyLink} from 'alinea'
+import styler, {type Styler} from '@alinea/styler'
+import type {Link as AnyLink} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
 import {HStack, Stack} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -91,7 +91,7 @@ function Menu({links}: MenuProps) {
       <Stack.Right>
         <HStack gap={12} center>
           <SearchButton>
-            <button className={styles.root.social('search')}>
+            <button type="button" className={styles.root.social('search')}>
               <IcRoundSearch className={styles.root.social.icon()} />
             </button>
           </SearchButton>
@@ -99,6 +99,7 @@ function Menu({links}: MenuProps) {
             href="https://github.com/alineacms/alinea"
             target="_blank"
             className={styles.root.social()}
+            rel="noreferrer"
           >
             <MdiGithub className={styles.root.social.icon()} />
           </a>
@@ -106,6 +107,7 @@ function Menu({links}: MenuProps) {
             href="https://twitter.com/alineacms"
             target="_blank"
             className={styles.root.social()}
+            rel="noreferrer"
           >
             <MdiTwitterCircle className={styles.root.social.icon()} />
           </a>
@@ -151,7 +153,7 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
         Changelog
       </Link>
       <SearchButton>
-        <button className={styles.root.nav.link({search: true})}>
+        <button type="button" className={styles.root.nav.link({search: true})}>
           <IcRoundSearch />
         </button>
       </SearchButton>

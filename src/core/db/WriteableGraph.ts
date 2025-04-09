@@ -1,6 +1,7 @@
 import type {UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import {Graph} from '../Graph.js'
+import {MediaFile} from '../media/MediaTypes.js'
 import type {Mutation} from './Mutation.js'
 import {
   ArchiveOperation,
@@ -28,7 +29,7 @@ export abstract class WriteableGraph extends Graph {
 
   async create<Definition>(create: CreateQuery<Definition>) {
     const op = new CreateOperation(create)
-    await this.#commitOps(op)
+    await this.commit(op)
     return this.get({
       id: op.id,
       type: create.type,
@@ -44,7 +45,7 @@ export abstract class WriteableGraph extends Graph {
 
   async update<Definition>(query: UpdateQuery<Definition>) {
     const op = new UpdateOperation<Definition>(query)
-    await this.#commitOps(op)
+    await this.commit(op)
     return this.get({
       type: query.type,
       id: query.id,
@@ -54,20 +55,20 @@ export abstract class WriteableGraph extends Graph {
   }
 
   async remove(...entryIds: Array<string>): Promise<void> {
-    await this.#commitOps(new DeleteOp(entryIds))
+    await this.commit(new DeleteOp(entryIds))
   }
 
   async publish(query: PublishQuery): Promise<void> {
-    await this.#commitOps(new PublishOperation(query))
+    await this.commit(new PublishOperation(query))
   }
 
   async archive(query: ArchiveQuery): Promise<void> {
-    await this.#commitOps(new ArchiveOperation(query))
+    await this.commit(new ArchiveOperation(query))
   }
 
   async move(query: MoveQuery) {
     const op = new MoveOperation(query)
-    await this.#commitOps(op)
+    await this.commit(op)
     return this.get({
       id: query.id,
       select: {index: Entry.index}
@@ -76,18 +77,19 @@ export abstract class WriteableGraph extends Graph {
 
   async discard(query: DiscardQuery) {
     const op = new DiscardOp(query)
-    await this.#commitOps(op)
+    await this.commit(op)
   }
 
   async upload(query: UploadQuery) {
     const op = new UploadOperation(query)
-    await this.#commitOps(op)
+    await this.commit(op)
     return this.get({
+      type: MediaFile,
       id: op.id
     })
   }
 
-  async #commitOps(...operations: Array<Operation>) {
+  async commit(...operations: Array<Operation>) {
     const mutations = await Promise.all(operations.map(op => op.task(this)))
     await this.mutate(mutations.flat())
   }

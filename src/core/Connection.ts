@@ -38,7 +38,7 @@ export interface SyncApi {
 }
 
 export interface CommitApi {
-  commit(request: CommitRequest, ctx?: RequestContext): Promise<{sha: string}>
+  write(request: CommitRequest, ctx?: RequestContext): Promise<{sha: string}>
 }
 
 export interface HistoryApi {

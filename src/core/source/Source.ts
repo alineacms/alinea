@@ -47,7 +47,7 @@ export async function syncWith(
   remote: RemoteSource
 ): Promise<Array<Change>> {
   const changes = await diff(source, remote)
-  await source.applyChanges(changes)
+  if (changes.length > 0) await source.applyChanges(changes)
   return changes
 }
 

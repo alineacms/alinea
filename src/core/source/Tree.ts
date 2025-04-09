@@ -165,6 +165,10 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
     }
   }
 
+  get isEmpty() {
+    return this.sha === EMPTY_TREE_SHA
+  }
+
   get entries(): Array<Entry> {
     return [...this.nodes.entries()].map(([name, entry]) => ({
       name,

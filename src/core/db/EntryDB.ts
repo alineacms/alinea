@@ -42,7 +42,7 @@ export class EntryDB extends LocalDB {
     }
   }
 
-  async commit(request: CommitRequest): Promise<{sha: string}> {
+  async write(request: CommitRequest): Promise<{sha: string}> {
     throw new Error('This must be implemented on the server')
   }
 

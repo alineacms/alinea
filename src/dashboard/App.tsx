@@ -4,9 +4,10 @@ import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
+import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
+import {IcRoundSync} from 'alinea/ui/icons/IcRoundSync'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
-import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {type ComponentType, useEffect} from 'react'
 import type {QueryClient} from 'react-query'
@@ -14,9 +15,9 @@ import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
 import {router} from './Routes.js'
 import {sessionAtom} from './atoms/DashboardAtoms.js'
-import {dbMetaAtom, useDbUpdater} from './atoms/DbAtoms.js'
+import {dbMetaAtom, pendingAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
-import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
+import {locationAtom, matchAtoms} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import type {WorkerDB} from './boot/WorkerDB.js'
@@ -34,29 +35,6 @@ import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
 import {SidebarSettings} from './view/sidebar/SidebarSettings.js'
-
-function DraftsButton() {
-  const location = useLocation()
-  const nav = useNav()
-  const {name: workspace} = useWorkspace()
-  const {name: root} = useRoot()
-  const entryLocation = useEntryLocation()
-  const link =
-    entryLocation && entryLocation.root === root
-      ? nav.draft(entryLocation)
-      : nav.draft({workspace})
-  const draftsTotal = 0
-  return (
-    <Sidebar.Nav.Item
-      selected={location.pathname.startsWith(nav.draft({workspace}))}
-      href={link}
-      aria-label="Drafts"
-      badge={draftsTotal}
-    >
-      <Icon icon={MdiSourceBranch} />
-    </Sidebar.Nav.Item>
-  )
-}
 
 const isEntryAtom = atom(get => {
   const location = get(locationAtom)
@@ -76,6 +54,7 @@ function AppAuthenticated() {
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
   const sha = useAtomValue(dbMetaAtom)
+  const pending = useAtomValue(pendingAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -134,6 +113,12 @@ function AppAuthenticated() {
               </ErrorBoundary>
             </div>
             <Statusbar.Root>
+              <Statusbar.Status
+                icon={pending === 0 ? IcRoundCheck : IcRoundSync}
+              >
+                {pending === 0 ? 'Synced' : 'Saving…'}
+              </Statusbar.Status>
+
               {sha ? (
                 <Statusbar.Status icon={MaterialSymbolsDatabase}>
                   {sha.slice(0, 7)}

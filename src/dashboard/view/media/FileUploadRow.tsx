@@ -14,7 +14,11 @@ export function FileUploadRow(upload: Upload) {
     <HStack center full gap={10} className={styles.root()}>
       <div className={styles.root.preview()}>
         {upload.preview ? (
-          <img src={upload.preview} className={styles.root.preview.image()} />
+          <img
+            alt="Uploaded file"
+            src={upload.preview}
+            className={styles.root.preview.image()}
+          />
         ) : (
           <div className={styles.root.preview.icon()}>
             <IcRoundInsertDriveFile />

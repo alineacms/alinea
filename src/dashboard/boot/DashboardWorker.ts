@@ -48,8 +48,9 @@ export class DashboardWorker extends EventTarget {
     const db = await this.#db
     const client = await this.#client
     if (remote.pendingCount > 0) return db.sha
-    console.log('sync')
-    return remote(() => db.syncWith(client))
+    const sync = remote(() => db.syncWith(client))
+    if (db.index.tree.isEmpty) await sync
+    return db.sha
   }
 
   async #apply(mutations: Array<Mutation>) {
@@ -60,6 +61,7 @@ export class DashboardWorker extends EventTarget {
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
     const sha = await this.#apply(mutations)
+    this.dispatchEvent(new IndexEvent({op: 'mutate', id, status: 'pending'}))
     remote(async () => {
       const client = await this.#client
       return client
