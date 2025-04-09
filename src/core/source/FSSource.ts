@@ -90,7 +90,9 @@ export class FSSource implements Source {
             const {contents} = change
             assert(contents, 'Missing contents')
             const dir = path.dirname(change.path)
-            await fs.mkdir(`${this.#cwd}/${dir}`, {recursive: true})
+            await fs
+              .mkdir(`${this.#cwd}/${dir}`, {recursive: true})
+              .catch(() => {})
             return fs.writeFile(`${this.#cwd}/${change.path}`, contents)
           }
         }

@@ -62,9 +62,8 @@
     "useIgnoreFile": true
   },
   "files": {
-    "include": [
-      "src",
-      "test"
+    "ignore": [
+      "node_modules"
     ]
   }
 }
