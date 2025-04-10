@@ -115,3 +115,12 @@ test('diff pre-existing tree', async () => {
   empty.applyChanges(changes)
   test.is(await empty.getSha(), tree.sha)
 })
+
+test('ignore empty dirs', async () => {
+  const empty = ReadonlyTree.EMPTY
+  const withEmpty = new WriteableTree()
+  withEmpty.add('dir1', empty)
+  withEmpty.add('dir2', empty)
+  const finished = await withEmpty.compile()
+  test.is(finished.sha, empty.sha)
+})

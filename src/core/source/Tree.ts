@@ -344,7 +344,9 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     for (const [name, node] of this.nodes.entries()) {
       if (node instanceof TreeBase) {
         const entry = await node.#getTree()
-        entries.push({name, ...node, ...entry})
+        // We probably should not allow an empty tree to be added in the
+        // first place
+        if (entry.entries.length > 0) entries.push({name, ...node, ...entry})
       } else {
         entries.push({name, ...node})
       }
