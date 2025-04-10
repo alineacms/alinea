@@ -109,7 +109,16 @@ export class CloudRemote implements RemoteConnection {
 
   async write(request: CommitRequest): Promise<{sha: string}> {
     const ctx = this.#context
-    throw new Error('Method not implemented.')
+    return parseOutcome<{sha: string}>(
+      fetch(
+        cloudConfig.write,
+        json({
+          method: 'POST',
+          headers: bearer(ctx),
+          body: JSON.stringify({request})
+        })
+      )
+    )
   }
 
   async authenticate(request: Request) {

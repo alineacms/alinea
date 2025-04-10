@@ -1,10 +1,9 @@
-import {
-  type CommitApi,
-  type HistoryApi,
-  type RequestContext,
-  type Revision,
-  type SyncApi,
-  authenticated
+import type {
+  CommitApi,
+  HistoryApi,
+  RequestContext,
+  Revision,
+  SyncApi
 } from 'alinea/core/Connection'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
@@ -18,26 +17,26 @@ import {join} from 'alinea/core/util/Paths'
 
 export interface GithubOptions extends GithubSourceOptions {
   rootDir: string
+  author?: {name: string; email: string}
 }
 
 export class GithubApi
   extends GithubSource
   implements HistoryApi, CommitApi, SyncApi
 {
-  #context: RequestContext
   #options: GithubOptions
 
-  constructor(context: RequestContext, options: GithubOptions) {
+  constructor(options: GithubOptions, context?: RequestContext) {
     super(options)
-    this.#context = context
     this.#options = options
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
-    const ctx = authenticated(this.#context)
+    const {author} = this.#options
     let commitMessage = request.description
-    if (ctx.user.email && ctx.user.name)
-      commitMessage += `\nCo-authored-by: ${ctx.user.name} <${ctx.user.email}>`
+    if (author) {
+      commitMessage += `\nCo-authored-by: ${author.name} <${author.email}>`
+    }
     await applyChangesToRepo(this.#options, request.changes, commitMessage)
     return this.getTree().then(tree => ({sha: tree.sha}))
   }

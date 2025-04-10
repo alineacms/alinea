@@ -2,7 +2,6 @@ import type {PreviewInfo} from 'alinea/backend/Previews'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
-import {HttpError} from './HttpError.js'
 import type {User} from './User.js'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
@@ -63,16 +62,13 @@ export interface RequestContext {
   isDev: boolean
   handlerUrl: URL
   apiKey: string
+  user?: User
+  token?: string
 }
 
 export interface AuthedContext extends RequestContext {
   user: User
   token: string
-}
-
-export function authenticated(context: RequestContext): AuthedContext {
-  if ('token' in context && 'user' in context) return context as AuthedContext
-  throw new HttpError(401)
 }
 
 export interface Revision {

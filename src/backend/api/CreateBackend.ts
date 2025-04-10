@@ -43,7 +43,15 @@ export function createBackend(
 ): (context: RequestContext) => RemoteConnection {
   const db = driver[options.database.driver](options.database.client)
   return context => {
-    const ghApi = new GithubApi(context, options.github)
+    const {user} = context
+    const author =
+      user?.name && user.email
+        ? {name: user.name, email: user.email}
+        : undefined
+    const ghApi = new GithubApi({
+      author,
+      ...options.github
+    })
     const dbApi = new DatabaseApi(context, {db})
     const auth = new BasicAuth(context, options.auth)
     return createRemote(ghApi, dbApi, auth)
