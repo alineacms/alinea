@@ -85,7 +85,7 @@ export function createLocalServer(
     return handleApi(request, {
       isDev: true,
       handlerUrl: new URL(request.url.split('?')[0]),
-      apiKey: 'dev'
+      apiKey: process.env.ALINEA_API_KEY ?? 'dev'
     })
   }
   if (cmd === 'build') return {close() {}, handle: devHandler}
@@ -223,8 +223,8 @@ export function createLocalServer(
           <link rel="icon" href="data:," />
           <link href="/config.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
-          <meta name="redirect_url" value="${handlerUrl}?auth=login" />
+          <meta name="handshake_url" value="${handlerUrl}/api?auth=handshake" />
+          <meta name="redirect_url" value="${handlerUrl}/api?auth=login" />
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,

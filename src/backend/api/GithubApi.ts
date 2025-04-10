@@ -1,9 +1,10 @@
-import type {
-  AuthedContext,
-  CommitApi,
-  HistoryApi,
-  Revision,
-  SyncApi
+import {
+  type CommitApi,
+  type HistoryApi,
+  type RequestContext,
+  type Revision,
+  type SyncApi,
+  authenticated
 } from 'alinea/core/Connection'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
@@ -23,16 +24,17 @@ export class GithubApi
   extends GithubSource
   implements HistoryApi, CommitApi, SyncApi
 {
+  #context: RequestContext
   #options: GithubOptions
-  constructor(options: GithubOptions) {
+
+  constructor(context: RequestContext, options: GithubOptions) {
     super(options)
+    this.#context = context
     this.#options = options
   }
 
-  async write(
-    request: CommitRequest,
-    ctx: AuthedContext
-  ): Promise<{sha: string}> {
+  async write(request: CommitRequest): Promise<{sha: string}> {
+    const ctx = authenticated(this.#context)
     let commitMessage = request.description
     if (ctx.user.email && ctx.user.name)
       commitMessage += `\nCo-authored-by: ${ctx.user.name} <${ctx.user.email}>`

@@ -78,11 +78,10 @@ export class EntryIndex extends EventTarget {
 
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
+    console.log(tree.flat())
     const changes = await bundleContents(source, this.tree.diff(tree))
-    if (changes.length === 0) {
-      this.tree = tree
-      return tree.sha
-    }
+    console.log(changes)
+    if (changes.length === 0) return tree.sha
     // for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
     return this.indexChanges(changes)
   }
@@ -108,14 +107,18 @@ export class EntryIndex extends EventTarget {
           })
           .toRequest()
         const contentChanges = sourceChanges(request.changes)
-        await source.applyChanges(contentChanges)
-        await this.indexChanges(contentChanges)
+        if (contentChanges.length) {
+          console.log(contentChanges)
+          await source.applyChanges(contentChanges)
+          await this.indexChanges(contentChanges)
+        }
       }
     }
   }
 
   async transaction(source: Source) {
     const from = await source.getTree()
+    console.log({i: this.sha, f: from.sha})
     return new EntryTransaction(this.#config, this, source, from)
   }
 

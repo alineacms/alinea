@@ -1,5 +1,5 @@
 import * as fsp from 'node:fs/promises'
-import type {Config} from 'alinea/core/Config'
+import {Config} from 'alinea/core/Config'
 import type {UploadResponse} from 'alinea/core/Connection'
 import {createId} from 'alinea/core/Id'
 import {getWorkspace} from 'alinea/core/Internal'
@@ -8,7 +8,7 @@ import {LocalDB} from 'alinea/core/db/LocalDB'
 import {CombinedSource} from 'alinea/core/source/CombinedSource'
 import {FSSource} from 'alinea/core/source/FSSource'
 import {assert} from 'alinea/core/source/Utils'
-import {entries, fromEntries, values} from 'alinea/core/util/Objects'
+import {fromEntries, values} from 'alinea/core/util/Objects'
 import {
   basename,
   contains,
@@ -35,12 +35,12 @@ export class DevDB extends LocalDB {
 
   constructor(options: DevDBOptions) {
     const sources = fromEntries(
-      entries(options.config.workspaces).map(([name, workspace]) => {
-        const dir = getWorkspace(workspace).source
-        return [name, new FSSource(join(options.rootDir, dir))]
+      Config.contentDirectories(options.config).map(([workspace, dir]) => {
+        return [workspace, new FSSource(join(options.rootDir, dir))]
       })
     )
     const source = new CombinedSource(sources)
+    source.getTree().then(tree => console.log(tree))
     super(options.config, source)
     this.#options = options
     this.source = source

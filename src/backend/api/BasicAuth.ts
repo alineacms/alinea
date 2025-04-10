@@ -9,15 +9,17 @@ export interface Verifier {
 }
 
 export class BasicAuth implements AuthApi {
+  #context: RequestContext
   #verify: Verifier
 
-  constructor(verify: Verifier) {
+  constructor(context: RequestContext, verify: Verifier) {
     this.#verify = verify
+    this.#context = context
   }
 
-  async authenticate(request: Request, ctx: RequestContext): Promise<Response> {
+  async authenticate(request: Request): Promise<Response> {
     try {
-      const verified = await this.verify(request, ctx)
+      const verified = await this.verify(request)
       const url = new URL(request.url)
       const action = url.searchParams.get('auth')
       switch (action) {
@@ -35,7 +37,8 @@ export class BasicAuth implements AuthApi {
     }
   }
 
-  async verify(request: Request, ctx: RequestContext): Promise<AuthedContext> {
+  async verify(request: Request): Promise<AuthedContext> {
+    const ctx = this.#context
     const auth = request.headers.get('Authorization')
     if (!auth) throw unauthorized()
     const [scheme, token] = auth.split(' ', 2)

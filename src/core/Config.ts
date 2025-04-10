@@ -77,6 +77,15 @@ export namespace Config {
       values(config.workspaces).flatMap(Workspace.referencedViews)
     )
   }
+
+  export function contentDirectories(
+    config: Config
+  ): Array<[workspace: string, dir: string]> {
+    return entries(config.workspaces).map(([name, workspace]) => {
+      const dir = getWorkspace(workspace).source
+      return [name, dir]
+    })
+  }
 }
 
 const normalized = new WeakSet()

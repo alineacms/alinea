@@ -1,7 +1,7 @@
 import {Response} from '@alinea/iso'
 import {AuthAction} from 'alinea/backend/Auth'
 import {router} from 'alinea/backend/router/Router'
-import type {Config} from 'alinea/core/Config'
+import {Config} from 'alinea/core/Config'
 import type {
   AuthedContext,
   RemoteConnection,
@@ -20,7 +20,7 @@ import {Outcome, type OutcomeJSON, outcome} from 'alinea/core/Outcome'
 import type {User} from 'alinea/core/User'
 import {Workspace} from 'alinea/core/Workspace'
 import type {CommitRequest} from 'alinea/core/db/CommitRequest'
-import type {ReadonlyTree} from 'alinea/core/source/Tree'
+import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
 import {base64} from 'alinea/core/util/Encoding'
 import {verify} from 'alinea/core/util/JWT'
 import PLazy from 'p-lazy'
@@ -53,33 +53,67 @@ let publicKey = PLazy.from(async function loadPublicKey(
 export const COOKIE_NAME = 'alinea.auth'
 
 export class CloudRemote implements RemoteConnection {
+  #context: RequestContext
   #config: Config
-  constructor(config: Config) {
+
+  constructor(context: RequestContext, config: Config) {
+    this.#context = context
     this.#config = config
   }
 
-  async getTreeIfDifferent(
-    sha: string,
-    ctx: RequestContext
-  ): Promise<ReadonlyTree | undefined> {
-    throw new Error('Method not implemented.')
+  async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
+    const ctx = this.#context
+    return parseOutcome<Tree | null>(
+      fetch(
+        cloudConfig.tree,
+        json({
+          method: 'POST',
+          headers: bearer(ctx),
+          body: JSON.stringify({
+            sha,
+            dirs: Config.contentDirectories(this.#config)
+          })
+        })
+      )
+    ).then(tree => {
+      return tree ? new ReadonlyTree(tree) : undefined
+    })
   }
 
   async getBlobs(
-    shas: Array<string>,
-    ctx: RequestContext
+    shas: Array<string>
   ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+    const ctx = this.#context
+    return fetch(cloudConfig.blobs, {
+      method: 'POST',
+      body: JSON.stringify({shas}),
+      headers: {
+        ...bearer(ctx),
+        'content-type': 'application/json',
+        accept: 'multipart/form-data'
+      }
+    })
+      .then(response => response.formData())
+      .then(async form => {
+        const blobs: Array<[sha: string, blob: Uint8Array]> = []
+        for (const [key, value] of form.entries()) {
+          if (value instanceof Blob) {
+            const sha = key.slice(0, 40)
+            const blob = new Uint8Array(await value.arrayBuffer())
+            blobs.push([sha, blob])
+          }
+        }
+        return blobs
+      })
+  }
+
+  async write(request: CommitRequest): Promise<{sha: string}> {
+    const ctx = this.#context
     throw new Error('Method not implemented.')
   }
 
-  async write(
-    request: CommitRequest,
-    ctx: RequestContext
-  ): Promise<{sha: string}> {
-    throw new Error('Method not implemented.')
-  }
-
-  async authenticate(request: Request, ctx: RequestContext) {
+  async authenticate(request: Request) {
+    const ctx = this.#context
     const config = this.#config
     const url = new URL(request.url)
     const action = url.searchParams.get('auth')
@@ -98,7 +132,7 @@ export class CloudRemote implements RemoteConnection {
             type: AuthResultType.MissingApiKey,
             setupUrl: cloudConfig.setup
           })
-        const [authed, err] = await outcome(this.verify(request, ctx))
+        const [authed, err] = await outcome(this.verify(request))
         if (authed)
           return Response.json({
             type: AuthResultType.Authenticated,
@@ -185,7 +219,7 @@ export class CloudRemote implements RemoteConnection {
       // The logout route unsets our cookies
       case AuthAction.Logout: {
         try {
-          const {token} = await this.verify(request, ctx)
+          const {token} = await this.verify(request)
           if (token) {
             await fetch(cloudConfig.logout, {
               method: 'POST',
@@ -217,7 +251,8 @@ export class CloudRemote implements RemoteConnection {
     }
   }
 
-  async verify(request: Request, ctx: RequestContext) {
+  async verify(request: Request) {
+    const ctx = this.#context
     const cookies = request.headers.get('cookie')
     if (!cookies) throw new HttpError(401, 'Unauthorized - no cookies')
     const prefix = `${COOKIE_NAME}=`
@@ -234,7 +269,8 @@ export class CloudRemote implements RemoteConnection {
     }
   }
 
-  prepareUpload(file: string, ctx: RequestContext) {
+  prepareUpload(file: string) {
+    const ctx = this.#context
     return parseOutcome<{
       entryId: string
       location: string
@@ -259,10 +295,8 @@ export class CloudRemote implements RemoteConnection {
     })
   }
 
-  async getDraft(
-    draftKey: DraftKey,
-    ctx: RequestContext
-  ): Promise<Draft | undefined> {
+  async getDraft(draftKey: DraftKey): Promise<Draft | undefined> {
+    const ctx = this.#context
     if (!validApiKey(ctx.apiKey)) return
     const {entryId, locale} = parseDraftKey(draftKey)
     type CloudDraft = {fileHash: string; update: string; commitHash: string}
@@ -279,7 +313,8 @@ export class CloudRemote implements RemoteConnection {
       : undefined
   }
 
-  async storeDraft(draft: Draft, ctx: RequestContext): Promise<void> {
+  async storeDraft(draft: Draft): Promise<void> {
+    const ctx = this.#context
     const key = formatDraftKey({id: draft.entryId, locale: draft.locale})
     return parseOutcome(
       fetch(
@@ -296,7 +331,8 @@ export class CloudRemote implements RemoteConnection {
     )
   }
 
-  revisions(file: string, ctx: RequestContext): Promise<Array<Revision>> {
+  revisions(file: string): Promise<Array<Revision>> {
+    const ctx = this.#context
     return parseOutcome(
       fetch(
         `${cloudConfig.history}?${new URLSearchParams({file})}`,
@@ -307,9 +343,9 @@ export class CloudRemote implements RemoteConnection {
 
   revisionData(
     file: string,
-    revisionId: string,
-    ctx: RequestContext
+    revisionId: string
   ): Promise<EntryRecord | undefined> {
+    const ctx = this.#context
     return parseOutcome(
       fetch(
         `${cloudConfig.history}?${new URLSearchParams({file, ref: revisionId})}`,

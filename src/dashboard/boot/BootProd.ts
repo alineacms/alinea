@@ -10,7 +10,7 @@ export function bootProd(
 ) {
   async function* getConfig() {
     yield {
-      dev: false,
+      local: false,
       revision: process.env.ALINEA_BUILD_ID as string,
       config: cms.config,
       views,

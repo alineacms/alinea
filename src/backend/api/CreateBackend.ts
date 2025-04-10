@@ -1,4 +1,4 @@
-import type {RemoteConnection} from 'alinea/core/Connection'
+import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
 import {DatabaseApi} from './DatabaseApi.js'
@@ -38,12 +38,16 @@ export interface BackendOptions {
   github: GithubOptions
 }
 
-export function createBackend(options: BackendOptions): RemoteConnection {
-  const ghApi = new GithubApi(options.github)
+export function createBackend(
+  options: BackendOptions
+): (context: RequestContext) => RemoteConnection {
   const db = driver[options.database.driver](options.database.client)
-  const dbApi = new DatabaseApi({db})
-  const auth = new BasicAuth(options.auth)
-  return createRemote(ghApi, dbApi, auth)
+  return context => {
+    const ghApi = new GithubApi(context, options.github)
+    const dbApi = new DatabaseApi(context, {db})
+    const auth = new BasicAuth(context, options.auth)
+    return createRemote(ghApi, dbApi, auth)
+  }
 }
 
 export function createRemote(

@@ -2,24 +2,22 @@ import type {PreviewInfo} from 'alinea/backend/Previews'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
+import {HttpError} from './HttpError.js'
 import type {User} from './User.js'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
 import type {ReadonlyTree} from './source/Tree.js'
 
 export interface AuthApi {
-  authenticate(request: Request, ctx: RequestContext): Promise<Response>
-  verify(request: Request, ctx: RequestContext): Promise<AuthedContext>
+  authenticate(request: Request): Promise<Response>
+  verify(request: Request): Promise<AuthedContext>
 }
 
 export interface RemoteConnection extends Connection, AuthApi {}
 
 export interface LocalConnection extends Connection {
-  mutate(
-    mutations: Array<Mutation>,
-    ctx?: RequestContext
-  ): Promise<{sha: string}>
-  previewToken(request: PreviewInfo, ctx?: RequestContext): Promise<string>
+  mutate(mutations: Array<Mutation>): Promise<{sha: string}>
+  previewToken(request: PreviewInfo): Promise<string>
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>>
@@ -27,38 +25,31 @@ export interface LocalConnection extends Connection {
 }
 
 export interface SyncApi {
-  getTreeIfDifferent(
-    sha: string,
-    ctx?: RequestContext
-  ): Promise<ReadonlyTree | undefined>
-  getBlobs(
-    shas: Array<string>,
-    ctx?: RequestContext
-  ): Promise<Array<[sha: string, blob: Uint8Array]>>
+  getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
+  getBlobs(shas: Array<string>): Promise<Array<[sha: string, blob: Uint8Array]>>
 }
 
 export interface CommitApi {
-  write(request: CommitRequest, ctx?: RequestContext): Promise<{sha: string}>
+  write(request: CommitRequest): Promise<{sha: string}>
 }
 
 export interface HistoryApi {
-  revisions(file: string, ctx?: RequestContext): Promise<Array<Revision>>
+  revisions(file: string): Promise<Array<Revision>>
   revisionData(
     file: string,
-    revisionId: string,
-    ctx?: RequestContext
+    revisionId: string
   ): Promise<EntryRecord | undefined>
 }
 
 export interface DraftsApi {
-  getDraft(draftKey: DraftKey, ctx?: RequestContext): Promise<Draft | undefined>
-  storeDraft(draft: Draft, ctx?: RequestContext): Promise<void>
+  getDraft(draftKey: DraftKey): Promise<Draft | undefined>
+  storeDraft(draft: Draft): Promise<void>
 }
 
 export interface UploadsApi {
-  prepareUpload(file: string, ctx?: RequestContext): Promise<UploadResponse>
-  handleUpload?(entryId: string, file: Blob, ctx?: AuthedContext): Promise<void>
-  previewUpload?(entryId: string, ctx?: RequestContext): Promise<Response>
+  prepareUpload(file: string): Promise<UploadResponse>
+  handleUpload?(entryId: string, file: Blob): Promise<void>
+  previewUpload?(entryId: string): Promise<Response>
 }
 
 export interface Connection
@@ -77,6 +68,11 @@ export interface RequestContext {
 export interface AuthedContext extends RequestContext {
   user: User
   token: string
+}
+
+export function authenticated(context: RequestContext): AuthedContext {
+  if ('token' in context && 'user' in context) return context as AuthedContext
+  throw new HttpError(401)
 }
 
 export interface Revision {

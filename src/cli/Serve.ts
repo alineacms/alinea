@@ -4,7 +4,7 @@ import {createRemote} from 'alinea/backend/api/CreateBackend'
 import {gitUser} from 'alinea/backend/util/ExecGit'
 import {CloudRemote} from 'alinea/cloud/CloudRemote'
 import type {CMS} from 'alinea/core/CMS'
-import type {RemoteConnection} from 'alinea/core/Connection'
+import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
 import {genEffect} from 'alinea/core/util/Async'
 import type {BuildOptions} from 'esbuild'
 import pkg from '../../package.json'
@@ -115,14 +115,12 @@ export async function serve(options: ServeOptions): Promise<void> {
   })
 
   const user = gitUser(rootDir)
-  const auth = new LocalAuth(user)
 
   for await (const {cms, db} of generateFiles) {
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
       const history = new GitHistory(cms.config, rootDir)
-      const backend = createBackend()
       const handleApi = createHandler({
         cms,
         remote: backend,
@@ -132,8 +130,15 @@ export async function serve(options: ServeOptions): Promise<void> {
       localServer = createLocalServer(context, cms, handleApi, await user)
       currentCMS = cms
 
-      function createBackend(): RemoteConnection {
-        if (process.env.ALINEA_CLOUD_URL) return new CloudRemote(cms.config)
+      function backend(context: RequestContext): RemoteConnection {
+        /*const ctx: RequestContext = {
+          isDev: true,
+          handlerUrl: new URL(await dashboardUrl),
+          apiKey: process.env.ALINEA_API_KEY ?? 'dev'
+        }*/
+        if (process.env.ALINEA_CLOUD_URL)
+          return new CloudRemote(context, cms.config)
+        const auth = new LocalAuth(context, user)
         return createRemote(auth, db, drafts, history)
       }
     }

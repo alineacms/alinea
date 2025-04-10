@@ -1,9 +1,8 @@
 import pLimit from 'p-limit'
-import type {RemoteSource} from './Source.js'
+import type {Change} from './Change.js'
+import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
 import {assert} from './Utils.js'
-
-const limit = pLimit(8)
 
 export interface GithubSourceOptions {
   authToken: string
@@ -13,9 +12,10 @@ export interface GithubSourceOptions {
   contentDir: string
 }
 
-export class GithubSource implements RemoteSource {
+export class GithubSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #options: GithubSourceOptions
+  #limit = pLimit(8)
 
   constructor(options: GithubSourceOptions) {
     this.#options = options
@@ -39,11 +39,16 @@ export class GithubSource implements RemoteSource {
     const parents = await parentInfo.json()
     assert(Array.isArray(parents))
     const parent = parents.find(entry => entry.path === contentDir)
-    assert(parent, `Failed to find parent: ${contentDir}`)
+    if (!parent) {
+      const result = ReadonlyTree.EMPTY
+      this.#current = result
+      if (sha !== result.sha) return result
+      return undefined
+    }
     assert(typeof parent.sha === 'string')
     if (parent.sha === sha) return undefined
     const treeInfo = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/git/trees/${parent.sha}?ref=${branch}&recursive=true`,
+      `https://api.github.com/repos/${owner}/${repo}/git/trees/${parent.sha}?recursive=true`,
       {headers: {Authorization: `Bearer ${authToken}`}}
     )
     assert(treeInfo.ok, `Failed to get tree: ${treeInfo.statusText}`)
@@ -59,7 +64,7 @@ export class GithubSource implements RemoteSource {
     const {owner, repo, authToken} = this.#options
     return Promise.all(
       shas.map(sha =>
-        limit(async (): Promise<[sha: string, blob: Uint8Array]> => {
+        this.#limit(async (): Promise<[sha: string, blob: Uint8Array]> => {
           const blobInfo = await fetch(
             `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
             {headers: {Authorization: `Bearer ${authToken}`}}
@@ -76,5 +81,9 @@ export class GithubSource implements RemoteSource {
         })
       )
     )
+  }
+
+  async applyChanges(changes: Array<Change>) {
+    throw new Error('Not implemented')
   }
 }

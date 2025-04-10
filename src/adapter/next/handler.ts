@@ -8,7 +8,7 @@ import {
 } from 'alinea/backend/api/CreateBackend'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {CloudRemote} from 'alinea/cloud/CloudRemote'
-import type {RemoteConnection} from 'alinea/core/Connection'
+import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
 import {Entry} from 'alinea/core/Entry'
 import type {Resolver} from 'alinea/core/Resolver'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
@@ -21,7 +21,7 @@ const handlers = new WeakMap<NextCMS, Handler>()
 export interface NextHandlerOptions extends HandlerHooks {
   cms: NextCMS
   backend?: BackendOptions
-  remote?: RemoteConnection
+  remote?: (context: RequestContext) => RemoteConnection
 }
 
 export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
@@ -30,7 +30,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
     options.remote ??
     (options.backend
       ? createBackend(options.backend)
-      : new CloudRemote(options.cms))
+      : context => new CloudRemote(context, options.cms))
   if (handlers.has(options.cms)) return handlers.get(options.cms)!
   const handleBackend = createCoreHandler({
     ...options,

@@ -172,7 +172,7 @@ export interface AppProps {
   client: LocalConnection
   queryClient?: QueryClient
   fullPage?: boolean
-  dev?: boolean
+  local?: boolean
   alineaDev?: boolean
 }
 

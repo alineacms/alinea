@@ -50,12 +50,12 @@ export interface HandlerHooks {
 export interface HandlerOptions extends HandlerHooks {
   cms: CMS
   db: LocalDB | Promise<LocalDB>
-  remote?: RemoteConnection
+  remote?: (context: RequestContext) => RemoteConnection
 }
 
 export function createHandler({
   cms,
-  remote = new CloudRemote(cms.config),
+  remote = context => new CloudRemote(context, cms.config),
   db,
   ...hooks
 }: HandlerOptions): Handler {
@@ -73,13 +73,13 @@ export function createHandler({
 
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
-    function periodicSync(syncInterval = 60) {
+    function periodicSync(cnx: RemoteConnection, syncInterval = 60) {
       return limit(async () => {
         if (syncInterval === Number.POSITIVE_INFINITY) return
         const now = Date.now()
         if (now - lastSync < syncInterval * 1000) return
         lastSync = now
-        await local.syncWith(remote)
+        await local.syncWith(cnx)
       })
     }
 
@@ -88,8 +88,9 @@ export function createHandler({
       const url = new URL(request.url)
       const params = url.searchParams
       const auth = params.get('auth')
+      const cnx = remote(context)
 
-      if (auth) return remote.authenticate(request, context)
+      if (auth) return cnx.authenticate(request)
 
       const action = params.get('action') as HandleAction
 
@@ -108,7 +109,7 @@ export function createHandler({
         return request.json()
       })
 
-      const verified = PLazy.from(() => remote.verify(request, context))
+      const verified = PLazy.from(() => cnx.verify(request))
 
       const internal = PLazy.from(async function verifyInternal(): Promise<
         AuthedContext | RequestContext
@@ -136,7 +137,7 @@ export function createHandler({
       if (action === HandleAction.User && request.method === 'GET') {
         expectJson()
         try {
-          const {user} = await remote.verify(request, context)
+          const {user} = await cnx.verify(request)
           return Response.json(user)
         } catch {
           return Response.json(null)
@@ -145,19 +146,19 @@ export function createHandler({
 
       // Resolve
       if (action === HandleAction.Resolve && request.method === 'POST') {
-        const ctx = await internal
+        await internal
         expectJson()
         const raw = await request.text()
         const scope = getScope(cms.config)
         const query = scope.parse(raw) as GraphQuery
         if (!query.preview) {
-          await periodicSync(query.syncInterval)
+          await periodicSync(cnx, query.syncInterval)
         } else {
           const {parse} = await previewParser
           const preview = await parse(
             query.preview,
-            () => local.syncWith(remote),
-            entryId => remote.getDraft(entryId, ctx)
+            () => local.syncWith(cnx),
+            entryId => cnx.getDraft(entryId)
           )
           query.preview = preview
         }
@@ -171,10 +172,10 @@ export function createHandler({
         const request = await local.request(mutations)
         let sha: string
         try {
-          await remote.write(request, ctx)
+          await cnx.write(request)
           await local.write(request)
         } finally {
-          sha = await local.syncWith(remote)
+          sha = await local.syncWith(cnx)
         }
         return Response.json(sha)
       }
@@ -196,26 +197,26 @@ export function createHandler({
         const file = string(url.searchParams.get('file'))
         const revisionId = string.nullable(url.searchParams.get('revisionId'))
         const result = await (revisionId
-          ? remote.revisionData(file, revisionId, ctx)
-          : remote.revisions(file, ctx))
+          ? cnx.revisionData(file, revisionId)
+          : cnx.revisions(file))
         return Response.json(result ?? null)
       }
 
       // Syncable
 
       if (action === HandleAction.Tree && request.method === 'GET') {
-        const ctx = await internal
+        await internal
         expectJson()
         const sha = string(url.searchParams.get('sha'))
-        await periodicSync()
+        await periodicSync(cnx)
         return Response.json((await local.getTreeIfDifferent(sha)) ?? null)
       }
 
       if (action === HandleAction.Blob && request.method === 'POST') {
-        const ctx = await verified
+        await verified
         const {shas} = object({shas: array(string)})(await body)
-        await periodicSync()
-        const blobs = await remote.getBlobs(shas, ctx)
+        await periodicSync(cnx)
+        const blobs = await cnx.getBlobs(shas)
         const formData = new FormData()
         for (const [sha, blob] of blobs) {
           formData.append(sha, new Blob([blob]), sha)
@@ -227,41 +228,41 @@ export function createHandler({
       if (action === HandleAction.Upload) {
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
-          const ctx = await verified
+          await verified
           expectJson()
           return Response.json(
-            await remote.prepareUpload(PrepareBody(await body).filename, ctx)
+            await cnx.prepareUpload(PrepareBody(await body).filename)
           )
         }
         const isPost = request.method === 'POST'
         if (isPost) {
-          const ctx = await verified
-          if (!remote.handleUpload)
+          await verified
+          if (!cnx.handleUpload)
             throw new Response('Bad Request', {status: 400})
-          await remote.handleUpload(entryId, await request.blob(), ctx)
+          await cnx.handleUpload(entryId, await request.blob())
           return new Response('OK', {status: 200})
         }
-        if (!remote.previewUpload)
-          throw new Response('Bad Request', {status: 400})
-        return remote.previewUpload(entryId, context)
+        if (!cnx.previewUpload) throw new Response('Bad Request', {status: 400})
+        return cnx.previewUpload(entryId)
       }
 
       // Drafts
       if (action === HandleAction.Draft && request.method === 'GET') {
-        const ctx = await internal
+        await internal
         expectJson()
         const key = string(url.searchParams.get('key')) as DraftKey
-        const draft = await remote.getDraft(key, ctx)
+        const draft = await cnx.getDraft(key)
         return Response.json(
           draft ? {...draft, draft: base64.stringify(draft.draft)} : null
         )
       }
 
       if (action === HandleAction.Draft && request.method === 'POST') {
+        await verified
         expectJson()
         const data = (await body) as DraftTransport
         const draft = {...data, draft: base64.parse(data.draft)}
-        return Response.json(await remote.storeDraft(draft, await verified))
+        return Response.json(await cnx.storeDraft(draft))
       }
     } catch (error) {
       if (error instanceof Response) return error

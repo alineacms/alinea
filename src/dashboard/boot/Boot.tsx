@@ -11,7 +11,7 @@ import {loadWorker} from './LoadWorker.js'
 import {WorkerDB} from './WorkerDB.js'
 
 export interface ConfigBatch {
-  dev: boolean
+  local: boolean
   revision: string
   config: Config
   client: Client
@@ -41,7 +41,7 @@ export async function boot(gen: ConfigGenerator) {
     element.parentElement!.replaceChild(into, element)
     const root = createRoot(into)
     for await (const batch of gen) {
-      if (batch.dev) {
+      if (batch.local) {
         const link = document.querySelector(
           'link[href^="/config.css"]'
         ) as HTMLLinkElement

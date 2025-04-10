@@ -13,7 +13,7 @@ async function* getConfig(): ConfigGenerator {
     const {cms, views} = await loadConfig(revision)
     const {config} = cms
     const client = new Client({config, url})
-    return {dev: true, revision, config, views, client}
+    return {local: true, revision, config, views, client}
   }
   let batch: ConfigBatch | undefined
   while (true) {

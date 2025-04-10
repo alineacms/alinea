@@ -1,7 +1,7 @@
 import {entries, keys} from '../util/Objects.js'
 import type {Change} from './Change.js'
 import type {Source} from './Source.js'
-import {type ReadonlyTree, WriteableTree} from './Tree.js'
+import {ReadonlyTree, WriteableTree} from './Tree.js'
 import {assert, splitPath} from './Utils.js'
 
 export class CombinedSource implements Source {
@@ -42,7 +42,8 @@ export class CombinedSource implements Source {
     const tree = await this.getTree()
     const perSource = new Map<Source, Array<string>>()
     for (const [name, source] of entries(this.#sources)) {
-      const sub = tree.getNode(name)
+      const sub = tree.get(name)
+      if (!(sub instanceof ReadonlyTree)) continue
       for (const sha of shas) {
         if (!sub.hasSha(sha)) continue
         const sourceShas = perSource.get(source) ?? []

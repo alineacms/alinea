@@ -40,8 +40,11 @@ const UploadTable = table('alinea_upload', {
 })
 
 export class DatabaseApi implements DraftsApi, UploadsApi {
+  #context: RequestContext
   #db: Promise<Database>
-  constructor({db}: DatabaseOptions) {
+
+  constructor(context: RequestContext, {db}: DatabaseOptions) {
+    this.#context = context
     this.#db = PLazy.from(async () => {
       await db.create(DraftTable, UploadTable).catch(() => {})
       return db
@@ -79,10 +82,8 @@ export class DatabaseApi implements DraftsApi, UploadsApi {
     await query
   }
 
-  async prepareUpload(
-    file: string,
-    ctx: RequestContext
-  ): Promise<UploadResponse> {
+  async prepareUpload(file: string): Promise<UploadResponse> {
+    const ctx = this.#context
     const entryId = createId()
     const extension = extname(file)
     const base = basename(file, extension)
