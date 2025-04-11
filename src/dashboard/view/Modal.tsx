@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
-import {PropsWithChildren, useRef} from 'react'
+import {type PropsWithChildren, useRef} from 'react'
 import {createPortal} from 'react-dom'
 import css from './Modal.module.scss'
 
@@ -20,7 +20,7 @@ export function Modal({children, ...props}: ModalProps) {
   if (!props.open) return null
   const inner = (
     <div {...props} ref={modalRef} className={styles.root({open: props.open})}>
-      <div className={styles.root.background()} onClick={props.onClose}></div>
+      <div className={styles.root.background()} onClick={props.onClose} />
       <div className={styles.root.inner.mergeProps(props)()}>
         {children}
         <IconButton

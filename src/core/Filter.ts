@@ -1,6 +1,6 @@
 type Primitive = string | number | boolean | null
 
-interface Ops<Value> {
+export interface Ops<Value = unknown> {
   is?: Value
   isNot?: Value
   in?: ReadonlyArray<Value>
@@ -25,11 +25,16 @@ type FieldOps<Fields> = {
   [K in keyof Fields]?: Condition<Fields[K]>
 }
 
+export interface AnyCondition<Value>
+  extends Ops<Value>,
+    ArrayOps<Value>,
+    ObjectOps<Value> {}
+
 export type Condition<Value> = [Value] extends [Primitive]
   ? Ops<Value> | Value
   : [Value] extends [Array<any>]
-  ? ArrayOps<Value[0]>
-  : ObjectOps<Value>
+    ? ArrayOps<Value[0]>
+    : ObjectOps<Value>
 
 type AndCondition<Fields> = {and: Array<Filter<Fields> | undefined>}
 type OrCondition<Fields> = {or: Array<Filter<Fields> | undefined>}

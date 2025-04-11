@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {PropsWithChildren} from 'react'
+import type {PropsWithChildren} from 'react'
 import css from './Badge.module.scss'
 import {px} from './util/Units.js'
 

@@ -6,13 +6,15 @@
   "typescript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifier": "project-relative",
   "editor.codeActionsOnSave": {
-    "source.organizeImports": "explicit"
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit",
+    "source.organizeImports": "never"
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "biomejs.biome"
   }
 }

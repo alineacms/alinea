@@ -1,4 +1,4 @@
-import {Field, FieldOptions} from './Field.js'
+import {Field, type FieldOptions} from './Field.js'
 
 export interface FieldGetter {
   <Value>(field: Field<Value>): Value

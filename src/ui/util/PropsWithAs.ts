@@ -1,6 +1,6 @@
 // Source: https://codesandbox.io/s/typescript-as-prop-dicj8?file=/src/App.tsx:0-1216
 
-import {forwardRef, ForwardRefRenderFunction} from 'react'
+import {forwardRef, type ForwardRefRenderFunction} from 'react'
 
 // --------------------
 // GENERIC TYPES

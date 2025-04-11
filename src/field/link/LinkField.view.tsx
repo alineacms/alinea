@@ -1,10 +1,10 @@
 import styler from '@alinea/styler'
 import {
   DndContext,
-  DragEndEvent,
+  type DragEndEvent,
   DragOverlay,
-  DragStartEvent,
-  DraggableSyntheticListeners,
+  type DragStartEvent,
+  type DraggableSyntheticListeners,
   KeyboardSensor,
   LayoutMeasuringStrategy,
   PointerSensor,
@@ -14,19 +14,19 @@ import {
   useSensors
 } from '@dnd-kit/core'
 import {
-  AnimateLayoutChanges,
+  type AnimateLayoutChanges,
   SortableContext,
   defaultAnimateLayoutChanges,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
-import {CSS, FirstArgument} from '@dnd-kit/utilities'
+import {CSS, type FirstArgument} from '@dnd-kit/utilities'
 import {Entry} from 'alinea/core/Entry'
-import {Field} from 'alinea/core/Field'
-import {Picker} from 'alinea/core/Picker'
+import type {Field} from 'alinea/core/Field'
+import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
-import {Type} from 'alinea/core/Type'
+import type {Type} from 'alinea/core/Type'
 import {MediaFile} from 'alinea/core/media/MediaTypes'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {entries} from 'alinea/core/util/Objects'
@@ -49,8 +49,8 @@ import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
-import {CSSProperties, HTMLAttributes, Ref, Suspense, useState} from 'react'
-import {LinkField, LinksField} from './LinkField.js'
+import {type CSSProperties, type HTMLAttributes, type Ref, Suspense, useState} from 'react'
+import type {LinkField, LinksField} from './LinkField.js'
 import css from './LinkField.module.scss'
 
 export type * from './LinkField.js'

@@ -5,7 +5,7 @@ import {HStack} from 'alinea/ui'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useState} from 'react'
-import {TextField} from './TextField.js'
+import type {TextField} from './TextField.js'
 import css from './TextField.module.scss'
 
 const styles = styler(css)

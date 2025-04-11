@@ -1,4 +1,4 @@
-import {SVGProps} from 'react'
+import type {SVGProps} from 'react'
 
 export function AlineaLogo(props: SVGProps<SVGSVGElement>) {
   return (

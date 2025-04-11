@@ -11,7 +11,7 @@ export interface Preferences {
   language: Language
 }
 
-export const preferencesAtom = atomWithStorage(`@alinea/preferences`, {
+export const preferencesAtom = atomWithStorage('@alinea/preferences', {
   scheme: undefined,
   workspace: undefined,
   size: 16,

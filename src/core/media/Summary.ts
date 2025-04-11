@@ -1,6 +1,6 @@
 import {Entry} from '../Entry.js'
-import {Schema} from '../Schema.js'
-import {MediaFile as MediaFileType} from './MediaTypes.js'
+import type {Schema} from '../Schema.js'
+import type {MediaFile as MediaFileType} from './MediaTypes.js'
 
 export function summarySelection(schema: Schema) {
   const MediaFile = schema.MediaFile as typeof MediaFileType

@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {HTMLProps} from 'react'
+import type {HTMLProps} from 'react'
 import css from './LogoShape.module.scss'
 
 const styles = styler(css)
@@ -11,8 +11,8 @@ export interface LogoShapeProps extends HTMLProps<HTMLDivElement> {
 
 export function LogoShape({
   children,
-  foreground = `var(--alinea-accent-foreground)`,
-  background = `var(--alinea-accent)`,
+  foreground = 'var(--alinea-accent-foreground)',
+  background = 'var(--alinea-accent)',
   ...props
 }: LogoShapeProps) {
   return (

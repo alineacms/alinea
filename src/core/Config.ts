@@ -1,13 +1,14 @@
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
-import {Preview} from 'alinea/core/Preview'
+import type {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
-import {Auth} from './Auth.js'
+import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
 import {Schema} from './Schema.js'
-import {Type} from './Type.js'
-import {Workspace, WorkspaceInternal} from './Workspace.js'
+import type {Type} from './Type.js'
+import {Workspace, type WorkspaceInternal} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
+import * as paths from './util/Paths.js'
 
 /** Configuration options */
 export interface Config {
@@ -38,10 +39,12 @@ export interface Config {
 export namespace Config {
   export function baseUrl(
     config: Config,
-    env = (process.env.NODE_ENV as 'development' | 'production') ?? 'production'
+    env = process.env.NODE_ENV ?? 'production'
   ) {
     const result =
-      typeof config.baseUrl === 'object' ? config.baseUrl[env] : config.baseUrl
+      typeof config.baseUrl === 'object'
+        ? (config.baseUrl as Record<string, string>)[env]
+        : config.baseUrl
     if (!result) return result
     if (result.includes('://')) return result
     return `https://${result}`
@@ -59,14 +62,55 @@ export namespace Config {
     return Boolean(config.auth)
   }
 
+  export function multipleWorkspaces(config: Config): boolean {
+    return Object.keys(config.workspaces).length > 1
+  }
+
+  export function contentDir(config: Config) {
+    const workspace = mainWorkspace(config)
+    if (multipleWorkspaces(config)) return paths.dirname(workspace.source)
+    return workspace.source
+  }
+
+  export function filePath(
+    config: Config,
+    workspace: string,
+    root: string,
+    locale: string | null,
+    ...rest: Array<string>
+  ) {
+    const hasMultipleWorkspaces = multipleWorkspaces(config)
+    let result = ''
+    if (hasMultipleWorkspaces) result = paths.join(result, workspace)
+    result = paths.join(result, root)
+    if (locale) result = paths.join(result, locale, ...rest)
+    return paths.join(result, ...rest)
+  }
+
   export function validate(config: Config) {
     Schema.validate(config.schema)
-    for (const [key, workspace] of entries(config.workspaces)) {
+    const all = entries(config.workspaces)
+    let sourceDir: string
+    for (const [key, workspace] of all) {
       if (!isValidIdentifier(key))
         throw new Error(
           `Invalid Workspace name "${key}", use only a-z, A-Z, 0-9, and _`
         )
       Workspace.validate(workspace, config.schema)
+      if (all.length > 1) {
+        const source = getWorkspace(workspace).source
+        const dir = paths.dirname(source)
+        const name = paths.basename(source)
+        if (name !== key)
+          throw new Error(
+            `Workspace "${key}" source directory "${name}" must be named "${key}"`
+          )
+        sourceDir ??= dir
+        if (sourceDir !== dir)
+          throw new Error(
+            `Workspaces "${key}" must be a directory of "${sourceDir}"`
+          )
+      }
     }
   }
 
@@ -74,6 +118,15 @@ export namespace Config {
     return Schema.referencedViews(config.schema).concat(
       values(config.workspaces).flatMap(Workspace.referencedViews)
     )
+  }
+
+  export function contentDirectories(
+    config: Config
+  ): Array<[workspace: string, dir: string]> {
+    return entries(config.workspaces).map(([name, workspace]) => {
+      const dir = getWorkspace(workspace).source
+      return [name, dir]
+    })
   }
 }
 

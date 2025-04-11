@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {HTMLProps, memo} from 'react'
+import {type HTMLProps, memo} from 'react'
 import css from './Ellipsis.module.scss'
 
 const styles = styler(css)

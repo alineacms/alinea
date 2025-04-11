@@ -2,7 +2,7 @@ import styler from '@alinea/styler'
 import type {ComponentType} from 'react'
 import css from './Chip.module.scss'
 import {Icon} from './Icon.js'
-import {HStack, StackProps} from './Stack.js'
+import {HStack, type StackProps} from './Stack.js'
 
 const styles = styler(css)
 

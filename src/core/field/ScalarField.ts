@@ -1,4 +1,4 @@
-import {Field, FieldMeta} from '../Field.js'
+import {Field, type FieldMeta} from '../Field.js'
 import {ScalarShape} from '../shape/ScalarShape.js'
 
 export class ScalarField<Value, Options> extends Field<

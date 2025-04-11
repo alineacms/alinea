@@ -5,9 +5,9 @@ import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {
-  ComponentType,
-  PropsWithChildren,
-  ReactNode,
+  type ComponentType,
+  type PropsWithChildren,
+  type ReactNode,
   forwardRef,
   memo
 } from 'react'

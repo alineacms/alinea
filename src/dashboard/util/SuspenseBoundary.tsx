@@ -1,4 +1,4 @@
-import {PropsWithChildren, Suspense, SuspenseProps, useEffect} from 'react'
+import {type PropsWithChildren, Suspense, type SuspenseProps, useEffect} from 'react'
 
 interface LogMsgProps {
   name: string

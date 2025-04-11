@@ -58,7 +58,7 @@ export function parse(
     // Read one character from the string:
     const value = encoding.codes[string[i]]
     if (value === undefined) {
-      throw new SyntaxError('Invalid character ' + string[i])
+      throw new SyntaxError(`Invalid character ${string[i]}`)
     }
 
     // Append the bits to the buffer:

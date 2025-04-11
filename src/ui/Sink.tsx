@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {HTMLProps, PropsWithChildren} from 'react'
+import type {HTMLProps, PropsWithChildren} from 'react'
 import css from './Sink.module.scss'
 import {ElevationProvider} from './util/Elevation.js'
 

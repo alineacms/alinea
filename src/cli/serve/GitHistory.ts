@@ -1,15 +1,19 @@
-import {History, RequestContext, Revision} from 'alinea/backend/Backend'
 import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {execGit} from 'alinea/backend/util/ExecGit'
-import {Config} from 'alinea/core/Config'
-import {EntryRecord} from 'alinea/core/EntryRecord'
+import type {Config} from 'alinea/core/Config'
+import type {Revision} from 'alinea/core/Connection'
+import type {HistoryApi} from 'alinea/core/Connection'
+import type {EntryRecord} from 'alinea/core/EntryRecord'
 
 const encoder = new TextEncoder()
 
-export class GitHistory implements History {
-  constructor(public config: Config, public rootDir: string) {}
+export class GitHistory implements HistoryApi {
+  constructor(
+    public config: Config,
+    public rootDir: string
+  ) {}
 
-  async list(ctx: RequestContext, file: string): Promise<Array<Revision>> {
+  async revisions(file: string): Promise<Array<Revision>> {
     const output = await execGit(this.rootDir, [
       'log',
       '--follow',
@@ -28,7 +32,7 @@ export class GitHistory implements History {
 
       return {
         ref: hash,
-        createdAt: parseInt(timestamp) * 1000,
+        createdAt: Number.parseInt(timestamp) * 1000,
         description: message,
         file: fileLocation,
         user: {
@@ -41,11 +45,7 @@ export class GitHistory implements History {
     return revisions
   }
 
-  async revision(
-    ctx: RequestContext,
-    file: string,
-    ref: string
-  ): Promise<EntryRecord> {
+  async revisionData(file: string, ref: string): Promise<EntryRecord> {
     const {config} = this
     const data = await execGit(this.rootDir, [
       'show',

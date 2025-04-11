@@ -3,10 +3,10 @@ import {
   closestCenter,
   defaultDropAnimation,
   DndContext,
-  DragEndEvent,
-  DraggableSyntheticListeners,
+  type DragEndEvent,
+  type DraggableSyntheticListeners,
   DragOverlay,
-  DragStartEvent,
+  type DragStartEvent,
   KeyboardSensor,
   LayoutMeasuringStrategy,
   PointerSensor,
@@ -14,17 +14,17 @@ import {
   useSensors
 } from '@dnd-kit/core'
 import {
-  AnimateLayoutChanges,
+  type AnimateLayoutChanges,
   defaultAnimateLayoutChanges,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
-import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {ListField} from 'alinea/core/field/ListField'
+import {CSS, type FirstArgument} from '@dnd-kit/utilities'
+import type {ListField} from 'alinea/core/field/ListField'
 import {getType} from 'alinea/core/Internal'
-import {Schema} from 'alinea/core/Schema'
+import type {Schema} from 'alinea/core/Schema'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
@@ -47,19 +47,19 @@ import {Sink} from 'alinea/ui/Sink'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import {
-  CSSProperties,
-  HTMLAttributes,
-  PropsWithChildren,
-  Ref,
+  type CSSProperties,
+  type HTMLAttributes,
+  type PropsWithChildren,
+  type Ref,
   useState
 } from 'react'
-import {ListOptions} from './ListField.js'
+import type {ListOptions} from './ListField.js'
 import css from './ListField.module.scss'
 
 const styles = styler(css)
 
 const copyAtom = atomWithStorage<ListRow | undefined>(
-  `@alinea/copypaste`,
+  '@alinea/copypaste',
   undefined
 )
 
@@ -167,7 +167,6 @@ function ListInputRow({
             icon={getType(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
-            title="Drag and drop to reorder"
           />
         </Sink.Options>
         <Sink.Title>
@@ -180,7 +179,6 @@ function ListInputRow({
               onClick={() => {
                 onCopyBlock()
               }}
-              title="Copy block"
             />
           )}
           {!readOnly && (
@@ -188,18 +186,12 @@ function ListInputRow({
               <IconButton
                 icon={IcRoundKeyboardArrowUp}
                 onClick={() => onMove?.(-1)}
-                title="Move up"
               />
               <IconButton
                 icon={IcRoundKeyboardArrowDown}
                 onClick={() => onMove?.(1)}
-                title="Move down"
               />
-              <IconButton
-                icon={IcRoundClose}
-                onClick={onDelete}
-                title="Delete block"
-              />
+              <IconButton icon={IcRoundClose} onClick={onDelete} />
             </>
           )}
         </Sink.Options>

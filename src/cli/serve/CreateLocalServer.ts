@@ -1,20 +1,20 @@
-import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
-import {HandlerWithConnect} from 'alinea/backend/Handler'
-import {router} from 'alinea/backend/router/Router'
-import {cloudUrl} from 'alinea/cloud/CloudConfig'
-import {CMS} from 'alinea/core/CMS'
-import {Trigger, trigger} from 'alinea/core/Trigger'
-import {User} from 'alinea/core/User'
-import {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
 import {Readable} from 'node:stream'
+import {ReadableStream, type Request, Response} from '@alinea/iso'
+import type {Handler} from 'alinea/backend/Handler'
+import {router} from 'alinea/backend/router/Router'
+import {cloudUrl} from 'alinea/cloud/CloudConfig'
+import type {CMS} from 'alinea/core/CMS'
+import {type Trigger, trigger} from 'alinea/core/Trigger'
+import type {User} from 'alinea/core/User'
+import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import {buildEmitter} from '../build/BuildEmitter.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
-import {reportHalt} from '../util/Report.js'
+import {reportFatal} from '../util/Report.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
-import {ServeContext} from './ServeContext.js'
+import type {ServeContext} from './ServeContext.js'
 
 type BuildDetails = Map<string, OutputFile>
 
@@ -75,7 +75,7 @@ export function createLocalServer(
     liveReload
   }: ServeContext,
   cms: CMS,
-  handleApi: HandlerWithConnect,
+  handleApi: Handler,
   user: User
 ): {
   close(): void
@@ -83,8 +83,9 @@ export function createLocalServer(
 } {
   function devHandler(request: Request) {
     return handleApi(request, {
+      isDev: true,
       handlerUrl: new URL(request.url.split('?')[0]),
-      apiKey: 'dev'
+      apiKey: process.env.ALINEA_API_KEY ?? 'dev'
     })
   }
   if (cmd === 'build') return {close() {}, handle: devHandler}
@@ -127,8 +128,8 @@ export function createLocalServer(
     external: ['@alinea/generated'],
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
-      'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
       'process.env.NODE_ENV': production ? '"production"' : '"development"',
+      'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
       'process.env.ALINEA_CLOUD_URL': cloudUrl
         ? JSON.stringify(cloudUrl)
         : 'undefined',
@@ -142,7 +143,6 @@ export function createLocalServer(
   } satisfies BuildOptions
 
   const builder = buildEmitter(config)
-
   ;(async () => {
     for await (const {type, result} of builder) {
       if (type === 'start') {
@@ -150,7 +150,7 @@ export function createLocalServer(
         else currentBuild = trigger<BuildDetails>()
       } else {
         if (result.errors.length) {
-          reportHalt('Building Alinea dashboard failed')
+          reportFatal('Building Alinea dashboard failed')
         } else {
           currentBuild.resolve(buildFiles(devDir, result))
           liveReload.reload(alineaDev ? 'reload' : 'refresh')
@@ -162,7 +162,7 @@ export function createLocalServer(
   async function serveBrowserBuild(
     request: Request
   ): Promise<Response | undefined> {
-    let result = await currentBuild
+    const result = await currentBuild
     if (!result) return new Response('Build failed', {status: 500})
     const url = new URL(request.url)
     const fileName = url.pathname.toLowerCase()
@@ -190,13 +190,13 @@ export function createLocalServer(
             close: () => controller.close()
           })
         }
-      }).pipeThrough(new TextEncoderStream())
+      })
       return new Response(stream, {
         headers: {
           'content-type': 'text/event-stream',
           'cache-control': 'no-cache',
           'access-control-allow-origin': '*',
-          Connection: 'keep-alive'
+          connection: 'keep-alive'
         }
       })
     }),
@@ -223,8 +223,8 @@ export function createLocalServer(
           <link rel="icon" href="data:," />
           <link href="/config.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
-          <meta name="redirect_url" value="${handlerUrl}?auth=login" />
+          <meta name="handshake_url" value="${handlerUrl}/api?auth=handshake" />
+          <meta name="redirect_url" value="${handlerUrl}/api?auth=login" />
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,

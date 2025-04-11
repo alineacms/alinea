@@ -10,29 +10,20 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "run-p dev:check dev:run",
+    "dev": "run-p dev:run",
     "web": "run-p dev:check web:run",
+    "tag": "bun tag.js",
+    "bump": "bun bump.js",
     "stories": "ladle serve",
-    "demo": "node build.js --watch -- node dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
-    "build": "tsc && node build.js",
-    "cycles:server": "CHECK_CYCLES=server node build.js && madge --warning --circular dist/index.js",
-    "cycles:browser": "CHECK_CYCLES=browser node build.js && madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
-    "alinea": "node build.js && node dist/cli.js",
-    "build:alinea": "node build.js",
-    "release:types": "tsc",
-    "release:build": "node build.js",
+    "build": "tsc && bun build.ts",
+    "cycles:server": "CHECK_CYCLES=server bun build.ts && bunx --bun madge --warning --circular dist/index.js",
+    "cycles:browser": "CHECK_CYCLES=browser bun build.ts && bunx --bun madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
     "type": "tsc --diagnostics",
-    "test": "NODE_OPTIONS=--enable-source-maps node build.js --test",
-    "tag": "esbx tag",
     "dev:check": "tsc -w",
-    "dev:run": "node build.js --watch -- node dev.js --dir apps/dev",
-    "web:run": "node build.js --watch -- node dev.js -- yarn workspace @alinea/web dev",
-    "dev:stories": "ladle serve --stories \"src/**/*.stories.tsx\"",
-    "gen:bundleTs": "esbx bundleTs",
-    "build:stories": "ladle build --base /stories --stories  \"packages/**/*.stories.tsx\" --outDir apps/web/public/stories",
-    "trace": "tsc --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
-    "bump": "esbx version",
-    "prepublishOnly": "yarn build"
+    "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev",
+    "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev",
+    "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
+    "prepublishOnly": "bun run build"
   },
   "sideEffects": false,
   "typesVersions": {
@@ -54,11 +45,10 @@
     "src/core",
     "src/dashboard",
     "src/ui",
-    "src/auth/passwordless",
     "src/field/richtext"
   ],
   "dependencies": {
-    "@alinea/iso": "^0.3.2",
+    "@alinea/iso": "^0.3.3",
     "@alinea/sqlite-wasm": "^0.1.18",
     "esbuild": "^0.23.1"
   },
@@ -68,21 +58,20 @@
   },
   "devDependencies": {
     "@alinea/styler": "^1.0.3",
+    "@alinea/suite": "^0.6.2",
+    "@biomejs/biome": "^1.9.4",
     "@esbx/reporter": "^0.0.20",
-    "@esbx/target": "^0.0.20",
-    "@esbx/util": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",
     "@ladle/react": "^4.1.2",
+    "@types/bun": "^1.1.17",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
-    "@types/node": "^22.5.2",
     "@types/react": "^18.2.13",
     "@types/react-dom": "^18.2.6",
+    "@types/sharedworker": "^0.0.154",
     "@types/sql.js": "^1.4.4",
     "@typescript/analyze-trace": "^0.9.1",
     "@ungap/with-resolvers": "^0.1.0",
-    "alinea": "link:.",
-    "esbx": "^0.0.18",
     "glob": "^7.2.0",
     "madge": "^6.1.0",
     "npm-run-all": "^4.1.5",
@@ -91,16 +80,16 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sass": "^1.63.4",
+    "sass-embedded": "^1.83.4",
     "sharp": "0.32.6",
     "speedscope": "^1.14.0",
-    "typescript": "^5.6.2",
+    "symlink-dir": "^6.0.5",
+    "typescript": "5.6.2",
     "typescript-plugin-css-modules": "^5.0.2",
-    "uvu": "^0.5.1",
     "yjs-src": "npm:yjs@13.6.11"
   },
   "packageManager": "yarn@4.5.0",
   "resolutions": {
-    "esbuild": "0.20.1",
     "yjs": "13.6.11",
     "lib0": "0.2.88"
   },
@@ -138,11 +127,6 @@
       "worker": "./dist/picker/url/UrlPicker.js",
       "browser": "./dist/picker/url/UrlPicker.browser.js",
       "default": "./dist/picker/url/UrlPicker.js"
-    },
-    "./cli/util/ExportStore": {
-      "worker": "./dist/cli/util/ExportStore.server.js",
-      "browser": "./dist/cli/util/ExportStore.js",
-      "default": "./dist/cli/util/ExportStore.server.js"
     }
   }
 }

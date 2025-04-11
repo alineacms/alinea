@@ -27,7 +27,7 @@ export namespace Report {
     if (prefix && !isConsole) output(prefix)
     console.info(`${report.name} in ${prettyMilliseconds(report.duration)}`)
     for (const log of report.logs) {
-      if ('name' in log) toConsole(log, ' '.repeat(prefix.length) + '└ ')
+      if ('name' in log) toConsole(log, `${' '.repeat(prefix.length)}└ `)
       else {
         if (prefix && !isConsole) output(prefix)
         console.info(...log.args)

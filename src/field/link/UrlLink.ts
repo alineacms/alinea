@@ -1,14 +1,14 @@
 import type {WithoutLabel} from 'alinea/core/Field'
-import {InferStoredValue} from 'alinea/core/Infer'
-import {Label} from 'alinea/core/Label'
-import {Type} from 'alinea/core/Type'
+import type {InferStoredValue} from 'alinea/core/Infer'
+import type {Label} from 'alinea/core/Label'
+import type {Type} from 'alinea/core/Type'
 import type {ListRow} from 'alinea/core/shape/ListShape'
 import {
-  LinkFieldOptions,
+  type LinkFieldOptions,
   createLink,
   createLinks
 } from 'alinea/field/link/LinkField'
-import {UrlPickerOptions, UrlReference, urlPicker} from 'alinea/picker/url'
+import {type UrlPickerOptions, type UrlReference, urlPicker} from 'alinea/picker/url'
 
 export interface UrlLink<InferredFields = undefined> extends UrlReference {
   href: string

@@ -30,7 +30,7 @@ export function dashboardNav(defaults: Partial<EntryLocation>) {
     return `/entry${loc(location)}`
   }
   function create(location: EntryLocation) {
-    return entry(location) + '?new'
+    return `${entry(location)}?new`
   }
   function draft(location: EntryLocation) {
     return `/draft${loc(location)}`

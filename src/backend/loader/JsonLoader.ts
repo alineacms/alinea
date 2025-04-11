@@ -1,4 +1,4 @@
-import {EntryRecord} from 'alinea/core/EntryRecord'
+import type {EntryRecord} from 'alinea/core/EntryRecord'
 import type {Schema} from 'alinea/core/Schema'
 import type {Loader} from '../Loader.js'
 
