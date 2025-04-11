@@ -1,6 +1,5 @@
 import {suite} from '@alinea/suite'
 import {LocalDB} from 'alinea/core/db/LocalDB'
-import {CombinedSource} from 'alinea/core/source/CombinedSource'
 import {FSSource} from 'alinea/core/source/FSSource'
 import {MemorySource} from 'alinea/core/source/MemorySource'
 import {syncWith} from 'alinea/core/source/Source'
@@ -8,8 +7,7 @@ import {cms} from './cms.js'
 
 const test = suite(import.meta)
 const dir = 'apps/web/content/demo'
-const demo = new FSSource(dir)
-const source = new CombinedSource({demo})
+const source = new FSSource(dir)
 const copy = new MemorySource()
 await syncWith(copy, source)
 const db = new LocalDB(cms, copy)

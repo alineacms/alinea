@@ -5,7 +5,6 @@ import {MediaFile} from 'alinea/core/media/MediaTypes'
 import {cms} from '../../test/cms.js'
 import {DemoRecipe} from '../../test/schema/DemoRecipe.js'
 import {DemoRecipes} from '../../test/schema/DemoRecipes.js'
-import {CombinedSource} from '../source/CombinedSource.js'
 import {FSSource} from '../source/FSSource.js'
 import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver} from './EntryResolver.js'
@@ -13,8 +12,7 @@ import {EntryResolver} from './EntryResolver.js'
 const test = suite(import.meta)
 
 const dir = 'apps/web/content/demo'
-const demo = new FSSource(dir)
-const source = new CombinedSource({demo})
+const source = new FSSource(dir)
 
 const index = new EntryIndex(cms.config)
 const resolver = new EntryResolver(cms.config, index)

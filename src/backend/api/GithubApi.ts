@@ -1,7 +1,6 @@
 import type {
   CommitApi,
   HistoryApi,
-  RequestContext,
   Revision,
   SyncApi
 } from 'alinea/core/Connection'
@@ -26,7 +25,7 @@ export class GithubApi
 {
   #options: GithubOptions
 
-  constructor(options: GithubOptions, context?: RequestContext) {
+  constructor(options: GithubOptions) {
     super(options)
     this.#options = options
   }

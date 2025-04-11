@@ -1,4 +1,4 @@
-import type {Config} from 'alinea/core/Config'
+import {Config} from 'alinea/core/Config'
 import type {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
 import {createRecord} from 'alinea/core/EntryRecord'
@@ -118,9 +118,7 @@ export class EntryTransaction {
     }
     const parentDir = parent
       ? parent.childrenDir
-      : locale !== null
-        ? `${workspace}/${root}/${locale.toLowerCase()}`
-        : `${workspace}/${root}`
+      : Config.filePath(this.#config, workspace, root, locale)
     const filePath = paths.join(
       parentDir,
       `${path}${status === 'published' ? '' : `.${status}`}.json`
@@ -401,9 +399,7 @@ export class EntryTransaction {
 
       const parentDir = parent
         ? parent.childrenDir
-        : entry.locale
-          ? `${workspace}/${root}/${entry.locale}`
-          : `${workspace}/${root}`
+        : Config.filePath(this.#config, workspace, root, entry.locale)
       const childrenDir = paths.join(parentDir, entry.path)
       const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
       const record = createRecord({

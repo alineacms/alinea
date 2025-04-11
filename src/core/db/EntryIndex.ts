@@ -1,5 +1,5 @@
 import {reportWarning} from 'alinea/cli/util/Report'
-import type {Config} from 'alinea/core/Config'
+import {Config} from 'alinea/core/Config'
 import type {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
 import {type EntryRecord, parseRecord} from 'alinea/core/EntryRecord'
@@ -9,7 +9,7 @@ import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
 import {entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
 import {isValidOrderKey} from 'alinea/core/util/FractionalIndexing'
-import {entries} from 'alinea/core/util/Objects'
+import {entries, keys} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
@@ -34,10 +34,14 @@ export class EntryIndex extends EventTarget {
   #config: Config
   #seeds: Map<string, Seed>
   #search: MiniSearch
+  #singleWorkspace: string | undefined
 
   constructor(config: Config) {
     super()
     this.#config = config
+    this.#singleWorkspace = Config.multipleWorkspaces(config)
+      ? undefined
+      : keys(config.workspaces)[0]
     this.#seeds = entrySeeds(config)
     this.resolver = new EntryResolver(config, this)
     this.#search = new MiniSearch({
@@ -78,7 +82,6 @@ export class EntryIndex extends EventTarget {
 
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
-    console.log(tree.flat())
     const changes = await bundleContents(source, this.tree.diff(tree))
     console.log(changes)
     if (changes.length === 0) return tree.sha
@@ -108,7 +111,6 @@ export class EntryIndex extends EventTarget {
           .toRequest()
         const contentChanges = sourceChanges(request.changes)
         if (contentChanges.length) {
-          console.log(contentChanges)
           await source.applyChanges(contentChanges)
           await this.indexChanges(contentChanges)
         }
@@ -118,7 +120,6 @@ export class EntryIndex extends EventTarget {
 
   async transaction(source: Source) {
     const from = await source.getTree()
-    console.log({i: this.sha, f: from.sha})
     return new EntryTransaction(this.#config, this, source, from)
   }
 
@@ -235,14 +236,15 @@ export class EntryIndex extends EventTarget {
     const index = record.index
     const title = data.title as string
 
-    const workspace = segments[0]
+    let segmentIndex = 0
+    const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
     const workspaceConfig = this.#config.workspaces[workspace]
     assert(workspaceConfig, `Invalid workspace: ${workspace} in ${file}`)
-    const root = segments[1]
+    const root = segments[segmentIndex++]
     const rootConfig = workspaceConfig[root]
     assert(rootConfig, `Invalid root: ${root}`)
     const hasI18n = getRoot(rootConfig).i18n
-    const locale = hasI18n ? segments[2] : null
+    const locale = hasI18n ? segments[segmentIndex++] : null
     const entryType = this.#config.schema[type]
     const searchableText = Type.searchableText(entryType, data)
 
@@ -448,23 +450,28 @@ function entrySeeds(config: Config): Map<string, Seed> {
   for (const [workspaceName, workspace] of entries(config.workspaces)) {
     for (const [rootName, root] of entries(workspace)) {
       const {i18n} = getRoot(root)
-      const locales = i18n?.locales ?? [undefined]
+      const locales = i18n?.locales ?? [null]
       for (const locale of locales) {
         const pages: Array<readonly [string, Page]> = entries(root)
-        const target = locale ? `/${locale.toLowerCase()}` : ''
         while (pages.length > 0) {
           const [pagePath, page] = pages.shift()!
           const path = pagePath.split('/').map(slugify).join('/')
           if (!Page.isPage(page)) continue
           const {type, fields = {}} = Page.data(page)
           const filePath = getNodePath(
-            `${workspaceName}/${rootName}${target}/${path}.json`
+            Config.filePath(
+              config,
+              workspaceName,
+              rootName,
+              locale,
+              `${path}.json`
+            )
           )
           const typeName = typeNames.get(type)
           if (!typeName) continue
           result.set(filePath, {
             type: typeName,
-            locale: locale ?? null,
+            locale: locale,
             workspace: workspaceName,
             root: rootName,
             data: {

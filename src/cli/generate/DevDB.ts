@@ -5,10 +5,9 @@ import {createId} from 'alinea/core/Id'
 import {getWorkspace} from 'alinea/core/Internal'
 import {type CommitRequest, checkCommit} from 'alinea/core/db/CommitRequest'
 import {LocalDB} from 'alinea/core/db/LocalDB'
-import {CombinedSource} from 'alinea/core/source/CombinedSource'
 import {FSSource} from 'alinea/core/source/FSSource'
 import {assert} from 'alinea/core/source/Utils'
-import {fromEntries, values} from 'alinea/core/util/Objects'
+import {values} from 'alinea/core/util/Objects'
 import {
   basename,
   contains,
@@ -30,17 +29,13 @@ export interface WatchFiles {
 }
 
 export class DevDB extends LocalDB {
-  source: CombinedSource
+  source: FSSource
   #options: DevDBOptions
 
   constructor(options: DevDBOptions) {
-    const sources = fromEntries(
-      Config.contentDirectories(options.config).map(([workspace, dir]) => {
-        return [workspace, new FSSource(join(options.rootDir, dir))]
-      })
+    const source = new FSSource(
+      join(options.rootDir, Config.contentDir(options.config))
     )
-    const source = new CombinedSource(sources)
-    source.getTree().then(tree => console.log(tree))
     super(options.config, source)
     this.#options = options
     this.source = source
