@@ -34,7 +34,7 @@ export class GithubApi
     const {author} = this.#options
     let commitMessage = request.description
     if (author) {
-      commitMessage += `\nCo-authored-by: ${author.name} <${author.email}>`
+      commitMessage += `\n\nCo-authored-by: ${author.name} <${author.email}>`
     }
     await applyChangesToRepo(this.#options, request.changes, commitMessage)
     return this.getTree().then(tree => ({sha: tree.sha}))

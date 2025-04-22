@@ -1,4 +1,5 @@
 import pLimit from 'p-limit'
+import {HttpError} from '../HttpError.js'
 import type {Change} from './Change.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
@@ -69,7 +70,11 @@ export class GithubSource implements Source {
             `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
             {headers: {Authorization: `Bearer ${authToken}`}}
           )
-          assert(blobInfo.ok, `Failed to get blob: ${blobInfo.statusText}`)
+          if (!blobInfo.ok)
+            throw new HttpError(
+              blobInfo.status,
+              `Failed to get blob: ${blobInfo.statusText}`
+            )
           const blobData = await blobInfo.json()
           assert(blobData.encoding === 'base64')
           assert(typeof blobData.content === 'string')

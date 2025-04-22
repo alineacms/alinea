@@ -70,8 +70,8 @@ export class CloudRemote implements RemoteConnection {
           method: 'POST',
           headers: bearer(ctx),
           body: JSON.stringify({
-            sha,
-            dirs: Config.contentDirectories(this.#config)
+            contentDir: Config.contentDir(this.#config),
+            sha
           })
         })
       )
@@ -115,7 +115,10 @@ export class CloudRemote implements RemoteConnection {
         json({
           method: 'POST',
           headers: bearer(ctx),
-          body: JSON.stringify({request})
+          body: JSON.stringify({
+            contentDir: Config.contentDir(this.#config),
+            ...request
+          })
         })
       )
     )

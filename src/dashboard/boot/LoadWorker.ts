@@ -9,7 +9,7 @@ export async function loadWorker(gen: ConfigGenerator) {
   const worker = new DashboardWorker(source)
 
   globalThis.onconnect = event => {
-    console.log('Worker connected')
+    console.info('Worker connected')
     const port = event.ports[0]
     Comlink.expose(worker, port)
     const listen = (event: Event) => {

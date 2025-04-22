@@ -88,49 +88,17 @@ export function createHandler({
       const url = new URL(request.url)
       const params = url.searchParams
       const auth = params.get('auth')
-      const cnx = remote(context)
+      let cnx = remote(context)
+      let userCtx: AuthedContext | undefined
+      const action = params.get('action') as HandleAction
 
       if (auth) return cnx.authenticate(request)
-
-      const action = params.get('action') as HandleAction
 
       const expectJson = () => {
         const acceptsJson = request.headers
           .get('accept')
           ?.includes('application/json')
         if (!acceptsJson) throw new Response('Expected JSON', {status: 400})
-      }
-
-      const body = PLazy.from(() => {
-        const isJson = request.headers
-          .get('content-type')
-          ?.includes('application/json')
-        if (!isJson) throw new Response('Expected JSON', {status: 400})
-        return request.json()
-      })
-
-      const verified = PLazy.from(() => cnx.verify(request))
-
-      const internal = PLazy.from(async function verifyInternal(): Promise<
-        AuthedContext | RequestContext
-      > {
-        try {
-          return await verified
-        } catch {
-          const authorization = request.headers.get('authorization')
-          const bearer = authorization?.slice('Bearer '.length)
-          if (!context.apiKey) throw new Error('Missing API key')
-          if (bearer !== context.apiKey)
-            throw new Error('Expected matching api key')
-          return context
-        }
-      })
-
-      // Sign preview token
-      if (action === HandleAction.PreviewToken && request.method === 'POST') {
-        await verified
-        expectJson()
-        return Response.json(await previews.sign(PreviewBody(await body)))
       }
 
       // User
@@ -144,9 +112,38 @@ export function createHandler({
         }
       }
 
+      try {
+        userCtx = await cnx.verify(request)
+        cnx = remote(userCtx)
+      } catch {
+        const authorization = request.headers.get('authorization')
+        const bearer = authorization?.slice('Bearer '.length)
+        if (!context.apiKey) throw new Error('Missing API key')
+        if (bearer !== context.apiKey)
+          throw new Error('Expected matching api key')
+      }
+
+      const expectUser = () => {
+        if (!userCtx) throw new Response('Unauthorized', {status: 401})
+      }
+
+      const body = PLazy.from(() => {
+        const isJson = request.headers
+          .get('content-type')
+          ?.includes('application/json')
+        if (!isJson) throw new Response('Expected JSON', {status: 400})
+        return request.json()
+      })
+
+      // Sign preview token
+      if (action === HandleAction.PreviewToken && request.method === 'POST') {
+        expectUser()
+        expectJson()
+        return Response.json(await previews.sign(PreviewBody(await body)))
+      }
+
       // Resolve
       if (action === HandleAction.Resolve && request.method === 'POST') {
-        await internal
         expectJson()
         const raw = await request.text()
         const scope = getScope(cms.config)
@@ -166,7 +163,7 @@ export function createHandler({
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
-        const ctx = await verified
+        expectUser()
         expectJson()
         const mutations = await body
         const request = await local.request(mutations)
@@ -192,7 +189,7 @@ export function createHandler({
 
       // History
       if (action === HandleAction.History && request.method === 'GET') {
-        const ctx = await verified
+        expectUser()
         expectJson()
         const file = string(url.searchParams.get('file'))
         const revisionId = string.nullable(url.searchParams.get('revisionId'))
@@ -205,7 +202,6 @@ export function createHandler({
       // Syncable
 
       if (action === HandleAction.Tree && request.method === 'GET') {
-        await internal
         expectJson()
         const sha = string(url.searchParams.get('sha'))
         await periodicSync(cnx)
@@ -213,7 +209,7 @@ export function createHandler({
       }
 
       if (action === HandleAction.Blob && request.method === 'POST') {
-        await verified
+        expectUser()
         const {shas} = object({shas: array(string)})(await body)
         await periodicSync(cnx)
         const blobs = await cnx.getBlobs(shas)
@@ -228,7 +224,7 @@ export function createHandler({
       if (action === HandleAction.Upload) {
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
-          await verified
+          expectUser()
           expectJson()
           return Response.json(
             await cnx.prepareUpload(PrepareBody(await body).filename)
@@ -236,7 +232,7 @@ export function createHandler({
         }
         const isPost = request.method === 'POST'
         if (isPost) {
-          await verified
+          expectUser()
           if (!cnx.handleUpload)
             throw new Response('Bad Request', {status: 400})
           await cnx.handleUpload(entryId, await request.blob())
@@ -248,7 +244,6 @@ export function createHandler({
 
       // Drafts
       if (action === HandleAction.Draft && request.method === 'GET') {
-        await internal
         expectJson()
         const key = string(url.searchParams.get('key')) as DraftKey
         const draft = await cnx.getDraft(key)
@@ -258,7 +253,7 @@ export function createHandler({
       }
 
       if (action === HandleAction.Draft && request.method === 'POST') {
-        await verified
+        expectUser()
         expectJson()
         const data = (await body) as DraftTransport
         const draft = {...data, draft: base64.parse(data.draft)}

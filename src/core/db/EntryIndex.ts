@@ -83,7 +83,6 @@ export class EntryIndex extends EventTarget {
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
     const changes = await bundleContents(source, this.tree.diff(tree))
-    console.log(changes)
     if (changes.length === 0) return tree.sha
     // for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
     return this.indexChanges(changes)

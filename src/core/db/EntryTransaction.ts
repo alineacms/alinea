@@ -468,7 +468,7 @@ export class EntryTransaction {
   }
 
   #reportOp(op: string, title: string) {
-    return `(ɑ:${op}) ${title}`
+    return `(${op}) ${title}`
   }
 
   apply(mutations: Array<Mutation>) {
