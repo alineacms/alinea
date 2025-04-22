@@ -1,3 +1,5 @@
+import {crypto} from '@alinea/iso'
+
 export function assert(value: unknown, message?: string): asserts value {
   if (value) return
   const error = new Error(message)
