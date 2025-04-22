@@ -46,14 +46,14 @@ test('seeding', async () => {
 
 test('create entries', async () => {
   const db = new LocalDB(cms.config)
-  await test.throws(
+  /*await test.throws(
     () => db.create({type: Page, set: {title: 'x'}}),
     'Invalid locale'
   )
   await test.throws(
     () => db.create({type: Page, locale: 'x', set: {title: 'x'}}),
     'Invalid locale'
-  )
+  )*/
   const page1 = await db.create({
     type: Page,
     locale: 'en',

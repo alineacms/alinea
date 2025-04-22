@@ -83,7 +83,7 @@ export namespace Config {
     let result = ''
     if (hasMultipleWorkspaces) result = paths.join(result, workspace)
     result = paths.join(result, root)
-    if (locale) result = paths.join(result, locale, ...rest)
+    if (locale) result = paths.join(result, locale)
     return paths.join(result, ...rest)
   }
 

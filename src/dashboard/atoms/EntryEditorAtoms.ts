@@ -290,7 +290,6 @@ export function createEntryEditor(entryData: EntryData) {
       return result
         .then(() => {
           if (clearChanges) set(hasChanges, false)
-          console.log('Action completed')
         })
         .catch(error => {
           set(errorAtom, errorMessage, error)

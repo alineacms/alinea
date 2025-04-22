@@ -89,14 +89,14 @@ export class EntryIndex extends EventTarget {
   }
 
   async seed(source: Source) {
-    for (const [filePath, seed] of this.#seeds) {
+    for (const [nodePath, seed] of this.#seeds) {
       const {type, workspace, root, locale, data} = seed
-      const node = this.byPath.get(filePath)
+      const node = this.byPath.get(nodePath)
       if (node) {
         assert(node.type === type, 'Type mismatch')
       } else {
         const tx = await this.transaction(source)
-        const parentPath = paths.dirname(filePath)
+        const parentPath = paths.dirname(nodePath)
         const parentNode = this.byPath.get(getNodePath(parentPath))
         const request = await tx
           .create({
@@ -381,7 +381,16 @@ class EntryNode {
           (isDraft && !hasPublished && !hasArchived)
         version.active = active
         version.main = main
-        const parentPaths = version.parentDir.split('/').slice(locale ? 3 : 2)
+
+        const parentPaths = []
+        let p = parent
+        while (p) {
+          const parentPath = p.pathOf(locale)
+          assert(parentPath, 'Missing parent path')
+          parentPaths.unshift(parentPath)
+          if (p.parentId) p = byId.get(p.parentId)
+          else break
+        }
         const type = this.#config.schema[version.type]
         const url = entryUrl(type, {
           locale,
@@ -457,18 +466,17 @@ function entrySeeds(config: Config): Map<string, Seed> {
           const path = pagePath.split('/').map(slugify).join('/')
           if (!Page.isPage(page)) continue
           const {type, fields = {}} = Page.data(page)
-          const filePath = getNodePath(
-            Config.filePath(
-              config,
-              workspaceName,
-              rootName,
-              locale,
-              `${path}.json`
-            )
+          const filePath = Config.filePath(
+            config,
+            workspaceName,
+            rootName,
+            locale,
+            `${path}.json`
           )
+          const nodePath = getNodePath(filePath)
           const typeName = typeNames.get(type)
           if (!typeName) continue
-          result.set(filePath, {
+          result.set(nodePath, {
             type: typeName,
             locale: locale,
             workspace: workspaceName,

@@ -17,7 +17,7 @@ test('content dir and file path of single workspace', () => {
   test.is(Config.contentDir(config), 'content')
   test.is(
     Config.filePath(config, 'main', 'root', null, 'file.txt'),
-    'content/root/file.txt'
+    'root/file.txt'
   )
 })
 
@@ -38,6 +38,6 @@ test('content dir and file path of multiple workspaces', () => {
   test.is(Config.contentDir(config2), 'content/sub')
   test.is(
     Config.filePath(config2, 'main', 'root', null, 'file.txt'),
-    'content/sub/main/root/file.txt'
+    'main/root/file.txt'
   )
 })
