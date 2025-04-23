@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
 import {
+  type AsyncDataLoaderDataRef,
   asyncDataLoaderFeature,
   dragAndDropFeature,
   propMemoizationFeature,
@@ -176,28 +177,37 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     }
   }, [treeProvider])
   useEffect(() => {
-    const listen = debounce(refresh, 0)
+    const data = tree.getDataRef<AsyncDataLoaderDataRef>()
+    const reload = new Set<string>()
+    const load = debounce(() => {
+      const todo = Array.from(reload)
+      reload.clear()
+      const tasks = todo.map(async id => {
+        if (data.current.itemData[id]) {
+          const item = await treeProvider.getItem(id)
+          data.current.itemData[id] = item
+        }
+        if (data.current.childrenIds[id]) {
+          const children = await treeProvider.getChildren(id)
+          data.current.childrenIds[id] = children
+        }
+      })
+      Promise.all(tasks).then(() => {
+        tree.rebuildTree()
+      })
+    }, 0)
     db.events.addEventListener(IndexEvent.type, listen)
     return () => db.events.removeEventListener(IndexEvent.type, listen)
-    function refresh(event: Event) {
+    function listen(event: Event) {
       assert(event instanceof IndexEvent)
       switch (event.data.op) {
-        case 'index':
-          return tree.getItemInstance(ROOT_ID).invalidateChildrenIds()
         case 'entry': {
           const id = event.data.id
-          try {
-            const item = tree.getItemInstance(id)
-            if (!item) return
-            const parent = item.getParent()
-            item.invalidateChildrenIds()
-            parent?.invalidateChildrenIds()
-          } catch (e) {
-            console.error(e)
-          } finally {
-          }
+          reload.add(id)
+          break
         }
       }
+      load()
     }
   }, [db])
   const loaded = tree.getItems().filter(item => item.getItemData())

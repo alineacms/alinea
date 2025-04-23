@@ -16,8 +16,8 @@ export function fillCache(db: DevDB): Emitter<DevDB> {
     }
   })
 
-  const run = () => limit(cache).then(results.emit, reportError)
   const limit = pLimit(1)
+  const run = () => limit(cache).then(results.emit, reportError)
 
   const cache = async () => {
     await db.sync()

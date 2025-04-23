@@ -260,8 +260,9 @@ export class EntryIndex extends EventTarget {
       entries.push(...node.entries)
     }
     this.entries = entries.sort((a, b) => compareStrings(a.index, b.index))
-    for (const id of recompute)
+    for (const id of recompute) {
       this.dispatchEvent(new IndexEvent({op: 'entry', id}))
+    }
   }
 
   #parseEntry({sha, file, contents}: ParseRequest): Entry {

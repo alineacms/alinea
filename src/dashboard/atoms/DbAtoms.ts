@@ -5,6 +5,7 @@ import {useEffect} from 'react'
 import {dashboardOptionsAtom} from './DashboardAtoms.js'
 
 export const dbAtom = atom(get => {
+  console.log('db')
   return get(dashboardOptionsAtom).db
 })
 

@@ -5,7 +5,7 @@ import {createId} from 'alinea/core/Id'
 import {getWorkspace} from 'alinea/core/Internal'
 import {type CommitRequest, checkCommit} from 'alinea/core/db/CommitRequest'
 import {LocalDB} from 'alinea/core/db/LocalDB'
-import {FSSource} from 'alinea/core/source/FSSource'
+import {CachedFSSource} from 'alinea/core/source/FSSource'
 import {assert} from 'alinea/core/source/Utils'
 import {values} from 'alinea/core/util/Objects'
 import {
@@ -29,16 +29,21 @@ export interface WatchFiles {
 }
 
 export class DevDB extends LocalDB {
-  source: FSSource
+  source: CachedFSSource
   #options: DevDBOptions
 
   constructor(options: DevDBOptions) {
-    const source = new FSSource(
+    const source = new CachedFSSource(
       join(options.rootDir, Config.contentDir(options.config))
     )
     super(options.config, source)
     this.#options = options
     this.source = source
+  }
+
+  async sync() {
+    await this.source.refresh()
+    return super.sync()
   }
 
   async watchFiles() {

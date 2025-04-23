@@ -40,8 +40,9 @@ export async function boot(gen: ConfigGenerator) {
     into.id = 'root'
     element.parentElement!.replaceChild(into, element)
     const root = createRoot(into)
+    let lastRevision: string | undefined
     for await (const batch of gen) {
-      if (batch.local) {
+      if (batch.local && batch.revision !== lastRevision) {
         const link = document.querySelector(
           'link[href^="/config.css"]'
         ) as HTMLLinkElement
@@ -50,10 +51,13 @@ export async function boot(gen: ConfigGenerator) {
         copy.onload = () => link.remove()
         link.after(copy)
       }
-      const db = new WorkerDB(batch.config, worker, batch.client, events)
       const isLocal = worker instanceof DashboardWorker
       if (isLocal) await worker.load(batch.revision, batch.config, batch.client)
-      root.render(<App db={db} {...batch} />)
+      if (batch.revision !== lastRevision) {
+        const db = new WorkerDB(batch.config, worker, batch.client, events)
+        root.render(<App db={db} {...batch} />)
+      }
+      lastRevision = batch.revision
     }
   }
 }
