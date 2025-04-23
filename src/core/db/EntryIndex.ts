@@ -25,6 +25,12 @@ import {IndexEvent} from './IndexEvent.js'
 const SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u
 const DIACRITIC = /\p{Diacritic}/gu
 
+export interface EntryFilter {
+  ids?: ReadonlyArray<string>
+  search?: string
+  condition?: (entry: Entry) => boolean
+}
+
 export class EntryIndex extends EventTarget {
   tree = ReadonlyTree.EMPTY
   entries = Array<Entry>()
@@ -56,17 +62,6 @@ export class EntryIndex extends EventTarget {
     })
   }
 
-  search(terms: string, condition?: (entry: Entry) => boolean): Array<Entry> {
-    return this.#search
-      .search(terms, {
-        prefix: true,
-        fuzzy: 0.2,
-        boost: {title: 2},
-        filter: condition && (result => condition(result.entry))
-      })
-      .map(result => result.entry)
-  }
-
   get sha() {
     return this.tree.sha
   }
@@ -78,6 +73,69 @@ export class EntryIndex extends EventTarget {
 
   *findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
     for (const entry of this.entries) if (filter(entry)) yield entry
+  }
+
+  search(terms: string, condition?: (entry: Entry) => boolean): Array<Entry> {
+    return this.#search
+      .search(terms, {
+        prefix: true,
+        fuzzy: 0.2,
+        boost: {title: 2},
+        filter: condition && (result => condition(result.entry))
+      })
+      .map(result => result.entry)
+  }
+
+  filter({ids, search, condition}: EntryFilter, preview?: Entry): Array<Entry> {
+    if (search) {
+      return this.#search
+        .search(search, {
+          prefix: true,
+          fuzzy: 0.2,
+          boost: {title: 2},
+          filter: result => {
+            if (ids) return ids.includes(result.entry.id)
+            if (condition) return condition(result.entry)
+            return true
+          }
+        })
+        .map(result => result.entry)
+    }
+    if (ids) {
+      const results = []
+      for (const id of ids) {
+        const node = this.byId.get(id)
+        if (!node) continue
+        for (const e of node.entries) {
+          const entry =
+            preview && e.id === preview.id && e.locale === preview.locale
+              ? preview
+              : e
+          if (condition && !condition(entry)) continue
+          results.push(entry)
+        }
+      }
+      return results
+    }
+    const results = this.#previewEntries(this.entries, preview)
+    if (!condition) return results
+    return results.filter(condition)
+  }
+
+  #previewEntries(entries: Array<Entry>, preview?: Entry) {
+    if (!preview) return entries
+    const index = entries.findIndex(entry => {
+      return (
+        entry.id === preview.id &&
+        entry.locale === preview.locale &&
+        entry.status === preview.status
+      )
+    })
+    // Todo: the order here is off
+    if (index === -1) return entries.concat(preview)
+    const copy = entries.slice()
+    copy[index] = preview
+    return copy
   }
 
   async syncWith(source: Source): Promise<string> {

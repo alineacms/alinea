@@ -22,7 +22,7 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
 import {assert, compareStrings} from '../source/Utils.js'
-import type {EntryIndex} from './EntryIndex.js'
+import type {EntryFilter, EntryIndex} from './EntryIndex.js'
 import {LinkResolver} from './LinkResolver.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))
@@ -105,58 +105,83 @@ export class EntryResolver implements Resolver {
   }
 
   sourceFilter(
-    entries: Array<Entry>,
+    ctx: ResolveContext,
     entry: Entry,
     query: EdgeQuery
-  ): (entry: Entry) => boolean {
+  ): EntryFilter {
     switch (query.edge) {
       case 'parent': {
-        return ({id, locale}) =>
-          id === entry.parentId && locale === entry.locale
+        return {
+          ids: entry.parentId ? [entry.parentId] : [],
+          condition({locale}) {
+            return locale === entry.locale
+          }
+        }
       }
       case 'next': {
-        const next = entries
-          .filter(
-            ({workspace, root, parentId, index, locale}) =>
-              workspace === entry.workspace &&
-              root === entry.root &&
-              parentId === entry.parentId &&
-              index < entry.index &&
-              locale === entry.locale
-          )
+        const [next] = this.index
+          .filter({
+            condition({workspace, root, parentId, index, locale}) {
+              return (
+                workspace === entry.workspace &&
+                root === entry.root &&
+                parentId === entry.parentId &&
+                index < entry.index &&
+                locale === entry.locale
+              )
+            }
+          })
           .sort((a, b) => compareStrings(a.index, b.index))
-        return entry => entry === next[0]
+        return {ids: next ? [next.id] : []}
       }
       case 'previous': {
-        const previous = entries
-          .filter(
-            ({workspace, root, parentId, index, locale}) =>
+        const [previous] = this.index
+          .filter({
+            condition({workspace, root, parentId, index, locale}) {
+              return (
+                workspace === entry.workspace &&
+                root === entry.root &&
+                parentId === entry.parentId &&
+                index > entry.index &&
+                locale === entry.locale
+              )
+            }
+          })
+          .sort((a, b) => compareStrings(b.index, a.index))
+        return {ids: previous ? [previous.id] : []}
+      }
+      case 'siblings': {
+        return {
+          condition({workspace, root, parentId, id, locale}) {
+            return (
               workspace === entry.workspace &&
               root === entry.root &&
               parentId === entry.parentId &&
-              index > entry.index &&
-              locale === entry.locale
-          )
-          .sort((a, b) => compareStrings(b.index, a.index))
-        return entry => entry === previous[0]
-      }
-      case 'siblings': {
-        return ({workspace, root, parentId, id, locale}) =>
-          workspace === entry.workspace &&
-          root === entry.root &&
-          parentId === entry.parentId &&
-          locale === entry.locale &&
-          (query.includeSelf ? true : id !== entry.id)
+              locale === entry.locale &&
+              (query.includeSelf ? true : id !== entry.id)
+            )
+          }
+        }
       }
       case 'translations': {
-        return ({id, locale}) => id === entry.id && locale !== entry.locale
+        return {
+          ids: [entry.id],
+          condition({locale}) {
+            return locale !== entry.locale
+          }
+        }
       }
       case 'children': {
         const depth = query?.depth ?? 1
-        return ({level, filePath}) =>
-          level > entry.level &&
-          level <= entry.level + depth &&
-          filePath.startsWith(entry.childrenDir)
+        return {
+          condition({level, filePath}) {
+            return (
+              level > entry.level &&
+              level <= entry.level + depth &&
+              filePath.startsWith(entry.childrenDir)
+            )
+          }
+        }
       }
       case 'parents': {
         const depth = query?.depth ?? Number.POSITIVE_INFINITY
@@ -164,10 +189,15 @@ export class EntryResolver implements Resolver {
         const parentPaths = segments.map((_, i) =>
           segments.slice(0, i + 1).join('/')
         )
-        return ({level, childrenDir}) =>
-          level < entry.level &&
-          level > entry.level - depth &&
-          parentPaths.includes(childrenDir)
+        return {
+          condition({level, childrenDir}) {
+            return (
+              level < entry.level &&
+              level > entry.level - depth &&
+              parentPaths.includes(childrenDir)
+            )
+          }
+        }
       }
       case 'entryMultiple': {
         const fieldValue = this.field(entry, query.field)
@@ -176,15 +206,15 @@ export class EntryResolver implements Resolver {
             ? fieldValue.map(item => item._entry).filter(Boolean)
             : []
         )
-        return ({id}) => ids.has(id)
+        return {ids: Array.from(ids)}
       }
       case 'entrySingle': {
         const fieldValue = this.field(entry, query.field) as {_entry: string}
         const entryId = fieldValue?._entry
-        return ({id}) => id === entryId
+        return {ids: entryId ? [entryId] : []}
       }
       default:
-        return () => true
+        return {}
     }
   }
 
@@ -202,11 +232,7 @@ export class EntryResolver implements Resolver {
         })
       )
     const related = value as object as EdgeQuery<Projection>
-    return this.query(
-      ctx,
-      related,
-      this.sourceFilter(ctx.entries, entry, related)
-    )
+    return this.query(ctx, related, this.sourceFilter(ctx, entry, related))
   }
 
   select(
@@ -221,7 +247,7 @@ export class EntryResolver implements Resolver {
     return this.selectProjection(ctx, entry, fields)
   }
 
-  condition(ctx: ResolveContext, query: GraphQuery) {
+  condition(ctx: ResolveContext, query: GraphQuery): EntryFilter {
     const location = Array.isArray(query.location)
       ? query.location
       : query.location && this.#scope.locationOf(query.location)
@@ -244,16 +270,26 @@ export class EntryResolver implements Resolver {
         if (name.startsWith('_')) return entry[name.slice(1)]
         return entry.data[name]
       })
-    return (entry: Entry) => {
-      if (checkStatus && !checkStatus(entry)) return false
-      if (checkLocation && !checkLocation(entry)) return false
-      if (checkLocale && !checkLocale(entry)) return false
-      if (checkType && !checkType(entry)) return false
-      const matchesLocale = checkLocale ? checkLocale(entry) : true
-      if (source !== 'translations' && !matchesLocale) return false
-      if (checkEntry && !checkEntry(entry)) return false
-      if (checkFilter && !checkFilter(entry)) return false
-      return true
+    const multipleIds =
+      typeof query.id === 'object' && query.id !== null && query.id.in
+    const ids = Array.isArray(multipleIds)
+      ? multipleIds
+      : typeof query.id === 'string'
+        ? [query.id]
+        : undefined
+    return {
+      ids,
+      condition(entry: Entry) {
+        if (checkStatus && !checkStatus(entry)) return false
+        if (checkLocation && !checkLocation(entry)) return false
+        if (checkLocale && !checkLocale(entry)) return false
+        if (checkType && !checkType(entry)) return false
+        const matchesLocale = checkLocale ? checkLocale(entry) : true
+        if (source !== 'translations' && !matchesLocale) return false
+        if (checkEntry && !checkEntry(entry)) return false
+        if (checkFilter && !checkFilter(entry)) return false
+        return true
+      }
     }
   }
 
@@ -271,22 +307,20 @@ export class EntryResolver implements Resolver {
   query(
     ctx: ResolveContext,
     query: GraphQuery<Projection>,
-    preFilter?: (entry: Entry) => boolean
+    preFilter?: EntryFilter
   ): any {
     const {skip, take, orderBy, groupBy, search, count} = query
-    let results = ctx.entries
-    const postFilter = this.condition(ctx, query)
-    const condition = preFilter
-      ? (entry: Entry) => preFilter(entry) && postFilter(entry)
-      : postFilter
-    if (search && search.length > 0) {
-      results = this.index.search(
-        Array.isArray(search) ? search.join(' ') : search,
-        condition
-      )
-    } else {
-      results = results.filter(condition)
+    const {ids, condition} = this.condition(ctx, query)
+    const preCondition = preFilter?.condition
+    const filter = {
+      ids: ids ?? preFilter?.ids,
+      search: Array.isArray(search) ? search.join(' ') : search,
+      condition:
+        preCondition && condition
+          ? (entry: Entry) => preCondition(entry) && condition(entry)
+          : (condition ?? preCondition)
     }
+    let results = this.index.filter(filter, ctx.preview)
     const isSingle = this.isSingleResult(query as EdgeQuery)
     if (orderBy) {
       const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
@@ -376,34 +410,18 @@ export class EntryResolver implements Resolver {
     await Promise.all(interim.map((row: any) => this.postRow(ctx, row, input)))
   }
 
-  #previewEntries(entries: Array<Entry>, preview?: Entry) {
-    if (!preview) return entries
-    const index = entries.findIndex(entry => {
-      return (
-        entry.id === preview.id &&
-        entry.locale === preview.locale &&
-        entry.status === preview.status
-      )
-    })
-    // Todo: the order here is off
-    if (index === -1) return entries.concat(preview)
-    const copy = entries.slice()
-    copy[index] = preview
-    return copy
-  }
-
   async resolve<Query extends GraphQuery>(
-    query: Query,
-    entries = this.index.entries
+    query: Query
   ): Promise<AnyQueryResult<Query>> {
     const {preview} = query
     const previewEntry =
       preview && 'entry' in preview ? preview.entry : undefined
-    const withPreview = this.#previewEntries(entries, previewEntry)
-    const ctx = {
+    /*const entries = this.index.entries
+    const withPreview = this.#previewEntries(entries, previewEntry)*/
+    const ctx: ResolveContext = {
       status: query.status ?? 'published',
       locale: query.locale,
-      entries: withPreview
+      preview: previewEntry
     }
     const asEdge = (<any>query) as EdgeQuery<Projection>
     const linkResolver = new LinkResolver(this, ctx)
@@ -414,9 +432,10 @@ export class EntryResolver implements Resolver {
 }
 
 export interface ResolveContext {
-  entries: Array<Entry>
+  //entries: Array<Entry>
   status: Status
   locale?: string | null
+  preview: Entry | undefined
 }
 
 export function statusChecker(status: Status): Check {

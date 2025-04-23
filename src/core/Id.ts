@@ -185,6 +185,15 @@ function parse(ksuid: string) {
   return {ts, rnd: buf.buffer.slice(4)}
 }
 
+export function validateId(id: string): boolean {
+  try {
+    parse(id)
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function createId() {
   return generate()
 }
