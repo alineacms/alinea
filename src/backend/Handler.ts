@@ -68,12 +68,14 @@ export function createHandler({
     request: Request,
     context: RequestContext
   ): Promise<Response> {
+    const dev = process.env.ALINEA_DEV_SERVER
     const local = await db
     const simulateLatency = process.env.ALINEA_LATENCY
 
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
     function periodicSync(cnx: RemoteConnection, syncInterval = 60) {
+      if (dev) return
       return limit(async () => {
         if (syncInterval === Number.POSITIVE_INFINITY) return
         const now = Date.now()

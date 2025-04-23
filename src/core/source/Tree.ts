@@ -145,6 +145,24 @@ class TreeBase<Node extends TreeBase<Node>> {
     }
     return changes
   }
+
+  equals(other: ReadonlyTree | WriteableTree): boolean {
+    if (other instanceof ReadonlyTree) return this.sha === other.sha
+    if (this.sha === other.sha) return true
+    if (this.nodes.size !== other.nodes.size) return false
+    for (const [name, entry] of this.nodes) {
+      const otherEntry = other.nodes.get(name)
+      if (!otherEntry) return false
+      if (entry instanceof Leaf) {
+        if (!(otherEntry instanceof Leaf)) return false
+        if (entry.sha !== otherEntry.sha) return false
+      } else {
+        if (!(otherEntry instanceof TreeBase)) return false
+        if (!entry.equals(otherEntry)) return false
+      }
+    }
+    return true
+  }
 }
 
 export class ReadonlyTree extends TreeBase<ReadonlyTree> {
@@ -185,10 +203,6 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
       sha: this.sha,
       entries: this.entries
     })
-  }
-
-  equals(other: ReadonlyTree) {
-    return this.sha === other.sha
   }
 
   toJSON() {
@@ -331,19 +345,23 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     }
   }
 
-  async #getTree(): Promise<Tree> {
-    const entries = await this.#treeEntries()
+  async #getTree(previous?: ReadonlyTree): Promise<Tree> {
+    if (previous?.equals(this)) return previous.toJSON()
+    const entries = await this.#treeEntries(previous)
     if (this.sha) return {sha: this.sha, entries}
     const serialized = serializeTreeEntries(entries)
     this.sha = await hashTree(serialized)
     return {sha: this.sha, entries}
   }
 
-  async #treeEntries(): Promise<Array<Entry>> {
+  async #treeEntries(previous?: ReadonlyTree): Promise<Array<Entry>> {
     const entries = Array<Entry>()
     for (const [name, node] of this.nodes.entries()) {
       if (node instanceof TreeBase) {
-        const entry = await node.#getTree()
+        const previousNode = previous?.get(name)
+        const entry = await node.#getTree(
+          previousNode instanceof ReadonlyTree ? previousNode : undefined
+        )
         // We probably should not allow an empty tree to be added in the
         // first place
         if (entry.entries.length > 0) entries.push({name, ...node, ...entry})
@@ -358,8 +376,8 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     return (await this.#getTree()).sha
   }
 
-  async compile(): Promise<ReadonlyTree> {
-    return new ReadonlyTree(await this.#getTree())
+  async compile(previous?: ReadonlyTree): Promise<ReadonlyTree> {
+    return new ReadonlyTree(await this.#getTree(previous))
   }
 
   clone(): WriteableTree {

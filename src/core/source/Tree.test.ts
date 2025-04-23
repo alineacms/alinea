@@ -94,6 +94,7 @@ test('diff trees', async () => {
 
   tree2.add('subdir/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
   test.is(await tree1.getSha(), await tree2.getSha())
+  test.ok(tree2.equals(tree1))
   const diff2 = tree1.diff(tree2)
   test.equal(diff2, [])
 
@@ -114,11 +115,13 @@ test('diff pre-existing tree', async () => {
   const changes = empty.diff(tree)
   empty.applyChanges(changes)
   test.is(await empty.getSha(), tree.sha)
+  test.ok(tree.equals(empty))
 })
 
 test('ignore empty dirs', async () => {
   const empty = ReadonlyTree.EMPTY
   const withEmpty = new WriteableTree()
+  test.ok(empty.equals(withEmpty))
   withEmpty.add('dir1', empty)
   withEmpty.add('dir2', empty)
   const finished = await withEmpty.compile()

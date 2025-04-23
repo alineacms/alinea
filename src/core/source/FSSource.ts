@@ -66,9 +66,7 @@ export class FSSource implements Source {
       } catch {}
     })
     await Promise.all(tasks)
-    const tree = await builder.compile()
-    const diff = current.diff(tree)
-    if (diff.length === 0) return current
+    const tree = await builder.compile(current)
     this.#current = tree
     return tree
   }
