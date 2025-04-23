@@ -4,7 +4,6 @@ import {Readable} from 'node:stream'
 import {ReadableStream, type Request, Response} from '@alinea/iso'
 import type {Handler} from 'alinea/backend/Handler'
 import {router} from 'alinea/backend/router/Router'
-import {cloudUrl} from 'alinea/cloud/CloudConfig'
 import type {CMS} from 'alinea/core/CMS'
 import {type Trigger, trigger} from 'alinea/core/Trigger'
 import type {User} from 'alinea/core/User'
@@ -130,9 +129,9 @@ export function createLocalServer(
     define: {
       'process.env.NODE_ENV': production ? '"production"' : '"development"',
       'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
-      'process.env.ALINEA_CLOUD_URL': cloudUrl
-        ? JSON.stringify(cloudUrl)
-        : 'undefined',
+      'process.env.ALINEA_FORCE_AUTH': process.env.ALINEA_CLOUD_URL
+        ? 'true'
+        : 'false',
       ...publicDefines(process.env)
     },
     logOverride: {

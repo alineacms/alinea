@@ -1,6 +1,6 @@
+import path from 'node:path'
 import {ensureEnv} from 'alinea/cli/util/EnsureEnv'
 import {forwardCommand} from 'alinea/cli/util/ForwardCommand'
-import path from 'node:path'
 import sade from 'sade'
 
 async function run({production, dir, config}) {
@@ -27,8 +27,8 @@ async function run({production, dir, config}) {
 }
 
 sade('dev', true)
-  .option('--production', `Run in production mode`)
-  .option('--dir', `Development directory`, 'apps/web')
-  .option('--config', `Config file`)
+  .option('--production', 'Run in production mode')
+  .option('--dir', 'Development directory', 'apps/web')
+  .option('--config', 'Config file')
   .action(opts => run(opts))
   .parse(process.argv)

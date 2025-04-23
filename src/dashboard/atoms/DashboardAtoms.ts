@@ -15,7 +15,8 @@ export function useSetDashboardOptions(options: AppProps) {
   useHydrateAtoms([[dashboardOptionsAtom, options]])
 
   const {client, config, local} = options
-  const isAnonymous = local && !process.env.ALINEA_CLOUD_URL
+  const isAnonymous = local && !process.env.ALINEA_FORCE_AUTH
+
   if (isAnonymous) {
     const userData =
       typeof process !== 'undefined' &&
