@@ -17,12 +17,23 @@ export class FSSource implements Source {
   #cwd: string
   #locations = new Map<string, string>()
   #lastModified = new Map<string, number>()
+  #lastScan = 0
+  #currentScan: Promise<ReadonlyTree> | undefined
 
   constructor(cwd: string) {
     this.#cwd = cwd
   }
 
   async getTree() {
+    const now = Date.now()
+    const isRecent = now - this.#lastScan < 1000
+    if (this.#currentScan && isRecent) return this.#currentScan
+    this.#lastScan = now
+    this.#currentScan = this.#scanTree()
+    return this.#currentScan
+  }
+
+  async #scanTree() {
     const current = this.#current
     const builder = new WriteableTree()
     const files = await fs.readdir(this.#cwd, {
