@@ -38,9 +38,11 @@ export interface PostContext {
 
 export class EntryResolver implements Resolver {
   index: EntryIndex
+  #config: Config
   #scope: Scope
 
   constructor(config: Config, index: EntryIndex) {
+    this.#config = config
     this.#scope = getScope(config)
     this.index = index
   }
@@ -463,11 +465,20 @@ function locationChecker(location: Array<string>): Check {
     case 2:
       return entry =>
         entry.workspace === location[0] && entry.root === location[1]
-    case 3:
-      return entry =>
-        entry.workspace === location[0] &&
-        entry.root === location[1] &&
-        entry.parentDir.startsWith(`/${location[2]}`)
+    case 3: {
+      return entry => {
+        if (entry.workspace !== location[0]) return false
+        if (entry.root !== location[1]) return false
+        if (entry.level === 0) return false
+        if (entry.level === 1)
+          return entry.parentDir.endsWith(`/${location[2]}`)
+        if (entry.level > 1) {
+          const position = entry.level - 1
+          const segment = entry.parentDir.split('/').at(-position)
+          return segment === location[2]
+        }
+      }
+    }
     default:
       return entry => true
   }

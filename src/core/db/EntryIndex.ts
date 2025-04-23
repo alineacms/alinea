@@ -483,7 +483,7 @@ function entrySeeds(config: Config): Map<string, Seed> {
             root: rootName,
             data: {
               ...fields,
-              path,
+              path: path.split('/').pop(),
               title: fields.title ?? path
             }
           })

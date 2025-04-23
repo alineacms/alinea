@@ -52,6 +52,14 @@ test('filters', async () => {
   test.is(result3.length, 0)
 })
 
+test('filter location', async () => {
+  const db = await createDb()
+  const [localised3] = await db.find({
+    location: config.workspaces.main.multiLanguage.localised2
+  })
+  test.is(localised3?._path, 'localised3')
+})
+
 test('take/skip', async () => {
   const db = await createDb()
   const lastTwo = await db.find({
