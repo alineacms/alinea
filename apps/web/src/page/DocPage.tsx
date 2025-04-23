@@ -114,7 +114,6 @@ export default async function DocPage({params}: DocPageProps) {
     location: cms.workspaces.main.pages.docs,
     select
   })
-  console.log({nav})
   const entries = [
     root,
     ...nav.map(item => ({
