@@ -47,10 +47,28 @@ export class EntryResolver implements Resolver {
     this.index = index
   }
 
-  call(entry: Entry, internal: {method: string; args: Array<Expr>}): unknown {
+  call(
+    ctx: ResolveContext,
+    entry: Entry,
+    internal: {method: string; args: Array<Expr>}
+  ): unknown {
     switch (internal.method) {
-      case 'snippet':
-        throw new Error('Not implemented')
+      case 'snippet': {
+        if (!ctx.searchTerms)
+          throw new Error('Snippet method requires search terms to be provided')
+        const start = this.expr(ctx, entry, internal.args[0])
+        const end = this.expr(ctx, entry, internal.args[1])
+        const cutOff = this.expr(ctx, entry, internal.args[2])
+        const limit = this.expr(ctx, entry, internal.args[3])
+        return snippet(
+          entry.searchableText,
+          ctx.searchTerms,
+          start as string,
+          end as string,
+          cutOff as string,
+          limit as number
+        )
+      }
       default:
         throw new Error(`Unknown method: "${internal.method}"`)
     }
@@ -64,7 +82,7 @@ export class EntryResolver implements Resolver {
     return entry.data[name]
   }
 
-  expr(entry: Entry, expr: Expr): unknown {
+  expr(ctx: ResolveContext, entry: Entry, expr: Expr): unknown {
     const internal = getExpr(expr)
     switch (internal.type) {
       case 'field': {
@@ -76,7 +94,7 @@ export class EntryResolver implements Resolver {
       case 'entryField':
         return entry[internal.name as keyof Entry]
       case 'call':
-        return this.call(entry, internal)
+        return this.call(ctx, entry, internal)
       case 'value':
         return internal.value
       default:
@@ -223,7 +241,7 @@ export class EntryResolver implements Resolver {
     entry: Entry,
     value: Projection
   ): unknown {
-    if (value && hasExpr(value)) return this.expr(entry, value as Expr)
+    if (value && hasExpr(value)) return this.expr(ctx, entry, value as Expr)
     const source = queryEdge(value)
     if (!source)
       return fromEntries(
@@ -242,7 +260,7 @@ export class EntryResolver implements Resolver {
   ): unknown {
     if (!entry) return null
     if (query.select && hasExpr(query.select))
-      return this.expr(entry, query.select as Expr)
+      return this.expr(ctx, entry, query.select as Expr)
     const fields = this.projection(query)
     return this.selectProjection(ctx, entry, fields)
   }
@@ -327,8 +345,8 @@ export class EntryResolver implements Resolver {
       results.sort((a, b) => {
         for (const order of orders) {
           const expr = (order.asc ?? order.desc)!
-          const valueA = this.expr(a, expr) as string | number
-          const valueB = this.expr(b, expr) as string | number
+          const valueA = this.expr(ctx, a, expr) as string | number
+          const valueB = this.expr(ctx, b, expr) as string | number
           const strings =
             typeof valueA === 'string' && typeof valueB === 'string'
           const numbers =
@@ -352,7 +370,7 @@ export class EntryResolver implements Resolver {
       assert(!Array.isArray(groupBy), 'groupBy must be a single field')
       const groups = new Map<unknown, Entry>()
       for (const entry of results) {
-        const value = this.expr(entry, groupBy)
+        const value = this.expr(ctx, entry, groupBy)
         if (!groups.has(value)) groups.set(value, entry)
       }
       results = Array.from(groups.values())
@@ -421,7 +439,10 @@ export class EntryResolver implements Resolver {
     const ctx: ResolveContext = {
       status: query.status ?? 'published',
       locale: query.locale,
-      preview: previewEntry
+      preview: previewEntry,
+      searchTerms: Array.isArray(query.search)
+        ? query.search.join(' ')
+        : query.search
     }
     const asEdge = (<any>query) as EdgeQuery<Projection>
     const linkResolver = new LinkResolver(this, ctx)
@@ -436,6 +457,7 @@ export interface ResolveContext {
   status: Status
   locale?: string | null
   preview: Entry | undefined
+  searchTerms?: string
 }
 
 export function statusChecker(status: Status): Check {
@@ -602,4 +624,46 @@ function createConditions(
     }
   }
   return conditions
+}
+
+function snippet(
+  body: string,
+  searchTerms: string,
+  start: string,
+  end: string,
+  cutOff: string,
+  limit: number
+): string {
+  if (limit <= 0 || limit > 64)
+    throw new Error(
+      "The 'limit' parameter must be greater than zero and less than or equal to 64."
+    )
+  const terms = searchTerms
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(term => term !== '')
+  const words = body.split(/\s+/)
+  const highlightedWords = Array<string>()
+  let firstMatchIndex = -1
+
+  for (let i = 0; i < words.length; i++) {
+    const lowerCaseWord = words[i].toLowerCase()
+    const isMatch = terms.some(term => lowerCaseWord.includes(term))
+    if (isMatch && firstMatchIndex === -1) firstMatchIndex = i
+    if (isMatch) highlightedWords.push(`${start}${words[i]}${end}`)
+    else highlightedWords.push(words[i])
+  }
+
+  if (firstMatchIndex === -1)
+    return words.slice(0, Math.min(limit, words.length)).join(' ')
+  const idealStartIndex = Math.max(0, firstMatchIndex - Math.floor(limit / 2))
+  const snippetResultWords = highlightedWords.slice(
+    idealStartIndex,
+    idealStartIndex + limit
+  )
+  let snippetResult = snippetResultWords.join(' ')
+  if (idealStartIndex > 0) snippetResult = `${cutOff}${snippetResult}`
+  if (idealStartIndex + limit < highlightedWords.length)
+    snippetResult = `${snippetResult}${cutOff}`
+  return snippetResult
 }
