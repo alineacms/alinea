@@ -60,28 +60,13 @@ export class DashboardWorker extends EventTarget {
   }
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
-    const sha = await this.#apply(mutations)
-    this.dispatchEvent(new IndexEvent({op: 'mutate', id, status: 'pending'}))
-    remote(async () => {
+    await this.#apply(mutations)
+    return remote(async () => {
       const client = await this.#client
-      return client
-        .mutate(mutations)
-        .then(() => {
-          this.dispatchEvent(
-            new IndexEvent({op: 'mutate', id, status: 'success'})
-          )
-        })
-        .catch(error => {
-          console.error(error)
-          this.dispatchEvent(
-            new IndexEvent({op: 'mutate', id, status: 'failure', error})
-          )
-        })
-        .finally(() => {
-          this.sync()
-        })
+      return client.mutate(mutations).then(() => {
+        return this.sync()
+      })
     })
-    return sha
   }
 
   async resolve(raw: string): Promise<unknown> {

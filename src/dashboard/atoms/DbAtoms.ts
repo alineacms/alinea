@@ -5,13 +5,7 @@ import {useEffect} from 'react'
 import {dashboardOptionsAtom} from './DashboardAtoms.js'
 
 export const dbAtom = atom(get => {
-  console.log('db')
   return get(dashboardOptionsAtom).db
-})
-
-export const dbInitialSync = atom(get => {
-  const db = get(dbAtom)
-  return db.sync()
 })
 
 const metaAtom = atom<string>()

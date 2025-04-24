@@ -85,7 +85,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const isMediaFile = editor.activeVersion.type === 'MediaFile'
   const isMediaLibrary = editor.activeVersion.type === 'MediaLibrary'
   const hasChanges = useAtomValue(editor.hasChanges)
-  const currentTransition = useAtomValue(editor.transition)?.transition
+  const currentTransition = useAtomValue(editor.transition)
   const variant = currentTransition
     ? 'transition'
     : previewRevision

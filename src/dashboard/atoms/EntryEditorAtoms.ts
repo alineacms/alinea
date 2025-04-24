@@ -60,9 +60,7 @@ export enum EntryTransition {
 }
 
 const entryTransitionAtoms = atomFamily((id: string) => {
-  return atom<{transition: EntryTransition; done: Promise<any>} | undefined>(
-    undefined
-  )
+  return atom<EntryTransition | undefined>(undefined)
 })
 
 export const entryEditorAtoms = atomFamily(
@@ -71,7 +69,7 @@ export const entryEditorAtoms = atomFamily(
       if (!id) return undefined
       const config = get(configAtom)
       const client = get(clientAtom)
-      const graph = await get(dbAtom)
+      const graph = get(dbAtom)
       let entry: EntryRow | null = await graph.first({
         select: Entry,
         id,
@@ -276,6 +274,7 @@ export function createEntryEditor(entryData: EntryData) {
   }
 
   type Action = {
+    transition: EntryTransition
     result: Promise<unknown>
     errorMessage: string
     clearChanges?: boolean
@@ -285,14 +284,28 @@ export function createEntryEditor(entryData: EntryData) {
     (
       get: Getter,
       set: Setter,
-      {result, errorMessage, clearChanges = false}: Action
+      {
+        transition: entryTransition,
+        result,
+        errorMessage,
+        clearChanges = false
+      }: Action
     ) => {
+      const now = Date.now()
+      set(transition, entryTransition)
       return result
-        .then(() => {
+        .then(async () => {
           if (clearChanges) set(hasChanges, false)
         })
         .catch(error => {
           set(errorAtom, errorMessage, error)
+        })
+        .finally(() => {
+          const duration = Date.now() - now
+          const delay = Math.max(0, 500 - duration)
+          setTimeout(() => {
+            set(transition, undefined)
+          }, delay)
         })
     }
   )
@@ -307,6 +320,7 @@ export function createEntryEditor(entryData: EntryData) {
       path: activeVersion.path
     })
     return set(action, {
+      transition: EntryTransition.SaveDraft,
       result: db.create({
         type,
         id: entry.id,
@@ -351,6 +365,7 @@ export function createEntryEditor(entryData: EntryData) {
     })
 
     return set(action, {
+      transition: EntryTransition.SaveTranslation,
       result: db.create({
         type,
         id: entry.id,
@@ -391,6 +406,7 @@ export function createEntryEditor(entryData: EntryData) {
     const update = await encode(edits.getLocalUpdate())
     const entry = await getDraftEntry({status: 'published'})
     return set(action, {
+      transition: EntryTransition.PublishEdits,
       result: db.update({
         type,
         id: entry.id,
@@ -418,6 +434,7 @@ export function createEntryEditor(entryData: EntryData) {
       path: activeVersion.path
     })
     return set(action, {
+      transition: EntryTransition.RestoreRevision,
       result: db.update({
         type,
         id: entry.id,
@@ -435,6 +452,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!set(confirmErrorsAtom)) return
     const db = get(dbAtom)
     return set(action, {
+      transition: EntryTransition.PublishDraft,
       result: db.publish({
         id: activeVersion.id,
         locale: activeVersion.locale,
@@ -447,6 +465,7 @@ export function createEntryEditor(entryData: EntryData) {
   const discardDraft = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
+      transition: EntryTransition.DiscardDraft,
       result: db.discard({
         id: activeVersion.id,
         locale: activeVersion.locale,
@@ -459,6 +478,7 @@ export function createEntryEditor(entryData: EntryData) {
   const archivePublished = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
+      transition: EntryTransition.ArchivePublished,
       result: db.archive({
         id: activeVersion.id,
         locale: activeVersion.locale
@@ -470,6 +490,7 @@ export function createEntryEditor(entryData: EntryData) {
   const publishArchived = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
+      transition: EntryTransition.PublishArchived,
       result: db.publish({
         id: activeVersion.id,
         locale: activeVersion.locale,
@@ -486,6 +507,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!result) return
     const db = get(dbAtom)
     return set(action, {
+      transition: EntryTransition.DeleteArchived,
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
@@ -517,6 +539,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!result) return
     const db = get(dbAtom)
     return set(action, {
+      transition: EntryTransition.DeleteFile,
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
@@ -544,6 +567,7 @@ export function createEntryEditor(entryData: EntryData) {
   const deleteArchived = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
+      transition: EntryTransition.DeleteArchived,
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
@@ -603,13 +627,17 @@ export function createEntryEditor(entryData: EntryData) {
       parentPaths
     }
     const url = entryUrl(type, urlMeta)
-    return createEntryRow(config, {
-      ...draftEntry,
-      parentDir,
-      childrenDir,
-      filePath,
-      url
-    })
+    return createEntryRow(
+      config,
+      {
+        ...draftEntry,
+        parentDir,
+        childrenDir,
+        filePath,
+        url
+      },
+      status
+    )
   }
 
   const revisionsAtom = atom(async get => {

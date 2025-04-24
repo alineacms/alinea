@@ -177,17 +177,17 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     }
   }, [treeProvider])
   useEffect(() => {
-    const data = tree.getDataRef<AsyncDataLoaderDataRef>()
     const reload = new Set<string>()
     const load = debounce(() => {
       const todo = Array.from(reload)
       reload.clear()
       const tasks = todo.map(async id => {
-        if (data.current.itemData[id]) {
+        const data = tree.getDataRef<AsyncDataLoaderDataRef>()
+        if (data.current.itemData?.[id]) {
           const item = await treeProvider.getItem(id)
           data.current.itemData[id] = item
         }
-        if (data.current.childrenIds[id]) {
+        if (data.current.childrenIds?.[id]) {
           const children = await treeProvider.getChildren(id)
           data.current.childrenIds[id] = children
         }

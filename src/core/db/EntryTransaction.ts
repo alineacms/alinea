@@ -157,7 +157,7 @@ export class EntryTransaction {
       }
       this.#persistSharedFields(id, locale, type, data)
     }
-    const record = createRecord({id, type, index: newIndex, path, data})
+    const record = createRecord({id, type, index: newIndex, path, data}, status)
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
     this.#tx.add(filePath, contents)
     this.#messages.push(this.#reportOp('create', title))
@@ -181,13 +181,16 @@ export class EntryTransaction {
     if (locale !== null && status === 'published') {
       this.#persistSharedFields(id, locale, entry.type, data)
     }
-    const record = createRecord({
-      id,
-      type: entry.type,
-      index: entry.index,
-      path: entry.path,
-      data
-    })
+    const record = createRecord(
+      {
+        id,
+        type: entry.type,
+        index: entry.index,
+        path: entry.path,
+        data
+      },
+      status
+    )
     const path = slugify((data.path as string) ?? entry.data.path ?? entry.path)
     this.#checks.push([entry.filePath, entry.fileHash])
     const childrenDir = paths.join(entry.parentDir, path)
@@ -238,16 +241,19 @@ export class EntryTransaction {
       })
       for (const translation of translations) {
         this.#checks.push([translation.filePath, translation.fileHash])
-        const record = createRecord({
-          id,
-          type: translation.type,
-          index: translation.index,
-          path: translation.path,
-          data: {
-            ...translation.data,
-            ...shared
-          }
-        })
+        const record = createRecord(
+          {
+            id,
+            type: translation.type,
+            index: translation.index,
+            path: translation.path,
+            data: {
+              ...translation.data,
+              ...shared
+            }
+          },
+          translation.status
+        )
         const contents = new TextEncoder().encode(
           JSON.stringify(record, null, 2)
         )
@@ -269,7 +275,7 @@ export class EntryTransaction {
     const childrenDir = paths.join(entry.parentDir, path)
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.remove(entry.filePath)
-    const record = createRecord({...entry, path})
+    const record = createRecord({...entry, path}, 'published')
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
     this.#tx.add(`${childrenDir}.json`, contents)
     if (pathChange) {
@@ -359,13 +365,16 @@ export class EntryTransaction {
         const node = index.byId.get(id)
         assert(node)
         for (const child of node.byFile.values()) {
-          const record = createRecord({
-            id,
-            type: child.type,
-            index: key,
-            path: child.path,
-            data: child.data
-          })
+          const record = createRecord(
+            {
+              id,
+              type: child.type,
+              index: key,
+              path: child.path,
+              data: child.data
+            },
+            child.status
+          )
           const contents = new TextEncoder().encode(
             JSON.stringify(record, null, 2)
           )
@@ -402,13 +411,16 @@ export class EntryTransaction {
         : Config.filePath(this.#config, workspace, root, entry.locale)
       const childrenDir = paths.join(parentDir, entry.path)
       const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
-      const record = createRecord({
-        id,
-        type: entry.type,
-        index: newIndex,
-        path: entry.path,
-        data: entry.data
-      })
+      const record = createRecord(
+        {
+          id,
+          type: entry.type,
+          index: newIndex,
+          path: entry.path,
+          data: entry.data
+        },
+        entry.status
+      )
       const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
       if (toParent || toRoot) {
         this.#tx.remove(entry.filePath)
@@ -429,10 +441,30 @@ export class EntryTransaction {
     })
     let info: Entry | undefined
     for (const entry of entries) {
+      info = entry
       this.#checks.push([entry.filePath, entry.fileHash])
       this.#tx.remove(entry.filePath)
-      if (entry.status !== 'draft') this.#tx.remove(entry.childrenDir)
-      info = entry
+      if (entry.status !== 'draft') {
+        this.#tx.remove(entry.childrenDir)
+      }
+      if (entry.type === 'MediaLibrary') {
+        const workspace = this.#config.workspaces[entry.workspace]
+        const mediaDir = getWorkspace(workspace).mediaDir
+        // Find all files within children
+        const files = index.findMany(f => {
+          return (
+            f.workspace === entry.workspace &&
+            f.root === entry.root &&
+            f.filePath.startsWith(entry.childrenDir) &&
+            f.type === 'MediaFile'
+          )
+        })
+        for (const file of files) {
+          this.removeFile({
+            location: paths.join(mediaDir, file.data.location)
+          })
+        }
+      }
       if (entry.type === 'MediaFile') {
         const workspace = this.#config.workspaces[entry.workspace]
         const mediaDir = getWorkspace(workspace).mediaDir
