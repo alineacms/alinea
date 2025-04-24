@@ -87,8 +87,9 @@ export class EntryResolver implements Resolver {
     switch (internal.type) {
       case 'field': {
         const result = this.field(entry, expr)
-        if (result && typeof result === 'object' && !Array.isArray(result))
-          return {...result}
+        if (result && typeof result === 'object') {
+          return structuredClone(result)
+        }
         return result
       }
       case 'entryField':

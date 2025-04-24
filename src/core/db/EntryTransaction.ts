@@ -339,7 +339,7 @@ export class EntryTransaction {
         })
       ).map(entry => [entry.id, entry])
     )
-    if (after) assert(siblings.has(after))
+    if (after) assert(siblings.has(after), `Sibling not found: ${after}`)
     const siblingList = Array.from(siblings.values())
     const previousIndex = after
       ? siblingList.findIndex(entry => entry.id === after)

@@ -60,7 +60,7 @@ async function entryTreeRoot(
   }
 }
 
-const loaderAtom = atom(async get => {
+const loaderAtom = atom(get => {
   const graph = get(dbAtom)
   const locale = get(localeAtom)
   const visibleTypes = get(visibleTypesAtom)

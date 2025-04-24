@@ -1,5 +1,9 @@
 import styler from '@alinea/styler'
-import {type JSONContent, mergeAttributes, Node as TipTapNode} from '@tiptap/core'
+import {
+  type JSONContent,
+  Node as TipTapNode,
+  mergeAttributes
+} from '@tiptap/core'
 import {Collaboration} from '@tiptap/extension-collaboration'
 import {
   Editor,
@@ -9,27 +13,27 @@ import {
   ReactNodeViewRenderer
 } from '@tiptap/react'
 import type {Field} from 'alinea/core/Field'
-import type {RichTextField} from 'alinea/core/field/RichTextField'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
 import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
+import type {RichTextField} from 'alinea/core/field/RichTextField'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, Icon, px, TextLabel} from 'alinea/ui'
+import {HStack, Icon, TextLabel, px} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {Sink} from 'alinea/ui/Sink'
 import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
-import {Sink} from 'alinea/ui/Sink'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import type {RichTextOptions} from './RichTextField.js'
@@ -49,7 +53,6 @@ function typeExtension(field: Field, name: string, type: Type) {
     const {[BlockNode.id]: id} = node.attrs
     const meta = getType(type)
     const {readOnly} = useFieldOptions(field)
-    if (!id) return null
     return (
       <FormRow field={field} type={type} rowId={id} readOnly={readOnly}>
         <NodeViewWrapper>
@@ -215,7 +218,7 @@ export function RichTextInput<Blocks extends Schema>({
   const isEditable = !options.readOnly && !readOnly
   const editor = useMemo(() => {
     const doc = fragment.doc!
-    let editor
+    let editor!: Editor
     // The y-prosemirror plugin sometimes mutates the doc during setup
     // which we want to catch because the mutations do not mean a value change
     doc.transact(() => {
@@ -227,7 +230,7 @@ export function RichTextInput<Blocks extends Schema>({
         editable: isEditable
       })
     }, 'self')
-    return editor!
+    return editor
   }, [fragment])
   useNonInitialEffect(() => {
     editor.setOptions({editable: isEditable})

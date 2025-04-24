@@ -32,9 +32,9 @@ export function FileSummaryRow(file: SummaryProps) {
                   .map<ReactNode>(({id, title}) => (
                     <Fragment key={id}>{title}</Fragment>
                   ))
-                  .reduce((prev, curr) => [
+                  .reduce((prev, curr, i) => [
                     prev,
-                    <IcRoundKeyboardArrowRight />,
+                    <IcRoundKeyboardArrowRight key={i} />,
                     curr
                   ])}
               </HStack>

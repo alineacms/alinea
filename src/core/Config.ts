@@ -84,7 +84,7 @@ export namespace Config {
     if (hasMultipleWorkspaces) result = paths.join(result, workspace)
     result = paths.join(result, root)
     if (locale) result = paths.join(result, locale)
-    return paths.join(result, ...rest)
+    return paths.join(result, ...rest).toLowerCase()
   }
 
   export function validate(config: Config) {

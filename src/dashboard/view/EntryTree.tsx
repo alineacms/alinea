@@ -164,52 +164,54 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       // hotkeysCoreFeature
     ]
   })
+
+  const reload = debounce(() => {
+    const data = tree.getDataRef<AsyncDataLoaderDataRef>()
+    const parentIds = data.current.childrenIds
+      ? Object.keys(data.current.childrenIds)
+      : []
+    const itemIds = data.current.itemData
+      ? Object.keys(data.current.itemData)
+      : []
+    const tasks = parentIds
+      .map(async parentId => {
+        try {
+          const children = await treeProvider.getChildren(parentId)
+          data.current.childrenIds[parentId] = children
+        } catch {
+          delete data.current.childrenIds[parentId]
+        }
+      })
+      .concat(
+        itemIds.map(async itemId => {
+          try {
+            const item = await treeProvider.getItem(itemId)
+            data.current.itemData[itemId] = item
+          } catch {
+            delete data.current.itemData[itemId]
+          }
+        })
+      )
+    Promise.all(tasks).then(() => {
+      tree.rebuildTree()
+    })
+  }, 0)
+
   useEffect(() => {
-    tree.getItemInstance(ROOT_ID).invalidateChildrenIds()
-    for (const item of tree.getItems()) {
-      const typeName: string = item.getItemData()?.type
-      if (!typeName) continue
-      const type = schema[typeName]
-      const {orderChildrenBy} = getType(type)
-      if (orderChildrenBy) {
-        item.invalidateChildrenIds()
-      }
-    }
+    reload()
   }, [treeProvider])
+
   useEffect(() => {
-    const reload = new Set<string>()
-    const load = debounce(() => {
-      const todo = Array.from(reload)
-      reload.clear()
-      const tasks = todo.map(async id => {
-        const data = tree.getDataRef<AsyncDataLoaderDataRef>()
-        if (data.current.itemData?.[id]) {
-          const item = await treeProvider.getItem(id)
-          data.current.itemData[id] = item
-        }
-        if (data.current.childrenIds?.[id]) {
-          const children = await treeProvider.getChildren(id)
-          data.current.childrenIds[id] = children
-        }
-      })
-      Promise.all(tasks).then(() => {
-        tree.rebuildTree()
-      })
-    }, 0)
     db.events.addEventListener(IndexEvent.type, listen)
     return () => db.events.removeEventListener(IndexEvent.type, listen)
     function listen(event: Event) {
       assert(event instanceof IndexEvent)
-      switch (event.data.op) {
-        case 'entry': {
-          const id = event.data.id
-          reload.add(id)
-          break
-        }
+      if (event.data.op === 'index') {
+        reload()
       }
-      load()
     }
   }, [db])
+
   const loaded = tree.getItems().filter(item => item.getItemData())
   return (
     <>

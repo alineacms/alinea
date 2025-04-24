@@ -112,23 +112,25 @@ function AppAuthenticated() {
                 </SuspenseBoundary>
               </ErrorBoundary>
             </div>
-            <Statusbar.Root>
-              <Statusbar.Status
-                icon={pending === 0 ? IcRoundCheck : IcRoundSync}
-              >
-                {pending === 0 ? 'Synced' : 'Saving…'}
-              </Statusbar.Status>
+            {alineaDev && (
+              <Statusbar.Root>
+                <Statusbar.Status
+                  icon={pending === 0 ? IcRoundCheck : IcRoundSync}
+                >
+                  {pending === 0 ? 'Synced' : 'Saving…'}
+                </Statusbar.Status>
 
-              {sha ? (
-                <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                  {sha.slice(0, 7)}
-                </Statusbar.Status>
-              ) : (
-                <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                  Syncing
-                </Statusbar.Status>
-              )}
-            </Statusbar.Root>
+                {sha ? (
+                  <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                    {sha.slice(0, 7)}
+                  </Statusbar.Status>
+                ) : (
+                  <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                    Syncing
+                  </Statusbar.Status>
+                )}
+              </Statusbar.Root>
+            )}
           </Sidebar.Provider>
         </Toolbar.Provider>
       </Statusbar.Provider>
