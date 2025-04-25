@@ -148,10 +148,16 @@ export class EntryIndex extends EventTarget {
 
   async seed(source: Source) {
     for (const [nodePath, seed] of this.#seeds) {
-      const {type, workspace, root, locale, data} = seed
+      const {
+        type,
+        workspace,
+        root,
+        locale,
+        data: {path}
+      } = seed
       const node = this.byPath.get(nodePath)
       if (node) {
-        assert(node.type === type, 'Type mismatch')
+        assert(node.type === type, `Type mismatch in ${nodePath}`)
       } else {
         const tx = await this.transaction(source)
         const parentPath = paths.dirname(nodePath)
@@ -163,7 +169,7 @@ export class EntryIndex extends EventTarget {
             type,
             workspace,
             root,
-            data
+            data: {path}
           })
           .toRequest()
         const contentChanges = sourceChanges(request.changes)
@@ -284,9 +290,12 @@ export class EntryIndex extends EventTarget {
       throw new Error(`Failed to parse JSON: ${file}`)
     }
     assert(typeof raw === 'object')
+    const nodePath = getNodePath(file)
+    const seed = this.#seeds.get(nodePath)
     const {meta: record, data: fields} = parseRecord(raw as EntryRecord)
     const data: Record<string, unknown> = {
       path,
+      ...seed?.data,
       ...fields
     }
     const id = record.id
