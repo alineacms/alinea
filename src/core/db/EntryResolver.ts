@@ -229,7 +229,7 @@ export class EntryResolver implements Resolver {
         const fieldValue = this.field(entry, query.field)
         const ids: Set<string> = new Set(
           Array.isArray(fieldValue)
-            ? fieldValue.map(item => item._entry).filter(Boolean)
+            ? fieldValue.map(item => item?._entry).filter(Boolean)
             : []
         )
         return {ids: Array.from(ids)}
