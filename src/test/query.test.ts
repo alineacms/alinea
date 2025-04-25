@@ -58,6 +58,11 @@ test('filter location', async () => {
     location: config.workspaces.main.multiLanguage.localised2
   })
   test.is(localised3?._path, 'localised3')
+
+  const rootEntries = await db.find({
+    root: config.workspaces.main.pages
+  })
+  test.is(rootEntries.length, 4)
 })
 
 test('take/skip', async () => {

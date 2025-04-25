@@ -14,7 +14,14 @@ import {
   type Status,
   querySource as queryEdge
 } from 'alinea/core/Graph'
-import {type HasExpr, getExpr, hasExpr, hasField} from 'alinea/core/Internal'
+import {
+  type HasExpr,
+  getExpr,
+  hasExpr,
+  hasField,
+  hasRoot,
+  hasWorkspace
+} from 'alinea/core/Internal'
 import type {Resolver} from 'alinea/core/Resolver'
 import {type Scope, getScope} from 'alinea/core/Scope'
 import {hasExact} from 'alinea/core/util/Checks'
@@ -284,7 +291,7 @@ export class EntryResolver implements Resolver {
           : this.#scope.nameOf(query.type as any)!
       )
     const source = queryEdge(query)
-    const checkEntry = entryChecker(query)
+    const checkEntry = entryChecker(this.#scope, query)
     const checkFilter =
       query.filter &&
       filterChecker(query.filter, (entry, name) => {
@@ -484,14 +491,26 @@ interface Check {
   (input: any): boolean
 }
 
-function entryChecker(query: QuerySettings): Check {
+function isObject(input: any): input is object {
+  return input && typeof input === 'object'
+}
+
+function entryChecker(scope: Scope, query: QuerySettings): Check {
+  const root =
+    isObject(query.root) && hasRoot(query.root)
+      ? scope.nameOf(query.root)
+      : query.root
+  const workspace =
+    isObject(query.workspace) && hasWorkspace(query.workspace)
+      ? scope.nameOf(query.workspace)
+      : query.workspace
   return filterChecker({
     id: query.id,
     parentId: query.parentId,
     path: query.path,
     url: query.url,
-    workspace: query.workspace,
-    root: query.root
+    workspace,
+    root
   })
 }
 
