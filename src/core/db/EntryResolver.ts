@@ -229,7 +229,7 @@ export class EntryResolver implements Resolver {
         const fieldValue = this.field(entry, query.field)
         const ids: Set<string> = new Set(
           Array.isArray(fieldValue)
-            ? fieldValue.map(item => item?._entry).filter(Boolean)
+            ? fieldValue.map(item => item._entry).filter(Boolean)
             : []
         )
         return {ids: Array.from(ids)}
@@ -605,10 +605,12 @@ function createConditions(
       conditions.push(input => getField(input, name) !== inner.isNot)
     const inOp = inner.in
     if (Array.isArray(inOp))
-      conditions.push(input => inOp.includes(getField(input, name)))
+      conditions.push(input => input && inOp.includes(getField(input, name)))
     const notInOp = inner.notIn
     if (Array.isArray(notInOp))
-      conditions.push(input => !notInOp.includes(getField(input, name)))
+      conditions.push(
+        input => input && !notInOp.includes(getField(input, name))
+      )
     if (inner.gt !== undefined)
       conditions.push(input => getField(input, name) > inner.gt)
     if (inner.gte !== undefined)
