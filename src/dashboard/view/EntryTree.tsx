@@ -165,7 +165,7 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     ]
   })
 
-  const reload = debounce(() => {
+  const reload = debounce(treeProvider => {
     const data = tree.getDataRef<AsyncDataLoaderDataRef>()
     const parentIds = data.current.childrenIds
       ? Object.keys(data.current.childrenIds)
@@ -198,7 +198,7 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
   }, 0)
 
   useEffect(() => {
-    reload()
+    reload(treeProvider)
   }, [treeProvider])
 
   useEffect(() => {
@@ -207,10 +207,10 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     function listen(event: Event) {
       assert(event instanceof IndexEvent)
       if (event.data.op === 'index') {
-        reload()
+        reload(treeProvider)
       }
     }
-  }, [db])
+  }, [db, treeProvider])
 
   const loaded = tree.getItems().filter(item => item.getItemData())
   return (
