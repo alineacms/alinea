@@ -301,10 +301,22 @@ export class EntryIndex extends EventTarget {
     const root = segments[segmentIndex++]
     const rootConfig = workspaceConfig[root]
     assert(rootConfig, `Invalid root: ${root}`)
-    const hasI18n = getRoot(rootConfig).i18n
-    const locale = hasI18n ? segments[segmentIndex++] : null
+    const i18n = getRoot(rootConfig).i18n
+    let locale: string | null = null
+    if (i18n) {
+      locale = segments[segmentIndex++].toLowerCase()
+      for (const localeCandidate of i18n.locales) {
+        if (locale === localeCandidate.toLowerCase()) {
+          locale = localeCandidate
+          break
+        }
+      }
+    }
     const entryType = this.#config.schema[type]
     const searchableText = Type.searchableText(entryType, data)
+    let levelOffset = 1
+    if (!this.#singleWorkspace) levelOffset += 1
+    if (i18n) levelOffset += 1
 
     return {
       rowHash: sha,
@@ -322,7 +334,7 @@ export class EntryIndex extends EventTarget {
       parentDir,
       childrenDir,
       parentId: null,
-      level: segments.length - (hasI18n ? 3 : 2),
+      level: segments.length - levelOffset,
       index,
       locale,
 

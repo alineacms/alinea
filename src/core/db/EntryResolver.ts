@@ -273,7 +273,9 @@ export class EntryResolver implements Resolver {
     const checkStatus = query.status && statusChecker(query.status)
     const checkLocation = location && locationChecker(location)
     const locale = query.locale ?? ctx.locale
-    const checkLocale = locale !== undefined && localeChecker(locale)
+    const checkLocale =
+      locale !== undefined &&
+      localeChecker(typeof locale === 'string' ? locale.toLowerCase() : null)
     const checkType =
       Boolean(query.type) &&
       typeChecker(
@@ -527,7 +529,11 @@ function locationChecker(location: Array<string>): Check {
 }
 
 function localeChecker(locale: string | null): Check {
-  return entry => entry.locale === locale
+  return (entry: Entry) => {
+    if (typeof entry.locale === 'string')
+      return entry.locale.toLowerCase() === locale
+    return entry.locale === locale
+  }
 }
 
 function filterChecker(
