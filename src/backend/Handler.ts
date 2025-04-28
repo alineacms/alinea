@@ -75,7 +75,7 @@ export function createHandler({
 
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
-    function periodicSync(cnx: RemoteConnection, syncInterval = 60) {
+    async function periodicSync(cnx: RemoteConnection, syncInterval = 60) {
       if (dev) return
       return limit(async () => {
         if (syncInterval === Number.POSITIVE_INFINITY) return
@@ -152,7 +152,9 @@ export function createHandler({
         const scope = getScope(cms.config)
         const query = scope.parse(raw) as GraphQuery
         if (!query.preview) {
-          await periodicSync(cnx, query.syncInterval)
+          await periodicSync(cnx, query.syncInterval).catch(error => {
+            console.error('Sync error', error)
+          })
         } else {
           const {parse} = await previewParser
           const preview = await parse(
