@@ -204,7 +204,7 @@ export class EntryTransaction {
     const path = slugify((data.path as string) ?? entry.data.path ?? entry.path)
     this.#checks.push([entry.filePath, entry.fileHash])
     const childrenDir = paths.join(entry.parentDir, path)
-    const filePath = `${childrenDir}.json`
+    const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     if (entry.status === 'published') {
       if (filePath !== entry.filePath) {
         // Rename children and other statuses
