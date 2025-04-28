@@ -1,6 +1,7 @@
 import type {Stats} from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
+import pLimit from 'p-limit'
 import {
   type CommitRequest,
   checkCommit,
@@ -11,6 +12,8 @@ import {hashBlob} from './GitUtils.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 import {assert} from './Utils.js'
+
+const limit = pLimit(1)
 
 export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
@@ -78,24 +81,26 @@ export class FSSource implements Source {
   }
 
   async applyChanges(changes: Array<Change>) {
-    await Promise.all(
-      changes.map(async change => {
-        switch (change.op) {
-          case 'delete': {
-            return fs.unlink(`${this.#cwd}/${change.path}`).catch(() => {})
+    return limit(async () => {
+      await Promise.all(
+        changes.map(async change => {
+          switch (change.op) {
+            case 'delete': {
+              return fs.unlink(`${this.#cwd}/${change.path}`).catch(() => {})
+            }
+            case 'add': {
+              const {contents} = change
+              assert(contents, 'Missing contents')
+              const dir = path.dirname(change.path)
+              await fs
+                .mkdir(`${this.#cwd}/${dir}`, {recursive: true})
+                .catch(() => {})
+              return fs.writeFile(`${this.#cwd}/${change.path}`, contents)
+            }
           }
-          case 'add': {
-            const {contents} = change
-            assert(contents, 'Missing contents')
-            const dir = path.dirname(change.path)
-            await fs
-              .mkdir(`${this.#cwd}/${dir}`, {recursive: true})
-              .catch(() => {})
-            return fs.writeFile(`${this.#cwd}/${change.path}`, contents)
-          }
-        }
-      })
-    )
+        })
+      )
+    })
   }
 
   async write(request: CommitRequest) {
