@@ -193,7 +193,7 @@ export class Client implements LocalConnection {
       .catch(err => {
         throw new HttpError(
           500,
-          `Could not ${init?.method || 'GET'} "${params.action}": ${err}`
+          `${err} @ ${init?.method || 'GET'} action ${params.action}`
         )
       })
       .then(async res => {
@@ -202,14 +202,19 @@ export class Client implements LocalConnection {
           const isJson = res.headers
             .get('content-type')
             ?.includes('application/json')
-          const msg = isJson
-            ? JSON.stringify(await res.json(), null, 2)
-            : await res.text()
+          let errorMessage: string
+          if (isJson) {
+            const body = await res.json()
+            if ('error' in body && typeof body.error === 'string')
+              errorMessage = body.error
+            else errorMessage = JSON.stringify(await res.json(), null, 2)
+          } else {
+            errorMessage = await res.text()
+          }
+          errorMessage = errorMessage.replace(/\s+/g, ' ').slice(0, 1024)
           throw new HttpError(
             res.status,
-            `Could not ${init?.method || 'GET'} "${params.action}" (${
-              res.status
-            }) ... ${msg.replace(/\s+/g, ' ').slice(0, 100)}`
+            `${errorMessage} @ ${init?.method || 'GET'} action ${params.action}`
           )
         }
         return res

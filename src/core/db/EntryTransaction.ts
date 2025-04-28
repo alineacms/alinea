@@ -131,7 +131,7 @@ export class EntryTransaction {
       .get(locale)
       ?.has(status as EntryStatus)
     const warnDuplicate = !overwrite && hasSameVersion
-    assert(!warnDuplicate, 'Cannot create duplicate entry')
+    assert(!warnDuplicate, `Cannot create duplicate entry with id ${id}`)
     let newIndex: string
     if (existing) {
       newIndex = existing.index

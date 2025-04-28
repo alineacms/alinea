@@ -10,6 +10,7 @@ import type {
 } from 'alinea/core/Connection'
 import type {DraftKey} from 'alinea/core/Draft'
 import type {GraphQuery} from 'alinea/core/Graph'
+import {HttpError} from 'alinea/core/HttpError.js'
 import {getScope} from 'alinea/core/Scope'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {base64} from 'alinea/core/util/Encoding'
@@ -264,7 +265,10 @@ export function createHandler({
     } catch (error) {
       if (error instanceof Response) return error
       console.error(error)
-      return new Response('Internal Server Error', {status: 500})
+      return Response.json(
+        {success: false, error: String(error)},
+        {status: error instanceof HttpError ? error.code : 500}
+      )
     }
 
     return new Response('Bad Request', {status: 400})
