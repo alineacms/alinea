@@ -527,11 +527,13 @@ class EntryNode {
 
         // Per ID: all have same index, index is valid fractional index
         assert(isValidOrderKey(version.index), 'Invalid index')
-        if (version.index !== this.index)
+        if (version.index !== this.index) {
           reportWarning(
             `This translation has a different _index field (${version.index} != ${this.index})`,
             version.filePath
           )
+          version.index = this.index
+        }
       }
     }
   }
