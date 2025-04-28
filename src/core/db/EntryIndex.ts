@@ -467,11 +467,39 @@ class EntryNode {
 
     // Per ID&locale: one of published or archived, but not both
     if (entry.status === 'published') {
-      assert(!versions.has('archived'))
+      const archived = versions.get('archived')
+      if (archived) {
+        reportWarning(
+          'Entry has both an archived and published version',
+          archived.filePath,
+          entry.filePath
+        )
+        return
+      }
     }
-    if (entry.status === 'archived') assert(!versions.has('published'))
+    if (entry.status === 'archived') {
+      const published = versions.get('published')
+      if (published) {
+        reportWarning(
+          'Entry has both an archived and published version',
+          published.filePath,
+          entry.filePath
+        )
+        return
+      }
+    }
     // Per ID&locale: only one draft
-    if (entry.status === 'draft') assert(!versions.has('draft'))
+    if (entry.status === 'draft') {
+      const draft = versions.get('draft')
+      if (draft) {
+        reportWarning(
+          'Entry has multiple drafts',
+          draft.filePath,
+          entry.filePath
+        )
+        return
+      }
+    }
 
     entry.parentId = parent ? parent.id : null
     versions.set(entry.status, entry)
