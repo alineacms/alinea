@@ -410,6 +410,7 @@ export class EntryTransaction {
         : undefined
 
       if (toParent) {
+        assert(!entry.seeded, `Cannot move seeded entry ${entry.filePath}`)
         assert(parent, `Parent not found: ${parentId}`)
         // Check if the new parent is not a child of the entry
         assert(
@@ -461,6 +462,7 @@ export class EntryTransaction {
     })
     let info: Entry | undefined
     for (const entry of entries) {
+      assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
       info = entry
       this.#checks.push([entry.filePath, entry.fileHash])
       this.#tx.remove(entry.filePath)

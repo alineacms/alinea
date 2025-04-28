@@ -175,6 +175,7 @@ export const entryEditorAtoms = atomFamily(
       const parentNeedsTranslation = entry.parentId ? !parentLink : false
       const parents = withParents?.parents ?? []
       const canPublish = parents.every(parent => parent.status === 'published')
+      const canDelete = !entry.seeded
       if (versions.length === 0) return undefined
       const statuses = fromEntries(
         versions.map(version => [version.status, version])
@@ -187,6 +188,7 @@ export const entryEditorAtoms = atomFamily(
       return createEntryEditor({
         parents,
         canPublish,
+        canDelete,
         translations,
         untranslated,
         parentNeedsTranslation,
@@ -214,6 +216,7 @@ export interface EntryData {
   translations: Array<{locale: string; entryId: string}>
   untranslated: boolean
   canPublish: boolean
+  canDelete: boolean
   parentNeedsTranslation: boolean
   edits: Edits
 }

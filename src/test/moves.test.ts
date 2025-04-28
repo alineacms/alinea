@@ -18,7 +18,15 @@ const Restricted = Config.document('Restricted', {
 })
 const main = Config.workspace('Main', {
   source: 'content',
-  roots: {pages: Config.root('Pages', {})}
+  roots: {
+    pages: Config.root('Pages', {
+      children: {
+        seeded1: Config.page({
+          type: Page
+        })
+      }
+    })
+  }
 })
 const cms = createCMS({
   schema: {Page, Restricted, SubPage},
@@ -64,6 +72,17 @@ test('move parent', async () => {
   await test.throws(async () => {
     await db.move({
       id: child1._id,
+      toParent: parent3._id
+    })
+  })
+
+  // Try move seeded entry
+  const seeded1 = await db.get({
+    path: 'seeded1'
+  })
+  await test.throws(async () => {
+    await db.move({
+      id: seeded1._id,
       toParent: parent3._id
     })
   })
