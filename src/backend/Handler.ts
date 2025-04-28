@@ -10,7 +10,7 @@ import type {
 } from 'alinea/core/Connection'
 import type {DraftKey} from 'alinea/core/Draft'
 import type {GraphQuery} from 'alinea/core/Graph'
-import {HttpError} from 'alinea/core/HttpError.js'
+import {HttpError} from 'alinea/core/HttpError'
 import {getScope} from 'alinea/core/Scope'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {base64} from 'alinea/core/util/Encoding'
