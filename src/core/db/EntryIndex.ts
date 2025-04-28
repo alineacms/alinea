@@ -558,7 +558,8 @@ class EntryNode {
         if (version.index !== this.index) {
           reportWarning(
             `This translation has a different _index field (${version.index} != ${this.index})`,
-            version.filePath
+            version.filePath,
+            this.entries[0]!.filePath
           )
           version.index = this.index
         }
