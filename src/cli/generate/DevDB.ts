@@ -46,6 +46,10 @@ export class DevDB extends LocalDB {
     return super.sync()
   }
 
+  async fix() {
+    await this.index.fix(this.source)
+  }
+
   async watchFiles() {
     const {rootDir, config} = this.#options
     const singleWorkspace = Config.multipleWorkspaces(config)

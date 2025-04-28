@@ -4,7 +4,7 @@ import {reportError} from '../util/Report.js'
 import {createWatcher} from '../util/Watcher.js'
 import type {DevDB} from './DevDB.js'
 
-export function fillCache(db: DevDB): Emitter<DevDB> {
+export function fillCache(db: DevDB, fix?: boolean): Emitter<DevDB> {
   let canceled = false
   let stopWatching = () => {
     canceled = true
@@ -21,6 +21,7 @@ export function fillCache(db: DevDB): Emitter<DevDB> {
 
   const cache = async () => {
     await db.sync()
+    if (fix) await db.fix()
     return db
   }
 

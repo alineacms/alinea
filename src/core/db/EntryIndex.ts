@@ -2,7 +2,11 @@ import {reportWarning} from 'alinea/cli/util/Report'
 import {Config} from 'alinea/core/Config'
 import type {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
-import {type EntryRecord, parseRecord} from 'alinea/core/EntryRecord'
+import {
+  type EntryRecord,
+  createRecord,
+  parseRecord
+} from 'alinea/core/EntryRecord'
 import {getRoot} from 'alinea/core/Internal'
 import {Page} from 'alinea/core/Page'
 import {Schema} from 'alinea/core/Schema'
@@ -14,6 +18,7 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
 import type {Change} from '../source/Change.js'
+import {hashBlob} from '../source/GitUtils.js'
 import {type Source, bundleContents} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
@@ -144,6 +149,29 @@ export class EntryIndex extends EventTarget {
     if (changes.length === 0) return tree.sha
     // for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
     return this.indexChanges(changes)
+  }
+
+  async fix(source: Source) {
+    const tree = await source.getTree()
+    const tx = await this.transaction(source)
+    for (const entry of this.entries) {
+      const record = createRecord(entry, entry.status)
+      const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
+      const sha = await hashBlob(contents)
+      const leaf = tree.getLeaf(entry.filePath)
+      if (sha !== leaf.sha) {
+        tx.update({
+          id: entry.id,
+          set: entry.data,
+          locale: entry.locale,
+          status: entry.status
+        })
+      }
+    }
+    if (tx.empty) return
+    const request = await tx.toRequest()
+    const contentChanges = sourceChanges(request.changes)
+    if (contentChanges.length) await source.applyChanges(contentChanges)
   }
 
   async seed(source: Source) {

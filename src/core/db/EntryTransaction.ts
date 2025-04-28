@@ -54,6 +54,10 @@ export class EntryTransaction {
     this.#tx = new SourceTransaction(source, from)
   }
 
+  get empty() {
+    return this.#messages.length === 0
+  }
+
   create({
     locale,
     type,
