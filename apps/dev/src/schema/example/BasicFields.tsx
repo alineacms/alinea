@@ -2,6 +2,9 @@ import {Config, Field} from 'alinea'
 
 export const BasicFields = Config.document('Basic fields', {
   fields: {
+    path: Field.path('Locked path', {
+      readOnly: true
+    }),
     text: Field.text('Text field'),
     hello: Field.text('Validated text field', {
       help: 'This field only accepts "hello"',

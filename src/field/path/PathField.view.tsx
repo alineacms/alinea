@@ -111,6 +111,7 @@ export function PathInput({field}: PathInputProps) {
           onBlur={() => {
             setFocus(false)
             applySuffix()
+            setEndsWithSeparator(false)
           }}
           style={{paddingRight: px(getRightInputPadding())}}
           readOnly={options.readOnly}
