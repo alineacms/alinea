@@ -157,7 +157,12 @@ export class EntryTransaction {
       }
       this.#persistSharedFields(id, locale, type, data)
     }
-    const record = createRecord({id, type, index: newIndex, path, data}, status)
+    const seeds = existing?.locales.get(locale)?.values()
+    const seeded = seeds?.next().value?.seeded ?? null
+    const record = createRecord(
+      {id, type, index: newIndex, path, seeded, data},
+      status
+    )
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
     this.#tx.add(filePath, contents)
     this.#messages.push(this.#reportOp('create', title))
@@ -187,6 +192,7 @@ export class EntryTransaction {
         type: entry.type,
         index: entry.index,
         path: entry.path,
+        seeded: entry.seeded,
         data
       },
       status
@@ -247,6 +253,7 @@ export class EntryTransaction {
             type: translation.type,
             index: translation.index,
             path: translation.path,
+            seeded: translation.seeded,
             data: {
               ...translation.data,
               ...shared
@@ -371,6 +378,7 @@ export class EntryTransaction {
               type: child.type,
               index: key,
               path: child.path,
+              seeded: child.seeded,
               data: child.data
             },
             child.status
@@ -417,6 +425,7 @@ export class EntryTransaction {
           type: entry.type,
           index: newIndex,
           path: entry.path,
+          seeded: entry.seeded,
           data: entry.data
         },
         entry.status

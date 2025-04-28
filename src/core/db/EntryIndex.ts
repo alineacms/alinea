@@ -159,23 +159,39 @@ export class EntryIndex extends EventTarget {
       if (node) {
         assert(node.type === type, `Type mismatch in ${nodePath}`)
       } else {
-        const tx = await this.transaction(source)
-        const parentPath = paths.dirname(nodePath)
-        const parentNode = this.byPath.get(getNodePath(parentPath))
-        const request = await tx
-          .create({
-            parentId: parentNode?.id ?? null,
-            locale,
-            type,
-            workspace,
-            root,
-            data: {path}
-          })
-          .toRequest()
-        const contentChanges = sourceChanges(request.changes)
-        if (contentChanges.length) {
-          await source.applyChanges(contentChanges)
-          await this.indexChanges(contentChanges)
+        // Find by seeded path
+        const seedPath = `/${nodePath
+          .split('/')
+          .slice(this.#singleWorkspace ? 1 : 2)
+          .join('/')}.json`
+        const node = this.findFirst(entry => {
+          return (
+            entry.seeded === seedPath &&
+            entry.root === root &&
+            entry.workspace === workspace
+          )
+        })
+        if (node) {
+          assert(node.type === type, `Type mismatch in ${nodePath}`)
+        } else {
+          const tx = await this.transaction(source)
+          const parentPath = paths.dirname(nodePath)
+          const parentNode = this.byPath.get(getNodePath(parentPath))
+          const request = await tx
+            .create({
+              parentId: parentNode?.id ?? null,
+              locale,
+              type,
+              workspace,
+              root,
+              data: {path}
+            })
+            .toRequest()
+          const contentChanges = sourceChanges(request.changes)
+          if (contentChanges.length) {
+            await source.applyChanges(contentChanges)
+            await this.indexChanges(contentChanges)
+          }
         }
       }
     }
@@ -334,7 +350,7 @@ export class EntryIndex extends EventTarget {
       workspace,
       root,
       filePath: file,
-      seeded: null,
+      seeded: record.seeded ?? null,
 
       id,
       status,
@@ -398,7 +414,7 @@ class EntryNode {
   add(entry: Entry, parent: EntryNode | undefined) {
     if (this.byFile.has(entry.filePath)) this.remove(entry.filePath)
     const [from] = this.byFile.values()
-    if (from) this.#validate(from, entry)
+    if (from) this.#validate(entry, from)
     const locale = entry.locale
     const versions = this.locales.get(locale) ?? new Map()
     this.locales.set(locale, versions)
@@ -507,7 +523,10 @@ class EntryNode {
   }
   #validate(a: Entry, b: Entry) {
     assert(a.id === b.id, 'ID mismatch')
-    assert(a.root === b.root, 'Root mismatch')
+    assert(
+      a.root === b.root,
+      `Entry has a different root than the previous version: ${a.filePath} (${a.root}) != ${b.filePath} (${b.root})`
+    )
     // Per ID: all have same type
     assert(a.type === b.type, 'Type mismatch')
   }
