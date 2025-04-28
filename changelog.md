@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2]
+- Fix use of the readOnly field property which was overwritten from context
+- Minor fixes to path field
+- Make sure the editor widget doesn't interfere with pointer events of 
+  underlying elements
+
 ## [1.2.1]
 - Added a preview property to TypeConfig to disable the preview on Type level 
   (#407)
