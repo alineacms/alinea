@@ -93,7 +93,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                   <br />
                   You can{' '}
                   <Typo.Link
-                    href="https://alinea.sh/docs/deploy/intro"
+                    href="https://alinea.sh/docs/deploy"
                     target="_blank"
                   >
                     <span>fully configure a custom backend</span>
