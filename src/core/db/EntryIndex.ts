@@ -545,7 +545,7 @@ class EntryNode {
     assert(entry, 'Entry not found')
     const locale = entry.locale
     const versions = this.locales.get(locale)
-    assert(versions, 'Locale not found')
+    assert(versions, `Locale (${locale}) not found for ${filePath}`)
     versions.delete(entry.status)
     if (versions.size === 0) this.locales.delete(locale)
     this.byFile.delete(filePath)
