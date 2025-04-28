@@ -3,6 +3,7 @@ import type {
   ItemInstance,
   TreeDataLoader
 } from '@headless-tree/core'
+import {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
 import type {Graph} from 'alinea/core/Graph'
@@ -52,7 +53,7 @@ async function entryTreeRoot(
   return {
     id: ROOT_ID,
     index: '',
-    type: '',
+    type: ROOT_ID,
     isFolder: true,
     isRoot: true,
     entries: [],
@@ -196,6 +197,10 @@ export interface EntryTreeItem {
 
 export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
   canDrag(item: Array<ItemInstance<EntryTreeItem>>): boolean
+  canDrop(
+    items: Array<ItemInstance<EntryTreeItem>>,
+    target: DragTarget<EntryTreeItem>
+  ): boolean
   onDrop(
     items: Array<ItemInstance<EntryTreeItem>>,
     target: DragTarget<EntryTreeItem>
@@ -210,6 +215,21 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
           const data = item.getItemData()
           return data.canDrag
         })
+      },
+      canDrop(items, target) {
+        const {item: parent} = target
+        if (items.length !== 1) return false
+        const [dropping] = items
+        const parentData = parent.getItemData()
+        const droppingData = dropping.getItemData()
+        const childType = db.config.schema[droppingData.type]
+        if (parentData.type === ROOT_ID) {
+          const entry = droppingData.entries[0]
+          const root = db.config.workspaces[entry.workspace][entry.root]
+          return Config.rootContains(db.config, root, childType)
+        }
+        const parentType = db.config.schema[parentData.type]
+        return Config.typeContains(db.config, parentType, childType)
       },
       onDrop(items, target) {
         const {item: parent} = target

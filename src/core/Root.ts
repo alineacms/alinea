@@ -42,6 +42,10 @@ export namespace Root {
     return getRoot(root).label
   }
 
+  export function contains(root: Root): Array<string | Type> {
+    return getRoot(root).contains ?? []
+  }
+
   export function data(root: Root): RootData {
     return getRoot(root)
   }

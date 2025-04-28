@@ -3,8 +3,10 @@ import type {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
+import {Root} from './Root.js'
 import {Schema} from './Schema.js'
-import type {Type} from './Type.js'
+import {getScope} from './Scope.js'
+import {Type} from './Type.js'
 import {Workspace, type WorkspaceInternal} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
@@ -56,6 +58,46 @@ export namespace Config {
 
   export function type(config: Config, name: string): Type | undefined {
     return config.schema[name]
+  }
+
+  export function rootContains(
+    config: Config,
+    root: Root,
+    childType: Type
+  ): boolean {
+    const allowed = Root.contains(root)
+    if (allowed.length === 0) return false
+    const scope = getScope(config)
+    const typeName = scope.nameOf(childType)
+    for (const type of allowed) {
+      if (typeof type === 'string') {
+        if (type === typeName) return true
+      } else {
+        const name = scope.nameOf(type)
+        if (name === typeName) return true
+      }
+    }
+    return false
+  }
+
+  export function typeContains(
+    config: Config,
+    parentType: Type,
+    childType: Type
+  ): boolean {
+    const allowed = Type.contains(parentType)
+    if (allowed.length === 0) return false
+    const scope = getScope(config)
+    const typeName = scope.nameOf(childType)
+    for (const type of allowed) {
+      if (typeof type === 'string') {
+        if (type === typeName) return true
+      } else {
+        const name = scope.nameOf(type)
+        if (name === typeName) return true
+      }
+    }
+    return false
   }
 
   export function hasAuth(config: Config): boolean {

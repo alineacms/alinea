@@ -416,6 +416,13 @@ export class EntryTransaction {
           !parent?.childrenDir.startsWith(entry.childrenDir),
           'Cannot move entry into its own children'
         )
+        const parentType = this.#config.schema[parent.type]
+        const childType = this.#config.schema[entry.type]
+        const allowed = Config.typeContains(this.#config, parentType, childType)
+        assert(
+          allowed,
+          `Parent of type ${parent.type} does not allow children of type ${entry.type}`
+        )
       }
 
       const parentDir = parent
