@@ -49,7 +49,7 @@ export class CreateOperation<Fields> extends Operation {
   constructor(op: CreateQuery<Fields>) {
     super(async (db): Promise<Array<Mutation>> => {
       const {config} = db
-      const exists = await db.get({
+      const exists = await db.first({
         id: this.id,
         status: 'all'
       })
