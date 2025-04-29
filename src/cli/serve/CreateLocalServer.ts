@@ -71,7 +71,8 @@ export function createLocalServer(
     alineaDev,
     buildOptions,
     production,
-    liveReload
+    liveReload,
+    buildId
   }: ServeContext,
   cms: CMS,
   handleApi: Handler,
@@ -132,6 +133,7 @@ export function createLocalServer(
       'process.env.ALINEA_FORCE_AUTH': process.env.ALINEA_CLOUD_URL
         ? 'true'
         : 'false',
+      'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
       ...publicDefines(process.env)
     },
     logOverride: {
@@ -225,7 +227,7 @@ export function createLocalServer(
           <meta name="handshake_url" value="${handlerUrl}/api?auth=handshake" />
           <meta name="redirect_url" value="${handlerUrl}/api?auth=login" />
           <body>
-            <script type="module" src="./entry.js"></script>
+            <script type="module" src="./entry.js?${buildId}"></script>
           </body>`,
           {headers: {'content-type': 'text/html'}}
         )

@@ -22,7 +22,7 @@ export async function generateDashboard(
     throw new Error(
       'The staticFile option in config.dashboard must point to an .html file (include the extension)'
     )
-  const revision = createId()
+  const buildId = createId()
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/entry'
   }
@@ -51,7 +51,7 @@ export async function generateDashboard(
     external: ['@alinea/generated'],
     define: {
       'process.env.NODE_ENV': '"production"',
-      'process.env.ALINEA_BUILD_ID': JSON.stringify(revision),
+      'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
       ...publicDefines(process.env)
     },
     ...buildOptions,
@@ -66,13 +66,13 @@ export async function generateDashboard(
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="${baseUrl}/entry.css?${revision}" rel="stylesheet" />
+        <link href="${baseUrl}/entry.css?${buildId}" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
         <meta name="redirect_url" value="${handlerUrl}?auth=login" />
         <body>
           <script type="module">
-            import {boot} from '${baseUrl}/entry.js?${revision}'
+            import {boot} from '${baseUrl}/entry.js?${buildId}'
             boot('${handlerUrl}')
           </script>
         </body>

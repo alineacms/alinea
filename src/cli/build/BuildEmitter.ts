@@ -1,4 +1,3 @@
-import {createId} from 'alinea/core/Id'
 import esbuild, {
   type BuildContext,
   type BuildOptions,
@@ -19,14 +18,9 @@ export function buildEmitter(config: BuildOptions): Emitter<BuildInfo> {
       canceled = true
     }
   })
-  const revision = createId()
   esbuild
     .context({
       ...config,
-      define: {
-        ...config.define,
-        'process.env.ALINEA_BUILD_ID': JSON.stringify(revision)
-      },
       plugins: [
         ...(config.plugins || []),
         {

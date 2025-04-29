@@ -5,6 +5,7 @@ import {gitUser} from 'alinea/backend/util/ExecGit'
 import {CloudRemote} from 'alinea/cloud/CloudRemote'
 import type {CMS} from 'alinea/core/CMS'
 import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
+import {createId} from 'alinea/core/Id'
 import {genEffect} from 'alinea/core/util/Async'
 import type {BuildOptions} from 'esbuild'
 import pkg from '../../package.json'
@@ -76,7 +77,8 @@ export async function serve(options: ServeOptions): Promise<void> {
       )
     },
     production,
-    liveReload: new LiveReload()
+    liveReload: new LiveReload(),
+    buildId: createId()
   }
 
   const drafts = new MemoryDrafts()

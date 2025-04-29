@@ -64,7 +64,10 @@ export async function boot(gen: ConfigGenerator) {
 
 function createSharedWorker(): [EventTarget, DashboardWorker] {
   const events = new EventTarget()
-  const worker = new SharedWorker(import.meta.url, {type: 'module'})
+  const worker = new SharedWorker(import.meta.url, {
+    type: 'module',
+    name: 'Alinea dashboard'
+  })
   worker.port.addEventListener('message', ({data}) => {
     if (data.type === IndexEvent.type) {
       events.dispatchEvent(new IndexEvent(data.data))

@@ -6,7 +6,8 @@ export function bootDev() {
 }
 
 async function* getConfig(): ConfigGenerator {
-  let revision = process.env.ALINEA_BUILD_ID as string
+  const buildId = process.env.ALINEA_BUILD_ID as string
+  let revision = buildId
   const source = new EventSource('/~dev')
   const url = new URL('/api', location.href).href
   const createConfig = async (revision: string) => {

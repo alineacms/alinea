@@ -11,4 +11,5 @@ export interface ServeContext {
   buildOptions: BuildOptions
   production: boolean
   liveReload: LiveReload
+  buildId: string
 }
