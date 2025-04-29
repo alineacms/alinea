@@ -29,6 +29,7 @@ import {
 import {useConfig} from '../hook/UseConfig.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
+import {useRoot} from '../hook/UseRoot.js'
 import {useNavigate} from '../util/HashRouter.js'
 import css from './EntryTree.module.scss'
 
@@ -141,6 +142,9 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
   const tree = useTree<EntryTreeItem>({
     rootItemId: ROOT_ID,
     canDrag: items => treeProvider.canDrag(items),
+    canDrop(items, target) {
+      return treeProvider.canDrop(items, target)
+    },
     onDrop(items, target) {
       return treeProvider.onDrop(items, target)
     },
@@ -196,6 +200,14 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       tree.rebuildTree()
     })
   }, 0)
+
+  const root = useRoot()
+
+  useEffect(() => {
+    const data = tree.getDataRef<AsyncDataLoaderDataRef>()
+    data.current.childrenIds[ROOT_ID] = []
+    tree.rebuildTree()
+  }, [root])
 
   useEffect(() => {
     reload(treeProvider)

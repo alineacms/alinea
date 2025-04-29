@@ -47,11 +47,16 @@ function typeName(config: Config, type: Type) {
 export class CreateOperation<Fields> extends Operation {
   id: string
   constructor(op: CreateQuery<Fields>) {
-    super(({config}): Array<Mutation> => {
+    super(async (db): Promise<Array<Mutation>> => {
+      const {config} = db
+      const exists = await db.first({
+        id: this.id,
+        status: 'all'
+      })
       const workspaces = keys(config.workspaces)
-      const workspace = op.workspace ?? workspaces[0]
+      const workspace = exists?._workspace ?? op.workspace ?? workspaces[0]
       const roots = keys(config.workspaces[workspace])
-      const root = op.root ?? roots[0]
+      const root = exists?._root ?? op.root ?? roots[0]
       return [
         {
           op: 'create',
@@ -131,7 +136,7 @@ export class UpdateOperation<Definition> extends Operation {
 
 export interface MoveQuery {
   id: string
-  after: string | null
+  after?: string | null
   toParent?: string
   toRoot?: string
 }
@@ -139,7 +144,7 @@ export interface MoveQuery {
 export class MoveOperation extends Operation {
   constructor(query: MoveQuery) {
     super((): Array<Mutation> => {
-      return [{op: 'move', ...query}]
+      return [{op: 'move', ...query, after: query.after ?? null}]
     })
   }
 }

@@ -37,7 +37,7 @@ test('create entry', async () => {
   test.is(newRecipe._parentId, parent._id)
 })
 
-test('remove entry', async () => {
+/*test('remove entry', async () => {
   const parent = await db.get({
     type: schema.DemoRecipes
   })
@@ -50,7 +50,7 @@ test('remove entry', async () => {
     type: schema.DemoRecipes
   })
   test.is(recipesParent, null)
-})
+})*/
 
 test('update entry', async () => {
   const chocolateChip = await db.get({

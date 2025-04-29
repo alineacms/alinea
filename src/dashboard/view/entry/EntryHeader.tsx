@@ -77,7 +77,7 @@ export interface EntryHeaderProps {
 export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const config = useConfig()
   const locale = useLocale()
-  const {canPublish, untranslated, parentNeedsTranslation} = editor
+  const {canPublish, canDelete, untranslated, parentNeedsTranslation} = editor
   const statusInUrl = useAtomValue(editor.statusInUrl)
   const selectedStatus = useAtomValue(editor.selectedStatus)
   const previewRevision = useAtomValue(editor.previewRevision)
@@ -199,12 +199,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             Publish
           </DropdownMenu.Item>
         )}
-        <DropdownMenu.Item
-          className={styles.root.action()}
-          onClick={deleteArchived}
-        >
-          Delete
-        </DropdownMenu.Item>
+        {canDelete && (
+          <DropdownMenu.Item
+            className={styles.root.action()}
+            onClick={deleteArchived}
+          >
+            Delete
+          </DropdownMenu.Item>
+        )}
       </>
     ) : null
   return (

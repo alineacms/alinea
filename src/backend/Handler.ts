@@ -10,6 +10,7 @@ import type {
 } from 'alinea/core/Connection'
 import type {DraftKey} from 'alinea/core/Draft'
 import type {GraphQuery} from 'alinea/core/Graph'
+import {HttpError} from 'alinea/core/HttpError'
 import {getScope} from 'alinea/core/Scope'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {base64} from 'alinea/core/util/Encoding'
@@ -74,7 +75,7 @@ export function createHandler({
 
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
-    function periodicSync(cnx: RemoteConnection, syncInterval = 60) {
+    async function periodicSync(cnx: RemoteConnection, syncInterval = 60) {
       if (dev) return
       return limit(async () => {
         if (syncInterval === Number.POSITIVE_INFINITY) return
@@ -151,7 +152,9 @@ export function createHandler({
         const scope = getScope(cms.config)
         const query = scope.parse(raw) as GraphQuery
         if (!query.preview) {
-          await periodicSync(cnx, query.syncInterval)
+          await periodicSync(cnx, query.syncInterval).catch(error => {
+            console.error('Sync error', error)
+          })
         } else {
           const {parse} = await previewParser
           const preview = await parse(
@@ -264,7 +267,10 @@ export function createHandler({
     } catch (error) {
       if (error instanceof Response) return error
       console.error(error)
-      return new Response('Internal Server Error', {status: 500})
+      return Response.json(
+        {success: false, error: String(error)},
+        {status: error instanceof HttpError ? error.code : 500}
+      )
     }
 
     return new Response('Bad Request', {status: 400})

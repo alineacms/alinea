@@ -33,6 +33,7 @@ export function registerPreviewWidget() {
       position: fixed;
       bottom: 15px;
       left: 50%;
+      transform: translateX(-50%);
       z-index: 9999;
     }
     .inner {
@@ -45,7 +46,6 @@ export function registerPreviewWidget() {
       height: 35px;
       font-size: 14px;
       font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-      transform: translateX(-50%);
       border: 1.5px solid #E4E4E7;
       transition: border 0.2s ease-out;
       animation: fade-in 0.3s ease-out;

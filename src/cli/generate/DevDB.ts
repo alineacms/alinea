@@ -7,7 +7,7 @@ import {type CommitRequest, checkCommit} from 'alinea/core/db/CommitRequest'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import {CachedFSSource} from 'alinea/core/source/FSSource'
 import {assert} from 'alinea/core/source/Utils'
-import {values} from 'alinea/core/util/Objects'
+import {keys, values} from 'alinea/core/util/Objects'
 import {
   basename,
   contains,
@@ -46,16 +46,24 @@ export class DevDB extends LocalDB {
     return super.sync()
   }
 
+  async fix() {
+    await this.index.fix(this.source)
+  }
+
   async watchFiles() {
     const {rootDir, config} = this.#options
+    const singleWorkspace = Config.multipleWorkspaces(config)
+      ? undefined
+      : keys(config.workspaces)[0]
     const tree = await this.source.getTree()
     const res: WatchFiles = {files: [], dirs: []}
     for (const [path, node] of tree) {
-      const [workspace, ...rest] = path.split('/')
+      const segments = path.split('/')
+      const workspace = singleWorkspace ?? segments.shift()!
       const hasWorkspace = config.workspaces[workspace]
       if (!hasWorkspace) continue
       const contentDir = getWorkspace(hasWorkspace).source
-      const fullPath = join(rootDir, contentDir, rest.join('/'))
+      const fullPath = join(rootDir, contentDir, segments.join('/'))
       if (node.type === 'tree') res.dirs.push(fullPath)
       else res.files.push(fullPath)
     }

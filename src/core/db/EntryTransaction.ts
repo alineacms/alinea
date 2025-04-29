@@ -54,6 +54,10 @@ export class EntryTransaction {
     this.#tx = new SourceTransaction(source, from)
   }
 
+  get empty() {
+    return this.#messages.length === 0
+  }
+
   create({
     locale,
     type,
@@ -127,7 +131,7 @@ export class EntryTransaction {
       .get(locale)
       ?.has(status as EntryStatus)
     const warnDuplicate = !overwrite && hasSameVersion
-    assert(!warnDuplicate, 'Cannot create duplicate entry')
+    assert(!warnDuplicate, `Cannot create duplicate entry with id ${id}`)
     let newIndex: string
     if (existing) {
       newIndex = existing.index
@@ -157,7 +161,12 @@ export class EntryTransaction {
       }
       this.#persistSharedFields(id, locale, type, data)
     }
-    const record = createRecord({id, type, index: newIndex, path, data}, status)
+    const seeds = existing?.locales.get(locale)?.values()
+    const seeded = seeds?.next().value?.seeded ?? null
+    const record = createRecord(
+      {id, type, index: newIndex, path, seeded, data},
+      status
+    )
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
     this.#tx.add(filePath, contents)
     this.#messages.push(this.#reportOp('create', title))
@@ -187,6 +196,7 @@ export class EntryTransaction {
         type: entry.type,
         index: entry.index,
         path: entry.path,
+        seeded: entry.seeded,
         data
       },
       status
@@ -194,7 +204,7 @@ export class EntryTransaction {
     const path = slugify((data.path as string) ?? entry.data.path ?? entry.path)
     this.#checks.push([entry.filePath, entry.fileHash])
     const childrenDir = paths.join(entry.parentDir, path)
-    const filePath = `${childrenDir}.json`
+    const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     if (entry.status === 'published') {
       if (filePath !== entry.filePath) {
         // Rename children and other statuses
@@ -247,6 +257,7 @@ export class EntryTransaction {
             type: translation.type,
             index: translation.index,
             path: translation.path,
+            seeded: translation.seeded,
             data: {
               ...translation.data,
               ...shared
@@ -371,6 +382,7 @@ export class EntryTransaction {
               type: child.type,
               index: key,
               path: child.path,
+              seeded: child.seeded,
               data: child.data
             },
             child.status
@@ -398,11 +410,19 @@ export class EntryTransaction {
         : undefined
 
       if (toParent) {
+        assert(!entry.seeded, `Cannot move seeded entry ${entry.filePath}`)
         assert(parent, `Parent not found: ${parentId}`)
         // Check if the new parent is not a child of the entry
         assert(
           !parent?.childrenDir.startsWith(entry.childrenDir),
           'Cannot move entry into its own children'
+        )
+        const parentType = this.#config.schema[parent.type]
+        const childType = this.#config.schema[entry.type]
+        const allowed = Config.typeContains(this.#config, parentType, childType)
+        assert(
+          allowed,
+          `Parent of type ${parent.type} does not allow children of type ${entry.type}`
         )
       }
 
@@ -417,6 +437,7 @@ export class EntryTransaction {
           type: entry.type,
           index: newIndex,
           path: entry.path,
+          seeded: entry.seeded,
           data: entry.data
         },
         entry.status
@@ -441,6 +462,7 @@ export class EntryTransaction {
     })
     let info: Entry | undefined
     for (const entry of entries) {
+      assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
       info = entry
       this.#checks.push([entry.filePath, entry.fileHash])
       this.#tx.remove(entry.filePath)

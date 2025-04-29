@@ -68,7 +68,7 @@ export class FormAtoms<T = any> {
     } = {}
   ) {
     const readOnly = options.readOnly
-    const forcedOptions = typeof readOnly === 'boolean' ? {readOnly} : {}
+    const forcedOptions = readOnly === true ? {readOnly} : {}
     container.doc!.transact(() => {
       for (const section of Type.sections(type)) {
         for (const [key, field] of entries(Section.fields(section))) {

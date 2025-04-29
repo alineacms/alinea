@@ -2,7 +2,11 @@ import {reportWarning} from 'alinea/cli/util/Report'
 import {Config} from 'alinea/core/Config'
 import type {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
-import {type EntryRecord, parseRecord} from 'alinea/core/EntryRecord'
+import {
+  type EntryRecord,
+  createRecord,
+  parseRecord
+} from 'alinea/core/EntryRecord'
 import {getRoot} from 'alinea/core/Internal'
 import {Page} from 'alinea/core/Page'
 import {Schema} from 'alinea/core/Schema'
@@ -14,6 +18,7 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
 import type {Change} from '../source/Change.js'
+import {hashBlob} from '../source/GitUtils.js'
 import {type Source, bundleContents} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
@@ -146,6 +151,29 @@ export class EntryIndex extends EventTarget {
     return this.indexChanges(changes)
   }
 
+  async fix(source: Source) {
+    const tree = await source.getTree()
+    const tx = await this.transaction(source)
+    for (const entry of this.entries) {
+      const record = createRecord(entry, entry.status)
+      const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
+      const sha = await hashBlob(contents)
+      const leaf = tree.getLeaf(entry.filePath)
+      if (sha !== leaf.sha) {
+        tx.update({
+          id: entry.id,
+          set: entry.data,
+          locale: entry.locale,
+          status: entry.status
+        })
+      }
+    }
+    if (tx.empty) return
+    const request = await tx.toRequest()
+    const contentChanges = sourceChanges(request.changes)
+    if (contentChanges.length) await source.applyChanges(contentChanges)
+  }
+
   async seed(source: Source) {
     for (const [nodePath, seed] of this.#seeds) {
       const {
@@ -159,23 +187,39 @@ export class EntryIndex extends EventTarget {
       if (node) {
         assert(node.type === type, `Type mismatch in ${nodePath}`)
       } else {
-        const tx = await this.transaction(source)
-        const parentPath = paths.dirname(nodePath)
-        const parentNode = this.byPath.get(getNodePath(parentPath))
-        const request = await tx
-          .create({
-            parentId: parentNode?.id ?? null,
-            locale,
-            type,
-            workspace,
-            root,
-            data: {path}
-          })
-          .toRequest()
-        const contentChanges = sourceChanges(request.changes)
-        if (contentChanges.length) {
-          await source.applyChanges(contentChanges)
-          await this.indexChanges(contentChanges)
+        // Find by seeded path
+        const seedPath = `/${nodePath
+          .split('/')
+          .slice(this.#singleWorkspace ? 1 : 2)
+          .join('/')}.json`
+        const node = this.findFirst(entry => {
+          return (
+            entry.seeded === seedPath &&
+            entry.root === root &&
+            entry.workspace === workspace
+          )
+        })
+        if (node) {
+          assert(node.type === type, `Type mismatch in ${nodePath}`)
+        } else {
+          const tx = await this.transaction(source)
+          const parentPath = paths.dirname(nodePath)
+          const parentNode = this.byPath.get(getNodePath(parentPath))
+          const request = await tx
+            .create({
+              parentId: parentNode?.id ?? null,
+              locale,
+              type,
+              workspace,
+              root,
+              data: {path}
+            })
+            .toRequest()
+          const contentChanges = sourceChanges(request.changes)
+          if (contentChanges.length) {
+            await source.applyChanges(contentChanges)
+            await this.indexChanges(contentChanges)
+          }
         }
       }
     }
@@ -334,7 +378,7 @@ export class EntryIndex extends EventTarget {
       workspace,
       root,
       filePath: file,
-      seeded: null,
+      seeded: record.seeded ?? null,
 
       id,
       status,
@@ -398,7 +442,7 @@ class EntryNode {
   add(entry: Entry, parent: EntryNode | undefined) {
     if (this.byFile.has(entry.filePath)) this.remove(entry.filePath)
     const [from] = this.byFile.values()
-    if (from) this.#validate(from, entry)
+    if (from) this.#validate(entry, from)
     const locale = entry.locale
     const versions = this.locales.get(locale) ?? new Map()
     this.locales.set(locale, versions)
@@ -423,11 +467,39 @@ class EntryNode {
 
     // Per ID&locale: one of published or archived, but not both
     if (entry.status === 'published') {
-      assert(!versions.has('archived'))
+      const archived = versions.get('archived')
+      if (archived) {
+        reportWarning(
+          'Entry has both an archived and published version',
+          archived.filePath,
+          entry.filePath
+        )
+        return
+      }
     }
-    if (entry.status === 'archived') assert(!versions.has('published'))
+    if (entry.status === 'archived') {
+      const published = versions.get('published')
+      if (published) {
+        reportWarning(
+          'Entry has both an archived and published version',
+          published.filePath,
+          entry.filePath
+        )
+        return
+      }
+    }
     // Per ID&locale: only one draft
-    if (entry.status === 'draft') assert(!versions.has('draft'))
+    if (entry.status === 'draft') {
+      const draft = versions.get('draft')
+      if (draft) {
+        reportWarning(
+          'Entry has multiple drafts',
+          draft.filePath,
+          entry.filePath
+        )
+        return
+      }
+    }
 
     entry.parentId = parent ? parent.id : null
     versions.set(entry.status, entry)
@@ -483,11 +555,14 @@ class EntryNode {
 
         // Per ID: all have same index, index is valid fractional index
         assert(isValidOrderKey(version.index), 'Invalid index')
-        if (version.index !== this.index)
+        if (version.index !== this.index) {
           reportWarning(
             `This translation has a different _index field (${version.index} != ${this.index})`,
-            version.filePath
+            version.filePath,
+            this.entries[0]!.filePath
           )
+          version.index = this.index
+        }
       }
     }
   }
@@ -499,7 +574,7 @@ class EntryNode {
     assert(entry, 'Entry not found')
     const locale = entry.locale
     const versions = this.locales.get(locale)
-    assert(versions, 'Locale not found')
+    assert(versions, `Locale (${locale}) not found for ${filePath}`)
     versions.delete(entry.status)
     if (versions.size === 0) this.locales.delete(locale)
     this.byFile.delete(filePath)
@@ -507,7 +582,10 @@ class EntryNode {
   }
   #validate(a: Entry, b: Entry) {
     assert(a.id === b.id, 'ID mismatch')
-    assert(a.root === b.root, 'Root mismatch')
+    assert(
+      a.root === b.root,
+      `Entry has a different root than the previous version: ${a.filePath} (${a.root}) != ${b.filePath} (${b.root})`
+    )
     // Per ID: all have same type
     assert(a.type === b.type, 'Type mismatch')
   }
