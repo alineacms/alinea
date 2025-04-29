@@ -125,11 +125,10 @@ export function registerPreviewWidget() {
     @keyframes fade-in {
       from {
         opacity: 0;
-        transform: translate(-50%, 10px);
+        transform: translateY(10px);
       }
       to {
         opacity: 1;
-        transform: translateX(-50%);
       }
     }
   `
