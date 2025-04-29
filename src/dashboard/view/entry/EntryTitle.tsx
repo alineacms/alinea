@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {Type} from 'alinea/core/Type'
-import {Chip, HStack, Loader, px} from 'alinea/ui'
+import {Chip, HStack, px} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtomValue} from 'jotai'
 import type {PropsWithChildren} from 'react'
@@ -27,7 +27,6 @@ export function EntryTitle({
   const activeTitle = useAtomValue(editor.activeTitle)
   const title =
     selectedStatus === editor.activeStatus ? activeTitle : version.title
-  const isLoading = useAtomValue(editor.isLoading)
   return (
     <>
       <Head>
@@ -47,7 +46,6 @@ export function EntryTitle({
               <span>{title}</span>
             </h1>
             <Chip>{Type.label(type)}</Chip>
-            {isLoading && <Loader size={15} />}
           </HStack>
         </HStack>
         {children}

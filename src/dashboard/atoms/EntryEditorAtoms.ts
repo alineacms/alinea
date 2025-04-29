@@ -1,7 +1,6 @@
 import type {Config} from 'alinea/core/Config'
 import type {Connection} from 'alinea/core/Connection'
 import {DOC_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
-import {formatDraftKey} from 'alinea/core/Draft'
 import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
 import type {EntryRow} from 'alinea/core/EntryRow'
@@ -11,7 +10,6 @@ import {getType} from 'alinea/core/Internal'
 import {Root} from 'alinea/core/Root'
 import {type EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
-import {encode} from 'alinea/core/util/BufferToBase64'
 import {
   entryFileName,
   entryFilepath,
@@ -28,7 +26,7 @@ import {type Getter, type Setter, atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {dbAtom, dbMetaAtom, entryRevisionAtoms} from './DbAtoms.js'
+import {dbAtom, entryRevisionAtoms} from './DbAtoms.js'
 import {type Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
@@ -91,37 +89,7 @@ export const entryEditorAtoms = atomFamily(
       const locale = entry.locale
       get(entryRevisionAtoms(entry.id))
       const type = config.schema[entry.type]
-      const edits = get(
-        entryEditsAtoms({
-          id: entry.id,
-          locale: entry.locale
-        })
-      )
-      const key = formatDraftKey(entry)
-      const loadDraft = client
-        .getDraft(key)
-        .then(draft => {
-          if (draft) {
-            edits.applyRemoteUpdate(draft.draft)
-            // The draft is out of sync, this can happen if
-            // - updates done manually to the content files
-            // - the draft storage could not be reached after mutation
-            // We fast forward the draft with the actual current field data
-            // and will submit new updates including it
-            const matches = draft.fileHash === entry!.fileHash
-            const isEmpty = !edits.hasData()
-            if (!matches || isEmpty) {
-              edits.applyEntryData(type, entry!.data)
-            }
-          } else {
-            edits.applyEntryData(type, entry!.data)
-          }
-        })
-        .catch(() => {
-          edits.applyEntryData(type, entry!.data)
-        })
-
-      if (!edits.hasData()) await loadDraft
+      const edits = get(entryEditsAtoms(entry))
 
       const versions = await graph.find({
         select: {
@@ -314,8 +282,6 @@ export function createEntryEditor(entryData: EntryData) {
   )
 
   const saveDraft = atom(null, async (get, set) => {
-    // sync: store update in draft right here
-    const update = await encode(edits.getLocalUpdate())
     // Use the existing path, when the entry gets published the path will change
     const db = get(dbAtom)
     const entry = await getDraftEntry({
@@ -405,8 +371,6 @@ export function createEntryEditor(entryData: EntryData) {
   const publishEdits = atom(null, async (get, set) => {
     if (!set(confirmErrorsAtom)) return
     const db = get(dbAtom)
-    // sync: store update in draft right here
-    const update = await encode(edits.getLocalUpdate())
     const entry = await getDraftEntry({status: 'published'})
     return set(action, {
       transition: EntryTransition.PublishEdits,
@@ -429,9 +393,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!data) return
     const db = get(dbAtom)
     const {edits} = entryData
-    edits.applyEntryData(type, data)
-    const update = await encode(edits.getLocalUpdate())
-    // sync: store update in draft right here
+    edits.applyEntryData(data)
     const entry = await getDraftEntry({
       status: 'published',
       path: activeVersion.path
@@ -696,20 +658,18 @@ export function createEntryEditor(entryData: EntryData) {
 
   const yUpdate = debounceAtom(edits.yUpdate, 250)
   const previewPayload = atom(async get => {
-    const sha = await get(dbMetaAtom)
     const update = get(yUpdate)
     const status = get(selectedStatus)
     return encodePreviewPayload({
       locale: activeVersion.locale,
       entryId: activeVersion.id,
-      contentHash: sha ?? '',
+      contentHash: activeVersion.fileHash,
       status: status,
       update
     })
   })
 
   const discardEdits = edits.resetChanges
-  const isLoading = edits.isLoading
 
   const preview =
     Type.preview(type) ??
@@ -754,7 +714,6 @@ export function createEntryEditor(entryData: EntryData) {
     deleteArchived,
     saveTranslation,
     discardEdits,
-    isLoading,
     showHistory,
     revisionsAtom,
     previewToken,

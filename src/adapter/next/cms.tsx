@@ -77,11 +77,7 @@ export class NextCMS<
     const sync = () => db.syncWith(client).catch(console.error)
     if (!isBuild) {
       if (preview) {
-        preview = await previews.parse(
-          preview,
-          sync,
-          client.getDraft.bind(client)
-        )
+        preview = await previews.parse(preview, sync)
       } else {
         const syncInterval = query.syncInterval ?? 60
         const now = Date.now()

@@ -157,11 +157,7 @@ export function createHandler({
           })
         } else {
           const {parse} = await previewParser
-          const preview = await parse(
-            query.preview,
-            () => local.syncWith(cnx),
-            entryId => cnx.getDraft(entryId)
-          )
+          const preview = await parse(query.preview, () => local.syncWith(cnx))
           query.preview = preview
         }
         return Response.json((await local.resolve(query)) ?? null)
