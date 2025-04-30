@@ -476,26 +476,6 @@ export function createEntryEditor(entryData: EntryData) {
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
-    /*const published = entryData.statuses['published']
-    const mutations: Array<Mutation> = [
-      {
-        type: MutationType.Archive,
-        entryId: published.id,
-        locale: published.locale,
-        file: entryFile(published)
-      },
-      {
-        type: MutationType.RemoveEntry,
-        entryId: published.id,
-        locale: published.locale,
-        file: entryFile({...published, status: 'archived'})
-      }
-    ]
-    return set(transact, {
-      transition: EntryTransition.DeleteArchived,
-      action: () => set(mutateAtom, mutations),
-      errorMessage: 'Could not complete delete action, please try again later'
-    })*/
   })
 
   const deleteFile = atom(null, async (get, set) => {
@@ -508,25 +488,6 @@ export function createEntryEditor(entryData: EntryData) {
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
-    /*const published = entryData.statuses['published']
-    const file = published.data as MediaFile
-    const mutation: Mutation = {
-      type: MutationType.RemoveFile,
-      entryId: published.id,
-      locale: null,
-      workspace: published.workspace,
-      location:
-        MEDIA_LOCATION in file
-          ? (file[MEDIA_LOCATION] as string)
-          : file.location,
-      file: entryFile(published),
-      replace: false
-    }
-    return set(transact, {
-      transition: EntryTransition.DeleteFile,
-      action: () => set(mutateAtom, [mutation]),
-      errorMessage: 'Could not complete delete action, please try again later'
-    })*/
   })
 
   const deleteArchived = atom(null, async (get, set) => {
@@ -536,19 +497,6 @@ export function createEntryEditor(entryData: EntryData) {
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
-
-    /*const archived = entryData.statuses['archived']
-    const mutation: Mutation = {
-      type: MutationType.RemoveEntry,
-      entryId: archived.id,
-      locale: archived.locale,
-      file: entryFile(archived)
-    }
-    return set(transact, {
-      transition: EntryTransition.DeleteArchived,
-      action: () => set(mutateAtom, [mutation]),
-      errorMessage: 'Could not complete delete action, please try again later'
-    })*/
   })
 
   type DraftEntryOptions = {

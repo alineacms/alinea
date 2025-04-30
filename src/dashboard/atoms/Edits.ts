@@ -72,7 +72,6 @@ function createChangesAtom(yMap: Y.Map<unknown>) {
     const listener = (events: Array<Y.YEvent<any>>, tx: Y.Transaction) => {
       if (tx.origin === 'self') return
       setAtom(true)
-      console.log(events)
     }
     yMap.observeDeep(listener)
     return () => yMap.unobserveDeep(listener)
