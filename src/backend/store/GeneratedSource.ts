@@ -8,7 +8,7 @@ export const generatedSource: Promise<MemorySource> = PLazy.from(async () => {
     const {default: source} = await import('@alinea/generated/source.json', {
       with: {type: 'json'}
     })
-    const imported = await importSource(source)
+    const imported = await importSource(<any>source)
     return imported
   } catch (error) {
     console.error(error)
