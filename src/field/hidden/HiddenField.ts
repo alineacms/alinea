@@ -1,5 +1,6 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 
 /** Internal representation of a text field */
 export class HiddenField<T> extends ScalarField<T, FieldOptions<T>> {}
@@ -11,6 +12,6 @@ export function hidden<T>(
 ): HiddenField<T> {
   return new HiddenField({
     options: {label, ...options},
-    view: 'alinea/field/hidden/HiddenField.view#HiddenInput'
+    view: viewKeys.HiddenInput
   })
 }

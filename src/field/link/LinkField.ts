@@ -13,6 +13,7 @@ import {ListField} from 'alinea/core/field/ListField'
 import {UnionField} from 'alinea/core/field/UnionField'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */
@@ -66,7 +67,7 @@ export function createLink<StoredValue extends Reference, QueryValue>(
       if (!picker) return
       if (picker.postProcess) await picker.postProcess(value, loader)
     },
-    view: 'alinea/field/link/LinkField.view#SingleLinkInput'
+    view: viewKeys.SingleLinkInput
   })
 }
 
@@ -132,6 +133,6 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
       }
       await Promise.all(tasks)
     },
-    view: 'alinea/field/link/LinkField.view#MultipleLinksInput'
+    view: viewKeys.MultipleLinksInput
   })
 }

@@ -368,6 +368,7 @@ export class EntryIndex extends EventTarget {
       }
     }
     const entryType = this.#config.schema[type]
+    assert(entryType, `Invalid type: ${type} in ${file} (${workspace}/${root})`)
     const searchableText = Type.searchableText(entryType, data)
     let levelOffset = 1
     if (!this.#singleWorkspace) levelOffset += 1

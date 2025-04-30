@@ -1,5 +1,6 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a text field */
@@ -24,6 +25,6 @@ export function date(
 ): DateField {
   return new DateField({
     options: {label, ...options},
-    view: 'alinea/field/date/DateField.view#DateInput'
+    view: viewKeys.DateInput
   })
 }

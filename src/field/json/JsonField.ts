@@ -1,5 +1,6 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a JSON field */
@@ -24,6 +25,6 @@ export function json<T>(
 ): JsonField<T> {
   return new JsonField({
     options: {label, ...options},
-    view: 'alinea/field/json/JsonField.view#JsonInput'
+    view: viewKeys.JsonInput
   })
 }

@@ -1,5 +1,6 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
 export interface PathOptions extends FieldOptions<string> {
@@ -19,6 +20,6 @@ export function path(
     throw new Error('The shared option is not supported on Path fields')
   return new PathField({
     options: {label, ...options},
-    view: 'alinea/field/path/PathField.view#PathInput'
+    view: viewKeys.PathInput
   })
 }

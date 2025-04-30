@@ -1,5 +1,6 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a time field */
@@ -30,6 +31,6 @@ export function time(
 ): TimeField {
   return new TimeField({
     options: {label, ...options},
-    view: 'alinea/field/time/TimeField.view#TimeInput'
+    view: viewKeys.TimeInput
   })
 }

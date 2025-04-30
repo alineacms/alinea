@@ -1,27 +1,31 @@
 'use client'
 
 import * as schema from '@/schema/demo'
-import {Config, Edit} from 'alinea'
-import {createCMS} from 'alinea/adapter/test/TestCMS'
-import {memoryBackend} from 'alinea/backend/data/MemoryBackend'
-import {createHandler} from 'alinea/backend/Handler'
-import {Entry} from 'alinea/core/Entry'
-import {localUser} from 'alinea/core/User'
+import {Config} from 'alinea'
 import 'alinea/css'
+import {createConfig} from 'alinea/core/Config'
+import type {LocalConnection} from 'alinea/core/Connection'
+import {localUser} from 'alinea/core/User'
+import {
+  type ExportedSource,
+  importSource
+} from 'alinea/core/source/SourceExport'
 import {App} from 'alinea/dashboard/App'
+import {DashboardWorker} from 'alinea/dashboard/boot/DashboardWorker'
+import {WorkerDB} from 'alinea/dashboard/boot/WorkerDB'
 import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
-import {use, useDeferredValue, useMemo} from 'react'
+import {Suspense, use, useDeferredValue, useMemo} from 'react'
 import {DemoHomePage} from './DemoHomePage'
 import {DemoRecipePage} from './DemoRecipePage'
 
-const config = {
+const config = createConfig({
   schema,
   workspaces: {
     demo: Config.workspace('Milk & Cookies', {
       color: '#3F61E8',
       mediaDir: 'public',
-      source: 'content',
+      source: 'content/demo',
       roots: {
         pages: Config.root('Pages'),
         media: Config.media()
@@ -38,7 +42,7 @@ const config = {
         return null
     }
   }
-}
+})
 
 function PreviewHome({entry}) {
   const graph = useGraph()
@@ -62,27 +66,60 @@ function PreviewRecipe({entry}) {
   return <DemoRecipePage {...props} />
 }
 
-async function setup(entries: Array<Entry>) {
-  const cms = createCMS(config)
-  for (const entry of entries) {
-    await cms.commit(Edit.createEntry(entry))
+async function setup(exported: ExportedSource) {
+  const source = await importSource(exported)
+  const worker = new DashboardWorker(source)
+  const notImplemented = () => {
+    throw new Error('Not implemented')
   }
-  const db = await cms.db
-  const backend = memoryBackend(db)
-  const handler = createHandler(cms, backend)
-  const client = handler.connect({
-    apiKey: 'dev',
-    user: localUser,
-    handlerUrl: new URL(location.href)
-  })
-  return {cms, client}
+  const client: LocalConnection = {
+    mutate: notImplemented,
+    previewToken: notImplemented,
+    resolve: notImplemented,
+    revisionData: notImplemented,
+    prepareUpload: notImplemented,
+    write: notImplemented,
+    getDraft: notImplemented,
+    storeDraft: notImplemented,
+    getTreeIfDifferent(sha: string) {
+      return source.getTreeIfDifferent(sha)
+    },
+    getBlobs(shas: Array<string>) {
+      return source.getBlobs(shas)
+    },
+    async revisions() {
+      return []
+    },
+    async user() {
+      return localUser
+    }
+  }
+  const db = new WorkerDB(config, worker, client, worker)
+  await worker.load('demo', config, client)
+  return {config, client, db}
+}
+
+interface RenderDashboardProps {
+  init: ReturnType<typeof setup>
+}
+
+function RenderDashboard({init}: RenderDashboardProps) {
+  const {config, client, db} = use(init)
+  console.log(db)
+  return (
+    <App local config={config} db={db} client={client} views={defaultViews} />
+  )
 }
 
 export interface DemoProps {
-  entries: Array<Entry>
+  exported: ExportedSource
 }
 
-export default function Demo({entries}: DemoProps) {
-  const {cms, client} = use(useMemo(() => setup(entries), [entries]))
-  return <App dev config={cms.config} client={client} views={defaultViews} />
+export default function DemoDashboard({exported}: DemoProps) {
+  const init = useMemo(() => setup(exported), [exported])
+  return (
+    <Suspense>
+      <RenderDashboard init={init} />
+    </Suspense>
+  )
 }

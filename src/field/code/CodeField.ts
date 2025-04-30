@@ -1,5 +1,6 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
 export interface CodeFieldOptions extends FieldOptions<string> {
@@ -17,6 +18,6 @@ export function code(
 ): CodeField {
   return new CodeField({
     options: {label, ...options},
-    view: 'alinea/field/code/CodeField.view#CodeInput'
+    view: viewKeys.CodeInput
   })
 }

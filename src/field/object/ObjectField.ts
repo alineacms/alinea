@@ -1,6 +1,7 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {type FieldsDefinition, type Type, type} from 'alinea/core/Type'
 import {RecordField} from 'alinea/core/field/RecordField'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 
 export interface ObjectOptions<Definition>
   extends FieldOptions<Type.Infer<Definition>> {
@@ -22,7 +23,7 @@ export function object<Fields extends FieldsDefinition>(
   return Object.assign(
     new ObjectField(fields, {
       options: {label, ...options, fields},
-      view: 'alinea/field/object/ObjectField.view#ObjectInput'
+      view: viewKeys.ObjectInput
     }),
     fields
   )

@@ -1,15 +1,16 @@
 import {Field} from 'alinea/core/Field'
 import {
   type Section,
-  section,
   type SectionData,
-  type SectionDefinition
+  type SectionDefinition,
+  section
 } from 'alinea/core/Section'
 import {Type, type} from 'alinea/core/Type'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 
 export class TabsSection implements SectionData {
-  view = 'alinea/field/tabs/Tabs.view#TabsView'
+  view = viewKeys.TabsView
   definition: SectionDefinition
   fields: Record<string, Field>
   sections: Array<Section>

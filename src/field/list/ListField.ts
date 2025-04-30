@@ -3,6 +3,7 @@ import type {InferQueryValue, InferStoredValue} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
 import {ListField} from 'alinea/core/field/ListField'
 import type {ListRow} from 'alinea/core/shape/ListShape'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a list field */
@@ -31,6 +32,6 @@ export function list<Definitions extends Schema>(
 > {
   return new ListField(options.schema, Schema.shapes(options.schema), {
     options: {label, ...options},
-    view: 'alinea/field/list/ListField.view#ListInput'
+    view: viewKeys.ListInput
   })
 }

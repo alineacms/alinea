@@ -17,6 +17,9 @@ import {SelectInput} from 'alinea/field/select/SelectField.view'
 import {TabsView} from 'alinea/field/tabs/Tabs.view'
 import {TextInput} from 'alinea/field/text/TextField.view'
 import {TimeInput} from 'alinea/field/time/TimeField.view'
+import {MediaExplorer} from '../view/MediaExplorer.js'
+import {FileEntry} from '../view/media/FileEntry.js'
+import {FileSummaryRow, FileSummaryThumb} from '../view/media/FileSummary.js'
 import {viewKeys} from './ViewKeys.js'
 
 export const defaultViews = {
@@ -36,5 +39,9 @@ export const defaultViews = {
   [viewKeys.SelectInput]: SelectInput,
   [viewKeys.TabsView]: TabsView,
   [viewKeys.TextInput]: TextInput,
-  [viewKeys.TimeInput]: TimeInput
+  [viewKeys.TimeInput]: TimeInput,
+  [viewKeys.MediaExplorer]: MediaExplorer,
+  [viewKeys.MediaFile]: FileEntry,
+  [viewKeys.FileSummaryRow]: FileSummaryRow,
+  [viewKeys.FileSummaryThumb]: FileSummaryThumb
 }

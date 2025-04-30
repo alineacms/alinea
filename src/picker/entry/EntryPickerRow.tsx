@@ -17,6 +17,7 @@ export function EntryPickerRow({reference}: EntryPickerRowProps) {
   if (!entry) return null
   const type = schema[entry.type]
   const typeView = type && getType(type).summaryRow
-  const View: any = typeView ? resolveView(views, typeView) : EntrySummaryRow
+  const View: any =
+    (typeView && resolveView(views, typeView)) ?? EntrySummaryRow
   return <View {...entry} />
 }

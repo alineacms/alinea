@@ -15,5 +15,9 @@ export const viewKeys = {
   SelectInput: 'alinea/field/select/SelectField.view#SelectInput',
   TabsView: 'alinea/field/tabs/Tabs.view#TabsView',
   TextInput: 'alinea/field/text/TextField.view#TextInput',
-  TimeInput: 'alinea/field/time/TimeField.view#TimeInput'
+  TimeInput: 'alinea/field/time/TimeField.view#TimeInput',
+  MediaExplorer: 'alinea/dashboard/view/MediaExplorer#MediaExplorer',
+  MediaFile: 'alinea/dashboard/view/media/FileEntry#FileEntry',
+  FileSummaryRow: 'alinea/dashboard/view/media/FileSummary#FileSummaryRow',
+  FileSummaryThumb: 'alinea/dashboard/view/media/FileSummary#FileSummaryThumb'
 }

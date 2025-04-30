@@ -1,5 +1,5 @@
-import type {Client} from 'alinea/core/Client'
 import type {Config} from 'alinea/core/Config'
+import type {LocalConnection} from 'alinea/core/Connection'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {getScope} from 'alinea/core/Scope'
 import {trigger} from 'alinea/core/Trigger'
@@ -26,8 +26,8 @@ const remote = pLimit(1)
 export class DashboardWorker extends EventTarget {
   #source: Source
   #localDB: LocalDB | undefined
-  #localClient: Client | undefined
-  #nextLoad = trigger<{db: LocalDB; client: Client}>()
+  #localClient: LocalConnection | undefined
+  #nextLoad = trigger<{db: LocalDB; client: LocalConnection}>()
   #defer: Function | undefined
   #currentRevision: string | undefined
 
@@ -76,7 +76,7 @@ export class DashboardWorker extends EventTarget {
     return db.resolve(query)
   }
 
-  async load(revision: string, config: Config, client: Client) {
+  async load(revision: string, config: Config, client: LocalConnection) {
     if (this.#currentRevision === revision) {
       await this.sync()
       return

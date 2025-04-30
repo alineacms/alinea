@@ -1,5 +1,6 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
 export interface NumberOptions extends FieldOptions<number | null> {
@@ -25,6 +26,6 @@ export function number(
 ): NumberField {
   return new NumberField({
     options: {label, ...options},
-    view: 'alinea/field/number/NumberField.view#NumberInput'
+    view: viewKeys.NumberInput
   })
 }

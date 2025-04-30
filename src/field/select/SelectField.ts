@@ -1,5 +1,6 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
+import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
 /** A string record with option labels */
@@ -42,6 +43,6 @@ export function select<
       label,
       ...options
     },
-    view: 'alinea/field/select/SelectField.view#SelectInput'
+    view: viewKeys.SelectInput
   })
 }

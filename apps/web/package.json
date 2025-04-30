@@ -3,6 +3,7 @@
   "name": "@alinea/web",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
     "build": "bun run --cwd ../.. build && node ../../dist/cli.js build -- next build",
