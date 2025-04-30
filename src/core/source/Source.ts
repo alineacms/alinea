@@ -39,7 +39,6 @@ export async function diff(
   const localTree = await source.getTree()
   const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
   if (!remoteTree) return []
-  console.log(remoteTree.toJSON())
   const changes = localTree.diff(remoteTree)
   return bundleContents(remote, changes)
 }
