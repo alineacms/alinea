@@ -205,7 +205,7 @@ export function createHandler({
       }
 
       if (action === HandleAction.Blob && request.method === 'POST') {
-        expectUser()
+        expectJson()
         const {shas} = object({shas: array(string)})(await body)
         const tree = await local.source.getTree()
         const fromLocal = []
