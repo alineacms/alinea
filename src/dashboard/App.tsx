@@ -54,7 +54,6 @@ function AppAuthenticated() {
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
   const sha = useAtomValue(dbMetaAtom)
-  console.log(sha)
   const pending = useAtomValue(pendingAtom)
   useEffect(() => {
     setPreferredLanguage(locale)

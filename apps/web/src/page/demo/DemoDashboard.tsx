@@ -66,19 +66,18 @@ function PreviewRecipe({entry}) {
   return <DemoRecipePage {...props} />
 }
 
+const notImplemented = () => {
+  throw new Error('Not implemented')
+}
+
 async function setup(exported: ExportedSource) {
   const source = await importSource(exported)
   const worker = new DashboardWorker(source)
-  const notImplemented = () => {
-    throw new Error('Not implemented')
-  }
   const client: LocalConnection = {
-    mutate: notImplemented,
     previewToken: notImplemented,
     resolve: notImplemented,
     revisionData: notImplemented,
     prepareUpload: notImplemented,
-    write: notImplemented,
     getDraft: notImplemented,
     storeDraft: notImplemented,
     getTreeIfDifferent(sha: string) {
@@ -86,6 +85,14 @@ async function setup(exported: ExportedSource) {
     },
     getBlobs(shas: Array<string>) {
       return source.getBlobs(shas)
+    },
+    async write(request) {
+      const tree = await source.getTree()
+      return {sha: tree.sha}
+    },
+    async mutate(mutations) {
+      const tree = await source.getTree()
+      return {sha: tree.sha}
     },
     async revisions() {
       return []
@@ -105,7 +112,6 @@ interface RenderDashboardProps {
 
 function RenderDashboard({init}: RenderDashboardProps) {
   const {config, client, db} = use(init)
-  console.log(db)
   return (
     <App local config={config} db={db} client={client} views={defaultViews} />
   )

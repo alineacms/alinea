@@ -36,7 +36,7 @@ export class DashboardWorker extends EventTarget {
     this.#source = source
   }
 
-  get #db() {
+  get db() {
     return this.#localDB ?? this.#nextLoad.then(res => res.db)
   }
 
@@ -45,7 +45,7 @@ export class DashboardWorker extends EventTarget {
   }
 
   async sync() {
-    const db = await this.#db
+    const db = await this.db
     const client = await this.#client
     if (remote.pendingCount > 0) return db.sha
     const sync = remote(() => db.syncWith(client))
@@ -54,7 +54,7 @@ export class DashboardWorker extends EventTarget {
   }
 
   async #apply(mutations: Array<Mutation>) {
-    const db = await this.#db
+    const db = await this.db
     await local(() => db.mutate(mutations))
     return db.sha
   }
@@ -70,7 +70,7 @@ export class DashboardWorker extends EventTarget {
   }
 
   async resolve(raw: string): Promise<unknown> {
-    const db = await this.#db
+    const db = await this.db
     const scope = getScope(db.config)
     const query = scope.parse(raw) as GraphQuery
     return db.resolve(query)
