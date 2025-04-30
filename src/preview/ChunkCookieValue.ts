@@ -9,8 +9,8 @@ export function chunkCookieValue(
   maxLength = MAX_COOKIE_LENGTH
 ): Array<Cookie> {
   const res: Array<Cookie> = []
-  let position = 0,
-    batch = 0
+  let position = 0
+  let batch = 0
   while (position < cookieValue.length) {
     const name = `${cookieName}-${batch}`
     const amount = maxLength - name.length
@@ -32,7 +32,7 @@ export function parseChunkedCookies(
   if (!amount) return undefined
   const count = Number(amount.value)
   const parts = allCookies
-    .filter(({name}) => name.startsWith(cookieName + '-'))
+    .filter(({name}) => name.startsWith(`${cookieName}-`))
     .sort((a, b) => {
       return a.name.localeCompare(b.name)
     })

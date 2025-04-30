@@ -1,6 +1,6 @@
 // Source: https://codesandbox.io/s/7mx5e?file=/src/use-element-size.ts:0-2030
 
-import {RefObject, useLayoutEffect, useMemo, useRef, useState} from 'react'
+import {type RefObject, useLayoutEffect, useMemo, useRef, useState} from 'react'
 
 // ugh, this is "making typescript happy" pain
 interface SubscribeToSizeChanges {

@@ -1,8 +1,8 @@
-import {Backend} from 'alinea/backend/Backend'
+import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
 import * as driver from 'rado/driver'
-import {basicAuth} from './BasicAuth.js'
-import {databaseApi} from './DatabaseApi.js'
-import {githubApi, GithubOptions} from './GithubApi.js'
+import {BasicAuth} from './BasicAuth.js'
+import {DatabaseApi} from './DatabaseApi.js'
+import {GithubApi, type GithubOptions} from './GithubApi.js'
 
 export type AvailableDrivers =
   | 'd1'
@@ -38,14 +38,50 @@ export interface BackendOptions {
   github: GithubOptions
 }
 
-export function createBackend(options: BackendOptions): Backend {
-  const ghApi = githubApi(options.github)
+export function createBackend(
+  options: BackendOptions
+): (context: RequestContext) => RemoteConnection {
   const db = driver[options.database.driver](options.database.client)
-  const dbApi = databaseApi({...options, db, target: ghApi.target})
-  const auth = basicAuth(options.auth)
+  return context => {
+    const {user} = context
+    const author =
+      user?.name && user.email
+        ? {name: user.name, email: user.email}
+        : undefined
+    const ghApi = new GithubApi({
+      author,
+      ...options.github
+    })
+    const dbApi = new DatabaseApi(context, {db})
+    const auth = new BasicAuth(context, options.auth)
+    return createRemote(ghApi, dbApi, auth)
+  }
+}
+
+export function createRemote(
+  ...impl: Array<Partial<RemoteConnection>>
+): RemoteConnection {
+  const reversed = impl.reverse()
+  const call = (name: keyof RemoteConnection): any => {
+    const use = reversed.find(i => name in i)
+    return use
+      ? use[name]!.bind(use)
+      : () => {
+          throw new Error(`Backend does not implement ${name}`)
+        }
+  }
   return {
-    ...ghApi,
-    ...dbApi,
-    auth
+    authenticate: call('authenticate'),
+    verify: call('verify'),
+    getTreeIfDifferent: call('getTreeIfDifferent'),
+    getBlobs: call('getBlobs'),
+    write: call('write'),
+    revisions: call('revisions'),
+    revisionData: call('revisionData'),
+    getDraft: call('getDraft'),
+    storeDraft: call('storeDraft'),
+    prepareUpload: call('prepareUpload'),
+    handleUpload: call('handleUpload'),
+    previewUpload: call('previewUpload')
   }
 }

@@ -1,6 +1,7 @@
+import type {Graph} from 'alinea/core/Graph'
 import {useAtomValue} from 'jotai'
-import {graphAtom} from '../atoms/DbAtoms.js'
+import {dbAtom} from '../atoms/DbAtoms.js'
 
-export function useGraph() {
-  return useAtomValue(graphAtom)
+export function useGraph(): Graph {
+  return useAtomValue(dbAtom)
 }

@@ -1,16 +1,16 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
-import {CMS} from 'alinea/core/CMS'
+import type {CMS} from 'alinea/core/CMS'
 import {createId} from 'alinea/core/Id'
 import {code} from 'alinea/core/util/CodeGen'
 import esbuild from 'esbuild'
 import escapeHtml from 'escape-html'
-import fs from 'node:fs'
-import path from 'node:path'
 import {buildOptions} from '../build/BuildOptions.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
-import {GenerateContext} from './GenerateContext.js'
+import type {GenerateContext} from './GenerateContext.js'
 
 export async function generateDashboard(
   {configLocation, rootDir, configDir}: GenerateContext,
@@ -20,9 +20,9 @@ export async function generateDashboard(
 ) {
   if (!staticFile.endsWith('.html'))
     throw new Error(
-      `The staticFile option in config.dashboard must point to an .html file (include the extension)`
+      'The staticFile option in config.dashboard must point to an .html file (include the extension)'
     )
-  const revision = createId()
+  const buildId = createId()
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/entry'
   }
@@ -51,6 +51,7 @@ export async function generateDashboard(
     external: ['@alinea/generated'],
     define: {
       'process.env.NODE_ENV': '"production"',
+      'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
       ...publicDefines(process.env)
     },
     ...buildOptions,
@@ -58,20 +59,20 @@ export async function generateDashboard(
     tsconfig,
     logLevel: 'error'
   })
-  const baseUrl = './' + escapeHtml(basename)
+  const baseUrl = `./${escapeHtml(basename)}`
   await writeFileIfContentsDiffer(
     path.join(rootDir, staticFile),
     code`
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="${baseUrl}/entry.css?${revision}" rel="stylesheet" />
+        <link href="${baseUrl}/entry.css?${buildId}" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
         <meta name="redirect_url" value="${handlerUrl}?auth=login" />
         <body>
           <script type="module">
-            import {boot} from '${baseUrl}/entry.js?${revision}'
+            import {boot} from '${baseUrl}/entry.js?${buildId}'
             boot('${handlerUrl}')
           </script>
         </body>

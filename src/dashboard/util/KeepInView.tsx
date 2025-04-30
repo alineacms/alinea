@@ -1,5 +1,5 @@
 import {Loader} from 'alinea/ui'
-import {PropsWithChildren, ReactNode, Suspense, useEffect, useRef} from 'react'
+import {type PropsWithChildren, type ReactNode, Suspense, useEffect, useRef} from 'react'
 
 function OnLoaded({onLoad, children}: PropsWithChildren<{onLoad: () => void}>) {
   useEffect(() => {

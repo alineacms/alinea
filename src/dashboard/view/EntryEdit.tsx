@@ -1,5 +1,4 @@
 import styler from '@alinea/styler'
-import {EntryStatus} from 'alinea/core/EntryRow'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {TabsSection} from 'alinea/field/tabs/Tabs'
@@ -13,7 +12,7 @@ import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useEffect, useRef, useState} from 'react'
-import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
+import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {FormProvider} from '../atoms/FormAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {InputForm} from '../editor/InputForm.js'
@@ -45,7 +44,7 @@ function ShowChanges({editor}: EntryEditProps) {
   const compareTo = hasChanges
     ? editor.activeVersion
     : editor.statuses[
-        editor.availableStatuses.find(status => status !== EntryStatus.Draft)!
+        editor.availableStatuses.find(status => status !== 'draft')!
       ]
   return <EntryDiff entryA={compareTo} entryB={draftEntry} />
 }
@@ -97,7 +96,7 @@ export function EntryEdit({editor}: EntryEditProps) {
           translate()
         } else if (config.enableDrafts) {
           if (hasChanges) saveDraft()
-          else if (selectedStatus === EntryStatus.Draft) publishDraft()
+          else if (selectedStatus === 'draft') publishDraft()
         } else {
           if (hasChanges) publishEdits()
         }
@@ -111,12 +110,13 @@ export function EntryEdit({editor}: EntryEditProps) {
   const sections = Type.sections(editor.type)
   const hasRootTabs =
     sections.length === 1 && sections[0][Section.Data] instanceof TabsSection
-  const tabs: TabsSection | false =
-    hasRootTabs && (sections[0][Section.Data] as TabsSection)
-  const visibleTypes = tabs && tabs.types.filter(type => !Type.isHidden(type))
+  const tabs: TabsSection | undefined = hasRootTabs
+    ? (sections[0][Section.Data] as TabsSection)
+    : undefined
+  const visibleTypes = tabs?.types.filter(type => !Type.isHidden(type))
 
   let selectedRootTab = 0
-  if (hasRootTabs && visibleTypes !== false && rootTab !== undefined) {
+  if (hasRootTabs && visibleTypes && rootTab !== undefined) {
     selectedRootTab = rootTab
     if (rootTab >= visibleTypes.length) selectedRootTab = 0
   }

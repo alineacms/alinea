@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {QueryWithResult} from 'alinea/core/Graph'
+import type {QueryWithResult} from 'alinea/core/Graph'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {HStack, Stack} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
@@ -13,7 +13,7 @@ import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {IconButton} from './IconButton.js'
 import css from './SearchBox.module.scss'
-import {Explorer, ExporerItemSelect} from './explorer/Explorer.js'
+import {Explorer, type ExporerItemSelect} from './explorer/Explorer.js'
 
 const styles = styler(css)
 

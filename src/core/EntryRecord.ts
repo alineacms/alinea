@@ -1,4 +1,5 @@
-import {EntryRow} from './EntryRow.js'
+import type {EntryStatus} from './Entry.js'
+import type {EntryRow} from './EntryRow.js'
 
 export interface EntryMeta {
   _id: string
@@ -51,7 +52,10 @@ export function parseRecord(record: EntryRecord) {
   }
 }
 
-export function createRecord(entry: RequiredEntryFields): EntryRecord {
+export function createRecord(
+  entry: RequiredEntryFields,
+  status: EntryStatus
+): EntryRecord {
   const {path = entry.path, title = entry.title, ...data} = entry.data
   const id = entry.id
   const meta: EntryRecord = {
@@ -61,10 +65,13 @@ export function createRecord(entry: RequiredEntryFields): EntryRecord {
   }
   if (entry.seeded) meta[EntryRecord.seeded] = entry.seeded
   if (!entry.parentId) meta[EntryRecord.root] = entry.root
-  return {
+  const result = {
     ...meta,
     title,
-    // path,
+    path,
     ...data
   } as EntryRecord
+  // biome-ignore lint/performance/noDelete: <explanation>
+  if (status !== 'draft') delete result.path
+  return result
 }

@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import {
-  HTMLAttributes,
-  MouseEvent as ReactMouseEvent,
-  RefObject,
+  type HTMLAttributes,
+  type MouseEvent as ReactMouseEvent,
+  type RefObject,
   useRef
 } from 'react'
 import css from './Pane.module.scss'
@@ -56,7 +56,7 @@ function Divider({
     window.addEventListener('mousemove', move)
     window.addEventListener(
       'mouseup',
-      function () {
+      () => {
         container.current?.classList.remove(draggingClassName)
         window.removeEventListener('mousemove', move)
         restoreIframes()

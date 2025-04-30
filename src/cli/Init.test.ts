@@ -1,7 +1,7 @@
+import {suite} from '@alinea/suite'
 import {init} from 'alinea/cli/Init'
 import fs from 'fs-extra'
 import path from 'node:path'
-import {test} from 'uvu'
 
 const testPms = false
 
@@ -17,6 +17,8 @@ async function setup(cwd: string) {
 async function run(cwd: string) {
   await init({cwd, quiet: true, next: true})
 }
+
+const test = suite(import.meta)
 
 if (testPms) {
   test('npm', async () => {
@@ -58,5 +60,3 @@ if (testPms) {
     await run(cwd)
   })
 }
-
-test.run()

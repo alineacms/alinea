@@ -1,8 +1,8 @@
-import {Field, FieldMeta, FieldOptions} from '../Field.js'
+import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {createId} from '../Id.js'
 import {Schema} from '../Schema.js'
-import {ListMutator, ListRow, ListShape} from '../shape/ListShape.js'
-import {RecordShape} from '../shape/RecordShape.js'
+import {type ListMutator, type ListRow, ListShape} from '../shape/ListShape.js'
+import type {RecordShape} from '../shape/RecordShape.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 
 export class ListField<

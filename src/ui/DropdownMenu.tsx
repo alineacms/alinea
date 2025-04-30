@@ -2,8 +2,8 @@ import styler from '@alinea/styler'
 import {autoUpdate, flip, offset, useFloating} from '@floating-ui/react-dom'
 import {Menu} from '@headlessui/react'
 import {
-  ButtonHTMLAttributes,
-  HTMLAttributes,
+  type ButtonHTMLAttributes,
+  type HTMLAttributes,
   createContext,
   useContext
 } from 'react'

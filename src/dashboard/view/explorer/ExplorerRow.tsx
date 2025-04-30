@@ -1,12 +1,11 @@
 import styler from '@alinea/styler'
-import {QueryWithResult} from 'alinea/core/Graph'
-import {Schema} from 'alinea/core/Schema'
-import {SummaryProps} from 'alinea/core/media/Summary'
-import {useAtomValue} from 'jotai'
-import {ComponentType, memo} from 'react'
+import type {QueryWithResult} from 'alinea/core/Graph'
+import type {Schema} from 'alinea/core/Schema'
+import type {SummaryProps} from 'alinea/core/media/Summary'
+import {type ComponentType, memo} from 'react'
 import {useQuery} from 'react-query'
-import {graphAtom} from '../../atoms/DbAtoms.js'
-import {ExporerItemSelect} from './Explorer.js'
+import {useGraph} from '../../hook/UseGraph.js'
+import type {ExporerItemSelect} from './Explorer.js'
 import {ExplorerItem} from './ExplorerItem.js'
 import css from './ExplorerRow.module.scss'
 
@@ -31,7 +30,7 @@ export const ExplorerRow = memo(function ExplorerRow({
   summaryView,
   defaultView
 }: ExplorerRowProps) {
-  const graph = useAtomValue(graphAtom)
+  const graph = useGraph()
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
   const {data} = useQuery(

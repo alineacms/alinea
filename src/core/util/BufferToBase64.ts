@@ -16,17 +16,11 @@ export const decode = (
   btoa: string,
   format: CompressionFormat | '' = 'deflate'
 ) => {
-  for (
-    var blob,
-      str = atob(btoa),
-      {length} = str,
-      buffer = new Uint8Array(length),
-      i = 0;
-    i < length;
-    i++
-  )
-    buffer[i] = str.charCodeAt(i)
-  blob = new Blob([buffer])
+  const str = atob(btoa)
+  const {length} = str
+  const buffer = new Uint8Array(length)
+  for (let i = 0; i < length; i++) buffer[i] = str.charCodeAt(i)
+  const blob = new Blob([buffer])
   return (
     format
       ? new Response(blob.stream().pipeThrough(new DecompressionStream(format)))
@@ -44,20 +38,16 @@ export const encode = async (
   buffer: ArrayBuffer | Uint8Array,
   format: CompressionFormat | '' = 'deflate'
 ) => {
-  for (
-    var blob = new Blob([buffer]),
-      res = format
-        ? new Response(blob.stream().pipeThrough(new CompressionStream(format)))
-        : blob,
-      view = new Uint8Array(await res.arrayBuffer()),
-      {fromCharCode} = String,
-      {length} = view,
-      out = '',
-      c = 2000,
-      i = 0;
-    i < length;
-    i += c
-  )
+  const blob = new Blob([buffer])
+  const res = format
+    ? new Response(blob.stream().pipeThrough(new CompressionStream(format)))
+    : blob
+  const view = new Uint8Array(await res.arrayBuffer())
+  const {fromCharCode} = String
+  const {length} = view
+  let out = ''
+  const c = 2000
+  for (let i = 0; i < length; i += c)
     out += fromCharCode(...view.subarray(i, i + c))
   return btoa(out)
 }

@@ -1,13 +1,13 @@
 import styler from '@alinea/styler'
-import {Revision} from 'alinea/backend/Backend'
+import type {Revision} from 'alinea/core/Connection'
 import {HStack, Icon, Loader, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
+import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
-import {IcRoundVisibility} from 'alinea/ui/icons/IcRoundVisibility'
 import {useAtom, useAtomValue} from 'jotai'
 import {Suspense} from 'react'
-import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
-import {EntryEditProps} from '../EntryEdit.js'
+import type {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
+import type {EntryEditProps} from '../EntryEdit.js'
 import css from './EntryHistory.module.scss'
 
 const styles = styler(css)
@@ -51,6 +51,7 @@ function RevisionItem({editor, revision, isCurrent}: RevisionItemProps) {
   const [previewRevision, setPreviewRevision] = useAtom(editor.previewRevision)
   return (
     <button
+      type="button"
       key={revision.ref}
       title={revision.description}
       className={styles.list.revision({
@@ -63,7 +64,7 @@ function RevisionItem({editor, revision, isCurrent}: RevisionItemProps) {
     >
       <HStack center gap={10}>
         {isCurrent ? (
-          <Icon icon={IcRoundVisibility} size={18} />
+          <Icon icon={IcOutlineRemoveRedEye} size={18} />
         ) : (
           <Icon icon={IcRoundPublishedWithChanges} size={18} />
         )}

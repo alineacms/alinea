@@ -1,24 +1,26 @@
 import {Config} from 'alinea/core/Config'
-import {Connection} from 'alinea/core/Connection'
+import type {LocalConnection} from 'alinea/core/Connection'
 import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
+import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
+import {IcRoundSync} from 'alinea/ui/icons/IcRoundSync'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
-import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
-import {ComponentType, useEffect} from 'react'
-import {QueryClient} from 'react-query'
+import {type ComponentType, useEffect} from 'react'
+import type {QueryClient} from 'react-query'
 import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
 import {router} from './Routes.js'
 import {sessionAtom} from './atoms/DashboardAtoms.js'
-import {dbMetaAtom, useDbUpdater} from './atoms/DbAtoms.js'
+import {dbMetaAtom, pendingAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
-import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
+import {locationAtom, matchAtoms} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
+import type {WorkerDB} from './boot/WorkerDB.js'
 import {useDashboard} from './hook/UseDashboard.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
 import {useLocale} from './hook/UseLocale.js'
@@ -33,29 +35,6 @@ import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
 import {SidebarSettings} from './view/sidebar/SidebarSettings.js'
-
-function DraftsButton() {
-  const location = useLocation()
-  const nav = useNav()
-  const {name: workspace} = useWorkspace()
-  const {name: root} = useRoot()
-  const entryLocation = useEntryLocation()
-  const link =
-    entryLocation && entryLocation.root === root
-      ? nav.draft(entryLocation)
-      : nav.draft({workspace})
-  const draftsTotal = 0
-  return (
-    <Sidebar.Nav.Item
-      selected={location.pathname.startsWith(nav.draft({workspace}))}
-      href={link}
-      aria-label="Drafts"
-      badge={draftsTotal}
-    >
-      <Icon icon={MdiSourceBranch} />
-    </Sidebar.Nav.Item>
-  )
-}
 
 const isEntryAtom = atom(get => {
   const location = get(locationAtom)
@@ -74,7 +53,8 @@ function AppAuthenticated() {
   const locale = useLocale()
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
-  const meta = useAtomValue(dbMetaAtom)
+  const sha = useAtomValue(dbMetaAtom)
+  const pending = useAtomValue(pendingAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -134,9 +114,21 @@ function AppAuthenticated() {
             </div>
             {alineaDev && (
               <Statusbar.Root>
-                <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                  {meta.contentHash}
+                <Statusbar.Status
+                  icon={pending === 0 ? IcRoundCheck : IcRoundSync}
+                >
+                  {pending === 0 ? 'Synced' : 'Saving…'}
                 </Statusbar.Status>
+
+                {sha ? (
+                  <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                    {sha.slice(0, 7)}
+                  </Statusbar.Status>
+                ) : (
+                  <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                    Syncing
+                  </Statusbar.Status>
+                )}
               </Statusbar.Root>
             )}
           </Sidebar.Provider>
@@ -176,12 +168,13 @@ function AppRoot() {
 }
 
 export interface AppProps {
+  db: WorkerDB
   config: Config
-  views: Record<string, ComponentType<any>>
-  client: Connection
+  views: Record<string, ComponentType>
+  client: LocalConnection
   queryClient?: QueryClient
   fullPage?: boolean
-  dev?: boolean
+  local?: boolean
   alineaDev?: boolean
 }
 

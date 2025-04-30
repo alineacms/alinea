@@ -1,6 +1,6 @@
-import {FieldOptions, WithoutLabel} from 'alinea/core'
+import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
-import {ReactNode} from 'react'
+import type {ReactNode} from 'react'
 
 export interface CodeFieldOptions extends FieldOptions<string> {
   width?: number

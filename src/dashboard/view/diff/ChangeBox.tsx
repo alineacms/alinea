@@ -4,7 +4,7 @@ import {IcOutlineArrowCircleRight} from 'alinea/ui/icons/IcOutlineArrowCircleRig
 import {IcRoundAddCircleOutline} from 'alinea/ui/icons/IcRoundAddCircleOutline'
 import {IcRoundMoreHoriz} from 'alinea/ui/icons/IcRoundMoreHoriz'
 import {IcRoundRemoveCircleOutline} from 'alinea/ui/icons/IcRoundRemoveCircleOutline'
-import {PropsWithChildren} from 'react'
+import type {PropsWithChildren} from 'react'
 import css from './ChangeBox.module.scss'
 
 const styles = styler(css)

@@ -1,13 +1,17 @@
-import esbuild, {BuildContext, BuildOptions, BuildResult} from 'esbuild'
-import {createEmitter, Emitter} from '../util/Emitter.js'
+import esbuild, {
+  type BuildContext,
+  type BuildOptions,
+  type BuildResult
+} from 'esbuild'
+import {type Emitter, createEmitter} from '../util/Emitter.js'
 
 export type BuildInfo =
   | {type: 'start'; result: undefined}
   | {type: 'done'; result: BuildResult}
 
 export function buildEmitter(config: BuildOptions): Emitter<BuildInfo> {
-  let context: BuildContext,
-    canceled = false
+  let context: BuildContext
+  let canceled = false
   const results = createEmitter<BuildInfo>({
     onReturn() {
       context?.dispose()

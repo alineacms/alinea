@@ -1,15 +1,15 @@
 import {Field} from 'alinea/core/Field'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
-import {Atom, Getter, atom} from 'jotai'
-import {PropsWithChildren, createContext, useContext, useMemo} from 'react'
+import {type Atom, type Getter, atom} from 'jotai'
+import {type PropsWithChildren, createContext, useContext, useMemo} from 'react'
 import * as Y from 'yjs'
 
 import {DOC_KEY, applyEntryData} from 'alinea/core/Doc'
 import {Section} from 'alinea/core/Section'
 import {
-  FieldGetter,
-  ValueTracker,
+  type FieldGetter,
+  type ValueTracker,
   optionTrackerOf,
   valueTrackerOf
 } from 'alinea/core/Tracker'
@@ -99,7 +99,7 @@ export class FormAtoms<T = any> {
               const res = validate(get(value))
               if (typeof res === 'boolean') return !res
               return res
-            } else if (required) {
+            }if (required) {
               const current = get(value)
               if (current === undefined || current === null) return true
               if (typeof current === 'string' && current === '') return true
@@ -235,7 +235,7 @@ export function FormRow({
     const key = form.keyOf(field)
     const inner = form.container.get(key)
     const row = rowId ? inner.get(rowId) : inner
-    const path = form.path + `.${key}` + (rowId ? `[${rowId}]` : '')
+    const path = `${form.path}.${key}${rowId ? `[${rowId}]` : ''}`
     return new FormAtoms(type, row, path, {
       readOnly,
       parent: form

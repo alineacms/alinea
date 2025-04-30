@@ -1,9 +1,10 @@
+import {suite} from '@alinea/suite'
 import {code} from 'alinea/core/util/CodeGen'
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
+
+const test = suite(import.meta)
 
 test('dedent', () => {
-  assert.is(
+  test.is(
     code`
       block {
         inner
@@ -14,8 +15,8 @@ test('dedent', () => {
 })
 
 test('indent insert', () => {
-  const inner = `a\nb`
-  assert.is(
+  const inner = 'a\nb'
+  test.is(
     code`
       block {
         ${inner}
@@ -32,7 +33,7 @@ test('indent indent after chars', () => {
       b: 2
     }
   `
-  assert.is(
+  test.is(
     code`
       block {
         property: ${type}
@@ -46,5 +47,3 @@ test('indent indent after chars', () => {
       '}'
   )
 })
-
-test.run()

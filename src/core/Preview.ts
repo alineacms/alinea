@@ -1,6 +1,6 @@
-import {Entry} from 'alinea/core/Entry'
-import {ComponentType} from 'react'
-import {EntryRow} from './EntryRow.js'
+import type {Entry} from 'alinea/core/Entry'
+import type {ComponentType} from 'react'
+import type {EntryRow} from './EntryRow.js'
 
 export type Preview = boolean | ComponentType<{entry: Entry}>
 

@@ -1,4 +1,4 @@
-import {SVGProps} from 'react'
+import type {SVGProps} from 'react'
 
 export function IcOutlineMoreHoriz(props: SVGProps<SVGSVGElement>) {
   return (
@@ -6,7 +6,7 @@ export function IcOutlineMoreHoriz(props: SVGProps<SVGSVGElement>) {
       <path
         fill="currentColor"
         d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2z"
-      ></path>
+      />
     </svg>
   )
 }

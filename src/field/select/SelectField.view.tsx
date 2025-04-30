@@ -15,7 +15,7 @@ import {IcRoundArrowDropDownCircle} from 'alinea/ui/icons/IcRoundArrowDropDownCi
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {SelectField} from './SelectField.js'
+import type {SelectField} from './SelectField.js'
 import css from './SelectField.module.scss'
 
 const styles = styler(css)

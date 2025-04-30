@@ -1,4 +1,4 @@
-import {Field, FieldOptions} from 'alinea/core/Field'
+import type {Field, FieldOptions} from 'alinea/core/Field'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect} from 'react'
 import {useFormContext} from '../atoms/FormAtoms.js'
@@ -54,7 +54,7 @@ export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
   const info = form.fieldInfo(field)
   const setError = useSetAtom(form.errors)
   const key = useFieldKey(field)
-  const fieldPath = form.path + '.' + key
+  const fieldPath = `${form.path}.${key}`
   const error = useAtomValue(info.error)
   useEffect(() => {
     setError(fieldPath, field, error)

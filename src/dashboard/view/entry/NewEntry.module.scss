@@ -16,6 +16,8 @@
 }
 
 .form {
+  z-index: 0;
+
   &.is-loading {
     pointer-events: none;
 

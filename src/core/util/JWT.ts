@@ -57,7 +57,7 @@ function defaultAlgorithms(
 
 function importKey(
   secret: string | JsonWebKey,
-  algorithm: typeof algorithms[Algorithm],
+  algorithm: (typeof algorithms)[Algorithm],
   use: 'sign' | 'verify'
 ): Promise<CryptoKey> {
   if (typeof secret !== 'string')

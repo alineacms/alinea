@@ -1,5 +1,5 @@
-import {BuildOptions} from 'esbuild'
-import {LiveReload} from './LiveReload.js'
+import type {BuildOptions} from 'esbuild'
+import type {LiveReload} from './LiveReload.js'
 
 export interface ServeContext {
   cmd: 'dev' | 'build'
@@ -11,4 +11,5 @@ export interface ServeContext {
   buildOptions: BuildOptions
   production: boolean
   liveReload: LiveReload
+  buildId: string
 }

@@ -10,7 +10,7 @@ import {px} from 'alinea/ui'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {useRef, useState} from 'react'
 import {useQuery} from 'react-query'
-import {PathField} from './PathField.js'
+import type {PathField} from './PathField.js'
 import css from './PathField.module.scss'
 
 const styles = styler(css)
@@ -45,7 +45,7 @@ export function PathInput({field}: PathInputProps) {
       locale: editor.activeVersion.locale,
       parentId: editor.activeVersion.parentId ?? null,
       id: {isNot: editor.entryId},
-      path: {or: {is: inputValue, startsWith: inputValue + '-'}},
+      path: {or: {is: inputValue, startsWith: `${inputValue}-`}},
       status: 'preferPublished'
     })
   }

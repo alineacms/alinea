@@ -4,7 +4,7 @@ import {useFieldError, useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {Sink} from 'alinea/ui/Sink'
 import {IcRoundFeed} from 'alinea/ui/icons/IcRoundFeed'
-import {ObjectField} from './ObjectField.js'
+import type {ObjectField} from './ObjectField.js'
 
 export interface ObjectInputProps<Definition> {
   field: ObjectField<Definition>

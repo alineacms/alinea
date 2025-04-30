@@ -5,13 +5,14 @@ function createCloudConfig(baseUrl: string) {
     setup: `${baseUrl}/setup`,
     auth: `${baseUrl}/auth`,
     handshake: `${baseUrl}/api/v1/handshake`,
-    mutate: `${baseUrl}/api/v1/mutate`,
     upload: `${baseUrl}/api/v1/upload`,
-    media: `${baseUrl}/api/v1/media`,
     logout: `${baseUrl}/api/v1/logout`,
     history: `${baseUrl}/api/v1/history`,
-    pending: `${baseUrl}/api/v1/pending`,
-    drafts: `${baseUrl}/api/v1/draft`
+    drafts: `${baseUrl}/api/v1/draft`,
+
+    tree: `${baseUrl}/api/v1/tree`,
+    blobs: `${baseUrl}/api/v1/blobs`,
+    write: `${baseUrl}/api/v1/write`
   }
 }
 

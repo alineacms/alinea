@@ -13,7 +13,7 @@ prog
 
   .command('init')
   .describe('Copy a sample config file to the current directory')
-  .option('--next', `Configure for Next.js`)
+  .option('--next', 'Configure for Next.js')
   .action(async args => {
     ensureNode()
     ensureReact()
@@ -24,12 +24,12 @@ prog
   .command('dev')
   .alias('serve')
   .describe('Start a development dashboard')
-  .option('-c, --config', `Config file location`)
-  .option('-d, --dir', `Root directory of the project`)
-  .option('-p, --port', `Port to listen on`)
-  .option('-b, --base', `Base URL for previews`)
-  .option('--production', `Use production backend`)
-  .option('--dev', `Watch alinea sources`)
+  .option('-c, --config', 'Config file location')
+  .option('-d, --dir', 'Root directory of the project')
+  .option('-p, --port', 'Port to listen on')
+  .option('-b, --base', 'Base URL for previews')
+  .option('--production', 'Use production backend')
+  .option('--dev', 'Watch alinea sources')
   .action(async args => {
     ensureNode()
     ensureReact()
@@ -50,12 +50,12 @@ prog
   .command('build')
   .alias('generate')
   .describe('Generate types and content cache')
-  .option('-c, --config', `Config file location`)
-  .option('-d, --dir', `Root directory of the project`)
-  .option('-w, --watch', `Watch for changes to source files`)
+  .option('-c, --config', 'Config file location')
+  .option('-d, --dir', 'Root directory of the project')
+  .option('-w, --watch', 'Watch for changes to source files')
   .option(
     '--fix',
-    `Any missing or incorrect properties will be overwritten by their default`
+    'Any missing or incorrect properties will be overwritten by their default'
   )
   .action(async args => {
     ensureNode()

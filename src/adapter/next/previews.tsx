@@ -50,10 +50,10 @@ export default function NextPreviews({
         isLoading
           ? 'loading'
           : isPreviewing
-          ? previewDisabled
-            ? 'warning'
-            : 'connected'
-          : undefined
+            ? previewDisabled
+              ? 'warning'
+              : 'connected'
+            : undefined
       }
     />
   )

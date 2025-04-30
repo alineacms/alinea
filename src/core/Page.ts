@@ -1,4 +1,4 @@
-import {FieldsDefinition, Type} from './Type.js'
+import type {FieldsDefinition, Type} from './Type.js'
 
 export interface PageData {
   type: Type
@@ -19,7 +19,7 @@ export namespace Page {
   }
 
   export function isPage(page: any): page is Page {
-    return Boolean(page && page[Page.Data])
+    return Boolean(page?.[Page.Data])
   }
 }
 

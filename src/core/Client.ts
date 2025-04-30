@@ -1,16 +1,22 @@
-import {AbortController, fetch, Response} from '@alinea/iso'
-import {DraftTransport, Revision} from 'alinea/backend/Backend'
+import {AbortController, type Response, fetch} from '@alinea/iso'
 import {HandleAction} from 'alinea/backend/HandleAction'
-import {PreviewInfo} from 'alinea/backend/Previews'
-import {Config} from './Config.js'
-import {Connection, SyncResponse} from './Connection.js'
-import {Draft, DraftKey} from './Draft.js'
-import {EntryRecord} from './EntryRecord.js'
-import {AnyQueryResult, GraphQuery} from './Graph.js'
+import type {PreviewInfo} from 'alinea/backend/Previews'
+import type {
+  DraftTransport,
+  LocalConnection,
+  Revision
+} from 'alinea/core/Connection'
+import type {Config} from './Config.js'
+import type {UploadResponse} from './Connection.js'
+import type {Draft, DraftKey} from './Draft.js'
+import type {EntryRecord} from './EntryRecord.js'
+import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
-import {Mutation} from './Mutation.js'
 import {getScope} from './Scope.js'
-import {User} from './User.js'
+import type {User} from './User.js'
+import type {CommitRequest} from './db/CommitRequest.js'
+import type {Mutation} from './db/Mutation.js'
+import {ReadonlyTree, type Tree} from './source/Tree.js'
 import {base64} from './util/Encoding.js'
 
 export type AuthenticateRequest = (
@@ -24,7 +30,7 @@ export interface ClientOptions {
   unauthorized?: () => void
 }
 
-export class Client implements Connection {
+export class Client implements LocalConnection {
   #options: ClientOptions
   constructor(options: ClientOptions) {
     this.#options = options
@@ -44,14 +50,14 @@ export class Client implements Connection {
     ).then<string>(this.#failOnHttpError)
   }
 
-  prepareUpload(file: string): Promise<Connection.UploadResponse> {
+  prepareUpload(file: string): Promise<UploadResponse> {
     return this.#requestJson(
       {action: HandleAction.Upload},
       {
         method: 'POST',
         body: JSON.stringify({filename: file})
       }
-    ).then<Connection.UploadResponse>(this.#failOnHttpError)
+    ).then<UploadResponse>(this.#failOnHttpError)
   }
 
   user(): Promise<User | undefined> {
@@ -71,11 +77,11 @@ export class Client implements Connection {
     ).then<AnyQueryResult<Query>>(this.#failOnHttpError)
   }
 
-  mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
+  mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
       {method: 'POST', body: JSON.stringify(mutations)}
-    ).then<{commitHash: string}>(this.#failOnHttpError)
+    ).then<{sha: string}>(this.#failOnHttpError)
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
@@ -102,20 +108,54 @@ export class Client implements Connection {
       .then(res => res ?? undefined)
   }
 
-  // Syncable
+  // Source
 
-  syncRequired(contentHash: string): Promise<boolean> {
+  getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
     return this.#requestJson({
-      action: HandleAction.Sync,
-      contentHash
-    }).then<boolean>(this.#failOnHttpError)
+      action: HandleAction.Tree,
+      sha
+    })
+      .then<Tree | null>(this.#failOnHttpError)
+      .then(tree => (tree ? new ReadonlyTree(tree) : undefined))
   }
 
-  sync(contentHashes: Array<string>): Promise<SyncResponse> {
+  async getBlobs(
+    shas: Array<string>
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+    if (shas.length === 0) return []
+    return this.#request(
+      {action: HandleAction.Blob},
+      {
+        method: 'POST',
+        body: JSON.stringify({shas}),
+        headers: {
+          'content-type': 'application/json',
+          accept: 'multipart/form-data'
+        }
+      }
+    )
+      .then(response => this.#failOnHttpError<Response>(response, false))
+      .then(response => response.formData())
+      .then(async form => {
+        const blobs: Array<[sha: string, blob: Uint8Array]> = []
+        for (const [key, value] of form.entries()) {
+          if (value instanceof Blob) {
+            const sha = key.slice(0, 40)
+            const blob = new Uint8Array(await value.arrayBuffer())
+            blobs.push([sha, blob])
+          }
+        }
+        return blobs
+      })
+  }
+
+  // Commit
+
+  write(request: CommitRequest): Promise<{sha: string}> {
     return this.#requestJson(
-      {action: HandleAction.Sync},
-      {method: 'POST', body: JSON.stringify(contentHashes)}
-    ).then<SyncResponse>(this.#failOnHttpError)
+      {action: HandleAction.Commit},
+      {method: 'POST', body: JSON.stringify(request)}
+    ).then<{sha: string}>(this.#failOnHttpError)
   }
 
   // Drafts
@@ -139,13 +179,13 @@ export class Client implements Connection {
   }
 
   #request(
-    params: {action: HandleAction},
+    params: {action: HandleAction; [key: string]: string},
     init?: RequestInit
   ): Promise<Response> {
     const {url, applyAuth = v => v, unauthorized} = this.#options
     const controller = new AbortController()
     const signal = controller.signal
-    const location = url + '?' + new URLSearchParams(params).toString()
+    const location = `${url}?${new URLSearchParams(params).toString()}`
     const promise = fetch(location, {
       ...applyAuth(init),
       signal
@@ -153,7 +193,7 @@ export class Client implements Connection {
       .catch(err => {
         throw new HttpError(
           500,
-          `Could not ${init?.method || 'GET'} "${params.action}": ${err}`
+          `${err} @ ${init?.method || 'GET'} action ${params.action}`
         )
       })
       .then(async res => {
@@ -162,14 +202,19 @@ export class Client implements Connection {
           const isJson = res.headers
             .get('content-type')
             ?.includes('application/json')
-          const msg = isJson
-            ? JSON.stringify(await res.json(), null, 2)
-            : await res.text()
+          let errorMessage: string
+          if (isJson) {
+            const body = await res.json()
+            if ('error' in body && typeof body.error === 'string')
+              errorMessage = body.error
+            else errorMessage = JSON.stringify(await res.json(), null, 2)
+          } else {
+            errorMessage = await res.text()
+          }
+          errorMessage = errorMessage.replace(/\s+/g, ' ').slice(0, 1024)
           throw new HttpError(
             res.status,
-            `Could not ${init?.method || 'GET'} "${params.action}" (${
-              res.status
-            }) ... ${msg.replace(/\s+/g, ' ').slice(0, 100)}`
+            `${errorMessage} @ ${init?.method || 'GET'} action ${params.action}`
           )
         }
         return res
@@ -201,8 +246,11 @@ export class Client implements Connection {
     })
   }
 
-  async #failOnHttpError<T>(res: Response, expectJson = true): Promise<T> {
-    if (res.ok) return expectJson ? res.json() : undefined
+  async #failOnHttpError<T = Response>(
+    res: Response,
+    expectJson = true
+  ): Promise<T> {
+    if (res.ok) return (expectJson ? res.json() : res) as T
     const text = await res.text()
     throw new HttpError(res.status, text || res.statusText)
   }

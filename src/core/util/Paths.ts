@@ -2,7 +2,7 @@
 
 // Split a filename into [root, dir, basename, ext], unix version
 // 'root' is just a slash, or nothing.
-var splitPathRe =
+const splitPathRe =
   /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/
 
 function posixSplitPath(filename: string) {
@@ -14,9 +14,9 @@ function posixSplitPath(filename: string) {
 // (so also no leading and trailing slashes - it does not distinguish
 // relative and absolute paths)
 function normalizeArray(parts: Array<string>, allowAboveRoot: boolean) {
-  var res = []
-  for (var i = 0; i < parts.length; i++) {
-    var p = parts[i]
+  const res = []
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i]
 
     // ignore empty parts
     if (!p || p === '.') continue
@@ -42,8 +42,8 @@ export function isAbsolute(path: string) {
 export function normalize(path: string) {
   path = path.replace(/\\/g, '/')
 
-  var absolute = isAbsolute(path),
-    trailingSlash = path && path[path.length - 1] === '/'
+  const absolute = isAbsolute(path)
+  const trailingSlash = path && path[path.length - 1] === '/'
 
   // Normalize the path
   path = normalizeArray(path.split('/'), !absolute).join('/')
@@ -59,9 +59,9 @@ export function normalize(path: string) {
 }
 
 export function dirname(path: string) {
-  var result = posixSplitPath(path),
-    root = result[0],
-    dir = result[1]
+  const result = posixSplitPath(path)
+  const root = result[0]
+  let dir = result[1]
 
   if (!root && !dir) {
     // No dirname whatsoever
@@ -77,7 +77,7 @@ export function dirname(path: string) {
 }
 
 export function basename(path: string, ext?: string) {
-  var f = posixSplitPath(path)[2]
+  let f = posixSplitPath(path)[2]
   // TODO: make this comparison case-insensitive on windows?
   if (ext && f.substr(-1 * ext.length) === ext) {
     f = f.substr(0, f.length - ext.length)
@@ -86,9 +86,9 @@ export function basename(path: string, ext?: string) {
 }
 
 export function join(...args: Array<string | undefined>) {
-  var path = ''
-  for (var i = 0; i < args.length; i++) {
-    var segment = args[i]
+  let path = ''
+  for (let i = 0; i < args.length; i++) {
+    const segment = args[i]
     if (typeof segment !== 'string') {
       continue
     }
@@ -96,7 +96,7 @@ export function join(...args: Array<string | undefined>) {
       if (!path) {
         path += segment
       } else {
-        path += '/' + segment
+        path += `/${segment}`
       }
     }
   }
@@ -110,13 +110,13 @@ export function extname(path: string) {
 // returns an array with empty elements removed from either end of the input
 // array or the original array if no elements need to be removed
 function trimArray<T>(arr: Array<T>): Array<T> {
-  var lastIndex = arr.length - 1
-  var start = 0
+  const lastIndex = arr.length - 1
+  let start = 0
   for (; start <= lastIndex; start++) {
     if (arr[start]) break
   }
 
-  var end = lastIndex
+  let end = lastIndex
   for (; end >= 0; end--) {
     if (arr[end]) break
   }
@@ -127,20 +127,20 @@ function trimArray<T>(arr: Array<T>): Array<T> {
 }
 
 export function resolve(...args: Array<string>) {
-  var resolvedPath = '',
-    resolvedAbsolute = false
+  let resolvedPath = ''
+  let resolvedAbsolute = false
 
-  for (var i = args.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-    var path = i >= 0 ? args[i] : process.cwd()
+  for (let i = args.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    const path = i >= 0 ? args[i] : process.cwd()
 
     // Skip empty and invalid entries
     if (typeof path !== 'string') {
       throw new TypeError('Arguments to path.resolve must be strings')
-    } else if (!path) {
+    }if (!path) {
       continue
     }
 
-    resolvedPath = path + '/' + resolvedPath
+    resolvedPath = `${path}/${resolvedPath}`
     resolvedAbsolute = path[0] === '/'
   }
 
@@ -160,20 +160,20 @@ export function relative(from: string, to: string) {
   from = resolve(from).substr(1)
   to = resolve(to).substr(1)
 
-  var fromParts = trimArray(from.split('/'))
-  var toParts = trimArray(to.split('/'))
+  const fromParts = trimArray(from.split('/'))
+  const toParts = trimArray(to.split('/'))
 
-  var length = Math.min(fromParts.length, toParts.length)
-  var samePartsLength = length
-  for (var i = 0; i < length; i++) {
+  const length = Math.min(fromParts.length, toParts.length)
+  let samePartsLength = length
+  for (let i = 0; i < length; i++) {
     if (fromParts[i] !== toParts[i]) {
       samePartsLength = i
       break
     }
   }
 
-  var outputParts = []
-  for (var i = samePartsLength; i < fromParts.length; i++) {
+  let outputParts = []
+  for (let i = samePartsLength; i < fromParts.length; i++) {
     outputParts.push('..')
   }
 

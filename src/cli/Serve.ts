@@ -1,25 +1,26 @@
-import {Backend} from 'alinea/backend/Backend'
-import {createHandler} from 'alinea/backend/Handler'
-import {gitUser} from 'alinea/backend/util/ExecGit'
-import {cloudBackend} from 'alinea/cloud/CloudBackend'
-import {cloudDebug} from 'alinea/cloud/CloudDebug'
-import {CMS} from 'alinea/core/CMS'
-import {genEffect} from 'alinea/core/util/Async'
-import {BuildOptions} from 'esbuild'
 import path from 'node:path'
+import {createHandler} from 'alinea/backend/Handler'
+import {createRemote} from 'alinea/backend/api/CreateBackend'
+import {gitUser} from 'alinea/backend/util/ExecGit'
+import {CloudRemote} from 'alinea/cloud/CloudRemote'
+import type {CMS} from 'alinea/core/CMS'
+import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
+import {createId} from 'alinea/core/Id'
+import {genEffect} from 'alinea/core/util/Async'
+import type {BuildOptions} from 'esbuild'
 import pkg from '../../package.json'
 import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
 import {createLocalServer} from './serve/CreateLocalServer.js'
 import {GitHistory} from './serve/GitHistory.js'
 import {LiveReload} from './serve/LiveReload.js'
-import {localAuth} from './serve/LocalAuth.js'
+import {LocalAuth} from './serve/LocalAuth.js'
 import {MemoryDrafts} from './serve/MemoryDrafts.js'
-import {ServeContext} from './serve/ServeContext.js'
-import {startNodeServer} from './serve/StartNodeServer.js'
+import type {ServeContext} from './serve/ServeContext.js'
+import {startServer} from './serve/StartServer.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
-import {bold, cyan, gray, reportHalt} from './util/Report.js'
+import {bold, cyan, gray, reportFatal} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -52,12 +53,12 @@ export async function serve(options: ServeOptions): Promise<void> {
     : findConfigFile(cwd)
 
   if (!configLocation) {
-    reportHalt(`No Alinea config file found @ ${cwd}`)
+    reportFatal(`No Alinea config file found @ ${cwd}`)
     process.exit(1)
   }
 
   const preferredPort = options.port ? Number(options.port) : 4500
-  const server = startNodeServer(preferredPort, 0, cmd === 'build')
+  const server = startServer(preferredPort, 0, cmd === 'build')
   const dashboardUrl = server.then(server => `http://localhost:${server.port}`)
 
   const rootDir = path.resolve(cwd)
@@ -76,7 +77,8 @@ export async function serve(options: ServeOptions): Promise<void> {
       )
     },
     production,
-    liveReload: new LiveReload()
+    liveReload: new LiveReload(),
+    buildId: createId()
   }
 
   const drafts = new MemoryDrafts()
@@ -96,7 +98,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     onAfterGenerate(msg) {
       dashboardUrl.then(url => {
         const version = gray(pkg.version)
-        const header = `  ${cyan(bold('ɑ'))} Alinea ${version}\n`
+        const header = `  ${cyan(bold('ɑ alinea'))} ${version}\n`
         const connector = gray(cmd === 'dev' ? '├' : '╰')
         const details = `  ${connector} ${gray(msg)}\n`
         const footer =
@@ -114,34 +116,32 @@ export async function serve(options: ServeOptions): Promise<void> {
     serveController = new AbortController()
   })
 
-  const user = await gitUser(rootDir)
+  const user = gitUser(rootDir)
 
-  for await (const {cms, localData: fileData, db} of generateFiles) {
+  for await (const {cms, db} of generateFiles) {
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
       const history = new GitHistory(cms.config, rootDir)
-      const backend = createBackend()
       const handleApi = createHandler({
         cms,
-        backend,
-        database: Promise.resolve(db)
+        remote: backend,
+        db
       })
       if (localServer) localServer.close()
-      localServer = createLocalServer(context, cms, handleApi, user)
+      localServer = createLocalServer(context, cms, handleApi, await user)
       currentCMS = cms
 
-      function createBackend(): Backend {
-        if (process.env.ALINEA_CLOUD_DEBUG)
-          return cloudDebug(cms.config, rootDir)
-        if (process.env.ALINEA_CLOUD_URL) return cloudBackend(cms.config)
-        return {
-          auth: localAuth(rootDir),
-          target: fileData,
-          media: fileData,
-          drafts,
-          history
-        }
+      function backend(context: RequestContext): RemoteConnection {
+        /*const ctx: RequestContext = {
+          isDev: true,
+          handlerUrl: new URL(await dashboardUrl),
+          apiKey: process.env.ALINEA_API_KEY ?? 'dev'
+        }*/
+        if (process.env.ALINEA_CLOUD_URL)
+          return new CloudRemote(context, cms.config)
+        const auth = new LocalAuth(context, user)
+        return createRemote(auth, db, drafts, history)
       }
     }
 

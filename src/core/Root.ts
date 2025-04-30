@@ -1,13 +1,13 @@
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
-import {getRoot, hasRoot, HasRoot, internalRoot} from './Internal.js'
-import {Label} from './Label.js'
-import {OrderBy} from './OrderBy.js'
-import {Page} from './Page.js'
-import {Preview} from './Preview.js'
+import {type HasRoot, getRoot, hasRoot, internalRoot} from './Internal.js'
+import type {Label} from './Label.js'
+import type {OrderBy} from './OrderBy.js'
+import type {Page} from './Page.js'
+import type {Preview} from './Preview.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
-import {View} from './View.js'
+import type {View} from './View.js'
 
 export interface RootI18n {
   locales: ReadonlyArray<string>
@@ -42,6 +42,10 @@ export namespace Root {
     return getRoot(root).label
   }
 
+  export function contains(root: Root): Array<string | Type> {
+    return getRoot(root).contains ?? []
+  }
+
   export function data(root: Root): RootData {
     return getRoot(root)
   }
@@ -52,14 +56,6 @@ export namespace Root {
 
   export function defaultLocale(root: Root): string | undefined {
     return getRoot(root).i18n?.locales[0]
-  }
-
-  export function localeName(root: Root, name: string): string | undefined {
-    const {i18n} = getRoot(root)
-    if (!i18n) return
-    for (const locale of i18n.locales) {
-      if (locale.toLowerCase() === name.toLowerCase()) return locale
-    }
   }
 
   export function isRoot(value: any): value is Root {

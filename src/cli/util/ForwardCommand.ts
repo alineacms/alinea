@@ -1,4 +1,4 @@
-import {spawn} from 'child_process'
+import {spawn} from 'node:child_process'
 
 export function forwardCommand(env: Record<string, string> = {}): boolean {
   const argv = process.argv

@@ -5,7 +5,7 @@ import {HStack} from 'alinea/ui'
 import {IcRoundCode} from 'alinea/ui/icons/IcRoundCode'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useState} from 'react'
-import {CodeField} from './CodeField.js'
+import type {CodeField} from './CodeField.js'
 import css from './CodeField.module.scss'
 
 const styles = styler(css)

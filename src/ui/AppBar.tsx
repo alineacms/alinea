@@ -1,9 +1,9 @@
 import styler from '@alinea/styler'
-import {ComponentType, HTMLAttributes} from 'react'
+import type {ComponentType, HTMLAttributes} from 'react'
 import css from './AppBar.module.scss'
 import {Icon} from './Icon.js'
 import {HStack} from './Stack.js'
-import {PropsWithAs} from './util/PropsWithAs.js'
+import type {PropsWithAs} from './util/PropsWithAs.js'
 
 const styles = styler(css)
 

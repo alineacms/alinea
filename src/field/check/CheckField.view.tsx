@@ -5,7 +5,7 @@ import {HStack, Icon, TextLabel} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {useState} from 'react'
-import {CheckField} from './CheckField.js'
+import type {CheckField} from './CheckField.js'
 import css from './CheckField.module.scss'
 
 const styles = styler(css)
@@ -41,7 +41,6 @@ export function CheckInput({field}: CheckInputProps) {
           }}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
-          autoFocus={options.autoFocus}
           readOnly={readOnly}
         />
         <span className={styles.root.checkmark({disabled: readOnly})}>

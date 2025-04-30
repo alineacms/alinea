@@ -12,9 +12,9 @@ import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {createSlots} from 'alinea/ui/util/Slots'
 import {
-  Dispatch,
-  HTMLProps,
-  PropsWithChildren,
+  type Dispatch,
+  type HTMLProps,
+  type PropsWithChildren,
   createContext,
   useContext,
   useReducer

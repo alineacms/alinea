@@ -1,4 +1,4 @@
-import {Reference} from 'alinea/core/Reference'
+import type {Reference} from 'alinea/core/Reference'
 
 export interface EntryReference extends Reference {
   _type: 'entry'

@@ -23,7 +23,7 @@ import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {px} from 'alinea/ui/util/Units'
 import type {Metadata, MetadataRoute} from 'next'
-import {ComponentType, PropsWithChildren} from 'react'
+import type {ComponentType, PropsWithChildren} from 'react'
 import {Link} from '../layout/nav/Link'
 import css from './HomePage.module.scss'
 

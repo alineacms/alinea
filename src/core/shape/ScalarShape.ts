@@ -1,6 +1,6 @@
-import * as Y from 'yjs'
-import {Label} from '../Label.js'
-import {Shape} from '../Shape.js'
+import type * as Y from 'yjs'
+import type {Label} from '../Label.js'
+import type {Shape} from '../Shape.js'
 
 export type ScalarMutator<T> = (value: T) => void
 
@@ -47,6 +47,6 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
   searchableText(value: T): string {
     if (!this.searchable) return ''
     const stringified = String(value ?? '')
-    return stringified ? ' ' + stringified : ''
+    return stringified ? ` ${stringified}` : ''
   }
 }

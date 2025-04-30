@@ -1,4 +1,4 @@
-import {DOMAttributes} from 'react'
+import type {DOMAttributes} from 'react'
 
 export function registerPreviewWidget() {
   if (customElements.get('alinea-preview')) return
@@ -214,7 +214,7 @@ export function registerPreviewWidget() {
           const max = 1 - min
           if (newX > max) newX = max
           current = newX
-          previews.style.left = newX * 100 + '%'
+          previews.style.left = `${newX * 100}%`
           xPosition = newX
         }
         function stop() {
@@ -243,7 +243,7 @@ export function registerPreviewWidget() {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      ['alinea-preview']: DOMAttributes<HTMLElement> & {
+      'alinea-preview': DOMAttributes<HTMLElement> & {
         adminUrl: string
         editUrl: string
         livePreview?: 'connected' | 'warning' | 'loading'

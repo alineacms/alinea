@@ -1,16 +1,21 @@
+import type {Entry} from 'alinea/core'
 import {DOC_KEY} from 'alinea/core/Doc'
 import {Type} from 'alinea/core/Type'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
+import {configAtom} from './DashboardAtoms.js'
 import {yAtom} from './YAtom.js'
 
 interface EntryEditsKeys {
   id: string
   locale: string | null
+  fileHash: string
 }
 
 export class Edits {
+  #type: Type
+  #entry: Entry
   /** The mutable doc that we are editing */
   doc = new Y.Doc()
   /** The state vector of the source doc */
@@ -22,53 +27,35 @@ export class Edits {
   hasChanges = createChangesAtom(this.root)
   /** Clear local changes, reset to source */
   resetChanges = atom(null, (get, set) => {
+    this.applyEntryData(this.#entry.data)
     set(this.hasChanges, false)
-    const copy = new Edits(this.keys)
-    if (this.sourceUpdate) copy.applyRemoteUpdate(this.sourceUpdate)
-    set(entryEditsAtoms(this.keys), copy)
-  })
-  /** Whether we have a draft loaded */
-  isLoading = yAtom(this.root, () => {
-    return !this.hasData()
   })
   yUpdate = yAtom(this.root, () => {
     return this.getLocalUpdate()
   })
 
-  constructor(private keys: EntryEditsKeys) {}
+  constructor(type: Type, entry: Entry) {
+    this.#type = type
+    this.#entry = entry
+    this.applyEntryData(entry.data)
+    this.sourceVector = Y.encodeStateVector(this.doc)
+  }
 
   hasData() {
     return !this.root.keys().next().done
   }
 
-  /** Apply updates from the source */
-  applyRemoteUpdate(update: Uint8Array) {
-    this.sourceUpdate = update
-    this.applyLocalUpdate(update)
-    this.sourceVector = Y.encodeStateVectorFromUpdateV2(update)
-  }
-
-  /** Apply local updates */
-  applyLocalUpdate(update: Uint8Array) {
-    Y.applyUpdateV2(this.doc, update, 'self')
-  }
-
   /** A Y.js update that contains our own edits */
   getLocalUpdate() {
-    return Y.encodeStateAsUpdateV2(this.doc, this.sourceVector)
-  }
-
-  /** The source doc */
-  getRemoteUpdate() {
-    return Y.encodeStateAsUpdateV2(this.doc)
+    return Y.encodeStateAsUpdate(this.doc, this.sourceVector)
   }
 
   /** Update entry field data */
-  applyEntryData(type: Type, entryData: Record<string, any>) {
+  applyEntryData(entryData: Record<string, any>) {
     const clientID = this.doc.clientID
     this.doc.clientID = 1
     this.doc.transact(() => {
-      Type.shape(type).applyY(entryData, this.doc, DOC_KEY)
+      Type.shape(this.#type).applyY(entryData, this.doc, DOC_KEY)
     }, 'self')
     this.doc.clientID = clientID
   }
@@ -93,8 +80,12 @@ function createChangesAtom(yMap: Y.Map<unknown>) {
 }
 
 export const entryEditsAtoms = atomFamily(
-  (keys: EntryEditsKeys) => {
-    return atom(new Edits(keys))
+  (entry: Entry) => {
+    return atom(get => {
+      const config = get(configAtom)
+      const type = config.schema[entry.type]
+      return new Edits(type, entry)
+    })
   },
-  (a, b) => a.id === b.id && a.locale === b.locale
+  (a, b) => a.id === b.id && a.locale === b.locale && a.fileHash === b.fileHash
 )

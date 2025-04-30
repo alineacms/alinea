@@ -8,6 +8,6 @@ export interface Trigger<T> extends Promise<T> {
 export function trigger<T>(): Trigger<T> {
   let resolve!: (value: T) => void
   let reject!: (reason?: any) => void
-  let promise = new Promise<T>((...args) => ([resolve, reject] = args))
+  const promise = new Promise<T>((...args) => ([resolve, reject] = args))
   return assign(promise, {resolve, reject})
 }

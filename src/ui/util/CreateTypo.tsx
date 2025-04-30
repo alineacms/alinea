@@ -1,12 +1,12 @@
-import {GenericStyles, Styler, styler} from '@alinea/styler'
+import {type GenericStyles, type Styler, styler} from '@alinea/styler'
 import {
-  ComponentType,
+  type ComponentType,
   forwardRef,
-  HTMLProps,
-  PropsWithChildren,
-  Ref
+  type HTMLProps,
+  type PropsWithChildren,
+  type Ref
 } from 'react'
-import {forwardRefWithAs, PropsWithAs} from './PropsWithAs.js'
+import {forwardRefWithAs, type PropsWithAs} from './PropsWithAs.js'
 
 type TypoStyles =
   | {

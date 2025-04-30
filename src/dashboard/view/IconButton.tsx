@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {px} from 'alinea/ui/util/Units'
-import {ComponentType, forwardRef, HTMLAttributes, HTMLProps, Ref} from 'react'
+import {type ComponentType, forwardRef, type HTMLAttributes, type HTMLProps, type Ref} from 'react'
 import {link} from '../util/HashRouter.js'
 import css from './IconButton.module.scss'
 

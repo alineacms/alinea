@@ -1,12 +1,12 @@
 import styler from '@alinea/styler'
-import {SummaryProps} from 'alinea/core/media/Summary'
+import type {SummaryProps} from 'alinea/core/media/Summary'
 import {Chip, HStack, TextLabel, Typo, VStack, px} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {transparentize} from 'color2k'
 import prettyBytes from 'pretty-bytes'
-import {Fragment, ReactNode} from 'react'
+import {Fragment, type ReactNode} from 'react'
 import css from './FileSummary.module.scss'
 
 const styles = styler(css)
@@ -32,9 +32,9 @@ export function FileSummaryRow(file: SummaryProps) {
                   .map<ReactNode>(({id, title}) => (
                     <Fragment key={id}>{title}</Fragment>
                   ))
-                  .reduce((prev, curr) => [
+                  .reduce((prev, curr, i) => [
                     prev,
-                    <IcRoundKeyboardArrowRight />,
+                    <IcRoundKeyboardArrowRight key={i} />,
                     curr
                   ])}
               </HStack>

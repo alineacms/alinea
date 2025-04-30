@@ -5,7 +5,7 @@ import {HStack} from 'alinea/ui'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useEffect, useState} from 'react'
-import {JsonField} from './JsonField.js'
+import type {JsonField} from './JsonField.js'
 import css from './JsonField.module.scss'
 
 const styles = styler(css)
@@ -34,7 +34,7 @@ export function JsonInput<T>({field}: JsonInputProps<T>) {
       mutator(newValue)
       setValid(true)
     } catch (e) {
-      setValid(text ? false : true)
+      setValid(!text)
     }
   }, [text])
 
@@ -55,16 +55,16 @@ export function JsonInput<T>({field}: JsonInputProps<T>) {
           onChange={e => setText(e.currentTarget.value)}
           onFocus={() => setFocus(true)}
           onKeyDown={e => {
-            if (e.key == 'Tab') {
+            if (e.key === 'Tab') {
               const target = e.target as HTMLInputElement
-              var start = target.selectionStart!
-              var end = target.selectionEnd!
+              const start = target.selectionStart!
+              const end = target.selectionEnd!
               const value = target.value
 
               if (end !== value.length) {
                 e.preventDefault()
                 target.value =
-                  value.substring(0, start) + '  ' + value.substring(end)
+                  `${value.substring(0, start)}  ${value.substring(end)}`
                 target.selectionStart = target.selectionEnd = start + 2
               }
             }

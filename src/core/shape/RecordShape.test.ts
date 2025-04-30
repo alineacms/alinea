@@ -1,7 +1,6 @@
+import {suite} from '@alinea/suite'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {test} from 'uvu'
-import * as assert from 'uvu/assert'
 import * as Y from 'yjs'
 
 const ROOT_KEY = '$root'
@@ -32,6 +31,8 @@ const value2 = {
   }
 }
 
+const test = suite(import.meta)
+
 test('apply', () => {
   const doc = new Y.Doc()
   const root = doc.getMap(ROOT_KEY)
@@ -40,7 +41,5 @@ test('apply', () => {
     shape.applyY(value2, root, FIELD_KEY)
   })
   const pass2 = shape.fromY(root.get(FIELD_KEY) as Y.Map<any>)
-  assert.equal(pass2, value2)
+  test.equal(pass2, value2)
 })
-
-test.run()

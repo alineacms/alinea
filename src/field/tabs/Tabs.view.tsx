@@ -8,7 +8,7 @@ import {Lift} from 'alinea/ui/Lift'
 import {Sink} from 'alinea/ui/Sink'
 import {Tabs} from 'alinea/ui/Tabs'
 import {useElevation} from 'alinea/ui/util/Elevation'
-import {TabsSection} from './Tabs.js'
+import type {TabsSection} from './Tabs.js'
 
 interface TabsViewProps {
   section: Section

@@ -18,7 +18,7 @@ const INTEGER_ZERO = 'a0'
 // ascending character code order!
 function midpoint(a: string, b: string | null, digits: string): string {
   if (b !== null && a >= b) {
-    throw new Error(a + ' >= ' + b)
+    throw new Error(`${a} >= ${b}`)
   }
   if (a.slice(-1) === '0' || (b && b.slice(-1) === '0')) {
     throw new Error('trailing zero')
@@ -41,11 +41,11 @@ function midpoint(a: string, b: string | null, digits: string): string {
   if (digitB - digitA > 1) {
     const midDigit = Math.round(0.5 * (digitA + digitB))
     return digits[midDigit]
-  } else {
+  }
     // first digits are consecutive
     if (b && b.length > 1) {
       return b.slice(0, 1)
-    } else {
+    }
       // `b` is null or has length 1 (a single digit).
       // the first digit of `a` is the previous digit to `b`,
       // or 9 if `b` is null.
@@ -53,37 +53,34 @@ function midpoint(a: string, b: string | null, digits: string): string {
       // '4' + midpoint('9', null), which will become
       // '4' + '9' + midpoint('', null), which is '495'
       return digits[digitA] + midpoint(a.slice(1), null, digits)
-    }
-  }
 }
 
 function validateInteger(int: string) {
   if (int.length !== getIntegerLength(int[0])) {
-    throw new Error('invalid integer part of order key: ' + int)
+    throw new Error(`invalid integer part of order key: ${int}`)
   }
 }
 
 function getIntegerLength(head: string) {
   if (head >= 'a' && head <= 'z') {
     return head.charCodeAt(0) - 'a'.charCodeAt(0) + 2
-  } else if (head >= 'A' && head <= 'Z') {
+  }if (head >= 'A' && head <= 'Z') {
     return 'Z'.charCodeAt(0) - head.charCodeAt(0) + 2
-  } else {
-    throw new Error('invalid order key head: ' + head)
   }
+    throw new Error(`invalid order key head: ${head}`)
 }
 
 function getIntegerPart(key: string) {
   const integerPartLength = getIntegerLength(key[0])
   if (integerPartLength > key.length) {
-    throw new Error('invalid order key: ' + key)
+    throw new Error(`invalid order key: ${key}`)
   }
   return key.slice(0, integerPartLength)
 }
 
 export function validateOrderKey(key: string): void {
   if (key === SMALLEST_INTEGER) {
-    throw new Error('invalid order key: ' + key)
+    throw new Error(`invalid order key: ${key}`)
   }
   // getIntegerPart will throw if the first character is bad,
   // or the key is too short.  we'd call it to check these things
@@ -91,7 +88,7 @@ export function validateOrderKey(key: string): void {
   const i = getIntegerPart(key)
   const f = key.slice(i.length)
   if (f.slice(-1) === '0') {
-    throw new Error('invalid order key: ' + key)
+    throw new Error(`invalid order key: ${key}`)
   }
 }
 
@@ -132,9 +129,8 @@ function incrementInteger(x: string, digits: string) {
       digs.pop()
     }
     return h + digs.join('')
-  } else {
-    return head + digs.join('')
   }
+    return head + digs.join('')
 }
 
 // note that this may return null, as there is a smallest integer
@@ -153,7 +149,7 @@ function decrementInteger(x: string, digits: string) {
   }
   if (borrow) {
     if (head === 'a') {
-      return 'Z' + digits.slice(-1)
+      return `Z${digits.slice(-1)}`
     }
     if (head === 'A') {
       return null
@@ -165,9 +161,8 @@ function decrementInteger(x: string, digits: string) {
       digs.pop()
     }
     return h + digs.join('')
-  } else {
-    return head + digs.join('')
   }
+    return head + digs.join('')
 }
 
 // `a` is an order key or null (START).
@@ -193,7 +188,7 @@ export function generateKeyBetween(
     validateOrderKey(b)
   }
   if (a !== null && b !== null && a >= b) {
-    throw new Error(a + ' >= ' + b)
+    throw new Error(`${a} >= ${b}`)
   }
   if (a === null) {
     if (b === null) {

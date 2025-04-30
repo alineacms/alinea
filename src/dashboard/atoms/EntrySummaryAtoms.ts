@@ -3,7 +3,7 @@ import DataLoader from 'dataloader'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {configAtom} from './DashboardAtoms.js'
-import {entryRevisionAtoms, graphAtom} from './DbAtoms.js'
+import {dbAtom, entryRevisionAtoms} from './DbAtoms.js'
 
 export interface EntrySummary {
   id: string
@@ -19,8 +19,8 @@ export interface EntrySummary {
   childrenAmount: number
 }
 
-export const entrySummaryLoaderAtom = atom(async get => {
-  const graph = await get(graphAtom)
+export const entrySummaryLoaderAtom = atom(get => {
+  const graph = get(dbAtom)
   const {schema} = get(configAtom)
   const selection = summarySelection(schema)
   return new DataLoader(
@@ -51,7 +51,7 @@ interface EntryKeys {
 export const entrySummaryAtoms = atomFamily(
   (keys: EntryKeys) => {
     return atom(async get => {
-      const loader = await get(entrySummaryLoaderAtom)
+      const loader = get(entrySummaryLoaderAtom)
       // We clear the dataloader cache because we use the atom family cache
       const summaries = await loader.clear(keys.id).load(keys.id)
       if (!summaries) return

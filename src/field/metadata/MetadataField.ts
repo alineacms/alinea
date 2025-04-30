@@ -1,9 +1,9 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
-import {Type, type} from 'alinea/core/Type'
+import {type Type, type} from 'alinea/core/Type'
 import {RecordField} from 'alinea/core/field/RecordField'
-import {ImageField, ImageLink, image} from 'alinea/field/link'
-import {ObjectField, object} from 'alinea/field/object'
-import {TextField, text} from 'alinea/field/text'
+import {type ImageField, type ImageLink, image} from 'alinea/field/link'
+import {type ObjectField, object} from 'alinea/field/object'
+import {type TextField, text} from 'alinea/field/text'
 
 export interface MetadataOptions extends FieldOptions<Metadata> {
   inferTitleFrom?: string

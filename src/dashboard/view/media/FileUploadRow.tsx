@@ -4,7 +4,7 @@ import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcBaselineErrorOutline} from 'alinea/ui/icons/IcBaselineErrorOutline'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
-import {Upload, UploadStatus} from '../../hook/UseUploads.js'
+import {type Upload, UploadStatus} from '../../hook/UseUploads.js'
 import css from './FileUploadRow.module.scss'
 
 const styles = styler(css)
@@ -14,7 +14,11 @@ export function FileUploadRow(upload: Upload) {
     <HStack center full gap={10} className={styles.root()}>
       <div className={styles.root.preview()}>
         {upload.preview ? (
-          <img src={upload.preview} className={styles.root.preview.image()} />
+          <img
+            alt="Uploaded file"
+            src={upload.preview}
+            className={styles.root.preview.image()}
+          />
         ) : (
           <div className={styles.root.preview.icon()}>
             <IcRoundInsertDriveFile />

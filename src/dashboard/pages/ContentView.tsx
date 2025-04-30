@@ -2,7 +2,7 @@ import styler from '@alinea/styler'
 import {resolveView} from 'alinea/core/View'
 import {HStack, Icon, Loader} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
-import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
+import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {useLocale} from '../hook/UseLocale.js'
@@ -45,11 +45,12 @@ export function ContentView({editor}: ContentViewProps) {
         <SearchBox />
         {/*<RootHeader active={!editor} />*/}
         <EntryTree
-          id={editor?.activeVersion.id}
-          selected={editor?.activeVersion.parents}
+          selectedId={editor?.activeVersion.id}
+          expanded={editor?.activeVersion.parents}
         />
         <div className={styles.root.create()}>
           <button
+            type="button"
             className={styles.root.create.button()}
             onClick={() =>
               navigate(

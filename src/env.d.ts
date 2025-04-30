@@ -11,7 +11,7 @@ declare module 'raw-loader!*' {
 declare module 'postcss-pxtorem'
 
 declare module 'octokit-commit-multiple-files/create-or-update-files.js' {
-  import {Octokit} from '@octokit/rest'
+  import type {Octokit} from '@octokit/rest'
 
   const createOrUpdateFiles: (
     octokit: Octokit,

@@ -1,4 +1,4 @@
-import {CompressionStream, Headers, Request, Response} from '@alinea/iso'
+import {CompressionStream, Headers, type Request, Response} from '@alinea/iso'
 import {Outcome} from 'alinea/core/Outcome'
 import {parse} from 'regexparam'
 
@@ -194,7 +194,7 @@ export namespace router {
       .map(cookie => {
         const {name, value, ...rest} = cookie
         return (
-          `${name}=${value}` + Object.entries(rest).map(cookieValue).join('')
+          `${name}=${value}${Object.entries(rest).map(cookieValue).join('')}`
         )
       })
       .join(', ')
@@ -216,8 +216,8 @@ export namespace router {
         const method = accept?.includes('gzip')
           ? 'gzip'
           : accept?.includes('deflate')
-          ? 'deflate'
-          : undefined
+            ? 'deflate'
+            : undefined
         if (method === undefined) return response
         const stream = body.pipeThrough(new CompressionStream(method))
         const headers = new Headers(response.headers)

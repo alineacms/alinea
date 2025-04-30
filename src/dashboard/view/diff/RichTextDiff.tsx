@@ -1,11 +1,11 @@
-import {BlockNode, ElementNode, Node, type TextDoc} from 'alinea/core/TextDoc'
-import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {RichTextShape} from 'alinea/core/shape/RichTextShape'
+import {BlockNode, type ElementNode, Node, type TextDoc} from 'alinea/core/TextDoc'
+import type {RecordShape} from 'alinea/core/shape/RecordShape'
+import type {RichTextShape} from 'alinea/core/shape/RichTextShape'
 import {Sink} from 'alinea/ui/Sink'
-import {ComponentType, ReactNode, useMemo} from 'react'
+import {type ComponentType, type ReactNode, useMemo} from 'react'
 import {ChangeBox} from './ChangeBox.js'
 import {diffList, diffRecord} from './DiffUtils.js'
-import {FieldsDiffProps} from './FieldsDiff.js'
+import type {FieldsDiffProps} from './FieldsDiff.js'
 import {ScalarDiff} from './ScalarDiff.js'
 
 type Part = {type: 'text'; text: string} | {type: 'block'; block: BlockNode}
@@ -18,7 +18,7 @@ function contentToString({_type: type, content}: ElementNode): string {
   return (
     content
       .map(block => {
-        if (Node.isText(block)) return block.text + ' '
+        if (Node.isText(block)) return `${block.text} `
         return contentToString(block)
       })
       .join('') + (withNewLine ? '\n\n' : '')
@@ -31,7 +31,7 @@ function textDocParts(textDoc: TextDoc<any>): Array<Part> {
   if (!Array.isArray(textDoc)) return parts
   for (const block of textDoc) {
     if (Node.isText(block)) {
-      text += block.text + ' '
+      text += `${block.text} `
     } else if (Node.isElement(block)) {
       text += contentToString(block)
     } else if (Node.isBlock(block)) {
@@ -85,8 +85,8 @@ export function RichTextDiff({
                     change.value.block
                   ]
                 : change.type === 'removal'
-                ? [change.value.block, {}]
-                : [{}, change.value.block]
+                  ? [change.value.block, {}]
+                  : [{}, change.value.block]
             const changes = diffRecord(
               kind as RecordShape,
               compare[0],
@@ -109,8 +109,8 @@ export function RichTextDiff({
               change.type === 'keep'
                 ? ['text' in change.old && change.old.text, change.value.text]
                 : change.type === 'removal'
-                ? [change.value.text, '']
-                : ['', change.value.text]
+                  ? [change.value.text, '']
+                  : ['', change.value.text]
             if (compare[0] === compare[1])
               return <ChangeBox change="equal" key={i} />
             return (
