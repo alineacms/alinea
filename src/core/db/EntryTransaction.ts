@@ -498,7 +498,7 @@ export class EntryTransaction {
       }
     }
     assert(info, `Entry not found: ${id}`)
-    this.#messages.push(this.#reportOp('remove', info.title))
+    this.#messages.unshift(this.#reportOp('remove', info.title))
     return this
   }
 
