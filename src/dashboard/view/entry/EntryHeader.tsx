@@ -86,15 +86,16 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const isMediaLibrary = editor.activeVersion.type === 'MediaLibrary'
   const hasChanges = useAtomValue(editor.hasChanges)
   const currentTransition = useAtomValue(editor.transition)
-  const variant = currentTransition
-    ? 'transition'
-    : previewRevision
-      ? 'revision'
-      : untranslated
-        ? 'untranslated'
-        : hasChanges && !statusInUrl
-          ? 'editing'
-          : selectedStatus
+  const variant =
+    currentTransition !== undefined
+      ? 'transition'
+      : previewRevision
+        ? 'revision'
+        : untranslated
+          ? 'untranslated'
+          : hasChanges && !statusInUrl
+            ? 'editing'
+            : selectedStatus
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const publishDraft = useSetAtom(editor.publishDraft)

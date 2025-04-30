@@ -76,6 +76,10 @@ export class EntryTransaction {
     assert(rootConfig, 'Invalid root')
     const i18n = getRoot(rootConfig).i18n
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
+    const existing = index.byId.get(id)
+    if (existing) {
+      parentId = existing.parentId
+    }
     let parent: Entry | undefined
     if (parentId) {
       parent = index.findFirst(entry => {
@@ -109,7 +113,6 @@ export class EntryTransaction {
       .map(entry => entry.path)
     const suffix = pathSuffix(path, conflictingPaths)
     if (suffix !== undefined) path = `${path}-${suffix}`
-    const existing = index.byId.get(id)
     if (existing) path = existing.pathOf(locale) ?? path
     if (overwrite && existing?.type === 'MediaFile') {
       const [prev] = existing.entries
