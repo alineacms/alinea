@@ -71,9 +71,9 @@ export async function generateDashboard(
         <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
         <meta name="redirect_url" value="${handlerUrl}?auth=login" />
         <body>
-          <script type="module">
-            import {boot} from '${baseUrl}/entry.js?${buildId}'
-            boot('${handlerUrl}')
+          <script type="module" src="${baseUrl}/entry.js?buildId=${buildId}&handlerUrl=${encodeURIComponent(
+            handlerUrl
+          )}">
           </script>
         </body>
       `.toString()

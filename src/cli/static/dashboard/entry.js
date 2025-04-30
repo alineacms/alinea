@@ -3,6 +3,7 @@ import {bootProd} from 'alinea/dashboard/boot/BootProd'
 import {cms} from '#alinea/config'
 import {views} from '#alinea/views'
 
-export function boot(handlerUrl) {
-  bootProd(handlerUrl, cms, views)
-}
+const params = new URL(import.meta.url).searchParams
+const handlerUrl = params.get('handlerUrl')
+
+bootProd(handlerUrl, cms, views)

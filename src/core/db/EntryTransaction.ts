@@ -64,6 +64,7 @@ export class EntryTransaction {
     data,
     root,
     workspace,
+    fromSeed,
     parentId = null,
     id = createId(),
     insertOrder = 'last',
@@ -162,7 +163,7 @@ export class EntryTransaction {
       this.#persistSharedFields(id, locale, type, data)
     }
     const seeds = existing?.locales.get(locale)?.values()
-    const seeded = seeds?.next().value?.seeded ?? null
+    const seeded = fromSeed ?? seeds?.next().value?.seeded ?? null
     const record = createRecord(
       {id, type, index: newIndex, path, seeded, data},
       status

@@ -22,6 +22,7 @@ export interface CreateMutation {
   insertOrder?: 'first' | 'last'
   status?: 'draft' | 'archived' | 'published'
   overwrite?: boolean
+  fromSeed?: string
 }
 
 export interface UpdateMutation {

@@ -83,6 +83,8 @@ export function createHandler({
         if (now - lastSync < syncInterval * 1000) return
         lastSync = now
         await local.syncWith(cnx)
+      }).catch(error => {
+        console.log(error)
       })
     }
 
@@ -152,9 +154,7 @@ export function createHandler({
         const scope = getScope(cms.config)
         const query = scope.parse(raw) as GraphQuery
         if (!query.preview) {
-          await periodicSync(cnx, query.syncInterval).catch(error => {
-            console.error('Sync error', error)
-          })
+          await periodicSync(cnx, query.syncInterval)
         } else {
           const {parse} = await previewParser
           const preview = await parse(query.preview, () => local.syncWith(cnx))
@@ -206,17 +206,33 @@ export function createHandler({
         expectJson()
         const sha = string(url.searchParams.get('sha'))
         await periodicSync(cnx)
-        return Response.json((await local.getTreeIfDifferent(sha)) ?? null)
+        const tree = await local.getTreeIfDifferent(sha)
+        return Response.json(tree ?? null)
       }
 
       if (action === HandleAction.Blob && request.method === 'POST') {
         expectUser()
         const {shas} = object({shas: array(string)})(await body)
-        await periodicSync(cnx)
-        const blobs = await cnx.getBlobs(shas)
+        const tree = await local.source.getTree()
+        const fromLocal = []
+        const fromRemote = []
+        for (const sha of shas) {
+          if (tree.hasSha(sha)) fromLocal.push(sha)
+          else fromRemote.push(sha)
+        }
         const formData = new FormData()
-        for (const [sha, blob] of blobs) {
-          formData.append(sha, new Blob([blob]), sha)
+        if (fromLocal.length > 0) {
+          const blobs = await local.source.getBlobs(fromLocal)
+          for (const [sha, blob] of blobs) {
+            formData.append(sha, new Blob([blob]))
+          }
+        }
+        if (fromRemote.length > 0) {
+          await periodicSync(cnx)
+          const blobs = await cnx.getBlobs(fromRemote)
+          for (const [sha, blob] of blobs) {
+            formData.append(sha, new Blob([blob]))
+          }
         }
         return new Response(formData)
       }

@@ -93,6 +93,7 @@ export class CloudRemote implements RemoteConnection {
         accept: 'multipart/form-data'
       }
     })
+      .then(failOnHttpError)
       .then(response => response.formData())
       .then(async form => {
         const blobs: Array<[sha: string, blob: Uint8Array]> = []

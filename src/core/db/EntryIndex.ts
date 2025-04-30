@@ -212,6 +212,7 @@ export class EntryIndex extends EventTarget {
               type,
               workspace,
               root,
+              fromSeed: seedPath,
               data: {path}
             })
             .toRequest()
@@ -329,9 +330,10 @@ export class EntryIndex extends EventTarget {
 
     let raw: unknown
     try {
-      raw = JSON.parse(new TextDecoder().decode(contents))
+      const data = new TextDecoder().decode(contents)
+      raw = JSON.parse(data)
     } catch (error) {
-      throw new Error(`Failed to parse JSON: ${file}`)
+      throw new Error(`Failed to parse JSON: ${file} - ${error}`)
     }
     assert(typeof raw === 'object')
     const nodePath = getNodePath(file)

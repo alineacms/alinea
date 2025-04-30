@@ -15,7 +15,12 @@ export interface ExportedSource {
 export async function exportSource(source: Source): Promise<ExportedSource> {
   const tree = await source.getTree()
   const shas = Array.from(tree.index(), ([, sha]) => sha)
-  const blobs = fromEntries(await source.getBlobs(shas))
+  const fromSource = await source.getBlobs(shas)
+  const blobs = fromEntries(
+    fromSource.map(([sha, blob]) => {
+      return [sha, decoder.decode(blob)]
+    })
+  )
   return {
     tree: tree.toJSON(),
     blobs: await base64.encode(encoder.encode(JSON.stringify(blobs)))
@@ -32,9 +37,10 @@ export async function importSource(
   const source = new MemorySource(
     tree,
     new Map(
-      entries(blobs).map(
-        ([sha, contents]) => [sha, encoder.encode(contents)] as const
-      )
+      entries(blobs).map(([sha, contents]) => {
+        const buffer = encoder.encode(contents)
+        return [sha, buffer]
+      })
     )
   )
   return source

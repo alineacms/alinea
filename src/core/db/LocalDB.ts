@@ -15,7 +15,7 @@ import {WriteableGraph} from './WriteableGraph.js'
 
 export class LocalDB extends WriteableGraph {
   public index: EntryIndex
-  protected source: Source
+  source: Source
   #resolver: EntryResolver
 
   constructor(

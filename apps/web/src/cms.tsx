@@ -52,6 +52,7 @@ const demo = Config.workspace('Demo', {
   }
 })
 export const cms = createCMS({
+  enableDrafts: true,
   schema,
   workspaces: {main, demo},
   baseUrl: {

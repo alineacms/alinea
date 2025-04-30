@@ -21,6 +21,7 @@ export async function bundleContents(
       changes.filter(change => change.op !== 'delete').map(change => change.sha)
     )
   )
+  if (shas.length === 0) return changes
   const blobs = new Map(await source.getBlobs(shas))
   return changes.map(change => {
     if (change.op === 'delete') return change
@@ -38,6 +39,7 @@ export async function diff(
   const localTree = await source.getTree()
   const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
   if (!remoteTree) return []
+  console.log(remoteTree.toJSON())
   const changes = localTree.diff(remoteTree)
   return bundleContents(remote, changes)
 }
@@ -109,7 +111,9 @@ export class SourceTransaction {
           .filter(sha => !this.#blobs.has(sha))
       )
     )
-    const blobs = new Map(await this.#source.getBlobs(fromSource))
+    const blobs = new Map(
+      fromSource.length === 0 ? [] : await this.#source.getBlobs(fromSource)
+    )
     const bundleContents = (change: Change) => {
       if (change.op === 'delete') return change
       const contents = this.#blobs.get(change.sha) ?? blobs.get(change.sha)

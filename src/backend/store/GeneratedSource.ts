@@ -5,11 +5,13 @@ import PLazy from 'p-lazy'
 export const generatedSource: Promise<MemorySource> = PLazy.from(async () => {
   try {
     // @ts-ignore
-    const source: any = await import('@alinea/generated/source.json', {
+    const {default: source} = await import('@alinea/generated/source.json', {
       with: {type: 'json'}
     })
-    return await importSource(source)
-  } catch {
+    const imported = await importSource(source)
+    return imported
+  } catch (error) {
+    console.error(error)
     return new MemorySource()
   }
 })
