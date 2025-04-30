@@ -224,6 +224,7 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         if (!newParent) return true
         const parentData = parent.getItemData()
         const droppingData = dropping.getItemData()
+        if (!droppingData) return false
         const childType = db.config.schema[droppingData.type]
         if (parentData.type === ROOT_ID) {
           const entry = droppingData.entries[0]
