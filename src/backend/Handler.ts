@@ -175,17 +175,11 @@ export function createHandler({
         } finally {
           sha = await local.syncWith(cnx)
         }
-        return Response.json(sha)
+        return Response.json({sha})
       }
 
       if (action === HandleAction.Commit && request.method === 'POST') {
         throw new Error('Mutations expected')
-        /*const ctx = await verified
-        expectJson()
-        const request: CommitRequest = await body
-        return Response.json(
-          (await attemptCommit(local, remote, request)) ?? null
-        )*/
       }
 
       // History
