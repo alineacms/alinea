@@ -71,7 +71,8 @@ export abstract class WriteableGraph extends Graph {
     await this.commit(op)
     return this.get({
       id: query.id,
-      select: {index: Entry.index}
+      select: {index: Entry.index},
+      status: 'preferDraft'
     })
   }
 
