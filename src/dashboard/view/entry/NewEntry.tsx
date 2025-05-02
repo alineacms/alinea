@@ -150,7 +150,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     return track.options(insertOrderField, async get => {
       const selectedParent = get(parentField)
       const parentId = selectedParent?.[EntryReference.entry]
-      const parent = await db.get({
+      const parent = await db.first({
         select: {
           type: Entry.type
         },
@@ -158,7 +158,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
         status: 'preferDraft'
       })
       const parentType = parent && config.schema[parent.type]
-      const parentInsertOrder = Type.insertOrder(parentType)
+      const parentInsertOrder = parentType && Type.insertOrder(parentType)
       return {
         hidden: parentInsertOrder !== 'free'
       }
