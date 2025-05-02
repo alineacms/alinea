@@ -26,7 +26,6 @@ jobs:
         run: bun run build && bunx pkg-pr-new publish
       - if: steps.version.outputs.is_valid == 'true'
         run: |
-          rm -r dist && rm tsconfig.tsbuildinfo
           bun bump ${GITHUB_REF#refs/tags/v}
           npm config set //registry.npmjs.org/:_authToken ${{secrets.NPM_AUTH_TOKEN}}
       - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
