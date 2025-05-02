@@ -19,10 +19,11 @@ jobs:
       - name: Check cycles for browser target
         run: bun cycles:browser
       - run: bun test
-      - run: bun run build && bunx pkg-pr-new publish
       - uses: nowsprinting/check-version-format-action@v3
         id: version
         with: {prefix: 'v'}
+      - if: steps.version.outputs.is_valid != 'true'
+        run: bun run build && bunx pkg-pr-new publish
       - if: steps.version.outputs.is_valid == 'true'
         run: |
           rm -r dist && rm tsconfig.tsbuildinfo
