@@ -115,12 +115,6 @@
       "browser": "./dist/core/media/CreatePreview.browser.js",
       "default": "./dist/core/media/CreatePreview.js"
     },
-    "./dashboard/view/Preview": {
-      "edge-light": "./dist/dashboard/view/Preview.js",
-      "worker": "./dist/dashboard/view/Preview.js",
-      "browser": "./dist/dashboard/view/Preview.browser.js",
-      "default": "./dist/dashboard/view/Preview.js"
-    },
     "./picker/entry/EntryPicker": {
       "edge-light": "./dist/picker/entry/EntryPicker.js",
       "worker": "./dist/picker/entry/EntryPicker.js",
