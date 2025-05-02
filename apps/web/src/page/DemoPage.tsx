@@ -1,14 +1,10 @@
 import {FSSource} from 'alinea/core/source/FSSource'
 import {exportSource} from 'alinea/core/source/SourceExport'
-import dynamic from 'next/dynamic.js'
-
-const DemoDashboard = dynamic(() => import('./demo/DemoDashboard'), {
-  ssr: false
-})
+import {DemoDynamic} from './DemoDynamic'
 
 const fs = new FSSource('content/demo')
 const exported = await exportSource(fs)
 
 export default async function Demo() {
-  return <DemoDashboard exported={exported} />
+  return <DemoDynamic exported={exported} />
 }
