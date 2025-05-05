@@ -1,5 +1,5 @@
 import type {Stats} from 'node:fs'
-import fs from 'node:fs'
+import fs from 'node:fs/promises'
 import path from 'node:path/posix'
 import pLimit from 'p-limit'
 import {
@@ -28,12 +28,10 @@ export class FSSource implements Source {
   async getTree() {
     const current = this.#current
     const builder = new WriteableTree()
-    const files = fs.readdirSync(this.#cwd, {
+    const files = await fs.readdir(this.#cwd, {
       recursive: true
     })
-    const tasks = files.map(file =>
-      this.getFile(current, builder, file as string)
-    )
+    const tasks = files.map(file => this.getFile(current, builder, file))
     await Promise.all(tasks)
     const tree = await builder.compile(current)
     this.#current = tree
@@ -45,7 +43,7 @@ export class FSSource implements Source {
     const fullPath = path.join(this.#cwd, filePath)
     let stat: Stats
     try {
-      stat = fs.statSync(fullPath)
+      stat = await fs.stat(fullPath)
       if (!stat.isFile()) return
     } catch {
       return
@@ -59,7 +57,7 @@ export class FSSource implements Source {
       }
     }
     try {
-      const contents = fs.readFileSync(fullPath)
+      const contents = await fs.readFile(fullPath)
       const sha = await hashBlob(contents)
       this.#locations.set(sha, filePath)
       this.#lastModified.set(filePath, stat.mtimeMs)
@@ -80,7 +78,7 @@ export class FSSource implements Source {
       shas.map(async (sha): Promise<[sha: string, blob: Uint8Array]> => {
         const path = this.#locations.get(sha)
         assert(path, `Missing path for blob ${sha}`)
-        return [sha, fs.readFileSync(`${this.#cwd}/${path}`)]
+        return [sha, await fs.readFile(`${this.#cwd}/${path}`)]
       })
     )
   }
@@ -91,14 +89,16 @@ export class FSSource implements Source {
         changes.map(async change => {
           switch (change.op) {
             case 'delete': {
-              return fs.unlinkSync(`${this.#cwd}/${change.path}`)
+              return fs.unlink(`${this.#cwd}/${change.path}`).catch(() => {})
             }
             case 'add': {
               const {contents} = change
               assert(contents, 'Missing contents')
               const dir = path.dirname(change.path)
-              fs.mkdirSync(`${this.#cwd}/${dir}`, {recursive: true})
-              return fs.writeFileSync(`${this.#cwd}/${change.path}`, contents)
+              await fs
+                .mkdir(`${this.#cwd}/${dir}`, {recursive: true})
+                .catch(() => {})
+              return fs.writeFile(`${this.#cwd}/${change.path}`, contents)
             }
           }
         })
