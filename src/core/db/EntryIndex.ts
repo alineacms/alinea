@@ -276,7 +276,9 @@ export class EntryIndex extends EventTarget {
           } else {
             recompute.add(node.id)
           }
-          this.#search.discard(change.path)
+          if (this.#search.has(entry.filePath)) {
+            this.#search.discard(entry.filePath)
+          }
           break
         }
         case 'add': {
