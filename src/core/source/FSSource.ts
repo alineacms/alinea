@@ -31,36 +31,39 @@ export class FSSource implements Source {
     const files = await fs.readdir(this.#cwd, {
       recursive: true
     })
-    const tasks = files.map(async file => {
-      const filePath = file.replaceAll('\\', '/')
-      const fullPath = path.join(this.#cwd, filePath)
-      let stat: Stats
-      try {
-        stat = await fs.stat(fullPath)
-        if (!stat.isFile()) return
-      } catch {
-        return
-      }
-      const previouslyModified = this.#lastModified.get(filePath)
-      if (previouslyModified && stat.mtimeMs === previouslyModified) {
-        const previous = current.get(filePath)
-        if (previous && typeof previous.sha === 'string') {
-          builder.add(filePath, previous.sha)
-          return
-        }
-      }
-      try {
-        const contents = await fs.readFile(fullPath)
-        const sha = await hashBlob(contents)
-        this.#locations.set(sha, filePath)
-        this.#lastModified.set(filePath, stat.mtimeMs)
-        builder.add(filePath, sha)
-      } catch {}
-    })
+    const tasks = files.map(file => this.getFile(current, builder, file))
     await Promise.all(tasks)
     const tree = await builder.compile(current)
     this.#current = tree
     return tree
+  }
+
+  async getFile(current: ReadonlyTree, builder: WriteableTree, file: string) {
+    const filePath = file.replaceAll('\\', '/')
+    const fullPath = path.join(this.#cwd, filePath)
+    let stat: Stats
+    try {
+      stat = await fs.stat(fullPath)
+      if (!stat.isFile()) return
+    } catch {
+      return
+    }
+    const previouslyModified = this.#lastModified.get(filePath)
+    if (previouslyModified && stat.mtimeMs === previouslyModified) {
+      const previous = current.get(filePath)
+      if (previous && typeof previous.sha === 'string') {
+        builder.add(filePath, previous.sha)
+        return
+      }
+    }
+    try {
+      const contents = await fs.readFile(fullPath)
+      const sha = await hashBlob(contents)
+      this.#locations.set(sha, filePath)
+      this.#lastModified.set(filePath, stat.mtimeMs)
+      builder.add(filePath, sha)
+      return [sha, contents] as const
+    } catch {}
   }
 
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
@@ -116,14 +119,14 @@ export class FSSource implements Source {
 
 export class CachedFSSource extends FSSource {
   #tree: Promise<ReadonlyTree> | undefined
-  #blobs: Map<string, Uint8Array> | undefined
+  #blobs: Map<string, Uint8Array> = new Map()
 
   constructor(cwd: string) {
     super(cwd)
   }
 
   refresh() {
-    this.#blobs = undefined
+    this.#blobs = new Map()
     return (this.#tree = super.getTree())
   }
 
@@ -132,11 +135,23 @@ export class CachedFSSource extends FSSource {
     return this.#tree
   }
 
+  async getFile(current: ReadonlyTree, builder: WriteableTree, file: string) {
+    const result = await super.getFile(current, builder, file)
+    if (result) this.#blobs?.set(result[0], result[1])
+    return result
+  }
+
   async getBlobs(
     shas: Array<string>
   ): Promise<Array<[sha: string, blob: Uint8Array]>> {
-    if (this.#blobs) return Array.from(this.#blobs.entries())
-    const entries = await super.getBlobs(shas)
+    const fromLocal = shas.filter(sha => this.#blobs.has(sha))
+    const localEntries = fromLocal.map(
+      (sha): [sha: string, blob: Uint8Array] => [sha, this.#blobs.get(sha)!]
+    )
+    const fromRemote = shas.filter(sha => !this.#blobs.has(sha))
+    const remoteEntries =
+      fromRemote.length > 0 ? await super.getBlobs(fromRemote) : []
+    const entries = [...localEntries, ...remoteEntries]
     this.#blobs = new Map(entries)
     return entries
   }
