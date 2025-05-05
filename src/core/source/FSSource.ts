@@ -115,18 +115,29 @@ export class FSSource implements Source {
 }
 
 export class CachedFSSource extends FSSource {
-  #tree: Promise<ReadonlyTree>
+  #tree: Promise<ReadonlyTree> | undefined
+  #blobs: Map<string, Uint8Array> | undefined
 
   constructor(cwd: string) {
     super(cwd)
-    this.#tree = super.getTree()
   }
 
   refresh() {
+    this.#blobs = undefined
     return (this.#tree = super.getTree())
   }
 
   getTree() {
+    if (!this.#tree) return this.refresh()
     return this.#tree
+  }
+
+  async getBlobs(
+    shas: Array<string>
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+    if (this.#blobs) return Array.from(this.#blobs.entries())
+    const entries = await super.getBlobs(shas)
+    this.#blobs = new Map(entries)
+    return entries
   }
 }
