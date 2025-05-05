@@ -93,6 +93,12 @@ export class EntryIndex extends EventTarget {
 
   filter({ids, search, condition}: EntryFilter, preview?: Entry): Array<Entry> {
     if (search) {
+      const entries = this.filter({ids, condition})
+      for (const entry of entries) {
+        if (!this.#search.has(entry.filePath)) {
+          this.updateSearch(entry)
+        }
+      }
       return this.#search
         .search(search, {
           prefix: true,
@@ -240,6 +246,15 @@ export class EntryIndex extends EventTarget {
     return sha
   }
 
+  async updateSearch(entry: Entry) {
+    this.#search.add({
+      id: entry.filePath,
+      title: entry.title,
+      searchableText: entry.searchableText,
+      entry
+    })
+  }
+
   #applyChanges(changes: Array<Change>) {
     const recompute = new Set<string>()
     for (const change of changes) {
@@ -282,13 +297,10 @@ export class EntryIndex extends EventTarget {
           else recompute.add(node.id)
           this.byPath.set(nodePath, node)
           this.byId.set(entry.id, node)
-          if (this.#search.has(change.path)) this.#search.discard(change.path)
-          this.#search.add({
-            id: change.path,
-            title: entry.title,
-            searchableText: entry.searchableText,
-            entry
-          })
+          if (this.#search.has(entry.filePath)) {
+            this.#search.discard(entry.filePath)
+            this.updateSearch(entry)
+          }
           break
         }
       }
