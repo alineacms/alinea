@@ -84,7 +84,7 @@ export function createHandler({
         lastSync = now
         await local.syncWith(cnx)
       }).catch(error => {
-        console.log(error)
+        console.error(error)
       })
     }
 
