@@ -8,6 +8,7 @@ import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
 import type {Graph} from 'alinea/core/Graph'
 import {getRoot, getType} from 'alinea/core/Internal'
+import type {OrderBy} from 'alinea/core/OrderBy.js'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {parents, translations} from 'alinea/query'
@@ -28,28 +29,53 @@ const visibleTypesAtom = atom(get => {
     .map(([name]) => name)
 })
 
+function childrenOf(
+  graph: Graph,
+  locale: string | null,
+  workspace: string,
+  root: string,
+  parentId: string | null,
+  visibleTypes: Array<string>,
+  orderBy: OrderBy | Array<OrderBy> | undefined
+) {
+  return PLazy.from(async () => {
+    const children = await graph.find({
+      select: {
+        id: Entry.id,
+        locale: Entry.locale
+      },
+      orderBy,
+      workspace,
+      root: root,
+      parentId,
+      filter: {
+        _type: {in: visibleTypes}
+      },
+      status: 'preferDraft'
+    })
+    const untranslated = new Set()
+    const translatedChildren = new Set(
+      children.filter(child => child.locale === locale).map(child => child.id)
+    )
+    const orderedChildren = children.filter(child => {
+      if (translatedChildren.has(child.id)) return child.locale === locale
+      if (untranslated.has(child.id)) return false
+      untranslated.add(child.id)
+      return true
+    })
+    return [...new Set(orderedChildren.map(child => child.id))]
+  })
+}
+
 async function entryTreeRoot(
   graph: Graph,
-  status: 'preferDraft' | 'preferPublished',
+  locale: string | null,
   workspace: string,
   rootName: string,
   visibleTypes: Array<string>
 ): Promise<EntryTreeItem> {
   const root = graph.config.workspaces[workspace][rootName]
   const orderBy = getRoot(root).orderChildrenBy
-  const children = graph.find({
-    select: Entry.id,
-    groupBy: Entry.id,
-    orderBy,
-    filter: {
-      _active: true,
-      _workspace: workspace,
-      _root: rootName,
-      _parentId: null,
-      _type: {in: visibleTypes}
-    },
-    status
-  })
   return {
     id: ROOT_ID,
     index: '',
@@ -57,7 +83,15 @@ async function entryTreeRoot(
     isFolder: true,
     isRoot: true,
     entries: [],
-    children
+    children: childrenOf(
+      graph,
+      locale,
+      workspace,
+      rootName,
+      null,
+      visibleTypes,
+      orderBy
+    )
   }
 }
 
@@ -106,36 +140,17 @@ const loaderAtom = atom(get => {
         row.data.parents.length > 0
           ? !getType(schema[row.data.parents.at(-1)!.type]).orderChildrenBy
           : true
-      const children = PLazy.from(async () => {
-        const type = schema[row.type]
-        const orderBy = getType(type).orderChildrenBy
-        const untranslated = new Set()
-        const children = await graph.find({
-          select: {
-            id: Entry.id,
-            locale: Entry.locale
-          },
-          groupBy: Entry.id,
-          orderBy,
-          filter: {
-            _parentId: row.id,
-            _type: {in: visibleTypes}
-          },
-          status: 'preferDraft'
-        })
-        const translatedChildren = new Set(
-          children
-            .filter(child => child.locale === locale)
-            .map(child => child.id)
-        )
-        const orderedChildren = children.filter(child => {
-          if (translatedChildren.has(child.id)) return child.locale === locale
-          if (untranslated.has(child.id)) return false
-          untranslated.add(child.id)
-          return true
-        })
-        return [...new Set(orderedChildren.map(child => child.id))]
-      })
+      const type = schema[row.type]
+      const orderBy = getType(type).orderChildrenBy
+      const children = childrenOf(
+        graph,
+        locale,
+        row.data.workspace,
+        row.data.root,
+        row.id,
+        visibleTypes,
+        orderBy
+      )
       const entries = [row.data].concat(row.translations)
       indexed.set(row.id, {
         id: row.id,
@@ -152,7 +167,7 @@ const loaderAtom = atom(get => {
         res.push(
           await entryTreeRoot(
             graph,
-            'preferDraft',
+            locale,
             workspace.name,
             root.name,
             visibleTypes
@@ -221,7 +236,6 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         if (items.length !== 1) return false
         const [dropping] = items
         const newParent = dropping.getParent() !== parent
-        if (!newParent) return true
         const parentData = parent.getItemData()
         const droppingData = dropping.getItemData()
         if (!droppingData) return false
@@ -230,10 +244,16 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         if (parentData.type === ROOT_ID) {
           const entry = droppingData.entries[0]
           const root = db.config.workspaces[entry.workspace][entry.root]
-          return Config.rootContains(db.config, root, childType)
+          const orderBy = getRoot(root).orderChildrenBy
+          return !newParent
+            ? !orderBy
+            : Config.rootContains(db.config, root, childType)
         }
         const parentType = db.config.schema[parentData.type]
-        return Config.typeContains(db.config, parentType, childType)
+        const orderBy = getType(parentType).orderChildrenBy
+        return !newParent
+          ? !orderBy
+          : Config.typeContains(db.config, parentType, childType)
       },
       onDrop(items, target) {
         const {item: parent} = target
