@@ -467,6 +467,14 @@ class EntryNode {
     // Per ID: all have locale or none have locale
     if (locale === null) assert(this.locales.size === 1)
 
+    if (versions.has(entry.status)) {
+      return reportWarning(
+        `Duplicate entry with id ${entry.id}`,
+        entry.filePath,
+        versions.get(entry.status).filePath
+      )
+    }
+
     if (parent) {
       const hasArchived = parent.locales.get(locale)?.get('archived')
       if (hasArchived) {
@@ -482,45 +490,51 @@ class EntryNode {
       }
     }
 
-    // Per ID&locale: one of published or archived, but not both
-    if (entry.status === 'published') {
-      const archived = versions.get('archived')
-      if (archived) {
-        reportWarning(
+    switch (entry.status) {
+      case 'published': {
+        // Per ID&locale: one of published or archived, but not both
+        const archived = versions.get('archived')
+        if (!archived) break
+        return reportWarning(
           'Entry has both an archived and published version',
           archived.filePath,
           entry.filePath
         )
-        return
       }
-    }
-    if (entry.status === 'archived') {
-      const published = versions.get('published')
-      if (published) {
-        reportWarning(
+      case 'archived': {
+        const published = versions.get('published')
+        if (!published) break
+        return reportWarning(
           'Entry has both an archived and published version',
           published.filePath,
           entry.filePath
         )
-        return
       }
-    }
-    // Per ID&locale: only one draft
-    if (entry.status === 'draft') {
-      const draft = versions.get('draft')
-      if (draft) {
-        reportWarning(
+      case 'draft': {
+        // Per ID&locale: only one draft
+        const draft = versions.get('draft')
+        if (!draft) break
+        return reportWarning(
           'Entry has multiple drafts',
           draft.filePath,
           entry.filePath
         )
-        return
       }
     }
 
     entry.parentId = parent ? parent.id : null
     versions.set(entry.status, entry)
     this.byFile.set(entry.filePath, entry)
+
+    for (const version of versions.values()) {
+      if (entry.path !== version.path) {
+        reportWarning(
+          'Entry has different file paths for different versions',
+          entry.filePath,
+          version.filePath
+        )
+      }
+    }
   }
   sync(byId: Map<string, EntryNode>) {
     const parent = this.parentId ? byId.get(this.parentId) : undefined
