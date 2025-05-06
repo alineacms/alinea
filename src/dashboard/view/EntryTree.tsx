@@ -19,7 +19,7 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundVisibilityOff} from 'alinea/ui/icons/IcRoundVisibilityOff'
 import {useAtomValue} from 'jotai'
 import type {HTMLProps} from 'react'
-import {forwardRef, memo, useEffect} from 'react'
+import {forwardRef, memo, useEffect, useLayoutEffect, useRef} from 'react'
 import {dbAtom} from '../atoms/DbAtoms.js'
 import {
   type EntryTreeItem,
@@ -73,55 +73,67 @@ const TreeItem = memo(
       level,
       ...props
     }: TreeItemProps,
-    ref
+    innerRef
   ) {
+    const outerRef = useRef<HTMLDivElement>(null)
     const {schema} = useConfig()
     const {icon} = getType(schema[type])
+    useLayoutEffect(() => {
+      if (!isSelected) return
+      const el = outerRef?.current
+      if (!el) return
+      el.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest'
+      })
+    }, [isSelected])
     return (
-      <div
-        {...props}
-        ref={ref}
-        className={styles.tree.item({
-          selected: isSelected,
-          unpublished: isUnpublished,
-          untranslated: isUntranslated,
-          drop: isDragTarget,
-          dropAbove: isDragTargetAbove,
-          dropBelow: isDragTargetBelow
-        })}
-        key={id}
-        data-id={id}
-      >
-        <button
-          type="button"
-          className={styles.tree.item.label()}
-          title={title}
-          style={{paddingLeft: px((level + 1) * 12)}}
+      <div ref={outerRef}>
+        <div
+          {...props}
+          ref={innerRef}
+          className={styles.tree.item({
+            selected: isSelected,
+            unpublished: isUnpublished,
+            untranslated: isUntranslated,
+            drop: isDragTarget,
+            dropAbove: isDragTargetAbove,
+            dropBelow: isDragTargetBelow
+          })}
+          key={id}
+          data-id={id}
         >
-          <span className={styles.tree.item.icon()}>
-            <Icon
-              icon={
-                isUntranslated
-                  ? IcRoundTranslate
-                  : isUnpublished
-                    ? IcRoundVisibilityOff
-                    : (icon ?? IcOutlineDescription)
-              }
-            />
-          </span>
-
-          <span className={styles.tree.item.label.itemName()}>{title}</span>
-
-          {isFolder && (
-            <span className={styles.tree.item.arrow()}>
-              {isExpanded ? (
-                <Icon icon={IcRoundKeyboardArrowDown} size={18} />
-              ) : (
-                <Icon icon={IcRoundKeyboardArrowRight} size={18} />
-              )}
+          <button
+            type="button"
+            className={styles.tree.item.label()}
+            title={title}
+            style={{paddingLeft: px((level + 1) * 12)}}
+          >
+            <span className={styles.tree.item.icon()}>
+              <Icon
+                icon={
+                  isUntranslated
+                    ? IcRoundTranslate
+                    : isUnpublished
+                      ? IcRoundVisibilityOff
+                      : (icon ?? IcOutlineDescription)
+                }
+              />
             </span>
-          )}
-        </button>
+
+            <span className={styles.tree.item.label.itemName()}>{title}</span>
+
+            {isFolder && (
+              <span className={styles.tree.item.arrow()}>
+                {isExpanded ? (
+                  <Icon icon={IcRoundKeyboardArrowDown} size={18} />
+                ) : (
+                  <Icon icon={IcRoundKeyboardArrowRight} size={18} />
+                )}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
     )
   })
