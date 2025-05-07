@@ -46,20 +46,20 @@ test('seeding', async () => {
 
 test('create entries', async () => {
   const db = new LocalDB(cms.config)
-  /*await test.throws(
+  await test.throws(
     () => db.create({type: Page, set: {title: 'x'}}),
     'Invalid locale'
   )
   await test.throws(
     () => db.create({type: Page, locale: 'x', set: {title: 'x'}}),
     'Invalid locale'
-  )*/
+  )
   const page1 = await db.create({
     type: Page,
     locale: 'en',
     set: {title: 'New Page'}
   })
-  test.is(page1._index, 'a2')
+  test.is(page1._index, 'a1')
 
   // We shouldn't be able to create an entry of the same locale and status
   await test.throws(
@@ -74,14 +74,14 @@ test('create entries', async () => {
     locale: 'de',
     set: {title: 'Neue Seite'}
   })
-  test.is(page1DE._index, 'a2')
+  test.is(page1DE._index, 'a1')
 
   const page2 = await db.create({
     type: Page,
     locale: 'de',
     set: {title: 'Neue Seite'}
   })
-  test.is(page2._index, 'a3')
+  test.is(page2._index, 'a2')
 
   const sub1 = await db.create({
     type: Page,

@@ -17,6 +17,7 @@ import {entries, keys} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
+import {createId} from '../Id.js'
 import type {Change} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {type Source, bundleContents} from '../source/Source.js'
@@ -196,10 +197,10 @@ export class EntryIndex extends EventTarget {
         assert(node.type === type, `Type mismatch in ${nodePath}`)
       } else {
         // Find by seeded path
-        const seedPath = `/${nodePath
+        const pathSegments = nodePath
           .split('/')
           .slice(this.#singleWorkspace ? 1 : 2)
-          .join('/')}.json`
+        const seedPath = `/${pathSegments.join('/')}.json`
         const node = this.findFirst(entry => {
           return (
             entry.seeded === seedPath &&
@@ -210,11 +211,30 @@ export class EntryIndex extends EventTarget {
         if (node) {
           assert(node.type === type, `Type mismatch in ${nodePath}`)
         } else {
-          const tx = await this.transaction(source)
           const parentPath = paths.dirname(nodePath)
           const parentNode = this.byPath.get(getNodePath(parentPath))
+          let id = createId()
+          if (locale) {
+            const level = pathSegments.length - 1
+            const pathEnd = `/${pathSegments.slice(1).join('/')}.json`
+            const from = this.findFirst(entry => {
+              return (
+                entry.locale !== locale &&
+                entry.root === root &&
+                entry.workspace === workspace &&
+                entry.path === path &&
+                entry.level === level &&
+                entry.parentId === (parentNode?.id ?? null) &&
+                entry.seeded !== null &&
+                entry.seeded.endsWith(pathEnd)
+              )
+            })
+            if (from) id = from.id
+          }
+          const tx = await this.transaction(source)
           const request = await tx
             .create({
+              id,
               parentId: parentNode?.id ?? null,
               locale,
               type,
@@ -636,6 +656,7 @@ function getNodePath(filePath: string) {
 }
 
 interface Seed {
+  seedId: string
   type: string
   workspace: string
   root: string
@@ -668,6 +689,7 @@ function entrySeeds(config: Config): Map<string, Seed> {
           const typeName = typeNames.get(type)
           if (!typeName) continue
           result.set(nodePath, {
+            seedId: `${rootName}/${path}`,
             type: typeName,
             locale: locale,
             workspace: workspaceName,
