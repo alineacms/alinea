@@ -75,7 +75,7 @@ export interface Revision {
   ref: string
   createdAt: number
   file: string
-  user?: User
+  user?: {name: string; email: string}
   description?: string
 }
 

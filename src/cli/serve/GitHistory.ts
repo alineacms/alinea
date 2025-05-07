@@ -23,24 +23,34 @@ export class GitHistory implements HistoryApi {
       file
     ])
 
-    const revisions = output.split('\n\n').map(entry => {
-      const [hash, timestamp, message, email, name, changedFile, ...rest] =
-        entry.split('\n')
-      const fileLocation = rest.length
-        ? rest[rest.length - 1].split('\t').pop()!.trim()
-        : file
-
-      return {
-        ref: hash,
-        createdAt: Number.parseInt(timestamp) * 1000,
-        description: message,
-        file: fileLocation,
-        user: {
-          sub: email,
-          name: name
+    const revisions = output
+      .split('\n\n')
+      .filter(entry => {
+        return entry.includes('\n')
+      })
+      .map(entry => {
+        const [hash, timestamp, message, email, name, changedFile, ...rest] =
+          entry.split('\n')
+        const fileLocation = rest.length
+          ? rest[rest.length - 1].split('\t').pop()!.trim()
+          : file
+        const user = {name, email}
+        if (message?.includes('Co-authored-by')) {
+          const coAuthors = message
+            .split('Co-authored-by:')
+            .slice(1)
+            .map(line => line.split('<').pop()!.split('>')[0])
+          user.email = coAuthors[0] || email
+          user.name = coAuthors[1] || name
         }
-      }
-    })
+        return {
+          ref: hash,
+          createdAt: Number.parseInt(timestamp) * 1000,
+          description: message,
+          file: fileLocation,
+          user
+        }
+      })
 
     return revisions
   }
