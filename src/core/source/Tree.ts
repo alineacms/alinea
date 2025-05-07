@@ -297,18 +297,15 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     return this.nodes.get(segment) as WriteableTree | undefined
   }
 
-  remove(path: string): number {
+  remove(path: string): boolean {
     this.sha = undefined
     const [name, rest] = splitPath(path)
-    if (rest) {
-      const target = this.#getNode(name)
-      if (!target) return 0
-      const newSize = target.remove(rest)
-      if (newSize === 0) this.nodes.delete(name)
-      return this.nodes.size
-    }
-    this.nodes.delete(name)
-    return this.nodes.size
+    if (!rest) return this.nodes.delete(name)
+    const target = this.#getNode(name)
+    if (!target) return false
+    const result = target.remove(rest)
+    if (target.nodes.size === 0) this.nodes.delete(name)
+    return result
   }
 
   rename(from: string, to: string): void {
