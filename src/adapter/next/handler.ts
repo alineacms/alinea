@@ -59,7 +59,8 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
           select: Entry.url,
           id: info.entryId,
           locale: info.locale,
-          preview: payload ? {payload} : undefined
+          preview: payload ? {payload} : undefined,
+          status: 'preferDraft'
         })
         if (!url) return new Response('Not found', {status: 404})
         const source = new URL(request.url)

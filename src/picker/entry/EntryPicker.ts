@@ -86,6 +86,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       const [extra] = await loader.resolveLinks(options.selection, linkIds)
       if (type !== 'image') return assign(row, extra)
       const {src: location, previewUrl, filePath, ...rest} = extra
+      if (!previewUrl) return assign(row, extra, {src: location})
       // If the DB was built with this entry in it we can assume the location
       // is ready to use, otherwise use the preview url
       const locationAvailable = loader.includedAtBuild(filePath)

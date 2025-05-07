@@ -51,6 +51,7 @@ export class NextCMS<
   }
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
+    let status = query.status
     const {isDev, handlerUrl, apiKey} = await requestContext(this.config)
     const client = new Client({
       config: this.config,
@@ -65,12 +66,13 @@ export class NextCMS<
     const {cookies, draftMode} = await import('next/headers')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
     if (isDraft) {
+      if (!status) status = 'preferDraft'
       const cookie = await cookies()
       const payload = getPreviewPayloadFromCookies(cookie.getAll())
       if (payload) preview = {payload}
     }
     if (process.env.NEXT_RUNTIME === 'edge' || isDev)
-      return client.resolve({preview, ...query})
+      return client.resolve({preview, ...query, status})
     const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
     const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
     const {db, previews} = await this.init
@@ -87,7 +89,7 @@ export class NextCMS<
         }
       }
     }
-    return db.resolve({preview, ...query})
+    return db.resolve({preview, ...query, status})
   }
 
   async #authenticatedClient() {

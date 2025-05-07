@@ -118,10 +118,7 @@ export class DevDB extends LocalDB {
     return {
       entryId,
       location: fileLocation,
-      previewUrl: new URL(
-        `?/preview&file=${encodeURIComponent(fileLocation)}`,
-        dashboardUrl
-      ).href,
+      previewUrl: '',
       url: new URL(
         `?/upload&file=${encodeURIComponent(fileLocation)}`,
         dashboardUrl

@@ -5,7 +5,7 @@ import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
-import {Metadata, MetadataRoute} from 'next'
+import type {Metadata, MetadataRoute} from 'next'
 import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
@@ -71,7 +71,7 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
                   url: '/blog'
                 }
               ]}
-            ></Breadcrumbs>
+            />
             <WebTypo.H1 flat className={styles.root.header.title()}>
               {page.title}
             </WebTypo.H1>

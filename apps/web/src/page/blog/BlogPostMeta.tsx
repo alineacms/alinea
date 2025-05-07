@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {UrlReference} from 'alinea'
+import type {UrlReference} from 'alinea'
 import {HStack} from 'alinea/ui'
 import css from './BlogPostMeta.module.scss'
 
@@ -15,11 +15,12 @@ export interface BlogPostMetaProps {
 }
 
 export function BlogPostMeta({publishDate, author}: BlogPostMetaProps) {
-  const date = new Intl.DateTimeFormat('en', {
+  const date = publishDate ? new Date(publishDate) : new Date()
+  const formattedDate = new Intl.DateTimeFormat('en', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
-  }).format(new Date(publishDate))
+  }).format(date)
   return (
     <HStack className={styles.root()} gap={8} align="flex-start">
       {author && (
@@ -27,7 +28,7 @@ export function BlogPostMeta({publishDate, author}: BlogPostMetaProps) {
           By
           <a href={author.url._url} className={styles.root.author.url()}>
             <HStack center gap={8}>
-              {author.avatar && (
+              {author.avatar?._url && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   alt="Author avatar"
@@ -40,7 +41,7 @@ export function BlogPostMeta({publishDate, author}: BlogPostMetaProps) {
           </a>
         </HStack>
       )}
-      <time>— {date}</time>
+      <time>— {formattedDate}</time>
     </HStack>
   )
 }

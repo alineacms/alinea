@@ -8,7 +8,7 @@ import styler from '@alinea/styler'
 import {Query} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
 import {VStack} from 'alinea/ui'
-import {MetadataRoute} from 'next'
+import type {MetadataRoute} from 'next'
 import css from './BlogPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
 
