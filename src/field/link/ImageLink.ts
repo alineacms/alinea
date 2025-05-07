@@ -69,11 +69,15 @@ function imagePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'Image',
     title: multiple ? 'Select images' : 'Select an image',
-    condition: {or: [imageCondition, {_type: 'MediaLibrary'}]},
+    condition: imageCondition,
 
     showMedia: true,
     defaultView: 'thumb',
-    selection: ImageLink
+    selection: {
+      ...ImageLink,
+      filePath: Entry.filePath,
+      previewUrl: MediaFile.previewUrl
+    }
   })
 }
 

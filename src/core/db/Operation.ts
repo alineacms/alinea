@@ -239,6 +239,7 @@ export class UploadOperation extends Operation {
         data: {
           title,
           location: fileLocation,
+          previewUrl: info.previewUrl,
           extension,
           size: body.byteLength,
           hash,

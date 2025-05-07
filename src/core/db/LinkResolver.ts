@@ -12,6 +12,10 @@ export class LinkResolver {
     private ctx: ResolveContext
   ) {}
 
+  includedAtBuild(filePath: string): boolean {
+    return this.resolver.index.initialSync?.has(filePath) ?? false
+  }
+
   async resolveLinks<P extends Projection>(
     projection: P,
     entryIds: ReadonlyArray<string>

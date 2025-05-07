@@ -42,6 +42,7 @@ export class EntryIndex extends EventTarget {
   byPath = new Map<string, EntryNode>()
   byId = new Map<string, EntryNode>()
   resolver: EntryResolver
+  initialSync: ReadonlyTree | undefined
   #config: Config
   #seeds: Map<string, Seed>
   #search: MiniSearch
@@ -151,6 +152,7 @@ export class EntryIndex extends EventTarget {
 
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
+    if (!this.initialSync) this.initialSync = tree
     const changes = await bundleContents(source, this.tree.diff(tree))
     if (changes.length === 0) return tree.sha
     // for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)

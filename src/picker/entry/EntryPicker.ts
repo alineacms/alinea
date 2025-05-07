@@ -4,10 +4,10 @@ import type {Graph, Projection} from 'alinea/core/Graph'
 import type {Label} from 'alinea/core/Label'
 import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
+import {Type, type} from 'alinea/core/Type'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {Type, type} from 'alinea/core/Type'
 import {assign, keys} from 'alinea/core/util/Objects'
 import {EntryReference} from './EntryReference.js'
 
@@ -84,7 +84,14 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       const linkIds = [entryId]
       if (!options.selection) return
       const [extra] = await loader.resolveLinks(options.selection, linkIds)
-      assign(row, extra)
+      if (type !== 'image') return assign(row, extra)
+      const {src: location, previewUrl, filePath, ...rest} = extra
+      // If the DB was built with this entry in it we can assume the location
+      // is ready to use, otherwise use the preview url
+      const locationAvailable = loader.includedAtBuild(filePath)
+      const src = locationAvailable ? location : previewUrl
+      row.src = src
+      assign(row, rest)
     }
   }
 }
