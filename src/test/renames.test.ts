@@ -17,6 +17,37 @@ const cms = createCMS({
   workspaces: {main}
 })
 
+test('avoid overwriting existing paths', async () => {
+  const db = new LocalDB(cms.config)
+  const page1 = await db.create({
+    type: Page,
+    set: {path: 'page1'}
+  })
+  const page2 = await db.create({
+    type: Page,
+    set: {path: 'page2'}
+  })
+
+  const draft = await db.create({
+    id: page2._id,
+    type: Page,
+    status: 'draft',
+    set: {path: 'page1'}
+  })
+
+  await db.publish({
+    id: draft._id,
+    status: 'draft'
+  })
+
+  const published = await db.get({
+    id: page2._id,
+    type: Page
+  })
+
+  console.log(db.index.tree.flat())
+})
+
 test('rename parent via draft', async () => {
   const db = new LocalDB(cms.config)
   const page1 = await db.create({

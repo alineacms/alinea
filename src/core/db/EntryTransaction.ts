@@ -34,6 +34,15 @@ import type {
 
 type Op<T> = Omit<T, 'op'>
 
+interface PathCandidate {
+  id: string
+  path: string
+  parentId: string | null
+  root: string
+  workspace: string
+  locale: string | null
+}
+
 export class EntryTransaction {
   #checks = Array<[path: string, sha: string]>()
   #messages = Array<string>()
@@ -103,17 +112,7 @@ export class EntryTransaction {
     assert(typeof title === 'string', 'Missing title')
     let path = slugify(typeof data.path === 'string' ? data.path : title)
     assert(path.length > 0, 'Invalid path')
-    const conflictingPaths = siblings
-      .filter(entry => {
-        return (
-          entry.id !== id &&
-          entry.locale === locale &&
-          (entry.path === path || entry.path.startsWith(`${path}-`))
-        )
-      })
-      .map(entry => entry.path)
-    const suffix = pathSuffix(path, conflictingPaths)
-    if (suffix !== undefined) path = `${path}-${suffix}`
+    path = this.#getAvailablePath({id, path, parentId, root, workspace, locale})
     if (existing) path = existing.pathOf(locale) ?? path
     if (overwrite && existing?.type === 'MediaFile') {
       const [prev] = existing.entries
@@ -237,6 +236,25 @@ export class EntryTransaction {
     return this
   }
 
+  #getAvailablePath(target: PathCandidate) {
+    const conflictingPaths = Array.from(
+      this.#index.findMany(entry => {
+        return (
+          entry.id !== target.id &&
+          entry.parentId === target.parentId &&
+          entry.workspace === target.workspace &&
+          entry.root === target.root &&
+          entry.locale === target.locale &&
+          (entry.path === target.path ||
+            entry.path.startsWith(`${target.path}-`))
+        )
+      })
+    ).map(entry => entry.path)
+    const suffix = pathSuffix(target.path, conflictingPaths)
+    if (suffix !== undefined) return `${target.path}-${suffix}`
+    return target.path
+  }
+
   #persistSharedFields(
     id: string,
     locale: string,
@@ -287,7 +305,15 @@ export class EntryTransaction {
     })
     assert(entry, `Entry not found: ${id}`)
     const pathChange = entry.data.path && entry.data.path !== entry.path
-    const path = entry.data.path ?? entry.path
+    let path = slugify(entry.data.path ?? entry.path)
+    path = this.#getAvailablePath({
+      id,
+      path,
+      parentId: entry.parentId,
+      root: entry.root,
+      workspace: entry.workspace,
+      locale
+    })
     const childrenDir = paths.join(entry.parentDir, path)
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.remove(entry.filePath)
