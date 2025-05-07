@@ -277,7 +277,7 @@ export class EntryResolver implements Resolver {
     const location = Array.isArray(query.location)
       ? query.location
       : query.location && this.#scope.locationOf(query.location)
-    const checkStatus = query.status && statusChecker(query.status)
+    const checkStatus = statusChecker(ctx.status)
     const checkLocation = location && locationChecker(location)
     const locale = query.locale ?? ctx.locale
     const checkLocale =
@@ -308,7 +308,7 @@ export class EntryResolver implements Resolver {
     return {
       ids,
       condition(entry: Entry) {
-        if (checkStatus && !checkStatus(entry)) return false
+        if (!checkStatus(entry)) return false
         if (checkLocation && !checkLocation(entry)) return false
         if (checkLocale && !checkLocale(entry)) return false
         if (checkType && !checkType(entry)) return false

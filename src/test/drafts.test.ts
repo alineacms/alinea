@@ -17,6 +17,22 @@ const cms = createCMS({
   workspaces: {main}
 })
 
+test('new drafts', async () => {
+  const db = new LocalDB(cms.config)
+  const page1 = await db.create({
+    type: Page,
+    status: 'draft',
+    set: {path: 'page1'}
+  })
+
+  // We should not be able to query the draft if we don't set status to draft
+  test.not.ok(
+    await db.first({
+      id: page1._id
+    })
+  )
+})
+
 test('rename parent via draft', async () => {
   const db = new LocalDB(cms.config)
   const page1 = await db.create({
