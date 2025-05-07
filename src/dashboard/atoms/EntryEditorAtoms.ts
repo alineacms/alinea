@@ -26,7 +26,7 @@ import {type Getter, type Setter, atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {dbAtom, entryRevisionAtoms} from './DbAtoms.js'
+import {dbAtom, dbMetaAtom, entryRevisionAtoms} from './DbAtoms.js'
 import {type Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
@@ -606,12 +606,13 @@ export function createEntryEditor(entryData: EntryData) {
 
   const yUpdate = debounceAtom(edits.yUpdate, 250)
   const previewPayload = atom(async get => {
+    const sha = await get(dbMetaAtom)
     const update = get(yUpdate)
     const status = get(selectedStatus)
     return encodePreviewPayload({
       locale: activeVersion.locale,
       entryId: activeVersion.id,
-      contentHash: activeVersion.fileHash,
+      contentHash: sha,
       status: status,
       update
     })

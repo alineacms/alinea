@@ -14,24 +14,17 @@ export function createPreviewParser(local: LocalDB) {
     ): Promise<PreviewRequest | undefined> {
       if (!(preview && 'payload' in preview)) return preview
       const update = await decodePreviewPayload(preview.payload)
-      let entry = await local.first({
+      if (local.sha !== update.contentHash) {
+        await sync()
+        if (local.sha !== update.contentHash) return
+      }
+      const entry = await local.first({
         select: Entry,
         id: update.entryId,
         locale: update.locale,
         status: 'preferDraft'
       })
       if (!entry) return
-      if (update.contentHash !== entry.fileHash) {
-        await sync()
-        entry = await local.first({
-          select: Entry,
-          id: update.entryId,
-          locale: update.locale,
-          status: 'preferDraft'
-        })
-        if (!entry) return
-        if (update.contentHash !== entry.fileHash) return
-      }
       const type = local.config.schema[entry.type]
       if (!type) return
       const doc = new Y.Doc()
