@@ -97,32 +97,38 @@
     ".": "./dist/index.js",
     "./css": "./dist/index.css",
     "./next": {
+      "edge-light": "./dist/next.edge.js",
       "require": "./dist/next.cjs",
       "default": "./dist/next.js"
     },
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js",
     "./cloud/view/CloudAuth": {
+      "edge-light": "./dist/cloud/view/CloudAuth.js",
       "worker": "./dist/cloud/view/CloudAuth.js",
       "browser": "./dist/cloud/view/CloudAuth.browser.js",
       "default": "./dist/cloud/view/CloudAuth.js"
     },
     "./core/media/CreatePreview": {
+      "edge-light": "./dist/core/media/CreatePreview.js",
       "worker": "./dist/core/media/CreatePreview.js",
       "browser": "./dist/core/media/CreatePreview.browser.js",
       "default": "./dist/core/media/CreatePreview.js"
     },
     "./dashboard/view/Preview": {
+      "edge-light": "./dist/dashboard/view/Preview.js",
       "worker": "./dist/dashboard/view/Preview.js",
       "browser": "./dist/dashboard/view/Preview.browser.js",
       "default": "./dist/dashboard/view/Preview.js"
     },
     "./picker/entry/EntryPicker": {
+      "edge-light": "./dist/picker/entry/EntryPicker.js",
       "worker": "./dist/picker/entry/EntryPicker.js",
       "browser": "./dist/picker/entry/EntryPicker.browser.js",
       "default": "./dist/picker/entry/EntryPicker.js"
     },
     "./picker/url/UrlPicker": {
+      "edge-light": "./dist/picker/url/UrlPicker.js",
       "worker": "./dist/picker/url/UrlPicker.js",
       "browser": "./dist/picker/url/UrlPicker.browser.js",
       "default": "./dist/picker/url/UrlPicker.js"

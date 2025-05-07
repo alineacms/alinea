@@ -1,3 +1,8 @@
+import {spawn} from 'node:child_process'
+import fs from 'node:fs'
+import {builtinModules} from 'node:module'
+import path from 'node:path'
+import {pathToFileURL} from 'node:url'
 import {ReporterPlugin} from '@esbx/reporter'
 import {getManifest} from '@esbx/workspaces'
 import {dequal} from 'dequal'
@@ -8,11 +13,6 @@ import esbuild, {
 } from 'esbuild'
 import fsExtra from 'fs-extra'
 import glob from 'glob'
-import {spawn} from 'node:child_process'
-import fs from 'node:fs'
-import {builtinModules} from 'node:module'
-import path from 'node:path'
-import {pathToFileURL} from 'node:url'
 import postcss from 'postcss'
 import postcssModules from 'postcss-modules'
 import pxtorem from 'postcss-pxtorem'
@@ -155,7 +155,8 @@ const internalPlugin: Plugin = {
     build.onResolve({filter: /^alinea.*/}, args => {
       if (checkCycles) {
         // Make this a relative path
-        const file = args.path === 'alinea' ? 'index' : args.path.slice('alinea/'.length)
+        const file =
+          args.path === 'alinea' ? 'index' : args.path.slice('alinea/'.length)
         const localFile = path.join(src, file)
         const target =
           checkCycles === 'browser' ? BROWSER_TARGET : SERVER_TARGET
@@ -285,6 +286,7 @@ const targetPlugin: Plugin = {
         '.': './dist/index.js',
         './css': './dist/index.css',
         './next': {
+          'edge-light': './dist/next.edge.js',
           require: './dist/next.cjs',
           default: './dist/next.js'
         },
@@ -294,6 +296,7 @@ const targetPlugin: Plugin = {
       const bFiles = [...browserFiles].sort()
       for (const file of bFiles) {
         exports[`./${file}`] = {
+          'edge-light': `./dist/${file}.js`,
           worker: `./dist/${file}.js`,
           browser: `./dist/${file}.${BROWSER_TARGET}.js`,
           default: `./dist/${file}.js`
@@ -302,6 +305,7 @@ const targetPlugin: Plugin = {
       const sFiles = [...serverFiles].sort()
       for (const file of sFiles) {
         exports[`./${file}`] = {
+          'edge-light': `./dist/${file}.${SERVER_TARGET}.js`,
           worker: `./dist/${file}.${SERVER_TARGET}.js`,
           browser: `./dist/${file}.js`,
           default: `./dist/${file}.${SERVER_TARGET}.js`
