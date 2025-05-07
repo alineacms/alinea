@@ -25,6 +25,7 @@ export const MediaFile = type('Media file', {
     title: text('Title'),
     path: hidden<string>('Path'),
     location: hidden<string>('Location'),
+    previewUrl: hidden<string>('Preview URL'),
     extension: hidden<string>('Extension'),
     size: hidden<number>('File size'),
     hash: hidden<string>('Hash'),

@@ -76,6 +76,7 @@ export class EntryTransaction {
     assert(rootConfig, 'Invalid root')
     const i18n = getRoot(rootConfig).i18n
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
+    else assert(locale === null, 'Invalid locale')
     const existing = index.byId.get(id)
     if (existing) {
       parentId = existing.parentId

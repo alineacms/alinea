@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import {suite} from '@alinea/suite'
 import {indexedDB} from 'fake-indexeddb'
-import demoTree from '../../test/demo.json' with {type: 'json'}
+import demoTree from '../../test/fixtures/demo.json' with {type: 'json'}
 import {MemorySource} from './MemorySource.js'
 import {syncWith} from './Source.js'
 import {ReadonlyTree} from './Tree.js'

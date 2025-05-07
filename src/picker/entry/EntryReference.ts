@@ -1,7 +1,7 @@
 import type {Reference} from 'alinea/core/Reference'
 
 export interface EntryReference extends Reference {
-  _type: 'entry'
+  _type: 'entry' | 'image' | 'file'
   _entry: string
 }
 
