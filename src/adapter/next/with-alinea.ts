@@ -1,7 +1,14 @@
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
+import type {RemotePattern} from 'next/dist/shared/lib/image-config.js'
 import type {NextConfig} from 'next/dist/types.js'
+
+export function createCMS() {
+  throw new Error(
+    'Alinea was loaded in a CJS environment. Please ensure your project is marked as "type": "module" in package.json.'
+  )
+}
 
 export function withAlinea(config: NextConfig): NextConfig {
   let nextVersion = 15
@@ -15,6 +22,18 @@ export function withAlinea(config: NextConfig): NextConfig {
   } catch {
     console.warn('Alinea could not determine Next.js version, assuming 15+')
   }
+  const imagesConfig = config.images ?? {}
+  const remotePatterns: Array<RemotePattern> = [
+    ...(imagesConfig.remotePatterns ?? []),
+    {
+      protocol: 'https',
+      hostname: 'uploads.alinea.cloud'
+    }
+  ]
+  const images = {
+    ...imagesConfig,
+    remotePatterns
+  }
   if (nextVersion < 15)
     return {
       ...config,
@@ -24,13 +43,15 @@ export function withAlinea(config: NextConfig): NextConfig {
           ...(config.experimental?.serverComponentsExternalPackages ?? []),
           '@alinea/generated'
         ]
-      }
+      },
+      images
     }
   return {
     ...config,
     serverExternalPackages: [
       ...(config.serverExternalPackages ?? []),
       '@alinea/generated'
-    ]
+    ],
+    images
   }
 }
