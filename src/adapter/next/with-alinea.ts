@@ -1,7 +1,6 @@
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
-import type {RemotePattern} from 'next/dist/shared/lib/image-config.js'
 import type {NextConfig} from 'next/dist/types.js'
 
 export function createCMS() {
@@ -23,10 +22,10 @@ export function withAlinea(config: NextConfig): NextConfig {
     console.warn('Alinea could not determine Next.js version, assuming 15+')
   }
   const imagesConfig = config.images ?? {}
-  const remotePatterns: Array<RemotePattern> = [
+  const remotePatterns = [
     ...(imagesConfig.remotePatterns ?? []),
     {
-      protocol: 'https',
+      protocol: 'https' as const,
       hostname: 'uploads.alinea.cloud'
     }
   ]
