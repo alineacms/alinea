@@ -56,7 +56,7 @@ export namespace outcome {
     run: OutcomeRunner
   ): OutcomeResult<Run> {
     const result: Promise<Outcome<any>> | Outcome<any> = outcome(run) as any
-    if (result instanceof Promise)
+    if ('then' in result)
       return result.then(outcome => outcome.isSuccess()) as any
     return result.isSuccess() as any
   }
@@ -64,7 +64,7 @@ export namespace outcome {
     run: OutcomeRunner
   ): OutcomeResult<Run> {
     const result: Promise<Outcome<any>> | Outcome<any> = outcome(run) as any
-    if (result instanceof Promise)
+    if ('then' in result)
       return result.then(outcome => outcome.isFailure()) as any
     return result.isFailure() as any
   }
