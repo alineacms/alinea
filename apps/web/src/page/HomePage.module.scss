@@ -61,6 +61,7 @@
       height: 80vh;
       width: 100%;
       border: none;
+      background: #f4f5f7;
 
       @include l {
         max-width: 1200px;
@@ -99,7 +100,9 @@
   flex-direction: column;
   justify-content: center;
   gap: 80px;
-  padding: 50px 0;
+  padding: 120px 0;
+  min-height: 98vh;
+  margin-bottom: 120px;
 
   &-demo {
     font-family: var(--web-title-font);
@@ -107,14 +110,7 @@
   }
 
   &-screenshot {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 0 20px;
-    padding-bottom: 80px;
-
-    &-inner {
-      border-radius: 10px;
-      overflow: hidden;
-    }
+    width: 100%;
+    margin-bottom: -200px;
   }
 }

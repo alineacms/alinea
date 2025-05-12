@@ -10,6 +10,8 @@
   &-inner {
     position: relative;
     display: flex;
+    flex-direction: column;
+    text-align: center;
     align-items: center;
     flex-grow: 1;
   }
@@ -39,6 +41,7 @@
   font-size: 14px;
 
   &.is-outline {
+    background: transparent;
     border: 1px solid var(--web-accent-foreground);
   }
 
