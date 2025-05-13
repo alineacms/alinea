@@ -17,7 +17,7 @@ export const cms = createCMS({
       source: 'content',
       mediaDir: 'public',
       roots: {
-        site: Config.root('Example site', {
+        pages: Config.root('Example site', {
           contains: ['Page'],
           children: {
             welcome: Config.page({
