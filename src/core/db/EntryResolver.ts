@@ -40,6 +40,7 @@ const andFilter = cito
 type Interim = any
 
 export interface PostContext {
+  locale: string | null
   linkResolver: LinkResolver
 }
 
@@ -332,11 +333,11 @@ export class EntryResolver implements Resolver {
     )
   }
 
-  query(
+  async query(
     ctx: ResolveContext,
     query: GraphQuery<Projection>,
     preFilter?: EntryFilter
-  ): any {
+  ): Promise<unknown> {
     const {skip, take, orderBy, groupBy, search, count} = query
     const {ids, condition} = this.condition(ctx, query)
     const preCondition = preFilter?.condition
@@ -348,11 +349,11 @@ export class EntryResolver implements Resolver {
           ? (entry: Entry) => preCondition(entry) && condition(entry)
           : (condition ?? preCondition)
     }
-    let results = this.index.filter(filter, ctx.preview)
+    let entries = this.index.filter(filter, ctx.preview)
     const isSingle = this.isSingleResult(query as EdgeQuery)
     if (orderBy) {
       const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
-      results.sort((a, b) => {
+      entries.sort((a, b) => {
         for (const order of orders) {
           const expr = (order.asc ?? order.desc)!
           const valueA = this.expr(ctx, a, expr) as string | number
@@ -374,20 +375,42 @@ export class EntryResolver implements Resolver {
         return 0
       })
     }
-    if (skip) results.splice(0, skip)
-    if (take) results.splice(take)
+    if (skip) entries.splice(0, skip)
+    if (take) entries.splice(take)
     if (groupBy) {
       assert(!Array.isArray(groupBy), 'groupBy must be a single field')
       const groups = new Map<unknown, Entry>()
-      for (const entry of results) {
+      for (const entry of entries) {
         const value = this.expr(ctx, entry, groupBy)
         if (!groups.has(value)) groups.set(value, entry)
       }
-      results = Array.from(groups.values())
+      entries = Array.from(groups.values())
     }
-    if (count) return results.length
-    if (isSingle) return this.select(ctx, results[0], query)
-    return results.map(entry => this.select(ctx, entry, query))
+    if (count) return entries.length
+
+    const asEdge = (<any>query) as EdgeQuery<Projection>
+    const linkResolver = new LinkResolver(this, ctx)
+    if (isSingle) {
+      const entry = entries[0]
+      const result = this.select(ctx, entry, query)
+      if (result)
+        await this.postRow({locale: entry.locale, linkResolver}, result, asEdge)
+      return result
+    }
+    const results = entries.map(entry => this.select(ctx, entry, query))
+    if (results.length > 0) {
+      await Promise.all(
+        results.map((result, index) => {
+          if (result)
+            return this.postRow(
+              {locale: entries[index].locale, linkResolver},
+              result,
+              asEdge
+            )
+        })
+      )
+    }
+    return results
   }
 
   async postField(
@@ -454,11 +477,8 @@ export class EntryResolver implements Resolver {
         ? query.search.join(' ')
         : query.search
     }
-    const asEdge = (<any>query) as EdgeQuery<Projection>
-    const linkResolver = new LinkResolver(this, ctx)
-    const result = this.query(ctx, query as GraphQuery<Projection>)
-    if (result) await this.post({linkResolver}, result, asEdge)
-    return result
+    const result = await this.query(ctx, query as GraphQuery<Projection>)
+    return result as AnyQueryResult<Query>
   }
 }
 

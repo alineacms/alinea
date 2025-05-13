@@ -1,10 +1,5 @@
 import type {InferProjection, Projection} from 'alinea/core/Graph'
-import type {Entry} from '../Entry.js'
-import {
-  type EntryResolver,
-  type ResolveContext,
-  statusChecker
-} from './EntryResolver.js'
+import type {EntryResolver, ResolveContext} from './EntryResolver.js'
 
 export class LinkResolver {
   constructor(
@@ -20,7 +15,7 @@ export class LinkResolver {
     projection: P,
     entryIds: ReadonlyArray<string>
   ): Promise<Array<InferProjection<P> | undefined>> {
-    const conditionStatus = statusChecker(this.ctx.status)
+    /*const conditionStatus = statusChecker(this.ctx.status)
     const entries = Array<Entry>()
     for (const id of entryIds) {
       const node = this.resolver.index.byId.get(id)
@@ -37,6 +32,15 @@ export class LinkResolver {
       return this.resolver.select(this.ctx, entry, q)
     })
     await this.resolver.post({linkResolver: this}, results, q as any)
-    return results
+    return results*/
+    const {locale, status, preview} = this.ctx
+    const results = await this.resolver.resolve({
+      preview: preview ? {entry: preview} : undefined,
+      locale,
+      status,
+      select: projection,
+      id: {in: entryIds}
+    })
+    return results as Array<InferProjection<P> | undefined>
   }
 }
