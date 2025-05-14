@@ -49,9 +49,16 @@ test('fetch edges via locale', async () => {
   })
   const getWithoutLocale = await db.get({
     type: Page,
-    url: page2._url
+    url: page2._url,
+    select: Page.link.first({
+      select: {
+        entryId: Query.id,
+        locale: Query.locale
+      }
+    })
   })
-  test.is(getWithoutLocale.link.entryId, page2._id)
+  test.is(getWithoutLocale!.entryId, page1EN._id)
+  test.is(getWithoutLocale!.locale, page1EN._locale)
 })
 
 test('seeding', async () => {
