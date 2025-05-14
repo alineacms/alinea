@@ -45,7 +45,7 @@ test('avoid overwriting existing paths', async () => {
     type: Page
   })
 
-  console.log(db.index.tree.flat())
+  test.is(published._path, 'page1-1')
 })
 
 test('rename parent via draft', async () => {

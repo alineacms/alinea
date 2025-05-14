@@ -1,11 +1,15 @@
 import {suite} from '@alinea/suite'
-import {Config, Query} from 'alinea'
+import {Config, Edit, Field, Query} from 'alinea'
 import {createCMS} from 'alinea/core'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 
 const test = suite(import.meta)
 
-const Page = Config.document('Page', {fields: {}})
+const Page = Config.document('Page', {
+  fields: {
+    link: Field.entry('Link')
+  }
+})
 const main = Config.workspace('Main', {
   source: 'content',
   roots: {
@@ -25,6 +29,36 @@ const main = Config.workspace('Main', {
 const cms = createCMS({
   schema: {Page},
   workspaces: {main}
+})
+
+test('fetch edges via locale', async () => {
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  const page1EN = await db.get({
+    type: Page,
+    locale: 'en',
+    path: 'page1'
+  })
+  const page2 = await db.create({
+    type: Page,
+    locale: 'en',
+    set: {
+      path: 'page2',
+      link: Edit.link(Page.link).addEntry(page1EN._id).value()
+    }
+  })
+  const getWithoutLocale = await db.get({
+    type: Page,
+    url: page2._url,
+    select: Page.link.first({
+      select: {
+        entryId: Query.id,
+        locale: Query.locale
+      }
+    })
+  })
+  test.is(getWithoutLocale!.entryId, page1EN._id)
+  test.is(getWithoutLocale!.locale, page1EN._locale)
 })
 
 test('seeding', async () => {

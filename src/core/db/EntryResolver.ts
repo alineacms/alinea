@@ -7,6 +7,7 @@ import {Field} from 'alinea/core/Field'
 import type {AnyCondition, Filter} from 'alinea/core/Filter'
 import {
   type AnyQueryResult,
+  type Edge,
   type EdgeQuery,
   type GraphQuery,
   type Projection,
@@ -258,7 +259,11 @@ export class EntryResolver implements Resolver {
         })
       )
     const related = value as object as EdgeQuery<Projection>
-    return this.query(ctx, related, this.sourceFilter(ctx, entry, related))
+    return this.query(
+      ctx,
+      related,
+      this.sourceFilter(ctx, entry, related)
+    ).getUnprocessed()
   }
 
   select(
@@ -321,7 +326,7 @@ export class EntryResolver implements Resolver {
     }
   }
 
-  isSingleResult(query: EdgeQuery): boolean {
+  isSingleResult(query: GraphQuery & Partial<Edge>): boolean {
     return Boolean(
       query.first ||
         query.get ||
@@ -336,7 +341,7 @@ export class EntryResolver implements Resolver {
     ctx: ResolveContext,
     query: GraphQuery<Projection>,
     preFilter?: EntryFilter
-  ): any {
+  ) {
     const {skip, take, orderBy, groupBy, search, count} = query
     const {ids, condition} = this.condition(ctx, query)
     const preCondition = preFilter?.condition
@@ -348,11 +353,19 @@ export class EntryResolver implements Resolver {
           ? (entry: Entry) => preCondition(entry) && condition(entry)
           : (condition ?? preCondition)
     }
-    let results = this.index.filter(filter, ctx.preview)
-    const isSingle = this.isSingleResult(query as EdgeQuery)
+    let entries = this.index.filter(filter, ctx.preview)
+    if (groupBy) {
+      assert(!Array.isArray(groupBy), 'groupBy must be a single field')
+      const groups = new Map<unknown, Entry>()
+      for (const entry of entries) {
+        const value = this.expr(ctx, entry, groupBy)
+        if (!groups.has(value)) groups.set(value, entry)
+      }
+      entries = Array.from(groups.values())
+    }
     if (orderBy) {
       const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
-      results.sort((a, b) => {
+      entries.sort((a, b) => {
         for (const order of orders) {
           const expr = (order.asc ?? order.desc)!
           const valueA = this.expr(ctx, a, expr) as string | number
@@ -374,20 +387,51 @@ export class EntryResolver implements Resolver {
         return 0
       })
     }
-    if (skip) results.splice(0, skip)
-    if (take) results.splice(take)
-    if (groupBy) {
-      assert(!Array.isArray(groupBy), 'groupBy must be a single field')
-      const groups = new Map<unknown, Entry>()
-      for (const entry of results) {
-        const value = this.expr(ctx, entry, groupBy)
-        if (!groups.has(value)) groups.set(value, entry)
-      }
-      results = Array.from(groups.values())
+    if (skip) entries.splice(0, skip)
+    if (take) entries.splice(take)
+    const isSingle = this.isSingleResult(<EdgeQuery>query)
+    const asEdge = (<any>query) as EdgeQuery<Projection>
+    const getSelected = () =>
+      entries.map(entry => this.select(ctx, entry, query))
+    const getUnprocessed = () => {
+      if (count) return entries.length
+      const results = getSelected()
+      if (isSingle) return results[0]
+      return results
     }
-    if (count) return results.length
-    if (isSingle) return this.select(ctx, results[0], query)
-    return results.map(entry => this.select(ctx, entry, query))
+    const getProcessed = async () => {
+      if (count) return entries.length
+      const results = getSelected()
+      if (isSingle) {
+        const entry = entries[0]
+        if (results[0]) {
+          const linkResolver = new LinkResolver(this, ctx, entry.locale)
+          await this.postRow({linkResolver}, results[0], asEdge)
+        }
+        return results[0] as any
+      }
+      if (results.length > 0) {
+        await Promise.all(
+          results
+            .map((result, index) => {
+              if (!result) return
+              const linkResolver = new LinkResolver(
+                this,
+                ctx,
+                entries[index].locale
+              )
+              return this.postRow({linkResolver}, result, asEdge)
+            })
+            .filter(Boolean)
+        )
+      }
+      return results as any
+    }
+    return {
+      entries,
+      getUnprocessed,
+      getProcessed
+    }
   }
 
   async postField(
@@ -396,7 +440,7 @@ export class EntryResolver implements Resolver {
     field: Field
   ): Promise<void> {
     const shape = Field.shape(field)
-    await shape.applyLinks(interim, ctx.linkResolver as any)
+    await shape.applyLinks(interim, ctx.linkResolver)
   }
 
   async postExpr(
@@ -444,8 +488,6 @@ export class EntryResolver implements Resolver {
     const {preview} = query
     const previewEntry =
       preview && 'entry' in preview ? preview.entry : undefined
-    /*const entries = this.index.entries
-    const withPreview = this.#previewEntries(entries, previewEntry)*/
     const ctx: ResolveContext = {
       status: query.status ?? 'published',
       locale: query.locale,
@@ -454,11 +496,7 @@ export class EntryResolver implements Resolver {
         ? query.search.join(' ')
         : query.search
     }
-    const asEdge = (<any>query) as EdgeQuery<Projection>
-    const linkResolver = new LinkResolver(this, ctx)
-    const result = this.query(ctx, query as GraphQuery<Projection>)
-    if (result) await this.post({linkResolver}, result, asEdge)
-    return result
+    return this.query(ctx, query as GraphQuery<Projection>).getProcessed()
   }
 }
 
