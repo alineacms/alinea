@@ -16,7 +16,12 @@ export const cms = createCMS({
           icon: IcRoundUploadFile
         }),
         pages: Config.root('Languages', {
-          contains: [schema.Page, schema.Folder, schema.LinkFields],
+          contains: [
+            schema.Page,
+            schema.Folder,
+            schema.LinkFields,
+            schema.SharedFields
+          ],
           icon: IcRoundTranslate,
           i18n: {
             locales: ['en', 'fr', 'nl-BE', 'nl-NL']

@@ -1,0 +1,17 @@
+{
+  "_id": "2x56wuj9pYd0t8zNGfYRdCIpxnQ",
+  "_type": "SharedFields",
+  "_index": "a7",
+  "title": "Shared fields",
+  "sharedSelect": "option2",
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}
