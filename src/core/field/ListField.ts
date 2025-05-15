@@ -8,7 +8,7 @@ import {generateKeyBetween} from '../util/FractionalIndexing.js'
 export class ListField<
   StoredValue extends ListRow,
   QueryValue,
-  Options extends FieldOptions<Array<StoredValue>>
+  Options extends FieldOptions<Array<unknown>>
 > extends Field<
   Array<StoredValue>,
   Array<QueryValue>,
