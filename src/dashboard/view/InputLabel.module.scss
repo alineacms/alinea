@@ -61,11 +61,6 @@
     }
   }
 
-  &.is-large &-title {
-    font-size: 20px;
-    padding-bottom: 12px;
-  }
-
   &.is-focused &-title {
     color: var(--alinea-foreground);
   }

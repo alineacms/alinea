@@ -28,7 +28,6 @@ import {Preview} from './Preview.js'
 import {useSidebar} from './Sidebar.js'
 import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditModeToggle.js'
-import {EntryHeader} from './entry/EntryHeader.js'
 import {EntryHistory} from './entry/EntryHistory.js'
 import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
@@ -205,7 +204,7 @@ export function EntryEdit({editor}: EntryEditProps) {
       )}
       <Main scrollRef={ref} className={styles.root()}>
         <FieldToolbar.Provider>
-          <EntryHeader editor={editor} />
+          {/*<EntryHeader editor={editor} />*/}
           {showHistory && <EntryHistory editor={editor} />}
           <Tabs.Root
             style={{flex: 1}}

@@ -24,7 +24,7 @@
     cursor: pointer;
 
     &-label {
-      font-size: 12px;
+      font-size: 13px;
       line-height: 1.5;
       //font-weight: bold;
       text-transform: uppercase;
@@ -44,7 +44,7 @@
 
       &.is-lang {
         padding-right: 5px;
-        font-size: 14px;
+        font-size: 13px;
       }
     }
   }
@@ -76,7 +76,7 @@
       white-space: nowrap;
       padding: 6px 8px;
       border-radius: var(--alinea-border-radius);
-      font-size: 12px;
+      font-size: 13px;
 
       &.is-active {
         background: var(--alinea-highlight);

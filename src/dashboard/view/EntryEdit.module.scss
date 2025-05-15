@@ -5,13 +5,9 @@
   flex-direction: column;
 
   &-tabs {
-    margin: auto;
+    margin-left: auto;
     padding: 0 calc(var(--alinea-main-padding-x) - 8px);
     padding-bottom: 2px;
     max-width: var(--alinea-main-width);
-
-    @include ml {
-      margin-top: -16px;
-    }
   }
 }

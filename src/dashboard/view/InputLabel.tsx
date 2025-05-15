@@ -18,7 +18,6 @@ const styles = styler(css)
 export type LabelHeaderProps = {
   label: ReactNode
   help?: ReactNode
-  size?: 'small' | 'medium' | 'large'
   focused?: boolean
   icon?: ComponentType
   shared?: boolean
@@ -30,7 +29,6 @@ export type LabelHeaderProps = {
 export const LabelHeader = memo(function LabelHeader({
   label,
   help,
-  size,
   focused,
   // icon: Icon,
   shared,
@@ -40,7 +38,7 @@ export const LabelHeader = memo(function LabelHeader({
 }: LabelHeaderProps) {
   const showError = typeof error === 'string'
   return (
-    <header className={styles.header(size, {focused, error: Boolean(error)})}>
+    <header className={styles.header({focused, error: Boolean(error)})}>
       <HStack center wrap gap={`${px(4)} ${px(8)}`}>
         <HStack center gap={8} className={styles.header.title()}>
           {/*Icon && <Icon />*/}
@@ -71,7 +69,6 @@ export interface InputLabelProps extends PropsWithChildren {
   inline?: boolean
   collection?: boolean
   focused?: boolean
-  size?: 'small' | 'medium' | 'large'
   icon?: ComponentType
   empty?: boolean
   shared?: boolean
@@ -93,7 +90,6 @@ export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
       inline = false,
       collection = false,
       focused = false,
-      size,
       icon,
       empty,
       shared,
@@ -123,7 +119,6 @@ export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
               label={label}
               help={help}
               required={required}
-              size={size}
               focused={focused}
               icon={icon}
               shared={shared}

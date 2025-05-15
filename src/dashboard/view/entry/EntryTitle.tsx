@@ -47,8 +47,8 @@ export function EntryTitle({
             </h1>
             <Chip>{Type.label(type)}</Chip>
           </HStack>
+          {children}
         </HStack>
-        {children}
       </div>
     </>
   )

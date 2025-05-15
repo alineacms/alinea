@@ -6,19 +6,14 @@
   flex-shrink: 0;
 
   &-inner {
-    padding: 26px var(--alinea-main-padding-x);
     max-width: var(--alinea-main-width);
     margin: auto;
-    @include s {
-      padding: var(--alinea-main-padding-x);
-    }
+    height: var(--alinea-header-height);
+    padding: 0 var(--alinea-main-padding-x);
   }
 
   &-title {
     font-weight: 600;
-    font-size: 14px;
-    @include ml {
-      font-size: 22px;
-    }
+    font-size: 13px;
   }
 }
