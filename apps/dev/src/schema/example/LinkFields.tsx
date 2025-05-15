@@ -5,7 +5,7 @@ export const LinkFields = Config.document('Link fields', {
     externalLink: Field.url('External link'),
     entry: Field.entry('Internal link'),
     entryWithCondition: Field.entry('With condition', {
-      help: `Show only entries of type BasicFields`,
+      help: 'Show only entries of type BasicFields',
       condition: {_type: 'BasicFields'}
     }),
     entryWithLocation: Field.entry('With location', {
