@@ -76,7 +76,7 @@ export function SelectInput<Key extends string>({
                 {value && !options.required && (
                   <IconButton
                     icon={IcRoundClose}
-                    onClick={() => mutator(undefined!)}
+                    onClick={() => mutator(null!)}
                     className={styles.root.input.delete()}
                   />
                 )}
