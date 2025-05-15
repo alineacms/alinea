@@ -2,8 +2,9 @@
   "_id": "2x56wuj9pYd0t8zNGfYRdCIpxnQ",
   "_type": "SharedFields",
   "_index": "a7",
+  "_root": "pages",
   "title": "Shared fields",
-  "sharedSelect": "option2",
+  "sharedSelect": "option1",
   "metadata": {
     "title": "",
     "description": "",

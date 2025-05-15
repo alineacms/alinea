@@ -315,6 +315,8 @@ export class EntryTransaction {
       locale
     })
     const childrenDir = paths.join(entry.parentDir, path)
+    if (entry.locale !== null)
+      this.#persistSharedFields(id, entry.locale, entry.type, entry.data)
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.remove(entry.filePath)
     const record = createRecord({...entry, path}, 'published')
