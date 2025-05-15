@@ -46,11 +46,9 @@ export interface PostContext {
 
 export class EntryResolver implements Resolver {
   index: EntryIndex
-  #config: Config
   #scope: Scope
 
   constructor(config: Config, index: EntryIndex) {
-    this.#config = config
     this.#scope = getScope(config)
     this.index = index
   }
@@ -131,11 +129,7 @@ export class EntryResolver implements Resolver {
     )
   }
 
-  sourceFilter(
-    ctx: ResolveContext,
-    entry: Entry,
-    query: EdgeQuery
-  ): EntryFilter {
+  sourceFilter(entry: Entry, query: EdgeQuery): EntryFilter {
     switch (query.edge) {
       case 'parent': {
         return {
@@ -193,9 +187,9 @@ export class EntryResolver implements Resolver {
       case 'translations': {
         return {
           ids: [entry.id],
-          condition({locale}) {
-            return locale !== entry.locale
-          }
+          condition: query.includeSelf
+            ? undefined
+            : ({locale}) => locale !== entry.locale
         }
       }
       case 'children': {
@@ -260,9 +254,9 @@ export class EntryResolver implements Resolver {
       )
     const related = value as object as EdgeQuery<Projection>
     return this.query(
-      ctx,
+      {...ctx, locale: entry.locale},
       related,
-      this.sourceFilter(ctx, entry, related)
+      this.sourceFilter(entry, related)
     ).getUnprocessed()
   }
 
@@ -278,7 +272,7 @@ export class EntryResolver implements Resolver {
     return this.selectProjection(ctx, entry, fields)
   }
 
-  condition(ctx: ResolveContext, query: GraphQuery): EntryFilter {
+  condition(ctx: ResolveContext, query: EdgeQuery): EntryFilter {
     const location = Array.isArray(query.location)
       ? query.location
       : query.location && this.#scope.locationOf(query.location)
@@ -287,6 +281,7 @@ export class EntryResolver implements Resolver {
     const locale = query.locale ?? ctx.locale
     const checkLocale =
       locale !== undefined &&
+      query.edge !== 'translations' &&
       localeChecker(typeof locale === 'string' ? locale.toLowerCase() : null)
     const checkType =
       Boolean(query.type) &&
@@ -343,7 +338,7 @@ export class EntryResolver implements Resolver {
     preFilter?: EntryFilter
   ) {
     const {skip, take, orderBy, groupBy, search, count} = query
-    const {ids, condition} = this.condition(ctx, query)
+    const {ids, condition} = this.condition(ctx, <EdgeQuery>query)
     const preCondition = preFilter?.condition
     const filter = {
       ids: ids ?? preFilter?.ids,

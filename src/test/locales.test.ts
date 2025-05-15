@@ -78,6 +78,69 @@ test('seeding', async () => {
   test.ok(page1DE)
 })
 
+test('get translations', async () => {
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  const page = await db.get({
+    root: cms.workspaces.main.pages,
+    locale: 'en',
+    path: 'page1',
+    select: {
+      type: Query.type,
+      translations: Query.translations({
+        select: {
+          locale: Query.locale,
+          url: Query.url,
+          children: Query.children({
+            select: Query.locale
+          })
+        }
+      }),
+      children: Query.children({
+        select: Query.locale
+      })
+    }
+  })
+  test.equal(page, {
+    type: 'Page',
+    translations: [
+      {
+        locale: 'de',
+        url: '/de/page1',
+        children: ['de']
+      }
+    ],
+    children: ['en']
+  })
+  const withSelf = await db.get({
+    root: cms.workspaces.main.pages,
+    locale: 'en',
+    path: 'page1',
+    select: Query.translations({
+      includeSelf: true,
+      select: {
+        locale: Query.locale,
+        url: Query.url,
+        children: Query.children({
+          select: Query.locale
+        })
+      }
+    })
+  })
+  test.equal(withSelf, [
+    {
+      locale: 'en',
+      url: '/en/page1',
+      children: ['en']
+    },
+    {
+      locale: 'de',
+      url: '/de/page1',
+      children: ['de']
+    }
+  ])
+})
+
 test('create entries', async () => {
   const db = new LocalDB(cms.config)
   await test.throws(
