@@ -49,7 +49,13 @@ import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
-import {type CSSProperties, type HTMLAttributes, type Ref, Suspense, useState} from 'react'
+import {
+  type CSSProperties,
+  type HTMLAttributes,
+  type Ref,
+  Suspense,
+  useState
+} from 'react'
 import type {LinkField, LinksField} from './LinkField.js'
 import css from './LinkField.module.scss'
 
@@ -199,18 +205,20 @@ export function MultipleLinksInput<Row>({field}: LinksInputProps<Row>) {
   return (
     <>
       {pickFrom && PickerView && (
-        <PickerView
-          type={pickFrom[Reference.type]!}
-          options={picker.options}
-          selection={value.filter(ref => {
-            if (ref[ListRow.id] === pickFrom[Reference.id]) return true
-            if (picker.handlesMultiple)
-              return ref[ListRow.type] === pickFrom[Reference.type]
-            return false
-          })}
-          onConfirm={handleConfirm}
-          onCancel={() => setPickFrom(undefined)}
-        />
+        <SuspenseBoundary name="picker">
+          <PickerView
+            type={pickFrom[Reference.type]!}
+            options={picker.options}
+            selection={value.filter(ref => {
+              if (ref[ListRow.id] === pickFrom[Reference.id]) return true
+              if (picker.handlesMultiple)
+                return ref[ListRow.type] === pickFrom[Reference.type]
+              return false
+            })}
+            onConfirm={handleConfirm}
+            onCancel={() => setPickFrom(undefined)}
+          />
+        </SuspenseBoundary>
       )}
       <DndContext
         sensors={sensors}

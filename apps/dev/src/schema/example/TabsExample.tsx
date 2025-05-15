@@ -11,7 +11,10 @@ export const TabsExample = Config.document('Tabs Example', {
         fields: {first_title: Field.text('Title')}
       }),
       Field.tab('Tab 2', {
-        fields: {another_title: Field.text('Another title')}
+        fields: {
+          another_title: Field.text('Another title'),
+          link: Field.link.multiple('Link')
+        }
       })
     )
   }
