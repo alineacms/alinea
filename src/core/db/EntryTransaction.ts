@@ -267,10 +267,7 @@ export class EntryTransaction {
     const shared = Type.sharedData(typeInstance, data)
     if (shared) {
       const translations = index.findMany(entry => {
-        return (
-          entry.id === id &&
-          (entry.locale !== locale || entry.status !== 'published')
-        )
+        return entry.id === id && entry.locale !== locale
       })
       for (const translation of translations) {
         this.#checks.push([translation.filePath, translation.fileHash])
