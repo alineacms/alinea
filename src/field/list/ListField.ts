@@ -3,7 +3,7 @@ import {createId} from 'alinea/core/Id'
 import type {InferQueryValue, InferStoredValue} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
 import {ListField} from 'alinea/core/field/ListField'
-import type {ListRow} from 'alinea/core/shape/ListShape'
+import {ListRow} from 'alinea/core/shape/ListShape'
 import {generateNKeysBetween} from 'alinea/core/util/FractionalIndexing'
 import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
@@ -51,8 +51,8 @@ export function list<Definitions extends Schema>(
         if (!Array.isArray(initialValue)) return []
         const keys = generateNKeysBetween(null, null, initialValue.length)
         return initialValue.map((row, index) => ({
-          _id: createId(),
-          _index: keys[index],
+          [ListRow.id]: createId(),
+          [ListRow.index]: keys[index],
           ...row
         }))
       }
