@@ -65,6 +65,7 @@ export const entryEditorAtoms = atomFamily(
   ({id, locale: searchLocale}: EntryEditorParams) => {
     return atom(async get => {
       if (!id) return undefined
+      get(entryRevisionAtoms(id))
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = get(dbAtom)
@@ -87,7 +88,6 @@ export const entryEditorAtoms = atomFamily(
       if (!entry) return undefined
       const entryId = entry.id
       const locale = entry.locale
-      get(entryRevisionAtoms(entry.id))
       const type = config.schema[entry.type]
       const edits = get(entryEditsAtoms(entry))
 

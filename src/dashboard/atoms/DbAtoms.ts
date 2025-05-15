@@ -4,29 +4,35 @@ import {atomFamily} from 'jotai/utils'
 import {useEffect} from 'react'
 import {dashboardOptionsAtom} from './DashboardAtoms.js'
 
-export const dbAtom = atom(get => {
-  return get(dashboardOptionsAtom).db
+const dbAtoms = atom(get => {
+  const db = get(dashboardOptionsAtom).db
+  const baseMeta = atom<string>()
+  const metaAtom = atom(
+    async get => {
+      return get(baseMeta) ?? db.sync()
+    },
+    (get, set) => {
+      const listen = (event: Event) => {
+        if (event instanceof IndexEvent && event.data.op === 'index')
+          set(baseMeta, event.data.sha)
+      }
+      db.events.addEventListener(IndexEvent.type, listen)
+      return () => {
+        db.events.removeEventListener(IndexEvent.type, listen)
+      }
+    }
+  )
+  metaAtom.onMount = init => init()
+  return {db, metaAtom}
 })
 
-const metaAtom = atom<string>()
-export const dbMetaAtom = atom(
-  async get => {
-    const local = get(dbAtom)
-    return get(metaAtom) ?? local.sync()
-  },
-  (get, set) => {
-    const local = get(dbAtom)
-    const listen = (event: Event) => {
-      if (event instanceof IndexEvent && event.data.op === 'index')
-        set(metaAtom, event.data.sha)
-    }
-    local.events.addEventListener(IndexEvent.type, listen)
-    return () => {
-      local.events.removeEventListener(IndexEvent.type, listen)
-    }
-  }
-)
-dbMetaAtom.onMount = init => init()
+export const dbAtom = atom(get => {
+  return get(dbAtoms).db
+})
+
+export const dbMetaAtom = atom(get => {
+  return get(get(dbAtoms).metaAtom)
+})
 
 const pendingMutations = atom(0)
 export const pendingAtom = atom(
