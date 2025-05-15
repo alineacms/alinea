@@ -19,7 +19,7 @@ export class LinkResolver {
     const {status, preview} = this.ctx
     const results = await this.resolver.resolve({
       preview: preview ? {entry: preview} : undefined,
-      locale: this.locale,
+      preferredLocale: this.locale ?? undefined,
       status,
       select: projection,
       id: {in: entryIds}

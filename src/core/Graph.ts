@@ -186,8 +186,10 @@ export declare class QuerySettings {
 
   /** Filter results by location */
   location?: Location
-  /** Filter by locale */
+  /** Filter by locale, for absolute match */
   locale?: string | null
+  /** Filter by preferred locale */
+  preferredLocale?: string
 
   /** Filter by fields */
   filter?: Filter<EntryFields>
