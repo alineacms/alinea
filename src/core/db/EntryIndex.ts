@@ -82,17 +82,6 @@ export class EntryIndex extends EventTarget {
     for (const entry of this.entries) if (filter(entry)) yield entry
   }
 
-  search(terms: string, condition?: (entry: Entry) => boolean): Array<Entry> {
-    return this.#search
-      .search(terms, {
-        prefix: true,
-        fuzzy: 0.2,
-        boost: {title: 2},
-        filter: condition && (result => condition(result.entry))
-      })
-      .map(result => result.entry)
-  }
-
   filter({ids, search, condition}: EntryFilter, preview?: Entry): Array<Entry> {
     if (search) {
       const entries = this.filter({ids, condition})
@@ -104,7 +93,7 @@ export class EntryIndex extends EventTarget {
       return this.#search
         .search(search, {
           prefix: true,
-          fuzzy: 0.2,
+          fuzzy: 0.1,
           boost: {title: 2},
           filter: result => {
             if (ids) return ids.includes(result.entry.id)
