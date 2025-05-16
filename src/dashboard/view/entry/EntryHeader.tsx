@@ -350,12 +350,12 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                     </Button>
                   )}
                   {config.enableDrafts && variant === 'editing' && (
-                    <Button icon={IcRoundSave} onClick={saveDraft}>
+                    <Button outline icon={IcRoundSave} onClick={saveDraft}>
                       Save draft
                     </Button>
                   )}
-                  {!config.enableDrafts && variant === 'editing' && (
-                    <Button icon={IcRoundSave} onClick={publishEdits}>
+                  {variant === 'editing' && (
+                    <Button icon={IcRoundCheck} onClick={publishEdits}>
                       Publish
                     </Button>
                   )}

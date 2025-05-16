@@ -44,7 +44,7 @@ function typeName(config: Config, type: Type) {
   return typeName
 }
 
-export class CreateOperation<Fields> extends Operation {
+export class CreateOp<Fields> extends Operation {
   id: string
   constructor(op: CreateQuery<Fields>) {
     super(async (db): Promise<Array<Mutation>> => {
@@ -260,7 +260,7 @@ export function update<Definition>(
 }
 
 export function create<Definition>(query: CreateQuery<Definition>) {
-  return new CreateOperation<Definition>(query)
+  return new CreateOp<Definition>(query)
 }
 
 export function remove(...entryIds: Array<string>) {

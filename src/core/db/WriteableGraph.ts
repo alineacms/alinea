@@ -6,7 +6,7 @@ import type {Mutation} from './Mutation.js'
 import {
   ArchiveOperation,
   type ArchiveQuery,
-  CreateOperation,
+  CreateOp,
   type CreateQuery,
   DeleteOp,
   DiscardOp,
@@ -28,7 +28,7 @@ export abstract class WriteableGraph extends Graph {
   abstract prepareUpload(file: string): Promise<UploadResponse>
 
   async create<Definition>(create: CreateQuery<Definition>) {
-    const op = new CreateOperation(create)
+    const op = new CreateOp(create)
     await this.commit(op)
     return this.get({
       id: op.id,
