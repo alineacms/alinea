@@ -1,6 +1,7 @@
 import type {Stats} from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
+import pDebounce from 'p-debounce'
 import pLimit from 'p-limit'
 import {
   type CommitRequest,
@@ -13,7 +14,8 @@ import type {Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 import {assert} from './Utils.js'
 
-const limit = pLimit(1)
+const limitRead = pLimit(1)
+const limitApply = pLimit(1)
 
 export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
@@ -26,16 +28,18 @@ export class FSSource implements Source {
   }
 
   async getTree() {
-    const current = this.#current
-    const builder = new WriteableTree()
-    const files = await fs.readdir(this.#cwd, {
-      recursive: true
+    return limitRead(async () => {
+      const current = this.#current
+      const builder = new WriteableTree()
+      const files = await fs.readdir(this.#cwd, {
+        recursive: true
+      })
+      const tasks = files.map(file => this.getFile(current, builder, file))
+      await Promise.all(tasks)
+      const tree = await builder.compile(current)
+      this.#current = tree
+      return tree
     })
-    const tasks = files.map(file => this.getFile(current, builder, file))
-    await Promise.all(tasks)
-    const tree = await builder.compile(current)
-    this.#current = tree
-    return tree
   }
 
   async getFile(current: ReadonlyTree, builder: WriteableTree, file: string) {
@@ -84,7 +88,7 @@ export class FSSource implements Source {
   }
 
   async applyChanges(changes: Array<Change>) {
-    return limit(async () => {
+    return limitApply(async () => {
       await Promise.all(
         changes.map(async change => {
           switch (change.op) {
@@ -125,10 +129,10 @@ export class CachedFSSource extends FSSource {
     super(cwd)
   }
 
-  refresh() {
+  refresh = pDebounce(async () => {
     this.#blobs = new Map()
     return (this.#tree = super.getTree())
-  }
+  }, 50)
 
   getTree() {
     if (!this.#tree) return this.refresh()
@@ -154,10 +158,5 @@ export class CachedFSSource extends FSSource {
     const entries = [...localEntries, ...remoteEntries]
     this.#blobs = new Map(entries)
     return entries
-  }
-
-  async applyChanges(changes: Array<Change>) {
-    await super.applyChanges(changes)
-    await this.refresh()
   }
 }

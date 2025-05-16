@@ -284,9 +284,8 @@ export class EntryIndex extends EventTarget {
           if (node.remove(change.path) === 0) {
             this.byId.delete(node.id)
             this.byPath.delete(nodePath)
-          } else {
-            recompute.add(node.id)
           }
+          recompute.add(node.id)
           if (this.#search.has(entry.filePath)) {
             this.#search.discard(entry.filePath)
           }

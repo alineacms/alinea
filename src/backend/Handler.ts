@@ -168,12 +168,11 @@ export function createHandler({
         expectJson()
         const mutations = await body
         const request = await local.request(mutations)
-        let sha: string
-        try {
-          await cnx.write(request)
+        const {sha} = await cnx.write(request)
+        if (sha === request.intoSha) {
           await local.write(request)
-        } finally {
-          sha = await local.syncWith(cnx)
+        } else {
+          await local.syncWith(cnx)
         }
         return Response.json({sha})
       }
