@@ -155,4 +155,9 @@ export class CachedFSSource extends FSSource {
     this.#blobs = new Map(entries)
     return entries
   }
+
+  async applyChanges(changes: Array<Change>) {
+    await super.applyChanges(changes)
+    await this.refresh()
+  }
 }
