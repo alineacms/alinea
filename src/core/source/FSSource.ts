@@ -14,8 +14,7 @@ import type {Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 import {assert} from './Utils.js'
 
-const limitRead = pLimit(1)
-const limitApply = pLimit(1)
+const limit = pLimit(1)
 
 export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
@@ -28,7 +27,7 @@ export class FSSource implements Source {
   }
 
   async getTree() {
-    return limitRead(async () => {
+    return limit(async () => {
       const current = this.#current
       const builder = new WriteableTree()
       const files = await fs.readdir(this.#cwd, {
@@ -88,7 +87,7 @@ export class FSSource implements Source {
   }
 
   async applyChanges(changes: Array<Change>) {
-    return limitApply(async () => {
+    return limit(async () => {
       await Promise.all(
         changes.map(async change => {
           switch (change.op) {
