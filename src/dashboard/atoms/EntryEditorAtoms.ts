@@ -341,7 +341,7 @@ export function createEntryEditor(entryData: EntryData) {
         id: entry.id,
         parentId,
         locale,
-        status: 'published',
+        status: config.enableDrafts ? 'draft' : 'published',
         set: entry.data
       }),
       errorMessage:
