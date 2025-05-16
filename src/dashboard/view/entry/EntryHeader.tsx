@@ -210,6 +210,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         )}
       </>
     ) : null
+  const inTransition = currentTransition !== undefined
   return (
     <>
       {isReplacing && <FileUploader />}
@@ -266,7 +267,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           </DropdownMenu.Root>
 
           {editable &&
-            !currentTransition &&
+            !inTransition &&
             !hasChanges &&
             isActiveStatus &&
             !untranslated &&
@@ -280,7 +281,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               </>
             )}
 
-          {!currentTransition &&
+          {!inTransition &&
             !hasChanges &&
             !isActiveStatus &&
             editor.availableStatuses.includes('draft') && (
@@ -292,7 +293,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               </>
             )}
 
-          {!currentTransition &&
+          {!inTransition &&
             untranslated &&
             !parentNeedsTranslation &&
             !hasChanges && (
@@ -313,16 +314,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               </>
             )}
 
-          {!currentTransition &&
-            untranslated &&
-            editor.parentNeedsTranslation && (
-              <>
-                <span className={styles.root.description.separator()} />
-                <div className={styles.root.description.action()}>
-                  Translate parent page first
-                </div>
-              </>
-            )}
+          {!inTransition && untranslated && editor.parentNeedsTranslation && (
+            <>
+              <span className={styles.root.description.separator()} />
+              <div className={styles.root.description.action()}>
+                Translate parent page first
+              </div>
+            </>
+          )}
 
           {variant === 'editing' && (
             <>
@@ -343,7 +342,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
 
           <Stack.Right>
             <HStack center gap={12}>
-              {!currentTransition && (
+              {!inTransition && (
                 <>
                   {untranslated && !editor.parentNeedsTranslation && (
                     <Button icon={IcRoundSave} onClick={translate}>
