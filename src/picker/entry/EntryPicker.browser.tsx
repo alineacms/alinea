@@ -156,16 +156,17 @@ export function EntryPickerModal({
   const query = useMemo((): QueryWithResult<ExporerItemSelect> => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     const condition = conditionQuery.data
+    const parentId =
+      (withNavigation && !search) || pickChildren
+        ? (destination.parentId ?? null)
+        : undefined
     const filter = {
       and: [
         condition,
         {
           _workspace: destination.workspace,
           _root: destination.root,
-          _parentId:
-            withNavigation || pickChildren
-              ? (destination.parentId ?? null)
-              : undefined,
+          _parentId: parentId,
           _locale: destinationLocale
         }
       ]
