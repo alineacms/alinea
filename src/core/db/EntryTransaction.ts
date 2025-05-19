@@ -492,7 +492,8 @@ export class EntryTransaction {
     })
     let info: Entry | undefined
     for (const entry of entries) {
-      assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
+      if (entry.status === 'published')
+        assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
       info = entry
       this.#checks.push([entry.filePath, entry.fileHash])
       this.#tx.remove(entry.filePath)

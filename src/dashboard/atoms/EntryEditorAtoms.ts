@@ -10,7 +10,7 @@ import {getType} from 'alinea/core/Internal'
 import {Root} from 'alinea/core/Root'
 import {type EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
-import {CreateOp, DeleteOp, type Operation} from 'alinea/core/db/Operation'
+import {CreateOp, DiscardOp, type Operation} from 'alinea/core/db/Operation'
 import {
   entryFileName,
   entryFilepath,
@@ -374,7 +374,11 @@ export function createEntryEditor(entryData: EntryData) {
     const db = get(dbAtom)
     const entry = await getDraftEntry({status: 'published'})
     const operations = Array<Operation>(
-      new DeleteOp([entry.id]),
+      new DiscardOp({
+        id: entry.id,
+        locale: entry.locale,
+        status: 'draft'
+      }),
       new CreateOp({
         type,
         id: entry.id,
