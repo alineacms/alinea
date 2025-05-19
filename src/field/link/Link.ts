@@ -4,14 +4,15 @@ import type {Type} from 'alinea/core/Type'
 import type {ListRow} from 'alinea/core/shape/ListShape'
 import {type FileLink, filePicker} from 'alinea/field/link/FileLink'
 import {
-  createLink,
-  createLinks,
   type LinkField,
-  type LinkFieldOptions
+  type LinkFieldOptions,
+  type LinksField,
+  createLink,
+  createLinks
 } from 'alinea/field/link/LinkField'
-import {entryPicker, type EntryPickerConditions} from 'alinea/picker/entry'
+import {type EntryPickerConditions, entryPicker} from 'alinea/picker/entry'
 import type {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {urlPicker, type UrlReference} from 'alinea/picker/url'
+import {type UrlReference, urlPicker} from 'alinea/picker/url'
 import {EntryLink} from './EntryLink.js'
 import type {UrlLink} from './UrlLink.js'
 
@@ -51,7 +52,7 @@ export namespace link {
   export function multiple<Fields>(
     label: Label,
     options: WithoutLabel<LinkOptions<Fields, Array<LinkRow>>> = {}
-  ) {
+  ): LinksField<LinkRow, Link<Type.Infer<Fields>>> {
     return createLinks<LinkRow, Link<Type.Infer<Fields>>>(label, {
       ...options,
       pickers: {
