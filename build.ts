@@ -243,10 +243,26 @@ const externalize: Plugin = {
   setup(build) {
     const cwd = process.cwd()
     const src = path.join(cwd, 'src')
+    let modules: Set<string>
+    build.onStart(() => {
+      modules = new Set()
+    })
     build.onResolve({filter: /^\./}, args => {
       if (args.kind === 'entry-point') return
       if (args.path.endsWith('.scss') || args.path.endsWith('.json')) return
-      if (!args.resolveDir.startsWith(src)) return
+      if (!args.resolveDir.startsWith(src)) {
+        if (args.resolveDir.includes('node_modules')) {
+          const folder = args.resolveDir
+            .replaceAll('\\', '/')
+            .split('node_modules/')[1]
+          const segments = folder.split('/')
+          const module = folder.startsWith('@')
+            ? segments.slice(0, 2)
+            : segments.slice(0, 1)
+          modules.add(module.join('/'))
+        }
+        return
+      }
       if (args.path.endsWith('.cjs')) return
       if (!args.path.endsWith('.js') && !args.path.endsWith('.mjs')) {
         console.error(`Missing file extension on local import: ${args.path}`)
@@ -254,6 +270,34 @@ const externalize: Plugin = {
         process.exit(1)
       }
       return {path: args.path, external: true}
+    })
+    build.onEnd(() => {
+      let licenses = ''
+      for (const module of modules) {
+        const target = path.join(cwd, 'node_modules', module)
+        const pkg = JSON.parse(
+          fs.readFileSync(path.join(target, 'package.json'), 'utf-8')
+        )
+        let licenseText: string = ''
+        try {
+          licenseText = fs.readFileSync(path.join(target, 'LICENSE'), 'utf-8')
+        } catch {}
+        if (!licenseText)
+          try {
+            licenseText = fs.readFileSync(
+              path.join(target, 'LICENSE.md'),
+              'utf-8'
+            )
+          } catch {}
+        if (!licenseText) licenseText = pkg.license
+        if (!licenseText) console.warn(`Missing license for module ${module}`)
+        else
+          licenses += `\n\n===\n\n# ${module}@${pkg.version} (${pkg.license})\n\n${licenseText}`
+      }
+      fs.writeFileSync(
+        path.join(cwd, build.initialOptions.outdir!, 'LICENSES.md'),
+        `This file contains the licenses of the bundled modules in this distribution.${licenses}`
+      )
     })
   }
 }
