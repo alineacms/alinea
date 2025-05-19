@@ -524,8 +524,7 @@ export class EntryTransaction {
         this.removeFile({location: paths.join(mediaDir, entry.data.location)})
       }
     }
-    assert(info, `Entry not found: ${id}`)
-    this.#messages.unshift(this.#reportOp('remove', info.title))
+    if (info) this.#messages.unshift(this.#reportOp('remove', info.title))
     return this
   }
 
