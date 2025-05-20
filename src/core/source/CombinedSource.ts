@@ -35,9 +35,9 @@ export class CombinedSource implements Source {
     return tree
   }
 
-  async getBlobs(
+  async *getBlobs(
     shas: Array<string>
-  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+  ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     if (this.#only) return this.#only.getBlobs(shas)
     const tree = await this.getTree()
     const perSource = new Map<Source, Array<string>>()
@@ -51,11 +51,9 @@ export class CombinedSource implements Source {
         perSource.set(source, sourceShas)
       }
     }
-    return Promise.all(
-      Array.from(perSource.entries()).flatMap(async ([source, shas]) => {
-        return source.getBlobs(shas)
-      })
-    ).then(res => res.flat())
+    for (const [source, shas] of perSource) {
+      yield* source.getBlobs(shas)
+    }
   }
 
   async applyChanges(changes: Array<Change>) {
