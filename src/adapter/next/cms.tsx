@@ -76,7 +76,7 @@ export class NextCMS<
     const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
     const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
     const {db, previews} = await this.init
-    const sync = () => db.syncWith(client).catch(console.error)
+    const sync = () => db.syncWith(client)
     if (!isBuild) {
       if (preview) {
         preview = await previews.parse(preview, sync)
