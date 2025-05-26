@@ -207,7 +207,7 @@ export class Client implements LocalConnection {
             const body = await res.json()
             if ('error' in body && typeof body.error === 'string')
               errorMessage = body.error
-            else errorMessage = JSON.stringify(await res.json(), null, 2)
+            else errorMessage = JSON.stringify(body, null, 2)
           } else {
             errorMessage = await res.text()
           }
