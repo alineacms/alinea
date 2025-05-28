@@ -1,5 +1,6 @@
 import * as base64 from 'alinea/core/util/BufferToBase64'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {accumulate} from '../util/Async.js'
 import {MemorySource} from './MemorySource.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree, type Tree} from './Tree.js'
@@ -15,7 +16,7 @@ export interface ExportedSource {
 export async function exportSource(source: Source): Promise<ExportedSource> {
   const tree = await source.getTree()
   const shas = Array.from(tree.index(), ([, sha]) => sha)
-  const fromSource = await source.getBlobs(shas)
+  const fromSource = await accumulate(source.getBlobs(shas))
   const blobs = fromEntries(
     fromSource.map(([sha, blob]) => {
       return [sha, decoder.decode(blob)]

@@ -59,33 +59,32 @@ export class GithubSource implements Source {
     return tree
   }
 
-  async getBlobs(
+  async *getBlobs(
     shas: Array<string>
-  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+  ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     const {owner, repo, authToken} = this.#options
-    return Promise.all(
-      shas.map(sha =>
-        this.#limit(async (): Promise<[sha: string, blob: Uint8Array]> => {
-          const blobInfo = await fetch(
-            `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
-            {headers: {Authorization: `Bearer ${authToken}`}}
-          )
-          if (!blobInfo.ok)
-            throw new HttpError(
-              blobInfo.status,
-              `Failed to get blob: ${blobInfo.statusText}`
-            )
-          const blobData = await blobInfo.json()
-          assert(blobData.encoding === 'base64')
-          assert(typeof blobData.content === 'string')
-          assert(blobData.size > 0)
-          return [
-            sha,
-            Uint8Array.from(atob(blobData.content), c => c.charCodeAt(0))
-          ]
-        })
+    const responses = shas.map(sha => {
+      const promise = this.#limit(() =>
+        fetch(
+          `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
+          {headers: {Authorization: `Bearer ${authToken}`}}
+        )
       )
-    )
+      return [sha, promise] as const
+    })
+    for (const [sha, promise] of responses) {
+      const response = await promise
+      if (!response.ok)
+        throw new HttpError(
+          response.status,
+          `Failed to get blob: ${response.statusText}`
+        )
+      const blobData = await response.json()
+      assert(blobData.encoding === 'base64')
+      assert(typeof blobData.content === 'string')
+      assert(blobData.size > 0)
+      yield [sha, Uint8Array.from(atob(blobData.content), c => c.charCodeAt(0))]
+    }
   }
 
   async applyChanges(changes: Array<Change>) {

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import {suite} from '@alinea/suite'
 import {indexedDB} from 'fake-indexeddb'
 import demoTree from '../../test/fixtures/demo.json' with {type: 'json'}
+import {accumulate} from '../util/Async.js'
 import {MemorySource} from './MemorySource.js'
 import {syncWith} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
@@ -24,7 +25,7 @@ test('indexeddb source', async () => {
   const idbSource = new IndexedDBSource(indexedDB, 'test')
   await syncWith(idbSource, memorySource)
   for (const [sha, contents] of blobs) {
-    const [[, fromSource]] = await idbSource.getBlobs([sha])
+    const [[, fromSource]] = await accumulate(idbSource.getBlobs([sha]))
     test.equal(fromSource, contents)
   }
   const idbTree = await idbSource.getTree()

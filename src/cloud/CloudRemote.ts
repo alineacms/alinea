@@ -80,11 +80,11 @@ export class CloudRemote implements RemoteConnection {
     })
   }
 
-  async getBlobs(
+  async *getBlobs(
     shas: Array<string>
-  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+  ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     const ctx = this.#context
-    return fetch(cloudConfig.blobs, {
+    const response = await fetch(cloudConfig.blobs, {
       method: 'POST',
       body: JSON.stringify({shas}),
       headers: {
@@ -92,20 +92,15 @@ export class CloudRemote implements RemoteConnection {
         'content-type': 'application/json',
         accept: 'multipart/form-data'
       }
-    })
-      .then(failOnHttpError)
-      .then(response => response.formData())
-      .then(async form => {
-        const blobs: Array<[sha: string, blob: Uint8Array]> = []
-        for (const [key, value] of form.entries()) {
-          if (value instanceof Blob) {
-            const sha = key.slice(0, 40)
-            const blob = new Uint8Array(await value.arrayBuffer())
-            blobs.push([sha, blob])
-          }
-        }
-        return blobs
-      })
+    }).then(failOnHttpError)
+    const form = await response.formData()
+    for (const [key, value] of form.entries()) {
+      if (value instanceof Blob) {
+        const sha = key.slice(0, 40)
+        const blob = new Uint8Array(await value.arrayBuffer())
+        yield [sha, blob]
+      }
+    }
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
