@@ -214,16 +214,16 @@ export function createHandler({
         }
         const formData = new FormData()
         if (fromLocal.length > 0) {
-          const blobs = await local.source.getBlobs(fromLocal)
-          for (const [sha, blob] of blobs) {
-            formData.append(sha, new Blob([blob]))
+          const blobs = local.source.getBlobs(fromLocal)
+          for await (const [sha, blob] of blobs) {
+            formData.append(sha, new Blob([blob as BlobPart]))
           }
         }
         if (fromRemote.length > 0) {
           await periodicSync(cnx)
-          const blobs = await cnx.getBlobs(fromRemote)
-          for (const [sha, blob] of blobs) {
-            formData.append(sha, new Blob([blob]))
+          const blobs = cnx.getBlobs(fromRemote)
+          for await (const [sha, blob] of blobs) {
+            formData.append(sha, new Blob([blob as BlobPart]))
           }
         }
         return new Response(formData)

@@ -1,10 +1,11 @@
+import {accumulate} from '../util/Async.js'
 import type {Change} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {ReadonlyTree, WriteableTree} from './Tree.js'
 
 export interface RemoteSource {
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
-  getBlobs(shas: Array<string>): Promise<Array<[sha: string, blob: Uint8Array]>>
+  getBlobs(shas: Array<string>): AsyncGenerator<[sha: string, blob: Uint8Array]>
 }
 
 export interface Source extends RemoteSource {
@@ -22,7 +23,7 @@ export async function bundleContents(
     )
   )
   if (shas.length === 0) return changes
-  const blobs = new Map(await source.getBlobs(shas))
+  const blobs = new Map(await accumulate(source.getBlobs(shas)))
   return changes.map(change => {
     if (change.op === 'delete') return change
     return {
@@ -111,7 +112,9 @@ export class SourceTransaction {
       )
     )
     const blobs = new Map(
-      fromSource.length === 0 ? [] : await this.#source.getBlobs(fromSource)
+      fromSource.length === 0
+        ? []
+        : await accumulate(this.#source.getBlobs(fromSource))
     )
     const bundleContents = (change: Change) => {
       if (change.op === 'delete') return change

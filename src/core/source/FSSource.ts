@@ -8,6 +8,7 @@ import {
   checkCommit,
   sourceChanges
 } from '../db/CommitRequest.js'
+import {accumulate} from '../util/Async.js'
 import type {Change} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {Source} from './Source.js'
@@ -74,16 +75,14 @@ export class FSSource implements Source {
     return current.sha === sha ? undefined : current
   }
 
-  async getBlobs(
+  async *getBlobs(
     shas: Array<string>
-  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
-    return Promise.all(
-      shas.map(async (sha): Promise<[sha: string, blob: Uint8Array]> => {
-        const path = this.#locations.get(sha)
-        assert(path, `Missing path for blob ${sha}`)
-        return [sha, await fs.readFile(`${this.#cwd}/${path}`)]
-      })
-    )
+  ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
+    for (const sha of shas) {
+      const path = this.#locations.get(sha)
+      assert(path, `Missing path for blob ${sha}`)
+      yield [sha, await fs.readFile(`${this.#cwd}/${path}`)]
+    }
   }
 
   async applyChanges(changes: Array<Change>) {
@@ -144,18 +143,18 @@ export class CachedFSSource extends FSSource {
     return result
   }
 
-  async getBlobs(
+  async *getBlobs(
     shas: Array<string>
-  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+  ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     const fromLocal = shas.filter(sha => this.#blobs.has(sha))
     const localEntries = fromLocal.map(
       (sha): [sha: string, blob: Uint8Array] => [sha, this.#blobs.get(sha)!]
     )
     const fromRemote = shas.filter(sha => !this.#blobs.has(sha))
     const remoteEntries =
-      fromRemote.length > 0 ? await super.getBlobs(fromRemote) : []
+      fromRemote.length > 0 ? await accumulate(super.getBlobs(fromRemote)) : []
     const entries = [...localEntries, ...remoteEntries]
     this.#blobs = new Map(entries)
-    return entries
+    yield* entries
   }
 }

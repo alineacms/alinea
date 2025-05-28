@@ -25,7 +25,7 @@ export interface LocalConnection extends Connection {
 
 export interface SyncApi {
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
-  getBlobs(shas: Array<string>): Promise<Array<[sha: string, blob: Uint8Array]>>
+  getBlobs(shas: Array<string>): AsyncGenerator<[sha: string, blob: Uint8Array]>
 }
 
 export interface CommitApi {

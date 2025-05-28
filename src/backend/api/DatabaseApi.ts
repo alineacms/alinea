@@ -120,7 +120,7 @@ export class DatabaseApi implements DraftsApi, UploadsApi {
       .where(eq(UploadTable.entryId, entryId))
       .get()
     if (!upload) return new Response('Not found', {status: 404})
-    return new Response(upload.content, {
+    return new Response(upload.content as BodyInit, {
       headers: {
         'content-type': 'application/octet-stream',
         'content-disposition': `inline; filename="${entryId}"`

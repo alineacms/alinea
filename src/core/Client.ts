@@ -119,11 +119,11 @@ export class Client implements LocalConnection {
       .then(tree => (tree ? new ReadonlyTree(tree) : undefined))
   }
 
-  async getBlobs(
+  async *getBlobs(
     shas: Array<string>
-  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
-    if (shas.length === 0) return []
-    return this.#request(
+  ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
+    if (shas.length === 0) return
+    const response = await this.#request(
       {action: HandleAction.Blob},
       {
         method: 'POST',
@@ -133,20 +133,15 @@ export class Client implements LocalConnection {
           accept: 'multipart/form-data'
         }
       }
-    )
-      .then(response => this.#failOnHttpError<Response>(response, false))
-      .then(response => response.formData())
-      .then(async form => {
-        const blobs: Array<[sha: string, blob: Uint8Array]> = []
-        for (const [key, value] of form.entries()) {
-          if (value instanceof Blob) {
-            const sha = key.slice(0, 40)
-            const blob = new Uint8Array(await value.arrayBuffer())
-            blobs.push([sha, blob])
-          }
-        }
-        return blobs
-      })
+    ).then(response => this.#failOnHttpError<Response>(response, false))
+    const form = await response.formData()
+    for (const [key, value] of form.entries()) {
+      if (value instanceof Blob) {
+        const sha = key.slice(0, 40)
+        const blob = new Uint8Array(await value.arrayBuffer())
+        yield [sha, blob]
+      }
+    }
   }
 
   // Commit
