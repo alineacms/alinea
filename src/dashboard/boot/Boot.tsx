@@ -46,10 +46,12 @@ export async function boot(gen: ConfigGenerator) {
         const link = document.querySelector(
           'link[href^="/config.css"]'
         ) as HTMLLinkElement
-        const copy = link.cloneNode() as HTMLLinkElement
-        copy.href = `/config.css?${batch.revision}`
-        copy.onload = () => link.remove()
-        link.after(copy)
+        if (link) {
+          const copy = link.cloneNode() as HTMLLinkElement
+          copy.href = `/config.css?${batch.revision}`
+          copy.onload = () => link.remove()
+          link.after(copy)
+        }
       }
       const isLocal = worker instanceof DashboardWorker
       if (isLocal) await worker.load(batch.revision, batch.config, batch.client)

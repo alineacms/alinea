@@ -12,7 +12,7 @@ export interface ImagePreviewDetails {
 }
 
 export async function createPreview(blob: Blob): Promise<ImagePreviewDetails> {
-  const {default: sharp} = await import('sharp' + '').catch(() => {
+  const {default: sharp} = await import('sharp?' + Math.random()).catch(() => {
     throw new Error(
       `To create image previews server side you need to install the 'sharp' package`
     )

@@ -1,4 +1,4 @@
-import {AbortController, type Response, fetch} from '@alinea/iso'
+//import {AbortController, type Response, fetch} from '@alinea/iso'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
 import type {
@@ -181,6 +181,7 @@ export class Client implements LocalConnection {
     const controller = new AbortController()
     const signal = controller.signal
     const location = `${url}?${new URLSearchParams(params).toString()}`
+
     const promise = fetch(location, {
       ...applyAuth(init),
       signal
