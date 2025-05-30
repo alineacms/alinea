@@ -6,7 +6,7 @@ import {LocalAuth} from 'alinea/cli/serve/LocalAuth'
 import {MemoryDrafts} from 'alinea/cli/serve/MemoryDrafts'
 import {localUser} from 'alinea/core/User'
 import {serve} from 'bun'
-import {cms} from './apps/dev/src/cms.tsx'
+import {cms} from '../apps/dev/src/cms.tsx'
 import index from './index.html'
 
 const context = {

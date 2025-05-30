@@ -1,6 +1,7 @@
-import {cms} from './apps/dev/src/cms.tsx'
-import {Client} from './src/core/Client.js'
-import {boot} from './src/dashboard/boot/Boot.tsx'
+import 'alinea/css'
+import {cms} from '../apps/dev/src/cms.tsx'
+import {Client} from '../src/core/Client.js'
+import {boot} from '../src/dashboard/boot/Boot.tsx'
 
 globalThis.process = {
   env: {}

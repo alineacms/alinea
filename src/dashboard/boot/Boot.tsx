@@ -34,11 +34,8 @@ export async function boot(gen: ConfigGenerator) {
       const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
       events = worker = new DashboardWorker(source)
     }
-    const scripts = document.getElementsByTagName('script')
-    const element = scripts[scripts.length - 1]
-    const into = document.createElement('div')
+    const into = document.body
     into.id = 'root'
-    element.parentElement!.replaceChild(into, element)
     const root = createRoot(into)
     let lastRevision: string | undefined
     for await (const batch of gen) {

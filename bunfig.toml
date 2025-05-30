@@ -1,0 +1,2 @@
+[serve.static]
+plugins = ["./local/sass-plugin.ts", "./local/css-plugin.ts"]
