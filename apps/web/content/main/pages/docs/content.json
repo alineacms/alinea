@@ -2,9 +2,8 @@
   "_id": "28Ng5RzmZ2fHUVlVbAEv1l1oUUS",
   "_type": "Docs",
   "_index": "ZoG",
-  "_i18nId": "28Ng5RzmZ2fHUVlVbAEv1l1oUUS",
-  "_root": "pages",
   "title": "Content",
+  "navigationTitle": "",
   "body": [
     {
       "_type": "paragraph",
@@ -85,7 +84,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2Yl96Yghl2sIFoaL6JTF1bQCpAO",
-      "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ pages // pages root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.json\n  ╰ file.json\n\n// A folder which is publicly available\npublic\n├ image.XYZ.png\n╰ file.XYZ.pdf\n\n// The alinea directory exports a Javascript library\n// which can be imported from @alinea/generated\nnode_modules/@alinea/generated\n├ ...\n├ config.js\n╰ store.js",
+      "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ pages // pages root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.json\n  ╰ file.json\n\n// A folder which is publicly available\npublic\n├ image.XYZ.png\n╰ file.XYZ.pdf\n\n// The alinea directory exports a Javascript library\n// which can be imported from @alinea/generated\nnode_modules/@alinea/generated\n├ ...\n├ config.js\n╰ source.js",
       "fileName": "",
       "language": "",
       "compact": true
@@ -95,8 +94,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

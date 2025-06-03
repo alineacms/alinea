@@ -1,7 +1,5 @@
 'use client'
 
-// @ts-ignore
-import declarations from '!!raw-loader!./alinea.d.ts.txt'
 import {Logo} from '@/layout/branding/Logo'
 import styler from '@alinea/styler'
 import Editor, {type Monaco} from '@monaco-editor/react'
@@ -84,7 +82,7 @@ function PreviewField({field}: PreviewFieldProps) {
   )
 }
 
-function editorConfig(monaco: Monaco) {
+function editorConfig(declarations: string, monaco: Monaco) {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     jsx: 'preserve' as any,
     typeRoots: ['node_modules/@types']
@@ -96,19 +94,25 @@ function editorConfig(monaco: Monaco) {
 }
 
 interface SourceEditorProps {
+  declarations: string
   resizeable: boolean
   code: string
   setCode: (code: string) => void
 }
 
-function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
+function SourceEditor({
+  declarations,
+  resizeable,
+  code,
+  setCode
+}: SourceEditorProps) {
   const inner = (
     <Editor
       // theme="vs-dark"
       path="cms.tsx"
       defaultLanguage="typescript"
       value={code}
-      beforeMount={editorConfig}
+      beforeMount={editorConfig.bind(null, declarations)}
       onChange={value => {
         if (value) setCode(value)
       }}
@@ -139,7 +143,11 @@ const workerDB = new WorkerDB(
   client.index
 )
 
-export default function Playground() {
+export interface PlaygroundProps {
+  declarations: string
+}
+
+export default function Playground({declarations}: PlaygroundProps) {
   const [view, setView] = useState<'both' | 'preview' | 'source'>(() => {
     const url = new URL(location.href)
     return (url.searchParams.get('view') as any) || 'both'
@@ -242,6 +250,7 @@ export default function Playground() {
             <HStack style={{height: '100%', minHeight: 0}}>
               {view !== 'preview' && (
                 <SourceEditor
+                  declarations={declarations}
                   code={code}
                   setCode={setCode}
                   resizeable={view === 'both'}

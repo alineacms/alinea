@@ -2,10 +2,6 @@
 
 import dynamic from 'next/dynamic'
 
-export const Playground = dynamic(() => import('./Playground'), {
+export const PlaygroundDynamic = dynamic(() => import('./Playground'), {
   ssr: false
 })
-
-export function PlaygroundDynamic(props) {
-  return <Playground {...props} />
-}

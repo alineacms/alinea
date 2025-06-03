@@ -1,3 +1,4 @@
+import {promises as fs} from 'node:fs'
 import {Loader} from 'alinea/ui'
 import type {MetadataRoute} from 'next'
 import {Suspense} from 'react'
@@ -11,10 +12,14 @@ export const viewport = {
   themeColor: '#4a65e8'
 }
 
-export default function PlaygroundPage() {
+export default async function PlaygroundPage() {
+  const declarations = await fs.readFile(
+    `${process.cwd()}/src/page/playground/alinea.d.ts.txt`,
+    'utf8'
+  )
   return (
     <Suspense fallback={<Loader absolute />}>
-      <PlaygroundDynamic />
+      <PlaygroundDynamic declarations={declarations} />
     </Suspense>
   )
 }
