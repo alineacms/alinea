@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.3.0]
+- Stability improvements.
+
 ## [1.2.2]
 - Fix use of the readOnly field property which was overwritten from context
 - Minor fixes to path field
