@@ -104,7 +104,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   async function writeStore(db: DevDB) {
     const exported = await exportSource(db.source)
     const data = JSON.stringify(exported, null, 2)
-    await fsp.writeFile(join(context.outDir, 'source.json'), data)
+    await fsp.writeFile(
+      join(context.outDir, 'source.js'),
+      `export const source = ${data}`
+    )
     return data.length
   }
   for await (const cms of builds) {
