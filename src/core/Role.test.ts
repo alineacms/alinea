@@ -29,7 +29,7 @@ test('root', async () => {
   const policy = new WriteablePolicy(getTags)
   await admin.permissions(policy, undefined!)
 
-  test.ok(policy.canCreate('a'))
+  test.ok(policy.canAll('a'))
 })
 
 const editB = role('Edit B', {
