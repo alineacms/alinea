@@ -247,13 +247,13 @@ export function role(label: string, config: RoleOptions) {
   }
 }
 
-export function createPolicy(
+export async function createPolicy(
   role: Role,
   index: EntryIndex,
   graph: Graph
-): Policy {
+): Promise<Policy> {
   const getTags = tagsByIndex(index)
   const policy = new WriteablePolicy(getTags)
-  role.permissions(policy, graph)
+  await role.permissions(policy, graph)
   return Policy.from(policy)
 }
