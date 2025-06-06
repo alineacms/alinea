@@ -10,29 +10,38 @@ import type {EntryIndex} from './db/EntryIndex.js'
 
 export type Tag = HasWorkspace | HasRoot | HasType | string
 
-type AttachedTags = (tag: Tag) => Set<Tag>
+type AttachedTags = (tag: Tag) => Set<Tag> | undefined
 
 function tagsByIndex(entryIndex: EntryIndex) {
-  return (tag: Tag): Set<Tag> => {
-    const result = new Set<Tag>()
+  return (tag: Tag): Set<Tag> | undefined => {
     if (typeof tag === 'string') {
       const node = entryIndex.byId.get(tag)
-      if (!node) return result
+      if (!node) return undefined
+      // Todo: cache this result on the entry node or locally
+      const result = new Set<Tag>()
       for (const tag of node.tags) result.add(tag)
       for (const parentId of entryIndex.parentsOf(tag)) result.add(parentId)
-    } else if (hasRoot(tag)) {
-      const workspace = entryIndex.scope.workspaceOf(tag)
-      result.add(workspace)
+      return result
     }
-    return result
+    if (hasRoot(tag)) {
+      const workspace = entryIndex.scope.workspaceOf(tag)
+      return new Set([workspace])
+    }
   }
 }
 
-class Policy {
+export class Policy {
   protected root = Permission.None
   protected acl = new Map<Tag, number>()
 
   constructor(protected getTags: AttachedTags) {}
+
+  static from(policy: Policy): Policy {
+    const result = new Policy(policy.getTags)
+    result.root = policy.root
+    result.acl = new Map(policy.acl)
+    return result
+  }
 
   concat(that: Policy): Policy {
     const result = new Policy(this.getTags)
@@ -48,8 +57,8 @@ class Policy {
     let result = this.root
 
     const attached = this.getTags(tag)
-
-    for (const attachedTag of attached) result |= this.acl.get(attachedTag)!
+    if (attached)
+      for (const attachedTag of attached) result |= this.acl.get(attachedTag)!
 
     result |= this.acl.get(tag)!
 
@@ -105,7 +114,7 @@ class Policy {
   }
 }
 
-class WriteablePolicy extends Policy {
+export class WriteablePolicy extends Policy {
   applyAll(permissions: Permissions): this {
     const [grant, revoke] = packPermissions(permissions)
     this.root |= grant
@@ -122,7 +131,7 @@ class WriteablePolicy extends Policy {
       for (const [otherTag, existingPermissions] of this.acl) {
         if (otherTag === tag) continue
         const attached = this.getTags(otherTag)
-        if (attached.has(tag))
+        if (attached?.has(tag))
           this.acl.set(otherTag, existingPermissions & ~revoke)
       }
     }
@@ -237,4 +246,15 @@ export function role(label: string, config: RoleOptions) {
     label,
     ...config
   }
+}
+
+export function createPolicy(
+  role: Role,
+  index: EntryIndex,
+  graph: Graph
+): Policy {
+  const getTags = tagsByIndex(index)
+  const policy = new WriteablePolicy(getTags)
+  role.permissions(policy, graph)
+  return Policy.from(policy)
 }
