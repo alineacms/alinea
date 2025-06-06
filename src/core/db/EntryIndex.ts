@@ -26,7 +26,6 @@ import {type Source, bundleContents} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
 import {sourceChanges} from './CommitRequest.js'
-import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {IndexEvent} from './IndexEvent.js'
 
@@ -44,7 +43,6 @@ export class EntryIndex extends EventTarget {
   entries = Array<Entry>()
   byPath = new Map<string, EntryNode>()
   byId = new Map<string, EntryNode>()
-  resolver: EntryResolver
   initialSync: ReadonlyTree | undefined
   #config: Config
   #seeds: Map<string, Seed>
@@ -58,7 +56,6 @@ export class EntryIndex extends EventTarget {
       ? undefined
       : keys(config.workspaces)[0]
     this.#seeds = entrySeeds(config)
-    this.resolver = new EntryResolver(config, this)
     this.#search = new MiniSearch({
       fields: ['title', 'searchableText'],
       storeFields: ['entry'],
