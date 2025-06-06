@@ -27,7 +27,7 @@ function getTags(tag: Tag) {
 
 test('root', async () => {
   const policy = new WriteablePolicy(getTags)
-  admin.permissions(policy, undefined!)
+  await admin.permissions(policy, undefined!)
 
   test.ok(policy.canCreate('a'))
 })
@@ -43,7 +43,7 @@ const editB = role('Edit B', {
 
 test('editB', async () => {
   const policy = new WriteablePolicy(getTags)
-  editB.permissions(policy, undefined!)
+  await editB.permissions(policy, undefined!)
 
   test.ok(policy.canRead('b'))
   test.ok(policy.canUpdate('b'))
