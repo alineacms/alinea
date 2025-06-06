@@ -5,7 +5,6 @@ import {
   type HasWorkspace,
   hasRoot
 } from './Internal.js'
-import {} from './Scope.js'
 import type {EntryIndex} from './db/EntryIndex.js'
 
 export type Tag = HasWorkspace | HasRoot | HasType | string
