@@ -2,7 +2,7 @@ import type {Workspace} from 'alinea/types'
 import type {Config} from './Config.js'
 import {Expr} from './Expr.js'
 import type {Field} from './Field.js'
-import {getExpr, hasExpr} from './Internal.js'
+import {type HasRoot, type HasWorkspace, getExpr, hasExpr} from './Internal.js'
 import type {Page} from './Page.js'
 import type {Root} from './Root.js'
 import type {Type} from './Type.js'
@@ -33,6 +33,12 @@ export class Scope {
         this.#insert(field, 'Field', typeName, fieldName)
       }
     }
+  }
+
+  workspaceOf(root: HasRoot): HasWorkspace {
+    const path = this.#paths.get(root)
+    if (!path) throw new Error(`Root not found in scope: ${root}`)
+    return this.#keys.get(path[0]) as Workspace
   }
 
   locationOf(entity: Entity) {

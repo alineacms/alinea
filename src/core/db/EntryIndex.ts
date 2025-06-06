@@ -18,6 +18,8 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
 import {createId} from '../Id.js'
+import type {Tag} from '../Role.js'
+import {getScope} from '../Scope.js'
 import type {Change} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {type Source, bundleContents} from '../source/Source.js'
@@ -80,6 +82,21 @@ export class EntryIndex extends EventTarget {
 
   *findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
     for (const entry of this.entries) if (filter(entry)) yield entry
+  }
+
+  get scope() {
+    return getScope(this.#config)
+  }
+
+  parentsOf(entryId: string): Array<string> {
+    const parents = []
+    let node = this.byId.get(entryId)
+    while (node) {
+      parents.push(node.id)
+      if (!node.parentId) break
+      node = this.byId.get(node.parentId)
+    }
+    return parents
   }
 
   filter({ids, search, condition}: EntryFilter, preview?: Entry): Array<Entry> {
@@ -443,10 +460,18 @@ class EntryNode {
   type: string
   byFile = new Map<string, Entry>()
   locales = new Map<string | null, Map<EntryStatus, Entry>>()
+  tags: Array<Tag> = []
   constructor(config: Config, from: Entry) {
     this.#config = config
     this.id = from.id
     this.type = from.type
+    const workspace = this.#config.workspaces[from.workspace]
+    assert(workspace, `Invalid workspace: ${from.workspace}`)
+    const root = workspace[from.root]
+    assert(root, `Invalid root: ${from.root}`)
+    const type = this.#config.schema[from.type]
+    assert(type, `Invalid type: ${from.type} in ${from.filePath}`)
+    this.tags = [workspace, root, type]
   }
   get index() {
     const [entry] = this.byFile.values()
