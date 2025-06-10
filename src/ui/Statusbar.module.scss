@@ -21,4 +21,8 @@
   padding: 0 6px;
   cursor: default;
   white-space: nowrap;
+
+  &.is-interactive {
+    cursor: pointer;
+  }
 }

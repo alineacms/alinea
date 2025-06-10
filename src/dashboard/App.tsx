@@ -4,7 +4,8 @@ import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
-import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
+import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
+import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {atom, useAtom, useAtomValue} from 'jotai'
@@ -45,7 +46,7 @@ function AppAuthenticated() {
   useDbUpdater()
   const {alineaDev, config, fullPage} = useDashboard()
   const {roles} = config
-  const session = useAtomValue(sessionAtom)
+  const [session, setSession] = useAtom(sessionAtom)
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
   const {name: workspace, color, roots} = useWorkspace()
@@ -117,8 +118,27 @@ function AppAuthenticated() {
               <Statusbar.Root>
                 {session &&
                   Object.entries(roles ?? {}).map(([name, role]) => {
+                    const isActive = session.user.roles.includes(name)
                     return (
-                      <Statusbar.Status icon={IcRoundCheck} key={name}>
+                      <Statusbar.Status
+                        icon={
+                          isActive
+                            ? IcRoundCheckBox
+                            : IcRoundCheckBoxOutlineBlank
+                        }
+                        key={name}
+                        onClick={() => {
+                          setSession({
+                            ...session,
+                            user: {
+                              ...session.user,
+                              roles: isActive
+                                ? session.user.roles.filter(r => r !== name)
+                                : [...session.user.roles, name]
+                            }
+                          })
+                        }}
+                      >
                         <span>{role.label}</span>
                       </Statusbar.Status>
                     )

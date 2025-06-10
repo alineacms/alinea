@@ -3,7 +3,6 @@ import type {Connection} from 'alinea/core/Connection'
 import {DOC_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
 import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
-import type {EntryRow} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
@@ -70,7 +69,7 @@ export const entryEditorAtoms = atomFamily(
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = get(dbAtom)
-      let entry: EntryRow | null = await graph.first({
+      let entry: Entry | null = await graph.first({
         select: Entry,
         id,
         locale: searchLocale,
@@ -237,7 +236,7 @@ export function createEntryEditor(entryData: EntryData) {
     return get(statusInUrl) ?? activeStatus
   })
 
-  function entryFile(entry: EntryRow, parentPaths?: Array<string>) {
+  function entryFile(entry: Entry, parentPaths?: Array<string>) {
     return entryFileName(
       config,
       entry,
@@ -520,7 +519,7 @@ export function createEntryEditor(entryData: EntryData) {
   }
   async function getDraftEntry(
     options: DraftEntryOptions = {}
-  ): Promise<EntryRow> {
+  ): Promise<Entry> {
     const data = parseYDoc(type, yDoc)
     const status = options.status ?? activeVersion.status
     const locale = options.locale ?? activeVersion.locale

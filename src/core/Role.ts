@@ -107,7 +107,7 @@ export class Policy {
     return result
   }
 
-  #check(permission: number, entity?: Resource): boolean {
+  check(permission: number, entity?: Resource): boolean {
     const permissions = entity ? this.#permissionsOf(entity) : this.acl.root
     const allowed = permissions & permission
     const denied = permissions & grant.deny(permission)
@@ -115,48 +115,48 @@ export class Policy {
   }
 
   assert(permission: Permission, entity?: Resource): void {
-    if (!this.#check(permission, entity))
+    if (!this.check(permission, entity))
       throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
   }
 
   canRead(entity: Resource): boolean {
-    return this.#check(grant.read, entity)
+    return this.check(grant.read, entity)
   }
 
   canCreate(entity: Resource): boolean {
-    return this.#check(grant.create, entity)
+    return this.check(grant.create, entity)
   }
 
   canUpdate(entity: Resource): boolean {
-    return this.#check(grant.update, entity)
+    return this.check(grant.update, entity)
   }
 
   canDelete(entity: Resource): boolean {
-    return this.#check(grant.delete, entity)
+    return this.check(grant.delete, entity)
   }
 
   canReorder(entity: Resource): boolean {
-    return this.#check(grant.reorder, entity)
+    return this.check(grant.reorder, entity)
   }
 
   canMove(entity: Resource): boolean {
-    return this.#check(grant.move, entity)
+    return this.check(grant.move, entity)
   }
 
   canPublish(entity: Resource): boolean {
-    return this.#check(grant.publish, entity)
+    return this.check(grant.publish, entity)
   }
 
   canArchive(entity: Resource): boolean {
-    return this.#check(grant.archive, entity)
+    return this.check(grant.archive, entity)
   }
 
   canUpload(entity: Resource): boolean {
-    return this.#check(grant.upload, entity)
+    return this.check(grant.upload, entity)
   }
 
   canExplore(entity: Resource): boolean {
-    return this.#check(grant.explore, entity)
+    return this.check(grant.explore, entity)
   }
 
   canAll(entity: Resource): boolean {

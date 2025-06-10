@@ -64,9 +64,9 @@ test('move parent', async () => {
     toParent: parent2._id
   })
 
-  const url = await db.get({select: Entry.url, id: child1._id})
-
-  test.is(url, '/page-2/child-1')
+  const child1Entry = await db.get({select: Entry, id: child1._id})
+  test.equal(child1Entry.parents, [parent2._id])
+  test.is(child1Entry.url, '/page-2/child-1')
 
   // Try reparent to parent3 (should fail)
   await test.throws(async () => {

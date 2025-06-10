@@ -72,7 +72,7 @@ export class DashboardWorker extends EventTarget {
   async resolve(raw: string): Promise<unknown> {
     const db = await this.db
     const scope = getScope(db.config)
-    const query = scope.parse(raw) as GraphQuery
+    const query = scope.parse<GraphQuery>(raw)
     return db.resolve(query)
   }
 

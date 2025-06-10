@@ -153,7 +153,7 @@ export function createHandler({
         expectJson()
         const raw = await request.text()
         const scope = getScope(cms.config)
-        const query = scope.parse(raw) as GraphQuery
+        const query = scope.parse<GraphQuery>(raw)
         if (!query.preview) {
           await periodicSync(cnx, query.syncInterval)
         } else {

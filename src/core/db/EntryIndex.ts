@@ -324,11 +324,14 @@ export class EntryIndex extends EventTarget {
           const segments = change.path.split('/').slice(0, -1)
           const parentPath = segments.join('/')
           const parent = this.byPath.get(parentPath)
-          const entry = this.#parseEntry({
-            sha: change.sha,
-            file: change.path,
-            contents: contents
-          })
+          const entry = this.#parseEntry(
+            {
+              sha: change.sha,
+              file: change.path,
+              contents: contents
+            },
+            parent
+          )
           const node =
             this.byId.get(entry.id) ?? new EntryNode(this.#config, entry)
           node.add(entry, parent)
@@ -367,7 +370,10 @@ export class EntryIndex extends EventTarget {
     }
   }
 
-  #parseEntry({sha, file, contents}: ParseRequest): Entry {
+  #parseEntry(
+    {sha, file, contents}: ParseRequest,
+    parent: EntryNode | undefined
+  ): Entry {
     const segments = file.split('/')
     const baseName = segments.at(-1)
     assert(baseName)
@@ -425,6 +431,17 @@ export class EntryIndex extends EventTarget {
     if (!this.#singleWorkspace) levelOffset += 1
     if (i18n) levelOffset += 1
 
+    const parents = []
+    let target = parent
+    while (target) {
+      parents.unshift(target.id)
+      if (target.parentId) {
+        target = this.byId.get(target.parentId)
+      } else {
+        target = undefined
+      }
+    }
+
     return {
       rowHash: sha,
       fileHash: sha,
@@ -440,7 +457,8 @@ export class EntryIndex extends EventTarget {
 
       parentDir,
       childrenDir,
-      parentId: null,
+      parentId: parent?.id ?? null,
+      parents: parents,
       level: segments.length - levelOffset,
       index,
       locale,
@@ -567,7 +585,6 @@ class EntryNode {
       }
     }
 
-    entry.parentId = parent ? parent.id : null
     versions.set(entry.status, entry)
     this.byFile.set(entry.filePath, entry)
 

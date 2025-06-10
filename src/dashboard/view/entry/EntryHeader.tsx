@@ -134,7 +134,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     setIsReplacing(true)
     const input = document.createElement('input')
     input.type = 'file'
-    const extension = editor.activeVersion.data.extension
+    const extension = editor.activeVersion.data.extension as string
     input.accept = extension
     input.onchange = async () => {
       const file = input.files![0]

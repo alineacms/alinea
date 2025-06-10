@@ -22,18 +22,25 @@ export namespace Statusbar {
     )
   }
 
-  export type StatusProps = PropsWithChildren<{
+  export interface StatusProps extends PropsWithChildren {
     icon?: ComponentType
-  }>
+    onClick?: () => void
+  }
 
-  export function Status({children, icon}: StatusProps) {
+  export function Status({children, icon, onClick}: StatusProps) {
     return (
-      <div className={styles.status()}>
+      <button
+        type="button"
+        className={styles.status({
+          interactive: Boolean(onClick)
+        })}
+        onClick={onClick}
+      >
         <HStack center gap={5}>
           <Icon icon={icon} />
           <span>{children}</span>
         </HStack>
-      </div>
+      </button>
     )
   }
 }

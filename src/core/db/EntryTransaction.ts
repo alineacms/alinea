@@ -126,7 +126,7 @@ export class EntryTransaction {
       this.removeFile({
         location: paths.join(
           getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
-          prev.data.location
+          prev.data.location as string
         )
       })
     }
@@ -311,7 +311,7 @@ export class EntryTransaction {
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Publish, id)
     const pathChange = entry.data.path && entry.data.path !== entry.path
-    let path = slugify(entry.data.path ?? entry.path)
+    let path = slugify((entry.data.path as string) ?? entry.path)
     path = this.#getAvailablePath({
       id,
       path,
@@ -526,14 +526,16 @@ export class EntryTransaction {
         })
         for (const file of files) {
           this.removeFile({
-            location: paths.join(mediaDir, file.data.location)
+            location: paths.join(mediaDir, file.data.location as string)
           })
         }
       }
       if (entry.type === 'MediaFile') {
         const workspace = this.#config.workspaces[entry.workspace]
         const mediaDir = getWorkspace(workspace).mediaDir
-        this.removeFile({location: paths.join(mediaDir, entry.data.location)})
+        this.removeFile({
+          location: paths.join(mediaDir, entry.data.location as string)
+        })
       }
     }
     if (info) {
