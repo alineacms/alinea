@@ -1,5 +1,7 @@
 import {suite} from '@alinea/suite'
-import {type Tag, WriteablePolicy, role} from './Role.js'
+import {type ACL, type Resource, WriteablePolicy, role} from './Role.js'
+
+const test = suite(import.meta)
 
 const admin = role('Admin', {
   permissions(policy) {
@@ -18,15 +20,14 @@ const admin = role('Admin', {
   }
 })
 
-const test = suite(import.meta)
-
-function getTags(tag: Tag) {
-  if (tag === 'c') return new Set(['a', 'b'])
-  if (tag === 'b') return new Set(['a'])
+function inherit(tag: Resource, acl: ACL) {
+  if (tag === 'c') return acl.get('a') | acl.get('b')
+  if (tag === 'b') return acl.get('a')
+  return 0
 }
 
 test('root', async () => {
-  const policy = new WriteablePolicy(getTags)
+  const policy = new WriteablePolicy(inherit)
   await admin.permissions(policy, undefined!)
 
   test.ok(policy.canAll('a'))
@@ -42,7 +43,7 @@ const editB = role('Edit B', {
 })
 
 test('editB', async () => {
-  const policy = new WriteablePolicy(getTags)
+  const policy = new WriteablePolicy(inherit)
   await editB.permissions(policy, undefined!)
 
   test.ok(policy.canRead('b'))
@@ -52,4 +53,25 @@ test('editB', async () => {
   test.not.ok(policy.canDelete('b'))
   test.not.ok(policy.canCreate('b'))
   test.not.ok(policy.canRead('a'))
+})
+
+const explicitDeny = role('Explicit Deny', {
+  permissions(policy) {
+    // This should mean we can read a, b and c
+    policy.allowAll()
+    // But this should deny reading c specifically
+    policy.applyEntry('c', {
+      read: false
+    })
+  }
+})
+
+test('explicitDeny', async () => {
+  const policy = new WriteablePolicy(inherit)
+  await explicitDeny.permissions(policy, undefined!)
+
+  test.ok(policy.canRead('a'))
+  test.ok(policy.canRead('b'))
+  test.ok(policy.canCreate('c'))
+  test.not.ok(policy.canRead('c'))
 })

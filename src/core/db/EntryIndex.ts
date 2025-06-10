@@ -7,7 +7,7 @@ import {
   createRecord,
   parseRecord
 } from 'alinea/core/EntryRecord'
-import {getRoot} from 'alinea/core/Internal'
+import {getRoot, hasRoot} from 'alinea/core/Internal'
 import {Page} from 'alinea/core/Page'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
@@ -18,8 +18,8 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
 import {createId} from '../Id.js'
-import type {Tag} from '../Role.js'
-import {getScope} from '../Scope.js'
+import type {ACL, Resource} from '../Role.js'
+import {type Scope, getScope} from '../Scope.js'
 import type {Change} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {type Source, bundleContents} from '../source/Source.js'
@@ -45,6 +45,7 @@ export class EntryIndex extends EventTarget {
   byId = new Map<string, EntryNode>()
   initialSync: ReadonlyTree | undefined
   #config: Config
+  #scope: Scope
   #seeds: Map<string, Seed>
   #search: MiniSearch
   #singleWorkspace: string | undefined
@@ -52,6 +53,7 @@ export class EntryIndex extends EventTarget {
   constructor(config: Config) {
     super()
     this.#config = config
+    this.#scope = getScope(config)
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
@@ -81,10 +83,6 @@ export class EntryIndex extends EventTarget {
     for (const entry of this.entries) if (filter(entry)) yield entry
   }
 
-  get scope() {
-    return getScope(this.#config)
-  }
-
   parentsOf(entryId: string): Array<string> {
     const parents = []
     let node = this.byId.get(entryId)
@@ -94,6 +92,21 @@ export class EntryIndex extends EventTarget {
       node = this.byId.get(node.parentId)
     }
     return parents
+  }
+
+  inheritPermissions(resource: Resource, acl: ACL): number {
+    let result = 0
+    if (typeof resource === 'string') {
+      const node = this.byId.get(resource)
+      if (!node) return result
+      for (const resource of node.inheritResources) result |= acl.get(resource)
+      for (const parentId of this.parentsOf(resource))
+        result |= acl.get(parentId)
+    } else if (hasRoot(resource)) {
+      const workspace = this.#scope.workspaceOf(resource)
+      result |= acl.get(workspace)
+    }
+    return result
   }
 
   filter({ids, search, condition}: EntryFilter, preview?: Entry): Array<Entry> {
@@ -457,7 +470,7 @@ class EntryNode {
   type: string
   byFile = new Map<string, Entry>()
   locales = new Map<string | null, Map<EntryStatus, Entry>>()
-  tags: Array<Tag> = []
+  inheritResources: Array<Resource> = []
   constructor(config: Config, from: Entry) {
     this.#config = config
     this.id = from.id
@@ -468,7 +481,7 @@ class EntryNode {
     assert(root, `Invalid root: ${from.root}`)
     const type = this.#config.schema[from.type]
     assert(type, `Invalid type: ${from.type} in ${from.filePath}`)
-    this.tags = [workspace, root, type]
+    this.inheritResources = [workspace, root, type]
   }
   get index() {
     const [entry] = this.byFile.values()
