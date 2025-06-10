@@ -130,6 +130,7 @@ export function createHandler({
 
       const expectUser = () => {
         if (!userCtx) throw new Response('Unauthorized', {status: 401})
+        return userCtx.user
       }
 
       const body = PLazy.from(() => {
@@ -164,10 +165,11 @@ export function createHandler({
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
-        expectUser()
+        const user = expectUser()
         expectJson()
+        const policy = await local.createPolicy(user.roles)
         const mutations = await body
-        const request = await local.request(mutations)
+        const request = await local.request(mutations, policy)
         const {sha} = await cnx.write(request)
         if (sha === request.intoSha) {
           await local.write(request)

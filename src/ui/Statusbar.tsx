@@ -14,8 +14,10 @@ export namespace Statusbar {
   export function Root({children}: PropsWithChildren<{}>) {
     return (
       <footer className={styles.root()}>
-        <Portal />
         {children}
+        <div className={styles.root.slots()}>
+          <Portal />
+        </div>
       </footer>
     )
   }

@@ -129,6 +129,7 @@ export function createLocalServer(
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
       'process.env.NODE_ENV': production ? '"production"' : '"development"',
+      'process.env.ALINEA_DEV': alineaDev ? 'true' : 'false',
       'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
       'process.env.ALINEA_FORCE_AUTH': process.env.ALINEA_CLOUD_URL
         ? 'true'

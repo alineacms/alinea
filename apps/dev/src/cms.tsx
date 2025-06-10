@@ -4,9 +4,27 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import * as schema from './schema'
 
+const editor = Config.role('Editor', {
+  permissions(policy) {
+    policy.setAll({
+      create: false,
+      read: true,
+      update: true,
+      delete: false,
+      reorder: false,
+      move: false,
+      publish: false,
+      archive: false,
+      upload: true,
+      explore: true
+    })
+  }
+})
+
 export const cms = createCMS({
   enableDrafts: true,
   schema,
+  roles: {editor},
   workspaces: {
     primary: Config.workspace('Primary workspace', {
       mediaDir: 'public',

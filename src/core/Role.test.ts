@@ -1,13 +1,6 @@
 import {suite} from '@alinea/suite'
 import {root, type, workspace} from 'alinea/config.js'
-import {
-  type ACL,
-  Policy,
-  type Resource,
-  WriteablePolicy,
-  createPolicy,
-  role
-} from './Role.js'
+import {type ACL, Policy, type Resource, WriteablePolicy, role} from './Role.js'
 
 const test = suite(import.meta)
 
@@ -235,21 +228,6 @@ test('role factory returns correct label and config', () => {
   test.is(r.label, 'Test')
   test.is(r.description, 'desc')
   test.ok(typeof r.permissions === 'function')
-})
-
-test('createPolicy applies permissions', async () => {
-  // Mock EntryIndex and Graph
-  const mockIndex = {
-    inheritPermissions: () => 0
-  }
-  const mockGraph = {}
-  const r = role('Test', {
-    async permissions(policy) {
-      policy.setEntry('a', {read: true})
-    }
-  })
-  const p = await createPolicy(r, mockIndex as any, mockGraph as any)
-  test.ok(p.canRead('a'))
 })
 
 test('WriteablePolicy.applyAll merges with allowAll', () => {

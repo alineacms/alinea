@@ -1,6 +1,6 @@
 import type {Graph} from './Graph.js'
+import {ErrorCode, HttpError} from './HttpError.js'
 import type {HasRoot, HasType, HasWorkspace} from './Internal.js'
-import type {EntryIndex} from './db/EntryIndex.js'
 
 interface Permissions {
   create?: boolean
@@ -16,25 +16,37 @@ interface Permissions {
 }
 
 const total = 10
+export enum Permission {
+  None = 0,
+  Create = 1 << 0,
+  Read = 1 << 1,
+  Update = 1 << 2,
+  Delete = 1 << 3,
+  Reorder = 1 << 4,
+  Move = 1 << 5,
+  Publish = 1 << 6,
+  Archive = 1 << 7,
+  Upload = 1 << 8,
+  Explore = 1 << 9,
+  All = (1 << total) - 1
+}
 const grant = {
-  create: 0,
-  read: 1,
-  update: 2,
-  delete: 3,
-  reorder: 4,
-  move: 5,
-  publish: 6,
-  archive: 7,
-  upload: 8,
-  explore: 9,
+  create: Permission.Create,
+  read: Permission.Read,
+  update: Permission.Update,
+  delete: Permission.Delete,
+  reorder: Permission.Reorder,
+  move: Permission.Move,
+  publish: Permission.Publish,
+  archive: Permission.Archive,
+  upload: Permission.Upload,
+  explore: Permission.Explore,
 
   allowAll: (1 << total) - 1,
   denyAll: ((1 << total) - 1) << total,
-  allow(permission: number): number {
-    return 1 << permission
-  },
-  deny(permission: number): number {
-    return 1 << (permission + total)
+
+  deny(permission: Permission): number {
+    return permission << total
   },
 
   pack(permissions: Permissions): number {
@@ -44,7 +56,7 @@ const grant = {
     >) {
       if (!(name in this)) continue
       if (state === undefined) continue
-      if (state) packed |= this.allow(this[name])
+      if (state) packed |= this[name]
       else packed |= this.deny(this[name])
     }
     return packed
@@ -54,7 +66,7 @@ const grant = {
 export type Resource = HasWorkspace | HasRoot | HasType | string
 
 export class ACL extends Map<Resource, number> {
-  root = 0
+  root = Permission.None
   constructor(acl?: ACL) {
     super(acl)
     if (acl) this.root = acl.root
@@ -95,51 +107,56 @@ export class Policy {
     return result
   }
 
-  #check(entity: Resource, permission: number): boolean {
-    const permissions = this.#permissionsOf(entity)
-    const allowed = permissions & grant.allow(permission)
+  #check(permission: number, entity?: Resource): boolean {
+    const permissions = entity ? this.#permissionsOf(entity) : this.acl.root
+    const allowed = permissions & permission
     const denied = permissions & grant.deny(permission)
     return Boolean(allowed && !denied)
   }
 
+  assert(permission: Permission, entity?: Resource): void {
+    if (!this.#check(permission, entity))
+      throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
+  }
+
   canRead(entity: Resource): boolean {
-    return this.#check(entity, grant.read)
+    return this.#check(grant.read, entity)
   }
 
   canCreate(entity: Resource): boolean {
-    return this.#check(entity, grant.create)
+    return this.#check(grant.create, entity)
   }
 
   canUpdate(entity: Resource): boolean {
-    return this.#check(entity, grant.update)
+    return this.#check(grant.update, entity)
   }
 
   canDelete(entity: Resource): boolean {
-    return this.#check(entity, grant.delete)
+    return this.#check(grant.delete, entity)
   }
 
   canReorder(entity: Resource): boolean {
-    return this.#check(entity, grant.reorder)
+    return this.#check(grant.reorder, entity)
   }
 
   canMove(entity: Resource): boolean {
-    return this.#check(entity, grant.move)
+    return this.#check(grant.move, entity)
   }
 
   canPublish(entity: Resource): boolean {
-    return this.#check(entity, grant.publish)
+    return this.#check(grant.publish, entity)
   }
 
   canArchive(entity: Resource): boolean {
-    return this.#check(entity, grant.archive)
+    return this.#check(grant.archive, entity)
   }
 
   canUpload(entity: Resource): boolean {
-    return this.#check(entity, grant.upload)
+    return this.#check(grant.upload, entity)
   }
 
   canExplore(entity: Resource): boolean {
-    return this.#check(entity, grant.explore)
+    return this.#check(grant.explore, entity)
   }
 
   canAll(entity: Resource): boolean {
@@ -189,6 +206,11 @@ export class WriteablePolicy extends Policy {
   }
 }
 
+export namespace Policy {
+  export const ALLOW_ALL = Policy.from(new WriteablePolicy().allowAll())
+  export const DENY_ALL = new Policy()
+}
+
 export interface RoleOptions {
   description?: string
   permissions(policy: WriteablePolicy, graph: Graph): void | Promise<void>
@@ -205,12 +227,9 @@ export function role(label: string, config: RoleOptions) {
   }
 }
 
-export async function createPolicy(
-  role: Role,
-  index: EntryIndex,
-  graph: Graph
-): Promise<Policy> {
-  const policy = new WriteablePolicy(index.inheritPermissions.bind(index))
-  await role.permissions(policy, graph)
-  return Policy.from(policy)
-}
+export const admin = role('Admin', {
+  description: 'Has full access to all features of the CMS',
+  permissions(policy) {
+    policy.allowAll()
+  }
+})

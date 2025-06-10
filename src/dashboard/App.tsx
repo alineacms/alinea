@@ -6,7 +6,6 @@ import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
-import {IcRoundSync} from 'alinea/ui/icons/IcRoundSync'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {type ComponentType, useEffect} from 'react'
@@ -44,7 +43,9 @@ const isEntryAtom = atom(get => {
 
 function AppAuthenticated() {
   useDbUpdater()
-  const {alineaDev, fullPage} = useDashboard()
+  const {alineaDev, config, fullPage} = useDashboard()
+  const {roles} = config
+  const session = useAtomValue(sessionAtom)
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
   const {name: workspace, color, roots} = useWorkspace()
@@ -114,11 +115,14 @@ function AppAuthenticated() {
             </div>
             {alineaDev && (
               <Statusbar.Root>
-                <Statusbar.Status
-                  icon={pending === 0 ? IcRoundCheck : IcRoundSync}
-                >
-                  {pending === 0 ? 'Synced' : 'Saving…'}
-                </Statusbar.Status>
+                {session &&
+                  Object.entries(roles ?? {}).map(([name, role]) => {
+                    return (
+                      <Statusbar.Status icon={IcRoundCheck} key={name}>
+                        <span>{role.label}</span>
+                      </Statusbar.Status>
+                    )
+                  })}
 
                 {sha ? (
                   <Statusbar.Status icon={MaterialSymbolsDatabase}>

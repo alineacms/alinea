@@ -3,7 +3,7 @@ import type {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
-import type {Role} from './Role.js'
+import {type Role, admin} from './Role.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getScope} from './Scope.js'
@@ -172,7 +172,7 @@ const normalized = new WeakSet()
 /** Create a new config instance */
 export function createConfig<Definition extends Config>(
   definition: Definition
-) {
+): Definition {
   if (normalized.has(definition)) return definition
   if (definition.schema.MediaFile && definition.schema.MediaFile !== MediaFile)
     throw new Error(`"MediaFile" is a reserved Type name`)
@@ -184,6 +184,7 @@ export function createConfig<Definition extends Config>(
   const res = {
     auth: CloudAuthView,
     ...definition,
+    roles: {admin, ...definition.roles},
     publicDir: definition.publicDir ?? '/public',
     schema: {...definition.schema, MediaLibrary, MediaFile}
   }
