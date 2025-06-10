@@ -157,7 +157,7 @@ export class WriteablePolicy extends Policy {
     return this
   }
 
-  applyAll(permissions: Permissions): this {
+  setAll(permissions: Permissions): this {
     const packed = grant.pack(permissions)
     this.acl.root |= packed
     return this
@@ -169,22 +169,22 @@ export class WriteablePolicy extends Policy {
     return this
   }
 
-  applyWorkspace(workspace: HasWorkspace, permissions: Permissions): this {
+  setWorkspace(workspace: HasWorkspace, permissions: Permissions): this {
     return this.#apply(workspace, permissions)
   }
 
-  applyRoot(
+  setRoot(
     root: HasRoot,
     permissions: Permissions | Record<string, number>
   ): this {
     return this.#apply(root, permissions)
   }
 
-  applyType(type: HasType, permissions: Permissions): this {
+  setType(type: HasType, permissions: Permissions): this {
     return this.#apply(type, permissions)
   }
 
-  applyEntry(entryId: string, permissions: Permissions): this {
+  setEntry(entryId: string, permissions: Permissions): this {
     return this.#apply(entryId, permissions)
   }
 }

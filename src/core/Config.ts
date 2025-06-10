@@ -3,6 +3,7 @@ import type {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
 import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
+import type {Role} from './Role.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getScope} from './Scope.js'
@@ -18,6 +19,9 @@ export interface Config {
   schema: Schema
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
+
+  /** A record containing roles */
+  roles?: Record<string, Role>
 
   /** A url which will be embedded in the dashboard for live previews */
   preview?: Preview

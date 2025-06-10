@@ -83,7 +83,7 @@ export class EntryIndex extends EventTarget {
     for (const entry of this.entries) if (filter(entry)) yield entry
   }
 
-  parentsOf(entryId: string): Array<string> {
+  #parentsOf(entryId: string): Array<string> {
     const parents = []
     let node = this.byId.get(entryId)
     while (node) {
@@ -100,7 +100,7 @@ export class EntryIndex extends EventTarget {
       const node = this.byId.get(resource)
       if (!node) return result
       for (const resource of node.inheritResources) result |= acl.get(resource)
-      for (const parentId of this.parentsOf(resource))
+      for (const parentId of this.#parentsOf(resource))
         result |= acl.get(parentId)
     } else if (hasRoot(resource)) {
       const workspace = this.#scope.workspaceOf(resource)
