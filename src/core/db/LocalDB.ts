@@ -2,12 +2,11 @@ import type {Config} from '../Config.js'
 import type {SyncApi, UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
-import {Policy, WriteablePolicy} from '../Role.js'
+import type {Policy} from '../Role.js'
 import type {Change} from '../source/Change.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {syncWith} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
-import {assert} from '../source/Utils.js'
 import {type CommitRequest, sourceChanges} from './CommitRequest.js'
 import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver} from './EntryResolver.js'
@@ -97,20 +96,6 @@ export class LocalDB extends WriteableGraph {
     )
     tx.apply(mutations)
     return tx.toRequest()
-  }
-
-  async createPolicy(forRoles: Array<string>): Promise<Policy> {
-    const roles = this.config.roles ?? {}
-    const inherit = this.index.inheritPermissions.bind(this.index)
-    let result = Policy.DENY_ALL
-    for (const name of forRoles) {
-      const role = roles[name]
-      assert(role, `Role ${name} not found in config`)
-      const policy = new WriteablePolicy(inherit)
-      await role.permissions(policy, this)
-      result = result.concat(policy)
-    }
-    return result
   }
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {

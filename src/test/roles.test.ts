@@ -45,5 +45,5 @@ test('enforce permissions', async () => {
     workspace: 'main',
     set: {title: 'Test Page'}
   }).task(db)
-  await test.throws(() => db.request(mutations, Policy.DENY_ALL), 'denied')
+  await test.throws(() => db.request(mutations, Policy.ALLOW_NONE), 'denied')
 })

@@ -1,6 +1,14 @@
 import type {Graph} from './Graph.js'
 import {ErrorCode, HttpError} from './HttpError.js'
 import type {HasRoot, HasType, HasWorkspace} from './Internal.js'
+import {type Scope, ScopeKey} from './Scope.js'
+import {assert} from './source/Utils.js'
+
+type SetPermissions =
+  | {workspace: HasWorkspace; grant: Permissions}
+  | {type: HasType; grant: Permissions}
+  | {root: HasRoot; grant: Permissions}
+  | {id: string; grant: Permissions}
 
 interface Permissions {
   create?: boolean
@@ -63,104 +71,120 @@ const grant = {
   }
 }
 
-export type Resource = HasWorkspace | HasRoot | HasType | string
+export interface Resource {
+  workspace?: string
+  root?: string
+  type?: string
+  id?: string
+  parents?: Array<string>
+  locale?: string | null
+}
 
-export class ACL extends Map<Resource, number> {
+export class ACL extends Map<string, number> {
   root = Permission.None
   constructor(acl?: ACL) {
     super(acl)
     if (acl) this.root = acl.root
   }
-  get(resource: Resource): number {
+  get(resource: string): number {
     return super.get(resource) ?? 0
   }
 }
 
-export type InheritPermissions = (resource: Resource, acl: ACL) => number
-
 export class Policy {
   protected acl = new ACL()
 
-  constructor(protected inherit?: InheritPermissions) {}
+  constructor(root?: Permission) {
+    if (root !== undefined) this.acl.root = root
+  }
 
   static from(policy: Policy): Policy {
-    const result = new Policy(policy.inherit)
+    const result = new Policy()
     result.acl = new ACL(policy.acl)
     return result
   }
 
   concat(that: Policy): Policy {
-    const result = new Policy(this.inherit)
+    const result = new Policy()
     const acl = new ACL(this.acl)
     acl.root |= that.acl.root
-    for (const [resource, permissions] of that.acl)
-      acl.set(resource, permissions | acl.get(resource))
+    for (const [key, permissions] of that.acl)
+      acl.set(key, permissions | acl.get(key))
     result.acl = acl
     return result
   }
 
   #permissionsOf(resource: Resource): number {
     let result = this.acl.root
-    result |= this.acl.get(resource)
-    if (!this.inherit) return result
-    result |= this.inherit(resource, this.acl)
+    assert(typeof resource === 'object', 'Resource must be an object')
+    if (resource.id) result |= this.acl.get(ScopeKey.entry(resource.id))
+    if (resource.type) result |= this.acl.get(ScopeKey.type(resource.type))
+    if (resource.workspace)
+      result |= this.acl.get(ScopeKey.workspace(resource.workspace))
+    if (resource.workspace && resource.root)
+      result |= this.acl.get(ScopeKey.root(resource.workspace, resource.root))
+    if (resource.parents) {
+      for (const parent of resource.parents) {
+        result |= this.acl.get(ScopeKey.entry(parent))
+      }
+    }
     return result
   }
 
-  check(permission: number, entity?: Resource): boolean {
-    const permissions = entity ? this.#permissionsOf(entity) : this.acl.root
+  check(permission: number, resource?: Resource): boolean {
+    const permissions = resource ? this.#permissionsOf(resource) : this.acl.root
     const allowed = permissions & permission
     const denied = permissions & grant.deny(permission)
     return Boolean(allowed && !denied)
   }
 
-  assert(permission: Permission, entity?: Resource): void {
-    if (!this.check(permission, entity))
+  assert(permission: Permission, resource?: Resource): void {
+    if (!this.check(permission, resource))
       throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
   }
 
-  canRead(entity: Resource): boolean {
-    return this.check(grant.read, entity)
+  canRead(resource?: Resource): boolean {
+    return this.check(grant.read, resource)
   }
 
-  canCreate(entity: Resource): boolean {
-    return this.check(grant.create, entity)
+  canCreate(resource?: Resource): boolean {
+    return this.check(grant.create, resource)
   }
 
-  canUpdate(entity: Resource): boolean {
-    return this.check(grant.update, entity)
+  canUpdate(resource?: Resource): boolean {
+    return this.check(grant.update, resource)
   }
 
-  canDelete(entity: Resource): boolean {
-    return this.check(grant.delete, entity)
+  canDelete(resource?: Resource): boolean {
+    return this.check(grant.delete, resource)
   }
 
-  canReorder(entity: Resource): boolean {
-    return this.check(grant.reorder, entity)
+  canReorder(resource?: Resource): boolean {
+    return this.check(grant.reorder, resource)
   }
 
-  canMove(entity: Resource): boolean {
-    return this.check(grant.move, entity)
+  canMove(resource?: Resource): boolean {
+    return this.check(grant.move, resource)
   }
 
-  canPublish(entity: Resource): boolean {
-    return this.check(grant.publish, entity)
+  canPublish(resource?: Resource): boolean {
+    return this.check(grant.publish, resource)
   }
 
-  canArchive(entity: Resource): boolean {
-    return this.check(grant.archive, entity)
+  canArchive(resource?: Resource): boolean {
+    return this.check(grant.archive, resource)
   }
 
-  canUpload(entity: Resource): boolean {
-    return this.check(grant.upload, entity)
+  canUpload(resource?: Resource): boolean {
+    return this.check(grant.upload, resource)
   }
 
-  canExplore(entity: Resource): boolean {
-    return this.check(grant.explore, entity)
+  canExplore(resource?: Resource): boolean {
+    return this.check(grant.explore, resource)
   }
 
-  canAll(entity: Resource): boolean {
-    const permissions = this.#permissionsOf(entity)
+  canAll(resource?: Resource): boolean {
+    const permissions = resource ? this.#permissionsOf(resource) : this.acl.root
     return (
       (permissions & grant.allowAll) === grant.allowAll &&
       (permissions & grant.denyAll) === 0
@@ -169,6 +193,12 @@ export class Policy {
 }
 
 export class WriteablePolicy extends Policy {
+  #scope: Scope
+  constructor(scope: Scope) {
+    super()
+    this.#scope = scope
+  }
+
   allowAll(): this {
     this.acl.root = grant.allowAll
     return this
@@ -180,35 +210,32 @@ export class WriteablePolicy extends Policy {
     return this
   }
 
-  #apply(resource: Resource, permissions: Permissions): this {
+  #apply(key: string, permissions: Permissions): this {
     const packed = grant.pack(permissions)
-    this.acl.set(resource, packed)
+    this.acl.set(key, packed)
     return this
   }
 
-  setWorkspace(workspace: HasWorkspace, permissions: Permissions): this {
-    return this.#apply(workspace, permissions)
-  }
-
-  setRoot(
-    root: HasRoot,
-    permissions: Permissions | Record<string, number>
-  ): this {
-    return this.#apply(root, permissions)
-  }
-
-  setType(type: HasType, permissions: Permissions): this {
-    return this.#apply(type, permissions)
-  }
-
-  setEntry(entryId: string, permissions: Permissions): this {
-    return this.#apply(entryId, permissions)
+  set(set: SetPermissions): this {
+    const subject =
+      'workspace' in set
+        ? set.workspace
+        : 'root' in set
+          ? set.root
+          : 'type' in set
+            ? set.type
+            : set.id
+    const key =
+      typeof subject === 'string'
+        ? ScopeKey.entry(subject)
+        : this.#scope.keyOf(subject)
+    return this.#apply(key, set.grant)
   }
 }
 
 export namespace Policy {
-  export const ALLOW_ALL = Policy.from(new WriteablePolicy().allowAll())
-  export const DENY_ALL = new Policy()
+  export const ALLOW_ALL = new Policy(Permission.All)
+  export const ALLOW_NONE = new Policy(Permission.None)
 }
 
 export interface RoleOptions {
