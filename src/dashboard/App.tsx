@@ -15,10 +15,11 @@ import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
 import {router} from './Routes.js'
 import {sessionAtom} from './atoms/DashboardAtoms.js'
-import {dbMetaAtom, pendingAtom, useDbUpdater} from './atoms/DbAtoms.js'
+import {dbMetaAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
+import {policyTrigger} from './atoms/PolicyAtom.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import type {WorkerDB} from './boot/WorkerDB.js'
 import {useDashboard} from './hook/UseDashboard.js'
@@ -44,6 +45,9 @@ const isEntryAtom = atom(get => {
 
 function AppAuthenticated() {
   useDbUpdater()
+  // This is a workaround to make sure we suspend right here until we have a
+  // policy available, but once we do there is no more need to suspend
+  const policy = useAtomValue(policyTrigger)
   const {alineaDev, config, fullPage} = useDashboard()
   const {roles} = config
   const [session, setSession] = useAtom(sessionAtom)
@@ -56,7 +60,6 @@ function AppAuthenticated() {
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
   const sha = useAtomValue(dbMetaAtom)
-  const pending = useAtomValue(pendingAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -82,29 +85,33 @@ function AppAuthenticated() {
               }}
             >
               <Sidebar.Nav>
-                {Object.entries(roots).map(([key, root], i) => {
-                  const isSelected = key === currentRoot
-                  const {id, ...location} = entryLocation
-                  const link =
-                    location.root === key
-                      ? nav.entry(location)
-                      : nav.root({
-                          workspace,
-                          root: key,
-                          locale: preferredLanguage
-                        })
-                  const {label, icon} = Root.data(root)
-                  return (
-                    <Sidebar.Nav.Item
-                      key={key}
-                      selected={isEntry && isSelected}
-                      href={link}
-                      aria-label={label}
-                    >
-                      <Icon icon={icon ?? IcRoundDescription} />
-                    </Sidebar.Nav.Item>
-                  )
-                })}
+                {Object.entries(roots)
+                  .filter(([key]) => {
+                    return policy.canRead({workspace, root: key})
+                  })
+                  .map(([key, root], i) => {
+                    const isSelected = key === currentRoot
+                    const {id, ...location} = entryLocation
+                    const link =
+                      location.root === key
+                        ? nav.entry(location)
+                        : nav.root({
+                            workspace,
+                            root: key,
+                            locale: preferredLanguage
+                          })
+                    const {label, icon} = Root.data(root)
+                    return (
+                      <Sidebar.Nav.Item
+                        key={key}
+                        selected={isEntry && isSelected}
+                        href={link}
+                        aria-label={label}
+                      >
+                        <Icon icon={icon ?? IcRoundDescription} />
+                      </Sidebar.Nav.Item>
+                    )
+                  })}
                 {/*<DraftsButton />*/}
                 <SidebarSettings />
               </Sidebar.Nav>

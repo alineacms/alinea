@@ -18,6 +18,18 @@ const editor = Config.role('Editor', {
       upload: true,
       explore: true
     })
+    policy.set({
+      workspace: cms.workspaces.secondary,
+      grant: {
+        read: false
+      }
+    })
+    policy.set({
+      root: cms.workspaces.primary.pages,
+      grant: {
+        read: false
+      }
+    })
   }
 })
 

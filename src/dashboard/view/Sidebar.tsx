@@ -23,6 +23,7 @@ import {useConfig} from '../hook/UseConfig.js'
 import {useEntryLocation} from '../hook/UseEntryLocation.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
+import {usePolicy} from '../hook/UsePolicy.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import css from './Sidebar.module.scss'
@@ -112,7 +113,10 @@ export namespace Sidebar {
     const config = useConfig()
     const workspace = useWorkspace()
     const root = useRoot()
-    const workspaces = entries(config.workspaces)
+    const policy = usePolicy()
+    const workspaces = entries(config.workspaces).filter(([name]) =>
+      policy.canRead({workspace: name})
+    )
     const navigate = useNavigate()
     const nav = useNav()
     const entryLocation = useEntryLocation()
