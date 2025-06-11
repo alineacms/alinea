@@ -4,11 +4,20 @@ import type {HasRoot, HasType, HasWorkspace} from './Internal.js'
 import {type Scope, ScopeKey} from './Scope.js'
 import {assert} from './source/Utils.js'
 
-type SetPermissions =
-  | {workspace: HasWorkspace; grant: Permissions}
-  | {type: HasType; grant: Permissions}
-  | {root: HasRoot; grant: Permissions}
-  | {id: string; grant: Permissions}
+interface PermissionInput {
+  workspace?: HasWorkspace
+  type?: HasType
+  root?: HasRoot
+  id?: string
+  /**
+   * Specifies the permission evaluation strategy.
+   * - 'inherit' (default): Permissions granted at a higher level (e.g., workspace) are sufficient.
+   * - 'explicit': A specific 'allow' permission must exist on the target entity itself.
+   */
+  grant?: 'inherit' | 'explicit'
+  allow?: Permissions
+  revoke?: Permissions
+}
 
 interface Permissions {
   create?: boolean
@@ -21,24 +30,27 @@ interface Permissions {
   archive?: boolean
   upload?: boolean
   explore?: boolean
+  all?: boolean
 }
 
-const total = 10
+let total = 0
 export enum Permission {
   None = 0,
-  Create = 1 << 0,
-  Read = 1 << 1,
-  Update = 1 << 2,
-  Delete = 1 << 3,
-  Reorder = 1 << 4,
-  Move = 1 << 5,
-  Publish = 1 << 6,
-  Archive = 1 << 7,
-  Upload = 1 << 8,
-  Explore = 1 << 9,
-  All = (1 << total) - 1
+  Create = 1 << total++,
+  Read = 1 << total++,
+  Update = 1 << total++,
+  Delete = 1 << total++,
+  Reorder = 1 << total++,
+  Move = 1 << total++,
+  Publish = 1 << total++,
+  Archive = 1 << total++,
+  Upload = 1 << total++,
+  Explore = 1 << total++,
+  All = (1 << total) - 1,
+  Explicit = 1 << total++
 }
-const grant = {
+
+const permissionMap = {
   create: Permission.Create,
   read: Permission.Read,
   update: Permission.Update,
@@ -49,26 +61,35 @@ const grant = {
   archive: Permission.Archive,
   upload: Permission.Upload,
   explore: Permission.Explore,
+  all: Permission.All
+}
 
-  allowAll: (1 << total) - 1,
-  denyAll: ((1 << total) - 1) << total,
+const DENY_MASK = ~((1 << total) - 1)
 
-  deny(permission: Permission): number {
-    return permission << total
-  },
+function combine(a: Permission, b: Permission): Permission {
+  const inheritAllows = !(a & Permission.Explicit)
+  if (inheritAllows) return a | b
+  // Carry over only denies, but not allows
+  const inheritedDenies = a & DENY_MASK
+  return inheritedDenies | b
+}
 
-  pack(permissions: Permissions): number {
-    let packed = 0
-    for (const [name, state] of Object.entries(permissions) as Array<
-      [keyof Permissions, boolean | undefined]
-    >) {
-      if (!(name in this)) continue
-      if (state === undefined) continue
-      if (state) packed |= this[name]
-      else packed |= this.deny(this[name])
+function deny(permission: Permission): number {
+  return permission << total
+}
+
+function pack(input: PermissionInput): number {
+  let result = 0
+  if (input.grant === 'explicit') result |= Permission.Explicit
+  if (input.allow)
+    for (const [name, state] of Object.entries(input.allow)) {
+      if (state) result |= permissionMap[name as keyof Permissions]
     }
-    return packed
-  }
+  if (input.revoke)
+    for (const [name, state] of Object.entries(input.revoke)) {
+      if (state) result |= deny(permissionMap[name as keyof Permissions])
+    }
+  return result
 }
 
 export interface Resource {
@@ -89,9 +110,20 @@ export class ACL extends Map<string, number> {
   get(resource: string): number {
     return super.get(resource) ?? 0
   }
+  equals(that: ACL): boolean {
+    if (this.root !== that.root) return false
+    if (this.size !== that.size) return false
+    for (const [key, value] of this) {
+      if (that.get(key) !== value) return false
+    }
+    return true
+  }
 }
 
 export class Policy {
+  static ALLOW_ALL = new Policy(Permission.All)
+  static ALLOW_NONE = new Policy(Permission.None)
+
   protected acl = new ACL()
 
   constructor(root?: Permission) {
@@ -102,6 +134,10 @@ export class Policy {
     const result = new Policy()
     result.acl = new ACL(policy.acl)
     return result
+  }
+
+  equals(that: Policy): boolean {
+    return this.acl.equals(that.acl)
   }
 
   concat(that: Policy): Policy {
@@ -117,16 +153,31 @@ export class Policy {
   #permissionsOf(resource: Resource): number {
     let result = this.acl.root
     assert(typeof resource === 'object', 'Resource must be an object')
-    if (resource.id) result |= this.acl.get(ScopeKey.entry(resource.id))
-    if (resource.type) result |= this.acl.get(ScopeKey.type(resource.type))
-    if (resource.workspace)
-      result |= this.acl.get(ScopeKey.workspace(resource.workspace))
-    if (resource.workspace && resource.root)
-      result |= this.acl.get(ScopeKey.root(resource.workspace, resource.root))
+    if (resource.workspace) {
+      const workspacePermission = this.acl.get(
+        ScopeKey.workspace(resource.workspace)
+      )
+      result = combine(result, workspacePermission)
+      if (resource.root) {
+        const rootPermission = this.acl.get(
+          ScopeKey.root(resource.workspace, resource.root)
+        )
+        result = combine(result, rootPermission)
+      }
+    }
     if (resource.parents) {
       for (const parent of resource.parents) {
-        result |= this.acl.get(ScopeKey.entry(parent))
+        const parentPermission = this.acl.get(ScopeKey.entry(parent))
+        result = combine(result, parentPermission)
       }
+    }
+    if (resource.type) {
+      const typePermission = this.acl.get(ScopeKey.type(resource.type))
+      result = combine(result, typePermission)
+    }
+    if (resource.id) {
+      const entryPermission = this.acl.get(ScopeKey.entry(resource.id))
+      result = combine(result, entryPermission)
     }
     return result
   }
@@ -134,7 +185,7 @@ export class Policy {
   check(permission: number, resource?: Resource): boolean {
     const permissions = resource ? this.#permissionsOf(resource) : this.acl.root
     const allowed = permissions & permission
-    const denied = permissions & grant.deny(permission)
+    const denied = permissions & deny(permission)
     return Boolean(allowed && !denied)
   }
 
@@ -144,50 +195,50 @@ export class Policy {
   }
 
   canRead(resource?: Resource): boolean {
-    return this.check(grant.read, resource)
+    return this.check(Permission.Read, resource)
   }
 
   canCreate(resource?: Resource): boolean {
-    return this.check(grant.create, resource)
+    return this.check(Permission.Create, resource)
   }
 
   canUpdate(resource?: Resource): boolean {
-    return this.check(grant.update, resource)
+    return this.check(Permission.Update, resource)
   }
 
   canDelete(resource?: Resource): boolean {
-    return this.check(grant.delete, resource)
+    return this.check(Permission.Delete, resource)
   }
 
   canReorder(resource?: Resource): boolean {
-    return this.check(grant.reorder, resource)
+    return this.check(Permission.Reorder, resource)
   }
 
   canMove(resource?: Resource): boolean {
-    return this.check(grant.move, resource)
+    return this.check(Permission.Move, resource)
   }
 
   canPublish(resource?: Resource): boolean {
-    return this.check(grant.publish, resource)
+    return this.check(Permission.Publish, resource)
   }
 
   canArchive(resource?: Resource): boolean {
-    return this.check(grant.archive, resource)
+    return this.check(Permission.Archive, resource)
   }
 
   canUpload(resource?: Resource): boolean {
-    return this.check(grant.upload, resource)
+    return this.check(Permission.Upload, resource)
   }
 
   canExplore(resource?: Resource): boolean {
-    return this.check(grant.explore, resource)
+    return this.check(Permission.Explore, resource)
   }
 
   canAll(resource?: Resource): boolean {
     const permissions = resource ? this.#permissionsOf(resource) : this.acl.root
     return (
-      (permissions & grant.allowAll) === grant.allowAll &&
-      (permissions & grant.denyAll) === 0
+      (permissions & Permission.All) === Permission.All &&
+      (permissions & deny(Permission.All)) === 0
     )
   }
 }
@@ -200,42 +251,36 @@ export class WriteablePolicy extends Policy {
   }
 
   allowAll(): this {
-    this.acl.root = grant.allowAll
+    this.acl.root = Permission.All
     return this
   }
 
-  setAll(permissions: Permissions): this {
-    const packed = grant.pack(permissions)
-    this.acl.root |= packed
-    return this
-  }
-
-  #apply(key: string, permissions: Permissions): this {
-    const packed = grant.pack(permissions)
+  #apply(key: string, input: PermissionInput): this {
+    const packed = pack(input)
     this.acl.set(key, packed)
     return this
   }
 
-  set(set: SetPermissions): this {
+  set(input: PermissionInput): this {
     const subject =
-      'workspace' in set
-        ? set.workspace
-        : 'root' in set
-          ? set.root
-          : 'type' in set
-            ? set.type
-            : set.id
+      'workspace' in input
+        ? input.workspace
+        : 'root' in input
+          ? input.root
+          : 'type' in input
+            ? input.type
+            : input.id
+    if (!subject) {
+      const packed = pack(input)
+      this.acl.root |= packed
+      return this
+    }
     const key =
       typeof subject === 'string'
         ? ScopeKey.entry(subject)
         : this.#scope.keyOf(subject)
-    return this.#apply(key, set.grant)
+    return this.#apply(key, input)
   }
-}
-
-export namespace Policy {
-  export const ALLOW_ALL = new Policy(Permission.All)
-  export const ALLOW_NONE = new Policy(Permission.None)
 }
 
 export interface RoleOptions {

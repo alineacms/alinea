@@ -275,7 +275,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   }
   return (
     <Modal open onClose={handleClose} className={styles.root()}>
-      <Suspense fallback={<Loader />}>
+      <Suspense fallback={<Loader absolute />}>
         <NewEntryForm parentId={parentId} />
       </Suspense>
     </Modal>

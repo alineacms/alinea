@@ -5,29 +5,32 @@ import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import * as schema from './schema'
 
 const editor = Config.role('Editor', {
-  permissions(policy) {
-    policy.setAll({
-      create: false,
-      read: true,
-      update: true,
-      delete: false,
-      reorder: false,
-      move: false,
-      publish: false,
-      archive: false,
-      upload: true,
-      explore: true
+  async permissions(policy, graph) {
+    policy.set({
+      allow: {
+        all: true
+      }
     })
     policy.set({
       workspace: cms.workspaces.secondary,
-      grant: {
+      revoke: {
         read: false
       }
     })
     policy.set({
       root: cms.workspaces.primary.pages,
-      grant: {
+      revoke: {
         read: false
+      }
+    })
+    policy.set({
+      root: cms.workspaces.primary.fields,
+      grant: 'explicit'
+    })
+    policy.set({
+      id: '2dgfSWKFaEqxaimsO32A1sR9iMw',
+      allow: {
+        read: true
       }
     })
   }

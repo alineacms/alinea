@@ -6,12 +6,18 @@ import {dbAtom} from '../atoms/DbAtoms.js'
 import {keepPreviousData} from '../util/KeepPreviousData.js'
 
 export const policyTrigger = keepPreviousData(
-  atom(get => {
+  atom(async get => {
     const session = get(sessionAtom)
     assert(session)
     const db = get(dbAtom)
-    return db.createPolicy(session.user.roles)
-  })
+    const policy = await db.createPolicy(session.user.roles)
+    return policy
+  }),
+  {
+    compare(a: Policy, b: Policy) {
+      return a.equals(b)
+    }
+  }
 )
 
 export const policyAtom = policyTrigger.current as Atom<Policy>

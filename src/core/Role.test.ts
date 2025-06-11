@@ -8,17 +8,10 @@ const test = suite(import.meta)
 
 const admin = role('Admin', {
   permissions(policy) {
-    policy.setAll({
-      create: true,
-      read: true,
-      update: true,
-      delete: true,
-      reorder: true,
-      move: true,
-      publish: true,
-      archive: true,
-      upload: true,
-      explore: true
+    policy.set({
+      allow: {
+        all: true
+      }
     })
   }
 })
@@ -55,7 +48,7 @@ const editB = role('Edit B', {
   permissions(policy) {
     policy.set({
       id: b.id,
-      grant: {
+      allow: {
         read: true,
         update: true
       }
@@ -82,8 +75,8 @@ const explicitDeny = role('Explicit Deny', {
     // But this should deny reading c specifically
     policy.set({
       id: c.id,
-      grant: {
-        read: false
+      revoke: {
+        read: true
       }
     })
   }
@@ -147,13 +140,13 @@ test('explicitDeny negative checks', async () => {
 test('inheritance logic', async () => {
   const policy = new WriteablePolicy(scope)
   // Simulate direct permission on a
-  policy.set({id: a.id, grant: {read: true}})
+  policy.set({id: a.id, allow: {read: true}})
   // b should inherit from a
   test.ok(policy.canRead(b))
   // c should inherit from a and b
   test.ok(policy.canRead(c))
   // Remove a permission, b and c should lose inherited read
-  policy.set({id: a.id, grant: {read: false}})
+  policy.set({id: a.id, revoke: {read: true}})
   test.not.ok(policy.canRead(b))
   test.not.ok(policy.canRead(c))
 })
@@ -161,7 +154,7 @@ test('inheritance logic', async () => {
 test('deny overrides allow', async () => {
   const policy = new WriteablePolicy(scope)
   policy.allowAll()
-  policy.set({id: a.id, grant: {delete: false}})
+  policy.set({id: a.id, revoke: {delete: true}})
   test.not.ok(policy.canDelete(a))
   // Other permissions still allowed
   test.ok(policy.canRead(a))
@@ -198,19 +191,19 @@ test('blank policy', () => {
 
 test('Policy.from creates a copy', async () => {
   const policy1 = new WriteablePolicy(scope)
-  policy1.set({id: a.id, grant: {read: true}})
+  policy1.set({id: a.id, allow: {read: true}})
   const policy2 = Policy.from(policy1)
   test.ok(policy2.canRead(a))
   // Mutating policy1 does not affect policy2
-  policy1.set({id: a.id, grant: {read: false}})
+  policy1.set({id: a.id, revoke: {read: true}})
   test.ok(policy2.canRead(a))
 })
 
 test('Policy.concat merges permissions', async () => {
   const p1 = new WriteablePolicy(scope)
   const p2 = new WriteablePolicy(scope)
-  p1.set({id: a.id, grant: {read: true}})
-  p2.set({id: a.id, grant: {update: true}})
+  p1.set({id: a.id, allow: {read: true}})
+  p2.set({id: a.id, allow: {update: true}})
   const merged = p1.concat(p2)
   test.ok(merged.canRead(a))
   test.ok(merged.canUpdate(a))
@@ -219,19 +212,19 @@ test('Policy.concat merges permissions', async () => {
 test('WriteablePolicy.applyWorkspace, applyRoot, applyType', async () => {
   const policy = new WriteablePolicy(scope)
   // Use string as dummy resource for workspace/root/type
-  policy.set({workspace: workspace1, grant: {read: true}})
+  policy.set({workspace: workspace1, allow: {read: true}})
   test.ok(policy.canRead({workspace: 'workspace1'}))
-  policy.set({root: root1, grant: {update: true}})
+  policy.set({root: root1, allow: {update: true}})
   test.ok(policy.canUpdate({workspace: 'workspace1', root: 'root1'}))
-  policy.set({type: type1, grant: {delete: true}})
+  policy.set({type: type1, allow: {delete: true}})
   test.ok(policy.canDelete({type: 'type1'}))
 })
 
 test('WriteablePolicy chaining', async () => {
   const policy = new WriteablePolicy(scope)
   policy
-    .set({id: a.id, grant: {read: true}})
-    .set({id: a.id, grant: {update: true}})
+    .set({id: a.id, allow: {read: true}})
+    .set({id: a.id, allow: {update: true}})
   test.not.ok(policy.canRead(a))
   test.ok(policy.canUpdate(a))
 })
@@ -246,7 +239,7 @@ test('role factory returns correct label and config', () => {
 test('WriteablePolicy.applyAll merges with allowAll', () => {
   const policy = new WriteablePolicy(scope)
   policy.allowAll()
-  policy.setAll({read: false})
+  policy.set({revoke: {read: true}})
   test.not.ok(policy.canRead(a))
   test.ok(policy.canCreate(a))
 })

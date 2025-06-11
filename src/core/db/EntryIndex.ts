@@ -215,7 +215,7 @@ export class EntryIndex extends EventTarget {
           const parentNode = this.byPath.get(getNodePath(parentPath))
           let id = createId()
           if (locale) {
-            const level = pathSegments.length - 1
+            const level = pathSegments.length - 2
             const pathEnd = `/${pathSegments.slice(1).join('/')}.json`
             const from = this.findFirst(entry => {
               return (
@@ -443,7 +443,7 @@ export class EntryIndex extends EventTarget {
       childrenDir,
       parentId: parent?.id ?? null,
       parents: parents,
-      level: segments.length - levelOffset,
+      level: segments.length - levelOffset - 1,
       index,
       locale,
 

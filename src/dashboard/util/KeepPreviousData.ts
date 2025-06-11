@@ -1,27 +1,29 @@
 import {assign} from 'alinea/core/util/Objects'
 import {type Atom, atom} from 'jotai'
 
+interface KeepDataOptions<Value> {
+  initialValue?: Value
+  compare?: (a: Value, b: Value) => boolean
+}
+
 // Suspend if we have no data, but keep previous data while loading new data
 export function keepPreviousData<Value>(
-  asyncAtom: Atom<Promise<Value>>
-): Atom<Promise<Value>> & {current: Atom<Value | undefined>}
-export function keepPreviousData<Value>(
   asyncAtom: Atom<Promise<Value>>,
-  initialValue: Value
-): Atom<Promise<Value>> & {current: Atom<Value>}
-export function keepPreviousData<Value>(
-  asyncAtom: Atom<Promise<Value>>,
-  initialValue?: Value
+  options: KeepDataOptions<Value> = {}
 ): Atom<Promise<Value>> & {current: Atom<Value | undefined>} {
   let expected: Promise<Value> | undefined
-  const currentAtom = atom<Value | undefined>(initialValue)
+  const currentAtom = atom<Value | undefined>(options.initialValue)
   return assign(
     atom(
       (get, {setSelf}) => {
         const next = get(asyncAtom)
         const current = get(currentAtom)
         expected = next.then(value => {
-          setSelf(expected, value)
+          const isSame =
+            options.compare && current !== undefined
+              ? options.compare(value, current)
+              : value === current
+          if (!isSame) setSelf(expected, value)
           return value
         })
         return current ?? expected
