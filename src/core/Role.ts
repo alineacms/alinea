@@ -279,22 +279,25 @@ export class WriteablePolicy extends Policy {
     return this
   }
 
-  set(input: PermissionInput): this {
-    let subject: Entity | string
-    if (input.workspace) subject = input.workspace
-    else if (input.root) subject = input.root
-    else if (input.type) subject = input.type
-    else if (input.id) subject = input.id
-    else {
-      const packed = pack(input)
-      this.acl.root |= packed
-      return this
+  set(...inputs: Array<PermissionInput>): this {
+    for (const input of inputs) {
+      let subject: Entity | string | undefined
+      if (input.workspace) subject = input.workspace
+      else if (input.root) subject = input.root
+      else if (input.type) subject = input.type
+      else if (input.id) subject = input.id
+      if (subject) {
+        const key =
+          typeof subject === 'string'
+            ? ScopeKey.entry(subject)
+            : this.#scope.keyOf(subject)
+        this.#apply(key, input)
+      } else {
+        const packed = pack(input)
+        this.acl.root |= packed
+      }
     }
-    const key =
-      typeof subject === 'string'
-        ? ScopeKey.entry(subject)
-        : this.#scope.keyOf(subject)
-    return this.#apply(key, input)
+    return this
   }
 }
 

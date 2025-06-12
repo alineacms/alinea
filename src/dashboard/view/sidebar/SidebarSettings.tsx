@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import {Switch} from '@headlessui/react'
 import {Workspace} from 'alinea/core/Workspace'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {select} from 'alinea/field'
 import {HStack, Icon, VStack, px} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -12,16 +12,15 @@ import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
-import {dashboardOptionsAtom} from '../../atoms/DashboardAtoms.js'
+import {dashboardOptionsAtom, sessionAtom} from '../../atoms/DashboardAtoms.js'
 import {
   preferencesAtom,
   sizePreferenceAtom,
   toggleSchemePreferenceAtom,
   workspacePreferenceAtom
 } from '../../atoms/PreferencesAtoms.js'
-import {useSession} from '../../hook/UseSession.js'
 import {IconButton} from '../IconButton.js'
 import {Sidebar} from '../Sidebar.js'
 import css from './SidebarSettings.module.scss'
@@ -29,11 +28,12 @@ import css from './SidebarSettings.module.scss'
 const styles = styler(css)
 
 export function SidebarSettings() {
-  const session = useSession()
-  const {config} = useAtomValue(dashboardOptionsAtom)
+  const [session, setSession] = useAtom(sessionAtom)
+  const {local, config} = useAtomValue(dashboardOptionsAtom)
   const preferences = useAtomValue(preferencesAtom)
   const size = preferences.size || 16
   const checked = preferences?.scheme === 'dark'
+  const {roles} = config
   const workspaces = Object.entries(config.workspaces)
   const defaultWorkspace = useMemo(
     () =>
@@ -66,13 +66,45 @@ export function SidebarSettings() {
 
       <DropdownMenu.Items style={{maxWidth: px(200)}}>
         <VStack gap={10}>
-          {session.user.name && (
+          {session?.user.name && (
             <PopoverMenu.Header>
               <HStack center gap={10} className={styles.root.username()}>
                 <Icon icon={IcBaselineAccountCircle} size={26} />
                 <Ellipsis>{session.user.name}</Ellipsis>
               </HStack>
             </PopoverMenu.Header>
+          )}
+
+          {local && session && (
+            <select
+              className={styles.root.roles()}
+              value={session.user.roles}
+              onChange={e => {
+                const roles = Array.from(
+                  e.target.selectedOptions,
+                  option => option.value
+                )
+                console.log(roles)
+                setSession({
+                  ...session,
+                  user: {...session.user, roles}
+                })
+              }}
+              size={Math.min(3, keys(roles!).length)}
+              multiple
+            >
+              {entries(roles!).map(([name, role]) => {
+                return (
+                  <option
+                    key={name}
+                    value={name}
+                    className={styles.root.roles.option()}
+                  >
+                    {role.label}
+                  </option>
+                )
+              })}
+            </select>
           )}
 
           <VStack gap={8}>
@@ -132,7 +164,7 @@ export function SidebarSettings() {
             )*/}
           </VStack>
 
-          {session.end && (
+          {session?.end && (
             <PopoverMenu.Footer>
               <DropdownMenu.Root>
                 <DropdownMenu.Item onClick={session.end}>
