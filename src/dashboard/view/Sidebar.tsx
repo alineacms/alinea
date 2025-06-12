@@ -1,3 +1,4 @@
+import {Button} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useWindowWidth} from '@react-hook/window-size'
 import {Root} from 'alinea/core/Root'
@@ -123,6 +124,7 @@ export namespace Sidebar {
     }
     return (
       <HStack as="header" center gap={12} className={styles.navHeader()}>
+        <Button>test</Button>
         {workspaces.length > 1 ? (
           <DropdownMenu.Root bottom>
             <DropdownMenu.Trigger>

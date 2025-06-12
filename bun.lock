@@ -4,6 +4,7 @@
     "": {
       "name": "alinea",
       "dependencies": {
+        "@alinea/components": "^0.0.21",
         "@alinea/iso": "^0.3.3",
         "esbuild": "^0.25.4",
       },
@@ -208,6 +209,8 @@
     "@alinea/backend": ["@alinea/backend@workspace:src/backend"],
 
     "@alinea/cli": ["@alinea/cli@workspace:src/cli"],
+
+    "@alinea/components": ["@alinea/components@0.0.21", "", { "peerDependencies": { "@types/react": "^19.0.10", "@types/react-dom": "^19.0.4", "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-+Sa8+aAoNns+ggnGujRF9a6zDC9JQRGjdLIIiVGWNqEvO1w8+B3f22c+0uBaR5nZ7c+MnoqB1BXhCPDCiVchAg=="],
 
     "@alinea/core": ["@alinea/core@workspace:src/core"],
 

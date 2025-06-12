@@ -48,6 +48,7 @@
     "src/field/richtext"
   ],
   "dependencies": {
+    "@alinea/components": "^0.0.21",
     "@alinea/iso": "^0.3.3",
     "esbuild": "^0.25.4"
   },
