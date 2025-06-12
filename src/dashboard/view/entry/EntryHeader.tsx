@@ -29,6 +29,7 @@ import {useConfig} from '../../hook/UseConfig.js'
 import {useEntryLocation} from '../../hook/UseEntryLocation.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
+import {usePolicy} from '../../hook/UsePolicy.js'
 import {useUploads} from '../../hook/UseUploads.js'
 import {useSidebar} from '../Sidebar.js'
 import {FileUploader} from '../media/FileUploader.js'
@@ -77,6 +78,8 @@ export interface EntryHeaderProps {
 export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const config = useConfig()
   const locale = useLocale()
+  const policy = usePolicy()
+  const access = policy.get(editor.activeVersion)
   const {canPublish, canDelete, untranslated, parentNeedsTranslation} = editor
   const statusInUrl = useAtomValue(editor.statusInUrl)
   const selectedStatus = useAtomValue(editor.selectedStatus)
@@ -151,48 +154,56 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
 
   const options =
     variant === 'draft' ? (
-      <DropdownMenu.Item
-        className={styles.root.action()}
-        onClick={discardDraft}
-      >
-        Remove draft
-      </DropdownMenu.Item>
+      access.update && (
+        <DropdownMenu.Item
+          className={styles.root.action()}
+          onClick={discardDraft}
+        >
+          Remove draft
+        </DropdownMenu.Item>
+      )
     ) : variant === 'published' && !editor.activeVersion.seeded ? (
       isMediaFile ? (
         <>
-          <DropdownMenu.Item
-            className={styles.root.action()}
-            onClick={replaceFile}
-          >
-            Replace
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className={styles.root.action()}
-            onClick={deleteFileAndNavigate}
-          >
-            Delete
-          </DropdownMenu.Item>
+          {access.update && (
+            <DropdownMenu.Item
+              className={styles.root.action()}
+              onClick={replaceFile}
+            >
+              Replace
+            </DropdownMenu.Item>
+          )}
+          {access.delete && (
+            <DropdownMenu.Item
+              className={styles.root.action()}
+              onClick={deleteFileAndNavigate}
+            >
+              Delete
+            </DropdownMenu.Item>
+          )}
         </>
       ) : isMediaLibrary ? (
-        <>
+        access.delete && (
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={deleteMediaLibraryAndNavigate}
           >
             Delete
           </DropdownMenu.Item>
-        </>
+        )
       ) : (
-        <DropdownMenu.Item
-          className={styles.root.action()}
-          onClick={archivePublished}
-        >
-          Archive
-        </DropdownMenu.Item>
+        access.archive && (
+          <DropdownMenu.Item
+            className={styles.root.action()}
+            onClick={archivePublished}
+          >
+            Archive
+          </DropdownMenu.Item>
+        )
       )
     ) : variant === 'archived' ? (
       <>
-        {canPublish && (
+        {canPublish && access.publish && (
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={publishArchived}
@@ -200,7 +211,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             Publish
           </DropdownMenu.Item>
         )}
-        {canDelete && (
+        {canDelete && access.delete && (
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={deleteArchived}
@@ -272,7 +283,8 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             isActiveStatus &&
             !untranslated &&
             !previewRevision &&
-            canPublish && (
+            canPublish &&
+            access.update && (
               <>
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>
@@ -344,29 +356,34 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             <HStack center gap={12}>
               {!inTransition && (
                 <>
-                  {untranslated && !editor.parentNeedsTranslation && (
-                    <Button icon={IcRoundSave} onClick={translate}>
-                      Save translation
-                    </Button>
-                  )}
-                  {config.enableDrafts && variant === 'editing' && (
-                    <Button outline icon={IcRoundSave} onClick={saveDraft}>
-                      Save draft
-                    </Button>
-                  )}
-                  {variant === 'editing' && (
+                  {untranslated &&
+                    !editor.parentNeedsTranslation &&
+                    access.update && (
+                      <Button icon={IcRoundSave} onClick={translate}>
+                        Save translation
+                      </Button>
+                    )}
+                  {config.enableDrafts &&
+                    variant === 'editing' &&
+                    access.update && (
+                      <Button outline icon={IcRoundSave} onClick={saveDraft}>
+                        Save draft
+                      </Button>
+                    )}
+                  {variant === 'editing' && access.publish && (
                     <Button icon={IcRoundCheck} onClick={publishEdits}>
                       Publish
                     </Button>
                   )}
                   {!untranslated &&
                     !hasChanges &&
-                    selectedStatus === 'draft' && (
+                    selectedStatus === 'draft' &&
+                    access.update && (
                       <Button icon={IcRoundCheck} onClick={publishDraft}>
                         Publish draft
                       </Button>
                     )}
-                  {variant === 'revision' && (
+                  {variant === 'revision' && access.publish && (
                     <Button icon={IcRoundSave} onClick={restoreRevision}>
                       Restore
                     </Button>

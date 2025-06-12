@@ -26,6 +26,7 @@ import {useConfig} from '../../hook/UseConfig.js'
 import {useDb} from '../../hook/UseDb.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
+import {usePolicy} from '../../hook/UsePolicy.js'
 import {useRoot} from '../../hook/UseRoot.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import css from './NewEntry.module.scss'
@@ -39,6 +40,7 @@ const parentData = {
   url: Entry.url,
   level: Entry.level,
   parent: Entry.parentId,
+  parents: Entry.parents,
   parentPaths: parents({
     select: Entry.path
   })
@@ -49,6 +51,7 @@ const titleField = text('Title', {autoFocus: true})
 function NewEntryForm({parentId}: NewEntryProps) {
   const config = useConfig()
   const locale = useLocale()
+  const policy = usePolicy()
   const db = useDb()
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
@@ -124,6 +127,13 @@ function NewEntryForm({parentId}: NewEntryProps) {
       return {
         options: fromEntries(
           types
+            .filter(type => {
+              return policy.canCreate({
+                workspace,
+                root: root.name,
+                type
+              })
+            })
             .map(key => {
               return [key, config.schema[key]] as const
             })
@@ -151,9 +161,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       const selectedParent = get(parentField)
       const parentId = selectedParent?.[EntryReference.entry]
       const parent = await db.first({
-        select: {
-          type: Entry.type
-        },
+        select: {type: Entry.type},
         id: parentId,
         status: 'preferDraft'
       })
@@ -205,6 +213,16 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const copyFromAtoms = form.fieldInfo(copyFromField)
   const selectedType = useAtomValue(typeAtoms.value)
   const selectedParent = useAtomValue(parentAtoms.value)
+
+  const isAllowed = policy.canCreate({
+    workspace,
+    root: root.name,
+    type: selectedType,
+    parents: requestedParent
+      ? [requestedParent.id, ...requestedParent.parents]
+      : [],
+    locale
+  })
 
   useEffect(() => {
     allowedTypes(selectedParent?.[EntryReference.entry]).then(types => {
@@ -259,7 +277,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
         <Link href={pathname} className={styles.root.footer.link()}>
           Cancel
         </Link>
-        <Button>Create</Button>
+        <Button disabled={!isAllowed}>Create</Button>
       </div>
     </form>
   )
@@ -275,7 +293,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   }
   return (
     <Modal open onClose={handleClose} className={styles.root()}>
-      <Suspense fallback={<Loader absolute />}>
+      <Suspense fallback={<Loader />}>
         <NewEntryForm parentId={parentId} />
       </Suspense>
     </Modal>

@@ -8,8 +8,9 @@ import type {Root} from './Root.js'
 import type {Type} from './Type.js'
 import {entries} from './util/Objects.js'
 
+export type Entity = Workspace | Root | Type | Field | Expr | Page
+
 const scopes = new WeakMap()
-type Entity = Workspace | Root | Type | Field | Expr | Page
 const ENTITY_KEY = '@alinea.Entity'
 const EXPR_KEY = '@alinea.Expr'
 

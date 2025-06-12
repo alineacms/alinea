@@ -14,13 +14,13 @@ const editor = Config.role('Editor', {
     policy.set({
       workspace: cms.workspaces.secondary,
       revoke: {
-        read: false
+        read: true
       }
     })
     policy.set({
       root: cms.workspaces.primary.pages,
       revoke: {
-        read: false
+        read: true
       }
     })
     policy.set({

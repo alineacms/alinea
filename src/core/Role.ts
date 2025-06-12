@@ -1,7 +1,7 @@
 import type {Graph} from './Graph.js'
 import {ErrorCode, HttpError} from './HttpError.js'
 import type {HasRoot, HasType, HasWorkspace} from './Internal.js'
-import {type Scope, ScopeKey} from './Scope.js'
+import {type Entity, type Scope, ScopeKey} from './Scope.js'
 import {assert} from './source/Utils.js'
 
 interface PermissionInput {
@@ -15,22 +15,22 @@ interface PermissionInput {
    * - 'explicit': A specific 'allow' permission must exist on the target entity itself.
    */
   grant?: 'inherit' | 'explicit'
-  allow?: Permissions
-  revoke?: Permissions
+  allow?: Partial<Permissions>
+  revoke?: Partial<Permissions>
 }
 
 interface Permissions {
-  create?: boolean
-  read?: boolean
-  update?: boolean
-  delete?: boolean
-  reorder?: boolean
-  move?: boolean
-  publish?: boolean
-  archive?: boolean
-  upload?: boolean
-  explore?: boolean
-  all?: boolean
+  create: boolean
+  read: boolean
+  update: boolean
+  delete: boolean
+  reorder: boolean
+  move: boolean
+  publish: boolean
+  archive: boolean
+  upload: boolean
+  explore: boolean
+  all: boolean
 }
 
 let total = 0
@@ -92,6 +92,22 @@ function pack(input: PermissionInput): number {
   return result
 }
 
+function entitlements(packed: number): Permissions {
+  return {
+    create: Boolean(packed & Permission.Create),
+    read: Boolean(packed & Permission.Read),
+    update: Boolean(packed & Permission.Update),
+    delete: Boolean(packed & Permission.Delete),
+    reorder: Boolean(packed & Permission.Reorder),
+    move: Boolean(packed & Permission.Move),
+    publish: Boolean(packed & Permission.Publish),
+    archive: Boolean(packed & Permission.Archive),
+    upload: Boolean(packed & Permission.Upload),
+    explore: Boolean(packed & Permission.Explore),
+    all: Boolean(packed & Permission.All)
+  }
+}
+
 export interface Resource {
   workspace?: string
   root?: string
@@ -150,8 +166,9 @@ export class Policy {
     return result
   }
 
-  #permissionsOf(resource: Resource): number {
+  #permissionsOf(resource?: Resource): number {
     let result = this.acl.root
+    if (!resource) return result
     assert(typeof resource === 'object', 'Resource must be an object')
     if (resource.workspace) {
       const workspacePermission = this.acl.get(
@@ -182,16 +199,21 @@ export class Policy {
     return result
   }
 
-  check(permission: number, resource?: Resource): boolean {
-    const permissions = resource ? this.#permissionsOf(resource) : this.acl.root
-    const allowed = permissions & permission
-    const denied = permissions & deny(permission)
-    return Boolean(allowed && !denied)
+  check(permission: Permission, resource?: Resource): boolean {
+    const permissions = this.#permissionsOf(resource)
+    return (
+      (permissions & permission) === permission &&
+      (permissions & deny(permission)) === 0
+    )
   }
 
   assert(permission: Permission, resource?: Resource): void {
     if (!this.check(permission, resource))
       throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
+  }
+
+  get(resource?: Resource): Permissions {
+    return entitlements(this.#permissionsOf(resource))
   }
 
   canRead(resource?: Resource): boolean {
@@ -235,11 +257,7 @@ export class Policy {
   }
 
   canAll(resource?: Resource): boolean {
-    const permissions = resource ? this.#permissionsOf(resource) : this.acl.root
-    return (
-      (permissions & Permission.All) === Permission.All &&
-      (permissions & deny(Permission.All)) === 0
-    )
+    return this.check(Permission.All, resource)
   }
 }
 
@@ -262,15 +280,12 @@ export class WriteablePolicy extends Policy {
   }
 
   set(input: PermissionInput): this {
-    const subject =
-      'workspace' in input
-        ? input.workspace
-        : 'root' in input
-          ? input.root
-          : 'type' in input
-            ? input.type
-            : input.id
-    if (!subject) {
+    let subject: Entity | string
+    if (input.workspace) subject = input.workspace
+    else if (input.root) subject = input.root
+    else if (input.type) subject = input.type
+    else if (input.id) subject = input.id
+    else {
       const packed = pack(input)
       this.acl.root |= packed
       return this

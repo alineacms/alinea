@@ -49,6 +49,7 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.3",
+    "@types/node": "^24.0.1",
     "esbuild": "^0.25.4"
   },
   "peerDependencies": {

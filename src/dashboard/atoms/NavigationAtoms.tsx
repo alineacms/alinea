@@ -1,3 +1,4 @@
+import {ErrorCode, HttpError} from 'alinea/core/HttpError'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
 import {keys} from 'alinea/core/util/Objects'
@@ -28,7 +29,10 @@ const workspaceNameAtom = atom(get => {
       if (canRead) return name
     }
   }
-  throw new Error('No workspace found')
+  throw new HttpError(
+    ErrorCode.Unauthorized,
+    `You don't have access to any workspaces`
+  )
 })
 
 export const workspaceAtom = atom(get => {
