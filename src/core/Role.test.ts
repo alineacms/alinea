@@ -75,7 +75,7 @@ const explicitDeny = role('Explicit Deny', {
     // But this should deny reading c specifically
     policy.set({
       id: c.id,
-      revoke: {
+      deny: {
         read: true
       }
     })
@@ -146,7 +146,7 @@ test('inheritance logic', async () => {
   // c should inherit from a and b
   test.ok(policy.canRead(c))
   // Remove a permission, b and c should lose inherited read
-  policy.set({id: a.id, revoke: {read: true}})
+  policy.set({id: a.id, deny: {read: true}})
   test.not.ok(policy.canRead(b))
   test.not.ok(policy.canRead(c))
 })
@@ -154,7 +154,7 @@ test('inheritance logic', async () => {
 test('deny overrides allow', async () => {
   const policy = new WriteablePolicy(scope)
   policy.allowAll()
-  policy.set({id: a.id, revoke: {delete: true}})
+  policy.set({id: a.id, deny: {delete: true}})
   test.not.ok(policy.canDelete(a))
   // Other permissions still allowed
   test.ok(policy.canRead(a))
@@ -195,7 +195,7 @@ test('Policy.from creates a copy', async () => {
   const policy2 = Policy.from(policy1)
   test.ok(policy2.canRead(a))
   // Mutating policy1 does not affect policy2
-  policy1.set({id: a.id, revoke: {read: true}})
+  policy1.set({id: a.id, deny: {read: true}})
   test.ok(policy2.canRead(a))
 })
 
@@ -239,7 +239,7 @@ test('role factory returns correct label and config', () => {
 test('WriteablePolicy.applyAll merges with allowAll', () => {
   const policy = new WriteablePolicy(scope)
   policy.allowAll()
-  policy.set({revoke: {read: true}})
+  policy.set({deny: {read: true}})
   test.not.ok(policy.canRead(a))
   test.ok(policy.canCreate(a))
 })

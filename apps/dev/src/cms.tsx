@@ -12,11 +12,11 @@ const editor = Config.role('Editor', {
       },
       {
         workspace: cms.workspaces.secondary,
-        revoke: {read: true}
+        deny: {read: true}
       },
       {
         root: cms.workspaces.primary.pages,
-        revoke: {read: true}
+        deny: {read: true}
       },
       {
         root: cms.workspaces.primary.fields,

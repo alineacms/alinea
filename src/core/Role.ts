@@ -16,7 +16,7 @@ interface PermissionInput {
    */
   grant?: 'inherit' | 'explicit'
   allow?: Partial<Permissions>
-  revoke?: Partial<Permissions>
+  deny?: Partial<Permissions>
 }
 
 interface Permissions {
@@ -85,8 +85,8 @@ function pack(input: PermissionInput): number {
     for (const [name, state] of Object.entries(input.allow)) {
       if (state) result |= permissionMap[name as keyof Permissions]
     }
-  if (input.revoke)
-    for (const [name, state] of Object.entries(input.revoke)) {
+  if (input.deny)
+    for (const [name, state] of Object.entries(input.deny)) {
       if (state) result |= deny(permissionMap[name as keyof Permissions])
     }
   return result
