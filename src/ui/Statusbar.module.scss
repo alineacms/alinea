@@ -1,12 +1,16 @@
 .root {
   height: 22px;
   display: flex;
-  justify-content: flex-end;
   border-top: 1px solid var(--alinea-outline);
   position: relative;
   z-index: 5;
   // background: var(--alinea-accent);
   // color: var(--alinea-accent-foreground);
+
+  &-slots {
+    margin-left: auto;
+    display: flex;
+  }
 }
 
 .status {
@@ -16,4 +20,9 @@
   font-size: 0.8em;
   padding: 0 6px;
   cursor: default;
+  white-space: nowrap;
+
+  &.is-interactive {
+    cursor: pointer;
+  }
 }

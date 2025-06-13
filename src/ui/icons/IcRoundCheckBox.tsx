@@ -10,4 +10,3 @@ export function IcRoundCheckBox(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundCheckBox

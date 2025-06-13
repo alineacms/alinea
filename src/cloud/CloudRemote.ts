@@ -23,6 +23,7 @@ import type {CommitRequest} from 'alinea/core/db/CommitRequest'
 import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
 import {base64} from 'alinea/core/util/Encoding'
 import {verify} from 'alinea/core/util/JWT'
+import {entries, values} from 'alinea/core/util/Objects'
 import PLazy from 'p-lazy'
 import pkg from '../../package.json'
 import {AuthResultType} from './AuthResult.js'
@@ -164,14 +165,14 @@ export class CloudRemote implements RemoteConnection {
           handshake_id: handShakeId,
           status: {
             version: pkg.version,
-            roles: [
-              {
-                key: 'editor',
-                label: 'Editor',
-                description: 'Can view and edit all pages'
+            roles: entries(this.#config.roles ?? {}).map(([name, role]) => {
+              return {
+                name,
+                label: role.label,
+                description: role.description ?? ''
               }
-            ],
-            sourceDirectories: Object.values(config.workspaces)
+            }),
+            sourceDirectories: values(config.workspaces)
               .flatMap(workspace => {
                 const {source, mediaDir} = Workspace.data(workspace)
                 return [source, mediaDir]

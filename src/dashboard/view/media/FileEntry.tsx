@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import type {EntryRow} from 'alinea/core/EntryRow'
+import type {Entry} from 'alinea/core/Entry'
 import {isImage} from 'alinea/core/media/IsImage'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import type {MediaFile} from 'alinea/core/media/MediaTypes'
@@ -28,7 +28,7 @@ interface Pos {
 }
 
 function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
-  const image: EntryRow<MediaImage> = editor.activeVersion as any
+  const image: Entry<MediaFile> = editor.activeVersion as any
   const {value: focus = {x: 0.5, y: 0.5}, mutator: setFocus} = useField(
     type.focus
   )
@@ -56,6 +56,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
             setHover({x, y})
           }}
           onMouseOut={() => setHover({})}
+          onBlur={() => setHover({})}
           onClick={event => {
             event.preventDefault()
             const rect = event.currentTarget.getBoundingClientRect()
@@ -67,6 +68,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
           <img
             className={styles.image.preview.img()}
             src={image.data.preview}
+            alt="Preview of media file"
           />
 
           <div
@@ -130,7 +132,7 @@ export function IcTwotonePinDrop() {
 }
 
 function FileView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
-  const file: EntryRow<MediaFile> = editor.activeVersion as any
+  const file: Entry<MediaFile> = editor.activeVersion as any
   return (
     <Lift>
       <InputField field={type.title} />
@@ -168,7 +170,7 @@ export function FileEntry(props: EntryEditProps & {type: typeof MediaFile}) {
       />
       <FormProvider form={form}>
         <Main.Container>
-          {isImage(editor.activeVersion.data.extension) ? (
+          {isImage(editor.activeVersion.data.extension as string) ? (
             <ImageView {...props} />
           ) : (
             <FileView {...props} />

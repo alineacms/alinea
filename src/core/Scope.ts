@@ -2,16 +2,38 @@ import type {Workspace} from 'alinea/types'
 import type {Config} from './Config.js'
 import {Expr} from './Expr.js'
 import type {Field} from './Field.js'
-import {getExpr, hasExpr} from './Internal.js'
+import {type HasRoot, type HasWorkspace, getExpr, hasExpr} from './Internal.js'
 import type {Page} from './Page.js'
 import type {Root} from './Root.js'
 import type {Type} from './Type.js'
 import {entries} from './util/Objects.js'
 
+export type Entity = Workspace | Root | Type | Field | Expr | Page
+
 const scopes = new WeakMap()
-type Entity = Workspace | Root | Type | Field | Expr | Page
 const ENTITY_KEY = '@alinea.Entity'
 const EXPR_KEY = '@alinea.Expr'
+
+export const ScopeKey = {
+  workspace(workspace: string) {
+    return `Workspace.${workspace}`
+  },
+  root(workspace: string, root: string) {
+    return `Root.${workspace}.${root}`
+  },
+  page(workspace: string, root: string, page: string) {
+    return `Page.${workspace}.${root}.${page}`
+  },
+  type(type: string) {
+    return `Type.${type}`
+  },
+  field(type: string, field: string) {
+    return `Field.${type}.${field}`
+  },
+  entry(entryId: string) {
+    return `Entry.${entryId}`
+  }
+}
 
 export class Scope {
   #keys: Map<string, Entity> = new Map()
@@ -19,20 +41,32 @@ export class Scope {
 
   constructor(config: Config) {
     for (const [workspaceName, workspace] of entries(config.workspaces)) {
-      this.#insert(workspace, 'Workspace', workspaceName)
+      this.#insert(workspace, ScopeKey.workspace(workspaceName))
       for (const [rootName, root] of entries(workspace)) {
-        this.#insert(root, 'Root', workspaceName, rootName)
+        this.#insert(root, ScopeKey.root(workspaceName, rootName))
         for (const [pageName, page] of entries(root)) {
-          this.#insert(page, 'Page', workspaceName, rootName, pageName)
+          this.#insert(page, ScopeKey.page(workspaceName, rootName, pageName))
         }
       }
     }
     for (const [typeName, type] of entries(config.schema)) {
-      this.#insert(type, 'Type', typeName)
+      this.#insert(type, ScopeKey.type(typeName))
       for (const [fieldName, field] of entries(type)) {
-        this.#insert(field, 'Field', typeName, fieldName)
+        this.#insert(field, ScopeKey.field(typeName, fieldName))
       }
     }
+  }
+
+  workspaceOf(root: HasRoot): HasWorkspace {
+    const path = this.#paths.get(root)
+    if (!path) throw new Error(`Root not found in scope: ${root}`)
+    return this.#keys.get(path[0]) as Workspace
+  }
+
+  keyOf(entity: Entity) {
+    const path = this.#paths.get(entity)
+    if (!path) throw new Error(`Entity not found in scope: ${entity}`)
+    return path.join('.')
   }
 
   locationOf(entity: Entity) {
@@ -69,18 +103,17 @@ export class Scope {
     return result
   }
 
-  #insert(entity: Entity, type: string, ...path: Array<string>) {
+  #insert(entity: Entity, key: string) {
     const exists = this.#paths.get(entity)
+    const segments = key.split('.')
     if (exists)
       throw new Error(
-        `${type} '${path.join('.')}' is already in use at '${exists
+        `${segments[0]} '${segments.slice(1).join('.')}' is already in use at '${exists
           .slice(1)
-          .join('.')}' — ${type}s must be unique`
+          .join('.')}' — ${segments[0]}s must be unique`
       )
-    const segments = [type].concat(path)
-    const key = segments.join('.')
-    this.#keys.set(key, entity)
     this.#paths.set(entity, segments)
+    this.#keys.set(key, entity)
   }
 }
 

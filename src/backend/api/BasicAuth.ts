@@ -1,11 +1,14 @@
 import {AuthResultType} from 'alinea/cloud/AuthResult'
 import type {AuthApi, AuthedContext} from 'alinea/core/Connection'
 import type {RequestContext} from 'alinea/core/Connection'
+import type {User} from 'alinea/core/User'
 import {atob} from 'alinea/core/util/Encoding'
 import {AuthAction} from '../Auth.js'
 
+export type Details = boolean | User | undefined
+
 export interface Verifier {
-  (username: string, password: string): boolean | Promise<boolean>
+  (username: string, password: string): Details | Promise<Details>
 }
 
 export class BasicAuth implements AuthApi {
@@ -46,9 +49,16 @@ export class BasicAuth implements AuthApi {
     const [username, password] = atob(token).split(':')
     const authorized = await this.#verify(username, password)
     if (!authorized) throw unauthorized()
+    const user =
+      typeof authorized === 'boolean'
+        ? {
+            sub: username,
+            roles: ['admin']
+          }
+        : authorized
     return {
       ...ctx,
-      user: {sub: username},
+      user,
       token
     }
   }

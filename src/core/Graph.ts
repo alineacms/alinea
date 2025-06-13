@@ -183,6 +183,8 @@ export declare class QuerySettings {
   workspace?: Condition<string> | Workspace
   /** Filter by root */
   root?: Condition<string> | Root
+  /** Filter by level */
+  level?: Condition<number>
 
   /** Filter results by location */
   location?: Location

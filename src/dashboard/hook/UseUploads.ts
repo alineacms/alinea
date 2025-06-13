@@ -1,6 +1,5 @@
 import type {UploadResponse} from 'alinea/core/Connection'
 import {Entry} from 'alinea/core/Entry'
-import type {EntryRow} from 'alinea/core/EntryRow'
 import {UploadOperation} from 'alinea/core/db/Operation'
 import {createPreview} from 'alinea/core/media/CreatePreview'
 import {MediaFile} from 'alinea/core/media/MediaTypes'
@@ -37,12 +36,12 @@ export interface Upload {
   thumbHash?: string
   width?: number
   height?: number
-  result?: EntryRow<MediaFile>
+  result?: Entry
   error?: Error
-  replace?: {entry: EntryRow; entryFile: string}
+  replace?: {entry: Entry; entryFile: string}
 }
 
-export function useUploads(onSelect?: (entry: EntryRow) => void) {
+export function useUploads(onSelect?: (entry: Entry) => void) {
   const db = useAtomValue(dbAtom)
   const [uploads, setUploads] = useState(Array<Upload>)
 

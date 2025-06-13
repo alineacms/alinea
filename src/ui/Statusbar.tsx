@@ -14,24 +14,33 @@ export namespace Statusbar {
   export function Root({children}: PropsWithChildren<{}>) {
     return (
       <footer className={styles.root()}>
-        <Portal />
         {children}
+        <div className={styles.root.slots()}>
+          <Portal />
+        </div>
       </footer>
     )
   }
 
-  export type StatusProps = PropsWithChildren<{
+  export interface StatusProps extends PropsWithChildren {
     icon?: ComponentType
-  }>
+    onClick?: () => void
+  }
 
-  export function Status({children, icon}: StatusProps) {
+  export function Status({children, icon, onClick}: StatusProps) {
     return (
-      <div className={styles.status()}>
+      <button
+        type="button"
+        className={styles.status({
+          interactive: Boolean(onClick)
+        })}
+        onClick={onClick}
+      >
         <HStack center gap={5}>
           <Icon icon={icon} />
           <span>{children}</span>
         </HStack>
-      </div>
+      </button>
     )
   }
 }

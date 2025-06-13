@@ -1,5 +1,5 @@
 import type {EntryStatus} from './Entry.js'
-import type {EntryRow} from './EntryRow.js'
+import type {Entry} from './Entry.js'
 
 export interface EntryMeta {
   _id: string
@@ -22,7 +22,7 @@ export namespace EntryRecord {
   export const seeded = '_seeded' satisfies keyof EntryMeta
 }
 
-export interface RequiredEntryFields extends Partial<EntryRow> {
+export interface RequiredEntryFields extends Partial<Entry> {
   id: string
   type: string
   index: string

@@ -1,6 +1,5 @@
-import type {Entry} from 'alinea/core/Entry'
 import type {ComponentType} from 'react'
-import type {EntryRow} from './EntryRow.js'
+import type {Entry} from './Entry.js'
 
 export type Preview = boolean | ComponentType<{entry: Entry}>
 
@@ -8,7 +7,7 @@ export interface PreviewPayload {
   payload: string
 }
 
-export type PreviewRequest = PreviewPayload | {entry: EntryRow}
+export type PreviewRequest = PreviewPayload | {entry: Entry}
 
 export interface PreviewUpdate {
   locale: string | null

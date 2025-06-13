@@ -3,7 +3,6 @@ import type {Connection} from 'alinea/core/Connection'
 import {DOC_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
 import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
-import type {EntryRow} from 'alinea/core/EntryRow'
 import {Field} from 'alinea/core/Field'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
@@ -31,6 +30,7 @@ import {dbAtom, dbMetaAtom, entryRevisionAtoms} from './DbAtoms.js'
 import {type Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
+import {policyAtom} from './PolicyAtom.js'
 import {yAtom} from './YAtom.js'
 
 export enum EditMode {
@@ -70,7 +70,7 @@ export const entryEditorAtoms = atomFamily(
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = get(dbAtom)
-      let entry: EntryRow | null = await graph.first({
+      let entry: Entry | null = await graph.first({
         select: Entry,
         id,
         locale: searchLocale,
@@ -87,6 +87,8 @@ export const entryEditorAtoms = atomFamily(
         })
       }
       if (!entry) return undefined
+      const policy = get(policyAtom)
+      if (!policy.canRead(entry)) return undefined
       const entryId = entry.id
       const locale = entry.locale
       const type = config.schema[entry.type]
@@ -237,7 +239,7 @@ export function createEntryEditor(entryData: EntryData) {
     return get(statusInUrl) ?? activeStatus
   })
 
-  function entryFile(entry: EntryRow, parentPaths?: Array<string>) {
+  function entryFile(entry: Entry, parentPaths?: Array<string>) {
     return entryFileName(
       config,
       entry,
@@ -520,7 +522,7 @@ export function createEntryEditor(entryData: EntryData) {
   }
   async function getDraftEntry(
     options: DraftEntryOptions = {}
-  ): Promise<EntryRow> {
+  ): Promise<Entry> {
     const data = parseYDoc(type, yDoc)
     const status = options.status ?? activeVersion.status
     const locale = options.locale ?? activeVersion.locale
@@ -610,8 +612,11 @@ export function createEntryEditor(entryData: EntryData) {
     return get(unwrap(revisionState, identity)) ?? get(selectedState)
   })
   const form = atom(get => {
+    const policy = get(policyAtom)
     const doc = get(currentDoc)
-    const readOnly = doc !== edits.doc ? true : !entryData.canPublish
+    const canUpdate = policy.canUpdate(activeVersion)
+    const readOnly =
+      !canUpdate || doc !== edits.doc ? true : !entryData.canPublish
     return new FormAtoms(type, doc.getMap(DOC_KEY), '', {readOnly})
   })
 

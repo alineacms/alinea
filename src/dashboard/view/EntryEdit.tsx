@@ -7,8 +7,8 @@ import {Button, HStack, Stack, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {Tabs} from 'alinea/ui/Tabs'
-import {IcOutlineTableRows} from 'alinea/ui/icons/IcOutlineTableRows'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useEffect, useRef, useState} from 'react'
@@ -129,31 +129,14 @@ export function EntryEdit({editor}: EntryEditProps) {
       {alineaDev && (
         <>
           <Statusbar.Slot>
-            <Statusbar.Status>
-              File path: {editor.activeVersion.filePath}
-            </Statusbar.Status>
-          </Statusbar.Slot>
-          <Statusbar.Slot>
-            <Statusbar.Status>
-              Parent dir: {editor.activeVersion.parentDir}
-            </Statusbar.Status>
-          </Statusbar.Slot>
-          <Statusbar.Slot>
-            <Statusbar.Status>
-              Children dir: {editor.activeVersion.childrenDir}
-            </Statusbar.Status>
-          </Statusbar.Slot>
-          <Statusbar.Slot>
-            <Statusbar.Status>Url: {editor.activeVersion.url}</Statusbar.Status>
-          </Statusbar.Slot>
-          <Statusbar.Slot>
             <Statusbar.Status icon={IcRoundInsertDriveFile}>
-              {editor.activeVersion.fileHash}
+              {editor.activeVersion.filePath} @{' '}
+              {editor.activeVersion.fileHash.slice(0, 8)}
             </Statusbar.Status>
           </Statusbar.Slot>
           <Statusbar.Slot>
-            <Statusbar.Status icon={IcOutlineTableRows}>
-              {editor.activeVersion.rowHash}
+            <Statusbar.Status icon={IcRoundLink}>
+              {editor.activeVersion.url}
             </Statusbar.Status>
           </Statusbar.Slot>
         </>

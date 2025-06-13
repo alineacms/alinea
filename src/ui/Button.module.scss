@@ -36,4 +36,9 @@
       border: 1px solid var(--alinea-button-hover);
     }
   }
+
+  &.is-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }

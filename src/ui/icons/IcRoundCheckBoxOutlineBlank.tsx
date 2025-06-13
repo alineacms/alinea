@@ -10,4 +10,3 @@ export function IcRoundCheckBoxOutlineBlank(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundCheckBoxOutlineBlank

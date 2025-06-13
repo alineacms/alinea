@@ -1,18 +1,18 @@
 import * as Y from 'yjs'
-import type {EntryRow} from './EntryRow.js'
+import type {Entry} from './Entry.js'
 import {Field} from './Field.js'
 import {Type} from './Type.js'
 import {entries} from './util/Objects.js'
 
 export const DOC_KEY = '#root'
 
-export function createYDoc(type: Type, entry: EntryRow | null) {
+export function createYDoc(type: Type, entry: Entry | null) {
   const doc = new Y.Doc({gc: false})
   if (entry) applyEntryData(doc, type, entry)
   return doc
 }
 
-export function applyEntryData(doc: Y.Doc, type: Type, entry: EntryRow) {
+export function applyEntryData(doc: Y.Doc, type: Type, entry: Entry) {
   const clientID = doc.clientID
   doc.clientID = 1
   doc.transact(() => {

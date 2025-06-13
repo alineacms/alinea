@@ -16,6 +16,7 @@ export interface ConfigBatch {
   config: Config
   client: Client
   views: Record<string, ComponentType>
+  alineaDev?: boolean
 }
 
 export type ConfigGenerator = AsyncGenerator<ConfigBatch>

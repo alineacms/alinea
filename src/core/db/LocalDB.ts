@@ -2,6 +2,7 @@ import type {Config} from '../Config.js'
 import type {SyncApi, UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
+import type {Policy} from '../Role.js'
 import type {Change} from '../source/Change.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {syncWith} from '../source/Source.js'
@@ -83,10 +84,16 @@ export class LocalDB extends WriteableGraph {
     console.table(entries)
   }
 
-  async request(mutations: Array<Mutation>) {
+  async request(mutations: Array<Mutation>, policy?: Policy) {
     await this.sync()
     const from = await this.source.getTree()
-    const tx = new EntryTransaction(this.config, this.index, this.source, from)
+    const tx = new EntryTransaction(
+      this.config,
+      this.index,
+      this.source,
+      from,
+      policy
+    )
     tx.apply(mutations)
     return tx.toRequest()
   }
