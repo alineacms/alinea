@@ -95,22 +95,20 @@ export class NextCMS<
 
   async #authenticatedClient() {
     const {handlerUrl, apiKey} = await requestContext(this.config)
-    let token = apiKey
+    let authCookie: string | undefined
     try {
       const {cookies} = await import('next/headers')
       const cookie = await cookies()
       const tokenCookie = cookie.get(COOKIE_NAME)
-      if (tokenCookie) token = tokenCookie.value
-      else console.warn('No auth cookie found, using API key instead')
-    } catch (error) {
-      console.warn('Failed to read auth cookie:', error)
-    }
+      if (tokenCookie) authCookie = tokenCookie.value
+    } catch {}
     return new Client({
       config: this.config,
       url: handlerUrl.href,
       applyAuth: init => {
         const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${token}`)
+        if (authCookie) headers.set('Cookie', `${COOKIE_NAME}=${authCookie}`)
+        else headers.set('Authorization', `Bearer ${apiKey}`)
         return {...init, headers}
       }
     })
