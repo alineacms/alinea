@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.3.1]
+- Fix usage of cms.user() in api routes
+
 ## [1.3.0]
 - Stability improvements.
 
