@@ -1,6 +1,7 @@
 import {Headers} from '@alinea/iso'
 import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
 import {generatedSource} from 'alinea/backend/store/GeneratedSource'
+import {COOKIE_NAME} from 'alinea/cloud/CloudRemote'
 import {CMS} from 'alinea/core/CMS'
 import {Client} from 'alinea/core/Client'
 import type {Config} from 'alinea/core/Config'
@@ -98,7 +99,7 @@ export class NextCMS<
     try {
       const {cookies} = await import('next/headers')
       const cookie = await cookies()
-      const tokenCookie = cookie.get('token')
+      const tokenCookie = cookie.get(COOKIE_NAME)
       if (tokenCookie) token = tokenCookie.value
     } catch {}
     return new Client({
