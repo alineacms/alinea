@@ -1,6 +1,6 @@
-import {ShaMismatchError} from '../db/EntryTransaction.js'
 import type {Change, ChangesBatch} from './Change.js'
 import {hashTree, serializeTreeEntries} from './GitUtils.js'
+import {ShaMismatchError} from './ShaMismatchError.js'
 import {assert, compareStrings, splitPath} from './Utils.js'
 
 export interface BaseEntry {

@@ -14,6 +14,7 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
+import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import {SourceTransaction} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
@@ -597,15 +598,5 @@ export class EntryTransaction {
       checks: this.#checks,
       changes: this.#fileChanges.concat(commitChanges(changes))
     }
-  }
-}
-
-export class ShaMismatchError extends Error {
-  status = 409
-  constructor(
-    public actual: string,
-    public expected: string
-  ) {
-    super(`SHA mismatch: ${actual} != ${expected}`)
   }
 }
