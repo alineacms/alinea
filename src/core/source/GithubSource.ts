@@ -1,6 +1,6 @@
 import pLimit from 'p-limit'
 import {HttpError} from '../HttpError.js'
-import type {Change} from './Change.js'
+import type {ChangesBatch} from './Change.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
 import {assert} from './Utils.js'
@@ -87,7 +87,7 @@ export class GithubSource implements Source {
     }
   }
 
-  async applyChanges(changes: Array<Change>) {
+  async applyChanges(batch: ChangesBatch) {
     throw new Error('Not implemented')
   }
 }

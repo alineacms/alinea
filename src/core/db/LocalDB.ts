@@ -1,8 +1,9 @@
+import pLimit from 'p-limit'
 import type {Config} from '../Config.js'
 import type {SyncApi, UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
-import type {Change} from '../source/Change.js'
+import type {ChangesBatch} from '../source/Change.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {syncWith} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
@@ -12,6 +13,8 @@ import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import type {Mutation} from './Mutation.js'
 import {WriteableGraph} from './WriteableGraph.js'
+
+const limit = pLimit(1)
 
 export class LocalDB extends WriteableGraph {
   public index: EntryIndex
@@ -40,12 +43,12 @@ export class LocalDB extends WriteableGraph {
     return this.index.sha
   }
 
-  indexChanges(changes: Array<Change>) {
-    return this.index.indexChanges(changes)
+  indexChanges(batch: ChangesBatch) {
+    return this.index.indexChanges(batch)
   }
 
-  applyChanges(changes: Array<Change>) {
-    return this.source.applyChanges(changes)
+  applyChanges(batch: ChangesBatch) {
+    return this.source.applyChanges(batch)
   }
 
   getTreeIfDifferent(sha: string) {
@@ -62,9 +65,11 @@ export class LocalDB extends WriteableGraph {
     return this.sha
   }
 
-  async syncWith(remote: SyncApi) {
-    await syncWith(this.source, remote)
-    return this.sync()
+  syncWith(remote: SyncApi) {
+    return limit(async () => {
+      await syncWith(this.source, remote)
+      return this.sync()
+    })
   }
 
   async logEntries() {
@@ -98,7 +103,7 @@ export class LocalDB extends WriteableGraph {
 
   async write(request: CommitRequest): Promise<{sha: string}> {
     if (this.sha === request.intoSha) return {sha: this.sha}
-    const contentChanges = sourceChanges(request.changes)
+    const contentChanges = sourceChanges(request)
     await this.applyChanges(contentChanges)
     return {sha: await this.sync()}
   }

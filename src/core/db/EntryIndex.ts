@@ -18,7 +18,7 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
 import {createId} from '../Id.js'
-import type {Change} from '../source/Change.js'
+import type {ChangesBatch} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {type Source, bundleContents} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
@@ -143,10 +143,10 @@ export class EntryIndex extends EventTarget {
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
     if (!this.initialSync) this.initialSync = tree
-    const changes = await bundleContents(source, this.tree.diff(tree))
-    if (changes.length === 0) return tree.sha
+    const batch = await bundleContents(source, this.tree.diff(tree))
+    if (batch.changes.length === 0) return tree.sha
     // for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
-    return this.indexChanges(changes)
+    return this.indexChanges(batch)
   }
 
   async fix(source: Source) {
@@ -168,8 +168,8 @@ export class EntryIndex extends EventTarget {
     }
     if (tx.empty) return
     const request = await tx.toRequest()
-    const contentChanges = sourceChanges(request.changes)
-    if (contentChanges.length) await source.applyChanges(contentChanges)
+    const contentChanges = sourceChanges(request)
+    if (contentChanges.changes.length) await source.applyChanges(contentChanges)
   }
 
   async seed(source: Source) {
@@ -233,8 +233,8 @@ export class EntryIndex extends EventTarget {
               data: {path}
             })
             .toRequest()
-          const contentChanges = sourceChanges(request.changes)
-          if (contentChanges.length) {
+          const contentChanges = sourceChanges(request)
+          if (contentChanges.changes.length) {
             await source.applyChanges(contentChanges)
             await this.indexChanges(contentChanges)
           }
@@ -248,10 +248,11 @@ export class EntryIndex extends EventTarget {
     return new EntryTransaction(this.#config, this, source, from)
   }
 
-  async indexChanges(changes: Array<Change>) {
+  async indexChanges(batch: ChangesBatch) {
+    const {changes} = batch
     if (changes.length === 0) return this.tree.sha
-    this.#applyChanges(changes)
-    this.tree = await this.tree.withChanges(changes)
+    this.#applyChanges(batch)
+    this.tree = await this.tree.withChanges(batch)
     const sha = this.tree.sha
     this.dispatchEvent(new IndexEvent({op: 'index', sha}))
     return sha
@@ -266,7 +267,8 @@ export class EntryIndex extends EventTarget {
     })
   }
 
-  #applyChanges(changes: Array<Change>) {
+  #applyChanges(batch: ChangesBatch) {
+    const {changes} = batch
     const recompute = new Set<string>()
     for (const change of changes) {
       if (!change.path.endsWith('.json')) continue

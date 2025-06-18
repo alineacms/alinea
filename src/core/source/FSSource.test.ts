@@ -10,6 +10,6 @@ test('compare', async () => {
   const fsSource = new FSSource(dir)
   const tree = ReadonlyTree.fromFlat(demoTree)
   const fsTree = await fsSource.getTree()
-  const diff = fsTree.diff(tree)
-  test.is(diff.length, 0)
+  const batch = fsTree.diff(tree)
+  test.is(batch.changes.length, 0)
 })

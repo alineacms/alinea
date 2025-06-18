@@ -1,4 +1,5 @@
-import type {Change} from './Change.js'
+import {ShaMismatchError} from '../db/EntryTransaction.js'
+import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
@@ -40,7 +41,10 @@ export class MemorySource implements Source {
     return sha
   }
 
-  async applyChanges(changes: Array<Change>) {
+  async applyChanges(batch: ChangesBatch) {
+    const {fromSha, changes} = batch
+    if (this.#tree.sha !== fromSha)
+      throw new ShaMismatchError(fromSha, this.#tree.sha)
     for (const change of changes) {
       switch (change.op) {
         case 'add': {
@@ -54,8 +58,6 @@ export class MemorySource implements Source {
         }
       }
     }
-    const tree = this.#tree.clone()
-    tree.applyChanges(changes)
-    this.#tree = await tree.compile()
+    this.#tree = await this.#tree.withChanges(batch)
   }
 }
