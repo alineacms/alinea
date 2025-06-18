@@ -1,8 +1,6 @@
 @import '../style.scss';
 
 .root {
-  // background: var(--web-background-variant);
-
   @include ml {
     padding: 120px 0;
   }
@@ -20,7 +18,7 @@
     left: 0;
     right: 0;
     width: 100%;
-    fill: var(--web-background-variant);
+    fill: var(--web-background);
     transform: translateY(-100%);
   }
 }
@@ -32,8 +30,8 @@
 .action {
   display: inline-block;
   text-decoration: none;
-  background: var(--web-accent);
-  color: var(--web-accent-foreground);
+  background: white;
+  color: var(--web-foreground);
   padding: 10px 16px;
   border-radius: 25px;
   font-size: 14px;

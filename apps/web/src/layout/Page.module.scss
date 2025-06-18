@@ -60,7 +60,7 @@
   }
 
   @include l {
-    max-width: 1280px;
+    max-width: 1280px + 2 * 45px;
   }
 }
 
