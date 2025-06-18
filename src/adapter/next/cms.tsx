@@ -101,7 +101,10 @@ export class NextCMS<
       const cookie = await cookies()
       const tokenCookie = cookie.get(COOKIE_NAME)
       if (tokenCookie) token = tokenCookie.value
-    } catch {}
+      else console.warn('No auth cookie found, using API key instead')
+    } catch (error) {
+      console.warn('Failed to read auth cookie:', error)
+    }
     return new Client({
       config: this.config,
       url: handlerUrl.href,
