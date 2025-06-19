@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
+import {IcRoundAccountTree} from 'alinea/ui/icons/IcRoundAccountTree'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
@@ -156,21 +157,107 @@ export default async function HomePage() {
           </VStack>
         </PageContainer>
 
-        <section className={styles.home.section()}>
-          <VStack gap={50}>
-            <PageContainer>
+        <PageContainer>
+          <VStack gap={40}>
+            <section className={styles.home.section()}>
               <WebTypo>
-                <WebTypo.H2>User friendly dashboard</WebTypo.H2>
+                <Feature.Title icon={IcRoundAccountTree}>
+                  Intuitive Content Tree
+                </Feature.Title>
+                <WebTypo.P>
+                  Organize content in a clear, hierarchical structure, like a
+                  family tree or a file system. Editors can easily navigate,
+                  reorder, and manage pages in a way that makes sense for any
+                  project. Navigation stays simple, whether you’re editing in
+                  the dashboard or working with the API.
+                </WebTypo.P>
               </WebTypo>
-              <div className={styles.home.demo()}>
-                <iframe
-                  src="https://demo.alinea.sh"
-                  className={styles.home.demo.inner()}
-                />
-              </div>
-            </PageContainer>
+            </section>
+
+            <WebTypo.H2 style={{textAlign: 'center'}}>
+              Describe your schema in code, review it in Git
+            </WebTypo.H2>
+
+            <section className={styles.home.section()}>
+              <WebTypo>
+                <Feature.Title icon={IcBaselineWorkspaces}>
+                  Configuration as Code
+                </Feature.Title>
+                <WebTypo.P>
+                  Define your content schema in code. No endless clicking
+                  through forms. Branch, test, and evolve your structure with
+                  the same developer workflow you use for your site.
+                </WebTypo.P>
+                <WebTypo.Link href="/docs/configuration">
+                  Read more
+                </WebTypo.Link>
+              </WebTypo>
+            </section>
+            <section className={styles.home.section()}>
+              <WebTypo>
+                <Feature.Title icon={IcRoundInsertDriveFile}>
+                  Powerful Query Engine
+                </Feature.Title>
+                <WebTypo.P>
+                  Query your content like an ORM. Content is bundled with your
+                  code, eliminating unnecessary network calls and keeping your
+                  site fast.
+                </WebTypo.P>
+                <WebTypo.Link href="/docs/content/query">
+                  Read more
+                </WebTypo.Link>
+              </WebTypo>
+            </section>
+
+            <WebTypo.H2 style={{textAlign: 'center'}}>
+              Content is local, versioned, and deploys with your site.
+            </WebTypo.H2>
+
+            <section className={styles.home.section()}>
+              <WebTypo>
+                <Feature.Title icon={RiFlashlightFill}>
+                  Live Previews
+                </Feature.Title>
+                <WebTypo.P>
+                  See exactly what your content changes look in real time.
+                  Preview updates instantly, right inside the dashboard. Full
+                  support for React Server Components without any extra setup.
+                </WebTypo.P>
+                <WebTypo.Link href="/docs/content/live-previews">
+                  Read more
+                </WebTypo.Link>
+              </WebTypo>
+            </section>
+
+            <section className={styles.home.section()}>
+              <WebTypo>
+                <Feature.Title icon={IcBaselineDashboardCustomize}>
+                  Custom Fields
+                </Feature.Title>
+                <WebTypo.P>
+                  Extend Alinea with your own fields. Create custom inputs with
+                  simple constructor functions. Tailored to exactly what your
+                  editors need.
+                </WebTypo.P>
+                <WebTypo.Link href="/docs/fields/custom-fields">
+                  Read more
+                </WebTypo.Link>
+              </WebTypo>
+            </section>
           </VStack>
-        </section>
+        </PageContainer>
+
+        <PageContainer>
+          <section className={styles.home.section()}>
+            <div className={styles.home.demo()}>
+              <iframe
+                title="Alinea demo"
+                src="https://demo.alinea.sh"
+                className={styles.home.demo.inner()}
+              />
+            </div>
+          </section>
+        </PageContainer>
 
         <HStack justify="space-between" gap={`${px(16)} ${px(30)}`} wrap>
           <Highlight href="/docs/content/live-previews" icon={RiFlashlightFill}>
@@ -210,100 +297,6 @@ export default async function HomePage() {
             Self-host or cloud host
           </Highlight>
         </HStack>
-
-        <section className={styles.home.section()}>
-          <PageContainer>
-            <WebTypo.H2>Code your schema</WebTypo.H2>
-            <WebTypo.P>
-              Configuration as code saves you from clicking endlessly through a
-              UI to define fields. Easily branch and feature test schema
-              changes.
-            </WebTypo.P>
-          </PageContainer>
-        </section>
-
-        <section className={styles.home.section()}>
-          <PageContainer>
-            <WebTypo.H2>Live previews</WebTypo.H2>
-            <WebTypo.P>
-              React to dashboard changes by previewing a live page view.
-            </WebTypo.P>
-          </PageContainer>
-        </section>
-
-        <section className={styles.home.section()}>
-          <PageContainer>
-            <WebTypo.H2>Query content</WebTypo.H2>
-            <WebTypo.P>
-              Use an ORM like API to query field contents. Content is bundled
-              with your code and directly available without network roundtrips.
-            </WebTypo.P>
-          </PageContainer>
-        </section>
-
-        <section className={styles.home.section()}>
-          <PageContainer>
-            <WebTypo.H2>Works with any framework</WebTypo.H2>
-            <WebTypo.P>Pick your favorite and get started.</WebTypo.P>
-          </PageContainer>
-        </section>
-        {/*
-
-        I think below we should highlight in separate (interactive) sections:
-        - [x] config as code => preview how to build a schema
-        - [x] live previews
-        - [x] query engine
-        - [ ] custom fields
-        - [ ] the editing/dashboard experience
-        - [ ] deploy "anywhere": node or edge deploys
-
-      
-
-      <section className={styles.home.section()}>
-        <PageContainer>
-          <WebTypo.H2>Code your schema</WebTypo.H2>
-          <WebTypo.P>
-            Configuration as code saves you from clicking endlessly through a UI
-            to define fields. Easily branch and feature test schema changes.
-          </WebTypo.P>
-        </PageContainer>
-      </section>
-
-      <section className={styles.home.section()}>
-        <PageContainer>
-          <WebTypo.H2>Live previews</WebTypo.H2>
-          <WebTypo.P>
-            React to dashboard changes by previewing a live page view.
-          </WebTypo.P>
-        </PageContainer>
-      </section>
-
-      <section className={styles.home.section()}>
-        <PageContainer>
-          <WebTypo.H2>Query content</WebTypo.H2>
-          <WebTypo.P>
-            Use an ORM like API to query field contents. Content is bundled with
-            your code and directly available without network roundtrips.
-          </WebTypo.P>
-        </PageContainer>
-      </section>
-
-      <section className={styles.home.section()}>
-        <PageContainer>
-          <WebTypo.H2>Works with any framework</WebTypo.H2>
-          <WebTypo.P>Pick your favorite and get started.</WebTypo.P>
-        </PageContainer>
-      </section>
-
-      <section className={styles.home.section()}>
-        <PageContainer>
-          <WebTypo.H2>Powerful fields</WebTypo.H2>
-          <WebTypo.P>
-            Alinea ships with a comprehensive set of fields that allow you to
-            structure complex web apps.
-          </WebTypo.P>
-        </PageContainer>
-      </section>*/}
       </main>
     </WebLayout>
   )

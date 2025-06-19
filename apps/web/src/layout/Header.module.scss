@@ -7,6 +7,7 @@
   height: var(--web-header-height);
   flex-shrink: 0;
   z-index: 7;
+  color: var(--web-foreground);
 
   @include sm {
     position: sticky;
@@ -32,10 +33,6 @@
   &-logo {
     display: block;
     transition: 0.25s ease-out;
-
-    &:hover {
-      color: var(--web-foreground);
-    }
   }
 
   &-nav {
@@ -86,7 +83,7 @@
     border-radius: 16px;
     font-size: 13px;
     font-weight: 600;
-    background: #44474d;
+    background: #1a1a41;
     color: #ffffff;
     padding: 0 14px;
     margin: 0 8px;
@@ -100,7 +97,7 @@
     }
 
     &:hover {
-      background: #171718;
+      background: black;
     }
   }
 
