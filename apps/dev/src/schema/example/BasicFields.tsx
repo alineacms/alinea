@@ -34,6 +34,16 @@ export const BasicFields = Config.document('Basic fields', {
     check: Field.check('Check field', {description: 'Check me please'}),
     date: Field.date('Date field'),
     time: Field.time('Time field'),
-    code: Field.code('Code field')
+    code: Field.code('Code field'),
+    object: Field.object('Object', {
+      help: 'An object field',
+      fields: {
+        image: Field.image('Image'),
+        title: Field.text('Title'),
+        cta: Field.link('Call to action', {
+          location: {workspace: 'main', root: 'pages'}
+        })
+      }
+    })
   }
 })
