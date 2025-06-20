@@ -14,6 +14,7 @@
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
   --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 18%);
   --alinea-selected: #25344d;
+  --alinea-selected-faded: #151d2c;
   --alinea-selected-foreground: #aec8f8;
   --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
   --alinea-fields: hsl(var(--alinea-hue), var(--alinea-saturation), 10%);
@@ -73,6 +74,7 @@
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
   --alinea-lift: #f5f5f7;
   --alinea-selected: #f1f3fd;
+  --alinea-selected-faded: #f8f9fd;
   --alinea-selected-foreground: #3f61e8;
   --alinea-outline: #eaeaef;
   --alinea-content: linear-gradient(

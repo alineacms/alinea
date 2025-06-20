@@ -10,4 +10,3 @@ export function IcRoundNotes(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundNotes

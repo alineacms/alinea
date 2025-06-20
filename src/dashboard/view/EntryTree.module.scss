@@ -47,6 +47,7 @@
     align-items: center;
     border-radius: var(--alinea-border-radius);
     margin: 0 12px;
+    cursor: pointer;
 
     &-icon {
       display: flex;
@@ -56,12 +57,7 @@
       margin-right: 4px;
       height: 20px;
       flex-shrink: 0;
-      color: hsla(var(--alinea-negative), 0.4);
       font-size: 12px;
-    }
-
-    &.is-selected &-icon {
-      color: var(--alinea-selected-foreground);
     }
 
     &:hover {
@@ -72,6 +68,15 @@
     &.is-selected {
       background: var(--alinea-selected);
       color: var(--alinea-selected-foreground);
+    }
+
+    &.is-selected.is-unpublished {
+      background: #fef2cc;
+      color: #d66700;
+    }
+
+    &.is-selected.is-archived &-label {
+      opacity: 1;
     }
 
     &.is-drop {
@@ -109,6 +114,26 @@
         transform: translateY(-1px);
       }
     }
+    &:has(+ &.is-parentSelected) {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    &.is-parentSelected {
+      background: var(--alinea-selected-faded);
+      color: var(--alinea-selected-foreground);
+      border-radius: 0;
+
+      &:not(:has(+ &)) {
+        border-bottom-left-radius: var(--alinea-border-radius);
+        border-bottom-right-radius: var(--alinea-border-radius);
+      }
+    }
+
+    &.is-parentSelected.is-unpublished {
+      background: #fff8e1;
+      color: #d66700;
+    }
 
     &-label {
       height: 100%;
@@ -116,7 +141,7 @@
       text-align: left;
       display: flex;
       align-items: center;
-      padding: 0 12px;
+      padding: 0 12px 0 0;
       min-width: 0;
       cursor: pointer;
 
@@ -126,6 +151,8 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         font-size: 13px;
+        min-width: 50px;
+        padding-right: 8px;
       }
     }
 
@@ -133,24 +160,23 @@
       font-weight: 600;
     }
 
-    &.is-archived &-label-itemname,
-    &.is-unpublished &-label-itemName,
-    &.is-untranslated &-label-itemName {
-      opacity: 0.5;
+    &.is-archived &-label,
+    &.is-untranslated &-label {
+      opacity: 0.65;
     }
 
     &-arrow {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 20px;
-      margin-left: auto;
+      width: 10px;
+      //margin-left: auto;
       height: 20px;
       flex-shrink: 0;
-      color: hsla(var(--alinea-negative), 0.5);
+      cursor: pointer;
     }
 
-    &.is-selected &-arrow {
+    &.is-selected {
       color: var(--alinea-selected-foreground);
     }
   }
@@ -164,26 +190,40 @@
     :global(.rct-tree-item-title-container-selected) & {
       font-weight: 600;
     }
-
-    &.is-untranslated {
-      opacity: 0.7;
-    }
   }
 
   &-status {
     flex-shrink: 0;
-    border-radius: 50%;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
+    gap: 6px;
     height: 16px;
+    padding: 0 4px;
     font-size: 10px;
-    margin-left: 8px;
+    margin-left: auto;
 
     &.is-draft {
-      background: #4e5fe6;
-      color: white;
+      color: rgb(10, 59, 133);
+      background: #c5cbfa;
+    }
+    &.is-unpublished {
+      color: #422000;
+      background: #ffbf6b;
+    }
+    &.is-archived {
+      color: #1f1f1f;
+      background: #d8dadb;
+    }
+    &.is-untranslated {
+      color: #6c757d;
+      background: #f0f0f0;
+    }
+    &.is-children {
+      margin-left: auto;
+      background: #f5f5f5;
+      color: #1f1f1f;
     }
   }
 }
