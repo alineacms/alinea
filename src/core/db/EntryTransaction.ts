@@ -113,8 +113,22 @@ export class EntryTransaction {
     assert(typeof title === 'string', 'Missing title')
     let path = slugify(typeof data.path === 'string' ? data.path : title)
     assert(path.length > 0, 'Invalid path')
-    path = this.#getAvailablePath({id, path, parentId, root, workspace, locale})
-    if (existing) path = existing.pathOf(locale) ?? path
+    const existingPath = existing?.pathOf(locale)
+    const hasSamePath = existingPath === path
+    if (!hasSamePath)
+      path = this.#getAvailablePath({
+        id,
+        path,
+        parentId,
+        root,
+        workspace,
+        locale
+      })
+    // Path changes are only carried out when the entry is published
+    if (status !== 'published' && existingPath) path = existingPath
+    if (existingPath && !hasSamePath && status === 'published') {
+      this.#rename(existing!.id, locale, path)
+    }
     if (overwrite && existing?.type === 'MediaFile') {
       const [prev] = existing.entries
       assert(prev, 'Previous entry not found')
@@ -178,6 +192,22 @@ export class EntryTransaction {
     return this
   }
 
+  #rename(entryId: string, locale: string | null, path: string) {
+    const index = this.#index
+    const versions = index.findMany(entry => {
+      return entry.id === entryId && entry.locale === locale
+    })
+    for (const version of versions) {
+      const name =
+        version.status === 'published' ? path : `${path}.${version.status}`
+      const filePath = paths.join(version.parentDir, `${name}.json`)
+      console.log(`Rename ${version.filePath} to ${filePath}`)
+      this.#tx.rename(version.filePath, filePath)
+      const childrenDir = paths.join(version.parentDir, path)
+      this.#tx.rename(version.childrenDir, childrenDir)
+    }
+  }
+
   update({id, locale, status, set}: Op<UpdateMutation>) {
     const index = this.#index
     const entry = index.findFirst(entry => {
@@ -211,23 +241,7 @@ export class EntryTransaction {
     const childrenDir = paths.join(entry.parentDir, path)
     const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     if (entry.status === 'published') {
-      if (filePath !== entry.filePath) {
-        // Rename children and other statuses
-        const versions = index.findMany(entry => {
-          return (
-            entry.id === id &&
-            entry.locale === locale &&
-            entry.status !== 'published'
-          )
-        })
-        for (const version of versions)
-          this.#tx.rename(
-            version.filePath,
-            paths.join(entry.parentDir, `${path}.${version.status}.json`)
-          )
-        this.#tx.remove(entry.filePath)
-        this.#tx.rename(entry.childrenDir, childrenDir)
-      }
+      if (filePath !== entry.filePath) this.#rename(id, locale, path)
     } else {
       if (path !== entry.path) record.path = path
     }
