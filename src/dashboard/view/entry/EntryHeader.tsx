@@ -3,11 +3,11 @@ import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {Button, HStack, Icon, Stack, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {IcOutlineArchive} from 'alinea/ui/icons/IcOutlineArchive'
 import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
 import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
 import {IcOutlineKeyboardTab} from 'alinea/ui/icons/IcOutlineKeyboardTab'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
-import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
@@ -63,7 +63,7 @@ const variantIcon = {
   draft: IcOutlineDrafts,
   editing: IcRoundEdit,
   published: IcOutlineRemoveRedEye,
-  archived: IcRoundArchive,
+  archived: IcOutlineArchive,
   untranslated: IcRoundTranslate,
   revision: IcRoundPublishedWithChanges,
   transition: IcOutlineAvTimer
