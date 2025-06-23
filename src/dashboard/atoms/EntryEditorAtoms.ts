@@ -143,7 +143,6 @@ export const entryEditorAtoms = atomFamily(
       )
       const parentNeedsTranslation = entry.parentId ? !parentLink : false
       const parents = withParents?.parents ?? []
-      const canPublish = parents.every(parent => parent.status === 'published')
       const canDelete = !entry.seeded
       if (versions.length === 0) return undefined
       const statuses = fromEntries(
@@ -156,7 +155,6 @@ export const entryEditorAtoms = atomFamily(
       ).filter(status => statuses[status] !== undefined)
       return createEntryEditor({
         parents,
-        canPublish,
         canDelete,
         translations,
         untranslated,
@@ -184,7 +182,6 @@ export interface EntryData {
   availableStatuses: Array<EntryStatus>
   translations: Array<{locale: string; entryId: string}>
   untranslated: boolean
-  canPublish: boolean
   canDelete: boolean
   parentNeedsTranslation: boolean
   edits: Edits
@@ -611,7 +608,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
   const form = atom(get => {
     const doc = get(currentDoc)
-    const readOnly = doc !== edits.doc ? true : !entryData.canPublish
+    const readOnly = doc !== edits.doc
     return new FormAtoms(type, doc.getMap(DOC_KEY), '', {readOnly})
   })
 

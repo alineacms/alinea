@@ -42,6 +42,12 @@
       background: var(--alinea-variant-progress-background);
     }
   }
+  &.is-unpublished {
+    color: var(--alinea-variant-create-foreground);
+    &::before {
+      background: var(--alinea-variant-create-background);
+    }
+  }
 }
 
 .item {

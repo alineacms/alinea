@@ -104,6 +104,7 @@ export class LocalDB extends WriteableGraph {
   async write(request: CommitRequest): Promise<{sha: string}> {
     if (this.sha === request.intoSha) return {sha: this.sha}
     const contentChanges = sourceChanges(request)
+    await this.indexChanges(contentChanges)
     await this.applyChanges(contentChanges)
     return {sha: await this.sync()}
   }

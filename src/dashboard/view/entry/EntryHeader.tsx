@@ -5,7 +5,6 @@ import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineArchive} from 'alinea/ui/icons/IcOutlineArchive'
 import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
-import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
 import {IcOutlineKeyboardTab} from 'alinea/ui/icons/IcOutlineKeyboardTab'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
@@ -17,6 +16,7 @@ import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithC
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
+import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
@@ -43,7 +43,8 @@ const variantDescription = {
   published: 'Published',
   archived: 'Archived',
   untranslated: 'Untranslated',
-  revision: 'Revision'
+  revision: 'Revision',
+  unpublished: 'Unpublished'
 }
 
 const transitions = {
@@ -60,13 +61,14 @@ const transitions = {
 }
 
 const variantIcon = {
-  draft: IcOutlineDrafts,
+  draft: IcRoundEdit,
   editing: IcRoundEdit,
   published: IcOutlineRemoveRedEye,
   archived: IcOutlineArchive,
   untranslated: IcRoundTranslate,
   revision: IcRoundPublishedWithChanges,
-  transition: IcOutlineAvTimer
+  transition: IcOutlineAvTimer,
+  unpublished: RiFlashlightFill
 }
 
 export interface EntryHeaderProps {
@@ -77,7 +79,7 @@ export interface EntryHeaderProps {
 export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const config = useConfig()
   const locale = useLocale()
-  const {canPublish, canDelete, untranslated, parentNeedsTranslation} = editor
+  const {canDelete, untranslated, parentNeedsTranslation} = editor
   const statusInUrl = useAtomValue(editor.statusInUrl)
   const selectedStatus = useAtomValue(editor.selectedStatus)
   const previewRevision = useAtomValue(editor.previewRevision)
@@ -95,7 +97,9 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           ? 'untranslated'
           : hasChanges && !statusInUrl
             ? 'editing'
-            : selectedStatus
+            : selectedStatus === 'draft' && editor.activeVersion.main
+              ? 'unpublished'
+              : selectedStatus
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const publishDraft = useSetAtom(editor.publishDraft)
@@ -192,14 +196,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
       )
     ) : variant === 'archived' ? (
       <>
-        {canPublish && (
+        {
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={publishArchived}
           >
             Publish
           </DropdownMenu.Item>
-        )}
+        }
         {canDelete && (
           <DropdownMenu.Item
             className={styles.root.action()}
@@ -266,20 +270,19 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             </DropdownMenu.Items>
           </DropdownMenu.Root>
 
-          {editable &&
+          {/*editable &&
             !inTransition &&
             !hasChanges &&
             isActiveStatus &&
             !untranslated &&
-            !previewRevision &&
-            canPublish && (
+            !previewRevision && (
               <>
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>
                   Edit to create a new draft
                 </div>
               </>
-            )}
+            )*/}
 
           {!inTransition &&
             !hasChanges &&
@@ -345,29 +348,51 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               {!inTransition && (
                 <>
                   {untranslated && !editor.parentNeedsTranslation && (
-                    <Button icon={IcRoundSave} onClick={translate}>
+                    <Button
+                      icon={IcRoundSave}
+                      onClick={translate}
+                      variant={variant}
+                    >
                       Save translation
                     </Button>
                   )}
                   {config.enableDrafts && variant === 'editing' && (
-                    <Button outline icon={IcRoundSave} onClick={saveDraft}>
+                    <Button
+                      outline
+                      icon={IcRoundSave}
+                      onClick={saveDraft}
+                      variant={variant}
+                    >
                       Save draft
                     </Button>
                   )}
-                  {variant === 'editing' && (
-                    <Button icon={IcRoundCheck} onClick={publishEdits}>
+                  {(variant === 'editing' || variant === 'unpublished') && (
+                    <Button
+                      icon={IcRoundCheck}
+                      onClick={publishEdits}
+                      variant={variant}
+                    >
                       Publish
                     </Button>
                   )}
                   {!untranslated &&
+                    variant !== 'unpublished' &&
                     !hasChanges &&
                     selectedStatus === 'draft' && (
-                      <Button icon={IcRoundCheck} onClick={publishDraft}>
-                        Publish draft
+                      <Button
+                        icon={IcRoundCheck}
+                        onClick={publishDraft}
+                        variant={variant}
+                      >
+                        Publish
                       </Button>
                     )}
                   {variant === 'revision' && (
-                    <Button icon={IcRoundSave} onClick={restoreRevision}>
+                    <Button
+                      icon={IcRoundSave}
+                      onClick={restoreRevision}
+                      variant={variant}
+                    >
                       Restore
                     </Button>
                   )}
