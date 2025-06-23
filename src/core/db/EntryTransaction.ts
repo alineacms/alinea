@@ -29,6 +29,7 @@ import type {
   PublishMutation,
   RemoveFileMutation,
   RemoveMutation,
+  UnpublishMutation,
   UpdateMutation,
   UploadFileMutation
 } from './Mutation.js'
@@ -360,6 +361,10 @@ export class EntryTransaction {
     return this
   }
 
+  unpublish({id, locale}: Op<UnpublishMutation>) {
+    throw new Error('To implement')
+  }
+
   archive({id, locale}: Op<ArchiveMutation>) {
     const index = this.#index
     const entry = index.findFirst(entry => {
@@ -581,6 +586,9 @@ export class EntryTransaction {
           break
         case 'publish':
           this.publish(mutation)
+          break
+        case 'unpublish':
+          this.unpublish(mutation)
           break
         case 'archive':
           this.archive(mutation)

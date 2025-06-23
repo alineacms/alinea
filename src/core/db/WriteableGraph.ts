@@ -16,6 +16,8 @@ import {
   type Operation,
   PublishOperation,
   type PublishQuery,
+  UnpublishOperation,
+  type UnpublishQuery,
   UpdateOperation,
   type UpdateQuery,
   UploadOperation,
@@ -60,6 +62,10 @@ export abstract class WriteableGraph extends Graph {
 
   async publish(query: PublishQuery): Promise<void> {
     await this.commit(new PublishOperation(query))
+  }
+
+  async unpublish(query: UnpublishQuery): Promise<void> {
+    await this.commit(new UnpublishOperation(query))
   }
 
   async archive(query: ArchiveQuery): Promise<void> {

@@ -53,6 +53,7 @@ const transitions = {
   [EntryTransition.PublishEdits]: 'Publishing',
   [EntryTransition.RestoreRevision]: 'Restoring',
   [EntryTransition.PublishDraft]: 'Publishing',
+  [EntryTransition.UnpublishDraft]: 'Unublishing',
   [EntryTransition.DiscardDraft]: 'Discarding',
   [EntryTransition.ArchivePublished]: 'Archiving',
   [EntryTransition.PublishArchived]: 'Publishing',
@@ -105,6 +106,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const publishDraft = useSetAtom(editor.publishDraft)
   const restoreRevision = useSetAtom(editor.restoreRevision)
   const discardDraft = useSetAtom(editor.discardDraft)
+  const unPublish = useSetAtom(editor.unPublish)
   const archivePublished = useSetAtom(editor.archivePublished)
   const publishArchived = useSetAtom(editor.publishArchived)
   const deleteArchived = useSetAtom(editor.deleteArchived)
@@ -187,12 +189,20 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           </DropdownMenu.Item>
         </>
       ) : (
-        <DropdownMenu.Item
-          className={styles.root.action()}
-          onClick={archivePublished}
-        >
-          Archive
-        </DropdownMenu.Item>
+        <>
+          <DropdownMenu.Item
+            className={styles.root.action()}
+            onClick={unPublish}
+          >
+            Unpublish
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className={styles.root.action()}
+            onClick={archivePublished}
+          >
+            Archive
+          </DropdownMenu.Item>
+        </>
       )
     ) : variant === 'archived' ? (
       <>

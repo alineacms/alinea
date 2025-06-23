@@ -51,6 +51,7 @@ export enum EntryTransition {
   PublishEdits,
   RestoreRevision,
   PublishDraft,
+  UnpublishDraft,
   DiscardDraft,
   ArchivePublished,
   PublishArchived,
@@ -448,6 +449,19 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
+  const unPublish = atom(null, async (get, set) => {
+    const db = get(dbAtom)
+    return set(action, {
+      transition: EntryTransition.UnpublishDraft,
+      result: db.unpublish({
+        id: activeVersion.id,
+        locale: activeVersion.locale
+      }),
+      errorMessage:
+        'Could not complete unpublish action, please try again later'
+    })
+  })
+
   const archivePublished = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
@@ -664,6 +678,7 @@ export function createEntryEditor(entryData: EntryData) {
     restoreRevision,
     publishDraft,
     discardDraft,
+    unPublish,
     archivePublished,
     publishArchived,
     deleteFile,

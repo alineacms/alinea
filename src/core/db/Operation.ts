@@ -163,6 +163,19 @@ export class PublishOperation extends Operation {
   }
 }
 
+export interface UnpublishQuery {
+  id: string
+  locale?: string | null
+}
+
+export class UnpublishOperation extends Operation {
+  constructor(query: UnpublishQuery) {
+    super((): Array<Mutation> => {
+      return [{op: 'unpublish', ...query, locale: query.locale ?? null}]
+    })
+  }
+}
+
 export interface ArchiveQuery {
   id: string
   locale?: string | null
