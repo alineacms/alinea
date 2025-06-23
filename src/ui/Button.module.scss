@@ -9,7 +9,7 @@
   cursor: pointer;
   z-index: 0;
   font-size: 13px;
-  // transition: 0.25s ease-out;
+  transition: 0.25s ease-out;
 
   &.is-medium {
     min-height: 22px;
@@ -30,10 +30,13 @@
 
   &.is-outline {
     background: transparent;
-    border: 1px solid var(--alinea-button-background);
+    color: var(--alinea-variant-info-foreground);
+    background: var(--alinea-variant-info-action);
+    /*border: 1px solid var(--alinea-button-background);
     color: var(--alinea-button-background);
+    */
     &:hover {
-      border: 1px solid var(--alinea-button-hover);
+      background: var(--alinea-button-hover);
     }
   }
 }

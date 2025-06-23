@@ -348,51 +348,35 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               {!inTransition && (
                 <>
                   {untranslated && !editor.parentNeedsTranslation && (
-                    <Button
-                      icon={IcRoundSave}
-                      onClick={translate}
-                      variant={variant}
-                    >
+                    <Button icon={IcRoundSave} onClick={translate}>
                       Save translation
                     </Button>
                   )}
                   {config.enableDrafts && variant === 'editing' && (
-                    <Button
-                      outline
-                      icon={IcRoundSave}
-                      onClick={saveDraft}
-                      variant={variant}
-                    >
+                    <Button outline icon={IcRoundSave} onClick={saveDraft}>
                       Save draft
                     </Button>
                   )}
-                  {(variant === 'editing' || variant === 'unpublished') && (
-                    <Button
-                      icon={IcRoundCheck}
-                      onClick={publishEdits}
-                      variant={variant}
-                    >
+                  {variant === 'editing' && (
+                    <Button icon={IcRoundCheck} onClick={publishEdits}>
                       Publish
                     </Button>
                   )}
                   {!untranslated &&
-                    variant !== 'unpublished' &&
                     !hasChanges &&
                     selectedStatus === 'draft' && (
                       <Button
                         icon={IcRoundCheck}
                         onClick={publishDraft}
-                        variant={variant}
+                        className={styles.root.main({
+                          unpublished: variant === 'unpublished'
+                        })}
                       >
                         Publish
                       </Button>
                     )}
                   {variant === 'revision' && (
-                    <Button
-                      icon={IcRoundSave}
-                      onClick={restoreRevision}
-                      variant={variant}
-                    >
+                    <Button icon={IcRoundSave} onClick={restoreRevision}>
                       Restore
                     </Button>
                   )}
