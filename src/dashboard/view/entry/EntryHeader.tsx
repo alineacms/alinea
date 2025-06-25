@@ -383,7 +383,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                     )}
                   {config.enableDrafts && variant === 'editing' && (
                     <Button outline icon={IcRoundSave} onClick={saveDraft}>
-                      Save draft
+                      Save
                     </Button>
                   )}
                   {variant === 'revision' && (

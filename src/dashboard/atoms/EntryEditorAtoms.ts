@@ -112,7 +112,8 @@ export const entryEditorAtoms = atomFamily(
             select: {
               id: Entry.id,
               path: Entry.path,
-              status: Entry.status
+              status: Entry.status,
+              main: Entry.main
             }
           }
         },
@@ -176,7 +177,7 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
-  parents: Array<{id: string; path: string; status: EntryStatus}>
+  parents: Array<{id: string; path: string; status: EntryStatus; main: boolean}>
   client: Connection
   config: Config
   entryId: string
@@ -283,7 +284,12 @@ export function createEntryEditor(entryData: EntryData) {
     }
   )
 
+  const parent = entryData.parents.at(-1)
+  const parentArchived = parent?.status === 'archived'
+  const parentUnpublished = parent?.status === 'draft' && parent.main
+
   const saveDraft = atom(null, async (get, set) => {
+    if (parentArchived || parentUnpublished) return set(publishEdits)
     // Use the existing path, when the entry gets published the path will change
     const db = get(dbAtom)
     const entry = await getDraftEntry({

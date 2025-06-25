@@ -2,8 +2,8 @@ import {reportWarning} from 'alinea/cli/util/Report'
 import {Config} from 'alinea/core/Config'
 import type {Entry, EntryStatus} from 'alinea/core/Entry'
 import {
-  createRecord,
   type EntryRecord,
+  createRecord,
   parseRecord
 } from 'alinea/core/EntryRecord'
 import {getRoot} from 'alinea/core/Internal'
@@ -19,7 +19,7 @@ import MiniSearch from 'minisearch'
 import {createId} from '../Id.js'
 import type {ChangesBatch} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
-import {bundleContents, type Source} from '../source/Source.js'
+import {type Source, bundleContents} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
 import {sourceChanges} from './CommitRequest.js'
@@ -478,6 +478,10 @@ class EntryNode {
   }
   get parentId() {
     const [entry] = this.byFile.values()
+    if (!entry) {
+      console.log(this)
+      throw new Error(`EntryNode has no entries: ${this.id}`)
+    }
     return entry.parentId
   }
   get entries() {
@@ -629,7 +633,8 @@ class EntryNode {
     const locale = entry.locale
     const versions = this.locales.get(locale)
     assert(versions, `Locale (${locale}) not found for ${filePath}`)
-    versions.delete(entry.status)
+    const [, status] = entryInfo(filePath.slice(0, -'.json'.length))
+    versions.delete(status)
     if (versions.size === 0) this.locales.delete(locale)
     this.byFile.delete(filePath)
     return this.byFile.size

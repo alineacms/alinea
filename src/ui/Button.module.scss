@@ -29,14 +29,11 @@
   }
 
   &.is-outline {
-    background: transparent;
     color: var(--alinea-variant-info-foreground);
     background: var(--alinea-variant-info-action);
-    /*border: 1px solid var(--alinea-button-background);
-    color: var(--alinea-button-background);
-    */
+
     &:hover {
-      background: var(--alinea-button-hover);
+      background: var(--alinea-variant-info-action);
     }
   }
 }
