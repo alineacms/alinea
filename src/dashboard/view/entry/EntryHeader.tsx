@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
-import {Button, HStack, Icon, Stack, px} from 'alinea/ui'
+import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineArchive} from 'alinea/ui/icons/IcOutlineArchive'
@@ -362,11 +362,6 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                       Save translation
                     </Button>
                   )}
-                  {config.enableDrafts && variant === 'editing' && (
-                    <Button outline icon={IcRoundSave} onClick={saveDraft}>
-                      Save draft
-                    </Button>
-                  )}
                   {variant === 'editing' && (
                     <Button icon={IcRoundCheck} onClick={publishEdits}>
                       Publish
@@ -385,6 +380,11 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                         Publish
                       </Button>
                     )}
+                  {config.enableDrafts && variant === 'editing' && (
+                    <Button outline icon={IcRoundSave} onClick={saveDraft}>
+                      Save draft
+                    </Button>
+                  )}
                   {variant === 'revision' && (
                     <Button icon={IcRoundSave} onClick={restoreRevision}>
                       Restore
