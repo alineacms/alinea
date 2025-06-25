@@ -4,8 +4,8 @@ import type {
   TreeDataLoader
 } from '@headless-tree/core'
 import {Config} from 'alinea/core/Config'
-import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
+import {Entry} from 'alinea/core/Entry'
 import type {Graph} from 'alinea/core/Graph'
 import {getRoot, getType} from 'alinea/core/Internal'
 import type {OrderBy} from 'alinea/core/OrderBy.js'

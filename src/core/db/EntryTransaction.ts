@@ -1,6 +1,5 @@
 import {Config} from 'alinea/core/Config'
-import type {Entry} from 'alinea/core/Entry'
-import type {EntryStatus} from 'alinea/core/Entry'
+import type {Entry, EntryStatus} from 'alinea/core/Entry'
 import {createRecord} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
 import {getRoot, getWorkspace} from 'alinea/core/Internal'
@@ -15,8 +14,8 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
-import {SourceTransaction} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
+import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../source/Utils.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
@@ -46,12 +45,12 @@ interface PathCandidate {
 }
 
 export class EntryTransaction {
-  #checks = Array<[path: string, sha: string]>()
-  #messages = Array<string>()
+  #checks = [] as [path: string, sha: string][]
+  #messages = [] as string[]
   #config: Config
   #index: EntryIndex
   #tx: SourceTransaction
-  #fileChanges = Array<CommitChange>()
+  #fileChanges = [] as CommitChange[]
 
   constructor(
     config: Config,
@@ -202,7 +201,6 @@ export class EntryTransaction {
       const name =
         version.status === 'published' ? path : `${path}.${version.status}`
       const filePath = paths.join(version.parentDir, `${name}.json`)
-      console.log(`Rename ${version.filePath} to ${filePath}`)
       this.#tx.rename(version.filePath, filePath)
       const childrenDir = paths.join(version.parentDir, path)
       this.#tx.rename(version.childrenDir, childrenDir)
@@ -362,7 +360,19 @@ export class EntryTransaction {
   }
 
   unpublish({id, locale}: Op<UnpublishMutation>) {
-    throw new Error('To implement')
+    const index = this.#index
+    const entry = index.findFirst(entry => {
+      return (
+        entry.id === id &&
+        entry.locale === locale &&
+        entry.status === 'published'
+      )
+    })
+    assert(entry, `Entry not found: ${id}`)
+    this.#checks.push([entry.filePath, entry.fileHash])
+    this.#tx.rename(entry.filePath, `${entry.childrenDir}.draft.json`)
+    this.#messages.push(this.#reportOp('unpublish', entry.title))
+    return this
   }
 
   archive({id, locale}: Op<ArchiveMutation>) {
@@ -376,7 +386,7 @@ export class EntryTransaction {
     })
     assert(entry, `Entry not found: ${id}`)
     this.#checks.push([entry.filePath, entry.fileHash])
-    this.#tx.rename(entry.filePath, `${entry.childrenDir}.${'archived'}.json`)
+    this.#tx.rename(entry.filePath, `${entry.childrenDir}.archived.json`)
     this.#messages.push(this.#reportOp('archive', entry.title))
     return this
   }

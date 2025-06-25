@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
-import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
+import {Button, HStack, Icon, Stack, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineArchive} from 'alinea/ui/icons/IcOutlineArchive'
@@ -80,7 +80,7 @@ export interface EntryHeaderProps {
 export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const config = useConfig()
   const locale = useLocale()
-  const {canDelete, untranslated, parentNeedsTranslation} = editor
+  const {canPublish, canDelete, untranslated, parentNeedsTranslation} = editor
   const statusInUrl = useAtomValue(editor.statusInUrl)
   const selectedStatus = useAtomValue(editor.selectedStatus)
   const previewRevision = useAtomValue(editor.previewRevision)
@@ -206,14 +206,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
       )
     ) : variant === 'archived' ? (
       <>
-        {
+        {canPublish && (
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={publishArchived}
           >
             Publish
           </DropdownMenu.Item>
-        }
+        )}
         {canDelete && (
           <DropdownMenu.Item
             className={styles.root.action()}
@@ -362,13 +362,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                       Save translation
                     </Button>
                   )}
-                  {variant === 'editing' && (
+                  {variant === 'editing' && canPublish && (
                     <Button icon={IcRoundCheck} onClick={publishEdits}>
                       Publish
                     </Button>
                   )}
                   {!untranslated &&
                     !hasChanges &&
+                    canPublish &&
                     selectedStatus === 'draft' && (
                       <Button
                         icon={IcRoundCheck}
