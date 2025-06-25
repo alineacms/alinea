@@ -8,11 +8,9 @@
   gap: 30px;
 
   &-section {
-    padding: 40px 0;
-
-    @include l {
-      padding: 90px 0;
-    }
+    padding: 30px;
+    border-radius: 24px;
+    background-color: white;
 
     &.is-highlight {
       background: var(--web-background-variant);
