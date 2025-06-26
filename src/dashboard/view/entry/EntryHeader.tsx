@@ -53,7 +53,7 @@ const transitions = {
   [EntryTransition.PublishEdits]: 'Publishing',
   [EntryTransition.RestoreRevision]: 'Restoring',
   [EntryTransition.PublishDraft]: 'Publishing',
-  [EntryTransition.UnpublishDraft]: 'Unublishing',
+  [EntryTransition.UnpublishDraft]: 'Unpublishing',
   [EntryTransition.DiscardDraft]: 'Discarding',
   [EntryTransition.ArchivePublished]: 'Archiving',
   [EntryTransition.PublishArchived]: 'Publishing',

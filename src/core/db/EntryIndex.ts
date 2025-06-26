@@ -479,7 +479,6 @@ class EntryNode {
   get parentId() {
     const [entry] = this.byFile.values()
     if (!entry) {
-      console.log(this)
       throw new Error(`EntryNode has no entries: ${this.id}`)
     }
     return entry.parentId
