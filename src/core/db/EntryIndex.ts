@@ -1,7 +1,6 @@
 import {reportWarning} from 'alinea/cli/util/Report'
 import {Config} from 'alinea/core/Config'
-import type {Entry} from 'alinea/core/Entry'
-import type {EntryStatus} from 'alinea/core/Entry'
+import type {Entry, EntryStatus} from 'alinea/core/Entry'
 import {
   type EntryRecord,
   createRecord,
@@ -39,7 +38,7 @@ export interface EntryFilter {
 
 export class EntryIndex extends EventTarget {
   tree = ReadonlyTree.EMPTY
-  entries = Array<Entry>()
+  entries = [] as Entry[]
   byPath = new Map<string, EntryNode>()
   byId = new Map<string, EntryNode>()
   resolver: EntryResolver
@@ -320,7 +319,8 @@ export class EntryIndex extends EventTarget {
       }
     }
 
-    const entries = Array<Entry>()
+    const entries: Entry[] = []
+
     for (const [id, node] of this.byId) {
       let needsSync = recompute.has(id)
       let parentId = node.parentId
@@ -439,12 +439,34 @@ interface ParseRequest {
   contents: Uint8Array
 }
 
+class Versions extends Map<EntryStatus, Entry> {
+  inheritedStatus: EntryStatus | undefined
+  setInherited(parentStatus: EntryStatus | undefined) {
+    if (parentStatus) this.inheritedStatus = parentStatus
+    else if (this.has('archived')) this.inheritedStatus = 'archived'
+    else if (this.has('draft') && !this.has('published'))
+      this.inheritedStatus = 'draft'
+    else this.inheritedStatus = undefined
+  }
+  get active() {
+    return this.get('draft') || this.get('published') || this.get('archived')
+  }
+  get main() {
+    if (this.inheritedStatus) return this.active
+    return this.get('published') || this.get('archived') || this.get('draft')
+  }
+  *versions(): Generator<Entry> {
+    if (this.inheritedStatus) yield this.active!
+    else yield* this.values()
+  }
+}
+
 class EntryNode {
   #config: Config
   id: string
   type: string
   byFile = new Map<string, Entry>()
-  locales = new Map<string | null, Map<EntryStatus, Entry>>()
+  locales = new Map<string | null, Versions>()
   constructor(config: Config, from: Entry) {
     this.#config = config
     this.id = from.id
@@ -456,10 +478,19 @@ class EntryNode {
   }
   get parentId() {
     const [entry] = this.byFile.values()
+    if (!entry) {
+      throw new Error(`EntryNode has no entries: ${this.id}`)
+    }
     return entry.parentId
   }
   get entries() {
-    return Array.from(this.byFile.values())
+    const result = []
+    for (const versions of this.locales.values()) {
+      for (const version of versions.versions()) {
+        result.push(version)
+      }
+    }
+    return result
   }
   pathOf(locale: string | null): string | undefined {
     const versions = this.locales.get(locale)
@@ -473,36 +504,23 @@ class EntryNode {
     const [from] = this.byFile.values()
     if (from) this.#validate(entry, from)
     const locale = entry.locale
-    const versions = this.locales.get(locale) ?? new Map()
+    const versions = this.locales.get(locale) ?? new Versions()
     this.locales.set(locale, versions)
+
+    const status = entry.status
 
     // Per ID: all have locale or none have locale
     if (locale === null) assert(this.locales.size === 1)
 
-    if (versions.has(entry.status)) {
+    if (versions.has(status)) {
       return reportWarning(
         `Duplicate entry with id ${entry.id}`,
         entry.filePath,
-        versions.get(entry.status).filePath
+        versions.get(status)!.filePath
       )
     }
 
-    if (parent) {
-      const hasArchived = parent.locales.get(locale)?.get('archived')
-      if (hasArchived) {
-        entry.status = 'archived'
-      } else {
-        const hasPublished = parent.locales.get(locale)?.get('published')
-        // Per ID&locale&published: all parents are published
-        if (!hasPublished)
-          assert(
-            entry.status === 'draft',
-            `Entry ${entry.filePath} needs a published parent`
-          )
-      }
-    }
-
-    switch (entry.status) {
+    switch (status) {
       case 'published': {
         // Per ID&locale: one of published or archived, but not both
         const archived = versions.get('archived')
@@ -535,8 +553,12 @@ class EntryNode {
     }
 
     entry.parentId = parent ? parent.id : null
-    versions.set(entry.status, entry)
+    versions.set(status, entry)
     this.byFile.set(entry.filePath, entry)
+
+    const parentVersions = parent?.locales.get(locale)
+    versions.setInherited(parentVersions?.inheritedStatus)
+    entry.status = versions.inheritedStatus ?? status
 
     for (const version of versions.values()) {
       if (entry.path !== version.path) {
@@ -552,30 +574,22 @@ class EntryNode {
     const parent = this.parentId ? byId.get(this.parentId) : undefined
 
     for (const [locale, versions] of this.locales) {
-      const parentIsArchived = parent?.locales.get(locale)?.get('archived')
       let path: string
+
+      const parentVersions = parent?.locales.get(locale)
+      versions.setInherited(parentVersions?.inheritedStatus)
+      const activeVersion = versions.active
+      const mainVersion = versions.main
+
       for (const [status, version] of versions) {
         path ??= version.path
         assert(
           version.path === path,
           `Invalid path: ${version.path} != ${path}`
         )
-        const isDraft = status === 'draft'
-        const isPublished = status === 'published'
-        const isArchived = status === 'archived'
-        const hasDraft = versions.has('draft')
-        const hasPublished = versions.has('published')
-        const hasArchived = versions.has('archived')
-        const active =
-          isDraft ||
-          (isPublished && !hasDraft) ||
-          (isArchived && !hasDraft && !hasPublished)
-        const main =
-          isPublished ||
-          (isArchived && !hasPublished) ||
-          (isDraft && !hasPublished && !hasArchived)
-        version.active = active
-        version.main = main
+
+        version.active = version === activeVersion
+        version.main = version === mainVersion
 
         const parentPaths = []
         let p = parent
@@ -594,7 +608,7 @@ class EntryNode {
           parentPaths
         })
         version.url = url
-        version.status = parentIsArchived ? 'archived' : status
+        version.status = versions.inheritedStatus ?? status
 
         // Per ID: all have same index, index is valid fractional index
         assert(isValidOrderKey(version.index), 'Invalid index')
@@ -618,7 +632,8 @@ class EntryNode {
     const locale = entry.locale
     const versions = this.locales.get(locale)
     assert(versions, `Locale (${locale}) not found for ${filePath}`)
-    versions.delete(entry.status)
+    const [, status] = entryInfo(filePath.slice(0, -'.json'.length))
+    versions.delete(status)
     if (versions.size === 0) this.locales.delete(locale)
     this.byFile.delete(filePath)
     return this.byFile.size

@@ -233,20 +233,24 @@ function NewEntryForm({parentId}: NewEntryProps) {
           status: 'preferPublished'
         })
       : Type.initialValue(entryType)
-    db.create({
-      type: entryType,
-      id: id,
-      insertOrder: form.data().order,
-      parentId: parentId,
-      locale: locale,
-      root: root.name,
-      workspace: workspace,
-      status: config.enableDrafts ? 'draft' : 'published',
-      set: {...entryData, title, path}
-    }).then(entry => {
-      setIsCreating(false)
-      navigate(nav.entry({id: entry._id}))
-    })
+    return db
+      .create({
+        type: entryType,
+        id: id,
+        insertOrder: form.data().order,
+        parentId: parentId,
+        locale: locale,
+        root: root.name,
+        workspace: workspace,
+        status: config.enableDrafts ? 'draft' : 'published',
+        set: {...entryData, title, path}
+      })
+      .then(entry => {
+        navigate(nav.entry({id: entry._id}))
+      })
+      .finally(() => {
+        setIsCreating(false)
+      })
   }
   return (
     <form

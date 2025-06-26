@@ -15,6 +15,8 @@ const dbAtoms = atom(get => {
       const listen = (event: Event) => {
         if (event instanceof IndexEvent && event.data.op === 'index')
           set(baseMeta, event.data.sha)
+        if (event instanceof IndexEvent && event.data.op === 'entry')
+          set(entryRevisionAtoms(event.data.id))
       }
       db.events.addEventListener(IndexEvent.type, listen)
       return () => {
@@ -60,26 +62,13 @@ pendingAtom.onMount = init => init()
 
 export const entryRevisionAtoms = atomFamily((id: string) => {
   const index = atom(0)
-  const revision = atom(
+  return atom(
     get => get(index),
     (get, set) => {
-      const local = get(dbAtom)
-      const markEntry = (event: Event) => {
-        if (
-          event instanceof IndexEvent &&
-          event.data.op === 'entry' &&
-          event.data.id === id
-        )
-          set(index, i => i + 1)
-      }
-      local.events.addEventListener(IndexEvent.type, markEntry)
-      return () => {
-        local.events.removeEventListener(IndexEvent.type, markEntry)
-      }
+      const current = get(index)
+      set(index, current + 1)
     }
   )
-  revision.onMount = init => init()
-  return atom(get => get(revision))
 })
 
 export function useDbUpdater(everySeconds = 30) {

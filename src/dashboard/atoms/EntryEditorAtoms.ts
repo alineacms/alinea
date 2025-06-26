@@ -51,6 +51,7 @@ export enum EntryTransition {
   PublishEdits,
   RestoreRevision,
   PublishDraft,
+  UnpublishDraft,
   DiscardDraft,
   ArchivePublished,
   PublishArchived,
@@ -111,7 +112,8 @@ export const entryEditorAtoms = atomFamily(
             select: {
               id: Entry.id,
               path: Entry.path,
-              status: Entry.status
+              status: Entry.status,
+              main: Entry.main
             }
           }
         },
@@ -156,8 +158,8 @@ export const entryEditorAtoms = atomFamily(
       ).filter(status => statuses[status] !== undefined)
       return createEntryEditor({
         parents,
-        canPublish,
         canDelete,
+        canPublish,
         translations,
         untranslated,
         parentNeedsTranslation,
@@ -175,7 +177,7 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
-  parents: Array<{id: string; path: string; status: EntryStatus}>
+  parents: Array<{id: string; path: string; status: EntryStatus; main: boolean}>
   client: Connection
   config: Config
   entryId: string
@@ -282,7 +284,12 @@ export function createEntryEditor(entryData: EntryData) {
     }
   )
 
+  const parent = entryData.parents.at(-1)
+  const parentArchived = parent?.status === 'archived'
+  const parentUnpublished = parent?.status === 'draft' && parent.main
+
   const saveDraft = atom(null, async (get, set) => {
+    if (parentArchived || parentUnpublished) return set(publishEdits)
     // Use the existing path, when the entry gets published the path will change
     const db = get(dbAtom)
     const entry = await getDraftEntry({
@@ -451,6 +458,19 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
+  const unPublish = atom(null, async (get, set) => {
+    const db = get(dbAtom)
+    return set(action, {
+      transition: EntryTransition.UnpublishDraft,
+      result: db.unpublish({
+        id: activeVersion.id,
+        locale: activeVersion.locale
+      }),
+      errorMessage:
+        'Could not complete unpublish action, please try again later'
+    })
+  })
+
   const archivePublished = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
@@ -611,7 +631,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
   const form = atom(get => {
     const doc = get(currentDoc)
-    const readOnly = doc !== edits.doc ? true : !entryData.canPublish
+    const readOnly = doc !== edits.doc
     return new FormAtoms(type, doc.getMap(DOC_KEY), '', {readOnly})
   })
 
@@ -667,6 +687,7 @@ export function createEntryEditor(entryData: EntryData) {
     restoreRevision,
     publishDraft,
     discardDraft,
+    unPublish,
     archivePublished,
     publishArchived,
     deleteFile,

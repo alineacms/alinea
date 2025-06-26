@@ -47,6 +47,7 @@
     align-items: center;
     border-radius: var(--alinea-border-radius);
     margin: 0 12px;
+    cursor: pointer;
 
     &-icon {
       display: flex;
@@ -56,22 +57,12 @@
       margin-right: 4px;
       height: 20px;
       flex-shrink: 0;
-      color: hsla(var(--alinea-negative), 0.4);
       font-size: 12px;
-    }
-
-    &.is-selected &-icon {
-      color: var(--alinea-selected-foreground);
     }
 
     &:hover {
       color: inherit;
       background: var(--alinea-highlight);
-    }
-
-    &.is-selected {
-      background: var(--alinea-selected);
-      color: var(--alinea-selected-foreground);
     }
 
     &.is-drop {
@@ -110,13 +101,72 @@
       }
     }
 
+    &.is-selected {
+      background: var(--alinea-selected);
+      color: var(--alinea-selected-foreground);
+    }
+    &.is-selected &-label-itemName {
+      font-weight: 600;
+    }
+    &.is-parentSelected {
+      background: var(--alinea-selected-faded);
+      color: var(--alinea-selected-foreground);
+      border-radius: 0;
+
+      &:not(:has(+ &)) {
+        border-bottom-left-radius: var(--alinea-border-radius);
+        border-bottom-right-radius: var(--alinea-border-radius);
+      }
+    }
+    &:has(+ &.is-parentSelected) {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    &.is-archived {
+      color: var(--alinea-variant-disabled-foreground);
+      &.is-selected {
+        background: var(--alinea-variant-disabled-background);
+      }
+      &.is-parentSelected {
+        background: color-mix(
+          in srgb,
+          var(--alinea-variant-disabled-background) 40%,
+          transparent
+        );
+      }
+    }
+
+    &.is-unpublished {
+      color: var(--alinea-variant-create-foreground);
+      &.is-selected {
+        background: var(--alinea-variant-create-background);
+      }
+      &.is-parentSelected {
+        background: color-mix(
+          in srgb,
+          var(--alinea-variant-create-background) 40%,
+          transparent
+        );
+      }
+    }
+
+    &.is-archived &-label-itemName,
+    &.is-untranslated &-label-itemName {
+      opacity: 0.7;
+    }
+
+    &.is-selected.is-archived &-label-itemName {
+      opacity: 1;
+    }
+
     &-label {
       height: 100%;
       flex: 1 0 0;
       text-align: left;
       display: flex;
       align-items: center;
-      padding: 0 12px;
+      padding: 0 12px 0 0;
       min-width: 0;
       cursor: pointer;
 
@@ -126,32 +176,20 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         font-size: 13px;
+        min-width: 50px;
+        padding-right: 8px;
       }
-    }
-
-    &.is-selected &-label-itemName {
-      font-weight: 600;
-    }
-
-    &.is-archived &-label-itemname,
-    &.is-unpublished &-label-itemName,
-    &.is-untranslated &-label-itemName {
-      opacity: 0.5;
     }
 
     &-arrow {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 20px;
-      margin-left: auto;
-      height: 20px;
+      width: 11px;
+      //margin-left: auto;
+      height: 100%;
       flex-shrink: 0;
-      color: hsla(var(--alinea-negative), 0.5);
-    }
-
-    &.is-selected &-arrow {
-      color: var(--alinea-selected-foreground);
+      cursor: pointer;
     }
   }
 
@@ -164,26 +202,40 @@
     :global(.rct-tree-item-title-container-selected) & {
       font-weight: 600;
     }
-
-    &.is-untranslated {
-      opacity: 0.7;
-    }
   }
 
   &-status {
     flex-shrink: 0;
-    border-radius: 50%;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
+    gap: 6px;
     height: 16px;
-    font-size: 10px;
-    margin-left: 8px;
+    padding: 0 4px;
+    font-size: 11px;
+    margin-left: auto;
 
     &.is-draft {
-      background: #4e5fe6;
-      color: white;
+      color: var(--alinea-variant-info-foreground);
+      background: var(--alinea-variant-info-background);
+    }
+    &.is-unpublished {
+      color: var(--alinea-variant-create-foreground);
+      background: var(--alinea-variant-create-background);
+    }
+    &.is-archived {
+      color: var(--alinea-variant-disabled-foreground);
+      background: var(--alinea-variant-disabled-background);
+    }
+    &.is-untranslated {
+      color: var(--alinea-variant-disabled-foreground);
+      background: var(--alinea-variant-disabled-background);
+    }
+    &.is-children {
+      margin-left: auto;
+      background: #f5f5f5;
+      color: #1f1f1f;
     }
   }
 }

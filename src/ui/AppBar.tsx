@@ -17,6 +17,7 @@ export namespace AppBar {
       | 'untranslated'
       | 'revision'
       | 'transition'
+      | 'unpublished'
   }
 
   export function Root({variant, ...props}: RootProps) {
