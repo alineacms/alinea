@@ -36,7 +36,7 @@ export class GithubApi
     const currentSha = await this.shaAt(currentCommit)
 
     if (currentSha !== request.fromSha)
-      throw new ShaMismatchError(request.fromSha, currentSha)
+      throw new ShaMismatchError(currentSha, request.fromSha)
 
     const {author} = this.#options
 

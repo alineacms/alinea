@@ -20,6 +20,7 @@ import {Outcome, type OutcomeJSON, outcome} from 'alinea/core/Outcome'
 import type {User} from 'alinea/core/User'
 import {Workspace} from 'alinea/core/Workspace'
 import type {CommitRequest} from 'alinea/core/db/CommitRequest'
+import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
 import {base64} from 'alinea/core/util/Encoding'
 import {verify} from 'alinea/core/util/JWT'
@@ -117,7 +118,13 @@ export class CloudRemote implements RemoteConnection {
           })
         })
       )
-    )
+    ).catch<{sha: string}>(error => {
+      const isObject = error && typeof error === 'object'
+      if (isObject && 'expectedSha' in error && 'actualSha' in error) {
+        throw new ShaMismatchError(error.actualSha, error.expectedSha)
+      }
+      throw error
+    })
   }
 
   async authenticate(request: Request) {
