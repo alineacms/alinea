@@ -11,7 +11,7 @@ import {
   GithubSource,
   type GithubSourceOptions
 } from 'alinea/core/source/GithubSource'
-import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError.js'
+import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {base64, btoa} from 'alinea/core/util/Encoding'
 import {join} from 'alinea/core/util/Paths'
 
