@@ -9,6 +9,7 @@ const Page = Config.document('Page', {
   contains: ['Page'],
   fields: {}
 })
+
 const main = Config.workspace('Main', {
   source: 'content',
   roots: {pages: Config.root('Pages', {})}
@@ -16,6 +17,73 @@ const main = Config.workspace('Main', {
 const cms = createCMS({
   schema: {Page},
   workspaces: {main}
+})
+
+test('new entries default to published', async () => {
+  const db = new LocalDB(cms.config)
+  const page = await db.create({
+    type: Page,
+    set: {path: 'page1'}
+  })
+  test.is(page._status, 'published')
+})
+
+test('creating new child defaults to archived when parent is archived', async () => {
+  const db = new LocalDB(cms.config)
+  const parent = await db.create({
+    type: Page,
+    set: {path: 'page1'},
+    status: 'archived'
+  })
+  const child = await db.create({
+    type: Page,
+    parentId: parent._id,
+    set: {path: 'child'}
+  })
+  // Dynamically retrieving the archived status inherits from parent
+  const archivedChild = await db.get({
+    id: child._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedChild.status, 'archived')
+})
+
+test('archive action', async () => {
+  const db = new LocalDB(cms.config)
+  const parent = await db.create({
+    type: Page,
+    set: {path: 'page1'}
+  })
+  const sub1 = await db.create({
+    type: Page,
+    parentId: parent._id,
+    set: {path: 'sub1'}
+  })
+  const sub2 = await db.create({
+    type: Page,
+    parentId: parent._id,
+    set: {path: 'sub2'}
+  })
+  await db.archive({id: parent._id})
+  const archivedParent = await db.get({
+    id: parent._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedParent.status, 'archived')
+  const archivedSub1 = await db.get({
+    id: sub1._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedSub1.status, 'archived')
+  const archivedSub2 = await db.get({
+    id: sub2._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedSub2.status, 'archived')
 })
 
 test('persist archived over children', async () => {
@@ -150,4 +218,71 @@ test('unpublish action', async () => {
     status: 'draft'
   })
   test.is(draftSub.status, 'draft')
+})
+
+test('new entries default to published', async () => {
+  const db = new LocalDB(cms.config)
+  const page = await db.create({
+    type: Page,
+    set: {path: 'page1'}
+  })
+  test.is(page._status, 'published')
+})
+
+test('creating new child defaults to archived when parent is archived', async () => {
+  const db = new LocalDB(cms.config)
+  const parent = await db.create({
+    type: Page,
+    set: {path: 'page1'},
+    status: 'archived'
+  })
+  const child = await db.create({
+    type: Page,
+    parentId: parent._id,
+    set: {path: 'child'}
+  })
+  // Dynamically retrieving the archived status inherits from parent
+  const archivedChild = await db.get({
+    id: child._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedChild.status, 'archived')
+})
+
+test('archive action', async () => {
+  const db = new LocalDB(cms.config)
+  const parent = await db.create({
+    type: Page,
+    set: {path: 'page1'}
+  })
+  const sub1 = await db.create({
+    type: Page,
+    parentId: parent._id,
+    set: {path: 'sub1'}
+  })
+  const sub2 = await db.create({
+    type: Page,
+    parentId: parent._id,
+    set: {path: 'sub2'}
+  })
+  await db.archive({id: parent._id})
+  const archivedParent = await db.get({
+    id: parent._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedParent.status, 'archived')
+  const archivedSub1 = await db.get({
+    id: sub1._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedSub1.status, 'archived')
+  const archivedSub2 = await db.get({
+    id: sub2._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedSub2.status, 'archived')
 })
