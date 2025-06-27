@@ -230,6 +230,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       ? await db.first({
           select: Entry.data,
           id: copyFrom,
+          locale: locale,
           status: 'preferPublished'
         })
       : Type.initialValue(entryType)
