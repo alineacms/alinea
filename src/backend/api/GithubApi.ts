@@ -226,7 +226,6 @@ async function processChanges(
   return {additions, deletions}
 }
 
-// sync: fetch this first and run checks
 async function getLatestCommitOid({
   owner,
   repo,
