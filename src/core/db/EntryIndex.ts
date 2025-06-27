@@ -19,6 +19,7 @@ import MiniSearch from 'minisearch'
 import {createId} from '../Id.js'
 import type {ChangesBatch} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
+import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import {type Source, bundleContents} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
@@ -267,7 +268,9 @@ export class EntryIndex extends EventTarget {
   }
 
   #applyChanges(batch: ChangesBatch) {
-    const {changes} = batch
+    const {fromSha, changes} = batch
+    if (fromSha !== this.tree.sha)
+      throw new ShaMismatchError(fromSha, this.tree.sha)
     const recompute = new Set<string>()
     for (const change of changes) {
       if (!change.path.endsWith('.json')) continue
