@@ -169,11 +169,11 @@ export function createHandler({
         const mutations = await body
         await local.syncWith(cnx)
         const request = await local.request(mutations)
-        const {sha} = await cnx.write(request)
+        let {sha} = await cnx.write(request)
         if (sha === request.intoSha) {
           await local.write(request)
         } else {
-          await local.syncWith(cnx)
+          sha = await local.syncWith(cnx)
         }
         return Response.json({sha})
       }
