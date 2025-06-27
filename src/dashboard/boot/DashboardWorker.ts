@@ -1,12 +1,12 @@
 import type {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
+import type {GraphQuery} from 'alinea/core/Graph'
+import {getScope} from 'alinea/core/Scope'
+import {trigger} from 'alinea/core/Trigger'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import type {Mutation} from 'alinea/core/db/Mutation'
-import type {GraphQuery} from 'alinea/core/Graph'
-import {getScope} from 'alinea/core/Scope'
 import type {Source} from 'alinea/core/source/Source'
-import {trigger} from 'alinea/core/Trigger'
 import pLimit from 'p-limit'
 
 export class MutateEvent extends Event {
@@ -64,7 +64,6 @@ export class DashboardWorker extends EventTarget {
     return remote(async () => {
       const client = await this.#client
       return client.mutate(mutations).then(async () => {
-        ;(await this.db).logEntries()
         return this.sync()
       })
     })

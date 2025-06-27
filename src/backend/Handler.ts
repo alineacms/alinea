@@ -167,6 +167,7 @@ export function createHandler({
         expectUser()
         expectJson()
         const mutations = await body
+        await local.syncWith(cnx)
         const request = await local.request(mutations)
         const {sha} = await cnx.write(request)
         if (sha === request.intoSha) {
