@@ -73,12 +73,12 @@ export const entryRevisionAtoms = atomFamily((id: string) => {
 
 export function useDbUpdater(everySeconds = 30) {
   const db = useAtomValue(dbAtom)
-  const forceDbUpdate = () => db.sync()
   useEffect(() => {
+    const forceDbUpdate = () => db.sync()
     let interval: any = 0
     interval = setInterval(forceDbUpdate, everySeconds * 1000)
     return () => {
       clearInterval(interval)
     }
-  }, [everySeconds, forceDbUpdate])
+  }, [everySeconds, db])
 }
