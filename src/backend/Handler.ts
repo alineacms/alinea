@@ -199,7 +199,7 @@ export function createHandler({
       if (action === HandleAction.Tree && request.method === 'GET') {
         expectJson()
         const sha = string(url.searchParams.get('sha'))
-        await periodicSync(cnx)
+        await local.syncWith(cnx)
         const tree = await local.getTreeIfDifferent(sha)
         return Response.json(tree ?? null)
       }
