@@ -29,27 +29,28 @@ export class GithubSource implements Source {
     return current
   }
 
-  async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
-    const {contentDir, owner, repo, branch, authToken} = this.#options
+  async shaAt(ref: string): Promise<string> {
+    const {contentDir, owner, repo, authToken} = this.#options
     const parentDir = contentDir.split('/').slice(0, -1).join('/')
     const parentInfo = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${parentDir}?ref=${branch}`,
+      `https://api.github.com/repos/${owner}/${repo}/contents/${parentDir}?ref=${ref}`,
       {headers: {Authorization: `Bearer ${authToken}`}}
     )
     assert(parentInfo.ok, `Failed to get parent: ${parentInfo.statusText}`)
     const parents = await parentInfo.json()
     assert(Array.isArray(parents))
     const parent = parents.find(entry => entry.path === contentDir)
-    if (!parent) {
-      const result = ReadonlyTree.EMPTY
-      this.#current = result
-      if (sha !== result.sha) return result
-      return undefined
-    }
+    if (!parent) return ReadonlyTree.EMPTY.sha
     assert(typeof parent.sha === 'string')
-    if (parent.sha === sha) return undefined
+    return parent.sha
+  }
+
+  async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
+    const {branch, owner, repo, authToken} = this.#options
+    const remoteSha = await this.shaAt(branch)
+    if (remoteSha === sha) return undefined
     const treeInfo = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/git/trees/${parent.sha}?recursive=true`,
+      `https://api.github.com/repos/${owner}/${repo}/git/trees/${remoteSha}?recursive=true`,
       {headers: {Authorization: `Bearer ${authToken}`}}
     )
     assert(treeInfo.ok, `Failed to get tree: ${treeInfo.statusText}`)

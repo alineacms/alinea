@@ -11,6 +11,7 @@ import {
   GithubSource,
   type GithubSourceOptions
 } from 'alinea/core/source/GithubSource'
+import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError.js'
 import {base64, btoa} from 'alinea/core/util/Encoding'
 import {join} from 'alinea/core/util/Paths'
 
@@ -31,13 +32,26 @@ export class GithubApi
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
+    const currentCommit = await getLatestCommitOid(this.#options)
+    const currentSha = await this.shaAt(currentCommit)
+
+    if (currentSha !== request.fromSha)
+      throw new ShaMismatchError(request.fromSha, currentSha)
+
     const {author} = this.#options
+
     let commitMessage = request.description
     if (author) {
       commitMessage += `\n\nCo-authored-by: ${author.name} <${author.email}>`
     }
-    await applyChangesToRepo(this.#options, request.changes, commitMessage)
-    return this.getTree().then(tree => ({sha: tree.sha}))
+    const newCommit = await applyChangesToRepo(
+      this.#options,
+      currentCommit,
+      request.changes,
+      commitMessage
+    )
+
+    return {sha: await this.shaAt(newCommit)}
   }
 
   async revisions(file: string): Promise<Array<Revision>> {
@@ -140,6 +154,7 @@ async function getFileContentAtCommit(
 
 async function applyChangesToRepo(
   options: GithubOptions,
+  expectedHeadOid: string,
   changes: Array<CommitChange>,
   commitMessage: string
 ): Promise<string> {
@@ -159,14 +174,9 @@ async function applyChangesToRepo(
           repositoryNameWithOwner: `${owner}/${repo}`,
           branchName: branch
         },
-        message: {
-          headline: commitMessage
-        },
-        fileChanges: {
-          additions,
-          deletions
-        },
-        expectedHeadOid: await getLatestCommitOid(options)
+        message: {headline: commitMessage},
+        fileChanges: {additions, deletions},
+        expectedHeadOid
       }
     },
     authToken
