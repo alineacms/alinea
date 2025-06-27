@@ -3,11 +3,6 @@ import fs from 'node:fs/promises'
 import path from 'node:path/posix'
 import pDebounce from 'p-debounce'
 import pLimit from 'p-limit'
-import {
-  type CommitRequest,
-  checkCommit,
-  sourceChanges
-} from '../db/CommitRequest.js'
 import {accumulate} from '../util/Async.js'
 import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
@@ -106,16 +101,6 @@ export class FSSource implements Source {
         })
       )
     })
-  }
-
-  async write(request: CommitRequest) {
-    const local = await this.getTree()
-    checkCommit(local, request)
-    const contentChanges = sourceChanges(request)
-    await this.applyChanges(contentChanges)
-    const tree = local.clone()
-    tree.applyChanges(contentChanges)
-    return tree.getSha()
   }
 }
 
