@@ -52,15 +52,20 @@ export class DashboardWorker extends EventTarget {
     return db.sha
   }
 
-  async queue(id: string, mutations: Array<Mutation>): Promise<string> {
+  queue(id: string, mutations: Array<Mutation>): Promise<string> {
     return remote(async () => {
       const db = await this.db
       await db.mutate(mutations)
       const intoSha = db.sha
       const client = await this.#client
-      const {sha} = await client.mutate(mutations)
-      if (sha !== intoSha) return this.sync()
-      return intoSha
+      try {
+        const {sha} = await client.mutate(mutations)
+        if (sha !== intoSha) return db.syncWith(client)
+        return intoSha
+      } catch (error) {
+        await db.syncWith(client)
+        throw error
+      }
     })
   }
 
