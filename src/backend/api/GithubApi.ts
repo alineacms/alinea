@@ -189,7 +189,15 @@ async function applyChangesToRepo(
     },
     authToken
   ).then(result => {
-    return result.data.createCommitOnBranch.commit.oid
+    const commitId = result.data.createCommitOnBranch?.commit?.oid
+    if (!commitId) {
+      console.trace(result)
+      throw new HttpError(
+        500,
+        'Failed to create commit on branch: No commit ID returned'
+      )
+    }
+    return commitId
   })
 }
 
