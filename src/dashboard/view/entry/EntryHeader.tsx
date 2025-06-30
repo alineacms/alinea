@@ -190,12 +190,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         </>
       ) : (
         <>
-          <DropdownMenu.Item
-            className={styles.root.action()}
-            onClick={unPublish}
-          >
-            Unpublish
-          </DropdownMenu.Item>
+          {config.enableDrafts && (
+            <DropdownMenu.Item
+              className={styles.root.action()}
+              onClick={unPublish}
+            >
+              Unpublish
+            </DropdownMenu.Item>
+          )}
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={archivePublished}
