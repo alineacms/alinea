@@ -202,6 +202,12 @@ async function applyChangesToRepo(
           const [_, actual, expected] = match
           throw new ShaMismatchError(actual, expected)
         }
+        const expectedMessage = /Expected branch to point to "([a-z0-9]+)"/
+        const expectedMatch = error.message.match(expectedMessage)
+        if (expectedMatch) {
+          const actualSha = expectedMatch[1]
+          throw new ShaMismatchError(actualSha, expectedHeadOid)
+        }
       }
       throw error
     })
