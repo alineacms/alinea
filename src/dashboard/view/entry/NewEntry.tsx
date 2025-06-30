@@ -219,7 +219,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
     const {title, type: selected} = form.data()
-    if (!selected || !title) return
+    if (isCreating || !selected || !title) return
     setIsCreating(true)
     const path = slugify(title)
     const id = createId()
