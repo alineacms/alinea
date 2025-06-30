@@ -83,10 +83,18 @@ function graphQL(query: string, variables: object, token: string) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({query, variables})
-  }).then(async response => {
-    if (response.ok) return response.json()
-    throw new HttpError(response.status, await response.text())
   })
+    .then(async response => {
+      if (response.ok) return response.json()
+      throw new HttpError(response.status, await response.text())
+    })
+    .then(result => {
+      if (Array.isArray(result.errors) && result.errors.length > 0) {
+        const message = result.errors.map((e: any) => e.message).join('; ')
+        throw new Error(message)
+      }
+      return result
+    })
 }
 
 async function getFileCommitHistory(
@@ -180,7 +188,9 @@ async function applyChangesToRepo(
       }
     },
     authToken
-  ).then(result => result.data.createCommitOnBranch.commit.oid)
+  ).then(result => {
+    return result.data.createCommitOnBranch.commit.oid
+  })
 }
 
 async function processChanges(
