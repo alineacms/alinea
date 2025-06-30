@@ -91,6 +91,7 @@ function graphQL(query: string, variables: object, token: string) {
     .then(result => {
       if (Array.isArray(result.errors) && result.errors.length > 0) {
         const message = result.errors.map((e: any) => e.message).join('; ')
+        console.trace(result.errors)
         throw new Error(message)
       }
       return result
@@ -188,17 +189,22 @@ async function applyChangesToRepo(
       }
     },
     authToken
-  ).then(result => {
-    const commitId = result.data.createCommitOnBranch?.commit?.oid
-    if (!commitId) {
-      console.trace(result)
-      throw new HttpError(
-        500,
-        'Failed to create commit on branch: No commit ID returned'
-      )
-    }
-    return commitId
-  })
+  )
+    .then(result => {
+      const commitId = result.data.createCommitOnBranch.commit.oid
+      return commitId
+    })
+    .catch(error => {
+      if (error instanceof Error) {
+        const mismatchMessage = /is at ([a-z0-9]+) but expected ([a-z0-9]+)/
+        const match = error.message.match(mismatchMessage)
+        if (match) {
+          const [_, actual, expected] = match
+          throw new ShaMismatchError(actual, expected)
+        }
+      }
+      throw error
+    })
 }
 
 async function processChanges(
