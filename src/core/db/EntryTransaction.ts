@@ -154,6 +154,14 @@ export class EntryTransaction {
     let newIndex: string
     if (existing) {
       newIndex = existing.index
+      if (status === 'published') {
+        // Remove all different versions of the entry
+        const versions = index.byId.get(id)?.locales.get(locale)
+        if (versions)
+          for (const version of versions.values()) {
+            this.#tx.remove(version.filePath)
+          }
+      }
     } else {
       const previous =
         insertOrder === 'first' ? null : (siblings.at(-1) ?? null)
@@ -328,6 +336,11 @@ export class EntryTransaction {
     const childrenDir = paths.join(entry.parentDir, path)
     if (entry.locale !== null)
       this.#persistSharedFields(id, entry.locale, entry.type, entry.data)
+    const versions = index.byId.get(id)?.locales.get(locale)
+    if (versions)
+      for (const version of versions.values()) {
+        this.#tx.remove(version.filePath)
+      }
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.remove(entry.filePath)
     const record = createRecord({...entry, path}, 'published')
@@ -336,24 +349,6 @@ export class EntryTransaction {
     if (pathChange) {
       this.#tx.remove(`${entry.parentDir}/${entry.path}.json`)
       this.#tx.rename(entry.childrenDir, childrenDir)
-      const versions = index.findMany(entry => {
-        return (
-          entry.id === id &&
-          entry.locale === locale &&
-          entry.status !== 'published' &&
-          entry.status !== status
-        )
-      })
-      for (const version of versions) {
-        this.#tx.rename(
-          version.filePath,
-          paths.join(entry.parentDir, `${path}.${version.status}.json`)
-        )
-        this.#tx.rename(
-          version.childrenDir,
-          paths.join(entry.parentDir, `${path}`)
-        )
-      }
     }
     this.#messages.push(this.#reportOp('publish', entry.title))
     return this

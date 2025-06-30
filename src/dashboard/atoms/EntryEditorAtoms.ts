@@ -10,7 +10,7 @@ import {getType} from 'alinea/core/Internal'
 import {Root} from 'alinea/core/Root'
 import {type EntryUrlMeta, Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
-import {CreateOp, DiscardOp, type Operation} from 'alinea/core/db/Operation'
+import {} from 'alinea/core/db/Operation'
 import {
   entryFileName,
   entryFilepath,
@@ -380,25 +380,16 @@ export function createEntryEditor(entryData: EntryData) {
     if (!set(confirmErrorsAtom)) return
     const db = get(dbAtom)
     const entry = await getDraftEntry({status: 'published'})
-    const operations = Array<Operation>(
-      new DiscardOp({
-        id: entry.id,
-        locale: entry.locale,
-        status: 'draft'
-      }),
-      new CreateOp({
+    return set(action, {
+      transition: EntryTransition.PublishEdits,
+      result: db.create({
         type,
         id: entry.id,
         locale: entry.locale,
         status: 'published',
         set: entry.data,
         overwrite: true
-      })
-    )
-    const result = db.commit(...operations)
-    return set(action, {
-      transition: EntryTransition.PublishEdits,
-      result,
+      }),
       errorMessage: 'Could not complete publish action, please try again later',
       clearChanges: true
     })

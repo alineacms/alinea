@@ -286,3 +286,47 @@ test('archive action', async () => {
   })
   test.is(archivedSub2.status, 'archived')
 })
+
+test('publishing removes other statuses', async () => {
+  const db = new LocalDB(cms.config)
+  const page1 = await db.create({
+    type: Page,
+    set: {path: 'page1', title: 'Published'},
+    status: 'archived'
+  })
+  const page1Published = await db.create({
+    type: Page,
+    id: page1._id,
+    set: {path: 'page1', title: 'Draft'}
+  })
+  const published = await db.get({
+    id: page1._id,
+    select: Entry
+  })
+  test.is(published.status, 'published')
+})
+
+test('publishing action removes other statuses', async () => {
+  const db = new LocalDB(cms.config)
+  const page1 = await db.create({
+    type: Page,
+    set: {path: 'page1', title: 'Published'},
+    status: 'archived'
+  })
+  const page1Draft = await db.create({
+    type: Page,
+    id: page1._id,
+    status: 'draft',
+    set: {title: 'Draft'},
+    overwrite: true
+  })
+  await db.publish({
+    id: page1._id,
+    status: 'archived'
+  })
+  const published = await db.get({
+    id: page1._id,
+    select: Entry
+  })
+  test.is(published.status, 'published')
+})
