@@ -19,8 +19,8 @@ import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
+import {IcTwotoneDescription} from 'alinea/ui/icons/IcTwotoneDescription'
 import {IcTwotoneFolder} from 'alinea/ui/icons/IcTwotoneFolder'
-import {IcTwotoneInsertDriveFile} from 'alinea/ui/icons/IcTwotoneInsertDriveFile'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {useAtomValue} from 'jotai'
 import type {HTMLProps} from 'react'
@@ -137,9 +137,7 @@ const TreeItem = memo(function TreeItem({
         {
           <span className={styles.tree.item.icon()}>
             <Icon
-              icon={
-                icon ?? (isFolder ? IcTwotoneFolder : IcTwotoneInsertDriveFile)
-              }
+              icon={icon ?? (isFolder ? IcTwotoneFolder : IcTwotoneDescription)}
             />
           </span>
         }

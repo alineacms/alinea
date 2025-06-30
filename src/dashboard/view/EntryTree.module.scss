@@ -110,7 +110,7 @@
     }
     &.is-parentSelected {
       background: var(--alinea-selected-faded);
-      color: var(--alinea-selected-foreground);
+      // color: var(--alinea-selected-foreground);
       border-radius: 0;
 
       &:not(:has(+ &)) {
