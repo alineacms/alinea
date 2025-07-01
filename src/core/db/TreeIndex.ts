@@ -1,8 +1,10 @@
 import type {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
 import type {Source} from '../source/Source.js'
-import type {ReadonlyTree} from '../source/Tree.js'
+import {ReadonlyTree} from '../source/Tree.js'
+import {compareStrings} from '../source/Utils.js'
 import {entryInfo} from '../util/EntryFilenames.js'
+import {entries} from '../util/Objects.js'
 
 export async function buildIndex(config: Config, source: Source) {
   const tree = await source.getTree()
@@ -21,7 +23,13 @@ class Index {
 
   constructor(config: Config, root: Node) {
     this.#config = config
-    root.index(this)
+    for (const [key, workspace] of entries(config.workspaces)) {
+      const outer = root.children.get(key)
+      for (const [key, root] of entries(workspace)) {
+        const inner = outer.children.get(key)
+        this.entries.set(key, entry)
+      }
+    }
   }
 
   parseEntry(sha: string) {
@@ -30,22 +38,15 @@ class Index {
 }
 
 class Node {
-  #sha: string | undefined
   versions = new Map<EntryStatus, string>()
-  children?: Level
+  children = Level.EMPTY
 
-  get sha() {
-    if (this.#sha) return this.#sha
-    const all = []
-    for (const [status, sha] of this.versions) {
-      if (sha) all.push(`${status}:${sha}`)
-    }
+  sha() {
+    const shas = Array.from(this.versions.values())
     if (this.children) {
-      const childSha = this.children.sha
-      if (childSha) all.push(`tree:${childSha}`)
+      shas.push(this.children.sha)
     }
-    this.#sha = all.join(',')
-    return this.#sha
+    return shas.sort(compareStrings).join('')
   }
 
   index(into: Index, path: string = '') {
@@ -58,6 +59,7 @@ class Node {
 }
 
 class Level {
+  static EMPTY = new Level(ReadonlyTree.EMPTY)
   #tree: ReadonlyTree
   #nodes = new Map<string, Node>()
 
@@ -67,16 +69,16 @@ class Level {
       if (entry.type === 'blob') {
         const fileName = key.slice(0, -'.json'.length)
         const [name, status] = entryInfo(fileName)
-        const node = this.#get(name)
+        const node = this.get(name)
         node.versions.set(status, entry.sha)
       } else {
-        const node = this.#get(key)
+        const node = this.get(key)
         node.children = new Level(entry)
       }
     }
   }
 
-  #get(name: string): Node {
+  get(name: string): Node {
     if (this.#nodes.has(name)) return this.#nodes.get(name)!
     const node = new Node()
     this.#nodes.set(name, node)
