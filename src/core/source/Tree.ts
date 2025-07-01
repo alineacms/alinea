@@ -128,7 +128,8 @@ class TreeBase<Node extends TreeBase<Node>> {
 
   equals(other: ReadonlyTree | WriteableTree): boolean {
     if (other instanceof ReadonlyTree) return this.sha === other.sha
-    if (this.sha === other.sha) return true
+    const canCompare = this.sha && other.sha
+    if (canCompare && this.sha === other.sha) return true
     if (this.nodes.size !== other.nodes.size) return false
     for (const [name, entry] of this.nodes) {
       const otherEntry = other.nodes.get(name)
