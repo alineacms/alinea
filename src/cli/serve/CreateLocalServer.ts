@@ -85,7 +85,7 @@ export function createLocalServer(
     return handleApi(request, {
       isDev: true,
       handlerUrl: new URL(request.url.split('?')[0]),
-      apiKey: process.env.ALINEA_API_KEY ?? 'dev'
+      apiKey: process.env.ALINEA_API_KEY || 'dev'
     })
   }
   if (cmd === 'build') return {close() {}, handle: devHandler}
