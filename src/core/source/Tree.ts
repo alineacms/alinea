@@ -59,7 +59,7 @@ class TreeBase<Node extends TreeBase<Node>> {
   readonly type = 'tree' as const
   readonly mode: string = '040000'
   sha: string | undefined
-  protected nodes = new Map<string, Node | Leaf>()
+  nodes = new Map<string, Node | Leaf>()
 
   constructor(sha?: string) {
     this.sha = sha
