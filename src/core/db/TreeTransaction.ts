@@ -19,6 +19,7 @@ import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../source/Utils.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
+import type {EntryIndex} from './EntryIndex.js'
 import type {
   ArchiveMutation,
   CreateMutation,
@@ -31,7 +32,6 @@ import type {
   UpdateMutation,
   UploadFileMutation
 } from './Mutation.js'
-import type {TreeIndex} from './TreeIndex.js'
 
 type Op<T> = Omit<T, 'op'>
 
@@ -47,11 +47,11 @@ interface PathCandidate {
 export class Tree {
   #checks = [] as [path: string, sha: string][]
   #messages = [] as string[]
-  #index: TreeIndex
+  #index: EntryIndex
   #tx: SourceTransaction
   #fileChanges = [] as CommitChange[]
 
-  constructor(index: TreeIndex, source: Source, from: ReadonlyTree) {
+  constructor(index: EntryIndex, source: Source, from: ReadonlyTree) {
     if (index.sha !== from.sha) throw new ShaMismatchError(index.sha, from.sha)
     this.#index = index
     this.#tx = new SourceTransaction(source, from)
@@ -84,7 +84,7 @@ export class Tree {
     const i18n = getRoot(rootConfig).i18n
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
     else assert(locale === null, 'Invalid locale')
-    const existing = index.entries.get(id)
+    const existing = index.byId.get(id)
     if (existing) {
       parentId = existing.parentId
     }
@@ -153,7 +153,7 @@ export class Tree {
       newIndex = existing.index
       if (status === 'published') {
         // Remove all different versions of the entry
-        const versions = index.entries.get(id)?.locales.get(locale)
+        const versions = index.byId.get(id)?.locales.get(locale)
         if (versions)
           for (const version of versions.values()) {
             this.#tx.remove(version.filePath)
@@ -333,7 +333,7 @@ export class Tree {
     const childrenDir = paths.join(entry.parentDir, path)
     if (entry.locale !== null)
       this.#persistSharedFields(id, entry.locale, entry.type, entry.data)
-    const versions = index.entries.get(id)?.locales.get(locale)
+    const versions = index.byId.get(id)?.locales.get(locale)
     if (versions)
       for (const version of versions.values()) {
         this.#tx.remove(version.filePath)
@@ -425,7 +425,7 @@ export class Tree {
       const newKeys = generateNKeysBetween(null, null, siblingList.length)
       for (const [i, key] of newKeys.entries()) {
         const id = siblingList[i].id
-        const node = index.entries.get(id)
+        const node = index.byId.get(id)
         assert(node)
         for (const child of node.entries()) {
           const record = createRecord(

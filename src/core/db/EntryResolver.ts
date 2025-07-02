@@ -30,7 +30,7 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
 import {assert, compareStrings} from '../source/Utils.js'
-import type {EntryFilter, EntryIndex} from './EntryIndex.js'
+import type {EntryFilter, EntryIndex} from './EntryIndex.ts'
 import {LinkResolver} from './LinkResolver.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))

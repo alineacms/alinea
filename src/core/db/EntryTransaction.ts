@@ -19,7 +19,7 @@ import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../source/Utils.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
-import type {EntryIndex} from './EntryIndex.js'
+import type {EntryIndex} from './EntryIndex.ts'
 import type {
   ArchiveMutation,
   CreateMutation,
@@ -130,7 +130,7 @@ export class EntryTransaction {
       this.#rename(existing!.id, locale, path)
     }
     if (overwrite && existing?.type === 'MediaFile') {
-      const [prev] = existing.entries
+      const [prev] = existing.entries()
       assert(prev, 'Previous entry not found')
       this.removeFile({
         location: paths.join(
@@ -430,7 +430,7 @@ export class EntryTransaction {
         const id = siblingList[i].id
         const node = index.byId.get(id)
         assert(node)
-        for (const child of node.byFile.values()) {
+        for (const child of node.entries()) {
           const record = createRecord(
             {
               id,
