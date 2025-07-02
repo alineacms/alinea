@@ -1,29 +1,137 @@
-import {Config} from '../Config.js'
-import type {Entry, EntryData, EntryStatus} from '../Entry.js'
-import {type EntryRecord, parseRecord} from '../EntryRecord.js'
-import {getRoot} from '../Internal.js'
-import {Type} from '../Type.js'
+import {Config} from 'alinea/core/Config'
+import type {Entry, EntryStatus} from 'alinea/core/Entry'
+import {type EntryRecord, parseRecord} from 'alinea/core/EntryRecord'
+import {getRoot} from 'alinea/core/Internal'
+import {Page} from 'alinea/core/Page'
+import {Schema} from 'alinea/core/Schema'
+import {Type} from 'alinea/core/Type'
+import {entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
+import {entries, keys} from 'alinea/core/util/Objects'
+import {slugify} from 'alinea/core/util/Slugs'
+import MiniSearch from 'minisearch'
+import type {EntryData} from '../Entry.js'
 import type {Source} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../source/Utils.js'
 import {accumulate} from '../util/Async.js'
-import {entryInfo, entryUrl} from '../util/EntryFilenames.js'
-import {assign, keys} from '../util/Objects.js'
+import {assign} from '../util/Objects.js'
+
+interface Seed {
+  seedId: string
+  type: string
+  workspace: string
+  root: string
+  locale: string | null
+  data: Record<string, any>
+}
+
+const SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u
+const DIACRITIC = /\p{Diacritic}/gu
+
+export interface EntryFilter {
+  ids?: ReadonlyArray<string>
+  search?: string
+  condition?: (entry: Entry) => boolean
+}
 
 export class TreeIndex {
-  #config: Config
-  #entries = new Map<string, EntryNode>()
+  config: Config
+  entries = new Map<string, EntryNode>()
   #singleWorkspace: string | undefined
   #built = new WeakMap<EntryInfo, Entry>()
+  #seeds: Map<string, Seed>
+  #search!: MiniSearch
+  #sha = ReadonlyTree.EMPTY.sha
 
   constructor(config: Config) {
-    this.#config = config
+    this.config = config
+    this.#seeds = entrySeeds(config)
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
+    this.clear()
+  }
+
+  get sha() {
+    return this.#sha
+  }
+
+  findFirst(filter: (entry: Entry) => boolean): Entry | undefined {
+    const [entry] = this.findMany(filter)
+    return entry
+  }
+
+  *findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
+    for (const node of this.entries.values())
+      for (const entry of node.entries()) if (filter(entry)) yield entry
+  }
+
+  filter({ids, search, condition}: EntryFilter, preview?: Entry): Array<Entry> {
+    if (search) {
+      const entries = this.filter({ids, condition})
+      for (const entry of entries) {
+        if (!this.#search.has(entry.filePath)) {
+          this.updateSearch(entry)
+        }
+      }
+      return this.#search
+        .search(search, {
+          prefix: true,
+          fuzzy: 0.1,
+          boost: {title: 2},
+          filter: result => {
+            if (ids) return ids.includes(result.entry.id)
+            if (condition) return condition(result.entry)
+            return true
+          }
+        })
+        .map(result => result.entry)
+    }
+    const nodes = ids
+      ? ids.map(id => this.entries.get(id))
+      : this.entries.values()
+    const results = []
+    for (const node of nodes) {
+      if (!node) continue
+      for (const e of node.entries()) {
+        const entry =
+          preview && e.id === preview.id && e.locale === preview.locale
+            ? preview
+            : e
+        if (condition && !condition(entry)) continue
+        results.push(entry)
+      }
+    }
+    if (preview) {
+      if (!condition || condition?.(preview)) results.push(preview)
+    }
+    return results
+  }
+
+  async updateSearch(entry: Entry) {
+    this.#search.add({
+      id: entry.filePath,
+      title: entry.title,
+      searchableText: entry.searchableText,
+      entry
+    })
+  }
+
+  clear() {
+    this.#search = new MiniSearch({
+      fields: ['title', 'searchableText'],
+      storeFields: ['entry'],
+      tokenize(text) {
+        return text
+          .normalize('NFD')
+          .replace(DIACRITIC, '')
+          .split(SPACE_OR_PUNCTUATION)
+      }
+    })
   }
 
   async build(source: Source) {
+    this.clear()
     const entries = new Map<string, EntryNode>()
     const tree = await source.getTree()
     const root = TreeLevel.create(tree)
@@ -35,8 +143,12 @@ export class TreeIndex {
     let entry: Entry | undefined
     for (const info of todo) {
       const prebuilt = this.#built.get(info)
-      entry = prebuilt ?? this.create(info, blobs.get(info.sha)!, entry)
-      this.#built.set(info, entry)
+      if (prebuilt) {
+        entry = prebuilt
+      } else {
+        entry = this.create(info, blobs.get(info.sha)!, entry)
+        this.#built.set(info, entry)
+      }
       const node = entries.get(entry.id)
       if (!node) {
         const newNode = new EntryNode(entry)
@@ -49,7 +161,8 @@ export class TreeIndex {
         node.add(entry)
       }
     }
-    this.#entries = entries
+    this.entries = entries
+    this.#sha = tree.sha
   }
 
   create(
@@ -92,7 +205,7 @@ export class TreeIndex {
 
     let segmentIndex = 0
     const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
-    const workspaceConfig = this.#config.workspaces[workspace]
+    const workspaceConfig = this.config.workspaces[workspace]
     assert(workspaceConfig, `Invalid workspace: ${workspace} in ${file}`)
     const root = segments[segmentIndex++]
     const rootConfig = workspaceConfig[root]
@@ -124,7 +237,7 @@ export class TreeIndex {
         }
       }
     }
-    const entryType = this.#config.schema[type]
+    const entryType = this.config.schema[type]
     assert(entryType, `Invalid type: ${type} in ${file} (${workspace}/${root})`)
     const searchableText = Type.searchableText(entryType, data)
 
@@ -233,16 +346,32 @@ class EntryNode implements EntryData {
   level!: number
   index!: string
 
-  #locales = new Map<string | null, Map<EntryStatus, Entry>>()
+  locales = new Map<string | null, Map<EntryStatus, Entry>>()
 
   constructor(from: EntryData) {
     assign(this, from)
   }
 
+  pathOf(locale: string | null): string | undefined {
+    const versions = this.locales.get(locale)
+    if (!versions) return
+    const [version] = versions.values()
+    if (!version) return
+    return version.path
+  }
+
+  *entries() {
+    for (const locale of this.locales.values()) {
+      for (const entry of locale.values()) {
+        yield entry
+      }
+    }
+  }
+
   add(entry: Entry) {
-    if (!this.#locales.has(entry.locale))
-      this.#locales.set(entry.locale, new Map())
-    const locale = this.#locales.get(entry.locale)!
+    if (!this.locales.has(entry.locale))
+      this.locales.set(entry.locale, new Map())
+    const locale = this.locales.get(entry.locale)!
     locale.set(entry.status, entry)
 
     assert(this.id === entry.id, `Invalid ID: ${entry.id}`)
@@ -296,4 +425,63 @@ class Versions extends Map<EntryStatus, VersionInfo> {
     if (this.has('draft')) return 'draft'
     throw new Error('No main version found')
   }
+}
+
+function entrySeeds(config: Config): Map<string, Seed> {
+  const result = new Map<string, Seed>()
+  const typeNames = Schema.typeNames(config.schema)
+  for (const [workspaceName, workspace] of entries(config.workspaces)) {
+    for (const [rootName, root] of entries(workspace)) {
+      const {i18n} = getRoot(root)
+      const locales = i18n?.locales ?? [null]
+      for (const locale of locales) {
+        const pages: Array<readonly [string, Page]> = entries(root)
+        while (pages.length > 0) {
+          const [pagePath, page] = pages.shift()!
+          const path = pagePath.split('/').map(slugify).join('/')
+          if (!Page.isPage(page)) continue
+          const {type, fields = {}} = Page.data(page)
+          const filePath = Config.filePath(
+            config,
+            workspaceName,
+            rootName,
+            locale,
+            `${path}.json`
+          )
+          const nodePath = getNodePath(filePath)
+          const typeName = typeNames.get(type)
+          if (!typeName) continue
+          result.set(nodePath, {
+            seedId: `${rootName}/${path}`,
+            type: typeName,
+            locale: locale,
+            workspace: workspaceName,
+            root: rootName,
+            data: {
+              ...fields,
+              path: path.split('/').pop(),
+              title: fields.title ?? path
+            }
+          })
+          const children = entries(page).map(
+            ([childPath, child]) =>
+              [`${path}/${childPath}`, child as Page] as const
+          )
+          pages.push(...children)
+        }
+      }
+    }
+  }
+  return result
+}
+
+function getNodePath(filePath: string) {
+  const lastSlash = filePath.lastIndexOf('/')
+  const dir = filePath.slice(0, lastSlash)
+  const name = filePath.slice(lastSlash + 1)
+  const lastDot = name.lastIndexOf('.')
+  let base = lastDot === -1 ? name : name.slice(0, lastDot)
+  if (base.endsWith('.archived')) base = base.slice(0, -'.archived'.length)
+  if (base.endsWith('.draft')) base = base.slice(0, -'.draft'.length)
+  return `${dir}/${base}`
 }
