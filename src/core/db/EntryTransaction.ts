@@ -356,14 +356,13 @@ export class EntryTransaction {
 
   unpublish({id, locale}: Op<UnpublishMutation>) {
     const index = this.#index
-    const entry = index.findFirst(entry => {
-      return (
-        entry.id === id &&
-        entry.locale === locale &&
-        entry.status === 'published'
-      )
-    })
+    const versions = index.byId.get(id)?.locales.get(locale)
+    const entry = versions?.main
     assert(entry, `Entry not found: ${id}`)
+    for (const version of versions.values()) {
+      if (version.main) continue
+      this.#tx.remove(version.filePath)
+    }
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.rename(entry.filePath, `${entry.childrenDir}.draft.json`)
     this.#messages.push(this.#reportOp('unpublish', entry.title))
@@ -372,14 +371,13 @@ export class EntryTransaction {
 
   archive({id, locale}: Op<ArchiveMutation>) {
     const index = this.#index
-    const entry = index.findFirst(entry => {
-      return (
-        entry.id === id &&
-        entry.locale === locale &&
-        entry.status === 'published'
-      )
-    })
+    const versions = index.byId.get(id)?.locales.get(locale)
+    const entry = versions?.main
     assert(entry, `Entry not found: ${id}`)
+    for (const version of versions.values()) {
+      if (version.main) continue
+      this.#tx.remove(version.filePath)
+    }
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.rename(entry.filePath, `${entry.childrenDir}.archived.json`)
     this.#messages.push(this.#reportOp('archive', entry.title))

@@ -363,3 +363,43 @@ test('unique path check in unpublished', async () => {
   const first = await db.first({id: child1._id, select: Entry, status: 'draft'})
   test.ok(first)
 })
+
+test("it's possible to archive unpublished entries", async () => {
+  const db = new LocalDB(cms.config)
+  const unpublished = await db.create({
+    type: Page,
+    set: {path: 'page1', title: 'Unpublished'},
+    status: 'draft'
+  })
+  const child1 = await db.create({
+    type: Page,
+    parentId: unpublished._id,
+    set: {path: 'child1', title: 'Child 1'},
+    status: 'draft'
+  })
+  const child2 = await db.create({
+    type: Page,
+    parentId: unpublished._id,
+    set: {path: 'child2', title: 'Child 2'},
+    status: 'draft'
+  })
+  await db.archive({id: unpublished._id})
+  const archivedUnpublished = await db.get({
+    id: unpublished._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedUnpublished.status, 'archived')
+  const archivedChild1 = await db.get({
+    id: child1._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedChild1.status, 'archived')
+  const archivedChild2 = await db.get({
+    id: child2._id,
+    select: Entry,
+    status: 'archived'
+  })
+  test.is(archivedChild2.status, 'archived')
+})
