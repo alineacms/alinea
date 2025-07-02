@@ -330,3 +330,36 @@ test('publishing action removes other statuses', async () => {
   })
   test.is(published.status, 'published')
 })
+
+test('unique path check in unpublished', async () => {
+  const data = {title: 'John Doe', path: 'john-doe'}
+  const db = new LocalDB(cms.config)
+  const unpublished = await db.create({
+    type: Page,
+    set: {path: 'page1', title: 'Unublished'},
+    status: 'draft'
+  })
+  const child1 = await db.create({
+    type: Page,
+    parentId: unpublished._id,
+    set: data,
+    status: 'draft'
+  })
+  const child2 = await db.create({
+    type: Page,
+    parentId: unpublished._id,
+    set: data,
+    status: 'draft'
+  })
+  await db.publish({
+    id: unpublished._id,
+    status: 'draft'
+  })
+  // This should not overwrite child1 which has the same path
+  await db.publish({
+    id: child2._id,
+    status: 'draft'
+  })
+  const first = await db.first({id: child1._id, select: Entry, status: 'draft'})
+  test.ok(first)
+})

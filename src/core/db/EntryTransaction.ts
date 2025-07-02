@@ -345,11 +345,11 @@ export class EntryTransaction {
     this.#tx.remove(entry.filePath)
     const record = createRecord({...entry, path}, 'published')
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
-    this.#tx.add(`${childrenDir}.json`, contents)
     if (pathChange) {
       this.#tx.remove(`${entry.parentDir}/${entry.path}.json`)
       this.#tx.rename(entry.childrenDir, childrenDir)
     }
+    this.#tx.add(`${childrenDir}.json`, contents)
     this.#messages.push(this.#reportOp('publish', entry.title))
     return this
   }
