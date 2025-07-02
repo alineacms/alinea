@@ -1,3 +1,4 @@
+import {parseCoAuthoredBy} from 'alinea/cli/util/CommitMessage'
 import type {
   CommitApi,
   HistoryApi,
@@ -19,6 +20,8 @@ export interface GithubOptions extends GithubSourceOptions {
   rootDir: string
   author?: {name: string; email: string}
 }
+
+const decoder = new TextDecoder()
 
 export class GithubApi
   extends GithubSource
@@ -133,9 +136,10 @@ async function getFileCommitHistory(
     ref: commit.oid,
     createdAt: new Date(commit.committedDate).getTime(),
     file,
-    user: commit.author
-      ? {name: commit.author.name, email: commit.author.email}
-      : undefined,
+    user:
+      (parseCoAuthoredBy(commit.message) ?? commit.author)
+        ? {name: commit.author.name, email: commit.author.email}
+        : undefined,
     description: commit.message
   }))
 }

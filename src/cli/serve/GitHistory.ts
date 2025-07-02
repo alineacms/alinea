@@ -4,6 +4,7 @@ import type {Config} from 'alinea/core/Config'
 import type {Revision} from 'alinea/core/Connection'
 import type {HistoryApi} from 'alinea/core/Connection'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
+import {parseCoAuthoredBy} from '../util/CommitMessage.js'
 
 const encoder = new TextEncoder()
 
@@ -29,22 +30,14 @@ export class GitHistory implements HistoryApi {
         return entry.includes('\n')
       })
       .map(entry => {
-        const [hash, timestamp, message, email, name, changedFile, ...rest] =
+        const [ref, timestamp, message, email, name, changedFile, ...rest] =
           entry.split('\n')
         const fileLocation = rest.length
           ? rest[rest.length - 1].split('\t').pop()!.trim()
           : file
-        const user = {name, email}
-        if (message?.includes('Co-authored-by')) {
-          const coAuthors = message
-            .split('Co-authored-by:')
-            .slice(1)
-            .map(line => line.split('<').pop()!.split('>')[0])
-          user.email = coAuthors[0] || email
-          user.name = coAuthors[1] || name
-        }
+        const user = parseCoAuthoredBy(message) ?? {name, email}
         return {
-          ref: hash,
+          ref,
           createdAt: Number.parseInt(timestamp) * 1000,
           description: message,
           file: fileLocation,
