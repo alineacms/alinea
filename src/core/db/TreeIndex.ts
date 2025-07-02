@@ -4,19 +4,13 @@ import {type EntryRecord, parseRecord} from '../EntryRecord.js'
 import {getRoot} from '../Internal.js'
 import {Type} from '../Type.js'
 import type {Source} from '../source/Source.js'
-import type {ReadonlyTree} from '../source/Tree.js'
+import {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../source/Utils.js'
 import {accumulate} from '../util/Async.js'
 import {entryInfo, entryUrl} from '../util/EntryFilenames.js'
 import {assign, keys} from '../util/Objects.js'
 
-export async function buildIndex(config: Config, source: Source) {
-  const index = new Index(config)
-  await index.build(source)
-  return index
-}
-
-class Index {
+export class TreeIndex {
   #config: Config
   #entries = new Map<string, EntryNode>()
   #singleWorkspace: string | undefined
@@ -32,7 +26,7 @@ class Index {
   async build(source: Source) {
     const entries = new Map<string, EntryNode>()
     const tree = await source.getTree()
-    const root = new Level(tree)
+    const root = TreeLevel.create(tree)
     const todo = Array.from(root.index())
     const shas = todo
       .filter(info => !this.#built.has(info))
@@ -42,6 +36,7 @@ class Index {
     for (const info of todo) {
       const prebuilt = this.#built.get(info)
       entry = prebuilt ?? this.create(info, blobs.get(info.sha)!, entry)
+      this.#built.set(info, entry)
       const node = entries.get(entry.id)
       if (!node) {
         const newNode = new EntryNode(entry)
@@ -175,58 +170,57 @@ interface EntryInfo {
   main: boolean
 }
 
-class Level {
-  static #prebuilt = new WeakMap<ReadonlyTree, Level>()
+class TreeLevel {
   #tree: ReadonlyTree
-  nodes = new Map<string, Node>()
+  #versions: Versions
+  #segments: Array<string>
+  #children = new Map<string, TreeLevel>()
 
-  constructor(tree: ReadonlyTree) {
+  private constructor(tree: ReadonlyTree, segments: Array<string>) {
     this.#tree = tree
-    const previous = Level.#prebuilt.get(tree)
-    if (previous && previous.#tree.sha === tree.sha) return previous
+    this.#segments = segments
+    this.#versions = new Versions(segments)
     for (const [key, entry] of tree.nodes) {
       if (entry.type === 'blob') {
         const fileName = key.slice(0, -'.json'.length)
         const [name, status] = entryInfo(fileName)
-        const node = this.get(name)
-        node.versions.set(status, {sha: entry.sha})
+        const level = this.#create(name)
+        level.#versions.set(status, {sha: entry.sha})
       } else {
-        const node = this.get(key)
-        node.children = new Level(entry)
+        this.#create(key)
       }
     }
   }
 
-  get(name: string): Node {
-    if (this.nodes.has(name)) return this.nodes.get(name)!
-    const node = new Node()
-    this.nodes.set(name, node)
+  static #cached = new Map<string, TreeLevel>()
+  static create(tree: ReadonlyTree, segments: Array<string> = []) {
+    const key = [tree.sha, ...segments].join('.')
+    if (TreeLevel.#cached.has(key)) return TreeLevel.#cached.get(key)!
+    const level = new TreeLevel(tree, segments)
+    TreeLevel.#cached.set(key, level)
+    return level
+  }
+
+  #create(name: string): TreeLevel {
+    if (this.#children.has(name)) return this.#children.get(name)!
+    const children = this.#tree.get(name)
+    const node = TreeLevel.create(
+      children?.type === 'tree' ? children : ReadonlyTree.EMPTY,
+      this.#segments.concat(name)
+    )
+    this.#children.set(name, node)
     return node
   }
 
-  get sha() {
-    return this.#tree.sha
-  }
-
-  *index(segments: Array<string> = []) {
-    for (const [name, node] of this.nodes) {
-      yield* node.index(segments.concat(name))
-    }
-  }
-}
-
-class Node {
-  versions = new Versions()
-  children?: Level;
-
-  *index(segments: Array<string>): Generator<EntryInfo> {
-    let selfId: string | undefined
-    if (this.versions.size > 0) {
-      for (const status of this.versions.keys()) {
-        yield this.versions.info(status, segments)
+  *index(): Generator<EntryInfo> {
+    if (this.#versions.size > 0) {
+      for (const status of this.#versions.keys()) {
+        yield this.#versions.info(status)
       }
     }
-    if (this.children) yield* this.children.index(segments)
+    for (const node of this.#children.values()) {
+      yield* node.index()
+    }
   }
 }
 
@@ -271,19 +265,23 @@ interface VersionInfo {
 }
 
 class Versions extends Map<EntryStatus, VersionInfo> {
-  #cache = new Map<string, EntryInfo>()
-  info(status: EntryStatus, segments: Array<string>): EntryInfo {
-    const key = segments.concat(status).join('.')
-    let info = this.#cache.get(key)
+  #cache = new Map<EntryStatus, EntryInfo>()
+  #segments: Array<string>
+  constructor(segments: Array<string>) {
+    super()
+    this.#segments = segments
+  }
+  info(status: EntryStatus): EntryInfo {
+    let info = this.#cache.get(status)
     if (info) return info
     info = {
       sha: this.get(status)!.sha,
-      segments,
+      segments: this.#segments,
       status,
       active: this.active === status,
       main: this.main === status
     }
-    this.#cache.set(key, info)
+    this.#cache.set(status, info)
     return info as EntryInfo
   }
   get active(): EntryStatus {
