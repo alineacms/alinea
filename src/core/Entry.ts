@@ -9,30 +9,39 @@ export const entryStatuses = Array<EntryStatus>(
   'archived'
 )
 
-export interface Entry {
+export interface EntryData {
   id: string
-  status: EntryStatus
-  title: string
+  parentId: string | null
   type: string
-  seeded: string | null
   workspace: string
   root: string
   level: number
-  filePath: string
+  index: string
+}
+
+export interface EntryLanguageData extends EntryData {
+  path: string
   parentDir: string
   childrenDir: string
-  index: string
-  parentId: string | null
   locale: string | null
+  seeded: string | null
+}
+
+export interface EntryVersionData extends EntryLanguageData {
+  status: EntryStatus
+  title: string
+  filePath: string
   rowHash: string
+  fileHash: string
   active: boolean
   main: boolean
-  path: string
-  fileHash: string
   url: string
   data: Record<string, any>
   searchableText: string
 }
+
+export interface Entry extends EntryVersionData {}
+
 export const Entry = {
   id: new Expr<string>({type: 'entryField', name: 'id'}),
   status: new Expr<EntryStatus>({type: 'entryField', name: 'status'}),
