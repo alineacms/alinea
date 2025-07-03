@@ -95,62 +95,92 @@ export class GithubApi
 
   async #getFileCommitHistory(file: string): Promise<Array<Revision>> {
     const {owner, repo, branch, authToken, rootDir} = this.#options
-    const versions = fileVersions(file)
-    const query = versions
-      .map((file, index) => {
-        const alias = `file${index}`
-        const path = join(rootDir, file)
-        return `
-      ${alias}: history(path: "${path}", first: 100) {
-        nodes {
-          oid
-          committedDate
-          message
-          author {
-            name
-            email
-          }
-        }
-      }
-    `
-      })
-      .join('')
-    const result = await this.#graphQL(
-      `query GetFileHistory($owner: String!, $repo: String!, $branch: String!) {
-      repository(owner: $owner, name: $repo) {
-        ref(qualifiedName: $branch) {
-          target {
-            ... on Commit {
-              ${query}
+    // Support multiple files and follow rename history
+    const seen = new Set<string>()
+    const queue = fileVersions(file)
+    const allRevisions = Array<Revision>()
+    const maxRequests = 3
+    let requestCount = 0
+
+    while (queue.length) {
+      if (requestCount === maxRequests) break
+      requestCount++
+      // Get history for all file versions of the current file
+      const versions = [...queue].filter(v => !seen.has(v))
+      for (const v of versions) seen.add(v)
+      queue.length = 0
+      const aliasMap = versions.map((v, idx) => ({
+        alias: `file${idx}`,
+        version: v,
+        path: join(rootDir, v)
+      }))
+      const query = aliasMap
+        .map(
+          ({alias, path}) => `
+          ${alias}: history(path: "${path}", first: 100) {
+            nodes {
+              oid
+              committedDate
+              message
+              author { name email }
+            }
+          }`
+        )
+        .join('')
+
+      const gql = `
+        query GetFileHistory($owner: String!, $repo: String!, $branch: String!) {
+          repository(owner: $owner, name: $repo) {
+            ref(qualifiedName: $branch) {
+              target { ... on Commit {${query}} }
             }
           }
+        }`
+      const result = await this.#graphQL(gql, {owner, repo, branch}, authToken)
+
+      for (const {alias, version, path} of aliasMap) {
+        const commits = result.data.repository.ref.target[alias]?.nodes || []
+        if (!commits.length) continue
+
+        // Add revisions
+        allRevisions.push(
+          ...commits.map((commit: any) => ({
+            ref: commit.oid,
+            createdAt: new Date(commit.committedDate).getTime(),
+            file: version,
+            user:
+              parseCoAuthoredBy(commit.message) ??
+              (commit.author
+                ? {name: commit.author.name, email: commit.author.email}
+                : undefined),
+            description: commit.message
+          }))
+        )
+
+        // Follow rename of the earliest commit
+        const earliest = commits[commits.length - 1].oid
+        const res = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/commits/${earliest}`,
+          {headers: {Authorization: `Bearer ${authToken}`}}
+        )
+        if (!res.ok) throw new HttpError(res.status, await res.text())
+
+        const commitData = await res.json()
+        const fileEntry = Array.isArray(commitData.files)
+          ? commitData.files.find((f: any) => f.filename === path)
+          : undefined
+        const prev = fileEntry?.previous_filename
+        if (prev) {
+          const prefix = rootDir ? `${rootDir}/` : ''
+          const relative = prev.startsWith(prefix)
+            ? prev.slice(prefix.length)
+            : prev
+          queue.push(...fileVersions(relative))
         }
       }
-    }`,
-      {owner, repo, branch},
-      authToken
-    )
-    const results = []
-
-    for (const [index, file] of versions.entries()) {
-      const alias = `file${index}`
-      const commits = result.data.repository.ref.target[alias]?.nodes || []
-
-      results.push(
-        ...commits.map((commit: any) => ({
-          ref: commit.oid,
-          createdAt: new Date(commit.committedDate).getTime(),
-          file,
-          user:
-            (parseCoAuthoredBy(commit.message) ?? commit.author)
-              ? {name: commit.author.name, email: commit.author.email}
-              : undefined,
-          description: commit.message
-        }))
-      )
     }
 
-    return results
+    return allRevisions.sort((a, b) => b.createdAt - a.createdAt)
   }
 
   async #getFileContentAtCommit(
