@@ -169,6 +169,10 @@ const internalPlugin: Plugin = {
           : `./${path.relative(args.resolveDir, localFile)}.js`
         return {path: relative, external: true}
       }
+      if (args.path.endsWith('.js'))
+        throw new Error(
+          `Remove file extension on absolute import: ${args.path} in ${args.importer}`
+        )
       return {path: args.path, external: true}
     })
   }

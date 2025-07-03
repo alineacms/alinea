@@ -14,7 +14,7 @@ import {
 } from 'alinea/core/source/GithubSource'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {base64, btoa} from 'alinea/core/util/Encoding'
-import {fileVersions} from 'alinea/core/util/EntryFilenames.js'
+import {fileVersions} from 'alinea/core/util/EntryFilenames'
 import {join} from 'alinea/core/util/Paths'
 
 export interface GithubOptions extends GithubSourceOptions {
