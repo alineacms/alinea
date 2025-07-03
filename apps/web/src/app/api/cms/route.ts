@@ -1,10 +1,10 @@
 import {cms} from '@/cms'
-import {db} from '@vercel/postgres'
+//import {db} from '@vercel/postgres'
 import {createHandler} from 'alinea/next'
 
 const handler = createHandler({
-  cms,
-  backend: {
+  cms
+  /*backend: {
     database: {
       driver: '@vercel/postgres',
       client: db
@@ -23,7 +23,7 @@ const handler = createHandler({
       repo: process.env.ALINEA_GITHUB_REPO!,
       branch: process.env.ALINEA_GITHUB_BRANCH!
     }
-  }
+  }*/
 })
 
 export const GET = handler
