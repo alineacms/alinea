@@ -14,7 +14,8 @@ test('sync', async () => {
     repo: 'alinea',
     branch: 'main',
     authToken: process.env.GITHUB_AUTH_TOKEN!,
-    contentDir: 'apps/web/content/demo'
+    rootDir: 'apps/web',
+    contentDir: 'content/demo'
   })
   const batch = await diff(fsSource, ghSource)
   test.is(batch.changes.length, 0)

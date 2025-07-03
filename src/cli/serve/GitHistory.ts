@@ -4,6 +4,7 @@ import type {Config} from 'alinea/core/Config'
 import type {Revision} from 'alinea/core/Connection'
 import type {HistoryApi} from 'alinea/core/Connection'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
+import {fileVersions} from 'alinea/core/util/EntryFilenames'
 import {parseCoAuthoredBy} from '../util/CommitMessage.js'
 
 const encoder = new TextEncoder()
@@ -15,37 +16,40 @@ export class GitHistory implements HistoryApi {
   ) {}
 
   async revisions(file: string): Promise<Array<Revision>> {
-    const output = await execGit(this.rootDir, [
-      'log',
-      '--follow',
-      '--name-status',
-      '--pretty=format:%H%n%at%n%s%n%ae%n%an%n%f',
-      '--',
-      file
-    ])
-
-    const revisions = output
-      .split('\n\n')
-      .filter(entry => {
-        return entry.includes('\n')
-      })
-      .map(entry => {
-        const [ref, timestamp, message, email, name, changedFile, ...rest] =
-          entry.split('\n')
-        const fileLocation = rest.length
-          ? rest[rest.length - 1].split('\t').pop()!.trim()
-          : file
-        const user = parseCoAuthoredBy(message) ?? {name, email}
-        return {
-          ref,
-          createdAt: Number.parseInt(timestamp) * 1000,
-          description: message,
-          file: fileLocation,
-          user
-        }
-      })
-
-    return revisions
+    const versions = fileVersions(file)
+    const results = Array<Revision>()
+    for (const versioned of versions) {
+      const output = await execGit(this.rootDir, [
+        'log',
+        '--follow',
+        '--name-status',
+        '--pretty=format:%H%n%at%n%s%n%ae%n%an%n%f',
+        '--',
+        versioned
+      ])
+      const revisions = output
+        .split('\n\n')
+        .filter(entry => {
+          return entry.includes('\n')
+        })
+        .map(entry => {
+          const [ref, timestamp, message, email, name, changedFile, ...rest] =
+            entry.split('\n')
+          const fileLocation = rest.length
+            ? rest[rest.length - 1].split('\t').pop()!.trim()
+            : versioned
+          const user = parseCoAuthoredBy(message) ?? {name, email}
+          return {
+            ref,
+            createdAt: Number.parseInt(timestamp) * 1000,
+            description: message,
+            file: fileLocation,
+            user
+          }
+        })
+      results.push(...revisions)
+    }
+    return results
   }
 
   async revisionData(file: string, ref: string): Promise<EntryRecord> {
