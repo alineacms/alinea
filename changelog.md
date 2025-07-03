@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0]
+- Better support for drafts in Alinea. Drafts can be enabled using the config
+  option `enableDrafts: true`. Drafts and archived entries will now show their
+  status in the sidebar as well. Workflows are adjusted to be able to create a
+  draft entry, including draft children. These will show up as "unpublished" and
+  can be published in one go. Further stability improvements were made to 
+  updating entry statuses.
+
 ## [1.3.1]
 - Fix usage of cms.user() in api routes
 
