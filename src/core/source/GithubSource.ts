@@ -10,6 +10,7 @@ export interface GithubSourceOptions {
   owner: string
   repo: string
   branch: string
+  rootDir: string
   contentDir: string
 }
 
@@ -22,6 +23,13 @@ export class GithubSource implements Source {
     this.#options = options
   }
 
+  protected get contentLocation() {
+    const {contentDir, rootDir} = this.#options
+    if (contentDir.startsWith('/')) return contentDir.slice(1)
+    if (rootDir.endsWith('/')) return rootDir + contentDir
+    return `${rootDir}/${contentDir}`
+  }
+
   async getTree() {
     const current = this.#current
     const newTree = await this.getTreeIfDifferent(current.sha)
@@ -30,8 +38,8 @@ export class GithubSource implements Source {
   }
 
   async shaAt(ref: string): Promise<string> {
-    const {contentDir, owner, repo, authToken} = this.#options
-    const parentDir = contentDir.split('/').slice(0, -1).join('/')
+    const {owner, repo, authToken} = this.#options
+    const parentDir = this.contentLocation.split('/').slice(0, -1).join('/')
     const parentInfo = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/${parentDir}?ref=${ref}`,
       {headers: {Authorization: `Bearer ${authToken}`}}
@@ -39,7 +47,7 @@ export class GithubSource implements Source {
     assert(parentInfo.ok, `Failed to get parent: ${parentInfo.statusText}`)
     const parents = await parentInfo.json()
     assert(Array.isArray(parents))
-    const parent = parents.find(entry => entry.path === contentDir)
+    const parent = parents.find(entry => entry.path === this.contentLocation)
     if (!parent) return ReadonlyTree.EMPTY.sha
     assert(typeof parent.sha === 'string')
     return parent.sha

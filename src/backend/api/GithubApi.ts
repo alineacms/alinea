@@ -14,14 +14,12 @@ import {
 } from 'alinea/core/source/GithubSource'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {base64, btoa} from 'alinea/core/util/Encoding'
+import {fileVersions} from 'alinea/core/util/EntryFilenames.js'
 import {join} from 'alinea/core/util/Paths'
 
 export interface GithubOptions extends GithubSourceOptions {
-  rootDir: string
   author?: {name: string; email: string}
 }
-
-const decoder = new TextDecoder()
 
 export class GithubApi
   extends GithubSource
@@ -35,7 +33,7 @@ export class GithubApi
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
-    const currentCommit = await getLatestCommitOid(this.#options)
+    const currentCommit = await this.#getLatestCommitOid()
     const currentSha = await this.shaAt(currentCommit)
 
     if (currentSha !== request.fromSha)
@@ -47,8 +45,7 @@ export class GithubApi
     if (author) {
       commitMessage += `\n\nCo-authored-by: ${author.name} <${author.email}>`
     }
-    const newCommit = await applyChangesToRepo(
-      this.#options,
+    const newCommit = await this.#applyChangesToRepo(
       currentCommit,
       request.changes,
       commitMessage
@@ -58,99 +55,111 @@ export class GithubApi
   }
 
   async revisions(file: string): Promise<Array<Revision>> {
-    return getFileCommitHistory(this.#options, file)
+    return this.#getFileCommitHistory(file)
   }
 
   async revisionData(
     file: string,
     revisionId: string
   ): Promise<EntryRecord | undefined> {
-    const content = await getFileContentAtCommit(
-      this.#options,
-      file,
-      revisionId
-    )
+    const content = await this.#getFileContentAtCommit(file, revisionId)
     try {
       return content ? (JSON.parse(content) as EntryRecord) : undefined
     } catch (error) {
       return undefined
     }
   }
-}
 
-function graphQL(query: string, variables: object, token: string) {
-  return fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({query, variables})
-  })
-    .then(async response => {
-      if (response.ok) return response.json()
-      throw new HttpError(response.status, await response.text())
+  async #graphQL(query: string, variables: object, token: string) {
+    return fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({query, variables})
     })
-    .then(result => {
-      if (Array.isArray(result.errors) && result.errors.length > 0) {
-        const message = result.errors.map((e: any) => e.message).join('; ')
-        console.trace(result.errors)
-        throw new Error(message)
+      .then(async response => {
+        if (response.ok) return response.json()
+        throw new HttpError(response.status, await response.text())
+      })
+      .then(result => {
+        if (Array.isArray(result.errors) && result.errors.length > 0) {
+          const message = result.errors.map((e: any) => e.message).join('; ')
+          console.trace(result.errors)
+          throw new Error(message)
+        }
+        return result
+      })
+  }
+
+  async #getFileCommitHistory(file: string): Promise<Array<Revision>> {
+    const {owner, repo, branch, authToken, rootDir} = this.#options
+    const versions = fileVersions(file)
+    const query = versions
+      .map((file, index) => {
+        const alias = `file${index}`
+        const path = join(rootDir, file)
+        return `
+      ${alias}: history(path: "${path}", first: 100) {
+        nodes {
+          oid
+          committedDate
+          message
+          author {
+            name
+            email
+          }
+        }
       }
-      return result
-    })
-}
-
-async function getFileCommitHistory(
-  {owner, repo, branch, authToken, rootDir}: GithubOptions,
-  file: string
-): Promise<Array<Revision>> {
-  const result = await graphQL(
-    `query GetFileHistory($owner: String!, $repo: String!, $branch: String!, $path: String!) {
+    `
+      })
+      .join('')
+    const result = await this.#graphQL(
+      `query GetFileHistory($owner: String!, $repo: String!, $branch: String!) {
       repository(owner: $owner, name: $repo) {
         ref(qualifiedName: $branch) {
           target {
             ... on Commit {
-              history(path: $path, first: 100) {
-                nodes {
-                  oid
-                  committedDate
-                  message
-                  author {
-                    name
-                    email
-                  }
-                }
-              }
+              ${query}
             }
           }
         }
       }
     }`,
-    {owner, repo, branch, path: join(rootDir, file)},
-    authToken
-  )
-  const commits = result.data.repository.ref.target.history.nodes
+      {owner, repo, branch},
+      authToken
+    )
+    const results = []
 
-  return commits.map((commit: any) => ({
-    ref: commit.oid,
-    createdAt: new Date(commit.committedDate).getTime(),
-    file,
-    user:
-      (parseCoAuthoredBy(commit.message) ?? commit.author)
-        ? {name: commit.author.name, email: commit.author.email}
-        : undefined,
-    description: commit.message
-  }))
-}
+    for (const [index, file] of versions.entries()) {
+      const alias = `file${index}`
+      const commits = result.data.repository.ref.target[alias]?.nodes || []
 
-async function getFileContentAtCommit(
-  {owner, repo, authToken, rootDir}: GithubOptions,
-  file: string,
-  ref: string
-): Promise<string | undefined> {
-  const result = await graphQL(
-    `query GetFileContent($owner: String!, $repo: String!, $expression: String!) {
+      results.push(
+        ...commits.map((commit: any) => ({
+          ref: commit.oid,
+          createdAt: new Date(commit.committedDate).getTime(),
+          file,
+          user:
+            (parseCoAuthoredBy(commit.message) ?? commit.author)
+              ? {name: commit.author.name, email: commit.author.email}
+              : undefined,
+          description: commit.message
+        }))
+      )
+    }
+
+    return results
+  }
+
+  async #getFileContentAtCommit(
+    file: string,
+    ref: string
+  ): Promise<string | undefined> {
+    const {owner, repo, authToken, rootDir} = this.#options
+    const result = await this.#graphQL(
+      `query GetFileContent($owner: String!, $repo: String!, $expression: String!) {
       repository(owner: $owner, name: $repo) {
         object(expression: $expression) {
           ... on Blob {
@@ -159,115 +168,108 @@ async function getFileContentAtCommit(
         }
       }
     }`,
-    {owner, repo, expression: `${ref}:${join(rootDir, file)}`},
-    authToken
-  )
-  return result.data.repository.object?.text
-}
+      {owner, repo, expression: `${ref}:${join(rootDir, file)}`},
+      authToken
+    )
+    return result.data.repository.object?.text
+  }
 
-async function applyChangesToRepo(
-  options: GithubOptions,
-  expectedHeadOid: string,
-  changes: Array<CommitChange>,
-  commitMessage: string
-): Promise<string> {
-  const {additions, deletions} = await processChanges(options, changes)
-  const {owner, repo, branch, authToken} = options
-  return graphQL(
-    `mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {
+  async #applyChangesToRepo(
+    expectedHeadOid: string,
+    changes: Array<CommitChange>,
+    commitMessage: string
+  ): Promise<string> {
+    const {additions, deletions} = await this.#processChanges(changes)
+    const {owner, repo, branch, authToken} = this.#options
+    return this.#graphQL(
+      `mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {
       createCommitOnBranch(input: $input) {
         commit {
           oid
         }
       }
     }`,
-    {
-      input: {
-        branch: {
-          repositoryNameWithOwner: `${owner}/${repo}`,
-          branchName: branch
-        },
-        message: {headline: commitMessage},
-        fileChanges: {additions, deletions},
-        expectedHeadOid
-      }
-    },
-    authToken
-  )
-    .then(result => {
-      const commitId = result.data.createCommitOnBranch.commit.oid
-      return commitId
-    })
-    .catch(error => {
-      if (error instanceof Error) {
-        const mismatchMessage = /is at ([a-z0-9]+) but expected ([a-z0-9]+)/
-        const match = error.message.match(mismatchMessage)
-        if (match) {
-          const [_, actual, expected] = match
-          throw new ShaMismatchError(actual, expected)
+      {
+        input: {
+          branch: {
+            repositoryNameWithOwner: `${owner}/${repo}`,
+            branchName: branch
+          },
+          message: {headline: commitMessage},
+          fileChanges: {additions, deletions},
+          expectedHeadOid
         }
-        const expectedMessage = /Expected branch to point to "([a-z0-9]+)"/
-        const expectedMatch = error.message.match(expectedMessage)
-        if (expectedMatch) {
-          const actualSha = expectedMatch[1]
-          throw new ShaMismatchError(actualSha, expectedHeadOid)
+      },
+      authToken
+    )
+      .then(result => {
+        const commitId = result.data.createCommitOnBranch.commit.oid
+        return commitId
+      })
+      .catch(error => {
+        if (error instanceof Error) {
+          const mismatchMessage = /is at ([a-z0-9]+) but expected ([a-z0-9]+)/
+          const match = error.message.match(mismatchMessage)
+          if (match) {
+            const [_, actual, expected] = match
+            throw new ShaMismatchError(actual, expected)
+          }
+          const expectedMessage = /Expected branch to point to "([a-z0-9]+)"/
+          const expectedMatch = error.message.match(expectedMessage)
+          if (expectedMatch) {
+            const actualSha = expectedMatch[1]
+            throw new ShaMismatchError(actualSha, expectedHeadOid)
+          }
         }
-      }
-      throw error
-    })
-}
-
-async function processChanges(
-  {rootDir, contentDir}: GithubOptions,
-  changes: Array<CommitChange>
-): Promise<{
-  additions: {path: string; contents: string}[]
-  deletions: {path: string}[]
-}> {
-  const additions = Array<{path: string; contents: string}>()
-  const deletions = Array<{path: string}>()
-
-  for (const change of changes) {
-    switch (change.op) {
-      case 'addContent': {
-        additions.push({
-          path: join(contentDir, change.path),
-          contents: btoa(change.contents!)
-        })
-        break
-      }
-      case 'uploadFile': {
-        const file = join(rootDir, change.location)
-        additions.push({
-          path: file,
-          contents: await fetchUploadedContent(change.url)
-        })
-        break
-      }
-      case 'deleteContent': {
-        const file = join(contentDir, change.path)
-        deletions.push({path: file})
-        break
-      }
-      case 'removeFile': {
-        const file = join(rootDir, change.location)
-        deletions.push({path: file})
-        break
-      }
-    }
+        throw error
+      })
   }
 
-  return {additions, deletions}
-}
+  async #processChanges(changes: Array<CommitChange>): Promise<{
+    additions: {path: string; contents: string}[]
+    deletions: {path: string}[]
+  }> {
+    const {rootDir} = this.#options
+    const additions = Array<{path: string; contents: string}>()
+    const deletions = Array<{path: string}>()
 
-async function getLatestCommitOid({
-  owner,
-  repo,
-  branch,
-  authToken
-}: GithubOptions): Promise<string> {
-  return graphQL(
-    `query GetLatestCommit($owner: String!, $repo: String!, $branch: String!) {
+    for (const change of changes) {
+      switch (change.op) {
+        case 'addContent': {
+          additions.push({
+            path: join(this.contentLocation, change.path),
+            contents: btoa(change.contents!)
+          })
+          break
+        }
+        case 'uploadFile': {
+          const file = join(rootDir, change.location)
+          additions.push({
+            path: file,
+            contents: await this.#fetchUploadedContent(change.url)
+          })
+          break
+        }
+        case 'deleteContent': {
+          const file = join(this.contentLocation, change.path)
+          deletions.push({path: file})
+          break
+        }
+        case 'removeFile': {
+          const file = join(rootDir, change.location)
+          deletions.push({path: file})
+          break
+        }
+      }
+    }
+
+    return {additions, deletions}
+  }
+
+  async #getLatestCommitOid(): Promise<string> {
+    const {owner, repo, branch, authToken} = this.#options
+    return this.#graphQL(
+      `query GetLatestCommit($owner: String!, $repo: String!, $branch: String!) {
       repository(owner: $owner, name: $repo) {
         ref(qualifiedName: $branch) {
           target {
@@ -276,12 +278,13 @@ async function getLatestCommitOid({
         }
       }
     }`,
-    {owner, repo, branch},
-    authToken
-  ).then(result => result.data.repository.ref.target.oid)
-}
+      {owner, repo, branch},
+      authToken
+    ).then(result => result.data.repository.ref.target.oid)
+  }
 
-async function fetchUploadedContent(url: string): Promise<string> {
-  const response = await fetch(url)
-  return base64.stringify(new Uint8Array(await response.arrayBuffer()))
+  async #fetchUploadedContent(url: string): Promise<string> {
+    const response = await fetch(url)
+    return base64.stringify(new Uint8Array(await response.arrayBuffer()))
+  }
 }
