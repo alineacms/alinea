@@ -1,3 +1,4 @@
+import * as paths from 'alinea/core/util/Paths'
 import pLimit from 'p-limit'
 import {HttpError} from '../HttpError.js'
 import type {ChangesBatch} from './Change.js'
@@ -25,9 +26,7 @@ export class GithubSource implements Source {
 
   protected get contentLocation() {
     const {contentDir, rootDir} = this.#options
-    if (contentDir.startsWith('/')) return contentDir.slice(1)
-    if (rootDir.endsWith('/')) return rootDir + contentDir
-    return `${rootDir}/${contentDir}`
+    return paths.join(rootDir, contentDir)
   }
 
   async getTree() {
