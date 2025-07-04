@@ -2,21 +2,11 @@
 
 .root {
   position: relative;
-  background: var(--web-background-variant);
   padding: 30px 0;
   //border-top: 1px solid hsla(var(--web-negative-hsl), 0.09);
 
   @include ml {
     padding: 60px 0;
-  }
-
-  &-bg {
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    right: 0;
-    width: 100%;
-    fill: var(--web-background-variant);
   }
 
   &-theme {

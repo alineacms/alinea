@@ -1,20 +1,20 @@
-import {cms} from '@/cms'
 import styler, {type Styler} from '@alinea/styler'
 import type {Link as AnyLink} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
-import {HStack, Stack} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {MdiGithub} from 'alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
+import {cms} from '@/cms'
 import {Home} from '../schema/Home'
+import {Logo} from './branding/Logo'
 import {HeaderRoot, MobileMenu, SearchButton} from './Header.client'
 import css from './Header.module.scss'
-import {PageContainer} from './Page'
-import {Logo} from './branding/Logo'
 import {Link} from './nav/Link'
 import {NavTree} from './nav/NavTree'
+import {PageContainer} from './Page'
 
 const styles = styler(css)
 
@@ -88,43 +88,39 @@ function Menu({links}: MenuProps) {
       <HStack as="nav" center className={styles.root.nav()}>
         <HeaderLinks links={links} style={styles.root.nav.link} />
       </HStack>
-      <Stack.Right>
-        <HStack gap={12} center>
-          <SearchButton>
-            <button type="button" className={styles.root.social('search')}>
-              <IcRoundSearch className={styles.root.social.icon()} />
-            </button>
-          </SearchButton>
-          <a
-            href="https://github.com/alineacms/alinea"
-            target="_blank"
-            className={styles.root.social()}
-            rel="noreferrer"
-          >
-            <MdiGithub className={styles.root.social.icon()} />
-          </a>
-          <a
-            href="https://twitter.com/alineacms"
-            target="_blank"
-            className={styles.root.social()}
-            rel="noreferrer"
-          >
-            <MdiTwitterCircle className={styles.root.social.icon()} />
-          </a>
-          <a
-            href="https://www.alinea.cloud/app"
-            className={styles.root.dashboard()}
-          >
-            Dashboard
-          </a>
-          <label htmlFor="mobilemenu" className={styles.root.mobileButton()}>
-            <IcRoundHamburger
-              className={styles.root.mobileButton.hamburger()}
-            />
-            <IcRoundClose className={styles.root.mobileButton.close()} />
-          </label>
-        </HStack>
-      </Stack.Right>
+      <HStack gap={12} center className={styles.root.extra()}>
+        <SearchButton>
+          <button type="button" className={styles.root.social('search')}>
+            <IcRoundSearch className={styles.root.social.icon()} />
+          </button>
+        </SearchButton>
+        <a
+          href="https://github.com/alineacms/alinea"
+          target="_blank"
+          className={styles.root.social()}
+          rel="noreferrer"
+        >
+          <MdiGithub className={styles.root.social.icon()} />
+        </a>
+        <a
+          href="https://twitter.com/alineacms"
+          target="_blank"
+          className={styles.root.social()}
+          rel="noreferrer"
+        >
+          <MdiTwitterCircle className={styles.root.social.icon()} />
+        </a>
+        <a
+          href="https://www.alinea.cloud/app"
+          className={styles.root.dashboard()}
+        >
+          Dashboard
+        </a>
+        <label htmlFor="mobilemenu" className={styles.root.mobileButton()}>
+          <IcRoundHamburger className={styles.root.mobileButton.hamburger()} />
+          <IcRoundClose className={styles.root.mobileButton.close()} />
+        </label>
+      </HStack>
     </HStack>
   )
 }
