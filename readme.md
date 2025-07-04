@@ -1,7 +1,7 @@
 [![npm](https://img.shields.io/npm/v/alinea.svg)](https://npmjs.org/package/alinea)
 [![install size](https://packagephobia.com/badge?p=alinea)](https://packagephobia.com/result?p=alinea)
 
-# [![Alinea CMS logo](https://github.com/alineacms/alinea/raw/HEAD/apps/web/public/logo.svg)](https://alinea.sh)
+# [![Alinea CMS logo](https://github.com/alineacms/alinea/raw/HEAD/apps/web/public/logo.svg)](https://alineacms.com)
 
 Alinea is a modern content management system.
 
@@ -29,7 +29,7 @@ Open the dashboard to have a look around
 npx alinea dev
 ```
 
-[Start configuring types and fields →](https://alinea.sh/docs/configuration)
+[Start configuring types and fields →](https://alineacms.com/docs/configuration)
 
 ## Configure
 
@@ -50,7 +50,7 @@ const Blog = Config.document('Blog', {
 })
 ```
 
-[Type options and fields →](https://alinea.sh/docs/configuration)
+[Type options and fields →](https://alineacms.com/docs/configuration)
 
 ## Query
 
@@ -76,18 +76,18 @@ console.log(
 )
 ```
 
-[See the full api →](https://alinea.sh/docs/content/query)
+[See the full api →](https://alineacms.com/docs/content/query)
 
 Content is available during static site generation and when server side querying.  
 Content is bundled with your code and can be queried with zero network overhead.
 
-[How alinea bundles content →](https://alinea.sh/docs/content)
+[How alinea bundles content →](https://alineacms.com/docs/content)
 
 ## Deploy anywhere
 
 Alinea supports custom backends that can be hosted as a simple Node.js process or on serverless runtimes.
 
-[Setup your backend →](https://alinea.sh/docs/deploy)
+[Setup your backend →](https://alineacms.com/docs/deploy)
 
 ## How to contribute to this project
 

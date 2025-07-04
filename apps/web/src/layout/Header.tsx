@@ -153,7 +153,7 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
           <IcRoundSearch />
         </button>
       </SearchButton>
-      {/*<a href="https://demo.alinea.sh" target="_blank" className={style()}>
+      {/*<a href="https://demo.alineacms.com" target="_blank" className={style()}>
         Demo
       </a>*/}
     </>

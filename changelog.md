@@ -383,12 +383,12 @@
     })
     ```
 
-- Add the [mutation API](https://alinea.sh/docs/content/editing-content) (#374)
+- Add the [mutation API](https://alineacms.com/docs/content/editing-content) (#374)
 
   This introduces a commit method on CMS instances that can be used to mutate
   cms content. It can be used to create, update and delete Entries.
 
-- Add the [Query namespace](https://alinea.sh/docs/content/query)
+- Add the [Query namespace](https://alineacms.com/docs/content/query)
 
 ## [0.7.1]
 

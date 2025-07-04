@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
       metadata: Home.metadata
     }
   })
-  const appUrl = 'https://alinea.sh'
+  const appUrl = 'https://alineacms.com'
   const title = page.metadata?.title || page.title
   const ogTitle = page.metadata?.openGraph?.title || title
   const ogDescription =
@@ -107,7 +107,7 @@ export default async function HomePage() {
                 )}
                 {/*<WebTypo.Link
                   className={styles.hero.demo()}
-                  href="https://demo.alinea.sh"
+                  href="https://demo.alineacms.com"
                   target="_blank"
                 >
                   <div>
@@ -261,7 +261,7 @@ export default async function HomePage() {
             <div className={styles.home.demo()}>
               <iframe
                 title="Alinea demo"
-                src="https://demo.alinea.sh"
+                src="https://demo.alineacms.com"
                 className={styles.home.demo.inner()}
               />
             </div>
