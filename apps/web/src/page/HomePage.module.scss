@@ -6,11 +6,14 @@
   display: flex;
   flex-direction: column;
   gap: 30px;
+  padding-bottom: 40px;
 
   &-section {
     padding: 30px;
     border-radius: 24px;
     background-color: white;
+    display: flex;
+    align-items: center;
 
     &.is-highlight {
       background: var(--web-background-variant);
@@ -19,6 +22,11 @@
     &.is-accent {
       background: var(--web-accent);
       color: var(--web-accent-foreground);
+    }
+
+    &-screenshot {
+      width: 50%;
+      height: 100%;
     }
   }
 
@@ -82,7 +90,7 @@
 .hero {
   flex: 1;
   position: relative;
-  background-color: #88acf1;
+  background-color: #2d50f1;
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -91,7 +99,7 @@
   flex-direction: column;
   justify-content: center;
   gap: 80px;
-  padding: 120px 0;
+  padding: 80px 0;
   border-radius: 24px;
 
   &-demo {
@@ -100,14 +108,7 @@
   }
 
   &-screenshot {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 0 20px;
-    padding-bottom: 80px;
-
-    &-inner {
-      border-radius: 10px;
-      overflow: hidden;
-    }
+    position: sticky;
+    bottom: 0;
   }
 }

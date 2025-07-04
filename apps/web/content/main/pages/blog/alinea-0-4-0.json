@@ -2,7 +2,6 @@
   "_id": "2YlP39QVFZOzf94YMwDVrzd4gNz",
   "_type": "BlogPost",
   "_index": "Zy",
-  "_i18nId": "2YlP39QVFZOzf94YMwDVrzd4gNz",
   "title": "Alinea 0.4.0 ⚡",
   "publishDate": "2023-12-01",
   "author": {
@@ -176,12 +175,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Overall stability",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
+          "text": "Overall stability"
         }
       ]
     },
@@ -249,12 +243,13 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {
         "_id": "2i9FuSoeYtbbK9Oq7YNBJuygCit",
         "_type": "image",
         "_entry": "2i9FuEJofr5yFe9DuleODHjjWkm"
       },
+      "title": "",
       "description": ""
     }
   }

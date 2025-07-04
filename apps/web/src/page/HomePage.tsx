@@ -10,6 +10,7 @@ import {px} from 'alinea/ui/util/Units'
 import type {Metadata, MetadataRoute} from 'next'
 import type {ComponentType, PropsWithChildren} from 'react'
 import heroBg from '@/assets/hero-alinea.jpg'
+import screenshot from '@/assets/screenshot.png'
 import {cms} from '@/cms'
 import {
   IcBaselineCloudQueue,
@@ -25,6 +26,7 @@ import {PageContainer} from '@/layout/Page'
 import WebLayout from '@/layout/WebLayout'
 import {WebTypo} from '@/layout/WebTypo'
 import {Home} from '@/schema/Home'
+import {Image} from '../layout/Image'
 import {Link} from '../layout/nav/Link'
 import css from './HomePage.module.scss'
 
@@ -87,7 +89,7 @@ function Highlight({
 export default async function HomePage() {
   const home = await cms.get({type: Home})
   return (
-    <WebLayout>
+    <WebLayout footer={false}>
       <main className={styles.home()}>
         <PageContainer>
           <div
@@ -126,7 +128,7 @@ export default async function HomePage() {
                     Minimal setup
                   </Feature.Title>
                   <WebTypo.P>
-                    Go straight to content modeling without having to deal with
+                    Straightforward content modeling without{'\n'}dealing with
                     databases and migrations.
                   </WebTypo.P>
                 </WebTypo>
@@ -137,7 +139,7 @@ export default async function HomePage() {
                     Git based
                   </Feature.Title>
                   <WebTypo.P>
-                    Content is version controlled in your git repository. Easily
+                    Version controlled content in your repository.{'\n'}Easily
                     branch and feature test content changes.
                   </WebTypo.P>
                 </WebTypo>
@@ -149,7 +151,7 @@ export default async function HomePage() {
                   </Feature.Title>
                   <WebTypo.P>
                     An optimized, type-safe experience for Typescript users
-                    without overcomplicating things.
+                    without overcomplication.
                   </WebTypo.P>
                 </WebTypo>
               </Feature>
@@ -157,7 +159,7 @@ export default async function HomePage() {
           </VStack>
         </PageContainer>
 
-        <PageContainer>
+        {/*<PageContainer>
           <VStack gap={40}>
             <section className={styles.home.section()}>
               <WebTypo>
@@ -172,6 +174,13 @@ export default async function HomePage() {
                   the dashboard or working with the API.
                 </WebTypo.P>
               </WebTypo>
+
+              <Image
+                alt="Alinea content tree screenshot"
+                {...screenshot}
+                sizes="(max-width: 700px) 100vw, 700px"
+                className={styles.home.section.screenshot()}
+              />
             </section>
 
             <WebTypo.H2 style={{textAlign: 'center'}}>
@@ -257,46 +266,54 @@ export default async function HomePage() {
               />
             </div>
           </section>
+        </PageContainer>*/}
+
+        <PageContainer>
+          <HStack justify="space-between" gap={`${px(16)} ${px(30)}`} wrap>
+            <Highlight
+              href="/docs/content/live-previews"
+              icon={RiFlashlightFill}
+            >
+              Live previews
+            </Highlight>
+
+            <Highlight
+              icon={IcRoundPublish}
+              href="/blog/alinea-0-4-0#content-workflow"
+            >
+              Editorial workflow
+            </Highlight>
+
+            <Highlight icon={IcRoundInsertDriveFile} href="/docs/content/query">
+              Query engine
+            </Highlight>
+
+            <Highlight
+              icon={IcBaselineDashboardCustomize}
+              href="/docs/fields/custom-fields"
+            >
+              Custom fields
+            </Highlight>
+
+            <Highlight
+              icon={IcBaselineWorkspaces}
+              href="/docs/configuration/workspaces"
+            >
+              Workspaces
+            </Highlight>
+
+            <Highlight
+              icon={PhGlobe}
+              href="/docs/reference/internationalization"
+            >
+              Internationalization
+            </Highlight>
+
+            <Highlight icon={IcBaselineCloudQueue} href="/docs/deploy">
+              Self-host or cloud host
+            </Highlight>
+          </HStack>
         </PageContainer>
-
-        <HStack justify="space-between" gap={`${px(16)} ${px(30)}`} wrap>
-          <Highlight href="/docs/content/live-previews" icon={RiFlashlightFill}>
-            Live previews
-          </Highlight>
-
-          <Highlight
-            icon={IcRoundPublish}
-            href="/blog/alinea-0-4-0#content-workflow"
-          >
-            Editorial workflow
-          </Highlight>
-
-          <Highlight icon={IcRoundInsertDriveFile} href="/docs/content/query">
-            Query engine
-          </Highlight>
-
-          <Highlight
-            icon={IcBaselineDashboardCustomize}
-            href="/docs/fields/custom-fields"
-          >
-            Custom fields
-          </Highlight>
-
-          <Highlight
-            icon={IcBaselineWorkspaces}
-            href="/docs/configuration/workspaces"
-          >
-            Workspaces
-          </Highlight>
-
-          <Highlight icon={PhGlobe} href="/docs/reference/internationalization">
-            Internationalization
-          </Highlight>
-
-          <Highlight icon={IcBaselineCloudQueue} href="/docs/deploy">
-            Self-host or cloud host
-          </Highlight>
-        </HStack>
       </main>
     </WebLayout>
   )

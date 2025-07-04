@@ -88,7 +88,7 @@ function Menu({links}: MenuProps) {
       <HStack as="nav" center className={styles.root.nav()}>
         <HeaderLinks links={links} style={styles.root.nav.link} />
       </HStack>
-      <HStack gap={12} center>
+      <HStack gap={12} center className={styles.root.extra()}>
         <SearchButton>
           <button type="button" className={styles.root.social('search')}>
             <IcRoundSearch className={styles.root.social.icon()} />

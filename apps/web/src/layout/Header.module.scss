@@ -9,13 +9,13 @@
   z-index: 7;
   color: var(--web-foreground);
 
-  @include sm {
+  /*@include sm {
     position: sticky;
     top: 0;
     border-bottom: 1px solid hsla(var(--web-negative-hsl), 0.09);
     background-color: var(--bg-faded);
     backdrop-filter: blur(12px);
-  }
+  }*/
 
   &-inner {
     position: relative;
@@ -33,6 +33,12 @@
   &-logo {
     display: block;
     transition: 0.25s ease-out;
+  }
+
+  &-extra {
+    @include sm {
+      margin-left: auto;
+    }
   }
 
   &-nav {
