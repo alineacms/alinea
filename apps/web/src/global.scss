@@ -7,8 +7,7 @@
   --web-accent-light: hsl(230, 77%, 65%);
   --web-accent-foreground: white;
   --web-background: #f8f8f8;
-  --web-background-variant-hsl: 240, 60%, 99%;
-  --web-background-variant: hsl(210, 50%, 98%);
+  --web-background-variant: white;
   --web-foreground: #171a42;
   --web-foreground-faded: #5c5e70;
   --web-selected: #ebedf9;
@@ -30,7 +29,6 @@
   --web-accent-light: hsl(230, 77%, 65%);
   --web-accent-foreground: white;
   --web-background: #1e232a;
-  --web-background-variant-hsl: 210, 17%, 11%;
   --web-background-variant: hsl(198, 27%, 10%);
   --web-foreground: white;
   --web-foreground-faded: #eee;
@@ -48,7 +46,7 @@
 
 :root {
   --web-title-font: 'Poppins', sans-serif;
-  --web-header-height: 80px;
+  --web-header-height: 120px;
   --web-code-background: #0a2540;
   --web-code-highlight: var(--web-accent);
   --web-code-foreground: #fbfbfe;

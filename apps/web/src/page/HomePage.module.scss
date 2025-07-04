@@ -99,8 +99,9 @@
   flex-direction: column;
   justify-content: center;
   gap: 80px;
-  padding: 80px 0;
+  padding: 80px 26px;
   border-radius: 24px;
+  text-align: center;
 
   &-demo {
     font-family: var(--web-title-font);
