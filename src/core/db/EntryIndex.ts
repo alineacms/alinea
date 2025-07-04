@@ -1,8 +1,8 @@
 import {Config} from 'alinea/core/Config'
 import type {Entry, EntryStatus} from 'alinea/core/Entry'
 import {
-  type EntryRecord,
   createRecord,
+  type EntryRecord,
   parseRecord
 } from 'alinea/core/EntryRecord'
 import {getRoot} from 'alinea/core/Internal'
@@ -590,6 +590,12 @@ class EntryVersions extends Map<EntryStatus, Entry> {
   get active(): Entry {
     const result =
       this.get('draft') ?? this.get('published') ?? this.get('archived')
+    assert(result)
+    return result
+  }
+  get main(): Entry {
+    const result =
+      this.get('published') ?? this.get('archived') ?? this.get('draft')
     assert(result)
     return result
   }
