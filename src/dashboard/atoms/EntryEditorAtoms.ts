@@ -56,7 +56,7 @@ export enum EntryTransition {
   ArchivePublished,
   PublishArchived,
   DeleteFile,
-  DeleteArchived
+  DeleteEntry
 }
 
 const entryTransitionAtoms = atomFamily((id: string) => {
@@ -462,7 +462,7 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const archivePublished = atom(null, async (get, set) => {
+  const archive = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
       transition: EntryTransition.ArchivePublished,
@@ -494,7 +494,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!result) return
     const db = get(dbAtom)
     return set(action, {
-      transition: EntryTransition.DeleteArchived,
+      transition: EntryTransition.DeleteEntry,
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
@@ -512,10 +512,10 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const deleteArchived = atom(null, async (get, set) => {
+  const deleteEntry = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
-      transition: EntryTransition.DeleteArchived,
+      transition: EntryTransition.DeleteEntry,
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
@@ -679,11 +679,11 @@ export function createEntryEditor(entryData: EntryData) {
     publishDraft,
     discardDraft,
     unPublish,
-    archivePublished,
+    archive,
     publishArchived,
     deleteFile,
     deleteMediaLibrary,
-    deleteArchived,
+    deleteEntry,
     saveTranslation,
     discardEdits,
     showHistory,

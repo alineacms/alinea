@@ -38,7 +38,7 @@ export function HeaderLinks({links, style}: HeaderLinksProps) {
       >
         Changelog
       </Link>
-      <a href="https://demo.alinea.sh" target="_blank" className={style()}>
+      <a href="https://demo.alineacms.com" target="_blank" className={style()}>
         Demo
       </a>
     </>

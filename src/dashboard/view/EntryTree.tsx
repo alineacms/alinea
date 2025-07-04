@@ -187,7 +187,8 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
   const customClickBehavior = useMemo((): FeatureImplementation => {
     return {
       itemInstance: {
-        getProps: ({item}) => ({
+        getProps: ({item, prev}) => ({
+          ...prev?.(),
           onClick: (e: MouseEvent) => {
             if (item.isSelected() && item.isFolder() && item.isExpanded()) {
               item.collapse()
@@ -214,6 +215,9 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
     dataLoader: treeProvider,
     getItemName: item => selectedEntry(locale, item.getItemData()).title,
     isItemFolder: item => Boolean(item.getItemData().isFolder),
+    onPrimaryAction: item => {
+      navigate(nav.entry({id: item.getId()}))
+    },
     initialState: {
       expandedItems: [...expanded].concat(selectedId ?? [])
     },

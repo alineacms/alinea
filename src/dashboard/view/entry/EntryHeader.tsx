@@ -58,7 +58,7 @@ const transitions = {
   [EntryTransition.ArchivePublished]: 'Archiving',
   [EntryTransition.PublishArchived]: 'Publishing',
   [EntryTransition.DeleteFile]: 'Deleting',
-  [EntryTransition.DeleteArchived]: 'Deleting'
+  [EntryTransition.DeleteEntry]: 'Deleting'
 }
 
 const variantIcon = {
@@ -107,9 +107,9 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const restoreRevision = useSetAtom(editor.restoreRevision)
   const discardDraft = useSetAtom(editor.discardDraft)
   const unPublish = useSetAtom(editor.unPublish)
-  const archivePublished = useSetAtom(editor.archivePublished)
+  const archive = useSetAtom(editor.archive)
   const publishArchived = useSetAtom(editor.publishArchived)
-  const deleteArchived = useSetAtom(editor.deleteArchived)
+  const deleteEntry = useSetAtom(editor.deleteEntry)
   const deleteFile = useSetAtom(editor.deleteFile)
   const deleteMediaLibrary = useSetAtom(editor.deleteMediaLibrary)
   const queryClient = useQueryClient()
@@ -154,7 +154,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     }
     input.click()
   }
-
+  const isParentUnpublished = editor.parents.some(p => p.status === 'draft')
   const options =
     variant === 'draft' ? (
       <DropdownMenu.Item
@@ -198,10 +198,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               Unpublish
             </DropdownMenu.Item>
           )}
-          <DropdownMenu.Item
-            className={styles.root.action()}
-            onClick={archivePublished}
-          >
+          <DropdownMenu.Item className={styles.root.action()} onClick={archive}>
             Archive
           </DropdownMenu.Item>
         </>
@@ -219,12 +216,25 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         {canDelete && (
           <DropdownMenu.Item
             className={styles.root.action()}
-            onClick={deleteArchived}
+            onClick={deleteEntry}
           >
             Delete
           </DropdownMenu.Item>
         )}
       </>
+    ) : variant === 'unpublished' ? (
+      isParentUnpublished ? (
+        <DropdownMenu.Item
+          className={styles.root.action()}
+          onClick={deleteEntry}
+        >
+          Delete
+        </DropdownMenu.Item>
+      ) : (
+        <DropdownMenu.Item className={styles.root.action()} onClick={archive}>
+          Archive
+        </DropdownMenu.Item>
+      )
     ) : null
   const inTransition = currentTransition !== undefined
   return (

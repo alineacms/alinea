@@ -18,8 +18,8 @@
   font-family: var(--web-title-font);
   min-width: 0;
   font-size: 50px;
-  font-weight: 700;
-  line-height: 1.1;
+  font-weight: 500;
+  line-height: 1.22;
   margin: 35px 0 35px 0;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
@@ -36,7 +36,7 @@
 
 .h2 {
   // font-family: var(--web-title-font);
-  font-weight: 700;
+  font-weight: 500;
   min-width: 0;
   font-size: 25px;
   line-height: 1.33;
@@ -87,7 +87,7 @@
 
 .h3 {
   // font-family: var(--web-title-font);
-  font-weight: 600;
+  font-weight: 500;
   min-width: 0;
   font-size: 16px;
   line-height: 1.2;
@@ -102,7 +102,7 @@
 
 .h4 {
   // font-family: var(--web-title-font);
-  font-weight: 600;
+  font-weight: 500;
   min-width: 0;
   font-size: 13px;
   margin-bottom: 4px;
@@ -121,6 +121,7 @@
   max-width: 60ch;
   text-rendering: optimizeLegibility;
   white-space: pre-line;
+  color: var(--web-foreground-faded);
   @extend .hyphenate;
   &.is-flat,
   &:last-child {

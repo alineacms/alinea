@@ -1,9 +1,8 @@
 {
-  "_id": "Xu4-sW6S0ynehY5zKR1VZ",
+  "_id": "tlhZ01MHUjv3Od172Ew6w",
   "_type": "Doc",
-  "_index": "a2Bl",
-  "_i18nId": "Xu4-sW6S0ynehY5zKR1VZ",
-  "title": "Image",
+  "_index": "a2f",
+  "title": "File",
   "navigationTitle": "",
   "body": [
     {
@@ -12,22 +11,22 @@
       "content": [
         {
           "_type": "text",
-          "text": "The image field can be used to select an image."
+          "text": "The file field can be used to link to a file."
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "YCDn4dBOi-_bHy32PAqzU",
-      "code": "import {Field} from 'alinea'\n\nField.image('Single image link')\n\nField.image.multiple('Multiple image links')",
+      "_id": "tYljidhFDZXvLGHPdOUyj",
+      "code": "import {Field} from 'alinea'\n\nField.file('Single file link')\n\nField.file.multiple('Multiple file links')",
       "fileName": "",
       "language": "",
       "compact": false
     },
     {
       "_type": "ExampleBlock",
-      "_id": "D6afYJyRzrcvfZy1mTq5L",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Image field', {\n  fields: {\n    image: Field.image('Single image link'),\n    imageMultiple: Field.image.multiple('Multiple image links')\n  }\n})"
+      "_id": "2Yks376YZg3E6MZZHv9KcuYgQos",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('File field', {\n  fields: {\n    file: Field.file('Single file link'),\n    fileMultiple: Field.file.multiple('Multiple file links')\n  }\n})"
     },
     {
       "_type": "heading",
