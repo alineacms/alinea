@@ -28,8 +28,7 @@ const PrepareBody = object({
 })
 
 const PreviewBody = object({
-  locale: string.nullable,
-  entryId: string
+  url: string
 })
 
 export interface Handler {
@@ -216,6 +215,7 @@ export function createHandler({
 
       if (action === HandleAction.Blob && request.method === 'POST') {
         const {shas} = object({shas: array(string)})(await body)
+        await periodicSync(cnx)
         const tree = await local.source.getTree()
         const fromLocal = []
         const fromRemote = []
@@ -231,7 +231,6 @@ export function createHandler({
           }
         }
         if (fromRemote.length > 0) {
-          await periodicSync(cnx)
           const blobs = cnx.getBlobs(fromRemote)
           for await (const [sha, blob] of blobs) {
             formData.append(sha, new Blob([blob as BlobPart]))

@@ -652,10 +652,7 @@ export function createEntryEditor(entryData: EntryData) {
 
   const previewToken = atom(async get => {
     const client = get(clientAtom)
-    return client.previewToken({
-      locale: activeVersion.locale,
-      entryId: entryData.entryId
-    })
+    return client.previewToken({url: activeVersion.url})
   })
 
   return {
