@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.1]
+- Restore drag-drop behavior in entry tree. The drag and drop functionality
+  was broken in the previous release due to a change in the way entries are
+  rendered in the sidebar.
+
 ## [1.4.0]
 - Better support for drafts in Alinea. Drafts can be enabled using the config
   option `enableDrafts: true`. Drafts and archived entries will now show their
