@@ -14,6 +14,7 @@
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
   --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 18%);
   --alinea-selected: #25344d;
+  --alinea-selected-faded: #151d2c;
   --alinea-selected-foreground: #aec8f8;
   --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
   --alinea-fields: hsl(var(--alinea-hue), var(--alinea-saturation), 10%);
@@ -43,21 +44,28 @@
 
   --alinea-button-foreground: white;
   --alinea-button-background: #3f61e8;
-  --alinea-button-hover: #4a65e8;
+  --alinea-button-hover: #1947ff;
   --alinea-error: #fd6d63;
 
-  --alinea-variant-info-foreground: #f0f6ff;
+  --alinea-variant-info-foreground: hsl(216, 100%, 97%);
   --alinea-variant-info-background: hsla(230, 40%, 26%, 0.8);
   --alinea-variant-info-action: hsl(230, 40%, 50%);
-  --alinea-variant-success-foreground: #f1fdf4;
+
+  --alinea-variant-success-foreground: hsl(135, 75%, 88%);
   --alinea-variant-success-background: hsla(140, 21%, 26%, 0.8);
   --alinea-variant-success-action: hsl(140, 21%, 50%);
-  --alinea-variant-disabled-foreground: #f0f0f0;
+
+  --alinea-variant-disabled-foreground: hsl(0, 0%, 88%);
   --alinea-variant-disabled-background: hsla(0, 0%, 26%, 0.8);
   --alinea-variant-disabled-action: hsl(0, 0%, 50%);
-  --alinea-variant-progress-foreground: #fef7ed;
+
+  --alinea-variant-create-foreground: hsla(29, 100%, 96%);
+  --alinea-variant-create-background: hsl(29, 100%, 26%, 0.8);
+  --alinea-variant-create-action: hsl(29, 100%, 50%);
+
+  --alinea-variant-progress-foreground: hsl(35, 89%, 88%);
   --alinea-variant-progress-background: hsla(20, 29%, 26%, 0.8);
-  --alinea-variant-progress-actoion: hsl(15, 54%, 50%);
+  --alinea-variant-progress-action: hsl(15, 54%, 50%);
 }
 
 @mixin light-theme {
@@ -73,6 +81,7 @@
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
   --alinea-lift: #f5f5f7;
   --alinea-selected: #f1f3fd;
+  --alinea-selected-faded: #f8f9fd;
   --alinea-selected-foreground: #3f61e8;
   --alinea-outline: #eaeaef;
   --alinea-content: linear-gradient(
@@ -101,18 +110,25 @@
 
   --alinea-button-foreground: white;
   --alinea-button-background: #3f61e8;
-  --alinea-button-hover: #4a65e8;
+  --alinea-button-hover: #1947ff;
   --alinea-error: #f05c51;
 
   --alinea-variant-info-background: hsla(216, 100%, 97%, 0.8);
   --alinea-variant-info-foreground: hsl(230, 40%, 42%);
   --alinea-variant-info-action: hsl(230, 100%, 91%);
+
   --alinea-variant-success-background: hsla(135, 75%, 97%, 0.8);
   --alinea-variant-success-foreground: hsl(140, 21%, 42%);
   --alinea-variant-success-action: hsl(140, 70%, 87%);
+
   --alinea-variant-disabled-background: hsla(0, 0%, 94%, 0.8);
   --alinea-variant-disabled-foreground: hsl(0, 0%, 33%);
   --alinea-variant-disabled-action: hsl(0, 0%, 90%);
+
+  --alinea-variant-create-background: hsla(29, 100%, 96%, 0.8);
+  --alinea-variant-create-foreground: hsl(29, 100%, 42%);
+  --alinea-variant-create-action: hsl(29, 100%, 90%);
+
   --alinea-variant-progress-background: hsla(35, 89%, 96%, 0.8);
   --alinea-variant-progress-foreground: hsl(15, 54%, 40%);
   --alinea-variant-progress-action: hsl(15, 100%, 91%);

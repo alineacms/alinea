@@ -1,4 +1,5 @@
-import {HttpError} from './HttpError.js'
+import {type ErrorCode, HttpError} from './HttpError.js'
+import {assign} from './util/Objects.js'
 
 type ErrorObject = {
   stack?: string
@@ -73,16 +74,24 @@ export namespace outcome {
 export type Outcome<T = void> = Outcome.OutcomeImpl<T> & Pair<T>
 
 export namespace Outcome {
-  export function fromJSON<T>(json: OutcomeJSON<T>): Outcome<T> {
+  export function fromJSON<T>(
+    json: OutcomeJSON<T>,
+    status?: ErrorCode
+  ): Outcome<T> {
     if (json.success) return Success(json.data)
-    const error = new HttpError(json.error.status!, json.error.message!)
-    error.stack = json.error.stack
+    const error = new HttpError(
+      json.error.status ?? status ?? 500,
+      json.error.message ?? 'Unknown error'
+    )
+    assign(error, json.error)
+    if (json.error.stack) error.stack = json.error.stack
     return Failure(error)
   }
 
   export function unpack<T>(outcome: Outcome<T>): T {
     if (outcome.isSuccess()) return outcome.value
-    throw (outcome as any).error
+    if (outcome.isFailure()) throw outcome.error
+    throw new Error('Outcome is neither success nor failure')
   }
 
   export function isOutcome(value: any): value is Outcome {

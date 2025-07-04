@@ -16,6 +16,8 @@ import {
   type Operation,
   PublishOperation,
   type PublishQuery,
+  UnpublishOperation,
+  type UnpublishQuery,
   UpdateOperation,
   type UpdateQuery,
   UploadOperation,
@@ -43,14 +45,14 @@ export abstract class WriteableGraph extends Graph {
     })
   }
 
-  async update<Definition>(query: UpdateQuery<Definition>) {
-    const op = new UpdateOperation<Definition>(query)
+  async update<Definition>(update: UpdateQuery<Definition>) {
+    const op = new UpdateOperation<Definition>(update)
     await this.commit(op)
     return this.get({
-      type: query.type,
-      id: query.id,
-      locale: query.locale ?? null,
-      status: query.status ?? 'published'
+      type: update.type,
+      id: update.id,
+      locale: update.locale ?? null,
+      status: update.status ?? 'published'
     })
   }
 
@@ -58,12 +60,16 @@ export abstract class WriteableGraph extends Graph {
     await this.commit(new DeleteOp(entryIds))
   }
 
-  async publish(query: PublishQuery): Promise<void> {
-    await this.commit(new PublishOperation(query))
+  async publish(publish: PublishQuery): Promise<void> {
+    await this.commit(new PublishOperation(publish))
   }
 
-  async archive(query: ArchiveQuery): Promise<void> {
-    await this.commit(new ArchiveOperation(query))
+  async unpublish(unpublish: UnpublishQuery): Promise<void> {
+    await this.commit(new UnpublishOperation(unpublish))
+  }
+
+  async archive(archive: ArchiveQuery): Promise<void> {
+    await this.commit(new ArchiveOperation(archive))
   }
 
   async move(query: MoveQuery) {

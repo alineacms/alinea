@@ -5,8 +5,8 @@ import {Entry} from '../Entry.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
 import type {ChangesBatch} from '../source/Change.js'
 import {MemorySource} from '../source/MemorySource.js'
-import {syncWith} from '../source/Source.js'
 import type {Source} from '../source/Source.js'
+import {syncWith} from '../source/Source.js'
 import {type CommitRequest, sourceChanges} from './CommitRequest.js'
 import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver} from './EntryResolver.js'
@@ -82,10 +82,17 @@ export class LocalDB extends WriteableGraph {
         locale: Entry.locale,
         status: Entry.status,
         path: Entry.path,
-        index: Entry.index
-      }
+        index: Entry.index,
+        title: Entry.title,
+        active: Entry.active
+      },
+      status: 'all'
     })
-    console.table(entries)
+    console.table(
+      entries.map(({id, parentId, ...entry}) => {
+        return {id: id.slice(-7), parentId: parentId?.slice(-7), ...entry}
+      })
+    )
   }
 
   async request(mutations: Array<Mutation>) {
@@ -104,6 +111,7 @@ export class LocalDB extends WriteableGraph {
   async write(request: CommitRequest): Promise<{sha: string}> {
     if (this.sha === request.intoSha) return {sha: this.sha}
     const contentChanges = sourceChanges(request)
+    await this.indexChanges(contentChanges)
     await this.applyChanges(contentChanges)
     return {sha: await this.sync()}
   }
