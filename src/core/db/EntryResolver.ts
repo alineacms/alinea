@@ -12,25 +12,25 @@ import {
   type GraphQuery,
   type Projection,
   type QuerySettings,
-  type Status,
-  querySource as queryEdge
+  querySource as queryEdge,
+  type Status
 } from 'alinea/core/Graph'
 import {
-  type HasExpr,
   getExpr,
+  type HasExpr,
   hasExpr,
   hasField,
   hasRoot,
   hasWorkspace
 } from 'alinea/core/Internal'
 import type {Resolver} from 'alinea/core/Resolver'
-import {type Scope, getScope} from 'alinea/core/Scope'
+import {getScope, type Scope} from 'alinea/core/Scope'
 import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
 import {assert, compareStrings} from '../source/Utils.js'
-import type {EntryFilter, EntryIndex} from './EntryIndex.ts'
+import type {EntryFilter, EntryIndex} from './EntryIndex.js'
 import {LinkResolver} from './LinkResolver.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))
@@ -630,7 +630,7 @@ function createConditions(
   ops: AnyCondition<any>,
   getField: (input: any, name: string) => any
 ): Array<Check> {
-  const conditions = Array<Check>()
+  const conditions: Check[] = []
   for (const [name, op] of entries(ops)) {
     if (op === undefined) continue
     if (typeof op !== 'object' || op === null) {
@@ -710,7 +710,7 @@ function snippet(
     .split(/\s+/)
     .filter(term => term !== '')
   const words = body.split(/\s+/)
-  const highlightedWords = Array<string>()
+  const highlightedWords: string[] = []
   let firstMatchIndex = -1
 
   for (let i = 0; i < words.length; i++) {

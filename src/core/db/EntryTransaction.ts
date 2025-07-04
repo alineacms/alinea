@@ -19,7 +19,7 @@ import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../source/Utils.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
-import type {EntryIndex} from './EntryIndex.ts'
+import type {EntryIndex} from './EntryIndex.js'
 import type {
   ArchiveMutation,
   CreateMutation,
