@@ -1,7 +1,9 @@
 import styler from '@alinea/styler'
 import {Entry} from 'alinea/core/Entry'
+import {Icon} from 'alinea/ui/Icon'
 import {IcRoundAccountTree} from 'alinea/ui/icons/IcRoundAccountTree'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
@@ -99,21 +101,28 @@ export default async function HomePage() {
             <VStack center>
               <Hero.Title>{home.headline}</Hero.Title>
               <Hero.ByLine>{home.byline}</Hero.ByLine>
-              <HStack gap={24} style={{paddingTop: px(20)}}>
+              <HStack
+                wrap
+                gap={`${px(16)} ${px(24)}`}
+                center
+                style={{paddingTop: px(20)}}
+                justify="center"
+              >
                 {home.action?.href && (
                   <Hero.Action href={home.action.href}>
                     {home.action.fields.label}
                   </Hero.Action>
                 )}
-                {/*<WebTypo.Link
+                <WebTypo.Link
                   className={styles.hero.demo()}
-                  href="https://demo.alineacms.com"
+                  href="https://alineacms.com/demo"
                   target="_blank"
                 >
-                  <div>
-                    <span>Try the demo</span>
-                  </div>
-                </WebTypo.Link>*/}
+                  <HStack gap={8} center>
+                    <span>Try a demo</span>
+                    <Icon icon={IcRoundOpenInNew} />
+                  </HStack>
+                </WebTypo.Link>
               </HStack>
             </VStack>
           </div>
