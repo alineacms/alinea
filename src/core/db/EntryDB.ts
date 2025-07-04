@@ -18,28 +18,21 @@ export class EntryDB extends LocalDB {
     this.connect = connect
   }
 
-  async mutate(
-    mutations: Array<Mutation>
-  ): Promise<{sha: string; remote: Promise<string>}> {
+  async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     const from = await this.source.getTree()
     const tx = new EntryTransaction(this.config, this.index, this.source, from)
     tx.apply(mutations)
     const request = await tx.toRequest()
     const contentChanges = sourceChanges(request)
-    const sha = this.indexChanges(contentChanges)
-    return {
-      sha: await sha,
-      remote: sha.then(async () => {
-        try {
-          const remote = await this.connect()
-          await remote.mutate(mutations)
-          await this.applyChanges(contentChanges)
-        } finally {
-          await this.syncWithRemote()
-        }
-        return this.sha
-      })
+    await this.applyChanges(contentChanges)
+    let sha = await this.sync()
+    try {
+      const remote = await this.connect()
+      await remote.mutate(mutations)
+    } finally {
+      sha = await this.syncWithRemote()
     }
+    return {sha}
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
