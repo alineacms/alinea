@@ -7,7 +7,7 @@ import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import type {Mutation} from 'alinea/core/db/Mutation'
 import type {Source} from 'alinea/core/source/Source'
-import {ReadonlyTree} from 'alinea/core/source/Tree.js'
+import {ReadonlyTree} from 'alinea/core/source/Tree'
 import pLimit from 'p-limit'
 
 export class MutateEvent extends Event {

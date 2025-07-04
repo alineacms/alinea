@@ -24,6 +24,7 @@ import {accumulate} from '../util/Async.js'
 import {assign} from '../util/Objects.js'
 import {sourceChanges} from './CommitRequest.js'
 import {EntryTransaction} from './EntryTransaction.js'
+import {IndexEvent} from './IndexEvent.js'
 
 interface Seed {
   seedId: string
@@ -45,7 +46,7 @@ export interface EntryFilter {
 
 export class EntryIndex extends EventTarget {
   config: Config
-  entries = Array<Entry>()
+  sorted: Array<Entry> = []
   byId = new Map<string, EntryNode>()
   byPath = new Map<string, EntryNode>()
   initialSync: ReadonlyTree | undefined
@@ -106,7 +107,7 @@ export class EntryIndex extends EventTarget {
           .filter(Boolean)
           .sort((a, b) => compareStrings(a!.index, b!.index))
           .flatMap(node => Array.from(node!.entries()))
-      : this.entries
+      : this.sorted
     const results = []
     for (const e of entries) {
       const entry =
@@ -146,7 +147,8 @@ export class EntryIndex extends EventTarget {
 
   async syncWith(source: Source) {
     this.clear()
-    const nodes = new Map<string, EntryNode>()
+    const byId = new Map<string, EntryNode>()
+    const byPath = new Map<string, EntryNode>()
     const tree = await source.getTree()
     if (!this.initialSync) this.initialSync = tree
     const root = TreeLevel.create(tree)
@@ -156,15 +158,18 @@ export class EntryIndex extends EventTarget {
       .map(info => info.sha)
     const blobs = new Map(await accumulate(source.getBlobs(shas)))
     let entry: Entry | undefined
+    const changed = new Set<string>()
     for (const info of todo) {
       const prebuilt = this.#built.get(info)
       if (prebuilt) {
         entry = prebuilt
       } else {
-        entry = this.create(info, blobs.get(info.sha)!, entry)
+        const parent = byPath.get(info.segments.slice(0, -1).join('/'))
+        entry = this.create(info, blobs.get(info.sha)!, parent)
         this.#built.set(info, entry)
+        changed.add(entry.id)
       }
-      let node = nodes.get(entry.id)
+      let node = byId.get(entry.id)
       if (!node) {
         node = new EntryNode({
           id: entry.id,
@@ -175,40 +180,32 @@ export class EntryIndex extends EventTarget {
           level: entry.level,
           index: entry.index
         })
-        nodes.set(entry.id, node)
+        byId.set(entry.id, node)
       } else {
         assert(
           node.id === entry.id,
           `Invalid ID: ${entry.id} in ${entry.filePath}`
         )
       }
-      node.add(entry)
-    }
-
-    // --- Add this block to link parent/child relationships ---
-    for (const node of nodes.values()) {
-      node.children.clear()
-    }
-    for (const node of nodes.values()) {
-      if (node.parentId) {
-        const parent = nodes.get(node.parentId)
-        if (parent) {
-          parent.children.add(node)
-        }
+      byPath.set(entry.childrenDir, node)
+      const parent = entry.parentId ? byId.get(entry.parentId) : undefined
+      node.add(entry, parent)
+      for (const entryId of changed) {
+        this.dispatchEvent(new IndexEvent({op: 'entry', id: entryId}))
       }
+      this.dispatchEvent(new IndexEvent({op: 'index', sha: tree.sha}))
     }
-    // --------------------------------------------------------
 
-    this.byId = nodes
-    this.byPath.clear()
-    this.entries = []
-    for (const node of nodes.values()) {
+    this.byId = byId
+    this.byPath = byPath
+    this.sorted = []
+    for (const node of byId.values()) {
       for (const path of node.paths()) {
         this.byPath.set(path, node)
       }
-      this.entries.push(...node.entries())
+      this.sorted.push(...node.entries())
     }
-    this.entries.sort((a, b) => compareStrings(a.index, b.index))
+    this.sorted.sort((a, b) => compareStrings(a.index, b.index))
     this.#sha = tree.sha
   }
 
@@ -318,14 +315,15 @@ export class EntryIndex extends EventTarget {
   create(
     {sha, segments, status, active, main}: EntryInfo,
     contents: Uint8Array,
-    previous: Entry | undefined
+    parent: EntryNode | undefined
   ): Entry {
     const path = segments.at(-1)
     assert(path)
 
     const parentDir = segments.slice(0, -1).join('/')
-    const childrenDir = `${parentDir}/${segments}`
-    const file = `${parentDir}/${path}.json`
+    const childrenDir = `${parentDir}/${path}`
+    const suffix = status === 'published' ? '' : `.${status}`
+    const file = `${childrenDir}${suffix}.json`
 
     let raw: unknown
     try {
@@ -340,7 +338,7 @@ export class EntryIndex extends EventTarget {
     const nodePath = getNodePath(file)
     const seed = this.#seeds.get(nodePath)
     const data: Record<string, unknown> = {
-      path: segments,
+      path,
       ...seed?.data,
       ...fields
     }
@@ -348,12 +346,7 @@ export class EntryIndex extends EventTarget {
     const type = record.type
     const index = record.index
 
-    const parentId =
-      previous?.id === id
-        ? previous.parentId
-        : previous?.parentDir === parentDir
-          ? previous.id
-          : null
+    const parentId = parent?.id ?? null
 
     let segmentIndex = 0
     const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
@@ -397,7 +390,7 @@ export class EntryIndex extends EventTarget {
       locale,
       status,
       path,
-      parentPaths: segments.slice(0, -1)
+      parentPaths: segments.slice(levelOffset, -1)
     })
 
     return {
@@ -427,6 +420,20 @@ export class EntryIndex extends EventTarget {
   }
 }
 
+class Entries {
+  byId: Map<string, EntryNode>
+  byPath = new Map<string, EntryNode>()
+  constructor(nodes: Map<string, EntryNode>) {
+    this.byId = nodes
+    for (const node of nodes.values()) {
+      for (const path of node.paths()) {
+        this.byPath.set(path, node)
+      }
+    }
+  }
+  get(ids: Array<string>, locale: string | null) {}
+}
+
 interface EntryInfo {
   sha: string
   status: EntryStatus
@@ -435,22 +442,38 @@ interface EntryInfo {
   main: boolean
 }
 
+class TreeNode {
+  versions: Versions
+  children?: TreeLevel
+
+  constructor(segments: Array<string>) {
+    this.versions = new Versions(segments)
+  }
+
+  *index(): Generator<EntryInfo> {
+    if (this.versions.size > 0) {
+      for (const status of this.versions.keys()) {
+        yield this.versions.get(status)
+      }
+    }
+    if (this.children) yield* this.children.index()
+  }
+}
+
 class TreeLevel {
   #tree: ReadonlyTree
-  #versions: Versions
   #segments: Array<string>
-  #children = new Map<string, TreeLevel>()
+  #nodes: Map<string, TreeNode> = new Map()
 
   private constructor(tree: ReadonlyTree, segments: Array<string>) {
     this.#tree = tree
     this.#segments = segments
-    this.#versions = new Versions(segments)
     for (const [key, entry] of tree.nodes) {
       if (entry.type === 'blob') {
         const fileName = key.slice(0, -'.json'.length)
         const [name, status] = entryInfo(fileName)
-        const level = this.#create(name)
-        level.#versions.set(status, {sha: entry.sha})
+        const node = this.#create(name)
+        node.versions.add(status, entry.sha)
       } else {
         this.#create(key)
       }
@@ -466,24 +489,19 @@ class TreeLevel {
     return level
   }
 
-  #create(name: string): TreeLevel {
-    if (this.#children.has(name)) return this.#children.get(name)!
+  #create(name: string): TreeNode {
+    if (this.#nodes.has(name)) return this.#nodes.get(name)!
+    const segments = this.#segments.concat(name)
+    const node = new TreeNode(segments)
     const children = this.#tree.get(name)
-    const node = TreeLevel.create(
-      children?.type === 'tree' ? children : ReadonlyTree.EMPTY,
-      this.#segments.concat(name)
-    )
-    this.#children.set(name, node)
+    if (children && children.type === 'tree')
+      node.children = TreeLevel.create(children, segments)
+    this.#nodes.set(name, node)
     return node
   }
 
   *index(): Generator<EntryInfo> {
-    if (this.#versions.size > 0) {
-      for (const status of this.#versions.keys()) {
-        yield this.#versions.info(status)
-      }
-    }
-    for (const node of this.#children.values()) {
+    for (const node of this.#nodes.values()) {
       yield* node.index()
     }
   }
@@ -498,11 +516,18 @@ class EntryNode implements EntryData {
   level!: number
   index!: string
 
-  locales = new Map<string | null, Map<EntryStatus, Entry>>()
-  children = new Set<EntryNode>(); // Add this line
+  locales = new Map<string | null, EntryVersions>()
 
   constructor(from: EntryData) {
     assign(this, from)
+  }
+
+  inheritStatus(locale: string | null): EntryStatus | undefined {
+    const versions = this.locales.get(locale)
+    if (!versions) return
+    if (versions.inheritedStatus) return versions.inheritedStatus
+    if (versions.has('archived')) return 'archived'
+    if (versions.has('draft') && !versions.has('published')) return 'draft'
   }
 
   *paths() {
@@ -522,15 +547,20 @@ class EntryNode implements EntryData {
 
   *entries(): Generator<Entry> {
     for (const locale of this.locales.values()) {
-      yield* locale.values()
+      yield* locale.versions()
     }
   }
 
-  add(entry: Entry) {
-    if (!this.locales.has(entry.locale))
-      this.locales.set(entry.locale, new Map())
+  add(entry: Entry, parent: EntryNode | undefined) {
+    const inheritedStatus = parent?.inheritStatus(entry.locale)
+    if (!this.locales.has(entry.locale)) {
+      this.locales.set(entry.locale, new EntryVersions(inheritedStatus))
+    }
     const locale = this.locales.get(entry.locale)!
-    locale.set(entry.status, entry)
+    locale.set(
+      entry.status,
+      inheritedStatus ? {...entry, status: inheritedStatus} : entry
+    )
 
     assert(this.id === entry.id, `Invalid ID: ${entry.id}`)
     assert(
@@ -547,29 +577,48 @@ class EntryNode implements EntryData {
   }
 }
 
-interface VersionInfo {
-  sha: string
+class EntryVersions extends Map<EntryStatus, Entry> {
+  inheritedStatus: EntryStatus | undefined
+  constructor(inheritedStatus?: EntryStatus) {
+    super()
+    this.inheritedStatus = inheritedStatus
+  }
+  *versions(): Generator<Entry> {
+    if (this.inheritedStatus) yield this.active
+    else yield* this.values()
+  }
+  get active(): Entry {
+    const result =
+      this.get('draft') ?? this.get('published') ?? this.get('archived')
+    assert(result)
+    return result
+  }
 }
 
-class Versions extends Map<EntryStatus, VersionInfo> {
-  #cache = new Map<EntryStatus, EntryInfo>()
+class Versions extends Map<EntryStatus, EntryInfo> {
   #segments: Array<string>
   constructor(segments: Array<string>) {
     super()
     this.#segments = segments
   }
-  info(status: EntryStatus): EntryInfo {
-    let info = this.#cache.get(status)
-    if (info) return info
-    info = {
-      sha: this.get(status)!.sha,
+  add(status: EntryStatus, sha: string) {
+    const self = this
+    this.set(status, {
+      sha,
       segments: this.#segments,
       status,
-      active: this.active === status,
-      main: this.main === status
-    }
-    this.#cache.set(status, info)
-    return info as EntryInfo
+      get active() {
+        return self.active === status
+      },
+      get main() {
+        return self.main === status
+      }
+    })
+  }
+  get(status: EntryStatus): EntryInfo {
+    const info = super.get(status)
+    if (!info) throw new Error(`No entry info for status: ${status}`)
+    return info
   }
   get active(): EntryStatus {
     if (this.has('draft')) return 'draft'
