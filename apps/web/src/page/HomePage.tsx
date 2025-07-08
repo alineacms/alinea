@@ -97,6 +97,7 @@ export default async function HomePage() {
           <div className={styles.hero()}>
             <NextImage
               priority
+              fetchPriority="high"
               src={heroBg.src}
               placeholder="blur"
               blurDataURL={heroBg.blurDataURL}
