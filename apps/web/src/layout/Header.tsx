@@ -82,7 +82,7 @@ interface MenuProps {
 function Menu({links}: MenuProps) {
   return (
     <HStack center gap={20} className={styles.root.inner()}>
-      <Link href="/" className={styles.root.logo()}>
+      <Link href="/" className={styles.root.logo()} title="Alinea CMS">
         <Logo />
       </Link>
       <HStack as="nav" center className={styles.root.nav()}>
@@ -90,7 +90,11 @@ function Menu({links}: MenuProps) {
       </HStack>
       <HStack gap={12} center className={styles.root.extra()}>
         <SearchButton>
-          <button type="button" className={styles.root.social('search')}>
+          <button
+            type="button"
+            className={styles.root.social('search')}
+            title="Search"
+          >
             <IcRoundSearch className={styles.root.social.icon()} />
           </button>
         </SearchButton>
@@ -99,6 +103,7 @@ function Menu({links}: MenuProps) {
           target="_blank"
           className={styles.root.social()}
           rel="noreferrer"
+          title="Github"
         >
           <MdiGithub className={styles.root.social.icon()} />
         </a>
@@ -107,6 +112,7 @@ function Menu({links}: MenuProps) {
           target="_blank"
           className={styles.root.social()}
           rel="noreferrer"
+          title="Twitter"
         >
           <MdiTwitterCircle className={styles.root.social.icon()} />
         </a>
