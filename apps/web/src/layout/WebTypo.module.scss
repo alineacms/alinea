@@ -35,18 +35,21 @@
 }
 
 .h2 {
-  // font-family: var(--web-title-font);
+  font-family: var(--web-title-font);
   font-weight: 500;
   min-width: 0;
   font-size: 25px;
   line-height: 1.33;
-  padding-top: 20px;
   padding-bottom: 14px;
-  //border-bottom: 1px solid var(--web-outline);
+  // border-bottom: 1px solid var(--web-outline);
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
   // scroll-margin-top: var(--web-header-height);
+
+  &:not(:first-child) {
+    padding-top: 20px;
+  }
 
   &.is-flat {
     margin: 0;

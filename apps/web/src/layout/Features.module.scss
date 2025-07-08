@@ -50,6 +50,7 @@
   }
 
   &-title {
+    font-family: var(--web-title-font);
     font-size: 18px;
     line-height: 1.33;
     font-weight: normal;
@@ -58,6 +59,11 @@
 
     @include s {
       font-size: 16px;
+    }
+
+    &.is-strong {
+      font-size: 24px;
+      font-weight: 600;
     }
   }
 }

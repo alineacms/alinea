@@ -8,12 +8,41 @@
   gap: 30px;
   padding-bottom: 40px;
 
-  &-section {
-    padding: 30px;
-    border-radius: 24px;
-    background-color: white;
+  &-sections {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    gap: 45px;
+    @include l {
+      gap: 120px;
+    }
+  }
+
+  &-section {
+    //padding: 30px;
+    //border-radius: 24px;
+    //background-color: white;
+    display: flex;
+
+    @include sm {
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    @include l {
+      align-items: center;
+      gap: 80px;
+
+      > * {
+        flex: 1 0 0;
+      }
+    }
+
+    &-illustration {
+      flex-grow: 1.2;
+      @include sm {
+        order: 1;
+      }
+    }
 
     &.is-highlight {
       background: var(--web-background-variant);
@@ -25,8 +54,9 @@
     }
 
     &-screenshot {
-      width: 50%;
+      width: 100%;
       height: 100%;
+      border-radius: 8px;
     }
   }
 
@@ -60,10 +90,6 @@
       height: 80vh;
       width: 100%;
       border: 1px solid var(--web-outline);
-
-      @include l {
-        max-width: 1200px;
-      }
     }
   }
 

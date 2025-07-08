@@ -11,8 +11,10 @@ import {HStack, VStack} from 'alinea/ui/Stack'
 import {px} from 'alinea/ui/util/Units'
 import type {Metadata, MetadataRoute} from 'next'
 import NextImage from 'next/image.js'
-import type {ComponentType, PropsWithChildren} from 'react'
+import type {ComponentType, PropsWithChildren, SVGProps} from 'react'
 import heroBg from '@/assets/hero-alinea.jpg'
+import screenshot from '@/assets/screenshot.png'
+import screenshot2 from '@/assets/screenshot2.png'
 import {cms} from '@/cms'
 import {
   IcBaselineCloudQueue,
@@ -30,6 +32,7 @@ import {WebTypo} from '@/layout/WebTypo'
 import {Home} from '@/schema/Home'
 import {Image} from '../layout/Image'
 import {Link} from '../layout/nav/Link'
+import {CodeBlockView} from './blocks/CodeBlockView'
 import css from './HomePage.module.scss'
 
 const styles = styler(css)
@@ -88,10 +91,41 @@ function Highlight({
   )
 }
 
+const schemaExample = `
+// Configure a CMS within minutes
+
+const BlogPost = Config.document('Blog post', {
+  fields: {
+    title: Field.text('Title'),
+    body: Field.richText('Body text')
+  }
+})
+
+const Blog = Config.document('Blog', {
+  contains: [BlogPost]
+})
+
+const cms = createCMS({schema: {Blog, BlogPost}})
+`
+
+const queryExample = `
+// Query content within React components
+
+const blog = await cms.get({
+  type: Blog
+})
+
+const posts = await cms.find({
+  type: BlogPost,
+  select: {title: BlogPost.title, body: BlogPost.body}
+  // ... filter, sort, paginate, order by, etc.
+})
+`
+
 export default async function HomePage() {
   const home = await cms.get({type: Home})
   return (
-    <WebLayout footer={false}>
+    <WebLayout>
       <main className={styles.home()}>
         <PageContainer>
           <div className={styles.hero()}>
@@ -137,7 +171,7 @@ export default async function HomePage() {
         </PageContainer>
 
         <PageContainer>
-          <VStack gap={40}>
+          <div className={styles.home.sections()}>
             <Features>
               <Feature>
                 <WebTypo>
@@ -173,112 +207,146 @@ export default async function HomePage() {
                 </WebTypo>
               </Feature>
             </Features>
-          </VStack>
+
+            <section className={styles.home.section()}>
+              <WebTypo>
+                <WebTypo.H2>
+                  Organize content in a clear,{'\n'}hierarchical structure
+                </WebTypo.H2>
+                <WebTypo.P>
+                  Editors can easily navigate, reorder, and manage pages in a
+                  way that makes sense for any project. Navigation stays simple,
+                  whether you’re editing in the dashboard or working with the
+                  API.
+                </WebTypo.P>
+              </WebTypo>
+
+              <div className={styles.home.section.illustration()}>
+                <Image
+                  alt="Alinea dashboard screenshot"
+                  {...screenshot2}
+                  sizes="50vw"
+                  className={styles.home.section.screenshot()}
+                />
+              </div>
+            </section>
+
+            <section className={styles.home.section()}>
+              <div className={styles.home.section.illustration()}>
+                <CodeBlockView
+                  code={schemaExample.trim()}
+                  fileName=""
+                  language="tsx"
+                  compact={false}
+                />
+              </div>
+
+              <WebTypo>
+                <WebTypo.H2>
+                  Describe your schema in code,{'\n'}
+                  get back fully typed content
+                </WebTypo.H2>
+                <WebTypo.P>
+                  Define your content schema in code and get fully typed content
+                  instantly — no generation step needed. Skip the endless form
+                  clicks and manage structure with the same workflow: branch,
+                  test, and iterate in code.
+                </WebTypo.P>
+              </WebTypo>
+            </section>
+
+            <section className={styles.home.section()}>
+              <WebTypo>
+                <WebTypo.H2>Publish with control</WebTypo.H2>
+                <WebTypo.P>
+                  Work on content without publishing right away. Alinea makes it
+                  easy to manage drafts, archive old pages, and keep your
+                  workspace tidy. The workflow stays simple for everyday tasks,
+                  but gives you the structure and control needed for larger,
+                  more complex projects.
+                </WebTypo.P>
+              </WebTypo>
+
+              <div className={styles.home.section.illustration()}>
+                <Image
+                  alt="Alinea content tree screenshot"
+                  {...screenshot}
+                  sizes="50vw"
+                  className={styles.home.section.screenshot()}
+                />
+              </div>
+            </section>
+
+            <section className={styles.home.section()}>
+              <div className={styles.home.section.illustration()}>
+                <CodeBlockView
+                  code={queryExample.trim()}
+                  fileName=""
+                  language="tsx"
+                  compact={false}
+                />
+              </div>
+
+              <WebTypo>
+                <WebTypo.H2>
+                  Content is local, versioned,{'\n'}and deploys with your site
+                </WebTypo.H2>
+                <WebTypo.P>
+                  Access content through a developer-friendly query API. Because
+                  everything is bundled at build time, there is no need for
+                  runtime fetching or external requests.
+                </WebTypo.P>
+              </WebTypo>
+            </section>
+
+            <Features>
+              <Feature>
+                <WebTypo>
+                  <Feature.Title icon={ProiconsOpenSource}>
+                    Open source
+                  </Feature.Title>
+                  <WebTypo.P>
+                    Open source by design, Alinea gives you full control over
+                    your CMS. Use it, extend it, or contribute back.
+                  </WebTypo.P>
+                </WebTypo>
+              </Feature>
+
+              <Feature>
+                <WebTypo>
+                  <Feature.Title icon={RiFlashlightFill}>
+                    Live Previews
+                  </Feature.Title>
+                  <WebTypo.P>
+                    See exactly what content changes look like in real time.
+                    Preview updates instantly with full support for React Server
+                    Components.
+                  </WebTypo.P>
+                </WebTypo>
+              </Feature>
+
+              <Feature>
+                <WebTypo>
+                  <Feature.Title icon={IcBaselineDashboardCustomize}>
+                    Custom Fields
+                  </Feature.Title>
+                  <WebTypo.P>
+                    Extend Alinea with your own fields. Create custom inputs
+                    with simple constructor functions. Tailored to exactly what
+                    your editors need.
+                  </WebTypo.P>
+                </WebTypo>
+              </Feature>
+            </Features>
+          </div>
         </PageContainer>
 
         {/*<PageContainer>
-          <VStack gap={40}>
-            <section className={styles.home.section()}>
-              <WebTypo>
-                <Feature.Title icon={IcRoundAccountTree}>
-                  Intuitive Content Tree
-                </Feature.Title>
-                <WebTypo.P>
-                  Organize content in a clear, hierarchical structure, like a
-                  family tree or a file system. Editors can easily navigate,
-                  reorder, and manage pages in a way that makes sense for any
-                  project. Navigation stays simple, whether you’re editing in
-                  the dashboard or working with the API.
-                </WebTypo.P>
-              </WebTypo>
-
-              <Image
-                alt="Alinea content tree screenshot"
-                {...screenshot}
-                sizes="(max-width: 700px) 100vw, 700px"
-                className={styles.home.section.screenshot()}
-              />
-            </section>
-
-            <WebTypo.H2 style={{textAlign: 'center'}}>
-              Describe your schema in code, review it in Git
-            </WebTypo.H2>
-
-            <section className={styles.home.section()}>
-              <WebTypo>
-                <Feature.Title icon={IcBaselineWorkspaces}>
-                  Configuration as Code
-                </Feature.Title>
-                <WebTypo.P>
-                  Define your content schema in code. No endless clicking
-                  through forms. Branch, test, and evolve your structure with
-                  the same developer workflow you use for your site.
-                </WebTypo.P>
-                <WebTypo.Link href="/docs/configuration">
-                  Read more
-                </WebTypo.Link>
-              </WebTypo>
-            </section>
-            <section className={styles.home.section()}>
-              <WebTypo>
-                <Feature.Title icon={IcRoundInsertDriveFile}>
-                  Powerful Query Engine
-                </Feature.Title>
-                <WebTypo.P>
-                  Query your content like an ORM. Content is bundled with your
-                  code, eliminating unnecessary network calls and keeping your
-                  site fast.
-                </WebTypo.P>
-                <WebTypo.Link href="/docs/content/query">
-                  Read more
-                </WebTypo.Link>
-              </WebTypo>
-            </section>
-
-            <WebTypo.H2 style={{textAlign: 'center'}}>
-              Content is local, versioned, and deploys with your site.
-            </WebTypo.H2>
-
-            <section className={styles.home.section()}>
-              <WebTypo>
-                <Feature.Title icon={RiFlashlightFill}>
-                  Live Previews
-                </Feature.Title>
-                <WebTypo.P>
-                  See exactly what your content changes look in real time.
-                  Preview updates instantly, right inside the dashboard. Full
-                  support for React Server Components without any extra setup.
-                </WebTypo.P>
-                <WebTypo.Link href="/docs/content/live-previews">
-                  Read more
-                </WebTypo.Link>
-              </WebTypo>
-            </section>
-
-            <section className={styles.home.section()}>
-              <WebTypo>
-                <Feature.Title icon={IcBaselineDashboardCustomize}>
-                  Custom Fields
-                </Feature.Title>
-                <WebTypo.P>
-                  Extend Alinea with your own fields. Create custom inputs with
-                  simple constructor functions. Tailored to exactly what your
-                  editors need.
-                </WebTypo.P>
-                <WebTypo.Link href="/docs/fields/custom-fields">
-                  Read more
-                </WebTypo.Link>
-              </WebTypo>
-            </section>
-          </VStack>
-        </PageContainer>
-
-        <PageContainer>
           <section className={styles.home.section()}>
             <div className={styles.home.demo()}>
               <iframe
                 title="Alinea demo"
-                src="https://demo.alineacms.com"
+                src="https://alineacms.com/demo"
                 className={styles.home.demo.inner()}
               />
             </div>
@@ -338,4 +406,26 @@ export default async function HomePage() {
 
 HomePage.sitemap = (): MetadataRoute.Sitemap => {
   return [{url: '/', priority: 1}]
+}
+
+export function ProiconsOpenSource(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      {/* Icon from ProIcons by ProCode - https://github.com/ProCode-Software/proicons/blob/main/LICENSE */}
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+        d="M15.157 20.136c.211.51.8.757 1.284.492a9.25 9.25 0 1 0-8.882 0c.484.265 1.073.018 1.284-.492l1.358-3.28c.212-.51-.043-1.086-.478-1.426a3.7 3.7 0 1 1 4.554 0c-.435.34-.69.916-.478 1.426z"
+      />
+    </svg>
+  )
 }

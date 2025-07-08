@@ -30,17 +30,19 @@ export function Feature({icon: Icon, children}: FeatureProps) {
 
 interface FeatureTitleProps {
   icon?: ComponentType<{className?: string}>
+  strong?: boolean
 }
 
 export namespace Feature {
   export function Title({
     children,
+    strong,
     icon: Icon
   }: PropsWithChildren<FeatureTitleProps>) {
     return (
       <HStack center gap={16} style={{paddingBottom: px(8)}}>
         {Icon && <Icon className={styles.feature.icon()} />}
-        <h2 className={styles.feature.title()}>{children}</h2>
+        <h2 className={styles.feature.title({strong})}>{children}</h2>
       </HStack>
     )
   }
