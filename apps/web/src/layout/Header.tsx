@@ -155,7 +155,11 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
         Changelog
       </Link>
       <SearchButton>
-        <button type="button" className={styles.root.nav.link({search: true})}>
+        <button
+          type="button"
+          className={styles.root.nav.link({search: true})}
+          title="Search"
+        >
           <IcRoundSearch />
         </button>
       </SearchButton>
