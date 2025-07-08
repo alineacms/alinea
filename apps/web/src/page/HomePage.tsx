@@ -10,9 +10,9 @@ import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {HStack, VStack} from 'alinea/ui/Stack'
 import {px} from 'alinea/ui/util/Units'
 import type {Metadata, MetadataRoute} from 'next'
+import NextImage from 'next/image.js'
 import type {ComponentType, PropsWithChildren} from 'react'
 import heroBg from '@/assets/hero-alinea.jpg'
-import screenshot from '@/assets/screenshot.png'
 import {cms} from '@/cms'
 import {
   IcBaselineCloudQueue,
@@ -94,10 +94,17 @@ export default async function HomePage() {
     <WebLayout footer={false}>
       <main className={styles.home()}>
         <PageContainer>
-          <div
-            className={styles.hero()}
-            style={{backgroundImage: `url(${heroBg.src})`}}
-          >
+          <div className={styles.hero()}>
+            <NextImage
+              priority
+              src={heroBg.src}
+              placeholder="blur"
+              blurDataURL={heroBg.blurDataURL}
+              sizes="(max-width: 1440px) 100vw, 1280px"
+              fill
+              alt="Background"
+              style={{objectFit: 'cover', zIndex: -1}}
+            />
             <VStack center>
               <Hero.Title>{home.headline}</Hero.Title>
               <Hero.ByLine>{home.byline}</Hero.ByLine>

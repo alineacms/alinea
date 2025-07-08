@@ -102,6 +102,8 @@
   padding: 80px 26px;
   border-radius: 24px;
   text-align: center;
+  z-index: 0;
+  overflow: hidden;
 
   &-demo {
     //font-family: var(--web-title-font);
