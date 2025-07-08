@@ -2,16 +2,464 @@
   "_id": "2zac0jImhzNgT2RovxMOJpiF1hT",
   "_type": "BlogPost",
   "_index": "Zx",
-  "title": "Alinea 1.4.0",
-  "path": "alinea-140",
+  "title": "A Long-Overdue Update",
+  "path": "a-long-overdue-update",
   "publishDate": "2025-07-08",
   "author": {
     "name": "",
     "url": {},
     "avatar": {}
   },
-  "introduction": "",
-  "body": [],
+  "introduction": "It’s been a while since we’ve shared an update on Alinea CMS — far too long, in fact. But rest assured, our silence hasn’t been due to inactivity. Quite the opposite: we’ve been hard at work building Alinea and pushing it forward through real-world use across a wide variety of projects.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "It’s been a while since we’ve shared an update on Alinea CMS — far too long, in fact. But rest assured, our silence hasn’t been due to inactivity. Quite the opposite: we’ve been hard at work building Alinea and pushing it forward through real-world use across a wide variety of projects."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Today, we’re excited to share where Alinea stands, highlight what’s new, and give you a glimpse into what’s next."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea 1.0: A Stable Foundation"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Since our last update, Alinea has officially reached its "
+        },
+        {
+          "_type": "text",
+          "text": "1.0.0",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " release. This milestone marks a fully stable API you can confidently build on. The 1.x series is focused on refinement, not reinvention — so anything built today is future-proof within the 1.x lifecycle."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This means you can now depend on Alinea’s core features and developer experience in production environments, whether you're managing a small site or scaling across multiple workspaces."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Key Features at a Glance"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea combines developer-first workflows with editor-friendly interfaces. Here’s what makes it stand out:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Minimal setup",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Define your schema in code — no databases, no migrations, no CLI scaffolding. Just TypeScript."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Git-based content",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Content lives in your repository, version-controlled and easy to branch for testing or collaboration."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Fully typed",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Enjoy type-safe content queries and schema definitions with no codegen or tooling overhead."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Intuitive structure",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Organize content in a hierarchical tree that makes sense to both developers and editors."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Live previews",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": See content changes in real time, including support for React Server Components."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Editorial workflow",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Manage drafts, publish with control, and archive old entries — all with built-in visual feedback."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Query engine",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Fetch exactly the data you need using a developer-friendly API — filtered, sorted, paginated."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Custom fields",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Extend the CMS with your own field types tailored to your project needs."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Internationalization",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Build multilingual experiences out of the box."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Workspaces",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Easily support multiple environments or project areas."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Self-host or cloud",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": You decide how and where Alinea runs."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea 1.4.0: Drafts, Statuses & Workflow Improvements"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The most recent release, "
+        },
+        {
+          "_type": "text",
+          "text": "1.4.0",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", introduces better support for drafts and editorial workflows:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Draft support",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " is now opt-in via the `enableDrafts: true` config flag."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Draft and archived entries clearly display their status in the sidebar."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "You can now create draft entries and children, which are marked as “unpublished” and can be published together."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Entry status updates are now more stable and predictable."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "These updates make it easier to manage in-progress content without cluttering the live site — especially useful for teams working on large editorial projects or preparing seasonal content."
+        }
+      ]
+    }
+  ],
   "metadata": {
     "title": "",
     "description": "",
