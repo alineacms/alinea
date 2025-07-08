@@ -460,6 +460,15 @@
           "text": "These updates make it easier to manage in-progress content without cluttering the live site — especially useful for teams working on large editorial projects or preparing seasonal content."
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "We’re excited to keep improving Alinea and sharing more frequent updates in the future. If you’re already building with Alinea — thank you. If you’re curious to try it out, now is the perfect time."
+        }
+      ]
     }
   ],
   "metadata": {
