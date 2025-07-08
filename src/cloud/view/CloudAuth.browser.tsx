@@ -41,7 +41,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
               </HStack>
               <Typo.P>
                 Alinea requires a{' '}
-                <Typo.Link href="https://alinea.sh/docs/deploy" target="_blank">
+                <Typo.Link href="https://alineacms.com/docs/deploy" target="_blank">
                   handler
                 </Typo.Link>{' '}
                 to continue.
@@ -92,7 +92,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                   <br />
                   You can{' '}
                   <Typo.Link
-                    href="https://alinea.sh/docs/deploy"
+                    href="https://alineacms.com/docs/deploy"
                     target="_blank"
                   >
                     <span>fully configure a custom backend</span>

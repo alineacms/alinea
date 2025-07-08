@@ -1,15 +1,15 @@
 'use client'
 
 import styler from '@alinea/styler'
-import {HStack, Stack, VStack} from 'alinea/ui/Stack'
 import {IcOutlineDarkMode} from 'alinea/ui/icons/IcOutlineDarkMode'
 import {IcOutlineLightMode} from 'alinea/ui/icons/IcOutlineLightMode'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
+import {HStack, Stack, VStack} from 'alinea/ui/Stack'
 import Link from 'next/link'
-import css from './Footer.module.scss'
-import {PageContainer, PageTheme} from './Page'
-import {WebTypo} from './WebTypo'
 import {Newsletter} from './engage/Newsletter'
+import css from './Footer.module.scss'
+import {PageContainer, type PageTheme} from './Page'
+import {WebTypo} from './WebTypo'
 
 const styles = styler(css)
 
@@ -60,6 +60,7 @@ export function Footer() {
                     className={styles.root.link()}
                     href="https://github.com/alineacms/alinea"
                     target="_blank"
+                    rel="noopener"
                   >
                     Source
                   </a>

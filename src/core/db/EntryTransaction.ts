@@ -345,25 +345,24 @@ export class EntryTransaction {
     this.#tx.remove(entry.filePath)
     const record = createRecord({...entry, path}, 'published')
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
-    this.#tx.add(`${childrenDir}.json`, contents)
     if (pathChange) {
       this.#tx.remove(`${entry.parentDir}/${entry.path}.json`)
       this.#tx.rename(entry.childrenDir, childrenDir)
     }
+    this.#tx.add(`${childrenDir}.json`, contents)
     this.#messages.push(this.#reportOp('publish', entry.title))
     return this
   }
 
   unpublish({id, locale}: Op<UnpublishMutation>) {
     const index = this.#index
-    const entry = index.findFirst(entry => {
-      return (
-        entry.id === id &&
-        entry.locale === locale &&
-        entry.status === 'published'
-      )
-    })
+    const versions = index.byId.get(id)?.locales.get(locale)
+    const entry = versions?.main
     assert(entry, `Entry not found: ${id}`)
+    for (const version of versions.values()) {
+      if (version.main) continue
+      this.#tx.remove(version.filePath)
+    }
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.rename(entry.filePath, `${entry.childrenDir}.draft.json`)
     this.#messages.push(this.#reportOp('unpublish', entry.title))
@@ -372,14 +371,13 @@ export class EntryTransaction {
 
   archive({id, locale}: Op<ArchiveMutation>) {
     const index = this.#index
-    const entry = index.findFirst(entry => {
-      return (
-        entry.id === id &&
-        entry.locale === locale &&
-        entry.status === 'published'
-      )
-    })
+    const versions = index.byId.get(id)?.locales.get(locale)
+    const entry = versions?.main
     assert(entry, `Entry not found: ${id}`)
+    for (const version of versions.values()) {
+      if (version.main) continue
+      this.#tx.remove(version.filePath)
+    }
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.rename(entry.filePath, `${entry.childrenDir}.archived.json`)
     this.#messages.push(this.#reportOp('archive', entry.title))

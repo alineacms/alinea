@@ -32,11 +32,11 @@
   &-inner {
     height: 100%;
     padding: 30px;
-    border-radius: 16px;
-    background-color: white;
+    border-radius: 24px;
+    background-color: var(--web-background-variant);
 
     @media l {
-      padding: 40px;
+      padding: 45px;
     }
 
     > *:first-child {
@@ -46,15 +46,13 @@
 
   &-icon {
     font-size: 30px;
-    color: var(--web-accent);
     margin-bottom: 4px;
   }
 
   &-title {
-    font-family: var(--web-title-font);
     font-size: 18px;
-    font-weight: 700;
     line-height: 1.33;
+    font-weight: normal;
     white-space: pre-line;
     text-rendering: optimizeLegibility;
 
