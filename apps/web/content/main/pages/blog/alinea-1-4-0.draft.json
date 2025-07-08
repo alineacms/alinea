@@ -3,6 +3,23 @@
   "_type": "BlogPost",
   "_index": "Zx",
   "title": "Alinea 1.4.0",
-  "path": "alinea-1-4-0",
-  "introduction": ""
+  "path": "alinea-140",
+  "publishDate": "2025-07-08",
+  "author": {
+    "name": "",
+    "url": {},
+    "avatar": {}
+  },
+  "introduction": "",
+  "body": [],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
 }
