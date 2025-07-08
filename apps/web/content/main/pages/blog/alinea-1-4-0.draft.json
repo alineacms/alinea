@@ -7,8 +7,20 @@
   "publishDate": "2025-07-08",
   "author": {
     "name": "Ben Merckx",
-    "url": {},
-    "avatar": {}
+    "url": {
+      "_id": "2zaczmmwSX3EBt2idaOCIqa8Zbg",
+      "_type": "url",
+      "_url": "https://github.com/benmerckx",
+      "_title": "",
+      "_target": "_self"
+    },
+    "avatar": {
+      "_id": "2zacxR4SIa5jOld2cGCkizNtzyy",
+      "_type": "url",
+      "_url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
+      "_title": "",
+      "_target": "_self"
+    }
   },
   "introduction": "It’s been a while since we’ve shared an update on Alinea CMS — far too long, in fact. But rest assured, our silence hasn’t been due to inactivity. Quite the opposite: we’ve been hard at work building Alinea and pushing it forward through real-world use across a wide variety of projects.",
   "body": [
