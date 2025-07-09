@@ -121,7 +121,7 @@ export function createHandler({
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
       } catch {
-        const authorization = request.headers.get('authorization')
+        const authorization = request.headers.get('Authorization')
         const bearer = authorization?.slice('Bearer '.length)
         if (!context.apiKey) throw new Error('Missing API key')
         if (bearer !== context.apiKey)
