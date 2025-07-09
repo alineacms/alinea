@@ -44,7 +44,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       const {searchParams} = new URL(request.url)
       const previewToken = searchParams.get('preview')
       if (previewToken) {
-        const {draftMode, cookies} = await import('next/headers.js')
+        const {draftMode, cookies} = await import('next/headers')
         const {searchParams} = new URL(request.url)
         const previewToken = searchParams.get('preview')
         if (!previewToken) return new Response('Not found', {status: 404})

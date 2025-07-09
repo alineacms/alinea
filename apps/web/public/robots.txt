@@ -1,0 +1,6 @@
+User-Agent: *
+
+Allow: /
+Host: https://alineacms.com
+
+Sitemap: https://alineacms.com/sitemap.xml

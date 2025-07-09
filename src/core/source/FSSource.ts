@@ -3,13 +3,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path/posix'
 import pDebounce from 'p-debounce'
 import pLimit from 'p-limit'
-import {
-  type CommitRequest,
-  checkCommit,
-  sourceChanges
-} from '../db/CommitRequest.js'
 import {accumulate} from '../util/Async.js'
-import type {Change} from './Change.js'
+import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
@@ -85,10 +80,10 @@ export class FSSource implements Source {
     }
   }
 
-  async applyChanges(changes: Array<Change>) {
+  async applyChanges(batch: ChangesBatch) {
     return limit(async () => {
       await Promise.all(
-        changes.map(async change => {
+        batch.changes.map(async change => {
           switch (change.op) {
             case 'delete': {
               return fs.unlink(`${this.#cwd}/${change.path}`).catch(() => {})
@@ -106,16 +101,6 @@ export class FSSource implements Source {
         })
       )
     })
-  }
-
-  async write(request: CommitRequest) {
-    const local = await this.getTree()
-    checkCommit(local, request)
-    const contentChanges = sourceChanges(request.changes)
-    await this.applyChanges(contentChanges)
-    const tree = local.clone()
-    tree.applyChanges(contentChanges)
-    return tree.getSha()
   }
 }
 

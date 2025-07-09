@@ -100,9 +100,15 @@ export namespace Sidebar {
     return (
       <div className={styles.collapse('right', {open: isPreviewOpen})}>
         <div className={styles.collapse.overlay()} onClick={togglePreview} />
-        <Pane id="preview" resizable="left" className={styles.collapse.inner()}>
-          {children}
-        </Pane>
+        {isPreviewOpen && (
+          <Pane
+            id="preview"
+            resizable="left"
+            className={styles.collapse.inner()}
+          >
+            {children}
+          </Pane>
+        )}
       </div>
     )
   }

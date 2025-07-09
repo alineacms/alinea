@@ -1,5 +1,6 @@
-import type {Change} from './Change.js'
+import type {Change, ChangesBatch} from './Change.js'
 import {hashTree, serializeTreeEntries} from './GitUtils.js'
+import {ShaMismatchError} from './ShaMismatchError.js'
 import {assert, compareStrings, splitPath} from './Utils.js'
 
 export interface BaseEntry {
@@ -125,30 +126,10 @@ class TreeBase<Node extends TreeBase<Node>> {
     }).flat()
   }
 
-  // Todo: check modes
-  diff(that: TreeBase<any>): Array<Change> {
-    const local = this.index()
-    const remote = that.index()
-    const changes: Array<Change> = []
-    const paths = new Set(
-      [...local.keys(), ...remote.keys()].sort(compareStrings)
-    )
-    for (const path of paths) {
-      const localValue = local.get(path)
-      const remoteValue = remote.get(path)
-      if (localValue === remoteValue) continue
-      if (remoteValue === undefined) {
-        changes.unshift({op: 'delete', path, sha: localValue!})
-      } else {
-        changes.push({op: 'add', path, sha: remoteValue!})
-      }
-    }
-    return changes
-  }
-
   equals(other: ReadonlyTree | WriteableTree): boolean {
     if (other instanceof ReadonlyTree) return this.sha === other.sha
-    if (this.sha === other.sha) return true
+    const canCompare = this.sha && other.sha
+    if (canCompare && this.sha === other.sha) return true
     if (this.nodes.size !== other.nodes.size) return false
     for (const [name, entry] of this.nodes) {
       const otherEntry = other.nodes.get(name)
@@ -216,9 +197,9 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
     }
   }
 
-  withChanges(changes: Array<Change>): Promise<ReadonlyTree> {
+  withChanges(batch: ChangesBatch): Promise<ReadonlyTree> {
     const result = this.clone()
-    result.applyChanges(changes)
+    result.applyChanges(batch)
     return result.compile()
   }
 
@@ -255,6 +236,30 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
       }
     }
     return new ReadonlyTree({sha: tree.sha, entries})
+  }
+
+  // Todo: check modes
+  diff(that: TreeBase<any>): ChangesBatch {
+    const local = this.index()
+    const remote = that.index()
+    const changes: Array<Change> = []
+    const paths = new Set(
+      [...local.keys(), ...remote.keys()].sort(compareStrings)
+    )
+    for (const path of paths) {
+      const localValue = local.get(path)
+      const remoteValue = remote.get(path)
+      if (localValue === remoteValue) continue
+      if (remoteValue === undefined) {
+        changes.unshift({op: 'delete', path, sha: localValue!})
+      } else {
+        changes.push({op: 'add', path, sha: remoteValue!})
+      }
+    }
+    return {
+      fromSha: this.sha,
+      changes
+    }
   }
 }
 
@@ -315,11 +320,15 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     this.add(to, entry.clone())
   }
 
-  applyChanges(changes: Array<Change>): void {
+  applyChanges(batch: ChangesBatch): void {
+    const {fromSha, changes} = batch
+    if (this.sha && this.sha !== fromSha)
+      throw new ShaMismatchError(fromSha, this.sha)
     for (const change of changes) {
       switch (change.op) {
         case 'delete': {
           const existing = this.get(change.path)
+          if (!existing) continue
           assert(existing instanceof Leaf, `Cannot delete: ${change.path}`)
           assert(
             existing.sha === change.sha,
@@ -330,10 +339,6 @@ export class WriteableTree extends TreeBase<WriteableTree> {
         }
         case 'add': {
           const existing = this.get(change.path)
-          assert(
-            !existing || existing instanceof Leaf,
-            `Cannot delete: ${change.path}`
-          )
           if (existing && existing.sha === change.sha) continue
           this.add(change.path, change.sha)
           continue

@@ -1,5 +1,5 @@
 import type {CommitApi, SyncApi} from '../Connection.js'
-import type {Change, ChangeFile} from '../source/Change.js'
+import type {Change, ChangeFile, ChangesBatch} from '../source/Change.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import type {LocalDB} from './LocalDB.js'
 import type {RemoveFileMutation, UploadFileMutation} from './Mutation.js'
@@ -37,26 +37,29 @@ export function commitChanges(changes: Array<Change>): Array<CommitChange> {
   })
 }
 
-export function sourceChanges(changes: Array<CommitChange>): Array<Change> {
-  return changes
-    .filter(
-      change => change.op === 'addContent' || change.op === 'deleteContent'
-    )
-    .map(change => {
-      switch (change.op) {
-        case 'deleteContent':
-          return {
-            ...change,
-            op: 'delete'
-          }
-        case 'addContent':
-          return {
-            ...change,
-            op: 'add' as const,
-            contents: new TextEncoder().encode(change.contents)
-          }
-      }
-    })
+export function sourceChanges(request: CommitRequest): ChangesBatch {
+  return {
+    fromSha: request.fromSha,
+    changes: request.changes
+      .filter(
+        change => change.op === 'addContent' || change.op === 'deleteContent'
+      )
+      .map(change => {
+        switch (change.op) {
+          case 'deleteContent':
+            return {
+              ...change,
+              op: 'delete'
+            }
+          case 'addContent':
+            return {
+              ...change,
+              op: 'add' as const,
+              contents: new TextEncoder().encode(change.contents)
+            }
+        }
+      })
+  }
 }
 
 export interface CommitRequest {
@@ -84,7 +87,7 @@ export async function attemptCommit(
   remote: CommitApi & SyncApi,
   request: CommitRequest
 ): Promise<void> {
-  const contentChanges = sourceChanges(request.changes)
+  const contentChanges = sourceChanges(request)
   await local.indexChanges(contentChanges)
   try {
     const {sha} = await remote.write(request)

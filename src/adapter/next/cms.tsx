@@ -1,6 +1,7 @@
 import {Headers} from '@alinea/iso'
 import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
 import {generatedSource} from 'alinea/backend/store/GeneratedSource'
+import {COOKIE_NAME} from 'alinea/cloud/CloudRemote'
 import {CMS} from 'alinea/core/CMS'
 import {Client} from 'alinea/core/Client'
 import type {Config} from 'alinea/core/Config'
@@ -76,7 +77,7 @@ export class NextCMS<
     const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
     const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
     const {db, previews} = await this.init
-    const sync = () => db.syncWith(client)
+    const sync = () => db.syncWith(client).catch(console.error)
     if (!isBuild) {
       if (preview) {
         preview = await previews.parse(preview, sync)
@@ -94,19 +95,20 @@ export class NextCMS<
 
   async #authenticatedClient() {
     const {handlerUrl, apiKey} = await requestContext(this.config)
-    let token = apiKey
+    let authCookie: string | undefined
     try {
       const {cookies} = await import('next/headers')
       const cookie = await cookies()
-      const tokenCookie = cookie.get('token')
-      if (tokenCookie) token = tokenCookie.value
+      const tokenCookie = cookie.get(COOKIE_NAME)
+      if (tokenCookie) authCookie = tokenCookie.value
     } catch {}
     return new Client({
       config: this.config,
       url: handlerUrl.href,
       applyAuth: init => {
         const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${token}`)
+        if (authCookie) headers.set('Cookie', `${COOKIE_NAME}=${authCookie}`)
+        else headers.set('Authorization', `Bearer ${apiKey}`)
         return {...init, headers}
       }
     })

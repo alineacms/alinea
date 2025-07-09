@@ -1,5 +1,5 @@
 import {withAlinea} from 'alinea/next'
-import {NextConfig} from 'next'
+import type {NextConfig} from 'next'
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true
+  },
+  async redirects() {
+    return [
+      {
+        source: '/docs/fields/:path*',
+        destination: '/docs/configuration/fields/:path*',
+        permanent: true
+      }
+    ]
   },
   async rewrites() {
     return [

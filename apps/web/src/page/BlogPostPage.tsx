@@ -35,7 +35,7 @@ export async function generateMetadata({
   })
   const openGraphImage = page.metadata?.openGraph.image
   return {
-    metadataBase: new URL('https://alinea.sh'),
+    metadataBase: new URL('https://alineacms.com'),
     title: page.metadata?.title || page.title,
     description: page.metadata?.description || page.introduction,
     openGraph: {

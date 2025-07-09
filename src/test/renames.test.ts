@@ -48,6 +48,44 @@ test('avoid overwriting existing paths', async () => {
   test.is(published._path, 'page1-1')
 })
 
+test('rename via publish', async () => {
+  const db = new LocalDB(cms.config)
+  const page1 = await db.create({
+    type: Page,
+    set: {path: 'page1'}
+  })
+  // Overwrite the published version of page1 with a new path
+  await db.create({
+    type: Page,
+    id: page1._id,
+    overwrite: true,
+    set: {path: 'page2'}
+  })
+  const published = await db.get({
+    id: page1._id,
+    type: Page
+  })
+  test.is(published._path, 'page2')
+})
+
+test('rename via update', async () => {
+  const db = new LocalDB(cms.config)
+  const page1 = await db.create({
+    type: Page,
+    set: {path: 'page1'}
+  })
+  await db.update({
+    type: Page,
+    id: page1._id,
+    set: {path: 'page2'}
+  })
+  const published = await db.get({
+    id: page1._id,
+    type: Page
+  })
+  test.is(published._path, 'page2')
+})
+
 test('rename parent via draft', async () => {
   const db = new LocalDB(cms.config)
   const page1 = await db.create({

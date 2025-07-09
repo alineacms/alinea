@@ -20,7 +20,6 @@ export class MutateEvent extends Event {
   }
 }
 
-const local = pLimit(1)
 const remote = pLimit(1)
 
 export class DashboardWorker extends EventTarget {
@@ -53,19 +52,20 @@ export class DashboardWorker extends EventTarget {
     return db.sha
   }
 
-  async #apply(mutations: Array<Mutation>) {
-    const db = await this.db
-    await local(() => db.mutate(mutations))
-    return db.sha
-  }
-
-  async queue(id: string, mutations: Array<Mutation>): Promise<string> {
-    await this.#apply(mutations)
+  queue(id: string, mutations: Array<Mutation>): Promise<string> {
     return remote(async () => {
+      const db = await this.db
+      await db.mutate(mutations)
+      const intoSha = db.sha
       const client = await this.#client
-      return client.mutate(mutations).then(() => {
-        return this.sync()
-      })
+      try {
+        const {sha} = await client.mutate(mutations)
+        if (sha !== intoSha) return db.syncWith(client)
+        return intoSha
+      } catch (error) {
+        await db.syncWith(client)
+        throw error
+      }
     })
   }
 

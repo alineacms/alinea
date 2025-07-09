@@ -6,6 +6,7 @@ export type Mutation =
   | RemoveMutation
   | MoveMutation
   | PublishMutation
+  | UnpublishMutation
   | ArchiveMutation
   | UploadFileMutation
   | RemoveFileMutation
@@ -45,6 +46,12 @@ export interface PublishMutation {
   id: string
   locale: string | null
   status: 'draft' | 'archived'
+}
+
+export interface UnpublishMutation {
+  op: 'unpublish'
+  id: string
+  locale: string | null
 }
 
 export interface ArchiveMutation {
