@@ -2,21 +2,25 @@ import sade from 'sade'
 // @ts-ignore
 import pkg from '../../package.json'
 import {ensureEnv} from './util/EnsureEnv.js'
+import {ensureLibs} from './util/EnsureLibs.js'
 import {ensureNode} from './util/EnsureNode.js'
-import {ensureReact} from './util/EnsureReact.js'
 import {forwardCommand} from './util/ForwardCommand.js'
 
 const prog = sade('alinea')
+
+const libs = {
+  react: '18.0.0',
+  'react-dom': '18.0.0'
+}
 
 prog
   .version(pkg.version)
 
   .command('init')
-  .describe('Copy a sample config file to the current directory')
-  .option('--next', 'Configure for Next.js')
+  .describe('Initialize a new Alinea project in the current directory')
   .action(async args => {
     ensureNode()
-    ensureReact()
+    ensureLibs(libs)
     const {init} = await import('./Init.js')
     return init(args)
   })
@@ -32,7 +36,7 @@ prog
   .option('--dev', 'Watch alinea sources')
   .action(async args => {
     ensureNode()
-    ensureReact()
+    ensureLibs(libs)
     ensureEnv(args.dir)
     process.env.NODE_ENV = args.production ? 'production' : 'development'
     const {serve} = await import('./Serve.js')
@@ -59,7 +63,7 @@ prog
   )
   .action(async args => {
     ensureNode()
-    ensureReact()
+    ensureLibs(libs)
     ensureEnv(args.dir)
     process.env.NODE_ENV = 'production'
     if (args.fix) {
