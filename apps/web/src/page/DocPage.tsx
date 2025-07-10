@@ -93,7 +93,7 @@ export async function generateMetadata({
   params
 }: DocPageProps): Promise<Metadata> {
   const {doc} = await getPage(params)
-  return {title: doc.title}
+  return {title: doc.title, alternates: {canonical: doc._url}}
 }
 
 export default async function DocPage({params}: DocPageProps) {

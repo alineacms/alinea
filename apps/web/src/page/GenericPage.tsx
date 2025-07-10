@@ -1,8 +1,8 @@
+import type {MetadataRoute} from 'next'
+import {notFound} from 'next/navigation'
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {Page} from '@/schema/Page'
-import type {MetadataRoute} from 'next'
-import {notFound} from 'next/navigation'
 import {TextFieldView} from './blocks/TextFieldView'
 
 export interface GenericPageProps {
@@ -27,7 +27,10 @@ export async function generateMetadata({params}: GenericPageProps) {
     url: `/${slug}`
   })
   if (!page) return notFound()
-  return {title: page.metadata?.title || page.title}
+  return {
+    title: page.metadata?.title || page.title,
+    alternates: {canonical: page._url}
+  }
 }
 
 export default async function GenericPage({params}: GenericPageProps) {

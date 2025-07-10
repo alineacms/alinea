@@ -67,7 +67,8 @@ export async function generateMetadata(): Promise<Metadata> {
         width: openGraphImage.width,
         height: openGraphImage.height
       }
-    }
+    },
+    alternates: {canonical: '/'}
   }
 }
 

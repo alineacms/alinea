@@ -1,11 +1,11 @@
+import styler from '@alinea/styler'
+import {Entry} from 'alinea/core/Entry'
+import type {Metadata, MetadataRoute} from 'next'
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
 import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
-import styler from '@alinea/styler'
-import {Entry} from 'alinea/core/Entry'
-import type {Metadata, MetadataRoute} from 'next'
 import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
@@ -48,7 +48,8 @@ export async function generateMetadata({
             }
           ]
         : []
-    }
+    },
+    alternates: {canonical: page._url}
   }
 }
 
