@@ -2,8 +2,9 @@ import type {Expand, UnionOfValues} from 'alinea/core/util/Types'
 import type {EntryFields} from './EntryFields.js'
 import type {Expr} from './Expr.js'
 import type {Field} from './Field.js'
-import type {Type} from './Type.js'
+import type {InferProjection} from './Graph.js'
 import type {ListRow} from './shape/ListShape.js'
+import type {Type} from './Type.js'
 
 type QueryList<T> = Expand<
   UnionOfValues<{
@@ -19,7 +20,7 @@ export type InferQueryValue<T> = T extends Array<Type<infer X>>
       ? QueryValue
       : T extends Record<string, Type>
         ? QueryList<T>
-        : never
+        : InferProjection<T>
 
 type StoredList<T> = Expand<
   UnionOfValues<{

@@ -1,6 +1,9 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import {ListField} from 'alinea/core/field/ListField'
+import {UnionField} from 'alinea/core/field/UnionField'
 import type {
-  EdgeQuery,
+  EdgeEntries,
+  EdgeEntry,
   GraphQuery,
   IncludeGuard,
   SelectionGuard,
@@ -9,8 +12,6 @@ import type {
 import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import type {Schema} from 'alinea/core/Schema'
-import {ListField} from 'alinea/core/field/ListField'
-import {UnionField} from 'alinea/core/field/UnionField'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
@@ -41,7 +42,7 @@ export class LinkField<
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
-  ): EdgeQuery<Selection, Type, Include> & {first: true} {
+  ): GraphQuery<Selection, Type, Include> & EdgeEntry & {first: true} {
     return {edge: 'entrySingle', first: true, field: this, ...query}
   }
 }
@@ -82,7 +83,7 @@ export class LinksField<
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
-  ): EdgeQuery<Selection, Type, Include> {
+  ): GraphQuery<Selection, Type, Include> & EdgeEntries {
     return {edge: 'entryMultiple', field: this, ...query}
   }
 
@@ -92,7 +93,7 @@ export class LinksField<
     Include extends IncludeGuard = undefined
   >(
     query?: GraphQuery<Selection, Type, Include>
-  ): EdgeQuery<Selection, Type, Include> & {first: true} {
+  ): GraphQuery<Selection, Type, Include> & EdgeEntries & {first: true} {
     return {edge: 'entryMultiple', first: true, field: this, ...query}
   }
 
@@ -102,7 +103,7 @@ export class LinksField<
     Include extends IncludeGuard = undefined
   >(
     query?: GraphQuery<Selection, Type, Include>
-  ): EdgeQuery<Selection, Type, Include> & {count: true} {
+  ): GraphQuery<Selection, Type, Include> & EdgeEntries & {count: true} {
     return {edge: 'entryMultiple', count: true, field: this, ...query}
   }
 }
