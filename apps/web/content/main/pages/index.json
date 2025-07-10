@@ -3,7 +3,6 @@
   "_type": "Home",
   "_index": "Zx",
   "title": "Homepage",
-  "path": "index",
   "headline": "Git-based CMS\nBuilt for Next.js",
   "byline": "Open source headless CMS with minimal setup.\nFully typed content right in your repository.",
   "action": {
@@ -124,7 +123,7 @@
     "title": "Alinea - Open source headless CMS",
     "description": "Alinea is a open source headless CMS with minimal setup. Fully typed content right in your repository.",
     "openGraph": {
-      "siteName": "Alinea",
+      "siteName": "",
       "image": {
         "_id": "2i9HvjoJjgs3bDP5bMyQyekUfGu",
         "_type": "image",

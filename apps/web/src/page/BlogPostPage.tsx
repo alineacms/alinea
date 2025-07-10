@@ -1,4 +1,5 @@
 import styler from '@alinea/styler'
+import {Query} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
 import type {Metadata, MetadataRoute} from 'next'
 import {cms} from '@/cms'
@@ -6,6 +7,7 @@ import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
 import {TextFieldView} from '@/page/blocks/TextFieldView'
 import {BlogPost} from '@/schema/BlogPost'
+import {getMetadata} from '@/utils/metadata'
 import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
@@ -31,26 +33,22 @@ export async function generateMetadata({
   const {slug} = await params
   const page = await cms.get({
     type: BlogPost,
-    url: `/blog/${slug}`
+    url: `/blog/${slug}`,
+    select: {
+      url: Query.url,
+      title: BlogPost.title,
+      metadata: BlogPost.metadata,
+      introduction: BlogPost.introduction
+    }
   })
-  const openGraphImage = page.metadata?.openGraph.image
-  return {
-    metadataBase: new URL('https://alineacms.com'),
-    title: page.metadata?.title || page.title,
-    description: page.metadata?.description || page.introduction,
-    openGraph: {
-      images: openGraphImage
-        ? [
-            {
-              url: openGraphImage.src,
-              width: openGraphImage.width,
-              height: openGraphImage.height
-            }
-          ]
-        : []
-    },
-    alternates: {canonical: page._url}
-  }
+  if (!page) return await getMetadata(null)
+  return await getMetadata({
+    ...page,
+    metadata: {
+      ...page.metadata,
+      description: page.metadata?.description || page.introduction
+    }
+  })
 }
 
 export default async function BlogPostPage({params}: BlogPostPageProps) {

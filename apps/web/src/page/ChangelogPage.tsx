@@ -1,16 +1,20 @@
-import {PageContainer, PageContent} from '@/layout/Page'
-import styler from '@alinea/styler'
-import {MetadataRoute} from 'next'
 import fs from 'node:fs'
 import path from 'node:path'
+import styler from '@alinea/styler'
+import type {Metadata, MetadataRoute} from 'next'
 import {remark} from 'remark'
 import html from 'remark-html'
+import {PageContainer, PageContent} from '@/layout/Page'
+import {getMetadata, type MetadataProps} from '@/utils/metadata'
 import css from './ChangelogPage.module.scss'
 
 const styles = styler(css)
 
-export const metadata = {
-  title: 'Changelog'
+export async function generateMetadata(): Promise<Metadata> {
+  return await getMetadata({
+    url: '/changelog',
+    title: 'Changelog'
+  } as MetadataProps)
 }
 
 async function markdownToHtml(markdown: Buffer) {

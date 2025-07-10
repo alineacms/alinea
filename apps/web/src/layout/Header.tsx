@@ -101,23 +101,26 @@ function Menu({links}: MenuProps) {
         <a
           href="https://github.com/alineacms/alinea"
           target="_blank"
+          rel="noopener"
+          title="GitHub"
           className={styles.root.social()}
-          rel="noreferrer"
-          title="Github"
         >
           <MdiGithub className={styles.root.social.icon()} />
         </a>
         <a
           href="https://twitter.com/alineacms"
           target="_blank"
+          rel="noopener"
+          title="X (Twitter)"
           className={styles.root.social()}
-          rel="noreferrer"
-          title="Twitter"
         >
           <MdiTwitterCircle className={styles.root.social.icon()} />
         </a>
         <a
           href="https://www.alinea.cloud/app"
+          target="_blank"
+          rel="noopener"
+          title="Alinea Cloud"
           className={styles.root.dashboard()}
         >
           Dashboard
