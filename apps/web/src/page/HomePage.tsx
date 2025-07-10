@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {Entry} from 'alinea/core/Entry'
+import {Query} from 'alinea'
 import {Icon} from 'alinea/ui/Icon'
 import {IcRoundAccountTree} from 'alinea/ui/icons/IcRoundAccountTree'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
@@ -26,12 +26,13 @@ import {
 } from '@/icons'
 import {Feature, Features} from '@/layout/Features'
 import {Hero} from '@/layout/Hero'
+import {Image} from '@/layout/Image'
+import {Link} from '@/layout/nav/Link'
 import {PageContainer} from '@/layout/Page'
 import WebLayout from '@/layout/WebLayout'
 import {WebTypo} from '@/layout/WebTypo'
 import {Home} from '@/schema/Home'
-import {Image} from '../layout/Image'
-import {Link} from '../layout/nav/Link'
+import {getMetadata} from '@/utils/metadata'
 import {CodeBlockView} from './blocks/CodeBlockView'
 import css from './HomePage.module.scss'
 
@@ -41,35 +42,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const page = await cms.get({
     type: Home,
     select: {
-      url: Entry.url,
+      url: Query.url,
       title: Home.title,
       metadata: Home.metadata
     }
   })
-  const appUrl = 'https://alineacms.com'
-  const title = page.metadata?.title || page.title
-  const ogTitle = page.metadata?.openGraph?.title || title
-  const ogDescription =
-    page.metadata?.openGraph?.description || page.metadata?.description
-  const openGraphImage = page.metadata?.openGraph.image
-
-  return {
-    metadataBase: new URL(appUrl),
-    title,
-    description: page.metadata?.description,
-    openGraph: {
-      url: appUrl + page.url,
-      siteName: page.metadata?.openGraph?.siteName,
-      title: ogTitle,
-      description: ogDescription,
-      images: openGraphImage?.src && {
-        url: openGraphImage.src,
-        width: openGraphImage.width,
-        height: openGraphImage.height
-      }
-    },
-    alternates: {canonical: '/'}
-  }
+  return await getMetadata(page)
 }
 
 interface HighlightProps {

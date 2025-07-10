@@ -11,9 +11,10 @@ import {Link} from '@/layout/nav/Link'
 import {NavTree} from '@/layout/nav/NavTree'
 import {type NavItem, nestNav} from '@/layout/nav/NestNav'
 import {PageWithSidebar} from '@/layout/Page'
+import {WebTypo} from '@/layout/WebTypo'
 import {BodyFieldView} from '@/page/blocks/BodyFieldView'
 import {Doc} from '@/schema/Doc'
-import {WebTypo} from '../layout/WebTypo'
+import {getMetadata} from '@/utils/metadata'
 import css from './DocPage.module.scss'
 
 const styles = styler(css)
@@ -93,7 +94,11 @@ export async function generateMetadata({
   params
 }: DocPageProps): Promise<Metadata> {
   const {doc} = await getPage(params)
-  return {title: doc.title, alternates: {canonical: doc._url}}
+  return await getMetadata({
+    url: doc._url,
+    title: doc.title,
+    metadata: doc.metadata
+  })
 }
 
 export default async function DocPage({params}: DocPageProps) {

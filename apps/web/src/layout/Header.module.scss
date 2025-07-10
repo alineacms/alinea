@@ -74,36 +74,37 @@
         }
       }
 
-      &:hover {
+      &:is(:hover, :focus-visible) {
         color: var(--web-foreground);
         background: var(--web-highlight);
       }
 
       &[aria-current] {
-        color: var(--web-foreground);
+        color: var(--web-accent-foreground);
+        background: var(--web-accent);
       }
     }
   }
 
   &-dashboard {
-    border-radius: 16px;
-    font-size: 13px;
+    color: var(--web-foreground);
+    font-size: 14px;
     font-weight: 600;
-    background: #1a1a41;
-    color: #ffffff;
-    padding: 0 14px;
-    margin: 0 8px;
-    transition: 0.25s ease-out;
-    height: 26px;
     display: flex;
     align-items: center;
+    padding: 6px 16px;
+    border: 2px solid var(--web-foreground);
+    border-radius: 25px;
+    margin: 0 8px;
+    transition: 0.25s ease-out;
 
-    @include s {
+    @include sm {
       display: none;
     }
 
-    &:hover {
-      background: black;
+    &:is(:hover, :focus-visible) {
+      background: var(--web-foreground);
+      color: var(--web-background);
     }
   }
 
@@ -115,16 +116,16 @@
       font-size: 25px;
     }
 
-    &:hover {
-      color: var(--web-foreground);
-    }
+    &:is(:hover, :focus-visible) {
+      color: var(--web-accent-light);
 
-    .is-transparent &:hover {
-      color: black;
+      .is-transparent & {
+        color: var(--web-accent-light);
+      }
     }
 
     &.is-search {
-      @include ml {
+      @include l {
         display: none;
       }
     }
