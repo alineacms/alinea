@@ -1,7 +1,6 @@
 import styler from '@alinea/styler'
 import {Query} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
-import {get} from 'http'
 import type {Metadata, MetadataRoute} from 'next'
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
