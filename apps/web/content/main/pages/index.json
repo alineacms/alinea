@@ -125,6 +125,15 @@
           "_type": "entry",
           "_entry": "docs",
           "label": ""
+        },
+        {
+          "_id": "2zjF046cGtCTwPONsqQAFfm5UWL",
+          "_index": "a1",
+          "_type": "url",
+          "_url": "https://alineacms.com/demo",
+          "_title": "Demo",
+          "_target": "_blank",
+          "label": "Demo"
         }
       ]
     }
