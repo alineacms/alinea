@@ -49,8 +49,7 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.3",
-    "esbuild": "^0.25.4",
-    "next": "^15.3.5"
+    "esbuild": "^0.25.4"
   },
   "peerDependencies": {
     "react": "*",
