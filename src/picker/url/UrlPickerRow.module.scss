@@ -4,14 +4,18 @@
   font-size: 13px;
   padding: 0 4px;
 
-  &-url {
+  &-url,
+  &-desc {
     overflow: hidden;
-    max-width: 50%;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   &-desc {
     font-style: italic;
+
+    .is-description & {
+      flex-basis: 96px;
+    }
   }
 }

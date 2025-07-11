@@ -17,6 +17,7 @@
   &-title {
     font-weight: 600;
     font-size: 14px;
+    overflow-wrap: anywhere;
     @include ml {
       font-size: 22px;
     }
