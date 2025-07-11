@@ -143,6 +143,7 @@ const TreeItem = memo(
             event.stopPropagation()
             toggleExpand()
           }}
+          disabled={!canExpand}
         >
           {canExpand &&
             (isExpanded ? (
