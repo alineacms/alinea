@@ -1,9 +1,9 @@
 'use client'
 
-import {Styler} from '@alinea/styler'
+import type {Styler} from '@alinea/styler'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
-import {HeaderLink} from './Header'
+import type {HeaderLink} from './Header'
 
 export interface HeaderLinksProps {
   links: Array<HeaderLink>
@@ -38,7 +38,12 @@ export function HeaderLinks({links, style}: HeaderLinksProps) {
       >
         Changelog
       </Link>
-      <a href="https://demo.alineacms.com" target="_blank" className={style()}>
+      <a
+        href="https://alineacms.com/demo"
+        target="_blank"
+        rel="noopener"
+        className={style()}
+      >
         Demo
       </a>
     </>
