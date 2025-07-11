@@ -1,8 +1,10 @@
 import styler from '@alinea/styler'
+import {Config} from 'alinea/core/Config'
 import type {EntryRow} from 'alinea/core/EntryRow'
 import {isImage} from 'alinea/core/media/IsImage'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import type {MediaFile} from 'alinea/core/media/MediaTypes'
+import {outcome} from 'alinea/core/Outcome'
 import {Typo} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {Main} from 'alinea/ui/Main'
@@ -14,6 +16,7 @@ import {useState} from 'react'
 import {FormProvider} from '../../atoms/FormAtoms.js'
 import {InputField} from '../../editor/InputForm.js'
 import {useField} from '../../editor/UseField.js'
+import {useConfig} from '../../hook/UseConfig.js'
 import {useNav} from '../../hook/UseNav.js'
 import type {EntryEditProps} from '../EntryEdit.js'
 import {EntryHeader} from '../entry/EntryHeader.js'
@@ -28,12 +31,17 @@ interface Pos {
 }
 
 function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
+  const config = useConfig()
   const image: EntryRow<MediaImage> = editor.activeVersion as any
   const {value: focus = {x: 0.5, y: 0.5}, mutator: setFocus} = useField(
     type.focus
   )
   const [hover, setHover] = useState<Pos>({})
   const {x: focusX = focus.x, y: focusY = focus.y} = hover
+  const location = image.data.location
+  const liveUrl = outcome(
+    () => new URL(location, Config.baseUrl(config) ?? window.location.href)
+  )
   return (
     <Lift className={styles.image()}>
       <div
@@ -67,6 +75,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
           <img
             className={styles.image.preview.img()}
             src={image.data.preview}
+            alt="Preview of media file"
           />
 
           <div
@@ -87,13 +96,14 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
         <Property label="Dimensions">
           {image.data.width} x {image.data.height} pixels
         </Property>
-        <Property label="URL">
-          <Typo.Monospace>
-            {MEDIA_LOCATION in image.data
-              ? (image.data[MEDIA_LOCATION] as string)
-              : image.data.location}
-          </Typo.Monospace>
-        </Property>
+        <a
+          href={liveUrl.isSuccess() ? liveUrl.value : location}
+          target="_blank"
+        >
+          <Property label="URL">
+            <Typo.Monospace>{location}</Typo.Monospace>
+          </Property>
+        </a>
         <Property
           label="Focus"
           help="Click on the image to change the focus point"
