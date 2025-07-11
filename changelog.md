@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.3]
+- The previous release mistakenly added `next` as a direct dependency to the
+  `alinea` package. While we're currently focused on providing a clean Next.js
+  integration, Alinea is not tied to Next.js and should not depend on it.
+
 ## [1.4.2]
 - Using the `alinea init` command for a Next.js website will now auto-create
   the handler route in `app/(alinea)/api/cms/route.ts`. The generated `cms.tsx`

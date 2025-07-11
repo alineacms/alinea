@@ -14,7 +14,7 @@
     "@monaco-editor/react": "^4.4.5",
     "@vercel/postgres": "^0.10.0",
     "lz-string": "^1.4.4",
-    "next": "^15.1.5",
+    "next": "^15.3.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-string-replace": "^1.0.0",
