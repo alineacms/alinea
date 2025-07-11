@@ -33,7 +33,7 @@ function MetadataPreview() {
   if (!metadata) return null
   return (
     <div className={styles.preview()}>
-      <h2>Share preview</h2>
+      <h2>Preview</h2>
       <SearchEnginePreview metaTags={metadata} />
       <OpenGraphPreview metaTags={metadata} />
     </div>
@@ -83,11 +83,13 @@ const OpenGraphPreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
     <>
       <h4 className={styles.preview.subtitle()}>Social share</h4>
       <div className={styles.opengraph()}>
-        <img
-          src={metaTags['og:image']}
-          alt="Open Graph image"
-          className={styles.opengraph.img()}
-        />
+        {metaTags['og:image'] && (
+          <img
+            src={metaTags['og:image']}
+            alt="Open Graph image"
+            className={styles.opengraph.img()}
+          />
+        )}
         <div className={styles.opengraph.body()}>
           <p className={styles.opengraph.body.url()}>
             {metaTags['og:url']?.replace(/^https?:\/\//, '')}
