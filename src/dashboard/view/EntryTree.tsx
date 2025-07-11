@@ -1,16 +1,16 @@
 import styler from '@alinea/styler'
 import {
   type AsyncDataLoaderDataRef,
-  type FeatureImplementation,
-  type ItemInstance,
   asyncDataLoaderFeature,
   dragAndDropFeature,
+  type FeatureImplementation,
+  type ItemInstance,
   propMemoizationFeature,
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import {getType} from 'alinea/core/Internal'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {getType} from 'alinea/core/Internal'
 import {assert} from 'alinea/core/source/Utils'
 import {debounce} from 'alinea/core/util/Debounce'
 import {Icon, px} from 'alinea/ui'
@@ -125,6 +125,7 @@ const TreeItem = memo(function TreeItem({
           event.stopPropagation()
           toggleExpand()
         }}
+        disabled={!canExpand}
       >
         {canExpand &&
           (isExpanded ? (
