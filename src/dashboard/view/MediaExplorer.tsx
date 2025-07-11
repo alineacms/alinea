@@ -9,8 +9,8 @@ import type {RootData} from 'alinea/core/Root'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {EntryHeader} from 'alinea/dashboard/view/entry/EntryHeader'
 import {HStack, TextLabel, VStack} from 'alinea/ui'
-import {Main} from 'alinea/ui/Main'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
+import {Main} from 'alinea/ui/Main'
 import {useMemo} from 'react'
 import {useQuery} from 'react-query'
 import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
@@ -21,9 +21,9 @@ import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {Head} from '../util/Head.js'
+import {Explorer, type ExporerItemSelect} from './explorer/Explorer.js'
 import {IconLink} from './IconButton.js'
 import css from './MediaExplorer.module.scss'
-import {Explorer, type ExporerItemSelect} from './explorer/Explorer.js'
 import {FileUploader} from './media/FileUploader.js'
 
 const styles = styler(css)
@@ -86,7 +86,9 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
             <VStack style={{height: '100%', width: '100%'}}>
               <header className={styles.root.inner.header()}>
                 <Head>
-                  <title>{String(title)}</title>
+                  <title>
+                    {workspace.label}: {String(title)}
+                  </title>
                 </Head>
                 <HStack center gap={18}>
                   {backLink && (
