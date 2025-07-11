@@ -33,20 +33,20 @@ export function EntryTitle({
         <title>{title}</title>
       </Head>
       <div className={styles.root()}>
-        <HStack center gap={8} className={styles.root.inner()}>
-          {backLink && (
-            <IconLink
-              icon={IcRoundArrowBack}
-              href={backLink}
-              style={{marginLeft: px(-4)}}
-            />
-          )}
-          <HStack center gap={12}>
+        <HStack center gap={12} wrap className={styles.root.inner()}>
+          <HStack center gap={8}>
+            {backLink && (
+              <IconLink
+                icon={IcRoundArrowBack}
+                href={backLink}
+                style={{marginLeft: px(-4)}}
+              />
+            )}
             <h1 className={styles.root.title()}>
               <span>{title}</span>
             </h1>
-            <Chip>{Type.label(type)}</Chip>
           </HStack>
+          <Chip>{Type.label(type)}</Chip>
         </HStack>
         {children}
       </div>

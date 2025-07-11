@@ -30,6 +30,12 @@
   align-items: center;
   flex-grow: 1;
   min-width: 0;
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .content {

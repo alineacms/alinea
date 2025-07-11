@@ -31,8 +31,9 @@
   }
 
   &-description {
-    height: 100%;
     flex: 1;
+    overflow-x: auto;
+    height: 100%;
     margin: auto;
     padding: 0 var(--alinea-main-padding-x);
     max-width: var(--alinea-main-width);
