@@ -2,21 +2,19 @@
   "_id": "jVMfGc-GJGY-GXyV4tDTX",
   "_type": "BlogPost",
   "_index": "Zz",
-  "_i18nId": "jVMfGc-GJGY-GXyV4tDTX",
-  "_root": "pages",
   "title": "Introducing Alinea 🚀",
   "publishDate": "2022-09-30",
   "author": {
     "name": "Ben Merckx",
     "url": {
-      "_type": "url",
       "_id": "DiAsFDEHRKLhrgSoiPAVU",
+      "_type": "url",
       "_url": "https://github.com/benmerckx",
       "_target": "_blank"
     },
     "avatar": {
-      "_type": "url",
       "_id": "Z4LBK9_vyKQLA_3WL6IZ6",
+      "_type": "url",
       "_url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
       "_target": "_self"
     }
@@ -55,8 +53,8 @@
       "_type": "ImageBlock",
       "_id": "2U9fzC4RrGpYPrgl9rpk8IZbvJa",
       "image": {
-        "_type": "image",
         "_id": "2aAv1Wwg7XpakKtlbQjUvpt5L6X",
+        "_type": "image",
         "_entry": "2aAa3AZWsipZefM1WJTKylGY5wM"
       }
     },
@@ -141,8 +139,9 @@
             {
               "_type": "link",
               "_id": "o4XauEOqb4gRCdGGpisfp",
-              "href": "https://demo.alineacms.com",
-              "target": "_self"
+              "_link": "url",
+              "href": "https://alineacms.com/demo",
+              "target": "_blank"
             }
           ]
         },
@@ -182,8 +181,8 @@
       "_type": "ChapterLinkBlock",
       "_id": "2YlNBlNnDvFwItkzndyIF30F097",
       "link": {
-        "_type": "entry",
         "_id": "2YlNCdLCxRMUdJseBFjB4cdkS1M",
+        "_type": "entry",
         "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
         "description": ""
       }
@@ -395,8 +394,8 @@
       "_type": "ChapterLinkBlock",
       "_id": "LHkwOsLpUl2Dwlkgie7I4",
       "link": {
-        "_type": "entry",
         "_id": "ETNJb5lOS8bZ0EZmTcOuh",
+        "_type": "entry",
         "_entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
         "description": "Read the docs"
       }
@@ -406,8 +405,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
