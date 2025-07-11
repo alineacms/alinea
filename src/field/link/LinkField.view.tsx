@@ -1,22 +1,22 @@
 import styler from '@alinea/styler'
 import {
+  closestCenter,
   DndContext,
   type DragEndEvent,
+  type DraggableSyntheticListeners,
   DragOverlay,
   type DragStartEvent,
-  type DraggableSyntheticListeners,
+  defaultDropAnimation,
   KeyboardSensor,
   LayoutMeasuringStrategy,
   PointerSensor,
-  closestCenter,
-  defaultDropAnimation,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
 import {
   type AnimateLayoutChanges,
-  SortableContext,
   defaultAnimateLayoutChanges,
+  SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
@@ -388,6 +388,7 @@ function LinkInputRow({
               icon={IcRoundDragHandle}
               {...handle}
               style={{cursor: handle ? 'grab' : 'grabbing'}}
+              title="Drag and drop to reorder"
             />
           ) : (
             <div className={styles.row.staticHandle()}>
@@ -405,9 +406,26 @@ function LinkInputRow({
             <IconButton
               icon={IcRoundOpenInNew}
               onClick={() => onView(reference)}
+              title={
+                reference?._type === 'image'
+                  ? 'Open media file in new tab'
+                  : 'Open link in new tab'
+              }
             />
-            <IconButton icon={IcRoundEdit} onClick={onEdit} />
-            <IconButton icon={IcRoundClose} onClick={onRemove} />
+            <IconButton
+              icon={IcRoundEdit}
+              onClick={onEdit}
+              title={
+                reference?._type === 'image' ? 'Change image' : 'Edit link'
+              }
+            />
+            <IconButton
+              icon={IcRoundClose}
+              onClick={onRemove}
+              title={
+                reference?._type === 'image' ? 'Delete image' : 'Delete link'
+              }
+            />
           </Sink.Options>
         )}
       </Sink.Header>
