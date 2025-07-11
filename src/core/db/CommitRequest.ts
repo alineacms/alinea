@@ -88,13 +88,11 @@ export async function attemptCommit(
   request: CommitRequest
 ): Promise<void> {
   const contentChanges = sourceChanges(request)
-  await local.indexChanges(contentChanges)
+  await local.applyChanges(contentChanges)
+  await local.sync()
   try {
     const {sha} = await remote.write(request)
-    if (sha === request.intoSha) {
-      await local.applyChanges(contentChanges)
-      return
-    }
+    if (sha === request.intoSha) return
   } finally {
     await local.syncWith(remote)
   }
