@@ -1,16 +1,16 @@
 import styler from '@alinea/styler'
 import {
   type AsyncDataLoaderDataRef,
-  type FeatureImplementation,
-  type ItemInstance,
   asyncDataLoaderFeature,
   dragAndDropFeature,
+  type FeatureImplementation,
+  type ItemInstance,
   propMemoizationFeature,
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import {getType} from 'alinea/core/Internal'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {getType} from 'alinea/core/Internal'
 import {assert} from 'alinea/core/source/Utils'
 import {debounce} from 'alinea/core/util/Debounce'
 import {Icon, px} from 'alinea/ui'
@@ -23,8 +23,15 @@ import {IcTwotoneDescription} from 'alinea/ui/icons/IcTwotoneDescription'
 import {IcTwotoneFolder} from 'alinea/ui/icons/IcTwotoneFolder'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {useAtomValue} from 'jotai'
-import type {HTMLProps} from 'react'
-import {memo, useEffect, useLayoutEffect, useMemo, useRef} from 'react'
+import type {HTMLProps, MutableRefObject, Ref, RefObject} from 'react'
+import {
+  forwardRef,
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef
+} from 'react'
 import {dbAtom} from '../atoms/DbAtoms.js'
 import {
   type EntryTreeItem,
@@ -65,112 +72,130 @@ interface TreeItemProps extends HTMLProps<HTMLDivElement> {
   level: number
 }
 
-const TreeItem = memo(function TreeItem({
-  id,
-  title,
-  type,
-  locale,
-  isSelected,
-  isDraft,
-  isFolder,
-  isExpanded,
-  isArchived,
-  isUnpublished,
-  isUntranslated,
-  isParentSelected,
-  isDragTarget,
-  isDragTargetAbove,
-  isDragTargetBelow,
-  hasChildren,
-  toggleExpand,
-  level,
-  ...props
-}: TreeItemProps) {
-  const outerRef = useRef<HTMLDivElement>(null)
-  const {schema} = useConfig()
-  const {icon} = getType(schema[type])
-  useLayoutEffect(() => {
-    if (!isSelected) return
-    const el = outerRef?.current
-    if (!el) return
-    el.scrollIntoView({
-      block: 'nearest',
-      inline: 'nearest'
-    })
-  }, [isSelected])
-  const canExpand = Boolean(isFolder && hasChildren)
-  return (
-    <div
-      {...props}
-      ref={outerRef}
-      className={styles.tree.item({
-        selected: isSelected,
-        plain: !canExpand,
-        archived: isArchived,
-        unpublished: !isUntranslated && isUnpublished,
-        untranslated: isUntranslated,
-        drop: isDragTarget,
-        dropAbove: isDragTargetAbove,
-        dropBelow: isDragTargetBelow,
-        parentSelected: isParentSelected
-      })}
-      key={id}
-      data-id={id}
-      style={{paddingLeft: px(level * 14 + 8)}}
-    >
-      <button
-        type="button"
-        className={styles.tree.item.arrow()}
-        onClick={event => {
-          event.stopPropagation()
-          toggleExpand()
+const TreeItem = memo(
+  forwardRef(function TreeItem(
+    {
+      id,
+      title,
+      type,
+      locale,
+      isSelected,
+      isDraft,
+      isFolder,
+      isExpanded,
+      isArchived,
+      isUnpublished,
+      isUntranslated,
+      isParentSelected,
+      isDragTarget,
+      isDragTargetAbove,
+      isDragTargetBelow,
+      hasChildren,
+      toggleExpand,
+      level,
+      ...props
+    }: TreeItemProps,
+    innerRef: Ref<HTMLDivElement>
+  ) {
+    const outerRef = useRef<HTMLDivElement>()
+    const {schema} = useConfig()
+    const {icon} = getType(schema[type])
+    useLayoutEffect(() => {
+      if (!isSelected) return
+      const el = outerRef?.current
+      if (!el) return
+      el.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest'
+      })
+    }, [isSelected])
+    const canExpand = Boolean(isFolder && hasChildren)
+    return (
+      <div
+        {...props}
+        ref={(node: HTMLDivElement) => {
+          if (typeof innerRef === 'function') {
+            innerRef(node)
+          } else if (innerRef) {
+            ;(innerRef as MutableRefObject<HTMLDivElement>).current = node
+          }
+          outerRef.current = node
         }}
+        className={styles.tree.item({
+          selected: isSelected,
+          plain: !canExpand,
+          archived: isArchived,
+          unpublished: !isUntranslated && isUnpublished,
+          untranslated: isUntranslated,
+          drop: isDragTarget,
+          dropAbove: isDragTargetAbove,
+          dropBelow: isDragTargetBelow,
+          parentSelected: isParentSelected
+        })}
+        key={id}
+        data-id={id}
+        style={{paddingLeft: px(level * 14 + 8)}}
       >
-        {canExpand &&
-          (isExpanded ? (
-            <Icon icon={IcRoundKeyboardArrowDown} size={14} />
-          ) : (
-            <Icon icon={IcRoundKeyboardArrowRight} size={14} />
-          ))}
-      </button>
-      <button type="button" className={styles.tree.item.label()} title={title}>
-        {
-          <span className={styles.tree.item.icon()}>
-            <Icon
-              icon={icon ?? (isFolder ? IcTwotoneFolder : IcTwotoneDescription)}
-            />
-          </span>
-        }
+        <button
+          type="button"
+          className={styles.tree.item.arrow()}
+          onClick={event => {
+            event.stopPropagation()
+            toggleExpand()
+          }}
+        >
+          {canExpand &&
+            (isExpanded ? (
+              <Icon icon={IcRoundKeyboardArrowDown} size={14} />
+            ) : (
+              <Icon icon={IcRoundKeyboardArrowRight} size={14} />
+            ))}
+        </button>
+        <button
+          type="button"
+          className={styles.tree.item.label()}
+          title={title}
+        >
+          {
+            <span className={styles.tree.item.icon()}>
+              <Icon
+                icon={
+                  icon ?? (isFolder ? IcTwotoneFolder : IcTwotoneDescription)
+                }
+              />
+            </span>
+          }
 
-        <span className={styles.tree.item.label.itemName()}>{title}</span>
+          <span className={styles.tree.item.label.itemName()}>{title}</span>
 
-        {!isUntranslated && !isUnpublished && isDraft && (
-          <span className={styles.tree.status({draft: true})}>
-            <Icon icon={IcRoundEdit} />
-          </span>
-        )}
+          {!isUntranslated && !isUnpublished && isDraft && (
+            <span className={styles.tree.status({draft: true})}>
+              <Icon icon={IcRoundEdit} />
+            </span>
+          )}
 
-        {!isUntranslated && isArchived && (
-          <span className={styles.tree.status({archived: true})}>
-            <Icon icon={IcOutlineArchive} />
-          </span>
-        )}
+          {!isUntranslated && isArchived && (
+            <span className={styles.tree.status({archived: true})}>
+              <Icon icon={IcOutlineArchive} />
+            </span>
+          )}
 
-        {!isUntranslated && isUnpublished && (
-          <span className={styles.tree.status({unpublished: true})}>
-            <Icon icon={RiFlashlightFill} />
-          </span>
-        )}
+          {!isUntranslated && isUnpublished && (
+            <span className={styles.tree.status({unpublished: true})}>
+              <Icon icon={RiFlashlightFill} />
+            </span>
+          )}
 
-        {isUntranslated && (
-          <span className={styles.tree.status({untranslated: true})}>
-            <Icon icon={IcRoundTranslate} />
-          </span>
-        )}
-      </button>
-    </div>
-  )
-})
+          {isUntranslated && (
+            <span className={styles.tree.status({untranslated: true})}>
+              <Icon icon={IcRoundTranslate} />
+            </span>
+          )}
+        </button>
+      </div>
+    )
+  })
+)
 
 export interface EntryTreeProps {
   selectedId?: string
