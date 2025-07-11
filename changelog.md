@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.2]
+- Using the `alinea init` command for a Next.js website will now auto-create
+  the handler route in `app/(alinea)/api/cms/route.ts`. The generated `cms.tsx`
+  config file also includes more default options such as the `baseUrl` and
+  `handlerUrl`.
+
 ## [1.4.1]
 - Restore drag-drop behavior in entry tree. The drag and drop functionality
   was broken in the previous release due to a change in the way entries are
