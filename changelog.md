@@ -7,7 +7,7 @@
 
 ## [1.4.2]
 - Using the `alinea init` command for a Next.js website will now auto-create
-  the handler route in `app/(alinea)/api/cms/route.ts`. The generated `cms.tsx`
+  the handler route in `app/(alinea)/api/cms/route.ts`. The generated `cms.ts`
   config file also includes more default options such as the `baseUrl` and
   `handlerUrl`.
 
@@ -160,7 +160,7 @@
   `dashboardFile` properties.
 
   ```tsx
-  // cms.tsx
+  // cms.ts
 
   // Previously:
   const cms = createCMS({

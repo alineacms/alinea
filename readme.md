@@ -33,7 +33,7 @@ npx alinea dev
 
 ## Configure
 
-Configure Alinea in `cms.tsx`
+Configure Alinea in `cms.ts`
 
 ```tsx
 import {Config, Field} from 'alinea'
