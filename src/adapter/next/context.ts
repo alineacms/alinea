@@ -4,9 +4,8 @@ import type {RequestContext} from 'alinea/core/Connection'
 
 export async function requestContext(config: Config): Promise<RequestContext> {
   const apiKey =
-    process.env.NODE_ENV === 'development'
-      ? 'dev'
-      : (process.env.ALINEA_API_KEY ?? (await generatedRelease))
+    process.env.ALINEA_API_KEY ||
+    (process.env.NODE_ENV === 'development' ? 'dev' : await generatedRelease)
   const dev = process.env.ALINEA_DEV_SERVER
   if (dev) return {isDev: true, handlerUrl: new URL('/api', dev), apiKey}
   const nodeEnv = process.env.NODE_ENV
@@ -15,9 +14,6 @@ export async function requestContext(config: Config): Promise<RequestContext> {
   return {
     isDev: false,
     handlerUrl: new URL(config.handlerUrl ?? '/api/cms', baseUrl),
-    apiKey:
-      process.env.NODE_ENV === 'development'
-        ? 'dev'
-        : (process.env.ALINEA_API_KEY ?? (await generatedRelease))
+    apiKey
   }
 }

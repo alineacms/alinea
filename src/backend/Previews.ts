@@ -1,6 +1,5 @@
 export interface PreviewInfo {
-  locale: string | null
-  entryId: string
+  url: string
 }
 
 export interface Previews {
