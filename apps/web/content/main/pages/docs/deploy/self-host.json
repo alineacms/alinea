@@ -56,7 +56,7 @@
       "_type": "CodeBlock",
       "_id": "2nsIBLDV4OlNWhy9FpZnT3EJWvR",
       "code": "import {cms} from '@/cms'\nimport {db} from '@vercel/postgres'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler({\n  cms,\n  backend: {\n    database: {\n      driver: '@vercel/postgres',\n      client: db\n    },\n    auth(username, password) {\n      return (\n        username === process.env.ALINEA_USERNAME &&\n        password === process.env.ALINEA_PASSWORD\n      )\n    },\n    github: {\n      rootDir: 'apps/web',\n      conentDir: 'content',\n      authToken: process.env.ALINEA_GITHUB_TOKEN!,\n      owner: process.env.ALINEA_GITHUB_OWNER!,\n      repo: process.env.ALINEA_GITHUB_REPO!,\n      branch: process.env.ALINEA_GITHUB_BRANCH!\n    }\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
-      "fileName": "app/api/cms/route.ts",
+      "fileName": "app/(alinea)/api/cms/route.ts",
       "language": ""
     }
   ],
