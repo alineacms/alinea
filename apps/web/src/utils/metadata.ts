@@ -46,11 +46,11 @@ export async function getMetadata(
   const {url, title, metadata} = data
   const metaTitle =
     metadata?.title && metadata?.title !== title
-      ? `${metadata.title} - ${siteName}`
+      ? metadata.title
       : `${title} - ${siteName}`
   const metaImage = metadata?.openGraph?.image?.src
     ? metadata.openGraph.image
-    : defaultMetadata?.openGraph?.image
+    : {src: '/opengraph-image.png', width: 1200, height: 630}
 
   return {
     ...basicMetadata,
