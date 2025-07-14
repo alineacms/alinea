@@ -226,20 +226,20 @@
           "_id": "2bRC6LC1i4PfMRTFBeXuHrvWjk0",
           "variants": [
             {
+              "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
+              "_index": "Zz",
+              "_type": "Variant",
+              "name": "next.config.ts",
+              "language": "tsx",
+              "code": "import {withAlinea} from 'alinea/next'\n\nconst nextConfig = {...}\n\nexport default withAlinea(nextConfig)"
+            },
+            {
               "_id": "2bRC6k9IXwZsgnaBLqqWcybH8H9",
               "_index": "a0",
               "_type": "Variant",
               "name": "next.config.js",
               "language": "tsx",
               "code": "const {withAlinea} = require('alinea/next')\n\nconst nextConfig = {...}\n\nmodule.exports = withAlinea(nextConfig)"
-            },
-            {
-              "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
-              "_index": "a1",
-              "_type": "Variant",
-              "name": "next.config.mjs",
-              "language": "tsx",
-              "code": "import {withAlinea} from 'alinea/next'\n\nconst nextConfig = {...}\n\nexport default withAlinea(nextConfig)"
             }
           ]
         }
