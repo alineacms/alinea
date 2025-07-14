@@ -1,6 +1,7 @@
 User-Agent: *
 
 Allow: /
+Disallow: /admin*
 Host: https://alineacms.com
 
 Sitemap: https://alineacms.com/sitemap.xml
