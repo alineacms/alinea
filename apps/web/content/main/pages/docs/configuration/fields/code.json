@@ -18,7 +18,7 @@
     {
       "_type": "CodeBlock",
       "_id": "itHNQSxP3U_KYZ77Q3vIC",
-      "code": "import {Field} from 'alinea'\n\nalinea.code('My code field', {\n  help: 'Paste your code here'\n})",
+      "code": "import {Field} from 'alinea'\n\nField.code('My code field', {\n  help: 'Paste your code here'\n})",
       "fileName": "",
       "language": "",
       "compact": false
