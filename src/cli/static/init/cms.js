@@ -19,7 +19,7 @@ export const cms = createCMS({
   workspaces: {
     main: Config.workspace('Example', {
       source: 'content',
-      mediaDir: 'public/media',
+      mediaDir: 'public',
       roots: {
         pages: Config.root('Example site', {
           contains: ['Page']
