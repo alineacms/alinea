@@ -33,8 +33,8 @@ export async function createPreview(blob: Blob): Promise<ImagePreviewDetails> {
   const thumbHash = rgbaToThumbHash(thumbW, thumbH, pixels.data)
 
   // Get the average color via thumbhash
-  const {r, g, b, a} = thumbHashToAverageRGBA(thumbHash)
-  const averageColor = toHex(rgba(r * 255, g * 255, b * 255, a))
+  const {r, g, b} = thumbHashToAverageRGBA(thumbHash)
+  const averageColor = toHex(rgba(r * 255, g * 255, b * 255, 1))
 
   // Create webp preview image
   const previewW = Math.min(Math.round((160 * image.width) / size), image.width)
