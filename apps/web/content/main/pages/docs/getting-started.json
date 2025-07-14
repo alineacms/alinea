@@ -10,12 +10,22 @@
       "_id": "2YX0hoFtrkov2TMQT8cuHwhgN6L",
       "next": [
         {
+          "_type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "_type": "text",
+              "text": "Setup Next.js"
+            }
+          ]
+        },
+        {
           "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
               "_type": "text",
-              "text": "Get started by creating a new Next.js project. The following will setup a project in your chosen directory. (If you'd like to add Alinea to an existing project just skip this instruction.)"
+              "text": "Get started by creating a new Next.js project. The following will setup a project in your chosen directory. If you'd like to add Alinea to an existing project, skip this step and continue with step 2."
             }
           ]
         },
@@ -64,7 +74,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Install Alinea"
+              "text": "2. Install Alinea"
             }
           ]
         },
@@ -122,7 +132,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Initialize the project"
+              "text": "3. Initialize the project"
             }
           ]
         },
@@ -197,7 +207,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Adjust Next.js config"
+              "text": "4. Adjust Next.js config"
             }
           ]
         },
@@ -241,7 +251,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Access the dashboard"
+          "text": "5. Access the dashboard"
         }
       ]
     },
