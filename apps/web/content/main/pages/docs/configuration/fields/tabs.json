@@ -2,7 +2,6 @@
   "_id": "268hnUNLntD1TbeY1WPh34VFVcM",
   "_type": "Doc",
   "_index": "a1l",
-  "_i18nId": "268hnUNLntD1TbeY1WPh34VFVcM",
   "title": "Tabs",
   "navigationTitle": "",
   "body": [
@@ -31,7 +30,7 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Tabs field",
     "description": "",
     "openGraph": {
       "siteName": "",
