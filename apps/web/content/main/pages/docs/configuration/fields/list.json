@@ -2,7 +2,6 @@
   "_id": "268hhWIV6twxD4PMp03isLY6Pac",
   "_type": "Doc",
   "_index": "a1V",
-  "_i18nId": "268hhWIV6twxD4PMp03isLY6Pac",
   "title": "List",
   "navigationTitle": "",
   "body": [
@@ -31,7 +30,7 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "List field",
     "description": "",
     "openGraph": {
       "siteName": "",
