@@ -2,7 +2,6 @@
   "_id": "267QuOShP41WnFxQFOcHZQoCsla",
   "_type": "Doc",
   "_index": "Zx",
-  "_i18nId": "267QuOShP41WnFxQFOcHZQoCsla",
   "title": "Type",
   "navigationTitle": "",
   "body": [
@@ -24,17 +23,13 @@
               "_entry": "267KTV8uPHIdZgFUQvJf06sfm4h"
             }
           ]
-        },
-        {
-          "_type": "text",
-          "text": " need to define both a title and path field."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "267QyzM4851hQU1DihfoV3fSIFg",
-      "code": "import {Config} from 'alinea'\n\nConfig.type('Blog', {\n  contains: ['BlogPost'],\n  fields: {\n    title: alinea.text('Title', {width: 0.5}),\n    path: alinea.path('Path', {width: 0.5})\n  }\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nConfig.type('Blog', {\n  contains: ['BlogPost'],\n  fields: {\n    title: Field.text('Title', {width: 0.5}),\n    path: Field.path('Path', {width: 0.5})\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -69,10 +64,6 @@
               "title": ""
             }
           ]
-        },
-        {
-          "_type": "text",
-          "text": "."
         }
       ]
     },
@@ -161,26 +152,6 @@
               "target": "_blank"
             }
           ]
-        },
-        {
-          "_type": "text",
-          "text": " or install a package such as "
-        },
-        {
-          "_type": "text",
-          "text": "react-icons",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "toXRTK13MpBaa1ijN3COj",
-              "href": "https://react-icons.github.io/react-icons",
-              "target": "_blank"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": "."
         }
       ]
     },
@@ -223,26 +194,6 @@
               "_link": "entry"
             }
           ]
-        },
-        {
-          "_type": "text",
-          "text": " or in "
-        },
-        {
-          "_type": "text",
-          "text": "conditional configuration",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "2bMDXpF1usIvfF9iDpLslLCmPSu",
-              "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG",
-              "_link": "entry"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": ". "
         }
       ]
     },
@@ -258,8 +209,9 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }
