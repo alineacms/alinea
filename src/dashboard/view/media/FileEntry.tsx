@@ -45,7 +45,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
   return (
     <Lift className={styles.image()}>
       <div
-        className={styles.image.col()}
+        className={styles.image.wrapper()}
         style={{
           backgroundImage:
             image.data.averageColor &&
@@ -89,23 +89,25 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
           </div>
         </div>
       </div>
-      <div style={{minWidth: 0}}>
+      <div className={styles.image.content()}>
         <InputField field={type.title} />
         <Property label="Extension">{image.data.extension}</Property>
         <Property label="File size">{prettyBytes(image.data.size)}</Property>
         <Property label="Dimensions">
           {image.data.width} x {image.data.height} pixels
         </Property>
-        <a
-          href={liveUrl.isSuccess() ? liveUrl.value : location}
-          target="_blank"
-        >
-          <Property label="URL">
+        <Property label="URL">
+          <a
+            href={liveUrl.isSuccess() ? liveUrl.value : location}
+            target="_blank"
+            title={location}
+            className={styles.image.content.url()}
+          >
             <Typo.Monospace>{location}</Typo.Monospace>
-          </Property>
-        </a>
+          </a>
+        </Property>
         <Property
-          label="Focus"
+          label="Focus point"
           help="Click on the image to change the focus point"
         >
           ({focusX.toFixed(2)}, {focusY.toFixed(2)})
