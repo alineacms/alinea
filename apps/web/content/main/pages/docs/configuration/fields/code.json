@@ -2,7 +2,6 @@
   "_id": "BUQj_NQqEq7YYO1nevx1o",
   "_type": "Doc",
   "_index": "a2C",
-  "_i18nId": "BUQj_NQqEq7YYO1nevx1o",
   "title": "Code",
   "navigationTitle": "",
   "body": [
@@ -31,7 +30,7 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Code field",
     "description": "",
     "openGraph": {
       "siteName": "",
