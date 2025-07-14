@@ -2,7 +2,6 @@
   "_id": "268hjH2OU9fiReg61Wov1SRbPD5",
   "_type": "Doc",
   "_index": "a1",
-  "_i18nId": "268hjH2OU9fiReg61Wov1SRbPD5",
   "title": "Rich Text",
   "navigationTitle": "",
   "body": [
@@ -179,7 +178,7 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Rich Text field",
     "description": "",
     "openGraph": {
       "siteName": "",
