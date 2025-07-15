@@ -43,9 +43,9 @@ export class LocalDB extends WriteableGraph {
     return this.index.sha
   }
 
-  indexChanges(batch: ChangesBatch) {
+  /*indexChanges(batch: ChangesBatch) {
     return this.index.indexChanges(batch)
-  }
+  }*/
 
   applyChanges(batch: ChangesBatch) {
     return this.source.applyChanges(batch)
@@ -111,7 +111,6 @@ export class LocalDB extends WriteableGraph {
   async write(request: CommitRequest): Promise<{sha: string}> {
     if (this.sha === request.intoSha) return {sha: this.sha}
     const contentChanges = sourceChanges(request)
-    await this.indexChanges(contentChanges)
     await this.applyChanges(contentChanges)
     return {sha: await this.sync()}
   }
