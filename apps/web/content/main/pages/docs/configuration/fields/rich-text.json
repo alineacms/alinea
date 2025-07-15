@@ -175,6 +175,32 @@
       "fileName": "",
       "language": "",
       "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "If you need the HTML as string output and not as a component, you can convert the component as follows:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2zuFDW5eMhiuJJp7E4koNWCXyJt",
+      "code": "import {RichText} from 'alinea/ui'\nconst {renderToString} = await import('react-dom/server')\n\nconst html = renderToString(<RichText doc={richTextValue} />)",
+      "fileName": "",
+      "language": "typescript",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Note the dynamic import of react-dom/server. This is necessary to avoid warnings from Next.js for using server imports."
+        }
+      ]
     }
   ],
   "metadata": {
