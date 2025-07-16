@@ -132,12 +132,14 @@ export class EntryTransaction {
     if (overwrite && existing?.type === 'MediaFile') {
       const [prev] = existing.entries
       assert(prev, 'Previous entry not found')
-      this.removeFile({
-        location: paths.join(
-          getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
-          prev.data.location
-        )
-      })
+      const prevLocation = prev.data.location
+      if (prevLocation !== data.location)
+        this.removeFile({
+          location: paths.join(
+            getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
+            prev.data.location
+          )
+        })
     }
     const parentDir = parent
       ? parent.childrenDir
