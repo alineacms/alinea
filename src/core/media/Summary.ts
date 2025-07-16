@@ -8,6 +8,7 @@ export function summarySelection(schema: Schema) {
     id: Entry.id,
     locale: Entry.locale,
     type: Entry.type,
+    path: Entry.path,
     workspace: Entry.workspace,
     root: Entry.root,
     title: Entry.title,
@@ -40,6 +41,7 @@ export type SummaryProps = {
   workspace: string
   root: string
   title: string
+  path: string
   extension: string
   size: number
   preview: string

@@ -1,34 +1,32 @@
 import styler from '@alinea/styler'
 import type {SummaryProps} from 'alinea/core/media/Summary'
 import {Type} from 'alinea/core/Type'
-import {Chip, HStack, TextLabel, Typo, VStack, px} from 'alinea/ui'
+import {Chip, HStack, px, TextLabel, Typo, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Fragment, type ReactNode} from 'react'
 import {useDashboard} from '../../hook/UseDashboard.js'
-import {useNav} from '../../hook/UseNav.js'
 import css from './EntrySummary.module.scss'
 
 const styles = styler(css)
 
 export function EntrySummaryRow({
-  id,
   title,
   type: typeName,
+  path,
   parents
 }: SummaryProps) {
-  const nav = useNav()
   const {schema} = useDashboard().config
   const type = schema[typeName]
   if (!type) return null
   return (
     <HStack center full gap={10} className={styles.row()}>
       <VStack>
-        {parents.length > 0 && (
-          <Ellipsis style={{marginTop: px(-1)}}>
-            <Typo.Small>
-              <HStack center gap={3}>
-                {parents
+        <Ellipsis style={{marginTop: px(-1)}}>
+          <Typo.Small>
+            <HStack center gap={3}>
+              {parents.length > 0 &&
+                parents
                   .map<ReactNode>(({id, title}) => (
                     <Fragment key={id}>{title}</Fragment>
                   ))
@@ -37,36 +35,36 @@ export function EntrySummaryRow({
                     <IcRoundKeyboardArrowRight key={`s${i}`} />,
                     curr
                   ])}
-              </HStack>
-            </Typo.Small>
-          </Ellipsis>
-        )}
+              <Typo.Monospace>/{path}</Typo.Monospace>
+            </HStack>
+          </Typo.Small>
+        </Ellipsis>
         <Ellipsis>
-          <TextLabel label={title} />
+          <span>{title}</span>
         </Ellipsis>
       </VStack>
-      <Chip style={{marginLeft: 'auto'}}>
-        <TextLabel label={Type.label(type)} />
+      <Chip variant="info" style={{marginLeft: 'auto'}}>
+        {Type.label(type)}
       </Chip>
     </HStack>
   )
 }
 
 export function EntrySummaryThumb({
-  id,
   title,
   type: typeName,
+  path,
   parents
 }: SummaryProps) {
   const {schema} = useDashboard().config
   const type = schema[typeName]!
   return (
     <div className={styles.thumb()}>
-      {parents.length > 0 && (
-        <header className={styles.thumb.header()}>
-          <Typo.Small>
-            <HStack center gap={3}>
-              {parents
+      <header className={styles.thumb.header()}>
+        <Typo.Small>
+          <HStack center gap={3}>
+            {parents.length > 0 &&
+              parents
                 .map<ReactNode>(({id, title}) => (
                   <Fragment key={id}>{title}</Fragment>
                 ))
@@ -75,10 +73,10 @@ export function EntrySummaryThumb({
                   <IcRoundKeyboardArrowRight key={`s${i}`} />,
                   curr
                 ])}
-            </HStack>
-          </Typo.Small>
-        </header>
-      )}
+            <Typo.Monospace>/{path}</Typo.Monospace>
+          </HStack>
+        </Typo.Small>
+      </header>
       <div className={styles.thumb.title()}>
         <TextLabel label={title} />
       </div>
