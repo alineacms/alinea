@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.4.4]
 - Fix: publishing changes to file details no longer removes the associated file
 - Fix: don't use transparency in averageColor property for images
 
