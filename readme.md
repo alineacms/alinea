@@ -6,7 +6,7 @@
 Alinea is a modern content management system.
 
 - Content is stored in flat files and committed to your repository
-- Content is easily queryable through an in-memory SQLite database
+- Content is easily queryable through an in-memory database
 - Content is fully typed
 
 ## Get started
@@ -20,7 +20,7 @@ npm install alinea
 Initialize Alinea's config file
 
 ```sh
-npx alinea init --next
+npx alinea init-
 ```
 
 Open the dashboard to have a look around
