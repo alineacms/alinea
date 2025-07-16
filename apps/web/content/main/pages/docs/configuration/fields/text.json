@@ -2,7 +2,6 @@
   "_id": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
   "_type": "Doc",
   "_index": "a0",
-  "_i18nId": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
   "title": "Text",
   "navigationTitle": "",
   "body": [
@@ -81,7 +80,7 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Text field - Alinea CMS",
     "description": "",
     "openGraph": {
       "siteName": "",

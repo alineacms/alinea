@@ -210,10 +210,11 @@ DocPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   return pages
     .filter(page => supportedFrameworks.some(f => f.name === page.framework))
     .map(page => {
+      const pathname = page.slug.length > 0 ? `/${page.slug.join('/')}` : ''
       return {
         url: `/${
           page.framework === 'next' ? 'docs' : `docs:${page.framework}`
-        }/${page.slug.join('/')}`,
+        }${pathname}`,
         priority: 0.9
       }
     })

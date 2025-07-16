@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.4]
+- Fix: publishing changes to file details no longer removes the associated file
+- Fix: don't use transparency in averageColor property for images
+
 ## [1.4.3]
 - The previous release mistakenly added `next` as a direct dependency to the
   `alinea` package. While we're currently focused on providing a clean Next.js

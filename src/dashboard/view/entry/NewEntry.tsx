@@ -234,11 +234,17 @@ function NewEntryForm({parentId}: NewEntryProps) {
           status: 'preferPublished'
         })
       : Type.initialValue(entryType)
+    const parent = parentId ? await db.first({id: parentId}) : undefined
+    const parentType = parent && config.schema[parent._type]
+    const parentInsertOrder = parentType && Type.insertOrder(parentType)
     return db
       .create({
         type: entryType,
         id: id,
-        insertOrder: form.data().order,
+        insertOrder:
+          !parentInsertOrder || parentInsertOrder === 'free'
+            ? form.data().order
+            : parentInsertOrder,
         parentId: parentId,
         locale: locale,
         root: root.name,

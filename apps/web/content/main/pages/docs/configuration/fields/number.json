@@ -2,8 +2,6 @@
   "_id": "GyPkhJLrxgmfXYtYFOq9x",
   "_type": "Doc",
   "_index": "a26",
-  "_i18nId": "GyPkhJLrxgmfXYtYFOq9x",
-  "_root": "pages",
   "title": "Number",
   "navigationTitle": "",
   "body": [
@@ -93,11 +91,12 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Number field - Alinea CMS",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

@@ -2,8 +2,6 @@
   "_id": "28htwzY7qMeaV15j276Myvpek8y",
   "_type": "Doc",
   "_index": "a29",
-  "_i18nId": "28htwzY7qMeaV15j276Myvpek8y",
-  "_root": "pages",
   "title": "Check",
   "navigationTitle": "",
   "body": [
@@ -32,11 +30,12 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Check field - Alinea CMS",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

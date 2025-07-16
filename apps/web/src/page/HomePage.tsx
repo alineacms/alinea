@@ -354,7 +354,7 @@ export default async function HomePage() {
 
             <Highlight
               icon={IcBaselineDashboardCustomize}
-              href="/docs/fields/custom-fields"
+              href="/docs/configuration/fields/custom-fields"
             >
               Custom fields
             </Highlight>

@@ -2,7 +2,6 @@
   "_id": "268hmvl73nDMrfPTEpVq3AB5B3L",
   "_type": "Doc",
   "_index": "a23",
-  "_i18nId": "268hmvl73nDMrfPTEpVq3AB5B3L",
   "title": "Select",
   "navigationTitle": "",
   "body": [
@@ -31,7 +30,7 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Select field - Alinea CMS",
     "description": "",
     "openGraph": {
       "siteName": "",

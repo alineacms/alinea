@@ -2,8 +2,6 @@
   "_id": "290i4FnT1HBujZ2qoNZPm4EX69B",
   "_type": "Doc",
   "_index": "a2O",
-  "_i18nId": "290i4FnT1HBujZ2qoNZPm4EX69B",
-  "_root": "pages",
   "title": "Object",
   "navigationTitle": "",
   "body": [
@@ -32,11 +30,12 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Object field - Alinea CMS",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

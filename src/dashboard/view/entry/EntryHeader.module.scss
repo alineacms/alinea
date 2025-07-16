@@ -25,6 +25,9 @@
   }
 
   &-menuToggle {
+    cursor: pointer;
+    font-size: 18px;
+
     @include l {
       display: none;
     }
@@ -138,5 +141,10 @@
     &:hover {
       background: #ec7711 !important;
     }
+  }
+
+  &-previewToggle {
+    cursor: pointer;
+    font-size: 16px;
   }
 }

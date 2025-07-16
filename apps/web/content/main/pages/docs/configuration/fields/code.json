@@ -2,7 +2,6 @@
   "_id": "BUQj_NQqEq7YYO1nevx1o",
   "_type": "Doc",
   "_index": "a2C",
-  "_i18nId": "BUQj_NQqEq7YYO1nevx1o",
   "title": "Code",
   "navigationTitle": "",
   "body": [
@@ -19,7 +18,7 @@
     {
       "_type": "CodeBlock",
       "_id": "itHNQSxP3U_KYZ77Q3vIC",
-      "code": "import {Field} from 'alinea'\n\nalinea.code('My code field', {\n  help: 'Paste your code here'\n})",
+      "code": "import {Field} from 'alinea'\n\nField.code('My code field', {\n  help: 'Paste your code here'\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -31,7 +30,7 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Code field - Alinea CMS",
     "description": "",
     "openGraph": {
       "siteName": "",

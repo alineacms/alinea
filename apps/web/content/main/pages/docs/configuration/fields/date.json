@@ -2,8 +2,6 @@
   "_id": "A4UA9D0tJn2aanMDjODOj",
   "_type": "Doc",
   "_index": "a2B",
-  "_i18nId": "A4UA9D0tJn2aanMDjODOj",
-  "_root": "pages",
   "title": "Date",
   "navigationTitle": "",
   "body": [
@@ -32,11 +30,12 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Date field - Alinea CMS",
     "description": "",
     "openGraph": {
-      "title": "",
+      "siteName": "",
       "image": {},
+      "title": "",
       "description": ""
     }
   }

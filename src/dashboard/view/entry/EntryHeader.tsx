@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
-import {Button, HStack, Icon, Stack, px} from 'alinea/ui'
+import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineArchive} from 'alinea/ui/icons/IcOutlineArchive'
@@ -10,6 +10,7 @@ import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
+import {IcRoundLastPage} from 'alinea/ui/icons/IcRoundLastPage'
 import {IcRoundMenu} from 'alinea/ui/icons/IcRoundMenu'
 import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
 import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
@@ -30,8 +31,8 @@ import {useEntryLocation} from '../../hook/UseEntryLocation.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {useUploads} from '../../hook/UseUploads.js'
-import {useSidebar} from '../Sidebar.js'
 import {FileUploader} from '../media/FileUploader.js'
+import {useSidebar} from '../Sidebar.js'
 import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
 
@@ -133,7 +134,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const navigate = useNavigate()
   const nav = useNav()
   const {pathname} = useLocation()
-  const {isPreviewOpen, toggleNav, togglePreview} = useSidebar()
+  const {isNavOpen, isPreviewOpen, toggleNav, togglePreview} = useSidebar()
   const [isReplacing, setIsReplacing] = useState(false)
   const {upload} = useUploads()
   function replaceFile() {
@@ -244,8 +245,8 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         <HStack center gap={12} className={styles.root.description()}>
           <button
             type="button"
-            title="Display menu"
             onClick={() => toggleNav()}
+            title={!isNavOpen ? 'Display menu' : 'Hide menu'}
             className={styles.root.menuToggle()}
           >
             <Icon icon={IcRoundMenu} />
@@ -424,14 +425,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               )}
               <button
                 type="button"
-                title="Display preview"
                 onClick={() => togglePreview()}
-                style={{cursor: 'pointer'}}
+                title={isPreviewOpen ? 'Hide preview' : 'Display preview'}
+                className={styles.root.previewToggle()}
               >
                 <Icon
-                  icon={IcOutlineKeyboardTab}
+                  icon={IcRoundLastPage}
                   style={{
-                    transform: `rotate(${isPreviewOpen ? 0 : 180}deg)`
+                    transform: `rotate(${isPreviewOpen ? 180 : 0}deg)`
                   }}
                 />
               </button>
