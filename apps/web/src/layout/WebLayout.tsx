@@ -1,19 +1,20 @@
 import {cms} from '@/cms'
 import '@/global.scss'
+import styler from '@alinea/styler'
+import type {Metadata, Viewport} from 'next'
+import type {PropsWithChildren} from 'react'
 import {Footer} from '@/layout/Footer'
 import {Header} from '@/layout/Header'
-import styler from '@alinea/styler'
-import {PropsWithChildren} from 'react'
 import css from './WebLayout.module.scss'
 
 const styles = styler(css)
 
-export const metadata = {
-  title: 'Alinea'
+export const metadata: Metadata = {
+  title: 'Alinea CMS'
 }
 
-export const viewport = {
-  themeColor: '#4a65e8'
+export const viewport: Viewport = {
+  themeColor: '#3f61e8'
 }
 
 export interface WebLayoutProps {
