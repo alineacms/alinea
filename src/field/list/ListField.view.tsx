@@ -171,7 +171,7 @@ function ListInputRow({
           />
         </Sink.Options>
         <Sink.Title>
-          <TextLabel label={Type.label(type)} />
+          <TextLabel label={Type.label(type)} className={styles.row.header.title()} />
         </Sink.Title>
         <Sink.Options>
           {onCopyBlock !== undefined && (
