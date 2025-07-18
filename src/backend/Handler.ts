@@ -9,10 +9,10 @@ import type {
   RequestContext
 } from 'alinea/core/Connection'
 import type {DraftKey} from 'alinea/core/Draft'
+import type {LocalDB} from 'alinea/core/db/LocalDB'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {HttpError} from 'alinea/core/HttpError'
 import {getScope} from 'alinea/core/Scope'
-import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {base64} from 'alinea/core/util/Encoding'
 import {array, object, string} from 'cito'
@@ -131,6 +131,7 @@ export function createHandler({
 
       const expectUser = () => {
         if (!userCtx) throw new Response('Unauthorized', {status: 401})
+        return userCtx.user
       }
 
       const body = PLazy.from(() => {
@@ -153,7 +154,7 @@ export function createHandler({
         expectJson()
         const raw = await request.text()
         const scope = getScope(cms.config)
-        const query = scope.parse(raw) as GraphQuery
+        const query = scope.parse<GraphQuery>(raw)
         if (!query.preview) {
           await periodicSync(cnx, query.syncInterval)
         } else {
@@ -165,12 +166,13 @@ export function createHandler({
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
-        expectUser()
+        const user = expectUser()
         expectJson()
+        const policy = await local.createPolicy(user.roles)
         const mutations = await body
         const attempt = async (retry = 0) => {
           await local.syncWith(cnx)
-          const request = await local.request(mutations)
+          const request = await local.request(mutations, policy)
           try {
             let {sha} = await cnx.write(request)
             if (sha === request.intoSha) {

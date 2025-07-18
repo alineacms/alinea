@@ -3,6 +3,7 @@ import type {Config} from '../Config.js'
 import type {SyncApi, UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
+import type {Policy} from '../Role.js'
 import type {ChangesBatch} from '../source/Change.js'
 import {MemorySource} from '../source/MemorySource.js'
 import type {Source} from '../source/Source.js'
@@ -95,10 +96,16 @@ export class LocalDB extends WriteableGraph {
     )
   }
 
-  async request(mutations: Array<Mutation>) {
+  async request(mutations: Array<Mutation>, policy?: Policy) {
     await this.sync()
     const from = await this.source.getTree()
-    const tx = new EntryTransaction(this.config, this.index, this.source, from)
+    const tx = new EntryTransaction(
+      this.config,
+      this.index,
+      this.source,
+      from,
+      policy
+    )
     tx.apply(mutations)
     return tx.toRequest()
   }
@@ -116,7 +123,7 @@ export class LocalDB extends WriteableGraph {
     return {sha: await this.sync()}
   }
 
-  async prepareUpload(file: string): Promise<UploadResponse> {
+  async prepareUpload(): Promise<UploadResponse> {
     throw new Error('Uploads not supported on local DB')
   }
 }

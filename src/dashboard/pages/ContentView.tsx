@@ -7,6 +7,7 @@ import {useConfig} from '../hook/UseConfig.js'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
+import {usePolicy} from '../hook/UsePolicy.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {useLocation, useNavigate} from '../util/HashRouter.js'
@@ -39,6 +40,16 @@ export function ContentView({editor}: ContentViewProps) {
   const navigate = useNavigate()
   const {schema} = useConfig()
   const type = editor && schema[editor.activeVersion.type]
+  const policy = usePolicy()
+  const canCreate = policy.canCreate({
+    type: editor?.activeVersion.type,
+    workspace: workspace.name,
+    root: root.name,
+    parents: editor && [
+      ...editor.activeVersion.parents,
+      editor.activeVersion.id
+    ]
+  })
   return (
     <>
       <Sidebar.Tree>
@@ -48,26 +59,28 @@ export function ContentView({editor}: ContentViewProps) {
           selectedId={editor?.activeVersion.id}
           expanded={editor?.activeVersion.parents}
         />
-        <div className={styles.root.create()}>
-          <button
-            type="button"
-            className={styles.root.create.button()}
-            onClick={() =>
-              navigate(
-                nav.create({
-                  id: editor?.activeVersion.id,
-                  workspace: workspace.name,
-                  root: root.name
-                })
-              )
-            }
-          >
-            <HStack center gap={8} align="center">
-              <Icon icon={IcRoundAddCircle} size={17} />
-              <span>Create new</span>
-            </HStack>
-          </button>
-        </div>
+        {canCreate && (
+          <div className={styles.root.create()}>
+            <button
+              type="button"
+              className={styles.root.create.button()}
+              onClick={() =>
+                navigate(
+                  nav.create({
+                    id: editor?.activeVersion.id,
+                    workspace: workspace.name,
+                    root: root.name
+                  })
+                )
+              }
+            >
+              <HStack center gap={8} align="center">
+                <Icon icon={IcRoundAddCircle} size={17} />
+                <span>Create new</span>
+              </HStack>
+            </button>
+          </div>
+        )}
         {/*editor && <EntryVersionList editor={editor} />*/}
       </Sidebar.Tree>
       {search === '?new' && <NewEntry parentId={editor?.entryId} />}
