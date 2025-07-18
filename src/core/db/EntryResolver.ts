@@ -547,6 +547,7 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
     parentId: query.parentId,
     path: query.path,
     url: query.url,
+    level: query.level,
     workspace,
     root
   })

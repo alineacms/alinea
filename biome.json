@@ -34,7 +34,8 @@
         "useEnumInitializers": "off",
         "noParameterAssign": "off",
         "useShorthandFunctionType": "off",
-        "noInferrableTypes": "off"
+        "noInferrableTypes": "off",
+        "useArrayLiterals": "off"
       },
       "complexity": {
         "noBannedTypes": "off",

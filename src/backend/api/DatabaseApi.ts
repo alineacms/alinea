@@ -1,6 +1,6 @@
-import type {RequestContext} from 'alinea/core/Connection'
 import type {
   DraftsApi,
+  RequestContext,
   UploadResponse,
   UploadsApi
 } from 'alinea/core/Connection'
@@ -10,7 +10,7 @@ import {basename, extname} from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import PLazy from 'p-lazy'
 import {type Database, eq, primaryKey, table} from 'rado'
-import type {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData.js'
+import type {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../HandleAction.js'
 import {is} from '../util/ORM.js'
