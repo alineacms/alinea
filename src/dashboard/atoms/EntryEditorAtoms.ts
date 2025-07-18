@@ -1,16 +1,12 @@
 import type {Config} from 'alinea/core/Config'
 import type {Connection} from 'alinea/core/Connection'
-import {DOC_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
-import {Entry} from 'alinea/core/Entry'
-import type {EntryStatus} from 'alinea/core/Entry'
-import type {EntryRow} from 'alinea/core/EntryRow'
+import {createYDoc, DOC_KEY, parseYDoc} from 'alinea/core/Doc'
+import {Entry, type EntryStatus} from 'alinea/core/Entry'
 import {Field} from 'alinea/core/Field'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
 import {Root} from 'alinea/core/Root'
 import {type EntryUrlMeta, Type} from 'alinea/core/Type'
-import {Workspace} from 'alinea/core/Workspace'
-import {} from 'alinea/core/db/Operation'
 import {
   entryFileName,
   entryFilepath,
@@ -20,10 +16,11 @@ import {
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
+import {Workspace} from 'alinea/core/Workspace'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
 import {encodePreviewPayload} from 'alinea/preview/PreviewPayload'
-import {type Getter, type Setter, atom} from 'jotai'
+import {atom, type Getter, type Setter} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
@@ -56,7 +53,7 @@ export enum EntryTransition {
   ArchivePublished,
   PublishArchived,
   DeleteFile,
-  DeleteArchived
+  DeleteEntry
 }
 
 const entryTransitionAtoms = atomFamily((id: string) => {
@@ -71,7 +68,7 @@ export const entryEditorAtoms = atomFamily(
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = get(dbAtom)
-      let entry: EntryRow | null = await graph.first({
+      let entry: Entry | null = await graph.first({
         select: Entry,
         id,
         locale: searchLocale,
@@ -239,7 +236,7 @@ export function createEntryEditor(entryData: EntryData) {
     return get(statusInUrl) ?? activeStatus
   })
 
-  function entryFile(entry: EntryRow, parentPaths?: Array<string>) {
+  function entryFile(entry: Entry, parentPaths?: Array<string>) {
     return entryFileName(
       config,
       entry,
@@ -462,7 +459,7 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const archivePublished = atom(null, async (get, set) => {
+  const archive = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
       transition: EntryTransition.ArchivePublished,
@@ -494,7 +491,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!result) return
     const db = get(dbAtom)
     return set(action, {
-      transition: EntryTransition.DeleteArchived,
+      transition: EntryTransition.DeleteEntry,
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
@@ -512,10 +509,10 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const deleteArchived = atom(null, async (get, set) => {
+  const deleteEntry = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
-      transition: EntryTransition.DeleteArchived,
+      transition: EntryTransition.DeleteEntry,
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
@@ -531,7 +528,7 @@ export function createEntryEditor(entryData: EntryData) {
   }
   async function getDraftEntry(
     options: DraftEntryOptions = {}
-  ): Promise<EntryRow> {
+  ): Promise<Entry> {
     const data = parseYDoc(type, yDoc)
     const status = options.status ?? activeVersion.status
     const locale = options.locale ?? activeVersion.locale
@@ -676,11 +673,11 @@ export function createEntryEditor(entryData: EntryData) {
     publishDraft,
     discardDraft,
     unPublish,
-    archivePublished,
+    archive,
     publishArchived,
     deleteFile,
     deleteMediaLibrary,
-    deleteArchived,
+    deleteEntry,
     saveTranslation,
     discardEdits,
     showHistory,

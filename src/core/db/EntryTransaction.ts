@@ -13,6 +13,7 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
+import type {MediaFile} from '../media/MediaTypes.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
 import {SourceTransaction} from '../source/Source.js'
@@ -132,12 +133,14 @@ export class EntryTransaction {
     if (overwrite && existing?.type === 'MediaFile') {
       const [prev] = existing.entries
       assert(prev, 'Previous entry not found')
-      this.removeFile({
-        location: paths.join(
-          getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
-          prev.data.location
-        )
-      })
+      const prevLocation = prev.data.location
+      if (prevLocation !== data.location)
+        this.removeFile({
+          location: paths.join(
+            getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
+            prev.data.location as string
+          )
+        })
     }
     const parentDir = parent
       ? parent.childrenDir
@@ -324,7 +327,7 @@ export class EntryTransaction {
     })
     assert(entry, `Entry not found: ${id}`)
     const pathChange = entry.data.path && entry.data.path !== entry.path
-    let path = slugify(entry.data.path ?? entry.path)
+    let path = slugify((entry.data.path as string) ?? entry.path)
     path = this.#getAvailablePath({
       id,
       path,
@@ -345,25 +348,24 @@ export class EntryTransaction {
     this.#tx.remove(entry.filePath)
     const record = createRecord({...entry, path}, 'published')
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
-    this.#tx.add(`${childrenDir}.json`, contents)
     if (pathChange) {
       this.#tx.remove(`${entry.parentDir}/${entry.path}.json`)
       this.#tx.rename(entry.childrenDir, childrenDir)
     }
+    this.#tx.add(`${childrenDir}.json`, contents)
     this.#messages.push(this.#reportOp('publish', entry.title))
     return this
   }
 
   unpublish({id, locale}: Op<UnpublishMutation>) {
     const index = this.#index
-    const entry = index.findFirst(entry => {
-      return (
-        entry.id === id &&
-        entry.locale === locale &&
-        entry.status === 'published'
-      )
-    })
+    const versions = index.byId.get(id)?.locales.get(locale)
+    const entry = versions?.main
     assert(entry, `Entry not found: ${id}`)
+    for (const version of versions.values()) {
+      if (version.main) continue
+      this.#tx.remove(version.filePath)
+    }
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.rename(entry.filePath, `${entry.childrenDir}.draft.json`)
     this.#messages.push(this.#reportOp('unpublish', entry.title))
@@ -372,14 +374,13 @@ export class EntryTransaction {
 
   archive({id, locale}: Op<ArchiveMutation>) {
     const index = this.#index
-    const entry = index.findFirst(entry => {
-      return (
-        entry.id === id &&
-        entry.locale === locale &&
-        entry.status === 'published'
-      )
-    })
+    const versions = index.byId.get(id)?.locales.get(locale)
+    const entry = versions?.main
     assert(entry, `Entry not found: ${id}`)
+    for (const version of versions.values()) {
+      if (version.main) continue
+      this.#tx.remove(version.filePath)
+    }
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.rename(entry.filePath, `${entry.childrenDir}.archived.json`)
     this.#messages.push(this.#reportOp('archive', entry.title))
@@ -529,7 +530,7 @@ export class EntryTransaction {
         const workspace = this.#config.workspaces[entry.workspace]
         const mediaDir = getWorkspace(workspace).mediaDir
         // Find all files within children
-        const files = index.findMany(f => {
+        const files: Iterable<Entry<MediaFile>> = index.findMany(f => {
           return (
             f.workspace === entry.workspace &&
             f.root === entry.root &&
@@ -546,7 +547,12 @@ export class EntryTransaction {
       if (entry.type === 'MediaFile') {
         const workspace = this.#config.workspaces[entry.workspace]
         const mediaDir = getWorkspace(workspace).mediaDir
-        this.removeFile({location: paths.join(mediaDir, entry.data.location)})
+        this.removeFile({
+          location: paths.join(
+            mediaDir,
+            (<Entry<MediaFile>>entry).data.location
+          )
+        })
       }
     }
     if (info) this.#messages.unshift(this.#reportOp('remove', info.title))

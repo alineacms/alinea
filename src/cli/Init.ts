@@ -78,15 +78,29 @@ export async function init(options: InitOptions) {
       if (isNext) options.next = true
     } catch {}
   }
-  const configFileContents = options.next
+  const isNext = options.next ?? false
+  const configFileContents = isNext
     ? configFile.replaceAll('alinea/core', 'alinea/next')
     : configFile
   const hasSrcDir = await fs.access(path.join(cwd, 'src')).then(
     () => true,
     () => false
   )
-  const configFileLocation = path.join(cwd, hasSrcDir ? 'src/cms.ts' : 'cms.ts')
+  const installInto = hasSrcDir ? path.join(cwd, 'src') : cwd
+  const configFileLocation = path.join(installInto, 'cms.ts')
   await fs.writeFile(configFileLocation, configFileContents)
+  if (isNext) {
+    const handlerFile = await fs.readFile(
+      path.join(__dirname, 'static/init/next-handler.js'),
+      'utf-8'
+    )
+    const routeLocation = path.join(
+      installInto,
+      'app/(alinea)/api/cms/route.ts'
+    )
+    await fs.mkdir(path.dirname(routeLocation), {recursive: true})
+    await fs.writeFile(routeLocation, handlerFile)
+  }
   const command = `${runner} alinea dev`
   if (!quiet)
     console.info(

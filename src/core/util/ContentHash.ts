@@ -1,5 +1,5 @@
 import {crypto} from '@alinea/iso'
-import type {EntryRow} from '../EntryRow.js'
+import type {Entry} from '../Entry.js'
 
 export function toHex(buffer: ArrayBuffer) {
   return Array.from(new Uint8Array(buffer))
@@ -13,7 +13,7 @@ export async function createFileHash(data: Uint8Array) {
   return toHex(digest)
 }
 
-export async function createRowHash(entry: Omit<EntryRow, 'rowHash'>) {
+export async function createRowHash(entry: Omit<Entry, 'rowHash'>) {
   const encoder = new TextEncoder()
   const data = encoder.encode(
     `entryId ${entry.id}` +

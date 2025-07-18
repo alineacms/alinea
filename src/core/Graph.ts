@@ -116,7 +116,7 @@ type InferResult<Selection, Types, Include> = Selection extends undefined
     ? Value
     : InferSelection<Selection>
 
-type QueryResult<Selection, Types, Include> = Expand<
+export type QueryResult<Selection, Types, Include> = Expand<
   InferResult<Selection, Types, Include>
 >
 
@@ -183,6 +183,8 @@ export declare class QuerySettings {
   workspace?: Condition<string> | Workspace
   /** Filter by root */
   root?: Condition<string> | Root
+  /** Filter by level */
+  level?: Condition<number>
 
   /** Filter results by location */
   location?: Location

@@ -1,19 +1,20 @@
-import {cms} from '@/cms'
-import {Breadcrumbs} from '@/layout/Breadcrumbs'
-import {PageWithSidebar} from '@/layout/Page'
-import {FrameworkPicker} from '@/layout/nav/FrameworkPicker'
-import {supportedFrameworks} from '@/layout/nav/Frameworks'
-import {Link} from '@/layout/nav/Link'
-import {NavTree} from '@/layout/nav/NavTree'
-import {type NavItem, nestNav} from '@/layout/nav/NestNav'
-import {BodyFieldView} from '@/page/blocks/BodyFieldView'
-import {Doc} from '@/schema/Doc'
 import styler from '@alinea/styler'
 import {Query} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
 import {HStack, VStack} from 'alinea/ui'
 import type {Metadata, MetadataRoute} from 'next'
-import {WebTypo} from '../layout/WebTypo'
+import {cms} from '@/cms'
+import {Breadcrumbs} from '@/layout/Breadcrumbs'
+import {FrameworkPicker} from '@/layout/nav/FrameworkPicker'
+import {supportedFrameworks} from '@/layout/nav/Frameworks'
+import {Link} from '@/layout/nav/Link'
+import {NavTree} from '@/layout/nav/NavTree'
+import {type NavItem, nestNav} from '@/layout/nav/NestNav'
+import {PageWithSidebar} from '@/layout/Page'
+import {WebTypo} from '@/layout/WebTypo'
+import {BodyFieldView} from '@/page/blocks/BodyFieldView'
+import {Doc} from '@/schema/Doc'
+import {getMetadata} from '@/utils/metadata'
 import css from './DocPage.module.scss'
 
 const styles = styler(css)
@@ -93,7 +94,11 @@ export async function generateMetadata({
   params
 }: DocPageProps): Promise<Metadata> {
   const {doc} = await getPage(params)
-  return {title: doc.title}
+  return await getMetadata({
+    url: doc._url,
+    title: doc.title,
+    metadata: doc.metadata
+  })
 }
 
 export default async function DocPage({params}: DocPageProps) {
@@ -205,10 +210,11 @@ DocPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   return pages
     .filter(page => supportedFrameworks.some(f => f.name === page.framework))
     .map(page => {
+      const pathname = page.slug.length > 0 ? `/${page.slug.join('/')}` : ''
       return {
         url: `/${
           page.framework === 'next' ? 'docs' : `docs:${page.framework}`
-        }/${page.slug.join('/')}`,
+        }${pathname}`,
         priority: 0.9
       }
     })

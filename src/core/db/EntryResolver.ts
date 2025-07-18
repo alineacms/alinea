@@ -12,19 +12,19 @@ import {
   type GraphQuery,
   type Projection,
   type QuerySettings,
-  type Status,
-  querySource as queryEdge
+  querySource as queryEdge,
+  type Status
 } from 'alinea/core/Graph'
 import {
-  type HasExpr,
   getExpr,
+  type HasExpr,
   hasExpr,
   hasField,
   hasRoot,
   hasWorkspace
 } from 'alinea/core/Internal'
 import type {Resolver} from 'alinea/core/Resolver'
-import {type Scope, getScope} from 'alinea/core/Scope'
+import {getScope, type Scope} from 'alinea/core/Scope'
 import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
@@ -206,17 +206,10 @@ export class EntryResolver implements Resolver {
       }
       case 'parents': {
         const depth = query?.depth ?? Number.POSITIVE_INFINITY
-        const segments = entry.parentDir.split('/')
-        const parentPaths = segments.map((_, i) =>
-          segments.slice(0, i + 1).join('/')
-        )
         return {
-          condition({level, childrenDir}) {
-            return (
-              level < entry.level &&
-              level > entry.level - depth &&
-              parentPaths.includes(childrenDir)
-            )
+          ids: entry.parents.slice(-depth),
+          condition({locale}) {
+            return locale === entry.locale
           }
         }
       }
@@ -547,6 +540,7 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
     parentId: query.parentId,
     path: query.path,
     url: query.url,
+    level: query.level,
     workspace,
     root
   })

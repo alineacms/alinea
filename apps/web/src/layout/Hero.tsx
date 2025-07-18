@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
+import {IcRoundChevronRight} from 'alinea/ui/icons/IcRoundChevronRight'
 import {HStack} from 'alinea/ui/Stack'
-import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
-import Link, {LinkProps} from 'next/link'
-import {HTMLProps, PropsWithChildren} from 'react'
+import Link, {type LinkProps} from 'next/link'
+import type {HTMLProps, PropsWithChildren} from 'react'
 import css from './Hero.module.scss'
 import {PageContainer} from './Page'
 import {WebTypo} from './WebTypo'
@@ -58,7 +58,7 @@ export namespace Hero {
       >
         <HStack center gap={8}>
           <span>{children}</span>
-          <IcRoundArrowForward />
+          <IcRoundChevronRight />
         </HStack>
       </Link>
     )

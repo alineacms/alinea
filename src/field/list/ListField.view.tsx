@@ -167,18 +167,18 @@ function ListInputRow({
             icon={getType(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
+            title="Drag and drop to reorder"
           />
         </Sink.Options>
         <Sink.Title>
-          <TextLabel label={Type.label(type)} />
+          <TextLabel label={Type.label(type)} className={styles.row.header.title()} />
         </Sink.Title>
         <Sink.Options>
           {onCopyBlock !== undefined && (
             <IconButton
               icon={IcBaselineContentCopy}
-              onClick={() => {
-                onCopyBlock()
-              }}
+              onClick={() => onCopyBlock()}
+              title="Copy block"
             />
           )}
           {!readOnly && (
@@ -186,12 +186,14 @@ function ListInputRow({
               <IconButton
                 icon={IcRoundKeyboardArrowUp}
                 onClick={() => onMove?.(-1)}
+                title="Move up one position"
               />
               <IconButton
                 icon={IcRoundKeyboardArrowDown}
                 onClick={() => onMove?.(1)}
+                title="Move down one position"
               />
-              <IconButton icon={IcRoundClose} onClick={onDelete} />
+              <IconButton icon={IcRoundClose} onClick={onDelete} title="Delete block" />
             </>
           )}
         </Sink.Options>
@@ -259,7 +261,7 @@ function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
   return (
     <>
       <div className={styles.insert({open, first})}>
-        <button className={styles.insert.icon()} onClick={onInsert}>
+        <button className={styles.insert.icon()} onClick={onInsert} title="Insert new block">
           <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
         </button>
       </div>

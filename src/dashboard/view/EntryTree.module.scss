@@ -60,7 +60,8 @@
       font-size: 12px;
     }
 
-    &:hover {
+    &:hover,
+    &:has(button:focus-visible) {
       color: inherit;
       background: var(--alinea-highlight);
     }
@@ -110,9 +111,10 @@
     }
     &.is-parentSelected {
       background: var(--alinea-selected-faded);
-      // color: var(--alinea-selected-foreground);
       border-radius: 0;
-
+      &:hover {
+        background: var(--alinea-selected);
+      }
       &:not(:has(+ &)) {
         border-bottom-left-radius: var(--alinea-border-radius);
         border-bottom-right-radius: var(--alinea-border-radius);
@@ -134,11 +136,17 @@
           var(--alinea-variant-disabled-background) 40%,
           transparent
         );
+        &:hover {
+          background: var(--alinea-variant-disabled-background);
+        }
       }
     }
 
     &.is-unpublished {
       color: var(--alinea-variant-create-foreground);
+      &:hover {
+        background: var(--alinea-variant-create-background);
+      }
       &.is-selected {
         background: var(--alinea-variant-create-background);
       }
@@ -148,6 +156,9 @@
           var(--alinea-variant-create-background) 40%,
           transparent
         );
+        &:hover {
+          background: var(--alinea-variant-create-background);
+        }
       }
     }
 

@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import type {EntryRow} from 'alinea/core/EntryRow'
+import type {Entry} from 'alinea/core/Entry'
 import {Type} from 'alinea/core/Type'
 import {Chip, TextLabel} from 'alinea/ui'
 import {useConfig} from '../../hook/UseConfig.js'
@@ -10,8 +10,8 @@ import {FieldsDiff} from './FieldsDiff.js'
 const styles = styler(css)
 
 export type EntryDiffProps = {
-  entryA: EntryRow
-  entryB: EntryRow
+  entryA: Entry
+  entryB: Entry
 }
 
 export function EntryDiff({entryA, entryB}: EntryDiffProps) {

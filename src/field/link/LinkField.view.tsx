@@ -1,22 +1,22 @@
 import styler from '@alinea/styler'
 import {
+  closestCenter,
   DndContext,
   type DragEndEvent,
+  type DraggableSyntheticListeners,
   DragOverlay,
   type DragStartEvent,
-  type DraggableSyntheticListeners,
+  defaultDropAnimation,
   KeyboardSensor,
   LayoutMeasuringStrategy,
   PointerSensor,
-  closestCenter,
-  defaultDropAnimation,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
 import {
   type AnimateLayoutChanges,
-  SortableContext,
   defaultAnimateLayoutChanges,
+  SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
@@ -24,11 +24,11 @@ import {
 import {CSS, type FirstArgument} from '@dnd-kit/utilities'
 import {Entry} from 'alinea/core/Entry'
 import type {Field} from 'alinea/core/Field'
+import {MediaFile} from 'alinea/core/media/MediaTypes'
 import type {Picker} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
-import type {Type} from 'alinea/core/Type'
-import {MediaFile} from 'alinea/core/media/MediaTypes'
 import {ListRow} from 'alinea/core/shape/ListShape'
+import type {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
@@ -43,12 +43,12 @@ import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url/UrlPicker'
 import {TextLabel} from 'alinea/ui'
-import {Sink} from 'alinea/ui/Sink'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
+import {Sink} from 'alinea/ui/Sink'
 import {
   type CSSProperties,
   type HTMLAttributes,
@@ -388,6 +388,7 @@ function LinkInputRow({
               icon={IcRoundDragHandle}
               {...handle}
               style={{cursor: handle ? 'grab' : 'grabbing'}}
+              title="Drag and drop to reorder"
             />
           ) : (
             <div className={styles.row.staticHandle()}>
@@ -405,9 +406,26 @@ function LinkInputRow({
             <IconButton
               icon={IcRoundOpenInNew}
               onClick={() => onView(reference)}
+              title={
+                reference?._type === 'image'
+                  ? 'Open media file in new tab'
+                  : 'Open link in new tab'
+              }
             />
-            <IconButton icon={IcRoundEdit} onClick={onEdit} />
-            <IconButton icon={IcRoundClose} onClick={onRemove} />
+            <IconButton
+              icon={IcRoundEdit}
+              onClick={onEdit}
+              title={
+                reference?._type === 'image' ? 'Change image' : 'Edit link'
+              }
+            />
+            <IconButton
+              icon={IcRoundClose}
+              onClick={onRemove}
+              title={
+                reference?._type === 'image' ? 'Delete image' : 'Delete link'
+              }
+            />
           </Sink.Options>
         )}
       </Sink.Header>
@@ -446,14 +464,13 @@ function useReferenceViewer() {
           select: {
             id: Entry.id,
             workspace: Entry.workspace,
-            root: Entry.root,
-            location: MediaFile.location
+            root: Entry.root
           },
           status: 'preferDraft'
         })
         .then(entry => {
           if (!entry) return
-          window.open(entry.location ?? `#${nav.entry(entry)}`, '_blank')
+          window.open(`#${nav.entry(entry)}`, '_blank')
         })
     }
   }

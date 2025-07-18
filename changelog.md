@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.4.4]
+- Fix: publishing changes to file details no longer removes the associated file
+- Fix: don't use transparency in averageColor property for images
+
+## [1.4.3]
+- The previous release mistakenly added `next` as a direct dependency to the
+  `alinea` package. While we're currently focused on providing a clean Next.js
+  integration, Alinea is not tied to Next.js and should not depend on it.
+
+## [1.4.2]
+- Using the `alinea init` command for a Next.js website will now auto-create
+  the handler route in `app/(alinea)/api/cms/route.ts`. The generated `cms.ts`
+  config file also includes more default options such as the `baseUrl` and
+  `handlerUrl`.
+
+## [1.4.1]
+- Restore drag-drop behavior in entry tree. The drag and drop functionality
+  was broken in the previous release due to a change in the way entries are
+  rendered in the sidebar.
+
+## [1.4.0]
+- Better support for drafts in Alinea. Drafts can be enabled using the config
+  option `enableDrafts: true`. Drafts and archived entries will now show their
+  status in the sidebar as well. Workflows are adjusted to be able to create a
+  draft entry, including draft children. These will show up as "unpublished" and
+  can be published in one go. Further stability improvements were made to 
+  updating entry statuses.
+
 ## [1.3.1]
 - Fix usage of cms.user() in api routes
 
@@ -136,7 +164,7 @@
   `dashboardFile` properties.
 
   ```tsx
-  // cms.tsx
+  // cms.ts
 
   // Previously:
   const cms = createCMS({
@@ -370,12 +398,12 @@
     })
     ```
 
-- Add the [mutation API](https://alinea.sh/docs/content/editing-content) (#374)
+- Add the [mutation API](https://alineacms.com/docs/content/editing-content) (#374)
 
   This introduces a commit method on CMS instances that can be used to mutate
   cms content. It can be used to create, update and delete Entries.
 
-- Add the [Query namespace](https://alinea.sh/docs/content/query)
+- Add the [Query namespace](https://alineacms.com/docs/content/query)
 
 ## [0.7.1]
 

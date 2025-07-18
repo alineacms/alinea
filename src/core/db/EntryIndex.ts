@@ -2,8 +2,8 @@ import {reportWarning} from 'alinea/cli/util/Report'
 import {Config} from 'alinea/core/Config'
 import type {Entry, EntryStatus} from 'alinea/core/Entry'
 import {
-  type EntryRecord,
   createRecord,
+  type EntryRecord,
   parseRecord
 } from 'alinea/core/EntryRecord'
 import {getRoot} from 'alinea/core/Internal'
@@ -17,14 +17,14 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
 import {createId} from '../Id.js'
-import type {ChangesBatch} from '../source/Change.js'
+import {getScope, type Scope} from '../Scope.js'
+import type {Change, ChangesBatch} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
-import {type Source, bundleContents} from '../source/Source.js'
+import {bundleContents, type Source} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {assert, compareStrings} from '../source/Utils.js'
 import {sourceChanges} from './CommitRequest.js'
-import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {IndexEvent} from './IndexEvent.js'
 
@@ -42,9 +42,9 @@ export class EntryIndex extends EventTarget {
   entries = [] as Entry[]
   byPath = new Map<string, EntryNode>()
   byId = new Map<string, EntryNode>()
-  resolver: EntryResolver
   initialSync: ReadonlyTree | undefined
   #config: Config
+  #scope: Scope
   #seeds: Map<string, Seed>
   #search: MiniSearch
   #singleWorkspace: string | undefined
@@ -52,11 +52,11 @@ export class EntryIndex extends EventTarget {
   constructor(config: Config) {
     super()
     this.#config = config
+    this.#scope = getScope(config)
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
     this.#seeds = entrySeeds(config)
-    this.resolver = new EntryResolver(config, this)
     this.#search = new MiniSearch({
       fields: ['title', 'searchableText'],
       storeFields: ['entry'],
@@ -73,13 +73,28 @@ export class EntryIndex extends EventTarget {
     return this.tree.sha
   }
 
-  findFirst(filter: (entry: Entry) => boolean): Entry | undefined {
+  findFirst<T extends Record<string, unknown>>(
+    filter: (entry: Entry) => boolean
+  ): Entry<T> | undefined {
     const [entry] = this.findMany(filter)
-    return entry
+    return entry as Entry<T> | undefined
   }
 
-  *findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
-    for (const entry of this.entries) if (filter(entry)) yield entry
+  *findMany<T extends Record<string, unknown>>(
+    filter: (entry: Entry) => boolean
+  ): Iterable<Entry<T>> {
+    for (const entry of this.entries) if (filter(entry)) yield entry as Entry<T>
+  }
+
+  #parentsOf(entryId: string): Array<string> {
+    const parents = []
+    let node = this.byId.get(entryId)
+    while (node) {
+      parents.push(node.id)
+      if (!node.parentId) break
+      node = this.byId.get(node.parentId)
+    }
+    return parents
   }
 
   filter({ids, search, condition}: EntryFilter, preview?: Entry): Array<Entry> {
@@ -204,7 +219,7 @@ export class EntryIndex extends EventTarget {
           const parentNode = this.byPath.get(getNodePath(parentPath))
           let id = createId()
           if (locale) {
-            const level = pathSegments.length - 1
+            const level = pathSegments.length - 2
             const pathEnd = `/${pathSegments.slice(1).join('/')}.json`
             const from = this.findFirst(entry => {
               return (
@@ -301,11 +316,14 @@ export class EntryIndex extends EventTarget {
           const segments = change.path.split('/').slice(0, -1)
           const parentPath = segments.join('/')
           const parent = this.byPath.get(parentPath)
-          const entry = this.#parseEntry({
-            sha: change.sha,
-            file: change.path,
-            contents: contents
-          })
+          const entry = this.#parseEntry(
+            {
+              sha: change.sha,
+              file: change.path,
+              contents: contents
+            },
+            parent
+          )
           const node =
             this.byId.get(entry.id) ?? new EntryNode(this.#config, entry)
           node.add(entry, parent)
@@ -345,7 +363,10 @@ export class EntryIndex extends EventTarget {
     }
   }
 
-  #parseEntry({sha, file, contents}: ParseRequest): Entry {
+  #parseEntry(
+    {sha, file, contents}: ParseRequest,
+    parent: EntryNode | undefined
+  ): Entry {
     const segments = file.split('/')
     const baseName = segments.at(-1)
     assert(baseName)
@@ -403,6 +424,17 @@ export class EntryIndex extends EventTarget {
     if (!this.#singleWorkspace) levelOffset += 1
     if (i18n) levelOffset += 1
 
+    const parents = []
+    let target = parent
+    while (target) {
+      parents.unshift(target.id)
+      if (target.parentId) {
+        target = this.byId.get(target.parentId)
+      } else {
+        target = undefined
+      }
+    }
+
     return {
       rowHash: sha,
       fileHash: sha,
@@ -418,8 +450,9 @@ export class EntryIndex extends EventTarget {
 
       parentDir,
       childrenDir,
-      parentId: null,
-      level: segments.length - levelOffset,
+      parentId: parent?.id ?? null,
+      parents: parents,
+      level: segments.length - levelOffset - 1,
       index,
       locale,
 
@@ -474,6 +507,12 @@ class EntryNode {
     this.#config = config
     this.id = from.id
     this.type = from.type
+    const workspace = this.#config.workspaces[from.workspace]
+    assert(workspace, `Invalid workspace: ${from.workspace}`)
+    const root = workspace[from.root]
+    assert(root, `Invalid root: ${from.root}`)
+    const type = this.#config.schema[from.type]
+    assert(type, `Invalid type: ${from.type} in ${from.filePath}`)
   }
   get index() {
     const [entry] = this.byFile.values()

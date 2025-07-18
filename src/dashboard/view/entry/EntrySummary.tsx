@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import type {SummaryProps} from 'alinea/core/media/Summary'
 import {Type} from 'alinea/core/Type'
-import {Chip, HStack, TextLabel, Typo, VStack, px} from 'alinea/ui'
+import {Chip, HStack, px, TextLabel, Typo, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Fragment, type ReactNode} from 'react'
@@ -14,6 +14,8 @@ const styles = styler(css)
 export function EntrySummaryRow({
   id,
   title,
+  path,
+  url,
   type: typeName,
   parents
 }: SummaryProps) {
@@ -27,7 +29,7 @@ export function EntrySummaryRow({
         {parents.length > 0 && (
           <Ellipsis style={{marginTop: px(-1)}}>
             <Typo.Small>
-              <HStack center gap={3}>
+              <HStack center gap={3} title={url}>
                 {parents
                   .map<ReactNode>(({id, title}) => (
                     <Fragment key={id}>{title}</Fragment>
@@ -42,11 +44,11 @@ export function EntrySummaryRow({
           </Ellipsis>
         )}
         <Ellipsis>
-          <TextLabel label={title} />
+          <TextLabel label={title} title={title} />
         </Ellipsis>
       </VStack>
       <Chip style={{marginLeft: 'auto'}}>
-        <TextLabel label={Type.label(type)} />
+        <TextLabel label={Type.label(type)} title={Type.label(type)} />
       </Chip>
     </HStack>
   )
