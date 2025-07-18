@@ -13,6 +13,7 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
+import type {MediaFile} from '../media/MediaTypes.js'
 import {Permission, Policy} from '../Role.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
@@ -545,7 +546,7 @@ export class EntryTransaction {
         const workspace = this.#config.workspaces[entry.workspace]
         const mediaDir = getWorkspace(workspace).mediaDir
         // Find all files within children
-        const files = index.findMany(f => {
+        const files: Iterable<Entry<MediaFile>> = index.findMany(f => {
           return (
             f.workspace === entry.workspace &&
             f.root === entry.root &&
@@ -563,7 +564,10 @@ export class EntryTransaction {
         const workspace = this.#config.workspaces[entry.workspace]
         const mediaDir = getWorkspace(workspace).mediaDir
         this.removeFile({
-          location: paths.join(mediaDir, entry.data.location as string)
+          location: paths.join(
+            mediaDir,
+            (<Entry<MediaFile>>entry).data.location
+          )
         })
       }
     }

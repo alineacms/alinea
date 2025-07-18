@@ -73,13 +73,28 @@ export class EntryIndex extends EventTarget {
     return this.tree.sha
   }
 
-  findFirst(filter: (entry: Entry) => boolean): Entry | undefined {
+  findFirst<T extends Record<string, unknown>>(
+    filter: (entry: Entry) => boolean
+  ): Entry<T> | undefined {
     const [entry] = this.findMany(filter)
-    return entry
+    return entry as Entry<T> | undefined
   }
 
-  *findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
-    for (const entry of this.entries) if (filter(entry)) yield entry
+  *findMany<T extends Record<string, unknown>>(
+    filter: (entry: Entry) => boolean
+  ): Iterable<Entry<T>> {
+    for (const entry of this.entries) if (filter(entry)) yield entry as Entry<T>
+  }
+
+  #parentsOf(entryId: string): Array<string> {
+    const parents = []
+    let node = this.byId.get(entryId)
+    while (node) {
+      parents.push(node.id)
+      if (!node.parentId) break
+      node = this.byId.get(node.parentId)
+    }
+    return parents
   }
 
   #parentsOf(entryId: string): Array<string> {

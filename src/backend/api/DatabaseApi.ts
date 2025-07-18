@@ -1,6 +1,6 @@
-import type {RequestContext} from 'alinea/core/Connection'
 import type {
   DraftsApi,
+  RequestContext,
   UploadResponse,
   UploadsApi
 } from 'alinea/core/Connection'
