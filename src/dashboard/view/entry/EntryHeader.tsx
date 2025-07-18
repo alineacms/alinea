@@ -1,22 +1,22 @@
 import styler from '@alinea/styler'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
-import {Button, HStack, Icon, Stack, px} from 'alinea/ui'
+import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {IcOutlineArchive} from 'alinea/ui/icons/IcOutlineArchive'
 import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
-import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
-import {IcOutlineKeyboardTab} from 'alinea/ui/icons/IcOutlineKeyboardTab'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
-import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
+import {IcRoundLastPage} from 'alinea/ui/icons/IcRoundLastPage'
 import {IcRoundMenu} from 'alinea/ui/icons/IcRoundMenu'
 import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
 import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
+import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
@@ -31,8 +31,8 @@ import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {usePolicy} from '../../hook/UsePolicy.js'
 import {useUploads} from '../../hook/UseUploads.js'
-import {useSidebar} from '../Sidebar.js'
 import {FileUploader} from '../media/FileUploader.js'
+import {useSidebar} from '../Sidebar.js'
 import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
 
@@ -44,7 +44,8 @@ const variantDescription = {
   published: 'Published',
   archived: 'Archived',
   untranslated: 'Untranslated',
-  revision: 'Revision'
+  revision: 'Revision',
+  unpublished: 'Unpublished'
 }
 
 const transitions = {
@@ -53,29 +54,30 @@ const transitions = {
   [EntryTransition.PublishEdits]: 'Publishing',
   [EntryTransition.RestoreRevision]: 'Restoring',
   [EntryTransition.PublishDraft]: 'Publishing',
+  [EntryTransition.UnpublishDraft]: 'Unpublishing',
   [EntryTransition.DiscardDraft]: 'Discarding',
   [EntryTransition.ArchivePublished]: 'Archiving',
   [EntryTransition.PublishArchived]: 'Publishing',
   [EntryTransition.DeleteFile]: 'Deleting',
-  [EntryTransition.DeleteArchived]: 'Deleting'
+  [EntryTransition.DeleteEntry]: 'Deleting'
 }
 
 const variantIcon = {
-  draft: IcOutlineDrafts,
+  draft: IcRoundEdit,
   editing: IcRoundEdit,
   published: IcOutlineRemoveRedEye,
-  archived: IcRoundArchive,
+  archived: IcOutlineArchive,
   untranslated: IcRoundTranslate,
   revision: IcRoundPublishedWithChanges,
-  transition: IcOutlineAvTimer
+  transition: IcOutlineAvTimer,
+  unpublished: RiFlashlightFill
 }
 
 export interface EntryHeaderProps {
-  editable?: boolean
   editor: EntryEditor
 }
 
-export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
+export function EntryHeader({editor}: EntryHeaderProps) {
   const config = useConfig()
   const locale = useLocale()
   const policy = usePolicy()
@@ -98,15 +100,18 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           ? 'untranslated'
           : hasChanges && !statusInUrl
             ? 'editing'
-            : selectedStatus
+            : selectedStatus === 'draft' && editor.activeVersion.main
+              ? 'unpublished'
+              : selectedStatus
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const publishDraft = useSetAtom(editor.publishDraft)
   const restoreRevision = useSetAtom(editor.restoreRevision)
   const discardDraft = useSetAtom(editor.discardDraft)
-  const archivePublished = useSetAtom(editor.archivePublished)
+  const unPublish = useSetAtom(editor.unPublish)
+  const archive = useSetAtom(editor.archive)
   const publishArchived = useSetAtom(editor.publishArchived)
-  const deleteArchived = useSetAtom(editor.deleteArchived)
+  const deleteEntry = useSetAtom(editor.deleteEntry)
   const deleteFile = useSetAtom(editor.deleteFile)
   const deleteMediaLibrary = useSetAtom(editor.deleteMediaLibrary)
   const queryClient = useQueryClient()
@@ -130,7 +135,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const navigate = useNavigate()
   const nav = useNav()
   const {pathname} = useLocation()
-  const {isPreviewOpen, toggleNav, togglePreview} = useSidebar()
+  const {isNavOpen, isPreviewOpen, toggleNav, togglePreview} = useSidebar()
   const [isReplacing, setIsReplacing] = useState(false)
   const {upload} = useUploads()
   function replaceFile() {
@@ -151,7 +156,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     }
     input.click()
   }
-
+  const isParentUnpublished = editor.parents.some(p => p.status === 'draft')
   const options =
     variant === 'draft' ? (
       access.update && (
@@ -192,14 +197,24 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           </DropdownMenu.Item>
         )
       ) : (
-        access.archive && (
-          <DropdownMenu.Item
-            className={styles.root.action()}
-            onClick={archivePublished}
-          >
-            Archive
-          </DropdownMenu.Item>
-        )
+        <>
+          {config.enableDrafts && access.publish && (
+            <DropdownMenu.Item
+              className={styles.root.action()}
+              onClick={unPublish}
+            >
+              Unpublish
+            </DropdownMenu.Item>
+          )}
+          {access.archive && (
+            <DropdownMenu.Item
+              className={styles.root.action()}
+              onClick={archive}
+            >
+              Archive
+            </DropdownMenu.Item>
+          )}
+        </>
       )
     ) : variant === 'archived' ? (
       <>
@@ -214,12 +229,25 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         {canDelete && access.delete && (
           <DropdownMenu.Item
             className={styles.root.action()}
-            onClick={deleteArchived}
+            onClick={deleteEntry}
           >
             Delete
           </DropdownMenu.Item>
         )}
       </>
+    ) : variant === 'unpublished' ? (
+      isParentUnpublished ? (
+        <DropdownMenu.Item
+          className={styles.root.action()}
+          onClick={deleteEntry}
+        >
+          Delete
+        </DropdownMenu.Item>
+      ) : (
+        <DropdownMenu.Item className={styles.root.action()} onClick={archive}>
+          Archive
+        </DropdownMenu.Item>
+      )
     ) : null
   const inTransition = currentTransition !== undefined
   return (
@@ -229,8 +257,8 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         <HStack center gap={12} className={styles.root.description()}>
           <button
             type="button"
-            title="Display menu"
             onClick={() => toggleNav()}
+            title={!isNavOpen ? 'Display menu' : 'Hide menu'}
             className={styles.root.menuToggle()}
           >
             <Icon icon={IcRoundMenu} />
@@ -277,13 +305,12 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             </DropdownMenu.Items>
           </DropdownMenu.Root>
 
-          {editable &&
+          {/*editable &&
             !inTransition &&
             !hasChanges &&
             isActiveStatus &&
             !untranslated &&
             !previewRevision &&
-            canPublish &&
             access.update && (
               <>
                 <span className={styles.root.description.separator()} />
@@ -291,7 +318,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                   Edit to create a new draft
                 </div>
               </>
-            )}
+            )*/}
 
           {!inTransition &&
             !hasChanges &&
@@ -363,13 +390,6 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                         Save translation
                       </Button>
                     )}
-                  {config.enableDrafts &&
-                    variant === 'editing' &&
-                    access.update && (
-                      <Button outline icon={IcRoundSave} onClick={saveDraft}>
-                        Save draft
-                      </Button>
-                    )}
                   {variant === 'editing' && access.publish && (
                     <Button icon={IcRoundCheck} onClick={publishEdits}>
                       Publish
@@ -377,13 +397,27 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                   )}
                   {!untranslated &&
                     !hasChanges &&
+                    canPublish &&
                     selectedStatus === 'draft' &&
-                    access.update && (
-                      <Button icon={IcRoundCheck} onClick={publishDraft}>
-                        Publish draft
+                    access.publish && (
+                      <Button
+                        icon={IcRoundCheck}
+                        onClick={publishDraft}
+                        className={styles.root.main({
+                          unpublished: variant === 'unpublished'
+                        })}
+                      >
+                        Publish
                       </Button>
                     )}
-                  {variant === 'revision' && access.publish && (
+                  {config.enableDrafts &&
+                    access.update &&
+                    variant === 'editing' && (
+                      <Button outline icon={IcRoundSave} onClick={saveDraft}>
+                        Save
+                      </Button>
+                    )}
+                  {variant === 'revision' && (
                     <Button icon={IcRoundSave} onClick={restoreRevision}>
                       Restore
                     </Button>
@@ -409,14 +443,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               )}
               <button
                 type="button"
-                title="Display preview"
                 onClick={() => togglePreview()}
-                style={{cursor: 'pointer'}}
+                title={isPreviewOpen ? 'Hide preview' : 'Display preview'}
+                className={styles.root.previewToggle()}
               >
                 <Icon
-                  icon={IcOutlineKeyboardTab}
+                  icon={IcRoundLastPage}
                   style={{
-                    transform: `rotate(${isPreviewOpen ? 0 : 180}deg)`
+                    transform: `rotate(${isPreviewOpen ? 180 : 0}deg)`
                   }}
                 />
               </button>

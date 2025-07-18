@@ -33,11 +33,13 @@
     }
 
     &-hitBox {
+      cursor: pointer;
       position: relative;
       display: flex;
       align-items: center;
 
-      &:hover {
+      &:hover,
+      &:focus-within {
         background: var(--alinea-highlight);
       }
     }

@@ -4,8 +4,8 @@ import type {
   TreeDataLoader
 } from '@headless-tree/core'
 import {Config} from 'alinea/core/Config'
-import {Entry} from 'alinea/core/Entry'
 import type {EntryStatus} from 'alinea/core/Entry'
+import {Entry} from 'alinea/core/Entry'
 import type {Graph} from 'alinea/core/Graph'
 import {getRoot, getType} from 'alinea/core/Internal'
 import type {OrderBy} from 'alinea/core/OrderBy.js'
@@ -32,6 +32,28 @@ const visibleTypesAtom = atom(get => {
     })
     .map(([name]) => name)
 })
+
+async function getHasChildren(
+  graph: Graph,
+  locale: string | null,
+  workspace: string,
+  root: string,
+  parentId: string | null,
+  visibleTypes: Array<string>
+) {
+  return Boolean(
+    await graph.first({
+      workspace,
+      root: root,
+      parentId,
+      locale,
+      filter: {
+        _type: {in: visibleTypes}
+      },
+      status: 'preferDraft'
+    })
+  )
+}
 
 function childrenOf(
   policy: Policy,
@@ -99,6 +121,7 @@ async function entryTreeRoot(
     isFolder: true,
     isRoot: true,
     entries: [],
+    hasChildren: true,
     children: childrenOf(
       policy,
       graph,
@@ -130,6 +153,7 @@ const loaderAtom = atom(get => {
       status: Entry.status,
       locale: Entry.locale,
       workspace: Entry.workspace,
+      main: Entry.main,
       root: Entry.root,
       path: Entry.path,
       parents: parents({
@@ -170,6 +194,14 @@ const loaderAtom = atom(get => {
         visibleTypes,
         orderBy
       )
+      const hasChildren = await getHasChildren(
+        graph,
+        locale,
+        row.data.workspace,
+        row.data.root,
+        row.id,
+        visibleTypes
+      )
       const entries = [row.data].concat(row.translations)
       indexed.set(row.id, {
         id: row.id,
@@ -177,6 +209,7 @@ const loaderAtom = atom(get => {
         index: row.index,
         entries,
         canDrag,
+        hasChildren,
         children
       })
     }
@@ -223,10 +256,12 @@ export interface EntryTreeItem {
     root: string
     path: string
     parents: Array<{path: string; type: string}>
+    main: boolean
   }>
   isFolder?: boolean
   isRoot?: boolean
   canDrag?: boolean
+  hasChildren: boolean
   children: Promise<Array<string>>
 }
 

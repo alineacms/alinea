@@ -1,8 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
@@ -18,13 +15,15 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 80,
-    "lineEnding": "lf",
-    "ignore": []
+    "lineEnding": "lf"
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
+      "nursery": {
+        "useUniqueElementIds": "off"
+      },
       "correctness": {
         "noConstructorReturn": "off",
         "useExhaustiveDependencies": "off",
@@ -36,7 +35,8 @@
         "noParameterAssign": "off",
         "useShorthandFunctionType": "off",
         "noInferrableTypes": "off",
-        "useLiteralEnumMembers": "off"
+        "useLiteralEnumMembers": "off",
+        "useArrayLiterals": "off"
       },
       "complexity": {
         "noBannedTypes": "off",
@@ -61,10 +61,5 @@
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
-  },
-  "files": {
-    "ignore": [
-      "node_modules"
-    ]
   }
 }

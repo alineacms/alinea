@@ -1,0 +1,87 @@
+{
+  "_id": "286iEJsjhd8R9NxN6EVg59fELyd",
+  "_type": "Doc",
+  "_index": "a2h",
+  "title": "Custom fields",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "It's possible to create custom fields. A field needs a constructor function that users call to create instances of it in their configuration. "
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Range field example"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Let's create a custom field to demonstrate."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "tjXTNIX1E2w3fts1zXG9Z",
+      "code": "import {Field} from 'alinea'\n\nexport type RangeField = Field.Create<number, {\n  min?: number\n  max?: number\n}>\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: Field.Options<RangeField> = {}): RangeField {\n  return Field.create({\n    label,\n    options,\n    // Point this\n    view: '@/fields/RangeField.view'\n  })\n}",
+      "fileName": "fields/Range.ts",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2nv09c35sDr2QrQy3epoEKPrlWj",
+      "code": "import {InputLabel, useField} from 'alinea/dashboard'\nimport {RangeField} from './Range'\n\ninterface RangeViewProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useField hook to receive the\n// current value and a method to update it.\nexport default function RangeView({field}: RangeViewProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}",
+      "fileName": "fields/Range.view.tsx",
+      "language": ""
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To use the field in your types later call the constructor function:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "WnK5Nlvq82spn6R62dTQe",
+      "code": "import {Config} from 'alinea'\nimport {range} from './RangeField'\n\nConfig.type('My type', {\n  fields: {\n    // ...\n    myRangeField: range('A range field', {\n      min: 0, \n      max: 20\n    })\n  }\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "yhfKjT9ITmHHD0N5JRU4G",
+      "code": "import {Field, Config} from 'alinea'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\nexport type RangeField = Field.Create<number, {\n  min?: number\n  max?: number\n}>\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: Field.Options<RangeField> = {}): RangeField {\n  return Field.create({\n    label,\n    options,\n    // Point this\n    view({field}) {\n      const {value, mutator, options} = useField(field)\n      const {min = 0, max = 10} = options\n      return (\n        <InputLabel {...options}>\n          <input \n            type=\"range\" \n            min={min} max={max} \n            value={value} \n            onChange={e => mutator(Number(e.target.value))} \n          />\n        </InputLabel>\n      )\n    }\n  })\n}\n\nexport default Config.type('Custom fields', {\n  fields: {\n    range: range('A range field', {min: 0, max: 20})\n  }\n})"
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

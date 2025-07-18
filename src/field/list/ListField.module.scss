@@ -26,6 +26,12 @@
     overflow: hidden;
     background: var(--alinea-lift);
   }
+
+  &-header-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .insert {
@@ -34,7 +40,7 @@
   left: 0;
   width: 100%;
   height: 8px;
-  border-top: 2px solid var(--alinea-accent);
+  border-top: 2px solid var(--alinea-button-background);
   opacity: 0;
   transition: opacity 0.25s ease-out;
 
@@ -61,9 +67,9 @@
   }
 
   &-icon {
-    color: var(--alinea-accent);
+    color: var(--alinea-button-background);
     box-shadow: 0 0 0 1px currentColor;
-    background: var(--alinea-accent-foreground);
+    background: var(--alinea-button-foreground);
     border-radius: 50%;
     font-size: 16px;
     transition: box-shadow 0.25s ease-out;
@@ -96,6 +102,6 @@
 
   &.is-inline {
     padding: 10px 0 8px 0;
-    border-bottom: 2px solid var(--alinea-accent);
+    border-bottom: 2px solid var(--alinea-button-background);
   }
 }

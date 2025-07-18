@@ -1,15 +1,14 @@
 import type {Config} from 'alinea/core/Config'
 import type {Connection} from 'alinea/core/Connection'
-import {DOC_KEY, createYDoc, parseYDoc} from 'alinea/core/Doc'
-import {Entry} from 'alinea/core/Entry'
+import {createYDoc, DOC_KEY, parseYDoc} from 'alinea/core/Doc'
+import {} from 'alinea/core/db/Operation'
 import type {EntryStatus} from 'alinea/core/Entry'
+import {Entry} from 'alinea/core/Entry'
 import {Field} from 'alinea/core/Field'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
 import {Root} from 'alinea/core/Root'
 import {type EntryUrlMeta, Type} from 'alinea/core/Type'
-import {Workspace} from 'alinea/core/Workspace'
-import {CreateOp, DiscardOp, type Operation} from 'alinea/core/db/Operation'
 import {
   entryFileName,
   entryFilepath,
@@ -19,10 +18,11 @@ import {
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
+import {Workspace} from 'alinea/core/Workspace'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
 import {encodePreviewPayload} from 'alinea/preview/PreviewPayload'
-import {type Getter, type Setter, atom} from 'jotai'
+import {atom, type Getter, type Setter} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
@@ -51,11 +51,12 @@ export enum EntryTransition {
   PublishEdits,
   RestoreRevision,
   PublishDraft,
+  UnpublishDraft,
   DiscardDraft,
   ArchivePublished,
   PublishArchived,
   DeleteFile,
-  DeleteArchived
+  DeleteEntry
 }
 
 const entryTransitionAtoms = atomFamily((id: string) => {
@@ -113,7 +114,8 @@ export const entryEditorAtoms = atomFamily(
             select: {
               id: Entry.id,
               path: Entry.path,
-              status: Entry.status
+              status: Entry.status,
+              main: Entry.main
             }
           }
         },
@@ -158,8 +160,8 @@ export const entryEditorAtoms = atomFamily(
       ).filter(status => statuses[status] !== undefined)
       return createEntryEditor({
         parents,
-        canPublish,
         canDelete,
+        canPublish,
         translations,
         untranslated,
         parentNeedsTranslation,
@@ -177,7 +179,7 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
-  parents: Array<{id: string; path: string; status: EntryStatus}>
+  parents: Array<{id: string; path: string; status: EntryStatus; main: boolean}>
   client: Connection
   config: Config
   entryId: string
@@ -284,7 +286,12 @@ export function createEntryEditor(entryData: EntryData) {
     }
   )
 
+  const parent = entryData.parents.at(-1)
+  const parentArchived = parent?.status === 'archived'
+  const parentUnpublished = parent?.status === 'draft' && parent.main
+
   const saveDraft = atom(null, async (get, set) => {
+    if (parentArchived || parentUnpublished) return set(publishEdits)
     // Use the existing path, when the entry gets published the path will change
     const db = get(dbAtom)
     const entry = await getDraftEntry({
@@ -375,25 +382,16 @@ export function createEntryEditor(entryData: EntryData) {
     if (!set(confirmErrorsAtom)) return
     const db = get(dbAtom)
     const entry = await getDraftEntry({status: 'published'})
-    const operations = Array<Operation>(
-      new DiscardOp({
-        id: entry.id,
-        locale: entry.locale,
-        status: 'draft'
-      }),
-      new CreateOp({
+    return set(action, {
+      transition: EntryTransition.PublishEdits,
+      result: db.create({
         type,
         id: entry.id,
         locale: entry.locale,
         status: 'published',
         set: entry.data,
         overwrite: true
-      })
-    )
-    const result = db.commit(...operations)
-    return set(action, {
-      transition: EntryTransition.PublishEdits,
-      result,
+      }),
       errorMessage: 'Could not complete publish action, please try again later',
       clearChanges: true
     })
@@ -453,7 +451,20 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const archivePublished = atom(null, async (get, set) => {
+  const unPublish = atom(null, async (get, set) => {
+    const db = get(dbAtom)
+    return set(action, {
+      transition: EntryTransition.UnpublishDraft,
+      result: db.unpublish({
+        id: activeVersion.id,
+        locale: activeVersion.locale
+      }),
+      errorMessage:
+        'Could not complete unpublish action, please try again later'
+    })
+  })
+
+  const archive = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
       transition: EntryTransition.ArchivePublished,
@@ -485,7 +496,7 @@ export function createEntryEditor(entryData: EntryData) {
     if (!result) return
     const db = get(dbAtom)
     return set(action, {
-      transition: EntryTransition.DeleteArchived,
+      transition: EntryTransition.DeleteEntry,
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
@@ -503,10 +514,10 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const deleteArchived = atom(null, async (get, set) => {
+  const deleteEntry = atom(null, async (get, set) => {
     const db = get(dbAtom)
     return set(action, {
-      transition: EntryTransition.DeleteArchived,
+      transition: EntryTransition.DeleteEntry,
       result: db.remove(activeVersion.id),
       errorMessage: 'Could not complete delete action, please try again later'
     })
@@ -615,8 +626,7 @@ export function createEntryEditor(entryData: EntryData) {
     const policy = get(policyAtom)
     const doc = get(currentDoc)
     const canUpdate = policy.canUpdate(activeVersion)
-    const readOnly =
-      !canUpdate || doc !== edits.doc ? true : !entryData.canPublish
+    const readOnly = !canUpdate || doc !== edits.doc
     return new FormAtoms(type, doc.getMap(DOC_KEY), '', {readOnly})
   })
 
@@ -672,11 +682,12 @@ export function createEntryEditor(entryData: EntryData) {
     restoreRevision,
     publishDraft,
     discardDraft,
-    archivePublished,
+    unPublish,
+    archive,
     publishArchived,
     deleteFile,
     deleteMediaLibrary,
-    deleteArchived,
+    deleteEntry,
     saveTranslation,
     discardEdits,
     showHistory,

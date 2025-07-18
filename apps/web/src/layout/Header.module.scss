@@ -7,27 +7,15 @@
   height: var(--web-header-height);
   flex-shrink: 0;
   z-index: 7;
+  color: var(--web-foreground);
 
-  @include sm {
+  /*@include sm {
     position: sticky;
     top: 0;
     border-bottom: 1px solid hsla(var(--web-negative-hsl), 0.09);
     background-color: var(--bg-faded);
     backdrop-filter: blur(12px);
-  }
-
-  &.is-transparent {
-    border-bottom: transparent;
-    position: absolute;
-    width: 100%;
-    background: none;
-    backdrop-filter: none;
-    color: #041d40;
-    .root-nav-link:hover,
-    .root-nav-link[aria-current] {
-      background: rgba(225, 237, 243, 0.5);
-    }
-  }
+  }*/
 
   &-inner {
     position: relative;
@@ -44,21 +32,17 @@
 
   &-logo {
     display: block;
-    margin-top: -3px;
+    transition: 0.25s ease-out;
+  }
 
-    @include ml {
-      margin-top: -2px;
-    }
-
-    &:hover {
-      color: var(--web-foreground);
-    }
-    .is-transparent &:hover {
-      color: black;
+  &-extra {
+    @include sm {
+      margin-left: auto;
     }
   }
 
   &-nav {
+    margin: 0 auto;
     height: 100%;
 
     @include sm {
@@ -68,7 +52,7 @@
     &-link {
       color: inherit;
       text-decoration: none;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
       display: flex;
       align-items: center;
@@ -76,6 +60,7 @@
       margin: 0 8px;
       white-space: nowrap;
       border-radius: 8px;
+      transition: 0.25s ease-out;
 
       &.is-search {
         display: block;
@@ -89,35 +74,37 @@
         }
       }
 
-      &:hover {
+      &:is(:hover, :focus-visible) {
         color: var(--web-foreground);
         background: var(--web-highlight);
       }
 
-      .is-transparent &:hover {
-        color: black;
-      }
-
       &[aria-current] {
-        background: var(--web-selected);
-        color: var(--web-selected-foreground);
-        font-weight: 600;
-        // border-color: var(--web-accent);
+        color: var(--web-accent-foreground);
+        background: var(--web-accent);
       }
     }
   }
 
   &-dashboard {
-    border-radius: 8px;
-    font-size: 13.5px;
+    color: var(--web-foreground);
+    font-size: 14px;
     font-weight: 600;
-    background: #ebedf9;
-    color: #333a43;
-    padding: 7.5px 12px;
+    display: flex;
+    align-items: center;
+    padding: 6px 16px;
+    border: 2px solid var(--web-foreground);
+    border-radius: 25px;
     margin: 0 8px;
+    transition: 0.25s ease-out;
 
-    @include s {
+    @include sm {
       display: none;
+    }
+
+    &:is(:hover, :focus-visible) {
+      background: var(--web-foreground);
+      color: var(--web-background);
     }
   }
 
@@ -129,16 +116,16 @@
       font-size: 25px;
     }
 
-    &:hover {
-      color: var(--web-foreground);
-    }
+    &:is(:hover, :focus-visible) {
+      color: var(--web-accent-light);
 
-    .is-transparent &:hover {
-      color: black;
+      .is-transparent & {
+        color: var(--web-accent-light);
+      }
     }
 
     &.is-search {
-      @include ml {
+      @include l {
         display: none;
       }
     }

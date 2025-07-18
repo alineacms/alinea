@@ -1,0 +1,42 @@
+{
+  "_id": "A4UA9D0tJn2aanMDjODOj",
+  "_type": "Doc",
+  "_index": "a2B",
+  "title": "Date",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A date field is used to input a date."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "utmfOtYpwki29ZXEW5QPX",
+      "code": "import {Field} from 'alinea'\n\nField.date('Date field')",
+      "fileName": "",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "RHKsNdTj50LX0TFLU2_QH",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Date field', {\n  fields: {\n    date: Field.date('Date field')\n  }\n})"
+    }
+  ],
+  "metadata": {
+    "title": "Date field - Alinea CMS",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

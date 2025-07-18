@@ -1,8 +1,10 @@
 import styler from '@alinea/styler'
+import {Config} from 'alinea/core/Config'
 import type {Entry} from 'alinea/core/Entry'
 import {isImage} from 'alinea/core/media/IsImage'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import type {MediaFile} from 'alinea/core/media/MediaTypes'
+import {outcome} from 'alinea/core/Outcome'
 import {Typo} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {Main} from 'alinea/ui/Main'
@@ -14,6 +16,7 @@ import {useState} from 'react'
 import {FormProvider} from '../../atoms/FormAtoms.js'
 import {InputField} from '../../editor/InputForm.js'
 import {useField} from '../../editor/UseField.js'
+import {useConfig} from '../../hook/UseConfig.js'
 import {useNav} from '../../hook/UseNav.js'
 import type {EntryEditProps} from '../EntryEdit.js'
 import {EntryHeader} from '../entry/EntryHeader.js'
@@ -28,16 +31,21 @@ interface Pos {
 }
 
 function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
+  const config = useConfig()
   const image: Entry<MediaFile> = editor.activeVersion as any
   const {value: focus = {x: 0.5, y: 0.5}, mutator: setFocus} = useField(
     type.focus
   )
   const [hover, setHover] = useState<Pos>({})
   const {x: focusX = focus.x, y: focusY = focus.y} = hover
+  const location = image.data.location
+  const liveUrl = outcome(
+    () => new URL(location, Config.baseUrl(config) ?? window.location.href)
+  )
   return (
     <Lift className={styles.image()}>
       <div
-        className={styles.image.col()}
+        className={styles.image.wrapper()}
         style={{
           backgroundImage:
             image.data.averageColor &&
@@ -82,7 +90,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
           </div>
         </div>
       </div>
-      <div style={{minWidth: 0}}>
+      <div className={styles.image.content()}>
         <InputField field={type.title} />
         <Property label="Extension">{image.data.extension}</Property>
         <Property label="File size">{prettyBytes(image.data.size)}</Property>
@@ -90,14 +98,17 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
           {image.data.width} x {image.data.height} pixels
         </Property>
         <Property label="URL">
-          <Typo.Monospace>
-            {MEDIA_LOCATION in image.data
-              ? (image.data[MEDIA_LOCATION] as string)
-              : image.data.location}
-          </Typo.Monospace>
+          <a
+            href={liveUrl.isSuccess() ? String(liveUrl.value) : location}
+            target="_blank"
+            title={location}
+            className={styles.image.content.url()}
+          >
+            <Typo.Monospace>{location}</Typo.Monospace>
+          </a>
         </Property>
         <Property
-          label="Focus"
+          label="Focus point"
           help="Click on the image to change the focus point"
         >
           ({focusX.toFixed(2)}, {focusY.toFixed(2)})
@@ -156,7 +167,7 @@ export function FileEntry(props: EntryEditProps & {type: typeof MediaFile}) {
   const form = useAtomValue(editor.form)
   return (
     <Main className={styles.root()}>
-      <EntryHeader editable={false} editor={editor} />
+      <EntryHeader editor={editor} />
       <EntryTitle
         editor={editor}
         backLink={

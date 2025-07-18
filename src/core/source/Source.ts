@@ -1,5 +1,5 @@
 import {accumulate} from '../util/Async.js'
-import type {Change} from './Change.js'
+import type {Change, ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {ReadonlyTree, WriteableTree} from './Tree.js'
 
@@ -10,47 +10,55 @@ export interface RemoteSource {
 
 export interface Source extends RemoteSource {
   getTree(): Promise<ReadonlyTree>
-  applyChanges(changes: Array<Change>): Promise<void>
+  applyChanges(batch: ChangesBatch): Promise<void>
 }
 
 export async function bundleContents(
   source: RemoteSource,
-  changes: Array<Change>
-): Promise<Array<Change>> {
+  batch: ChangesBatch
+): Promise<ChangesBatch> {
+  const {changes} = batch
   const shas = Array.from(
     new Set(
       changes.filter(change => change.op !== 'delete').map(change => change.sha)
     )
   )
-  if (shas.length === 0) return changes
+  if (shas.length === 0) return batch
   const blobs = new Map(await accumulate(source.getBlobs(shas)))
-  return changes.map(change => {
-    if (change.op === 'delete') return change
-    return {
-      ...change,
-      contents: blobs.get(change.sha)
-    }
-  })
+  return {
+    ...batch,
+    changes: changes.map(change => {
+      if (change.op === 'delete') return change
+      return {
+        ...change,
+        contents: blobs.get(change.sha)
+      }
+    })
+  }
 }
 
 export async function diff(
   source: Source,
   remote: RemoteSource
-): Promise<Array<Change>> {
+): Promise<ChangesBatch> {
   const localTree = await source.getTree()
   const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
-  if (!remoteTree) return []
-  const changes = localTree.diff(remoteTree)
-  return bundleContents(remote, changes)
+  if (!remoteTree)
+    return {
+      fromSha: localTree.sha,
+      changes: []
+    }
+  const batch = localTree.diff(remoteTree)
+  return bundleContents(remote, batch)
 }
 
 export async function syncWith(
   source: Source,
   remote: RemoteSource
-): Promise<Array<Change>> {
-  const changes = await diff(source, remote)
-  if (changes.length > 0) await source.applyChanges(changes)
-  return changes
+): Promise<ChangesBatch> {
+  const batch = await diff(source, remote)
+  await source.applyChanges(batch)
+  return batch
 }
 
 export async function transaction(source: Source): Promise<SourceTransaction> {
@@ -99,14 +107,12 @@ export class SourceTransaction {
     const todo = this.#tasks.splice(0)
     for (const task of todo) await task()
     const from = this.#from
-    const into = this.#into
+    const into = await this.#into.compile()
     const forwards = from.diff(into)
-    const backwards = into.diff(from)
     const fromSource = Array.from(
       new Set(
-        forwards
+        forwards.changes
           .filter(change => change.op === 'add')
-          .concat(backwards.filter(change => change.op === 'add'))
           .map(change => change.sha)
           .filter(sha => !this.#blobs.has(sha))
       )
@@ -123,9 +129,8 @@ export class SourceTransaction {
     }
     return {
       from,
-      into: await into.compile(),
-      changes: forwards.map(bundleContents),
-      rollback: backwards.map(bundleContents)
+      into,
+      changes: forwards.changes.map(bundleContents)
     }
   }
 }

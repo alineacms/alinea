@@ -8,9 +8,7 @@ export const entryStatuses = Array<EntryStatus>(
 )
 export const ALT_STATUS: Array<EntryStatus> = ['draft', 'archived']
 
-export interface Entry<
-  Data extends Record<string, unknown> = Record<string, unknown>
-> {
+export interface Entry<Data extends object = Record<string, unknown>> {
   id: string
   status: EntryStatus
   title: string

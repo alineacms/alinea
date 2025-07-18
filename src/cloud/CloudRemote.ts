@@ -16,10 +16,11 @@ import {
 } from 'alinea/core/Draft'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
-import {Outcome, type OutcomeJSON, outcome} from 'alinea/core/Outcome'
+import {Outcome, outcome} from 'alinea/core/Outcome'
 import type {User} from 'alinea/core/User'
 import {Workspace} from 'alinea/core/Workspace'
 import type {CommitRequest} from 'alinea/core/db/CommitRequest'
+import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
 import {base64} from 'alinea/core/util/Encoding'
 import {verify} from 'alinea/core/util/JWT'
@@ -118,7 +119,14 @@ export class CloudRemote implements RemoteConnection {
           })
         })
       )
-    )
+    ).catch<{sha: string}>(error => {
+      if (error instanceof HttpError && error.code === 409) {
+        const actual = 'actualSha' in error && (error.actualSha as string)
+        const expected = 'expectedSha' in error && (error.expectedSha as string)
+        if (actual && expected) throw new ShaMismatchError(actual, expected)
+      }
+      throw error
+    })
   }
 
   async authenticate(request: Request) {
@@ -379,19 +387,20 @@ function json(init: RequestInit = {}): RequestInit {
   return {...init, headers}
 }
 
-async function failOnHttpError(res: Response): Promise<Response> {
-  if (res.status >= 400) throw new HttpError(res.status, await res.text())
-  return res
+async function failOnHttpError(response: Response): Promise<Response> {
+  if (!response.ok) throw new HttpError(response.status, await response.text())
+  return response
 }
 
-function parseJson<T>(res: Response): Promise<T> {
-  return res.json()
-}
-
-function parseOutcome<T>(res: Promise<Response>): Promise<T> {
-  return res
-    .then(failOnHttpError)
-    .then<OutcomeJSON<T>>(parseJson)
-    .then<Outcome<T>>(Outcome.fromJSON)
-    .then(Outcome.unpack)
+async function parseOutcome<T>(expected: Promise<Response>): Promise<T> {
+  const response = await expected
+  const contentType = response.headers.get('content-type')
+  const isJson = contentType?.includes('application/json')
+  if (!response.ok && !isJson) {
+    const message = await response.text()
+    throw new HttpError(response.status, message)
+  }
+  const output = await response.json()
+  const outcome = Outcome.fromJSON<T>(output, response.status)
+  return Outcome.unpack(outcome)
 }

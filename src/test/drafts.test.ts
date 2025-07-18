@@ -33,7 +33,7 @@ test('new drafts', async () => {
   )
 })
 
-test('rename parent via draft', async () => {
+test("don't drop children when discarding drafts", async () => {
   const db = new LocalDB(cms.config)
   const page1 = await db.create({
     type: Page,
@@ -44,6 +44,7 @@ test('rename parent via draft', async () => {
     parentId: page1._id,
     set: {path: 'sub1'}
   })
+
   // Create a draft of page1
   const draft = await db.create({
     id: page1._id,

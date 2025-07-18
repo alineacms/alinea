@@ -2,7 +2,6 @@
   "_id": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
   "_type": "Doc",
   "_index": "a1",
-  "_i18nId": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
   "title": "Querying content",
   "navigationTitle": "",
   "body": [
@@ -33,17 +32,7 @@
         {
           "_type": "CodeBlock",
           "_id": "2YlCpSWtMLknsvHhIwtZlTf1MDI",
-          "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nexport default async function HomePage() {\n  const homePage = await cms.get({type: HomePage})\n  return <h1>{homePage.title}</h1>\n}",
-          "fileName": "",
-          "language": "",
-          "compact": false
-        }
-      ],
-      "js": [
-        {
-          "_type": "CodeBlock",
-          "_id": "2YlCoQfFsitNdnsCxRgq0VkVdEU",
-          "code": "import {cms} from '@/cms'\n\nconst homePage = await cms.get(HomePage())",
+          "code": "import {cms} from '@/cms'\n\nexport default async function HomePage() {\n  const homePage = await cms.get({type: HomePage})\n  return <h1>{homePage.title}</h1>\n}",
           "fileName": "",
           "language": "",
           "compact": false
@@ -185,7 +174,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28i0B7nRFUqmGWdCmchhzy21bkt",
-      "code": "const grouped = await cms.find({\n  type: NewsItem,\n  orderBy: NewsItem.category\n})",
+      "code": "const grouped = await cms.find({\n  type: NewsItem,\n  groupBy: NewsItem.category\n})",
       "fileName": "",
       "language": "",
       "compact": false

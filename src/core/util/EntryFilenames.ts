@@ -1,3 +1,4 @@
+import * as paths from 'alinea/core/util/Paths'
 import type {Config} from '../Config.js'
 import {type EntryStatus, entryStatuses} from '../Entry.js'
 import {ALT_STATUS, type Entry} from '../Entry.js'
@@ -128,4 +129,15 @@ export function pathSuffix(
 
 export function applySuffix(path: string, suffix: number) {
   return `${path}-${suffix}`
+}
+
+export function fileVersions(file: string) {
+  const dir = paths.dirname(file)
+  const base = paths.basename(file, '.json')
+  const [name] = entryInfo(base)
+  return [
+    `${dir}/${name}.json`,
+    `${dir}/${name}.draft.json`,
+    `${dir}/${name}.archived.json`
+  ]
 }

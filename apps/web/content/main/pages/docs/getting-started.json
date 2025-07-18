@@ -2,31 +2,30 @@
   "_id": "2YWqKUTrANlgEFMyBUEYdih2HpP",
   "_type": "Doc",
   "_index": "Zgl",
-  "_i18nId": "2YWqKUTrANlgEFMyBUEYdih2HpP",
   "title": "Getting started",
   "navigationTitle": "",
   "body": [
     {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Alinea is a git-based CMS written in Typescript. This guide will help you setup Alinea for Next.js projects. "
-        }
-      ]
-    },
-    {
       "_type": "FrameworkBlock",
       "_id": "2YX0hoFtrkov2TMQT8cuHwhgN6L",
       "next": [
+        {
+          "_type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "_type": "text",
+              "text": "1. Setup Next.js"
+            }
+          ]
+        },
         {
           "_type": "paragraph",
           "textAlign": "left",
           "content": [
             {
               "_type": "text",
-              "text": "Get started by creating a new Next.js project. The following will setup a project in your chosen directory. (If you'd like to add Alinea to an existing project just skip this instruction.)"
+              "text": "Get started by creating a new Next.js project. The following will setup a project in your chosen directory. If you'd like to add Alinea to an existing project, skip this step and continue with step 2."
             }
           ]
         },
@@ -75,7 +74,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Install Alinea"
+              "text": "2. Install Alinea"
             }
           ]
         },
@@ -133,7 +132,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Initialize the project"
+              "text": "3. Initialize the project"
             }
           ]
         },
@@ -208,61 +207,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Create CMS handler route"
-            }
-          ]
-        },
-        {
-          "_type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "_type": "text",
-              "text": "Add a handler route which handles the CMS backend and previews."
-            }
-          ]
-        },
-        {
-          "_type": "CodeBlock",
-          "_id": "2lFGtrO1pqUsBK9wsyzzEmfujsB",
-          "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler(cms)\n\nexport const GET = handler\nexport const POST = handler",
-          "fileName": "app/api/cms/route.ts",
-          "language": ""
-        },
-        {
-          "_type": "heading",
-          "level": 2,
-          "content": [
-            {
-              "_type": "text",
-              "text": "Update the CMS config"
-            }
-          ]
-        },
-        {
-          "_type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "_type": "text",
-              "text": "We'll pass the Next.js URL to Alinea so that it can display live previews in the dashboard. The production URL is optional — Alinea will remind you to update the value when deploying."
-            }
-          ]
-        },
-        {
-          "_type": "CodeBlock",
-          "_id": "2lFH4jKdDEEw2cDbg9YYUPdsOtw",
-          "code": "export const cms = createCMS({\n  // ... schema, workspaces\n\n  baseUrl: {\n    // Point to your Next.js website\n    development: 'http://localhost:3000',\n    // If hosting on vercel you can use: process.env.VERCEL_URL\n    production: 'http://example.com'\n  },\n\n  // The handler route URL\n  handlerUrl: '/api/cms',\n\n  // The admin dashboard will be bundled in this static file\n  dashboardFile: 'admin.html'\n})",
-          "fileName": "src/cms.tsx",
-          "language": ""
-        },
-        {
-          "_type": "heading",
-          "level": 2,
-          "content": [
-            {
-              "_type": "text",
-              "text": "Adjust Next.js config"
+              "text": "4. Adjust Next.js config"
             }
           ]
         },
@@ -281,20 +226,20 @@
           "_id": "2bRC6LC1i4PfMRTFBeXuHrvWjk0",
           "variants": [
             {
+              "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
+              "_index": "Zz",
+              "_type": "Variant",
+              "name": "next.config.ts",
+              "language": "tsx",
+              "code": "import {withAlinea} from 'alinea/next'\n\nconst nextConfig = {...}\n\nexport default withAlinea(nextConfig)"
+            },
+            {
               "_id": "2bRC6k9IXwZsgnaBLqqWcybH8H9",
               "_index": "a0",
               "_type": "Variant",
               "name": "next.config.js",
               "language": "tsx",
               "code": "const {withAlinea} = require('alinea/next')\n\nconst nextConfig = {...}\n\nmodule.exports = withAlinea(nextConfig)"
-            },
-            {
-              "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
-              "_index": "a1",
-              "_type": "Variant",
-              "name": "next.config.mjs",
-              "language": "tsx",
-              "code": "import {withAlinea} from 'alinea/next'\n\nconst nextConfig = {...}\n\nexport default withAlinea(nextConfig)"
             }
           ]
         }
@@ -306,7 +251,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Access the dashboard"
+          "text": "5. Access the dashboard"
         }
       ]
     },

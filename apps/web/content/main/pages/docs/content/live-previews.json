@@ -51,7 +51,7 @@
           "_type": "CodeBlock",
           "_id": "2YlCBIFhktYqXLnxlG8MWbFhkA4",
           "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  // schema and workspaces ...\n  baseUrl: {\n    // Point this url to your Next.js website\n    development: 'http://localhost:3000'\n  },\n  preview: true\n})",
-          "fileName": "cms.tsx",
+          "fileName": "cms.ts",
           "language": "",
           "compact": false
         },

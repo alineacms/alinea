@@ -9,10 +9,11 @@ import type {
   RequestContext
 } from 'alinea/core/Connection'
 import type {DraftKey} from 'alinea/core/Draft'
+import type {LocalDB} from 'alinea/core/db/LocalDB'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {HttpError} from 'alinea/core/HttpError'
 import {getScope} from 'alinea/core/Scope'
-import type {LocalDB} from 'alinea/core/db/LocalDB'
+import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {base64} from 'alinea/core/util/Encoding'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
@@ -169,14 +170,24 @@ export function createHandler({
         expectJson()
         const policy = await local.createPolicy(user.roles)
         const mutations = await body
-        const request = await local.request(mutations, policy)
-        const {sha} = await cnx.write(request)
-        if (sha === request.intoSha) {
-          await local.write(request)
-        } else {
+        const attempt = async (retry = 0) => {
           await local.syncWith(cnx)
+          const request = await local.request(mutations, policy)
+          try {
+            let {sha} = await cnx.write(request)
+            if (sha === request.intoSha) {
+              await local.write(request)
+            } else {
+              sha = await local.syncWith(cnx)
+            }
+            return sha
+          } catch (error) {
+            if (error instanceof ShaMismatchError && retry < 3)
+              return attempt(retry + 1)
+            throw error
+          }
         }
-        return Response.json({sha})
+        return Response.json({sha: await attempt()})
       }
 
       if (action === HandleAction.Commit && request.method === 'POST') {
@@ -200,7 +211,7 @@ export function createHandler({
       if (action === HandleAction.Tree && request.method === 'GET') {
         expectJson()
         const sha = string(url.searchParams.get('sha'))
-        await periodicSync(cnx)
+        await local.syncWith(cnx)
         const tree = await local.getTreeIfDifferent(sha)
         return Response.json(tree ?? null)
       }
