@@ -116,7 +116,7 @@ type InferResult<Selection, Types, Include> = Selection extends undefined
     ? Value
     : InferSelection<Selection>
 
-type QueryResult<Selection, Types, Include> = Expand<
+export type QueryResult<Selection, Types, Include> = Expand<
   InferResult<Selection, Types, Include>
 >
 
