@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {Edit} from 'alinea'
+import {Edit, Query} from 'alinea'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import {config} from './example.js'
 
@@ -79,4 +79,29 @@ test('take/skip', async () => {
     take: 1
   })
   test.is(lastOne.length, 1)
+})
+
+test('parents order', async () => {
+  const db = await createDb()
+  const parent1 = await db.create({
+    type: Page,
+    set: {title: 'Parent 1'}
+  })
+  const parent2 = await db.create({
+    type: Page,
+    parentId: parent1._id,
+    set: {title: 'Parent 2'}
+  })
+  const child1 = await db.create({
+    type: Page,
+    parentId: parent2._id,
+    set: {title: 'Child 1'}
+  })
+  const parentIds = await db.get({
+    id: child1._id,
+    select: Query.parents({
+      select: Query.id
+    })
+  })
+  test.equal(parentIds, [parent1._id, parent2._id])
 })
