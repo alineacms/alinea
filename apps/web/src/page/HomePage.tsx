@@ -333,7 +333,7 @@ export default async function HomePage() {
         </PageContainer>*/}
 
         <PageContainer>
-          <HStack justify="space-between" gap={`${px(16)} ${px(30)}`} wrap>
+          <HStack justify="space-evenly" gap={`${px(16)} ${px(30)}`} wrap>
             <Highlight
               href="/docs/content/live-previews"
               icon={RiFlashlightFill}

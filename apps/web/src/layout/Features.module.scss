@@ -8,8 +8,8 @@
   @media (max-width: 600px) {
     overflow-x: scroll;
     grid-auto-flow: column;
-    grid-auto-columns: calc(100% - 25px);
-    scroll-snap-type: x proximity;
+    grid-auto-columns: 100%;
+    scroll-snap-type: x mandatory;
     &::-webkit-scrollbar {
       width: 0px;
       background: transparent; /* make scrollbar transparent */
