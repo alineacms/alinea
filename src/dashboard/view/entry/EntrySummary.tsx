@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import type {SummaryProps} from 'alinea/core/media/Summary'
 import {Type} from 'alinea/core/Type'
-import {Chip, HStack, TextLabel, Typo, VStack, px} from 'alinea/ui'
+import {Chip, HStack, px, TextLabel, Typo, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Fragment, type ReactNode} from 'react'
