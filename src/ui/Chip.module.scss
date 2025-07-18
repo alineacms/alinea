@@ -1,21 +1,23 @@
 .root {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
+  padding-left: 4px;
   border-radius: 14.4px;
-  //height: 17px;
-  font-size: 11px;
-  white-space: nowrap;
-  flex-shrink: 0;
-  color: var(--alinea-foreground);
   background: var(--alinea-background);
   box-shadow: var(--alinea-fields-shadow);
-  padding-left: 4px;
+  color: var(--alinea-foreground);
+  font-size: 11px;
 
   &-icon {
     margin-left: 4px;
   }
 
   &-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     padding: 3px 8px 3px 4px;
   }
 

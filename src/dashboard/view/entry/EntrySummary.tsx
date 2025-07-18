@@ -44,11 +44,11 @@ export function EntrySummaryRow({
           </Ellipsis>
         )}
         <Ellipsis>
-          <TextLabel label={title} title={path} />
+          <TextLabel label={title} title={title} />
         </Ellipsis>
       </VStack>
       <Chip style={{marginLeft: 'auto'}}>
-        <TextLabel label={Type.label(type)} />
+        <TextLabel label={Type.label(type)} title={Type.label(type)} />
       </Chip>
     </HStack>
   )
