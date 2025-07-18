@@ -3,7 +3,6 @@
   "_type": "Home",
   "_index": "Zx",
   "title": "Homepage",
-  "path": "index",
   "headline": "Git-based CMS\nBuilt for Next.js",
   "byline": "Open source headless CMS with minimal setup.\nFully typed content right in your repository.",
   "action": {
@@ -101,6 +100,16 @@
       "_entry": "gx3H52whBKO_DdfcMNI3I",
       "label": "Blog",
       "active": ""
+    },
+    {
+      "_id": "2zjDScPPjhfYdxsYOCSUVIJL7oD",
+      "_index": "a3",
+      "_type": "url",
+      "_url": "https://alineacms.com/demo",
+      "_title": "Demo of the Alinea CMS",
+      "_target": "_blank",
+      "label": "Demo",
+      "active": ""
     }
   ],
   "footer": [
@@ -116,6 +125,15 @@
           "_type": "entry",
           "_entry": "docs",
           "label": ""
+        },
+        {
+          "_id": "2zjF046cGtCTwPONsqQAFfm5UWL",
+          "_index": "a1",
+          "_type": "url",
+          "_url": "https://alineacms.com/demo",
+          "_title": "Demo",
+          "_target": "_blank",
+          "label": "Demo"
         }
       ]
     }
@@ -124,12 +142,8 @@
     "title": "Alinea - Open source headless CMS",
     "description": "Alinea is a open source headless CMS with minimal setup. Fully typed content right in your repository.",
     "openGraph": {
-      "siteName": "Alinea",
-      "image": {
-        "_id": "2i9HvjoJjgs3bDP5bMyQyekUfGu",
-        "_type": "image",
-        "_entry": "2i9FuEJofr5yFe9DuleODHjjWkm"
-      },
+      "siteName": "",
+      "image": {},
       "title": "",
       "description": ""
     }

@@ -163,6 +163,19 @@ export class PublishOperation extends Operation {
   }
 }
 
+export interface UnpublishQuery {
+  id: string
+  locale?: string | null
+}
+
+export class UnpublishOperation extends Operation {
+  constructor(query: UnpublishQuery) {
+    super((): Array<Mutation> => {
+      return [{op: 'unpublish', ...query, locale: query.locale ?? null}]
+    })
+  }
+}
+
 export interface ArchiveQuery {
   id: string
   locale?: string | null
@@ -195,6 +208,8 @@ export class UploadOperation extends Operation {
       const {workspace: _workspace, root: _root, parentId: _parentId} = query
       const fileName = Array.isArray(file) ? file[0] : file.name
       const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
+      const contentType =
+        file instanceof Blob ? file.type : 'application/octet-stream'
       const workspace = _workspace ?? Object.keys(db.config.workspaces)[0]
       const root =
         _root ?? Workspace.defaultMediaRoot(db.config.workspaces[workspace])
@@ -206,15 +221,17 @@ export class UploadOperation extends Operation {
       const previewData = isImage(fileName)
         ? await createPreview?.(file instanceof Blob ? file : new Blob([body]))
         : undefined
-      await fetch(info.url, {method: info.method ?? 'POST', body}).then(
-        result => {
-          if (!result.ok)
-            throw new HttpError(
-              result.status,
-              'Could not reach server for upload'
-            )
-        }
-      )
+      await fetch(info.url, {
+        method: info.method ?? 'POST',
+        headers: {'Content-Type': contentType},
+        body
+      }).then(result => {
+        if (!result.ok)
+          throw new HttpError(
+            result.status,
+            'Could not reach server for upload'
+          )
+      })
       const title = basename(fileName, extension)
       const hash = await createFileHash(new Uint8Array(body))
       const {mediaDir} = Workspace.data(db.config.workspaces[workspace])

@@ -25,7 +25,7 @@ export class EntryDB extends LocalDB {
     const tx = new EntryTransaction(this.config, this.index, this.source, from)
     tx.apply(mutations)
     const request = await tx.toRequest()
-    const contentChanges = sourceChanges(request.changes)
+    const contentChanges = sourceChanges(request)
     const sha = this.indexChanges(contentChanges)
     return {
       sha: await sha,

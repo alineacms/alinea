@@ -25,6 +25,9 @@
   }
 
   &-menuToggle {
+    cursor: pointer;
+    font-size: 18px;
+
     @include l {
       display: none;
     }
@@ -120,9 +123,27 @@
       color: var(--alinea-variant-progress-foreground);
       background: var(--alinea-variant-progress-action);
     }
+    &.is-unpublished {
+      color: var(--alinea-variant-create-foreground);
+      background: var(--alinea-variant-create-action);
+    }
   }
 
   &-action {
     cursor: pointer;
+  }
+
+  &-main.is-unpublished {
+    color: white !important;
+    background: #ce6c19 !important;
+
+    &:hover {
+      background: #ec7711 !important;
+    }
+  }
+
+  &-previewToggle {
+    cursor: pointer;
+    font-size: 16px;
   }
 }

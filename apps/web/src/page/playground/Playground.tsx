@@ -1,6 +1,5 @@
 'use client'
 
-import {Logo} from '@/layout/branding/Logo'
 import styler from '@alinea/styler'
 import Editor, {type Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
@@ -9,18 +8,19 @@ import type {Field} from 'alinea/core/Field'
 import {outcome} from 'alinea/core/Outcome'
 import {trigger} from 'alinea/core/Trigger'
 import {Type, type} from 'alinea/core/Type'
+import {Logo} from '@/layout/branding/Logo'
 import 'alinea/css'
 import {TestDB} from 'alinea/core/db/TestDB'
 import {MemorySource} from 'alinea/core/source/MemorySource'
 import * as dashboard from 'alinea/dashboard'
-import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
 import {DashboardWorker} from 'alinea/dashboard/boot/DashboardWorker'
 import {WorkerDB} from 'alinea/dashboard/boot/WorkerDB'
+import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
 import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
-import {Viewport} from 'alinea/dashboard/view/Viewport'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
+import {Viewport} from 'alinea/dashboard/view/Viewport'
 import {cms} from 'alinea/test/cms'
 import {HStack, Loader, Stack, TextLabel, Typo, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
@@ -109,7 +109,7 @@ function SourceEditor({
   const inner = (
     <Editor
       // theme="vs-dark"
-      path="cms.tsx"
+      path="cms.ts"
       defaultLanguage="typescript"
       value={code}
       beforeMount={editorConfig.bind(null, declarations)}

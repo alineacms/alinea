@@ -162,8 +162,9 @@ export function EntryEdit({editor}: EntryEditProps) {
         <Modal open onClose={() => cancel()}>
           <VStack gap={30}>
             <p>
-              This document was changed, would you like to save your changes
-              {isNavigationChange ? ' before navigating' : ''}?
+              This document was changed,
+              <br />
+              would you like to save your changes?
             </p>
             <HStack as="footer">
               <Stack.Right>

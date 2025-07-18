@@ -1,5 +1,5 @@
 import {entries, keys} from '../util/Objects.js'
-import type {Change} from './Change.js'
+import type {Change, ChangesBatch} from './Change.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 import {assert, splitPath} from './Utils.js'
@@ -56,9 +56,9 @@ export class CombinedSource implements Source {
     }
   }
 
-  async applyChanges(changes: Array<Change>) {
+  async applyChanges(batch: ChangesBatch) {
     const perSource = new Map<string, Array<Change>>()
-    for (const change of changes) {
+    for (const change of batch.changes) {
       const [name, rest] = splitPath(change.path)
       assert(rest, `Invalid path: ${change.path}`)
       const sourceChanges = perSource.get(name) ?? []
@@ -68,7 +68,12 @@ export class CombinedSource implements Source {
     for (const [name, changes] of perSource) {
       const source = this.#sources[name]
       if (!source) throw new Error(`Source ${name} not found`)
-      await source.applyChanges(changes)
+      const fromSha = this.#shas.get(name)
+      assert(fromSha)
+      await source.applyChanges({
+        fromSha,
+        changes
+      })
     }
   }
 }

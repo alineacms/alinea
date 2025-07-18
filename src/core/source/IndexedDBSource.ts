@@ -1,4 +1,4 @@
-import type {Change} from './Change.js'
+import type {ChangesBatch} from './Change.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
 
@@ -56,17 +56,17 @@ export class IndexedDBSource implements Source {
     }
   }
 
-  async applyChanges(changes: Array<Change>) {
+  async applyChanges(batch: ChangesBatch) {
     const db = await this.#db
     const current = await this.getTree()
     const updatedTree = current.clone()
-    updatedTree.applyChanges(changes)
+    updatedTree.applyChanges(batch)
     const compiled = await updatedTree.compile()
     const transaction = db.transaction(['blobs', 'tree'], 'readwrite')
     const blobs = transaction.objectStore('blobs')
     const tree = transaction.objectStore('tree')
     tree.put(compiled.toJSON(), 'tree')
-    for (const change of changes)
+    for (const change of batch.changes)
       switch (change.op) {
         case 'add':
           blobs.put(change.contents, change.sha)

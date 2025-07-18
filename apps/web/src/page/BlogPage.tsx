@@ -1,18 +1,32 @@
-import {cms} from '@/cms'
-import {PageContainer, PageContent} from '@/layout/Page'
-import {WebTypo} from '@/layout/WebTypo'
-import {Link} from '@/layout/nav/Link'
-import {BlogOverview} from '@/schema/BlogOverview'
-import {BlogPost} from '@/schema/BlogPost'
 import styler from '@alinea/styler'
 import {Query} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
 import {VStack} from 'alinea/ui'
-import type {MetadataRoute} from 'next'
+import type {Metadata, MetadataRoute} from 'next'
+import {cms} from '@/cms'
+import {Link} from '@/layout/nav/Link'
+import {PageContainer, PageContent} from '@/layout/Page'
+import {WebTypo} from '@/layout/WebTypo'
+import {BlogOverview} from '@/schema/BlogOverview'
+import {BlogPost} from '@/schema/BlogPost'
+import {getMetadata} from '@/utils/metadata'
 import css from './BlogPage.module.scss'
 import {BlogPostMeta} from './blog/BlogPostMeta'
 
 const styles = styler(css)
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await cms.first({
+    type: BlogOverview,
+    select: {
+      url: Query.url,
+      title: BlogOverview.title,
+      metadata: BlogOverview.metadata
+    }
+  })
+  if (!page) return await getMetadata(null)
+  return await getMetadata(page)
+}
 
 export default async function BlogPage() {
   const overview = await cms.get({

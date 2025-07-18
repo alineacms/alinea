@@ -1,7 +1,7 @@
+import path from 'node:path'
 import {suite} from '@alinea/suite'
 import {init} from 'alinea/cli/Init'
 import fs from 'fs-extra'
-import path from 'node:path'
 
 const testPms = false
 
@@ -57,6 +57,7 @@ if (testPms) {
   test('init', async () => {
     const cwd = path.join(process.cwd(), 'dist/.init')
     await setup(cwd)
+    await fs.mkdirp(path.join(cwd, 'src'))
     await run(cwd)
   })
 }

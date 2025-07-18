@@ -12,7 +12,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "All configuration can be managed from the `cms.tsx` file. This file is created in the project root (or your `src` folder if it exists) during `alinea init`."
+          "text": "All configuration can be managed from the `cms.ts` file. This file is created in the project root (or your `src` folder if it exists) during `alinea init`."
         }
       ]
     },
@@ -20,7 +20,7 @@
       "_type": "CodeBlock",
       "_id": "2a4tC7lBmNMZUuJDec7zsG4st62",
       "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  schema, workspaces, ...\n})",
-      "fileName": "cms.tsx",
+      "fileName": "cms.ts",
       "language": "",
       "compact": false
     },
@@ -275,7 +275,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2bRR5xvNhvfy0EaJAgL0owbuNYV",
-      "code": "Error: Fail\n    at <anonymous> (/home/alinea/apps/dev/cms.tsx:278:7)\n    at ModuleJob.run (node:internal/modules/esm/module_job:194:25)",
+      "code": "Error: Fail\n    at <anonymous> (/home/alinea/apps/dev/cms.ts:278:7)\n    at ModuleJob.run (node:internal/modules/esm/module_job:194:25)",
       "fileName": "",
       "language": "shellscript"
     }

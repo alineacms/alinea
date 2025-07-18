@@ -282,8 +282,11 @@ export abstract class Graph {
   >(
     query: GraphQuery<Selection, Type, Include>
   ): Promise<QueryResult<Selection, Type, Include>> {
-    const result = await (<any>this.resolve({...query, get: true}))
-    if (!result) throw new Error('Entry not found')
+    // Workaround oven-sh/bun#2704 for now, because we're otherwise missing
+    // frames in the stack trace.
+    const error = globalThis.Bun ? new Error('Entry not found') : undefined
+    const result = await this.resolve({...query, get: true})
+    if (!result) throw error ?? new Error('Entry not found')
     return result
   }
 

@@ -1,8 +1,9 @@
 import styler from '@alinea/styler'
 import type {RootData} from 'alinea/core/Root'
 import {Icon, TextLabel, Typo} from 'alinea/ui'
-import {Main} from 'alinea/ui/Main'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
+import {Main} from 'alinea/ui/Main'
+import {useWorkspace} from '../hook/UseWorkspace.js'
 import {Head} from '../util/Head.js'
 import css from './RootOverview.module.scss'
 
@@ -13,10 +14,13 @@ export interface RootOverviewProps {
 }
 
 export function RootOverview({root}: RootOverviewProps) {
+  const workspace = useWorkspace()
   return (
     <>
       <Head>
-        <title>{root.label}</title>
+        <title>
+          {workspace.label}: {root.label}
+        </title>
       </Head>
       <Main>
         <div className={styles.root()}>

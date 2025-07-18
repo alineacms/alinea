@@ -1,32 +1,32 @@
 import styler from '@alinea/styler'
 import {
-  closestCenter,
-  defaultDropAnimation,
   DndContext,
   type DragEndEvent,
-  type DraggableSyntheticListeners,
   DragOverlay,
   type DragStartEvent,
+  type DraggableSyntheticListeners,
   KeyboardSensor,
   LayoutMeasuringStrategy,
   PointerSensor,
+  closestCenter,
+  defaultDropAnimation,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
 import {
   type AnimateLayoutChanges,
-  defaultAnimateLayoutChanges,
   SortableContext,
+  defaultAnimateLayoutChanges,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, type FirstArgument} from '@dnd-kit/utilities'
-import type {ListField} from 'alinea/core/field/ListField'
 import {getType} from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
-import {ListRow} from 'alinea/core/shape/ListShape'
 import {Type} from 'alinea/core/Type'
+import type {ListField} from 'alinea/core/field/ListField'
+import {ListRow} from 'alinea/core/shape/ListShape'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
@@ -35,6 +35,7 @@ import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {Icon, TextLabel} from 'alinea/ui'
+import {Sink} from 'alinea/ui/Sink'
 import {IcBaselineContentCopy} from 'alinea/ui/icons/IcBaselineContentCopy'
 import {IcBaselineContentPasteGo} from 'alinea/ui/icons/IcBaselineContentPasteGo'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
@@ -43,7 +44,6 @@ import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
-import {Sink} from 'alinea/ui/Sink'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import {
@@ -167,6 +167,7 @@ function ListInputRow({
             icon={getType(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
+            title="Drag and drop to reorder"
           />
         </Sink.Options>
         <Sink.Title>
@@ -176,9 +177,8 @@ function ListInputRow({
           {onCopyBlock !== undefined && (
             <IconButton
               icon={IcBaselineContentCopy}
-              onClick={() => {
-                onCopyBlock()
-              }}
+              onClick={() => onCopyBlock()}
+              title="Copy block"
             />
           )}
           {!readOnly && (
@@ -186,12 +186,14 @@ function ListInputRow({
               <IconButton
                 icon={IcRoundKeyboardArrowUp}
                 onClick={() => onMove?.(-1)}
+                title="Move up one position"
               />
               <IconButton
                 icon={IcRoundKeyboardArrowDown}
                 onClick={() => onMove?.(1)}
+                title="Move down one position"
               />
-              <IconButton icon={IcRoundClose} onClick={onDelete} />
+              <IconButton icon={IcRoundClose} onClick={onDelete} title="Delete block" />
             </>
           )}
         </Sink.Options>
@@ -259,7 +261,7 @@ function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
   return (
     <>
       <div className={styles.insert({open, first})}>
-        <button className={styles.insert.icon()} onClick={onInsert}>
+        <button className={styles.insert.icon()} onClick={onInsert} title="Insert new block">
           <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
         </button>
       </div>
@@ -347,7 +349,7 @@ export function ListInput({field}: ListInputProps) {
                         onPasteBlock={(data: ListRow) => {
                           if (readOnly) return
                           const {_id, _index, ...rest} = data
-                          mutator.push(rest)
+                          mutator.push(rest, i)
                         }}
                         firstRow={i === 0}
                       />

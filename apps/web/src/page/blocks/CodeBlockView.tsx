@@ -1,11 +1,11 @@
+import styler from '@alinea/styler'
+import type {Infer} from 'alinea'
 import {Typo, VStack} from 'alinea/ui'
 //import {useClipboard} from 'use-clipboard-copy'
 //import MdiContentCopy from '../../icons/MdiContentCopy'
-import {CodeBlock} from '@/schema/blocks/CodeBlock'
-import styler from '@alinea/styler'
-import {Infer} from 'alinea'
-import {codeHighlighter} from './code/CodeHighlighter'
+import type {CodeBlock} from '@/schema/blocks/CodeBlock'
 import css from './CodeBlockView.module.scss'
+import {codeHighlighter} from './code/CodeHighlighter'
 
 const styles = styler(css)
 
@@ -26,6 +26,7 @@ export async function CodeBlockView({
       <div style={{position: 'relative'}}>
         <Typo.Monospace
           as="div"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
           dangerouslySetInnerHTML={{__html: html}}
           className={styles.root.code()}
         />

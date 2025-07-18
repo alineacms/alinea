@@ -219,7 +219,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
     const {title, type: selected} = form.data()
-    if (!selected || !title) return
+    if (isCreating || !selected || !title) return
     setIsCreating(true)
     const path = slugify(title)
     const id = createId()
@@ -230,23 +230,34 @@ function NewEntryForm({parentId}: NewEntryProps) {
       ? await db.first({
           select: Entry.data,
           id: copyFrom,
+          locale: locale,
           status: 'preferPublished'
         })
       : Type.initialValue(entryType)
-    db.create({
-      type: entryType,
-      id: id,
-      insertOrder: form.data().order,
-      parentId: parentId,
-      locale: locale,
-      root: root.name,
-      workspace: workspace,
-      status: config.enableDrafts ? 'draft' : 'published',
-      set: {...entryData, title, path}
-    }).then(entry => {
-      setIsCreating(false)
-      navigate(nav.entry({id: entry._id}))
-    })
+    const parent = parentId ? await db.first({id: parentId}) : undefined
+    const parentType = parent && config.schema[parent._type]
+    const parentInsertOrder = parentType && Type.insertOrder(parentType)
+    return db
+      .create({
+        type: entryType,
+        id: id,
+        insertOrder:
+          !parentInsertOrder || parentInsertOrder === 'free'
+            ? form.data().order
+            : parentInsertOrder,
+        parentId: parentId,
+        locale: locale,
+        root: root.name,
+        workspace: workspace,
+        status: config.enableDrafts ? 'draft' : 'published',
+        set: {...entryData, title, path}
+      })
+      .then(entry => {
+        navigate(nav.entry({id: entry._id}))
+      })
+      .finally(() => {
+        setIsCreating(false)
+      })
   }
   return (
     <form

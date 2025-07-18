@@ -81,12 +81,13 @@ test('diff trees', async () => {
   tree1.add('file.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
   tree1.add('subdir/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
   tree1.add('subdir/deeper/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
+  const tree1Readonly = await tree1.compile()
   const tree2 = tree1.clone()
   test.is(await tree1.getSha(), await tree2.getSha())
 
   tree2.remove('subdir/a.txt')
-  const diff = tree1.diff(tree2)
-  test.equal(diff, [
+  const diff = tree1Readonly.diff(tree2)
+  test.equal(diff.changes, [
     {
       op: 'delete',
       path: 'subdir/a.txt',
@@ -97,12 +98,12 @@ test('diff trees', async () => {
   tree2.add('subdir/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
   test.is(await tree1.getSha(), await tree2.getSha())
   test.ok(tree2.equals(tree1))
-  const diff2 = tree1.diff(tree2)
-  test.equal(diff2, [])
+  const diff2 = tree1Readonly.diff(tree2)
+  test.equal(diff2.changes, [])
 
   tree2.add('file.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
-  const diff3 = tree1.diff(tree2)
-  test.equal(diff3, [
+  const diff3 = tree1Readonly.diff(tree2)
+  test.equal(diff3.changes, [
     {
       op: 'add',
       path: 'file.txt',
@@ -114,7 +115,8 @@ test('diff trees', async () => {
 test('diff pre-existing tree', async () => {
   const tree = ReadonlyTree.fromFlat(treeExample)
   const empty = new WriteableTree()
-  const changes = empty.diff(tree)
+  const emptyReadonly = await empty.compile()
+  const changes = emptyReadonly.diff(tree)
   empty.applyChanges(changes)
   test.is(await empty.getSha(), tree.sha)
   test.ok(tree.equals(empty))

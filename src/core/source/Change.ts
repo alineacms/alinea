@@ -13,3 +13,8 @@ export interface AddChange extends ChangeFile {
 export interface DeleteChange extends ChangeFile {
   op: 'delete'
 }
+
+export interface ChangesBatch {
+  fromSha: string
+  changes: Array<Change>
+}

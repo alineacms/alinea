@@ -1,8 +1,10 @@
+import {Query} from 'alinea'
+import type {Metadata, MetadataRoute} from 'next'
+import {notFound} from 'next/navigation'
 import {cms} from '@/cms'
 import {PageContainer, PageContent} from '@/layout/Page'
 import {Page} from '@/schema/Page'
-import type {MetadataRoute} from 'next'
-import {notFound} from 'next/navigation'
+import {getMetadata} from '@/utils/metadata'
 import {TextFieldView} from './blocks/TextFieldView'
 
 export interface GenericPageProps {
@@ -20,14 +22,21 @@ export async function generateStaticParams() {
   return slugs.map(slug => ({slug}))
 }
 
-export async function generateMetadata({params}: GenericPageProps) {
+export async function generateMetadata({
+  params
+}: GenericPageProps): Promise<Metadata> {
   const {slug} = await params
   const page = await cms.first({
     type: Page,
-    url: `/${slug}`
+    url: `/${slug}`,
+    select: {
+      url: Query.url,
+      title: Page.title,
+      metadata: Page.metadata
+    }
   })
-  if (!page) return notFound()
-  return {title: page.metadata?.title || page.title}
+  if (!page) return await getMetadata(null)
+  return await getMetadata(page)
 }
 
 export default async function GenericPage({params}: GenericPageProps) {

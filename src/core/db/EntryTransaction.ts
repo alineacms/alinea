@@ -1,6 +1,5 @@
 import {Config} from 'alinea/core/Config'
-import type {Entry} from 'alinea/core/Entry'
-import type {EntryStatus} from 'alinea/core/Entry'
+import type {Entry, EntryStatus} from 'alinea/core/Entry'
 import {createRecord} from 'alinea/core/EntryRecord'
 import {createId} from 'alinea/core/Id'
 import {getRoot, getWorkspace} from 'alinea/core/Internal'
@@ -14,8 +13,9 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
-import {SourceTransaction} from '../source/Source.js'
+import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
+import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../source/Utils.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
@@ -28,6 +28,7 @@ import type {
   PublishMutation,
   RemoveFileMutation,
   RemoveMutation,
+  UnpublishMutation,
   UpdateMutation,
   UploadFileMutation
 } from './Mutation.js'
@@ -44,12 +45,12 @@ interface PathCandidate {
 }
 
 export class EntryTransaction {
-  #checks = Array<[path: string, sha: string]>()
-  #messages = Array<string>()
+  #checks = [] as [path: string, sha: string][]
+  #messages = [] as string[]
   #config: Config
   #index: EntryIndex
   #tx: SourceTransaction
-  #fileChanges = Array<CommitChange>()
+  #fileChanges = [] as CommitChange[]
 
   constructor(
     config: Config,
@@ -112,17 +113,33 @@ export class EntryTransaction {
     assert(typeof title === 'string', 'Missing title')
     let path = slugify(typeof data.path === 'string' ? data.path : title)
     assert(path.length > 0, 'Invalid path')
-    path = this.#getAvailablePath({id, path, parentId, root, workspace, locale})
-    if (existing) path = existing.pathOf(locale) ?? path
+    const existingPath = existing?.pathOf(locale)
+    const hasSamePath = existingPath === path
+    if (!hasSamePath)
+      path = this.#getAvailablePath({
+        id,
+        path,
+        parentId,
+        root,
+        workspace,
+        locale
+      })
+    // Path changes are only carried out when the entry is published
+    if (status !== 'published' && existingPath) path = existingPath
+    if (existingPath && !hasSamePath && status === 'published') {
+      this.#rename(existing!.id, locale, path)
+    }
     if (overwrite && existing?.type === 'MediaFile') {
       const [prev] = existing.entries
       assert(prev, 'Previous entry not found')
-      this.removeFile({
-        location: paths.join(
-          getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
-          prev.data.location
-        )
-      })
+      const prevLocation = prev.data.location
+      if (prevLocation !== data.location)
+        this.removeFile({
+          location: paths.join(
+            getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
+            prev.data.location
+          )
+        })
     }
     const parentDir = parent
       ? parent.childrenDir
@@ -139,6 +156,14 @@ export class EntryTransaction {
     let newIndex: string
     if (existing) {
       newIndex = existing.index
+      if (status === 'published') {
+        // Remove all different versions of the entry
+        const versions = index.byId.get(id)?.locales.get(locale)
+        if (versions)
+          for (const version of versions.values()) {
+            this.#tx.remove(version.filePath)
+          }
+      }
     } else {
       const previous =
         insertOrder === 'first' ? null : (siblings.at(-1) ?? null)
@@ -177,6 +202,21 @@ export class EntryTransaction {
     return this
   }
 
+  #rename(entryId: string, locale: string | null, path: string) {
+    const index = this.#index
+    const versions = index.findMany(entry => {
+      return entry.id === entryId && entry.locale === locale
+    })
+    for (const version of versions) {
+      const name =
+        version.status === 'published' ? path : `${path}.${version.status}`
+      const filePath = paths.join(version.parentDir, `${name}.json`)
+      this.#tx.rename(version.filePath, filePath)
+      const childrenDir = paths.join(version.parentDir, path)
+      this.#tx.rename(version.childrenDir, childrenDir)
+    }
+  }
+
   update({id, locale, status, set}: Op<UpdateMutation>) {
     const index = this.#index
     const entry = index.findFirst(entry => {
@@ -210,23 +250,7 @@ export class EntryTransaction {
     const childrenDir = paths.join(entry.parentDir, path)
     const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     if (entry.status === 'published') {
-      if (filePath !== entry.filePath) {
-        // Rename children and other statuses
-        const versions = index.findMany(entry => {
-          return (
-            entry.id === id &&
-            entry.locale === locale &&
-            entry.status !== 'published'
-          )
-        })
-        for (const version of versions)
-          this.#tx.rename(
-            version.filePath,
-            paths.join(entry.parentDir, `${path}.${version.status}.json`)
-          )
-        this.#tx.remove(entry.filePath)
-        this.#tx.rename(entry.childrenDir, childrenDir)
-      }
+      if (filePath !== entry.filePath) this.#rename(id, locale, path)
     } else {
       if (path !== entry.path) record.path = path
     }
@@ -314,49 +338,50 @@ export class EntryTransaction {
     const childrenDir = paths.join(entry.parentDir, path)
     if (entry.locale !== null)
       this.#persistSharedFields(id, entry.locale, entry.type, entry.data)
+    const versions = index.byId.get(id)?.locales.get(locale)
+    if (versions)
+      for (const version of versions.values()) {
+        this.#tx.remove(version.filePath)
+      }
     this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.remove(entry.filePath)
     const record = createRecord({...entry, path}, 'published')
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
-    this.#tx.add(`${childrenDir}.json`, contents)
     if (pathChange) {
       this.#tx.remove(`${entry.parentDir}/${entry.path}.json`)
       this.#tx.rename(entry.childrenDir, childrenDir)
-      const versions = index.findMany(entry => {
-        return (
-          entry.id === id &&
-          entry.locale === locale &&
-          entry.status !== 'published' &&
-          entry.status !== status
-        )
-      })
-      for (const version of versions) {
-        this.#tx.rename(
-          version.filePath,
-          paths.join(entry.parentDir, `${path}.${version.status}.json`)
-        )
-        this.#tx.rename(
-          version.childrenDir,
-          paths.join(entry.parentDir, `${path}`)
-        )
-      }
     }
+    this.#tx.add(`${childrenDir}.json`, contents)
     this.#messages.push(this.#reportOp('publish', entry.title))
+    return this
+  }
+
+  unpublish({id, locale}: Op<UnpublishMutation>) {
+    const index = this.#index
+    const versions = index.byId.get(id)?.locales.get(locale)
+    const entry = versions?.main
+    assert(entry, `Entry not found: ${id}`)
+    for (const version of versions.values()) {
+      if (version.main) continue
+      this.#tx.remove(version.filePath)
+    }
+    this.#checks.push([entry.filePath, entry.fileHash])
+    this.#tx.rename(entry.filePath, `${entry.childrenDir}.draft.json`)
+    this.#messages.push(this.#reportOp('unpublish', entry.title))
     return this
   }
 
   archive({id, locale}: Op<ArchiveMutation>) {
     const index = this.#index
-    const entry = index.findFirst(entry => {
-      return (
-        entry.id === id &&
-        entry.locale === locale &&
-        entry.status === 'published'
-      )
-    })
+    const versions = index.byId.get(id)?.locales.get(locale)
+    const entry = versions?.main
     assert(entry, `Entry not found: ${id}`)
+    for (const version of versions.values()) {
+      if (version.main) continue
+      this.#tx.remove(version.filePath)
+    }
     this.#checks.push([entry.filePath, entry.fileHash])
-    this.#tx.rename(entry.filePath, `${entry.childrenDir}.${'archived'}.json`)
+    this.#tx.rename(entry.filePath, `${entry.childrenDir}.archived.json`)
     this.#messages.push(this.#reportOp('archive', entry.title))
     return this
   }
@@ -567,6 +592,9 @@ export class EntryTransaction {
         case 'publish':
           this.publish(mutation)
           break
+        case 'unpublish':
+          this.unpublish(mutation)
+          break
         case 'archive':
           this.archive(mutation)
           break
@@ -597,15 +625,5 @@ export class EntryTransaction {
       checks: this.#checks,
       changes: this.#fileChanges.concat(commitChanges(changes))
     }
-  }
-}
-
-export class ShaMismatchError extends Error {
-  status = 409
-  constructor(
-    public actual: string,
-    public expected: string
-  ) {
-    super(`SHA mismatch: ${actual} != ${expected}`)
   }
 }
