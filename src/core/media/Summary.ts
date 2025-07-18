@@ -11,6 +11,8 @@ export function summarySelection(schema: Schema) {
     workspace: Entry.workspace,
     root: Entry.root,
     title: Entry.title,
+    path: Entry.path,
+    url: Entry.url,
     extension: MediaFile.extension,
     size: MediaFile.size,
     preview: MediaFile.preview,
@@ -40,6 +42,8 @@ export type SummaryProps = {
   workspace: string
   root: string
   title: string
+  path: string
+  url: string
   extension: string
   size: number
   preview: string
