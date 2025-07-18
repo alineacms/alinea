@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.5]
+- Fix: don't bundle contents in edge functions
+- Fix: order results of Query.parents by level
+- Fix: respect parent insert order on create
+- Fix: internal links to image and file entries from the link preview
+
 ## [1.4.4]
 - Fix: publishing changes to file details no longer removes the associated file
 - Fix: don't use transparency in averageColor property for images
