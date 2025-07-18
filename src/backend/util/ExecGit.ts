@@ -1,6 +1,6 @@
-import {localUser} from 'alinea/core/User'
 import {exec} from 'node:child_process'
 import {promisify} from 'node:util'
+import {localUser} from 'alinea/core/User'
 import PLazy from 'p-lazy'
 
 const execAsync = promisify(exec)

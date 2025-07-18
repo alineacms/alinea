@@ -1,10 +1,10 @@
 import * as fsp from 'node:fs/promises'
 import {Config} from 'alinea/core/Config'
 import type {UploadResponse} from 'alinea/core/Connection'
-import {createId} from 'alinea/core/Id'
-import {getWorkspace} from 'alinea/core/Internal'
 import {type CommitRequest, checkCommit} from 'alinea/core/db/CommitRequest'
 import {LocalDB} from 'alinea/core/db/LocalDB'
+import {createId} from 'alinea/core/Id'
+import {getWorkspace} from 'alinea/core/Internal'
 import {CachedFSSource} from 'alinea/core/source/FSSource'
 import {assert} from 'alinea/core/source/Utils'
 import {keys, values} from 'alinea/core/util/Objects'
@@ -20,7 +20,7 @@ import {slugify} from 'alinea/core/util/Slugs'
 export interface DevDBOptions {
   config: Config
   rootDir: string
-  dashboardUrl: string | undefined
+  dashboardUrl?: string
 }
 
 export interface WatchFiles {

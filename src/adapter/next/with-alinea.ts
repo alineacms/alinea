@@ -49,7 +49,8 @@ export function withAlinea(config: NextConfig): NextConfig {
     ...config,
     serverExternalPackages: [
       ...(config.serverExternalPackages ?? []),
-      '@alinea/generated'
+      '@alinea/generated',
+      ...(process.env.NODE_ENV === 'development' ? ['alinea'] : [])
     ],
     images
   }

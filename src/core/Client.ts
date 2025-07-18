@@ -1,4 +1,4 @@
-import {AbortController, type Response, fetch} from '@alinea/iso'
+import {AbortController, fetch, type Response} from '@alinea/iso'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
 import type {
@@ -9,19 +9,17 @@ import type {
 import type {Config} from './Config.js'
 import type {UploadResponse} from './Connection.js'
 import type {Draft, DraftKey} from './Draft.js'
+import type {CommitRequest} from './db/CommitRequest.js'
+import type {Mutation} from './db/Mutation.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {getScope} from './Scope.js'
-import type {User} from './User.js'
-import type {CommitRequest} from './db/CommitRequest.js'
-import type {Mutation} from './db/Mutation.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
+import type {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
-export type AuthenticateRequest = (
-  request?: RequestInit
-) => RequestInit | undefined
+export type AuthenticateRequest = () => RequestInit | undefined
 
 export interface ClientOptions {
   config: Config
@@ -177,14 +175,18 @@ export class Client implements LocalConnection {
     params: {action: HandleAction; [key: string]: string},
     init?: RequestInit
   ): Promise<Response> {
-    const {url, applyAuth = v => v, unauthorized} = this.#options
+    const {url, applyAuth = () => undefined, unauthorized} = this.#options
     const controller = new AbortController()
     const signal = controller.signal
     const location = `${url}?${new URLSearchParams(params).toString()}`
-    const promise = fetch(location, {
-      ...applyAuth(init),
-      signal
-    })
+    const auth = applyAuth()
+    const headers = new Headers(init?.headers)
+    if (auth?.headers) {
+      for (const [key, value] of Object.entries(auth.headers)) {
+        headers.set(key, value)
+      }
+    }
+    const promise = fetch(location, {...init, ...auth, headers, signal})
       .catch(err => {
         throw new HttpError(
           500,

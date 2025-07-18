@@ -2,16 +2,16 @@ import {Headers} from '@alinea/iso'
 import {createPreviewParser} from 'alinea/backend/resolver/ParsePreview'
 import {generatedSource} from 'alinea/backend/store/GeneratedSource'
 import {COOKIE_NAME} from 'alinea/cloud/CloudRemote'
-import {CMS} from 'alinea/core/CMS'
 import {Client} from 'alinea/core/Client'
+import {CMS} from 'alinea/core/CMS'
 import type {Config} from 'alinea/core/Config'
 import type {UploadResponse} from 'alinea/core/Connection'
+import {LocalDB} from 'alinea/core/db/LocalDB'
+import type {Mutation} from 'alinea/core/db/Mutation'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {outcome} from 'alinea/core/Outcome'
 import type {PreviewRequest} from 'alinea/core/Preview'
 import type {User} from 'alinea/core/User'
-import {LocalDB} from 'alinea/core/db/LocalDB'
-import type {Mutation} from 'alinea/core/db/Mutation'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
 import PLazy from 'p-lazy'
 import {requestContext} from './context.js'
@@ -57,10 +57,8 @@ export class NextCMS<
     const client = new Client({
       config: this.config,
       url: handlerUrl.href,
-      applyAuth: init => {
-        const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${apiKey}`)
-        return {...init, headers}
+      applyAuth: () => {
+        return {headers: {authorization: `Bearer ${apiKey}`}}
       }
     })
     let preview: PreviewRequest | undefined
@@ -105,11 +103,11 @@ export class NextCMS<
     return new Client({
       config: this.config,
       url: handlerUrl.href,
-      applyAuth: init => {
-        const headers = new Headers(init?.headers)
+      applyAuth: () => {
+        const headers = new Headers()
         if (authCookie) headers.set('Cookie', `${COOKIE_NAME}=${authCookie}`)
         else headers.set('Authorization', `Bearer ${apiKey}`)
-        return {...init, headers}
+        return {headers}
       }
     })
   }

@@ -9,10 +9,10 @@ import type {
   RequestContext
 } from 'alinea/core/Connection'
 import type {DraftKey} from 'alinea/core/Draft'
+import type {LocalDB} from 'alinea/core/db/LocalDB'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {HttpError} from 'alinea/core/HttpError'
 import {getScope} from 'alinea/core/Scope'
-import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {base64} from 'alinea/core/util/Encoding'
 import {array, object, string} from 'cito'
@@ -125,8 +125,9 @@ export function createHandler({
         const authorization = request.headers.get('authorization')
         const bearer = authorization?.slice('Bearer '.length)
         if (!context.apiKey) throw new Error('Missing API key')
-        if (bearer !== context.apiKey)
+        if (bearer !== context.apiKey) {
           throw new Error('Expected matching api key')
+        }
       }
 
       const expectUser = () => {

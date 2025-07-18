@@ -1,7 +1,8 @@
 'use client'
-import {cms} from '@/cms'
+
 import {Dashboard} from 'alinea/adapter/next/Dashboard'
+import {cms} from '@/cms'
 
 export default function AdminPanel() {
-  return <Dashboard cms={cms} handler="/api/cms" />
+  return <Dashboard cms={cms} />
 }

@@ -41,7 +41,10 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
               </HStack>
               <Typo.P>
                 Alinea requires a{' '}
-                <Typo.Link href="https://alineacms.com/docs/deploy" target="_blank">
+                <Typo.Link
+                  href="https://alineacms.com/docs/deploy"
+                  target="_blank"
+                >
                   handler
                 </Typo.Link>{' '}
                 to continue.
@@ -58,7 +61,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       setSession({
         user: data.user,
         cnx: client.authenticate(
-          options => ({...options, credentials: 'same-origin'}),
+          () => ({credentials: 'same-origin'}),
           () => setSession(undefined)
         ),
         async end() {
@@ -67,10 +70,9 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       })
       return null
     case AuthResultType.UnAuthenticated:
-      location.href =
-        `${data.redirect}&from=${encodeURIComponent(
-          `${location.protocol}//${location.host}${location.pathname}`
-        )}`
+      location.href = `${data.redirect}&from=${encodeURIComponent(
+        `${location.protocol}//${location.host}${location.pathname}`
+      )}`
       return null
     case AuthResultType.MissingApiKey:
       return (
