@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 export default async function PlaygroundPage() {
   const declarations = await fs.readFile(
-    `${process.cwd()}/dist/bundled.d.ts`,
+    `${process.cwd()}/../../dist/bundled.d.ts`,
     'utf8'
   )
   return (
