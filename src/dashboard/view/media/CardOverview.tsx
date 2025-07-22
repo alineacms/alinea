@@ -1,3 +1,10 @@
+import {useTranslation} from '../../hook/useTranslation'
+
+export const copy = {
+  title: 'card'
+}
+
 export function CardOverview() {
-  return <div>card</div>
+  const t = useTranslation(copy)
+  return <div>{t.title}</div>
 }

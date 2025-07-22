@@ -22,13 +22,25 @@ import {
   workspacePreferenceAtom
 } from '../../atoms/PreferencesAtoms.js'
 import {useSession} from '../../hook/UseSession.js'
+import {useTranslation} from '../../hook/useTranslation.js'
 import {IconButton} from '../IconButton.js'
 import {Sidebar} from '../Sidebar.js'
 import css from './SidebarSettings.module.scss'
 
 const styles = styler(css)
 
+export const copy = {
+  settings: 'Settings',
+  defaultWorkspace: 'Default workspace',
+  theme: 'Switch theme',
+  fontSize: 'Font size',
+  decreaseFontSize: 'Decrease font size',
+  increaseFontSize: 'Increase font size',
+  logout: 'Logout'
+}
+
 export function SidebarSettings() {
+  const t = useTranslation(copy)
   const session = useSession()
   const {config} = useAtomValue(dashboardOptionsAtom)
   const preferences = useAtomValue(preferencesAtom)
@@ -37,7 +49,7 @@ export function SidebarSettings() {
   const workspaces = Object.entries(config.workspaces)
   const defaultWorkspace = useMemo(
     () =>
-      select('Default workspace', {
+      select(t.defaultWorkspace, {
         options: fromEntries(
           entries(config.workspaces).map(([key, workspace]) => {
             return [key, (Workspace.label(workspace) as string) || key]
@@ -59,7 +71,7 @@ export function SidebarSettings() {
   return (
     <DropdownMenu.Root top style={{margin: 'auto', marginBottom: 0}}>
       <DropdownMenu.Trigger style={{width: '100%'}}>
-        <Sidebar.Nav.Item aria-label="Settings">
+        <Sidebar.Nav.Item aria-label={t.settings}>
           <Icon icon={IcBaselineAccountCircle} />
         </Sidebar.Nav.Item>
       </DropdownMenu.Trigger>
@@ -81,7 +93,7 @@ export function SidebarSettings() {
                 <Icon
                   icon={IcSharpBrightnessMedium}
                   size={20}
-                  title="Switch theme"
+                  title={t.theme}
                 />
                 <Switch
                   checked={checked}
@@ -102,7 +114,7 @@ export function SidebarSettings() {
                   icon={IcRoundTextFields}
                   size={20}
                   style={{marginRight: px(12)}}
-                  title="Font size"
+                  title={t.fontSize}
                 />
                 <IconButton
                   icon={IcRoundKeyboardArrowDown}
@@ -110,7 +122,7 @@ export function SidebarSettings() {
                     disableTransition(() => updateFontSize(size - 1))
                   }
                   disabled={size <= 16}
-                  title="Decrease font size"
+                  title={t.decreaseFontSize}
                 />
                 <IconButton
                   icon={IcRoundKeyboardArrowUp}
@@ -118,7 +130,7 @@ export function SidebarSettings() {
                     disableTransition(() => updateFontSize(size + 1))
                   }
                   disabled={size >= 40}
-                  title="Increase font size"
+                  title={t.increaseFontSize}
                 />
               </HStack>
             </HStack>
@@ -136,7 +148,7 @@ export function SidebarSettings() {
             <PopoverMenu.Footer>
               <DropdownMenu.Root>
                 <DropdownMenu.Item onClick={session.end}>
-                  Logout
+                  {t.logout}
                 </DropdownMenu.Item>
               </DropdownMenu.Root>
             </PopoverMenu.Footer>

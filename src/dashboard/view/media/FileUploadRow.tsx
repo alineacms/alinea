@@ -4,18 +4,25 @@ import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcBaselineErrorOutline} from 'alinea/ui/icons/IcBaselineErrorOutline'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {useTranslation} from '../../hook/useTranslation.js'
 import {type Upload, UploadStatus} from '../../hook/UseUploads.js'
 import css from './FileUploadRow.module.scss'
 
 const styles = styler(css)
 
+export const copy = {
+  alt: 'Uploaded file',
+  done: 'Done'
+}
+
 export function FileUploadRow(upload: Upload) {
+  const t = useTranslation(copy)
   return (
     <HStack center full gap={10} className={styles.root()}>
       <div className={styles.root.preview()}>
         {upload.preview ? (
           <img
-            alt="Uploaded file"
+            alt={t.alt}
             src={upload.preview}
             className={styles.root.preview.image()}
           />
@@ -37,7 +44,7 @@ export function FileUploadRow(upload: Upload) {
         {upload.status === UploadStatus.Done ? (
           <Icon
             icon={upload.error ? IcBaselineErrorOutline : IcRoundCheck}
-            title={upload.error ? upload.error.message : 'Done'}
+            title={upload.error ? upload.error.message : t.done}
           />
         ) : (
           <Loader />

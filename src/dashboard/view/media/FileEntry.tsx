@@ -18,6 +18,7 @@ import {InputField} from '../../editor/InputForm.js'
 import {useField} from '../../editor/UseField.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useNav} from '../../hook/UseNav.js'
+import {useTranslation} from '../../hook/useTranslation.js'
 import type {EntryEditProps} from '../EntryEdit.js'
 import {EntryHeader} from '../entry/EntryHeader.js'
 import {EntryTitle} from '../entry/EntryTitle.js'
@@ -25,12 +26,24 @@ import css from './FileEntry.module.scss'
 
 const styles = styler(css)
 
+export const copy = {
+  preview: 'Preview of media file',
+  extension: 'Extension',
+  fileSize: 'File size',
+  dimensions: 'Dimensions',
+  pixels: 'pixels',
+  url: 'URL',
+  focus: 'Focus point',
+  focusHelp: 'Click on the image to change the focus point'
+}
+
 interface Pos {
   x?: number
   y?: number
 }
 
 function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
+  const t = useTranslation(copy)
   const config = useConfig()
   const image: Entry<MediaFile> = editor.activeVersion as any
   const {value: focus = {x: 0.5, y: 0.5}, mutator: setFocus} = useField(
@@ -76,7 +89,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
           <img
             className={styles.image.preview.img()}
             src={image.data.preview}
-            alt="Preview of media file"
+            alt={t.preview}
           />
 
           <div
@@ -92,12 +105,12 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
       </div>
       <div className={styles.image.content()}>
         <InputField field={type.title} />
-        <Property label="Extension">{image.data.extension}</Property>
-        <Property label="File size">{prettyBytes(image.data.size)}</Property>
-        <Property label="Dimensions">
-          {image.data.width} x {image.data.height} pixels
+        <Property label={t.extension}>{image.data.extension}</Property>
+        <Property label={t.fileSize}>{prettyBytes(image.data.size)}</Property>
+        <Property label={t.dimensions}>
+          {image.data.width} x {image.data.height} {t.pixels}
         </Property>
-        <Property label="URL">
+        <Property label={t.url}>
           <a
             href={liveUrl.isSuccess() ? String(liveUrl.value) : location}
             target="_blank"
@@ -107,10 +120,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
             <Typo.Monospace>{location}</Typo.Monospace>
           </a>
         </Property>
-        <Property
-          label="Focus point"
-          help="Click on the image to change the focus point"
-        >
+        <Property label={t.focus} help={t.focusHelp}>
           ({focusX.toFixed(2)}, {focusY.toFixed(2)})
         </Property>
       </div>
@@ -143,14 +153,15 @@ export function IcTwotonePinDrop() {
 }
 
 function FileView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
+  const t = useTranslation(copy)
   const file: Entry<MediaFile> = editor.activeVersion as any
   return (
     <Lift>
       <InputField field={type.title} />
-      <Property label="Extension">{file.data.extension}</Property>
-      <Property label="File size">{prettyBytes(file.data.size)}</Property>
+      <Property label={t.extension}>{file.data.extension}</Property>
+      <Property label={t.fileSize}>{prettyBytes(file.data.size)}</Property>
 
-      <Property label="URL">
+      <Property label={t.url}>
         <Typo.Monospace>
           {MEDIA_LOCATION in file.data
             ? (file.data[MEDIA_LOCATION] as string)

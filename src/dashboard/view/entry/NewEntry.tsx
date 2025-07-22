@@ -26,11 +26,27 @@ import {useConfig} from '../../hook/UseConfig.js'
 import {useDb} from '../../hook/UseDb.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
+import {useTranslation} from '../../hook/useTranslation.js'
 import {useRoot} from '../../hook/UseRoot.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import css from './NewEntry.module.scss'
 
 const styles = styler(css)
+
+export const copy = {
+  title: 'Title',
+  parent: 'Parent',
+  type: 'Select type',
+  order: 'Insert order',
+  orderOptions: {
+    first: 'At the top of the list',
+    last: 'At the bottom of the list'
+  },
+  copy: 'Copy content from',
+  formTitle: 'New entry',
+  cancel: 'Cancel',
+  create: 'Create'
+}
 
 const parentData = {
   id: Entry.id,
@@ -44,9 +60,9 @@ const parentData = {
   })
 }
 
-const titleField = text('Title', {autoFocus: true})
-
 function NewEntryForm({parentId}: NewEntryProps) {
+  const t = useTranslation(copy)
+  const titleField = useMemo(() => text(t.title, {autoFocus: true}), [])
   const config = useConfig()
   const locale = useLocale()
   const db = useDb()
@@ -80,7 +96,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     .map(pair => pair[0])
   const root = useRoot()
   const parentField = useMemo(() => {
-    return entry('Parent', {
+    return entry(t.parent, {
       location: {workspace, root: root.name},
       condition: {_type: {in: containerTypes}},
       enableNavigation: true,
@@ -114,7 +130,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }
 
   const typeField = useMemo(() => {
-    const typeField: SelectField<string> = select('Select type', {
+    const typeField: SelectField<string> = select(t.type, {
       options: {}
     }) as any
     return track.options(typeField, async get => {
@@ -137,16 +153,13 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }, [])
 
   const insertOrderField = useMemo(() => {
-    const insertOrderField: SelectField<'first' | 'last'> = select(
-      'Insert order',
-      {
-        initialValue: 'last',
-        options: {
-          first: 'At the top of the list',
-          last: 'At the bottom of the list'
-        }
+    const insertOrderField: SelectField<'first' | 'last'> = select(t.order, {
+      initialValue: 'last',
+      options: {
+        first: t.orderOptions.first,
+        last: t.orderOptions.last
       }
-    )
+    })
     return track.options(insertOrderField, async get => {
       const selectedParent = get(parentField)
       const parentId = selectedParent?.[EntryReference.entry]
@@ -166,7 +179,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }, [])
 
   const copyFromField = useMemo(() => {
-    const copyFromField = entry('Copy content from')
+    const copyFromField = entry(t.copy)
     return track.options(copyFromField, get => {
       const type = get(typeField)!
       return {
@@ -174,7 +187,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
         pickers: {
           entry: entryPicker({
             condition: {_type: type},
-            title: 'Copy content from',
+            title: t.copy,
             max: 1,
             selection: EntryLink
           })
@@ -187,7 +200,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
 
   const formType = useMemo(
     () =>
-      type('New entry', {
+      type(t.formTitle, {
         fields: {
           parent: parentField,
           title: titleField,
@@ -268,9 +281,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
       <InputForm border={false} form={form} />
       <div className={styles.root.footer()}>
         <Link href={pathname} className={styles.root.footer.link()}>
-          Cancel
+          {t.cancel}
         </Link>
-        <Button>Create</Button>
+        <Button>{t.create}</Button>
       </div>
     </form>
   )

@@ -12,11 +12,16 @@ import VirtualList from 'react-tiny-virtual-list'
 import {dbAtom, dbMetaAtom} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {ExplorerProvider} from '../../hook/UseExplorer.js'
+import {useTranslation} from '../../hook/useTranslation.js'
 import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
 import css from './Explorer.module.scss'
 import {ExplorerRow} from './ExplorerRow.js'
 
 const styles = styler(css)
+
+export const copy = {
+  noResults: 'No results'
+}
 
 const defaultSummaryView = {
   summaryRow: EntrySummaryRow,
@@ -59,6 +64,7 @@ export function Explorer({
   showMedia,
   border = true
 }: ExplorerProps) {
+  const t = useTranslation(copy)
   const {schema} = useConfig()
   const graph = useAtomValue(dbAtom)
 
@@ -163,7 +169,7 @@ export function Explorer({
               )
             )
           ) : (
-            <div style={{margin: 'auto'}}>No results</div>
+            <div style={{margin: 'auto'}}>{t.noResults}</div>
           )
         ) : (
           <Loader absolute />

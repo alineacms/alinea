@@ -9,6 +9,7 @@ import {useLayoutEffect, useMemo, useState} from 'react'
 import {useFocusList} from '../hook/UseFocusList.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
+import {useTranslation} from '../hook/useTranslation.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {IconButton} from './IconButton.js'
@@ -17,7 +18,12 @@ import {Explorer, type ExporerItemSelect} from './explorer/Explorer.js'
 
 const styles = styler(css)
 
+export const copy = {
+  search: 'Search'
+}
+
 export function SearchBox() {
+  const t = useTranslation(copy)
   const nav = useNav()
   const navigate = useNavigate()
   const location = useLocation()
@@ -62,7 +68,7 @@ export function SearchBox() {
         <label className={styles.root.label()} {...list.focusProps}>
           <IcRoundSearch className={styles.root.label.icon()} />
           <input
-            placeholder="Search"
+            placeholder={t.search}
             value={search}
             onChange={event => setSearch(event.target.value)}
             className={styles.root.label.input()}

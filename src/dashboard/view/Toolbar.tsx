@@ -36,12 +36,21 @@ import {
 } from '../atoms/PreferencesAtoms.js'
 import {accentColorAtom} from '../atoms/StyleAtoms.js'
 import {useSession} from '../hook/UseSession.js'
+import {useTranslation} from '../hook/useTranslation.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {IconButton} from './IconButton.js'
 import {useSidebar} from './Sidebar.js'
 import css from './Toolbar.module.scss'
 
 const styles = styler(css)
+
+export const copy = {
+  workspace(label: Label) {
+    return <TextLabel label={label} />
+  },
+  defaultWorkspace: 'Default workspace',
+  logout: 'Logout'
+}
 
 type WorkspaceLabelProps = {
   color?: string
@@ -50,6 +59,7 @@ type WorkspaceLabelProps = {
 }
 
 function WorkspaceLabel({label, color, icon: Icon}: WorkspaceLabelProps) {
+  const t = useTranslation(copy)
   const symbol = Icon ? <Icon /> : <RiFlashlightFill />
   return (
     <HStack center gap={12}>
@@ -57,7 +67,7 @@ function WorkspaceLabel({label, color, icon: Icon}: WorkspaceLabelProps) {
         <AlineaLogo />
       </LogoShape>
       <div style={{fontSize: '13px', fontWeight: 600}}>
-        <TextLabel label={label} />
+        {t.workspace(label)}
       </div>
     </HStack>
   )
@@ -67,6 +77,7 @@ export namespace Toolbar {
   export const {Provider, Portal, Slot} = createSlots()
 
   export function Root() {
+    const t = useTranslation(copy)
     const accentColor = useAtomValue(accentColorAtom)
     const session = useSession()
     const {config} = useAtomValue(dashboardOptionsAtom)
@@ -84,7 +95,7 @@ export namespace Toolbar {
       '--alinea-saturation': `${saturation * 100}%`,
       '--alinea-lightness': `${lightness * 100}%`
     }
-    const defaultWorkspace = select('Default workspace', {
+    const defaultWorkspace = select(t.defaultWorkspace, {
       options: fromEntries(
         entries(config.workspaces).map(([key, workspace]) => {
           return [key, (Workspace.label(workspace) as string) || key]
@@ -220,7 +231,7 @@ export namespace Toolbar {
                     <PopoverMenu.Footer>
                       <DropdownMenu.Root>
                         <DropdownMenu.Item onClick={session.end}>
-                          Logout
+                          {t.logout}
                         </DropdownMenu.Item>
                       </DropdownMenu.Root>
                     </PopoverMenu.Footer>

@@ -11,9 +11,15 @@ import {
   forwardRef,
   memo
 } from 'react'
+import {useTranslation} from '../hook/useTranslation.js'
 import css from './InputLabel.module.scss'
 
 const styles = styler(css)
+
+export const copy = {
+  readonly: 'Read-only',
+  shared: 'Shared'
+}
 
 export type LabelHeaderProps = {
   label: ReactNode
@@ -38,6 +44,7 @@ export const LabelHeader = memo(function LabelHeader({
   required,
   error
 }: LabelHeaderProps) {
+  const t = useTranslation(copy)
   const showError = typeof error === 'string'
   return (
     <header className={styles.header(size, {focused, error: Boolean(error)})}>
@@ -50,9 +57,13 @@ export const LabelHeader = memo(function LabelHeader({
           </span>
         </HStack>
         {readOnly && (
-          <Icon title="Read-only" icon={IcOutlineLock} style={{opacity: 0.6}} />
+          <Icon
+            title={t.readonly}
+            icon={IcOutlineLock}
+            style={{opacity: 0.6}}
+          />
         )}
-        {shared && <Chip icon={PhGlobe}>Shared</Chip>}
+        {shared && <Chip icon={PhGlobe}>{t.shared}</Chip>}
         {showError ? (
           <div className={styles.header.help({error: true})}>{error}</div>
         ) : (

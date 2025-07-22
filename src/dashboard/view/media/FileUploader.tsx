@@ -10,10 +10,21 @@ import {
   UploadStatus,
   useUploads
 } from '../../hook/UseUploads.js'
+import {useTranslation} from '../../hook/useTranslation.js'
 import {FileUploadRow} from './FileUploadRow.js'
 import css from './FileUploader.module.scss'
 
 const styles = styler(css)
+
+export const copy = {
+  uploadComplete(amount: number) {
+    return `${amount} upload${amount > 1 ? 's' : ''} complete`
+  },
+  uploading(amount: number) {
+    return `uploading ${amount} file${amount > 1 ? 's' : ''}`
+  },
+  upload: 'Upload files'
+}
 
 export interface FileUploaderProps {
   onlyImages?: boolean
@@ -30,6 +41,7 @@ export function FileUploader({
   toggleSelect,
   position = 'right'
 }: FileUploaderProps) {
+  const t = useTranslation(copy)
   const readOnly = !destination
   const {upload, uploads} = useUploads(toggleSelect)
   const [isOver, setIsOver] = useState(false)
@@ -50,9 +62,9 @@ export function FileUploader({
   }
   const description = isUploading
     ? isFinished
-      ? `${uploadsDone} upload${uploadsDone > 1 ? 's' : ''} complete`
-      : `uploading ${todo} file${todo > 1 ? 's' : ''}`
-    : 'Upload files'
+      ? t.uploadComplete(uploadsDone)
+      : t.uploading(todo)
+    : t.upload
   useEffect(() => {
     const {body} = document
     let eventTarget: EventTarget | null

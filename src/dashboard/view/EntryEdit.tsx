@@ -20,6 +20,7 @@ import {useConfig} from '../hook/UseConfig.js'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {EntryEditorProvider} from '../hook/UseEntryEditor.js'
 import {useLocale} from '../hook/UseLocale.js'
+import {useTranslation} from '../hook/useTranslation.js'
 import {useNav} from '../hook/UseNav.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import {Modal} from '../view/Modal.js'
@@ -38,6 +39,22 @@ import {BrowserPreviewMetaProvider} from './preview/BrowserPreview.js'
 
 const styles = styler(css)
 
+export const copy = {
+  blocking: {
+    title: 'Are you sure you want to discard changes?',
+    warning: 'This document was changed',
+    prompt: 'would you like to save your changes?',
+    discard: 'Discard my changes',
+    saveDraft: 'Save as draft',
+    publishChanges: 'Publish changes'
+  },
+  untranslated: {
+    title: 'Untranslated',
+    parent: 'Translate the parent page first.',
+    prompt: 'Enter the details below and save to start translating.'
+  }
+}
+
 function ShowChanges({editor}: EntryEditProps) {
   const draftEntry = useAtomValue(editor.draftEntry)
   const hasChanges = useAtomValue(editor.hasChanges)
@@ -55,6 +72,7 @@ export interface EntryEditProps {
 
 export function EntryEdit({editor}: EntryEditProps) {
   const {alineaDev} = useDashboard()
+  const t = useTranslation(copy)
   const locale = useLocale()
   const config = useConfig()
   const {isPreviewOpen} = useSidebar()
@@ -68,7 +86,7 @@ export function EntryEdit({editor}: EntryEditProps) {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedStatus])
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
-    'Are you sure you want to discard changes?',
+    t.blocking.title,
     !editor.untranslated && hasChanges
   )
   const isNavigationChange =
@@ -145,9 +163,9 @@ export function EntryEdit({editor}: EntryEditProps) {
         <Modal open onClose={() => cancel()}>
           <VStack gap={30}>
             <p>
-              This document was changed,
+              {t.blocking.warning},
               <br />
-              would you like to save your changes?
+              {t.blocking.prompt}
             </p>
             <HStack as="footer">
               <Stack.Right>
@@ -160,7 +178,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                       confirm()
                     }}
                   >
-                    Discard my changes
+                    {t.blocking.discard}
                   </Button>
                   {config.enableDrafts ? (
                     <Button
@@ -169,7 +187,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                         confirm()
                       }}
                     >
-                      Save as draft
+                      {t.blocking.saveDraft}
                     </Button>
                   ) : (
                     <Button
@@ -178,7 +196,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                         confirm()
                       }}
                     >
-                      Publish changes
+                      {t.blocking.publishChanges}
                     </Button>
                   )}
                 </HStack>
@@ -218,12 +236,12 @@ export function EntryEdit({editor}: EntryEditProps) {
                 <div>
                   <EntryNotice
                     icon={IcRoundTranslate}
-                    title="Untranslated"
+                    title={t.untranslated.title}
                     variant="untranslated"
                   >
                     {editor.parentNeedsTranslation
-                      ? 'Translate the parent page first.'
-                      : 'Enter the details below and save to start translating.'}
+                      ? t.untranslated.parent
+                      : t.untranslated.prompt}
                   </EntryNotice>
                 </div>
               )}
