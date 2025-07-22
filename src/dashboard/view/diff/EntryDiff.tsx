@@ -3,11 +3,16 @@ import type {Entry} from 'alinea/core/Entry'
 import {Type} from 'alinea/core/Type'
 import {Chip, TextLabel} from 'alinea/ui'
 import {useConfig} from '../../hook/UseConfig.js'
+import {useTranslation} from '../../hook/useTranslation.js'
 import {diffRecord} from './DiffUtils.js'
 import css from './EntryDiff.module.scss'
 import {FieldsDiff} from './FieldsDiff.js'
 
 const styles = styler(css)
+
+export const copy = {
+  changed: '=>'
+}
 
 export type EntryDiffProps = {
   entryA: Entry
@@ -15,6 +20,7 @@ export type EntryDiffProps = {
 }
 
 export function EntryDiff({entryA, entryB}: EntryDiffProps) {
+  const t = useTranslation(copy)
   const {schema} = useConfig()
   const typeA = schema[entryA.type]!
   const typeB = schema[entryB.type]!
@@ -25,7 +31,7 @@ export function EntryDiff({entryA, entryB}: EntryDiffProps) {
         <Chip>
           <TextLabel label={Type.label(typeA)} />
         </Chip>{' '}
-        =&gt;
+        {t.changed}
         <Chip>
           <TextLabel label={Type.label(typeB)} />
         </Chip>
