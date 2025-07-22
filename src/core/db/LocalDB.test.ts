@@ -6,7 +6,7 @@ import {MemorySource} from '../source/MemorySource.js'
 import {syncWith} from '../source/Source.js'
 import {LocalDB} from './LocalDB.js'
 
-const dir = 'apps/web/content/demo'
+const dir = 'src/test/fixtures/demo'
 const source = new FSSource(dir)
 const from = new MemorySource()
 const into = new MemorySource()

@@ -5,7 +5,7 @@ import {exportSource, importSource} from './SourceExport.js'
 
 const test = suite(import.meta)
 
-const dir = 'apps/web/content/demo'
+const dir = 'src/test/fixtures/demo'
 const fsSource = new FSSource(dir)
 
 test('export/import', async () => {

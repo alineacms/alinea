@@ -11,7 +11,7 @@ import {EntryResolver} from './EntryResolver.js'
 
 const test = suite(import.meta)
 
-const dir = 'apps/web/content/demo'
+const dir = 'src/test/fixtures/demo'
 const source = new FSSource(dir)
 
 const index = new EntryIndex(cms.config)

@@ -6,7 +6,7 @@ import {ReadonlyTree} from './Tree.js'
 const test = suite(import.meta)
 
 test('compare', async () => {
-  const dir = 'apps/web/content/demo'
+  const dir = 'src/test/fixtures/demo'
   const fsSource = new FSSource(dir)
   const tree = ReadonlyTree.fromFlat(demoTree)
   const fsTree = await fsSource.getTree()
