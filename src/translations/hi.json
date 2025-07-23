@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "सिंक्रनाइज़ किए जा रहे",
+    "synced": "सिंक किया गया",
+    "saving": "बचत…"
+  },
+  "urlPicker": {
+    "title": "जोड़ना",
+    "url": "यूआरएल",
+    "urlHelp": "लिंक का URL",
+    "description": "विवरण",
+    "descriptionHelp": "लिंक तत्व के अंदर प्रदर्शित करने के लिए पाठ",
+    "target": "लक्ष्य",
+    "targetDescription": "नए टैब में लिंक खोलें",
+    "cancel": "रद्द करना",
+    "confirm": "पुष्टि करना"
+  },
+  "pickLink": {
+    "title": "लिंक चुनें",
+    "link": "जोड़ना",
+    "description": "विवरण",
+    "descriptionHelp": "लिंक तत्व के अंदर प्रदर्शित करने के लिए पाठ",
+    "tooltip": "टूलटिप",
+    "tooltipHelp": "लिंक का वर्णन करने वाली अतिरिक्त जानकारी, होवर पर दिखाई जाती है",
+    "newTab": "नए टैब में लिंक खोलें",
+    "remove": "लिंक हटाएँ",
+    "cancel": "रद्द करना",
+    "confirm": "पुष्टि करना"
+  },
+  "newEntry": {
+    "title": "शीर्षक",
+    "parent": "माता-पिता",
+    "type": "प्रकार चुनें",
+    "order": "आदेश डालें",
+    "orderFirst": "सूची में सबसे ऊपर",
+    "orderLast": "सूची में सबसे नीचे",
+    "copyFrom": "सामग्री कॉपी करें",
+    "formTitle": "नई प्रविष्टि",
+    "cancel": "रद्द करना",
+    "create": "बनाएं"
+  },
+  "entryEdit": {
+    "blockingTitle": "क्या आप वाकई परिवर्तनों को त्यागना चाहते हैं?",
+    "blockingWarning": "यह दस्तावेज़ बदल दिया गया था",
+    "blockingPrompt": "क्या आप अपने परिवर्तन सहेजना चाहेंगे?",
+    "blockingDiscard": "मेरे परिवर्तन त्यागें",
+    "blockingSaveDraft": "ड्राफ्ट के रूप में सेव करें",
+    "blockingPublishChanges": "परिवर्तन प्रकाशित करें",
+    "untranslatedTitle": "अनुवाद नहीं",
+    "untranslatedParent": "पहले मूल पृष्ठ का अनुवाद करें.",
+    "untranslatedPrompt": "अनुवाद शुरू करने के लिए नीचे विवरण दर्ज करें और सहेजें।",
+    "draftError": "ड्राफ़्ट कार्रवाई पूरी नहीं की जा सकी, कृपया बाद में पुनः प्रयास करें",
+    "saveTranslationError": "अनुवाद कार्य पूरा नहीं किया जा सका, कृपया बाद में पुनः प्रयास करें",
+    "publishError": "प्रकाशन कार्य पूरा नहीं किया जा सका, कृपया बाद में पुनः प्रयास करें",
+    "discardError": "परिवर्तनों को रद्द नहीं किया जा सका, कृपया बाद में पुनः प्रयास करें",
+    "unpublishError": "अप्रकाशित कार्रवाई पूरी नहीं की जा सकी, कृपया बाद में पुनः प्रयास करें",
+    "deleteError": "हटाने की कार्रवाई पूरी नहीं हो सकी, कृपया बाद में पुनः प्रयास करें",
+    "archiveError": "संग्रह कार्रवाई पूरी नहीं हो सकी, कृपया बाद में पुनः प्रयास करें"
+  },
+  "entryHeader": {
+    "draft": "मसौदा",
+    "editing": "संपादन",
+    "published": "प्रकाशित",
+    "archived": "संग्रहीत",
+    "untranslated": "अनुवाद नहीं",
+    "unpublished": "अप्रकाशित",
+    "revision": "दोहराव",
+    "showMenu": "प्रदर्शन मेनू",
+    "hideMenu": "मेनू छिपाएँ",
+    "removeDraft": "ड्राफ्ट हटाएँ",
+    "replace": "प्रतिस्थापित करें",
+    "delete": "मिटाना",
+    "unpublish": "अप्रकाशित करें",
+    "archive": "पुरालेख",
+    "publish": "प्रकाशित करना",
+    "showHistory": "इतिहास दिखाएँ",
+    "hideHistory": "इतिहास छिपाएँ",
+    "draftAvailable": "एक नया मसौदा संस्करण उपलब्ध है",
+    "translateFrom": "से अनुवाद करें",
+    "translateParent": "पहले मूल पृष्ठ का अनुवाद करें",
+    "discard": "संपादन त्यागें",
+    "save": "अनुवाद सहेजें",
+    "saveDraft": "बचाना",
+    "restore": "पुनर्स्थापित करना",
+    "showPreview": "पूर्वावलोकन प्रदर्शित करें",
+    "hidePreview": "पूर्वावलोकन छिपाएँ",
+    "savingDraft": "ड्राफ्ट सहेजा जा रहा है",
+    "savingTranslation": "अनुवाद सहेजा जा रहा है",
+    "publishingEdits": "संपादन प्रकाशित करना",
+    "restoringRevision": "संशोधन बहाल करना",
+    "publishingDraft": "मसौदा प्रकाशित करना",
+    "unpublishingDraft": "मसौदा अप्रकाशित करना",
+    "discardingDraft": "ड्राफ्ट को त्यागना",
+    "archivingPublished": "संग्रह प्रकाशित",
+    "publishingArchived": "प्रकाशन संग्रहीत",
+    "deletingFile": "फ़ाइल हटाना",
+    "deletingEntry": "प्रविष्टि हटाएं"
+  },
+  "contentView": {
+    "create": "नया निर्माण"
+  },
+  "welcome": {
+    "title": "आपका एलाइनिया इंस्टॉलेशन अब कॉन्फ़िगरेशन के लिए तैयार है।",
+    "button": "कॉन्फ़िगर करने का तरीका जानें"
+  },
+  "cloudAuthView": {
+    "title": "अनुच्छेद",
+    "deploy": "तैनात करने के लिए तैयार हैं?",
+    "requiresHandler": "एलिनिया को जारी रखने के लिए एक हैंडलर की आवश्यकता है",
+    "backend": "एलिनेया को जारी रखने के लिए एक बैकएंड की आवश्यकता है।",
+    "customBackend": "एक कस्टम बैकएंड को पूरी तरह से कॉन्फ़िगर करें",
+    "cloud": "या फिर हमारी क्लाउड पेशकश के साथ कुछ ही क्लिक में सेटअप करें।",
+    "cloudButton": "alinea.cloud के साथ जारी रखें"
+  },
+  "sidebarSettings": {
+    "settings": "सेटिंग्स",
+    "defaultWorkspace": "डिफ़ॉल्ट कार्यस्थान",
+    "theme": "थीम बदलें",
+    "fontSize": "फ़ॉन्ट आकार",
+    "decreaseFontSize": "फ़ॉन्ट आकार घटाएँ",
+    "increaseFontSize": "फ़ॉन्ट आकार बढ़ाएँ",
+    "logout": "लॉग आउट"
+  },
+  "fileUploader": {
+    "uploadComplete": "अपलोड पूर्ण: {{amount}}",
+    "uploading": "फ़ाइलें अपलोड हो रही हैं: {{amount}}",
+    "upload": "फाइलें अपलोड करें"
+  },
+  "fileUploadRow": {
+    "alt": "अपलोड की गई फ़ाइल",
+    "done": "हो गया"
+  },
+  "fileEntry": {
+    "preview": "मीडिया फ़ाइल का पूर्वावलोकन",
+    "extension": "विस्तार",
+    "fileSize": "फ़ाइल का साइज़",
+    "dimensions": "DIMENSIONS",
+    "pixels": "पिक्सेल",
+    "url": "यूआरएल",
+    "focus": "फोकस बिन्दु",
+    "focusHelp": "फोकस बिंदु बदलने के लिए छवि पर क्लिक करें"
+  },
+  "cardOverview": {
+    "title": "कार्ड"
+  },
+  "explorer": {
+    "noResults": "कोई परिणाम नहीं"
+  },
+  "editModeToggle": {
+    "edit": "संपादन करना",
+    "review": "परिवर्तनों की समीक्षा करें"
+  },
+  "searchBox": {
+    "search": "खोज"
+  },
+  "rootOverview": {
+    "instruction": "संपादन शुरू करने के लिए बाईं ओर नेविगेशन ट्री में एक प्रविष्टि चुनें\n"
+  },
+  "inputLabel": {
+    "readonly": "केवल पढ़ने के लिए",
+    "shared": "साझा"
+  },
+  "errorBoundary": {
+    "title": "गलती",
+    "oops": "ओह! कुछ गलत हो गया है",
+    "close": "बंद त्रुटि",
+    "issue": "कोई समस्या बनाएँ"
+  },
+  "toolbar": {
+    "defaultWorkspace": "डिफ़ॉल्ट कार्यस्थान",
+    "logout": "लॉग आउट"
+  },
+  "listField": {
+    "reorder": "पुनःक्रमित करने के लिए खींचें और छोड़ें",
+    "copy": "ब्लॉक कॉपी करें",
+    "moveUp": "एक स्थान ऊपर जाएँ",
+    "moveDown": "एक स्थान नीचे जाएँ",
+    "delete": "ब्लॉक हटाएं",
+    "paste": "ब्लॉक चिपकाएँ",
+    "add": "नया ब्लॉक डालें"
+  },
+  "metadataField": {
+    "previewTitle": "पूर्व दर्शन",
+    "searchEngine": "खोज इंजन",
+    "socialShare": "सामाजिक हिस्सेदारी",
+    "ogImageAlt": "ग्राफ़ छवि खोलें"
+  },
+  "pickTextLink": {
+    "title": "लिंक चुनें",
+    "link": "जोड़ना",
+    "description": "विवरण",
+    "descriptionHelp": "लिंक तत्व के अंदर प्रदर्शित करने के लिए पाठ",
+    "tooltip": "टूलटिप",
+    "tooltipHelp": "लिंक का वर्णन करने वाली अतिरिक्त जानकारी, होवर पर दिखाई जाती है",
+    "newTab": "नए टैब में लिंक खोलें",
+    "remove": "लिंक हटाएँ",
+    "cancel": "रद्द करना",
+    "confirm": "पुष्टि करना"
+  },
+  "richTextField": {
+    "insert": "ब्लॉक डालें"
+  },
+  "richTextToolbar": {
+    "styles": "शीर्षक/अनुच्छेद",
+    "table": "मेज़",
+    "bold": "बोल्ड",
+    "italic": "तिरछा",
+    "align": "संरेखण",
+    "alignLeft": "बाईं ओर संरेखित करें",
+    "alignCenter": "मध्य में संरेखित करें",
+    "alignRight": "दाईं ओर संरेखित करें",
+    "alignJustify": "संरेखित करें औचित्य सिद्ध करें",
+    "clear": "स्पष्ट प्रारूप",
+    "bulletList": "बुलेट सूची",
+    "orderedList": "क्रमबद्ध सूची",
+    "link": "जोड़ना",
+    "quote": "ब्लॉककोट",
+    "rule": "क्षैतिज नियम",
+    "small": "छोटा",
+    "sub": "सबस्क्रिप्ट",
+    "sup": "ऊपर की ओर लिखा हुआ",
+    "paragraph": "सामान्य पाठ",
+    "h1": "शीर्षक 1",
+    "h2": "शीर्षक 2",
+    "h3": "शीर्षक 3",
+    "h4": "शीर्षक 4",
+    "h5": "शीर्षक 5",
+    "tableLabel": "मेज़",
+    "insert": "टेबल इंसर्ट करें",
+    "insertRowBefore": "पहले पंक्ति डालें",
+    "insertRowAfter": "इसके बाद पंक्ति डालें",
+    "deleteRow": "पंक्ति को हटाएं",
+    "toggleHeaderRow": "शीर्षलेख पंक्ति टॉगल करें",
+    "insertColumnBefore": "इससे पहले कॉलम डालें",
+    "insertColumnAfter": "इसके बाद कॉलम डालें",
+    "deleteColumn": "कॉलम हटाएं",
+    "deleteTable": "तालिका हटाएँ",
+    "left": "बाएं",
+    "center": "केंद्र",
+    "right": "सही",
+    "justify": "औचित्य"
+  },
+  "linkField": {
+    "reorder": "पुनःक्रमित करने के लिए खींचें और छोड़ें",
+    "open": "नए टैब में लिंक खोलें",
+    "openFile": "मीडिया फ़ाइल को नए टैब में खोलें",
+    "edit": "लिंक संपादित करें",
+    "editFile": "छवि बदलें",
+    "delete": "लिंक हटाएं",
+    "deleteFile": "छवि हटाएं"
+  },
+  "entryPicker": {
+    "title": "एक संदर्भ चुनें",
+    "searchPlaceholder": "खोज",
+    "cancel": "रद्द करना",
+    "confirm": "पुष्टि करना"
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Synchronisierung",
+    "synced": "Synchronisiert",
+    "saving": "Speichern…"
+  },
+  "urlPicker": {
+    "title": "Link",
+    "url": "URL",
+    "urlHelp": "URL des Links",
+    "description": "Beschreibung",
+    "descriptionHelp": "Text, der im Link-Element angezeigt werden soll",
+    "target": "Ziel",
+    "targetDescription": "Link in neuem Tab öffnen",
+    "cancel": "Stornieren",
+    "confirm": "Bestätigen"
+  },
+  "pickLink": {
+    "title": "Link auswählen",
+    "link": "Link",
+    "description": "Beschreibung",
+    "descriptionHelp": "Text, der im Link-Element angezeigt werden soll",
+    "tooltip": "Tooltip",
+    "tooltipHelp": "Zusätzliche Informationen, die den Link beschreiben und beim Hovern angezeigt werden",
+    "newTab": "Link in neuem Tab öffnen",
+    "remove": "Link entfernen",
+    "cancel": "Stornieren",
+    "confirm": "Bestätigen"
+  },
+  "newEntry": {
+    "title": "Titel",
+    "parent": "Elternteil",
+    "type": "Typ auswählen",
+    "order": "Insert-Reihenfolge",
+    "orderFirst": "Ganz oben auf der Liste",
+    "orderLast": "Am Ende der Liste",
+    "copyFrom": "Inhalt kopieren von",
+    "formTitle": "Neuer Eintrag",
+    "cancel": "Stornieren",
+    "create": "Erstellen"
+  },
+  "entryEdit": {
+    "blockingTitle": "Möchten Sie die Änderungen wirklich verwerfen?",
+    "blockingWarning": "Dieses Dokument wurde geändert",
+    "blockingPrompt": "möchten Sie Ihre Änderungen speichern?",
+    "blockingDiscard": "Meine Änderungen verwerfen",
+    "blockingSaveDraft": "Als Entwurf speichern",
+    "blockingPublishChanges": "Änderungen veröffentlichen",
+    "untranslatedTitle": "Unübersetzt",
+    "untranslatedParent": "Übersetzen Sie zuerst die übergeordnete Seite.",
+    "untranslatedPrompt": "Geben Sie unten die Details ein und speichern Sie, um mit der Übersetzung zu beginnen.",
+    "draftError": "Die Entwurfsaktion konnte nicht abgeschlossen werden. Bitte versuchen Sie es später noch einmal.",
+    "saveTranslationError": "Die Übersetzungsaktion konnte nicht abgeschlossen werden. Bitte versuchen Sie es später noch einmal.",
+    "publishError": "Die Veröffentlichungsaktion konnte nicht abgeschlossen werden. Bitte versuchen Sie es später erneut.",
+    "discardError": "Änderungen konnten nicht verworfen werden. Bitte versuchen Sie es später erneut.",
+    "unpublishError": "Die Aktion zum Aufheben der Veröffentlichung konnte nicht abgeschlossen werden. Bitte versuchen Sie es später erneut.",
+    "deleteError": "Löschvorgang konnte nicht abgeschlossen werden. Bitte versuchen Sie es später erneut.",
+    "archiveError": "Die Archivierungsaktion konnte nicht abgeschlossen werden. Bitte versuchen Sie es später erneut."
+  },
+  "entryHeader": {
+    "draft": "Entwurf",
+    "editing": "Bearbeitung",
+    "published": "Veröffentlicht",
+    "archived": "Archiviert",
+    "untranslated": "Unübersetzt",
+    "unpublished": "Unveröffentlicht",
+    "revision": "Revision",
+    "showMenu": "Menü anzeigen",
+    "hideMenu": "Menü ausblenden",
+    "removeDraft": "Entwurf entfernen",
+    "replace": "Ersetzen",
+    "delete": "Löschen",
+    "unpublish": "Veröffentlichung aufheben",
+    "archive": "Archiv",
+    "publish": "Veröffentlichen",
+    "showHistory": "Verlauf anzeigen",
+    "hideHistory": "Verlauf ausblenden",
+    "draftAvailable": "Eine neuere Entwurfsversion ist verfügbar",
+    "translateFrom": "Übersetzen von",
+    "translateParent": "Übersetzen Sie zuerst die übergeordnete Seite",
+    "discard": "Änderungen verwerfen",
+    "save": "Übersetzung speichern",
+    "saveDraft": "Speichern",
+    "restore": "Wiederherstellen",
+    "showPreview": "Vorschau anzeigen",
+    "hidePreview": "Vorschau ausblenden",
+    "savingDraft": "Entwurf speichern",
+    "savingTranslation": "Übersetzung speichern",
+    "publishingEdits": "Änderungen veröffentlichen",
+    "restoringRevision": "Revision wiederherstellen",
+    "publishingDraft": "Veröffentlichungsentwurf",
+    "unpublishingDraft": "Entwurf wird nicht veröffentlicht",
+    "discardingDraft": "Entwurf verwerfen",
+    "archivingPublished": "Archivierung veröffentlicht",
+    "publishingArchived": "Veröffentlichung archiviert",
+    "deletingFile": "Datei löschen",
+    "deletingEntry": "Eintrag löschen"
+  },
+  "contentView": {
+    "create": "Neu erstellen"
+  },
+  "welcome": {
+    "title": "Ihre alinea-Installation ist nun bereit zur Konfiguration.",
+    "button": "Erfahren Sie, wie Sie konfigurieren"
+  },
+  "cloudAuthView": {
+    "title": "Absatz",
+    "deploy": "Bereit zur Bereitstellung?",
+    "requiresHandler": "Alinea benötigt einen Handler, um fortzufahren",
+    "backend": "Alinea benötigt ein Backend, um fortzufahren.",
+    "customBackend": "Konfigurieren Sie ein benutzerdefiniertes Backend vollständig",
+    "cloud": "Oder richten Sie sich mit unserem Cloud-Angebot in wenigen Klicks ein.",
+    "cloudButton": "Weiter mit alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Einstellungen",
+    "defaultWorkspace": "Standardarbeitsbereich",
+    "theme": "Design wechseln",
+    "fontSize": "Schriftgröße",
+    "decreaseFontSize": "Schriftgröße verringern",
+    "increaseFontSize": "Schriftgröße erhöhen",
+    "logout": "Ausloggen"
+  },
+  "fileUploader": {
+    "uploadComplete": "Uploads abgeschlossen: {{amount}}",
+    "uploading": "Dateien werden hochgeladen: {{amount}}",
+    "upload": "Dateien hochladen"
+  },
+  "fileUploadRow": {
+    "alt": "Hochgeladene Datei",
+    "done": "Erledigt"
+  },
+  "fileEntry": {
+    "preview": "Vorschau der Mediendatei",
+    "extension": "Verlängerung",
+    "fileSize": "Dateigröße",
+    "dimensions": "Maße",
+    "pixels": "Pixel",
+    "url": "URL",
+    "focus": "Fokuspunkt",
+    "focusHelp": "Klicken Sie auf das Bild, um den Fokuspunkt zu ändern"
+  },
+  "cardOverview": {
+    "title": "Karte"
+  },
+  "explorer": {
+    "noResults": "Keine Ergebnisse"
+  },
+  "editModeToggle": {
+    "edit": "Bearbeiten",
+    "review": "Änderungen überprüfen"
+  },
+  "searchBox": {
+    "search": "Suchen"
+  },
+  "rootOverview": {
+    "instruction": "Wählen Sie einen Eintrag im Navigationsbaum links aus, um mit der Bearbeitung zu beginnen"
+  },
+  "inputLabel": {
+    "readonly": "Schreibgeschützt",
+    "shared": "Geteilt"
+  },
+  "errorBoundary": {
+    "title": "Fehler",
+    "oops": "Hoppla, da ist etwas schiefgelaufen",
+    "close": "Fehler schließen",
+    "issue": "Problem erstellen"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Standardarbeitsbereich",
+    "logout": "Ausloggen"
+  },
+  "listField": {
+    "reorder": "Zum Neuordnen per Drag & Drop",
+    "copy": "Block kopieren",
+    "moveUp": "Eine Position nach oben",
+    "moveDown": "Eine Position nach unten verschieben",
+    "delete": "Block löschen",
+    "paste": "Block einfügen",
+    "add": "Neuen Block einfügen"
+  },
+  "metadataField": {
+    "previewTitle": "Vorschau",
+    "searchEngine": "Suchmaschine",
+    "socialShare": "Soziales Teilen",
+    "ogImageAlt": "Graph-Bild öffnen"
+  },
+  "pickTextLink": {
+    "title": "Link auswählen",
+    "link": "Link",
+    "description": "Beschreibung",
+    "descriptionHelp": "Text, der im Link-Element angezeigt werden soll",
+    "tooltip": "Tooltip",
+    "tooltipHelp": "Zusätzliche Informationen, die den Link beschreiben und beim Hovern angezeigt werden",
+    "newTab": "Link in neuem Tab öffnen",
+    "remove": "Link entfernen",
+    "cancel": "Stornieren",
+    "confirm": "Bestätigen"
+  },
+  "richTextField": {
+    "insert": "Block einfügen"
+  },
+  "richTextToolbar": {
+    "styles": "Überschrift/Absatz",
+    "table": "Tisch",
+    "bold": "Deutlich",
+    "italic": "Kursiv",
+    "align": "Ausrichtung",
+    "alignLeft": "Linksbündig",
+    "alignCenter": "Zentriert ausrichten",
+    "alignRight": "Rechtsbündig",
+    "alignJustify": "Blocksatz ausrichten",
+    "clear": "Übersichtliches Format",
+    "bulletList": "Aufzählungsliste",
+    "orderedList": "Geordnete Liste",
+    "link": "Link",
+    "quote": "Blockzitat",
+    "rule": "Horizontale Linie",
+    "small": "Klein",
+    "sub": "Index",
+    "sup": "Hochgestellt",
+    "paragraph": "Normaler Text",
+    "h1": "Überschrift 1",
+    "h2": "Überschrift 2",
+    "h3": "Überschrift 3",
+    "h4": "Überschrift 4",
+    "h5": "Überschrift 5",
+    "tableLabel": "Tisch",
+    "insert": "Tabelle einfügen",
+    "insertRowBefore": "Zeile einfügen vor",
+    "insertRowAfter": "Zeile einfügen nach",
+    "deleteRow": "Zeile löschen",
+    "toggleHeaderRow": "Kopfzeile umschalten",
+    "insertColumnBefore": "Spalte einfügen vor",
+    "insertColumnAfter": "Spalte einfügen nach",
+    "deleteColumn": "Spalte löschen",
+    "deleteTable": "Tabelle löschen",
+    "left": "Links",
+    "center": "Center",
+    "right": "Rechts",
+    "justify": "Rechtfertigen"
+  },
+  "linkField": {
+    "reorder": "Zum Neuordnen per Drag & Drop",
+    "open": "Link in neuem Tab öffnen",
+    "openFile": "Mediendatei in neuem Tab öffnen",
+    "edit": "Link bearbeiten",
+    "editFile": "Bild ändern",
+    "delete": "Link löschen",
+    "deleteFile": "Bild löschen"
+  },
+  "entryPicker": {
+    "title": "Wählen Sie eine Referenz",
+    "searchPlaceholder": "Suchen",
+    "cancel": "Stornieren",
+    "confirm": "Bestätigen"
+  }
+}

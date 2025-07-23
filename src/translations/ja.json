@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "同期中",
+    "synced": "同期済み",
+    "saving": "保存中…"
+  },
+  "urlPicker": {
+    "title": "リンク",
+    "url": "URL",
+    "urlHelp": "リンクのURL",
+    "description": "説明",
+    "descriptionHelp": "リンク要素内に表示するテキスト",
+    "target": "ターゲット",
+    "targetDescription": "リンクを新しいタブで開く",
+    "cancel": "キャンセル",
+    "confirm": "確認する"
+  },
+  "pickLink": {
+    "title": "リンクを選択",
+    "link": "リンク",
+    "description": "説明",
+    "descriptionHelp": "リンク要素内に表示するテキスト",
+    "tooltip": "ツールチップ",
+    "tooltipHelp": "リンクを説明する追加情報（マウスオーバー時に表示される）",
+    "newTab": "リンクを新しいタブで開く",
+    "remove": "リンクを削除",
+    "cancel": "キャンセル",
+    "confirm": "確認する"
+  },
+  "newEntry": {
+    "title": "タイトル",
+    "parent": "親",
+    "type": "タイプを選択",
+    "order": "注文を挿入",
+    "orderFirst": "リストの一番上に",
+    "orderLast": "リストの一番下",
+    "copyFrom": "コンテンツをコピー",
+    "formTitle": "新規エントリー",
+    "cancel": "キャンセル",
+    "create": "作成する"
+  },
+  "entryEdit": {
+    "blockingTitle": "変更を破棄してもよろしいですか?",
+    "blockingWarning": "この文書は変更されました",
+    "blockingPrompt": "変更を保存しますか?",
+    "blockingDiscard": "変更を破棄",
+    "blockingSaveDraft": "下書きとして保存",
+    "blockingPublishChanges": "変更を公開する",
+    "untranslatedTitle": "未翻訳",
+    "untranslatedParent": "まず親ページを翻訳します。",
+    "untranslatedPrompt": "以下の詳細を入力して保存し、翻訳を開始してください。",
+    "draftError": "下書き操作を完了できませんでした。しばらくしてからもう一度お試しください。",
+    "saveTranslationError": "翻訳操作を完了できませんでした。しばらくしてからもう一度お試しください。",
+    "publishError": "公開操作を完了できませんでした。しばらくしてからもう一度お試しください。",
+    "discardError": "変更を破棄できませんでした。後でもう一度お試しください。",
+    "unpublishError": "非公開操作を完了できませんでした。しばらくしてからもう一度お試しください。",
+    "deleteError": "削除操作を完了できませんでした。しばらくしてからもう一度お試しください。",
+    "archiveError": "アーカイブ操作を完了できませんでした。しばらくしてからもう一度お試しください。"
+  },
+  "entryHeader": {
+    "draft": "下書き",
+    "editing": "編集",
+    "published": "出版",
+    "archived": "アーカイブ済み",
+    "untranslated": "未翻訳",
+    "unpublished": "未発表",
+    "revision": "リビジョン",
+    "showMenu": "表示メニュー",
+    "hideMenu": "メニューを非表示",
+    "removeDraft": "下書きを削除",
+    "replace": "交換する",
+    "delete": "消去",
+    "unpublish": "非公開",
+    "archive": "アーカイブ",
+    "publish": "公開",
+    "showHistory": "履歴を表示",
+    "hideHistory": "履歴を非表示",
+    "draftAvailable": "新しいドラフト版が利用可能です",
+    "translateFrom": "翻訳元",
+    "translateParent": "親ページを最初に翻訳する",
+    "discard": "編集を破棄",
+    "save": "翻訳を保存",
+    "saveDraft": "保存",
+    "restore": "復元する",
+    "showPreview": "プレビューを表示",
+    "hidePreview": "プレビューを非表示",
+    "savingDraft": "下書きを保存しています",
+    "savingTranslation": "翻訳を保存しています",
+    "publishingEdits": "編集内容の公開",
+    "restoringRevision": "復元リビジョン",
+    "publishingDraft": "公開草稿",
+    "unpublishingDraft": "下書きを非公開にする",
+    "discardingDraft": "ドラフトの破棄",
+    "archivingPublished": "アーカイブ公開",
+    "publishingArchived": "出版アーカイブ",
+    "deletingFile": "ファイルを削除しています",
+    "deletingEntry": "エントリを削除"
+  },
+  "contentView": {
+    "create": "新規作成"
+  },
+  "welcome": {
+    "title": "これで、alinea インストールの構成準備が整いました。",
+    "button": "設定方法を学ぶ"
+  },
+  "cloudAuthView": {
+    "title": "段落",
+    "deploy": "展開する準備はできましたか?",
+    "requiresHandler": "Alinea を続行するにはハンドラーが必要です",
+    "backend": "Alinea を続行するにはバックエンドが必要です。",
+    "customBackend": "カスタムバックエンドを完全に構成する",
+    "cloud": "または、当社のクラウド サービスを使用して、数回のクリックでセットアップできます。",
+    "cloudButton": "alinea.cloud を続ける"
+  },
+  "sidebarSettings": {
+    "settings": "設定",
+    "defaultWorkspace": "デフォルトのワークスペース",
+    "theme": "テーマを切り替える",
+    "fontSize": "フォントサイズ",
+    "decreaseFontSize": "フォントサイズを小さくする",
+    "increaseFontSize": "フォントサイズを大きくする",
+    "logout": "ログアウト"
+  },
+  "fileUploader": {
+    "uploadComplete": "アップロードが完了しました: {{amount}}",
+    "uploading": "ファイルをアップロードしています: {{amount}}",
+    "upload": "ファイルをアップロードする"
+  },
+  "fileUploadRow": {
+    "alt": "アップロードされたファイル",
+    "done": "終わり"
+  },
+  "fileEntry": {
+    "preview": "メディアファイルのプレビュー",
+    "extension": "拡大",
+    "fileSize": "ファイルサイズ",
+    "dimensions": "寸法",
+    "pixels": "ピクセル",
+    "url": "URL",
+    "focus": "焦点",
+    "focusHelp": "画像をクリックすると焦点位置が変更されます"
+  },
+  "cardOverview": {
+    "title": "カード"
+  },
+  "explorer": {
+    "noResults": "結果なし"
+  },
+  "editModeToggle": {
+    "edit": "編集",
+    "review": "変更を確認する"
+  },
+  "searchBox": {
+    "search": "検索"
+  },
+  "rootOverview": {
+    "instruction": "左側のナビゲーションツリーからエントリを選択して編集を開始します"
+  },
+  "inputLabel": {
+    "readonly": "読み取り専用",
+    "shared": "共有"
+  },
+  "errorBoundary": {
+    "title": "エラー",
+    "oops": "申し訳ありません。問題が発生しました",
+    "close": "エラーを閉じる",
+    "issue": "問題を作成する"
+  },
+  "toolbar": {
+    "defaultWorkspace": "デフォルトのワークスペース",
+    "logout": "ログアウト"
+  },
+  "listField": {
+    "reorder": "ドラッグアンドドロップで並べ替え",
+    "copy": "コピーブロック",
+    "moveUp": "1つ上のポジションへ移動",
+    "moveDown": "1つ下に移動",
+    "delete": "ブロックを削除",
+    "paste": "ブロックを貼り付ける",
+    "add": "新しいブロックを挿入"
+  },
+  "metadataField": {
+    "previewTitle": "プレビュー",
+    "searchEngine": "検索エンジン",
+    "socialShare": "ソーシャルシェア",
+    "ogImageAlt": "オープングラフ画像"
+  },
+  "pickTextLink": {
+    "title": "リンクを選択",
+    "link": "リンク",
+    "description": "説明",
+    "descriptionHelp": "リンク要素内に表示するテキスト",
+    "tooltip": "ツールチップ",
+    "tooltipHelp": "リンクを説明する追加情報（マウスオーバー時に表示される）",
+    "newTab": "リンクを新しいタブで開く",
+    "remove": "リンクを削除",
+    "cancel": "キャンセル",
+    "confirm": "確認する"
+  },
+  "richTextField": {
+    "insert": "ブロックを挿入"
+  },
+  "richTextToolbar": {
+    "styles": "見出し/段落",
+    "table": "テーブル",
+    "bold": "大胆な",
+    "italic": "イタリック",
+    "align": "アライメント",
+    "alignLeft": "左揃え",
+    "alignCenter": "中央揃え",
+    "alignRight": "右揃え",
+    "alignJustify": "両端揃え",
+    "clear": "フォーマットをクリア",
+    "bulletList": "箇条書きリスト",
+    "orderedList": "順序付きリスト",
+    "link": "リンク",
+    "quote": "引用ブロック",
+    "rule": "水平線",
+    "small": "小さい",
+    "sub": "添字",
+    "sup": "上付き文字",
+    "paragraph": "通常のテキスト",
+    "h1": "見出し1",
+    "h2": "見出し2",
+    "h3": "見出し3",
+    "h4": "見出し4",
+    "h5": "見出し5",
+    "tableLabel": "テーブル",
+    "insert": "表を挿入",
+    "insertRowBefore": "前に行を挿入",
+    "insertRowAfter": "後に行を挿入",
+    "deleteRow": "行を削除",
+    "toggleHeaderRow": "ヘッダー行を切り替える",
+    "insertColumnBefore": "前に列を挿入",
+    "insertColumnAfter": "列を挿入",
+    "deleteColumn": "列を削除",
+    "deleteTable": "テーブルを削除",
+    "left": "左",
+    "center": "中心",
+    "right": "右",
+    "justify": "正当化する"
+  },
+  "linkField": {
+    "reorder": "ドラッグアンドドロップで並べ替え",
+    "open": "リンクを新しいタブで開く",
+    "openFile": "新しいタブでメディアファイルを開く",
+    "edit": "リンクを編集",
+    "editFile": "画像を変更",
+    "delete": "リンクを削除",
+    "deleteFile": "画像を削除"
+  },
+  "entryPicker": {
+    "title": "参照を選択",
+    "searchPlaceholder": "検索",
+    "cancel": "キャンセル",
+    "confirm": "確認する"
+  }
+}

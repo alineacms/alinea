@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "การซิงค์",
+    "synced": "ซิงค์แล้ว",
+    "saving": "ประหยัด…"
+  },
+  "urlPicker": {
+    "title": "ลิงค์",
+    "url": "URL",
+    "urlHelp": "URL ของลิงค์",
+    "description": "คำอธิบาย",
+    "descriptionHelp": "ข้อความที่จะแสดงภายในองค์ประกอบลิงก์",
+    "target": "เป้า",
+    "targetDescription": "เปิดลิงก์ในแท็บใหม่",
+    "cancel": "ยกเลิก",
+    "confirm": "ยืนยัน"
+  },
+  "pickLink": {
+    "title": "เลือกลิงค์",
+    "link": "ลิงค์",
+    "description": "คำอธิบาย",
+    "descriptionHelp": "ข้อความที่จะแสดงภายในองค์ประกอบลิงก์",
+    "tooltip": "คำแนะนำเครื่องมือ",
+    "tooltipHelp": "ข้อมูลเพิ่มเติมที่อธิบายลิงก์ จะแสดงเมื่อวางเมาส์เหนือ",
+    "newTab": "เปิดลิงก์ในแท็บใหม่",
+    "remove": "ลบลิงค์",
+    "cancel": "ยกเลิก",
+    "confirm": "ยืนยัน"
+  },
+  "newEntry": {
+    "title": "ชื่อ",
+    "parent": "พ่อแม่",
+    "type": "เลือกประเภท",
+    "order": "แทรกคำสั่งซื้อ",
+    "orderFirst": "อยู่ด้านบนสุดของรายการ",
+    "orderLast": "ที่ด้านล่างของรายการ",
+    "copyFrom": "คัดลอกเนื้อหาจาก",
+    "formTitle": "รายการใหม่",
+    "cancel": "ยกเลิก",
+    "create": "สร้าง"
+  },
+  "entryEdit": {
+    "blockingTitle": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการเปลี่ยนแปลง?",
+    "blockingWarning": "เอกสารนี้ได้รับการเปลี่ยนแปลง",
+    "blockingPrompt": "คุณต้องการบันทึกการเปลี่ยนแปลงของคุณหรือไม่?",
+    "blockingDiscard": "ยกเลิกการเปลี่ยนแปลงของฉัน",
+    "blockingSaveDraft": "บันทึกเป็นฉบับร่าง",
+    "blockingPublishChanges": "เผยแพร่การเปลี่ยนแปลง",
+    "untranslatedTitle": "ไม่ได้แปล",
+    "untranslatedParent": "แปลหน้าหลักก่อน",
+    "untranslatedPrompt": "กรอกรายละเอียดด้านล่างและบันทึกเพื่อเริ่มแปล",
+    "draftError": "ไม่สามารถดำเนินการร่างได้ โปรดลองอีกครั้งในภายหลัง",
+    "saveTranslationError": "ไม่สามารถดำเนินการแปลได้ โปรดลองอีกครั้งในภายหลัง",
+    "publishError": "ไม่สามารถดำเนินการเผยแพร่ได้ โปรดลองอีกครั้งในภายหลัง",
+    "discardError": "ไม่สามารถยกเลิกการเปลี่ยนแปลงได้ โปรดลองอีกครั้งในภายหลัง",
+    "unpublishError": "ไม่สามารถดำเนินการยกเลิกการเผยแพร่ได้ โปรดลองอีกครั้งในภายหลัง",
+    "deleteError": "ไม่สามารถดำเนินการลบได้ โปรดลองอีกครั้งในภายหลัง",
+    "archiveError": "ไม่สามารถดำเนินการเก็บถาวรได้ โปรดลองอีกครั้งในภายหลัง"
+  },
+  "entryHeader": {
+    "draft": "ร่าง",
+    "editing": "การแก้ไข",
+    "published": "ที่ตีพิมพ์",
+    "archived": "เก็บถาวรแล้ว",
+    "untranslated": "ไม่ได้แปล",
+    "unpublished": "ไม่ได้เผยแพร่",
+    "revision": "การแก้ไข",
+    "showMenu": "แสดงเมนู",
+    "hideMenu": "ซ่อนเมนู",
+    "removeDraft": "ลบร่าง",
+    "replace": "แทนที่",
+    "delete": "ลบ",
+    "unpublish": "ยกเลิกการเผยแพร่",
+    "archive": "คลังเก็บเอกสารสำคัญ",
+    "publish": "เผยแพร่",
+    "showHistory": "แสดงประวัติ",
+    "hideHistory": "ซ่อนประวัติ",
+    "draftAvailable": "มีเวอร์ชันร่างใหม่กว่าแล้ว",
+    "translateFrom": "แปลจาก",
+    "translateParent": "แปลหน้าหลักก่อน",
+    "discard": "ยกเลิกการแก้ไข",
+    "save": "บันทึกการแปล",
+    "saveDraft": "บันทึก",
+    "restore": "คืนค่า",
+    "showPreview": "แสดงตัวอย่าง",
+    "hidePreview": "ซ่อนตัวอย่าง",
+    "savingDraft": "การบันทึกฉบับร่าง",
+    "savingTranslation": "การบันทึกการแปล",
+    "publishingEdits": "การแก้ไขการเผยแพร่",
+    "restoringRevision": "การคืนค่าการแก้ไข",
+    "publishingDraft": "ร่างการเผยแพร่",
+    "unpublishingDraft": "การยกเลิกการเผยแพร่ฉบับร่าง",
+    "discardingDraft": "การทิ้งร่าง",
+    "archivingPublished": "การเก็บถาวรการเผยแพร่",
+    "publishingArchived": "การเผยแพร่ที่เก็บถาวร",
+    "deletingFile": "การลบไฟล์",
+    "deletingEntry": "ลบรายการ"
+  },
+  "contentView": {
+    "create": "สร้างใหม่"
+  },
+  "welcome": {
+    "title": "ตอนนี้การติดตั้ง Alinea ของคุณพร้อมสำหรับการกำหนดค่าแล้ว",
+    "button": "เรียนรู้วิธีการกำหนดค่า"
+  },
+  "cloudAuthView": {
+    "title": "ย่อหน้า",
+    "deploy": "พร้อมที่จะใช้งานหรือยัง?",
+    "requiresHandler": "Alinea ต้องมีผู้จัดการเพื่อดำเนินการต่อ",
+    "backend": "Alinea ต้องมีแบ็กเอนด์เพื่อดำเนินการต่อ",
+    "customBackend": "กำหนดค่าแบ็กเอนด์แบบกำหนดเองอย่างสมบูรณ์",
+    "cloud": "หรือตั้งค่าได้ในไม่กี่คลิกด้วยข้อเสนอระบบคลาวด์ของเรา",
+    "cloudButton": "ดำเนินการต่อด้วย alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "การตั้งค่า",
+    "defaultWorkspace": "พื้นที่ทำงานเริ่มต้น",
+    "theme": "สลับธีม",
+    "fontSize": "ขนาดตัวอักษร",
+    "decreaseFontSize": "ลดขนาดตัวอักษร",
+    "increaseFontSize": "เพิ่มขนาดตัวอักษร",
+    "logout": "ออกจากระบบ"
+  },
+  "fileUploader": {
+    "uploadComplete": "อัพโหลดเสร็จสมบูรณ์: {{amount}}",
+    "uploading": "กำลังอัพโหลดไฟล์: {{amount}}",
+    "upload": "อัพโหลดไฟล์"
+  },
+  "fileUploadRow": {
+    "alt": "ไฟล์อัพโหลด",
+    "done": "เสร็จแล้ว"
+  },
+  "fileEntry": {
+    "preview": "ตัวอย่างไฟล์สื่อ",
+    "extension": "ส่วนขยาย",
+    "fileSize": "ขนาดไฟล์",
+    "dimensions": "ขนาด",
+    "pixels": "พิกเซล",
+    "url": "URL",
+    "focus": "จุดโฟกัส",
+    "focusHelp": "คลิกที่ภาพเพื่อเปลี่ยนจุดโฟกัส"
+  },
+  "cardOverview": {
+    "title": "การ์ด"
+  },
+  "explorer": {
+    "noResults": "ไม่มีผลลัพธ์"
+  },
+  "editModeToggle": {
+    "edit": "แก้ไข",
+    "review": "ตรวจสอบการเปลี่ยนแปลง"
+  },
+  "searchBox": {
+    "search": "ค้นหา"
+  },
+  "rootOverview": {
+    "instruction": "เลือกรายการในแผนผังการนำทาง\nทางด้านซ้ายเพื่อเริ่มแก้ไข"
+  },
+  "inputLabel": {
+    "readonly": "อ่านอย่างเดียว",
+    "shared": "แชร์"
+  },
+  "errorBoundary": {
+    "title": "ข้อผิดพลาด",
+    "oops": "อุ๊ย มีบางอย่างผิดพลาด",
+    "close": "ปิดข้อผิดพลาด",
+    "issue": "สร้างปัญหา"
+  },
+  "toolbar": {
+    "defaultWorkspace": "พื้นที่ทำงานเริ่มต้น",
+    "logout": "ออกจากระบบ"
+  },
+  "listField": {
+    "reorder": "ลากและวางเพื่อเรียงลำดับใหม่",
+    "copy": "บล็อคการคัดลอก",
+    "moveUp": "เลื่อนขึ้นหนึ่งตำแหน่ง",
+    "moveDown": "เลื่อนลงหนึ่งตำแหน่ง",
+    "delete": "ลบบล็อค",
+    "paste": "วางบล็อค",
+    "add": "แทรกบล็อคใหม่"
+  },
+  "metadataField": {
+    "previewTitle": "ตัวอย่าง",
+    "searchEngine": "เครื่องมือค้นหา",
+    "socialShare": "แชร์บนโซเชียล",
+    "ogImageAlt": "ภาพเปิดกราฟ"
+  },
+  "pickTextLink": {
+    "title": "เลือกลิงค์",
+    "link": "ลิงค์",
+    "description": "คำอธิบาย",
+    "descriptionHelp": "ข้อความที่จะแสดงภายในองค์ประกอบลิงก์",
+    "tooltip": "คำแนะนำเครื่องมือ",
+    "tooltipHelp": "ข้อมูลเพิ่มเติมที่อธิบายลิงก์ จะแสดงเมื่อวางเมาส์เหนือ",
+    "newTab": "เปิดลิงก์ในแท็บใหม่",
+    "remove": "ลบลิงค์",
+    "cancel": "ยกเลิก",
+    "confirm": "ยืนยัน"
+  },
+  "richTextField": {
+    "insert": "แทรกบล็อค"
+  },
+  "richTextToolbar": {
+    "styles": "หัวข้อ/ย่อหน้า",
+    "table": "โต๊ะ",
+    "bold": "ตัวหนา",
+    "italic": "ตัวเอียง",
+    "align": "การจัดตำแหน่ง",
+    "alignLeft": "จัดชิดซ้าย",
+    "alignCenter": "จัดตำแหน่งกึ่งกลาง",
+    "alignRight": "จัดชิดขวา",
+    "alignJustify": "จัดแนวให้ชิด",
+    "clear": "รูปแบบที่ชัดเจน",
+    "bulletList": "รายการหัวข้อย่อย",
+    "orderedList": "รายการสั่งซื้อ",
+    "link": "ลิงค์",
+    "quote": "บล็อคโควต",
+    "rule": "กฎแนวนอน",
+    "small": "เล็ก",
+    "sub": "ตัวห้อย",
+    "sup": "อักษรยก",
+    "paragraph": "ข้อความปกติ",
+    "h1": "หัวข้อที่ 1",
+    "h2": "หัวข้อที่ 2",
+    "h3": "หัวข้อที่ 3",
+    "h4": "หัวข้อที่ 4",
+    "h5": "หัวข้อที่ 5",
+    "tableLabel": "โต๊ะ",
+    "insert": "แทรกตาราง",
+    "insertRowBefore": "แทรกแถวก่อน",
+    "insertRowAfter": "แทรกแถวหลัง",
+    "deleteRow": "ลบแถว",
+    "toggleHeaderRow": "สลับแถวส่วนหัว",
+    "insertColumnBefore": "แทรกคอลัมน์ก่อน",
+    "insertColumnAfter": "แทรกคอลัมน์หลัง",
+    "deleteColumn": "ลบคอลัมน์",
+    "deleteTable": "ลบตาราง",
+    "left": "ซ้าย",
+    "center": "ศูนย์",
+    "right": "ขวา",
+    "justify": "พิสูจน์"
+  },
+  "linkField": {
+    "reorder": "ลากและวางเพื่อเรียงลำดับใหม่",
+    "open": "เปิดลิงก์ในแท็บใหม่",
+    "openFile": "เปิดไฟล์สื่อในแท็บใหม่",
+    "edit": "แก้ไขลิงค์",
+    "editFile": "เปลี่ยนรูปภาพ",
+    "delete": "ลบลิงค์",
+    "deleteFile": "ลบรูปภาพ"
+  },
+  "entryPicker": {
+    "title": "เลือกการอ้างอิง",
+    "searchPlaceholder": "ค้นหา",
+    "cancel": "ยกเลิก",
+    "confirm": "ยืนยัน"
+  }
+}

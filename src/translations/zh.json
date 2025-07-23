@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "同步",
+    "synced": "已同步",
+    "saving": "保存…"
+  },
+  "urlPicker": {
+    "title": "关联",
+    "url": "网址",
+    "urlHelp": "链接的 URL",
+    "description": "描述",
+    "descriptionHelp": "链接元素内显示的文本",
+    "target": "目标",
+    "targetDescription": "在新标签页中打开链接",
+    "cancel": "取消",
+    "confirm": "确认"
+  },
+  "pickLink": {
+    "title": "选择链接",
+    "link": "关联",
+    "description": "描述",
+    "descriptionHelp": "链接元素内显示的文本",
+    "tooltip": "工具提示",
+    "tooltipHelp": "描述链接的额外信息，悬停时显示",
+    "newTab": "在新标签页中打开链接",
+    "remove": "删除链接",
+    "cancel": "取消",
+    "confirm": "确认"
+  },
+  "newEntry": {
+    "title": "标题",
+    "parent": "父母",
+    "type": "选择类型",
+    "order": "插入订单",
+    "orderFirst": "位于列表顶部",
+    "orderLast": "列表底部",
+    "copyFrom": "复制内容",
+    "formTitle": "新条目",
+    "cancel": "取消",
+    "create": "创造"
+  },
+  "entryEdit": {
+    "blockingTitle": "您确定要放弃更改吗？",
+    "blockingWarning": "此文件已更改",
+    "blockingPrompt": "您想保存更改吗？",
+    "blockingDiscard": "放弃我的更改",
+    "blockingSaveDraft": "保存为草稿",
+    "blockingPublishChanges": "发布变更",
+    "untranslatedTitle": "未翻译",
+    "untranslatedParent": "首先翻译父页面。",
+    "untranslatedPrompt": "输入以下详细信息并保存以开始翻译。",
+    "draftError": "无法完成草稿操作，请稍后重试",
+    "saveTranslationError": "无法完成翻译操作，请稍后重试",
+    "publishError": "无法完成发布操作，请稍后重试",
+    "discardError": "无法放弃更改，请稍后重试",
+    "unpublishError": "无法完成取消发布操作，请稍后重试",
+    "deleteError": "无法完成删除操作，请稍后重试",
+    "archiveError": "无法完成存档操作，请稍后重试"
+  },
+  "entryHeader": {
+    "draft": "草稿",
+    "editing": "编辑",
+    "published": "发布",
+    "archived": "已归档",
+    "untranslated": "未翻译",
+    "unpublished": "未发表",
+    "revision": "修订",
+    "showMenu": "显示菜单",
+    "hideMenu": "隐藏菜单",
+    "removeDraft": "删除草稿",
+    "replace": "代替",
+    "delete": "删除",
+    "unpublish": "取消发布",
+    "archive": "档案",
+    "publish": "发布",
+    "showHistory": "显示历史记录",
+    "hideHistory": "隐藏历史记录",
+    "draftAvailable": "有较新的草稿版本可用",
+    "translateFrom": "翻译自",
+    "translateParent": "首先翻译父页面",
+    "discard": "放弃编辑",
+    "save": "保存翻译",
+    "saveDraft": "节省",
+    "restore": "恢复",
+    "showPreview": "显示预览",
+    "hidePreview": "隐藏预览",
+    "savingDraft": "保存草稿",
+    "savingTranslation": "保存翻译",
+    "publishingEdits": "发布编辑",
+    "restoringRevision": "恢复修订",
+    "publishingDraft": "发布草稿",
+    "unpublishingDraft": "取消发布草稿",
+    "discardingDraft": "放弃草稿",
+    "archivingPublished": "归档已发布",
+    "publishingArchived": "已归档出版",
+    "deletingFile": "删除文件",
+    "deletingEntry": "删除条目"
+  },
+  "contentView": {
+    "create": "创建新的"
+  },
+  "welcome": {
+    "title": "您的 alinea 安装现已准备好进行配置。",
+    "button": "了解如何配置"
+  },
+  "cloudAuthView": {
+    "title": "段落",
+    "deploy": "准备好部署了吗？",
+    "requiresHandler": "Alinea 需要处理程序继续",
+    "backend": "Alinea 需要后端才能继续。",
+    "customBackend": "完全配置自定义后端",
+    "cloud": "或者通过我们的云服务单击几下即可完成设置。",
+    "cloudButton": "继续使用 alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "设置",
+    "defaultWorkspace": "默认工作区",
+    "theme": "切换主题",
+    "fontSize": "字体大小",
+    "decreaseFontSize": "减小字体大小",
+    "increaseFontSize": "增加字体大小",
+    "logout": "登出"
+  },
+  "fileUploader": {
+    "uploadComplete": "上传完成：{{amount}}",
+    "uploading": "正在上传文件：{{amount}}",
+    "upload": "上传文件"
+  },
+  "fileUploadRow": {
+    "alt": "已上传文件",
+    "done": "完毕"
+  },
+  "fileEntry": {
+    "preview": "媒体文件预览",
+    "extension": "扩大",
+    "fileSize": "文件大小",
+    "dimensions": "方面",
+    "pixels": "像素",
+    "url": "网址",
+    "focus": "焦点",
+    "focusHelp": "点击图像即可更改焦点"
+  },
+  "cardOverview": {
+    "title": "卡片"
+  },
+  "explorer": {
+    "noResults": "没有结果"
+  },
+  "editModeToggle": {
+    "edit": "编辑",
+    "review": "审阅更改"
+  },
+  "searchBox": {
+    "search": "搜索"
+  },
+  "rootOverview": {
+    "instruction": "在左侧导航树中选择一个条目即可开始编辑"
+  },
+  "inputLabel": {
+    "readonly": "只读",
+    "shared": "共享"
+  },
+  "errorBoundary": {
+    "title": "错误",
+    "oops": "哎呀，出了点问题",
+    "close": "关闭错误",
+    "issue": "创建问题"
+  },
+  "toolbar": {
+    "defaultWorkspace": "默认工作区",
+    "logout": "登出"
+  },
+  "listField": {
+    "reorder": "拖放即可重新排序",
+    "copy": "复制块",
+    "moveUp": "向上移动一个位置",
+    "moveDown": "向下移动一个位置",
+    "delete": "删除块",
+    "paste": "粘贴块",
+    "add": "插入新块"
+  },
+  "metadataField": {
+    "previewTitle": "预览",
+    "searchEngine": "搜索引擎",
+    "socialShare": "社交分享",
+    "ogImageAlt": "Open Graph 图像"
+  },
+  "pickTextLink": {
+    "title": "选择链接",
+    "link": "关联",
+    "description": "描述",
+    "descriptionHelp": "链接元素内显示的文本",
+    "tooltip": "工具提示",
+    "tooltipHelp": "描述链接的额外信息，悬停时显示",
+    "newTab": "在新标签页中打开链接",
+    "remove": "删除链接",
+    "cancel": "取消",
+    "confirm": "确认"
+  },
+  "richTextField": {
+    "insert": "插入块"
+  },
+  "richTextToolbar": {
+    "styles": "标题/段落",
+    "table": "桌子",
+    "bold": "大胆的",
+    "italic": "斜体",
+    "align": "结盟",
+    "alignLeft": "左对齐",
+    "alignCenter": "居中对齐",
+    "alignRight": "右对齐",
+    "alignJustify": "对齐",
+    "clear": "清除格式",
+    "bulletList": "项目符号列表",
+    "orderedList": "有序列表",
+    "link": "关联",
+    "quote": "区块引用",
+    "rule": "水平线",
+    "small": "小的",
+    "sub": "下标",
+    "sup": "上标",
+    "paragraph": "普通文本",
+    "h1": "标题 1",
+    "h2": "标题 2",
+    "h3": "标题 3",
+    "h4": "标题 4",
+    "h5": "标题 5",
+    "tableLabel": "桌子",
+    "insert": "插入表格",
+    "insertRowBefore": "在前插入行",
+    "insertRowAfter": "在…之后插入行",
+    "deleteRow": "删除行",
+    "toggleHeaderRow": "切换标题行",
+    "insertColumnBefore": "在前插入列",
+    "insertColumnAfter": "在之后插入列",
+    "deleteColumn": "删除列",
+    "deleteTable": "删除表",
+    "left": "左边",
+    "center": "中心",
+    "right": "正确的",
+    "justify": "证明合法"
+  },
+  "linkField": {
+    "reorder": "拖放即可重新排序",
+    "open": "在新标签页中打开链接",
+    "openFile": "在新选项卡中打开媒体文件",
+    "edit": "编辑链接",
+    "editFile": "更改图像",
+    "delete": "删除链接",
+    "deleteFile": "删除图片"
+  },
+  "entryPicker": {
+    "title": "选择参考",
+    "searchPlaceholder": "搜索",
+    "cancel": "取消",
+    "confirm": "确认"
+  }
+}

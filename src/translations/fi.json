@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Synkronoidaan",
+    "synced": "Synkronoitu",
+    "saving": "Tallennetaan…"
+  },
+  "urlPicker": {
+    "title": "Linkki",
+    "url": "URL-osoite",
+    "urlHelp": "Linkin URL-osoite",
+    "description": "Kuvaus",
+    "descriptionHelp": "Linkkielementin sisällä näytettävä teksti",
+    "target": "Kohde",
+    "targetDescription": "Avaa linkki uudessa välilehdessä",
+    "cancel": "Peruuttaa",
+    "confirm": "Vahvistaa"
+  },
+  "pickLink": {
+    "title": "Valitse linkki",
+    "link": "Linkki",
+    "description": "Kuvaus",
+    "descriptionHelp": "Linkkielementin sisällä näytettävä teksti",
+    "tooltip": "Työkaluvihje",
+    "tooltipHelp": "Linkkiä kuvaavat lisätiedot, jotka näkyvät hiiren osoittimella",
+    "newTab": "Avaa linkki uudessa välilehdessä",
+    "remove": "Poista linkki",
+    "cancel": "Peruuttaa",
+    "confirm": "Vahvistaa"
+  },
+  "newEntry": {
+    "title": "Otsikko",
+    "parent": "Vanhempi",
+    "type": "Valitse tyyppi",
+    "order": "Lisää järjestys",
+    "orderFirst": "Listan kärjessä",
+    "orderLast": "Listan lopussa",
+    "copyFrom": "Kopioi sisältöä osoitteesta",
+    "formTitle": "Uusi merkintä",
+    "cancel": "Peruuttaa",
+    "create": "Luoda"
+  },
+  "entryEdit": {
+    "blockingTitle": "Haluatko varmasti hylätä muutokset?",
+    "blockingWarning": "Tätä asiakirjaa on muutettu",
+    "blockingPrompt": "Haluatko tallentaa muutoksesi?",
+    "blockingDiscard": "Hylkää muutokset",
+    "blockingSaveDraft": "Tallenna luonnoksena",
+    "blockingPublishChanges": "Julkaise muutokset",
+    "untranslatedTitle": "Kääntämätön",
+    "untranslatedParent": "Käännä ensin pääsivu.",
+    "untranslatedPrompt": "Syötä alla olevat tiedot ja tallenna aloittaaksesi kääntämisen.",
+    "draftError": "Luonnostoimintoa ei voitu suorittaa loppuun, yritä myöhemmin uudelleen.",
+    "saveTranslationError": "Käännöstoimintoa ei voitu suorittaa loppuun, yritä myöhemmin uudelleen.",
+    "publishError": "Julkaisutoimintoa ei voitu suorittaa loppuun, yritä myöhemmin uudelleen.",
+    "discardError": "Muutoksia ei voitu hylätä, yritä myöhemmin uudelleen.",
+    "unpublishError": "Julkaisun peruuttamista ei voitu suorittaa loppuun. Yritä myöhemmin uudelleen.",
+    "deleteError": "Poistoa ei voitu suorittaa loppuun, yritä myöhemmin uudelleen.",
+    "archiveError": "Arkistointitoimintoa ei voitu suorittaa loppuun, yritä myöhemmin uudelleen."
+  },
+  "entryHeader": {
+    "draft": "Luonnos",
+    "editing": "Muokkaus",
+    "published": "Julkaistu",
+    "archived": "Arkistoitu",
+    "untranslated": "Kääntämätön",
+    "unpublished": "Julkaisematon",
+    "revision": "Versio",
+    "showMenu": "Näytä valikko",
+    "hideMenu": "Piilota valikko",
+    "removeDraft": "Poista luonnos",
+    "replace": "Korvata",
+    "delete": "Poistaa",
+    "unpublish": "Peruuta julkaisu",
+    "archive": "Arkisto",
+    "publish": "Julkaista",
+    "showHistory": "Näytä historia",
+    "hideHistory": "Piilota historia",
+    "draftAvailable": "Uudempi luonnosversio on saatavilla",
+    "translateFrom": "Käännä kielestä",
+    "translateParent": "Käännä ensin pääsivu",
+    "discard": "Hylkää muokkaukset",
+    "save": "Tallenna käännös",
+    "saveDraft": "Tallentaa",
+    "restore": "Palauttaa",
+    "showPreview": "Näytä esikatselu",
+    "hidePreview": "Piilota esikatselu",
+    "savingDraft": "Luonnoksen tallentaminen",
+    "savingTranslation": "Käännöstä tallennetaan",
+    "publishingEdits": "Julkaisumuokkaukset",
+    "restoringRevision": "Version palauttaminen",
+    "publishingDraft": "Julkaisuluonnos",
+    "unpublishingDraft": "Luonnoksen julkaisun peruuttaminen",
+    "discardingDraft": "Luonnoksen hylkääminen",
+    "archivingPublished": "Julkaistujen arkistointi",
+    "publishingArchived": "Julkaisu arkistoitu",
+    "deletingFile": "Tiedoston poistaminen",
+    "deletingEntry": "Poista merkintä"
+  },
+  "contentView": {
+    "create": "Luo uusi"
+  },
+  "welcome": {
+    "title": "Alinea-asennuksesi on nyt valmis konfigurointiin.",
+    "button": "Opi konfiguroimaan"
+  },
+  "cloudAuthView": {
+    "title": "Kohta",
+    "deploy": "Valmis käyttöönottoon?",
+    "requiresHandler": "Alinea vaatii käsittelijän jatkaakseen",
+    "backend": "Alinea vaatii taustajärjestelmän jatkaakseen.",
+    "customBackend": "konfiguroi täysin mukautettu taustajärjestelmä",
+    "cloud": "Tai ota käyttöön muutamalla napsautuksella pilvipalvelumme avulla.",
+    "cloudButton": "Jatka alinea.cloud-palvelulla"
+  },
+  "sidebarSettings": {
+    "settings": "Asetukset",
+    "defaultWorkspace": "Oletustyötila",
+    "theme": "Vaihda teemaa",
+    "fontSize": "Fonttikoko",
+    "decreaseFontSize": "Pienennä fonttikokoa",
+    "increaseFontSize": "Suurenna fonttikokoa",
+    "logout": "Kirjaudu ulos"
+  },
+  "fileUploader": {
+    "uploadComplete": "Lataukset valmiit: {{amount}}",
+    "uploading": "Tiedostojen lataaminen: {{amount}}",
+    "upload": "Lataa tiedostoja"
+  },
+  "fileUploadRow": {
+    "alt": "Ladattu tiedosto",
+    "done": "Tehty"
+  },
+  "fileEntry": {
+    "preview": "Mediatiedoston esikatselu",
+    "extension": "Laajennus",
+    "fileSize": "Tiedostokoko",
+    "dimensions": "Mitat",
+    "pixels": "pikseliä",
+    "url": "URL-osoite",
+    "focus": "Tarkennuspiste",
+    "focusHelp": "Napsauta kuvaa vaihtaaksesi tarkennuspistettä"
+  },
+  "cardOverview": {
+    "title": "kortti"
+  },
+  "explorer": {
+    "noResults": "Ei tuloksia"
+  },
+  "editModeToggle": {
+    "edit": "Muokata",
+    "review": "Tarkista muutokset"
+  },
+  "searchBox": {
+    "search": "Haku"
+  },
+  "rootOverview": {
+    "instruction": "Aloita muokkaaminen valitsemalla merkintä vasemmalla olevasta navigointipuusta"
+  },
+  "inputLabel": {
+    "readonly": "Vain lukuoikeus",
+    "shared": "Jaettu"
+  },
+  "errorBoundary": {
+    "title": "Virhe",
+    "oops": "Hupsista, jokin meni pieleen",
+    "close": "Sulkemisvirhe",
+    "issue": "Luo ongelma"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Oletustyötila",
+    "logout": "Kirjaudu ulos"
+  },
+  "listField": {
+    "reorder": "Vedä ja pudota järjestääksesi uudelleen",
+    "copy": "Kopioi lohko",
+    "moveUp": "Siirry yhden sijan ylöspäin",
+    "moveDown": "Siirry yhden paikan alaspäin",
+    "delete": "Poista lohko",
+    "paste": "Liitä lohko",
+    "add": "Lisää uusi lohko"
+  },
+  "metadataField": {
+    "previewTitle": "Esikatselu",
+    "searchEngine": "Hakukone",
+    "socialShare": "Jaa sosiaalisessa mediassa",
+    "ogImageAlt": "Avaa graafikuva"
+  },
+  "pickTextLink": {
+    "title": "Valitse linkki",
+    "link": "Linkki",
+    "description": "Kuvaus",
+    "descriptionHelp": "Linkkielementin sisällä näytettävä teksti",
+    "tooltip": "Työkaluvihje",
+    "tooltipHelp": "Linkkiä kuvaavat lisätiedot, jotka näkyvät hiiren osoittimella",
+    "newTab": "Avaa linkki uudessa välilehdessä",
+    "remove": "Poista linkki",
+    "cancel": "Peruuttaa",
+    "confirm": "Vahvistaa"
+  },
+  "richTextField": {
+    "insert": "Lisää lohko"
+  },
+  "richTextToolbar": {
+    "styles": "Otsikko/kappale",
+    "table": "Taulukko",
+    "bold": "Lihavoitu",
+    "italic": "Kursiivi",
+    "align": "Tasaus",
+    "alignLeft": "Tasaa vasemmalle",
+    "alignCenter": "Tasaa keskelle",
+    "alignRight": "Tasaa oikealle",
+    "alignJustify": "Tasaa tasaus",
+    "clear": "Tyhjennä muoto",
+    "bulletList": "Luettelomerkkiluettelo",
+    "orderedList": "Järjestetty lista",
+    "link": "Linkki",
+    "quote": "Lainauslohko",
+    "rule": "Vaakasuora viiva",
+    "small": "Pieni",
+    "sub": "Alaindeksi",
+    "sup": "Yläindeksi",
+    "paragraph": "Normaali teksti",
+    "h1": "Otsikko 1",
+    "h2": "Otsikko 2",
+    "h3": "Otsikko 3",
+    "h4": "Otsikko 4",
+    "h5": "Otsikko 5",
+    "tableLabel": "Taulukko",
+    "insert": "Lisää taulukko",
+    "insertRowBefore": "Lisää rivi ennen",
+    "insertRowAfter": "Lisää rivi jälkeen",
+    "deleteRow": "Poista rivi",
+    "toggleHeaderRow": "Näytä/piilota otsikkorivi",
+    "insertColumnBefore": "Lisää sarake ennen",
+    "insertColumnAfter": "Lisää sarake jälkeen",
+    "deleteColumn": "Poista sarake",
+    "deleteTable": "Poista taulukko",
+    "left": "Vasen",
+    "center": "Keskusta",
+    "right": "Oikea",
+    "justify": "Perustella"
+  },
+  "linkField": {
+    "reorder": "Vedä ja pudota järjestääksesi uudelleen",
+    "open": "Avaa linkki uudessa välilehdessä",
+    "openFile": "Avaa mediatiedosto uudessa välilehdessä",
+    "edit": "Muokkaa linkkiä",
+    "editFile": "Vaihda kuva",
+    "delete": "Poista linkki",
+    "deleteFile": "Poista kuva"
+  },
+  "entryPicker": {
+    "title": "Valitse viite",
+    "searchPlaceholder": "Haku",
+    "cancel": "Peruuttaa",
+    "confirm": "Vahvistaa"
+  }
+}

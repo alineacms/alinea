@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Đồng bộ hóa",
+    "synced": "Đã đồng bộ",
+    "saving": "Đang lưu…"
+  },
+  "urlPicker": {
+    "title": "Liên kết",
+    "url": "Địa chỉ",
+    "urlHelp": "Url của liên kết",
+    "description": "Sự miêu tả",
+    "descriptionHelp": "Văn bản hiển thị bên trong phần tử liên kết",
+    "target": "Mục tiêu",
+    "targetDescription": "Mở liên kết trong tab mới",
+    "cancel": "Hủy bỏ",
+    "confirm": "Xác nhận"
+  },
+  "pickLink": {
+    "title": "Chọn liên kết",
+    "link": "Liên kết",
+    "description": "Sự miêu tả",
+    "descriptionHelp": "Văn bản hiển thị bên trong phần tử liên kết",
+    "tooltip": "Chú giải công cụ",
+    "tooltipHelp": "Thông tin bổ sung mô tả liên kết, hiển thị khi di chuột qua",
+    "newTab": "Mở liên kết trong tab mới",
+    "remove": "Xóa liên kết",
+    "cancel": "Hủy bỏ",
+    "confirm": "Xác nhận"
+  },
+  "newEntry": {
+    "title": "Tiêu đề",
+    "parent": "Phụ huynh",
+    "type": "Chọn loại",
+    "order": "Chèn thứ tự",
+    "orderFirst": "Ở đầu danh sách",
+    "orderLast": "Ở cuối danh sách",
+    "copyFrom": "Sao chép nội dung từ",
+    "formTitle": "Mục nhập mới",
+    "cancel": "Hủy bỏ",
+    "create": "Tạo nên"
+  },
+  "entryEdit": {
+    "blockingTitle": "Bạn có chắc chắn muốn hủy bỏ thay đổi không?",
+    "blockingWarning": "Tài liệu này đã được thay đổi",
+    "blockingPrompt": "Bạn có muốn lưu lại những thay đổi của mình không?",
+    "blockingDiscard": "Hủy bỏ những thay đổi của tôi",
+    "blockingSaveDraft": "Lưu dưới dạng bản nháp",
+    "blockingPublishChanges": "Xuất bản thay đổi",
+    "untranslatedTitle": "Chưa dịch",
+    "untranslatedParent": "Đầu tiên hãy dịch trang gốc.",
+    "untranslatedPrompt": "Nhập thông tin bên dưới và lưu để bắt đầu dịch.",
+    "draftError": "Không thể hoàn tất hành động dự thảo, vui lòng thử lại sau",
+    "saveTranslationError": "Không thể hoàn tất hành động dịch, vui lòng thử lại sau",
+    "publishError": "Không thể hoàn tất hành động xuất bản, vui lòng thử lại sau",
+    "discardError": "Không thể hủy bỏ các thay đổi, vui lòng thử lại sau",
+    "unpublishError": "Không thể hoàn tất hành động hủy xuất bản, vui lòng thử lại sau",
+    "deleteError": "Không thể hoàn tất hành động xóa, vui lòng thử lại sau",
+    "archiveError": "Không thể hoàn tất thao tác lưu trữ, vui lòng thử lại sau"
+  },
+  "entryHeader": {
+    "draft": "Bản nháp",
+    "editing": "Chỉnh sửa",
+    "published": "Đã xuất bản",
+    "archived": "Đã lưu trữ",
+    "untranslated": "Chưa dịch",
+    "unpublished": "Chưa xuất bản",
+    "revision": "Ôn tập",
+    "showMenu": "Hiển thị menu",
+    "hideMenu": "Ẩn menu",
+    "removeDraft": "Xóa bản nháp",
+    "replace": "Thay thế",
+    "delete": "Xóa bỏ",
+    "unpublish": "Hủy xuất bản",
+    "archive": "Lưu trữ",
+    "publish": "Xuất bản",
+    "showHistory": "Hiển thị lịch sử",
+    "hideHistory": "Ẩn lịch sử",
+    "draftAvailable": "Đã có phiên bản dự thảo mới hơn",
+    "translateFrom": "Dịch từ",
+    "translateParent": "Dịch trang gốc trước",
+    "discard": "Hủy bỏ chỉnh sửa",
+    "save": "Lưu bản dịch",
+    "saveDraft": "Cứu",
+    "restore": "Khôi phục",
+    "showPreview": "Hiển thị bản xem trước",
+    "hidePreview": "Ẩn bản xem trước",
+    "savingDraft": "Lưu bản nháp",
+    "savingTranslation": "Lưu bản dịch",
+    "publishingEdits": "Xuất bản chỉnh sửa",
+    "restoringRevision": "Đang khôi phục bản sửa đổi",
+    "publishingDraft": "Xuất bản bản thảo",
+    "unpublishingDraft": "Bản nháp chưa xuất bản",
+    "discardingDraft": "Bỏ bản nháp",
+    "archivingPublished": "Lưu trữ đã xuất bản",
+    "publishingArchived": "Xuất bản lưu trữ",
+    "deletingFile": "Đang xóa tập tin",
+    "deletingEntry": "Xóa mục nhập"
+  },
+  "contentView": {
+    "create": "Tạo mới"
+  },
+  "welcome": {
+    "title": "Cài đặt alinea của bạn hiện đã sẵn sàng để cấu hình.",
+    "button": "Tìm hiểu cách cấu hình"
+  },
+  "cloudAuthView": {
+    "title": "Đoạn văn",
+    "deploy": "Sẵn sàng triển khai chưa?",
+    "requiresHandler": "Alinea cần một người xử lý để tiếp tục",
+    "backend": "Alinea cần có phần phụ trợ để tiếp tục.",
+    "customBackend": "cấu hình đầy đủ một backend tùy chỉnh",
+    "cloud": "Hoặc thiết lập chỉ với vài cú nhấp chuột với dịch vụ đám mây của chúng tôi.",
+    "cloudButton": "Tiếp tục với alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Cài đặt",
+    "defaultWorkspace": "Không gian làm việc mặc định",
+    "theme": "Chuyển chủ đề",
+    "fontSize": "Kích thước phông chữ",
+    "decreaseFontSize": "Giảm kích thước phông chữ",
+    "increaseFontSize": "Tăng kích thước phông chữ",
+    "logout": "Đăng xuất"
+  },
+  "fileUploader": {
+    "uploadComplete": "Tải lên hoàn tất: {{amount}}",
+    "uploading": "Đang tải tệp lên: {{amount}}",
+    "upload": "Tải lên tập tin"
+  },
+  "fileUploadRow": {
+    "alt": "Tệp đã tải lên",
+    "done": "Xong"
+  },
+  "fileEntry": {
+    "preview": "Xem trước tập tin phương tiện",
+    "extension": "Sự mở rộng",
+    "fileSize": "Kích thước tập tin",
+    "dimensions": "Kích thước",
+    "pixels": "điểm ảnh",
+    "url": "URL",
+    "focus": "Điểm tập trung",
+    "focusHelp": "Nhấp vào hình ảnh để thay đổi điểm lấy nét"
+  },
+  "cardOverview": {
+    "title": "thẻ"
+  },
+  "explorer": {
+    "noResults": "Không có kết quả"
+  },
+  "editModeToggle": {
+    "edit": "Biên tập",
+    "review": "Xem lại các thay đổi"
+  },
+  "searchBox": {
+    "search": "Tìm kiếm"
+  },
+  "rootOverview": {
+    "instruction": "Chọn một mục trong cây điều hướng\nbên trái để bắt đầu chỉnh sửa"
+  },
+  "inputLabel": {
+    "readonly": "Chỉ đọc",
+    "shared": "Chia sẻ"
+  },
+  "errorBoundary": {
+    "title": "Lỗi",
+    "oops": "Ồ, có gì đó không ổn",
+    "close": "Đóng lỗi",
+    "issue": "Tạo một vấn đề"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Không gian làm việc mặc định",
+    "logout": "Đăng xuất"
+  },
+  "listField": {
+    "reorder": "Kéo và thả để sắp xếp lại",
+    "copy": "Sao chép khối",
+    "moveUp": "Di chuyển lên một vị trí",
+    "moveDown": "Di chuyển xuống một vị trí",
+    "delete": "Xóa khối",
+    "paste": "Dán khối",
+    "add": "Chèn khối mới"
+  },
+  "metadataField": {
+    "previewTitle": "Xem trước",
+    "searchEngine": "Công cụ tìm kiếm",
+    "socialShare": "Chia sẻ xã hội",
+    "ogImageAlt": "Hình ảnh đồ thị mở"
+  },
+  "pickTextLink": {
+    "title": "Chọn liên kết",
+    "link": "Liên kết",
+    "description": "Sự miêu tả",
+    "descriptionHelp": "Văn bản hiển thị bên trong phần tử liên kết",
+    "tooltip": "Chú giải công cụ",
+    "tooltipHelp": "Thông tin bổ sung mô tả liên kết, hiển thị khi di chuột qua",
+    "newTab": "Mở liên kết trong tab mới",
+    "remove": "Xóa liên kết",
+    "cancel": "Hủy bỏ",
+    "confirm": "Xác nhận"
+  },
+  "richTextField": {
+    "insert": "Chèn khối"
+  },
+  "richTextToolbar": {
+    "styles": "Tiêu đề/đoạn văn",
+    "table": "Bàn",
+    "bold": "In đậm",
+    "italic": "In nghiêng",
+    "align": "Căn chỉnh",
+    "alignLeft": "Căn trái",
+    "alignCenter": "Căn giữa",
+    "alignRight": "Căn phải",
+    "alignJustify": "Căn chỉnh",
+    "clear": "Định dạng rõ ràng",
+    "bulletList": "Danh sách dấu đầu dòng",
+    "orderedList": "Danh sách có thứ tự",
+    "link": "Liên kết",
+    "quote": "Trích dẫn",
+    "rule": "Quy tắc ngang",
+    "small": "Bé nhỏ",
+    "sub": "Chỉ số dưới",
+    "sup": "Chỉ số trên",
+    "paragraph": "Văn bản bình thường",
+    "h1": "Tiêu đề 1",
+    "h2": "Tiêu đề 2",
+    "h3": "Tiêu đề 3",
+    "h4": "Tiêu đề 4",
+    "h5": "Tiêu đề 5",
+    "tableLabel": "Bàn",
+    "insert": "Chèn bảng",
+    "insertRowBefore": "Chèn hàng trước",
+    "insertRowAfter": "Chèn hàng sau",
+    "deleteRow": "Xóa hàng",
+    "toggleHeaderRow": "Chuyển đổi hàng tiêu đề",
+    "insertColumnBefore": "Chèn cột trước",
+    "insertColumnAfter": "Chèn cột sau",
+    "deleteColumn": "Xóa cột",
+    "deleteTable": "Xóa bảng",
+    "left": "Bên trái",
+    "center": "Trung tâm",
+    "right": "Phải",
+    "justify": "Căn chỉnh"
+  },
+  "linkField": {
+    "reorder": "Kéo và thả để sắp xếp lại",
+    "open": "Mở liên kết trong tab mới",
+    "openFile": "Mở tệp phương tiện trong tab mới",
+    "edit": "Chỉnh sửa liên kết",
+    "editFile": "Thay đổi hình ảnh",
+    "delete": "Xóa liên kết",
+    "deleteFile": "Xóa hình ảnh"
+  },
+  "entryPicker": {
+    "title": "Chọn một tài liệu tham khảo",
+    "searchPlaceholder": "Tìm kiếm",
+    "cancel": "Hủy bỏ",
+    "confirm": "Xác nhận"
+  }
+}

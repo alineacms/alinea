@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Sinchronizuojama",
+    "synced": "Sinchronizuota",
+    "saving": "Įrašoma…"
+  },
+  "urlPicker": {
+    "title": "Nuoroda",
+    "url": "URL",
+    "urlHelp": "Nuorodos URL adresas",
+    "description": "Aprašymas",
+    "descriptionHelp": "Tekstas, kuris bus rodomas nuorodos elemento viduje",
+    "target": "Tikslas",
+    "targetDescription": "Atidaryti nuorodą naujame skirtuke",
+    "cancel": "Atšaukti",
+    "confirm": "Patvirtinti"
+  },
+  "pickLink": {
+    "title": "Pasirinkite nuorodą",
+    "link": "Nuoroda",
+    "description": "Aprašymas",
+    "descriptionHelp": "Tekstas, kuris bus rodomas nuorodos elemento viduje",
+    "tooltip": "Patarimas",
+    "tooltipHelp": "Papildoma informacija, apibūdinanti nuorodą, rodoma užvedus pelės žymeklį",
+    "newTab": "Atidaryti nuorodą naujame skirtuke",
+    "remove": "Pašalinti nuorodą",
+    "cancel": "Atšaukti",
+    "confirm": "Patvirtinti"
+  },
+  "newEntry": {
+    "title": "Pavadinimas",
+    "parent": "Tėvų",
+    "type": "Pasirinkite tipą",
+    "order": "Įterpti užsakymą",
+    "orderFirst": "Sąrašo viršuje",
+    "orderLast": "Sąrašo apačioje",
+    "copyFrom": "Kopijuoti turinį iš",
+    "formTitle": "Naujas įrašas",
+    "cancel": "Atšaukti",
+    "create": "Sukurti"
+  },
+  "entryEdit": {
+    "blockingTitle": "Ar tikrai norite atmesti pakeitimus?",
+    "blockingWarning": "Šis dokumentas buvo pakeistas",
+    "blockingPrompt": "Ar norite išsaugoti pakeitimus?",
+    "blockingDiscard": "Atmesti mano pakeitimus",
+    "blockingSaveDraft": "Išsaugoti kaip juodraštį",
+    "blockingPublishChanges": "Paskelbti pakeitimus",
+    "untranslatedTitle": "Neišverstas",
+    "untranslatedParent": "Pirmiausia išverskite pagrindinį puslapį.",
+    "untranslatedPrompt": "Įveskite toliau pateiktą informaciją ir išsaugokite, kad pradėtumėte versti.",
+    "draftError": "Nepavyko užbaigti juodraščio veiksmo, bandykite dar kartą vėliau",
+    "saveTranslationError": "Nepavyko užbaigti vertimo veiksmo, bandykite dar kartą vėliau",
+    "publishError": "Nepavyko užbaigti paskelbimo veiksmo, bandykite dar kartą vėliau",
+    "discardError": "Nepavyko atmesti pakeitimų, bandykite dar kartą vėliau",
+    "unpublishError": "Nepavyko atšaukti paskelbimo, bandykite dar kartą vėliau.",
+    "deleteError": "Nepavyko užbaigti trynimo veiksmo, bandykite dar kartą vėliau",
+    "archiveError": "Nepavyko užbaigti archyvavimo veiksmo, bandykite dar kartą vėliau"
+  },
+  "entryHeader": {
+    "draft": "Juodraštis",
+    "editing": "Redagavimas",
+    "published": "Paskelbta",
+    "archived": "Archyvuota",
+    "untranslated": "Neišverstas",
+    "unpublished": "Neskelbta",
+    "revision": "Pataisymas",
+    "showMenu": "Rodyti meniu",
+    "hideMenu": "Slėpti meniu",
+    "removeDraft": "Pašalinti juodraštį",
+    "replace": "Pakeisti",
+    "delete": "Ištrinti",
+    "unpublish": "Atšaukti publikavimą",
+    "archive": "Archyvas",
+    "publish": "Paskelbti",
+    "showHistory": "Rodyti istoriją",
+    "hideHistory": "Slėpti istoriją",
+    "draftAvailable": "Naujesnė juodraščio versija yra prieinama",
+    "translateFrom": "Versti iš",
+    "translateParent": "Pirmiausia išverskite pagrindinį puslapį",
+    "discard": "Atmesti redagavimus",
+    "save": "Išsaugoti vertimą",
+    "saveDraft": "Išsaugoti",
+    "restore": "Atkurti",
+    "showPreview": "Rodyti peržiūrą",
+    "hidePreview": "Slėpti peržiūrą",
+    "savingDraft": "Įrašomas juodraštis",
+    "savingTranslation": "Įrašomas vertimas",
+    "publishingEdits": "Publikuojami redagavimai",
+    "restoringRevision": "Atkuriama versija",
+    "publishingDraft": "Skelbiamo juodraščio",
+    "unpublishingDraft": "Juodraščio paskelbimo atšaukimas",
+    "discardingDraft": "Atmetamas juodraštis",
+    "archivingPublished": "Archyvuojamas publikuotas turinys",
+    "publishingArchived": "Leidimas archyvuotas",
+    "deletingFile": "Failo trynimas",
+    "deletingEntry": "Ištrinti įrašą"
+  },
+  "contentView": {
+    "create": "Sukurti naują"
+  },
+  "welcome": {
+    "title": "Jūsų „alinea“ diegimas dabar paruoštas konfigūravimui.",
+    "button": "Sužinokite, kaip konfigūruoti"
+  },
+  "cloudAuthView": {
+    "title": "Pastraipa",
+    "deploy": "Pasiruošę dislokuoti?",
+    "requiresHandler": "Alineai reikia tvarkytojo, kad galėtų tęsti",
+    "backend": "Alineai tęsti reikalinga serverio sąsaja.",
+    "customBackend": "visiškai sukonfigūruoti pasirinktinę posistemę",
+    "cloud": "Arba susikurkite vos keliais paspaudimais naudodamiesi mūsų debesijos pasiūlymu.",
+    "cloudButton": "Tęsti su alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Nustatymai",
+    "defaultWorkspace": "Numatytoji darbo sritis",
+    "theme": "Perjungti temą",
+    "fontSize": "Šrifto dydis",
+    "decreaseFontSize": "Sumažinti šrifto dydį",
+    "increaseFontSize": "Padidinti šrifto dydį",
+    "logout": "Atsijungti"
+  },
+  "fileUploader": {
+    "uploadComplete": "Įkėlimai baigti: {{amount}}",
+    "uploading": "Įkeliami failai: {{amount}}",
+    "upload": "Įkelti failus"
+  },
+  "fileUploadRow": {
+    "alt": "Įkeltas failas",
+    "done": "Atlikta"
+  },
+  "fileEntry": {
+    "preview": "Medijos failo peržiūra",
+    "extension": "Pratęsimas",
+    "fileSize": "Failo dydis",
+    "dimensions": "Matmenys",
+    "pixels": "pikselių",
+    "url": "URL",
+    "focus": "Fokusavimo taškas",
+    "focusHelp": "Spustelėkite paveikslėlį, kad pakeistumėte fokusavimo tašką"
+  },
+  "cardOverview": {
+    "title": "kortelė"
+  },
+  "explorer": {
+    "noResults": "Nėra rezultatų"
+  },
+  "editModeToggle": {
+    "edit": "Redaguoti",
+    "review": "Peržiūrėti pakeitimus"
+  },
+  "searchBox": {
+    "search": "Paieška"
+  },
+  "rootOverview": {
+    "instruction": "Norėdami pradėti redaguoti, kairėje pusėje esančiame naršymo medyje pasirinkite įrašą"
+  },
+  "inputLabel": {
+    "readonly": "Tik skaitymui",
+    "shared": "Bendrinama"
+  },
+  "errorBoundary": {
+    "title": "Klaida",
+    "oops": "Oi, kažkas nutiko ne taip",
+    "close": "Uždarymo klaida",
+    "issue": "Sukurti problemą"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Numatytoji darbo sritis",
+    "logout": "Atsijungti"
+  },
+  "listField": {
+    "reorder": "Nuvilkite, kad pertvarkytumėte",
+    "copy": "Kopijavimo blokas",
+    "moveUp": "Perkelti viena pozicija aukštyn",
+    "moveDown": "Perkelti žemyn viena pozicija",
+    "delete": "Ištrinti bloką",
+    "paste": "Įklijuoti bloką",
+    "add": "Įterpti naują bloką"
+  },
+  "metadataField": {
+    "previewTitle": "Peržiūra",
+    "searchEngine": "Paieškos sistema",
+    "socialShare": "Dalintis socialiniuose tinkluose",
+    "ogImageAlt": "Atidaryti grafiko vaizdą"
+  },
+  "pickTextLink": {
+    "title": "Pasirinkite nuorodą",
+    "link": "Nuoroda",
+    "description": "Aprašymas",
+    "descriptionHelp": "Tekstas, kuris bus rodomas nuorodos elemento viduje",
+    "tooltip": "Patarimas",
+    "tooltipHelp": "Papildoma informacija, apibūdinanti nuorodą, rodoma užvedus pelės žymeklį",
+    "newTab": "Atidaryti nuorodą naujame skirtuke",
+    "remove": "Pašalinti nuorodą",
+    "cancel": "Atšaukti",
+    "confirm": "Patvirtinti"
+  },
+  "richTextField": {
+    "insert": "Įterpti bloką"
+  },
+  "richTextToolbar": {
+    "styles": "Antraštė / pastraipa",
+    "table": "Lentelė",
+    "bold": "Paryškintas",
+    "italic": "Kursyvas",
+    "align": "Lygiavimas",
+    "alignLeft": "Lygiuoti kairėje",
+    "alignCenter": "Sulygiuoti centrą",
+    "alignRight": "Lygiuoti dešinėje",
+    "alignJustify": "Lygiuoti lygiagrečiai",
+    "clear": "Aiškus formatas",
+    "bulletList": "Ženklelių sąrašas",
+    "orderedList": "Sutvarkytas sąrašas",
+    "link": "Nuoroda",
+    "quote": "Citatos blokas",
+    "rule": "Horizontalioji taisyklė",
+    "small": "Mažas",
+    "sub": "Apatinis indeksas",
+    "sup": "Viršutinis indeksas",
+    "paragraph": "Įprastas tekstas",
+    "h1": "1 antraštė",
+    "h2": "2 antraštė",
+    "h3": "3 antraštė",
+    "h4": "4 antraštė",
+    "h5": "5 antraštė",
+    "tableLabel": "Lentelė",
+    "insert": "Įterpti lentelę",
+    "insertRowBefore": "Įterpti eilutę prieš",
+    "insertRowAfter": "Įterpti eilutę po",
+    "deleteRow": "Ištrinti eilutę",
+    "toggleHeaderRow": "Perjungti antraštės eilutę",
+    "insertColumnBefore": "Įterpti stulpelį prieš",
+    "insertColumnAfter": "Įterpti stulpelį po",
+    "deleteColumn": "Ištrinti stulpelį",
+    "deleteTable": "Ištrinti lentelę",
+    "left": "Kairė",
+    "center": "Centras",
+    "right": "Dešinė",
+    "justify": "Lygiuoti"
+  },
+  "linkField": {
+    "reorder": "Nuvilkite, kad pertvarkytumėte",
+    "open": "Atidaryti nuorodą naujame skirtuke",
+    "openFile": "Atidaryti medijos failą naujame skirtuke",
+    "edit": "Redaguoti nuorodą",
+    "editFile": "Keisti vaizdą",
+    "delete": "Ištrinti nuorodą",
+    "deleteFile": "Ištrinti vaizdą"
+  },
+  "entryPicker": {
+    "title": "Pasirinkite nuorodą",
+    "searchPlaceholder": "Paieška",
+    "cancel": "Atšaukti",
+    "confirm": "Patvirtinti"
+  }
+}

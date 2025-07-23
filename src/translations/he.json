@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "סנכרון",
+    "synced": "מסונכרן",
+    "saving": "חִסָכוֹן…"
+  },
+  "urlPicker": {
+    "title": "לְקַשֵׁר",
+    "url": "כתובת אתר",
+    "urlHelp": "כתובת הקישור",
+    "description": "תֵאוּר",
+    "descriptionHelp": "טקסט להצגה בתוך רכיב הקישור",
+    "target": "יַעַד",
+    "targetDescription": "פתח קישור בכרטיסייה חדשה",
+    "cancel": "לְבַטֵל",
+    "confirm": "לְאַשֵׁר"
+  },
+  "pickLink": {
+    "title": "בחירת קישור",
+    "link": "לְקַשֵׁר",
+    "description": "תֵאוּר",
+    "descriptionHelp": "טקסט להצגה בתוך רכיב הקישור",
+    "tooltip": "תיאור כלי",
+    "tooltipHelp": "מידע נוסף המתאר את הקישור, מוצג בעת העכבר",
+    "newTab": "פתח קישור בכרטיסייה חדשה",
+    "remove": "הסר קישור",
+    "cancel": "לְבַטֵל",
+    "confirm": "לְאַשֵׁר"
+  },
+  "newEntry": {
+    "title": "כּוֹתֶרֶת",
+    "parent": "הוֹרֶה",
+    "type": "בחר סוג",
+    "order": "הכנס הזמנה",
+    "orderFirst": "בראש הרשימה",
+    "orderLast": "בתחתית הרשימה",
+    "copyFrom": "העתקת תוכן מ",
+    "formTitle": "ערך חדש",
+    "cancel": "לְבַטֵל",
+    "create": "לִיצוֹר"
+  },
+  "entryEdit": {
+    "blockingTitle": "האם אתה בטוח שברצונך לבטל את השינויים?",
+    "blockingWarning": "מסמך זה שונה",
+    "blockingPrompt": "האם תרצה לשמור את השינויים שלך?",
+    "blockingDiscard": "בטל את השינויים שלי",
+    "blockingSaveDraft": "שמור כטיוטה",
+    "blockingPublishChanges": "פרסום שינויים",
+    "untranslatedTitle": "לא מתורגם",
+    "untranslatedParent": "תרגם תחילה את דף האב.",
+    "untranslatedPrompt": "הזן את הפרטים למטה ושמור כדי להתחיל בתרגום.",
+    "draftError": "לא ניתן היה להשלים את פעולת הטיוטה, אנא נסה שוב מאוחר יותר",
+    "saveTranslationError": "לא ניתן היה להשלים את פעולת התרגום, אנא נסה שוב מאוחר יותר",
+    "publishError": "לא ניתן היה להשלים את פעולת הפרסום, אנא נסה שוב מאוחר יותר",
+    "discardError": "לא ניתן היה לבטל את השינויים, אנא נסה שוב מאוחר יותר",
+    "unpublishError": "לא ניתן היה להשלים את פעולת ביטול הפרסום, אנא נסה שוב מאוחר יותר",
+    "deleteError": "לא ניתן היה להשלים את פעולת המחיקה, אנא נסה שוב מאוחר יותר",
+    "archiveError": "לא ניתן היה להשלים את פעולת הארכיון, אנא נסה שוב מאוחר יותר"
+  },
+  "entryHeader": {
+    "draft": "טְיוּטָה",
+    "editing": "עֲרִיכָה",
+    "published": "פורסם",
+    "archived": "הועבר לארכיון",
+    "untranslated": "לא מתורגם",
+    "unpublished": "לא פורסם",
+    "revision": "גרסה",
+    "showMenu": "תפריט תצוגה",
+    "hideMenu": "הסתר תפריט",
+    "removeDraft": "הסר טיוטה",
+    "replace": "לְהַחלִיף",
+    "delete": "לִמְחוֹק",
+    "unpublish": "בטל פרסום",
+    "archive": "ארכיון",
+    "publish": "לְפַרְסֵם",
+    "showHistory": "הצג היסטוריה",
+    "hideHistory": "הסתר היסטוריה",
+    "draftAvailable": "גרסת טיוטה חדשה יותר זמינה",
+    "translateFrom": "תרגם מ",
+    "translateParent": "תרגם תחילה את דף האב",
+    "discard": "בטל עריכות",
+    "save": "שמור תרגום",
+    "saveDraft": "לְהַצִיל",
+    "restore": "לְשַׁחְזֵר",
+    "showPreview": "תצוגה מקדימה",
+    "hidePreview": "הסתר תצוגה מקדימה",
+    "savingDraft": "שומר טיוטה",
+    "savingTranslation": "שמירת התרגום",
+    "publishingEdits": "עריכות פרסום",
+    "restoringRevision": "משחזר את הגרסה",
+    "publishingDraft": "טיוטת פרסום",
+    "unpublishingDraft": "מבטל פרסום טיוטה",
+    "discardingDraft": "מחיקת טיוטה",
+    "archivingPublished": "פורסם בארכיון",
+    "publishingArchived": "הפרסום הועבר לארכיון",
+    "deletingFile": "מחיקת קובץ",
+    "deletingEntry": "מחיקת ערך"
+  },
+  "contentView": {
+    "create": "צור חדש"
+  },
+  "welcome": {
+    "title": "התקנת ה-alinea שלך מוכנה כעת להגדרה.",
+    "button": "למד כיצד להגדיר"
+  },
+  "cloudAuthView": {
+    "title": "סָעִיף",
+    "deploy": "מוכנים לפריסה?",
+    "requiresHandler": "אלינה זקוקה למטפל כדי להמשיך",
+    "backend": "אלינה דורשת שרת אחורי כדי להמשיך.",
+    "customBackend": "הגדרה מלאה של backend מותאם אישית",
+    "cloud": "או התחל את ההגדרה בכמה לחיצות עם הצעת הענן שלנו.",
+    "cloudButton": "המשך עם alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "הגדרות",
+    "defaultWorkspace": "סביבת עבודה ברירת מחדל",
+    "theme": "החלפת ערכת נושא",
+    "fontSize": "גודל גופן",
+    "decreaseFontSize": "הקטנת גודל הגופן",
+    "increaseFontSize": "הגדלת גודל הגופן",
+    "logout": "התנתק"
+  },
+  "fileUploader": {
+    "uploadComplete": "העלאות הושלמו: {{amount}}",
+    "uploading": "מעלה קבצים: {{amount}}",
+    "upload": "העלאת קבצים"
+  },
+  "fileUploadRow": {
+    "alt": "קובץ שהועלה",
+    "done": "נַעֲשָׂה"
+  },
+  "fileEntry": {
+    "preview": "תצוגה מקדימה של קובץ מדיה",
+    "extension": "הַרחָבָה",
+    "fileSize": "גודל הקובץ",
+    "dimensions": "מידות",
+    "pixels": "פיקסלים",
+    "url": "כתובת אתר",
+    "focus": "נקודת מיקוד",
+    "focusHelp": "לחץ על התמונה כדי לשנות את נקודת המיקוד"
+  },
+  "cardOverview": {
+    "title": "כַּרְטִיס"
+  },
+  "explorer": {
+    "noResults": "אין תוצאות"
+  },
+  "editModeToggle": {
+    "edit": "לַעֲרוֹך",
+    "review": "סקירת שינויים"
+  },
+  "searchBox": {
+    "search": "לְחַפֵּשׂ"
+  },
+  "rootOverview": {
+    "instruction": "בחר ערך בעץ הניווט משמאל כדי להתחיל בעריכה"
+  },
+  "inputLabel": {
+    "readonly": "לקריאה בלבד",
+    "shared": "מְשׁוּתָף"
+  },
+  "errorBoundary": {
+    "title": "שְׁגִיאָה",
+    "oops": "אופס, משהו השתבש",
+    "close": "סגירת שגיאה",
+    "issue": "צור בעיה"
+  },
+  "toolbar": {
+    "defaultWorkspace": "סביבת עבודה ברירת מחדל",
+    "logout": "התנתק"
+  },
+  "listField": {
+    "reorder": "גרור ושחרר כדי לסדר מחדש",
+    "copy": "העתקת בלוק",
+    "moveUp": "עלייה במיקום אחד",
+    "moveDown": "הזז למטה מיקום אחד",
+    "delete": "מחיקת בלוק",
+    "paste": "הדבקת בלוק",
+    "add": "הכנס בלוק חדש"
+  },
+  "metadataField": {
+    "previewTitle": "תצוגה מקדימה",
+    "searchEngine": "מנוע חיפוש",
+    "socialShare": "שיתוף חברתי",
+    "ogImageAlt": "תמונה של גרף פתוח"
+  },
+  "pickTextLink": {
+    "title": "בחירת קישור",
+    "link": "לְקַשֵׁר",
+    "description": "תֵאוּר",
+    "descriptionHelp": "טקסט להצגה בתוך רכיב הקישור",
+    "tooltip": "תיאור כלי",
+    "tooltipHelp": "מידע נוסף המתאר את הקישור, מוצג בעת העכבר",
+    "newTab": "פתח קישור בכרטיסייה חדשה",
+    "remove": "הסר קישור",
+    "cancel": "לְבַטֵל",
+    "confirm": "לְאַשֵׁר"
+  },
+  "richTextField": {
+    "insert": "הכנס בלוק"
+  },
+  "richTextToolbar": {
+    "styles": "כותרת/פסקה",
+    "table": "לוּחַ",
+    "bold": "נוֹעָז",
+    "italic": "נטוי",
+    "align": "מַעֲרָך",
+    "alignLeft": "יישור שמאלה",
+    "alignCenter": "יישור למרכז",
+    "alignRight": "יישור ימינה",
+    "alignJustify": "יישור צדק",
+    "clear": "פורמט ברור",
+    "bulletList": "רשימת תבליטים",
+    "orderedList": "רשימה מסודרת",
+    "link": "לְקַשֵׁר",
+    "quote": "ציטוט חסום",
+    "rule": "כלל אופקי",
+    "small": "קָטָן",
+    "sub": "מנוי",
+    "sup": "כתב עילי",
+    "paragraph": "טקסט רגיל",
+    "h1": "כותרת 1",
+    "h2": "כותרת 2",
+    "h3": "כותרת 3",
+    "h4": "כותרת 4",
+    "h5": "כותרת 5",
+    "tableLabel": "לוּחַ",
+    "insert": "הכנס טבלה",
+    "insertRowBefore": "הכנס שורה לפני",
+    "insertRowAfter": "הוספת שורה אחרי",
+    "deleteRow": "מחיקת שורה",
+    "toggleHeaderRow": "הפעל/הפעל שורת כותרת",
+    "insertColumnBefore": "הכנס עמודה לפני",
+    "insertColumnAfter": "הוסף עמודה אחרי",
+    "deleteColumn": "מחיקת עמודה",
+    "deleteTable": "מחיקת טבלה",
+    "left": "שְׁמֹאל",
+    "center": "מֶרְכָּז",
+    "right": "יָמִינָה",
+    "justify": "לְהַצְדִיק"
+  },
+  "linkField": {
+    "reorder": "גרור ושחרר כדי לסדר מחדש",
+    "open": "פתח קישור בכרטיסייה חדשה",
+    "openFile": "פתיחת קובץ מדיה בכרטיסייה חדשה",
+    "edit": "עריכת קישור",
+    "editFile": "שנה תמונה",
+    "delete": "מחיקת קישור",
+    "deleteFile": "מחיקת תמונה"
+  },
+  "entryPicker": {
+    "title": "בחר הפניה",
+    "searchPlaceholder": "לְחַפֵּשׂ",
+    "cancel": "לְבַטֵל",
+    "confirm": "לְאַשֵׁר"
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Sincronització",
+    "synced": "Sincronitzat",
+    "saving": "Desant…"
+  },
+  "urlPicker": {
+    "title": "Enllaç",
+    "url": "URL",
+    "urlHelp": "URL de l'enllaç",
+    "description": "Descripció",
+    "descriptionHelp": "Text que es mostrarà dins de l'element d'enllaç",
+    "target": "Objectiu",
+    "targetDescription": "Obre l'enllaç en una pestanya nova",
+    "cancel": "Cancel·la",
+    "confirm": "Confirma"
+  },
+  "pickLink": {
+    "title": "Tria l'enllaç",
+    "link": "Enllaç",
+    "description": "Descripció",
+    "descriptionHelp": "Text que es mostrarà dins de l'element d'enllaç",
+    "tooltip": "Descripció emergent",
+    "tooltipHelp": "Informació addicional que descriu l'enllaç, que es mostra en passar el cursor per sobre",
+    "newTab": "Obre l'enllaç en una pestanya nova",
+    "remove": "Elimina l'enllaç",
+    "cancel": "Cancel·la",
+    "confirm": "Confirma"
+  },
+  "newEntry": {
+    "title": "Títol",
+    "parent": "Pare/Mare",
+    "type": "Selecciona el tipus",
+    "order": "Insereix ordre",
+    "orderFirst": "A la part superior de la llista",
+    "orderLast": "A la part inferior de la llista",
+    "copyFrom": "Copiar contingut de",
+    "formTitle": "Nova entrada",
+    "cancel": "Cancel·la",
+    "create": "Crea"
+  },
+  "entryEdit": {
+    "blockingTitle": "Esteu segur que voleu descartar els canvis?",
+    "blockingWarning": "Aquest document ha estat modificat",
+    "blockingPrompt": "Voleu desar els canvis?",
+    "blockingDiscard": "Descarta els meus canvis",
+    "blockingSaveDraft": "Desa com a esborrany",
+    "blockingPublishChanges": "Publica els canvis",
+    "untranslatedTitle": "Sense traduir",
+    "untranslatedParent": "Tradueix primer la pàgina principal.",
+    "untranslatedPrompt": "Introduïu les dades següents i deseu-les per començar a traduir.",
+    "draftError": "No s'ha pogut completar l'acció d'esborrany, torneu-ho a provar més tard.",
+    "saveTranslationError": "No s'ha pogut completar l'acció de traducció. Torna-ho a provar més tard.",
+    "publishError": "No s'ha pogut completar l'acció de publicació. Torna-ho a provar més tard.",
+    "discardError": "No s'han pogut descartar els canvis. Torna-ho a provar més tard.",
+    "unpublishError": "No s'ha pogut completar l'acció de no publicar. Torna-ho a provar més tard.",
+    "deleteError": "No s'ha pogut completar l'acció d'eliminació. Torna-ho a provar més tard.",
+    "archiveError": "No s'ha pogut completar l'acció d'arxivament. Torna-ho a provar més tard."
+  },
+  "entryHeader": {
+    "draft": "Esborrany",
+    "editing": "Edició",
+    "published": "Publicat",
+    "archived": "Arxivat",
+    "untranslated": "Sense traduir",
+    "unpublished": "Inèdit",
+    "revision": "Revisió",
+    "showMenu": "Mostra el menú",
+    "hideMenu": "Amaga el menú",
+    "removeDraft": "Elimina l'esborrany",
+    "replace": "Substitueix",
+    "delete": "Suprimeix",
+    "unpublish": "Anul·la la publicació",
+    "archive": "Arxiu",
+    "publish": "Publica",
+    "showHistory": "Mostra l'historial",
+    "hideHistory": "Amaga l'historial",
+    "draftAvailable": "Hi ha disponible una versió d'esborrany més recent",
+    "translateFrom": "Tradueix de",
+    "translateParent": "Tradueix primer la pàgina principal",
+    "discard": "Descarta les edicions",
+    "save": "Desa la traducció",
+    "saveDraft": "Desa",
+    "restore": "Restaurar",
+    "showPreview": "Visualització prèvia",
+    "hidePreview": "Amaga la vista prèvia",
+    "savingDraft": "Desant l'esborrany",
+    "savingTranslation": "Desant la traducció",
+    "publishingEdits": "Publicació d'edicions",
+    "restoringRevision": "Restauració de la revisió",
+    "publishingDraft": "Publicació de l'esborrany",
+    "unpublishingDraft": "Anul·lació de l'esborrany",
+    "discardingDraft": "Descartant l'esborrany",
+    "archivingPublished": "Arxivament publicat",
+    "publishingArchived": "Publicació arxivada",
+    "deletingFile": "Supressió del fitxer",
+    "deletingEntry": "Suprimeix l'entrada"
+  },
+  "contentView": {
+    "create": "Crear nou"
+  },
+  "welcome": {
+    "title": "La instal·lació d'alinea ja està a punt per a la configuració.",
+    "button": "Aprèn a configurar"
+  },
+  "cloudAuthView": {
+    "title": "Paràgraf",
+    "deploy": "A punt per desplegar-se?",
+    "requiresHandler": "Alinea necessita un gestor per continuar",
+    "backend": "Alinea necessita un backend per continuar.",
+    "customBackend": "configurar completament un backend personalitzat",
+    "cloud": "O configura't en uns quants clics amb la nostra oferta al núvol.",
+    "cloudButton": "Continua amb alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Configuració",
+    "defaultWorkspace": "Espai de treball predeterminat",
+    "theme": "Canvia el tema",
+    "fontSize": "Mida de la lletra",
+    "decreaseFontSize": "Reduir la mida de la lletra",
+    "increaseFontSize": "Augmenta la mida de la lletra",
+    "logout": "Tanca la sessió"
+  },
+  "fileUploader": {
+    "uploadComplete": "Càrregues completades: {{amount}}",
+    "uploading": "Pujant fitxers: {{amount}}",
+    "upload": "Puja fitxers"
+  },
+  "fileUploadRow": {
+    "alt": "Fitxer carregat",
+    "done": "Fet"
+  },
+  "fileEntry": {
+    "preview": "Vista prèvia del fitxer multimèdia",
+    "extension": "Extensió",
+    "fileSize": "Mida del fitxer",
+    "dimensions": "Dimensions",
+    "pixels": "píxels",
+    "url": "URL",
+    "focus": "Punt d'enfocament",
+    "focusHelp": "Feu clic a la imatge per canviar el punt d'enfocament"
+  },
+  "cardOverview": {
+    "title": "targeta"
+  },
+  "explorer": {
+    "noResults": "Sense resultats"
+  },
+  "editModeToggle": {
+    "edit": "Edita",
+    "review": "Revisa els canvis"
+  },
+  "searchBox": {
+    "search": "Cerca"
+  },
+  "rootOverview": {
+    "instruction": "Seleccioneu una entrada a l'arbre de navegació de l'esquerra per començar a editar"
+  },
+  "inputLabel": {
+    "readonly": "Només lectura",
+    "shared": "Compartit"
+  },
+  "errorBoundary": {
+    "title": "Error",
+    "oops": "Ups, alguna cosa ha anat malament",
+    "close": "Error de tancament",
+    "issue": "Crea un problema"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Espai de treball predeterminat",
+    "logout": "Tanca la sessió"
+  },
+  "listField": {
+    "reorder": "Arrossega i deixa anar per reordenar",
+    "copy": "Bloc de còpia",
+    "moveUp": "Puja una posició",
+    "moveDown": "Baixar una posició",
+    "delete": "Suprimeix el bloc",
+    "paste": "Enganxa el bloc",
+    "add": "Insereix un bloc nou"
+  },
+  "metadataField": {
+    "previewTitle": "Vista prèvia",
+    "searchEngine": "Motor de cerca",
+    "socialShare": "Compartir a les xarxes socials",
+    "ogImageAlt": "Imatge de gràfic obert"
+  },
+  "pickTextLink": {
+    "title": "Tria l'enllaç",
+    "link": "Enllaç",
+    "description": "Descripció",
+    "descriptionHelp": "Text que es mostrarà dins de l'element d'enllaç",
+    "tooltip": "Descripció emergent",
+    "tooltipHelp": "Informació addicional que descriu l'enllaç, que es mostra en passar el cursor per sobre",
+    "newTab": "Obre l'enllaç en una pestanya nova",
+    "remove": "Elimina l'enllaç",
+    "cancel": "Cancel·la",
+    "confirm": "Confirma"
+  },
+  "richTextField": {
+    "insert": "Insereix un bloc"
+  },
+  "richTextToolbar": {
+    "styles": "Encapçalament/paràgraf",
+    "table": "Taula",
+    "bold": "Negreta",
+    "italic": "Cursiva",
+    "align": "Alineació",
+    "alignLeft": "Alinea a l'esquerra",
+    "alignCenter": "Alinea al centre",
+    "alignRight": "Alinea a la dreta",
+    "alignJustify": "Alinea justifica",
+    "clear": "Format clar",
+    "bulletList": "Llista amb vinyetes",
+    "orderedList": "Llista ordenada",
+    "link": "Enllaç",
+    "quote": "Cita en bloc",
+    "rule": "Regla horitzontal",
+    "small": "Petit",
+    "sub": "Subíndex",
+    "sup": "Superíndex",
+    "paragraph": "Text normal",
+    "h1": "Títol 1",
+    "h2": "Títol 2",
+    "h3": "Títol 3",
+    "h4": "Títol 4",
+    "h5": "Títol 5",
+    "tableLabel": "Taula",
+    "insert": "Insereix una taula",
+    "insertRowBefore": "Insereix una fila abans de",
+    "insertRowAfter": "Insereix una fila després de",
+    "deleteRow": "Suprimeix la fila",
+    "toggleHeaderRow": "Activa/desactiva la fila de capçalera",
+    "insertColumnBefore": "Insereix una columna abans de",
+    "insertColumnAfter": "Insereix una columna després de",
+    "deleteColumn": "Suprimeix la columna",
+    "deleteTable": "Suprimeix la taula",
+    "left": "Esquerra",
+    "center": "Centre",
+    "right": "Dreta",
+    "justify": "Justificar"
+  },
+  "linkField": {
+    "reorder": "Arrossega i deixa anar per reordenar",
+    "open": "Obre l'enllaç en una pestanya nova",
+    "openFile": "Obre el fitxer multimèdia en una pestanya nova",
+    "edit": "Edita l'enllaç",
+    "editFile": "Canvia la imatge",
+    "delete": "Suprimeix l'enllaç",
+    "deleteFile": "Suprimeix la imatge"
+  },
+  "entryPicker": {
+    "title": "Selecciona una referència",
+    "searchPlaceholder": "Cerca",
+    "cancel": "Cancel·la",
+    "confirm": "Confirma"
+  }
+}
