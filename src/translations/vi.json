@@ -29,7 +29,7 @@
   },
   "newEntry": {
     "title": "Tiêu đề",
-    "parent": "Phụ huynh",
+    "parent": "Mục cha",
     "type": "Chọn loại",
     "order": "Chèn thứ tự",
     "orderFirst": "Ở đầu danh sách",
