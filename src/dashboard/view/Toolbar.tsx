@@ -3,16 +3,14 @@ import {Switch} from '@headlessui/react'
 import {Config} from 'alinea/core/Config'
 import type {Label} from 'alinea/core/Label'
 import {Root as AlineaRoot} from 'alinea/core/Root'
-import {Workspace} from 'alinea/core/Workspace'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {Workspace} from 'alinea/core/Workspace'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {select} from 'alinea/field/select'
-import {Icon, TextLabel, VStack, px} from 'alinea/ui'
+import {Icon, px, TextLabel, VStack} from 'alinea/ui'
 import {Avatar} from 'alinea/ui/Avatar'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {PopoverMenu} from 'alinea/ui/PopoverMenu'
-import {HStack} from 'alinea/ui/Stack'
 import {LogoShape} from 'alinea/ui/branding/LogoShape'
+import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineScreenshot} from 'alinea/ui/icons/IcOutlineScreenshot'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
@@ -21,6 +19,8 @@ import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
+import {PopoverMenu} from 'alinea/ui/PopoverMenu'
+import {HStack} from 'alinea/ui/Stack'
 import {contrastColor} from 'alinea/ui/util/ContrastColor'
 import {createSlots} from 'alinea/ui/util/Slots'
 import {parseToHsla} from 'color2k'
@@ -36,6 +36,7 @@ import {
 } from '../atoms/PreferencesAtoms.js'
 import {accentColorAtom} from '../atoms/StyleAtoms.js'
 import {useSession} from '../hook/UseSession.js'
+import {useTranslation} from '../hook/UseTranslation.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {IconButton} from './IconButton.js'
 import {useSidebar} from './Sidebar.js'
@@ -56,9 +57,7 @@ function WorkspaceLabel({label, color, icon: Icon}: WorkspaceLabelProps) {
       <LogoShape foreground={contrastColor(color)} background={color}>
         <AlineaLogo />
       </LogoShape>
-      <div style={{fontSize: '13px', fontWeight: 600}}>
-        <TextLabel label={label} />
-      </div>
+      <div style={{fontSize: '13px', fontWeight: 600}}>{label}</div>
     </HStack>
   )
 }
@@ -67,6 +66,7 @@ export namespace Toolbar {
   export const {Provider, Portal, Slot} = createSlots()
 
   export function Root() {
+    const {toolbar: t} = useTranslation()
     const accentColor = useAtomValue(accentColorAtom)
     const session = useSession()
     const {config} = useAtomValue(dashboardOptionsAtom)
@@ -84,7 +84,7 @@ export namespace Toolbar {
       '--alinea-saturation': `${saturation * 100}%`,
       '--alinea-lightness': `${lightness * 100}%`
     }
-    const defaultWorkspace = select('Default workspace', {
+    const defaultWorkspace = select(t.defaultWorkspace, {
       options: fromEntries(
         entries(config.workspaces).map(([key, workspace]) => {
           return [key, (Workspace.label(workspace) as string) || key]
@@ -220,7 +220,7 @@ export namespace Toolbar {
                     <PopoverMenu.Footer>
                       <DropdownMenu.Root>
                         <DropdownMenu.Item onClick={session.end}>
-                          Logout
+                          {t.logout}
                         </DropdownMenu.Item>
                       </DropdownMenu.Root>
                     </PopoverMenu.Footer>

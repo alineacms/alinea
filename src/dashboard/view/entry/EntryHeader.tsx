@@ -30,6 +30,7 @@ import {useConfig} from '../../hook/UseConfig.js'
 import {useEntryLocation} from '../../hook/UseEntryLocation.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
+import {useTranslation} from '../../hook/UseTranslation.js'
 import {useUploads} from '../../hook/UseUploads.js'
 import {FileUploader} from '../media/FileUploader.js'
 import {useSidebar} from '../Sidebar.js'
@@ -37,30 +38,6 @@ import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
 
 const styles = styler(css)
-
-const variantDescription = {
-  draft: 'Draft',
-  editing: 'Editing',
-  published: 'Published',
-  archived: 'Archived',
-  untranslated: 'Untranslated',
-  revision: 'Revision',
-  unpublished: 'Unpublished'
-}
-
-const transitions = {
-  [EntryTransition.SaveDraft]: 'Saving',
-  [EntryTransition.SaveTranslation]: 'Saving',
-  [EntryTransition.PublishEdits]: 'Publishing',
-  [EntryTransition.RestoreRevision]: 'Restoring',
-  [EntryTransition.PublishDraft]: 'Publishing',
-  [EntryTransition.UnpublishDraft]: 'Unpublishing',
-  [EntryTransition.DiscardDraft]: 'Discarding',
-  [EntryTransition.ArchivePublished]: 'Archiving',
-  [EntryTransition.PublishArchived]: 'Publishing',
-  [EntryTransition.DeleteFile]: 'Deleting',
-  [EntryTransition.DeleteEntry]: 'Deleting'
-}
 
 const variantIcon = {
   draft: IcRoundEdit,
@@ -79,6 +56,7 @@ export interface EntryHeaderProps {
 }
 
 export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
+  const {entryHeader: t} = useTranslation()
   const config = useConfig()
   const locale = useLocale()
   const {canPublish, canDelete, untranslated, parentNeedsTranslation} = editor
@@ -162,7 +140,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         className={styles.root.action()}
         onClick={discardDraft}
       >
-        Remove draft
+        {t.removeDraft}
       </DropdownMenu.Item>
     ) : variant === 'published' && !editor.activeVersion.seeded ? (
       isMediaFile ? (
@@ -171,13 +149,13 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={replaceFile}
           >
-            Replace
+            {t.replace}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={deleteFileAndNavigate}
           >
-            Delete
+            {t.delete}
           </DropdownMenu.Item>
         </>
       ) : isMediaLibrary ? (
@@ -186,7 +164,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={deleteMediaLibraryAndNavigate}
           >
-            Delete
+            {t.delete}
           </DropdownMenu.Item>
         </>
       ) : (
@@ -196,11 +174,11 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               className={styles.root.action()}
               onClick={unPublish}
             >
-              Unpublish
+              {t.unpublish}
             </DropdownMenu.Item>
           )}
           <DropdownMenu.Item className={styles.root.action()} onClick={archive}>
-            Archive
+            {t.archive}
           </DropdownMenu.Item>
         </>
       )
@@ -211,7 +189,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={publishArchived}
           >
-            Publish
+            {t.publish}
           </DropdownMenu.Item>
         )}
         {canDelete && (
@@ -219,7 +197,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={deleteEntry}
           >
-            Delete
+            {t.delete}
           </DropdownMenu.Item>
         )}
       </>
@@ -229,11 +207,11 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           className={styles.root.action()}
           onClick={deleteEntry}
         >
-          Delete
+          {t.delete}
         </DropdownMenu.Item>
       ) : (
         <DropdownMenu.Item className={styles.root.action()} onClick={archive}>
-          Archive
+          {t.archive}
         </DropdownMenu.Item>
       )
     ) : null
@@ -246,7 +224,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           <button
             type="button"
             onClick={() => toggleNav()}
-            title={!isNavOpen ? 'Display menu' : 'Hide menu'}
+            title={!isNavOpen ? t.showMenu : t.hideMenu}
             className={styles.root.menuToggle()}
           >
             <Icon icon={IcRoundMenu} />
@@ -259,8 +237,8 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               <HStack center gap={4}>
                 <span>
                   {variant === 'transition'
-                    ? transitions[currentTransition!]
-                    : variantDescription[variant]}
+                    ? t[currentTransition!]
+                    : t[variant]}
                 </span>
                 {!previewRevision && editor.availableStatuses.length > 1 && (
                   <Icon icon={IcRoundUnfoldMore} />
@@ -274,7 +252,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                     navigate(pathname)
                   }}
                 >
-                  Editing
+                  {t.editing}
                 </DropdownMenu.Item>
               )}
               {!previewRevision &&
@@ -286,7 +264,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                         navigate(`${pathname}?${status}`)
                       }}
                     >
-                      {variantDescription[status]}
+                      {t[status]}
                     </DropdownMenu.Item>
                   )
                 })}
@@ -314,7 +292,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               <>
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>
-                  A newer draft version is available
+                  {t.draftAvailable}
                 </div>
               </>
             )}
@@ -327,7 +305,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>
                   <HStack center>
-                    <span style={{marginRight: px(8)}}>Translate from</span>
+                    <span style={{marginRight: px(8)}}>{t.translateFrom}</span>
                     <Langswitch
                       selected={editor.activeVersion.locale!}
                       locales={editor.translations.map(({locale}) => locale)}
@@ -344,7 +322,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             <>
               <span className={styles.root.description.separator()} />
               <div className={styles.root.description.action()}>
-                Translate parent page first
+                {t.translateParent}
               </div>
             </>
           )}
@@ -360,7 +338,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                   onClick={discardEdits}
                 >
                   <Icon icon={IcRoundDelete} />
-                  <span>Discard edits</span>
+                  <span>{t.discard}</span>
                 </button>
               </div>
             </>
@@ -372,12 +350,12 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 <>
                   {untranslated && !editor.parentNeedsTranslation && (
                     <Button icon={IcRoundSave} onClick={translate}>
-                      Save translation
+                      {t.save}
                     </Button>
                   )}
                   {variant === 'editing' && canPublish && (
                     <Button icon={IcRoundCheck} onClick={publishEdits}>
-                      Publish
+                      {t.publish}
                     </Button>
                   )}
                   {!untranslated &&
@@ -391,17 +369,17 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                           unpublished: variant === 'unpublished'
                         })}
                       >
-                        Publish
+                        {t.publish}
                       </Button>
                     )}
                   {config.enableDrafts && variant === 'editing' && (
                     <Button outline icon={IcRoundSave} onClick={saveDraft}>
-                      Save
+                      {t.saveDraft}
                     </Button>
                   )}
                   {variant === 'revision' && (
                     <Button icon={IcRoundSave} onClick={restoreRevision}>
-                      Restore
+                      {t.restore}
                     </Button>
                   )}
 
@@ -415,7 +393,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                         <DropdownMenu.Item
                           onClick={() => setShowHistory(!showHistory)}
                         >
-                          {showHistory ? 'Hide' : 'Show'} history
+                          {showHistory ? t.hideHistory : t.showHistory}
                         </DropdownMenu.Item>
                       )}
                       {options}
@@ -426,7 +404,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               <button
                 type="button"
                 onClick={() => togglePreview()}
-                title={isPreviewOpen ? 'Hide preview' : 'Display preview'}
+                title={isPreviewOpen ? t.hidePreview : t.showPreview}
                 className={styles.root.previewToggle()}
               >
                 <Icon

@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Sincronização",
+    "synced": "Sincronizado",
+    "saving": "Salvando…"
+  },
+  "urlPicker": {
+    "title": "Link",
+    "url": "URL",
+    "urlHelp": "URL do link",
+    "description": "Descrição",
+    "descriptionHelp": "Texto a ser exibido dentro do elemento de link",
+    "target": "Alvo",
+    "targetDescription": "Abrir link em nova aba",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
+  },
+  "pickLink": {
+    "title": "Selecionar link",
+    "link": "Link",
+    "description": "Descrição",
+    "descriptionHelp": "Texto a ser exibido dentro do elemento de link",
+    "tooltip": "Dica de ferramenta",
+    "tooltipHelp": "Informações extras que descrevem o link, mostradas ao passar o mouse",
+    "newTab": "Abrir link em nova aba",
+    "remove": "Remover link",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
+  },
+  "newEntry": {
+    "title": "Título",
+    "parent": "Pais",
+    "type": "Selecione o tipo",
+    "order": "Inserir ordem",
+    "orderFirst": "No topo da lista",
+    "orderLast": "No final da lista",
+    "copyFrom": "Copiar conteúdo de",
+    "formTitle": "Nova entrada",
+    "cancel": "Cancelar",
+    "create": "Criar"
+  },
+  "entryEdit": {
+    "blockingTitle": "Tem certeza de que deseja descartar as alterações?",
+    "blockingWarning": "Este documento foi alterado",
+    "blockingPrompt": "você gostaria de salvar suas alterações?",
+    "blockingDiscard": "Descartar minhas alterações",
+    "blockingSaveDraft": "Salvar como rascunho",
+    "blockingPublishChanges": "Publicar alterações",
+    "untranslatedTitle": "Não traduzido",
+    "untranslatedParent": "Traduza a página principal primeiro.",
+    "untranslatedPrompt": "Insira os detalhes abaixo e salve para começar a traduzir.",
+    "draftError": "Não foi possível concluir a ação de rascunho, tente novamente mais tarde.",
+    "saveTranslationError": "Não foi possível concluir a ação de tradução. Tente novamente mais tarde.",
+    "publishError": "Não foi possível concluir a ação de publicação. Tente novamente mais tarde.",
+    "discardError": "Não foi possível descartar as alterações, tente novamente mais tarde.",
+    "unpublishError": "Não foi possível concluir a ação de cancelamento de publicação. Tente novamente mais tarde.",
+    "deleteError": "Não foi possível concluir a ação de exclusão. Tente novamente mais tarde.",
+    "archiveError": "Não foi possível concluir a ação de arquivamento. Tente novamente mais tarde."
+  },
+  "entryHeader": {
+    "draft": "Rascunho",
+    "editing": "Edição",
+    "published": "Publicado",
+    "archived": "Arquivado",
+    "untranslated": "Não traduzido",
+    "unpublished": "Não publicado",
+    "revision": "Revisão",
+    "showMenu": "Exibir menu",
+    "hideMenu": "Ocultar menu",
+    "removeDraft": "Remover rascunho",
+    "replace": "Substituir",
+    "delete": "Excluir",
+    "unpublish": "Despublicar",
+    "archive": "Arquivo",
+    "publish": "Publicar",
+    "showHistory": "Mostrar histórico",
+    "hideHistory": "Ocultar histórico",
+    "draftAvailable": "Uma versão de rascunho mais recente está disponível",
+    "translateFrom": "Traduzir de",
+    "translateParent": "Traduzir a página principal primeiro",
+    "discard": "Descartar edições",
+    "save": "Salvar tradução",
+    "saveDraft": "Salvar",
+    "restore": "Restaurar",
+    "showPreview": "Exibir pré-visualização",
+    "hidePreview": "Ocultar visualização",
+    "savingDraft": "Salvando rascunho",
+    "savingTranslation": "Salvando a tradução",
+    "publishingEdits": "Edições de publicação",
+    "restoringRevision": "Restaurando revisão",
+    "publishingDraft": "Rascunho de publicação",
+    "unpublishingDraft": "Rascunho de despublicação",
+    "discardingDraft": "Descartando rascunho",
+    "archivingPublished": "Arquivamento publicado",
+    "publishingArchived": "Publicação arquivada",
+    "deletingFile": "Excluindo arquivo",
+    "deletingEntry": "Excluir entrada"
+  },
+  "contentView": {
+    "create": "Criar novo"
+  },
+  "welcome": {
+    "title": "Sua instalação do alinea agora está pronta para configuração.",
+    "button": "Aprenda a configurar"
+  },
+  "cloudAuthView": {
+    "title": "Parágrafo",
+    "deploy": "Pronto para implementar?",
+    "requiresHandler": "Alinea precisa de um manipulador para continuar",
+    "backend": "Alinea precisa de um backend para continuar.",
+    "customBackend": "configurar completamente um backend personalizado",
+    "cloud": "Ou configure em poucos cliques nossa oferta de nuvem.",
+    "cloudButton": "Continue com alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Configurações",
+    "defaultWorkspace": "Espaço de trabalho padrão",
+    "theme": "Mudar tema",
+    "fontSize": "Tamanho da fonte",
+    "decreaseFontSize": "Diminuir o tamanho da fonte",
+    "increaseFontSize": "Aumentar o tamanho da fonte",
+    "logout": "Sair"
+  },
+  "fileUploader": {
+    "uploadComplete": "Uploads concluídos: {{amount}}",
+    "uploading": "Carregando arquivos: {{amount}}",
+    "upload": "Carregar arquivos"
+  },
+  "fileUploadRow": {
+    "alt": "Arquivo enviado",
+    "done": "Feito"
+  },
+  "fileEntry": {
+    "preview": "Visualização do arquivo de mídia",
+    "extension": "Extensão",
+    "fileSize": "Tamanho do arquivo",
+    "dimensions": "Dimensões",
+    "pixels": "pixels",
+    "url": "URL",
+    "focus": "Ponto de foco",
+    "focusHelp": "Clique na imagem para alterar o ponto de foco"
+  },
+  "cardOverview": {
+    "title": "cartão"
+  },
+  "explorer": {
+    "noResults": "Nenhum resultado"
+  },
+  "editModeToggle": {
+    "edit": "Editar",
+    "review": "Revisar alterações"
+  },
+  "searchBox": {
+    "search": "Procurar"
+  },
+  "rootOverview": {
+    "instruction": "Selecione uma entrada na árvore de navegação\nà esquerda para iniciar a edição"
+  },
+  "inputLabel": {
+    "readonly": "Somente leitura",
+    "shared": "Compartilhado"
+  },
+  "errorBoundary": {
+    "title": "Erro",
+    "oops": "Ops, algo deu errado",
+    "close": "Erro de fechamento",
+    "issue": "Criar um problema"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Espaço de trabalho padrão",
+    "logout": "Sair"
+  },
+  "listField": {
+    "reorder": "Arraste e solte para reordenar",
+    "copy": "Bloco de cópia",
+    "moveUp": "Subir uma posição",
+    "moveDown": "Mover uma posição para baixo",
+    "delete": "Excluir bloco",
+    "paste": "Bloco de colagem",
+    "add": "Inserir novo bloco"
+  },
+  "metadataField": {
+    "previewTitle": "Visualização",
+    "searchEngine": "Motor de busca",
+    "socialShare": "Compartilhamento social",
+    "ogImageAlt": "Imagem do Open Graph"
+  },
+  "pickTextLink": {
+    "title": "Selecionar link",
+    "link": "Link",
+    "description": "Descrição",
+    "descriptionHelp": "Texto a ser exibido dentro do elemento de link",
+    "tooltip": "Dica de ferramenta",
+    "tooltipHelp": "Informações extras que descrevem o link, mostradas ao passar o mouse",
+    "newTab": "Abrir link em nova aba",
+    "remove": "Remover link",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
+  },
+  "richTextField": {
+    "insert": "Inserir bloco"
+  },
+  "richTextToolbar": {
+    "styles": "Título/parágrafo",
+    "table": "Mesa",
+    "bold": "Audacioso",
+    "italic": "itálico",
+    "align": "Alinhamento",
+    "alignLeft": "Alinhar à esquerda",
+    "alignCenter": "Alinhar ao centro",
+    "alignRight": "Alinhar à direita",
+    "alignJustify": "Alinhar justificar",
+    "clear": "Formato claro",
+    "bulletList": "Lista com marcadores",
+    "orderedList": "Lista ordenada",
+    "link": "Link",
+    "quote": "Citação em bloco",
+    "rule": "Régua horizontal",
+    "small": "Pequeno",
+    "sub": "Subscrito",
+    "sup": "Sobrescrito",
+    "paragraph": "Texto normal",
+    "h1": "Título 1",
+    "h2": "Título 2",
+    "h3": "Título 3",
+    "h4": "Título 4",
+    "h5": "Título 5",
+    "tableLabel": "Mesa",
+    "insert": "Inserir tabela",
+    "insertRowBefore": "Inserir linha antes",
+    "insertRowAfter": "Inserir linha após",
+    "deleteRow": "Excluir linha",
+    "toggleHeaderRow": "Alternar linha de cabeçalho",
+    "insertColumnBefore": "Inserir coluna antes",
+    "insertColumnAfter": "Inserir coluna após",
+    "deleteColumn": "Excluir coluna",
+    "deleteTable": "Excluir tabela",
+    "left": "Esquerda",
+    "center": "Centro",
+    "right": "Certo",
+    "justify": "Justificar"
+  },
+  "linkField": {
+    "reorder": "Arraste e solte para reordenar",
+    "open": "Abrir link em nova aba",
+    "openFile": "Abrir arquivo de mídia em uma nova aba",
+    "edit": "Editar link",
+    "editFile": "Alterar imagem",
+    "delete": "Excluir link",
+    "deleteFile": "Excluir imagem"
+  },
+  "entryPicker": {
+    "title": "Selecione uma referência",
+    "searchPlaceholder": "Procurar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
+  }
+}

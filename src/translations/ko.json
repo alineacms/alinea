@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "동기화 중",
+    "synced": "동기화됨",
+    "saving": "절약…"
+  },
+  "urlPicker": {
+    "title": "링크",
+    "url": "URL",
+    "urlHelp": "링크의 URL",
+    "description": "설명",
+    "descriptionHelp": "링크 요소 내부에 표시할 텍스트",
+    "target": "목표",
+    "targetDescription": "새 탭에서 링크 열기",
+    "cancel": "취소",
+    "confirm": "확인하다"
+  },
+  "pickLink": {
+    "title": "링크 선택",
+    "link": "링크",
+    "description": "설명",
+    "descriptionHelp": "링크 요소 내부에 표시할 텍스트",
+    "tooltip": "도구 설명",
+    "tooltipHelp": "링크를 설명하는 추가 정보(호버 시 표시됨)",
+    "newTab": "새 탭에서 링크 열기",
+    "remove": "링크 제거",
+    "cancel": "취소",
+    "confirm": "확인하다"
+  },
+  "newEntry": {
+    "title": "제목",
+    "parent": "조상",
+    "type": "유형을 선택하세요",
+    "order": "삽입 주문",
+    "orderFirst": "목록의 맨 위에",
+    "orderLast": "목록의 맨 아래에",
+    "copyFrom": "콘텐츠 복사",
+    "formTitle": "새로운 항목",
+    "cancel": "취소",
+    "create": "만들다"
+  },
+  "entryEdit": {
+    "blockingTitle": "변경 사항을 취소하시겠습니까?",
+    "blockingWarning": "이 문서는 변경되었습니다",
+    "blockingPrompt": "변경 사항을 저장하시겠습니까?",
+    "blockingDiscard": "내 변경 사항 취소",
+    "blockingSaveDraft": "초안으로 저장",
+    "blockingPublishChanges": "변경 사항 게시",
+    "untranslatedTitle": "번역되지 않음",
+    "untranslatedParent": "먼저 상위 페이지를 번역하세요.",
+    "untranslatedPrompt": "아래에 세부 정보를 입력하고 저장하여 번역을 시작하세요.",
+    "draftError": "초안 작업을 완료할 수 없습니다. 나중에 다시 시도하세요.",
+    "saveTranslationError": "번역 작업을 완료할 수 없습니다. 나중에 다시 시도하세요.",
+    "publishError": "게시 작업을 완료할 수 없습니다. 나중에 다시 시도하세요.",
+    "discardError": "변경 사항을 삭제할 수 없습니다. 나중에 다시 시도하세요.",
+    "unpublishError": "게시 취소 작업을 완료할 수 없습니다. 나중에 다시 시도하세요.",
+    "deleteError": "삭제 작업을 완료할 수 없습니다. 나중에 다시 시도하세요.",
+    "archiveError": "보관 작업을 완료할 수 없습니다. 나중에 다시 시도하세요."
+  },
+  "entryHeader": {
+    "draft": "초안",
+    "editing": "편집 중",
+    "published": "게시됨",
+    "archived": "보관됨",
+    "untranslated": "번역되지 않음",
+    "unpublished": "널리 알려지지 않은",
+    "revision": "개정",
+    "showMenu": "디스플레이 메뉴",
+    "hideMenu": "메뉴 숨기기",
+    "removeDraft": "초안 제거",
+    "replace": "바꾸다",
+    "delete": "삭제",
+    "unpublish": "게시 취소",
+    "archive": "보관소",
+    "publish": "게시하다",
+    "showHistory": "기록 보기",
+    "hideHistory": "기록 숨기기",
+    "draftAvailable": "최신 초안 버전이 출시되었습니다.",
+    "translateFrom": "번역에서",
+    "translateParent": "먼저 상위 페이지를 번역하세요",
+    "discard": "편집 내용 취소",
+    "save": "번역 저장",
+    "saveDraft": "구하다",
+    "restore": "복원하다",
+    "showPreview": "미리보기 표시",
+    "hidePreview": "미리보기 숨기기",
+    "savingDraft": "초안 저장",
+    "savingTranslation": "번역 저장 중",
+    "publishingEdits": "편집 내용 게시",
+    "restoringRevision": "개정판 복원",
+    "publishingDraft": "초안 출판",
+    "unpublishingDraft": "초안 게시 취소",
+    "discardingDraft": "초안 폐기",
+    "archivingPublished": "게시된 보관함",
+    "publishingArchived": "게시됨 보관됨",
+    "deletingFile": "파일 삭제",
+    "deletingEntry": "항목 삭제"
+  },
+  "contentView": {
+    "create": "새로 만들기"
+  },
+  "welcome": {
+    "title": "이제 Alinea 설치를 구성할 준비가 되었습니다.",
+    "button": "구성 방법을 알아보세요"
+  },
+  "cloudAuthView": {
+    "title": "절",
+    "deploy": "배치할 준비가 되셨나요?",
+    "requiresHandler": "Alinea는 계속하려면 핸들러가 필요합니다.",
+    "backend": "Alinea를 계속 사용하려면 백엔드가 필요합니다.",
+    "customBackend": "사용자 정의 백엔드를 완벽하게 구성",
+    "cloud": "또는 클라우드 서비스를 이용해 몇 번의 클릭만으로 설정을 완료하세요.",
+    "cloudButton": "alinea.cloud로 계속 진행하세요"
+  },
+  "sidebarSettings": {
+    "settings": "설정",
+    "defaultWorkspace": "기본 작업 공간",
+    "theme": "테마 전환",
+    "fontSize": "글꼴 크기",
+    "decreaseFontSize": "글꼴 크기 줄이기",
+    "increaseFontSize": "글꼴 크기 늘리기",
+    "logout": "로그아웃"
+  },
+  "fileUploader": {
+    "uploadComplete": "업로드 완료: {{amount}}",
+    "uploading": "파일 업로드 중: {{amount}}",
+    "upload": "파일 업로드"
+  },
+  "fileUploadRow": {
+    "alt": "업로드된 파일",
+    "done": "완료"
+  },
+  "fileEntry": {
+    "preview": "미디어 파일 미리보기",
+    "extension": "확대",
+    "fileSize": "파일 크기",
+    "dimensions": "치수",
+    "pixels": "픽셀",
+    "url": "URL",
+    "focus": "초점 포인트",
+    "focusHelp": "이미지를 클릭하여 초점 포인트를 변경하세요"
+  },
+  "cardOverview": {
+    "title": "카드"
+  },
+  "explorer": {
+    "noResults": "결과가 없습니다"
+  },
+  "editModeToggle": {
+    "edit": "편집하다",
+    "review": "변경 사항 검토"
+  },
+  "searchBox": {
+    "search": "찾다"
+  },
+  "rootOverview": {
+    "instruction": "왼쪽 탐색 트리에서 항목을 선택하여\n편집을 시작하세요."
+  },
+  "inputLabel": {
+    "readonly": "읽기 전용",
+    "shared": "공유됨"
+  },
+  "errorBoundary": {
+    "title": "오류",
+    "oops": "앗, 뭔가 잘못됐어요",
+    "close": "닫기 오류",
+    "issue": "이슈 생성"
+  },
+  "toolbar": {
+    "defaultWorkspace": "기본 작업 공간",
+    "logout": "로그아웃"
+  },
+  "listField": {
+    "reorder": "드래그 앤 드롭으로 재정렬",
+    "copy": "블록 복사",
+    "moveUp": "한 단계 위로 이동",
+    "moveDown": "한 단계 아래로 이동",
+    "delete": "블록 삭제",
+    "paste": "블록 붙여넣기",
+    "add": "새로운 블록 삽입"
+  },
+  "metadataField": {
+    "previewTitle": "시사",
+    "searchEngine": "검색 엔진",
+    "socialShare": "소셜 공유",
+    "ogImageAlt": "오픈 그래프 이미지"
+  },
+  "pickTextLink": {
+    "title": "링크 선택",
+    "link": "링크",
+    "description": "설명",
+    "descriptionHelp": "링크 요소 내부에 표시할 텍스트",
+    "tooltip": "도구 설명",
+    "tooltipHelp": "링크를 설명하는 추가 정보(호버 시 표시됨)",
+    "newTab": "새 탭에서 링크 열기",
+    "remove": "링크 제거",
+    "cancel": "취소",
+    "confirm": "확인하다"
+  },
+  "richTextField": {
+    "insert": "블록 삽입"
+  },
+  "richTextToolbar": {
+    "styles": "제목/단락",
+    "table": "테이블",
+    "bold": "용감한",
+    "italic": "이탤릭체",
+    "align": "조정",
+    "alignLeft": "왼쪽 정렬",
+    "alignCenter": "가운데 정렬",
+    "alignRight": "오른쪽 정렬",
+    "alignJustify": "정렬 정렬",
+    "clear": "명확한 형식",
+    "bulletList": "글머리 기호 목록",
+    "orderedList": "순서가 있는 목록",
+    "link": "링크",
+    "quote": "인용구",
+    "rule": "수평선",
+    "small": "작은",
+    "sub": "아래 첨자",
+    "sup": "어깨 기호",
+    "paragraph": "일반 텍스트",
+    "h1": "제목 1",
+    "h2": "제목 2",
+    "h3": "제목 3",
+    "h4": "제목 4",
+    "h5": "제목 5",
+    "tableLabel": "테이블",
+    "insert": "표 삽입",
+    "insertRowBefore": "행을 앞에 삽입",
+    "insertRowAfter": "행 삽입",
+    "deleteRow": "행 삭제",
+    "toggleHeaderRow": "헤더 행 전환",
+    "insertColumnBefore": "열 삽입 전에",
+    "insertColumnAfter": "다음에 열 삽입",
+    "deleteColumn": "열 삭제",
+    "deleteTable": "테이블 삭제",
+    "left": "왼쪽",
+    "center": "센터",
+    "right": "오른쪽",
+    "justify": "신이 옳다고 하다"
+  },
+  "linkField": {
+    "reorder": "드래그 앤 드롭으로 순서를 변경하세요",
+    "open": "새 탭에서 링크 열기",
+    "openFile": "새 탭에서 미디어 파일 열기",
+    "edit": "링크 편집",
+    "editFile": "이미지 변경",
+    "delete": "링크 삭제",
+    "deleteFile": "이미지 삭제"
+  },
+  "entryPicker": {
+    "title": "참조를 선택하세요",
+    "searchPlaceholder": "찾다",
+    "cancel": "취소",
+    "confirm": "확인하다"
+  }
+}

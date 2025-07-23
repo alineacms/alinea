@@ -5,13 +5,14 @@ import {IcOutlineCloudUpload} from 'alinea/ui/icons/IcOutlineCloudUpload'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {type ChangeEvent, useEffect, useState} from 'react'
+import {useTranslation} from '../../hook/UseTranslation.js'
 import {
   type UploadDestination,
   UploadStatus,
   useUploads
 } from '../../hook/UseUploads.js'
-import {FileUploadRow} from './FileUploadRow.js'
 import css from './FileUploader.module.scss'
+import {FileUploadRow} from './FileUploadRow.js'
 
 const styles = styler(css)
 
@@ -30,6 +31,7 @@ export function FileUploader({
   toggleSelect,
   position = 'right'
 }: FileUploaderProps) {
+  const {fileUploader: t} = useTranslation()
   const readOnly = !destination
   const {upload, uploads} = useUploads(toggleSelect)
   const [isOver, setIsOver] = useState(false)
@@ -50,9 +52,9 @@ export function FileUploader({
   }
   const description = isUploading
     ? isFinished
-      ? `${uploadsDone} upload${uploadsDone > 1 ? 's' : ''} complete`
-      : `uploading ${todo} file${todo > 1 ? 's' : ''}`
-    : 'Upload files'
+      ? t.uploadComplete.replace('{{amount}}', String(uploadsDone))
+      : t.uploading.replace('{{amount}}', String(todo))
+    : t.upload
   useEffect(() => {
     const {body} = document
     let eventTarget: EventTarget | null

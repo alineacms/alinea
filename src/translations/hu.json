@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Szinkronizálás",
+    "synced": "Szinkronizálva",
+    "saving": "Megtakarítás…"
+  },
+  "urlPicker": {
+    "title": "Link",
+    "url": "URL-cím",
+    "urlHelp": "A link URL-címe",
+    "description": "Leírás",
+    "descriptionHelp": "A hivatkozás elemen belül megjelenítendő szöveg",
+    "target": "Cél",
+    "targetDescription": "Link megnyitása új lapon",
+    "cancel": "Mégsem",
+    "confirm": "Megerősítés"
+  },
+  "pickLink": {
+    "title": "Válasszon linket",
+    "link": "Link",
+    "description": "Leírás",
+    "descriptionHelp": "A hivatkozás elemen belül megjelenítendő szöveg",
+    "tooltip": "Elemleírás",
+    "tooltipHelp": "A hivatkozást leíró extra információk, amelyek az egérrel kiemelve jelennek meg",
+    "newTab": "Link megnyitása új lapon",
+    "remove": "Link eltávolítása",
+    "cancel": "Mégsem",
+    "confirm": "Megerősítés"
+  },
+  "newEntry": {
+    "title": "Cím",
+    "parent": "Szülő",
+    "type": "Válasszon típust",
+    "order": "Sorrend beszúrása",
+    "orderFirst": "A lista tetején",
+    "orderLast": "A lista alján",
+    "copyFrom": "Tartalom másolása innen",
+    "formTitle": "Új bejegyzés",
+    "cancel": "Mégsem",
+    "create": "Teremt"
+  },
+  "entryEdit": {
+    "blockingTitle": "Biztosan elveti a változtatásokat?",
+    "blockingWarning": "Ez a dokumentum megváltozott",
+    "blockingPrompt": "Szeretnéd menteni a módosításokat?",
+    "blockingDiscard": "Változtatások elvetése",
+    "blockingSaveDraft": "Mentés piszkozatként",
+    "blockingPublishChanges": "Változások közzététele",
+    "untranslatedTitle": "Lefordítatlan",
+    "untranslatedParent": "Először a szülőoldalt fordítsd le.",
+    "untranslatedPrompt": "Add meg az alábbi adatokat, és mentsd el a fordítás megkezdéséhez.",
+    "draftError": "Nem sikerült befejezni a vázlatműveletet, kérjük, próbálja meg később",
+    "saveTranslationError": "Nem sikerült befejezni a fordítási műveletet, kérjük, próbálja meg később.",
+    "publishError": "A közzétételi művelet nem fejezhető be, kérjük, próbálja meg később.",
+    "discardError": "Nem sikerült elvetni a változtatásokat, kérjük, próbálja újra később.",
+    "unpublishError": "Nem sikerült befejezni a közzététel visszavonását, kérjük, próbálja meg később.",
+    "deleteError": "Nem sikerült befejezni a törlési műveletet, kérjük, próbálja meg később.",
+    "archiveError": "Nem sikerült befejezni az archiválási műveletet, kérjük, próbálja meg később."
+  },
+  "entryHeader": {
+    "draft": "Vázlat",
+    "editing": "Szerkesztés",
+    "published": "Közzétett",
+    "archived": "Archivált",
+    "untranslated": "Lefordítatlan",
+    "unpublished": "Kiadatlan",
+    "revision": "Felülvizsgálat",
+    "showMenu": "Menü megjelenítése",
+    "hideMenu": "Menü elrejtése",
+    "removeDraft": "Vázlat eltávolítása",
+    "replace": "Csere",
+    "delete": "Töröl",
+    "unpublish": "Közzététel visszavonása",
+    "archive": "Archívum",
+    "publish": "Közzététel",
+    "showHistory": "Előzmények megjelenítése",
+    "hideHistory": "Előzmények elrejtése",
+    "draftAvailable": "Újabb vázlatverzió érhető el",
+    "translateFrom": "Fordítás innen:",
+    "translateParent": "Először a szülőoldalt fordítsa le",
+    "discard": "Szerkesztések elvetése",
+    "save": "Fordítás mentése",
+    "saveDraft": "Megtakarítás",
+    "restore": "Visszaállítás",
+    "showPreview": "Előnézet megjelenítése",
+    "hidePreview": "Előnézet elrejtése",
+    "savingDraft": "Vázlat mentése",
+    "savingTranslation": "Fordítás mentése",
+    "publishingEdits": "Szerkesztések közzététele",
+    "restoringRevision": "Verzió visszaállítása",
+    "publishingDraft": "Piszkozat közzététele",
+    "unpublishingDraft": "Vázlat közzétételének visszavonása",
+    "discardingDraft": "Vázlat elvetése",
+    "archivingPublished": "Közzétéve archiválása",
+    "publishingArchived": "Közzététel archiválva",
+    "deletingFile": "Fájl törlése",
+    "deletingEntry": "Bejegyzés törlése"
+  },
+  "contentView": {
+    "create": "Új létrehozása"
+  },
+  "welcome": {
+    "title": "Az alinea telepítése most már készen áll a konfigurálásra.",
+    "button": "Ismerje meg, hogyan konfigurálható"
+  },
+  "cloudAuthView": {
+    "title": "Bekezdés",
+    "deploy": "Készen áll a telepítésre?",
+    "requiresHandler": "Alinea folytatásához kezelőre van szükség.",
+    "backend": "Az Alinea folytatásához háttérrendszerre van szükség.",
+    "customBackend": "egyéni háttérrendszer teljes konfigurálása",
+    "cloud": "Vagy állítsd be néhány kattintással felhőalapú ajánlatunkkal.",
+    "cloudButton": "Folytatás az alinea.clouddal"
+  },
+  "sidebarSettings": {
+    "settings": "Beállítások",
+    "defaultWorkspace": "Alapértelmezett munkaterület",
+    "theme": "Témaváltás",
+    "fontSize": "Betűméret",
+    "decreaseFontSize": "Betűméret csökkentése",
+    "increaseFontSize": "Betűméret növelése",
+    "logout": "Kijelentkezés"
+  },
+  "fileUploader": {
+    "uploadComplete": "Feltöltések befejeződtek: {{amount}}",
+    "uploading": "Fájlok feltöltése: {{amount}}",
+    "upload": "Fájlok feltöltése"
+  },
+  "fileUploadRow": {
+    "alt": "Feltöltött fájl",
+    "done": "Kész"
+  },
+  "fileEntry": {
+    "preview": "Médiafájl előnézete",
+    "extension": "Kiterjesztés",
+    "fileSize": "Fájlméret",
+    "dimensions": "Méretek",
+    "pixels": "pixelek",
+    "url": "URL-cím",
+    "focus": "Fókuszpont",
+    "focusHelp": "Kattintson a képre a fókuszpont megváltoztatásához"
+  },
+  "cardOverview": {
+    "title": "kártya"
+  },
+  "explorer": {
+    "noResults": "Nincs találat"
+  },
+  "editModeToggle": {
+    "edit": "Szerkesztés",
+    "review": "Változások áttekintése"
+  },
+  "searchBox": {
+    "search": "Keresés"
+  },
+  "rootOverview": {
+    "instruction": "Válasszon ki egy bejegyzést a bal oldali navigációs fában a szerkesztés megkezdéséhez"
+  },
+  "inputLabel": {
+    "readonly": "Csak olvasható",
+    "shared": "Megosztott"
+  },
+  "errorBoundary": {
+    "title": "Hiba",
+    "oops": "Hoppá, valami hiba történt",
+    "close": "Bezárási hiba",
+    "issue": "Probléma létrehozása"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Alapértelmezett munkaterület",
+    "logout": "Kijelentkezés"
+  },
+  "listField": {
+    "reorder": "Húzd át az átrendezéshez",
+    "copy": "Másolási blokk",
+    "moveUp": "Egy pozícióval feljebb lépés",
+    "moveDown": "Egy pozícióval lejjebb lépés",
+    "delete": "Blokk törlése",
+    "paste": "Beillesztési blokk",
+    "add": "Új blokk beszúrása"
+  },
+  "metadataField": {
+    "previewTitle": "Előnézet",
+    "searchEngine": "Keresőmotor",
+    "socialShare": "Közösségi megosztás",
+    "ogImageAlt": "Nyissa meg a grafikon képét"
+  },
+  "pickTextLink": {
+    "title": "Válasszon linket",
+    "link": "Link",
+    "description": "Leírás",
+    "descriptionHelp": "A hivatkozás elemen belül megjelenítendő szöveg",
+    "tooltip": "Elemleírás",
+    "tooltipHelp": "A hivatkozást leíró extra információk, amelyek az egérrel kiemelve jelennek meg",
+    "newTab": "Link megnyitása új lapon",
+    "remove": "Link eltávolítása",
+    "cancel": "Mégsem",
+    "confirm": "Megerősítés"
+  },
+  "richTextField": {
+    "insert": "Blokk beszúrása"
+  },
+  "richTextToolbar": {
+    "styles": "Címsor/bekezdés",
+    "table": "Táblázat",
+    "bold": "Bátor",
+    "italic": "Dőlt betűs",
+    "align": "Igazítás",
+    "alignLeft": "Balra igazítás",
+    "alignCenter": "Középre igazítás",
+    "alignRight": "Jobbra igazítás",
+    "alignJustify": "Sorkizárás",
+    "clear": "Tiszta formátum",
+    "bulletList": "Felsorolás",
+    "orderedList": "Rendezett lista",
+    "link": "Link",
+    "quote": "Idézetblokk",
+    "rule": "Vízszintes vonal",
+    "small": "Kicsi",
+    "sub": "Alsó index",
+    "sup": "Felső index",
+    "paragraph": "Normál szöveg",
+    "h1": "1. címsor",
+    "h2": "2. címsor",
+    "h3": "3. címsor",
+    "h4": "4. címsor",
+    "h5": "5. címsor",
+    "tableLabel": "Táblázat",
+    "insert": "Táblázat beszúrása",
+    "insertRowBefore": "Sor beszúrása elé",
+    "insertRowAfter": "Sor beszúrása után",
+    "deleteRow": "Sor törlése",
+    "toggleHeaderRow": "Fejlécsor be-/kikapcsolása",
+    "insertColumnBefore": "Oszlop beszúrása elé",
+    "insertColumnAfter": "Oszlop beszúrása után",
+    "deleteColumn": "Oszlop törlése",
+    "deleteTable": "Táblázat törlése",
+    "left": "Balra",
+    "center": "Központ",
+    "right": "Jobbra",
+    "justify": "Sorkizárás"
+  },
+  "linkField": {
+    "reorder": "Húzd át az átrendezéshez",
+    "open": "Link megnyitása új lapon",
+    "openFile": "Médiafájl megnyitása új lapon",
+    "edit": "Link szerkesztése",
+    "editFile": "Kép módosítása",
+    "delete": "Link törlése",
+    "deleteFile": "Kép törlése"
+  },
+  "entryPicker": {
+    "title": "Válasszon egy referenciát",
+    "searchPlaceholder": "Keresés",
+    "cancel": "Mégsem",
+    "confirm": "Megerősítés"
+  }
+}

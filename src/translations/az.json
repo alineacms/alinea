@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Sinxronizasiya",
+    "synced": "Sinxronlaşdırıldı",
+    "saving": "Yadda saxlanılır..."
+  },
+  "urlPicker": {
+    "title": "Link",
+    "url": "Url",
+    "urlHelp": "Linkin URL-i",
+    "description": "Təsvir",
+    "descriptionHelp": "Link elementinin daxilində göstəriləcək mətn",
+    "target": "Hədəf",
+    "targetDescription": "Linki yeni tabda açın",
+    "cancel": "Ləğv et",
+    "confirm": "Təsdiq edin"
+  },
+  "pickLink": {
+    "title": "Link seçin",
+    "link": "Link",
+    "description": "Təsvir",
+    "descriptionHelp": "Link elementinin daxilində göstəriləcək mətn",
+    "tooltip": "Alət göstərişi",
+    "tooltipHelp": "Hover üzərində göstərilən keçidi təsvir edən əlavə məlumat",
+    "newTab": "Linki yeni tabda açın",
+    "remove": "Linki silin",
+    "cancel": "Ləğv et",
+    "confirm": "Təsdiq edin"
+  },
+  "newEntry": {
+    "title": "Başlıq",
+    "parent": "Valideyn",
+    "type": "Növü seçin",
+    "order": "Sifariş daxil edin",
+    "orderFirst": "Siyahının başında",
+    "orderLast": "Siyahının sonunda",
+    "copyFrom": "Məzmunu buradan kopyalayın",
+    "formTitle": "Yeni giriş",
+    "cancel": "Ləğv et",
+    "create": "Yaradın"
+  },
+  "entryEdit": {
+    "blockingTitle": "Dəyişiklikləri ləğv etmək istədiyinizə əminsiniz?",
+    "blockingWarning": "Bu sənəd dəyişdirildi",
+    "blockingPrompt": "dəyişikliklərinizi saxlamaq istərdinizmi?",
+    "blockingDiscard": "Dəyişikliklərimi ləğv edin",
+    "blockingSaveDraft": "Qaralama olaraq yadda saxlayın",
+    "blockingPublishChanges": "Dəyişiklikləri dərc edin",
+    "untranslatedTitle": "Tərcümə edilməmiş",
+    "untranslatedParent": "Əvvəlcə ana səhifəni tərcümə edin.",
+    "untranslatedPrompt": "Aşağıdakı təfərrüatları daxil edin və tərcüməyə başlamaq üçün yadda saxlayın.",
+    "draftError": "Qaralama əməliyyatı tamamlamaq mümkün olmadı, sonra yenidən cəhd edin",
+    "saveTranslationError": "Tərcümə əməliyyatını tamamlamaq mümkün olmadı, sonra yenidən cəhd edin",
+    "publishError": "Yayımlama əməliyyatını tamamlamaq mümkün olmadı, sonra yenidən cəhd edin",
+    "discardError": "Dəyişiklikləri ləğv etmək mümkün olmadı, sonra yenidən cəhd edin",
+    "unpublishError": "Dərcdən çıxarma əməliyyatını tamamlamaq mümkün olmadı, sonra yenidən cəhd edin",
+    "deleteError": "Silinmə əməliyyatını tamamlamaq mümkün olmadı, sonra yenidən cəhd edin",
+    "archiveError": "Arxiv əməliyyatını tamamlamaq mümkün olmadı, sonra yenidən cəhd edin"
+  },
+  "entryHeader": {
+    "draft": "Qaralama",
+    "editing": "Redaktə",
+    "published": "Nəşr edilmişdir",
+    "archived": "Arxivləşdirilib",
+    "untranslated": "Tərcümə edilməmiş",
+    "unpublished": "Dərc olunmayıb",
+    "revision": "Reviziya",
+    "showMenu": "Menyu göstərin",
+    "hideMenu": "Menyu gizlət",
+    "removeDraft": "Qaralamanı silin",
+    "replace": "Əvəz edin",
+    "delete": "Sil",
+    "unpublish": "Dərcdən çıxarın",
+    "archive": "Arxiv",
+    "publish": "dərc et",
+    "showHistory": "Tarixi göstərin",
+    "hideHistory": "Tarixi gizlədin",
+    "draftAvailable": "Daha yeni qaralama versiyası mövcuddur",
+    "translateFrom": "Tərcümə et",
+    "translateParent": "Əvvəlcə ana səhifəni tərcümə edin",
+    "discard": "Redaktələri ləğv edin",
+    "save": "Tərcüməni yadda saxla",
+    "saveDraft": "Saxla",
+    "restore": "Bərpa et",
+    "showPreview": "Önizləməni göstərin",
+    "hidePreview": "Önizləməni gizlədin",
+    "savingDraft": "Qaralama yadda saxlanılır",
+    "savingTranslation": "Tərcümə saxlanılır",
+    "publishingEdits": "Redaktələrin nəşri",
+    "restoringRevision": "Revizyon bərpa edilir",
+    "publishingDraft": "Qaralama nəşr olunur",
+    "unpublishingDraft": "Qaralama dərcdən çıxarılır",
+    "discardingDraft": "Qaralama ləğv edilir",
+    "archivingPublished": "Arxiv nəşr olundu",
+    "publishingArchived": "Nəşr arxivləşdirildi",
+    "deletingFile": "Fayl silinir",
+    "deletingEntry": "Girişi silin"
+  },
+  "contentView": {
+    "create": "Yeni yaradın"
+  },
+  "welcome": {
+    "title": "Alinea quraşdırmanız artıq konfiqurasiyaya hazırdır.",
+    "button": "Necə konfiqurasiya edəcəyinizi öyrənin"
+  },
+  "cloudAuthView": {
+    "title": "Paraqraf",
+    "deploy": "Yerləşdirməyə hazırsınız?",
+    "requiresHandler": "Alinea davam etmək üçün bir idarəçi tələb edir",
+    "backend": "Alinea davam etmək üçün backend tələb edir.",
+    "customBackend": "xüsusi backend-i tam konfiqurasiya edin",
+    "cloud": "Və ya bulud təklifimizlə bir neçə kliklə quraşdırın.",
+    "cloudButton": "alinea.cloud ilə davam edin"
+  },
+  "sidebarSettings": {
+    "settings": "Parametrlər",
+    "defaultWorkspace": "Defolt iş sahəsi",
+    "theme": "Mövzunu dəyişin",
+    "fontSize": "Şrift ölçüsü",
+    "decreaseFontSize": "Şriftin ölçüsünü azaldın",
+    "increaseFontSize": "Şriftin ölçüsünü artırın",
+    "logout": "Çıxın"
+  },
+  "fileUploader": {
+    "uploadComplete": "Yükləmələr tamamlandı: {{amount}}",
+    "uploading": "Fayllar yüklənir: {{amount}}",
+    "upload": "Faylları yükləyin"
+  },
+  "fileUploadRow": {
+    "alt": "Yüklənmiş fayl",
+    "done": "Bitdi"
+  },
+  "fileEntry": {
+    "preview": "Media faylına ön baxış",
+    "extension": "Uzatma",
+    "fileSize": "Fayl ölçüsü",
+    "dimensions": "Ölçülər",
+    "pixels": "piksel",
+    "url": "URL",
+    "focus": "Fokus nöqtəsi",
+    "focusHelp": "Fokus nöqtəsini dəyişdirmək üçün şəklin üzərinə klikləyin"
+  },
+  "cardOverview": {
+    "title": "kart"
+  },
+  "explorer": {
+    "noResults": "Nəticə yoxdur"
+  },
+  "editModeToggle": {
+    "edit": "Redaktə et",
+    "review": "Dəyişiklikləri nəzərdən keçirin"
+  },
+  "searchBox": {
+    "search": "Axtar"
+  },
+  "rootOverview": {
+    "instruction": "Naviqasiya ağacında giriş seçin\nredaktə etməyə başlamaq üçün solda"
+  },
+  "inputLabel": {
+    "readonly": "Yalnız oxumaq üçün",
+    "shared": "Paylaşıldı"
+  },
+  "errorBoundary": {
+    "title": "Xəta",
+    "oops": "Ups, nəsə xəta baş verdi",
+    "close": "Bağlama xətası",
+    "issue": "Problem yaradın"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Defolt iş sahəsi",
+    "logout": "Çıxın"
+  },
+  "listField": {
+    "reorder": "Yenidən sıralamaq üçün sürükləyin və buraxın",
+    "copy": "Blok kopyalayın",
+    "moveUp": "Bir mövqe yuxarı hərəkət edin",
+    "moveDown": "Bir mövqe aşağı hərəkət edin",
+    "delete": "Bloku silin",
+    "paste": "Blok yapışdırın",
+    "add": "Yeni blok daxil edin"
+  },
+  "metadataField": {
+    "previewTitle": "Önizləmə",
+    "searchEngine": "Axtarış motoru",
+    "socialShare": "Sosial paylaşım",
+    "ogImageAlt": "Qrafik şəklini açın"
+  },
+  "pickTextLink": {
+    "title": "Link seçin",
+    "link": "Link",
+    "description": "Təsvir",
+    "descriptionHelp": "Link elementinin daxilində göstəriləcək mətn",
+    "tooltip": "Alət göstərişi",
+    "tooltipHelp": "Hover üzərində göstərilən keçidi təsvir edən əlavə məlumat",
+    "newTab": "Linki yeni tabda açın",
+    "remove": "Linki silin",
+    "cancel": "Ləğv et",
+    "confirm": "Təsdiq edin"
+  },
+  "richTextField": {
+    "insert": "Blok daxil edin"
+  },
+  "richTextToolbar": {
+    "styles": "Başlıq/paraqraf",
+    "table": "Cədvəl",
+    "bold": "Cəsarətli",
+    "italic": "kursiv",
+    "align": "Hizalanma",
+    "alignLeft": "Sola düzün",
+    "alignCenter": "Mərkəzi hizalayın",
+    "alignRight": "Sağa düzün",
+    "alignJustify": "Düzləşdirin",
+    "clear": "Təmiz format",
+    "bulletList": "Güllə siyahısı",
+    "orderedList": "Sifarişli siyahı",
+    "link": "Link",
+    "quote": "Blok sitat",
+    "rule": "Üfüqi qayda",
+    "small": "Kiçik",
+    "sub": "Subscript",
+    "sup": "Üst yazı",
+    "paragraph": "Normal mətn",
+    "h1": "Başlıq 1",
+    "h2": "Başlıq 2",
+    "h3": "Başlıq 3",
+    "h4": "Başlıq 4",
+    "h5": "Başlıq 5",
+    "tableLabel": "Cədvəl",
+    "insert": "Cədvəl daxil edin",
+    "insertRowBefore": "Öncə sıra daxil edin",
+    "insertRowAfter": "Sonra sıra daxil edin",
+    "deleteRow": "Sıranı silin",
+    "toggleHeaderRow": "Başlıq sırasını dəyişin",
+    "insertColumnBefore": "Əvvəl sütun daxil edin",
+    "insertColumnAfter": "Sonra sütun daxil edin",
+    "deleteColumn": "Sütunu silin",
+    "deleteTable": "Cədvəl silin",
+    "left": "Sol",
+    "center": "mərkəz",
+    "right": "Sağ",
+    "justify": "Əsaslandırmaq"
+  },
+  "linkField": {
+    "reorder": "Yenidən sıralamaq üçün sürükləyin və buraxın",
+    "open": "Linki yeni tabda açın",
+    "openFile": "Media faylını yeni tabda açın",
+    "edit": "Linki redaktə edin",
+    "editFile": "Şəkli dəyişdirin",
+    "delete": "Linki silin",
+    "deleteFile": "Şəkli silin"
+  },
+  "entryPicker": {
+    "title": "İstinad seçin",
+    "searchPlaceholder": "Axtar",
+    "cancel": "Ləğv et",
+    "confirm": "Təsdiq edin"
+  }
+}

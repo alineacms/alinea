@@ -4,12 +4,13 @@ import {Reference} from 'alinea/core/Reference'
 import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {check} from 'alinea/field/check'
 import {text} from 'alinea/field/text'
 import {Button, HStack, Stack} from 'alinea/ui'
 import {type FormEvent, useMemo} from 'react'
-import {UrlReference, urlPicker as createUrlPicker} from './UrlPicker.js'
+import {urlPicker as createUrlPicker, UrlReference} from './UrlPicker.js'
 import {UrlPickerRow} from './UrlPickerRow.js'
 
 export * from './UrlPicker.js'
@@ -25,20 +26,21 @@ export function UrlPickerForm({
   onConfirm,
   onCancel
 }: PickerProps) {
+  const {urlPicker: t} = useTranslation()
   const preSelected = selection?.[0] as UrlReference | undefined
   const linkForm = useMemo(
     () =>
-      type('Link', {
+      type(t.title, {
         fields: {
-          url: text('Url', {
+          url: text(t.url, {
             required: true,
-            help: 'Url of the link'
+            help: t.urlHelp
           }),
-          title: text('Description', {
-            help: 'Text to display inside the link element'
+          title: text(t.description, {
+            help: t.descriptionHelp
           }),
-          blank: check('Target', {
-            description: 'Open link in new tab',
+          blank: check(t.target, {
+            description: t.targetDescription,
             initialValue: true
           })
         }
@@ -74,9 +76,9 @@ export function UrlPickerForm({
         <Stack.Right>
           <HStack gap={16}>
             <Button outline type="button" onClick={onCancel}>
-              Cancel
+              {t.cancel}
             </Button>
-            <Button>Confirm</Button>
+            <Button>{t.confirm}</Button>
           </HStack>
         </Stack.Right>
       </HStack>

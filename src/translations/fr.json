@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Synchronisation",
+    "synced": "Synchronisé",
+    "saving": "Économie…"
+  },
+  "urlPicker": {
+    "title": "Lien",
+    "url": "URL",
+    "urlHelp": "URL du lien",
+    "description": "Description",
+    "descriptionHelp": "Texte à afficher à l'intérieur de l'élément de lien",
+    "target": "Cible",
+    "targetDescription": "Ouvrir le lien dans un nouvel onglet",
+    "cancel": "Annuler",
+    "confirm": "Confirmer"
+  },
+  "pickLink": {
+    "title": "Choisir le lien",
+    "link": "Lien",
+    "description": "Description",
+    "descriptionHelp": "Texte à afficher à l'intérieur de l'élément de lien",
+    "tooltip": "Info-bulle",
+    "tooltipHelp": "Informations supplémentaires décrivant le lien, affichées au survol",
+    "newTab": "Ouvrir le lien dans un nouvel onglet",
+    "remove": "Supprimer le lien",
+    "cancel": "Annuler",
+    "confirm": "Confirmer"
+  },
+  "newEntry": {
+    "title": "Titre",
+    "parent": "Mère",
+    "type": "Sélectionnez le type",
+    "order": "Ordre d'insertion",
+    "orderFirst": "En tête de liste",
+    "orderLast": "Au bas de la liste",
+    "copyFrom": "Copier le contenu de",
+    "formTitle": "Nouvelle entrée",
+    "cancel": "Annuler",
+    "create": "Créer"
+  },
+  "entryEdit": {
+    "blockingTitle": "Êtes-vous sûr de vouloir annuler les modifications ?",
+    "blockingWarning": "Ce document a été modifié",
+    "blockingPrompt": "Souhaitez-vous enregistrer vos modifications ?",
+    "blockingDiscard": "Annuler mes modifications",
+    "blockingSaveDraft": "Enregistrer comme brouillon",
+    "blockingPublishChanges": "Publier les modifications",
+    "untranslatedTitle": "Non traduit",
+    "untranslatedParent": "Traduisez d’abord la page parent.",
+    "untranslatedPrompt": "Saisissez les détails ci-dessous et enregistrez pour commencer la traduction.",
+    "draftError": "Impossible de terminer le brouillon, veuillez réessayer plus tard",
+    "saveTranslationError": "Impossible de terminer l'action de traduction, veuillez réessayer plus tard",
+    "publishError": "Impossible de terminer l'action de publication, veuillez réessayer plus tard",
+    "discardError": "Impossible d'annuler les modifications, veuillez réessayer plus tard",
+    "unpublishError": "Impossible de terminer l'action de non-publication, veuillez réessayer plus tard",
+    "deleteError": "Impossible de terminer l'action de suppression, veuillez réessayer plus tard",
+    "archiveError": "Impossible de terminer l'action d'archivage, veuillez réessayer plus tard"
+  },
+  "entryHeader": {
+    "draft": "Brouillon",
+    "editing": "Édition",
+    "published": "Publié",
+    "archived": "Archivé",
+    "untranslated": "Non traduit",
+    "unpublished": "Inédit",
+    "revision": "Révision",
+    "showMenu": "Afficher le menu",
+    "hideMenu": "Masquer le menu",
+    "removeDraft": "Supprimer le brouillon",
+    "replace": "Remplacer",
+    "delete": "Supprimer",
+    "unpublish": "Dépublier",
+    "archive": "Archive",
+    "publish": "Publier",
+    "showHistory": "Afficher l'historique",
+    "hideHistory": "Masquer l'historique",
+    "draftAvailable": "Une version préliminaire plus récente est disponible",
+    "translateFrom": "Traduire de",
+    "translateParent": "Traduire d'abord la page parent",
+    "discard": "Annuler les modifications",
+    "save": "Enregistrer la traduction",
+    "saveDraft": "Sauvegarder",
+    "restore": "Restaurer",
+    "showPreview": "Aperçu de l'affichage",
+    "hidePreview": "Masquer l'aperçu",
+    "savingDraft": "Sauvegarde du brouillon",
+    "savingTranslation": "Sauvegarde de la traduction",
+    "publishingEdits": "Modifications de publication",
+    "restoringRevision": "Restauration de la révision",
+    "publishingDraft": "Projet de publication",
+    "unpublishingDraft": "Brouillon de dépublication",
+    "discardingDraft": "Rejet du projet",
+    "archivingPublished": "Archivage publié",
+    "publishingArchived": "Publication archivée",
+    "deletingFile": "Suppression du fichier",
+    "deletingEntry": "Supprimer l'entrée"
+  },
+  "contentView": {
+    "create": "Créer un nouveau"
+  },
+  "welcome": {
+    "title": "Votre installation alinea est maintenant prête à être configurée.",
+    "button": "Apprenez à configurer"
+  },
+  "cloudAuthView": {
+    "title": "Paragraphe",
+    "deploy": "Prêt à être déployé ?",
+    "requiresHandler": "Alinea a besoin d'un maître pour continuer",
+    "backend": "Alinea nécessite un backend pour continuer.",
+    "customBackend": "configurer entièrement un backend personnalisé",
+    "cloud": "Ou installez-vous en quelques clics avec notre offre cloud.",
+    "cloudButton": "Continuer avec alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Paramètres",
+    "defaultWorkspace": "Espace de travail par défaut",
+    "theme": "Changer de thème",
+    "fontSize": "Taille de la police",
+    "decreaseFontSize": "Réduire la taille de la police",
+    "increaseFontSize": "Augmenter la taille de la police",
+    "logout": "Déconnexion"
+  },
+  "fileUploader": {
+    "uploadComplete": "Téléchargements terminés : {{amount}}",
+    "uploading": "Téléchargement de fichiers : {{amount}}",
+    "upload": "Télécharger des fichiers"
+  },
+  "fileUploadRow": {
+    "alt": "Fichier téléchargé",
+    "done": "Fait"
+  },
+  "fileEntry": {
+    "preview": "Aperçu du fichier multimédia",
+    "extension": "Extension",
+    "fileSize": "Taille du fichier",
+    "dimensions": "Dimensions",
+    "pixels": "pixels",
+    "url": "URL",
+    "focus": "Point focal",
+    "focusHelp": "Cliquez sur l'image pour changer le point de focalisation"
+  },
+  "cardOverview": {
+    "title": "carte"
+  },
+  "explorer": {
+    "noResults": "Aucun résultat"
+  },
+  "editModeToggle": {
+    "edit": "Modifier",
+    "review": "Examiner les modifications"
+  },
+  "searchBox": {
+    "search": "Recherche"
+  },
+  "rootOverview": {
+    "instruction": "Sélectionnez une entrée dans l'arborescence de navigation\nà gauche pour commencer la modification."
+  },
+  "inputLabel": {
+    "readonly": "Lecture seule",
+    "shared": "Commun"
+  },
+  "errorBoundary": {
+    "title": "Erreur",
+    "oops": "Oups, quelque chose s'est mal passé",
+    "close": "Erreur de fermeture",
+    "issue": "Créer un problème"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Espace de travail par défaut",
+    "logout": "Déconnexion"
+  },
+  "listField": {
+    "reorder": "Glissez-déposez pour réorganiser",
+    "copy": "Bloc de copie",
+    "moveUp": "Monter d'une position",
+    "moveDown": "Descendre d'une position",
+    "delete": "Supprimer le bloc",
+    "paste": "Coller le bloc",
+    "add": "Insérer un nouveau bloc"
+  },
+  "metadataField": {
+    "previewTitle": "Aperçu",
+    "searchEngine": "Moteur de recherche",
+    "socialShare": "Partage social",
+    "ogImageAlt": "Image graphique ouverte"
+  },
+  "pickTextLink": {
+    "title": "Choisir le lien",
+    "link": "Lien",
+    "description": "Description",
+    "descriptionHelp": "Texte à afficher à l'intérieur de l'élément de lien",
+    "tooltip": "Info-bulle",
+    "tooltipHelp": "Informations supplémentaires décrivant le lien, affichées au survol",
+    "newTab": "Ouvrir le lien dans un nouvel onglet",
+    "remove": "Supprimer le lien",
+    "cancel": "Annuler",
+    "confirm": "Confirmer"
+  },
+  "richTextField": {
+    "insert": "Insérer un bloc"
+  },
+  "richTextToolbar": {
+    "styles": "Titre/paragraphe",
+    "table": "Tableau",
+    "bold": "Audacieux",
+    "italic": "Italique",
+    "align": "Alignement",
+    "alignLeft": "Aligner à gauche",
+    "alignCenter": "Aligner le centre",
+    "alignRight": "Aligner à droite",
+    "alignJustify": "Aligner et justifier",
+    "clear": "Format clair",
+    "bulletList": "Liste à puces",
+    "orderedList": "Liste ordonnée",
+    "link": "Lien",
+    "quote": "Citation en bloc",
+    "rule": "Règle horizontale",
+    "small": "Petit",
+    "sub": "Indice",
+    "sup": "Exposant",
+    "paragraph": "Texte normal",
+    "h1": "Titre 1",
+    "h2": "Titre 2",
+    "h3": "Titre 3",
+    "h4": "Titre 4",
+    "h5": "Titre 5",
+    "tableLabel": "Tableau",
+    "insert": "Insérer un tableau",
+    "insertRowBefore": "Insérer une ligne avant",
+    "insertRowAfter": "Insérer une ligne après",
+    "deleteRow": "Supprimer la ligne",
+    "toggleHeaderRow": "Basculer la ligne d'en-tête",
+    "insertColumnBefore": "Insérer une colonne avant",
+    "insertColumnAfter": "Insérer une colonne après",
+    "deleteColumn": "Supprimer la colonne",
+    "deleteTable": "Supprimer le tableau",
+    "left": "Gauche",
+    "center": "Centre",
+    "right": "Droite",
+    "justify": "Justifier"
+  },
+  "linkField": {
+    "reorder": "Glissez-déposez pour réorganiser",
+    "open": "Ouvrir le lien dans un nouvel onglet",
+    "openFile": "Ouvrir le fichier multimédia dans un nouvel onglet",
+    "edit": "Modifier le lien",
+    "editFile": "Changer l'image",
+    "delete": "Supprimer le lien",
+    "deleteFile": "Supprimer l'image"
+  },
+  "entryPicker": {
+    "title": "Sélectionnez une référence",
+    "searchPlaceholder": "Recherche",
+    "cancel": "Annuler",
+    "confirm": "Confirmer"
+  }
+}

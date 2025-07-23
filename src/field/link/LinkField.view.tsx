@@ -36,6 +36,7 @@ import {useField} from 'alinea/dashboard/editor/UseField'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {useLocale} from 'alinea/dashboard/hook/UseLocale'
 import {useNav} from 'alinea/dashboard/hook/UseNav'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {SuspenseBoundary} from 'alinea/dashboard/util/SuspenseBoundary'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
@@ -370,8 +371,10 @@ function LinkInputRow({
   multiple,
   ...rest
 }: LinkInputRowProps) {
+  const {linkField: t} = useTranslation()
   const onView = useReferenceViewer()
   const RowView = picker.viewRow!
+  const isFile = reference[Reference.type] === 'file'
   const inner = (
     <div
       className={styles.row({
@@ -388,7 +391,7 @@ function LinkInputRow({
               icon={IcRoundDragHandle}
               {...handle}
               style={{cursor: handle ? 'grab' : 'grabbing'}}
-              title="Drag and drop to reorder"
+              title={t.reorder}
             />
           ) : (
             <div className={styles.row.staticHandle()}>
@@ -406,25 +409,17 @@ function LinkInputRow({
             <IconButton
               icon={IcRoundOpenInNew}
               onClick={() => onView(reference)}
-              title={
-                reference?._type === 'image'
-                  ? 'Open media file in new tab'
-                  : 'Open link in new tab'
-              }
+              title={t[isFile ? 'openFile' : 'open']}
             />
             <IconButton
               icon={IcRoundEdit}
               onClick={onEdit}
-              title={
-                reference?._type === 'image' ? 'Change image' : 'Edit link'
-              }
+              title={t[isFile ? 'editFile' : 'edit']}
             />
             <IconButton
               icon={IcRoundClose}
               onClick={onRemove}
-              title={
-                reference?._type === 'image' ? 'Delete image' : 'Delete link'
-              }
+              title={t[isFile ? 'deleteFile' : 'delete']}
             />
           </Sink.Options>
         )}

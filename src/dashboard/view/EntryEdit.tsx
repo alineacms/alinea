@@ -4,12 +4,12 @@ import {Type} from 'alinea/core/Type'
 import {TabsSection} from 'alinea/field/tabs/Tabs'
 import {TabsHeader} from 'alinea/field/tabs/Tabs.view'
 import {Button, HStack, Stack, VStack} from 'alinea/ui'
-import {Main} from 'alinea/ui/Main'
-import {Statusbar} from 'alinea/ui/Statusbar'
-import {Tabs} from 'alinea/ui/Tabs'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
+import {Main} from 'alinea/ui/Main'
+import {Statusbar} from 'alinea/ui/Statusbar'
+import {Tabs} from 'alinea/ui/Tabs'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useEffect, useRef, useState} from 'react'
 import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
@@ -21,12 +21,11 @@ import {useDashboard} from '../hook/UseDashboard.js'
 import {EntryEditorProvider} from '../hook/UseEntryEditor.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
+import {useTranslation} from '../hook/UseTranslation.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import {Modal} from '../view/Modal.js'
-import css from './EntryEdit.module.scss'
-import {Preview} from './Preview.js'
-import {useSidebar} from './Sidebar.js'
 import {EntryDiff} from './diff/EntryDiff.js'
+import css from './EntryEdit.module.scss'
 import {EditMode} from './entry/EditModeToggle.js'
 import {EntryHeader} from './entry/EntryHeader.js'
 import {EntryHistory} from './entry/EntryHistory.js'
@@ -34,7 +33,9 @@ import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
 import {FieldToolbar} from './entry/FieldToolbar.js'
+import {Preview} from './Preview.js'
 import {BrowserPreviewMetaProvider} from './preview/BrowserPreview.js'
+import {useSidebar} from './Sidebar.js'
 
 const styles = styler(css)
 
@@ -55,6 +56,7 @@ export interface EntryEditProps {
 
 export function EntryEdit({editor}: EntryEditProps) {
   const {alineaDev} = useDashboard()
+  const {entryEdit: t} = useTranslation()
   const locale = useLocale()
   const config = useConfig()
   const {isPreviewOpen} = useSidebar()
@@ -68,7 +70,7 @@ export function EntryEdit({editor}: EntryEditProps) {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedStatus])
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
-    'Are you sure you want to discard changes?',
+    t.blockingTitle,
     !editor.untranslated && hasChanges
   )
   const isNavigationChange =
@@ -145,9 +147,9 @@ export function EntryEdit({editor}: EntryEditProps) {
         <Modal open onClose={() => cancel()}>
           <VStack gap={30}>
             <p>
-              This document was changed,
+              {t.blockingWarning},
               <br />
-              would you like to save your changes?
+              {t.blockingPrompt}
             </p>
             <HStack as="footer">
               <Stack.Right>
@@ -160,7 +162,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                       confirm()
                     }}
                   >
-                    Discard my changes
+                    {t.blockingDiscard}
                   </Button>
                   {config.enableDrafts ? (
                     <Button
@@ -169,7 +171,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                         confirm()
                       }}
                     >
-                      Save as draft
+                      {t.blockingSaveDraft}
                     </Button>
                   ) : (
                     <Button
@@ -178,7 +180,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                         confirm()
                       }}
                     >
-                      Publish changes
+                      {t.blockingPublishChanges}
                     </Button>
                   )}
                 </HStack>
@@ -218,12 +220,12 @@ export function EntryEdit({editor}: EntryEditProps) {
                 <div>
                   <EntryNotice
                     icon={IcRoundTranslate}
-                    title="Untranslated"
+                    title={t.untranslatedTitle}
                     variant="untranslated"
                   >
                     {editor.parentNeedsTranslation
-                      ? 'Translate the parent page first.'
-                      : 'Enter the details below and save to start translating.'}
+                      ? t.untranslatedParent
+                      : t.untranslatedPrompt}
                   </EntryNotice>
                 </div>
               )}

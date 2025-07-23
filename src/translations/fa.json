@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "همگام‌سازی",
+    "synced": "همگام‌سازی شده",
+    "saving": "در حال ذخیره…"
+  },
+  "urlPicker": {
+    "title": "پیوند",
+    "url": "آدرس اینترنتی",
+    "urlHelp": "آدرس اینترنتی (URL) لینک",
+    "description": "توضیحات",
+    "descriptionHelp": "متنی که قرار است درون عنصر لینک نمایش داده شود",
+    "target": "هدف",
+    "targetDescription": "باز کردن لینک در تب جدید",
+    "cancel": "لغو",
+    "confirm": "تأیید"
+  },
+  "pickLink": {
+    "title": "پیوند را انتخاب کنید",
+    "link": "پیوند",
+    "description": "توضیحات",
+    "descriptionHelp": "متنی که قرار است درون عنصر لینک نمایش داده شود",
+    "tooltip": "راهنمای ابزار",
+    "tooltipHelp": "اطلاعات اضافی که لینک را توصیف می‌کند، با نگه داشتن ماوس روی آن نمایش داده می‌شود",
+    "newTab": "باز کردن لینک در تب جدید",
+    "remove": "حذف لینک",
+    "cancel": "لغو",
+    "confirm": "تأیید"
+  },
+  "newEntry": {
+    "title": "عنوان",
+    "parent": "والدین",
+    "type": "نوع را انتخاب کنید",
+    "order": "سفارش درج کنید",
+    "orderFirst": "در بالای لیست",
+    "orderLast": "در پایین لیست",
+    "copyFrom": "کپی کردن محتوا از",
+    "formTitle": "ورودی جدید",
+    "cancel": "لغو",
+    "create": "ایجاد"
+  },
+  "entryEdit": {
+    "blockingTitle": "آیا مطمئن هستید که می‌خواهید تغییرات را لغو کنید؟",
+    "blockingWarning": "این سند تغییر کرد",
+    "blockingPrompt": "آیا می‌خواهید تغییرات خود را ذخیره کنید؟",
+    "blockingDiscard": "تغییرات من را نادیده بگیر",
+    "blockingSaveDraft": "ذخیره به عنوان پیش نویس",
+    "blockingPublishChanges": "انتشار تغییرات",
+    "untranslatedTitle": "ترجمه نشده",
+    "untranslatedParent": "ابتدا صفحه والد را ترجمه کنید.",
+    "untranslatedPrompt": "جزئیات زیر را وارد کنید و برای شروع ترجمه، ذخیره کنید.",
+    "draftError": "نتوانستیم عملیات پیش‌نویس را تکمیل کنیم، لطفاً بعداً دوباره امتحان کنید",
+    "saveTranslationError": "عملیات ترجمه انجام نشد، لطفاً بعداً دوباره امتحان کنید",
+    "publishError": "عملیات انتشار کامل نشد، لطفاً بعداً دوباره امتحان کنید",
+    "discardError": "نتوانستم تغییرات را نادیده بگیرم، لطفاً بعداً دوباره امتحان کنید",
+    "unpublishError": "عملیات لغو انتشار انجام نشد، لطفاً بعداً دوباره امتحان کنید",
+    "deleteError": "عملیات حذف کامل نشد، لطفاً بعداً دوباره امتحان کنید",
+    "archiveError": "عملیات بایگانی کامل نشد، لطفاً بعداً دوباره امتحان کنید"
+  },
+  "entryHeader": {
+    "draft": "پیش نویس",
+    "editing": "ویرایش",
+    "published": "منتشر شده",
+    "archived": "بایگانی شده",
+    "untranslated": "ترجمه نشده",
+    "unpublished": "منتشر نشده",
+    "revision": "بازنگری",
+    "showMenu": "نمایش منو",
+    "hideMenu": "پنهان کردن منو",
+    "removeDraft": "حذف پیش‌نویس",
+    "replace": "جایگزین کردن",
+    "delete": "حذف",
+    "unpublish": "عدم انتشار",
+    "archive": "بایگانی",
+    "publish": "منتشر کردن",
+    "showHistory": "نمایش تاریخچه",
+    "hideHistory": "پنهان کردن تاریخچه",
+    "draftAvailable": "نسخه پیش‌نویس جدیدتری در دسترس است",
+    "translateFrom": "ترجمه از",
+    "translateParent": "ابتدا صفحه والد را ترجمه کنید",
+    "discard": "ویرایش‌ها را لغو کنید",
+    "save": "ذخیره ترجمه",
+    "saveDraft": "ذخیره",
+    "restore": "بازیابی",
+    "showPreview": "پیش‌نمایش نمایش",
+    "hidePreview": "پنهان کردن پیش‌نمایش",
+    "savingDraft": "ذخیره پیش‌نویس",
+    "savingTranslation": "ذخیره ترجمه",
+    "publishingEdits": "انتشار ویرایش‌ها",
+    "restoringRevision": "بازیابی نسخه",
+    "publishingDraft": "انتشار پیش‌نویس",
+    "unpublishingDraft": "عدم انتشار پیش‌نویس",
+    "discardingDraft": "کنار گذاشتن پیش‌نویس",
+    "archivingPublished": "بایگانی منتشر شده",
+    "publishingArchived": "انتشار بایگانی شده",
+    "deletingFile": "حذف فایل",
+    "deletingEntry": "حذف ورودی"
+  },
+  "contentView": {
+    "create": "ایجاد جدید"
+  },
+  "welcome": {
+    "title": "نصب alinea شما اکنون آماده پیکربندی است.",
+    "button": "یاد بگیرید چگونه پیکربندی کنید"
+  },
+  "cloudAuthView": {
+    "title": "پاراگراف",
+    "deploy": "آماده‌ی استقرار هستید؟",
+    "requiresHandler": "آلینیا برای ادامه کار به یک دستیار نیاز دارد",
+    "backend": "آلینیا برای ادامه به یک بک‌اند نیاز دارد.",
+    "customBackend": "یک backend سفارشی را به طور کامل پیکربندی کنید",
+    "cloud": "یا با چند کلیک با سرویس ابری ما، آن را راه‌اندازی کنید.",
+    "cloudButton": "با alinea.cloud ادامه دهید"
+  },
+  "sidebarSettings": {
+    "settings": "تنظیمات",
+    "defaultWorkspace": "فضای کاری پیش‌فرض",
+    "theme": "تغییر تم",
+    "fontSize": "اندازه فونت",
+    "decreaseFontSize": "کاهش اندازه فونت",
+    "increaseFontSize": "افزایش اندازه فونت",
+    "logout": "خروج"
+  },
+  "fileUploader": {
+    "uploadComplete": "آپلودها تکمیل شد: {{amount}}",
+    "uploading": "در حال آپلود فایل‌ها: {{amount}}",
+    "upload": "آپلود فایل‌ها"
+  },
+  "fileUploadRow": {
+    "alt": "فایل آپلود شده",
+    "done": "انجام شد"
+  },
+  "fileEntry": {
+    "preview": "پیش‌نمایش فایل رسانه‌ای",
+    "extension": "پسوند",
+    "fileSize": "حجم فایل",
+    "dimensions": "ابعاد",
+    "pixels": "پیکسل‌ها",
+    "url": "آدرس اینترنتی",
+    "focus": "نقطه تمرکز",
+    "focusHelp": "برای تغییر نقطه فوکوس روی تصویر کلیک کنید"
+  },
+  "cardOverview": {
+    "title": "کارت"
+  },
+  "explorer": {
+    "noResults": "هیچ نتیجه‌ای حاصل نشد"
+  },
+  "editModeToggle": {
+    "edit": "ویرایش",
+    "review": "بررسی تغییرات"
+  },
+  "searchBox": {
+    "search": "جستجو"
+  },
+  "rootOverview": {
+    "instruction": "برای شروع ویرایش، یک ورودی را در درخت ناوبری سمت چپ انتخاب کنید"
+  },
+  "inputLabel": {
+    "readonly": "فقط خواندنی",
+    "shared": "اشتراکی"
+  },
+  "errorBoundary": {
+    "title": "خطا",
+    "oops": "اوه، یه مشکلی پیش اومد",
+    "close": "خطا را ببندید",
+    "issue": "ایجاد یک مسئله"
+  },
+  "toolbar": {
+    "defaultWorkspace": "فضای کاری پیش‌فرض",
+    "logout": "خروج"
+  },
+  "listField": {
+    "reorder": "برای مرتب سازی مجدد، بکشید و رها کنید",
+    "copy": "بلوک کپی",
+    "moveUp": "یک رتبه بالاتر بروید",
+    "moveDown": "یک موقعیت به پایین حرکت کنید",
+    "delete": "حذف بلوک",
+    "paste": "بلوک چسباندن",
+    "add": "درج بلوک جدید"
+  },
+  "metadataField": {
+    "previewTitle": "پیش‌نمایش",
+    "searchEngine": "موتور جستجو",
+    "socialShare": "اشتراک‌گذاری در شبکه‌های اجتماعی",
+    "ogImageAlt": "تصویر گراف باز"
+  },
+  "pickTextLink": {
+    "title": "پیوند را انتخاب کنید",
+    "link": "پیوند",
+    "description": "توضیحات",
+    "descriptionHelp": "متنی که قرار است درون عنصر لینک نمایش داده شود",
+    "tooltip": "راهنمای ابزار",
+    "tooltipHelp": "اطلاعات اضافی که لینک را توصیف می‌کند، با نگه داشتن ماوس روی آن نمایش داده می‌شود",
+    "newTab": "باز کردن لینک در تب جدید",
+    "remove": "حذف لینک",
+    "cancel": "لغو",
+    "confirm": "تأیید"
+  },
+  "richTextField": {
+    "insert": "بلوک را وارد کنید"
+  },
+  "richTextToolbar": {
+    "styles": "عنوان/پاراگراف",
+    "table": "میز",
+    "bold": "پررنگ",
+    "italic": "ایتالیک",
+    "align": "ترازبندی",
+    "alignLeft": "ترازبندی از چپ",
+    "alignCenter": "مرکز را تراز کنید",
+    "alignRight": "ترازبندی از راست",
+    "alignJustify": "تراز کردن، توجیه کردن",
+    "clear": "قالب را پاک کنید",
+    "bulletList": "فهرست گلوله‌ای",
+    "orderedList": "لیست مرتب شده",
+    "link": "پیوند",
+    "quote": "نقل قول بلوکی",
+    "rule": "خط‌کش افقی",
+    "small": "کوچک",
+    "sub": "زیرنویس",
+    "sup": "متن بالانویس",
+    "paragraph": "متن عادی",
+    "h1": "عنوان ۱",
+    "h2": "عنوان ۲",
+    "h3": "عنوان ۳",
+    "h4": "عنوان ۴",
+    "h5": "عنوان ۵",
+    "tableLabel": "میز",
+    "insert": "جدول را وارد کنید",
+    "insertRowBefore": "قبل از آن ردیف را وارد کنید",
+    "insertRowAfter": "درج ردیف بعد از",
+    "deleteRow": "حذف ردیف",
+    "toggleHeaderRow": "تغییر وضعیت ردیف هدر",
+    "insertColumnBefore": "ستون را قبل از آن وارد کنید",
+    "insertColumnAfter": "درج ستون بعد از",
+    "deleteColumn": "حذف ستون",
+    "deleteTable": "حذف جدول",
+    "left": "چپ",
+    "center": "مرکز",
+    "right": "درست",
+    "justify": "توجیه کردن"
+  },
+  "linkField": {
+    "reorder": "برای مرتب سازی مجدد، بکشید و رها کنید",
+    "open": "باز کردن لینک در تب جدید",
+    "openFile": "باز کردن فایل رسانه در تب جدید",
+    "edit": "ویرایش پیوند",
+    "editFile": "تغییر تصویر",
+    "delete": "حذف لینک",
+    "deleteFile": "حذف تصویر"
+  },
+  "entryPicker": {
+    "title": "یک مرجع انتخاب کنید",
+    "searchPlaceholder": "جستجو",
+    "cancel": "لغو",
+    "confirm": "تأیید"
+  }
+}

@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import useSize from '@react-hook/size'
 import type {QueryWithResult} from 'alinea/core/Graph'
-import type {Reference} from 'alinea/core/Reference'
 import {summarySelection} from 'alinea/core/media/Summary'
+import type {Reference} from 'alinea/core/Reference'
 import {Loader} from 'alinea/ui'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import {useAtomValue} from 'jotai'
@@ -12,6 +12,7 @@ import VirtualList from 'react-tiny-virtual-list'
 import {dbAtom, dbMetaAtom} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {ExplorerProvider} from '../../hook/UseExplorer.js'
+import {useTranslation} from '../../hook/UseTranslation.js'
 import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
 import css from './Explorer.module.scss'
 import {ExplorerRow} from './ExplorerRow.js'
@@ -59,6 +60,7 @@ export function Explorer({
   showMedia,
   border = true
 }: ExplorerProps) {
+  const {explorer: t} = useTranslation()
   const {schema} = useConfig()
   const graph = useAtomValue(dbAtom)
 
@@ -163,7 +165,7 @@ export function Explorer({
               )
             )
           ) : (
-            <div style={{margin: 'auto'}}>No results</div>
+            <div style={{margin: 'auto'}}>{t.noResults}</div>
           )
         ) : (
           <Loader absolute />

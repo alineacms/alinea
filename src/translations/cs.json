@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Synchronizace",
+    "synced": "Synchronizováno",
+    "saving": "Ukládání…"
+  },
+  "urlPicker": {
+    "title": "Odkaz",
+    "url": "URL",
+    "urlHelp": "URL odkazu",
+    "description": "Popis",
+    "descriptionHelp": "Text, který se má zobrazit uvnitř elementu odkazu",
+    "target": "Cíl",
+    "targetDescription": "Otevřít odkaz v nové kartě",
+    "cancel": "Zrušit",
+    "confirm": "Potvrdit"
+  },
+  "pickLink": {
+    "title": "Vyberte odkaz",
+    "link": "Odkaz",
+    "description": "Popis",
+    "descriptionHelp": "Text, který se má zobrazit uvnitř elementu odkazu",
+    "tooltip": "Popisek",
+    "tooltipHelp": "Doplňující informace popisující odkaz, zobrazené při najetí myší",
+    "newTab": "Otevřít odkaz v nové kartě",
+    "remove": "Odebrat odkaz",
+    "cancel": "Zrušit",
+    "confirm": "Potvrdit"
+  },
+  "newEntry": {
+    "title": "Titul",
+    "parent": "Rodič",
+    "type": "Vyberte typ",
+    "order": "Vložit objednávku",
+    "orderFirst": "Na vrcholu seznamu",
+    "orderLast": "Na konci seznamu",
+    "copyFrom": "Kopírovat obsah z",
+    "formTitle": "Nový záznam",
+    "cancel": "Zrušit",
+    "create": "Vytvořit"
+  },
+  "entryEdit": {
+    "blockingTitle": "Opravdu chcete změny zahodit?",
+    "blockingWarning": "Tento dokument byl změněn",
+    "blockingPrompt": "Chcete uložit změny?",
+    "blockingDiscard": "Zahodit mé změny",
+    "blockingSaveDraft": "Uložit jako koncept",
+    "blockingPublishChanges": "Publikovat změny",
+    "untranslatedTitle": "Nepřeložené",
+    "untranslatedParent": "Nejprve přeložte nadřazenou stránku.",
+    "untranslatedPrompt": "Zadejte níže uvedené údaje a uložte je pro zahájení překladu.",
+    "draftError": "Akci konceptu se nepodařilo dokončit, zkuste to prosím znovu později.",
+    "saveTranslationError": "Překlad se nepodařilo dokončit, zkuste to prosím znovu později.",
+    "publishError": "Akci publikování se nepodařilo dokončit, zkuste to prosím znovu později.",
+    "discardError": "Změny se nepodařilo zahodit, zkuste to prosím znovu později.",
+    "unpublishError": "Akci zrušení publikování se nepodařilo dokončit, zkuste to prosím znovu později.",
+    "deleteError": "Akci smazání se nepodařilo dokončit, zkuste to prosím znovu později.",
+    "archiveError": "Akci archivace se nepodařilo dokončit, zkuste to prosím znovu později."
+  },
+  "entryHeader": {
+    "draft": "Návrh",
+    "editing": "Editace",
+    "published": "Publikováno",
+    "archived": "Archivováno",
+    "untranslated": "Nepřeložené",
+    "unpublished": "Nepublikovaný",
+    "revision": "Revize",
+    "showMenu": "Zobrazit nabídku",
+    "hideMenu": "Skrýt nabídku",
+    "removeDraft": "Odebrat koncept",
+    "replace": "Nahradit",
+    "delete": "Vymazat",
+    "unpublish": "Zrušit publikování",
+    "archive": "Archiv",
+    "publish": "Publikovat",
+    "showHistory": "Zobrazit historii",
+    "hideHistory": "Skrýt historii",
+    "draftAvailable": "Je k dispozici novější koncept verze",
+    "translateFrom": "Přeložit z",
+    "translateParent": "Nejprve přeložit nadřazenou stránku",
+    "discard": "Zahodit úpravy",
+    "save": "Uložit překlad",
+    "saveDraft": "Uložit",
+    "restore": "Obnovit",
+    "showPreview": "Náhled zobrazení",
+    "hidePreview": "Skrýt náhled",
+    "savingDraft": "Ukládání konceptu",
+    "savingTranslation": "Ukládání překladu",
+    "publishingEdits": "Publikování úprav",
+    "restoringRevision": "Obnovení revize",
+    "publishingDraft": "Publikování konceptu",
+    "unpublishingDraft": "Zrušení publikování konceptu",
+    "discardingDraft": "Zahazování konceptu",
+    "archivingPublished": "Archivace publikována",
+    "publishingArchived": "Publikování archivováno",
+    "deletingFile": "Mazání souboru",
+    "deletingEntry": "Smazat položku"
+  },
+  "contentView": {
+    "create": "Vytvořit nové"
+  },
+  "welcome": {
+    "title": "Vaše instalace Alinea je nyní připravena ke konfiguraci.",
+    "button": "Naučte se, jak konfigurovat"
+  },
+  "cloudAuthView": {
+    "title": "Odstavec",
+    "deploy": "Připraveni k nasazení?",
+    "requiresHandler": "Alinea vyžaduje pro pokračování psovoda",
+    "backend": "Alinea vyžaduje pro pokračování backend.",
+    "customBackend": "plně nakonfigurovat vlastní backend",
+    "cloud": "Nebo si vše nastavte několika kliknutími s naší cloudovou nabídkou.",
+    "cloudButton": "Pokračujte s alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Nastavení",
+    "defaultWorkspace": "Výchozí pracovní prostor",
+    "theme": "Přepnout téma",
+    "fontSize": "Velikost písma",
+    "decreaseFontSize": "Zmenšit velikost písma",
+    "increaseFontSize": "Zvětšit velikost písma",
+    "logout": "Odhlásit se"
+  },
+  "fileUploader": {
+    "uploadComplete": "Nahrávání dokončeno: {{amount}}",
+    "uploading": "Nahrávání souborů: {{amount}}",
+    "upload": "Nahrát soubory"
+  },
+  "fileUploadRow": {
+    "alt": "Nahraný soubor",
+    "done": "Hotovo"
+  },
+  "fileEntry": {
+    "preview": "Náhled mediálního souboru",
+    "extension": "Rozšíření",
+    "fileSize": "Velikost souboru",
+    "dimensions": "Rozměry",
+    "pixels": "pixely",
+    "url": "URL",
+    "focus": "Bod zaostření",
+    "focusHelp": "Kliknutím na obrázek změníte bod zaostření"
+  },
+  "cardOverview": {
+    "title": "karta"
+  },
+  "explorer": {
+    "noResults": "Žádné výsledky"
+  },
+  "editModeToggle": {
+    "edit": "Upravit",
+    "review": "Zkontrolovat změny"
+  },
+  "searchBox": {
+    "search": "Vyhledávání"
+  },
+  "rootOverview": {
+    "instruction": "Vyberte položku v navigačním stromu vlevo pro zahájení úprav"
+  },
+  "inputLabel": {
+    "readonly": "Pouze pro čtení",
+    "shared": "Sdílené"
+  },
+  "errorBoundary": {
+    "title": "Chyba",
+    "oops": "Jejda, něco se pokazilo",
+    "close": "Chyba zavření",
+    "issue": "Vytvořit problém"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Výchozí pracovní prostor",
+    "logout": "Odhlásit se"
+  },
+  "listField": {
+    "reorder": "Přetažením změníte pořadí",
+    "copy": "Kopírovat blok",
+    "moveUp": "Posunout o jednu pozici nahoru",
+    "moveDown": "Posunout o jednu pozici dolů",
+    "delete": "Smazat blok",
+    "paste": "Vložit blok",
+    "add": "Vložit nový blok"
+  },
+  "metadataField": {
+    "previewTitle": "Náhled",
+    "searchEngine": "Vyhledávač",
+    "socialShare": "Sdílení na sociálních sítích",
+    "ogImageAlt": "Otevřít obrázek grafu"
+  },
+  "pickTextLink": {
+    "title": "Vyberte odkaz",
+    "link": "Odkaz",
+    "description": "Popis",
+    "descriptionHelp": "Text, který se má zobrazit uvnitř elementu odkazu",
+    "tooltip": "Popisek",
+    "tooltipHelp": "Doplňující informace popisující odkaz, zobrazené při najetí myší",
+    "newTab": "Otevřít odkaz v nové kartě",
+    "remove": "Odebrat odkaz",
+    "cancel": "Zrušit",
+    "confirm": "Potvrdit"
+  },
+  "richTextField": {
+    "insert": "Vložit blok"
+  },
+  "richTextToolbar": {
+    "styles": "Nadpis/odstavec",
+    "table": "Tabulka",
+    "bold": "Tučné písmo",
+    "italic": "Kurzíva",
+    "align": "Zarovnání",
+    "alignLeft": "Zarovnat doleva",
+    "alignCenter": "Zarovnat na střed",
+    "alignRight": "Zarovnat vpravo",
+    "alignJustify": "Zarovnat do stran",
+    "clear": "Vymazat formát",
+    "bulletList": "Seznam s odrážkami",
+    "orderedList": "Seřazený seznam",
+    "link": "Odkaz",
+    "quote": "Bloková citace",
+    "rule": "Horizontální pravítko",
+    "small": "Malý",
+    "sub": "Dolní index",
+    "sup": "Horní index",
+    "paragraph": "Normální text",
+    "h1": "Nadpis 1",
+    "h2": "Nadpis 2",
+    "h3": "Nadpis 3",
+    "h4": "Nadpis 4",
+    "h5": "Nadpis 5",
+    "tableLabel": "Tabulka",
+    "insert": "Vložit tabulku",
+    "insertRowBefore": "Vložit řádek před",
+    "insertRowAfter": "Vložit řádek za",
+    "deleteRow": "Smazat řádek",
+    "toggleHeaderRow": "Přepnout řádek záhlaví",
+    "insertColumnBefore": "Vložit sloupec před",
+    "insertColumnAfter": "Vložit sloupec za",
+    "deleteColumn": "Smazat sloupec",
+    "deleteTable": "Smazat tabulku",
+    "left": "Vlevo",
+    "center": "Centrum",
+    "right": "Právo",
+    "justify": "Zarovnat"
+  },
+  "linkField": {
+    "reorder": "Přetažením změníte pořadí",
+    "open": "Otevřít odkaz v nové kartě",
+    "openFile": "Otevřít mediální soubor v nové kartě",
+    "edit": "Upravit odkaz",
+    "editFile": "Změnit obrázek",
+    "delete": "Smazat odkaz",
+    "deleteFile": "Smazat obrázek"
+  },
+  "entryPicker": {
+    "title": "Vyberte referenci",
+    "searchPlaceholder": "Vyhledávání",
+    "cancel": "Zrušit",
+    "confirm": "Potvrdit"
+  }
+}

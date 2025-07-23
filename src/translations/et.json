@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Sünkroonimine",
+    "synced": "Sünkroonitud",
+    "saving": "Salvestamine…"
+  },
+  "urlPicker": {
+    "title": "Link",
+    "url": "URL",
+    "urlHelp": "Lingi URL",
+    "description": "Kirjeldus",
+    "descriptionHelp": "Lingi elemendi sees kuvatav tekst",
+    "target": "Sihtmärk",
+    "targetDescription": "Ava link uuel vahelehel",
+    "cancel": "Tühista",
+    "confirm": "Kinnita"
+  },
+  "pickLink": {
+    "title": "Valige link",
+    "link": "Link",
+    "description": "Kirjeldus",
+    "descriptionHelp": "Lingi elemendi sees kuvatav tekst",
+    "tooltip": "Tööriistavihje",
+    "tooltipHelp": "Lisateave, mis kirjeldab linki ja kuvatakse kursoril",
+    "newTab": "Ava link uuel vahelehel",
+    "remove": "Eemalda link",
+    "cancel": "Tühista",
+    "confirm": "Kinnita"
+  },
+  "newEntry": {
+    "title": "Pealkiri",
+    "parent": "Vanem",
+    "type": "Valige tüüp",
+    "order": "Lisa järjekord",
+    "orderFirst": "Nimekirja ülaosas",
+    "orderLast": "Nimekirja allosas",
+    "copyFrom": "Kopeeri sisu saidilt",
+    "formTitle": "Uus kirje",
+    "cancel": "Tühista",
+    "create": "Loo"
+  },
+  "entryEdit": {
+    "blockingTitle": "Kas oled kindel, et soovid muudatused tühistada?",
+    "blockingWarning": "Seda dokumenti muudeti",
+    "blockingPrompt": "Kas soovite oma muudatused salvestada?",
+    "blockingDiscard": "Tühista mu muudatused",
+    "blockingSaveDraft": "Salvesta mustandina",
+    "blockingPublishChanges": "Avalda muudatused",
+    "untranslatedTitle": "Tõlkimata",
+    "untranslatedParent": "Tõlgi esmalt ülemlehekülg.",
+    "untranslatedPrompt": "Sisestage allolevad andmed ja salvestage, et tõlkimist alustada.",
+    "draftError": "Mustanditoimingut ei õnnestunud lõpule viia, proovige hiljem uuesti",
+    "saveTranslationError": "Tõlkimist ei õnnestunud lõpule viia, proovige hiljem uuesti.",
+    "publishError": "Avaldamist ei õnnestunud lõpule viia, proovige hiljem uuesti.",
+    "discardError": "Muudatusi ei õnnestunud tühistada, proovige hiljem uuesti.",
+    "unpublishError": "Avaldamise tühistamise toimingut ei õnnestunud lõpule viia, proovige hiljem uuesti.",
+    "deleteError": "Kustutamistoimingut ei õnnestunud lõpule viia, proovige hiljem uuesti.",
+    "archiveError": "Arhiveerimistoimingut ei õnnestunud lõpule viia, proovige hiljem uuesti."
+  },
+  "entryHeader": {
+    "draft": "Mustand",
+    "editing": "Redigeerimine",
+    "published": "Avaldatud",
+    "archived": "Arhiveeritud",
+    "untranslated": "Tõlkimata",
+    "unpublished": "Avaldamata",
+    "revision": "Läbivaatamine",
+    "showMenu": "Kuva menüü",
+    "hideMenu": "Peida menüü",
+    "removeDraft": "Eemalda mustand",
+    "replace": "Asenda",
+    "delete": "Kustuta",
+    "unpublish": "Tühista avaldamine",
+    "archive": "Arhiiv",
+    "publish": "Avalda",
+    "showHistory": "Näita ajalugu",
+    "hideHistory": "Peida ajalugu",
+    "draftAvailable": "Uuem mustandiversioon on saadaval",
+    "translateFrom": "Tõlgi keelest",
+    "translateParent": "Tõlgi esmalt ülemleht",
+    "discard": "Muudatuste tühistamine",
+    "save": "Salvesta tõlge",
+    "saveDraft": "Salvesta",
+    "restore": "Taasta",
+    "showPreview": "Kuva eelvaade",
+    "hidePreview": "Peida eelvaade",
+    "savingDraft": "Mustandi salvestamine",
+    "savingTranslation": "Tõlke salvestamine",
+    "publishingEdits": "Muudatuste avaldamine",
+    "restoringRevision": "Redaktsiooni taastamine",
+    "publishingDraft": "Mustandi avaldamine",
+    "unpublishingDraft": "Mustandi avaldamise tühistamine",
+    "discardingDraft": "Mustandist loobumine",
+    "archivingPublished": "Avaldatud arhiveerimine",
+    "publishingArchived": "Avaldamine arhiveeritud",
+    "deletingFile": "Faili kustutamine",
+    "deletingEntry": "Kustuta kirje"
+  },
+  "contentView": {
+    "create": "Loo uus"
+  },
+  "welcome": {
+    "title": "Teie alinea install on nüüd seadistamiseks valmis.",
+    "button": "Siit saate teada, kuidas seadistada"
+  },
+  "cloudAuthView": {
+    "title": "Lõik",
+    "deploy": "Kas olete juurutamiseks valmis?",
+    "requiresHandler": "Alinea vajab jätkamiseks käitlejat",
+    "backend": "Alinea vajab jätkamiseks taustaserverit.",
+    "customBackend": "kohandatud taustaprogrammi täielik konfigureerimine",
+    "cloud": "Või seadista see vaid mõne hiireklõpsuga meie pilveteenuse abil.",
+    "cloudButton": "Jätka alinea.cloudiga"
+  },
+  "sidebarSettings": {
+    "settings": "Seaded",
+    "defaultWorkspace": "Vaikimisi tööruum",
+    "theme": "Teema vahetamine",
+    "fontSize": "Fondi suurus",
+    "decreaseFontSize": "Vähenda fondi suurust",
+    "increaseFontSize": "Suurenda fondi suurust",
+    "logout": "Logi välja"
+  },
+  "fileUploader": {
+    "uploadComplete": "Üleslaadimised lõpetatud: {{amount}}",
+    "uploading": "Failide üleslaadimine: {{amount}}",
+    "upload": "Laadi failid üles"
+  },
+  "fileUploadRow": {
+    "alt": "Üleslaaditud fail",
+    "done": "Valmis"
+  },
+  "fileEntry": {
+    "preview": "Meediumifaili eelvaade",
+    "extension": "Laiendus",
+    "fileSize": "Faili suurus",
+    "dimensions": "Mõõtmed",
+    "pixels": "pikslid",
+    "url": "URL",
+    "focus": "Fookuspunkt",
+    "focusHelp": "Fookuspunkti muutmiseks klõpsake pildil"
+  },
+  "cardOverview": {
+    "title": "kaart"
+  },
+  "explorer": {
+    "noResults": "Tulemusi pole"
+  },
+  "editModeToggle": {
+    "edit": "Redigeeri",
+    "review": "Vaadake muudatused üle"
+  },
+  "searchBox": {
+    "search": "Otsi"
+  },
+  "rootOverview": {
+    "instruction": "Redigeerimise alustamiseks valige vasakul asuvast navigeerimispuust kirje"
+  },
+  "inputLabel": {
+    "readonly": "Kirjutuskaitstud",
+    "shared": "Jagatud"
+  },
+  "errorBoundary": {
+    "title": "Viga",
+    "oops": "Ups, midagi läks valesti",
+    "close": "Sulgemisviga",
+    "issue": "Loo probleem"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Vaikimisi tööruum",
+    "logout": "Logi välja"
+  },
+  "listField": {
+    "reorder": "Lohistage ümberjärjestamiseks",
+    "copy": "Kopeerimisplokk",
+    "moveUp": "Liigu ühe positsiooni võrra üles",
+    "moveDown": "Liigu ühe positsiooni võrra alla",
+    "delete": "Kustuta plokk",
+    "paste": "Kleebi plokk",
+    "add": "Lisa uus plokk"
+  },
+  "metadataField": {
+    "previewTitle": "Eelvaade",
+    "searchEngine": "Otsingumootor",
+    "socialShare": "Jaga sotsiaalmeedias",
+    "ogImageAlt": "Ava graafiku pilt"
+  },
+  "pickTextLink": {
+    "title": "Valige link",
+    "link": "Link",
+    "description": "Kirjeldus",
+    "descriptionHelp": "Lingi elemendi sees kuvatav tekst",
+    "tooltip": "Tööriistavihje",
+    "tooltipHelp": "Lisateave, mis kirjeldab linki ja kuvatakse kursoril",
+    "newTab": "Ava link uuel vahelehel",
+    "remove": "Eemalda link",
+    "cancel": "Tühista",
+    "confirm": "Kinnita"
+  },
+  "richTextField": {
+    "insert": "Sisesta plokk"
+  },
+  "richTextToolbar": {
+    "styles": "Pealkiri/lõik",
+    "table": "Tabel",
+    "bold": "Paks kiri",
+    "italic": "Kursiiv",
+    "align": "Joondus",
+    "alignLeft": "Joonda vasakule",
+    "alignCenter": "Joonda keskele",
+    "alignRight": "Joonda paremale",
+    "alignJustify": "Joonda õigustatult",
+    "clear": "Selge vorming",
+    "bulletList": "Täpploend",
+    "orderedList": "Järjestatud nimekiri",
+    "link": "Link",
+    "quote": "Plokktsitaat",
+    "rule": "Horisontaalne reegel",
+    "small": "Väike",
+    "sub": "Alamindeks",
+    "sup": "Ülaindeks",
+    "paragraph": "Tavaline tekst",
+    "h1": "Pealkiri 1",
+    "h2": "Pealkiri 2",
+    "h3": "Pealkiri 3",
+    "h4": "Pealkiri 4",
+    "h5": "Pealkiri 5",
+    "tableLabel": "Tabel",
+    "insert": "Lisa tabel",
+    "insertRowBefore": "Lisa rida ette",
+    "insertRowAfter": "Lisa rida pärast",
+    "deleteRow": "Kustuta rida",
+    "toggleHeaderRow": "Päise rea sisse/välja lülitamine",
+    "insertColumnBefore": "Lisa veerg ette",
+    "insertColumnAfter": "Lisa veerg pärast",
+    "deleteColumn": "Kustuta veerg",
+    "deleteTable": "Kustuta tabel",
+    "left": "Vasakule",
+    "center": "Keskus",
+    "right": "Parem",
+    "justify": "Joonda"
+  },
+  "linkField": {
+    "reorder": "Lohistage ümberjärjestamiseks",
+    "open": "Ava link uuel vahelehel",
+    "openFile": "Ava meediafail uuel vahelehel",
+    "edit": "Redigeeri linki",
+    "editFile": "Muuda pilti",
+    "delete": "Kustuta link",
+    "deleteFile": "Kustuta pilt"
+  },
+  "entryPicker": {
+    "title": "Valige viide",
+    "searchPlaceholder": "Otsi",
+    "cancel": "Tühista",
+    "confirm": "Kinnita"
+  }
+}
