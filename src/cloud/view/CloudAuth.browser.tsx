@@ -11,19 +11,8 @@ import {Loader} from 'alinea/ui/Loader'
 import {useQuery} from 'react-query'
 import {type AuthResult, AuthResultType} from '../AuthResult.js'
 
-export const copy = {
-  title: 'Alinea',
-  deploy: 'Ready to deploy?',
-  handler: 'handler',
-  continue: 'to continue',
-  backend: 'Alinea requires a backend to continue.',
-  customBackend: 'fully configure a custom backend',
-  cloud: 'Or get set up in a few clicks with our cloud offering.',
-  cloudButton: 'Continue with alinea.cloud'
-}
-
 export function CloudAuthView({setSession}: Auth.ViewProps) {
-  const t = useTranslation(copy)
+  const {cloudAuthView: t} = useTranslation()
   const {client} = useDashboard()
   if (!(client instanceof Client))
     throw new Error('Cannot authenticate with non http client')
@@ -83,10 +72,9 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       })
       return null
     case AuthResultType.UnAuthenticated:
-      location.href =
-        `${data.redirect}&from=${encodeURIComponent(
-          `${location.protocol}//${location.host}${location.pathname}`
-        )}`
+      location.href = `${data.redirect}&from=${encodeURIComponent(
+        `${location.protocol}//${location.host}${location.pathname}`
+      )}`
       return null
     case AuthResultType.MissingApiKey:
       return (

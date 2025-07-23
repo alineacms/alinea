@@ -1,41 +1,41 @@
 import styler from '@alinea/styler'
 import {
+  closestCenter,
   DndContext,
   type DragEndEvent,
+  type DraggableSyntheticListeners,
   DragOverlay,
   type DragStartEvent,
-  type DraggableSyntheticListeners,
+  defaultDropAnimation,
   KeyboardSensor,
   LayoutMeasuringStrategy,
   PointerSensor,
-  closestCenter,
-  defaultDropAnimation,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
 import {
   type AnimateLayoutChanges,
-  SortableContext,
   defaultAnimateLayoutChanges,
+  SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, type FirstArgument} from '@dnd-kit/utilities'
+import type {ListField} from 'alinea/core/field/ListField'
 import {getType} from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
-import {Type} from 'alinea/core/Type'
-import type {ListField} from 'alinea/core/field/ListField'
 import {ListRow} from 'alinea/core/shape/ListShape'
+import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField} from 'alinea/dashboard/editor/UseField'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {Icon, TextLabel} from 'alinea/ui'
-import {Sink} from 'alinea/ui/Sink'
 import {IcBaselineContentCopy} from 'alinea/ui/icons/IcBaselineContentCopy'
 import {IcBaselineContentPasteGo} from 'alinea/ui/icons/IcBaselineContentPasteGo'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
@@ -44,7 +44,7 @@ import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
-import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
+import {Sink} from 'alinea/ui/Sink'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import {
@@ -63,16 +63,6 @@ const copyAtom = atomWithStorage<ListRow | undefined>(
   '@alinea/copypaste',
   undefined
 )
-
-export const copy = {
-  reorder: 'Drag and drop to reorder',
-  copy: 'Copy block',
-  moveUp: 'Move up one position',
-  moveDown: 'Move down one position',
-  delete: 'Delete block',
-  paste: 'Paste block',
-  add: 'Insert new block'
-}
 
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   const {isSorting, wasSorting} = args
@@ -142,7 +132,7 @@ function ListInputRow({
   firstRow,
   ...rest
 }: ListInputRowProps) {
-  const t = useTranslation(copy)
+  const {listField: t} = useTranslation()
   const type = schema[row[ListRow.type]]
   const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
@@ -239,7 +229,7 @@ function ListCreateRow({
   onCreate,
   onPaste
 }: ListCreateRowProps) {
-  const t = useTranslation(copy)
+  const {listField: t} = useTranslation()
   const [pasted] = useAtom(copyAtom)
   const canPaste =
     pasted && entries(schema).some(([key]) => key === pasted._type)
@@ -278,7 +268,7 @@ interface ListInsertRowProps {
 }
 
 function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
-  const t = useTranslation(copy)
+  const {listField: t} = useTranslation()
   return (
     <>
       <div className={styles.insert({open, first})}>

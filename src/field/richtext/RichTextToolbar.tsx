@@ -1,4 +1,11 @@
+/*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
+import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
+import styler from '@alinea/styler'
+import type {Editor} from '@tiptap/react'
 import type {Reference} from 'alinea/core/Reference'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
+import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
+import {IconButton} from 'alinea/dashboard/view/IconButton'
 import type {UrlReference} from 'alinea/picker/url'
 import {HStack, Icon, px, Typo} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -14,16 +21,10 @@ import {IcRoundFormatListNumbered} from 'alinea/ui/icons/IcRoundFormatListNumber
 import {IcRoundHorizontalRule} from 'alinea/ui/icons/IcRoundHorizontalRule'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundQuote} from 'alinea/ui/icons/IcRoundQuote'
-import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-/*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
-import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
-import styler from '@alinea/styler'
-import type {Editor} from '@tiptap/react'
-import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
-import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {IcRoundSubscript} from 'alinea/ui/icons/IcRoundSubscript'
 import {IcRoundSuperscript} from 'alinea/ui/icons/IcRoundSuperscript'
+import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {TableDelete} from 'alinea/ui/icons/TableDelete'
 import {TableDeleteColumn} from 'alinea/ui/icons/TableDeleteColumn'
 import {TableDeleteRow} from 'alinea/ui/icons/TableDeleteRow'
@@ -33,54 +34,12 @@ import {TableInsertColumnAfter} from 'alinea/ui/icons/TableInsertColumnAfter'
 import {TableInsertColumnBefore} from 'alinea/ui/icons/TableInsertColumnBefore'
 import {TableInsertRowAfter} from 'alinea/ui/icons/TableInsertRowAfter'
 import {TableInsertRowBefore} from 'alinea/ui/icons/TableInsertRowBefore'
-import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {forwardRef, type Ref} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import css from './RichTextToolbar.module.scss'
 
 const styles = styler(css)
-
-export const copy = {
-  styles: 'Heading/paragraph',
-  table: 'Table',
-  bold: 'Bold',
-  italic: 'Italic',
-  align: 'Alignment',
-  alignLeft: 'Align left',
-  alignCenter: 'Align center',
-  alignRight: 'Align right',
-  alignJustify: 'Align justify',
-  clear: 'Clear format',
-  bulletList: 'Bullet list',
-  orderedList: 'Ordered list',
-  link: 'Link',
-  quote: 'Blockquote',
-  rule: 'Horizontal Rule',
-  small: 'Small',
-  sub: 'Subscript',
-  sup: 'Superscript',
-  paragraph: 'Normal text',
-  h1: 'Heading 1',
-  h2: 'Heading 2',
-  h3: 'Heading 3',
-  h4: 'Heading 4',
-  h5: 'Heading 5',
-  tableLabel: 'Table',
-  insert: 'Insert table',
-  insertRowBefore: 'Insert row before',
-  insertRowAfter: 'Insert row after',
-  deleteRow: 'Delete row',
-  toggleHeaderRow: 'Toggle header row',
-  insertColumnBefore: 'Insert column before',
-  insertColumnAfter: 'Insert column after',
-  deleteColumn: 'Delete column',
-  deleteTable: 'Delete table',
-  left: 'Left',
-  center: 'Center',
-  right: 'Right',
-  justify: 'Justify'
-}
 
 const HrDivider = () => (
   <hr
@@ -103,21 +62,21 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
   {pickLink, editor, focusToggle, enableTables}: RichTextToolbarProps,
   ref: Ref<HTMLDivElement>
 ) {
-  const t = useTranslation(copy)
+  const {richTextToolbar: t} = useTranslation()
   function exec() {
     return editor.chain().focus(null, {scrollIntoView: false})
   }
   const selectedStyle = editor.isActive('heading', {level: 1})
     ? 'h1'
     : editor.isActive('heading', {level: 2})
-    ? 'h2'
-    : editor.isActive('heading', {level: 3})
-    ? 'h3'
-    : editor.isActive('heading', {level: 4})
-    ? 'h4'
-    : editor.isActive('heading', {level: 5})
-    ? 'h5'
-    : 'paragraph'
+      ? 'h2'
+      : editor.isActive('heading', {level: 3})
+        ? 'h3'
+        : editor.isActive('heading', {level: 4})
+          ? 'h4'
+          : editor.isActive('heading', {level: 5})
+            ? 'h5'
+            : 'paragraph'
 
   const selectedTable = editor.isActive('table')
 
@@ -349,10 +308,10 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                     editor.isActive({textAlign: 'center'})
                       ? IcAlignCenter
                       : editor.isActive({textAlign: 'right'})
-                      ? IcAlignRight
-                      : editor.isActive({textAlign: 'justify'})
-                      ? IcAlignJustify
-                      : IcAlignLeft
+                        ? IcAlignRight
+                        : editor.isActive({textAlign: 'justify'})
+                          ? IcAlignJustify
+                          : IcAlignLeft
                   }
                   size={18}
                 />

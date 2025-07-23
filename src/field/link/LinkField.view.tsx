@@ -64,16 +64,6 @@ export type * from './LinkField.js'
 
 const styles = styler(css)
 
-export const copy = {
-  reorder: 'Drag and drop to reorder',
-  open: 'Open link in new tab',
-  openFile: 'Open media file in new tab',
-  edit: 'Edit link',
-  editFile: 'Change image',
-  delete: 'Delete link',
-  deleteFile: 'Delete image'
-}
-
 export interface LinkInputProps<Row> {
   field: LinkField<Reference, Row>
 }
@@ -381,7 +371,7 @@ function LinkInputRow({
   multiple,
   ...rest
 }: LinkInputRowProps) {
-  const t = useTranslation(copy)
+  const {linkField: t} = useTranslation()
   const onView = useReferenceViewer()
   const RowView = picker.viewRow!
   const isFile = reference[Reference.type] === 'file'

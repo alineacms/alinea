@@ -27,53 +27,17 @@ import {
 } from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
-import {useTranslation} from '../../hook/useTranslation.js'
 import {useEntryLocation} from '../../hook/UseEntryLocation.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {useUploads} from '../../hook/UseUploads.js'
+import {useTranslation} from '../../hook/useTranslation.js'
 import {FileUploader} from '../media/FileUploader.js'
 import {useSidebar} from '../Sidebar.js'
 import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
 
 const styles = styler(css)
-
-export const copy = {
-  draft: 'Draft',
-  editing: 'Editing',
-  published: 'Published',
-  archived: 'Archived',
-  untranslated: 'Untranslated',
-  revision: 'Revision',
-  unpublished: 'Unpublished',
-  saving: 'Saving',
-  publishing: 'Publishing',
-  restoring: 'Restoring',
-  unpublishing: 'Unpublishing',
-  discarding: 'Discarding',
-  archiving: 'Archiving',
-  deleting: 'Deleting',
-  showMenu: 'Display menu',
-  hideMenu: 'Hide menu',
-  removeDraft: 'Remove draft',
-  replace: 'Replace',
-  delete: 'Delete',
-  unpublish: 'Unpublish',
-  archive: 'Archive',
-  publish: 'Publish',
-  showHistory: 'Show history',
-  hideHistory: 'Hide history',
-  draftAvailable: 'A newer draft version is available',
-  translateFrom: 'Translate from',
-  translateParent: 'Translate parent page first',
-  discard: 'Discard edits',
-  save: 'Save translation',
-  saveDraft: 'Save',
-  restore: 'Restore',
-  showPreview: 'Display preview',
-  hidePreview: 'Hide preview'
-}
 
 const variantIcon = {
   draft: IcRoundEdit,
@@ -92,7 +56,7 @@ export interface EntryHeaderProps {
 }
 
 export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
-  const t = useTranslation(copy)
+  const {entryHeader: t} = useTranslation()
   const config = useConfig()
   const locale = useLocale()
   const {canPublish, canDelete, untranslated, parentNeedsTranslation} = editor
@@ -341,9 +305,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>
                   <HStack center>
-                    <span style={{marginRight: px(8)}}>
-                      {t.translateFrom}
-                    </span>
+                    <span style={{marginRight: px(8)}}>{t.translateFrom}</span>
                     <Langswitch
                       selected={editor.activeVersion.locale!}
                       locales={editor.translations.map(({locale}) => locale)}

@@ -1,17 +1,17 @@
 import styler from '@alinea/styler'
 import {Switch} from '@headlessui/react'
-import {Workspace} from 'alinea/core/Workspace'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {Workspace} from 'alinea/core/Workspace'
 import {select} from 'alinea/field'
 import {HStack, Icon, VStack, px} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
-import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {IcBaselineAccountCircle} from 'alinea/ui/icons/IcBaselineAccountCircle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
+import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import {dashboardOptionsAtom} from '../../atoms/DashboardAtoms.js'
@@ -29,18 +29,8 @@ import css from './SidebarSettings.module.scss'
 
 const styles = styler(css)
 
-export const copy = {
-  settings: 'Settings',
-  defaultWorkspace: 'Default workspace',
-  theme: 'Switch theme',
-  fontSize: 'Font size',
-  decreaseFontSize: 'Decrease font size',
-  increaseFontSize: 'Increase font size',
-  logout: 'Logout'
-}
-
 export function SidebarSettings() {
-  const t = useTranslation(copy)
+  const {sidebarSettings: t} = useTranslation()
   const session = useSession()
   const {config} = useAtomValue(dashboardOptionsAtom)
   const preferences = useAtomValue(preferencesAtom)

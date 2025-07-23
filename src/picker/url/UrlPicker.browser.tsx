@@ -10,7 +10,7 @@ import {check} from 'alinea/field/check'
 import {text} from 'alinea/field/text'
 import {Button, HStack, Stack} from 'alinea/ui'
 import {type FormEvent, useMemo} from 'react'
-import {UrlReference, urlPicker as createUrlPicker} from './UrlPicker.js'
+import {urlPicker as createUrlPicker, UrlReference} from './UrlPicker.js'
 import {UrlPickerRow} from './UrlPickerRow.js'
 
 export * from './UrlPicker.js'
@@ -20,25 +20,13 @@ export const urlPicker = pickerWithView(createUrlPicker, {
   viewRow: UrlPickerRow
 })
 
-export const copy = {
-  title: 'Link',
-  url: 'Url',
-  urlHelp: 'Url of the link',
-  description: 'Description',
-  descriptionHelp: 'Text to display inside the link element',
-  target: 'Target',
-  targetDescription: 'Open link in new tab',
-  cancel: 'Cancel',
-  confirm: 'Confirm'
-}
-
 export function UrlPickerForm({
   selection,
   options,
   onConfirm,
   onCancel
 }: PickerProps) {
-  const t = useTranslation(copy)
+  const {urlPicker: t} = useTranslation()
   const preSelected = selection?.[0] as UrlReference | undefined
   const linkForm = useMemo(
     () =>

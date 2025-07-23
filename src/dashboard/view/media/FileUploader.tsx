@@ -11,20 +11,10 @@ import {
   useUploads
 } from '../../hook/UseUploads.js'
 import {useTranslation} from '../../hook/useTranslation.js'
-import {FileUploadRow} from './FileUploadRow.js'
 import css from './FileUploader.module.scss'
+import {FileUploadRow} from './FileUploadRow.js'
 
 const styles = styler(css)
-
-export const copy = {
-  uploadComplete(amount: number) {
-    return `${amount} upload${amount > 1 ? 's' : ''} complete`
-  },
-  uploading(amount: number) {
-    return `uploading ${amount} file${amount > 1 ? 's' : ''}`
-  },
-  upload: 'Upload files'
-}
 
 export interface FileUploaderProps {
   onlyImages?: boolean
@@ -41,7 +31,7 @@ export function FileUploader({
   toggleSelect,
   position = 'right'
 }: FileUploaderProps) {
-  const t = useTranslation(copy)
+  const {fileUploader: t} = useTranslation()
   const readOnly = !destination
   const {upload, uploads} = useUploads(toggleSelect)
   const [isOver, setIsOver] = useState(false)

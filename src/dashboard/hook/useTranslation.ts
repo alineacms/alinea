@@ -1,5 +1,5 @@
-import {useMemo} from 'react'
+import {en} from 'alinea/translations/en'
 
-export function useTranslation<T>(copy: T): T {
-  return useMemo(() => copy, [])
+export function useTranslation() {
+  return en
 }

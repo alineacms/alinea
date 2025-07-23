@@ -26,25 +26,12 @@ import {useConfig} from '../../hook/UseConfig.js'
 import {useDb} from '../../hook/UseDb.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
-import {useTranslation} from '../../hook/useTranslation.js'
 import {useRoot} from '../../hook/UseRoot.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
+import {useTranslation} from '../../hook/useTranslation.js'
 import css from './NewEntry.module.scss'
 
 const styles = styler(css)
-
-export const copy = {
-  title: 'Title',
-  parent: 'Parent',
-  type: 'Select type',
-  order: 'Insert order',
-  orderFirst: 'At the top of the list',
-  orderLast: 'At the bottom of the list',
-  copyFrom: 'Copy content from',
-  formTitle: 'New entry',
-  cancel: 'Cancel',
-  create: 'Create'
-}
 
 const parentData = {
   id: Entry.id,
@@ -59,7 +46,7 @@ const parentData = {
 }
 
 function NewEntryForm({parentId}: NewEntryProps) {
-  const t = useTranslation(copy)
+  const {newEntry: t} = useTranslation()
   const titleField = useMemo(() => text(t.title, {autoFocus: true}), [])
   const config = useConfig()
   const locale = useLocale()

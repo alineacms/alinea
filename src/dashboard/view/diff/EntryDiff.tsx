@@ -10,17 +10,12 @@ import {FieldsDiff} from './FieldsDiff.js'
 
 const styles = styler(css)
 
-export const copy = {
-  changed: '=>'
-}
-
 export type EntryDiffProps = {
   entryA: Entry
   entryB: Entry
 }
 
 export function EntryDiff({entryA, entryB}: EntryDiffProps) {
-  const t = useTranslation(copy)
   const {schema} = useConfig()
   const typeA = schema[entryA.type]!
   const typeB = schema[entryB.type]!
@@ -31,7 +26,7 @@ export function EntryDiff({entryA, entryB}: EntryDiffProps) {
         <Chip>
           <TextLabel label={Type.label(typeA)} />
         </Chip>{' '}
-        {t.changed}
+        {'=>'}
         <Chip>
           <TextLabel label={Type.label(typeB)} />
         </Chip>

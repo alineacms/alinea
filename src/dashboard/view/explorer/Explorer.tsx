@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import useSize from '@react-hook/size'
 import type {QueryWithResult} from 'alinea/core/Graph'
-import type {Reference} from 'alinea/core/Reference'
 import {summarySelection} from 'alinea/core/media/Summary'
+import type {Reference} from 'alinea/core/Reference'
 import {Loader} from 'alinea/ui'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import {useAtomValue} from 'jotai'
@@ -18,10 +18,6 @@ import css from './Explorer.module.scss'
 import {ExplorerRow} from './ExplorerRow.js'
 
 const styles = styler(css)
-
-export const copy = {
-  noResults: 'No results'
-}
 
 const defaultSummaryView = {
   summaryRow: EntrySummaryRow,
@@ -64,7 +60,7 @@ export function Explorer({
   showMedia,
   border = true
 }: ExplorerProps) {
-  const t = useTranslation(copy)
+  const {explorer: t} = useTranslation()
   const {schema} = useConfig()
   const graph = useAtomValue(dbAtom)
 

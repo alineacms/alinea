@@ -20,6 +20,7 @@ import {Workspace} from 'alinea/core/Workspace'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
 import {encodePreviewPayload} from 'alinea/preview/PreviewPayload'
+import type {en} from 'alinea/translations/en.js'
 import {atom, type Getter, type Setter} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
@@ -28,6 +29,7 @@ import {dbAtom, dbMetaAtom, entryRevisionAtoms} from './DbAtoms.js'
 import {type Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
+import {translationAtom} from './TranslationAtoms.js'
 import {yAtom} from './YAtom.js'
 
 export enum EditMode {
@@ -43,17 +45,17 @@ interface EntryEditorParams {
 }
 
 export enum EntryTransition {
-  SaveDraft,
-  SaveTranslation,
-  PublishEdits,
-  RestoreRevision,
-  PublishDraft,
-  UnpublishDraft,
-  DiscardDraft,
-  ArchivePublished,
-  PublishArchived,
-  DeleteFile,
-  DeleteEntry
+  SaveDraft = 'savingDraft',
+  SaveTranslation = 'savingTranslation',
+  PublishEdits = 'publishingEdits',
+  RestoreRevision = 'restoringRevision',
+  PublishDraft = 'publishingDraft',
+  UnpublishDraft = 'unpublishingDraft',
+  DiscardDraft = 'discardingDraft',
+  ArchivePublished = 'archivingPublished',
+  PublishArchived = 'publishingArchived',
+  DeleteFile = 'deletingFile',
+  DeleteEntry = 'deletingEntry'
 }
 
 const entryTransitionAtoms = atomFamily((id: string) => {
@@ -64,6 +66,7 @@ export const entryEditorAtoms = atomFamily(
   ({id, locale: searchLocale}: EntryEditorParams) => {
     return atom(async get => {
       if (!id) return undefined
+      const {entryEdit: t} = get(translationAtom)
       get(entryRevisionAtoms(id))
       const config = get(configAtom)
       const client = get(clientAtom)
@@ -87,7 +90,6 @@ export const entryEditorAtoms = atomFamily(
       if (!entry) return undefined
       const entryId = entry.id
       const locale = entry.locale
-      const type = config.schema[entry.type]
       const edits = get(entryEditsAtoms(entry))
 
       const versions = await graph.find({
@@ -154,6 +156,7 @@ export const entryEditorAtoms = atomFamily(
         'archived'
       ).filter(status => statuses[status] !== undefined)
       return createEntryEditor({
+        t,
         parents,
         canDelete,
         canPublish,
@@ -174,6 +177,7 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
+  t: (typeof en)['entryEdit']
   parents: Array<{id: string; path: string; status: EntryStatus; main: boolean}>
   client: Connection
   config: Config
@@ -194,7 +198,7 @@ export type EntryEditor = ReturnType<typeof createEntryEditor>
 const showHistoryAtom = atom(false)
 
 export function createEntryEditor(entryData: EntryData) {
-  const {config, availableStatuses, edits} = entryData
+  const {t, config, availableStatuses, edits} = entryData
   const activeStatus = availableStatuses[0]
   const activeVersion = entryData.statuses[activeStatus]
   const type = config.schema[activeVersion.type]
@@ -303,7 +307,7 @@ export function createEntryEditor(entryData: EntryData) {
         set: entry.data,
         overwrite: true
       }),
-      errorMessage: 'Could not complete draft action, please try again later',
+      errorMessage: t.draftError,
       clearChanges: true
     })
   })
@@ -348,8 +352,7 @@ export function createEntryEditor(entryData: EntryData) {
         status: config.enableDrafts ? 'draft' : 'published',
         set: entry.data
       }),
-      errorMessage:
-        'Could not complete translate action, please try again later',
+      errorMessage: t.saveTranslationError,
       clearChanges: true
     })
   })
@@ -387,7 +390,7 @@ export function createEntryEditor(entryData: EntryData) {
         set: entry.data,
         overwrite: true
       }),
-      errorMessage: 'Could not complete publish action, please try again later',
+      errorMessage: t.publishError,
       clearChanges: true
     })
   })
@@ -413,7 +416,7 @@ export function createEntryEditor(entryData: EntryData) {
         status: 'published',
         set: entry.data
       }),
-      errorMessage: 'Could not complete publish action, please try again later',
+      errorMessage: t.publishError,
       clearChanges: true
     })
   })
@@ -429,7 +432,7 @@ export function createEntryEditor(entryData: EntryData) {
         locale: activeVersion.locale,
         status: 'draft'
       }),
-      errorMessage: 'Could not complete publish action, please try again later'
+      errorMessage: t.publishError
     })
   })
 
@@ -442,7 +445,7 @@ export function createEntryEditor(entryData: EntryData) {
         locale: activeVersion.locale,
         status: 'draft'
       }),
-      errorMessage: 'Could not complete discard action, please try again later'
+      errorMessage: t.discardError
     })
   })
 
@@ -454,8 +457,7 @@ export function createEntryEditor(entryData: EntryData) {
         id: activeVersion.id,
         locale: activeVersion.locale
       }),
-      errorMessage:
-        'Could not complete unpublish action, please try again later'
+      errorMessage: t.unpublishError
     })
   })
 
@@ -467,7 +469,7 @@ export function createEntryEditor(entryData: EntryData) {
         id: activeVersion.id,
         locale: activeVersion.locale
       }),
-      errorMessage: 'Could not complete archive action, please try again later'
+      errorMessage: t.archiveError
     })
   })
 
@@ -480,7 +482,7 @@ export function createEntryEditor(entryData: EntryData) {
         locale: activeVersion.locale,
         status: 'archived'
       }),
-      errorMessage: 'Could not complete publish action, please try again later'
+      errorMessage: t.publishError
     })
   })
 
@@ -493,7 +495,7 @@ export function createEntryEditor(entryData: EntryData) {
     return set(action, {
       transition: EntryTransition.DeleteEntry,
       result: db.remove(activeVersion.id),
-      errorMessage: 'Could not complete delete action, please try again later'
+      errorMessage: t.deleteError
     })
   })
 
@@ -505,7 +507,7 @@ export function createEntryEditor(entryData: EntryData) {
     return set(action, {
       transition: EntryTransition.DeleteFile,
       result: db.remove(activeVersion.id),
-      errorMessage: 'Could not complete delete action, please try again later'
+      errorMessage: t.deleteError
     })
   })
 
@@ -514,7 +516,7 @@ export function createEntryEditor(entryData: EntryData) {
     return set(action, {
       transition: EntryTransition.DeleteEntry,
       result: db.remove(activeVersion.id),
-      errorMessage: 'Could not complete delete action, please try again later'
+      errorMessage: t.deleteError
     })
   })
 

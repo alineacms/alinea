@@ -7,11 +7,6 @@ import css from './EditModeToggle.module.scss'
 
 const styles = styler(css)
 
-export const copy = {
-  edit: 'Edit',
-  review: 'Review changes'
-}
-
 export enum EditMode {
   Editing = 'editing',
   Diff = 'diff'
@@ -23,7 +18,7 @@ export interface EditModeToggleProps {
 }
 
 export function EditModeToggle({mode, onChange}: EditModeToggleProps) {
-  const t = useTranslation(copy)
+  const {editModeToggle: t} = useTranslation()
   return (
     <div className={styles.root()}>
       <button

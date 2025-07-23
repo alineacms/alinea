@@ -13,28 +13,28 @@ import {
   ReactNodeViewRenderer
 } from '@tiptap/react'
 import type {Field} from 'alinea/core/Field'
+import type {RichTextField} from 'alinea/core/field/RichTextField'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
 import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
-import type {RichTextField} from 'alinea/core/field/RichTextField'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, Icon, TextLabel, px} from 'alinea/ui'
+import {HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {Sink} from 'alinea/ui/Sink'
 import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
-import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
+import {Sink} from 'alinea/ui/Sink'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import type {RichTextOptions} from './RichTextField.js'
@@ -43,10 +43,6 @@ import {RichTextKit} from './RichTextKit.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
-
-export const copy = {
-  insert: 'Insert block'
-}
 
 type NodeViewProps = {
   node: {attrs: {[BlockNode.id]?: string}}
@@ -121,7 +117,7 @@ type InsertMenuProps = {
 }
 
 function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
-  const t = useTranslation(copy)
+  const {richTextField: t} = useTranslation()
   const id = createId()
   if (!schema) return null
   const blocks = entries(schema).map(([key, type]) => {

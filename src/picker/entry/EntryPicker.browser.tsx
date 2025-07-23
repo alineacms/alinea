@@ -5,9 +5,9 @@ import {createId} from 'alinea/core/Id'
 import {type PickerProps, pickerWithView} from 'alinea/core/Picker'
 import {Reference} from 'alinea/core/Reference'
 import {Root} from 'alinea/core/Root'
-import {Workspace} from 'alinea/core/Workspace'
 import {workspaceMediaDir} from 'alinea/core/util/EntryFilenames'
 import {entries} from 'alinea/core/util/Objects'
+import {Workspace} from 'alinea/core/Workspace'
 import {useConfig} from 'alinea/dashboard/hook/UseConfig'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
@@ -15,14 +15,15 @@ import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {useLocale} from 'alinea/dashboard/hook/UseLocale'
 import {useRoot} from 'alinea/dashboard/hook/UseRoot'
 import {useWorkspace} from 'alinea/dashboard/hook/UseWorkspace'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {Breadcrumbs, BreadcrumbsItem} from 'alinea/dashboard/view/Breadcrumbs'
-import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {Modal} from 'alinea/dashboard/view/Modal'
 import {Langswitch} from 'alinea/dashboard/view/entry/LangSwitch'
 import {
   Explorer,
   type ExporerItemSelect
 } from 'alinea/dashboard/view/explorer/Explorer'
+import {IconButton} from 'alinea/dashboard/view/IconButton'
+import {Modal} from 'alinea/dashboard/view/Modal'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
 import {Button, HStack, Icon, Loader, Stack, TextLabel, VStack} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -31,26 +32,18 @@ import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {Suspense, useCallback, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {
+  entryPicker as createEntryPicker,
   type EditorInfo,
-  type EntryPickerOptions,
-  entryPicker as createEntryPicker
+  type EntryPickerOptions
 } from './EntryPicker.js'
 import css from './EntryPicker.module.scss'
 import {EntryPickerRow} from './EntryPickerRow.js'
 import {EntryReference} from './EntryReference.js'
 
 export * from './EntryPicker.js'
-
-export const copy = {
-  title: 'Select a reference',
-  searchPlaceholder: 'Search',
-  cancel: 'Cancel',
-  confirm: 'Confirm'
-}
 
 export const entryPicker = pickerWithView(createEntryPicker, {
   view: EntryPickerModal,
@@ -76,7 +69,7 @@ export function EntryPickerModal({
   onConfirm,
   onCancel
 }: EntryPickerModalProps) {
-  const t = useTranslation(copy)
+  const {entryPicker: t} = useTranslation()
   const config = useConfig()
   const graph = useGraph()
   const editor = useEntryEditor()
@@ -321,9 +314,7 @@ export function EntryPickerModal({
                     })}
                   </Breadcrumbs>
                 )}
-                <h2>
-                  {title ? <TextLabel label={title} /> : t.title}
-                </h2>
+                <h2>{title ? <TextLabel label={title} /> : t.title}</h2>
               </VStack>
             </HStack>
 

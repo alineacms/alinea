@@ -5,12 +5,12 @@ import {track} from 'alinea/core/Tracker'
 import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {check} from 'alinea/field/check'
 import {link as createLink} from 'alinea/field/link'
 import {text} from 'alinea/field/text'
 import type {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {Button, HStack, Stack, VStack} from 'alinea/ui'
 import {useTrigger} from 'alinea/ui/hook/UseTrigger'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -19,21 +19,8 @@ import css from './PickLink.module.scss'
 
 const styles = styler(css)
 
-export const copy = {
-  title: 'Pick link',
-  link: 'Link',
-  description: 'Description',
-  descriptionHelp: 'Text to display inside the link element',
-  tooltip: 'Tooltip',
-  tooltipHelp: 'Extra information that describes the link, shown on hover',
-  newTab: 'Open link in new tab',
-  remove: 'Remove link',
-  cancel: 'Cancel',
-  confirm: 'Confirm'
-}
-
 function linkForm(options: PickerOptions) {
-  const t = useTranslation(copy)
+  const {pickTextLink: t} = useTranslation()
   const isExistingLink = Boolean(options.link)
   const fields = type(t.title, {
     fields: {
@@ -100,7 +87,7 @@ export function PickTextLinkForm({
   resolve,
   options = {}
 }: PickTextLinkState) {
-  const t = useTranslation(copy)
+  const {pickTextLink: t} = useTranslation()
   const type = useMemo(() => linkForm(options), [options])
   const form = useForm(type, {
     initialValue: options as any

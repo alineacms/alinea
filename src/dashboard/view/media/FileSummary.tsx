@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import type {SummaryProps} from 'alinea/core/media/Summary'
-import {Chip, HStack, TextLabel, Typo, VStack, px} from 'alinea/ui'
+import {Chip, HStack, px, TextLabel, Typo, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
@@ -55,12 +55,7 @@ export function FileSummaryRow(file: SummaryProps) {
   )
 }
 
-export const copy = {
-  separator: ` - `
-}
-
 export function FileSummaryThumb(file: SummaryProps) {
-  const t = useTranslation(copy)
   return (
     <div className={styles.thumb()} title={file.title}>
       <div
@@ -89,7 +84,7 @@ export function FileSummaryThumb(file: SummaryProps) {
         <p className={styles.thumb.footer.title()}>{file.title}</p>
         <p className={styles.thumb.footer.details()}>
           {file.extension?.slice(1).toUpperCase()}
-          {file.width && file.height && `${t.separator}${file.width}x${file.height}`}
+          {file.width && file.height && ` - ${file.width}x${file.height}`}
           {file.size && (
             <span style={{marginLeft: 'auto'}}>{prettyBytes(file.size)}</span>
           )}

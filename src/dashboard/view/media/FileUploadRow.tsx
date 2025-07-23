@@ -4,19 +4,14 @@ import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcBaselineErrorOutline} from 'alinea/ui/icons/IcBaselineErrorOutline'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
-import {useTranslation} from '../../hook/useTranslation.js'
 import {type Upload, UploadStatus} from '../../hook/UseUploads.js'
+import {useTranslation} from '../../hook/useTranslation.js'
 import css from './FileUploadRow.module.scss'
 
 const styles = styler(css)
 
-export const copy = {
-  alt: 'Uploaded file',
-  done: 'Done'
-}
-
 export function FileUploadRow(upload: Upload) {
-  const t = useTranslation(copy)
+  const {fileUploadRow: t} = useTranslation()
   return (
     <HStack center full gap={10} className={styles.root()}>
       <div className={styles.root.preview()}>

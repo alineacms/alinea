@@ -14,24 +14,20 @@ import {useLocation, useNavigate} from '../util/HashRouter.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import {EntryEdit} from '../view/EntryEdit.js'
 import {EntryTree} from '../view/EntryTree.js'
+import {NewEntry} from '../view/entry/NewEntry.js'
 import {RootOverview} from '../view/RootOverview.js'
 import {SearchBox} from '../view/SearchBox.js'
 import {Sidebar} from '../view/Sidebar.js'
-import {NewEntry} from '../view/entry/NewEntry.js'
 import css from './ContentView.module.scss'
 
 const styles = styler(css)
-
-export const copy = {
-  create: 'Create new'
-}
 
 export interface ContentViewProps {
   editor?: EntryEditor
 }
 
 export function ContentView({editor}: ContentViewProps) {
-  const t = useTranslation(copy)
+  const {contentView: t} = useTranslation()
   const {views} = useDashboard()
   const workspace = useWorkspace()
   const root = useRoot()

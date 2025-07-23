@@ -1,25 +1,20 @@
 import styler from '@alinea/styler'
 import {Icon, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
-import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
+import {HStack} from 'alinea/ui/Stack'
 import {
   type ComponentType,
-  type PropsWithChildren,
-  type ReactNode,
   forwardRef,
-  memo
+  memo,
+  type PropsWithChildren,
+  type ReactNode
 } from 'react'
 import {useTranslation} from '../hook/useTranslation.js'
 import css from './InputLabel.module.scss'
 
 const styles = styler(css)
-
-export const copy = {
-  readonly: 'Read-only',
-  shared: 'Shared'
-}
 
 export type LabelHeaderProps = {
   label: ReactNode
@@ -44,7 +39,7 @@ export const LabelHeader = memo(function LabelHeader({
   required,
   error
 }: LabelHeaderProps) {
-  const t = useTranslation(copy)
+  const {inputLabel: t} = useTranslation()
   const showError = typeof error === 'string'
   return (
     <header className={styles.header(size, {focused, error: Boolean(error)})}>

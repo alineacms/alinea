@@ -12,20 +12,13 @@ import css from './ErrorBoundary.module.scss'
 
 const styles = styler(css)
 
-export const copy = {
-  title: 'Error',
-  oops: 'Oops, something went wrong',
-  close: 'Close error',
-  issue: 'Create an issue'
-}
-
 type ErrorBoundaryProps = PropsWithChildren<{
   dependencies?: ReadonlyArray<any>
 }>
 
 export function ErrorBoundary({children, dependencies}: ErrorBoundaryProps) {
   const {ErrorBoundary, didCatch, error, reset} = useErrorBoundary()
-  const t = useTranslation(copy)
+  const {errorBoundary: t} = useTranslation()
   const location = useLocation()
   useEffect(() => {
     // Let's retry once we navigate elsewhere

@@ -11,13 +11,6 @@ import css from './MetadataField.module.scss'
 
 const styles = styler(css)
 
-export const copy = {
-  previewTitle: 'Preview',
-  searchEngine: 'Search engine',
-  socialShare: 'Social share',
-  ogImageAlt: 'Open Graph image'
-}
-
 export interface MetadataInputProps {
   field: MetadataField
 }
@@ -37,7 +30,7 @@ export function MetadataInput({field}: MetadataInputProps) {
 }
 
 function MetadataPreview() {
-  const t = useTranslation(copy)
+  const {metadataField: t} = useTranslation()
   const metadata = usePreviewMetadata()
   if (!metadata) return null
   return (
@@ -50,7 +43,7 @@ function MetadataPreview() {
 }
 
 const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
-  const t = useTranslation(copy)
+  const {metadataField: t} = useTranslation()
   return (
     <>
       <h4 className={styles.preview.subtitle()}>{t.searchEngine}</h4>
@@ -89,7 +82,7 @@ const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
 }
 
 const OpenGraphPreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
-  const t = useTranslation(copy)
+  const {metadataField: t} = useTranslation()
   return (
     <>
       <h4 className={styles.preview.subtitle()}>{t.socialShare}</h4>

@@ -26,24 +26,13 @@ import css from './FileEntry.module.scss'
 
 const styles = styler(css)
 
-export const copy = {
-  preview: 'Preview of media file',
-  extension: 'Extension',
-  fileSize: 'File size',
-  dimensions: 'Dimensions',
-  pixels: 'pixels',
-  url: 'URL',
-  focus: 'Focus point',
-  focusHelp: 'Click on the image to change the focus point'
-}
-
 interface Pos {
   x?: number
   y?: number
 }
 
 function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
-  const t = useTranslation(copy)
+  const {fileEntry: t} = useTranslation()
   const config = useConfig()
   const image: Entry<MediaFile> = editor.activeVersion as any
   const {value: focus = {x: 0.5, y: 0.5}, mutator: setFocus} = useField(
@@ -153,7 +142,7 @@ export function IcTwotonePinDrop() {
 }
 
 function FileView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
-  const t = useTranslation(copy)
+  const {fileEntry: t} = useTranslation()
   const file: Entry<MediaFile> = editor.activeVersion as any
   return (
     <Lift>
