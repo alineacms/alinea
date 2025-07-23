@@ -29,7 +29,7 @@
   },
   "newEntry": {
     "title": "Tytuł",
-    "parent": "Roślina mateczna",
+    "parent": "Rodzic",
     "type": "Wybierz typ",
     "order": "Wstaw zamówienie",
     "orderFirst": "Na szczycie listy",
