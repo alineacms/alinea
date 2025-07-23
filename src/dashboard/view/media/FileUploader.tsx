@@ -52,8 +52,8 @@ export function FileUploader({
   }
   const description = isUploading
     ? isFinished
-      ? t.uploadComplete(uploadsDone)
-      : t.uploading(todo)
+      ? t.uploadComplete.replace('{{amount}}', String(uploadsDone))
+      : t.uploading.replace('{{amount}}', String(todo))
     : t.upload
   useEffect(() => {
     const {body} = document
