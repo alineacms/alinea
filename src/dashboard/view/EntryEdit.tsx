@@ -40,19 +40,15 @@ import {BrowserPreviewMetaProvider} from './preview/BrowserPreview.js'
 const styles = styler(css)
 
 export const copy = {
-  blocking: {
-    title: 'Are you sure you want to discard changes?',
-    warning: 'This document was changed',
-    prompt: 'would you like to save your changes?',
-    discard: 'Discard my changes',
-    saveDraft: 'Save as draft',
-    publishChanges: 'Publish changes'
-  },
-  untranslated: {
-    title: 'Untranslated',
-    parent: 'Translate the parent page first.',
-    prompt: 'Enter the details below and save to start translating.'
-  }
+  blockingTitle: 'Are you sure you want to discard changes?',
+  blockingWarning: 'This document was changed',
+  blockingPrompt: 'would you like to save your changes?',
+  blockingDiscard: 'Discard my changes',
+  blockingSaveDraft: 'Save as draft',
+  blockingPublishChanges: 'Publish changes',
+  untranslatedTitle: 'Untranslated',
+  untranslatedParent: 'Translate the parent page first.',
+  untranslatedPrompt: 'Enter the details below and save to start translating.'
 }
 
 function ShowChanges({editor}: EntryEditProps) {
@@ -86,7 +82,7 @@ export function EntryEdit({editor}: EntryEditProps) {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedStatus])
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
-    t.blocking.title,
+    t.blockingTitle,
     !editor.untranslated && hasChanges
   )
   const isNavigationChange =
@@ -163,9 +159,9 @@ export function EntryEdit({editor}: EntryEditProps) {
         <Modal open onClose={() => cancel()}>
           <VStack gap={30}>
             <p>
-              {t.blocking.warning},
+              {t.blockingWarning},
               <br />
-              {t.blocking.prompt}
+              {t.blockingPrompt}
             </p>
             <HStack as="footer">
               <Stack.Right>
@@ -178,7 +174,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                       confirm()
                     }}
                   >
-                    {t.blocking.discard}
+                    {t.blockingDiscard}
                   </Button>
                   {config.enableDrafts ? (
                     <Button
@@ -187,7 +183,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                         confirm()
                       }}
                     >
-                      {t.blocking.saveDraft}
+                      {t.blockingSaveDraft}
                     </Button>
                   ) : (
                     <Button
@@ -196,7 +192,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                         confirm()
                       }}
                     >
-                      {t.blocking.publishChanges}
+                      {t.blockingPublishChanges}
                     </Button>
                   )}
                 </HStack>
@@ -236,12 +232,12 @@ export function EntryEdit({editor}: EntryEditProps) {
                 <div>
                   <EntryNotice
                     icon={IcRoundTranslate}
-                    title={t.untranslated.title}
+                    title={t.untranslatedTitle}
                     variant="untranslated"
                   >
                     {editor.parentNeedsTranslation
-                      ? t.untranslated.parent
-                      : t.untranslated.prompt}
+                      ? t.untranslatedParent
+                      : t.untranslatedPrompt}
                   </EntryNotice>
                 </div>
               )}

@@ -12,13 +12,9 @@ import css from './MetadataField.module.scss'
 const styles = styler(css)
 
 export const copy = {
-  preview: {
-    title: 'Preview',
-    subtitle: {
-      search: 'Search engine',
-      social: 'Social share'
-    }
-  },
+  previewTitle: 'Preview',
+  searchEngine: 'Search engine',
+  socialShare: 'Social share',
   ogImageAlt: 'Open Graph image'
 }
 
@@ -46,7 +42,7 @@ function MetadataPreview() {
   if (!metadata) return null
   return (
     <div className={styles.preview()}>
-      <h2>{t.preview.title}</h2>
+      <h2>{t.previewTitle}</h2>
       <SearchEnginePreview metaTags={metadata} />
       <OpenGraphPreview metaTags={metadata} />
     </div>
@@ -57,9 +53,7 @@ const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
   const t = useTranslation(copy)
   return (
     <>
-      <h4 className={styles.preview.subtitle()}>
-        {t.preview.subtitle.search}
-      </h4>
+      <h4 className={styles.preview.subtitle()}>{t.searchEngine}</h4>
       <div className={styles.searchengine()}>
         <div className={styles.searchengine.intro()}>
           <div className={styles.searchengine.intro.favicon()}>
@@ -98,7 +92,7 @@ const OpenGraphPreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
   const t = useTranslation(copy)
   return (
     <>
-      <h4 className={styles.preview.subtitle()}>{t.preview.subtitle.social}</h4>
+      <h4 className={styles.preview.subtitle()}>{t.socialShare}</h4>
       <div className={styles.opengraph()}>
         {metaTags['og:image'] && (
           <img

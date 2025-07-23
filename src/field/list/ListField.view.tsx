@@ -65,25 +65,13 @@ const copyAtom = atomWithStorage<ListRow | undefined>(
 )
 
 export const copy = {
-  row: {
-    ariaLabel: {
-      reorder: 'Drag and drop to reorder',
-      copy: 'Copy block',
-      moveUp: 'Move up one position',
-      moveDown: 'Move down one position',
-      delete: 'Delete block'
-    }
-  },
-  create: {
-    ariaLabel: {
-      paste: 'Paste block'
-    }
-  },
-  insert: {
-    ariaLabel: {
-      add: 'Insert new block'
-    }
-  }
+  reorder: 'Drag and drop to reorder',
+  copy: 'Copy block',
+  moveUp: 'Move up one position',
+  moveDown: 'Move down one position',
+  delete: 'Delete block',
+  paste: 'Paste block',
+  add: 'Insert new block'
 }
 
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
@@ -191,7 +179,7 @@ function ListInputRow({
             icon={getType(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
-            title={t.row.ariaLabel.reorder}
+            title={t.reorder}
           />
         </Sink.Options>
         <Sink.Title>
@@ -205,7 +193,7 @@ function ListInputRow({
             <IconButton
               icon={IcBaselineContentCopy}
               onClick={() => onCopyBlock()}
-              title={t.row.ariaLabel.copy}
+              title={t.copy}
             />
           )}
           {!readOnly && (
@@ -213,17 +201,17 @@ function ListInputRow({
               <IconButton
                 icon={IcRoundKeyboardArrowUp}
                 onClick={() => onMove?.(-1)}
-                title={t.row.ariaLabel.moveUp}
+                title={t.moveUp}
               />
               <IconButton
                 icon={IcRoundKeyboardArrowDown}
                 onClick={() => onMove?.(1)}
-                title={t.row.ariaLabel.moveDown}
+                title={t.moveDown}
               />
               <IconButton
                 icon={IcRoundClose}
                 onClick={onDelete}
-                title={t.row.ariaLabel.delete}
+                title={t.delete}
               />
             </>
           )}
@@ -275,7 +263,7 @@ function ListCreateRow({
             onClick={() => onPaste(pasted)}
             mod="paste"
           >
-            <TextLabel label={t.create.ariaLabel.paste} />
+            <TextLabel label={t.paste} />
           </Create.Button>
         )}
       </Create.Root>
@@ -297,7 +285,7 @@ function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
         <button
           className={styles.insert.icon()}
           onClick={onInsert}
-          title={t.insert.ariaLabel.add}
+          title={t.add}
         >
           <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
         </button>

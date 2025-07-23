@@ -47,13 +47,9 @@ export * from './EntryPicker.js'
 
 export const copy = {
   title: 'Select a reference',
-  search: {
-    placeholder: 'Search'
-  },
-  button: {
-    cancel: 'Cancel',
-    confirm: 'Confirm'
-  }
+  searchPlaceholder: 'Search',
+  cancel: 'Cancel',
+  confirm: 'Confirm'
 }
 
 export const entryPicker = pickerWithView(createEntryPicker, {
@@ -335,7 +331,7 @@ export function EntryPickerModal({
               <IcRoundSearch className={styles.root.search.icon()} />
               <input
                 type="text"
-                placeholder={t.search.placeholder}
+                placeholder={t.searchPlaceholder}
                 value={search}
                 onChange={event => setSearch(event.target.value)}
                 className={styles.root.search.input()}
@@ -400,9 +396,9 @@ export function EntryPickerModal({
           <Stack.Right>
             <HStack gap={16}>
               <Button outline type="button" onClick={onCancel}>
-                {t.button.cancel}
+                {t.cancel}
               </Button>
-              <Button onClick={handleConfirm}>{t.button.confirm}</Button>
+              <Button onClick={handleConfirm}>{t.confirm}</Button>
             </HStack>
           </Stack.Right>
         </HStack>

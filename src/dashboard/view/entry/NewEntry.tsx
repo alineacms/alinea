@@ -38,11 +38,9 @@ export const copy = {
   parent: 'Parent',
   type: 'Select type',
   order: 'Insert order',
-  orderOptions: {
-    first: 'At the top of the list',
-    last: 'At the bottom of the list'
-  },
-  copy: 'Copy content from',
+  orderFirst: 'At the top of the list',
+  orderLast: 'At the bottom of the list',
+  copyFrom: 'Copy content from',
   formTitle: 'New entry',
   cancel: 'Cancel',
   create: 'Create'
@@ -156,8 +154,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const insertOrderField: SelectField<'first' | 'last'> = select(t.order, {
       initialValue: 'last',
       options: {
-        first: t.orderOptions.first,
-        last: t.orderOptions.last
+        first: t.orderFirst,
+        last: t.orderLast
       }
     })
     return track.options(insertOrderField, async get => {
@@ -179,7 +177,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   }, [])
 
   const copyFromField = useMemo(() => {
-    const copyFromField = entry(t.copy)
+    const copyFromField = entry(t.copyFrom)
     return track.options(copyFromField, get => {
       const type = get(typeField)!
       return {
@@ -187,7 +185,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
         pickers: {
           entry: entryPicker({
             condition: {_type: type},
-            title: t.copy,
+            title: t.copyFrom,
             max: 1,
             selection: EntryLink
           })

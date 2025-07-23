@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
 import {resolveView} from 'alinea/core/View'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {HStack, Icon, Loader} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
@@ -21,11 +22,16 @@ import css from './ContentView.module.scss'
 
 const styles = styler(css)
 
+export const copy = {
+  create: 'Create new'
+}
+
 export interface ContentViewProps {
   editor?: EntryEditor
 }
 
 export function ContentView({editor}: ContentViewProps) {
+  const t = useTranslation(copy)
   const {views} = useDashboard()
   const workspace = useWorkspace()
   const root = useRoot()
@@ -64,7 +70,7 @@ export function ContentView({editor}: ContentViewProps) {
           >
             <HStack center gap={8} align="center">
               <Icon icon={IcRoundAddCircle} size={17} />
-              <span>Create new</span>
+              <span>{t.create}</span>
             </HStack>
           </button>
         </div>

@@ -40,58 +40,39 @@ import {Langswitch} from './LangSwitch.js'
 const styles = styler(css)
 
 export const copy = {
-  variant: {
-    draft: 'Draft',
-    editing: 'Editing',
-    published: 'Published',
-    archived: 'Archived',
-    untranslated: 'Untranslated',
-    revision: 'Revision',
-    unpublished: 'Unpublished'
-  },
-  transition: {
-    [EntryTransition.SaveDraft]: 'Saving',
-    [EntryTransition.SaveTranslation]: 'Saving',
-    [EntryTransition.PublishEdits]: 'Publishing',
-    [EntryTransition.RestoreRevision]: 'Restoring',
-    [EntryTransition.PublishDraft]: 'Publishing',
-    [EntryTransition.UnpublishDraft]: 'Unpublishing',
-    [EntryTransition.DiscardDraft]: 'Discarding',
-    [EntryTransition.ArchivePublished]: 'Archiving',
-    [EntryTransition.PublishArchived]: 'Publishing',
-    [EntryTransition.DeleteFile]: 'Deleting',
-    [EntryTransition.DeleteEntry]: 'Deleting'
-  },
-  menu: {
-    show: 'Display menu',
-    hide: 'Hide menu'
-  },
-  options: {
-    removeDraft: 'Remove draft',
-    replace: 'Replace',
-    delete: 'Delete',
-    unpublish: 'Unpublish',
-    archive: 'Archive',
-    publish: 'Publish',
-    history: {
-      show: 'Show history',
-      hide: 'Hide history'
-    }
-  },
-  prompt: {
-    draftAvailable: 'A newer draft version is available',
-    translateFrom: 'Translate from',
-    translateParent: 'Translate parent page first'
-  },
+  draft: 'Draft',
+  editing: 'Editing',
+  published: 'Published',
+  archived: 'Archived',
+  untranslated: 'Untranslated',
+  revision: 'Revision',
+  unpublished: 'Unpublished',
+  saving: 'Saving',
+  publishing: 'Publishing',
+  restoring: 'Restoring',
+  unpublishing: 'Unpublishing',
+  discarding: 'Discarding',
+  archiving: 'Archiving',
+  deleting: 'Deleting',
+  showMenu: 'Display menu',
+  hideMenu: 'Hide menu',
+  removeDraft: 'Remove draft',
+  replace: 'Replace',
+  delete: 'Delete',
+  unpublish: 'Unpublish',
+  archive: 'Archive',
+  publish: 'Publish',
+  showHistory: 'Show history',
+  hideHistory: 'Hide history',
+  draftAvailable: 'A newer draft version is available',
+  translateFrom: 'Translate from',
+  translateParent: 'Translate parent page first',
   discard: 'Discard edits',
   save: 'Save translation',
-  publish: 'Publish',
   saveDraft: 'Save',
   restore: 'Restore',
-  preview: {
-    show: 'Display preview',
-    hide: 'Hide preview'
-  }
+  showPreview: 'Display preview',
+  hidePreview: 'Hide preview'
 }
 
 const variantIcon = {
@@ -195,7 +176,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         className={styles.root.action()}
         onClick={discardDraft}
       >
-        {t.options.removeDraft}
+        {t.removeDraft}
       </DropdownMenu.Item>
     ) : variant === 'published' && !editor.activeVersion.seeded ? (
       isMediaFile ? (
@@ -204,13 +185,13 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={replaceFile}
           >
-            {t.options.replace}
+            {t.replace}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className={styles.root.action()}
             onClick={deleteFileAndNavigate}
           >
-            {t.options.delete}
+            {t.delete}
           </DropdownMenu.Item>
         </>
       ) : isMediaLibrary ? (
@@ -219,7 +200,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={deleteMediaLibraryAndNavigate}
           >
-            {t.options.delete}
+            {t.delete}
           </DropdownMenu.Item>
         </>
       ) : (
@@ -229,11 +210,11 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               className={styles.root.action()}
               onClick={unPublish}
             >
-              {t.options.unpublish}
+              {t.unpublish}
             </DropdownMenu.Item>
           )}
           <DropdownMenu.Item className={styles.root.action()} onClick={archive}>
-            {t.options.archive}
+            {t.archive}
           </DropdownMenu.Item>
         </>
       )
@@ -244,7 +225,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={publishArchived}
           >
-            {t.options.publish}
+            {t.publish}
           </DropdownMenu.Item>
         )}
         {canDelete && (
@@ -252,7 +233,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             className={styles.root.action()}
             onClick={deleteEntry}
           >
-            {t.options.delete}
+            {t.delete}
           </DropdownMenu.Item>
         )}
       </>
@@ -262,11 +243,11 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           className={styles.root.action()}
           onClick={deleteEntry}
         >
-          {t.options.delete}
+          {t.delete}
         </DropdownMenu.Item>
       ) : (
         <DropdownMenu.Item className={styles.root.action()} onClick={archive}>
-          {t.options.archive}
+          {t.archive}
         </DropdownMenu.Item>
       )
     ) : null
@@ -279,7 +260,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           <button
             type="button"
             onClick={() => toggleNav()}
-            title={!isNavOpen ? t.menu.show : t.menu.hide}
+            title={!isNavOpen ? t.showMenu : t.hideMenu}
             className={styles.root.menuToggle()}
           >
             <Icon icon={IcRoundMenu} />
@@ -292,8 +273,8 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               <HStack center gap={4}>
                 <span>
                   {variant === 'transition'
-                    ? t.transition[currentTransition!]
-                    : t.variant[variant]}
+                    ? t[currentTransition!]
+                    : t[variant]}
                 </span>
                 {!previewRevision && editor.availableStatuses.length > 1 && (
                   <Icon icon={IcRoundUnfoldMore} />
@@ -307,7 +288,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                     navigate(pathname)
                   }}
                 >
-                  {t.variant.editing}
+                  {t.editing}
                 </DropdownMenu.Item>
               )}
               {!previewRevision &&
@@ -319,7 +300,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                         navigate(`${pathname}?${status}`)
                       }}
                     >
-                      {t.variant[status]}
+                      {t[status]}
                     </DropdownMenu.Item>
                   )
                 })}
@@ -347,7 +328,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               <>
                 <span className={styles.root.description.separator()} />
                 <div className={styles.root.description.action()}>
-                  {t.prompt.draftAvailable}
+                  {t.draftAvailable}
                 </div>
               </>
             )}
@@ -361,7 +342,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 <div className={styles.root.description.action()}>
                   <HStack center>
                     <span style={{marginRight: px(8)}}>
-                      {t.prompt.translateFrom}
+                      {t.translateFrom}
                     </span>
                     <Langswitch
                       selected={editor.activeVersion.locale!}
@@ -379,7 +360,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
             <>
               <span className={styles.root.description.separator()} />
               <div className={styles.root.description.action()}>
-                {t.prompt.translateParent}
+                {t.translateParent}
               </div>
             </>
           )}
@@ -450,7 +431,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                         <DropdownMenu.Item
                           onClick={() => setShowHistory(!showHistory)}
                         >
-                          {showHistory ? t.options.history.hide : t.options.history.show}
+                          {showHistory ? t.hideHistory : t.showHistory}
                         </DropdownMenu.Item>
                       )}
                       {options}
@@ -461,7 +442,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               <button
                 type="button"
                 onClick={() => togglePreview()}
-                title={isPreviewOpen ? t.preview.hide : t.preview.show}
+                title={isPreviewOpen ? t.hidePreview : t.showPreview}
                 className={styles.root.previewToggle()}
               >
                 <Icon

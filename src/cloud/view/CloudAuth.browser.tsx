@@ -1,6 +1,7 @@
 import type {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {Head} from 'alinea/dashboard/util/Head'
 import {Button, HStack, px, Typo, VStack} from 'alinea/ui'
 import {LogoShape} from 'alinea/ui/branding/LogoShape'
@@ -10,7 +11,19 @@ import {Loader} from 'alinea/ui/Loader'
 import {useQuery} from 'react-query'
 import {type AuthResult, AuthResultType} from '../AuthResult.js'
 
+export const copy = {
+  title: 'Alinea',
+  deploy: 'Ready to deploy?',
+  handler: 'handler',
+  continue: 'to continue',
+  backend: 'Alinea requires a backend to continue.',
+  customBackend: 'fully configure a custom backend',
+  cloud: 'Or get set up in a few clicks with our cloud offering.',
+  cloudButton: 'Continue with alinea.cloud'
+}
+
 export function CloudAuthView({setSession}: Auth.ViewProps) {
+  const t = useTranslation(copy)
   const {client} = useDashboard()
   if (!(client instanceof Client))
     throw new Error('Cannot authenticate with non http client')
@@ -28,7 +41,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
     return (
       <>
         <Head>
-          <title>Alinea</title>
+          <title>{t.title}</title>
         </Head>
         <div style={{display: 'flex', height: '100%', width: '100%'}}>
           <div style={{margin: 'auto', padding: px(20)}}>
@@ -37,14 +50,17 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                 <LogoShape>
                   <IcRoundPublish />
                 </LogoShape>
-                <Typo.H1 flat>Ready to deploy?</Typo.H1>
+                <Typo.H1 flat>{t.deploy}</Typo.H1>
               </HStack>
               <Typo.P>
                 Alinea requires a{' '}
-                <Typo.Link href="https://alineacms.com/docs/deploy" target="_blank">
-                  handler
+                <Typo.Link
+                  href="https://alineacms.com/docs/deploy"
+                  target="_blank"
+                >
+                  {t.handler}
                 </Typo.Link>{' '}
-                to continue.
+                {t.continue}.
               </Typo.P>
             </VStack>
           </div>
@@ -76,7 +92,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       return (
         <>
           <Head>
-            <title>Alinea</title>
+            <title>{t.title}</title>
           </Head>
           <div style={{display: 'flex', height: '100%', width: '100%'}}>
             <div style={{margin: 'auto', padding: px(20)}}>
@@ -85,21 +101,21 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                   <LogoShape>
                     <IcRoundPublish />
                   </LogoShape>
-                  <Typo.H1 flat>Ready to deploy?</Typo.H1>
+                  <Typo.H1 flat>{t.deploy}</Typo.H1>
                 </HStack>
                 <Typo.P>
-                  Alinea requires a backend to continue.
+                  {t.backend}
                   <br />
                   You can{' '}
                   <Typo.Link
                     href="https://alineacms.com/docs/deploy"
                     target="_blank"
                   >
-                    <span>fully configure a custom backend</span>
+                    <span>{t.customBackend}</span>
                   </Typo.Link>
                   .
                   <br />
-                  Or get set up in a few clicks with our cloud offering.
+                  {t.cloud}
                 </Typo.P>
                 <div>
                   <Button
@@ -109,7 +125,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                     )}`}
                     iconRight={IcRoundArrowForward}
                   >
-                    Continue with alinea.cloud
+                    {t.cloudButton}
                   </Button>
                 </div>
               </VStack>

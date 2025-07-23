@@ -21,19 +21,15 @@ const styles = styler(css)
 
 export const copy = {
   title: 'Pick link',
-  form: {
-    link: 'Link',
-    description: 'Description',
-    description_help: 'Text to display inside the link element',
-    tooltip: 'Tooltip',
-    tooltip_help: 'Extra information that describes the link, shown on hover',
-    new_tab: 'Open link in new tab'
-  },
-  button: {
-    remove: 'Remove link',
-    cancel: 'Cancel',
-    confirm: 'Confirm'
-  }
+  link: 'Link',
+  description: 'Description',
+  descriptionHelp: 'Text to display inside the link element',
+  tooltip: 'Tooltip',
+  tooltipHelp: 'Extra information that describes the link, shown on hover',
+  newTab: 'Open link in new tab',
+  remove: 'Remove link',
+  cancel: 'Cancel',
+  confirm: 'Confirm'
 }
 
 function linkForm(options: PickerOptions) {
@@ -41,17 +37,17 @@ function linkForm(options: PickerOptions) {
   const isExistingLink = Boolean(options.link)
   const fields = type(t.title, {
     fields: {
-      link: createLink(t.form.link, {
+      link: createLink(t.link, {
         required: true,
         initialValue: options.link as EntryReference & ListRow
       }),
-      description: text(t.form.description, {
-        help: t.form.description_help
+      description: text(t.description, {
+        help: t.descriptionHelp
       }),
-      title: text(t.form.tooltip, {
-        help: t.form.tooltip_help
+      title: text(t.tooltip, {
+        help: t.tooltipHelp
       }),
-      blank: check(t.form.new_tab, {
+      blank: check(t.newTab, {
         inline: true
       })
     }
@@ -131,15 +127,15 @@ export function PickTextLinkForm({
                   type="button"
                   onClick={() => resolve(undefined)}
                 >
-                  {t.button.remove}
+                  {t.remove}
                 </Button>
               )}
               <Stack.Right>
                 <HStack gap={16}>
                   <Button outline type="button" onClick={onClose}>
-                    {t.button.cancel}
+                    {t.cancel}
                   </Button>
-                  <Button>{t.button.confirm}</Button>
+                  <Button>{t.confirm}</Button>
                 </HStack>
               </Stack.Right>
             </HStack>

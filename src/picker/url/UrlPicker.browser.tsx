@@ -22,18 +22,14 @@ export const urlPicker = pickerWithView(createUrlPicker, {
 
 export const copy = {
   title: 'Link',
-  form: {
-    url: 'Url',
-    url_help: 'Url of the link',
-    description: 'Description',
-    description_help: 'Text to display inside the link element',
-    target: 'Target',
-    target_description: 'Open link in new tab'
-  },
-  button: {
-    cancel: 'Cancel',
-    confirm: 'Confirm'
-  }
+  url: 'Url',
+  urlHelp: 'Url of the link',
+  description: 'Description',
+  descriptionHelp: 'Text to display inside the link element',
+  target: 'Target',
+  targetDescription: 'Open link in new tab',
+  cancel: 'Cancel',
+  confirm: 'Confirm'
 }
 
 export function UrlPickerForm({
@@ -48,15 +44,15 @@ export function UrlPickerForm({
     () =>
       type(t.title, {
         fields: {
-          url: text(t.form.url, {
+          url: text(t.url, {
             required: true,
-            help: t.form.url_help
+            help: t.urlHelp
           }),
-          title: text(t.form.description, {
-            help: t.form.description_help
+          title: text(t.description, {
+            help: t.descriptionHelp
           }),
-          blank: check(t.form.target, {
-            description: t.form.target_description,
+          blank: check(t.target, {
+            description: t.targetDescription,
             initialValue: true
           })
         }
@@ -92,9 +88,9 @@ export function UrlPickerForm({
         <Stack.Right>
           <HStack gap={16}>
             <Button outline type="button" onClick={onCancel}>
-              {t.button.cancel}
+              {t.cancel}
             </Button>
-            <Button>{t.button.confirm}</Button>
+            <Button>{t.confirm}</Button>
           </HStack>
         </Stack.Right>
       </HStack>

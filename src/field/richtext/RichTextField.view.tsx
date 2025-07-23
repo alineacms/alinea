@@ -45,9 +45,7 @@ import {RichTextToolbar} from './RichTextToolbar.js'
 const styles = styler(css)
 
 export const copy = {
-  insert: {
-    label: 'Insert block'
-  }
+  insert: 'Insert block'
 }
 
 type NodeViewProps = {
@@ -160,7 +158,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
       <DropdownMenu.Root bottom>
         <DropdownMenu.Trigger className={styles.insert.trigger()}>
           <Icon icon={IcRoundAddCircle} />
-          <span>{t.insert.label}</span>
+          <span>{t.insert}</span>
         </DropdownMenu.Trigger>
         <DropdownMenu.Items>{blocks}</DropdownMenu.Items>
       </DropdownMenu.Root>

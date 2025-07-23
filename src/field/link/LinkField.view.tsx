@@ -65,17 +65,13 @@ export type * from './LinkField.js'
 const styles = styler(css)
 
 export const copy = {
-  row: {
-    ariaLabel: {
-      reorder: 'Drag and drop to reorder',
-      open: 'Open link in new tab',
-      openFile: 'Open media file in new tab',
-      edit: 'Edit link',
-      editFile: 'Change image',
-      delete: 'Delete link',
-      deleteFile: 'Delete image'
-    }
-  }
+  reorder: 'Drag and drop to reorder',
+  open: 'Open link in new tab',
+  openFile: 'Open media file in new tab',
+  edit: 'Edit link',
+  editFile: 'Change image',
+  delete: 'Delete link',
+  deleteFile: 'Delete image'
 }
 
 export interface LinkInputProps<Row> {
@@ -405,7 +401,7 @@ function LinkInputRow({
               icon={IcRoundDragHandle}
               {...handle}
               style={{cursor: handle ? 'grab' : 'grabbing'}}
-              title={t.row.ariaLabel.reorder}
+              title={t.reorder}
             />
           ) : (
             <div className={styles.row.staticHandle()}>
@@ -423,17 +419,17 @@ function LinkInputRow({
             <IconButton
               icon={IcRoundOpenInNew}
               onClick={() => onView(reference)}
-              title={t.row.ariaLabel[isFile ? 'openFile' : 'open']}
+              title={t[isFile ? 'openFile' : 'open']}
             />
             <IconButton
               icon={IcRoundEdit}
               onClick={onEdit}
-              title={t.row.ariaLabel[isFile ? 'editFile' : 'edit']}
+              title={t[isFile ? 'editFile' : 'edit']}
             />
             <IconButton
               icon={IcRoundClose}
               onClick={onRemove}
-              title={t.row.ariaLabel[isFile ? 'deleteFile' : 'delete']}
+              title={t[isFile ? 'deleteFile' : 'delete']}
             />
           </Sink.Options>
         )}
