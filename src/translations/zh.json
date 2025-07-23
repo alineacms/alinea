@@ -29,7 +29,7 @@
   },
   "newEntry": {
     "title": "标题",
-    "parent": "父母",
+    "parent": "父级",
     "type": "选择类型",
     "order": "插入订单",
     "orderFirst": "位于列表顶部",
