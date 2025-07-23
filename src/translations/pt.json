@@ -29,7 +29,7 @@
   },
   "newEntry": {
     "title": "Título",
-    "parent": "Pais",
+    "parent": "Pai",
     "type": "Selecione o tipo",
     "order": "Inserir ordem",
     "orderFirst": "No topo da lista",
