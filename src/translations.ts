@@ -22,12 +22,10 @@ export {default as ko} from './translations/ko.json' with {type: 'json'}
 export {default as lt} from './translations/lt.json' with {type: 'json'}
 export {default as lv} from './translations/lv.json' with {type: 'json'}
 export {default as my} from './translations/my.json' with {type: 'json'}
-export {default as nb} from './translations/nb.json' with {type: 'json'}
 export {default as nl} from './translations/nl.json' with {type: 'json'}
 export {default as pl} from './translations/pl.json' with {type: 'json'}
 export {default as pt} from './translations/pt.json' with {type: 'json'}
 export {default as ro} from './translations/ro.json' with {type: 'json'}
-export {default as rs} from './translations/rs.json' with {type: 'json'}
 export {default as ru} from './translations/ru.json' with {type: 'json'}
 export {default as sk} from './translations/sk.json' with {type: 'json'}
 export {default as sl} from './translations/sl.json' with {type: 'json'}

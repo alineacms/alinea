@@ -6,7 +6,7 @@ import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {IcRoundWarning} from 'alinea/ui/icons/IcRoundWarning'
 import {type PropsWithChildren, useEffect} from 'react'
 import useErrorBoundary from 'use-error-boundary'
-import {useTranslation} from '../hook/useTranslation.js'
+import {useTranslation} from '../hook/UseTranslation.js'
 import {useLocation} from '../util/HashRouter.js'
 import css from './ErrorBoundary.module.scss'
 

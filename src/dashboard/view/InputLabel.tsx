@@ -11,7 +11,7 @@ import {
   type PropsWithChildren,
   type ReactNode
 } from 'react'
-import {useTranslation} from '../hook/useTranslation.js'
+import {useTranslation} from '../hook/UseTranslation.js'
 import css from './InputLabel.module.scss'
 
 const styles = styler(css)

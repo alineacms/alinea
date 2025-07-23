@@ -7,7 +7,7 @@ import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRig
 import {transparentize} from 'color2k'
 import prettyBytes from 'pretty-bytes'
 import {Fragment, type ReactNode} from 'react'
-import {useTranslation} from '../../hook/useTranslation.js'
+import {useTranslation} from '../../hook/UseTranslation.js'
 import css from './FileSummary.module.scss'
 
 const styles = styler(css)

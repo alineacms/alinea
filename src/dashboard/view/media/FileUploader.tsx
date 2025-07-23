@@ -5,12 +5,12 @@ import {IcOutlineCloudUpload} from 'alinea/ui/icons/IcOutlineCloudUpload'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {type ChangeEvent, useEffect, useState} from 'react'
+import {useTranslation} from '../../hook/UseTranslation.js'
 import {
   type UploadDestination,
   UploadStatus,
   useUploads
 } from '../../hook/UseUploads.js'
-import {useTranslation} from '../../hook/useTranslation.js'
 import css from './FileUploader.module.scss'
 import {FileUploadRow} from './FileUploadRow.js'
 

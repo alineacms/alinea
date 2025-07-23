@@ -1,4 +1,4 @@
-import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {px, Typo, VStack} from 'alinea/ui'
 
 export function Welcome() {

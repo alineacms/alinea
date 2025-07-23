@@ -27,8 +27,8 @@ import {useDb} from '../../hook/UseDb.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {useRoot} from '../../hook/UseRoot.js'
+import {useTranslation} from '../../hook/UseTranslation.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
-import {useTranslation} from '../../hook/useTranslation.js'
 import css from './NewEntry.module.scss'
 
 const styles = styler(css)

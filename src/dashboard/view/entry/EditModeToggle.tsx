@@ -2,7 +2,7 @@ import styler from '@alinea/styler'
 import {Icon} from 'alinea/ui'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
-import {useTranslation} from '../../hook/useTranslation.js'
+import {useTranslation} from '../../hook/UseTranslation.js'
 import css from './EditModeToggle.module.scss'
 
 const styles = styler(css)

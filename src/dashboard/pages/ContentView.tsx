@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {resolveView} from 'alinea/core/View'
-import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation.js'
 import {HStack, Icon, Loader} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'

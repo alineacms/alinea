@@ -1,4 +1,4 @@
-import {useTranslation} from '../../hook/useTranslation.js'
+import {useTranslation} from '../../hook/UseTranslation.js'
 
 export function CardOverview() {
   const {cardOverview: t} = useTranslation()

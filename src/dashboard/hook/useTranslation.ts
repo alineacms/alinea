@@ -1,5 +1,6 @@
-import {en} from 'alinea/translations'
+import {useAtomValue} from 'jotai'
+import {translationAtom} from '../atoms/TranslationAtoms.js'
 
 export function useTranslation() {
-  return en
+  return useAtomValue(translationAtom)
 }

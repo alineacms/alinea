@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import {
   type JSONContent,
-  Node as TipTapNode,
-  mergeAttributes
+  mergeAttributes,
+  Node as TipTapNode
 } from '@tiptap/core'
 import {Collaboration} from '@tiptap/extension-collaboration'
 import {
@@ -23,7 +23,7 @@ import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
-import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation.js'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, Icon, px, TextLabel} from 'alinea/ui'

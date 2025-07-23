@@ -36,7 +36,7 @@ import {
 } from '../atoms/PreferencesAtoms.js'
 import {accentColorAtom} from '../atoms/StyleAtoms.js'
 import {useSession} from '../hook/UseSession.js'
-import {useTranslation} from '../hook/useTranslation.js'
+import {useTranslation} from '../hook/UseTranslation.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {IconButton} from './IconButton.js'
 import {useSidebar} from './Sidebar.js'
