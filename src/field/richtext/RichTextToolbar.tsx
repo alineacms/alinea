@@ -3,7 +3,7 @@ import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/react'
 import type {Reference} from 'alinea/core/Reference'
-import {useTranslation} from 'alinea/dashboard/hook/UseTranslation.js'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import type {UrlReference} from 'alinea/picker/url'

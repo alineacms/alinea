@@ -1,7 +1,7 @@
 import type {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
-import {useTranslation} from 'alinea/dashboard/hook/UseTranslation.js'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {Head} from 'alinea/dashboard/util/Head'
 import {Button, HStack, px, Typo, VStack} from 'alinea/ui'
 import {LogoShape} from 'alinea/ui/branding/LogoShape'
