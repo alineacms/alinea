@@ -106,8 +106,7 @@
   "cloudAuthView": {
     "title": "Alinea",
     "deploy": "Ready to deploy?",
-    "handler": "handler",
-    "continue": "to continue",
+    "requiresHandler": "Alinea requires a handler to continue",
     "backend": "Alinea requires a backend to continue.",
     "customBackend": "fully configure a custom backend",
     "cloud": "Or get set up in a few clicks with our cloud offering.",

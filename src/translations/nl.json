@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Synchroniseren",
+    "synced": "Gesynchroniseerd",
+    "saving": "Opslaan..."
+  },
+  "urlPicker": {
+    "title": "Link",
+    "url": "Url",
+    "urlHelp": "Url van de link",
+    "description": "Beschrijving",
+    "descriptionHelp": "Tekst om weer te geven in het linkelement",
+    "target": "Doel",
+    "targetDescription": "Link openen in nieuw tabblad",
+    "cancel": "Annuleren",
+    "confirm": "Bevestigen"
+  },
+  "pickLink": {
+    "title": "Link kiezen",
+    "link": "Link",
+    "description": "Beschrijving",
+    "descriptionHelp": "Tekst om weer te geven in het linkelement",
+    "tooltip": "Tooltip",
+    "tooltipHelp": "Extra informatie die de link beschrijft, weergegeven bij hover",
+    "newTab": "Link openen in nieuw tabblad",
+    "remove": "Link verwijderen",
+    "cancel": "Annuleren",
+    "confirm": "Bevestigen"
+  },
+  "newEntry": {
+    "title": "Titel",
+    "parent": "Ouder",
+    "type": "Type selecteren",
+    "order": "Order invoegen",
+    "orderFirst": "Bovenaan de lijst",
+    "orderLast": "Onderaan de lijst",
+    "copyFrom": "Inhoud kopiëren van",
+    "formTitle": "Nieuw item",
+    "cancel": "Annuleren",
+    "create": "Aanmaken"
+  },
+  "entryEdit": {
+    "blockingTitle": "Weet u zeker dat u de wijzigingen wilt verwijderen?",
+    "blockingWarning": "Dit document is gewijzigd",
+    "blockingPrompt": "Wilt u uw wijzigingen opslaan?",
+    "blockingDiscard": "Verwijderen mijn wijzigingen",
+    "blockingSaveDraft": "Opslaan als concept",
+    "blockingPublishChanges": "Wijzigingen publiceren",
+    "untranslatedTitle": "Niet vertaald",
+    "untranslatedParent": "Vertaal eerst de bovenliggende pagina.",
+    "untranslatedPrompt": "Voer de onderstaande gegevens in en sla ze op om te beginnen met vertalen.",
+    "draftError": "Kan de conceptactie niet voltooien, probeer het later opnieuw",
+    "saveTranslationError": "Kan de vertaalactie niet voltooien, probeer het later opnieuw",
+    "publishError": "Kan de publicatieactie niet voltooien, probeer het later opnieuw",
+    "discardError": "Kan de wijzigingen niet verwijderen, probeer het later opnieuw",
+    "unpublishError": "Kan de ongedaanmakingsactie niet voltooien, probeer het later opnieuw",
+    "deleteError": "Kan de verwijderactie niet voltooien, probeer het later opnieuw",
+    "archiveError": "Kan Archiefactie niet voltooien, probeer het later opnieuw"
+  },
+  "entryHeader": {
+    "draft": "Concept",
+    "editing": "Bewerken",
+    "published": "Gepubliceerd",
+    "archived": "Gearchiveerd",
+    "untranslated": "Niet vertaald",
+    "unpublished": "Niet gepubliceerd",
+    "revision": "Revisie",
+    "showMenu": "Menu weergeven",
+    "hideMenu": "Menu verbergen",
+    "removeDraft": "Concept verwijderen",
+    "replace": "Vervangen",
+    "delete": "Verwijderen",
+    "unpublish": "Niet publiceren",
+    "archive": "Archiveren",
+    "publish": "Publiceren",
+    "showHistory": "Geschiedenis weergeven",
+    "hideHistory": "Geschiedenis verbergen",
+    "draftAvailable": "Er is een nieuwere conceptversie beschikbaar beschikbaar",
+    "translateFrom": "Vertalen van",
+    "translateParent": "Eerst bovenliggende pagina vertalen",
+    "discard": "Bewerkingen verwijderen",
+    "save": "Vertaling opslaan",
+    "saveDraft": "Opslaan",
+    "restore": "Herstellen",
+    "showPreview": "Voorbeeld weergeven",
+    "hidePreview": "Voorbeeld verbergen",
+    "savingDraft": "Concept opslaan",
+    "savingTranslation": "Vertaling opslaan",
+    "publishingEdits": "Bewerkingen publiceren",
+    "restoringRevision": "Revisie herstellen",
+    "publishingDraft": "Concept publiceren",
+    "unpublishingDraft": "Concept depubliceren",
+    "discardingDraft": "Concept verwijderen",
+    "archivingPublished": "Gepubliceerd archiveren",
+    "publishingArchived": "Gearchiveerd publiceren",
+    "deletingFile": "Bestand verwijderen",
+    "deletingEntry": "Item verwijderen"
+  },
+  "contentView": {
+    "create": "Nieuw maken"
+  },
+  "welcome": {
+    "title": "Uw alinea-installatie is nu klaar voor configuratie.",
+    "button": "Leer hoe u kunt configureren"
+  },
+  "cloudAuthView": {
+    "title": "Alinea",
+    "deploy": "Klaar voor implementatie?",
+    "requiresHandler": "Alinea heeft een handler nodig om door te gaan.",
+    "backend": "Alinea heeft een backend nodig om door te gaan.",
+    "customBackend": "Configureer een aangepaste backend volledig",
+    "cloud": "Of stel het in met een paar klikken in met ons cloudaanbod.",
+    "cloudButton": "Ga verder met alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Instellingen",
+    "defaultWorkspace": "Standaardwerkruimte",
+    "theme": "Thema wisselen",
+    "fontSize": "Lettergrootte",
+    "decreaseFontSize": "Lettergrootte verkleinen",
+    "increaseFontSize": "Lettergrootte vergroten",
+    "logout": "Uitloggen"
+  },
+  "fileUploader": {
+    "uploadComplete": "Uploads voltooid: {{amount}}",
+    "uploading": "Bestanden uploaden: {{amount}}",
+    "upload": "Bestanden uploaden"
+  },
+  "fileUploadRow": {
+    "alt": "Geüpload bestand",
+    "done": "Klaar"
+  },
+  "fileEntry": {
+    "preview": "Voorbeeld van mediabestand",
+    "extension": "Extensie",
+    "fileSize": "Bestandsgrootte",
+    "dimensions": "Afmetingen",
+    "pixels": "pixels",
+    "url": "URL",
+    "focus": "Scherpstelpunt",
+    "focusHelp": "Klik op de afbeelding om het scherpstelpunt te wijzigen"
+  },
+  "cardOverview": {
+    "title": "kaart"
+  },
+  "explorer": {
+    "noResults": "Geen resultaten"
+  },
+  "editModeToggle": {
+    "edit": "Bewerken",
+    "review": "Wijzigingen controleren"
+  },
+  "searchBox": {
+    "search": "Zoeken"
+  },
+  "rootOverview": {
+    "instruction": "Selecteer een item in de navigatiestructuur\non links om te beginnen met bewerken"
+  },
+  "inputLabel": {
+    "readonly": "Alleen-lezen",
+    "shared": "Gedeeld"
+  },
+  "errorBoundary": {
+    "title": "Fout",
+    "oops": "Oeps, er is iets misgegaan",
+    "close": "Fout sluiten",
+    "issue": "Maak een issue aan"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Standaardwerkruimte",
+    "logout": "Uitloggen"
+  },
+  "listField": {
+    "reorder": "Sleep en zet neer om de volgorde te wijzigen",
+    "copy": "Blok kopiëren",
+    "moveUp": "Eén positie omhoog verplaatsen",
+    "moveDown": "Eén positie omlaag verplaatsen",
+    "delete": "Blok verwijderen",
+    "paste": "Blok plakken",
+    "add": "Nieuw blok invoegen"
+  },
+  "metadataField": {
+    "previewTitle": "Voorbeeld",
+    "searchEngine": "Zoekmachine",
+    "socialShare": "Sociaal delen",
+    "ogImageAlt": "Open Graph-afbeelding"
+  },
+  "pickTextLink": {
+    "title": "Link kiezen",
+    "link": "Link",
+    "description": "Beschrijving",
+    "descriptionHelp": "Tekst om weer te geven in het linkelement",
+    "tooltip": "Tooltip",
+    "tooltipHelp": "Extra informatie die de link beschrijft, weergegeven bij hover",
+    "newTab": "Link openen in nieuw tabblad",
+    "remove": "Link verwijderen",
+    "cancel": "Annuleren",
+    "confirm": "Bevestigen"
+  },
+  "richTextField": {
+    "insert": "Blok invoegen"
+  },
+  "richTextToolbar": {
+    "styles": "Kop/alinea",
+    "table": "Tabel",
+    "bold": "Vet",
+    "italic": "Cursief",
+    "align": "Uitlijning",
+    "alignLeft": "Links uitlijnen",
+    "alignCenter": "Centreren",
+    "alignRight": "Rechts uitlijnen",
+    "alignJustify": "Uitlijnen",
+    "clear": "Opmaak wissen",
+    "bulletList": "Lijst met opsommingstekens",
+    "orderedList": "Geordende lijst",
+    "link": "Link",
+    "quote": "Blokcitaat",
+    "rule": "Horizontale regel",
+    "small": "Klein",
+    "sub": "Subscript",
+    "sup": "Superscript",
+    "paragraph": "Normale tekst",
+    "h1": "Kop 1",
+    "h2": "Kop 2",
+    "h3": "Kop 3",
+    "h4": "Kop 4",
+    "h5": "Kop 5",
+    "tableLabel": "Tabel",
+    "insert": "Tabel invoegen",
+    "insertRowBefore": "Rij invoegen vóór",
+    "insertRowAfter": "Rij invoegen na",
+    "deleteRow": "Rij verwijderen",
+    "toggleHeaderRow": "Koptekstrij in-/uitschakelen",
+    "insertColumnBefore": "Kolom invoegen vóór",
+    "insertColumnAfter": "Kolom invoegen na",
+    "deleteColumn": "Kolom verwijderen",
+    "deleteTable": "Tabel verwijderen",
+    "left": "Links",
+    "center": "Midden",
+    "right": "Rechts",
+    "justify": "Uitvullen"
+  },
+  "linkField": {
+    "reorder": "Slepen en neerzetten om de volgorde te wijzigen",
+    "open": "Link openen in nieuw tabblad",
+    "openFile": "Mediabestand openen in nieuw tabblad",
+    "edit": "Link bewerken",
+    "editFile": "Afbeelding wijzigen",
+    "delete": "Link verwijderen",
+    "deleteFile": "Afbeelding verwijderen"
+  },
+  "entryPicker": {
+    "title": "Selecteer een referentie",
+    "searchPlaceholder": "Zoeken",
+    "cancel": "Annuleren",
+    "confirm": "Bevestigen"
+  }
+}

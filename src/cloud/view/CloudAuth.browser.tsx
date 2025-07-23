@@ -42,14 +42,12 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                 <Typo.H1 flat>{t.deploy}</Typo.H1>
               </HStack>
               <Typo.P>
-                Alinea requires a{' '}
                 <Typo.Link
                   href="https://alineacms.com/docs/deploy"
                   target="_blank"
                 >
-                  {t.handler}
-                </Typo.Link>{' '}
-                {t.continue}.
+                  {t.requiresHandler}
+                </Typo.Link>
               </Typo.P>
             </VStack>
           </div>
