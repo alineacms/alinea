@@ -36,13 +36,13 @@ import {useField} from 'alinea/dashboard/editor/UseField'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {useLocale} from 'alinea/dashboard/hook/UseLocale'
 import {useNav} from 'alinea/dashboard/hook/UseNav'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {SuspenseBoundary} from 'alinea/dashboard/util/SuspenseBoundary'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url/UrlPicker'
-import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {TextLabel} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
@@ -388,7 +388,7 @@ function LinkInputRow({
   const t = useTranslation(copy)
   const onView = useReferenceViewer()
   const RowView = picker.viewRow!
-  const isFile = reference[Reference.type] === MediaFile.Type.name
+  const isFile = reference[Reference.type] === 'file'
   const inner = (
     <div
       className={styles.row({
