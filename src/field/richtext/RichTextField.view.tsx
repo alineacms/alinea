@@ -34,6 +34,7 @@ import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import type {RichTextOptions} from './RichTextField.js'
@@ -42,6 +43,12 @@ import {RichTextKit} from './RichTextKit.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
+
+export const copy = {
+  insert: {
+    label: 'Insert block'
+  }
+}
 
 type NodeViewProps = {
   node: {attrs: {[BlockNode.id]?: string}}
@@ -116,6 +123,7 @@ type InsertMenuProps = {
 }
 
 function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
+  const t = useTranslation(copy)
   const id = createId()
   if (!schema) return null
   const blocks = entries(schema).map(([key, type]) => {
@@ -152,7 +160,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
       <DropdownMenu.Root bottom>
         <DropdownMenu.Trigger className={styles.insert.trigger()}>
           <Icon icon={IcRoundAddCircle} />
-          <span>Insert block</span>
+          <span>{t.insert.label()}</span>
         </DropdownMenu.Trigger>
         <DropdownMenu.Items>{blocks}</DropdownMenu.Items>
       </DropdownMenu.Root>

@@ -31,6 +31,7 @@ import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {Suspense, useCallback, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {
@@ -43,6 +44,17 @@ import {EntryPickerRow} from './EntryPickerRow.js'
 import {EntryReference} from './EntryReference.js'
 
 export * from './EntryPicker.js'
+
+export const copy = {
+  title: 'Select a reference',
+  search: {
+    placeholder: 'Search'
+  },
+  button: {
+    cancel: 'Cancel',
+    confirm: 'Confirm'
+  }
+}
 
 export const entryPicker = pickerWithView(createEntryPicker, {
   view: EntryPickerModal,
@@ -68,6 +80,7 @@ export function EntryPickerModal({
   onConfirm,
   onCancel
 }: EntryPickerModalProps) {
+  const t = useTranslation(copy)
   const config = useConfig()
   const graph = useGraph()
   const editor = useEntryEditor()
@@ -313,7 +326,7 @@ export function EntryPickerModal({
                   </Breadcrumbs>
                 )}
                 <h2>
-                  {title ? <TextLabel label={title} /> : 'Select a reference'}
+                  {title ? <TextLabel label={title} /> : t.title()}
                 </h2>
               </VStack>
             </HStack>
@@ -322,7 +335,7 @@ export function EntryPickerModal({
               <IcRoundSearch className={styles.root.search.icon()} />
               <input
                 type="text"
-                placeholder="Search"
+                placeholder={t.search.placeholder()}
                 value={search}
                 onChange={event => setSearch(event.target.value)}
                 className={styles.root.search.input()}
@@ -387,9 +400,9 @@ export function EntryPickerModal({
           <Stack.Right>
             <HStack gap={16}>
               <Button outline type="button" onClick={onCancel}>
-                Cancel
+                {t.button.cancel()}
               </Button>
-              <Button onClick={handleConfirm}>Confirm</Button>
+              <Button onClick={handleConfirm}>{t.button.confirm()}</Button>
             </HStack>
           </Stack.Right>
         </HStack>

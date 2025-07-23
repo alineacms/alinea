@@ -27,6 +27,7 @@ import {useLocale} from './hook/UseLocale.js'
 import {useNav} from './hook/UseNav.js'
 import {useRoot} from './hook/UseRoot.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
+import {useTranslation} from './hook/useTranslation.js'
 import {Head} from './util/Head.js'
 import {SuspenseBoundary} from './util/SuspenseBoundary.js'
 import {ErrorBoundary} from './view/ErrorBoundary.js'
@@ -42,7 +43,14 @@ const isEntryAtom = atom(get => {
   return Boolean(match) || location.pathname === '/'
 })
 
+export const copy = {
+  syncing: 'Syncing',
+  synced: 'Synced',
+  saving: 'Saving…'
+}
+
 function AppAuthenticated() {
+  const t = useTranslation(copy)
   useDbUpdater()
   const {alineaDev, fullPage} = useDashboard()
   const nav = useNav()
@@ -117,7 +125,7 @@ function AppAuthenticated() {
                 <Statusbar.Status
                   icon={pending === 0 ? IcRoundCheck : IcRoundSync}
                 >
-                  {pending === 0 ? 'Synced' : 'Saving…'}
+                  {pending === 0 ? t.synced : t.saving}
                 </Statusbar.Status>
 
                 {sha ? (
@@ -126,7 +134,7 @@ function AppAuthenticated() {
                   </Statusbar.Status>
                 ) : (
                   <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                    Syncing
+                    {t.syncing}
                   </Statusbar.Status>
                 )}
               </Statusbar.Root>

@@ -10,6 +10,7 @@ import {check} from 'alinea/field/check'
 import {link as createLink} from 'alinea/field/link'
 import {text} from 'alinea/field/text'
 import type {EntryReference} from 'alinea/picker/entry/EntryReference'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {Button, HStack, Stack, VStack} from 'alinea/ui'
 import {useTrigger} from 'alinea/ui/hook/UseTrigger'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -18,21 +19,39 @@ import css from './PickLink.module.scss'
 
 const styles = styler(css)
 
+export const copy = {
+  title: 'Pick link',
+  form: {
+    link: 'Link',
+    description: 'Description',
+    description_help: 'Text to display inside the link element',
+    tooltip: 'Tooltip',
+    tooltip_help: 'Extra information that describes the link, shown on hover',
+    new_tab: 'Open link in new tab'
+  },
+  button: {
+    remove: 'Remove link',
+    cancel: 'Cancel',
+    confirm: 'Confirm'
+  }
+}
+
 function linkForm(options: PickerOptions) {
+  const t = useTranslation(copy)
   const isExistingLink = Boolean(options.link)
-  const fields = type('Pick link', {
+  const fields = type(t.title(), {
     fields: {
-      link: createLink('Link', {
+      link: createLink(t.form.link(), {
         required: true,
         initialValue: options.link as EntryReference & ListRow
       }),
-      description: text('Description', {
-        help: 'Text to display inside the link element'
+      description: text(t.form.description(), {
+        help: t.form.description_help()
       }),
-      title: text('Tooltip', {
-        help: 'Extra information that describes the link, shown on hover'
+      title: text(t.form.tooltip(), {
+        help: t.form.tooltip_help()
       }),
-      blank: check('Open link in new tab', {
+      blank: check(t.form.new_tab(), {
         inline: true
       })
     }
@@ -85,6 +104,7 @@ export function PickTextLinkForm({
   resolve,
   options = {}
 }: PickTextLinkState) {
+  const t = useTranslation(copy)
   const type = useMemo(() => linkForm(options), [options])
   const form = useForm(type, {
     initialValue: options as any
@@ -111,15 +131,15 @@ export function PickTextLinkForm({
                   type="button"
                   onClick={() => resolve(undefined)}
                 >
-                  Remove link
+                  {t.button.remove()}
                 </Button>
               )}
               <Stack.Right>
                 <HStack gap={16}>
                   <Button outline type="button" onClick={onClose}>
-                    Cancel
+                    {t.button.cancel()}
                   </Button>
-                  <Button>Confirm</Button>
+                  <Button>{t.button.confirm()}</Button>
                 </HStack>
               </Stack.Right>
             </HStack>

@@ -42,6 +42,7 @@ import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url/UrlPicker'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {TextLabel} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
@@ -62,6 +63,20 @@ import css from './LinkField.module.scss'
 export type * from './LinkField.js'
 
 const styles = styler(css)
+
+export const copy = {
+  row: {
+    ariaLabel: {
+      reorder: 'Drag and drop to reorder',
+      open: 'Open link in new tab',
+      openFile: 'Open media file in new tab',
+      edit: 'Edit link',
+      editFile: 'Change image',
+      delete: 'Delete link',
+      deleteFile: 'Delete image'
+    }
+  }
+}
 
 export interface LinkInputProps<Row> {
   field: LinkField<Reference, Row>
@@ -370,8 +385,10 @@ function LinkInputRow({
   multiple,
   ...rest
 }: LinkInputRowProps) {
+  const t = useTranslation(copy)
   const onView = useReferenceViewer()
   const RowView = picker.viewRow!
+  const isFile = reference[Reference.type] === MediaFile.Type.name
   const inner = (
     <div
       className={styles.row({
@@ -388,7 +405,7 @@ function LinkInputRow({
               icon={IcRoundDragHandle}
               {...handle}
               style={{cursor: handle ? 'grab' : 'grabbing'}}
-              title="Drag and drop to reorder"
+              title={t.row.ariaLabel.reorder()}
             />
           ) : (
             <div className={styles.row.staticHandle()}>
@@ -406,25 +423,17 @@ function LinkInputRow({
             <IconButton
               icon={IcRoundOpenInNew}
               onClick={() => onView(reference)}
-              title={
-                reference?._type === 'image'
-                  ? 'Open media file in new tab'
-                  : 'Open link in new tab'
-              }
+              title={t.row.ariaLabel[isFile ? 'openFile' : 'open']()}
             />
             <IconButton
               icon={IcRoundEdit}
               onClick={onEdit}
-              title={
-                reference?._type === 'image' ? 'Change image' : 'Edit link'
-              }
+              title={t.row.ariaLabel[isFile ? 'editFile' : 'edit']()}
             />
             <IconButton
               icon={IcRoundClose}
               onClick={onRemove}
-              title={
-                reference?._type === 'image' ? 'Delete image' : 'Delete link'
-              }
+              title={t.row.ariaLabel[isFile ? 'deleteFile' : 'delete']()}
             />
           </Sink.Options>
         )}

@@ -7,6 +7,7 @@ import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRig
 import {transparentize} from 'color2k'
 import prettyBytes from 'pretty-bytes'
 import {Fragment, type ReactNode} from 'react'
+import {useTranslation} from '../../hook/useTranslation.js'
 import css from './FileSummary.module.scss'
 
 const styles = styler(css)
@@ -54,7 +55,12 @@ export function FileSummaryRow(file: SummaryProps) {
   )
 }
 
+export const copy = {
+  separator: ` - `
+}
+
 export function FileSummaryThumb(file: SummaryProps) {
+  const t = useTranslation(copy)
   return (
     <div className={styles.thumb()} title={file.title}>
       <div
@@ -83,7 +89,7 @@ export function FileSummaryThumb(file: SummaryProps) {
         <p className={styles.thumb.footer.title()}>{file.title}</p>
         <p className={styles.thumb.footer.details()}>
           {file.extension?.slice(1).toUpperCase()}
-          {file.width && file.height && ` - ${file.width}x${file.height}`}
+          {file.width && file.height && `${t.separator}${file.width}x${file.height}`}
           {file.size && (
             <span style={{marginLeft: 'auto'}}>{prettyBytes(file.size)}</span>
           )}

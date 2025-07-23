@@ -4,11 +4,23 @@ import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {usePreviewMetadata} from 'alinea/dashboard/view/preview/BrowserPreview'
 import type {MetadataField} from './MetadataField.js'
 import css from './MetadataField.module.scss'
 
 const styles = styler(css)
+
+export const copy = {
+  preview: {
+    title: 'Preview',
+    subtitle: {
+      search: 'Search engine',
+      social: 'Social share'
+    }
+  },
+  ogImageAlt: 'Open Graph image'
+}
 
 export interface MetadataInputProps {
   field: MetadataField
@@ -29,11 +41,12 @@ export function MetadataInput({field}: MetadataInputProps) {
 }
 
 function MetadataPreview() {
+  const t = useTranslation(copy)
   const metadata = usePreviewMetadata()
   if (!metadata) return null
   return (
     <div className={styles.preview()}>
-      <h2>Preview</h2>
+      <h2>{t.preview.title()}</h2>
       <SearchEnginePreview metaTags={metadata} />
       <OpenGraphPreview metaTags={metadata} />
     </div>
@@ -41,9 +54,12 @@ function MetadataPreview() {
 }
 
 const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
+  const t = useTranslation(copy)
   return (
     <>
-      <h4 className={styles.preview.subtitle()}>Search engine</h4>
+      <h4 className={styles.preview.subtitle()}>
+        {t.preview.subtitle.search()}
+      </h4>
       <div className={styles.searchengine()}>
         <div className={styles.searchengine.intro()}>
           <div className={styles.searchengine.intro.favicon()}>
@@ -79,14 +95,15 @@ const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
 }
 
 const OpenGraphPreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
+  const t = useTranslation(copy)
   return (
     <>
-      <h4 className={styles.preview.subtitle()}>Social share</h4>
+      <h4 className={styles.preview.subtitle()}>{t.preview.subtitle.social()}</h4>
       <div className={styles.opengraph()}>
         {metaTags['og:image'] && (
           <img
             src={metaTags['og:image']}
-            alt="Open Graph image"
+            alt={t.ogImageAlt()}
             className={styles.opengraph.img()}
           />
         )}

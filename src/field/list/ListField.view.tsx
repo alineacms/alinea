@@ -44,6 +44,7 @@ import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import {
@@ -62,6 +63,28 @@ const copyAtom = atomWithStorage<ListRow | undefined>(
   '@alinea/copypaste',
   undefined
 )
+
+export const copy = {
+  row: {
+    ariaLabel: {
+      reorder: 'Drag and drop to reorder',
+      copy: 'Copy block',
+      moveUp: 'Move up one position',
+      moveDown: 'Move down one position',
+      delete: 'Delete block'
+    }
+  },
+  create: {
+    ariaLabel: {
+      paste: 'Paste block'
+    }
+  },
+  insert: {
+    ariaLabel: {
+      add: 'Insert new block'
+    }
+  }
+}
 
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   const {isSorting, wasSorting} = args
@@ -131,6 +154,7 @@ function ListInputRow({
   firstRow,
   ...rest
 }: ListInputRowProps) {
+  const t = useTranslation(copy)
   const type = schema[row[ListRow.type]]
   const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
@@ -167,18 +191,21 @@ function ListInputRow({
             icon={getType(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
-            title="Drag and drop to reorder"
+            title={t.row.ariaLabel.reorder()}
           />
         </Sink.Options>
         <Sink.Title>
-          <TextLabel label={Type.label(type)} className={styles.row.header.title()} />
+          <TextLabel
+            label={Type.label(type)}
+            className={styles.row.header.title()}
+          />
         </Sink.Title>
         <Sink.Options>
           {onCopyBlock !== undefined && (
             <IconButton
               icon={IcBaselineContentCopy}
               onClick={() => onCopyBlock()}
-              title="Copy block"
+              title={t.row.ariaLabel.copy()}
             />
           )}
           {!readOnly && (
@@ -186,14 +213,18 @@ function ListInputRow({
               <IconButton
                 icon={IcRoundKeyboardArrowUp}
                 onClick={() => onMove?.(-1)}
-                title="Move up one position"
+                title={t.row.ariaLabel.moveUp()}
               />
               <IconButton
                 icon={IcRoundKeyboardArrowDown}
                 onClick={() => onMove?.(1)}
-                title="Move down one position"
+                title={t.row.ariaLabel.moveDown()}
               />
-              <IconButton icon={IcRoundClose} onClick={onDelete} title="Delete block" />
+              <IconButton
+                icon={IcRoundClose}
+                onClick={onDelete}
+                title={t.row.ariaLabel.delete()}
+              />
             </>
           )}
         </Sink.Options>
@@ -220,6 +251,7 @@ function ListCreateRow({
   onCreate,
   onPaste
 }: ListCreateRowProps) {
+  const t = useTranslation(copy)
   const [pasted] = useAtom(copyAtom)
   const canPaste =
     pasted && entries(schema).some(([key]) => key === pasted._type)
@@ -243,7 +275,7 @@ function ListCreateRow({
             onClick={() => onPaste(pasted)}
             mod="paste"
           >
-            <TextLabel label="Paste block" />
+            <TextLabel label={t.create.ariaLabel.paste()} />
           </Create.Button>
         )}
       </Create.Root>
@@ -258,10 +290,15 @@ interface ListInsertRowProps {
 }
 
 function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
+  const t = useTranslation(copy)
   return (
     <>
       <div className={styles.insert({open, first})}>
-        <button className={styles.insert.icon()} onClick={onInsert} title="Insert new block">
+        <button
+          className={styles.insert.icon()}
+          onClick={onInsert}
+          title={t.insert.ariaLabel.add()}
+        >
           <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
         </button>
       </div>

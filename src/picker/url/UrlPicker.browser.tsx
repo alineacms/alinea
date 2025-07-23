@@ -4,6 +4,7 @@ import {Reference} from 'alinea/core/Reference'
 import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useTranslation} from 'alinea/dashboard/hook/useTranslation'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {check} from 'alinea/field/check'
 import {text} from 'alinea/field/text'
@@ -19,26 +20,43 @@ export const urlPicker = pickerWithView(createUrlPicker, {
   viewRow: UrlPickerRow
 })
 
+export const copy = {
+  title: 'Link',
+  form: {
+    url: 'Url',
+    url_help: 'Url of the link',
+    description: 'Description',
+    description_help: 'Text to display inside the link element',
+    target: 'Target',
+    target_description: 'Open link in new tab'
+  },
+  button: {
+    cancel: 'Cancel',
+    confirm: 'Confirm'
+  }
+}
+
 export function UrlPickerForm({
   selection,
   options,
   onConfirm,
   onCancel
 }: PickerProps) {
+  const t = useTranslation(copy)
   const preSelected = selection?.[0] as UrlReference | undefined
   const linkForm = useMemo(
     () =>
-      type('Link', {
+      type(t.title(), {
         fields: {
-          url: text('Url', {
+          url: text(t.form.url(), {
             required: true,
-            help: 'Url of the link'
+            help: t.form.url_help()
           }),
-          title: text('Description', {
-            help: 'Text to display inside the link element'
+          title: text(t.form.description(), {
+            help: t.form.description_help()
           }),
-          blank: check('Target', {
-            description: 'Open link in new tab',
+          blank: check(t.form.target(), {
+            description: t.form.target_description(),
             initialValue: true
           })
         }
@@ -74,9 +92,9 @@ export function UrlPickerForm({
         <Stack.Right>
           <HStack gap={16}>
             <Button outline type="button" onClick={onCancel}>
-              Cancel
+              {t.button.cancel()}
             </Button>
-            <Button>Confirm</Button>
+            <Button>{t.button.confirm()}</Button>
           </HStack>
         </Stack.Right>
       </HStack>
