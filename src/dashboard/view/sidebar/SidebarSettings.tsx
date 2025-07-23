@@ -1,17 +1,17 @@
 import styler from '@alinea/styler'
 import {Switch} from '@headlessui/react'
-import {Workspace} from 'alinea/core/Workspace'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {Workspace} from 'alinea/core/Workspace'
 import {select} from 'alinea/field'
-import {HStack, Icon, VStack, px} from 'alinea/ui'
+import {HStack, Icon, px, VStack} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
-import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {IcBaselineAccountCircle} from 'alinea/ui/icons/IcBaselineAccountCircle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
+import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import {dashboardOptionsAtom} from '../../atoms/DashboardAtoms.js'
@@ -22,6 +22,7 @@ import {
   workspacePreferenceAtom
 } from '../../atoms/PreferencesAtoms.js'
 import {useSession} from '../../hook/UseSession.js'
+import {useTranslation} from '../../hook/UseTranslation.js'
 import {IconButton} from '../IconButton.js'
 import {Sidebar} from '../Sidebar.js'
 import css from './SidebarSettings.module.scss'
@@ -29,6 +30,7 @@ import css from './SidebarSettings.module.scss'
 const styles = styler(css)
 
 export function SidebarSettings() {
+  const {sidebarSettings: t} = useTranslation()
   const session = useSession()
   const {config} = useAtomValue(dashboardOptionsAtom)
   const preferences = useAtomValue(preferencesAtom)
@@ -37,7 +39,7 @@ export function SidebarSettings() {
   const workspaces = Object.entries(config.workspaces)
   const defaultWorkspace = useMemo(
     () =>
-      select('Default workspace', {
+      select(t.defaultWorkspace, {
         options: fromEntries(
           entries(config.workspaces).map(([key, workspace]) => {
             return [key, (Workspace.label(workspace) as string) || key]
@@ -59,7 +61,7 @@ export function SidebarSettings() {
   return (
     <DropdownMenu.Root top style={{margin: 'auto', marginBottom: 0}}>
       <DropdownMenu.Trigger style={{width: '100%'}}>
-        <Sidebar.Nav.Item aria-label="Settings">
+        <Sidebar.Nav.Item aria-label={t.settings}>
           <Icon icon={IcBaselineAccountCircle} />
         </Sidebar.Nav.Item>
       </DropdownMenu.Trigger>
@@ -81,7 +83,7 @@ export function SidebarSettings() {
                 <Icon
                   icon={IcSharpBrightnessMedium}
                   size={20}
-                  title="Switch theme"
+                  title={t.theme}
                 />
                 <Switch
                   checked={checked}
@@ -102,7 +104,7 @@ export function SidebarSettings() {
                   icon={IcRoundTextFields}
                   size={20}
                   style={{marginRight: px(12)}}
-                  title="Font size"
+                  title={t.fontSize}
                 />
                 <IconButton
                   icon={IcRoundKeyboardArrowDown}
@@ -110,7 +112,7 @@ export function SidebarSettings() {
                     disableTransition(() => updateFontSize(size - 1))
                   }
                   disabled={size <= 16}
-                  title="Decrease font size"
+                  title={t.decreaseFontSize}
                 />
                 <IconButton
                   icon={IcRoundKeyboardArrowUp}
@@ -118,7 +120,7 @@ export function SidebarSettings() {
                     disableTransition(() => updateFontSize(size + 1))
                   }
                   disabled={size >= 40}
-                  title="Increase font size"
+                  title={t.increaseFontSize}
                 />
               </HStack>
             </HStack>
@@ -136,7 +138,7 @@ export function SidebarSettings() {
             <PopoverMenu.Footer>
               <DropdownMenu.Root>
                 <DropdownMenu.Item onClick={session.end}>
-                  Logout
+                  {t.logout}
                 </DropdownMenu.Item>
               </DropdownMenu.Root>
             </PopoverMenu.Footer>

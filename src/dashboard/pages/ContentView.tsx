@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
 import {resolveView} from 'alinea/core/View'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {HStack, Icon, Loader} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import type {EntryEditor} from '../atoms/EntryEditorAtoms.js'
@@ -13,10 +14,10 @@ import {useLocation, useNavigate} from '../util/HashRouter.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import {EntryEdit} from '../view/EntryEdit.js'
 import {EntryTree} from '../view/EntryTree.js'
+import {NewEntry} from '../view/entry/NewEntry.js'
 import {RootOverview} from '../view/RootOverview.js'
 import {SearchBox} from '../view/SearchBox.js'
 import {Sidebar} from '../view/Sidebar.js'
-import {NewEntry} from '../view/entry/NewEntry.js'
 import css from './ContentView.module.scss'
 
 const styles = styler(css)
@@ -26,6 +27,7 @@ export interface ContentViewProps {
 }
 
 export function ContentView({editor}: ContentViewProps) {
+  const {contentView: t} = useTranslation()
   const {views} = useDashboard()
   const workspace = useWorkspace()
   const root = useRoot()
@@ -64,7 +66,7 @@ export function ContentView({editor}: ContentViewProps) {
           >
             <HStack center gap={8} align="center">
               <Icon icon={IcRoundAddCircle} size={17} />
-              <span>Create new</span>
+              <span>{t.create}</span>
             </HStack>
           </button>
         </div>

@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import {
   type JSONContent,
-  Node as TipTapNode,
-  mergeAttributes
+  mergeAttributes,
+  Node as TipTapNode
 } from '@tiptap/core'
 import {Collaboration} from '@tiptap/extension-collaboration'
 import {
@@ -13,27 +13,28 @@ import {
   ReactNodeViewRenderer
 } from '@tiptap/react'
 import type {Field} from 'alinea/core/Field'
+import type {RichTextField} from 'alinea/core/field/RichTextField'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
 import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
-import type {RichTextField} from 'alinea/core/field/RichTextField'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, Icon, TextLabel, px} from 'alinea/ui'
+import {HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {Sink} from 'alinea/ui/Sink'
 import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
+import {Sink} from 'alinea/ui/Sink'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import type {RichTextOptions} from './RichTextField.js'
@@ -116,6 +117,7 @@ type InsertMenuProps = {
 }
 
 function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
+  const {richTextField: t} = useTranslation()
   const id = createId()
   if (!schema) return null
   const blocks = entries(schema).map(([key, type]) => {
@@ -152,7 +154,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
       <DropdownMenu.Root bottom>
         <DropdownMenu.Trigger className={styles.insert.trigger()}>
           <Icon icon={IcRoundAddCircle} />
-          <span>Insert block</span>
+          <span>{t.insert}</span>
         </DropdownMenu.Trigger>
         <DropdownMenu.Items>{blocks}</DropdownMenu.Items>
       </DropdownMenu.Root>

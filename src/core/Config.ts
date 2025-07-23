@@ -1,16 +1,17 @@
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
-import type {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
+import type {Preview} from 'alinea/core/Preview'
+import type {en} from 'alinea/translations'
 import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getScope} from './Scope.js'
 import {Type} from './Type.js'
-import {Workspace, type WorkspaceInternal} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
 import * as paths from './util/Paths.js'
+import {Workspace, type WorkspaceInternal} from './Workspace.js'
 
 /** Configuration options */
 export interface Config {
@@ -34,6 +35,9 @@ export interface Config {
   publicDir?: string
   /** Filename of the generated dashboard */
   dashboardFile?: string
+
+  /** Supported interface languages */
+  interfaceLanguages?: Record<string, typeof en>
 
   auth?: Auth.View
 }

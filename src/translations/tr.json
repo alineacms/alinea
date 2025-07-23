@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Senkronizasyon",
+    "synced": "Senkronize edildi",
+    "saving": "Kaydediliyor…"
+  },
+  "urlPicker": {
+    "title": "Bağlantı",
+    "url": "URL",
+    "urlHelp": "Bağlantının URL'si",
+    "description": "Tanım",
+    "descriptionHelp": "Bağlantı öğesinin içinde görüntülenecek metin",
+    "target": "Hedef",
+    "targetDescription": "Bağlantıyı yeni sekmede aç",
+    "cancel": "İptal etmek",
+    "confirm": "Onaylamak"
+  },
+  "pickLink": {
+    "title": "Bağlantıyı seç",
+    "link": "Bağlantı",
+    "description": "Tanım",
+    "descriptionHelp": "Bağlantı öğesinin içinde görüntülenecek metin",
+    "tooltip": "Araç ipucu",
+    "tooltipHelp": "Bağlantıyı açıklayan ve üzerine gelindiğinde gösterilen ek bilgiler",
+    "newTab": "Bağlantıyı yeni sekmede aç",
+    "remove": "Bağlantıyı kaldır",
+    "cancel": "İptal etmek",
+    "confirm": "Onaylamak"
+  },
+  "newEntry": {
+    "title": "Başlık",
+    "parent": "Ebeveyn",
+    "type": "Türünü seçin",
+    "order": "Sipariş ekle",
+    "orderFirst": "Listenin en üstünde",
+    "orderLast": "Listenin en altında",
+    "copyFrom": "İçeriği kopyala",
+    "formTitle": "Yeni giriş",
+    "cancel": "İptal etmek",
+    "create": "Yaratmak"
+  },
+  "entryEdit": {
+    "blockingTitle": "Değişiklikleri silmek istediğinizden emin misiniz?",
+    "blockingWarning": "Bu belge değiştirildi",
+    "blockingPrompt": "değişikliklerinizi kaydetmek ister misiniz?",
+    "blockingDiscard": "Değişikliklerimi sil",
+    "blockingSaveDraft": "Taslak olarak kaydet",
+    "blockingPublishChanges": "Değişiklikleri yayınla",
+    "untranslatedTitle": "Çeviri yapılmamış",
+    "untranslatedParent": "Önce ana sayfayı çevirin.",
+    "untranslatedPrompt": "Aşağıdaki bilgileri girin ve çeviriye başlamak için kaydedin.",
+    "draftError": "Taslak eylem tamamlanamadı, lütfen daha sonra tekrar deneyin",
+    "saveTranslationError": "Çeviri işlemi tamamlanamadı, lütfen daha sonra tekrar deneyin",
+    "publishError": "Yayımlama işlemi tamamlanamadı, lütfen daha sonra tekrar deneyin",
+    "discardError": "Değişiklikler silinemedi, lütfen daha sonra tekrar deneyin",
+    "unpublishError": "Yayımdan kaldırma işlemi tamamlanamadı, lütfen daha sonra tekrar deneyin",
+    "deleteError": "Silme işlemi tamamlanamadı, lütfen daha sonra tekrar deneyin",
+    "archiveError": "Arşivleme işlemi tamamlanamadı, lütfen daha sonra tekrar deneyin"
+  },
+  "entryHeader": {
+    "draft": "Taslak",
+    "editing": "Düzenleme",
+    "published": "Yayımlandı",
+    "archived": "Arşivlendi",
+    "untranslated": "Çeviri yapılmamış",
+    "unpublished": "Yayımlanmamış",
+    "revision": "Revizyon",
+    "showMenu": "Menüyü görüntüle",
+    "hideMenu": "Menüyü gizle",
+    "removeDraft": "Taslağı kaldır",
+    "replace": "Yer değiştirmek",
+    "delete": "Silmek",
+    "unpublish": "Yayımdan kaldır",
+    "archive": "Arşiv",
+    "publish": "Yayınla",
+    "showHistory": "Geçmişi göster",
+    "hideHistory": "Geçmişi gizle",
+    "draftAvailable": "Daha yeni bir taslak sürümü mevcut",
+    "translateFrom": "Çeviriden",
+    "translateParent": "Önce ana sayfayı çevirin",
+    "discard": "Düzenlemeleri sil",
+    "save": "Çeviriyi kaydet",
+    "saveDraft": "Kaydetmek",
+    "restore": "Eski haline getirmek",
+    "showPreview": "Önizleme görüntüle",
+    "hidePreview": "Önizlemeyi gizle",
+    "savingDraft": "Taslak kaydediliyor",
+    "savingTranslation": "Çeviri kaydediliyor",
+    "publishingEdits": "Yayın düzenlemeleri",
+    "restoringRevision": "Revizyonun geri yüklenmesi",
+    "publishingDraft": "Taslağı yayınlamak",
+    "unpublishingDraft": "Taslağın yayımlanması durduruluyor",
+    "discardingDraft": "Taslağı atma",
+    "archivingPublished": "Arşivleme yayınlandı",
+    "publishingArchived": "Yayın arşivlendi",
+    "deletingFile": "Dosya siliniyor",
+    "deletingEntry": "Girişi sil"
+  },
+  "contentView": {
+    "create": "Yeni oluştur"
+  },
+  "welcome": {
+    "title": "Alinea kurulumunuz artık yapılandırmaya hazır.",
+    "button": "Yapılandırmayı öğrenin"
+  },
+  "cloudAuthView": {
+    "title": "Paragraf",
+    "deploy": "Dağıtıma hazır mısınız?",
+    "requiresHandler": "Alinea'nın devam edebilmesi için bir yöneticiye ihtiyacı var",
+    "backend": "Alinea'nın devam edebilmesi için bir arka uç gereklidir.",
+    "customBackend": "özel bir arka ucu tamamen yapılandırın",
+    "cloud": "Veya bulut hizmetimizle birkaç tıklamayla kurulumunuzu yapın.",
+    "cloudButton": "alinea.cloud ile devam edin"
+  },
+  "sidebarSettings": {
+    "settings": "Ayarlar",
+    "defaultWorkspace": "Varsayılan çalışma alanı",
+    "theme": "Tema değiştir",
+    "fontSize": "Yazı tipi boyutu",
+    "decreaseFontSize": "Yazı tipi boyutunu küçült",
+    "increaseFontSize": "Yazı tipi boyutunu büyüt",
+    "logout": "Çıkış yap"
+  },
+  "fileUploader": {
+    "uploadComplete": "Yüklemeler tamamlandı: {{amount}}",
+    "uploading": "Dosyalar yükleniyor: {{amount}}",
+    "upload": "Dosyaları yükleyin"
+  },
+  "fileUploadRow": {
+    "alt": "Yüklenen dosya",
+    "done": "Tamamlamak"
+  },
+  "fileEntry": {
+    "preview": "Medya dosyasının önizlemesi",
+    "extension": "Eklenti",
+    "fileSize": "Dosya boyutu",
+    "dimensions": "Boyutlar",
+    "pixels": "pikseller",
+    "url": "URL",
+    "focus": "Odak noktası",
+    "focusHelp": "Odak noktasını değiştirmek için resme tıklayın"
+  },
+  "cardOverview": {
+    "title": "kart"
+  },
+  "explorer": {
+    "noResults": "Sonuç yok"
+  },
+  "editModeToggle": {
+    "edit": "Düzenlemek",
+    "review": "Değişiklikleri gözden geçir"
+  },
+  "searchBox": {
+    "search": "Aramak"
+  },
+  "rootOverview": {
+    "instruction": "Düzenlemeye başlamak için soldaki gezinme ağacından bir giriş seçin"
+  },
+  "inputLabel": {
+    "readonly": "Salt okunur",
+    "shared": "Paylaşılan"
+  },
+  "errorBoundary": {
+    "title": "Hata",
+    "oops": "Oops, bir şeyler ters gitti",
+    "close": "Hatayı kapat",
+    "issue": "Bir sorun yaratın"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Varsayılan çalışma alanı",
+    "logout": "Çıkış yap"
+  },
+  "listField": {
+    "reorder": "Yeniden sıralamak için sürükleyip bırakın",
+    "copy": "Kopyalama bloğu",
+    "moveUp": "Bir pozisyon yukarı çık",
+    "moveDown": "Bir pozisyon aşağı in",
+    "delete": "Bloğu sil",
+    "paste": "Bloğu yapıştır",
+    "add": "Yeni blok ekle"
+  },
+  "metadataField": {
+    "previewTitle": "Önizleme",
+    "searchEngine": "Arama motoru",
+    "socialShare": "Sosyal paylaşım",
+    "ogImageAlt": "Açık Grafik görüntüsü"
+  },
+  "pickTextLink": {
+    "title": "Bağlantıyı seç",
+    "link": "Bağlantı",
+    "description": "Tanım",
+    "descriptionHelp": "Bağlantı öğesinin içinde görüntülenecek metin",
+    "tooltip": "Araç ipucu",
+    "tooltipHelp": "Bağlantıyı açıklayan ve üzerine gelindiğinde gösterilen ek bilgiler",
+    "newTab": "Bağlantıyı yeni sekmede aç",
+    "remove": "Bağlantıyı kaldır",
+    "cancel": "İptal etmek",
+    "confirm": "Onaylamak"
+  },
+  "richTextField": {
+    "insert": "Blok ekle"
+  },
+  "richTextToolbar": {
+    "styles": "Başlık/paragraf",
+    "table": "Masa",
+    "bold": "Gözü pek",
+    "italic": "İtalik",
+    "align": "Hizalama",
+    "alignLeft": "Sola hizala",
+    "alignCenter": "Ortaya hizala",
+    "alignRight": "Sağa hizala",
+    "alignJustify": "Hizala ve haklı çıkar",
+    "clear": "Temiz format",
+    "bulletList": "Madde işaretli liste",
+    "orderedList": "Sıralı liste",
+    "link": "Bağlantı",
+    "quote": "Alıntı",
+    "rule": "Yatay Kural",
+    "small": "Küçük",
+    "sub": "Alt simge",
+    "sup": "Üst simge",
+    "paragraph": "Normal metin",
+    "h1": "Başlık 1",
+    "h2": "Başlık 2",
+    "h3": "Başlık 3",
+    "h4": "Başlık 4",
+    "h5": "Başlık 5",
+    "tableLabel": "Masa",
+    "insert": "Tablo ekle",
+    "insertRowBefore": "Öncesine satır ekle",
+    "insertRowAfter": "Satır sonrasına ekle",
+    "deleteRow": "Satırı sil",
+    "toggleHeaderRow": "Başlık satırını aç/kapat",
+    "insertColumnBefore": "Öncesine sütun ekle",
+    "insertColumnAfter": "Sonra sütun ekle",
+    "deleteColumn": "Sütunu sil",
+    "deleteTable": "Tabloyu sil",
+    "left": "Sol",
+    "center": "Merkez",
+    "right": "Sağ",
+    "justify": "Savunmak"
+  },
+  "linkField": {
+    "reorder": "Yeniden sıralamak için sürükleyip bırakın",
+    "open": "Bağlantıyı yeni sekmede aç",
+    "openFile": "Medya dosyasını yeni sekmede aç",
+    "edit": "Bağlantıyı düzenle",
+    "editFile": "Görüntüyü değiştir",
+    "delete": "Bağlantıyı sil",
+    "deleteFile": "Resmi sil"
+  },
+  "entryPicker": {
+    "title": "Bir referans seçin",
+    "searchPlaceholder": "Aramak",
+    "cancel": "İptal etmek",
+    "confirm": "Onaylamak"
+  }
+}

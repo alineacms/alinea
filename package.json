@@ -49,7 +49,8 @@
   "dependencies": {
     "@alinea/iso": "^0.3.3",
     "@types/node": "^24.0.15",
-    "esbuild": "^0.25.4"
+    "esbuild": "^0.25.4",
+    "stylus": "^0.0.1-security"
   },
   "peerDependencies": {
     "react": "*",
@@ -85,7 +86,7 @@
     "speedscope": "^1.14.0",
     "symlink-dir": "^6.0.5",
     "typescript": "5.6.2",
-    "typescript-plugin-css-modules": "^5.0.2",
+    "typescript-plugin-css-modules": "^5.2.0",
     "yjs-src": "npm:yjs@13.6.11"
   },
   "packageManager": "yarn@4.5.0",

@@ -1,4 +1,11 @@
+/*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
+import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
+import styler from '@alinea/styler'
+import type {Editor} from '@tiptap/react'
 import type {Reference} from 'alinea/core/Reference'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
+import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
+import {IconButton} from 'alinea/dashboard/view/IconButton'
 import type {UrlReference} from 'alinea/picker/url'
 import {HStack, Icon, px, Typo} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -14,16 +21,10 @@ import {IcRoundFormatListNumbered} from 'alinea/ui/icons/IcRoundFormatListNumber
 import {IcRoundHorizontalRule} from 'alinea/ui/icons/IcRoundHorizontalRule'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundQuote} from 'alinea/ui/icons/IcRoundQuote'
-import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-/*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
-import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
-import styler from '@alinea/styler'
-import type {Editor} from '@tiptap/react'
-import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
-import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {IcRoundSubscript} from 'alinea/ui/icons/IcRoundSubscript'
 import {IcRoundSuperscript} from 'alinea/ui/icons/IcRoundSuperscript'
+import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {TableDelete} from 'alinea/ui/icons/TableDelete'
 import {TableDeleteColumn} from 'alinea/ui/icons/TableDeleteColumn'
 import {TableDeleteRow} from 'alinea/ui/icons/TableDeleteRow'
@@ -39,15 +40,6 @@ import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import css from './RichTextToolbar.module.scss'
 
 const styles = styler(css)
-
-enum Styles {
-  paragraph = 'Normal text',
-  h1 = 'Heading 1',
-  h2 = 'Heading 2',
-  h3 = 'Heading 3',
-  h4 = 'Heading 4',
-  h5 = 'Heading 5'
-}
 
 const HrDivider = () => (
   <hr
@@ -70,6 +62,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
   {pickLink, editor, focusToggle, enableTables}: RichTextToolbarProps,
   ref: Ref<HTMLDivElement>
 ) {
+  const {richTextToolbar: t} = useTranslation()
   function exec() {
     return editor.chain().focus(null, {scrollIntoView: false})
   }
@@ -148,53 +141,53 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
         <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
           <DropdownMenu.Root top>
             <DropdownMenu.Trigger
-              title="Heading/paragraph"
+              title={t.styles}
               className={styles.root.dropdown()}
             >
               <HStack gap={10} center>
-                <span>{Styles[selectedStyle]}</span>
+                <span>{t[selectedStyle]}</span>
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
             </DropdownMenu.Trigger>
             <DropdownMenu.Items>
               <DropdownMenu.Item onClick={() => exec().clearNodes().run()}>
-                <Typo.P>Normal text</Typo.P>
+                <Typo.P>{t.paragraph}</Typo.P>
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onClick={() => exec().setHeading({level: 1}).run()}
               >
-                <Typo.H1 flat>Heading 1</Typo.H1>
+                <Typo.H1 flat>{t.h1}</Typo.H1>
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onClick={() => exec().setHeading({level: 2}).run()}
               >
-                <Typo.H2 flat>Heading 2</Typo.H2>
+                <Typo.H2 flat>{t.h2}</Typo.H2>
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onClick={() => exec().setHeading({level: 3}).run()}
               >
-                <Typo.H3 flat>Heading 3</Typo.H3>
+                <Typo.H3 flat>{t.h3}</Typo.H3>
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onClick={() => exec().setHeading({level: 4}).run()}
               >
-                <Typo.H4 flat>Heading 4</Typo.H4>
+                <Typo.H4 flat>{t.h4}</Typo.H4>
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onClick={() => exec().setHeading({level: 5}).run()}
               >
-                <Typo.H5 flat>Heading 5</Typo.H5>
+                <Typo.H5 flat>{t.h5}</Typo.H5>
               </DropdownMenu.Item>
             </DropdownMenu.Items>
           </DropdownMenu.Root>
           {enableTables && (
             <DropdownMenu.Root top>
               <DropdownMenu.Trigger
-                title="Table"
+                title={t.table}
                 className={styles.root.dropdown()}
               >
                 <HStack gap={10} center>
-                  <span>Table</span>
+                  <span>{t.tableLabel}</span>
                   <Icon icon={IcRoundUnfoldMore} />
                 </HStack>
               </DropdownMenu.Trigger>
@@ -206,7 +199,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                     >
                       <HStack gap={8} center>
                         <Icon icon={TableInsertRowBefore} size={20} />
-                        Insert row before
+                        {t.insertRowBefore}
                       </HStack>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
@@ -214,13 +207,13 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                     >
                       <HStack gap={8} center>
                         <Icon icon={TableInsertRowAfter} size={20} />
-                        Insert row after
+                        {t.insertRowAfter}
                       </HStack>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item onClick={() => exec().deleteRow().run()}>
                       <HStack gap={8} center>
                         <Icon icon={TableDeleteRow} size={20} />
-                        Delete row
+                        {t.deleteRow}
                       </HStack>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
@@ -228,7 +221,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                     >
                       <HStack gap={8} center>
                         <Icon icon={TableHeaderRow} size={20} />
-                        Toggle header row
+                        {t.toggleHeaderRow}
                       </HStack>
                     </DropdownMenu.Item>
                     <HrDivider />
@@ -237,7 +230,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                     >
                       <HStack gap={8} center>
                         <Icon icon={TableInsertColumnBefore} size={20} />
-                        Insert column before
+                        {t.insertColumnBefore}
                       </HStack>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
@@ -245,7 +238,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                     >
                       <HStack gap={8} center>
                         <Icon icon={TableInsertColumnAfter} size={20} />
-                        Insert column after
+                        {t.insertColumnAfter}
                       </HStack>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
@@ -253,7 +246,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                     >
                       <HStack gap={8} center>
                         <Icon icon={TableDeleteColumn} size={20} />
-                        Delete column
+                        {t.deleteColumn}
                       </HStack>
                     </DropdownMenu.Item>
                     <HrDivider />
@@ -262,7 +255,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                     >
                       <HStack gap={8} center>
                         <Icon icon={TableDelete} size={20} />
-                        Delete table
+                        {t.deleteTable}
                       </HStack>
                     </DropdownMenu.Item>
                   </>
@@ -276,7 +269,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                   >
                     <HStack gap={8} center>
                       <Icon icon={TableInsert} size={20} />
-                      Insert table
+                      {t.insert}
                     </HStack>
                   </DropdownMenu.Item>
                 )}
@@ -287,7 +280,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundFormatBold}
             size={18}
-            title="Bold"
+            title={t.bold}
             onClick={e => {
               e.preventDefault()
               exec().toggleBold().run()
@@ -297,7 +290,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundFormatItalic}
             size={18}
-            title="Italic"
+            title={t.italic}
             onClick={e => {
               e.preventDefault()
               exec().toggleItalic().run()
@@ -306,7 +299,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           />
           <DropdownMenu.Root top>
             <DropdownMenu.Trigger
-              title="Alignment"
+              title={t.align}
               className={styles.root.dropdown()}
             >
               <HStack gap={10} center>
@@ -333,10 +326,10 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                   <Icon
                     round
                     icon={IcAlignLeft}
-                    title="Align left"
+                    title={t.alignLeft}
                     active={editor.isActive({textAlign: 'left'})}
                   />
-                  <span>Left</span>
+                  <span>{t.left}</span>
                 </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
@@ -346,10 +339,10 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                   <Icon
                     round
                     icon={IcAlignCenter}
-                    title="Align center"
+                    title={t.alignCenter}
                     active={editor.isActive({textAlign: 'center'})}
                   />
-                  <span>Center</span>
+                  <span>{t.center}</span>
                 </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
@@ -359,10 +352,10 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                   <Icon
                     round
                     icon={IcAlignRight}
-                    title="Align right"
+                    title={t.alignRight}
                     active={editor.isActive({textAlign: 'right'})}
                   />
-                  <span>Right</span>
+                  <span>{t.right}</span>
                 </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
@@ -372,10 +365,10 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                   <Icon
                     round
                     icon={IcAlignJustify}
-                    title="Align justify"
+                    title={t.alignJustify}
                     active={editor.isActive({textAlign: 'justify'})}
                   />
-                  <span>Justify</span>
+                  <span>{t.justify}</span>
                 </HStack>
               </DropdownMenu.Item>
             </DropdownMenu.Items>
@@ -383,7 +376,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundFormatClear}
             size={18}
-            title="Clear format"
+            title={t.clear}
             onClick={e => {
               e.preventDefault()
               exec().unsetAllMarks().run()
@@ -394,7 +387,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundFormatListBulleted}
             size={18}
-            title="Bullet list"
+            title={t.bulletList}
             onClick={e => {
               e.preventDefault()
               exec().toggleBulletList().run()
@@ -404,7 +397,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundFormatListNumbered}
             size={18}
-            title="Ordered list"
+            title={t.orderedList}
             onClick={e => {
               e.preventDefault()
               exec().toggleOrderedList().run()
@@ -415,7 +408,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundLink}
             size={18}
-            title="Link"
+            title={t.link}
             onClick={handleLink}
             active={editor.isActive('link')}
           />
@@ -423,7 +416,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundQuote}
             size={18}
-            title="Blockquote"
+            title={t.quote}
             onClick={e => {
               e.preventDefault()
               exec().toggleBlockquote().run()
@@ -433,7 +426,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundHorizontalRule}
             size={18}
-            title="Horizontal Rule"
+            title={t.rule}
             onClick={e => {
               e.preventDefault()
               exec().setHorizontalRule().run()
@@ -443,7 +436,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundTextFields}
             size={18}
-            title="Small"
+            title={t.small}
             onClick={e => {
               e.preventDefault()
               exec().toggleSmall().run()
@@ -453,7 +446,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundSubscript}
             size={18}
-            title="Subscript"
+            title={t.sub}
             onClick={e => {
               e.preventDefault()
               exec().toggleSubscript().run()
@@ -463,7 +456,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           <IconButton
             icon={IcRoundSuperscript}
             size={18}
-            title="Superscript"
+            title={t.sup}
             onClick={e => {
               e.preventDefault()
               exec().toggleSuperscript().run()

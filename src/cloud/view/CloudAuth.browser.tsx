@@ -1,6 +1,7 @@
 import type {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {Head} from 'alinea/dashboard/util/Head'
 import {Button, HStack, px, Typo, VStack} from 'alinea/ui'
 import {LogoShape} from 'alinea/ui/branding/LogoShape'
@@ -11,6 +12,7 @@ import {useQuery} from 'react-query'
 import {type AuthResult, AuthResultType} from '../AuthResult.js'
 
 export function CloudAuthView({setSession}: Auth.ViewProps) {
+  const {cloudAuthView: t} = useTranslation()
   const {client} = useDashboard()
   if (!(client instanceof Client))
     throw new Error('Cannot authenticate with non http client')
@@ -28,7 +30,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
     return (
       <>
         <Head>
-          <title>Alinea</title>
+          <title>{t.title}</title>
         </Head>
         <div style={{display: 'flex', height: '100%', width: '100%'}}>
           <div style={{margin: 'auto', padding: px(20)}}>
@@ -37,14 +39,15 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                 <LogoShape>
                   <IcRoundPublish />
                 </LogoShape>
-                <Typo.H1 flat>Ready to deploy?</Typo.H1>
+                <Typo.H1 flat>{t.deploy}</Typo.H1>
               </HStack>
               <Typo.P>
-                Alinea requires a{' '}
-                <Typo.Link href="https://alineacms.com/docs/deploy" target="_blank">
-                  handler
-                </Typo.Link>{' '}
-                to continue.
+                <Typo.Link
+                  href="https://alineacms.com/docs/deploy"
+                  target="_blank"
+                >
+                  {t.requiresHandler}
+                </Typo.Link>
               </Typo.P>
             </VStack>
           </div>
@@ -67,16 +70,15 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       })
       return null
     case AuthResultType.UnAuthenticated:
-      location.href =
-        `${data.redirect}&from=${encodeURIComponent(
-          `${location.protocol}//${location.host}${location.pathname}`
-        )}`
+      location.href = `${data.redirect}&from=${encodeURIComponent(
+        `${location.protocol}//${location.host}${location.pathname}`
+      )}`
       return null
     case AuthResultType.MissingApiKey:
       return (
         <>
           <Head>
-            <title>Alinea</title>
+            <title>{t.title}</title>
           </Head>
           <div style={{display: 'flex', height: '100%', width: '100%'}}>
             <div style={{margin: 'auto', padding: px(20)}}>
@@ -85,21 +87,21 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                   <LogoShape>
                     <IcRoundPublish />
                   </LogoShape>
-                  <Typo.H1 flat>Ready to deploy?</Typo.H1>
+                  <Typo.H1 flat>{t.deploy}</Typo.H1>
                 </HStack>
                 <Typo.P>
-                  Alinea requires a backend to continue.
+                  {t.backend}
                   <br />
                   You can{' '}
                   <Typo.Link
                     href="https://alineacms.com/docs/deploy"
                     target="_blank"
                   >
-                    <span>fully configure a custom backend</span>
+                    <span>{t.customBackend}</span>
                   </Typo.Link>
                   .
                   <br />
-                  Or get set up in a few clicks with our cloud offering.
+                  {t.cloud}
                 </Typo.P>
                 <div>
                   <Button
@@ -109,7 +111,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                     )}`}
                     iconRight={IcRoundArrowForward}
                   >
-                    Continue with alinea.cloud
+                    {t.cloudButton}
                   </Button>
                 </div>
               </VStack>

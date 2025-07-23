@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Sinhronizacija",
+    "synced": "Sinhronizirano",
+    "saving": "Shranjevanje …"
+  },
+  "urlPicker": {
+    "title": "Povezava",
+    "url": "URL",
+    "urlHelp": "URL povezave",
+    "description": "Opis",
+    "descriptionHelp": "Besedilo, ki se prikaže znotraj elementa povezave",
+    "target": "Cilj",
+    "targetDescription": "Odpri povezavo v novem zavihku",
+    "cancel": "Prekliči",
+    "confirm": "Potrdi"
+  },
+  "pickLink": {
+    "title": "Izberi povezavo",
+    "link": "Povezava",
+    "description": "Opis",
+    "descriptionHelp": "Besedilo, ki se prikaže znotraj elementa povezave",
+    "tooltip": "Opis orodja",
+    "tooltipHelp": "Dodatne informacije, ki opisujejo povezavo, prikazane ob zadržanju miške",
+    "newTab": "Odpri povezavo v novem zavihku",
+    "remove": "Odstrani povezavo",
+    "cancel": "Prekliči",
+    "confirm": "Potrdi"
+  },
+  "newEntry": {
+    "title": "Naslov",
+    "parent": "Starš",
+    "type": "Izberite vrsto",
+    "order": "Vstavi naročilo",
+    "orderFirst": "Na vrhu seznama",
+    "orderLast": "Na dnu seznama",
+    "copyFrom": "Kopiraj vsebino iz",
+    "formTitle": "Nov vnos",
+    "cancel": "Prekliči",
+    "create": "Ustvari"
+  },
+  "entryEdit": {
+    "blockingTitle": "Ali ste prepričani, da želite zavreči spremembe?",
+    "blockingWarning": "Ta dokument je bil spremenjen",
+    "blockingPrompt": "Ali želite shraniti spremembe?",
+    "blockingDiscard": "Zavrzi moje spremembe",
+    "blockingSaveDraft": "Shrani kot osnutek",
+    "blockingPublishChanges": "Objavi spremembe",
+    "untranslatedTitle": "Neprevedeno",
+    "untranslatedParent": "Najprej prevedite nadrejeno stran.",
+    "untranslatedPrompt": "Vnesite spodnje podatke in shranite, da začnete prevajati.",
+    "draftError": "Osnutka ni bilo mogoče dokončati, poskusite znova pozneje.",
+    "saveTranslationError": "Prevajanja ni bilo mogoče dokončati, poskusite znova pozneje.",
+    "publishError": "Objave ni bilo mogoče dokončati, poskusite znova pozneje.",
+    "discardError": "Sprememb ni bilo mogoče zavreči, poskusite znova pozneje.",
+    "unpublishError": "Dejanja preklic objave ni bilo mogoče dokončati, poskusite znova pozneje.",
+    "deleteError": "Dejanja brisanja ni bilo mogoče dokončati, poskusite znova pozneje.",
+    "archiveError": "Arhiviranja ni bilo mogoče dokončati, poskusite znova pozneje."
+  },
+  "entryHeader": {
+    "draft": "Osnutek",
+    "editing": "Urejanje",
+    "published": "Objavljeno",
+    "archived": "Arhivirano",
+    "untranslated": "Neprevedeno",
+    "unpublished": "Neobjavljeno",
+    "revision": "Revizija",
+    "showMenu": "Prikaz menija",
+    "hideMenu": "Skrij meni",
+    "removeDraft": "Odstrani osnutek",
+    "replace": "Zamenjaj",
+    "delete": "Izbriši",
+    "unpublish": "Prekliči objavo",
+    "archive": "Arhiv",
+    "publish": "Objavi",
+    "showHistory": "Prikaži zgodovino",
+    "hideHistory": "Skrij zgodovino",
+    "draftAvailable": "Na voljo je novejša osnutek različice",
+    "translateFrom": "Prevedi iz",
+    "translateParent": "Najprej prevedi nadrejeno stran",
+    "discard": "Zavrzi urejanja",
+    "save": "Shrani prevod",
+    "saveDraft": "Shrani",
+    "restore": "Obnovi",
+    "showPreview": "Predogled zaslona",
+    "hidePreview": "Skrij predogled",
+    "savingDraft": "Shranjevanje osnutka",
+    "savingTranslation": "Shranjevanje prevoda",
+    "publishingEdits": "Objavljanje urejanj",
+    "restoringRevision": "Obnavljanje revizije",
+    "publishingDraft": "Objava osnutka",
+    "unpublishingDraft": "Preklic objave osnutka",
+    "discardingDraft": "Zavrženje osnutka",
+    "archivingPublished": "Arhiviranje objavljeno",
+    "publishingArchived": "Objava arhivirana",
+    "deletingFile": "Brisanje datoteke",
+    "deletingEntry": "Izbriši vnos"
+  },
+  "contentView": {
+    "create": "Ustvari novo"
+  },
+  "welcome": {
+    "title": "Vaša namestitev programa Alinea je zdaj pripravljena za konfiguracijo.",
+    "button": "Naučite se konfigurirati"
+  },
+  "cloudAuthView": {
+    "title": "Odstavek",
+    "deploy": "Ste pripravljeni na uvajanje?",
+    "requiresHandler": "Alinea za nadaljevanje potrebuje upravljavca",
+    "backend": "Za nadaljevanje Alinea potrebuje zaledni sistem.",
+    "customBackend": "popolnoma konfigurirajte prilagojeni zaledni sistem",
+    "cloud": "Ali pa se nastavite z nekaj kliki z našo ponudbo v oblaku.",
+    "cloudButton": "Nadaljujte z alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Nastavitve",
+    "defaultWorkspace": "Privzeti delovni prostor",
+    "theme": "Preklopi temo",
+    "fontSize": "Velikost pisave",
+    "decreaseFontSize": "Zmanjšaj velikost pisave",
+    "increaseFontSize": "Povečaj velikost pisave",
+    "logout": "Odjava"
+  },
+  "fileUploader": {
+    "uploadComplete": "Nalaganja končana: {{amount}}",
+    "uploading": "Nalaganje datotek: {{amount}}",
+    "upload": "Naloži datoteke"
+  },
+  "fileUploadRow": {
+    "alt": "Naložena datoteka",
+    "done": "Končano"
+  },
+  "fileEntry": {
+    "preview": "Predogled medijske datoteke",
+    "extension": "Podaljšek",
+    "fileSize": "Velikost datoteke",
+    "dimensions": "Dimenzije",
+    "pixels": "slikovnih pik",
+    "url": "URL-naslov",
+    "focus": "Točka ostrenja",
+    "focusHelp": "Kliknite na sliko, da spremenite točko ostrenja"
+  },
+  "cardOverview": {
+    "title": "kartica"
+  },
+  "explorer": {
+    "noResults": "Ni rezultatov"
+  },
+  "editModeToggle": {
+    "edit": "Uredi",
+    "review": "Pregled sprememb"
+  },
+  "searchBox": {
+    "search": "Iskanje"
+  },
+  "rootOverview": {
+    "instruction": "Izberite vnos v navigacijskem drevesu na levi, da začnete urejati"
+  },
+  "inputLabel": {
+    "readonly": "Samo za branje",
+    "shared": "Deljeno"
+  },
+  "errorBoundary": {
+    "title": "Napaka",
+    "oops": "Ups, nekaj je šlo narobe",
+    "close": "Napaka pri zapiranju",
+    "issue": "Ustvari težavo"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Privzeti delovni prostor",
+    "logout": "Odjava"
+  },
+  "listField": {
+    "reorder": "Povlecite in spustite, da spremenite vrstni red",
+    "copy": "Kopiraj blok",
+    "moveUp": "Premakni se za eno mesto navzgor",
+    "moveDown": "Premakni se za eno mesto navzdol",
+    "delete": "Izbriši blok",
+    "paste": "Prilepi blok",
+    "add": "Vstavi nov blok"
+  },
+  "metadataField": {
+    "previewTitle": "Predogled",
+    "searchEngine": "Iskalnik",
+    "socialShare": "Deljenje na družbenih omrežjih",
+    "ogImageAlt": "Odpri sliko grafa"
+  },
+  "pickTextLink": {
+    "title": "Izberi povezavo",
+    "link": "Povezava",
+    "description": "Opis",
+    "descriptionHelp": "Besedilo, ki se prikaže znotraj elementa povezave",
+    "tooltip": "Opis orodja",
+    "tooltipHelp": "Dodatne informacije, ki opisujejo povezavo, prikazane ob zamiku miške",
+    "newTab": "Odpri povezavo v novem zavihku",
+    "remove": "Odstrani povezavo",
+    "cancel": "Prekliči",
+    "confirm": "Potrdi"
+  },
+  "richTextField": {
+    "insert": "Vstavi blok"
+  },
+  "richTextToolbar": {
+    "styles": "Naslov/odstavek",
+    "table": "Tabela",
+    "bold": "Krepko",
+    "italic": "Kurzivno",
+    "align": "Poravnava",
+    "alignLeft": "Poravnaj levo",
+    "alignCenter": "Poravnaj na sredino",
+    "alignRight": "Poravnaj desno",
+    "alignJustify": "Poravnaj obostrano",
+    "clear": "Počisti obliko",
+    "bulletList": "Seznam z oznakami",
+    "orderedList": "Urejen seznam",
+    "link": "Povezava",
+    "quote": "Blokovni citat",
+    "rule": "Vodoravno pravilo",
+    "small": "Majhna",
+    "sub": "Podpis",
+    "sup": "Nadpis",
+    "paragraph": "Običajno besedilo",
+    "h1": "Naslov 1",
+    "h2": "Naslov 2",
+    "h3": "Naslov 3",
+    "h4": "Naslov 4",
+    "h5": "Naslov 5",
+    "tableLabel": "Tabela",
+    "insert": "Vstavi tabelo",
+    "insertRowBefore": "Vstavi vrstico pred",
+    "insertRowAfter": "Vstavi vrstico za",
+    "deleteRow": "Izbriši vrstico",
+    "toggleHeaderRow": "Preklopi vrstico z glavo",
+    "insertColumnBefore": "Vstavi stolpec pred",
+    "insertColumnAfter": "Vstavi stolpec za",
+    "deleteColumn": "Izbriši stolpec",
+    "deleteTable": "Izbriši tabelo",
+    "left": "Levo",
+    "center": "Center",
+    "right": "Desno",
+    "justify": "Poravnaj"
+  },
+  "linkField": {
+    "reorder": "Povlecite in spustite, da spremenite vrstni red",
+    "open": "Odpri povezavo v novem zavihku",
+    "openFile": "Odpri medijsko datoteko v novem zavihku",
+    "edit": "Uredi povezavo",
+    "editFile": "Spremeni sliko",
+    "delete": "Izbriši povezavo",
+    "deleteFile": "Izbriši sliko"
+  },
+  "entryPicker": {
+    "title": "Izberite referenco",
+    "searchPlaceholder": "Iskanje",
+    "cancel": "Prekliči",
+    "confirm": "Potrdi"
+  }
+}

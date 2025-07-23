@@ -1,41 +1,41 @@
 import styler from '@alinea/styler'
 import {
+  closestCenter,
   DndContext,
   type DragEndEvent,
+  type DraggableSyntheticListeners,
   DragOverlay,
   type DragStartEvent,
-  type DraggableSyntheticListeners,
+  defaultDropAnimation,
   KeyboardSensor,
   LayoutMeasuringStrategy,
   PointerSensor,
-  closestCenter,
-  defaultDropAnimation,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
 import {
   type AnimateLayoutChanges,
-  SortableContext,
   defaultAnimateLayoutChanges,
+  SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, type FirstArgument} from '@dnd-kit/utilities'
+import type {ListField} from 'alinea/core/field/ListField'
 import {getType} from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
-import {Type} from 'alinea/core/Type'
-import type {ListField} from 'alinea/core/field/ListField'
 import {ListRow} from 'alinea/core/shape/ListShape'
+import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField} from 'alinea/dashboard/editor/UseField'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {Icon, TextLabel} from 'alinea/ui'
-import {Sink} from 'alinea/ui/Sink'
 import {IcBaselineContentCopy} from 'alinea/ui/icons/IcBaselineContentCopy'
 import {IcBaselineContentPasteGo} from 'alinea/ui/icons/IcBaselineContentPasteGo'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
@@ -44,6 +44,7 @@ import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
+import {Sink} from 'alinea/ui/Sink'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import {
@@ -131,6 +132,7 @@ function ListInputRow({
   firstRow,
   ...rest
 }: ListInputRowProps) {
+  const {listField: t} = useTranslation()
   const type = schema[row[ListRow.type]]
   const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
@@ -167,18 +169,21 @@ function ListInputRow({
             icon={getType(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
-            title="Drag and drop to reorder"
+            title={t.reorder}
           />
         </Sink.Options>
         <Sink.Title>
-          <TextLabel label={Type.label(type)} className={styles.row.header.title()} />
+          <TextLabel
+            label={Type.label(type)}
+            className={styles.row.header.title()}
+          />
         </Sink.Title>
         <Sink.Options>
           {onCopyBlock !== undefined && (
             <IconButton
               icon={IcBaselineContentCopy}
               onClick={() => onCopyBlock()}
-              title="Copy block"
+              title={t.copy}
             />
           )}
           {!readOnly && (
@@ -186,14 +191,18 @@ function ListInputRow({
               <IconButton
                 icon={IcRoundKeyboardArrowUp}
                 onClick={() => onMove?.(-1)}
-                title="Move up one position"
+                title={t.moveUp}
               />
               <IconButton
                 icon={IcRoundKeyboardArrowDown}
                 onClick={() => onMove?.(1)}
-                title="Move down one position"
+                title={t.moveDown}
               />
-              <IconButton icon={IcRoundClose} onClick={onDelete} title="Delete block" />
+              <IconButton
+                icon={IcRoundClose}
+                onClick={onDelete}
+                title={t.delete}
+              />
             </>
           )}
         </Sink.Options>
@@ -220,6 +229,7 @@ function ListCreateRow({
   onCreate,
   onPaste
 }: ListCreateRowProps) {
+  const {listField: t} = useTranslation()
   const [pasted] = useAtom(copyAtom)
   const canPaste =
     pasted && entries(schema).some(([key]) => key === pasted._type)
@@ -243,7 +253,7 @@ function ListCreateRow({
             onClick={() => onPaste(pasted)}
             mod="paste"
           >
-            <TextLabel label="Paste block" />
+            <TextLabel label={t.paste} />
           </Create.Button>
         )}
       </Create.Root>
@@ -258,10 +268,15 @@ interface ListInsertRowProps {
 }
 
 function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
+  const {listField: t} = useTranslation()
   return (
     <>
       <div className={styles.insert({open, first})}>
-        <button className={styles.insert.icon()} onClick={onInsert} title="Insert new block">
+        <button
+          className={styles.insert.icon()}
+          onClick={onInsert}
+          title={t.add}
+        >
           <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
         </button>
       </div>

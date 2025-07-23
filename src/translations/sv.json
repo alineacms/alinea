@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Synkronisering",
+    "synced": "Synkroniserad",
+    "saving": "Sparande…"
+  },
+  "urlPicker": {
+    "title": "Länk",
+    "url": "URL",
+    "urlHelp": "URL till länken",
+    "description": "Beskrivning",
+    "descriptionHelp": "Text som ska visas inuti länkelementet",
+    "target": "Mål",
+    "targetDescription": "Öppna länken i ny flik",
+    "cancel": "Avboka",
+    "confirm": "Bekräfta"
+  },
+  "pickLink": {
+    "title": "Välj länk",
+    "link": "Länk",
+    "description": "Beskrivning",
+    "descriptionHelp": "Text som ska visas inuti länkelementet",
+    "tooltip": "Verktygstips",
+    "tooltipHelp": "Extra information som beskriver länken, visas när muspekaren hålls över",
+    "newTab": "Öppna länken i ny flik",
+    "remove": "Ta bort länk",
+    "cancel": "Avboka",
+    "confirm": "Bekräfta"
+  },
+  "newEntry": {
+    "title": "Titel",
+    "parent": "Förälder",
+    "type": "Välj typ",
+    "order": "Lägg in order",
+    "orderFirst": "Högst upp på listan",
+    "orderLast": "Längst ner på listan",
+    "copyFrom": "Kopiera innehåll från",
+    "formTitle": "Ny post",
+    "cancel": "Avboka",
+    "create": "Skapa"
+  },
+  "entryEdit": {
+    "blockingTitle": "Är du säker på att du vill ignorera ändringarna?",
+    "blockingWarning": "Detta dokument har ändrats",
+    "blockingPrompt": "Vill du spara dina ändringar?",
+    "blockingDiscard": "Ignorera mina ändringar",
+    "blockingSaveDraft": "Spara som utkast",
+    "blockingPublishChanges": "Publicera ändringar",
+    "untranslatedTitle": "Oöversatt",
+    "untranslatedParent": "Översätt först huvudsidan.",
+    "untranslatedPrompt": "Ange uppgifterna nedan och spara för att börja översätta.",
+    "draftError": "Kunde inte slutföra utkastet, försök igen senare.",
+    "saveTranslationError": "Kunde inte slutföra översättningen, försök igen senare.",
+    "publishError": "Det gick inte att slutföra publiceringsåtgärden, försök igen senare.",
+    "discardError": "Det gick inte att ignorera ändringarna, försök igen senare.",
+    "unpublishError": "Kunde inte slutföra avpubliceringen, försök igen senare.",
+    "deleteError": "Kunde inte slutföra borttagningen, försök igen senare.",
+    "archiveError": "Kunde inte slutföra arkiveringen, försök igen senare."
+  },
+  "entryHeader": {
+    "draft": "Förslag",
+    "editing": "Redigering",
+    "published": "Publicerad",
+    "archived": "Arkiverad",
+    "untranslated": "Oöversatt",
+    "unpublished": "Opublicerad",
+    "revision": "Revision",
+    "showMenu": "Visa meny",
+    "hideMenu": "Dölj menyn",
+    "removeDraft": "Ta bort utkast",
+    "replace": "Ersätta",
+    "delete": "Radera",
+    "unpublish": "Avpublicera",
+    "archive": "Arkiv",
+    "publish": "Publicera",
+    "showHistory": "Visa historik",
+    "hideHistory": "Dölj historik",
+    "draftAvailable": "En nyare utkastversion finns tillgänglig",
+    "translateFrom": "Översätt från",
+    "translateParent": "Översätt först den överordnade sidan",
+    "discard": "Ignorera redigeringar",
+    "save": "Spara översättning",
+    "saveDraft": "Spara",
+    "restore": "Återställa",
+    "showPreview": "Förhandsgranskning av visning",
+    "hidePreview": "Dölj förhandsgranskning",
+    "savingDraft": "Sparar utkast",
+    "savingTranslation": "Sparar översättningen",
+    "publishingEdits": "Publicering av redigeringar",
+    "restoringRevision": "Återställer revision",
+    "publishingDraft": "Publiceringsutkast",
+    "unpublishingDraft": "Avpublicerar utkast",
+    "discardingDraft": "Ignorerar utkast",
+    "archivingPublished": "Arkivering publicerad",
+    "publishingArchived": "Arkiverad publicering",
+    "deletingFile": "Tar bort fil",
+    "deletingEntry": "Ta bort post"
+  },
+  "contentView": {
+    "create": "Skapa nytt"
+  },
+  "welcome": {
+    "title": "Din alinea-installation är nu klar för konfiguration.",
+    "button": "Lär dig hur du konfigurerar"
+  },
+  "cloudAuthView": {
+    "title": "Stycke",
+    "deploy": "Redo att driftsättas?",
+    "requiresHandler": "Alinea behöver en förare för att fortsätta",
+    "backend": "Alinea behöver en backend för att fortsätta.",
+    "customBackend": "konfigurera en anpassad backend helt",
+    "cloud": "Eller kom igång med några få klick med vårt molnerbjudande.",
+    "cloudButton": "Fortsätt med alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Inställningar",
+    "defaultWorkspace": "Standardarbetsyta",
+    "theme": "Byt tema",
+    "fontSize": "Fontstorlek",
+    "decreaseFontSize": "Minska teckenstorleken",
+    "increaseFontSize": "Öka teckenstorleken",
+    "logout": "Utloggning"
+  },
+  "fileUploader": {
+    "uploadComplete": "Uppladdningar slutförda: {{amount}}",
+    "uploading": "Laddar upp filer: {{amount}}",
+    "upload": "Ladda upp filer"
+  },
+  "fileUploadRow": {
+    "alt": "Uppladdad fil",
+    "done": "Gjort"
+  },
+  "fileEntry": {
+    "preview": "Förhandsgranskning av mediefil",
+    "extension": "Förlängning",
+    "fileSize": "Fil-storlek",
+    "dimensions": "Mått",
+    "pixels": "pixlar",
+    "url": "URL",
+    "focus": "Fokuspunkt",
+    "focusHelp": "Klicka på bilden för att ändra fokuspunkten"
+  },
+  "cardOverview": {
+    "title": "kort"
+  },
+  "explorer": {
+    "noResults": "Inga resultat"
+  },
+  "editModeToggle": {
+    "edit": "Redigera",
+    "review": "Granska ändringar"
+  },
+  "searchBox": {
+    "search": "Söka"
+  },
+  "rootOverview": {
+    "instruction": "Välj en post i navigeringsträdet till vänster för att börja redigera"
+  },
+  "inputLabel": {
+    "readonly": "Skrivskyddad",
+    "shared": "Delad"
+  },
+  "errorBoundary": {
+    "title": "Fel",
+    "oops": "Oj då, något gick fel",
+    "close": "Stäng felet",
+    "issue": "Skapa ett problem"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Standardarbetsyta",
+    "logout": "Utloggning"
+  },
+  "listField": {
+    "reorder": "Dra och släpp för att ändra ordning",
+    "copy": "Kopiera block",
+    "moveUp": "Flytta upp en position",
+    "moveDown": "Flytta ner en position",
+    "delete": "Ta bort block",
+    "paste": "Klistra in block",
+    "add": "Infoga nytt block"
+  },
+  "metadataField": {
+    "previewTitle": "Förhandsvisning",
+    "searchEngine": "Sökmotor",
+    "socialShare": "Social delning",
+    "ogImageAlt": "Öppna grafbilden"
+  },
+  "pickTextLink": {
+    "title": "Välj länk",
+    "link": "Länk",
+    "description": "Beskrivning",
+    "descriptionHelp": "Text som ska visas inuti länkelementet",
+    "tooltip": "Verktygstips",
+    "tooltipHelp": "Extra information som beskriver länken, visas när muspekaren hålls över",
+    "newTab": "Öppna länken i ny flik",
+    "remove": "Ta bort länk",
+    "cancel": "Avboka",
+    "confirm": "Bekräfta"
+  },
+  "richTextField": {
+    "insert": "Infoga block"
+  },
+  "richTextToolbar": {
+    "styles": "Rubrik/stycke",
+    "table": "Tabell",
+    "bold": "Djärv",
+    "italic": "Kursiv",
+    "align": "Inriktning",
+    "alignLeft": "Justera vänster",
+    "alignCenter": "Justera mitten",
+    "alignRight": "Högerjustera",
+    "alignJustify": "Justera/justera",
+    "clear": "Rensa formatet",
+    "bulletList": "Punktlista",
+    "orderedList": "Ordnad lista",
+    "link": "Länk",
+    "quote": "Blockcitat",
+    "rule": "Horisontell regel",
+    "small": "Små",
+    "sub": "Index",
+    "sup": "Exponent",
+    "paragraph": "Vanlig text",
+    "h1": "Rubrik 1",
+    "h2": "Rubrik 2",
+    "h3": "Rubrik 3",
+    "h4": "Rubrik 4",
+    "h5": "Rubrik 5",
+    "tableLabel": "Tabell",
+    "insert": "Infoga tabell",
+    "insertRowBefore": "Infoga rad före",
+    "insertRowAfter": "Infoga rad efter",
+    "deleteRow": "Ta bort rad",
+    "toggleHeaderRow": "Visa/visa rubrikrad",
+    "insertColumnBefore": "Infoga kolumn före",
+    "insertColumnAfter": "Infoga kolumn efter",
+    "deleteColumn": "Ta bort kolumn",
+    "deleteTable": "Ta bort tabell",
+    "left": "Vänster",
+    "center": "Centrum",
+    "right": "Rätt",
+    "justify": "Rättfärdiga"
+  },
+  "linkField": {
+    "reorder": "Dra och släpp för att ändra ordning",
+    "open": "Öppna länken i ny flik",
+    "openFile": "Öppna mediefilen i ny flik",
+    "edit": "Redigera länk",
+    "editFile": "Ändra bild",
+    "delete": "Ta bort länk",
+    "deleteFile": "Ta bort bild"
+  },
+  "entryPicker": {
+    "title": "Välj en referens",
+    "searchPlaceholder": "Söka",
+    "cancel": "Avboka",
+    "confirm": "Bekräfta"
+  }
+}

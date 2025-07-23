@@ -5,6 +5,7 @@ import {track} from 'alinea/core/Tracker'
 import {type} from 'alinea/core/Type'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useTranslation} from 'alinea/dashboard/hook/UseTranslation'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {check} from 'alinea/field/check'
 import {link as createLink} from 'alinea/field/link'
@@ -19,20 +20,21 @@ import css from './PickLink.module.scss'
 const styles = styler(css)
 
 function linkForm(options: PickerOptions) {
+  const {pickTextLink: t} = useTranslation()
   const isExistingLink = Boolean(options.link)
-  const fields = type('Pick link', {
+  const fields = type(t.title, {
     fields: {
-      link: createLink('Link', {
+      link: createLink(t.link, {
         required: true,
         initialValue: options.link as EntryReference & ListRow
       }),
-      description: text('Description', {
-        help: 'Text to display inside the link element'
+      description: text(t.description, {
+        help: t.descriptionHelp
       }),
-      title: text('Tooltip', {
-        help: 'Extra information that describes the link, shown on hover'
+      title: text(t.tooltip, {
+        help: t.tooltipHelp
       }),
-      blank: check('Open link in new tab', {
+      blank: check(t.newTab, {
         inline: true
       })
     }
@@ -85,6 +87,7 @@ export function PickTextLinkForm({
   resolve,
   options = {}
 }: PickTextLinkState) {
+  const {pickTextLink: t} = useTranslation()
   const type = useMemo(() => linkForm(options), [options])
   const form = useForm(type, {
     initialValue: options as any
@@ -111,15 +114,15 @@ export function PickTextLinkForm({
                   type="button"
                   onClick={() => resolve(undefined)}
                 >
-                  Remove link
+                  {t.remove}
                 </Button>
               )}
               <Stack.Right>
                 <HStack gap={16}>
                   <Button outline type="button" onClick={onClose}>
-                    Cancel
+                    {t.cancel}
                   </Button>
-                  <Button>Confirm</Button>
+                  <Button>{t.confirm}</Button>
                 </HStack>
               </Stack.Right>
             </HStack>

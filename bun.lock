@@ -7,6 +7,7 @@
         "@alinea/iso": "^0.3.3",
         "@types/node": "^24.0.15",
         "esbuild": "^0.25.4",
+        "stylus": "^0.0.1-security",
       },
       "devDependencies": {
         "@alinea/styler": "^1.0.3",
@@ -38,7 +39,7 @@
         "speedscope": "^1.14.0",
         "symlink-dir": "^6.0.5",
         "typescript": "5.6.2",
-        "typescript-plugin-css-modules": "^5.0.2",
+        "typescript-plugin-css-modules": "^5.2.0",
         "yjs-src": "npm:yjs@13.6.11",
       },
       "peerDependencies": {
@@ -172,8 +173,6 @@
     "yjs": "13.6.11",
   },
   "packages": {
-    "@adobe/css-tools": ["@adobe/css-tools@4.3.3", "", {}, "sha512-rE0Pygv0sEZ4vBWHlAgJLGDU7Pm8xoO6p3wsEceb7GYAjScrOHpEo8KK/eVkAcnSM+slAEtXjA2JpdjLp4fJQQ=="],
-
     "@alinea/adapter": ["@alinea/adapter@workspace:src/adapter"],
 
     "@alinea/backend": ["@alinea/backend@workspace:src/backend"],
@@ -1938,7 +1937,7 @@
 
     "styled-jsx": ["styled-jsx@5.1.6", "", { "dependencies": { "client-only": "0.0.1" }, "peerDependencies": { "react": ">= 16.8.0 || 17.x.x || ^18.0.0-0 || ^19.0.0-0" } }, "sha512-qSVyDTeMotdvQYoHWLNGwRFJHC+i+ZvdBRYosOFgC+Wg1vx4frN2/RG/NA7SYqqvKNLf39P2LSRA2pu6n0XYZA=="],
 
-    "stylus": ["stylus@0.62.0", "", { "dependencies": { "@adobe/css-tools": "~4.3.1", "debug": "^4.3.2", "glob": "^7.1.6", "sax": "~1.3.0", "source-map": "^0.7.3" }, "bin": { "stylus": "bin/stylus" } }, "sha512-v3YCf31atbwJQIMtPNX8hcQ+okD4NQaTuKGUWfII8eaqn+3otrbttGL1zSMZAAtiPsBztQnujVBugg/cXFUpyg=="],
+    "stylus": ["stylus@0.0.1-security", "", {}, "sha512-qTLX5NJwuj5dqdJyi1eAjXGE4HfjWDoPLbSIpYWn/rAEdiyZnsngS/Yj0BRjM7wC41e/+spK4QCXFqz7LM0fFQ=="],
 
     "stylus-lookup": ["stylus-lookup@3.0.2", "", { "dependencies": { "commander": "^2.8.1", "debug": "^4.1.0" }, "bin": { "stylus-lookup": "bin/cli.js" } }, "sha512-oEQGHSjg/AMaWlKe7gqsnYzan8DLcGIHe0dUaFkucZZ14z4zjENRlQMCHT4FNsiWnJf17YN9OvrCfCoi7VvOyg=="],
 
@@ -2014,7 +2013,7 @@
 
     "typescript": ["typescript@5.6.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-NW8ByodCSNCwZeghjN3o+JX5OFH0Ojg6sadjEKY4huZ52TqbJTJnDo5+Tw98lSy63NZvi4n+ez5m2u5d4PkZyw=="],
 
-    "typescript-plugin-css-modules": ["typescript-plugin-css-modules@5.1.0", "", { "dependencies": { "@types/postcss-modules-local-by-default": "^4.0.2", "@types/postcss-modules-scope": "^3.0.4", "dotenv": "^16.4.2", "icss-utils": "^5.1.0", "less": "^4.2.0", "lodash.camelcase": "^4.3.0", "postcss": "^8.4.35", "postcss-load-config": "^3.1.4", "postcss-modules-extract-imports": "^3.0.0", "postcss-modules-local-by-default": "^4.0.4", "postcss-modules-scope": "^3.1.1", "reserved-words": "^0.1.2", "sass": "^1.70.0", "source-map-js": "^1.0.2", "stylus": "^0.62.0", "tsconfig-paths": "^4.2.0" }, "peerDependencies": { "typescript": ">=4.0.0" } }, "sha512-6h+sLBa4l+XYSTn/31vZHd/1c3SvAbLpobY6FxDiUOHJQG1eD9Gh3eCs12+Eqc+TCOAdxcO+zAPvUq0jBfdciw=="],
+    "typescript-plugin-css-modules": ["typescript-plugin-css-modules@5.2.0", "", { "dependencies": { "@types/postcss-modules-local-by-default": "^4.0.2", "@types/postcss-modules-scope": "^3.0.4", "dotenv": "^16.4.2", "icss-utils": "^5.1.0", "less": "^4.2.0", "lodash.camelcase": "^4.3.0", "postcss": "^8.4.35", "postcss-load-config": "^3.1.4", "postcss-modules-extract-imports": "^3.0.0", "postcss-modules-local-by-default": "^4.0.4", "postcss-modules-scope": "^3.1.1", "reserved-words": "^0.1.2", "sass": "^1.70.0", "source-map-js": "^1.0.2", "tsconfig-paths": "^4.2.0" }, "optionalDependencies": { "stylus": "^0.62.0" }, "peerDependencies": { "typescript": ">=4.0.0" } }, "sha512-c5pAU5d+m3GciDr/WhkFldz1NIEGBafuP/3xhFt9BEXS2gmn/LvjkoZ11vEBIuP8LkXfPNhOt1BUhM5efFuwOw=="],
 
     "uc.micro": ["uc.micro@2.1.0", "", {}, "sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A=="],
 

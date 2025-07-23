@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Synkronisering",
+    "synced": "Synkroniseret",
+    "saving": "Gemmer…"
+  },
+  "urlPicker": {
+    "title": "Forbindelse",
+    "url": "URL",
+    "urlHelp": "URL'en til linket",
+    "description": "Beskrivelse",
+    "descriptionHelp": "Tekst, der skal vises inde i linkelementet",
+    "target": "Mål",
+    "targetDescription": "Åbn link i ny fane",
+    "cancel": "Ophæve",
+    "confirm": "Bekræfte"
+  },
+  "pickLink": {
+    "title": "Vælg link",
+    "link": "Forbindelse",
+    "description": "Beskrivelse",
+    "descriptionHelp": "Tekst, der skal vises inde i linkelementet",
+    "tooltip": "Værktøjstip",
+    "tooltipHelp": "Ekstra information, der beskriver linket, vist ved at holde musen over det",
+    "newTab": "Åbn link i ny fane",
+    "remove": "Fjern link",
+    "cancel": "Ophæve",
+    "confirm": "Bekræfte"
+  },
+  "newEntry": {
+    "title": "Titel",
+    "parent": "Forælder",
+    "type": "Vælg type",
+    "order": "Indsæt ordre",
+    "orderFirst": "Øverst på listen",
+    "orderLast": "Nederst på listen",
+    "copyFrom": "Kopiér indhold fra",
+    "formTitle": "Ny indtastning",
+    "cancel": "Ophæve",
+    "create": "Skabe"
+  },
+  "entryEdit": {
+    "blockingTitle": "Er du sikker på, at du vil kassere ændringerne?",
+    "blockingWarning": "Dette dokument blev ændret",
+    "blockingPrompt": "Vil du gemme dine ændringer?",
+    "blockingDiscard": "Kassér mine ændringer",
+    "blockingSaveDraft": "Gem som kladde",
+    "blockingPublishChanges": "Udgiv ændringer",
+    "untranslatedTitle": "Uoversat",
+    "untranslatedParent": "Oversæt først den overordnede side.",
+    "untranslatedPrompt": "Indtast oplysningerne nedenfor, og gem for at begynde at oversætte.",
+    "draftError": "Kunne ikke fuldføre udkastet. Prøv igen senere.",
+    "saveTranslationError": "Oversættelsen kunne ikke fuldføres. Prøv igen senere.",
+    "publishError": "Kunne ikke fuldføre udgivelseshandlingen. Prøv igen senere.",
+    "discardError": "Ændringerne kunne ikke kasseres. Prøv igen senere.",
+    "unpublishError": "Kunne ikke fuldføre handlingen \"annullering af publicering\". Prøv igen senere.",
+    "deleteError": "Sletningen kunne ikke fuldføres. Prøv igen senere.",
+    "archiveError": "Arkiveringen kunne ikke fuldføres. Prøv igen senere."
+  },
+  "entryHeader": {
+    "draft": "Udkast",
+    "editing": "Redigering",
+    "published": "Udgivet",
+    "archived": "Arkiveret",
+    "untranslated": "Uoversat",
+    "unpublished": "Ikke-udgivet",
+    "revision": "Revision",
+    "showMenu": "Vis menu",
+    "hideMenu": "Skjul menu",
+    "removeDraft": "Fjern kladde",
+    "replace": "Erstatte",
+    "delete": "Slet",
+    "unpublish": "Fjern publicering",
+    "archive": "Arkiv",
+    "publish": "Offentliggøre",
+    "showHistory": "Vis historik",
+    "hideHistory": "Skjul historik",
+    "draftAvailable": "En nyere udkastversion er tilgængelig",
+    "translateFrom": "Oversæt fra",
+    "translateParent": "Oversæt først den overordnede side",
+    "discard": "Kassér redigeringer",
+    "save": "Gem oversættelse",
+    "saveDraft": "Spare",
+    "restore": "Gendan",
+    "showPreview": "Vis forhåndsvisning",
+    "hidePreview": "Skjul forhåndsvisning",
+    "savingDraft": "Gemmer kladde",
+    "savingTranslation": "Gemmer oversættelse",
+    "publishingEdits": "Udgivelse af redigeringer",
+    "restoringRevision": "Gendannelse af revision",
+    "publishingDraft": "Udgivelseskladde",
+    "unpublishingDraft": "Fjerner udgivelse af kladde",
+    "discardingDraft": "Kasserer kladde",
+    "archivingPublished": "Arkivering af publicering",
+    "publishingArchived": "Arkiveret udgivelse",
+    "deletingFile": "Sletter fil",
+    "deletingEntry": "Slet indtastning"
+  },
+  "contentView": {
+    "create": "Opret ny"
+  },
+  "welcome": {
+    "title": "Din alinea-installation er nu klar til konfiguration.",
+    "button": "Lær hvordan du konfigurerer"
+  },
+  "cloudAuthView": {
+    "title": "Afsnit",
+    "deploy": "Klar til implementering?",
+    "requiresHandler": "Alinea har brug for en handler for at fortsætte",
+    "backend": "Alinea kræver en backend for at fortsætte.",
+    "customBackend": "fuldt ud konfigurere en brugerdefineret backend",
+    "cloud": "Eller bliv opsat med et par klik med vores cloud-tilbud.",
+    "cloudButton": "Fortsæt med alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Indstillinger",
+    "defaultWorkspace": "Standardarbejdsområde",
+    "theme": "Skift tema",
+    "fontSize": "Skriftstørrelse",
+    "decreaseFontSize": "Formindsk skriftstørrelsen",
+    "increaseFontSize": "Øg skriftstørrelsen",
+    "logout": "Log ud"
+  },
+  "fileUploader": {
+    "uploadComplete": "Uploads fuldført: {{amount}}",
+    "uploading": "Uploader filer: {{amount}}",
+    "upload": "Upload filer"
+  },
+  "fileUploadRow": {
+    "alt": "Uploadet fil",
+    "done": "Færdig"
+  },
+  "fileEntry": {
+    "preview": "Forhåndsvisning af mediefil",
+    "extension": "Udvidelse",
+    "fileSize": "Filstørrelse",
+    "dimensions": "Dimensioner",
+    "pixels": "pixels",
+    "url": "URL",
+    "focus": "Fokuspunkt",
+    "focusHelp": "Klik på billedet for at ændre fokuspunktet"
+  },
+  "cardOverview": {
+    "title": "kort"
+  },
+  "explorer": {
+    "noResults": "Ingen resultater"
+  },
+  "editModeToggle": {
+    "edit": "Redigere",
+    "review": "Gennemgå ændringer"
+  },
+  "searchBox": {
+    "search": "Søge"
+  },
+  "rootOverview": {
+    "instruction": "Vælg en post i navigationstræet til venstre for at starte redigering"
+  },
+  "inputLabel": {
+    "readonly": "Skrivebeskyttet",
+    "shared": "Delt"
+  },
+  "errorBoundary": {
+    "title": "Fejl",
+    "oops": "Ups, noget gik galt",
+    "close": "Luk fejl",
+    "issue": "Opret et problem"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Standardarbejdsområde",
+    "logout": "Log ud"
+  },
+  "listField": {
+    "reorder": "Træk og slip for at ændre rækkefølgen",
+    "copy": "Kopiér blok",
+    "moveUp": "Flyt én position op",
+    "moveDown": "Flyt én position ned",
+    "delete": "Slet blok",
+    "paste": "Indsæt blok",
+    "add": "Indsæt ny blok"
+  },
+  "metadataField": {
+    "previewTitle": "Forhåndsvisning",
+    "searchEngine": "Søgemaskine",
+    "socialShare": "Social deling",
+    "ogImageAlt": "Åbn grafbillede"
+  },
+  "pickTextLink": {
+    "title": "Vælg link",
+    "link": "Forbindelse",
+    "description": "Beskrivelse",
+    "descriptionHelp": "Tekst, der skal vises inde i linkelementet",
+    "tooltip": "Værktøjstip",
+    "tooltipHelp": "Ekstra information, der beskriver linket, vist ved at holde musen over det",
+    "newTab": "Åbn link i ny fane",
+    "remove": "Fjern link",
+    "cancel": "Ophæve",
+    "confirm": "Bekræfte"
+  },
+  "richTextField": {
+    "insert": "Indsæt blok"
+  },
+  "richTextToolbar": {
+    "styles": "Overskrift/afsnit",
+    "table": "Tabel",
+    "bold": "Dristig",
+    "italic": "Kursiv",
+    "align": "Justering",
+    "alignLeft": "Juster til venstre",
+    "alignCenter": "Juster center",
+    "alignRight": "Juster til højre",
+    "alignJustify": "Juster/juster",
+    "clear": "Ryd format",
+    "bulletList": "Punktliste",
+    "orderedList": "Ordnet liste",
+    "link": "Forbindelse",
+    "quote": "Blokcitat",
+    "rule": "Vandret regel",
+    "small": "Lille",
+    "sub": "Subskript",
+    "sup": "Hævet skrift",
+    "paragraph": "Normal tekst",
+    "h1": "Overskrift 1",
+    "h2": "Overskrift 2",
+    "h3": "Overskrift 3",
+    "h4": "Overskrift 4",
+    "h5": "Overskrift 5",
+    "tableLabel": "Tabel",
+    "insert": "Indsæt tabel",
+    "insertRowBefore": "Indsæt række før",
+    "insertRowAfter": "Indsæt række efter",
+    "deleteRow": "Slet række",
+    "toggleHeaderRow": "Slå overskriftsrække til/fra",
+    "insertColumnBefore": "Indsæt kolonne før",
+    "insertColumnAfter": "Indsæt kolonne efter",
+    "deleteColumn": "Slet kolonne",
+    "deleteTable": "Slet tabel",
+    "left": "Venstre",
+    "center": "Centrum",
+    "right": "Højre",
+    "justify": "Begrund"
+  },
+  "linkField": {
+    "reorder": "Træk og slip for at ændre rækkefølgen",
+    "open": "Åbn link i ny fane",
+    "openFile": "Åbn mediefil i ny fane",
+    "edit": "Rediger link",
+    "editFile": "Skift billede",
+    "delete": "Slet link",
+    "deleteFile": "Slet billede"
+  },
+  "entryPicker": {
+    "title": "Vælg en reference",
+    "searchPlaceholder": "Søge",
+    "cancel": "Ophæve",
+    "confirm": "Bekræfte"
+  }
+}

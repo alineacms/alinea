@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "المزامنة",
+    "synced": "متزامنة",
+    "saving": "توفير…"
+  },
+  "urlPicker": {
+    "title": "وصلة",
+    "url": "عنوان URL",
+    "urlHelp": "عنوان الرابط",
+    "description": "وصف",
+    "descriptionHelp": "النص الذي سيتم عرضه داخل عنصر الرابط",
+    "target": "هدف",
+    "targetDescription": "فتح الرابط في علامة تبويب جديدة",
+    "cancel": "يلغي",
+    "confirm": "يتأكد"
+  },
+  "pickLink": {
+    "title": "اختر الرابط",
+    "link": "وصلة",
+    "description": "وصف",
+    "descriptionHelp": "النص الذي سيتم عرضه داخل عنصر الرابط",
+    "tooltip": "تلميح الأدوات",
+    "tooltipHelp": "معلومات إضافية تصف الرابط، والتي تظهر عند التمرير فوقها",
+    "newTab": "فتح الرابط في علامة تبويب جديدة",
+    "remove": "إزالة الرابط",
+    "cancel": "يلغي",
+    "confirm": "يتأكد"
+  },
+  "newEntry": {
+    "title": "عنوان",
+    "parent": "الوالد",
+    "type": "حدد النوع",
+    "order": "إدراج الطلب",
+    "orderFirst": "في أعلى القائمة",
+    "orderLast": "في أسفل القائمة",
+    "copyFrom": "نسخ المحتوى من",
+    "formTitle": "دخول جديد",
+    "cancel": "يلغي",
+    "create": "يخلق"
+  },
+  "entryEdit": {
+    "blockingTitle": "هل أنت متأكد أنك تريد تجاهل التغييرات؟",
+    "blockingWarning": "تم تغيير هذه الوثيقة",
+    "blockingPrompt": "هل ترغب في حفظ التغييرات الخاصة بك؟",
+    "blockingDiscard": "تجاهل تغييراتي",
+    "blockingSaveDraft": "حفظ كمسودة",
+    "blockingPublishChanges": "نشر التغييرات",
+    "untranslatedTitle": "غير مترجم",
+    "untranslatedParent": "قم بترجمة الصفحة الأصلية أولاً.",
+    "untranslatedPrompt": "أدخل التفاصيل أدناه واحفظها لبدء الترجمة.",
+    "draftError": "لم نتمكن من إكمال مسودة العمل، يرجى المحاولة مرة أخرى لاحقًا",
+    "saveTranslationError": "لم نتمكن من إكمال عملية الترجمة، يرجى المحاولة مرة أخرى لاحقًا",
+    "publishError": "لم نتمكن من إكمال عملية النشر، يرجى المحاولة مرة أخرى لاحقًا",
+    "discardError": "لم نتمكن من تجاهل التغييرات، يرجى المحاولة مرة أخرى لاحقًا",
+    "unpublishError": "لم نتمكن من إكمال عملية إلغاء النشر، يرجى المحاولة مرة أخرى لاحقًا",
+    "deleteError": "لم نتمكن من إكمال عملية الحذف، يرجى المحاولة مرة أخرى لاحقًا",
+    "archiveError": "لم نتمكن من إكمال عملية الأرشيف، يرجى المحاولة مرة أخرى لاحقًا"
+  },
+  "entryHeader": {
+    "draft": "مسودة",
+    "editing": "التحرير",
+    "published": "نُشرت",
+    "archived": "مؤرشفة",
+    "untranslated": "غير مترجم",
+    "unpublished": "غير منشور",
+    "revision": "مراجعة",
+    "showMenu": "قائمة العرض",
+    "hideMenu": "إخفاء القائمة",
+    "removeDraft": "إزالة المسودة",
+    "replace": "يستبدل",
+    "delete": "يمسح",
+    "unpublish": "إلغاء النشر",
+    "archive": "أرشيف",
+    "publish": "نشر",
+    "showHistory": "عرض التاريخ",
+    "hideHistory": "إخفاء التاريخ",
+    "draftAvailable": "تتوفر نسخة مسودة أحدث",
+    "translateFrom": "ترجمة من",
+    "translateParent": "ترجمة الصفحة الأصلية أولاً",
+    "discard": "تجاهل التعديلات",
+    "save": "حفظ الترجمة",
+    "saveDraft": "يحفظ",
+    "restore": "يعيد",
+    "showPreview": "معاينة العرض",
+    "hidePreview": "إخفاء المعاينة",
+    "savingDraft": "حفظ المسودة",
+    "savingTranslation": "حفظ الترجمة",
+    "publishingEdits": "تحريرات النشر",
+    "restoringRevision": "استعادة المراجعة",
+    "publishingDraft": "مسودة النشر",
+    "unpublishingDraft": "إلغاء نشر المسودة",
+    "discardingDraft": "التخلص من المسودة",
+    "archivingPublished": "أرشفة المنشورات",
+    "publishingArchived": "تم أرشفة النشر",
+    "deletingFile": "حذف الملف",
+    "deletingEntry": "حذف الإدخال"
+  },
+  "contentView": {
+    "create": "إنشاء جديد"
+  },
+  "welcome": {
+    "title": "الآن أصبح تثبيت alinea الخاص بك جاهزًا للتكوين.",
+    "button": "تعلم كيفية التكوين"
+  },
+  "cloudAuthView": {
+    "title": "فقرة",
+    "deploy": "هل أنت مستعد للنشر؟",
+    "requiresHandler": "تتطلب ألينيا معالجًا للاستمرار",
+    "backend": "تتطلب Alinea برنامجًا خلفيًا للاستمرار.",
+    "customBackend": "تكوين واجهة خلفية مخصصة بالكامل",
+    "cloud": "أو قم بإعدادها ببضع نقرات باستخدام عرضنا السحابي.",
+    "cloudButton": "متابعة مع alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "إعدادات",
+    "defaultWorkspace": "مساحة العمل الافتراضية",
+    "theme": "تبديل الموضوع",
+    "fontSize": "حجم الخط",
+    "decreaseFontSize": "تقليل حجم الخط",
+    "increaseFontSize": "زيادة حجم الخط",
+    "logout": "تسجيل الخروج"
+  },
+  "fileUploader": {
+    "uploadComplete": "تم تحميل الملفات كاملة: {{amount}}",
+    "uploading": "تحميل الملفات: {{amount}}",
+    "upload": "تحميل الملفات"
+  },
+  "fileUploadRow": {
+    "alt": "تم تحميل الملف",
+    "done": "منتهي"
+  },
+  "fileEntry": {
+    "preview": "معاينة ملف الوسائط",
+    "extension": "امتداد",
+    "fileSize": "حجم الملف",
+    "dimensions": "أبعاد",
+    "pixels": "بكسل",
+    "url": "عنوان URL",
+    "focus": "نقطة التركيز",
+    "focusHelp": "انقر على الصورة لتغيير نقطة التركيز"
+  },
+  "cardOverview": {
+    "title": "بطاقة"
+  },
+  "explorer": {
+    "noResults": "لا توجد نتائج"
+  },
+  "editModeToggle": {
+    "edit": "يحرر",
+    "review": "مراجعة التغييرات"
+  },
+  "searchBox": {
+    "search": "يبحث"
+  },
+  "rootOverview": {
+    "instruction": "حدد إدخالاً في شجرة التنقل على اليسار لبدء التحرير"
+  },
+  "inputLabel": {
+    "readonly": "للقراءة فقط",
+    "shared": "مشترك"
+  },
+  "errorBoundary": {
+    "title": "خطأ",
+    "oops": "عفواً، حدث خطأ ما",
+    "close": "خطأ الإغلاق",
+    "issue": "إنشاء مشكلة"
+  },
+  "toolbar": {
+    "defaultWorkspace": "مساحة العمل الافتراضية",
+    "logout": "تسجيل الخروج"
+  },
+  "listField": {
+    "reorder": "اسحب وأفلِت لإعادة الترتيب",
+    "copy": "نسخة الكتلة",
+    "moveUp": "التحرك لأعلى موضع واحد",
+    "moveDown": "التحرك لأسفل موضعًا واحدًا",
+    "delete": "حذف الكتلة",
+    "paste": "كتلة اللصق",
+    "add": "إدراج كتلة جديدة"
+  },
+  "metadataField": {
+    "previewTitle": "معاينة",
+    "searchEngine": "محرك البحث",
+    "socialShare": "المشاركة الاجتماعية",
+    "ogImageAlt": "صورة الرسم البياني المفتوحة"
+  },
+  "pickTextLink": {
+    "title": "اختر الرابط",
+    "link": "وصلة",
+    "description": "وصف",
+    "descriptionHelp": "النص الذي سيتم عرضه داخل عنصر الرابط",
+    "tooltip": "تلميح الأدوات",
+    "tooltipHelp": "معلومات إضافية تصف الرابط، والتي تظهر عند التمرير فوقها",
+    "newTab": "فتح الرابط في علامة تبويب جديدة",
+    "remove": "إزالة الرابط",
+    "cancel": "يلغي",
+    "confirm": "يتأكد"
+  },
+  "richTextField": {
+    "insert": "إدراج كتلة"
+  },
+  "richTextToolbar": {
+    "styles": "العنوان/الفقرة",
+    "table": "طاولة",
+    "bold": "عريض",
+    "italic": "مائل",
+    "align": "تنسيق",
+    "alignLeft": "محاذاة إلى اليسار",
+    "alignCenter": "محاذاة المركز",
+    "alignRight": "محاذاة إلى اليمين",
+    "alignJustify": "محاذاة وضبط",
+    "clear": "تنسيق واضح",
+    "bulletList": "قائمة نقطية",
+    "orderedList": "قائمة مرتبة",
+    "link": "وصلة",
+    "quote": "اقتباسات مقتبسة",
+    "rule": "القاعدة الأفقية",
+    "small": "صغير",
+    "sub": "أسفل",
+    "sup": "أعلى النص",
+    "paragraph": "نص عادي",
+    "h1": "العنوان 1",
+    "h2": "العنوان 2",
+    "h3": "العنوان 3",
+    "h4": "العنوان 4",
+    "h5": "العنوان 5",
+    "tableLabel": "طاولة",
+    "insert": "إدراج الجدول",
+    "insertRowBefore": "إدراج الصف قبل",
+    "insertRowAfter": "إدراج الصف بعد",
+    "deleteRow": "حذف الصف",
+    "toggleHeaderRow": "تبديل صف الرأس",
+    "insertColumnBefore": "إدراج العمود قبل",
+    "insertColumnAfter": "إدراج العمود بعد",
+    "deleteColumn": "حذف العمود",
+    "deleteTable": "حذف الجدول",
+    "left": "غادر",
+    "center": "مركز",
+    "right": "يمين",
+    "justify": "يبرر"
+  },
+  "linkField": {
+    "reorder": "اسحب وأفلِت لإعادة الترتيب",
+    "open": "فتح الرابط في علامة تبويب جديدة",
+    "openFile": "فتح ملف الوسائط في علامة تبويب جديدة",
+    "edit": "تعديل الرابط",
+    "editFile": "تغيير الصورة",
+    "delete": "حذف الرابط",
+    "deleteFile": "حذف الصورة"
+  },
+  "entryPicker": {
+    "title": "حدد مرجعًا",
+    "searchPlaceholder": "يبحث",
+    "cancel": "يلغي",
+    "confirm": "يتأكد"
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Sincronizare",
+    "synced": "Sincronizat",
+    "saving": "Salvare…"
+  },
+  "urlPicker": {
+    "title": "Legătură",
+    "url": "Adresă URL",
+    "urlHelp": "URL-ul linkului",
+    "description": "Descriere",
+    "descriptionHelp": "Text de afișat în interiorul elementului de link",
+    "target": "Ţintă",
+    "targetDescription": "Deschide linkul într-o filă nouă",
+    "cancel": "Anula",
+    "confirm": "Confirma"
+  },
+  "pickLink": {
+    "title": "Alege linkul",
+    "link": "Legătură",
+    "description": "Descriere",
+    "descriptionHelp": "Text de afișat în interiorul elementului de link",
+    "tooltip": "Sugestie instrumentală",
+    "tooltipHelp": "Informații suplimentare care descriu linkul, afișate la trecerea cu mouse-ul peste",
+    "newTab": "Deschide linkul într-o filă nouă",
+    "remove": "Eliminați linkul",
+    "cancel": "Anula",
+    "confirm": "Confirma"
+  },
+  "newEntry": {
+    "title": "Titlu",
+    "parent": "Mamă",
+    "type": "Selectați tipul",
+    "order": "Introduceți comanda",
+    "orderFirst": "În fruntea listei",
+    "orderLast": "În partea de jos a listei",
+    "copyFrom": "Copiați conținutul din",
+    "formTitle": "Intrare nouă",
+    "cancel": "Anula",
+    "create": "Crea"
+  },
+  "entryEdit": {
+    "blockingTitle": "Sigur vrei să ștergi modificările?",
+    "blockingWarning": "Acest document a fost modificat",
+    "blockingPrompt": "Doriți să salvați modificările?",
+    "blockingDiscard": "Anulează modificările mele",
+    "blockingSaveDraft": "Salvați ca schiță",
+    "blockingPublishChanges": "Publicați modificările",
+    "untranslatedTitle": "Netradus",
+    "untranslatedParent": "Traduceți mai întâi pagina părinte.",
+    "untranslatedPrompt": "Introduceți detaliile de mai jos și salvați pentru a începe traducerea.",
+    "draftError": "Nu s-a putut finaliza acțiunea preliminară, vă rugăm să încercați din nou mai târziu.",
+    "saveTranslationError": "Nu s-a putut finaliza acțiunea de traducere, vă rugăm să încercați din nou mai târziu.",
+    "publishError": "Nu s-a putut finaliza acțiunea de publicare, vă rugăm să încercați din nou mai târziu.",
+    "discardError": "Nu s-au putut șterge modificările, vă rugăm să încercați din nou mai târziu.",
+    "unpublishError": "Nu s-a putut finaliza acțiunea de anulare a publicării. Vă rugăm să încercați din nou mai târziu.",
+    "deleteError": "Nu s-a putut finaliza acțiunea de ștergere, vă rugăm să încercați din nou mai târziu.",
+    "archiveError": "Nu s-a putut finaliza acțiunea de arhivare, vă rugăm să încercați din nou mai târziu."
+  },
+  "entryHeader": {
+    "draft": "Proiect",
+    "editing": "Editare",
+    "published": "Publicat",
+    "archived": "Arhivat",
+    "untranslated": "Netradus",
+    "unpublished": "Nepublicat",
+    "revision": "Revizuire",
+    "showMenu": "Afișare meniu",
+    "hideMenu": "Ascunde meniul",
+    "removeDraft": "Eliminați schița",
+    "replace": "Înlocui",
+    "delete": "Şterge",
+    "unpublish": "Anulează publicarea",
+    "archive": "Arhivă",
+    "publish": "Publica",
+    "showHistory": "Afișați istoricul",
+    "hideHistory": "Ascunde istoricul",
+    "draftAvailable": "O versiune preliminară mai nouă este disponibilă",
+    "translateFrom": "Traduceți din",
+    "translateParent": "Traduceți mai întâi pagina părinte",
+    "discard": "Anulează modificările",
+    "save": "Salvați traducerea",
+    "saveDraft": "Salva",
+    "restore": "Restabili",
+    "showPreview": "Afișare previzualizare",
+    "hidePreview": "Ascunde previzualizarea",
+    "savingDraft": "Se salvează schița",
+    "savingTranslation": "Salvarea traducerii",
+    "publishingEdits": "Publicarea editărilor",
+    "restoringRevision": "Restaurarea reviziei",
+    "publishingDraft": "Publicarea schiței",
+    "unpublishingDraft": "Anularea publicării schiței",
+    "discardingDraft": "Se elimină schița",
+    "archivingPublished": "Arhivare publicată",
+    "publishingArchived": "Publicare arhivată",
+    "deletingFile": "Ștergerea fișierului",
+    "deletingEntry": "Ștergeți intrarea"
+  },
+  "contentView": {
+    "create": "Creați nou"
+  },
+  "welcome": {
+    "title": "Instalarea dvs. alinea este acum gata de configurare.",
+    "button": "Aflați cum să configurați"
+  },
+  "cloudAuthView": {
+    "title": "Paragraf",
+    "deploy": "Gata de implementare?",
+    "requiresHandler": "Alinea necesită un handler pentru a continua",
+    "backend": "Alinea necesită un backend pentru a continua.",
+    "customBackend": "configurați complet un backend personalizat",
+    "cloud": "Sau configurează-te în câteva clicuri cu oferta noastră de cloud.",
+    "cloudButton": "Continuă cu alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Setări",
+    "defaultWorkspace": "Spațiu de lucru implicit",
+    "theme": "Schimbă tema",
+    "fontSize": "Dimensiunea fontului",
+    "decreaseFontSize": "Micșorează dimensiunea fontului",
+    "increaseFontSize": "Măriți dimensiunea fontului",
+    "logout": "Deconectare"
+  },
+  "fileUploader": {
+    "uploadComplete": "Încărcări finalizate: {{amount}}",
+    "uploading": "Încărcarea fișierelor: {{amount}}",
+    "upload": "Încărcați fișiere"
+  },
+  "fileUploadRow": {
+    "alt": "Fișier încărcat",
+    "done": "Făcut"
+  },
+  "fileEntry": {
+    "preview": "Previzualizare fișier media",
+    "extension": "Extensie",
+    "fileSize": "Dimensiunea fișierului",
+    "dimensions": "Dimensiuni",
+    "pixels": "pixeli",
+    "url": "URL-ul",
+    "focus": "Punct de focalizare",
+    "focusHelp": "Faceți clic pe imagine pentru a schimba punctul de focalizare"
+  },
+  "cardOverview": {
+    "title": "card"
+  },
+  "explorer": {
+    "noResults": "Niciun rezultat"
+  },
+  "editModeToggle": {
+    "edit": "Edita",
+    "review": "Revizuirea modificărilor"
+  },
+  "searchBox": {
+    "search": "Căutare"
+  },
+  "rootOverview": {
+    "instruction": "Selectați o intrare în arborele de navigare din stânga pentru a începe editarea"
+  },
+  "inputLabel": {
+    "readonly": "Doar citire",
+    "shared": "Partajat"
+  },
+  "errorBoundary": {
+    "title": "Eroare",
+    "oops": "Oops, ceva nu a mers bine",
+    "close": "Eroare la închidere",
+    "issue": "Creați o problemă"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Spațiu de lucru implicit",
+    "logout": "Deconectare"
+  },
+  "listField": {
+    "reorder": "Trageți și plasați pentru a reordona",
+    "copy": "Copiere bloc",
+    "moveUp": "Mută o poziție mai sus",
+    "moveDown": "Mută o poziție în jos",
+    "delete": "Ștergeți blocul",
+    "paste": "Lipire bloc",
+    "add": "Introduceți un bloc nou"
+  },
+  "metadataField": {
+    "previewTitle": "Previzualizare",
+    "searchEngine": "Motor de căutare",
+    "socialShare": "Partajare socială",
+    "ogImageAlt": "Imagine grafică deschisă"
+  },
+  "pickTextLink": {
+    "title": "Alege linkul",
+    "link": "Legătură",
+    "description": "Descriere",
+    "descriptionHelp": "Text de afișat în interiorul elementului de link",
+    "tooltip": "Sugestie instrumentală",
+    "tooltipHelp": "Informații suplimentare care descriu linkul, afișate la trecerea cu mouse-ul peste",
+    "newTab": "Deschide linkul într-o filă nouă",
+    "remove": "Eliminați linkul",
+    "cancel": "Anula",
+    "confirm": "Confirma"
+  },
+  "richTextField": {
+    "insert": "Inserare bloc"
+  },
+  "richTextToolbar": {
+    "styles": "Titlu/paragraf",
+    "table": "Masă",
+    "bold": "Îndrăzneţ",
+    "italic": "Cursiv",
+    "align": "Aliniere",
+    "alignLeft": "Aliniere la stânga",
+    "alignCenter": "Aliniere la centru",
+    "alignRight": "Aliniere la dreapta",
+    "alignJustify": "Aliniere justificare",
+    "clear": "Format clar",
+    "bulletList": "Listă cu puncte",
+    "orderedList": "Listă ordonată",
+    "link": "Legătură",
+    "quote": "Citat bloc",
+    "rule": "Regula orizontală",
+    "small": "Mic",
+    "sub": "Indice",
+    "sup": "Superscript",
+    "paragraph": "Text normal",
+    "h1": "Titlul 1",
+    "h2": "Titlul 2",
+    "h3": "Titlul 3",
+    "h4": "Titlul 4",
+    "h5": "Titlul 5",
+    "tableLabel": "Masă",
+    "insert": "Inserare tabel",
+    "insertRowBefore": "Introduceți un rând înainte",
+    "insertRowAfter": "Introduceți un rând după",
+    "deleteRow": "Ștergeți rândul",
+    "toggleHeaderRow": "Comutare rând antet",
+    "insertColumnBefore": "Introduceți coloana înainte",
+    "insertColumnAfter": "Introduceți coloana după",
+    "deleteColumn": "Ștergeți coloana",
+    "deleteTable": "Ștergeți tabelul",
+    "left": "Stânga",
+    "center": "Centru",
+    "right": "Corect",
+    "justify": "Justifica"
+  },
+  "linkField": {
+    "reorder": "Trageți și plasați pentru a reordona",
+    "open": "Deschide linkul într-o filă nouă",
+    "openFile": "Deschide fișierul media într-o filă nouă",
+    "edit": "Editați linkul",
+    "editFile": "Schimbă imaginea",
+    "delete": "Șterge linkul",
+    "deleteFile": "Ștergeți imaginea"
+  },
+  "entryPicker": {
+    "title": "Selectați o referință",
+    "searchPlaceholder": "Căutare",
+    "cancel": "Anula",
+    "confirm": "Confirma"
+  }
+}

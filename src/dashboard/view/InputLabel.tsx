@@ -1,16 +1,17 @@
 import styler from '@alinea/styler'
 import {Icon, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
-import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
+import {HStack} from 'alinea/ui/Stack'
 import {
   type ComponentType,
-  type PropsWithChildren,
-  type ReactNode,
   forwardRef,
-  memo
+  memo,
+  type PropsWithChildren,
+  type ReactNode
 } from 'react'
+import {useTranslation} from '../hook/UseTranslation.js'
 import css from './InputLabel.module.scss'
 
 const styles = styler(css)
@@ -38,6 +39,7 @@ export const LabelHeader = memo(function LabelHeader({
   required,
   error
 }: LabelHeaderProps) {
+  const {inputLabel: t} = useTranslation()
   const showError = typeof error === 'string'
   return (
     <header className={styles.header(size, {focused, error: Boolean(error)})}>
@@ -50,9 +52,13 @@ export const LabelHeader = memo(function LabelHeader({
           </span>
         </HStack>
         {readOnly && (
-          <Icon title="Read-only" icon={IcOutlineLock} style={{opacity: 0.6}} />
+          <Icon
+            title={t.readonly}
+            icon={IcOutlineLock}
+            style={{opacity: 0.6}}
+          />
         )}
-        {shared && <Chip icon={PhGlobe}>Shared</Chip>}
+        {shared && <Chip icon={PhGlobe}>{t.shared}</Chip>}
         {showError ? (
           <div className={styles.header.help({error: true})}>{error}</div>
         ) : (

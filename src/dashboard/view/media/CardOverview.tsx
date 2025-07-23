@@ -1,3 +1,6 @@
+import {useTranslation} from '../../hook/UseTranslation.js'
+
 export function CardOverview() {
-  return <div>card</div>
+  const {cardOverview: t} = useTranslation()
+  return <div>{t.title}</div>
 }

@@ -1,0 +1,258 @@
+{
+  "app": {
+    "syncing": "Sinhronizācija",
+    "synced": "Sinhronizēts",
+    "saving": "Saglabāšana…"
+  },
+  "urlPicker": {
+    "title": "Saite",
+    "url": "URL",
+    "urlHelp": "Saites URL",
+    "description": "Apraksts",
+    "descriptionHelp": "Teksts, kas jārāda saites elementā",
+    "target": "Mērķis",
+    "targetDescription": "Atvērt saiti jaunā cilnē",
+    "cancel": "Atcelt",
+    "confirm": "Apstiprināt"
+  },
+  "pickLink": {
+    "title": "Izvēlēties saiti",
+    "link": "Saite",
+    "description": "Apraksts",
+    "descriptionHelp": "Teksts, kas jārāda saites elementā",
+    "tooltip": "Rīka padoms",
+    "tooltipHelp": "Papildinformācija, kas apraksta saiti, tiek parādīta, virzot kursoru virs tās",
+    "newTab": "Atvērt saiti jaunā cilnē",
+    "remove": "Noņemt saiti",
+    "cancel": "Atcelt",
+    "confirm": "Apstiprināt"
+  },
+  "newEntry": {
+    "title": "Nosaukums",
+    "parent": "Vecāks",
+    "type": "Izvēlieties veidu",
+    "order": "Ievietot secību",
+    "orderFirst": "Saraksta augšgalā",
+    "orderLast": "Saraksta apakšā",
+    "copyFrom": "Kopēt saturu no",
+    "formTitle": "Jauns ieraksts",
+    "cancel": "Atcelt",
+    "create": "Izveidot"
+  },
+  "entryEdit": {
+    "blockingTitle": "Vai tiešām vēlaties atmest izmaiņas?",
+    "blockingWarning": "Šis dokuments tika mainīts",
+    "blockingPrompt": "Vai vēlaties saglabāt izmaiņas?",
+    "blockingDiscard": "Atmest manas izmaiņas",
+    "blockingSaveDraft": "Saglabāt kā melnrakstu",
+    "blockingPublishChanges": "Publicēt izmaiņas",
+    "untranslatedTitle": "Netulkots",
+    "untranslatedParent": "Vispirms iztulkojiet vecāklapu.",
+    "untranslatedPrompt": "Ievadiet tālāk norādīto informāciju un saglabājiet, lai sāktu tulkošanu.",
+    "draftError": "Nevarēja pabeigt melnraksta darbību. Lūdzu, mēģiniet vēlreiz vēlāk.",
+    "saveTranslationError": "Nevarēja pabeigt tulkošanas darbību. Lūdzu, mēģiniet vēlreiz vēlāk.",
+    "publishError": "Nevarēja pabeigt publicēšanas darbību. Lūdzu, mēģiniet vēlreiz vēlāk.",
+    "discardError": "Nevarēja atmest izmaiņas. Lūdzu, mēģiniet vēlreiz vēlāk.",
+    "unpublishError": "Nevarēja pabeigt publicēšanas atcelšanu. Lūdzu, mēģiniet vēlreiz vēlāk.",
+    "deleteError": "Nevarēja pabeigt dzēšanas darbību. Lūdzu, mēģiniet vēlreiz vēlāk.",
+    "archiveError": "Nevarēja pabeigt arhivēšanas darbību. Lūdzu, mēģiniet vēlreiz vēlāk."
+  },
+  "entryHeader": {
+    "draft": "Melnraksts",
+    "editing": "Rediģēšana",
+    "published": "Publicēts",
+    "archived": "Arhivēts",
+    "untranslated": "Netulkots",
+    "unpublished": "Nepublicēts",
+    "revision": "Pārskatīšana",
+    "showMenu": "Attēlot izvēlni",
+    "hideMenu": "Slēpt izvēlni",
+    "removeDraft": "Noņemt melnrakstu",
+    "replace": "Aizstāt",
+    "delete": "Dzēst",
+    "unpublish": "Atcelt publicēšanu",
+    "archive": "Arhīvs",
+    "publish": "Publicēt",
+    "showHistory": "Rādīt vēsturi",
+    "hideHistory": "Slēpt vēsturi",
+    "draftAvailable": "Ir pieejama jaunāka melnraksta versija",
+    "translateFrom": "Tulkot no",
+    "translateParent": "Vispirms tulkot vecāklapu",
+    "discard": "Atmest labojumus",
+    "save": "Saglabāt tulkojumu",
+    "saveDraft": "Saglabāt",
+    "restore": "Atjaunot",
+    "showPreview": "Rādīt priekšskatījumu",
+    "hidePreview": "Slēpt priekšskatījumu",
+    "savingDraft": "Melnraksta saglabāšana",
+    "savingTranslation": "Tulkojuma saglabāšana",
+    "publishingEdits": "Publicēšanas labojumi",
+    "restoringRevision": "Atjaunot labojumu",
+    "publishingDraft": "Melnraksta publicēšana",
+    "unpublishingDraft": "Melnraksta publicēšanas atcelšana",
+    "discardingDraft": "Melnraksta atmešana",
+    "archivingPublished": "Publicēto arhivēšana",
+    "publishingArchived": "Publicēšana arhivēta",
+    "deletingFile": "Faila dzēšana",
+    "deletingEntry": "Dzēst ierakstu"
+  },
+  "contentView": {
+    "create": "Izveidot jaunu"
+  },
+  "welcome": {
+    "title": "Jūsu alinea instalācija tagad ir gatava konfigurēšanai.",
+    "button": "Uzziniet, kā konfigurēt"
+  },
+  "cloudAuthView": {
+    "title": "Rindkopa",
+    "deploy": "Gatavs izvietošanai?",
+    "requiresHandler": "Alineai ir nepieciešams apstrādātājs, lai turpinātu",
+    "backend": "Lai turpinātu, Alineai ir nepieciešama aizmugursistēma.",
+    "customBackend": "pilnībā konfigurēt pielāgotu aizmugures sistēmu",
+    "cloud": "Vai arī iestatiet to ar dažiem klikšķiem, izmantojot mūsu mākoņpakalpojumu.",
+    "cloudButton": "Turpināt ar alinea.cloud"
+  },
+  "sidebarSettings": {
+    "settings": "Iestatījumi",
+    "defaultWorkspace": "Noklusējuma darbvieta",
+    "theme": "Mainīt tēmu",
+    "fontSize": "Fonta lielums",
+    "decreaseFontSize": "Samazināt fonta lielumu",
+    "increaseFontSize": "Palielināt fonta lielumu",
+    "logout": "Izrakstīties"
+  },
+  "fileUploader": {
+    "uploadComplete": "Augšupielādes pabeigtas: {{amount}}",
+    "uploading": "Failu augšupielāde: {{amount}}",
+    "upload": "Augšupielādēt failus"
+  },
+  "fileUploadRow": {
+    "alt": "Augšupielādētais fails",
+    "done": "Pabeigts"
+  },
+  "fileEntry": {
+    "preview": "Multivides faila priekšskatījums",
+    "extension": "Paplašinājums",
+    "fileSize": "Faila lielums",
+    "dimensions": "Izmēri",
+    "pixels": "pikseļi",
+    "url": "URL",
+    "focus": "Fokusa punkts",
+    "focusHelp": "Noklikšķiniet uz attēla, lai mainītu fokusa punktu"
+  },
+  "cardOverview": {
+    "title": "karte"
+  },
+  "explorer": {
+    "noResults": "Nav rezultātu"
+  },
+  "editModeToggle": {
+    "edit": "Rediģēt",
+    "review": "Pārskatīt izmaiņas"
+  },
+  "searchBox": {
+    "search": "Meklēt"
+  },
+  "rootOverview": {
+    "instruction": "Lai sāktu rediģēšanu, kreisajā pusē esošajā navigācijas kokā atlasiet ierakstu."
+  },
+  "inputLabel": {
+    "readonly": "Tikai lasāms",
+    "shared": "Kopīgots"
+  },
+  "errorBoundary": {
+    "title": "Kļūda",
+    "oops": "Ups, kaut kas nogāja greizi",
+    "close": "Aizvēršanas kļūda",
+    "issue": "Izveidot problēmu"
+  },
+  "toolbar": {
+    "defaultWorkspace": "Noklusējuma darbvieta",
+    "logout": "Izrakstīties"
+  },
+  "listField": {
+    "reorder": "Velciet un nometiet, lai pārkārtotu",
+    "copy": "Kopēšanas bloks",
+    "moveUp": "Pārvietot vienu pozīciju uz augšu",
+    "moveDown": "Pārvietot vienu pozīciju uz leju",
+    "delete": "Dzēst bloku",
+    "paste": "Ielīmēt bloku",
+    "add": "Ievietot jaunu bloku"
+  },
+  "metadataField": {
+    "previewTitle": "Priekšskatījums",
+    "searchEngine": "Meklētājprogramma",
+    "socialShare": "Dalīšanās sociālajos tīklos",
+    "ogImageAlt": "Atvērt grafika attēlu"
+  },
+  "pickTextLink": {
+    "title": "Izvēlēties saiti",
+    "link": "Saite",
+    "description": "Apraksts",
+    "descriptionHelp": "Teksts, kas jārāda saites elementā",
+    "tooltip": "Rīka padoms",
+    "tooltipHelp": "Papildinformācija, kas apraksta saiti, tiek parādīta, virzot kursoru virs tās",
+    "newTab": "Atvērt saiti jaunā cilnē",
+    "remove": "Noņemt saiti",
+    "cancel": "Atcelt",
+    "confirm": "Apstiprināt"
+  },
+  "richTextField": {
+    "insert": "Ievietot bloku"
+  },
+  "richTextToolbar": {
+    "styles": "Virsraksts/rindkopa",
+    "table": "Galds",
+    "bold": "Treknraksts",
+    "italic": "slīpraksts",
+    "align": "Izlīdzināšana",
+    "alignLeft": "Izlīdzināt pa kreisi",
+    "alignCenter": "Izlīdzināt centrā",
+    "alignRight": "Izlīdzināt pa labi",
+    "alignJustify": "Izlīdzināt",
+    "clear": "Notīrīt formātu",
+    "bulletList": "Aizzīmju saraksts",
+    "orderedList": "Sakārtots saraksts",
+    "link": "Saite",
+    "quote": "Citātu bloks",
+    "rule": "Horizontālā robeža",
+    "small": "Mazs",
+    "sub": "Apakšindekss",
+    "sup": "Augšraksts",
+    "paragraph": "Normāls teksts",
+    "h1": "1. virsraksts",
+    "h2": "2. virsraksts",
+    "h3": "3. virsraksts",
+    "h4": "4. virsraksts",
+    "h5": "5. virsraksts",
+    "tableLabel": "Galds",
+    "insert": "Ievietot tabulu",
+    "insertRowBefore": "Ievietot rindu pirms",
+    "insertRowAfter": "Ievietot rindu pēc",
+    "deleteRow": "Dzēst rindu",
+    "toggleHeaderRow": "Pārslēgt galvenes rindu",
+    "insertColumnBefore": "Ievietot kolonnu pirms",
+    "insertColumnAfter": "Ievietot kolonnu pēc",
+    "deleteColumn": "Dzēst kolonnu",
+    "deleteTable": "Dzēst tabulu",
+    "left": "Kreisā",
+    "center": "Centrs",
+    "right": "Pa labi",
+    "justify": "Izlīdzināt"
+  },
+  "linkField": {
+    "reorder": "Velciet un nometiet, lai pārkārtotu",
+    "open": "Atvērt saiti jaunā cilnē",
+    "openFile": "Atvērt multivides failu jaunā cilnē",
+    "edit": "Rediģēt saiti",
+    "editFile": "Mainīt attēlu",
+    "delete": "Dzēst saiti",
+    "deleteFile": "Dzēst attēlu"
+  },
+  "entryPicker": {
+    "title": "Izvēlieties atsauci",
+    "searchPlaceholder": "Meklēt",
+    "cancel": "Atcelt",
+    "confirm": "Apstiprināt"
+  }
+}
