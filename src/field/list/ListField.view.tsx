@@ -191,7 +191,7 @@ function ListInputRow({
             icon={getType(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
-            title={t.row.ariaLabel.reorder()}
+            title={t.row.ariaLabel.reorder}
           />
         </Sink.Options>
         <Sink.Title>
@@ -205,7 +205,7 @@ function ListInputRow({
             <IconButton
               icon={IcBaselineContentCopy}
               onClick={() => onCopyBlock()}
-              title={t.row.ariaLabel.copy()}
+              title={t.row.ariaLabel.copy}
             />
           )}
           {!readOnly && (
@@ -213,17 +213,17 @@ function ListInputRow({
               <IconButton
                 icon={IcRoundKeyboardArrowUp}
                 onClick={() => onMove?.(-1)}
-                title={t.row.ariaLabel.moveUp()}
+                title={t.row.ariaLabel.moveUp}
               />
               <IconButton
                 icon={IcRoundKeyboardArrowDown}
                 onClick={() => onMove?.(1)}
-                title={t.row.ariaLabel.moveDown()}
+                title={t.row.ariaLabel.moveDown}
               />
               <IconButton
                 icon={IcRoundClose}
                 onClick={onDelete}
-                title={t.row.ariaLabel.delete()}
+                title={t.row.ariaLabel.delete}
               />
             </>
           )}
@@ -275,7 +275,7 @@ function ListCreateRow({
             onClick={() => onPaste(pasted)}
             mod="paste"
           >
-            <TextLabel label={t.create.ariaLabel.paste()} />
+            <TextLabel label={t.create.ariaLabel.paste} />
           </Create.Button>
         )}
       </Create.Root>
@@ -297,7 +297,7 @@ function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
         <button
           className={styles.insert.icon()}
           onClick={onInsert}
-          title={t.insert.ariaLabel.add()}
+          title={t.insert.ariaLabel.add}
         >
           <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
         </button>

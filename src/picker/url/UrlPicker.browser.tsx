@@ -46,17 +46,17 @@ export function UrlPickerForm({
   const preSelected = selection?.[0] as UrlReference | undefined
   const linkForm = useMemo(
     () =>
-      type(t.title(), {
+      type(t.title, {
         fields: {
-          url: text(t.form.url(), {
+          url: text(t.form.url, {
             required: true,
-            help: t.form.url_help()
+            help: t.form.url_help
           }),
-          title: text(t.form.description(), {
-            help: t.form.description_help()
+          title: text(t.form.description, {
+            help: t.form.description_help
           }),
-          blank: check(t.form.target(), {
-            description: t.form.target_description(),
+          blank: check(t.form.target, {
+            description: t.form.target_description,
             initialValue: true
           })
         }
@@ -92,9 +92,9 @@ export function UrlPickerForm({
         <Stack.Right>
           <HStack gap={16}>
             <Button outline type="button" onClick={onCancel}>
-              {t.button.cancel()}
+              {t.button.cancel}
             </Button>
-            <Button>{t.button.confirm()}</Button>
+            <Button>{t.button.confirm}</Button>
           </HStack>
         </Stack.Right>
       </HStack>

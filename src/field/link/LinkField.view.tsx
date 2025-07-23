@@ -405,7 +405,7 @@ function LinkInputRow({
               icon={IcRoundDragHandle}
               {...handle}
               style={{cursor: handle ? 'grab' : 'grabbing'}}
-              title={t.row.ariaLabel.reorder()}
+              title={t.row.ariaLabel.reorder}
             />
           ) : (
             <div className={styles.row.staticHandle()}>
@@ -423,17 +423,17 @@ function LinkInputRow({
             <IconButton
               icon={IcRoundOpenInNew}
               onClick={() => onView(reference)}
-              title={t.row.ariaLabel[isFile ? 'openFile' : 'open']()}
+              title={t.row.ariaLabel[isFile ? 'openFile' : 'open']}
             />
             <IconButton
               icon={IcRoundEdit}
               onClick={onEdit}
-              title={t.row.ariaLabel[isFile ? 'editFile' : 'edit']()}
+              title={t.row.ariaLabel[isFile ? 'editFile' : 'edit']}
             />
             <IconButton
               icon={IcRoundClose}
               onClick={onRemove}
-              title={t.row.ariaLabel[isFile ? 'deleteFile' : 'delete']()}
+              title={t.row.ariaLabel[isFile ? 'deleteFile' : 'delete']}
             />
           </Sink.Options>
         )}

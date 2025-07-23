@@ -46,7 +46,7 @@ function MetadataPreview() {
   if (!metadata) return null
   return (
     <div className={styles.preview()}>
-      <h2>{t.preview.title()}</h2>
+      <h2>{t.preview.title}</h2>
       <SearchEnginePreview metaTags={metadata} />
       <OpenGraphPreview metaTags={metadata} />
     </div>
@@ -58,7 +58,7 @@ const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
   return (
     <>
       <h4 className={styles.preview.subtitle()}>
-        {t.preview.subtitle.search()}
+        {t.preview.subtitle.search}
       </h4>
       <div className={styles.searchengine()}>
         <div className={styles.searchengine.intro()}>
@@ -98,12 +98,12 @@ const OpenGraphPreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
   const t = useTranslation(copy)
   return (
     <>
-      <h4 className={styles.preview.subtitle()}>{t.preview.subtitle.social()}</h4>
+      <h4 className={styles.preview.subtitle()}>{t.preview.subtitle.social}</h4>
       <div className={styles.opengraph()}>
         {metaTags['og:image'] && (
           <img
             src={metaTags['og:image']}
-            alt={t.ogImageAlt()}
+            alt={t.ogImageAlt}
             className={styles.opengraph.img()}
           />
         )}

@@ -326,7 +326,7 @@ export function EntryPickerModal({
                   </Breadcrumbs>
                 )}
                 <h2>
-                  {title ? <TextLabel label={title} /> : t.title()}
+                  {title ? <TextLabel label={title} /> : t.title}
                 </h2>
               </VStack>
             </HStack>
@@ -335,7 +335,7 @@ export function EntryPickerModal({
               <IcRoundSearch className={styles.root.search.icon()} />
               <input
                 type="text"
-                placeholder={t.search.placeholder()}
+                placeholder={t.search.placeholder}
                 value={search}
                 onChange={event => setSearch(event.target.value)}
                 className={styles.root.search.input()}
@@ -400,9 +400,9 @@ export function EntryPickerModal({
           <Stack.Right>
             <HStack gap={16}>
               <Button outline type="button" onClick={onCancel}>
-                {t.button.cancel()}
+                {t.button.cancel}
               </Button>
-              <Button onClick={handleConfirm}>{t.button.confirm()}</Button>
+              <Button onClick={handleConfirm}>{t.button.confirm}</Button>
             </HStack>
           </Stack.Right>
         </HStack>

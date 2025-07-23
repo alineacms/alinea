@@ -39,19 +39,19 @@ export const copy = {
 function linkForm(options: PickerOptions) {
   const t = useTranslation(copy)
   const isExistingLink = Boolean(options.link)
-  const fields = type(t.title(), {
+  const fields = type(t.title, {
     fields: {
-      link: createLink(t.form.link(), {
+      link: createLink(t.form.link, {
         required: true,
         initialValue: options.link as EntryReference & ListRow
       }),
-      description: text(t.form.description(), {
-        help: t.form.description_help()
+      description: text(t.form.description, {
+        help: t.form.description_help
       }),
-      title: text(t.form.tooltip(), {
-        help: t.form.tooltip_help()
+      title: text(t.form.tooltip, {
+        help: t.form.tooltip_help
       }),
-      blank: check(t.form.new_tab(), {
+      blank: check(t.form.new_tab, {
         inline: true
       })
     }
@@ -131,15 +131,15 @@ export function PickTextLinkForm({
                   type="button"
                   onClick={() => resolve(undefined)}
                 >
-                  {t.button.remove()}
+                  {t.button.remove}
                 </Button>
               )}
               <Stack.Right>
                 <HStack gap={16}>
                   <Button outline type="button" onClick={onClose}>
-                    {t.button.cancel()}
+                    {t.button.cancel}
                   </Button>
-                  <Button>{t.button.confirm()}</Button>
+                  <Button>{t.button.confirm}</Button>
                 </HStack>
               </Stack.Right>
             </HStack>
