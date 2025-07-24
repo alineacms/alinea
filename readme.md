@@ -1,6 +1,12 @@
 [![npm](https://img.shields.io/npm/v/alinea.svg)](https://npmjs.org/package/alinea)
 [![install size](https://packagephobia.com/badge?p=alinea)](https://packagephobia.com/result?p=alinea)
 
+<br />
+<a href="https://vercel.com/oss">
+  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
+</a>
+<br />
+
 # [Alinea CMS](https://alineacms.com)
 
 Alinea is a modern content management system.
