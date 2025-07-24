@@ -86,9 +86,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
             <VStack style={{height: '100%', width: '100%'}}>
               <header className={styles.root.inner.header()}>
                 <Head>
-                  <title>
-                    {workspace.label}: {String(title)}
-                  </title>
+                  <title>{`${workspace.label}: ${String(title)}`}</title>
                 </Head>
                 <HStack center gap={18}>
                   {backLink && (
