@@ -87,8 +87,16 @@ export const entryEditorAtoms = atomFamily(
       if (!entry) return undefined
       const entryId = entry.id
       const locale = entry.locale
-      const type = config.schema[entry.type]
-      const edits = get(entryEditsAtoms(entry))
+      const untranslated = Boolean(
+        entry.locale && searchLocale !== entry.locale
+      )
+      const edits = get(
+        entryEditsAtoms(
+          untranslated
+            ? {...entry, data: {...entry.data, path: undefined}}
+            : entry
+        )
+      )
 
       const versions = await graph.find({
         select: {
@@ -137,9 +145,6 @@ export const entryEditorAtoms = atomFamily(
           locale: searchLocale,
           status: 'preferDraft'
         }))
-      const untranslated = Boolean(
-        entry.locale && searchLocale !== entry.locale
-      )
       const parentNeedsTranslation = entry.parentId ? !parentLink : false
       const parents = withParents?.parents ?? []
       const canPublish = parents.every(parent => parent.status === 'published')
