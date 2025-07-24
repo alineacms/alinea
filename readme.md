@@ -26,7 +26,7 @@ npm install alinea
 Initialize Alinea's config file
 
 ```sh
-npx alinea init-
+npx alinea init
 ```
 
 Open the dashboard to have a look around
