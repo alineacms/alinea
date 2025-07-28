@@ -1,22 +1,22 @@
 import {AbortController, type Response, fetch} from '@alinea/iso'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
+import type {Config} from './Config.js'
 import type {
   DraftTransport,
   LocalConnection,
-  Revision
-} from 'alinea/core/Connection'
-import type {Config} from './Config.js'
-import type {UploadResponse} from './Connection.js'
+  Revision,
+  UploadResponse
+} from './Connection.js'
 import type {Draft, DraftKey} from './Draft.js'
+import type {CommitRequest} from './db/CommitRequest.js'
+import type {Mutation} from './db/Mutation.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {getScope} from './Scope.js'
-import type {User} from './User.js'
-import type {CommitRequest} from './db/CommitRequest.js'
-import type {Mutation} from './db/Mutation.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
+import type {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
 export type AuthenticateRequest = (
