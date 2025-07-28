@@ -1,9 +1,10 @@
 import styler from '@alinea/styler'
 import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, Icon, TextLabel} from 'alinea/ui'
+import {InputLabel, LabelHeader} from 'alinea/dashboard/view/InputLabel'
+import {Chip, HStack, Icon, TextLabel} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
+import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {useState} from 'react'
 import type {CheckField} from './CheckField.js'
 import css from './CheckField.module.scss'
@@ -52,10 +53,20 @@ export function CheckInput({field}: CheckInputProps) {
             />
           )}
         </span>
-        <TextLabel
-          label={description ?? label}
-          className={styles.root.label({disabled: readOnly})}
-        />
+        <HStack center>
+          <TextLabel
+            label={description ?? label}
+            className={styles.root.label({disabled: readOnly})}
+          />
+          {!description && (
+            <LabelHeader
+              label=""
+              help={options?.help}
+              required={options?.required}
+              shared={options?.shared}
+            />
+          )}
+        </HStack>
       </HStack>
     </InputLabel>
   )
