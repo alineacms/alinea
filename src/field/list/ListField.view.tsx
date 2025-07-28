@@ -271,7 +271,6 @@ function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
         className={styles.insert.icon()}
         onClick={onInsert}
         title="Insert new block"
-        type="button"
       >
         <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
       </button>
