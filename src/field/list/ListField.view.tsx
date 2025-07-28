@@ -266,17 +266,16 @@ interface ListInsertRowProps {
 
 function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
   return (
-    <>
-      <div className={styles.insert({open, first})}>
-        <button
-          className={styles.insert.icon()}
-          onClick={onInsert}
-          title="Insert new block"
-        >
-          <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
-        </button>
-      </div>
-    </>
+    <div className={styles.insert({open, first})}>
+      <button
+        className={styles.insert.icon()}
+        onClick={onInsert}
+        title="Insert new block"
+        type="button"
+      >
+        <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
+      </button>
+    </div>
   )
 }
 
