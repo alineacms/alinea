@@ -1,6 +1,9 @@
 import {AuthResultType} from 'alinea/cloud/AuthResult'
-import type {AuthApi, AuthedContext} from 'alinea/core/Connection'
-import type {RequestContext} from 'alinea/core/Connection'
+import type {
+  AuthApi,
+  AuthedContext,
+  RequestContext
+} from 'alinea/core/Connection'
 import {atob} from 'alinea/core/util/Encoding'
 import {AuthAction} from '../Auth.js'
 
@@ -13,8 +16,8 @@ export class BasicAuth implements AuthApi {
   #verify: Verifier
 
   constructor(context: RequestContext, verify: Verifier) {
-    this.#verify = verify
     this.#context = context
+    this.#verify = verify
   }
 
   async authenticate(request: Request): Promise<Response> {
