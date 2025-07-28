@@ -1,15 +1,15 @@
 import styler from '@alinea/styler'
 import {Icon, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
-import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
+import {HStack} from 'alinea/ui/Stack'
 import {
   type ComponentType,
-  type PropsWithChildren,
-  type ReactNode,
   forwardRef,
-  memo
+  memo,
+  type PropsWithChildren,
+  type ReactNode
 } from 'react'
 import css from './InputLabel.module.scss'
 
