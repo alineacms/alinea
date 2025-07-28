@@ -31,4 +31,14 @@
   &:focus.is-active {
     background: hsla(var(--alinea-negative), 0.1);
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+
+    &:hover {
+      background: transparent;
+      box-shadow: none;
+    }
+  }
 }
