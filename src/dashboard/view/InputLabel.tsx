@@ -2,6 +2,8 @@ import styler from '@alinea/styler'
 import {Icon, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
+import IcRoundUnfoldLess from 'alinea/ui/icons/IcRoundUnfoldLess'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {HStack} from 'alinea/ui/Stack'
 import {
@@ -11,9 +13,12 @@ import {
   type PropsWithChildren,
   type ReactNode
 } from 'react'
+import {IconButton} from './IconButton.js'
 import css from './InputLabel.module.scss'
 
 const styles = styler(css)
+
+export type Foldable = 'fold' | 'unfold'
 
 export type LabelHeaderProps = {
   label: ReactNode
@@ -25,6 +30,9 @@ export type LabelHeaderProps = {
   readOnly?: boolean
   required?: boolean
   error?: boolean | string
+  foldable?: Foldable
+  foldableIsDisabled?: boolean
+  foldableHandler?: () => void
 }
 
 export const LabelHeader = memo(function LabelHeader({
@@ -36,7 +44,10 @@ export const LabelHeader = memo(function LabelHeader({
   shared,
   readOnly,
   required,
-  error
+  error,
+  foldable,
+  foldableIsDisabled,
+  foldableHandler
 }: LabelHeaderProps) {
   const showError = typeof error === 'string'
   return (
@@ -57,6 +68,15 @@ export const LabelHeader = memo(function LabelHeader({
           <div className={styles.header.help({error: true})}>{error}</div>
         ) : (
           help && <div className={styles.header.help()}>{help}</div>
+        )}
+        {foldable && (
+          <IconButton
+            disabled={foldableIsDisabled}
+            title={foldable === 'fold' ? 'Unfold' : 'Fold'}
+            icon={foldable === 'fold' ? IcRoundUnfoldMore : IcRoundUnfoldLess}
+            size={14}
+            onClick={foldableHandler}
+          />
         )}
       </HStack>
     </header>
@@ -79,6 +99,9 @@ export interface InputLabelProps extends PropsWithChildren {
   className?: string
   error?: boolean | string
   required?: boolean
+  foldable?: Foldable
+  foldableIsDisabled?: boolean
+  foldableHandler?: () => void
 }
 
 /** Label for an input */
@@ -100,7 +123,10 @@ export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
       readOnly,
       className,
       error,
-      required
+      required,
+      foldable,
+      foldableIsDisabled,
+      foldableHandler
     },
     ref
   ) {
@@ -129,6 +155,9 @@ export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
               shared={shared}
               readOnly={readOnly}
               error={error}
+              foldable={foldable}
+              foldableIsDisabled={foldableIsDisabled}
+              foldableHandler={foldableHandler}
             />
           )}
           <div className={styles.root.inner.content()}>{children}</div>
