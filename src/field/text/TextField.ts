@@ -21,6 +21,8 @@ export interface TextOptions extends FieldOptions<string> {
   autoFocus?: boolean
   /** Index the text value of this field */
   searchable?: boolean
+  /** Determines which data the field accepts */
+  type?: 'email' | 'tel' | 'text' | 'url'
 }
 
 export class TextField extends ScalarField<string, TextOptions> {}
