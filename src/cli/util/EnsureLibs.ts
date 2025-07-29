@@ -13,19 +13,18 @@ export function ensureLibs(libs: Record<string, string>) {
     process.exit(1)
   }
   function ensurePackage(pkg: string, minVersion: string) {
-    const location = outcome(() => require.resolve(pkg))
-    if (!location.isSuccess())
+    const [location] = outcome(() => require.resolve(pkg))
+    if (!location)
       throw fail(
         `We could not find the ${pkg} package. It's required for the alinea dashboard.\n` +
           `You can install it with: npm i ${pkg}`
       )
-    const dir = path.dirname(location.value)
-    const meta = outcome(() =>
+    const dir = path.dirname(location)
+    const [meta] = outcome(() =>
       fs.readFileSync(path.join(dir, 'package.json'), 'utf8')
     )
-    if (!meta.isSuccess())
-      throw fail(`Could not retrieve ${pkg}'s package.json file`)
-    const {version} = JSON.parse(meta.value)
+    if (!meta) throw fail(`Could not retrieve ${pkg}'s package.json file`)
+    const {version} = JSON.parse(meta)
     const pkgVersionWorks = semver.compare(version, minVersion, '>=')
     if (!pkgVersionWorks)
       throw fail(

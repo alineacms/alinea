@@ -14,16 +14,16 @@ import {
   formatDraftKey,
   parseDraftKey
 } from 'alinea/core/Draft'
+import type {CommitRequest} from 'alinea/core/db/CommitRequest'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
 import {Outcome, outcome} from 'alinea/core/Outcome'
-import type {User} from 'alinea/core/User'
-import {Workspace} from 'alinea/core/Workspace'
-import type {CommitRequest} from 'alinea/core/db/CommitRequest'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
+import type {User} from 'alinea/core/User'
 import {base64} from 'alinea/core/util/Encoding'
 import {verify} from 'alinea/core/util/JWT'
+import {Workspace} from 'alinea/core/Workspace'
 import PLazy from 'p-lazy'
 import pkg from '../../package.json'
 import {AuthResultType} from './AuthResult.js'
@@ -400,6 +400,14 @@ async function parseOutcome<T>(expected: Promise<Response>): Promise<T> {
     throw new HttpError(response.status, message)
   }
   const output = await response.json()
-  const outcome = Outcome.fromJSON<T>(output, response.status)
-  return Outcome.unpack(outcome)
+  if (output.success) {
+    return output.value as T
+  }
+  if (output.error) {
+    throw new HttpError(response.status, output.error)
+  }
+  throw new HttpError(
+    response.status,
+    `Unexpected response: ${JSON.stringify(output)}`
+  )
 }

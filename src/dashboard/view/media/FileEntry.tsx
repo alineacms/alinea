@@ -39,7 +39,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
   const [hover, setHover] = useState<Pos>({})
   const {x: focusX = focus.x, y: focusY = focus.y} = hover
   const location = image.data.location
-  const liveUrl = outcome(
+  const [liveUrl] = outcome(
     () => new URL(location, Config.baseUrl(config) ?? window.location.href)
   )
   return (
@@ -96,7 +96,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
         </Property>
         <Property label="URL">
           <a
-            href={liveUrl.isSuccess() ? String(liveUrl.value) : location}
+            href={liveUrl ? String(liveUrl) : location}
             target="_blank"
             title={location}
             className={styles.image.content.url()}

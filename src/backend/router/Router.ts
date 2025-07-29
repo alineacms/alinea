@@ -147,17 +147,9 @@ export namespace router {
     return {...input, body}
   }
 
-  export function jsonResponse<Out>(output: Out, init: ResponseInit = {}) {
-    return new Response(JSON.stringify(output), {
-      ...init,
-      headers: {'content-type': 'application/json', ...init.headers},
-      status: Outcome.isOutcome(output) ? output.status : 200
-    })
-  }
-
   export function reportError(error: any) {
     console.error(error)
-    return router.jsonResponse(Outcome.Failure(error))
+    return Response.json({success: false, error}, {status: 500})
   }
 
   export function redirect(url: string, init: ResponseInit = {}) {
@@ -193,9 +185,7 @@ export namespace router {
     return cookies
       .map(cookie => {
         const {name, value, ...rest} = cookie
-        return (
-          `${name}=${value}${Object.entries(rest).map(cookieValue).join('')}`
-        )
+        return `${name}=${value}${Object.entries(rest).map(cookieValue).join('')}`
       })
       .join(', ')
   }
