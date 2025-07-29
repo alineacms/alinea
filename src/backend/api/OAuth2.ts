@@ -133,7 +133,6 @@ export class OAuth2 implements AuthApi {
                 'set-cookie': router.cookie({
                   name: COOKIE_VERIFIER,
                   value: codeVerifier,
-                  domain: redirectUri.hostname,
                   path: redirectUri.pathname,
                   secure: redirectUri.protocol === 'https:',
                   httpOnly: true,
@@ -178,7 +177,6 @@ export class OAuth2 implements AuthApi {
                     expires: token.expiresAt
                       ? new Date(token.expiresAt)
                       : undefined,
-                    domain: redirectUri.hostname,
                     path: redirectUri.pathname,
                     secure: redirectUri.protocol === 'https:',
                     httpOnly: true,
@@ -187,7 +185,6 @@ export class OAuth2 implements AuthApi {
                   {
                     name: COOKIE_REFRESH_TOKEN,
                     value: token.refreshToken,
-                    domain: redirectUri.hostname,
                     path: redirectUri.pathname,
                     secure: redirectUri.protocol === 'https:',
                     httpOnly: true,
