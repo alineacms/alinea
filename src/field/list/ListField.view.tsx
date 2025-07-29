@@ -43,9 +43,8 @@ import IcRoundArrowDownward from 'alinea/ui/icons/IcRoundArrowDownward'
 import IcRoundArrowUpward from 'alinea/ui/icons/IcRoundArrowUpward'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
+import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
-import IcRoundUnfoldLess from 'alinea/ui/icons/IcRoundUnfoldLess'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {Sink} from 'alinea/ui/Sink'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
@@ -187,7 +186,7 @@ function ListInputRow({
         <Sink.Options>
           {typeof folded !== 'undefined' && (
             <IconButton
-              icon={folded ? IcRoundUnfoldMore : IcRoundUnfoldLess}
+              icon={folded ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowUp}
               onClick={toggleFold}
               title={folded ? 'Unfold' : 'Fold'}
             />
