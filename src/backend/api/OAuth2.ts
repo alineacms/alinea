@@ -137,7 +137,7 @@ export class OAuth2 implements AuthApi {
           throw new HttpError(400, 'Missing code or state parameter')
         const cookieHeader = request.headers.get('cookie')
         if (!cookieHeader) throw new HttpError(400, 'Missing cookies')
-        const {codeVerifier} = parse(cookieHeader)
+        const {[COOKIE_VERIFIER]: codeVerifier} = parse(cookieHeader)
         const token = await this.#client.authorizationCode.getToken({
           redirectUri: redirectUri.toString(),
           code,
@@ -190,15 +190,14 @@ export class OAuth2 implements AuthApi {
 
   async verify(request: Request): Promise<AuthedContext> {
     const ctx = this.#context
-    const auth = request.headers.get('Authorization')
-    if (!auth) throw unauthorized('Missing Authorization header')
-    const [scheme, token] = auth.split(' ', 2)
-    if (scheme !== 'Bearer') throw unauthorized('Expected Bearer token')
-    const user = await verify<User>(token, await this.#publicKey)
+    const cookieHeader = request.headers.get('cookie')
+    if (!cookieHeader) throw unauthorized('Missing cookies')
+    const {[COOKIE_ACCESS_TOKEN]: accessToken} = parse(cookieHeader)
+    const user = await verify<User>(accessToken, await this.#publicKey)
     return {
       ...ctx,
       user,
-      token
+      token: accessToken
     }
   }
 }

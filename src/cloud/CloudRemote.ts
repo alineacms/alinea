@@ -119,33 +119,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     const config = this.#config
     const url = new URL(request.url)
     const action = url.searchParams.get('auth')
-    let dashboardPath = config.dashboardFile ?? '/admin.html'
-    if (!dashboardPath.startsWith('/')) dashboardPath = `/${dashboardPath}`
-    const dashboardUrl = new URL(dashboardPath, url)
     switch (action) {
-      // We start by asking our backend whether we have:
-      // - a logged in user => return the user so we can create a session
-      // - no user, but a valid api key => we can redirect to cloud login
-      // - no api key => display a message to setup backend
-      case AuthAction.Status: {
-        const token = ctx.apiKey?.split('_')[1]
-        if (!token)
-          return Response.json({
-            type: AuthResultType.MissingApiKey,
-            setupUrl: cloudConfig.setup
-          })
-        const [authed, err] = await outcome(this.verify(request))
-        if (authed)
-          return Response.json({
-            type: AuthResultType.Authenticated,
-            user: authed.user
-          })
-        return Response.json({
-          type: AuthResultType.UnAuthenticated,
-          redirect: `${cloudConfig.auth}?token=${token}`
-        })
-      }
-
       // The cloud server will request a handshake confirmation on this route
       case AuthAction.Handshake: {
         const handShakeId = url.searchParams.get('handshake_id')
@@ -165,6 +139,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
                 description: 'Can view and edit all pages'
               }
             ],
+            enableOAuth2: true,
             sourceDirectories: Object.values(config.workspaces)
               .flatMap(workspace => {
                 const {source, mediaDir} = Workspace.data(workspace)
@@ -193,81 +168,8 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
           )
         return new Response('alinea cloud handshake')
       }
-
-      // If the user followed through to the cloud login page it should
-      // redirect us here with a token
-      case AuthAction.Login: {
-        const token: string | null = url.searchParams.get('token')
-        if (!token) throw new HttpError(400, 'Token required')
-        const user = await verify<User>(token, await publicKey)
-        // Store the token in a cookie and redirect to the dashboard
-        // Todo: add expires and max-age based on token expiration
-        return router.redirect(dashboardUrl.href, {
-          status: 302,
-          headers: {
-            'set-cookie': router.cookie({
-              name: COOKIE_NAME,
-              value: token,
-              domain: dashboardUrl.hostname,
-              path: '/',
-              secure: dashboardUrl.protocol === 'https:',
-              httpOnly: true,
-              sameSite: 'strict'
-            })
-          }
-        })
-      }
-
-      // The logout route unsets our cookies
-      case AuthAction.Logout: {
-        try {
-          const {token} = await this.verify(request)
-          if (token) {
-            await fetch(cloudConfig.logout, {
-              method: 'POST',
-              headers: {authorization: `Bearer ${token}`}
-            })
-          }
-        } catch (e) {
-          console.error(e)
-        }
-
-        return router.redirect(dashboardUrl.href, {
-          status: 302,
-          headers: {
-            'set-cookie': router.cookie({
-              name: COOKIE_NAME,
-              value: '',
-              domain: dashboardUrl.hostname,
-              path: '/',
-              secure: dashboardUrl.protocol === 'https:',
-              httpOnly: true,
-              sameSite: 'strict',
-              expires: new Date(0)
-            })
-          }
-        })
-      }
       default:
-        return new Response('Bad request', {status: 400})
-    }
-  }
-
-  async verify(request: Request) {
-    const ctx = this.#context
-    const cookies = request.headers.get('cookie')
-    if (!cookies) throw new HttpError(401, 'Unauthorized - no cookies')
-    const prefix = `${COOKIE_NAME}=`
-    const token = cookies
-      .split(';')
-      .map(c => c.trim())
-      .find(c => c.startsWith(prefix))
-    if (!token) throw new HttpError(401, `Unauthorized - no ${COOKIE_NAME}`)
-    const authToken = token.slice(prefix.length)
-    return {
-      ...ctx,
-      token: authToken,
-      user: await verify<User>(authToken, await publicKey)
+        return super.authenticate(request)
     }
   }
 

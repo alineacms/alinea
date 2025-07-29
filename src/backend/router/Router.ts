@@ -1,5 +1,4 @@
 import {CompressionStream, Headers, type Request, Response} from '@alinea/iso'
-import {Outcome} from 'alinea/core/Outcome'
 import {parse} from 'regexparam'
 
 export interface HttpRouter {
