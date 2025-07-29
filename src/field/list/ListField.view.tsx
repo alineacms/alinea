@@ -185,6 +185,13 @@ function ListInputRow({
           />
         </Sink.Title>
         <Sink.Options>
+          {typeof folded !== 'undefined' && (
+            <IconButton
+              icon={folded ? IcRoundUnfoldMore : IcRoundUnfoldLess}
+              onClick={toggleFold}
+              title={folded ? 'Unfold' : 'Fold'}
+            />
+          )}
           {onCopyBlock !== undefined && (
             <IconButton
               icon={IcBaselineContentCopy}
@@ -194,13 +201,6 @@ function ListInputRow({
           )}
           {!readOnly && (
             <>
-              {typeof folded !== 'undefined' && (
-                <IconButton
-                  icon={folded ? IcRoundUnfoldMore : IcRoundUnfoldLess}
-                  onClick={toggleFold}
-                  title={folded ? 'Unfold' : 'Fold'}
-                />
-              )}
               <IconButton
                 icon={IcRoundArrowUpward}
                 onClick={() => onMove?.(-1)}
