@@ -192,6 +192,7 @@ function ListInputRow({
               }
               onClick={toggleFold}
               title={isFolded ? 'Expand' : 'Fold'}
+              disabled={isDragOverlay}
             />
           )}
           {onCopyBlock !== undefined && (
@@ -199,6 +200,7 @@ function ListInputRow({
               icon={IcBaselineContentCopy}
               onClick={() => onCopyBlock()}
               title="Copy block"
+              disabled={isDragOverlay}
             />
           )}
           {!readOnly && (
@@ -207,18 +209,19 @@ function ListInputRow({
                 icon={IcRoundArrowUpward}
                 onClick={() => onMove?.(-1)}
                 title="Move up one position"
-                disabled={firstRow}
+                disabled={firstRow || isDragOverlay}
               />
               <IconButton
                 icon={IcRoundArrowDownward}
                 onClick={() => onMove?.(1)}
                 title="Move down one position"
-                disabled={lastRow}
+                disabled={lastRow || isDragOverlay}
               />
               <IconButton
                 icon={IcRoundClose}
                 onClick={onDelete}
                 title="Delete block"
+                disabled={isDragOverlay}
               />
             </>
           )}
@@ -445,6 +448,7 @@ export function ListInput({field}: ListInputProps) {
                     schema={schema}
                     isDragOverlay
                     isFolded={foldedItems.has(dragging._id)}
+                    onCopyBlock={() => {}}
                   />
                 </FormRow>
               ) : null}
