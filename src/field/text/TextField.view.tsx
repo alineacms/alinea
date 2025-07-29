@@ -41,7 +41,7 @@ export function TextInput({field}: TextInputProps) {
         {IconLeft && <IconLeft />}
         <Input
           className={styles.root.input({readOnly})}
-          type="text"
+          type={options.type || 'text'}
           value={value || ''}
           onChange={e => mutator(e.currentTarget.value)}
           onFocus={() => setFocus(true)}

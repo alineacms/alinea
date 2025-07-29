@@ -78,16 +78,13 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
             src={image.data.preview}
             alt="Preview of media file"
           />
-
-          <div
+          <span
             className={styles.image.preview.focus()}
             style={{
               left: `${focus.x * 100}%`,
               top: `${focus.y * 100}%`
             }}
-          >
-            <IcTwotonePinDrop />
-          </div>
+          />
         </div>
       </div>
       <div className={styles.image.content()}>

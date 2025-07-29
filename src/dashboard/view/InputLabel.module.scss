@@ -34,10 +34,6 @@
   &.is-readOnly &.is-readOnly &-inner-content {
     opacity: 1;
   }
-
-  &-header {
-    padding-top: 0;
-  }
 }
 
 .header {
@@ -72,5 +68,9 @@
 
   &.is-error &-title {
     color: var(--alinea-error);
+  }
+
+  &.is-nopadding {
+    padding: 0;
   }
 }

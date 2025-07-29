@@ -28,13 +28,30 @@
     position: relative;
 
     &-focus {
+      pointer-events: none;
       position: absolute;
-      top: 0;
-      left: 0;
-      transform: translate(-50%, -100%);
-      font-size: 35px;
-      opacity: 0;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 100%;
+      border: 1px solid white;
+      background-color: rgba(white, 0.4);
+      opacity: 1;
       transition: opacity 0.3s;
+
+      &::before {
+        content: '';
+        width: 2px;
+        height: 2px;
+        border-radius: 100%;
+        background-color: white;
+        border: 1px solid var(--alinea-foreground);
+      }
     }
     &:hover &-focus {
       opacity: 1;
