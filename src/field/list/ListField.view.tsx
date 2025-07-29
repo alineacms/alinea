@@ -114,7 +114,7 @@ type ListInputRowProps = PropsWithChildren<
     onCreate?: (type: string) => void
     onPasteBlock?: (data: ListRow) => void
     firstRow?: boolean
-    folded?: boolean
+    isFolded?: boolean
     toggleFold?: () => void
   } & HTMLAttributes<HTMLDivElement>
 >
@@ -133,7 +133,7 @@ function ListInputRow({
   onCreate,
   onPasteBlock,
   firstRow,
-  folded,
+  isFolded,
   toggleFold,
   ...rest
 }: ListInputRowProps) {
@@ -183,11 +183,13 @@ function ListInputRow({
           />
         </Sink.Title>
         <Sink.Options>
-          {typeof folded !== 'undefined' && (
+          {typeof isFolded !== 'undefined' && (
             <IconButton
-              icon={folded ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowUp}
+              icon={
+                isFolded ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowUp
+              }
               onClick={toggleFold}
-              title={folded ? 'Unfold' : 'Fold'}
+              title={isFolded ? 'Expand' : 'Fold'}
             />
           )}
           {onCopyBlock !== undefined && (
@@ -218,7 +220,7 @@ function ListInputRow({
           )}
         </Sink.Options>
       </Sink.Header>
-      {!folded && (
+      {!isFolded && (
         <Sink.Content>
           <InputForm type={type} />
         </Sink.Content>
@@ -365,7 +367,7 @@ export function ListInput({field}: ListInputProps) {
                       readOnly={readOnly}
                     >
                       <ListInputRowSortable
-                        folded={foldedItems.has(row._id)}
+                        isFolded={foldedItems.has(row._id)}
                         row={row}
                         schema={schema}
                         readOnly={readOnly}
@@ -437,7 +439,7 @@ export function ListInput({field}: ListInputProps) {
                     row={dragging}
                     schema={schema}
                     isDragOverlay
-                    folded={foldedItems.has(dragging._id)}
+                    isFolded={foldedItems.has(dragging._id)}
                   />
                 </FormRow>
               ) : null}
