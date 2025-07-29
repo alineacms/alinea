@@ -1,9 +1,9 @@
 import styler from '@alinea/styler'
 import {HStack, Icon, TextLabel} from 'alinea/ui'
 import {LogoShape} from 'alinea/ui/branding/LogoShape'
-import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {contrastColor} from 'alinea/ui/util/ContrastColor'
 import type {ComponentType} from 'react'
+import {AlineaLogo} from './AlineaLogo.js'
 import css from './WorkspaceLabel.module.scss'
 
 const styles = styler(css)
@@ -19,7 +19,7 @@ export function WorkspaceLabel({label, color, icon}: WorkspaceLabelProps) {
     <HStack center gap={8} className={styles.root()}>
       <div className={styles.root.logo()}>
         <LogoShape foreground={contrastColor(color)} background={color}>
-          <Icon icon={icon ?? RiFlashlightFill} />
+          <Icon icon={icon ?? <AlineaLogo />} />
         </LogoShape>
       </div>
       <div className={styles.root.label()}>
