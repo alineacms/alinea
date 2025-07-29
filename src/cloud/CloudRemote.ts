@@ -34,6 +34,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     const clientId = context.apiKey.split('_')[1]
     super(context, {
       clientId,
+      clientSecret: context.apiKey,
       jwksUri: cloudConfig.jwks,
       tokenEndpoint: cloudConfig.token,
       authorizationEndpoint: cloudConfig.auth,
