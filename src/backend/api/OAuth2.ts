@@ -134,7 +134,7 @@ export class OAuth2 implements AuthApi {
                   name: COOKIE_VERIFIER,
                   value: codeVerifier,
                   domain: redirectUri.hostname,
-                  path: '/',
+                  path: redirectUri.pathname,
                   secure: redirectUri.protocol === 'https:',
                   httpOnly: true,
                   sameSite: 'strict'
@@ -151,6 +151,8 @@ export class OAuth2 implements AuthApi {
           const cookieHeader = request.headers.get('cookie')
           if (!cookieHeader) throw new HttpError(400, 'Missing cookies')
           const {[COOKIE_VERIFIER]: codeVerifier} = parse(cookieHeader)
+          if (!codeVerifier)
+            throw new HttpError(400, 'Missing code verifier cookie')
           const token = await this.#client.authorizationCode.getToken({
             redirectUri: redirectUri.toString(),
             code,
@@ -177,7 +179,7 @@ export class OAuth2 implements AuthApi {
                       ? new Date(token.expiresAt)
                       : undefined,
                     domain: redirectUri.hostname,
-                    path: '/',
+                    path: redirectUri.pathname,
                     secure: redirectUri.protocol === 'https:',
                     httpOnly: true,
                     sameSite: 'strict'
@@ -186,7 +188,7 @@ export class OAuth2 implements AuthApi {
                     name: COOKIE_REFRESH_TOKEN,
                     value: token.refreshToken,
                     domain: redirectUri.hostname,
-                    path: '/',
+                    path: redirectUri.pathname,
                     secure: redirectUri.protocol === 'https:',
                     httpOnly: true,
                     sameSite: 'strict'
