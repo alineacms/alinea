@@ -333,6 +333,19 @@ export function ListInput({field}: ListInputProps) {
     setDragging(null)
   }
 
+  function handleFoldable() {
+    if (foldable === 'fold') {
+      setFoldedItems(new Set<string>())
+    } else {
+      const newFoldedItems = new Set<string>()
+      rows.forEach(row => {
+        newFoldedItems.add(row._id)
+      })
+      setFoldedItems(newFoldedItems)
+    }
+    setFoldable(f => (f === 'fold' ? 'unfold' : 'fold'))
+  }
+
   useEffect(() => {
     if (
       rows.length === 0 ||
@@ -357,18 +370,7 @@ export function ListInput({field}: ListInputProps) {
         icon={IcOutlineList}
         foldable={foldable}
         foldableIsDisabled={rows.length === 0}
-        foldableHandler={() => {
-          if (foldable === 'fold') {
-            setFoldedItems(new Set<string>())
-          } else {
-            const newFoldedItems = new Set<string>()
-            rows.forEach(row => {
-              newFoldedItems.add(row._id)
-            })
-            setFoldedItems(newFoldedItems)
-          }
-          setFoldable(f => (f === 'fold' ? 'unfold' : 'fold'))
-        }}
+        foldableHandler={handleFoldable}
       >
         <div className={styles.root()}>
           <div className={styles.root.inner({inline: options.inline})}>
