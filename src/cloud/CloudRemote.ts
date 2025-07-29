@@ -1,7 +1,6 @@
 import {Response} from '@alinea/iso'
 import {AuthAction} from 'alinea/backend/Auth'
 import {OAuth2} from 'alinea/backend/api/OAuth2'
-import {router} from 'alinea/backend/router/Router'
 import {Config} from 'alinea/core/Config'
 import type {
   AuthedContext,
@@ -18,15 +17,11 @@ import {
 import type {CommitRequest} from 'alinea/core/db/CommitRequest'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
-import {outcome} from 'alinea/core/Outcome'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
-import type {User} from 'alinea/core/User'
 import {base64} from 'alinea/core/util/Encoding'
-import {verify} from 'alinea/core/util/JWT'
 import {Workspace} from 'alinea/core/Workspace'
 import pkg from '../../package.json'
-import {AuthResultType} from './AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
 
 export const COOKIE_NAME = 'alinea.auth'
