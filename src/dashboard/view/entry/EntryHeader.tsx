@@ -4,20 +4,21 @@ import {Button, HStack, Icon, px, Stack} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineArchive} from 'alinea/ui/icons/IcOutlineArchive'
-import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
-import {IcOutlineKeyboardTab} from 'alinea/ui/icons/IcOutlineKeyboardTab'
-import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
+import {IcOutlineCheckCircle} from 'alinea/ui/icons/IcOutlineCheckCircle'
+import {IcOutlineEdit} from 'alinea/ui/icons/IcOutlineEdit'
+import {IcOutlineHistory} from 'alinea/ui/icons/IcOutlineHistory'
+import {IcOutlineUnpublished} from 'alinea/ui/icons/IcOutlineUnpublished'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
-import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
-import {IcRoundLastPage} from 'alinea/ui/icons/IcRoundLastPage'
-import {IcRoundMenu} from 'alinea/ui/icons/IcRoundMenu'
 import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
 import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
+import {SidebarLeft} from 'alinea/ui/icons/SidebarLeft'
+import {SidebarLeftOff} from 'alinea/ui/icons/SidebarLeftOff'
+import {SidebarRight} from 'alinea/ui/icons/SidebarRight'
+import {SidebarRightOff} from 'alinea/ui/icons/SidebarRightOff'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
@@ -63,14 +64,14 @@ const transitions = {
 }
 
 const variantIcon = {
-  draft: IcRoundEdit,
-  editing: IcRoundEdit,
-  published: IcOutlineRemoveRedEye,
+  draft: IcOutlineEdit,
+  editing: IcOutlineEdit,
+  published: IcOutlineCheckCircle,
   archived: IcOutlineArchive,
   untranslated: IcRoundTranslate,
-  revision: IcRoundPublishedWithChanges,
-  transition: IcOutlineAvTimer,
-  unpublished: RiFlashlightFill
+  revision: IcOutlineHistory,
+  transition: IcRoundPublishedWithChanges,
+  unpublished: IcOutlineUnpublished
 }
 
 export interface EntryHeaderProps {
@@ -181,14 +182,12 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           </DropdownMenu.Item>
         </>
       ) : isMediaLibrary ? (
-        <>
-          <DropdownMenu.Item
-            className={styles.root.action()}
-            onClick={deleteMediaLibraryAndNavigate}
-          >
-            Delete
-          </DropdownMenu.Item>
-        </>
+        <DropdownMenu.Item
+          className={styles.root.action()}
+          onClick={deleteMediaLibraryAndNavigate}
+        >
+          Delete
+        </DropdownMenu.Item>
       ) : (
         <>
           {config.enableDrafts && (
@@ -246,10 +245,10 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           <button
             type="button"
             onClick={() => toggleNav()}
-            title={!isNavOpen ? 'Display menu' : 'Hide menu'}
+            title={!isNavOpen ? 'Show sidebar' : 'Hide sidebar'}
             className={styles.root.menuToggle()}
           >
-            <Icon icon={IcRoundMenu} />
+            <Icon icon={isNavOpen ? SidebarLeft : SidebarLeftOff} />
           </button>
 
           <Icon icon={variantIcon[variant]} size={18} />
@@ -406,7 +405,10 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                   )}
 
                   <DropdownMenu.Root bottom left>
-                    <DropdownMenu.Trigger className={styles.root.more(variant)}>
+                    <DropdownMenu.Trigger
+                      className={styles.root.more(variant)}
+                      title="More options"
+                    >
                       <Icon icon={IcRoundMoreVert} />
                     </DropdownMenu.Trigger>
 
@@ -415,7 +417,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                         <DropdownMenu.Item
                           onClick={() => setShowHistory(!showHistory)}
                         >
-                          {showHistory ? 'Hide' : 'Show'} history
+                          {showHistory ? 'Hide history' : 'Show history'}
                         </DropdownMenu.Item>
                       )}
                       {options}
@@ -426,15 +428,10 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               <button
                 type="button"
                 onClick={() => togglePreview()}
-                title={isPreviewOpen ? 'Hide preview' : 'Display preview'}
+                title={isPreviewOpen ? 'Hide preview' : 'Show preview'}
                 className={styles.root.previewToggle()}
               >
-                <Icon
-                  icon={IcRoundLastPage}
-                  style={{
-                    transform: `rotate(${isPreviewOpen ? 180 : 0}deg)`
-                  }}
-                />
+                <Icon icon={isPreviewOpen ? SidebarRightOff : SidebarRight} />
               </button>
             </HStack>
           </Stack.Right>
