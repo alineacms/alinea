@@ -33,7 +33,7 @@ import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {type Foldable, InputLabel} from 'alinea/dashboard/view/InputLabel'
+import {foldText, InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {Icon, TextLabel} from 'alinea/ui'
 import {IcBaselineContentCopy} from 'alinea/ui/icons/IcBaselineContentCopy'
 import {IcBaselineContentPasteGo} from 'alinea/ui/icons/IcBaselineContentPasteGo'
@@ -188,7 +188,7 @@ function ListInputRow({
             <IconButton
               icon={folded ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowUp}
               onClick={toggleFold}
-              title={folded ? 'Unfold' : 'Fold'}
+              title={foldText(folded)}
             />
           )}
           {onCopyBlock !== undefined && (
@@ -304,14 +304,14 @@ const layoutMeasuringConfig = {
 }
 
 export function ListInput({field}: ListInputProps) {
-  const initialFolded = 'unfold' as Foldable
+  const initialIsFolded = false
   const {options, value, mutator, error} = useField(field)
   const {schema, readOnly} = options
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row._id)
   const [, setPasted] = useAtom(copyAtom)
   const [dragging, setDragging] = useState<ListRow | null>(null)
-  const [foldable, setFoldable] = useState<Foldable>(initialFolded)
+  const [isFolded, setIsFolded] = useState<boolean>(initialIsFolded)
   const [foldedItems, setFoldedItems] = useState<Set<string>>(new Set())
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -334,7 +334,7 @@ export function ListInput({field}: ListInputProps) {
   }
 
   function handleFoldable() {
-    if (foldable === 'fold') {
+    if (isFolded) {
       setFoldedItems(new Set<string>())
     } else {
       const newFoldedItems = new Set<string>()
@@ -343,7 +343,7 @@ export function ListInput({field}: ListInputProps) {
       })
       setFoldedItems(newFoldedItems)
     }
-    setFoldable(f => (f === 'fold' ? 'unfold' : 'fold'))
+    setIsFolded(f => !f)
   }
 
   useEffect(() => {
@@ -352,8 +352,8 @@ export function ListInput({field}: ListInputProps) {
       foldedItems.size === 0 ||
       foldedItems.size !== rows.length
     ) {
-      setFoldable('unfold')
-    } else setFoldable('fold')
+      setIsFolded(false)
+    } else setIsFolded(true)
   }, [foldedItems, rows.length])
 
   return (
@@ -368,7 +368,7 @@ export function ListInput({field}: ListInputProps) {
         {...options}
         error={error}
         icon={IcOutlineList}
-        foldable={foldable}
+        isFolded={isFolded}
         foldableIsDisabled={rows.length === 0}
         foldableHandler={handleFoldable}
       >
@@ -410,13 +410,13 @@ export function ListInput({field}: ListInputProps) {
                         onCreate={(type: string) => {
                           if (readOnly) return
                           mutator.push({_type: type} as any, i)
-                          setFoldable('unfold')
+                          setIsFolded(false)
                         }}
                         onPasteBlock={(data: ListRow) => {
                           if (readOnly) return
                           const {_id, _index, ...rest} = data
                           mutator.push(rest, i)
-                          setFoldable('unfold')
+                          setIsFolded(false)
                         }}
                         toggleFold={() => {
                           setFoldedItems(fi => {
@@ -436,12 +436,12 @@ export function ListInput({field}: ListInputProps) {
                   onPaste={(data: ListRow) => {
                     const {_id, _index, ...rest} = data
                     mutator.push(rest)
-                    setFoldable('unfold')
+                    setIsFolded(false)
                   }}
                   onCreate={(type: string, data?: ListRow) => {
                     if (readOnly) return
                     mutator.push({_type: type} as any)
-                    setFoldable('unfold')
+                    setIsFolded(false)
                   }}
                 />
               </Sink.Root>

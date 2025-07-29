@@ -18,8 +18,6 @@ import css from './InputLabel.module.scss'
 
 const styles = styler(css)
 
-export type Foldable = 'fold' | 'unfold'
-
 export type LabelHeaderProps = {
   label: ReactNode
   help?: ReactNode
@@ -30,10 +28,13 @@ export type LabelHeaderProps = {
   readOnly?: boolean
   required?: boolean
   error?: boolean | string
-  foldable?: Foldable
+  isFolded?: boolean
   foldableIsDisabled?: boolean
   foldableHandler?: () => void
 }
+
+export const foldText = (isFolded: boolean): string =>
+  isFolded ? 'Expand' : 'Collapse'
 
 export const LabelHeader = memo(function LabelHeader({
   label,
@@ -45,7 +46,7 @@ export const LabelHeader = memo(function LabelHeader({
   readOnly,
   required,
   error,
-  foldable,
+  isFolded,
   foldableIsDisabled,
   foldableHandler
 }: LabelHeaderProps) {
@@ -69,11 +70,11 @@ export const LabelHeader = memo(function LabelHeader({
         ) : (
           help && <div className={styles.header.help()}>{help}</div>
         )}
-        {foldable && (
+        {isFolded !== undefined && (
           <IconButton
             disabled={foldableIsDisabled}
-            title={foldable === 'fold' ? 'Unfold' : 'Fold'}
-            icon={foldable === 'fold' ? IcRoundUnfoldMore : IcRoundUnfoldLess}
+            title={foldText(isFolded)}
+            icon={isFolded ? IcRoundUnfoldMore : IcRoundUnfoldLess}
             size={14}
             onClick={foldableHandler}
           />
@@ -99,7 +100,7 @@ export interface InputLabelProps extends PropsWithChildren {
   className?: string
   error?: boolean | string
   required?: boolean
-  foldable?: Foldable
+  isFolded?: boolean
   foldableIsDisabled?: boolean
   foldableHandler?: () => void
 }
@@ -124,7 +125,7 @@ export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
       className,
       error,
       required,
-      foldable,
+      isFolded,
       foldableIsDisabled,
       foldableHandler
     },
@@ -155,7 +156,7 @@ export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
               shared={shared}
               readOnly={readOnly}
               error={error}
-              foldable={foldable}
+              isFolded={isFolded}
               foldableIsDisabled={foldableIsDisabled}
               foldableHandler={foldableHandler}
             />
