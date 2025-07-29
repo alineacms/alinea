@@ -183,7 +183,7 @@ function ListInputRow({
           />
         </Sink.Title>
         <Sink.Options>
-          {typeof isFolded !== 'undefined' && (
+          {isFolded !== undefined && (
             <IconButton
               icon={
                 isFolded ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowUp

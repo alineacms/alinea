@@ -65,10 +65,10 @@ export const LabelHeader = memo(function LabelHeader({
         ) : (
           help && <div className={styles.header.help()}>{help}</div>
         )}
-        {typeof isFolded === 'boolean' && (
+        {isFolded !== undefined && (
           <IconButton
             disabled={!toggleFold}
-            title={isFolded ? 'Unfold' : 'Fold'}
+            title={isFolded ? 'Expand' : 'Fold'}
             icon={isFolded ? IcRoundUnfoldMore : IcRoundUnfoldLess}
             size={14}
             onClick={toggleFold}
