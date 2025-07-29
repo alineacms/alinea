@@ -33,14 +33,14 @@ import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {type Foldable, InputLabel} from 'alinea/dashboard/view/InputLabel'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {Icon, TextLabel} from 'alinea/ui'
 import {IcBaselineContentCopy} from 'alinea/ui/icons/IcBaselineContentCopy'
 import {IcBaselineContentPasteGo} from 'alinea/ui/icons/IcBaselineContentPasteGo'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundAdd} from 'alinea/ui/icons/IcRoundAdd'
-import IcRoundArrowDownward from 'alinea/ui/icons/IcRoundArrowDownward'
-import IcRoundArrowUpward from 'alinea/ui/icons/IcRoundArrowUpward'
+import {IcRoundArrowDownward} from 'alinea/ui/icons/IcRoundArrowDownward'
+import {IcRoundArrowUpward} from 'alinea/ui/icons/IcRoundArrowUpward'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -53,7 +53,6 @@ import {
   type HTMLAttributes,
   type PropsWithChildren,
   type Ref,
-  useEffect,
   useState
 } from 'react'
 import type {ListOptions} from './ListField.js'
@@ -304,15 +303,14 @@ const layoutMeasuringConfig = {
 }
 
 export function ListInput({field}: ListInputProps) {
-  const initialFolded = 'unfold' as Foldable
   const {options, value, mutator, error} = useField(field)
   const {schema, readOnly} = options
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row._id)
   const [, setPasted] = useAtom(copyAtom)
   const [dragging, setDragging] = useState<ListRow | null>(null)
-  const [foldable, setFoldable] = useState<Foldable>(initialFolded)
-  const [foldedItems, setFoldedItems] = useState<Set<string>>(new Set())
+  const [foldedItems, setFoldedItems] = useState(new Set<string>())
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -333,28 +331,9 @@ export function ListInput({field}: ListInputProps) {
     setDragging(null)
   }
 
-  function handleFoldable() {
-    if (foldable === 'fold') {
-      setFoldedItems(new Set<string>())
-    } else {
-      const newFoldedItems = new Set<string>()
-      rows.forEach(row => {
-        newFoldedItems.add(row._id)
-      })
-      setFoldedItems(newFoldedItems)
-    }
-    setFoldable(f => (f === 'fold' ? 'unfold' : 'fold'))
-  }
-
-  useEffect(() => {
-    if (
-      rows.length === 0 ||
-      foldedItems.size === 0 ||
-      foldedItems.size !== rows.length
-    ) {
-      setFoldable('unfold')
-    } else setFoldable('fold')
-  }, [foldedItems, rows.length])
+  const isFolded = rows.every(row => foldedItems.has(row._id))
+  const toggleFold = () =>
+    setFoldedItems(new Set(isFolded ? [] : rows.map(row => row._id)))
 
   return (
     <DndContext
@@ -368,9 +347,8 @@ export function ListInput({field}: ListInputProps) {
         {...options}
         error={error}
         icon={IcOutlineList}
-        foldable={foldable}
-        foldableIsDisabled={rows.length === 0}
-        foldableHandler={handleFoldable}
+        isFolded={rows.length === 0 ? undefined : isFolded}
+        toggleFold={toggleFold}
       >
         <div className={styles.root()}>
           <div className={styles.root.inner({inline: options.inline})}>
@@ -402,27 +380,22 @@ export function ListInput({field}: ListInputProps) {
                         onDelete={() => {
                           if (readOnly) return
                           mutator.remove(row._id)
-                          setFoldedItems(fi => {
-                            fi.delete(row._id)
-                            return new Set<string>(fi)
-                          })
                         }}
                         onCreate={(type: string) => {
                           if (readOnly) return
                           mutator.push({_type: type} as any, i)
-                          setFoldable('unfold')
                         }}
                         onPasteBlock={(data: ListRow) => {
                           if (readOnly) return
                           const {_id, _index, ...rest} = data
                           mutator.push(rest, i)
-                          setFoldable('unfold')
                         }}
                         toggleFold={() => {
-                          setFoldedItems(fi => {
-                            if (fi.has(row._id)) fi.delete(row._id)
-                            else fi.add(row._id)
-                            return new Set<string>(fi)
+                          setFoldedItems(current => {
+                            const result = new Set(current)
+                            if (result.has(row._id)) result.delete(row._id)
+                            else result.add(row._id)
+                            return result
                           })
                         }}
                         firstRow={i === 0}
@@ -436,12 +409,10 @@ export function ListInput({field}: ListInputProps) {
                   onPaste={(data: ListRow) => {
                     const {_id, _index, ...rest} = data
                     mutator.push(rest)
-                    setFoldable('unfold')
                   }}
                   onCreate={(type: string, data?: ListRow) => {
                     if (readOnly) return
                     mutator.push({_type: type} as any)
-                    setFoldable('unfold')
                   }}
                 />
               </Sink.Root>

@@ -16,4 +16,3 @@ export function IcRoundArrowUpward(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundArrowUpward

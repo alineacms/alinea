@@ -16,4 +16,3 @@ export function IcRoundUnfoldLess(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundUnfoldLess
