@@ -1,4 +1,4 @@
-import {type Request, Response} from '@alinea/iso'
+import {Request, Response} from '@alinea/iso'
 import {generateCodeVerifier, OAuth2Client} from '@badgateway/oauth2-client'
 import {AuthResultType} from 'alinea/cloud/AuthResult'
 import type {
@@ -71,7 +71,19 @@ export class OAuth2 implements AuthApi {
 
   constructor(context: RequestContext, options: OAuth2Options) {
     this.#context = context
-    this.#client = new OAuth2Client(options)
+    this.#client = new OAuth2Client({
+      ...options,
+      authenticationMethod: 'client_secret_basic_interop',
+      async fetch(input: RequestInfo | URL, init?: RequestInit) {
+        const request = new Request(input, init)
+        const response = await fetch(request)
+        if (!response.ok) {
+          const text = await response.text()
+          throw new HttpError(response.status, text)
+        }
+        return response
+      }
+    })
     const loadPublicKey = async (): Promise<JsonWebKey> => {
       try {
         const res = await fetch(options.jwksUri)
