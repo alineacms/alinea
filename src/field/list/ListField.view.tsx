@@ -114,6 +114,7 @@ type ListInputRowProps = PropsWithChildren<
     onCreate?: (type: string) => void
     onPasteBlock?: (data: ListRow) => void
     firstRow?: boolean
+    lastRow?: boolean
     isFolded?: boolean
     toggleFold?: () => void
   } & HTMLAttributes<HTMLDivElement>
@@ -133,6 +134,7 @@ function ListInputRow({
   onCreate,
   onPasteBlock,
   firstRow,
+  lastRow,
   isFolded,
   toggleFold,
   ...rest
@@ -207,13 +209,13 @@ function ListInputRow({
                 icon={IcRoundArrowUpward}
                 onClick={() => onMove?.(-1)}
                 title="Move up one position"
-                disabled={isDragOverlay}
+                disabled={firstRow || isDragOverlay}
               />
               <IconButton
                 icon={IcRoundArrowDownward}
                 onClick={() => onMove?.(1)}
                 title="Move down one position"
-                disabled={isDragOverlay}
+                disabled={lastRow || isDragOverlay}
               />
               <IconButton
                 icon={IcRoundClose}
@@ -406,6 +408,7 @@ export function ListInput({field}: ListInputProps) {
                           })
                         }}
                         firstRow={i === 0}
+                        lastRow={i === rows.length - 1}
                       />
                     </FormRow>
                   )
