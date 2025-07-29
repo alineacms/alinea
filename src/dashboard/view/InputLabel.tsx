@@ -2,6 +2,8 @@ import styler from '@alinea/styler'
 import {Icon, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
+import {IcRoundUnfoldLess} from 'alinea/ui/icons/IcRoundUnfoldLess'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {HStack} from 'alinea/ui/Stack'
 import {
@@ -11,6 +13,7 @@ import {
   type PropsWithChildren,
   type ReactNode
 } from 'react'
+import {IconButton} from './IconButton.js'
 import css from './InputLabel.module.scss'
 
 const styles = styler(css)
@@ -25,6 +28,8 @@ export type LabelHeaderProps = {
   readOnly?: boolean
   required?: boolean
   error?: boolean | string
+  isFolded?: boolean
+  toggleFold?: () => void
 }
 
 export const LabelHeader = memo(function LabelHeader({
@@ -36,7 +41,9 @@ export const LabelHeader = memo(function LabelHeader({
   shared,
   readOnly,
   required,
-  error
+  error,
+  isFolded,
+  toggleFold
 }: LabelHeaderProps) {
   const showError = typeof error === 'string'
   return (
@@ -64,6 +71,15 @@ export const LabelHeader = memo(function LabelHeader({
         ) : (
           help && <div className={styles.header.help()}>{help}</div>
         )}
+        {isFolded !== undefined && (
+          <IconButton
+            disabled={!toggleFold}
+            title={isFolded ? 'Expand' : 'Fold'}
+            icon={isFolded ? IcRoundUnfoldMore : IcRoundUnfoldLess}
+            size={14}
+            onClick={toggleFold}
+          />
+        )}
       </HStack>
     </header>
   )
@@ -85,6 +101,8 @@ export interface InputLabelProps extends PropsWithChildren {
   className?: string
   error?: boolean | string
   required?: boolean
+  isFolded?: boolean
+  toggleFold?: () => void
 }
 
 /** Label for an input */
@@ -106,7 +124,9 @@ export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
       readOnly,
       className,
       error,
-      required
+      required,
+      isFolded,
+      toggleFold
     },
     ref
   ) {
@@ -135,6 +155,8 @@ export const InputLabel = forwardRef<HTMLElement, InputLabelProps>(
               shared={shared}
               readOnly={readOnly}
               error={error}
+              isFolded={isFolded}
+              toggleFold={toggleFold}
             />
           )}
           <div className={styles.root.inner.content()}>{children}</div>

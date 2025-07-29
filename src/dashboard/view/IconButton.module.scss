@@ -27,4 +27,14 @@
     background: var(--alinea-highlight);
     box-shadow: 0 0 0 2px var(--alinea-highlight);
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+
+    &:hover {
+      background: transparent;
+      box-shadow: none;
+    }
+  }
 }
