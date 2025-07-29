@@ -39,9 +39,10 @@ import {IcBaselineContentCopy} from 'alinea/ui/icons/IcBaselineContentCopy'
 import {IcBaselineContentPasteGo} from 'alinea/ui/icons/IcBaselineContentPasteGo'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundAdd} from 'alinea/ui/icons/IcRoundAdd'
+import IcRoundArrowDownward from 'alinea/ui/icons/IcRoundArrowDownward'
+import IcRoundArrowUpward from 'alinea/ui/icons/IcRoundArrowUpward'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
-import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
 import IcRoundUnfoldLess from 'alinea/ui/icons/IcRoundUnfoldLess'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
@@ -201,12 +202,12 @@ function ListInputRow({
                 />
               )}
               <IconButton
-                icon={IcRoundKeyboardArrowUp}
+                icon={IcRoundArrowUpward}
                 onClick={() => onMove?.(-1)}
                 title="Move up one position"
               />
               <IconButton
-                icon={IcRoundKeyboardArrowDown}
+                icon={IcRoundArrowDownward}
                 onClick={() => onMove?.(1)}
                 title="Move down one position"
               />
