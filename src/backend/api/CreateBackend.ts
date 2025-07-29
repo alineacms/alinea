@@ -58,7 +58,7 @@ export function createBackend(
     const dbApi = new DatabaseApi(context, {db})
     assert(options.oauth2 ?? options.auth, 'No auth method provided')
     const auth = options.oauth2
-      ? new OAuth2(options.oauth2)
+      ? new OAuth2(context, options.oauth2)
       : new BasicAuth(context, options.auth!)
     return createRemote(ghApi, dbApi, auth)
   }

@@ -1,5 +1,6 @@
 import {Response} from '@alinea/iso'
 import {AuthAction} from 'alinea/backend/Auth'
+import {OAuth2} from 'alinea/backend/api/OAuth2'
 import {router} from 'alinea/backend/router/Router'
 import {Config} from 'alinea/core/Config'
 import type {
@@ -17,47 +18,32 @@ import {
 import type {CommitRequest} from 'alinea/core/db/CommitRequest'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
-import {Outcome, outcome} from 'alinea/core/Outcome'
+import {outcome} from 'alinea/core/Outcome'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
 import type {User} from 'alinea/core/User'
 import {base64} from 'alinea/core/util/Encoding'
 import {verify} from 'alinea/core/util/JWT'
 import {Workspace} from 'alinea/core/Workspace'
-import PLazy from 'p-lazy'
 import pkg from '../../package.json'
 import {AuthResultType} from './AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
 
-type JWKS = {keys: Array<JsonWebKey>}
-
-class RemoteUnavailableError extends Error {}
-
-let publicKey = PLazy.from(async function loadPublicKey(
-  retry = 0
-): Promise<JsonWebKey> {
-  try {
-    const res = await fetch(cloudConfig.jwks)
-    if (res.status !== 200) throw new HttpError(res.status, await res.text())
-    const result: JWKS = await res.json()
-    const jwks = result
-    const key = jwks.keys[0]
-    if (!key) throw new HttpError(500, 'No signature key found')
-    return key
-  } catch (error) {
-    if (retry < 3) return loadPublicKey(retry + 1)
-    publicKey = PLazy.from(loadPublicKey)
-    throw new RemoteUnavailableError('Remote unavailable', {cause: error})
-  }
-})
-
 export const COOKIE_NAME = 'alinea.auth'
 
-export class CloudRemote implements RemoteConnection {
+export class CloudRemote extends OAuth2 implements RemoteConnection {
   #context: RequestContext
   #config: Config
 
   constructor(context: RequestContext, config: Config) {
+    const clientId = context.apiKey.split('_')[1]
+    super(context, {
+      clientId,
+      jwksUri: cloudConfig.jwks,
+      tokenEndpoint: cloudConfig.token,
+      authorizationEndpoint: cloudConfig.auth,
+      revocationEndpoint: cloudConfig.revocation
+    })
     this.#context = context
     this.#config = config
   }
