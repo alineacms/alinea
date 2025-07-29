@@ -1,15 +1,15 @@
 import styler from '@alinea/styler'
 import {Icon, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
-import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
 import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
+import {HStack} from 'alinea/ui/Stack'
 import {
   type ComponentType,
-  type PropsWithChildren,
-  type ReactNode,
   forwardRef,
-  memo
+  memo,
+  type PropsWithChildren,
+  type ReactNode
 } from 'react'
 import css from './InputLabel.module.scss'
 
@@ -40,7 +40,13 @@ export const LabelHeader = memo(function LabelHeader({
 }: LabelHeaderProps) {
   const showError = typeof error === 'string'
   return (
-    <header className={styles.header(size, {focused, error: Boolean(error)})}>
+    <header
+      className={styles.header(size, {
+        focused,
+        error: Boolean(error),
+        nopadding: !label
+      })}
+    >
       <HStack center wrap gap={`${px(4)} ${px(8)}`}>
         <HStack center gap={8} className={styles.header.title()}>
           {/*Icon && <Icon />*/}
