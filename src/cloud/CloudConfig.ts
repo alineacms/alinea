@@ -3,7 +3,6 @@ function createCloudConfig(baseUrl: string) {
     url: baseUrl,
     jwks: `${baseUrl}/.well-known/jwks.json`,
     setup: `${baseUrl}/setup`,
-    auth: `${baseUrl}/auth`,
     handshake: `${baseUrl}/api/v1/handshake`,
     upload: `${baseUrl}/api/v1/upload`,
     logout: `${baseUrl}/api/v1/logout`,
@@ -12,7 +11,12 @@ function createCloudConfig(baseUrl: string) {
 
     tree: `${baseUrl}/api/v1/tree`,
     blobs: `${baseUrl}/api/v1/blobs`,
-    write: `${baseUrl}/api/v1/write`
+    write: `${baseUrl}/api/v1/write`,
+
+    // Oauth2 endpoints
+    auth: `${baseUrl}/auth`,
+    token: `${baseUrl}/oauth/token`,
+    revocation: `${baseUrl}/oauth/token/revoke`
   }
 }
 

@@ -1,16 +1,20 @@
 import {type Request, Response} from '@alinea/iso'
-import {OAuth2Client} from '@badgateway/oauth2-client'
-import {AuthResultType} from 'alinea/cloud/AuthResult.js'
+import {generateCodeVerifier, OAuth2Client} from '@badgateway/oauth2-client'
+import {AuthResultType} from 'alinea/cloud/AuthResult'
 import type {
   AuthApi,
   AuthedContext,
   RequestContext
 } from 'alinea/core/Connection'
 import {HttpError} from 'alinea/core/HttpError'
+import {createId} from 'alinea/core/Id'
+import {outcome} from 'alinea/core/Outcome'
 import type {User} from 'alinea/core/User'
 import {verify} from 'alinea/core/util/JWT'
+import {parse} from 'cookie-es'
 import PLazy from 'p-lazy'
 import {AuthAction} from '../Auth.js'
+import {router} from '../router/Router.js'
 
 type JWKS = {keys: Array<JsonWebKey>}
 
@@ -56,6 +60,10 @@ export interface OAuth2Options {
   revocationEndpoint?: string
 }
 
+const COOKIE_VERIFIER = 'codeVerifier'
+const COOKIE_ACCESS_TOKEN = 'accessToken'
+const COOKIE_REFRESH_TOKEN = 'refreshToken'
+
 export class OAuth2 implements AuthApi {
   #context: RequestContext
   #client: OAuth2Client
@@ -84,22 +92,99 @@ export class OAuth2 implements AuthApi {
   }
 
   async authenticate(request: Request): Promise<Response> {
-    try {
-      const verified = await this.verify(request)
-      const url = new URL(request.url)
-      const action = url.searchParams.get('auth')
-      switch (action) {
-        case AuthAction.Status: {
+    const [ctx] = await outcome(this.verify(request))
+    const url = new URL(request.url)
+    const action = url.searchParams.get('auth')
+    const redirectUri = new URL('?auth=login', this.#context.handlerUrl)
+    switch (action) {
+      case AuthAction.Status: {
+        if (ctx)
           return Response.json({
             type: AuthResultType.Authenticated,
-            user: verified.user
+            user: ctx.user
           })
-        }
-        default:
-          return new Response('Bad request', {status: 400})
+        const codeVerifier = await generateCodeVerifier()
+        const state = createId()
+        const url = await this.#client.authorizationCode.getAuthorizeUri({
+          redirectUri: redirectUri.toString(),
+          state,
+          codeVerifier
+        })
+        return Response.json(
+          {
+            type: AuthResultType.UnAuthenticated,
+            redirect: url
+          },
+          {
+            headers: {
+              'set-cookie': router.cookie({
+                name: COOKIE_VERIFIER,
+                value: codeVerifier,
+                domain: redirectUri.hostname,
+                path: '/',
+                secure: redirectUri.protocol === 'https:',
+                httpOnly: true,
+                sameSite: 'strict'
+              })
+            }
+          }
+        )
       }
-    } catch {
-      return unauthorized()
+      case AuthAction.Login: {
+        const code = url.searchParams.get('code')
+        const state = url.searchParams.get('state')
+        if (!code || !state)
+          throw new HttpError(400, 'Missing code or state parameter')
+        const cookieHeader = request.headers.get('cookie')
+        if (!cookieHeader) throw new HttpError(400, 'Missing cookies')
+        const {codeVerifier} = parse(cookieHeader)
+        const token = await this.#client.authorizationCode.getToken({
+          redirectUri: redirectUri.toString(),
+          code,
+          codeVerifier
+        })
+        if (!token.refreshToken)
+          throw new HttpError(400, 'Missing refresh token in response')
+        const user = await verify<User>(
+          token.accessToken,
+          await this.#publicKey
+        )
+        return Response.json(
+          {
+            type: AuthResultType.Authenticated,
+            user
+          },
+          {
+            headers: {
+              'set-cookie': router.cookie(
+                {
+                  name: COOKIE_ACCESS_TOKEN,
+                  value: token.accessToken,
+                  expires: token.expiresAt
+                    ? new Date(token.expiresAt)
+                    : undefined,
+                  domain: redirectUri.hostname,
+                  path: '/',
+                  secure: redirectUri.protocol === 'https:',
+                  httpOnly: true,
+                  sameSite: 'strict'
+                },
+                {
+                  name: COOKIE_REFRESH_TOKEN,
+                  value: token.refreshToken,
+                  domain: redirectUri.hostname,
+                  path: '/',
+                  secure: redirectUri.protocol === 'https:',
+                  httpOnly: true,
+                  sameSite: 'strict'
+                }
+              )
+            }
+          }
+        )
+      }
+      default:
+        return new Response('Bad request', {status: 400})
     }
   }
 
