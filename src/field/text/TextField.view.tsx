@@ -26,7 +26,7 @@ export function TextInput({field}: TextInputProps) {
     readOnly
   } = options
   const Input = multiline ? TextareaAutosize : 'input'
-  const placeholder = inline ? label : ''
+  const placeholder = options.placeholder || (inline ? label : '')
   const empty = value === ''
   return (
     <InputLabel
