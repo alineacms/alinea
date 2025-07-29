@@ -22,6 +22,7 @@ import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
 import {base64} from 'alinea/core/util/Encoding'
 import {Workspace} from 'alinea/core/Workspace'
 import pkg from '../../package.json'
+import {AuthResultType} from './AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
 
 export const COOKIE_NAME = 'alinea.auth'
@@ -116,6 +117,15 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     const url = new URL(request.url)
     const action = url.searchParams.get('auth')
     switch (action) {
+      case AuthAction.Status: {
+        const token = ctx.apiKey?.split('_')[1]
+        if (!token)
+          return Response.json({
+            type: AuthResultType.MissingApiKey,
+            setupUrl: cloudConfig.setup
+          })
+        return super.authenticate(request)
+      }
       // The cloud server will request a handshake confirmation on this route
       case AuthAction.Handshake: {
         const handShakeId = url.searchParams.get('handshake_id')
