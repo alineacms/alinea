@@ -16,19 +16,15 @@
     background: hsla(var(--alinea-negative), 0.1);
   }
 
-  &:hover {
-    background: var(--alinea-highlight);
-    box-shadow: 0 0 0 2px var(--alinea-highlight);
-  }
-
-  &:focus {
+  &:active,
+  &:focus-visible {
     outline: none;
-    color: inherit;
     background: var(--alinea-background);
     box-shadow: 0 0 0 2px var(--alinea-fields-focus);
   }
 
-  &:focus.is-active {
-    background: hsla(var(--alinea-negative), 0.1);
+  &:hover {
+    background: var(--alinea-highlight);
+    box-shadow: 0 0 0 2px var(--alinea-highlight);
   }
 }
