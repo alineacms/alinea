@@ -177,7 +177,6 @@ export async function verify(
   if (nbf && typeof nbf !== 'number') throw new Error('Invalid nbf value')
   if (payload.nbf > clockTimestamp + clockTolerance)
     throw new Error('Token not yet valid')
-
   const exp = payload.exp
   if (exp && typeof payload.exp !== 'number')
     throw new Error('Invalid exp value')
