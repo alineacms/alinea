@@ -151,10 +151,10 @@ export namespace router {
     return Response.json({success: false, error}, {status: 500})
   }
 
-  export function redirect(url: string, init: ResponseInit = {}) {
+  export function redirect(url: URL | string, init: ResponseInit = {}) {
     return new Response('', {
       ...init,
-      headers: {location: url, ...init.headers},
+      headers: {location: String(url), ...init.headers},
       status: init.status || 301
     })
   }

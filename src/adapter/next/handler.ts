@@ -29,7 +29,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const remote =
     options.remote ??
     (options.backend
-      ? createBackend(options.backend)
+      ? createBackend(options.cms.config, options.backend)
       : context => new CloudRemote(context, options.cms))
   if (handlers.has(options.cms)) return handlers.get(options.cms)!
   const config = options.cms.config

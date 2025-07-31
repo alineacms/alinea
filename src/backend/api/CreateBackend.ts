@@ -1,3 +1,4 @@
+import type {Config} from 'alinea/core/Config'
 import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
 import {assert} from 'alinea/core/util/Assert'
 import * as driver from 'rado/driver'
@@ -42,6 +43,7 @@ export interface BackendOptions {
 }
 
 export function createBackend(
+  config: Config,
   options: BackendOptions
 ): (context: RequestContext) => RemoteConnection {
   const db = driver[options.database.driver](options.database.client)
@@ -58,7 +60,7 @@ export function createBackend(
     const dbApi = new DatabaseApi(context, {db})
     assert(options.oauth2 ?? options.auth, 'No auth method provided')
     const auth = options.oauth2
-      ? new OAuth2(context, options.oauth2)
+      ? new OAuth2(context, config, options.oauth2)
       : new BasicAuth(context, options.auth!)
     return createRemote(ghApi, dbApi, auth)
   }

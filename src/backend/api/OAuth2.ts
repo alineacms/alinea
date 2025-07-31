@@ -1,6 +1,7 @@
 import {Request, Response} from '@alinea/iso'
 import {generateCodeVerifier, OAuth2Client} from '@badgateway/oauth2-client'
 import {AuthResultType} from 'alinea/cloud/AuthResult'
+import type {Config} from 'alinea/core/Config'
 import type {
   AuthApi,
   AuthedContext,
@@ -67,11 +68,13 @@ const COOKIE_REFRESH_TOKEN = 'alinea.rt'
 
 export class OAuth2 implements AuthApi {
   #context: RequestContext
+  #config: Config
   #client: OAuth2Client
   #jwks: Promise<Array<JsonWebKey & {kid: string}>>
 
-  constructor(context: RequestContext, options: OAuth2Options) {
+  constructor(context: RequestContext, config: Config, options: OAuth2Options) {
     this.#context = context
+    this.#config = config
     this.#client = new OAuth2Client({
       ...options,
       authenticationMethod: 'client_secret_basic_interop',
@@ -115,15 +118,16 @@ export class OAuth2 implements AuthApi {
             })
           const codeVerifier = await generateCodeVerifier()
           const state = createId()
-          const url = await this.#client.authorizationCode.getAuthorizeUri({
-            redirectUri: redirectUri.toString(),
-            state,
-            codeVerifier
-          })
+          const redirectUrl =
+            await this.#client.authorizationCode.getAuthorizeUri({
+              redirectUri: redirectUri.toString(),
+              state,
+              codeVerifier
+            })
           return Response.json(
             {
               type: AuthResultType.UnAuthenticated,
-              redirect: url
+              redirect: redirectUrl
             },
             {
               headers: {
@@ -155,7 +159,13 @@ export class OAuth2 implements AuthApi {
             codeVerifier
           })
           assert(token.refreshToken, 'Missing refresh token in response')
-          return router.redirect(redirectUri.href, {
+
+          const config = this.#config
+          let dashboardPath = config.dashboardFile ?? '/admin.html'
+          if (!dashboardPath.startsWith('/'))
+            dashboardPath = `/${dashboardPath}`
+          const dashboardUrl = new URL(dashboardPath, url)
+          return router.redirect(dashboardUrl, {
             headers: {
               'set-cookie': router.cookie(
                 {
