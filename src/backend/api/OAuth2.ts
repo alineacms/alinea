@@ -202,22 +202,23 @@ export class OAuth2 implements AuthApi {
       [COOKIE_ACCESS_TOKEN]: accessToken,
       [COOKIE_REFRESH_TOKEN]: refreshToken
     } = parse(cookieHeader)
-    if (!accessToken) throw unauthorized('Missing access token cookie')
-    const kid = decode(accessToken).header.kid
     const jwks = await this.#jwks
-    const key = kid ? jwks.find(k => k.kid === kid) : jwks[0]
-    if (!key) throw unauthorized('Missing key for token verification')
     try {
+      if (!accessToken) throw unauthorized('Missing access token cookie')
+      const key = selectKey(jwks, accessToken)
       const user = await verify<User & {exp: number}>(accessToken, key)
       const expiresSoon = user.exp - Math.floor(Date.now() / 1000) < 30
       if (expiresSoon && refreshToken)
         throw new Error('Access token will expire soon') // Trigger refresh
       return {...ctx, user, token: accessToken}
     } catch (error) {
+      if (!refreshToken) throw error
+      const key = selectKey(jwks, refreshToken)
       const [, failed] = await outcome(verify(refreshToken, key))
-      if (!failed) {
-        // Refresh token is valid, but access token is not
-        const token = {accessToken, refreshToken, expiresAt: null}
+      if (failed) throw error
+      // Refresh token is valid, but access token is not
+      const token = {accessToken, refreshToken, expiresAt: null}
+      try {
         const newToken = await this.#client.refreshToken(token)
         const user = await verify<User>(newToken.accessToken, key)
         const redirectUri = this.#redirectUri
@@ -234,10 +235,22 @@ export class OAuth2 implements AuthApi {
             return result
           }
         }
+      } catch {
+        throw error
       }
-      throw error
     }
   }
+}
+
+function selectKey(
+  jwks: Array<JsonWebKey & {kid: string}>,
+  token: string
+): JsonWebKey {
+  const kid = decode(token).header.kid
+  if (!kid) return jwks[0]
+  const key = jwks.find(k => k.kid === kid)
+  if (!key) throw new Error(`No key found for kid: ${kid}`)
+  return key
 }
 
 function unauthorized(message = 'Unauthorized') {
