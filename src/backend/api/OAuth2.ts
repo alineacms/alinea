@@ -1,5 +1,9 @@
 import {Request, Response} from '@alinea/iso'
-import {generateCodeVerifier, OAuth2Client} from '@badgateway/oauth2-client'
+import {
+  generateCodeVerifier,
+  OAuth2Client,
+  type OAuth2Token
+} from '@badgateway/oauth2-client'
 import {AuthResultType} from 'alinea/cloud/AuthResult'
 import type {Config} from 'alinea/core/Config'
 import type {
@@ -103,12 +107,18 @@ export class OAuth2 implements AuthApi {
     this.#jwks = PLazy.from(loadJwks)
   }
 
+  get #redirectUri(): URL {
+    const url = new URL(this.#context.handlerUrl)
+    url.searchParams.set('auth', 'login')
+    return url
+  }
+
   async authenticate(request: Request): Promise<Response> {
     try {
       const [ctx] = await outcome(this.verify(request))
       const url = new URL(request.url)
       const action = url.searchParams.get('auth')
-      const redirectUri = new URL('?auth=login', this.#context.handlerUrl)
+      const redirectUri = this.#redirectUri
       switch (action) {
         case AuthAction.Status: {
           if (ctx)
@@ -167,27 +177,7 @@ export class OAuth2 implements AuthApi {
           const dashboardUrl = new URL(dashboardPath, url)
           return router.redirect(dashboardUrl, {
             headers: {
-              'set-cookie': router.cookie(
-                {
-                  name: COOKIE_ACCESS_TOKEN,
-                  value: token.accessToken,
-                  expires: token.expiresAt
-                    ? new Date(token.expiresAt)
-                    : undefined,
-                  path: redirectUri.pathname,
-                  secure: redirectUri.protocol === 'https:',
-                  httpOnly: true,
-                  sameSite: 'strict'
-                },
-                {
-                  name: COOKIE_REFRESH_TOKEN,
-                  value: token.refreshToken,
-                  path: redirectUri.pathname,
-                  secure: redirectUri.protocol === 'https:',
-                  httpOnly: true,
-                  sameSite: 'strict'
-                }
-              )
+              'set-cookie': tokenToCookie(token, redirectUri)
             }
           })
         }
@@ -208,21 +198,72 @@ export class OAuth2 implements AuthApi {
     const ctx = this.#context
     const cookieHeader = request.headers.get('cookie')
     if (!cookieHeader) throw unauthorized('Missing cookies')
-    const {[COOKIE_ACCESS_TOKEN]: accessToken} = parse(cookieHeader)
+    const {
+      [COOKIE_ACCESS_TOKEN]: accessToken,
+      [COOKIE_REFRESH_TOKEN]: refreshToken
+    } = parse(cookieHeader)
     if (!accessToken) throw unauthorized('Missing access token cookie')
     const kid = decode(accessToken).header.kid
     const jwks = await this.#jwks
     const key = kid ? jwks.find(k => k.kid === kid) : jwks[0]
     if (!key) throw unauthorized('Missing key for token verification')
-    const user = await verify<User>(accessToken, key)
-    return {
-      ...ctx,
-      user,
-      token: accessToken
+    try {
+      const user = await verify<User & {exp: number}>(accessToken, key)
+      const expiresSoon = user.exp - Math.floor(Date.now() / 1000) < 30
+      if (expiresSoon && refreshToken)
+        throw new Error('Access token will expire soon') // Trigger refresh
+      return {...ctx, user, token: accessToken}
+    } catch (error) {
+      const [, failed] = await outcome(verify(refreshToken, key))
+      if (!failed) {
+        // Refresh token is valid, but access token is not
+        const token = {accessToken, refreshToken, expiresAt: null}
+        const newToken = await this.#client.refreshToken(token)
+        const user = await verify<User>(newToken.accessToken, key)
+        const redirectUri = this.#redirectUri
+        return {
+          ...ctx,
+          user,
+          token: newToken.accessToken,
+          transformResponse(response: Response): Response {
+            const result = response.clone()
+            result.headers.append(
+              'set-cookie',
+              tokenToCookie(newToken, redirectUri)
+            )
+            return result
+          }
+        }
+      }
+      throw error
     }
   }
 }
 
 function unauthorized(message = 'Unauthorized') {
   return new Response(message, {status: 401})
+}
+
+function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
+  assert(token.refreshToken, 'Missing access token in response')
+  return router.cookie(
+    {
+      name: COOKIE_ACCESS_TOKEN,
+      value: token.accessToken,
+      expires: token.expiresAt ? new Date(token.expiresAt) : undefined,
+      path: redirectUri.pathname,
+      secure: redirectUri.protocol === 'https:',
+      httpOnly: true,
+      sameSite: 'strict'
+    },
+    {
+      name: COOKIE_REFRESH_TOKEN,
+      value: token.refreshToken,
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: redirectUri.pathname,
+      secure: redirectUri.protocol === 'https:',
+      httpOnly: true,
+      sameSite: 'strict'
+    }
+  )
 }

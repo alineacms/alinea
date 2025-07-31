@@ -106,17 +106,6 @@ export function createHandler({
         if (!acceptsJson) throw new Response('Expected JSON', {status: 400})
       }
 
-      // User
-      if (action === HandleAction.User && request.method === 'GET') {
-        expectJson()
-        try {
-          const {user} = await cnx.verify(request)
-          return Response.json(user)
-        } catch {
-          return Response.json(null)
-        }
-      }
-
       try {
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
@@ -128,156 +117,169 @@ export function createHandler({
           throw new HttpError(401, 'Expected matching api key', {cause})
       }
 
-      const expectUser = () => {
-        if (!userCtx) throw new Response('Unauthorized', {status: 401})
-      }
-
-      const body = PLazy.from(() => {
-        const isJson = request.headers
-          .get('content-type')
-          ?.includes('application/json')
-        if (!isJson) throw new Response('Expected JSON', {status: 400})
-        return request.json()
-      })
-
-      // Sign preview token
-      if (action === HandleAction.PreviewToken && request.method === 'POST') {
-        expectUser()
-        expectJson()
-        return Response.json(await previews.sign(PreviewBody(await body)))
-      }
-
-      // Resolve
-      if (action === HandleAction.Resolve && request.method === 'POST') {
-        expectJson()
-        const raw = await request.text()
-        const scope = getScope(cms.config)
-        const query = scope.parse(raw) as GraphQuery
-        if (!query.preview) {
-          await periodicSync(cnx, query.syncInterval)
-        } else {
-          const {parse} = await previewParser
-          const preview = await parse(query.preview, () => local.syncWith(cnx))
-          query.preview = preview
+      return transform(userCtx, async () => {
+        // User
+        if (action === HandleAction.User && request.method === 'GET') {
+          expectJson()
+          return Response.json(userCtx ? userCtx.user : null)
         }
-        return Response.json((await local.resolve(query)) ?? null)
-      }
 
-      if (action === HandleAction.Mutate && request.method === 'POST') {
-        expectUser()
-        expectJson()
-        const mutations = await body
-        const attempt = async (retry = 0) => {
-          await local.syncWith(cnx)
-          const request = await local.request(mutations)
-          try {
-            let {sha} = await cnx.write(request)
-            if (sha === request.intoSha) {
-              await local.write(request)
-            } else {
-              sha = await local.syncWith(cnx)
-            }
-            return sha
-          } catch (error) {
-            if (error instanceof ShaMismatchError && retry < 3)
-              return attempt(retry + 1)
-            throw error
-          }
+        const expectUser = () => {
+          if (!userCtx) throw new Response('Unauthorized', {status: 401})
         }
-        return Response.json({sha: await attempt()})
-      }
 
-      if (action === HandleAction.Commit && request.method === 'POST') {
-        throw new Error('Mutations expected')
-      }
+        const body = PLazy.from(() => {
+          const isJson = request.headers
+            .get('content-type')
+            ?.includes('application/json')
+          if (!isJson) throw new Response('Expected JSON', {status: 400})
+          return request.json()
+        })
 
-      // History
-      if (action === HandleAction.History && request.method === 'GET') {
-        expectUser()
-        expectJson()
-        const file = string(url.searchParams.get('file'))
-        const revisionId = string.nullable(url.searchParams.get('revisionId'))
-        const result = await (revisionId
-          ? cnx.revisionData(file, revisionId)
-          : cnx.revisions(file))
-        return Response.json(result ?? null)
-      }
-
-      // Syncable
-
-      if (action === HandleAction.Tree && request.method === 'GET') {
-        expectJson()
-        const sha = string(url.searchParams.get('sha'))
-        await local.syncWith(cnx)
-        const tree = await local.getTreeIfDifferent(sha)
-        return Response.json(tree ?? null)
-      }
-
-      if (action === HandleAction.Blob && request.method === 'POST') {
-        const {shas} = object({shas: array(string)})(await body)
-        await periodicSync(cnx)
-        const tree = await local.source.getTree()
-        const fromLocal = []
-        const fromRemote = []
-        for (const sha of shas) {
-          if (tree.hasSha(sha)) fromLocal.push(sha)
-          else fromRemote.push(sha)
-        }
-        const formData = new FormData()
-        if (fromLocal.length > 0) {
-          const blobs = local.source.getBlobs(fromLocal)
-          for await (const [sha, blob] of blobs) {
-            formData.append(sha, new Blob([blob as BlobPart]))
-          }
-        }
-        if (fromRemote.length > 0) {
-          const blobs = cnx.getBlobs(fromRemote)
-          for await (const [sha, blob] of blobs) {
-            formData.append(sha, new Blob([blob as BlobPart]))
-          }
-        }
-        return new Response(formData)
-      }
-
-      // Media
-      if (action === HandleAction.Upload) {
-        const entryId = url.searchParams.get('entryId')
-        if (!entryId) {
+        // Sign preview token
+        if (action === HandleAction.PreviewToken && request.method === 'POST') {
           expectUser()
           expectJson()
+          return Response.json(await previews.sign(PreviewBody(await body)))
+        }
+
+        // Resolve
+        if (action === HandleAction.Resolve && request.method === 'POST') {
+          expectJson()
+          const raw = await request.text()
+          const scope = getScope(cms.config)
+          const query = scope.parse(raw) as GraphQuery
+          if (!query.preview) {
+            await periodicSync(cnx, query.syncInterval)
+          } else {
+            const {parse} = await previewParser
+            const preview = await parse(query.preview, () =>
+              local.syncWith(cnx)
+            )
+            query.preview = preview
+          }
+          return Response.json((await local.resolve(query)) ?? null)
+        }
+
+        if (action === HandleAction.Mutate && request.method === 'POST') {
+          expectUser()
+          expectJson()
+          const mutations = await body
+          const attempt = async (retry = 0) => {
+            await local.syncWith(cnx)
+            const request = await local.request(mutations)
+            try {
+              let {sha} = await cnx.write(request)
+              if (sha === request.intoSha) {
+                await local.write(request)
+              } else {
+                sha = await local.syncWith(cnx)
+              }
+              return sha
+            } catch (error) {
+              if (error instanceof ShaMismatchError && retry < 3)
+                return attempt(retry + 1)
+              throw error
+            }
+          }
+          return Response.json({sha: await attempt()})
+        }
+
+        if (action === HandleAction.Commit && request.method === 'POST') {
+          throw new Error('Mutations expected')
+        }
+
+        // History
+        if (action === HandleAction.History && request.method === 'GET') {
+          expectUser()
+          expectJson()
+          const file = string(url.searchParams.get('file'))
+          const revisionId = string.nullable(url.searchParams.get('revisionId'))
+          const result = await (revisionId
+            ? cnx.revisionData(file, revisionId)
+            : cnx.revisions(file))
+          return Response.json(result ?? null)
+        }
+
+        // Syncable
+
+        if (action === HandleAction.Tree && request.method === 'GET') {
+          expectJson()
+          const sha = string(url.searchParams.get('sha'))
+          await local.syncWith(cnx)
+          const tree = await local.getTreeIfDifferent(sha)
+          return Response.json(tree ?? null)
+        }
+
+        if (action === HandleAction.Blob && request.method === 'POST') {
+          const {shas} = object({shas: array(string)})(await body)
+          await periodicSync(cnx)
+          const tree = await local.source.getTree()
+          const fromLocal = []
+          const fromRemote = []
+          for (const sha of shas) {
+            if (tree.hasSha(sha)) fromLocal.push(sha)
+            else fromRemote.push(sha)
+          }
+          const formData = new FormData()
+          if (fromLocal.length > 0) {
+            const blobs = local.source.getBlobs(fromLocal)
+            for await (const [sha, blob] of blobs) {
+              formData.append(sha, new Blob([blob as BlobPart]))
+            }
+          }
+          if (fromRemote.length > 0) {
+            const blobs = cnx.getBlobs(fromRemote)
+            for await (const [sha, blob] of blobs) {
+              formData.append(sha, new Blob([blob as BlobPart]))
+            }
+          }
+          return new Response(formData)
+        }
+
+        // Media
+        if (action === HandleAction.Upload) {
+          const entryId = url.searchParams.get('entryId')
+          if (!entryId) {
+            expectUser()
+            expectJson()
+            return Response.json(
+              await cnx.prepareUpload(PrepareBody(await body).filename)
+            )
+          }
+          const isPost = request.method === 'POST'
+          if (isPost) {
+            expectUser()
+            if (!cnx.handleUpload)
+              throw new Response('Bad Request', {status: 400})
+            await cnx.handleUpload(entryId, await request.blob())
+            return new Response('OK', {status: 200})
+          }
+          if (!cnx.previewUpload)
+            throw new Response('Bad Request', {status: 400})
+          return await cnx.previewUpload(entryId)
+        }
+
+        // Drafts
+        if (action === HandleAction.Draft && request.method === 'GET') {
+          expectJson()
+          const key = string(url.searchParams.get('key')) as DraftKey
+          const draft = await cnx.getDraft(key)
           return Response.json(
-            await cnx.prepareUpload(PrepareBody(await body).filename)
+            draft ? {...draft, draft: base64.stringify(draft.draft)} : null
           )
         }
-        const isPost = request.method === 'POST'
-        if (isPost) {
+
+        if (action === HandleAction.Draft && request.method === 'POST') {
           expectUser()
-          if (!cnx.handleUpload)
-            throw new Response('Bad Request', {status: 400})
-          await cnx.handleUpload(entryId, await request.blob())
-          return new Response('OK', {status: 200})
+          expectJson()
+          const data = (await body) as DraftTransport
+          const draft = {...data, draft: base64.parse(data.draft)}
+          return Response.json(await cnx.storeDraft(draft))
         }
-        if (!cnx.previewUpload) throw new Response('Bad Request', {status: 400})
-        return cnx.previewUpload(entryId)
-      }
 
-      // Drafts
-      if (action === HandleAction.Draft && request.method === 'GET') {
-        expectJson()
-        const key = string(url.searchParams.get('key')) as DraftKey
-        const draft = await cnx.getDraft(key)
-        return Response.json(
-          draft ? {...draft, draft: base64.stringify(draft.draft)} : null
-        )
-      }
-
-      if (action === HandleAction.Draft && request.method === 'POST') {
-        expectUser()
-        expectJson()
-        const data = (await body) as DraftTransport
-        const draft = {...data, draft: base64.parse(data.draft)}
-        return Response.json(await cnx.storeDraft(draft))
-      }
+        return new Response('Bad Request', {status: 400})
+      })
     } catch (error) {
       if (error instanceof Response) return error
       console.error(error)
@@ -286,7 +288,20 @@ export function createHandler({
         {status: error instanceof HttpError ? error.code : 500}
       )
     }
-
-    return new Response('Bad Request', {status: 400})
   }
+}
+
+async function transform(
+  ctx: AuthedContext | undefined,
+  run: () => Promise<Response>
+) {
+  const transformer = ctx?.transformResponse
+  if (transformer) {
+    const response = await run().catch(error => {
+      if (error instanceof Response) throw transformer(error)
+      throw error
+    })
+    return transformer(response)
+  }
+  return run()
 }
