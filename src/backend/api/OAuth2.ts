@@ -259,7 +259,7 @@ function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
     {
       name: COOKIE_REFRESH_TOKEN,
       value: token.refreshToken,
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       path: redirectUri.pathname,
       secure: redirectUri.protocol === 'https:',
       httpOnly: true,
