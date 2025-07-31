@@ -293,9 +293,14 @@ async function parseOutcome<T>(expected: Promise<Response>): Promise<T> {
   }
   const output = await response.json()
   if (output.success) {
-    return output.value as T
+    return output.data as T
   }
   if (output.error) {
+    if (typeof output.error === 'object') {
+      const error = new HttpError(response.status, 'Unexpected error')
+      Object.assign(error, output.error)
+      throw error
+    }
     throw new HttpError(response.status, output.error)
   }
   throw new HttpError(
