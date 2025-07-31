@@ -1,8 +1,9 @@
+import {assert} from '../util/Assert.js'
 import {entries, keys} from '../util/Objects.js'
 import type {Change, ChangesBatch} from './Change.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
-import {assert, splitPath} from './Utils.js'
+import {splitPath} from './Utils.js'
 
 export class CombinedSource implements Source {
   #only: Source | undefined
