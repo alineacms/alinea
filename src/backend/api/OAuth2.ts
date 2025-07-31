@@ -10,6 +10,7 @@ import {HttpError} from 'alinea/core/HttpError'
 import {createId} from 'alinea/core/Id'
 import {outcome} from 'alinea/core/Outcome'
 import type {User} from 'alinea/core/User'
+import {assert} from 'alinea/core/util/Assert'
 import {decode, verify} from 'alinea/core/util/JWT'
 import {parse} from 'cookie-es'
 import PLazy from 'p-lazy'
@@ -60,9 +61,9 @@ export interface OAuth2Options {
   revocationEndpoint?: string
 }
 
-const COOKIE_VERIFIER = 'codeVerifier'
-const COOKIE_ACCESS_TOKEN = 'accessToken'
-const COOKIE_REFRESH_TOKEN = 'refreshToken'
+const COOKIE_VERIFIER = 'alinea.cv'
+const COOKIE_ACCESS_TOKEN = 'alinea.at'
+const COOKIE_REFRESH_TOKEN = 'alinea.rt'
 
 export class OAuth2 implements AuthApi {
   #context: RequestContext
@@ -153,45 +154,32 @@ export class OAuth2 implements AuthApi {
             code,
             codeVerifier
           })
-          if (!token.refreshToken)
-            throw new HttpError(400, 'Missing refresh token in response')
-          const kid = decode(token.accessToken).header.kid
-          const jwks = await this.#jwks
-          const key = kid ? jwks.find(k => k.kid === kid) : jwks[0]
-          if (!key)
-            throw new HttpError(500, 'Missing key for token verification')
-          const user = await verify<User>(token.accessToken, key)
-          return Response.json(
-            {
-              type: AuthResultType.Authenticated,
-              user
-            },
-            {
-              headers: {
-                'set-cookie': router.cookie(
-                  {
-                    name: COOKIE_ACCESS_TOKEN,
-                    value: token.accessToken,
-                    expires: token.expiresAt
-                      ? new Date(token.expiresAt)
-                      : undefined,
-                    path: redirectUri.pathname,
-                    secure: redirectUri.protocol === 'https:',
-                    httpOnly: true,
-                    sameSite: 'strict'
-                  },
-                  {
-                    name: COOKIE_REFRESH_TOKEN,
-                    value: token.refreshToken,
-                    path: redirectUri.pathname,
-                    secure: redirectUri.protocol === 'https:',
-                    httpOnly: true,
-                    sameSite: 'strict'
-                  }
-                )
-              }
+          assert(token.refreshToken, 'Missing refresh token in response')
+          return router.redirect(redirectUri.href, {
+            headers: {
+              'set-cookie': router.cookie(
+                {
+                  name: COOKIE_ACCESS_TOKEN,
+                  value: token.accessToken,
+                  expires: token.expiresAt
+                    ? new Date(token.expiresAt)
+                    : undefined,
+                  path: redirectUri.pathname,
+                  secure: redirectUri.protocol === 'https:',
+                  httpOnly: true,
+                  sameSite: 'strict'
+                },
+                {
+                  name: COOKIE_REFRESH_TOKEN,
+                  value: token.refreshToken,
+                  path: redirectUri.pathname,
+                  secure: redirectUri.protocol === 'https:',
+                  httpOnly: true,
+                  sameSite: 'strict'
+                }
+              )
             }
-          )
+          })
         }
         default:
           return new Response('Bad request', {status: 400})
@@ -201,7 +189,7 @@ export class OAuth2 implements AuthApi {
         return new Response(error.message, {status: error.code})
       return Response.json(
         error instanceof Error ? error.message : 'Unknown error',
-        {status: 500}
+        {status: 401}
       )
     }
   }
@@ -211,10 +199,11 @@ export class OAuth2 implements AuthApi {
     const cookieHeader = request.headers.get('cookie')
     if (!cookieHeader) throw unauthorized('Missing cookies')
     const {[COOKIE_ACCESS_TOKEN]: accessToken} = parse(cookieHeader)
+    if (!accessToken) throw unauthorized('Missing access token cookie')
     const kid = decode(accessToken).header.kid
     const jwks = await this.#jwks
     const key = kid ? jwks.find(k => k.kid === kid) : jwks[0]
-    if (!key) throw new HttpError(500, 'Missing key for token verification')
+    if (!key) throw unauthorized('Missing key for token verification')
     const user = await verify<User>(accessToken, key)
     return {
       ...ctx,
