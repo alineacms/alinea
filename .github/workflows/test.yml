@@ -23,10 +23,8 @@ jobs:
         id: version
         with: {prefix: 'v'}
       - if: steps.version.outputs.is_valid != 'true'
-        env:
-          SHA: ${{ (github.event.pull_request.head.sha || github.sha)[0:7] }}
         run: |
-          bun bump 0.0.0-$SHA
+          bun bump 0.0.0-$GITHUB_SHA
           bun run build
           bunx pkg-pr-new publish
       - if: steps.version.outputs.is_valid == 'true'
