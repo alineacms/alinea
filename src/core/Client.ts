@@ -1,4 +1,4 @@
-import {AbortController, type Response, fetch} from '@alinea/iso'
+import {AbortController, fetch, type Response} from '@alinea/iso'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
 import type {Config} from './Config.js'
