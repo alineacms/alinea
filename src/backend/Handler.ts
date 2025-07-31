@@ -120,12 +120,12 @@ export function createHandler({
       try {
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
-      } catch {
+      } catch (cause) {
         const authorization = request.headers.get('authorization')
         const bearer = authorization?.slice('Bearer '.length)
-        if (!context.apiKey) throw new Error('Missing API key')
+        if (!context.apiKey) throw new Error('Missing API key', {cause})
         if (bearer !== context.apiKey)
-          throw new HttpError(401, 'Expected matching api key')
+          throw new HttpError(401, 'Expected matching api key', {cause})
       }
 
       const expectUser = () => {
