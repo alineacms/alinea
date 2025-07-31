@@ -24,8 +24,8 @@ jobs:
         with: {prefix: 'v'}
       - if: steps.version.outputs.is_valid != 'true'
         run: |
-          bun run build
           bun bump 0.0.0-$GITHUB_SHA
+          bun run build
           bunx pkg-pr-new publish
       - if: steps.version.outputs.is_valid == 'true'
         run: |
