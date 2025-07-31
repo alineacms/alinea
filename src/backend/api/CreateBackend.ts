@@ -1,5 +1,5 @@
 import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
-import {assert} from 'alinea/core/source/Utils'
+import {assert} from 'alinea/core/util/Assert'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
 import {DatabaseApi} from './DatabaseApi.js'

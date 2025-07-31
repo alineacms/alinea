@@ -18,7 +18,7 @@ import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
 import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
-import {assert} from '../source/Utils.js'
+import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
 import type {EntryIndex} from './EntryIndex.js'
 import type {
