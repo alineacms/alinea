@@ -284,7 +284,10 @@ export function createHandler({
       if (error instanceof Response) return error
       console.error(error)
       return Response.json(
-        {success: false, error: String(error)},
+        {
+          success: false,
+          error: error instanceof Error ? error.message : String(error)
+        },
         {status: error instanceof HttpError ? error.code : 500}
       )
     }

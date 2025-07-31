@@ -14,6 +14,7 @@ export function outcome(run: Function | Promise<unknown>) {
       return run.then(v => [v]).catch(err => [undefined, err])
     return [run]
   } catch (error) {
+    if (!(error instanceof Error)) return [undefined, new Error(String(error))]
     return [undefined, error]
   }
 }
