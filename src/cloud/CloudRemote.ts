@@ -25,15 +25,13 @@ import pkg from '../../package.json'
 import {AuthResultType} from './AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
 
-export const COOKIE_NAME = 'alinea.auth'
-
 export class CloudRemote extends OAuth2 implements RemoteConnection {
   #context: RequestContext
   #config: Config
 
   constructor(context: RequestContext, config: Config) {
     const clientId = context.apiKey.split('_')[1]
-    super(context, {
+    super(context, config, {
       clientId,
       clientSecret: context.apiKey,
       jwksUri: cloudConfig.jwks,
