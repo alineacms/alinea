@@ -96,10 +96,10 @@ export function createHandler({
       const auth = params.get('auth')
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
-      const action = params.get('action') as HandleAction
 
       if (auth) return cnx.authenticate(request)
 
+      const action = params.get('action') as HandleAction
       const expectJson = () => {
         const acceptsJson = request.headers
           .get('accept')
@@ -307,6 +307,7 @@ async function transform(
 ) {
   const transformer = ctx?.transformResponse
   if (transformer) {
+    console.log('Transforming response')
     const response = await run().catch(error => {
       if (error instanceof Response) throw transformer(error)
       throw error
