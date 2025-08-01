@@ -8,10 +8,15 @@ export enum AuthAction {
 }
 
 export class AuthError extends HttpError {
+  name = 'AuthError'
   constructor(message: string, options?: ErrorOptions) {
     super(401, message, options)
   }
 }
 
-export class MissingCredentialsError extends AuthError {}
-export class InvalidCredentialsError extends AuthError {}
+export class MissingCredentialsError extends AuthError {
+  name = 'MissingCredentialsError'
+}
+export class InvalidCredentialsError extends AuthError {
+  name = 'InvalidCredentialsError'
+}
