@@ -55,7 +55,7 @@ function defaultAlgorithms(
   return ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512']
 }
 
-function importKey(
+export function importKey(
   secret: string | JsonWebKey,
   algorithm: (typeof algorithms)[Algorithm],
   use: 'sign' | 'verify'
