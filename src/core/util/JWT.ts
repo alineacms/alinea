@@ -84,11 +84,25 @@ function importKey(
   )
 }
 
+/**
+ * Options for signing a JWT.
+ * @property algorithm - The algorithm to use for signing (e.g., 'HS256').
+ * @property header - Optional custom header fields to include in the JWT header.
+ */
 export type SignOptions = {
+  /** The algorithm to use for signing (e.g., 'HS256'). */
   algorithm: Algorithm
+  /** Optional custom header fields to include in the JWT header. */
   header?: Record<string, any>
 }
 
+/**
+ * Signs a JWT payload and returns the token string.
+ * @param payload - The payload to include in the JWT.
+ * @param secret - The secret or key to sign the JWT with.
+ * @param options - Options for signing, including algorithm and header.
+ * @returns The signed JWT as a string.
+ */
 export async function sign(
   payload: JWTPayload,
   secret: string | JsonWebKey,
@@ -126,22 +140,52 @@ export async function sign(
   ].join('.')
 }
 
+/**
+ * Options for verifying a JWT.
+ * @property algorithms - Allowed algorithms for verification.
+ * @property clockTolerance - Allowed clock skew in seconds.
+ * @property clockTimestamp - Override the current time for verification.
+ */
 export type VerifyOptions = {
+  /** Allowed algorithms for verification. */
   algorithms?: Array<Algorithm>
+  /** Allowed clock skew in seconds. */
   clockTolerance?: number
+  /** Override the current time for verification. */
   clockTimestamp?: number
 }
 
+/**
+ * Verifies a JWT token using a secret or public key.
+ * @param token - The JWT token string to verify.
+ * @param secret - The secret to verify the JWT with.
+ * @param options - Verification options.
+ * @returns The decoded JWT payload if verification succeeds.
+ */
 export function verify<T = JWTPayload>(
   token: string,
   secret: string,
   options?: VerifyOptions
 ): Promise<T>
+/**
+ * Verifies a JWT token using a public key.
+ * @param token - The JWT token string to verify.
+ * @param publicKey - The public key to verify the JWT with.
+ * @param options - Verification options.
+ * @returns The decoded JWT payload if verification succeeds.
+ */
 export function verify<T = JWTPayload>(
   token: string,
   publicKey: JsonWebKey,
   options?: VerifyOptions
 ): Promise<T>
+/**
+ * Verifies a JWT token using a secret or public key.
+ * @param token - The JWT token string to verify.
+ * @param secretOrPublicKey - The secret or public key to verify the JWT with.
+ * @param options - Verification options.
+ * @returns The decoded JWT payload if verification succeeds.
+ */
 export async function verify(
   token: string,
   secretOrPublicKey: string | JsonWebKey,
@@ -186,6 +230,11 @@ export async function verify(
   return payload
 }
 
+/**
+ * Decodes a JWT token into its header, payload, and signature components.
+ * @param token - The JWT token string to decode.
+ * @returns The decoded JWT object.
+ */
 export function decode(token: string): JWT {
   const parts = token.split('.')
   if (parts.length !== 3) throw new Error('Invalid token')
