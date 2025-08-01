@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+- Setup OAuth2 authentication for cloud and self-hosted instances (#454)
+- Disabled arrow up/down when on first/last row in lists (#450)
+- Keep copy icon visible during drag state; disable icons while dragging (#451)
+- SelectField: responsive layout improvements (#448)
+- ImageView: show cursor crosshair (#449)
+- Collapsible list rows (#444)
+- IconButton: focus layout change (#447)
+- TextField: added placeholder support (#442) and type email, tel, text, or url (#445)
+- Various UI tweaks and bug fixes
+- Remove web workspace; move website to alineacms/alineacms.com
+
 ## [1.4.5]
 - Fix: don't bundle contents in edge functions
 - Fix: order results of Query.parents by level
