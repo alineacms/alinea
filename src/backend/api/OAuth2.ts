@@ -222,7 +222,7 @@ export class OAuth2 implements AuthApi {
       const [, failed] = await outcome(verify(refreshToken, key))
       if (failed)
         throw new InvalidCredentialsError('Invalid refresh token', {
-          cause: [error, failed]
+          cause: [failed, error]
         })
       // Refresh token is valid, but access token is not
       const token = {accessToken, refreshToken, expiresAt: null}
