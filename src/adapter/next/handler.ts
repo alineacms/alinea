@@ -65,7 +65,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
           headers: {location: String(location)}
         })
       }
-      return handleBackend(request, context)
+      return await handleBackend(request, context)
     } catch (error) {
       console.error(error)
       return new Response('Internal server error', {status: 500})
