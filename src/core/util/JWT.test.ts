@@ -4,9 +4,10 @@ import {importKey, sign, verify} from 'alinea/core/util/JWT'
 import {base64url} from './Encoding.js'
 
 // Minimal base64url helper for test tokens
-function b64(obj: any) {
+function b64(obj: any, pad = false) {
   return base64url.stringify(
-    Buffer.from(typeof obj === 'string' ? obj : JSON.stringify(obj))
+    Buffer.from(typeof obj === 'string' ? obj : JSON.stringify(obj)),
+    {pad}
   )
 }
 
