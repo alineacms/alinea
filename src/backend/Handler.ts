@@ -307,7 +307,6 @@ async function transform(
 ) {
   const transformer = ctx?.transformResponse
   if (transformer) {
-    console.log('Transforming response')
     const response = await run().catch(error => {
       if (error instanceof Response) throw transformer(error)
       throw error
