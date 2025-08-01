@@ -68,7 +68,7 @@ export class NextCMS<
         headers.set('Authorization', `Bearer ${apiKey}`)
         if (authCookies.length) {
           for (const [name, value] of authCookies) {
-            headers.set('Cookie', `${name}=${value}`)
+            headers.append('Cookie', `${name}=${value}`)
           }
         }
         return {...init, headers}
