@@ -119,17 +119,21 @@ export class OAuth2 implements AuthApi {
 
   async authenticate(request: Request): Promise<Response> {
     try {
-      const [ctx] = await outcome(this.verify(request))
       const url = new URL(request.url)
       const action = url.searchParams.get('auth')
       const redirectUri = this.#redirectUri
       switch (action) {
         case AuthAction.Status: {
-          if (ctx)
-            return Response.json({
-              type: AuthResultType.Authenticated,
-              user: ctx.user
-            })
+          const [ctx] = await outcome(this.verify(request))
+          if (ctx) {
+            const transform = ctx.transformResponse ?? (v => v)
+            return transform(
+              Response.json({
+                type: AuthResultType.Authenticated,
+                user: ctx.user
+              })
+            )
+          }
           const codeVerifier = await generateCodeVerifier()
           const state = createId()
           const redirectUrl =
