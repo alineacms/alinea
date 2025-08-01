@@ -19,7 +19,11 @@ import {assert} from 'alinea/core/util/Assert'
 import {decode, verify} from 'alinea/core/util/JWT'
 import {parse} from 'cookie-es'
 import PLazy from 'p-lazy'
-import {AuthAction} from '../Auth.js'
+import {
+  AuthAction,
+  InvalidCredentialsError,
+  MissingCredentialsError
+} from '../Auth.js'
 import {router} from '../router/Router.js'
 
 type JWKS = {keys: Array<JsonWebKey & {kid: string}>}
@@ -197,46 +201,56 @@ export class OAuth2 implements AuthApi {
   async verify(request: Request): Promise<AuthedContext> {
     const ctx = this.#context
     const cookieHeader = request.headers.get('cookie')
-    if (!cookieHeader) throw unauthorized('Missing cookies')
+    if (!cookieHeader) throw new MissingCredentialsError('Missing cookies')
     const {
       [COOKIE_ACCESS_TOKEN]: accessToken,
       [COOKIE_REFRESH_TOKEN]: refreshToken
     } = parse(cookieHeader)
     const jwks = await this.#jwks
     try {
-      if (!accessToken) throw unauthorized('Missing access token cookie')
+      if (!accessToken)
+        throw new MissingCredentialsError('Missing access token cookie')
       const key = selectKey(jwks, accessToken)
       const user = await verify<User & {exp: number}>(accessToken, key)
       const expiresSoon = user.exp - Math.floor(Date.now() / 1000) < 30
       if (expiresSoon && refreshToken)
-        throw new Error('Access token will expire soon') // Trigger refresh
+        throw new InvalidCredentialsError('Access token will expire soon') // Trigger refresh
       return {...ctx, user, token: accessToken}
     } catch (error) {
       if (!refreshToken) throw error
       const key = selectKey(jwks, refreshToken)
       const [, failed] = await outcome(verify(refreshToken, key))
-      if (failed) throw error
+      if (failed)
+        throw new InvalidCredentialsError('Invalid refresh token', {
+          cause: [error, failed]
+        })
       // Refresh token is valid, but access token is not
       const token = {accessToken, refreshToken, expiresAt: null}
-      try {
-        const newToken = await this.#client.refreshToken(token)
-        const user = await verify<User>(newToken.accessToken, key)
-        const redirectUri = this.#redirectUri
-        return {
-          ...ctx,
-          user,
-          token: newToken.accessToken,
-          transformResponse(response: Response): Response {
-            const result = response.clone()
-            result.headers.append(
-              'set-cookie',
-              tokenToCookie(newToken, redirectUri)
-            )
-            return result
-          }
+      const newToken = await this.#client.refreshToken(token).catch(cause => {
+        throw new InvalidCredentialsError('Failed to refresh token', {
+          cause: [cause, error]
+        })
+      })
+      const user = await verify<User>(newToken.accessToken, key).catch(
+        cause => {
+          throw new InvalidCredentialsError('Failed to verify user', {
+            cause: [cause, error]
+          })
         }
-      } catch {
-        throw error
+      )
+      const redirectUri = this.#redirectUri
+      return {
+        ...ctx,
+        user,
+        token: newToken.accessToken,
+        transformResponse(response: Response): Response {
+          const result = response.clone()
+          result.headers.append(
+            'set-cookie',
+            tokenToCookie(newToken, redirectUri)
+          )
+          return result
+        }
       }
     }
   }

@@ -18,6 +18,7 @@ import {base64} from 'alinea/core/util/Encoding'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
+import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
 
@@ -110,11 +111,17 @@ export function createHandler({
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
       } catch (cause) {
-        const authorization = request.headers.get('authorization')
-        const bearer = authorization?.slice('Bearer '.length)
-        if (!context.apiKey) throw new Error('Missing API key', {cause})
-        if (bearer !== context.apiKey)
-          throw new HttpError(401, 'Expected matching api key', {cause})
+        if (cause instanceof MissingCredentialsError) {
+          const authorization = request.headers.get('authorization')
+          const bearer = authorization?.slice('Bearer '.length)
+          if (!context.apiKey)
+            throw new MissingCredentialsError('Missing API key', {cause})
+          if (bearer !== context.apiKey)
+            throw new InvalidCredentialsError('Expected matching api key', {
+              cause
+            })
+        }
+        throw cause
       }
 
       return transform(userCtx, async () => {
