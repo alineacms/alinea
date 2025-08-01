@@ -271,10 +271,6 @@ function selectKey(
   return key
 }
 
-function unauthorized(message = 'Unauthorized') {
-  return new Response(message, {status: 401})
-}
-
 function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
   assert(token.refreshToken, 'Missing access token in response')
   return router.cookie(
