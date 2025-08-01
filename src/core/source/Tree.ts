@@ -1,7 +1,8 @@
+import {assert} from '../util/Assert.js'
 import type {Change, ChangesBatch} from './Change.js'
 import {hashTree, serializeTreeEntries} from './GitUtils.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
-import {assert, compareStrings, splitPath} from './Utils.js'
+import {compareStrings, splitPath} from './Utils.js'
 
 export interface BaseEntry {
   sha: string
