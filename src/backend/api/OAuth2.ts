@@ -231,13 +231,13 @@ export class OAuth2 implements AuthApi {
           cause: [cause, error]
         })
       })
-      const user = await verify<User>(newToken.accessToken, key).catch(
-        cause => {
-          throw new InvalidCredentialsError('Failed to verify user', {
-            cause: [cause, error]
-          })
-        }
-      )
+      const user = await verify<User>(newToken.accessToken, key, {
+        clockTolerance: 30
+      }).catch(cause => {
+        throw new InvalidCredentialsError('Failed to verify user', {
+          cause: [cause, error]
+        })
+      })
       const redirectUri = this.#redirectUri
       return {
         ...ctx,
