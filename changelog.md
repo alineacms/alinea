@@ -3,7 +3,7 @@
 ## [Unreleased]
 - Setup OAuth2 authentication for cloud and self-hosted instances (#454)
 
-## [1.4.6]
+## [1.4.7]
 - Disabled arrow up/down when on first/last row in lists (#450)
 - Keep copy icon visible during drag state; disable icons while dragging (#451)
 - SelectField: responsive layout improvements (#448)
