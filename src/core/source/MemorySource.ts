@@ -1,9 +1,9 @@
-import {assert} from '../util/Assert.js'
 import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
+import {assert} from './Utils.js'
 
 export class MemorySource implements Source {
   #tree: ReadonlyTree

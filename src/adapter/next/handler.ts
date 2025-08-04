@@ -1,11 +1,11 @@
 import {
+  type HandlerHooks,
+  createHandler as createCoreHandler
+} from 'alinea/backend/Handler'
+import {
   type BackendOptions,
   createBackend
 } from 'alinea/backend/api/CreateBackend'
-import {
-  createHandler as createCoreHandler,
-  type HandlerHooks
-} from 'alinea/backend/Handler'
 import {generatedSource} from 'alinea/backend/store/GeneratedSource'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {CloudRemote} from 'alinea/cloud/CloudRemote'
@@ -29,7 +29,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const remote =
     options.remote ??
     (options.backend
-      ? createBackend(options.cms.config, options.backend)
+      ? createBackend(options.backend)
       : context => new CloudRemote(context, options.cms))
   if (handlers.has(options.cms)) return handlers.get(options.cms)!
   const config = options.cms.config
@@ -65,7 +65,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
           headers: {location: String(location)}
         })
       }
-      return await handleBackend(request, context)
+      return handleBackend(request, context)
     } catch (error) {
       console.error(error)
       return new Response('Internal server error', {status: 500})

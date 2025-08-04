@@ -1,15 +1,8 @@
 import {AuthResultType} from 'alinea/cloud/AuthResult'
-import type {
-  AuthApi,
-  AuthedContext,
-  RequestContext
-} from 'alinea/core/Connection'
+import type {AuthApi, AuthedContext} from 'alinea/core/Connection'
+import type {RequestContext} from 'alinea/core/Connection'
 import {atob} from 'alinea/core/util/Encoding'
-import {
-  AuthAction,
-  InvalidCredentialsError,
-  MissingCredentialsError
-} from '../Auth.js'
+import {AuthAction} from '../Auth.js'
 
 export interface Verifier {
   (username: string, password: string): boolean | Promise<boolean>
@@ -20,8 +13,8 @@ export class BasicAuth implements AuthApi {
   #verify: Verifier
 
   constructor(context: RequestContext, verify: Verifier) {
-    this.#context = context
     this.#verify = verify
+    this.#context = context
   }
 
   async authenticate(request: Request): Promise<Response> {
@@ -47,13 +40,12 @@ export class BasicAuth implements AuthApi {
   async verify(request: Request): Promise<AuthedContext> {
     const ctx = this.#context
     const auth = request.headers.get('Authorization')
-    if (!auth) throw new MissingCredentialsError('Missing authorization header')
+    if (!auth) throw unauthorized()
     const [scheme, token] = auth.split(' ', 2)
-    if (scheme !== 'Basic')
-      throw new MissingCredentialsError('Invalid authorization scheme')
+    if (scheme !== 'Basic') throw unauthorized()
     const [username, password] = atob(token).split(':')
     const authorized = await this.#verify(username, password)
-    if (!authorized) throw new InvalidCredentialsError('Invalid credentials')
+    if (!authorized) throw unauthorized()
     return {
       ...ctx,
       user: {sub: username},

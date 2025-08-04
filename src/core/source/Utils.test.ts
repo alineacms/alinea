@@ -1,5 +1,33 @@
 import {expect, it} from 'bun:test'
-import {bytesToHex, concatUint8Arrays, hexToBytes, sha1Hash} from './Utils.js'
+import {
+  assert,
+  bytesToHex,
+  concatUint8Arrays,
+  hexToBytes,
+  sha1Hash
+} from './Utils.js'
+
+it('should not throw an error for truthy values', () => {
+  expect(() => assert(true)).not.toThrow()
+  expect(() => assert(1)).not.toThrow()
+  expect(() => assert('test')).not.toThrow()
+  expect(() => assert({})).not.toThrow()
+  expect(() => assert([])).not.toThrow()
+})
+
+it('should throw an error for falsy values', () => {
+  expect(() => assert(false)).toThrow()
+  expect(() => assert(0)).toThrow()
+  expect(() => assert('')).toThrow()
+  expect(() => assert(null)).toThrow()
+  expect(() => assert(undefined)).toThrow()
+  expect(() => assert(Number.NaN)).toThrow()
+})
+
+it('should throw an error with the provided message', () => {
+  const errorMessage = 'Assertion failed'
+  expect(() => assert(false, errorMessage)).toThrow(errorMessage)
+})
 
 it('should handle empty Uint8Array', async () => {
   const data = new Uint8Array([])

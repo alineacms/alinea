@@ -11,7 +11,7 @@ import {
 import {useTree} from '@headless-tree/react'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import {getType} from 'alinea/core/Internal'
-import {assert} from 'alinea/core/util/Assert'
+import {assert} from 'alinea/core/source/Utils'
 import {debounce} from 'alinea/core/util/Debounce'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineArchive} from 'alinea/ui/icons/IcOutlineArchive'

@@ -3,12 +3,12 @@ import fs from 'node:fs/promises'
 import path from 'node:path/posix'
 import pDebounce from 'p-debounce'
 import pLimit from 'p-limit'
-import {assert} from '../util/Assert.js'
 import {accumulate} from '../util/Async.js'
 import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
+import {assert} from './Utils.js'
 
 const limit = pLimit(1)
 

@@ -10,7 +10,6 @@
     "pretty-ms": "^8.0.0",
     "y-protocols": "^1.0.6",
     "yjs": "^13.6.11",
-    "p-debounce": "^4.0.0",
-    "@badgateway/oauth2-client": "^3.2.0"
+    "p-debounce": "^4.0.0"
   }
 }

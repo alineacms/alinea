@@ -1,4 +1,5 @@
 import {CompressionStream, Headers, type Request, Response} from '@alinea/iso'
+import {Outcome} from 'alinea/core/Outcome'
 import {parse} from 'regexparam'
 
 export interface HttpRouter {
@@ -151,10 +152,10 @@ export namespace router {
     return Response.json({success: false, error}, {status: 500})
   }
 
-  export function redirect(url: URL | string, init: ResponseInit = {}) {
+  export function redirect(url: string, init: ResponseInit = {}) {
     return new Response('', {
       ...init,
-      headers: {location: String(url), ...init.headers},
+      headers: {location: url, ...init.headers},
       status: init.status || 301
     })
   }
