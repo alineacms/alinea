@@ -81,21 +81,3 @@ export function checkCommit(tree: ReadonlyTree, request: CommitRequest): void {
     if (entry.sha !== sha) throw new Error(`Entry ${path} has changed`)
   }
 }
-
-export async function attemptCommit(
-  local: LocalDB,
-  remote: CommitApi & SyncApi,
-  request: CommitRequest
-): Promise<void> {
-  const contentChanges = sourceChanges(request)
-  await local.indexChanges(contentChanges)
-  try {
-    const {sha} = await remote.write(request)
-    if (sha === request.intoSha) {
-      await local.applyChanges(contentChanges)
-      return
-    }
-  } finally {
-    await local.syncWith(remote)
-  }
-}
