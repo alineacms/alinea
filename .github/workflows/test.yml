@@ -11,8 +11,8 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      id-token: write
+      contents: write # To create release
+      id-token: write # To use OIDC for npm publish
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v4
