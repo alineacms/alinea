@@ -48,9 +48,7 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.3",
-    "@types/node": "^24.0.15",
-    "esbuild": "^0.25.4",
-    "stylus": "^0.0.1-security"
+    "esbuild": "^0.25.4"
   },
   "peerDependencies": {
     "react": "*",
@@ -67,6 +65,7 @@
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
     "@types/react": "^18.2.13",
+    "@types/node": "^24.0.15",
     "@types/react-dom": "^18.2.6",
     "@types/sharedworker": "^0.0.154",
     "@types/sql.js": "^1.4.4",
