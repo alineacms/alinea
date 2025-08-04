@@ -370,7 +370,7 @@ export class EntryResolver implements Resolver {
           if (strings) {
             const compare = order.caseSensitive
               ? compareStrings(valueA, valueB)
-              : valueA.localeCompare(valueB)
+              : valueA.localeCompare(valueB, undefined, {numeric: true})
             if (compare !== 0) return order.asc ? compare : -compare
           } else if (numbers) {
             if (valueA !== valueB)
