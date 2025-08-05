@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.4.8]
+- Fix: data coming from Alinea Cloud was not handled correctly 
+
 ## [1.4.7]
 - Fix: previous release was published with extraneous dependencies
 
