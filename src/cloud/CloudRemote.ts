@@ -401,7 +401,7 @@ async function parseOutcome<T>(expected: Promise<Response>): Promise<T> {
   }
   const output = await response.json()
   if (output.success) {
-    return output.value as T
+    return output.data as T
   }
   if (output.error) {
     throw new HttpError(response.status, output.error)
