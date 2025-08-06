@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.4.9]
+- Fix: handle missing blobs in local IndexedDB store
+
 ## [1.4.8]
 - Fix: data coming from Alinea Cloud was not handled correctly 
 
