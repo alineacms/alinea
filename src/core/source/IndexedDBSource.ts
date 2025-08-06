@@ -1,4 +1,5 @@
 import type {ChangesBatch} from './Change.js'
+import {ShaMismatchError} from './ShaMismatchError.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
 
@@ -92,6 +93,12 @@ export class IndexedDBSource implements Source {
   async applyChanges(batch: ChangesBatch) {
     const db = await this.#connect()
     const current = await this.getTree()
+    if (batch.fromSha !== current.sha)
+      throw new ShaMismatchError(
+        current.sha,
+        batch.fromSha,
+        'Cannot apply changes locally due to SHA mismatch'
+      )
     const updatedTree = current.clone()
     updatedTree.applyChanges(batch)
     const compiled = await updatedTree.compile()
@@ -104,10 +111,15 @@ export class IndexedDBSource implements Source {
         case 'add':
           blobs.put(change.contents, change.sha)
           break
-        case 'delete':
-          blobs.delete(change.sha)
-          break
       }
+    const blobKeys = await new Promise<Array<string>>((resolve, reject) => {
+      const request = blobs.getAllKeys()
+      request.onsuccess = () => resolve(request.result as Array<string>)
+      request.onerror = event => reject((event.target as IDBRequest).error)
+    })
+    for (const sha of blobKeys) {
+      if (!compiled.hasSha(sha)) blobs.delete(sha)
+    }
     return new Promise<void>((resolve, reject) => {
       transaction.oncomplete = () => resolve()
       transaction.onerror = event => reject((event.target as IDBRequest).error)
