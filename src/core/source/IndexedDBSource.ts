@@ -52,25 +52,24 @@ export class IndexedDBSource implements Source {
   getTree(): Promise<ReadonlyTree> {
     const handle = async () => {
       const db = await this.#connect()
-      const tree = await new Promise<ReadonlyTree>((resolve, reject) => {
-        const transaction = db.transaction(['tree'], 'readonly')
-        const store = transaction.objectStore('tree')
-        const request = store.get('tree')
-        request.onsuccess = event => {
-          const entry = (event.target as IDBRequest).result
-          resolve(entry ? new ReadonlyTree(entry) : ReadonlyTree.EMPTY)
-        }
-        request.onerror = event => reject((event.target as IDBRequest).error)
-      })
-      // Check if we have a valid tree
-      // TODO: do this in a single transaction
-      const blobKeys = await new Promise<Array<string>>((resolve, reject) => {
-        const transaction = db.transaction(['blobs'], 'readonly')
-        const blobs = transaction.objectStore('blobs')
-        const request = blobs.getAllKeys()
-        request.onsuccess = () => resolve(request.result as Array<string>)
-        request.onerror = event => reject((event.target as IDBRequest).error)
-      })
+      const transaction = db.transaction(['tree', 'blobs'], 'readonly')
+      const treeStore = transaction.objectStore('tree')
+      const blobsStore = transaction.objectStore('blobs')
+      const [tree, blobKeys] = await Promise.all([
+        new Promise<ReadonlyTree>((resolve, reject) => {
+          const request = treeStore.get('tree')
+          request.onsuccess = event => {
+            const entry = (event.target as IDBRequest).result
+            resolve(entry ? new ReadonlyTree(entry) : ReadonlyTree.EMPTY)
+          }
+          request.onerror = event => reject((event.target as IDBRequest).error)
+        }),
+        new Promise<Array<string>>((resolve, reject) => {
+          const request = blobsStore.getAllKeys()
+          request.onsuccess = () => resolve(request.result as Array<string>)
+          request.onerror = event => reject((event.target as IDBRequest).error)
+        })
+      ])
       for (const sha of tree.shas) {
         if (!blobKeys.includes(sha)) {
           console.warn(`Blob ${sha} in tree, but not found`)
