@@ -175,6 +175,10 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
     }))
   }
 
+  get shas(): ReadonlySet<string> {
+    return this.#shas
+  }
+
   hasSha(sha: string): boolean {
     return this.#shas.has(sha)
   }

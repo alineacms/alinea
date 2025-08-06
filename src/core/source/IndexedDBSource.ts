@@ -52,7 +52,7 @@ export class IndexedDBSource implements Source {
   getTree(): Promise<ReadonlyTree> {
     const handle = async () => {
       const db = await this.#connect()
-      return new Promise<ReadonlyTree>((resolve, reject) => {
+      const tree = await new Promise<ReadonlyTree>((resolve, reject) => {
         const transaction = db.transaction(['tree'], 'readonly')
         const store = transaction.objectStore('tree')
         const request = store.get('tree')
@@ -62,6 +62,22 @@ export class IndexedDBSource implements Source {
         }
         request.onerror = event => reject((event.target as IDBRequest).error)
       })
+      // Check if we have a valid tree
+      // TODO: do this in a single transaction
+      const blobKeys = await new Promise<Array<string>>((resolve, reject) => {
+        const transaction = db.transaction(['blobs'], 'readonly')
+        const blobs = transaction.objectStore('blobs')
+        const request = blobs.getAllKeys()
+        request.onsuccess = () => resolve(request.result as Array<string>)
+        request.onerror = event => reject((event.target as IDBRequest).error)
+      })
+      for (const sha of tree.shas) {
+        if (!blobKeys.includes(sha)) {
+          console.warn(`Blob ${sha} in tree, but not found`)
+          return ReadonlyTree.EMPTY
+        }
+      }
+      return tree
     }
     return handle().catch(this.#retryIfClosing(handle))
   }
