@@ -30,7 +30,8 @@ const lockfiles = {
 
 async function detectPm(): Promise<PM> {
   for (const [pm, lockFile] of Object.entries(lockfiles)) {
-    if ((await outcome(fs.stat(lockFile))).isSuccess()) {
+    const [, error] = await outcome(fs.stat(lockFile))
+    if (!error) {
       return pm as PM
     }
   }

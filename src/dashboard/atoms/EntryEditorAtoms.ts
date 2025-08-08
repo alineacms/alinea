@@ -90,8 +90,16 @@ export const entryEditorAtoms = atomFamily(
       if (!policy.canRead(entry)) return undefined
       const entryId = entry.id
       const locale = entry.locale
-      const type = config.schema[entry.type]
-      const edits = get(entryEditsAtoms(entry))
+      const untranslated = Boolean(
+        entry.locale && searchLocale !== entry.locale
+      )
+      const edits = get(
+        entryEditsAtoms(
+          untranslated
+            ? {...entry, data: {...entry.data, path: undefined}}
+            : entry
+        )
+      )
 
       const versions = await graph.find({
         select: {
@@ -140,9 +148,6 @@ export const entryEditorAtoms = atomFamily(
           locale: searchLocale,
           status: 'preferDraft'
         }))
-      const untranslated = Boolean(
-        entry.locale && searchLocale !== entry.locale
-      )
       const parentNeedsTranslation = entry.parentId ? !parentLink : false
       const parents = withParents?.parents ?? []
       const canPublish = parents.every(parent => parent.status === 'published')
@@ -654,10 +659,7 @@ export function createEntryEditor(entryData: EntryData) {
 
   const previewToken = atom(async get => {
     const client = get(clientAtom)
-    return client.previewToken({
-      locale: activeVersion.locale,
-      entryId: entryData.entryId
-    })
+    return client.previewToken({url: activeVersion.url})
   })
 
   return {

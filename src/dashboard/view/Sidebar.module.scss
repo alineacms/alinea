@@ -173,8 +173,7 @@
     border-radius: 8px;
     padding: 6px 12px 6px 6px;
 
-    &:focus,
-    &:hover {
+    &:is(:hover, :focus-visible) {
       background: var(--alinea-highlight);
     }
   }

@@ -1,4 +1,4 @@
-# Contributing to ![Alinea CMS logo](https://github.com/alineacms/alinea/raw/HEAD/apps/web/public/logo.svg)
+# Contributing to Alinea CMS
 
 ## Bugs
 
@@ -19,13 +19,13 @@ git checkout -b branch-name
 - Install all dependencies:
 
   ```
-  yarn
+  bun install
   ```
 
 - Run dev server in watch mode:
 
   ```
-  yarn dev
+  bun dev
   ```
 
 ### Commiting changes

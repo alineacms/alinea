@@ -11,7 +11,7 @@ const test = suite(import.meta)
 
 const tree = ReadonlyTree.fromFlat(demoTree)
 const memorySource = new MemorySource(tree)
-const dir = 'apps/web/content/demo'
+const dir = 'src/test/fixtures/demo'
 const files = tree.index()
 const blobs = new Map<string, Uint8Array>()
 for (const [file, sha] of files) {

@@ -10,8 +10,14 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # To create release
+      id-token: write # To use OIDC for npm publish
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - name: Check cycles for server target
@@ -23,15 +29,20 @@ jobs:
         id: version
         with: {prefix: 'v'}
       - if: steps.version.outputs.is_valid != 'true'
-        run: bun run build && bunx pkg-pr-new publish
+        env:
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          bun bump 0.0.0-$SHA
+          bun run build
+          bunx pkg-pr-new publish
       - if: steps.version.outputs.is_valid == 'true'
         run: |
           bun bump ${GITHUB_REF#refs/tags/v}
           npm config set //registry.npmjs.org/:_authToken ${{secrets.NPM_AUTH_TOKEN}}
       - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
-        run: npm publish
+        run: npm publish --provenance --access public
       - if: steps.version.outputs.prerelease
-        run: npm publish --tag preview
+        run: npm publish --provenance --access public --tag preview
       - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
         id: extract-release-notes
         uses: ffurrer2/extract-release-notes@v1

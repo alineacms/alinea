@@ -460,7 +460,7 @@ function useReferenceViewer() {
       graph
         .first({
           id: reference[EntryReference.entry],
-          locale,
+          locale: reference[Reference.type] === 'entry' ? locale : null,
           select: {
             id: Entry.id,
             workspace: Entry.workspace,

@@ -16,5 +16,9 @@
       background: var(--alinea-fields-selected);
       outline: 2px solid var(--alinea-fields-focus);
     }
+
+    &::placeholder {
+      color: hsla(var(--alinea-negative), 0.25);
+    }
   }
 }

@@ -1,32 +1,32 @@
 import styler from '@alinea/styler'
 import {
+  closestCenter,
   DndContext,
   type DragEndEvent,
+  type DraggableSyntheticListeners,
   DragOverlay,
   type DragStartEvent,
-  type DraggableSyntheticListeners,
+  defaultDropAnimation,
   KeyboardSensor,
   LayoutMeasuringStrategy,
   PointerSensor,
-  closestCenter,
-  defaultDropAnimation,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
 import {
   type AnimateLayoutChanges,
-  SortableContext,
   defaultAnimateLayoutChanges,
+  SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, type FirstArgument} from '@dnd-kit/utilities'
+import type {ListField} from 'alinea/core/field/ListField'
 import {getType} from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
-import {Type} from 'alinea/core/Type'
-import type {ListField} from 'alinea/core/field/ListField'
 import {ListRow} from 'alinea/core/shape/ListShape'
+import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
@@ -35,15 +35,17 @@ import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {Icon, TextLabel} from 'alinea/ui'
-import {Sink} from 'alinea/ui/Sink'
 import {IcBaselineContentCopy} from 'alinea/ui/icons/IcBaselineContentCopy'
 import {IcBaselineContentPasteGo} from 'alinea/ui/icons/IcBaselineContentPasteGo'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundAdd} from 'alinea/ui/icons/IcRoundAdd'
+import {IcRoundArrowDownward} from 'alinea/ui/icons/IcRoundArrowDownward'
+import {IcRoundArrowUpward} from 'alinea/ui/icons/IcRoundArrowUpward'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
+import {Sink} from 'alinea/ui/Sink'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import {
@@ -112,6 +114,9 @@ type ListInputRowProps = PropsWithChildren<
     onCreate?: (type: string) => void
     onPasteBlock?: (data: ListRow) => void
     firstRow?: boolean
+    lastRow?: boolean
+    isFolded?: boolean
+    toggleFold?: () => void
   } & HTMLAttributes<HTMLDivElement>
 >
 
@@ -129,6 +134,9 @@ function ListInputRow({
   onCreate,
   onPasteBlock,
   firstRow,
+  lastRow,
+  isFolded,
+  toggleFold,
   ...rest
 }: ListInputRowProps) {
   const type = schema[row[ListRow.type]]
@@ -171,36 +179,59 @@ function ListInputRow({
           />
         </Sink.Options>
         <Sink.Title>
-          <TextLabel label={Type.label(type)} className={styles.row.header.title()} />
+          <TextLabel
+            label={Type.label(type)}
+            className={styles.row.header.title()}
+          />
         </Sink.Title>
         <Sink.Options>
+          {isFolded !== undefined && (
+            <IconButton
+              icon={
+                isFolded ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowUp
+              }
+              onClick={toggleFold}
+              title={isFolded ? 'Expand' : 'Fold'}
+              disabled={isDragOverlay}
+            />
+          )}
           {onCopyBlock !== undefined && (
             <IconButton
               icon={IcBaselineContentCopy}
               onClick={() => onCopyBlock()}
               title="Copy block"
+              disabled={isDragOverlay}
             />
           )}
           {!readOnly && (
             <>
               <IconButton
-                icon={IcRoundKeyboardArrowUp}
+                icon={IcRoundArrowUpward}
                 onClick={() => onMove?.(-1)}
                 title="Move up one position"
+                disabled={firstRow || isDragOverlay}
               />
               <IconButton
-                icon={IcRoundKeyboardArrowDown}
+                icon={IcRoundArrowDownward}
                 onClick={() => onMove?.(1)}
                 title="Move down one position"
+                disabled={lastRow || isDragOverlay}
               />
-              <IconButton icon={IcRoundClose} onClick={onDelete} title="Delete block" />
+              <IconButton
+                icon={IcRoundClose}
+                onClick={onDelete}
+                title="Delete block"
+                disabled={isDragOverlay}
+              />
             </>
           )}
         </Sink.Options>
       </Sink.Header>
-      <Sink.Content>
-        <InputForm type={type} />
-      </Sink.Content>
+      {!isFolded && (
+        <Sink.Content>
+          <InputForm type={type} />
+        </Sink.Content>
+      )}
     </div>
   )
 }
@@ -259,13 +290,16 @@ interface ListInsertRowProps {
 
 function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
   return (
-    <>
-      <div className={styles.insert({open, first})}>
-        <button className={styles.insert.icon()} onClick={onInsert} title="Insert new block">
-          <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
-        </button>
-      </div>
-    </>
+    <div className={styles.insert({open, first})}>
+      <button
+        className={styles.insert.icon()}
+        onClick={onInsert}
+        title="Insert new block"
+        type="button"
+      >
+        <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
+      </button>
+    </div>
   )
 }
 
@@ -284,6 +318,8 @@ export function ListInput({field}: ListInputProps) {
   const ids = rows.map(row => row._id)
   const [, setPasted] = useAtom(copyAtom)
   const [dragging, setDragging] = useState<ListRow | null>(null)
+  const [foldedItems, setFoldedItems] = useState(new Set<string>())
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -303,6 +339,11 @@ export function ListInput({field}: ListInputProps) {
     if (!readOnly) mutator.move(ids.indexOf(active.id), ids.indexOf(over.id))
     setDragging(null)
   }
+
+  const isFolded = rows.every(row => foldedItems.has(row._id))
+  const toggleFold = () =>
+    setFoldedItems(new Set(isFolded ? [] : rows.map(row => row._id)))
+
   return (
     <DndContext
       sensors={sensors}
@@ -311,7 +352,13 @@ export function ListInput({field}: ListInputProps) {
       onDragEnd={handleDragEnd}
       layoutMeasuring={layoutMeasuringConfig}
     >
-      <InputLabel {...options} error={error} icon={IcOutlineList}>
+      <InputLabel
+        {...options}
+        error={error}
+        icon={IcOutlineList}
+        isFolded={rows.length === 0 ? undefined : isFolded}
+        toggleFold={toggleFold}
+      >
         <div className={styles.root()}>
           <div className={styles.root.inner({inline: options.inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
@@ -327,6 +374,7 @@ export function ListInput({field}: ListInputProps) {
                       readOnly={readOnly}
                     >
                       <ListInputRowSortable
+                        isFolded={foldedItems.has(row._id)}
                         row={row}
                         schema={schema}
                         readOnly={readOnly}
@@ -351,7 +399,16 @@ export function ListInput({field}: ListInputProps) {
                           const {_id, _index, ...rest} = data
                           mutator.push(rest, i)
                         }}
+                        toggleFold={() => {
+                          setFoldedItems(current => {
+                            const result = new Set(current)
+                            if (result.has(row._id)) result.delete(row._id)
+                            else result.add(row._id)
+                            return result
+                          })
+                        }}
                         firstRow={i === 0}
+                        lastRow={i === rows.length - 1}
                       />
                     </FormRow>
                   )
@@ -390,6 +447,8 @@ export function ListInput({field}: ListInputProps) {
                     row={dragging}
                     schema={schema}
                     isDragOverlay
+                    isFolded={foldedItems.has(dragging._id)}
+                    onCopyBlock={() => {}}
                   />
                 </FormRow>
               ) : null}

@@ -370,7 +370,7 @@ export class EntryResolver implements Resolver {
           if (strings) {
             const compare = order.caseSensitive
               ? compareStrings(valueA, valueB)
-              : valueA.localeCompare(valueB)
+              : valueA.localeCompare(valueB, undefined, {numeric: true})
             if (compare !== 0) return order.asc ? compare : -compare
           } else if (numbers) {
             if (valueA !== valueB)
@@ -519,7 +519,7 @@ export function statusChecker(status: Status): Check {
 }
 
 interface Check {
-  (input: any): boolean
+  (input: Entry): boolean
 }
 
 function isObject(input: any): input is object {
@@ -567,11 +567,8 @@ function locationChecker(location: Array<string>): Check {
         if (entry.level === 0) return false
         if (entry.level === 1)
           return entry.parentDir.endsWith(`/${location[2]}`)
-        if (entry.level > 1) {
-          const position = entry.level - 1
-          const segment = entry.parentDir.split('/').at(-position)
-          return segment === location[2]
-        }
+        const segment = entry.parentDir.split('/').at(-entry.level)
+        return segment === location[2]
       }
     }
     default:

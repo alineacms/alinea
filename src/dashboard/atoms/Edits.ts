@@ -87,5 +87,10 @@ export const entryEditsAtoms = atomFamily(
       return new Edits(type, entry)
     })
   },
-  (a, b) => a.id === b.id && a.locale === b.locale && a.fileHash === b.fileHash
+  (a, b) =>
+    a.id === b.id &&
+    a.locale === b.locale &&
+    a.fileHash === b.fileHash &&
+    // This is a check for untranslated entries, where the path is cleared
+    a.data.path === b.data.path
 )

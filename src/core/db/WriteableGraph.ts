@@ -1,9 +1,12 @@
+import type {Infer} from 'alinea'
+import type {Type} from 'alinea/core/Type'
 import type {UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
+import type {EntryFields} from '../EntryFields.js'
 import {Graph} from '../Graph.js'
+import {MediaFile} from '../media/MediaTypes.js'
 import {Policy, WriteablePolicy} from '../Role.js'
 import {getScope} from '../Scope.js'
-import {MediaFile} from '../media/MediaTypes.js'
 import {assert} from '../source/Utils.js'
 import type {Mutation} from './Mutation.js'
 import {
@@ -28,11 +31,12 @@ import {
 } from './Operation.js'
 
 export abstract class WriteableGraph extends Graph {
-  abstract sync(): Promise<string>
   abstract mutate(mutations: Array<Mutation>): Promise<{sha: string}>
   abstract prepareUpload(file: string): Promise<UploadResponse>
 
-  async create<Definition>(create: CreateQuery<Definition>) {
+  async create<Definition>(
+    create: CreateQuery<Definition>
+  ): Promise<EntryFields & Infer<Type<Definition>>> {
     const op = new CreateOp(create)
     await this.commit(op)
     return this.get({
@@ -45,10 +49,12 @@ export abstract class WriteableGraph extends Graph {
           : create.status === 'archived'
             ? 'archived'
             : 'preferPublished'
-    })
+    }) as Promise<EntryFields & Infer<Type<Definition>>>
   }
 
-  async update<Definition>(update: UpdateQuery<Definition>) {
+  async update<Definition>(
+    update: UpdateQuery<Definition>
+  ): Promise<EntryFields & Infer<Type<Definition>>> {
     const op = new UpdateOperation<Definition>(update)
     await this.commit(op)
     return this.get({
@@ -56,7 +62,7 @@ export abstract class WriteableGraph extends Graph {
       id: update.id,
       locale: update.locale ?? null,
       status: update.status ?? 'published'
-    })
+    }) as Promise<EntryFields & Infer<Type<Definition>>>
   }
 
   async remove(...entryIds: Array<string>): Promise<void> {

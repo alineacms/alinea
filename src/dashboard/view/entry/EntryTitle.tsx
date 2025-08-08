@@ -32,9 +32,7 @@ export function EntryTitle({
   return (
     <>
       <Head>
-        <title>
-          {workspace.label}: {title}
-        </title>
+        <title>{`${workspace.label}: ${title}`}</title>
       </Head>
       <div className={styles.root()}>
         <HStack center gap={12} wrap className={styles.root.inner()}>

@@ -16,19 +16,25 @@
     background: hsla(var(--alinea-negative), 0.1);
   }
 
+  &:active,
+  &:focus-visible {
+    outline: none;
+    background: var(--alinea-background);
+    box-shadow: 0 0 0 2px var(--alinea-fields-focus);
+  }
+
   &:hover {
     background: var(--alinea-highlight);
     box-shadow: 0 0 0 2px var(--alinea-highlight);
   }
 
-  &:focus {
-    outline: none;
-    color: inherit;
-    background: var(--alinea-background);
-    box-shadow: 0 0 0 2px var(--alinea-fields-focus);
-  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
 
-  &:focus.is-active {
-    background: hsla(var(--alinea-negative), 0.1);
+    &:hover {
+      background: transparent;
+      box-shadow: none;
+    }
   }
 }
