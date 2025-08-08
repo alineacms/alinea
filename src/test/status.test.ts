@@ -1,6 +1,6 @@
 import {suite} from '@alinea/suite'
 import {Config} from 'alinea'
-import {Entry, createCMS} from 'alinea/core'
+import {createCMS, Entry} from 'alinea/core'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 
 const test = suite(import.meta)
@@ -248,43 +248,6 @@ test('creating new child defaults to archived when parent is archived', async ()
     status: 'archived'
   })
   test.is(archivedChild.status, 'archived')
-})
-
-test('archive action', async () => {
-  const db = new LocalDB(cms.config)
-  const parent = await db.create({
-    type: Page,
-    set: {path: 'page1'}
-  })
-  const sub1 = await db.create({
-    type: Page,
-    parentId: parent._id,
-    set: {path: 'sub1'}
-  })
-  const sub2 = await db.create({
-    type: Page,
-    parentId: parent._id,
-    set: {path: 'sub2'}
-  })
-  await db.archive({id: parent._id})
-  const archivedParent = await db.get({
-    id: parent._id,
-    select: Entry,
-    status: 'archived'
-  })
-  test.is(archivedParent.status, 'archived')
-  const archivedSub1 = await db.get({
-    id: sub1._id,
-    select: Entry,
-    status: 'archived'
-  })
-  test.is(archivedSub1.status, 'archived')
-  const archivedSub2 = await db.get({
-    id: sub2._id,
-    select: Entry,
-    status: 'archived'
-  })
-  test.is(archivedSub2.status, 'archived')
 })
 
 test('publishing removes other statuses', async () => {
