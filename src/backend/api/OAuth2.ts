@@ -124,15 +124,13 @@ export class OAuth2 implements AuthApi {
       const redirectUri = this.#redirectUri
       switch (action) {
         case AuthAction.Status: {
-          const [ctx] = await outcome(this.verify(request))
+          const [ctx, err] = await outcome(this.verify(request))
+          if (err instanceof Response) return err
           if (ctx) {
-            const transform = ctx.transformResponse ?? (v => v)
-            return transform(
-              Response.json({
-                type: AuthResultType.Authenticated,
-                user: ctx.user
-              })
-            )
+            return Response.json({
+              type: AuthResultType.Authenticated,
+              user: ctx.user
+            })
           }
           const codeVerifier = await generateCodeVerifier()
           const state = createId()
@@ -235,27 +233,23 @@ export class OAuth2 implements AuthApi {
           cause: [cause, error]
         })
       })
-      const user = await verify<User>(newToken.accessToken, key, {
+      await verify<User>(newToken.accessToken, key, {
         clockTolerance: 30
       }).catch(cause => {
         throw new InvalidCredentialsError('Failed to verify user', {
           cause: [cause, error]
         })
       })
-      const redirectUri = this.#redirectUri
-      return {
-        ...ctx,
-        user,
-        token: newToken.accessToken,
-        transformResponse(response: Response): Response {
-          const result = response.clone()
-          result.headers.append(
-            'set-cookie',
-            tokenToCookie(newToken, redirectUri)
-          )
-          return result
+      // Respond with 401 and instruct the client to retry request
+      throw Response.json(
+        {type: AuthResultType.NeedsRefresh},
+        {
+          status: 401,
+          headers: {
+            'set-cookie': tokenToCookie(newToken, this.#redirectUri)
+          }
         }
-      }
+      )
     }
   }
 }
@@ -287,6 +281,7 @@ function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
       name: COOKIE_REFRESH_TOKEN,
       value: token.refreshToken,
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      // TODO: make sure we can create a separate path to do refreshes
       path: redirectUri.pathname,
       secure: redirectUri.protocol === 'https:',
       httpOnly: true,

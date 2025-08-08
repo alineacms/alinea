@@ -4,7 +4,8 @@ export enum AuthAction {
   Status = 'status',
   Handshake = 'handshake',
   Login = 'login',
-  Logout = 'logout'
+  Logout = 'logout',
+  Refresh = 'refresh'
 }
 
 export class AuthError extends HttpError {

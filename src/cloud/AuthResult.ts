@@ -3,7 +3,8 @@ import type {User} from 'alinea/core/User'
 export enum AuthResultType {
   Authenticated,
   UnAuthenticated,
-  MissingApiKey
+  MissingApiKey,
+  NeedsRefresh
 }
 
 export type AuthResult =

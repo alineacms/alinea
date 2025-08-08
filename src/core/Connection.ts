@@ -70,7 +70,6 @@ export interface RequestContext {
 export interface AuthedContext extends RequestContext {
   user: User
   token: string
-  transformResponse?(response: Response): Response
 }
 
 export interface Revision {
