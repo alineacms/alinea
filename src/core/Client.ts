@@ -1,7 +1,7 @@
 import {AbortController, fetch, type Response} from '@alinea/iso'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
-import {AuthResultType} from 'alinea/cloud/AuthResult'
+import {type AuthResult, AuthResultType} from 'alinea/cloud/AuthResult'
 import type {Config} from './Config.js'
 import type {
   DraftTransport,
@@ -39,6 +39,13 @@ export class Client implements LocalConnection {
 
   get url() {
     return this.#options.url
+  }
+
+  authStatus(): Promise<AuthResult> {
+    return this.#requestJson({
+      action: HandleAction.Auth,
+      auth: 'status'
+    }).then<AuthResult>(this.#failOnHttpError)
   }
 
   previewToken(request: PreviewInfo): Promise<string> {
