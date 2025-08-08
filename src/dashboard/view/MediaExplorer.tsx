@@ -78,45 +78,43 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
       ? nav.root({root: root.name})
       : undefined
   return (
-    <>
-      <Main className={styles.root()} scrollable={false}>
-        {editor && <EntryHeader editable={false} editor={editor} />}
-        <div className={styles.root.inner()}>
-          <HStack style={{flexGrow: 1, minHeight: 0}}>
-            <VStack style={{height: '100%', width: '100%'}}>
-              <header className={styles.root.inner.header()}>
-                <Head>
-                  <title>
-                    {workspace.label}: {String(title)}
-                  </title>
-                </Head>
-                <HStack center gap={18}>
-                  {backLink && (
-                    <IconLink icon={IcRoundArrowBack} href={backLink} />
-                  )}
-                  <h1 className={styles.root.title()}>
-                    <TextLabel label={title} />
-                  </h1>
-                </HStack>
-              </header>
-              <Explorer
-                query={query}
-                type="thumb"
-                virtualized
-                onNavigate={id => navigate(nav.entry({id: id}))}
-              />
-            </VStack>
-          </HStack>
-          <FileUploader
-            destination={{
-              parentId,
-              workspace: workspace.name,
-              root: root.name,
-              directory: workspaceMediaDir(config, workspace.name)
-            }}
-          />
-        </div>
-      </Main>
-    </>
+    <Main className={styles.root()} scrollable={false}>
+      {editor && <EntryHeader editor={editor} />}
+      <div className={styles.root.inner()}>
+        <HStack style={{flexGrow: 1, minHeight: 0}}>
+          <VStack style={{height: '100%', width: '100%'}}>
+            <header className={styles.root.inner.header()}>
+              <Head>
+                <title>
+                  {workspace.label}: {String(title)}
+                </title>
+              </Head>
+              <HStack center gap={18}>
+                {backLink && (
+                  <IconLink icon={IcRoundArrowBack} href={backLink} />
+                )}
+                <h1 className={styles.root.title()}>
+                  <TextLabel label={title} />
+                </h1>
+              </HStack>
+            </header>
+            <Explorer
+              query={query}
+              type="thumb"
+              virtualized
+              onNavigate={id => navigate(nav.entry({id: id}))}
+            />
+          </VStack>
+        </HStack>
+        <FileUploader
+          destination={{
+            parentId,
+            workspace: workspace.name,
+            root: root.name,
+            directory: workspaceMediaDir(config, workspace.name)
+          }}
+        />
+      </div>
+    </Main>
   )
 }

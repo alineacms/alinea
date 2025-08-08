@@ -123,7 +123,7 @@ export class LocalDB extends WriteableGraph {
     return {sha: await this.sync()}
   }
 
-  async prepareUpload(): Promise<UploadResponse> {
+  async prepareUpload(file: string): Promise<UploadResponse> {
     throw new Error('Uploads not supported on local DB')
   }
 }
