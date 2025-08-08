@@ -1,5 +1,6 @@
 import type {Infer} from 'alinea'
 import type {Type} from 'alinea/core/Type'
+import {assert} from 'alinea/core/util/Assert'
 import type {UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import type {EntryFields} from '../EntryFields.js'
@@ -7,7 +8,6 @@ import {Graph} from '../Graph.js'
 import {MediaFile} from '../media/MediaTypes.js'
 import {Policy, WriteablePolicy} from '../Role.js'
 import {getScope} from '../Scope.js'
-import {assert} from '../source/Utils.js'
 import type {Mutation} from './Mutation.js'
 import {
   ArchiveOperation,

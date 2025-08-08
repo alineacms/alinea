@@ -1,8 +1,8 @@
+import {assert} from 'alinea/core/util/Assert'
 import type {Graph} from './Graph.js'
 import {ErrorCode, HttpError} from './HttpError.js'
 import type {HasRoot, HasType, HasWorkspace} from './Internal.js'
 import {type Entity, type Scope, ScopeKey} from './Scope.js'
-import {assert} from './source/Utils.js'
 
 interface PermissionInput {
   workspace?: HasWorkspace
