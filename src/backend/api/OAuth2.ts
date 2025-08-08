@@ -266,7 +266,7 @@ function selectKey(
 }
 
 function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
-  assert(token.refreshToken, 'Missing access token in response')
+  assert(token.refreshToken, 'Missing refresh token in response')
   return router.cookie(
     {
       name: COOKIE_ACCESS_TOKEN,
