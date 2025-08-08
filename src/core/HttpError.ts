@@ -28,6 +28,7 @@ export enum ErrorCode {
 }
 
 export class HttpError extends Error {
+  name = 'HttpError'
   public code: ErrorCode
   constructor(
     code: number | ErrorCode,

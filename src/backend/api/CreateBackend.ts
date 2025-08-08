@@ -1,8 +1,11 @@
+import type {Config} from 'alinea/core/Config'
 import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
+import {assert} from 'alinea/core/util/Assert'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
 import {DatabaseApi} from './DatabaseApi.js'
 import {GithubApi, type GithubOptions} from './GithubApi.js'
+import {OAuth2, type OAuth2Options} from './OAuth2.js'
 
 export type AvailableDrivers =
   | 'd1'
@@ -33,12 +36,14 @@ export type DatabaseDeclaration =
   | DatabaseOption<'@libsql/client'>
 
 export interface BackendOptions {
-  auth(username: string, password: string): boolean | Promise<boolean>
+  auth?(username: string, password: string): boolean | Promise<boolean>
+  oauth2?: OAuth2Options
   database: DatabaseDeclaration
   github: GithubOptions
 }
 
 export function createBackend(
+  config: Config,
   options: BackendOptions
 ): (context: RequestContext) => RemoteConnection {
   const db = driver[options.database.driver](options.database.client)
@@ -53,7 +58,10 @@ export function createBackend(
       ...options.github
     })
     const dbApi = new DatabaseApi(context, {db})
-    const auth = new BasicAuth(context, options.auth)
+    assert(options.oauth2 ?? options.auth, 'No auth method provided')
+    const auth = options.oauth2
+      ? new OAuth2(context, config, options.oauth2)
+      : new BasicAuth(context, options.auth!)
     return createRemote(ghApi, dbApi, auth)
   }
 }

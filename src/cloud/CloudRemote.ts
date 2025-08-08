@@ -1,6 +1,6 @@
 import {Response} from '@alinea/iso'
 import {AuthAction} from 'alinea/backend/Auth'
-import {router} from 'alinea/backend/router/Router'
+import {OAuth2} from 'alinea/backend/api/OAuth2'
 import {Config} from 'alinea/core/Config'
 import type {
   AuthedContext,
@@ -17,47 +17,28 @@ import {
 import type {CommitRequest} from 'alinea/core/db/CommitRequest'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import {HttpError} from 'alinea/core/HttpError'
-import {Outcome, outcome} from 'alinea/core/Outcome'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
-import type {User} from 'alinea/core/User'
 import {base64} from 'alinea/core/util/Encoding'
-import {verify} from 'alinea/core/util/JWT'
 import {Workspace} from 'alinea/core/Workspace'
-import PLazy from 'p-lazy'
 import pkg from '../../package.json'
 import {AuthResultType} from './AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
 
-type JWKS = {keys: Array<JsonWebKey>}
-
-class RemoteUnavailableError extends Error {}
-
-let publicKey = PLazy.from(async function loadPublicKey(
-  retry = 0
-): Promise<JsonWebKey> {
-  try {
-    const res = await fetch(cloudConfig.jwks)
-    if (res.status !== 200) throw new HttpError(res.status, await res.text())
-    const result: JWKS = await res.json()
-    const jwks = result
-    const key = jwks.keys[0]
-    if (!key) throw new HttpError(500, 'No signature key found')
-    return key
-  } catch (error) {
-    if (retry < 3) return loadPublicKey(retry + 1)
-    publicKey = PLazy.from(loadPublicKey)
-    throw new RemoteUnavailableError('Remote unavailable', {cause: error})
-  }
-})
-
-export const COOKIE_NAME = 'alinea.auth'
-
-export class CloudRemote implements RemoteConnection {
+export class CloudRemote extends OAuth2 implements RemoteConnection {
   #context: RequestContext
   #config: Config
 
   constructor(context: RequestContext, config: Config) {
+    const clientId = context.apiKey.split('_')[1]
+    super(context, config, {
+      clientId,
+      clientSecret: context.apiKey,
+      jwksUri: cloudConfig.jwks,
+      tokenEndpoint: cloudConfig.token,
+      authorizationEndpoint: cloudConfig.auth,
+      revocationEndpoint: cloudConfig.revocation
+    })
     this.#context = context
     this.#config = config
   }
@@ -133,14 +114,7 @@ export class CloudRemote implements RemoteConnection {
     const config = this.#config
     const url = new URL(request.url)
     const action = url.searchParams.get('auth')
-    let dashboardPath = config.dashboardFile ?? '/admin.html'
-    if (!dashboardPath.startsWith('/')) dashboardPath = `/${dashboardPath}`
-    const dashboardUrl = new URL(dashboardPath, url)
     switch (action) {
-      // We start by asking our backend whether we have:
-      // - a logged in user => return the user so we can create a session
-      // - no user, but a valid api key => we can redirect to cloud login
-      // - no api key => display a message to setup backend
       case AuthAction.Status: {
         const token = ctx.apiKey?.split('_')[1]
         if (!token)
@@ -148,18 +122,8 @@ export class CloudRemote implements RemoteConnection {
             type: AuthResultType.MissingApiKey,
             setupUrl: cloudConfig.setup
           })
-        const [authed, err] = await outcome(this.verify(request))
-        if (authed)
-          return Response.json({
-            type: AuthResultType.Authenticated,
-            user: authed.user
-          })
-        return Response.json({
-          type: AuthResultType.UnAuthenticated,
-          redirect: `${cloudConfig.auth}?token=${token}`
-        })
+        return super.authenticate(request)
       }
-
       // The cloud server will request a handshake confirmation on this route
       case AuthAction.Handshake: {
         const handShakeId = url.searchParams.get('handshake_id')
@@ -179,6 +143,7 @@ export class CloudRemote implements RemoteConnection {
                 description: 'Can view and edit all pages'
               }
             ],
+            enableOAuth2: true,
             sourceDirectories: Object.values(config.workspaces)
               .flatMap(workspace => {
                 const {source, mediaDir} = Workspace.data(workspace)
@@ -207,81 +172,8 @@ export class CloudRemote implements RemoteConnection {
           )
         return new Response('alinea cloud handshake')
       }
-
-      // If the user followed through to the cloud login page it should
-      // redirect us here with a token
-      case AuthAction.Login: {
-        const token: string | null = url.searchParams.get('token')
-        if (!token) throw new HttpError(400, 'Token required')
-        const user = await verify<User>(token, await publicKey)
-        // Store the token in a cookie and redirect to the dashboard
-        // Todo: add expires and max-age based on token expiration
-        return router.redirect(dashboardUrl.href, {
-          status: 302,
-          headers: {
-            'set-cookie': router.cookie({
-              name: COOKIE_NAME,
-              value: token,
-              domain: dashboardUrl.hostname,
-              path: '/',
-              secure: dashboardUrl.protocol === 'https:',
-              httpOnly: true,
-              sameSite: 'strict'
-            })
-          }
-        })
-      }
-
-      // The logout route unsets our cookies
-      case AuthAction.Logout: {
-        try {
-          const {token} = await this.verify(request)
-          if (token) {
-            await fetch(cloudConfig.logout, {
-              method: 'POST',
-              headers: {authorization: `Bearer ${token}`}
-            })
-          }
-        } catch (e) {
-          console.error(e)
-        }
-
-        return router.redirect(dashboardUrl.href, {
-          status: 302,
-          headers: {
-            'set-cookie': router.cookie({
-              name: COOKIE_NAME,
-              value: '',
-              domain: dashboardUrl.hostname,
-              path: '/',
-              secure: dashboardUrl.protocol === 'https:',
-              httpOnly: true,
-              sameSite: 'strict',
-              expires: new Date(0)
-            })
-          }
-        })
-      }
       default:
-        return new Response('Bad request', {status: 400})
-    }
-  }
-
-  async verify(request: Request) {
-    const ctx = this.#context
-    const cookies = request.headers.get('cookie')
-    if (!cookies) throw new HttpError(401, 'Unauthorized - no cookies')
-    const prefix = `${COOKIE_NAME}=`
-    const token = cookies
-      .split(';')
-      .map(c => c.trim())
-      .find(c => c.startsWith(prefix))
-    if (!token) throw new HttpError(401, `Unauthorized - no ${COOKIE_NAME}`)
-    const authToken = token.slice(prefix.length)
-    return {
-      ...ctx,
-      token: authToken,
-      user: await verify<User>(authToken, await publicKey)
+        return super.authenticate(request)
     }
   }
 
@@ -404,6 +296,11 @@ async function parseOutcome<T>(expected: Promise<Response>): Promise<T> {
     return output.data as T
   }
   if (output.error) {
+    if (typeof output.error === 'object') {
+      const error = new HttpError(response.status, 'Unexpected error')
+      Object.assign(error, output.error)
+      throw error
+    }
     throw new HttpError(response.status, output.error)
   }
   throw new HttpError(

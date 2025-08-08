@@ -1,5 +1,4 @@
 import {Headers} from '@alinea/iso'
-import {COOKIE_NAME} from 'alinea/cloud/CloudRemote'
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import type {Config} from 'alinea/core/Config'
@@ -51,20 +50,27 @@ export class NextCMS<
 
   async #authenticatedClient() {
     const {handlerUrl, apiKey} = await requestContext(this.config)
-    let authCookie: string | undefined
+    const authCookies: Array<[name: string, value: string]> = []
     try {
       const {cookies} = await import('next/headers')
       const cookie = await cookies()
-      const tokenCookie = cookie.get(COOKIE_NAME)
-      if (tokenCookie) authCookie = tokenCookie.value
+      for (const {name, value} of cookie.getAll()) {
+        if (name.startsWith('alinea.')) {
+          authCookies.push([name, value])
+        }
+      }
     } catch {}
     return new Client({
       config: this.config,
       url: handlerUrl.href,
       applyAuth: init => {
         const headers = new Headers(init?.headers)
-        if (authCookie) headers.set('Cookie', `${COOKIE_NAME}=${authCookie}`)
-        else headers.set('Authorization', `Bearer ${apiKey}`)
+        headers.set('Authorization', `Bearer ${apiKey}`)
+        if (authCookies.length) {
+          for (const [name, value] of authCookies) {
+            headers.set('Cookie', `${name}=${value}`)
+          }
+        }
         return {...init, headers}
       }
     })

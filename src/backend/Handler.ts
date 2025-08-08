@@ -9,15 +9,16 @@ import type {
   RequestContext
 } from 'alinea/core/Connection'
 import type {DraftKey} from 'alinea/core/Draft'
+import type {LocalDB} from 'alinea/core/db/LocalDB'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {HttpError} from 'alinea/core/HttpError'
 import {getScope} from 'alinea/core/Scope'
-import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {base64} from 'alinea/core/util/Encoding'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
+import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
 
@@ -95,10 +96,10 @@ export function createHandler({
       const auth = params.get('auth')
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
-      const action = params.get('action') as HandleAction
 
       if (auth) return cnx.authenticate(request)
 
+      const action = params.get('action') as HandleAction
       const expectJson = () => {
         const acceptsJson = request.headers
           .get('accept')
@@ -106,26 +107,28 @@ export function createHandler({
         if (!acceptsJson) throw new Response('Expected JSON', {status: 400})
       }
 
-      // User
-      if (action === HandleAction.User && request.method === 'GET') {
-        expectJson()
-        try {
-          const {user} = await cnx.verify(request)
-          return Response.json(user)
-        } catch {
-          return Response.json(null)
-        }
-      }
-
       try {
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
-      } catch {
-        const authorization = request.headers.get('authorization')
-        const bearer = authorization?.slice('Bearer '.length)
-        if (!context.apiKey) throw new Error('Missing API key')
-        if (bearer !== context.apiKey)
-          throw new Error('Expected matching api key')
+      } catch (cause) {
+        if (cause instanceof MissingCredentialsError) {
+          const authorization = request.headers.get('authorization')
+          const bearer = authorization?.slice('Bearer '.length)
+          if (!context.apiKey)
+            throw new MissingCredentialsError('Missing API key', {cause})
+          if (bearer !== context.apiKey)
+            throw new InvalidCredentialsError('Expected matching api key', {
+              cause
+            })
+        } else {
+          throw cause
+        }
+      }
+
+      // User
+      if (action === HandleAction.User && request.method === 'GET') {
+        expectJson()
+        return Response.json(userCtx ? userCtx.user : null)
       }
 
       const expectUser = () => {
@@ -258,7 +261,7 @@ export function createHandler({
           return new Response('OK', {status: 200})
         }
         if (!cnx.previewUpload) throw new Response('Bad Request', {status: 400})
-        return cnx.previewUpload(entryId)
+        return await cnx.previewUpload(entryId)
       }
 
       // Drafts
@@ -278,15 +281,18 @@ export function createHandler({
         const draft = {...data, draft: base64.parse(data.draft)}
         return Response.json(await cnx.storeDraft(draft))
       }
+
+      return new Response('Bad Request', {status: 400})
     } catch (error) {
       if (error instanceof Response) return error
       console.error(error)
       return Response.json(
-        {success: false, error: String(error)},
+        {
+          success: false,
+          error: error instanceof Error ? error.message : String(error)
+        },
         {status: error instanceof HttpError ? error.code : 500}
       )
     }
-
-    return new Response('Bad Request', {status: 400})
   }
 }
