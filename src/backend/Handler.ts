@@ -120,8 +120,9 @@ export function createHandler({
             throw new InvalidCredentialsError('Expected matching api key', {
               cause
             })
+        } else {
+          throw cause
         }
-        throw cause
       }
 
       // User
