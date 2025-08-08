@@ -1,7 +1,7 @@
 import {AbortController, fetch, type Response} from '@alinea/iso'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
-import {AuthResultType} from 'alinea/cloud/AuthResult.js'
+import {AuthResultType} from 'alinea/cloud/AuthResult'
 import type {Config} from './Config.js'
 import type {
   DraftTransport,
