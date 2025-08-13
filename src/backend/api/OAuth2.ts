@@ -187,6 +187,21 @@ export class OAuth2 implements AuthApi {
             }
           })
         }
+        case AuthAction.Logout: {
+          const cookieHeader = request.headers.get('cookie')
+          if (!cookieHeader) throw new HttpError(400, 'Missing cookies')
+          const cookies = parse(cookieHeader)
+          const accessToken = cookies[COOKIE_ACCESS_TOKEN]
+          const refreshToken = cookies[COOKIE_REFRESH_TOKEN]
+          const token = {accessToken, refreshToken, expiresAt: null}
+          await this.#client.revoke(token).catch(() => {})
+          return new Response(undefined, {
+            status: 204,
+            headers: {
+              'set-cookie': clearCookies(redirectUri)
+            }
+          })
+        }
         default:
           return new Response('Bad request', {status: 400})
       }
@@ -263,6 +278,29 @@ function selectKey(
   const key = jwks.find(k => k.kid === kid)
   if (!key) throw new Error(`No key found for kid: ${kid}`)
   return key
+}
+
+function clearCookies(redirectUri: URL): string {
+  return router.cookie(
+    {
+      name: COOKIE_ACCESS_TOKEN,
+      value: '',
+      expires: new Date(0),
+      path: redirectUri.pathname,
+      secure: redirectUri.protocol === 'https:',
+      httpOnly: true,
+      sameSite: 'strict'
+    },
+    {
+      name: COOKIE_REFRESH_TOKEN,
+      value: '',
+      expires: new Date(0),
+      path: redirectUri.pathname,
+      secure: redirectUri.protocol === 'https:',
+      httpOnly: true,
+      sameSite: 'strict'
+    }
+  )
 }
 
 function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
