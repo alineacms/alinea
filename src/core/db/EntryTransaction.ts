@@ -91,6 +91,14 @@ export class EntryTransaction {
     const existing = index.byId.get(id)
     if (existing) {
       parentId = existing.parentId
+      assert(
+        existing.workspace === workspace,
+        `Cannot create entry with id ${id} in workspace ${workspace}, already exists in ${existing.workspace}`
+      )
+      assert(
+        existing.root === root,
+        `Cannot create entry with id ${id} in root ${root}, already exists in ${existing.root}`
+      )
     }
     let parent: Entry | undefined
     if (parentId) {

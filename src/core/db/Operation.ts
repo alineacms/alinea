@@ -3,16 +3,17 @@ import type {EntryStatus} from '../Entry.js'
 import {HttpError} from '../HttpError.js'
 import {createId} from '../Id.js'
 import type {StoredRow} from '../Infer.js'
-import {Schema} from '../Schema.js'
-import {Type} from '../Type.js'
-import {Workspace} from '../Workspace.js'
 import type {ImagePreviewDetails} from '../media/CreatePreview.js'
 import {isImage} from '../media/IsImage.js'
+import {Schema} from '../Schema.js'
+import {Type} from '../Type.js'
+import {assert} from '../util/Assert.js'
 import {createFileHash} from '../util/ContentHash.js'
 import {workspaceMediaDir} from '../util/EntryFilenames.js'
 import {keys} from '../util/Objects.js'
 import {basename, extname, join, normalize} from '../util/Paths.js'
 import {slugify} from '../util/Slugs.js'
+import {Workspace} from '../Workspace.js'
 import type {Mutation} from './Mutation.js'
 import type {WriteableGraph} from './WriteableGraph.js'
 
@@ -54,9 +55,17 @@ export class CreateOp<Fields> extends Operation {
         status: 'all'
       })
       const workspaces = keys(config.workspaces)
-      const workspace = exists?._workspace ?? op.workspace ?? workspaces[0]
+      const workspace = op.workspace ?? exists?._workspace ?? workspaces[0]
+      assert(
+        workspace in config.workspaces,
+        `Workspace "${workspace}" not found in config`
+      )
       const roots = keys(config.workspaces[workspace])
-      const root = exists?._root ?? op.root ?? roots[0]
+      const root = op.root ?? exists?._root ?? roots[0]
+      assert(
+        root in config.workspaces[workspace],
+        `Root "${root}" not found in workspace "${workspace}"`
+      )
       return [
         {
           op: 'create',

@@ -515,16 +515,24 @@ class EntryNode {
     const type = this.#config.schema[from.type]
     assert(type, `Invalid type: ${from.type} in ${from.filePath}`)
   }
-  get index() {
-    const [entry] = this.byFile.values()
-    return entry.index
-  }
-  get parentId() {
+  get #firstEntry() {
     const [entry] = this.byFile.values()
     if (!entry) {
       throw new Error(`EntryNode has no entries: ${this.id}`)
     }
-    return entry.parentId
+    return entry
+  }
+  get index() {
+    return this.#firstEntry.index
+  }
+  get parentId() {
+    return this.#firstEntry.parentId
+  }
+  get workspace() {
+    return this.#firstEntry.workspace
+  }
+  get root() {
+    return this.#firstEntry.root
   }
   get entries() {
     const result = []
