@@ -15,8 +15,6 @@ export interface CreateMutation {
   op: 'create'
   type: string
   locale: string | null
-  root: string
-  workspace: string
   data: Record<string, unknown>
   parentId?: string | null
   id?: string
@@ -24,6 +22,8 @@ export interface CreateMutation {
   status?: 'draft' | 'archived' | 'published'
   overwrite?: boolean
   fromSeed?: string
+  root?: string
+  workspace?: string
 }
 
 export interface UpdateMutation {

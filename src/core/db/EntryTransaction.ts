@@ -9,7 +9,7 @@ import {
   generateKeyBetween,
   generateNKeysBetween
 } from 'alinea/core/util/FractionalIndexing'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
@@ -82,15 +82,13 @@ export class EntryTransaction {
     status = 'published',
     overwrite = false
   }: Op<CreateMutation>) {
+    const config = this.#config
     const index = this.#index
-    const rootConfig = this.#config.workspaces[workspace][root]
-    assert(rootConfig, 'Invalid root')
-    const i18n = getRoot(rootConfig).i18n
-    if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
-    else assert(locale === null, 'Invalid locale')
     const existing = index.byId.get(id)
     if (existing) {
       parentId = existing.parentId
+      if (!workspace) workspace = existing.workspace
+      if (!root) root = existing.root
       assert(
         existing.workspace === workspace,
         `Cannot create entry with id ${id} in workspace ${workspace}, already exists in ${existing.workspace}`
@@ -100,6 +98,23 @@ export class EntryTransaction {
         `Cannot create entry with id ${id} in root ${root}, already exists in ${existing.root}`
       )
     }
+    const workspaces = keys(config.workspaces)
+    if (!workspace) workspace = workspaces[0]
+    assert(
+      workspace in config.workspaces,
+      `Workspace "${workspace}" not found in config`
+    )
+    const roots = keys(config.workspaces[workspace])
+    if (!root) root = roots[0]
+    assert(
+      root in config.workspaces[workspace],
+      `Root "${root}" not found in workspace "${workspace}"`
+    )
+    const rootConfig = this.#config.workspaces[workspace][root]
+    assert(rootConfig, 'Invalid root')
+    const i18n = getRoot(rootConfig).i18n
+    if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
+    else assert(locale === null, 'Invalid locale')
     let parent: Entry | undefined
     if (parentId) {
       parent = index.findFirst(entry => {

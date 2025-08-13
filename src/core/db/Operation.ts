@@ -50,22 +50,6 @@ export class CreateOp<Fields> extends Operation {
   constructor(op: CreateQuery<Fields>) {
     super(async (db): Promise<Array<Mutation>> => {
       const {config} = db
-      const exists = await db.first({
-        id: this.id,
-        status: 'all'
-      })
-      const workspaces = keys(config.workspaces)
-      const workspace = op.workspace ?? exists?._workspace ?? workspaces[0]
-      assert(
-        workspace in config.workspaces,
-        `Workspace "${workspace}" not found in config`
-      )
-      const roots = keys(config.workspaces[workspace])
-      const root = op.root ?? exists?._root ?? roots[0]
-      assert(
-        root in config.workspaces[workspace],
-        `Root "${root}" not found in workspace "${workspace}"`
-      )
       return [
         {
           op: 'create',
@@ -73,12 +57,12 @@ export class CreateOp<Fields> extends Operation {
           locale: op.locale ?? null,
           parentId: op.parentId ?? null,
           type: typeName(config, op.type),
-          root,
-          workspace,
           data: op.set ?? {},
           insertOrder: op.insertOrder,
           status: op.status,
-          overwrite: op.overwrite
+          overwrite: op.overwrite,
+          root: op.root,
+          workspace: op.workspace
         }
       ]
     })
