@@ -4,9 +4,9 @@ import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
 import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
-import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
+import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
+import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
-import {IcRoundSync} from 'alinea/ui/icons/IcRoundSync'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {type ComponentType, useEffect} from 'react'
@@ -15,10 +15,11 @@ import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
 import {router} from './Routes.js'
 import {sessionAtom} from './atoms/DashboardAtoms.js'
-import {dbMetaAtom, pendingAtom, useDbUpdater} from './atoms/DbAtoms.js'
+import {dbMetaAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
+import {policyTrigger} from './atoms/PolicyAtom.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import type {WorkerDB} from './boot/WorkerDB.js'
 import {useDashboard} from './hook/UseDashboard.js'
@@ -44,7 +45,12 @@ const isEntryAtom = atom(get => {
 
 function AppAuthenticated() {
   useDbUpdater()
-  const {alineaDev, fullPage} = useDashboard()
+  // This is a workaround to make sure we suspend right here until we have a
+  // policy available, but once we do there is no more need to suspend
+  const policy = useAtomValue(policyTrigger)
+  const {alineaDev, config} = useDashboard()
+  const {roles} = config
+  const [session, setSession] = useAtom(sessionAtom)
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
   const {name: workspace, color, roots} = useWorkspace()
@@ -54,7 +60,6 @@ function AppAuthenticated() {
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
   const sha = useAtomValue(dbMetaAtom)
-  const pending = useAtomValue(pendingAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -80,29 +85,33 @@ function AppAuthenticated() {
               }}
             >
               <Sidebar.Nav>
-                {Object.entries(roots).map(([key, root], i) => {
-                  const isSelected = key === currentRoot
-                  const {id, ...location} = entryLocation
-                  const link =
-                    location.root === key
-                      ? nav.entry(location)
-                      : nav.root({
-                          workspace,
-                          root: key,
-                          locale: preferredLanguage
-                        })
-                  const {label, icon} = Root.data(root)
-                  return (
-                    <Sidebar.Nav.Item
-                      key={key}
-                      selected={isEntry && isSelected}
-                      href={link}
-                      aria-label={label}
-                    >
-                      <Icon icon={icon ?? IcRoundDescription} />
-                    </Sidebar.Nav.Item>
-                  )
-                })}
+                {Object.entries(roots)
+                  .filter(([key]) => {
+                    return policy.canRead({workspace, root: key})
+                  })
+                  .map(([key, root], i) => {
+                    const isSelected = key === currentRoot
+                    const {id, ...location} = entryLocation
+                    const link =
+                      location.root === key
+                        ? nav.entry(location)
+                        : nav.root({
+                            workspace,
+                            root: key,
+                            locale: preferredLanguage
+                          })
+                    const {label, icon} = Root.data(root)
+                    return (
+                      <Sidebar.Nav.Item
+                        key={key}
+                        selected={isEntry && isSelected}
+                        href={link}
+                        aria-label={label}
+                      >
+                        <Icon icon={icon ?? IcRoundDescription} />
+                      </Sidebar.Nav.Item>
+                    )
+                  })}
                 {/*<DraftsButton />*/}
                 <SidebarSettings />
               </Sidebar.Nav>
@@ -114,11 +123,33 @@ function AppAuthenticated() {
             </div>
             {alineaDev && (
               <Statusbar.Root>
-                <Statusbar.Status
-                  icon={pending === 0 ? IcRoundCheck : IcRoundSync}
-                >
-                  {pending === 0 ? 'Synced' : 'Saving…'}
-                </Statusbar.Status>
+                {session &&
+                  Object.entries(roles ?? {}).map(([name, role]) => {
+                    const isActive = session.user.roles.includes(name)
+                    return (
+                      <Statusbar.Status
+                        icon={
+                          isActive
+                            ? IcRoundCheckBox
+                            : IcRoundCheckBoxOutlineBlank
+                        }
+                        key={name}
+                        onClick={() => {
+                          setSession({
+                            ...session,
+                            user: {
+                              ...session.user,
+                              roles: isActive
+                                ? session.user.roles.filter(r => r !== name)
+                                : [...session.user.roles, name]
+                            }
+                          })
+                        }}
+                      >
+                        <span>{role.label}</span>
+                      </Statusbar.Status>
+                    )
+                  })}
 
                 {sha ? (
                   <Statusbar.Status icon={MaterialSymbolsDatabase}>
@@ -157,13 +188,13 @@ function AppRoot() {
       </>
     )
   return (
-    <>
+    <ErrorBoundary>
       <SuspenseBoundary name="router" fallback={<Loader absolute />}>
         <RouterProvider router={router}>
           <AppAuthenticated />
         </RouterProvider>
       </SuspenseBoundary>
-    </>
+    </ErrorBoundary>
   )
 }
 

@@ -87,17 +87,6 @@ export class EntryIndex extends EventTarget {
     for (const entry of this.entries) if (filter(entry)) yield entry as Entry<T>
   }
 
-  #parentsOf(entryId: string): Array<string> {
-    const parents = []
-    let node = this.byId.get(entryId)
-    while (node) {
-      parents.push(node.id)
-      if (!node.parentId) break
-      node = this.byId.get(node.parentId)
-    }
-    return parents
-  }
-
   filter({ids, search, condition}: EntryFilter, preview?: Entry): Array<Entry> {
     if (search) {
       const entries = this.filter({ids, condition})
@@ -603,7 +592,6 @@ class EntryNode {
       }
     }
 
-    entry.parentId = parent ? parent.id : null
     versions.set(status, entry)
     this.byFile.set(entry.filePath, entry)
 

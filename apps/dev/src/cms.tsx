@@ -4,9 +4,36 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import * as schema from './schema'
 
+const editor = Config.role('Editor', {
+  permissions(policy) {
+    policy.set(
+      {
+        allow: {all: true}
+      },
+      {
+        workspace: cms.workspaces.secondary,
+        deny: {read: true}
+      },
+      {
+        root: cms.workspaces.primary.pages,
+        deny: {read: true}
+      },
+      {
+        root: cms.workspaces.primary.fields,
+        grant: 'explicit'
+      },
+      {
+        id: '2dgfSWKFaEqxaimsO32A1sR9iMw',
+        allow: {read: true}
+      }
+    )
+  }
+})
+
 export const cms = createCMS({
   enableDrafts: true,
   schema,
+  roles: {editor},
   workspaces: {
     primary: Config.workspace('Primary workspace', {
       mediaDir: 'public',
@@ -41,14 +68,14 @@ export const cms = createCMS({
         }),
         media: Config.media()
       }
-    })
-    /*secondary: Config.workspace('Secondary workspace', {
+    }),
+    secondary: Config.workspace('Secondary workspace', {
       source: 'content/secondary',
       roots: {
         pages: Config.root('Pages', {
           contains: ['Page', 'Folder']
         })
       }
-    })*/
+    })
   }
 })
