@@ -2,8 +2,8 @@ import styler from '@alinea/styler'
 import type {Revision} from 'alinea/core/Connection'
 import {HStack, Icon, Loader, VStack} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
-import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
-import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
+import {IcOutlineCheckCircle} from 'alinea/ui/icons/IcOutlineCheckCircle'
+import {IcOutlineHistory} from 'alinea/ui/icons/IcOutlineHistory'
 import {useAtom, useAtomValue} from 'jotai'
 import {Suspense} from 'react'
 import type {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
@@ -64,9 +64,9 @@ function RevisionItem({editor, revision, isCurrent}: RevisionItemProps) {
     >
       <HStack center gap={10}>
         {isCurrent ? (
-          <Icon icon={IcOutlineRemoveRedEye} size={18} />
+          <Icon icon={IcOutlineCheckCircle} size={18} />
         ) : (
-          <Icon icon={IcRoundPublishedWithChanges} size={18} />
+          <Icon icon={IcOutlineHistory} size={20} />
         )}
         <VStack align="flex-start">
           <b>

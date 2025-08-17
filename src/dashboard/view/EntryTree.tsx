@@ -19,9 +19,9 @@ import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
+import {IcRoundUnpublished} from 'alinea/ui/icons/IcRoundUnpublished'
 import {IcTwotoneDescription} from 'alinea/ui/icons/IcTwotoneDescription'
 import {IcTwotoneFolder} from 'alinea/ui/icons/IcTwotoneFolder'
-import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {useAtomValue} from 'jotai'
 import type {HTMLProps, MutableRefObject, Ref, RefObject} from 'react'
 import {
@@ -183,7 +183,7 @@ const TreeItem = memo(
 
           {!isUntranslated && isUnpublished && (
             <span className={styles.tree.status({unpublished: true})}>
-              <Icon icon={RiFlashlightFill} />
+              <Icon icon={IcRoundUnpublished} />
             </span>
           )}
 
