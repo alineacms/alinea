@@ -432,7 +432,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 <Icon
                   icon={IcRoundLastPage}
                   style={{
-                    transform: `rotate(${isPreviewOpen ? 180 : 0}deg)`
+                    transform: `scaleX(${isPreviewOpen ? 1 : -1})`
                   }}
                 />
               </button>
