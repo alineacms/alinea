@@ -133,6 +133,7 @@ export function createHandler({
 
       const expectUser = () => {
         if (!userCtx) throw new Response('Unauthorized', {status: 401})
+        return userCtx.user
       }
 
       const body = PLazy.from(() => {
@@ -155,7 +156,7 @@ export function createHandler({
         expectJson()
         const raw = await request.text()
         const scope = getScope(cms.config)
-        const query = scope.parse(raw) as GraphQuery
+        const query = scope.parse<GraphQuery>(raw)
         if (!query.preview) {
           await periodicSync(cnx, query.syncInterval)
         } else {
@@ -167,12 +168,13 @@ export function createHandler({
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
-        expectUser()
+        const user = expectUser()
         expectJson()
+        const policy = await local.createPolicy(user.roles)
         const mutations = await body
         const attempt = async (retry = 0) => {
           await local.syncWith(cnx)
-          const request = await local.request(mutations)
+          const request = await local.request(mutations, policy)
           try {
             let {sha} = await cnx.write(request)
             if (sha === request.intoSha) {

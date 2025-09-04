@@ -1,10 +1,13 @@
 import type {Infer} from 'alinea'
 import type {Type} from 'alinea/core/Type'
+import {assert} from 'alinea/core/util/Assert'
 import type {UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import type {EntryFields} from '../EntryFields.js'
-import {Graph, QueryResult} from '../Graph.js'
+import {Graph} from '../Graph.js'
 import {MediaFile} from '../media/MediaTypes.js'
+import {Policy, WriteablePolicy} from '../Role.js'
+import {getScope} from '../Scope.js'
 import type {Mutation} from './Mutation.js'
 import {
   ArchiveOperation,
@@ -105,5 +108,18 @@ export abstract class WriteableGraph extends Graph {
   async commit(...operations: Array<Operation>) {
     const mutations = await Promise.all(operations.map(op => op.task(this)))
     await this.mutate(mutations.flat())
+  }
+
+  async createPolicy(forRoles: Array<string>): Promise<Policy> {
+    const roles = this.config.roles ?? {}
+    let result = Policy.ALLOW_NONE
+    for (const name of forRoles) {
+      const role = roles[name]
+      assert(role, `Role ${name} not found in config`)
+      const policy = new WriteablePolicy(getScope(this.config))
+      await role.permissions(policy, this)
+      result = result.concat(policy)
+    }
+    return result
   }
 }
