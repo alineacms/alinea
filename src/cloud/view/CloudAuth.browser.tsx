@@ -60,11 +60,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
         cnx: client.authenticate(
           options => options,
           () => setSession(undefined)
-        ),
-        async end() {
-          setSession(undefined)
-          location.href = new URL('?auth=logout', clientUrl).href
-        }
+        )
       })
       return null
     case AuthResultType.UnAuthenticated:

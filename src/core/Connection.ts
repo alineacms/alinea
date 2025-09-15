@@ -15,6 +15,10 @@ export interface AuthApi {
 
 export interface RemoteConnection extends Connection, AuthApi {}
 
+export interface BrowserConnection extends Connection {
+  logout?(): Promise<void>
+}
+
 export interface LocalConnection extends Connection {
   mutate(mutations: Array<Mutation>): Promise<{sha: string}>
   previewToken(request: PreviewInfo): Promise<string>

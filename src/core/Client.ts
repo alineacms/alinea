@@ -48,6 +48,16 @@ export class Client implements LocalConnection {
     }).then<AuthResult>(this.#failOnHttpError)
   }
 
+  async logout(): Promise<void> {
+    const endSession = this.#options.unauthorized
+    await this.#request({
+      action: HandleAction.Auth,
+      auth: 'logout'
+    })
+      .then(res => this.#failOnHttpError(res, false))
+      .then(endSession)
+  }
+
   previewToken(request: PreviewInfo): Promise<string> {
     return this.#requestJson(
       {action: HandleAction.PreviewToken},
