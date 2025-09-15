@@ -236,7 +236,7 @@ export class UploadOperation extends Operation {
       const uploadFile: Mutation = {
         op: 'uploadFile',
         url: info.previewUrl,
-        location: info.location
+        location: join(prefix, fileLocation)
       }
       const createEntry: Mutation = {
         op: 'create',
