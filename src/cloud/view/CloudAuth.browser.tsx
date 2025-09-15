@@ -61,8 +61,8 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
           () => setSession(undefined)
         ),
         async end() {
-          location.href = new URL('?auth=logout', clientUrl).href
           setSession(undefined)
+          location.href = new URL('?auth=logout', clientUrl).href
         }
       })
       return null
