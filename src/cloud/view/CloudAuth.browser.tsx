@@ -10,14 +10,14 @@ import {Loader} from 'alinea/ui/Loader'
 import {useQuery} from 'react-query'
 import {AuthResultType} from '../AuthResult.js'
 
-export function CloudAuthView({setSession}: Auth.ViewProps) {
+export function CloudAuthView({session, setSession}: Auth.ViewProps) {
   const {client} = useDashboard()
   if (!(client instanceof Client))
     throw new Error('Cannot authenticate with non http client')
   const clientUrl = new URL(client.url, window.location.href)
-  const {data, isError} = useQuery(['auth.status'], () => client.authStatus(), {
-    keepPreviousData: true
-  })
+  const {data, isError} = useQuery(['auth.status', session], () =>
+    client.authStatus()
+  )
   if (isError)
     return (
       <>
