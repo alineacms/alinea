@@ -151,7 +151,7 @@ function AppRoot() {
         </Head>
         {Auth && (
           <SuspenseBoundary name="auth" fallback={<Loader absolute />}>
-            <Auth session={session} setSession={setSession} />
+            <Auth setSession={setSession} />
           </SuspenseBoundary>
         )}
       </>
