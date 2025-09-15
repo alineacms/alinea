@@ -48,7 +48,7 @@ export class Client implements LocalConnection {
     }).then<AuthResult>(this.#failOnHttpError)
   }
 
-  async logout(): Promise<void> {
+  logout = async (): Promise<void> => {
     const endSession = this.#options.unauthorized
     await this.#request({
       action: HandleAction.Auth,
