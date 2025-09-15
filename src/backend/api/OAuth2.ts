@@ -310,7 +310,7 @@ function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
       name: COOKIE_ACCESS_TOKEN,
       value: token.accessToken,
       expires: token.expiresAt ? new Date(token.expiresAt) : undefined,
-      path: redirectUri.pathname,
+      path: '/',
       secure: redirectUri.protocol === 'https:',
       httpOnly: true,
       sameSite: 'strict'
