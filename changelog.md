@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.5.2]
+- Set access token at the root so `cms.user()` calls work in preview environments
+
 ## [1.5.1]
 - Prefix upload locations with media dir for self-hosted backends
 - Handle logout endpoint for OAuth backends
