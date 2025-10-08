@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@alinea/styler": "^1.0.3",
-    "@alinea/suite": "^0.6.2",
+    "@alinea/suite": "^0.6.3",
     "@biomejs/biome": "^2.1.2",
     "@esbx/reporter": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",

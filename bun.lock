@@ -9,7 +9,7 @@
       },
       "devDependencies": {
         "@alinea/styler": "^1.0.3",
-        "@alinea/suite": "^0.6.2",
+        "@alinea/suite": "^0.6.3",
         "@biomejs/biome": "^2.1.2",
         "@esbx/reporter": "^0.0.20",
         "@esbx/workspaces": "^0.0.20",
@@ -189,7 +189,7 @@
 
     "@alinea/styler": ["@alinea/styler@1.0.3", "", {}, "sha512-u248xCGPYuGAsC2Z83Jyxplcc92Ai1IdeoZiBmr9HY/yGRSLZAxteStg4ErLOi8BnQQ9g72oEbgK3GJ7wU71zA=="],
 
-    "@alinea/suite": ["@alinea/suite@0.6.2", "", {}, "sha512-UEYs2OLLb5DCMVE/0C8AAhP+xjKdOujbfL+NIXtcCW0dyeQqxjRVVFu+JH5VsjNxkx9ZNgId0fU4HkoKRU49CQ=="],
+    "@alinea/suite": ["@alinea/suite@0.6.3", "", {}, "sha512-4oGhbwAGq3rQeuuq9ylmybMkIT1mAl6e+DiiTLwwmwNzHFQiVihishgOpkIGrs0fGVSD4T8jOLyNTuQ30RtVuQ=="],
 
     "@alinea/ui": ["@alinea/ui@workspace:src/ui"],
 
