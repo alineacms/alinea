@@ -152,8 +152,7 @@ export class OAuth2 implements AuthApi {
                   value: codeVerifier,
                   path: redirectUri.pathname,
                   secure: redirectUri.protocol === 'https:',
-                  httpOnly: true,
-                  sameSite: 'strict'
+                  httpOnly: true
                 })
               }
             }
