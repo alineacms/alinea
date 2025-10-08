@@ -285,7 +285,7 @@ function clearCookies(redirectUri: URL): string {
       name: COOKIE_ACCESS_TOKEN,
       value: '',
       expires: new Date(0),
-      path: redirectUri.pathname,
+      path: '/',
       secure: redirectUri.protocol === 'https:',
       httpOnly: true,
       sameSite: 'strict'
