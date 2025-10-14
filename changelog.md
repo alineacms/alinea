@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.5.3]
+- Fix Query.next and Query.previous which were not sorted correctly
+ 
 ## [1.5.2]
 - Set access token at the root so `cms.user()` calls work in preview environments
 
