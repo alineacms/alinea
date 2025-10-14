@@ -19,6 +19,8 @@ jobs:
         with:
           node-version: 22
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.23
       - run: bun install
       - name: Check cycles for server target
         run: bun cycles:server
