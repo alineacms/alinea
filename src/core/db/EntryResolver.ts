@@ -148,7 +148,7 @@ export class EntryResolver implements Resolver {
                 workspace === entry.workspace &&
                 root === entry.root &&
                 parentId === entry.parentId &&
-                index < entry.index &&
+                index > entry.index &&
                 locale === entry.locale
               )
             }
@@ -164,7 +164,7 @@ export class EntryResolver implements Resolver {
                 workspace === entry.workspace &&
                 root === entry.root &&
                 parentId === entry.parentId &&
-                index > entry.index &&
+                index < entry.index &&
                 locale === entry.locale
               )
             }
