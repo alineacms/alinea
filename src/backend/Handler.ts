@@ -107,6 +107,12 @@ export function createHandler({
         if (!acceptsJson) throw new Response('Expected JSON', {status: 400})
       }
 
+      if (action === HandleAction.Upload && request.method === 'GET') {
+        const entryId = url.searchParams.get('entryId')
+        if (entryId && cnx.previewUpload)
+          return await cnx.previewUpload(entryId)
+      }
+
       try {
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
@@ -244,24 +250,19 @@ export function createHandler({
 
       // Media
       if (action === HandleAction.Upload) {
+        expectUser()
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
-          expectUser()
           expectJson()
           return Response.json(
             await cnx.prepareUpload(PrepareBody(await body).filename)
           )
         }
         const isPost = request.method === 'POST'
-        if (isPost) {
-          expectUser()
-          if (!cnx.handleUpload)
-            throw new Response('Bad Request', {status: 400})
+        if (isPost && cnx.handleUpload) {
           await cnx.handleUpload(entryId, await request.blob())
           return new Response('OK', {status: 200})
         }
-        if (!cnx.previewUpload) throw new Response('Bad Request', {status: 400})
-        return await cnx.previewUpload(entryId)
       }
 
       // Drafts
