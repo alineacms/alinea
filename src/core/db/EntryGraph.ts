@@ -8,12 +8,21 @@ import {entryInfo} from '../util/EntryFilenames.js'
 import {keys} from '../util/Objects.js'
 import {Workspace} from '../Workspace.js'
 
-interface Version {
+interface EntryVersion {
   id: string
   type: string
   index: string
   searchableText: string
   data: object
+}
+
+interface EntryLanguage {
+  locale: string | null
+  workspace: string
+  root: string
+  path: string
+  status: string
+  version: EntryVersion
 }
 
 class EntryNode {
@@ -22,28 +31,40 @@ class EntryNode {
   index: string
   workspace: string
   root: string
-  constructor(workspace: string, root: string, version: Version) {
-    this.id = version.id
-    this.type = version.type
-    this.index = version.index
-    this.workspace = workspace
-    this.root = root
+  constructor(languages: Array<EntryLanguage>) {
+    const [first, ...rest] = languages
+    this.id = first.version.id
+    this.type = first.version.type
+    this.index = first.version.index
+    this.workspace = first.workspace
+    this.root = first.root
+    for (const language of rest) {
+      if (language.version.type !== this.type) throw new Error(`err: type`)
+      if (language.version.index !== this.index) throw new Error(`err: index`)
+      if (language.root !== this.root) throw new Error(`err: root`)
+      if (language.workspace !== this.workspace)
+        throw new Error(`err: workspace`)
+    }
   }
 }
 
 class EntryGraph {
   #config: Config
-  #singleWorkspace: string | undefined
   #nodes: Map<string, EntryNode> = new Map()
-  constructor(
-    config: Config,
-    entries: Array<readonly [file: string, version: Version]>
-  ) {
+  constructor(config: Config, versions: Map<string, EntryVersion>) {
     this.#config = config
+    const nodes = new Map<string, EntryNode>()
     const singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
-    for (const [file, version] of entries) {
+    const filesById = new Map<string, Array<string>>()
+    for (const [file, version] of versions) {
+      const files = filesById.get(version.id) ?? []
+      files.push(file)
+      filesById.set(version.id, files)
+    }
+    const mkEntryLanguage = (file: string): EntryLanguage => {
+      const version = versions.get(file)!
       const segments = file.toLowerCase().split('/')
       const baseName = segments.at(-1)
       assert(baseName)
@@ -51,9 +72,12 @@ class EntryGraph {
       assert(lastDot !== -1)
       const fileName = baseName.slice(0, lastDot)
       const [path, status] = entryInfo(fileName)
+      const parentDir = segments.slice(0, -1).join('/')
+      const parent = mkNode(parentDir)
+      const childrenDir = `${parentDir}/${path}`
       let segmentIndex = 0
       const workspace = singleWorkspace ?? segments[segmentIndex++]
-      const workspaceConfig = this.#config.workspaces[workspace]
+      const workspaceConfig = config.workspaces[workspace]
       assert(workspaceConfig, `Invalid workspace: ${workspace} in ${file}`)
       const root = segments[segmentIndex++]
       const rootConfig = workspaceConfig[root]
@@ -69,7 +93,23 @@ class EntryGraph {
           }
         }
       }
-      let node: EntryNode
+      return {
+        locale,
+        workspace,
+        root,
+        path,
+        status,
+        version
+      }
+    }
+    const mkNode = (id: string) => {
+      if (nodes.has(id)) return nodes.get(id)!
+      const files = filesById.get(id)!
+      const node = new EntryNode(files.map(file => mkEntryLanguage(file)))
+      nodes.set(id, node)
+      return node
+
+      /*let node: EntryNode
       if (!this.#nodes.has(version.id)) {
         node = new EntryNode(workspace, root, version)
         this.#nodes.set(version.id, node)
@@ -80,11 +120,15 @@ class EntryGraph {
         if (node.root !== root) throw new Error(`err: root`)
         if (node.workspace !== workspace) throw new Error(`err: workspace`)
       }
+      return node*/
+    }
+    for (const [id] of filesById) {
+      mkNode(id)
     }
   }
 }
 
-const versions = new Map<string, Version>()
+const versions = new Map<string, EntryVersion>()
 
 export async function buildGraph(config: Config, source: Source) {
   const decoder = new TextDecoder()
@@ -116,5 +160,5 @@ export async function buildGraph(config: Config, source: Source) {
     if (!version) throw new Error(`Missing version for sha: ${sha}`)
     return [file, version] as const
   })
-  return new EntryGraph(config, entries)
+  return new EntryGraph(config, new Map(entries))
 }
