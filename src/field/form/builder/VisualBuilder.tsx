@@ -5,23 +5,13 @@ import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {list} from 'alinea/field/list/ListField'
-import {number} from 'alinea/field/number'
 import {path} from 'alinea/field/path'
 import {text} from 'alinea/field/text/TextField'
 import {VStack} from 'alinea/ui/Stack'
 import {useAtomValue} from 'jotai'
 import {useEffect} from 'react'
 import type {FormDefinition} from '../FormField'
-
-const TextField = type('Text', {
-  fields: {
-    title: text('Label', {required: true, width: 0.5}),
-    key: path('Key', {required: true, width: 0.5}),
-    placeholer: text('Placeholder'),
-    defaultValue: text('Default value'),
-    maxLength: number('Max Length')
-  }
-})
+import {addTextFieldToRJSF, FormTextField} from './text/FormTextField.js'
 
 const EmailField = type('Email', {
   fields: {
@@ -30,12 +20,55 @@ const EmailField = type('Email', {
   }
 })
 
+const baseSchema = {
+  TextField: FormTextField,
+  EmailField
+}
+
+const ArrayField = type('Array', {
+  fields: {
+    title: text('Label', {required: true, width: 0.5}),
+    key: path('Key', {required: true, width: 0.5}),
+    items: list('Fields', {
+      schema: baseSchema
+    })
+  }
+})
+
+const OneOfField = type('OneOf', {
+  fields: {
+    option1: list('Option1', {
+      schema: baseSchema
+    }),
+    option2: list('Option2', {
+      schema: baseSchema
+    })
+  }
+})
+
+const TwoColumns = type('TwoColumns', {
+  fields: {
+    left: list('Left', {
+      inline: true,
+      width: 0.5,
+      schema: baseSchema
+    }),
+    right: list('Right', {
+      inline: true,
+      width: 0.5,
+      schema: baseSchema
+    })
+  }
+})
+
 const fields = type('Fields', {
   fields: {
     list: list('List', {
       schema: {
-        TextField,
-        EmailField
+        ...baseSchema,
+        ArrayField,
+        OneOfField,
+        TwoColumns
       }
     })
   }
@@ -113,16 +146,7 @@ export function VisualBuilder({
 
     for (const row of data) {
       if (row._type === 'TextField') {
-        const key = row.key || row._id
-        newSchema.properties![key] = {
-          type: 'string',
-          title: row.title || '[No label]',
-          default: row.defaultValue
-        }
-        newUiSchema[key] = {
-          'ui:placeholder': row.placeholer || '',
-          'ui:maxLength': row.maxLength ? Number(row.maxLength) : undefined
-        }
+        addTextFieldToRJSF(newSchema, newUiSchema, row)
       }
       if (row._type === 'EmailField') {
         const key = row.key || row._id

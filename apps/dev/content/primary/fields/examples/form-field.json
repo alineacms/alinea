@@ -16,6 +16,11 @@
           "title": "Lastname",
           "default": ""
         },
+        "lastname2": {
+          "type": "string",
+          "title": "Lastname 22",
+          "default": ""
+        },
         "email": {
           "type": "string",
           "format": "email",
@@ -29,6 +34,9 @@
       },
       "lastname": {
         "ui:placeholder": "Merckx"
+      },
+      "lastname2": {
+        "ui:placeholder": ""
       }
     }
   },

@@ -29,7 +29,6 @@ export function FormInput({field}: FormInputProps) {
   return (
     <div>
       <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
-        Tabs:{' '}
         {tabs.map(t => (
           <button
             type="button"
@@ -80,7 +79,7 @@ function Preview({
     <Form
       schema={formSchema}
       uiSchema={uiSchema}
-      validator={validator as any}
+      validator={validator}
       onChange={log('changed')}
       onSubmit={log('submitted')}
       onError={log('errors')}
