@@ -1,3 +1,4 @@
+import type {EntryStatus} from 'alinea/core.js'
 import {Config} from '../Config.js'
 import {parseRecord} from '../EntryRecord.js'
 import {getRoot} from '../Internal.js'
@@ -6,9 +7,8 @@ import {Type} from '../Type.js'
 import {assert} from '../util/Assert.js'
 import {entryInfo} from '../util/EntryFilenames.js'
 import {keys} from '../util/Objects.js'
-import {Workspace} from '../Workspace.js'
 
-interface EntryVersion {
+interface EntryVersionData {
   id: string
   type: string
   index: string
@@ -16,44 +16,70 @@ interface EntryVersion {
   data: object
 }
 
-interface EntryLanguage {
+interface EntryVersion {
   locale: string | null
   workspace: string
   root: string
   path: string
-  status: string
-  version: EntryVersion
+  status: EntryStatus
+  version: EntryVersionData
+  parentId: string | null
+  parentDir: string
+  childrenDir: string
 }
 
-class EntryNode {
-  id: string
-  type: string
-  index: string
-  workspace: string
-  root: string
-  constructor(languages: Array<EntryLanguage>) {
+class EntryLanguage extends Map<EntryStatus, EntryVersion> {
+  readonly language: string | null
+  readonly parentDir: string
+  readonly selfDir: string
+  constructor(versions: Array<EntryVersion>) {
+    super(versions.map(phase => [phase.status, phase] as const))
+    this.language = versions[0].locale
+    this.parentDir = versions[0].parentDir
+    this.selfDir = versions[0].childrenDir
+  }
+}
+
+class EntryNode extends Map<string | null, EntryLanguage> {
+  readonly id: string
+  readonly type: string
+  readonly index: string
+  readonly workspace: string
+  readonly root: string
+  readonly parentId: string | null
+  constructor(languages: Array<EntryVersion>) {
+    super()
     const [first, ...rest] = languages
     this.id = first.version.id
     this.type = first.version.type
     this.index = first.version.index
     this.workspace = first.workspace
     this.root = first.root
+    this.parentId = first.parentId
     for (const language of rest) {
       if (language.version.type !== this.type) throw new Error(`err: type`)
       if (language.version.index !== this.index) throw new Error(`err: index`)
       if (language.root !== this.root) throw new Error(`err: root`)
       if (language.workspace !== this.workspace)
         throw new Error(`err: workspace`)
+      if (language.parentId !== this.parentId) throw new Error(`err: parentId`)
+    }
+    const byLanguage = new Map<string | null, Array<EntryVersion>>()
+    for (const language of languages) {
+      const collection = byLanguage.get(language.locale) ?? []
+      collection.push(language)
+      byLanguage.set(language.locale, collection)
+    }
+    for (const [locale, versions] of byLanguage) {
+      this.set(locale, new EntryLanguage(versions))
     }
   }
 }
 
 class EntryGraph {
-  #config: Config
-  #nodes: Map<string, EntryNode> = new Map()
-  constructor(config: Config, versions: Map<string, EntryVersion>) {
-    this.#config = config
-    const nodes = new Map<string, EntryNode>()
+  constructor(config: Config, versions: Map<string, EntryVersionData>) {
+    const byId = new Map<string, EntryNode>()
+    const byDir = new Map<string, string>()
     const singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
@@ -62,8 +88,10 @@ class EntryGraph {
       const files = filesById.get(version.id) ?? []
       files.push(file)
       filesById.set(version.id, files)
+      const dir = getNodePath(file)
+      byDir.set(dir, version.id)
     }
-    const mkEntryLanguage = (file: string): EntryLanguage => {
+    const mkEntryLanguage = (file: string): EntryVersion => {
       const version = versions.get(file)!
       const segments = file.toLowerCase().split('/')
       const baseName = segments.at(-1)
@@ -73,7 +101,7 @@ class EntryGraph {
       const fileName = baseName.slice(0, lastDot)
       const [path, status] = entryInfo(fileName)
       const parentDir = segments.slice(0, -1).join('/')
-      const parent = mkNode(parentDir)
+      const parentId = byDir.get(parentDir) ?? null
       const childrenDir = `${parentDir}/${path}`
       let segmentIndex = 0
       const workspace = singleWorkspace ?? segments[segmentIndex++]
@@ -99,28 +127,18 @@ class EntryGraph {
         root,
         path,
         status,
-        version
+        version,
+        parentId,
+        parentDir,
+        childrenDir
       }
     }
-    const mkNode = (id: string) => {
-      if (nodes.has(id)) return nodes.get(id)!
+    const mkNode = (id: string): EntryNode => {
+      if (byId.has(id)) return byId.get(id)!
       const files = filesById.get(id)!
       const node = new EntryNode(files.map(file => mkEntryLanguage(file)))
-      nodes.set(id, node)
+      byId.set(id, node)
       return node
-
-      /*let node: EntryNode
-      if (!this.#nodes.has(version.id)) {
-        node = new EntryNode(workspace, root, version)
-        this.#nodes.set(version.id, node)
-      } else {
-        node = this.#nodes.get(version.id)!
-        if (node.type !== version.type) throw new Error(`err: type`)
-        if (node.index !== version.index) throw new Error(`err: index`)
-        if (node.root !== root) throw new Error(`err: root`)
-        if (node.workspace !== workspace) throw new Error(`err: workspace`)
-      }
-      return node*/
     }
     for (const [id] of filesById) {
       mkNode(id)
@@ -128,7 +146,7 @@ class EntryGraph {
   }
 }
 
-const versions = new Map<string, EntryVersion>()
+const versions = new Map<string, EntryVersionData>()
 
 export async function buildGraph(config: Config, source: Source) {
   const decoder = new TextDecoder()
@@ -161,4 +179,15 @@ export async function buildGraph(config: Config, source: Source) {
     return [file, version] as const
   })
   return new EntryGraph(config, new Map(entries))
+}
+
+function getNodePath(filePath: string) {
+  const lastSlash = filePath.lastIndexOf('/')
+  const dir = filePath.slice(0, lastSlash)
+  const name = filePath.slice(lastSlash + 1)
+  const lastDot = name.lastIndexOf('.')
+  let base = lastDot === -1 ? name : name.slice(0, lastDot)
+  if (base.endsWith('.archived')) base = base.slice(0, -'.archived'.length)
+  if (base.endsWith('.draft')) base = base.slice(0, -'.draft'.length)
+  return `${dir}/${base}`
 }
