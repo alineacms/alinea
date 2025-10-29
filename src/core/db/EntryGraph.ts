@@ -1,16 +1,23 @@
+import * as paths from 'alinea/core/util/Paths'
 import MiniSearch from 'minisearch'
 import {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
 import {createRecord, EntryRecord, parseRecord} from '../EntryRecord.js'
+import {createId} from '../Id.js'
 import {getRoot} from '../Internal.js'
+import {Page} from '../Page.js'
+import {Schema} from '../Schema.js'
 import type {ChangesBatch} from '../source/Change.js'
+import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {compareStrings} from '../source/Utils.js'
 import {Type} from '../Type.js'
 import {assert} from '../util/Assert.js'
 import {entryInfo, entryUrl} from '../util/EntryFilenames.js'
-import {keys} from '../util/Objects.js'
+import {entries, keys} from '../util/Objects.js'
+import {slugify} from '../util/Slugs.js'
+import {sourceChanges} from './CommitRequest.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {IndexEvent} from './IndexEvent.js'
 
@@ -73,8 +80,14 @@ class EntryCollection extends Map<string | null, EntryLanguage> {
     const [first, ...rest] = versions
     this.type = first.type
     for (const version of rest) {
-      if (version.type !== first.type) throw new Error(`err: type`)
-      if (version.index !== first.index) throw new Error(`err: index`)
+      assert(
+        version.type === first.type,
+        `Mismatched types for ${first.id} "${version.type}" <> "${first.type}"`
+      )
+      assert(
+        version.index === first.index,
+        `Mismatched index for ${first.id} "${version.index}" <> "${first.index}"`
+      )
       if (version.root !== first.root) throw new Error(`err: root`)
       if (version.seeded !== first.seeded) throw new Error(`err: seeded`)
       if (version.workspace !== first.workspace)
@@ -263,7 +276,15 @@ class EntryGraph {
   }
 
   byId(id: string) {
+    this.validate()
     return this.#byId.get(id)
+  }
+
+  byDir(dir: string) {
+    this.validate()
+    const id = this.#byDir.get(dir)
+    if (!id) return undefined
+    return this.byId(id)
   }
 
   withChanges(batch: ChangesBatch) {
@@ -272,7 +293,7 @@ class EntryGraph {
     for (const change of batch.changes) {
       switch (change.op) {
         case 'delete':
-          versions.delete(change.path)
+          assert(versions.delete(change.path), 'Missing version to delete')
           break
         case 'add':
           if (!change.contents) throw new Error('Missing contents')
@@ -327,7 +348,7 @@ class EntryGraph {
   }
 
   #mkEntry(filePath: string): EntryVersion {
-    const data = this.#versionData.get(filePath)!
+    const version = this.#versionData.get(filePath)!
     const segments = filePath.toLowerCase().split('/')
     const baseName = segments.at(-1)
     assert(baseName)
@@ -361,7 +382,7 @@ class EntryGraph {
     const level = segments.length - levelOffset - 1
 
     return {
-      ...data,
+      ...version,
       locale,
       workspace,
       root,
@@ -472,10 +493,16 @@ export class EntryIndex extends EventTarget {
   initialSync: ReadonlyTree | undefined
   #graph: EntryGraph
   #config: Config
+  #seeds: Map<string, Seed>
+  #singleWorkspace: string | undefined
   constructor(config: Config) {
     super()
     this.#config = config
     this.#graph = new EntryGraph(config, new Map())
+    this.#seeds = entrySeeds(config)
+    this.#singleWorkspace = Config.multipleWorkspaces(config)
+      ? undefined
+      : keys(config.workspaces)[0]
   }
   get sha() {
     return this.tree.sha
@@ -520,9 +547,12 @@ export class EntryIndex extends EventTarget {
     return sha
   }
   async indexChanges(batch: ChangesBatch) {
-    const {changes} = batch
+    const {fromSha, changes} = batch
+    if (fromSha !== this.tree.sha)
+      throw new ShaMismatchError(fromSha, this.tree.sha)
     if (changes.length === 0) return this.tree.sha
     this.#graph = this.#graph.withChanges(batch)
+    this.#graph.validate()
     const updatedTree = await this.tree.withChanges(batch)
     const sha = updatedTree.sha
     this.tree = updatedTree
@@ -530,17 +560,141 @@ export class EntryIndex extends EventTarget {
     this.dispatchEvent(new IndexEvent({op: 'index', sha}))
     return sha
   }
+  async seed(source: Source) {
+    for (const [nodePath, seed] of this.#seeds) {
+      const {
+        type,
+        workspace,
+        root,
+        locale,
+        data: {path}
+      } = seed
+      const node = this.#graph.byDir(nodePath)
+      if (node) {
+        assert(node.type === type, `Type mismatch in ${nodePath}`)
+      } else {
+        // Find by seeded path
+        const pathSegments = nodePath
+          .split('/')
+          .slice(this.#singleWorkspace ? 1 : 2)
+        const seedPath = `/${pathSegments.join('/')}.json`
+        const node = this.findFirst(entry => {
+          return (
+            entry.seeded === seedPath &&
+            entry.root === root &&
+            entry.workspace === workspace
+          )
+        })
+        if (node) {
+          assert(node.type === type, `Type mismatch in ${nodePath}`)
+        } else {
+          const parentPath = paths.dirname(nodePath)
+          const parentNode = this.#graph.byDir(getNodePath(parentPath))
+          let id = createId()
+          if (locale) {
+            const level = pathSegments.length - 2
+            const pathEnd = `/${pathSegments.slice(1).join('/')}.json`
+            const from = this.findFirst(entry => {
+              return (
+                entry.locale !== locale &&
+                entry.root === root &&
+                entry.workspace === workspace &&
+                entry.path === path &&
+                entry.level === level &&
+                entry.parentId === (parentNode?.id ?? null) &&
+                entry.seeded !== null &&
+                entry.seeded.endsWith(pathEnd)
+              )
+            })
+            if (from) id = from.id
+          }
+          const tx = await this.transaction(source)
+          const request = await tx
+            .create({
+              id,
+              parentId: parentNode?.id ?? null,
+              locale,
+              type,
+              workspace,
+              root,
+              fromSeed: seedPath,
+              data: {path}
+            })
+            .toRequest()
+          const contentChanges = sourceChanges(request)
+          if (contentChanges.changes.length) {
+            await source.applyChanges(contentChanges)
+            await this.indexChanges(contentChanges)
+          }
+        }
+      }
+    }
+  }
   byId(id: string): EntryNode | undefined {
     return this.#graph.byId(id)
   }
   async fix(source: Source) {
     throw new Error('Not implemented')
   }
-  async seed(source: Source) {
-    throw new Error('Not implemented')
-  }
   async transaction(source: Source) {
     const from = await source.getTree()
     return new EntryTransaction(this.#config, this, source, from)
   }
+}
+
+interface Seed {
+  seedId: string
+  type: string
+  workspace: string
+  root: string
+  locale: string | null
+  data: Record<string, any>
+}
+
+function entrySeeds(config: Config): Map<string, Seed> {
+  const result = new Map<string, Seed>()
+  const typeNames = Schema.typeNames(config.schema)
+  for (const [workspaceName, workspace] of entries(config.workspaces)) {
+    for (const [rootName, root] of entries(workspace)) {
+      const {i18n} = getRoot(root)
+      const locales = i18n?.locales ?? [null]
+      for (const locale of locales) {
+        const pages: Array<readonly [string, Page]> = entries(root)
+        while (pages.length > 0) {
+          const [pagePath, page] = pages.shift()!
+          const path = pagePath.split('/').map(slugify).join('/')
+          if (!Page.isPage(page)) continue
+          const {type, fields = {}} = Page.data(page)
+          const filePath = Config.filePath(
+            config,
+            workspaceName,
+            rootName,
+            locale,
+            `${path}.json`
+          )
+          const nodePath = getNodePath(filePath)
+          const typeName = typeNames.get(type)
+          if (!typeName) continue
+          result.set(nodePath, {
+            seedId: `${rootName}/${path}`,
+            type: typeName,
+            locale: locale,
+            workspace: workspaceName,
+            root: rootName,
+            data: {
+              ...fields,
+              path: path.split('/').pop(),
+              title: fields.title ?? path
+            }
+          })
+          const children = entries(page).map(
+            ([childPath, child]) =>
+              [`${path}/${childPath}`, child as Page] as const
+          )
+          pages.push(...children)
+        }
+      }
+    }
+  }
+  return result
 }
