@@ -6,7 +6,7 @@ import {cms} from '../../test/cms.js'
 import {DemoRecipe} from '../../test/schema/DemoRecipe.js'
 import {DemoRecipes} from '../../test/schema/DemoRecipes.js'
 import {FSSource} from '../source/FSSource.js'
-import {EntryIndex} from './EntryIndex.js'
+import {EntryIndex} from './EntryGraph.js'
 import {EntryResolver} from './EntryResolver.js'
 
 const test = suite(import.meta)

@@ -1,10 +1,9 @@
 import MiniSearch from 'minisearch'
 import {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
-import {parseRecord} from '../EntryRecord.js'
+import {createRecord, EntryRecord, parseRecord} from '../EntryRecord.js'
 import {getRoot} from '../Internal.js'
 import type {ChangesBatch} from '../source/Change.js'
-import {changedSource} from '../source/MemorySource.js'
 import type {Source} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {compareStrings} from '../source/Utils.js'
@@ -77,6 +76,7 @@ class EntryCollection extends Map<string | null, EntryLanguage> {
       if (version.type !== first.type) throw new Error(`err: type`)
       if (version.index !== first.index) throw new Error(`err: index`)
       if (version.root !== first.root) throw new Error(`err: root`)
+      if (version.seeded !== first.seeded) throw new Error(`err: seeded`)
       if (version.workspace !== first.workspace)
         throw new Error(`err: workspace`)
     }
@@ -98,7 +98,9 @@ class EntryLanguageNode {
   active: EntryVersion
   url: string
   locale: string | null
+  path: string
   #entries: Array<Entry> | undefined
+  readonly seeded: string | null = null
   constructor(
     private node: EntryNode,
     private language: EntryLanguage
@@ -125,12 +127,22 @@ class EntryLanguageNode {
     this.main = main
     assert(active, `EntryLanguageNode missing active version`)
     this.active = active
-    this.url = entryUrl(node.type, {
+    this.url = entryUrl(node.entryType, {
       status: main.status,
       path: main.path,
       parentPaths: this.parentPaths,
       locale: main.locale
     })
+    this.path = this.main.path
+    this.seeded = this.main.seeded
+  }
+
+  [Symbol.iterator]() {
+    return this.language[Symbol.iterator]()
+  }
+
+  has(status: EntryStatus) {
+    return this.language.has(status)
   }
 
   get parentPaths() {
@@ -176,9 +188,12 @@ class EntryNode extends Map<string | null, EntryLanguageNode> {
   readonly index: string
   readonly parentId: string | null
   readonly parents: Array<string>
+  readonly workspace: string
+  readonly root: string
+  readonly type: string
 
   constructor(
-    public type: Type,
+    public entryType: Type,
     public parent: EntryNode | null,
     collection: EntryCollection
   ) {
@@ -186,6 +201,9 @@ class EntryNode extends Map<string | null, EntryLanguageNode> {
     const first = collection.versions[0]
     this.id = first.id
     this.index = first.index
+    this.workspace = first.workspace
+    this.root = first.root
+    this.type = first.type
     this.parentId = parent ? parent.id : null
     this.parents = []
     let current = parent
@@ -242,6 +260,10 @@ class EntryGraph {
       const dir = getNodePath(file)
       this.#byDir.set(dir, version.id)
     }
+  }
+
+  byId(id: string) {
+    return this.#byId.get(id)
   }
 
   withChanges(batch: ChangesBatch) {
@@ -458,6 +480,26 @@ export class EntryIndex extends EventTarget {
   get sha() {
     return this.tree.sha
   }
+  filter(filter: EntryFilter, preview?: Entry): Iterable<Entry> {
+    if (preview) {
+      // Todo: cache this by entry
+      const updatedGraph = this.#graph.withChanges({
+        fromSha: this.tree.sha,
+        changes: [
+          {
+            op: 'add',
+            path: preview.filePath,
+            sha: preview.fileHash,
+            contents: new TextEncoder().encode(
+              JSON.stringify(createRecord(preview, preview.status), null, 2)
+            )
+          }
+        ]
+      })
+      return updatedGraph.filter(filter)
+    }
+    return this.#graph.filter(filter)
+  }
   findFirst<T extends Record<string, unknown>>(
     filter: (entry: Entry) => boolean
   ): Entry<T> | undefined {
@@ -484,8 +526,18 @@ export class EntryIndex extends EventTarget {
     const updatedTree = await this.tree.withChanges(batch)
     const sha = updatedTree.sha
     this.tree = updatedTree
+    // Todo: dispatch each changed entry
     this.dispatchEvent(new IndexEvent({op: 'index', sha}))
     return sha
+  }
+  byId(id: string): EntryNode | undefined {
+    return this.#graph.byId(id)
+  }
+  async fix(source: Source) {
+    throw new Error('Not implemented')
+  }
+  async seed(source: Source) {
+    throw new Error('Not implemented')
   }
   async transaction(source: Source) {
     const from = await source.getTree()

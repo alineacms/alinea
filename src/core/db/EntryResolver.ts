@@ -31,7 +31,7 @@ import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
 import {compareStrings} from '../source/Utils.js'
 import {assert} from '../util/Assert.js'
-import type {EntryFilter, EntryIndex} from './EntryIndex.js'
+import type {EntryFilter, EntryIndex} from './EntryGraph.js'
 import {LinkResolver} from './LinkResolver.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))
@@ -141,8 +141,8 @@ export class EntryResolver implements Resolver {
         }
       }
       case 'next': {
-        const [next] = this.index
-          .filter({
+        const [next] = Array.from(
+          this.index.filter({
             condition({workspace, root, parentId, index, locale}) {
               return (
                 workspace === entry.workspace &&
@@ -153,12 +153,12 @@ export class EntryResolver implements Resolver {
               )
             }
           })
-          .sort((a, b) => compareStrings(a.index, b.index))
+        ).sort((a, b) => compareStrings(a.index, b.index))
         return {ids: next ? [next.id] : []}
       }
       case 'previous': {
-        const [previous] = this.index
-          .filter({
+        const [previous] = Array.from(
+          this.index.filter({
             condition({workspace, root, parentId, index, locale}) {
               return (
                 workspace === entry.workspace &&
@@ -169,7 +169,7 @@ export class EntryResolver implements Resolver {
               )
             }
           })
-          .sort((a, b) => compareStrings(b.index, a.index))
+        ).sort((a, b) => compareStrings(b.index, a.index))
         return {ids: previous ? [previous.id] : []}
       }
       case 'siblings': {
@@ -347,7 +347,7 @@ export class EntryResolver implements Resolver {
           ? (entry: Entry) => preCondition(entry) && condition(entry)
           : (condition ?? preCondition)
     }
-    let entries = this.index.filter(filter, ctx.preview)
+    let entries = Array.from(this.index.filter(filter, ctx.preview))
     if (groupBy) {
       assert(!Array.isArray(groupBy), 'groupBy must be a single field')
       const groups = new Map<unknown, Entry>()
