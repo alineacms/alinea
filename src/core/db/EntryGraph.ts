@@ -3,12 +3,17 @@ import {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
 import {parseRecord} from '../EntryRecord.js'
 import {getRoot} from '../Internal.js'
+import type {ChangesBatch} from '../source/Change.js'
+import {changedSource} from '../source/MemorySource.js'
 import type {Source} from '../source/Source.js'
+import {ReadonlyTree} from '../source/Tree.js'
 import {compareStrings} from '../source/Utils.js'
 import {Type} from '../Type.js'
 import {assert} from '../util/Assert.js'
 import {entryInfo, entryUrl} from '../util/EntryFilenames.js'
 import {keys} from '../util/Objects.js'
+import {EntryTransaction} from './EntryTransaction.js'
+import {IndexEvent} from './IndexEvent.js'
 
 export interface EntryFilter {
   ids?: ReadonlyArray<string>
@@ -239,6 +244,23 @@ class EntryGraph {
     }
   }
 
+  withChanges(batch: ChangesBatch) {
+    const parser = getParser(this.#config)
+    const versions = new Map(this.#versionData)
+    for (const change of batch.changes) {
+      switch (change.op) {
+        case 'delete':
+          versions.delete(change.path)
+          break
+        case 'add':
+          if (!change.contents) throw new Error('Missing contents')
+          versions.set(change.path, parser.parse(change.sha, change.contents))
+          break
+      }
+    }
+    return new EntryGraph(this.#config, versions)
+  }
+
   validate() {
     // If we were able to build the nodes without errors, we're good
     assert(this.nodes)
@@ -351,39 +373,61 @@ class EntryGraph {
   }
 }
 
-const dataCache = new Map<string, EntryVersionData>()
+class VersionParser extends Map<string, EntryVersionData> {
+  #config: Config
+  constructor(config: Config) {
+    super()
+    this.#config = config
+  }
+  parse(sha: string, blob: Uint8Array): EntryVersionData {
+    if (super.has(sha)) return super.get(sha)!
+    const version = parseVersion(this.#config, sha, blob)
+    this.set(sha, version)
+    return version
+  }
+}
+
+class ParserCache extends WeakMap<Config, VersionParser> {
+  get = (config: Config) => {
+    if (!this.has(config)) this.set(config, new VersionParser(config))
+    return super.get(config)!
+  }
+}
+
+const getParser = new ParserCache().get
+
+function parseVersion(config: Config, sha: string, blob: Uint8Array) {
+  const decoder = new TextDecoder()
+  const text = decoder.decode(blob)
+  const raw = JSON.parse(text)
+  const {meta, data} = parseRecord(raw)
+  const entryType = config.schema[meta.type]
+  const searchableText = Type.searchableText(entryType, data)
+  return {
+    id: meta.id,
+    type: meta.type,
+    index: meta.index,
+    data,
+    title: data.title as string,
+    searchableText,
+    seeded: meta.seeded ?? null,
+    rowHash: sha,
+    fileHash: sha
+  }
+}
 
 export async function buildGraph(config: Config, source: Source) {
-  const decoder = new TextDecoder()
   const tree = await source.getTree()
   const index = tree.index()
+  const parser = getParser(config)
   const contents = source.getBlobs(
-    [...index.values()].filter(sha => !dataCache.has(sha))
+    [...index.values()].filter(sha => !parser.has(sha))
   )
   for await (const [sha, blob] of contents) {
-    try {
-      const text = decoder.decode(blob)
-      const raw = JSON.parse(text)
-      const {meta, data} = parseRecord(raw)
-      const entryType = config.schema[meta.type]
-      const searchableText = Type.searchableText(entryType, data)
-      dataCache.set(sha, {
-        id: meta.id,
-        type: meta.type,
-        index: meta.index,
-        data,
-        title: data.title as string,
-        searchableText,
-        seeded: meta.seeded ?? null,
-        rowHash: sha,
-        fileHash: sha
-      })
-    } catch (error) {
-      console.warn(`Failed to parse JSON: ${error}`)
-    }
+    parser.parse(sha, blob)
   }
   const entries = [...index].map(([file, sha]) => {
-    const version = dataCache.get(sha)
+    const version = parser.get(sha)
     if (!version) throw new Error(`Missing version for sha: ${sha}`)
     return [file, version] as const
   })
@@ -399,4 +443,52 @@ function getNodePath(filePath: string) {
   if (base.endsWith('.archived')) base = base.slice(0, -'.archived'.length)
   if (base.endsWith('.draft')) base = base.slice(0, -'.draft'.length)
   return `${dir}/${base}`
+}
+
+export class EntryIndex extends EventTarget {
+  tree = ReadonlyTree.EMPTY
+  initialSync: ReadonlyTree | undefined
+  #graph: EntryGraph
+  #config: Config
+  constructor(config: Config) {
+    super()
+    this.#config = config
+    this.#graph = new EntryGraph(config, new Map())
+  }
+  get sha() {
+    return this.tree.sha
+  }
+  findFirst<T extends Record<string, unknown>>(
+    filter: (entry: Entry) => boolean
+  ): Entry<T> | undefined {
+    const [entry] = this.findMany(filter)
+    return entry as Entry<T> | undefined
+  }
+  findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
+    return this.#graph.filter({condition: filter})
+  }
+  async syncWith(source: Source): Promise<string> {
+    const tree = await source.getTree()
+    if (!this.initialSync) this.initialSync = tree
+    const sha = tree.sha
+    const graph = await buildGraph(this.#config, source)
+    this.tree = tree
+    this.#graph = graph
+    this.dispatchEvent(new IndexEvent({op: 'index', sha}))
+    return sha
+  }
+  async indexChanges(batch: ChangesBatch) {
+    const {changes} = batch
+    if (changes.length === 0) return this.tree.sha
+    this.#graph = this.#graph.withChanges(batch)
+    const updatedTree = await this.tree.withChanges(batch)
+    const sha = updatedTree.sha
+    this.tree = updatedTree
+    this.dispatchEvent(new IndexEvent({op: 'index', sha}))
+    return sha
+  }
+  async transaction(source: Source) {
+    const from = await source.getTree()
+    return new EntryTransaction(this.#config, this, source, from)
+  }
 }
