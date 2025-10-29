@@ -81,7 +81,7 @@ test('take/skip', async () => {
   test.is(lastOne.length, 1)
 })
 
-test('parents order', async () => {
+test.only('parents order', async () => {
   const db = await createDb()
   const parent1 = await db.create({
     type: Page,

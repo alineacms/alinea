@@ -88,10 +88,14 @@ class EntryCollection extends Map<string | null, EntryLanguage> {
         version.index === first.index,
         `Mismatched index for ${first.id} "${version.index}" <> "${first.index}"`
       )
-      if (version.root !== first.root) throw new Error(`err: root`)
-      if (version.seeded !== first.seeded) throw new Error(`err: seeded`)
-      if (version.workspace !== first.workspace)
-        throw new Error(`err: workspace`)
+      assert(
+        version.root === first.root,
+        `Mismatched root for ${first.id} "${version.root}" <> "${first.root}"`
+      )
+      assert(
+        version.workspace === first.workspace,
+        `Mismatched workspace for ${first.id} "${version.workspace}" <> "${first.workspace}"`
+      )
     }
     const byLanguage = new Map<string | null, Array<EntryVersion>>()
     for (const language of versions) {
@@ -177,6 +181,7 @@ class EntryLanguageNode {
     ).map((version): Entry => {
       return {
         ...version,
+        status: this.inheritedStatus ?? version.status,
         parentId: this.node.parentId,
         parents: this.node.parents,
         url: this.url,
@@ -219,10 +224,17 @@ class EntryNode extends Map<string | null, EntryLanguageNode> {
     this.type = first.type
     this.parentId = parent ? parent.id : null
     this.parents = []
-    let current = parent
-    while (current) {
-      this.parents.unshift(current.id)
-      current = current.parentId ? parent : null
+    let next = parent
+    while (next) {
+      if (this.parents.includes(next.id)) {
+        console.log(this, parent, next)
+      }
+      assert(
+        !this.parents.includes(next.id),
+        `Cyclic parent reference: ${this.parents}`
+      )
+      this.parents.unshift(next.id)
+      next = next.parent
     }
     for (const [locale, language] of collection) {
       this.set(locale, new EntryLanguageNode(this, language))
@@ -249,10 +261,16 @@ class EntryGraph {
   #nodes: Array<EntryNode> | undefined
   #singleWorkspace: string | undefined
   #search: MiniSearch
+  #seeds: Map<string, Seed>
 
-  constructor(config: Config, versionData: Map<string, EntryVersionData>) {
+  constructor(
+    config: Config,
+    versionData: Map<string, EntryVersionData>,
+    seeds: Map<string, Seed>
+  ) {
     this.#config = config
     this.#versionData = versionData
+    this.#seeds = seeds
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
@@ -301,7 +319,7 @@ class EntryGraph {
           break
       }
     }
-    return new EntryGraph(this.#config, versions)
+    return new EntryGraph(this.#config, versions, this.#seeds)
   }
 
   validate() {
@@ -349,7 +367,7 @@ class EntryGraph {
 
   #mkEntry(filePath: string): EntryVersion {
     const version = this.#versionData.get(filePath)!
-    const segments = filePath.toLowerCase().split('/')
+    const segments = filePath.split('/')
     const baseName = segments.at(-1)
     assert(baseName)
     const lastDot = baseName.lastIndexOf('.')
@@ -358,23 +376,26 @@ class EntryGraph {
     const [path, status] = entryInfo(fileName)
     const parentDir = segments.slice(0, -1).join('/')
     const childrenDir = `${parentDir}/${path}`
+    const seed = this.#seeds.get(childrenDir)
+    const data: Record<string, unknown> = {path, ...version.data, ...seed?.data}
     let segmentIndex = 0
     const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
     const workspaceConfig = this.#config.workspaces[workspace]
     assert(workspaceConfig, `Invalid workspace: ${workspace} in ${filePath}`)
     const root = segments[segmentIndex++]
     const rootConfig = workspaceConfig[root]
-    assert(rootConfig, `Invalid root: ${root}`)
+    assert(rootConfig, `Invalid root: ${root} for workspace ${workspace}`)
     const i18n = getRoot(rootConfig).i18n
     let locale: string | null = null
     if (i18n) {
-      locale = segments[segmentIndex++]
+      locale = segments[segmentIndex++].toLowerCase()
       for (const localeCandidate of i18n.locales) {
         if (locale === localeCandidate.toLowerCase()) {
           locale = localeCandidate
           break
         }
       }
+      assert(i18n.locales.includes(locale), `Invalid locale: ${locale}`)
     }
     let levelOffset = 1
     if (!this.#singleWorkspace) levelOffset += 1
@@ -383,6 +404,8 @@ class EntryGraph {
 
     return {
       ...version,
+      data,
+      title: data.title as string,
       locale,
       workspace,
       root,
@@ -406,7 +429,10 @@ class EntryGraph {
     const parentId = this.#byDir.get(first.parentDir) ?? null
     for (const language of rest) {
       const otherParentId = this.#byDir.get(language.parentDir) ?? null
-      if (parentId !== otherParentId) throw new Error(`err: parentId`)
+      assert(
+        parentId === otherParentId,
+        `Expected matching parents for entries "${first.selfDir}" and "${language.selfDir}"`
+      )
     }
     const parent = parentId ? this.#mkNode(parentId) : null
     const type = this.#config.schema[collection.type]
@@ -474,7 +500,7 @@ export async function buildGraph(config: Config, source: Source) {
     if (!version) throw new Error(`Missing version for sha: ${sha}`)
     return [file, version] as const
   })
-  return new EntryGraph(config, new Map(entries))
+  return new EntryGraph(config, new Map(entries), entrySeeds(config))
 }
 
 function getNodePath(filePath: string) {
@@ -498,8 +524,8 @@ export class EntryIndex extends EventTarget {
   constructor(config: Config) {
     super()
     this.#config = config
-    this.#graph = new EntryGraph(config, new Map())
     this.#seeds = entrySeeds(config)
+    this.#graph = new EntryGraph(config, new Map(), this.#seeds)
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]

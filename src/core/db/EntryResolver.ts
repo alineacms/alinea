@@ -143,13 +143,13 @@ export class EntryResolver implements Resolver {
       case 'next': {
         const [next] = Array.from(
           this.index.filter({
-            condition({workspace, root, parentId, index, locale}) {
+            locales: [entry.locale],
+            condition({workspace, root, parentId, index}) {
               return (
                 workspace === entry.workspace &&
                 root === entry.root &&
                 parentId === entry.parentId &&
-                index > entry.index &&
-                locale === entry.locale
+                index > entry.index
               )
             }
           })
@@ -159,13 +159,13 @@ export class EntryResolver implements Resolver {
       case 'previous': {
         const [previous] = Array.from(
           this.index.filter({
-            condition({workspace, root, parentId, index, locale}) {
+            locales: [entry.locale],
+            condition({workspace, root, parentId, index}) {
               return (
                 workspace === entry.workspace &&
                 root === entry.root &&
                 parentId === entry.parentId &&
-                index < entry.index &&
-                locale === entry.locale
+                index < entry.index
               )
             }
           })
@@ -174,12 +174,12 @@ export class EntryResolver implements Resolver {
       }
       case 'siblings': {
         return {
-          condition({workspace, root, parentId, id, locale}) {
+          locales: [entry.locale],
+          condition({workspace, root, parentId, id}) {
             return (
               workspace === entry.workspace &&
               root === entry.root &&
               parentId === entry.parentId &&
-              locale === entry.locale &&
               (query.includeSelf ? true : id !== entry.id)
             )
           }
@@ -209,9 +209,7 @@ export class EntryResolver implements Resolver {
         const depth = query?.depth ?? Number.POSITIVE_INFINITY
         return {
           ids: entry.parents.slice(-depth),
-          condition({locale}) {
-            return locale === entry.locale
-          }
+          locales: [entry.locale]
         }
       }
       case 'entryMultiple': {
@@ -306,6 +304,7 @@ export class EntryResolver implements Resolver {
         : undefined
     return {
       ids,
+      locales: locale !== undefined ? [locale] : undefined,
       condition(entry: Entry) {
         if (!checkStatus(entry)) return false
         if (checkLocation && !checkLocation(entry)) return false
@@ -336,8 +335,9 @@ export class EntryResolver implements Resolver {
     query: GraphQuery<Projection>,
     preFilter?: EntryFilter
   ) {
+    const edge = <EdgeQuery>query
     const {skip, take, orderBy, groupBy, search, count} = query
-    const {ids, condition} = this.condition(ctx, <EdgeQuery>query)
+    const {ids, condition} = this.condition(ctx, edge)
     const preCondition = preFilter?.condition
     const filter = {
       ids: ids ?? preFilter?.ids,
@@ -380,6 +380,8 @@ export class EntryResolver implements Resolver {
         }
         return 0
       })
+    } else if (edge.edge === 'parents') {
+      entries.sort((a, b) => a.level - b.level)
     }
     if (skip) entries.splice(0, skip)
     if (take) entries.splice(take)

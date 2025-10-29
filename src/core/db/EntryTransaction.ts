@@ -215,7 +215,7 @@ export class EntryTransaction {
     const seeds = existing?.get(locale)
     const seeded = fromSeed ?? seeds?.seeded ?? null
     const record = createRecord(
-      {id, type, index: newIndex, path, seeded, data},
+      {id, type, index: newIndex, path, seeded, data, title},
       status
     )
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
