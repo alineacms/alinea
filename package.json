@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "dev": "run-p dev:run",
-    "web": "run-p dev:check web:run",
+    "demo": "run-p dev:check demo:run",
     "tag": "bun tag.js",
     "bump": "bun bump.js",
     "stories": "ladle serve",
@@ -21,11 +21,9 @@
     "type": "tsc --diagnostics",
     "dev:check": "tsc -w",
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev",
-    "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev",
+    "demo:run": "bun build.ts --watch -- node dev.js --dir apps/demo -- bun run --cwd apps/demo dev",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
-    "prepublishOnly": "bun run build",
-    "forms": "run-p forms:build forms:watch",
-    "forms:build": "bun bun build.ts --watch -- node dev.js --dir apps/demo-forms"
+    "prepublishOnly": "bun run build"
   },
   "sideEffects": false,
   "typesVersions": {
@@ -40,6 +38,7 @@
   ],
   "workspaces": [
     "apps/dev",
+    "apps/demo",
     "src/adapter",
     "src/backend",
     "src/cli",
@@ -62,9 +61,10 @@
     "@biomejs/biome": "^2.1.2",
     "@esbx/reporter": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",
-    "@rjsf/core": "^5.24.13",
-    "@rjsf/utils": "^5.24.13",
-    "@rjsf/validator-ajv8": "^5.24.13",
+    "@rjsf/core": "6.0.0-beta.22",
+    "@rjsf/utils": "6.0.0-beta.22",
+    "@rjsf/validator-ajv8": "6.0.0-beta.22",
+    "@rjsf/shadcn": "6.0.0-beta.22",
     "@ladle/react": "^4.1.2",
     "@types/bun": "^1.1.17",
     "@types/fs-extra": "^11.0.1",

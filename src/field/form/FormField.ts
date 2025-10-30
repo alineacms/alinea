@@ -6,7 +6,7 @@ import type {ReactNode} from 'react'
 
 export type FormDefinition = {
   schema: RJSFSchema
-  ui: UiSchema<any, RJSFSchema>
+  ui: any
 }
 
 /** Optional settings to configure a text field */

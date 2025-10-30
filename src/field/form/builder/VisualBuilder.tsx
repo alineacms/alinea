@@ -85,7 +85,7 @@ function formSchemasToListData(
   const result: ListDataType = []
 
   for (const key of Object.keys(formSchema?.properties || {})) {
-    const fieldSchema = formSchema.properties?.[key]
+    const fieldSchema = formSchema.properties?.[key] as any
     const uiFieldSchema = uiSchema?.[key] || {}
 
     if (!fieldSchema) continue
