@@ -14,10 +14,8 @@ test('sync', async () => {
 
 test('re-sync', async () => {
   const graph = await buildGraph(cms.config, source)
-  graph.validate()
 })
 
 test('re-re-sync', async () => {
   const graph = await buildGraph(cms.config, source)
-  graph.validate()
 })

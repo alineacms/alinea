@@ -2,12 +2,13 @@ import * as paths from 'alinea/core/util/Paths'
 import MiniSearch from 'minisearch'
 import {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
-import {createRecord, EntryRecord, parseRecord} from '../EntryRecord.js'
+import {createRecord, parseRecord} from '../EntryRecord.js'
 import {createId} from '../Id.js'
 import {getRoot} from '../Internal.js'
 import {Page} from '../Page.js'
 import {Schema} from '../Schema.js'
 import type {ChangesBatch} from '../source/Change.js'
+import {hashBlob} from '../source/GitUtils.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
@@ -63,12 +64,22 @@ class EntryLanguage extends Map<EntryStatus, EntryVersion> {
     this.selfDir = versions[0].childrenDir
     const [first, ...rest] = versions
     for (const version of rest) {
-      if (version.locale !== first.locale) throw new Error(`err: locale`)
-      if (version.parentDir !== first.parentDir)
-        throw new Error(`err: parentDir`)
-      if (version.childrenDir !== first.childrenDir)
-        throw new Error(`err: childrenDir`)
-      if (version.path !== first.path) throw new Error(`err: path`)
+      assert(
+        version.locale === first.locale,
+        `Mismatched locales for ${first.id} "${version.locale}" <> "${first.locale}"`
+      )
+      assert(
+        version.parentDir === first.parentDir,
+        `Mismatched parentDirs for ${first.id} "${version.parentDir}" <> "${first.parentDir}"`
+      )
+      assert(
+        version.childrenDir === first.childrenDir,
+        `Mismatched selfDirs for ${first.id} "${version.childrenDir}" <> "${first.childrenDir}"`
+      )
+      assert(
+        version.path === first.path,
+        `Mismatched paths for ${first.id} "${version.path}" <> "${first.path}"`
+      )
     }
   }
 }
@@ -258,7 +269,7 @@ class EntryGraph {
   #filesById = new Map<string, Array<string>>()
   #byId = new Map<string, EntryNode>()
   #byDir = new Map<string, string>()
-  #nodes: Array<EntryNode> | undefined
+  nodes: Array<EntryNode>
   #singleWorkspace: string | undefined
   #search: MiniSearch
   #seeds: Map<string, Seed>
@@ -291,15 +302,17 @@ class EntryGraph {
       const dir = getNodePath(file)
       this.#byDir.set(dir, version.id)
     }
+
+    this.nodes = [...this.#filesById.keys()]
+      .map(file => this.#mkNode(file))
+      .sort((a, b) => compareStrings(a.index, b.index))
   }
 
   byId(id: string) {
-    this.validate()
     return this.#byId.get(id)
   }
 
   byDir(dir: string) {
-    this.validate()
     const id = this.#byDir.get(dir)
     if (!id) return undefined
     return this.byId(id)
@@ -314,17 +327,12 @@ class EntryGraph {
           assert(versions.delete(change.path), 'Missing version to delete')
           break
         case 'add':
-          if (!change.contents) throw new Error('Missing contents')
+          assert(change.contents, 'Missing contents')
           versions.set(change.path, parser.parse(change.sha, change.contents))
           break
       }
     }
     return new EntryGraph(this.#config, versions, this.#seeds)
-  }
-
-  validate() {
-    // If we were able to build the nodes without errors, we're good
-    assert(this.nodes)
   }
 
   *filter({search, ...filter}: EntryFilter): Generator<Entry> {
@@ -355,14 +363,6 @@ class EntryGraph {
       searchableText: entry.searchableText,
       entry
     })
-  }
-
-  get nodes() {
-    if (this.#nodes) return this.#nodes
-    this.#nodes = [...this.#filesById.keys()]
-      .map(file => this.#mkNode(file))
-      .sort((a, b) => compareStrings(a.index, b.index))
-    return this.#nodes
   }
 
   #mkEntry(filePath: string): EntryVersion {
@@ -450,7 +450,23 @@ class VersionParser extends Map<string, EntryVersionData> {
   }
   parse(sha: string, blob: Uint8Array): EntryVersionData {
     if (super.has(sha)) return super.get(sha)!
-    const version = parseVersion(this.#config, sha, blob)
+    const decoder = new TextDecoder()
+    const text = decoder.decode(blob)
+    const raw = JSON.parse(text)
+    const {meta, data} = parseRecord(raw)
+    const entryType = this.#config.schema[meta.type]
+    const searchableText = Type.searchableText(entryType, data)
+    const version = {
+      id: meta.id,
+      type: meta.type,
+      index: meta.index,
+      data,
+      title: data.title as string,
+      searchableText,
+      seeded: meta.seeded ?? null,
+      rowHash: sha,
+      fileHash: sha
+    }
     this.set(sha, version)
     return version
   }
@@ -465,26 +481,6 @@ class ParserCache extends WeakMap<Config, VersionParser> {
 
 const getParser = new ParserCache().get
 
-function parseVersion(config: Config, sha: string, blob: Uint8Array) {
-  const decoder = new TextDecoder()
-  const text = decoder.decode(blob)
-  const raw = JSON.parse(text)
-  const {meta, data} = parseRecord(raw)
-  const entryType = config.schema[meta.type]
-  const searchableText = Type.searchableText(entryType, data)
-  return {
-    id: meta.id,
-    type: meta.type,
-    index: meta.index,
-    data,
-    title: data.title as string,
-    searchableText,
-    seeded: meta.seeded ?? null,
-    rowHash: sha,
-    fileHash: sha
-  }
-}
-
 export async function buildGraph(config: Config, source: Source) {
   const tree = await source.getTree()
   const index = tree.index()
@@ -497,7 +493,7 @@ export async function buildGraph(config: Config, source: Source) {
   }
   const entries = [...index].map(([file, sha]) => {
     const version = parser.get(sha)
-    if (!version) throw new Error(`Missing version for sha: ${sha}`)
+    assert(version, `Missing version for sha: ${sha}`)
     return [file, version] as const
   })
   return new EntryGraph(config, new Map(entries), entrySeeds(config))
@@ -578,7 +574,6 @@ export class EntryIndex extends EventTarget {
       throw new ShaMismatchError(fromSha, this.tree.sha)
     if (changes.length === 0) return this.tree.sha
     this.#graph = this.#graph.withChanges(batch)
-    this.#graph.validate()
     const updatedTree = await this.tree.withChanges(batch)
     const sha = updatedTree.sha
     this.tree = updatedTree
@@ -620,17 +615,19 @@ export class EntryIndex extends EventTarget {
           if (locale) {
             const level = pathSegments.length - 2
             const pathEnd = `/${pathSegments.slice(1).join('/')}.json`
-            const from = this.findFirst(entry => {
-              return (
-                entry.locale !== locale &&
-                entry.root === root &&
-                entry.workspace === workspace &&
-                entry.path === path &&
-                entry.level === level &&
-                entry.parentId === (parentNode?.id ?? null) &&
-                entry.seeded !== null &&
-                entry.seeded.endsWith(pathEnd)
-              )
+            const [from] = this.filter({
+              locales: [locale],
+              condition(entry) {
+                return (
+                  entry.root === root &&
+                  entry.workspace === workspace &&
+                  entry.path === path &&
+                  entry.level === level &&
+                  entry.parentId === (parentNode?.id ?? null) &&
+                  entry.seeded !== null &&
+                  entry.seeded.endsWith(pathEnd)
+                )
+              }
             })
             if (from) id = from.id
           }
@@ -660,7 +657,26 @@ export class EntryIndex extends EventTarget {
     return this.#graph.byId(id)
   }
   async fix(source: Source) {
-    throw new Error('Not implemented')
+    const tree = await source.getTree()
+    const tx = await this.transaction(source)
+    for (const entry of this.filter({})) {
+      const record = createRecord(entry, entry.status)
+      const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
+      const sha = await hashBlob(contents)
+      const leaf = tree.getLeaf(entry.filePath)
+      if (sha !== leaf.sha) {
+        tx.update({
+          id: entry.id,
+          set: entry.data,
+          locale: entry.locale,
+          status: entry.status
+        })
+      }
+    }
+    if (tx.empty) return
+    const request = await tx.toRequest()
+    const contentChanges = sourceChanges(request)
+    if (contentChanges.changes.length) await source.applyChanges(contentChanges)
   }
   async transaction(source: Source) {
     const from = await source.getTree()
