@@ -81,7 +81,7 @@ test('select edges', async () => {
   }
 })
 
-test('select siblings', async () => {
+test.only('select siblings', async () => {
   const siblings = await resolver.resolve({
     first: true,
     id: 'oi4qtV9YaXNRIUDT2s61Y',

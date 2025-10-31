@@ -30,6 +30,7 @@ export interface EntryFilter {
 
 export interface EntryCondition {
   search?: string
+  nodes?: Iterable<EntryNode>
   node?(node: EntryNode): boolean
   language?(language: EntryLanguageNode): boolean
   entry?(entry: Entry): boolean
@@ -41,6 +42,7 @@ export function combineConditions(
 ): EntryCondition {
   return {
     search: a.search ?? b.search,
+    nodes: a.nodes ?? b.nodes,
     node(node) {
       return (a.node ? a.node(node) : true) && (b.node ? b.node(node) : true)
     },
@@ -241,7 +243,7 @@ class EntryLanguageNode {
   }
 }
 
-class EntryNode extends Map<string | null, EntryLanguageNode> {
+export class EntryNode extends Map<string | null, EntryLanguageNode> {
   readonly id: string
   readonly index: string
   readonly parentId: string | null
@@ -295,7 +297,7 @@ class EntryNode extends Map<string | null, EntryLanguageNode> {
 const SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u
 const DIACRITIC = /\p{Diacritic}/gu
 
-class EntryGraph {
+export class EntryGraph {
   #config: Config
   #versionData: Map<string, EntryVersionData>
   #filesById = new Map<string, Array<string>>()
@@ -382,7 +384,7 @@ class EntryGraph {
         })
         .map(result => result.entry)
     }
-    for (const node of this.nodes) {
+    for (const node of filter.nodes ?? this.nodes) {
       if (filter.node && !filter.node(node)) continue
       yield* node.filter(filter)
     }
@@ -532,7 +534,7 @@ function getNodePath(filePath: string) {
 export class EntryIndex extends EventTarget {
   tree = ReadonlyTree.EMPTY
   initialSync: ReadonlyTree | undefined
-  #graph: EntryGraph
+  graph: EntryGraph
   #config: Config
   #seeds: Map<string, Seed>
   #singleWorkspace: string | undefined
@@ -540,7 +542,7 @@ export class EntryIndex extends EventTarget {
     super()
     this.#config = config
     this.#seeds = entrySeeds(config)
-    this.#graph = new EntryGraph(config, new Map(), this.#seeds)
+    this.graph = new EntryGraph(config, new Map(), this.#seeds)
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
@@ -548,25 +550,8 @@ export class EntryIndex extends EventTarget {
   get sha() {
     return this.tree.sha
   }
-  filter(filter: EntryCondition, preview?: Entry): Iterable<Entry> {
-    if (preview) {
-      // Todo: cache this by entry
-      const updatedGraph = this.#graph.withChanges({
-        fromSha: this.tree.sha,
-        changes: [
-          {
-            op: 'add',
-            path: preview.filePath,
-            sha: preview.fileHash,
-            contents: new TextEncoder().encode(
-              JSON.stringify(createRecord(preview, preview.status), null, 2)
-            )
-          }
-        ]
-      })
-      return updatedGraph.filter(filter)
-    }
-    return this.#graph.filter(filter)
+  filter(filter: EntryCondition): Iterable<Entry> {
+    return this.graph.filter(filter)
   }
   findFirst<T extends Record<string, unknown>>(
     filter: (entry: Entry) => boolean
@@ -575,7 +560,7 @@ export class EntryIndex extends EventTarget {
     return entry as Entry<T> | undefined
   }
   findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
-    return this.#graph.filter({entry: filter})
+    return this.graph.filter({entry: filter})
   }
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
@@ -593,15 +578,15 @@ export class EntryIndex extends EventTarget {
     for (const change of changes) {
       if (change.op !== 'delete') continue
       const nodePath = getNodePath(change.path)
-      const node = this.#graph.byDir(nodePath)
+      const node = this.graph.byDir(nodePath)
       assert(node, `Missing node for deleted path: ${change.path}`)
       changed.add(node)
     }
-    this.#graph = this.#graph.withChanges(batch)
+    this.graph = this.graph.withChanges(batch)
     for (const change of changes) {
       if (change.op !== 'add') continue
       const nodePath = getNodePath(change.path)
-      const node = this.#graph.byDir(nodePath)
+      const node = this.graph.byDir(nodePath)
       assert(node, `Missing node for added path: ${change.path}`)
       changed.add(node)
     }
@@ -628,7 +613,7 @@ export class EntryIndex extends EventTarget {
         locale,
         data: {path}
       } = seed
-      const node = this.#graph.byDir(nodePath)
+      const node = this.graph.byDir(nodePath)
       if (node) {
         assert(node.type === type, `Type mismatch in ${nodePath}`)
       } else {
@@ -648,7 +633,7 @@ export class EntryIndex extends EventTarget {
           assert(node.type === type, `Type mismatch in ${nodePath}`)
         } else {
           const parentPath = paths.dirname(nodePath)
-          const parentNode = this.#graph.byDir(getNodePath(parentPath))
+          const parentNode = this.graph.byDir(getNodePath(parentPath))
           let id = createId()
           if (locale) {
             const level = pathSegments.length - 2
@@ -694,7 +679,7 @@ export class EntryIndex extends EventTarget {
     }
   }
   byId(id: string): EntryNode | undefined {
-    return this.#graph.byId(id)
+    return this.graph.byId(id)
   }
   async fix(source: Source) {
     const tree = await source.getTree()

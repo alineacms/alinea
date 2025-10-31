@@ -29,13 +29,16 @@ import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
+import {createRecord} from '../EntryRecord.js'
 import {compareStrings} from '../source/Utils.js'
 import {assert} from '../util/Assert.js'
 import {
   combineConditions,
   type EntryCondition,
   type EntryFilter,
-  type EntryIndex
+  type EntryGraph,
+  type EntryIndex,
+  type EntryNode
 } from './EntryIndex.js'
 import {LinkResolver} from './LinkResolver.js'
 
@@ -135,67 +138,63 @@ export class EntryResolver implements Resolver {
     )
   }
 
-  sourceFilter(entry: Entry, query: EdgeQuery): EntryCondition {
+  sourceFilter(
+    ctx: ResolveContext,
+    entry: Entry,
+    query: EdgeQuery
+  ): EntryCondition {
     switch (query.edge) {
       case 'parent': {
         return {
-          node: node => (entry.parentId ? node.id === entry.parentId : false),
+          nodes: entry.parentId ? [ctx.graph.byId(entry.parentId)!] : [],
           language: lang => lang.locale === entry.locale
         }
       }
       case 'next': {
+        const parent = entry.parentId
+          ? ctx.graph.byId(entry.parentId)
+          : undefined
         const [next] = Array.from(
-          this.index.filter({
-            node(node) {
-              return (
-                node.workspace === entry.workspace &&
-                node.root === entry.root &&
-                node.parentId === entry.parentId &&
-                node.index > entry.index
-              )
-            },
-            language(lang) {
-              return lang.locale === entry.locale
-            }
+          ctx.graph.filter({
+            nodes: parent?.children() ?? [],
+            node: node => node.index > entry.index,
+            language: lang => lang.locale === entry.locale
           })
         ).sort((a, b) => compareStrings(a.index, b.index))
-        return {
-          node: entry => (next ? entry.id === next.id : false)
-        }
+        const nodes: Array<EntryNode> = next ? [ctx.graph.byId(next.id)!] : []
+        return {nodes}
       }
       case 'previous': {
+        const parent = entry.parentId
+          ? ctx.graph.byId(entry.parentId)
+          : undefined
         const [previous] = Array.from(
-          this.index.filter({
-            language(lang) {
-              return lang.locale === entry.locale
-            },
-            node(node) {
-              return (
-                node.workspace === entry.workspace &&
-                node.root === entry.root &&
-                node.parentId === entry.parentId &&
-                node.index < entry.index
-              )
-            }
+          ctx.graph.filter({
+            nodes: parent?.children() ?? [],
+            node: node => node.index < entry.index,
+            language: lang => lang.locale === entry.locale
           })
         ).sort((a, b) => compareStrings(b.index, a.index))
-        return {
-          node: entry => (previous ? entry.id === previous.id : false)
-        }
+        const nodes: Array<EntryNode> = previous
+          ? [ctx.graph.byId(previous.id)!]
+          : []
+        return {nodes}
       }
       case 'siblings': {
+        const parent = entry.parentId
+          ? ctx.graph.byId(entry.parentId)
+          : undefined
         return {
-          node: node =>
-            node.parentId === entry.parentId &&
-            node.workspace === entry.workspace &&
-            node.root === entry.root &&
-            (query.includeSelf ? true : node.id !== entry.id),
+          nodes: parent?.children() ?? [],
+          node: node => query.includeSelf || node.id !== entry.id,
           language: lang => lang.locale === entry.locale
         }
       }
       case 'translations': {
+        const self = ctx.graph.byId(entry.id)
+        assert(self)
         return {
-          node: node => node.id === entry.id,
+          nodes: [self],
           language: lang => query.includeSelf || lang.locale !== entry.locale
         }
       }
@@ -209,29 +208,23 @@ export class EntryResolver implements Resolver {
       }
       case 'parents': {
         const depth = query?.depth ?? Number.POSITIVE_INFINITY
-        const ids = new Set(entry.parents.slice(-depth))
-        return {
-          node: node => ids.has(node.id),
-          language: lang => lang.locale === entry.locale
-        }
+        const ids = entry.parents.slice(-depth)
+        const nodes = ids.map(id => ctx.graph.byId(id)!)
+        return {nodes, language: lang => lang.locale === entry.locale}
       }
       case 'entryMultiple': {
         const fieldValue = this.field(entry, query.field)
-        const ids: Set<string> = new Set(
-          Array.isArray(fieldValue)
-            ? fieldValue.map(item => item._entry).filter(Boolean)
-            : []
-        )
-        return {
-          node: node => ids.has(node.id)
-        }
+        const ids: Array<string> = Array.isArray(fieldValue)
+          ? fieldValue.map(item => item._entry).filter(Boolean)
+          : []
+        const nodes = ids.map(id => ctx.graph.byId(id)!).filter(Boolean)
+        return {nodes}
       }
       case 'entrySingle': {
         const fieldValue = this.field(entry, query.field) as {_entry: string}
         const entryId = fieldValue?._entry
-        return {
-          node: node => node.id === entryId
-        }
+        const node = ctx.graph.byId(entryId)
+        return {nodes: node ? [node] : []}
       }
       default:
         return {}
@@ -255,7 +248,7 @@ export class EntryResolver implements Resolver {
     return this.query(
       {...ctx, locale: entry.locale},
       related,
-      this.sourceFilter(entry, related)
+      this.sourceFilter(ctx, entry, related)
     ).getUnprocessed()
   }
 
@@ -344,14 +337,13 @@ export class EntryResolver implements Resolver {
     const {skip, take, orderBy, groupBy, search, count} = query
     const {ids, condition} = this.condition(ctx, edge)
     const filter: EntryCondition = {
-      node: node => (ids ? ids.includes(node.id) : true),
       search: Array.isArray(search) ? search.join(' ') : search,
+      node: node => (ids ? ids.includes(node.id) : true),
       entry: condition
     }
     let entries = Array.from(
-      this.index.filter(
-        preFilter ? combineConditions(filter, preFilter) : filter,
-        ctx.preview
+      ctx.graph.filter(
+        preFilter ? combineConditions(filter, preFilter) : filter
       )
     )
     if (groupBy) {
@@ -490,10 +482,29 @@ export class EntryResolver implements Resolver {
     const {preview} = query
     const previewEntry =
       preview && 'entry' in preview ? preview.entry : undefined
+    let graph = this.index.graph
+    if (previewEntry)
+      graph = graph.withChanges({
+        fromSha: this.index.tree.sha,
+        changes: [
+          {
+            op: 'add',
+            path: previewEntry.filePath,
+            sha: previewEntry.fileHash,
+            contents: new TextEncoder().encode(
+              JSON.stringify(
+                createRecord(previewEntry, previewEntry.status),
+                null,
+                2
+              )
+            )
+          }
+        ]
+      })
     const ctx: ResolveContext = {
       status: query.status ?? 'published',
       locale: query.locale,
-      preview: previewEntry,
+      graph: graph,
       searchTerms: Array.isArray(query.search)
         ? query.search.join(' ')
         : query.search
@@ -506,7 +517,7 @@ export interface ResolveContext {
   //entries: Array<Entry>
   status: Status
   locale?: string | null
-  preview: Entry | undefined
+  graph: EntryGraph
   searchTerms?: string
 }
 
