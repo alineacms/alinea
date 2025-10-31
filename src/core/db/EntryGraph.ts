@@ -254,6 +254,7 @@ class EntryNode extends Map<string | null, EntryLanguageNode> {
   constructor(
     public entryType: Type,
     public parent: EntryNode | null,
+    public children: () => Iterable<EntryNode>,
     collection: EntryCollection
   ) {
     super()
@@ -467,7 +468,12 @@ class EntryGraph {
     }
     const parent = parentId ? this.#mkNode(parentId) : null
     const type = this.#config.schema[collection.type]
-    const node = new EntryNode(type, parent, collection)
+    function* children(this: EntryGraph) {
+      for (const node of this.nodes) {
+        if (node.parentId === id) yield node
+      }
+    }
+    const node = new EntryNode(type, parent, children.bind(this), collection)
     this.#byId.set(id, node)
     return node
   }
@@ -604,11 +610,34 @@ export class EntryIndex extends EventTarget {
     if (fromSha !== this.tree.sha)
       throw new ShaMismatchError(fromSha, this.tree.sha)
     if (changes.length === 0) return this.tree.sha
+    const changed = new Set<EntryNode>()
+    for (const change of changes) {
+      if (change.op !== 'delete') continue
+      const nodePath = getNodePath(change.path)
+      const node = this.#graph.byDir(nodePath)
+      assert(node, `Missing node for deleted path: ${change.path}`)
+      changed.add(node)
+    }
     this.#graph = this.#graph.withChanges(batch)
+    for (const change of changes) {
+      if (change.op !== 'add') continue
+      const nodePath = getNodePath(change.path)
+      const node = this.#graph.byDir(nodePath)
+      assert(node, `Missing node for added path: ${change.path}`)
+      changed.add(node)
+    }
     const updatedTree = await this.tree.withChanges(batch)
     const sha = updatedTree.sha
     this.tree = updatedTree
-    // Todo: dispatch each changed entry
+    const pool = Array.from(changed)
+    while (pool.length > 0) {
+      const node = pool.shift()!
+      console.log(node.id)
+      this.dispatchEvent(new IndexEvent({op: 'entry', id: node.id}))
+      for (const child of node.children()) {
+        if (!changed.has(child)) pool.push(child)
+      }
+    }
     this.dispatchEvent(new IndexEvent({op: 'index', sha}))
     return sha
   }
@@ -656,7 +685,7 @@ export class EntryIndex extends EventTarget {
                 )
               },
               language(node) {
-                return node.locale !== locale && node.path === path
+                return node.locale === locale && node.path === path
               },
               entry(entry) {
                 return Boolean(entry.seeded?.endsWith(pathEnd))
@@ -679,8 +708,8 @@ export class EntryIndex extends EventTarget {
             .toRequest()
           const contentChanges = sourceChanges(request)
           if (contentChanges.changes.length) {
-            await source.applyChanges(contentChanges)
             await this.indexChanges(contentChanges)
+            await source.applyChanges(contentChanges)
           }
         }
       }

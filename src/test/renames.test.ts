@@ -118,7 +118,6 @@ test('rename parent via draft', async () => {
     id: page1._id,
     type: Page
   })
-  console.log({published})
   test.is(published._path, 'page1-new')
   test.is(published.path, 'page1-new')
 
