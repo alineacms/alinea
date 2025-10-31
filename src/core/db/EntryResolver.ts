@@ -36,7 +36,7 @@ import {
   type EntryCondition,
   type EntryFilter,
   type EntryIndex
-} from './EntryGraph.js'
+} from './EntryIndex.js'
 import {LinkResolver} from './LinkResolver.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))

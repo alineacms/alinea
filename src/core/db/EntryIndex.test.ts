@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {cms} from '../../test/cms.js'
 import {FSSource} from '../source/FSSource.js'
-import {EntryIndex} from './EntryIndex.ts_'
+import {EntryIndex} from './EntryIndex.js'
 
 const test = suite(import.meta)
 

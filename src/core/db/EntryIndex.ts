@@ -10,7 +10,7 @@ import {Schema} from '../Schema.js'
 import type {ChangesBatch} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
-import type {Source} from '../source/Source.js'
+import {bundleContents, type Source} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {compareStrings} from '../source/Utils.js'
 import {Type} from '../Type.js'
@@ -518,24 +518,6 @@ class ParserCache extends WeakMap<Config, VersionParser> {
 
 const getParser = new ParserCache().get
 
-export async function buildGraph(config: Config, source: Source) {
-  const tree = await source.getTree()
-  const index = tree.index()
-  const parser = getParser(config)
-  const contents = source.getBlobs(
-    [...index.values()].filter(sha => !parser.has(sha))
-  )
-  for await (const [sha, blob] of contents) {
-    parser.parse(sha, blob)
-  }
-  const entries = [...index].map(([file, sha]) => {
-    const version = parser.get(sha)
-    assert(version, `Missing version for sha: ${sha}`)
-    return [file, version] as const
-  })
-  return new EntryGraph(config, new Map(entries), entrySeeds(config))
-}
-
 function getNodePath(filePath: string) {
   const lastSlash = filePath.lastIndexOf('/')
   const dir = filePath.slice(0, lastSlash)
@@ -598,12 +580,9 @@ export class EntryIndex extends EventTarget {
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
     if (!this.initialSync) this.initialSync = tree
-    const sha = tree.sha
-    const graph = await buildGraph(this.#config, source)
-    this.tree = tree
-    this.#graph = graph
-    this.dispatchEvent(new IndexEvent({op: 'index', sha}))
-    return sha
+    const batch = await bundleContents(source, this.tree.diff(tree))
+    if (batch.changes.length === 0) return tree.sha
+    return this.indexChanges(batch)
   }
   async indexChanges(batch: ChangesBatch) {
     const {fromSha, changes} = batch
@@ -632,7 +611,6 @@ export class EntryIndex extends EventTarget {
     const pool = Array.from(changed)
     while (pool.length > 0) {
       const node = pool.shift()!
-      console.log(node.id)
       this.dispatchEvent(new IndexEvent({op: 'entry', id: node.id}))
       for (const child of node.children()) {
         if (!changed.has(child)) pool.push(child)
@@ -685,7 +663,7 @@ export class EntryIndex extends EventTarget {
                 )
               },
               language(node) {
-                return node.locale === locale && node.path === path
+                return node.locale !== locale && node.path === path
               },
               entry(entry) {
                 return Boolean(entry.seeded?.endsWith(pathEnd))
