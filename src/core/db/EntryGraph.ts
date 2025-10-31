@@ -656,7 +656,7 @@ export class EntryIndex extends EventTarget {
                 )
               },
               language(node) {
-                return node.locale === locale && node.path === path
+                return node.locale !== locale && node.path === path
               },
               entry(entry) {
                 return Boolean(entry.seeded?.endsWith(pathEnd))
