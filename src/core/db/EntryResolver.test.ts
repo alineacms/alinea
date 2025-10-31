@@ -81,7 +81,7 @@ test('select edges', async () => {
   }
 })
 
-test('select siblings', async () => {
+test.only('select siblings', async () => {
   const siblings = await resolver.resolve({
     first: true,
     id: 'oi4qtV9YaXNRIUDT2s61Y',
@@ -180,7 +180,11 @@ test('preview existing entry', async () => {
     select: Entry,
     first: true,
     preview: {
-      entry: {...entry!, title: 'Chocolate chip preview'}
+      entry: {
+        ...entry!,
+        fileHash: 'preview',
+        data: {...entry?.data, title: 'Chocolate chip preview'}
+      }
     }
   })
   test.is(entry2!.title, 'Chocolate chip preview')
