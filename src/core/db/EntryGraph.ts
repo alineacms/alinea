@@ -24,9 +24,38 @@ import {IndexEvent} from './IndexEvent.js'
 
 export interface EntryFilter {
   ids?: ReadonlyArray<string>
-  locales?: ReadonlyArray<string | null>
   search?: string
   condition?(entry: Entry): boolean
+}
+
+export interface EntryCondition {
+  search?: string
+  node?(node: EntryNode): boolean
+  language?(language: EntryLanguageNode): boolean
+  entry?(entry: Entry): boolean
+}
+
+export function combineConditions(
+  a: EntryCondition,
+  b: EntryCondition
+): EntryCondition {
+  return {
+    search: a.search ?? b.search,
+    node(node) {
+      return (a.node ? a.node(node) : true) && (b.node ? b.node(node) : true)
+    },
+    language(language) {
+      return (
+        (a.language ? a.language(language) : true) &&
+        (b.language ? b.language(language) : true)
+      )
+    },
+    entry(entry) {
+      return (
+        (a.entry ? a.entry(entry) : true) && (b.entry ? b.entry(entry) : true)
+      )
+    }
+  }
 }
 
 interface EntryVersionData {
@@ -204,9 +233,9 @@ class EntryLanguageNode {
     return entries
   }
 
-  *filter(filter: EntryFilter): Generator<Entry> {
+  *filter(filter: EntryCondition): Generator<Entry> {
     for (const entry of this.entries) {
-      if (filter.condition && !filter.condition(entry)) continue
+      if (filter.entry && !filter.entry(entry)) continue
       yield entry
     }
   }
@@ -220,6 +249,7 @@ class EntryNode extends Map<string | null, EntryLanguageNode> {
   readonly workspace: string
   readonly root: string
   readonly type: string
+  readonly level: number
 
   constructor(
     public entryType: Type,
@@ -233,6 +263,7 @@ class EntryNode extends Map<string | null, EntryLanguageNode> {
     this.workspace = first.workspace
     this.root = first.root
     this.type = first.type
+    this.level = first.level
     this.parentId = parent ? parent.id : null
     this.parents = []
     let next = parent
@@ -252,9 +283,9 @@ class EntryNode extends Map<string | null, EntryLanguageNode> {
     }
   }
 
-  *filter(filter: EntryFilter): Generator<Entry> {
+  *filter(filter: EntryCondition): Generator<Entry> {
     for (const node of this.values()) {
-      if (filter.locales && !filter.locales.includes(node.locale)) continue
+      if (filter.language && !filter.language(node)) continue
       yield* node.filter(filter)
     }
   }
@@ -335,7 +366,7 @@ class EntryGraph {
     return new EntryGraph(this.#config, versions, this.#seeds)
   }
 
-  *filter({search, ...filter}: EntryFilter): Generator<Entry> {
+  *filter({search, ...filter}: EntryCondition): Generator<Entry> {
     if (search) {
       const found = new Set(this.filter(filter))
       for (const entry of found) {
@@ -351,7 +382,7 @@ class EntryGraph {
         .map(result => result.entry)
     }
     for (const node of this.nodes) {
-      if (filter.ids && !filter.ids.includes(node.id)) continue
+      if (filter.node && !filter.node(node)) continue
       yield* node.filter(filter)
     }
   }
@@ -529,7 +560,7 @@ export class EntryIndex extends EventTarget {
   get sha() {
     return this.tree.sha
   }
-  filter(filter: EntryFilter, preview?: Entry): Iterable<Entry> {
+  filter(filter: EntryCondition, preview?: Entry): Iterable<Entry> {
     if (preview) {
       // Todo: cache this by entry
       const updatedGraph = this.#graph.withChanges({
@@ -556,7 +587,7 @@ export class EntryIndex extends EventTarget {
     return entry as Entry<T> | undefined
   }
   findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
-    return this.#graph.filter({condition: filter})
+    return this.#graph.filter({entry: filter})
   }
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
@@ -616,17 +647,19 @@ export class EntryIndex extends EventTarget {
             const level = pathSegments.length - 2
             const pathEnd = `/${pathSegments.slice(1).join('/')}.json`
             const [from] = this.filter({
-              locales: [locale],
-              condition(entry) {
+              node(node) {
                 return (
-                  entry.root === root &&
-                  entry.workspace === workspace &&
-                  entry.path === path &&
-                  entry.level === level &&
-                  entry.parentId === (parentNode?.id ?? null) &&
-                  entry.seeded !== null &&
-                  entry.seeded.endsWith(pathEnd)
+                  node.root === root &&
+                  node.workspace === workspace &&
+                  node.level === level &&
+                  node.parentId === (parentNode?.id ?? null)
                 )
+              },
+              language(node) {
+                return node.locale === locale && node.path === path
+              },
+              entry(entry) {
+                return Boolean(entry.seeded?.endsWith(pathEnd))
               }
             })
             if (from) id = from.id
