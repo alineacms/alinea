@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bun run --cwd ../.. build && node ../../dist/cli.js build -- next build",
     "start": "next start"
   },
   "dependencies": {
