@@ -10,7 +10,7 @@ export default async function Home() {
       <div className="container mx-auto px-4 py-16 max-w-3xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight mb-3 text-balance">
-            Form Builder Demo
+            Form Builder Demo123
           </h1>
           <p className="text-muted-foreground text-lg">
             Explore different form implementations and capabilities
@@ -20,7 +20,11 @@ export default async function Home() {
         <div className="space-y-4">
           {forms.map(form => {
             return (
-              <Link key={form._id} href={form._url}>
+              <Link
+                key={form._id}
+                href={form._url}
+                className="block p-4 border border-border rounded-lg hover:bg-accent hover:underline"
+              >
                 {form.title}
               </Link>
             )

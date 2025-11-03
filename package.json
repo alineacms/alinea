@@ -22,7 +22,7 @@
     "dev:check": "tsc -w",
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev",
     "demo:build": "cd apps/demo && bun run build",
-    "demo:run": "cd apps/demo && bun run start",
+    "demo:run": "bun build.ts --watch -- node dev.js --dir apps/demo -- bun run --cwd apps/demo dev",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "prepublishOnly": "bun run build"
   },
