@@ -12,24 +12,25 @@ import {
   type GraphQuery,
   type Projection,
   type QuerySettings,
-  type Status,
-  querySource as queryEdge
+  querySource as queryEdge,
+  type Status
 } from 'alinea/core/Graph'
 import {
-  type HasExpr,
   getExpr,
+  type HasExpr,
   hasExpr,
   hasField,
   hasRoot,
   hasWorkspace
 } from 'alinea/core/Internal'
 import type {Resolver} from 'alinea/core/Resolver'
-import {type Scope, getScope} from 'alinea/core/Scope'
+import {getScope, type Scope} from 'alinea/core/Scope'
 import {hasExact} from 'alinea/core/util/Checks'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
-import {assert, compareStrings} from '../source/Utils.js'
+import {compareStrings} from '../source/Utils.js'
+import {assert} from '../util/Assert.js'
 import type {EntryFilter, EntryIndex} from './EntryIndex.js'
 import {LinkResolver} from './LinkResolver.js'
 
@@ -147,7 +148,7 @@ export class EntryResolver implements Resolver {
                 workspace === entry.workspace &&
                 root === entry.root &&
                 parentId === entry.parentId &&
-                index < entry.index &&
+                index > entry.index &&
                 locale === entry.locale
               )
             }
@@ -163,7 +164,7 @@ export class EntryResolver implements Resolver {
                 workspace === entry.workspace &&
                 root === entry.root &&
                 parentId === entry.parentId &&
-                index > entry.index &&
+                index < entry.index &&
                 locale === entry.locale
               )
             }
@@ -206,17 +207,10 @@ export class EntryResolver implements Resolver {
       }
       case 'parents': {
         const depth = query?.depth ?? Number.POSITIVE_INFINITY
-        const segments = entry.parentDir.split('/')
-        const parentPaths = segments.map((_, i) =>
-          segments.slice(0, i + 1).join('/')
-        )
         return {
-          condition({level, childrenDir}) {
-            return (
-              level < entry.level &&
-              level > entry.level - depth &&
-              parentPaths.includes(childrenDir)
-            )
+          ids: entry.parents.slice(-depth),
+          condition({locale}) {
+            return locale === entry.locale
           }
         }
       }
@@ -377,7 +371,7 @@ export class EntryResolver implements Resolver {
           if (strings) {
             const compare = order.caseSensitive
               ? compareStrings(valueA, valueB)
-              : valueA.localeCompare(valueB)
+              : valueA.localeCompare(valueB, undefined, {numeric: true})
             if (compare !== 0) return order.asc ? compare : -compare
           } else if (numbers) {
             if (valueA !== valueB)
@@ -526,7 +520,7 @@ export function statusChecker(status: Status): Check {
 }
 
 interface Check {
-  (input: any): boolean
+  (input: Entry): boolean
 }
 
 function isObject(input: any): input is object {
@@ -547,6 +541,7 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
     parentId: query.parentId,
     path: query.path,
     url: query.url,
+    level: query.level,
     workspace,
     root
   })
@@ -573,11 +568,8 @@ function locationChecker(location: Array<string>): Check {
         if (entry.level === 0) return false
         if (entry.level === 1)
           return entry.parentDir.endsWith(`/${location[2]}`)
-        if (entry.level > 1) {
-          const position = entry.level - 1
-          const segment = entry.parentDir.split('/').at(-position)
-          return segment === location[2]
-        }
+        const segment = entry.parentDir.split('/').at(-entry.level)
+        return segment === location[2]
       }
     }
     default:

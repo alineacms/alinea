@@ -1,9 +1,9 @@
+import {assert} from '../util/Assert.js'
 import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
-import {assert} from './Utils.js'
 
 export class MemorySource implements Source {
   #tree: ReadonlyTree
@@ -52,12 +52,12 @@ export class MemorySource implements Source {
           this.#blobs.set(change.sha, change.contents)
           continue
         }
-        case 'delete': {
-          this.#blobs.delete(change.sha)
-          continue
-        }
       }
     }
-    this.#tree = await this.#tree.withChanges(batch)
+    const compiled = await this.#tree.withChanges(batch)
+    for (const sha of this.#blobs.keys()) {
+      if (!compiled.hasSha(sha)) this.#blobs.delete(sha)
+    }
+    this.#tree = compiled
   }
 }

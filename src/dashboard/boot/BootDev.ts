@@ -1,5 +1,6 @@
 import {Client} from 'alinea/core/Client'
-import {type ConfigBatch, type ConfigGenerator, boot} from './Boot.js'
+import {SharedEventSource} from 'shared-event-source'
+import {boot, type ConfigBatch, type ConfigGenerator} from './Boot.js'
 
 export function bootDev() {
   return boot(getConfig())
@@ -8,13 +9,20 @@ export function bootDev() {
 async function* getConfig(): ConfigGenerator {
   const buildId = process.env.ALINEA_BUILD_ID as string
   let revision = buildId
-  const source = new EventSource('/~dev')
+  const source = new SharedEventSource('/~dev')
   const url = new URL('/api', location.href).href
   const createConfig = async (revision: string) => {
     const {cms, views} = await loadConfig(revision)
     const {config} = cms
     const client = new Client({config, url})
-    return {local: true, revision, config, views, client}
+    return {
+      local: true,
+      alineaDev: Boolean(process.env.ALINEA_DEV),
+      revision,
+      config,
+      views,
+      client
+    }
   }
   let batch: ConfigBatch | undefined
   while (true) {

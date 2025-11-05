@@ -26,6 +26,12 @@
     overflow: hidden;
     background: var(--alinea-lift);
   }
+
+  &-header-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .insert {

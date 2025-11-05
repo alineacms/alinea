@@ -1,8 +1,7 @@
-import type {Connection} from './Connection.js'
+import type {BrowserConnection} from './Connection.js'
 import type {User} from './User.js'
 
 export interface Session {
-  cnx: Connection
+  cnx: BrowserConnection
   user: User
-  end?: () => Promise<void>
 }

@@ -116,7 +116,7 @@ type InferResult<Selection, Types, Include> = Selection extends undefined
     ? Value
     : InferSelection<Selection>
 
-type QueryResult<Selection, Types, Include> = Expand<
+export type QueryResult<Selection, Types, Include> = Expand<
   InferResult<Selection, Types, Include>
 >
 
@@ -183,6 +183,8 @@ export declare class QuerySettings {
   workspace?: Condition<string> | Workspace
   /** Filter by root */
   root?: Condition<string> | Root
+  /** Filter by level */
+  level?: Condition<number>
 
   /** Filter results by location */
   location?: Location
@@ -282,11 +284,8 @@ export abstract class Graph {
   >(
     query: GraphQuery<Selection, Type, Include>
   ): Promise<QueryResult<Selection, Type, Include>> {
-    // Workaround oven-sh/bun#2704 for now, because we're otherwise missing
-    // frames in the stack trace.
-    const error = globalThis.Bun ? new Error('Entry not found') : undefined
     const result = await this.resolve({...query, get: true})
-    if (!result) throw error ?? new Error('Entry not found')
+    if (!result) throw new Error('Entry not found')
     return result
   }
 

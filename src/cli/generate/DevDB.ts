@@ -6,7 +6,7 @@ import {LocalDB} from 'alinea/core/db/LocalDB'
 import {createId} from 'alinea/core/Id'
 import {getWorkspace} from 'alinea/core/Internal'
 import {CachedFSSource} from 'alinea/core/source/FSSource'
-import {assert} from 'alinea/core/source/Utils'
+import {assert} from 'alinea/core/util/Assert'
 import {keys, values} from 'alinea/core/util/Objects'
 import {
   basename,

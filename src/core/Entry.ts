@@ -1,6 +1,4 @@
-import type {EntryRow} from './EntryRow.js'
 import {Expr} from './Expr.js'
-import type {Expand} from './util/Types.js'
 
 export type EntryStatus = 'draft' | 'published' | 'archived'
 export const entryStatuses = Array<EntryStatus>(
@@ -8,8 +6,9 @@ export const entryStatuses = Array<EntryStatus>(
   'published',
   'archived'
 )
+export const ALT_STATUS: Array<EntryStatus> = ['draft', 'archived']
 
-export interface Entry {
+export interface Entry<Data extends object = Record<string, unknown>> {
   id: string
   status: EntryStatus
   title: string
@@ -23,6 +22,7 @@ export interface Entry {
   childrenDir: string
   index: string
   parentId: string | null
+  parents: Array<string>
   locale: string | null
   rowHash: string
   active: boolean
@@ -30,7 +30,7 @@ export interface Entry {
   path: string
   fileHash: string
   url: string
-  data: Record<string, any>
+  data: Data
   searchableText: string
 }
 export const Entry = {
@@ -47,6 +47,7 @@ export const Entry = {
   childrenDir: new Expr<string>({type: 'entryField', name: 'childrenDir'}),
   index: new Expr<string>({type: 'entryField', name: 'index'}),
   parentId: new Expr<string | null>({type: 'entryField', name: 'parentId'}),
+  parents: new Expr<Array<string>>({type: 'entryField', name: 'parents'}),
   locale: new Expr<string | null>({type: 'entryField', name: 'locale'}),
   rowHash: new Expr<string>({type: 'entryField', name: 'rowHash'}),
   active: new Expr<boolean>({type: 'entryField', name: 'active'}),
@@ -57,10 +58,3 @@ export const Entry = {
   data: new Expr<Record<string, any>>({type: 'entryField', name: 'data'}),
   searchableText: new Expr<string>({type: 'entryField', name: 'searchableText'})
 }
-
-// We can't export the inferred type because the rado depencency types are
-// not included in distribution. At least we'll get a type error here if the
-// type is out of date.
-type EntryFromRow = Expand<EntryRow>
-type Assert<A, B extends A> = never
-type Run = Assert<EntryFromRow, Entry> | Assert<Entry, EntryFromRow>

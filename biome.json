@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
@@ -34,7 +34,8 @@
         "useEnumInitializers": "off",
         "noParameterAssign": "off",
         "useShorthandFunctionType": "off",
-        "noInferrableTypes": "off"
+        "noInferrableTypes": "off",
+        "useArrayLiterals": "off"
       },
       "complexity": {
         "noBannedTypes": "off",

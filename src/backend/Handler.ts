@@ -18,6 +18,7 @@ import {base64} from 'alinea/core/util/Encoding'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
+import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
 
@@ -28,8 +29,7 @@ const PrepareBody = object({
 })
 
 const PreviewBody = object({
-  locale: string.nullable,
-  entryId: string
+  url: string
 })
 
 export interface Handler {
@@ -96,10 +96,10 @@ export function createHandler({
       const auth = params.get('auth')
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
-      const action = params.get('action') as HandleAction
 
       if (auth) return cnx.authenticate(request)
 
+      const action = params.get('action') as HandleAction
       const expectJson = () => {
         const acceptsJson = request.headers
           .get('accept')
@@ -107,27 +107,34 @@ export function createHandler({
         if (!acceptsJson) throw new Response('Expected JSON', {status: 400})
       }
 
-      // User
-      if (action === HandleAction.User && request.method === 'GET') {
-        expectJson()
-        try {
-          const {user} = await cnx.verify(request)
-          return Response.json(user)
-        } catch {
-          return Response.json(null)
-        }
+      if (action === HandleAction.Upload && request.method === 'GET') {
+        const entryId = url.searchParams.get('entryId')
+        if (entryId && cnx.previewUpload)
+          return await cnx.previewUpload(entryId)
       }
 
       try {
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
-      } catch {
-        const authorization = request.headers.get('authorization')
-        const bearer = authorization?.slice('Bearer '.length)
-        if (!context.apiKey) throw new Error('Missing API key')
-        if (bearer !== context.apiKey) {
-          throw new Error('Expected matching api key')
+      } catch (cause) {
+        if (cause instanceof MissingCredentialsError) {
+          const authorization = request.headers.get('authorization')
+          const bearer = authorization?.slice('Bearer '.length)
+          if (!context.apiKey)
+            throw new MissingCredentialsError('Missing API key', {cause})
+          if (bearer !== context.apiKey)
+            throw new InvalidCredentialsError('Expected matching api key', {
+              cause
+            })
+        } else {
+          throw cause
         }
+      }
+
+      // User
+      if (action === HandleAction.User && request.method === 'GET') {
+        expectJson()
+        return Response.json(userCtx ? userCtx.user : null)
       }
 
       const expectUser = () => {
@@ -217,6 +224,7 @@ export function createHandler({
 
       if (action === HandleAction.Blob && request.method === 'POST') {
         const {shas} = object({shas: array(string)})(await body)
+        await periodicSync(cnx)
         const tree = await local.source.getTree()
         const fromLocal = []
         const fromRemote = []
@@ -232,7 +240,6 @@ export function createHandler({
           }
         }
         if (fromRemote.length > 0) {
-          await periodicSync(cnx)
           const blobs = cnx.getBlobs(fromRemote)
           for await (const [sha, blob] of blobs) {
             formData.append(sha, new Blob([blob as BlobPart]))
@@ -243,24 +250,19 @@ export function createHandler({
 
       // Media
       if (action === HandleAction.Upload) {
+        expectUser()
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
-          expectUser()
           expectJson()
           return Response.json(
             await cnx.prepareUpload(PrepareBody(await body).filename)
           )
         }
         const isPost = request.method === 'POST'
-        if (isPost) {
-          expectUser()
-          if (!cnx.handleUpload)
-            throw new Response('Bad Request', {status: 400})
+        if (isPost && cnx.handleUpload) {
           await cnx.handleUpload(entryId, await request.blob())
           return new Response('OK', {status: 200})
         }
-        if (!cnx.previewUpload) throw new Response('Bad Request', {status: 400})
-        return cnx.previewUpload(entryId)
       }
 
       // Drafts
@@ -280,15 +282,18 @@ export function createHandler({
         const draft = {...data, draft: base64.parse(data.draft)}
         return Response.json(await cnx.storeDraft(draft))
       }
+
+      return new Response('Bad Request', {status: 400})
     } catch (error) {
       if (error instanceof Response) return error
       console.error(error)
       return Response.json(
-        {success: false, error: String(error)},
+        {
+          success: false,
+          error: error instanceof Error ? error.message : String(error)
+        },
         {status: error instanceof HttpError ? error.code : 500}
       )
     }
-
-    return new Response('Bad Request', {status: 400})
   }
 }

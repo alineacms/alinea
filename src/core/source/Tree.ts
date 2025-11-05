@@ -1,7 +1,8 @@
+import {assert} from '../util/Assert.js'
 import type {Change, ChangesBatch} from './Change.js'
 import {hashTree, serializeTreeEntries} from './GitUtils.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
-import {assert, compareStrings, splitPath} from './Utils.js'
+import {compareStrings, splitPath} from './Utils.js'
 
 export interface BaseEntry {
   sha: string
@@ -173,6 +174,10 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
       name,
       ...entry.toJSON()
     }))
+  }
+
+  get shas(): ReadonlySet<string> {
+    return this.#shas
   }
 
   hasSha(sha: string): boolean {

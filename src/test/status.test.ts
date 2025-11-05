@@ -1,6 +1,6 @@
 import {suite} from '@alinea/suite'
 import {Config} from 'alinea'
-import {Entry, createCMS} from 'alinea/core'
+import {createCMS, Entry} from 'alinea/core'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 
 const test = suite(import.meta)
@@ -11,12 +11,19 @@ const Page = Config.document('Page', {
 })
 
 const main = Config.workspace('Main', {
-  source: 'content',
+  source: 'content/main',
+  roots: {pages: Config.root('Pages', {}), pages1: Config.root('Pages', {})}
+})
+const secondary = Config.workspace('Second', {
+  source: 'content/secondary',
   roots: {pages: Config.root('Pages', {})}
 })
 const cms = createCMS({
   schema: {Page},
-  workspaces: {main}
+  workspaces: {
+    main,
+    secondary
+  }
 })
 
 test('new entries default to published', async () => {
@@ -402,4 +409,49 @@ test("it's possible to archive unpublished entries", async () => {
     status: 'archived'
   })
   test.is(archivedChild2.status, 'archived')
+})
+
+test('creating entry with mismatched workspace throws error', async () => {
+  const db = new LocalDB(cms.config)
+  const entry = await db.create({
+    type: Page,
+    set: {path: 'page1'},
+    workspace: 'main',
+    root: 'pages'
+  })
+  await test.throws(
+    () =>
+      db.create({
+        id: entry._id,
+        type: Page,
+        set: {path: 'page1'},
+        workspace: 'secondary',
+        root: 'pages',
+        status: 'draft'
+      }),
+    `already exists`
+  )
+})
+
+test('creating entry with mismatched root throws error', async () => {
+  const db = new LocalDB(cms.config)
+  const entry = await db.create({
+    type: Page,
+    set: {path: 'page1'},
+    workspace: 'main',
+    root: 'pages'
+  })
+
+  await test.throws(
+    () =>
+      db.create({
+        id: entry._id,
+        type: Page,
+        set: {path: 'page1'},
+        workspace: 'main',
+        root: 'pages1',
+        status: 'draft'
+      }),
+    `already exists`
+  )
 })

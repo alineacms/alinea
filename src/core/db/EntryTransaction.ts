@@ -9,15 +9,16 @@ import {
   generateKeyBetween,
   generateNKeysBetween
 } from 'alinea/core/util/FractionalIndexing'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
+import type {MediaFile} from '../media/MediaTypes.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
 import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
-import {assert} from '../source/Utils.js'
+import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
 import type {EntryIndex} from './EntryIndex.js'
 import type {
@@ -81,16 +82,39 @@ export class EntryTransaction {
     status = 'published',
     overwrite = false
   }: Op<CreateMutation>) {
+    const config = this.#config
     const index = this.#index
+    const existing = index.byId.get(id)
+    if (existing) {
+      parentId = existing.parentId
+      if (!workspace) workspace = existing.workspace
+      if (!root) root = existing.root
+      assert(
+        existing.workspace === workspace,
+        `Cannot create entry with id ${id} in workspace ${workspace}, already exists in ${existing.workspace}`
+      )
+      assert(
+        existing.root === root,
+        `Cannot create entry with id ${id} in root ${root}, already exists in ${existing.root}`
+      )
+    }
+    const workspaces = keys(config.workspaces)
+    if (!workspace) workspace = workspaces[0]
+    assert(
+      workspace in config.workspaces,
+      `Workspace "${workspace}" not found in config`
+    )
+    const roots = keys(config.workspaces[workspace])
+    if (!root) root = roots[0]
+    assert(
+      root in config.workspaces[workspace],
+      `Root "${root}" not found in workspace "${workspace}"`
+    )
     const rootConfig = this.#config.workspaces[workspace][root]
     assert(rootConfig, 'Invalid root')
     const i18n = getRoot(rootConfig).i18n
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
     else assert(locale === null, 'Invalid locale')
-    const existing = index.byId.get(id)
-    if (existing) {
-      parentId = existing.parentId
-    }
     let parent: Entry | undefined
     if (parentId) {
       parent = index.findFirst(entry => {
@@ -137,7 +161,7 @@ export class EntryTransaction {
         this.removeFile({
           location: paths.join(
             getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
-            prev.data.location
+            prev.data.location as string
           )
         })
     }
@@ -326,7 +350,7 @@ export class EntryTransaction {
     })
     assert(entry, `Entry not found: ${id}`)
     const pathChange = entry.data.path && entry.data.path !== entry.path
-    let path = slugify(entry.data.path ?? entry.path)
+    let path = slugify((entry.data.path as string) ?? entry.path)
     path = this.#getAvailablePath({
       id,
       path,
@@ -529,7 +553,7 @@ export class EntryTransaction {
         const workspace = this.#config.workspaces[entry.workspace]
         const mediaDir = getWorkspace(workspace).mediaDir
         // Find all files within children
-        const files = index.findMany(f => {
+        const files: Iterable<Entry<MediaFile>> = index.findMany(f => {
           return (
             f.workspace === entry.workspace &&
             f.root === entry.root &&
@@ -546,7 +570,12 @@ export class EntryTransaction {
       if (entry.type === 'MediaFile') {
         const workspace = this.#config.workspaces[entry.workspace]
         const mediaDir = getWorkspace(workspace).mediaDir
-        this.removeFile({location: paths.join(mediaDir, entry.data.location)})
+        this.removeFile({
+          location: paths.join(
+            mediaDir,
+            (<Entry<MediaFile>>entry).data.location
+          )
+        })
       }
     }
     if (info) this.#messages.unshift(this.#reportOp('remove', info.title))

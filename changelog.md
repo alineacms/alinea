@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.5.3]
+- Fix Query.next and Query.previous which were not sorted correctly
+ 
+## [1.5.2]
+- Set access token at the root so `cms.user()` calls work in preview environments
+
+## [1.5.1]
+- Prefix upload locations with media dir for self-hosted backends
+- Handle logout endpoint for OAuth backends
+
+## [1.5.0]
+- Handle authentication with Alinea Cloud using OAuth 2.0
+- Enable ctrl and middle mouse clicks in the entry tree to open in new tab
+- Use a shared EventSource in dev mode to avoid the browser maximum of 
+  6 connections per origin
+- Check workspace and root properties during entry creation
+
+## [1.4.9]
+- Fix: handle missing blobs in local IndexedDB store
+
+## [1.4.8]
+- Fix: data coming from Alinea Cloud was not handled correctly 
+
+## [1.4.7]
+- Fix: previous release was published with extraneous dependencies
+
+## [1.4.6]
+- Disabled arrow up/down when on first/last row in lists (#450)
+- Keep copy icon visible during drag state; disable icons while dragging (#451)
+- SelectField: responsive layout improvements (#448)
+- ImageView: show cursor crosshair (#449)
+- Collapsible list rows (#444)
+- IconButton: focus layout change (#447)
+- TextField: added placeholder support (#442) and type email, tel, text, or url (#445)
+- Remove web workspace; move website to alineacms/alineacms.com
+
+## [1.4.5]
+- Fix: don't bundle contents in edge functions
+- Fix: order results of Query.parents by level
+- Fix: respect parent insert order on create
+- Fix: internal links to image and file entries from the link preview
+
 ## [1.4.4]
 - Fix: publishing changes to file details no longer removes the associated file
 - Fix: don't use transparency in averageColor property for images

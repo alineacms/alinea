@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import {Config} from 'alinea/core/Config'
-import type {EntryRow} from 'alinea/core/EntryRow'
+import type {Entry} from 'alinea/core/Entry'
 import {isImage} from 'alinea/core/media/IsImage'
 import {MEDIA_LOCATION} from 'alinea/core/media/MediaLocation'
 import type {MediaFile} from 'alinea/core/media/MediaTypes'
@@ -32,14 +32,14 @@ interface Pos {
 
 function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
   const config = useConfig()
-  const image: EntryRow<MediaImage> = editor.activeVersion as any
+  const image: Entry<MediaFile> = editor.activeVersion as any
   const {value: focus = {x: 0.5, y: 0.5}, mutator: setFocus} = useField(
     type.focus
   )
   const [hover, setHover] = useState<Pos>({})
   const {x: focusX = focus.x, y: focusY = focus.y} = hover
   const location = image.data.location
-  const liveUrl = outcome(
+  const [liveUrl] = outcome(
     () => new URL(location, Config.baseUrl(config) ?? window.location.href)
   )
   return (
@@ -64,6 +64,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
             setHover({x, y})
           }}
           onMouseOut={() => setHover({})}
+          onBlur={() => setHover({})}
           onClick={event => {
             event.preventDefault()
             const rect = event.currentTarget.getBoundingClientRect()
@@ -77,16 +78,13 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
             src={image.data.preview}
             alt="Preview of media file"
           />
-
-          <div
+          <span
             className={styles.image.preview.focus()}
             style={{
               left: `${focus.x * 100}%`,
               top: `${focus.y * 100}%`
             }}
-          >
-            <IcTwotonePinDrop />
-          </div>
+          />
         </div>
       </div>
       <div className={styles.image.content()}>
@@ -98,7 +96,7 @@ function ImageView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
         </Property>
         <Property label="URL">
           <a
-            href={liveUrl.isSuccess() ? liveUrl.value : location}
+            href={liveUrl ? String(liveUrl) : location}
             target="_blank"
             title={location}
             className={styles.image.content.url()}
@@ -142,7 +140,7 @@ export function IcTwotonePinDrop() {
 }
 
 function FileView({type, editor}: EntryEditProps & {type: typeof MediaFile}) {
-  const file: EntryRow<MediaFile> = editor.activeVersion as any
+  const file: Entry<MediaFile> = editor.activeVersion as any
   return (
     <Lift>
       <InputField field={type.title} />
@@ -166,7 +164,7 @@ export function FileEntry(props: EntryEditProps & {type: typeof MediaFile}) {
   const form = useAtomValue(editor.form)
   return (
     <Main className={styles.root()}>
-      <EntryHeader editable={false} editor={editor} />
+      <EntryHeader editor={editor} />
       <EntryTitle
         editor={editor}
         backLink={
@@ -180,7 +178,7 @@ export function FileEntry(props: EntryEditProps & {type: typeof MediaFile}) {
       />
       <FormProvider form={form}>
         <Main.Container>
-          {isImage(editor.activeVersion.data.extension) ? (
+          {isImage(editor.activeVersion.data.extension as string) ? (
             <ImageView {...props} />
           ) : (
             <FileView {...props} />

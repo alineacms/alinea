@@ -11,7 +11,7 @@ import {
 import {useTree} from '@headless-tree/react'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import {getType} from 'alinea/core/Internal'
-import {assert} from 'alinea/core/source/Utils'
+import {assert} from 'alinea/core/util/Assert'
 import {debounce} from 'alinea/core/util/Debounce'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineArchive} from 'alinea/ui/icons/IcOutlineArchive'
@@ -215,14 +215,20 @@ export function EntryTree({selectedId, expanded = []}: EntryTreeProps) {
       itemInstance: {
         getProps: ({item, prev}) => ({
           ...prev?.(),
-          onClick: (e: MouseEvent) => {
+          onAuxClick() {
+            const uri = navRef.current.entry({id: item.getId()})
+            window.open(`#${uri}`, '_blank')
+          },
+          onClick(e: MouseEvent) {
             if (item.isSelected() && item.isFolder() && item.isExpanded()) {
               item.collapse()
             } else if (item.isFolder() && !item.isExpanded()) {
               item.expand()
             }
             item.setFocused()
-            navigate(navRef.current.entry({id: item.getId()}))
+            const uri = navRef.current.entry({id: item.getId()})
+            if (e.metaKey || e.ctrlKey) window.open(`#${uri}`, '_blank')
+            else navigate(uri)
           }
         })
       }

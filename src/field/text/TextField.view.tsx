@@ -26,7 +26,7 @@ export function TextInput({field}: TextInputProps) {
     readOnly
   } = options
   const Input = multiline ? TextareaAutosize : 'input'
-  const placeholder = inline ? label : ''
+  const placeholder = options.placeholder || (inline ? label : '')
   const empty = value === ''
   return (
     <InputLabel
@@ -41,7 +41,7 @@ export function TextInput({field}: TextInputProps) {
         {IconLeft && <IconLeft />}
         <Input
           className={styles.root.input({readOnly})}
-          type="text"
+          type={options.type || 'text'}
           value={value || ''}
           onChange={e => mutator(e.currentTarget.value)}
           onFocus={() => setFocus(true)}

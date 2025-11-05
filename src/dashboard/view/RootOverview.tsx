@@ -18,9 +18,7 @@ export function RootOverview({root}: RootOverviewProps) {
   return (
     <>
       <Head>
-        <title>
-          {workspace.label}: {root.label}
-        </title>
+        <title>{`${workspace.label}: ${root.label}`}</title>
       </Head>
       <Main>
         <div className={styles.root()}>

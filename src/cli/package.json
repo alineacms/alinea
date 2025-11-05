@@ -1,9 +1,6 @@
 {
   "name": "@alinea/cli",
   "type": "module",
-  "dependencies": {
-    "esbuild": "^0.23.1"
-  },
   "devDependencies": {
     "@types/escape-html": "^1.0.2",
     "@types/sade": "^1.7.3",

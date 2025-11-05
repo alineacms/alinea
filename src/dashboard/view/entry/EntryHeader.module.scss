@@ -34,11 +34,15 @@
   }
 
   &-description {
-    height: 100%;
     flex: 1;
+    height: 100%;
     margin: auto;
     padding: 0 var(--alinea-main-padding-x);
     max-width: var(--alinea-main-width);
+
+    @include s {
+      overflow-x: auto;
+    }
 
     &-separator {
       border-right: 1px solid;

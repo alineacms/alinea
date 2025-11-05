@@ -1,7 +1,13 @@
 [![npm](https://img.shields.io/npm/v/alinea.svg)](https://npmjs.org/package/alinea)
 [![install size](https://packagephobia.com/badge?p=alinea)](https://packagephobia.com/result?p=alinea)
 
-# [![Alinea CMS logo](https://github.com/alineacms/alinea/raw/HEAD/apps/web/public/logo.svg)](https://alineacms.com)
+<br />
+<a href="https://vercel.com/oss">
+  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
+</a>
+<br />
+
+# [Alinea CMS](https://alineacms.com)
 
 Alinea is a modern content management system.
 
@@ -20,7 +26,7 @@ npm install alinea
 Initialize Alinea's config file
 
 ```sh
-npx alinea init-
+npx alinea init
 ```
 
 Open the dashboard to have a look around

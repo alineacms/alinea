@@ -1,10 +1,10 @@
 import * as paths from 'alinea/core/util/Paths'
 import pLimit from 'p-limit'
 import {HttpError} from '../HttpError.js'
+import {assert} from '../util/Assert.js'
 import type {ChangesBatch} from './Change.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
-import {assert} from './Utils.js'
 
 export interface GithubSourceOptions {
   authToken: string

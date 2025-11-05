@@ -1,6 +1,6 @@
+import {assert} from '../util/Assert.js'
 import type {Entry} from './Tree.js'
 import {
-  assert,
   bytesToHex,
   compareStrings,
   concatUint8Arrays,

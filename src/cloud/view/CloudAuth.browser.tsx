@@ -8,22 +8,17 @@ import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {Loader} from 'alinea/ui/Loader'
 import {useQuery} from 'react-query'
-import {type AuthResult, AuthResultType} from '../AuthResult.js'
+import {AuthResultType} from '../AuthResult.js'
 
 export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {client} = useDashboard()
   if (!(client instanceof Client))
     throw new Error('Cannot authenticate with non http client')
   const clientUrl = new URL(client.url, window.location.href)
-  const {data, isError} = useQuery(
-    ['auth.cloud'],
-    () => {
-      return fetch(new URL('?auth=status', clientUrl), {
-        credentials: 'include'
-      }).then<AuthResult>(res => res.json())
-    },
-    {keepPreviousData: true}
-  )
+  const {data, isError} = useQuery(['auth.status'], () => client.authStatus(), {
+    cacheTime: 0,
+    keepPreviousData: false
+  })
   if (isError)
     return (
       <>
@@ -57,16 +52,15 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
   if (!data) return <Loader absolute />
   const {location} = window
   switch (data.type) {
+    case AuthResultType.NeedsRefresh:
+      throw new Error('Authentication failure, please refresh the page')
     case AuthResultType.Authenticated:
       setSession({
         user: data.user,
         cnx: client.authenticate(
-          () => ({credentials: 'same-origin'}),
+          options => options,
           () => setSession(undefined)
-        ),
-        async end() {
-          location.href = new URL('?auth=logout', clientUrl).href
-        }
+        )
       })
       return null
     case AuthResultType.UnAuthenticated:

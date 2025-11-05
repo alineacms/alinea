@@ -6,12 +6,12 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from 'alinea/backend/Handler'
+import {generatedSource} from 'alinea/backend/store/GeneratedSource'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
-import {localRemote} from 'alinea/cli/serve/LocalRemote'
+import {CloudRemote} from 'alinea/cloud/CloudRemote.js'
 import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
-import {Entry} from 'alinea/core/Entry'
-import type {Resolver} from 'alinea/core/Resolver'
-import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
+import {LocalDB} from 'alinea/core/db/LocalDB'
+import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
 
@@ -29,37 +29,30 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const remote =
     options.remote ??
     (options.backend
-      ? createBackend(options.backend)
-      : localRemote(options.cms.config))
+      ? createBackend(options.cms.config, options.backend)
+      : context => new CloudRemote(context, options.cms))
   if (handlers.has(options.cms)) return handlers.get(options.cms)!
+  const config = options.cms.config
+  const db = PLazy.from(async () => {
+    const source = await generatedSource
+    const db = new LocalDB(config, source)
+    await db.sync()
+    return db
+  })
   const handleBackend = createCoreHandler({
     ...options,
     remote,
-    db: options.cms.db
+    db
   })
   const handle: Handler = async request => {
     try {
-      const context = await requestContext(options.cms.config)
+      const context = await requestContext(config)
       const previews = new JWTPreviews(context.apiKey)
       const {searchParams} = new URL(request.url)
       const previewToken = searchParams.get('preview')
       if (previewToken) {
-        const {draftMode, cookies} = await import('next/headers')
-        const info = await previews.verify(previewToken)
-        const cookie = await cookies()
-        const resolver: Resolver = context.isDev
-          ? options.cms
-          : await options.cms.db
-        const payload = getPreviewPayloadFromCookies(cookie.getAll())
-        const url = await resolver.resolve({
-          first: true,
-          select: Entry.url,
-          id: info.entryId,
-          locale: info.locale,
-          preview: payload ? {payload} : undefined,
-          status: 'preferDraft'
-        })
-        if (!url) return new Response('Not found', {status: 404})
+        const {draftMode} = await import('next/headers')
+        const {url} = await previews.verify(previewToken)
         const source = new URL(request.url)
         // Next.js incorrectly reports 0.0.0.0 as the hostname if the server is
         // listening on all interfaces
@@ -72,7 +65,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
           headers: {location: String(location)}
         })
       }
-      return handleBackend(request, context)
+      return await handleBackend(request, context)
     } catch (error) {
       console.error(error)
       return new Response('Internal server error', {status: 500})

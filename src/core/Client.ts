@@ -1,13 +1,14 @@
 import {AbortController, fetch, type Response} from '@alinea/iso'
 import {HandleAction} from 'alinea/backend/HandleAction'
 import type {PreviewInfo} from 'alinea/backend/Previews'
+import {type AuthResult, AuthResultType} from 'alinea/cloud/AuthResult'
+import type {Config} from './Config.js'
 import type {
   DraftTransport,
   LocalConnection,
-  Revision
-} from 'alinea/core/Connection'
-import type {Config} from './Config.js'
-import type {UploadResponse} from './Connection.js'
+  Revision,
+  UploadResponse
+} from './Connection.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
@@ -19,7 +20,9 @@ import {ReadonlyTree, type Tree} from './source/Tree.js'
 import type {User} from './User.js'
 import {base64} from './util/Encoding.js'
 
-export type AuthenticateRequest = () => RequestInit | undefined
+export type AuthenticateRequest = (
+  request?: RequestInit
+) => RequestInit | undefined
 
 export interface ClientOptions {
   config: Config
@@ -36,6 +39,23 @@ export class Client implements LocalConnection {
 
   get url() {
     return this.#options.url
+  }
+
+  authStatus(): Promise<AuthResult> {
+    return this.#requestJson({
+      action: HandleAction.Auth,
+      auth: 'status'
+    }).then<AuthResult>(this.#failOnHttpError)
+  }
+
+  logout = async (): Promise<void> => {
+    const endSession = this.#options.unauthorized
+    await this.#request({
+      action: HandleAction.Auth,
+      auth: 'logout'
+    })
+      .then(res => this.#failOnHttpError(res, false))
+      .then(endSession)
   }
 
   previewToken(request: PreviewInfo): Promise<string> {
@@ -173,7 +193,8 @@ export class Client implements LocalConnection {
 
   #request(
     params: {action: HandleAction; [key: string]: string},
-    init?: RequestInit
+    init: RequestInit = {},
+    retry = false
   ): Promise<Response> {
     const {url, applyAuth = () => undefined, unauthorized} = this.#options
     const controller = new AbortController()
@@ -194,27 +215,29 @@ export class Client implements LocalConnection {
         )
       })
       .then(async res => {
-        if (res.status === 401) unauthorized?.()
-        if (!res.ok) {
-          const isJson = res.headers
-            .get('content-type')
-            ?.includes('application/json')
-          let errorMessage: string
-          if (isJson) {
-            const body = await res.json()
-            if ('error' in body && typeof body.error === 'string')
-              errorMessage = body.error
-            else errorMessage = JSON.stringify(body, null, 2)
-          } else {
-            errorMessage = await res.text()
+        if (res.ok) return res
+        const isJson = res.headers
+          .get('content-type')
+          ?.includes('application/json')
+        let errorMessage: string
+        if (isJson) {
+          const body = await res.json()
+          if (res.status === 401 && body.type === AuthResultType.NeedsRefresh) {
+            // We'll attempt a single retry if the access token is refreshed
+            if (!retry) return this.#request(params, init, true)
           }
-          errorMessage = errorMessage.replace(/\s+/g, ' ').slice(0, 1024)
-          throw new HttpError(
-            res.status,
-            `${errorMessage} @ ${init?.method || 'GET'} action ${params.action}`
-          )
+          if ('error' in body && typeof body.error === 'string')
+            errorMessage = body.error
+          else errorMessage = JSON.stringify(body, null, 2)
+        } else {
+          errorMessage = await res.text()
         }
-        return res
+        errorMessage = errorMessage.replace(/\s+/g, ' ').slice(0, 1024)
+        if (res.status === 401) unauthorized?.()
+        throw new HttpError(
+          res.status,
+          `${errorMessage} @ ${init?.method || 'GET'} action ${params.action}`
+        )
       })
     const cancel = () => controller.abort()
     function cancelify<T>(promise: Promise<T>) {

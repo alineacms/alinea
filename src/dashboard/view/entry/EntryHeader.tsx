@@ -142,7 +142,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     const input = document.createElement('input')
     input.type = 'file'
     const extension = editor.activeVersion.data.extension
-    input.accept = extension
+    input.accept = extension as string
     input.onchange = async () => {
       const file = input.files![0]
       const destination = {
@@ -432,7 +432,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 <Icon
                   icon={IcRoundLastPage}
                   style={{
-                    transform: `rotate(${isPreviewOpen ? 180 : 0}deg)`
+                    transform: `scaleX(${isPreviewOpen ? 1 : -1})`
                   }}
                 />
               </button>

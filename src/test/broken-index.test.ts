@@ -6,7 +6,7 @@ import {syncWith} from 'alinea/core/source/Source'
 import {cms} from './cms.js'
 
 const test = suite(import.meta)
-const dir = 'apps/web/content/demo'
+const dir = 'src/test/fixtures/demo'
 const source = new FSSource(dir)
 const copy = new MemorySource()
 await syncWith(copy, source)

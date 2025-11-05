@@ -11,6 +11,7 @@ import {useField} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, Icon, TextLabel} from 'alinea/ui'
+import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundArrowDropDownCircle} from 'alinea/ui/icons/IcRoundArrowDropDownCircle'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -66,11 +67,13 @@ export function SelectInput<Key extends string>({
                       label={
                         (value ? items[value] : options.placeholder) || label
                       }
+                      title={value ? items[value] : undefined}
                     />
                   </span>
                   <Icon
                     icon={IcRoundUnfoldMore}
                     className={styles.root.input.icon()}
+                    title={open ? 'Close options' : 'Open options'}
                   />
                 </Listbox.Button>
                 {value && !options.required && (
@@ -78,6 +81,7 @@ export function SelectInput<Key extends string>({
                     icon={IcRoundClose}
                     onClick={() => mutator(null!)}
                     className={styles.root.input.delete()}
+                    title="Clear selection"
                   />
                 )}
               </div>
@@ -102,7 +106,9 @@ export function SelectInput<Key extends string>({
                             selected
                           })}
                         >
-                          <TextLabel label={label} />
+                          <Ellipsis>
+                            <TextLabel label={label} title={label} />
+                          </Ellipsis>
                           <div className={styles.root.dropdown.option.icon()}>
                             {selected && <Icon size={18} icon={IcRoundCheck} />}
                           </div>

@@ -96,6 +96,7 @@ const bundleTs: Plugin = {
       const entries = glob.sync('**/*.d.ts', {cwd: root})
       let declaration = ''
       for (const entry of entries) {
+        if (entry.startsWith('bundled')) continue
         if (entry.includes('/static/')) continue
         const location = entry.slice(0, -'.d.ts'.length)
         const absolute = location === 'index' ? 'alinea' : `alinea/${location}`
@@ -124,6 +125,9 @@ const bundleTs: Plugin = {
             return `import("${relative}")`
           }
         )
+        contents = contents.replace(/import\("(.*?).js"\)/g, (match, p1) => {
+          return `import("${p1}")`
+        })
         contents = contents.replace(
           /'#view\/(.*?)\.view\.js'/g,
           (match, p1) => {
@@ -137,10 +141,7 @@ const bundleTs: Plugin = {
           '\n  '
         )}\n}\n\n`
       }
-      fs.writeFileSync(
-        './apps/web/src/page/playground/alinea.d.ts.txt',
-        declaration
-      )
+      fs.writeFileSync('./dist/bundled.d.ts', declaration)
     })
   }
 }
