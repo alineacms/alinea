@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST="{\"../../dist/adapter/next/Dashboard.js -> alinea/dashboard/Dashboard\":{\"id\":\"../../dist/adapter/next/Dashboard.js -> alinea/dashboard/Dashboard\",\"files\":[\"static/chunks/_app-pages-browser_dist_dashboard_Dashboard_js.js\"]}}"
