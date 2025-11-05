@@ -21,7 +21,7 @@
     "type": "tsc --diagnostics",
     "dev:check": "tsc -w",
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev",
-    "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev",
+    "example:run": "bun build.ts --watch -- node dev.js --dir apps/example-next -- bun run --cwd apps/example-next next dev",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "prepublishOnly": "bun run build"
   },
