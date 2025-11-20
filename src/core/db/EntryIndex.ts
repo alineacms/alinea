@@ -271,9 +271,6 @@ export class EntryNode extends Map<string | null, EntryLanguageNode> {
     this.parents = []
     let next = parent
     while (next) {
-      if (this.parents.includes(next.id)) {
-        console.log(this, parent, next)
-      }
       assert(
         !this.parents.includes(next.id),
         `Cyclic parent reference: ${this.parents}`
