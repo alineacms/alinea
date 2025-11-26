@@ -25,6 +25,21 @@ export const RichTextFields = Config.document('Rich text fields', {
           fields: {
             checkbox1: Field.check('Checkbox 1'),
             checkbox2: Field.check('Checkbox 2'),
+            selectNative: Field.select('Select', {
+              options: {
+                optionA: 'Option A',
+                optionB: 'Option B',
+                optionC: 'Option C'
+              }
+            }),
+            select: Field.select('Select (native)', {
+              native: true,
+              options: {
+                optionA: 'Option A',
+                optionB: 'Option B',
+                optionC: 'Option C'
+              }
+            }),
             title: Field.text('Title'),
             content: Field.richText('Inner rich text', {
               searchable: true
