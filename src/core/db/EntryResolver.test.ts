@@ -95,12 +95,12 @@ test('select siblings', async () => {
 test('select next', async () => {
   const nextId = await resolver.resolve({
     first: true,
-    id: 'oi4qtV9YaXNRIUDT2s61Y',
+    id: 'oU_7ZAszAXwar__BCXVIt',
     select: Query.next({
       select: Query.id
     })
   })
-  test.is(nextId, 'P7QDb99Sp1JS5FyqCXXn3')
+  test.is(nextId, 'uENumuMjqX0fSbGtrf2fj')
 })
 
 test('select next', async () => {
@@ -111,18 +111,18 @@ test('select next', async () => {
       select: Query.id
     })
   })
-  test.is(nextId, 'P7QDb99Sp1JS5FyqCXXn3')
+  test.is(nextId, undefined)
 })
 
 test('select previous', async () => {
   const previousId = await resolver.resolve({
     first: true,
-    id: 'P7QDb99Sp1JS5FyqCXXn3',
+    id: 'oi4qtV9YaXNRIUDT2s61Y',
     select: Query.previous({
       select: Query.id
     })
   })
-  test.is(previousId, 'oi4qtV9YaXNRIUDT2s61Y')
+  test.is(previousId, 'uENumuMjqX0fSbGtrf2fj')
 })
 
 test('select parent', async () => {
@@ -180,7 +180,11 @@ test('preview existing entry', async () => {
     select: Entry,
     first: true,
     preview: {
-      entry: {...entry!, title: 'Chocolate chip preview'}
+      entry: {
+        ...entry!,
+        fileHash: 'preview',
+        data: {...entry?.data, title: 'Chocolate chip preview'}
+      }
     }
   })
   test.is(entry2!.title, 'Chocolate chip preview')

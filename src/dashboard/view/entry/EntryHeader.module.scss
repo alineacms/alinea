@@ -35,11 +35,14 @@
 
   &-description {
     flex: 1;
-    overflow-x: auto;
     height: 100%;
     margin: auto;
     padding: 0 var(--alinea-main-padding-x);
     max-width: var(--alinea-main-width);
+
+    @include s {
+      overflow-x: auto;
+    }
 
     &-separator {
       border-right: 1px solid;

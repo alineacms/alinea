@@ -3,16 +3,17 @@ import type {EntryStatus} from '../Entry.js'
 import {HttpError} from '../HttpError.js'
 import {createId} from '../Id.js'
 import type {StoredRow} from '../Infer.js'
-import {Schema} from '../Schema.js'
-import {Type} from '../Type.js'
-import {Workspace} from '../Workspace.js'
 import type {ImagePreviewDetails} from '../media/CreatePreview.js'
 import {isImage} from '../media/IsImage.js'
+import {Schema} from '../Schema.js'
+import {Type} from '../Type.js'
+import {assert} from '../util/Assert.js'
 import {createFileHash} from '../util/ContentHash.js'
 import {workspaceMediaDir} from '../util/EntryFilenames.js'
 import {keys} from '../util/Objects.js'
 import {basename, extname, join, normalize} from '../util/Paths.js'
 import {slugify} from '../util/Slugs.js'
+import {Workspace} from '../Workspace.js'
 import type {Mutation} from './Mutation.js'
 import type {WriteableGraph} from './WriteableGraph.js'
 
@@ -49,14 +50,6 @@ export class CreateOp<Fields> extends Operation {
   constructor(op: CreateQuery<Fields>) {
     super(async (db): Promise<Array<Mutation>> => {
       const {config} = db
-      const exists = await db.first({
-        id: this.id,
-        status: 'all'
-      })
-      const workspaces = keys(config.workspaces)
-      const workspace = exists?._workspace ?? op.workspace ?? workspaces[0]
-      const roots = keys(config.workspaces[workspace])
-      const root = exists?._root ?? op.root ?? roots[0]
       return [
         {
           op: 'create',
@@ -64,12 +57,12 @@ export class CreateOp<Fields> extends Operation {
           locale: op.locale ?? null,
           parentId: op.parentId ?? null,
           type: typeName(config, op.type),
-          root,
-          workspace,
           data: op.set ?? {},
           insertOrder: op.insertOrder,
           status: op.status,
-          overwrite: op.overwrite
+          overwrite: op.overwrite,
+          root: op.root,
+          workspace: op.workspace
         }
       ]
     })
@@ -243,7 +236,7 @@ export class UploadOperation extends Operation {
       const uploadFile: Mutation = {
         op: 'uploadFile',
         url: info.previewUrl,
-        location: info.location
+        location: join(prefix, fileLocation)
       }
       const createEntry: Mutation = {
         op: 'create',

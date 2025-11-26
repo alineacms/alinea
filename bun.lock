@@ -9,7 +9,7 @@
       },
       "devDependencies": {
         "@alinea/styler": "^1.0.3",
-        "@alinea/suite": "^0.6.2",
+        "@alinea/suite": "^0.6.3",
         "@biomejs/biome": "^2.1.2",
         "@esbx/reporter": "^0.0.20",
         "@esbx/workspaces": "^0.0.20",
@@ -118,6 +118,7 @@
         "pretty-bytes": "^6.0.0",
         "react-query": "^3.39.1",
         "react-tiny-virtual-list": "^2.2.0",
+        "shared-event-source": "^0.1.3",
         "smartcrop": "^2.0.5",
         "thumbhash": "^0.1.1",
       },
@@ -188,7 +189,7 @@
 
     "@alinea/styler": ["@alinea/styler@1.0.3", "", {}, "sha512-u248xCGPYuGAsC2Z83Jyxplcc92Ai1IdeoZiBmr9HY/yGRSLZAxteStg4ErLOi8BnQQ9g72oEbgK3GJ7wU71zA=="],
 
-    "@alinea/suite": ["@alinea/suite@0.6.2", "", {}, "sha512-UEYs2OLLb5DCMVE/0C8AAhP+xjKdOujbfL+NIXtcCW0dyeQqxjRVVFu+JH5VsjNxkx9ZNgId0fU4HkoKRU49CQ=="],
+    "@alinea/suite": ["@alinea/suite@0.6.3", "", {}, "sha512-4oGhbwAGq3rQeuuq9ylmybMkIT1mAl6e+DiiTLwwmwNzHFQiVihishgOpkIGrs0fGVSD4T8jOLyNTuQ30RtVuQ=="],
 
     "@alinea/ui": ["@alinea/ui@workspace:src/ui"],
 
@@ -1853,6 +1854,8 @@
     "set-function-name": ["set-function-name@2.0.2", "", { "dependencies": { "define-data-property": "^1.1.4", "es-errors": "^1.3.0", "functions-have-names": "^1.2.3", "has-property-descriptors": "^1.0.2" } }, "sha512-7PGFlmtwsEADb0WYyvCMa1t+yke6daIG4Wirafur5kcf+MhUnPms1UeR0CKQdTZD81yESwMHbtn+TR+dMviakQ=="],
 
     "setprototypeof": ["setprototypeof@1.2.0", "", {}, "sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw=="],
+
+    "shared-event-source": ["shared-event-source@0.1.3", "", {}, "sha512-n1k1l59O+pQ+hooGj6LYCgiqfdDy+zM9x8RJAX0MTc4o+4/Ccqqt8Jcy2qLUe7EQZtD3NQWXc2uzwlo1BRiXww=="],
 
     "sharp": ["sharp@0.32.6", "", { "dependencies": { "color": "^4.2.3", "detect-libc": "^2.0.2", "node-addon-api": "^6.1.0", "prebuild-install": "^7.1.1", "semver": "^7.5.4", "simple-get": "^4.0.1", "tar-fs": "^3.0.4", "tunnel-agent": "^0.6.0" } }, "sha512-KyLTWwgcR9Oe4d9HwCwNM2l7+J0dUQwn/yf7S0EnTtb0eVS4RxO0eUSvxPtzT4F3SY+C4K6fqdv/DO27sJ/v/w=="],
 

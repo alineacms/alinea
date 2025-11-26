@@ -3,16 +3,14 @@ import {Switch} from '@headlessui/react'
 import {Config} from 'alinea/core/Config'
 import type {Label} from 'alinea/core/Label'
 import {Root as AlineaRoot} from 'alinea/core/Root'
-import {Workspace} from 'alinea/core/Workspace'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {Workspace} from 'alinea/core/Workspace'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {select} from 'alinea/field/select'
-import {Icon, TextLabel, VStack, px} from 'alinea/ui'
+import {Icon, px, TextLabel, VStack} from 'alinea/ui'
 import {Avatar} from 'alinea/ui/Avatar'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {PopoverMenu} from 'alinea/ui/PopoverMenu'
-import {HStack} from 'alinea/ui/Stack'
 import {LogoShape} from 'alinea/ui/branding/LogoShape'
+import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineScreenshot} from 'alinea/ui/icons/IcOutlineScreenshot'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
@@ -21,6 +19,8 @@ import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
+import {PopoverMenu} from 'alinea/ui/PopoverMenu'
+import {HStack} from 'alinea/ui/Stack'
 import {contrastColor} from 'alinea/ui/util/ContrastColor'
 import {createSlots} from 'alinea/ui/util/Slots'
 import {parseToHsla} from 'color2k'
@@ -216,10 +216,10 @@ export namespace Toolbar {
                     )*/}
                   </VStack>
 
-                  {Config.hasAuth(config) && (
+                  {Config.hasAuth(config) && session.cnx.logout && (
                     <PopoverMenu.Footer>
                       <DropdownMenu.Root>
-                        <DropdownMenu.Item onClick={session.end}>
+                        <DropdownMenu.Item onClick={session.cnx.logout}>
                           Logout
                         </DropdownMenu.Item>
                       </DropdownMenu.Root>

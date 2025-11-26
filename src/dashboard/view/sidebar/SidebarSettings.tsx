@@ -1,17 +1,17 @@
 import styler from '@alinea/styler'
 import {Switch} from '@headlessui/react'
-import {Workspace} from 'alinea/core/Workspace'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
+import {Workspace} from 'alinea/core/Workspace'
 import {select} from 'alinea/field'
-import {HStack, Icon, VStack, px} from 'alinea/ui'
+import {HStack, Icon, px, VStack} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
-import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {IcBaselineAccountCircle} from 'alinea/ui/icons/IcBaselineAccountCircle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
+import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import {dashboardOptionsAtom, sessionAtom} from '../../atoms/DashboardAtoms.js'
@@ -164,10 +164,10 @@ export function SidebarSettings() {
             )*/}
           </VStack>
 
-          {session?.end && (
+          {session?.cnx.logout && (
             <PopoverMenu.Footer>
               <DropdownMenu.Root>
-                <DropdownMenu.Item onClick={session.end}>
+                <DropdownMenu.Item onClick={session.cnx.logout}>
                   Logout
                 </DropdownMenu.Item>
               </DropdownMenu.Root>

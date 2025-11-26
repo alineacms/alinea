@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.5.3]
+- Fix Query.next and Query.previous which were not sorted correctly
+ 
+## [1.5.2]
+- Set access token at the root so `cms.user()` calls work in preview environments
+
+## [1.5.1]
+- Prefix upload locations with media dir for self-hosted backends
+- Handle logout endpoint for OAuth backends
+
+## [1.5.0]
+- Handle authentication with Alinea Cloud using OAuth 2.0
+- Enable ctrl and middle mouse clicks in the entry tree to open in new tab
+- Use a shared EventSource in dev mode to avoid the browser maximum of 
+  6 connections per origin
+- Check workspace and root properties during entry creation
+
 ## [1.4.9]
 - Fix: handle missing blobs in local IndexedDB store
 

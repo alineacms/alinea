@@ -1,63 +1,321 @@
-import {reportWarning} from 'alinea/cli/util/Report'
-import {Config} from 'alinea/core/Config'
-import type {Entry, EntryStatus} from 'alinea/core/Entry'
-import {
-  createRecord,
-  type EntryRecord,
-  parseRecord
-} from 'alinea/core/EntryRecord'
-import {getRoot} from 'alinea/core/Internal'
-import {Page} from 'alinea/core/Page'
-import {Schema} from 'alinea/core/Schema'
-import {Type} from 'alinea/core/Type'
-import {entryInfo, entryUrl} from 'alinea/core/util/EntryFilenames'
-import {isValidOrderKey} from 'alinea/core/util/FractionalIndexing'
-import {entries, keys} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
-import {slugify} from 'alinea/core/util/Slugs'
 import MiniSearch from 'minisearch'
+import {Config} from '../Config.js'
+import type {Entry, EntryStatus} from '../Entry.js'
+import {createRecord, parseRecord} from '../EntryRecord.js'
 import {createId} from '../Id.js'
-import {getScope, type Scope} from '../Scope.js'
-import type {Change, ChangesBatch} from '../source/Change.js'
+import {getRoot} from '../Internal.js'
+import {Page} from '../Page.js'
+import {Schema} from '../Schema.js'
+import type {ChangesBatch} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import {bundleContents, type Source} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {compareStrings} from '../source/Utils.js'
+import {Type} from '../Type.js'
 import {assert} from '../util/Assert.js'
+import {entryInfo, entryUrl} from '../util/EntryFilenames.js'
+import {entries, keys} from '../util/Objects.js'
+import {slugify} from '../util/Slugs.js'
 import {sourceChanges} from './CommitRequest.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {IndexEvent} from './IndexEvent.js'
 
-const SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u
-const DIACRITIC = /\p{Diacritic}/gu
-
 export interface EntryFilter {
   ids?: ReadonlyArray<string>
   search?: string
-  condition?: (entry: Entry) => boolean
+  condition?(entry: Entry): boolean
 }
 
-export class EntryIndex extends EventTarget {
-  tree = ReadonlyTree.EMPTY
-  entries = [] as Entry[]
-  byPath = new Map<string, EntryNode>()
-  byId = new Map<string, EntryNode>()
-  initialSync: ReadonlyTree | undefined
-  #config: Config
-  #scope: Scope
-  #seeds: Map<string, Seed>
-  #search: MiniSearch
-  #singleWorkspace: string | undefined
+export interface EntryCondition {
+  search?: string
+  nodes?: Iterable<EntryNode>
+  node?(node: EntryNode): boolean
+  language?(language: EntryLanguageNode): boolean
+  entry?(entry: Entry): boolean
+}
 
-  constructor(config: Config) {
+export function combineConditions(
+  a: EntryCondition,
+  b: EntryCondition
+): EntryCondition {
+  return {
+    search: a.search ?? b.search,
+    nodes: a.nodes ?? b.nodes,
+    node(node) {
+      return (a.node ? a.node(node) : true) && (b.node ? b.node(node) : true)
+    },
+    language(language) {
+      return (
+        (a.language ? a.language(language) : true) &&
+        (b.language ? b.language(language) : true)
+      )
+    },
+    entry(entry) {
+      return (
+        (a.entry ? a.entry(entry) : true) && (b.entry ? b.entry(entry) : true)
+      )
+    }
+  }
+}
+
+interface EntryVersionData {
+  id: string
+  type: string
+  index: string
+  searchableText: string
+  title: string
+  data: Record<string, unknown>
+  seeded: string | null
+  rowHash: string
+  fileHash: string
+}
+
+interface EntryVersion extends EntryVersionData {
+  locale: string | null
+  workspace: string
+  root: string
+  path: string
+  status: EntryStatus
+  parentDir: string
+  childrenDir: string
+  filePath: string
+  level: number
+}
+
+class EntryLanguage extends Map<EntryStatus, EntryVersion> {
+  readonly locale: string | null
+  readonly parentDir: string
+  readonly selfDir: string
+  constructor(versions: Array<EntryVersion>) {
+    super(versions.map(phase => [phase.status, phase] as const))
+    this.locale = versions[0].locale
+    this.parentDir = versions[0].parentDir
+    this.selfDir = versions[0].childrenDir
+    const [first, ...rest] = versions
+    for (const version of rest) {
+      assert(
+        version.locale === first.locale,
+        `Mismatched locales for ${first.id} "${version.locale}" <> "${first.locale}"`
+      )
+      assert(
+        version.parentDir === first.parentDir,
+        `Mismatched parentDirs for ${first.id} "${version.parentDir}" <> "${first.parentDir}"`
+      )
+      assert(
+        version.childrenDir === first.childrenDir,
+        `Mismatched selfDirs for ${first.id} "${version.childrenDir}" <> "${first.childrenDir}"`
+      )
+      assert(
+        version.path === first.path,
+        `Mismatched paths for ${first.id} "${version.path}" <> "${first.path}"`
+      )
+    }
+  }
+}
+
+class EntryCollection extends Map<string | null, EntryLanguage> {
+  readonly type: string
+  constructor(public versions: Array<EntryVersion>) {
     super()
+    const [first, ...rest] = versions
+    this.type = first.type
+    for (const version of rest) {
+      assert(
+        version.type === first.type,
+        `Mismatched types for ${first.id} "${version.type}" <> "${first.type}"`
+      )
+      assert(
+        version.index === first.index,
+        `Mismatched index for ${first.id} "${version.index}" <> "${first.index}"`
+      )
+      assert(
+        version.root === first.root,
+        `Mismatched root for ${first.id} "${version.root}" <> "${first.root}"`
+      )
+      assert(
+        version.workspace === first.workspace,
+        `Mismatched workspace for ${first.id} "${version.workspace}" <> "${first.workspace}"`
+      )
+    }
+    const byLanguage = new Map<string | null, Array<EntryVersion>>()
+    for (const language of versions) {
+      const collection = byLanguage.get(language.locale) ?? []
+      collection.push(language)
+      byLanguage.set(language.locale, collection)
+    }
+    for (const [locale, entries] of byLanguage) {
+      this.set(locale, new EntryLanguage(entries))
+    }
+  }
+}
+
+class EntryLanguageNode {
+  inheritedStatus: EntryStatus | undefined
+  main: EntryVersion
+  active: EntryVersion
+  url: string
+  locale: string | null
+  path: string
+  #entries: Array<Entry> | undefined
+  readonly seeded: string | null = null
+  constructor(
+    private node: EntryNode,
+    private language: EntryLanguage
+  ) {
+    this.locale = language.locale
+    const active =
+      language.get('draft') ||
+      language.get('published') ||
+      language.get('archived')
+    const parentStatus = node.parent?.get(language.locale)?.inheritedStatus
+    if (parentStatus) this.inheritedStatus = parentStatus
+    else if (language.has('archived')) this.inheritedStatus = 'archived'
+    else if (language.has('draft') && !language.has('published'))
+      this.inheritedStatus = 'draft'
+    else this.inheritedStatus = undefined
+    let main: EntryVersion | undefined
+    if (this.inheritedStatus) main = active
+    else
+      main =
+        language.get('published') ||
+        language.get('archived') ||
+        language.get('draft')
+    assert(main, `EntryLanguageNode missing main version`)
+    this.main = main
+    assert(active, `EntryLanguageNode missing active version`)
+    this.active = active
+    this.url = entryUrl(node.entryType, {
+      status: main.status,
+      path: main.path,
+      parentPaths: this.parentPaths,
+      locale: main.locale
+    })
+    this.path = this.main.path
+    this.seeded = this.main.seeded
+  }
+
+  [Symbol.iterator]() {
+    return this.language[Symbol.iterator]()
+  }
+
+  has(status: EntryStatus) {
+    return this.language.has(status)
+  }
+
+  get parentPaths() {
+    let current = this.node.parent
+    const paths: Array<string> = []
+    while (current) {
+      const parentLanguage = current.get(this.locale)
+      assert(parentLanguage, `Missing parent language node`)
+      paths.unshift(parentLanguage.main.path)
+      current = current.parent
+    }
+    return paths
+  }
+
+  get entries() {
+    if (this.#entries) return this.#entries
+    const entries = (
+      this.inheritedStatus ? [this.active] : [...this.language.values()]
+    ).map((version): Entry => {
+      return {
+        ...version,
+        status: this.inheritedStatus ?? version.status,
+        parentId: this.node.parentId,
+        parents: this.node.parents,
+        url: this.url,
+        active: version === this.active,
+        main: version === this.main
+      }
+    })
+    this.#entries = entries
+    return entries
+  }
+
+  *filter(filter: EntryCondition): Generator<Entry> {
+    for (const entry of this.entries) {
+      if (filter.entry && !filter.entry(entry)) continue
+      yield entry
+    }
+  }
+}
+
+export class EntryNode extends Map<string | null, EntryLanguageNode> {
+  readonly id: string
+  readonly index: string
+  readonly parentId: string | null
+  readonly parents: Array<string>
+  readonly workspace: string
+  readonly root: string
+  readonly type: string
+  readonly level: number
+
+  constructor(
+    public entryType: Type,
+    public parent: EntryNode | null,
+    public children: () => Iterable<EntryNode>,
+    collection: EntryCollection
+  ) {
+    super()
+    const first = collection.versions[0]
+    this.id = first.id
+    this.index = first.index
+    this.workspace = first.workspace
+    this.root = first.root
+    this.type = first.type
+    this.level = first.level
+    this.parentId = parent ? parent.id : null
+    this.parents = []
+    let next = parent
+    while (next) {
+      assert(
+        !this.parents.includes(next.id),
+        `Cyclic parent reference: ${this.parents}`
+      )
+      this.parents.unshift(next.id)
+      next = next.parent
+    }
+    for (const [locale, language] of collection) {
+      this.set(locale, new EntryLanguageNode(this, language))
+    }
+  }
+
+  *filter(filter: EntryCondition): Generator<Entry> {
+    for (const node of this.values()) {
+      if (filter.language && !filter.language(node)) continue
+      yield* node.filter(filter)
+    }
+  }
+}
+
+const SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u
+const DIACRITIC = /\p{Diacritic}/gu
+
+export class EntryGraph {
+  #config: Config
+  #versionData: Map<string, EntryVersionData>
+  #filesById = new Map<string, Array<string>>()
+  #byId = new Map<string, EntryNode>()
+  #byDir = new Map<string, string>()
+  nodes: Array<EntryNode>
+  #singleWorkspace: string | undefined
+  #search: MiniSearch
+  #seeds: Map<string, Seed>
+
+  constructor(
+    config: Config,
+    versionData: Map<string, EntryVersionData>,
+    seeds: Map<string, Seed>
+  ) {
     this.#config = config
-    this.#scope = getScope(config)
+    this.#versionData = versionData
+    this.#seeds = seeds
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
-    this.#seeds = entrySeeds(config)
     this.#search = new MiniSearch({
       fields: ['title', 'searchableText'],
       storeFields: ['entry'],
@@ -68,115 +326,281 @@ export class EntryIndex extends EventTarget {
           .split(SPACE_OR_PUNCTUATION)
       }
     })
+    for (const [file, version] of versionData) {
+      const files = this.#filesById.get(version.id) ?? []
+      files.push(file)
+      this.#filesById.set(version.id, files)
+      const dir = getNodePath(file)
+      this.#byDir.set(dir, version.id)
+    }
+
+    this.nodes = [...this.#filesById.keys()]
+      .map(file => this.#mkNode(file))
+      .sort((a, b) => compareStrings(a.index, b.index))
   }
 
-  get sha() {
-    return this.tree.sha
+  byId(id: string) {
+    return this.#byId.get(id)
   }
 
-  findFirst<T extends Record<string, unknown>>(
-    filter: (entry: Entry) => boolean
-  ): Entry<T> | undefined {
-    const [entry] = this.findMany(filter)
-    return entry as Entry<T> | undefined
+  byDir(dir: string) {
+    const id = this.#byDir.get(dir)
+    if (!id) return undefined
+    return this.byId(id)
   }
 
-  *findMany<T extends Record<string, unknown>>(
-    filter: (entry: Entry) => boolean
-  ): Iterable<Entry<T>> {
-    for (const entry of this.entries) if (filter(entry)) yield entry as Entry<T>
+  withChanges(batch: ChangesBatch) {
+    const parser = getParser(this.#config)
+    const versions = new Map(this.#versionData)
+    for (const change of batch.changes) {
+      switch (change.op) {
+        case 'delete':
+          assert(versions.delete(change.path), 'Missing version to delete')
+          break
+        case 'add':
+          assert(change.contents, 'Missing contents')
+          versions.set(change.path, parser.parse(change.sha, change.contents))
+          break
+      }
+    }
+    return new EntryGraph(this.#config, versions, this.#seeds)
   }
 
-  filter({ids, search, condition}: EntryFilter, preview?: Entry): Array<Entry> {
+  *filter({search, ...filter}: EntryCondition): Generator<Entry> {
     if (search) {
-      const entries = this.filter({ids, condition})
-      for (const entry of entries) {
-        if (!this.#search.has(entry.filePath)) {
-          this.updateSearch(entry)
-        }
+      const found = new Set(this.filter(filter))
+      for (const entry of found) {
+        if (!this.#search.has(entry.filePath)) this.#updateSearch(entry)
       }
       return this.#search
         .search(search, {
           prefix: true,
           fuzzy: 0.1,
           boost: {title: 2},
-          filter: result => {
-            if (ids) return ids.includes(result.entry.id)
-            if (condition) return condition(result.entry)
-            return true
-          }
+          filter: result => found.has(result.entry)
         })
         .map(result => result.entry)
     }
-    if (ids) {
-      const results = []
-      for (const id of ids) {
-        const node = this.byId.get(id)
-        if (!node) continue
-        for (const e of node.entries) {
-          const entry =
-            preview && e.id === preview.id && e.locale === preview.locale
-              ? preview
-              : e
-          if (condition && !condition(entry)) continue
-          results.push(entry)
+    for (const node of filter.nodes ?? this.nodes) {
+      if (filter.node && !filter.node(node)) continue
+      yield* node.filter(filter)
+    }
+  }
+
+  #updateSearch(entry: Entry) {
+    this.#search.add({
+      id: entry.filePath,
+      title: entry.title,
+      searchableText: entry.searchableText,
+      entry
+    })
+  }
+
+  #mkEntry(filePath: string): EntryVersion {
+    const version = this.#versionData.get(filePath)!
+    const segments = filePath.split('/')
+    const baseName = segments.at(-1)
+    assert(baseName)
+    const lastDot = baseName.lastIndexOf('.')
+    assert(lastDot !== -1)
+    const fileName = baseName.slice(0, lastDot)
+    const [path, status] = entryInfo(fileName)
+    const parentDir = segments.slice(0, -1).join('/')
+    const childrenDir = `${parentDir}/${path}`
+    const seed = this.#seeds.get(childrenDir)
+    const data: Record<string, unknown> = {path, ...version.data, ...seed?.data}
+    let segmentIndex = 0
+    const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
+    const workspaceConfig = this.#config.workspaces[workspace]
+    assert(workspaceConfig, `Invalid workspace: ${workspace} in ${filePath}`)
+    const root = segments[segmentIndex++]
+    const rootConfig = workspaceConfig[root]
+    assert(rootConfig, `Invalid root: ${root} for workspace ${workspace}`)
+    const i18n = getRoot(rootConfig).i18n
+    let locale: string | null = null
+    if (i18n) {
+      locale = segments[segmentIndex++].toLowerCase()
+      for (const localeCandidate of i18n.locales) {
+        if (locale === localeCandidate.toLowerCase()) {
+          locale = localeCandidate
+          break
         }
       }
-      return results
+      assert(i18n.locales.includes(locale), `Invalid locale: ${locale}`)
     }
-    const results = this.#previewEntries(this.entries, preview)
-    if (!condition) return results
-    return results.filter(condition)
+    let levelOffset = 1
+    if (!this.#singleWorkspace) levelOffset += 1
+    if (i18n) levelOffset += 1
+    const level = segments.length - levelOffset - 1
+
+    return {
+      ...version,
+      data,
+      title: data.title as string,
+      locale,
+      workspace,
+      root,
+      path,
+      status,
+      parentDir,
+      childrenDir,
+      filePath,
+      level
+    }
   }
 
-  #previewEntries(entries: Array<Entry>, preview?: Entry) {
-    if (!preview) return entries
-    const index = entries.findIndex(entry => {
-      return (
-        entry.id === preview.id &&
-        entry.locale === preview.locale &&
-        entry.status === preview.status
+  #mkNode(id: string): EntryNode {
+    if (this.#byId.has(id)) return this.#byId.get(id)!
+    const files = this.#filesById.get(id)!
+    // Todo: these can be cached
+    const collection = new EntryCollection(
+      files.map(file => this.#mkEntry(file))
+    )
+    const [first, ...rest] = collection.values()
+    const parentId = this.#byDir.get(first.parentDir) ?? null
+    for (const language of rest) {
+      const otherParentId = this.#byDir.get(language.parentDir) ?? null
+      assert(
+        parentId === otherParentId,
+        `Expected matching parents for entries "${first.selfDir}" and "${language.selfDir}"`
       )
-    })
-    // Todo: the order here is off
-    if (index === -1) return entries.concat(preview)
-    const copy = entries.slice()
-    copy[index] = preview
-    return copy
+    }
+    const parent = parentId ? this.#mkNode(parentId) : null
+    const type = this.#config.schema[collection.type]
+    function* children(this: EntryGraph) {
+      for (const node of this.nodes) {
+        if (node.parentId === id) yield node
+      }
+    }
+    const node = new EntryNode(type, parent, children.bind(this), collection)
+    this.#byId.set(id, node)
+    return node
   }
+}
 
+class VersionParser extends Map<string, EntryVersionData> {
+  #config: Config
+  constructor(config: Config) {
+    super()
+    this.#config = config
+  }
+  parse(sha: string, blob: Uint8Array): EntryVersionData {
+    if (super.has(sha)) return super.get(sha)!
+    const decoder = new TextDecoder()
+    const text = decoder.decode(blob)
+    const raw = JSON.parse(text)
+    const {meta, data} = parseRecord(raw)
+    const entryType = this.#config.schema[meta.type]
+    const searchableText = Type.searchableText(entryType, data)
+    const version = {
+      id: meta.id,
+      type: meta.type,
+      index: meta.index,
+      data,
+      title: data.title as string,
+      searchableText,
+      seeded: meta.seeded ?? null,
+      rowHash: sha,
+      fileHash: sha
+    }
+    this.set(sha, version)
+    return version
+  }
+}
+
+class ParserCache extends WeakMap<Config, VersionParser> {
+  get = (config: Config) => {
+    if (!this.has(config)) this.set(config, new VersionParser(config))
+    return super.get(config)!
+  }
+}
+
+const getParser = new ParserCache().get
+
+function getNodePath(filePath: string) {
+  const lastSlash = filePath.lastIndexOf('/')
+  const dir = filePath.slice(0, lastSlash)
+  const name = filePath.slice(lastSlash + 1)
+  const lastDot = name.lastIndexOf('.')
+  let base = lastDot === -1 ? name : name.slice(0, lastDot)
+  if (base.endsWith('.archived')) base = base.slice(0, -'.archived'.length)
+  if (base.endsWith('.draft')) base = base.slice(0, -'.draft'.length)
+  return `${dir}/${base}`
+}
+
+export class EntryIndex extends EventTarget {
+  tree = ReadonlyTree.EMPTY
+  initialSync: ReadonlyTree | undefined
+  graph: EntryGraph
+  #config: Config
+  #seeds: Map<string, Seed>
+  #singleWorkspace: string | undefined
+  constructor(config: Config) {
+    super()
+    this.#config = config
+    this.#seeds = entrySeeds(config)
+    this.graph = new EntryGraph(config, new Map(), this.#seeds)
+    this.#singleWorkspace = Config.multipleWorkspaces(config)
+      ? undefined
+      : keys(config.workspaces)[0]
+  }
+  get sha() {
+    return this.tree.sha
+  }
+  filter(filter: EntryCondition): Iterable<Entry> {
+    return this.graph.filter(filter)
+  }
+  findFirst<T extends Record<string, unknown>>(
+    filter: (entry: Entry) => boolean
+  ): Entry<T> | undefined {
+    const [entry] = this.findMany(filter)
+    return entry as Entry<T> | undefined
+  }
+  findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
+    return this.graph.filter({entry: filter})
+  }
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
     if (!this.initialSync) this.initialSync = tree
     const batch = await bundleContents(source, this.tree.diff(tree))
     if (batch.changes.length === 0) return tree.sha
-    // for (const {op, path} of changes) console.log(`sync> ${op} ${path}`)
     return this.indexChanges(batch)
   }
-
-  async fix(source: Source) {
-    const tree = await source.getTree()
-    const tx = await this.transaction(source)
-    for (const entry of this.entries) {
-      const record = createRecord(entry, entry.status)
-      const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
-      const sha = await hashBlob(contents)
-      const leaf = tree.getLeaf(entry.filePath)
-      if (sha !== leaf.sha) {
-        tx.update({
-          id: entry.id,
-          set: entry.data,
-          locale: entry.locale,
-          status: entry.status
-        })
+  async indexChanges(batch: ChangesBatch) {
+    const {fromSha, changes} = batch
+    if (fromSha !== this.tree.sha)
+      throw new ShaMismatchError(fromSha, this.tree.sha)
+    if (changes.length === 0) return this.tree.sha
+    const changed = new Set<EntryNode>()
+    for (const change of changes) {
+      if (change.op !== 'delete') continue
+      const nodePath = getNodePath(change.path)
+      const node = this.graph.byDir(nodePath)
+      assert(node, `Missing node for deleted path: ${change.path}`)
+      changed.add(node)
+    }
+    this.graph = this.graph.withChanges(batch)
+    for (const change of changes) {
+      if (change.op !== 'add') continue
+      const nodePath = getNodePath(change.path)
+      const node = this.graph.byDir(nodePath)
+      assert(node, `Missing node for added path: ${change.path}`)
+      changed.add(node)
+    }
+    const updatedTree = await this.tree.withChanges(batch)
+    const sha = updatedTree.sha
+    this.tree = updatedTree
+    const pool = Array.from(changed)
+    while (pool.length > 0) {
+      const node = pool.shift()!
+      this.dispatchEvent(new IndexEvent({op: 'entry', id: node.id}))
+      for (const child of node.children()) {
+        if (!changed.has(child)) pool.push(child)
       }
     }
-    if (tx.empty) return
-    const request = await tx.toRequest()
-    const contentChanges = sourceChanges(request)
-    if (contentChanges.changes.length) await source.applyChanges(contentChanges)
+    this.dispatchEvent(new IndexEvent({op: 'index', sha}))
+    return sha
   }
-
   async seed(source: Source) {
     for (const [nodePath, seed] of this.#seeds) {
       const {
@@ -186,7 +610,7 @@ export class EntryIndex extends EventTarget {
         locale,
         data: {path}
       } = seed
-      const node = this.byPath.get(nodePath)
+      const node = this.graph.byDir(nodePath)
       if (node) {
         assert(node.type === type, `Type mismatch in ${nodePath}`)
       } else {
@@ -206,22 +630,26 @@ export class EntryIndex extends EventTarget {
           assert(node.type === type, `Type mismatch in ${nodePath}`)
         } else {
           const parentPath = paths.dirname(nodePath)
-          const parentNode = this.byPath.get(getNodePath(parentPath))
+          const parentNode = this.graph.byDir(getNodePath(parentPath))
           let id = createId()
           if (locale) {
             const level = pathSegments.length - 2
             const pathEnd = `/${pathSegments.slice(1).join('/')}.json`
-            const from = this.findFirst(entry => {
-              return (
-                entry.locale !== locale &&
-                entry.root === root &&
-                entry.workspace === workspace &&
-                entry.path === path &&
-                entry.level === level &&
-                entry.parentId === (parentNode?.id ?? null) &&
-                entry.seeded !== null &&
-                entry.seeded.endsWith(pathEnd)
-              )
+            const [from] = this.filter({
+              node(node) {
+                return (
+                  node.root === root &&
+                  node.workspace === workspace &&
+                  node.level === level &&
+                  node.parentId === (parentNode?.id ?? null)
+                )
+              },
+              language(node) {
+                return node.locale !== locale && node.path === path
+              },
+              entry(entry) {
+                return Boolean(entry.seeded?.endsWith(pathEnd))
+              }
             })
             if (from) id = from.id
           }
@@ -240,455 +668,42 @@ export class EntryIndex extends EventTarget {
             .toRequest()
           const contentChanges = sourceChanges(request)
           if (contentChanges.changes.length) {
-            await source.applyChanges(contentChanges)
             await this.indexChanges(contentChanges)
+            await source.applyChanges(contentChanges)
           }
         }
       }
     }
   }
-
+  byId(id: string): EntryNode | undefined {
+    return this.graph.byId(id)
+  }
+  async fix(source: Source) {
+    const tree = await source.getTree()
+    const tx = await this.transaction(source)
+    for (const entry of this.filter({})) {
+      const record = createRecord(entry, entry.status)
+      const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
+      const sha = await hashBlob(contents)
+      const leaf = tree.getLeaf(entry.filePath)
+      if (sha !== leaf.sha) {
+        tx.update({
+          id: entry.id,
+          set: entry.data,
+          locale: entry.locale,
+          status: entry.status
+        })
+      }
+    }
+    if (tx.empty) return
+    const request = await tx.toRequest()
+    const contentChanges = sourceChanges(request)
+    if (contentChanges.changes.length) await source.applyChanges(contentChanges)
+  }
   async transaction(source: Source) {
     const from = await source.getTree()
     return new EntryTransaction(this.#config, this, source, from)
   }
-
-  async indexChanges(batch: ChangesBatch) {
-    const {changes} = batch
-    if (changes.length === 0) return this.tree.sha
-    this.#applyChanges(batch)
-    this.tree = await this.tree.withChanges(batch)
-    const sha = this.tree.sha
-    this.dispatchEvent(new IndexEvent({op: 'index', sha}))
-    return sha
-  }
-
-  async updateSearch(entry: Entry) {
-    this.#search.add({
-      id: entry.filePath,
-      title: entry.title,
-      searchableText: entry.searchableText,
-      entry
-    })
-  }
-
-  #applyChanges(batch: ChangesBatch) {
-    const {fromSha, changes} = batch
-    if (fromSha !== this.tree.sha)
-      throw new ShaMismatchError(fromSha, this.tree.sha)
-    const recompute = new Set<string>()
-    for (const change of changes) {
-      if (!change.path.endsWith('.json')) continue
-      const nodePath = getNodePath(change.path)
-      switch (change.op) {
-        case 'delete': {
-          const node = this.byPath.get(nodePath)
-          if (!node) continue
-          const entry = node.byFile.get(change.path)
-          if (!entry) continue
-          assert(
-            entry.fileHash === change.sha,
-            `SHA mismatch: ${entry.fileHash} != ${change.sha}`
-          )
-          if (node.remove(change.path) === 0) {
-            this.byId.delete(node.id)
-            this.byPath.delete(nodePath)
-          }
-          recompute.add(node.id)
-          if (this.#search.has(entry.filePath)) {
-            this.#search.discard(entry.filePath)
-          }
-          break
-        }
-        case 'add': {
-          const contents = change.contents
-          assert(contents, 'Missing contents')
-          const segments = change.path.split('/').slice(0, -1)
-          const parentPath = segments.join('/')
-          const parent = this.byPath.get(parentPath)
-          const entry = this.#parseEntry(
-            {
-              sha: change.sha,
-              file: change.path,
-              contents: contents
-            },
-            parent
-          )
-          const node =
-            this.byId.get(entry.id) ?? new EntryNode(this.#config, entry)
-          node.add(entry, parent)
-          if (parent) recompute.add(parent.id)
-          else recompute.add(node.id)
-          this.byPath.set(nodePath, node)
-          this.byId.set(entry.id, node)
-          if (this.#search.has(entry.filePath)) {
-            this.#search.discard(entry.filePath)
-            this.updateSearch(entry)
-          }
-          break
-        }
-      }
-    }
-
-    const entries: Entry[] = []
-
-    for (const [id, node] of this.byId) {
-      let needsSync = recompute.has(id)
-      let parentId = node.parentId
-      while (!needsSync && parentId) {
-        const parent = this.byId.get(parentId)
-        if (!parent) break
-        needsSync = recompute.has(parent.id)
-        parentId = parent.parentId
-      }
-      if (needsSync) {
-        node.sync(this.byId)
-        recompute.add(id)
-      }
-      entries.push(...node.entries)
-    }
-    this.entries = entries.sort((a, b) => compareStrings(a.index, b.index))
-    for (const id of recompute) {
-      this.dispatchEvent(new IndexEvent({op: 'entry', id}))
-    }
-  }
-
-  #parseEntry(
-    {sha, file, contents}: ParseRequest,
-    parent: EntryNode | undefined
-  ): Entry {
-    const segments = file.split('/')
-    const baseName = segments.at(-1)
-    assert(baseName)
-    const lastDot = baseName.lastIndexOf('.')
-    assert(lastDot !== -1)
-    const fileName = baseName.slice(0, lastDot)
-    const [path, status] = entryInfo(fileName)
-
-    const parentDir = segments.slice(0, -1).join('/')
-    const childrenDir = `${parentDir}/${path}`
-
-    let raw: unknown
-    try {
-      const data = new TextDecoder().decode(contents)
-      raw = JSON.parse(data)
-    } catch (error) {
-      throw new Error(`Failed to parse JSON: ${file} - ${error}`)
-    }
-    assert(typeof raw === 'object')
-    const nodePath = getNodePath(file)
-    const seed = this.#seeds.get(nodePath)
-    const {meta: record, data: fields} = parseRecord(raw as EntryRecord)
-    const data: Record<string, unknown> = {
-      path,
-      ...seed?.data,
-      ...fields
-    }
-    const id = record.id
-    const type = record.type
-    const index = record.index
-    const title = data.title as string
-
-    let segmentIndex = 0
-    const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
-    const workspaceConfig = this.#config.workspaces[workspace]
-    assert(workspaceConfig, `Invalid workspace: ${workspace} in ${file}`)
-    const root = segments[segmentIndex++]
-    const rootConfig = workspaceConfig[root]
-    assert(rootConfig, `Invalid root: ${root}`)
-    const i18n = getRoot(rootConfig).i18n
-    let locale: string | null = null
-    if (i18n) {
-      locale = segments[segmentIndex++].toLowerCase()
-      for (const localeCandidate of i18n.locales) {
-        if (locale === localeCandidate.toLowerCase()) {
-          locale = localeCandidate
-          break
-        }
-      }
-    }
-    const entryType = this.#config.schema[type]
-    assert(entryType, `Invalid type: ${type} in ${file} (${workspace}/${root})`)
-    const searchableText = Type.searchableText(entryType, data)
-    let levelOffset = 1
-    if (!this.#singleWorkspace) levelOffset += 1
-    if (i18n) levelOffset += 1
-
-    const parents = []
-    let target = parent
-    while (target) {
-      parents.unshift(target.id)
-      if (target.parentId) {
-        target = this.byId.get(target.parentId)
-      } else {
-        target = undefined
-      }
-    }
-
-    return {
-      rowHash: sha,
-      fileHash: sha,
-
-      workspace,
-      root,
-      filePath: file,
-      seeded: record.seeded ?? null,
-
-      id,
-      status,
-      type,
-
-      parentDir,
-      childrenDir,
-      parentId: parent?.id ?? null,
-      parents: parents,
-      level: segments.length - levelOffset - 1,
-      index,
-      locale,
-
-      path,
-      title,
-      data,
-      searchableText,
-
-      // Derived
-      url: '',
-      active: false,
-      main: false
-    }
-  }
-}
-
-interface ParseRequest {
-  sha: string
-  file: string
-  contents: Uint8Array
-}
-
-class Versions extends Map<EntryStatus, Entry> {
-  inheritedStatus: EntryStatus | undefined
-  setInherited(parentStatus: EntryStatus | undefined) {
-    if (parentStatus) this.inheritedStatus = parentStatus
-    else if (this.has('archived')) this.inheritedStatus = 'archived'
-    else if (this.has('draft') && !this.has('published'))
-      this.inheritedStatus = 'draft'
-    else this.inheritedStatus = undefined
-  }
-  get active() {
-    return this.get('draft') || this.get('published') || this.get('archived')
-  }
-  get main() {
-    if (this.inheritedStatus) return this.active
-    return this.get('published') || this.get('archived') || this.get('draft')
-  }
-  *versions(): Generator<Entry> {
-    if (this.inheritedStatus) yield this.active!
-    else yield* this.values()
-  }
-}
-
-class EntryNode {
-  #config: Config
-  id: string
-  type: string
-  byFile = new Map<string, Entry>()
-  locales = new Map<string | null, Versions>()
-  constructor(config: Config, from: Entry) {
-    this.#config = config
-    this.id = from.id
-    this.type = from.type
-    const workspace = this.#config.workspaces[from.workspace]
-    assert(workspace, `Invalid workspace: ${from.workspace}`)
-    const root = workspace[from.root]
-    assert(root, `Invalid root: ${from.root}`)
-    const type = this.#config.schema[from.type]
-    assert(type, `Invalid type: ${from.type} in ${from.filePath}`)
-  }
-  get index() {
-    const [entry] = this.byFile.values()
-    return entry.index
-  }
-  get parentId() {
-    const [entry] = this.byFile.values()
-    if (!entry) {
-      throw new Error(`EntryNode has no entries: ${this.id}`)
-    }
-    return entry.parentId
-  }
-  get entries() {
-    const result = []
-    for (const versions of this.locales.values()) {
-      for (const version of versions.versions()) {
-        result.push(version)
-      }
-    }
-    return result
-  }
-  pathOf(locale: string | null): string | undefined {
-    const versions = this.locales.get(locale)
-    if (!versions) return
-    const [version] = versions.values()
-    if (!version) return
-    return version.path
-  }
-  add(entry: Entry, parent: EntryNode | undefined) {
-    if (this.byFile.has(entry.filePath)) this.remove(entry.filePath)
-    const [from] = this.byFile.values()
-    if (from) this.#validate(entry, from)
-    const locale = entry.locale
-    const versions = this.locales.get(locale) ?? new Versions()
-    this.locales.set(locale, versions)
-
-    const status = entry.status
-
-    // Per ID: all have locale or none have locale
-    if (locale === null) assert(this.locales.size === 1)
-
-    if (versions.has(status)) {
-      return reportWarning(
-        `Duplicate entry with id ${entry.id}`,
-        entry.filePath,
-        versions.get(status)!.filePath
-      )
-    }
-
-    switch (status) {
-      case 'published': {
-        // Per ID&locale: one of published or archived, but not both
-        const archived = versions.get('archived')
-        if (!archived) break
-        return reportWarning(
-          'Entry has both an archived and published version',
-          archived.filePath,
-          entry.filePath
-        )
-      }
-      case 'archived': {
-        const published = versions.get('published')
-        if (!published) break
-        return reportWarning(
-          'Entry has both an archived and published version',
-          published.filePath,
-          entry.filePath
-        )
-      }
-      case 'draft': {
-        // Per ID&locale: only one draft
-        const draft = versions.get('draft')
-        if (!draft) break
-        return reportWarning(
-          'Entry has multiple drafts',
-          draft.filePath,
-          entry.filePath
-        )
-      }
-    }
-
-    versions.set(status, entry)
-    this.byFile.set(entry.filePath, entry)
-
-    const parentVersions = parent?.locales.get(locale)
-    versions.setInherited(parentVersions?.inheritedStatus)
-    entry.status = versions.inheritedStatus ?? status
-
-    for (const version of versions.values()) {
-      if (entry.path !== version.path) {
-        reportWarning(
-          'Entry has different file paths for different versions',
-          entry.filePath,
-          version.filePath
-        )
-      }
-    }
-  }
-  sync(byId: Map<string, EntryNode>) {
-    const parent = this.parentId ? byId.get(this.parentId) : undefined
-
-    for (const [locale, versions] of this.locales) {
-      let path: string
-
-      const parentVersions = parent?.locales.get(locale)
-      versions.setInherited(parentVersions?.inheritedStatus)
-      const activeVersion = versions.active
-      const mainVersion = versions.main
-
-      for (const [status, version] of versions) {
-        path ??= version.path
-        assert(
-          version.path === path,
-          `Invalid path: ${version.path} != ${path}`
-        )
-
-        version.active = version === activeVersion
-        version.main = version === mainVersion
-
-        const parentPaths = []
-        let p = parent
-        while (p) {
-          const parentPath = p.pathOf(locale)
-          assert(parentPath, 'Missing parent path')
-          parentPaths.unshift(parentPath)
-          if (p.parentId) p = byId.get(p.parentId)
-          else break
-        }
-        const type = this.#config.schema[version.type]
-        const url = entryUrl(type, {
-          locale,
-          status,
-          path: version.path,
-          parentPaths
-        })
-        version.url = url
-        version.status = versions.inheritedStatus ?? status
-
-        // Per ID: all have same index, index is valid fractional index
-        assert(isValidOrderKey(version.index), 'Invalid index')
-        if (version.index !== this.index) {
-          reportWarning(
-            `This translation has a different _index field (${version.index} != ${this.index})`,
-            version.filePath,
-            this.entries[0]!.filePath
-          )
-          version.index = this.index
-        }
-      }
-    }
-  }
-  has(filePath: string) {
-    return this.byFile.has(filePath)
-  }
-  remove(filePath: string) {
-    const entry = this.byFile.get(filePath)
-    assert(entry, 'Entry not found')
-    const locale = entry.locale
-    const versions = this.locales.get(locale)
-    assert(versions, `Locale (${locale}) not found for ${filePath}`)
-    const [, status] = entryInfo(filePath.slice(0, -'.json'.length))
-    versions.delete(status)
-    if (versions.size === 0) this.locales.delete(locale)
-    this.byFile.delete(filePath)
-    return this.byFile.size
-  }
-  #validate(a: Entry, b: Entry) {
-    assert(a.id === b.id, 'ID mismatch')
-    assert(
-      a.root === b.root,
-      `Entry has a different root than the previous version: ${a.filePath} (${a.root}) != ${b.filePath} (${b.root})`
-    )
-    // Per ID: all have same type
-    assert(a.type === b.type, 'Type mismatch')
-  }
-}
-
-function getNodePath(filePath: string) {
-  const lastSlash = filePath.lastIndexOf('/')
-  const dir = filePath.slice(0, lastSlash)
-  const name = filePath.slice(lastSlash + 1)
-  const lastDot = name.lastIndexOf('.')
-  let base = lastDot === -1 ? name : name.slice(0, lastDot)
-  if (base.endsWith('.archived')) base = base.slice(0, -'.archived'.length)
-  if (base.endsWith('.draft')) base = base.slice(0, -'.draft'.length)
-  return `${dir}/${base}`
 }
 
 interface Seed {

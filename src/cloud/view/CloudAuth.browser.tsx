@@ -16,7 +16,8 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
     throw new Error('Cannot authenticate with non http client')
   const clientUrl = new URL(client.url, window.location.href)
   const {data, isError} = useQuery(['auth.status'], () => client.authStatus(), {
-    keepPreviousData: true
+    cacheTime: 0,
+    keepPreviousData: false
   })
   if (isError)
     return (
@@ -59,10 +60,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
         cnx: client.authenticate(
           options => options,
           () => setSession(undefined)
-        ),
-        async end() {
-          location.href = new URL('?auth=logout', clientUrl).href
-        }
+        )
       })
       return null
     case AuthResultType.UnAuthenticated:

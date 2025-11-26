@@ -2,40 +2,40 @@ import {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
 import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
-import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
+import {Statusbar} from 'alinea/ui/Statusbar'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {type ComponentType, useEffect} from 'react'
 import type {QueryClient} from 'react-query'
-import {navMatchers} from './DashboardNav.js'
-import {DashboardProvider} from './DashboardProvider.js'
-import {router} from './Routes.js'
 import {sessionAtom} from './atoms/DashboardAtoms.js'
 import {dbMetaAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
 import {policyTrigger} from './atoms/PolicyAtom.js'
-import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
+import {RouterProvider, RouteView} from './atoms/RouterAtoms.js'
 import type {WorkerDB} from './boot/WorkerDB.js'
+import {navMatchers} from './DashboardNav.js'
+import {DashboardProvider} from './DashboardProvider.js'
 import {useDashboard} from './hook/UseDashboard.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
 import {useLocale} from './hook/UseLocale.js'
 import {useNav} from './hook/UseNav.js'
 import {useRoot} from './hook/UseRoot.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
+import {router} from './Routes.js'
 import {Head} from './util/Head.js'
 import {SuspenseBoundary} from './util/SuspenseBoundary.js'
 import {ErrorBoundary} from './view/ErrorBoundary.js'
 import {Modal} from './view/Modal.js'
 import {Sidebar} from './view/Sidebar.js'
+import {SidebarSettings} from './view/sidebar/SidebarSettings.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
-import {SidebarSettings} from './view/sidebar/SidebarSettings.js'
 
 const isEntryAtom = atom(get => {
   const location = get(locationAtom)
@@ -89,7 +89,7 @@ function AppAuthenticated() {
                   .filter(([key]) => {
                     return policy.canRead({workspace, root: key})
                   })
-                  .map(([key, root], i) => {
+                  .map(([key, root]) => {
                     const isSelected = key === currentRoot
                     const {id, ...location} = entryLocation
                     const link =
@@ -171,7 +171,7 @@ function AppAuthenticated() {
 
 function AppRoot() {
   const [session, setSession] = useAtom(sessionAtom)
-  const {fullPage, config} = useDashboard()
+  const {config} = useDashboard()
   const {color} = Config.mainWorkspace(config)
   const Auth = config.auth
   if (!session)
