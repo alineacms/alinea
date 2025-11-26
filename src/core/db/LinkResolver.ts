@@ -16,9 +16,9 @@ export class LinkResolver {
     projection: P,
     entryIds: ReadonlyArray<string>
   ): Promise<Array<InferProjection<P> | undefined>> {
-    const {status, preview} = this.ctx
+    const {status, graph} = this.ctx
     const results = await this.resolver.resolve({
-      preview: preview ? {entry: preview} : undefined,
+      graph,
       preferredLocale: this.locale ?? undefined,
       status,
       select: projection,
