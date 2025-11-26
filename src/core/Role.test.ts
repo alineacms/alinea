@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {root, type, workspace} from 'alinea/config.js'
 import {createConfig} from './Config.js'
-import {Policy, WriteablePolicy, role} from './Role.js'
+import {Policy, role, WriteablePolicy} from './Role.js'
 import {getScope} from './Scope.js'
 
 const test = suite(import.meta)
@@ -242,4 +242,11 @@ test('WriteablePolicy.applyAll merges with allowAll', () => {
   policy.set({deny: {read: true}})
   test.not.ok(policy.canRead(a))
   test.ok(policy.canCreate(a))
+})
+
+test('locale permissions', async () => {
+  const policy = new WriteablePolicy(scope)
+  policy.set({locale: 'en', allow: {read: true}})
+  test.ok(policy.canRead({locale: 'en'}))
+  test.not.ok(policy.canRead({locale: 'fr'}))
 })

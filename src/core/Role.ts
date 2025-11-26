@@ -2,13 +2,14 @@ import {assert} from 'alinea/core/util/Assert'
 import type {Graph} from './Graph.js'
 import {ErrorCode, HttpError} from './HttpError.js'
 import type {HasRoot, HasType, HasWorkspace} from './Internal.js'
-import {type Entity, type Scope, ScopeKey} from './Scope.js'
+import {type Scope, ScopeKey} from './Scope.js'
 
-interface PermissionInput {
+export interface PermissionInput {
   workspace?: HasWorkspace
   type?: HasType
   root?: HasRoot
   id?: string
+  locale?: string | null
   /**
    * Specifies the permission evaluation strategy.
    * - 'inherit' (default): Permissions granted at a higher level (e.g., workspace) are sufficient.
@@ -19,7 +20,7 @@ interface PermissionInput {
   deny?: Partial<Permissions>
 }
 
-interface Permissions {
+export interface Permissions {
   create: boolean
   read: boolean
   update: boolean
@@ -192,6 +193,10 @@ export class Policy {
       const typePermission = this.acl.get(ScopeKey.type(resource.type))
       result = combine(result, typePermission)
     }
+    if (resource.locale !== undefined) {
+      const localePermission = this.acl.get(ScopeKey.locale(resource.locale))
+      result = combine(result, localePermission)
+    }
     if (resource.id) {
       const entryPermission = this.acl.get(ScopeKey.entry(resource.id))
       result = combine(result, entryPermission)
@@ -281,21 +286,14 @@ export class WriteablePolicy extends Policy {
 
   set(...inputs: Array<PermissionInput>): this {
     for (const input of inputs) {
-      let subject: Entity | string | undefined
-      if (input.workspace) subject = input.workspace
-      else if (input.root) subject = input.root
-      else if (input.type) subject = input.type
-      else if (input.id) subject = input.id
-      if (subject) {
-        const key =
-          typeof subject === 'string'
-            ? ScopeKey.entry(subject)
-            : this.#scope.keyOf(subject)
-        this.#apply(key, input)
-      } else {
-        const packed = pack(input)
-        this.acl.root |= packed
-      }
+      if (input.workspace)
+        this.#apply(this.#scope.keyOf(input.workspace), input)
+      else if (input.root) this.#apply(this.#scope.keyOf(input.root), input)
+      else if (input.type) this.#apply(this.#scope.keyOf(input.type), input)
+      else if (input.id) this.#apply(ScopeKey.entry(input.id), input)
+      else if (input.locale !== undefined)
+        this.#apply(ScopeKey.locale(input.locale), input)
+      else this.acl.root |= pack(input)
     }
     return this
   }

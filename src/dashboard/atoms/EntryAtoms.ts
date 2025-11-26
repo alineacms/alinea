@@ -72,7 +72,9 @@ function childrenOf(
           id: Entry.id,
           type: Entry.type,
           parents: Entry.parents,
-          locale: Entry.locale
+          locale: Entry.locale,
+          root: Entry.root,
+          workspace: Entry.workspace
         },
         orderBy,
         workspace,
@@ -83,13 +85,7 @@ function childrenOf(
         },
         status: 'preferDraft'
       })
-    ).filter(child => {
-      return policy.canRead({
-        ...child,
-        workspace,
-        root
-      })
-    })
+    ).filter(child => policy.canRead(child))
     const translatedChildren = new Set(
       children.filter(child => child.locale === locale).map(child => child.id)
     )
