@@ -10,19 +10,13 @@ import {text} from 'alinea/field/text/TextField'
 import {VStack} from 'alinea/ui/Stack'
 import {useAtomValue} from 'jotai'
 import {useEffect} from 'react'
-import type {FormDefinition} from '../FormField'
-import {addTextFieldToRJSF, FormTextField} from './text/FormTextField.js'
-
-const EmailField = type('Email', {
-  fields: {
-    title: text('Label', {required: true, width: 0.5}),
-    key: path('Key', {required: true, width: 0.5})
-  }
-})
+import type {FormDefinition} from './FormField'
+import {addTextFieldToRJSF, FormTextField, transformFieldSchemaToTextField} from './builder/FormTextField.js'
+import { addSelectFieldToRJSF, FormSelectField, transformFieldSchemaToSelectField } from './builder/FormSelectField.js'
 
 const baseSchema = {
   TextField: FormTextField,
-  EmailField
+  SelectField: FormSelectField,
 }
 
 const ArrayField = type('Array', {
@@ -74,7 +68,13 @@ const fields = type('Fields', {
   }
 })
 
-type ListDataType = Infer.ListItem<typeof fields>['list']
+export type ListDataType = Infer.ListItem<typeof fields>['list']
+
+// From specific to general
+const transformators = [
+  {_type: 'SelectField', transform: transformFieldSchemaToSelectField},
+  {_type: 'TextField', transform: transformFieldSchemaToTextField},
+ ] as const
 
 function formSchemasToListData(
   formSchema: FormDefinition['schema'],
@@ -85,36 +85,27 @@ function formSchemasToListData(
   const result: ListDataType = []
 
   for (const key of Object.keys(formSchema?.properties || {})) {
-    const fieldSchema = formSchema.properties?.[key] as any
+    const fieldSchema = formSchema.properties?.[key] 
     const uiFieldSchema = uiSchema?.[key] || {}
 
-    if (!fieldSchema) continue
+    if (!fieldSchema || fieldSchema === true) continue
 
     const id = createId()
     const lastItem = result[result.length - 1]
     const index = generateKeyBetween(lastItem?._index || null, null)
 
-    if (fieldSchema.type === 'string' && fieldSchema.format === 'email') {
+
+    for(const transformator of transformators){
+      const data = transformator.transform(key, fieldSchema, formSchema, uiSchema)
+      if(!data) continue
+      console.log(transformator._type, data)
       result.push({
         _id: id,
         _index: index,
-        _type: 'EmailField',
-        title: fieldSchema.title || '[No label]',
-        key: key
+        _type: transformator._type as any, // TODO: find an elegant way to type this
+        ...data,
       })
-    } else if (fieldSchema.type === 'string') {
-      result.push({
-        _id: id,
-        _index: index,
-        _type: 'TextField',
-        title: fieldSchema.title || '[No label]',
-        key: key,
-        placeholer: uiFieldSchema?.['ui:placeholder'] || '',
-        defaultValue: fieldSchema.default || '',
-        maxLength: uiFieldSchema?.['ui:maxLength']
-          ? parseInt(uiFieldSchema['ui:maxLength'], 10)
-          : null
-      })
+      break
     }
   }
 
@@ -148,13 +139,8 @@ export function VisualBuilder({
       if (row._type === 'TextField') {
         addTextFieldToRJSF(newSchema, newUiSchema, row)
       }
-      if (row._type === 'EmailField') {
-        const key = row.key || row._id
-        newSchema.properties![key] = {
-          type: 'string',
-          format: 'email',
-          title: row.title || '[No label]'
-        }
+      if(row._type === 'SelectField'){
+        addSelectFieldToRJSF(newSchema, newUiSchema, row)
       }
     }
     setSchemas({schema: newSchema, ui: newUiSchema})

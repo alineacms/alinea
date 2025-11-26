@@ -6,7 +6,7 @@ import {useField} from 'alinea/dashboard/editor/UseField'
 import {HStack} from 'alinea/ui/Stack'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useState} from 'react'
-import {VisualBuilder} from './builder/VisualBuilder.js'
+import {VisualBuilder} from './VisualBuilder.js'
 import type {FormDefinition, FormField} from './FormField'
 import css from './FormField.module.scss'
 
