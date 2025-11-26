@@ -4,12 +4,12 @@ import {ErrorCode, HttpError} from './HttpError.js'
 import type {HasRoot, HasType, HasWorkspace} from './Internal.js'
 import {type Scope, ScopeKey} from './Scope.js'
 
-export interface PermissionInput {
-  workspace?: HasWorkspace
-  type?: HasType
-  root?: HasRoot
-  id?: string
-  locale?: string | null
+interface SetPermissions {
+  workspace?: never
+  root?: never
+  type?: never
+  id?: never
+  locale?: never
   /**
    * Specifies the permission evaluation strategy.
    * - 'inherit' (default): Permissions granted at a higher level (e.g., workspace) are sufficient.
@@ -19,6 +19,30 @@ export interface PermissionInput {
   allow?: Partial<Permissions>
   deny?: Partial<Permissions>
 }
+
+interface WorkspacePermission extends Omit<SetPermissions, 'workspace'> {
+  workspace: HasWorkspace
+}
+interface RootPermission extends Omit<SetPermissions, 'root'> {
+  root: HasRoot
+}
+interface TypePermission extends Omit<SetPermissions, 'type'> {
+  type: HasType
+}
+interface IdPermission extends Omit<SetPermissions, 'id'> {
+  id: string
+}
+interface LocalePermission extends Omit<SetPermissions, 'locale'> {
+  locale: string | null
+}
+
+export type PermissionInput =
+  | SetPermissions
+  | WorkspacePermission
+  | RootPermission
+  | TypePermission
+  | IdPermission
+  | LocalePermission
 
 export interface Permissions {
   create: boolean
