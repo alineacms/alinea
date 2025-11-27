@@ -8,48 +8,16 @@
     "schema": {
       "type": "object",
       "properties": {
-        "color-radio": {
+        "test": {
           "type": "string",
-          "title": "Color as radio",
-          "oneOf": [
-            {
-              "const": "red",
-              "title": "Red"
-            },
-            {
-              "const": "blue",
-              "title": "Blue"
-            },
-            {
-              "const": "green",
-              "title": "Green"
-            }
-          ]
-        },
-        "color-as-dropdown": {
-          "type": "string",
-          "title": "Color as dropdown",
-          "oneOf": [
-            {
-              "const": "red",
-              "title": "Red"
-            },
-            {
-              "const": "blue",
-              "title": "Blue"
-            }
-          ]
+          "title": "Test",
+          "format": "data-url"
         }
       }
     },
     "ui": {
-      "color-radio": {
-        "ui:placeholder": "",
-        "ui:widget": "radio"
-      },
-      "color-as-dropdown": {
-        "ui:placeholder": "",
-        "ui:widget": "select"
+      "test": {
+        "ui:widget": "my-custom-widget"
       }
     }
   }

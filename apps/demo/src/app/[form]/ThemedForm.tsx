@@ -19,6 +19,7 @@ import {cx} from 'class-variance-authority'
 import {MoveDown, MoveUp, Trash2Icon, TriangleAlert} from 'lucide-react'
 import {startTransition, useActionState, useState} from 'react'
 import type {Form} from '@/Form.schema'
+import {MyFieldWidget} from '../../project-specific-field/MyFieldWidget'
 import {handleRjsfSubmit, type RjsfFormState} from './handleRjsfSubmit.action'
 
 function TitleFieldTemplate(props: TitleFieldProps) {
@@ -185,6 +186,9 @@ export const ThemedForm: React.FC<{
         }}
         schema={schema}
         uiSchema={ui!}
+        widgets={{
+          'my-custom-widget': MyFieldWidget
+        }}
         templates={{
           ArrayFieldTitleTemplate,
           TitleFieldTemplate,

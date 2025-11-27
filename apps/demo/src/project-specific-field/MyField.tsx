@@ -3,33 +3,34 @@ import {type} from 'alinea/core/Type'
 import {path} from 'alinea/field/path'
 import {text} from 'alinea/field/text/TextField'
 import type {JSONSchema7, JSONSchema7Definition} from 'json-schema'
-import type {FormDefinition, FormFieldDefinition} from '../FormField.js'
+import type {
+  FormDefinition,
+  FormFieldDefinition
+} from '../../../../dist/field/form.js'
 
-export const Schema = type('File', {
+const Schema = type('Project-specific-field', {
   fields: {
     title: text('Label', {required: true, width: 0.5}),
-    key: path('Key', {required: true, width: 0.5}),
-    placeholder: text('Placeholder')
+    key: path('Key', {required: true, width: 0.5})
   }
 })
 
-export function rjsfToField(
+function rjsfToField(
   key: string,
   schema: FormDefinition['schema'],
   uiSchema: FormDefinition['ui']
 ): Infer<typeof Schema> | undefined {
   if (schema.type !== 'string') return undefined
-  if (uiSchema['ui:widget'] !== 'file' && schema.format !== 'data-url')
-    return undefined
+  const uiFieldSchema = uiSchema[key] || {}
+  if (uiFieldSchema?.['ui:widget'] !== 'my-custom-widget') return undefined
 
   return {
     title: schema.title || '[No label]',
-    key: key,
-    placeholder: uiSchema['ui:placeholder'] || ''
+    key: key
   }
 }
 
-export function addFieldToRjsf(
+function addFieldToRjsf(
   properties: Record<string, JSONSchema7>,
   uiSchema: FormDefinition['ui'],
   field: Infer.ListItem<typeof Schema>
@@ -44,14 +45,14 @@ export function addFieldToRjsf(
   properties[key] = schema
 
   const ui: any = {}
-  ui['ui:widget'] = 'file'
+  ui['ui:widget'] = 'my-custom-widget'
 
   if (Object.keys(ui).length > 0) {
     uiSchema[key] = ui
   }
 }
 
-export const FormFileField = {
+export const MyField = {
   schema: Schema,
   rjsfToField,
   addFieldToRjsf
