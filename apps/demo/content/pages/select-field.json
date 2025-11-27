@@ -6,11 +6,11 @@
   "description": "",
   "form": {
     "schema": {
+      "type": "object",
       "properties": {
         "color-radio": {
           "type": "string",
           "title": "Color as radio",
-          "default": "",
           "oneOf": [
             {
               "const": "red",
@@ -19,13 +19,16 @@
             {
               "const": "blue",
               "title": "Blue"
+            },
+            {
+              "const": "green",
+              "title": "Green"
             }
           ]
         },
         "color-as-dropdown": {
           "type": "string",
           "title": "Color as dropdown",
-          "default": "",
           "oneOf": [
             {
               "const": "red",

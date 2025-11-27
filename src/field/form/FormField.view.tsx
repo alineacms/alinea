@@ -1,14 +1,19 @@
 import styler from '@alinea/styler'
 import Form from '@rjsf/core'
-import {RJSFSchema} from '@rjsf/utils'
 import validator from '@rjsf/validator-ajv8'
+import {type} from 'alinea/core/Type'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField} from 'alinea/dashboard/editor/UseField'
-import {HStack} from 'alinea/ui/Stack'
+import {HStack, VStack} from 'alinea/ui/Stack'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
-import {useState} from 'react'
-import {VisualBuilder} from './VisualBuilder.js'
-import type {FormDefinition, FormField} from './FormField'
+import {useAtomValue} from 'jotai'
+import {useEffect, useMemo, useState} from 'react'
+import {list} from '../list.js'
+// import {VisualBuilder} from './VisualBuilder.js'
+import type {FormDefinition, FormField, FormOptions} from './FormField'
 import css from './FormField.module.scss'
+import {RjsfHandler} from './RjsfHandler.js'
 
 const styles = styler(css)
 
@@ -20,7 +25,7 @@ const tabs = ['builder', 'schema', 'preview'] as const
 type Tab = (typeof tabs)[number]
 
 export function FormInput({field}: FormInputProps) {
-  const {options, value, mutator, error} = useField(field)
+  const {options, value, mutator} = useField(field)
 
   const [tab, setTab] = useState<Tab>('builder')
   const formSchema = value?.schema || {}
@@ -46,6 +51,7 @@ export function FormInput({field}: FormInputProps) {
       <div style={{marginTop: '12px'}}>
         {tab === 'builder' && (
           <VisualBuilder
+            options={options}
             formSchema={formSchema}
             uiSchema={uiSchema}
             setSchemas={value => mutator(value)}
@@ -167,5 +173,63 @@ function JSONTextAreaField({
         placeholder={'{}'}
       />
     </HStack>
+  )
+}
+
+export function VisualBuilder({
+  options,
+  formSchema,
+  uiSchema,
+  setSchemas
+}: {
+  options: FormOptions
+  formSchema: FormDefinition['schema']
+  uiSchema: FormDefinition['ui']
+  setSchemas: (value: FormDefinition) => void
+}) {
+  const fields = useMemo(() => {
+    const baseSchema: any = {}
+    for (const entry of Object.entries(options.baseFields || {})) {
+      const [key, fieldDef] = entry
+      baseSchema[key] = fieldDef.schema
+    }
+    const composedSchema: any = {}
+    for (const entry of Object.entries(options.composedFields || {})) {
+      const [key, fieldDef] = entry
+      composedSchema[key] = fieldDef.generateSchema(baseSchema)
+    }
+    return type('Fields', {
+      fields: {
+        list: list('List', {
+          schema: {
+            ...baseSchema,
+            ...composedSchema
+          }
+        })
+      }
+    })
+  }, [])
+
+  const listInitialValue = useMemo(() => {
+    const handler = new RjsfHandler(formSchema, uiSchema, options)
+    return handler.generateFields()
+  }, [])
+
+  const form = useForm(fields, {
+    initialValue: {list: listInitialValue}
+  })
+  const listField = form.fieldInfo(fields.list)
+  const data = useAtomValue(listField.value)
+
+  useEffect(() => {
+    const handler = new RjsfHandler(formSchema, uiSchema, options)
+    const newSchemas = handler.rebuildSchemas(data)
+    setSchemas(newSchemas)
+  }, [data])
+
+  return (
+    <VStack>
+      <InputForm form={form} />
+    </VStack>
   )
 }

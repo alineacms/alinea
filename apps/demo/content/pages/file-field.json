@@ -6,17 +6,50 @@
   "description": "",
   "form": {
     "schema": {
+      "type": "object",
       "properties": {
-        "cv": {
+        "color-radio": {
           "type": "string",
-          "title": "CV",
-          "format": "data-url"
+          "title": "Color as radio",
+          "oneOf": [
+            {
+              "const": "red",
+              "title": "Red"
+            },
+            {
+              "const": "blue",
+              "title": "Blue"
+            },
+            {
+              "const": "green",
+              "title": "Green"
+            }
+          ]
+        },
+        "color-as-dropdown": {
+          "type": "string",
+          "title": "Color as dropdown",
+          "oneOf": [
+            {
+              "const": "red",
+              "title": "Red"
+            },
+            {
+              "const": "blue",
+              "title": "Blue"
+            }
+          ]
         }
       }
     },
     "ui": {
-      "cv": {
-        "ui:widget": "file"
+      "color-radio": {
+        "ui:placeholder": "",
+        "ui:widget": "radio"
+      },
+      "color-as-dropdown": {
+        "ui:placeholder": "",
+        "ui:widget": "select"
       }
     }
   }
