@@ -9,7 +9,8 @@
       "properties": {
         "cv": {
           "type": "string",
-          "title": "CV"
+          "title": "CV",
+          "format": "data-url"
         }
       }
     },

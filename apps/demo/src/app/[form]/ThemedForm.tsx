@@ -45,16 +45,6 @@ function ArrayFieldTitleTemplate(
   )
 }
 
-function DescriptionFieldTemplate(props: DescriptionFieldProps) {
-  const {description, id} = props
-  return (
-    <details id={id}>
-      <summary>Description 123456</summary>
-      {description}
-    </details>
-  )
-}
-
 function AddButton(props: IconButtonProps) {
   const {icon, iconType, uiSchema, ...btnProps} = props
   return (
@@ -198,7 +188,6 @@ export const ThemedForm: React.FC<{
         templates={{
           ArrayFieldTitleTemplate,
           TitleFieldTemplate,
-          DescriptionFieldTemplate,
           ObjectFieldTemplate,
           FieldErrorTemplate,
           ButtonTemplates: {
