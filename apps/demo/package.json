@@ -8,10 +8,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@rjsf/core": "6.0.0-beta.22",
-    "@rjsf/daisyui": "6.0.0-beta.22",
-    "@rjsf/utils": "6.0.0-beta.22",
-    "@rjsf/validator-ajv8": "6.0.0-beta.22",
+    "@rjsf/core": "6.1.2",
+    "@rjsf/daisyui": "6.1.2",
+    "@rjsf/utils": "6.1.2",
+    "@rjsf/validator-ajv8": "6.1.2",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.4.1",
     "class-variance-authority": "^0.7.1",

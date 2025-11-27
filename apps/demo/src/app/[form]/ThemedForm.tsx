@@ -153,15 +153,11 @@ export const ThemedForm: React.FC<{
     }
   )
   const onSubmit = (formData: any) => {
+    console.log('Form submitted', formData)
     startTransition(() => {
       dispatch(formData)
     })
-    console.log('Form submitted')
   }
-
-  console.log('schema', schema)
-  console.log('uiSchema', ui)
-  console.log('isPending', isPending)
 
   if (state.key === 'submitted') {
     console.log(state.submissions)
