@@ -1,6 +1,6 @@
-import {cms} from '@/cms'
 //import {db} from '@vercel/postgres'
 import {createHandler} from 'alinea/next'
+import {cms} from '@/cms'
 
 const handler = createHandler({
   cms

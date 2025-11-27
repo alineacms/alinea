@@ -26,12 +26,14 @@ export interface NextHandlerOptions extends HandlerHooks {
 
 export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const options = input instanceof NextCMS ? {cms: input} : input
+  if (handlers.has(options.cms)) return handlers.get(options.cms)!
+  const isLocal = process.env.NEXT_PHASE === 'phase-development-server'
+
   const remote =
     options.remote ??
     (options.backend
       ? createBackend(options.cms.config, options.backend)
       : context => new CloudRemote(context, options.cms))
-  if (handlers.has(options.cms)) return handlers.get(options.cms)!
   const config = options.cms.config
   const db = PLazy.from(async () => {
     const source = await generatedSource

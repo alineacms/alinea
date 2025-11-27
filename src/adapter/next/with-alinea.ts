@@ -1,7 +1,5 @@
-import {readFileSync} from 'node:fs'
-import {createRequire} from 'node:module'
-import {resolve} from 'node:path'
 import type {NextConfig} from 'next/dist/types.js'
+import nextPkg from 'next/package.json' with {type: 'json'}
 
 export function createCMS() {
   throw new Error(
@@ -12,12 +10,7 @@ export function createCMS() {
 export function withAlinea(config: NextConfig): NextConfig {
   let nextVersion = 15
   try {
-    // Ducktape this together so we can get the package.json contents regardless
-    // of .cjs, .mjs, compiled .ts or Node version
-    const require = createRequire(resolve('./index.js'))
-    const pkgLocation = require.resolve('next/package.json')
-    const pkg = JSON.parse(readFileSync(pkgLocation, 'utf-8'))
-    nextVersion = Number(pkg.version.split('.')[0])
+    nextVersion = Number(nextPkg.version.split('.')[0])
   } catch {
     console.warn('Alinea could not determine Next.js version, assuming 15+')
   }
