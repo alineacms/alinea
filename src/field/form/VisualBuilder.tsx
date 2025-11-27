@@ -13,8 +13,10 @@ import {useEffect} from 'react'
 import type {FormDefinition} from './FormField'
 import {addTextFieldToRJSF, FormTextField, transformFieldSchemaToTextField} from './builder/FormTextField.js'
 import { addSelectFieldToRJSF, FormSelectField, transformFieldSchemaToSelectField } from './builder/FormSelectField.js'
+import { addFileFieldToRJSF, FormFileField, transformFieldSchemaToFileField } from './builder/FormFileField.js'
 
 const baseSchema = {
+  FileField: FormFileField,
   TextField: FormTextField,
   SelectField: FormSelectField,
 }
@@ -72,6 +74,7 @@ export type ListDataType = Infer.ListItem<typeof fields>['list']
 
 // From specific to general
 const transformators = [
+  {_type: 'FileField', transform: transformFieldSchemaToFileField},
   {_type: 'SelectField', transform: transformFieldSchemaToSelectField},
   {_type: 'TextField', transform: transformFieldSchemaToTextField},
  ] as const
@@ -136,6 +139,9 @@ export function VisualBuilder({
     const newUiSchema: FormDefinition['ui'] = {}
 
     for (const row of data) {
+      if(row._type === 'FileField') {
+        addFileFieldToRJSF(newSchema, newUiSchema, row)
+      }
       if (row._type === 'TextField') {
         addTextFieldToRJSF(newSchema, newUiSchema, row)
       }

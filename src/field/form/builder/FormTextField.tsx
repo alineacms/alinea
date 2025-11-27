@@ -7,6 +7,7 @@ import {text} from 'alinea/field/text/TextField'
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { FormDefinition } from '../FormField.js'
 import { select } from '../../select.js'
+import { autoCompleteValues, isAutoCompleteValue } from '../utils/autoCompleteValues.js'
 
 export const FormTextField = type('Text', {
   fields: {
@@ -21,6 +22,9 @@ export const FormTextField = type('Text', {
         }
     }),
     placeholder: text('Placeholder'),
+    autocomplete: select('Autocomplete', {
+      options: autoCompleteValues 
+    }),
     defaultValue: text('Default value'),
     maxLength: number('Max Length')
   }
@@ -40,11 +44,13 @@ export function transformFieldSchemaToTextField(
   if(uiFieldSchema?.['ui:widget'] === 'password') widget = 'password'
   if(field.format === 'email') widget = 'email'
 
+  const autocomplete = uiFieldSchema?.['ui:autocomplete']
   return {
     title: field.title || '[No label]',
     key: key,
     widget,
     placeholder: uiFieldSchema?.['ui:placeholder'] || '',
+    autocomplete: isAutoCompleteValue(autocomplete) ? autocomplete : null,
     defaultValue: field.default as string || '',
     maxLength: field.maxLength || null
   }
@@ -64,8 +70,9 @@ export function addTextFieldToRJSF(
   schema.properties![key] = properties
   if(row.maxLength) properties.maxLength = row.maxLength
   if(row.defaultValue) properties.default = row.defaultValue
-
+  
   const ui: any = {}
+  if(row.autocomplete) ui['ui:autocomplete'] = row.autocomplete
   if(row.placeholder) ui['ui:placeholder'] = row.placeholder
   if(row.widget === 'textarea') ui['ui:widget'] = 'textarea'
   if(row.widget === 'email') schema.properties![key].format = 'email'

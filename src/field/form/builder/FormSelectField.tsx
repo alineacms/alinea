@@ -44,6 +44,8 @@ export function transformFieldSchemaToSelectField(
   if(fieldSchema.type !== 'string') return 
   if(!fieldSchema.oneOf) return
 
+  const uiFieldSchema = uiSchema?.[key] || {}
+
   return {
     title: fieldSchema.title || '[No label]',
     key,
@@ -65,7 +67,7 @@ export function transformFieldSchemaToSelectField(
     }),
     placeholder: '',
     defaultValue: '',
-    widget: 'radio',
+    widget: uiFieldSchema?.['ui:widget'] === 'select' ? 'select' : 'radio',
   }
 }
 
