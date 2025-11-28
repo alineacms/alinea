@@ -5,7 +5,7 @@ export function TableHeaderRow(props: SVGProps<SVGSVGElement>) {
     <svg width="1em" height="1em" viewBox="0 0 24 24" {...props}>
       <path
         fill="currentColor"
-        d="M19 4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2h14ZM5 15v3h6v-3H5Zm14 0h-6v3h6v-3Zm0-9h-6v3h6V6ZM5 9h6V6H5v3Z"
+        d="M19,4 C20.1045695,4 21,4.8954305 21,6 L21,18 C21,19.1045695 20.1045695,20 19,20 L5,20 C3.8954305,20 3,19.1045695 3,18 L3,6 C3,4.8954305 3.8954305,4 5,4 L19,4 Z M11,15 L5,15 L5,18 L11,18 L11,15 Z M19,15 L13,15 L13,18 L19,18 L19,15 Z M19,10 L13,10 L13,13 L19,13 L19,10 Z M5,13 L11,13 L11,10 L5,10 L5,13 Z"
       />
     </svg>
   )

@@ -51,6 +51,9 @@ export const RichTextFields = Config.document('Rich text fields', {
           }
         })
       }
+    }),
+    table: Field.richText('With table support', {
+      enableTables: true
     })
   }
 })
