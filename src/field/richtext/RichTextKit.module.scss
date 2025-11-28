@@ -68,6 +68,10 @@ h3.heading {
 .th {
   padding: 4px 8px;
   border: 1px solid var(--alinea-fields-table);
+
+  &:global(.selectedCell) {
+    background-color: var(--alinea-highlight);
+  }
 }
 
 .th {
