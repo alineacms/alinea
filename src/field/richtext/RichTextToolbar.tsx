@@ -73,7 +73,7 @@ export type RichTextCommand = () => ReturnType<Editor['chain']>
 
 export type RichTextToolbarProps = {
   editor: Editor
-  focusToggle: (target: EventTarget | null) => void
+  focusToggle: (target: EventTarget | 'toolbar' | null) => void
   pickLink: PickTextLinkFunc
   enableTables?: boolean
 }
@@ -179,23 +179,19 @@ export function RichTextToolbarProvider({
 
 export const RichTextMenuDivider = HrDivider
 
-export const RichTextToolbarRoot = forwardRef(function RichTextToolbarRoot(
-  {children}: {children: ReactNode},
-  ref: Ref<HTMLDivElement>
-) {
+export function RichTextToolbarRoot({children}: {children: ReactNode}) {
   const {focusToggle} = useToolbar()
   return (
     <div
-      ref={ref}
       tabIndex={-1}
       className={styles.root()}
-      onFocus={e => focusToggle(e.currentTarget)}
+      onFocus={() => focusToggle('toolbar')}
       onBlur={e => focusToggle(e.relatedTarget)}
     >
       {children}
     </div>
   )
-})
+}
 
 export function RichTextToolbarSeparator() {
   return <div className={styles.root.separator()} />
@@ -613,13 +609,10 @@ export function RichTextSuperscriptButton() {
   )
 }
 
-const DefaultRichTextToolbarContent = forwardRef(function DefaultRichTextToolbarContent(
-  _props: RichTextToolbarProps,
-  ref: Ref<HTMLDivElement>
-) {
+function DefaultRichTextToolbarContent() {
   const {enableTables} = useToolbar()
   return (
-    <RichTextToolbarRoot ref={ref}>
+    <RichTextToolbarRoot>
       <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
         <RichTextHeadingMenu />
         {enableTables && <RichTextTableMenu />}
@@ -643,19 +636,16 @@ const DefaultRichTextToolbarContent = forwardRef(function DefaultRichTextToolbar
       </HStack>
     </RichTextToolbarRoot>
   )
-})
+}
 
-export const RichTextToolbar = forwardRef(function RichTextToolbar(
-  props: RichTextToolbarProps,
-  ref: Ref<HTMLDivElement>
-) {
+export function RichTextToolbar(props: RichTextToolbarProps) {
   const context = useContext(ToolbarContext)
   if (context) {
-    return <DefaultRichTextToolbarContent ref={ref} {...props} />
+    return <DefaultRichTextToolbarContent />
   }
   return (
     <RichTextToolbarProvider {...props}>
-      <DefaultRichTextToolbarContent ref={ref} {...props} />
+      <DefaultRichTextToolbarContent />
     </RichTextToolbarProvider>
   )
-})
+}

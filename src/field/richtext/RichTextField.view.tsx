@@ -176,22 +176,23 @@ export function RichTextInput<Blocks extends Schema>({
   const picker = usePickTextLink()
   const {readOnly, schema, enableTables} = options
   const [focus, setFocus] = useState(false)
-  const toolbarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLElement>(null)
   const focusToggle = useCallback(
-    function focusToggle(target: EventTarget | null) {
-      const element = target || document.activeElement
+    function focusToggle(target: EventTarget | 'toolbar' | null) {
+      const element =
+        target && target !== 'toolbar' ? target : document.activeElement
       const editorElement = () =>
         containerRef.current?.querySelector(
           `.${styles.root.editor()} > .ProseMirror`
         )
       const isFocused =
-        toolbarRef.current?.contains(element as HTMLElement) ||
+        target === 'toolbar' ||
         element === editorElement() ||
+        editorElement()?.contains(element as HTMLElement) ||
         false
       setFocus(isFocused)
     },
-    [setFocus, containerRef, toolbarRef]
+    [setFocus, containerRef]
   )
   const blocks = useMemo(() => {
     return schemaToExtensions(field, schema)
@@ -258,7 +259,6 @@ export function RichTextInput<Blocks extends Schema>({
             enableTables={enableTables}
           >
             <ToolbarView
-              ref={toolbarRef}
               editor={editor}
               focusToggle={focusToggle}
               pickLink={picker.pickLink}
