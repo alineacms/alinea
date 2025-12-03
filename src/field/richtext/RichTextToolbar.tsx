@@ -141,376 +141,370 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
       .catch(console.error)
   }
   return (
-    <FieldToolbar.Slot>
-      <div
-        ref={ref}
-        tabIndex={-1}
-        className={styles.root()}
-        onFocus={e => focusToggle(e.currentTarget)}
-        onBlur={e => focusToggle(e.relatedTarget)}
-      >
-        <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
+    <div
+      ref={ref}
+      tabIndex={-1}
+      className={styles.root()}
+      onFocus={e => focusToggle(e.currentTarget)}
+      onBlur={e => focusToggle(e.relatedTarget)}
+    >
+      <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
+        <DropdownMenu.Root top>
+          <DropdownMenu.Trigger
+            title="Heading/paragraph"
+            className={styles.root.dropdown()}
+          >
+            <HStack gap={10} center>
+              <span>{Styles[selectedStyle]}</span>
+              <Icon icon={IcRoundUnfoldMore} />
+            </HStack>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Items>
+            <DropdownMenu.Item onClick={() => exec().clearNodes().run()}>
+              <Typo.P>Normal text</Typo.P>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => exec().setHeading({level: 1}).run()}
+            >
+              <Typo.H1 flat>Heading 1</Typo.H1>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => exec().setHeading({level: 2}).run()}
+            >
+              <Typo.H2 flat>Heading 2</Typo.H2>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => exec().setHeading({level: 3}).run()}
+            >
+              <Typo.H3 flat>Heading 3</Typo.H3>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => exec().setHeading({level: 4}).run()}
+            >
+              <Typo.H4 flat>Heading 4</Typo.H4>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => exec().setHeading({level: 5}).run()}
+            >
+              <Typo.H5 flat>Heading 5</Typo.H5>
+            </DropdownMenu.Item>
+          </DropdownMenu.Items>
+        </DropdownMenu.Root>
+        {enableTables && (
           <DropdownMenu.Root top>
             <DropdownMenu.Trigger
-              title="Heading/paragraph"
+              title="Table"
               className={styles.root.dropdown()}
             >
               <HStack gap={10} center>
-                <span>{Styles[selectedStyle]}</span>
+                <span>Table</span>
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
             </DropdownMenu.Trigger>
             <DropdownMenu.Items>
-              <DropdownMenu.Item onClick={() => exec().clearNodes().run()}>
-                <Typo.P>Normal text</Typo.P>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 1}).run()}
-              >
-                <Typo.H1 flat>Heading 1</Typo.H1>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 2}).run()}
-              >
-                <Typo.H2 flat>Heading 2</Typo.H2>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 3}).run()}
-              >
-                <Typo.H3 flat>Heading 3</Typo.H3>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 4}).run()}
-              >
-                <Typo.H4 flat>Heading 4</Typo.H4>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setHeading({level: 5}).run()}
-              >
-                <Typo.H5 flat>Heading 5</Typo.H5>
-              </DropdownMenu.Item>
-            </DropdownMenu.Items>
-          </DropdownMenu.Root>
-          {enableTables && (
-            <DropdownMenu.Root top>
-              <DropdownMenu.Trigger
-                title="Table"
-                className={styles.root.dropdown()}
-              >
-                <HStack gap={10} center>
-                  <span>Table</span>
-                  <Icon icon={IcRoundUnfoldMore} />
-                </HStack>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Items>
-                {selectedTable ? (
-                  <>
-                    <DropdownMenu.Item
-                      onClick={() => exec().mergeCells().run()}
-                      disabled={!editor.can().mergeCells()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableMergeCells} size={20} />
-                        Merge cells
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onClick={() => exec().splitCell().run()}
-                      disabled={!editor.can().splitCell()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableSplitCell} size={20} />
-                        Split cell
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onClick={() => exec().toggleHeaderCell().run()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableHeaderCell} size={20} />
-                        Toggle header cell
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <HrDivider />
-                    <DropdownMenu.Item
-                      onClick={() => exec().addColumnBefore().run()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableInsertColumnBefore} size={20} />
-                        Insert column before
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onClick={() => exec().addColumnAfter().run()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableInsertColumnAfter} size={20} />
-                        Insert column after
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onClick={() => exec().toggleHeaderColumn().run()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableHeaderColumn} size={20} />
-                        Toggle header column
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onClick={() => exec().deleteColumn().run()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableDeleteColumn} size={20} />
-                        Delete column
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <HrDivider />
-                    <DropdownMenu.Item
-                      onClick={() => exec().addRowBefore().run()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableInsertRowBefore} size={20} />
-                        Insert row before
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onClick={() => exec().addRowAfter().run()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableInsertRowAfter} size={20} />
-                        Insert row after
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onClick={() => exec().toggleHeaderRow().run()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableHeaderRow} size={20} />
-                        Toggle header row
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item onClick={() => exec().deleteRow().run()}>
-                      <HStack gap={8} center>
-                        <Icon icon={TableDeleteRow} size={20} />
-                        Delete row
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <HrDivider />
-                    <DropdownMenu.Item
-                      onClick={() => exec().deleteTable().run()}
-                    >
-                      <HStack gap={8} center>
-                        <Icon icon={TableDelete} size={20} />
-                        Delete table
-                      </HStack>
-                    </DropdownMenu.Item>
-                  </>
-                ) : (
+              {selectedTable ? (
+                <>
                   <DropdownMenu.Item
-                    onClick={() =>
-                      exec()
-                        .insertTable({rows: 3, cols: 3, withHeaderRow: true})
-                        .run()
-                    }
+                    onClick={() => exec().mergeCells().run()}
+                    disabled={!editor.can().mergeCells()}
                   >
                     <HStack gap={8} center>
-                      <Icon icon={TableInsert} size={20} />
-                      Insert table
+                      <Icon icon={TableMergeCells} size={20} />
+                      Merge cells
                     </HStack>
                   </DropdownMenu.Item>
-                )}
-              </DropdownMenu.Items>
-            </DropdownMenu.Root>
-          )}
-          <div className={styles.root.separator()} />
-          <IconButton
-            icon={IcRoundFormatBold}
-            size={18}
-            title="Bold"
-            onClick={e => {
-              e.preventDefault()
-              exec().toggleBold().run()
-            }}
-            active={editor.isActive('bold')}
-          />
-          <IconButton
-            icon={IcRoundFormatItalic}
-            size={18}
-            title="Italic"
-            onClick={e => {
-              e.preventDefault()
-              exec().toggleItalic().run()
-            }}
-            active={editor.isActive('italic')}
-          />
-          <DropdownMenu.Root top>
-            <DropdownMenu.Trigger
-              title="Alignment"
-              className={styles.root.dropdown()}
-            >
-              <HStack gap={10} center>
-                <Icon
-                  icon={
-                    editor.isActive({textAlign: 'center'})
-                      ? IcAlignCenter
-                      : editor.isActive({textAlign: 'right'})
-                        ? IcAlignRight
-                        : editor.isActive({textAlign: 'justify'})
-                          ? IcAlignJustify
-                          : IcAlignLeft
+                  <DropdownMenu.Item
+                    onClick={() => exec().splitCell().run()}
+                    disabled={!editor.can().splitCell()}
+                  >
+                    <HStack gap={8} center>
+                      <Icon icon={TableSplitCell} size={20} />
+                      Split cell
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onClick={() => exec().toggleHeaderCell().run()}
+                  >
+                    <HStack gap={8} center>
+                      <Icon icon={TableHeaderCell} size={20} />
+                      Toggle header cell
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <HrDivider />
+                  <DropdownMenu.Item
+                    onClick={() => exec().addColumnBefore().run()}
+                  >
+                    <HStack gap={8} center>
+                      <Icon icon={TableInsertColumnBefore} size={20} />
+                      Insert column before
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onClick={() => exec().addColumnAfter().run()}
+                  >
+                    <HStack gap={8} center>
+                      <Icon icon={TableInsertColumnAfter} size={20} />
+                      Insert column after
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onClick={() => exec().toggleHeaderColumn().run()}
+                  >
+                    <HStack gap={8} center>
+                      <Icon icon={TableHeaderColumn} size={20} />
+                      Toggle header column
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onClick={() => exec().deleteColumn().run()}
+                  >
+                    <HStack gap={8} center>
+                      <Icon icon={TableDeleteColumn} size={20} />
+                      Delete column
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <HrDivider />
+                  <DropdownMenu.Item
+                    onClick={() => exec().addRowBefore().run()}
+                  >
+                    <HStack gap={8} center>
+                      <Icon icon={TableInsertRowBefore} size={20} />
+                      Insert row before
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item onClick={() => exec().addRowAfter().run()}>
+                    <HStack gap={8} center>
+                      <Icon icon={TableInsertRowAfter} size={20} />
+                      Insert row after
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onClick={() => exec().toggleHeaderRow().run()}
+                  >
+                    <HStack gap={8} center>
+                      <Icon icon={TableHeaderRow} size={20} />
+                      Toggle header row
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item onClick={() => exec().deleteRow().run()}>
+                    <HStack gap={8} center>
+                      <Icon icon={TableDeleteRow} size={20} />
+                      Delete row
+                    </HStack>
+                  </DropdownMenu.Item>
+                  <HrDivider />
+                  <DropdownMenu.Item onClick={() => exec().deleteTable().run()}>
+                    <HStack gap={8} center>
+                      <Icon icon={TableDelete} size={20} />
+                      Delete table
+                    </HStack>
+                  </DropdownMenu.Item>
+                </>
+              ) : (
+                <DropdownMenu.Item
+                  onClick={() =>
+                    exec()
+                      .insertTable({rows: 3, cols: 3, withHeaderRow: true})
+                      .run()
                   }
-                  size={18}
-                />
-                <Icon icon={IcRoundUnfoldMore} />
-              </HStack>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Items>
-              <DropdownMenu.Item
-                onClick={() => exec().setTextAlign('left').run()}
-              >
-                <HStack gap={8} center>
-                  <Icon
-                    round
-                    icon={IcAlignLeft}
-                    title="Align left"
-                    active={editor.isActive({textAlign: 'left'})}
-                  />
-                  <span>Left</span>
-                </HStack>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setTextAlign('center').run()}
-              >
-                <HStack gap={8} center>
-                  <Icon
-                    round
-                    icon={IcAlignCenter}
-                    title="Align center"
-                    active={editor.isActive({textAlign: 'center'})}
-                  />
-                  <span>Center</span>
-                </HStack>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setTextAlign('right').run()}
-              >
-                <HStack gap={8} center>
-                  <Icon
-                    round
-                    icon={IcAlignRight}
-                    title="Align right"
-                    active={editor.isActive({textAlign: 'right'})}
-                  />
-                  <span>Right</span>
-                </HStack>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={() => exec().setTextAlign('justify').run()}
-              >
-                <HStack gap={8} center>
-                  <Icon
-                    round
-                    icon={IcAlignJustify}
-                    title="Align justify"
-                    active={editor.isActive({textAlign: 'justify'})}
-                  />
-                  <span>Justify</span>
-                </HStack>
-              </DropdownMenu.Item>
+                >
+                  <HStack gap={8} center>
+                    <Icon icon={TableInsert} size={20} />
+                    Insert table
+                  </HStack>
+                </DropdownMenu.Item>
+              )}
             </DropdownMenu.Items>
           </DropdownMenu.Root>
-          <IconButton
-            icon={IcRoundFormatClear}
-            size={18}
-            title="Clear format"
-            onClick={e => {
-              e.preventDefault()
-              exec().unsetAllMarks().run()
-              exec().unsetTextAlign().run()
-            }}
-          />
-          <div className={styles.root.separator()} />
-          <IconButton
-            icon={IcRoundFormatListBulleted}
-            size={18}
-            title="Bullet list"
-            onClick={e => {
-              e.preventDefault()
-              exec().toggleBulletList().run()
-            }}
-            active={editor.isActive('bulletList')}
-          />
-          <IconButton
-            icon={IcRoundFormatListNumbered}
-            size={18}
-            title="Ordered list"
-            onClick={e => {
-              e.preventDefault()
-              exec().toggleOrderedList().run()
-            }}
-            active={editor.isActive('orderedList')}
-          />
-          <div className={styles.root.separator()} />
-          <IconButton
-            icon={IcRoundLink}
-            size={18}
-            title="Link"
-            onClick={handleLink}
-            active={editor.isActive('link')}
-          />
-          <div className={styles.root.separator()} />
-          <IconButton
-            icon={IcRoundQuote}
-            size={18}
-            title="Blockquote"
-            onClick={e => {
-              e.preventDefault()
-              exec().toggleBlockquote().run()
-            }}
-            active={editor.isActive('blockquote')}
-          />
-          <IconButton
-            icon={IcRoundHorizontalRule}
-            size={18}
-            title="Horizontal Rule"
-            onClick={e => {
-              e.preventDefault()
-              exec().setHorizontalRule().run()
-            }}
-          />
-          <div className={styles.root.separator()} />
-          <IconButton
-            icon={IcRoundTextFields}
-            size={18}
-            title="Small"
-            onClick={e => {
-              e.preventDefault()
-              exec().toggleSmall().run()
-            }}
-            active={editor.isActive('small')}
-          />
-          <IconButton
-            icon={IcRoundSubscript}
-            size={18}
-            title="Subscript"
-            onClick={e => {
-              e.preventDefault()
-              exec().toggleSubscript().run()
-            }}
-            active={editor.isActive('subscript')}
-          />
-          <IconButton
-            icon={IcRoundSuperscript}
-            size={18}
-            title="Superscript"
-            onClick={e => {
-              e.preventDefault()
-              exec().toggleSuperscript().run()
-            }}
-            active={editor.isActive('superscript')}
-          />
-        </HStack>
-      </div>
-    </FieldToolbar.Slot>
+        )}
+        <div className={styles.root.separator()} />
+        <IconButton
+          icon={IcRoundFormatBold}
+          size={18}
+          title="Bold"
+          onClick={e => {
+            e.preventDefault()
+            exec().toggleBold().run()
+          }}
+          active={editor.isActive('bold')}
+        />
+        <IconButton
+          icon={IcRoundFormatItalic}
+          size={18}
+          title="Italic"
+          onClick={e => {
+            e.preventDefault()
+            exec().toggleItalic().run()
+          }}
+          active={editor.isActive('italic')}
+        />
+        <DropdownMenu.Root top>
+          <DropdownMenu.Trigger
+            title="Alignment"
+            className={styles.root.dropdown()}
+          >
+            <HStack gap={10} center>
+              <Icon
+                icon={
+                  editor.isActive({textAlign: 'center'})
+                    ? IcAlignCenter
+                    : editor.isActive({textAlign: 'right'})
+                      ? IcAlignRight
+                      : editor.isActive({textAlign: 'justify'})
+                        ? IcAlignJustify
+                        : IcAlignLeft
+                }
+                size={18}
+              />
+              <Icon icon={IcRoundUnfoldMore} />
+            </HStack>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Items>
+            <DropdownMenu.Item
+              onClick={() => exec().setTextAlign('left').run()}
+            >
+              <HStack gap={8} center>
+                <Icon
+                  round
+                  icon={IcAlignLeft}
+                  title="Align left"
+                  active={editor.isActive({textAlign: 'left'})}
+                />
+                <span>Left</span>
+              </HStack>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => exec().setTextAlign('center').run()}
+            >
+              <HStack gap={8} center>
+                <Icon
+                  round
+                  icon={IcAlignCenter}
+                  title="Align center"
+                  active={editor.isActive({textAlign: 'center'})}
+                />
+                <span>Center</span>
+              </HStack>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => exec().setTextAlign('right').run()}
+            >
+              <HStack gap={8} center>
+                <Icon
+                  round
+                  icon={IcAlignRight}
+                  title="Align right"
+                  active={editor.isActive({textAlign: 'right'})}
+                />
+                <span>Right</span>
+              </HStack>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => exec().setTextAlign('justify').run()}
+            >
+              <HStack gap={8} center>
+                <Icon
+                  round
+                  icon={IcAlignJustify}
+                  title="Align justify"
+                  active={editor.isActive({textAlign: 'justify'})}
+                />
+                <span>Justify</span>
+              </HStack>
+            </DropdownMenu.Item>
+          </DropdownMenu.Items>
+        </DropdownMenu.Root>
+        <IconButton
+          icon={IcRoundFormatClear}
+          size={18}
+          title="Clear format"
+          onClick={e => {
+            e.preventDefault()
+            exec().unsetAllMarks().run()
+            exec().unsetTextAlign().run()
+          }}
+        />
+        <div className={styles.root.separator()} />
+        <IconButton
+          icon={IcRoundFormatListBulleted}
+          size={18}
+          title="Bullet list"
+          onClick={e => {
+            e.preventDefault()
+            exec().toggleBulletList().run()
+          }}
+          active={editor.isActive('bulletList')}
+        />
+        <IconButton
+          icon={IcRoundFormatListNumbered}
+          size={18}
+          title="Ordered list"
+          onClick={e => {
+            e.preventDefault()
+            exec().toggleOrderedList().run()
+          }}
+          active={editor.isActive('orderedList')}
+        />
+        <div className={styles.root.separator()} />
+        <IconButton
+          icon={IcRoundLink}
+          size={18}
+          title="Link"
+          onClick={handleLink}
+          active={editor.isActive('link')}
+        />
+        <div className={styles.root.separator()} />
+        <IconButton
+          icon={IcRoundQuote}
+          size={18}
+          title="Blockquote"
+          onClick={e => {
+            e.preventDefault()
+            exec().toggleBlockquote().run()
+          }}
+          active={editor.isActive('blockquote')}
+        />
+        <IconButton
+          icon={IcRoundHorizontalRule}
+          size={18}
+          title="Horizontal Rule"
+          onClick={e => {
+            e.preventDefault()
+            exec().setHorizontalRule().run()
+          }}
+        />
+        <div className={styles.root.separator()} />
+        <IconButton
+          icon={IcRoundTextFields}
+          size={18}
+          title="Small"
+          onClick={e => {
+            e.preventDefault()
+            exec().toggleSmall().run()
+          }}
+          active={editor.isActive('small')}
+        />
+        <IconButton
+          icon={IcRoundSubscript}
+          size={18}
+          title="Subscript"
+          onClick={e => {
+            e.preventDefault()
+            exec().toggleSubscript().run()
+          }}
+          active={editor.isActive('subscript')}
+        />
+        <IconButton
+          icon={IcRoundSuperscript}
+          size={18}
+          title="Superscript"
+          onClick={e => {
+            e.preventDefault()
+            exec().toggleSuperscript().run()
+          }}
+          active={editor.isActive('superscript')}
+        />
+      </HStack>
+    </div>
   )
 })

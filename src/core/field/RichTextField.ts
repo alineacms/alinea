@@ -1,12 +1,15 @@
 import {Parser} from 'htmlparser2'
+import {ref} from 'process'
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {Schema} from '../Schema.js'
-import type {ElementNode, Mark, TextDoc, TextNode} from '../TextDoc.js'
 import {type RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
+import type {ElementNode, Mark, TextDoc, TextNode} from '../TextDoc.js'
 
 export class RichTextField<
   Blocks,
-  Options extends FieldOptions<TextDoc<Blocks>> & {searchable?: boolean}
+  Options extends FieldOptions<TextDoc<Blocks>> & {
+    searchable?: boolean
+  }
 > extends Field<
   TextDoc<Blocks>,
   TextDoc<Blocks>,
@@ -20,8 +23,10 @@ export class RichTextField<
       TextDoc<Blocks>,
       RichTextMutator<Blocks>,
       Options
-    >
+    > & {referencedViews?: Array<string>}
   ) {
+    const referencedViews = schema ? Schema.referencedViews(schema) : []
+    if (meta.referencedViews) referencedViews.push(...meta.referencedViews)
     super({
       shape: new RichTextShape(
         meta.options.label,
@@ -29,7 +34,7 @@ export class RichTextField<
         meta.options.initialValue,
         meta.options.searchable
       ),
-      referencedViews: schema ? Schema.referencedViews(schema) : [],
+      referencedViews,
       ...meta
     })
   }
