@@ -53,7 +53,10 @@ export const RichTextFields = Config.document('Rich text fields', {
       }
     }),
     table: Field.richText('With table support', {
-      enableTables: true
+      enableTables: true,
+      toolbarView(props) {
+        return <div>Custom toolbar</div>
+      }
     })
   }
 })
