@@ -42,7 +42,7 @@ import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import type {RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
 import {RichTextKit} from './RichTextKit.js'
-import {RichTextToolbar} from './RichTextToolbar.js'
+import {RichTextToolbar, RichTextToolbarProvider} from './RichTextToolbar.js'
 
 const styles = styler(css)
 
@@ -251,13 +251,20 @@ export function RichTextInput<Blocks extends Schema>({
     <>
       {isEditable && focus && (
         <FieldToolbar.Slot>
-          <ToolbarView
-            ref={toolbarRef}
+          <RichTextToolbarProvider
             editor={editor}
             focusToggle={focusToggle}
             pickLink={picker.pickLink}
             enableTables={enableTables}
-          />
+          >
+            <ToolbarView
+              ref={toolbarRef}
+              editor={editor}
+              focusToggle={focusToggle}
+              pickLink={picker.pickLink}
+              enableTables={enableTables}
+            />
+          </RichTextToolbarProvider>
         </FieldToolbar.Slot>
       )}
       <PickTextLink picker={picker} />

@@ -36,7 +36,14 @@ import {TableInsertRowAfter} from 'alinea/ui/icons/TableInsertRowAfter'
 import {TableInsertRowBefore} from 'alinea/ui/icons/TableInsertRowBefore'
 import {TableMergeCells} from 'alinea/ui/icons/TableMergeCells'
 import {TableSplitCell} from 'alinea/ui/icons/TableSplitCell'
-import {forwardRef, type ReactNode, type Ref} from 'react'
+import {
+  createContext,
+  forwardRef,
+  type ReactNode,
+  type Ref,
+  useContext,
+  useMemo
+} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import css from './RichTextToolbar.module.scss'
@@ -130,17 +137,53 @@ export function createLinkHandler(
   }
 }
 
-export const RichTextMenuDivider = HrDivider
-
-export type RichTextToolbarRootProps = {
+type RichTextToolbarContextValue = {
+  editor: Editor
   focusToggle: (target: EventTarget | null) => void
+  pickLink: PickTextLinkFunc
+  enableTables?: boolean
+  exec: RichTextCommand
+  handleLink: () => void
+}
+
+const ToolbarContext = createContext<RichTextToolbarContextValue | null>(null)
+
+export function useToolbar(): RichTextToolbarContextValue {
+  const ctx = useContext(ToolbarContext)
+  if (!ctx) throw new Error('RichTextToolbarProvider is missing')
+  return ctx
+}
+
+export type RichTextToolbarProviderProps = RichTextToolbarProps & {
   children: ReactNode
 }
 
+export function RichTextToolbarProvider({
+  editor,
+  pickLink,
+  focusToggle,
+  enableTables,
+  children
+}: RichTextToolbarProviderProps) {
+  const exec = useMemo(() => createToolbarExec(editor), [editor])
+  const handleLink = useMemo(
+    () => createLinkHandler(editor, pickLink, exec),
+    [editor, pickLink, exec]
+  )
+  const value = useMemo(
+    () => ({editor, pickLink, focusToggle, enableTables, exec, handleLink}),
+    [editor, pickLink, focusToggle, enableTables, exec, handleLink]
+  )
+  return <ToolbarContext.Provider value={value}>{children}</ToolbarContext.Provider>
+}
+
+export const RichTextMenuDivider = HrDivider
+
 export const RichTextToolbarRoot = forwardRef(function RichTextToolbarRoot(
-  {focusToggle, children}: RichTextToolbarRootProps,
+  {children}: {children: ReactNode},
   ref: Ref<HTMLDivElement>
 ) {
+  const {focusToggle} = useToolbar()
   return (
     <div
       ref={ref}
@@ -158,17 +201,8 @@ export function RichTextToolbarSeparator() {
   return <div className={styles.root.separator()} />
 }
 
-export type RichTextHeadingMenuProps = {
-  editor: Editor
-  exec?: RichTextCommand
-  children?: ReactNode
-}
-
-export function RichTextHeadingMenu({
-  editor,
-  exec = createToolbarExec(editor),
-  children
-}: RichTextHeadingMenuProps) {
+export function RichTextHeadingMenu({children}: {children?: ReactNode}) {
+  const {editor, exec} = useToolbar()
   const selectedStyle = editor.isActive('heading', {level: 1})
     ? 'h1'
     : editor.isActive('heading', {level: 2})
@@ -216,17 +250,8 @@ export function RichTextHeadingMenu({
   )
 }
 
-export type RichTextTableMenuProps = {
-  editor: Editor
-  exec?: RichTextCommand
-  children?: ReactNode
-}
-
-export function RichTextTableMenu({
-  editor,
-  exec = createToolbarExec(editor),
-  children
-}: RichTextTableMenuProps) {
+export function RichTextTableMenu({children}: {children?: ReactNode}) {
+  const {editor, exec} = useToolbar()
   const selectedTable = editor.isActive('table')
   return (
     <DropdownMenu.Root top>
@@ -341,17 +366,8 @@ export function RichTextTableMenu({
   )
 }
 
-export type RichTextAlignmentMenuProps = {
-  editor: Editor
-  exec?: RichTextCommand
-  children?: ReactNode
-}
-
-export function RichTextAlignmentMenu({
-  editor,
-  exec = createToolbarExec(editor),
-  children
-}: RichTextAlignmentMenuProps) {
+export function RichTextAlignmentMenu({children}: {children?: ReactNode}) {
+  const {editor, exec} = useToolbar()
   return (
     <DropdownMenu.Root top>
       <DropdownMenu.Trigger
@@ -425,132 +441,221 @@ export function RichTextAlignmentMenu({
   )
 }
 
-export const RichTextToolbar = forwardRef(function RichTextToolbar(
-  {pickLink, editor, focusToggle, enableTables}: RichTextToolbarProps,
+export function RichTextBoldButton() {
+  const {editor, exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundFormatBold}
+      size={18}
+      title="Bold"
+      onClick={e => {
+        e.preventDefault()
+        exec().toggleBold().run()
+      }}
+      active={editor.isActive('bold')}
+    />
+  )
+}
+
+export function RichTextItalicButton() {
+  const {editor, exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundFormatItalic}
+      size={18}
+      title="Italic"
+      onClick={e => {
+        e.preventDefault()
+        exec().toggleItalic().run()
+      }}
+      active={editor.isActive('italic')}
+    />
+  )
+}
+
+export function RichTextClearFormattingButton() {
+  const {exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundFormatClear}
+      size={18}
+      title="Clear format"
+      onClick={e => {
+        e.preventDefault()
+        exec().unsetAllMarks().run()
+        exec().unsetTextAlign().run()
+      }}
+    />
+  )
+}
+
+export function RichTextBulletListButton() {
+  const {editor, exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundFormatListBulleted}
+      size={18}
+      title="Bullet list"
+      onClick={e => {
+        e.preventDefault()
+        exec().toggleBulletList().run()
+      }}
+      active={editor.isActive('bulletList')}
+    />
+  )
+}
+
+export function RichTextOrderedListButton() {
+  const {editor, exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundFormatListNumbered}
+      size={18}
+      title="Ordered list"
+      onClick={e => {
+        e.preventDefault()
+        exec().toggleOrderedList().run()
+      }}
+      active={editor.isActive('orderedList')}
+    />
+  )
+}
+
+export function RichTextLinkButton() {
+  const {editor, handleLink} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundLink}
+      size={18}
+      title="Link"
+      onClick={handleLink}
+      active={editor.isActive('link')}
+    />
+  )
+}
+
+export function RichTextBlockquoteButton() {
+  const {editor, exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundQuote}
+      size={18}
+      title="Blockquote"
+      onClick={e => {
+        e.preventDefault()
+        exec().toggleBlockquote().run()
+      }}
+      active={editor.isActive('blockquote')}
+    />
+  )
+}
+
+export function RichTextHorizontalRuleButton() {
+  const {exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundHorizontalRule}
+      size={18}
+      title="Horizontal Rule"
+      onClick={e => {
+        e.preventDefault()
+        exec().setHorizontalRule().run()
+      }}
+    />
+  )
+}
+
+export function RichTextSmallButton() {
+  const {editor, exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundTextFields}
+      size={18}
+      title="Small"
+      onClick={e => {
+        e.preventDefault()
+        exec().toggleSmall().run()
+      }}
+      active={editor.isActive('small')}
+    />
+  )
+}
+
+export function RichTextSubscriptButton() {
+  const {editor, exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundSubscript}
+      size={18}
+      title="Subscript"
+      onClick={e => {
+        e.preventDefault()
+        exec().toggleSubscript().run()
+      }}
+      active={editor.isActive('subscript')}
+    />
+  )
+}
+
+export function RichTextSuperscriptButton() {
+  const {editor, exec} = useToolbar()
+  return (
+    <IconButton
+      icon={IcRoundSuperscript}
+      size={18}
+      title="Superscript"
+      onClick={e => {
+        e.preventDefault()
+        exec().toggleSuperscript().run()
+      }}
+      active={editor.isActive('superscript')}
+    />
+  )
+}
+
+const DefaultRichTextToolbarContent = forwardRef(function DefaultRichTextToolbarContent(
+  _props: RichTextToolbarProps,
   ref: Ref<HTMLDivElement>
 ) {
-  const exec = createToolbarExec(editor)
-  const handleLink = createLinkHandler(editor, pickLink, exec)
+  const {enableTables} = useToolbar()
   return (
-    <RichTextToolbarRoot ref={ref} focusToggle={focusToggle}>
+    <RichTextToolbarRoot ref={ref}>
       <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
-        <RichTextHeadingMenu editor={editor} exec={exec} />
-        {enableTables && (
-          <RichTextTableMenu editor={editor} exec={exec} />
-        )}
+        <RichTextHeadingMenu />
+        {enableTables && <RichTextTableMenu />}
         <RichTextToolbarSeparator />
-        <IconButton
-          icon={IcRoundFormatBold}
-          size={18}
-          title="Bold"
-          onClick={e => {
-            e.preventDefault()
-            exec().toggleBold().run()
-          }}
-          active={editor.isActive('bold')}
-        />
-        <IconButton
-          icon={IcRoundFormatItalic}
-          size={18}
-          title="Italic"
-          onClick={e => {
-            e.preventDefault()
-            exec().toggleItalic().run()
-          }}
-          active={editor.isActive('italic')}
-        />
-        <RichTextAlignmentMenu editor={editor} exec={exec} />
-        <IconButton
-          icon={IcRoundFormatClear}
-          size={18}
-          title="Clear format"
-          onClick={e => {
-            e.preventDefault()
-            exec().unsetAllMarks().run()
-            exec().unsetTextAlign().run()
-          }}
-        />
+        <RichTextBoldButton />
+        <RichTextItalicButton />
+        <RichTextAlignmentMenu />
+        <RichTextClearFormattingButton />
         <RichTextToolbarSeparator />
-        <IconButton
-          icon={IcRoundFormatListBulleted}
-          size={18}
-          title="Bullet list"
-          onClick={e => {
-            e.preventDefault()
-            exec().toggleBulletList().run()
-          }}
-          active={editor.isActive('bulletList')}
-        />
-        <IconButton
-          icon={IcRoundFormatListNumbered}
-          size={18}
-          title="Ordered list"
-          onClick={e => {
-            e.preventDefault()
-            exec().toggleOrderedList().run()
-          }}
-          active={editor.isActive('orderedList')}
-        />
+        <RichTextBulletListButton />
+        <RichTextOrderedListButton />
         <RichTextToolbarSeparator />
-        <IconButton
-          icon={IcRoundLink}
-          size={18}
-          title="Link"
-          onClick={handleLink}
-          active={editor.isActive('link')}
-        />
+        <RichTextLinkButton />
         <RichTextToolbarSeparator />
-        <IconButton
-          icon={IcRoundQuote}
-          size={18}
-          title="Blockquote"
-          onClick={e => {
-            e.preventDefault()
-            exec().toggleBlockquote().run()
-          }}
-          active={editor.isActive('blockquote')}
-        />
-        <IconButton
-          icon={IcRoundHorizontalRule}
-          size={18}
-          title="Horizontal Rule"
-          onClick={e => {
-            e.preventDefault()
-            exec().setHorizontalRule().run()
-          }}
-        />
+        <RichTextBlockquoteButton />
+        <RichTextHorizontalRuleButton />
         <RichTextToolbarSeparator />
-        <IconButton
-          icon={IcRoundTextFields}
-          size={18}
-          title="Small"
-          onClick={e => {
-            e.preventDefault()
-            exec().toggleSmall().run()
-          }}
-          active={editor.isActive('small')}
-        />
-        <IconButton
-          icon={IcRoundSubscript}
-          size={18}
-          title="Subscript"
-          onClick={e => {
-            e.preventDefault()
-            exec().toggleSubscript().run()
-          }}
-          active={editor.isActive('subscript')}
-        />
-        <IconButton
-          icon={IcRoundSuperscript}
-          size={18}
-          title="Superscript"
-          onClick={e => {
-            e.preventDefault()
-            exec().toggleSuperscript().run()
-          }}
-          active={editor.isActive('superscript')}
-        />
+        <RichTextSmallButton />
+        <RichTextSubscriptButton />
+        <RichTextSuperscriptButton />
       </HStack>
     </RichTextToolbarRoot>
+  )
+})
+
+export const RichTextToolbar = forwardRef(function RichTextToolbar(
+  props: RichTextToolbarProps,
+  ref: Ref<HTMLDivElement>
+) {
+  const context = useContext(ToolbarContext)
+  if (context) {
+    return <DefaultRichTextToolbarContent ref={ref} {...props} />
+  }
+  return (
+    <RichTextToolbarProvider {...props}>
+      <DefaultRichTextToolbarContent ref={ref} {...props} />
+    </RichTextToolbarProvider>
   )
 })
