@@ -21,15 +21,11 @@ import {
 import {HStack, Icon, px} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {TableInsert} from 'alinea/ui/icons/TableInsert'
-import {forwardRef} from 'react'
 
-const CustomToolbar = forwardRef<HTMLDivElement, RichTextToolbarProps>(function CustomToolbar(
-  _,
-  ref
-) {
+function CustomToolbar(_props: RichTextToolbarProps) {
   const {enableTables, exec} = useToolbar()
   return (
-    <RichTextToolbarRoot ref={ref}>
+    <RichTextToolbarRoot>
       <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
         <RichTextHeadingMenu />
         {enableTables && (
