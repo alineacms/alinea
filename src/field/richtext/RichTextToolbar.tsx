@@ -73,7 +73,7 @@ export type RichTextCommand = () => ReturnType<Editor['chain']>
 
 export type RichTextToolbarProps = {
   editor: Editor
-  focusToggle: (target: EventTarget | 'toolbar' | null) => void
+  focusToggle: (target: EventTarget | null) => void
   pickLink: PickTextLinkFunc
   enableTables?: boolean
 }
@@ -185,7 +185,8 @@ export function RichTextToolbarRoot({children}: {children: ReactNode}) {
     <div
       tabIndex={-1}
       className={styles.root()}
-      onFocus={() => focusToggle('toolbar')}
+      data-richtext-toolbar="true"
+      onFocus={e => focusToggle(e.currentTarget)}
       onBlur={e => focusToggle(e.relatedTarget)}
     >
       {children}
