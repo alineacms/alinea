@@ -13,7 +13,7 @@ import {
   RichTextSubscriptButton,
   RichTextSuperscriptButton,
   RichTextTableMenu,
-  RichTextToolbarProps,
+  type RichTextToolbarProps,
   RichTextToolbarRoot,
   RichTextToolbarSeparator,
   useToolbar
@@ -62,7 +62,7 @@ function CustomToolbar(_props: RichTextToolbarProps) {
       </HStack>
     </RichTextToolbarRoot>
   )
-})
+}
 
 export const RichTextFields = Config.document('Rich text fields', {
   fields: {

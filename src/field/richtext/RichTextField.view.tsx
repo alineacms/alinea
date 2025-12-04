@@ -178,18 +178,21 @@ export function RichTextInput<Blocks extends Schema>({
   const [focus, setFocus] = useState(false)
   const containerRef = useRef<HTMLElement>(null)
   const focusToggle = useCallback(
-    function focusToggle(target: EventTarget | 'toolbar' | null) {
+    function focusToggle(target: EventTarget | null) {
       const element =
-        target && target !== 'toolbar' ? target : document.activeElement
+        (target as HTMLElement | null) ||
+        (document.activeElement as HTMLElement | null)
       const editorElement = () =>
         containerRef.current?.querySelector(
           `.${styles.root.editor()} > .ProseMirror`
-        )
-      const isFocused =
-        target === 'toolbar' ||
-        element === editorElement() ||
-        editorElement()?.contains(element as HTMLElement) ||
-        false
+        ) as HTMLElement | null
+      const isInToolbar =
+        element?.closest?.('[data-richtext-toolbar=\"true\"]') !== null
+      const editor = editorElement()
+      const isInEditor =
+        !!editor &&
+        (editor === element || editor.contains(element as HTMLElement))
+      const isFocused = isInToolbar || isInEditor
       setFocus(isFocused)
     },
     [setFocus, containerRef]
