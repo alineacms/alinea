@@ -5,77 +5,66 @@ import type {Editor} from '@tiptap/react'
 import type {Reference} from 'alinea/core/Reference'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import type {UrlReference} from 'alinea/picker/url'
-import {HStack, Icon, px, Typo} from 'alinea/ui'
+import {HStack, Icon, px} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {IcAlignCenter} from 'alinea/ui/icons/IcAlignCenter'
-import {IcAlignJustify} from 'alinea/ui/icons/IcAlignJustify'
-import {IcAlignLeft} from 'alinea/ui/icons/IcAlignLeft'
-import {IcAlignRight} from 'alinea/ui/icons/IcAlignRight'
-import {IcRoundFormatBold} from 'alinea/ui/icons/IcRoundFormatBold'
-import {IcRoundFormatClear} from 'alinea/ui/icons/IcRoundFormatClear'
-import {IcRoundFormatItalic} from 'alinea/ui/icons/IcRoundFormatItalic'
-import {IcRoundFormatListBulleted} from 'alinea/ui/icons/IcRoundFormatListBulleted'
-import {IcRoundFormatListNumbered} from 'alinea/ui/icons/IcRoundFormatListNumbered'
-import {IcRoundHorizontalRule} from 'alinea/ui/icons/IcRoundHorizontalRule'
-import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
-import {IcRoundQuote} from 'alinea/ui/icons/IcRoundQuote'
-import {IcRoundSubscript} from 'alinea/ui/icons/IcRoundSubscript'
-import {IcRoundSuperscript} from 'alinea/ui/icons/IcRoundSuperscript'
-import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {TableDelete} from 'alinea/ui/icons/TableDelete'
-import {TableDeleteColumn} from 'alinea/ui/icons/TableDeleteColumn'
-import {TableDeleteRow} from 'alinea/ui/icons/TableDeleteRow'
-import {TableHeaderCell} from 'alinea/ui/icons/TableHeaderCell'
-import {TableHeaderColumn} from 'alinea/ui/icons/TableHeaderColumn'
-import {TableHeaderRow} from 'alinea/ui/icons/TableHeaderRow'
-import {TableInsert} from 'alinea/ui/icons/TableInsert'
-import {TableInsertColumnAfter} from 'alinea/ui/icons/TableInsertColumnAfter'
-import {TableInsertColumnBefore} from 'alinea/ui/icons/TableInsertColumnBefore'
-import {TableInsertRowAfter} from 'alinea/ui/icons/TableInsertRowAfter'
-import {TableInsertRowBefore} from 'alinea/ui/icons/TableInsertRowBefore'
-import {TableMergeCells} from 'alinea/ui/icons/TableMergeCells'
-import {TableSplitCell} from 'alinea/ui/icons/TableSplitCell'
 import {
   createContext,
-  forwardRef,
+  type ComponentType,
   type ReactNode,
-  type Ref,
   useContext,
   useMemo
 } from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import css from './RichTextToolbar.module.scss'
+import {defaultToolbar} from './RichTextToolbar.preset.js'
 
 const styles = styler(css)
 
-enum Styles {
-  paragraph = 'Normal text',
-  h1 = 'Heading 1',
-  h2 = 'Heading 2',
-  h3 = 'Heading 3',
-  h4 = 'Heading 4',
-  h5 = 'Heading 5'
+export function RichTextToolbarSeparator() {
+  return <div className={styles.root.separator()} />
 }
 
-const HrDivider = () => (
-  <hr
-    style={{
-      border: 'none',
-      marginBlock: '2px',
-      borderTop: '1px solid var(--alinea-outline)'
-    }}
-  />
-)
-
 export type RichTextCommand = () => ReturnType<Editor['chain']>
+
+export type ToolbarButton = {
+  icon?: ComponentType | ReactNode
+  iconFromCtx?: (ctx: RichTextToolbarContext) => ComponentType | ReactNode
+  label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
+  onSelect?: (ctx: RichTextToolbarContext) => void
+  active?: (ctx: RichTextToolbarContext) => boolean
+  disabled?: (ctx: RichTextToolbarContext) => boolean
+  render?: (ctx: RichTextToolbarContext) => ReactNode
+  size?: number
+}
+
+export type ToolbarMenu = {
+  icon?: ComponentType | ReactNode
+  iconFromCtx?: (ctx: RichTextToolbarContext) => ComponentType | ReactNode
+  label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
+  items?: ToolbarConfig
+  menu?: ToolbarConfig | ((ctx: RichTextToolbarContext) => ToolbarConfig)
+  render?: (ctx: RichTextToolbarContext) => ReactNode
+}
+
+export type ToolbarSeparator = {separator: true}
+
+export type ToolbarEntry =
+  | ToolbarConfig
+  | ToolbarButton
+  | ToolbarMenu
+  | ToolbarSeparator
+
+export type ToolbarConfig = {
+  [ns: string]: ToolbarEntry
+}
 
 export type RichTextToolbarProps = {
   editor: Editor
   focusToggle: (target: EventTarget | null) => void
   pickLink: PickTextLinkFunc
   enableTables?: boolean
+  toolbar?: ToolbarConfig
 }
 
 export function createToolbarExec(editor: Editor): RichTextCommand {
@@ -106,7 +95,7 @@ export function createLinkHandler(
           return
         }
         const link = picked.link
-        const attrs = {
+        const linkAttrs = {
           title: picked.title,
           ...referenceToAttributes(link),
           target:
@@ -114,10 +103,10 @@ export function createLinkHandler(
             (picked.blank ? '_blank' : undefined)
         }
         if (existing) {
-          exec().extendMarkRange('link').setLink(attrs).run()
+          exec().extendMarkRange('link').setLink(linkAttrs).run()
         } else if (isSelection) {
           exec()
-            .setLink(attrs as any)
+            .setLink(linkAttrs as any)
             .run()
         } else {
           exec()
@@ -128,7 +117,7 @@ export function createLinkHandler(
                 (link as UrlReference)._title ||
                 (link as UrlReference)._url ||
                 '',
-              marks: [{type: 'link', attrs}]
+              marks: [{type: 'link', attrs: linkAttrs}]
             })
             .run()
         }
@@ -137,18 +126,19 @@ export function createLinkHandler(
   }
 }
 
-type RichTextToolbarContextValue = {
+export type RichTextToolbarContext = {
   editor: Editor
   focusToggle: (target: EventTarget | null) => void
   pickLink: PickTextLinkFunc
   enableTables?: boolean
   exec: RichTextCommand
   handleLink: () => void
+  toolbar: ToolbarConfig
 }
 
-const ToolbarContext = createContext<RichTextToolbarContextValue | null>(null)
+const ToolbarContext = createContext<RichTextToolbarContext | null>(null)
 
-export function useToolbar(): RichTextToolbarContextValue {
+export function useToolbar(): RichTextToolbarContext {
   const ctx = useContext(ToolbarContext)
   if (!ctx) throw new Error('RichTextToolbarProvider is missing')
   return ctx
@@ -163,6 +153,7 @@ export function RichTextToolbarProvider({
   pickLink,
   focusToggle,
   enableTables,
+  toolbar,
   children
 }: RichTextToolbarProviderProps) {
   const exec = useMemo(() => createToolbarExec(editor), [editor])
@@ -170,14 +161,34 @@ export function RichTextToolbarProvider({
     () => createLinkHandler(editor, pickLink, exec),
     [editor, pickLink, exec]
   )
-  const value = useMemo(
-    () => ({editor, pickLink, focusToggle, enableTables, exec, handleLink}),
-    [editor, pickLink, focusToggle, enableTables, exec, handleLink]
+  const mergedToolbar = useMemo(
+    () => ({...defaultToolbar, ...(toolbar ?? {})}),
+    [toolbar]
   )
-  return <ToolbarContext.Provider value={value}>{children}</ToolbarContext.Provider>
+  const value = useMemo(
+    () => ({
+      editor,
+      pickLink,
+      focusToggle,
+      enableTables,
+      exec,
+      handleLink,
+      toolbar: mergedToolbar
+    }),
+    [
+      editor,
+      pickLink,
+      focusToggle,
+      enableTables,
+      exec,
+      handleLink,
+      mergedToolbar
+    ]
+  )
+  return (
+    <ToolbarContext.Provider value={value}>{children}</ToolbarContext.Provider>
+  )
 }
-
-export const RichTextMenuDivider = HrDivider
 
 export function RichTextToolbarRoot({children}: {children: ReactNode}) {
   const {focusToggle} = useToolbar()
@@ -194,446 +205,222 @@ export function RichTextToolbarRoot({children}: {children: ReactNode}) {
   )
 }
 
-export function RichTextToolbarSeparator() {
-  return <div className={styles.root.separator()} />
-}
-
-export function RichTextHeadingMenu({children}: {children?: ReactNode}) {
-  const {editor, exec} = useToolbar()
-  const selectedStyle = editor.isActive('heading', {level: 1})
-    ? 'h1'
-    : editor.isActive('heading', {level: 2})
-      ? 'h2'
-      : editor.isActive('heading', {level: 3})
-        ? 'h3'
-        : editor.isActive('heading', {level: 4})
-          ? 'h4'
-          : editor.isActive('heading', {level: 5})
-            ? 'h5'
-            : 'paragraph'
+function isMenu(value: ToolbarEntry): value is ToolbarMenu {
   return (
-    <DropdownMenu.Root top>
-      <DropdownMenu.Trigger
-        title="Heading/paragraph"
-        className={styles.root.dropdown()}
-      >
-        <HStack gap={10} center>
-          <span>{Styles[selectedStyle]}</span>
-          <Icon icon={IcRoundUnfoldMore} />
-        </HStack>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Items>
-        <DropdownMenu.Item onClick={() => exec().clearNodes().run()}>
-          <Typo.P>Normal text</Typo.P>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item onClick={() => exec().setHeading({level: 1}).run()}>
-          <Typo.H1 flat>Heading 1</Typo.H1>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item onClick={() => exec().setHeading({level: 2}).run()}>
-          <Typo.H2 flat>Heading 2</Typo.H2>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item onClick={() => exec().setHeading({level: 3}).run()}>
-          <Typo.H3 flat>Heading 3</Typo.H3>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item onClick={() => exec().setHeading({level: 4}).run()}>
-          <Typo.H4 flat>Heading 4</Typo.H4>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item onClick={() => exec().setHeading({level: 5}).run()}>
-          <Typo.H5 flat>Heading 5</Typo.H5>
-        </DropdownMenu.Item>
-        {children}
-      </DropdownMenu.Items>
-    </DropdownMenu.Root>
+    typeof value === 'object' &&
+    value !== null &&
+    ('menu' in value || 'items' in value)
   )
 }
 
-export function RichTextTableMenu({children}: {children?: ReactNode}) {
-  const {editor, exec} = useToolbar()
-  const selectedTable = editor.isActive('table')
+function isButton(value: ToolbarEntry): value is ToolbarButton {
   return (
-    <DropdownMenu.Root top>
-      <DropdownMenu.Trigger title="Table" className={styles.root.dropdown()}>
-        <HStack gap={10} center>
-          <span>Table</span>
-          <Icon icon={IcRoundUnfoldMore} />
-        </HStack>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Items>
-        {selectedTable ? (
-          <>
-            <DropdownMenu.Item
-              onClick={() => exec().mergeCells().run()}
-              disabled={!editor.can().mergeCells()}
-            >
-              <HStack gap={8} center>
-                <Icon icon={TableMergeCells} size={20} />
-                Merge cells
-              </HStack>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item
-              onClick={() => exec().splitCell().run()}
-              disabled={!editor.can().splitCell()}
-            >
-              <HStack gap={8} center>
-                <Icon icon={TableSplitCell} size={20} />
-                Split cell
-              </HStack>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={() => exec().toggleHeaderCell().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableHeaderCell} size={20} />
-                Toggle header cell
-              </HStack>
-            </DropdownMenu.Item>
-            <HrDivider />
-            <DropdownMenu.Item onClick={() => exec().addColumnBefore().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableInsertColumnBefore} size={20} />
-                Insert column before
-              </HStack>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={() => exec().addColumnAfter().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableInsertColumnAfter} size={20} />
-                Insert column after
-              </HStack>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={() => exec().toggleHeaderColumn().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableHeaderColumn} size={20} />
-                Toggle header column
-              </HStack>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={() => exec().deleteColumn().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableDeleteColumn} size={20} />
-                Delete column
-              </HStack>
-            </DropdownMenu.Item>
-            <HrDivider />
-            <DropdownMenu.Item onClick={() => exec().addRowBefore().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableInsertRowBefore} size={20} />
-                Insert row before
-              </HStack>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={() => exec().addRowAfter().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableInsertRowAfter} size={20} />
-                Insert row after
-              </HStack>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={() => exec().toggleHeaderRow().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableHeaderRow} size={20} />
-                Toggle header row
-              </HStack>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={() => exec().deleteRow().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableDeleteRow} size={20} />
-                Delete row
-              </HStack>
-            </DropdownMenu.Item>
-            <HrDivider />
-            <DropdownMenu.Item onClick={() => exec().deleteTable().run()}>
-              <HStack gap={8} center>
-                <Icon icon={TableDelete} size={20} />
-                Delete table
-              </HStack>
-            </DropdownMenu.Item>
-          </>
-        ) : (
-          <DropdownMenu.Item
-            onClick={() =>
-              exec()
-                .insertTable({rows: 3, cols: 3, withHeaderRow: true})
-                .run()
-            }
-          >
-            <HStack gap={8} center>
-              <Icon icon={TableInsert} size={20} />
-              Insert table
-            </HStack>
-          </DropdownMenu.Item>
-        )}
-        {children}
-      </DropdownMenu.Items>
-    </DropdownMenu.Root>
+    typeof value === 'object' &&
+    value !== null &&
+    !isMenu(value) &&
+    ('onSelect' in value ||
+      'active' in value ||
+      'disabled' in value ||
+      'icon' in value ||
+      'render' in value)
   )
 }
 
-export function RichTextAlignmentMenu({children}: {children?: ReactNode}) {
-  const {editor, exec} = useToolbar()
+function isSeparator(value: ToolbarEntry): value is ToolbarSeparator {
   return (
-    <DropdownMenu.Root top>
-      <DropdownMenu.Trigger
-        title="Alignment"
-        className={styles.root.dropdown()}
-      >
-        <HStack gap={10} center>
-          <Icon
-            icon={
-              editor.isActive({textAlign: 'center'})
-                ? IcAlignCenter
-                : editor.isActive({textAlign: 'right'})
-                  ? IcAlignRight
-                  : editor.isActive({textAlign: 'justify'})
-                    ? IcAlignJustify
-                    : IcAlignLeft
-            }
-            size={18}
+    typeof value === 'object' &&
+    value !== null &&
+    'separator' in value &&
+    Object.keys(value).length === 1
+  )
+}
+
+function resolveNode<T>(
+  value: T | ((ctx: RichTextToolbarContext) => T),
+  ctx: RichTextToolbarContext
+): T {
+  return typeof value === 'function' ? (value as any)(ctx) : value
+}
+
+function renderButton(
+  key: string,
+  config: ToolbarButton,
+  ctx: RichTextToolbarContext
+) {
+  if (config.render) return <span key={key}>{config.render(ctx)}</span>
+  const iconValue = config.iconFromCtx ? config.iconFromCtx(ctx) : config.icon
+  const icon =
+    typeof iconValue === 'function'
+      ? (iconValue as ComponentType<any>)
+      : undefined
+  if (!icon) return null
+  const active = config.active?.(ctx)
+  const disabled = config.disabled?.(ctx)
+  const label = resolveNode(config.label ?? '', ctx)
+  const size = config.size ?? 18
+  return (
+    <IconButton
+      key={key}
+      icon={icon}
+      size={size}
+      title={typeof label === 'string' ? label : undefined}
+      onClick={e => {
+        e.preventDefault()
+        config.onSelect?.(ctx)
+      }}
+      active={active}
+      disabled={disabled}
+    />
+  )
+}
+
+function renderMenuItems(
+  items: ToolbarConfig | undefined,
+  ctx: RichTextToolbarContext
+) {
+  if (!items) return null
+  const rendered: Array<ReactNode> = []
+  Object.entries(items).forEach(([key, entry], idx) => {
+    if (isMenu(entry)) return
+    if (isSeparator(entry)) {
+      rendered.push(
+        <div
+          key={`sep-${key}-${idx}`}
+          style={{
+            borderTop: '1px solid var(--alinea-outline)',
+            margin: '4px 0'
+          }}
+        />
+      )
+      return
+    }
+    if (isButton(entry)) {
+      if (entry.render) {
+        rendered.push(<span key={key}>{entry.render(ctx)}</span>)
+        return
+      }
+      const iconValue = entry.iconFromCtx ? entry.iconFromCtx(ctx) : entry.icon
+      const icon =
+        typeof iconValue === 'function'
+          ? (iconValue as ComponentType<any>)
+          : undefined
+      const disabled = entry.disabled?.(ctx)
+      const active = entry.active?.(ctx)
+      const label = resolveNode(entry.label ?? key, ctx)
+      rendered.push(
+        <DropdownMenu.Item
+          key={key}
+          disabled={disabled}
+          onClick={() => entry.onSelect?.(ctx)}
+        >
+          <HStack gap={8} center>
+            {icon && <Icon icon={icon} active={active} />}
+            {typeof label === 'string' || typeof label === 'number' ? (
+              <span>{label}</span>
+            ) : (
+              label
+            )}
+          </HStack>
+        </DropdownMenu.Item>
+      )
+      return
+    }
+    // Nested group inside menu: render its items with a separator before if needed
+    const groupItems = renderMenuItems(entry as ToolbarConfig, ctx)
+    if (groupItems) {
+      if (rendered.length > 0) {
+        rendered.push(
+          <div
+            key={`sep-group-${key}-${idx}`}
+            style={{
+              borderTop: '1px solid var(--alinea-outline)',
+              margin: '4px 0'
+            }}
           />
-          <Icon icon={IcRoundUnfoldMore} />
+        )
+      }
+      rendered.push(<span key={`group-${key}-${idx}`}>{groupItems}</span>)
+    }
+  })
+  return rendered
+}
+
+function renderMenu(
+  key: string,
+  menu: ToolbarMenu,
+  ctx: RichTextToolbarContext
+) {
+  if (menu.render) return <span key={key}>{menu.render(ctx)}</span>
+  const itemsConfig =
+    menu.items ?? (menu.menu ? resolveNode(menu.menu, ctx) : undefined)
+  if (!itemsConfig) return null
+  const iconValue = menu.iconFromCtx ? menu.iconFromCtx(ctx) : menu.icon
+  const iconComponent =
+    typeof iconValue === 'function'
+      ? (iconValue as ComponentType<any>)
+      : undefined
+  const label = resolveNode(menu.label ?? key, ctx)
+  return (
+    <DropdownMenu.Root key={key} top>
+      <DropdownMenu.Trigger className={styles.root.dropdown()}>
+        <HStack gap={10} center>
+          {iconComponent && <Icon icon={iconComponent} />}
+          <span>{label}</span>
         </HStack>
       </DropdownMenu.Trigger>
       <DropdownMenu.Items>
-        <DropdownMenu.Item onClick={() => exec().setTextAlign('left').run()}>
-          <HStack gap={8} center>
-            <Icon
-              round
-              icon={IcAlignLeft}
-              title="Align left"
-              active={editor.isActive({textAlign: 'left'})}
-            />
-            <span>Left</span>
-          </HStack>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item onClick={() => exec().setTextAlign('center').run()}>
-          <HStack gap={8} center>
-            <Icon
-              round
-              icon={IcAlignCenter}
-              title="Align center"
-              active={editor.isActive({textAlign: 'center'})}
-            />
-            <span>Center</span>
-          </HStack>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item onClick={() => exec().setTextAlign('right').run()}>
-          <HStack gap={8} center>
-            <Icon
-              round
-              icon={IcAlignRight}
-              title="Align right"
-              active={editor.isActive({textAlign: 'right'})}
-            />
-            <span>Right</span>
-          </HStack>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item onClick={() => exec().setTextAlign('justify').run()}>
-          <HStack gap={8} center>
-            <Icon
-              round
-              icon={IcAlignJustify}
-              title="Align justify"
-              active={editor.isActive({textAlign: 'justify'})}
-            />
-            <span>Justify</span>
-          </HStack>
-        </DropdownMenu.Item>
-        {children}
+        {renderMenuItems(itemsConfig, ctx)}
       </DropdownMenu.Items>
     </DropdownMenu.Root>
   )
 }
 
-export function RichTextBoldButton() {
-  const {editor, exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundFormatBold}
-      size={18}
-      title="Bold"
-      onClick={e => {
-        e.preventDefault()
-        exec().toggleBold().run()
-      }}
-      active={editor.isActive('bold')}
-    />
-  )
-}
-
-export function RichTextItalicButton() {
-  const {editor, exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundFormatItalic}
-      size={18}
-      title="Italic"
-      onClick={e => {
-        e.preventDefault()
-        exec().toggleItalic().run()
-      }}
-      active={editor.isActive('italic')}
-    />
-  )
-}
-
-export function RichTextClearFormattingButton() {
-  const {exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundFormatClear}
-      size={18}
-      title="Clear format"
-      onClick={e => {
-        e.preventDefault()
-        exec().unsetAllMarks().run()
-        exec().unsetTextAlign().run()
-      }}
-    />
-  )
-}
-
-export function RichTextBulletListButton() {
-  const {editor, exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundFormatListBulleted}
-      size={18}
-      title="Bullet list"
-      onClick={e => {
-        e.preventDefault()
-        exec().toggleBulletList().run()
-      }}
-      active={editor.isActive('bulletList')}
-    />
-  )
-}
-
-export function RichTextOrderedListButton() {
-  const {editor, exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundFormatListNumbered}
-      size={18}
-      title="Ordered list"
-      onClick={e => {
-        e.preventDefault()
-        exec().toggleOrderedList().run()
-      }}
-      active={editor.isActive('orderedList')}
-    />
-  )
-}
-
-export function RichTextLinkButton() {
-  const {editor, handleLink} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundLink}
-      size={18}
-      title="Link"
-      onClick={handleLink}
-      active={editor.isActive('link')}
-    />
-  )
-}
-
-export function RichTextBlockquoteButton() {
-  const {editor, exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundQuote}
-      size={18}
-      title="Blockquote"
-      onClick={e => {
-        e.preventDefault()
-        exec().toggleBlockquote().run()
-      }}
-      active={editor.isActive('blockquote')}
-    />
-  )
-}
-
-export function RichTextHorizontalRuleButton() {
-  const {exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundHorizontalRule}
-      size={18}
-      title="Horizontal Rule"
-      onClick={e => {
-        e.preventDefault()
-        exec().setHorizontalRule().run()
-      }}
-    />
-  )
-}
-
-export function RichTextSmallButton() {
-  const {editor, exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundTextFields}
-      size={18}
-      title="Small"
-      onClick={e => {
-        e.preventDefault()
-        exec().toggleSmall().run()
-      }}
-      active={editor.isActive('small')}
-    />
-  )
-}
-
-export function RichTextSubscriptButton() {
-  const {editor, exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundSubscript}
-      size={18}
-      title="Subscript"
-      onClick={e => {
-        e.preventDefault()
-        exec().toggleSubscript().run()
-      }}
-      active={editor.isActive('subscript')}
-    />
-  )
-}
-
-export function RichTextSuperscriptButton() {
-  const {editor, exec} = useToolbar()
-  return (
-    <IconButton
-      icon={IcRoundSuperscript}
-      size={18}
-      title="Superscript"
-      onClick={e => {
-        e.preventDefault()
-        exec().toggleSuperscript().run()
-      }}
-      active={editor.isActive('superscript')}
-    />
-  )
+function renderToolbarItems(
+  config: ToolbarConfig,
+  ctx: RichTextToolbarContext,
+  insertSeparators = false
+) {
+  const entries = Object.entries(config)
+  const rendered: Array<ReactNode> = []
+  entries.forEach(([key, value], index) => {
+    const node = isMenu(value) ? (
+      renderMenu(key, value, ctx)
+    ) : isButton(value) ? (
+      renderButton(key, value, ctx)
+    ) : isSeparator(value) ? (
+      <RichTextToolbarSeparator key={key} />
+    ) : (
+      <HStack key={key} gap={10} center>
+        {renderToolbarItems(value as ToolbarConfig, ctx)}
+      </HStack>
+    )
+    if (!node) return
+    if (insertSeparators && rendered.length > 0) {
+      rendered.push(<RichTextToolbarSeparator key={`sep-${key}-${index}`} />)
+    }
+    rendered.push(node)
+  })
+  return rendered
 }
 
 function DefaultRichTextToolbarContent() {
-  const {enableTables} = useToolbar()
+  const ctx = useToolbar()
+  const {enableTables, toolbar} = ctx
+  if (!enableTables) {
+    // If tables are disabled, drop table namespace
+    const {table, ...rest} = toolbar
+    return (
+      <RichTextToolbarRoot>
+        <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
+          {renderToolbarItems(rest, ctx, true)}
+        </HStack>
+      </RichTextToolbarRoot>
+    )
+  }
   return (
     <RichTextToolbarRoot>
       <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
-        <RichTextHeadingMenu />
-        {enableTables && <RichTextTableMenu />}
-        <RichTextToolbarSeparator />
-        <RichTextBoldButton />
-        <RichTextItalicButton />
-        <RichTextAlignmentMenu />
-        <RichTextClearFormattingButton />
-        <RichTextToolbarSeparator />
-        <RichTextBulletListButton />
-        <RichTextOrderedListButton />
-        <RichTextToolbarSeparator />
-        <RichTextLinkButton />
-        <RichTextToolbarSeparator />
-        <RichTextBlockquoteButton />
-        <RichTextHorizontalRuleButton />
-        <RichTextToolbarSeparator />
-        <RichTextSmallButton />
-        <RichTextSubscriptButton />
-        <RichTextSuperscriptButton />
+        {renderToolbarItems(toolbar, ctx, true)}
       </HStack>
     </RichTextToolbarRoot>
   )
