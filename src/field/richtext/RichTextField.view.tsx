@@ -20,11 +20,9 @@ import type {Schema} from 'alinea/core/Schema'
 import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
-import {resolveView} from 'alinea/core/View'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
-import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
@@ -174,7 +172,7 @@ export function RichTextInput<Blocks extends Schema>({
   const forceUpdate = useForceUpdate()
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
-  const {readOnly, schema, enableTables} = options
+  const {readOnly, schema, enableTables, toolbar: toolbarConfig} = options
   const [focus, setFocus] = useState(false)
   const containerRef = useRef<HTMLElement>(null)
   const focusToggle = useCallback(
@@ -246,11 +244,6 @@ export function RichTextInput<Blocks extends Schema>({
     editor.on('transaction', forceUpdate)
     return () => editor.destroy()
   }, [editor])
-  const {views} = useDashboard()
-  const ToolbarView =
-    (options.toolbarView
-      ? resolveView(views, options.toolbarView)
-      : RichTextToolbar) ?? RichTextToolbar
   return (
     <>
       {isEditable && focus && (
@@ -260,12 +253,14 @@ export function RichTextInput<Blocks extends Schema>({
             focusToggle={focusToggle}
             pickLink={picker.pickLink}
             enableTables={enableTables}
+            toolbar={toolbarConfig}
           >
-            <ToolbarView
+            <RichTextToolbar
               editor={editor}
               focusToggle={focusToggle}
               pickLink={picker.pickLink}
               enableTables={enableTables}
+              toolbar={toolbarConfig}
             />
           </RichTextToolbarProvider>
         </FieldToolbar.Slot>
