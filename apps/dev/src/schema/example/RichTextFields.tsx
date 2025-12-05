@@ -1,17 +1,14 @@
 import {Config, Field} from 'alinea'
 import {
   alignment,
-  defaultToolbar,
   formatting,
   headings,
   inserts,
   links,
   lists,
   quotes,
-  table
-} from 'alinea/field/richtext/RichTextToolbar.preset'
-import {HStack, Icon} from 'alinea/ui'
-import {TableInsert} from 'alinea/ui/icons/TableInsert'
+  tables
+} from 'alinea/field/richtext/Toolbar'
 
 export const RichTextFields = Config.document('Rich text fields', {
   fields: {
@@ -65,18 +62,15 @@ export const RichTextFields = Config.document('Rich text fields', {
         })
       }
     }),
-    configured: Field.richText('With configured toolbar', {
-      enableTables: true,
-      toolbar: defaultToolbar
-    }),
     table: Field.richText('With table support', {
       enableTables: true,
       toolbar: {
         headings,
         table: {
-          ...table,
-          menu(ctx) {
-            const base = (typeof table.menu === 'function' ? table.menu(ctx) : {}) ?? {}
+          ...tables,
+          items(ctx) {
+            const base =
+              (typeof tables.menu === 'function' ? tables.items(ctx) : {}) ?? {}
             if (ctx.editor.isActive('table')) return base
             return {
               quickInsert: {

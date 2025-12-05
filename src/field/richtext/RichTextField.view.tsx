@@ -172,7 +172,7 @@ export function RichTextInput<Blocks extends Schema>({
   const forceUpdate = useForceUpdate()
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
-  const {readOnly, schema, enableTables, toolbar: toolbarConfig} = options
+  const {readOnly, schema, enableTables, toolbar} = options
   const [focus, setFocus] = useState(false)
   const containerRef = useRef<HTMLElement>(null)
   const focusToggle = useCallback(
@@ -248,21 +248,13 @@ export function RichTextInput<Blocks extends Schema>({
     <>
       {isEditable && focus && (
         <FieldToolbar.Slot>
-          <RichTextToolbarProvider
+          <RichTextToolbar
             editor={editor}
             focusToggle={focusToggle}
             pickLink={picker.pickLink}
             enableTables={enableTables}
-            toolbar={toolbarConfig}
-          >
-            <RichTextToolbar
-              editor={editor}
-              focusToggle={focusToggle}
-              pickLink={picker.pickLink}
-              enableTables={enableTables}
-              toolbar={toolbarConfig}
-            />
-          </RichTextToolbarProvider>
+            toolbar={toolbar}
+          />
         </FieldToolbar.Slot>
       )}
       <PickTextLink picker={picker} />
