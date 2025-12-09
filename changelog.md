@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.4]
+- Add more richtext table options (mergeCells, splitCell, toggleHeaderCell and
+  toggleHeaderColumn)
+
 ## [1.5.3]
 - Fix Query.next and Query.previous which were not sorted correctly
  
