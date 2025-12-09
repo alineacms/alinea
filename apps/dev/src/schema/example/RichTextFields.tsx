@@ -63,15 +63,17 @@ export const RichTextFields = Config.document('Rich text fields', {
       }
     }),
     table: Field.richText('With table support', {
+      enableTables: true
+    }),
+    tableCustom: Field.richText('With custom toolbar', {
       enableTables: true,
       toolbar: {
         headings,
-        table: {
+        tables: {
           ...tables,
           items(ctx) {
-            const base =
-              (typeof tables.menu === 'function' ? tables.items(ctx) : {}) ?? {}
-            if (ctx.editor.isActive('table')) return base
+            const items = tables.items(ctx)
+            if (ctx.editor.isActive('table')) return items
             return {
               quickInsert: {
                 label: 'Quick 2x4 table',
@@ -80,7 +82,7 @@ export const RichTextFields = Config.document('Rich text fields', {
                     .insertTable({rows: 2, cols: 4, withHeaderRow: false})
                     .run()
               },
-              ...base
+              ...items
             }
           }
         },

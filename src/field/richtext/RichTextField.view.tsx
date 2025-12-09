@@ -40,7 +40,7 @@ import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import type {RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
 import {RichTextKit} from './RichTextKit.js'
-import {RichTextToolbar, RichTextToolbarProvider} from './RichTextToolbar.js'
+import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
 

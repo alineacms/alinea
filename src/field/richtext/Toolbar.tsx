@@ -31,6 +31,7 @@ import {Typo} from 'alinea/ui/Typo'
 import type {
   ToolbarButton,
   ToolbarConfig,
+  ToolbarGroup,
   ToolbarMenu
 } from './RichTextToolbar.js'
 
@@ -60,29 +61,33 @@ export const headings = {
     return styleLabels[selected as keyof typeof styleLabels]
   },
   items: {
-    normal: {
-      label: () => <Typo.P flat>Normal text</Typo.P>,
-      onSelect: ({exec}) => exec().clearNodes().run()
-    },
-    h1: {
-      label: () => <Typo.H1 flat>Heading 1</Typo.H1>,
-      onSelect: ({exec}) => exec().setHeading({level: 1}).run()
-    },
-    h2: {
-      label: () => <Typo.H2 flat>Heading 2</Typo.H2>,
-      onSelect: ({exec}) => exec().setHeading({level: 2}).run()
-    },
-    h3: {
-      label: () => <Typo.H3 flat>Heading 3</Typo.H3>,
-      onSelect: ({exec}) => exec().setHeading({level: 3}).run()
-    },
-    h4: {
-      label: () => <Typo.H4 flat>Heading 4</Typo.H4>,
-      onSelect: ({exec}) => exec().setHeading({level: 4}).run()
-    },
-    h5: {
-      label: () => <Typo.H5 flat>Heading 5</Typo.H5>,
-      onSelect: ({exec}) => exec().setHeading({level: 5}).run()
+    styles: {
+      group: {
+        normal: {
+          label: () => <Typo.P flat>Normal text</Typo.P>,
+          onSelect: ({exec}) => exec().clearNodes().run()
+        },
+        h1: {
+          label: () => <Typo.H1 flat>Heading 1</Typo.H1>,
+          onSelect: ({exec}) => exec().setHeading({level: 1}).run()
+        },
+        h2: {
+          label: () => <Typo.H2 flat>Heading 2</Typo.H2>,
+          onSelect: ({exec}) => exec().setHeading({level: 2}).run()
+        },
+        h3: {
+          label: () => <Typo.H3 flat>Heading 3</Typo.H3>,
+          onSelect: ({exec}) => exec().setHeading({level: 3}).run()
+        },
+        h4: {
+          label: () => <Typo.H4 flat>Heading 4</Typo.H4>,
+          onSelect: ({exec}) => exec().setHeading({level: 4}).run()
+        },
+        h5: {
+          label: () => <Typo.H5 flat>Heading 5</Typo.H5>,
+          onSelect: ({exec}) => exec().setHeading({level: 5}).run()
+        }
+      }
     }
   }
 } satisfies ToolbarMenu
@@ -93,7 +98,7 @@ export const tables = {
   items(ctx) {
     const {editor, exec} = ctx
     if (!editor.isActive('table')) {
-      const insertOnly: ToolbarConfig = {
+      return {
         insertTable: {
           icon: () => <TableInsert />,
           label: 'Insert table',
@@ -101,11 +106,10 @@ export const tables = {
             exec().insertTable({rows: 3, cols: 3, withHeaderRow: true}).run()
         }
       }
-      return insertOnly
     }
     const activeMenu: ToolbarConfig = {
       cells: {
-        items: {
+        group: {
           mergeCells: {
             icon: () => <TableMergeCells />,
             label: 'Merge cells',
@@ -126,7 +130,7 @@ export const tables = {
         }
       },
       structure: {
-        items: {
+        group: {
           addColumnBefore: {
             icon: () => <TableInsertColumnBefore />,
             label: 'Insert column before',
@@ -150,7 +154,7 @@ export const tables = {
         }
       },
       rows: {
-        items: {
+        group: {
           addRowBefore: {
             icon: () => <TableInsertRowBefore />,
             label: 'Insert row before',
@@ -174,7 +178,7 @@ export const tables = {
         }
       },
       danger: {
-        items: {
+        group: {
           deleteTable: {
             icon: () => <TableDelete />,
             label: 'Delete table',
@@ -188,7 +192,7 @@ export const tables = {
 } satisfies ToolbarMenu
 
 export const formatting = {
-  items: {
+  group: {
     bold: {
       icon: () => <IcRoundFormatBold />,
       title: 'Bold',
@@ -228,7 +232,7 @@ export const formatting = {
       onSelect: ({exec}) => exec().toggleSuperscript().run()
     }
   }
-} satisfies ToolbarMenu
+} satisfies ToolbarGroup
 
 export const alignment = {
   icon({editor}) {
@@ -266,7 +270,7 @@ export const alignment = {
 } satisfies ToolbarMenu
 
 export const lists = {
-  items: {
+  group: {
     bulletList: {
       icon: () => <IcRoundFormatListBulleted />,
       title: 'Bullet list',
@@ -280,10 +284,10 @@ export const lists = {
       onSelect: ({exec}) => exec().toggleOrderedList().run()
     }
   }
-} satisfies ToolbarMenu
+} satisfies ToolbarGroup
 
 export const links = {
-  items: {
+  group: {
     link: {
       icon: () => <IcRoundLink />,
       title: 'Link',
@@ -291,7 +295,7 @@ export const links = {
       onSelect: ({handleLink}) => handleLink()
     }
   }
-} satisfies ToolbarMenu
+} satisfies ToolbarGroup
 
 export const quotes = {
   icon: () => <IcRoundQuote />,
@@ -306,12 +310,25 @@ export const inserts = {
   onSelect: ({exec}) => exec().setHorizontalRule().run()
 } satisfies ToolbarButton
 
-export const defaultToolbar = {
-  headings,
-  formatting,
-  alignment,
-  lists,
-  links,
-  quotes,
-  inserts
-} satisfies ToolbarConfig
+export function defaultToolbar(enableTables: boolean): ToolbarConfig {
+  if (!enableTables)
+    return {
+      headings,
+      formatting,
+      alignment,
+      lists,
+      links,
+      quotes,
+      inserts
+    }
+  return {
+    headings,
+    tables,
+    formatting,
+    alignment,
+    lists,
+    links,
+    quotes,
+    inserts
+  }
+}

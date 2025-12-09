@@ -6,7 +6,7 @@ import {IconButton} from 'alinea/dashboard/view/IconButton'
 import type {UrlReference} from 'alinea/picker/url'
 import {HStack, Icon, px} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {type ReactNode, useMemo} from 'react'
+import {Fragment, type ReactNode, useMemo} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import css from './RichTextToolbar.module.scss'
@@ -26,13 +26,17 @@ export interface ToolbarButton {
 }
 
 export interface ToolbarMenu {
-  icon?: (ctx: RichTextToolbarContext) => ReactNode
+  icon: (ctx: RichTextToolbarContext) => ReactNode
   label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
   items: ToolbarConfig | ((ctx: RichTextToolbarContext) => ToolbarConfig)
 }
 
+export interface ToolbarGroup {
+  group: ToolbarConfig | ((ctx: RichTextToolbarContext) => ToolbarConfig)
+}
+
 export type ToolbarConfig = {
-  [name: string]: ToolbarMenu | ToolbarButton
+  [name: string]: ToolbarMenu | ToolbarButton | ToolbarGroup
 }
 
 export interface RichTextToolbarProps {
@@ -115,27 +119,44 @@ export interface RichTextToolbarContext {
 interface ToolbarButtonProps {
   button: ToolbarButton
   ctx: RichTextToolbarContext
+  subMenu: boolean
 }
 
-function ToolbarButton({button, ctx}: ToolbarButtonProps) {
+function ToolbarButton({button, ctx, subMenu}: ToolbarButtonProps) {
   const icon = button.icon?.(ctx)
   const active = button.active?.(ctx)
   const disabled = button.disabled?.(ctx)
   const label =
     typeof button.label === 'function' ? button.label(ctx) : button.label
-  return (
-    <>
-      <IconButton
-        icon={icon}
+  const title = button.title ?? (typeof label === 'string' ? label : undefined)
+  if (subMenu)
+    return (
+      <DropdownMenu.Item
+        type="button"
         onClick={e => {
           e.preventDefault()
           button.onSelect(ctx)
         }}
-        active={active}
         disabled={disabled}
-      />
-      {label}
-    </>
+      >
+        <HStack gap={8} center>
+          <Icon icon={icon} active={active} size={20} />
+          {label}
+        </HStack>
+      </DropdownMenu.Item>
+    )
+  return (
+    <IconButton
+      icon={icon}
+      size={18}
+      onClick={e => {
+        e.preventDefault()
+        button.onSelect(ctx)
+      }}
+      disabled={disabled}
+      active={active}
+      title={title}
+    />
   )
 }
 
@@ -152,12 +173,17 @@ function ToolbarMenu({ctx, menu}: ToolbarMenuProps) {
     <DropdownMenu.Root top>
       <DropdownMenu.Trigger className={styles.root.dropdown()}>
         <HStack gap={10} center>
-          {icon && <Icon icon={icon} />}
+          {icon && <Icon icon={icon} size={18} />}
           <span>{label}</span>
         </HStack>
       </DropdownMenu.Trigger>
       <DropdownMenu.Items>
-        <ToolbarItems config={config} ctx={ctx} />
+        <ToolbarItems
+          subMenu
+          config={config}
+          ctx={ctx}
+          separator={<HorizontalSeparator />}
+        />
       </DropdownMenu.Items>
     </DropdownMenu.Root>
   )
@@ -166,32 +192,52 @@ function ToolbarMenu({ctx, menu}: ToolbarMenuProps) {
 interface ToolbarItemsProps {
   config: ToolbarConfig
   ctx: RichTextToolbarContext
+  subMenu: boolean
+  separator?: ReactNode
 }
 
-function ToolbarItems({config, ctx}: ToolbarItemsProps) {
+function ToolbarItems({config, ctx, subMenu, separator}: ToolbarItemsProps) {
   return values(config)
-    .map((entry, index) => {
+    .map(entry => {
       if ('items' in entry) {
-        if ('label' in entry || 'icon' in entry)
-          return <ToolbarMenu key={`item-${index}`} menu={entry} ctx={ctx} />
+        return <ToolbarMenu menu={entry} ctx={ctx} />
+      } else if ('group' in entry) {
         const config =
-          typeof entry.items === 'function' ? entry.items(ctx) : entry.items
-        return <ToolbarItems key={`item-${index}`} config={config} ctx={ctx} />
+          typeof entry.group === 'function' ? entry.group(ctx) : entry.group
+        return <ToolbarItems subMenu={subMenu} config={config} ctx={ctx} />
+      } else {
+        return <ToolbarButton subMenu={subMenu} button={entry} ctx={ctx} />
       }
-      return <ToolbarButton key={`item-${index}`} button={entry} ctx={ctx} />
     })
-    .reduce((result, _, index) => {
-      if (index > 0) result.push(<Separator key={`sep-${index}`} />)
+    .reduce((result, node, index) => {
+      if (index > 0)
+        result.push(<Fragment key={`sep-${index}`}>{separator}</Fragment>)
+      result.push(<Fragment key={`node-${index}`}>{node}</Fragment>)
       return result
     }, Array<ReactNode>())
 }
 
-function Separator() {
+function VerticalSeparator() {
   return <div className={styles.root.separator()} />
 }
 
+function HorizontalSeparator() {
+  return (
+    <hr
+      style={{
+        border: 'none',
+        marginBlock: '2px',
+        borderTop: '1px solid var(--alinea-outline)'
+      }}
+    />
+  )
+}
+
 export function RichTextToolbar(props: RichTextToolbarProps) {
-  const config: ToolbarConfig = props.toolbar ?? defaultToolbar
+  const config: ToolbarConfig = useMemo(
+    () => props.toolbar ?? defaultToolbar(props.enableTables || false),
+    [props.toolbar, props.enableTables]
+  )
   const ctx = useMemo(() => {
     const exec = createToolbarExec(props.editor)
     const handleLink = createLinkHandler(props.editor, props.pickLink, exec)
@@ -215,7 +261,12 @@ export function RichTextToolbar(props: RichTextToolbarProps) {
       onBlur={e => ctx.focusToggle(e.relatedTarget)}
     >
       <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
-        <ToolbarItems config={config} ctx={ctx} />
+        <ToolbarItems
+          subMenu={false}
+          config={config}
+          ctx={ctx}
+          separator={<VerticalSeparator />}
+        />
       </HStack>
     </div>
   )
