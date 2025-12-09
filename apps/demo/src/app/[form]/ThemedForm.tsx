@@ -17,7 +17,7 @@ import validator from '@rjsf/validator-ajv8'
 import type {Infer} from 'alinea'
 import {cx} from 'class-variance-authority'
 import {MoveDown, MoveUp, Trash2Icon, TriangleAlert} from 'lucide-react'
-import {startTransition, useActionState, useState} from 'react'
+import {type ReactNode, startTransition, useActionState, useState} from 'react'
 import type {Form} from '@/Form.schema'
 import {MyFieldWidget} from '../../project-specific-field/MyFieldWidget'
 import {handleRjsfSubmit, type RjsfFormState} from './handleRjsfSubmit.action'
@@ -47,16 +47,16 @@ function ArrayFieldTitleTemplate(
 }
 
 function AddButton(props: IconButtonProps) {
-  const {icon, iconType, uiSchema, ...btnProps} = props
+  const {icon, iconType, uiSchema, popover, ...btnProps} = props
   return (
     <button {...btnProps} className="btn">
-      +{icon}
+      +{icon as string}
     </button>
   )
 }
 
 function MoveUpButton(props: IconButtonProps) {
-  const {icon, iconType, uiSchema, ...btnProps} = props
+  const {icon, iconType, uiSchema, popover, ...btnProps} = props
   return (
     <button {...btnProps} className={cx('btn btn-sm', btnProps.className)}>
       <MoveUp className="h-3 w-3 mx-1" />
@@ -65,7 +65,7 @@ function MoveUpButton(props: IconButtonProps) {
 }
 
 function MoveDownButton(props: IconButtonProps) {
-  const {icon, iconType, uiSchema, ...btnProps} = props
+  const {icon, iconType, uiSchema, popover, ...btnProps} = props
   return (
     <button {...btnProps} className={cx('btn btn-sm', btnProps.className)}>
       <MoveDown className="h-3 w-3 mx-1" />
@@ -74,7 +74,7 @@ function MoveDownButton(props: IconButtonProps) {
 }
 
 function RemoveButton(props: IconButtonProps) {
-  const {icon, iconType, uiSchema, ...btnProps} = props
+  const {icon, iconType, uiSchema, popover, ...btnProps} = props
   return (
     <button {...btnProps} className={cx('btn btn-sm', btnProps.className)}>
       <Trash2Icon className="h-3 w-3 mx-1" />
@@ -99,10 +99,10 @@ function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   return (
     <div>
       {props.title && <div className="underline mb-2">{props.title}</div>}
-      {props.description}
+      {props.description as string}
       {props.properties.map(element => (
         <div className="property-wrapper" key={element.name}>
-          {element.content}
+          {element.content as any}
         </div>
       ))}
     </div>
