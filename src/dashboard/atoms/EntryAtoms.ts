@@ -165,7 +165,8 @@ const loaderAtom = atom(get => {
           ? !getType(schema[row.data.parents.at(-1)!.type]).orderChildrenBy
           : true
       const type = schema[row.type]
-      const orderBy = getType(type).orderChildrenBy
+      const typeConfig = getType(type)
+      const orderBy = typeConfig.orderChildrenBy
       const children = childrenOf(
         graph,
         locale,
@@ -175,14 +176,16 @@ const loaderAtom = atom(get => {
         visibleTypes,
         orderBy
       )
-      const hasChildren = await getHasChildren(
-        graph,
-        locale,
-        row.data.workspace,
-        row.data.root,
-        row.id,
-        visibleTypes
-      )
+      const hasChildren = typeConfig.contains
+        ? await getHasChildren(
+            graph,
+            locale,
+            row.data.workspace,
+            row.data.root,
+            row.id,
+            visibleTypes
+          )
+        : false
       const entries = [row.data].concat(row.translations)
       indexed.set(row.id, {
         id: row.id,
