@@ -16,9 +16,7 @@ function generateSchema(baseSchema: Schema) {
     fields: {
       title: text('Label', {required: true, width: 0.5}),
       key: path('Key', {required: true, width: 0.5}),
-      items: list('Fields', {schema: baseSchema}),
-      left: list('Fields', {schema: baseSchema, width: 0.5}),
-      right: list('Fields', {schema: baseSchema, width: 0.5})
+      items: list('Fields', {schema: baseSchema})
     }
   })
 }
@@ -89,7 +87,7 @@ export function addFieldToRjsf(
   }
 }
 
-export const FormArrayField = {
+export const TwoColumnsField = {
   generateSchema,
   rjsfToField,
   addFieldToRjsf

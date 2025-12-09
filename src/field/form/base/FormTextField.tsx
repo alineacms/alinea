@@ -11,7 +11,7 @@ import {
   isAutoCompleteValue
 } from '../utils/autoCompleteValues.js'
 
-export const Schema = type('Text', {
+const Schema = type('Text', {
   fields: {
     title: text('Label', {required: true, width: 0.5}),
     key: path('Key', {required: true, width: 0.5}),
@@ -32,7 +32,7 @@ export const Schema = type('Text', {
   }
 })
 
-export function rjsfToField(
+function rjsfToField(
   key: string,
   schema: FormDefinition['schema'],
   uiSchema: FormDefinition['ui']
@@ -56,7 +56,7 @@ export function rjsfToField(
   }
 }
 
-export function addFieldToRjsf(
+function addFieldToRjsf(
   properties: Record<string, JSONSchema7>,
   uiSchema: FormDefinition['ui'],
   field: Infer.ListItem<typeof Schema>

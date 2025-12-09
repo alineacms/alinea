@@ -17,15 +17,36 @@
               "name": {
                 "type": "string",
                 "title": "Name"
+              },
+              "lastname": {
+                "type": "string",
+                "title": "Lastname"
+              },
+              "project-specific": {
+                "type": "string",
+                "title": "Project specific",
+                "format": "data-url"
               }
             }
           }
+        },
+        "bla": {
+          "type": "string",
+          "title": "Bla",
+          "format": "data-url"
         }
       }
     },
     "ui": {
       "test": {
-        "test": {}
+        "test": {
+          "project-specific": {
+            "ui:widget": "my-custom-widget"
+          }
+        }
+      },
+      "bla": {
+        "ui:widget": "my-custom-widget"
       }
     }
   }
