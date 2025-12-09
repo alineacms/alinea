@@ -1,0 +1,24 @@
+{
+  "_id": "363QRkgQVIswyZ3Z6V8vyax4JS2",
+  "_type": "Form",
+  "_index": "a0V",
+  "title": "File field",
+  "description": "",
+  "form": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "test": {
+          "type": "string",
+          "title": "Test",
+          "format": "data-url"
+        }
+      }
+    },
+    "ui": {
+      "test": {
+        "ui:widget": "my-custom-widget"
+      }
+    }
+  }
+}
