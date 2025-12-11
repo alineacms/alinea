@@ -250,7 +250,13 @@ export function RichTextToolbar(props: RichTextToolbarProps) {
       handleLink,
       toolbar: config
     }
-  }, [config])
+  }, [
+    config,
+    props.editor,
+    props.focusToggle,
+    props.pickLink,
+    props.enableTables
+  ])
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: because
     <div
