@@ -133,10 +133,7 @@ function ToolbarButton({button, ctx, subMenu}: ToolbarButtonProps) {
     return (
       <DropdownMenu.Item
         type="button"
-        onClick={e => {
-          e.preventDefault()
-          button.onSelect(ctx)
-        }}
+        onClick={() => button.onSelect(ctx)}
         disabled={disabled}
       >
         <HStack gap={8} center>
