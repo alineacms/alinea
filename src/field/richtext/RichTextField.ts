@@ -1,3 +1,4 @@
+import type {AnyExtension, Mark, Node} from '@tiptap/core'
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {RichTextField} from 'alinea/core/field/RichTextField'
 import type {Schema} from 'alinea/core/Schema'
@@ -23,6 +24,8 @@ export interface RichTextOptions<Blocks extends Schema>
   enableTables?: boolean
   /** Configure the toolbar layout and items */
   toolbar?: ToolbarConfig
+  /** Configure tiptap extensions */
+  extensions?: Record<string, AnyExtension>
 }
 
 /** Create a rich text field configuration */

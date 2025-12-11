@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
 import {
+  Extension,
   type JSONContent,
   mergeAttributes,
   Node as TipTapNode
@@ -19,7 +20,7 @@ import {getType} from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
 import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
-import {entries} from 'alinea/core/util/Objects'
+import {entries, values} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
@@ -36,10 +37,10 @@ import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
 import {Sink} from 'alinea/ui/Sink'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {extensions as baseExtensions} from './Extensions.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import type {RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
-import {RichTextKit} from './RichTextKit.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
@@ -198,10 +199,12 @@ export function RichTextInput<Blocks extends Schema>({
   const blocks = useMemo(() => {
     return schemaToExtensions(field, schema)
   }, [field, schema])
-  const extensions = useMemo(
-    () => [Collaboration.configure({fragment}), RichTextKit, ...blocks],
-    [fragment, blocks]
-  )
+  const base = useMemo(() => {
+    return values(options.extensions ?? baseExtensions)
+  }, [options.extensions])
+  const extensions = useMemo(() => {
+    return [Collaboration.configure({fragment}), ...base, ...blocks]
+  }, [fragment, blocks, base])
   // The collaboration extension takes over content syncing after inital content
   // is set. Unfortunately we can't fully utilize it to set the content initally
   // as well because it does not work synchronously causing flickering.
