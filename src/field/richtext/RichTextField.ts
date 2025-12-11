@@ -30,10 +30,8 @@ export function richText<Blocks extends Schema = {}>(
   label: string,
   options: WithoutLabel<RichTextOptions<Blocks>> = {}
 ): RichTextField<Blocks, RichTextOptions<Blocks>> {
-  const referencedViews: Array<string> = []
   return new RichTextField(options.schema, {
     options: {label, ...options},
-    view: viewKeys.RichTextInput,
-    referencedViews: referencedViews
+    view: viewKeys.RichTextInput
   })
 }
