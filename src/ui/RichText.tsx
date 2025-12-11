@@ -1,5 +1,6 @@
 import type {Infer} from 'alinea/core/Infer'
 import type {Schema} from 'alinea/core/Schema'
+import type {RichTextElements} from 'alinea/core/shape/RichTextShape'
 import {
   BlockNode,
   ElementNode,
@@ -8,14 +9,13 @@ import {
   type TextDoc,
   TextNode
 } from 'alinea/core/TextDoc'
-import type {RichTextElements} from 'alinea/core/shape/RichTextShape'
 import {slugify} from 'alinea/core/util/Slugs'
 import {
   type ComponentType,
   Fragment,
+  isValidElement,
   type ReactElement,
-  type ReactNode,
-  isValidElement
+  type ReactNode
 } from 'react'
 
 type Element = keyof typeof RichTextElements
@@ -81,10 +81,20 @@ function nodeElement(
       return <table />
     case 'tableBody':
       return <tbody />
-    case 'tableCell':
-      return <td />
-    case 'tableHeader':
-      return <th />
+    case 'tableCell': {
+      const props = {
+        colSpan: attributes?.colspan,
+        rowSpan: attributes?.rowspan
+      }
+      return <td {...props} />
+    }
+    case 'tableHeader': {
+      const props = {
+        colSpan: attributes?.colspan,
+        rowSpan: attributes?.rowspan
+      }
+      return <th {...props} />
+    }
     case 'tableRow':
       return <tr />
   }
@@ -125,7 +135,11 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
         <RichTextNodeView key={i} views={views} node={node} />
       )) || null
     if (View && !isValidElement(View)) {
-      return <View {...(element?.props || attrs)}>{inner}</View>
+      return (
+        <View {...element?.props} {...attrs}>
+          {inner}
+        </View>
+      )
     }
     const el = View ?? element ?? {type: Fragment}
     return (
