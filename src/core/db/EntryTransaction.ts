@@ -14,6 +14,7 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
 import type {MediaFile} from '../media/MediaTypes.js'
+import {Permission, Policy} from '../Role.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
 import {SourceTransaction} from '../source/Source.js'
@@ -52,17 +53,20 @@ export class EntryTransaction {
   #index: EntryIndex
   #tx: SourceTransaction
   #fileChanges = [] as CommitChange[]
+  #policy: Policy
 
   constructor(
     config: Config,
     index: EntryIndex,
     source: Source,
-    from: ReadonlyTree
+    from: ReadonlyTree,
+    policy = Policy.ALLOW_ALL
   ) {
     if (index.sha !== from.sha) throw new ShaMismatchError(index.sha, from.sha)
     this.#config = config
     this.#index = index
     this.#tx = new SourceTransaction(source, from)
+    this.#policy = policy
   }
 
   get empty() {
@@ -84,7 +88,7 @@ export class EntryTransaction {
   }: Op<CreateMutation>) {
     const config = this.#config
     const index = this.#index
-    const existing = index.byId.get(id)
+    const existing = index.byId(id)
     if (existing) {
       parentId = existing.parentId
       if (!workspace) workspace = existing.workspace
@@ -112,6 +116,11 @@ export class EntryTransaction {
     )
     const rootConfig = this.#config.workspaces[workspace][root]
     assert(rootConfig, 'Invalid root')
+    this.#policy.assert(Permission.Create, {
+      workspace,
+      root,
+      type
+    })
     const i18n = getRoot(rootConfig).i18n
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
     else assert(locale === null, 'Invalid locale')
@@ -122,6 +131,7 @@ export class EntryTransaction {
       })
       assert(parent, `Parent not found: ${parentId}`)
       this.#checks.push([parent.filePath, parent.fileHash])
+      this.#policy.assert(Permission.Create, parent)
     }
     const siblings = Array.from(
       index.findMany(entry => {
@@ -137,7 +147,7 @@ export class EntryTransaction {
     assert(typeof title === 'string', 'Missing title')
     let path = slugify(typeof data.path === 'string' ? data.path : title)
     assert(path.length > 0, 'Invalid path')
-    const existingPath = existing?.pathOf(locale)
+    const existingPath = existing?.get(locale)?.path
     const hasSamePath = existingPath === path
     if (!hasSamePath)
       path = this.#getAvailablePath({
@@ -154,7 +164,7 @@ export class EntryTransaction {
       this.#rename(existing!.id, locale, path)
     }
     if (overwrite && existing?.type === 'MediaFile') {
-      const [prev] = existing.entries
+      const prev = existing.get(null)?.main
       assert(prev, 'Previous entry not found')
       const prevLocation = prev.data.location
       if (prevLocation !== data.location)
@@ -172,9 +182,7 @@ export class EntryTransaction {
       parentDir,
       `${path}${status === 'published' ? '' : `.${status}`}.json`
     )
-    const hasSameVersion = existing?.locales
-      .get(locale)
-      ?.has(status as EntryStatus)
+    const hasSameVersion = existing?.get(locale)?.has(status as EntryStatus)
     const warnDuplicate = !overwrite && hasSameVersion
     assert(!warnDuplicate, `Cannot create duplicate entry with id ${id}`)
     let newIndex: string
@@ -182,9 +190,9 @@ export class EntryTransaction {
       newIndex = existing.index
       if (status === 'published') {
         // Remove all different versions of the entry
-        const versions = index.byId.get(id)?.locales.get(locale)
+        const versions = index.byId(id)?.get(locale)
         if (versions)
-          for (const version of versions.values()) {
+          for (const [status, version] of versions) {
             this.#tx.remove(version.filePath)
           }
       }
@@ -214,10 +222,10 @@ export class EntryTransaction {
       }
       this.#persistSharedFields(id, locale, type, data)
     }
-    const seeds = existing?.locales.get(locale)?.values()
-    const seeded = fromSeed ?? seeds?.next().value?.seeded ?? null
+    const seeds = existing?.get(locale)
+    const seeded = fromSeed ?? seeds?.seeded ?? null
     const record = createRecord(
-      {id, type, index: newIndex, path, seeded, data},
+      {id, type, index: newIndex, path, seeded, data, title},
       status
     )
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
@@ -249,6 +257,7 @@ export class EntryTransaction {
       )
     })
     assert(entry, `Entry not found: ${id}`)
+    this.#policy.assert(Permission.Update, entry)
     const fieldUpdates = fromEntries(
       entries(set).map(([key, value]) => {
         return [key, value ?? null]
@@ -274,6 +283,7 @@ export class EntryTransaction {
     const childrenDir = paths.join(entry.parentDir, path)
     const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     if (entry.status === 'published') {
+      this.#policy.assert(Permission.Publish, entry)
       if (filePath !== entry.filePath) this.#rename(id, locale, path)
     } else {
       if (path !== entry.path) record.path = path
@@ -349,6 +359,7 @@ export class EntryTransaction {
       )
     })
     assert(entry, `Entry not found: ${id}`)
+    this.#policy.assert(Permission.Publish, entry)
     const pathChange = entry.data.path && entry.data.path !== entry.path
     let path = slugify((entry.data.path as string) ?? entry.path)
     path = this.#getAvailablePath({
@@ -362,9 +373,9 @@ export class EntryTransaction {
     const childrenDir = paths.join(entry.parentDir, path)
     if (entry.locale !== null)
       this.#persistSharedFields(id, entry.locale, entry.type, entry.data)
-    const versions = index.byId.get(id)?.locales.get(locale)
+    const versions = index.byId(id)?.get(locale)
     if (versions)
-      for (const version of versions.values()) {
+      for (const [_, version] of versions) {
         this.#tx.remove(version.filePath)
       }
     this.#checks.push([entry.filePath, entry.fileHash])
@@ -382,31 +393,35 @@ export class EntryTransaction {
 
   unpublish({id, locale}: Op<UnpublishMutation>) {
     const index = this.#index
-    const versions = index.byId.get(id)?.locales.get(locale)
-    const entry = versions?.main
-    assert(entry, `Entry not found: ${id}`)
-    for (const version of versions.values()) {
-      if (version.main) continue
+    const versions = index.byId(id)?.get(locale)
+    const mainEntry = versions?.main
+    assert(mainEntry, `Entry not found: ${id}`)
+    for (const [_, version] of versions) {
+      if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
     }
-    this.#checks.push([entry.filePath, entry.fileHash])
-    this.#tx.rename(entry.filePath, `${entry.childrenDir}.draft.json`)
-    this.#messages.push(this.#reportOp('unpublish', entry.title))
+    this.#checks.push([mainEntry.filePath, mainEntry.fileHash])
+    this.#tx.rename(mainEntry.filePath, `${mainEntry.childrenDir}.draft.json`)
+    this.#messages.push(this.#reportOp('unpublish', mainEntry.title))
     return this
   }
 
   archive({id, locale}: Op<ArchiveMutation>) {
     const index = this.#index
-    const versions = index.byId.get(id)?.locales.get(locale)
-    const entry = versions?.main
-    assert(entry, `Entry not found: ${id}`)
-    for (const version of versions.values()) {
-      if (version.main) continue
+    const versions = index.byId(id)?.get(locale)
+    const mainEntry = versions?.main
+    assert(mainEntry, `Entry not found: ${id}`)
+    this.#policy.assert(Permission.Archive, mainEntry)
+    for (const [_, version] of versions) {
+      if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
     }
-    this.#checks.push([entry.filePath, entry.fileHash])
-    this.#tx.rename(entry.filePath, `${entry.childrenDir}.archived.json`)
-    this.#messages.push(this.#reportOp('archive', entry.title))
+    this.#checks.push([mainEntry.filePath, mainEntry.fileHash])
+    this.#tx.rename(
+      mainEntry.filePath,
+      `${mainEntry.childrenDir}.archived.json`
+    )
+    this.#messages.push(this.#reportOp('archive', mainEntry.title))
     return this
   }
 
@@ -414,6 +429,8 @@ export class EntryTransaction {
     const index = this.#index
     const entries = Array.from(index.findMany(entry => entry.id === id))
     assert(entries.length > 0, `Entry not found: ${id}`)
+    const action = toParent || toRoot ? Permission.Move : Permission.Reorder
+    this.#policy.assert(action, entries[0])
     const parentId = toRoot ? null : (toParent ?? entries[0].parentId)
     const root = toRoot ?? entries[0].root
     const workspace = entries[0].workspace
@@ -452,24 +469,26 @@ export class EntryTransaction {
       const newKeys = generateNKeysBetween(null, null, siblingList.length)
       for (const [i, key] of newKeys.entries()) {
         const id = siblingList[i].id
-        const node = index.byId.get(id)
+        const node = index.byId(id)
         assert(node)
-        for (const child of node.byFile.values()) {
-          const record = createRecord(
-            {
-              id,
-              type: child.type,
-              index: key,
-              path: child.path,
-              seeded: child.seeded,
-              data: child.data
-            },
-            child.status
-          )
-          const contents = new TextEncoder().encode(
-            JSON.stringify(record, null, 2)
-          )
-          this.#tx.add(child.filePath, contents)
+        for (const locale of node.keys()) {
+          for (const [_, version] of node.get(locale)!) {
+            const record = createRecord(
+              {
+                id,
+                type: version.type,
+                index: key,
+                path: version.path,
+                seeded: version.seeded,
+                data: version.data
+              },
+              version.status
+            )
+            const contents = new TextEncoder().encode(
+              JSON.stringify(record, null, 2)
+            )
+            this.#tx.add(version.filePath, contents)
+          }
         }
       }
       newIndex = newKeys[previousIndex + 1]
@@ -553,7 +572,7 @@ export class EntryTransaction {
         const workspace = this.#config.workspaces[entry.workspace]
         const mediaDir = getWorkspace(workspace).mediaDir
         // Find all files within children
-        const files: Iterable<Entry<MediaFile>> = index.findMany(f => {
+        const files = index.findMany(f => {
           return (
             f.workspace === entry.workspace &&
             f.root === entry.root &&
@@ -563,7 +582,7 @@ export class EntryTransaction {
         })
         for (const file of files) {
           this.removeFile({
-            location: paths.join(mediaDir, file.data.location)
+            location: paths.join(mediaDir, file.data.location as string)
           })
         }
       }
@@ -578,11 +597,15 @@ export class EntryTransaction {
         })
       }
     }
-    if (info) this.#messages.unshift(this.#reportOp('remove', info.title))
+    if (info) {
+      this.#policy.assert(Permission.Delete, info)
+      this.#messages.unshift(this.#reportOp('remove', info.title))
+    }
     return this
   }
 
   removeFile(mutation: Op<RemoveFileMutation>) {
+    this.#policy.assert(Permission.Delete)
     assert(mutation.location, 'Missing location')
     this.#messages.push(this.#reportOp('remove', mutation.location))
     this.#fileChanges.push({op: 'removeFile', ...mutation})
@@ -590,6 +613,7 @@ export class EntryTransaction {
   }
 
   uploadFile(mutation: Op<UploadFileMutation>) {
+    this.#policy.assert(Permission.Upload)
     this.#fileChanges.push({op: 'uploadFile', ...mutation})
     return this
   }

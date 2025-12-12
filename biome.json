@@ -35,6 +35,7 @@
         "noParameterAssign": "off",
         "useShorthandFunctionType": "off",
         "noInferrableTypes": "off",
+        "useLiteralEnumMembers": "off",
         "useArrayLiterals": "off"
       },
       "complexity": {

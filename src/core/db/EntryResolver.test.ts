@@ -180,7 +180,11 @@ test('preview existing entry', async () => {
     select: Entry,
     first: true,
     preview: {
-      entry: {...entry!, title: 'Chocolate chip preview'}
+      entry: {
+        ...entry!,
+        fileHash: 'preview',
+        data: {...entry?.data, title: 'Chocolate chip preview'}
+      }
     }
   })
   test.is(entry2!.title, 'Chocolate chip preview')
