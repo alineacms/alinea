@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.0]
+- Refactor how we build the internal index of all entries. This is now done 
+  immutably so that any problems during mutations to entries do not corrupt the
+  index.
+
+## [1.5.4]
+- Add more richtext table options (mergeCells, splitCell, toggleHeaderCell and
+  toggleHeaderColumn)
+
 ## [1.5.3]
 - Fix Query.next and Query.previous which were not sorted correctly
  
@@ -227,8 +236,7 @@
     // ... schema and workspaces
     baseUrl: {
       // Point this to your local frontend
-      development: 'http://localhost:3000'
-      // If hosting on vercel you can use: process.env.VERCEL_URL
+      development: 'http://localhost:3000',
       production: 'http://example.com'
     },
     handlerUrl: '/api/cms',

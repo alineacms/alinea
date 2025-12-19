@@ -1,4 +1,10 @@
+/*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
+import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
+import styler from '@alinea/styler'
+import type {Editor} from '@tiptap/react'
 import type {Reference} from 'alinea/core/Reference'
+import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
+import {IconButton} from 'alinea/dashboard/view/IconButton'
 import type {UrlReference} from 'alinea/picker/url'
 import {HStack, Icon, px, Typo} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -14,25 +20,23 @@ import {IcRoundFormatListNumbered} from 'alinea/ui/icons/IcRoundFormatListNumber
 import {IcRoundHorizontalRule} from 'alinea/ui/icons/IcRoundHorizontalRule'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundQuote} from 'alinea/ui/icons/IcRoundQuote'
-import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-/*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
-import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
-import styler from '@alinea/styler'
-import type {Editor} from '@tiptap/react'
-import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
-import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {IcRoundSubscript} from 'alinea/ui/icons/IcRoundSubscript'
 import {IcRoundSuperscript} from 'alinea/ui/icons/IcRoundSuperscript'
+import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {TableDelete} from 'alinea/ui/icons/TableDelete'
 import {TableDeleteColumn} from 'alinea/ui/icons/TableDeleteColumn'
 import {TableDeleteRow} from 'alinea/ui/icons/TableDeleteRow'
+import {TableHeaderCell} from 'alinea/ui/icons/TableHeaderCell'
+import {TableHeaderColumn} from 'alinea/ui/icons/TableHeaderColumn'
 import {TableHeaderRow} from 'alinea/ui/icons/TableHeaderRow'
 import {TableInsert} from 'alinea/ui/icons/TableInsert'
 import {TableInsertColumnAfter} from 'alinea/ui/icons/TableInsertColumnAfter'
 import {TableInsertColumnBefore} from 'alinea/ui/icons/TableInsertColumnBefore'
 import {TableInsertRowAfter} from 'alinea/ui/icons/TableInsertRowAfter'
 import {TableInsertRowBefore} from 'alinea/ui/icons/TableInsertRowBefore'
+import {TableMergeCells} from 'alinea/ui/icons/TableMergeCells'
+import {TableSplitCell} from 'alinea/ui/icons/TableSplitCell'
 import {forwardRef, type Ref} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
@@ -202,33 +206,29 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 {selectedTable ? (
                   <>
                     <DropdownMenu.Item
-                      onClick={() => exec().addRowBefore().run()}
+                      onClick={() => exec().mergeCells().run()}
+                      disabled={!editor.can().mergeCells()}
                     >
                       <HStack gap={8} center>
-                        <Icon icon={TableInsertRowBefore} size={20} />
-                        Insert row before
+                        <Icon icon={TableMergeCells} size={20} />
+                        Merge cells
                       </HStack>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
-                      onClick={() => exec().addRowAfter().run()}
+                      onClick={() => exec().splitCell().run()}
+                      disabled={!editor.can().splitCell()}
                     >
                       <HStack gap={8} center>
-                        <Icon icon={TableInsertRowAfter} size={20} />
-                        Insert row after
-                      </HStack>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item onClick={() => exec().deleteRow().run()}>
-                      <HStack gap={8} center>
-                        <Icon icon={TableDeleteRow} size={20} />
-                        Delete row
+                        <Icon icon={TableSplitCell} size={20} />
+                        Split cell
                       </HStack>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
-                      onClick={() => exec().toggleHeaderRow().run()}
+                      onClick={() => exec().toggleHeaderCell().run()}
                     >
                       <HStack gap={8} center>
-                        <Icon icon={TableHeaderRow} size={20} />
-                        Toggle header row
+                        <Icon icon={TableHeaderCell} size={20} />
+                        Toggle header cell
                       </HStack>
                     </DropdownMenu.Item>
                     <HrDivider />
@@ -249,11 +249,50 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                       </HStack>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
+                      onClick={() => exec().toggleHeaderColumn().run()}
+                    >
+                      <HStack gap={8} center>
+                        <Icon icon={TableHeaderColumn} size={20} />
+                        Toggle header column
+                      </HStack>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
                       onClick={() => exec().deleteColumn().run()}
                     >
                       <HStack gap={8} center>
                         <Icon icon={TableDeleteColumn} size={20} />
                         Delete column
+                      </HStack>
+                    </DropdownMenu.Item>
+                    <HrDivider />
+                    <DropdownMenu.Item
+                      onClick={() => exec().addRowBefore().run()}
+                    >
+                      <HStack gap={8} center>
+                        <Icon icon={TableInsertRowBefore} size={20} />
+                        Insert row before
+                      </HStack>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onClick={() => exec().addRowAfter().run()}
+                    >
+                      <HStack gap={8} center>
+                        <Icon icon={TableInsertRowAfter} size={20} />
+                        Insert row after
+                      </HStack>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onClick={() => exec().toggleHeaderRow().run()}
+                    >
+                      <HStack gap={8} center>
+                        <Icon icon={TableHeaderRow} size={20} />
+                        Toggle header row
+                      </HStack>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item onClick={() => exec().deleteRow().run()}>
+                      <HStack gap={8} center>
+                        <Icon icon={TableDeleteRow} size={20} />
+                        Delete row
                       </HStack>
                     </DropdownMenu.Item>
                     <HrDivider />

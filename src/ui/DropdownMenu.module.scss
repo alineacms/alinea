@@ -69,14 +69,22 @@
   user-select: none;
   border-radius: var(--alinea-border-radius);
   padding: 8px 10px;
-  cursor: pointer;
+
+  &:not([disabled]) {
+    cursor: pointer;
+  }
 
   &:focus {
-    background-color: var(--alinea-selected);
+    background: var(--alinea-selected);
   }
 
   &:hover,
   &.is-active {
     background: var(--alinea-highlight);
+  }
+
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.5;
   }
 }

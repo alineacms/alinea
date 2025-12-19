@@ -287,8 +287,7 @@ function clearCookies(redirectUri: URL): string {
       expires: new Date(0),
       path: '/',
       secure: redirectUri.protocol === 'https:',
-      httpOnly: true,
-      sameSite: 'strict'
+      httpOnly: true
     },
     {
       name: COOKIE_REFRESH_TOKEN,
@@ -311,8 +310,7 @@ function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
       expires: token.expiresAt ? new Date(token.expiresAt) : undefined,
       path: '/',
       secure: redirectUri.protocol === 'https:',
-      httpOnly: true,
-      sameSite: 'strict'
+      httpOnly: true
     },
     {
       name: COOKIE_REFRESH_TOKEN,
