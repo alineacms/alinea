@@ -1,19 +1,10 @@
 import {execSync} from 'node:child_process'
-import {write} from 'bun'
-// @ts-ignore
-import pkg from './package.json'
 
-let semver = process.argv[2]
+const semver = process.argv[2]
 
 if (!semver) {
-  const current = pkg.version
-  const isCleanSemver = /^\d+\.\d+\.\d+$/.test(current)
-  if (!isCleanSemver) {
-    console.log('Current version cannot be bumped')
-    process.exit(1)
-  }
-  const [major, minor, patch] = current.split('.')
-  semver = `${major}.${minor}.${Number(patch) + 1}`
+  console.log('Usage: bun tag <semver>')
+  process.exit(1)
 }
 
 // Check if we're on main branch
@@ -36,12 +27,8 @@ if (changes) {
   console.log('Working directory is not clean')
   process.exit(1)
 }
-// Bump version
+// Tag version
 const version = semver.startsWith('v') ? semver : `v${semver}`
-pkg.version = version.slice(1)
-await write('package.json', `${JSON.stringify(pkg, null, 2)}\n`)
-execSync('git add .', {stdio: 'inherit'})
-execSync(`git commit -m "${version}"`, {stdio: 'inherit'})
 execSync(`git tag -a ${version} -m "${version}"`, {stdio: 'inherit'})
 execSync('git push --follow-tags', {stdio: 'inherit'})
-console.log(`Bumped version to ${version}`)
+console.log(`Tagged version ${version} for release`)
