@@ -231,8 +231,7 @@
     // ... schema and workspaces
     baseUrl: {
       // Point this to your local frontend
-      development: 'http://localhost:3000'
-      // If hosting on vercel you can use: process.env.VERCEL_URL
+      development: 'http://localhost:3000',
       production: 'http://example.com'
     },
     handlerUrl: '/api/cms',

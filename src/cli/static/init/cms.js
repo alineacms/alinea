@@ -33,7 +33,7 @@ export const cms = createCMS({
     // Point to your local website
     development: 'http://localhost:3000',
     // The production URL of your website
-    production: process.env.VERCEL_URL ?? 'https://example.com'
+    production: 'https://example.com'
   },
 
   // Enable live previews after adding <cms.previews widget /> to your layout
