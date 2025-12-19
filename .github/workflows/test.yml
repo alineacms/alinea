@@ -40,7 +40,6 @@ jobs:
           bunx pkg-pr-new publish
       - if: steps.version.outputs.is_valid == 'true'
         run: bun bump ${GITHUB_REF#refs/tags/v}
-      - run: npm ci
       - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
         run: npm publish --provenance --access public
       - if: steps.version.outputs.prerelease
