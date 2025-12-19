@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.6.0]
+- Refactor how we build the internal index of all entries. This is now done 
+  immutably so that any problems during mutations to entries do not corrupt the
+  index.
+
 ## [1.5.4]
 - Add more richtext table options (mergeCells, splitCell, toggleHeaderCell and
   toggleHeaderColumn)
