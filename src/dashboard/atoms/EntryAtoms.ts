@@ -9,6 +9,7 @@ import {Entry} from 'alinea/core/Entry'
 import type {Graph} from 'alinea/core/Graph'
 import {getRoot, getType} from 'alinea/core/Internal'
 import type {OrderBy} from 'alinea/core/OrderBy.js'
+import type {Policy} from 'alinea/core/Role'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {parents, translations} from 'alinea/query'
@@ -19,13 +20,16 @@ import {useMemo} from 'react'
 import {configAtom} from './DashboardAtoms.js'
 import {dbAtom} from './DbAtoms.js'
 import {localeAtom, rootAtom, workspaceAtom} from './NavigationAtoms.js'
+import {policyAtom} from './PolicyAtom.js'
 
 export const ROOT_ID = '@alinea/root'
 
 const visibleTypesAtom = atom(get => {
   const {schema} = get(configAtom)
   return entries(schema)
-    .filter(([_, type]) => !Type.isHidden(type))
+    .filter(([name, type]) => {
+      return !Type.isHidden(type)
+    })
     .map(([name]) => name)
 })
 
@@ -52,6 +56,7 @@ async function getHasChildren(
 }
 
 function childrenOf(
+  policy: Policy,
   graph: Graph,
   locale: string | null,
   workspace: string,
@@ -61,24 +66,30 @@ function childrenOf(
   orderBy: OrderBy | Array<OrderBy> | undefined
 ) {
   return PLazy.from(async () => {
-    const children = await graph.find({
-      select: {
-        id: Entry.id,
-        locale: Entry.locale
-      },
-      orderBy,
-      workspace,
-      root: root,
-      parentId,
-      filter: {
-        _type: {in: visibleTypes}
-      },
-      status: 'preferDraft'
-    })
-    const untranslated = new Set()
+    const children = (
+      await graph.find({
+        select: {
+          id: Entry.id,
+          type: Entry.type,
+          parents: Entry.parents,
+          locale: Entry.locale,
+          root: Entry.root,
+          workspace: Entry.workspace
+        },
+        orderBy,
+        workspace,
+        root: root,
+        parentId,
+        filter: {
+          _type: {in: visibleTypes}
+        },
+        status: 'preferDraft'
+      })
+    ).filter(child => policy.canRead(child))
     const translatedChildren = new Set(
       children.filter(child => child.locale === locale).map(child => child.id)
     )
+    const untranslated = new Set()
     const orderedChildren = children.filter(child => {
       if (translatedChildren.has(child.id)) return child.locale === locale
       if (untranslated.has(child.id)) return false
@@ -90,6 +101,7 @@ function childrenOf(
 }
 
 async function entryTreeRoot(
+  policy: Policy,
   graph: Graph,
   locale: string | null,
   workspace: string,
@@ -107,6 +119,7 @@ async function entryTreeRoot(
     entries: [],
     hasChildren: true,
     children: childrenOf(
+      policy,
       graph,
       locale,
       workspace,
@@ -120,6 +133,7 @@ async function entryTreeRoot(
 
 const loaderAtom = atom(get => {
   const graph = get(dbAtom)
+  const policy = get(policyAtom)
   const locale = get(localeAtom)
   const visibleTypes = get(visibleTypesAtom)
   const {schema} = get(configAtom)
@@ -168,6 +182,7 @@ const loaderAtom = atom(get => {
       const typeConfig = getType(type)
       const orderBy = typeConfig.orderChildrenBy
       const children = childrenOf(
+        policy,
         graph,
         locale,
         row.data.workspace,
@@ -202,6 +217,7 @@ const loaderAtom = atom(get => {
       if (id === ROOT_ID) {
         res.push(
           await entryTreeRoot(
+            policy,
             graph,
             locale,
             workspace.name,
