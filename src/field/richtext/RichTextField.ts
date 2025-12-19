@@ -1,9 +1,11 @@
+import type {AnyExtension, Mark, Node} from '@tiptap/core'
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import {RichTextField} from 'alinea/core/field/RichTextField'
 import type {Schema} from 'alinea/core/Schema'
 import type {TextDoc} from 'alinea/core/TextDoc'
-import {RichTextField} from 'alinea/core/field/RichTextField'
 import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
+import type {ToolbarConfig} from './RichTextToolbar.js'
 
 /** Optional settings to configure a rich text field */
 export interface RichTextOptions<Blocks extends Schema>
@@ -20,6 +22,10 @@ export interface RichTextOptions<Blocks extends Schema>
   searchable?: boolean
   /** Enable inserting and editing tables */
   enableTables?: boolean
+  /** Configure the toolbar layout and items */
+  toolbar?: ToolbarConfig
+  /** Configure tiptap extensions */
+  extensions?: Record<string, AnyExtension>
 }
 
 /** Create a rich text field configuration */
