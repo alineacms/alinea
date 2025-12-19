@@ -1,6 +1,5 @@
 import {execSync} from 'node:child_process'
 import {readFileSync} from 'node:fs'
-import {$} from 'bun'
 
 const semver = process.argv[2]
 
