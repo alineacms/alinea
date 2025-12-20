@@ -1,0 +1,34 @@
+{
+  "_id": "361JxeCk2GXIXYIMyyy6T0sLGVt",
+  "_type": "Form",
+  "_index": "Zz",
+  "title": "Basic input field",
+  "description": "",
+  "form": {
+    "schema": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Name"
+        },
+        "textarea": {
+          "type": "string",
+          "title": "Text area"
+        },
+        "email": {
+          "type": "string",
+          "title": "Email input"
+        }
+      }
+    },
+    "ui": {
+      "name": {
+        "ui:placeholder": "Your name"
+      },
+      "textarea": {
+        "ui:widget": "textarea"
+      },
+      "email": {}
+    }
+  }
+}

@@ -19,5 +19,6 @@ export const viewKeys = {
   MediaExplorer: 'alinea/dashboard/view/MediaExplorer#MediaExplorer',
   MediaFile: 'alinea/dashboard/view/media/FileEntry#FileEntry',
   FileSummaryRow: 'alinea/dashboard/view/media/FileSummary#FileSummaryRow',
-  FileSummaryThumb: 'alinea/dashboard/view/media/FileSummary#FileSummaryThumb'
+  FileSummaryThumb: 'alinea/dashboard/view/media/FileSummary#FileSummaryThumb',
+  FormInput: 'alinea/field/form/FormField.view#FormInput'
 }
