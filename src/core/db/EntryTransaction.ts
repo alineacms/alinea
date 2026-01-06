@@ -396,6 +396,7 @@ export class EntryTransaction {
     const versions = index.byId(id)?.get(locale)
     const mainEntry = versions?.main
     assert(mainEntry, `Entry not found: ${id}`)
+    this.#policy.assert(Permission.Publish, mainEntry)
     for (const [_, version] of versions) {
       if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
