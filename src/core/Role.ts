@@ -114,6 +114,9 @@ function pack(input: PermissionInput): number {
     for (const [name, state] of Object.entries(input.deny)) {
       if (state) result |= deny(permissionMap[name as keyof Permissions])
     }
+  if (!input.allow && !input.deny) {
+    throw new Error('No permissions specified to allow or deny')
+  }
   return result
 }
 
