@@ -17,7 +17,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.2.23
@@ -38,9 +39,7 @@ jobs:
           bun run build
           bunx pkg-pr-new publish
       - if: steps.version.outputs.is_valid == 'true'
-        run: |
-          bun bump ${GITHUB_REF#refs/tags/v}
-          npm config set //registry.npmjs.org/:_authToken ${{secrets.NPM_AUTH_TOKEN}}
+        run: bun bump ${GITHUB_REF#refs/tags/v}
       - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
         run: npm publish --provenance --access public
       - if: steps.version.outputs.prerelease
