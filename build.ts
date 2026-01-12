@@ -95,7 +95,7 @@ const oauth2ClientPolyfill: Plugin = {
     // and replace with a virtual module that uses @alinea/iso
     build.onResolve({filter: /^crypto$/}, args => {
       // Only intercept if the import is from within @badgateway/oauth2-client
-      if (args.importer.includes('@badgateway/oauth2-client')) {
+      if (args.importer.includes('node_modules/@badgateway/oauth2-client')) {
         return {
           path: 'crypto-polyfill',
           namespace: 'oauth2-crypto-polyfill'
@@ -108,10 +108,9 @@ const oauth2ClientPolyfill: Plugin = {
       {filter: /.*/, namespace: 'oauth2-crypto-polyfill'},
       () => {
         return {
-          contents: `
-            import {crypto} from '@alinea/iso'
-            export const webcrypto = crypto
-          `,
+          contents: `import {crypto} from '@alinea/iso'
+export const webcrypto = crypto
+`,
           loader: 'js'
         }
       }
