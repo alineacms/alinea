@@ -14,3 +14,4 @@ node_modules
 .DS_Store
 *.tsbuildinfo
 /generated
+package-lock.json
