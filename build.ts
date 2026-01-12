@@ -88,6 +88,37 @@ const cjsModules: Plugin = {
   }
 }
 
+const oauth2ClientPolyfill: Plugin = {
+  name: 'oauth2-client-polyfill',
+  setup(build) {
+    // Intercept dynamic imports of 'crypto' from within @badgateway/oauth2-client
+    // and replace with a virtual module that uses @alinea/iso
+    build.onResolve({filter: /^crypto$/}, args => {
+      // Only intercept if the import is from within @badgateway/oauth2-client
+      if (args.importer.includes('@badgateway/oauth2-client')) {
+        return {
+          path: 'crypto-polyfill',
+          namespace: 'oauth2-crypto-polyfill'
+        }
+      }
+      return undefined
+    })
+
+    build.onLoad(
+      {filter: /.*/, namespace: 'oauth2-crypto-polyfill'},
+      () => {
+        return {
+          contents: `
+            import {crypto} from '@alinea/iso'
+            export const webcrypto = crypto
+          `,
+          loader: 'js'
+        }
+      }
+    )
+  }
+}
+
 const bundleTs: Plugin = {
   name: 'bundle-ts',
   setup(build) {
@@ -377,7 +408,13 @@ function jsEntry({
   test: boolean
   report: boolean
 }): Plugin {
-  const plugins = [sassJsPlugin, internalPlugin, externalize, cleanup]
+  const plugins = [
+    oauth2ClientPolyfill,
+    sassJsPlugin,
+    internalPlugin,
+    externalize,
+    cleanup
+  ]
   if (report) plugins.push(reportSizePlugin)
   return {
     name: JS_ENTRY,
