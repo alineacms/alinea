@@ -106,7 +106,7 @@ test('parents order', async () => {
   test.equal(parentIds, [parent1._id, parent2._id])
 })
 
-test.only('search', async () => {
+test('search', async () => {
   const db = await createDb()
   const page1 = await db.create({
     type: Page,
