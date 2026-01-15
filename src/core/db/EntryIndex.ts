@@ -323,9 +323,7 @@ export class EntryGraph {
         return text
           .normalize('NFD')
           .replace(DIACRITIC, '')
-          .toLowerCase()
           .split(SPACE_OR_PUNCTUATION)
-          .filter(Boolean)
       }
     })
     for (const [file, version] of versionData) {
