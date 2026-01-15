@@ -1,6 +1,6 @@
 import {suite} from '@alinea/suite'
 import {Config} from 'alinea'
-import {createCMS} from 'alinea/core'
+import {createCMS, Entry} from 'alinea/core'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 
 const test = suite(import.meta)
@@ -127,4 +127,63 @@ test('rename parent via draft', async () => {
     type: Page
   })
   test.is(sub._url, '/page1-new/sub1')
+})
+
+test('create new entry draft with same path name as published entry with children, then publish', async () => {
+  const db = new LocalDB(cms.config)
+  const pagePublished = await db.create({
+    type: Page,
+    status: 'published',
+    set: {path: 'page'}
+  })
+
+  // Add child
+  const childPublished = await db.create({
+    type: Page,
+    status: 'published',
+    parentId: pagePublished._id,
+    set: {path: 'child'}
+  })
+
+  // Add draft with same path as published parent
+  const pageDraft = await db.create({
+    type: Page,
+    status: 'draft',
+    set: {path: 'page'}
+  })
+
+  // Save the same path to the draft
+  await db.update({
+    id: pageDraft._id,
+    status: 'draft',
+    set: {path: 'page'}
+  })
+
+  const draftPath = await db.get({
+    id: pageDraft._id,
+    select: Entry.path,
+    status: 'draft'
+  })
+
+  test.is(draftPath, 'page-1')
+
+  // Now publish the draft
+  await db.publish({
+    id: pageDraft._id,
+    status: 'draft'
+  })
+
+  // Verify the published path
+  const published = await db.get({
+    id: pageDraft._id,
+    status: 'published'
+  })
+  test.is(published._path, 'page-1')
+
+  // Check that the child's path is unchanged
+  const child = await db.get({
+    id: childPublished._id
+  })
+
+  test.is(child._url, '/page/child')
 })
