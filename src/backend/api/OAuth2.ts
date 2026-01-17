@@ -1,9 +1,5 @@
-import {Request, Response} from '@alinea/iso'
-import {
-  generateCodeVerifier,
-  OAuth2Client,
-  type OAuth2Token
-} from '@badgateway/oauth2-client'
+import {crypto, Request, Response} from '@alinea/iso'
+import {OAuth2Client, type OAuth2Token} from '@badgateway/oauth2-client'
 import {AuthResultType} from 'alinea/cloud/AuthResult'
 import type {Config} from 'alinea/core/Config'
 import type {
@@ -16,6 +12,7 @@ import {createId} from 'alinea/core/Id'
 import {outcome} from 'alinea/core/Outcome'
 import type {User} from 'alinea/core/User'
 import {assert} from 'alinea/core/util/Assert'
+import {base64url} from 'alinea/core/util/Encoding'
 import {decode, verify} from 'alinea/core/util/JWT'
 import {parse} from 'cookie-es'
 import PLazy from 'p-lazy'
@@ -27,6 +24,17 @@ import {
 import {router} from '../router/Router.js'
 
 type JWKS = {keys: Array<JsonWebKey & {kid: string}>}
+
+/**
+ * Generate a code verifier for PKCE (Proof Key for Code Exchange)
+ * Uses crypto from @alinea/iso instead of @badgateway/oauth2-client
+ * to avoid Next.js edge runtime warnings about dynamic crypto imports
+ */
+async function generateCodeVerifier(): Promise<string> {
+  const arr = new Uint8Array(32)
+  crypto.getRandomValues(arr)
+  return base64url.stringify(arr, {pad: false})
+}
 
 export interface OAuth2Options {
   /**
