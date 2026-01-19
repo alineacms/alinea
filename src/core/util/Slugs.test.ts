@@ -1,11 +1,38 @@
 import {suite} from '@alinea/suite'
-import {slugify} from 'alinea/core/util/Slugs'
+import {isSeparator, slugify} from 'alinea/core/util/Slugs'
 
 const test = suite(import.meta)
 
 test('slugs', () => {
   test.is(slugify('a b c'), 'a-b-c')
   test.is(slugify('A-B  c'), 'a-b-c')
+})
+
+test('accented', () => {
+  test.is(slugify('àáâäå'), 'aaaaa')
+  test.is(slugify('Ångström'), 'angstrom')
+  test.is(slugify('Crème brûlée'), 'creme-brulee')
+})
+
+test('unicode scripts and emojis', () => {
+  test.is(slugify('中文 測試'), '中文-測試')
+  test.is(slugify('Привет мир'), 'привет-мир')
+  test.is(slugify('مرحبا بالعالم'), 'مرحبا-بالعالم')
+  test.is(slugify('日本語テスト'), '日本語テスト')
+  test.is(slugify('Hello 😀👍🏽 World'), 'hello-😀👍🏽-world')
+  test.is(slugify('family 👨‍👩‍👧‍👦 test'), 'family-👨‍👩‍👧‍👦-test')
+})
+
+test('combining marks in non-latin scripts', () => {
+  test.is(slugify('हिंदी भाषा'), 'हिंदी-भाषा')
+  test.is(slugify('ภาษาไทย'), 'ภาษาไทย')
+})
+
+test('isSeparator is stable across calls', () => {
+  test.is(isSeparator('-'), true)
+  test.is(isSeparator('-'), true)
+  test.is(isSeparator('a'), false)
+  test.is(isSeparator('a'), false)
 })
 
 test('emojis', () => {
