@@ -207,7 +207,7 @@ export class Client implements LocalConnection {
       .catch(err => {
         throw new HttpError(
           500,
-          `${err} @ ${init?.method || 'GET'} action ${params.action}`
+          `${err} @ ${init?.method || 'GET'} action ${params.action} - ${location}`
         )
       })
       .then(async res => {
@@ -232,7 +232,7 @@ export class Client implements LocalConnection {
         if (res.status === 401) unauthorized?.()
         throw new HttpError(
           res.status,
-          `${errorMessage} @ ${init?.method || 'GET'} action ${params.action}`
+          `${errorMessage} @ ${init?.method || 'GET'} action ${params.action} - ${location}`
         )
       })
     const cancel = () => controller.abort()

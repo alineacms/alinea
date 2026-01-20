@@ -8,7 +8,8 @@ export const cms = createCMS({
   enableDrafts: true,
   schema,
   baseUrl: {
-    development: 'http://localhost:3000'
+    development: 'http://localhost:3000',
+    production: 'http://localhost:3000'
   },
   workspaces: {
     primary: Config.workspace('Primary workspace', {
