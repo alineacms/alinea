@@ -1,6 +1,10 @@
 {
   "private": true,
+  "type": "module",
   "name": "@alinea/dev",
   "version": "0.0.0",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "alinea": "bun ../../src/cli/bin.ts"
+  }
 }

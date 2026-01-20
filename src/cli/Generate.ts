@@ -95,6 +95,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     fix: options.fix || false,
     outDir: path.join(nodeModules, '@alinea/generated')
   }
+  console.log(context)
   await copyStaticFiles(context)
   let indexing!: Emitter<DevDB>
   const builder = compileConfig(context)
