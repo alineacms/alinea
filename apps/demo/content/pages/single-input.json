@@ -1,0 +1,19 @@
+{
+  "_id": "36469OLDe2mleYkwDQ0wohti56D",
+  "_type": "Form",
+  "_index": "a5",
+  "title": "Single input",
+  "description": "",
+  "form": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Name"
+        }
+      }
+    },
+    "ui": {}
+  }
+}

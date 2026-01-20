@@ -1,0 +1,52 @@
+{
+  "_id": "34Bj3ZsdjBWfsO5nyI5hjIuk44S",
+  "_type": "FormExample",
+  "_index": "Zz",
+  "title": "Form field",
+  "text": {
+    "schema": {
+      "properties": {
+        "firstname": {
+          "type": "string",
+          "title": "Firstname",
+          "default": ""
+        },
+        "lastname": {
+          "type": "string",
+          "title": "Lastname",
+          "default": ""
+        },
+        "lastname2": {
+          "type": "string",
+          "title": "Lastname 22",
+          "default": ""
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "title": "Email"
+        }
+      }
+    },
+    "ui": {
+      "firstname": {
+        "ui:placeholder": "Bill123"
+      },
+      "lastname": {
+        "ui:placeholder": "Merckx"
+      },
+      "lastname2": {
+        "ui:placeholder": ""
+      }
+    }
+  },
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}
