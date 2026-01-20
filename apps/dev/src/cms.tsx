@@ -7,6 +7,9 @@ import * as schema from './schema'
 export const cms = createCMS({
   enableDrafts: true,
   schema,
+  baseUrl: {
+    development: 'http://localhost:3000'
+  },
   workspaces: {
     primary: Config.workspace('Primary workspace', {
       mediaDir: 'public',
