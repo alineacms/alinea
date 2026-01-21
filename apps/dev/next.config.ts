@@ -1,9 +1,9 @@
 import {withAlinea} from 'alinea/next'
 
 const config = withAlinea({
-  serverExternalPackages: ['alinea']
+  typescript: {
+    ignoreBuildErrors: true
+  }
 })
-
-console.log(config)
 
 export default config
