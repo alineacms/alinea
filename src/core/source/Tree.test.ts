@@ -2,6 +2,7 @@ import {suite} from '@alinea/suite'
 import treeExample from '../../test/fixtures/exampleTree.json' with {
   type: 'json'
 }
+import {ShaMismatchError} from './ShaMismatchError.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 
 const test = suite(import.meta)
@@ -130,4 +131,79 @@ test('ignore empty dirs', async () => {
   withEmpty.add('dir2', empty)
   const finished = await withEmpty.compile()
   test.is(finished.sha, empty.sha)
+})
+
+test('tree iteration and index', () => {
+  const tree = new WriteableTree()
+  tree.add('root.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
+  tree.add('dir/file.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
+
+  test.ok(tree.has('dir/file.txt'))
+  test.not.ok(tree.has('root.txt/missing'))
+  test.not.ok(tree.has('missing'))
+
+  const paths = new Set(tree.paths())
+  test.ok(paths.has('root.txt'))
+  test.ok(paths.has('dir'))
+  test.ok(paths.has('dir/file.txt'))
+
+  const iterated = new Map([...tree])
+  test.ok(iterated.has('dir/file.txt'))
+  test.is(
+    tree.index().get('dir/file.txt'),
+    'dffd6021bb2bd5b0af676290809ec3a53191dd81'
+  )
+})
+
+test('readonly helpers and changes', async () => {
+  const tree = new WriteableTree()
+  tree.add('root.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
+  tree.add('nested/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
+  const readonly = await tree.compile()
+
+  test.not.ok(readonly.isEmpty)
+  test.ok(ReadonlyTree.EMPTY.isEmpty)
+
+  const leaf = readonly.getLeaf('root.txt')
+  const serialized = leaf.toJSON()
+  test.is(serialized.sha, 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
+  test.is(serialized.mode, '100644')
+
+  test.ok(readonly.shas.has(leaf.sha))
+  test.ok(readonly.hasSha(leaf.sha))
+  test.not.ok(readonly.hasSha('deadbeef'))
+
+  const entries = readonly.entries
+  test.ok(entries.some(entry => entry.name === 'root.txt'))
+
+  const json = readonly.toJSON()
+  test.is(json.sha, readonly.sha)
+  test.ok(Array.isArray(json.entries))
+
+  const flat = readonly.flat()
+  test.ok(flat.tree.some(entry => entry.path === 'nested/a.txt'))
+
+  const updated = await readonly.withChanges({
+    fromSha: readonly.sha,
+    changes: [
+      {
+        op: 'add',
+        path: 'new.txt',
+        sha: '8c7e5a667f1b771847fe88c01c3de34413a1b220'
+      }
+    ]
+  })
+  test.ok(updated.has('new.txt'))
+})
+
+test('applyChanges sha mismatch', async () => {
+  const tree = new WriteableTree()
+  tree.add('root.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
+  await tree.getSha()
+  test.throws(() => {
+    tree.applyChanges({
+      fromSha: 'deadbeef',
+      changes: []
+    })
+  }, 'SHA mismatch')
 })
