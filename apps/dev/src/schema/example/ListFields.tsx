@@ -1,19 +1,27 @@
 import {Config, Field} from 'alinea'
 
+const ListSchema = {
+  Text: Config.type('Text', {
+    fields: {
+      title: Field.text('Item title'),
+      text: Field.richText('Item body text')
+    }
+  }),
+  Image: Config.type('Image', {
+    fields: {image: Field.image('Image')}
+  })
+}
+
 export const ListFields = Config.document('List fields', {
   fields: {
     list: Field.list('My list field', {
-      schema: {
-        Text: Config.type('Text', {
-          fields: {
-            title: Field.text('Item title'),
-            text: Field.richText('Item body text')
-          }
-        }),
-        Image: Config.type('Image', {
-          fields: {image: Field.image('Image')}
-        })
-      }
+      schema: ListSchema
+    }),
+    listWithMinMax: Field.list('List with min/max', {
+      schema: ListSchema,
+      min: 1,
+      max: 3,
+      help: 'This list requires at least 1 item and allows a maximum of 3 items'
     }),
     listWithInitial: Field.list('My list field', {
       schema: {

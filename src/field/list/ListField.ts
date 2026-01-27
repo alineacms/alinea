@@ -1,8 +1,8 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
+import {ListField} from 'alinea/core/field/ListField'
 import {createId} from 'alinea/core/Id'
 import type {InferQueryValue, InferStoredValue} from 'alinea/core/Infer'
 import {Schema} from 'alinea/core/Schema'
-import {ListField} from 'alinea/core/field/ListField'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {generateNKeysBetween} from 'alinea/core/util/FractionalIndexing'
 import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
@@ -21,6 +21,10 @@ export interface ListOptions<Definitions extends Schema>
   inline?: boolean
   /** Hide this list field */
   hidden?: boolean
+  /** Minimum number of items required */
+  min?: number
+  /** Maximum number of items allowed */
+  max?: number
   /** The initial value of the field */
   initialValue?: Array<InferStoredValue<Definitions>>
   /** Validate the given value */
@@ -38,6 +42,7 @@ export function list<Definitions extends Schema>(
   InferQueryValue<Definitions> & ListRow,
   ListOptions<Definitions>
 > {
+  const {min, max, validate: userValidate} = options
   return new ListField<
     InferStoredValue<Definitions> & ListRow,
     InferQueryValue<Definitions> & ListRow,
@@ -46,6 +51,18 @@ export function list<Definitions extends Schema>(
     options: {
       label,
       ...options,
+      validate(value) {
+        if (userValidate) {
+          const result = userValidate(value)
+          if (result !== undefined) return result
+        }
+        if (min !== undefined && value.length < min) {
+          return `Minimum ${min} item${min === 1 ? '' : 's'} required`
+        }
+        if (max !== undefined && value.length > max) {
+          return `Maximum ${max} item${max === 1 ? '' : 's'} allowed`
+        }
+      },
       get initialValue(): any {
         const initialValue = options.initialValue
         if (!Array.isArray(initialValue)) return []

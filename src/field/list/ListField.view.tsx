@@ -102,6 +102,7 @@ type ListInputRowProps = PropsWithChildren<
     schema: Schema
     isDragging?: boolean
     readOnly?: boolean
+    canAddMore?: boolean
     onMove?: (direction: 1 | -1) => void
     onDelete?: () => void
     onCopyBlock?: () => void
@@ -131,6 +132,7 @@ function ListInputRow({
   isDragging,
   isDragOverlay,
   readOnly,
+  canAddMore = true,
   onCreate,
   onPasteBlock,
   firstRow,
@@ -148,14 +150,14 @@ function ListInputRow({
       ref={rootRef}
       {...rest}
     >
-      {!readOnly && !isDragOverlay && (
+      {!readOnly && !isDragOverlay && canAddMore && (
         <ListInsertRow
           open={showInsert}
           first={Boolean(firstRow)}
           onInsert={() => setShowInsert(!showInsert)}
         />
       )}
-      {showInsert && (
+      {showInsert && canAddMore && (
         <ListCreateRow
           inline
           schema={schema}
@@ -313,12 +315,13 @@ const layoutMeasuringConfig = {
 
 export function ListInput({field}: ListInputProps) {
   const {options, value, mutator, error} = useField(field)
-  const {schema, readOnly} = options
+  const {schema, readOnly, max} = options
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row._id)
   const [, setPasted] = useAtom(copyAtom)
   const [dragging, setDragging] = useState<ListRow | null>(null)
   const [foldedItems, setFoldedItems] = useState(new Set<string>())
+  const canAddMore = max === undefined || rows.length < max
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -378,6 +381,7 @@ export function ListInput({field}: ListInputProps) {
                         row={row}
                         schema={schema}
                         readOnly={readOnly}
+                        canAddMore={canAddMore}
                         onCopyBlock={() => {
                           const data = mutator.read(row._id)
                           setPasted(data)
@@ -391,11 +395,11 @@ export function ListInput({field}: ListInputProps) {
                           mutator.remove(row._id)
                         }}
                         onCreate={(type: string) => {
-                          if (readOnly) return
+                          if (readOnly || !canAddMore) return
                           mutator.push({_type: type} as any, i)
                         }}
                         onPasteBlock={(data: ListRow) => {
-                          if (readOnly) return
+                          if (readOnly || !canAddMore) return
                           const {_id, _index, ...rest} = data
                           mutator.push(rest, i)
                         }}
@@ -413,18 +417,20 @@ export function ListInput({field}: ListInputProps) {
                     </FormRow>
                   )
                 })}
-                <ListCreateRow
-                  schema={schema}
-                  readOnly={readOnly}
-                  onPaste={(data: ListRow) => {
-                    const {_id, _index, ...rest} = data
-                    mutator.push(rest)
-                  }}
-                  onCreate={(type: string, data?: ListRow) => {
-                    if (readOnly) return
-                    mutator.push({_type: type} as any)
-                  }}
-                />
+                {canAddMore && (
+                  <ListCreateRow
+                    schema={schema}
+                    readOnly={readOnly}
+                    onPaste={(data: ListRow) => {
+                      const {_id, _index, ...rest} = data
+                      mutator.push(rest)
+                    }}
+                    onCreate={(type: string) => {
+                      if (readOnly) return
+                      mutator.push({_type: type} as any)
+                    }}
+                  />
+                )}
               </Sink.Root>
             </SortableContext>
 
