@@ -1,6 +1,7 @@
 import {CheckInput} from 'alinea/field/check/CheckField.view'
 import {CodeInput} from 'alinea/field/code/CodeField.view'
 import {DateInput} from 'alinea/field/date/DateField.view'
+import {FormInput} from 'alinea/field/form/FormField.view'
 import {HiddenInput} from 'alinea/field/hidden/HiddenField.view'
 import {JsonInput} from 'alinea/field/json/JsonField.view'
 import {
@@ -43,5 +44,6 @@ export const defaultViews = {
   [viewKeys.MediaExplorer]: MediaExplorer,
   [viewKeys.MediaFile]: FileEntry,
   [viewKeys.FileSummaryRow]: FileSummaryRow,
-  [viewKeys.FileSummaryThumb]: FileSummaryThumb
+  [viewKeys.FileSummaryThumb]: FileSummaryThumb,
+  [viewKeys.FormInput]: FormInput
 }

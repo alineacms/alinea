@@ -1,0 +1,53 @@
+{
+  "_id": "363hSAskC1OdY74vN9YkhBSIAzU",
+  "_type": "Form",
+  "_index": "a0l",
+  "title": "Array",
+  "description": "",
+  "form": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "test": {
+          "type": "array",
+          "title": "Test",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "title": "Name"
+              },
+              "lastname": {
+                "type": "string",
+                "title": "Lastname"
+              },
+              "project-specific": {
+                "type": "string",
+                "title": "Project specific",
+                "format": "data-url"
+              }
+            }
+          }
+        },
+        "bla": {
+          "type": "string",
+          "title": "Bla",
+          "format": "data-url"
+        }
+      }
+    },
+    "ui": {
+      "test": {
+        "test": {
+          "project-specific": {
+            "ui:widget": "my-custom-widget"
+          }
+        }
+      },
+      "bla": {
+        "ui:widget": "my-custom-widget"
+      }
+    }
+  }
+}

@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "dev": "run-p dev:run",
-    "web": "run-p dev:check web:run",
+    "demo": "run-p dev:check demo:run",
     "tag": "bun tag.js",
     "bump": "bun bump.js",
     "stories": "ladle serve",
@@ -21,7 +21,8 @@
     "type": "tsc --diagnostics",
     "dev:check": "tsc -w",
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev",
-    "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev",
+    "demo:build": "cd apps/demo && bun run build",
+    "demo:run": "bun build.ts --watch -- node dev.js --dir apps/demo -- bun run --cwd apps/demo dev",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "prepublishOnly": "bun run build"
   },
@@ -38,6 +39,7 @@
   ],
   "workspaces": [
     "apps/dev",
+    "apps/demo",
     "src/adapter",
     "src/backend",
     "src/cli",
@@ -51,8 +53,8 @@
     "esbuild": "^0.25.4"
   },
   "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@alinea/styler": "^1.0.3",
@@ -60,6 +62,9 @@
     "@biomejs/biome": "^2.1.2",
     "@esbx/reporter": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",
+    "@rjsf/core": "6.1.2",
+    "@rjsf/utils": "6.1.2",
+    "@rjsf/validator-ajv8": "6.1.2",
     "@ladle/react": "^4.1.2",
     "@types/bun": "^1.1.17",
     "@types/fs-extra": "^11.0.1",
@@ -77,8 +82,6 @@
     "npm-run-all": "^4.1.5",
     "postcss-modules": "^6.0.0",
     "postcss-pxtorem": "^6.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "sass": "^1.63.4",
     "sass-embedded": "^1.83.4",
     "sharp": "0.32.6",
