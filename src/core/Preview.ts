@@ -14,7 +14,7 @@ export interface PreviewUpdate {
   entryId: string
   contentHash: string
   status: string
-  update: Uint8Array
+  patch: Uint8Array
 }
 
 export interface PreviewMetadata {

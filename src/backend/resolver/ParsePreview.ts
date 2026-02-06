@@ -1,10 +1,14 @@
 import {Entry} from 'alinea/core'
-import {DOC_KEY, parseYDoc} from 'alinea/core/Doc'
+import {createRecord, parseRecord} from 'alinea/core/EntryRecord'
 import type {PreviewRequest} from 'alinea/core/Preview'
-import {Type} from 'alinea/core/Type'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
+import {applyFilePatch} from 'alinea/core/source/FilePatch'
+import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
-import * as Y from 'yjs'
+
+function recordToText(record: ReturnType<typeof createRecord>) {
+  return JSON.stringify(record, null, '  ')
+}
 
 export function createPreviewParser(local: LocalDB) {
   return {
@@ -13,28 +17,33 @@ export function createPreviewParser(local: LocalDB) {
       sync: () => Promise<unknown>
     ): Promise<PreviewRequest | undefined> {
       if (!(preview && 'payload' in preview)) return preview
-      const update = await decodePreviewPayload(preview.payload)
-      if (local.sha !== update.contentHash) {
+      const payload = await decodePreviewPayload(preview.payload)
+      if (local.sha !== payload.contentHash) {
         await sync()
-        if (local.sha !== update.contentHash) return
+        if (local.sha !== payload.contentHash) return
       }
       const entry = await local.first({
         select: Entry,
-        id: update.entryId,
-        locale: update.locale,
+        id: payload.entryId,
+        locale: payload.locale,
         status: 'preferDraft'
       })
       if (!entry) return
-      const type = local.config.schema[entry.type]
-      if (!type) return
-      const doc = new Y.Doc()
-      const clientID = doc.clientID
-      doc.clientID = 1
-      Type.shape(type).applyY(entry.data, doc, DOC_KEY)
-      doc.clientID = clientID
-      Y.applyUpdate(doc, update.update)
-      const entryData = parseYDoc(type, doc)
-      return {entry: {...entry, ...entryData, path: entry.path}}
+      const baseText = recordToText(createRecord(entry, entry.status))
+      const updatedText = await applyFilePatch(baseText, payload.patch)
+      const {data} = parseRecord(JSON.parse(updatedText))
+      const {rowHash: _rowHash, fileHash: _fileHash, ...withoutHashes} = entry
+      const patched = await createEntryRow(
+        local.config,
+        {
+          ...withoutHashes,
+          title: data.title as string,
+          data,
+          path: entry.path
+        },
+        entry.status
+      )
+      return {entry: patched}
     }
   }
 }
