@@ -1,6 +1,6 @@
 import {Config, Field} from 'alinea'
-import {Page} from './Page.js'
-import {LinkFields} from './example/LinkFields.js'
+import {LinkFields} from './example/LinkFields'
+import {Page} from './Page'
 
 export const Folder = Config.document('Folder', {
   contains: ['Folder', Page, LinkFields],
