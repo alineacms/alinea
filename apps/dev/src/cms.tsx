@@ -20,11 +20,20 @@ const editor = Config.role('Editor', {
       },
       {
         root: cms.workspaces.primary.fields,
-        grant: 'explicit'
+        grant: 'explicit',
+        allow: {read: true}
       },
       {
         id: '2dgfSWKFaEqxaimsO32A1sR9iMw',
-        allow: {read: true}
+        allow: {read: true, update: true}
+      },
+      {
+        field: schema.FieldPermissions.readOnlyByRole,
+        deny: {update: true}
+      },
+      {
+        field: schema.FieldPermissions.hiddenByRole,
+        deny: {read: true}
       }
     )
   }

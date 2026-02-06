@@ -1,4 +1,5 @@
 import {suite} from '@alinea/suite'
+import {Field} from 'alinea'
 import {root, type, workspace} from 'alinea/config.js'
 import {createConfig} from './Config.js'
 import {Policy, role, WriteablePolicy} from './Role.js'
@@ -17,7 +18,10 @@ const admin = role('Admin', {
 })
 
 const type1 = type('Type1', {
-  fields: {}
+  fields: {
+    title: Field.text('Title'),
+    body: Field.text('Body')
+  }
 })
 
 const root1 = root('Root1', {})
@@ -218,6 +222,24 @@ test('WriteablePolicy.applyWorkspace, applyRoot, applyType', async () => {
   test.ok(policy.canUpdate({workspace: 'workspace1', root: 'root1'}))
   policy.set({type: type1, allow: {delete: true}})
   test.ok(policy.canDelete({type: 'type1'}))
+  policy.set({field: type1.title, allow: {update: true}})
+  test.ok(policy.canUpdate({type: 'type1', field: 'title'}))
+})
+
+test('field permissions inherit from type and can be denied', () => {
+  const policy = new WriteablePolicy(scope)
+  policy.set({type: type1, allow: {update: true}})
+  policy.set({field: type1.title, deny: {update: true}})
+  test.not.ok(policy.canUpdate({type: 'type1', field: 'title'}))
+  test.ok(policy.canUpdate({type: 'type1', field: 'body'}))
+})
+
+test('field permissions support explicit grant mode', () => {
+  const policy = new WriteablePolicy(scope)
+  policy.set({type: type1, grant: 'explicit', allow: {read: true}})
+  policy.set({field: type1.title, allow: {read: true}})
+  test.ok(policy.canRead({type: 'type1', field: 'title'}))
+  test.not.ok(policy.canRead({type: 'type1', field: 'body'}))
 })
 
 test('WriteablePolicy chaining', async () => {

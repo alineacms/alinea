@@ -1,4 +1,5 @@
 import {assert} from 'alinea/core/util/Assert'
+import type {Field} from './Field.js'
 import type {Graph} from './Graph.js'
 import {ErrorCode, HttpError} from './HttpError.js'
 import type {HasRoot, HasType, HasWorkspace} from './Internal.js'
@@ -8,6 +9,7 @@ interface SetPermissions {
   workspace?: never
   root?: never
   type?: never
+  field?: never
   id?: never
   locale?: never
   /**
@@ -29,6 +31,9 @@ interface RootPermission extends Omit<SetPermissions, 'root'> {
 interface TypePermission extends Omit<SetPermissions, 'type'> {
   type: HasType
 }
+interface FieldPermission extends Omit<SetPermissions, 'field'> {
+  field: Field
+}
 interface IdPermission extends Omit<SetPermissions, 'id'> {
   id: string
 }
@@ -41,6 +46,7 @@ export type PermissionInput =
   | WorkspacePermission
   | RootPermission
   | TypePermission
+  | FieldPermission
   | IdPermission
   | LocalePermission
 
@@ -140,6 +146,7 @@ export interface Resource {
   workspace?: string
   root?: string
   type?: string
+  field?: string
   id?: string
   parents?: Array<string>
   locale?: string | null
@@ -219,6 +226,12 @@ export class Policy {
     if (resource.type) {
       const typePermission = this.acl.get(ScopeKey.type(resource.type))
       result = combine(result, typePermission)
+      if (resource.field) {
+        const fieldPermission = this.acl.get(
+          ScopeKey.field(resource.type, resource.field)
+        )
+        result = combine(result, fieldPermission)
+      }
     }
     if (resource.locale !== undefined) {
       const localePermission = this.acl.get(ScopeKey.locale(resource.locale))
@@ -317,6 +330,7 @@ export class WriteablePolicy extends Policy {
         this.#apply(this.#scope.keyOf(input.workspace), input)
       else if (input.root) this.#apply(this.#scope.keyOf(input.root), input)
       else if (input.type) this.#apply(this.#scope.keyOf(input.type), input)
+      else if (input.field) this.#apply(this.#scope.keyOf(input.field), input)
       else if (input.id) this.#apply(ScopeKey.entry(input.id), input)
       else if (input.locale !== undefined)
         this.#apply(ScopeKey.locale(input.locale), input)

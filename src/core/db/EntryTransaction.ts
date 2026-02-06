@@ -258,6 +258,17 @@ export class EntryTransaction {
     })
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Update, entry)
+    for (const key of keys(set)) {
+      this.#policy.assert(Permission.Update, {
+        workspace: entry.workspace,
+        root: entry.root,
+        type: entry.type,
+        id: entry.id,
+        parents: entry.parents,
+        locale: entry.locale,
+        field: key
+      })
+    }
     const fieldUpdates = fromEntries(
       entries(set).map(([key, value]) => {
         return [key, value ?? null]
