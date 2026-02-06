@@ -1,8 +1,6 @@
 import styler from '@alinea/styler'
 import {Head} from 'alinea/dashboard/util/Head'
-import {Button, HStack, Icon, Typo, VStack} from 'alinea/ui'
-import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
-import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
+import {HStack, Icon, Typo, VStack} from 'alinea/ui'
 import {IcRoundWarning} from 'alinea/ui/icons/IcRoundWarning'
 import {type PropsWithChildren, useEffect} from 'react'
 import useErrorBoundary from 'use-error-boundary'
@@ -39,7 +37,7 @@ export function ErrorBoundary({children, dependencies}: ErrorBoundaryProps) {
                 <Typo.H3 flat>Oops, something went wrong</Typo.H3>
               </HStack>
               <div className={styles.root.mesage()}>{error.message}</div>
-              <HStack gap={16} center>
+              {/*<HStack gap={16} center>
                 <Button onClick={reset} icon={IcRoundClose}>
                   Close error
                 </Button>
@@ -52,7 +50,7 @@ export function ErrorBoundary({children, dependencies}: ErrorBoundaryProps) {
                     <Icon icon={IcRoundOpenInNew} />
                   </HStack>
                 </Typo.Link>
-              </HStack>
+              </HStack>*/}
             </VStack>
           </div>
         </>
