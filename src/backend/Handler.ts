@@ -12,6 +12,7 @@ import type {DraftKey} from 'alinea/core/Draft'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {HttpError} from 'alinea/core/HttpError'
+import {Permission} from 'alinea/core/Role'
 import {getScope} from 'alinea/core/Scope'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {base64} from 'alinea/core/util/Encoding'
@@ -252,7 +253,9 @@ export function createHandler({
 
       // Media
       if (action === HandleAction.Upload) {
-        expectUser()
+        const user = expectUser()
+        const policy = await local.createPolicy(user.roles)
+        policy.assert(Permission.Upload)
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
           expectJson()
