@@ -9,7 +9,7 @@ export function encodePreviewPayload(update: PreviewUpdate): Promise<string> {
   encoding.writeVarString(encoder, update.entryId)
   encoding.writeVarString(encoder, update.contentHash)
   encoding.writeVarString(encoder, update.status)
-  encoding.writeVarUint8Array(encoder, update.update)
+  encoding.writeVarUint8Array(encoder, update.patch)
   return encode(encoding.toUint8Array(encoder))
 }
 
@@ -22,6 +22,6 @@ export async function decodePreviewPayload(
     entryId: decoding.readVarString(decoder),
     contentHash: decoding.readVarString(decoder),
     status: decoding.readVarString(decoder),
-    update: decoding.readVarUint8Array(decoder)
+    patch: decoding.readVarUint8Array(decoder)
   }
 }

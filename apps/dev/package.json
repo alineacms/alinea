@@ -2,5 +2,11 @@
   "private": true,
   "name": "@alinea/dev",
   "version": "0.0.0",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev"
+  },
+  "dependencies": {
+    "alinea": "../.."
+  }
 }

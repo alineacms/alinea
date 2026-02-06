@@ -1,12 +1,18 @@
 import {crypto} from '@alinea/iso'
 
 /**
+ * Computes the SHA-1 hash bytes of the input data.
+ */
+export async function sha1Bytes(data: Uint8Array): Promise<Uint8Array> {
+  const hashBuffer = await crypto.subtle.digest('SHA-1', data)
+  return new Uint8Array(hashBuffer)
+}
+
+/**
  * Computes the SHA-1 hash of the input data.
  */
 export async function sha1Hash(data: Uint8Array): Promise<string> {
-  const hashBuffer = await crypto.subtle.digest('SHA-1', data)
-  const hashArray = new Uint8Array(hashBuffer)
-  return bytesToHex(hashArray)
+  return bytesToHex(await sha1Bytes(data))
 }
 
 /**

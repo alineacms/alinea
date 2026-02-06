@@ -1,5 +1,11 @@
 import {expect, it} from 'bun:test'
-import {bytesToHex, concatUint8Arrays, hexToBytes, sha1Hash} from './Utils.js'
+import {
+  bytesToHex,
+  concatUint8Arrays,
+  hexToBytes,
+  sha1Bytes,
+  sha1Hash
+} from './Utils.js'
 
 it('should handle empty Uint8Array', async () => {
   const data = new Uint8Array([])
@@ -12,6 +18,12 @@ it('should handle larger Uint8Arrays', async () => {
   const data = new Uint8Array(1024).map(() => Math.floor(Math.random() * 256))
   const hash = await sha1Hash(data)
   expect(hash).toMatch(/^[0-9a-f]{40}$/) // Check if it's a valid SHA-1 hash
+})
+
+it('should return SHA-1 bytes', async () => {
+  const data = new TextEncoder().encode('')
+  const hash = await sha1Bytes(data)
+  expect(bytesToHex(hash)).toBe('da39a3ee5e6b4b0d3255bfef95601890afd80709')
 })
 
 it('should concatenate Uint8Arrays correctly', () => {
