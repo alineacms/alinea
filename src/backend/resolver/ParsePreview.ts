@@ -1,3 +1,4 @@
+import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {Entry} from 'alinea/core'
 import {createRecord, parseRecord} from 'alinea/core/EntryRecord'
 import type {PreviewRequest} from 'alinea/core/Preview'
@@ -5,10 +6,7 @@ import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {applyFilePatch} from 'alinea/core/source/FilePatch'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
-
-function recordToText(record: ReturnType<typeof createRecord>) {
-  return JSON.stringify(record, null, '  ')
-}
+const decoder = new TextDecoder()
 
 export function createPreviewParser(local: LocalDB) {
   return {
@@ -29,7 +27,9 @@ export function createPreviewParser(local: LocalDB) {
         status: 'preferDraft'
       })
       if (!entry) return
-      const baseText = recordToText(createRecord(entry, entry.status))
+      const baseText = decoder.decode(
+        JsonLoader.format(local.config.schema, createRecord(entry, entry.status))
+      )
       const updatedText = await applyFilePatch(baseText, payload.patch)
       const {data} = parseRecord(JSON.parse(updatedText))
       const {rowHash: _rowHash, fileHash: _fileHash, ...withoutHashes} = entry

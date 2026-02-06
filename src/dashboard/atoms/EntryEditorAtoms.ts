@@ -19,6 +19,7 @@ import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {Workspace} from 'alinea/core/Workspace'
+import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
 import {encodePreviewPayload} from 'alinea/preview/PreviewPayload'
@@ -31,10 +32,7 @@ import {type Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
 import {yAtom} from './YAtom.js'
-
-function recordToText(record: ReturnType<typeof createRecord>) {
-  return JSON.stringify(record, null, '  ')
-}
+const decoder = new TextDecoder()
 
 export enum EditMode {
   Editing = 'editing',
@@ -639,11 +637,18 @@ export function createEntryEditor(entryData: EntryData) {
     const sha = await get(dbMetaAtom)
     get(yUpdate)
     const status = get(selectedStatus)
-    const baseText = recordToText(createRecord(activeVersion, activeVersion.status))
+    const baseText = decoder.decode(
+      JsonLoader.format(
+        config.schema,
+        createRecord(activeVersion, activeVersion.status)
+      )
+    )
     const updated = await getDraftEntry({status})
     const patch = await createFilePatch(
       baseText,
-      recordToText(createRecord(updated, status))
+      decoder.decode(
+        JsonLoader.format(config.schema, createRecord(updated, status))
+      )
     )
     return encodePreviewPayload({
       locale: activeVersion.locale,
