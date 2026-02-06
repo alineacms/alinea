@@ -35,7 +35,6 @@ const visibleTypesAtom = atom(get => {
 
 async function getHasChildren(
   graph: Graph,
-  locale: string | null,
   workspace: string,
   root: string,
   parentId: string | null,
@@ -46,7 +45,6 @@ async function getHasChildren(
       workspace,
       root: root,
       parentId,
-      locale,
       filter: {
         _type: {in: visibleTypes}
       },
@@ -194,7 +192,6 @@ const loaderAtom = atom(get => {
       const hasChildren = typeConfig.contains
         ? await getHasChildren(
             graph,
-            locale,
             row.data.workspace,
             row.data.root,
             row.id,

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.6.2]
+- Fix search results turning up empty
+- Show children indicator in tree even if all children are untranslated
+
 ## [1.6.1]
 - Previous release mistakenly included features that were not ready for release.
 

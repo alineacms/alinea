@@ -15,6 +15,7 @@ import type {Schema} from 'alinea/core/Schema'
 import {ListRow} from 'alinea/core/shape/ListShape'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
+import {unresolvedEntryMarker} from 'alinea/picker/entry/EntryPicker'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */
@@ -133,6 +134,10 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
         if (picker.postProcess) tasks.push(picker.postProcess(row, loader))
       }
       await Promise.all(tasks)
+      for (let index = rows.length - 1; index >= 0; index--) {
+        const row = rows[index] as any
+        if (row[unresolvedEntryMarker]) rows.splice(index, 1)
+      }
     },
     view: viewKeys.MultipleLinksInput
   })

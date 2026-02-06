@@ -27,7 +27,9 @@ const Page = Config.document('Type', {
       Field.tab('Tab 2', {
         fields: {
           name: Field.text('Name'),
-          name2: Field.text('Name')
+          name2: Field.text('Name', {
+            searchable: true
+          })
         }
       })
     )

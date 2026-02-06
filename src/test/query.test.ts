@@ -105,3 +105,26 @@ test('parents order', async () => {
   })
   test.equal(parentIds, [parent1._id, parent2._id])
 })
+
+test('search', async () => {
+  const db = await createDb()
+  const page1 = await db.create({
+    type: Page,
+    set: {title: 'Page 1', name2: 'Searchable Name'}
+  })
+  const page2 = await db.create({
+    type: Page,
+    set: {title: 'Page 2', name2: 'Another Name'}
+  })
+  const results = await db.find({
+    type: Page,
+    search: 'page'
+  })
+  test.is(results.length, 2)
+  const results2 = await db.find({
+    type: Page,
+    search: 'Searchable'
+  })
+  test.is(results2.length, 1)
+  test.is(results2[0]._id, page1._id)
+})

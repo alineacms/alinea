@@ -278,7 +278,20 @@ export class EntryTransaction {
       },
       status
     )
-    const path = slugify((data.path as string) ?? entry.data.path ?? entry.path)
+    const desiredPath = slugify(
+      (data.path as string) ?? entry.data.path ?? entry.path
+    )
+    const lockPath = entry.status !== 'published' && !entry.main
+    const path = lockPath
+      ? entry.path
+      : this.#getAvailablePath({
+          id,
+          path: desiredPath,
+          parentId: entry.parentId,
+          root: entry.root,
+          workspace: entry.workspace,
+          locale
+        })
     this.#checks.push([entry.filePath, entry.fileHash])
     const childrenDir = paths.join(entry.parentDir, path)
     const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`

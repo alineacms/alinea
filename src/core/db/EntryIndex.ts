@@ -372,7 +372,7 @@ export class EntryGraph {
       for (const entry of found) {
         if (!this.#search.has(entry.filePath)) this.#updateSearch(entry)
       }
-      return this.#search
+      const results = this.#search
         .search(search, {
           prefix: true,
           fuzzy: 0.1,
@@ -380,6 +380,8 @@ export class EntryGraph {
           filter: result => found.has(result.entry)
         })
         .map(result => result.entry)
+      yield* results
+      return
     }
     for (const node of filter.nodes ?? this.nodes) {
       if (filter.node && !filter.node(node)) continue

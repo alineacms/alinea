@@ -32,6 +32,11 @@ const editor = Config.role('Editor', {
 
 export const cms = createCMS({
   enableDrafts: true,
+  preview: true,
+  handlerUrl: '/api/cms',
+  baseUrl: {
+    development: 'http://localhost:3000'
+  },
   schema,
   roles: {editor},
   workspaces: {

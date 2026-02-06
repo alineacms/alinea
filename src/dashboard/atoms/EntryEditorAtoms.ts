@@ -2,9 +2,11 @@ import type {Config} from 'alinea/core/Config'
 import type {Connection} from 'alinea/core/Connection'
 import {createYDoc, DOC_KEY, parseYDoc} from 'alinea/core/Doc'
 import {Entry, type EntryStatus} from 'alinea/core/Entry'
+import {createRecord} from 'alinea/core/EntryRecord'
 import {Field} from 'alinea/core/Field'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
+import {createFilePatch} from 'alinea/core/source/FilePatch'
 import {Root} from 'alinea/core/Root'
 import {type EntryUrlMeta, Type} from 'alinea/core/Type'
 import {
@@ -17,6 +19,7 @@ import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
 import {Workspace} from 'alinea/core/Workspace'
+import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
 import {encodePreviewPayload} from 'alinea/preview/PreviewPayload'
@@ -30,6 +33,7 @@ import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
 import {policyAtom} from './PolicyAtom.js'
 import {yAtom} from './YAtom.js'
+const decoder = new TextDecoder()
 
 export enum EditMode {
   Editing = 'editing',
@@ -636,14 +640,27 @@ export function createEntryEditor(entryData: EntryData) {
   const yUpdate = debounceAtom(edits.yUpdate, 250)
   const previewPayload = atom(async get => {
     const sha = await get(dbMetaAtom)
-    const update = get(yUpdate)
+    get(yUpdate)
     const status = get(selectedStatus)
+    const baseText = decoder.decode(
+      JsonLoader.format(
+        config.schema,
+        createRecord(activeVersion, activeVersion.status)
+      )
+    )
+    const updated = await getDraftEntry({status})
+    const patch = await createFilePatch(
+      baseText,
+      decoder.decode(
+        JsonLoader.format(config.schema, createRecord(updated, status))
+      )
+    )
     return encodePreviewPayload({
       locale: activeVersion.locale,
       entryId: activeVersion.id,
       contentHash: sha,
       status: status,
-      update
+      patch
     })
   })
 
