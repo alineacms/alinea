@@ -4,7 +4,7 @@ import {createCMS} from 'alinea/core'
 import {Policy, WriteablePolicy} from 'alinea/core/Role.js'
 import {getScope} from 'alinea/core/Scope.js'
 import {LocalDB} from 'alinea/core/db/LocalDB'
-import {create, update} from 'alinea/core/db/Operation.js'
+import {create, move, update} from 'alinea/core/db/Operation.js'
 
 const test = suite(import.meta)
 
@@ -80,4 +80,65 @@ test('enforce field update permissions', async () => {
     set: {title: 'Updated title'}
   }).task(db)
   await db.request(allowOtherField, policy)
+})
+
+test('enforce reorder permissions', async () => {
+  const db = new LocalDB(cms.config)
+  const parent = await db.create({
+    type: Page,
+    root: 'pages',
+    workspace: 'main',
+    set: {title: 'Parent'}
+  })
+  const childA = await db.create({
+    type: Page,
+    parentId: parent._id,
+    set: {title: 'A'}
+  })
+  const childB = await db.create({
+    type: Page,
+    parentId: parent._id,
+    set: {title: 'B'}
+  })
+
+  const policy = new WriteablePolicy(getScope(cms.config))
+  policy.allowAll()
+  policy.set({id: childA._id, deny: {reorder: true}})
+
+  const reorder = await move({
+    id: childA._id,
+    after: childB._id
+  }).task(db)
+  await test.throws(() => db.request(reorder, policy), 'denied')
+})
+
+test('enforce move permissions', async () => {
+  const db = new LocalDB(cms.config)
+  const sourceParent = await db.create({
+    type: Page,
+    root: 'pages',
+    workspace: 'main',
+    set: {title: 'Source'}
+  })
+  const targetParent = await db.create({
+    type: Page,
+    root: 'pages',
+    workspace: 'main',
+    set: {title: 'Target'}
+  })
+  const child = await db.create({
+    type: Page,
+    parentId: sourceParent._id,
+    set: {title: 'Child'}
+  })
+
+  const policy = new WriteablePolicy(getScope(cms.config))
+  policy.allowAll()
+  policy.set({id: child._id, deny: {move: true}})
+
+  const moveMutation = await move({
+    id: child._id,
+    toParent: targetParent._id
+  }).task(db)
+  await test.throws(() => db.request(moveMutation, policy), 'denied')
 })

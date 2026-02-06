@@ -152,6 +152,7 @@ const loaderAtom = atom(get => {
       path: Entry.path,
       parents: parents({
         select: {
+          id: Entry.id,
           path: Entry.path,
           type: Entry.type
         }
@@ -251,7 +252,7 @@ export interface EntryTreeItem {
     workspace: string
     root: string
     path: string
-    parents: Array<{path: string; type: string}>
+    parents: Array<{id: string; path: string; type: string}>
     main: boolean
   }>
   isFolder?: boolean
@@ -274,12 +275,27 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
 } {
   const loader = useAtomValue(loaderAtom)
   const db = useAtomValue(dbAtom)
+  const policy = useAtomValue(policyAtom)
+  const entryResource = (entry: EntryTreeItem['entries'][number]) => {
+    return {
+      id: entry.id,
+      type: entry.type,
+      workspace: entry.workspace,
+      root: entry.root,
+      locale: entry.locale,
+      parents: entry.parents.map(parent => parent.id)
+    }
+  }
   return useMemo(() => {
     return {
       canDrag(items) {
         return items.every(item => {
           const data = item.getItemData()
-          return data.canDrag
+          if (!data?.canDrag) return false
+          return data.entries.some(entry => {
+            const resource = entryResource(entry)
+            return policy.canReorder(resource) || policy.canMove(resource)
+          })
         })
       },
       canDrop(items, target) {
@@ -290,6 +306,17 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         const parentData = parent.getItemData()
         const droppingData = dropping.getItemData()
         if (!droppingData) return false
+        if (newParent) {
+          const canMove = droppingData.entries.every(entry => {
+            return policy.canMove(entryResource(entry))
+          })
+          if (!canMove) return false
+        } else {
+          const canReorder = droppingData.entries.every(entry => {
+            return policy.canReorder(entryResource(entry))
+          })
+          if (!canReorder) return false
+        }
         const childType = db.config.schema[droppingData.type]
         if (!parentData) return false
         if (parentData.type === ROOT_ID) {
@@ -315,9 +342,10 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
           'childIndex' in target ? children[target.childIndex - 1] : null
         const after = previous ? previous.getId() : null
         const newParent = dropping.getParent() !== parent
-        const toRoot = parent.getId().startsWith('@alinea')
-          ? dropping.getItemData().entries[0].root
-          : undefined
+        const toRoot =
+          parent.getId().startsWith('@alinea') && newParent
+            ? dropping.getItemData().entries[0].root
+            : undefined
         const toParent = !toRoot && newParent ? parent.getId() : undefined
         db.move({
           id: dropping.getId(),
@@ -335,5 +363,5 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         return this.getItem(id).then(item => item?.children ?? [])
       }
     }
-  }, [loader])
+  }, [loader, db, policy])
 }

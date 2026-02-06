@@ -455,10 +455,11 @@ export class EntryTransaction {
     const entries = Array.from(index.findMany(entry => entry.id === id))
     assert(entries.length > 0, `Entry not found: ${id}`)
     const action = toParent || toRoot ? Permission.Move : Permission.Reorder
-    this.#policy.assert(action, entries[0])
+    for (const entry of entries) this.#policy.assert(action, entry)
     const parentId = toRoot ? null : (toParent ?? entries[0].parentId)
     const root = toRoot ?? entries[0].root
     const workspace = entries[0].workspace
+    if (toRoot) this.#policy.assert(Permission.Move, {workspace, root})
     const siblings = new Map(
       Array.from(
         index.findMany(entry => {
@@ -491,6 +492,9 @@ export class EntryTransaction {
       const self = index.findFirst(entry => entry.id === id)
       assert(self, `Entry not found: ${id}`)
       siblingList.splice(previousIndex + 1, 0, self)
+      for (const sibling of siblingList) {
+        this.#policy.assert(Permission.Reorder, sibling)
+      }
       const newKeys = generateNKeysBetween(null, null, siblingList.length)
       for (const [i, key] of newKeys.entries()) {
         const id = siblingList[i].id
@@ -535,6 +539,7 @@ export class EntryTransaction {
       if (toParent) {
         assert(!entry.seeded, `Cannot move seeded entry ${entry.filePath}`)
         assert(parent, `Parent not found: ${parentId}`)
+        this.#policy.assert(Permission.Move, parent)
         // Check if the new parent is not a child of the entry
         assert(
           !parent?.childrenDir.startsWith(entry.childrenDir),
