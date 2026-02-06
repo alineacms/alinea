@@ -11,6 +11,8 @@ import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import {assign, keys} from 'alinea/core/util/Objects'
 import {EntryReference} from './EntryReference.js'
 
+export const unresolvedEntryMarker = Symbol('unresolvedEntryMarker')
+
 export interface EditorInfo {
   graph: Graph
   entry: {
@@ -80,12 +82,18 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       } = row as EntryReference & ListRow
       for (const key of keys(fields)) delete row[key]
       row.fields = fields
-      if (!entryId) return
+      if (!entryId) {
+        row[unresolvedEntryMarker] = true
+        return
+      }
       const linkIds = [entryId]
       if (!options.selection) return
       const [extra] = await loader.resolveLinks(options.selection, linkIds)
+      if (!extra) {
+        row[unresolvedEntryMarker] = true
+        return
+      }
       if (type !== 'image') return assign(row, extra)
-      if (!extra) return row
       const {src: location, previewUrl, filePath, ...rest} = extra
       if (!previewUrl) return assign(row, extra, {src: location})
       // If the DB was built with this entry in it we can assume the location
