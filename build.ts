@@ -200,6 +200,28 @@ const sassCssPlugin: Plugin = {
   }
 }
 
+const oauthIsoCrypto: Plugin = {
+  name: 'oauth-iso-crypto',
+  setup(build) {
+    const namespace = 'oauth-iso-crypto'
+    build.onResolve({filter: /^node:crypto$|^crypto$/}, args => {
+      if (!args.importer.includes('/@badgateway/oauth2-client/')) return
+      return {path: args.path, namespace}
+    })
+    build.onLoad({filter: /.*/, namespace}, () => {
+      return {
+        contents: [
+          `import {crypto} from '@alinea/iso'`,
+          `export {crypto}`,
+          `export const webcrypto = crypto`,
+          `export default {webcrypto}`
+        ].join('\n'),
+        loader: 'js'
+      }
+    })
+  }
+}
+
 const cleanup: Plugin = {
   name: 'cleanup',
   setup(build) {
@@ -377,7 +399,13 @@ function jsEntry({
   test: boolean
   report: boolean
 }): Plugin {
-  const plugins = [sassJsPlugin, internalPlugin, externalize, cleanup]
+  const plugins = [
+    sassJsPlugin,
+    internalPlugin,
+    externalize,
+    oauthIsoCrypto,
+    cleanup
+  ]
   if (report) plugins.push(reportSizePlugin)
   return {
     name: JS_ENTRY,
