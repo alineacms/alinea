@@ -4,14 +4,16 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import * as schema from './schema'
 
+const baseUrl = process.env.ALINEA_BASE_URL ?? 'http://localhost:3000'
+
 export const cms = createCMS({
   enableDrafts: true,
   preview: true,
   handlerUrl: '/api/cms',
   schema,
   baseUrl: {
-    development: 'http://localhost:3000',
-    production: 'http://localhost:3000'
+    development: baseUrl,
+    production: baseUrl
   },
   workspaces: {
     primary: Config.workspace('Primary workspace', {

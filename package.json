@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "run-p dev:run",
     "web": "run-p dev:check web:run",
+    "test:e2e": "bun test ./apps/dev/mock.e2e.ts",
     "tag": "bun tag.js",
     "bump": "bun bump.js",
     "stories": "ladle serve",
