@@ -28,6 +28,7 @@ jobs:
       - name: Check cycles for browser target
         run: bun cycles:browser
       - run: bun test
+      - run: bun run test:e2e
       - uses: nowsprinting/check-version-format-action@v3
         id: version
         with: {prefix: 'v'}
