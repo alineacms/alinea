@@ -1,12 +1,14 @@
 import {Parser} from 'htmlparser2'
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {Schema} from '../Schema.js'
-import type {ElementNode, Mark, TextDoc, TextNode} from '../TextDoc.js'
 import {type RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
+import type {ElementNode, Mark, TextDoc, TextNode} from '../TextDoc.js'
 
 export class RichTextField<
   Blocks,
-  Options extends FieldOptions<TextDoc<Blocks>> & {searchable?: boolean}
+  Options extends FieldOptions<TextDoc<Blocks>> & {
+    searchable?: boolean
+  }
 > extends Field<
   TextDoc<Blocks>,
   TextDoc<Blocks>,

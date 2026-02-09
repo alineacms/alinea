@@ -1,8 +1,9 @@
 import styler from '@alinea/styler'
 import {
+  Extension,
   type JSONContent,
-  Node as TipTapNode,
-  mergeAttributes
+  mergeAttributes,
+  Node as TipTapNode
 } from '@tiptap/core'
 import {Collaboration} from '@tiptap/extension-collaboration'
 import {
@@ -13,32 +14,33 @@ import {
   ReactNodeViewRenderer
 } from '@tiptap/react'
 import type {Field} from 'alinea/core/Field'
+import type {RichTextField} from 'alinea/core/field/RichTextField'
 import {createId} from 'alinea/core/Id'
 import {getType} from 'alinea/core/Internal'
 import type {Schema} from 'alinea/core/Schema'
 import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
-import type {RichTextField} from 'alinea/core/field/RichTextField'
-import {entries} from 'alinea/core/util/Objects'
+import {entries, values} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
+import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, Icon, TextLabel, px} from 'alinea/ui'
+import {HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {Sink} from 'alinea/ui/Sink'
 import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
+import {Sink} from 'alinea/ui/Sink'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {extensions as baseExtensions} from './Extensions.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import type {RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
-import {RichTextKit} from './RichTextKit.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
@@ -171,32 +173,38 @@ export function RichTextInput<Blocks extends Schema>({
   const forceUpdate = useForceUpdate()
   const {fragment, insert} = mutator
   const picker = usePickTextLink()
-  const {readOnly, schema, enableTables} = options
+  const {readOnly, schema, enableTables, toolbar} = options
   const [focus, setFocus] = useState(false)
-  const toolbarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLElement>(null)
   const focusToggle = useCallback(
     function focusToggle(target: EventTarget | null) {
-      const element = target || document.activeElement
+      const element =
+        (target as HTMLElement | null) ||
+        (document.activeElement as HTMLElement | null)
       const editorElement = () =>
         containerRef.current?.querySelector(
           `.${styles.root.editor()} > .ProseMirror`
-        )
-      const isFocused =
-        toolbarRef.current?.contains(element as HTMLElement) ||
-        element === editorElement() ||
-        false
+        ) as HTMLElement | null
+      const isInToolbar =
+        element?.closest?.('[data-richtext-toolbar=\"true\"]') !== null
+      const editor = editorElement()
+      const isInEditor =
+        !!editor &&
+        (editor === element || editor.contains(element as HTMLElement))
+      const isFocused = isInToolbar || isInEditor
       setFocus(isFocused)
     },
-    [setFocus, containerRef, toolbarRef]
+    [setFocus, containerRef]
   )
   const blocks = useMemo(() => {
     return schemaToExtensions(field, schema)
   }, [field, schema])
-  const extensions = useMemo(
-    () => [Collaboration.configure({fragment}), RichTextKit, ...blocks],
-    [fragment, blocks]
-  )
+  const base = useMemo(() => {
+    return values(options.extensions ?? baseExtensions)
+  }, [options.extensions])
+  const extensions = useMemo(() => {
+    return [Collaboration.configure({fragment}), ...base, ...blocks]
+  }, [fragment, blocks, base])
   // The collaboration extension takes over content syncing after inital content
   // is set. Unfortunately we can't fully utilize it to set the content initally
   // as well because it does not work synchronously causing flickering.
@@ -242,13 +250,15 @@ export function RichTextInput<Blocks extends Schema>({
   return (
     <>
       {isEditable && focus && (
-        <RichTextToolbar
-          ref={toolbarRef}
-          editor={editor}
-          focusToggle={focusToggle}
-          pickLink={picker.pickLink}
-          enableTables={enableTables}
-        />
+        <FieldToolbar.Slot>
+          <RichTextToolbar
+            editor={editor}
+            focusToggle={focusToggle}
+            pickLink={picker.pickLink}
+            enableTables={enableTables}
+            toolbar={toolbar}
+          />
+        </FieldToolbar.Slot>
       )}
       <PickTextLink picker={picker} />
       <InputLabel

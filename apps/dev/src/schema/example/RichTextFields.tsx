@@ -1,4 +1,15 @@
 import {Config, Field} from 'alinea'
+import {extensions} from 'alinea/field/richtext/Extensions'
+import {
+  alignment,
+  formatting,
+  headings,
+  inserts,
+  links,
+  lists,
+  quotes,
+  tables
+} from 'alinea/field/richtext/Toolbar'
 
 export const RichTextFields = Config.document('Rich text fields', {
   fields: {
@@ -54,6 +65,41 @@ export const RichTextFields = Config.document('Rich text fields', {
     }),
     table: Field.richText('With table support', {
       enableTables: true
+    }),
+    tableCustom: Field.richText('With custom toolbar', {
+      enableTables: true,
+      extensions: {
+        ...extensions,
+        Table: extensions.Table.configure({
+          resizable: true
+        })
+      },
+      toolbar: {
+        headings,
+        tables: {
+          ...tables,
+          items(ctx) {
+            const items = tables.items(ctx)
+            if (ctx.editor.isActive('table')) return items
+            return {
+              quickInsert: {
+                label: 'Quick 2x4 table',
+                onSelect: ({exec}) =>
+                  exec()
+                    .insertTable({rows: 2, cols: 4, withHeaderRow: false})
+                    .run()
+              },
+              ...items
+            }
+          }
+        },
+        formatting,
+        alignment,
+        lists,
+        links,
+        quotes,
+        inserts
+      }
     })
   }
 })
