@@ -6,6 +6,10 @@
   "license": "MIT",
   "scripts": {
     "test": "bun run --cwd ../.. build.ts && bun alinea build -- bun next build",
-    "alinea": "bun ../../src/cli/bin.ts"
+    "alinea": "bun ../../src/cli/bin.ts",
+    "dev": "next dev"
+  },
+  "dependencies": {
+    "alinea": "../.."
   }
 }
