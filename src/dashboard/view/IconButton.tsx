@@ -1,13 +1,20 @@
 import styler from '@alinea/styler'
 import {px} from 'alinea/ui/util/Units'
-import {type ComponentType, forwardRef, type HTMLAttributes, type HTMLProps, type Ref} from 'react'
+import {
+  type ComponentType,
+  forwardRef,
+  type HTMLAttributes,
+  type HTMLProps,
+  type ReactNode,
+  type Ref
+} from 'react'
 import {link} from '../util/HashRouter.js'
 import css from './IconButton.module.scss'
 
 const styles = styler(css)
 
 export type IconButtonProps = HTMLAttributes<HTMLButtonElement> & {
-  icon: ComponentType
+  icon: ComponentType | ReactNode
   size?: number
   active?: boolean
   disabled?: boolean
@@ -25,7 +32,7 @@ export const IconButton = forwardRef(function IconButton(
       style={{...props.style, fontSize: size ? px(size) : undefined}}
       className={styles.root.mergeProps(props)({active})}
     >
-      <Icon />
+      {typeof Icon === 'function' ? <Icon /> : Icon}
     </button>
   )
 })
