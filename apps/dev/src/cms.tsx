@@ -8,9 +8,6 @@ export const cms = createCMS({
   enableDrafts: true,
   preview: true,
   handlerUrl: '/api/cms',
-  baseUrl: {
-    development: 'http://localhost:3000'
-  },
   schema,
   baseUrl: {
     development: 'http://localhost:3000',

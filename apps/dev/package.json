@@ -5,7 +5,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "test": "bun run --cwd ../.. build.ts && bun alinea build -- bun next build",
+    "setup": "bun run --cwd ../.. build.ts && bun alinea build -- bun next build",
     "alinea": "bun ../../src/cli/bin.ts",
     "dev": "next dev"
   },
