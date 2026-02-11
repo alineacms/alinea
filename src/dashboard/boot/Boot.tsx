@@ -29,8 +29,9 @@ export async function boot(gen: ConfigGenerator) {
     let events: EventTarget
     let worker: DashboardWorker
     try {
-      ;[events, worker] = createSharedWorker()
+      ;[events, worker] = await createSharedWorker()
     } catch (error) {
+      console.error(error)
       console.warn('Shared worker not supported, falling back to local worker.')
       const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
       events = worker = new DashboardWorker(source)
@@ -45,10 +46,11 @@ export async function boot(gen: ConfigGenerator) {
     for await (const batch of gen) {
       if (batch.local && batch.revision !== lastRevision) {
         const link = document.querySelector(
-          'link[href^="/config.css"]'
+          'link[href$="/config.css"]'
         ) as HTMLLinkElement
         const copy = link.cloneNode() as HTMLLinkElement
-        copy.href = `/config.css?${batch.revision}`
+        const revised = new URL(`?${batch.revision}`, link.href)
+        copy.href = revised.href
         copy.onload = () => link.remove()
         link.after(copy)
       }
@@ -63,9 +65,15 @@ export async function boot(gen: ConfigGenerator) {
   }
 }
 
-function createSharedWorker(): [EventTarget, DashboardWorker] {
+async function createSharedWorker(): Promise<[EventTarget, DashboardWorker]> {
   const events = new EventTarget()
-  const worker = new SharedWorker(import.meta.url, {
+  const response = await fetch(import.meta.url)
+  if (!response.ok) throw new Error('Could not loader worker script')
+  const blob = new Blob([await response.text()], {
+    type: 'application/javascript'
+  })
+  const url = URL.createObjectURL(blob)
+  const worker = new SharedWorker(url, {
     type: 'module',
     name: 'Alinea dashboard'
   })

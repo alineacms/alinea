@@ -7,14 +7,15 @@ export function bootDev() {
 }
 
 async function* getConfig(): ConfigGenerator {
+  const url = new URL(import.meta.url)
   const buildId = process.env.ALINEA_BUILD_ID as string
   let revision = buildId
-  const source = new SharedEventSource('/~dev')
-  const url = new URL('/api', location.href).href
+  const source = new SharedEventSource(new URL('/~dev', url).href)
+  const clientUrl = new URL('/api', url).href
   const createConfig = async (revision: string) => {
     const {cms, views} = await loadConfig(revision)
     const {config} = cms
-    const client = new Client({config, url})
+    const client = new Client({config, url: clientUrl})
     return {
       local: true,
       alineaDev: Boolean(process.env.ALINEA_DEV),

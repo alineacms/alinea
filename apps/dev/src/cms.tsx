@@ -7,7 +7,7 @@ import * as schema from './schema'
 export const cms = createCMS({
   enableDrafts: true,
   preview: true,
-  handlerUrl: '/api/cms',
+  handlerUrl: '/admin',
   baseUrl: {
     development: 'http://localhost:3000'
   },

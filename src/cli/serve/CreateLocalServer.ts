@@ -90,7 +90,11 @@ export function createLocalServer(
   }
   if (cmd === 'build') return {close() {}, handle: devHandler}
   const devDir = path.join(staticDir, 'dev')
-  const matcher = router.matcher()
+  const matcher = router.matcher(url => {
+    if (url.pathname.startsWith('/admin'))
+      return url.pathname.slice('/admin'.length)
+    return url.pathname
+  })
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/dev',
     config: '#alinea/entry'
@@ -219,16 +223,19 @@ export function createLocalServer(
       }),
       matcher.get('/').map(({url}): Response => {
         const handlerUrl = `${url.protocol}//${url.host}`
+        const path = url.pathname.endsWith('/')
+          ? url.pathname
+          : `${url.pathname}/`
         return new Response(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          <link href="/config.css" rel="stylesheet" />
+          <link href="${path}config.css" rel="stylesheet" crossorigin />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="handshake_url" value="${handlerUrl}/api?auth=handshake" />
           <meta name="redirect_url" value="${handlerUrl}/api?auth=login" />
           <body>
-            <script type="module" src="./entry.js?${buildId}"></script>
+            <script type="module" src="${path}entry.js?${buildId}"></script>
           </body>`,
           {headers: {'content-type': 'text/html'}}
         )
