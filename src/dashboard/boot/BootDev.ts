@@ -7,15 +7,14 @@ export function bootDev() {
 }
 
 async function* getConfig(): ConfigGenerator {
-  const url = new URL(import.meta.url)
   const buildId = process.env.ALINEA_BUILD_ID as string
   let revision = buildId
-  const source = new SharedEventSource(new URL('/~dev', url).href)
-  const clientUrl = new URL('/api', url).href
+  const source = new SharedEventSource('./~dev')
+  const url = new URL('./api', import.meta.url).href
   const createConfig = async (revision: string) => {
     const {cms, views} = await loadConfig(revision)
     const {config} = cms
-    const client = new Client({config, url: clientUrl})
+    const client = new Client({config, url})
     return {
       local: true,
       alineaDev: Boolean(process.env.ALINEA_DEV),
@@ -53,7 +52,8 @@ async function* getConfig(): ConfigGenerator {
 }
 
 async function loadConfig(revision: string) {
-  const exports = await import(`/config.js?${revision}`)
+  const url = new URL(`./config.js?${revision}`, import.meta.url)
+  const exports = await import(url.href)
   if (!('cms' in exports)) throw new Error(`No config found in "/config.js"`)
   return exports
 }

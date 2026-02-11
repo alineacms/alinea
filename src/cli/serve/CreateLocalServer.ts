@@ -90,11 +90,12 @@ export function createLocalServer(
   }
   if (cmd === 'build') return {close() {}, handle: devHandler}
   const devDir = path.join(staticDir, 'dev')
-  const matcher = router.matcher(url => {
+  const getPath = (url: URL) => {
     if (url.pathname.startsWith('/admin'))
       return url.pathname.slice('/admin'.length)
     return url.pathname
-  })
+  }
+  const matcher = router.matcher(getPath)
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/dev',
     config: '#alinea/entry'
@@ -171,7 +172,7 @@ export function createLocalServer(
     const result = await currentBuild
     if (!result) return new Response('Build failed', {status: 500})
     const url = new URL(request.url)
-    const fileName = url.pathname.toLowerCase()
+    const fileName = getPath(url).toLowerCase()
     const file = result.get(fileName)
     if (!file) return undefined
     const ifNoneMatch = request.headers.get('if-none-match')
@@ -229,13 +230,14 @@ export function createLocalServer(
         return new Response(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
+          <base href="${path}" />
           <link rel="icon" href="data:," />
-          <link href="${path}config.css" rel="stylesheet" crossorigin />
+          <link href="config.css" rel="stylesheet" crossorigin />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="handshake_url" value="${handlerUrl}/api?auth=handshake" />
           <meta name="redirect_url" value="${handlerUrl}/api?auth=login" />
           <body>
-            <script type="module" src="${path}entry.js?${buildId}"></script>
+            <script type="module" src="entry.js?${buildId}"></script>
           </body>`,
           {headers: {'content-type': 'text/html'}}
         )
