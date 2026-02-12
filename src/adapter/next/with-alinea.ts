@@ -115,12 +115,9 @@ function appendRewrites(
   rewrites: RewritesResult,
   extra: Array<{source: string; destination: string}>
 ): RewritesResult {
-  if (Array.isArray(rewrites)) return [...rewrites, ...extra]
-  return {
-    beforeFiles: rewrites.beforeFiles ?? [],
-    afterFiles: [...(rewrites.afterFiles ?? []), ...extra],
-    fallback: rewrites.fallback ?? []
-  }
+  if (Array.isArray(rewrites))
+    return {beforeFiles: extra, afterFiles: rewrites, fallback: []}
+  return {...rewrites, beforeFiles: [...(rewrites.beforeFiles ?? []), ...extra]}
 }
 
 function normalizeBasePath(value: string): string {
