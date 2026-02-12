@@ -105,15 +105,16 @@ function createRewrites(config: NextConfig, adminPath: string) {
     const rewrites = Array.isArray(existing)
       ? {...emptyRewrites, afterFiles: existing}
       : {...emptyRewrites, ...existing}
-    const dev = process.env.ALINEA_DEV_SERVER
-    if (dev) {
+    const devServer = process.env.ALINEA_DEV_SERVER
+    const nodeEnv = process.env.NODE_ENV
+    if (devServer && nodeEnv === 'development') {
       return {
         ...rewrites,
         beforeFiles: [
           ...rewrites.beforeFiles,
           {
             source: `${adminPath}/:path*`,
-            destination: `${dev}${adminPath}/:path*`
+            destination: `${devServer}${adminPath}/:path*`
           }
         ]
       }
