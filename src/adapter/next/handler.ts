@@ -49,21 +49,12 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const handle: Handler = async request => {
     const url = new URL(request.url)
     const {searchParams} = url
-    const dev = process.env.ALINEA_DEV_SERVER
     const context = await requestContext(config)
-    const handlerPath = config.handlerUrl ?? '/admin'
+    const handlerPath = config.handlerUrl ?? '/api/cms'
     if (!url.pathname.startsWith(handlerPath))
       return new Response(`Expected handler to be served on ${handlerPath}`, {
         status: 400
       })
-    if (dev) {
-      // proxy to dev server, strip handler path
-      console.log({handlerPath})
-      const requestedPath = url.pathname.slice(handlerPath.length)
-      const proxyTo = `${dev}${requestedPath}`
-      console.log(proxyTo)
-      return await proxy(dev)
-    }
     try {
       const previews = new JWTPreviews(context.apiKey)
       const previewToken = searchParams.get('preview')
