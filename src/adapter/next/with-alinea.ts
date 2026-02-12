@@ -93,31 +93,45 @@ function createRedirects(config: NextConfig, adminPath: string) {
   }
 }
 
+const emptyRewrites = {
+  beforeFiles: [],
+  afterFiles: [],
+  fallback: []
+}
+
 function createRewrites(config: NextConfig, adminPath: string) {
   return async (): Promise<RewritesResult> => {
     const existing = config.rewrites ? await config.rewrites() : []
+    const rewrites = Array.isArray(existing)
+      ? {...emptyRewrites, afterFiles: existing}
+      : {...emptyRewrites, ...existing}
     const dev = process.env.ALINEA_DEV_SERVER
-    const alineaRewrites = [
-      {
-        source: `${adminPath}/:path*`,
-        // TODO: admin.html can be configured, but we'll not have access
-        // to config here. In next breaking changes we can remove it
-        // as an option and use a unique name because it will be exposed
-        // as adminPath anyway.
-        destination: dev ? `${dev}${adminPath}/:path*` : '/admin.html'
+    if (dev) {
+      return {
+        ...rewrites,
+        beforeFiles: [
+          ...rewrites.beforeFiles,
+          {
+            source: `${adminPath}/:path*`,
+            destination: `${dev}${adminPath}/:path*`
+          }
+        ]
       }
-    ]
-    return appendRewrites(existing, alineaRewrites)
+    }
+    return {
+      ...rewrites,
+      afterFiles: [
+        {
+          source: adminPath,
+          // TODO: admin.html can be configured, but we'll not have access
+          // to config here. In next breaking changes we can remove it
+          // as an option and use a unique name because it will be exposed
+          // as adminPath anyway.
+          destination: '/admin.html'
+        }
+      ]
+    }
   }
-}
-
-function appendRewrites(
-  rewrites: RewritesResult,
-  extra: Array<{source: string; destination: string}>
-): RewritesResult {
-  if (Array.isArray(rewrites))
-    return {beforeFiles: extra, afterFiles: rewrites, fallback: []}
-  return {...rewrites, beforeFiles: [...(rewrites.beforeFiles ?? []), ...extra]}
 }
 
 function normalizeBasePath(value: string): string {
