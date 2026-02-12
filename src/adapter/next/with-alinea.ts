@@ -9,7 +9,7 @@ export function createCMS() {
   )
 }
 
-export function withAlinea(config: NextConfig): NextConfig {
+export function withAlinea(config: NextConfig = {}): NextConfig {
   let nextVersion = 15
   try {
     // Ducktape this together so we can get the package.json contents regardless
