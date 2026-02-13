@@ -45,10 +45,10 @@ export async function boot(gen: ConfigGenerator) {
     for await (const batch of gen) {
       if (batch.local && batch.revision !== lastRevision) {
         const link = document.querySelector(
-          'link[href^="/config.css"]'
+          'link[href="config.css"]'
         ) as HTMLLinkElement
         const copy = link.cloneNode() as HTMLLinkElement
-        copy.href = `/config.css?${batch.revision}`
+        copy.href = `config.css?${batch.revision}`
         copy.onload = () => link.remove()
         link.after(copy)
       }

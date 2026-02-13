@@ -81,6 +81,7 @@ const cjsModules: Plugin = {
     build.onEnd(async () => {
       await esbuild.build({
         format: 'cjs',
+        platform: 'node',
         entryPoints: ['./src/adapter/next/with-alinea.ts'],
         outfile: './dist/next.cjs'
       })

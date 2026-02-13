@@ -6,9 +6,11 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from 'alinea/backend/Handler'
+import {proxy} from 'alinea/backend/router/Proxy'
 import {generatedSource} from 'alinea/backend/store/GeneratedSource'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {CloudRemote} from 'alinea/cloud/CloudRemote'
+import {Config} from 'alinea/core/Config'
 import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import PLazy from 'p-lazy'
@@ -45,10 +47,16 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
     db
   })
   const handle: Handler = async request => {
+    const url = new URL(request.url)
+    const {searchParams} = url
+    const context = await requestContext(config)
+    const handlerPath = config.handlerUrl ?? '/api/cms'
+    if (!url.pathname.startsWith(handlerPath))
+      return new Response(`Expected handler to be served on ${handlerPath}`, {
+        status: 400
+      })
     try {
-      const context = await requestContext(config)
       const previews = new JWTPreviews(context.apiKey)
-      const {searchParams} = new URL(request.url)
       const previewToken = searchParams.get('preview')
       if (previewToken) {
         const {draftMode} = await import('next/headers')
