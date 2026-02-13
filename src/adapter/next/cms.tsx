@@ -1,6 +1,5 @@
 import {Headers} from '@alinea/iso'
-import {generatedSource} from 'alinea/backend/store/GeneratedSource'
-import {createThrottledSync} from 'alinea/backend/util/Syncable.js'
+import {createThrottledSync} from 'alinea/backend/util/Syncable'
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import type {Config} from 'alinea/core/Config'
@@ -32,6 +31,9 @@ export class NextCMS<
   bundledDb = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
+    const {generatedSource} = await import(
+      'alinea/backend/store/GeneratedSource'
+    )
     const source = await generatedSource
     const db = new LocalDB(this.config, source)
     await db.sync()
