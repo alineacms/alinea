@@ -1,3 +1,4 @@
+import {ErrorCode, HttpError} from 'alinea/core/HttpError'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
 import {keys} from 'alinea/core/util/Objects'
@@ -6,9 +7,11 @@ import {atomWithStorage} from 'jotai/utils'
 import {type EntryLocation, dashboardNav, navMatchers} from '../DashboardNav.js'
 import {configAtom} from './DashboardAtoms.js'
 import {matchAtoms} from './LocationAtoms.js'
+import {policyAtom} from './PolicyAtom.js'
 import {workspacePreferenceAtom} from './PreferencesAtoms.js'
 
 const workspaceNameAtom = atom(get => {
+  const policy = get(policyAtom)
   const config = get(configAtom)
   const match = get(
     matchAtoms({route: navMatchers.matchWorkspace, loose: true})
@@ -18,10 +21,18 @@ const workspaceNameAtom = atom(get => {
   const requested = [
     params.workspace,
     workspacePreference,
-    keys(config.workspaces)[0]
+    ...keys(config.workspaces)
   ]
-  for (const name of requested) if (name && config.workspaces[name]) return name
-  throw new Error('No workspace found')
+  for (const name of requested) {
+    if (name && config.workspaces[name]) {
+      const canRead = policy.canRead({workspace: name})
+      if (canRead) return name
+    }
+  }
+  throw new HttpError(
+    ErrorCode.Unauthorized,
+    `You don't have access to any workspaces`
+  )
 })
 
 export const workspaceAtom = atom(get => {
@@ -35,12 +46,18 @@ function parseRootPath(path: string) {
 }
 
 const rootNameAtom = atom(get => {
+  const policy = get(policyAtom)
   const workspace = get(workspaceAtom)
   const match = get(matchAtoms({route: navMatchers.matchRoot, loose: true}))
   const params: Record<string, string | undefined> = match ?? {}
   const requestedRoot = params.root ? parseRootPath(params.root)[0] : undefined
-  const requested = [requestedRoot, keys(workspace.roots)[0]]
-  for (const name of requested) if (name && workspace.roots[name]) return name
+  const requested = [requestedRoot, ...keys(workspace.roots)]
+  for (const name of requested) {
+    if (name && workspace.roots[name]) {
+      const canRead = policy.canRead({workspace: workspace.name, root: name})
+      if (canRead) return name
+    }
+  }
   throw new Error('No root found')
 })
 

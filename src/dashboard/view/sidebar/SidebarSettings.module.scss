@@ -34,4 +34,26 @@
     padding: 8px 4px 4px 4px;
     min-width: 0;
   }
+
+  &-roles {
+    border-radius: 8px;
+    background-color: var(--alinea-background);
+    border: 1px solid var(--alinea-outline);
+    font: inherit;
+    outline: var(--alinea-button-background) auto 1px;
+
+    &-option {
+      padding: 8px;
+
+      &:checked {
+        color: var(--alinea-button-foreground);
+        background-color: var(--alinea-button-background);
+      }
+
+      &:focus {
+        outline: none;
+        background-color: var(--alinea-highlight);
+      }
+    }
+  }
 }

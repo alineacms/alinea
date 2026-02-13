@@ -31,6 +31,7 @@ import {dbAtom, dbMetaAtom, entryRevisionAtoms} from './DbAtoms.js'
 import {type Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
+import {policyAtom} from './PolicyAtom.js'
 import {yAtom} from './YAtom.js'
 const decoder = new TextDecoder()
 
@@ -89,6 +90,8 @@ export const entryEditorAtoms = atomFamily(
         })
       }
       if (!entry) return undefined
+      const policy = get(policyAtom)
+      if (!policy.canRead(entry)) return undefined
       const entryId = entry.id
       const locale = entry.locale
       const untranslated = Boolean(
@@ -627,8 +630,10 @@ export function createEntryEditor(entryData: EntryData) {
     return get(unwrap(revisionState, identity)) ?? get(selectedState)
   })
   const form = atom(get => {
+    const policy = get(policyAtom)
     const doc = get(currentDoc)
-    const readOnly = doc !== edits.doc
+    const canUpdate = policy.canUpdate(activeVersion)
+    const readOnly = !canUpdate || doc !== edits.doc
     return new FormAtoms(type, doc.getMap(DOC_KEY), '', {readOnly})
   })
 

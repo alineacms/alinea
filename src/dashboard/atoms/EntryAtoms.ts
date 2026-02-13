@@ -9,6 +9,7 @@ import {Entry} from 'alinea/core/Entry'
 import type {Graph} from 'alinea/core/Graph'
 import {getRoot, getType} from 'alinea/core/Internal'
 import type {OrderBy} from 'alinea/core/OrderBy.js'
+import type {Policy} from 'alinea/core/Role'
 import {Type} from 'alinea/core/Type'
 import {entries} from 'alinea/core/util/Objects'
 import {parents, translations} from 'alinea/query'
@@ -19,13 +20,16 @@ import {useMemo} from 'react'
 import {configAtom} from './DashboardAtoms.js'
 import {dbAtom} from './DbAtoms.js'
 import {localeAtom, rootAtom, workspaceAtom} from './NavigationAtoms.js'
+import {policyAtom} from './PolicyAtom.js'
 
 export const ROOT_ID = '@alinea/root'
 
 const visibleTypesAtom = atom(get => {
   const {schema} = get(configAtom)
   return entries(schema)
-    .filter(([_, type]) => !Type.isHidden(type))
+    .filter(([name, type]) => {
+      return !Type.isHidden(type)
+    })
     .map(([name]) => name)
 })
 
@@ -50,6 +54,7 @@ async function getHasChildren(
 }
 
 function childrenOf(
+  policy: Policy,
   graph: Graph,
   locale: string | null,
   workspace: string,
@@ -59,24 +64,30 @@ function childrenOf(
   orderBy: OrderBy | Array<OrderBy> | undefined
 ) {
   return PLazy.from(async () => {
-    const children = await graph.find({
-      select: {
-        id: Entry.id,
-        locale: Entry.locale
-      },
-      orderBy,
-      workspace,
-      root: root,
-      parentId,
-      filter: {
-        _type: {in: visibleTypes}
-      },
-      status: 'preferDraft'
-    })
-    const untranslated = new Set()
+    const children = (
+      await graph.find({
+        select: {
+          id: Entry.id,
+          type: Entry.type,
+          parents: Entry.parents,
+          locale: Entry.locale,
+          root: Entry.root,
+          workspace: Entry.workspace
+        },
+        orderBy,
+        workspace,
+        root: root,
+        parentId,
+        filter: {
+          _type: {in: visibleTypes}
+        },
+        status: 'preferDraft'
+      })
+    ).filter(child => policy.canRead(child))
     const translatedChildren = new Set(
       children.filter(child => child.locale === locale).map(child => child.id)
     )
+    const untranslated = new Set()
     const orderedChildren = children.filter(child => {
       if (translatedChildren.has(child.id)) return child.locale === locale
       if (untranslated.has(child.id)) return false
@@ -88,6 +99,7 @@ function childrenOf(
 }
 
 async function entryTreeRoot(
+  policy: Policy,
   graph: Graph,
   locale: string | null,
   workspace: string,
@@ -105,6 +117,7 @@ async function entryTreeRoot(
     entries: [],
     hasChildren: true,
     children: childrenOf(
+      policy,
       graph,
       locale,
       workspace,
@@ -118,6 +131,7 @@ async function entryTreeRoot(
 
 const loaderAtom = atom(get => {
   const graph = get(dbAtom)
+  const policy = get(policyAtom)
   const locale = get(localeAtom)
   const visibleTypes = get(visibleTypesAtom)
   const {schema} = get(configAtom)
@@ -138,6 +152,7 @@ const loaderAtom = atom(get => {
       path: Entry.path,
       parents: parents({
         select: {
+          id: Entry.id,
           path: Entry.path,
           type: Entry.type
         }
@@ -166,6 +181,7 @@ const loaderAtom = atom(get => {
       const typeConfig = getType(type)
       const orderBy = typeConfig.orderChildrenBy
       const children = childrenOf(
+        policy,
         graph,
         locale,
         row.data.workspace,
@@ -199,6 +215,7 @@ const loaderAtom = atom(get => {
       if (id === ROOT_ID) {
         res.push(
           await entryTreeRoot(
+            policy,
             graph,
             locale,
             workspace.name,
@@ -235,7 +252,7 @@ export interface EntryTreeItem {
     workspace: string
     root: string
     path: string
-    parents: Array<{path: string; type: string}>
+    parents: Array<{id: string; path: string; type: string}>
     main: boolean
   }>
   isFolder?: boolean
@@ -258,12 +275,27 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
 } {
   const loader = useAtomValue(loaderAtom)
   const db = useAtomValue(dbAtom)
+  const policy = useAtomValue(policyAtom)
+  const entryResource = (entry: EntryTreeItem['entries'][number]) => {
+    return {
+      id: entry.id,
+      type: entry.type,
+      workspace: entry.workspace,
+      root: entry.root,
+      locale: entry.locale,
+      parents: entry.parents.map(parent => parent.id)
+    }
+  }
   return useMemo(() => {
     return {
       canDrag(items) {
         return items.every(item => {
           const data = item.getItemData()
-          return data.canDrag
+          if (!data?.canDrag) return false
+          return data.entries.some(entry => {
+            const resource = entryResource(entry)
+            return policy.canReorder(resource) || policy.canMove(resource)
+          })
         })
       },
       canDrop(items, target) {
@@ -274,6 +306,17 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         const parentData = parent.getItemData()
         const droppingData = dropping.getItemData()
         if (!droppingData) return false
+        if (newParent) {
+          const canMove = droppingData.entries.every(entry => {
+            return policy.canMove(entryResource(entry))
+          })
+          if (!canMove) return false
+        } else {
+          const canReorder = droppingData.entries.every(entry => {
+            return policy.canReorder(entryResource(entry))
+          })
+          if (!canReorder) return false
+        }
         const childType = db.config.schema[droppingData.type]
         if (!parentData) return false
         if (parentData.type === ROOT_ID) {
@@ -299,9 +342,10 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
           'childIndex' in target ? children[target.childIndex - 1] : null
         const after = previous ? previous.getId() : null
         const newParent = dropping.getParent() !== parent
-        const toRoot = parent.getId().startsWith('@alinea')
-          ? dropping.getItemData().entries[0].root
-          : undefined
+        const toRoot =
+          parent.getId().startsWith('@alinea') && newParent
+            ? dropping.getItemData().entries[0].root
+            : undefined
         const toParent = !toRoot && newParent ? parent.getId() : undefined
         db.move({
           id: dropping.getId(),
@@ -319,5 +363,5 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         return this.getItem(id).then(item => item?.children ?? [])
       }
     }
-  }, [loader])
+  }, [loader, db, policy])
 }
