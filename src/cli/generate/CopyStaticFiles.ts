@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {createId} from 'alinea/core/Id'
+import {MemorySource} from 'alinea/core/source/MemorySource'
+import {exportSource} from 'alinea/core/source/SourceExport'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
 import type {GenerateContext} from './GenerateContext.js'
 
@@ -9,8 +11,19 @@ const packageJson = {
   version: '0.0.0',
   name: '@alinea/generated',
   type: 'module',
-  sideEffects: false
+  sideEffects: false,
+  exports: {
+    './package.json': './package.json',
+    './config.js': './config.js',
+    './release.js': './release.js',
+    './source.js': {
+      'edge-light': './empty-source.js',
+      default: './source.js'
+    }
+  }
 }
+
+const emptySource = await exportSource(new MemorySource())
 
 export async function copyStaticFiles({outDir}: GenerateContext) {
   await fs.mkdir(outDir, {recursive: true}).catch(console.error)
@@ -24,8 +37,12 @@ export async function copyStaticFiles({outDir}: GenerateContext) {
     JSON.stringify(packageJson, null, 2)
   )
   await fs.writeFile(
+    path.join(outDir, 'empty-source.js'),
+    `export const source = ${JSON.stringify(emptySource, null, 2)}`
+  )
+  await fs.writeFile(
     path.join(outDir, 'source.js'),
-    `export const source = ${JSON.stringify({}, null, 2)}`
+    `export const source = ${JSON.stringify(emptySource, null, 2)}`
   )
   // await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)*/
   await writeFileIfContentsDiffer(
