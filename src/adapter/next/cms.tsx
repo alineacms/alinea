@@ -1,14 +1,17 @@
 import {Headers} from '@alinea/iso'
+import {createThrottledSync} from 'alinea/backend/util/Syncable'
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import type {Config} from 'alinea/core/Config'
 import type {UploadResponse} from 'alinea/core/Connection'
+import {LocalDB} from 'alinea/core/db/LocalDB'
 import type {Mutation} from 'alinea/core/db/Mutation'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {outcome} from 'alinea/core/Outcome'
 import type {PreviewRequest} from 'alinea/core/Preview'
 import type {User} from 'alinea/core/User'
 import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
+import PLazy from 'p-lazy'
 import {requestContext} from './context.js'
 
 export interface PreviewProps {
@@ -23,6 +26,19 @@ export class NextCMS<
   constructor(config: Definition) {
     super(config)
   }
+
+  throttle = createThrottledSync()
+  bundledDb = PLazy.from(async () => {
+    if (process.env.NEXT_RUNTIME === 'edge')
+      throw new Error('Local DB is not supported in Edge runtime environments.')
+    const {generatedSource} = await import(
+      'alinea/backend/store/GeneratedSource'
+    )
+    const source = await generatedSource
+    const db = new LocalDB(this.config, source)
+    await db.sync()
+    return db
+  })
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     let status = query.status
@@ -45,7 +61,17 @@ export class NextCMS<
       const payload = getPreviewPayloadFromCookies(cookie.getAll())
       if (payload) preview = {payload}
     }
-    return client.resolve({preview, ...query, status})
+    const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
+    const isEdge = process.env.NEXT_RUNTIME === 'edge'
+    const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+    const request = {preview, ...query, status}
+    const useLocalDb = isBuild || (!preview && !isEdge)
+    if (useLocalDb) {
+      const db = await this.bundledDb
+      await this.throttle(() => db.syncWith(client), request.syncInterval)
+      return db.resolve(request)
+    }
+    return client.resolve(request)
   }
 
   async #authenticatedClient() {
