@@ -23,7 +23,8 @@
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
     "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build",
+    "bench": "bun run apps/bench/entry-resolver.bench.ts"
   },
   "sideEffects": false,
   "typesVersions": {
@@ -64,8 +65,8 @@
     "@types/bun": "^1.1.17",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
-    "@types/react": "^18.2.13",
     "@types/node": "^24.0.15",
+    "@types/react": "^18.2.13",
     "@types/react-dom": "^18.2.6",
     "@types/sharedworker": "^0.0.154",
     "@types/sql.js": "^1.4.4",
@@ -73,6 +74,7 @@
     "@ungap/with-resolvers": "^0.1.0",
     "glob": "^7.2.0",
     "madge": "^6.1.0",
+    "mitata": "^1.0.34",
     "next": "^15.4.2",
     "npm-run-all": "^4.1.5",
     "postcss-modules": "^6.0.0",
