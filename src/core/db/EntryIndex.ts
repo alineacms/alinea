@@ -300,6 +300,7 @@ export class EntryGraph {
   #filesById = new Map<string, Array<string>>()
   #byId = new Map<string, EntryNode>()
   #byDir = new Map<string, string>()
+  #childrenByParentId = new Map<string, Array<EntryNode>>()
   nodes: Array<EntryNode>
   #singleWorkspace: string | undefined
   #search: MiniSearch
@@ -337,10 +338,28 @@ export class EntryGraph {
     this.nodes = [...this.#filesById.keys()]
       .map(file => this.#mkNode(file))
       .sort((a, b) => compareStrings(a.index, b.index))
+    for (const node of this.nodes) {
+      if (!node.parentId) continue
+      const siblings = this.#childrenByParentId.get(node.parentId) ?? []
+      siblings.push(node)
+      this.#childrenByParentId.set(node.parentId, siblings)
+    }
   }
 
   byId(id: string) {
     return this.#byId.get(id)
+  }
+
+  nodesByIds(ids: Iterable<string>) {
+    const dedupe = new Set<string>()
+    const nodes = Array<EntryNode>()
+    for (const id of ids) {
+      if (dedupe.has(id)) continue
+      dedupe.add(id)
+      const node = this.#byId.get(id)
+      if (node) nodes.push(node)
+    }
+    return nodes
   }
 
   byDir(dir: string) {
@@ -469,11 +488,7 @@ export class EntryGraph {
     }
     const parent = parentId ? this.#mkNode(parentId) : null
     const type = this.#config.schema[collection.type]
-    function* children(this: EntryGraph) {
-      for (const node of this.nodes) {
-        if (node.parentId === id) yield node
-      }
-    }
+    const children = () => this.#childrenByParentId.get(id) ?? []
     const node = new EntryNode(type, parent, children.bind(this), collection)
     this.#byId.set(id, node)
     return node

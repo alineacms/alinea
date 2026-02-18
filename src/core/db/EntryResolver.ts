@@ -33,7 +33,6 @@ import {createRecord} from '../EntryRecord.js'
 import {compareStrings} from '../source/Utils.js'
 import {assert} from '../util/Assert.js'
 import {
-  combineConditions,
   type EntryCondition,
   type EntryFilter,
   type EntryGraph,
@@ -41,6 +40,12 @@ import {
   type EntryNode
 } from './EntryIndex.js'
 import {LinkResolver} from './LinkResolver.js'
+import {QueryExecutor} from './entry-v2/Executor.js'
+import {getEntryIndices} from './entry-v2/EntryIndices.js'
+import {
+  QueryPlanner,
+  type QueryPlan
+} from './entry-v2/Planner.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))
 const andFilter = cito
@@ -52,6 +57,9 @@ type Interim = any
 export interface PostContext {
   linkResolver: LinkResolver
 }
+
+const planner = new QueryPlanner()
+const executor = new QueryExecutor()
 
 export class EntryResolver implements Resolver {
   index: EntryIndex
@@ -154,31 +162,36 @@ export class EntryResolver implements Resolver {
         const parent = entry.parentId
           ? ctx.graph.byId(entry.parentId)
           : undefined
-        const [next] = Array.from(
-          ctx.graph.filter({
-            nodes: parent?.children() ?? [],
-            node: node => node.index > entry.index,
-            language: lang => lang.locale === entry.locale
-          })
-        ).sort((a, b) => compareStrings(a.index, b.index))
-        const nodes: Array<EntryNode> = next ? [ctx.graph.byId(next.id)!] : []
-        return {nodes}
+        let next: EntryNode | undefined
+        for (const candidate of parent?.children() ?? []) {
+          if (!candidate.has(entry.locale)) continue
+          if (compareStrings(candidate.index, entry.index) <= 0) continue
+          if (!next || compareStrings(candidate.index, next.index) < 0) {
+            next = candidate
+          }
+        }
+        const nodes: Array<EntryNode> = next ? [next] : []
+        return {nodes, language: lang => lang.locale === entry.locale}
       }
       case 'previous': {
         const parent = entry.parentId
           ? ctx.graph.byId(entry.parentId)
           : undefined
-        const [previous] = Array.from(
-          ctx.graph.filter({
-            nodes: parent?.children() ?? [],
-            node: node => node.index < entry.index,
-            language: lang => lang.locale === entry.locale
-          })
-        ).sort((a, b) => compareStrings(b.index, a.index))
+        let previous: EntryNode | undefined
+        for (const candidate of parent?.children() ?? []) {
+          if (!candidate.has(entry.locale)) continue
+          if (compareStrings(candidate.index, entry.index) >= 0) continue
+          if (
+            !previous ||
+            compareStrings(candidate.index, previous.index) > 0
+          ) {
+            previous = candidate
+          }
+        }
         const nodes: Array<EntryNode> = previous
-          ? [ctx.graph.byId(previous.id)!]
+          ? [previous]
           : []
-        return {nodes}
+        return {nodes, language: lang => lang.locale === entry.locale}
       }
       case 'siblings': {
         const parent = entry.parentId
@@ -200,10 +213,24 @@ export class EntryResolver implements Resolver {
       }
       case 'children': {
         const depth = query?.depth ?? 1
+        const self = ctx.graph.byId(entry.id)
+        if (!self) return {nodes: []}
+        const nodes: Array<EntryNode> = []
+        let frontier: Array<EntryNode> = [self]
+        for (let level = 0; level < depth; level++) {
+          const nextFrontier: Array<EntryNode> = []
+          for (const parent of frontier) {
+            for (const child of parent.children()) {
+              nodes.push(child)
+              nextFrontier.push(child)
+            }
+          }
+          if (nextFrontier.length === 0) break
+          frontier = nextFrontier
+        }
         return {
-          entry: e => e.filePath.startsWith(entry.childrenDir),
-          node: node =>
-            node.level > entry.level && node.level <= entry.level + depth
+          nodes,
+          language: lang => lang.locale === entry.locale
         }
       }
       case 'parents': {
@@ -328,6 +355,33 @@ export class EntryResolver implements Resolver {
     )
   }
 
+  plan(
+    ctx: ResolveContext,
+    query: EdgeQuery,
+    preFilter?: EntryCondition
+  ): QueryPlan {
+    const search = Array.isArray(query.search) ? query.search.join(' ') : query.search
+    const {ids, condition} = this.condition(ctx, query)
+    const indices = getEntryIndices(ctx.graph)
+    return planner.plan(indices, {
+      ids,
+      search,
+      preFilter,
+      entry(entry) {
+        return condition(entry)
+      }
+    })
+  }
+
+  *executePlan(
+    ctx: ResolveContext,
+    plan: QueryPlan,
+    preFilter?: EntryCondition
+  ): Generator<Entry> {
+    const indices = getEntryIndices(ctx.graph)
+    yield* executor.execute(ctx.graph, indices, plan, preFilter)
+  }
+
   query(
     ctx: ResolveContext,
     query: GraphQuery<Projection>,
@@ -335,17 +389,33 @@ export class EntryResolver implements Resolver {
   ) {
     const edge = <EdgeQuery>query
     const {skip, take, orderBy, groupBy, search, count} = query
-    const {ids, condition} = this.condition(ctx, edge)
-    const filter: EntryCondition = {
-      search: Array.isArray(search) ? search.join(' ') : search,
-      node: node => (ids ? ids.includes(node.id) : true),
-      entry: condition
+    const plan = this.plan(ctx, edge, preFilter)
+    if (count) {
+      let total = 0
+      if (groupBy) {
+        assert(!Array.isArray(groupBy), 'groupBy must be a single field')
+        const groups = new Map<unknown, true>()
+        for (const entry of this.executePlan(ctx, plan, preFilter)) {
+          const value = this.expr(ctx, entry, groupBy)
+          groups.set(value, true)
+        }
+        total = groups.size
+      } else {
+        for (const _entry of this.executePlan(ctx, plan, preFilter)) total++
+      }
+      const skipped = Math.max(0, total - (skip ?? 0))
+      const bounded = take !== undefined ? Math.min(skipped, take) : skipped
+      return {
+        entries: [],
+        getUnprocessed() {
+          return bounded
+        },
+        async getProcessed() {
+          return bounded
+        }
+      }
     }
-    let entries = Array.from(
-      ctx.graph.filter(
-        preFilter ? combineConditions(filter, preFilter) : filter
-      )
-    )
+    let entries = Array.from(this.executePlan(ctx, plan, preFilter))
     if (groupBy) {
       assert(!Array.isArray(groupBy), 'groupBy must be a single field')
       const groups = new Map<unknown, Entry>()
@@ -357,11 +427,14 @@ export class EntryResolver implements Resolver {
     }
     if (orderBy) {
       const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
-      entries.sort((a, b) => {
-        for (const order of orders) {
-          const expr = (order.asc ?? order.desc)!
-          const valueA = this.expr(ctx, a, expr) as string | number
-          const valueB = this.expr(ctx, b, expr) as string | number
+      const compare = (
+        a: {values: Array<unknown>},
+        b: {values: Array<unknown>}
+      ) => {
+        for (let i = 0; i < orders.length; i++) {
+          const order = orders[i]
+          const valueA = a.values[i] as string | number
+          const valueB = b.values[i] as string | number
           const strings =
             typeof valueA === 'string' && typeof valueB === 'string'
           const numbers =
@@ -377,7 +450,64 @@ export class EntryResolver implements Resolver {
           }
         }
         return 0
-      })
+      }
+      const decorated = entries.map(entry => ({
+        entry,
+        values: orders.map(order => this.expr(ctx, entry, (order.asc ?? order.desc)!))
+      }))
+      const partialLimit =
+        take !== undefined ? Math.max(0, (skip ?? 0) + take) : undefined
+      if (
+        partialLimit !== undefined &&
+        partialLimit > 0 &&
+        partialLimit < decorated.length
+      ) {
+        const best = Array<{entry: Entry; values: Array<unknown>}>()
+        const swap = (i: number, j: number) => {
+          const tmp = best[i]
+          best[i] = best[j]
+          best[j] = tmp
+        }
+        const heapifyUp = (index: number) => {
+          let current = index
+          while (current > 0) {
+            const parent = Math.floor((current - 1) / 2)
+            if (compare(best[current], best[parent]) <= 0) break
+            swap(current, parent)
+            current = parent
+          }
+        }
+        const heapifyDown = (index: number) => {
+          let current = index
+          while (true) {
+            const left = current * 2 + 1
+            const right = left + 1
+            let largest = current
+            if (left < best.length && compare(best[left], best[largest]) > 0) {
+              largest = left
+            }
+            if (right < best.length && compare(best[right], best[largest]) > 0) {
+              largest = right
+            }
+            if (largest === current) break
+            swap(current, largest)
+            current = largest
+          }
+        }
+        for (const row of decorated) {
+          if (best.length < partialLimit) {
+            best.push(row)
+            heapifyUp(best.length - 1)
+            continue
+          }
+          if (compare(row, best[0]) >= 0) continue
+          best[0] = row
+          heapifyDown(0)
+        }
+        entries = best.sort(compare).map(item => item.entry)
+      } else {
+        entries = decorated.sort(compare).map(item => item.entry)
+      }
     } else if (edge.edge === 'parents') {
       entries.sort((a, b) => a.level - b.level)
     }
@@ -385,6 +515,9 @@ export class EntryResolver implements Resolver {
     if (take) entries.splice(take)
     const isSingle = this.isSingleResult(<EdgeQuery>query)
     const asEdge = (<any>query) as EdgeQuery<Projection>
+    const selectedExpr =
+      query.select && hasExpr(query.select) ? (query.select as HasExpr) : null
+    const needsPostProcessing = selectedExpr ? hasField(selectedExpr) : true
     const getSelected = () =>
       entries.map(entry => this.select(ctx, entry, query))
     const getUnprocessed = () => {
@@ -396,6 +529,10 @@ export class EntryResolver implements Resolver {
     const getProcessed = async () => {
       if (count) return entries.length
       const results = getSelected()
+      if (!needsPostProcessing) {
+        if (isSingle) return results[0] as any
+        return results as any
+      }
       if (isSingle) {
         const entry = entries[0]
         if (results[0]) {
@@ -568,7 +705,8 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
 
 function typeChecker(type: Array<string> | string): Check {
   if (Array.isArray(type)) {
-    return entry => type.includes(entry.type)
+    const typeSet = new Set(type)
+    return entry => typeSet.has(entry.type)
   }
   return entry => entry.type === type
 }
@@ -654,13 +792,17 @@ function createConditions(
     if (inner.isNot !== undefined)
       conditions.push(input => getField(input, name) !== inner.isNot)
     const inOp = inner.in
-    if (Array.isArray(inOp))
-      conditions.push(input => input && inOp.includes(getField(input, name)))
+    if (Array.isArray(inOp)) {
+      const inSet = new Set(inOp)
+      conditions.push(input => input && inSet.has(getField(input, name)))
+    }
     const notInOp = inner.notIn
-    if (Array.isArray(notInOp))
+    if (Array.isArray(notInOp)) {
+      const notInSet = new Set(notInOp)
       conditions.push(
-        input => input && !notInOp.includes(getField(input, name))
+        input => input && !notInSet.has(getField(input, name))
       )
+    }
     if (inner.gt !== undefined)
       conditions.push(input => getField(input, name) > inner.gt)
     if (inner.gte !== undefined)
