@@ -65,6 +65,11 @@ type BenchStats = {
   max: number
 }
 
+type BenchRun = {
+  size: number
+  rows: Array<{name: string} & BenchStats>
+}
+
 function nsToMs(value: number) {
   return value / 1_000_000
 }
@@ -85,11 +90,25 @@ function collectStats(result: Awaited<ReturnType<typeof run>>) {
   return rows
 }
 
-async function mainBench() {
-  const args = process.argv.slice(2)
-  const json = args.includes('--json')
-  const sizeArg = args.find(arg => !arg.startsWith('-'))
-  const size = Number(sizeArg ?? 2000)
+function parseSizes(args: Array<string>) {
+  const sizeOption = args.find(arg => arg.startsWith('--sizes='))
+  const positional = args.filter(arg => !arg.startsWith('-'))
+  const rawSizes =
+    sizeOption?.slice('--sizes='.length) ??
+    (positional.length > 0 ? positional.join(',') : '1000,5000,10000')
+  const sizes = rawSizes
+    .split(',')
+    .map(part => Number(part.trim()))
+    .filter(size => Number.isFinite(size) && size >= 1000)
+  if (sizes.length === 0) {
+    throw new Error(
+      'No valid benchmark sizes provided. Use values >= 1000, e.g. --sizes=1000,5000,10000'
+    )
+  }
+  return sizes
+}
+
+async function benchSize(size: number, json: boolean): Promise<BenchRun> {
   const {resolver} = await createEntryResolver(cms.config, buildEntries(size))
   const targetId = `child-${Math.floor(size / 2)}`
   const siblingId = `child-${Math.floor(size / 3)}`
@@ -174,17 +193,34 @@ async function mainBench() {
     format: json ? 'quiet' : 'mitata'
   })
   const rows = collectStats(result)
-  if (json) {
-    console.log(JSON.stringify({size, rows}))
-    return
-  }
+  return {size, rows}
+}
+
+function printSummary(run: BenchRun) {
   console.log('')
-  console.log(`EntryResolver benchmark summary size=${size}`)
-  for (const row of rows) {
+  console.log(`EntryResolver benchmark summary size=${run.size}`)
+  for (const row of run.rows) {
     console.log(
       `${row.name.padEnd(24)} median=${row.median.toFixed(3)}ms  min=${row.min.toFixed(3)}ms  max=${row.max.toFixed(3)}ms`
     )
   }
+}
+
+async function mainBench() {
+  const args = process.argv.slice(2)
+  const json = args.includes('--json')
+  const sizes = parseSizes(args)
+  const runs: Array<BenchRun> = []
+  for (const size of sizes) {
+    if (!json) {
+      console.log('')
+      console.log(`EntryResolver benchmark size=${size}`)
+    }
+    const output = await benchSize(size, json)
+    runs.push(output)
+    if (!json) printSummary(output)
+  }
+  if (json) console.log(JSON.stringify({runs}))
 }
 
 await mainBench()
