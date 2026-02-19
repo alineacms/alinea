@@ -15,7 +15,7 @@ export class LinkResolver {
   async resolveLinks<P extends Projection>(
     projection: P,
     entryIds: ReadonlyArray<string>
-  ): Promise<Array<InferProjection<P> | undefined>> {
+  ): Promise<Array<InferProjection<P>>> {
     const {status, graph} = this.ctx
     const results = await this.resolver.resolve({
       graph,
@@ -24,6 +24,6 @@ export class LinkResolver {
       select: projection,
       id: {in: entryIds}
     })
-    return results as Array<InferProjection<P> | undefined>
+    return results as Array<InferProjection<P>>
   }
 }

@@ -2,6 +2,7 @@ import type {LinkResolver} from 'alinea/core/db/LinkResolver'
 import * as Y from 'yjs'
 import {Entry} from '../Entry.js'
 import type {Label} from '../Label.js'
+import {MediaFile} from '../media/MediaTypes.js'
 import type {Shape} from '../Shape.js'
 import {
   BlockNode,
@@ -12,7 +13,6 @@ import {
   type TextDoc,
   TextNode
 } from '../TextDoc.js'
-import {MediaFile} from '../media/MediaTypes.js'
 import {entries, fromEntries, keys} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
 import {ScalarShape} from './ScalarShape.js'
@@ -147,6 +147,7 @@ export interface TextDocSelected<Blocks> {
 }
 
 const linkInfoFields = {
+  id: Entry.id,
   url: Entry.url,
   location: MediaFile.location
 }
@@ -410,7 +411,11 @@ export class RichTextShape<Blocks>
     async function loadLinks() {
       const linkIds = Array.from(new Set(links.values()))
       const entries = await loader.resolveLinks(linkInfoFields, linkIds)
-      const info = new Map(linkIds.map((id, i) => [id, entries[i]]))
+      const info = new Map(
+        entries.map(entry => {
+          return [entry.id, entry]
+        })
+      )
       for (const [mark, entryId] of links) {
         const type = mark![LinkMark.link] as 'entry' | 'file' | undefined
         const data = info.get(entryId)
