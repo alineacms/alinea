@@ -2,7 +2,7 @@ import type {Workspace} from 'alinea/types'
 import type {Config} from './Config.js'
 import {Expr} from './Expr.js'
 import type {Field} from './Field.js'
-import {type HasRoot, type HasWorkspace, getExpr, hasExpr} from './Internal.js'
+import {getExpr, type HasRoot, type HasWorkspace, hasExpr} from './Internal.js'
 import type {Page} from './Page.js'
 import type {Root} from './Root.js'
 import type {Type} from './Type.js'
@@ -32,6 +32,9 @@ export const ScopeKey = {
   },
   entry(entryId: string) {
     return `Entry.${entryId}`
+  },
+  locale(locale: string | null) {
+    return `Locale.${locale ?? 'null'}`
   }
 }
 

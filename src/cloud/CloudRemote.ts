@@ -20,6 +20,7 @@ import {HttpError} from 'alinea/core/HttpError'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
 import {base64} from 'alinea/core/util/Encoding'
+import {entries, values} from 'alinea/core/util/Objects'
 import {Workspace} from 'alinea/core/Workspace'
 import pkg from '../../package.json'
 import {AuthResultType} from './AuthResult.js'
@@ -136,15 +137,15 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
           handshake_id: handShakeId,
           status: {
             version: pkg.version,
-            roles: [
-              {
-                key: 'editor',
-                label: 'Editor',
-                description: 'Can view and edit all pages'
+            roles: entries(this.#config.roles ?? {}).map(([name, role]) => {
+              return {
+                name,
+                label: role.label,
+                description: role.description ?? ''
               }
-            ],
+            }),
             enableOAuth2: true,
-            sourceDirectories: Object.values(config.workspaces)
+            sourceDirectories: values(config.workspaces)
               .flatMap(workspace => {
                 const {source, mediaDir} = Workspace.data(workspace)
                 return [source, mediaDir]
