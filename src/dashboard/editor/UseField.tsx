@@ -1,7 +1,10 @@
 import type {Field, FieldOptions} from 'alinea/core/Field'
+import {getScope} from 'alinea/core/Scope'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect} from 'react'
 import {useFormContext} from '../atoms/FormAtoms.js'
+import {useEntryEditor} from '../hook/UseEntryEditor.js'
+import {usePolicy} from '../hook/UsePolicy.js'
 
 export function useField<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string
@@ -44,7 +47,22 @@ export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
 ): Options & FieldOptions<StoredValue> {
   const form = useFormContext()
   const info = form.fieldInfo(field)
-  return useAtomValue(info.options) as Options & FieldOptions<StoredValue>
+  const policy = usePolicy()
+  const editor = useEntryEditor()
+  const options = useAtomValue(info.options) as Options &
+    FieldOptions<StoredValue>
+  if (!editor) return options
+  const scope = getScope(editor.config)
+  const fieldName = scope.nameOf(field)
+  if (!fieldName) return options
+  const resource = {type: editor.activeVersion.type, field: fieldName}
+  const read = policy.canRead(resource)
+  const update = policy.canUpdate(resource)
+  return {
+    ...options,
+    hidden: options.hidden || !read,
+    readOnly: options.readOnly || !update
+  }
 }
 
 export function useFieldError<StoredValue, QueryValue, Mutator, Options>(

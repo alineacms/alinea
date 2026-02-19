@@ -12,17 +12,16 @@ import type {DraftKey} from 'alinea/core/Draft'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {HttpError} from 'alinea/core/HttpError'
+import {Permission} from 'alinea/core/Role'
 import {getScope} from 'alinea/core/Scope'
 import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
 import {base64} from 'alinea/core/util/Encoding'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
-import pLimit from 'p-limit'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
-
-const limit = pLimit(1)
+import {createThrottledSync} from './util/Syncable.js'
 
 const PrepareBody = object({
   filename: string
@@ -61,7 +60,7 @@ export function createHandler({
   db,
   ...hooks
 }: HandlerOptions): Handler {
-  let lastSync = 0
+  const throttle = createThrottledSync()
   const previewParser = PLazy.from(async () => {
     const local = await db
     return createPreviewParser(local)
@@ -76,17 +75,9 @@ export function createHandler({
 
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
-    async function periodicSync(cnx: RemoteConnection, syncInterval = 60) {
+    async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
       if (dev) return
-      return limit(async () => {
-        if (syncInterval === Number.POSITIVE_INFINITY) return
-        const now = Date.now()
-        if (now - lastSync < syncInterval * 1000) return
-        lastSync = now
-        await local.syncWith(cnx)
-      }).catch(error => {
-        console.error(error)
-      })
+      return throttle(() => local.syncWith(cnx), syncInterval)
     }
 
     try {
@@ -139,6 +130,7 @@ export function createHandler({
 
       const expectUser = () => {
         if (!userCtx) throw new Response('Unauthorized', {status: 401})
+        return userCtx.user
       }
 
       const body = PLazy.from(() => {
@@ -161,7 +153,7 @@ export function createHandler({
         expectJson()
         const raw = await request.text()
         const scope = getScope(cms.config)
-        const query = scope.parse(raw) as GraphQuery
+        const query = scope.parse<GraphQuery>(raw)
         if (!query.preview) {
           await periodicSync(cnx, query.syncInterval)
         } else {
@@ -173,12 +165,13 @@ export function createHandler({
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
-        expectUser()
+        const user = expectUser()
         expectJson()
+        const policy = await local.createPolicy(user.roles)
         const mutations = await body
         const attempt = async (retry = 0) => {
           await local.syncWith(cnx)
-          const request = await local.request(mutations)
+          const request = await local.request(mutations, policy)
           try {
             let {sha} = await cnx.write(request)
             if (sha === request.intoSha) {
@@ -250,7 +243,9 @@ export function createHandler({
 
       // Media
       if (action === HandleAction.Upload) {
-        expectUser()
+        const user = expectUser()
+        const policy = await local.createPolicy(user.roles)
+        policy.assert(Permission.Upload)
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
           expectJson()

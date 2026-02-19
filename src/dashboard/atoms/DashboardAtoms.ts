@@ -14,7 +14,7 @@ export const dashboardOptionsAtom = atom(undefined! as AppProps)
 export function useSetDashboardOptions(options: AppProps) {
   useHydrateAtoms([[dashboardOptionsAtom, options]])
 
-  const {client, config, local} = options
+  const {client, local} = options
   const isAnonymous = local && !process.env.ALINEA_FORCE_AUTH
 
   if (isAnonymous) {
