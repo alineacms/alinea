@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.6.3]
+- Fix link order in rich text fields
+
 ## [1.6.2]
 - Fix search results turning up empty
 - Show children indicator in tree even if all children are untranslated
