@@ -24,6 +24,12 @@ export function createCMS() {
 }
 
 export function withAlinea(config: NextConfig = {}): NextConfig {
+  if (!process.env.ALINEA_ADMIN_PATH) {
+    console.warn(
+      'ALINEA_ADMIN_PATH environment variable is not set, did you run with the Alinea CLI?'
+    )
+    return config
+  }
   let nextVersion = 15
   try {
     // Ducktape this together so we can get the package.json contents regardless
@@ -46,12 +52,6 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   const images = {
     ...imagesConfig,
     remotePatterns
-  }
-  if (!process.env.ALINEA_ADMIN_PATH) {
-    console.warn(
-      'ALINEA_ADMIN_PATH environment variable is not set, did you run with the Alinea CLI?'
-    )
-    return config
   }
   const adminPath = normalizeBasePath(process.env.ALINEA_ADMIN_PATH)
   const redirects = createRedirects(config, adminPath)
