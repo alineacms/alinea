@@ -80,10 +80,12 @@ const cjsModules: Plugin = {
   setup(build) {
     build.onEnd(async () => {
       await esbuild.build({
+        bundle: true,
         format: 'cjs',
         platform: 'node',
         entryPoints: ['./src/adapter/next/with-alinea.ts'],
-        outfile: './dist/next.cjs'
+        outfile: './dist/next.cjs',
+        external: ['alinea', 'next']
       })
     })
   }

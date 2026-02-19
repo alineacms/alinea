@@ -2,8 +2,8 @@ import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
 import {bold, cyan, gray} from 'alinea/cli/util/Report'
-import pkg from 'alinea/package.json'
 import type {NextConfig} from 'next/dist/types.js'
+import {version} from '../../../package.json'
 
 type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
 type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>
@@ -114,8 +114,8 @@ function createRewrites(config: NextConfig, adminPath: string) {
     const origin = nextOrigin ?? (nextHost ? `http://${nextHost}` : null)
     const location = origin ? new URL(adminPath, origin).href : adminPath
     if (isDev) {
-      const version = gray(pkg.version)
-      const header = `\n   ${cyan(bold('ɑ Alinea'))} ${version}\n`
+      const alineaVersion = gray(version)
+      const header = `\n   ${cyan(bold('ɑ Alinea'))} ${alineaVersion}\n`
       console.log(`${header}   - Local CMS:    ${location}\n`)
     }
     const existing = config.rewrites ? await config.rewrites() : []
