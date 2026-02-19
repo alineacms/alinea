@@ -1,16 +1,17 @@
 import path from 'node:path'
-import {createHandler} from 'alinea/backend/Handler'
 import {createRemote} from 'alinea/backend/api/CreateBackend'
+import {createHandler} from 'alinea/backend/Handler'
 import {gitUser} from 'alinea/backend/util/ExecGit'
 import {CloudRemote} from 'alinea/cloud/CloudRemote'
 import type {CMS} from 'alinea/core/CMS'
+import {Config} from 'alinea/core/Config'
 import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
 import {createId} from 'alinea/core/Id'
 import {genEffect} from 'alinea/core/util/Async'
 import type {BuildOptions} from 'esbuild'
 import pkg from '../../package.json'
-import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
+import {generate} from './Generate.js'
 import {createLocalServer} from './serve/CreateLocalServer.js'
 import {GitHistory} from './serve/GitHistory.js'
 import {LiveReload} from './serve/LiveReload.js'
@@ -95,17 +96,20 @@ export async function serve(options: ServeOptions): Promise<void> {
     ...options,
     dashboardUrl,
     watch: cmd === 'dev',
-    onAfterGenerate(msg) {
+    onAfterGenerate(msg, config) {
       dashboardUrl.then(url => {
         const version = gray(pkg.version)
-        const header = `  ${cyan(bold('ɑ alinea'))} ${version}\n`
-        const connector = gray(cmd === 'dev' ? '├' : '╰')
+        const header = `  ${cyan(bold('ɑ Alinea'))} ${version}\n`
+        const showUrl = cmd === 'dev' && !options.onAfterGenerate
+        const connector = gray(showUrl ? '├' : '╰')
         const details = `  ${connector} ${gray(msg)}\n`
-        const footer =
-          cmd === 'dev' ? `  ${gray('╰')} Local CMS:    ${url}\n\n` : '\n'
+        const footer = showUrl
+          ? `  ${gray('╰')} Local CMS:    ${url}\n\n`
+          : '\n'
         process.stdout.write(header + details + footer)
         options.onAfterGenerate?.({
-          ALINEA_DEV_SERVER: url
+          ALINEA_DEV_SERVER: url,
+          ALINEA_ADMIN_PATH: Config.adminPath(config)
         })
       })
     }

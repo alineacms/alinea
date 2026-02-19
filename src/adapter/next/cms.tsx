@@ -2,7 +2,7 @@ import {Headers} from '@alinea/iso'
 import {createThrottledSync} from 'alinea/backend/util/Syncable'
 import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
-import type {Config} from 'alinea/core/Config'
+import {Config} from 'alinea/core/Config'
 import type {UploadResponse} from 'alinea/core/Connection'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import type {Mutation} from 'alinea/core/db/Mutation'
@@ -123,7 +123,7 @@ export class NextCMS<
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
     if (!isDraft) return null
     const {isDev, handlerUrl} = await requestContext(this.config)
-    let file = this.config.dashboardFile ?? '/admin.html'
+    let file = `${Config.adminPath(this.config)}.html`
     if (!file.startsWith('/')) file = `/${file}`
     const dashboardUrl = isDev
       ? new URL('/', handlerUrl)

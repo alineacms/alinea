@@ -5,7 +5,7 @@ import {
   type OAuth2Token
 } from '@badgateway/oauth2-client'
 import {AuthResultType} from 'alinea/cloud/AuthResult'
-import type {Config} from 'alinea/core/Config'
+import {Config} from 'alinea/core/Config'
 import type {
   AuthApi,
   AuthedContext,
@@ -176,7 +176,7 @@ export class OAuth2 implements AuthApi {
           assert(token.refreshToken, 'Missing refresh token in response')
 
           const config = this.#config
-          let dashboardPath = config.dashboardFile ?? '/admin.html'
+          let dashboardPath = Config.adminPath(config)
           if (!dashboardPath.startsWith('/'))
             dashboardPath = `/${dashboardPath}`
           const dashboardUrl = new URL(dashboardPath, url)

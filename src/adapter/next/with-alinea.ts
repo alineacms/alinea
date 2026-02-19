@@ -1,7 +1,21 @@
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
+import {bold, cyan, gray} from 'alinea/cli/util/Report'
 import type {NextConfig} from 'next/dist/types.js'
+import {version} from '../../../package.json'
+
+type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
+type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>
+
+export interface WithAlineaOptions {
+  /**
+   * Base path where the dashboard is mounted.
+   *
+   * @default '/admin'
+   */
+  adminPath?: string
+}
 
 export function createCMS() {
   throw new Error(
@@ -9,7 +23,13 @@ export function createCMS() {
   )
 }
 
-export function withAlinea(config: NextConfig): NextConfig {
+export function withAlinea(config: NextConfig = {}): NextConfig {
+  if (!process.env.ALINEA_ADMIN_PATH) {
+    console.warn(
+      'ALINEA_ADMIN_PATH environment variable is not set, did you run with the Alinea CLI?'
+    )
+    return config
+  }
   let nextVersion = 15
   try {
     // Ducktape this together so we can get the package.json contents regardless
@@ -33,6 +53,9 @@ export function withAlinea(config: NextConfig): NextConfig {
     ...imagesConfig,
     remotePatterns
   }
+  const adminPath = normalizeBasePath(process.env.ALINEA_ADMIN_PATH)
+  const redirects = createRedirects(config, adminPath)
+  const rewrites = createRewrites(config, adminPath)
   if (nextVersion < 15)
     return {
       ...config,
@@ -43,7 +66,9 @@ export function withAlinea(config: NextConfig): NextConfig {
           '@alinea/generated'
         ]
       },
-      images
+      images,
+      redirects,
+      rewrites
     }
   return {
     ...config,
@@ -51,6 +76,76 @@ export function withAlinea(config: NextConfig): NextConfig {
       ...(config.serverExternalPackages ?? []),
       '@alinea/generated'
     ],
-    images
+    images,
+    redirects,
+    rewrites
   }
+}
+
+function createRedirects(config: NextConfig, adminPath: string) {
+  const dev = process.env.ALINEA_DEV_SERVER
+  if (!dev) return config.redirects
+  return async (): Promise<RedirectsResult> => {
+    const existing = config.redirects ? await config.redirects() : []
+    return [
+      ...existing,
+      {
+        permanent: true,
+        source: `${adminPath}/~dev`,
+        destination: `${dev}/~dev`
+      }
+    ]
+  }
+}
+
+const emptyRewrites = {
+  beforeFiles: [],
+  afterFiles: [],
+  fallback: []
+}
+
+function createRewrites(config: NextConfig, adminPath: string) {
+  return async (): Promise<RewritesResult> => {
+    const devServer = process.env.ALINEA_DEV_SERVER
+    const nodeEnv = process.env.NODE_ENV
+    const isDev = devServer && nodeEnv === 'development'
+    const nextOrigin = process.env.__NEXT_PRIVATE_ORIGIN
+    const nextHost = process.env.__NEXT_PRIVATE_HOST
+    const origin = nextOrigin ?? (nextHost ? `http://${nextHost}` : null)
+    const location = origin ? new URL(adminPath, origin).href : adminPath
+    if (isDev) {
+      const alineaVersion = gray(version)
+      const header = `\n   ${cyan(bold('ɑ Alinea'))} ${alineaVersion}\n`
+      console.log(`${header}   - Local CMS:    ${location}\n`)
+    }
+    const existing = config.rewrites ? await config.rewrites() : []
+    const rewrites = Array.isArray(existing)
+      ? {...emptyRewrites, afterFiles: existing}
+      : {...emptyRewrites, ...existing}
+    if (isDev) {
+      return {
+        ...rewrites,
+        beforeFiles: [
+          ...rewrites.beforeFiles,
+          {
+            source: `${adminPath}/:path*`,
+            destination: `${devServer}${adminPath}/:path*`
+          }
+        ]
+      }
+    }
+    return {
+      ...rewrites,
+      afterFiles: [
+        {
+          source: adminPath,
+          destination: `${adminPath}.html`
+        }
+      ]
+    }
+  }
+}
+
+function normalizeBasePath(value: string): string {
+  return value.startsWith('/') ? value : `/${value}`
 }
