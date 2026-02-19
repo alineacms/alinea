@@ -31,15 +31,16 @@ if (changes) {
   process.exit(1)
 }
 
+const version = semver.startsWith('v') ? semver : `v${semver}`
+
 // Check if requested version has release notes
 const changelog = readFileSync('changelog.md', 'utf-8')
-if (!changelog.includes(`## [${semver}]`)) {
+if (!version.includes('preview') && !changelog.includes(`## [${semver}]`)) {
   console.log(`No release notes found for version ${semver}`)
   process.exit(1)
 }
 
 // Tag version
-const version = semver.startsWith('v') ? semver : `v${semver}`
 execSync(`git tag -a ${version} -m "${version}"`, {stdio: 'inherit'})
 execSync('git push --follow-tags', {stdio: 'inherit'})
 console.log(`Tagged version ${version} for release`)
