@@ -14,6 +14,7 @@ import * as paths from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {unreachable} from 'alinea/core/util/Types'
 import type {MediaFile} from '../media/MediaTypes.js'
+import {Permission, Policy} from '../Role.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
 import {SourceTransaction} from '../source/Source.js'
@@ -52,17 +53,20 @@ export class EntryTransaction {
   #index: EntryIndex
   #tx: SourceTransaction
   #fileChanges = [] as CommitChange[]
+  #policy: Policy
 
   constructor(
     config: Config,
     index: EntryIndex,
     source: Source,
-    from: ReadonlyTree
+    from: ReadonlyTree,
+    policy = Policy.ALLOW_ALL
   ) {
     if (index.sha !== from.sha) throw new ShaMismatchError(index.sha, from.sha)
     this.#config = config
     this.#index = index
     this.#tx = new SourceTransaction(source, from)
+    this.#policy = policy
   }
 
   get empty() {
@@ -112,6 +116,11 @@ export class EntryTransaction {
     )
     const rootConfig = this.#config.workspaces[workspace][root]
     assert(rootConfig, 'Invalid root')
+    this.#policy.assert(Permission.Create, {
+      workspace,
+      root,
+      type
+    })
     const i18n = getRoot(rootConfig).i18n
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
     else assert(locale === null, 'Invalid locale')
@@ -122,6 +131,7 @@ export class EntryTransaction {
       })
       assert(parent, `Parent not found: ${parentId}`)
       this.#checks.push([parent.filePath, parent.fileHash])
+      this.#policy.assert(Permission.Create, parent)
     }
     const siblings = Array.from(
       index.findMany(entry => {
@@ -247,6 +257,18 @@ export class EntryTransaction {
       )
     })
     assert(entry, `Entry not found: ${id}`)
+    this.#policy.assert(Permission.Update, entry)
+    for (const key of keys(set)) {
+      this.#policy.assert(Permission.Update, {
+        workspace: entry.workspace,
+        root: entry.root,
+        type: entry.type,
+        id: entry.id,
+        parents: entry.parents,
+        locale: entry.locale,
+        field: key
+      })
+    }
     const fieldUpdates = fromEntries(
       entries(set).map(([key, value]) => {
         return [key, value ?? null]
@@ -285,6 +307,7 @@ export class EntryTransaction {
     const childrenDir = paths.join(entry.parentDir, path)
     const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     if (entry.status === 'published') {
+      this.#policy.assert(Permission.Publish, entry)
       if (filePath !== entry.filePath) this.#rename(id, locale, path)
     } else {
       if (path !== entry.path) record.path = path
@@ -360,6 +383,7 @@ export class EntryTransaction {
       )
     })
     assert(entry, `Entry not found: ${id}`)
+    this.#policy.assert(Permission.Publish, entry)
     const pathChange = entry.data.path && entry.data.path !== entry.path
     let path = slugify((entry.data.path as string) ?? entry.path)
     path = this.#getAvailablePath({
@@ -396,6 +420,7 @@ export class EntryTransaction {
     const versions = index.byId(id)?.get(locale)
     const mainEntry = versions?.main
     assert(mainEntry, `Entry not found: ${id}`)
+    this.#policy.assert(Permission.Publish, mainEntry)
     for (const [_, version] of versions) {
       if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
@@ -411,6 +436,7 @@ export class EntryTransaction {
     const versions = index.byId(id)?.get(locale)
     const mainEntry = versions?.main
     assert(mainEntry, `Entry not found: ${id}`)
+    this.#policy.assert(Permission.Archive, mainEntry)
     for (const [_, version] of versions) {
       if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
@@ -428,9 +454,12 @@ export class EntryTransaction {
     const index = this.#index
     const entries = Array.from(index.findMany(entry => entry.id === id))
     assert(entries.length > 0, `Entry not found: ${id}`)
+    const action = toParent || toRoot ? Permission.Move : Permission.Reorder
+    for (const entry of entries) this.#policy.assert(action, entry)
     const parentId = toRoot ? null : (toParent ?? entries[0].parentId)
     const root = toRoot ?? entries[0].root
     const workspace = entries[0].workspace
+    if (toRoot) this.#policy.assert(Permission.Move, {workspace, root})
     const siblings = new Map(
       Array.from(
         index.findMany(entry => {
@@ -463,6 +492,9 @@ export class EntryTransaction {
       const self = index.findFirst(entry => entry.id === id)
       assert(self, `Entry not found: ${id}`)
       siblingList.splice(previousIndex + 1, 0, self)
+      for (const sibling of siblingList) {
+        this.#policy.assert(Permission.Reorder, sibling)
+      }
       const newKeys = generateNKeysBetween(null, null, siblingList.length)
       for (const [i, key] of newKeys.entries()) {
         const id = siblingList[i].id
@@ -507,6 +539,7 @@ export class EntryTransaction {
       if (toParent) {
         assert(!entry.seeded, `Cannot move seeded entry ${entry.filePath}`)
         assert(parent, `Parent not found: ${parentId}`)
+        this.#policy.assert(Permission.Move, parent)
         // Check if the new parent is not a child of the entry
         assert(
           !parent?.childrenDir.startsWith(entry.childrenDir),
@@ -594,11 +627,15 @@ export class EntryTransaction {
         })
       }
     }
-    if (info) this.#messages.unshift(this.#reportOp('remove', info.title))
+    if (info) {
+      this.#policy.assert(Permission.Delete, info)
+      this.#messages.unshift(this.#reportOp('remove', info.title))
+    }
     return this
   }
 
   removeFile(mutation: Op<RemoveFileMutation>) {
+    this.#policy.assert(Permission.Delete)
     assert(mutation.location, 'Missing location')
     this.#messages.push(this.#reportOp('remove', mutation.location))
     this.#fileChanges.push({op: 'removeFile', ...mutation})
@@ -606,6 +643,7 @@ export class EntryTransaction {
   }
 
   uploadFile(mutation: Op<UploadFileMutation>) {
+    this.#policy.assert(Permission.Upload)
     this.#fileChanges.push({op: 'uploadFile', ...mutation})
     return this
   }
