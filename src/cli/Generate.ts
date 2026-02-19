@@ -31,7 +31,7 @@ export interface GenerateOptions {
   fix?: boolean
   wasmCache?: boolean
   quiet?: boolean
-  onAfterGenerate?: (buildMessage: string) => void
+  onAfterGenerate?: (buildMessage: string, config: Config) => void
   dashboardUrl?: Promise<string>
 }
 
@@ -157,7 +157,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         await write(recordCount ?? 0).then(
           message => {
             afterGenerateCalled = true
-            onAfterGenerate(message)
+            onAfterGenerate(message, cms.config)
           },
           () => {
             reportFatal('Alinea failed to write dashboard files')

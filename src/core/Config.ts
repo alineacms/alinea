@@ -1,17 +1,17 @@
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
-import type {Preview} from 'alinea/core/Preview'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
+import type {Preview} from 'alinea/core/Preview'
 import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
-import {type Role, admin} from './Role.js'
+import {admin, type Role} from './Role.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getScope} from './Scope.js'
 import {Type} from './Type.js'
-import {Workspace, type WorkspaceInternal} from './Workspace.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
 import * as paths from './util/Paths.js'
+import {Workspace, type WorkspaceInternal} from './Workspace.js'
 
 /** Configuration options */
 export interface Config {
@@ -36,7 +36,7 @@ export interface Config {
   handlerUrl?: string
   /** The folder where public assets are stored, defaults to /public */
   publicDir?: string
-  /** Filename of the generated dashboard */
+  /** Filename of the generated dashboard, defaults to admin.html */
   dashboardFile?: string
 
   auth?: Auth.View
@@ -55,6 +55,12 @@ export namespace Config {
     if (result.includes('://')) return result
     return `https://${result}`
   }
+
+  export function adminPath(config: Config) {
+    const file = config.dashboardFile ?? 'admin.html'
+    return paths.basename(file, '.html')
+  }
+
   export function mainWorkspace(config: Config): WorkspaceInternal {
     const key = Object.keys(config.workspaces)[0]
     return getWorkspace(config.workspaces[key])
