@@ -1,6 +1,8 @@
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
+import {bold, cyan, gray} from 'alinea/cli/util/Report'
+import pkg from 'alinea/package.json'
 import type {NextConfig} from 'next/dist/types.js'
 
 type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
@@ -21,10 +23,7 @@ export function createCMS() {
   )
 }
 
-export function withAlinea(
-  config: NextConfig = {},
-  options: WithAlineaOptions = {}
-): NextConfig {
+export function withAlinea(config: NextConfig = {}): NextConfig {
   let nextVersion = 15
   try {
     // Ducktape this together so we can get the package.json contents regardless
@@ -48,7 +47,13 @@ export function withAlinea(
     ...imagesConfig,
     remotePatterns
   }
-  const adminPath = normalizeBasePath(options.adminPath ?? '/admin')
+  if (!process.env.ALINEA_ADMIN_PATH) {
+    console.warn(
+      'ALINEA_ADMIN_PATH environment variable is not set, did you run with the Alinea CLI?'
+    )
+    return config
+  }
+  const adminPath = normalizeBasePath(process.env.ALINEA_ADMIN_PATH)
   const redirects = createRedirects(config, adminPath)
   const rewrites = createRewrites(config, adminPath)
   if (nextVersion < 15)
@@ -101,13 +106,23 @@ const emptyRewrites = {
 
 function createRewrites(config: NextConfig, adminPath: string) {
   return async (): Promise<RewritesResult> => {
+    const devServer = process.env.ALINEA_DEV_SERVER
+    const nodeEnv = process.env.NODE_ENV
+    const isDev = devServer && nodeEnv === 'development'
+    const nextOrigin = process.env.__NEXT_PRIVATE_ORIGIN
+    const nextHost = process.env.__NEXT_PRIVATE_HOST
+    const origin = nextOrigin ?? (nextHost ? `http://${nextHost}` : null)
+    const location = origin ? new URL(adminPath, origin).href : adminPath
+    if (isDev) {
+      const version = gray(pkg.version)
+      const header = `\n   ${cyan(bold('ɑ Alinea'))} ${version}\n`
+      console.log(`${header}   - Local CMS:    ${location}\n`)
+    }
     const existing = config.rewrites ? await config.rewrites() : []
     const rewrites = Array.isArray(existing)
       ? {...emptyRewrites, afterFiles: existing}
       : {...emptyRewrites, ...existing}
-    const devServer = process.env.ALINEA_DEV_SERVER
-    const nodeEnv = process.env.NODE_ENV
-    if (devServer && nodeEnv === 'development') {
+    if (isDev) {
       return {
         ...rewrites,
         beforeFiles: [
@@ -124,11 +139,7 @@ function createRewrites(config: NextConfig, adminPath: string) {
       afterFiles: [
         {
           source: adminPath,
-          // TODO: admin.html can be configured, but we'll not have access
-          // to config here. In next breaking changes we can remove it
-          // as an option and use a unique name because it will be exposed
-          // as adminPath anyway.
-          destination: '/admin.html'
+          destination: `${adminPath}.html`
         }
       ]
     }
