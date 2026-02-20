@@ -64,8 +64,10 @@ export class NextCMS<
     const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
     const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+    const isDev = process.env.NODE_ENV === 'development'
     const request = {preview, ...query, status}
-    const useLocalDb = isBuild || (!preview && !isEdge)
+    const useRemote = isDev || isEdge || preview
+    const useLocalDb = !useRemote || isBuild
     if (useLocalDb) {
       const db = await this.bundledDb
       await this.throttle(() => db.syncWith(client), request.syncInterval)
