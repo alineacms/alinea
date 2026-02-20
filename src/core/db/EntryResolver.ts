@@ -62,6 +62,11 @@ export class EntryResolver implements Resolver {
     this.index = index
   }
 
+  #trace(ctx: ResolveContext, id: string | null | undefined) {
+    if (!id) return
+    ctx.trace.add(id)
+  }
+
   call(
     ctx: ResolveContext,
     entry: Entry,
@@ -98,6 +103,7 @@ export class EntryResolver implements Resolver {
   }
 
   expr(ctx: ResolveContext, entry: Entry, expr: Expr): unknown {
+    this.#trace(ctx, entry.id)
     const internal = getExpr(expr)
     switch (internal.type) {
       case 'field': {
@@ -143,8 +149,10 @@ export class EntryResolver implements Resolver {
     entry: Entry,
     query: EdgeQuery
   ): EntryCondition {
+    this.#trace(ctx, entry.id)
     switch (query.edge) {
       case 'parent': {
+        this.#trace(ctx, entry.parentId)
         return {
           nodes: entry.parentId ? [ctx.graph.byId(entry.parentId)!] : [],
           language: lang => lang.locale === entry.locale
@@ -161,6 +169,7 @@ export class EntryResolver implements Resolver {
             language: lang => lang.locale === entry.locale
           })
         ).sort((a, b) => compareStrings(a.index, b.index))
+        this.#trace(ctx, next?.id)
         const nodes: Array<EntryNode> = next ? [ctx.graph.byId(next.id)!] : []
         return {nodes}
       }
@@ -175,6 +184,7 @@ export class EntryResolver implements Resolver {
             language: lang => lang.locale === entry.locale
           })
         ).sort((a, b) => compareStrings(b.index, a.index))
+        this.#trace(ctx, previous?.id)
         const nodes: Array<EntryNode> = previous
           ? [ctx.graph.byId(previous.id)!]
           : []
@@ -192,6 +202,7 @@ export class EntryResolver implements Resolver {
       }
       case 'translations': {
         const self = ctx.graph.byId(entry.id)
+        this.#trace(ctx, self?.id)
         assert(self)
         return {
           nodes: [self],
@@ -209,6 +220,7 @@ export class EntryResolver implements Resolver {
       case 'parents': {
         const depth = query?.depth ?? Number.POSITIVE_INFINITY
         const ids = entry.parents.slice(-depth)
+        for (const id of ids) this.#trace(ctx, id)
         const nodes = ids.map(id => ctx.graph.byId(id)!)
         return {nodes, language: lang => lang.locale === entry.locale}
       }
@@ -217,12 +229,14 @@ export class EntryResolver implements Resolver {
         const ids: Array<string> = Array.isArray(fieldValue)
           ? fieldValue.map(item => item._entry).filter(Boolean)
           : []
+        for (const id of ids) this.#trace(ctx, id)
         const nodes = ids.map(id => ctx.graph.byId(id)!).filter(Boolean)
         return {nodes}
       }
       case 'entrySingle': {
         const fieldValue = this.field(entry, query.field) as {_entry: string}
         const entryId = fieldValue?._entry
+        this.#trace(ctx, entryId)
         const node = ctx.graph.byId(entryId)
         return {nodes: node ? [node] : []}
       }
@@ -258,6 +272,7 @@ export class EntryResolver implements Resolver {
     query: GraphQuery<Projection>
   ): unknown {
     if (!entry) return null
+    this.#trace(ctx, entry.id)
     if (query.select && hasExpr(query.select))
       return this.expr(ctx, entry, query.select as Expr)
     const fields = this.projection(query)
@@ -305,6 +320,7 @@ export class EntryResolver implements Resolver {
     return {
       ids,
       condition(entry: Entry) {
+        ctx.trace.add(entry.id)
         if (!checkStatus(entry)) return false
         if (checkLocation && !checkLocation(entry)) return false
         if (checkType && !checkType(entry)) return false
@@ -505,6 +521,7 @@ export class EntryResolver implements Resolver {
       status: query.status ?? 'published',
       locale: query.locale,
       graph: graph,
+      trace: new Set(),
       searchTerms: Array.isArray(query.search)
         ? query.search.join(' ')
         : query.search
@@ -519,6 +536,7 @@ export interface ResolveContext {
   locale?: string | null
   graph: EntryGraph
   searchTerms?: string
+  trace: Set<string>
 }
 
 export function statusChecker(status: Status): Check {

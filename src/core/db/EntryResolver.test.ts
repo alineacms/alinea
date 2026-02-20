@@ -334,7 +334,8 @@ function publishedCtx(index: EntryIndex, searchTerms?: string) {
     status: 'published' as const,
     locale: null,
     graph: index.graph,
-    searchTerms
+    searchTerms,
+    trace: new Set<string>()
   }
 }
 
@@ -573,4 +574,90 @@ test('direct condition and helper branches', async () => {
     edge: 'siblings',
     select: Query.id
   } as any)
+})
+
+test('trace collects touched ids for queried and related entries', async () => {
+  const {resolver, index} = await createAdvancedResolver()
+  const ctx = publishedCtx(index)
+  const direct = resolver.query(ctx, {
+    first: true,
+    id: 'grand',
+    select: Query.parents({select: Query.id})
+  })
+  test.equal(direct.getUnprocessed(), ['parent', 'child-1'])
+  test.ok(ctx.trace.has('grand'))
+  test.ok(ctx.trace.has('child-1'))
+  test.ok(ctx.trace.has('parent'))
+})
+
+test('trace includes all candidates evaluated by filters', async () => {
+  const {resolver, index} = await createAdvancedResolver()
+  const ctx = publishedCtx(index)
+  const direct = resolver.query(ctx, {
+    type: Article,
+    id: {in: ['child-1', 'child-2']},
+    filter: {score: {is: 5}} as any,
+    select: Query.id
+  })
+  test.equal(direct.getUnprocessed(), ['child-1'])
+  test.ok(ctx.trace.has('child-1'))
+  test.ok(ctx.trace.has('child-2'))
+})
+
+test('trace includes linked entry ids referenced by entry fields', async () => {
+  const {resolver, index} = await createAdvancedResolver()
+  const ctx = publishedCtx(index)
+  const single = resolver.query(ctx, {
+    first: true,
+    id: 'child-1',
+    select: Article.single.first({select: Query.id})
+  })
+  test.is(single.getUnprocessed(), 'child-2')
+  test.ok(ctx.trace.has('child-1'))
+  test.ok(ctx.trace.has('child-2'))
+
+  const multi = resolver.query(ctx, {
+    first: true,
+    id: 'child-1',
+    select: Article.multi.find({select: Query.id})
+  })
+  test.equal(multi.getUnprocessed(), ['child-2'])
+  test.ok(ctx.trace.has('missing'))
+})
+
+test('trace includes edge target ids for next and previous', async () => {
+  const {resolver, index} = await createAdvancedResolver()
+  const ctx = publishedCtx(index)
+  const next = resolver.query(ctx, {
+    first: true,
+    id: 'child-1',
+    select: Query.next({select: Query.id})
+  })
+  test.is(next.getUnprocessed(), 'child-2')
+  test.ok(ctx.trace.has('child-1'))
+  test.ok(ctx.trace.has('child-2'))
+
+  const previous = resolver.query(ctx, {
+    first: true,
+    id: 'child-2',
+    select: Query.previous({select: Query.id})
+  })
+  test.is(previous.getUnprocessed(), 'child-1')
+  test.ok(ctx.trace.has('child-1'))
+})
+
+test('trace includes ids touched through nested linked entry edges', async () => {
+  const {resolver, index} = await createAdvancedResolver()
+  const ctx = publishedCtx(index)
+  const nested = resolver.query(ctx, {
+    first: true,
+    id: 'child-1',
+    select: Article.single.first({
+      select: Query.parent({select: Query.id}) as any
+    })
+  })
+  test.is(nested.getUnprocessed(), 'parent')
+  test.ok(ctx.trace.has('child-1'))
+  test.ok(ctx.trace.has('child-2'))
+  test.ok(ctx.trace.has('parent'))
 })
