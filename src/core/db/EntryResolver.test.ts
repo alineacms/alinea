@@ -585,9 +585,9 @@ test('trace collects touched ids for queried and related entries', async () => {
     select: Query.parents({select: Query.id})
   })
   test.equal(direct.getUnprocessed(), ['parent', 'child-1'])
-  test.ok(ctx.trace.has('grand'))
-  test.ok(ctx.trace.has('child-1'))
-  test.ok(ctx.trace.has('parent'))
+  test.ok(ctx.trace.has(findEntryById(index, 'grand').rowHash))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-1').rowHash))
+  test.ok(ctx.trace.has(findEntryById(index, 'parent').rowHash))
 })
 
 test('trace includes all candidates evaluated by filters', async () => {
@@ -600,8 +600,8 @@ test('trace includes all candidates evaluated by filters', async () => {
     select: Query.id
   })
   test.equal(direct.getUnprocessed(), ['child-1'])
-  test.ok(ctx.trace.has('child-1'))
-  test.ok(ctx.trace.has('child-2'))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-1').rowHash))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-2').rowHash))
 })
 
 test('trace includes linked entry ids referenced by entry fields', async () => {
@@ -613,8 +613,8 @@ test('trace includes linked entry ids referenced by entry fields', async () => {
     select: Article.single.first({select: Query.id})
   })
   test.is(single.getUnprocessed(), 'child-2')
-  test.ok(ctx.trace.has('child-1'))
-  test.ok(ctx.trace.has('child-2'))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-1').rowHash))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-2').rowHash))
 
   const multi = resolver.query(ctx, {
     first: true,
@@ -622,7 +622,6 @@ test('trace includes linked entry ids referenced by entry fields', async () => {
     select: Article.multi.find({select: Query.id})
   })
   test.equal(multi.getUnprocessed(), ['child-2'])
-  test.ok(ctx.trace.has('missing'))
 })
 
 test('trace includes edge target ids for next and previous', async () => {
@@ -634,8 +633,8 @@ test('trace includes edge target ids for next and previous', async () => {
     select: Query.next({select: Query.id})
   })
   test.is(next.getUnprocessed(), 'child-2')
-  test.ok(ctx.trace.has('child-1'))
-  test.ok(ctx.trace.has('child-2'))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-1').rowHash))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-2').rowHash))
 
   const previous = resolver.query(ctx, {
     first: true,
@@ -643,7 +642,7 @@ test('trace includes edge target ids for next and previous', async () => {
     select: Query.previous({select: Query.id})
   })
   test.is(previous.getUnprocessed(), 'child-1')
-  test.ok(ctx.trace.has('child-1'))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-1').rowHash))
 })
 
 test('trace includes ids touched through nested linked entry edges', async () => {
@@ -657,7 +656,38 @@ test('trace includes ids touched through nested linked entry edges', async () =>
     })
   })
   test.is(nested.getUnprocessed(), 'parent')
-  test.ok(ctx.trace.has('child-1'))
-  test.ok(ctx.trace.has('child-2'))
-  test.ok(ctx.trace.has('parent'))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-1').rowHash))
+  test.ok(ctx.trace.has(findEntryById(index, 'child-2').rowHash))
+})
+
+test('trace returns deterministic fingerprint and results', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const first = await resolver.trace({
+    first: true,
+    id: 'child-1',
+    select: Article.single.first({
+      select: Query.parent({select: Query.id}) as any
+    })
+  })
+  test.ok(typeof first.fingerprint === 'string')
+  test.ok(first.fingerprint.length > 0)
+  test.is(first.results, 'parent')
+
+  const second = await resolver.trace({
+    first: true,
+    id: 'child-1',
+    select: Article.single.first({
+      select: Query.parent({select: Query.id}) as any
+    })
+  })
+  test.is(second.results, 'parent')
+  test.is(second.fingerprint, first.fingerprint)
+
+  const directParent = await resolver.trace({
+    first: true,
+    id: 'child-2',
+    select: Query.parent({select: Query.id})
+  })
+  test.is(directParent.results, 'parent')
+  test.not.is(directParent.fingerprint, first.fingerprint)
 })

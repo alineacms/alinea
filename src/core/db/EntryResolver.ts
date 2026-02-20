@@ -30,7 +30,7 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
 import {createRecord} from '../EntryRecord.js'
-import {compareStrings} from '../source/Utils.js'
+import {compareStrings, sha1Hash} from '../source/Utils.js'
 import {assert} from '../util/Assert.js'
 import {
   combineConditions,
@@ -62,9 +62,14 @@ export class EntryResolver implements Resolver {
     this.index = index
   }
 
+  #touch(ctx: ResolveContext, rowHash: string | null | undefined) {
+    if (!rowHash) return
+    ctx.trace.add(rowHash)
+  }
+
   #trace(ctx: ResolveContext, id: string | null | undefined) {
     if (!id) return
-    ctx.trace.add(id)
+    for (const rowHash of this.#rowHashesForId(id)) this.#touch(ctx, rowHash)
   }
 
   call(
@@ -103,7 +108,7 @@ export class EntryResolver implements Resolver {
   }
 
   expr(ctx: ResolveContext, entry: Entry, expr: Expr): unknown {
-    this.#trace(ctx, entry.id)
+    this.#touch(ctx, entry.rowHash)
     const internal = getExpr(expr)
     switch (internal.type) {
       case 'field': {
@@ -149,7 +154,7 @@ export class EntryResolver implements Resolver {
     entry: Entry,
     query: EdgeQuery
   ): EntryCondition {
-    this.#trace(ctx, entry.id)
+    this.#touch(ctx, entry.rowHash)
     switch (query.edge) {
       case 'parent': {
         this.#trace(ctx, entry.parentId)
@@ -272,7 +277,7 @@ export class EntryResolver implements Resolver {
     query: GraphQuery<Projection>
   ): unknown {
     if (!entry) return null
-    this.#trace(ctx, entry.id)
+    this.#touch(ctx, entry.rowHash)
     if (query.select && hasExpr(query.select))
       return this.expr(ctx, entry, query.select as Expr)
     const fields = this.projection(query)
@@ -320,7 +325,7 @@ export class EntryResolver implements Resolver {
     return {
       ids,
       condition(entry: Entry) {
-        ctx.trace.add(entry.id)
+        ctx.trace.add(entry.rowHash)
         if (!checkStatus(entry)) return false
         if (checkLocation && !checkLocation(entry)) return false
         if (checkType && !checkType(entry)) return false
@@ -492,9 +497,34 @@ export class EntryResolver implements Resolver {
     await Promise.all(interim.map((row: any) => this.postRow(ctx, row, input)))
   }
 
-  async resolve<Query extends GraphQuery>(
+  resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
+    const {execution} = this.#prepare(query)
+    return execution.getProcessed() as Promise<AnyQueryResult<Query>>
+  }
+
+  async trace<Query extends GraphQuery>(
+    query: Query
+  ): Promise<{
+    fingerprint: string
+    results: AnyQueryResult<Query>
+  }> {
+    const {ctx, execution} = this.#prepare(query)
+    const results = (await execution.getProcessed()) as AnyQueryResult<Query>
+    const fingerprint = await this.#fingerprintFromTrace(ctx.trace)
+    return {
+      fingerprint,
+      results
+    }
+  }
+
+  #prepare<Query extends GraphQuery>(
+    query: Query
+  ): {
+    ctx: ResolveContext
+    execution: ReturnType<EntryResolver['query']>
+  } {
     const {preview} = query
     const previewEntry =
       preview && 'entry' in preview ? preview.entry : undefined
@@ -526,7 +556,23 @@ export class EntryResolver implements Resolver {
         ? query.search.join(' ')
         : query.search
     }
-    return this.query(ctx, query as GraphQuery<Projection>).getProcessed()
+    const execution = this.query(ctx, query as GraphQuery<Projection>)
+    return {ctx, execution}
+  }
+
+  async #fingerprintFromTrace(trace: Set<string>): Promise<string> {
+    const stable = Array.from(trace).sort(compareStrings).join('|')
+    return sha1Hash(new TextEncoder().encode(stable))
+  }
+
+  #rowHashesForId(id: string): Array<string> {
+    const node = this.index.byId(id)
+    if (!node) return []
+    const rowHashes = new Set<string>()
+    for (const entry of node.filter({})) {
+      rowHashes.add(entry.rowHash)
+    }
+    return Array.from(rowHashes).sort(compareStrings)
   }
 }
 
