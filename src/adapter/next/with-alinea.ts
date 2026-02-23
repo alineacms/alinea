@@ -113,8 +113,8 @@ function createRewrites(config: NextConfig, adminPath: string) {
     const nextHost = process.env.__NEXT_PRIVATE_HOST
     const origin = nextOrigin ?? (nextHost ? `http://${nextHost}` : null)
     const location = origin ? new URL(adminPath, origin).href : adminPath
-    if (isDev && !process.env._ALINEA_REPORTED) {
-      process.env._ALINEA_REPORTED = 'true'
+    if (isDev && !process.env.__NEXT_PRIVATE_ALINEA_REPORTED) {
+      process.env.__NEXT_PRIVATE_ALINEA_REPORTED = 'true'
       console.log(`\n${cyan(bold('ɑ Alinea CMS'))}:    ${location}\n`)
     }
     const existing = config.rewrites ? await config.rewrites() : []
