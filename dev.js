@@ -9,6 +9,7 @@ async function run({production, dir, config}) {
   process.env.NODE_ENV =
     forceProduction || production ? 'production' : 'development'
   const {serve} = await import('alinea/cli/Serve')
+  const onAfterGenerate = forwardCommand()
   return serve({
     alineaDev: true,
     watch: true,
@@ -18,7 +19,7 @@ async function run({production, dir, config}) {
     configFile: config,
     staticDir: path.resolve('src/cli/static'),
     port: 4500,
-    onAfterGenerate: forwardCommand,
+    onAfterGenerate,
     cmd: 'dev',
     buildOptions: {
       minify: false
