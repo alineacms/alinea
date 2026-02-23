@@ -1,7 +1,11 @@
 import * as paths from 'alinea/core/util/Paths'
 import type {Config} from '../Config.js'
-import {type EntryStatus, entryStatuses} from '../Entry.js'
-import {ALT_STATUS, type Entry} from '../Entry.js'
+import {
+  ALT_STATUS,
+  type Entry,
+  type EntryStatus,
+  entryStatuses
+} from '../Entry.js'
 import {getRoot, getType} from '../Internal.js'
 import type {EntryUrlMeta, Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
@@ -69,7 +73,12 @@ export function entryFilepath(
   const location = `${
     entryChildrenDir(config, entry, parentPaths) + statusSegment
   }.json`.toLowerCase()
-  return location
+  const workspace = config.workspaces[entry.workspace]
+  if (!workspace)
+    throw new Error(`Workspace "${entry.workspace}" does not exist`)
+  const root = Workspace.roots(workspace)[entry.root]
+  if (!root) throw new Error(`Root "${entry.root}" does not exist`)
+  return join(entry.root, location)
 }
 
 export function entryFileName(
@@ -87,9 +96,7 @@ export function entryFileName(
   if (!workspace)
     throw new Error(`Workspace "${entry.workspace}" does not exist`)
   const {source: contentDir} = Workspace.data(workspace)
-  const root = Workspace.roots(workspace)[entry.root]
-  if (!root) throw new Error(`Root "${entry.root}" does not exist`)
-  return join(contentDir, entry.root, entryFilepath(config, entry, parentPaths))
+  return join(contentDir, entryFilepath(config, entry, parentPaths))
 }
 
 export function entryFile(config: Config, entry: Entry) {
