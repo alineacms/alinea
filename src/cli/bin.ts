@@ -40,12 +40,13 @@ prog
     ensureEnv(args.dir)
     process.env.NODE_ENV = args.production ? 'production' : 'development'
     const {serve} = await import('./Serve.js')
+    const onAfterGenerate = forwardCommand()
     return serve({
       ...args,
       alineaDev: args.dev,
       cwd: args.dir,
       base: args.base,
-      onAfterGenerate: forwardCommand,
+      onAfterGenerate,
       configFile: args.config,
       cmd: 'dev'
     })
@@ -82,14 +83,15 @@ prog
       return
     }
     const {serve} = await import('./Serve.js')
+    const onAfterGenerate = forwardCommand()
     return serve({
       ...args,
       alineaDev: args.dev,
       cwd: args.dir,
       production: true,
       onAfterGenerate: env => {
-        const isForwarding = forwardCommand(env)
-        if (!isForwarding) process.exit(0)
+        if (onAfterGenerate) onAfterGenerate(env)
+        else process.exit(0)
       },
       configFile: args.config,
       cmd: 'build'
