@@ -1,0 +1,13 @@
+{
+  "name": "@alinea/v2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot index.ts",
+    "build": "bun build ./index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
+    "start": "NODE_ENV=production bun index.ts"
+  },
+  "dependencies": {
+    "@types/bun": "^1.3.9"
+  }
+}
