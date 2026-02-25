@@ -281,13 +281,14 @@ export function createHandler({
       return new Response('Bad Request', {status: 400})
     } catch (error) {
       if (error instanceof Response) return error
-      console.error(error)
+      const status = error instanceof HttpError ? error.code : 500
+      if (!(error instanceof HttpError)) console.error(error)
       return Response.json(
         {
           success: false,
           error: error instanceof Error ? error.message : String(error)
         },
-        {status: error instanceof HttpError ? error.code : 500}
+        {status}
       )
     }
   }
