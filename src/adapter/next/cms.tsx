@@ -61,19 +61,18 @@ export class NextCMS<
       const payload = getPreviewPayloadFromCookies(cookie.getAll())
       if (payload) preview = {payload}
     }
-    const {PHASE_PRODUCTION_BUILD} = await import('next/constants')
+    const {PHASE_PRODUCTION_SERVER, PHASE_PRODUCTION_BUILD} = await import(
+      'next/constants'
+    )
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
+    const isServer = process.env.NEXT_PHASE === PHASE_PRODUCTION_SERVER
     const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
-    const isDev = process.env.NODE_ENV === 'development'
     const request = {preview, ...query, status}
-    const useRemote = isDev || isEdge || preview
-    const useLocalDb = !useRemote || isBuild
-    if (useLocalDb) {
-      const db = await this.bundledDb
-      await this.throttle(() => db.syncWith(client), request.syncInterval)
-      return db.resolve(request)
-    }
-    return client.resolve(request)
+    const useLocalDb = !isEdge && (isServer || isBuild)
+    if (!useLocalDb) return client.resolve(request)
+    const db = await this.bundledDb
+    await this.throttle(() => db.syncWith(client), request.syncInterval)
+    return db.resolve(request)
   }
 
   async #authenticatedClient() {
