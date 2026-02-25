@@ -152,6 +152,7 @@ export function parseHTML(html: string): TextDoc<any> {
     },
     ontext(text) {
       const parent = parents.at(-1)
+      if (parent?.doc === doc && text.trim().length === 0) return
       parent?.doc?.push({_type: 'text', text})
     },
     onclosetag(name) {
