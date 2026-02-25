@@ -119,7 +119,12 @@ export function parseHTML(html: string): TextDoc<any> {
   const parents: Array<{tag: string; doc?: TextDoc<any>}> = [
     {tag: undefined!, doc}
   ]
-  let marks: Array<Mark> = []
+  const markStack: Array<{
+    tag: string
+    mark: Mark
+    doc: TextDoc<any>
+    start: number
+  }> = []
   const parser = new Parser({
     onopentag(name, attributes) {
       const node = mapNode(name, attributes)
@@ -129,23 +134,88 @@ export function parseHTML(html: string): TextDoc<any> {
         parent?.doc?.push(node)
         parents.push({tag: name, doc: node?.content})
       } else if (mark) {
-        marks.push(mark)
+        const target = parent?.doc
+        if (!target) return
+        markStack.push({
+          tag: name,
+          mark,
+          doc: target,
+          start: target.length
+        })
       }
     },
     ontext(text) {
       const parent = parents.at(-1)
-      const node: TextNode = {_type: 'text', text}
-      if (marks.length) node.marks = marks
-      parent?.doc?.push(node)
-      marks = []
+      parent?.doc?.push({_type: 'text', text})
     },
     onclosetag(name) {
       const parent = parents.at(-1)
       if (parent?.tag === name) parents.pop()
-      else marks.pop()
+      const match = findMark(name, markStack)
+      if (match < 0) return
+      const {mark, doc, start} = markStack[match]
+      for (let i = start; i < doc.length; i++) applyMark(doc[i], mark)
+      markStack.splice(match)
     }
   })
   parser.write(html)
   parser.end()
+  concatTextNodes(doc)
   return doc
+}
+
+function findMark(
+  tag: string,
+  marks: Array<{tag: string}>
+) {
+  for (let i = marks.length - 1; i >= 0; i--) {
+    if (marks[i].tag === tag) return i
+  }
+  return -1
+}
+
+function applyMark(node: ElementNode | TextNode, mark: Mark) {
+  if (node._type === 'text') {
+    const marks = node.marks || (node.marks = [])
+    if (!marks.some(current => sameMark(current, mark))) marks.unshift(mark)
+    return
+  }
+  node.content?.forEach(child => {
+    if ('_type' in child) applyMark(child as ElementNode | TextNode, mark)
+  })
+}
+
+function sameMark(a: Mark, b: Mark) {
+  const keysA = Object.keys(a)
+  const keysB = Object.keys(b)
+  if (keysA.length !== keysB.length) return false
+  for (const key of keysA) {
+    if (a[key as keyof Mark] !== b[key as keyof Mark]) return false
+  }
+  return true
+}
+
+function sameMarks(a?: Array<Mark>, b?: Array<Mark>) {
+  if (!a?.length && !b?.length) return true
+  if (!a || !b || a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (!sameMark(a[i], b[i])) return false
+  }
+  return true
+}
+
+function concatTextNodes(doc: TextDoc<any>) {
+  for (let i = 0; i < doc.length; i++) {
+    const node = doc[i]
+    if (node._type !== 'text') {
+      node.content && concatTextNodes(node.content)
+      continue
+    }
+    const next = doc[i + 1]
+    if (!next || next._type !== 'text') continue
+    if (!sameMarks(node.marks, next.marks)) continue
+    node.text += next.text
+    doc.splice(i + 1, 1)
+    i--
+  }
 }

@@ -1,10 +1,10 @@
-import {suite} from '@alinea/suite'
+﻿import {suite} from '@alinea/suite'
 import {RichTextEditor} from 'alinea/core'
 import type {TextDoc} from 'alinea/core/TextDoc'
 
 const test = suite(import.meta)
 
-test('parse html nodes & marks', async () => {
+test('parse html nodes & marks', () => {
   const editor = new RichTextEditor()
   const html =
     '<p><strong><i>bold</i></strong><em>italic</em><b></b><u>underline</u> <s>strike</s> <a href="https://example.com">link</a></p>'
@@ -32,3 +32,43 @@ test('parse html nodes & marks', async () => {
     }
   ] satisfies TextDoc)
 })
+
+test('parses strong', () => {
+  const htmlExample = `
+    <p><strong>Lorem&rsquo;s Ipsum&nbsp;</strong></p>
+    <p>Normal text.</p>
+  `
+  const value = new RichTextEditor().addHtml(htmlExample).value()
+  const expectedDoc = [
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'text',
+          text: 'Lorem’s Ipsum\u00a0',
+          marks: [
+            {
+              _type: 'bold'
+            }
+          ]
+        }
+      ]
+    },
+    {
+      _type: 'text',
+      text: '\n    '
+    },
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'text',
+          text: 'Normal text.'
+        }
+      ]
+    }
+  ]
+
+  test.equal(value, expectedDoc)
+})
+
