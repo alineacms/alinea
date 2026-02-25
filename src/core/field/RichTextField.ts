@@ -2,7 +2,13 @@ import {Parser} from 'htmlparser2'
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {Schema} from '../Schema.js'
 import {type RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
-import type {ElementNode, Mark, TextDoc, TextNode} from '../TextDoc.js'
+import {
+  type ElementNode,
+  type Mark,
+  Node,
+  type TextDoc,
+  type TextNode
+} from '../TextDoc.js'
 
 export class RichTextField<
   Blocks,
@@ -164,10 +170,7 @@ export function parseHTML(html: string): TextDoc<any> {
   return doc
 }
 
-function findMark(
-  tag: string,
-  marks: Array<{tag: string}>
-) {
+function findMark(tag: string, marks: Array<{tag: string}>) {
   for (let i = marks.length - 1; i >= 0; i--) {
     if (marks[i].tag === tag) return i
   }
@@ -176,13 +179,15 @@ function findMark(
 
 function applyMark(node: ElementNode | TextNode, mark: Mark) {
   if (node._type === 'text') {
-    const marks = node.marks || (node.marks = [])
+    const marks: Array<Mark> = node.marks || (node.marks = [])
     if (!marks.some(current => sameMark(current, mark))) marks.unshift(mark)
     return
   }
-  node.content?.forEach(child => {
-    if ('_type' in child) applyMark(child as ElementNode | TextNode, mark)
-  })
+  if ('content' in node && node.content) {
+    for (const child of node.content) {
+      if ('_type' in child) applyMark(child as ElementNode | TextNode, mark)
+    }
+  }
 }
 
 function sameMark(a: Mark, b: Mark) {
@@ -207,14 +212,14 @@ function sameMarks(a?: Array<Mark>, b?: Array<Mark>) {
 function concatTextNodes(doc: TextDoc<any>) {
   for (let i = 0; i < doc.length; i++) {
     const node = doc[i]
-    if (node._type !== 'text') {
-      node.content && concatTextNodes(node.content)
+    if (!Node.isText(node)) {
+      if (Node.isElement(node) && node.content) concatTextNodes(node.content)
       continue
     }
     const next = doc[i + 1]
-    if (!next || next._type !== 'text') continue
+    if (!next || !Node.isText(next)) continue
     if (!sameMarks(node.marks, next.marks)) continue
-    node.text += next.text
+    node.text = (node.text || '') + (next.text || '')
     doc.splice(i + 1, 1)
     i--
   }
