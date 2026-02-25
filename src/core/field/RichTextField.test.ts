@@ -55,10 +55,6 @@ test('parses strong', () => {
       ]
     },
     {
-      _type: 'text',
-      text: '\n    '
-    },
-    {
       _type: 'paragraph',
       content: [
         {
@@ -90,6 +86,20 @@ test('concatenates adjacent text segments with identical marks', () => {
     {
       _type: 'paragraph',
       content: [{_type: 'text', text: 'ab', marks: [{_type: 'bold'}]}]
+    }
+  ] satisfies TextDoc)
+})
+
+test('keeps spaces between marked text segments', () => {
+  const value = new RichTextEditor().addHtml('<p><b>a</b> <b>c</b></p>').value()
+  test.equal(value, [
+    {
+      _type: 'paragraph',
+      content: [
+        {_type: 'text', text: 'a', marks: [{_type: 'bold'}]},
+        {_type: 'text', text: ' '},
+        {_type: 'text', text: 'c', marks: [{_type: 'bold'}]}
+      ]
     }
   ] satisfies TextDoc)
 })
