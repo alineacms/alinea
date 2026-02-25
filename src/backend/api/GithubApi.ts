@@ -396,17 +396,7 @@ export class GithubApi
     const source = await fetch(url)
     if (!source.ok) throw new HttpError(source.status, await source.text())
     const {maxBlobBytes, blobChunkBytes} = this.#options
-    if (!source.body) {
-      const fallback = await this.#fetchUploadedContent(url)
-      const {owner, repo} = this.#options
-      return this.#restRequest<{sha: string}>(
-        `/repos/${owner}/${repo}/git/blobs`,
-        {
-          method: 'POST',
-          body: {content: fallback, encoding: 'base64'}
-        }
-      )
-    }
+    if (!source.body) throw new Error('Upload response body is not readable')
     const chunkSize = Math.max(3, blobChunkBytes ?? 64 * 1024)
     const chunked = this.#chunkStream(source.body, chunkSize, maxBlobBytes)
     const body = this.#jsonBlobBody(this.#base64EncodeStream(chunked))

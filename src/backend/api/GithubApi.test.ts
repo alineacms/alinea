@@ -287,6 +287,64 @@ test('write uses chunked base64 stream and preserves encoded content', async () 
   }
 })
 
+test('write throws when upload response has no readable body stream', async () => {
+  const api = createApi()
+  const request = baseRequest({
+    changes: [
+      {
+        op: 'uploadFile',
+        location: 'uploads/fallback.bin',
+        url: 'https://upload.local/fallback.bin'
+      }
+    ]
+  })
+  const originalFetch = globalThis.fetch
+  let uploadFetches = 0
+  globalThis.fetch = (async (input, init) => {
+    const url = requestUrl(input)
+    const parsed = new URL(url)
+    const method = init?.method ?? 'GET'
+    const pathname = parsed.pathname
+    if (url === 'https://upload.local/fallback.bin') {
+      uploadFetches++
+      return {
+        ok: true,
+        status: 200,
+        body: null,
+        arrayBuffer: async () => new TextEncoder().encode('uploaded').buffer,
+        text: async () => 'uploaded'
+      } as Response
+    }
+    if (method === 'GET' && pathname === '/repos/acme/site/git/ref/heads/main')
+      return json({object: {sha: 'head-1'}})
+    if (method === 'GET' && pathname === '/repos/acme/site/contents/repo') {
+      const ref = parsed.searchParams.get('ref')
+      if (ref === 'head-1') return json([{path: 'repo/content', sha: 'tree-old'}])
+      if (ref === 'commit-new')
+        return json([{path: 'repo/content', sha: 'tree-new-sha'}])
+    }
+    if (method === 'GET' && pathname === '/repos/acme/site/git/commits/head-1')
+      return json({tree: {sha: 'base-tree'}})
+    if (
+      pathname === '/repos/acme/site/git/blobs' ||
+      pathname === '/repos/acme/site/git/trees' ||
+      pathname === '/repos/acme/site/git/commits' ||
+      pathname === '/repos/acme/site/git/refs/heads/main'
+    )
+      return new Response(`Unexpected ${method} ${url}`, {status: 500})
+    return new Response(`Unexpected ${method} ${url}`, {status: 500})
+  }) as typeof fetch
+  try {
+    await test.throws(
+      () => api.write(request),
+      'Upload response body is not readable'
+    )
+    test.is(uploadFetches, 1)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
 test('write rejects upload bigger than maxBlobBytes', async () => {
   const api = createApi({maxBlobBytes: 5})
   const request = baseRequest({
