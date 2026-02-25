@@ -72,3 +72,44 @@ test('parses strong', () => {
   test.equal(value, expectedDoc)
 })
 
+test('concatenates adjacent plain text segments', () => {
+  const value = new RichTextEditor().addHtml('<p>a<!-- split -->b</p>').value()
+  test.equal(value, [
+    {
+      _type: 'paragraph',
+      content: [{_type: 'text', text: 'ab'}]
+    }
+  ] satisfies TextDoc)
+})
+
+test('concatenates adjacent text segments with identical marks', () => {
+  const value = new RichTextEditor()
+    .addHtml('<p><strong>a</strong><strong>b</strong></p>')
+    .value()
+  test.equal(value, [
+    {
+      _type: 'paragraph',
+      content: [{_type: 'text', text: 'ab', marks: [{_type: 'bold'}]}]
+    }
+  ] satisfies TextDoc)
+})
+
+test('applies outer marks on close tag for nested marks', () => {
+  const value = new RichTextEditor()
+    .addHtml('<p><strong>a<i>b</i>c</strong></p>')
+    .value()
+  test.equal(value, [
+    {
+      _type: 'paragraph',
+      content: [
+        {_type: 'text', text: 'a', marks: [{_type: 'bold'}]},
+        {
+          _type: 'text',
+          text: 'b',
+          marks: [{_type: 'bold'}, {_type: 'italic'}]
+        },
+        {_type: 'text', text: 'c', marks: [{_type: 'bold'}]}
+      ]
+    }
+  ] satisfies TextDoc)
+})
