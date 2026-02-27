@@ -1,215 +1,236 @@
-import {Button} from '@alinea/components'
+import {
+  SearchField,
+  Select,
+  SelectItem,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+  TextField,
+  Tree,
+  TreeItem
+} from '@alinea/components'
 import styler from '@alinea/styler'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
-import {Suspense, useMemo} from 'react'
-import {useEntries} from '../features/entries/useEntries'
+import {useSelectedEntry} from '../features/entry/useSelectedEntry'
+import {
+  type DashboardTreeNode,
+  useDashboardTree
+} from '../features/tree/useDashboardTree'
 import {useApp} from '../hooks'
-import type {RouteState} from '../routing/state'
 import css from './AppShell.module.css'
 
-console.log(css)
-
 const styles = styler(css)
-
-function nextRoute(base: RouteState, patch: Partial<RouteState>): RouteState {
-  const merged = {...base, ...patch}
-  if (!patch.entryId && patch.entryId !== undefined) delete merged.entryId
-  return merged
-}
-
-function navButtonClass(active: boolean): string {
-  return active
-    ? `${styles.navButton()} ${styles.navButtonActive()}`
-    : styles.navButton()
-}
 
 export function AppShell() {
   const {config, route, navigate, isNavigating} = useApp()
   const workspace = config.workspaces[route.workspace]
   const workspaceData = Workspace.data(workspace)
   const roots = workspaceData.roots
-  const rootData = Root.data(roots[route.root])
+  const workspaceNames = Object.keys(config.workspaces)
 
   return (
     <div className={styles.root()}>
-      <header className={styles.header()}>
-        <div className={styles.brand()}>
-          <span>Dashboard v2</span>
-          <span className={styles.badge()}>
-            {workspaceData.label} / {rootData.label}
-          </span>
-        </div>
-        <div className={styles.meta()}>
-          {isNavigating ? 'Navigating...' : 'Ready'}
-        </div>
-      </header>
-
-      <Suspense fallback={<LoadingBody roots={roots} rootData={rootData} />}>
-        <Body
-          roots={roots}
-          rootData={rootData}
-          route={route}
-          navigate={navigate}
-        />
-      </Suspense>
+      <Body
+        roots={roots}
+        workspaceNames={workspaceNames}
+        workspaceLabel={workspaceData.label}
+        workspaceName={route.workspace}
+        rootName={route.root}
+        entryId={route.entryId}
+        navigate={navigate}
+        isNavigating={isNavigating}
+      />
     </div>
   )
 }
 
 interface BodyProps {
   roots: ReturnType<typeof Workspace.data>['roots']
-  rootData: ReturnType<typeof Root.data>
-  route: RouteState
-  navigate: (next: RouteState, replace?: boolean) => void
+  workspaceNames: Array<string>
+  workspaceLabel: string
+  workspaceName: string
+  rootName: string
+  entryId?: string
+  navigate: ReturnType<typeof useApp>['navigate']
+  isNavigating: boolean
 }
 
-function Body({roots, rootData, route, navigate}: BodyProps) {
-  const entries = useEntries(route.workspace, route.root)
-  const selectedEntry = useMemo(
-    () => entries.find(entry => entry.id === route.entryId),
-    [entries, route.entryId]
-  )
-  return (
-    <div className={styles.body()}>
-      <aside className={styles.sidebar()}>
-        <section className={styles.section()}>
-          <h2 className={styles.sectionTitle()}>Roots</h2>
-          <ul className={styles.list()}>
-            {Object.keys(roots).map(rootName => {
-              const isActive = route.root === rootName && !route.entryId
-              return (
-                <li key={rootName}>
-                  <button
-                    type="button"
-                    className={navButtonClass(isActive)}
-                    onClick={() =>
-                      navigate(
-                        nextRoute(route, {
-                          workspace: route.workspace,
-                          root: rootName,
-                          entryId: undefined
-                        })
-                      )
-                    }
-                  >
-                    {Root.data(roots[rootName]).label}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
+function Body({
+  roots,
+  workspaceNames,
+  workspaceLabel,
+  workspaceName,
+  rootName,
+  entryId,
+  navigate,
+  isNavigating
+}: BodyProps) {
+  const route = {workspace: workspaceName, root: rootName, entryId}
+  const tree = useDashboardTree(route, navigate)
+  const selectedEntry = useSelectedEntry(workspaceName, rootName, entryId)
 
-        <section className={styles.section()}>
-          <h2 className={styles.sectionTitle()}>Entries</h2>
-          <ul className={styles.list()}>
-            {entries.slice(0, 25).map(entry => {
-              const isActive = route.entryId === entry.id
-              return (
-                <li key={entry.id}>
-                  <button
-                    type="button"
-                    className={navButtonClass(isActive)}
-                    onClick={() =>
-                      navigate(
-                        nextRoute(route, {
-                          entryId: entry.id,
-                          root: route.root,
-                          workspace: route.workspace
-                        })
-                      )
-                    }
-                  >
-                    {entry.title || entry.id}
-                  </button>
-                </li>
-              )
-            })}
-            {entries.length === 0 && (
-              <li className={styles.meta()}>
-                No entries found for this root yet.
-              </li>
-            )}
-          </ul>
-        </section>
+  return (
+    <>
+      <aside className={styles.left()}>
+        <header className={styles.leftHeader()}>
+          <div className={styles.rowGrow()}>
+            <Select
+              aria-label="Workspace"
+              selectedKey={workspaceName}
+              onSelectionChange={key => {
+                if (typeof key !== 'string') return
+                navigate({workspace: key, root: rootName})
+              }}
+            >
+              {workspaceNames.map(name => (
+                <SelectItem key={name} id={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </Select>
+          </div>
+        </header>
+
+        <div className={styles.leftSectionHeader()}>
+          <div className={styles.rowGrow()}>
+            <SearchField
+              aria-label="Search entries"
+              placeholder="Search entries"
+              hasIcon
+            />
+          </div>
+        </div>
+
+        <div className={styles.treeWrap()}>
+          <Tree
+            aria-label="Roots and entries"
+            className={styles.tree()}
+            selectionMode="single"
+            selectionBehavior="replace"
+            selectedKeys={tree.selectedKeys}
+            expandedKeys={tree.expandedKeys}
+            onSelectionChange={tree.onSelectionChange}
+            onExpandedChange={tree.onExpandedChange}
+          >
+            {tree.items.map(renderTreeNode)}
+          </Tree>
+        </div>
+
+        <footer className={styles.leftFooter()}>
+          <div className={styles.meta()}>{workspaceLabel}</div>
+          <div className={styles.meta()}>{tree.isLoadingTree ? 'Loading tree...' : 'Tree ready'}</div>
+        </footer>
       </aside>
 
       <main className={styles.main()}>
-        <section className={styles.panel()}>
-          {!route.entryId ? (
-            <>
-              <h1 className={styles.panelTitle()}>{rootData.label}</h1>
-              <p className={styles.meta()}>
-                Select an entry from the left to start editing.
-              </p>
-              <p className={styles.meta()}>
-                This is the first v2 shell with hook-based state and transition
-                navigation.
-              </p>
-            </>
+        <header className={styles.mainHeader()}>
+          <h1 className={styles.mainTitle()}>
+            {selectedEntry.value?.title || Root.data(roots[rootName]).label}
+          </h1>
+          <div className={styles.mainHeaderActions()}>
+            <span className={styles.statusBadge()}>
+              {selectedEntry.value?.status || 'root'}
+            </span>
+          </div>
+        </header>
+
+        <div className={styles.mainBody()}>
+          {selectedEntry.loading ? (
+            <div className={styles.form()}>
+              <p className={styles.meta()}>Loading entry...</p>
+            </div>
+          ) : selectedEntry.error ? (
+            <div className={styles.form()}>
+              <p className={styles.meta()}>{selectedEntry.error}</p>
+            </div>
+          ) : selectedEntry.value ? (
+            <div className={styles.tabs()}>
+              <Tabs variant="subtle">
+                <TabList>
+                  <Tab id="document">Document</Tab>
+                  <Tab id="metadata">Metadata</Tab>
+                  <Tab id="json">JSON</Tab>
+                </TabList>
+
+                <TabPanel id="document" className={styles.tabPanel()}>
+                  <div className={styles.form()}>
+                    <div className={styles.twoCol()}>
+                      <TextField label="Title" defaultValue={selectedEntry.value.title || ''} isReadOnly />
+                      <TextField label="Path" defaultValue={selectedEntry.value.path || ''} isReadOnly />
+                    </div>
+                    <div className={styles.twoCol()}>
+                      <TextField label="Type" defaultValue={selectedEntry.value.type || ''} isReadOnly />
+                      <TextField label="Locale" defaultValue={selectedEntry.value.locale || ''} isReadOnly />
+                    </div>
+                    <TextField label="Url" defaultValue={selectedEntry.value.url || ''} isReadOnly />
+                  </div>
+                </TabPanel>
+
+                <TabPanel id="metadata" className={styles.tabPanel()}>
+                  <div className={styles.form()}>
+                    <TextField label="File path" defaultValue={selectedEntry.value.filePath || ''} isReadOnly />
+                    <TextField label="File hash" defaultValue={selectedEntry.value.fileHash || ''} isReadOnly />
+                    <TextField label="Row hash" defaultValue={selectedEntry.value.rowHash || ''} isReadOnly />
+                    <TextField label="Parent id" defaultValue={selectedEntry.value.parentId || ''} isReadOnly />
+                  </div>
+                </TabPanel>
+
+                <TabPanel id="json" className={styles.tabPanel()}>
+                  <TextField
+                    label="Entry data"
+                    multiline
+                    rows={18}
+                    defaultValue={JSON.stringify(selectedEntry.value.data ?? {}, null, 2)}
+                    isReadOnly
+                  />
+                </TabPanel>
+              </Tabs>
+            </div>
           ) : (
-            <>
-              <h1 className={styles.panelTitle()}>
-                {selectedEntry?.title || route.entryId}
-              </h1>
-              <p className={styles.meta()}>Entry ID: {route.entryId}</p>
+            <div className={styles.form()}>
               <p className={styles.meta()}>
-                Type: {selectedEntry?.type || 'Unknown'}
+                Select an entry in the tree to inspect real document data.
               </p>
-              <p className={styles.meta()}>
-                Status: {selectedEntry?.status || 'Unknown'}
-              </p>
-              <div style={{marginTop: 12}}>
-                <Button
-                  onPress={() =>
-                    navigate(nextRoute(route, {entryId: undefined}))
-                  }
-                >
-                  Back to root overview
-                </Button>
-              </div>
-            </>
+            </div>
           )}
-        </section>
+        </div>
       </main>
-    </div>
+
+      <aside className={styles.right()}>
+        <header className={styles.rightHeader()}>
+          <strong>Selection</strong>
+          <span className={styles.meta()}>{isNavigating ? 'Navigating' : 'Ready'}</span>
+        </header>
+        <ul className={styles.history()}>
+          <li className={styles.historyItem()}>
+            <div className={styles.historyTitle()}>Workspace</div>
+            <div className={styles.meta()}>{workspaceName}</div>
+          </li>
+          <li className={styles.historyItem()}>
+            <div className={styles.historyTitle()}>Root</div>
+            <div className={styles.meta()}>{rootName}</div>
+          </li>
+          <li className={styles.historyItem()}>
+            <div className={styles.historyTitle()}>Entry id</div>
+            <div className={styles.meta()}>{entryId || 'none'}</div>
+          </li>
+        </ul>
+      </aside>
+    </>
   )
 }
 
-interface LoadingBodyProps {
-  roots: ReturnType<typeof Workspace.data>['roots']
-  rootData: ReturnType<typeof Root.data>
-}
-
-function LoadingBody({roots, rootData}: LoadingBodyProps) {
+function renderTreeNode(node: DashboardTreeNode) {
   return (
-    <div className={styles.body()}>
-      <aside className={styles.sidebar()}>
-        <section className={styles.section()}>
-          <h2 className={styles.sectionTitle()}>Roots</h2>
-          <ul className={styles.list()}>
-            {Object.keys(roots).map(rootName => (
-              <li key={rootName}>
-                <div className={styles.navButton()}>
-                  {Root.data(roots[rootName]).label}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className={styles.section()}>
-          <h2 className={styles.sectionTitle()}>Entries</h2>
-          <div className={styles.meta()}>Loading entries...</div>
-        </section>
-      </aside>
-
-      <main className={styles.main()}>
-        <section className={styles.panel()}>
-          <h1 className={styles.panelTitle()}>{rootData.label}</h1>
-          <p className={styles.meta()}>Loading content...</p>
-        </section>
-      </main>
-    </div>
+    <TreeItem
+      key={node.id}
+      id={node.id}
+      title={node.title}
+      hasChildItems={node.hasChildItems}
+    >
+      {node.children?.map(child => renderTreeNode(child))}
+    </TreeItem>
   )
 }

@@ -172,7 +172,7 @@
     "src/v2": {
       "name": "@alinea/v2",
       "dependencies": {
-        "@alinea/components": "v0.0.42",
+        "@alinea/components": "^0.0.42",
       },
       "devDependencies": {
         "@playwright/experimental-ct-react": "^1.58.2",

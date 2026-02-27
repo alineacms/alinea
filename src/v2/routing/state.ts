@@ -8,6 +8,14 @@ export interface RouteState {
   entryId?: string
 }
 
+function sameRoute(a: RouteState, b: RouteState): boolean {
+  return (
+    a.workspace === b.workspace &&
+    a.root === b.root &&
+    (a.entryId ?? undefined) === (b.entryId ?? undefined)
+  )
+}
+
 function firstRoute(config: Config): RouteState {
   const [workspaceName, workspace] = Object.entries(config.workspaces)[0]
   const roots = Workspace.data(workspace).roots
@@ -84,15 +92,18 @@ export function useRouteState(config: Config) {
       const target = sanitizeRoute(config, next)
       const targetPath = routeToPath(target)
       if (typeof window === 'undefined') {
-        setRoute(target)
+        setRoute(current => (sameRoute(current, target) ? current : target))
         return
       }
       startTransition(() => {
         const currentPath = window.location?.pathname ?? '/'
+        if (currentPath === targetPath) {
+          setRoute(current => (sameRoute(current, target) ? current : target))
+          return
+        }
         if (replace) window.history.replaceState(null, '', targetPath)
-        else if (currentPath !== targetPath)
-          window.history.pushState(null, '', targetPath)
-        setRoute(target)
+        else window.history.pushState(null, '', targetPath)
+        setRoute(current => (sameRoute(current, target) ? current : target))
       })
     },
     [config]
