@@ -1,8 +1,9 @@
 import {Tree, TreeItem} from '@alinea/components'
-import {useAtom, useAtomValue} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import {ListLayout, Virtualizer} from 'react-aria-components'
 import type {Selection} from 'react-aria-components'
+import {cmsRouteAtom} from '../atoms/cms/route.js'
 import {
   reactAriaTreeItemsAtom,
   treeExpandedKeysAtom,
@@ -49,6 +50,7 @@ export function SidebarTree() {
   const items = useAtomValue(reactAriaTreeItemsAtom)
   const [expandedKeys, setTreeExpandedKeys] = useAtom(treeExpandedKeysAtom)
   const [selectedKeys, setTreeSelectedKeys] = useAtom(treeSelectedKeysAtom)
+  const setRoute = useSetAtom(cmsRouteAtom)
   const itemIndex = useMemo(() => {
     const index = new Map<string, ReactAriaTreeItem>()
     for (const item of items) {
@@ -83,7 +85,25 @@ export function SidebarTree() {
           setTreeExpandedKeys(toSet(keys, expandedKeys))
         }}
         onSelectionChange={function onSelectionChange(keys) {
-          setTreeSelectedKeys(toSet(keys, selectedKeys))
+          const selected = toSet(keys, selectedKeys)
+          setTreeSelectedKeys(selected)
+          const selectedId = selected.values().next().value
+          if (!selectedId) return
+          const item = itemIndex.get(String(selectedId))
+          if (!item) return
+          setRoute(() => {
+            if (item.node.kind === 'root') {
+              return {
+                workspace: item.node.workspace,
+                root: item.node.root
+              }
+            }
+            return {
+              workspace: item.node.workspace,
+              root: item.node.root,
+              entry: item.node.entryId
+            }
+          })
         }}
       >
         {renderTreeItem}

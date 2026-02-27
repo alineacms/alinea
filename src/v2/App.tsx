@@ -5,7 +5,6 @@ import {type ComponentType, useMemo} from 'react'
 import './index.css'
 import type {LocalDB} from 'alinea/core/db/LocalDB.js'
 import {AppShell} from './app/AppShell'
-import {currentWorkspaceAtom} from './atoms/cms/workspaces.js'
 import {configAtom} from './atoms/config.js'
 import {dbAtom} from './atoms/db.js'
 import {useRequiredAtoms} from './atoms/util/RequiredAtom.js'
@@ -18,17 +17,14 @@ export interface AppProps {
 
 const requiredAtoms = {
   config: configAtom,
-  db: dbAtom,
-  currentWorkspace: currentWorkspaceAtom
+  db: dbAtom
 }
 
 export function App(props: AppProps) {
   const {config} = props
-  const currentWorkspace = Object.keys(config.workspaces)[0] ?? ''
   useRequiredAtoms(requiredAtoms, {
     config,
-    db: props.db,
-    currentWorkspace
+    db: props.db
   })
   return <AppShell />
 }

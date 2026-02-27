@@ -11,7 +11,7 @@ const Page = Config.document('Page', {
   }
 })
 const main = Config.workspace('Main', {
-  source: 'content',
+  source: 'content/main',
   roots: {
     pages: Config.root('Pages 123', {
       i18n: {locales: ['en', 'de']},
@@ -41,9 +41,20 @@ const main = Config.workspace('Main', {
     media: Config.media()
   }
 })
+const secondary = Config.workspace('Secondary', {
+  source: 'content/secondary',
+  roots: {
+    pages: Config.root('Secondary pages', {
+      children: {
+        home: Config.page({type: Page}),
+        contact: Config.page({type: Page})
+      }
+    })
+  }
+})
 const cms = createCMS({
   schema: {Page},
-  workspaces: {main}
+  workspaces: {main, secondary}
 })
 
 const elem = document.getElementById('root')!

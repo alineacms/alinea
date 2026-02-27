@@ -7,13 +7,25 @@ import {Root} from 'alinea/core/Root'
 import {Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {atom} from 'jotai'
-import {currentWorkspaceAtom} from '../cms/workspaces.js'
+import {currentWorkspaceAtom} from './workspaces.js'
 import {configAtom} from '../config.js'
 import {graphAtom} from '../graph.js'
 import {command} from '../util/Command.js'
 
 const treeExpandedKeysStateAtom = atom<Set<string>>(new Set<string>())
 export const treeSelectedKeysAtom = atom<Set<string>>(new Set<string>())
+
+interface TreeLoadedState {
+  childIdsByParent: Record<string, Array<string>>
+  nodesById: Record<string, TreeNode>
+}
+
+const treeLoadedStateAtom = atom<TreeLoadedState>({
+  childIdsByParent: {},
+  nodesById: {}
+})
+
+const treeLoadingStateAtom = atom<Record<string, boolean>>({})
 
 export interface TreeNode {
   id: string
@@ -24,21 +36,6 @@ export interface TreeNode {
   title: string
   entryId?: string
   hasChildNodes: boolean
-  childIds: Array<string> | null
-  isLoading?: boolean
-}
-
-export interface TreeState {
-  rootIds: Array<string>
-  nodesById: Record<string, TreeNode>
-}
-
-export interface TreeAction {
-  type: 'hydrateRoots' | 'setLoading' | 'setChildren' | 'invalidateNode'
-  roots?: Array<TreeNode>
-  nodeId?: string
-  isLoading?: boolean
-  children?: Array<TreeNode>
 }
 
 export interface TreeEntryPreview {
@@ -55,90 +52,10 @@ export interface ReactAriaTreeItem {
   node: TreeNode
 }
 
-const initialTreeState: TreeState = {
-  rootIds: [],
-  nodesById: {}
-}
-
-const reduceTreeState = (state: TreeState, action: TreeAction): TreeState => {
-  switch (action.type) {
-    case 'hydrateRoots': {
-      const roots = action.roots ?? []
-      const nextNodesById = {...state.nodesById}
-      const nextRootIds: Array<string> = []
-      for (const root of roots) {
-        nextRootIds.push(root.id)
-        nextNodesById[root.id] = root
-      }
-      return {
-        rootIds: nextRootIds,
-        nodesById: nextNodesById
-      }
-    }
-    case 'setLoading': {
-      const nodeId = action.nodeId
-      if (!nodeId) return state
-      const current = state.nodesById[nodeId]
-      if (!current) return state
-      return {
-        ...state,
-        nodesById: {
-          ...state.nodesById,
-          [nodeId]: {
-            ...current,
-            isLoading: action.isLoading
-          }
-        }
-      }
-    }
-    case 'setChildren': {
-      const nodeId = action.nodeId
-      if (!nodeId) return state
-      const parent = state.nodesById[nodeId]
-      if (!parent) return state
-      const children = action.children ?? []
-      const nextNodesById = {...state.nodesById}
-      const childIds = children.map(child => child.id)
-      for (const child of children) {
-        nextNodesById[child.id] = child
-      }
-      nextNodesById[nodeId] = {
-        ...parent,
-        childIds,
-        isLoading: false
-      }
-      return {
-        ...state,
-        nodesById: nextNodesById
-      }
-    }
-    case 'invalidateNode': {
-      const nodeId = action.nodeId
-      if (!nodeId) return state
-      const current = state.nodesById[nodeId]
-      if (!current) return state
-      return {
-        ...state,
-        nodesById: {
-          ...state.nodesById,
-          [nodeId]: {
-            ...current,
-            childIds: null,
-            isLoading: false
-          }
-        }
-      }
-    }
-    default:
-      return state
-  }
-}
-
 const buildRootNode = (
   workspace: string,
   rootName: string,
-  rootLabel: string,
-  hasChildNodes = true
+  rootLabel: string
 ): TreeNode => {
   return {
     id: `root:${workspace}:${rootName}`,
@@ -147,15 +64,11 @@ const buildRootNode = (
     workspace,
     root: rootName,
     title: rootLabel,
-    hasChildNodes,
-    childIds: null
+    hasChildNodes: true
   }
 }
 
-const buildEntryNode = (
-  parent: TreeNode,
-  entry: TreeEntryPreview
-): TreeNode => {
+const buildEntryNode = (parent: TreeNode, entry: TreeEntryPreview): TreeNode => {
   return {
     id: `entry:${entry.id}`,
     parentId: parent.id,
@@ -164,70 +77,14 @@ const buildEntryNode = (
     root: parent.root,
     title: entry.title,
     entryId: entry.id,
-    hasChildNodes: entry.hasChildren,
-    childIds: entry.hasChildren ? null : []
+    hasChildNodes: entry.hasChildren
   }
-}
-
-const toReactAriaTreeItem = (
-  state: TreeState,
-  nodeId: string
-): ReactAriaTreeItem | undefined => {
-  const node = state.nodesById[nodeId]
-  if (!node) return undefined
-  const item: ReactAriaTreeItem = {
-    id: node.id,
-    textValue: node.title,
-    hasChildNodes: node.hasChildNodes,
-    node
-  }
-  if (node.childIds && node.childIds.length > 0) {
-    const children: Array<ReactAriaTreeItem> = []
-    for (const childId of node.childIds) {
-      const child = toReactAriaTreeItem(state, childId)
-      if (child) children.push(child)
-    }
-    item.children = children
-  }
-  return item
-}
-
-const queryRootEntries = async (
-  graph: WriteableGraph,
-  config: Config,
-  workspace: string,
-  root: string
-): Promise<Array<TreeEntryPreview>> => {
-  const rootConfig = config.workspaces[workspace]?.[root]
-  const orderBy = rootConfig ? Root.data(rootConfig).orderChildrenBy : undefined
-  return queryChildren(graph, config, workspace, root, null, orderBy)
-}
-
-const queryEntryChildren = async (
-  graph: WriteableGraph,
-  config: Config,
-  workspace: string,
-  root: string,
-  parentEntryId: string
-): Promise<Array<TreeEntryPreview>> => {
-  const parent = await graph.first({
-    id: parentEntryId,
-    select: {type: Entry.type},
-    status: 'preferDraft'
-  })
-  const parentType = parent ? config.schema[parent.type] : undefined
-  const orderBy = parentType ? getType(parentType).orderChildrenBy : undefined
-  return queryChildren(graph, config, workspace, root, parentEntryId, orderBy)
 }
 
 const visibleTypes = (config: Config): Array<string> => {
   return Object.entries(config.schema)
-    .filter(([, type]) => {
-      return !Type.isHidden(type)
-    })
-    .map(([name]) => {
-      return name
-    })
+    .filter(([, type]) => !Type.isHidden(type))
+    .map(([name]) => name)
 }
 
 const getHasChildren = async (
@@ -258,7 +115,6 @@ const queryChildren = async (
 ): Promise<Array<TreeEntryPreview>> => {
   const typeNames = visibleTypes(config)
   if (typeNames.length === 0) return []
-
   const rows = await graph.find({
     select: {
       id: Entry.id,
@@ -272,15 +128,12 @@ const queryChildren = async (
     orderBy,
     status: 'preferDraft'
   })
-
   const uniqueById = new Map<string, (typeof rows)[number]>()
   for (const row of rows) {
     if (!uniqueById.has(row.id)) uniqueById.set(row.id, row)
   }
-
-  const entries = Array.from(uniqueById.values())
   return Promise.all(
-    entries.map(async row => {
+    Array.from(uniqueById.values()).map(async row => {
       const type = config.schema[row.type]
       const canContain = type ? Type.isContainer(type) : false
       const hasChildren = canContain
@@ -295,45 +148,63 @@ const queryChildren = async (
   )
 }
 
-const treeStateAtom = atom<TreeState>(initialTreeState)
+const queryRootEntries = async (
+  graph: WriteableGraph,
+  config: Config,
+  workspace: string,
+  root: string
+) => {
+  const rootConfig = config.workspaces[workspace]?.[root]
+  const orderBy = rootConfig ? Root.data(rootConfig).orderChildrenBy : undefined
+  return queryChildren(graph, config, workspace, root, null, orderBy)
+}
 
-export const treeDispatchCommand = command<[TreeAction]>((get, set, action) => {
-  const state = get(treeStateAtom)
-  set(treeStateAtom, reduceTreeState(state, action))
+const queryEntryChildren = async (
+  graph: WriteableGraph,
+  config: Config,
+  workspace: string,
+  root: string,
+  parentEntryId: string
+) => {
+  const parent = await graph.first({
+    id: parentEntryId,
+    select: {type: Entry.type},
+    status: 'preferDraft'
+  })
+  const parentType = parent ? config.schema[parent.type] : undefined
+  const orderBy = parentType ? getType(parentType).orderChildrenBy : undefined
+  return queryChildren(graph, config, workspace, root, parentEntryId, orderBy)
+}
+
+const workspaceRootNodesAtom = atom(get => {
+  const config = get(configAtom)
+  const workspace = get(currentWorkspaceAtom)
+  const workspaceConfig = config.workspaces[workspace]
+  if (!workspaceConfig) return []
+  return Object.entries(Workspace.roots(workspaceConfig)).map(([rootName, root]) =>
+    buildRootNode(workspace, rootName, String(Root.label(root)))
+  )
 })
 
-export const initializeTreeRootsCommand = command<[], Promise<void>>(
-  async (get, set) => {
-    const config = get(configAtom)
-    const workspace = get(currentWorkspaceAtom)
-    set(treeExpandedKeysAtom, new Set())
-    set(treeSelectedKeysAtom, new Set())
-    const workspaceConfig = config.workspaces[workspace]
-    if (!workspaceConfig) {
-      set(treeDispatchCommand, {type: 'hydrateRoots', roots: []})
-      return
-    }
-    const roots = Object.entries(Workspace.roots(workspaceConfig)).map(
-      ([rootName, root]) => {
-        const label = Root.label(root)
-        return buildRootNode(workspace, rootName, String(label), true)
-      }
-    )
-    set(treeDispatchCommand, {type: 'hydrateRoots', roots})
-  }
-)
+const treeNodeIndexAtom = atom(get => {
+  const index = new Map<string, TreeNode>()
+  const roots = get(workspaceRootNodesAtom)
+  for (const root of roots) index.set(root.id, root)
+  const loaded = get(treeLoadedStateAtom)
+  for (const [id, node] of Object.entries(loaded.nodesById)) index.set(id, node)
+  return index
+})
 
 export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
   async (get, set, nodeId) => {
-    const state = get(treeStateAtom)
-    const node = state.nodesById[nodeId]
-    if (!node || !node.hasChildNodes || node.childIds !== null) return
-
-    set(treeDispatchCommand, {type: 'setLoading', nodeId, isLoading: true})
+    const node = get(treeNodeIndexAtom).get(nodeId)
+    if (!node || !node.hasChildNodes) return
+    const loaded = get(treeLoadedStateAtom)
+    if (loaded.childIdsByParent[nodeId]) return
+    set(treeLoadingStateAtom, prev => ({...prev, [nodeId]: true}))
     const graph = get(graphAtom)
     const config = get(configAtom)
-
-    const rows =
+    const entries =
       node.kind === 'root'
         ? await queryRootEntries(graph, config, node.workspace, node.root)
         : node.entryId
@@ -345,41 +216,56 @@ export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
               node.entryId
             )
           : []
-
-    const children = rows.map(entry => {
-      return buildEntryNode(node, entry)
+    const children = entries.map(entry => buildEntryNode(node, entry))
+    set(treeLoadedStateAtom, prev => {
+      const nodesById = {...prev.nodesById}
+      for (const child of children) nodesById[child.id] = child
+      return {
+        childIdsByParent: {
+          ...prev.childIdsByParent,
+          [nodeId]: children.map(child => child.id)
+        },
+        nodesById
+      }
     })
-    set(treeDispatchCommand, {type: 'setChildren', nodeId, children})
+    set(treeLoadingStateAtom, prev => ({...prev, [nodeId]: false}))
   }
 )
 
 export const treeExpandedKeysAtom = atom(
-  get => {
-    return get(treeExpandedKeysStateAtom)
-  },
+  get => get(treeExpandedKeysStateAtom),
   (_get, set, keys: Set<string>) => {
     set(treeExpandedKeysStateAtom, keys)
-    for (const key of keys) {
-      void set(loadTreeNodeChildrenCommand, key)
-    }
+    for (const key of keys) void set(loadTreeNodeChildrenCommand, key)
   }
 )
 
-export const reactAriaTreeItemsAtom = atom(
-  get => {
-    const state = get(treeStateAtom)
-    const items: Array<ReactAriaTreeItem> = []
-    for (const rootId of state.rootIds) {
-      const item = toReactAriaTreeItem(state, rootId)
-      if (item) items.push(item)
+export const reactAriaTreeItemsAtom = atom(get => {
+  const loaded = get(treeLoadedStateAtom)
+  const index = get(treeNodeIndexAtom)
+  const toItem = (node: TreeNode): ReactAriaTreeItem => {
+    const childIds = loaded.childIdsByParent[node.id]
+    const item: ReactAriaTreeItem = {
+      id: node.id,
+      textValue: node.title,
+      hasChildNodes: node.hasChildNodes,
+      node
     }
-    return items
-  },
-  (_get, set) => {
-    set(initializeTreeRootsCommand)
+    if (childIds && childIds.length > 0) {
+      item.children = childIds
+        .map(childId => index.get(childId))
+        .filter((child): child is TreeNode => Boolean(child))
+        .map(child => toItem(child))
+    }
+    return item
   }
-)
+  return get(workspaceRootNodesAtom).map(root => toItem(root))
+})
 
-reactAriaTreeItemsAtom.onMount = setAtom => {
-  setAtom()
-}
+export const treeStateSnapshotAtom = atom(get => {
+  return {
+    roots: get(workspaceRootNodesAtom),
+    loaded: get(treeLoadedStateAtom),
+    loading: get(treeLoadingStateAtom)
+  }
+})
