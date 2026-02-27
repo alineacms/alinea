@@ -11,13 +11,22 @@ export type RequiredAtom<Value> = Atom<Value> & {
   readonly __brand?: 'RequiredAtom'
 }
 
+export interface RequiredAtomOptions<Value> {
+  errorMessage?: string
+  onMount?: (
+    setAtom: (update: Value | ((prev: Value) => Value)) => void
+  ) => void | (() => void)
+}
+
 /**
  * Creates a strict atom that throws an error if read before being hydrated.
  * It is branded as read-only to prevent accidental writes from child components.
  */
 export function requiredAtom<Value>(
-  errorMessage = 'Required atom was read before being hydrated!'
+  options: RequiredAtomOptions<Value> = {}
 ): RequiredAtom<Value> {
+  const {errorMessage = 'Required atom was read before being hydrated!', onMount} =
+    options
   const baseAtom = atom<Value | typeof UNINITIALIZED>(UNINITIALIZED)
 
   const derivedAtom = atom(
@@ -28,10 +37,21 @@ export function requiredAtom<Value>(
       }
       return value
     },
-    (_get, set, update: Value) => {
+    (get, set, update: Value | ((prev: Value) => Value)) => {
+      if (typeof update === 'function') {
+        const updater = update as (prev: Value) => Value
+        const current = get(baseAtom)
+        if (current === UNINITIALIZED) {
+          throw new Error(errorMessage)
+        }
+        set(baseAtom, updater(current))
+        return
+      }
       set(baseAtom, update)
     }
   )
+
+  if (onMount) derivedAtom.onMount = onMount
 
   // Cast the writable atom to our branded read-only type before exporting
   return derivedAtom as unknown as RequiredAtom<Value>

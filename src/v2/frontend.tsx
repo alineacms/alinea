@@ -1,5 +1,6 @@
 import {Config, Field} from 'alinea'
 import {createCMS} from 'alinea/core'
+import {LocalDB} from 'alinea/core/db/LocalDB.js'
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
 import {App} from './App'
@@ -12,7 +13,7 @@ const Page = Config.document('Page', {
 const main = Config.workspace('Main', {
   source: 'content',
   roots: {
-    pages: Config.root('Pages', {
+    pages: Config.root('Pages 123', {
       i18n: {locales: ['en', 'de']},
       children: {
         welcome: Config.page({
@@ -36,7 +37,8 @@ const main = Config.workspace('Main', {
           }
         })
       }
-    })
+    }),
+    media: Config.media()
   }
 })
 const cms = createCMS({
@@ -45,9 +47,12 @@ const cms = createCMS({
 })
 
 const elem = document.getElementById('root')!
+const db = new LocalDB(cms.config)
+await db.sync()
+
 const app = (
   <StrictMode>
-    <App config={cms.config} client={undefined!} views={{}} />
+    <App config={cms.config} db={db} views={{}} />
   </StrictMode>
 )
 

@@ -3,7 +3,6 @@ import {useAtom, useAtomValue} from 'jotai'
 import type {Selection} from 'react-aria-components'
 import {
   reactAriaTreeItemsAtom,
-  treeBootstrapAtom,
   treeExpandedKeysAtom,
   treeSelectedKeysAtom,
   type ReactAriaTreeItem
@@ -28,7 +27,6 @@ function renderTreeItem(item: ReactAriaTreeItem) {
 }
 
 export function SidebarTree() {
-  useAtomValue(treeBootstrapAtom)
   const items = useAtomValue(reactAriaTreeItemsAtom)
   const [expandedKeys, setTreeExpandedKeys] = useAtom(treeExpandedKeysAtom)
   const [selectedKeys, setTreeSelectedKeys] = useAtom(treeSelectedKeysAtom)

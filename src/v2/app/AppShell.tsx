@@ -1,10 +1,14 @@
 import styler from '@alinea/styler'
+import {useAtomValue} from 'jotai'
+import {dbAtom} from '../atoms/db.js'
 import css from './AppShell.module.css'
 import {SidebarTree} from './SidebarTree'
 
 const styles = styler(css)
 
 export function AppShell() {
+  const db = useAtomValue(dbAtom)
+
   return (
     <div className={styles.root()}>
       <aside className={styles.left()}>
@@ -17,9 +21,7 @@ export function AppShell() {
         </div>
 
         <footer className={styles.leftFooter()}>
-          <div className={styles.meta()}>
-            Placeholder: sidebar footer status
-          </div>
+          <div className={styles.meta()}>db.sha: {db.sha || '-'}</div>
         </footer>
       </aside>
 
