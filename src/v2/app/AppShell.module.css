@@ -1,0 +1,115 @@
+.root {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  background: linear-gradient(180deg, #f6f9fc 0%, #eef3f7 100%);
+  color: #152238;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #dae5ef;
+  background: #ffffff;
+  padding: 0 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.badge {
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: 1px solid #d2dce6;
+  background: #f8fbff;
+}
+
+.body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 270px 1fr;
+}
+
+.sidebar {
+  min-height: 0;
+  overflow: auto;
+  border-right: 1px solid #dbe4ee;
+  background: #f9fcff;
+  padding: 12px;
+}
+
+.section {
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #58708a;
+  margin: 0 0 8px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.navButton {
+  width: 100%;
+  border: 1px solid #d5e0ea;
+  background: #ffffff;
+  color: inherit;
+  text-align: left;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.navButtonActive {
+  background: #e4f0ff;
+  border-color: #afc8e5;
+}
+
+.main {
+  min-height: 0;
+  overflow: auto;
+  padding: 18px;
+}
+
+.panel {
+  background: #ffffff;
+  border: 1px solid #d8e3ed;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.panelTitle {
+  margin: 0 0 6px;
+}
+
+.meta {
+  color: #4c6075;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid #dbe4ee;
+  }
+}

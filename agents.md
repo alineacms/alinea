@@ -4,6 +4,7 @@
 - State management: use plain React hooks (`useState`, `useReducer`, `useMemo`, `useContext`, custom hooks). Avoid atom/state libraries in v2.
 - React 19 UX primitives: use transitions for navigation/loading/update flows (`startTransition`, `useTransition`, `useDeferredValue`, `useOptimistic` where it adds value).
 - Testability first: establish fast component tests with React Testing Library and a Playwright end-to-end suite.
+- Test runtime convention: import `test` and `expect` from `bun:test` in test files.
 - UI toolkit: use `@alinea/components` as the default UI surface.
 - Core integration: keep using `alinea/core` for config/schema/db/query/policy primitives.
 - Field rendering: do not reuse existing dashboard field views; build new v2 field views wired to `@alinea/components`.
@@ -69,7 +70,7 @@
   - Entry editor reducer: selected status, mode, pending transition, optimistic UI.
   - Tree reducer: expanded nodes, selection, drag target.
   - Create modal reducer: type/parent/options loading state.
-- Keep async data in hooks with explicit loading/error/value states; no hidden global atom graph.
+- Avoid `useEffect` + `useState` data-loading pairs. Prefer stable promise-returning hooks with Suspense-style reads and transition-friendly rendering.
 
 ### 3. React 19 Transition Usage
 - Route changes and heavy data refetch run inside transitions to preserve UI responsiveness.
@@ -103,6 +104,11 @@
 - Keep component styling close to feature folders; avoid global CSS except reset/base primitives.
 
 ### 7. Test Plan
+- Naming convention:
+  - Playwright tests use `*.spec.tsx`.
+  - Regular tests (unit/component/integration) use `*.test.tsx`.
+- Test imports:
+  - Use `import {test, expect} from 'bun:test'`.
 - Unit/component tests (React Testing Library):
   - route parser + navigation hook behavior.
   - tree interactions (selection, expand/collapse, keyboard).
