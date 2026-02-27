@@ -177,6 +177,7 @@
       "devDependencies": {
         "@playwright/experimental-ct-react": "^1.58.2",
         "@testing-library/react": "^16.3.2",
+        "jotai-location": "^0.6.2",
         "linkedom": "^0.18.12",
         "vite": "npm:rolldown-vite@latest",
         "vite-tsconfig-paths": "^6.1.1",
@@ -1639,6 +1640,8 @@
     "isomorphic.js": ["isomorphic.js@0.2.5", "", {}, "sha512-PIeMbHqMt4DnUP3MA/Flc0HElYjMXArsw1qwJZcm9sqR8mq3l8NYizFMty0pWwE/tzIGH3EKK5+jes5mAr85yw=="],
 
     "jotai": ["jotai@2.9.3", "", { "peerDependencies": { "@types/react": ">=17.0.0", "react": ">=17.0.0" }, "optionalPeers": ["@types/react", "react"] }, "sha512-IqMWKoXuEzWSShjd9UhalNsRGbdju5G2FrqNLQJT+Ih6p41VNYe2sav5hnwQx4HJr25jq9wRqvGSWGviGG6Gjw=="],
+
+    "jotai-location": ["jotai-location@0.6.2", "", { "peerDependencies": { "jotai": ">=1.11.0" } }, "sha512-D+fqGNNgPHpehOsGBsYsS7F3kNgml099MJrGYt8YlLumcnoTVrBdcO+Y11KyMlyzwPihEN0HPUgke9Iihz9OXw=="],
 
     "js-sha3": ["js-sha3@0.8.0", "", {}, "sha512-gF1cRrHhIzNfToc802P800N8PpXS+evLLXfsVpowqmAFR9uwbi89WvXg2QspOmXL8QL86J4T1EpFu+yUkwJY3Q=="],
 

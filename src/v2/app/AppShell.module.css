@@ -1,5 +1,4 @@
 .root {
-  --faded-border: color-mix(in oklab, #8da1b8 45%, transparent);
   --surface: #ffffff;
   --left-surface: #ffffff;
   --main-surface: #ffffff;
@@ -10,7 +9,7 @@
   --content-padding-y: 24px;
 
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 300px;
+  grid-template-columns: 320px minmax(0, 1fr);
   height: 100vh;
   color: #1f2b3b;
   background: #ffffff;
@@ -26,7 +25,6 @@
 
 .leftHeader,
 .leftSectionHeader,
-.rightHeader,
 .mainHeader {
   height: var(--header-height);
   display: flex;
@@ -46,19 +44,10 @@
   gap: 8px;
 }
 
-.rowGrow {
-  flex: 1;
-  min-width: 0;
-}
-
 .treeWrap {
   min-height: 0;
   overflow: auto;
   padding: 8px;
-}
-
-.tree {
-  width: 100%;
 }
 
 .leftFooter {
@@ -92,90 +81,16 @@
   line-height: 1.2;
 }
 
-.mainHeaderActions {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.statusBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  border-radius: 999px;
-  padding: 6px 9px;
-  border: 1px solid #b8d8c1;
-  color: #1b4f2d;
-  background: #ecfbf0;
-}
-
 .mainBody {
   overflow: auto;
   padding: var(--content-padding-y) var(--content-padding-x);
 }
 
-.tabs {
-  max-width: 920px;
-}
-
-.tabPanel {
-  margin-top: 16px;
-}
-
 .form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
   max-width: 920px;
-}
-
-.twoCol {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.right {
-  border-left: 1px solid #d8e1eb;
-  background: var(--surface);
-  min-width: 0;
-  display: grid;
-  grid-template-rows: var(--header-height) 1fr;
-}
-
-.rightHeader {
-  border-bottom: 1px solid #d8e1eb;
-  padding: 0 12px;
-  justify-content: space-between;
-}
-
-.history {
-  margin: 0;
-  padding: 10px;
-  list-style: none;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.historyItem {
-  border: 1px solid #d8e1eb;
-  background: #fff;
-  border-radius: 10px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.historyTitle {
-  font-size: 13px;
-  font-weight: 600;
 }
 
 .meta {
@@ -183,18 +98,9 @@
   color: #58708a;
 }
 
-.loading {
-  padding: 16px;
-  color: #58708a;
-}
-
 @media (max-width: 1180px) {
   .root {
     grid-template-columns: 280px minmax(0, 1fr);
-  }
-
-  .right {
-    display: none;
   }
 }
 
@@ -208,9 +114,5 @@
     grid-template-rows: var(--header-height) var(--header-height) 180px auto;
     border-right: 0;
     border-bottom: 1px solid #d8e1eb;
-  }
-
-  .twoCol {
-    grid-template-columns: 1fr;
   }
 }

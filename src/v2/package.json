@@ -8,11 +8,13 @@
     "start": "NODE_ENV=production bun index.ts"
   },
   "dependencies": {
-    "@alinea/components": "^0.0.42"
+    "@alinea/components": "^0.0.42",
+    "jotai": "^2.4.2"
   },
   "devDependencies": {
     "@playwright/experimental-ct-react": "^1.58.2",
     "@testing-library/react": "^16.3.2",
+    "jotai-location": "^0.6.2",
     "linkedom": "^0.18.12",
     "vite": "npm:rolldown-vite@latest",
     "vite-tsconfig-paths": "^6.1.1"

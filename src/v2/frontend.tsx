@@ -15,10 +15,24 @@ const main = Config.workspace('Main', {
     pages: Config.root('Pages', {
       i18n: {locales: ['en', 'de']},
       children: {
-        page1: Config.page({
+        welcome: Config.page({
           type: Page,
           children: {
-            sub1: Config.page({type: Page})
+            getStarted: Config.page({type: Page})
+          }
+        }),
+        about: Config.page({
+          type: Page,
+          children: {
+            team: Config.page({type: Page}),
+            history: Config.page({type: Page})
+          }
+        }),
+        blog: Config.page({
+          type: Page,
+          children: {
+            firstPost: Config.page({type: Page}),
+            secondPost: Config.page({type: Page})
           }
         })
       }
