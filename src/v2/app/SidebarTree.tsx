@@ -1,5 +1,7 @@
 import {Tree, TreeItem} from '@alinea/components'
 import {useAtom, useAtomValue} from 'jotai'
+import {useMemo} from 'react'
+import {ListLayout, Virtualizer} from 'react-aria-components'
 import type {Selection} from 'react-aria-components'
 import {
   reactAriaTreeItemsAtom,
@@ -26,26 +28,66 @@ function renderTreeItem(item: ReactAriaTreeItem) {
   )
 }
 
+const treeLayoutOptions = {
+  rowHeight: 34,
+  padding: 0,
+  gap: 1
+}
+
+function addItemToMap(
+  index: Map<string, ReactAriaTreeItem>,
+  item: ReactAriaTreeItem
+) {
+  index.set(item.id, item)
+  if (!item.children) return
+  for (const child of item.children) {
+    addItemToMap(index, child)
+  }
+}
+
 export function SidebarTree() {
   const items = useAtomValue(reactAriaTreeItemsAtom)
   const [expandedKeys, setTreeExpandedKeys] = useAtom(treeExpandedKeysAtom)
   const [selectedKeys, setTreeSelectedKeys] = useAtom(treeSelectedKeysAtom)
+  const itemIndex = useMemo(() => {
+    const index = new Map<string, ReactAriaTreeItem>()
+    for (const item of items) {
+      addItemToMap(index, item)
+    }
+    return index
+  }, [items])
 
   return (
-    <Tree
-      aria-label="Content tree"
-      selectionMode="single"
-      selectionBehavior="replace"
-      selectedKeys={selectedKeys}
-      expandedKeys={expandedKeys}
-      onExpandedChange={function onExpandedChange(keys) {
-        setTreeExpandedKeys(toSet(keys, expandedKeys))
-      }}
-      onSelectionChange={function onSelectionChange(keys) {
-        setTreeSelectedKeys(toSet(keys, selectedKeys))
-      }}
+    <Virtualizer
+      layout={ListLayout}
+      layoutOptions={treeLayoutOptions}
     >
-      {items.map(renderTreeItem)}
-    </Tree>
+      <Tree
+        aria-label="Content tree"
+        style={{display: 'block', padding: 0, height: '100%'}}
+        items={items}
+        selectionMode="single"
+        selectionBehavior="replace"
+        selectedKeys={selectedKeys}
+        expandedKeys={expandedKeys}
+        onAction={function onAction(key) {
+          const id = String(key)
+          const item = itemIndex.get(id)
+          if (!item?.hasChildNodes) return
+          const next = new Set(expandedKeys)
+          if (next.has(id)) next.delete(id)
+          else next.add(id)
+          setTreeExpandedKeys(next)
+        }}
+        onExpandedChange={function onExpandedChange(keys) {
+          setTreeExpandedKeys(toSet(keys, expandedKeys))
+        }}
+        onSelectionChange={function onSelectionChange(keys) {
+          setTreeSelectedKeys(toSet(keys, selectedKeys))
+        }}
+      >
+        {renderTreeItem}
+      </Tree>
+    </Virtualizer>
   )
 }

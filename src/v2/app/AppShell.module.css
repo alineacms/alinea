@@ -57,6 +57,11 @@
   min-height: 100%;
 }
 
+.treeWrap > :global(.react-aria-Virtualizer) {
+  flex: 1;
+  min-height: 0;
+}
+
 .leftFooter {
   border-top: 1px solid #d8e1eb;
   padding: 10px;
