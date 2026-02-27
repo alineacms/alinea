@@ -2,20 +2,13 @@ import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
 import {atom} from 'jotai'
-import type {Key} from 'react'
 import {currentWorkspaceAtom} from '../cms/workspaces.js'
 import {configAtom} from '../config.js'
 import {graphAtom} from '../graph.js'
 import {command} from '../util/Command.js'
-import {requiredAtom} from '../util/RequiredAtom.js'
 
-export const treeExpandedKeysAtom = requiredAtom<Set<Key>>()
-export const treeSelectedKeysAtom = requiredAtom<Set<Key>>()
-
-export const treeRequiredAtoms = {
-  expandedKeys: treeExpandedKeysAtom,
-  selectedKeys: treeSelectedKeysAtom
-}
+const treeExpandedKeysStateAtom = atom<Set<string>>(new Set<string>())
+export const treeSelectedKeysAtom = atom<Set<string>>(new Set<string>())
 
 export interface TreeNode {
   id: string
@@ -153,6 +146,35 @@ function buildRootNode(
   }
 }
 
+function buildFallbackRoots(workspace: string): Array<TreeNode> {
+  return [
+    buildRootNode(workspace, 'content', 'Content'),
+    buildRootNode(workspace, 'marketing', 'Marketing'),
+    buildRootNode(workspace, 'docs', 'Docs'),
+    buildRootNode(workspace, 'shop', 'Shop')
+  ]
+}
+
+function appendSampleRoots(
+  workspace: string,
+  roots: Array<TreeNode>
+): Array<TreeNode> {
+  const names = new Set(roots.map(root => root.root))
+  const samples = [
+    ['blog', 'Blog'],
+    ['docs', 'Docs'],
+    ['media', 'Media']
+  ] as const
+  const next = [...roots]
+  for (const [name, label] of samples) {
+    if (names.has(name)) continue
+    next.push(buildRootNode(workspace, name, label))
+    names.add(name)
+    if (next.length >= 4) break
+  }
+  return next
+}
+
 function buildEntryNode(parent: TreeNode, entry: TreeEntryPreview): TreeNode {
   return {
     id: `entry:${entry.id}`,
@@ -192,20 +214,78 @@ function toReactAriaTreeItem(
 
 async function queryRootEntries(
   _graph: WriteableGraph,
-  _workspace: string,
-  _root: string
+  workspace: string,
+  root: string
 ): Promise<Array<TreeEntryPreview>> {
-  // TODO: Query first level root entries from the graph.
-  return []
+  // TODO: replace dummy data with graph query.
+  return [
+    {
+      id: `${workspace}:${root}:home`,
+      title: 'Home',
+      hasChildren: true
+    },
+    {
+      id: `${workspace}:${root}:about`,
+      title: 'About',
+      hasChildren: false
+    },
+    {
+      id: `${workspace}:${root}:blog`,
+      title: 'Blog',
+      hasChildren: true
+    }
+  ]
 }
 
 async function queryEntryChildren(
   _graph: WriteableGraph,
-  _workspace: string,
-  _root: string,
-  _parentEntryId: string
+  workspace: string,
+  root: string,
+  parentEntryId: string
 ): Promise<Array<TreeEntryPreview>> {
-  // TODO: Query child entries for an entry node from the graph.
+  // TODO: replace dummy data with graph query.
+  if (parentEntryId.endsWith(':home')) {
+    return [
+      {
+        id: `${workspace}:${root}:home:hero`,
+        title: 'Hero',
+        hasChildren: false
+      },
+      {
+        id: `${workspace}:${root}:home:features`,
+        title: 'Features',
+        hasChildren: true
+      }
+    ]
+  }
+  if (parentEntryId.endsWith(':home:features')) {
+    return [
+      {
+        id: `${workspace}:${root}:home:features:feature-a`,
+        title: 'Feature A',
+        hasChildren: false
+      },
+      {
+        id: `${workspace}:${root}:home:features:feature-b`,
+        title: 'Feature B',
+        hasChildren: false
+      }
+    ]
+  }
+  if (parentEntryId.endsWith(':blog')) {
+    return [
+      {
+        id: `${workspace}:${root}:blog:welcome-post`,
+        title: 'Welcome post',
+        hasChildren: false
+      },
+      {
+        id: `${workspace}:${root}:blog:release-notes`,
+        title: 'Release notes',
+        hasChildren: false
+      }
+    ]
+  }
   return []
 }
 
@@ -222,9 +302,14 @@ export const initializeTreeRootsCommand = command(
   function initializeTreeRootsCommand(get, set) {
     const config = get(configAtom)
     const workspace = get(currentWorkspaceAtom)
+    set(treeExpandedKeysAtom, new Set())
+    set(treeSelectedKeysAtom, new Set())
     const workspaceConfig = config.workspaces[workspace]
     if (!workspaceConfig) {
-      set(treeDispatchCommand, {type: 'hydrateRoots', roots: []})
+      set(treeDispatchCommand, {
+        type: 'hydrateRoots',
+        roots: buildFallbackRoots(workspace || 'workspace')
+      })
       return
     }
     const roots = Object.entries(Workspace.roots(workspaceConfig)).map(
@@ -233,7 +318,11 @@ export const initializeTreeRootsCommand = command(
         return buildRootNode(workspace, rootName, String(label))
       }
     )
-    set(treeDispatchCommand, {type: 'hydrateRoots', roots})
+    const rootsWithSamples = appendSampleRoots(workspace, roots)
+    set(treeDispatchCommand, {
+      type: 'hydrateRoots',
+      roots: roots.length > 0 ? rootsWithSamples : buildFallbackRoots(workspace)
+    })
   }
 )
 
@@ -265,6 +354,18 @@ export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
   }
 )
 
+export const treeExpandedKeysAtom = atom(
+  function readTreeExpandedKeys(get) {
+    return get(treeExpandedKeysStateAtom)
+  },
+  function writeTreeExpandedKeys(_get, set, keys: Set<string>) {
+    set(treeExpandedKeysStateAtom, keys)
+    for (const key of keys) {
+      void set(loadTreeNodeChildrenCommand, key)
+    }
+  }
+)
+
 export const reactAriaTreeItemsAtom = atom(
   function readReactAriaTreeItems(get) {
     const state = get(treeStateAtom)
@@ -280,3 +381,14 @@ export const reactAriaTreeItemsAtom = atom(
 export const treeStateSnapshotAtom = atom(function readTreeState(get) {
   return get(treeStateAtom)
 })
+
+export const treeBootstrapAtom = atom(
+  null,
+  function runTreeBootstrap(_get, set) {
+    set(initializeTreeRootsCommand)
+  }
+)
+
+treeBootstrapAtom.onMount = function onMountTreeBootstrap(setAtom) {
+  setAtom()
+}

@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
 import css from './AppShell.module.css'
+import {SidebarTree} from './SidebarTree'
 
 const styles = styler(css)
 
@@ -12,9 +13,7 @@ export function AppShell() {
         </div>
 
         <div className={styles.treeWrap()}>
-          <p className={styles.meta()}>
-            Placeholder: roots + lazy tree entries
-          </p>
+          <SidebarTree />
         </div>
 
         <footer className={styles.leftFooter()}>

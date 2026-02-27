@@ -17,10 +17,11 @@
 
 .left {
   display: grid;
-  grid-template-rows: var(--header-height) var(--header-height) 1fr auto;
+  grid-template-rows: var(--header-height) 1fr auto;
   border-right: 1px solid #d8e1eb;
   background: var(--left-surface);
   min-width: 0;
+  min-height: 0;
 }
 
 .leftHeader,
@@ -45,9 +46,15 @@
 }
 
 .treeWrap {
+  display: flex;
   min-height: 0;
   overflow: auto;
   padding: 8px;
+}
+
+.treeWrap > :global(.alinea-rac-Tree) {
+  flex: 1;
+  min-height: 100%;
 }
 
 .leftFooter {
@@ -111,7 +118,7 @@
   }
 
   .left {
-    grid-template-rows: var(--header-height) var(--header-height) 180px auto;
+    grid-template-rows: var(--header-height) 180px auto;
     border-right: 0;
     border-bottom: 1px solid #d8e1eb;
   }

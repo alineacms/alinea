@@ -11,5 +11,6 @@ Find the v2 dashboard in src/v2
 
 ## Code style
 - Prefer interface over type
-- Use function instead of arrow functions for components and hooks
+- Use function instead of arrow functions for components and hooks, but anonymous ok for atoms
 - Always name props interfaces with a `Props` suffix
+- Do not use any type, unless communicated explicitly in the code review
