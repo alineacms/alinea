@@ -88,7 +88,6 @@ export function createLocalServer(
       apiKey: process.env.ALINEA_API_KEY || 'dev'
     })
   }
-  if (cmd === 'build') return {close() {}, handle: devHandler}
   const devDir = path.join(staticDir, 'dev')
   const getPath = (url: URL) => {
     if (url.pathname.startsWith('/admin'))
