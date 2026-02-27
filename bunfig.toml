@@ -1,2 +1,5 @@
 [install]
 linker = "hoisted"
+
+[test]
+preload = "./src/v2/dom.ts"
