@@ -44,7 +44,8 @@
     "src/core",
     "src/dashboard",
     "src/ui",
-    "src/field/richtext"
+    "src/field/richtext",
+    "src/v2"
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.3",

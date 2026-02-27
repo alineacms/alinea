@@ -1,18 +1,39 @@
-/**
- * This file is the entry point for the React app, it sets up the root
- * element and renders the App component to the DOM.
- *
- * It is included in `src/index.html`.
- */
-
+import {Config, Field} from 'alinea'
+import {createCMS} from 'alinea/core'
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
 import {App} from './App'
 
+const Page = Config.document('Page', {
+  fields: {
+    link: Field.entry('Link')
+  }
+})
+const main = Config.workspace('Main', {
+  source: 'content',
+  roots: {
+    pages: Config.root('Pages', {
+      i18n: {locales: ['en', 'de']},
+      children: {
+        page1: Config.page({
+          type: Page,
+          children: {
+            sub1: Config.page({type: Page})
+          }
+        })
+      }
+    })
+  }
+})
+const cms = createCMS({
+  schema: {Page},
+  workspaces: {main}
+})
+
 const elem = document.getElementById('root')!
 const app = (
   <StrictMode>
-    <App />
+    <App config={cms.config} client={undefined!} views={{}} />
   </StrictMode>
 )
 
