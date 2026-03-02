@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {FSSource} from '../../core/source/FSSource'
+import {type ExportedSource, exportSource} from '../../core/source/SourceExport'
 import type {Plugin} from 'vite'
 
 const virtualSuffix = '?alinea-fixture'
@@ -11,11 +12,6 @@ interface AlineaFixturePluginOptions {
 
 interface ResolveIdOptions {
   attributes?: Record<string, string>
-}
-
-interface ExportedFixtureSource {
-  tree: unknown
-  blobs: Record<string, string>
 }
 
 function hasQueryFlag(source: string, query: string): boolean {
@@ -48,16 +44,10 @@ async function listFilesRecursive(dir: string): Promise<Array<string>> {
 
 async function exportFixtureSource(
   cmsFile: string
-): Promise<ExportedFixtureSource> {
+): Promise<ExportedSource> {
   const contentDir = path.join(path.dirname(cmsFile), 'content')
   const source = new FSSource(contentDir)
-  const tree = await source.getTree()
-  const shas = Array.from(tree.index(), ([, sha]) => sha)
-  const blobs: Record<string, string> = {}
-  for await (const [sha, blob] of source.getBlobs(shas)) {
-    blobs[sha] = Buffer.from(blob).toString('base64')
-  }
-  return {tree: tree.toJSON(), blobs}
+  return exportSource(source)
 }
 
 export function alineaFixturePlugin(): Plugin {
@@ -92,25 +82,11 @@ export function alineaFixturePlugin(): Plugin {
 
       return `
 import {LocalDB} from 'alinea/core/db/LocalDB'
-import {MemorySource} from 'alinea/core/source/MemorySource'
-import {ReadonlyTree} from 'alinea/core/source/Tree'
+import {importSource} from 'alinea/core/source/SourceExport'
 import {cms} from ${importPath}
 
 const exportedSource = ${serialized}
-function decodeBase64(input) {
-  const binary = atob(input)
-  const bytes = new Uint8Array(binary.length)
-  for (let index = 0; index < binary.length; index++) {
-    bytes[index] = binary.charCodeAt(index)
-  }
-  return bytes
-}
-const blobs = new Map(
-  Object.entries(exportedSource.blobs).map(([sha, encoded]) => {
-    return [sha, decodeBase64(encoded)]
-  })
-)
-const source = new MemorySource(new ReadonlyTree(exportedSource.tree), blobs)
+const source = await importSource(exportedSource)
 const db = new LocalDB(cms.config, source)
 await db.sync()
 

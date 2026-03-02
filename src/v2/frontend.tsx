@@ -1,6 +1,6 @@
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
-import {cms, db} from '../fixture/cms.ts?alinea'
+import {cms, db} from './fixture/cms.ts?alinea'
 import {App} from './App'
 
 const elem = document.getElementById('root')!

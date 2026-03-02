@@ -1,5 +1,5 @@
-import * as base64 from 'alinea/core/util/BufferToBase64'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
+import * as base64 from '../util/BufferToBase64.js'
+import {entries, fromEntries} from '../util/Objects.js'
 import {accumulate} from '../util/Async.js'
 import {MemorySource} from './MemorySource.js'
 import type {Source} from './Source.js'

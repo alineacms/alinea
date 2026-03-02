@@ -16,6 +16,9 @@ Find the v2 dashboard in src/v2, and v1 in src/dashboard.
 - Use function instead of arrow functions for components and hooks, but anonymous ok for atoms
 - Always name props interfaces with a `Props` suffix
 - Do not use any type, unless communicated explicitly in the code review
+- Imports should be relative if in same src subdir, otherwise absolute starting
+  with 'alinea', eg 'alinea/core/Config'. If relative, include .js extension.
+  If absolute do not include any extension.
 
 ## Testability
 - Use react-testing-library for testing, and test the public API of components
