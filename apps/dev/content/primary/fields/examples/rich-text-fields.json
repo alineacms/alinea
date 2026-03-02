@@ -27,6 +27,16 @@
       ]
     },
     {
+      "_type": "Inner",
+      "_id": "35NHj0CoZZwsTXBfRwm1vB3ZsQR",
+      "checkbox1": true,
+      "checkbox2": false,
+      "selectNative": "optionC",
+      "select": "optionB",
+      "title": "",
+      "content": []
+    },
+    {
       "_type": "paragraph",
       "textAlign": "left",
       "content": [
@@ -48,6 +58,15 @@
           ]
         }
       ]
+    },
+    {
+      "_type": "Inner",
+      "_id": "35NHkXfiMBpbK5x09C4bD2pZOLn",
+      "checkbox2": true,
+      "selectNative": "optionB",
+      "select": "optionB",
+      "title": "Test",
+      "content": []
     }
   ],
   "table": [

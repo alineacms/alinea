@@ -29,6 +29,7 @@ export function SelectInput<Key extends string>({
   field
 }: SelectInputProps<Key>) {
   const {value = null, mutator, label, options, error} = useField(field)
+
   const {readOnly} = options
   const items = options.options as Record<string, string>
   const {x, y, reference, floating, refs, strategy} = useFloating({
@@ -48,6 +49,29 @@ export function SelectInput<Key extends string>({
       })
     ]
   })
+
+  if (options.native) {
+    return (
+      <InputLabel {...options} error={error} icon={IcRoundArrowDropDownCircle}>
+        <div className={styles.native({readOnly})}>
+          <select
+            value={value || ''}
+            onChange={e => {
+              console.log(e.target.value)
+              mutator(e.target.value as Key)
+            }}
+          >
+            <option value=""></option>
+            {Object.keys(items).map(key => (
+              <option key={key} value={key}>
+                {items[key]}
+              </option>
+            ))}
+          </select>
+        </div>
+      </InputLabel>
+    )
+  }
 
   return (
     <InputLabel {...options} error={error} icon={IcRoundArrowDropDownCircle}>
