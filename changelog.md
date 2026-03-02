@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.6.4]
+- Don't use Y.js for preview deltas, but a more predictable diff
+
 ## [1.6.3]
 - Fix link order in rich text fields
 
