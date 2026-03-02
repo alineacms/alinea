@@ -16,3 +16,11 @@ Find the v2 dashboard in src/v2, and v1 in src/dashboard.
 - Use function instead of arrow functions for components and hooks, but anonymous ok for atoms
 - Always name props interfaces with a `Props` suffix
 - Do not use any type, unless communicated explicitly in the code review
+
+## Testability
+- Use react-testing-library for testing, and test the public API of components
+- Dom implementation is preloaded
+- Create a test file for each component, named `ComponentName.test.tsx`
+- Use `bun test` for running tests
+- If a component is very complex and a browser environment is needed use 
+  `@playwright/experimental-ct-react` and name the test file `ComponentName.spec.tsx`
