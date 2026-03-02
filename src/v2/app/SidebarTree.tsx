@@ -1,16 +1,24 @@
-import {Tree, TreeItem} from '@alinea/components'
+import {Button, Icon, Tree, TreeItem} from '@alinea/components'
+import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useMemo} from 'react'
 import {Collection, ListLayout, Virtualizer} from 'react-aria-components'
 import type {Selection} from 'react-aria-components'
+import type {CmsRoute} from '../atoms/cms/route.js'
 import {cmsRouteAtom} from '../atoms/cms/route.js'
 import {
-  treeItemsAtom,
   treeExpandedKeysAtom,
+  focusTreeNodeCommand,
+  focusTreeParentCommand,
+  treeItemIndexAtom,
   treeSelectedKeysAtom,
+  treeViewAtom,
   type TreeItem as TreeItemData
 } from '../atoms/cms/tree.js'
+import {IcRoundArrowBack} from '../icons.js'
+import css from './SidebarTree.module.css'
 import {EntryStatus} from './EntryStatus.js'
+
+const styles = styler(css)
 
 function toSet(keys: Selection, fallback: Set<string>): Set<string> {
   if (keys === 'all') return fallback
@@ -44,85 +52,104 @@ function renderTreeItem(item: TreeItemData) {
   )
 }
 
+function navigateToTreeItem(
+  setRoute: (update: CmsRoute | ((prev: CmsRoute) => CmsRoute)) => void,
+  item: TreeItemData
+) {
+  setRoute(() => {
+    if (item.node.kind === 'root') {
+      return {
+        workspace: item.node.workspace,
+        root: item.node.root
+      }
+    }
+    return {
+      workspace: item.node.workspace,
+      root: item.node.root,
+      entry: item.node.entryId
+    }
+  })
+}
+
 const treeLayoutOptions = {
   rowHeight: 34,
   padding: 0,
   gap: 1
 }
 
-function addItemToMap(
-  index: Map<string, TreeItemData>,
-  item: TreeItemData
-) {
-  index.set(item.id, item)
-  if (!item.children) return
-  for (const child of item.children) {
-    addItemToMap(index, child)
-  }
-}
-
 export function SidebarTree() {
-  const items = useAtomValue(treeItemsAtom)
+  const {items, focusItem} = useAtomValue(treeViewAtom)
   const [expandedKeys, setTreeExpandedKeys] = useAtom(treeExpandedKeysAtom)
   const [selectedKeys, setTreeSelectedKeys] = useAtom(treeSelectedKeysAtom)
+  const focusTreeNode = useSetAtom(focusTreeNodeCommand)
+  const focusTreeParent = useSetAtom(focusTreeParentCommand)
   const setRoute = useSetAtom(cmsRouteAtom)
-  const itemIndex = useMemo(() => {
-    const index = new Map<string, TreeItemData>()
-    for (const item of items) {
-      addItemToMap(index, item)
-    }
-    return index
-  }, [items])
+  const itemIndex = useAtomValue(treeItemIndexAtom)
 
   return (
-    <Virtualizer
-      layout={ListLayout}
-      layoutOptions={treeLayoutOptions}
-    >
-      <Tree
-        aria-label="Content tree"
-        style={{display: 'block', padding: 0, height: '100%'}}
-        items={items}
-        selectionMode="single"
-        selectionBehavior="replace"
-        selectedKeys={selectedKeys}
-        expandedKeys={expandedKeys}
-        onAction={function onAction(key) {
-          const id = String(key)
-          const item = itemIndex.get(id)
-          if (!item?.hasChildNodes) return
-          const next = new Set(expandedKeys)
-          if (next.has(id)) next.delete(id)
-          else next.add(id)
-          setTreeExpandedKeys(next)
-        }}
-        onExpandedChange={function onExpandedChange(keys) {
-          setTreeExpandedKeys(toSet(keys, expandedKeys))
-        }}
-        onSelectionChange={function onSelectionChange(keys) {
-          const selected = toSet(keys, selectedKeys)
-          setTreeSelectedKeys(selected)
-          const selectedId = selected.values().next().value
-          if (!selectedId) return
-          const item = itemIndex.get(String(selectedId))
-          if (!item) return
-          setRoute(() => {
-            if (item.node.kind === 'root') {
-              return {
-                workspace: item.node.workspace,
-                root: item.node.root
-              }
-            }
-            return {
-              workspace: item.node.workspace,
-              root: item.node.root,
-              entry: item.node.entryId
-            }
-          })
-        }}
-      >
-        {renderTreeItem}
-      </Tree>
-    </Virtualizer>
+    <div className={styles.root()}>
+      {focusItem && (
+        <header className={styles.focusHeader()}>
+          <Button
+            aria-label="Back"
+            size="icon"
+            appearance="plain"
+            className={styles.backButton()}
+            onPress={function onPress() {
+              focusTreeParent()
+            }}
+          >
+            <Icon icon={IcRoundArrowBack} />
+          </Button>
+          <Button
+            aria-label={`Go to ${focusItem.node.title}`}
+            size="small"
+            appearance="plain"
+            className={styles.focusLabel()}
+            onPress={function onPress() {
+              navigateToTreeItem(setRoute, focusItem)
+            }}
+          >
+            {focusItem.node.title}
+          </Button>
+        </header>
+      )}
+      <div className={styles.treeViewport()}>
+        <Virtualizer
+          layout={ListLayout}
+          layoutOptions={treeLayoutOptions}
+        >
+          <Tree
+            aria-label="Content tree"
+            style={{display: 'block', padding: 0, height: '100%'}}
+            items={items}
+            selectionMode="single"
+            selectionBehavior="replace"
+            selectedKeys={selectedKeys}
+            expandedKeys={expandedKeys}
+            onAction={function onAction(key) {
+              const item = itemIndex.get(String(key))
+              if (!item?.hasChildNodes) return
+              void focusTreeNode(item.id)
+            }}
+            onExpandedChange={function onExpandedChange(keys) {
+              setTreeExpandedKeys(toSet(keys, expandedKeys))
+            }}
+            onSelectionChange={function onSelectionChange(keys) {
+              const selected = toSet(keys, selectedKeys)
+              setTreeSelectedKeys(selected)
+              const selectedId = selected.values().next().value
+              if (!selectedId) return
+              const item = itemIndex.get(String(selectedId))
+              if (!item) return
+              if (item.hasChildNodes) void focusTreeNode(item.id)
+              navigateToTreeItem(setRoute, item)
+            }}
+          >
+            {renderTreeItem}
+          </Tree>
+        </Virtualizer>
+      </div>
+    </div>
   )
 }

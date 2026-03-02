@@ -1,0 +1,52 @@
+.root {
+  display: flex;
+  flex: 1;
+  min-height: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.focusHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  margin-bottom: 4px;
+}
+
+.backButton {
+  z-index: 2;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+
+.focusLabel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: block;
+  padding: 0 36px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--alinea-text-color);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 400;
+  line-height: 34px;
+  min-height: 34px;
+  border: 0;
+  background: transparent;
+}
+
+.treeViewport {
+  min-height: 0;
+  flex: 1;
+}
+
+.treeViewport > :global(.react-aria-Virtualizer) {
+  min-height: 0;
+  height: 100%;
+}

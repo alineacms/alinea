@@ -14,6 +14,7 @@ import {command} from '../util/Command.js'
 
 const treeExpandedKeysStateAtom = atom<Set<string>>(new Set<string>())
 export const treeSelectedKeysAtom = atom<Set<string>>(new Set<string>())
+const treeFocusedNodeIdStateAtom = atom<string | null>(null)
 
 interface TreeLoadedState {
   childIdsByParent: Record<string, Array<string>>
@@ -54,6 +55,11 @@ export interface TreeItem {
   hasChildNodes: boolean
   children?: Array<TreeItem>
   node: TreeNode
+}
+
+export interface TreeView {
+  focusItem: TreeItem | null
+  items: Array<TreeItem>
 }
 
 const buildRootNode = (
@@ -205,6 +211,17 @@ const treeNodeIndexAtom = atom(get => {
   return index
 })
 
+export const treeFocusedNodeIdAtom = atom(
+  get => {
+    const focusedNodeId = get(treeFocusedNodeIdStateAtom)
+    if (!focusedNodeId) return null
+    return get(treeNodeIndexAtom).has(focusedNodeId) ? focusedNodeId : null
+  },
+  (_get, set, nodeId: string | null) => {
+    set(treeFocusedNodeIdStateAtom, nodeId)
+  }
+)
+
 export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
   async (get, set, nodeId) => {
     const node = get(treeNodeIndexAtom).get(nodeId)
@@ -250,6 +267,26 @@ export const treeExpandedKeysAtom = atom(
   }
 )
 
+export const focusTreeNodeCommand = command<[string], Promise<void>>(
+  async (get, set, nodeId) => {
+    const node = get(treeNodeIndexAtom).get(nodeId)
+    if (!node || !node.hasChildNodes) return
+    await set(loadTreeNodeChildrenCommand, nodeId)
+    set(treeFocusedNodeIdStateAtom, nodeId)
+  }
+)
+
+export const focusTreeParentCommand = command<[], void>((get, set) => {
+  const focusedNodeId = get(treeFocusedNodeIdAtom)
+  if (!focusedNodeId) return
+  const focusedNode = get(treeNodeIndexAtom).get(focusedNodeId)
+  if (!focusedNode?.parentId) {
+    set(treeFocusedNodeIdStateAtom, null)
+    return
+  }
+  set(treeFocusedNodeIdStateAtom, focusedNode.parentId)
+})
+
 export const treeItemsAtom = atom(get => {
   const loaded = get(treeLoadedStateAtom)
   const index = get(treeNodeIndexAtom)
@@ -270,4 +307,27 @@ export const treeItemsAtom = atom(get => {
     return item
   }
   return get(workspaceRootNodesAtom).map(root => toItem(root))
+})
+
+export const treeItemIndexAtom = atom(get => {
+  const index = new Map<string, TreeItem>()
+  const addToIndex = (item: TreeItem) => {
+    index.set(item.id, item)
+    if (!item.children) return
+    for (const child of item.children) addToIndex(child)
+  }
+  for (const root of get(treeItemsAtom)) addToIndex(root)
+  return index
+})
+
+export const treeViewAtom = atom<TreeView>(get => {
+  const items = get(treeItemsAtom)
+  const focusedNodeId = get(treeFocusedNodeIdAtom)
+  if (!focusedNodeId) return {focusItem: null, items}
+  const focusItem = get(treeItemIndexAtom).get(focusedNodeId)
+  if (!focusItem) return {focusItem: null, items}
+  return {
+    focusItem,
+    items: focusItem.children ?? []
+  }
 })
