@@ -1,6 +1,6 @@
 import type {Config} from 'alinea/core/Config'
 import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
-import {Entry} from 'alinea/core/Entry'
+import {Entry, type EntryStatus} from 'alinea/core/Entry'
 import {getType} from 'alinea/core/Internal'
 import type {OrderBy} from 'alinea/core/OrderBy'
 import {Root} from 'alinea/core/Root'
@@ -36,19 +36,23 @@ export interface TreeNode {
   title: string
   entryId?: string
   hasChildNodes: boolean
+  entryStatus?: EntryStatus
+  isUnpublished?: boolean
 }
 
 export interface TreeEntryPreview {
   id: string
   title: string
   hasChildren: boolean
+  status: EntryStatus
+  isUnpublished: boolean
 }
 
-export interface ReactAriaTreeItem {
+export interface TreeItem {
   id: string
   textValue: string
   hasChildNodes: boolean
-  children?: Array<ReactAriaTreeItem>
+  children?: Array<TreeItem>
   node: TreeNode
 }
 
@@ -77,7 +81,9 @@ const buildEntryNode = (parent: TreeNode, entry: TreeEntryPreview): TreeNode => 
     root: parent.root,
     title: entry.title,
     entryId: entry.id,
-    hasChildNodes: entry.hasChildren
+    hasChildNodes: entry.hasChildren,
+    entryStatus: entry.status,
+    isUnpublished: entry.isUnpublished
   }
 }
 
@@ -119,7 +125,9 @@ const queryChildren = async (
     select: {
       id: Entry.id,
       title: Entry.title,
-      type: Entry.type
+      type: Entry.type,
+      status: Entry.status,
+      main: Entry.main
     },
     workspace,
     root,
@@ -142,7 +150,9 @@ const queryChildren = async (
       return {
         id: row.id,
         title: row.title || '(Untitled)',
-        hasChildren
+        hasChildren,
+        status: row.status,
+        isUnpublished: row.status === 'draft' && row.main
       }
     })
   )
@@ -240,12 +250,12 @@ export const treeExpandedKeysAtom = atom(
   }
 )
 
-export const reactAriaTreeItemsAtom = atom(get => {
+export const treeItemsAtom = atom(get => {
   const loaded = get(treeLoadedStateAtom)
   const index = get(treeNodeIndexAtom)
-  const toItem = (node: TreeNode): ReactAriaTreeItem => {
+  const toItem = (node: TreeNode): TreeItem => {
     const childIds = loaded.childIdsByParent[node.id]
-    const item: ReactAriaTreeItem = {
+    const item: TreeItem = {
       id: node.id,
       textValue: node.title,
       hasChildNodes: node.hasChildNodes,
