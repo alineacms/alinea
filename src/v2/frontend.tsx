@@ -6,6 +6,7 @@ import {createRoot} from 'react-dom/client'
 import {App} from './App'
 
 const Page = Config.document('Page', {
+  contains: ['Page'],
   fields: {
     link: Field.entry('Link')
   }
