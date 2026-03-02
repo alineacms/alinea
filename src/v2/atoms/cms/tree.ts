@@ -261,11 +261,3 @@ export const reactAriaTreeItemsAtom = atom(get => {
   }
   return get(workspaceRootNodesAtom).map(root => toItem(root))
 })
-
-export const treeStateSnapshotAtom = atom(get => {
-  return {
-    roots: get(workspaceRootNodesAtom),
-    loaded: get(treeLoadedStateAtom),
-    loading: get(treeLoadingStateAtom)
-  }
-})
