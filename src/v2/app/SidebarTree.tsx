@@ -56,14 +56,16 @@ function navigateToTreeItem(
   setRoute: (update: CmsRoute | ((prev: CmsRoute) => CmsRoute)) => void,
   item: TreeItemData
 ) {
-  setRoute(() => {
+  setRoute(prev => {
     if (item.node.kind === 'root') {
       return {
+        ...prev,
         workspace: item.node.workspace,
         root: item.node.root
       }
     }
     return {
+      ...prev,
       workspace: item.node.workspace,
       root: item.node.root,
       entry: item.node.entryId

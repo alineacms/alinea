@@ -20,7 +20,8 @@ export const currentWorkspaceAtom = atom(
     set(cmsRouteAtom, {
       workspace: nextWorkspace,
       root: keepScope ? route.root : undefined,
-      entry: keepScope ? route.entry : undefined
+      entry: keepScope ? route.entry : undefined,
+      locale: keepScope ? route.locale : undefined
     })
   }
 )

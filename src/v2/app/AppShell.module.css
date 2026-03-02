@@ -45,10 +45,6 @@
   gap: 8px;
 }
 
-.workspaceSelect {
-  width: 100%;
-}
-
 .treeWrap {
   display: flex;
   min-height: 0;
