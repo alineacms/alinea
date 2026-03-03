@@ -28,6 +28,22 @@ Object.defineProperty(globalThis, 'HTMLElement', {
   value: (window as any).HTMLElement,
   configurable: true
 })
+Object.defineProperty(globalThis, 'SVGElement', {
+  value: (window as any).SVGElement,
+  configurable: true
+})
+Object.defineProperty(globalThis, 'getComputedStyle', {
+  value:
+    (window as any).getComputedStyle ??
+    function getComputedStyle() {
+      return {
+        getPropertyValue() {
+          return ''
+        }
+      }
+    },
+  configurable: true
+})
 
 const elementProto = (window as any).HTMLElement?.prototype
 if (elementProto && !elementProto.setCustomValidity) {

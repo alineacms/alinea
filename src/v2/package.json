@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@alinea/components": "^0.0.44",
+    "react-aria-components": "1.15.0",
     "jotai": "^2.4.2"
   },
   "devDependencies": {
@@ -16,7 +17,7 @@
     "@testing-library/react": "^16.3.2",
     "jotai-location": "^0.6.2",
     "linkedom": "^0.18.12",
-    "vite": "npm:rolldown-vite@latest",
+    "vite": "npm:rolldown-vite@^7.3.1",
     "vite-tsconfig-paths": "^6.1.1"
   }
 }
