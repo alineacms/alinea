@@ -9,7 +9,7 @@ import {dbAtom} from '../atoms/db.js'
 import {configAtom} from '../atoms/config.js'
 import css from './AppShell.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
-import {SidebarTree} from './SidebarTree'
+import {SidebarTree} from './SidebarTree.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 
 const styles = styler(css)
@@ -21,7 +21,13 @@ export function AppShell() {
   const [workspace, setWorkspace] = useAtom(currentWorkspaceAtom)
   const workspaces = useMemo(() => {
     return Object.keys(config.workspaces).map(key => {
-      return {id: key, label: String(Workspace.label(config.workspaces[key]))}
+      const data = Workspace.data(config.workspaces[key])
+      return {
+        id: key,
+        label: String(Workspace.label(config.workspaces[key])),
+        icon: data.icon,
+        color: data.color
+      }
     })
   }, [config])
   const rootLocales = useMemo(() => {

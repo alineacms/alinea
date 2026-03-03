@@ -9,7 +9,7 @@ const MenuActionContext = createContext<(key: string) => void>(
 
 mock.module('@alinea/components', function createComponentsMock() {
   interface MenuProps {
-    label: string
+    label: ReactNode
     children: ReactNode
     onAction?: (key: string) => void
   }
@@ -19,10 +19,14 @@ mock.module('@alinea/components', function createComponentsMock() {
     children: ReactNode
   }
 
+  interface ButtonProps {
+    children: ReactNode
+  }
+
   function Menu({label, children, onAction}: MenuProps) {
     return (
       <div>
-        <button type="button">{label}</button>
+        {label}
         <MenuActionContext.Provider value={onAction ?? function onAction() {}}>
           {children}
         </MenuActionContext.Provider>
@@ -45,7 +49,11 @@ mock.module('@alinea/components', function createComponentsMock() {
     )
   }
 
-  return {Menu, MenuItem}
+  function Button({children}: ButtonProps) {
+    return <button type="button">{children}</button>
+  }
+
+  return {Button, Menu, MenuItem}
 })
 
 const {LocaleMenu} = await import('./LocaleMenu.js')
@@ -60,7 +68,7 @@ test('hides locale menu when root has 0 or 1 locale', () => {
       onSelectLocale={function onSelectLocale() {}}
     />
   )
-  test.is(screen.queryByRole('button', {name: 'Language'}), null)
+  test.is(screen.queryAllByRole('button').length, 0)
 
   rerender(
     <LocaleMenu
@@ -69,7 +77,7 @@ test('hides locale menu when root has 0 or 1 locale', () => {
       onSelectLocale={function onSelectLocale() {}}
     />
   )
-  test.is(screen.queryByRole('button', {name: 'Language'}), null)
+  test.is(screen.queryAllByRole('button').length, 0)
 })
 
 test('renders locale menu and emits selected locale', async () => {

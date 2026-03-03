@@ -9,7 +9,7 @@ const MenuActionContext = createContext<(key: string) => void>(
 
 mock.module('@alinea/components', function createComponentsMock() {
   interface MenuProps {
-    label: string
+    label: ReactNode
     children: ReactNode
     onAction?: (key: string) => void
   }
@@ -19,10 +19,14 @@ mock.module('@alinea/components', function createComponentsMock() {
     children: ReactNode
   }
 
+  interface ButtonProps {
+    children: ReactNode
+  }
+
   function Menu({label, children, onAction}: MenuProps) {
     return (
       <div>
-        <button type="button">{label}</button>
+        {label}
         <MenuActionContext.Provider value={onAction ?? function onAction() {}}>
           {children}
         </MenuActionContext.Provider>
@@ -45,14 +49,18 @@ mock.module('@alinea/components', function createComponentsMock() {
     )
   }
 
-  return {Menu, MenuItem}
+  function Button({children}: ButtonProps) {
+    return <button type="button">{children}</button>
+  }
+
+  return {Button, Menu, MenuItem}
 })
 
 const {WorkspaceMenu} = await import('./WorkspaceMenu.js')
 
 const test = suite(import.meta)
 
-test('renders workspace menu and emits selected workspace id', async () => {
+test('renders selected workspace label and emits selected workspace id', async () => {
   let selected: string | undefined
   render(
     <WorkspaceMenu
@@ -67,6 +75,7 @@ test('renders workspace menu and emits selected workspace id', async () => {
     />
   )
 
+  test.is(screen.getAllByRole('button', {name: /simple/i}).length, 2)
   fireEvent.click(screen.getByText('Nested'))
   test.is(selected, 'nested')
 })

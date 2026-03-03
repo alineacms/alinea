@@ -1,4 +1,4 @@
-import {Menu, MenuItem} from '@alinea/components'
+import {Button, Menu, MenuItem} from '@alinea/components'
 
 interface LocaleMenuProps {
   locales: Array<string>
@@ -14,7 +14,7 @@ export function LocaleMenu({
   if (locales.length <= 1 || !selectedLocale) return null
   return (
     <Menu
-      label="Language"
+      label={<Button appearance="plain">{selectedLocale.toUpperCase()}</Button>}
       aria-label="Language"
       selectionMode="single"
       selectedKeys={new Set([selectedLocale])}
