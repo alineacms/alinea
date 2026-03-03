@@ -13,7 +13,7 @@ Find the v2 dashboard in src/v2, and v1 in src/dashboard.
 
 ## Code style
 - Prefer interface over type
-- Use function instead of arrow functions for components and hooks, but anonymous ok for atoms
+- Use function instead of arrow functions when defining React components
 - Always name props interfaces with a `Props` suffix
 - Do not use any type, unless communicated explicitly in the code review
 - Imports should be relative if in same src subdir, otherwise absolute starting

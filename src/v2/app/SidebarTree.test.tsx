@@ -9,11 +9,14 @@ import {createStore, type WritableAtom} from 'jotai'
 import {fileURLToPath} from 'node:url'
 import {configAtom} from '../atoms/config.js'
 import {
+  applyTreeRouteStateCommand,
   focusTreeNodeCommand,
   focusTreeParentCommand,
-  initializeTreeExpandedKeysCommand,
+  treeBootstrapAtom,
   treeExpandedKeysAtom,
   treeFocusedNodeIdAtom,
+  treeItemsAtom,
+  treeSelectedKeysAtom,
   treeViewAtom
 } from '../atoms/cms/tree.js'
 import {dbAtom} from '../atoms/db.js'
@@ -116,16 +119,63 @@ test('expands roots marked openByDefault when initializing the sidebar tree', as
     config
   )
 
-  await store.set(initializeTreeExpandedKeysCommand)
+  await store.set(treeBootstrapAtom)
 
   const rootId = 'root:simple:pages'
   const expandedKeys = store.get(treeExpandedKeysAtom)
   test.is(expandedKeys.has(rootId), true)
 
-  const rootView = store.get(treeViewAtom)
-  test.equal(rootView.items.map(item => item.node.title), ['Pages', 'Media'])
+  const treeItems = store.get(treeItemsAtom)
+  test.equal(treeItems.map(item => item.node.title), ['Pages', 'Media'])
   test.equal(
-    rootView.items[0]?.children?.map(item => item.node.title),
+    treeItems[0]?.children?.map(item => item.node.title),
     ['Home', 'About', 'Blog']
   )
+})
+
+test('syncs tree state from route for root, branch and leaf entry paths', async () => {
+  const db = await createDbFromFS()
+  const store = createStore()
+  setRequiredAtoms(store, db)
+
+  await store.set(applyTreeRouteStateCommand, {
+    workspace: 'simple',
+    root: 'pages'
+  })
+  test.is(store.get(treeFocusedNodeIdAtom), 'root:simple:pages')
+  test.equal(Array.from(store.get(treeSelectedKeysAtom)), ['root:simple:pages'])
+
+  await store.set(applyTreeRouteStateCommand, {
+    workspace: 'simple',
+    root: 'pages',
+    entry: 'blog'
+  })
+  const blogSelected = Array.from(store.get(treeSelectedKeysAtom))[0]
+  test.is(Boolean(blogSelected), true)
+  if (!blogSelected) throw new Error('Expected selected blog node')
+  test.is(store.get(treeFocusedNodeIdAtom), blogSelected)
+
+  await store.set(applyTreeRouteStateCommand, {
+    workspace: 'simple',
+    root: 'pages',
+    entry: 'about'
+  })
+  const aboutSelected = Array.from(store.get(treeSelectedKeysAtom))[0]
+  test.is(Boolean(aboutSelected), true)
+  if (!aboutSelected) throw new Error('Expected selected about node')
+  test.is(store.get(treeFocusedNodeIdAtom), 'root:simple:pages')
+})
+
+test('roots without visible children do not expose child nodes', async () => {
+  const db = await createDbFromFS()
+  const store = createStore()
+  setRequiredAtoms(store, db)
+
+  await store.set(treeBootstrapAtom)
+
+  const treeItems = store.get(treeItemsAtom)
+  const mediaRoot = treeItems.find(item => item.node.title === 'Media')
+  test.is(Boolean(mediaRoot), true)
+  if (!mediaRoot) throw new Error('Expected Media root')
+  test.is(mediaRoot.hasChildNodes, false)
 })

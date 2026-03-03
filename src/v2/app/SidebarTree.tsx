@@ -1,22 +1,21 @@
 import {Button, Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useEffect} from 'react'
 import {Collection, ListLayout, Virtualizer} from 'react-aria-components'
 import type {Selection} from 'react-aria-components'
 import type {CmsRoute} from '../atoms/cms/route.js'
 import {cmsRouteAtom} from '../atoms/cms/route.js'
 import {
+  applyTreeRouteStateCommand,
   focusTreeNodeCommand,
   focusTreeParentCommand,
-  initializeTreeExpandedKeysCommand,
+  treeBootstrapAtom,
   treeExpandedKeysAtom,
   treeItemIndexAtom,
   treeSelectedKeysAtom,
   treeViewAtom,
   type TreeItem as TreeItemData
 } from '../atoms/cms/tree.js'
-import {currentWorkspaceAtom} from '../atoms/cms/workspaces.js'
 import {IcRoundArrowBack} from '../icons.js'
 import css from './SidebarTree.module.css'
 import {EntryStatus} from './EntryStatus.js'
@@ -83,22 +82,15 @@ const treeLayoutOptions = {
 }
 
 export function SidebarTree() {
+  useAtomValue(treeBootstrapAtom)
   const {items, focusItem} = useAtomValue(treeViewAtom)
-  const workspace = useAtomValue(currentWorkspaceAtom)
   const [expandedKeys, setTreeExpandedKeys] = useAtom(treeExpandedKeysAtom)
   const [selectedKeys, setTreeSelectedKeys] = useAtom(treeSelectedKeysAtom)
   const focusTreeNode = useSetAtom(focusTreeNodeCommand)
   const focusTreeParent = useSetAtom(focusTreeParentCommand)
-  const initializeTreeExpandedKeys = useSetAtom(initializeTreeExpandedKeysCommand)
+  const applyTreeRouteState = useSetAtom(applyTreeRouteStateCommand)
   const setRoute = useSetAtom(cmsRouteAtom)
   const itemIndex = useAtomValue(treeItemIndexAtom)
-
-  useEffect(
-    function initializeTreeExpansion() {
-      void initializeTreeExpandedKeys()
-    },
-    [initializeTreeExpandedKeys, workspace]
-  )
 
   return (
     <div className={styles.root()}>
@@ -141,23 +133,28 @@ export function SidebarTree() {
             selectionBehavior="replace"
             selectedKeys={selectedKeys}
             expandedKeys={expandedKeys}
-            onAction={function onAction(key) {
+            onAction={async function onAction(key) {
               const item = itemIndex.get(String(key))
               if (!item?.hasChildNodes) return
-              void focusTreeNode(item.id)
+              await focusTreeNode(item.id)
             }}
-            onExpandedChange={function onExpandedChange(keys) {
-              setTreeExpandedKeys(toSet(keys, expandedKeys))
+            onExpandedChange={async function onExpandedChange(keys) {
+              await setTreeExpandedKeys(toSet(keys, expandedKeys))
             }}
-            onSelectionChange={function onSelectionChange(keys) {
+            onSelectionChange={async function onSelectionChange(keys) {
               const selected = toSet(keys, selectedKeys)
               setTreeSelectedKeys(selected)
               const selectedId = selected.values().next().value
               if (!selectedId) return
               const item = itemIndex.get(String(selectedId))
               if (!item) return
-              if (item.hasChildNodes) void focusTreeNode(item.id)
+              if (item.hasChildNodes) await focusTreeNode(item.id)
               navigateToTreeItem(setRoute, item)
+              await applyTreeRouteState({
+                workspace: item.node.workspace,
+                root: item.node.root,
+                entry: item.node.entryId
+              })
             }}
           >
             {renderTreeItem}

@@ -7,13 +7,15 @@ import {Root} from 'alinea/core/Root'
 import {Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {atom} from 'jotai'
+import {cmsRouteAtom, type CmsRoute} from './route.js'
 import {currentWorkspaceAtom} from './workspaces.js'
 import {configAtom} from '../config.js'
 import {graphAtom} from '../graph.js'
 import {command} from '../util/Command.js'
 
 const treeExpandedKeysStateAtom = atom<Set<string>>(new Set<string>())
-const treeInitializedWorkspacesStateAtom = atom<Set<string>>(new Set<string>())
+const treeBootstrappedStateAtom = atom<boolean>(false)
+const treeRootHasChildrenStateAtom = atom<Record<string, boolean>>({})
 export const treeSelectedKeysAtom = atom<Set<string>>(new Set<string>())
 const treeFocusedNodeIdStateAtom = atom<string | null>(null)
 
@@ -63,10 +65,17 @@ export interface TreeView {
   items: Array<TreeItem>
 }
 
+interface EntryRouteInfo {
+  id: string
+  parentId: string | null
+  hasChildren: boolean
+}
+
 const buildRootNode = (
   workspace: string,
   rootName: string,
-  rootLabel: string
+  rootLabel: string,
+  hasChildNodes: boolean
 ): TreeNode => {
   return {
     id: `root:${workspace}:${rootName}`,
@@ -75,7 +84,7 @@ const buildRootNode = (
     workspace,
     root: rootName,
     title: rootLabel,
-    hasChildNodes: true
+    hasChildNodes
   }
 }
 
@@ -193,13 +202,91 @@ const queryEntryChildren = async (
   return queryChildren(graph, config, workspace, root, parentEntryId, orderBy)
 }
 
+const queryEntryByRoute = async (
+  graph: WriteableGraph,
+  config: Config,
+  route: CmsRoute
+): Promise<EntryRouteInfo | null> => {
+  if (!route.workspace || !route.root || !route.entry) return null
+  const byId = await graph.first({
+    workspace: route.workspace,
+    root: route.root,
+    id: route.entry,
+    select: {
+      id: Entry.id,
+      parentId: Entry.parentId
+    },
+    status: 'preferDraft'
+  })
+  const byPath =
+    byId ??
+    (await graph.first({
+      workspace: route.workspace,
+      root: route.root,
+      path: route.entry,
+      select: {
+        id: Entry.id,
+        parentId: Entry.parentId
+      },
+      status: 'preferDraft'
+    }))
+  if (!byPath) return null
+  const typeNames = visibleTypes(config)
+  const hasChildren = await getHasChildren(
+    graph,
+    route.workspace,
+    route.root,
+    byPath.id,
+    typeNames
+  )
+  return {
+    id: byPath.id,
+    parentId: byPath.parentId,
+    hasChildren
+  }
+}
+
+const queryParentIdByEntryId = async (
+  graph: WriteableGraph,
+  entryId: string
+): Promise<string | null> => {
+  const parent = await graph.first({
+    id: entryId,
+    select: {parentId: Entry.parentId},
+    status: 'preferDraft'
+  })
+  return parent?.parentId ?? null
+}
+
+const queryAncestorIds = async (
+  graph: WriteableGraph,
+  targetEntryId: string
+): Promise<Array<string>> => {
+  const ancestry: Array<string> = []
+  let parentId = await queryParentIdByEntryId(graph, targetEntryId)
+  while (parentId) {
+    ancestry.unshift(parentId)
+    parentId = await queryParentIdByEntryId(graph, parentId)
+  }
+  return ancestry
+}
+
 const workspaceRootNodesAtom = atom(get => {
   const config = get(configAtom)
   const workspace = get(currentWorkspaceAtom)
+  const rootHasChildren = get(treeRootHasChildrenStateAtom)
   const workspaceConfig = config.workspaces[workspace]
   if (!workspaceConfig) return []
-  return Object.entries(Workspace.roots(workspaceConfig)).map(([rootName, root]) =>
-    buildRootNode(workspace, rootName, String(Root.label(root)))
+  return Object.entries(Workspace.roots(workspaceConfig)).map(
+    ([rootName, root]) => {
+      const rootId = `root:${workspace}:${rootName}`
+      return buildRootNode(
+        workspace,
+        rootName,
+        String(Root.label(root)),
+        rootHasChildren[rootId] ?? true
+      )
+    }
   )
 })
 
@@ -255,6 +342,12 @@ export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
             )
           : []
     const children = entries.map(entry => buildEntryNode(node, entry))
+    if (node.kind === 'root') {
+      set(treeRootHasChildrenStateAtom, previous => ({
+        ...previous,
+        [nodeId]: children.length > 0
+      }))
+    }
     set(treeLoadedStateAtom, prev => {
       const nodesById = {...prev.nodesById}
       for (const child of children) nodesById[child.id] = child
@@ -270,37 +363,115 @@ export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
   }
 )
 
-export const initializeTreeExpandedKeysCommand = command<[], Promise<void>>(
+const loadWorkspaceRootHasChildrenCommand = command<[], Promise<void>>(
   async (get, set) => {
+    const config = get(configAtom)
+    const graph = get(graphAtom)
     const workspace = get(currentWorkspaceAtom)
-    const initializedWorkspaces = get(treeInitializedWorkspacesStateAtom)
-    if (initializedWorkspaces.has(workspace)) return
-    const defaultExpandedRootIds = get(workspaceDefaultExpandedRootIdsAtom)
-    if (defaultExpandedRootIds.length > 0) {
-      set(treeExpandedKeysStateAtom, previousKeys => {
-        const nextKeys = new Set(previousKeys)
-        for (const rootId of defaultExpandedRootIds) {
-          nextKeys.add(rootId)
-        }
-        return nextKeys
-      })
-      for (const rootId of defaultExpandedRootIds) {
-        await set(loadTreeNodeChildrenCommand, rootId)
-      }
+    const workspaceConfig = config.workspaces[workspace]
+    if (!workspaceConfig) return
+    const typeNames = visibleTypes(config)
+    const rootChildrenState: Record<string, boolean> = {}
+    for (const [rootName] of Object.entries(Workspace.roots(workspaceConfig))) {
+      const rootId = `root:${workspace}:${rootName}`
+      const hasChildren =
+        typeNames.length > 0
+          ? await getHasChildren(graph, workspace, rootName, null, typeNames)
+          : false
+      rootChildrenState[rootId] = hasChildren
     }
-    set(treeInitializedWorkspacesStateAtom, previous => {
-      const next = new Set(previous)
-      next.add(workspace)
-      return next
-    })
+    set(treeRootHasChildrenStateAtom, previous => ({
+      ...previous,
+      ...rootChildrenState
+    }))
   }
 )
 
+export const applyTreeRouteStateCommand = command<
+  [CmsRoute?],
+  Promise<void>
+>(
+  async (get, set, routeOverride) => {
+    await set(loadWorkspaceRootHasChildrenCommand)
+    const route = routeOverride ?? get(cmsRouteAtom)
+    const workspace = route.workspace || get(currentWorkspaceAtom)
+    const config = get(configAtom)
+    const workspaceConfig = config.workspaces[workspace]
+    if (!workspaceConfig) return
+    const rootName = route.root || Object.keys(Workspace.roots(workspaceConfig))[0]
+    if (!rootName || !workspaceConfig[rootName]) return
+
+    const rootId = `root:${workspace}:${rootName}`
+    const rootHasChildren = get(treeRootHasChildrenStateAtom)[rootId] ?? false
+    if (rootHasChildren) await set(loadTreeNodeChildrenCommand, rootId)
+    const defaultExpandedRootIds = get(workspaceDefaultExpandedRootIdsAtom).filter(
+      rootNodeId => get(treeRootHasChildrenStateAtom)[rootNodeId]
+    )
+    set(treeExpandedKeysStateAtom, previousKeys => {
+      const nextKeys = new Set(previousKeys)
+      for (const rootNodeId of defaultExpandedRootIds) nextKeys.add(rootNodeId)
+      return nextKeys
+    })
+
+    const graph = get(graphAtom)
+    const entry = await queryEntryByRoute(graph, config, {
+      ...route,
+      workspace,
+      root: rootName
+    })
+
+    if (!entry) {
+      set(treeSelectedKeysAtom, new Set<string>([rootId]))
+      if (rootHasChildren) await set(focusTreeNodeCommand, rootId)
+      else set(treeFocusedNodeIdStateAtom, rootId)
+      return
+    }
+
+    const ancestorIds = await queryAncestorIds(graph, entry.id)
+    const expandedPathNodeIds = [rootId]
+    for (const ancestorId of ancestorIds) {
+      const nodeId = `entry:${ancestorId}`
+      if (!get(treeNodeIndexAtom).has(nodeId)) continue
+      expandedPathNodeIds.push(nodeId)
+      await set(loadTreeNodeChildrenCommand, nodeId)
+    }
+
+    const nextExpandedKeys = new Set(get(treeExpandedKeysStateAtom))
+    for (const nodeId of expandedPathNodeIds) nextExpandedKeys.add(nodeId)
+    set(treeExpandedKeysStateAtom, nextExpandedKeys)
+
+    const selectedNodeId = `entry:${entry.id}`
+    set(treeSelectedKeysAtom, new Set<string>([selectedNodeId]))
+
+    if (entry.hasChildren) {
+      await set(focusTreeNodeCommand, selectedNodeId)
+      return
+    }
+
+    const focusNodeId = entry.parentId ? `entry:${entry.parentId}` : rootId
+    await set(focusTreeNodeCommand, focusNodeId)
+  }
+)
+
+export const treeBootstrapAtom = atom(
+  get => get(treeBootstrappedStateAtom),
+  async (get, set) => {
+    if (get(treeBootstrappedStateAtom)) return
+    await set(applyTreeRouteStateCommand)
+    set(treeBootstrappedStateAtom, true)
+  }
+)
+treeBootstrapAtom.onMount = function onMount(set) {
+  set()
+}
+
 export const treeExpandedKeysAtom = atom(
   get => get(treeExpandedKeysStateAtom),
-  (_get, set, keys: Set<string>) => {
+  async (_get, set, keys: Set<string>) => {
     set(treeExpandedKeysStateAtom, keys)
-    for (const key of keys) void set(loadTreeNodeChildrenCommand, key)
+    for (const key of keys) {
+      await set(loadTreeNodeChildrenCommand, key)
+    }
   }
 )
 
