@@ -2,13 +2,17 @@ import {suite} from '@alinea/suite'
 import type {Config} from 'alinea/core/Config'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import type {LocalDB as LocalDBType} from 'alinea/core/db/LocalDB'
+import {root} from 'alinea/core/Root'
 import {FSSource} from 'alinea/core/source/FSSource'
+import {Workspace, workspace} from 'alinea/core/Workspace'
 import {createStore, type WritableAtom} from 'jotai'
 import {fileURLToPath} from 'node:url'
 import {configAtom} from '../atoms/config.js'
 import {
   focusTreeNodeCommand,
   focusTreeParentCommand,
+  initializeTreeExpandedKeysCommand,
+  treeExpandedKeysAtom,
   treeFocusedNodeIdAtom,
   treeViewAtom
 } from '../atoms/cms/tree.js'
@@ -37,6 +41,27 @@ function setRequiredAtoms(store: ReturnType<typeof createStore>, db: LocalDBType
     dbAtom as unknown as WritableAtom<LocalDBType, [LocalDBType], void>,
     db
   )
+}
+
+function configWithSimpleRootOpenByDefault(config: Config): Config {
+  const simple = config.workspaces.simple
+  const simpleData = Workspace.data(simple)
+  return {
+    ...config,
+    workspaces: {
+      ...config.workspaces,
+      simple: workspace(Workspace.label(simple), {
+        ...simpleData,
+        roots: {
+          ...Workspace.roots(simple),
+          pages: root('Pages', {
+            contains: ['Page', 'Folder'],
+            openByDefault: true
+          })
+        }
+      })
+    }
+  }
 }
 
 test('drills into loaded nodes and navigates back without refocusing leaves', async () => {
@@ -78,5 +103,29 @@ test('drills into loaded nodes and navigates back without refocusing leaves', as
   store.set(focusTreeParentCommand)
   const topView = store.get(treeViewAtom)
   test.is(topView.focusItem, null)
-  test.equal(topView.items.map(item => item.node.title), ['Pages'])
+  test.equal(topView.items.map(item => item.node.title), ['Pages', 'Media'])
+})
+
+test('expands roots marked openByDefault when initializing the sidebar tree', async () => {
+  const db = await createDbFromFS()
+  const store = createStore()
+  const config = configWithSimpleRootOpenByDefault(cms.config)
+  setRequiredAtoms(store, db)
+  store.set(
+    configAtom as unknown as WritableAtom<Config, [Config], void>,
+    config
+  )
+
+  await store.set(initializeTreeExpandedKeysCommand)
+
+  const rootId = 'root:simple:pages'
+  const expandedKeys = store.get(treeExpandedKeysAtom)
+  test.is(expandedKeys.has(rootId), true)
+
+  const rootView = store.get(treeViewAtom)
+  test.equal(rootView.items.map(item => item.node.title), ['Pages', 'Media'])
+  test.equal(
+    rootView.items[0]?.children?.map(item => item.node.title),
+    ['Home', 'About', 'Blog']
+  )
 })

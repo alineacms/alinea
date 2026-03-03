@@ -13,6 +13,7 @@ import {graphAtom} from '../graph.js'
 import {command} from '../util/Command.js'
 
 const treeExpandedKeysStateAtom = atom<Set<string>>(new Set<string>())
+const treeInitializedWorkspacesStateAtom = atom<Set<string>>(new Set<string>())
 export const treeSelectedKeysAtom = atom<Set<string>>(new Set<string>())
 const treeFocusedNodeIdStateAtom = atom<string | null>(null)
 
@@ -202,6 +203,16 @@ const workspaceRootNodesAtom = atom(get => {
   )
 })
 
+const workspaceDefaultExpandedRootIdsAtom = atom(get => {
+  const config = get(configAtom)
+  const workspace = get(currentWorkspaceAtom)
+  const workspaceConfig = config.workspaces[workspace]
+  if (!workspaceConfig) return []
+  return Object.entries(Workspace.roots(workspaceConfig))
+    .filter(([, root]) => Boolean(Root.data(root).openByDefault))
+    .map(([rootName]) => `root:${workspace}:${rootName}`)
+})
+
 const treeNodeIndexAtom = atom(get => {
   const index = new Map<string, TreeNode>()
   const roots = get(workspaceRootNodesAtom)
@@ -256,6 +267,32 @@ export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
       }
     })
     set(treeLoadingStateAtom, prev => ({...prev, [nodeId]: false}))
+  }
+)
+
+export const initializeTreeExpandedKeysCommand = command<[], Promise<void>>(
+  async (get, set) => {
+    const workspace = get(currentWorkspaceAtom)
+    const initializedWorkspaces = get(treeInitializedWorkspacesStateAtom)
+    if (initializedWorkspaces.has(workspace)) return
+    const defaultExpandedRootIds = get(workspaceDefaultExpandedRootIdsAtom)
+    if (defaultExpandedRootIds.length > 0) {
+      set(treeExpandedKeysStateAtom, previousKeys => {
+        const nextKeys = new Set(previousKeys)
+        for (const rootId of defaultExpandedRootIds) {
+          nextKeys.add(rootId)
+        }
+        return nextKeys
+      })
+      for (const rootId of defaultExpandedRootIds) {
+        await set(loadTreeNodeChildrenCommand, rootId)
+      }
+    }
+    set(treeInitializedWorkspacesStateAtom, previous => {
+      const next = new Set(previous)
+      next.add(workspace)
+      return next
+    })
   }
 )
 

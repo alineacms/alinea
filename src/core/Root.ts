@@ -18,6 +18,8 @@ export interface RootMeta {
   contains?: Array<string | Type>
   /** Order children entries in the sidebar content tree */
   orderChildrenBy?: OrderBy | Array<OrderBy>
+  /** Open this root in the sidebar content tree by default */
+  openByDefault?: boolean
   icon?: ComponentType
   i18n?: RootI18n
   /** Point to a React component used to view this root in the dashboard */
@@ -72,6 +74,7 @@ export namespace Root {
       locales: cito.array(cito.string)
     }).optional,
     view: cito.string.optional,
+    openByDefault: cito.boolean.optional,
     isMediaRoot: cito.boolean.optional
   })
 
