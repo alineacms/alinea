@@ -7,29 +7,12 @@ import {Root} from 'alinea/core/Root'
 import {Type} from 'alinea/core/Type'
 import {Workspace} from 'alinea/core/Workspace'
 import {atom} from 'jotai'
+import {atomWithReducer} from 'jotai/utils'
 import {cmsRouteAtom, type CmsRoute} from './route.js'
 import {currentWorkspaceAtom} from './workspaces.js'
 import {configAtom} from '../config.js'
 import {graphAtom} from '../graph.js'
 import {command} from '../util/Command.js'
-
-const treeExpandedKeysStateAtom = atom<Set<string>>(new Set<string>())
-const treeBootstrappedStateAtom = atom<boolean>(false)
-const treeRootHasChildrenStateAtom = atom<Record<string, boolean>>({})
-export const treeSelectedKeysAtom = atom<Set<string>>(new Set<string>())
-const treeFocusedNodeIdStateAtom = atom<string | null>(null)
-
-interface TreeLoadedState {
-  childIdsByParent: Record<string, Array<string>>
-  nodesById: Record<string, TreeNode>
-}
-
-const treeLoadedStateAtom = atom<TreeLoadedState>({
-  childIdsByParent: {},
-  nodesById: {}
-})
-
-const treeLoadingStateAtom = atom<Record<string, boolean>>({})
 
 export interface TreeNode {
   id: string
@@ -65,11 +48,199 @@ export interface TreeView {
   items: Array<TreeItem>
 }
 
+export interface TreeSnapshot {
+  expandedKeys: Set<string>
+  selectedKeys: Set<string>
+  itemIndex: Map<string, TreeItem>
+  focusItem: TreeItem | null
+  items: Array<TreeItem>
+}
+
 interface EntryRouteInfo {
   id: string
   parentId: string | null
   hasChildren: boolean
 }
+
+interface TreeState {
+  expandedKeys: Set<string>
+  selectedNodeId: string | null
+  focusedNodeId: string | null
+  rootHasChildrenById: Record<string, boolean>
+  childIdsByParent: Record<string, Array<string>>
+  nodesById: Record<string, TreeNode>
+  loadingByNodeId: Record<string, boolean>
+}
+
+interface TreeAction {
+  type:
+    | 'setExpandedKeys'
+    | 'addExpandedKeys'
+    | 'setSelectedNodeId'
+    | 'setFocusedNodeId'
+    | 'mergeRootHasChildren'
+    | 'setNodeChildren'
+    | 'setNodeLoading'
+  keys?: Set<string>
+  nodeId?: string | null
+  rootHasChildrenById?: Record<string, boolean>
+  children?: Array<TreeNode>
+  isLoading?: boolean
+}
+
+function createInitialTreeState(): TreeState {
+  return {
+    expandedKeys: new Set<string>(),
+    selectedNodeId: null,
+    focusedNodeId: null,
+    rootHasChildrenById: {},
+    childIdsByParent: {},
+    nodesById: {},
+    loadingByNodeId: {}
+  }
+}
+
+function reduceTreeState(state: TreeState, action: TreeAction): TreeState {
+  switch (action.type) {
+    case 'setExpandedKeys': {
+      if (!action.keys) return state
+      return {
+        ...state,
+        expandedKeys: new Set(action.keys)
+      }
+    }
+    case 'addExpandedKeys': {
+      if (!action.keys || action.keys.size === 0) return state
+      const nextKeys = new Set(state.expandedKeys)
+      for (const key of action.keys) nextKeys.add(key)
+      return {
+        ...state,
+        expandedKeys: nextKeys
+      }
+    }
+    case 'setSelectedNodeId': {
+      return {
+        ...state,
+        selectedNodeId: action.nodeId ?? null
+      }
+    }
+    case 'setFocusedNodeId': {
+      return {
+        ...state,
+        focusedNodeId: action.nodeId ?? null
+      }
+    }
+    case 'mergeRootHasChildren': {
+      if (!action.rootHasChildrenById) return state
+      return {
+        ...state,
+        rootHasChildrenById: {
+          ...state.rootHasChildrenById,
+          ...action.rootHasChildrenById
+        }
+      }
+    }
+    case 'setNodeChildren': {
+      if (!action.nodeId || !action.children) return state
+      const nodesById = {...state.nodesById}
+      for (const child of action.children) nodesById[child.id] = child
+      return {
+        ...state,
+        childIdsByParent: {
+          ...state.childIdsByParent,
+          [action.nodeId]: action.children.map(child => child.id)
+        },
+        nodesById
+      }
+    }
+    case 'setNodeLoading': {
+      if (!action.nodeId || typeof action.isLoading !== 'boolean') return state
+      return {
+        ...state,
+        loadingByNodeId: {
+          ...state.loadingByNodeId,
+          [action.nodeId]: action.isLoading
+        }
+      }
+    }
+    default: {
+      return state
+    }
+  }
+}
+
+const treeStateAtom = atomWithReducer(createInitialTreeState(), reduceTreeState)
+
+const workspaceRootNodesAtom = atom(get => {
+  const config = get(configAtom)
+  const workspace = get(currentWorkspaceAtom)
+  const state = get(treeStateAtom)
+  const workspaceConfig = config.workspaces[workspace]
+  if (!workspaceConfig) return []
+  return Object.entries(Workspace.roots(workspaceConfig)).map(
+    ([rootName, root]) => {
+      const rootId = `root:${workspace}:${rootName}`
+      return buildRootNode(
+        workspace,
+        rootName,
+        String(Root.label(root)),
+        state.rootHasChildrenById[rootId] ?? true
+      )
+    }
+  )
+})
+
+const defaultExpandedRootIdsAtom = atom(get => {
+  const config = get(configAtom)
+  const workspace = get(currentWorkspaceAtom)
+  const workspaceConfig = config.workspaces[workspace]
+  if (!workspaceConfig) return []
+  return Object.entries(Workspace.roots(workspaceConfig))
+    .filter(([, root]) => Boolean(Root.data(root).openByDefault))
+    .map(([rootName]) => `root:${workspace}:${rootName}`)
+})
+
+const treeNodeIndexAtom = atom(get => {
+  const index = new Map<string, TreeNode>()
+  const roots = get(workspaceRootNodesAtom)
+  for (const root of roots) index.set(root.id, root)
+  for (const [id, node] of Object.entries(get(treeStateAtom).nodesById)) {
+    index.set(id, node)
+  }
+  return index
+})
+
+const treeSelectedNodeIdAtom = atom(get => {
+  const selectedNodeId = get(treeStateAtom).selectedNodeId
+  if (!selectedNodeId) return null
+  return get(treeNodeIndexAtom).has(selectedNodeId) ? selectedNodeId : null
+})
+
+export const treeSelectedKeysAtom = atom(
+  get => {
+    const selectedNodeId = get(treeSelectedNodeIdAtom)
+    if (!selectedNodeId) return new Set<string>()
+    return new Set<string>([selectedNodeId])
+  },
+  (_get, set, keys: Set<string>) => {
+    const nodeId = keys.values().next().value
+    set(treeStateAtom, {
+      type: 'setSelectedNodeId',
+      nodeId: nodeId ? String(nodeId) : null
+    })
+  }
+)
+
+export const treeFocusedNodeIdAtom = atom(
+  get => {
+    const focusedNodeId = get(treeStateAtom).focusedNodeId
+    if (!focusedNodeId) return null
+    return get(treeNodeIndexAtom).has(focusedNodeId) ? focusedNodeId : null
+  },
+  (_get, set, nodeId: string | null) => {
+    set(treeStateAtom, {type: 'setFocusedNodeId', nodeId})
+  }
+)
 
 const buildRootNode = (
   workspace: string,
@@ -271,95 +442,42 @@ const queryAncestorIds = async (
   return ancestry
 }
 
-const workspaceRootNodesAtom = atom(get => {
-  const config = get(configAtom)
-  const workspace = get(currentWorkspaceAtom)
-  const rootHasChildren = get(treeRootHasChildrenStateAtom)
-  const workspaceConfig = config.workspaces[workspace]
-  if (!workspaceConfig) return []
-  return Object.entries(Workspace.roots(workspaceConfig)).map(
-    ([rootName, root]) => {
-      const rootId = `root:${workspace}:${rootName}`
-      return buildRootNode(
-        workspace,
-        rootName,
-        String(Root.label(root)),
-        rootHasChildren[rootId] ?? true
-      )
-    }
-  )
-})
-
-const workspaceDefaultExpandedRootIdsAtom = atom(get => {
-  const config = get(configAtom)
-  const workspace = get(currentWorkspaceAtom)
-  const workspaceConfig = config.workspaces[workspace]
-  if (!workspaceConfig) return []
-  return Object.entries(Workspace.roots(workspaceConfig))
-    .filter(([, root]) => Boolean(Root.data(root).openByDefault))
-    .map(([rootName]) => `root:${workspace}:${rootName}`)
-})
-
-const treeNodeIndexAtom = atom(get => {
-  const index = new Map<string, TreeNode>()
-  const roots = get(workspaceRootNodesAtom)
-  for (const root of roots) index.set(root.id, root)
-  const loaded = get(treeLoadedStateAtom)
-  for (const [id, node] of Object.entries(loaded.nodesById)) index.set(id, node)
-  return index
-})
-
-export const treeFocusedNodeIdAtom = atom(
-  get => {
-    const focusedNodeId = get(treeFocusedNodeIdStateAtom)
-    if (!focusedNodeId) return null
-    return get(treeNodeIndexAtom).has(focusedNodeId) ? focusedNodeId : null
-  },
-  (_get, set, nodeId: string | null) => {
-    set(treeFocusedNodeIdStateAtom, nodeId)
-  }
-)
-
 export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
   async (get, set, nodeId) => {
     const node = get(treeNodeIndexAtom).get(nodeId)
     if (!node || !node.hasChildNodes) return
-    const loaded = get(treeLoadedStateAtom)
-    if (loaded.childIdsByParent[nodeId]) return
-    set(treeLoadingStateAtom, prev => ({...prev, [nodeId]: true}))
-    const graph = get(graphAtom)
-    const config = get(configAtom)
-    const entries =
-      node.kind === 'root'
-        ? await queryRootEntries(graph, config, node.workspace, node.root)
-        : node.entryId
-          ? await queryEntryChildren(
-              graph,
-              config,
-              node.workspace,
-              node.root,
-              node.entryId
-            )
-          : []
-    const children = entries.map(entry => buildEntryNode(node, entry))
-    if (node.kind === 'root') {
-      set(treeRootHasChildrenStateAtom, previous => ({
-        ...previous,
-        [nodeId]: children.length > 0
-      }))
-    }
-    set(treeLoadedStateAtom, prev => {
-      const nodesById = {...prev.nodesById}
-      for (const child of children) nodesById[child.id] = child
-      return {
-        childIdsByParent: {
-          ...prev.childIdsByParent,
-          [nodeId]: children.map(child => child.id)
-        },
-        nodesById
+    if (get(treeStateAtom).childIdsByParent[nodeId]) return
+
+    set(treeStateAtom, {type: 'setNodeLoading', nodeId, isLoading: true})
+
+    try {
+      const graph = get(graphAtom)
+      const config = get(configAtom)
+      const entries =
+        node.kind === 'root'
+          ? await queryRootEntries(graph, config, node.workspace, node.root)
+          : node.entryId
+            ? await queryEntryChildren(
+                graph,
+                config,
+                node.workspace,
+                node.root,
+                node.entryId
+              )
+            : []
+      const children = entries.map(entry => buildEntryNode(node, entry))
+
+      if (node.kind === 'root') {
+        set(treeStateAtom, {
+          type: 'mergeRootHasChildren',
+          rootHasChildrenById: {[nodeId]: children.length > 0}
+        })
       }
-    })
-    set(treeLoadingStateAtom, prev => ({...prev, [nodeId]: false}))
+
+      set(treeStateAtom, {type: 'setNodeChildren', nodeId, children})
+    } finally {
+      set(treeStateAtom, {type: 'setNodeLoading', nodeId, isLoading: false})
+    }
   }
 )
 
@@ -370,20 +488,20 @@ const loadWorkspaceRootHasChildrenCommand = command<[], Promise<void>>(
     const workspace = get(currentWorkspaceAtom)
     const workspaceConfig = config.workspaces[workspace]
     if (!workspaceConfig) return
+
     const typeNames = visibleTypes(config)
-    const rootChildrenState: Record<string, boolean> = {}
+    const rootHasChildrenById: Record<string, boolean> = {}
+
     for (const [rootName] of Object.entries(Workspace.roots(workspaceConfig))) {
       const rootId = `root:${workspace}:${rootName}`
       const hasChildren =
         typeNames.length > 0
           ? await getHasChildren(graph, workspace, rootName, null, typeNames)
           : false
-      rootChildrenState[rootId] = hasChildren
+      rootHasChildrenById[rootId] = hasChildren
     }
-    set(treeRootHasChildrenStateAtom, previous => ({
-      ...previous,
-      ...rootChildrenState
-    }))
+
+    set(treeStateAtom, {type: 'mergeRootHasChildren', rootHasChildrenById})
   }
 )
 
@@ -393,24 +511,29 @@ export const applyTreeRouteStateCommand = command<
 >(
   async (get, set, routeOverride) => {
     await set(loadWorkspaceRootHasChildrenCommand)
+
     const route = routeOverride ?? get(cmsRouteAtom)
     const workspace = route.workspace || get(currentWorkspaceAtom)
     const config = get(configAtom)
     const workspaceConfig = config.workspaces[workspace]
     if (!workspaceConfig) return
-    const rootName = route.root || Object.keys(Workspace.roots(workspaceConfig))[0]
+
+    const rootName =
+      route.root || Object.keys(Workspace.roots(workspaceConfig))[0]
     if (!rootName || !workspaceConfig[rootName]) return
 
     const rootId = `root:${workspace}:${rootName}`
-    const rootHasChildren = get(treeRootHasChildrenStateAtom)[rootId] ?? false
+    const rootHasChildren = get(treeStateAtom).rootHasChildrenById[rootId] ?? false
+
     if (rootHasChildren) await set(loadTreeNodeChildrenCommand, rootId)
-    const defaultExpandedRootIds = get(workspaceDefaultExpandedRootIdsAtom).filter(
-      rootNodeId => get(treeRootHasChildrenStateAtom)[rootNodeId]
+
+    const defaultExpandedRootIds = get(defaultExpandedRootIdsAtom).filter(rootNodeId =>
+      Boolean(get(treeStateAtom).rootHasChildrenById[rootNodeId])
     )
-    set(treeExpandedKeysStateAtom, previousKeys => {
-      const nextKeys = new Set(previousKeys)
-      for (const rootNodeId of defaultExpandedRootIds) nextKeys.add(rootNodeId)
-      return nextKeys
+
+    set(treeStateAtom, {
+      type: 'addExpandedKeys',
+      keys: new Set(defaultExpandedRootIds)
     })
 
     const graph = get(graphAtom)
@@ -421,14 +544,15 @@ export const applyTreeRouteStateCommand = command<
     })
 
     if (!entry) {
-      set(treeSelectedKeysAtom, new Set<string>([rootId]))
+      set(treeStateAtom, {type: 'setSelectedNodeId', nodeId: rootId})
       if (rootHasChildren) await set(focusTreeNodeCommand, rootId)
-      else set(treeFocusedNodeIdStateAtom, rootId)
+      else set(treeStateAtom, {type: 'setFocusedNodeId', nodeId: rootId})
       return
     }
 
     const ancestorIds = await queryAncestorIds(graph, entry.id)
     const expandedPathNodeIds = [rootId]
+
     for (const ancestorId of ancestorIds) {
       const nodeId = `entry:${ancestorId}`
       if (!get(treeNodeIndexAtom).has(nodeId)) continue
@@ -436,12 +560,13 @@ export const applyTreeRouteStateCommand = command<
       await set(loadTreeNodeChildrenCommand, nodeId)
     }
 
-    const nextExpandedKeys = new Set(get(treeExpandedKeysStateAtom))
-    for (const nodeId of expandedPathNodeIds) nextExpandedKeys.add(nodeId)
-    set(treeExpandedKeysStateAtom, nextExpandedKeys)
+    set(treeStateAtom, {
+      type: 'addExpandedKeys',
+      keys: new Set(expandedPathNodeIds)
+    })
 
     const selectedNodeId = `entry:${entry.id}`
-    set(treeSelectedKeysAtom, new Set<string>([selectedNodeId]))
+    set(treeStateAtom, {type: 'setSelectedNodeId', nodeId: selectedNodeId})
 
     if (entry.hasChildren) {
       await set(focusTreeNodeCommand, selectedNodeId)
@@ -454,21 +579,16 @@ export const applyTreeRouteStateCommand = command<
 )
 
 export const treeBootstrapAtom = atom(
-  get => get(treeBootstrappedStateAtom),
-  async (get, set) => {
-    if (get(treeBootstrappedStateAtom)) return
+  false,
+  async (_get, set) => {
     await set(applyTreeRouteStateCommand)
-    set(treeBootstrappedStateAtom, true)
   }
 )
-treeBootstrapAtom.onMount = function onMount(set) {
-  set()
-}
 
 export const treeExpandedKeysAtom = atom(
-  get => get(treeExpandedKeysStateAtom),
+  get => get(treeStateAtom).expandedKeys,
   async (_get, set, keys: Set<string>) => {
-    set(treeExpandedKeysStateAtom, keys)
+    set(treeStateAtom, {type: 'setExpandedKeys', keys})
     for (const key of keys) {
       await set(loadTreeNodeChildrenCommand, key)
     }
@@ -480,50 +600,58 @@ export const focusTreeNodeCommand = command<[string], Promise<void>>(
     const node = get(treeNodeIndexAtom).get(nodeId)
     if (!node || !node.hasChildNodes) return
     await set(loadTreeNodeChildrenCommand, nodeId)
-    set(treeFocusedNodeIdStateAtom, nodeId)
+    set(treeStateAtom, {type: 'setFocusedNodeId', nodeId})
   }
 )
 
 export const focusTreeParentCommand = command<[], void>((get, set) => {
   const focusedNodeId = get(treeFocusedNodeIdAtom)
   if (!focusedNodeId) return
+
   const focusedNode = get(treeNodeIndexAtom).get(focusedNodeId)
   if (!focusedNode?.parentId) {
-    set(treeFocusedNodeIdStateAtom, null)
+    set(treeStateAtom, {type: 'setFocusedNodeId', nodeId: null})
     return
   }
-  set(treeFocusedNodeIdStateAtom, focusedNode.parentId)
+
+  set(treeStateAtom, {type: 'setFocusedNodeId', nodeId: focusedNode.parentId})
 })
 
 export const treeItemsAtom = atom(get => {
-  const loaded = get(treeLoadedStateAtom)
+  const state = get(treeStateAtom)
   const index = get(treeNodeIndexAtom)
+
   const toItem = (node: TreeNode): TreeItem => {
-    const childIds = loaded.childIdsByParent[node.id]
+    const childIds = state.childIdsByParent[node.id]
     const item: TreeItem = {
       id: node.id,
       textValue: node.title,
       hasChildNodes: node.hasChildNodes,
       node
     }
+
     if (childIds && childIds.length > 0) {
       item.children = childIds
         .map(childId => index.get(childId))
         .filter((child): child is TreeNode => Boolean(child))
         .map(child => toItem(child))
     }
+
     return item
   }
+
   return get(workspaceRootNodesAtom).map(root => toItem(root))
 })
 
 export const treeItemIndexAtom = atom(get => {
   const index = new Map<string, TreeItem>()
+
   const addToIndex = (item: TreeItem) => {
     index.set(item.id, item)
     if (!item.children) return
     for (const child of item.children) addToIndex(child)
   }
+
   for (const root of get(treeItemsAtom)) addToIndex(root)
   return index
 })
@@ -532,10 +660,23 @@ export const treeViewAtom = atom<TreeView>(get => {
   const items = get(treeItemsAtom)
   const focusedNodeId = get(treeFocusedNodeIdAtom)
   if (!focusedNodeId) return {focusItem: null, items}
+
   const focusItem = get(treeItemIndexAtom).get(focusedNodeId)
   if (!focusItem) return {focusItem: null, items}
+
   return {
     focusItem,
     items: focusItem.children ?? []
+  }
+})
+
+export const treeAtom = atom<TreeSnapshot>(get => {
+  const view = get(treeViewAtom)
+  return {
+    expandedKeys: get(treeExpandedKeysAtom),
+    selectedKeys: get(treeSelectedKeysAtom),
+    itemIndex: get(treeItemIndexAtom),
+    focusItem: view.focusItem,
+    items: view.items
   }
 })
