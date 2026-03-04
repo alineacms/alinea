@@ -2,7 +2,7 @@ import styler from '@alinea/styler'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useMemo} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {cmsRouteAtom} from '../atoms/cms/route.js'
 import {applyTreeRouteStateCommand} from '../atoms/cms/tree.js'
 import {currentWorkspaceAtom} from '../atoms/cms/workspaces.js'
@@ -21,6 +21,7 @@ export function AppShell() {
   const config = useAtomValue(configAtom)
   const [route, setRoute] = useAtom(cmsRouteAtom)
   const [workspace, setWorkspace] = useAtom(currentWorkspaceAtom)
+  const [mainTitle, setMainTitle] = useState('Entries')
   const applyTreeRouteState = useSetAtom(applyTreeRouteStateCommand)
   const workspaces = useMemo(() => {
     return Object.keys(config.workspaces).map(key => {
@@ -124,7 +125,7 @@ export function AppShell() {
 
       <main className={styles.main()}>
         <header className={styles.mainHeader()}>
-          <h1 className={styles.mainTitle()}>Main area</h1>
+          <h1 className={styles.mainTitle()}>{mainTitle}</h1>
           <LocaleMenu
             locales={rootLocales}
             selectedLocale={selectedLocale}
@@ -142,6 +143,7 @@ export function AppShell() {
             root={route.root}
             entry={route.entry}
             locale={selectedLocale}
+            onScopeTitleChange={setMainTitle}
             onOpenEntry={function onOpenEntry(entryId) {
               const workspaceId = route.workspace || workspace
               const rootId = route.root

@@ -114,6 +114,7 @@ interface ScopeParentEntry {
   id: string
   title: string
   type: string
+  parentId: string | null
 }
 
 interface ContentExplorerProps {
@@ -128,6 +129,7 @@ interface ContentExplorerProps {
   virtualized?: boolean
   defaultMode?: ExplorerMode
   onOpenEntry: (entryId: string) => void
+  onScopeTitleChange?: (title: string) => void
 }
 
 const rowLayoutOptions = {
@@ -262,7 +264,8 @@ async function findScopeParentEntry(
     select: {
       id: Entry.id,
       title: Entry.title,
-      type: Entry.type
+      type: Entry.type,
+      parentId: Entry.parentId
     },
     status: 'preferDraft'
   })
@@ -275,7 +278,8 @@ async function findScopeParentEntry(
     select: {
       id: Entry.id,
       title: Entry.title,
-      type: Entry.type
+      type: Entry.type,
+      parentId: Entry.parentId
     },
     status: 'preferDraft'
   })
@@ -312,20 +316,38 @@ async function resolveScope(
   let orderBy = rootData.orderChildrenBy
 
   if (entry) {
-    const parentEntry = await findScopeParentEntry(
+    const selectedEntry = await findScopeParentEntry(
       graph,
       workspace,
       root,
       entry,
       scopedLocale
     )
-    if (parentEntry) {
-      parentId = parentEntry.id
-      parentTitle = parentEntry.title || '(Untitled)'
-      const parentType = config.schema[parentEntry.type]
-      if (parentType) {
-        const typeData = getType(parentType)
-        orderBy = typeData.orderChildrenBy
+    if (selectedEntry) {
+      const selectedType = config.schema[selectedEntry.type]
+      const selectedCanContain = selectedType
+        ? Type.isContainer(selectedType)
+        : false
+      if (selectedCanContain) {
+        parentId = selectedEntry.id
+        parentTitle = selectedEntry.title || '(Untitled)'
+        orderBy = getType(selectedType).orderChildrenBy
+      } else if (selectedEntry.parentId) {
+        const parentEntry = await findScopeParentEntry(
+          graph,
+          workspace,
+          root,
+          selectedEntry.parentId,
+          scopedLocale
+        )
+        if (parentEntry) {
+          parentId = parentEntry.id
+          parentTitle = parentEntry.title || '(Untitled)'
+          const parentType = config.schema[parentEntry.type]
+          if (parentType) {
+            orderBy = getType(parentType).orderChildrenBy
+          }
+        }
       }
     }
   }
@@ -470,7 +492,8 @@ export function ContentExplorer({
   autoLoadMore = true,
   virtualized = true,
   defaultMode = 'rows',
-  onOpenEntry
+  onOpenEntry,
+  onScopeTitleChange
 }: ContentExplorerProps) {
   const [mode, setMode] = useState<ExplorerMode>(defaultMode)
   const [state, setState] = useState<ContentExplorerState>({
@@ -490,6 +513,13 @@ export function ContentExplorer({
       stateRef.current = state
     },
     [state]
+  )
+  useEffect(
+    function emitScopeTitle() {
+      if (!onScopeTitleChange) return
+      onScopeTitleChange(state.scope?.parentTitle || 'Entries')
+    },
+    [onScopeTitleChange, state.scope?.parentTitle]
   )
 
   const loadMore = useCallback(
@@ -613,17 +643,13 @@ export function ContentExplorer({
   )
 
   const hasMore = state.entries.length < state.total
-  const scopeTitle = state.scope?.parentTitle || 'Entries'
 
   return (
     <section className={styles.root()}>
       <header className={styles.header()}>
-        <div className={styles.headerText()}>
-          <h2 className={styles.heading()}>{scopeTitle}</h2>
-          <p className={styles.meta()}>
-            Loaded {state.entries.length} of {state.total}
-          </p>
-        </div>
+        <p className={styles.meta()}>
+          Loaded {state.entries.length} of {state.total}
+        </p>
 
         <div className={styles.viewSwitch()}>
           <Button
