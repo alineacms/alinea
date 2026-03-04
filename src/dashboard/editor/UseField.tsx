@@ -55,7 +55,14 @@ export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
   const scope = getScope(editor.config)
   const fieldName = scope.nameOf(field)
   if (!fieldName) return options
-  const resource = {type: editor.activeVersion.type, field: fieldName}
+  const resource = {
+    workspace: editor.activeVersion.workspace,
+    root: editor.activeVersion.root,
+    id: editor.activeVersion.id,
+    parents: editor.activeVersion.parents,
+    type: editor.activeVersion.type,
+    field: fieldName
+  }
   const read = policy.canRead(resource)
   const update = policy.canUpdate(resource)
   return {
