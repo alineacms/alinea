@@ -2,4 +2,4 @@
 linker = "hoisted"
 
 [test]
-preload = "./src/v2/dom.ts"
+preload = "./src/v2/dom.js"

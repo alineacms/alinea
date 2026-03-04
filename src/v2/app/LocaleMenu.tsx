@@ -1,7 +1,7 @@
 import {Button, Menu, MenuItem} from '@alinea/components'
 
 interface LocaleMenuProps {
-  locales: Array<string>
+  locales: ReadonlyArray<string>
   selectedLocale: string | undefined
   onSelectLocale: (locale: string) => void
 }

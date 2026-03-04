@@ -94,15 +94,15 @@
 }
 
 .mainBody {
-  overflow: auto;
+  overflow: hidden;
   padding: var(--content-padding-y) var(--content-padding-x);
+  min-height: 0;
+  display: flex;
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 920px;
+.mainBody > * {
+  flex: 1;
+  min-height: 0;
 }
 
 .meta {

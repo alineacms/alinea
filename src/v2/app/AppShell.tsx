@@ -1,13 +1,15 @@
 import styler from '@alinea/styler'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
-import {useAtom, useAtomValue} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useMemo} from 'react'
 import {cmsRouteAtom} from '../atoms/cms/route.js'
+import {applyTreeRouteStateCommand} from '../atoms/cms/tree.js'
 import {currentWorkspaceAtom} from '../atoms/cms/workspaces.js'
 import {dbAtom} from '../atoms/db.js'
 import {configAtom} from '../atoms/config.js'
 import css from './AppShell.module.css'
+import {ContentExplorer} from './ContentExplorer.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {SidebarTree} from './SidebarTree.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
@@ -19,6 +21,7 @@ export function AppShell() {
   const config = useAtomValue(configAtom)
   const [route, setRoute] = useAtom(cmsRouteAtom)
   const [workspace, setWorkspace] = useAtom(currentWorkspaceAtom)
+  const applyTreeRouteState = useSetAtom(applyTreeRouteStateCommand)
   const workspaces = useMemo(() => {
     return Object.keys(config.workspaces).map(key => {
       const data = Workspace.data(config.workspaces[key])
@@ -63,6 +66,41 @@ export function AppShell() {
     },
     [rootLocales, route.locale, selectedLocale, setRoute]
   )
+  useEffect(
+    function ensureRootInPath() {
+      const workspaceId = route.workspace || workspace
+      if (!workspaceId || route.root) return
+      const workspaceConfig = config.workspaces[workspaceId]
+      if (!workspaceConfig) return
+      const firstRoot = Object.keys(Workspace.roots(workspaceConfig))[0]
+      if (!firstRoot) return
+      setRoute(prev => ({
+        ...prev,
+        workspace: workspaceId,
+        root: firstRoot,
+        entry: undefined
+      }))
+    },
+    [config, route.root, route.workspace, setRoute, workspace]
+  )
+  useEffect(
+    function syncTreeStateToRoute() {
+      const workspaceId = route.workspace || workspace
+      if (!workspaceId) return
+      void applyTreeRouteState({
+        workspace: workspaceId,
+        root: route.root,
+        entry: route.entry
+      })
+    },
+    [
+      applyTreeRouteState,
+      route.entry,
+      route.root,
+      route.workspace,
+      workspace
+    ]
+  )
 
   return (
     <div className={styles.root()}>
@@ -97,10 +135,27 @@ export function AppShell() {
         </header>
 
         <div className={styles.mainBody()}>
-          <div className={styles.form()}>
-            <p className={styles.meta()}>Placeholder: selected entry summary</p>
-            <p className={styles.meta()}>Placeholder: field editor surface</p>
-          </div>
+          <ContentExplorer
+            graph={db}
+            config={config}
+            workspace={route.workspace || workspace}
+            root={route.root}
+            entry={route.entry}
+            locale={selectedLocale}
+            onOpenEntry={function onOpenEntry(entryId) {
+              const workspaceId = route.workspace || workspace
+              const rootId = route.root
+              if (!workspaceId || !rootId) return
+              const nextRoute = {
+                workspace: workspaceId,
+                root: rootId,
+                entry: entryId,
+                locale: route.locale
+              }
+              setRoute(nextRoute)
+              void applyTreeRouteState(nextRoute)
+            }}
+          />
         </div>
       </main>
     </div>
