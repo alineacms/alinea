@@ -10,6 +10,7 @@ import {dbAtom} from '../atoms/db.js'
 import {configAtom} from '../atoms/config.js'
 import css from './AppShell.module.css'
 import {ContentExplorer} from './ContentExplorer.js'
+import {EntryEditor} from './EntryEditor.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {SidebarTree} from './SidebarTree.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
@@ -136,28 +137,40 @@ export function AppShell() {
         </header>
 
         <div className={styles.mainBody()}>
-          <ContentExplorer
-            graph={db}
-            config={config}
-            workspace={route.workspace || workspace}
-            root={route.root}
-            entry={route.entry}
-            locale={selectedLocale}
-            onScopeTitleChange={setMainTitle}
-            onOpenEntry={function onOpenEntry(entryId) {
-              const workspaceId = route.workspace || workspace
-              const rootId = route.root
-              if (!workspaceId || !rootId) return
-              const nextRoute = {
-                workspace: workspaceId,
-                root: rootId,
-                entry: entryId,
-                locale: route.locale
-              }
-              setRoute(nextRoute)
-              void applyTreeRouteState(nextRoute)
-            }}
-          />
+          <div className={styles.explorerPane()}>
+            <ContentExplorer
+              graph={db}
+              config={config}
+              workspace={route.workspace || workspace}
+              root={route.root}
+              entry={route.entry}
+              locale={selectedLocale}
+              onScopeTitleChange={setMainTitle}
+              onOpenEntry={function onOpenEntry(entryId) {
+                const workspaceId = route.workspace || workspace
+                const rootId = route.root
+                if (!workspaceId || !rootId) return
+                const nextRoute = {
+                  workspace: workspaceId,
+                  root: rootId,
+                  entry: entryId,
+                  locale: route.locale
+                }
+                setRoute(nextRoute)
+                void applyTreeRouteState(nextRoute)
+              }}
+            />
+          </div>
+          <div className={styles.editorPane()}>
+            <EntryEditor
+              graph={db}
+              config={config}
+              workspace={route.workspace || workspace}
+              root={route.root}
+              entry={route.entry}
+              locale={selectedLocale}
+            />
+          </div>
         </div>
       </main>
     </div>
