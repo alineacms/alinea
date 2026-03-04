@@ -19,6 +19,7 @@ import {
   ListBoxItem,
   ListBoxLoadMoreItem,
   ListLayout,
+  Size,
   Virtualizer
 } from 'react-aria-components'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
@@ -130,10 +131,17 @@ interface ContentExplorerProps {
 }
 
 const rowLayoutOptions = {
-  rowHeight: 70,
+  estimatedRowHeight: 72,
   padding: 0,
   gap: 1,
   loaderHeight: 42
+}
+
+const cardLayoutOptions = {
+  minItemSize: new Size(236, 212),
+  maxItemSize: new Size(320, 212),
+  minSpace: new Size(12, 12),
+  maxHorizontalSpace: 24
 }
 
 function entrySelection(schema: Schema) {
@@ -729,6 +737,7 @@ export function ContentExplorer({
         ) : virtualized ? (
           <Virtualizer
             layout={GridLayout}
+            layoutOptions={cardLayoutOptions}
           >
             <GridList
               aria-label="Children as cards"
