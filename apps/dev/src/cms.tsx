@@ -8,24 +8,18 @@ const editor = Config.role('Editor', {
   permissions(policy) {
     policy.set(
       {
-        allow: {all: true}
-      },
-      {
-        workspace: cms.workspaces.secondary,
-        deny: {read: true}
-      },
-      {
-        root: cms.workspaces.primary.pages,
-        deny: {read: true}
+        workspace: cms.workspaces.primary,
+        allow: {read: true},
+        grant: 'explicit'
       },
       {
         root: cms.workspaces.primary.fields,
-        grant: 'explicit',
-        allow: {read: true}
+        allow: {read: true},
+        grant: 'explicit'
       },
       {
         id: '2dgfSWKFaEqxaimsO32A1sR9iMw',
-        allow: {read: true, update: true}
+        allow: {all: true}
       },
       {
         field: schema.FieldPermissions.readOnlyByRole,
