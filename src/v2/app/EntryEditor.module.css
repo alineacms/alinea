@@ -137,7 +137,11 @@
   background: #f0f4f8;
 }
 
-.placeholder {
+.input {
+  min-width: 0;
+}
+
+.missingView {
   border-radius: 8px;
   border: 1px dashed #c8d3df;
   background: #ffffff;

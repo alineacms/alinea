@@ -8,6 +8,7 @@ import {applyTreeRouteStateCommand} from '../atoms/cms/tree.js'
 import {currentWorkspaceAtom} from '../atoms/cms/workspaces.js'
 import {dbAtom} from '../atoms/db.js'
 import {configAtom} from '../atoms/config.js'
+import type {EntryViews} from '../fields/FieldView.js'
 import css from './AppShell.module.css'
 import {ContentExplorer} from './ContentExplorer.js'
 import {EntryEditor} from './EntryEditor.js'
@@ -17,7 +18,11 @@ import {WorkspaceMenu} from './WorkspaceMenu.js'
 
 const styles = styler(css)
 
-export function AppShell() {
+interface AppShellProps {
+  views: EntryViews
+}
+
+export function AppShell({views}: AppShellProps) {
   const db = useAtomValue(dbAtom)
   const config = useAtomValue(configAtom)
   const [route, setRoute] = useAtom(cmsRouteAtom)
@@ -165,6 +170,7 @@ export function AppShell() {
             <EntryEditor
               graph={db}
               config={config}
+              views={views}
               workspace={route.workspace || workspace}
               root={route.root}
               entry={route.entry}

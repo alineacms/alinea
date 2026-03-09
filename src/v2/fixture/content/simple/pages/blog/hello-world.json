@@ -4,5 +4,8 @@
   "_index": "a0",
   "_root": "pages",
   "title": "Hello world",
-  "summary": "First child page"
+  "path": "hello-world",
+  "summary": "First child page",
+  "featured": false,
+  "category": "news"
 }

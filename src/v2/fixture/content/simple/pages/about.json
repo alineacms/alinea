@@ -4,5 +4,8 @@
   "_index": "a1",
   "_root": "pages",
   "title": "About",
-  "summary": "Basic page with no children"
+  "path": "about",
+  "summary": "Basic page with no children",
+  "featured": false,
+  "category": "news"
 }

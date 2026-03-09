@@ -4,5 +4,8 @@
   "_index": "a0",
   "_root": "pages",
   "title": "Home",
-  "summary": "Simple workspace root page"
+  "path": "home",
+  "summary": "Simple workspace root page",
+  "featured": true,
+  "category": "docs"
 }

@@ -1,0 +1,10 @@
+.control {
+  width: 100%;
+}
+
+.check {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+

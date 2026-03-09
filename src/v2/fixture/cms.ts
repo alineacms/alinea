@@ -4,9 +4,26 @@ import {createCMS} from 'alinea/core'
 const Page = Config.document('Page', {
   contains: ['Page', 'Folder'],
   fields: {
-    title: Field.text('Title'),
-    path: Field.path('Path'),
-    summary: Field.text('Summary')
+    title: Field.text('Title', {width: 0.5}),
+    path: Field.path('Path', {width: 0.5}),
+    summary: Field.text('Summary', {
+      multiline: true,
+      placeholder: 'Write a short summary'
+    }),
+    featured: Field.check('Featured', {
+      width: 0.5,
+      description: 'Highlight on overview pages',
+      initialValue: true
+    }),
+    category: Field.select('Category', {
+      width: 0.5,
+      options: {
+        docs: 'Docs',
+        news: 'News',
+        release: 'Release notes'
+      },
+      initialValue: 'docs'
+    })
   }
 })
 

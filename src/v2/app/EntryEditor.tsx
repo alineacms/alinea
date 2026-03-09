@@ -2,13 +2,17 @@ import {Elevation, ProgressCircle} from '@alinea/components'
 import styler from '@alinea/styler'
 import type {Config} from 'alinea/core/Config'
 import {Entry, type EntryStatus} from 'alinea/core/Entry'
-import {Field, type FieldOptions} from 'alinea/core/Field'
+import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {entries} from 'alinea/core/util/Objects'
 import type {CSSProperties} from 'react'
 import {useEffect, useMemo, useState} from 'react'
+import type {
+  EditorFieldOptions,
+  EntryViews
+} from '../fields/FieldView.js'
 import css from './EntryEditor.module.css'
 import {EntryStatus as EntryStatusBadge} from './EntryStatus.js'
 
@@ -17,6 +21,7 @@ const styles = styler(css)
 interface EntryEditorProps {
   graph: WriteableGraph
   config: Config
+  views: EntryViews
   workspace?: string
   root?: string
   entry?: string
@@ -53,10 +58,10 @@ interface EntryEditorQueryRow {
 
 interface EntrySection {
   id: string
-  fields: Array<EntryFieldPlaceholder>
+  fields: Array<EntryFieldConfig>
 }
 
-interface EntryFieldPlaceholder {
+interface EntryFieldConfig {
   key: string
   label: string
   width: number
@@ -64,13 +69,9 @@ interface EntryFieldPlaceholder {
   required: boolean
   readOnly: boolean
   helpText?: string
+  viewId?: string
   viewLabel: string
-  valuePreview: string
-}
-
-interface FieldLayoutOptions extends FieldOptions<unknown> {
-  width?: number
-  help?: unknown
+  options: EditorFieldOptions
 }
 
 const entryEditorSelection = {
@@ -129,6 +130,11 @@ function widthToSpan(width: number): number {
   return Math.max(1, Math.min(12, Math.round(width * 12)))
 }
 
+function fieldViewId(field: Field): string | undefined {
+  const view = Field.view(field)
+  return typeof view === 'string' ? view : undefined
+}
+
 function fieldViewLabel(field: Field): string {
   const view = Field.view(field)
   if (typeof view !== 'string') return 'Custom view'
@@ -163,21 +169,20 @@ function helpText(help: unknown): string | undefined {
   return undefined
 }
 
-function fieldOptions(field: Field): FieldLayoutOptions {
-  return Field.options(field as Field<unknown, unknown, unknown, FieldLayoutOptions>)
+function fieldOptions(field: Field): EditorFieldOptions {
+  return Field.options(
+    field as Field<unknown, unknown, unknown, EditorFieldOptions>
+  )
 }
 
-function fieldStyle(field: EntryFieldPlaceholder): CSSProperties {
+function fieldStyle(field: EntryFieldConfig): CSSProperties {
   return {gridColumn: `span ${field.span}`}
 }
 
-function buildSections(
-  type: Type,
-  entryData: Record<string, unknown>
-): Array<EntrySection> {
+function buildSections(type: Type): Array<EntrySection> {
   const result: Array<EntrySection> = []
   for (const section of Type.sections(type)) {
-    const sectionFields: Array<EntryFieldPlaceholder> = []
+    const sectionFields: Array<EntryFieldConfig> = []
     for (const [key, field] of entries(Section.fields(section))) {
       const options = fieldOptions(field)
       if (options.hidden) continue
@@ -190,8 +195,9 @@ function buildSections(
         required: Boolean(options.required),
         readOnly: Boolean(options.readOnly),
         helpText: helpText(options.help),
+        viewId: fieldViewId(field),
         viewLabel: fieldViewLabel(field),
-        valuePreview: stringifyPreview(entryData[key])
+        options
       })
     }
     if (sectionFields.length === 0) continue
@@ -203,9 +209,28 @@ function buildSections(
   return result
 }
 
+function initialDraftData(
+  type: Type,
+  entryData: Record<string, unknown>
+): Record<string, unknown> {
+  const draftData = {...entryData}
+  for (const section of Type.sections(type)) {
+    for (const [key, field] of entries(Section.fields(section))) {
+      if (draftData[key] !== undefined) continue
+      draftData[key] = Field.initialValue(field)
+    }
+  }
+  return draftData
+}
+
+function fieldInputId(entryId: string, fieldKey: string): string {
+  return `field-${entryId}-${fieldKey}`
+}
+
 export function EntryEditor({
   graph,
   config,
+  views,
   workspace,
   root,
   entry,
@@ -215,6 +240,7 @@ export function EntryEditor({
     isLoading: false,
     entry: null
   })
+  const [draftData, setDraftData] = useState<Record<string, unknown>>({})
 
   useEffect(
     function loadSelectedEntry() {
@@ -255,10 +281,21 @@ export function EntryEditor({
     return config.schema[state.entry.type]
   }, [config, state.entry])
 
+  useEffect(
+    function resetDraftDataWhenEntryChanges() {
+      if (!state.entry || !entryType) {
+        setDraftData({})
+        return
+      }
+      setDraftData(initialDraftData(entryType, state.entry.data))
+    },
+    [entryType, state.entry]
+  )
+
   const sections = useMemo(() => {
-    if (!state.entry || !entryType) return []
-    return buildSections(entryType, state.entry.data)
-  }, [entryType, state.entry])
+    if (!entryType) return []
+    return buildSections(entryType)
+  }, [entryType])
 
   return (
     <section className={styles.root()}>
@@ -314,39 +351,62 @@ export function EntryEditor({
                     </h3>
                   )}
                   <div className={styles.grid()}>
-                    {section.fields.map(field => (
-                      <Elevation
-                        key={field.key}
-                        className={styles.field()}
-                        style={fieldStyle(field)}
-                      >
-                        <header className={styles.fieldHeader()}>
-                          <div className={styles.fieldLabel()}>
-                            {field.label}
-                          </div>
-                          <div className={styles.flags()}>
-                            {field.required && (
-                              <span className={styles.flag()}>Required</span>
+                    {section.fields.map(field => {
+                      const View = field.viewId ? views[field.viewId] : undefined
+                      const value = draftData[field.key]
+                      return (
+                        <Elevation
+                          key={field.key}
+                          className={styles.field()}
+                          style={fieldStyle(field)}
+                        >
+                          <header className={styles.fieldHeader()}>
+                            <div className={styles.fieldLabel()}>
+                              {field.label}
+                            </div>
+                            <div className={styles.flags()}>
+                              {field.required && (
+                                <span className={styles.flag()}>Required</span>
+                              )}
+                              {field.readOnly && (
+                                <span className={styles.flag({muted: true})}>
+                                  Read only
+                                </span>
+                              )}
+                            </div>
+                          </header>
+                          <div className={styles.input()}>
+                            {View ? (
+                              <View
+                                id={fieldInputId(state.entry.id, field.key)}
+                                label={field.label}
+                                value={value}
+                                options={field.options}
+                                readOnly={field.readOnly}
+                                required={field.required}
+                                onChange={function onChange(nextValue) {
+                                  setDraftData(prev => ({
+                                    ...prev,
+                                    [field.key]: nextValue
+                                  }))
+                                }}
+                              />
+                            ) : (
+                              <div className={styles.missingView()}>
+                                {stringifyPreview(value)}
+                              </div>
                             )}
-                            {field.readOnly && (
-                              <span className={styles.flag({muted: true})}>
-                                Read only
-                              </span>
-                            )}
                           </div>
-                        </header>
-                        <div className={styles.placeholder()}>
-                          {field.valuePreview}
-                        </div>
-                        <footer className={styles.fieldMeta()}>
-                          <span>{field.viewLabel}</span>
-                          <span>{Math.round(field.width * 100)}%</span>
-                        </footer>
-                        {field.helpText && (
-                          <p className={styles.help()}>{field.helpText}</p>
-                        )}
-                      </Elevation>
-                    ))}
+                          <footer className={styles.fieldMeta()}>
+                            <span>{field.viewLabel}</span>
+                            <span>{Math.round(field.width * 100)}%</span>
+                          </footer>
+                          {field.helpText && (
+                            <p className={styles.help()}>{field.helpText}</p>
+                          )}
+                        </Elevation>
+                      )
+                    })}
                   </div>
                 </section>
               ))

@@ -4,5 +4,8 @@
   "_index": "a1",
   "_root": "pages",
   "title": "Release notes",
-  "summary": "Second child page"
+  "path": "release-notes",
+  "summary": "Second child page",
+  "featured": true,
+  "category": "release"
 }

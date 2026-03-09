@@ -1,18 +1,17 @@
 import '@alinea/components/css'
 import type {Config} from 'alinea/core/Config'
-import type {LocalConnection} from 'alinea/core/Connection'
-import {type ComponentType, useMemo} from 'react'
 import './index.css'
 import type {LocalDB} from 'alinea/core/db/LocalDB.js'
-import {AppShell} from './app/AppShell'
+import {AppShell} from './app/AppShell.js'
 import {configAtom} from './atoms/config.js'
 import {dbAtom} from './atoms/db.js'
 import {useRequiredAtoms} from './atoms/util/RequiredAtom.js'
+import type {EntryViews} from './fields/FieldView.js'
 
 export interface AppProps {
   config: Config
   db: LocalDB
-  views: Record<string, ComponentType>
+  views: EntryViews
 }
 
 const requiredAtoms = {
@@ -26,5 +25,5 @@ export function App(props: AppProps) {
     config,
     db: props.db
   })
-  return <AppShell />
+  return <AppShell views={props.views} />
 }
