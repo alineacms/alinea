@@ -1,17 +1,21 @@
 import {suite} from '@alinea/suite'
 import type {Config} from 'alinea/core/Config'
+import {Entry} from 'alinea/core/Entry'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import type {LocalDB as LocalDBType} from 'alinea/core/db/LocalDB'
 import {root} from 'alinea/core/Root'
 import {FSSource} from 'alinea/core/source/FSSource'
 import {Workspace, workspace} from 'alinea/core/Workspace'
 import {createStore, type WritableAtom} from 'jotai'
+import {cpSync, mkdtempSync} from 'node:fs'
+import {tmpdir} from 'node:os'
 import {fileURLToPath} from 'node:url'
 import {configAtom} from '../atoms/config.js'
 import {
   applyTreeRouteStateCommand,
   focusTreeNodeCommand,
   focusTreeParentCommand,
+  moveTreeNodeCommand,
   treeBootstrapAtom,
   treeExpandedKeysAtom,
   treeFocusedNodeIdAtom,
@@ -29,7 +33,10 @@ function fixtureContentDir() {
 }
 
 async function createDbFromFS() {
-  const source = new FSSource(fixtureContentDir())
+  const fixtureDir = fixtureContentDir()
+  const tempDir = mkdtempSync(`${tmpdir()}/alinea-sidebar-tree-`)
+  cpSync(fixtureDir, tempDir, {recursive: true})
+  const source = new FSSource(tempDir)
   const db = new LocalDB(cms.config, source)
   await db.sync()
   return db
@@ -81,16 +88,25 @@ test('drills into loaded nodes and navigates back without refocusing leaves', as
     rootView.items.map(item => item.node.title),
     ['Home', 'About', 'Blog']
   )
+  const home = rootView.items.find(item => item.node.title === 'Home')
+  test.is(Boolean(home), true)
+  if (!home) throw new Error('Expected Home node to exist')
+  test.is(home.node.typeName, 'Page')
+  test.is(home.node.isContainer, true)
 
   const about = rootView.items.find(item => item.node.title === 'About')
   test.is(Boolean(about), true)
   if (!about) throw new Error('Expected About node to exist')
+  test.is(about.node.typeName, 'Page')
+  test.is(about.node.isContainer, true)
   await store.set(focusTreeNodeCommand, about.id)
   test.is(store.get(treeFocusedNodeIdAtom), rootId)
 
   const blog = rootView.items.find(item => item.node.title === 'Blog')
   test.is(Boolean(blog), true)
   if (!blog) throw new Error('Expected Blog node to exist')
+  test.is(blog.node.typeName, 'Folder')
+  test.is(blog.node.isContainer, true)
   await store.set(focusTreeNodeCommand, blog.id)
 
   const blogView = store.get(treeViewAtom)
@@ -178,4 +194,51 @@ test('roots without visible children do not expose child nodes', async () => {
   test.is(Boolean(mediaRoot), true)
   if (!mediaRoot) throw new Error('Expected Media root')
   test.is(mediaRoot.hasChildNodes, false)
+})
+
+test('moves a leaf entry into a folder from the sidebar tree', async () => {
+  const db = await createDbFromFS()
+  const store = createStore()
+  setRequiredAtoms(store, db)
+
+  await store.set(applyTreeRouteStateCommand, {
+    workspace: 'simple',
+    root: 'pages'
+  })
+
+  const rootView = store.get(treeViewAtom)
+  const about = rootView.items.find(item => item.node.title === 'About')
+  test.is(Boolean(about), true)
+  if (!about) throw new Error('Expected About node to exist')
+
+  const blog = rootView.items.find(item => item.node.title === 'Blog')
+  test.is(Boolean(blog), true)
+  if (!blog) throw new Error('Expected Blog node to exist')
+
+  const nextRoute = await store.set(moveTreeNodeCommand, about.id, {
+    key: blog.id,
+    dropPosition: 'on'
+  })
+  test.is(nextRoute?.workspace, 'simple')
+  test.is(nextRoute?.root, 'pages')
+  test.is(nextRoute?.entry, about.node.entryId)
+
+  const movedEntry = await db.first({
+    id: about.node.entryId,
+    select: {
+      parentId: Entry.parentId,
+      root: Entry.root
+    },
+    status: 'preferDraft'
+  })
+  test.is(movedEntry?.parentId, blog.node.entryId)
+  test.is(movedEntry?.root, 'pages')
+
+  const blogView = store.get(treeViewAtom)
+  test.is(blogView.focusItem?.node.title, 'Blog')
+  test.equal(
+    blogView.items.map(item => item.node.title),
+    ['Hello world', 'Release notes', 'About']
+  )
+  test.equal(Array.from(store.get(treeSelectedKeysAtom)), [about.id])
 })

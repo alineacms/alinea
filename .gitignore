@@ -15,3 +15,7 @@ node_modules
 *.tsbuildinfo
 /generated
 .next
+/.playwright/.cache
+/test-results
+/playwright-report
+/blob-report

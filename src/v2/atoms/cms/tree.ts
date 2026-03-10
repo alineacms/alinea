@@ -1,4 +1,4 @@
-import type {Config} from 'alinea/core/Config'
+import {Config} from 'alinea/core/Config'
 import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {Entry, type EntryStatus} from 'alinea/core/Entry'
 import {getType} from 'alinea/core/Internal'
@@ -22,6 +22,8 @@ export interface TreeNode {
   root: string
   title: string
   entryId?: string
+  typeName?: string
+  isContainer?: boolean
   hasChildNodes: boolean
   entryStatus?: EntryStatus
   isUnpublished?: boolean
@@ -30,6 +32,8 @@ export interface TreeNode {
 export interface TreeEntryPreview {
   id: string
   title: string
+  typeName: string
+  isContainer: boolean
   hasChildren: boolean
   status: EntryStatus
   isUnpublished: boolean
@@ -54,6 +58,17 @@ export interface TreeSnapshot {
   itemIndex: Map<string, TreeItem>
   focusItem: TreeItem | null
   items: Array<TreeItem>
+}
+
+export interface TreeDropTarget {
+  key: string
+  dropPosition: 'on' | 'before' | 'after'
+}
+
+interface ResolvedTreeDropTarget {
+  parentNodeId: string
+  targetNodeId: string
+  dropPosition: 'on' | 'before' | 'after'
 }
 
 interface EntryRouteInfo {
@@ -81,6 +96,7 @@ interface TreeAction {
     | 'mergeRootHasChildren'
     | 'setNodeChildren'
     | 'setNodeLoading'
+    | 'resetLoadedNodes'
   keys?: Set<string>
   nodeId?: string | null
   rootHasChildrenById?: Record<string, boolean>
@@ -161,6 +177,15 @@ function reduceTreeState(state: TreeState, action: TreeAction): TreeState {
           ...state.loadingByNodeId,
           [action.nodeId]: action.isLoading
         }
+      }
+    }
+    case 'resetLoadedNodes': {
+      return {
+        ...state,
+        rootHasChildrenById: {},
+        childIdsByParent: {},
+        nodesById: {},
+        loadingByNodeId: {}
       }
     }
     default: {
@@ -268,6 +293,8 @@ const buildEntryNode = (parent: TreeNode, entry: TreeEntryPreview): TreeNode => 
     root: parent.root,
     title: entry.title,
     entryId: entry.id,
+    typeName: entry.typeName,
+    isContainer: entry.isContainer,
     hasChildNodes: entry.hasChildren,
     entryStatus: entry.status,
     isUnpublished: entry.isUnpublished
@@ -337,6 +364,8 @@ const queryChildren = async (
       return {
         id: row.id,
         title: row.title || '(Untitled)',
+        typeName: row.type,
+        isContainer: canContain,
         hasChildren,
         status: row.status,
         isUnpublished: row.status === 'draft' && row.main
@@ -440,6 +469,131 @@ const queryAncestorIds = async (
     parentId = await queryParentIdByEntryId(graph, parentId)
   }
   return ancestry
+}
+
+function entryNodeId(entryId: string): string {
+  return `entry:${entryId}`
+}
+
+function entryIdFromNodeId(nodeId: string): string | null {
+  if (!nodeId.startsWith('entry:')) return null
+  return nodeId.slice('entry:'.length)
+}
+
+function resolveTreeDropTarget(
+  itemIndex: Map<string, TreeItem>,
+  target: TreeDropTarget
+): ResolvedTreeDropTarget | null {
+  const targetItem = itemIndex.get(target.key)
+  if (!targetItem) return null
+
+  if (target.dropPosition === 'on') {
+    if (targetItem.node.kind === 'entry' && !targetItem.node.isContainer) {
+      return null
+    }
+    return {
+      parentNodeId: targetItem.id,
+      targetNodeId: targetItem.id,
+      dropPosition: target.dropPosition
+    }
+  }
+
+  if (targetItem.node.kind === 'root' || !targetItem.node.parentId) return null
+
+  return {
+    parentNodeId: targetItem.node.parentId,
+    targetNodeId: targetItem.id,
+    dropPosition: target.dropPosition
+  }
+}
+
+function orderedChildren(
+  config: Config,
+  itemIndex: Map<string, TreeItem>,
+  parentNodeId: string
+): OrderBy | Array<OrderBy> | undefined {
+  const parent = itemIndex.get(parentNodeId)?.node
+  if (!parent) return undefined
+
+  if (parent.kind === 'root') {
+    const rootConfig = config.workspaces[parent.workspace]?.[parent.root]
+    return rootConfig ? Root.data(rootConfig).orderChildrenBy : undefined
+  }
+
+  if (!parent.typeName) return undefined
+  const parentType = config.schema[parent.typeName]
+  return parentType ? getType(parentType).orderChildrenBy : undefined
+}
+
+export function canDragTreeItem(
+  config: Config,
+  itemIndex: Map<string, TreeItem>,
+  nodeId: string
+): boolean {
+  const item = itemIndex.get(nodeId)
+  if (!item || item.node.kind !== 'entry') return false
+  const parentNodeId = item.node.parentId
+  if (!parentNodeId) return false
+  const parent = itemIndex.get(parentNodeId)?.node
+  if (!parent) return false
+  if (parent.kind === 'root') return true
+  return !orderedChildren(config, itemIndex, parentNodeId)
+}
+
+export function canDropTreeItem(
+  config: Config,
+  itemIndex: Map<string, TreeItem>,
+  nodeId: string,
+  target: TreeDropTarget
+): boolean {
+  const item = itemIndex.get(nodeId)
+  if (!item || item.node.kind !== 'entry' || !item.node.typeName) return false
+  const childType = config.schema[item.node.typeName]
+  if (!childType) return false
+
+  const resolved = resolveTreeDropTarget(itemIndex, target)
+  if (!resolved) return false
+
+  const parent = itemIndex.get(resolved.parentNodeId)?.node
+  if (!parent) return false
+
+  const newParent = item.node.parentId !== parent.id
+  if (!newParent) return !orderedChildren(config, itemIndex, parent.id)
+
+  if (parent.kind === 'root') {
+    const rootConfig = config.workspaces[parent.workspace]?.[parent.root]
+    return rootConfig ? Config.rootContains(config, rootConfig, childType) : false
+  }
+
+  if (!parent.typeName) return false
+  const parentType = config.schema[parent.typeName]
+  return parentType ? Config.typeContains(config, parentType, childType) : false
+}
+
+export function treeDropOperation(
+  config: Config,
+  itemIndex: Map<string, TreeItem>,
+  nodeId: string | null,
+  target: TreeDropTarget
+): 'move' | 'cancel' {
+  if (!nodeId) return 'cancel'
+  return canDropTreeItem(config, itemIndex, nodeId, target)
+    ? 'move'
+    : 'cancel'
+}
+
+async function queryTreeChildIds(
+  graph: WriteableGraph,
+  config: Config,
+  node: TreeNode
+): Promise<Array<string>> {
+  const entries =
+    node.kind === 'root'
+      ? await queryRootEntries(graph, config, node.workspace, node.root)
+      : node.entryId
+        ? await queryEntryChildren(graph, config, node.workspace, node.root, node.entryId)
+        : []
+  return entries.map(entry => entryNodeId(entry.id))
 }
 
 export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
@@ -603,6 +757,62 @@ export const focusTreeNodeCommand = command<[string], Promise<void>>(
     set(treeStateAtom, {type: 'setFocusedNodeId', nodeId})
   }
 )
+
+export const moveTreeNodeCommand = command<
+  [string, TreeDropTarget],
+  Promise<CmsRoute | null>
+>(async (get, set, nodeId, target) => {
+  const config = get(configAtom)
+  const itemIndex = get(treeItemIndexAtom)
+  const item = itemIndex.get(nodeId)
+  if (!item || item.node.kind !== 'entry' || !item.node.entryId) return null
+
+  const resolvedTarget = resolveTreeDropTarget(itemIndex, target)
+  if (!resolvedTarget) return null
+  if (!canDropTreeItem(config, itemIndex, nodeId, target)) return null
+
+  const parentNode = itemIndex.get(resolvedTarget.parentNodeId)?.node
+  if (!parentNode) return null
+
+  const graph = get(graphAtom)
+  const siblingIds = await queryTreeChildIds(graph, config, parentNode)
+  const nextSiblings = siblingIds.filter(childId => childId !== nodeId)
+
+  let insertIndex = nextSiblings.length
+  if (resolvedTarget.dropPosition !== 'on') {
+    const targetIndex = nextSiblings.indexOf(resolvedTarget.targetNodeId)
+    if (targetIndex === -1) return null
+    insertIndex =
+      resolvedTarget.dropPosition === 'before' ? targetIndex : targetIndex + 1
+  }
+
+  const afterNodeId = insertIndex > 0 ? nextSiblings[insertIndex - 1] : null
+  const after = afterNodeId ? entryIdFromNodeId(afterNodeId) : null
+  const newParent = item.node.parentId !== parentNode.id
+  const toRoot = newParent && parentNode.kind === 'root' ? parentNode.root : undefined
+  const toParent =
+    newParent && parentNode.kind === 'entry' ? parentNode.entryId : undefined
+
+  await graph.move({
+    id: item.node.entryId,
+    after,
+    toParent,
+    toRoot
+  })
+
+  set(treeStateAtom, {type: 'resetLoadedNodes'})
+
+  const currentRoute = get(cmsRouteAtom)
+  const nextRoute: CmsRoute = {
+    ...currentRoute,
+    workspace: parentNode.workspace,
+    root: parentNode.root,
+    entry: item.node.entryId
+  }
+
+  await set(applyTreeRouteStateCommand, nextRoute)
+  return nextRoute
+})
 
 export const focusTreeParentCommand = command<[], void>((get, set) => {
   const focusedNodeId = get(treeFocusedNodeIdAtom)

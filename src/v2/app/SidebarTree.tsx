@@ -1,24 +1,48 @@
 import {Button, Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
+import {getType} from 'alinea/core/Internal'
+import {Root} from 'alinea/core/Root'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {Collection, ListLayout, Virtualizer} from 'react-aria-components'
-import type {Selection} from 'react-aria-components'
+import {Collection, ListLayout, useDragAndDrop, Virtualizer} from 'react-aria-components'
+import type {
+  DragTypes,
+  DropOperation,
+  DropTarget,
+  DroppableCollectionReorderEvent,
+  Selection
+} from 'react-aria-components'
+import {configAtom} from '../atoms/config.js'
 import type {CmsRoute} from '../atoms/cms/route.js'
 import {cmsRouteAtom} from '../atoms/cms/route.js'
 import {
   applyTreeRouteStateCommand,
+  canDragTreeItem,
   focusTreeNodeCommand,
   focusTreeParentCommand,
+  moveTreeNodeCommand,
   treeAtom,
+  treeDropOperation,
   treeExpandedKeysAtom,
   treeSelectedKeysAtom,
+  type TreeDropTarget,
   type TreeItem as TreeItemData
 } from '../atoms/cms/tree.js'
-import {IcRoundArrowBack} from '../icons.js'
+import {
+  IcRoundArrowBack,
+  IcRoundDescription,
+  IcTwotoneDescription,
+  IcTwotoneFolder
+} from '../icons.js'
 import css from './SidebarTree.module.css'
 import {EntryStatus} from './EntryStatus.js'
+import {useMemo, useRef} from 'react'
 
 const styles = styler(css)
+const treeDragType = 'application/x-alinea-sidebar-tree-item'
+
+interface DragInfo {
+  keys: Set<string | number>
+}
 
 function toSet(keys: Selection, fallback: Set<string>): Set<string> {
   if (keys === 'all') return fallback
@@ -33,22 +57,6 @@ function entryStatusSuffix(item: TreeItemData) {
       status={node.entryStatus}
       isUnpublished={node.isUnpublished ?? false}
     />
-  )
-}
-
-function renderTreeItem(item: TreeItemData) {
-  return (
-    <TreeItem
-      key={item.id}
-      id={item.id}
-      title={item.node.title}
-      hasChildItems={item.hasChildNodes}
-      suffix={entryStatusSuffix(item)}
-    >
-      <Collection items={item.children}>
-        {renderTreeItem}
-      </Collection>
-    </TreeItem>
   )
 }
 
@@ -80,6 +88,7 @@ const treeLayoutOptions = {
 }
 
 export function SidebarTree() {
+  const config = useAtomValue(configAtom)
   const {expandedKeys, selectedKeys, itemIndex, items, focusItem} =
     useAtomValue(treeAtom)
   const setTreeExpandedKeys = useSetAtom(treeExpandedKeysAtom)
@@ -87,7 +96,93 @@ export function SidebarTree() {
   const focusTreeNode = useSetAtom(focusTreeNodeCommand)
   const focusTreeParent = useSetAtom(focusTreeParentCommand)
   const applyTreeRouteState = useSetAtom(applyTreeRouteStateCommand)
+  const moveTreeNode = useSetAtom(moveTreeNodeCommand)
   const setRoute = useSetAtom(cmsRouteAtom)
+  const draggingNodeIdRef = useRef<string | null>(null)
+
+  function treeItemIcon(item: TreeItemData) {
+    if (item.node.kind === 'root') {
+      const workspaceConfig = config.workspaces[item.node.workspace]
+      const rootConfig = workspaceConfig?.[item.node.root]
+      if (!rootConfig) return IcRoundDescription
+      return Root.data(rootConfig).icon ?? IcRoundDescription
+    }
+
+    if (item.node.typeName) {
+      const entryType = config.schema[item.node.typeName]
+      if (entryType) {
+        const icon = getType(entryType).icon
+        if (icon) return icon
+      }
+    }
+    if (item.node.isContainer) return IcTwotoneFolder
+    return IcTwotoneDescription
+  }
+
+  function renderTreeItem(item: TreeItemData) {
+    const isDraggable = canDragTreeItem(config, itemIndex, item.id)
+    return (
+      <TreeItem
+        key={item.id}
+        id={item.id}
+        title={item.node.title}
+        icon={treeItemIcon(item)}
+        className={!isDraggable ? css.dragDisabled : undefined}
+        hasChildItems={item.hasChildNodes}
+        suffix={entryStatusSuffix(item)}
+      >
+        <Collection items={item.children}>
+          {renderTreeItem}
+        </Collection>
+      </TreeItem>
+    )
+  }
+
+  const {dragAndDropHooks} = useDragAndDrop<TreeItemData>(
+    useMemo(
+      function createDragAndDropOptions() {
+        return {
+          getItems(_keys: Set<string | number>, items: Array<TreeItemData>) {
+            return items
+              .filter(item => canDragTreeItem(config, itemIndex, item.id))
+              .map(item => ({
+                [treeDragType]: item.id,
+                'text/plain': item.node.title
+              }))
+          },
+          onDragStart(event: DragInfo) {
+            draggingNodeIdRef.current =
+              Array.from(event.keys, key => String(key))[0] ?? null
+          },
+          onDragEnd() {
+            draggingNodeIdRef.current = null
+          },
+          getDropOperation(
+            target: DropTarget,
+            types: DragTypes,
+            _allowedOperations: Array<DropOperation>
+          ) {
+            if (target.type !== 'item') return 'cancel'
+            if (!types.has(treeDragType)) return 'cancel'
+            return treeDropOperation(config, itemIndex, draggingNodeIdRef.current, {
+              key: String(target.key),
+              dropPosition: target.dropPosition
+            })
+          },
+          async onMove(event: DroppableCollectionReorderEvent) {
+            const draggingNodeId = Array.from(event.keys, key => String(key))[0]
+            if (!draggingNodeId) return
+            const nextRoute = await moveTreeNode(draggingNodeId, {
+              key: String(event.target.key),
+              dropPosition: event.target.dropPosition
+            })
+            if (nextRoute) setRoute(nextRoute)
+          }
+        }
+      },
+      [config, itemIndex, moveTreeNode, setRoute]
+    )
+  )
 
   return (
     <div className={styles.root()}>
@@ -113,6 +208,10 @@ export function SidebarTree() {
               navigateToTreeItem(setRoute, focusItem)
             }}
           >
+            <Icon
+              icon={treeItemIcon(focusItem)}
+              className={styles.focusIcon()}
+            />
             {focusItem.node.title}
           </Button>
         </header>
@@ -126,6 +225,7 @@ export function SidebarTree() {
             aria-label="Content tree"
             style={{display: 'block', padding: 0, height: '100%'}}
             items={items}
+            dragAndDropHooks={dragAndDropHooks}
             selectionMode="single"
             selectionBehavior="replace"
             selectedKeys={selectedKeys}
