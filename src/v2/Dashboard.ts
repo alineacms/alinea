@@ -1,0 +1,327 @@
+import type {Config} from 'alinea/core/Config'
+import type {LocalConnection} from 'alinea/core/Connection'
+import type {LocalDB} from 'alinea/core/db/LocalDB'
+import {Entry} from 'alinea/core/Entry'
+import type {Order} from 'alinea/core/Graph'
+import {getRoot, getType, getWorkspace} from 'alinea/core/Internal'
+import {Type} from 'alinea/core/Type'
+import {assert} from 'alinea/core/util/Assert'
+import {parents, translations} from 'alinea/query'
+import {type Atom, atom} from 'jotai'
+
+export class Dashboard {
+  constructor(
+    public db: Atom<LocalDB>,
+    public config: Atom<Config>,
+    public client: Atom<LocalConnection>
+  ) {}
+
+  workspaces = atom(get => {
+    const config = get(this.config)
+    return Object.keys(config.workspaces)
+  })
+
+  workspace = dispense(key => new DashboardWorkspace(this, key))
+}
+
+export class DashboardWorkspace {
+  constructor(
+    public dashboard: Dashboard,
+    public key: string
+  ) {}
+
+  tree = new DashboardTree(this)
+
+  #settings = atom(get => {
+    const config = get(this.dashboard.config)
+    const workspaceConfig = config.workspaces[this.key]
+    assert(workspaceConfig)
+    return getWorkspace(workspaceConfig)
+  })
+
+  color = atom(get => get(this.#settings).color)
+  label = atom(get => get(this.#settings).label)
+  icon = atom(get => get(this.#settings).icon)
+
+  roots = atom(get => {
+    const roots = get(this.#settings).roots
+    return Object.keys(roots)
+  })
+
+  root = dispense(key => new DashboardRoot(this, key))
+}
+
+export class DashboardTree {
+  constructor(private workspace: DashboardWorkspace) {}
+
+  focusItem = atom<DashboardTreeItem>()
+  expandedKeys = atom<Array<string>>([])
+  selectedKeys = atom<Array<string>>([])
+  items = atom(get => {
+    const focusItem = get(this.focusItem)
+    if (focusItem) return get(focusItem.items)
+    const roots = get(this.workspace.roots)
+    return roots.map(key => this.workspace.root[key].treeItem)
+  })
+
+  visibleTypes = atom(get => {
+    const config = get(this.workspace.dashboard.config)
+    return Object.entries(config.schema)
+      .filter(([, type]) => !Type.isHidden(type))
+      .map(([name]) => name)
+  })
+}
+
+type Awaitable<T> = T | Promise<T>
+
+export class DashboardTreeItem {
+  constructor(
+    public label: Atom<Awaitable<string>>,
+    public items: Atom<Awaitable<Array<DashboardTreeItem>>>
+  ) {}
+}
+
+export class DashboardEntry {
+  constructor(
+    public root: DashboardRoot,
+    public id: string
+  ) {
+    this.#children = treeChildren(
+      this.root,
+      this.parentId,
+      this.orderChildrenBy
+    )
+  }
+
+  #treeData = atom(async get => {
+    const load = get(this.root.entryLoader)
+    const [result, error] = await load(this.id)
+    if (error) throw error
+    return result
+  })
+
+  locales = atom(async get => {
+    const treeData = await get(this.#treeData)
+    return new Map(
+      treeData.entries.map(entry => {
+        return [entry.locale, entry] as const
+      })
+    )
+  })
+
+  parentId = atom(async get => {
+    const {parentId} = await get(this.#treeData)
+    return parentId
+  })
+
+  orderChildrenBy = atom(async get => {
+    const {type} = await get(this.#treeData)
+    const config = get(this.root.workspace.dashboard.config)
+    const typeConfig = getType(config.schema[type])
+    return typeConfig?.orderChildrenBy
+  })
+
+  #children: Atom<Awaitable<Array<string>>>
+  treeItem: DashboardTreeItem = new DashboardTreeItem(
+    atom(async get => {
+      const locale = get(this.root.displayLocale)
+      const locales = await get(this.locales)
+      const entry = locales.get(locale)
+      if (entry?.title) return entry.title
+      // Fallback to any available locale if the preferred one doesn't have a title
+      for (const entry of locales.values()) {
+        if (entry.title) return entry.title
+      }
+      return ''
+    }),
+    atom(async get => {
+      const children = await get(this.#children)
+      return children.map(id => this.root.entries[id].treeItem)
+    })
+  )
+
+  hasChildren = atom(async get => {
+    const db = get(this.root.workspace.dashboard.db)
+    const visibleTypes = get(this.root.workspace.tree.visibleTypes)
+    return Boolean(
+      await db.first({
+        workspace: this.root.workspace.key,
+        root: this.root.key,
+        parentId: this.id,
+        filter: {_type: {in: visibleTypes}},
+        status: 'preferDraft'
+      })
+    )
+  })
+}
+
+export class DashboardRoot {
+  constructor(
+    public workspace: DashboardWorkspace,
+    public key: string
+  ) {}
+
+  #settings = atom(get => {
+    const config = get(this.workspace.dashboard.config)
+    const workspaceConfig = config.workspaces[this.workspace.key]
+    assert(workspaceConfig)
+    const rootConfig = workspaceConfig[this.key]
+    return getRoot(rootConfig)
+  })
+
+  selectedLocale = atom(null)
+  displayLocale = atom(get => {
+    const i18n = get(this.i18n)
+    return get(this.selectedLocale) ?? i18n?.locales[0] ?? null
+  })
+
+  label = atom(get => get(this.#settings).label)
+  icon = atom(get => get(this.#settings).icon)
+  i18n = atom(get => get(this.#settings).i18n)
+  view = atom(get => get(this.#settings).view)
+  orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
+
+  entries = dispense(id => new DashboardEntry(this, id))
+
+  entryLoader = atom(get => {
+    const db = get(this.workspace.dashboard.db)
+    return loader(async ids => {
+      const data = {
+        id: Entry.id,
+        type: Entry.type,
+        title: Entry.title,
+        status: Entry.status,
+        locale: Entry.locale,
+        workspace: Entry.workspace,
+        main: Entry.main,
+        root: Entry.root,
+        path: Entry.path,
+        parents: parents({
+          select: {
+            id: Entry.id,
+            path: Entry.path,
+            type: Entry.type
+          }
+        })
+      }
+      const rows = await db.find({
+        groupBy: Entry.id,
+        select: {
+          id: Entry.id,
+          type: Entry.type,
+          parentId: Entry.parentId,
+          entries: translations({select: data, includeSelf: true})
+        },
+        id: {in: ids},
+        status: 'preferDraft'
+      })
+      return rows.map(row => [row, null] as const)
+    })
+  })
+
+  #children = treeChildren(this, atom(null), this.orderChildrenBy)
+  treeItem = new DashboardTreeItem(
+    this.label,
+    atom(async get => {
+      const ids = await get(this.#children)
+      return ids.map(id => this.entries[id].treeItem)
+    })
+  )
+
+  hasChildren = atom(async get => {
+    const db = get(this.workspace.dashboard.db)
+    const visibleTypes = get(this.workspace.tree.visibleTypes)
+    return Boolean(
+      await db.first({
+        workspace: this.workspace.key,
+        root: this.key,
+        parentId: null,
+        filter: {_type: {in: visibleTypes}},
+        status: 'preferDraft'
+      })
+    )
+  })
+}
+
+function treeChildren(
+  root: DashboardRoot,
+  parentIdAtom: Atom<Awaitable<string | null>>,
+  orderByAtom: Atom<Awaitable<Order | Array<Order> | undefined>>
+) {
+  return atom(async get => {
+    const visibleTypes = get(root.workspace.tree.visibleTypes)
+    const db = get(root.workspace.dashboard.db)
+    const orderBy = await get(orderByAtom)
+    const parentId = await get(parentIdAtom)
+    const locale = get(root.displayLocale)
+    const children = await db.find({
+      select: {
+        id: Entry.id,
+        type: Entry.type,
+        parents: Entry.parents,
+        locale: Entry.locale,
+        root: Entry.root,
+        workspace: Entry.workspace
+      },
+      orderBy,
+      workspace: root.workspace.key,
+      root: root.key,
+      parentId: parentId || null,
+      filter: {
+        _type: {in: visibleTypes}
+      },
+      status: 'preferDraft'
+    })
+    const translatedChildren = new Set(
+      children.filter(child => child.locale === locale).map(child => child.id)
+    )
+    const untranslated = new Set()
+    const orderedChildren = children.filter(child => {
+      if (translatedChildren.has(child.id)) return child.locale === locale
+      if (untranslated.has(child.id)) return false
+      untranslated.add(child.id)
+      return true
+    })
+    return [...new Set(orderedChildren.map(child => child.id))]
+  })
+}
+
+type Result<Value> = [value: Value, error: null] | [value: null, error: Error]
+type BatchLoadFn<V> = (
+  keys: ReadonlyArray<string>
+) => Promise<ReadonlyArray<Result<V>>>
+function loader<Value>(fn: BatchLoadFn<Value>) {
+  let batch: {key: string; resolve: (v: Result<Value>) => void}[] = []
+  return (key: string): Promise<Result<Value>> => {
+    return new Promise(resolve => {
+      if (batch.push({key, resolve}) === 1) {
+        queueMicrotask(async () => {
+          const current = batch
+          batch = []
+          try {
+            const result = await fn(current.map(i => i.key))
+            for (const [index, item] of current.entries())
+              item.resolve(
+                result[index] ?? [item.key, null, new Error('Missing result')]
+              )
+          } catch (e) {
+            const err = e instanceof Error ? e : new Error(String(e))
+            for (const item of current) item.resolve([null, err])
+          }
+        })
+      }
+    })
+  }
+}
+
+function dispense<T>(fn: (key: string) => T): Record<string, T> {
+  return new Proxy(Object.create(null), {
+    get(target: Record<string, T>, key: string) {
+      if (!(typeof key === 'string')) throw new Error('Key must be a string')
+      if (!(key in target)) {
+        target[key] = fn(key)
+      }
+      return target[key]
+    }
+  })
+}
