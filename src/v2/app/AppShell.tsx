@@ -2,7 +2,6 @@ import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import type {Dashboard} from '../dashboard/Dashboard.js'
 import css from './AppShell.module.css'
-import {LocaleMenu} from './LocaleMenu.js'
 import {SidebarTree} from './SidebarTree.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 
@@ -30,13 +29,13 @@ export function AppShell({dashboard}: AppShellProps) {
         </footer>
       </aside>
 
-      <main className={styles.main()}>
+      {/*<main className={styles.main()}>
         <header className={styles.mainHeader()}>
           <h1 className={styles.mainTitle()}>Title</h1>
           <LocaleMenu dashboard={dashboard} />
         </header>
 
-        {/*<div className={styles.mainBody()}>
+        <div className={styles.mainBody()}>
           <div className={styles.explorerPane()}>
             <ContentExplorer
               graph={db}
@@ -72,8 +71,8 @@ export function AppShell({dashboard}: AppShellProps) {
               locale={selectedLocale}
             />
           </div>
-        </div>*/}
-      </main>
+        </div>
+      </main>*/}
     </div>
   )
 }

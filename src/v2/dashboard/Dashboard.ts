@@ -8,6 +8,7 @@ import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
 import {parents, translations} from 'alinea/query'
 import {type Atom, atom} from 'jotai'
+import {ComponentType} from 'react'
 
 export class Dashboard {
   constructor(
@@ -18,12 +19,31 @@ export class Dashboard {
 
   sha = atom(get => get(this.db).sha)
 
+  #selected = atom<string | null>(null)
+  selectedWorkspace = atom(
+    get => {
+      const selected = get(this.#selected)
+      if (selected) return selected
+      const config = get(this.config)
+      const workspaceKeys = Object.keys(config.workspaces)
+      return workspaceKeys[0] ?? null
+    },
+    (get, set, next: string) => {
+      set(this.#selected, next)
+    }
+  )
+
   workspaces = atom(get => {
     const config = get(this.config)
     return Object.keys(config.workspaces)
   })
 
   workspace = dispense(key => new DashboardWorkspace(this, key))
+
+  currentWorkspace = atom(get => {
+    const workspaceKey = get(this.selectedWorkspace)
+    return this.workspace[workspaceKey]
+  })
 }
 
 export class DashboardWorkspace {
@@ -78,6 +98,8 @@ type Awaitable<T> = T | Promise<T>
 
 export class DashboardTreeItem {
   constructor(
+    public id: string,
+    public icon: Atom<Awaitable<ComponentType | undefined>>,
     public label: Atom<Awaitable<string>>,
     public items: Atom<Awaitable<Array<DashboardTreeItem>>>
   ) {}
@@ -92,6 +114,25 @@ export class DashboardEntry {
       this.root,
       this.parentId,
       this.orderChildrenBy
+    )
+    this.treeItem = new DashboardTreeItem(
+      id,
+      this.icon,
+      atom(async get => {
+        const locale = get(this.root.displayLocale)
+        const locales = await get(this.locales)
+        const entry = locales.get(locale)
+        if (entry?.title) return entry.title
+        // Fallback to any available locale if the preferred one doesn't have a title
+        for (const entry of locales.values()) {
+          if (entry.title) return entry.title
+        }
+        return ''
+      }),
+      atom(async get => {
+        const children = await get(this.#children)
+        return children.map(id => this.root.entries[id].treeItem)
+      })
     )
   }
 
@@ -123,24 +164,15 @@ export class DashboardEntry {
     return typeConfig?.orderChildrenBy
   })
 
+  icon = atom(async get => {
+    const {type} = await get(this.#treeData)
+    const config = get(this.root.workspace.dashboard.config)
+    const typeConfig = getType(config.schema[type])
+    return typeConfig?.icon
+  })
+
   #children: Atom<Awaitable<Array<string>>>
-  treeItem: DashboardTreeItem = new DashboardTreeItem(
-    atom(async get => {
-      const locale = get(this.root.displayLocale)
-      const locales = await get(this.locales)
-      const entry = locales.get(locale)
-      if (entry?.title) return entry.title
-      // Fallback to any available locale if the preferred one doesn't have a title
-      for (const entry of locales.values()) {
-        if (entry.title) return entry.title
-      }
-      return ''
-    }),
-    atom(async get => {
-      const children = await get(this.#children)
-      return children.map(id => this.root.entries[id].treeItem)
-    })
-  )
+  treeItem: DashboardTreeItem
 
   hasChildren = atom(async get => {
     const db = get(this.root.workspace.dashboard.db)
@@ -161,7 +193,17 @@ export class DashboardRoot {
   constructor(
     public workspace: DashboardWorkspace,
     public key: string
-  ) {}
+  ) {
+    this.treeItem = new DashboardTreeItem(
+      `root:${this.key}`,
+      this.icon,
+      this.label,
+      atom(async get => {
+        const ids = await get(this.#children)
+        return ids.map(id => this.entries[id].treeItem)
+      })
+    )
+  }
 
   #settings = atom(get => {
     const config = get(this.workspace.dashboard.config)
@@ -222,13 +264,7 @@ export class DashboardRoot {
   })
 
   #children = treeChildren(this, atom(null), this.orderChildrenBy)
-  treeItem = new DashboardTreeItem(
-    this.label,
-    atom(async get => {
-      const ids = await get(this.#children)
-      return ids.map(id => this.entries[id].treeItem)
-    })
-  )
+  treeItem: DashboardTreeItem
 
   hasChildren = atom(async get => {
     const db = get(this.workspace.dashboard.db)

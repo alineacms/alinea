@@ -1,61 +1,61 @@
 import {Button, Menu, MenuItem} from '@alinea/components'
 import styler from '@alinea/styler'
-import type {ComponentType, CSSProperties} from 'react'
-import type {Dashboard} from '../dashboard/Dashboard.js'
+import {useAtom, useAtomValue} from 'jotai'
+import type {Dashboard, DashboardWorkspace} from '../dashboard/Dashboard.js'
 import {IcAlineaLogo} from '../icons.js'
 import css from './WorkspaceMenu.module.css'
 
 const styles = styler(css)
 
-export interface WorkspaceMenuItem {
-  id: string
-  label: string
-  icon?: ComponentType
-  color?: string
-}
-
 interface WorkspaceMenuProps {
   dashboard: Dashboard
 }
 
-function workspaceAvatarStyle(color?: string): CSSProperties {
-  return {backgroundColor: color || '#d8e1eb'}
-}
-
 export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
-  const selectedItem =
-    items.find(item => item.id === selectedWorkspace) ?? items[0] ?? null
-  const Icon = selectedItem?.icon ?? IcAlineaLogo
-
+  const [selected, setSelected] = useAtom(dashboard.selectedWorkspace)
+  const workspaces = useAtomValue(dashboard.workspaces)
+  const workspace = dashboard.workspace[selected]
+  const color = useAtomValue(workspace.color)
+  const Icon = useAtomValue(workspace.icon) ?? IcAlineaLogo
+  const label = useAtomValue(workspace.label)
   return (
     <Menu
       label={
         <Button appearance="plain" className={styles.trigger()}>
           <span
             className={styles.triggerAvatar()}
-            style={workspaceAvatarStyle(selectedItem?.color)}
+            style={{backgroundColor: color}}
           >
             <Icon />
           </span>
-          <span className={styles.triggerText()}>
-            {selectedItem?.label ?? 'Workspace'}
-          </span>
+          <span className={styles.triggerText()}>{label}</span>
         </Button>
       }
       aria-label="Workspace"
       selectionMode="single"
-      selectedKeys={
-        selectedWorkspace ? new Set([selectedWorkspace]) : new Set<string>()
-      }
-      onAction={function onAction(key) {
-        onSelectWorkspace(String(key))
-      }}
+      selectedKeys={[selected]}
+      onAction={key => setSelected(String(key))}
     >
-      {items.map(item => (
-        <MenuItem key={item.id} id={item.id} textValue={item.label}>
-          {item.label}
-        </MenuItem>
+      {workspaces.map(workspace => (
+        <WorkspaceItem
+          key={workspace}
+          workspace={dashboard.workspace[workspace]}
+        />
       ))}
     </Menu>
+  )
+}
+
+interface WorkspaceItemProps {
+  workspace: DashboardWorkspace
+}
+
+function WorkspaceItem({workspace}: WorkspaceItemProps) {
+  const id = workspace.key
+  const label = useAtomValue(workspace.label)
+  return (
+    <MenuItem key={id} id={id} textValue={label}>
+      {label}
+    </MenuItem>
   )
 }
