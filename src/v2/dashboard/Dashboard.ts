@@ -7,10 +7,11 @@ import {getRoot, getType, getWorkspace} from 'alinea/core/Internal'
 import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
 import {parents, translations} from 'alinea/query'
-import {type Atom, atom} from 'jotai'
+import type {Atom, Getter, WritableAtom} from 'jotai'
+import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
-import {ComponentType} from 'react'
-import {Key} from 'react-aria-components'
+import type {ComponentType} from 'react'
+import type {Key} from 'react-aria-components'
 
 export interface DashboardRoute {
   workspace?: string
@@ -18,6 +19,12 @@ export interface DashboardRoute {
   entry?: string
   locale?: string
 }
+
+type DashboardTreeSelection = WritableAtom<
+  Set<Key>,
+  [next: 'all' | Set<Key>],
+  Promise<void>
+>
 
 export class Dashboard {
   constructor(
@@ -82,7 +89,54 @@ export class Dashboard {
     const workspaceKey = get(this.selectedWorkspace)
     return this.workspace[workspaceKey]
   })
+
+  entries = dispense(id => new DashboardEntry(this, id))
+
+  entryLoader = atom(get => {
+    const db = get(this.db)
+    return loader(async ids => {
+      const data = {
+        id: Entry.id,
+        type: Entry.type,
+        title: Entry.title,
+        status: Entry.status,
+        locale: Entry.locale,
+        workspace: Entry.workspace,
+        main: Entry.main,
+        root: Entry.root,
+        path: Entry.path,
+        parents: parents({
+          select: {
+            id: Entry.id,
+            path: Entry.path,
+            type: Entry.type
+          }
+        })
+      }
+      const rows = await db.find({
+        groupBy: Entry.id,
+        select: {
+          id: Entry.id,
+          type: Entry.type,
+          parentId: Entry.parentId,
+          workspace: Entry.workspace,
+          root: Entry.root,
+          entries: translations({select: data, includeSelf: true})
+        },
+        id: {in: ids},
+        status: 'preferDraft'
+      })
+      const byId = new Map(rows.map(row => [row.id, row] as const))
+      return ids.map(id => {
+        const row = byId.get(id)
+        if (!row) return [null, new Error(`Missing entry ${id}`)] as const
+        return [row, null] as const
+      })
+    })
+  })
 }
+
+const ROOT_KEY_PREFIX = 'root:'
 
 export class DashboardWorkspace {
   constructor(
@@ -90,7 +144,43 @@ export class DashboardWorkspace {
     public key: string
   ) {}
 
-  tree = new DashboardTree(this)
+  #treeSelection = atom(
+    get => {
+      const route = get(this.dashboard.route)
+      if (route.workspace && route.workspace !== this.key) return new Set<Key>()
+      if (route.entry) return new Set<Key>([route.entry])
+      if (route.root) return new Set<Key>([`root:${route.root}`])
+      return new Set<Key>()
+    },
+    async (get, set, next: 'all' | Set<Key>) => {
+      if (next === 'all')
+        throw new Error('Selecting all items is not supported')
+      const current = get(this.dashboard.route)
+      const selectedKey = next.values().next().value
+      if (!selectedKey) {
+        set(this.dashboard.route, {workspace: this.key})
+        return
+      }
+      const selectedId = String(selectedKey)
+      if (selectedId.startsWith(ROOT_KEY_PREFIX)) {
+        set(this.dashboard.route, {
+          workspace: this.key,
+          root: selectedId.slice(ROOT_KEY_PREFIX.length),
+          locale: current.locale
+        })
+        return
+      }
+      const root = await get(this.dashboard.entries[selectedId].root)
+      set(this.dashboard.route, {
+        workspace: root.workspace.key,
+        root: root.key,
+        entry: selectedId,
+        locale: current.locale
+      })
+    }
+  )
+
+  tree = new DashboardTree(this, this.#treeSelection)
 
   #settings = atom(get => {
     const config = get(this.dashboard.config)
@@ -112,35 +202,49 @@ export class DashboardWorkspace {
 }
 
 export class DashboardTree {
-  constructor(private workspace: DashboardWorkspace) {}
+  constructor(
+    private workspace: DashboardWorkspace,
+    public selectedKeys: DashboardTreeSelection
+  ) {}
 
   focusItem = atom<DashboardTreeItem>()
   expandedKeys = atom(new Set<Key>())
 
-  #selection = atom(new Set<Key>())
-  selectedKeys = atom(
-    get => {
-      const selection = get(this.#selection)
-      if (selection.size > 0) return selection
-      const route = get(this.workspace.dashboard.route)
-      if (route.entry) return new Set([route.entry])
-      if (route.root) return new Set([`root:${route.root}`])
-      return selection
-    },
-    (get, set, next: 'all' | Set<Key>) => {
-      if (next === 'all')
-        throw new Error('Selecting all items is not supported')
-      set(this.#selection, next)
-      // todo:
-      //set(this.workspace.dashboard.route, entry/route)
-    }
-  )
+  entryItems: Record<string, DashboardTreeItem> = dispense(id => {
+    const entry = this.workspace.dashboard.entries[id]
+    return new DashboardTreeItem(
+      this,
+      id,
+      entry.icon,
+      entry.label,
+      atom(async get => {
+        const children = await get(entry.children)
+        return children.map(childId => this.entryItems[childId])
+      }),
+      entry.hasChildren
+    )
+  })
+
+  rootItems: Record<string, DashboardTreeItem> = dispense(key => {
+    const root = this.workspace.root[key]
+    return new DashboardTreeItem(
+      this,
+      `${ROOT_KEY_PREFIX}${root.key}`,
+      root.icon,
+      root.label,
+      atom(async get => {
+        const ids = await get(root.children)
+        return ids.map(id => this.entryItems[id])
+      }),
+      root.hasChildren
+    )
+  })
 
   items = atom(get => {
     const focusItem = get(this.focusItem)
     if (focusItem) return get(focusItem.items)
     const roots = get(this.workspace.roots)
-    return roots.map(key => this.workspace.root[key].treeItem)
+    return roots.map(key => this.rootItems[key])
   })
 
   visibleTypes = atom(get => {
@@ -168,39 +272,26 @@ export class DashboardTreeItem {
 
 export class DashboardEntry {
   constructor(
-    public root: DashboardRoot,
+    public dashboard: Dashboard,
     public id: string
-  ) {
-    this.#children = treeChildren(this.root, this.id, this.orderChildrenBy)
-    this.treeItem = new DashboardTreeItem(
-      this.root.workspace.tree,
-      id,
-      this.icon,
-      atom(async get => {
-        const locale = get(this.root.displayLocale)
-        const locales = await get(this.locales)
-        const entry = locales.get(locale)
-        if (entry?.title) return entry.title
-        // Fallback to any available locale if the preferred one doesn't have a title
-        for (const entry of locales.values()) {
-          if (entry.title) return entry.title
-        }
-        return ''
-      }),
-      atom(async get => {
-        const children = await get(this.#children)
-        return children.map(id => this.root.entries[id].treeItem)
-      }),
-      this.hasChildren
-    )
-  }
+  ) {}
 
   #treeData = atom(async get => {
-    const load = get(this.root.entryLoader)
+    const load = get(this.dashboard.entryLoader)
     const [result, error] = await load(this.id)
     if (error) throw error
-    console.log('loaded', {id: this.id, result})
     return result
+  })
+
+  workspace = atom(async get => {
+    const treeData = await get(this.#treeData)
+    return this.dashboard.workspace[treeData.workspace]
+  })
+
+  root = atom(async get => {
+    const workspace = await get(this.workspace)
+    const treeData = await get(this.#treeData)
+    return workspace.root[treeData.root]
   })
 
   locales = atom(async get => {
@@ -217,30 +308,45 @@ export class DashboardEntry {
     return parentId
   })
 
+  label = atom(async get => {
+    const root = await get(this.root)
+    const locale = get(root.displayLocale)
+    const locales = await get(this.locales)
+    const entry = locales.get(locale)
+    if (entry?.title) return entry.title
+    for (const fallback of locales.values()) {
+      if (fallback.title) return fallback.title
+    }
+    return ''
+  })
+
   orderChildrenBy = atom(async get => {
     const {type} = await get(this.#treeData)
-    const config = get(this.root.workspace.dashboard.config)
+    const config = get(this.dashboard.config)
     const typeConfig = getType(config.schema[type])
     return typeConfig?.orderChildrenBy
   })
 
   icon = atom(async get => {
     const {type} = await get(this.#treeData)
-    const config = get(this.root.workspace.dashboard.config)
+    const config = get(this.dashboard.config)
     const typeConfig = getType(config.schema[type])
     return typeConfig?.icon
   })
 
-  #children: Atom<Awaitable<Array<string>>>
-  treeItem: DashboardTreeItem
+  children = atom(async get => {
+    const root = await get(this.root)
+    return queryTreeChildren(get, root, this.id, this.orderChildrenBy)
+  })
 
   hasChildren = atom(async get => {
-    const db = get(this.root.workspace.dashboard.db)
-    const visibleTypes = get(this.root.workspace.tree.visibleTypes)
+    const root = await get(this.root)
+    const db = get(this.dashboard.db)
+    const visibleTypes = get(root.workspace.tree.visibleTypes)
     return Boolean(
       await db.first({
-        workspace: this.root.workspace.key,
-        root: this.root.key,
+        workspace: root.workspace.key,
+        root: root.key,
         parentId: this.id,
         filter: {_type: {in: visibleTypes}},
         status: 'preferDraft'
@@ -253,19 +359,7 @@ export class DashboardRoot {
   constructor(
     public workspace: DashboardWorkspace,
     public key: string
-  ) {
-    this.treeItem = new DashboardTreeItem(
-      this.workspace.tree,
-      `root:${this.key}`,
-      this.icon,
-      this.label,
-      atom(async get => {
-        const ids = await get(this.#children)
-        return ids.map(id => this.entries[id].treeItem)
-      }),
-      this.hasChildren
-    )
-  }
+  ) {}
 
   #settings = atom(get => {
     const config = get(this.workspace.dashboard.config)
@@ -286,47 +380,9 @@ export class DashboardRoot {
   i18n = atom(get => get(this.#settings).i18n)
   view = atom(get => get(this.#settings).view)
   orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
-
-  entries = dispense(id => new DashboardEntry(this, id))
-
-  entryLoader = atom(get => {
-    const db = get(this.workspace.dashboard.db)
-    return loader(async ids => {
-      const data = {
-        id: Entry.id,
-        type: Entry.type,
-        title: Entry.title,
-        status: Entry.status,
-        locale: Entry.locale,
-        workspace: Entry.workspace,
-        main: Entry.main,
-        root: Entry.root,
-        path: Entry.path,
-        parents: parents({
-          select: {
-            id: Entry.id,
-            path: Entry.path,
-            type: Entry.type
-          }
-        })
-      }
-      const rows = await db.find({
-        groupBy: Entry.id,
-        select: {
-          id: Entry.id,
-          type: Entry.type,
-          parentId: Entry.parentId,
-          entries: translations({select: data, includeSelf: true})
-        },
-        id: {in: ids},
-        status: 'preferDraft'
-      })
-      return rows.map(row => [row, null] as const)
-    })
-  })
-
-  #children = treeChildren(this, null, this.orderChildrenBy)
-  treeItem: DashboardTreeItem
+  children = atom(get =>
+    queryTreeChildren(get, this, null, this.orderChildrenBy)
+  )
 
   hasChildren = atom(async get => {
     const db = get(this.workspace.dashboard.db)
@@ -343,46 +399,45 @@ export class DashboardRoot {
   })
 }
 
-function treeChildren(
+async function queryTreeChildren(
+  get: Getter,
   root: DashboardRoot,
   parentId: null | string,
   orderByAtom: Atom<Awaitable<Order | Array<Order> | undefined>>
 ) {
-  return atom(async get => {
-    const visibleTypes = get(root.workspace.tree.visibleTypes)
-    const db = get(root.workspace.dashboard.db)
-    const orderBy = await get(orderByAtom)
-    const locale = get(root.displayLocale)
-    const children = await db.find({
-      select: {
-        id: Entry.id,
-        type: Entry.type,
-        parents: Entry.parents,
-        locale: Entry.locale,
-        root: Entry.root,
-        workspace: Entry.workspace
-      },
-      orderBy,
-      workspace: root.workspace.key,
-      root: root.key,
-      parentId: parentId,
-      filter: {
-        _type: {in: visibleTypes}
-      },
-      status: 'preferDraft'
-    })
-    const translatedChildren = new Set(
-      children.filter(child => child.locale === locale).map(child => child.id)
-    )
-    const untranslated = new Set()
-    const orderedChildren = children.filter(child => {
-      if (translatedChildren.has(child.id)) return child.locale === locale
-      if (untranslated.has(child.id)) return false
-      untranslated.add(child.id)
-      return true
-    })
-    return [...new Set(orderedChildren.map(child => child.id))]
+  const visibleTypes = get(root.workspace.tree.visibleTypes)
+  const db = get(root.workspace.dashboard.db)
+  const orderBy = await get(orderByAtom)
+  const locale = get(root.displayLocale)
+  const children = await db.find({
+    select: {
+      id: Entry.id,
+      type: Entry.type,
+      parents: Entry.parents,
+      locale: Entry.locale,
+      root: Entry.root,
+      workspace: Entry.workspace
+    },
+    orderBy,
+    workspace: root.workspace.key,
+    root: root.key,
+    parentId: parentId,
+    filter: {
+      _type: {in: visibleTypes}
+    },
+    status: 'preferDraft'
   })
+  const translatedChildren = new Set(
+    children.filter(child => child.locale === locale).map(child => child.id)
+  )
+  const untranslated = new Set()
+  const orderedChildren = children.filter(child => {
+    if (translatedChildren.has(child.id)) return child.locale === locale
+    if (untranslated.has(child.id)) return false
+    untranslated.add(child.id)
+    return true
+  })
+  return [...new Set(orderedChildren.map(child => child.id))]
 }
 
 type Result<Value> = [value: Value, error: null] | [value: null, error: Error]
@@ -401,7 +456,10 @@ function loader<Value>(fn: BatchLoadFn<Value>) {
             const result = await fn(current.map(i => i.key))
             for (const [index, item] of current.entries())
               item.resolve(
-                result[index] ?? [item.key, null, new Error('Missing result')]
+                result[index] ?? [
+                  null,
+                  new Error(`Missing result for ${item.key}`)
+                ]
               )
           } catch (e) {
             const err = e instanceof Error ? e : new Error(String(e))

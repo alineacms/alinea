@@ -163,7 +163,6 @@ export function SidebarTree({dashboard}: SidebarTreeProps) {
   const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
   const items = useAtomValue(workspace.tree.items)
-  console.log(items)
   return (
     <div className={styles.root()}>
       {focusItem && <SidebarParent item={focusItem} />}
