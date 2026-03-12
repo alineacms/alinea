@@ -1,9 +1,8 @@
 import {Button, Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {unwrap} from 'jotai/utils'
 import {memo, Suspense} from 'react'
-import {ListLayout, Virtualizer} from 'react-aria-components'
+import {Collection, ListLayout, Virtualizer} from 'react-aria-components'
 import {Dashboard, DashboardTreeItem} from '../dashboard/Dashboard.js'
 import {
   IcRoundArrowBack,
@@ -122,8 +121,8 @@ const SidebarItemChildren = memo(function SidebarItemChildren({
 }: {
   item: DashboardTreeItem
 }) {
-  const items = useAtomValue(unwrap(item.items))
-  return items?.map(item => <SidebarItem key={item.id} item={item} />)
+  const items = useAtomValue(item.items)
+  return <Collection items={items}>{renderItem}</Collection>
 })
 
 const SidebarItem = memo(function SidebarItem({
@@ -146,10 +145,22 @@ const SidebarItem = memo(function SidebarItem({
       hasChildItems={hasChildItems}
       icon={icon}
     >
-      {isExpanded && <SidebarItemChildren item={item} />}
+      {isExpanded && (
+        <Suspense>
+          <SidebarItemChildren item={item} />
+        </Suspense>
+      )}
     </TreeItem>
   )
 })
+
+function renderItem(item: DashboardTreeItem) {
+  return (
+    <Suspense>
+      <SidebarItem item={item} />
+    </Suspense>
+  )
+}
 
 const treeLayoutOptions = {
   rowHeight: 34,
@@ -179,32 +190,8 @@ export function SidebarTree({dashboard}: SidebarTreeProps) {
             onExpandedChange={setExpandedKeys}
             selectedKeys={selectedKeys}
             onSelectionChange={setSelectedKeys}
-            /*onAction={async function onAction(key) {
-              const item = itemIndex.get(String(key))
-              if (!item?.hasChildNodes) return
-              await focusTreeNode(item.id)
-            }}
-            onSelectionChange={async function onSelectionChange(keys) {
-              const selected = toSet(keys, selectedKeys)
-              setTreeSelectedKeys(selected)
-              const selectedId = selected.values().next().value
-              if (!selectedId) return
-              const item = itemIndex.get(String(selectedId))
-              if (!item) return
-              if (item.hasChildNodes) await focusTreeNode(item.id)
-              navigateToTreeItem(setRoute, item)
-              await applyTreeRouteState({
-                workspace: item.node.workspace,
-                root: item.node.root,
-                entry: item.node.entryId
-              })
-            }}*/
           >
-            {items.map(item => (
-              <Suspense key={item.id}>
-                <SidebarItem item={item} />
-              </Suspense>
-            ))}
+            {renderItem}
           </Tree>
         </Virtualizer>
       </div>

@@ -371,7 +371,11 @@ export class DashboardRoot {
 
   selectedLocale = atom(null)
   displayLocale = atom(get => {
+    const route = get(this.workspace.dashboard.route)
     const i18n = get(this.i18n)
+
+    if (route.locale && i18n?.locales.includes(route.locale))
+      return route.locale
     return get(this.selectedLocale) ?? i18n?.locales[0] ?? null
   })
 
