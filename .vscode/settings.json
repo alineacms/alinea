@@ -7,7 +7,7 @@
   "typescript.preferences.importModuleSpecifier": "project-relative",
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "explicit",
-    "source.organizeImports": "never"
+    "source.organizeImports": "explicit"
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "[typescript]": {
