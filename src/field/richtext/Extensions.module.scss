@@ -29,6 +29,12 @@ h3.heading {
   }
 }
 
+.highlight {
+  background: var(--alinea-selected);
+  color: inherit;
+  padding: 2px 4px;
+}
+
 .list {
   margin-left: 20px;
   &:not(:last-child) {
