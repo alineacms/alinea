@@ -8,7 +8,16 @@ import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
 import {parents, translations} from 'alinea/query'
 import {type Atom, atom} from 'jotai'
+import {atomWithLocation} from 'jotai-location'
 import {ComponentType} from 'react'
+import {Key} from 'react-aria-components'
+
+export interface DashboardRoute {
+  workspace?: string
+  root?: string
+  entry?: string
+  locale?: string
+}
 
 export class Dashboard {
   constructor(
@@ -17,19 +26,48 @@ export class Dashboard {
     public client: Atom<LocalConnection>
   ) {}
 
+  #location = atomWithLocation()
+  route = atom(
+    get => {
+      const {pathname = '/', searchParams = new URLSearchParams()} = get(
+        this.#location
+      )
+      const [workspace, root, entry] = pathname.split('/').slice(1) as Array<
+        string | undefined
+      >
+      const locale = searchParams.get('locale') ?? undefined
+      return {
+        workspace,
+        root,
+        entry,
+        locale
+      }
+    },
+    (get, set, update: DashboardRoute) => {
+      const current = get(this.route)
+      let {workspace, root, entry, locale} = update
+      if (locale) entry = entry ?? current.entry
+      if (entry) root = root ?? current.root
+      if (root) workspace = workspace ?? current.workspace
+      const pathname = `/${[workspace, root, entry].filter(Boolean).join('/')}`
+      const searchParams = new URLSearchParams()
+      if (locale) searchParams.set('locale', locale)
+      set(this.#location, {pathname, searchParams})
+    }
+  )
+
   sha = atom(get => get(this.db).sha)
 
-  #selected = atom<string | null>(null)
   selectedWorkspace = atom(
     get => {
-      const selected = get(this.#selected)
-      if (selected) return selected
+      const {workspace} = get(this.route)
+      if (workspace) return workspace
       const config = get(this.config)
       const workspaceKeys = Object.keys(config.workspaces)
       return workspaceKeys[0] ?? null
     },
-    (get, set, next: string) => {
-      set(this.#selected, next)
+    (get, set, workspace: string) => {
+      set(this.route, {workspace})
     }
   )
 
@@ -77,8 +115,27 @@ export class DashboardTree {
   constructor(private workspace: DashboardWorkspace) {}
 
   focusItem = atom<DashboardTreeItem>()
-  expandedKeys = atom<Array<string>>([])
-  selectedKeys = atom<Array<string>>([])
+  expandedKeys = atom(new Set<Key>())
+
+  #selection = atom(new Set<Key>())
+  selectedKeys = atom(
+    get => {
+      const selection = get(this.#selection)
+      if (selection.size > 0) return selection
+      const route = get(this.workspace.dashboard.route)
+      if (route.entry) return new Set([route.entry])
+      if (route.root) return new Set([`root:${route.root}`])
+      return selection
+    },
+    (get, set, next: 'all' | Set<Key>) => {
+      if (next === 'all')
+        throw new Error('Selecting all items is not supported')
+      set(this.#selection, next)
+      // todo:
+      //set(this.workspace.dashboard.route, entry/route)
+    }
+  )
+
   items = atom(get => {
     const focusItem = get(this.focusItem)
     if (focusItem) return get(focusItem.items)
@@ -98,11 +155,15 @@ type Awaitable<T> = T | Promise<T>
 
 export class DashboardTreeItem {
   constructor(
+    public tree: DashboardTree,
     public id: string,
     public icon: Atom<Awaitable<ComponentType | undefined>>,
     public label: Atom<Awaitable<string>>,
-    public items: Atom<Awaitable<Array<DashboardTreeItem>>>
+    public items: Atom<Awaitable<Array<DashboardTreeItem>>>,
+    public hasChildren: Atom<Awaitable<boolean>>
   ) {}
+
+  isExpanded = atom(get => get(this.tree.expandedKeys).has(this.id))
 }
 
 export class DashboardEntry {
@@ -110,12 +171,9 @@ export class DashboardEntry {
     public root: DashboardRoot,
     public id: string
   ) {
-    this.#children = treeChildren(
-      this.root,
-      this.parentId,
-      this.orderChildrenBy
-    )
+    this.#children = treeChildren(this.root, this.id, this.orderChildrenBy)
     this.treeItem = new DashboardTreeItem(
+      this.root.workspace.tree,
       id,
       this.icon,
       atom(async get => {
@@ -132,7 +190,8 @@ export class DashboardEntry {
       atom(async get => {
         const children = await get(this.#children)
         return children.map(id => this.root.entries[id].treeItem)
-      })
+      }),
+      this.hasChildren
     )
   }
 
@@ -140,6 +199,7 @@ export class DashboardEntry {
     const load = get(this.root.entryLoader)
     const [result, error] = await load(this.id)
     if (error) throw error
+    console.log('loaded', {id: this.id, result})
     return result
   })
 
@@ -195,13 +255,15 @@ export class DashboardRoot {
     public key: string
   ) {
     this.treeItem = new DashboardTreeItem(
+      this.workspace.tree,
       `root:${this.key}`,
       this.icon,
       this.label,
       atom(async get => {
         const ids = await get(this.#children)
         return ids.map(id => this.entries[id].treeItem)
-      })
+      }),
+      this.hasChildren
     )
   }
 
@@ -263,7 +325,7 @@ export class DashboardRoot {
     })
   })
 
-  #children = treeChildren(this, atom(null), this.orderChildrenBy)
+  #children = treeChildren(this, null, this.orderChildrenBy)
   treeItem: DashboardTreeItem
 
   hasChildren = atom(async get => {
@@ -283,14 +345,13 @@ export class DashboardRoot {
 
 function treeChildren(
   root: DashboardRoot,
-  parentIdAtom: Atom<Awaitable<string | null>>,
+  parentId: null | string,
   orderByAtom: Atom<Awaitable<Order | Array<Order> | undefined>>
 ) {
   return atom(async get => {
     const visibleTypes = get(root.workspace.tree.visibleTypes)
     const db = get(root.workspace.dashboard.db)
     const orderBy = await get(orderByAtom)
-    const parentId = await get(parentIdAtom)
     const locale = get(root.displayLocale)
     const children = await db.find({
       select: {
@@ -304,7 +365,7 @@ function treeChildren(
       orderBy,
       workspace: root.workspace.key,
       root: root.key,
-      parentId: parentId || null,
+      parentId: parentId,
       filter: {
         _type: {in: visibleTypes}
       },

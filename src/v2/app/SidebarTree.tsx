@@ -1,9 +1,15 @@
 import {Button, Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
-import {useAtomValue} from 'jotai'
+import {useAtom, useAtomValue} from 'jotai'
+import {unwrap} from 'jotai/utils'
+import {memo, Suspense} from 'react'
 import {ListLayout, Virtualizer} from 'react-aria-components'
 import {Dashboard, DashboardTreeItem} from '../dashboard/Dashboard.js'
-import {IcRoundArrowBack} from '../icons.js'
+import {
+  IcRoundArrowBack,
+  IcTwotoneDescription,
+  IcTwotoneFolder
+} from '../icons.js'
 import css from './SidebarTree.module.css'
 
 const styles = styler(css)
@@ -111,14 +117,39 @@ function SidebarParent({item}: SidebarParentProps) {
   )
 }
 
-function SidebarItem({item}: {item: DashboardTreeItem}) {
+const SidebarItemChildren = memo(function SidebarItemChildren({
+  item
+}: {
+  item: DashboardTreeItem
+}) {
+  const items = useAtomValue(unwrap(item.items))
+  return items?.map(item => <SidebarItem key={item.id} item={item} />)
+})
+
+const SidebarItem = memo(function SidebarItem({
+  item
+}: {
+  item: DashboardTreeItem
+}) {
   const label = useAtomValue(item.label)
+  const isExpanded = useAtomValue(item.isExpanded)
+  const hasChildItems = useAtomValue(item.hasChildren)
+  let icon = useAtomValue(item.icon)
+  if (!icon)
+    if (hasChildItems) icon = IcTwotoneFolder
+    else icon = IcTwotoneDescription
   return (
-    <TreeItem id={item.id} textValue={label} title={label}>
-      {label}
+    <TreeItem
+      id={item.id}
+      textValue={label}
+      title={label}
+      hasChildItems={hasChildItems}
+      icon={icon}
+    >
+      {isExpanded && <SidebarItemChildren item={item} />}
     </TreeItem>
   )
-}
+})
 
 const treeLayoutOptions = {
   rowHeight: 34,
@@ -129,6 +160,8 @@ const treeLayoutOptions = {
 export function SidebarTree({dashboard}: SidebarTreeProps) {
   const workspace = useAtomValue(dashboard.currentWorkspace)
   const focusItem = useAtomValue(workspace.tree.focusItem)
+  const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
+  const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
   const items = useAtomValue(workspace.tree.items)
   console.log(items)
   return (
@@ -143,16 +176,14 @@ export function SidebarTree({dashboard}: SidebarTreeProps) {
             //dragAndDropHooks={dragAndDropHooks}
             selectionMode="single"
             selectionBehavior="replace"
-            onAction={console.log}
-            /*selectedKeys={selectedKeys}
             expandedKeys={expandedKeys}
-            onAction={async function onAction(key) {
+            onExpandedChange={setExpandedKeys}
+            selectedKeys={selectedKeys}
+            onSelectionChange={setSelectedKeys}
+            /*onAction={async function onAction(key) {
               const item = itemIndex.get(String(key))
               if (!item?.hasChildNodes) return
               await focusTreeNode(item.id)
-            }}
-            onExpandedChange={async function onExpandedChange(keys) {
-              await setTreeExpandedKeys(toSet(keys, expandedKeys))
             }}
             onSelectionChange={async function onSelectionChange(keys) {
               const selected = toSet(keys, selectedKeys)
@@ -170,7 +201,11 @@ export function SidebarTree({dashboard}: SidebarTreeProps) {
               })
             }}*/
           >
-            {item => <SidebarItem key={item.id} item={item} />}
+            {items.map(item => (
+              <Suspense key={item.id}>
+                <SidebarItem item={item} />
+              </Suspense>
+            ))}
           </Tree>
         </Virtualizer>
       </div>
