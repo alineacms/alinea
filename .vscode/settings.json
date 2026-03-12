@@ -1,20 +1,25 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "search.useGlobalIgnoreFiles": true,
   "typescript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifier": "project-relative",
   "editor.codeActionsOnSave": {
-    "quickfix.biome": "explicit",
-    "source.organizeImports.biome": "explicit",
+    "source.fixAll.oxc": "explicit",
     "source.organizeImports": "never"
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "[typescript]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   }
 }
