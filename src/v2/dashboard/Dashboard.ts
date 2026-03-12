@@ -16,6 +16,8 @@ export class Dashboard {
     public client: Atom<LocalConnection>
   ) {}
 
+  sha = atom(get => get(this.db).sha)
+
   workspaces = atom(get => {
     const config = get(this.config)
     return Object.keys(config.workspaces)

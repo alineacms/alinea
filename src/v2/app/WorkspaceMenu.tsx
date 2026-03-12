@@ -1,6 +1,7 @@
 import {Button, Menu, MenuItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import type {ComponentType, CSSProperties} from 'react'
+import type {Dashboard} from '../dashboard/Dashboard.js'
 import {IcAlineaLogo} from '../icons.js'
 import css from './WorkspaceMenu.module.css'
 
@@ -14,20 +15,14 @@ export interface WorkspaceMenuItem {
 }
 
 interface WorkspaceMenuProps {
-  items: Array<WorkspaceMenuItem>
-  selectedWorkspace: string
-  onSelectWorkspace: (workspace: string) => void
+  dashboard: Dashboard
 }
 
 function workspaceAvatarStyle(color?: string): CSSProperties {
   return {backgroundColor: color || '#d8e1eb'}
 }
 
-export function WorkspaceMenu({
-  items,
-  selectedWorkspace,
-  onSelectWorkspace
-}: WorkspaceMenuProps) {
+export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
   const selectedItem =
     items.find(item => item.id === selectedWorkspace) ?? items[0] ?? null
   const Icon = selectedItem?.icon ?? IcAlineaLogo
@@ -35,10 +30,7 @@ export function WorkspaceMenu({
   return (
     <Menu
       label={
-        <Button
-          appearance="plain"
-          className={styles.trigger()}
-        >
+        <Button appearance="plain" className={styles.trigger()}>
           <span
             className={styles.triggerAvatar()}
             style={workspaceAvatarStyle(selectedItem?.color)}
@@ -60,11 +52,7 @@ export function WorkspaceMenu({
       }}
     >
       {items.map(item => (
-        <MenuItem
-          key={item.id}
-          id={item.id}
-          textValue={item.label}
-        >
+        <MenuItem key={item.id} id={item.id} textValue={item.label}>
           {item.label}
         </MenuItem>
       ))}

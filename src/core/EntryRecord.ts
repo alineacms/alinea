@@ -71,7 +71,6 @@ export function createRecord(
     path,
     ...data
   } as EntryRecord
-  // biome-ignore lint/performance/noDelete: <explanation>
   if (status !== 'draft') delete result.path
   return result
 }

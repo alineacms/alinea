@@ -1,11 +1,8 @@
 import {expect, test} from 'bun:test'
-import {suite} from '@alinea/suite'
-import {Config, Query} from 'alinea'
-import {createCMS, Entry} from 'alinea/core'
-import {LocalDB} from 'alinea/core/db/LocalDB'
+import {Config} from 'alinea'
+import {createCMS} from 'alinea/core'
 import {TestDB} from 'alinea/core/db/TestDB.js'
 import {atom, createStore} from 'jotai'
-import {hydrate} from './atomic.js'
 import {Dashboard} from './Dashboard.js'
 
 const Page = Config.document('Page', {
