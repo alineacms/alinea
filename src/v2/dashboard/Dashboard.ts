@@ -1,6 +1,7 @@
 import {DragItem} from '@react-types/shared'
 import type {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
+import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {Entry, EntryStatus} from 'alinea/core/Entry'
 import type {Order} from 'alinea/core/Graph'
@@ -33,11 +34,40 @@ type DashboardTreeSelection = WritableAtom<
 >
 
 export class Dashboard {
+  db: Atom<LocalDB>
+
   constructor(
-    public db: Atom<LocalDB>,
+    dbAtom: Atom<LocalDB>,
     public config: Atom<Config>,
     public client: Atom<LocalConnection>
-  ) {}
+  ) {
+    this.db = Object.assign(
+      atom(
+        get => get(dbAtom),
+        (get, set) => {
+          const db = get(dbAtom)
+          // Listen to db changes and update entry revisions
+          const listen = (event: Event) => {
+            if (event instanceof IndexEvent && event.data.op === 'entry') {
+              console.log('Entry updated', event.data.id)
+              set(this.revisions[event.data.id], current => current + 1)
+            }
+          }
+          db.index.addEventListener(IndexEvent.type, listen)
+          return () => {
+            db.index.removeEventListener(IndexEvent.type, listen)
+          }
+        }
+      ),
+      {
+        onMount(init: () => void) {
+          init()
+        }
+      }
+    )
+  }
+
+  revisions = dispense(id => atom(0))
 
   #location = atomWithLocation()
   route = atom(
@@ -69,7 +99,24 @@ export class Dashboard {
     }
   )
 
-  sha = atom(get => get(this.db).sha)
+  #sha = atom<string>()
+  sha = Object.assign(
+    atom(
+      get => get(this.#sha) ?? get(this.db).sha,
+      (get, set) => {
+        const db = get(this.db)
+        const listen = (event: Event) => {
+          if (event instanceof IndexEvent && event.data.op === 'index')
+            set(this.#sha, event.data.sha)
+        }
+        db.index.addEventListener(IndexEvent.type, listen)
+        return () => {
+          db.index.removeEventListener(IndexEvent.type, listen)
+        }
+      }
+    ),
+    {onMount: (init: () => void) => init()}
+  )
 
   selectedWorkspace = atom(
     get => {
@@ -101,6 +148,7 @@ export class Dashboard {
       const load = get(this.#entryLoader)
       const [result, error] = await load(id)
       if (error) throw error
+      get(this.revisions[id])
       return new DashboardEntry(this, result)
     })
   })
@@ -289,6 +337,7 @@ export class DashboardTree {
           entry.label,
           atom(async get => {
             const children = await get(entry.children)
+            for (const childId of children) get(this.entryItems[childId])
             return Promise.all(
               children.map(childId => this.entryItems[childId]).map(get)
             )
@@ -344,7 +393,6 @@ export class DashboardTree {
         targetType: targetId.startsWith(ROOT_KEY_PREFIX) ? 'root' : 'entry',
         dropPosition: target.dropPosition
       })
-      await db.logEntries()
     }
   )
 
@@ -527,6 +575,7 @@ async function queryTreeChildren(
   parentId: null | string,
   orderByAtom: Atom<Awaitable<Order | Array<Order> | undefined>>
 ) {
+  get(root.workspace.dashboard.sha) // subscribe to content changes
   const visibleTypes = get(root.workspace.tree.visibleTypes)
   const db = get(root.workspace.dashboard.db)
   const orderBy = await get(orderByAtom)
@@ -559,7 +608,8 @@ async function queryTreeChildren(
     untranslated.add(child.id)
     return true
   })
-  return [...new Set(orderedChildren.map(child => child.id))]
+  const ids = [...new Set(orderedChildren.map(child => child.id))]
+  return ids
 }
 
 type Result<Value> = [value: Value, error: null] | [value: null, error: Error]
