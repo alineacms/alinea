@@ -202,13 +202,30 @@ export class DashboardWorkspace {
 }
 
 export class DashboardTree {
+  #treeSelection: DashboardTreeSelection
   constructor(
     private workspace: DashboardWorkspace,
-    public selectedKeys: DashboardTreeSelection
-  ) {}
+    treeSelection: DashboardTreeSelection
+  ) {
+    this.#treeSelection = treeSelection
+  }
 
   focusItem = atom<DashboardTreeItem>()
   expandedKeys = atom(new Set<Key>())
+  selectedKeys = atom(
+    get => get(this.#treeSelection),
+    (get, set, next: 'all' | Set<Key>) => {
+      assert(next !== 'all', 'Selecting all items is not supported')
+      const [first] = next
+      // Add to expanded keys if not already expanded
+      if (first) {
+        const expandedKeys = get(this.expandedKeys)
+        if (!expandedKeys.has(first))
+          set(this.expandedKeys, new Set(expandedKeys).add(first))
+      }
+      set(this.#treeSelection, next)
+    }
+  )
 
   entryItems: Record<string, DashboardTreeItem> = dispense(id => {
     const entry = this.workspace.dashboard.entries[id]
