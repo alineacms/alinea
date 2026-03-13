@@ -42,7 +42,7 @@ export function urlPicker<Fields>(
       [UrlReference.title]: new ScalarShape('Title'),
       [UrlReference.target]: new ScalarShape('Target')
     }).concat(extra),
-    label: 'External website',
+    label: 'External link',
     handlesMultiple: false,
     fields: fieldType,
     options,
