@@ -10,7 +10,7 @@
   "dependencies": {
     "@alinea/components": "^0.0.46",
     "jotai": "^2.4.2",
-    "react-aria-components": "1.15.0"
+    "react-aria-components": "^1.16.0"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.8.3",

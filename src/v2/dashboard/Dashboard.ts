@@ -320,24 +320,20 @@ export class DashboardTree {
   })
 
   // dnd
-  getItems = atom(
+  getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
+    return [...keys].map(id => {
+      return {'text/plain': String(id)}
+    })
+  })
+
+  onMove = atom(
     null,
-    (
-      get,
-      set,
-      _: Set<Key>,
-      items: Array<DashboardTreeItem>
-    ): Array<DragItem> => {
-      const labels = items.map(item => get(item.label))
-      return labels.map(label => {
-        return {'text/plain': label}
-      })
+    async (get, set, event: DroppableCollectionReorderEvent) => {
+      const db = get(this.workspace.dashboard.db)
+      const {keys, target} = event
+      // todo
     }
   )
-
-  onMove = atom(null, (get, set, event: DroppableCollectionReorderEvent) => {
-    console.log({event})
-  })
 
   visibleTypes = atom(get => {
     const config = get(this.workspace.dashboard.config)

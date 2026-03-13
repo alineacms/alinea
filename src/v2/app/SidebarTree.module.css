@@ -52,11 +52,3 @@
 .treeViewport :global(.alinea-rac-TreeItem) {
   padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px) !important;
 }
-
-.treeViewport :global(.alinea-rac-TreeItem [slot='drag']) {
-  display: none;
-}
-
-.dragDisabled {
-  padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px) !important;
-}
