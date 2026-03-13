@@ -9,16 +9,8 @@
 .focusHeader {
   display: flex;
   align-items: center;
-  gap: 4px;
   min-height: 34px;
   margin-bottom: 4px;
-}
-
-.backButton {
-  min-width: 28px;
-  min-height: 28px;
-  padding: 0;
-  flex-shrink: 0;
 }
 
 .focusLabel {

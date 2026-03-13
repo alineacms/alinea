@@ -40,3 +40,17 @@ test('dashboard', () => {
   const label = store.get(main.label)
   expect(label).toEqual('Main')
 })
+
+test('derives the current root from selection or falls back to the first root', () => {
+  const db = new TestDB(cms.config)
+  const store = createStore()
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const main = dashboard.workspace.main
+
+  const initialRoot = store.get(main.tree.currentRoot)
+  expect(initialRoot?.key).toEqual('pages')
+
+  store.set(dashboard.route, {workspace: 'main', root: 'pages'})
+  const selectedRoot = store.get(main.tree.currentRoot)
+  expect(selectedRoot?.key).toEqual('pages')
+})

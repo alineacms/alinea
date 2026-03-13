@@ -10,8 +10,14 @@ import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
+
 import type {ComponentType} from 'react'
 import type {Key} from 'react-aria-components'
+import {
+  IcRoundDescription,
+  IcTwotoneDescription,
+  IcTwotoneFolder
+} from '../icons.js'
 
 export interface DashboardRoute {
   workspace?: string
@@ -206,22 +212,65 @@ export class DashboardTree {
     this.#treeSelection = treeSelection
   }
 
-  focusItem = atom<DashboardTreeItem>()
-  expandedKeys = atom(new Set<Key>())
+  #routeExpandedKeys = atom(async get => {
+    const route = get(this.workspace.dashboard.route)
+    if (!route.entry || route.workspace !== this.workspace.key)
+      return new Set<Key>()
+    const entry = this.workspace.dashboard.entries[route.entry]
+    const parentIds = await get(entry.parentIds)
+    const keys = new Set<Key>(parentIds)
+    if (route.root) keys.add(`${ROOT_KEY_PREFIX}${route.root}`)
+    return keys
+  })
+
+  expandedKeys = Object.assign(
+    atom(
+      get => get(this.#expandedKeys),
+      (get, set, next: 'init' | Set<Key>) => {
+        if (next === 'init') {
+          get(this.#routeExpandedKeys).then(routeKeys => {
+            if (routeKeys.size === 0) return
+            const current = get(this.#expandedKeys)
+            const merged = new Set(current)
+            for (const key of routeKeys) merged.add(key)
+            set(this.#expandedKeys, merged)
+          })
+        } else {
+          set(this.#expandedKeys, next)
+        }
+      }
+    ),
+    {onMount: (setSelf: (value: 'init') => void) => setSelf('init')}
+  )
+  #expandedKeys = atom(new Set<Key>())
+
   selectedKeys = atom(
     get => get(this.#treeSelection),
     (get, set, next: 'all' | Set<Key>) => {
       assert(next !== 'all', 'Selecting all items is not supported')
       const [first] = next
-      // Add to expanded keys if not already expanded
       if (first) {
-        const expandedKeys = get(this.expandedKeys)
+        const expandedKeys = get(this.#expandedKeys)
         if (!expandedKeys.has(first))
-          set(this.expandedKeys, new Set(expandedKeys).add(first))
+          set(this.#expandedKeys, new Set(expandedKeys).add(first))
       }
       set(this.#treeSelection, next)
     }
   )
+
+  currentRoot = atom(get => {
+    const [selectedKey] = get(this.selectedKeys)
+    let rootKey: string | undefined
+    if (selectedKey) {
+      const selectedId = String(selectedKey)
+      if (selectedId.startsWith(ROOT_KEY_PREFIX))
+        rootKey = selectedId.slice(ROOT_KEY_PREFIX.length)
+    }
+    rootKey ??= get(this.workspace.dashboard.route).root
+    rootKey ??= get(this.workspace.roots)[0]
+    if (!rootKey) return null
+    return this.workspace.root[rootKey]
+  })
 
   entryItems: Record<string, DashboardTreeItem> = dispense(id => {
     const entry = this.workspace.dashboard.entries[id]
@@ -254,8 +303,6 @@ export class DashboardTree {
   })
 
   items = atom(get => {
-    const focusItem = get(this.focusItem)
-    if (focusItem) return get(focusItem.items)
     const roots = get(this.workspace.roots)
     return roots.map(key => this.rootItems[key])
   })
@@ -321,6 +368,11 @@ export class DashboardEntry {
     return parentId
   })
 
+  parentIds = atom(async get => {
+    const {parents} = await get(this.#treeData)
+    return parents.map(p => p.id)
+  })
+
   label = atom(async get => {
     const root = await get(this.root)
     const locale = get(root.displayLocale)
@@ -342,9 +394,12 @@ export class DashboardEntry {
 
   icon = atom(async get => {
     const {type} = await get(this.#treeData)
+    const hasChildren = await get(this.hasChildren)
     const config = get(this.dashboard.config)
     const typeConfig = getType(config.schema[type])
-    return typeConfig?.icon
+    return (
+      typeConfig?.icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription)
+    )
   })
 
   children = atom(async get => {
@@ -393,7 +448,7 @@ export class DashboardRoot {
   })
 
   label = atom(get => get(this.#settings).label)
-  icon = atom(get => get(this.#settings).icon)
+  icon = atom(get => get(this.#settings).icon ?? IcRoundDescription)
   i18n = atom(get => get(this.#settings).i18n)
   view = atom(get => get(this.#settings).view)
   orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
