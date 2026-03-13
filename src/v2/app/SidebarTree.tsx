@@ -13,6 +13,7 @@ import {
   DashboardRoot,
   DashboardTreeItem
 } from '../dashboard/Dashboard.js'
+import {LocaleMenu} from './LocaleMenu.js'
 import css from './SidebarTree.module.css'
 
 const styles = styler(css)
@@ -33,6 +34,7 @@ function SidebarParent({root}: SidebarParentProps) {
       <div className={styles.focusLabel()}>
         <Icon icon={icon} className={styles.focusIcon()} />
         {label}
+        <LocaleMenu root={root} />
       </div>
     </header>
   )

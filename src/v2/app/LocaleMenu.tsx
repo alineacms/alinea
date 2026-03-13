@@ -1,33 +1,27 @@
 import {Button, Menu, MenuItem} from '@alinea/components'
+import {useAtom, useAtomValue} from 'jotai'
+import {DashboardRoot} from '../dashboard/Dashboard.js'
 
 interface LocaleMenuProps {
-  locales: ReadonlyArray<string>
-  selectedLocale: string | undefined
-  onSelectLocale: (locale: string) => void
+  root: DashboardRoot
 }
 
-export function LocaleMenu({
-  locales,
-  selectedLocale,
-  onSelectLocale
-}: LocaleMenuProps) {
-  if (locales.length <= 1 || !selectedLocale) return null
+export function LocaleMenu({root}: LocaleMenuProps) {
+  const i18n = useAtomValue(root.i18n)
+  const [selectedLocale, setSelectedLocale] = useAtom(root.selectedLocale)
+  if (!i18n || !selectedLocale) return null
   return (
     <Menu
       label={<Button appearance="plain">{selectedLocale.toUpperCase()}</Button>}
       aria-label="Language"
       selectionMode="single"
       selectedKeys={new Set([selectedLocale])}
-      onAction={function onAction(key) {
-        if (!key) return
-        onSelectLocale(String(key))
+      onAction={key => {
+        setSelectedLocale(String(key))
       }}
     >
-      {locales.map(locale => (
-        <MenuItem
-          key={locale}
-          id={locale}
-        >
+      {i18n.locales.map(locale => (
+        <MenuItem key={locale} id={locale}>
           {locale.toUpperCase()}
         </MenuItem>
       ))}

@@ -87,11 +87,7 @@ export class Dashboard {
       }
     },
     (get, set, update: DashboardRoute) => {
-      const current = get(this.route)
       let {workspace, root, entry, locale} = update
-      if (locale) entry = entry ?? current.entry
-      if (entry) root = root ?? current.root
-      if (root) workspace = workspace ?? current.workspace
       const pathname = `/${[workspace, root, entry].filter(Boolean).join('/')}`
       const searchParams = new URLSearchParams()
       if (locale) searchParams.set('locale', locale)
@@ -476,7 +472,7 @@ export class DashboardEntry {
 
   label = atom(get => {
     const root = this.dashboard.workspace[this.workspace].root[this.root]
-    const locale = get(root.displayLocale)
+    const locale = get(root.selectedLocale)
     const entry = this.locales.get(locale)
     if (entry?.title) return entry.title
     for (const fallback of this.locales.values()) {
@@ -535,15 +531,28 @@ export class DashboardRoot {
     return getRoot(rootConfig)
   })
 
-  selectedLocale = atom(null)
-  displayLocale = atom(get => {
-    const route = get(this.workspace.dashboard.route)
-    const i18n = get(this.i18n)
-
-    if (route.locale && i18n?.locales.includes(route.locale))
-      return route.locale
-    return get(this.selectedLocale) ?? i18n?.locales[0] ?? null
-  })
+  #languagePreference = atom<string>()
+  selectedLocale = atom(
+    get => {
+      const route = get(this.workspace.dashboard.route)
+      const i18n = get(this.i18n)
+      if (route.locale && i18n?.locales.includes(route.locale))
+        return route.locale
+      const preference = get(this.#languagePreference)
+      if (preference) return preference
+      return i18n?.locales[0] ?? null
+    },
+    (get, set, locale: string) => {
+      const route = get(this.workspace.dashboard.route)
+      set(this.workspace.dashboard.route, {
+        workspace: this.workspace.key,
+        root: this.key,
+        entry: route.entry,
+        locale
+      })
+      set(this.#languagePreference, locale)
+    }
+  )
 
   label = atom(get => get(this.#settings).label)
   icon = atom(get => get(this.#settings).icon ?? IcRoundDescription)
@@ -579,7 +588,7 @@ async function queryTreeChildren(
   const visibleTypes = get(root.workspace.tree.visibleTypes)
   const db = get(root.workspace.dashboard.db)
   const orderBy = await get(orderByAtom)
-  const locale = get(root.displayLocale)
+  const locale = get(root.selectedLocale)
   const children = await db.find({
     select: {
       id: Entry.id,
