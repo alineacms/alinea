@@ -12,7 +12,7 @@ import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
 
 import type {ComponentType} from 'react'
-import type {Key} from 'react-aria-components'
+import type {DragAndDropOptions, Key} from 'react-aria-components'
 import {
   IcRoundDescription,
   IcTwotoneDescription,
@@ -305,6 +305,16 @@ export class DashboardTree {
   items = atom(get => {
     const roots = get(this.workspace.roots)
     return roots.map(key => this.rootItems[key])
+  })
+
+  dragAndDrop: Atom<DragAndDropOptions> = atom(get => {
+    return {
+      getItems(keys, values) {
+        return [...keys].map(key => {
+          return {'text/plain': String(key)}
+        })
+      }
+    }
   })
 
   visibleTypes = atom(get => {

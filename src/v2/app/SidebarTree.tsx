@@ -141,13 +141,8 @@ export function SidebarTree({dashboard}: SidebarTreeProps) {
   const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
   const items = useAtomValue(workspace.tree.items)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
-    getItems(keys, values) {
-      alert('ok')
-      console.log({keys, values})
-      return []
-    }
-  })
+  const dnd = useAtomValue(workspace.tree.dragAndDrop)
+  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>(dnd)
   return (
     <div className={styles.root()}>
       {currentRoot && <SidebarParent root={currentRoot} />}
