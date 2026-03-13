@@ -1,7 +1,7 @@
 import {Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue} from 'jotai'
-import {memo, Suspense} from 'react'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {Suspense, useMemo} from 'react'
 import {
   Collection,
   ListLayout,
@@ -21,54 +21,6 @@ interface SidebarTreeProps {
   dashboard: Dashboard
 }
 
-/*
-const {dragAndDropHooks} = useDragAndDrop<TreeItemData>(
-    useMemo(
-      function createDragAndDropOptions() {
-        return {
-          getItems(_keys: Set<string | number>, items: Array<TreeItemData>) {
-            return items
-              .filter(item => canDragTreeItem(config, itemIndex, item.id))
-              .map(item => ({
-                [treeDragType]: item.id,
-                'text/plain': item.node.title
-              }))
-          },
-          onDragStart(event: DragInfo) {
-            draggingNodeIdRef.current =
-              Array.from(event.keys, key => String(key))[0] ?? null
-          },
-          onDragEnd() {
-            draggingNodeIdRef.current = null
-          },
-          getDropOperation(
-            target: DropTarget,
-            types: DragTypes,
-            _allowedOperations: Array<DropOperation>
-          ) {
-            if (target.type !== 'item') return 'cancel'
-            if (!types.has(treeDragType)) return 'cancel'
-            return treeDropOperation(config, itemIndex, draggingNodeIdRef.current, {
-              key: String(target.key),
-              dropPosition: target.dropPosition
-            })
-          },
-          async onMove(event: DroppableCollectionReorderEvent) {
-            const draggingNodeId = Array.from(event.keys, key => String(key))[0]
-            if (!draggingNodeId) return
-            const nextRoute = await moveTreeNode(draggingNodeId, {
-              key: String(event.target.key),
-              dropPosition: event.target.dropPosition
-            })
-            if (nextRoute) setRoute(nextRoute)
-          }
-        }
-      },
-      [config, itemIndex, moveTreeNode, setRoute]
-    )
-  )
-*/
-
 interface SidebarParentProps {
   root: DashboardRoot
 }
@@ -86,20 +38,20 @@ function SidebarParent({root}: SidebarParentProps) {
   )
 }
 
-const SidebarItemChildren = memo(function SidebarItemChildren({
-  item
-}: {
+interface SidebarItemChildrenProps {
   item: DashboardTreeItem
-}) {
+}
+
+function SidebarItemChildren({item}: SidebarItemChildrenProps) {
   const items = useAtomValue(item.items)
   return <Collection items={items}>{renderItem}</Collection>
-})
+}
 
-const SidebarItem = memo(function SidebarItem({
-  item
-}: {
+interface SidebarItemProps {
   item: DashboardTreeItem
-}) {
+}
+
+function SidebarItem({item}: SidebarItemProps) {
   const label = useAtomValue(item.label)
   const isExpanded = useAtomValue(item.isExpanded)
   const hasChildItems = useAtomValue(item.hasChildren)
@@ -119,7 +71,7 @@ const SidebarItem = memo(function SidebarItem({
       )}
     </TreeItem>
   )
-})
+}
 
 function renderItem(item: DashboardTreeItem) {
   return (
@@ -141,30 +93,30 @@ export function SidebarTree({dashboard}: SidebarTreeProps) {
   const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
   const items = useAtomValue(workspace.tree.items)
-  const dnd = useAtomValue(workspace.tree.dragAndDrop)
+  const getItems = useSetAtom(workspace.tree.getItems)
+  const onMove = useSetAtom(workspace.tree.onMove)
+  const dnd = useMemo(() => ({getItems, onMove}), [getItems, onMove])
   const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>(dnd)
   return (
     <div className={styles.root()}>
       {currentRoot && <SidebarParent root={currentRoot} />}
       <div className={styles.treeViewport()}>
-        <Suspense fallback="loading tree...">
-          <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
-            <Tree
-              aria-label="Content tree"
-              style={{display: 'block', padding: 0, height: '100%'}}
-              items={items}
-              dragAndDropHooks={dragAndDropHooks}
-              selectionMode="single"
-              selectionBehavior="replace"
-              expandedKeys={expandedKeys}
-              onExpandedChange={setExpandedKeys}
-              selectedKeys={selectedKeys}
-              onSelectionChange={setSelectedKeys}
-            >
-              {renderItem}
-            </Tree>
-          </Virtualizer>
-        </Suspense>
+        <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
+          <Tree
+            aria-label="Content tree"
+            style={{display: 'block', padding: 0, height: '100%'}}
+            items={items}
+            dragAndDropHooks={dragAndDropHooks}
+            selectionMode="single"
+            selectionBehavior="replace"
+            expandedKeys={expandedKeys}
+            onExpandedChange={setExpandedKeys}
+            selectedKeys={selectedKeys}
+            onSelectionChange={setSelectedKeys}
+          >
+            {renderItem}
+          </Tree>
+        </Virtualizer>
       </div>
     </div>
   )

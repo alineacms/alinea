@@ -1,7 +1,8 @@
+import {DragItem} from '@react-types/shared'
 import type {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
-import {Entry} from 'alinea/core/Entry'
+import {Entry, EntryStatus} from 'alinea/core/Entry'
 import type {Order} from 'alinea/core/Graph'
 import {getRoot, getType, getWorkspace} from 'alinea/core/Internal'
 import {Type} from 'alinea/core/Type'
@@ -10,9 +11,8 @@ import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
-
 import type {ComponentType} from 'react'
-import type {DragAndDropOptions, Key} from 'react-aria-components'
+import type {DroppableCollectionReorderEvent, Key} from 'react-aria-components'
 import {
   IcRoundDescription,
   IcTwotoneDescription,
@@ -96,9 +96,16 @@ export class Dashboard {
     return this.workspace[workspaceKey]
   })
 
-  entries = dispense(id => new DashboardEntry(this, id))
+  entries = dispense(id => {
+    return atom(async get => {
+      const load = get(this.#entryLoader)
+      const [result, error] = await load(id)
+      if (error) throw error
+      return new DashboardEntry(this, result)
+    })
+  })
 
-  entryLoader = atom(get => {
+  #entryLoader = atom(get => {
     const db = get(this.db)
     return loader(async ids => {
       const data = {
@@ -172,10 +179,10 @@ export class DashboardWorkspace {
         })
         return
       }
-      const root = await get(this.dashboard.entries[selectedId].root)
+      const {root, workspace} = await get(this.dashboard.entries[selectedId])
       set(this.dashboard.route, {
-        workspace: root.workspace.key,
-        root: root.key,
+        workspace: workspace,
+        root: root,
         entry: selectedId,
         locale: current.locale
       })
@@ -216,8 +223,7 @@ export class DashboardTree {
     const route = get(this.workspace.dashboard.route)
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
-    const entry = this.workspace.dashboard.entries[route.entry]
-    const parentIds = await get(entry.parentIds)
+    const {parentIds} = await get(this.workspace.dashboard.entries[route.entry])
     const keys = new Set<Key>(parentIds)
     if (route.root) keys.add(`${ROOT_KEY_PREFIX}${route.root}`)
     return keys
@@ -272,20 +278,26 @@ export class DashboardTree {
     return this.workspace.root[rootKey]
   })
 
-  entryItems: Record<string, DashboardTreeItem> = dispense(id => {
-    const entry = this.workspace.dashboard.entries[id]
-    return new DashboardTreeItem(
-      this,
-      id,
-      entry.icon,
-      entry.label,
-      atom(async get => {
-        const children = await get(entry.children)
-        return children.map(childId => this.entryItems[childId])
-      }),
-      entry.hasChildren
-    )
-  })
+  entryItems: Record<string, Atom<Promise<DashboardTreeItem>>> = dispense(
+    id => {
+      return atom(async get => {
+        const entry = await get(this.workspace.dashboard.entries[id])
+        return new DashboardTreeItem(
+          this,
+          id,
+          entry.icon,
+          entry.label,
+          atom(async get => {
+            const children = await get(entry.children)
+            return Promise.all(
+              children.map(childId => this.entryItems[childId]).map(get)
+            )
+          }),
+          entry.hasChildren
+        )
+      })
+    }
+  )
 
   rootItems: Record<string, DashboardTreeItem> = dispense(key => {
     const root = this.workspace.root[key]
@@ -296,7 +308,7 @@ export class DashboardTree {
       root.label,
       atom(async get => {
         const ids = await get(root.children)
-        return ids.map(id => this.entryItems[id])
+        return Promise.all(ids.map(id => this.entryItems[id]).map(get))
       }),
       root.hasChildren
     )
@@ -307,14 +319,24 @@ export class DashboardTree {
     return roots.map(key => this.rootItems[key])
   })
 
-  dragAndDrop: Atom<DragAndDropOptions> = atom(get => {
-    return {
-      getItems(keys, values) {
-        return [...keys].map(key => {
-          return {'text/plain': String(key)}
-        })
-      }
+  // dnd
+  getItems = atom(
+    null,
+    (
+      get,
+      set,
+      _: Set<Key>,
+      items: Array<DashboardTreeItem>
+    ): Array<DragItem> => {
+      const labels = items.map(item => get(item.label))
+      return labels.map(label => {
+        return {'text/plain': label}
+      })
     }
+  )
+
+  onMove = atom(null, (get, set, event: DroppableCollectionReorderEvent) => {
+    console.log({event})
   })
 
   visibleTypes = atom(get => {
@@ -332,7 +354,7 @@ export class DashboardTreeItem {
     public tree: DashboardTree,
     public id: string,
     public icon: Atom<Awaitable<ComponentType | undefined>>,
-    public label: Atom<Awaitable<string>>,
+    public label: Atom<string>,
     public items: Atom<Awaitable<Array<DashboardTreeItem>>>,
     public hasChildren: Atom<Awaitable<boolean>>
   ) {}
@@ -340,85 +362,94 @@ export class DashboardTreeItem {
   isExpanded = atom(get => get(this.tree.expandedKeys).has(this.id))
 }
 
+interface EntryData {
+  id: string
+  type: string
+  parentId: string | null
+  workspace: string
+  root: string
+  parents: {
+    id: string
+    path: string
+    type: string
+  }[]
+  entries: {
+    title: string
+    status: EntryStatus
+    locale: string | null
+    main: boolean
+    path: string
+  }[]
+}
+
 export class DashboardEntry {
+  id: string
+  workspace: string
+  root: string
+  type: string
+  locales: Map<
+    string | null,
+    {
+      title: string
+      status: EntryStatus
+      locale: string | null
+      main: boolean
+      path: string
+    }
+  >
+  parentId: string | null
+  parentIds: Array<string>
+
   constructor(
     public dashboard: Dashboard,
-    public id: string
-  ) {}
-
-  #treeData = atom(async get => {
-    const load = get(this.dashboard.entryLoader)
-    const [result, error] = await load(this.id)
-    if (error) throw error
-    return result
-  })
-
-  workspace = atom(async get => {
-    const treeData = await get(this.#treeData)
-    return this.dashboard.workspace[treeData.workspace]
-  })
-
-  root = atom(async get => {
-    const workspace = await get(this.workspace)
-    const treeData = await get(this.#treeData)
-    return workspace.root[treeData.root]
-  })
-
-  locales = atom(async get => {
-    const treeData = await get(this.#treeData)
-    return new Map(
-      treeData.entries.map(entry => {
+    data: EntryData
+  ) {
+    this.id = data.id
+    this.workspace = data.workspace
+    this.root = data.root
+    this.type = data.type
+    this.parentId = data.parentId
+    this.parentIds = data.parents.map(p => p.id)
+    this.locales = new Map(
+      data.entries.map(entry => {
         return [entry.locale, entry] as const
       })
     )
-  })
+  }
 
-  parentId = atom(async get => {
-    const {parentId} = await get(this.#treeData)
-    return parentId
-  })
-
-  parentIds = atom(async get => {
-    const {parents} = await get(this.#treeData)
-    return parents.map(p => p.id)
-  })
-
-  label = atom(async get => {
-    const root = await get(this.root)
+  label = atom(get => {
+    const root = this.dashboard.workspace[this.workspace].root[this.root]
     const locale = get(root.displayLocale)
-    const locales = await get(this.locales)
-    const entry = locales.get(locale)
+    const entry = this.locales.get(locale)
     if (entry?.title) return entry.title
-    for (const fallback of locales.values()) {
+    for (const fallback of this.locales.values()) {
       if (fallback.title) return fallback.title
     }
     return ''
   })
 
   orderChildrenBy = atom(async get => {
-    const {type} = await get(this.#treeData)
     const config = get(this.dashboard.config)
-    const typeConfig = getType(config.schema[type])
+    const typeConfig = getType(config.schema[this.type])
     return typeConfig?.orderChildrenBy
   })
 
   icon = atom(async get => {
-    const {type} = await get(this.#treeData)
     const hasChildren = await get(this.hasChildren)
     const config = get(this.dashboard.config)
-    const typeConfig = getType(config.schema[type])
+    const typeConfig = getType(config.schema[this.type])
     return (
       typeConfig?.icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription)
     )
   })
 
   children = atom(async get => {
-    const root = await get(this.root)
+    const root = this.dashboard.workspace[this.workspace].root[this.root]
     return queryTreeChildren(get, root, this.id, this.orderChildrenBy)
   })
 
   hasChildren = atom(async get => {
-    const root = await get(this.root)
+    const root = this.dashboard.workspace[this.workspace].root[this.root]
     const db = get(this.dashboard.db)
     const visibleTypes = get(root.workspace.tree.visibleTypes)
     return Boolean(
