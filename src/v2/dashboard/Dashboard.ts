@@ -96,22 +96,11 @@ export class Dashboard {
     const db = get(this.db)
     return loader(async ids => {
       const data = {
-        id: Entry.id,
-        type: Entry.type,
         title: Entry.title,
         status: Entry.status,
         locale: Entry.locale,
-        workspace: Entry.workspace,
         main: Entry.main,
-        root: Entry.root,
-        path: Entry.path,
-        parents: parents({
-          select: {
-            id: Entry.id,
-            path: Entry.path,
-            type: Entry.type
-          }
-        })
+        path: Entry.path
       }
       const rows = await db.find({
         groupBy: Entry.id,
@@ -121,6 +110,13 @@ export class Dashboard {
           parentId: Entry.parentId,
           workspace: Entry.workspace,
           root: Entry.root,
+          parents: parents({
+            select: {
+              id: Entry.id,
+              path: Entry.path,
+              type: Entry.type
+            }
+          }),
           entries: translations({select: data, includeSelf: true})
         },
         id: {in: ids},
