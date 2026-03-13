@@ -30,9 +30,9 @@ h3.heading {
 }
 
 .highlight {
-  background: var(--alinea-selected);
-  color: inherit;
+  background: var(--alinea-variant-info-action);
   padding: 2px 4px;
+  color: var(--alinea-variant-info-foreground);
 }
 
 .list {
