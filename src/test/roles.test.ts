@@ -107,7 +107,8 @@ test('enforce reorder permissions', async () => {
 
   const reorder = await move({
     id: childA._id,
-    after: childB._id
+    target: childB._id,
+    dropPosition: 'after'
   }).task(db)
   await test.throws(() => db.request(reorder, policy), 'denied')
 })
@@ -138,7 +139,8 @@ test('enforce move permissions', async () => {
 
   const moveMutation = await move({
     id: child._id,
-    toParent: targetParent._id
+    target: targetParent._id,
+    dropPosition: 'on'
   }).task(db)
   await test.throws(() => db.request(moveMutation, policy), 'denied')
 })

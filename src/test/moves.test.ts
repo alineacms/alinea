@@ -61,7 +61,8 @@ test('move parent', async () => {
   // Reparent child1 to parent2
   await db.move({
     id: child1._id,
-    toParent: parent2._id
+    target: parent2._id,
+    dropPosition: 'on'
   })
 
   const child1Entry = await db.get({select: Entry, id: child1._id})
@@ -72,7 +73,8 @@ test('move parent', async () => {
   await test.throws(async () => {
     await db.move({
       id: child1._id,
-      toParent: parent3._id
+      target: parent3._id,
+      dropPosition: 'on'
     })
   })
 
@@ -83,7 +85,8 @@ test('move parent', async () => {
   await test.throws(async () => {
     await db.move({
       id: seeded1._id,
-      toParent: parent3._id
+      target: parent3._id,
+      dropPosition: 'on'
     })
   })
 })

@@ -129,15 +129,15 @@ export class UpdateOperation<Definition> extends Operation {
 
 export interface MoveQuery {
   id: string
-  after?: string | null
-  toParent?: string
-  toRoot?: string
+  target: string
+  dropPosition: 'after' | 'before' | 'on'
+  targetType?: 'entry' | 'root'
 }
 
 export class MoveOperation extends Operation {
   constructor(query: MoveQuery) {
     super((): Array<Mutation> => {
-      return [{op: 'move', ...query, after: query.after ?? null}]
+      return [{op: 'move', ...query, targetType: query.targetType ?? 'entry'}]
     })
   }
 }

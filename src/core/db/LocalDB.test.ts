@@ -126,7 +126,8 @@ test('change order', async () => {
   test.is(sub3._index, 'a2')
   await db.move({
     id: sub1._id,
-    after: sub2._id
+    target: sub2._id,
+    dropPosition: 'after'
   })
   sub1 = await db.get({type: schema.DemoRecipe, id: sub1._id})
   test.is(sub1._index, 'a1V')

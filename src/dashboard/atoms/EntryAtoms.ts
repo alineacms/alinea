@@ -337,21 +337,21 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         const {item: parent} = target
         if (items.length !== 1) return
         const [dropping] = items
+        const isRoot = parent.getId().startsWith('@alinea')
         const children = parent.getChildren()
-        const previous =
-          'childIndex' in target ? children[target.childIndex - 1] : null
-        const after = previous ? previous.getId() : null
-        const newParent = dropping.getParent() !== parent
-        const toRoot =
-          parent.getId().startsWith('@alinea') && newParent
-            ? dropping.getItemData().entries[0].root
-            : undefined
-        const toParent = !toRoot && newParent ? parent.getId() : undefined
+        const before = 'childIndex' in target ? children[target.childIndex] : null
+        const after = 'childIndex' in target ? children[target.childIndex - 1] : null
         db.move({
           id: dropping.getId(),
-          after,
-          toParent,
-          toRoot
+          target: before
+            ? before.getId()
+            : after
+              ? after.getId()
+              : isRoot
+                ? dropping.getItemData().entries[0].root
+                : parent.getId(),
+          targetType: before || after ? 'entry' : isRoot ? 'root' : 'entry',
+          dropPosition: before ? 'before' : after ? 'after' : 'on'
         })
       },
       async getItem(id): Promise<EntryTreeItem> {

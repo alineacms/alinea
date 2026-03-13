@@ -14,15 +14,19 @@ const db = new LocalDB(cms, copy)
 await db.sync()
 
 test('move in between duplicate indexes', async () => {
-  await db.move({
-    id: 'sw3j0F5a-lzQ9ubqYuS53',
-    after: null
-  })
   const siblings = await db.find({
     root: 'media'
   })
+  await db.move({
+    id: 'sw3j0F5a-lzQ9ubqYuS53',
+    target: siblings[0]._id,
+    dropPosition: 'before'
+  })
+  const moved = await db.find({
+    root: 'media'
+  })
   test.equal(
-    siblings.map(entry => entry._index),
+    moved.map(entry => entry._index),
     ['a0', 'a1', 'a2', 'a3', 'a4']
   )
 })

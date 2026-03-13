@@ -475,11 +475,6 @@ function entryNodeId(entryId: string): string {
   return `entry:${entryId}`
 }
 
-function entryIdFromNodeId(nodeId: string): string | null {
-  if (!nodeId.startsWith('entry:')) return null
-  return nodeId.slice('entry:'.length)
-}
-
 function resolveTreeDropTarget(
   itemIndex: Map<string, TreeItem>,
   target: TreeDropTarget
@@ -580,20 +575,6 @@ export function treeDropOperation(
   return canDropTreeItem(config, itemIndex, nodeId, target)
     ? 'move'
     : 'cancel'
-}
-
-async function queryTreeChildIds(
-  graph: WriteableGraph,
-  config: Config,
-  node: TreeNode
-): Promise<Array<string>> {
-  const entries =
-    node.kind === 'root'
-      ? await queryRootEntries(graph, config, node.workspace, node.root)
-      : node.entryId
-        ? await queryEntryChildren(graph, config, node.workspace, node.root, node.entryId)
-        : []
-  return entries.map(entry => entryNodeId(entry.id))
 }
 
 export const loadTreeNodeChildrenCommand = command<[string], Promise<void>>(
@@ -775,29 +756,14 @@ export const moveTreeNodeCommand = command<
   if (!parentNode) return null
 
   const graph = get(graphAtom)
-  const siblingIds = await queryTreeChildIds(graph, config, parentNode)
-  const nextSiblings = siblingIds.filter(childId => childId !== nodeId)
-
-  let insertIndex = nextSiblings.length
-  if (resolvedTarget.dropPosition !== 'on') {
-    const targetIndex = nextSiblings.indexOf(resolvedTarget.targetNodeId)
-    if (targetIndex === -1) return null
-    insertIndex =
-      resolvedTarget.dropPosition === 'before' ? targetIndex : targetIndex + 1
-  }
-
-  const afterNodeId = insertIndex > 0 ? nextSiblings[insertIndex - 1] : null
-  const after = afterNodeId ? entryIdFromNodeId(afterNodeId) : null
-  const newParent = item.node.parentId !== parentNode.id
-  const toRoot = newParent && parentNode.kind === 'root' ? parentNode.root : undefined
-  const toParent =
-    newParent && parentNode.kind === 'entry' ? parentNode.entryId : undefined
+  const targetNode = itemIndex.get(resolvedTarget.targetNodeId)?.node
+  if (!targetNode) return null
 
   await graph.move({
     id: item.node.entryId,
-    after,
-    toParent,
-    toRoot
+    target: targetNode.kind === 'root' ? targetNode.root : targetNode.entryId!,
+    targetType: targetNode.kind,
+    dropPosition: resolvedTarget.dropPosition
   })
 
   set(treeStateAtom, {type: 'resetLoadedNodes'})

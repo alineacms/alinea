@@ -450,36 +450,63 @@ export class EntryTransaction {
     return this
   }
 
-  move({id, after, toParent, toRoot}: Op<MoveMutation>) {
+  move({id, target, dropPosition, targetType}: Op<MoveMutation>) {
     const index = this.#index
+    targetType ??= 'entry'
     const entries = Array.from(index.findMany(entry => entry.id === id))
     assert(entries.length > 0, `Entry not found: ${id}`)
-    const action = toParent || toRoot ? Permission.Move : Permission.Reorder
-    for (const entry of entries) this.#policy.assert(action, entry)
-    const parentId = toRoot ? null : (toParent ?? entries[0].parentId)
-    const root = toRoot ?? entries[0].root
-    const workspace = entries[0].workspace
-    if (toRoot) this.#policy.assert(Permission.Move, {workspace, root})
-    const siblings = new Map(
-      Array.from(
-        index.findMany(entry => {
-          return (
-            entry.workspace === workspace &&
-            entry.root === root &&
-            entry.parentId === parentId &&
-            entry.id !== id
-          )
-        })
-      ).map(entry => [entry.id, entry])
+    const targetEntry =
+      targetType === 'root'
+        ? undefined
+        : index.findFirst(entry => {
+            return entry.id === target
+          })
+    assert(targetType === 'root' || targetEntry, `Target not found: ${target}`)
+    assert(
+      targetType === 'entry' || dropPosition === 'on',
+      `Cannot move ${dropPosition} root ${target}`
     )
-    if (after) assert(siblings.has(after), `Sibling not found: ${after}`)
-    const siblingList = Array.from(siblings.values())
-    const previousIndex = after
-      ? siblingList.findIndex(entry => entry.id === after)
-      : -1
-    const nextIndex = previousIndex + 1
-    const previous = siblingList[previousIndex] ?? null
-    const next = siblingList[nextIndex] ?? null
+    const parentId =
+      targetType === 'root'
+        ? null
+        : dropPosition === 'on'
+          ? target
+          : (targetEntry?.parentId ?? null)
+    const root =
+      targetType === 'root' ? target : (targetEntry?.root ?? entries[0].root)
+    const workspace =
+      targetEntry?.workspace ?? entries[0].workspace
+    const action =
+      parentId !== entries[0].parentId || root !== entries[0].root
+        ? Permission.Move
+        : Permission.Reorder
+    for (const entry of entries) this.#policy.assert(action, entry)
+    if (action === Permission.Move && parentId === null) {
+      this.#policy.assert(Permission.Move, {workspace, root})
+    }
+    const siblingList = Array.from(
+      index.findMany(entry => {
+        return (
+          entry.workspace === workspace &&
+          entry.root === root &&
+          entry.parentId === parentId &&
+          entry.id !== id
+        )
+      })
+    )
+    let insertIndex = siblingList.length
+    if (targetType !== 'root') {
+      const targetIndex = siblingList.findIndex(entry => entry.id === target)
+      if (dropPosition === 'before') {
+        assert(targetIndex >= 0, `Sibling not found: ${target}`)
+        insertIndex = targetIndex
+      } else if (dropPosition === 'after') {
+        assert(targetIndex >= 0, `Sibling not found: ${target}`)
+        insertIndex = targetIndex + 1
+      }
+    }
+    const previous = siblingList[insertIndex - 1] ?? null
+    const next = siblingList[insertIndex] ?? null
     const seen = new Set()
     const hasDuplicates = siblingList.some(entry => {
       const wasSeen = seen.has(entry.index)
@@ -491,7 +518,7 @@ export class EntryTransaction {
     if (hasDuplicates) {
       const self = index.findFirst(entry => entry.id === id)
       assert(self, `Entry not found: ${id}`)
-      siblingList.splice(previousIndex + 1, 0, self)
+      siblingList.splice(insertIndex, 0, self)
       for (const sibling of siblingList) {
         this.#policy.assert(Permission.Reorder, sibling)
       }
@@ -520,7 +547,7 @@ export class EntryTransaction {
           }
         }
       }
-      newIndex = newKeys[previousIndex + 1]
+      newIndex = newKeys[insertIndex]
     } else {
       newIndex = generateKeyBetween(
         previous?.index ?? null,
@@ -536,7 +563,7 @@ export class EntryTransaction {
           })
         : undefined
 
-      if (toParent) {
+      if (action === Permission.Move && parentId) {
         assert(!entry.seeded, `Cannot move seeded entry ${entry.filePath}`)
         assert(parent, `Parent not found: ${parentId}`)
         this.#policy.assert(Permission.Move, parent)
@@ -571,7 +598,7 @@ export class EntryTransaction {
         entry.status
       )
       const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
-      if (toParent || toRoot) {
+      if (action === Permission.Move) {
         this.#tx.remove(entry.filePath)
         this.#tx.rename(entry.childrenDir, childrenDir)
       }

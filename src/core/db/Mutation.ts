@@ -63,9 +63,9 @@ export interface ArchiveMutation {
 export interface MoveMutation {
   op: 'move'
   id: string
-  after: string | null
-  toParent?: string
-  toRoot?: string
+  target: string
+  dropPosition: 'after' | 'before' | 'on'
+  targetType?: 'entry' | 'root'
 }
 
 export interface UploadFileMutation {
