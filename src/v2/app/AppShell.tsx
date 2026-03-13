@@ -2,6 +2,7 @@ import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import type {Dashboard} from '../dashboard/Dashboard.js'
 import css from './AppShell.module.css'
+import {Editor} from './Editor.js'
 import {SidebarTree} from './SidebarTree.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 
@@ -29,50 +30,9 @@ export function AppShell({dashboard}: AppShellProps) {
         </footer>
       </aside>
 
-      {/*<main className={styles.main()}>
-        <header className={styles.mainHeader()}>
-          <h1 className={styles.mainTitle()}>Title</h1>
-          <LocaleMenu dashboard={dashboard} />
-        </header>
-
-        <div className={styles.mainBody()}>
-          <div className={styles.explorerPane()}>
-            <ContentExplorer
-              graph={db}
-              config={config}
-              workspace={route.workspace || workspace}
-              root={route.root}
-              entry={route.entry}
-              locale={selectedLocale}
-              onScopeTitleChange={setMainTitle}
-              onOpenEntry={function onOpenEntry(entryId) {
-                const workspaceId = route.workspace || workspace
-                const rootId = route.root
-                if (!workspaceId || !rootId) return
-                const nextRoute = {
-                  workspace: workspaceId,
-                  root: rootId,
-                  entry: entryId,
-                  locale: route.locale
-                }
-                setRoute(nextRoute)
-                void applyTreeRouteState(nextRoute)
-              }}
-            />
-          </div>
-          <div className={styles.editorPane()}>
-            <EntryEditor
-              graph={db}
-              config={config}
-              views={views}
-              workspace={route.workspace || workspace}
-              root={route.root}
-              entry={route.entry}
-              locale={selectedLocale}
-            />
-          </div>
-        </div>
-      </main>*/}
+      <main className={styles.main()}>
+        <Editor dashboard={dashboard} />
+      </main>
     </div>
   )
 }
