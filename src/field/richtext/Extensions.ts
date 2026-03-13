@@ -8,6 +8,7 @@ import FloatingMenu from '@tiptap/extension-floating-menu'
 import Gapcursor from '@tiptap/extension-gapcursor'
 import HardBreak from '@tiptap/extension-hard-break'
 import Heading from '@tiptap/extension-heading'
+import Highlight from '@tiptap/extension-highlight'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
 import Italic from '@tiptap/extension-italic'
 import ListItem from '@tiptap/extension-list-item'
@@ -99,5 +100,10 @@ export const extensions = {
       class: styles.th()
     }
   }),
-  TableRow
+  TableRow,
+  Highlight: Highlight.configure({
+    HTMLAttributes: {
+      class: styles.highlight()
+    }
+  })
 }
