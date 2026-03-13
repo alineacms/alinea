@@ -331,7 +331,20 @@ export class DashboardTree {
     async (get, set, event: DroppableCollectionReorderEvent) => {
       const db = get(this.workspace.dashboard.db)
       const {keys, target} = event
-      // todo
+      const [dragged] = keys
+      if (!dragged) return
+      const draggedId = String(dragged)
+      if (draggedId.startsWith(ROOT_KEY_PREFIX)) return
+      const targetId = String(target.key)
+      await db.move({
+        id: draggedId,
+        target: targetId.startsWith(ROOT_KEY_PREFIX)
+          ? targetId.slice(ROOT_KEY_PREFIX.length)
+          : targetId,
+        targetType: targetId.startsWith(ROOT_KEY_PREFIX) ? 'root' : 'entry',
+        dropPosition: target.dropPosition
+      })
+      await db.logEntries()
     }
   )
 

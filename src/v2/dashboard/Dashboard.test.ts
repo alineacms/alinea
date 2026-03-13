@@ -1,8 +1,9 @@
-import {expect, test} from 'bun:test'
 import {Config} from 'alinea'
 import {Entry, createCMS} from 'alinea/core'
 import {TestDB} from 'alinea/core/db/TestDB.js'
+import {expect, test} from 'bun:test'
 import {atom, createStore} from 'jotai'
+import '../dom.js'
 import {Dashboard} from './Dashboard.js'
 
 const Page = Config.document('Page', {
