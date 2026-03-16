@@ -213,12 +213,7 @@ export class GithubApi
     commitMessage: string
   ): Promise<string> {
     const {owner, repo, branch} = this.#options
-    const [{additions, deletions}, baseCommit] = await Promise.all([
-      this.#processChanges(changes),
-      this.#restRequest<{tree: {sha: string}}>(
-        `/repos/${owner}/${repo}/git/commits/${expectedHeadOid}`
-      )
-    ])
+    const {additions, deletions} = await this.#processChanges(changes)
     const entries = Array<{
       path: string
       mode: '100644'
@@ -245,6 +240,9 @@ export class GithubApi
       }))
     )
     if (!entries.length) return expectedHeadOid
+    const baseCommit = await this.#restRequest<{tree: {sha: string}}>(
+      `/repos/${owner}/${repo}/git/commits/${expectedHeadOid}`
+    )
     const createdTree = await this.#restRequest<{sha: string}>(
       `/repos/${owner}/${repo}/git/trees`,
       {
