@@ -12,7 +12,7 @@ import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
-import type {ComponentType} from 'react'
+import {startTransition, type ComponentType} from 'react'
 import type {DroppableCollectionReorderEvent, Key} from 'react-aria-components'
 import {
   IcRoundDescription,
@@ -32,6 +32,8 @@ type DashboardTreeSelection = WritableAtom<
   [next: 'all' | Set<Key>],
   Promise<void>
 >
+
+type FocusedItem = {entry: DashboardEntry} | {root: DashboardRoot} | null
 
 export class Dashboard {
   db: Atom<LocalDB>
@@ -91,9 +93,20 @@ export class Dashboard {
       const pathname = `/${[workspace, root, entry].filter(Boolean).join('/')}`
       const searchParams = new URLSearchParams()
       if (locale) searchParams.set('locale', locale)
-      set(this.#location, {pathname, searchParams})
+      startTransition(() => {
+        set(this.#location, {pathname, searchParams})
+      })
     }
   )
+
+  focused = atom(async (get): Promise<FocusedItem> => {
+    const route = get(this.route)
+    if (route.entry) return {entry: await get(this.entries[route.entry])}
+    if (!route.workspace) return null
+    const workspace = this.workspace[route.workspace!]
+    if (route.root) return {root: workspace.root[route.root]}
+    return null
+  })
 
   #sha = atom<string>()
   sha = Object.assign(
@@ -123,7 +136,9 @@ export class Dashboard {
       return workspaceKeys[0] ?? null
     },
     (get, set, workspace: string) => {
-      set(this.route, {workspace})
+      startTransition(() => {
+        set(this.route, {workspace})
+      })
     }
   )
 
@@ -137,6 +152,10 @@ export class Dashboard {
   currentWorkspace = atom(get => {
     const workspaceKey = get(this.selectedWorkspace)
     return this.workspace[workspaceKey]
+  })
+
+  type = dispense(name => {
+    return new DashboardType(this, name)
   })
 
   entries = dispense(id => {
@@ -187,6 +206,22 @@ export class Dashboard {
       })
     })
   })
+}
+
+export class DashboardType {
+  constructor(
+    public dashboard: Dashboard,
+    public name: string
+  ) {}
+
+  #settings = atom(get => {
+    const config = get(this.dashboard.config)
+    const typeConfig = config.schema[this.name]
+    assert(typeConfig, `Type "${this.name}" not found in config`)
+    return getType(typeConfig)
+  })
+
+  label = atom(get => get(this.#settings).label)
 }
 
 const ROOT_KEY_PREFIX = 'root:'
