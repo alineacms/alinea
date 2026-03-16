@@ -336,21 +336,6 @@ export class GithubApi
     return ref.object.sha
   }
 
-  async #fetchUploadedContent(url: string): Promise<string> {
-    const response = await fetch(url)
-    if (!response.ok)
-      throw new HttpError(response.status, await response.text())
-    const buffer = new Uint8Array(await response.arrayBuffer())
-    const {maxBlobBytes} = this.#options
-    if (maxBlobBytes && buffer.byteLength > maxBlobBytes) {
-      throw new HttpError(
-        413,
-        `Upload exceeds max blob size (${buffer.byteLength} > ${maxBlobBytes})`
-      )
-    }
-    return base64.stringify(buffer)
-  }
-
   async #uploadBlobs(
     additions: Array<{path: string; contents?: string; uploadUrl?: string}>
   ): Promise<Array<{path: string; sha: string}>> {
