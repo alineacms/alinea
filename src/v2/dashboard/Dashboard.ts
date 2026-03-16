@@ -154,8 +154,16 @@ export class Dashboard {
     return this.workspace[workspaceKey]
   })
 
-  type = dispense(name => {
-    return new DashboardType(this, name)
+  type = dispense(key => {
+    return new DashboardType(
+      this,
+      atom(get => {
+        const config = get(this.config)
+        const settings = config.schema[key]
+        assert(settings, `Type "${key}" not found in config`)
+        return settings
+      })
+    )
   })
 
   entries = dispense(id => {
@@ -176,7 +184,8 @@ export class Dashboard {
         status: Entry.status,
         locale: Entry.locale,
         main: Entry.main,
-        path: Entry.path
+        path: Entry.path,
+        fileHash: Entry.fileHash
       }
       const rows = await db.find({
         groupBy: Entry.id,
@@ -208,20 +217,24 @@ export class Dashboard {
   })
 }
 
+export class DashboardDraft {
+  constructor(type: DashboardType, initialValue: object) {}
+}
+
 export class DashboardType {
   constructor(
     public dashboard: Dashboard,
-    public name: string
+    private type: Atom<Type>
   ) {}
 
-  #settings = atom(get => {
-    const config = get(this.dashboard.config)
-    const typeConfig = config.schema[this.name]
-    assert(typeConfig, `Type "${this.name}" not found in config`)
-    return getType(typeConfig)
-  })
-
+  #settings = atom(get => getType(get(this.type)))
+  contains = atom(get => get(this.#settings).contains)
   label = atom(get => get(this.#settings).label)
+  orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
+  icon = atom(get => get(this.#settings).icon)
+
+  sections = atom(get => get(this.#settings).sections)
+  items = atom(get => {})
 }
 
 const ROOT_KEY_PREFIX = 'root:'
@@ -467,6 +480,7 @@ interface EntryData {
     locale: string | null
     main: boolean
     path: string
+    fileHash: string
   }[]
 }
 
@@ -474,7 +488,7 @@ export class DashboardEntry {
   id: string
   workspace: string
   root: string
-  type: string
+  type: DashboardType
   locales: Map<
     string | null,
     {
@@ -495,7 +509,7 @@ export class DashboardEntry {
     this.id = data.id
     this.workspace = data.workspace
     this.root = data.root
-    this.type = data.type
+    this.type = dashboard.type[data.type]
     this.parentId = data.parentId
     this.parentIds = data.parents.map(p => p.id)
     this.locales = new Map(
@@ -516,24 +530,16 @@ export class DashboardEntry {
     return ''
   })
 
-  orderChildrenBy = atom(async get => {
-    const config = get(this.dashboard.config)
-    const typeConfig = getType(config.schema[this.type])
-    return typeConfig?.orderChildrenBy
-  })
-
   icon = atom(async get => {
+    const typeIcon = get(this.type.icon)
+    if (typeIcon) return typeIcon
     const hasChildren = await get(this.hasChildren)
-    const config = get(this.dashboard.config)
-    const typeConfig = getType(config.schema[this.type])
-    return (
-      typeConfig?.icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription)
-    )
+    return hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   })
 
   children = atom(async get => {
     const root = this.dashboard.workspace[this.workspace].root[this.root]
-    return queryTreeChildren(get, root, this.id, this.orderChildrenBy)
+    return queryTreeChildren(get, root, this.id, this.type.orderChildrenBy)
   })
 
   hasChildren = atom(async get => {

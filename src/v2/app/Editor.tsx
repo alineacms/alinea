@@ -1,9 +1,13 @@
+import {Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
+import {Field} from 'alinea/core/Field'
+import {Section} from 'alinea/core/Section'
 import {useAtomValue} from 'jotai'
 import {
   Dashboard,
   DashboardEntry,
-  DashboardRoot
+  DashboardRoot,
+  DashboardType
 } from '../dashboard/Dashboard.js'
 import css from './Editor.module.css'
 
@@ -38,16 +42,70 @@ interface EntryEditorProps {
 
 function EntryEditor({entry}: EntryEditorProps) {
   const title = useAtomValue(entry.label)
-  // const type = useAtomValue(entry.type)
   return (
     <>
       <header className={styles.mainHeader()}>
         <h1 className={styles.mainTitle()}>{title}</h1>
+        <TypeBadge type={entry.type} />
       </header>
 
       <div className={styles.mainBody()}>
-        <p>Content</p>
+        <TypeForm type={entry.type} />
       </div>
     </>
+  )
+}
+
+interface TypeFormProps {
+  type: DashboardType
+}
+
+function TypeForm({type}: TypeFormProps) {
+  const sections = useAtomValue(type.sections)
+  return sections.map((section, index) => {
+    return (
+      <div key={index} style={{display: 'contents'}}>
+        <EditFields fields={Section.fields(section)} />
+      </div>
+    )
+  })
+}
+
+interface FieldsProps {
+  fields: Record<string, Field>
+}
+
+function EditFields({fields}: FieldsProps) {
+  return Object.entries(fields).map(([name, field]) => {
+    return <EditField key={name} name={name} field={field} />
+  })
+}
+
+interface EditFieldProps {
+  name: string
+  field: Field
+}
+
+function EditField({name, field}: EditFieldProps) {
+  return (
+    <div>
+      <label>{name}</label>
+      <input />
+    </div>
+  )
+}
+
+interface TypeBadgeProps {
+  type: DashboardType
+}
+
+function TypeBadge({type}: TypeBadgeProps) {
+  const label = useAtomValue(type.label)
+  const icon = useAtomValue(type.icon)
+  return (
+    <span>
+      <Icon icon={icon} />
+      {label}
+    </span>
   )
 }
