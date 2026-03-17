@@ -4,8 +4,11 @@ import type {LocalConnection} from 'alinea/core/Connection'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {Entry, EntryStatus} from 'alinea/core/Entry'
+import {Field} from 'alinea/core/Field'
 import type {Order} from 'alinea/core/Graph'
 import {getRoot, getType, getWorkspace} from 'alinea/core/Internal'
+import {Section} from 'alinea/core/Section.js'
+import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
 import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
 import {parents, translations} from 'alinea/query'
@@ -41,7 +44,8 @@ export class Dashboard {
   constructor(
     dbAtom: Atom<LocalDB>,
     public config: Atom<Config>,
-    public client: Atom<LocalConnection>
+    public client: Atom<LocalConnection>,
+    public views: Atom<Record<string, ComponentType>>
   ) {
     this.db = Object.assign(
       atom(
@@ -166,6 +170,15 @@ export class Dashboard {
     )
   })
 
+  view = dispense(key => {
+    return atom(get => {
+      const views = get(this.views)
+      const component = views[key]
+      assert(component, `View "${key}" not found in views`)
+      return component
+    })
+  })
+
   entries = dispense(id => {
     return atom(async get => {
       const load = get(this.#entryLoader)
@@ -217,14 +230,79 @@ export class Dashboard {
   })
 }
 
-export class DashboardDraft {
-  constructor(type: DashboardType, initialValue: object) {}
+export class DashboardEditor {
+  constructor(
+    public dashboard: Dashboard,
+    protected type: Type,
+    protected initialValue: Record<string, unknown>
+  ) {
+    this.byField = new WeakMap(
+      Object.entries(getType(type).allFields).map(([key, field]) => {
+        return [field, this.field[key]]
+      })
+    )
+    this.sections = getType(this.type).sections.map(section => {
+      return new DashboardSection(this.dashboard, section)
+    })
+  }
+
+  byField: WeakMap<Field, DashboardField>
+
+  field = dispense(key => {
+    const settings = getType(this.type)
+    const initialValue =
+      key in this.initialValue ? this.initialValue[key] : undefined
+    return new DashboardField(this, key, settings.fields[key], initialValue)
+  })
+
+  sections: Array<DashboardSection>
+}
+
+export class DashboardSection {
+  constructor(
+    public dashboard: Dashboard,
+    public section: Section
+  ) {}
+
+  view = atom(get => {
+    const view = Section.view(this.section)
+    if (typeof view === 'string') return get(this.dashboard.view[view])
+    return view
+  })
+}
+
+export class DashboardField {
+  constructor(
+    protected draft: DashboardEditor,
+    public key: string,
+    public field: Field,
+    initialValue: unknown
+  ) {
+    const defaultOptions = Field.options(field)
+    this.value = atom(initialValue ?? defaultOptions.initialValue)
+    const tracker = optionTrackerOf(field)
+    this.options = atom(async get => {
+      const update = tracker ? await tracker(get(this.#getter)) : undefined
+      return {...defaultOptions, ...update}
+    })
+  }
+
+  #getter = atom(get => {
+    return ((field: Field) => {
+      const info = this.draft.byField.get(field)
+      assert(info, `Field not found: ${Field.label(field)}`)
+      return get(info.value)
+    }) as FieldGetter
+  })
+
+  value: Atom<unknown>
+  options: Atom<object>
 }
 
 export class DashboardType {
   constructor(
     public dashboard: Dashboard,
-    private type: Atom<Type>
+    public type: Atom<Type>
   ) {}
 
   #settings = atom(get => getType(get(this.type)))
@@ -501,6 +579,8 @@ export class DashboardEntry {
   >
   parentId: string | null
   parentIds: Array<string>
+  #workspace: DashboardWorkspace
+  #root: DashboardRoot
 
   constructor(
     public dashboard: Dashboard,
@@ -517,11 +597,12 @@ export class DashboardEntry {
         return [entry.locale, entry] as const
       })
     )
+    this.#workspace = dashboard.workspace[this.workspace]
+    this.#root = this.#workspace.root[this.root]
   }
 
   label = atom(get => {
-    const root = this.dashboard.workspace[this.workspace].root[this.root]
-    const locale = get(root.selectedLocale)
+    const locale = get(this.#root.selectedLocale)
     const entry = this.locales.get(locale)
     if (entry?.title) return entry.title
     for (const fallback of this.locales.values()) {
@@ -538,23 +619,54 @@ export class DashboardEntry {
   })
 
   children = atom(async get => {
-    const root = this.dashboard.workspace[this.workspace].root[this.root]
-    return queryTreeChildren(get, root, this.id, this.type.orderChildrenBy)
+    return queryTreeChildren(
+      get,
+      this.#root,
+      this.id,
+      this.type.orderChildrenBy
+    )
   })
 
   hasChildren = atom(async get => {
-    const root = this.dashboard.workspace[this.workspace].root[this.root]
     const db = get(this.dashboard.db)
-    const visibleTypes = get(root.workspace.tree.visibleTypes)
+    const visibleTypes = get(this.#root.workspace.tree.visibleTypes)
     return Boolean(
       await db.first({
-        workspace: root.workspace.key,
-        root: root.key,
+        workspace: this.#workspace.key,
+        root: this.#root.key,
         parentId: this.id,
         filter: {_type: {in: visibleTypes}},
         status: 'preferDraft'
       })
     )
+  })
+
+  untranslated = atom(get => {
+    const locale = get(this.#root.selectedLocale)
+    return !this.locales.has(locale)
+  })
+
+  activeVersion = atom(get => {
+    const locale = get(this.#root.selectedLocale)
+    const entry = this.locales.get(locale)
+    if (entry) return entry
+    for (const fallback of this.locales.values()) {
+      if (fallback.title) return fallback
+    }
+    return null
+  })
+
+  editor = atom(async get => {
+    const locale = get(this.#root.selectedLocale)
+    const type = get(this.type.type)
+    const db = get(this.dashboard.db)
+    const data = await db.get({
+      id: this.id,
+      locale,
+      select: Entry.data,
+      status: 'preferDraft'
+    })
+    return new DashboardEditor(this.dashboard, type, data)
   })
 }
 

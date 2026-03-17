@@ -2,11 +2,14 @@ import {Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
 import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
-import {useAtomValue} from 'jotai'
+import {assert} from 'alinea/core/util/Assert'
+import {useAtom, useAtomValue} from 'jotai'
 import {
   Dashboard,
+  DashboardEditor,
   DashboardEntry,
   DashboardRoot,
+  DashboardSection,
   DashboardType
 } from '../dashboard/Dashboard.js'
 import css from './Editor.module.css'
@@ -42,6 +45,7 @@ interface EntryEditorProps {
 
 function EntryEditor({entry}: EntryEditorProps) {
   const title = useAtomValue(entry.label)
+  const editor = useAtomValue(entry.editor)
   return (
     <>
       <header className={styles.mainHeader()}>
@@ -50,47 +54,66 @@ function EntryEditor({entry}: EntryEditorProps) {
       </header>
 
       <div className={styles.mainBody()}>
-        <TypeForm type={entry.type} />
+        <TypeForm editor={editor} />
       </div>
     </>
   )
 }
 
 interface TypeFormProps {
-  type: DashboardType
+  editor: DashboardEditor
 }
 
-function TypeForm({type}: TypeFormProps) {
-  const sections = useAtomValue(type.sections)
-  return sections.map((section, index) => {
-    return (
-      <div key={index} style={{display: 'contents'}}>
-        <EditFields fields={Section.fields(section)} />
-      </div>
-    )
+function TypeForm({editor}: TypeFormProps) {
+  return editor.sections.map((section, index) => {
+    return <FormSection key={index} editor={editor} section={section} />
   })
 }
 
+interface FormSectionProps {
+  editor: DashboardEditor
+  section: DashboardSection
+}
+
+function FormSection({editor, section}: FormSectionProps) {
+  const View = useAtomValue(section.view)
+  if (View) return <View section={section.section} />
+  return (
+    <div style={{display: 'contents'}}>
+      <EditFields editor={editor} fields={Section.fields(section.section)} />
+    </div>
+  )
+}
+
 interface FieldsProps {
+  editor: DashboardEditor
   fields: Record<string, Field>
 }
 
-function EditFields({fields}: FieldsProps) {
+function EditFields({editor, fields}: FieldsProps) {
   return Object.entries(fields).map(([name, field]) => {
-    return <EditField key={name} name={name} field={field} />
+    return <EditField editor={editor} key={name} name={name} field={field} />
   })
 }
 
 interface EditFieldProps {
   name: string
+  editor: DashboardEditor
   field: Field
 }
 
-function EditField({name, field}: EditFieldProps) {
+function EditField({editor, name, field}: EditFieldProps) {
+  const info = editor.field[name]
+  assert(info, 'Missing editor info for field')
+  const [value, setValue] = useAtom(info.value)
+  const options = useAtomValue(info.options)
   return (
     <div>
       <label>{name}</label>
-      <input />
+      <input
+        value={(value as string) || ''}
+        onChange={e => setValue(e.target.value)}
+      />
     </div>
   )
 }
