@@ -14,25 +14,5 @@
 }
 
 .mainBody {
-  overflow: hidden;
   padding: 24px 28px;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 0.44fr) minmax(0, 0.56fr);
-  gap: 16px;
-}
-
-@media (max-width: 1180px) {
-  .mainBody {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(260px, 38%) minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 860px) {
-  .mainBody {
-    padding: 16px;
-    gap: 12px;
-    grid-template-rows: minmax(220px, 42%) minmax(0, 1fr);
-  }
 }

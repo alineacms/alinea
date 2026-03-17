@@ -3,6 +3,7 @@ import {styler} from '@alinea/styler'
 import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {assert} from 'alinea/core/util/Assert'
+import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary.js'
 import {useAtom, useAtomValue} from 'jotai'
 import {
   Dashboard,
@@ -77,7 +78,8 @@ interface FormSectionProps {
 
 function FormSection({editor, section}: FormSectionProps) {
   const View = useAtomValue(section.view)
-  if (View) return <View section={section.section} />
+  const props = {editor, section: section.section}
+  if (View) return <View {...props} />
   return (
     <div style={{display: 'contents'}}>
       <EditFields editor={editor} fields={Section.fields(section.section)} />
@@ -85,14 +87,18 @@ function FormSection({editor, section}: FormSectionProps) {
   )
 }
 
-interface FieldsProps {
+export interface EditFieldsProps {
   editor: DashboardEditor
   fields: Record<string, Field>
 }
 
-function EditFields({editor, fields}: FieldsProps) {
+export function EditFields({editor, fields}: EditFieldsProps) {
   return Object.entries(fields).map(([name, field]) => {
-    return <EditField editor={editor} key={name} name={name} field={field} />
+    return (
+      <ErrorBoundary key={name}>
+        <EditField editor={editor} name={name} field={field} />
+      </ErrorBoundary>
+    )
   })
 }
 
@@ -105,6 +111,9 @@ interface EditFieldProps {
 function EditField({editor, name, field}: EditFieldProps) {
   const info = editor.field[name]
   assert(info, 'Missing editor info for field')
+  const View = useAtomValue(info.view)
+  const props = {editor, field, name}
+  if (View) return <View {...props} />
   const [value, setValue] = useAtom(info.value)
   const options = useAtomValue(info.options)
   return (

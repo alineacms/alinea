@@ -297,6 +297,12 @@ export class DashboardField {
 
   value: Atom<unknown>
   options: Atom<object>
+
+  view = atom(get => {
+    const view = Field.view(this.field)
+    if (typeof view === 'string') return get(this.draft.dashboard.view[view])
+    return view
+  })
 }
 
 export class DashboardType {
