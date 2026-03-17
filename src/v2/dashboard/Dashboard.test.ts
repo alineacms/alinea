@@ -3,12 +3,24 @@ import {Entry, createCMS} from 'alinea/core'
 import {TestDB} from 'alinea/core/db/TestDB.js'
 import {expect, test} from 'bun:test'
 import {atom, createStore} from 'jotai'
+import {object} from 'alinea/field/object'
+import {text} from 'alinea/field/text'
 import '../dom.js'
 import {Dashboard} from './Dashboard.js'
 
 const Page = Config.document('Page', {
   contains: ['Page'],
   fields: {}
+})
+const Article = Config.document('Article', {
+  fields: {
+    title: text('Title'),
+    seo: object('SEO', {
+      fields: {
+        description: text('Description')
+      }
+    })
+  }
 })
 const main = Config.workspace('Main', {
   source: 'content',
@@ -26,6 +38,17 @@ const main = Config.workspace('Main', {
 const cms = createCMS({
   schema: {Page},
   workspaces: {main}
+})
+const cmsWithFields = createCMS({
+  schema: {Article},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {
+        pages: Config.root('Pages')
+      }
+    })
+  }
 })
 
 test('dashboard', () => {
@@ -131,4 +154,31 @@ test('moves an entry to another root when dropped beside a root-level target', a
     status: 'preferDraft'
   })
   expect(moved).toEqual({parentId: null, root: 'archive'})
+})
+
+test('derives editor value from writable field atoms', async () => {
+  const db = new TestDB(cmsWithFields.config)
+  const store = createStore()
+  const dashboard = new Dashboard(atom(db), atom(cmsWithFields.config), atom(db))
+
+  const entry = await db.create({
+    type: Article,
+    root: 'pages',
+    set: {title: 'Hello'}
+  })
+
+  const loaded = await store.get(dashboard.entries[entry._id])
+  const editor = await store.get(loaded.editor)
+
+  expect(store.get(editor.value)).toMatchObject({
+    title: 'Hello',
+    path: 'hello'
+  })
+
+  store.set(editor.field.title.value, 'Updated')
+
+  expect(store.get(editor.value)).toMatchObject({
+    title: 'Updated',
+    path: 'hello'
+  })
 })

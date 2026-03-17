@@ -7,12 +7,12 @@ import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary.js'
 import {useAtomValue} from 'jotai'
 import {
   Dashboard,
-  DashboardEditor,
   DashboardEntry,
   DashboardRoot,
   DashboardSection,
   DashboardType
 } from '../dashboard/Dashboard.js'
+import {EditorScope, EntryScope, useDashboardEditor} from '../dashboard/hooks.js'
 import css from './Editor.module.css'
 
 const styles = styler(css)
@@ -48,55 +48,52 @@ function EntryEditor({entry}: EntryEditorProps) {
   const title = useAtomValue(entry.label)
   const editor = useAtomValue(entry.editor)
   return (
-    <>
-      <header className={styles.mainHeader()}>
-        <h1 className={styles.mainTitle()}>{title}</h1>
-        <TypeBadge type={entry.type} />
-      </header>
+    <EntryScope entry={entry}>
+      <EditorScope editor={editor}>
+        <header className={styles.mainHeader()}>
+          <h1 className={styles.mainTitle()}>{title}</h1>
+          <TypeBadge type={entry.type} />
+        </header>
 
-      <div className={styles.mainBody()}>
-        <TypeForm editor={editor} />
-      </div>
-    </>
+        <div className={styles.mainBody()}>
+          <TypeForm />
+        </div>
+      </EditorScope>
+    </EntryScope>
   )
 }
 
-interface TypeFormProps {
-  editor: DashboardEditor
-}
-
-function TypeForm({editor}: TypeFormProps) {
+function TypeForm() {
+  const editor = useDashboardEditor()
   return editor.sections.map((section, index) => {
-    return <FormSection key={index} editor={editor} section={section} />
+    return <FormSection key={index} section={section} />
   })
 }
 
 interface FormSectionProps {
-  editor: DashboardEditor
   section: DashboardSection
 }
 
-function FormSection({editor, section}: FormSectionProps) {
+function FormSection({section}: FormSectionProps) {
   const View = useAtomValue(section.view)
-  const props = {editor, section: section.section}
+  const props = {section: section.section}
   if (View) return <View {...props} />
   return (
     <div style={{display: 'contents'}}>
-      <EditFields editor={editor} fields={Section.fields(section.section)} />
+      <EditFields fields={Section.fields(section.section)} />
     </div>
   )
 }
 
 export interface EditFieldsProps {
-  editor: DashboardEditor
   fields: Record<string, Field>
 }
 
-export function EditFields({editor, fields}: EditFieldsProps) {
+export function EditFields({fields}: EditFieldsProps) {
   return Object.entries(fields).map(([name, field]) => {
     return (
       <ErrorBoundary key={name}>
-        <EditField editor={editor} name={name} field={field} />
+        <EditField name={name} field={field} />
       </ErrorBoundary>
     )
   })
@@ -104,15 +101,15 @@ export function EditFields({editor, fields}: EditFieldsProps) {
 
 interface EditFieldProps {
   name: string
-  editor: DashboardEditor
   field: Field
 }
 
-function EditField({editor, name, field}: EditFieldProps) {
+function EditField({name, field}: EditFieldProps) {
+  const editor = useDashboardEditor()
   const info = editor.field[name]
   assert(info, 'Missing editor info for field')
   const View = useAtomValue(info.view)
-  const props = {editor, field, name}
+  const props = {field, name}
   return <View {...props} />
 }
 

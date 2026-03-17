@@ -45,7 +45,7 @@ export class Dashboard {
     dbAtom: Atom<LocalDB>,
     public config: Atom<Config>,
     public client: Atom<LocalConnection>,
-    public views: Atom<Record<string, ComponentType>>
+    public views: Atom<Record<string, ComponentType>> = atom({})
   ) {
     this.db = Object.assign(
       atom(
@@ -231,11 +231,38 @@ export class Dashboard {
 }
 
 export class DashboardEditor {
+  value: WritableAtom<
+    Record<string, unknown>,
+    [FieldUpdate<Record<string, unknown>>],
+    void
+  >
+
   constructor(
     public dashboard: Dashboard,
-    protected type: Type,
-    protected initialValue: Record<string, unknown>
+    public type: Type,
+    value: WritableAtom<
+      Record<string, unknown>,
+      [FieldUpdate<Record<string, unknown>>],
+      void
+    >
   ) {
+    this.value = atom(
+      get => {
+        const current = get(value)
+        if (current && typeof current === 'object' && !Array.isArray(current))
+          return current as Record<string, unknown>
+        return {}
+      },
+      (get, set, update: FieldUpdate<Record<string, unknown>>) => {
+        const current = get(value)
+        const scoped =
+          current && typeof current === 'object' && !Array.isArray(current)
+            ? (current as Record<string, unknown>)
+            : {}
+        const next = applyUpdate(update, scoped)
+        set(value, next)
+      }
+    )
     this.byField = new WeakMap(
       Object.entries(getType(type).allFields).map(([key, field]) => {
         return [field, this.field[key]]
@@ -250,9 +277,7 @@ export class DashboardEditor {
 
   field = dispense(key => {
     const settings = getType(this.type)
-    const initialValue =
-      key in this.initialValue ? this.initialValue[key] : undefined
-    return new DashboardField(this, key, settings.fields[key], initialValue)
+    return new DashboardField(this, key, settings.allFields[key])
   })
 
   sections: Array<DashboardSection>
@@ -272,19 +297,33 @@ export class DashboardSection {
 }
 
 export class DashboardField {
+  value: WritableAtom<unknown, [FieldUpdate<any>], void>
+
   constructor(
     protected draft: DashboardEditor,
     public key: string,
-    public field: Field,
-    initialValue: unknown
+    public field: Field
   ) {
-    const defaultOptions = Field.options(field)
-    this.value = atom(initialValue ?? defaultOptions.initialValue)
-    const tracker = optionTrackerOf(field)
-    this.options = atom(async get => {
-      const update = tracker ? await tracker(get(this.#getter)) : undefined
-      return {...defaultOptions, ...update}
-    })
+    this.value = atom(
+      get => {
+        const current = get(this.draft.value)
+        const scoped =
+          current && typeof current === 'object' && !Array.isArray(current)
+            ? (current as Record<string, unknown>)
+            : {}
+        return scoped[this.key]
+      },
+      (get, set, update: FieldUpdate<unknown>) => {
+        const current = get(this.draft.value)
+        const scoped =
+          current && typeof current === 'object' && !Array.isArray(current)
+            ? (current as Record<string, unknown>)
+            : {}
+        const previous = scoped[this.key]
+        const next = applyUpdate(update, previous)
+        set(this.draft.value, {...scoped, [this.key]: next})
+      }
+    )
   }
 
   #getter = atom(get => {
@@ -295,8 +334,28 @@ export class DashboardField {
     }) as FieldGetter
   })
 
-  value: Atom<unknown>
-  options: Atom<object>
+  options = atom(async get => {
+    const defaultOptions = Field.options(this.field)
+    const tracker = optionTrackerOf(this.field)
+    const update = tracker ? await tracker(get(this.#getter)) : undefined
+    return {...defaultOptions, ...update}
+  })
+
+  error = atom(async get => {
+    const options = await get(this.options)
+    const value = get(this.value)
+    if (options.validate) {
+      const result = options.validate(value)
+      if (typeof result === 'boolean') return result ? undefined : true
+      return result
+    }
+    if (options.required) {
+      if (value === undefined || value === null) return true
+      if (typeof value === 'string' && value === '') return true
+      if (Array.isArray(value) && value.length === 0) return true
+    }
+    return undefined
+  })
 
   view = atom(get => {
     const view = Field.view(this.field)
@@ -672,7 +731,7 @@ export class DashboardEntry {
       select: Entry.data,
       status: 'preferDraft'
     })
-    return new DashboardEditor(this.dashboard, type, data)
+    return new DashboardEditor(this.dashboard, type, valueAtom(data))
   })
 }
 
@@ -821,4 +880,29 @@ function dispense<T>(fn: (key: string) => T): Record<string, T> {
       return target[key]
     }
   })
+}
+
+type FieldUpdate<Value> = Value | ((value: Value) => Value)
+
+function applyUpdate<Value>(update: FieldUpdate<Value>, current: Value): Value {
+  return typeof update === 'function'
+    ? (update as (value: Value) => Value)(current)
+    : update
+}
+
+function valueAtom<Value>(
+  initialValue: Value
+): WritableAtom<Value, [FieldUpdate<Value>], void> {
+  const base = atom(initialValue)
+  return atom(
+    get => get(base),
+    (get, set, update: FieldUpdate<Value>) => {
+      const current = get(base)
+      const next =
+        typeof update === 'function'
+          ? (update as (value: Value) => Value)(current)
+          : update
+      set(base, next)
+    }
+  )
 }
