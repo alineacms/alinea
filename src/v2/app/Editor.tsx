@@ -4,7 +4,7 @@ import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {assert} from 'alinea/core/util/Assert'
 import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary.js'
-import {useAtom, useAtomValue} from 'jotai'
+import {useAtomValue} from 'jotai'
 import {
   Dashboard,
   DashboardEditor,
@@ -113,18 +113,7 @@ function EditField({editor, name, field}: EditFieldProps) {
   assert(info, 'Missing editor info for field')
   const View = useAtomValue(info.view)
   const props = {editor, field, name}
-  if (View) return <View {...props} />
-  const [value, setValue] = useAtom(info.value)
-  const options = useAtomValue(info.options)
-  return (
-    <div>
-      <label>{name}</label>
-      <input
-        value={(value as string) || ''}
-        onChange={e => setValue(e.target.value)}
-      />
-    </div>
-  )
+  return <View {...props} />
 }
 
 interface TypeBadgeProps {

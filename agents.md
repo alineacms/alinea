@@ -6,7 +6,7 @@ Find the v2 dashboard in src/v2, and v1 in src/dashboard.
 - UI toolkit: use `@alinea/components` as the default UI surface.
   It is a theme of react-aria-components, docs are here: https://react-aria.adobe.com/llms.txt
 - Core integration: keep using `alinea/core` for config/schema/db/query/policy primitives.
-- Field rendering: do not reuse existing dashboard field views; build new v2 field views wired to `@alinea/components`.
+- Field rendering: do not reuse existing dashboard field views; build new v2 field views wired to `@alinea/components`. Do not use Y.js for field state management, but instead use Jotai atoms.
 - Styling: use CSS Modules plus `@alinea/styler`.
 - Bundle all icons into the same file src/v2/icons.tsx, download them if needed
   from icones (https://icones.js.org/) using the Google Material Icons set.
