@@ -83,8 +83,6 @@
     "postcss-pxtorem": "^6.0.0",
     "oxfmt": "^0.39.0",
     "oxlint": "^1.54.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "sass": "^1.63.4",
     "sass-embedded": "^1.83.4",
     "sharp": "0.32.6",
@@ -97,7 +95,9 @@
   "packageManager": "yarn@4.5.0",
   "resolutions": {
     "yjs": "13.6.11",
-    "lib0": "0.2.88"
+    "lib0": "0.2.88",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "exports": {
     "./package.json": "./package.json",

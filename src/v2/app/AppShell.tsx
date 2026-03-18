@@ -32,7 +32,7 @@ export function AppShell({dashboard}: AppShellProps) {
       </aside>
 
       <main className={styles.main()}>
-        <Suspense>
+        <Suspense fallback={<div>Loading...</div>}>
           <Editor dashboard={dashboard} />
         </Suspense>
       </main>
