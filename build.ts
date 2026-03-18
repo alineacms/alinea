@@ -30,6 +30,8 @@ const JS_ENTRY = 'js-entry'
 
 const isWindows = process.platform === 'win32'
 const prefix = 'alinea/'
+const llmsHandbookUrl = 'https://alineacms.com/llms-full.txt'
+const llmsHandbookFile = 'llms-full.txt'
 
 const sassCompiler = await sass.initAsyncCompiler()
 
@@ -626,6 +628,18 @@ async function build({
   test: boolean
   report: boolean
 }): Promise<void> {
+  if (!watch) {
+    const response = await fetch(llmsHandbookUrl)
+    if (!response.ok) {
+      throw new Error(
+        `Failed to refresh ${llmsHandbookFile}: ` +
+          `${response.status} ${response.statusText}`
+      )
+    }
+    const handbook = await response.text()
+    fs.writeFileSync(llmsHandbookFile, handbook)
+    console.info(`Refreshed ${llmsHandbookFile} from ${llmsHandbookUrl}`)
+  }
   const plugins = [
     targetPlugin,
     cssEntry,
