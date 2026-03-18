@@ -37,6 +37,14 @@ npx alinea dev
 
 [Start configuring types and fields →](https://alineacms.com/docs/configuration)
 
+## Coding agents
+
+If you are working in a project that depends on `alinea`, read the local handbook at `./llms-full.txt`.
+
+Use that file as additional project context whenever you are asked to generate Alinea schemas, model Alinea content, or produce Alinea-specific code.
+
+If you are working in the alinea repository directly. Make sure you have a local `./llms-full.txt` file to consult, by running bun build.
+
 ## Configure
 
 Configure Alinea in `cms.ts`
