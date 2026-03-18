@@ -384,15 +384,15 @@ export class DashboardField {
     }) as FieldGetter
   })
 
-  options = atom(async get => {
+  options = atom(get => {
     const defaultOptions = Field.options(this.field)
     const tracker = optionTrackerOf(this.field)
-    const update = tracker ? await tracker(get(this.#getter)) : undefined
+    const update = tracker ? tracker(get(this.#getter)) : undefined
     return {...defaultOptions, ...update}
   })
 
-  error = atom(async get => {
-    const options = await get(this.options)
+  error = atom(get => {
+    const options = get(this.options)
     const value = get(this.value)
     if (options.validate) {
       const result = options.validate(value)

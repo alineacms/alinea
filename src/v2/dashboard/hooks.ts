@@ -43,6 +43,7 @@ export function useField<StoredValue, QueryValue, Mutator, Options>(
 ): [QueryValue, Mutator] {
   const editor = useDashboardEditor()
   const info = editor.get(field)
+  assert(info, 'Field info not found in editor')
   return useAtom(info.value)
 }
 
@@ -51,6 +52,7 @@ export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(
 ): string {
   const editor = useDashboardEditor()
   const info = editor.get(field)
+  assert(info, 'Field info not found in editor')
   return info.key
 }
 
@@ -59,6 +61,7 @@ export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
 ) {
   const editor = useDashboardEditor()
   const info = editor.get(field)
+  assert(info, 'Field info not found in editor')
   return useAtomValue(info.options) as Options
 }
 
@@ -67,6 +70,7 @@ export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
 ) {
   const editor = useDashboardEditor()
   const info = editor.get(field)
+  assert(info, 'Field info not found in editor')
   return useAtomValue(info.error)
 }
 
@@ -75,6 +79,7 @@ export function useFieldView<StoredValue, QueryValue, Mutator, Options>(
 ) {
   const editor = useDashboardEditor()
   const info = editor.get(field)
+  assert(info, 'Field info not found in editor')
   return useAtomValue(info.view)
 }
 
