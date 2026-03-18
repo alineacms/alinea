@@ -38,7 +38,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "llms-full.txt"
   ],
   "workspaces": [
     "apps/dev",

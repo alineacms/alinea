@@ -15,3 +15,4 @@ node_modules
 *.tsbuildinfo
 /generated
 .next
+llms-full.txt
