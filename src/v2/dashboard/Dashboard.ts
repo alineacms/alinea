@@ -230,6 +230,63 @@ export class Dashboard {
   })
 }
 
+class AtomContainer<Key> {
+  protected entries = atom(new Map<Key, Atom<unknown>>())
+  protected entry = atom(null, (get, set, key: Key, value: Atom<unknown>) => {
+    set(this.entries, current => {
+      const next = new Map(current)
+      next.set(key, value)
+      return next
+    })
+    return () => {
+      set(this.entries, current => {
+        const next = new Map(current)
+        next.delete(key)
+        return next
+      })
+    }
+  })
+
+  scalar = atom(null, (get, set, key: Key) => {
+    const result = atom()
+    const cancel = set(this.entry, key, result)
+    result.onMount = () => cancel
+    return result
+  })
+
+  object = atom(null, (get, set, key: Key) => {
+    const result = new ObjectContainer()
+    const cancel = set(this.entry, key, result.value)
+    Object.assign(result.value, {onMount: () => cancel})
+    return result
+  })
+
+  array = atom(null, (get, set, key: Key) => {
+    const result = new ArrayContainer()
+    const cancel = set(this.entry, key, result.value)
+    Object.assign(result.value, {onMount: () => cancel})
+    return result
+  })
+}
+
+class ObjectContainer extends AtomContainer<string> {
+  value = atom(get => {
+    const result: Record<string, unknown> = {}
+    const fields = get(this.entries)
+    for (const [key, atom] of fields) result[key] = get(atom)
+    return result
+  })
+}
+
+class ArrayContainer extends AtomContainer<number> {
+  value = atom(get => {
+    const result: Array<unknown> = []
+    const fields = get(this.entries)
+    for (const [key, atom] of fields) result[key] = get(atom)
+    return result
+  })
+}
+
 export class DashboardEditor {
   constructor(
     public dashboard: Dashboard,
