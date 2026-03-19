@@ -24,6 +24,18 @@ const Page = Config.document('Page', {
       },
       initialValue: 'docs'
     }),
+    wordCount: Field.number('Word count', {
+      width: 1 / 3,
+      minValue: 0,
+      step: 10
+    }),
+    publishDate: Field.date('Publish date', {
+      width: 1 / 3
+    }),
+    publishTime: Field.time('Publish time', {
+      width: 1 / 3,
+      step: 900
+    }),
     inner: Field.object('Testje', {
       fields: {
         a: Field.text('field A'),

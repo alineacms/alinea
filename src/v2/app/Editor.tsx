@@ -113,9 +113,13 @@ export interface EditFieldsProps {
 }
 
 export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
-  return Object.entries(fields).map(([name, field]) => {
-    return <EditField key={name} field={field} />
-  })
+  return (
+    <div className={styles.fields()}>
+      {Object.entries(fields).map(([name, field]) => {
+        return <EditField key={name} field={field} />
+      })}
+    </div>
+  )
 })
 
 interface EditFieldProps {
@@ -137,7 +141,7 @@ function TypeBadge({type}: TypeBadgeProps) {
   const icon = type.icon
   return (
     <span>
-      <Icon icon={icon} />
+      {icon && <Icon icon={icon} />}
       {label}
     </span>
   )

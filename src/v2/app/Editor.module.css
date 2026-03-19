@@ -18,3 +18,8 @@
   overflow: auto;
   padding: 24px 28px;
 }
+
+.fields {
+  display: grid;
+  gap: 16px;
+}

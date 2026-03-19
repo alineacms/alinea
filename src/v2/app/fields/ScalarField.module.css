@@ -1,0 +1,21 @@
+.input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d8e1eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #22303d;
+  font: inherit;
+}
+
+.input:focus {
+  outline: 2px solid #90b9e6;
+  outline-offset: 1px;
+}
+
+.input[readonly],
+.input:disabled {
+  background: #f6f8fb;
+  color: #5d6b79;
+}

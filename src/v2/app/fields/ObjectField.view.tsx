@@ -1,4 +1,4 @@
-import {Label} from '@alinea/components'
+import {Elevation, Label} from '@alinea/components'
 import {ObjectField} from 'alinea/field/object'
 import {useFieldError, useFieldNode, useFieldOptions} from '../../store.js'
 import {NodeEditor} from '../Editor.js'
@@ -13,7 +13,9 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
   const node = useFieldNode(field)
   return (
     <Label label={options.label} errorMessage={error}>
-      <NodeEditor node={node} type={options.fields} />
+      <Elevation>
+        <NodeEditor node={node} type={options.fields} />
+      </Elevation>
     </Label>
   )
 }

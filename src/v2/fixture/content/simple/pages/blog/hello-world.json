@@ -7,5 +7,8 @@
   "path": "hello-world",
   "summary": "First child page",
   "featured": false,
-  "category": "news"
+  "category": "news",
+  "wordCount": 540,
+  "publishDate": "2026-03-06",
+  "publishTime": "14:30"
 }
