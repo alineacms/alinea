@@ -14,5 +14,7 @@
 }
 
 .mainBody {
+  min-height: 0;
+  overflow: auto;
   padding: 24px 28px;
 }
