@@ -9,28 +9,12 @@
 }
 
 .row {
-  border: 1px solid #d8e1eb;
-  border-radius: 12px;
-  background: #fff;
-  overflow: hidden;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  background: #f6f8fb;
-  border-bottom: 1px solid #e6edf5;
+  display: block;
 }
 
 .title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: #22303d;
 }
 
@@ -46,7 +30,17 @@
 }
 
 .content {
-  padding: 14px;
+  padding-top: 6px;
+}
+
+.inner {
+  margin-top: 6px;
+}
+
+.body {
+  display: grid;
+  gap: 12px;
+  align-items: normal;
 }
 
 .create {

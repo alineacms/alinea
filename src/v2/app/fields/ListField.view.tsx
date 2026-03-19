@@ -1,4 +1,4 @@
-import {Button, Icon, Label} from '@alinea/components'
+import {Button, Elevation, Icon, Label, List, ListItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {createId} from 'alinea/core/Id.js'
 import {getType} from 'alinea/core/Internal.js'
@@ -44,27 +44,27 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const options = useFieldOptions(field) as ListOptions<Schema>
   const error = useFieldError(field)
   const list = useFieldNode(field) as ArrayNode<ListValue>
-  const nodes = useNodes(list)
-  const push = useSetAtom(list.push)
+  const nodes = useNodes(list) as Array<ObjectNode<ListValue>>
+  const setRows = useSetAtom(list.value)
   const schemaEntries = useMemo(() => Object.entries(options.schema), [options])
   const readOnly = Boolean(options.readOnly)
   return (
     <Label label={options.label} errorMessage={error}>
       <div className={styles.root()}>
         {nodes.length > 0 ? (
-          <div className={styles.rows()}>
+          <List className={styles.rows()}>
             {nodes.map((row, index) => (
               <ListFieldRow
                 index={index}
                 key={index}
                 list={list}
                 readOnly={readOnly}
-                row={row as ObjectNode<ListValue>}
+                row={row}
                 rows={nodes.length}
                 schema={options.schema}
               />
             ))}
-          </div>
+          </List>
         ) : (
           <div className={styles.empty()}>No items yet.</div>
         )}
@@ -75,10 +75,20 @@ export function ListFieldView({field}: ListFieldViewProps) {
               <Button
                 key={typeName}
                 onPress={() =>
-                  push({
-                    _id: createId(),
-                    _type: typeName,
-                    ...Type.initialValue(type)
+                  setRows(current => {
+                    const initialValue = Type.initialValue(type) as Record<
+                      string,
+                      unknown
+                    >
+                    return [
+                      ...current,
+                      {
+                        _id: createId(),
+                        _index: '',
+                        _type: typeName,
+                        ...initialValue
+                      }
+                    ]
                   })
                 }
               >
@@ -111,49 +121,77 @@ function ListFieldRow({
   schema
 }: ListFieldRowProps) {
   const typeName = useAtomValue(row.field._type) as string
-  const move = useSetAtom(list.move)
-  const remove = useSetAtom(list.remove)
+  const setRows = useSetAtom(list.value)
   const type = schema[typeName]
   if (!type) return null
   const label = Type.label(type)
   const icon = getType(type).icon || IcOutlineList
   return (
     <section aria-label={`${label} item ${index + 1}`} className={styles.row()}>
-      <header className={styles.header()}>
-        <span className={styles.title()}>
-          <Icon aria-hidden icon={icon} />
-          {label}
-        </span>
-        <div className={styles.actions()}>
-          <Button
-            aria-label={`Move ${label} up`}
-            className={styles.action()}
-            isDisabled={readOnly || index === 0}
-            onPress={() => move(index, index - 1)}
-          >
-            <Icon aria-hidden icon={IcRoundArrowUpward} />
-          </Button>
-          <Button
-            aria-label={`Move ${label} down`}
-            className={styles.action()}
-            isDisabled={readOnly || index === rows - 1}
-            onPress={() => move(index, index + 1)}
-          >
-            <Icon aria-hidden icon={IcRoundArrowDownward} />
-          </Button>
-          <Button
-            aria-label={`Remove ${label}`}
-            className={styles.action()}
-            isDisabled={readOnly}
-            onPress={() => remove(index)}
-          >
-            <Icon aria-hidden icon={IcRoundDelete} />
-          </Button>
-        </div>
-      </header>
-      <div className={styles.content()}>
-        <NodeEditor node={row as Node} type={type} />
-      </div>
+      <ListItem
+        inner={
+          <Elevation className={styles.inner()}>
+            <div className={styles.body()}>
+              <NodeEditor node={row as Node} type={type} />
+            </div>
+          </Elevation>
+        }
+        leading={<Icon aria-hidden icon={icon} />}
+        trailing={
+          <div className={styles.actions()}>
+            <Button
+              aria-label={`Move ${label} up`}
+              className={styles.action()}
+              isDisabled={readOnly || index === 0}
+              onPress={() =>
+                setRows(current => {
+                  const nextIndex = index - 1
+                  if (nextIndex < 0) return current
+                  const next = [...current]
+                  const item = next[index]
+                  next[index] = next[nextIndex]
+                  next[nextIndex] = item
+                  return next
+                })
+              }
+            >
+              <Icon aria-hidden icon={IcRoundArrowUpward} />
+            </Button>
+            <Button
+              aria-label={`Move ${label} down`}
+              className={styles.action()}
+              isDisabled={readOnly || index === rows - 1}
+              onPress={() =>
+                setRows(current => {
+                  const nextIndex = index + 1
+                  if (nextIndex >= current.length) return current
+                  const next = [...current]
+                  const item = next[index]
+                  next[index] = next[nextIndex]
+                  next[nextIndex] = item
+                  return next
+                })
+              }
+            >
+              <Icon aria-hidden icon={IcRoundArrowDownward} />
+            </Button>
+            <Button
+              aria-label={`Remove ${label}`}
+              className={styles.action()}
+              isDisabled={readOnly}
+              onPress={() =>
+                setRows(current =>
+                  current.filter((_, currentIndex) => currentIndex !== index)
+                )
+              }
+            >
+              <Icon aria-hidden icon={IcRoundDelete} />
+            </Button>
+          </div>
+        }
+      >
+        <strong className={styles.title()}>{label}</strong>
+      </ListItem>
     </section>
   )
 }
