@@ -11,6 +11,7 @@ import {Section} from 'alinea/core/Section.js'
 import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
 import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
+import {entries} from 'alinea/core/util/Objects.js'
 import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
@@ -227,97 +228,88 @@ export class Dashboard {
   })
 }
 
-const init = Symbol()
+type Writable<Value> = WritableAtom<Value, [Value], void>
 
-class AtomContainer {
-  constructor() {}
-  protected entries = atom(new Map<string, Atom<unknown>>())
-  protected entry = atom(
-    null,
-    (get, set, key: string, value: Atom<unknown>) => {
-      set(this.entries, current => {
-        const next = new Map(current)
-        next.set(key, value)
-        return next
-      })
-      return () => {
-        set(this.entries, current => {
-          const next = new Map(current)
-          next.delete(key)
-          return next
+export interface Node<Value = unknown> {
+  value: Writable<Value>
+}
+
+export class Primitive<Value> implements Node<Value> {
+  value: Writable<Value>
+  constructor(initialValue: Value) {
+    this.value = atom(initialValue)
+  }
+}
+
+export class ObjectNode<Value extends object> implements Node<Value> {
+  nodes: Writable<Map<string, Node>>
+  constructor(initialValue: Value) {
+    this.nodes = atom(
+      new Map<string, Node>(
+        entries(initialValue).map(([key, value]) => {
+          return [key, createNode(value)]
         })
+      )
+    )
+  }
+  value = atom(
+    get => {
+      const result: Record<string, unknown> = Object.create(null)
+      const fields = get(this.nodes)
+      for (const [key, node] of fields) result[key] = get(node.value)
+      return result as Value
+    },
+    (get, set, update: Value) => {
+      const inserts = Array<[string, Node]>()
+      const removes = Array<string>()
+      const fields = get(this.nodes)
+      for (const [key, value] of entries(update)) {
+        const node = fields.get(key)
+        if (node) set(node.value, value)
+        else inserts.push([key, createNode(value)])
+      }
+      for (const key of fields.keys()) {
+        if (!(key in update)) removes.push(key)
+      }
+      if (inserts.length > 0 || removes.length > 0) {
+        const next = new Map(fields)
+        for (const [key, node] of inserts) next.set(key, node)
+        for (const key of removes) next.delete(key)
+        set(this.nodes, next)
       }
     }
   )
+}
 
-  #wrap(key: string, inner: Atom<unknown>) {
-    return Object.assign(
-      atom(
-        get => get(inner),
-        (get, set, next: unknown) => {
-          if (next === init) return set(this.entry, key, inner)
-          return set(
-            inner as WritableAtom<unknown, Array<unknown>, unknown>,
-            next
-          )
+export class ArrayNode<Value> implements Node<Array<Value>> {
+  nodes: Writable<Array<Node<Value>>>
+  constructor(initialValue: Array<Value>) {
+    this.nodes = atom(initialValue.map(createNode))
+  }
+  value = atom(
+    get => {
+      return get(this.nodes).map(node => get(node.value)) as Array<Value>
+    },
+    (get, set, update: Array<Value>) => {
+      const current = get(this.nodes)
+      const next = update.map((value, index) => {
+        const node = current[index]
+        if (node) {
+          set(node.value, value)
+          return node
         }
-      ),
-      {onMount: (set: (action: typeof init) => void) => set(init)}
-    )
-  }
-
-  field = dispense(key => {
-    return atom(get => {
-      const entries = get(this.entries)
-      return entries.get(key)
-    })
-  })
-
-  scalar = dispense(key => {
-    return this.#wrap(key, atom())
-  })
-
-  object = dispense(key => {
-    const result = new ObjectContainer()
-    Object.assign(result, {value: this.#wrap(key, result.value)})
-    return result
-  })
-
-  array = dispense(key => {
-    const result = new ArrayContainer()
-    Object.assign(result, {value: this.#wrap(key, result.value)})
-    return result
-  })
+        return createNode(value)
+      })
+      if (next.length !== current.length) set(this.nodes, next)
+    }
+  )
 }
 
-class ObjectContainer extends AtomContainer {
-  #initialValue: Record<string, unknown>
-  constructor(initialValue: Record<string, unknown> = {}) {
-    super()
-    this.#initialValue = initialValue
-  }
-  value = atom(get => {
-    const result: Record<string, unknown> = {}
-    const fields = get(this.entries)
-    for (const [key, atom] of fields)
-      result[key] = get(atom) ?? this.#initialValue[key]
-    return result
-  })
-}
-
-class ArrayContainer extends AtomContainer {
-  #initialValue: Array<unknown>
-  constructor(initialValue: Array<unknown> = []) {
-    super()
-    this.#initialValue = initialValue
-  }
-  value = atom(get => {
-    const result: Array<unknown> = []
-    const fields = get(this.entries)
-    for (const [key, atom] of fields)
-      result[Number(key)] = get(atom) ?? this.#initialValue[Number(key)]
-    return result
-  })
+export function createNode<Value>(value: Value): Node<Value> {
+  if (!value) return new Primitive(value)
+  if (Array.isArray(value)) return <any>new ArrayNode(value)
+  if (typeof value === 'object') return <any>new ObjectNode(value)
+  return <any>new Primitive(value)
 }
 
 export class DashboardEditor {
