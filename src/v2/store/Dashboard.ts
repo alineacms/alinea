@@ -11,6 +11,7 @@ import {Section} from 'alinea/core/Section.js'
 import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
 import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
+import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
@@ -45,7 +46,7 @@ export class Dashboard {
     dbAtom: Atom<LocalDB>,
     public config: Atom<Config>,
     public client: Atom<LocalConnection>,
-    public views: Atom<Record<string, ComponentType>>
+    public views: Atom<Record<string, ComponentType>> = atom({})
   ) {
     this.db = Object.assign(
       atom(
@@ -159,22 +160,19 @@ export class Dashboard {
   })
 
   type = dispense(key => {
-    return new DashboardType(
-      this,
-      atom(get => {
-        const config = get(this.config)
-        const settings = config.schema[key]
-        assert(settings, `Type "${key}" not found in config`)
-        return settings
-      })
-    )
+    return atom(get => {
+      const config = get(this.config)
+      const type = config.schema[key]
+      assert(type, `Type "${key}" not found in config`)
+      return new DashboardType(this, type)
+    })
   })
 
   view = dispense(key => {
     return atom(get => {
       const views = get(this.views)
       const component = views[key]
-      assert(component, `View "${key}" not found in views`)
+      // assert(component, `View "${key}" not found in views`)
       return component
     })
   })
@@ -288,31 +286,37 @@ class ArrayContainer extends AtomContainer<number> {
 }
 
 export class DashboardEditor {
+  node: ObjectNode
+  value: Atom<object>
+  sections: Array<DashboardSection>
   constructor(
     public dashboard: Dashboard,
-    protected type: Type,
-    protected initialValue: Record<string, unknown>
+    public type: Type,
+    initialValue: Record<string, unknown>
   ) {
-    this.byField = new WeakMap(
-      Object.entries(getType(type).allFields).map(([key, field]) => {
-        return [field, this.field[key]]
-      })
+    this.node = createNode(initialValue) as ObjectNode
+    this.value = this.node.value
+    this.sections = getType(this.type).sections.map(
+      section => new DashboardSection(this.dashboard, section)
     )
-    this.sections = getType(this.type).sections.map(section => {
-      return new DashboardSection(this.dashboard, section)
-    })
   }
-
-  byField: WeakMap<Field, DashboardField>
-
   field = dispense(key => {
-    const settings = getType(this.type)
-    const initialValue =
-      key in this.initialValue ? this.initialValue[key] : undefined
-    return new DashboardField(this, key, settings.fields[key], initialValue)
+    const fields = getType(this.type).allFields
+    const field = fields[key]
+    if (!field) return undefined
+    return new DashboardField(this, key, field)
   })
-
-  sections: Array<DashboardSection>
+  #keyOfField(field: Field) {
+    const fields = getType(this.type).allFields
+    for (const [key, candidate] of Object.entries(fields)) {
+      if (candidate === field) return key
+    }
+    throw new Error(`Field not found in type: ${Field.label(field)}`)
+  }
+  get(field: Field) {
+    const key = this.#keyOfField(field)
+    return this.field[key]
+  }
 }
 
 export class DashboardSection {
@@ -329,31 +333,46 @@ export class DashboardSection {
 }
 
 export class DashboardField {
+  value: WritableAtom<unknown, [unknown], void>
+
   constructor(
-    protected draft: DashboardEditor,
+    public draft: DashboardEditor,
     public key: string,
-    public field: Field,
-    initialValue: unknown
+    public field: Field
   ) {
-    const defaultOptions = Field.options(field)
-    this.value = atom(initialValue ?? defaultOptions.initialValue)
-    const tracker = optionTrackerOf(field)
-    this.options = atom(async get => {
-      const update = tracker ? await tracker(get(this.#getter)) : undefined
-      return {...defaultOptions, ...update}
-    })
+    this.value = this.draft.node.field[key]
   }
 
   #getter = atom(get => {
     return ((field: Field) => {
-      const info = this.draft.byField.get(field)
+      const info = this.draft.get(field)
       assert(info, `Field not found: ${Field.label(field)}`)
       return get(info.value)
     }) as FieldGetter
   })
 
-  value: Atom<unknown>
-  options: Atom<object>
+  options = atom(get => {
+    const defaultOptions = Field.options(this.field)
+    const tracker = optionTrackerOf(this.field)
+    const update = tracker ? tracker(get(this.#getter)) : undefined
+    return {...defaultOptions, ...update}
+  })
+
+  error = atom(get => {
+    const options = get(this.options)
+    const value = get(this.value)
+    if (options.validate) {
+      const result = options.validate(value)
+      if (typeof result === 'boolean') return result ? undefined : true
+      return result
+    }
+    if (options.required) {
+      if (value === undefined || value === null) return true
+      if (typeof value === 'string' && value === '') return true
+      if (Array.isArray(value) && value.length === 0) return true
+    }
+    return undefined
+  })
 
   view = atom(get => {
     const view = Field.view(this.field)
@@ -365,17 +384,24 @@ export class DashboardField {
 export class DashboardType {
   constructor(
     public dashboard: Dashboard,
-    public type: Atom<Type>
+    public type: Type
   ) {}
 
-  #settings = atom(get => getType(get(this.type)))
-  contains = atom(get => get(this.#settings).contains)
-  label = atom(get => get(this.#settings).label)
-  orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
-  icon = atom(get => get(this.#settings).icon)
-
-  sections = atom(get => get(this.#settings).sections)
-  items = atom(get => {})
+  get contains() {
+    return getType(this.type).contains
+  }
+  get label() {
+    return getType(this.type).label
+  }
+  get orderChildrenBy() {
+    return getType(this.type).orderChildrenBy
+  }
+  get icon() {
+    return getType(this.type).icon
+  }
+  get sections() {
+    return getType(this.type).sections
+  }
 }
 
 const ROOT_KEY_PREFIX = 'root:'
@@ -629,7 +655,7 @@ export class DashboardEntry {
   id: string
   workspace: string
   root: string
-  type: DashboardType
+  type: Atom<DashboardType>
   locales: Map<
     string | null,
     {
@@ -675,19 +701,15 @@ export class DashboardEntry {
   })
 
   icon = atom(async get => {
-    const typeIcon = get(this.type.icon)
+    const typeIcon = get(this.type).icon
     if (typeIcon) return typeIcon
     const hasChildren = await get(this.hasChildren)
     return hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   })
 
   children = atom(async get => {
-    return queryTreeChildren(
-      get,
-      this.#root,
-      this.id,
-      this.type.orderChildrenBy
-    )
+    const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
+    return queryTreeChildren(get, this.#root, this.id, orderChildrenBy)
   })
 
   hasChildren = atom(async get => {
@@ -721,7 +743,7 @@ export class DashboardEntry {
 
   editor = atom(async get => {
     const locale = get(this.#root.selectedLocale)
-    const type = get(this.type.type)
+    const type = get(this.type).type
     const db = get(this.dashboard.db)
     const data = await db.get({
       id: this.id,
@@ -798,12 +820,12 @@ async function queryTreeChildren(
   get: Getter,
   root: DashboardRoot,
   parentId: null | string,
-  orderByAtom: Atom<Awaitable<Order | Array<Order> | undefined>>
+  orderByAtom: Atom<Order | Array<Order> | undefined>
 ) {
   get(root.workspace.dashboard.sha) // subscribe to content changes
   const visibleTypes = get(root.workspace.tree.visibleTypes)
   const db = get(root.workspace.dashboard.db)
-  const orderBy = await get(orderByAtom)
+  const orderBy = get(orderByAtom)
   const locale = get(root.selectedLocale)
   const children = await db.find({
     select: {
@@ -870,12 +892,131 @@ function loader<Value>(fn: BatchLoadFn<Value>) {
 
 function dispense<T>(fn: (key: string) => T): Record<string, T> {
   return new Proxy(Object.create(null), {
-    get(target: Record<string, T>, key: string) {
-      if (!(typeof key === 'string')) throw new Error('Key must be a string')
-      if (!(key in target)) {
-        target[key] = fn(key)
-      }
+    get(target: Record<string | symbol, T>, key: string | symbol) {
+      if (!(typeof key === 'string')) return target[key]
+      if (!(key in target)) target[key] = fn(key)
       return target[key]
     }
   })
+}
+
+// data nodes
+
+type Writable<Value> = WritableAtom<Value, [Value], void>
+
+export interface Node<Value = unknown> {
+  value: Writable<Value>
+  accepts(value: unknown): value is Value
+}
+
+function isArray<Value>(value: unknown): value is Array<Value> {
+  return Array.isArray(value)
+}
+
+function isObject<Value extends object>(value: unknown): value is Value {
+  return value !== null && typeof value === 'object' && !isArray(value)
+}
+
+function isScalar<Value>(value: unknown): value is Value {
+  return !isObject(value) && !isArray(value)
+}
+
+export class ScalarNode<Value> implements Node<Value> {
+  value: Writable<Value>
+  accepts = isScalar
+  constructor(initialValue: Value) {
+    this.value = atom(initialValue)
+  }
+}
+
+export class ObjectNode<Value extends object = object> implements Node<Value> {
+  nodes: Writable<Record<string, Node>>
+  accepts = isObject
+  constructor(initialValue: Value) {
+    this.nodes = atom(
+      fromEntries(
+        entries(initialValue).map(([key, value]) => {
+          return [key, createNode(value)]
+        })
+      )
+    )
+  }
+  field = dispense(key => {
+    return atom(
+      get => {
+        const nodes = get(this.nodes)
+        const node = nodes[key]
+        assert(node, `Field not found`)
+        return get(node.value)
+      },
+      (get, set, update: unknown) => {
+        const nodes = get(this.nodes)
+        const node = nodes[key]
+        assert(node, `Field not found`)
+        assert(node.accepts(update), `Invalid value for field`)
+        set(node.value, update)
+      }
+    )
+  })
+  value = atom(
+    get => {
+      return fromEntries(
+        entries(get(this.nodes)).map(([key, node]) => {
+          return [key, get(node.value)]
+        })
+      ) as Value
+    },
+    (get, set, update: Value) => {
+      const updates = Array<[string, Node]>()
+      const removes = Array<string>()
+      const fields = get(this.nodes)
+      for (const [key, value] of entries(update)) {
+        const node = fields[key]
+        if (node && node.accepts(value)) set(node.value, value)
+        else updates.push([key, createNode(value)])
+      }
+      for (const key of keys(fields)) {
+        if (!(key in update)) removes.push(key)
+      }
+      if (updates.length > 0 || removes.length > 0) {
+        const next = {...fields}
+        for (const [key, node] of updates) next[key] = node
+        for (const key of removes) delete next[key]
+        set(this.nodes, next)
+      }
+    }
+  )
+}
+
+export class ArrayNode<Value = Array<unknown>> implements Node<Array<Value>> {
+  nodes: Writable<Array<Node<Value>>>
+  accepts = isArray
+  constructor(initialValue: Array<Value>) {
+    this.nodes = atom(initialValue.map(createNode))
+  }
+  value = atom(
+    get => {
+      return get(this.nodes).map(node => get(node.value)) as Array<Value>
+    },
+    (get, set, update: Array<Value>) => {
+      const current = get(this.nodes)
+      let changed = current.length !== update.length
+      const next = update.map((value, index) => {
+        const node = current[index]
+        if (node && node.accepts(value)) {
+          set(node.value, value)
+          return node
+        }
+        changed = true
+        return createNode(value)
+      })
+      if (changed) set(this.nodes, next)
+    }
+  )
+}
+
+export function createNode<Value>(initialValue: Value): Node<Value> {
+  if (isArray(initialValue)) return new ArrayNode(initialValue) as any
+  if (isObject(initialValue)) return new ObjectNode(initialValue) as any
+  return new ScalarNode(initialValue)
 }

@@ -2,9 +2,8 @@ import {Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
 import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
-import {assert} from 'alinea/core/util/Assert'
-import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary.js'
 import {useAtomValue} from 'jotai'
+import {memo} from 'react'
 import {
   Dashboard,
   DashboardEditor,
@@ -12,7 +11,8 @@ import {
   DashboardRoot,
   DashboardSection,
   DashboardType
-} from '../dashboard/Dashboard.js'
+} from '../store/Dashboard.js'
+import {EditorScope, EntryScope, useFieldView} from '../store/hooks.js'
 import css from './Editor.module.css'
 
 const styles = styler(css)
@@ -47,17 +47,20 @@ interface EntryEditorProps {
 function EntryEditor({entry}: EntryEditorProps) {
   const title = useAtomValue(entry.label)
   const editor = useAtomValue(entry.editor)
+  const type = useAtomValue(entry.type)
   return (
-    <>
-      <header className={styles.mainHeader()}>
-        <h1 className={styles.mainTitle()}>{title}</h1>
-        <TypeBadge type={entry.type} />
-      </header>
+    <EntryScope entry={entry}>
+      <EditorScope editor={editor}>
+        <header className={styles.mainHeader()}>
+          <h1 className={styles.mainTitle()}>{title}</h1>
+          <TypeBadge type={type} />
+        </header>
 
-      <div className={styles.mainBody()}>
-        <TypeForm editor={editor} />
-      </div>
-    </>
+        <div className={styles.mainBody()}>
+          <TypeForm editor={editor} />
+        </div>
+      </EditorScope>
+    </EntryScope>
   )
 }
 
@@ -65,64 +68,60 @@ interface TypeFormProps {
   editor: DashboardEditor
 }
 
-function TypeForm({editor}: TypeFormProps) {
-  return editor.sections.map((section, index) => {
-    return <FormSection key={index} editor={editor} section={section} />
-  })
-}
+const TypeForm = memo(function TypeForm({editor}: TypeFormProps) {
+  const value = useAtomValue(editor.value)
+  return (
+    <>
+      {editor.sections.map((section, index) => {
+        return <FormSection key={index} section={section} />
+      })}
+      <pre>{JSON.stringify(value)}</pre>
+    </>
+  )
+})
 
 interface FormSectionProps {
-  editor: DashboardEditor
   section: DashboardSection
 }
 
-function FormSection({editor, section}: FormSectionProps) {
+const FormSection = memo(function FormSection({section}: FormSectionProps) {
   const View = useAtomValue(section.view)
-  const props = {editor, section: section.section}
+  const props = {section: section.section}
   if (View) return <View {...props} />
   return (
     <div style={{display: 'contents'}}>
-      <EditFields editor={editor} fields={Section.fields(section.section)} />
+      <EditFields fields={Section.fields(section.section)} />
     </div>
   )
-}
+})
 
 export interface EditFieldsProps {
-  editor: DashboardEditor
   fields: Record<string, Field>
 }
 
-export function EditFields({editor, fields}: EditFieldsProps) {
+export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
   return Object.entries(fields).map(([name, field]) => {
-    return (
-      <ErrorBoundary key={name}>
-        <EditField editor={editor} name={name} field={field} />
-      </ErrorBoundary>
-    )
+    return <EditField key={name} field={field} />
   })
-}
+})
 
 interface EditFieldProps {
-  name: string
-  editor: DashboardEditor
   field: Field
 }
 
-function EditField({editor, name, field}: EditFieldProps) {
-  const info = editor.field[name]
-  assert(info, 'Missing editor info for field')
-  const View = useAtomValue(info.view)
-  const props = {editor, field, name}
-  return <View {...props} />
-}
+const EditField = memo(function EditField({field}: EditFieldProps) {
+  const View = useFieldView(field)
+  if (!View) return <div>Missing view for field</div>
+  return <View field={field} />
+})
 
 interface TypeBadgeProps {
   type: DashboardType
 }
 
 function TypeBadge({type}: TypeBadgeProps) {
-  const label = useAtomValue(type.label)
-  const icon = useAtomValue(type.icon)
+  const label = type.label
+  const icon = type.icon
   return (
     <span>
       <Icon icon={icon} />

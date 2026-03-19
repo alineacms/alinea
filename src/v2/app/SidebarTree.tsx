@@ -12,7 +12,7 @@ import {
   Dashboard,
   DashboardRoot,
   DashboardTreeItem
-} from '../dashboard/Dashboard.js'
+} from '../store/Dashboard.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import css from './SidebarTree.module.css'
 

@@ -4,8 +4,8 @@ import type {LocalDB} from 'alinea/core/db/LocalDB.js'
 import type {Atom} from 'jotai'
 import {ComponentType, useMemo} from 'react'
 import {AppShell} from './app/AppShell.js'
-import {Dashboard} from './dashboard/Dashboard.js'
 import './index.css'
+import {Dashboard} from './store/Dashboard.js'
 
 export interface AppProps {
   db: Atom<LocalDB>

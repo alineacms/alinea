@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {Suspense} from 'react'
-import type {Dashboard} from '../dashboard/Dashboard.js'
+import type {Dashboard} from '../store/Dashboard.js'
 import css from './AppShell.module.css'
 import {Editor} from './Editor.js'
 import {SidebarTree} from './SidebarTree.js'
@@ -32,7 +32,7 @@ export function AppShell({dashboard}: AppShellProps) {
       </aside>
 
       <main className={styles.main()}>
-        <Suspense>
+        <Suspense fallback={<div>Loading...</div>}>
           <Editor dashboard={dashboard} />
         </Suspense>
       </main>
