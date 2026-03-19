@@ -232,12 +232,16 @@ type Writable<Value> = WritableAtom<Value, [Value], void>
 
 export interface Node<Value = unknown> {
   value: Writable<Value>
+  accepts(value: unknown): value is Value
 }
 
 export class Primitive<Value> implements Node<Value> {
   value: Writable<Value>
   constructor(initialValue: Value) {
     this.value = atom(initialValue)
+  }
+  accepts(value: unknown): value is Value {
+    return typeof value !== 'object' || value === null
   }
 }
 
@@ -254,31 +258,34 @@ export class ObjectNode<Value extends object> implements Node<Value> {
   }
   value = atom(
     get => {
-      const result: Record<string, unknown> = Object.create(null)
+      const result: Record<string, unknown> = {}
       const fields = get(this.nodes)
       for (const [key, node] of fields) result[key] = get(node.value)
       return result as Value
     },
     (get, set, update: Value) => {
-      const inserts = Array<[string, Node]>()
+      const updates = Array<[string, Node]>()
       const removes = Array<string>()
       const fields = get(this.nodes)
       for (const [key, value] of entries(update)) {
         const node = fields.get(key)
-        if (node) set(node.value, value)
-        else inserts.push([key, createNode(value)])
+        if (node && node.accepts(value)) set(node.value, value)
+        else updates.push([key, createNode(value)])
       }
       for (const key of fields.keys()) {
         if (!(key in update)) removes.push(key)
       }
-      if (inserts.length > 0 || removes.length > 0) {
+      if (updates.length > 0 || removes.length > 0) {
         const next = new Map(fields)
-        for (const [key, node] of inserts) next.set(key, node)
+        for (const [key, node] of updates) next.set(key, node)
         for (const key of removes) next.delete(key)
         set(this.nodes, next)
       }
     }
   )
+  accepts(value: unknown): value is Value {
+    return typeof value === 'object' && value !== null
+  }
 }
 
 export class ArrayNode<Value> implements Node<Array<Value>> {
@@ -294,7 +301,7 @@ export class ArrayNode<Value> implements Node<Array<Value>> {
       const current = get(this.nodes)
       const next = update.map((value, index) => {
         const node = current[index]
-        if (node) {
+        if (node && node.accepts(value)) {
           set(node.value, value)
           return node
         }
@@ -303,6 +310,9 @@ export class ArrayNode<Value> implements Node<Array<Value>> {
       if (next.length !== current.length) set(this.nodes, next)
     }
   )
+  accepts(value: unknown): value is Array<Value> {
+    return Array.isArray(value)
+  }
 }
 
 export function createNode<Value>(value: Value): Node<Value> {
