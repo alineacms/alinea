@@ -66,11 +66,7 @@ function SidebarItem({item}: SidebarItemProps) {
       hasChildItems={hasChildItems}
       icon={icon}
     >
-      {isExpanded && (
-        <Suspense>
-          <SidebarItemChildren item={item} />
-        </Suspense>
-      )}
+      {isExpanded && <SidebarItemChildren item={item} />}
     </TreeItem>
   )
 }

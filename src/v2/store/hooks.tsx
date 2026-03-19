@@ -1,9 +1,10 @@
+import {Type} from 'alinea'
 import {WriteableGraph} from 'alinea/core/db/WriteableGraph.js'
 import type {Field} from 'alinea/core/Field'
 import {assert} from 'alinea/core/util/Assert.js'
 import {useAtom, useAtomValue} from 'jotai'
 import type {PropsWithChildren} from 'react'
-import {createContext, createElement, useContext} from 'react'
+import {createContext, createElement, useContext, useMemo} from 'react'
 import type {DashboardEntry, Node} from './Dashboard.js'
 import {ArrayNode, DashboardEditor, ObjectNode} from './Dashboard.js'
 
@@ -45,6 +46,23 @@ function useField(field: Field) {
   return info
 }
 
+export function useNodeEditor(node: Node, type: Type) {
+  const parent = useEditor()
+  assert(node instanceof ObjectNode, 'Expected object node')
+  const editor = useMemo(
+    () => new DashboardEditor(parent.dashboard, type, node),
+    [parent.dashboard, node, type]
+  )
+  return editor
+}
+
+export function useFieldNode(field: Field) {
+  const key = useFieldKey(field)
+  const editor = useEditor()
+  const nodes = useAtomValue(editor.node.nodes)
+  return nodes[key]
+}
+
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): [StoredValue, Mutator] {
@@ -69,7 +87,7 @@ export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
 
 export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
-) {
+): string | undefined {
   const info = useField(field)
   return useAtomValue(info.error)
 }

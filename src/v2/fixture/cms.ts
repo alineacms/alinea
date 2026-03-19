@@ -23,6 +23,12 @@ const Page = Config.document('Page', {
         release: 'Release notes'
       },
       initialValue: 'docs'
+    }),
+    inner: Field.object('Testje', {
+      fields: {
+        a: Field.text('field A'),
+        b: Field.text('field B')
+      }
     })
   }
 })

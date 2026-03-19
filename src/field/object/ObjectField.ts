@@ -1,11 +1,12 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {type FieldsDefinition, type Type, type} from 'alinea/core/Type'
+import {type FieldsDefinition, Type, type} from 'alinea/core/Type'
 import {RecordField} from 'alinea/core/field/RecordField'
 import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import type {ReactNode} from 'react'
 
-export interface ObjectOptions<Definition>
-  extends FieldOptions<Type.Infer<Definition>> {
+export interface ObjectOptions<Definition> extends FieldOptions<
+  Type.Infer<Definition>
+> {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -26,9 +27,15 @@ export function object<Fields extends FieldsDefinition>(
   const fields: Type<Fields> = type('Object fields', {
     fields: options.fields
   })
+  const initialValue = Type.initialValue(fields) as any
   return Object.assign(
     new ObjectField(fields, {
-      options: {label, ...options, fields},
+      options: {
+        label,
+        initialValue,
+        ...options,
+        fields
+      },
       view: viewKeys.ObjectInput
     }),
     fields

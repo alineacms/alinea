@@ -2,6 +2,7 @@ import {Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
 import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
+import {Type} from 'alinea/core/Type'
 import {useAtomValue} from 'jotai'
 import {memo} from 'react'
 import {
@@ -10,9 +11,15 @@ import {
   DashboardEntry,
   DashboardRoot,
   DashboardSection,
-  DashboardType
+  DashboardType,
+  Node
 } from '../store/Dashboard.js'
-import {EditorScope, EntryScope, useFieldView} from '../store/hooks.js'
+import {
+  EditorScope,
+  EntryScope,
+  useFieldView,
+  useNodeEditor
+} from '../store/hooks.js'
 import css from './Editor.module.css'
 
 const styles = styler(css)
@@ -57,27 +64,37 @@ function EntryEditor({entry}: EntryEditorProps) {
         </header>
 
         <div className={styles.mainBody()}>
-          <TypeForm editor={editor} />
+          <FieldsEditor editor={editor} />
         </div>
       </EditorScope>
     </EntryScope>
   )
 }
 
-interface TypeFormProps {
+interface NodeEditorProps {
+  node: Node
+  type: Type
+}
+
+export function NodeEditor({node, type}: NodeEditorProps) {
+  const editor = useNodeEditor(node, type)
+  return (
+    <EditorScope editor={editor}>
+      <FieldsEditor editor={editor} />
+    </EditorScope>
+  )
+}
+
+interface FieldsEditorProps {
   editor: DashboardEditor
 }
 
-const TypeForm = memo(function TypeForm({editor}: TypeFormProps) {
-  const value = useAtomValue(editor.value)
-  return (
-    <>
-      {editor.sections.map((section, index) => {
-        return <FormSection key={index} section={section} />
-      })}
-      <pre>{JSON.stringify(value)}</pre>
-    </>
-  )
+export const FieldsEditor = memo(function TypeForm({
+  editor
+}: FieldsEditorProps) {
+  return editor.sections.map((section, index) => {
+    return <FormSection key={index} section={section} />
+  })
 })
 
 interface FormSectionProps {
@@ -88,11 +105,7 @@ const FormSection = memo(function FormSection({section}: FormSectionProps) {
   const View = useAtomValue(section.view)
   const props = {section: section.section}
   if (View) return <View {...props} />
-  return (
-    <div style={{display: 'contents'}}>
-      <EditFields fields={Section.fields(section.section)} />
-    </div>
-  )
+  return <EditFields fields={Section.fields(section.section)} />
 })
 
 export interface EditFieldsProps {

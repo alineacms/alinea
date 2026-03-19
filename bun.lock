@@ -170,7 +170,7 @@
     "src/v2": {
       "name": "@alinea/v2",
       "dependencies": {
-        "@alinea/components": "^0.0.46",
+        "@alinea/components": "^0.0.47",
         "jotai": "^2.4.2",
         "react-aria-components": "^1.16.0",
       },
@@ -199,7 +199,7 @@
 
     "@alinea/cli": ["@alinea/cli@workspace:src/cli"],
 
-    "@alinea/components": ["@alinea/components@0.0.46", "", { "peerDependencies": { "react-aria-components": "^1.15.1" } }, "sha512-NC0bAmZkr/1MFBDGB64IJy1YAzlaBEJ9CSbWh0RBAGRIF7kQLeH8gIV9CkZC/xOi5m4sMQudE5DJkz/yb1TgKg=="],
+    "@alinea/components": ["@alinea/components@0.0.47", "", { "peerDependencies": { "react-aria-components": "^1.15.1" } }, "sha512-uTtdpKVjwdjnTo7wxejZPAn4Pgt2xO5UrOT5e2F5jeTIKh1NLtKDr9zwmbNAm9czDQNQVEWV/gkDJTkDb32vBA=="],
 
     "@alinea/core": ["@alinea/core@workspace:src/core"],
 

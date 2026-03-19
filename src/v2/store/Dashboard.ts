@@ -4,7 +4,7 @@ import type {LocalConnection} from 'alinea/core/Connection'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
 import type {LocalDB} from 'alinea/core/db/LocalDB'
 import {Entry, EntryStatus} from 'alinea/core/Entry'
-import {Field} from 'alinea/core/Field'
+import {Field, FieldOptions} from 'alinea/core/Field'
 import type {Order} from 'alinea/core/Graph'
 import {getRoot, getType, getWorkspace} from 'alinea/core/Internal'
 import {Section} from 'alinea/core/Section.js'
@@ -229,16 +229,14 @@ export class Dashboard {
 }
 
 export class DashboardEditor {
-  node: ObjectNode
   value: Atom<object>
   sections: Array<DashboardSection>
   constructor(
     public dashboard: Dashboard,
     public type: Type,
-    initialValue: Record<string, unknown>
+    public node: ObjectNode
   ) {
-    this.node = createNode(initialValue) as ObjectNode
-    this.value = this.node.value
+    this.value = node.value
     this.sections = getType(this.type).sections.map(
       section => new DashboardSection(this.dashboard, section)
     )
@@ -301,18 +299,19 @@ export class DashboardField {
     return {...defaultOptions, ...update}
   })
 
-  error = atom(get => {
-    const options = get(this.options)
+  error = atom((get): string | undefined => {
+    const options = get(this.options) as FieldOptions<unknown>
     const value = get(this.value)
     if (options.validate) {
       const result = options.validate(value)
-      if (typeof result === 'boolean') return result ? undefined : true
+      if (typeof result === 'boolean')
+        return result ? 'Field is invalid' : undefined
       return result
     }
     if (options.required) {
-      if (value === undefined || value === null) return true
-      if (typeof value === 'string' && value === '') return true
-      if (Array.isArray(value) && value.length === 0) return true
+      if (value === undefined || value === null) return 'Field is required'
+      if (typeof value === 'string' && value === '') return 'Field is required'
+      if (Array.isArray(value) && value.length === 0) return 'Field is required'
     }
     return undefined
   })
@@ -435,17 +434,19 @@ export class DashboardTree {
     atom(
       get => get(this.#expandedKeys),
       (get, set, next: 'init' | Set<Key>) => {
-        if (next === 'init') {
-          get(this.#routeExpandedKeys).then(routeKeys => {
-            if (routeKeys.size === 0) return
-            const current = get(this.#expandedKeys)
-            const merged = new Set(current)
-            for (const key of routeKeys) merged.add(key)
-            set(this.#expandedKeys, merged)
-          })
-        } else {
-          set(this.#expandedKeys, next)
-        }
+        startTransition(() => {
+          if (next === 'init') {
+            get(this.#routeExpandedKeys).then(routeKeys => {
+              if (routeKeys.size === 0) return
+              const current = get(this.#expandedKeys)
+              const merged = new Set(current)
+              for (const key of routeKeys) merged.add(key)
+              set(this.#expandedKeys, merged)
+            })
+          } else {
+            set(this.#expandedKeys, next)
+          }
+        })
       }
     ),
     {onMount: (setSelf: (value: 'init') => void) => setSelf('init')}
@@ -455,14 +456,16 @@ export class DashboardTree {
   selectedKeys = atom(
     get => get(this.#treeSelection),
     (get, set, next: 'all' | Set<Key>) => {
-      assert(next !== 'all', 'Selecting all items is not supported')
-      const [first] = next
-      if (first) {
-        const expandedKeys = get(this.#expandedKeys)
-        if (!expandedKeys.has(first))
-          set(this.#expandedKeys, new Set(expandedKeys).add(first))
-      }
-      set(this.#treeSelection, next)
+      startTransition(() => {
+        assert(next !== 'all', 'Selecting all items is not supported')
+        const [first] = next
+        if (first) {
+          const expandedKeys = get(this.#expandedKeys)
+          if (!expandedKeys.has(first))
+            set(this.#expandedKeys, new Set(expandedKeys).add(first))
+        }
+        set(this.#treeSelection, next)
+      })
     }
   )
 
@@ -694,7 +697,14 @@ export class DashboardEntry {
       select: Entry.data,
       status: 'preferDraft'
     })
-    return new DashboardEditor(this.dashboard, type, data)
+    // Todo: fix data during indexing instead of here
+    const initialValue = {
+      ...Type.initialValue(type),
+      ...data
+    }
+    console.log(initialValue)
+    const node = createObjectNode(initialValue)
+    return new DashboardEditor(this.dashboard, type, node)
   })
 }
 
@@ -958,8 +968,20 @@ export class ArrayNode<Value = Array<unknown>> implements Node<Array<Value>> {
   )
 }
 
+export function createObjectNode<Value extends Object>(
+  initialValue: Value
+): ObjectNode<Value> {
+  return new ObjectNode(initialValue)
+}
+
+export function createArrayNode<Value>(
+  initialValue: Array<Value>
+): ArrayNode<Value> {
+  return new ArrayNode(initialValue)
+}
+
 export function createNode<Value>(initialValue: Value): Node<Value> {
-  if (isArray(initialValue)) return new ArrayNode(initialValue) as any
-  if (isObject(initialValue)) return new ObjectNode(initialValue) as any
+  if (isArray(initialValue)) return createArrayNode(initialValue) as any
+  if (isObject(initialValue)) return createObjectNode(initialValue) as any
   return new ScalarNode(initialValue)
 }

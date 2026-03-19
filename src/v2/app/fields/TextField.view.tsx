@@ -1,12 +1,15 @@
 import {TextField as RacTextField} from '@alinea/components'
 import {TextField} from 'alinea/field/text'
+import {memo} from 'react'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../store.js'
 
 export interface TextInputProps {
   field: TextField
 }
 
-export function TextFieldView({field}: TextInputProps) {
+export const TextFieldView = memo(function TextFieldView({
+  field
+}: TextInputProps) {
   const [value = '', setValue] = useFieldValue(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
@@ -18,4 +21,4 @@ export function TextFieldView({field}: TextInputProps) {
       isInvalid={Boolean(error)}
     />
   )
-}
+})
