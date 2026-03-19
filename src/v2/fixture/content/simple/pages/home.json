@@ -7,5 +7,21 @@
   "path": "home",
   "summary": "Simple workspace root page",
   "featured": true,
-  "category": "docs"
+  "category": "docs",
+  "sections": [
+    {
+      "_id": "31QListSimpleHomeCallout0000001",
+      "_type": "callout",
+      "_index": "a0",
+      "heading": "Welcome",
+      "text": "This page now exercises the v2 list field."
+    },
+    {
+      "_id": "31QListSimpleHomeCallout0000002",
+      "_type": "callout",
+      "_index": "a1",
+      "heading": "Next step",
+      "text": "Try moving, editing, or removing these sections."
+    }
+  ]
 }

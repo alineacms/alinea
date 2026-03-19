@@ -16,7 +16,7 @@ import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
-import {startTransition, type ComponentType} from 'react'
+import {SetStateAction, startTransition, type ComponentType} from 'react'
 import type {DroppableCollectionReorderEvent, Key} from 'react-aria-components'
 import {
   IcRoundDescription,
@@ -855,7 +855,17 @@ function dispense<T>(fn: (key: string) => T): Record<string, T> {
 
 // data nodes
 
-type Writable<Value> = WritableAtom<Value, [Value], void>
+function resolveSetStateAction<Value>(
+  current: Value,
+  update: SetStateAction<Value>
+): Value {
+  if (typeof update === 'function') {
+    return (update as (current: Value) => Value)(current)
+  }
+  return update
+}
+
+type Writable<Value> = WritableAtom<Value, [SetStateAction<Value>], void>
 
 export interface Node<Value = unknown> {
   value: Writable<Value>
@@ -878,7 +888,14 @@ export class ScalarNode<Value> implements Node<Value> {
   value: Writable<Value>
   accepts = isScalar
   constructor(initialValue: Value) {
-    this.value = atom(initialValue)
+    const current = atom(initialValue)
+    this.value = atom(
+      get => get(current),
+      (get, set, update: SetStateAction<Value>) => {
+        const next = resolveSetStateAction(get(current), update)
+        set(current, next)
+      }
+    )
   }
 }
 
@@ -902,12 +919,13 @@ export class ObjectNode<Value extends object = object> implements Node<Value> {
         assert(node, `Field not found`)
         return get(node.value)
       },
-      (get, set, update: unknown) => {
+      (get, set, update: SetStateAction<unknown>) => {
         const nodes = get(this.nodes)
         const node = nodes[key]
         assert(node, `Field not found`)
-        assert(node.accepts(update), `Invalid value for field`)
-        set(node.value, update)
+        const next = resolveSetStateAction(get(node.value), update)
+        assert(node.accepts(next), `Invalid value for field`)
+        set(node.value, next)
       }
     )
   })
@@ -919,17 +937,18 @@ export class ObjectNode<Value extends object = object> implements Node<Value> {
         })
       ) as Value
     },
-    (get, set, update: Value) => {
+    (get, set, update: SetStateAction<Value>) => {
+      const nextValue = resolveSetStateAction(get(this.value), update)
       const updates = Array<[string, Node]>()
       const removes = Array<string>()
       const fields = get(this.nodes)
-      for (const [key, value] of entries(update)) {
+      for (const [key, value] of entries(nextValue)) {
         const node = fields[key]
         if (node && node.accepts(value)) set(node.value, value)
         else updates.push([key, createNode(value)])
       }
       for (const key of keys(fields)) {
-        if (!(key in update)) removes.push(key)
+        if (!(key in nextValue)) removes.push(key)
       }
       if (updates.length > 0 || removes.length > 0) {
         const next = {...fields}
@@ -951,10 +970,11 @@ export class ArrayNode<Value = Array<unknown>> implements Node<Array<Value>> {
     get => {
       return get(this.nodes).map(node => get(node.value)) as Array<Value>
     },
-    (get, set, update: Array<Value>) => {
+    (get, set, update: SetStateAction<Array<Value>>) => {
+      const nextValue = resolveSetStateAction(get(this.value), update)
       const current = get(this.nodes)
-      let changed = current.length !== update.length
-      const next = update.map((value, index) => {
+      let changed = current.length !== nextValue.length
+      const next = nextValue.map((value, index) => {
         const node = current[index]
         if (node && node.accepts(value)) {
           set(node.value, value)
@@ -966,6 +986,22 @@ export class ArrayNode<Value = Array<unknown>> implements Node<Array<Value>> {
       if (changed) set(this.nodes, next)
     }
   )
+  push = atom(null, (get, set, value: Value) => {
+    set(this.nodes, [...get(this.nodes), createNode(value)])
+  })
+  move = atom(null, (get, set, from: number, to: number) => {
+    const current = get(this.nodes)
+    const next = [...current]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    set(this.nodes, next)
+  })
+  remove = atom(null, (get, set, index: number) => {
+    const current = get(this.nodes)
+    const next = [...current]
+    next.splice(index, 1)
+    set(this.nodes, next)
+  })
 }
 
 export function createObjectNode<Value extends Object>(

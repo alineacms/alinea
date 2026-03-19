@@ -29,6 +29,19 @@ const Page = Config.document('Page', {
         a: Field.text('field A'),
         b: Field.text('field B')
       }
+    }),
+    sections: Field.list('Sections', {
+      schema: {
+        callout: Config.type('Callout', {
+          fields: {
+            heading: Field.text('Heading'),
+            text: Field.text('Text', {
+              multiline: true,
+              placeholder: 'Write section copy'
+            })
+          }
+        })
+      }
     })
   }
 })

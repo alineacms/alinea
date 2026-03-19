@@ -1,0 +1,65 @@
+.root {
+  display: grid;
+  gap: 14px;
+}
+
+.rows {
+  display: grid;
+  gap: 12px;
+}
+
+.row {
+  border: 1px solid #d8e1eb;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f6f8fb;
+  border-bottom: 1px solid #e6edf5;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #22303d;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action {
+  min-width: 36px;
+  padding: 0 10px;
+}
+
+.content {
+  padding: 14px;
+}
+
+.create {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.empty {
+  padding: 16px;
+  border: 1px dashed #d8e1eb;
+  border-radius: 12px;
+  color: #5d6b79;
+  background: #fbfcfe;
+  font-size: 14px;
+}

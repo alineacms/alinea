@@ -5,5 +5,14 @@
   "_i18nId": "31Q9i18nHomeSharedId000000001",
   "_root": "pages",
   "title": "Home",
-  "summary": "English homepage"
+  "summary": "English homepage",
+  "sections": [
+    {
+      "_id": "31QListI18nEnHomeCallout000001",
+      "_type": "callout",
+      "_index": "a0",
+      "heading": "Localized content",
+      "text": "This translation includes seeded list sections."
+    }
+  ]
 }
