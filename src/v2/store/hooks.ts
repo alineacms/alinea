@@ -32,66 +32,64 @@ export function EntryScope({
   return createElement(entryContext.Provider, {value: entry}, children)
 }
 
-function useDashboardEditor() {
+function useEditor() {
   const editor = useContext(editorContext)
   assert(editor, 'DashboardEditor not found in context')
   return editor
 }
 
-export function useField<StoredValue, QueryValue, Mutator, Options>(
-  field: Field<StoredValue, QueryValue, Mutator, Options>
-): [QueryValue, Mutator] {
-  const editor = useDashboardEditor()
+function useField(field: Field) {
+  const editor = useEditor()
   const info = editor.get(field)
   assert(info, 'Field info not found in editor')
-  return useAtom(info.value)
+  return info
+}
+
+export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+): [StoredValue, Mutator] {
+  const info = useField(field)
+  // Todo: "mutator" will not really be relevant anymore
+  return useAtom(info.value) as [StoredValue, Mutator]
 }
 
 export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): string {
-  const editor = useDashboardEditor()
-  const info = editor.get(field)
-  assert(info, 'Field info not found in editor')
+  const info = useField(field)
   return info.key
 }
 
 export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ) {
-  const editor = useDashboardEditor()
-  const info = editor.get(field)
-  assert(info, 'Field info not found in editor')
+  const info = useField(field)
   return useAtomValue(info.options) as Options
 }
 
 export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ) {
-  const editor = useDashboardEditor()
-  const info = editor.get(field)
-  assert(info, 'Field info not found in editor')
+  const info = useField(field)
   return useAtomValue(info.error)
 }
 
 export function useFieldView<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ) {
-  const editor = useDashboardEditor()
-  const info = editor.get(field)
-  assert(info, 'Field info not found in editor')
+  const info = useField(field)
   return useAtomValue(info.view)
 }
 
 export function useSiblingFieldValue(key: string) {
-  const editor = useDashboardEditor()
+  const editor = useEditor()
   const info = editor.field[key]
   assert(info, `Field not found: ${key}`)
   return useAtomValue(info.value)
 }
 
 export function useGraph() {
-  const editor = useDashboardEditor()
+  const editor = useEditor()
   return useAtomValue(editor.dashboard.db) as WriteableGraph
 }
 

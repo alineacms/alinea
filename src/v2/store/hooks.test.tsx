@@ -1,15 +1,15 @@
+import {fireEvent, render} from '@testing-library/react'
 import {Config} from 'alinea'
-import {Entry, createCMS} from 'alinea/core'
+import {createCMS} from 'alinea/core'
 import {Field} from 'alinea/core/Field'
 import {TestDB} from 'alinea/core/db/TestDB.js'
 import {object} from 'alinea/field/object'
 import {text} from 'alinea/field/text'
 import {expect, test} from 'bun:test'
-import '../dom.js'
-import {fireEvent, render} from '@testing-library/react'
 import {atom, createStore, Provider} from 'jotai'
-import {EditorScope, useField, useFieldScope} from './hooks.js'
+import '../dom.js'
 import {Dashboard} from './Dashboard.js'
+import {EditorScope, useFieldScope, useFieldValue} from './hooks.js'
 
 const Article = Config.document('Article', {
   fields: {
@@ -35,7 +35,7 @@ const cms = createCMS({
 })
 
 function Inner() {
-  const [value = '', setValue] = useField(Article.seo.description)
+  const [value = '', setValue] = useFieldValue(Article.seo.description)
   return (
     <button onClick={() => setValue('Meta')} type="button">
       {value}
