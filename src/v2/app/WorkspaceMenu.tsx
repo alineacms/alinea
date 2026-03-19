@@ -1,8 +1,8 @@
 import {Button, Menu, MenuItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import type {Dashboard, DashboardWorkspace} from '../dashboard/Dashboard.js'
 import {IcAlineaLogo} from '../icons.js'
+import type {Dashboard, DashboardWorkspace} from '../store/Dashboard.js'
 import css from './WorkspaceMenu.module.css'
 
 const styles = styler(css)

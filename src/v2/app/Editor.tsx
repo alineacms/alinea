@@ -3,6 +3,7 @@ import {styler} from '@alinea/styler'
 import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {useAtomValue} from 'jotai'
+import {memo} from 'react'
 import {
   Dashboard,
   DashboardEditor,
@@ -10,8 +11,8 @@ import {
   DashboardRoot,
   DashboardSection,
   DashboardType
-} from '../dashboard/Dashboard.js'
-import {EditorScope, EntryScope, useFieldView} from '../dashboard/hooks.js'
+} from '../store/Dashboard.js'
+import {EditorScope, EntryScope, useFieldView} from '../store/hooks.js'
 import css from './Editor.module.css'
 
 const styles = styler(css)
@@ -67,17 +68,23 @@ interface TypeFormProps {
   editor: DashboardEditor
 }
 
-function TypeForm({editor}: TypeFormProps) {
-  return editor.sections.map((section, index) => {
-    return <FormSection key={index} section={section} />
-  })
-}
+const TypeForm = memo(function TypeForm({editor}: TypeFormProps) {
+  const value = useAtomValue(editor.value)
+  return (
+    <>
+      {editor.sections.map((section, index) => {
+        return <FormSection key={index} section={section} />
+      })}
+      <pre>{JSON.stringify(value)}</pre>
+    </>
+  )
+})
 
 interface FormSectionProps {
   section: DashboardSection
 }
 
-function FormSection({section}: FormSectionProps) {
+const FormSection = memo(function FormSection({section}: FormSectionProps) {
   const View = useAtomValue(section.view)
   const props = {section: section.section}
   if (View) return <View {...props} />
@@ -86,27 +93,27 @@ function FormSection({section}: FormSectionProps) {
       <EditFields fields={Section.fields(section.section)} />
     </div>
   )
-}
+})
 
 export interface EditFieldsProps {
   fields: Record<string, Field>
 }
 
-export function EditFields({fields}: EditFieldsProps) {
+export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
   return Object.entries(fields).map(([name, field]) => {
-    return <EditField field={field} />
+    return <EditField key={name} field={field} />
   })
-}
+})
 
 interface EditFieldProps {
   field: Field
 }
 
-function EditField({field}: EditFieldProps) {
+const EditField = memo(function EditField({field}: EditFieldProps) {
   const View = useFieldView(field)
   if (!View) return <div>Missing view for field</div>
   return <View field={field} />
-}
+})
 
 interface TypeBadgeProps {
   type: DashboardType

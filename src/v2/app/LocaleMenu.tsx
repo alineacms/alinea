@@ -1,6 +1,6 @@
 import {Button, Menu, MenuItem} from '@alinea/components'
 import {useAtom, useAtomValue} from 'jotai'
-import {DashboardRoot} from '../dashboard/Dashboard.js'
+import {DashboardRoot} from '../store/Dashboard.js'
 
 interface LocaleMenuProps {
   root: DashboardRoot

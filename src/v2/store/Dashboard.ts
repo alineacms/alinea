@@ -11,7 +11,7 @@ import {Section} from 'alinea/core/Section.js'
 import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
 import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
-import {entries} from 'alinea/core/util/Objects.js'
+import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
@@ -228,109 +228,17 @@ export class Dashboard {
   })
 }
 
-type Writable<Value> = WritableAtom<Value, [Value], void>
-
-export interface Node<Value = unknown> {
-  value: Writable<Value>
-  accepts(value: unknown): value is Value
-}
-
-export class Primitive<Value> implements Node<Value> {
-  value: Writable<Value>
-  constructor(initialValue: Value) {
-    this.value = atom(initialValue)
-  }
-  accepts(value: unknown): value is Value {
-    return typeof value !== 'object' || value === null
-  }
-}
-
-export class ObjectNode<Value extends object> implements Node<Value> {
-  nodes: Writable<Map<string, Node>>
-  constructor(initialValue: Value) {
-    this.nodes = atom(
-      new Map<string, Node>(
-        entries(initialValue).map(([key, value]) => {
-          return [key, createNode(value)]
-        })
-      )
-    )
-  }
-  value = atom(
-    get => {
-      const result: Record<string, unknown> = {}
-      const fields = get(this.nodes)
-      for (const [key, node] of fields) result[key] = get(node.value)
-      return result as Value
-    },
-    (get, set, update: Value) => {
-      const updates = Array<[string, Node]>()
-      const removes = Array<string>()
-      const fields = get(this.nodes)
-      for (const [key, value] of entries(update)) {
-        const node = fields.get(key)
-        if (node && node.accepts(value)) set(node.value, value)
-        else updates.push([key, createNode(value)])
-      }
-      for (const key of fields.keys()) {
-        if (!(key in update)) removes.push(key)
-      }
-      if (updates.length > 0 || removes.length > 0) {
-        const next = new Map(fields)
-        for (const [key, node] of updates) next.set(key, node)
-        for (const key of removes) next.delete(key)
-        set(this.nodes, next)
-      }
-    }
-  )
-  accepts(value: unknown): value is Value {
-    return typeof value === 'object' && value !== null
-  }
-}
-
-export class ArrayNode<Value> implements Node<Array<Value>> {
-  nodes: Writable<Array<Node<Value>>>
-  constructor(initialValue: Array<Value>) {
-    this.nodes = atom(initialValue.map(createNode))
-  }
-  value = atom(
-    get => {
-      return get(this.nodes).map(node => get(node.value)) as Array<Value>
-    },
-    (get, set, update: Array<Value>) => {
-      const current = get(this.nodes)
-      const next = update.map((value, index) => {
-        const node = current[index]
-        if (node && node.accepts(value)) {
-          set(node.value, value)
-          return node
-        }
-        return createNode(value)
-      })
-      if (next.length !== current.length) set(this.nodes, next)
-    }
-  )
-  accepts(value: unknown): value is Array<Value> {
-    return Array.isArray(value)
-  }
-}
-
-export function createNode<Value>(value: Value): Node<Value> {
-  if (!value) return new Primitive(value)
-  if (Array.isArray(value)) return <any>new ArrayNode(value)
-  if (typeof value === 'object') return <any>new ObjectNode(value)
-  return <any>new Primitive(value)
-}
-
 export class DashboardEditor {
-  container: ObjectContainer
+  node: ObjectNode
+  value: Atom<object>
   sections: Array<DashboardSection>
   constructor(
     public dashboard: Dashboard,
     public type: Type,
     initialValue: Record<string, unknown>
   ) {
-    this.container = new ObjectContainer(initialValue)
+    this.node = createNode(initialValue) as ObjectNode
+    this.value = this.node.value
     this.sections = getType(this.type).sections.map(
       section => new DashboardSection(this.dashboard, section)
     )
@@ -375,7 +283,7 @@ export class DashboardField {
     public key: string,
     public field: Field
   ) {
-    this.value = draft.container.scalar[this.key]
+    this.value = this.draft.node.field[key]
   }
 
   #getter = atom(get => {
@@ -777,7 +685,6 @@ export class DashboardEntry {
   })
 
   editor = atom(async get => {
-    console.log('here')
     const locale = get(this.#root.selectedLocale)
     const type = get(this.type).type
     const db = get(this.dashboard.db)
@@ -934,4 +841,125 @@ function dispense<T>(fn: (key: string) => T): Record<string, T> {
       return target[key]
     }
   })
+}
+
+// data nodes
+
+type Writable<Value> = WritableAtom<Value, [Value], void>
+
+export interface Node<Value = unknown> {
+  value: Writable<Value>
+  accepts(value: unknown): value is Value
+}
+
+function isArray<Value>(value: unknown): value is Array<Value> {
+  return Array.isArray(value)
+}
+
+function isObject<Value extends object>(value: unknown): value is Value {
+  return value !== null && typeof value === 'object' && !isArray(value)
+}
+
+function isScalar<Value>(value: unknown): value is Value {
+  return !isObject(value) && !isArray(value)
+}
+
+export class ScalarNode<Value> implements Node<Value> {
+  value: Writable<Value>
+  accepts = isScalar
+  constructor(initialValue: Value) {
+    this.value = atom(initialValue)
+  }
+}
+
+export class ObjectNode<Value extends object = object> implements Node<Value> {
+  nodes: Writable<Record<string, Node>>
+  accepts = isObject
+  constructor(initialValue: Value) {
+    this.nodes = atom(
+      fromEntries(
+        entries(initialValue).map(([key, value]) => {
+          return [key, createNode(value)]
+        })
+      )
+    )
+  }
+  field = dispense(key => {
+    return atom(
+      get => {
+        const nodes = get(this.nodes)
+        const node = nodes[key]
+        assert(node, `Field not found`)
+        return get(node.value)
+      },
+      (get, set, update: unknown) => {
+        const nodes = get(this.nodes)
+        const node = nodes[key]
+        assert(node, `Field not found`)
+        assert(node.accepts(update), `Invalid value for field`)
+        set(node.value, update)
+      }
+    )
+  })
+  value = atom(
+    get => {
+      return fromEntries(
+        entries(get(this.nodes)).map(([key, node]) => {
+          return [key, get(node.value)]
+        })
+      ) as Value
+    },
+    (get, set, update: Value) => {
+      const updates = Array<[string, Node]>()
+      const removes = Array<string>()
+      const fields = get(this.nodes)
+      for (const [key, value] of entries(update)) {
+        const node = fields[key]
+        if (node && node.accepts(value)) set(node.value, value)
+        else updates.push([key, createNode(value)])
+      }
+      for (const key of keys(fields)) {
+        if (!(key in update)) removes.push(key)
+      }
+      if (updates.length > 0 || removes.length > 0) {
+        const next = {...fields}
+        for (const [key, node] of updates) next[key] = node
+        for (const key of removes) delete next[key]
+        set(this.nodes, next)
+      }
+    }
+  )
+}
+
+export class ArrayNode<Value = Array<unknown>> implements Node<Array<Value>> {
+  nodes: Writable<Array<Node<Value>>>
+  accepts = isArray
+  constructor(initialValue: Array<Value>) {
+    this.nodes = atom(initialValue.map(createNode))
+  }
+  value = atom(
+    get => {
+      return get(this.nodes).map(node => get(node.value)) as Array<Value>
+    },
+    (get, set, update: Array<Value>) => {
+      const current = get(this.nodes)
+      let changed = current.length !== update.length
+      const next = update.map((value, index) => {
+        const node = current[index]
+        if (node && node.accepts(value)) {
+          set(node.value, value)
+          return node
+        }
+        changed = true
+        return createNode(value)
+      })
+      if (changed) set(this.nodes, next)
+    }
+  )
+}
+
+export function createNode<Value>(initialValue: Value): Node<Value> {
+  if (isArray(initialValue)) return new ArrayNode(initialValue) as any
+  if (isObject(initialValue)) return new ObjectNode(initialValue) as any
+  return new ScalarNode(initialValue)
 }

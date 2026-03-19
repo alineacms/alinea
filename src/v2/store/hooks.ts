@@ -4,8 +4,8 @@ import {assert} from 'alinea/core/util/Assert.js'
 import {useAtom, useAtomValue} from 'jotai'
 import type {PropsWithChildren} from 'react'
 import {createContext, createElement, useContext} from 'react'
-import type {DashboardEntry} from './Dashboard.js'
-import {DashboardEditor} from './Dashboard.js'
+import type {DashboardEntry, Node} from './Dashboard.js'
+import {ArrayNode, DashboardEditor, ObjectNode} from './Dashboard.js'
 
 const entryContext = createContext<DashboardEntry | null>(null)
 const editorContext = createContext<DashboardEditor | null>(null)
@@ -97,4 +97,18 @@ export function useGraph() {
 
 export function useEntry() {
   return useContext(entryContext)
+}
+
+export function useValue<Value>(node: Node<Value>) {
+  return useAtom(node.value)
+}
+
+export function useNodes<Value>(node: Node<Array<Value>>): Array<Node<Value>>
+export function useNodes<Value extends object>(
+  node: Node<Value>
+): Record<string, Node>
+export function useNodes(node: Node<any>) {
+  if (node instanceof ArrayNode) return useAtomValue(node.nodes)
+  if (node instanceof ObjectNode) return useAtomValue(node.nodes)
+  throw new Error('Only object and array fields have nodes')
 }

@@ -1,10 +1,6 @@
 import {TextField as RacTextField} from '@alinea/components'
 import {TextField} from 'alinea/field/text'
-import {
-  useField,
-  useFieldError,
-  useFieldOptions
-} from '../../dashboard/hooks.js'
+import {useField, useFieldError, useFieldOptions} from '../../store/hooks.js'
 
 export interface TextInputProps {
   field: TextField
