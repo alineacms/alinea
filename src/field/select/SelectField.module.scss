@@ -1,3 +1,25 @@
+.native {
+  select {
+    cursor: pointer;
+    // appearance: none;
+    background: transparent;
+
+    border-radius: var(--alinea-border-radius);
+    background: var(--alinea-background);
+    border: 1px solid var(--alinea-outline);
+    box-shadow: var(--alinea-fields-shadow);
+    padding: 9px 0 9px 14px;
+    text-align: left;
+    line-height: 1.5;
+    width: 100%;
+
+    &:focus-within {
+      background: var(--alinea-fields-selected);
+      outline: 2px solid var(--alinea-fields-focus);
+    }
+  }
+}
+
 .root {
   position: relative;
   background: var(--alinea-fields);
