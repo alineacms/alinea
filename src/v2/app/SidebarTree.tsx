@@ -1,13 +1,15 @@
 import {Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {memo, Suspense, useMemo} from 'react'
+import {unwrap} from 'jotai/utils'
+import {memo, useMemo} from 'react'
 import {
   Collection,
   ListLayout,
   useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
+import {IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
 import {
   Dashboard,
   DashboardRoot,
@@ -47,7 +49,7 @@ interface SidebarItemChildrenProps {
 const SidebarItemChildren = memo(function SidebarItemChildren({
   item
 }: SidebarItemChildrenProps) {
-  const items = useAtomValue(item.items)
+  const items = useAtomValue(unwrap(item.items))
   return <Collection items={items}>{renderItem}</Collection>
 })
 
@@ -58,14 +60,14 @@ interface SidebarItemProps {
 const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   const label = useAtomValue(item.label)
   const isExpanded = useAtomValue(item.isExpanded)
-  const hasChildItems = useAtomValue(item.hasChildren)
-  const icon = useAtomValue(item.icon)
+  let icon = useAtomValue(item.icon)
+  if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   return (
     <TreeItem
       id={item.id}
       textValue={label}
       title={label}
-      hasChildItems={hasChildItems}
+      hasChildItems={item.hasChildren}
       icon={icon}
     >
       {isExpanded && <SidebarItemChildren item={item} />}
@@ -74,11 +76,7 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
 })
 
 function renderItem(item: DashboardTreeItem) {
-  return (
-    <Suspense>
-      <SidebarItem item={item} />
-    </Suspense>
-  )
+  return <SidebarItem item={item} />
 }
 
 const treeLayoutOptions = {
@@ -94,7 +92,7 @@ export const SidebarTree = memo(function SidebarTree({
   const currentRoot = useAtomValue(workspace.tree.currentRoot)
   const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
-  const items = useAtomValue(workspace.tree.items)
+  const items = useAtomValue(unwrap(workspace.tree.items))
   const getItems = useSetAtom(workspace.tree.getItems)
   const onMove = useSetAtom(workspace.tree.onMove)
   const dnd = useMemo(() => ({getItems, onMove}), [getItems, onMove])

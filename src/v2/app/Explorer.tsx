@@ -1,15 +1,19 @@
 import {Button, Menu, MenuItem, SearchField} from '@alinea/components'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {Suspense} from 'react'
+import {Atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {IcOutlineGridView, IcOutlineList} from '../icons.js'
 import {DashboardExplorer, DashboardMenuItem} from '../store.js'
+import {ExplorerList} from './ExplorerList.js'
 
 interface BreadcrumbMenuProps {
-  label: string
-  items: Array<DashboardMenuItem>
+  label: Atom<string>
+  items: Atom<Array<DashboardMenuItem>>
   onAction: (id: string) => void
 }
 
-function BreadcrumbMenu({label, items, onAction}: BreadcrumbMenuProps) {
+function BreadcrumbMenu(props: BreadcrumbMenuProps) {
+  const label = useAtomValue(props.label)
+  const items = useAtomValue(props.items)
+  const onAction = props.onAction
   return (
     <Menu
       label={<Button appearance="plain">{label}</Button>}
@@ -36,33 +40,39 @@ interface ParentBreadcrumbsProps {
 }
 
 function ParentBreadcrumbs({explorer}: ParentBreadcrumbsProps) {
-  const parents = useAtomValue(explorer.parentBreadcrumbs)
+  const parents = useAtomValue(explorer.parentsMenu)
+  const setParent = useSetAtom(explorer.parent)
   return parents.map(parent => {
-    return <span key={parent.id}>&gt; {parent.label}</span>
+    return (
+      <span key={parent.id}>
+        {' > '}
+        <Button appearance="plain" onPress={() => setParent(parent.id)}>
+          {parent.label}
+        </Button>
+      </span>
+    )
   })
 }
 
 function Breadcrumbs({explorer}: BreadcrumbsProps) {
-  const workspace = useAtomValue(explorer.workspace)
-  const root = useAtomValue(explorer.root)
-  const workspaces = useAtomValue(explorer.workspaces)
-  const roots = useAtomValue(explorer.roots)
-  const setWorkspace = useSetAtom(explorer.setWorkspace)
-  const setRoot = useSetAtom(explorer.setRoot)
-  const workspaceLabel = useAtomValue(workspace.label)
-  const rootLabel = useAtomValue(root.label)
+  const [workspace, setWorkspace] = useAtom(explorer.workspace)
+  const [root, setRoot] = useAtom(explorer.root)
   return (
     <div>
       <BreadcrumbMenu
-        label={workspaceLabel}
-        items={workspaces}
+        label={workspace.label}
+        items={explorer.dashboard.workspaceMenu}
         onAction={setWorkspace}
       />
       &gt;
-      <BreadcrumbMenu label={rootLabel} items={roots} onAction={setRoot} />
-      <Suspense>
-        <ParentBreadcrumbs explorer={explorer} />
-      </Suspense>
+      {root && (
+        <BreadcrumbMenu
+          label={root.label}
+          items={workspace.rootMenu}
+          onAction={setRoot}
+        />
+      )}
+      <ParentBreadcrumbs explorer={explorer} />
     </div>
   )
 }
@@ -87,15 +97,40 @@ function ExplorerSearch({explorer}: ExplorerSearchProps) {
   )
 }
 
+interface ExplorerToolbarProps {
+  explorer: DashboardExplorer
+}
+
+function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
+  const [view, setView] = useAtom(explorer.view)
+  return (
+    <div>
+      <Button
+        appearance={view === 'card' ? 'active' : 'plain'}
+        onPress={() => setView('card')}
+      >
+        <IcOutlineGridView /> Cards
+      </Button>
+      <Button
+        appearance={view === 'row' ? 'active' : 'plain'}
+        onPress={() => setView('row')}
+      >
+        <IcOutlineList /> Rows
+      </Button>
+    </div>
+  )
+}
+
 export function Explorer({explorer}: ExplorerProps) {
   return (
     <div>
       <Breadcrumbs explorer={explorer} />
-      <div>
+      <div style={{display: 'flex'}}>
         <ExplorerSearch explorer={explorer} />
+        <ExplorerToolbar explorer={explorer} />
       </div>
 
-      <div>rows</div>
+      <ExplorerList explorer={explorer} />
     </div>
   )
 }

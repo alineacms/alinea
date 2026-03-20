@@ -1,0 +1,53 @@
+.root {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.root-view-card {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.root-view-row {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.item {
+  position: relative;
+  min-width: 0;
+  border: 1px solid #d8e1eb;
+  background: #fff;
+  color: #223042;
+  overflow: hidden;
+  cursor: default;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
+}
+
+.item[data-hovered] {
+  border-color: #bfd0e2;
+}
+
+.item[data-focus-visible] {
+  outline: 2px solid #5b91ff;
+  outline-offset: 2px;
+}
+
+.item[data-selected] {
+  border-color: #7ea6df;
+  box-shadow: 0 0 0 1px #7ea6df;
+}
+
+.item-checkbox {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+}
+
+.item-content {
+  min-width: 0;
+}

@@ -16,13 +16,10 @@ import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
+import {loadable, unwrap} from 'jotai/utils'
 import {SetStateAction, startTransition, type ComponentType} from 'react'
 import type {DroppableCollectionReorderEvent, Key} from 'react-aria-components'
-import {
-  IcRoundDescription,
-  IcTwotoneDescription,
-  IcTwotoneFolder
-} from '../icons.js'
+import {IcRoundDescription} from '../icons.js'
 
 export interface DashboardRoute {
   workspace?: string
@@ -175,6 +172,15 @@ export class Dashboard {
 
   workspace = dispense(key => new DashboardWorkspace(this, key))
 
+  workspaceMenu = atom(get => {
+    const workspaces = get(this.workspaces)
+    return workspaces.map(workspace => ({
+      id: workspace,
+      label: get(this.workspace[workspace].label),
+      icon: get(this.workspace[workspace].icon)
+    }))
+  })
+
   currentWorkspace = atom(get => {
     const workspaceKey = get(this.selectedWorkspace)
     return this.workspace[workspaceKey]
@@ -300,7 +306,7 @@ export class DashboardSection {
 
 export interface ExplorerLocation {
   workspace: string
-  root: string
+  root?: string
   parentId?: string
 }
 
@@ -322,57 +328,82 @@ export class DashboardExplorer {
   ) {}
 
   search = atom('')
+  view = atom<'card' | 'row'>('card')
+  selection = atom<'all' | Set<Key>>(new Set<Key>())
 
-  setWorkspace = atom(null, (get, set, workspace: string) => {
-    const roots = get(this.dashboard.workspace[workspace].roots)
-    const root = roots[0]
-    if (!root) return
-    set(this.location, {workspace, root})
-  })
+  workspace = atom(
+    get => {
+      const {workspace} = get(this.location)
+      return this.dashboard.workspace[workspace]
+    },
+    (get, set, update: string) => {
+      set(this.location, {workspace: update})
+    }
+  )
 
-  setRoot = atom(null, (get, set, root: string) => {
-    const {workspace} = get(this.location)
-    set(this.location, {workspace, root})
-  })
+  root = atom(
+    get => {
+      const {root} = get(this.location)
+      if (!root) return
+      const workspace = get(this.workspace)
+      return workspace.root[root]
+    },
+    (get, set, update: string) => {
+      const workspace = get(this.workspace)
+      set(this.location, {workspace: workspace.key, root: update})
+    }
+  )
 
-  workspace = atom(get => {
-    const {workspace} = get(this.location)
-    return this.dashboard.workspace[workspace]
-  })
+  parent = atom(
+    get => {
+      const {parentId} = get(this.location)
+      if (!parentId) return
+      return get(this.dashboard.entries[parentId])
+    },
+    (get, set, parentId: string | undefined) => {
+      const location = get(this.location)
+      set(this.location, {...location, parentId})
+    }
+  )
 
-  root = atom(get => {
-    const {root} = get(this.location)
-    const workspace = get(this.workspace)
-    return workspace.root[root]
-  })
-
-  workspaces = atom(get => {
-    const workspaces = get(this.dashboard.workspaces)
-    return workspaces.map(key => {
-      const workspace = this.dashboard.workspace[key]
-      return {id: key, label: get(workspace.label)}
+  items = atomWithPending(
+    atom(async get => {
+      get(this.dashboard.sha) // subscribe to content changes, todo: refine
+      const location = get(this.location)
+      const db = get(this.dashboard.db)
+      const search = get(this.search)
+      const root = get(this.root)
+      if (!root) return []
+      const locale = get(root.selectedLocale)
+      const children = await db.find({
+        locale,
+        search: search || undefined,
+        workspace: location.workspace,
+        root: location.root,
+        parentId: location.parentId,
+        select: Entry.id,
+        status: 'preferDraft'
+      })
+      return Promise.all(
+        children.map(id => this.dashboard.entries[id]).map(get)
+      )
     })
-  })
+  )
 
-  roots = atom(get => {
-    const workspace = get(this.workspace)
-    const roots = get(workspace.roots)
-    return roots.map(key => {
-      return {id: key, label: get(workspace.root[key].label)}
-    })
-  })
-
-  parentBreadcrumbs = atom(async get => {
-    const {parentId} = get(this.location)
-    if (!parentId) return []
-    const parent = await get(this.dashboard.entries[parentId])
-    const parents = await get(parent.parents)
-    const label = await get(parent.label)
-    return [
-      ...parents.map(entry => ({id: entry.id, label: get(entry.label)})),
-      {id: parent.id, label}
-    ]
-  })
+  parentsMenu = unwrap(
+    atom(async get => {
+      const {parentId} = get(this.location)
+      if (!parentId) return []
+      const parent = await get(this.dashboard.entries[parentId])
+      const parents = await get(parent.parents)
+      const label = get(parent.label)
+      return [
+        ...parents.map(entry => ({id: entry.id, label: get(entry.label)})),
+        {id: parent.id, label}
+      ]
+    }),
+    prev => prev ?? []
+  )
 }
 
 export class DashboardField {
@@ -511,6 +542,15 @@ export class DashboardWorkspace {
   })
 
   root = dispense(key => new DashboardRoot(this, key))
+
+  rootMenu = atom(get => {
+    const roots = get(this.roots)
+    return roots.map(root => ({
+      id: root,
+      label: get(this.root[root].label),
+      icon: get(this.root[root].icon)
+    }))
+  })
 }
 
 export class DashboardTree {
@@ -589,6 +629,7 @@ export class DashboardTree {
     id => {
       return atom(async get => {
         const entry = await get(this.workspace.dashboard.entries[id])
+        const hasChildren = await get(entry.hasChildren)
         return new DashboardTreeItem(
           this,
           id,
@@ -601,30 +642,35 @@ export class DashboardTree {
               children.map(childId => this.entryItems[childId]).map(get)
             )
           }),
-          entry.hasChildren
+          hasChildren
         )
       })
     }
   )
 
-  rootItems: Record<string, DashboardTreeItem> = dispense(key => {
-    const root = this.workspace.root[key]
-    return new DashboardTreeItem(
-      this,
-      `${ROOT_KEY_PREFIX}${root.key}`,
-      root.icon,
-      root.label,
-      atom(async get => {
-        const ids = await get(root.children)
-        return Promise.all(ids.map(id => this.entryItems[id]).map(get))
-      }),
-      root.hasChildren
-    )
-  })
+  rootItems: Record<string, Atom<Promise<DashboardTreeItem>>> = dispense(
+    key => {
+      return atom(async get => {
+        const root = this.workspace.root[key]
+        const hasChildren = await get(root.hasChildren)
+        return new DashboardTreeItem(
+          this,
+          `${ROOT_KEY_PREFIX}${root.key}`,
+          root.icon,
+          root.label,
+          atom(async get => {
+            const ids = await get(root.children)
+            return Promise.all(ids.map(id => this.entryItems[id]).map(get))
+          }),
+          hasChildren
+        )
+      })
+    }
+  )
 
   items = atom(get => {
     const roots = get(this.workspace.roots)
-    return roots.map(key => this.rootItems[key])
+    return Promise.all(roots.map(key => this.rootItems[key]).map(get))
   })
 
   // dnd
@@ -666,14 +712,17 @@ export class DashboardTree {
 type Awaitable<T> = T | Promise<T>
 
 export class DashboardTreeItem {
+  items: Atom<Array<DashboardTreeItem>>
   constructor(
     public tree: DashboardTree,
     public id: string,
-    public icon: Atom<Awaitable<ComponentType | undefined>>,
+    public icon: Atom<ComponentType | undefined>,
     public label: Atom<string>,
-    public items: Atom<Awaitable<Array<DashboardTreeItem>>>,
-    public hasChildren: Atom<Awaitable<boolean>>
-  ) {}
+    items: Atom<Awaitable<Array<DashboardTreeItem>>>,
+    public hasChildren: boolean
+  ) {
+    this.items = unwrap(items, prev => prev ?? [])
+  }
 
   isExpanded = atom(get => get(this.tree.expandedKeys).has(this.id))
 }
@@ -749,15 +798,12 @@ export class DashboardEntry {
   })
 
   parents = atom(async get => {
-    return Promise.all(this.parentIds.map(id => get(this.dashboard.entries[id])))
+    return Promise.all(
+      this.parentIds.map(id => get(this.dashboard.entries[id]))
+    )
   })
 
-  icon = atom(async get => {
-    const typeIcon = get(this.type).icon
-    if (typeIcon) return typeIcon
-    const hasChildren = await get(this.hasChildren)
-    return hasChildren ? IcTwotoneFolder : IcTwotoneDescription
-  })
+  icon = atom(get => get(this.type).icon)
 
   children = atom(async get => {
     const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
@@ -895,11 +941,7 @@ async function queryTreeChildren(
   const children = await db.find({
     select: {
       id: Entry.id,
-      type: Entry.type,
-      parents: Entry.parents,
-      locale: Entry.locale,
-      root: Entry.root,
-      workspace: Entry.workspace
+      locale: Entry.locale
     },
     orderBy,
     workspace: root.workspace.key,
@@ -1132,4 +1174,16 @@ export function createNode<Value>(initialValue: Value): Node<Value> {
   if (isArray(initialValue)) return createArrayNode(initialValue) as any
   if (isObject(initialValue)) return createObjectNode(initialValue) as any
   return new ScalarNode(initialValue)
+}
+
+export function atomWithPending<T>(
+  baseAtom: Atom<T>
+): Atom<[isPending: boolean, current: Awaited<T> | undefined]> {
+  const unwrappedAtom = unwrap(baseAtom, prev => prev)
+  const loadableAtom = loadable(baseAtom)
+  return atom(get => {
+    const status = get(loadableAtom)
+    const current = get(unwrappedAtom)
+    return [status.state === 'loading', current as Awaited<T> | undefined]
+  })
 }
