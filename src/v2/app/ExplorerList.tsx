@@ -1,4 +1,4 @@
-import {Elevation, Icon} from '@alinea/components'
+import {Button, Elevation, Icon, ProgressCircle} from '@alinea/components'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -8,12 +8,12 @@ import {
   type GridLayoutOptions,
   GridList,
   GridListItem,
-  type Key,
   ListLayout,
   type ListLayoutOptions,
-  type Selection,
+  useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
+import {IcRoundDragIndicator} from '../icons.js'
 import type {DashboardEntry, DashboardExplorer} from '../store.js'
 import css from './ExplorerList.module.css'
 
@@ -45,7 +45,6 @@ const ExplorerItem = memo(function ExplorerItem({
   const label = useAtomValue(entry.label)
   const icon = useAtomValue(entry.icon)
   const type = useAtomValue(entry.type)
-  const setSelectedKeys = useSetAtom(explorer.selection)
   const setParent = useSetAtom(explorer.parent)
   return (
     <GridListItem
@@ -53,15 +52,17 @@ const ExplorerItem = memo(function ExplorerItem({
       textValue={label}
       className={styles.item()}
       onAction={() => {
-        setSelectedKeys(current => {
-          const next = new Set<Key>(current === 'all' ? [] : current)
-          if (next.has(entry.id)) next.delete(entry.id)
-          else next.add(entry.id)
-          return next
-        })
         if (entry.hasChildren) setParent(entry.id)
       }}
     >
+      <Button
+        slot="drag"
+        aria-label={`Drag ${label}`}
+        appearance="plain"
+        className={styles.dragHandle()}
+      >
+        <IcRoundDragIndicator />
+      </Button>
       <Elevation className={styles.card()}>
         {icon && <Icon icon={icon} className={styles.icon()} />}
         <div className={styles.body()}>
@@ -79,14 +80,28 @@ export interface ExplorerListProps {
 
 export function ExplorerList({explorer}: ExplorerListProps) {
   const view = useAtomValue(explorer.view)
-  const [selectedKeys, setSelectedKeys] = useAtom(explorer.selection)
   const [isPending, items] = useAtomValue(explorer.items)
-  function handleSelectionChange(next: Selection) {
-    if (next === 'all') return
-    setSelectedKeys(new Set<Key>(next))
-  }
+  const getItems = useSetAtom(explorer.getItems)
+  const [selected, setSelected] = useAtom(explorer.selection)
+  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
+    getItems,
+    renderDragPreview(items) {
+      return (
+        <Elevation className={styles.dragPreview()}>
+          <span className={styles.dragPreviewLabel()}>
+            {items.length === 1 ? '1 item' : `${items.length} items`}
+          </span>
+        </Elevation>
+      )
+    }
+  })
   return (
     <div className={styles.viewport()}>
+      {isPending && (
+        <div className={styles.pending()}>
+          <ProgressCircle isIndeterminate aria-label="Pending..." />
+        </div>
+      )}
       {view === 'card' ? (
         <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
           <GridList
@@ -95,17 +110,13 @@ export function ExplorerList({explorer}: ExplorerListProps) {
             layout="grid"
             className={styles.root({view: 'card'})}
             selectionMode="multiple"
-            selectionBehavior="toggle"
-            selectedKeys={selectedKeys}
-            onSelectionChange={handleSelectionChange}
+            selectionBehavior="replace"
+            dragAndDropHooks={dragAndDropHooks}
+            selectedKeys={selected}
+            onSelectionChange={setSelected}
             style={{display: 'block', height: '100%'}}
-            renderEmptyState={() => {
-              return <div>{isPending ? 'loading' : null}</div>
-            }}
           >
-            {item => (
-              <ExplorerItem entry={item} explorer={explorer} />
-            )}
+            {item => <ExplorerItem entry={item} explorer={explorer} />}
           </GridList>
         </Virtualizer>
       ) : (
@@ -116,14 +127,13 @@ export function ExplorerList({explorer}: ExplorerListProps) {
             layout="stack"
             className={styles.root({view: 'row'})}
             selectionMode="multiple"
-            selectionBehavior="toggle"
-            selectedKeys={selectedKeys}
-            onSelectionChange={handleSelectionChange}
+            selectionBehavior="replace"
+            dragAndDropHooks={dragAndDropHooks}
+            selectedKeys={selected}
+            onSelectionChange={setSelected}
             style={{display: 'block', height: '100%'}}
           >
-            {item => (
-              <ExplorerItem entry={item} explorer={explorer} />
-            )}
+            {item => <ExplorerItem entry={item} explorer={explorer} />}
           </GridList>
         </Virtualizer>
       )}

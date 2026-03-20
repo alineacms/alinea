@@ -2,7 +2,7 @@ import {Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {memo, useMemo} from 'react'
+import {memo} from 'react'
 import {
   Collection,
   ListLayout,
@@ -94,9 +94,15 @@ export const SidebarTree = memo(function SidebarTree({
   const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
   const items = useAtomValue(unwrap(workspace.tree.items))
   const getItems = useSetAtom(workspace.tree.getItems)
+  const onInsert = useSetAtom(workspace.tree.onInsert)
+  const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
   const onMove = useSetAtom(workspace.tree.onMove)
-  const dnd = useMemo(() => ({getItems, onMove}), [getItems, onMove])
-  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>(dnd)
+  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
+    getItems,
+    onInsert,
+    onItemDrop,
+    onMove
+  })
   return (
     <div className={styles.root()}>
       {currentRoot && <SidebarParent root={currentRoot} />}

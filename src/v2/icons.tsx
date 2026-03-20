@@ -88,6 +88,23 @@ export function IcRoundArrowDropDown(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+export function IcRoundDragIndicator(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2m0-6c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2m0-6c0 1.1-.9 2-2 2S7 7.1 7 6s.9-2 2-2s2 .9 2 2m6 12c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2m0-6c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2m0-6c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2"
+      />
+    </svg>
+  )
+}
+
 export function IcAlineaLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg width="1em" height="1em" viewBox="0 0 24 24" {...props}>

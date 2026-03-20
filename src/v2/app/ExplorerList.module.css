@@ -1,4 +1,5 @@
 .viewport {
+  position: relative;
   min-height: 0;
   height: 100%;
 }
@@ -24,6 +25,14 @@
   padding: 2px;
 }
 
+.pending {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .item {
   display: block;
   min-width: 0;
@@ -44,6 +53,27 @@
     0 0 0 1px #7ea6df,
     lch(0 0 0 / 0.022) 0px 3px 6px -2px,
     lch(0 0 0 / 0.044) 0px 1px 1px;
+}
+
+.dragHandle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  color: #6c7b8c;
+}
+
+.dragPreview {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  color: #223042;
+}
+
+.dragPreviewLabel {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .card {
@@ -67,6 +97,7 @@
 .root-view-row .card {
   min-height: 76px;
   width: 100%;
+  padding-right: 48px;
   padding-left: 16px;
 }
 

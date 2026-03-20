@@ -2,6 +2,7 @@ import {Config} from 'alinea'
 import {Entry, createCMS} from 'alinea/core'
 import {TestDB} from 'alinea/core/db/TestDB.js'
 import {expect, test} from 'bun:test'
+import type {TextDropItem} from '@react-types/shared'
 import {atom, createStore} from 'jotai'
 import {object} from 'alinea/field/object'
 import {text} from 'alinea/field/text'
@@ -156,6 +157,83 @@ test('moves an entry to another root when dropped beside a root-level target', a
   expect(moved).toEqual({parentId: null, root: 'archive'})
 })
 
+test('accepts external entry drops on a tree node', async () => {
+  const db = new TestDB(cms.config)
+  const store = createStore()
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const main = dashboard.workspace.main
+
+  const folder = await db.create({
+    type: Page,
+    root: 'pages',
+    set: {title: 'Folder'}
+  })
+  const child = await db.create({
+    type: Page,
+    root: 'pages',
+    set: {title: 'Child'}
+  })
+
+  await store.set(main.tree.onItemDrop, {
+    items: [dropTextItem(child._id)],
+    dropOperation: 'move',
+    isInternal: false,
+    target: {
+      type: 'item',
+      key: folder._id,
+      dropPosition: 'on'
+    }
+  })
+
+  const moved = await db.first({
+    id: child._id,
+    select: {
+      parentId: Entry.parentId,
+      root: Entry.root
+    },
+    status: 'preferDraft'
+  })
+  expect(moved).toEqual({parentId: folder._id, root: 'pages'})
+})
+
+test('accepts external entry drops before a tree item', async () => {
+  const db = new TestDB(cms.config)
+  const store = createStore()
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const main = dashboard.workspace.main
+
+  const source = await db.create({
+    type: Page,
+    root: 'pages',
+    set: {title: 'Source'}
+  })
+  const target = await db.create({
+    type: Page,
+    root: 'archive',
+    set: {title: 'Target'}
+  })
+
+  await store.set(main.tree.onInsert, {
+    items: [dropTextItem(source._id)],
+    dropOperation: 'move',
+    target: {
+      type: 'item',
+      key: target._id,
+      dropPosition: 'before'
+    }
+  })
+
+  const moved = await db.first({
+    id: source._id,
+    select: {
+      parentId: Entry.parentId,
+      root: Entry.root
+    },
+    status: 'preferDraft'
+  })
+  expect(moved).toEqual({parentId: null, root: 'archive'})
+})
+
 test('derives editor value from writable field atoms', async () => {
   const db = new TestDB(cmsWithFields.config)
   const store = createStore()
@@ -210,3 +288,19 @@ test('loads hasChildren before constructing dashboard entries', async () => {
 
   unsubscribe()
 })
+
+function dropTextItem(id: string): TextDropItem {
+  return {
+    kind: 'text',
+    types: new Set(['application/x-alinea-entry-id', 'text/plain']),
+    getText(type: string) {
+      if (
+        type !== 'application/x-alinea-entry-id' &&
+        type !== 'text/plain'
+      ) {
+        return Promise.reject(new Error(`Unsupported type ${type}`))
+      }
+      return Promise.resolve(id)
+    }
+  }
+}

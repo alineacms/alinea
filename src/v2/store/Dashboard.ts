@@ -1,4 +1,4 @@
-import {DragItem} from '@react-types/shared'
+import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
 import type {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
@@ -18,7 +18,12 @@ import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
 import {loadable, unwrap} from 'jotai/utils'
 import {SetStateAction, startTransition, type ComponentType} from 'react'
-import type {DroppableCollectionReorderEvent, Key} from 'react-aria-components'
+import type {
+  DroppableCollectionInsertDropEvent,
+  DroppableCollectionOnItemDropEvent,
+  DroppableCollectionReorderEvent,
+  Key
+} from 'react-aria-components'
 import {IcRoundDescription} from '../icons.js'
 
 export interface DashboardRoute {
@@ -318,14 +323,27 @@ type ExplorerLocationAtom = WritableAtom<
 >
 
 export class DashboardExplorer {
+  #location: ExplorerLocationAtom
   constructor(
     public dashboard: Dashboard,
-    public location: ExplorerLocationAtom
-  ) {}
+    location: ExplorerLocationAtom
+  ) {
+    this.#location = location
+  }
 
   search = atom('')
   view = atom<'card' | 'row'>('card')
   selection = atom<'all' | Set<Key>>(new Set<Key>())
+  location = atom(
+    get => get(this.#location),
+    (get, set, update: ExplorerLocation) => {
+      set(this.#location, update)
+      set(this.selection, new Set<Key>())
+    }
+  )
+  getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
+    return [...keys].map(id => dragItem(id))
+  })
 
   workspace = atom(
     get => {
@@ -671,31 +689,74 @@ export class DashboardTree {
 
   // dnd
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
-    return [...keys].map(id => {
-      return {'text/plain': String(id)}
-    })
+    return [...keys].map(id => dragItem(id))
   })
 
   onMove = atom(
     null,
     async (get, set, event: DroppableCollectionReorderEvent) => {
-      const db = get(this.workspace.dashboard.db)
-      const {keys, target} = event
-      const [dragged] = keys
-      if (!dragged) return
-      const draggedId = String(dragged)
-      if (draggedId.startsWith(ROOT_KEY_PREFIX)) return
-      const targetId = String(target.key)
+      await this.#moveDraggedKeys(get, event.keys, event.target)
+    }
+  )
+
+  onInsert = atom(
+    null,
+    async (get, set, event: DroppableCollectionInsertDropEvent) => {
+      await this.#moveDropItems(get, event.items, event.target)
+    }
+  )
+
+  onItemDrop = atom(
+    null,
+    async (get, set, event: DroppableCollectionOnItemDropEvent) => {
+      await this.#moveDropItems(get, event.items, event.target)
+    }
+  )
+
+  async #moveDraggedKeys(get: Getter, keys: Set<Key>, target: ItemDropTarget) {
+    const db = get(this.workspace.dashboard.db)
+    const {moveTarget, targetType} = this.#target(target.key)
+    for (const key of keys) {
+      const draggedId = String(key)
+      if (draggedId.startsWith(ROOT_KEY_PREFIX)) continue
       await db.move({
         id: draggedId,
-        target: targetId.startsWith(ROOT_KEY_PREFIX)
-          ? targetId.slice(ROOT_KEY_PREFIX.length)
-          : targetId,
-        targetType: targetId.startsWith(ROOT_KEY_PREFIX) ? 'root' : 'entry',
+        target: moveTarget,
+        targetType,
         dropPosition: target.dropPosition
       })
     }
-  )
+  }
+
+  async #moveDropItems(
+    get: Getter,
+    items: Array<DropItem>,
+    target: ItemDropTarget
+  ) {
+    const draggedKeys = new Set<Key>()
+    for (const item of items) {
+      if (item.kind !== 'text' || !item.types || !item.getText) continue
+      let draggedId: string | null = null
+      if (item.types.has(DASHBOARD_ENTRY_DRAG_TYPE)) {
+        draggedId = await item.getText(DASHBOARD_ENTRY_DRAG_TYPE)
+      } else if (item.types.has('text/plain')) {
+        draggedId = await item.getText('text/plain')
+      }
+      if (!draggedId || draggedId.startsWith(ROOT_KEY_PREFIX)) continue
+      draggedKeys.add(draggedId)
+    }
+    await this.#moveDraggedKeys(get, draggedKeys, target)
+  }
+
+  #target(key: Key) {
+    const targetId = String(key)
+    return {
+      moveTarget: targetId.startsWith(ROOT_KEY_PREFIX)
+        ? targetId.slice(ROOT_KEY_PREFIX.length)
+        : targetId,
+      targetType: targetId.startsWith(ROOT_KEY_PREFIX) ? 'root' : 'entry'
+    } as const
+  }
 
   visibleTypes = atom(get => {
     const config = get(this.workspace.dashboard.config)
@@ -834,7 +895,6 @@ export class DashboardEntry {
       ...Type.initialValue(type),
       ...data
     }
-    console.log(initialValue)
     const node = createObjectNode(initialValue)
     return new DashboardEditor(this.dashboard, type, node)
   })
@@ -1000,6 +1060,16 @@ function dispense<T>(fn: (key: string) => T): Record<string, T> {
       return target[key]
     }
   })
+}
+
+const DASHBOARD_ENTRY_DRAG_TYPE = 'application/x-alinea-entry-id'
+
+function dragItem(id: Key): DragItem {
+  const key = String(id)
+  return {
+    'text/plain': key,
+    [DASHBOARD_ENTRY_DRAG_TYPE]: key
+  }
 }
 
 // data nodes
