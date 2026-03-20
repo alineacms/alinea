@@ -1,0 +1,79 @@
+:global(.react-aria-ModalOverlay) {
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+}
+
+.root {
+  margin-left: auto;
+  height: 100%;
+  max-width: 100%;
+  width: 400px;
+  overflow: hidden;
+
+  &[data-entering] {
+    animation: slide-in 0.25s ease-out;
+  }
+
+  &[data-exiting] {
+    animation: slide-in 0.15s reverse ease-in;
+  }
+
+  @keyframes slide-in {
+    from {
+      transform: translateX(50px);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+}
+
+.root-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: visible;
+  height: 100%;
+  background: light-dark(white, var(--alinea-gray-900));
+
+  @media (max-width: 768px) {
+    padding: 14px;
+  }
+}
+
+.root-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.root-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.root-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.root-content {
+  flex: 1;
+  overflow: auto;
+  scrollbar-width: thin;
+  margin: 0 -18px 0 -22px;
+  padding: 0 18px 0 22px;
+  gap: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.separator {
+  border-top: 1px solid light-dark(var(--gray-200), var(--gray-800));
+}

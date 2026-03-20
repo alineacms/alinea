@@ -1,7 +1,7 @@
 import {Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, useMemo} from 'react'
+import {memo, Suspense, useMemo} from 'react'
 import {
   Collection,
   ListLayout,
@@ -26,7 +26,7 @@ interface SidebarParentProps {
   root: DashboardRoot
 }
 
-function SidebarParent({root}: SidebarParentProps) {
+const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
   const label = useAtomValue(root.label)
   const icon = useAtomValue(root.icon)
   return (
@@ -38,26 +38,28 @@ function SidebarParent({root}: SidebarParentProps) {
       </div>
     </header>
   )
-}
+})
 
 interface SidebarItemChildrenProps {
   item: DashboardTreeItem
 }
 
-function SidebarItemChildren({item}: SidebarItemChildrenProps) {
+const SidebarItemChildren = memo(function SidebarItemChildren({
+  item
+}: SidebarItemChildrenProps) {
   const items = useAtomValue(item.items)
   return <Collection items={items}>{renderItem}</Collection>
-}
+})
 
 interface SidebarItemProps {
   item: DashboardTreeItem
 }
 
-function SidebarItem({item}: SidebarItemProps) {
+const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   const label = useAtomValue(item.label)
   const isExpanded = useAtomValue(item.isExpanded)
   const hasChildItems = useAtomValue(item.hasChildren)
-  let icon = useAtomValue(item.icon)
+  const icon = useAtomValue(item.icon)
   return (
     <TreeItem
       id={item.id}
@@ -69,7 +71,7 @@ function SidebarItem({item}: SidebarItemProps) {
       {isExpanded && <SidebarItemChildren item={item} />}
     </TreeItem>
   )
-}
+})
 
 function renderItem(item: DashboardTreeItem) {
   return (
@@ -85,7 +87,9 @@ const treeLayoutOptions = {
   gap: 1
 }
 
-export function SidebarTree({dashboard}: SidebarTreeProps) {
+export const SidebarTree = memo(function SidebarTree({
+  dashboard
+}: SidebarTreeProps) {
   const workspace = useAtomValue(dashboard.currentWorkspace)
   const currentRoot = useAtomValue(workspace.tree.currentRoot)
   const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
@@ -118,4 +122,4 @@ export function SidebarTree({dashboard}: SidebarTreeProps) {
       </div>
     </div>
   )
-}
+})

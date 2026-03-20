@@ -104,6 +104,17 @@ export class Dashboard {
     }
   )
 
+  explorerLocation = atom(
+    get => {
+      const workspace = get(this.selectedWorkspace)
+      const root = get(this.selectedRoot)
+      return {workspace, root}
+    },
+    (get, set, update: ExplorerLocation) => {
+      set(this.route, update)
+    }
+  )
+
   focused = atom(async (get): Promise<FocusedItem> => {
     const route = get(this.route)
     if (route.entry) return {entry: await get(this.entries[route.entry])}
@@ -147,6 +158,16 @@ export class Dashboard {
     }
   )
 
+  selectedRoot = atom(get => {
+    const {root} = get(this.route)
+    if (root) return root
+    const workspace = get(this.currentWorkspace)
+    const roots = workspace ? get(workspace.roots) : []
+    const first = roots[0]
+    if (!first) throw new Error('No root found in workspace')
+    return first
+  })
+
   workspaces = atom(get => {
     const config = get(this.config)
     return Object.keys(config.workspaces)
@@ -176,6 +197,10 @@ export class Dashboard {
       return component
     })
   })
+
+  explore(initialLocation: ExplorerLocation) {
+    return new DashboardExplorer(this, atom(initialLocation))
+  }
 
   entries = dispense(id => {
     return atom(async get => {
@@ -271,6 +296,21 @@ export class DashboardSection {
     if (typeof view === 'string') return get(this.dashboard.view[view])
     return view
   })
+}
+
+export interface ExplorerLocation {
+  workspace: string
+  root: string
+  parentId?: string
+}
+
+export class DashboardExplorer {
+  constructor(
+    public dashboard: Dashboard,
+    public location: Atom<ExplorerLocation>
+  ) {}
+
+  search = atom('')
 }
 
 export class DashboardField {
@@ -709,10 +749,16 @@ export class DashboardEntry {
 }
 
 export class DashboardRoot {
+  explorer: DashboardExplorer
   constructor(
     public workspace: DashboardWorkspace,
     public key: string
-  ) {}
+  ) {
+    this.explorer = new DashboardExplorer(
+      workspace.dashboard,
+      workspace.dashboard.explorerLocation
+    )
+  }
 
   #settings = atom(get => {
     const config = get(this.workspace.dashboard.config)

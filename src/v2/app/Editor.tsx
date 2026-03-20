@@ -21,6 +21,7 @@ import {
   useNodeEditor
 } from '../store/hooks.js'
 import css from './Editor.module.css'
+import {Explorer} from './Explorer.js'
 
 const styles = styler(css)
 
@@ -42,9 +43,15 @@ interface RootEditorProps {
 function RootEditor({root}: RootEditorProps) {
   const title = useAtomValue(root.label)
   return (
-    <div>
-      <h2>{title}</h2>
-    </div>
+    <>
+      <header className={styles.mainHeader()}>
+        <h1 className={styles.mainTitle()}>{title}</h1>
+      </header>
+
+      <div className={styles.mainBody()}>
+        <Explorer explorer={root.explorer} />
+      </div>
+    </>
   )
 }
 interface EntryEditorProps {

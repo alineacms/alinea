@@ -36,6 +36,8 @@ const Page = Config.document('Page', {
       width: 1 / 3,
       step: 900
     }),
+    relatedLink: Field.link('Related link'),
+    resources: Field.link.multiple('Resources'),
     inner: Field.object('Testje', {
       fields: {
         a: Field.text('field A'),

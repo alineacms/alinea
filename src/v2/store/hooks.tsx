@@ -3,13 +3,27 @@ import {WriteableGraph} from 'alinea/core/db/WriteableGraph.js'
 import type {Field} from 'alinea/core/Field'
 import {assert} from 'alinea/core/util/Assert.js'
 import {useAtom, useAtomValue} from 'jotai'
-import type {PropsWithChildren} from 'react'
+import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
-import type {DashboardEntry, Node} from './Dashboard.js'
+import type {Dashboard, DashboardEntry, Node} from './Dashboard.js'
 import {ArrayNode, DashboardEditor, ObjectNode} from './Dashboard.js'
 
+const dashboardContext = createContext<Dashboard | null>(null)
 const entryContext = createContext<DashboardEntry | null>(null)
 const editorContext = createContext<DashboardEditor | null>(null)
+
+export function DashboardScopeInternal({
+  children,
+  dashboard
+}: PropsWithChildren<{dashboard: Dashboard}>) {
+  return createElement(dashboardContext.Provider, {value: dashboard}, children)
+}
+
+export function useDashboard() {
+  const dashboard = useContext(dashboardContext)
+  assert(dashboard, 'Dashboard not found in context')
+  return dashboard
+}
 
 export interface EditorScopeProps {
   editor: DashboardEditor
@@ -65,10 +79,13 @@ export function useFieldNode(field: Field) {
 
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
-): [StoredValue, Mutator] {
+): [StoredValue, Dispatch<SetStateAction<StoredValue>>] {
   const info = useField(field)
   // Todo: "mutator" will not really be relevant anymore
-  return useAtom(info.value) as [StoredValue, Mutator]
+  return useAtom(info.value) as [
+    StoredValue,
+    Dispatch<SetStateAction<StoredValue>>
+  ]
 }
 
 export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(

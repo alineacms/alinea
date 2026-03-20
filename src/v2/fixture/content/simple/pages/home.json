@@ -11,6 +11,27 @@
   "wordCount": 820,
   "publishDate": "2026-03-01",
   "publishTime": "09:00",
+  "relatedLink": {
+    "_id": "31QLinkSimpleHomeSingle0000001",
+    "_type": "entry",
+    "_entry": "31Q74HdW0mj4tMy8pUxgL2uXv9F"
+  },
+  "resources": [
+    {
+      "_id": "31QLinkSimpleHomeMulti000001",
+      "_type": "entry",
+      "_index": "a0",
+      "_entry": "31Q7Mce4fyl2rAx9eJ8sP0nVvZd"
+    },
+    {
+      "_id": "31QLinkSimpleHomeMulti000002",
+      "_type": "url",
+      "_index": "a1",
+      "_url": "https://alinea.sh",
+      "_title": "Alinea",
+      "_target": "_blank"
+    }
+  ],
   "sections": [
     {
       "_id": "31QListSimpleHomeCallout0000001",
