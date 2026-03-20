@@ -13,7 +13,6 @@ const Article = Config.document('Article', {
 })
 
 async function renderExplorerList(options?: {
-  enableSelection?: boolean
   view?: 'card' | 'row'
   withParent?: boolean
 }) {
@@ -54,10 +53,7 @@ async function renderExplorerList(options?: {
   const view = render(
     <Provider store={store}>
       <div style={{height: '480px'}}>
-        <ExplorerList
-          explorer={explorer}
-          enableSelection={options?.enableSelection}
-        />
+        <ExplorerList explorer={explorer} />
       </div>
     </Provider>
   )
@@ -72,22 +68,17 @@ test('renders explorer items inside the virtualized viewport', async () => {
   expect(view.getByText('Article')).toBeTruthy()
 })
 
-test('keeps checkbox selection working in the virtualized list', async () => {
-  const {explorer, store, view} = await renderExplorerList({
-    enableSelection: true,
-    view: 'row'
-  })
-
-  const checkbox = await view.findByLabelText('Select First entry', {
-    selector: 'input'
-  })
+test('selects items by clicking rows in the virtualized list', async () => {
+  const {explorer, first, store, view} = await renderExplorerList({view: 'row'})
+  const row = await view.findByRole('row', {name: 'First entry'})
 
   await act(async () => {
-    fireEvent.click(checkbox)
+    fireEvent.click(row)
   })
 
   const selection = store.get(explorer.selection)
-  expect(selection === 'all' ? [] : Array.from(selection)).toHaveLength(1)
+  expect(selection === 'all' ? [] : Array.from(selection)).toEqual([first._id])
+  expect(row.getAttribute('data-selected')).toBe('true')
 })
 
 test('activating an entry with children sets the explorer parent', async () => {

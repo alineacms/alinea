@@ -38,17 +38,12 @@
 
 .item[data-selected] .card {
   border-color: #7ea6df;
+  outline: 2px solid #7ea6df;
+  outline-offset: 1px;
   box-shadow:
     0 0 0 1px #7ea6df,
     lch(0 0 0 / 0.022) 0px 3px 6px -2px,
     lch(0 0 0 / 0.044) 0px 1px 1px;
-}
-
-.checkbox {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  z-index: 1;
 }
 
 .card {
@@ -72,7 +67,7 @@
 .root-view-row .card {
   min-height: 76px;
   width: 100%;
-  padding-left: 42px;
+  padding-left: 16px;
 }
 
 .icon {

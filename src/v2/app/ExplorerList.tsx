@@ -1,4 +1,4 @@
-import {Checkbox, Elevation, Icon} from '@alinea/components'
+import {Elevation, Icon} from '@alinea/components'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -35,18 +35,17 @@ const cardLayoutOptions: GridLayoutOptions = {
 
 interface ExplorerItemProps {
   entry: DashboardEntry
-  enableSelection: boolean
   explorer: DashboardExplorer
 }
 
 const ExplorerItem = memo(function ExplorerItem({
   entry,
-  enableSelection,
   explorer
 }: ExplorerItemProps) {
   const label = useAtomValue(entry.label)
   const icon = useAtomValue(entry.icon)
   const type = useAtomValue(entry.type)
+  const setSelectedKeys = useSetAtom(explorer.selection)
   const setParent = useSetAtom(explorer.parent)
   return (
     <GridListItem
@@ -54,16 +53,15 @@ const ExplorerItem = memo(function ExplorerItem({
       textValue={label}
       className={styles.item()}
       onAction={() => {
+        setSelectedKeys(current => {
+          const next = new Set<Key>(current === 'all' ? [] : current)
+          if (next.has(entry.id)) next.delete(entry.id)
+          else next.add(entry.id)
+          return next
+        })
         if (entry.hasChildren) setParent(entry.id)
       }}
     >
-      {enableSelection && (
-        <Checkbox
-          slot="selection"
-          aria-label={`Select ${label}`}
-          className={styles.checkbox()}
-        />
-      )}
       <Elevation className={styles.card()}>
         {icon && <Icon icon={icon} className={styles.icon()} />}
         <div className={styles.body()}>
@@ -77,13 +75,9 @@ const ExplorerItem = memo(function ExplorerItem({
 
 export interface ExplorerListProps {
   explorer: DashboardExplorer
-  enableSelection?: boolean
 }
 
-export function ExplorerList({
-  explorer,
-  enableSelection = false
-}: ExplorerListProps) {
+export function ExplorerList({explorer}: ExplorerListProps) {
   const view = useAtomValue(explorer.view)
   const [selectedKeys, setSelectedKeys] = useAtom(explorer.selection)
   const [isPending, items] = useAtomValue(explorer.items)
@@ -100,7 +94,7 @@ export function ExplorerList({
             items={items}
             layout="grid"
             className={styles.root({view: 'card'})}
-            selectionMode={enableSelection ? 'multiple' : 'none'}
+            selectionMode="multiple"
             selectionBehavior="toggle"
             selectedKeys={selectedKeys}
             onSelectionChange={handleSelectionChange}
@@ -110,11 +104,7 @@ export function ExplorerList({
             }}
           >
             {item => (
-              <ExplorerItem
-                entry={item}
-                enableSelection={enableSelection}
-                explorer={explorer}
-              />
+              <ExplorerItem entry={item} explorer={explorer} />
             )}
           </GridList>
         </Virtualizer>
@@ -125,18 +115,14 @@ export function ExplorerList({
             items={items}
             layout="stack"
             className={styles.root({view: 'row'})}
-            selectionMode={enableSelection ? 'multiple' : 'none'}
+            selectionMode="multiple"
             selectionBehavior="toggle"
             selectedKeys={selectedKeys}
             onSelectionChange={handleSelectionChange}
             style={{display: 'block', height: '100%'}}
           >
             {item => (
-              <ExplorerItem
-                entry={item}
-                enableSelection={enableSelection}
-                explorer={explorer}
-              />
+              <ExplorerItem entry={item} explorer={explorer} />
             )}
           </GridList>
         </Virtualizer>

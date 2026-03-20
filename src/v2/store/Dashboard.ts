@@ -708,17 +708,14 @@ export class DashboardTree {
 type Awaitable<T> = T | Promise<T>
 
 export class DashboardTreeItem {
-  items: Atom<Array<DashboardTreeItem>>
   constructor(
     public tree: DashboardTree,
     public id: string,
     public icon: Atom<ComponentType | undefined>,
     public label: Atom<string>,
-    items: Atom<Awaitable<Array<DashboardTreeItem>>>,
+    public items: Atom<Awaitable<Array<DashboardTreeItem>>>,
     public hasChildren: boolean
-  ) {
-    this.items = unwrap(items, prev => prev ?? [])
-  }
+  ) {}
 
   isExpanded = atom(get => get(this.tree.expandedKeys).has(this.id))
 }

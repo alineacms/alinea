@@ -49,7 +49,7 @@ interface SidebarItemChildrenProps {
 const SidebarItemChildren = memo(function SidebarItemChildren({
   item
 }: SidebarItemChildrenProps) {
-  const items = useAtomValue(unwrap(item.items))
+  const items = useAtomValue(item.items)
   return <Collection items={items}>{renderItem}</Collection>
 })
 
