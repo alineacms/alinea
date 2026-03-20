@@ -199,6 +199,7 @@ export class Dashboard {
 
   entries = dispense(id => {
     return atom(async get => {
+      // todo: this will get out of sync for hasChildren
       const load = get(this.#entryLoader)
       const [result, error] = await load(id)
       if (error) throw error
@@ -238,11 +239,17 @@ export class Dashboard {
         id: {in: ids},
         status: 'preferDraft'
       })
+      const parentIds = await db.find({
+        select: Entry.parentId,
+        parentId: {in: ids},
+        groupBy: Entry.parentId,
+        status: 'preferDraft'
+      })
       const byId = new Map(rows.map(row => [row.id, row] as const))
       return ids.map(id => {
         const row = byId.get(id)
         if (!row) return [null, new Error(`Missing entry ${id}`)] as const
-        return [row, null] as const
+        return [{...row, hasChildren: parentIds.includes(id)}, null] as const
       })
     })
   })
@@ -619,7 +626,6 @@ export class DashboardTree {
     id => {
       return atom(async get => {
         const entry = await get(this.workspace.dashboard.entries[id])
-        const hasChildren = await get(entry.hasChildren)
         return new DashboardTreeItem(
           this,
           id,
@@ -632,7 +638,7 @@ export class DashboardTree {
               children.map(childId => this.entryItems[childId]).map(get)
             )
           }),
-          hasChildren
+          entry.hasChildren
         )
       })
     }
@@ -723,6 +729,7 @@ interface EntryData {
   parentId: string | null
   workspace: string
   root: string
+  hasChildren: boolean
   parents: Array<{
     id: string
     path: string
@@ -742,6 +749,7 @@ export class DashboardEntry {
   id: string
   workspace: string
   root: string
+  hasChildren: boolean
   type: Atom<DashboardType>
   locales: Map<
     string | null,
@@ -755,7 +763,6 @@ export class DashboardEntry {
   >
   parentId: string | null
   parentIds: Array<string>
-  #workspace: DashboardWorkspace
   #root: DashboardRoot
 
   constructor(
@@ -765,6 +772,7 @@ export class DashboardEntry {
     this.id = data.id
     this.workspace = data.workspace
     this.root = data.root
+    this.hasChildren = data.hasChildren
     this.type = dashboard.type[data.type]
     this.parentId = data.parentId
     this.parentIds = data.parents.map(p => p.id)
@@ -773,8 +781,7 @@ export class DashboardEntry {
         return [entry.locale, entry] as const
       })
     )
-    this.#workspace = dashboard.workspace[this.workspace]
-    this.#root = this.#workspace.root[this.root]
+    this.#root = dashboard.workspace[this.workspace].root[this.root]
   }
 
   label = atom(get => {
@@ -798,20 +805,6 @@ export class DashboardEntry {
   children = atom(async get => {
     const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
     return queryTreeChildren(get, this.#root, this.id, orderChildrenBy)
-  })
-
-  hasChildren = atom(async get => {
-    const db = get(this.dashboard.db)
-    const visibleTypes = get(this.#root.workspace.tree.visibleTypes)
-    return Boolean(
-      await db.first({
-        workspace: this.#workspace.key,
-        root: this.#root.key,
-        parentId: this.id,
-        filter: {_type: {in: visibleTypes}},
-        status: 'preferDraft'
-      })
-    )
   })
 
   untranslated = atom(get => {

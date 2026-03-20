@@ -47,7 +47,6 @@ const ExplorerItem = memo(function ExplorerItem({
   const label = useAtomValue(entry.label)
   const icon = useAtomValue(entry.icon)
   const type = useAtomValue(entry.type)
-  const hasChildren = useAtomValue(entry.hasChildren)
   const setParent = useSetAtom(explorer.parent)
   return (
     <GridListItem
@@ -55,7 +54,7 @@ const ExplorerItem = memo(function ExplorerItem({
       textValue={label}
       className={styles.item()}
       onAction={() => {
-        if (hasChildren) setParent(entry.id)
+        if (entry.hasChildren) setParent(entry.id)
       }}
     >
       {enableSelection && (

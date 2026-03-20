@@ -182,3 +182,31 @@ test('derives editor value from writable field atoms', async () => {
     path: 'hello'
   })
 })
+
+test('loads hasChildren before constructing dashboard entries', async () => {
+  const db = new TestDB(cms.config)
+  const store = createStore()
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+
+  const parent = await db.create({
+    type: Page,
+    root: 'pages',
+    set: {title: 'Parent'}
+  })
+  const unsubscribe = store.sub(dashboard.entries[parent._id], () => {})
+
+  const initial = await store.get(dashboard.entries[parent._id])
+  expect(initial.hasChildren).toBe(false)
+
+  await db.create({
+    type: Page,
+    root: 'pages',
+    parentId: parent._id,
+    set: {title: 'Child'}
+  })
+
+  const updated = await store.get(dashboard.entries[parent._id])
+  expect(updated.hasChildren).toBe(true)
+
+  unsubscribe()
+})
