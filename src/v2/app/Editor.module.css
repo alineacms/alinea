@@ -19,6 +19,23 @@
   padding: 24px 28px;
 }
 
+.explorerMainBody {
+  min-height: 0;
+  overflow: hidden;
+  padding: 24px 28px;
+}
+
+.explorerBody {
+  display: flex;
+  min-height: 100%;
+  height: 100%;
+}
+
+.explorerBody > * {
+  flex: 1;
+  min-height: 0;
+}
+
 .fields {
   display: grid;
   gap: 16px;

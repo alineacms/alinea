@@ -109,6 +109,7 @@ export const SidebarTree = memo(function SidebarTree({
             dragAndDropHooks={dragAndDropHooks}
             selectionMode="single"
             selectionBehavior="replace"
+            disallowEmptySelection
             expandedKeys={expandedKeys}
             onExpandedChange={setExpandedKeys}
             selectedKeys={selectedKeys}

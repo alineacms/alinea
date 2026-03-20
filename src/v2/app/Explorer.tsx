@@ -1,8 +1,12 @@
 import {Button, Menu, MenuItem, SearchField} from '@alinea/components'
+import styler from '@alinea/styler'
 import {Atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {IcOutlineGridView, IcOutlineList} from '../icons.js'
 import {DashboardExplorer, DashboardMenuItem} from '../store.js'
+import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
+
+const styles = styler(css)
 
 interface BreadcrumbMenuProps {
   label: Atom<string>
@@ -123,14 +127,16 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
 
 export function Explorer({explorer}: ExplorerProps) {
   return (
-    <div>
+    <div className={styles.root()}>
       <Breadcrumbs explorer={explorer} />
-      <div style={{display: 'flex'}}>
+      <div className={styles.toolbar()}>
         <ExplorerSearch explorer={explorer} />
         <ExplorerToolbar explorer={explorer} />
       </div>
 
-      <ExplorerList explorer={explorer} />
+      <div className={styles.listViewport()}>
+        <ExplorerList explorer={explorer} />
+      </div>
     </div>
   )
 }

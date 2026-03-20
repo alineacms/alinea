@@ -101,17 +101,6 @@ export class Dashboard {
     }
   )
 
-  explorerLocation = atom(
-    get => {
-      const workspace = get(this.selectedWorkspace)
-      const root = get(this.selectedRoot)
-      return {workspace, root}
-    },
-    (get, set, update: ExplorerLocation) => {
-      set(this.route, update)
-    }
-  )
-
   focused = atom(async (get): Promise<FocusedItem> => {
     const route = get(this.route)
     if (route.entry) return {entry: await get(this.entries[route.entry])}
@@ -337,7 +326,8 @@ export class DashboardExplorer {
       return this.dashboard.workspace[workspace]
     },
     (get, set, update: string) => {
-      set(this.location, {workspace: update})
+      const roots = get(this.dashboard.workspace[update].roots)
+      set(this.location, {workspace: update, root: roots[0]})
     }
   )
 
@@ -380,7 +370,7 @@ export class DashboardExplorer {
         search: search || undefined,
         workspace: location.workspace,
         root: location.root,
-        parentId: location.parentId,
+        parentId: location.parentId ?? null,
         select: Entry.id,
         status: 'preferDraft'
       })
@@ -733,19 +723,19 @@ interface EntryData {
   parentId: string | null
   workspace: string
   root: string
-  parents: {
+  parents: Array<{
     id: string
     path: string
     type: string
-  }[]
-  entries: {
+  }>
+  entries: Array<{
     title: string
     status: EntryStatus
     locale: string | null
     main: boolean
     path: string
     fileHash: string
-  }[]
+  }>
 }
 
 export class DashboardEntry {
@@ -866,9 +856,24 @@ export class DashboardRoot {
     public workspace: DashboardWorkspace,
     public key: string
   ) {
+    const parentId = atom<string>()
     this.explorer = new DashboardExplorer(
       workspace.dashboard,
-      workspace.dashboard.explorerLocation
+      atom(
+        get => {
+          return {workspace: workspace.key, root: key, parentId: get(parentId)}
+        },
+        (get, set, update: ExplorerLocation) => {
+          if (update.root !== key || update.workspace !== workspace.key) {
+            set(workspace.dashboard.route, {
+              workspace: update.workspace,
+              root: update.root
+            })
+          } else {
+            set(parentId, update.parentId)
+          }
+        }
+      )
     )
   }
 

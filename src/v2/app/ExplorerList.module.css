@@ -1,53 +1,108 @@
+.viewport {
+  min-height: 0;
+  height: 100%;
+}
+
+.viewport > :global(.react-aria-Virtualizer) {
+  min-height: 0;
+  height: 100%;
+}
+
 .root {
-  display: grid;
-  gap: 16px;
-  align-items: start;
+  display: block;
+  min-height: 100%;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
 
 .root-view-card {
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  padding: 10px 2px 2px;
 }
 
 .root-view-row {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
+  padding: 2px;
 }
 
 .item {
-  position: relative;
+  display: block;
   min-width: 0;
-  border: 1px solid #d8e1eb;
-  background: #fff;
-  color: #223042;
-  overflow: hidden;
-  cursor: default;
-  transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease,
-    background-color 120ms ease;
+  position: relative;
+  outline: none;
 }
 
-.item[data-hovered] {
-  border-color: #bfd0e2;
-}
-
-.item[data-focus-visible] {
+.item[data-focus-visible] .card {
   outline: 2px solid #5b91ff;
   outline-offset: 2px;
 }
 
-.item[data-selected] {
+.item[data-selected] .card {
   border-color: #7ea6df;
-  box-shadow: 0 0 0 1px #7ea6df;
+  box-shadow:
+    0 0 0 1px #7ea6df,
+    lch(0 0 0 / 0.022) 0px 3px 6px -2px,
+    lch(0 0 0 / 0.044) 0px 1px 1px;
 }
 
-.item-checkbox {
+.checkbox {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 14px;
+  left: 14px;
   z-index: 1;
 }
 
-.item-content {
+.card {
+  position: relative;
+  display: flex;
   min-width: 0;
+  height: 100%;
+  align-items: center;
+  gap: 12px;
+  color: #223042;
+}
+
+.root-view-card .card {
+  min-height: 184px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 56px;
+}
+
+.root-view-row .card {
+  min-height: 76px;
+  width: 100%;
+  padding-left: 42px;
+}
+
+.icon {
+  flex-shrink: 0;
+  opacity: 0.78;
+}
+
+.root-view-card .icon {
+  font-size: 24px;
+}
+
+.body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.meta {
+  color: #6c7b8c;
+  font-size: 12px;
+  line-height: 1.3;
 }

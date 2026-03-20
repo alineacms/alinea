@@ -48,8 +48,10 @@ function RootEditor({root}: RootEditorProps) {
         <h1 className={styles.mainTitle()}>{title}</h1>
       </header>
 
-      <div className={styles.mainBody()}>
-        <Explorer explorer={root.explorer} />
+      <div className={styles.explorerMainBody()}>
+        <div className={styles.explorerBody()}>
+          <Explorer explorer={root.explorer} />
+        </div>
       </div>
     </>
   )
