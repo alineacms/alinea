@@ -304,13 +304,75 @@ export interface ExplorerLocation {
   parentId?: string
 }
 
+export interface DashboardMenuItem {
+  id: string
+  label: string
+}
+
+type ExplorerLocationAtom = WritableAtom<
+  ExplorerLocation,
+  [ExplorerLocation],
+  void
+>
+
 export class DashboardExplorer {
   constructor(
     public dashboard: Dashboard,
-    public location: Atom<ExplorerLocation>
+    public location: ExplorerLocationAtom
   ) {}
 
   search = atom('')
+
+  setWorkspace = atom(null, (get, set, workspace: string) => {
+    const roots = get(this.dashboard.workspace[workspace].roots)
+    const root = roots[0]
+    if (!root) return
+    set(this.location, {workspace, root})
+  })
+
+  setRoot = atom(null, (get, set, root: string) => {
+    const {workspace} = get(this.location)
+    set(this.location, {workspace, root})
+  })
+
+  workspace = atom(get => {
+    const {workspace} = get(this.location)
+    return this.dashboard.workspace[workspace]
+  })
+
+  root = atom(get => {
+    const {root} = get(this.location)
+    const workspace = get(this.workspace)
+    return workspace.root[root]
+  })
+
+  workspaces = atom(get => {
+    const workspaces = get(this.dashboard.workspaces)
+    return workspaces.map(key => {
+      const workspace = this.dashboard.workspace[key]
+      return {id: key, label: get(workspace.label)}
+    })
+  })
+
+  roots = atom(get => {
+    const workspace = get(this.workspace)
+    const roots = get(workspace.roots)
+    return roots.map(key => {
+      return {id: key, label: get(workspace.root[key].label)}
+    })
+  })
+
+  parentBreadcrumbs = atom(async get => {
+    const {parentId} = get(this.location)
+    if (!parentId) return []
+    const parent = await get(this.dashboard.entries[parentId])
+    const parents = await get(parent.parents)
+    const label = await get(parent.label)
+    return [
+      ...parents.map(entry => ({id: entry.id, label: get(entry.label)})),
+      {id: parent.id, label}
+    ]
+  })
 }
 
 export class DashboardField {
@@ -684,6 +746,10 @@ export class DashboardEntry {
       if (fallback.title) return fallback.title
     }
     return ''
+  })
+
+  parents = atom(async get => {
+    return Promise.all(this.parentIds.map(id => get(this.dashboard.entries[id])))
   })
 
   icon = atom(async get => {
