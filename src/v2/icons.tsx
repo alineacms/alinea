@@ -314,3 +314,54 @@ export function IcOutlineList(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
+
+export function IcRoundHistory(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M13 3a9 9 0 0 0-8.95 8H2.5a.5.5 0 0 0-.35.85l2.79 2.79c.2.2.51.2.71 0l2.79-2.79A.5.5 0 0 0 8.09 11H6.07A7 7 0 1 1 13 18a6.9 6.9 0 0 1-4.74-1.85a1 1 0 1 0-1.35 1.48A8.9 8.9 0 0 0 13 20a9 9 0 0 0 0-18m-.5 5a1 1 0 0 1 2 0v3.38l2.12 1.23a1 1 0 1 1-1 1.74l-2.62-1.51a1 1 0 0 1-.5-.87z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundVisibility(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M12 6.5c-5 0-9.27 3.11-11 7.5c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5m0 12.5A5 5 0 1 1 12 9a5 5 0 0 1 0 10m0-8a3 3 0 1 0 0 6a3 3 0 0 0 0-6"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFilterList(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M10 18h4a1 1 0 1 1 0 2h-4a1 1 0 1 1 0-2m-7-7h18a1 1 0 1 1 0 2H3a1 1 0 1 1 0-2m3-7h12a1 1 0 1 1 0 2H6a1 1 0 1 1 0-2"
+      />
+    </svg>
+  )
+}

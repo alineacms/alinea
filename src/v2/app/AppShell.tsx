@@ -6,6 +6,7 @@ import type {Dashboard} from '../store/Dashboard.js'
 import css from './AppShell.module.css'
 import {Editor} from './Editor.js'
 import {SidebarTree} from './SidebarTree.js'
+import {Sidebar, SidebarBody, SidebarFooter, SidebarHeader} from './ui/Sidebar.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 
 const styles = styler(css)
@@ -19,19 +20,23 @@ export function AppShell({dashboard}: AppShellProps) {
   return (
     <DashboardScopeInternal dashboard={dashboard}>
       <div className={styles.root()}>
-        <aside className={styles.left()}>
-          <div className={styles.leftSectionHeader()}>
+        <Sidebar
+          className={styles.left()}
+          divider="right"
+          layout
+        >
+          <SidebarHeader className={styles.leftSectionHeader()}>
             <WorkspaceMenu dashboard={dashboard} />
-          </div>
+          </SidebarHeader>
 
-          <div className={styles.treeWrap()}>
+          <SidebarBody className={styles.treeWrap()} scroll>
             <SidebarTree dashboard={dashboard} />
-          </div>
+          </SidebarBody>
 
-          <footer className={styles.leftFooter()}>
+          <SidebarFooter className={styles.leftFooter()}>
             <div className={styles.meta()}>db.sha: {sha}</div>
-          </footer>
-        </aside>
+          </SidebarFooter>
+        </Sidebar>
 
         <main className={styles.main()}>
           <Suspense fallback={<div>Loading...</div>}>

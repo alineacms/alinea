@@ -8,6 +8,8 @@ Find the v2 dashboard in src/v2, and v1 in src/dashboard.
 - Core integration: keep using `alinea/core` for config/schema/db/query/policy primitives.
 - Field rendering: do not reuse existing dashboard field views; build new v2 field views wired to `@alinea/components`. Do not use Y.js for field state management, but instead use Jotai atoms.
 - Styling: use CSS Modules plus `@alinea/styler`.
+- Styling ownership: each component should use its own CSS Module file. Do not import another component's CSS Module into a different component.
+- Use `@alinea/styler` for composing and joining class names. Do not introduce custom class name join helpers for this.
 - Bundle all icons into the same file src/v2/icons.tsx, download them if needed
   from icones (https://icones.js.org/) using the Google Material Icons set.
 

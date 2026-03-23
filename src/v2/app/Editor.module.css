@@ -19,6 +19,29 @@
   padding: 24px 28px;
 }
 
+.entryMainBody {
+  min-height: 0;
+  min-width: 0;
+}
+
+.entryLayout {
+  grid-row: 1 / span 2;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-rows: var(--header-height, 56px) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #58708a;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .explorerMainBody {
   min-height: 0;
   overflow: hidden;
@@ -39,4 +62,11 @@
 .fields {
   display: grid;
   gap: 16px;
+}
+
+@media (max-width: 1080px) {
+  .entryLayout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--header-height, 56px) minmax(0, 1fr) auto;
+  }
 }

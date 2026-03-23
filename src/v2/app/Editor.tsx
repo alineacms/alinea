@@ -21,6 +21,7 @@ import {
   useNodeEditor
 } from '../store/hooks.js'
 import css from './Editor.module.css'
+import {EntrySidebar} from './EntrySidebar.js'
 import {Explorer} from './Explorer.js'
 
 const styles = styler(css)
@@ -67,13 +68,16 @@ function EntryEditor({entry}: EntryEditorProps) {
   return (
     <EntryScope entry={entry}>
       <EditorScope editor={editor}>
-        <header className={styles.mainHeader()}>
-          <h1 className={styles.mainTitle()}>{title}</h1>
-          <TypeBadge type={type} />
-        </header>
+        <div className={styles.entryLayout()}>
+          <header className={styles.mainHeader()}>
+            <h1 className={styles.mainTitle()}>{title}</h1>
+            <TypeBadge type={type} />
+          </header>
 
-        <div className={styles.mainBody()}>
-          <FieldsEditor editor={editor} />
+          <div className={`${styles.mainBody()} ${styles.entryMainBody()}`}>
+            <FieldsEditor editor={editor} />
+          </div>
+          <EntrySidebar />
         </div>
       </EditorScope>
     </EntryScope>
@@ -149,7 +153,7 @@ function TypeBadge({type}: TypeBadgeProps) {
   const label = type.label
   const icon = type.icon
   return (
-    <span>
+    <span className={styles.typeBadge()}>
       {icon && <Icon icon={icon} />}
       {label}
     </span>
