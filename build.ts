@@ -1,8 +1,3 @@
-import {spawn} from 'node:child_process'
-import fs from 'node:fs'
-import {builtinModules} from 'node:module'
-import path from 'node:path'
-import {pathToFileURL} from 'node:url'
 import {ReporterPlugin} from '@esbx/reporter'
 import {getManifest} from '@esbx/workspaces'
 import {dequal} from 'dequal'
@@ -13,6 +8,11 @@ import esbuild, {
 } from 'esbuild'
 import fsExtra from 'fs-extra'
 import glob from 'glob'
+import {spawn} from 'node:child_process'
+import fs from 'node:fs'
+import {builtinModules} from 'node:module'
+import path from 'node:path'
+import {pathToFileURL} from 'node:url'
 import postcss from 'postcss'
 import postcssModules from 'postcss-modules'
 import pxtorem from 'postcss-pxtorem'
@@ -279,7 +279,12 @@ const externalize: Plugin = {
     })
     build.onResolve({filter: /^\./}, args => {
       if (args.kind === 'entry-point') return
-      if (args.path.endsWith('.scss') || args.path.endsWith('.json')) return
+      if (
+        args.path.endsWith('.scss') ||
+        args.path.endsWith('.json') ||
+        args.path.endsWith('.css')
+      )
+        return
       if (!args.resolveDir.startsWith(src)) {
         if (args.resolveDir.includes('node_modules')) {
           const folder = args.resolveDir
@@ -430,6 +435,7 @@ function jsEntry({
           const files = glob.sync('src/**/*.{ts,tsx}').filter(file => {
             if (file.endsWith('UIStory.tsx')) return false
             if (!test && file.endsWith('.test.ts')) return false
+            if (!test && file.endsWith('.test.tsx')) return false
             return !file.endsWith('.d.ts') && !file.endsWith('.stories.tsx')
           })
           if (!context || !dequal(currentFiles, files)) {
@@ -457,7 +463,13 @@ function jsEntry({
                 'lib0/webcrypto': `data:text/javascript,
                   import {crypto} from '@alinea/iso'
                   export const subtle = crypto.subtle
-                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`
+                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`,
+
+                'use-sync-external-store': `data:text/javascript,
+                  export const useSyncExternalStore = () => {
+                    throw new Error('useSyncExternalStore is not supported in this environment')
+                  }
+                //`
               },
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33

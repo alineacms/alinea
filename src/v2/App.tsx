@@ -1,6 +1,6 @@
 import '@alinea/components/css'
 import type {Config} from 'alinea/core/Config'
-import type {LocalDB} from 'alinea/core/db/LocalDB.js'
+import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import type {Atom} from 'jotai'
 import {ComponentType, useMemo} from 'react'
 import {AppShell} from './app/AppShell.js'
@@ -8,15 +8,21 @@ import './index.css'
 import {Dashboard} from './store/Dashboard.js'
 
 export interface AppProps {
-  db: Atom<LocalDB>
+  writeableGraph: Atom<WriteableGraph>
+  indexEvents: Atom<EventTarget>
   config: Atom<Config>
   views: Atom<Record<string, ComponentType>>
 }
 
-export function App({db, config, views}: AppProps) {
+export function App({
+  writeableGraph,
+  indexEvents,
+  config,
+  views
+}: AppProps) {
   const dashboard = useMemo(
-    () => new Dashboard(db, config, undefined!, views),
-    [db, config, views]
+    () => new Dashboard(writeableGraph, config, indexEvents, undefined!, views),
+    [writeableGraph, config, indexEvents, views]
   )
   return <AppShell dashboard={dashboard} />
 }

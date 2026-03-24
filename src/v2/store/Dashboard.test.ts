@@ -55,7 +55,7 @@ const cmsWithFields = createCMS({
 test('dashboard', () => {
   const db = new TestDB(cms.config)
   const store = createStore()
-  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
   const keys = store.get(dashboard.workspaces)
   expect(keys).toEqual(['main'])
 
@@ -70,7 +70,7 @@ test('dashboard', () => {
 test('derives the current root from selection or falls back to the first root', () => {
   const db = new TestDB(cms.config)
   const store = createStore()
-  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
   const main = dashboard.workspace.main
 
   const initialRoot = store.get(main.tree.currentRoot)
@@ -84,7 +84,7 @@ test('derives the current root from selection or falls back to the first root', 
 test('reparents an entry when dropped on a tree node', async () => {
   const db = new TestDB(cms.config)
   const store = createStore()
-  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
   const main = dashboard.workspace.main
 
   const folder = await db.create({
@@ -122,7 +122,7 @@ test('reparents an entry when dropped on a tree node', async () => {
 test('moves an entry to another root when dropped beside a root-level target', async () => {
   const db = new TestDB(cms.config)
   const store = createStore()
-  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
   const main = dashboard.workspace.main
 
   const source = await db.create({
@@ -160,7 +160,7 @@ test('moves an entry to another root when dropped beside a root-level target', a
 test('accepts external entry drops on a tree node', async () => {
   const db = new TestDB(cms.config)
   const store = createStore()
-  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
   const main = dashboard.workspace.main
 
   const folder = await db.create({
@@ -199,7 +199,7 @@ test('accepts external entry drops on a tree node', async () => {
 test('accepts external entry drops before a tree item', async () => {
   const db = new TestDB(cms.config)
   const store = createStore()
-  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
   const main = dashboard.workspace.main
 
   const source = await db.create({
@@ -237,7 +237,11 @@ test('accepts external entry drops before a tree item', async () => {
 test('derives editor value from writable field atoms', async () => {
   const db = new TestDB(cmsWithFields.config)
   const store = createStore()
-  const dashboard = new Dashboard(atom(db), atom(cmsWithFields.config), atom(db))
+  const dashboard = new Dashboard(
+    atom(db),
+    atom(cmsWithFields.config),
+    atom(db.index)
+  )
 
   const entry = await db.create({
     type: Article,
@@ -264,7 +268,7 @@ test('derives editor value from writable field atoms', async () => {
 test('loads hasChildren before constructing dashboard entries', async () => {
   const db = new TestDB(cms.config)
   const store = createStore()
-  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
 
   const parent = await db.create({
     type: Page,

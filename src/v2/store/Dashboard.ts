@@ -2,16 +2,16 @@ import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
 import type {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
-import type {LocalDB} from 'alinea/core/db/LocalDB'
+import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {Entry, EntryStatus} from 'alinea/core/Entry'
 import {Field, FieldOptions} from 'alinea/core/Field'
 import type {Order} from 'alinea/core/Graph'
 import {getRoot, getType, getWorkspace} from 'alinea/core/Internal'
-import {Section} from 'alinea/core/Section.js'
+import {Section} from 'alinea/core/Section'
 import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
 import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
-import {entries, fromEntries, values} from 'alinea/core/util/Objects.js'
+import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
@@ -42,19 +42,22 @@ type DashboardTreeSelection = WritableAtom<
 type FocusedItem = {entry: DashboardEntry} | {root: DashboardRoot} | null
 
 export class Dashboard {
-  db: Atom<LocalDB>
+  db: Atom<WriteableGraph>
+  indexEvents: Atom<EventTarget>
 
   constructor(
-    dbAtom: Atom<LocalDB>,
+    dbAtom: Atom<WriteableGraph>,
     public config: Atom<Config>,
-    public client: Atom<LocalConnection>,
+    indexEventsAtom: Atom<EventTarget>,
+    public client: Atom<LocalConnection> = undefined!,
     public views: Atom<Record<string, ComponentType>> = atom({})
   ) {
+    this.indexEvents = indexEventsAtom
     this.db = Object.assign(
       atom(
         get => get(dbAtom),
         (get, set) => {
-          const db = get(dbAtom)
+          const events = get(indexEventsAtom)
           // Listen to db changes and update entry revisions
           const listen = (event: Event) => {
             if (event instanceof IndexEvent && event.data.op === 'entry') {
@@ -62,9 +65,9 @@ export class Dashboard {
               set(this.revisions[event.data.id], current => current + 1)
             }
           }
-          db.index.addEventListener(IndexEvent.type, listen)
+          events.addEventListener(IndexEvent.type, listen)
           return () => {
-            db.index.removeEventListener(IndexEvent.type, listen)
+            events.removeEventListener(IndexEvent.type, listen)
           }
         }
       ),
@@ -129,14 +132,14 @@ export class Dashboard {
     atom(
       get => get(this.#sha) ?? get(this.db).sha,
       (get, set) => {
-        const db = get(this.db)
+        const events = get(this.indexEvents)
         const listen = (event: Event) => {
           if (event instanceof IndexEvent && event.data.op === 'index')
             set(this.#sha, event.data.sha)
         }
-        db.index.addEventListener(IndexEvent.type, listen)
+        events.addEventListener(IndexEvent.type, listen)
         return () => {
-          db.index.removeEventListener(IndexEvent.type, listen)
+          events.removeEventListener(IndexEvent.type, listen)
         }
       }
     ),
@@ -146,8 +149,8 @@ export class Dashboard {
   selectedWorkspace = atom(
     get => {
       const {workspace} = get(this.route)
-      if (workspace) return workspace
       const config = get(this.config)
+      if (workspace && config.workspaces[workspace]) return workspace
       const workspaceKeys = Object.keys(config.workspaces)
       return workspaceKeys[0] ?? null
     },
@@ -577,7 +580,7 @@ export class DashboardWorkspace {
   #settings = atom(get => {
     const config = get(this.dashboard.config)
     const workspaceConfig = config.workspaces[this.key]
-    assert(workspaceConfig)
+    assert(workspaceConfig, `Workspace "${this.key}" not found in config`)
     return getWorkspace(workspaceConfig)
   })
 

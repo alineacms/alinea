@@ -1,8 +1,11 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import {FSSource} from '../../core/source/FSSource'
-import {type ExportedSource, exportSource} from '../../core/source/SourceExport'
 import type {Plugin} from 'vite'
+import {FSSource} from '../../core/source/FSSource.js'
+import {
+  type ExportedSource,
+  exportSource
+} from '../../core/source/SourceExport.js'
 
 const virtualSuffix = '?alinea-fixture'
 
@@ -42,9 +45,7 @@ async function listFilesRecursive(dir: string): Promise<Array<string>> {
   return result
 }
 
-async function exportFixtureSource(
-  cmsFile: string
-): Promise<ExportedSource> {
+async function exportFixtureSource(cmsFile: string): Promise<ExportedSource> {
   const contentDir = path.join(path.dirname(cmsFile), 'content')
   const source = new FSSource(contentDir)
   return exportSource(source)

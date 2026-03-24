@@ -1,5 +1,6 @@
 import {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
+import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {Root} from 'alinea/core/Root'
 import {Icon, Loader, px} from 'alinea/ui'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
@@ -8,8 +9,10 @@ import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlin
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {Statusbar} from 'alinea/ui/Statusbar'
+import {App as AppV2} from 'alinea/v2/App'
+import {views as v2Views} from 'alinea/v2/app/fields/views'
 import {atom, useAtom, useAtomValue} from 'jotai'
-import {type ComponentType, useEffect} from 'react'
+import {type ComponentType, useEffect, useMemo} from 'react'
 import type {QueryClient} from 'react-query'
 import {sessionAtom} from './atoms/DashboardAtoms.js'
 import {dbMetaAtom, useDbUpdater} from './atoms/DbAtoms.js'
@@ -215,8 +218,22 @@ export function App(props: AppProps) {
   return (
     <DashboardProvider {...props}>
       <Viewport attachToBody={fullPage} contain color={color}>
-        <AppRoot />
+        {/*<AppRoot />*/}
+        <V2 />
       </Viewport>
     </DashboardProvider>
   )
+}
+
+function V2() {
+  const {config, db} = useDashboard()
+  const props = useMemo(() => {
+    return {
+      config: atom(config),
+      writeableGraph: atom(db as WriteableGraph),
+      indexEvents: atom(db.events),
+      views: atom(v2Views)
+    }
+  }, [config, db])
+  return <AppV2 {...props} />
 }
