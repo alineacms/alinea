@@ -319,6 +319,7 @@ export interface DashboardMenuItem {
 export interface ExplorerOptions {
   selectionMode?: 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
+  initialSelection?: Array<string>
   onAction?: WritableAtom<void, [entry: DashboardEntry], void>
   onConfirm?: (selection: Array<string>) => void
 }
@@ -326,6 +327,7 @@ export interface ExplorerOptions {
 export class DashboardExplorer {
   #location: WritableAtom<ExplorerLocation, [ExplorerLocation], void>
   #options: ExplorerOptions
+  selection
   constructor(
     public dashboard: Dashboard,
     location: WritableAtom<ExplorerLocation, [ExplorerLocation], void>,
@@ -333,6 +335,9 @@ export class DashboardExplorer {
   ) {
     this.#location = location
     this.#options = options
+    this.selection = atom<'all' | Set<Key>>(
+      new Set<Key>(options.initialSelection)
+    )
   }
 
   get selectionMode() {
@@ -355,12 +360,10 @@ export class DashboardExplorer {
 
   search = atom('')
   view = atom<'card' | 'row'>('row')
-  selection = atom<'all' | Set<Key>>(new Set<Key>())
   location = atom(
     get => get(this.#location),
     (get, set, update: ExplorerLocation) => {
       set(this.#location, update)
-      set(this.selection, new Set<Key>())
     }
   )
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {

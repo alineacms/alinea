@@ -69,11 +69,11 @@ export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
   return editor
 }
 
-export function useFieldNode(field: Field) {
+export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
   const key = useFieldKey(field)
   const editor = useEditor()
   const nodes = useAtomValue(editor.node.nodes) as Record<string, ReactiveNode>
-  return nodes[key]
+  return nodes[key] as ReactiveNode<Value>
 }
 
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(

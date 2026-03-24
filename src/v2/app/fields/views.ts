@@ -7,6 +7,7 @@ import {
   SingleLinkFieldView
 } from './LinkField.view.js'
 import {ListFieldView} from './ListField.view.js'
+import {MetadataFieldView} from './MetadataField.view.js'
 import {NumberFieldView} from './NumberField.view.js'
 import {ObjectFieldView} from './ObjectField.view.js'
 import {SelectFieldView} from './SelectField.view.js'
@@ -21,6 +22,7 @@ export const views: Record<string, ComponentType<any>> = {
   [viewKeys.MultipleLinksInput]: MultipleLinksFieldView,
   [viewKeys.TabsView]: TabsView,
   [viewKeys.NumberInput]: NumberFieldView,
+  [viewKeys.MetadataInput]: MetadataFieldView,
   [viewKeys.SelectInput]: SelectFieldView,
   [viewKeys.TextInput]: TextFieldView,
   [viewKeys.TimeInput]: TimeFieldView,
