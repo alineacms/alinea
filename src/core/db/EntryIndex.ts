@@ -191,7 +191,8 @@ class EntryLanguageNode {
       path: main.path,
       parentPaths: this.parentPaths,
       locale: main.locale,
-      workspace: node.workspace
+      workspace: node.workspace,
+      root: node.root
     })
     this.path = this.main.path
     this.seeded = this.main.seeded
