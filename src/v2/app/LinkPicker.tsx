@@ -32,27 +32,23 @@ function ExplorerSheet({options}: ExplorerSheetProps) {
     dashboard.explore({workspace, root}, options)
   )
   const onConfirm = useSetAtom(explorer.onConfirm)
+  const onSubmit = () => {
+    startTransition(() => {
+      onConfirm()
+      sheet.close()
+    })
+  }
   return (
-    <form
-      onSubmit={event => {
-        event.preventDefault()
-        startTransition(() => {
-          onConfirm()
-          sheet.close()
-        })
-      }}
-    >
-      <SheetDialog label="Pick a link">
-        <SheetContent>
-          <Explorer explorer={explorer} />
-        </SheetContent>
-        <SheetFooter>
-          <Button intent="secondary" onPress={sheet.close}>
-            Cancel
-          </Button>
-          <Button type="submit">Pick</Button>
-        </SheetFooter>
-      </SheetDialog>
-    </form>
+    <SheetDialog label="Pick a link">
+      <SheetContent>
+        <Explorer explorer={explorer} />
+      </SheetContent>
+      <SheetFooter>
+        <Button intent="secondary" onPress={sheet.close}>
+          Cancel
+        </Button>
+        <Button onPress={onSubmit}>Pick</Button>
+      </SheetFooter>
+    </SheetDialog>
   )
 }
