@@ -6,7 +6,6 @@ import {createEntryIndex} from '../../test/EntryFixture.js'
 import {createRecord} from '../EntryRecord.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {MemorySource} from '../source/MemorySource.js'
-import {Workspace} from '../Workspace.js'
 import {
   combineConditions,
   type EntryCondition,
@@ -120,11 +119,11 @@ test('indexes one-off fixture entries', async () => {
   )
 })
 
-test('entryUrl receives the resolved workspace config', async () => {
+test('entryUrl receives the workspace key', async () => {
   const Page = Config.document('Page', {
     fields: {body: Field.text('Body')},
     entryUrl({workspace, path}) {
-      return `/${Workspace.label(workspace).toLowerCase()}/${path}`
+      return `/${workspace}/${path}`
     }
   })
   const cms = createCMS({
