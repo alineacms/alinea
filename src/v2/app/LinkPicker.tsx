@@ -1,6 +1,6 @@
 import {Button} from '@alinea/components'
-import {useAtomValue} from 'jotai'
-import {useState} from 'react'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {startTransition, useState} from 'react'
 import {ExplorerOptions, useDashboard} from '../store.js'
 import {Explorer} from './Explorer.js'
 import {
@@ -31,17 +31,28 @@ function ExplorerSheet({options}: ExplorerSheetProps) {
   const [explorer] = useState(() =>
     dashboard.explore({workspace, root}, options)
   )
+  const onConfirm = useSetAtom(explorer.onConfirm)
   return (
-    <SheetDialog label="Pick a link">
-      <SheetContent>
-        <Explorer explorer={explorer} />
-      </SheetContent>
-      <SheetFooter>
-        <Button intent="secondary" onPress={sheet.close}>
-          Cancel
-        </Button>
-        <Button type="submit">Pick</Button>
-      </SheetFooter>
-    </SheetDialog>
+    <form
+      onSubmit={event => {
+        event.preventDefault()
+        startTransition(() => {
+          onConfirm()
+          sheet.close()
+        })
+      }}
+    >
+      <SheetDialog label="Pick a link">
+        <SheetContent>
+          <Explorer explorer={explorer} />
+        </SheetContent>
+        <SheetFooter>
+          <Button intent="secondary" onPress={sheet.close}>
+            Cancel
+          </Button>
+          <Button type="submit">Pick</Button>
+        </SheetFooter>
+      </SheetDialog>
+    </form>
   )
 }

@@ -347,6 +347,12 @@ export class DashboardExplorer {
     if (this.#options.onAction) set(this.#options.onAction, entry)
   })
 
+  onConfirm = atom(null, (get, set) => {
+    const selection = get(this.selection)
+    if (this.#options.onConfirm)
+      this.#options.onConfirm([...selection].map(String))
+  })
+
   search = atom('')
   view = atom<'card' | 'row'>('row')
   selection = atom<'all' | Set<Key>>(new Set<Key>())

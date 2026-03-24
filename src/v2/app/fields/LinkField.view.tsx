@@ -7,6 +7,7 @@ import {EntryReference} from 'alinea/types.js'
 import {useAtomValue} from 'jotai'
 import {
   ObjectNode,
+  useDashboard,
   useFieldNode,
   useFieldOptions,
   useFieldSetter
@@ -21,8 +22,11 @@ interface LinkRowProps {
 }
 
 function LinkRow({node}: LinkRowProps) {
-  const id = useAtomValue(node.field._id)
-  return <Elevation>Link: {id}</Elevation>
+  const dashboard = useDashboard()
+  const entryId = useAtomValue(node.field._entry) as string
+  const entry = useAtomValue(dashboard.entries[entryId])
+  const label = useAtomValue(entry.label)
+  return <Elevation>Link: {label}</Elevation>
 }
 
 export interface SingleLinkFieldViewProps {
