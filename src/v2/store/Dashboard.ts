@@ -78,7 +78,16 @@ export class Dashboard {
 
   revisions = dispense(id => atom(0))
 
-  #location = atomWithLocation()
+  #location = atomWithLocation({
+    subscribe(setLocation) {
+      // workaround facebook/react#35966
+      const transition = () =>
+        requestAnimationFrame(() => startTransition(setLocation))
+      window.addEventListener('popstate', transition)
+      return () => window.removeEventListener('popstate', transition)
+    }
+  })
+
   route = atom(
     get => {
       const {pathname = '/', searchParams = new URLSearchParams()} = get(
