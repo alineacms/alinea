@@ -11,9 +11,9 @@ import {Section} from 'alinea/core/Section.js'
 import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
 import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
-import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
+import {entries, fromEntries} from 'alinea/core/util/Objects.js'
 import {parents, translations} from 'alinea/query'
-import type {Atom, Getter, WritableAtom} from 'jotai'
+import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
 import {loadable, unwrap} from 'jotai/utils'
@@ -266,7 +266,7 @@ export class DashboardEditor {
   constructor(
     public dashboard: Dashboard,
     public type: Type,
-    public node: ObjectNode
+    public node: ReactiveNode<object>
   ) {
     this.value = node.value
     this.sections = getType(this.type).sections.map(
@@ -917,7 +917,7 @@ export class DashboardEntry {
       ...Type.initialValue(type),
       ...data
     }
-    const node = createObjectNode(initialValue)
+    const node = new ReactiveNode(initialValue)
     return new DashboardEditor(this.dashboard, type, node)
   })
 }
@@ -1101,176 +1101,7 @@ function dragItem(id: Key): DragItem {
   }
 }
 
-// data nodes
-
-function resolveSetStateAction<Value>(
-  current: Value,
-  update: SetStateAction<Value>
-): Value {
-  if (typeof update === 'function') {
-    return (update as (current: Value) => Value)(current)
-  }
-  return update
-}
-
-type Writable<Value> = WritableAtom<Value, [SetStateAction<Value>], void>
-
-export interface Node<Value = unknown> {
-  value: Writable<Value>
-  accepts(value: unknown): value is Value
-}
-
-function isArray<Value>(value: unknown): value is Array<Value> {
-  return Array.isArray(value)
-}
-
-function isObject<Value extends object>(value: unknown): value is Value {
-  return value !== null && typeof value === 'object' && !isArray(value)
-}
-
-function isScalar<Value>(value: unknown): value is Value {
-  return !isObject(value) && !isArray(value)
-}
-
-export class ScalarNode<Value> implements Node<Value> {
-  value: Writable<Value>
-  accepts = isScalar
-  constructor(initialValue: Value) {
-    const current = atom(initialValue)
-    this.value = atom(
-      get => get(current),
-      (get, set, update: SetStateAction<Value>) => {
-        const next = resolveSetStateAction(get(current), update)
-        set(current, next)
-      }
-    )
-  }
-}
-
-export class ObjectNode<Value extends object = object> implements Node<Value> {
-  nodes: Writable<Record<string, Node>>
-  accepts = isObject
-  constructor(initialValue: Value) {
-    this.nodes = atom(
-      fromEntries(
-        entries(initialValue).map(([key, value]) => {
-          return [key, createNode(value)]
-        })
-      )
-    )
-  }
-  field = dispense(key => {
-    return atom(
-      get => {
-        const nodes = get(this.nodes)
-        const node = nodes[key]
-        assert(node, `Field not found`)
-        return get(node.value)
-      },
-      (get, set, update: SetStateAction<unknown>) => {
-        const nodes = get(this.nodes)
-        const node = nodes[key]
-        assert(node, `Field not found`)
-        const next = resolveSetStateAction(get(node.value), update)
-        assert(node.accepts(next), `Invalid value for field`)
-        set(node.value, next)
-      }
-    )
-  })
-  value = atom(
-    get => {
-      return fromEntries(
-        entries(get(this.nodes)).map(([key, node]) => {
-          return [key, get(node.value)]
-        })
-      ) as Value
-    },
-    (get, set, update: SetStateAction<Value>) => {
-      const nextValue = resolveSetStateAction(get(this.value), update)
-      const updates = Array<[string, Node]>()
-      const removes = Array<string>()
-      const fields = get(this.nodes)
-      for (const [key, value] of entries(nextValue)) {
-        const node = fields[key]
-        if (node && node.accepts(value)) set(node.value, value)
-        else updates.push([key, createNode(value)])
-      }
-      for (const key of keys(fields)) {
-        if (!(key in nextValue)) removes.push(key)
-      }
-      if (updates.length > 0 || removes.length > 0) {
-        const next = {...fields}
-        for (const [key, node] of updates) next[key] = node
-        for (const key of removes) delete next[key]
-        set(this.nodes, next)
-      }
-    }
-  )
-}
-
-export class ArrayNode<Value = Array<unknown>> implements Node<Array<Value>> {
-  nodes: Writable<Array<Node<Value>>>
-  accepts = isArray
-  constructor(initialValue: Array<Value>) {
-    this.nodes = atom(initialValue.map(createNode))
-  }
-  value = atom(
-    get => {
-      return get(this.nodes).map(node => get(node.value)) as Array<Value>
-    },
-    (get, set, update: SetStateAction<Array<Value>>) => {
-      const nextValue = resolveSetStateAction(get(this.value), update)
-      const current = get(this.nodes)
-      let changed = current.length !== nextValue.length
-      const next = nextValue.map((value, index) => {
-        const node = current[index]
-        if (node && node.accepts(value)) {
-          set(node.value, value)
-          return node
-        }
-        changed = true
-        return createNode(value)
-      })
-      if (changed) set(this.nodes, next)
-    }
-  )
-  push = atom(null, (get, set, value: Value) => {
-    set(this.nodes, [...get(this.nodes), createNode(value)])
-  })
-  move = atom(null, (get, set, from: number, to: number) => {
-    const current = get(this.nodes)
-    const next = [...current]
-    const [moved] = next.splice(from, 1)
-    next.splice(to, 0, moved)
-    set(this.nodes, next)
-  })
-  remove = atom(null, (get, set, index: number) => {
-    const current = get(this.nodes)
-    const next = [...current]
-    next.splice(index, 1)
-    set(this.nodes, next)
-  })
-}
-
-export function createObjectNode<Value extends Object>(
-  initialValue: Value
-): ObjectNode<Value> {
-  return new ObjectNode(initialValue)
-}
-
-export function createArrayNode<Value>(
-  initialValue: Array<Value>
-): ArrayNode<Value> {
-  return new ArrayNode(initialValue)
-}
-
-export function createNode<Value>(initialValue: Value): Node<Value> {
-  if (isArray(initialValue)) return createArrayNode(initialValue) as any
-  if (isObject(initialValue)) return createObjectNode(initialValue) as any
-  return new ScalarNode(initialValue)
-}
-
-export function atomWithPending<T>(
+function atomWithPending<T>(
   baseAtom: Atom<T>
 ): Atom<[isPending: boolean, current: Awaited<T> | undefined]> {
   const unwrappedAtom = unwrap(baseAtom, prev => prev)
@@ -1279,5 +1110,124 @@ export function atomWithPending<T>(
     const status = get(loadableAtom)
     const current = get(unwrappedAtom)
     return [status.state === 'loading', current as Awaited<T> | undefined]
+  })
+}
+
+// data nodes
+
+export type Writable<Value> = WritableAtom<Value, [SetStateAction<Value>], void>
+
+const isArray = Array.isArray
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  v !== null && typeof v === 'object' && !isArray(v)
+
+export class ReactiveNode<Value = unknown> {
+  nodes: WritableAtom<unknown, [unknown], void>
+  value: Writable<Value>
+
+  constructor(initialValue: Value) {
+    this.nodes = atom(this.#wrap(initialValue))
+    this.value = atom(
+      get => this.#unwrap(get, get(this.nodes)) as Value,
+      (get, set, update: SetStateAction<Value>) => {
+        this.#reconcile(get, set, this.#resolveUpdate(get(this.value), update))
+      }
+    )
+  }
+
+  isEmpty = atom(get => get(this.value) === undefined)
+
+  #resolveUpdate(current: Value, update: SetStateAction<Value>): Value {
+    return typeof update === 'function' ? (update as Function)(current) : update
+  }
+
+  #wrap(v: unknown): unknown {
+    if (isArray(v)) return v.map(i => new ReactiveNode(i))
+    if (isObject(v)) {
+      return fromEntries(entries(v).map(([k, i]) => [k, new ReactiveNode(i)]))
+    }
+    return v
+  }
+
+  #unwrap(get: Getter, struct: unknown): unknown {
+    if (isArray(struct)) return struct.map((n: ReactiveNode) => get(n.value))
+    if (isObject(struct)) {
+      return fromEntries(
+        entries(struct).map(([k, n]) => [k, get((n as ReactiveNode).value)])
+      )
+    }
+    return struct
+  }
+
+  #reconcile(get: Getter, set: Setter, next: unknown) {
+    const curr = get(this.nodes)
+
+    if (isArray(next) && isArray(curr)) {
+      let changed = curr.length !== next.length
+      const nextStruct = next.map((val, i) => {
+        if (curr[i]) {
+          set((curr[i] as ReactiveNode).value, val)
+          return curr[i]
+        }
+        changed = true
+        return new ReactiveNode(val)
+      })
+      if (changed) set(this.nodes, nextStruct)
+    } else if (isObject(next) && isObject(curr)) {
+      let changed = false
+      const nextStruct = {...curr} as Record<string, ReactiveNode>
+
+      for (const k of new Set([...Object.keys(curr), ...Object.keys(next)])) {
+        if (!(k in next)) {
+          delete nextStruct[k]
+          changed = true
+        } else if (!(k in curr)) {
+          nextStruct[k] = new ReactiveNode(next[k])
+          changed = true
+        } else set((curr[k] as ReactiveNode).value, next[k])
+      }
+      if (changed) set(this.nodes, nextStruct)
+    } else if (curr !== next) {
+      set(this.nodes, this.#wrap(next))
+    }
+  }
+
+  field = dispense((key: string): Writable<unknown> => {
+    return atom(
+      get => {
+        const structure = get(this.nodes)
+        return isObject(structure) && structure[key]
+          ? get((structure[key] as ReactiveNode).value)
+          : undefined
+      },
+      (get, set, update) => {
+        const structure = get(this.nodes)
+        if (isObject(structure) && structure[key])
+          set((structure[key] as ReactiveNode).value, update)
+      }
+    )
+  })
+
+  push = atom(null, (get, set, val: unknown) => {
+    const structure = get(this.nodes)
+    if (!isArray(structure)) return
+    set(this.nodes, [...structure, new ReactiveNode(val)])
+  })
+
+  remove = atom(null, (get, set, i: number) => {
+    const structure = get(this.nodes)
+    if (!isArray(structure)) return
+    set(
+      this.nodes,
+      structure.filter((_, idx) => idx !== i)
+    )
+  })
+
+  move = atom(null, (get, set, from: number, to: number) => {
+    const structure = get(this.nodes)
+    if (!isArray(structure)) return
+    const next = [...structure]
+    next.splice(to, 0, next.splice(from, 1)[0])
+    set(this.nodes, next)
   })
 }

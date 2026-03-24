@@ -19,8 +19,10 @@ export function SelectFieldView<KeyType extends string | null>({
   const [value, setValue] = useFieldValue(field)
   const options = useFieldOptions(field) as SelectOptions<NonNullable<KeyType>>
   const error = useFieldError(field)
-  const items = useMemo<Array<SelectItemData>>(() => {
-    return Object.entries(options.options).map(([id, label]) => ({id, label}))
+  const items = useMemo(() => {
+    return Object.entries(options.options).map(
+      ([id, label]): SelectItemData => ({id, label})
+    )
   }, [options.options])
 
   function handleSelectionChange(key: Key | null) {

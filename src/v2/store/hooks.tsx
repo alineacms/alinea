@@ -5,8 +5,8 @@ import {assert} from 'alinea/core/util/Assert.js'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
-import type {Dashboard, DashboardEntry, Node} from './Dashboard.js'
-import {ArrayNode, DashboardEditor, ObjectNode} from './Dashboard.js'
+import type {Dashboard, DashboardEntry, ReactiveNode} from './Dashboard.js'
+import {DashboardEditor} from './Dashboard.js'
 
 const dashboardContext = createContext<Dashboard | null>(null)
 const entryContext = createContext<DashboardEntry | null>(null)
@@ -60,9 +60,8 @@ function useField(field: Field) {
   return info
 }
 
-export function useNodeEditor(node: Node, type: Type) {
+export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
   const parent = useEditor()
-  assert(node instanceof ObjectNode, 'Expected object node')
   const editor = useMemo(
     () => new DashboardEditor(parent.dashboard, type, node),
     [parent.dashboard, node, type]
@@ -73,7 +72,7 @@ export function useNodeEditor(node: Node, type: Type) {
 export function useFieldNode(field: Field) {
   const key = useFieldKey(field)
   const editor = useEditor()
-  const nodes = useAtomValue(editor.node.nodes)
+  const nodes = useAtomValue(editor.node.nodes) as Record<string, ReactiveNode>
   return nodes[key]
 }
 
@@ -139,16 +138,16 @@ export function useEntry() {
   return useContext(entryContext)
 }
 
-export function useValue<Value>(node: Node<Value>) {
+export function useValue<Value>(node: ReactiveNode<Value>) {
   return useAtom(node.value)
 }
 
-export function useNodes<Value>(node: Node<Array<Value>>): Array<Node<Value>>
+export function useNodes<Value>(
+  node: ReactiveNode<Array<Value>>
+): Array<ReactiveNode<Value>>
 export function useNodes<Value extends object>(
-  node: Node<Value>
-): Record<string, Node>
-export function useNodes(node: Node<any>) {
-  if (node instanceof ArrayNode) return useAtomValue(node.nodes)
-  if (node instanceof ObjectNode) return useAtomValue(node.nodes)
-  throw new Error('Only object and array fields have nodes')
+  node: ReactiveNode<Value>
+): Record<string, ReactiveNode>
+export function useNodes(node: ReactiveNode<any>) {
+  return useAtomValue(node.nodes)
 }

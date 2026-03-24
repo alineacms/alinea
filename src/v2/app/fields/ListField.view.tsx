@@ -1,4 +1,11 @@
-import {Button, Elevation, Icon, Label, List, ListItem} from '@alinea/components'
+import {
+  Button,
+  Elevation,
+  Icon,
+  Label,
+  List,
+  ListItem
+} from '@alinea/components'
 import styler from '@alinea/styler'
 import {createId} from 'alinea/core/Id.js'
 import {getType} from 'alinea/core/Internal.js'
@@ -16,9 +23,7 @@ import {
   IcRoundDelete
 } from 'alinea/v2/icons'
 import {
-  ArrayNode,
-  Node,
-  ObjectNode,
+  ReactiveNode,
   useFieldError,
   useFieldNode,
   useFieldOptions,
@@ -43,8 +48,8 @@ export interface ListFieldViewProps {
 export function ListFieldView({field}: ListFieldViewProps) {
   const options = useFieldOptions(field) as ListOptions<Schema>
   const error = useFieldError(field)
-  const list = useFieldNode(field) as ArrayNode<ListValue>
-  const nodes = useNodes(list) as Array<ObjectNode<ListValue>>
+  const list = useFieldNode(field) as ReactiveNode<Array<ListValue>>
+  const nodes = useNodes(list) as Array<ReactiveNode<ListValue>>
   const setRows = useSetAtom(list.value)
   const schemaEntries = useMemo(() => Object.entries(options.schema), [options])
   const readOnly = Boolean(options.readOnly)
@@ -105,9 +110,9 @@ export function ListFieldView({field}: ListFieldViewProps) {
 
 interface ListFieldRowProps {
   index: number
-  list: ArrayNode<ListValue>
+  list: ReactiveNode<Array<ListValue>>
   readOnly: boolean
-  row: ObjectNode<ListValue>
+  row: ReactiveNode<ListValue>
   rows: number
   schema: Schema
 }
@@ -132,7 +137,7 @@ function ListFieldRow({
         inner={
           <Elevation className={styles.inner()}>
             <div className={styles.body()}>
-              <NodeEditor node={row as Node} type={type} />
+              <NodeEditor node={row as ReactiveNode<object>} type={type} />
             </div>
           </Elevation>
         }

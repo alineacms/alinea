@@ -6,7 +6,7 @@ import {LinkField} from 'alinea/field/link/LinkField'
 import {EntryReference} from 'alinea/types.js'
 import {useAtomValue} from 'jotai'
 import {
-  ObjectNode,
+  ReactiveNode,
   useDashboard,
   useFieldNode,
   useFieldOptions,
@@ -18,7 +18,7 @@ import css from './LinkField.module.css'
 const styles = styler(css)
 
 interface LinkRowProps {
-  node: ObjectNode<Reference>
+  node: ReactiveNode<Reference>
 }
 
 function LinkRow({node}: LinkRowProps) {
@@ -37,20 +37,17 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const setValue = useFieldSetter(field)
   const options = useFieldOptions(field)
   const node = useFieldNode(field)
+  const isEmpty = useAtomValue(node.isEmpty)
   return (
     <Label label={options.label}>
       <Elevation>
-        {node instanceof ObjectNode ? (
-          <LinkRow node={node as ObjectNode<Reference>} />
-        ) : (
-          'No link selected'
-        )}
+        {!isEmpty && <LinkRow node={node as ReactiveNode<Reference>} />}
       </Elevation>
       <DialogTrigger>
         <Button>Pick a link</Button>
         <LinkPicker
           selectionMode="single"
-          selectionBehavior="toggle"
+          selectionBehavior="replace"
           onConfirm={selection =>
             setValue({
               _id: createId(),
@@ -60,6 +57,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
           }
         />
       </DialogTrigger>
+      <Button onPress={() => setValue(undefined!)}>Clear link</Button>
     </Label>
   )
 }
@@ -69,13 +67,20 @@ export interface MultipleLinksFieldViewProps {
 }
 
 export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
+  const options = useFieldOptions(field)
+  const node = useFieldNode(field)
+  const nodes = useAtomValue(node.nodes) as Array<ReactiveNode<Reference>>
   return (
-    <div>
-      Pick multiple links
+    <Label label={options.label}>
+      <Elevation>
+        {nodes.map((node, index) => (
+          <LinkRow key={index} node={node} />
+        ))}
+      </Elevation>
       <DialogTrigger>
         <Button>Pick a link</Button>
         <LinkPicker selectionMode="multiple" selectionBehavior="toggle" />
       </DialogTrigger>
-    </div>
+    </Label>
   )
 }

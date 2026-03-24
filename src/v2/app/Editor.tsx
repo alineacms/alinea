@@ -12,7 +12,7 @@ import {
   DashboardRoot,
   DashboardSection,
   DashboardType,
-  Node
+  ReactiveNode
 } from '../store/Dashboard.js'
 import {
   EditorScope,
@@ -85,7 +85,7 @@ function EntryEditor({entry}: EntryEditorProps) {
 }
 
 interface NodeEditorProps {
-  node: Node
+  node: ReactiveNode<object>
   type: Type
 }
 
