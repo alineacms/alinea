@@ -190,7 +190,8 @@ class EntryLanguageNode {
       status: main.status,
       path: main.path,
       parentPaths: this.parentPaths,
-      locale: main.locale
+      locale: main.locale,
+      workspace: node.graph.config.workspaces[node.workspace]
     })
     this.path = this.main.path
     this.seeded = this.main.seeded
@@ -254,6 +255,7 @@ export class EntryNode extends Map<string | null, EntryLanguageNode> {
   readonly level: number
 
   constructor(
+    public graph: EntryGraph,
     public entryType: Type,
     public parent: EntryNode | null,
     public children: () => Iterable<EntryNode>,
@@ -341,6 +343,10 @@ export class EntryGraph {
 
   byId(id: string) {
     return this.#byId.get(id)
+  }
+
+  get config() {
+    return this.#config
   }
 
   byDir(dir: string) {
@@ -474,7 +480,13 @@ export class EntryGraph {
         if (node.parentId === id) yield node
       }
     }
-    const node = new EntryNode(type, parent, children.bind(this), collection)
+    const node = new EntryNode(
+      this,
+      type,
+      parent,
+      children.bind(this),
+      collection
+    )
     this.#byId.set(id, node)
     return node
   }
