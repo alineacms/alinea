@@ -11,7 +11,7 @@ import {Section} from 'alinea/core/Section.js'
 import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
 import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
-import {entries, fromEntries} from 'alinea/core/util/Objects.js'
+import {entries, fromEntries, values} from 'alinea/core/util/Objects.js'
 import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
@@ -905,6 +905,14 @@ export class DashboardEntry {
     return null
   })
 
+  availableStatuses = atom(get => {
+    const statuses = new Set<EntryStatus>()
+    for (const entry of this.locales.values()) {
+      statuses.add(entry.status)
+    }
+    return Array.from(statuses)
+  })
+
   editor = atom(async get => {
     const locale = get(this.#root.selectedLocale)
     const type = get(this.type).type
@@ -1120,9 +1128,13 @@ function atomWithPending<T>(
 
 export type Writable<Value> = WritableAtom<Value, [SetStateAction<Value>], void>
 
-const isArray = Array.isArray
-const isObject = (v: unknown): v is Record<string, unknown> =>
-  v !== null && typeof v === 'object' && !isArray(v)
+function isArray<Value = any>(input: unknown): input is Array<Value> {
+  return Array.isArray(input)
+}
+function isObject<Value extends object>(input: unknown): input is Value {
+  return input !== null && typeof input === 'object' && !isArray(input)
+}
+type ReactiveObject = Record<string, ReactiveNode>
 
 export class ReactiveNode<Value = unknown> {
   nodes: WritableAtom<unknown, [unknown], void>
@@ -1134,32 +1146,44 @@ export class ReactiveNode<Value = unknown> {
       get => this.#unwrap(get, get(this.nodes)) as Value,
       (get, set, update: SetStateAction<Value>) => {
         this.#reconcile(get, set, this.#resolveUpdate(get(this.value), update))
+        set(this.#dirty, true)
       }
     )
   }
 
   isEmpty = atom(get => get(this.value) === undefined)
+  #dirty = atom(false)
+  isDirty = atom((get): boolean => {
+    const dirty = get(this.#dirty)
+    if (dirty) return true
+    const nodes = get(this.nodes)
+    if (isArray<ReactiveNode>(nodes))
+      return nodes.some(node => get(node.isDirty))
+    if (isObject<ReactiveObject>(nodes))
+      return values(nodes).some(node => get(node.isDirty))
+    return false
+  })
 
   #resolveUpdate(current: Value, update: SetStateAction<Value>): Value {
     return typeof update === 'function' ? (update as Function)(current) : update
   }
 
-  #wrap(v: unknown): unknown {
-    if (isArray(v)) return v.map(i => new ReactiveNode(i))
-    if (isObject(v)) {
-      return fromEntries(entries(v).map(([k, i]) => [k, new ReactiveNode(i)]))
-    }
-    return v
-  }
-
-  #unwrap(get: Getter, struct: unknown): unknown {
-    if (isArray(struct)) return struct.map((n: ReactiveNode) => get(n.value))
-    if (isObject(struct)) {
+  #wrap(value: unknown): unknown {
+    if (isArray(value)) return value.map(i => new ReactiveNode(i))
+    if (isObject(value)) {
       return fromEntries(
-        entries(struct).map(([k, n]) => [k, get((n as ReactiveNode).value)])
+        entries(value).map(([k, i]) => [k, new ReactiveNode(i)])
       )
     }
-    return struct
+    return value
+  }
+
+  #unwrap(get: Getter, nodes: unknown): unknown {
+    if (isArray<ReactiveNode>(nodes)) return nodes.map(node => get(node.value))
+    if (isObject<ReactiveObject>(nodes)) {
+      return fromEntries(entries(nodes).map(([k, n]) => [k, get(n.value)]))
+    }
+    return nodes
   }
 
   #reconcile(get: Getter, set: Setter, next: unknown) {
@@ -1176,7 +1200,7 @@ export class ReactiveNode<Value = unknown> {
         return new ReactiveNode(val)
       })
       if (changed) set(this.nodes, nextStruct)
-    } else if (isObject(next) && isObject(curr)) {
+    } else if (isObject<any>(next) && isObject<any>(curr)) {
       let changed = false
       const nextStruct = {...curr} as Record<string, ReactiveNode>
 
@@ -1199,13 +1223,13 @@ export class ReactiveNode<Value = unknown> {
     return atom(
       get => {
         const structure = get(this.nodes)
-        return isObject(structure) && structure[key]
+        return isObject<any>(structure) && structure[key]
           ? get((structure[key] as ReactiveNode).value)
           : undefined
       },
       (get, set, update) => {
         const structure = get(this.nodes)
-        if (isObject(structure) && structure[key])
+        if (isObject<any>(structure) && structure[key])
           set((structure[key] as ReactiveNode).value, update)
       }
     )
