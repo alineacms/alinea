@@ -15,6 +15,7 @@ import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries, keys, values} from './util/Objects.js'
 import type {Expand} from './util/Types.js'
+import type {Workspace} from './Workspace.js'
 
 export interface EntryUrlMeta {
   status: EntryStatus
