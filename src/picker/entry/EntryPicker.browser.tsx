@@ -62,12 +62,26 @@ const styles = styler(css)
 export interface EntryPickerModalProps
   extends PickerProps<EntryPickerOptions> {}
 
-function mediaRootName(workspace: Workspace) {
-  return entries(workspace).find(([, root]) => Root.isMediaRoot(root))?.[0]
+function firstExplorableRootName(
+  workspaceName: string,
+  workspace: Workspace,
+  policy: ReturnType<typeof usePolicy>
+) {
+  return entries(workspace).find(([rootName]) =>
+    policy.canExplore({workspace: workspaceName, root: rootName})
+  )?.[0]
 }
 
-function hasMediaRoot(workspace: Workspace) {
-  return Boolean(mediaRootName(workspace))
+function firstExplorableMediaRootName(
+  workspaceName: string,
+  workspace: Workspace,
+  policy: ReturnType<typeof usePolicy>
+) {
+  return entries(workspace).find(
+    ([rootName, root]) =>
+      Root.isMediaRoot(root) &&
+      policy.canExplore({workspace: workspaceName, root: rootName})
+  )?.[0]
 }
 
 export function EntryPickerModal({
@@ -108,40 +122,70 @@ export function EntryPickerModal({
     {suspense: true}
   )
   const location = locationQuery.data
-  const readableWorkspaces = useMemo(() => {
+  const explorableWorkspaces = useMemo(() => {
     return entries(config.workspaces).filter(([name]) =>
-      policy.canRead({workspace: name})
+      policy.canExplore({workspace: name})
     )
   }, [config.workspaces, policy])
   const availableWorkspaces = useMemo(() => {
-    if (!showMedia) return readableWorkspaces
-    return readableWorkspaces.filter(([, workspace]) => hasMediaRoot(workspace))
-  }, [readableWorkspaces, showMedia])
+    if (!showMedia) return explorableWorkspaces
+    return explorableWorkspaces.filter(([name, workspace]) =>
+      Boolean(firstExplorableMediaRootName(name, workspace, policy))
+    )
+  }, [explorableWorkspaces, policy, showMedia])
   const defaultWorkspaceName =
-    showMedia && hasMediaRoot(config.workspaces[currentWorkspace])
+    showMedia &&
+    firstExplorableMediaRootName(
+      currentWorkspace,
+      config.workspaces[currentWorkspace],
+      policy
+    )
       ? currentWorkspace
       : availableWorkspaces[0]?.[0] ?? currentWorkspace
-  const defaultMediaRoot = mediaRootName(config.workspaces[defaultWorkspaceName])
+  const defaultMediaRoot = firstExplorableMediaRootName(
+    defaultWorkspaceName,
+    config.workspaces[defaultWorkspaceName],
+    policy
+  )
+  const defaultRoot = firstExplorableRootName(
+    defaultWorkspaceName,
+    config.workspaces[defaultWorkspaceName],
+    policy
+  )
   const [destination, setDestination] = useState<PickerLocation>({
     workspace: defaultWorkspaceName,
     parentId: pickChildren ? editor?.entryId : undefined,
-    root: showMedia ? defaultMediaRoot ?? currentRoot : currentRoot,
+    root: showMedia ? defaultMediaRoot ?? currentRoot : defaultRoot ?? currentRoot,
     ...location,
     locale: locale
   })
   const destinationWorkspaceName =
     config.workspaces[destination.workspace]
-      ? showMedia && !hasMediaRoot(config.workspaces[destination.workspace])
+      ? showMedia &&
+        !firstExplorableMediaRootName(
+          destination.workspace,
+          config.workspaces[destination.workspace],
+          policy
+        )
         ? defaultWorkspaceName
         : destination.workspace
       : defaultWorkspaceName
   const workspace = config.workspaces[destinationWorkspaceName]
+  const explorableRoots = useMemo(() => {
+    return entries(workspace).filter(([name]) =>
+      policy.canExplore({workspace: destinationWorkspaceName, root: name})
+    )
+  }, [workspace, policy, destinationWorkspaceName])
   const destinationRootName =
-    workspace[destination.root]
+    explorableRoots.some(([name]) => name === destination.root)
       ? destination.root
       : showMedia
-        ? mediaRootName(workspace) ?? currentRoot
-        : Workspace.defaultRoot(workspace)
+        ? firstExplorableMediaRootName(
+            destinationWorkspaceName,
+            workspace,
+            policy
+          ) ?? currentRoot
+        : explorableRoots[0]?.[0] ?? currentRoot
   const workspaceData = Workspace.data(workspace)
   const destinationRoot = Root.data(workspace[destinationRootName])
   const locales = destinationRoot.i18n?.locales
@@ -292,8 +336,16 @@ export function EntryPickerModal({
                           <DropdownMenu.Items>
                             {availableWorkspaces.map(([name, workspace]) => {
                               const nextRoot = showMedia
-                                ? mediaRootName(workspace)!
-                                : Workspace.defaultRoot(workspace)
+                                ? firstExplorableMediaRootName(
+                                    name,
+                                    workspace,
+                                    policy
+                                  )!
+                                : firstExplorableRootName(
+                                    name,
+                                    workspace,
+                                    policy
+                                  )!
                               const root = workspace[nextRoot]
                               return (
                                 <DropdownMenu.Item
@@ -334,7 +386,7 @@ export function EntryPickerModal({
                               </HStack>
                             </DropdownMenu.Trigger>
                             <DropdownMenu.Items>
-                              {entries(workspace).map(([name, root]) => {
+                              {explorableRoots.map(([name, root]) => {
                                 return (
                                   <DropdownMenu.Item
                                     key={name}
