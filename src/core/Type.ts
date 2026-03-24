@@ -15,14 +15,12 @@ import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries, keys, values} from './util/Objects.js'
 import type {Expand} from './util/Types.js'
-import type {Workspace} from './Workspace.js'
 
 export interface EntryUrlMeta {
   status: EntryStatus
   path: string
   parentPaths: Array<string>
   locale?: string | null
-  workspace: Workspace
 }
 
 export type Type<Definition = object> = Definition & HasType

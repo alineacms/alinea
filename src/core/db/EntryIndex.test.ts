@@ -6,7 +6,6 @@ import {createEntryIndex} from '../../test/EntryFixture.js'
 import {createRecord} from '../EntryRecord.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {MemorySource} from '../source/MemorySource.js'
-import {Workspace} from '../Workspace.js'
 import {
   combineConditions,
   type EntryCondition,
@@ -118,42 +117,6 @@ test('indexes one-off fixture entries', async () => {
     children.map(child => child.id),
     ['cookie-1', 'cookie-2']
   )
-})
-
-test('entryUrl receives the resolved workspace config', async () => {
-  const Page = Config.document('Page', {
-    fields: {body: Field.text('Body')},
-    entryUrl({workspace, path}) {
-      return `/${Workspace.label(workspace).toLowerCase()}/${path}`
-    }
-  })
-  const cms = createCMS({
-    schema: {Page},
-    workspaces: {
-      main: Config.workspace('Main', {
-        source: 'content/main',
-        roots: {pages: Config.root('Pages')}
-      }),
-      docs: Config.workspace('Docs', {
-        source: 'content/docs',
-        roots: {pages: Config.root('Pages')}
-      })
-    }
-  })
-
-  const {index} = await createEntryIndex(cms.config, [
-    {
-      id: 'guide',
-      type: 'Page',
-      index: 'a1',
-      workspace: 'docs',
-      path: 'guide',
-      data: {title: 'Guide'}
-    }
-  ])
-
-  const [entry] = Array.from(index.filter({}))
-  test.is(entry.url, '/docs/guide')
 })
 
 test('filters by entry predicate', async () => {
