@@ -1,7 +1,7 @@
 import {Button} from '@alinea/components'
 import {useAtomValue} from 'jotai'
 import {useState} from 'react'
-import {useDashboard} from '../store.js'
+import {ExplorerOptions, useDashboard} from '../store.js'
 import {Explorer} from './Explorer.js'
 import {
   Sheet,
@@ -11,20 +11,26 @@ import {
   useSheet
 } from './ui/Sheet.js'
 
-export function LinkPicker() {
+export function LinkPicker(options: ExplorerOptions) {
   return (
     <Sheet>
-      <ExplorerSheet />
+      <ExplorerSheet options={options} />
     </Sheet>
   )
 }
 
-function ExplorerSheet() {
+interface ExplorerSheetProps {
+  options: ExplorerOptions
+}
+
+function ExplorerSheet({options}: ExplorerSheetProps) {
   const sheet = useSheet()
   const dashboard = useDashboard()
   const workspace = useAtomValue(dashboard.selectedWorkspace)
   const root = useAtomValue(dashboard.selectedRoot)
-  const [explorer] = useState(() => dashboard.explore({workspace, root}))
+  const [explorer] = useState(() =>
+    dashboard.explore({workspace, root}, options)
+  )
   return (
     <SheetDialog label="Pick a link">
       <SheetContent>

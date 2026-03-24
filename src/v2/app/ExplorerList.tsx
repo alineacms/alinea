@@ -45,15 +45,19 @@ const ExplorerItem = memo(function ExplorerItem({
   const label = useAtomValue(entry.label)
   const icon = useAtomValue(entry.icon)
   const type = useAtomValue(entry.type)
-  const setParent = useSetAtom(explorer.parent)
+  const onAction = useSetAtom(explorer.onAction)
   return (
     <GridListItem
       id={entry.id}
       textValue={label}
       className={styles.item()}
-      onAction={() => {
-        if (entry.hasChildren) setParent(entry.id)
-      }}
+      onAction={
+        // This is not ideal, but I can't see how to cleanly make the setter
+        // optional
+        explorer.selectionBehavior === 'replace'
+          ? onAction.bind(null, entry)
+          : undefined
+      }
     >
       <Button
         slot="drag"
@@ -109,8 +113,8 @@ export function ExplorerList({explorer}: ExplorerListProps) {
             items={items}
             layout="grid"
             className={styles.root({view: 'card'})}
-            selectionMode="multiple"
-            selectionBehavior="replace"
+            selectionMode={explorer.selectionMode}
+            selectionBehavior={explorer.selectionBehavior}
             dragAndDropHooks={dragAndDropHooks}
             selectedKeys={selected}
             onSelectionChange={setSelected}
@@ -126,8 +130,8 @@ export function ExplorerList({explorer}: ExplorerListProps) {
             items={items}
             layout="stack"
             className={styles.root({view: 'row'})}
-            selectionMode="multiple"
-            selectionBehavior="replace"
+            selectionMode={explorer.selectionMode}
+            selectionBehavior={explorer.selectionBehavior}
             dragAndDropHooks={dragAndDropHooks}
             selectedKeys={selected}
             onSelectionChange={setSelected}

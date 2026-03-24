@@ -2,7 +2,7 @@ import {Type} from 'alinea'
 import {WriteableGraph} from 'alinea/core/db/WriteableGraph.js'
 import type {Field} from 'alinea/core/Field'
 import {assert} from 'alinea/core/util/Assert.js'
-import {useAtom, useAtomValue} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
 import type {Dashboard, DashboardEntry, Node} from './Dashboard.js'
@@ -86,6 +86,13 @@ export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
     StoredValue,
     Dispatch<SetStateAction<StoredValue>>
   ]
+}
+
+export function useFieldSetter<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+): Dispatch<SetStateAction<StoredValue>> {
+  const info = useField(field)
+  return useSetAtom(info.value) as Dispatch<SetStateAction<StoredValue>>
 }
 
 export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(

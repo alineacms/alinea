@@ -198,8 +198,8 @@ export class Dashboard {
     })
   })
 
-  explore(initialLocation: ExplorerLocation) {
-    return new DashboardExplorer(this, atom(initialLocation))
+  explore(initialLocation: ExplorerLocation, options: ExplorerOptions = {}) {
+    return new DashboardExplorer(this, atom(initialLocation), options)
   }
 
   entries = dispense(id => {
@@ -316,23 +316,39 @@ export interface DashboardMenuItem {
   label: string
 }
 
-type ExplorerLocationAtom = WritableAtom<
-  ExplorerLocation,
-  [ExplorerLocation],
-  void
->
+export interface ExplorerOptions {
+  selectionMode?: 'single' | 'multiple'
+  selectionBehavior?: 'toggle' | 'replace'
+  onAction?: WritableAtom<void, [entry: DashboardEntry], void>
+  onConfirm?: (selection: Array<string>) => void
+}
 
 export class DashboardExplorer {
-  #location: ExplorerLocationAtom
+  #location: WritableAtom<ExplorerLocation, [ExplorerLocation], void>
+  #options: ExplorerOptions
   constructor(
     public dashboard: Dashboard,
-    location: ExplorerLocationAtom
+    location: WritableAtom<ExplorerLocation, [ExplorerLocation], void>,
+    options: ExplorerOptions
   ) {
     this.#location = location
+    this.#options = options
   }
 
+  get selectionMode() {
+    return this.#options.selectionMode ?? 'single'
+  }
+
+  get selectionBehavior() {
+    return this.#options.selectionBehavior ?? 'replace'
+  }
+
+  onAction = atom(null, (get, set, entry: DashboardEntry) => {
+    if (this.#options.onAction) set(this.#options.onAction, entry)
+  })
+
   search = atom('')
-  view = atom<'card' | 'row'>('card')
+  view = atom<'card' | 'row'>('row')
   selection = atom<'all' | Set<Key>>(new Set<Key>())
   location = atom(
     get => get(this.#location),
@@ -923,7 +939,14 @@ export class DashboardRoot {
             set(parentId, update.parentId)
           }
         }
-      )
+      ),
+      {
+        selectionMode: 'multiple',
+        selectionBehavior: 'replace',
+        onAction: atom(null, (get, set, entry) => {
+          set(parentId, entry.id)
+        })
+      }
     )
   }
 
