@@ -3,6 +3,7 @@ import {styler} from '@alinea/styler'
 import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
+import {ErrorMessage} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
 import {memo} from 'react'
 import {
@@ -141,7 +142,10 @@ interface EditFieldProps {
 
 const EditField = memo(function EditField({field}: EditFieldProps) {
   const View = useFieldView(field)
-  if (!View) return <div>Missing view for field</div>
+  if (!View)
+    return (
+      <ErrorMessage error={`Missing view for field: ${Field.label(field)}`} />
+    )
   return <View field={field} />
 })
 
