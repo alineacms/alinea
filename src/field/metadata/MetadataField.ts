@@ -1,6 +1,6 @@
 import type {FieldOptions, WithoutLabel} from 'alinea/core'
 import {RecordField} from 'alinea/core/field/RecordField'
-import {type Type, type} from 'alinea/core/Type'
+import {Type, type} from 'alinea/core/Type'
 import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import {type ImageField, type ImageLink, image} from 'alinea/field/link'
 import {type ObjectField, object} from 'alinea/field/object'
@@ -57,7 +57,12 @@ export function metadata(
     }
   })
   return new MetadataField(fields, {
-    options: {label, ...options, fields},
+    options: {
+      label,
+      initialValue: Type.initialValue(fields) as any,
+      ...options,
+      fields
+    },
     view: viewKeys.MetadataInput
   })
 }
