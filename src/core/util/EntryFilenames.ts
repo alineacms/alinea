@@ -9,10 +9,44 @@ import {
 import {getRoot, getType} from '../Internal.js'
 import type {EntryUrlMeta, Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
-import {join} from './Paths.js'
+import {join, normalize} from './Paths.js'
 
 export function workspaceMediaDir(config: Config, workspace: string): string {
   return Workspace.data(config.workspaces[workspace])?.mediaDir ?? ''
+}
+
+function absolute(path: string): string {
+  const normalized = normalize(path)
+  return normalized.startsWith('/') ? normalized : `/${normalized}`
+}
+
+function containsPath(parent: string, child: string): boolean {
+  return child === parent || child.startsWith(`${parent}/`)
+}
+
+export function workspaceMediaLocation(
+  config: Config,
+  workspace: string,
+  file: string
+): string {
+  const publicDir = absolute(config.publicDir ?? '/public')
+  const mediaDir = absolute(workspaceMediaDir(config, workspace))
+  const location = absolute(file)
+  const base = containsPath(publicDir, location) ? publicDir : mediaDir
+  return containsPath(base, location)
+    ? location.slice(base.length) || '/'
+    : location
+}
+
+export function workspaceMediaFile(
+  config: Config,
+  workspace: string,
+  location: string
+): string {
+  const publicDir = absolute(config.publicDir ?? '/public')
+  const mediaDir = absolute(workspaceMediaDir(config, workspace))
+  const base = containsPath(publicDir, mediaDir) ? publicDir : mediaDir
+  return join(base, location)
 }
 
 export function entryInfo(

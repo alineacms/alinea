@@ -45,6 +45,18 @@ class DB extends LocalDB {
   }
 }
 
+class MultiWorkspaceDB extends LocalDB {
+  async prepareUpload(file: string): Promise<UploadResponse> {
+    const serve = await listenForUpload()
+    return {
+      entryId: createId(),
+      location: file,
+      previewUrl: `preview/${file}`,
+      url: serve.url
+    }
+  }
+}
+
 test('upload urls', async () => {
   const db = new DB(cms.config)
   const upload = await db.upload({
@@ -59,6 +71,44 @@ test('upload urls', async () => {
     }
   })
   test.is(page.image.src, upload.previewUrl)
+})
+
+test('upload stores public location for nested workspace media dirs', async () => {
+  const mainWorkspace = Config.workspace('Main', {
+    source: 'content/main',
+    mediaDir: 'public',
+    roots: {
+      pages: Config.root('Pages', {contains: [Page]}),
+      media: Config.media()
+    }
+  })
+  const regio = Config.workspace('Regio', {
+    source: 'content/regio',
+    mediaDir: 'public/regio',
+    roots: {
+      pages: Config.root('Pages', {contains: [Page]}),
+      media: Config.media()
+    }
+  })
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main: mainWorkspace, regio}
+  })
+  const db = new MultiWorkspaceDB(cms.config)
+
+  const uploadRegio= await db.upload({
+    file: example,
+    workspace: 'regio',
+    createPreview
+  })
+  test.is(uploadRegio.location, '/regio/example.jpg')
+
+  const uploadMain = await db.upload({
+    file: example,
+    workspace: 'main',
+    createPreview
+  })
+  test.is(uploadMain.location, '/example.jpg')
 })
 
 async function listenForUpload(): Promise<{url: string}> {
