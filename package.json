@@ -83,8 +83,6 @@
     "postcss-pxtorem": "^6.0.0",
     "oxfmt": "^0.39.0",
     "oxlint": "^1.54.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "sass": "^1.63.4",
     "sass-embedded": "^1.83.4",
     "sharp": "0.32.6",

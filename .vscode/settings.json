@@ -3,13 +3,11 @@
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "search.useGlobalIgnoreFiles": true,
-  "typescript.preferences.importModuleSpecifierEnding": "js",
-  "typescript.preferences.importModuleSpecifier": "project-relative",
+  "js/ts.experimental.useTsgo": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "explicit",
     "source.organizeImports": "explicit"
   },
-  "typescript.tsdk": "node_modules/typescript/lib",
   "[typescript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
@@ -21,5 +19,6 @@
   },
   "[javascriptreact]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
-  }
+  },
+  "js/ts.tsdk.path": "node_modules/typescript/lib"
 }

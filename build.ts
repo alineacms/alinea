@@ -252,8 +252,13 @@ const cssEntry: Plugin = {
     build.onLoad(
       {filter: new RegExp(`^${CSS_ENTRY}$`), namespace: CSS_ENTRY},
       args => {
-        const files = glob.sync('src/**/*.scss')
-        const entryPoint = [`@import url('./src/global.css');`]
+        const files = glob.sync('src/**/*.{scss,css}')
+        const entryPoint = [
+          `
+          @import url('./src/global.css');
+          @import url('@alinea/components/css');
+        `
+        ]
           .concat(files.map(file => `@import url('./${file}');`))
           .join('\n')
         return {

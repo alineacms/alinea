@@ -93,13 +93,12 @@ export class Dashboard {
 
   route = atom(
     get => {
-      const {pathname = '/', searchParams = new URLSearchParams()} = get(
-        this.#location
-      )
-      const [workspace, root, entry] = pathname.split('/').slice(1) as Array<
-        string | undefined
-      >
-      const locale = searchParams.get('locale') ?? undefined
+      const {hash = '/'} = get(this.#location)
+      const [action, workspace, rootPart = '', entry] = hash
+        .slice(1)
+        .split('/')
+        .slice(1) as Array<string | undefined>
+      const [root, locale] = rootPart.split(':')
       return {
         workspace,
         root,
@@ -109,11 +108,10 @@ export class Dashboard {
     },
     (get, set, update: DashboardRoute) => {
       let {workspace, root, entry, locale} = update
-      const pathname = `/${[workspace, root, entry].filter(Boolean).join('/')}`
-      const searchParams = new URLSearchParams()
-      if (locale) searchParams.set('locale', locale)
+      const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
+      const pathname = `/${[workspace, rootPart, entry].filter(Boolean).join('/')}`
       startTransition(() => {
-        set(this.#location, {pathname, searchParams})
+        set(this.#location, {hash: `#${pathname}`})
       })
     }
   )

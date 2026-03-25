@@ -48,6 +48,7 @@ const isEntryAtom = atom(get => {
 
 function AppAuthenticated() {
   useDbUpdater()
+  return <V2 />
   // This is a workaround to make sure we suspend right here until we have a
   // policy available, but once we do there is no more need to suspend
   const policy = useAtomValue(policyTrigger)
@@ -218,8 +219,7 @@ export function App(props: AppProps) {
   return (
     <DashboardProvider {...props}>
       <Viewport attachToBody={fullPage} contain color={color}>
-        {/*<AppRoot />*/}
-        <V2 />
+        <AppRoot />
       </Viewport>
     </DashboardProvider>
   )
