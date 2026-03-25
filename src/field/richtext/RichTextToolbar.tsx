@@ -255,6 +255,7 @@ export function RichTextToolbar(props: RichTextToolbarProps) {
     props.enableTables
   ])
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: because
     <div
       tabIndex={-1}
       className={styles.root()}

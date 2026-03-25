@@ -43,11 +43,13 @@ import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url/UrlPicker'
 import {TextLabel} from 'alinea/ui'
+import {IcRoundAttachFile} from 'alinea/ui/icons/IcRoundAttachFile'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
+import {IcRoundPanorama} from 'alinea/ui/icons/IcRoundPanorama'
 import {Sink} from 'alinea/ui/Sink'
 import {
   type CSSProperties,
@@ -65,6 +67,16 @@ const styles = styler(css)
 
 export interface LinkInputProps<Row> {
   field: LinkField<Reference, Row>
+}
+
+function getLinkIcon(name: string){
+  switch(name){
+    case 'entry': return IcRoundLink
+    case 'url': return IcRoundOpenInNew
+    case 'file': return IcRoundAttachFile
+    case 'image': return IcRoundPanorama
+    default: return undefined
+  }
 }
 
 export function SingleLinkInput<Row>({field}: LinkInputProps<Row>) {
@@ -123,6 +135,7 @@ export function SingleLinkInput<Row>({field}: LinkInputProps<Row>) {
                             if (readOnly) return
                             setPickFrom(name)
                           }}
+                          icon={getLinkIcon(name)}
                         >
                           <TextLabel label={picker.label} />
                         </Create.Button>
@@ -266,6 +279,7 @@ export function MultipleLinksInput<Row>({field}: LinksInputProps<Row>) {
                               onClick={() =>
                                 setPickFrom({[Reference.type]: name})
                               }
+                              icon={getLinkIcon(name)}
                             >
                               <TextLabel label={picker.label} />
                             </Create.Button>

@@ -32,7 +32,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
     options.remote ??
     (options.backend
       ? createBackend(options.cms.config, options.backend)
-      : context => new CloudRemote(context, options.cms))
+      : context => new CloudRemote(context, options.cms.config))
   if (handlers.has(options.cms)) return handlers.get(options.cms)!
   const config = options.cms.config
   const db = PLazy.from(async () => {

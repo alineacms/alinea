@@ -88,7 +88,6 @@ export function createLocalServer(
       apiKey: process.env.ALINEA_API_KEY || 'dev'
     })
   }
-  if (cmd === 'build') return {close() {}, handle: devHandler}
   const devDir = path.join(staticDir, 'dev')
   const getPath = (url: URL) => {
     if (url.pathname.startsWith('/admin'))
@@ -180,7 +179,7 @@ export function createLocalServer(
     if (ifNoneMatch && ifNoneMatch === etag)
       return new Response(undefined, {status: 304})
     const extension = path.extname(fileName)
-    return new Response(file.contents, {
+    return new Response(file.contents as BodyInit, {
       headers: {
         'content-type': mimeTypes.get(extension) || 'application/octet-stream',
         etag

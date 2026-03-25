@@ -70,14 +70,14 @@ export function importKey(
           .replace(/-----BEGIN.*?-----/g, '')
           .replace(/-----END.*?-----/g, '')
           .replace(/\s/g, '')
-      ),
+      ) as BufferSource,
       algorithm,
       false,
       [use]
     )
   return crypto.subtle.importKey(
     'raw',
-    textEncoder.encode(secret),
+    textEncoder.encode(secret) as BufferSource,
     algorithm,
     false,
     [use]
@@ -130,7 +130,7 @@ export async function sign(
   const signature = await crypto.subtle.sign(
     algorithm,
     key,
-    textEncoder.encode(partialToken)
+    textEncoder.encode(partialToken) as BufferSource
   )
   return [
     partialToken,
@@ -209,8 +209,8 @@ export async function verify(
   const isValid = await crypto.subtle.verify(
     algorithm,
     key,
-    signature,
-    new TextEncoder().encode(token.slice(0, token.lastIndexOf('.')))
+    signature as BufferSource,
+    textEncoder.encode(token.slice(0, token.lastIndexOf('.'))) as BufferSource
   )
   if (!isValid) throw new Error('Invalid signature')
 
