@@ -2,7 +2,7 @@ import {fireEvent, render} from '@testing-library/react'
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/core'
 import {Field} from 'alinea/core/Field'
-import {TestDB} from 'alinea/core/db/TestDB.js'
+import {TestDB} from 'alinea/core/db/TestDB'
 import {object} from 'alinea/field/object'
 import {text} from 'alinea/field/text'
 import {expect, test} from 'bun:test'
@@ -55,7 +55,7 @@ function Outer() {
 test('useFieldScope creates a nested scope that updates the parent field value', async () => {
   const db = new TestDB(cms.config)
   const store = createStore()
-  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db))
+  const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
 
   const entry = await db.create({
     type: Article,

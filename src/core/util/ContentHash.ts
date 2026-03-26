@@ -9,7 +9,7 @@ export function toHex(buffer: ArrayBuffer) {
 }
 
 export async function createFileHash(data: Uint8Array) {
-  const digest = await crypto.subtle.digest('SHA-256', data)
+  const digest = await crypto.subtle.digest('SHA-256', data as BufferSource)
   return toHex(digest)
 }
 

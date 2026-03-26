@@ -2,21 +2,21 @@ import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
 import type {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
-import type {LocalDB} from 'alinea/core/db/LocalDB'
+import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {Entry, EntryStatus} from 'alinea/core/Entry'
 import {Field, FieldOptions} from 'alinea/core/Field'
 import type {Order} from 'alinea/core/Graph'
 import {getRoot, getType, getWorkspace} from 'alinea/core/Internal'
-import {Section} from 'alinea/core/Section.js'
+import {Section} from 'alinea/core/Section'
 import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
 import {Type} from 'alinea/core/Type'
 import {assert} from 'alinea/core/util/Assert'
-import {entries, fromEntries, values} from 'alinea/core/util/Objects.js'
+import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
-import {loadable, unwrap} from 'jotai/utils'
+import {unwrap} from 'jotai/utils'
 import {SetStateAction, startTransition, type ComponentType} from 'react'
 import type {
   DroppableCollectionInsertDropEvent,
@@ -42,29 +42,39 @@ type DashboardTreeSelection = WritableAtom<
 type FocusedItem = {entry: DashboardEntry} | {root: DashboardRoot} | null
 
 export class Dashboard {
-  db: Atom<LocalDB>
+  graph
+  config
+  client
+  views
+  db: Atom<WriteableGraph>
+  events: Atom<EventTarget>
 
   constructor(
-    dbAtom: Atom<LocalDB>,
-    public config: Atom<Config>,
-    public client: Atom<LocalConnection>,
-    public views: Atom<Record<string, ComponentType>> = atom({})
+    graph: WriteableGraph,
+    config: Config,
+    events: EventTarget,
+    client: LocalConnection = undefined!,
+    views: Record<string, ComponentType>
   ) {
+    this.graph = atom(graph)
+    this.config = atom(config)
+    this.events = atom(events)
+    this.client = atom(client)
+    this.views = atom(views)
     this.db = Object.assign(
       atom(
-        get => get(dbAtom),
+        get => get(this.graph),
         (get, set) => {
-          const db = get(dbAtom)
+          const events = get(this.events)
           // Listen to db changes and update entry revisions
           const listen = (event: Event) => {
             if (event instanceof IndexEvent && event.data.op === 'entry') {
-              console.log('Entry updated', event.data.id)
               set(this.revisions[event.data.id], current => current + 1)
             }
           }
-          db.index.addEventListener(IndexEvent.type, listen)
+          events.addEventListener(IndexEvent.type, listen)
           return () => {
-            db.index.removeEventListener(IndexEvent.type, listen)
+            events.removeEventListener(IndexEvent.type, listen)
           }
         }
       ),
@@ -90,27 +100,20 @@ export class Dashboard {
 
   route = atom(
     get => {
-      const {pathname = '/', searchParams = new URLSearchParams()} = get(
-        this.#location
-      )
-      const [workspace, root, entry] = pathname.split('/').slice(1) as Array<
-        string | undefined
-      >
-      const locale = searchParams.get('locale') ?? undefined
-      return {
-        workspace,
-        root,
-        entry,
-        locale
-      }
+      const {hash = '/'} = get(this.#location)
+      const [action, workspace, rootPart = '', entry] = hash
+        .slice(1)
+        .split('/')
+        .slice(1) as Array<string | undefined>
+      const [root, locale] = rootPart.split(':')
+      return {workspace, root, entry, locale}
     },
     (get, set, update: DashboardRoute) => {
       let {workspace, root, entry, locale} = update
-      const pathname = `/${[workspace, root, entry].filter(Boolean).join('/')}`
-      const searchParams = new URLSearchParams()
-      if (locale) searchParams.set('locale', locale)
+      const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
+      const pathname = `/entry/${[workspace, rootPart, entry].filter(Boolean).join('/')}`
       startTransition(() => {
-        set(this.#location, {pathname, searchParams})
+        set(this.#location, {hash: `#${pathname}`})
       })
     }
   )
@@ -127,16 +130,16 @@ export class Dashboard {
   #sha = atom<string>()
   sha = Object.assign(
     atom(
-      get => get(this.#sha) ?? get(this.db).sha,
+      get => get(this.#sha),
       (get, set) => {
-        const db = get(this.db)
+        const events = get(this.events)
         const listen = (event: Event) => {
           if (event instanceof IndexEvent && event.data.op === 'index')
             set(this.#sha, event.data.sha)
         }
-        db.index.addEventListener(IndexEvent.type, listen)
+        events.addEventListener(IndexEvent.type, listen)
         return () => {
-          db.index.removeEventListener(IndexEvent.type, listen)
+          events.removeEventListener(IndexEvent.type, listen)
         }
       }
     ),
@@ -146,8 +149,8 @@ export class Dashboard {
   selectedWorkspace = atom(
     get => {
       const {workspace} = get(this.route)
-      if (workspace) return workspace
       const config = get(this.config)
+      if (workspace && config.workspaces[workspace]) return workspace
       const workspaceKeys = Object.keys(config.workspaces)
       return workspaceKeys[0] ?? null
     },
@@ -577,7 +580,7 @@ export class DashboardWorkspace {
   #settings = atom(get => {
     const config = get(this.dashboard.config)
     const workspaceConfig = config.workspaces[this.key]
-    assert(workspaceConfig)
+    assert(workspaceConfig, `Workspace "${this.key}" not found in config`)
     return getWorkspace(workspaceConfig)
   })
 
@@ -1121,16 +1124,12 @@ function dragItem(id: Key): DragItem {
   }
 }
 
-function atomWithPending<T>(
-  baseAtom: Atom<T>
-): Atom<[isPending: boolean, current: Awaited<T> | undefined]> {
-  const unwrappedAtom = unwrap(baseAtom, prev => prev)
-  const loadableAtom = loadable(baseAtom)
-  return atom(get => {
-    const status = get(loadableAtom)
-    const current = get(unwrappedAtom)
-    return [status.state === 'loading', current as Awaited<T> | undefined]
+function atomWithPending<Value>(asyncAtom: Atom<Promise<Value> | Value>) {
+  const wrappedAtom = atom(async get => {
+    const data = await get(asyncAtom)
+    return [false, data] as const
   })
+  return unwrap(wrappedAtom, prev => [true, prev?.[1]] as const)
 }
 
 // data nodes

@@ -1,5 +1,5 @@
 import {Tab, TabList, TabPanel, Tabs} from '@alinea/components'
-import {getType} from 'alinea/core/Internal.js'
+import {getType} from 'alinea/core/Internal'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {TabsSection} from 'alinea/field/tabs'

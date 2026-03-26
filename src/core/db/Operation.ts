@@ -212,12 +212,14 @@ export class UploadOperation extends Operation {
       const uploadLocation = join(directory, path + extension)
       const info = await db.prepareUpload(uploadLocation)
       const previewData = isImage(fileName)
-        ? await createPreview?.(file instanceof Blob ? file : new Blob([body]))
+        ? await createPreview?.(
+            file instanceof Blob ? file : new Blob([body as BlobPart])
+          )
         : undefined
       await fetch(info.url, {
         method: info.method ?? 'POST',
         headers: {'Content-Type': contentType},
-        body
+        body: body as BodyInit
       }).then(result => {
         if (!result.ok)
           throw new HttpError(

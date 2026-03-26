@@ -1,12 +1,11 @@
 {
   "compilerOptions": {
-    "emitDeclarationOnly": true,
+    "noEmit": true,
     "outDir": "dist",
     "rootDir": "src",
-    "declaration": true,
     "module": "ESNext",
     "target": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

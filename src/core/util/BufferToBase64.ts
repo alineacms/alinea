@@ -38,7 +38,7 @@ export const encode = async (
   buffer: ArrayBuffer | Uint8Array,
   format: CompressionFormat | '' = 'deflate'
 ) => {
-  const blob = new Blob([buffer])
+  const blob = new Blob([buffer as BlobPart])
   const res = format
     ? new Response(blob.stream().pipeThrough(new CompressionStream(format)))
     : blob

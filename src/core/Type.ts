@@ -21,6 +21,8 @@ export interface EntryUrlMeta {
   path: string
   parentPaths: Array<string>
   locale?: string | null
+  workspace: string
+  root: string
 }
 
 export type Type<Definition = object> = Definition & HasType

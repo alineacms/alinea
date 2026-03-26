@@ -8,6 +8,8 @@ declare module '*.module.css' {
   export default classes
 }
 
+declare module '*.css'
+
 declare module 'raw-loader!*' {
   const content: string
   export default content

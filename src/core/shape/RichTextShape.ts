@@ -81,6 +81,7 @@ function serialize(
   if (typeof item.getAttributes !== 'function') return res
   const attrs = item.getAttributes()
   if (attrs && Object.keys(attrs).length) Object.assign(res, attrs)
+  if (typeof item.toArray !== 'function') return res
   const children = item.toArray()
   if (children.length) {
     res.content = children.flatMap(serialize)

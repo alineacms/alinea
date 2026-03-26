@@ -7,6 +7,7 @@ import {IcRoundFormatClear} from 'alinea/ui/icons/IcRoundFormatClear'
 import {IcRoundFormatItalic} from 'alinea/ui/icons/IcRoundFormatItalic'
 import {IcRoundFormatListBulleted} from 'alinea/ui/icons/IcRoundFormatListBulleted'
 import {IcRoundFormatListNumbered} from 'alinea/ui/icons/IcRoundFormatListNumbered'
+import {IcRoundFormatPaint} from 'alinea/ui/icons/IcRoundFormatPaint'
 import {IcRoundHorizontalRule} from 'alinea/ui/icons/IcRoundHorizontalRule'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundQuote} from 'alinea/ui/icons/IcRoundQuote'
@@ -230,6 +231,12 @@ export const formatting = {
       title: 'Superscript',
       active: ({editor}) => editor.isActive('superscript'),
       onSelect: ({exec}) => exec().toggleSuperscript().run()
+    },
+    highlight: {
+      icon: () => <IcRoundFormatPaint />,
+      title: 'Highlight',
+      active: ({editor}) => editor.isActive('highlight'),
+      onSelect: ({exec}) => exec().toggleHighlight().run()
     }
   }
 } satisfies ToolbarGroup

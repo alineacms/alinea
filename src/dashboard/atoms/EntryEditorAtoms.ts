@@ -568,7 +568,9 @@ export function createEntryEditor(entryData: EntryData) {
       locale,
       path,
       status,
-      parentPaths
+      parentPaths,
+      workspace: activeVersion.workspace,
+      root: activeVersion.root
     }
     const url = entryUrl(type, urlMeta)
     return createEntryRow(

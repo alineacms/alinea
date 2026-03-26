@@ -86,7 +86,7 @@ export class OAuth2 implements AuthApi {
     this.#client = new OAuth2Client({
       ...options,
       authenticationMethod: 'client_secret_basic_interop',
-      async fetch(input: RequestInfo | URL, init?: RequestInit) {
+      fetch: (async (input, init) => {
         const request = new Request(input, init)
         const response = await fetch(request)
         if (!response.ok) {
@@ -94,7 +94,7 @@ export class OAuth2 implements AuthApi {
           throw new HttpError(response.status, text)
         }
         return response
-      }
+      }) as typeof fetch
     })
     const loadJwks = async (): Promise<Array<JsonWebKey & {kid: string}>> => {
       try {

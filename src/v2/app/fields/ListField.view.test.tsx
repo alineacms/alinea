@@ -4,13 +4,12 @@ import {createCMS} from 'alinea/core'
 import {TestDB} from 'alinea/core/db/TestDB.js'
 import {list} from 'alinea/field/list'
 import {text} from 'alinea/field/text'
-import {Dashboard} from 'alinea/v2/store'
-import {EditorScope} from 'alinea/v2/store'
+import 'alinea/v2/dom'
+import {Dashboard, EditorScope} from 'alinea/v2/store'
 import {expect, test} from 'bun:test'
 import {atom, createStore, Provider} from 'jotai'
-import 'alinea/v2/dom.js'
-import {views} from './views.js'
 import {ListFieldView} from './ListField.view.js'
+import {views} from './views.js'
 
 const Article = Config.document('Article', {
   fields: {
@@ -44,7 +43,8 @@ async function renderField() {
   const dashboard = new Dashboard(
     atom(db),
     atom(cms.config),
-    atom(db),
+    atom(db.index),
+    undefined!,
     atom(views)
   )
 
@@ -96,7 +96,9 @@ test('moves and removes list items', async () => {
     )
   )
 
-  const afterMove = store.get(editor.field.blocks!.value) as Array<{_id: string}>
+  const afterMove = store.get(editor.field.blocks!.value) as Array<{
+    _id: string
+  }>
   expect(afterMove.map(item => item._id)).toEqual([
     beforeMove[1]._id,
     beforeMove[0]._id

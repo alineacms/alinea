@@ -15,15 +15,15 @@
     "tag": "bun tag.js",
     "bump": "bun bump.js",
     "stories": "ladle serve",
-    "build": "tsc && bun build.ts",
+    "build": "tsgo --noEmit false --declaration --emitDeclarationOnly && bun build.ts",
     "lint": "oxlint --ignore-path .gitignore .",
     "lint:fix": "oxlint --fix --ignore-path .gitignore .",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "cycles:server": "CHECK_CYCLES=server bun build.ts && bunx --bun madge --warning --circular dist/index.js",
     "cycles:browser": "CHECK_CYCLES=browser bun build.ts && bunx --bun madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
-    "type": "tsc --diagnostics",
-    "dev:check": "tsc -w",
+    "type": "tsgo --diagnostics",
+    "dev:check": "tsgo -w",
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
     "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
@@ -55,10 +55,6 @@
     "@alinea/iso": "^0.3.3",
     "esbuild": "^0.25.4"
   },
-  "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
-  },
   "devDependencies": {
     "@alinea/styler": "^1.0.3",
     "@alinea/suite": "^0.6.3",
@@ -88,16 +84,14 @@
     "sharp": "0.32.6",
     "speedscope": "^1.14.0",
     "symlink-dir": "^6.0.5",
-    "typescript": "5.6.2",
+    "@typescript/native-preview": "7.0.0-dev.20260325.1",
     "typescript-plugin-css-modules": "^5.2.0",
     "yjs-src": "npm:yjs@13.6.11"
   },
   "packageManager": "yarn@4.5.0",
   "resolutions": {
     "yjs": "13.6.11",
-    "lib0": "0.2.88",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "lib0": "0.2.88"
   },
   "exports": {
     "./package.json": "./package.json",

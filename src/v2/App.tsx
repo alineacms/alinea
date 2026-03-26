@@ -1,22 +1,21 @@
 import '@alinea/components/css'
 import type {Config} from 'alinea/core/Config'
-import type {LocalDB} from 'alinea/core/db/LocalDB.js'
-import type {Atom} from 'jotai'
-import {ComponentType, useMemo} from 'react'
+import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
+import {ComponentType, useState} from 'react'
 import {AppShell} from './app/AppShell.js'
 import './index.css'
 import {Dashboard} from './store/Dashboard.js'
 
 export interface AppProps {
-  db: Atom<LocalDB>
-  config: Atom<Config>
-  views: Atom<Record<string, ComponentType>>
+  graph: WriteableGraph
+  events: EventTarget
+  config: Config
+  views: Record<string, ComponentType>
 }
 
-export function App({db, config, views}: AppProps) {
-  const dashboard = useMemo(
-    () => new Dashboard(db, config, undefined!, views),
-    [db, config, views]
+export function App({graph, events, config, views}: AppProps) {
+  const [dashboard] = useState(
+    () => new Dashboard(graph, config, events, undefined!, views)
   )
   return <AppShell dashboard={dashboard} />
 }

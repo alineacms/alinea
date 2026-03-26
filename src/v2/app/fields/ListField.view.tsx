@@ -7,12 +7,12 @@ import {
   ListItem
 } from '@alinea/components'
 import styler from '@alinea/styler'
-import {createId} from 'alinea/core/Id.js'
-import {getType} from 'alinea/core/Internal.js'
+import {createId} from 'alinea/core/Id'
+import {getType} from 'alinea/core/Internal'
 import {Schema} from 'alinea/core/Schema'
 import {Type} from 'alinea/core/Type'
-import {ListField as CoreListField} from 'alinea/core/field/ListField.js'
-import {ListRow} from 'alinea/core/shape/ListShape.js'
+import {ListField as CoreListField} from 'alinea/core/field/ListField'
+import {ListRow} from 'alinea/core/shape/ListShape'
 import {ListOptions} from 'alinea/field/list'
 import {NodeEditor} from 'alinea/v2/app/Editor'
 import {

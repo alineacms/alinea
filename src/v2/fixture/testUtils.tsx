@@ -1,10 +1,9 @@
 import {cleanup, render} from '@testing-library/react'
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/core'
-import {TestDB} from 'alinea/core/db/TestDB.js'
+import {TestDB} from 'alinea/core/db/TestDB'
 import {Type} from 'alinea/core/Type'
-import {Dashboard} from 'alinea/v2/store'
-import {DashboardEditor, EditorScope} from 'alinea/v2/store'
+import {Dashboard, DashboardEditor, EditorScope} from 'alinea/v2/store'
 import {atom, createStore, Provider} from 'jotai'
 import {ReactNode} from 'react'
 
@@ -38,7 +37,8 @@ export async function renderField({
   const dashboard = new Dashboard(
     atom(db),
     atom(cms.config),
-    atom(db),
+    atom(db.index),
+    undefined!,
     atom({})
   )
 

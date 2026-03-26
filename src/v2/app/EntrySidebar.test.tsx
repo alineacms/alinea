@@ -1,6 +1,6 @@
 import {fireEvent, render} from '@testing-library/react'
+import 'alinea/v2/dom'
 import {expect, test} from 'bun:test'
-import 'alinea/v2/dom.js'
 import {EntrySidebar} from './EntrySidebar.js'
 
 test('switches between history and preview sidebar tabs', () => {
