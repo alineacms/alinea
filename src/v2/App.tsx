@@ -2,8 +2,8 @@ import '@alinea/components/css'
 import type {Config} from 'alinea/core/Config'
 import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {ComponentType, useState} from 'react'
+import '../global.css'
 import {AppShell} from './app/AppShell.js'
-import './index.css'
 import {Dashboard} from './store/Dashboard.js'
 
 export interface AppProps {
