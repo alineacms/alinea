@@ -1,4 +1,4 @@
-import {Icon} from '@alinea/components'
+import {Button, Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
 import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
@@ -74,6 +74,9 @@ function EntryEditor({entry}: EntryEditorProps) {
           <RailHeader>
             <h1 className={styles.mainTitle()}>{title}</h1>
             <TypeBadge type={type} />
+            <div style={{marginLeft: 'auto'}}>
+              <Button>Save</Button>
+            </div>
           </RailHeader>
 
           <RailBody>
