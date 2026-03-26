@@ -2,7 +2,7 @@ import {Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {memo, Suspense} from 'react'
+import {memo} from 'react'
 import {
   Collection,
   ListLayout,
@@ -50,7 +50,7 @@ interface SidebarItemChildrenProps {
 const SidebarItemChildren = memo(function SidebarItemChildren({
   item
 }: SidebarItemChildrenProps) {
-  const items = useAtomValue(item.items)
+  const items = useAtomValue(unwrap(item.items))
   return <Collection items={items}>{renderItem}</Collection>
 })
 
@@ -71,11 +71,7 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
       hasChildItems={item.hasChildren}
       icon={icon}
     >
-      {isExpanded && (
-        <Suspense>
-          <SidebarItemChildren item={item} />
-        </Suspense>
-      )}
+      {isExpanded && <SidebarItemChildren item={item} />}
     </TreeItem>
   )
 })
@@ -94,7 +90,7 @@ export const SidebarTree = memo(function SidebarTree({
   dashboard
 }: SidebarTreeProps) {
   const workspace = useAtomValue(dashboard.currentWorkspace)
-  const currentRoot = useAtomValue(workspace.tree.currentRoot)
+  const currentRoot = useAtomValue(dashboard.currentRoot)
   const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
   const items = useAtomValue(unwrap(workspace.tree.items))

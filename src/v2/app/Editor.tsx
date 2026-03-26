@@ -46,7 +46,7 @@ interface RootEditorProps {
 function RootEditor({root}: RootEditorProps) {
   const title = useAtomValue(root.label)
   return (
-    <Rail>
+    <Rail main>
       <RailHeader>
         <h1 className={styles.mainTitle()}>{title}</h1>
       </RailHeader>

@@ -119,11 +119,12 @@ export class Dashboard {
   )
 
   focused = atom(async (get): Promise<FocusedItem> => {
-    const route = get(this.route)
-    if (route.entry) return {entry: await get(this.entries[route.entry])}
-    if (!route.workspace) return null
-    const workspace = this.workspace[route.workspace!]
-    if (route.root) return {root: workspace.root[route.root]}
+    const root = get(this.selectedRoot)
+    const workspace = get(this.selectedWorkspace)
+    const {entry} = get(this.route)
+    if (entry) return {entry: await get(this.entries[entry])}
+    if (!workspace) return null
+    if (root) return {root: this.workspace[workspace].root[root]}
     return null
   })
 
@@ -190,6 +191,12 @@ export class Dashboard {
   currentWorkspace = atom(get => {
     const workspaceKey = get(this.selectedWorkspace)
     return this.workspace[workspaceKey]
+  })
+
+  currentRoot = atom(get => {
+    const workspace = get(this.currentWorkspace)
+    const rootKey = get(this.selectedRoot)
+    return workspace ? workspace.root[rootKey] : null
   })
 
   type = dispense(key => {
@@ -662,20 +669,6 @@ export class DashboardTree {
       })
     }
   )
-
-  currentRoot = atom(get => {
-    const [selectedKey] = get(this.selectedKeys)
-    let rootKey: string | undefined
-    if (selectedKey) {
-      const selectedId = String(selectedKey)
-      if (selectedId.startsWith(ROOT_KEY_PREFIX))
-        rootKey = selectedId.slice(ROOT_KEY_PREFIX.length)
-    }
-    rootKey ??= get(this.workspace.dashboard.route).root
-    rootKey ??= get(this.workspace.roots)[0]
-    if (!rootKey) return null
-    return this.workspace.root[rootKey]
-  })
 
   entryItems: Record<string, Atom<Promise<DashboardTreeItem>>> = dispense(
     id => {
