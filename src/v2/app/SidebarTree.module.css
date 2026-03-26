@@ -39,16 +39,11 @@
   opacity: 0.75;
 }
 
-.treeViewport {
-  min-height: 0;
-  flex: 1;
-}
-
-.treeViewport > :global(.react-aria-Virtualizer) {
+:global(.react-aria-Virtualizer) {
   min-height: 0;
   height: 100%;
 }
 
-.treeViewport :global(.alinea-rac-TreeItem) {
+:global(.alinea-rac-TreeItem) {
   padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px) !important;
 }

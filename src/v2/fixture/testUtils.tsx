@@ -4,7 +4,7 @@ import {createCMS} from 'alinea/core'
 import {TestDB} from 'alinea/core/db/TestDB'
 import {Type} from 'alinea/core/Type'
 import {Dashboard, DashboardEditor, EditorScope} from 'alinea/v2/store'
-import {atom, createStore, Provider} from 'jotai'
+import {createStore, Provider} from 'jotai'
 import {ReactNode} from 'react'
 
 export interface RenderFieldOptions {
@@ -35,11 +35,11 @@ export async function renderField({
   const db = new TestDB(cms.config)
   const store = createStore()
   const dashboard = new Dashboard(
-    atom(db),
-    atom(cms.config),
-    atom(db.index),
+    db,
+    cms.config,
+    db.index,
     undefined!,
-    atom({})
+    {}
   )
 
   const entry = await db.create({

@@ -365,3 +365,221 @@ export function IcRoundFilterList(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
+
+export function IcRoundNotes(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M4 19h16v2H4zm2-4h12v2H6zm0-4h12v2H6zm0-6v2h12V5z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFormatBold(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M15.6 10.79c1.04-.73 1.76-1.91 1.76-3.29c0-2.48-2.04-4.5-4.55-4.5H7v18h6.3c2.35 0 4.26-1.89 4.26-4.22c0-1.7-1.03-3.16-2.51-3.99M10 5.5h2.6c.81 0 1.45.63 1.45 1.41s-.64 1.41-1.45 1.41H10zm2.8 13H10v-4h2.8c1.1 0 2 .9 2 2s-.9 2-2 2"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFormatItalic(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M10 4v3h2.21l-3.42 10H6v3h8v-3h-2.21l3.42-10H18V4z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundStrikethroughS(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M6.85 7.15c0-1.46 1.6-2.5 3.82-2.5c1.74 0 2.98.64 3.56 1.69l2.49-1.44C15.73 3.13 13.73 2 10.69 2C6.64 2 4 4.11 4 7.35c0 .22.02.44.05.65H2v3h20V8H6.54c-.01-.1-.02-.2-.02-.3M12 19.35c-2.11 0-3.68-.98-4.24-2.4L5.26 18.4C6.49 20.53 8.87 22 11.95 22c4.05 0 6.73-2.1 6.73-5.35c0-.23-.01-.44-.04-.65h-2.97c.04.17.06.35.06.55c0 1.44-1.63 2.5-3.73 2.5"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFormatListBulleted(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M4 10.5c.83 0 1.5-.67 1.5-1.5S4.83 7.5 4 7.5S2.5 8.17 2.5 9S3.17 10.5 4 10.5m0 6c.83 0 1.5-.67 1.5-1.5S4.83 13.5 4 13.5S2.5 14.17 2.5 15s.67 1.5 1.5 1.5M7 16h14v-2H7zm0-8v2h14V8z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFormatListNumbered(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M2 17h2v.5H3v1h1V19H2zm1-8H2v1h1v.5H2v1h2V9zm-1-4v1h2V4H2v1zm5 0v2h14V5zm0 14h14v-2H7zm0-6h14v-2H7z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFormatQuote(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundHorizontalRule(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path fill="currentColor" d="M19 13H5v-2h14z" />
+    </svg>
+  )
+}
+
+export function IcRoundFormatAlignLeft(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M3 21h18v-2H3zm0-4h12v-2H3zm0-4h18v-2H3zm0-6v2h12V7zm0-4v2h18V3z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFormatAlignCenter(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M3 21h18v-2H3zm3-4h12v-2H6zm-3-4h18v-2H3zm3-6v2h12V7zm-3-4v2h18V3z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFormatAlignRight(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M3 21h18v-2H3zm6-4h12v-2H9zm-6-4h18v-2H3zm6-6v2h12V7zm-6-4v2h18V3z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFormatAlignJustify(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M3 21h18v-2H3zm0-4h18v-2H3zm0-4h18v-2H3zm0-4h18V7H3zm0-6v2h18V3z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundSubject(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M14 17H4v2h10zm6-8H4v2h16zM4 13h16v-2H4zm0 8h16v-2H4zm0-16v2h10V5z"
+      />
+    </svg>
+  )
+}

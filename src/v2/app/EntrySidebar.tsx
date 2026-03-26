@@ -8,30 +8,24 @@ const styles = styler(css)
 
 export function EntrySidebar() {
   return (
-    <Sidebar className={styles.entrySidebar()} divider="left" layout>
+    <Sidebar>
       <Tabs defaultSelectedKey="history" variant="subtle">
         <SidebarHeader>
-          <div className={styles.entrySidebarTabsWrap()}>
-            <TabList aria-label="Entry sidebar">
-              <Tab id="history">
-                <Icon icon={IcRoundHistory} />
-                History
-              </Tab>
-              <Tab id="preview">
-                <Icon icon={IcRoundVisibility} />
-                Preview
-              </Tab>
-            </TabList>
-          </div>
+          <TabList aria-label="Entry sidebar">
+            <Tab id="history">
+              <Icon icon={IcRoundHistory} />
+              History
+            </Tab>
+            <Tab id="preview">
+              <Icon icon={IcRoundVisibility} />
+              Preview
+            </Tab>
+          </TabList>
         </SidebarHeader>
 
-        <SidebarBody scroll>
-          <TabPanel className={styles.sidebarPanel()} id="history">
-            History placeholder
-          </TabPanel>
-          <TabPanel className={styles.sidebarPanel()} id="preview">
-            Preview placeholder
-          </TabPanel>
+        <SidebarBody>
+          <TabPanel id="history">History placeholder</TabPanel>
+          <TabPanel id="preview">Preview placeholder</TabPanel>
         </SidebarBody>
       </Tabs>
     </Sidebar>

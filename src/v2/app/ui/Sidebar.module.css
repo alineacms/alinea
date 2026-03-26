@@ -1,35 +1,10 @@
 .root {
-  min-width: 0;
-  min-height: 0;
-}
-
-.root.is-layout {
-  display: grid;
-}
-
-.root.is-dividerLeft {
-  border-left: 1px solid #d8e1eb;
-}
-
-.root.is-dividerRight {
-  border-right: 1px solid #d8e1eb;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  min-width: 0;
+  width: 320px;
 }
 
 .body {
-  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
-}
-
-.body.is-scroll {
-  overflow: auto;
-}
-
-.footer {
-  min-width: 0;
 }

@@ -10,6 +10,7 @@ import {ListFieldView} from './ListField.view.js'
 import {MetadataFieldView} from './MetadataField.view.js'
 import {NumberFieldView} from './NumberField.view.js'
 import {ObjectFieldView} from './ObjectField.view.js'
+import {RichTextFieldView} from './RichTextField.view.js'
 import {SelectFieldView} from './SelectField.view.js'
 import {TabsView} from './Tabs.view.js'
 import {TextFieldView} from './TextField.view.js'
@@ -24,6 +25,7 @@ export const views: Record<string, ComponentType<any>> = {
   [viewKeys.NumberInput]: NumberFieldView,
   [viewKeys.MetadataInput]: MetadataFieldView,
   [viewKeys.SelectInput]: SelectFieldView,
+  [viewKeys.RichTextInput]: RichTextFieldView,
   [viewKeys.TextInput]: TextFieldView,
   [viewKeys.TimeInput]: TimeFieldView,
   [viewKeys.ListInput]: ListFieldView,

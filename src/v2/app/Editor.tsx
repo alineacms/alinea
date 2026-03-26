@@ -24,6 +24,7 @@ import {
 import css from './Editor.module.css'
 import {EntrySidebar} from './EntrySidebar.js'
 import {Explorer} from './Explorer.js'
+import {Rail, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -33,7 +34,7 @@ export interface EditorProps {
 
 export function Editor({dashboard}: EditorProps) {
   const focused = useAtomValue(dashboard.focused)
-  if (!focused) return null
+  if (!focused) return <Rail main />
   if ('entry' in focused) return <EntryEditor entry={focused.entry} />
   return <RootEditor root={focused.root} />
 }
@@ -45,17 +46,17 @@ interface RootEditorProps {
 function RootEditor({root}: RootEditorProps) {
   const title = useAtomValue(root.label)
   return (
-    <>
-      <header className={styles.mainHeader()}>
+    <Rail>
+      <RailHeader>
         <h1 className={styles.mainTitle()}>{title}</h1>
-      </header>
+      </RailHeader>
 
       <div className={styles.explorerMainBody()}>
         <div className={styles.explorerBody()}>
           <Explorer explorer={root.explorer} />
         </div>
       </div>
-    </>
+    </Rail>
   )
 }
 interface EntryEditorProps {
@@ -69,17 +70,18 @@ function EntryEditor({entry}: EntryEditorProps) {
   return (
     <EntryScope entry={entry}>
       <EditorScope editor={editor}>
-        <div className={styles.entryLayout()}>
-          <header className={styles.mainHeader()}>
+        <Rail main>
+          <RailHeader>
             <h1 className={styles.mainTitle()}>{title}</h1>
             <TypeBadge type={type} />
-          </header>
+          </RailHeader>
 
           <div className={`${styles.mainBody()} ${styles.entryMainBody()}`}>
             <FieldsEditor editor={editor} />
           </div>
-          <EntrySidebar />
-        </div>
+        </Rail>
+
+        <EntrySidebar />
       </EditorScope>
     </EntryScope>
   )

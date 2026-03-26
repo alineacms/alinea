@@ -1,87 +1,37 @@
 import styler from '@alinea/styler'
 import type {HTMLAttributes, PropsWithChildren} from 'react'
+import {Rail, RailHeader, RailHeaderProps, RailProps} from './Rail'
 import css from './Sidebar.module.css'
 
 const styles = styler(css)
 
-type SidebarDivider = 'left' | 'right'
+export interface SidebarProps extends RailProps {}
 
-export interface SidebarProps
-  extends PropsWithChildren,
-    HTMLAttributes<HTMLElement> {
-  className?: string
-  divider?: SidebarDivider
-  layout?: boolean
+export function Sidebar(props: SidebarProps) {
+  return <Rail className={styles.root(styler.merge(props))} {...props} />
 }
 
-export function Sidebar({
-  className,
-  children,
-  divider,
-  layout = false,
-  ...props
-}: SidebarProps) {
-  return (
-    <aside
-      {...props}
-      className={styles.root(
-        {
-          layout,
-          dividerLeft: divider === 'left',
-          dividerRight: divider === 'right'
-        },
-        styler.merge({className})
-      )}
-    >
-      {children}
-    </aside>
-  )
-}
+export interface SidebarHeaderProps extends RailHeaderProps {}
 
-export interface SidebarHeaderProps
-  extends PropsWithChildren,
-    HTMLAttributes<HTMLElement> {}
-
-export function SidebarHeader({
-  children,
-  className,
-  ...props
-}: SidebarHeaderProps) {
-  return (
-    <header
-      {...props}
-      className={styles.header(styler.merge({className}))}
-    >
-      {children}
-    </header>
-  )
+export function SidebarHeader(props: SidebarHeaderProps) {
+  return <RailHeader {...props} />
 }
 
 export interface SidebarBodyProps
-  extends PropsWithChildren,
-    HTMLAttributes<HTMLDivElement> {
+  extends PropsWithChildren, HTMLAttributes<HTMLDivElement> {
   scroll?: boolean
 }
 
-export function SidebarBody({
-  children,
-  className,
-  scroll = false,
-  ...props
-}: SidebarBodyProps) {
+export function SidebarBody({children, ...props}: SidebarBodyProps) {
   return (
-    <div
-      {...props}
-      className={styles.body({scroll}, styler.merge({className}))}
-    >
+    <div {...props} className={styles.body()}>
       {children}
     </div>
   )
 }
 
 export interface SidebarFooterProps
-  extends PropsWithChildren,
-    HTMLAttributes<HTMLElement> {}
+  extends PropsWithChildren, HTMLAttributes<HTMLElement> {}
 
 export function SidebarFooter({
   children,
@@ -89,10 +39,7 @@ export function SidebarFooter({
   ...props
 }: SidebarFooterProps) {
   return (
-    <footer
-      {...props}
-      className={styles.footer(styler.merge({className}))}
-    >
+    <footer {...props} className={styles.footer(styler.merge({className}))}>
       {children}
     </footer>
   )

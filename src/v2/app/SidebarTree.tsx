@@ -17,6 +17,7 @@ import {
 } from '../store/Dashboard.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import css from './SidebarTree.module.css'
+import {SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 
 const styles = styler(css)
 
@@ -32,13 +33,13 @@ const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
   const label = useAtomValue(root.label)
   const icon = useAtomValue(root.icon)
   return (
-    <header className={styles.focusHeader()}>
+    <SidebarHeader>
       <div className={styles.focusLabel()}>
         <Icon icon={icon} className={styles.focusIcon()} />
         {label}
         <LocaleMenu root={root} />
       </div>
-    </header>
+    </SidebarHeader>
   )
 })
 
@@ -108,9 +109,9 @@ export const SidebarTree = memo(function SidebarTree({
     onMove
   })
   return (
-    <div className={styles.root()}>
+    <>
       {currentRoot && <SidebarParent root={currentRoot} />}
-      <div className={styles.treeViewport()}>
+      <SidebarBody>
         <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
           <Tree
             aria-label="Content tree"
@@ -128,7 +129,7 @@ export const SidebarTree = memo(function SidebarTree({
             {renderItem}
           </Tree>
         </Virtualizer>
-      </div>
-    </div>
+      </SidebarBody>
+    </>
   )
 })

@@ -1,0 +1,21 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &+& {
+    border-left: 1px solid red;
+  }
+
+  &.is-main {
+    flex: 1;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  flex-shrink: 0;
+  border-bottom: 1px solid red;
+}

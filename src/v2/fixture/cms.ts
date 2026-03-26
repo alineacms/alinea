@@ -10,6 +10,10 @@ const Page = Config.document('Page', {
       multiline: true,
       placeholder: 'Write a short summary'
     }),
+    body: Field.richText('Body', {
+      searchable: true,
+      enableTables: true
+    }),
     featured: Field.check('Featured', {
       width: 0.5,
       description: 'Highlight on overview pages',
