@@ -15,5 +15,17 @@ export function Rail({main, ...props}: RailProps) {
 export interface RailHeaderProps extends HTMLProps<HTMLElement> {}
 
 export function RailHeader(props: RailHeaderProps) {
-  return <header className={styles.header(styler.merge(props))} {...props} />
+  return <header {...props} className={styles.header(styler.merge(props))} />
+}
+
+export interface RailBodyProps extends HTMLProps<HTMLDivElement> {}
+
+export function RailBody(props: RailBodyProps) {
+  return <div {...props} className={styles.body(styler.merge(props))} />
+}
+
+export interface RailFooterProps extends HTMLProps<HTMLElement> {}
+
+export function RailFooter(props: RailFooterProps) {
+  return <footer {...props} className={styles.footer(styler.merge(props))} />
 }

@@ -62,3 +62,13 @@
     grid-template-rows: var(--header-height, 56px) minmax(0, 1fr) auto;
   }
 }
+
+.toolbar {
+  position: sticky;
+  bottom: 0;
+  background: white;
+
+  &:empty {
+    display: none;
+  }
+}

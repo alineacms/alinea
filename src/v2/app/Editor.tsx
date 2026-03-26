@@ -24,7 +24,7 @@ import {
 import css from './Editor.module.css'
 import {EntrySidebar} from './EntrySidebar.js'
 import {Explorer} from './Explorer.js'
-import {Rail, RailHeader} from './ui/Rail.js'
+import {Rail, RailBody, RailFooter, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -76,9 +76,11 @@ function EntryEditor({entry}: EntryEditorProps) {
             <TypeBadge type={type} />
           </RailHeader>
 
-          <div className={`${styles.mainBody()} ${styles.entryMainBody()}`}>
+          <RailBody>
             <FieldsEditor editor={editor} />
-          </div>
+
+            <RailFooter id="alinea-toolbar" className={styles.toolbar()} />
+          </RailBody>
         </Rail>
 
         <EntrySidebar />

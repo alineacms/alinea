@@ -2,7 +2,7 @@ import {Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {memo} from 'react'
+import {memo, Suspense} from 'react'
 import {
   Collection,
   ListLayout,
@@ -50,7 +50,7 @@ interface SidebarItemChildrenProps {
 const SidebarItemChildren = memo(function SidebarItemChildren({
   item
 }: SidebarItemChildrenProps) {
-  const items = useAtomValue(unwrap(item.items))
+  const items = useAtomValue(item.items)
   return <Collection items={items}>{renderItem}</Collection>
 })
 
@@ -71,7 +71,11 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
       hasChildItems={item.hasChildren}
       icon={icon}
     >
-      {isExpanded && <SidebarItemChildren item={item} />}
+      {isExpanded && (
+        <Suspense>
+          <SidebarItemChildren item={item} />
+        </Suspense>
+      )}
     </TreeItem>
   )
 })
