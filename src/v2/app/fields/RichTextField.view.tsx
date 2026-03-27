@@ -9,7 +9,7 @@ import {
   ToolbarSeparator
 } from '@alinea/components'
 import styler from '@alinea/styler'
-import {EditorContent, JSONContent, useEditor} from '@tiptap/react'
+import {Editor, EditorContent, JSONContent, useEditor} from '@tiptap/react'
 import {RichTextField as CoreRichTextField} from 'alinea/core/field/RichTextField'
 import {Schema} from 'alinea/core/Schema'
 import {
@@ -59,7 +59,7 @@ export const RichTextFieldView = memo(function RichTextFieldView<
     onUpdate({editor}) {
       setValue(fromContent(editor.getJSON()))
     }
-  })
+  })!
   useEffect(() => {
     // Update the editor content when the value changes externally
     if (editor) editor.commands.setContent(content)
@@ -73,12 +73,18 @@ export const RichTextFieldView = memo(function RichTextFieldView<
       >
         <EditorContent editor={editor} className={styles.root()} />
       </Label>
-      {toolbar && createPortal(<RichTextToolbar />, toolbar)}
+      {toolbar && createPortal(<RichTextToolbar editor={editor} />, toolbar)}
     </>
   )
 })
 
-const RichTextToolbar = memo(function RichTextToolbar() {
+interface RichTextToolbarProps {
+  editor: Editor
+}
+
+const RichTextToolbar = memo(function RichTextToolbar({
+  editor
+}: RichTextToolbarProps) {
   return (
     <Toolbar aria-label="Text formatting" data-orientation="horizontal">
       <ToolbarGroup>
