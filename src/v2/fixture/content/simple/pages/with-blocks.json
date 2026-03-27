@@ -6,6 +6,7 @@
   "title": "Rich Text Blocks Demo",
   "path": "with-blocks",
   "summary": "Fixture page with rich text blocks for the v2 editor.",
+  "codeSample": "const blockIds = body.filter(node => node._type !== 'paragraph')",
   "body": [
     {
       "_type": "paragraph",
@@ -21,6 +22,7 @@
       "_id": "fixture-cta-block",
       "title": "Try inserting another block",
       "text": "Use the insert menu to add more blocks between text fragments.",
+      "actionCode": "router.push('/docs/blocks')",
       "featured": true
     },
     {
@@ -52,7 +54,8 @@
       "_index": "a0",
       "_type": "callout",
       "heading": "Tip",
-      "text": "Open the Body field and use the insert menu to add more rich text blocks."
+      "text": "Open the Body field and use the insert menu to add more rich text blocks.",
+      "snippet": "insertMenu.openAtSelection()"
     }
   ]
 }

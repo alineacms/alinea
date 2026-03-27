@@ -1,6 +1,7 @@
 import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import {ComponentType} from 'react'
 import {CheckFieldView} from './check/CheckField.view.js'
+import {CodeFieldView} from './code/CodeField.view.js'
 import {DateFieldView} from './date/DateField.view.js'
 import {
   MultipleLinksFieldView,
@@ -18,6 +19,7 @@ import {TimeFieldView} from './time/TimeField.view.js'
 
 export const views: Record<string, ComponentType<any>> = {
   [viewKeys.CheckInput]: CheckFieldView,
+  [viewKeys.CodeInput]: CodeFieldView,
   [viewKeys.DateInput]: DateFieldView,
   [viewKeys.SingleLinkInput]: SingleLinkFieldView,
   [viewKeys.MultipleLinksInput]: MultipleLinksFieldView,

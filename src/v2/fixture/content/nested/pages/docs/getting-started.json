@@ -5,6 +5,7 @@
   "_root": "pages",
   "title": "Getting started",
   "summary": "Top-level child",
+  "codeSample": "bun run dev --filter @alinea/v2",
   "wordCount": 940,
   "publishDate": "2026-02-24",
   "publishTime": "08:30"

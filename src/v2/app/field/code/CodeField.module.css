@@ -1,0 +1,65 @@
+.root {
+  overflow: hidden;
+  border: 1px solid #d8e1eb;
+  border-radius: 12px;
+  background: #fbfcfe;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
+}
+
+.root:focus-within {
+  border-color: #7ea7d8;
+  box-shadow: 0 0 0 3px rgba(126, 167, 216, 0.2);
+  background: #ffffff;
+}
+
+.editor {
+  width: 100%;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.textarea {
+  outline: none;
+}
+
+.pre {
+  color: #22303d;
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.comment {
+  color: #98a3ad;
+  font-style: italic;
+}
+
+.keyword {
+  color: #55616b;
+  font-weight: 600;
+}
+
+.identifier {
+  color: #1e88e5;
+}
+
+.number {
+  color: #d81b60;
+}
+
+.string {
+  color: #2e7d32;
+}
+
+.regex {
+  color: #ef6c00;
+}
+
+.punctuation {
+  color: #607d8b;
+}

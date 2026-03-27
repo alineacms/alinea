@@ -6,6 +6,7 @@
   "title": "Home",
   "path": "home",
   "summary": "Simple workspace root page",
+  "codeSample": "export function formatTitle(title: string) {\n  return title.trim().toUpperCase()\n}",
   "body": [
     {
       "_type": "heading",
@@ -106,14 +107,16 @@
       "_type": "callout",
       "_index": "a0",
       "heading": "Welcome",
-      "text": "This page now exercises the v2 list field."
+      "text": "This page now exercises the v2 list field.",
+      "snippet": "const featured = entry.featured === true"
     },
     {
       "_id": "31QListSimpleHomeCallout0000002",
       "_type": "callout",
       "_index": "a1",
       "heading": "Next step",
-      "text": "Try moving, editing, or removing these sections."
+      "text": "Try moving, editing, or removing these sections.",
+      "snippet": "await publishEntry(entryId)"
     }
   ]
 }

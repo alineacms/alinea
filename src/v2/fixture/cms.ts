@@ -10,6 +10,9 @@ const Page = Config.document('Page', {
       multiline: true,
       placeholder: 'Write a short summary'
     }),
+    codeSample: Field.code('Code sample', {
+      language: 'ts'
+    }),
     body: Field.richText('Body', {
       schema: {
         Cta: Config.type('Call to action', {
@@ -18,6 +21,9 @@ const Page = Config.document('Page', {
             text: Field.text('Text', {
               multiline: true,
               placeholder: 'Write a short prompt'
+            }),
+            actionCode: Field.code('Action code', {
+              language: 'ts'
             }),
             featured: Field.check('Featured')
           }
@@ -77,6 +83,9 @@ const Page = Config.document('Page', {
             text: Field.text('Text', {
               multiline: true,
               placeholder: 'Write section copy'
+            }),
+            snippet: Field.code('Snippet', {
+              language: 'ts'
             })
           }
         })

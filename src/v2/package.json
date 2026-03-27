@@ -21,6 +21,8 @@
     "jotai-location": "^0.6.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "lolight": "^1.4.1",
+    "react-simple-code-editor": "^0.14.1",
     "vite": "^8.0.0"
   }
 }
