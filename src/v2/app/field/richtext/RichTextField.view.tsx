@@ -31,7 +31,7 @@ import {
   useFieldSetter
 } from 'alinea/v2/store'
 import {atom, useAtomValue, useStore} from 'jotai'
-import {memo, useLayoutEffect, useMemo} from 'react'
+import {memo, useEffect, useMemo} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor'
 import {InsertMenu} from './InsertMenu.js'
@@ -136,7 +136,7 @@ export const RichTextFieldView = memo(function RichTextFieldView<
       setValue(fromContent(editor.getJSON(), current))
     }
   })
-  useLayoutEffect(() => {
+  useEffect(() => {
     // Update the editor content when the value changes externally
     if (editor) editor.commands.setContent(content)
   }, [editor, content])
