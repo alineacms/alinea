@@ -21,7 +21,6 @@ import {
   TextNode
 } from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
-import {assert} from 'alinea/core/util/Assert'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {extensions as baseExtensions} from 'alinea/field/richtext/Extensions'
 import {RichTextOptions} from 'alinea/field/richtext/RichTextField'
@@ -32,9 +31,10 @@ import {
   useFieldSetter
 } from 'alinea/v2/store'
 import {atom, useAtomValue, useStore} from 'jotai'
-import {memo, useEffect, useMemo} from 'react'
+import {memo, useLayoutEffect, useMemo} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor'
+import {InsertMenu} from './InsertMenu.js'
 import css from './RichTextField.module.css'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
@@ -60,7 +60,7 @@ function typeExtension(field: Field, name: string, type: Type) {
       })
     }, [reactive, id])
     const rowNode = useAtomValue(rowNodeAtom) as ReactiveNode<object>
-    assert(rowNode, 'Could not find reactive node for block')
+    if (!rowNode) return null
     return (
       <NodeViewWrapper>
         <Elevation>
@@ -132,10 +132,11 @@ export const RichTextFieldView = memo(function RichTextFieldView<
     content,
     extensions,
     onUpdate({editor}) {
-      setValue(fromContent(editor.getJSON()))
+      const current = store.get(node.value) as TextDoc | undefined
+      setValue(fromContent(editor.getJSON(), current))
     }
   })
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Update the editor content when the value changes externally
     if (editor) editor.commands.setContent(content)
   }, [editor, content])
@@ -146,6 +147,23 @@ export const RichTextFieldView = memo(function RichTextFieldView<
         isRequired={options.required}
         label={options.label}
       >
+        {editor && !options.readOnly && (
+          <InsertMenu
+            editor={editor}
+            schema={options.schema}
+            onInsert={(id, typeName) => {
+              const type = options.schema?.[typeName]
+              setValue(current => [
+                ...(current ?? []),
+                {
+                  [Node.type]: typeName,
+                  [BlockNode.id]: id,
+                  ...(type ? Type.initialValue(type) : {})
+                } as Node
+              ])
+            }}
+          />
+        )}
         <EditorContent editor={editor} className={styles.root()} />
       </Label>
       {toolbar &&
@@ -189,8 +207,17 @@ function toContent(node: Node): JSONContent {
   throw new TypeError('Invalid node')
 }
 
-function fromContent(content: JSONContent): Array<Node> {
-  const nodes = content.content?.flatMap(fromNode) ?? []
+function fromContent(
+  content: JSONContent,
+  currentValue: Array<Node> = []
+): Array<Node> {
+  const blocksById = new Map(
+    currentValue
+      .filter(Node.isBlock)
+      .map(node => [String(node[BlockNode.id]), node] as const)
+  )
+  const nodes =
+    content.content?.flatMap(node => fromNode(node, blocksById)) ?? []
   const [first] = nodes
   const isEmptyParagraph =
     nodes.length === 1 &&
@@ -200,7 +227,10 @@ function fromContent(content: JSONContent): Array<Node> {
   return isEmptyParagraph ? [] : nodes
 }
 
-function fromNode(content: JSONContent): Array<Node> {
+function fromNode(
+  content: JSONContent,
+  blocksById: Map<string, Node>
+): Array<Node> {
   const {type, text, marks, attrs} = content
   if (!type) return []
   if (type === 'text') {
@@ -213,10 +243,11 @@ function fromNode(content: JSONContent): Array<Node> {
     return [node]
   }
   if (type[0] === type[0].toUpperCase()) {
+    const id = String(attrs?.[BlockNode.id] ?? '')
     return [
-      {
+      blocksById.get(id) ?? {
         [Node.type]: type,
-        [BlockNode.id]: String(attrs?.[BlockNode.id] ?? '')
+        [BlockNode.id]: id
       }
     ]
   }
@@ -225,7 +256,9 @@ function fromNode(content: JSONContent): Array<Node> {
     {
       [Node.type]: type,
       ...normalizedAttrs,
-      [ElementNode.content]: content.content?.flatMap(fromNode)
+      [ElementNode.content]: content.content?.flatMap(node =>
+        fromNode(node, blocksById)
+      )
     }
   ]
 }

@@ -1,0 +1,58 @@
+{
+  "_id": "fixture-page-with-blocks",
+  "_type": "Page",
+  "_index": "a0",
+  "_root": "pages",
+  "title": "Rich Text Blocks Demo",
+  "path": "with-blocks",
+  "summary": "Fixture page with rich text blocks for the v2 editor.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This fixture page includes rich text blocks so the v2 insert menu has something real to work with."
+        }
+      ]
+    },
+    {
+      "_type": "Cta",
+      "_id": "fixture-cta-block",
+      "title": "Try inserting another block",
+      "text": "Use the insert menu to add more blocks between text fragments.",
+      "featured": true
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The quote below is another rich text block instance stored inline with the document."
+        }
+      ]
+    },
+    {
+      "_type": "Quote",
+      "_id": "fixture-quote-block",
+      "quote": "Blocks should feel like first-class parts of the document, not a bolted-on exception.",
+      "attribution": "Fixture content"
+    }
+  ],
+  "featured": true,
+  "category": "docs",
+  "wordCount": 120,
+  "inner": {
+    "a": "Nested A",
+    "b": "Nested B"
+  },
+  "sections": [
+    {
+      "_id": "fixture-section-1",
+      "_index": "a0",
+      "_type": "callout",
+      "heading": "Tip",
+      "text": "Open the Body field and use the insert menu to add more rich text blocks."
+    }
+  ]
+}

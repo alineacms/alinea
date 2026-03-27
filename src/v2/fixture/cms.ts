@@ -11,6 +11,27 @@ const Page = Config.document('Page', {
       placeholder: 'Write a short summary'
     }),
     body: Field.richText('Body', {
+      schema: {
+        Cta: Config.type('Call to action', {
+          fields: {
+            title: Field.text('Title'),
+            text: Field.text('Text', {
+              multiline: true,
+              placeholder: 'Write a short prompt'
+            }),
+            featured: Field.check('Featured')
+          }
+        }),
+        Quote: Config.type('Quote', {
+          fields: {
+            quote: Field.text('Quote', {
+              multiline: true,
+              placeholder: 'Add a quote'
+            }),
+            attribution: Field.text('Attribution')
+          }
+        })
+      },
       searchable: true,
       enableTables: true
     }),

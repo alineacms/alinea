@@ -1,0 +1,14 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  background: var(--alinea-background-color);
+  border: 1px solid var(--alinea-border-color);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
