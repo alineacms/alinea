@@ -1,6 +1,6 @@
 import {act, cleanup, render} from '@testing-library/react'
 import {Config} from 'alinea'
-import {JSONContent} from '@tiptap/react'
+import type {Editor, JSONContent} from '@tiptap/react'
 import {createCMS} from 'alinea/core'
 import {TestDB} from 'alinea/core/db/TestDB.js'
 import {TextNode} from 'alinea/core/TextDoc'
@@ -12,6 +12,10 @@ import {afterEach, expect, test} from 'bun:test'
 import {createStore, Provider} from 'jotai'
 import {RichTextFieldView} from './RichTextField.view.js'
 import {views} from '../views.js'
+
+interface EditorElement extends HTMLElement {
+  editor?: Editor
+}
 
 const Article = Config.document('Article', {
   fields: {
@@ -113,11 +117,7 @@ test('writes editor content changes back into the field value', async () => {
     </Provider>
   )
 
-  const input = view.getByRole('textbox') as HTMLElement & {
-    editor?: {
-      commands: {setContent: (content: string, emitUpdate?: boolean) => void}
-    }
-  }
+  const input = view.getByRole('textbox') as EditorElement
 
   await act(async function updateContent() {
     input.editor?.commands.setContent('<p>After</p>', true)
@@ -128,6 +128,56 @@ test('writes editor content changes back into the field value', async () => {
     {
       _type: 'paragraph',
       content: [{_type: 'text', [TextNode.text]: 'After'}]
+    }
+  ])
+})
+
+test('undoes rich text changes through history', async () => {
+  const db = new TestDB(cms.config)
+  const store = createStore()
+  const dashboard = new Dashboard(db, cms.config, db.index, undefined!, views)
+
+  const entry = await db.create({
+    type: Article,
+    root: 'pages',
+    set: {
+      title: 'Article',
+      body: [
+        {
+          _type: 'paragraph',
+          content: [{_type: 'text', text: 'Before'}]
+        }
+      ]
+    }
+  })
+
+  const loaded = await store.get(dashboard.entries[entry._id])
+  const editor = await store.get(loaded.editor)
+
+  const view = render(
+    <Provider store={store}>
+      <EditorScope editor={editor}>
+        <RichTextFieldView field={Article.body} />
+      </EditorScope>
+    </Provider>
+  )
+
+  const input = view.getByRole('textbox') as EditorElement
+
+  await act(async function updateContent() {
+    input.editor?.chain().focus().selectAll().insertContent('After').run()
+    await Promise.resolve()
+  })
+
+  await act(async function undoContent() {
+    input.editor?.commands.undo()
+    await Promise.resolve()
+  })
+
+  expect(store.get(editor.field.body!.value)).toEqual([
+    {
+      _type: 'paragraph',
+      content: [{_type: 'text', [TextNode.text]: 'Before'}]
     }
   ])
 })

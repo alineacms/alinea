@@ -1,0 +1,142 @@
+.heading {
+  min-width: 0;
+  font-weight: 600;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+
+  &:not(:last-child) {
+    margin-bottom: 20px;
+  }
+}
+
+h1.heading {
+  font-size: 33px;
+  line-height: 1.25;
+}
+
+h2.heading {
+  font-size: 18px;
+  line-height: 1.33;
+
+  &:not(:last-child) {
+    margin-bottom: 9px;
+  }
+}
+
+h3.heading {
+  font-size: 16px;
+  line-height: 1.2;
+
+  &:not(:last-child) {
+    margin-bottom: 5px;
+  }
+}
+
+h4.heading {
+  font-size: 13px;
+  font-weight: 700;
+
+  &:not(:last-child) {
+    margin-bottom: 4px;
+  }
+}
+
+h5.heading {
+  font-size: 11.5px;
+  font-weight: 700;
+
+  &:not(:last-child) {
+    margin-bottom: 3px;
+  }
+}
+
+.paragraph {
+  max-width: 50ch;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+
+  &:not(:last-child) {
+    margin-bottom: 14px;
+  }
+}
+
+.list {
+  margin-left: 20px;
+
+  &:not(:last-child) {
+    margin-bottom: 14px;
+  }
+}
+
+.listItem {
+  &:not(:last-child) {
+    margin-bottom: 5px;
+  }
+}
+
+.blockquote {
+  padding: 4px 16px;
+  border-left: 2px solid hsla(var(--alinea-negative), 0.5);
+
+  &:not(:last-child) {
+    margin-bottom: 14px;
+  }
+}
+
+.link {
+  cursor: text;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: hsla(var(--alinea-negative), 0.4);
+  text-underline-offset: 0.3em;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+
+  &:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.table {
+  width: 100%;
+  overflow: hidden;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  &:not(:last-child) {
+    margin-bottom: 14px;
+  }
+}
+
+.td,
+.th {
+  padding: 4px 8px;
+  border: 1px solid var(--alinea-fields-table);
+
+  &:global(.selectedCell) {
+    background-color: var(--alinea-highlight);
+  }
+}
+
+.th {
+  background: var(--alinea-fields-header);
+  text-align: left;
+  font-weight: 700;
+}
+
+.highlight {
+  background: var(--alinea-variant-info-action);
+  color: var(--alinea-variant-info-foreground);
+}

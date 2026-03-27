@@ -1,9 +1,9 @@
 import {act, fireEvent, render} from '@testing-library/react'
 import {Editor} from '@tiptap/react'
 import {values} from 'alinea/core/util/Objects'
-import {extensions as baseExtensions} from 'alinea/field/richtext/Extensions'
 import 'alinea/v2/dom'
 import {afterEach, expect, test} from 'bun:test'
+import {extensions as baseExtensions} from './Extensions.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
 const editors = Array<Editor>()
@@ -14,7 +14,7 @@ afterEach(function cleanupEditors() {
   }
 })
 
-test('renders the v2 rich text toolbar with v1 controls', () => {
+test('renders the v2 rich text toolbar with v2 controls', () => {
   const editor = createEditor()
   const view = render(<RichTextToolbar editor={editor} enableTables />)
 

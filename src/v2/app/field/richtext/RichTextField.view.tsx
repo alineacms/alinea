@@ -22,7 +22,6 @@ import {
 } from 'alinea/core/TextDoc'
 import {Type} from 'alinea/core/Type'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
-import {extensions as baseExtensions} from 'alinea/field/richtext/Extensions'
 import {RichTextOptions} from 'alinea/field/richtext/RichTextField'
 import {
   ReactiveNode,
@@ -34,6 +33,7 @@ import {atom, useAtomValue, useStore} from 'jotai'
 import {memo, useEffect, useMemo} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor'
+import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
 import css from './RichTextField.module.css'
 import {RichTextToolbar} from './RichTextToolbar.js'
@@ -52,8 +52,8 @@ function typeExtension(field: Field, name: string, type: Type) {
     // Find the corresponding reactive node for this block
     const rowNodeAtom = useMemo(() => {
       return atom(get => {
-        const nodes = get(reactive.nodes) as Array<ReactiveNode>
-        return nodes.find(node => {
+        const nodes = get(reactive.nodes) as Array<ReactiveNode> | undefined
+        return nodes?.find(node => {
           const value = get(node.value) as Node
           return Node.isBlock(value) && value[BlockNode.id] === id
         })
