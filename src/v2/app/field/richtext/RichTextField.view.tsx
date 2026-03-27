@@ -11,6 +11,7 @@ import {
 } from '@tiptap/react'
 import {Field} from 'alinea/core/Field'
 import {RichTextField as CoreRichTextField} from 'alinea/core/field/RichTextField'
+import {createId} from 'alinea/core/Id'
 import {Schema} from 'alinea/core/Schema'
 import {
   BlockNode,
@@ -30,7 +31,7 @@ import {
   useFieldSetter
 } from 'alinea/v2/store'
 import {atom, useAtomValue, useStore} from 'jotai'
-import {memo, useEffect, useMemo} from 'react'
+import {memo, useMemo} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor'
 import {extensions as baseExtensions} from './Extensions.js'
@@ -104,13 +105,9 @@ function schemaToExtensions(field: Field, schema: Schema | undefined) {
   })
 }
 
-export interface RichTextFieldViewProps<Blocks extends Schema> {
-  field: CoreRichTextField<Blocks, RichTextOptions<Blocks>>
-}
-
-export const RichTextFieldView = memo(function RichTextFieldView<
-  Blocks extends Schema
->({field}: RichTextFieldViewProps<Blocks>) {
+function RTView<Blocks extends Schema>({
+  field
+}: RichTextFieldViewProps<Blocks>) {
   const store = useStore()
   const options = useFieldOptions(field)
   const toolbar = document.getElementById('alinea-toolbar')
@@ -136,10 +133,6 @@ export const RichTextFieldView = memo(function RichTextFieldView<
       setValue(fromContent(editor.getJSON(), current))
     }
   })
-  useEffect(() => {
-    // Update the editor content when the value changes externally
-    if (editor) editor.commands.setContent(content)
-  }, [editor, content])
   return (
     <>
       <Label
@@ -178,6 +171,19 @@ export const RichTextFieldView = memo(function RichTextFieldView<
         )}
     </>
   )
+}
+
+export interface RichTextFieldViewProps<Blocks extends Schema> {
+  field: CoreRichTextField<Blocks, RichTextOptions<Blocks>>
+}
+
+export const RichTextFieldView = memo(function RichTextFieldView<
+  Blocks extends Schema
+>({field}: RichTextFieldViewProps<Blocks>) {
+  const node = useFieldNode(field)
+  const id = useMemo(createId, [node])
+  // Tiptap really does not want you to control its state
+  return <RTView field={field} key={id} />
 })
 
 function toContent(node: Node): JSONContent {

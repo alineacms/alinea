@@ -222,14 +222,16 @@ export class Dashboard {
   }
 
   entries = dispense(id => {
-    return atom(async get => {
-      // todo: this will get out of sync for hasChildren
-      const load = get(this.#entryLoader)
-      const [result, error] = await load(id)
-      if (error) throw error
-      get(this.revisions[id])
-      return new DashboardEntry(this, result)
-    })
+    return swr(
+      atom(async get => {
+        // todo: this will get out of sync for hasChildren
+        const load = get(this.#entryLoader)
+        const [result, error] = await load(id)
+        if (error) throw error
+        get(this.revisions[id])
+        return new DashboardEntry(this, result)
+      })
+    )
   })
 
   #entryLoader = atom(get => {
@@ -936,6 +938,22 @@ export class DashboardEntry {
     const node = new ReactiveNode(initialValue)
     return new DashboardEditor(this.dashboard, type, node)
   })
+
+  saveDraft = atom(null, async (get, set) => {
+    const locale = get(this.#root.selectedLocale)
+    const editor = await get(this.editor)
+    const data = get(editor.value)
+    const db = get(this.dashboard.db)
+    const type = get(this.type).type
+    await db.create({
+      type,
+      id: this.id,
+      locale: locale,
+      status: 'draft',
+      set: data,
+      overwrite: true
+    })
+  })
 }
 
 export class DashboardRoot {
@@ -1121,6 +1139,14 @@ function dragItem(id: Key): DragItem {
     'text/plain': key,
     [DASHBOARD_ENTRY_DRAG_TYPE]: key
   }
+}
+
+function swr<Value>(asyncAtom: Atom<Promise<Value>>) {
+  const withPrev = unwrap(asyncAtom, prev => prev)
+  return atom(get => {
+    const current = get(withPrev)
+    return current ?? get(asyncAtom)
+  })
 }
 
 function atomWithPending<Value>(asyncAtom: Atom<Promise<Value> | Value>) {

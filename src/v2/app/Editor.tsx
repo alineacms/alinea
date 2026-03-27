@@ -4,8 +4,8 @@ import {Field} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {ErrorMessage} from 'alinea/ui'
-import {useAtomValue} from 'jotai'
-import {memo} from 'react'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {memo, useTransition} from 'react'
 import {
   Dashboard,
   DashboardEditor,
@@ -67,6 +67,8 @@ function EntryEditor({entry}: EntryEditorProps) {
   const title = useAtomValue(entry.label)
   const editor = useAtomValue(entry.editor)
   const type = useAtomValue(entry.type)
+  const [isPending, startTransition] = useTransition()
+  const save = useSetAtom(entry.saveDraft)
   return (
     <EntryScope entry={entry}>
       <EditorScope editor={editor}>
@@ -75,7 +77,12 @@ function EntryEditor({entry}: EntryEditorProps) {
             <h1 className={styles.mainTitle()}>{title}</h1>
             <TypeBadge type={type} />
             <div style={{marginLeft: 'auto'}}>
-              <Button>Save</Button>
+              <Button
+                isPending={isPending}
+                onPress={() => startTransition(save)}
+              >
+                {isPending ? 'Saving...' : 'Save Draft'}
+              </Button>
             </div>
           </RailHeader>
 
