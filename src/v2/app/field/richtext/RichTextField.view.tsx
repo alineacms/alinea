@@ -1,6 +1,15 @@
-import {Label} from '@alinea/components'
+import {Elevation, Label} from '@alinea/components'
 import styler from '@alinea/styler'
-import {EditorContent, JSONContent, useEditor} from '@tiptap/react'
+import {Node as TipTapNode} from '@tiptap/core'
+import {
+  EditorContent,
+  JSONContent,
+  mergeAttributes,
+  NodeViewWrapper,
+  ReactNodeViewRenderer,
+  useEditor
+} from '@tiptap/react'
+import {Field} from 'alinea/core/Field'
 import {RichTextField as CoreRichTextField} from 'alinea/core/field/RichTextField'
 import {Schema} from 'alinea/core/Schema'
 import {
@@ -11,17 +20,89 @@ import {
   TextDoc,
   TextNode
 } from 'alinea/core/TextDoc'
+import {Type} from 'alinea/core/Type'
+import {assert} from 'alinea/core/util/Assert'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {extensions as baseExtensions} from 'alinea/field/richtext/Extensions'
 import {RichTextOptions} from 'alinea/field/richtext/RichTextField'
-import {useFieldNode, useFieldOptions, useFieldSetter} from 'alinea/v2/store'
-import {useStore} from 'jotai'
+import {
+  ReactiveNode,
+  useFieldNode,
+  useFieldOptions,
+  useFieldSetter
+} from 'alinea/v2/store'
+import {atom, useAtomValue, useStore} from 'jotai'
 import {memo, useEffect, useMemo} from 'react'
 import {createPortal} from 'react-dom'
+import {NodeEditor} from '../../Editor'
 import css from './RichTextField.module.css'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
+
+type NodeViewProps = {
+  node: {attrs: {[BlockNode.id]?: string}}
+  deleteNode: () => void
+}
+
+function typeExtension(field: Field, name: string, type: Type) {
+  function View({node, deleteNode}: NodeViewProps) {
+    const reactive = useFieldNode(field)
+    const {[BlockNode.id]: id} = node.attrs
+    // Find the corresponding reactive node for this block
+    const rowNodeAtom = useMemo(() => {
+      return atom(get => {
+        const nodes = get(reactive.nodes) as Array<ReactiveNode>
+        return nodes.find(node => {
+          const value = get(node.value) as Node
+          return Node.isBlock(value) && value[BlockNode.id] === id
+        })
+      })
+    }, [reactive, id])
+    const rowNode = useAtomValue(rowNodeAtom) as ReactiveNode<object>
+    assert(rowNode, 'Could not find reactive node for block')
+    return (
+      <NodeViewWrapper>
+        <Elevation>
+          <div>
+            <button data-drag-handle style={{cursor: 'grab'}}>
+              drag handle
+            </button>
+            Block, type: {Type.label(type)}
+          </div>
+          <NodeEditor type={type} node={rowNode} />
+        </Elevation>
+      </NodeViewWrapper>
+    )
+  }
+  return TipTapNode.create({
+    name,
+    group: 'block',
+    atom: true,
+    draggable: true,
+    parseHTML() {
+      return [{tag: name}]
+    },
+    renderHTML({HTMLAttributes}) {
+      return [name, mergeAttributes(HTMLAttributes)]
+    },
+    addNodeView() {
+      return ReactNodeViewRenderer(View)
+    },
+    addAttributes() {
+      return {
+        [BlockNode.id]: {default: null}
+      }
+    }
+  })
+}
+
+function schemaToExtensions(field: Field, schema: Schema | undefined) {
+  if (!schema) return []
+  return entries(schema).map(([name, type]) => {
+    return typeExtension(field, name, type)
+  })
+}
 
 export interface RichTextFieldViewProps<Blocks extends Schema> {
   field: CoreRichTextField<Blocks, RichTextOptions<Blocks>>
@@ -43,7 +124,10 @@ export const RichTextFieldView = memo(function RichTextFieldView<
       content: value?.map(toContent) ?? []
     }
   }, [node, store])
-  const extensions = useMemo(() => values(baseExtensions), [])
+  const extensions = useMemo(() => {
+    const schemaExtensions = schemaToExtensions(field, options.schema)
+    return [...values(baseExtensions), ...schemaExtensions]
+  }, [field, options.schema])
   const editor = useEditor({
     content,
     extensions,
