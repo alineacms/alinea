@@ -966,7 +966,13 @@ export class DashboardRoot {
         selectionMode: 'multiple',
         selectionBehavior: 'replace',
         onAction: atom(null, (get, set, entry) => {
-          set(parentId, entry.id)
+          if (entry.hasChildren) set(parentId, entry.id)
+          else
+            set(this.workspace.dashboard.route, {
+              workspace: this.workspace.key,
+              root: this.key,
+              entry: entry.id
+            })
         })
       }
     )
