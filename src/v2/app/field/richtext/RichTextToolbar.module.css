@@ -1,0 +1,49 @@
+.root {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 100%;
+  overflow-x: auto;
+  padding: 4px 8px;
+}
+
+.toolbar {
+  flex-wrap: nowrap;
+  min-width: max-content;
+}
+
+.button {
+  flex: 0 0 auto;
+}
+
+.menuTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.menuText {
+  line-height: 1;
+}
+
+.menuItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 768px) {
+  .root {
+    justify-content: flex-start;
+  }
+}

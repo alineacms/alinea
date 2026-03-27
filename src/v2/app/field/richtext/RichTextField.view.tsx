@@ -1,15 +1,6 @@
-import {
-  Button,
-  Icon,
-  Label,
-  Menu,
-  MenuItem,
-  Toolbar,
-  ToolbarGroup,
-  ToolbarSeparator
-} from '@alinea/components'
+import {Label} from '@alinea/components'
 import styler from '@alinea/styler'
-import {Editor, EditorContent, JSONContent, useEditor} from '@tiptap/react'
+import {EditorContent, JSONContent, useEditor} from '@tiptap/react'
 import {RichTextField as CoreRichTextField} from 'alinea/core/field/RichTextField'
 import {Schema} from 'alinea/core/Schema'
 import {
@@ -23,12 +14,12 @@ import {
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {extensions as baseExtensions} from 'alinea/field/richtext/Extensions'
 import {RichTextOptions} from 'alinea/field/richtext/RichTextField'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useFieldNode, useFieldOptions, useFieldSetter} from 'alinea/v2/store'
 import {useStore} from 'jotai'
 import {memo, useEffect, useMemo} from 'react'
 import {createPortal} from 'react-dom'
 import css from './RichTextField.module.css'
+import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
 
@@ -59,7 +50,7 @@ export const RichTextFieldView = memo(function RichTextFieldView<
     onUpdate({editor}) {
       setValue(fromContent(editor.getJSON()))
     }
-  })!
+  })
   useEffect(() => {
     // Update the editor content when the value changes externally
     if (editor) editor.commands.setContent(content)
@@ -73,78 +64,17 @@ export const RichTextFieldView = memo(function RichTextFieldView<
       >
         <EditorContent editor={editor} className={styles.root()} />
       </Label>
-      {toolbar && createPortal(<RichTextToolbar editor={editor} />, toolbar)}
+      {toolbar &&
+        editor &&
+        createPortal(
+          <RichTextToolbar
+            editor={editor}
+            enableTables={options.enableTables}
+            toolbar={options.toolbar}
+          />,
+          toolbar
+        )}
     </>
-  )
-})
-
-interface RichTextToolbarProps {
-  editor: Editor
-}
-
-const RichTextToolbar = memo(function RichTextToolbar({
-  editor
-}: RichTextToolbarProps) {
-  return (
-    <Toolbar aria-label="Text formatting" data-orientation="horizontal">
-      <ToolbarGroup>
-        <Menu
-          label={
-            <Button appearance="plain">
-              Options...
-              <IcRoundUnfoldMore />
-            </Button>
-          }
-        >
-          <MenuItem>
-            <IcRoundUnfoldMore />
-            Undo
-          </MenuItem>
-          <MenuItem>
-            <IcRoundUnfoldMore />
-            Redo
-          </MenuItem>
-          <MenuItem>
-            <IcRoundUnfoldMore />
-            Insert Link
-          </MenuItem>
-          <MenuItem>
-            <IcRoundUnfoldMore />
-            Insert Image
-          </MenuItem>
-          <MenuItem>
-            <IcRoundUnfoldMore />
-            Insert Grid
-          </MenuItem>
-        </Menu>
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <Button
-          size="square-petite"
-          appearance="plain"
-          data-appearance="active"
-        >
-          <Icon icon={IcRoundUnfoldMore} />
-        </Button>
-
-        <Menu
-          label={
-            <Button size="large" appearance="plain">
-              <Icon icon={IcRoundUnfoldMore} />
-              <Icon icon={IcRoundUnfoldMore} />
-            </Button>
-          }
-        >
-          <MenuItem>
-            <IcRoundUnfoldMore />
-            Undo
-          </MenuItem>
-        </Menu>
-      </ToolbarGroup>
-    </Toolbar>
   )
 })
 

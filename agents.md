@@ -30,3 +30,8 @@ Find the v2 dashboard in src/v2, and v1 in src/dashboard.
 - Do not mock `@alinea/components` in tests; test using the real components.
 - If a component is very complex and a browser environment is needed use 
   `@playwright/experimental-ct-react` and name the test file `ComponentName.spec.tsx`
+
+
+## Known todos
+- Link view: pick external links + distinction of files/images/entries
+- Link picker in RichTextField

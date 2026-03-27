@@ -1,4 +1,4 @@
-import {act, render} from '@testing-library/react'
+import {act, cleanup, render} from '@testing-library/react'
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/core'
 import {TestDB} from 'alinea/core/db/TestDB.js'
@@ -6,7 +6,7 @@ import {TextNode} from 'alinea/core/TextDoc'
 import {richText} from 'alinea/field/richtext'
 import 'alinea/v2/dom'
 import {Dashboard, EditorScope} from 'alinea/v2/store'
-import {expect, test} from 'bun:test'
+import {afterEach, expect, test} from 'bun:test'
 import {createStore, Provider} from 'jotai'
 import {RichTextFieldView} from './RichTextField.view.js'
 import {views} from '../views.js'
@@ -27,6 +27,10 @@ const cms = createCMS({
       }
     })
   }
+})
+
+afterEach(function cleanupView() {
+  cleanup()
 })
 
 test('renders existing rich text content without crashing', async () => {

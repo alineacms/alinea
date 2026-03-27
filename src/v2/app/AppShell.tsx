@@ -30,14 +30,14 @@ export function AppShell({dashboard}: AppShellProps) {
           <SidebarTree dashboard={dashboard} />
 
           <SidebarFooter>
-            <div className={styles.meta()}>db.sha: {sha}</div>
+            <div>db.sha: {sha}</div>
           </SidebarFooter>
         </Sidebar>
 
         <Suspense
           fallback={
             <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-              <ProgressCircle isIndeterminate />
+              <ProgressCircle isIndeterminate aria-label="loading" />
             </Rail>
           }
         >

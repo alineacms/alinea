@@ -417,6 +417,62 @@ export function IcRoundFormatItalic(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+export function IcRoundFormatClear(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" {...props}>
+      <path
+        fill="currentColor"
+        d="M18.5 8c.83 0 1.5-.67 1.5-1.5S19.33 5 18.5 5H6.39l3 3h1.83l-.55 1.28l2.09 2.09L14.21 8zm-1.06 10.88L4.12 5.56a.996.996 0 1 0-1.41 1.41l6.26 6.26l-1.65 3.84c-.39.92.28 1.93 1.27 1.93c.55 0 1.05-.33 1.27-.84l1.21-2.83l4.95 4.95c.39.39 1.02.39 1.41 0c.4-.38.4-1.01.01-1.4"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundTextFields(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" {...props}>
+      <path
+        fill="currentColor"
+        d="M2.5 5.5C2.5 6.33 3.17 7 4 7h3.5v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7H14c.83 0 1.5-.67 1.5-1.5S14.83 4 14 4H4c-.83 0-1.5.67-1.5 1.5M20 9h-6c-.83 0-1.5.67-1.5 1.5S13.17 12 14 12h1.5v5.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V12H20c.83 0 1.5-.67 1.5-1.5S20.83 9 20 9"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundSubscript(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M10.52 10.73L7.3 5.72a1.112 1.112 0 1 1 1.88-1.19l2.76 4.46h.12l2.74-4.45c.21-.34.57-.54.96-.54c.88 0 1.42.98.94 1.72l-3.23 5l3.55 5.55c.48.75-.06 1.73-.94 1.73c-.38 0-.74-.2-.95-.52l-3.07-4.89h-.12l-3.07 4.89c-.2.32-.56.52-.95.52c-.88 0-1.42-.97-.94-1.72zM23 19.5c0-.28-.22-.5-.5-.5H20v-1h2c.55 0 1-.45 1-1v-1c0-.55-.45-1-1-1h-2.5c-.28 0-.5.22-.5.5s.22.5.5.5H22v1h-2c-.55 0-1 .45-1 1v1c0 .55.45 1 1 1h2.5c.28 0 .5-.22.5-.5"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundSuperscript(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M10.51 12.73L7.3 7.72a1.112 1.112 0 1 1 1.88-1.19l2.76 4.46h.12l2.74-4.45c.2-.34.56-.54.95-.54c.88 0 1.42.98.94 1.72l-3.23 5l3.55 5.55c.49.75-.05 1.73-.93 1.73c-.38 0-.74-.2-.95-.52l-3.07-4.89h-.12l-3.07 4.89c-.21.32-.56.52-.95.52c-.88 0-1.42-.97-.94-1.72zM23 8.5c0-.28-.22-.5-.5-.5H20V7h2c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1h-2.5c-.28 0-.5.22-.5.5s.22.5.5.5H22v1h-2c-.55 0-1 .45-1 1v1c0 .55.45 1 1 1h2.5c.28 0 .5-.22.5-.5"
+      />
+    </svg>
+  )
+}
+
 export function IcRoundStrikethroughS(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
@@ -429,6 +485,23 @@ export function IcRoundStrikethroughS(props: SVGProps<SVGSVGElement>) {
       <path
         fill="currentColor"
         d="M6.85 7.15c0-1.46 1.6-2.5 3.82-2.5c1.74 0 2.98.64 3.56 1.69l2.49-1.44C15.73 3.13 13.73 2 10.69 2C6.64 2 4 4.11 4 7.35c0 .22.02.44.05.65H2v3h20V8H6.54c-.01-.1-.02-.2-.02-.3M12 19.35c-2.11 0-3.68-.98-4.24-2.4L5.26 18.4C6.49 20.53 8.87 22 11.95 22c4.05 0 6.73-2.1 6.73-5.35c0-.23-.01-.44-.04-.65h-2.97c.04.17.06.35.06.55c0 1.44-1.63 2.5-3.73 2.5"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundFormatPaint(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M18 4V3c0-.55-.45-1-1-1H5c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V6h1v4h-9c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-9h7c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1"
       />
     </svg>
   )
@@ -480,6 +553,17 @@ export function IcRoundFormatQuote(props: SVGProps<SVGSVGElement>) {
       <path
         fill="currentColor"
         d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"
+      />
+    </svg>
+  )
+}
+
+export function IcRoundLink(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" {...props}>
+      <path
+        fill="currentColor"
+        d="M17 7h-3c-.55 0-1 .45-1 1s.45 1 1 1h3c1.65 0 3 1.35 3 3s-1.35 3-3 3h-3c-.55 0-1 .45-1 1s.45 1 1 1h3c2.76 0 5-2.24 5-5s-2.24-5-5-5m-9 5c0 .55.45 1 1 1h6c.55 0 1-.45 1-1s-.45-1-1-1H9c-.55 0-1 .45-1 1m2 3H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h3c.55 0 1-.45 1-1s-.45-1-1-1H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h3c.55 0 1-.45 1-1s-.45-1-1-1"
       />
     </svg>
   )
