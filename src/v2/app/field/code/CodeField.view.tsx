@@ -2,7 +2,7 @@ import {Elevation, Label} from '@alinea/components'
 import {styler} from '@alinea/styler'
 import {CodeField} from 'alinea/field/code'
 import lolight from 'lolight'
-import {Fragment, useId} from 'react'
+import {Fragment, ReactNode, useId} from 'react'
 import CodeEditor from 'react-simple-code-editor/src/index.js'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 import css from './CodeField.module.css'
@@ -23,6 +23,22 @@ export interface CodeFieldViewProps {
   field: CodeField
 }
 
+export interface CodeEditorInputProps {
+  autoFocus?: boolean
+  description?: ReactNode
+  errorMessage?: ReactNode
+  highlight?: (value: string) => ReactNode
+  invalid?: boolean
+  isRequired?: boolean
+  label?: ReactNode
+  onValueChange: (value: string) => void
+  onBlur?: () => void
+  onFocus?: () => void
+  placeholder?: string
+  readOnly?: boolean
+  value: string
+}
+
 function renderHighlightedCode(value: string) {
   return lolight.tok(value).map(([type, token], index) => {
     const className = tokenClassNames[type]
@@ -35,28 +51,42 @@ function renderHighlightedCode(value: string) {
   })
 }
 
-export function CodeFieldView({field}: CodeFieldViewProps) {
-  const [value = '', setValue] = useFieldValue(field)
-  const options = useFieldOptions(field)
-  const error = useFieldError(field)
+export function CodeEditorInput({
+  autoFocus,
+  description,
+  errorMessage,
+  highlight = renderHighlightedCode,
+  invalid = false,
+  isRequired,
+  label,
+  onBlur,
+  onFocus,
+  onValueChange,
+  placeholder,
+  readOnly,
+  value
+}: CodeEditorInputProps) {
   const inputId = useId()
   return (
     <Label
-      label={options.label}
-      description={options.help}
-      errorMessage={error}
-      isRequired={options.required}
+      label={label}
+      description={description}
+      errorMessage={errorMessage}
+      isRequired={isRequired}
     >
-      <Elevation className={styles.root()}>
+      <Elevation className={styles.root({invalid})}>
         <CodeEditor
+          autoFocus={autoFocus}
           className={styles.editor()}
-          disabled={options.readOnly}
-          highlight={renderHighlightedCode}
-          onValueChange={setValue}
+          disabled={readOnly}
+          highlight={highlight}
+          onBlur={onBlur}
+          onFocus={onFocus}
+          onValueChange={onValueChange}
           padding={14}
-          placeholder={options.inline ? String(options.label) : undefined}
+          placeholder={placeholder}
           preClassName={styles.pre()}
-          readOnly={options.readOnly}
+          readOnly={readOnly}
           tabSize={2}
           textareaClassName={styles.textarea()}
           textareaId={inputId}
@@ -64,5 +94,23 @@ export function CodeFieldView({field}: CodeFieldViewProps) {
         />
       </Elevation>
     </Label>
+  )
+}
+
+export function CodeFieldView({field}: CodeFieldViewProps) {
+  const [value = '', setValue] = useFieldValue(field)
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
+  return (
+    <CodeEditorInput
+      description={options.help}
+      errorMessage={error}
+      isRequired={options.required}
+      label={options.label}
+      onValueChange={setValue}
+      placeholder={options.inline ? String(options.label) : undefined}
+      readOnly={options.readOnly}
+      value={value}
+    />
   )
 }

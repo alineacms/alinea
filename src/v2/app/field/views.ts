@@ -3,6 +3,7 @@ import {ComponentType} from 'react'
 import {CheckFieldView} from './check/CheckField.view.js'
 import {CodeFieldView} from './code/CodeField.view.js'
 import {DateFieldView} from './date/DateField.view.js'
+import {JsonFieldView} from './json/JsonField.view.js'
 import {
   MultipleLinksFieldView,
   SingleLinkFieldView
@@ -21,6 +22,7 @@ export const views: Record<string, ComponentType<any>> = {
   [viewKeys.CheckInput]: CheckFieldView,
   [viewKeys.CodeInput]: CodeFieldView,
   [viewKeys.DateInput]: DateFieldView,
+  [viewKeys.JsonInput]: JsonFieldView,
   [viewKeys.SingleLinkInput]: SingleLinkFieldView,
   [viewKeys.MultipleLinksInput]: MultipleLinksFieldView,
   [viewKeys.TabsView]: TabsView,

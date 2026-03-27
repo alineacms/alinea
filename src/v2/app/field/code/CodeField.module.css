@@ -15,6 +15,12 @@
   background: #ffffff;
 }
 
+.root-invalid {
+  border-color: #d15b6a;
+  box-shadow: 0 0 0 3px rgba(209, 91, 106, 0.16);
+  background: #fff8f8;
+}
+
 .editor {
   width: 100%;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
