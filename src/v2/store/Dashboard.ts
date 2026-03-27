@@ -1143,13 +1143,20 @@ export class ReactiveNode<Value = unknown> {
 
   constructor(initialValue: Value) {
     this.nodes = atom(this.#wrap(initialValue))
-    this.value = atom(
-      get => this.#unwrap(get, get(this.nodes)) as Value,
-      (get, set, update: SetStateAction<Value>) => {
-        this.#reconcile(get, set, this.#resolveUpdate(get(this.value), update))
-        set(this.#dirty, true)
-      }
-    )
+    this.value = atom(this.#read, this.#write)
+  }
+
+  #read = (get: Getter) => {
+    return this.#unwrap(get, get(this.nodes)) as Value
+  }
+
+  #write = (get: Getter, set: Setter, update: SetStateAction<Value>) => {
+    const next =
+      typeof update === 'function'
+        ? (update as Function)(get(this.value))
+        : update
+    this.#reconcile(get, set, next)
+    set(this.#dirty, true)
   }
 
   isEmpty = atom(get => get(this.value) === undefined)
@@ -1164,10 +1171,6 @@ export class ReactiveNode<Value = unknown> {
       return values(nodes).some(node => get(node.isDirty))
     return false
   })
-
-  #resolveUpdate(current: Value, update: SetStateAction<Value>): Value {
-    return typeof update === 'function' ? (update as Function)(current) : update
-  }
 
   #wrap(value: unknown): unknown {
     if (isArray(value)) return value.map(i => new ReactiveNode(i))
@@ -1192,27 +1195,34 @@ export class ReactiveNode<Value = unknown> {
 
     if (isArray(next) && isArray(curr)) {
       let changed = curr.length !== next.length
-      const nextStruct = next.map((val, i) => {
+      const nextStruct = []
+      for (let i = 0; i < next.length; i++) {
+        const val = next[i]
         if (curr[i]) {
           set((curr[i] as ReactiveNode).value, val)
-          return curr[i]
+          nextStruct.push(curr[i])
+        } else {
+          changed = true
+          nextStruct.push(new ReactiveNode(val))
         }
-        changed = true
-        return new ReactiveNode(val)
-      })
+      }
       if (changed) set(this.nodes, nextStruct)
     } else if (isObject<any>(next) && isObject<any>(curr)) {
       let changed = false
       const nextStruct = {...curr} as Record<string, ReactiveNode>
-
-      for (const k of new Set([...Object.keys(curr), ...Object.keys(next)])) {
-        if (!(k in next)) {
-          delete nextStruct[k]
+      for (const key of Object.keys(curr)) {
+        if (!(key in next)) {
+          delete nextStruct[key]
           changed = true
-        } else if (!(k in curr)) {
-          nextStruct[k] = new ReactiveNode(next[k])
+        } else {
+          set((curr[key] as ReactiveNode).value, next[key])
+        }
+      }
+      for (const key of Object.keys(next)) {
+        if (!curr[key]) {
           changed = true
-        } else set((curr[k] as ReactiveNode).value, next[k])
+          nextStruct[key] = new ReactiveNode(next[key])
+        }
       }
       if (changed) set(this.nodes, nextStruct)
     } else if (curr !== next) {
@@ -1240,6 +1250,7 @@ export class ReactiveNode<Value = unknown> {
     const structure = get(this.nodes)
     if (!isArray(structure)) return
     set(this.nodes, [...structure, new ReactiveNode(val)])
+    set(this.#dirty, true)
   })
 
   remove = atom(null, (get, set, i: number) => {
@@ -1249,6 +1260,7 @@ export class ReactiveNode<Value = unknown> {
       this.nodes,
       structure.filter((_, idx) => idx !== i)
     )
+    set(this.#dirty, true)
   })
 
   move = atom(null, (get, set, from: number, to: number) => {
@@ -1257,5 +1269,6 @@ export class ReactiveNode<Value = unknown> {
     const next = [...structure]
     next.splice(to, 0, next.splice(from, 1)[0])
     set(this.nodes, next)
+    set(this.#dirty, true)
   })
 }
