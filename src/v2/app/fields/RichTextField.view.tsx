@@ -43,14 +43,15 @@ export const RichTextFieldView = memo(function RichTextFieldView<
   const options = useFieldOptions(field)
   const toolbar = document.getElementById('alinea-toolbar')
   const setValue = useFieldSetter(field)
+  const node = useFieldNode(field)
   const content = useMemo(() => {
     // Get the value once, but don't subscribe to updates
-    const value = store.get(useFieldNode(field).value) as TextDoc | undefined
+    const value = store.get(node.value) as TextDoc | undefined
     return {
       type: 'doc',
       content: value?.map(toContent) ?? []
     }
-  }, [store, field])
+  }, [node, store])
   const extensions = useMemo(() => values(baseExtensions), [])
   const editor = useEditor({
     content,
@@ -60,7 +61,7 @@ export const RichTextFieldView = memo(function RichTextFieldView<
     }
   })
   useEffect(() => {
-    console.log('Setting content', content)
+    // Update the editor content when the value changes externally
     if (editor) editor.commands.setContent(content)
   }, [editor, content])
   return (
