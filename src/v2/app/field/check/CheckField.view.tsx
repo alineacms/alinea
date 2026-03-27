@@ -1,6 +1,6 @@
 import {Checkbox, Label} from '@alinea/components'
 import {CheckField} from 'alinea/field/check'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../store.js'
+import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 
 export interface CheckFieldViewProps {
   field: CheckField

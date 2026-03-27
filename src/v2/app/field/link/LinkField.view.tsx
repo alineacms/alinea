@@ -12,8 +12,8 @@ import {
   useFieldNode,
   useFieldOptions,
   useFieldValue
-} from '../../store.js'
-import {LinkPicker} from '../LinkPicker.js'
+} from '../../../store.js'
+import {LinkPicker} from '../../LinkPicker.js'
 import css from './LinkField.module.css'
 
 const styles = styler(css)

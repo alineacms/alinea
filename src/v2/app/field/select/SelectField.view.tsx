@@ -2,7 +2,7 @@ import {Select, SelectItem} from '@alinea/components'
 import {Key} from '@react-types/shared'
 import {SelectField, SelectOptions} from 'alinea/field/select'
 import {useMemo} from 'react'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../store.js'
+import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 
 interface SelectItemData {
   id: string

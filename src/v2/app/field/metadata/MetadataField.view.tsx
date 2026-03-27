@@ -1,7 +1,7 @@
 import {Elevation, Label} from '@alinea/components'
 import {MetadataField} from 'alinea/field/metadata'
-import {useFieldError, useFieldNode, useFieldOptions} from '../../store.js'
-import {NodeEditor} from '../Editor.js'
+import {useFieldError, useFieldNode, useFieldOptions} from '../../../store.js'
+import {NodeEditor} from '../../Editor.js'
 
 export interface MetadataFieldViewProps {
   field: MetadataField

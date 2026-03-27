@@ -3,7 +3,7 @@ import {getType} from 'alinea/core/Internal'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {TabsSection} from 'alinea/field/tabs'
-import {EditFields} from '../Editor.js'
+import {EditFields} from '../../Editor.js'
 
 interface TabsViewProps {
   section: Section

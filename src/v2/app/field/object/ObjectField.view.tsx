@@ -5,8 +5,8 @@ import {
   useFieldError,
   useFieldNode,
   useFieldOptions
-} from '../../store.js'
-import {NodeEditor} from '../Editor.js'
+} from '../../../store.js'
+import {NodeEditor} from '../../Editor.js'
 
 export interface ObjectFieldViewProps {
   field: ObjectField<object>

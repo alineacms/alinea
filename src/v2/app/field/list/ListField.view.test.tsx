@@ -9,7 +9,7 @@ import {Dashboard, EditorScope} from 'alinea/v2/store'
 import {expect, test} from 'bun:test'
 import {atom, createStore, Provider} from 'jotai'
 import {ListFieldView} from './ListField.view.js'
-import {views} from './views.js'
+import {views} from '../views.js'
 
 const Article = Config.document('Article', {
   fields: {

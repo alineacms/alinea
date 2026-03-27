@@ -2,7 +2,7 @@ import {TimeField as RacTimeField} from '@alinea/components'
 import {parseTime} from '@internationalized/date'
 import {TimeField} from 'alinea/field/time'
 import {useMemo} from 'react'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../store.js'
+import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 
 export interface TimeFieldViewProps {
   field: TimeField

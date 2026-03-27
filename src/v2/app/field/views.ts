@@ -1,20 +1,20 @@
 import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
 import {ComponentType} from 'react'
-import {CheckFieldView} from './CheckField.view.js'
-import {DateFieldView} from './DateField.view.js'
+import {CheckFieldView} from './check/CheckField.view.js'
+import {DateFieldView} from './date/DateField.view.js'
 import {
   MultipleLinksFieldView,
   SingleLinkFieldView
-} from './LinkField.view.js'
-import {ListFieldView} from './ListField.view.js'
-import {MetadataFieldView} from './MetadataField.view.js'
-import {NumberFieldView} from './NumberField.view.js'
-import {ObjectFieldView} from './ObjectField.view.js'
-import {RichTextFieldView} from './RichTextField.view.js'
-import {SelectFieldView} from './SelectField.view.js'
-import {TabsView} from './Tabs.view.js'
-import {TextFieldView} from './TextField.view.js'
-import {TimeFieldView} from './TimeField.view.js'
+} from './link/LinkField.view.js'
+import {ListFieldView} from './list/ListField.view.js'
+import {MetadataFieldView} from './metadata/MetadataField.view.js'
+import {NumberFieldView} from './number/NumberField.view.js'
+import {ObjectFieldView} from './object/ObjectField.view.js'
+import {RichTextFieldView} from './richtext/RichTextField.view.js'
+import {SelectFieldView} from './select/SelectField.view.js'
+import {TabsView} from './tabs/Tabs.view.js'
+import {TextFieldView} from './text/TextField.view.js'
+import {TimeFieldView} from './time/TimeField.view.js'
 
 export const views: Record<string, ComponentType<any>> = {
   [viewKeys.CheckInput]: CheckFieldView,
