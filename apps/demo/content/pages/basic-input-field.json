@@ -6,6 +6,7 @@
   "description": "",
   "form": {
     "schema": {
+      "type": "object",
       "properties": {
         "name": {
           "type": "string",
@@ -27,8 +28,7 @@
       },
       "textarea": {
         "ui:widget": "textarea"
-      },
-      "email": {}
+      }
     }
   }
 }
