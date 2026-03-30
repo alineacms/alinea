@@ -1208,6 +1208,8 @@ export class ReactiveNode<Value = unknown> {
       return false
     },
     (get, set, value: false) => {
+      const isDirty = get(this.isDirty)
+      if (!isDirty) return
       set(this.#dirty, false)
       const nodes = get(this.nodes)
       if (isArray<ReactiveNode>(nodes)) {
