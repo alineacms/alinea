@@ -1283,6 +1283,18 @@ export class ReactiveNode<Value = unknown> {
     set(this.isDirty, false)
   })
 
+  commit = atom(null, (get, set): Value => {
+    const nodes = get(this.nodes)
+    if (isArray<ReactiveNode>(nodes)) {
+      for (const node of nodes) set(node.commit)
+    } else if (isObject<ReactiveObject>(nodes)) {
+      for (const node of values(nodes)) set(node.commit)
+    }
+    this.#initialValue = get(this.value)
+    set(this.#dirty, false)
+    return this.#initialValue
+  })
+
   field = dispense((key: string): Writable<unknown> => {
     return atom(
       get => {
