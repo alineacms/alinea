@@ -31,7 +31,7 @@ import {
   useFieldSetter
 } from 'alinea/v2/store'
 import {atom, useAtomValue, useStore} from 'jotai'
-import {memo, useMemo} from 'react'
+import {memo, useMemo, useRef} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor'
 import {extensions as baseExtensions} from './Extensions.js'
@@ -181,7 +181,11 @@ export const RichTextFieldView = memo(function RichTextFieldView<
   Blocks extends Schema
 >({field}: RichTextFieldViewProps<Blocks>) {
   const node = useFieldNode(field)
-  const id = useMemo(createId, [node])
+  const isDirty = useAtomValue(node.isDirty)
+  const prevIsDirty = useRef(isDirty)
+  const wasReset = !isDirty && prevIsDirty.current
+  prevIsDirty.current = isDirty
+  const id = useMemo(createId, [node, wasReset])
   // Tiptap really does not want you to control its state
   return <RTView field={field} key={id} />
 })
