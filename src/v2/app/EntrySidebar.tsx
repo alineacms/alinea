@@ -1,12 +1,21 @@
-import {Icon, Tab, TabList, TabPanel, Tabs} from '@alinea/components'
+import {Button, Icon, Tab, TabList, TabPanel, Tabs} from '@alinea/components'
 import {styler} from '@alinea/styler'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {IcRoundHistory, IcRoundVisibility} from '../icons.js'
+import {DashboardEntry} from '../store.js'
 import css from './EntrySidebar.module.css'
 import {Sidebar, SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 
 const styles = styler(css)
 
-export function EntrySidebar() {
+export interface EntrySidebarProps {
+  entry: DashboardEntry
+}
+
+export function EntrySidebar({entry}: EntrySidebarProps) {
+  const editor = useAtomValue(entry.editor)
+  const isEditing = useAtomValue(editor.node.isDirty)
+  const reset = useSetAtom(editor.node.reset)
   return (
     <Sidebar>
       <Tabs defaultSelectedKey="history" variant="subtle">
@@ -24,7 +33,16 @@ export function EntrySidebar() {
         </SidebarHeader>
 
         <SidebarBody>
-          <TabPanel id="history">History placeholder</TabPanel>
+          <TabPanel id="history">
+            {isEditing ? (
+              <>
+                Editing
+                <Button onPress={reset}>Discard changes</Button>
+              </>
+            ) : (
+              'Not editing'
+            )}
+          </TabPanel>
           <TabPanel id="preview">Preview placeholder</TabPanel>
         </SidebarBody>
       </Tabs>

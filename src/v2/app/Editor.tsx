@@ -94,7 +94,7 @@ function EntryEditor({entry}: EntryEditorProps) {
           </RailBody>
         </Rail>
 
-        <EntrySidebar />
+        <EntrySidebar entry={entry} />
       </EditorScope>
     </EntryScope>
   )

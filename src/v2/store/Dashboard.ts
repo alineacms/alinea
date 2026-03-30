@@ -1170,10 +1170,12 @@ function isObject<Value extends object>(input: unknown): input is Value {
 type ReactiveObject = Record<string, ReactiveNode>
 
 export class ReactiveNode<Value = unknown> {
+  #initialValue: Value
   nodes: WritableAtom<unknown, [unknown], void>
   value: Writable<Value>
 
   constructor(initialValue: Value) {
+    this.#initialValue = initialValue
     this.nodes = atom(this.#wrap(initialValue))
     this.value = atom(this.#read, this.#write)
   }
@@ -1188,21 +1190,33 @@ export class ReactiveNode<Value = unknown> {
         ? (update as Function)(get(this.value))
         : update
     this.#reconcile(get, set, next)
-    set(this.#dirty, true)
+    const isChanged = next === this.#initialValue
+    set(this.#dirty, !isChanged)
   }
 
   isEmpty = atom(get => get(this.value) === undefined)
   #dirty = atom(false)
-  isDirty = atom((get): boolean => {
-    const dirty = get(this.#dirty)
-    if (dirty) return true
-    const nodes = get(this.nodes)
-    if (isArray<ReactiveNode>(nodes))
-      return nodes.some(node => get(node.isDirty))
-    if (isObject<ReactiveObject>(nodes))
-      return values(nodes).some(node => get(node.isDirty))
-    return false
-  })
+  isDirty = atom(
+    (get): boolean => {
+      const dirty = get(this.#dirty)
+      if (dirty) return true
+      const nodes = get(this.nodes)
+      if (isArray<ReactiveNode>(nodes))
+        return nodes.some(node => get(node.isDirty))
+      if (isObject<ReactiveObject>(nodes))
+        return values(nodes).some(node => get(node.isDirty))
+      return false
+    },
+    (get, set, value: false) => {
+      set(this.#dirty, false)
+      const nodes = get(this.nodes)
+      if (isArray<ReactiveNode>(nodes)) {
+        for (const node of nodes) set(node.isDirty, false)
+      } else if (isObject<ReactiveObject>(nodes)) {
+        for (const node of values(nodes)) set(node.isDirty, false)
+      }
+    }
+  )
 
   #wrap(value: unknown): unknown {
     if (isArray(value)) return value.map(i => new ReactiveNode(i))
@@ -1261,6 +1275,11 @@ export class ReactiveNode<Value = unknown> {
       set(this.nodes, this.#wrap(next))
     }
   }
+
+  reset = atom(null, (get, set): void => {
+    set(this.value, this.#initialValue)
+    set(this.isDirty, false)
+  })
 
   field = dispense((key: string): Writable<unknown> => {
     return atom(
