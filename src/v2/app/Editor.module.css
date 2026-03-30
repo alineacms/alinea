@@ -53,13 +53,28 @@
 
 .fields {
   display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 16px;
+}
+
+.fieldSlot {
+  min-width: 0;
 }
 
 @media (max-width: 1080px) {
   .entryLayout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: var(--header-height, 56px) minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fieldSlot {
+    grid-column: 1 / -1 !important;
   }
 }
 

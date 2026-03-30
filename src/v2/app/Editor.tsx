@@ -1,6 +1,6 @@
 import {Button, Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
-import {Field} from 'alinea/core/Field'
+import {Field, type FieldOptions} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {ErrorMessage} from 'alinea/ui'
@@ -18,6 +18,7 @@ import {
 import {
   EditorScope,
   EntryScope,
+  useFieldOptions,
   useFieldView,
   useNodeEditor
 } from '../store/hooks.js'
@@ -154,14 +155,32 @@ interface EditFieldProps {
   field: Field
 }
 
+interface FieldLayoutOptions extends FieldOptions<unknown> {
+  width?: number
+}
+
 const EditField = memo(function EditField({field}: EditFieldProps) {
+  const options = useFieldOptions(field) as FieldLayoutOptions
   const View = useFieldView(field)
+  if (options.hidden) return null
   if (!View)
     return (
       <ErrorMessage error={`Missing view for field: ${Field.label(field)}`} />
     )
-  return <View field={field} />
+  return (
+    <div
+      className={styles.fieldSlot()}
+      style={{gridColumn: `span ${fieldSpan(options.width)}`}}
+    >
+      <View field={field} />
+    </div>
+  )
 })
+
+function fieldSpan(width = 1): number {
+  const columns = 12
+  return Math.max(1, Math.min(columns, Math.round(width * columns)))
+}
 
 interface TypeBadgeProps {
   type: DashboardType
