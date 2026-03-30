@@ -36,3 +36,4 @@ Find the v2 dashboard in src/v2, and v1 in src/dashboard.
 ## Known todos
 - Link view: pick external links + distinction of files/images/entries
 - Link picker in RichTextField
+- Path field: slugify, mask and unique validation
