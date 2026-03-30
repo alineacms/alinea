@@ -70,6 +70,7 @@ function EntryEditor({entry}: EntryEditorProps) {
   const type = useAtomValue(entry.type)
   const [isPending, startTransition] = useTransition()
   const save = useSetAtom(entry.saveDraft)
+  const isDirty = useAtomValue(editor.node.isDirty)
   return (
     <EntryScope entry={entry}>
       <EditorScope editor={editor}>
@@ -77,14 +78,16 @@ function EntryEditor({entry}: EntryEditorProps) {
           <RailHeader>
             <h1 className={styles.mainTitle()}>{title}</h1>
             <TypeBadge type={type} />
-            <div style={{marginLeft: 'auto'}}>
-              <Button
-                isPending={isPending}
-                onPress={() => startTransition(save)}
-              >
-                {isPending ? 'Saving...' : 'Save Draft'}
-              </Button>
-            </div>
+            {isDirty && (
+              <div style={{marginLeft: 'auto'}}>
+                <Button
+                  isPending={isPending}
+                  onPress={() => startTransition(save)}
+                >
+                  {isPending ? 'Saving...' : 'Save Draft'}
+                </Button>
+              </div>
+            )}
           </RailHeader>
 
           <RailBody>
