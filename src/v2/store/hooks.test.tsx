@@ -63,7 +63,7 @@ test('useFieldScope creates a nested scope that updates the parent field value',
     set: {title: 'Hello'}
   })
 
-  const loaded = await store.get(dashboard.entries[entry._id])
+  const loaded = await store.get(dashboard.entries(entry._id))
   const editor = await store.get(loaded.editor)
 
   const view = render(
@@ -76,7 +76,7 @@ test('useFieldScope creates a nested scope that updates the parent field value',
 
   fireEvent.click(view.getByRole('button'))
 
-  expect(store.get(editor.field.seo.value)).toEqual({description: 'Meta'})
+  expect(store.get(editor.field('seo')!.value)).toEqual({description: 'Meta'})
   expect(store.get(editor.value)).toMatchObject({
     title: 'Hello',
     path: 'hello',

@@ -28,5 +28,5 @@ test('updates the selected value', async () => {
   fireEvent.click(view.getByRole('button'))
   fireEvent.click(view.getByRole('option', {name: 'Published'}))
 
-  expect(store.get(editor.field.status!.value)).toBe('published')
+  expect(store.get(editor.field('status')!.value)).toBe('published')
 })

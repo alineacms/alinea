@@ -59,7 +59,7 @@ test('dashboard', () => {
   const keys = store.get(dashboard.workspaces)
   expect(keys).toEqual(['main'])
 
-  const main = dashboard.workspace.main
+  const main = dashboard.workspace('main')
   const rootKeys = store.get(main.roots)
   expect(rootKeys).toEqual(['archive', 'pages'])
 
@@ -71,7 +71,7 @@ test('derives the current root from selection or falls back to the first root', 
   const db = new TestDB(cms.config)
   const store = createStore()
   const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
-  const main = dashboard.workspace.main
+  const main = dashboard.workspace('main')
 
   const initialRoot = store.get(main.tree.currentRoot)
   expect(initialRoot?.key).toEqual('archive')
@@ -85,7 +85,7 @@ test('reparents an entry when dropped on a tree node', async () => {
   const db = new TestDB(cms.config)
   const store = createStore()
   const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
-  const main = dashboard.workspace.main
+  const main = dashboard.workspace('main')
 
   const folder = await db.create({
     type: Page,
@@ -123,7 +123,7 @@ test('moves an entry to another root when dropped beside a root-level target', a
   const db = new TestDB(cms.config)
   const store = createStore()
   const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
-  const main = dashboard.workspace.main
+  const main = dashboard.workspace('main')
 
   const source = await db.create({
     type: Page,
@@ -161,7 +161,7 @@ test('accepts external entry drops on a tree node', async () => {
   const db = new TestDB(cms.config)
   const store = createStore()
   const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
-  const main = dashboard.workspace.main
+  const main = dashboard.workspace('main')
 
   const folder = await db.create({
     type: Page,
@@ -200,7 +200,7 @@ test('accepts external entry drops before a tree item', async () => {
   const db = new TestDB(cms.config)
   const store = createStore()
   const dashboard = new Dashboard(atom(db), atom(cms.config), atom(db.index))
-  const main = dashboard.workspace.main
+  const main = dashboard.workspace('main')
 
   const source = await db.create({
     type: Page,
@@ -249,7 +249,7 @@ test('derives editor value from writable field atoms', async () => {
     set: {title: 'Hello'}
   })
 
-  const loaded = await store.get(dashboard.entries[entry._id])
+  const loaded = await store.get(dashboard.entries(entry._id))
   const editor = await store.get(loaded.editor)
 
   expect(store.get(editor.value)).toMatchObject({
@@ -257,7 +257,7 @@ test('derives editor value from writable field atoms', async () => {
     path: 'hello'
   })
 
-  store.set(editor.field.title.value, 'Updated')
+  store.set(editor.field('title')!.value, 'Updated')
 
   expect(store.get(editor.value)).toMatchObject({
     title: 'Updated',
@@ -275,9 +275,9 @@ test('loads hasChildren before constructing dashboard entries', async () => {
     root: 'pages',
     set: {title: 'Parent'}
   })
-  const unsubscribe = store.sub(dashboard.entries[parent._id], () => {})
+  const unsubscribe = store.sub(dashboard.entries(parent._id), () => {})
 
-  const initial = await store.get(dashboard.entries[parent._id])
+  const initial = await store.get(dashboard.entries(parent._id))
   expect(initial.hasChildren).toBe(false)
 
   await db.create({
@@ -287,7 +287,7 @@ test('loads hasChildren before constructing dashboard entries', async () => {
     set: {title: 'Child'}
   })
 
-  const updated = await store.get(dashboard.entries[parent._id])
+  const updated = await store.get(dashboard.entries(parent._id))
   expect(updated.hasChildren).toBe(true)
 
   unsubscribe()

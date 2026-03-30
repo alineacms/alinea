@@ -72,7 +72,7 @@ test('renders existing rich text content without crashing', async () => {
     }
   })
 
-  const loaded = await store.get(dashboard.entries[entry._id])
+  const loaded = await store.get(dashboard.entries(entry._id))
   const editor = await store.get(loaded.editor)
 
   const view = render(
@@ -106,7 +106,7 @@ test('writes editor content changes back into the field value', async () => {
     }
   })
 
-  const loaded = await store.get(dashboard.entries[entry._id])
+  const loaded = await store.get(dashboard.entries(entry._id))
   const editor = await store.get(loaded.editor)
 
   const view = render(
@@ -124,7 +124,7 @@ test('writes editor content changes back into the field value', async () => {
     await Promise.resolve()
   })
 
-  expect(store.get(editor.field.body!.value)).toEqual([
+  expect(store.get(editor.field('body')!.value)).toEqual([
     {
       _type: 'paragraph',
       content: [{_type: 'text', [TextNode.text]: 'After'}]
@@ -151,7 +151,7 @@ test('undoes rich text changes through history', async () => {
     }
   })
 
-  const loaded = await store.get(dashboard.entries[entry._id])
+  const loaded = await store.get(dashboard.entries(entry._id))
   const editor = await store.get(loaded.editor)
 
   const view = render(
@@ -174,7 +174,7 @@ test('undoes rich text changes through history', async () => {
     await Promise.resolve()
   })
 
-  expect(store.get(editor.field.body!.value)).toEqual([
+  expect(store.get(editor.field('body')!.value)).toEqual([
     {
       _type: 'paragraph',
       content: [{_type: 'text', [TextNode.text]: 'Before'}]
@@ -202,7 +202,7 @@ test('preserves block field data when rich text content updates', async () => {
     }
   })
 
-  const loaded = await store.get(dashboard.entries[entry._id])
+  const loaded = await store.get(dashboard.entries(entry._id))
   const editor = await store.get(loaded.editor)
 
   const view = render(
@@ -242,7 +242,7 @@ test('preserves block field data when rich text content updates', async () => {
     await Promise.resolve()
   })
 
-  const value = store.get(editor.field.body!.value) as Array<{
+  const value = store.get(editor.field('body')!.value) as Array<{
     _type: string
     _id: string
     title?: string

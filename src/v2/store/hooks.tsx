@@ -124,7 +124,7 @@ export function useFieldView<StoredValue, QueryValue, Mutator, Options>(
 
 export function useSiblingFieldValue(key: string) {
   const editor = useEditor()
-  const info = editor.field[key]
+  const info = editor.field(key)
   assert(info, `Field not found: ${key}`)
   return useAtomValue(info.value)
 }

@@ -44,5 +44,5 @@ test('inserts indentation when pressing tab', async () => {
   input.selectionEnd = 0
   fireEvent.keyDown(input, {key: 'Tab'})
 
-  expect(store.get(editor.field.snippet!.value)).toBe('  ')
+  expect(store.get(editor.field('snippet')!.value)).toBe('  ')
 })

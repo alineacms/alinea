@@ -24,7 +24,7 @@ interface EntryRowProps {
 
 function EntryRow({entryId}: EntryRowProps) {
   const dashboard = useDashboard()
-  const entry = useAtomValue(dashboard.entries[entryId])
+  const entry = useAtomValue(dashboard.entries(entryId))
   const label = useAtomValue(entry.label)
   const type = useAtomValue(entry.type)
   return (
@@ -39,7 +39,7 @@ interface LinkRowProps {
 }
 
 function LinkRow({node}: LinkRowProps) {
-  const entryId = useAtomValue(node.field._entry) as string | undefined
+  const entryId = useAtomValue(node.field('_entry')) as string | undefined
   if (!entryId) return null
   return <EntryRow entryId={entryId} />
 }

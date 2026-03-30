@@ -27,5 +27,5 @@ test('updates the time field value', async () => {
   input!.value = '14:30'
   fireEvent.change(input!)
 
-  expect(store.get(editor.field.publishTime!.value)).toBe('14:30')
+  expect(store.get(editor.field('publishTime')!.value)).toBe('14:30')
 })

@@ -69,7 +69,7 @@ export class Dashboard {
           // Listen to db changes and update entry revisions
           const listen = (event: Event) => {
             if (event instanceof IndexEvent && event.data.op === 'entry') {
-              set(this.revisions[event.data.id], current => current + 1)
+              set(this.revisions(event.data.id), current => current + 1)
             }
           }
           events.addEventListener(IndexEvent.type, listen)
@@ -122,9 +122,9 @@ export class Dashboard {
     const root = get(this.selectedRoot)
     const workspace = get(this.selectedWorkspace)
     const {entry} = get(this.route)
-    if (entry) return {entry: await get(this.entries[entry])}
+    if (entry) return {entry: await get(this.entries(entry))}
     if (!workspace) return null
-    if (root) return {root: this.workspace[workspace].root[root]}
+    if (root) return {root: this.workspace(workspace).root(root)}
     return null
   })
 
@@ -183,20 +183,20 @@ export class Dashboard {
     const workspaces = get(this.workspaces)
     return workspaces.map(workspace => ({
       id: workspace,
-      label: get(this.workspace[workspace].label),
-      icon: get(this.workspace[workspace].icon)
+      label: get(this.workspace(workspace).label),
+      icon: get(this.workspace(workspace).icon)
     }))
   })
 
   currentWorkspace = atom(get => {
     const workspaceKey = get(this.selectedWorkspace)
-    return this.workspace[workspaceKey]
+    return workspaceKey ? this.workspace(workspaceKey) : null
   })
 
   currentRoot = atom(get => {
     const workspace = get(this.currentWorkspace)
     const rootKey = get(this.selectedRoot)
-    return workspace ? workspace.root[rootKey] : null
+    return workspace ? workspace.root(rootKey) : null
   })
 
   type = dispense(key => {
@@ -228,7 +228,7 @@ export class Dashboard {
         const load = get(this.#entryLoader)
         const [result, error] = await load(id)
         if (error) throw error
-        get(this.revisions[id])
+        get(this.revisions(id))
         return new DashboardEntry(this, result)
       })
     )
@@ -309,7 +309,7 @@ export class DashboardEditor {
   }
   get(field: Field) {
     const key = this.#keyOfField(field)
-    return this.field[key]
+    return this.field(key)
   }
 }
 
@@ -321,7 +321,7 @@ export class DashboardSection {
 
   view = atom(get => {
     const view = Section.view(this.section)
-    if (typeof view === 'string') return get(this.dashboard.view[view])
+    if (typeof view === 'string') return get(this.dashboard.view(view))
     return view
   })
 }
@@ -394,10 +394,10 @@ export class DashboardExplorer {
   workspace = atom(
     get => {
       const {workspace} = get(this.location)
-      return this.dashboard.workspace[workspace]
+      return this.dashboard.workspace(workspace)
     },
     (get, set, update: string) => {
-      const roots = get(this.dashboard.workspace[update].roots)
+      const roots = get(this.dashboard.workspace(update).roots)
       set(this.location, {workspace: update, root: roots[0]})
     }
   )
@@ -407,7 +407,7 @@ export class DashboardExplorer {
       const {root} = get(this.location)
       if (!root) return
       const workspace = get(this.workspace)
-      return workspace.root[root]
+      return workspace.root(root)
     },
     (get, set, update: string) => {
       const workspace = get(this.workspace)
@@ -419,7 +419,7 @@ export class DashboardExplorer {
     get => {
       const {parentId} = get(this.location)
       if (!parentId) return
-      return get(this.dashboard.entries[parentId])
+      return get(this.dashboard.entries(parentId))
     },
     (get, set, parentId: string | undefined) => {
       const location = get(this.location)
@@ -446,7 +446,7 @@ export class DashboardExplorer {
         status: 'preferDraft'
       })
       return Promise.all(
-        children.map(id => this.dashboard.entries[id]).map(get)
+        children.map(id => this.dashboard.entries(id)).map(get)
       )
     })
   )
@@ -455,7 +455,7 @@ export class DashboardExplorer {
     atom(async get => {
       const {parentId} = get(this.location)
       if (!parentId) return []
-      const parent = await get(this.dashboard.entries[parentId])
+      const parent = await get(this.dashboard.entries(parentId))
       const parents = await get(parent.parents)
       const label = get(parent.label)
       return [
@@ -475,7 +475,7 @@ export class DashboardField {
     public key: string,
     public field: Field
   ) {
-    this.value = this.draft.node.field[key]
+    this.value = this.draft.node.field(key)
   }
 
   #getter = atom(get => {
@@ -512,7 +512,7 @@ export class DashboardField {
 
   view = atom(get => {
     const view = Field.view(this.field)
-    if (typeof view === 'string') return get(this.draft.dashboard.view[view])
+    if (typeof view === 'string') return get(this.draft.dashboard.view(view))
     return view
   })
 }
@@ -574,7 +574,7 @@ export class DashboardWorkspace {
         })
         return
       }
-      const {root, workspace} = await get(this.dashboard.entries[selectedId])
+      const {root, workspace} = await get(this.dashboard.entries(selectedId))
       set(this.dashboard.route, {
         workspace: workspace,
         root: root,
@@ -608,8 +608,8 @@ export class DashboardWorkspace {
     const roots = get(this.roots)
     return roots.map(root => ({
       id: root,
-      label: get(this.root[root].label),
-      icon: get(this.root[root].icon)
+      label: get(this.root(root).label),
+      icon: get(this.root(root).icon)
     }))
   })
 }
@@ -627,7 +627,7 @@ export class DashboardTree {
     const route = get(this.workspace.dashboard.route)
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
-    const {parentIds} = await get(this.workspace.dashboard.entries[route.entry])
+    const {parentIds} = await get(this.workspace.dashboard.entries(route.entry))
     const keys = new Set<Key>(parentIds)
     if (route.root) keys.add(`${ROOT_KEY_PREFIX}${route.root}`)
     return keys
@@ -672,20 +672,20 @@ export class DashboardTree {
     }
   )
 
-  entryItems: Record<string, Atom<Promise<DashboardTreeItem>>> = dispense(
-    id => {
-      return atom(async get => {
-        const entry = await get(this.workspace.dashboard.entries[id])
+  entryItems: (id: string) => Atom<Promise<DashboardTreeItem>> = dispense(
+    (id: string): Atom<Promise<DashboardTreeItem>> => {
+      return atom(async (get): Promise<DashboardTreeItem> => {
+        const entry = await get(this.workspace.dashboard.entries(id))
         return new DashboardTreeItem(
           this,
           id,
           entry.icon,
           entry.label,
-          atom(async get => {
+          atom(async (get): Promise<Array<DashboardTreeItem>> => {
             const children = await get(entry.children)
-            for (const childId of children) get(this.entryItems[childId])
+            for (const childId of children) get(this.entryItems(childId))
             return Promise.all(
-              children.map(childId => this.entryItems[childId]).map(get)
+              children.map(childId => this.entryItems(childId)).map(get)
             )
           }),
           entry.hasChildren
@@ -694,19 +694,19 @@ export class DashboardTree {
     }
   )
 
-  rootItems: Record<string, Atom<Promise<DashboardTreeItem>>> = dispense(
-    key => {
-      return atom(async get => {
-        const root = this.workspace.root[key]
+  rootItems: (key: string) => Atom<Promise<DashboardTreeItem>> = dispense(
+    (key: string): Atom<Promise<DashboardTreeItem>> => {
+      return atom(async (get): Promise<DashboardTreeItem> => {
+        const root = this.workspace.root(key)
         const hasChildren = await get(root.hasChildren)
         return new DashboardTreeItem(
           this,
           `${ROOT_KEY_PREFIX}${root.key}`,
           root.icon,
           root.label,
-          atom(async get => {
+          atom(async (get): Promise<Array<DashboardTreeItem>> => {
             const ids = await get(root.children)
-            return Promise.all(ids.map(id => this.entryItems[id]).map(get))
+            return Promise.all(ids.map(id => this.entryItems(id)).map(get))
           }),
           hasChildren
         )
@@ -716,7 +716,7 @@ export class DashboardTree {
 
   items = atom(get => {
     const roots = get(this.workspace.roots)
-    return Promise.all(roots.map(key => this.rootItems[key]).map(get))
+    return Promise.all(roots.map(key => this.rootItems(key)).map(get))
   })
 
   // dnd
@@ -863,7 +863,7 @@ export class DashboardEntry {
     this.workspace = data.workspace
     this.root = data.root
     this.hasChildren = data.hasChildren
-    this.type = dashboard.type[data.type]
+    this.type = dashboard.type(data.type)
     this.parentId = data.parentId
     this.parentIds = data.parents.map(p => p.id)
     this.locales = new Map(
@@ -871,7 +871,7 @@ export class DashboardEntry {
         return [entry.locale, entry] as const
       })
     )
-    this.#root = dashboard.workspace[this.workspace].root[this.root]
+    this.#root = dashboard.workspace(this.workspace).root(this.root)
   }
 
   label = atom(get => {
@@ -886,7 +886,7 @@ export class DashboardEntry {
 
   parents = atom(async get => {
     return Promise.all(
-      this.parentIds.map(id => get(this.dashboard.entries[id]))
+      this.parentIds.map(id => get(this.dashboard.entries(id)))
     )
   })
 
@@ -1121,14 +1121,14 @@ function loader<Value>(fn: BatchLoadFn<Value>) {
   }
 }
 
-function dispense<T>(fn: (key: string) => T): Record<string, T> {
-  return new Proxy(Object.create(null), {
-    get(target: Record<string | symbol, T>, key: string | symbol) {
-      if (!(typeof key === 'string')) return target[key]
-      if (!(key in target)) target[key] = fn(key)
-      return target[key]
-    }
-  })
+function dispense<Key extends string, Value>(
+  fn: (key: Key) => Value
+): (key: Key) => Value {
+  const values = new Map<Key, Value>()
+  return function dispenseValue(key: Key) {
+    if (!values.has(key)) values.set(key, fn(key))
+    return values.get(key)!
+  }
 }
 
 const DASHBOARD_ENTRY_DRAG_TYPE = 'application/x-alinea-entry-id'

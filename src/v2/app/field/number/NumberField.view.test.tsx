@@ -22,5 +22,5 @@ test('updates the number field value', async () => {
 
   fireEvent.click(view.getByRole('button', {name: 'Increase Rating'}))
 
-  expect(store.get(editor.field.rating!.value)).toBe(1)
+  expect(store.get(editor.field('rating')!.value)).toBe(1)
 })

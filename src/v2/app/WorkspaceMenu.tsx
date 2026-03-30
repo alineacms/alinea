@@ -14,7 +14,7 @@ interface WorkspaceMenuProps {
 export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
   const [selected, setSelected] = useAtom(dashboard.selectedWorkspace)
   const workspaces = useAtomValue(dashboard.workspaces)
-  const workspace = dashboard.workspace[selected]
+  const workspace = dashboard.workspace(selected)
   const color = useAtomValue(workspace.color)
   const Icon = useAtomValue(workspace.icon) ?? IcAlineaLogo
   const label = useAtomValue(workspace.label)
@@ -39,7 +39,7 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
       {workspaces.map(workspace => (
         <WorkspaceItem
           key={workspace}
-          workspace={dashboard.workspace[workspace]}
+          workspace={dashboard.workspace(workspace)}
         />
       ))}
     </Menu>

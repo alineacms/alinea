@@ -22,5 +22,5 @@ test('toggles the check field value', async () => {
 
   fireEvent.click(view.getByRole('checkbox', {name: 'Published'}))
 
-  expect(store.get(editor.field.published!.value)).toBe(true)
+  expect(store.get(editor.field('published')!.value)).toBe(true)
 })

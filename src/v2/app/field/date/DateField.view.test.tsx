@@ -27,5 +27,5 @@ test('updates the date field value', async () => {
   input!.value = '2026-03-19'
   fireEvent.change(input!)
 
-  expect(store.get(editor.field.publishDate!.value)).toBe('2026-03-19')
+  expect(store.get(editor.field('publishDate')!.value)).toBe('2026-03-19')
 })

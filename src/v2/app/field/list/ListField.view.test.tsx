@@ -54,7 +54,7 @@ async function renderField() {
     set: {title: 'Article'}
   })
 
-  const loaded = await store.get(dashboard.entries[entry._id])
+  const loaded = await store.get(dashboard.entries(entry._id))
   const editor = await store.get(loaded.editor)
 
   const view = render(
@@ -74,7 +74,7 @@ test('adds a list item and updates nested field values', async () => {
   fireEvent.click(view.getByRole('button', {name: 'Add Item'}))
 
   expect(view.getByRole('textbox', {name: 'Title'})).toBeTruthy()
-  expect(store.get(editor.field.blocks!.value)).toMatchObject([
+  expect(store.get(editor.field('blocks')!.value)).toMatchObject([
     {_type: 'item', title: ''}
   ])
 })
@@ -85,7 +85,7 @@ test('moves and removes list items', async () => {
   fireEvent.click(view.getByRole('button', {name: 'Add Item'}))
   fireEvent.click(view.getByRole('button', {name: 'Add Item'}))
 
-  const beforeMove = store.get(editor.field.blocks!.value) as Array<{
+  const beforeMove = store.get(editor.field('blocks')!.value) as Array<{
     _id: string
   }>
 
@@ -96,7 +96,7 @@ test('moves and removes list items', async () => {
     )
   )
 
-  const afterMove = store.get(editor.field.blocks!.value) as Array<{
+  const afterMove = store.get(editor.field('blocks')!.value) as Array<{
     _id: string
   }>
   expect(afterMove.map(item => item._id)).toEqual([
@@ -111,6 +111,6 @@ test('moves and removes list items', async () => {
     )
   )
 
-  const items = store.get(editor.field.blocks!.value) as Array<{_id: string}>
+  const items = store.get(editor.field('blocks')!.value) as Array<{_id: string}>
   expect(items.map(item => item._id)).toEqual([beforeMove[0]._id])
 })

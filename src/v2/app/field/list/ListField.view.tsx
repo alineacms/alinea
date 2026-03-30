@@ -125,7 +125,7 @@ function ListFieldRow({
   rows,
   schema
 }: ListFieldRowProps) {
-  const typeName = useAtomValue(row.field._type) as string
+  const typeName = useAtomValue(row.field('_type')) as string
   const setRows = useSetAtom(list.value)
   const type = schema[typeName]
   if (!type) return null

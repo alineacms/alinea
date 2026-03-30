@@ -48,7 +48,7 @@ export async function renderField({
     set: {title: 'Entry', ...set}
   })
 
-  const loaded = await store.get(dashboard.entries[entry._id])
+  const loaded = await store.get(dashboard.entries(entry._id))
   const editor = await store.get(loaded.editor)
 
   const view = render(
