@@ -1,8 +1,9 @@
 import {Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
+import {assert} from 'alinea/core/util/Assert'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {memo, Suspense} from 'react'
+import {memo, Suspense, useMemo} from 'react'
 import {
   Collection,
   ListLayout,
@@ -63,6 +64,15 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   const isExpanded = useAtomValue(item.isExpanded)
   let icon = useAtomValue(item.icon)
   if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription
+  const children = useMemo(() => {
+    return (
+      isExpanded && (
+        <Suspense>
+          <SidebarItemChildren item={item} />
+        </Suspense>
+      )
+    )
+  }, [isExpanded, item])
   return (
     <TreeItem
       id={item.id}
@@ -71,11 +81,7 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
       hasChildItems={item.hasChildren}
       icon={icon}
     >
-      {isExpanded && (
-        <Suspense>
-          <SidebarItemChildren item={item} />
-        </Suspense>
-      )}
+      {children}
     </TreeItem>
   )
 })
@@ -94,6 +100,7 @@ export const SidebarTree = memo(function SidebarTree({
   dashboard
 }: SidebarTreeProps) {
   const workspace = useAtomValue(dashboard.currentWorkspace)
+  assert(workspace, 'No workspace selected')
   const currentRoot = useAtomValue(dashboard.currentRoot)
   const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)

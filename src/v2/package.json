@@ -8,7 +8,7 @@
     "start": "vite preview"
   },
   "dependencies": {
-    "@alinea/components": "^0.0.47",
+    "@alinea/components": "^0.0.49",
     "react-aria-components": "^1.16.0"
   },
   "devDependencies": {
