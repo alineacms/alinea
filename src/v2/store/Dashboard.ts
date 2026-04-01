@@ -108,13 +108,21 @@ export class Dashboard {
       const [root, locale] = rootPart.split(':')
       return {workspace, root, entry, locale}
     },
-    (get, set, update: DashboardRoute) => {
-      let {workspace, root, entry, locale} = update
-      const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
-      const pathname = `/entry/${[workspace, rootPart, entry].filter(Boolean).join('/')}`
-      startTransition(() => {
-        set(this.#location, {hash: `#${pathname}`})
-      })
+    async (get, set, update: DashboardRoute) => {
+      const focused = await get(this.focused)
+      const confirm = () => {
+        let {workspace, root, entry, locale} = update
+        const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
+        const pathname = `/entry/${[workspace, rootPart, entry].filter(Boolean).join('/')}`
+        startTransition(() => {
+          set(this.#location, {hash: `#${pathname}`})
+        })
+      }
+      if (focused && 'entry' in focused) {
+        const blockNavigation = await set(focused.entry.needsBlock, confirm)
+        if (blockNavigation) return
+      }
+      confirm()
     }
   )
 
@@ -126,6 +134,10 @@ export class Dashboard {
     if (!workspace) return null
     if (root) return {root: this.workspace(workspace).root(root)}
     return null
+  })
+
+  edits = dispense((entryIdAndLocale: string) => {
+    return new ReactiveNode({})
   })
 
   #sha = atom<string>()
@@ -222,14 +234,20 @@ export class Dashboard {
   }
 
   entries = dispense(id => {
+    const data = atom<Promise<EntryData>>(get => {
+      // todo: this will get out of sync for hasChildren
+      get(this.revisions(id))
+      const load = get(this.#entryLoader)
+      return load(id).then(([result, error]) => {
+        if (error) throw error
+        return result
+      })
+    })
+    const entry = new DashboardEntry(this, id, swr(data) as Atom<EntryData>)
     return swr(
       atom(async get => {
-        // todo: this will get out of sync for hasChildren
-        const load = get(this.#entryLoader)
-        const [result, error] = await load(id)
-        if (error) throw error
-        get(this.revisions(id))
-        return new DashboardEntry(this, result)
+        await get(data)
+        return entry
       })
     )
   })
@@ -576,8 +594,8 @@ export class DashboardWorkspace {
       }
       const {root, workspace} = await get(this.dashboard.entries(selectedId))
       set(this.dashboard.route, {
-        workspace: workspace,
-        root: root,
+        workspace: get(workspace),
+        root: get(root),
         entry: selectedId,
         locale: current.locale
       })
@@ -628,7 +646,7 @@ export class DashboardTree {
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
     const {parentIds} = await get(this.workspace.dashboard.entries(route.entry))
-    const keys = new Set<Key>(parentIds)
+    const keys = new Set<Key>(get(parentIds))
     if (route.root) keys.add(`${ROOT_KEY_PREFIX}${route.root}`)
     return keys
   })
@@ -688,7 +706,7 @@ export class DashboardTree {
               children.map(childId => this.entryItems(childId)).map(get)
             )
           }),
-          entry.hasChildren
+          get(entry.hasChildren)
         )
       })
     }
@@ -836,92 +854,123 @@ interface EntryData {
 }
 
 export class DashboardEntry {
-  id: string
-  workspace: string
-  root: string
-  hasChildren: boolean
+  workspace: Atom<string>
+  root: Atom<string>
+  hasChildren: Atom<boolean>
   type: Atom<DashboardType>
-  locales: Map<
-    string | null,
-    {
-      title: string
-      status: EntryStatus
-      locale: string | null
-      main: boolean
-      path: string
-    }
+  locales: Atom<
+    Map<
+      string | null,
+      {
+        title: string
+        status: EntryStatus
+        locale: string | null
+        main: boolean
+        path: string
+      }
+    >
   >
-  parentId: string | null
-  parentIds: Array<string>
-  #root: DashboardRoot
+  parentId: Atom<string | null>
+  parentIds: Atom<Array<string>>
+  #root: Atom<DashboardRoot>
 
   constructor(
     public dashboard: Dashboard,
-    data: EntryData
+    public id: string,
+    private data: Atom<EntryData>
   ) {
-    this.id = data.id
-    this.workspace = data.workspace
-    this.root = data.root
-    this.hasChildren = data.hasChildren
-    this.type = dashboard.type(data.type)
-    this.parentId = data.parentId
-    this.parentIds = data.parents.map(p => p.id)
-    this.locales = new Map(
-      data.entries.map(entry => {
-        return [entry.locale, entry] as const
-      })
+    this.workspace = atom(get => get(data).workspace)
+    this.root = atom(get => get(data).root)
+    this.hasChildren = atom(get => get(data).hasChildren)
+    this.type = atom(get => get(this.dashboard.type(get(data).type)))
+    this.parentId = atom(get => get(data).parentId)
+    this.parentIds = atom(get => get(data).parents.map(parent => parent.id))
+    this.locales = atom(
+      get =>
+        new Map(
+          get(data).entries.map(entry => {
+            return [entry.locale, entry] as const
+          })
+        )
     )
-    this.#root = dashboard.workspace(this.workspace).root(this.root)
+    this.#root = atom(get =>
+      dashboard.workspace(get(this.workspace)).root(get(this.root))
+    )
   }
 
   label = atom(get => {
-    const locale = get(this.#root.selectedLocale)
-    const entry = this.locales.get(locale)
+    const locale = get(get(this.#root).selectedLocale)
+    const locales = get(this.locales)
+    const entry = locales.get(locale)
     if (entry?.title) return entry.title
-    for (const fallback of this.locales.values()) {
+    for (const fallback of locales.values()) {
       if (fallback.title) return fallback.title
     }
     return ''
   })
 
   parents = atom(async get => {
-    return Promise.all(
-      this.parentIds.map(id => get(this.dashboard.entries(id)))
-    )
+    const parentIds = get(this.parentIds)
+    return Promise.all(parentIds.map(id => get(this.dashboard.entries(id))))
   })
 
   icon = atom(get => get(this.type).icon)
 
   children = atom(async get => {
+    const root = get(this.#root)
     const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
-    return queryTreeChildren(get, this.#root, this.id, orderChildrenBy)
+    return queryTreeChildren(get, root, this.id, orderChildrenBy)
   })
 
   untranslated = atom(get => {
-    const locale = get(this.#root.selectedLocale)
-    return !this.locales.has(locale)
+    const root = get(this.#root)
+    const locales = get(this.locales)
+    const locale = get(root.selectedLocale)
+    return !locales.has(locale)
   })
 
   activeVersion = atom(get => {
-    const locale = get(this.#root.selectedLocale)
-    const entry = this.locales.get(locale)
+    const root = get(this.#root)
+    const locales = get(this.locales)
+    const locale = get(root.selectedLocale)
+    const entry = locales.get(locale)
     if (entry) return entry
-    for (const fallback of this.locales.values()) {
+    for (const fallback of locales.values()) {
       if (fallback.title) return fallback
     }
     return null
   })
 
   availableStatuses = atom(get => {
+    const locales = get(this.locales)
     const statuses = new Set<EntryStatus>()
-    for (const entry of this.locales.values()) {
+    for (const entry of locales.values()) {
       statuses.add(entry.status)
     }
     return Array.from(statuses)
   })
 
+  routeBlock = atom<{confirm: () => void} | null>(null)
+
+  needsBlock = atom(
+    null,
+    async (get, set, confirm: () => void): Promise<boolean> => {
+      const editor = await get(this.editor)
+      const isDirty = get(editor.node.isDirty)
+      if (isDirty)
+        set(this.routeBlock, {
+          confirm: () => {
+            set(this.routeBlock, null)
+            confirm()
+          }
+        })
+      return isDirty
+    }
+  )
+
   editor = atom(async get => {
-    const locale = get(this.#root.selectedLocale)
+    const root = get(this.#root)
+    const locale = get(root.selectedLocale)
     const type = get(this.type).type
     const db = get(this.dashboard.db)
     const data = await db.get({
@@ -940,7 +989,8 @@ export class DashboardEntry {
   })
 
   saveDraft = atom(null, async (get, set) => {
-    const locale = get(this.#root.selectedLocale)
+    const root = get(this.#root)
+    const locale = get(root.selectedLocale)
     const editor = await get(this.editor)
     const data = get(editor.value)
     const db = get(this.dashboard.db)
@@ -953,6 +1003,7 @@ export class DashboardEntry {
       set: data,
       overwrite: true
     })
+    set(editor.node.commit)
   })
 }
 
@@ -1172,6 +1223,12 @@ type ReactiveObject = Record<string, ReactiveNode>
 export class ReactiveNode<Value = unknown> {
   #initialValue: Value
   nodes: WritableAtom<unknown, [unknown], void>
+  #inner = atom(get => {
+    const nodes = get(this.nodes)
+    if (isArray<ReactiveNode>(nodes)) return nodes
+    if (isObject<ReactiveObject>(nodes)) return values(nodes)
+    return []
+  })
   value: Writable<Value>
 
   constructor(initialValue: Value) {
@@ -1200,23 +1257,13 @@ export class ReactiveNode<Value = unknown> {
     (get): boolean => {
       const dirty = get(this.#dirty)
       if (dirty) return true
-      const nodes = get(this.nodes)
-      if (isArray<ReactiveNode>(nodes))
-        return nodes.some(node => get(node.isDirty))
-      if (isObject<ReactiveObject>(nodes))
-        return values(nodes).some(node => get(node.isDirty))
-      return false
+      return get(this.#inner).some(node => get(node.isDirty))
     },
     (get, set, value: false) => {
       const isDirty = get(this.isDirty)
       if (!isDirty) return
       set(this.#dirty, false)
-      const nodes = get(this.nodes)
-      if (isArray<ReactiveNode>(nodes)) {
-        for (const node of nodes) set(node.isDirty, false)
-      } else if (isObject<ReactiveObject>(nodes)) {
-        for (const node of values(nodes)) set(node.isDirty, false)
-      }
+      for (const node of get(this.#inner)) set(node.isDirty, false)
     }
   )
 
@@ -1284,12 +1331,7 @@ export class ReactiveNode<Value = unknown> {
   })
 
   commit = atom(null, (get, set): Value => {
-    const nodes = get(this.nodes)
-    if (isArray<ReactiveNode>(nodes)) {
-      for (const node of nodes) set(node.commit)
-    } else if (isObject<ReactiveObject>(nodes)) {
-      for (const node of values(nodes)) set(node.commit)
-    }
+    for (const node of get(this.#inner)) set(node.commit)
     this.#initialValue = get(this.value)
     set(this.#dirty, false)
     return this.#initialValue

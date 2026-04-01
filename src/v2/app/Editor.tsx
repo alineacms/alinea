@@ -4,7 +4,7 @@ import {Field, type FieldOptions} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {ErrorMessage} from 'alinea/ui'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, useTransition} from 'react'
 import {
   Dashboard,
@@ -26,6 +26,7 @@ import css from './Editor.module.css'
 import {EntrySidebar} from './EntrySidebar.js'
 import {Explorer} from './Explorer.js'
 import {Rail, RailBody, RailFooter, RailHeader} from './ui/Rail.js'
+import {Sheet, SheetContent, SheetDialog, SheetFooter} from './ui/Sheet.js'
 
 const styles = styler(css)
 
@@ -71,35 +72,54 @@ function EntryEditor({entry}: EntryEditorProps) {
   const [isPending, startTransition] = useTransition()
   const save = useSetAtom(entry.saveDraft)
   const isDirty = useAtomValue(editor.node.isDirty)
+  const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
   return (
-    <EntryScope entry={entry}>
-      <EditorScope editor={editor}>
-        <Rail main>
-          <RailHeader>
-            <h1 className={styles.mainTitle()}>{title}</h1>
-            <TypeBadge type={type} />
-            {isDirty && (
-              <div style={{marginLeft: 'auto'}}>
-                <Button
-                  isPending={isPending}
-                  onPress={() => startTransition(save)}
-                >
-                  {isPending ? 'Saving...' : 'Save Draft'}
-                </Button>
-              </div>
-            )}
-          </RailHeader>
+    <>
+      <Sheet
+        isOpen={Boolean(routeBlock)}
+        onOpenChange={open => !open && setRouteBlock(null)}
+      >
+        {routeBlock && (
+          <SheetDialog label="Confirm navigation">
+            <SheetContent>This entry has unsaved changes</SheetContent>
+            <SheetFooter>
+              <Button intent="secondary" onPress={() => setRouteBlock(null)}>
+                Cancel
+              </Button>
+              <Button onPress={routeBlock.confirm}>Okido</Button>
+            </SheetFooter>
+          </SheetDialog>
+        )}
+      </Sheet>
+      <EntryScope entry={entry}>
+        <EditorScope editor={editor}>
+          <Rail main>
+            <RailHeader>
+              <h1 className={styles.mainTitle()}>{title}</h1>
+              <TypeBadge type={type} />
+              {isDirty && (
+                <div style={{marginLeft: 'auto'}}>
+                  <Button
+                    isPending={isPending}
+                    onPress={() => startTransition(save)}
+                  >
+                    {isPending ? 'Saving...' : 'Save Draft'}
+                  </Button>
+                </div>
+              )}
+            </RailHeader>
 
-          <RailBody>
-            <FieldsEditor editor={editor} />
+            <RailBody>
+              <FieldsEditor editor={editor} />
 
-            <RailFooter id="alinea-toolbar" className={styles.toolbar()} />
-          </RailBody>
-        </Rail>
+              <RailFooter id="alinea-toolbar" className={styles.toolbar()} />
+            </RailBody>
+          </Rail>
 
-        <EntrySidebar entry={entry} />
-      </EditorScope>
-    </EntryScope>
+          <EntrySidebar entry={entry} />
+        </EditorScope>
+      </EntryScope>
+    </>
   )
 }
 
