@@ -1,6 +1,6 @@
 import {Button, Icon, Tab, TabList, TabPanel, Tabs} from '@alinea/components'
 import {styler} from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {IcRoundHistory, IcRoundVisibility} from '../icons.js'
 import {DashboardEntry} from '../store.js'
 import css from './EntrySidebar.module.css'
@@ -16,6 +16,8 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
   const editor = useAtomValue(entry.editor)
   const isEditing = useAtomValue(editor.node.isDirty)
   const reset = useSetAtom(editor.node.reset)
+  const statuses = useAtomValue(entry.availableStatuses)
+  const [selectedStatus, setSelectedStatus] = useAtom(entry.selectedStatus)
   return (
     <Sidebar>
       <Tabs defaultSelectedKey="history" variant="subtle">
@@ -42,6 +44,17 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
             ) : (
               'Not editing'
             )}
+            <ul>
+              {statuses.map(status => {
+                return (
+                  <li key={status}>
+                    <Button onPress={() => setSelectedStatus(status)}>
+                      {status}
+                    </Button>
+                  </li>
+                )
+              })}
+            </ul>
           </TabPanel>
           <TabPanel id="preview">Preview placeholder</TabPanel>
         </SidebarBody>

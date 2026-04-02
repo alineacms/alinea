@@ -72,7 +72,20 @@ function EntryEditor({entry}: EntryEditorProps) {
   const [isPending, startTransition] = useTransition()
   const save = useSetAtom(entry.saveDraft)
   const isDirty = useAtomValue(editor.node.isDirty)
+  const reset = useSetAtom(editor.node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
+  const discardAndConfirm = () => {
+    startTransition(() => {
+      reset()
+      routeBlock?.confirm()
+    })
+  }
+  const saveAndConfirm = () => {
+    startTransition(() => {
+      save()
+      routeBlock?.confirm()
+    })
+  }
   return (
     <>
       <Sheet
@@ -83,10 +96,10 @@ function EntryEditor({entry}: EntryEditorProps) {
           <SheetDialog label="Confirm navigation">
             <SheetContent>This entry has unsaved changes</SheetContent>
             <SheetFooter>
-              <Button intent="secondary" onPress={() => setRouteBlock(null)}>
-                Cancel
+              <Button intent="warning" onPress={discardAndConfirm}>
+                Discard my changes
               </Button>
-              <Button onPress={routeBlock.confirm}>Okido</Button>
+              <Button onPress={saveAndConfirm}>Save as draft</Button>
             </SheetFooter>
           </SheetDialog>
         )}
@@ -97,6 +110,7 @@ function EntryEditor({entry}: EntryEditorProps) {
             <RailHeader>
               <h1 className={styles.mainTitle()}>{title}</h1>
               <TypeBadge type={type} />
+              <EntryStatus entry={entry} />
               {isDirty && (
                 <div style={{marginLeft: 'auto'}}>
                   <Button
@@ -218,4 +232,13 @@ function TypeBadge({type}: TypeBadgeProps) {
       {label}
     </span>
   )
+}
+
+interface EntryStatusProps {
+  entry: DashboardEntry
+}
+
+function EntryStatus({entry}: EntryStatusProps) {
+  const status = useAtomValue(entry.selectedStatus)
+  return <span className={styles.statusBadge()}>{status}</span>
 }

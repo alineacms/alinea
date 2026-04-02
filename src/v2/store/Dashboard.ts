@@ -873,6 +873,23 @@ export class DashboardEntry {
   parentId: Atom<string | null>
   parentIds: Atom<Array<string>>
   #root: Atom<DashboardRoot>
+  #statusPreference = atom<EntryStatus>()
+  selectedStatus = atom(
+    get => {
+      const preference = get(this.#statusPreference)
+      if (preference) return preference
+      const locales = get(this.locales)
+      const locale = get(get(this.#root).selectedLocale)
+      const entry = locales.get(locale)
+      assert(entry, `Entry ${this.id} has no data for locale ${locale}`)
+      return entry.status
+    },
+    (get, set, status: EntryStatus) => {
+      startTransition(() => {
+        set(this.#statusPreference, status)
+      })
+    }
+  )
 
   constructor(
     public dashboard: Dashboard,
@@ -929,7 +946,14 @@ export class DashboardEntry {
     return !locales.has(locale)
   })
 
-  activeVersion = atom(get => {
+  availableStatuses = atom(async get => {
+    const locale = get(get(this.#root).selectedLocale)
+    const language = this.languages(locale)
+    const versions = await get(language.versions)
+    return [...versions.keys()]
+  })
+
+  activeVersion = atom(async get => {
     const root = get(this.#root)
     const locales = get(this.locales)
     const locale = get(root.selectedLocale)
@@ -941,13 +965,8 @@ export class DashboardEntry {
     return null
   })
 
-  availableStatuses = atom(get => {
-    const locales = get(this.locales)
-    const statuses = new Set<EntryStatus>()
-    for (const entry of locales.values()) {
-      statuses.add(entry.status)
-    }
-    return Array.from(statuses)
+  languages = dispense((locale: string | null) => {
+    return new DashboardEntryLanguage(this, locale)
   })
 
   routeBlock = atom<{confirm: () => void} | null>(null)
@@ -973,12 +992,22 @@ export class DashboardEntry {
     const locale = get(root.selectedLocale)
     const type = get(this.type).type
     const db = get(this.dashboard.db)
+    const status = get(this.selectedStatus)
     const data = await db.get({
       id: this.id,
       locale,
       select: Entry.data,
-      status: 'preferDraft'
+      status: status
     })
+    /*
+    const language = this.languages(locale)
+    const versions = await get(language.versions)
+    const version = versions.get(status)
+    assert(
+      version,
+      `Entry ${this.id} has no version for status ${status} and locale ${locale}`
+    )
+    const data = version.data*/
     // Todo: fix data during indexing instead of here
     const initialValue = {
       ...Type.initialValue(type),
@@ -1004,6 +1033,30 @@ export class DashboardEntry {
       overwrite: true
     })
     set(editor.node.commit)
+  })
+}
+
+export class DashboardEntryLanguage {
+  constructor(
+    public entry: DashboardEntry,
+    public locale: string | null
+  ) {}
+
+  versions = atom(async get => {
+    const db = get(this.entry.dashboard.db)
+    get(this.entry.dashboard.revisions(this.entry.id)) // subscribe to entry changes
+    const entries = await db.find({
+      id: this.entry.id,
+      locale: this.locale,
+      select: Entry,
+      status: 'all'
+    })
+    // order by draft, published, archived
+    const order = ['draft', 'published', 'archived']
+    entries.sort((a, b) => {
+      return order.indexOf(a.status) - order.indexOf(b.status)
+    })
+    return new Map(entries.map(entry => [entry.status, entry] as const))
   })
 }
 
@@ -1035,7 +1088,7 @@ export class DashboardRoot {
         selectionMode: 'multiple',
         selectionBehavior: 'replace',
         onAction: atom(null, (get, set, entry) => {
-          if (entry.hasChildren) set(parentId, entry.id)
+          if (get(entry.hasChildren)) set(parentId, entry.id)
           else
             set(this.workspace.dashboard.route, {
               workspace: this.workspace.key,
@@ -1068,13 +1121,15 @@ export class DashboardRoot {
     },
     (get, set, locale: string) => {
       const route = get(this.workspace.dashboard.route)
-      set(this.workspace.dashboard.route, {
-        workspace: this.workspace.key,
-        root: this.key,
-        entry: route.entry,
-        locale
+      startTransition(() => {
+        set(this.workspace.dashboard.route, {
+          workspace: this.workspace.key,
+          root: this.key,
+          entry: route.entry,
+          locale
+        })
+        set(this.#languagePreference, locale)
       })
-      set(this.#languagePreference, locale)
     }
   )
 
@@ -1172,9 +1227,7 @@ function loader<Value>(fn: BatchLoadFn<Value>) {
   }
 }
 
-function dispense<Key extends string, Value>(
-  fn: (key: Key) => Value
-): (key: Key) => Value {
+function dispense<Key, Value>(fn: (key: Key) => Value): (key: Key) => Value {
   const values = new Map<Key, Value>()
   return function dispenseValue(key: Key) {
     if (!values.has(key)) values.set(key, fn(key))

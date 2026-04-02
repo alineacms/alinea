@@ -21,7 +21,7 @@ export function NumberFieldView({field}: NumberFieldViewProps) {
       minValue={options.minValue}
       onChange={next => setValue(Number.isNaN(next) ? null : next)}
       step={options.step || 1}
-      value={typeof value === 'number' ? value : undefined}
+      value={typeof value === 'number' ? value : 0}
     />
   )
 }
