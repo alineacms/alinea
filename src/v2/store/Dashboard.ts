@@ -1314,7 +1314,7 @@ export class ReactiveNode<Value = unknown> {
   })
   value: Writable<Value>
 
-  constructor(initialValue: Value, readOnly: boolean) {
+  constructor(initialValue: Value, readOnly = false) {
     this.#initialValue = initialValue
     this.readOnly = readOnly
     this.nodes = atom(this.#wrap(initialValue))
