@@ -62,7 +62,7 @@ export function createLink<StoredValue extends Reference, QueryValue>(
     pickers.map(([type, picker]) => [type, picker.shape])
   )
   return new LinkField(schema, shapes, {
-    options: {label, ...options},
+    options: {label, initialValue: null!, ...options},
     async postProcess(value, loader) {
       const type = value[Reference.type]
       const picker = options.pickers[type]

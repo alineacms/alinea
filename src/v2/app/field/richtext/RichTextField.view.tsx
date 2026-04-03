@@ -124,9 +124,11 @@ function RTView<Blocks extends Schema>({
     const schemaExtensions = schemaToExtensions(field, options.schema)
     return [...values(baseExtensions), ...schemaExtensions]
   }, [field, options.schema])
+  const editable = !options.readOnly && !node.readOnly
   const editor = useEditor({
     content,
     extensions,
+    editable,
     onUpdate({editor}) {
       const current = store.get(node.value) as TextDoc | undefined
       setValue(fromContent(editor.getJSON(), current))
@@ -185,7 +187,7 @@ export const RichTextFieldView = memo(function RichTextFieldView<
   const wasReset = !isDirty && prevIsDirty.current
   prevIsDirty.current = isDirty
   // Tiptap really does not want you to control its state
-  return <RTView field={field} key={`${node}:${wasReset}`} />
+  return <RTView field={field} key={`${node.value}:${wasReset}`} />
 })
 
 function toContent(node: Node): JSONContent {

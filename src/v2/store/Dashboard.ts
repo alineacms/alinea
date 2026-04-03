@@ -119,7 +119,7 @@ export class Dashboard {
         })
       }
       if (focused && 'entry' in focused) {
-        const blockNavigation = await set(focused.entry.needsBlock, confirm)
+        const blockNavigation = set(focused.entry.needsBlock, confirm)
         if (blockNavigation) return
       }
       confirm()
@@ -134,10 +134,6 @@ export class Dashboard {
     if (!workspace) return null
     if (root) return {root: this.workspace(workspace).root(root)}
     return null
-  })
-
-  edits = dispense((entryIdAndLocale: string) => {
-    return new ReactiveNode({})
   })
 
   #sha = atom<string>()
@@ -592,7 +588,9 @@ export class DashboardWorkspace {
         })
         return
       }
-      const {root, workspace} = await get(this.dashboard.entries(selectedId))
+      const {rootKey: root, workspaceKey: workspace} = await get(
+        this.dashboard.entries(selectedId)
+      )
       set(this.dashboard.route, {
         workspace: get(workspace),
         root: get(root),
@@ -853,9 +851,13 @@ interface EntryData {
   }>
 }
 
+type SelectedVersion =
+  | {type: 'status'; status: EntryStatus}
+  | {type: 'history'; ref: string}
+
 export class DashboardEntry {
-  workspace: Atom<string>
-  root: Atom<string>
+  workspaceKey: Atom<string>
+  rootKey: Atom<string>
   hasChildren: Atom<boolean>
   type: Atom<DashboardType>
   locales: Atom<
@@ -872,32 +874,15 @@ export class DashboardEntry {
   >
   parentId: Atom<string | null>
   parentIds: Atom<Array<string>>
-  #root: Atom<DashboardRoot>
-  #statusPreference = atom<EntryStatus>()
-  selectedStatus = atom(
-    get => {
-      const preference = get(this.#statusPreference)
-      if (preference) return preference
-      const locales = get(this.locales)
-      const locale = get(get(this.#root).selectedLocale)
-      const entry = locales.get(locale)
-      assert(entry, `Entry ${this.id} has no data for locale ${locale}`)
-      return entry.status
-    },
-    (get, set, status: EntryStatus) => {
-      startTransition(() => {
-        set(this.#statusPreference, status)
-      })
-    }
-  )
+  root: Atom<DashboardRoot>
 
   constructor(
     public dashboard: Dashboard,
     public id: string,
-    private data: Atom<EntryData>
+    data: Atom<EntryData>
   ) {
-    this.workspace = atom(get => get(data).workspace)
-    this.root = atom(get => get(data).root)
+    this.workspaceKey = atom(get => get(data).workspace)
+    this.rootKey = atom(get => get(data).root)
     this.hasChildren = atom(get => get(data).hasChildren)
     this.type = atom(get => get(this.dashboard.type(get(data).type)))
     this.parentId = atom(get => get(data).parentId)
@@ -910,13 +895,51 @@ export class DashboardEntry {
           })
         )
     )
-    this.#root = atom(get =>
-      dashboard.workspace(get(this.workspace)).root(get(this.root))
+    this.root = atom(get =>
+      dashboard.workspace(get(this.workspaceKey)).root(get(this.rootKey))
     )
   }
 
+  activeStatus = atom(get => {
+    const locales = get(this.locales)
+    const locale = get(get(this.root).selectedLocale)
+    const entry = locales.get(locale)
+    assert(entry, `Entry ${this.id} has no data for locale ${locale}`)
+    return entry.status
+  })
+
+  #selection = atom<SelectedVersion>()
+  selectedVersion = atom(
+    (get): SelectedVersion => {
+      const current = get(this.#selection)
+      if (current) return current
+      const status = get(this.activeStatus)
+      return {type: 'status', status}
+    },
+    (get, set, next: SelectedVersion) => {
+      startTransition(() => {
+        set(this.#selection, next)
+      })
+    }
+  )
+
+  selectedNode = swr(
+    atom(async (get): Promise<ReactiveNode<object>> => {
+      const version = get(this.selectedVersion)
+      if (version.type === 'status') {
+        const language = this.languages(get(get(this.root).selectedLocale))
+        if (version.status === get(this.activeStatus)) {
+          const editing = get(this.currentlyEditing)
+          if (editing) return editing
+        }
+        return get(language.data(version.status))
+      }
+      throw new Error(`Unsupported version type: ${version.type}`)
+    })
+  )
+
   label = atom(get => {
-    const locale = get(get(this.#root).selectedLocale)
+    const locale = get(get(this.root).selectedLocale)
     const locales = get(this.locales)
     const entry = locales.get(locale)
     if (entry?.title) return entry.title
@@ -934,27 +957,27 @@ export class DashboardEntry {
   icon = atom(get => get(this.type).icon)
 
   children = atom(async get => {
-    const root = get(this.#root)
+    const root = get(this.root)
     const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
     return queryTreeChildren(get, root, this.id, orderChildrenBy)
   })
 
   untranslated = atom(get => {
-    const root = get(this.#root)
+    const root = get(this.root)
     const locales = get(this.locales)
     const locale = get(root.selectedLocale)
     return !locales.has(locale)
   })
 
   availableStatuses = atom(async get => {
-    const locale = get(get(this.#root).selectedLocale)
+    const locale = get(get(this.root).selectedLocale)
     const language = this.languages(locale)
     const versions = await get(language.versions)
     return [...versions.keys()]
   })
 
   activeVersion = atom(async get => {
-    const root = get(this.#root)
+    const root = get(this.root)
     const locales = get(this.locales)
     const locale = get(root.selectedLocale)
     const entry = locales.get(locale)
@@ -971,57 +994,26 @@ export class DashboardEntry {
 
   routeBlock = atom<{confirm: () => void} | null>(null)
 
-  needsBlock = atom(
-    null,
-    async (get, set, confirm: () => void): Promise<boolean> => {
-      const editor = await get(this.editor)
-      const isDirty = get(editor.node.isDirty)
-      if (isDirty)
-        set(this.routeBlock, {
-          confirm: () => {
-            set(this.routeBlock, null)
-            confirm()
-          }
-        })
-      return isDirty
-    }
-  )
-
-  editor = atom(async get => {
-    const root = get(this.#root)
-    const locale = get(root.selectedLocale)
-    const type = get(this.type).type
-    const db = get(this.dashboard.db)
-    const status = get(this.selectedStatus)
-    const data = await db.get({
-      id: this.id,
-      locale,
-      select: Entry.data,
-      status: status
-    })
-    /*
-    const language = this.languages(locale)
-    const versions = await get(language.versions)
-    const version = versions.get(status)
-    assert(
-      version,
-      `Entry ${this.id} has no version for status ${status} and locale ${locale}`
-    )
-    const data = version.data*/
-    // Todo: fix data during indexing instead of here
-    const initialValue = {
-      ...Type.initialValue(type),
-      ...data
-    }
-    const node = new ReactiveNode(initialValue)
-    return new DashboardEditor(this.dashboard, type, node)
+  needsBlock = atom(null, (get, set, confirm: () => void): boolean => {
+    const currentNode = get(this.currentlyEditing)
+    if (!currentNode) return false
+    const isDirty = get(currentNode.isDirty)
+    if (isDirty)
+      set(this.routeBlock, {
+        confirm: () => {
+          set(this.routeBlock, null)
+          confirm()
+        }
+      })
+    return isDirty
   })
 
-  saveDraft = atom(null, async (get, set) => {
-    const root = get(this.#root)
+  currentlyEditing = atom<ReactiveNode<object>>()
+
+  saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
+    const root = get(this.root)
     const locale = get(root.selectedLocale)
-    const editor = await get(this.editor)
-    const data = get(editor.value)
+    const data = get(node.value)
     const db = get(this.dashboard.db)
     const type = get(this.type).type
     await db.create({
@@ -1032,7 +1024,7 @@ export class DashboardEntry {
       set: data,
       overwrite: true
     })
-    set(editor.node.commit)
+    set(node.commit)
   })
 }
 
@@ -1057,6 +1049,24 @@ export class DashboardEntryLanguage {
       return order.indexOf(a.status) - order.indexOf(b.status)
     })
     return new Map(entries.map(entry => [entry.status, entry] as const))
+  })
+
+  data = dispense((status: EntryStatus) => {
+    return atom(async get => {
+      const type = get(this.entry.type).type
+      const versions = await get(this.versions)
+      const activeStatus = versions.keys().next().value
+      const version = versions.get(status)
+      assert(version, `No version found`)
+      const data = version.data
+      // Todo: fix data during indexing instead of here
+      const initialValue = {
+        ...Type.initialValue(type),
+        ...data
+      }
+      const isActiveVersion = status === activeStatus
+      return new ReactiveNode(initialValue, !isActiveVersion)
+    })
   })
 }
 
@@ -1227,7 +1237,9 @@ function loader<Value>(fn: BatchLoadFn<Value>) {
   }
 }
 
-function dispense<Key, Value>(fn: (key: Key) => Value): (key: Key) => Value {
+function dispense<Key = string, Value = unknown>(
+  fn: (key: Key) => Value
+): (key: Key) => Value {
   const values = new Map<Key, Value>()
   return function dispenseValue(key: Key) {
     if (!values.has(key)) values.set(key, fn(key))
@@ -1275,6 +1287,7 @@ type ReactiveObject = Record<string, ReactiveNode>
 
 export class ReactiveNode<Value = unknown> {
   #initialValue: Value
+  readonly readOnly: boolean
   nodes: WritableAtom<unknown, [unknown], void>
   #inner = atom(get => {
     const nodes = get(this.nodes)
@@ -1284,8 +1297,9 @@ export class ReactiveNode<Value = unknown> {
   })
   value: Writable<Value>
 
-  constructor(initialValue: Value) {
+  constructor(initialValue: Value, readOnly: boolean) {
     this.#initialValue = initialValue
+    this.readOnly = readOnly
     this.nodes = atom(this.#wrap(initialValue))
     this.value = atom(this.#read, this.#write)
   }
@@ -1295,6 +1309,7 @@ export class ReactiveNode<Value = unknown> {
   }
 
   #write = (get: Getter, set: Setter, update: SetStateAction<Value>) => {
+    if (this.readOnly) return
     const next =
       typeof update === 'function'
         ? (update as Function)(get(this.value))
@@ -1321,10 +1336,11 @@ export class ReactiveNode<Value = unknown> {
   )
 
   #wrap(value: unknown): unknown {
-    if (isArray(value)) return value.map(i => new ReactiveNode(i))
+    if (isArray(value))
+      return value.map(i => new ReactiveNode(i, this.readOnly))
     if (isObject(value)) {
       return fromEntries(
-        entries(value).map(([k, i]) => [k, new ReactiveNode(i)])
+        entries(value).map(([k, i]) => [k, new ReactiveNode(i, this.readOnly)])
       )
     }
     return value
@@ -1351,7 +1367,7 @@ export class ReactiveNode<Value = unknown> {
           nextStruct.push(curr[i])
         } else {
           changed = true
-          nextStruct.push(new ReactiveNode(val))
+          nextStruct.push(new ReactiveNode(val, this.readOnly))
         }
       }
       if (changed) set(this.nodes, nextStruct)
@@ -1369,7 +1385,7 @@ export class ReactiveNode<Value = unknown> {
       for (const key of Object.keys(next)) {
         if (!curr[key]) {
           changed = true
-          nextStruct[key] = new ReactiveNode(next[key])
+          nextStruct[key] = new ReactiveNode(next[key], this.readOnly)
         }
       }
       if (changed) set(this.nodes, nextStruct)
@@ -1407,13 +1423,15 @@ export class ReactiveNode<Value = unknown> {
   })
 
   push = atom(null, (get, set, val: unknown) => {
+    if (this.readOnly) return
     const structure = get(this.nodes)
     if (!isArray(structure)) return
-    set(this.nodes, [...structure, new ReactiveNode(val)])
+    set(this.nodes, [...structure, new ReactiveNode(val, this.readOnly)])
     set(this.#dirty, true)
   })
 
   remove = atom(null, (get, set, i: number) => {
+    if (this.readOnly) return
     const structure = get(this.nodes)
     if (!isArray(structure)) return
     set(
@@ -1424,6 +1442,7 @@ export class ReactiveNode<Value = unknown> {
   })
 
   move = atom(null, (get, set, from: number, to: number) => {
+    if (this.readOnly) return
     const structure = get(this.nodes)
     if (!isArray(structure)) return
     const next = [...structure]

@@ -1,6 +1,6 @@
 import {Button, Icon, Tab, TabList, TabPanel, Tabs} from '@alinea/components'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue} from 'jotai'
 import {IcRoundHistory, IcRoundVisibility} from '../icons.js'
 import {DashboardEntry} from '../store.js'
 import css from './EntrySidebar.module.css'
@@ -13,11 +13,10 @@ export interface EntrySidebarProps {
 }
 
 export function EntrySidebar({entry}: EntrySidebarProps) {
-  const editor = useAtomValue(entry.editor)
-  const isEditing = useAtomValue(editor.node.isDirty)
-  const reset = useSetAtom(editor.node.reset)
+  const activeStatus = useAtomValue(entry.activeStatus)
+  const currentlyEditing = useAtomValue(entry.currentlyEditing)
   const statuses = useAtomValue(entry.availableStatuses)
-  const [selectedStatus, setSelectedStatus] = useAtom(entry.selectedStatus)
+  const [selectedVersion, setSelectedVersion] = useAtom(entry.selectedVersion)
   return (
     <Sidebar>
       <Tabs defaultSelectedKey="history" variant="subtle">
@@ -36,20 +35,23 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
 
         <SidebarBody>
           <TabPanel id="history">
-            {isEditing ? (
-              <>
-                Editing
-                <Button onPress={reset}>Discard changes</Button>
-              </>
-            ) : (
-              'Not editing'
-            )}
             <ul>
-              {statuses.map(status => {
+              {statuses.map((status, index) => {
+                const isEditing =
+                  activeStatus == status && currentlyEditing !== undefined
                 return (
                   <li key={status}>
-                    <Button onPress={() => setSelectedStatus(status)}>
-                      {status}
+                    <Button
+                      onPress={() =>
+                        setSelectedVersion({type: 'status', status})
+                      }
+                    >
+                      {status}{' '}
+                      {selectedVersion.type === 'status' &&
+                      selectedVersion.status === status
+                        ? 'selected'
+                        : ''}{' '}
+                      {isEditing ? 'editing' : ''}
                     </Button>
                   </li>
                 )

@@ -61,10 +61,10 @@ function useField(field: Field) {
 }
 
 export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
-  const parent = useEditor()
+  const dashboard = useDashboard()
   const editor = useMemo(
-    () => new DashboardEditor(parent.dashboard, type, node),
-    [parent.dashboard, node, type]
+    () => new DashboardEditor(dashboard, type, node),
+    [dashboard, node, type]
   )
   return editor
 }

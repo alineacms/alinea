@@ -5,7 +5,7 @@ import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
 import {ErrorMessage} from 'alinea/ui'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {memo, useTransition} from 'react'
+import {memo, useEffect, useTransition} from 'react'
 import {
   Dashboard,
   DashboardEditor,
@@ -67,12 +67,13 @@ interface EntryEditorProps {
 
 function EntryEditor({entry}: EntryEditorProps) {
   const title = useAtomValue(entry.label)
-  const editor = useAtomValue(entry.editor)
+  const node = useAtomValue(entry.selectedNode)
+  const setEditing = useSetAtom(entry.currentlyEditing)
   const type = useAtomValue(entry.type)
   const [isPending, startTransition] = useTransition()
   const save = useSetAtom(entry.saveDraft)
-  const isDirty = useAtomValue(editor.node.isDirty)
-  const reset = useSetAtom(editor.node.reset)
+  const isDirty = useAtomValue(node.isDirty)
+  const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
   const discardAndConfirm = () => {
     startTransition(() => {
@@ -82,10 +83,13 @@ function EntryEditor({entry}: EntryEditorProps) {
   }
   const saveAndConfirm = () => {
     startTransition(() => {
-      save()
+      save(node)
       routeBlock?.confirm()
     })
   }
+  useEffect(() => {
+    setEditing(isDirty ? node : undefined)
+  }, [node, setEditing, isDirty])
   return (
     <>
       <Sheet
@@ -105,33 +109,34 @@ function EntryEditor({entry}: EntryEditorProps) {
         )}
       </Sheet>
       <EntryScope entry={entry}>
-        <EditorScope editor={editor}>
-          <Rail main>
-            <RailHeader>
-              <h1 className={styles.mainTitle()}>{title}</h1>
-              <TypeBadge type={type} />
-              <EntryStatus entry={entry} />
-              {isDirty && (
-                <div style={{marginLeft: 'auto'}}>
-                  <Button
-                    isPending={isPending}
-                    onPress={() => startTransition(save)}
-                  >
-                    {isPending ? 'Saving...' : 'Save Draft'}
-                  </Button>
-                </div>
-              )}
-            </RailHeader>
+        <Rail main>
+          <RailHeader>
+            <h1 className={styles.mainTitle()}>{title}</h1>
+            <TypeBadge type={type} />
+            <EntryStatus entry={entry} />
+            {isDirty && (
+              <div style={{marginLeft: 'auto'}}>
+                <Button intent="secondary" onPress={reset}>
+                  Discard my changes
+                </Button>
+                <Button
+                  isPending={isPending}
+                  onPress={() => startTransition(() => save(node))}
+                >
+                  {isPending ? 'Saving...' : 'Save Draft'}
+                </Button>
+              </div>
+            )}
+          </RailHeader>
 
-            <RailBody>
-              <FieldsEditor editor={editor} />
+          <RailBody>
+            <NodeEditor node={node} type={type.type} />
 
-              <RailFooter id="alinea-toolbar" className={styles.toolbar()} />
-            </RailBody>
-          </Rail>
+            <RailFooter id="alinea-toolbar" className={styles.toolbar()} />
+          </RailBody>
+        </Rail>
 
-          <EntrySidebar entry={entry} />
-        </EditorScope>
+        <EntrySidebar entry={entry} />
       </EntryScope>
     </>
   )
@@ -239,6 +244,7 @@ interface EntryStatusProps {
 }
 
 function EntryStatus({entry}: EntryStatusProps) {
-  const status = useAtomValue(entry.selectedStatus)
-  return <span className={styles.statusBadge()}>{status}</span>
+  const selectedVersion = useAtomValue(entry.selectedVersion)
+  if (selectedVersion.type !== 'status') return
+  return <span className={styles.statusBadge()}>{selectedVersion.status}</span>
 }
