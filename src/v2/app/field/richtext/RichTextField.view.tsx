@@ -11,7 +11,6 @@ import {
 } from '@tiptap/react'
 import {Field} from 'alinea/core/Field'
 import {RichTextField as CoreRichTextField} from 'alinea/core/field/RichTextField'
-import {createId} from 'alinea/core/Id'
 import {Schema} from 'alinea/core/Schema'
 import {
   BlockNode,
@@ -185,9 +184,8 @@ export const RichTextFieldView = memo(function RichTextFieldView<
   const prevIsDirty = useRef(isDirty)
   const wasReset = !isDirty && prevIsDirty.current
   prevIsDirty.current = isDirty
-  const id = useMemo(createId, [node, wasReset])
   // Tiptap really does not want you to control its state
-  return <RTView field={field} key={id} />
+  return <RTView field={field} key={`${node}:${wasReset}`} />
 })
 
 function toContent(node: Node): JSONContent {
