@@ -4,7 +4,7 @@ import {ExplorerLocation, useDashboard} from 'alinea/v2/store.js'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {useState} from 'react'
 import {LocationBreadcrumbs} from '../LocationBreadcrumbs.js'
-import {Sheet, SheetContent, SheetDialog, SheetFooter} from '../ui/Sheet.js'
+import {SheetContent, SheetDialog, SheetFooter} from '../ui/Sheet.js'
 
 const titleAtom = atom('')
 
@@ -21,7 +21,7 @@ export function CreateEntry() {
   const [title, setTitle] = useAtom(titleAtom)
   const {schema} = useAtomValue(dashboard.config)
   return (
-    <Sheet>
+    <>
       <SheetDialog label="Create entry">
         <SheetContent>
           <LocationBreadcrumbs location={location} setLocation={setLocation} />
@@ -43,6 +43,6 @@ export function CreateEntry() {
           <Button>Create entry</Button>
         </SheetFooter>
       </SheetDialog>
-    </Sheet>
+    </>
   )
 }

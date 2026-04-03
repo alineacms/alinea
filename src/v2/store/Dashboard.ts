@@ -293,6 +293,8 @@ export class Dashboard {
       })
     })
   })
+
+  createEntry = atom(null, async (get, set, request) => {})
 }
 
 export class DashboardEditor {

@@ -20,6 +20,7 @@ import {
 import {LocaleMenu} from './LocaleMenu.js'
 import {CreateEntry} from './modals/CreateEntry.js'
 import css from './SidebarTree.module.css'
+import {Sheet} from './ui/Sheet.js'
 import {SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 
 const styles = styler(css)
@@ -45,7 +46,9 @@ const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
           <Button size="icon">
             <Icon icon={IcRoundEdit} data-slot="icon" />
           </Button>
-          <CreateEntry />
+          <Sheet>
+            <CreateEntry />
+          </Sheet>
         </DialogTrigger>
       </div>
     </SidebarHeader>
