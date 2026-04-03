@@ -1,4 +1,4 @@
-import {Icon, Tree, TreeItem} from '@alinea/components'
+import {Button, Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {assert} from 'alinea/core/util/Assert'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -6,17 +6,19 @@ import {unwrap} from 'jotai/utils'
 import {memo, Suspense, useMemo} from 'react'
 import {
   Collection,
+  DialogTrigger,
   ListLayout,
   useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
-import {IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
+import {IcRoundEdit, IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
 import {
   Dashboard,
   DashboardRoot,
   DashboardTreeItem
 } from '../store/Dashboard.js'
 import {LocaleMenu} from './LocaleMenu.js'
+import {CreateEntry} from './modals/CreateEntry.js'
 import css from './SidebarTree.module.css'
 import {SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 
@@ -39,6 +41,12 @@ const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
         <Icon icon={icon} className={styles.focusIcon()} />
         {label}
         <LocaleMenu root={root} />
+        <DialogTrigger>
+          <Button size="icon">
+            <Icon icon={IcRoundEdit} data-slot="icon" />
+          </Button>
+          <CreateEntry />
+        </DialogTrigger>
       </div>
     </SidebarHeader>
   )

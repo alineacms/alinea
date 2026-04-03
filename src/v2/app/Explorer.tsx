@@ -1,85 +1,13 @@
-import {Button, Menu, MenuItem, SearchField} from '@alinea/components'
+import {Button, SearchField} from '@alinea/components'
 import styler from '@alinea/styler'
-import {Atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom} from 'jotai'
 import {IcOutlineGridView, IcOutlineList} from '../icons.js'
-import {DashboardExplorer, DashboardMenuItem} from '../store.js'
+import {DashboardExplorer} from '../store.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
+import {LocationBreadcrumbs} from './LocationBreadcrumbs.js'
 
 const styles = styler(css)
-
-interface BreadcrumbMenuProps {
-  label: Atom<string>
-  items: Atom<Array<DashboardMenuItem>>
-  onAction: (id: string) => void
-}
-
-function BreadcrumbMenu(props: BreadcrumbMenuProps) {
-  const label = useAtomValue(props.label)
-  const items = useAtomValue(props.items)
-  const onAction = props.onAction
-  return (
-    <Menu
-      label={<Button appearance="plain">{label}</Button>}
-      aria-label={label}
-      onAction={key => onAction(String(key))}
-    >
-      {items.map(item => {
-        return (
-          <MenuItem key={item.id} id={item.id} textValue={item.label}>
-            {item.label}
-          </MenuItem>
-        )
-      })}
-    </Menu>
-  )
-}
-
-interface BreadcrumbsProps {
-  explorer: DashboardExplorer
-}
-
-interface ParentBreadcrumbsProps {
-  explorer: DashboardExplorer
-}
-
-function ParentBreadcrumbs({explorer}: ParentBreadcrumbsProps) {
-  const parents = useAtomValue(explorer.parentsMenu)
-  const setParent = useSetAtom(explorer.parent)
-  return parents.map(parent => {
-    return (
-      <span key={parent.id}>
-        {' > '}
-        <Button appearance="plain" onPress={() => setParent(parent.id)}>
-          {parent.label}
-        </Button>
-      </span>
-    )
-  })
-}
-
-function Breadcrumbs({explorer}: BreadcrumbsProps) {
-  const [workspace, setWorkspace] = useAtom(explorer.workspace)
-  const [root, setRoot] = useAtom(explorer.root)
-  return (
-    <div>
-      <BreadcrumbMenu
-        label={workspace.label}
-        items={explorer.dashboard.workspaceMenu}
-        onAction={setWorkspace}
-      />
-      &gt;
-      {root && (
-        <BreadcrumbMenu
-          label={root.label}
-          items={workspace.rootMenu}
-          onAction={setRoot}
-        />
-      )}
-      <ParentBreadcrumbs explorer={explorer} />
-    </div>
-  )
-}
 
 export interface ExplorerProps {
   explorer: DashboardExplorer
@@ -126,9 +54,10 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
 }
 
 export function Explorer({explorer}: ExplorerProps) {
+  const [location, setLocation] = useAtom(explorer.location)
   return (
     <div className={styles.root()}>
-      <Breadcrumbs explorer={explorer} />
+      <LocationBreadcrumbs location={location} setLocation={setLocation} />
       <div className={styles.toolbar()}>
         <ExplorerSearch explorer={explorer} />
         <ExplorerToolbar explorer={explorer} />

@@ -360,12 +360,20 @@ export interface ExplorerOptions {
 }
 
 export class DashboardExplorer {
-  #location: WritableAtom<ExplorerLocation, [ExplorerLocation], void>
+  #location: WritableAtom<
+    ExplorerLocation,
+    [SetStateAction<ExplorerLocation>],
+    void
+  >
   #options: ExplorerOptions
   selection
   constructor(
     public dashboard: Dashboard,
-    location: WritableAtom<ExplorerLocation, [ExplorerLocation], void>,
+    location: WritableAtom<
+      ExplorerLocation,
+      [SetStateAction<ExplorerLocation>],
+      void
+    >,
     options: ExplorerOptions
   ) {
     this.#location = location
@@ -397,7 +405,7 @@ export class DashboardExplorer {
   view = atom<'card' | 'row'>('row')
   location = atom(
     get => get(this.#location),
-    (get, set, update: ExplorerLocation) => {
+    (get, set, update: SetStateAction<ExplorerLocation>) => {
       set(this.#location, update)
     }
   )
@@ -1083,14 +1091,23 @@ export class DashboardRoot {
         get => {
           return {workspace: workspace.key, root: key, parentId: get(parentId)}
         },
-        (get, set, update: ExplorerLocation) => {
-          if (update.root !== key || update.workspace !== workspace.key) {
+        (get, set, update: SetStateAction<ExplorerLocation>) => {
+          const next =
+            typeof update === 'function'
+              ? update(get(this.explorer.location))
+              : update
+          if (next.root !== key || next.workspace !== workspace.key) {
             set(workspace.dashboard.route, {
-              workspace: update.workspace,
-              root: update.root
+              workspace: next.workspace,
+              root: next.root
             })
           } else {
-            set(parentId, update.parentId)
+            console.log('Updating parentId to', next.parentId)
+            set(parentId, next.parentId)
+            set(
+              workspace.tree.expandedKeys,
+              new Set(next.parentId ? [next.parentId] : [])
+            )
           }
         }
       ),
