@@ -3,12 +3,14 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .triggerAvatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -24,4 +26,11 @@
   white-space: nowrap;
   font-size: 14px;
   font-weight: 600;
+}
+
+.parent {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
 }

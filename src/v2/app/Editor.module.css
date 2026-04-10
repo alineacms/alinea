@@ -17,12 +17,9 @@
 }
 
 .entryLayout {
-  grid-row: 1 / span 2;
   min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  grid-template-rows: var(--header-height, 56px) minmax(0, 1fr);
-  overflow: hidden;
+  height: 100%;
+  min-width: 0;
 }
 
 .typeBadge {
@@ -63,8 +60,7 @@
 
 @media (max-width: 1080px) {
   .entryLayout {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: var(--header-height, 56px) minmax(0, 1fr) auto;
+    height: 100%;
   }
 }
 
@@ -96,4 +92,10 @@
   color: #58708a;
   background: #f0f4f8;
   border-radius: 4px;
+}
+
+.entryEditorHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }

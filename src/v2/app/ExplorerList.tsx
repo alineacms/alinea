@@ -1,8 +1,8 @@
-import {Button, Elevation, Icon, ProgressCircle} from '@alinea/components'
+import { Button, Elevation, Icon, ProgressCircle } from '@alinea/components'
 import styler from '@alinea/styler'
-import {Size} from '@react-stately/virtualizer'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {memo} from 'react'
+import { Size } from '@react-stately/virtualizer'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { memo } from 'react'
 import {
   GridLayout,
   type GridLayoutOptions,
@@ -13,8 +13,8 @@ import {
   useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
-import {IcRoundDragIndicator} from '../icons.js'
-import type {DashboardEntry, DashboardExplorer} from '../store.js'
+import { IcRoundDragIndicator } from '../icons.js'
+import type { DashboardEntry, DashboardExplorer } from '../store.js'
 import css from './ExplorerList.module.css'
 
 const styles = styler(css)

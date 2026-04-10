@@ -1,49 +1,90 @@
-import {Button, Icon, Tree, TreeItem} from '@alinea/components'
-import styler from '@alinea/styler'
-import {assert} from 'alinea/core/util/Assert'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
-import {memo, Suspense, useMemo} from 'react'
+import {
+  Button,
+  Icon,
+  Menu,
+  MenuItem,
+  Tree,
+  TreeItem,
+} from "@alinea/components";
+import styler from "@alinea/styler";
+import { assert } from "alinea/core/util/Assert";
+import { IcRoundUnfoldMore } from "alinea/ui/icons/IcRoundUnfoldMore.js";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { unwrap } from "jotai/utils";
+import { memo, Suspense, useMemo } from "react";
 import {
   Collection,
   DialogTrigger,
   ListLayout,
   useDragAndDrop,
-  Virtualizer
-} from 'react-aria-components'
-import {IcRoundEdit, IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
+  Virtualizer,
+} from "react-aria-components";
+import {
+  IcRoundArrowBack,
+  IcRoundEdit,
+  IcTwotoneDescription,
+  IcTwotoneFolder,
+} from "../icons.js";
 import {
   Dashboard,
   DashboardRoot,
-  DashboardTreeItem
-} from '../store/Dashboard.js'
-import {LocaleMenu} from './LocaleMenu.js'
-import {CreateEntry} from './modals/CreateEntry.js'
-import css from './SidebarTree.module.css'
-import {Sheet} from './ui/Sheet.js'
-import {SidebarBody, SidebarHeader} from './ui/Sidebar.js'
+  DashboardTreeItem,
+} from "../store/Dashboard.js";
+import { LocaleMenu } from "./LocaleMenu.js";
+import { CreateEntry } from "./modals/CreateEntry.js";
+import css from "./SidebarTree.module.css";
+import { Sheet } from "./ui/Sheet.js";
+import { SidebarBody, SidebarHeader } from "./ui/Sidebar.js";
 
-const styles = styler(css)
+const styles = styler(css);
 
 interface SidebarTreeProps {
-  dashboard: Dashboard
+  dashboard: Dashboard;
 }
 
 interface SidebarParentProps {
-  root: DashboardRoot
+  root: DashboardRoot;
+  items: DashboardTreeItem[] | undefined;
 }
 
-const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
-  const label = useAtomValue(root.label)
-  const icon = useAtomValue(root.icon)
+const SidebarParent = memo(function SidebarParent({
+  root,
+  items,
+}: SidebarParentProps) {
+  const label = useAtomValue(root.label);
+  const icon = useAtomValue(root.icon);
+  const roots = (items || [])
+    .map((item) => item.id)
+    .filter((item) => item.startsWith("root:"))
+    .map((item) => item.replace("root:", ""));
+  console.log(roots);
   return (
     <SidebarHeader>
       <div className={styles.focusLabel()}>
-        <Icon icon={icon} className={styles.focusIcon()} />
-        {label}
+        <Button size="icon" appearance="outline">
+          <Icon icon={IcRoundArrowBack} data-slot="icon" />
+        </Button>
+        <Menu
+          label={
+            <Button
+              appearance="outline"
+              intent="secondary"
+              className={styles.rootsTrigger()}
+            >
+              {label} <IcRoundUnfoldMore />
+            </Button>
+          }
+          aria-label={label}
+        >
+          {roots.map((root) => (
+            <MenuItem key={root} id={root}>
+              {root}
+            </MenuItem>
+          ))}
+        </Menu>
         <LocaleMenu root={root} />
         <DialogTrigger>
-          <Button size="icon">
+          <Button size="icon" appearance="outline">
             <Icon icon={IcRoundEdit} data-slot="icon" />
           </Button>
           <Sheet>
@@ -52,29 +93,29 @@ const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
         </DialogTrigger>
       </div>
     </SidebarHeader>
-  )
-})
+  );
+});
 
 interface SidebarItemChildrenProps {
-  item: DashboardTreeItem
+  item: DashboardTreeItem;
 }
 
 const SidebarItemChildren = memo(function SidebarItemChildren({
-  item
+  item,
 }: SidebarItemChildrenProps) {
-  const items = useAtomValue(item.items)
-  return <Collection items={items}>{renderItem}</Collection>
-})
+  const items = useAtomValue(item.items);
+  return <Collection items={items}>{renderItem}</Collection>;
+});
 
 interface SidebarItemProps {
-  item: DashboardTreeItem
+  item: DashboardTreeItem;
 }
 
-const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
-  const label = useAtomValue(item.label)
-  const isExpanded = useAtomValue(item.isExpanded)
-  let icon = useAtomValue(item.icon)
-  if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription
+const SidebarItem = memo(function SidebarItem({ item }: SidebarItemProps) {
+  const label = useAtomValue(item.label);
+  const isExpanded = useAtomValue(item.isExpanded);
+  let icon = useAtomValue(item.icon);
+  if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription;
   const children = useMemo(() => {
     return (
       isExpanded && (
@@ -82,8 +123,8 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
           <SidebarItemChildren item={item} />
         </Suspense>
       )
-    )
-  }, [isExpanded, item])
+    );
+  }, [isExpanded, item]);
   return (
     <TreeItem
       id={item.id}
@@ -94,46 +135,46 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
     >
       {children}
     </TreeItem>
-  )
-})
+  );
+});
 
 function renderItem(item: DashboardTreeItem) {
-  return <SidebarItem item={item} />
+  return <SidebarItem item={item} />;
 }
 
 const treeLayoutOptions = {
   rowHeight: 34,
   padding: 0,
-  gap: 1
-}
+  gap: 1,
+};
 
 export const SidebarTree = memo(function SidebarTree({
-  dashboard
+  dashboard,
 }: SidebarTreeProps) {
-  const workspace = useAtomValue(dashboard.currentWorkspace)
-  assert(workspace, 'No workspace selected')
-  const currentRoot = useAtomValue(dashboard.currentRoot)
-  const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
-  const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
-  const items = useAtomValue(unwrap(workspace.tree.items))
-  const getItems = useSetAtom(workspace.tree.getItems)
-  const onInsert = useSetAtom(workspace.tree.onInsert)
-  const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
-  const onMove = useSetAtom(workspace.tree.onMove)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
+  const workspace = useAtomValue(dashboard.currentWorkspace);
+  assert(workspace, "No workspace selected");
+  const currentRoot = useAtomValue(dashboard.currentRoot);
+  const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys);
+  const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys);
+  const items = useAtomValue(unwrap(workspace.tree.items));
+  const getItems = useSetAtom(workspace.tree.getItems);
+  const onInsert = useSetAtom(workspace.tree.onInsert);
+  const onItemDrop = useSetAtom(workspace.tree.onItemDrop);
+  const onMove = useSetAtom(workspace.tree.onMove);
+  const { dragAndDropHooks } = useDragAndDrop<DashboardTreeItem>({
     getItems,
     onInsert,
     onItemDrop,
-    onMove
-  })
+    onMove,
+  });
   return (
     <>
-      {currentRoot && <SidebarParent root={currentRoot} />}
+      {currentRoot && <SidebarParent root={currentRoot} items={items} />}
       <SidebarBody>
         <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
           <Tree
             aria-label="Content tree"
-            style={{display: 'block', padding: 0, height: '100%'}}
+            style={{ display: "block", padding: 0, height: "100%" }}
             items={items}
             dragAndDropHooks={dragAndDropHooks}
             selectionMode="single"
@@ -149,5 +190,5 @@ export const SidebarTree = memo(function SidebarTree({
         </Virtualizer>
       </SidebarBody>
     </>
-  )
-})
+  );
+});

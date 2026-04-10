@@ -53,6 +53,7 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.3",
+    "allotment": "^1.20.5",
     "esbuild": "^0.25.4"
   },
   "devDependencies": {

@@ -19,10 +19,7 @@
   justify-content: flex-start;
   gap: 8px;
   min-width: 0;
-  flex: 1;
-  padding: 0 8px 0 0;
   text-align: left;
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--alinea-text-color);
@@ -32,6 +29,17 @@
   min-height: 34px;
   border: 0;
   background: transparent;
+  width: 100%;
+}
+
+.rootsTrigger {
+  font: inherit;
+  min-height: 34px;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px;
 }
 
 .focusIcon {
@@ -44,6 +52,24 @@
   height: 100%;
 }
 
-:global(.alinea-rac-TreeItem) {
+:global(.alinea-Sidebar-body) :global(.alinea-rac-Tree) {
+  min-width: 0;
+  padding: 8px !important;
+  
+  /* TODO */
+  > div {
+    height: auto !important;
+    width: 100% !important;
+    
+    > div {
+      height: auto !important;
+      width: 100% !important;
+    }
+  }
+}
+
+:global(.alinea-rac-TreeItem){
+  border-radius: 6px;
+  width: 100%;
   padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px) !important;
 }

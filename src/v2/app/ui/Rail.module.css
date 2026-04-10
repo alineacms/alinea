@@ -19,6 +19,7 @@
   height: 56px;
   flex-shrink: 0;
   border-bottom: 1px solid red;
+  padding: 0px 8px;
 }
 
 .footer {
