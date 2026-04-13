@@ -287,7 +287,8 @@ const externalize: Plugin = {
       if (
         args.path.endsWith('.scss') ||
         args.path.endsWith('.json') ||
-        args.path.endsWith('.css')
+        args.path.endsWith('.css') ||
+        args.path.endsWith('.woff2')
       )
         return
       if (!args.resolveDir.startsWith(src)) {
@@ -479,6 +480,9 @@ function jsEntry({
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33
                 'import.meta.env.MODE': '"production"'
+              },
+              loader: {
+                '.woff2': 'file'
               }
             })
             currentFiles = files

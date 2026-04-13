@@ -15,12 +15,12 @@
     "moduleDetection": "force",
     "incremental": true,
     "jsx": "react-jsx",
-    "plugins": [{"name": "typescript-plugin-css-modules"}],
+    "plugins": [{ "name": "typescript-plugin-css-modules" }],
     "paths": {
       "alinea": ["./src/index.ts"],
       "alinea/*": ["./src/*"]
     },
-    "lib": ["dom.iterable", "dom", "webworker"]
+    "lib": ["dom.iterable", "dom", "webworker", "es2025"]
   },
   "include": ["src"]
 }

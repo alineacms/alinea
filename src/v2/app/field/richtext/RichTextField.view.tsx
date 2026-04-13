@@ -32,7 +32,7 @@ import {
 import {atom, useAtomValue, useStore} from 'jotai'
 import {memo, useMemo, useRef} from 'react'
 import {createPortal} from 'react-dom'
-import {NodeEditor} from '../../Editor'
+import {NodeEditor} from '../../Editor.js'
 import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
 import css from './RichTextField.module.css'
