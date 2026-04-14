@@ -1,10 +1,13 @@
 import {Request, Response} from '@alinea/iso'
 import {suite} from '@alinea/suite'
 import {Config} from 'alinea'
+import {MissingCredentialsError} from 'alinea/backend/Auth'
 import {createHandler} from 'alinea/backend/Handler'
 import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
 import {createCMS} from 'alinea/core'
+import type {CommitRequest} from 'alinea/core/db/CommitRequest'
 import {LocalDB} from 'alinea/core/db/LocalDB'
+import {Policy} from 'alinea/core/Role'
 
 const test = suite(import.meta)
 
@@ -178,4 +181,120 @@ test('upload preview does not require auth or permissions', async () => {
   test.is(await response.text(), 'preview:e1')
   test.is(previewCalls, 1)
   test.is(verifyCalls, 0)
+})
+
+const fakeCommitRequest: CommitRequest = {
+  description: 'test',
+  fromSha: 'abc123',
+  intoSha: 'def456',
+  checks: [],
+  changes: []
+}
+
+test('mutate with authenticated user creates and enforces policy', async () => {
+  let createPolicyCalls: Array<Array<string>> = []
+  let requestPolicies: Array<Policy | false | undefined> = []
+
+  const db = {
+    createPolicy: async (roles: Array<string>) => {
+      createPolicyCalls.push(roles)
+      return Policy.ALLOW_NONE
+    },
+    syncWith: async () => 'sha',
+    request: async (_mutations: unknown, policy: Policy | false | undefined) => {
+      requestPolicies.push(policy)
+      return fakeCommitRequest
+    },
+    write: async () => ({sha: 'def456'})
+  } as unknown as LocalDB
+
+  const remote = ((ctx: RequestContext) => {
+    return {
+      authenticate: async () => new Response('auth'),
+      verify: async (req: Request) => {
+        const bearer = req.headers.get('authorization')
+        const user =
+          bearer === 'Bearer token'
+            ? {name: 'Viewer', roles: ['viewer']}
+            : null
+        if (!user) throw new MissingCredentialsError('No credentials')
+        return {...ctx, user, token: 'token'}
+      },
+      write: async () => ({sha: 'def456'})
+    } as unknown as RemoteConnection
+  }) as (context: RequestContext) => RemoteConnection
+
+  const handler = createHandler({cms, db, remote})
+
+  const response = await handler(
+    new Request('http://localhost/api?action=mutate', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        authorization: 'Bearer token'
+      },
+      body: JSON.stringify([])
+    }),
+    context()
+  )
+
+  test.is(response.status, 200)
+  // Policy must be created from the user's roles
+  test.is(createPolicyCalls.length, 1)
+  test.equal(createPolicyCalls[0], ['viewer'])
+  // The policy must be passed to local.request
+  test.is(requestPolicies.length, 1)
+  test.ok(requestPolicies[0] instanceof Policy)
+})
+
+test('mutate with api key only skips policy creation', async () => {
+  let createPolicyCalls = 0
+  let requestPolicies: Array<Policy | false | undefined> = []
+
+  const db = {
+    createPolicy: async () => {
+      createPolicyCalls++
+      return Policy.ALLOW_NONE
+    },
+    syncWith: async () => 'sha',
+    request: async (_mutations: unknown, policy: Policy | false | undefined) => {
+      requestPolicies.push(policy)
+      return fakeCommitRequest
+    },
+    write: async () => ({sha: 'def456'})
+  } as unknown as LocalDB
+
+  const remote = ((ctx: RequestContext) => {
+    return {
+      authenticate: async () => new Response('auth'),
+      verify: async () => {
+        throw new MissingCredentialsError('No credentials')
+      },
+      write: async () => ({sha: 'def456'})
+    } as unknown as RemoteConnection
+  }) as (context: RequestContext) => RemoteConnection
+
+  const handler = createHandler({cms, db, remote})
+
+  // Request authenticated only via API key (bearer matches context.apiKey)
+  const response = await handler(
+    new Request('http://localhost/api?action=mutate', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        authorization: `Bearer ${context().apiKey}`
+      },
+      body: JSON.stringify([])
+    }),
+    context()
+  )
+
+  test.is(response.status, 200)
+  // No policy should be created when there is no authenticated user
+  test.is(createPolicyCalls, 0)
+  // local.request is called without a policy (allow-all behaviour)
+  test.is(requestPolicies.length, 1)
+  test.is(requestPolicies[0], undefined)
 })
