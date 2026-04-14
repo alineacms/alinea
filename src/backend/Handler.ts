@@ -165,9 +165,9 @@ export function createHandler({
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
-        const user = expectUser()
+        const user = userCtx?.user
         expectJson()
-        const policy = await local.createPolicy(user.roles)
+        const policy = user && (await local.createPolicy(user.roles))
         const mutations = await body
         const attempt = async (retry = 0) => {
           await local.syncWith(cnx)
