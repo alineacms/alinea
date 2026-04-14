@@ -1,59 +1,55 @@
-.root {
+.ListFieldView {
   display: grid;
   gap: 14px;
 }
 
-.rows {
+.ListFieldView-rows {
   display: grid;
   gap: 12px;
 }
 
-.row {
-  display: block;
-}
-
-.title {
-  font-size: 13px;
-  font-weight: 500;
-  color: #22303d;
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.action {
-  min-width: 36px;
-  padding: 0 10px;
-}
-
-.content {
-  padding-top: 6px;
-}
-
-.inner {
-  margin-top: 6px;
-}
-
-.body {
-  display: grid;
-  gap: 12px;
-  align-items: normal;
-}
-
-.create {
+.ListFieldView-create {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.empty {
+.ListFieldView-empty {
   padding: 16px;
   border: 1px dashed #d8e1eb;
   border-radius: 12px;
   color: #5d6b79;
   background: #fbfcfe;
   font-size: 14px;
+}
+
+.ListFieldRow {
+  display: block;
+}
+
+.ListFieldRow-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #22303d;
+}
+
+.ListFieldRow-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ListFieldRow-action {
+  min-width: 36px;
+  padding: 0 10px;
+}
+
+.ListFieldRow-inner {
+  margin-top: 6px;
+}
+
+.ListFieldRow-body {
+  display: grid;
+  gap: 12px;
+  align-items: normal;
 }

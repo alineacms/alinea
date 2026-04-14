@@ -158,7 +158,7 @@ function RTView<Blocks extends Schema>({
             }}
           />
         )}
-        <EditorContent editor={editor} className={styles.root()} />
+        <EditorContent editor={editor} className={styles.RichTextFieldView()} />
       </Label>
       {toolbar &&
         editor &&

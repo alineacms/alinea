@@ -10,13 +10,13 @@ import css from './CodeField.module.css'
 const styles = styler(css)
 
 const tokenClassNames: Record<string, string> = {
-  com: styles.comment(),
-  key: styles.keyword(),
-  nam: styles.identifier(),
-  num: styles.number(),
-  pct: styles.punctuation(),
-  rex: styles.regex(),
-  str: styles.string()
+  com: styles.CodeEditorInput.comment(),
+  key: styles.CodeEditorInput.keyword(),
+  nam: styles.CodeEditorInput.identifier(),
+  num: styles.CodeEditorInput.number(),
+  pct: styles.CodeEditorInput.punctuation(),
+  rex: styles.CodeEditorInput.regex(),
+  str: styles.CodeEditorInput.string()
 }
 
 export interface CodeFieldViewProps {
@@ -74,10 +74,10 @@ export function CodeEditorInput({
       errorMessage={errorMessage}
       isRequired={isRequired}
     >
-      <Elevation className={styles.root({invalid})}>
+      <Elevation className={styles.CodeEditorInput({invalid})}>
         <CodeEditor
           autoFocus={autoFocus}
-          className={styles.editor()}
+          className={styles.CodeEditorInput.editor()}
           disabled={readOnly}
           highlight={highlight}
           onBlur={onBlur}
@@ -85,10 +85,10 @@ export function CodeEditorInput({
           onValueChange={onValueChange}
           padding={14}
           placeholder={placeholder}
-          preClassName={styles.pre()}
+          preClassName={styles.CodeEditorInput.pre()}
           readOnly={readOnly}
           tabSize={2}
-          textareaClassName={styles.textarea()}
+          textareaClassName={styles.CodeEditorInput.textarea()}
           textareaId={inputId}
           value={value}
         />

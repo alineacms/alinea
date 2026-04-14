@@ -73,14 +73,14 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
 export function Explorer({explorer}: ExplorerProps) {
   const [location, setLocation] = useAtom(explorer.location)
   return (
-    <div className={styles.root()}>
+    <div className={styles.Explorer()}>
       <LocationBreadcrumbs location={location} setLocation={setLocation} />
-      <div className={styles.toolbar()}>
+      <div className={styles.Explorer.toolbar()}>
         <ExplorerSearch explorer={explorer} />
         <ExplorerToolbar explorer={explorer} />
       </div>
 
-      <div className={styles.listViewport()}>
+      <div className={styles.Explorer.viewport()}>
         <ExplorerList explorer={explorer} />
       </div>
     </div>

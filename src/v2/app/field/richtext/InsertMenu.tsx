@@ -31,7 +31,7 @@ export function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
       <Menu
         aria-label="Insert block"
         label={
-          <Button appearance="plain" className={styles.trigger()}>
+          <Button appearance="plain" className={styles.InsertMenu.trigger()}>
             <Icon icon={IcRoundAddCircle} />
             <span>Insert block</span>
           </Button>
@@ -58,7 +58,7 @@ export function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
                   .run()
               }}
             >
-              <span className={styles.item()}>
+              <span className={styles.InsertMenu.item()}>
                 <Icon aria-hidden icon={meta.icon ?? IcRoundAddCircle} />
                 <span>{label}</span>
               </span>

@@ -38,8 +38,8 @@ const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
   const icon = useAtomValue(root.icon)
   return (
     <SidebarHeader>
-      <div className={styles.focusLabel()}>
-        <Icon icon={icon} className={styles.focusIcon()} />
+      <div className={styles.SidebarParent.label()}>
+        <Icon icon={icon} className={styles.SidebarParent.icon()} />
         {label}
         <LocaleMenu root={root} />
         <DialogTrigger>

@@ -1,4 +1,4 @@
-.root {
+.Rail {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -13,7 +13,7 @@
   }
 }
 
-.header {
+.RailHeader {
   display: flex;
   align-items: center;
   height: 56px;
@@ -21,7 +21,7 @@
   border-bottom: 1px solid red;
 }
 
-.footer {
+.RailFooter {
   display: flex;
   align-items: center;
   height: 56px;
@@ -29,7 +29,7 @@
   border-top: 1px solid red;
 }
 
-.body {
+.RailBody {
   flex: 1;
   display: flex;
   flex-direction: column;

@@ -1,11 +1,11 @@
-.trigger {
+.WorkspaceMenu-trigger {
   max-width: 100%;
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.triggerAvatar {
+.WorkspaceMenu-trigger-avatar {
   width: 24px;
   height: 24px;
   border-radius: 999px;
@@ -16,7 +16,7 @@
   flex-shrink: 0;
 }
 
-.triggerText {
+.WorkspaceMenu-trigger-text {
   display: block;
   min-width: 0;
   overflow: hidden;

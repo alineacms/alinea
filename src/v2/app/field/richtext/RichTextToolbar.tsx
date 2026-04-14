@@ -144,10 +144,10 @@ export const RichTextToolbar = memo(function RichTextToolbar({
     } satisfies RichTextToolbarContext
   }, [config, editor, enableTables, pickLink])
   return (
-    <div className={styles.root()} data-richtext-toolbar="true">
+    <div className={styles.RichTextToolbar()} data-richtext-toolbar="true">
       <Toolbar
         aria-label="Text formatting"
-        className={styles.toolbar()}
+        className={styles.RichTextToolbar.toolbar()}
         data-orientation="horizontal"
       >
         <ToolbarItems config={config} ctx={ctx} subMenu={false} />
@@ -173,9 +173,9 @@ function ToolbarButtonView({button, ctx}: ToolbarButtonProps) {
       isDisabled={button.disabled?.(ctx)}
       onPress={() => button.onSelect(ctx)}
       aria-label={title}
-      className={styles.button()}
+      className={styles.ToolbarButtonView()}
     >
-      {icon && <span className={styles.icon()}>{icon}</span>}
+      {icon && <span className={styles.ToolbarButtonView.icon()}>{icon}</span>}
       {!icon && label}
     </Button>
   )
@@ -198,11 +198,11 @@ function ToolbarMenuView({ctx, menu}: ToolbarMenuProps) {
         <Button
           appearance="plain"
           size="small"
-          className={styles.menuTrigger()}
+          className={styles.ToolbarMenuView.trigger()}
         >
-          {icon && <span className={styles.icon()}>{icon}</span>}
-          {label && <span className={styles.menuText()}>{label}</span>}
-          <span className={styles.icon()}>
+          {icon && <span className={styles.ToolbarMenuView.icon()}>{icon}</span>}
+          {label && <span className={styles.ToolbarMenuView.text()}>{label}</span>}
+          <span className={styles.ToolbarMenuView.icon()}>
             <IcRoundArrowDropDown />
           </span>
         </Button>
@@ -267,8 +267,8 @@ function renderEntry(
         isDisabled={entry.disabled?.(ctx)}
         onAction={() => entry.onSelect(ctx)}
       >
-        <span className={styles.menuItem()}>
-          {icon && <span className={styles.icon()}>{icon}</span>}
+        <span className={styles.ToolbarMenuView.item()}>
+          {icon && <span className={styles.ToolbarMenuView.icon()}>{icon}</span>}
           <span>{label ?? title}</span>
         </span>
       </MenuItem>

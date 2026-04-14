@@ -8,7 +8,7 @@ const styles = styler(css)
 export interface SidebarProps extends RailProps {}
 
 export function Sidebar(props: SidebarProps) {
-  return <Rail className={styles.root(styler.merge(props))} {...props} />
+  return <Rail className={styles.Sidebar(styler.merge(props))} {...props} />
 }
 
 export interface SidebarHeaderProps extends RailHeaderProps {}
@@ -24,7 +24,7 @@ export interface SidebarBodyProps
 
 export function SidebarBody({children, ...props}: SidebarBodyProps) {
   return (
-    <div {...props} className={styles.body()}>
+    <div {...props} className={styles.SidebarBody()}>
       {children}
     </div>
   )
@@ -39,7 +39,10 @@ export function SidebarFooter({
   ...props
 }: SidebarFooterProps) {
   return (
-    <footer {...props} className={styles.footer(styler.merge({className}))}>
+    <footer
+      {...props}
+      className={styles.SidebarFooter(styler.merge({className}))}
+    >
       {children}
     </footer>
   )

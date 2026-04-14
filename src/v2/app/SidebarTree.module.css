@@ -1,19 +1,4 @@
-.root {
-  display: flex;
-  flex: 1;
-  min-height: 100%;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.focusHeader {
-  display: flex;
-  align-items: center;
-  min-height: 34px;
-  margin-bottom: 4px;
-}
-
-.focusLabel {
+.SidebarParent-label {
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -34,7 +19,7 @@
   background: transparent;
 }
 
-.focusIcon {
+.SidebarParent-icon {
   flex-shrink: 0;
   opacity: 0.75;
 }

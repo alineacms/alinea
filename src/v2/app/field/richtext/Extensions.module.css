@@ -1,4 +1,4 @@
-.heading {
+.Heading {
   min-width: 0;
   font-weight: 600;
   white-space: pre-line;
@@ -13,12 +13,12 @@
   }
 }
 
-h1.heading {
+h1.Heading {
   font-size: 33px;
   line-height: 1.25;
 }
 
-h2.heading {
+h2.Heading {
   font-size: 18px;
   line-height: 1.33;
 
@@ -27,7 +27,7 @@ h2.heading {
   }
 }
 
-h3.heading {
+h3.Heading {
   font-size: 16px;
   line-height: 1.2;
 
@@ -36,7 +36,7 @@ h3.heading {
   }
 }
 
-h4.heading {
+h4.Heading {
   font-size: 13px;
   font-weight: 700;
 
@@ -45,7 +45,7 @@ h4.heading {
   }
 }
 
-h5.heading {
+h5.Heading {
   font-size: 11.5px;
   font-weight: 700;
 
@@ -54,7 +54,7 @@ h5.heading {
   }
 }
 
-.paragraph {
+.Paragraph {
   max-width: 50ch;
   font-size: 14px;
   line-height: 1.6;
@@ -70,7 +70,8 @@ h5.heading {
   }
 }
 
-.list {
+.BulletList,
+.OrderedList {
   margin-left: 20px;
 
   &:not(:last-child) {
@@ -78,13 +79,13 @@ h5.heading {
   }
 }
 
-.listItem {
+.ListItem {
   &:not(:last-child) {
     margin-bottom: 5px;
   }
 }
 
-.blockquote {
+.Blockquote {
   padding: 4px 16px;
   border-left: 2px solid hsla(var(--alinea-negative), 0.5);
 
@@ -93,7 +94,7 @@ h5.heading {
   }
 }
 
-.link {
+.Link {
   cursor: text;
   color: inherit;
   text-decoration: underline;
@@ -109,7 +110,7 @@ h5.heading {
   }
 }
 
-.table {
+.Table {
   width: 100%;
   overflow: hidden;
   border-collapse: collapse;
@@ -120,8 +121,8 @@ h5.heading {
   }
 }
 
-.td,
-.th {
+.TableCell,
+.TableHeader {
   padding: 4px 8px;
   border: 1px solid var(--alinea-fields-table);
 
@@ -130,13 +131,13 @@ h5.heading {
   }
 }
 
-.th {
+.TableHeader {
   background: var(--alinea-fields-header);
   text-align: left;
   font-weight: 700;
 }
 
-.highlight {
+.Highlight {
   background: var(--alinea-variant-info-action);
   color: var(--alinea-variant-info-foreground);
 }

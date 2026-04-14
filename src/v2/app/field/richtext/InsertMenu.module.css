@@ -1,4 +1,4 @@
-.trigger {
+.InsertMenu-trigger {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -7,7 +7,7 @@
   border: 1px solid var(--alinea-border-color);
 }
 
-.item {
+.InsertMenu-item {
   display: inline-flex;
   align-items: center;
   gap: 8px;

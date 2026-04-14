@@ -1,4 +1,4 @@
-.root {
+.CodeEditorInput {
   overflow: hidden;
   border: 1px solid #d8e1eb;
   border-radius: 12px;
@@ -7,21 +7,21 @@
     border-color 120ms ease,
     box-shadow 120ms ease,
     background-color 120ms ease;
+
+  &:focus-within {
+    border-color: #7ea7d8;
+    box-shadow: 0 0 0 3px rgba(126, 167, 216, 0.2);
+    background: #ffffff;
+  }
+
+  &.is-invalid {
+    border-color: #d15b6a;
+    box-shadow: 0 0 0 3px rgba(209, 91, 106, 0.16);
+    background: #fff8f8;
+  }
 }
 
-.root:focus-within {
-  border-color: #7ea7d8;
-  box-shadow: 0 0 0 3px rgba(126, 167, 216, 0.2);
-  background: #ffffff;
-}
-
-.root-invalid {
-  border-color: #d15b6a;
-  box-shadow: 0 0 0 3px rgba(209, 91, 106, 0.16);
-  background: #fff8f8;
-}
-
-.editor {
+.CodeEditorInput-editor {
   width: 100%;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 13px;
@@ -29,43 +29,43 @@
   tab-size: 2;
 }
 
-.textarea {
+.CodeEditorInput-textarea {
   outline: none;
 }
 
-.pre {
+.CodeEditorInput-pre {
   color: #22303d;
   white-space: pre-wrap;
   word-break: normal;
   overflow-wrap: anywhere;
 }
 
-.comment {
+.CodeEditorInput-comment {
   color: #98a3ad;
   font-style: italic;
 }
 
-.keyword {
+.CodeEditorInput-keyword {
   color: #55616b;
   font-weight: 600;
 }
 
-.identifier {
+.CodeEditorInput-identifier {
   color: #1e88e5;
 }
 
-.number {
+.CodeEditorInput-number {
   color: #d81b60;
 }
 
-.string {
+.CodeEditorInput-string {
   color: #2e7d32;
 }
 
-.regex {
+.CodeEditorInput-regex {
   color: #ef6c00;
 }
 
-.punctuation {
+.CodeEditorInput-punctuation {
   color: #607d8b;
 }

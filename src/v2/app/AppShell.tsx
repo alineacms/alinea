@@ -20,7 +20,7 @@ interface AppShellProps {
 export function AppShell({dashboard}: AppShellProps) {
   const sha = useAtomValue(dashboard.sha)
   return (
-    <main className={styles.root()}>
+    <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
         <Sidebar>
           <SidebarHeader>

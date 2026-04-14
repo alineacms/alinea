@@ -50,11 +50,11 @@ function RootEditor({root}: RootEditorProps) {
   return (
     <Rail main>
       <RailHeader>
-        <h1 className={styles.mainTitle()}>{title}</h1>
+        <h1 className={styles.RootEditor.title()}>{title}</h1>
       </RailHeader>
 
-      <div className={styles.explorerMainBody()}>
-        <div className={styles.explorerBody()}>
+      <div className={styles.RootEditor.body()}>
+        <div className={styles.RootEditor.explorer()}>
           <Explorer explorer={root.explorer} />
         </div>
       </div>
@@ -111,7 +111,7 @@ function EntryEditor({entry}: EntryEditorProps) {
       <EntryScope entry={entry}>
         <Rail main>
           <RailHeader>
-            <h1 className={styles.mainTitle()}>{title}</h1>
+            <h1 className={styles.EntryEditor.title()}>{title}</h1>
             <TypeBadge type={type} />
             <EntryStatus entry={entry} />
             {isDirty && (
@@ -132,7 +132,10 @@ function EntryEditor({entry}: EntryEditorProps) {
           <RailBody>
             <NodeEditor node={node} type={type.type} />
 
-            <RailFooter id="alinea-toolbar" className={styles.toolbar()} />
+            <RailFooter
+              id="alinea-toolbar"
+              className={styles.EntryEditor.toolbar()}
+            />
           </RailBody>
         </Rail>
 
@@ -185,7 +188,7 @@ export interface EditFieldsProps {
 
 export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
   return (
-    <div className={styles.fields()}>
+    <div className={styles.EditFields()}>
       {Object.entries(fields).map(([name, field]) => {
         return <EditField key={name} field={field} />
       })}
@@ -211,7 +214,7 @@ const EditField = memo(function EditField({field}: EditFieldProps) {
     )
   return (
     <div
-      className={styles.fieldSlot()}
+      className={styles.EditField.slot()}
       style={{gridColumn: `span ${fieldSpan(options.width)}`}}
     >
       <View field={field} />
@@ -232,7 +235,7 @@ function TypeBadge({type}: TypeBadgeProps) {
   const label = type.label
   const icon = type.icon
   return (
-    <span className={styles.typeBadge()}>
+    <span className={styles.TypeBadge()}>
       {icon && <Icon icon={icon} />}
       {label}
     </span>
@@ -246,5 +249,9 @@ interface EntryStatusProps {
 function EntryStatus({entry}: EntryStatusProps) {
   const selectedVersion = useAtomValue(entry.selectedVersion)
   if (selectedVersion.type !== 'status') return
-  return <span className={styles.statusBadge()}>{selectedVersion.status}</span>
+  return (
+    <span className={styles.EntryStatus.badge()}>
+      {selectedVersion.status}
+    </span>
+  )
 }

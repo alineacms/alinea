@@ -1,5 +1,4 @@
 import {Button, DialogTrigger, Elevation, Label} from '@alinea/components'
-import {styler} from '@alinea/styler'
 import {createId} from 'alinea/core/Id'
 import {Reference} from 'alinea/core/Reference'
 import {ListRow} from 'alinea/core/shape/ListShape'
@@ -14,9 +13,6 @@ import {
   useFieldValue
 } from '../../../store.js'
 import {LinkPicker} from '../../LinkPicker.js'
-import css from './LinkField.module.css'
-
-const styles = styler(css)
 
 interface EntryRowProps {
   entryId: string

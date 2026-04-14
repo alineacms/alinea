@@ -1,4 +1,4 @@
-.root {
+.RichTextFieldView {
   padding: 10px;
 
   :global(.ProseMirror) {

@@ -55,9 +55,9 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const readOnly = Boolean(options.readOnly)
   return (
     <Label label={options.label} errorMessage={error}>
-      <div className={styles.root()}>
+      <div className={styles.ListFieldView()}>
         {nodes.length > 0 ? (
-          <List className={styles.rows()}>
+          <List className={styles.ListFieldView.rows()}>
             {nodes.map((row, index) => (
               <ListFieldRow
                 index={index}
@@ -71,11 +71,11 @@ export function ListFieldView({field}: ListFieldViewProps) {
             ))}
           </List>
         ) : (
-          <div className={styles.empty()}>No items yet.</div>
+          <div className={styles.ListFieldView.empty()}>No items yet.</div>
         )}
 
         {!readOnly && (
-          <div className={styles.create()}>
+          <div className={styles.ListFieldView.create()}>
             {schemaEntries.map(([typeName, type]) => (
               <Button
                 key={typeName}
@@ -132,21 +132,24 @@ function ListFieldRow({
   const label = Type.label(type)
   const icon = getType(type).icon || IcOutlineList
   return (
-    <section aria-label={`${label} item ${index + 1}`} className={styles.row()}>
+    <section
+      aria-label={`${label} item ${index + 1}`}
+      className={styles.ListFieldRow()}
+    >
       <ListItem
         inner={
-          <Elevation className={styles.inner()}>
-            <div className={styles.body()}>
+          <Elevation className={styles.ListFieldRow.inner()}>
+            <div className={styles.ListFieldRow.body()}>
               <NodeEditor node={row as ReactiveNode<object>} type={type} />
             </div>
           </Elevation>
         }
         leading={<Icon aria-hidden icon={icon} />}
         trailing={
-          <div className={styles.actions()}>
+          <div className={styles.ListFieldRow.actions()}>
             <Button
               aria-label={`Move ${label} up`}
-              className={styles.action()}
+              className={styles.ListFieldRow.action()}
               isDisabled={readOnly || index === 0}
               onPress={() =>
                 setRows(current => {
@@ -164,7 +167,7 @@ function ListFieldRow({
             </Button>
             <Button
               aria-label={`Move ${label} down`}
-              className={styles.action()}
+              className={styles.ListFieldRow.action()}
               isDisabled={readOnly || index === rows - 1}
               onPress={() =>
                 setRows(current => {
@@ -182,7 +185,7 @@ function ListFieldRow({
             </Button>
             <Button
               aria-label={`Remove ${label}`}
-              className={styles.action()}
+              className={styles.ListFieldRow.action()}
               isDisabled={readOnly}
               onPress={() =>
                 setRows(current =>
@@ -195,7 +198,7 @@ function ListFieldRow({
           </div>
         }
       >
-        <strong className={styles.title()}>{label}</strong>
+        <strong className={styles.ListFieldRow.title()}>{label}</strong>
       </ListItem>
     </section>
   )

@@ -21,14 +21,14 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
   return (
     <Menu
       label={
-        <Button appearance="plain" className={styles.trigger()}>
+        <Button appearance="plain" className={styles.WorkspaceMenu.trigger()}>
           <span
-            className={styles.triggerAvatar()}
+            className={styles.WorkspaceMenu.trigger.avatar()}
             style={{backgroundColor: color}}
           >
             <Icon />
           </span>
-          <span className={styles.triggerText()}>{label}</span>
+          <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>
         </Button>
       }
       aria-label="Workspace"
