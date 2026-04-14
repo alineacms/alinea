@@ -3,13 +3,27 @@
   gap: 14px;
 }
 
-.rows {
-  display: grid;
-  gap: 12px;
+.rowsBox {
+  width: 100%;
 }
 
 .row {
-  display: block;
+  display: grid;
+}
+
+.row + .row {
+  border-top: 1px solid var(--alinea-border-color);
+}
+
+.header {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.leading {
+  display: inline-flex;
+  align-items: center;
+  color: #22303d;
 }
 
 .title {
@@ -29,14 +43,6 @@
   padding: 0 10px;
 }
 
-.content {
-  padding-top: 6px;
-}
-
-.inner {
-  margin-top: 6px;
-}
-
 .body {
   display: grid;
   gap: 12px;
@@ -50,7 +56,7 @@
 }
 
 .empty {
-  padding: 16px;
+  padding: 8px;
   border: 1px dashed #d8e1eb;
   border-radius: 12px;
   color: #5d6b79;

@@ -99,3 +99,7 @@
   flex-direction: row;
   justify-content: space-between;
 }
+
+:global(.alinea-rac-TabPanel){
+  padding: 0; 
+}

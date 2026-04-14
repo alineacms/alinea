@@ -1,10 +1,10 @@
-import {Elevation, Label} from '@alinea/components'
-import {styler} from '@alinea/styler'
-import {CodeField} from 'alinea/field/code'
+import { Elevation, Label } from '@alinea/components'
+import { styler } from '@alinea/styler'
+import { CodeField } from 'alinea/field/code'
 import lolight from 'lolight'
-import {Fragment, ReactNode, useId} from 'react'
+import { Fragment, ReactNode, useId } from 'react'
 import CodeEditor from 'react-simple-code-editor/src/index.js'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
+import { useFieldError, useFieldOptions, useFieldValue } from '../../../store.js'
 import css from './CodeField.module.css'
 
 const styles = styler(css)

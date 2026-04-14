@@ -1,9 +1,9 @@
-import {getType} from 'alinea/core/Internal'
-import {Section} from 'alinea/core/Section'
-import {Type} from 'alinea/core/Type'
-import {TabsSection} from 'alinea/field/tabs'
-import {type KeyboardEvent, useEffect, useId, useRef, useState} from 'react'
-import {EditFields} from '../../Editor.js'
+import { getType } from 'alinea/core/Internal'
+import { Section } from 'alinea/core/Section'
+import { Type } from 'alinea/core/Type'
+import { TabsSection } from 'alinea/field/tabs'
+import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react'
+import { EditFields } from '../../Editor.js'
 
 interface TabsViewProps {
   section: Section

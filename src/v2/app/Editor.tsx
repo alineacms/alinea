@@ -23,6 +23,8 @@ import {
   useFieldView,
   useNodeEditor,
 } from "../store/hooks.js";
+import { Box, BoxContent, BoxHeader, BoxRow } from "./Box.js";
+import { DetailsBar } from "./DetailsBar.js";
 import css from "./Editor.module.css";
 import { EntrySidebar } from "./EntrySidebar.js";
 import { Explorer } from "./Explorer.js";
@@ -111,14 +113,14 @@ function EntryEditor({ entry }: EntryEditorProps) {
       </Sheet>
       <EntryScope entry={entry}>
         <Allotment className={styles.entryLayout()} snap>
-          <Allotment.Pane preferredSize={"72%"} snap={false}>
+          <Allotment.Pane snap={false}>
             <Rail main>
               <RailHeader className={styles.entryEditorHeader()}>
                 <div>
                   <h1 className={styles.mainTitle()}>{title}</h1>
-                  <TypeBadge type={type} />
+                  {/* <TypeBadge type={type} /> */}
                 </div>
-                <EntryStatus entry={entry} />
+                {/* <EntryStatus entry={entry} /> */}
                 {isDirty && (
                   <div style={{ marginLeft: "auto" }}>
                     <Button intent="secondary" onPress={reset}>
@@ -134,17 +136,18 @@ function EntryEditor({ entry }: EntryEditorProps) {
                 )}
               </RailHeader>
 
-              {/* status component */}
+              <DetailsBar status="published" />
 
               <RailBody>
+                <div style={{ padding: "12px" }}>
                 <NodeEditor node={node} type={type.type} />
-
+                </div>
                 <RailFooter id="alinea-toolbar" className={styles.toolbar()} />
               </RailBody>
             </Rail>
           </Allotment.Pane>
 
-          <Allotment.Pane minSize={180} preferredSize={360} maxSize={560}>
+          <Allotment.Pane minSize={180} preferredSize="25%" maxSize={560}>
             <EntrySidebar entry={entry} />
           </Allotment.Pane>
         </Allotment>
@@ -156,14 +159,34 @@ function EntryEditor({ entry }: EntryEditorProps) {
 interface NodeEditorProps {
   node: ReactiveNode<object>;
   type: Type;
+  surface?: "box" | "plain";
 }
 
-export function NodeEditor({ node, type }: NodeEditorProps) {
+export function NodeEditor({
+  node,
+  type,
+  surface = "box",
+}: NodeEditorProps) {
   const editor = useNodeEditor(node, type);
+  const typeLabel = Type.label(type);
+  if (surface === "plain") {
+    return (
+      <EditorScope editor={editor}>
+        <FieldsEditor editor={editor} />
+      </EditorScope>
+    );
+  }
   return (
-    <EditorScope editor={editor}>
-      <FieldsEditor editor={editor} />
-    </EditorScope>
+      <Box>
+        <BoxRow>
+          <BoxHeader>{typeLabel}</BoxHeader>
+        </BoxRow>
+        <BoxContent>
+          <EditorScope editor={editor}>
+            <FieldsEditor editor={editor} />
+          </EditorScope>
+        </BoxContent>
+      </Box>
   );
 }
 
@@ -175,7 +198,9 @@ export const FieldsEditor = memo(function TypeForm({
   editor,
 }: FieldsEditorProps) {
   return editor.sections.map((section, index) => {
-    return <FormSection key={index} section={section} />;
+    return (
+      <FormSection key={index} section={section} />
+    )
   });
 });
 
@@ -187,7 +212,9 @@ const FormSection = memo(function FormSection({ section }: FormSectionProps) {
   const View = useAtomValue(section.view);
   const props = { section: section.section };
   if (View) return <View {...props} />;
-  return <EditFields fields={Section.fields(section.section)} />;
+  return( 
+      <EditFields fields={Section.fields(section.section)} />
+    )
 });
 
 export interface EditFieldsProps {

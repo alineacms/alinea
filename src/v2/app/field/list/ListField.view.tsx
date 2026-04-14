@@ -1,20 +1,16 @@
 import {
   Button,
-  Elevation,
-  Icon,
-  Label,
-  List,
-  ListItem
+  Icon
 } from '@alinea/components'
 import styler from '@alinea/styler'
-import {createId} from 'alinea/core/Id'
-import {getType} from 'alinea/core/Internal'
-import {Schema} from 'alinea/core/Schema'
-import {Type} from 'alinea/core/Type'
-import {ListField as CoreListField} from 'alinea/core/field/ListField'
-import {ListRow} from 'alinea/core/shape/ListShape'
-import {ListOptions} from 'alinea/field/list'
-import {NodeEditor} from 'alinea/v2/app/Editor'
+import { createId } from 'alinea/core/Id'
+import { getType } from 'alinea/core/Internal'
+import { Schema } from 'alinea/core/Schema'
+import { Type } from 'alinea/core/Type'
+import { ListField as CoreListField } from 'alinea/core/field/ListField'
+import { ListRow } from 'alinea/core/shape/ListShape'
+import { ListOptions } from 'alinea/field/list'
+import { NodeEditor } from 'alinea/v2/app/Editor'
 import {
   IcOutlineList,
   IcRoundAdd,
@@ -29,8 +25,9 @@ import {
   useFieldOptions,
   useNodes
 } from 'alinea/v2/store'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {useMemo} from 'react'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { useMemo } from 'react'
+import { Box, BoxContent, BoxHeader, BoxRow } from '../../Box'
 import css from './ListField.module.css'
 
 const styles = styler(css)
@@ -53,58 +50,71 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const setRows = useSetAtom(list.value)
   const schemaEntries = useMemo(() => Object.entries(options.schema), [options])
   const readOnly = Boolean(options.readOnly)
+  const hasRows = nodes.length > 0
   return (
-    <Label label={options.label} errorMessage={error}>
       <div className={styles.root()}>
-        {nodes.length > 0 ? (
-          <List className={styles.rows()}>
-            {nodes.map((row, index) => (
-              <ListFieldRow
-                index={index}
-                key={index}
-                list={list}
-                readOnly={readOnly}
-                row={row}
-                rows={nodes.length}
-                schema={options.schema}
-              />
-            ))}
-          </List>
+        {hasRows || !readOnly ? (
+          <Box className={styles.rowsBox()} role="list">
+            <BoxRow>
+              <BoxHeader>
+                {options.label}
+              </BoxHeader>
+            </BoxRow>
+            {hasRows ? (
+              nodes.map((row, index) => (
+                <ListFieldRow
+                  index={index}
+                  key={index}
+                  list={list}
+                  readOnly={readOnly}
+                  row={row}
+                  rows={nodes.length}
+                  schema={options.schema}
+                />
+              ))
+            ) : (
+              <BoxContent>
+                <div className={styles.empty()}>No items yet.</div>
+              </BoxContent>
+            )}
+            {!readOnly && (
+              <BoxRow position="middle">
+                <div className={styles.create()}>
+                  {schemaEntries.map(([typeName, type]) => (
+                    <Button
+                      key={typeName}
+                      appearance='plain'
+                      intent='secondary'
+                      onPress={() =>
+                        setRows(current => {
+                          const initialValue = Type.initialValue(type) as Record<
+                            string,
+                            unknown
+                          >
+                          return [
+                            ...current,
+                            {
+                              _id: createId(),
+                              _index: '',
+                              _type: typeName,
+                              ...initialValue
+                            }
+                          ]
+                        })
+                      }
+                    >
+                      <Icon aria-hidden icon={getType(type).icon || IcRoundAdd} />
+                      {`Add ${Type.label(type)}`}
+                    </Button>
+                  ))}
+                </div>
+              </BoxRow>
+            )}
+          </Box>
         ) : (
           <div className={styles.empty()}>No items yet.</div>
         )}
-
-        {!readOnly && (
-          <div className={styles.create()}>
-            {schemaEntries.map(([typeName, type]) => (
-              <Button
-                key={typeName}
-                onPress={() =>
-                  setRows(current => {
-                    const initialValue = Type.initialValue(type) as Record<
-                      string,
-                      unknown
-                    >
-                    return [
-                      ...current,
-                      {
-                        _id: createId(),
-                        _index: '',
-                        _type: typeName,
-                        ...initialValue
-                      }
-                    ]
-                  })
-                }
-              >
-                <Icon aria-hidden icon={getType(type).icon || IcRoundAdd} />
-                {`Add ${Type.label(type)}`}
-              </Button>
-            ))}
-          </div>
-        )}
       </div>
-    </Label>
   )
 }
 
@@ -132,17 +142,16 @@ function ListFieldRow({
   const label = Type.label(type)
   const icon = getType(type).icon || IcOutlineList
   return (
-    <section aria-label={`${label} item ${index + 1}`} className={styles.row()}>
-      <ListItem
-        inner={
-          <Elevation className={styles.inner()}>
-            <div className={styles.body()}>
-              <NodeEditor node={row as ReactiveNode<object>} type={type} />
-            </div>
-          </Elevation>
-        }
-        leading={<Icon aria-hidden icon={icon} />}
-        trailing={
+    <section
+      aria-label={`${label} item ${index + 1}`}
+      className={styles.row()}
+      role="listitem"
+    >
+        <BoxRow className={styles.header()}>
+          <BoxHeader className={styles.leading()}>
+            <Icon aria-hidden icon={icon} />
+            <strong className={styles.title()}>{label}</strong>
+          </BoxHeader>
           <div className={styles.actions()}>
             <Button
               aria-label={`Move ${label} up`}
@@ -193,10 +202,14 @@ function ListFieldRow({
               <Icon aria-hidden icon={IcRoundDelete} />
             </Button>
           </div>
-        }
-      >
-        <strong className={styles.title()}>{label}</strong>
-      </ListItem>
+        </BoxRow>
+        <BoxContent className={styles.body()}>
+          <NodeEditor
+            node={row as ReactiveNode<object>}
+            surface="plain"
+            type={type}
+          />
+        </BoxContent>
     </section>
   )
 }
