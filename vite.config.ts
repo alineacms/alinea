@@ -1,8 +1,9 @@
 import react from '@vitejs/plugin-react'
 import {writeFileSync} from 'node:fs'
-import {basename} from 'node:path'
 import {defineConfig} from 'vite-plus'
 import {alineaFixturePlugin} from './src/v2/plugins/alineaFixturePlugin.js'
+
+const generateScopedName = 'alinea-[local]'
 
 export default defineConfig({
   plugins: [alineaFixturePlugin(), react()],
@@ -65,14 +66,6 @@ export default defineConfig({
     }
   }
 })
-
-function generateScopedName(name: string, fileName: string) {
-  const base = basename(fileName)
-  const module = base.slice(0, base.indexOf('.'))
-  if (name.startsWith('root-')) name = name.slice(5)
-  if (name.startsWith('root')) name = name.slice(4)
-  return `alinea-${module}${name ? '-' + name : ''}`
-}
 
 function pkg(name: string) {
   return new RegExp(`^${RegExp.escape(name)}(/|$)`)
