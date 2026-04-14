@@ -294,7 +294,7 @@ test('mutate with api key only skips policy creation', async () => {
   test.is(response.status, 200)
   // No policy should be created when there is no authenticated user
   test.is(createPolicyCalls, 0)
-  // local.request is called without a policy (allow-all behaviour)
+  // local.request is called without a policy (allow-all behavior)
   test.is(requestPolicies.length, 1)
   test.is(requestPolicies[0], undefined)
 })
