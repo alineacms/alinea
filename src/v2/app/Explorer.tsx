@@ -1,7 +1,12 @@
 import {Button, SearchField} from '@alinea/components'
 import styler from '@alinea/styler'
-import {useAtom} from 'jotai'
-import {IcOutlineGridView, IcOutlineList} from '../icons.js'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {
+  FileTrigger,
+  ToggleButton,
+  ToggleButtonGroup
+} from 'react-aria-components'
+import {IcOutlineGridView, IcOutlineList, IcRoundUploadFile} from '../icons.js'
 import {DashboardExplorer} from '../store.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
@@ -35,20 +40,32 @@ interface ExplorerToolbarProps {
 
 function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   const [view, setView] = useAtom(explorer.view)
+  const isMedia = useAtomValue(explorer.isMedia)
+  const upload = useSetAtom(explorer.upload)
   return (
     <div>
-      <Button
-        appearance={view === 'card' ? 'active' : 'plain'}
-        onPress={() => setView('card')}
+      <ToggleButtonGroup
+        selectedKeys={[view]}
+        onSelectionChange={keys => {
+          setView(keys.has('card') ? 'card' : 'row')
+        }}
       >
-        <IcOutlineGridView /> Cards
-      </Button>
-      <Button
-        appearance={view === 'row' ? 'active' : 'plain'}
-        onPress={() => setView('row')}
-      >
-        <IcOutlineList /> Rows
-      </Button>
+        <ToggleButton id="card">
+          <IcOutlineGridView /> Cards
+        </ToggleButton>
+        <ToggleButton id="row">
+          <IcOutlineList /> Rows
+        </ToggleButton>
+      </ToggleButtonGroup>
+      {isMedia && (
+        <FileTrigger
+          onSelect={files => {
+            if (files) upload(files)
+          }}
+        >
+          <Button icon={IcRoundUploadFile}>Upload media</Button>
+        </FileTrigger>
+      )}
     </div>
   )
 }

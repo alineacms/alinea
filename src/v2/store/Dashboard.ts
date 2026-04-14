@@ -2,11 +2,13 @@ import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
 import type {Config} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
 import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {UploadOperation} from 'alinea/core/db/Operation'
 import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
 import {Entry, EntryStatus} from 'alinea/core/Entry'
 import {Field, FieldOptions} from 'alinea/core/Field'
 import type {Order} from 'alinea/core/Graph'
 import {getRoot, getType, getWorkspace} from 'alinea/core/Internal'
+import {createPreview} from 'alinea/core/media/CreatePreview'
 import {Section} from 'alinea/core/Section'
 import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
 import {Type} from 'alinea/core/Type'
@@ -413,6 +415,28 @@ export class DashboardExplorer {
   )
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
     return [...keys].map(id => dragItem(id))
+  })
+
+  isMedia = atom(get => {
+    const root = get(this.root)
+    return root ? get(root.isMedia) : false
+  })
+
+  upload = atom(null, (get, set, files: FileList) => {
+    const location = get(this.location)
+    const db = get(this.dashboard.db)
+    const ops = Array.from(
+      files,
+      file =>
+        new UploadOperation({
+          file,
+          createPreview: createPreview,
+          parentId: location.parentId,
+          workspace: location.workspace,
+          root: location.root
+        })
+    )
+    return db.commit(...ops)
   })
 
   workspace = atom(
@@ -1170,6 +1194,7 @@ export class DashboardRoot {
   children = atom(get =>
     queryTreeChildren(get, this, null, this.orderChildrenBy)
   )
+  isMedia = atom(get => get(this.#settings).isMediaRoot)
 
   hasChildren = atom(async get => {
     const db = get(this.workspace.dashboard.db)
