@@ -5,6 +5,8 @@
   gap: 8px;
   width: 100%;
   justify-content: space-between;
+  padding: 0 8px !important;
+  height: 36px !important;
 }
 
 .triggerAvatar {

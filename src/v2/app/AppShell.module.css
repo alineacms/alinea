@@ -7,3 +7,39 @@
   flex-direction: row;
   width: 100%;
 }
+
+.profile {
+  border: 0;
+  border-top: 1px solid lightgray;
+  border-radius: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  width: 100%;
+}
+
+.profile-identity {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.profile-popover {
+  padding: 0;
+  margin: 0;
+  & > * {
+    font-size: 14px;
+    &:not(:last-child) {
+      border-bottom: 1px solid #e5e7eb;
+    }
+    &:nth-child(even) {
+      background-color: rgb(251, 251, 251);
+    }
+  }
+}
+
+.profile-popover-themeOptions {
+  display: flex;
+  gap: 8px;
+}

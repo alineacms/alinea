@@ -3,35 +3,33 @@ import {
   DialogTrigger,
   Icon as IconComp,
   Menu,
-  MenuItem,
-} from "@alinea/components";
-import styler from "@alinea/styler";
-import { IcRoundUnfoldMore } from "alinea/ui/icons/IcRoundUnfoldMore.js";
-import { useAtom, useAtomValue } from "jotai";
-import { IcAlineaLogo, IcRoundSearch } from "../icons.js";
-import type { Dashboard, DashboardWorkspace } from "../store/Dashboard.js";
-import css from "./WorkspaceMenu.module.css";
-import { Sheet } from "./ui/Sheet.js";
+  MenuItem
+} from '@alinea/components'
+import styler from '@alinea/styler'
+import IcOutlineSettings from 'alinea/ui/icons/IcOutlineSettings.js'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore.js'
+import {useAtom, useAtomValue} from 'jotai'
+import {IcAlineaLogo, IcRoundSearch} from '../icons.js'
+import type {Dashboard, DashboardWorkspace} from '../store/Dashboard.js'
+import css from './WorkspaceMenu.module.css'
+import {Sheet} from './ui/Sheet.js'
 
-const styles = styler(css);
+const styles = styler(css)
 
 interface WorkspaceMenuProps {
-  dashboard: Dashboard;
+  dashboard: Dashboard
 }
 
-export function WorkspaceMenu({ dashboard }: WorkspaceMenuProps) {
-  const [selected, setSelected] = useAtom(dashboard.selectedWorkspace);
-  const workspaces = useAtomValue(dashboard.workspaces);
-  const workspace = dashboard.workspace(selected);
-  const color = useAtomValue(workspace.color);
-  const Icon = useAtomValue(workspace.icon) ?? IcAlineaLogo;
-  const label = useAtomValue(workspace.label);
+export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
+  const [selected, setSelected] = useAtom(dashboard.selectedWorkspace)
+  const workspaces = useAtomValue(dashboard.workspaces)
+  const workspace = dashboard.workspace(selected)
+  const color = useAtomValue(workspace.color)
+  const Icon = useAtomValue(workspace.icon) ?? IcAlineaLogo
+  const label = useAtomValue(workspace.label)
   return (
     <div className={styles.parent()}>
-      <span
-        className={styles.triggerAvatar()}
-        style={{ backgroundColor: color }}
-      >
+      <span className={styles.triggerAvatar()} style={{backgroundColor: color}}>
         <Icon />
       </span>
 
@@ -49,14 +47,18 @@ export function WorkspaceMenu({ dashboard }: WorkspaceMenuProps) {
         aria-label="Workspace"
         selectionMode="single"
         selectedKeys={[selected]}
-        onAction={(key) => setSelected(String(key))}
+        onAction={key => setSelected(String(key))}
       >
-        {workspaces.map((workspace) => (
+        {workspaces.map(workspace => (
           <WorkspaceItem
             key={workspace}
             workspace={dashboard.workspace(workspace)}
           />
         ))}
+        <MenuItem key="manage">
+          <IcOutlineSettings />
+          Manage members
+        </MenuItem>
       </Menu>
       <DialogTrigger>
         <Button size="icon" appearance="outline">
@@ -65,19 +67,19 @@ export function WorkspaceMenu({ dashboard }: WorkspaceMenuProps) {
         <Sheet></Sheet>
       </DialogTrigger>
     </div>
-  );
+  )
 }
 
 interface WorkspaceItemProps {
-  workspace: DashboardWorkspace;
+  workspace: DashboardWorkspace
 }
 
-function WorkspaceItem({ workspace }: WorkspaceItemProps) {
-  const id = workspace.key;
-  const label = useAtomValue(workspace.label);
+function WorkspaceItem({workspace}: WorkspaceItemProps) {
+  const id = workspace.key
+  const label = useAtomValue(workspace.label)
   return (
     <MenuItem key={id} id={id} textValue={label}>
       {label}
     </MenuItem>
-  );
+  )
 }

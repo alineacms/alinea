@@ -1,0 +1,5 @@
+header {
+  & > .alinea-rac-Tablist {
+    align-self: auto; 
+  }
+}

@@ -39,7 +39,7 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 8px;
 }
 
 .focusIcon {
@@ -55,12 +55,11 @@
 :global(.alinea-Sidebar-body) :global(.alinea-rac-Tree) {
   min-width: 0;
   padding: 8px !important;
-  
+
   /* TODO */
   > div {
-    height: auto !important;
     width: 100% !important;
-    
+
     > div {
       height: auto !important;
       width: 100% !important;
@@ -68,8 +67,28 @@
   }
 }
 
-:global(.alinea-rac-TreeItem){
+:global(.alinea-rac-TreeItem) {
   border-radius: 6px;
   width: 100%;
   padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px) !important;
+}
+
+.locator {
+  display: flex;
+  height: 100%;
+}
+
+.locator > :not(.locator-rootSelector) {
+  width: 100%;
+}
+
+.locator-rootSelector {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  border-right: solid 1px lightgray;
+  width: 64px;
+  align-items: center;
 }

@@ -1,10 +1,10 @@
-import {Button, Icon, Tab, TabList, TabPanel, Tabs} from '@alinea/components'
-import {styler} from '@alinea/styler'
-import {useAtom, useAtomValue} from 'jotai'
-import {IcRoundHistory, IcRoundVisibility} from '../icons.js'
-import {DashboardEntry} from '../store.js'
+import { Button, Icon, Tab, TabList, TabPanel, Tabs } from '@alinea/components'
+import { styler } from '@alinea/styler'
+import { useAtom, useAtomValue } from 'jotai'
+import { IcRoundHistory, IcRoundVisibility } from '../icons.js'
+import { DashboardEntry } from '../store.js'
 import css from './EntrySidebar.module.css'
-import {Sidebar, SidebarBody, SidebarHeader} from './ui/Sidebar.js'
+import { Sidebar, SidebarBody, SidebarHeader } from './ui/Sidebar.js'
 
 const styles = styler(css)
 
@@ -20,7 +20,7 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
   return (
     <Sidebar>
       <Tabs defaultSelectedKey="history" variant="subtle">
-        <SidebarHeader>
+        <SidebarHeader className={styles.header()}>
           <TabList aria-label="Entry sidebar">
             <Tab id="history">
               <Icon icon={IcRoundHistory} />
