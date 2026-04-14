@@ -1,0 +1,43 @@
+.alinea-rac-Badge {
+  display: flex;
+  align-items: center;
+  align-self: normal;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 32px;
+  height: 32px;
+  color: var(--alinea-text-color);
+  align-self: center;
+
+  --bg: var(--alinea-surface-0);
+  --border-color: transparent;
+
+  &[data-status="success"] {
+    --bg: var(--alinea-status-succes-background);
+    --border-color: var(--alinea-mint-300);
+  }
+
+  &[data-status="warning"] {
+    --bg: var(--alinea-warning-400);
+    --border-color: var(--alinea-warning-800);
+  }
+  &[data-status="neutral"] {
+    --bg: var(--alinea-surface-0);
+    --border-color: var(--alinea-surface-200);
+  }
+  &[data-status="danger"] {
+    --bg: var(--alinea-danger-400);
+    --border-color: var(--alinea-danger-800);
+  }
+
+  &[data-appearence="plain"],
+  &[data-appearence="outline"] {
+    --bg: transparent;
+  }
+  &[data-appearence="outline"],
+  &[data-appearence="default"] {
+    --border: 1px solid var(--border-color);
+  }
+  background-color: var(--bg);
+  border: var(--border);
+}
