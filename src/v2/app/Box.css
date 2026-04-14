@@ -1,0 +1,65 @@
+.alinea-rac-Box {
+  border: 1px solid var(--alinea-border-color);
+  border-radius: 6px;
+  /* background-color: var(--alinea-panel-background-secondary); */
+  background-color: whitesmoke;
+  overflow: hidden;
+  min-height: fit-content;
+  height: auto;
+}
+
+.alinea-rac-Box > .tabs .alinea-rac-Tablist {
+  padding: 0;
+}
+
+.alinea-rac-BoxRow {
+  border-bottom: 1px solid var(--alinea-border-color);
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--alinea-text-color);
+
+  &[data-position="between"] {
+    justify-content: space-between;
+  }
+  &[data-position="start"] {
+    justify-content: start;
+  }
+  &[data-position="middle"] {
+    justify-content: center;
+  }
+  &[data-position="end"] {
+    justify-content: end;
+  }
+}
+
+:not(.alinea-rac-BoxRow, .alinea-rac-Tablist, .alinea-rac-Tabs)
+  + .alinea-rac-BoxRow {
+  border-top: 1px solid var(--alinea-border-color);
+}
+
+.alinea-rac-BoxRow:last-child {
+  border-bottom: none;
+}
+
+.alinea-rac-BoxContent {
+  overflow: hidden;
+  padding: 12px;
+  /* background-color: var(--alinea-panel-background-tertiary); */
+  background-color: white;
+  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  color: var(--alinea-text-color);
+}
+
+.alinea-rac-BoxHeader {
+  gap: 8px;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--alinea-text-color);
+}
