@@ -1,5 +1,5 @@
+import {cms} from '#test/cms.js'
 import {suite} from '@alinea/suite'
-import {cms} from '#test/cms'
 import {Entry} from '../Entry.js'
 import {FSSource} from '../source/FSSource.js'
 import {MemorySource} from '../source/MemorySource.js'

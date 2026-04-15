@@ -21,29 +21,11 @@
     },
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js",
-    "./cloud/view/CloudAuth": {
-      "edge-light": "./dist/cloud/view/CloudAuth.js",
-      "worker": "./dist/cloud/view/CloudAuth.js",
-      "browser": "./dist/cloud/view/CloudAuth.browser.js",
-      "default": "./dist/cloud/view/CloudAuth.js"
-    },
     "./core/media/CreatePreview": {
       "edge-light": "./dist/core/media/CreatePreview.js",
       "worker": "./dist/core/media/CreatePreview.js",
       "browser": "./dist/core/media/CreatePreview.browser.js",
       "default": "./dist/core/media/CreatePreview.js"
-    },
-    "./picker/entry/EntryPicker": {
-      "edge-light": "./dist/picker/entry/EntryPicker.js",
-      "worker": "./dist/picker/entry/EntryPicker.js",
-      "browser": "./dist/picker/entry/EntryPicker.browser.js",
-      "default": "./dist/picker/entry/EntryPicker.js"
-    },
-    "./picker/url/UrlPicker": {
-      "edge-light": "./dist/picker/url/UrlPicker.js",
-      "worker": "./dist/picker/url/UrlPicker.js",
-      "browser": "./dist/picker/url/UrlPicker.browser.js",
-      "default": "./dist/picker/url/UrlPicker.js"
     }
   },
   "typesVersions": {
@@ -136,7 +118,7 @@
     "@tiptap/pm": "^2.1.16",
     "@tiptap/react": "^2.1.16",
     "@tsdown/css": "^0.21.7",
-    "@types/bun": "^1.3.9",
+    "@types/bun": "^1.3.12",
     "@types/diff-match-patch": "^1.0.32",
     "@types/escape-html": "^1.0.2",
     "@types/fs-extra": "^11.0.1",

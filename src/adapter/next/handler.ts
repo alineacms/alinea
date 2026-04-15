@@ -6,11 +6,9 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from '#/backend/Handler.js'
-import {proxy} from '#/backend/router/Proxy.js'
 import {generatedSource} from '#/backend/store/GeneratedSource.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
-import {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import PLazy from 'p-lazy'

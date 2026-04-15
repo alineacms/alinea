@@ -513,7 +513,7 @@ const postCssPlugins = [
   }),
   postcssModules({
     localsConvention: 'dashes',
-    generateScopedName(name, fileName, css) {
+    generateScopedName(name, fileName) {
       const module = path.basename(fileName).split('.')[0]
       if (name.startsWith('root-')) name = name.slice(5)
       if (name.startsWith('root')) name = name.slice(4)

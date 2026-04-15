@@ -1,11 +1,11 @@
+import {CodeField} from '#/field/code.js'
 import {Elevation, Label} from '@alinea/components'
 import {styler} from '@alinea/styler'
-import {CodeField} from '#/field/code.js'
 import lolight from 'lolight'
 import {Fragment, ReactNode, useId} from 'react'
-import CodeEditor from 'react-simple-code-editor/src/index.js'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 import css from './CodeField.module.css'
+import {SimpleCodeEditor} from './SimpleCodeEditor.js'
 
 const styles = styler(css)
 
@@ -75,7 +75,7 @@ export function CodeEditorInput({
       isRequired={isRequired}
     >
       <Elevation className={styles.CodeEditorInput({invalid})}>
-        <CodeEditor
+        <SimpleCodeEditor
           autoFocus={autoFocus}
           className={styles.CodeEditorInput.editor()}
           disabled={readOnly}

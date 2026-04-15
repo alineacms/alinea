@@ -1,4 +1,3 @@
-import {Headers} from '@alinea/iso'
 import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
@@ -11,6 +10,7 @@ import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
 import type {User} from '#/core/User.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
+import {Headers} from '@alinea/iso'
 import PLazy from 'p-lazy'
 import {requestContext} from './context.js'
 
@@ -31,9 +31,8 @@ export class NextCMS<
   bundledDb = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
-    const {generatedSource} = await import(
-      'alinea/backend/store/GeneratedSource'
-    )
+    const {generatedSource} =
+      await import('alinea/backend/store/GeneratedSource')
     const source = await generatedSource
     const db = new LocalDB(this.config, source)
     await db.sync()
@@ -53,7 +52,7 @@ export class NextCMS<
       }
     })
     let preview: PreviewRequest | undefined
-    const {cookies, draftMode} = await import('next/headers')
+    const {cookies, draftMode} = await import('next/headers.js')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
     if (isDraft) {
       if (!status) status = 'preferDraft'
@@ -61,9 +60,8 @@ export class NextCMS<
       const payload = getPreviewPayloadFromCookies(cookie.getAll())
       if (payload) preview = {payload}
     }
-    const {PHASE_PRODUCTION_SERVER, PHASE_PRODUCTION_BUILD} = await import(
-      'next/constants'
-    )
+    const {PHASE_PRODUCTION_SERVER, PHASE_PRODUCTION_BUILD} =
+      await import('next/constants.js')
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
     const isServer = process.env.NEXT_PHASE === PHASE_PRODUCTION_SERVER
     const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
@@ -79,7 +77,7 @@ export class NextCMS<
     const {handlerUrl, apiKey} = await requestContext(this.config)
     const authCookies: Array<[name: string, value: string]> = []
     try {
-      const {cookies} = await import('next/headers')
+      const {cookies} = await import('next/headers.js')
       const cookie = await cookies()
       for (const {name, value} of cookie.getAll()) {
         if (name.startsWith('alinea.')) {
@@ -119,8 +117,8 @@ export class NextCMS<
   }
 
   previews = async ({widget, workspace, root}: PreviewProps) => {
-    const {draftMode} = await import('next/headers')
-    const {default: dynamic} = await import('next/dynamic')
+    const {draftMode} = await import('next/headers.js')
+    const {default: dynamic} = await import('next/dynamic.js')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
     if (!isDraft) return null
     const {isDev, handlerUrl} = await requestContext(this.config)

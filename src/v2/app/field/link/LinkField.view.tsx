@@ -3,7 +3,7 @@ import {createId} from '#/core/Id.js'
 import {Reference} from '#/core/Reference.js'
 import {ListRow} from '#/core/shape/ListShape.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
-import {EntryReference} from '#/types.js.js'
+import {EntryReference} from '#/types.js'
 import {useAtomValue} from 'jotai'
 import {
   ReactiveNode,

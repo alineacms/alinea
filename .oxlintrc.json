@@ -1,6 +1,10 @@
 {
-  "plugins": ["react", "jsx-a11y", "import"],
+  "plugins": ["react", "import"],
   "env": {
     "builtin": true
-  }
+  },
+  "rules": {
+    "react/rules-of-hooks": "error"
+  },
+  "ignorePatterns": ["v1"]
 }

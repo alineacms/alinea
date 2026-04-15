@@ -1,7 +1,7 @@
-import path from 'node:path'
 import {Config} from '#/core/Config.js'
 import type {BuildOptions} from 'esbuild'
-import pkg from '../../package.json'
+import path from 'node:path'
+import pkg from '../../package.json' with {type: 'json'}
 import {buildOptions} from './build/BuildOptions.js'
 import {createDevServer, type DevServer} from './serve/DevServer.js'
 import {startServer} from './serve/StartServer.js'
@@ -61,7 +61,9 @@ export async function serve(options: ServeOptions): Promise<void> {
           const showUrl = cmd === 'dev' && !options.onAfterGenerate
           const connector = gray(showUrl ? '|-' : '`-')
           const details = `${connector} ${gray(message)}\n`
-          const footer = showUrl ? `${gray('`-')} Local CMS:    ${url}\n\n` : '\n'
+          const footer = showUrl
+            ? `${gray('`-')} Local CMS:    ${url}\n\n`
+            : '\n'
           process.stdout.write(header + details + footer)
           options.onAfterGenerate?.({
             ALINEA_DEV_SERVER: url,

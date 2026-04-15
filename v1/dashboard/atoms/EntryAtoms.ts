@@ -8,7 +8,7 @@ import type {EntryStatus} from '#/core/Entry.js'
 import {Entry} from '#/core/Entry.js'
 import type {Graph} from '#/core/Graph.js'
 import {getRoot, getType} from '#/core/Internal.js'
-import type {OrderBy} from '#/core/OrderBy.js.js'
+import type {OrderBy} from '#/core/OrderBy.js'
 import type {Policy} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
@@ -339,8 +339,10 @@ export function useEntryTreeProvider(): TreeDataLoader<EntryTreeItem> & {
         const [dropping] = items
         const isRoot = parent.getId().startsWith('@alinea')
         const children = parent.getChildren()
-        const before = 'childIndex' in target ? children[target.childIndex] : null
-        const after = 'childIndex' in target ? children[target.childIndex - 1] : null
+        const before =
+          'childIndex' in target ? children[target.childIndex] : null
+        const after =
+          'childIndex' in target ? children[target.childIndex - 1] : null
         db.move({
           id: dropping.getId(),
           target: before
