@@ -3,21 +3,56 @@ import {
   DialogTrigger,
   Icon as IconComp,
   Menu,
-  MenuItem
+  MenuItem,
+  Modal
 } from '@alinea/components'
 import styler from '@alinea/styler'
 import IcOutlineSettings from 'alinea/ui/icons/IcOutlineSettings.js'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore.js'
 import {useAtom, useAtomValue} from 'jotai'
+import {useState} from 'react'
 import {IcAlineaLogo, IcRoundSearch} from '../icons.js'
+import {useDashboard} from '../store.js'
 import type {Dashboard, DashboardWorkspace} from '../store/Dashboard.js'
+import {Explorer} from './Explorer.js'
 import css from './WorkspaceMenu.module.css'
-import {Sheet} from './ui/Sheet.js'
 
 const styles = styler(css)
 
 interface WorkspaceMenuProps {
   dashboard: Dashboard
+}
+
+function SearchPopup() {
+  const dashboard = useDashboard()
+  const workspace = useAtomValue(dashboard.selectedWorkspace)
+  const root = useAtomValue(dashboard.selectedRoot)
+  const [explorer] = useState(() => dashboard.explore({workspace, root}))
+
+  return (
+    <div style={{padding: '8px 12px', borderRadius: '6px'}}>
+      {/* Header */}
+      {/* <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+        <Button
+          icon={IcRoundFilterList}
+          size="square-petite"
+          appearance="outline"
+          intent="secondary"
+        />
+        <Button
+          icon={IcRoundClose}
+          size="square-petite"
+          appearance="outline"
+          intent="secondary"
+        />
+      </div> */}
+      {/* Content */}
+      <div>
+        <Explorer explorer={explorer} />
+      </div>
+      {/* Footer */}
+    </div>
+  )
 }
 
 export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
@@ -64,7 +99,9 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
         <Button size="icon" appearance="outline">
           <IconComp icon={IcRoundSearch} data-slot="icon" />
         </Button>
-        <Sheet></Sheet>
+        <Modal isDismissable>
+          <SearchPopup />
+        </Modal>
       </DialogTrigger>
     </div>
   )
