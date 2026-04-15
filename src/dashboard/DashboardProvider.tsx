@@ -1,5 +1,5 @@
-import type {Config} from 'alinea/core/Config'
-import type {LocalConnection} from 'alinea/core/Connection'
+import type {Config} from '#/core/Config.js'
+import type {LocalConnection} from '#/core/Connection.js'
 import {useAtomValue} from 'jotai'
 import type {ComponentType, PropsWithChildren} from 'react'
 import {type QueryClient, QueryClientProvider} from 'react-query'

@@ -1,1 +1,1 @@
-export * from 'alinea/field/select/SelectField'
+export * from '#/field/select/SelectField.js'

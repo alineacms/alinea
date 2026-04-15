@@ -1,4 +1,4 @@
-import {btoa} from 'alinea/core/util/Encoding'
+import {btoa} from '#/core/util/Encoding.js'
 import {useContrastColor} from '../hook/UseContrastColor.js'
 
 type FavIconProps = {

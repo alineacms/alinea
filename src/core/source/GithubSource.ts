@@ -1,4 +1,4 @@
-import * as paths from 'alinea/core/util/Paths'
+import * as paths from '#/core/util/Paths.js'
 import pLimit from 'p-limit'
 import {HttpError} from '../HttpError.js'
 import {assert} from '../util/Assert.js'

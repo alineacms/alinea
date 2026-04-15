@@ -1,10 +1,10 @@
+import {createCMS} from '#/core.js'
+import {Policy, WriteablePolicy} from '#/core/Role.js'
+import {getScope} from '#/core/Scope.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {create, move, update} from '#/core/db/Operation.js'
+import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
-import {Config, Field} from 'alinea'
-import {createCMS} from 'alinea/core'
-import {Policy, WriteablePolicy} from 'alinea/core/Role.js'
-import {getScope} from 'alinea/core/Scope.js'
-import {LocalDB} from 'alinea/core/db/LocalDB'
-import {create, move, update} from 'alinea/core/db/Operation.js'
 
 const test = suite(import.meta)
 

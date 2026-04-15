@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
-import {ListShape} from 'alinea/core/shape/ListShape'
-import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {ScalarShape} from 'alinea/core/shape/ScalarShape'
+import {ListShape} from '#/core/shape/ListShape.js'
+import {RecordShape} from '#/core/shape/RecordShape.js'
+import {ScalarShape} from '#/core/shape/ScalarShape.js'
 import * as Y from 'yjs'
 
 const ROOT_KEY = '$root'

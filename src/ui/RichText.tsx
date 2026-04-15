@@ -1,6 +1,6 @@
-import type {Infer} from 'alinea/core/Infer'
-import type {Schema} from 'alinea/core/Schema'
-import type {RichTextElements} from 'alinea/core/shape/RichTextShape'
+import type {Infer} from '#/core/Infer.js'
+import type {Schema} from '#/core/Schema.js'
+import type {RichTextElements} from '#/core/shape/RichTextShape.js'
 import {
   BlockNode,
   ElementNode,
@@ -8,8 +8,8 @@ import {
   Node,
   type TextDoc,
   TextNode
-} from 'alinea/core/TextDoc'
-import {slugify} from 'alinea/core/util/Slugs'
+} from '#/core/TextDoc.js'
+import {slugify} from '#/core/util/Slugs.js'
 import {
   type ComponentType,
   Fragment,

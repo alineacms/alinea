@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
-import {HStack} from 'alinea/ui'
-import {IcRoundAddCircle} from 'alinea/ui/icons/IcRoundAddCircle'
+import {HStack} from '#/ui.js'
+import {IcRoundAddCircle} from '#/ui/icons/IcRoundAddCircle.js'
 import type {ComponentType, HTMLAttributes, HTMLProps} from 'react'
 import {link} from '../util/HashRouter.js'
 import css from './Create.module.scss'

@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
-import {HStack, Icon} from 'alinea/ui'
-import {Lift} from 'alinea/ui/Lift'
+import {HStack, Icon} from '#/ui.js'
+import {Lift} from '#/ui/Lift.js'
 import type {ComponentType, PropsWithChildren, ReactNode} from 'react'
 import css from './EntryNotice.module.scss'
 

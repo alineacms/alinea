@@ -1,7 +1,7 @@
-import {createId} from 'alinea/core/Id'
-import {Reference} from 'alinea/core/Reference'
-import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {UrlReference} from 'alinea/picker/url'
+import {createId} from '#/core/Id.js'
+import {Reference} from '#/core/Reference.js'
+import {EntryReference} from '#/picker/entry/EntryReference.js'
+import {UrlReference} from '#/picker/url.js'
 import type {HTMLProps} from 'react'
 
 interface Anchor extends HTMLProps<HTMLAnchorElement> {

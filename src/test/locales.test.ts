@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
-import {Config, Edit, Field, Query} from 'alinea'
-import {createCMS} from 'alinea/core'
-import {LocalDB} from 'alinea/core/db/LocalDB'
+import {Config, Edit, Field, Query} from '#/index.js'
+import {createCMS} from '#/core.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
 
 const test = suite(import.meta)
 

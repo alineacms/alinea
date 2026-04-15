@@ -1,5 +1,5 @@
-import type {RecordShape} from 'alinea/core/shape/RecordShape'
-import {ScalarShape} from 'alinea/core/shape/ScalarShape'
+import type {RecordShape} from '#/core/shape/RecordShape.js'
+import {ScalarShape} from '#/core/shape/ScalarShape.js'
 
 export function equals(a: any, b: any) {
   if (a === b) return true

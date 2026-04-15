@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
-import {AppBar} from 'alinea/ui/AppBar'
-import {createSlots} from 'alinea/ui/util/Slots'
+import {AppBar} from '#/ui/AppBar.js'
+import {createSlots} from '#/ui/util/Slots.js'
 import type {HTMLProps} from 'react'
 import css from './FieldToolbar.module.scss'
 

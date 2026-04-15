@@ -1,11 +1,11 @@
 import styler from '@alinea/styler'
-import {Icon, px} from 'alinea/ui'
-import {Chip} from 'alinea/ui/Chip'
-import {IcOutlineLock} from 'alinea/ui/icons/IcOutlineLock'
-import {IcRoundUnfoldLess} from 'alinea/ui/icons/IcRoundUnfoldLess'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
-import {HStack} from 'alinea/ui/Stack'
+import {Icon, px} from '#/ui.js'
+import {Chip} from '#/ui/Chip.js'
+import {IcOutlineLock} from '#/ui/icons/IcOutlineLock.js'
+import {IcRoundUnfoldLess} from '#/ui/icons/IcRoundUnfoldLess.js'
+import {IcRoundUnfoldMore} from '#/ui/icons/IcRoundUnfoldMore.js'
+import {PhGlobe} from '#/ui/icons/PhGlobe.js'
+import {HStack} from '#/ui/Stack.js'
 import {
   type ComponentType,
   forwardRef,

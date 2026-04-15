@@ -1,4 +1,4 @@
-import {createId} from 'alinea/core/Id'
+import {createId} from '#/core/Id.js'
 import React, {useMemo} from 'react'
 
 export function useId() {

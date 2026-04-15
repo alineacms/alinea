@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
-import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {IcRoundDateRange} from 'alinea/ui/icons/IcRoundDateRange'
+import {useField} from '#/dashboard/editor/UseField.js'
+import {InputLabel} from '#/dashboard/view/InputLabel.js'
+import {IcRoundDateRange} from '#/ui/icons/IcRoundDateRange.js'
 import type {TimeField} from './TimeField.js'
 import css from './TimeField.module.scss'
 

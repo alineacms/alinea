@@ -1,6 +1,6 @@
 import '@alinea/components/css'
-import type {Config} from 'alinea/core/Config'
-import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
+import type {Config} from '#/core/Config.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {ComponentType, useState} from 'react'
 import '../global.css'
 import {AppShell} from './app/AppShell.js'

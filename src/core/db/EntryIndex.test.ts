@@ -1,6 +1,6 @@
 import {suite} from '@alinea/suite'
-import {Config, Field} from 'alinea'
-import {createCMS} from 'alinea/core'
+import {Config, Field} from '#/index.js'
+import {createCMS} from '#/core.js'
 import {cms} from '../../test/cms.js'
 import {createEntryIndex} from '../../test/EntryFixture.js'
 import {createRecord} from '../EntryRecord.js'

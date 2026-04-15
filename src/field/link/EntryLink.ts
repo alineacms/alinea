@@ -1,16 +1,16 @@
-import {Entry} from 'alinea/core'
-import type {WithoutLabel} from 'alinea/core/Field'
-import type {InferStoredValue} from 'alinea/core/Infer'
-import type {Label} from 'alinea/core/Label'
-import type {Type} from 'alinea/core/Type'
-import type {ListRow} from 'alinea/core/shape/ListShape'
+import {Entry} from '#/core.js'
+import type {WithoutLabel} from '#/core/Field.js'
+import type {InferStoredValue} from '#/core/Infer.js'
+import type {Label} from '#/core/Label.js'
+import type {Type} from '#/core/Type.js'
+import type {ListRow} from '#/core/shape/ListShape.js'
 import {
   type LinkFieldOptions,
   createLink,
   createLinks
-} from 'alinea/field/link/LinkField'
-import {type EntryPickerOptions, entryPicker} from 'alinea/picker/entry'
-import type {EntryReference} from 'alinea/picker/entry/EntryReference'
+} from '#/field/link/LinkField.js'
+import {type EntryPickerOptions, entryPicker} from '#/picker/entry.js'
+import type {EntryReference} from '#/picker/entry/EntryReference.js'
 
 export interface EntryLink<InferredFields = undefined> extends EntryReference {
   entryId: string

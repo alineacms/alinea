@@ -1,5 +1,5 @@
-import type {PreviewMetadata, PreviewPayload} from 'alinea/core/Preview'
-import {PreviewAction, type PreviewMessage} from 'alinea/preview/PreviewMessage'
+import type {PreviewMetadata, PreviewPayload} from '#/core/Preview.js'
+import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 
 export interface PreviewApi {
   preview(update: PreviewPayload): Promise<void>

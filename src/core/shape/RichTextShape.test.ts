@@ -1,6 +1,6 @@
-import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {RichTextShape} from 'alinea/core/shape/RichTextShape'
-import {ScalarShape} from 'alinea/core/shape/ScalarShape'
+import {RecordShape} from '#/core/shape/RecordShape.js'
+import {RichTextShape} from '#/core/shape/RichTextShape.js'
+import {ScalarShape} from '#/core/shape/ScalarShape.js'
 
 import {suite} from '@alinea/suite'
 import * as Y from 'yjs'

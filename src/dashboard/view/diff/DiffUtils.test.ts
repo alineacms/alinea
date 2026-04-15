@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {equals} from 'alinea/dashboard/view/diff/DiffUtils'
+import {equals} from '#/dashboard/view/diff/DiffUtils.js'
 
 const test = suite(import.meta)
 

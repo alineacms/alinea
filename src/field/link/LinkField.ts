@@ -1,6 +1,6 @@
-import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {ListField} from 'alinea/core/field/ListField'
-import {UnionField} from 'alinea/core/field/UnionField'
+import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {ListField} from '#/core/field/ListField.js'
+import {UnionField} from '#/core/field/UnionField.js'
 import type {
   EdgeEntries,
   EdgeEntry,
@@ -8,14 +8,14 @@ import type {
   IncludeGuard,
   SelectionGuard,
   TypeGuard
-} from 'alinea/core/Graph'
-import type {Picker} from 'alinea/core/Picker'
-import {Reference} from 'alinea/core/Reference'
-import type {Schema} from 'alinea/core/Schema'
-import {ListRow} from 'alinea/core/shape/ListShape'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
-import {unresolvedEntryMarker} from 'alinea/picker/entry/EntryPicker'
+} from '#/core/Graph.js'
+import type {Picker} from '#/core/Picker.js'
+import {Reference} from '#/core/Reference.js'
+import type {Schema} from '#/core/Schema.js'
+import {ListRow} from '#/core/shape/ListShape.js'
+import {entries, fromEntries} from '#/core/util/Objects.js'
+import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {unresolvedEntryMarker} from '#/picker/entry/EntryPicker.js'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */

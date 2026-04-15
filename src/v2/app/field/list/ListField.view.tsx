@@ -7,28 +7,28 @@ import {
   ListItem
 } from '@alinea/components'
 import styler from '@alinea/styler'
-import {createId} from 'alinea/core/Id'
-import {getType} from 'alinea/core/Internal'
-import {Schema} from 'alinea/core/Schema'
-import {Type} from 'alinea/core/Type'
-import {ListField as CoreListField} from 'alinea/core/field/ListField'
-import {ListRow} from 'alinea/core/shape/ListShape'
-import {ListOptions} from 'alinea/field/list'
-import {NodeEditor} from 'alinea/v2/app/Editor'
+import {createId} from '#/core/Id.js'
+import {getType} from '#/core/Internal.js'
+import {Schema} from '#/core/Schema.js'
+import {Type} from '#/core/Type.js'
+import {ListField as CoreListField} from '#/core/field/ListField.js'
+import {ListRow} from '#/core/shape/ListShape.js'
+import {ListOptions} from '#/field/list.js'
+import {NodeEditor} from '#/v2/app/Editor.js'
 import {
   IcOutlineList,
   IcRoundAdd,
   IcRoundArrowDownward,
   IcRoundArrowUpward,
   IcRoundDelete
-} from 'alinea/v2/icons'
+} from '#/v2/icons.js'
 import {
   ReactiveNode,
   useFieldError,
   useFieldNode,
   useFieldOptions,
   useNodes
-} from 'alinea/v2/store'
+} from '#/v2/store.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import css from './ListField.module.css'

@@ -2,12 +2,12 @@ import fs from 'node:fs'
 import {createServer} from 'node:http'
 import type {AddressInfo} from 'node:net'
 import {suite} from '@alinea/suite'
-import {Config, Edit, Field} from 'alinea'
-import {createCMS} from 'alinea/core'
-import type {UploadResponse} from 'alinea/core/Connection.js'
-import {createId} from 'alinea/core/Id'
-import {LocalDB} from 'alinea/core/db/LocalDB'
-import {createPreview} from 'alinea/core/media/CreatePreview'
+import {Config, Edit, Field} from '#/index.js'
+import {createCMS} from '#/core.js'
+import type {UploadResponse} from '#/core/Connection.js.js'
+import {createId} from '#/core/Id.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {createPreview} from '#/core/media/CreatePreview.js'
 
 const test = suite(import.meta)
 const Page = Config.document('Page', {

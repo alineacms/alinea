@@ -1,13 +1,13 @@
 import styler from '@alinea/styler'
-import type {PreviewMetadata} from 'alinea/core/Preview'
-import {PreviewAction, type PreviewMessage} from 'alinea/preview/PreviewMessage'
-import {HStack, Loader, Typo, px} from 'alinea/ui'
-import {AppBar} from 'alinea/ui/AppBar'
-import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
-import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
-import {IcRoundLock} from 'alinea/ui/icons/IcRoundLock'
-import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
-import {IcRoundRefresh} from 'alinea/ui/icons/IcRoundRefresh'
+import type {PreviewMetadata} from '#/core/Preview.js'
+import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
+import {HStack, Loader, Typo, px} from '#/ui.js'
+import {AppBar} from '#/ui/AppBar.js'
+import {IcRoundArrowBack} from '#/ui/icons/IcRoundArrowBack.js'
+import {IcRoundArrowForward} from '#/ui/icons/IcRoundArrowForward.js'
+import {IcRoundLock} from '#/ui/icons/IcRoundLock.js'
+import {IcRoundOpenInNew} from '#/ui/icons/IcRoundOpenInNew.js'
+import {IcRoundRefresh} from '#/ui/icons/IcRoundRefresh.js'
 import {
   type PropsWithChildren,
   createContext,

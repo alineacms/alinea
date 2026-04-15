@@ -1,4 +1,4 @@
-import {UIStory} from 'alinea/ui/UIStory'
+import {UIStory} from '#/ui/UIStory.js'
 import {useState} from 'react'
 import {EntryPickerModal} from './EntryPicker.browser.js'
 

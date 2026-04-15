@@ -1,5 +1,5 @@
 import path from 'node:path'
-import {Config} from 'alinea/core/Config'
+import {Config} from '#/core/Config.js'
 import type {BuildOptions} from 'esbuild'
 import pkg from '../../package.json'
 import {buildOptions} from './build/BuildOptions.js'

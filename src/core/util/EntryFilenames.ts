@@ -1,4 +1,4 @@
-import * as paths from 'alinea/core/util/Paths'
+import * as paths from '#/core/util/Paths.js'
 import type {Config} from '../Config.js'
 import {
   ALT_STATUS,

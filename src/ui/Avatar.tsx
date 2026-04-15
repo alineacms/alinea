@@ -1,5 +1,5 @@
-import type {User} from 'alinea/core/User'
-import {getRandomColor} from 'alinea/core/util/GetRandomColor'
+import type {User} from '#/core/User.js'
+import {getRandomColor} from '#/core/util/GetRandomColor.js'
 import {useContrastColor} from './hook/UseContrastColor.js'
 import {px} from './util/Units.js'
 

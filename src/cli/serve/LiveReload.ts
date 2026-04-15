@@ -1,4 +1,4 @@
-import {createId} from 'alinea/core/Id'
+import {createId} from '#/core/Id.js'
 
 type Client = {
   write(value: string): void

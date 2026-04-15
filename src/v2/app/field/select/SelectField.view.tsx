@@ -1,6 +1,6 @@
 import {Select, SelectItem} from '@alinea/components'
 import {Key} from '@react-types/shared'
-import {SelectField, SelectOptions} from 'alinea/field/select'
+import {SelectField, SelectOptions} from '#/field/select.js'
 import {useMemo} from 'react'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 

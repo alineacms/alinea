@@ -1,4 +1,4 @@
-import type {LinkResolver} from 'alinea/core/db/LinkResolver'
+import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Expr} from './Expr.js'
 import {type HasField, getField, hasField, internalField} from './Internal.js'
 import type {Shape} from './Shape.js'

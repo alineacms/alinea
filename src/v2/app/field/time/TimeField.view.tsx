@@ -1,6 +1,6 @@
 import {TimeField as RacTimeField} from '@alinea/components'
 import {parseTime} from '@internationalized/date'
-import {TimeField} from 'alinea/field/time'
+import {TimeField} from '#/field/time.js'
 import {useMemo} from 'react'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 

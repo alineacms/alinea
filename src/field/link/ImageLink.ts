@@ -1,20 +1,20 @@
-import {Entry} from 'alinea/core/Entry'
-import type {WithoutLabel} from 'alinea/core/Field'
-import type {InferStoredValue} from 'alinea/core/Infer'
-import type {Label} from 'alinea/core/Label'
-import type {Type} from 'alinea/core/Type'
-import {imageExtensions} from 'alinea/core/media/IsImage'
-import {MediaFile} from 'alinea/core/media/MediaTypes'
-import type {ListRow} from 'alinea/core/shape/ListShape'
+import {Entry} from '#/core/Entry.js'
+import type {WithoutLabel} from '#/core/Field.js'
+import type {InferStoredValue} from '#/core/Infer.js'
+import type {Label} from '#/core/Label.js'
+import type {Type} from '#/core/Type.js'
+import {imageExtensions} from '#/core/media/IsImage.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
+import type {ListRow} from '#/core/shape/ListShape.js'
 import {
   type LinkField,
   type LinkFieldOptions,
   type LinksField,
   createLink,
   createLinks
-} from 'alinea/field/link/LinkField'
-import {type EntryPickerOptions, entryPicker} from 'alinea/picker/entry'
-import type {EntryReference} from 'alinea/picker/entry/EntryReference'
+} from '#/field/link/LinkField.js'
+import {type EntryPickerOptions, entryPicker} from '#/picker/entry.js'
+import type {EntryReference} from '#/picker/entry/EntryReference.js'
 
 export interface ImageLink<InferredFields = undefined> extends EntryReference {
   title: string

@@ -1,10 +1,10 @@
-import type {Type} from 'alinea'
-import type {Config} from 'alinea/core/Config'
-import type {Entry} from 'alinea/core/Entry'
-import {EntryFields} from 'alinea/core/EntryFields'
-import type {Expr} from 'alinea/core/Expr'
-import {Field} from 'alinea/core/Field'
-import type {AnyCondition, Filter} from 'alinea/core/Filter'
+import type {Type} from '#/index.js'
+import type {Config} from '#/core/Config.js'
+import type {Entry} from '#/core/Entry.js'
+import {EntryFields} from '#/core/EntryFields.js'
+import type {Expr} from '#/core/Expr.js'
+import {Field} from '#/core/Field.js'
+import type {AnyCondition, Filter} from '#/core/Filter.js'
 import {
   type AnyQueryResult,
   type Edge,
@@ -14,7 +14,7 @@ import {
   type QuerySettings,
   querySource as queryEdge,
   type Status
-} from 'alinea/core/Graph'
+} from '#/core/Graph.js'
 import {
   getExpr,
   type HasExpr,
@@ -22,12 +22,12 @@ import {
   hasField,
   hasRoot,
   hasWorkspace
-} from 'alinea/core/Internal'
-import type {Resolver} from 'alinea/core/Resolver'
-import {getScope, type Scope} from 'alinea/core/Scope'
-import {hasExact} from 'alinea/core/util/Checks'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
-import {unreachable} from 'alinea/core/util/Types'
+} from '#/core/Internal.js'
+import type {Resolver} from '#/core/Resolver.js'
+import {getScope, type Scope} from '#/core/Scope.js'
+import {hasExact} from '#/core/util/Checks.js'
+import {entries, fromEntries} from '#/core/util/Objects.js'
+import {unreachable} from '#/core/util/Types.js'
 import * as cito from 'cito'
 import {createRecord} from '../EntryRecord.js'
 import {compareStrings} from '../source/Utils.js'

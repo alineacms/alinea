@@ -1,1 +1,1 @@
-export {InputLabel as Property} from 'alinea/dashboard'
+export {InputLabel as Property} from '#/dashboard.js'

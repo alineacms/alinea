@@ -1,1 +1,1 @@
-export * from 'alinea/field/text/TextField'
+export * from '#/field/text/TextField.js'

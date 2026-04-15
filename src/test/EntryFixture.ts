@@ -1,11 +1,11 @@
-import type {Config} from 'alinea/core/Config'
-import {Config as ConfigUtils} from 'alinea/core/Config'
-import {EntryIndex} from 'alinea/core/db/EntryIndex'
-import {EntryResolver} from 'alinea/core/db/EntryResolver'
-import type {EntryStatus} from 'alinea/core/Entry'
-import {createRecord} from 'alinea/core/EntryRecord'
-import {hashBlob} from 'alinea/core/source/GitUtils'
-import {MemorySource} from 'alinea/core/source/MemorySource'
+import type {Config} from '#/core/Config.js'
+import {Config as ConfigUtils} from '#/core/Config.js'
+import {EntryIndex} from '#/core/db/EntryIndex.js'
+import {EntryResolver} from '#/core/db/EntryResolver.js'
+import type {EntryStatus} from '#/core/Entry.js'
+import {createRecord} from '#/core/EntryRecord.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
 
 export interface EntryFixtureEntry {
   id: string

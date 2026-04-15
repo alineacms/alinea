@@ -1,3 +1,3 @@
-import {bootDev} from 'alinea/dashboard/boot/BootDev'
+import {bootDev} from '#/dashboard/boot/BootDev.js'
 
 bootDev()

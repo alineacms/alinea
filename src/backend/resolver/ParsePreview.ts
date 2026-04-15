@@ -1,11 +1,11 @@
-import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
-import {Entry} from 'alinea/core'
-import type {LocalDB} from 'alinea/core/db/LocalDB'
-import {createRecord, parseRecord} from 'alinea/core/EntryRecord'
-import type {PreviewRequest} from 'alinea/core/Preview'
-import {applyFilePatch} from 'alinea/core/source/FilePatch'
-import {createEntryRow} from 'alinea/core/util/EntryRows'
-import {decodePreviewPayload} from 'alinea/preview/PreviewPayload'
+import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {Entry} from '#/core.js'
+import type {LocalDB} from '#/core/db/LocalDB.js'
+import {createRecord, parseRecord} from '#/core/EntryRecord.js'
+import type {PreviewRequest} from '#/core/Preview.js'
+import {applyFilePatch} from '#/core/source/FilePatch.js'
+import {createEntryRow} from '#/core/util/EntryRows.js'
+import {decodePreviewPayload} from '#/preview/PreviewPayload.js'
 
 const decoder = new TextDecoder()
 

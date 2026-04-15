@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
-import {bold, cyan, gray} from 'alinea/cli/util/Report'
+import {bold, cyan, gray} from '#/cli/util/Report.js'
 import type {NextConfig} from 'next/dist/types.js'
 import {version} from '../../../package.json'
 

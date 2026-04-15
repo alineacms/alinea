@@ -1,5 +1,5 @@
-import {Config} from 'alinea/core/Config'
-import type {Entry} from 'alinea/core/Entry'
+import {Config} from '#/core/Config.js'
+import type {Entry} from '#/core/Entry.js'
 import {useAtomValue} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {type ComponentType, useEffect, useState} from 'react'

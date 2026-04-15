@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
-import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
+import {IconButton} from '#/dashboard/view/IconButton.js'
+import {IcRoundClose} from '#/ui/icons/IcRoundClose.js'
 import {type PropsWithChildren, useRef} from 'react'
 import {createPortal} from 'react-dom'
 import css from './Modal.module.scss'

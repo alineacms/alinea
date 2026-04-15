@@ -1,5 +1,5 @@
-import {ListRow, type ListShape} from 'alinea/core/shape/ListShape'
-import {Sink} from 'alinea/ui/Sink'
+import {ListRow, type ListShape} from '#/core/shape/ListShape.js'
+import {Sink} from '#/ui/Sink.js'
 import type {ComponentType} from 'react'
 import {ChangeBox} from './ChangeBox.js'
 import {diffList, diffRecord} from './DiffUtils.js'

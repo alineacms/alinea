@@ -1,5 +1,5 @@
 import {NumberField as RacNumberField} from '@alinea/components'
-import {NumberField} from 'alinea/field/number'
+import {NumberField} from '#/field/number.js'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 
 export interface NumberFieldViewProps {

@@ -1,4 +1,4 @@
-import {values} from 'alinea/core/util/Objects'
+import {values} from '#/core/util/Objects.js'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {parse} from 'regexparam'

@@ -1,4 +1,4 @@
-import {assign} from 'alinea/core/util/Objects'
+import {assign} from '#/core/util/Objects.js'
 import {type Atom, atom} from 'jotai'
 
 interface KeepDataOptions<Value> {

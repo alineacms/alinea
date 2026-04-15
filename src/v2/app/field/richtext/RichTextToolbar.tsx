@@ -9,24 +9,24 @@ import {
 } from '@alinea/components'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/react'
-import type {Reference} from 'alinea/core/Reference'
-import {entries} from 'alinea/core/util/Objects'
+import type {Reference} from '#/core/Reference.js'
+import {entries} from '#/core/util/Objects.js'
 import type {
   PickTextLinkFunc,
   PickerValue
-} from 'alinea/field/richtext/PickTextLink'
+} from '#/field/richtext/PickTextLink.js'
 import {
   attributesToReference,
   referenceToAttributes
-} from 'alinea/field/richtext/ReferenceLink'
+} from '#/field/richtext/ReferenceLink.js'
 import type {
   RichTextToolbarContext,
   ToolbarButton,
   ToolbarConfig,
   ToolbarGroup as ToolbarConfigGroup,
   ToolbarMenu
-} from 'alinea/field/richtext/RichTextToolbar'
-import type {UrlReference} from 'alinea/picker/url'
+} from '#/field/richtext/RichTextToolbar.js'
+import type {UrlReference} from '#/picker/url.js'
 import {memo, useMemo, type ReactNode} from 'react'
 import {
   IcOutlineTableRows,

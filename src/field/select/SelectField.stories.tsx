@@ -1,10 +1,10 @@
-import {track} from 'alinea/core/Tracker'
-import {type} from 'alinea/core/Type'
-import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
-import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {select} from 'alinea/field/select'
-import {VStack} from 'alinea/ui'
-import {UIStory} from 'alinea/ui/UIStory'
+import {track} from '#/core/Tracker.js'
+import {type} from '#/core/Type.js'
+import {useForm} from '#/dashboard/atoms/FormAtoms.js'
+import {InputForm} from '#/dashboard/editor/InputForm.js'
+import {select} from '#/field/select.js'
+import {VStack} from '#/ui.js'
+import {UIStory} from '#/ui/UIStory.js'
 
 const options = {
   option1: 'Option 1',

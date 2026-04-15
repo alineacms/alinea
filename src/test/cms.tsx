@@ -1,5 +1,5 @@
-import {Config} from 'alinea'
-import {createCMS} from 'alinea/core'
+import {Config} from '#/index.js'
+import {createCMS} from '#/core.js'
 import * as schema from './schema/index.js'
 
 const demo = Config.workspace('Demo', {

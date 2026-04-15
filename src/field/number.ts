@@ -1,1 +1,1 @@
-export * from 'alinea/field/number/NumberField'
+export * from '#/field/number/NumberField.js'

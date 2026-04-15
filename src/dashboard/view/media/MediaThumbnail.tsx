@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
-import {link} from 'alinea/dashboard/util/HashRouter'
-import {px} from 'alinea/ui'
-import {useContrastColor} from 'alinea/ui/hook/UseContrastColor'
-import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {link} from '#/dashboard/util/HashRouter.js'
+import {px} from '#/ui.js'
+import {useContrastColor} from '#/ui/hook/UseContrastColor.js'
+import {IcRoundInsertDriveFile} from '#/ui/icons/IcRoundInsertDriveFile.js'
 import {useNav} from '../../hook/UseNav.js'
 import css from './MediaThumbnail.module.scss'
 

@@ -1,6 +1,6 @@
+import {root, type, workspace} from '#/config.js'
+import {Field} from '#/index.js'
 import {suite} from '@alinea/suite'
-import {Field} from 'alinea'
-import {root, type, workspace} from 'alinea/config.js'
 import {createConfig} from './Config.js'
 import {Policy, role, WriteablePolicy} from './Role.js'
 import {getScope} from './Scope.js'

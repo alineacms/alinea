@@ -1,9 +1,9 @@
-import type {TextDoc} from 'alinea/core/TextDoc'
-import {type} from 'alinea/core/Type'
-import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
-import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {richText} from 'alinea/field/richtext'
-import {UIStory} from 'alinea/ui/UIStory'
+import type {TextDoc} from '#/core/TextDoc.js'
+import {type} from '#/core/Type.js'
+import {useForm} from '#/dashboard/atoms/FormAtoms.js'
+import {InputForm} from '#/dashboard/editor/InputForm.js'
+import {richText} from '#/field/richtext.js'
+import {UIStory} from '#/ui/UIStory.js'
 
 const lipsumDoc: TextDoc = [
   {

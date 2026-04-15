@@ -1,9 +1,9 @@
-import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
-import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {useFieldError, useFieldOptions} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {Sink} from 'alinea/ui/Sink'
-import {IcRoundFeed} from 'alinea/ui/icons/IcRoundFeed'
+import {FormRow} from '#/dashboard/atoms/FormAtoms.js'
+import {InputForm} from '#/dashboard/editor/InputForm.js'
+import {useFieldError, useFieldOptions} from '#/dashboard/editor/UseField.js'
+import {InputLabel} from '#/dashboard/view/InputLabel.js'
+import {Sink} from '#/ui/Sink.js'
+import {IcRoundFeed} from '#/ui/icons/IcRoundFeed.js'
 import type {ObjectField} from './ObjectField.js'
 
 export interface ObjectInputProps<Definition> {

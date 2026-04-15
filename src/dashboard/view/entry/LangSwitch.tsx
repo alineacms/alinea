@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import {Listbox} from '@headlessui/react'
-import {HStack, Icon} from 'alinea/ui'
-import {IcRoundLanguage} from 'alinea/ui/icons/IcRoundLanguage'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
+import {HStack, Icon} from '#/ui.js'
+import {IcRoundLanguage} from '#/ui/icons/IcRoundLanguage.js'
+import {IcRoundUnfoldMore} from '#/ui/icons/IcRoundUnfoldMore.js'
 import css from './LangSwitch.module.scss'
 
 const styles = styler(css)

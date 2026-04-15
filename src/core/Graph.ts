@@ -1,4 +1,4 @@
-import type {Root, Workspace} from 'alinea/types'
+import type {Root, Workspace} from '#/types.js'
 import type {Config} from './Config.js'
 import type {EntryFields} from './EntryFields.js'
 import type {Expr} from './Expr.js'

@@ -1,6 +1,6 @@
 import path from 'node:path'
 import {suite} from '@alinea/suite'
-import {init} from 'alinea/cli/Init'
+import {init} from '#/cli/Init.js'
 import fs from 'fs-extra'
 
 const testPms = false

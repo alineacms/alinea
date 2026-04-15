@@ -1,4 +1,4 @@
-import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
+import type {EntryEditProps} from '#/dashboard/view/EntryEdit.js'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import type {EntryStatus} from './Entry.js'

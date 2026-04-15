@@ -1,6 +1,6 @@
 import {Button, Select, SelectItem, TextField} from '@alinea/components'
-import {getType} from 'alinea/core/Internal'
-import {ExplorerLocation, useDashboard} from 'alinea/v2/store'
+import {getType} from '#/core/Internal.js'
+import {ExplorerLocation, useDashboard} from '#/v2/store.js'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {useState} from 'react'
 import {LocationBreadcrumbs} from '../LocationBreadcrumbs.js'

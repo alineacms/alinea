@@ -1,5 +1,5 @@
-import type {Field, FieldOptions} from 'alinea/core/Field'
-import {getScope} from 'alinea/core/Scope'
+import type {Field, FieldOptions} from '#/core/Field.js'
+import {getScope} from '#/core/Scope.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect} from 'react'
 import {useFormContext} from '../atoms/FormAtoms.js'

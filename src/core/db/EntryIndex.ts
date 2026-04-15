@@ -1,4 +1,4 @@
-import * as paths from 'alinea/core/util/Paths'
+import * as paths from '#/core/util/Paths.js'
 import MiniSearch from 'minisearch'
 import {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'

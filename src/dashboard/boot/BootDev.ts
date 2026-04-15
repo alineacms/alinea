@@ -1,4 +1,4 @@
-import {Client} from 'alinea/core/Client'
+import {Client} from '#/core/Client.js'
 import {SharedEventSource} from 'shared-event-source'
 import {boot, type ConfigBatch, type ConfigGenerator} from './Boot.js'
 

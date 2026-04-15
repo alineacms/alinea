@@ -82,8 +82,8 @@ export function alineaFixturePlugin(): Plugin {
       const importPath = JSON.stringify(cmsFile)
 
       return `
-import {LocalDB} from 'alinea/core/db/LocalDB'
-import {importSource} from 'alinea/core/source/SourceExport'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {importSource} from '#/core/source/SourceExport.js'
 import {cms} from ${importPath}
 
 const exportedSource = ${serialized}

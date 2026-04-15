@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {assign} from 'alinea/core/util/Objects'
+import {assign} from '#/core/util/Objects.js'
 import {type HTMLProps, type ReactNode, type Ref, forwardRef} from 'react'
 import {Loader} from './Loader.js'
 import css from './Main.module.scss'

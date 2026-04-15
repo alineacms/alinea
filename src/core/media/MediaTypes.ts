@@ -1,7 +1,7 @@
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
-import {hidden} from 'alinea/field/hidden'
-import {text} from 'alinea/field/text/TextField'
-import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
+import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {hidden} from '#/field/hidden.js'
+import {text} from '#/field/text/TextField.js'
+import {IcRoundPermMedia} from '#/ui/icons/IcRoundPermMedia.js'
 import {type Type, type} from '../Type.js'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>

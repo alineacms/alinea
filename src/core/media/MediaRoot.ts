@@ -1,5 +1,5 @@
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
-import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
+import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {IcRoundPermMedia} from '#/ui/icons/IcRoundPermMedia.js'
 import type {Page} from '../Page.js'
 import {type Root, root} from '../Root.js'
 

@@ -1,6 +1,6 @@
 import {Request, Response} from '@alinea/iso'
 import {suite} from '@alinea/suite'
-import {router} from 'alinea/backend/router/Router'
+import {router} from '#/backend/router/Router.js'
 
 const matcher = router.matcher()
 

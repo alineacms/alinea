@@ -1,5 +1,5 @@
 import {Elevation, Label} from '@alinea/components'
-import {ObjectField} from 'alinea/field/object'
+import {ObjectField} from '#/field/object.js'
 import {
   ReactiveNode,
   useFieldError,

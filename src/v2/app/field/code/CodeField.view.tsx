@@ -1,6 +1,6 @@
 import {Elevation, Label} from '@alinea/components'
 import {styler} from '@alinea/styler'
-import {CodeField} from 'alinea/field/code'
+import {CodeField} from '#/field/code.js'
 import lolight from 'lolight'
 import {Fragment, ReactNode, useId} from 'react'
 import CodeEditor from 'react-simple-code-editor/src/index.js'

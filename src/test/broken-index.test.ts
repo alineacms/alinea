@@ -1,8 +1,8 @@
 import {suite} from '@alinea/suite'
-import {LocalDB} from 'alinea/core/db/LocalDB'
-import {FSSource} from 'alinea/core/source/FSSource'
-import {MemorySource} from 'alinea/core/source/MemorySource'
-import {syncWith} from 'alinea/core/source/Source'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {FSSource} from '#/core/source/FSSource.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
+import {syncWith} from '#/core/source/Source.js'
 import {cms} from './cms.js'
 
 const test = suite(import.meta)

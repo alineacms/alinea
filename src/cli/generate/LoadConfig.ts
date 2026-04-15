@@ -1,7 +1,7 @@
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import {pathToFileURL} from 'node:url'
-import {CMS} from 'alinea/core/CMS'
+import {CMS} from '#/core/CMS.js'
 
 export async function loadCMS(outDir: string): Promise<CMS> {
   const unique = Date.now()

@@ -1,4 +1,4 @@
-import {px, Typo, VStack} from 'alinea/ui'
+import {px, Typo, VStack} from '#/ui.js'
 
 export function Welcome() {
   return (

@@ -1,4 +1,4 @@
-import type {Preview} from 'alinea/core/Preview'
+import type {Preview} from '#/core/Preview.js'
 import type {ComponentType} from 'react'
 import {
   getWorkspace,

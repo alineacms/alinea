@@ -1,4 +1,4 @@
-import type {LinkResolver} from 'alinea/core/db/LinkResolver'
+import type {LinkResolver} from '#/core/db/LinkResolver.js'
 
 export interface PostProcess<Value> {
   (value: Value, loader: LinkResolver): Promise<void>

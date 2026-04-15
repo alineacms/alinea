@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {px} from 'alinea/ui/util/Units'
+import {px} from '#/ui/util/Units.js'
 import {
   type ComponentType,
   forwardRef,

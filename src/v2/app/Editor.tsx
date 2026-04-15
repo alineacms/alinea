@@ -1,9 +1,9 @@
 import {Button, Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
-import {Field, type FieldOptions} from 'alinea/core/Field'
-import {Section} from 'alinea/core/Section'
-import {Type} from 'alinea/core/Type'
-import {ErrorMessage} from 'alinea/ui'
+import {Field, type FieldOptions} from '#/core/Field.js'
+import {Section} from '#/core/Section.js'
+import {Type} from '#/core/Type.js'
+import {ErrorMessage} from '#/ui.js'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, useEffect, useTransition} from 'react'
 import {

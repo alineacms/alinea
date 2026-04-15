@@ -1,4 +1,4 @@
-import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
+import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import type {Config} from '../Config.js'
 import type {EntryStatus} from '../Entry.js'
 import type {Entry} from '../Entry.js'

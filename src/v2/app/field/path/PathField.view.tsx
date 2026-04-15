@@ -1,5 +1,5 @@
 import {TextField as RacTextField} from '@alinea/components'
-import {PathField} from 'alinea/field/path'
+import {PathField} from '#/field/path.js'
 import {memo} from 'react'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 

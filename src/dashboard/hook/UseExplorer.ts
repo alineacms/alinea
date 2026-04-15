@@ -1,4 +1,4 @@
-import type {Reference} from 'alinea/core/Reference'
+import type {Reference} from '#/core/Reference.js'
 import {createContext, useContext} from 'react'
 import type {ExporerItemSelect} from '../view/explorer/Explorer.js'
 

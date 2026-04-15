@@ -1,4 +1,4 @@
-import type {Expand, UnionOfValues} from 'alinea/core/util/Types'
+import type {Expand, UnionOfValues} from '#/core/util/Types.js'
 import type {EntryFields} from './EntryFields.js'
 import type {Expr} from './Expr.js'
 import type {Field} from './Field.js'

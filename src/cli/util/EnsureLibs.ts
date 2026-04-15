@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
-import {outcome} from 'alinea/core/Outcome'
+import {outcome} from '#/core/Outcome.js'
 import semver from 'compare-versions'
 import {reportFatal} from './Report.js'
 

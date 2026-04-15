@@ -1,6 +1,6 @@
 import {Button, Icon, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
-import {assert} from 'alinea/core/util/Assert'
+import {assert} from '#/core/util/Assert.js'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {memo, Suspense, useMemo} from 'react'

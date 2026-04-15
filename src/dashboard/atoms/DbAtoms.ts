@@ -1,4 +1,4 @@
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {atom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {useEffect} from 'react'

@@ -1,13 +1,13 @@
-import {Field} from 'alinea/core/Field'
+import {Field} from '#/core/Field.js'
 import {
   type Section,
   type SectionData,
   type SectionDefinition,
   section
-} from 'alinea/core/Section'
-import {Type, type} from 'alinea/core/Type'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
+} from '#/core/Section.js'
+import {Type, type} from '#/core/Type.js'
+import {entries, fromEntries} from '#/core/util/Objects.js'
+import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
 
 export class TabsSection implements SectionData {
   view = viewKeys.TabsView

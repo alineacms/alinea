@@ -9,9 +9,9 @@ import {
   ReactNodeViewRenderer,
   useEditor
 } from '@tiptap/react'
-import {Field} from 'alinea/core/Field'
-import {RichTextField as CoreRichTextField} from 'alinea/core/field/RichTextField'
-import {Schema} from 'alinea/core/Schema'
+import {Field} from '#/core/Field.js'
+import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
+import {Schema} from '#/core/Schema.js'
 import {
   BlockNode,
   ElementNode,
@@ -19,16 +19,16 @@ import {
   Node,
   TextDoc,
   TextNode
-} from 'alinea/core/TextDoc'
-import {Type} from 'alinea/core/Type'
-import {entries, fromEntries, values} from 'alinea/core/util/Objects'
-import {RichTextOptions} from 'alinea/field/richtext/RichTextField'
+} from '#/core/TextDoc.js'
+import {Type} from '#/core/Type.js'
+import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {RichTextOptions} from '#/field/richtext/RichTextField.js'
 import {
   ReactiveNode,
   useFieldNode,
   useFieldOptions,
   useFieldSetter
-} from 'alinea/v2/store'
+} from '#/v2/store.js'
 import {atom, useAtomValue, useStore} from 'jotai'
 import {memo, useMemo, useRef} from 'react'
 import {createPortal} from 'react-dom'

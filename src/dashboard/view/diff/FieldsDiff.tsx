@@ -1,7 +1,7 @@
-import type {Shape} from 'alinea/core/Shape'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {VStack} from 'alinea/ui'
-import {Lift} from 'alinea/ui/Lift'
+import type {Shape} from '#/core/Shape.js'
+import {InputLabel} from '#/dashboard/view/InputLabel.js'
+import {VStack} from '#/ui.js'
+import {Lift} from '#/ui/Lift.js'
 import {FieldDiff} from './FieldDiff.js'
 
 export type FieldsDiffProps = {

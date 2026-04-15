@@ -1,9 +1,9 @@
-import {getType} from 'alinea/core/Internal'
-import {resolveView} from 'alinea/core/View'
-import {useConfig} from 'alinea/dashboard/hook/UseConfig'
-import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
-import {useEntrySummary} from 'alinea/dashboard/hook/UseEntrySummary'
-import {EntrySummaryRow} from 'alinea/dashboard/view/entry/EntrySummary'
+import {getType} from '#/core/Internal.js'
+import {resolveView} from '#/core/View.js'
+import {useConfig} from '#/dashboard/hook/UseConfig.js'
+import {useDashboard} from '#/dashboard/hook/UseDashboard.js'
+import {useEntrySummary} from '#/dashboard/hook/UseEntrySummary.js'
+import {EntrySummaryRow} from '#/dashboard/view/entry/EntrySummary.js'
 import {EntryReference} from './EntryReference.js'
 
 export interface EntryPickerRowProps {

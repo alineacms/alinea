@@ -1,5 +1,5 @@
-import type {Policy} from 'alinea/core/Role'
-import {assert} from 'alinea/core/util/Assert'
+import type {Policy} from '#/core/Role.js'
+import {assert} from '#/core/util/Assert.js'
 import {type Atom, atom} from 'jotai'
 import {sessionAtom} from '../atoms/DashboardAtoms.js'
 import {dbAtom} from '../atoms/DbAtoms.js'

@@ -1,5 +1,5 @@
-import {Config, Field} from 'alinea'
-import {createCMS} from 'alinea/core'
+import {Config, Field} from '#/index.js'
+import {createCMS} from '#/core.js'
 
 const Page = Config.document('Page', {
   contains: ['Page', 'Folder'],

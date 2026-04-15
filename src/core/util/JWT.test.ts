@@ -1,6 +1,6 @@
+import {outcome} from '#/core/Outcome.js'
+import {importKey, sign, verify} from '#/core/util/JWT.js'
 import {suite} from '@alinea/suite'
-import {outcome} from 'alinea/core/Outcome'
-import {importKey, sign, verify} from 'alinea/core/util/JWT'
 import {base64url} from './Encoding.js'
 
 // Minimal base64url helper for test tokens

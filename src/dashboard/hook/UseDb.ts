@@ -1,4 +1,4 @@
-import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {useAtomValue} from 'jotai'
 import {dbAtom} from '../atoms/DbAtoms.js'
 

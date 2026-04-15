@@ -1,7 +1,7 @@
-import {getType} from 'alinea/core/Internal'
-import {Section} from 'alinea/core/Section'
-import {Type} from 'alinea/core/Type'
-import {TabsSection} from 'alinea/field/tabs'
+import {getType} from '#/core/Internal.js'
+import {Section} from '#/core/Section.js'
+import {Type} from '#/core/Type.js'
+import {TabsSection} from '#/field/tabs.js'
 import {type KeyboardEvent, useEffect, useId, useRef, useState} from 'react'
 import {EditFields} from '../../Editor.js'
 

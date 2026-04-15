@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {ScalarShape} from 'alinea/core/shape/ScalarShape'
+import {ScalarShape} from '#/core/shape/ScalarShape.js'
 
 import * as Y from 'yjs'
 

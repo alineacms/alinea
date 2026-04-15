@@ -1,4 +1,4 @@
-import {summarySelection} from 'alinea/core/media/Summary'
+import {summarySelection} from '#/core/media/Summary.js'
 import DataLoader from 'dataloader'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'

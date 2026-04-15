@@ -1,1 +1,1 @@
-export * from 'alinea/field/object/ObjectField'
+export * from '#/field/object/ObjectField.js'

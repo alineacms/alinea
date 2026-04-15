@@ -1,1 +1,1 @@
-export * from 'alinea/field/tabs/Tabs'
+export * from '#/field/tabs/Tabs.js'

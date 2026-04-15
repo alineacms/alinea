@@ -1,4 +1,4 @@
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
+import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
 import {ComponentType} from 'react'
 import {CheckFieldView} from './check/CheckField.view.js'
 import {CodeFieldView} from './code/CodeField.view.js'

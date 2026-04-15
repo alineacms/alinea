@@ -1,27 +1,27 @@
 import {Response} from '@alinea/iso'
-import {AuthAction} from 'alinea/backend/Auth'
-import {OAuth2} from 'alinea/backend/api/OAuth2'
-import {Config} from 'alinea/core/Config'
+import {AuthAction} from '#/backend/Auth.js'
+import {OAuth2} from '#/backend/api/OAuth2.js'
+import {Config} from '#/core/Config.js'
 import type {
   AuthedContext,
   RemoteConnection,
   RequestContext,
   Revision
-} from 'alinea/core/Connection'
+} from '#/core/Connection.js'
 import {
   type Draft,
   type DraftKey,
   formatDraftKey,
   parseDraftKey
-} from 'alinea/core/Draft'
-import type {CommitRequest} from 'alinea/core/db/CommitRequest'
-import type {EntryRecord} from 'alinea/core/EntryRecord'
-import {HttpError} from 'alinea/core/HttpError'
-import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
-import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
-import {base64} from 'alinea/core/util/Encoding'
-import {entries, values} from 'alinea/core/util/Objects'
-import {Workspace} from 'alinea/core/Workspace'
+} from '#/core/Draft.js'
+import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import type {EntryRecord} from '#/core/EntryRecord.js'
+import {HttpError} from '#/core/HttpError.js'
+import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import {base64} from '#/core/util/Encoding.js'
+import {entries, values} from '#/core/util/Objects.js'
+import {Workspace} from '#/core/Workspace.js'
 import pkg from '../../package.json'
 import {AuthResultType} from './AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'

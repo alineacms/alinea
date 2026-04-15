@@ -1,5 +1,5 @@
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
-import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
+import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import * as Comlink from 'comlink'
 import type {ConfigGenerator} from './Boot.js'
 import {DashboardWorker} from './DashboardWorker.js'

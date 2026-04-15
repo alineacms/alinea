@@ -1,4 +1,4 @@
-import {Config, Field} from 'alinea'
+import {Config, Field} from '#/index.js'
 
 export const DemoRecipes = Config.type('Recipes', {
   contains: ['DemoRecipe'],

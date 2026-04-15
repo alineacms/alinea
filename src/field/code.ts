@@ -1,1 +1,2 @@
-export * from 'alinea/field/code/CodeField'
+export * from '#/field/code/CodeField.js'
+
