@@ -23,6 +23,9 @@ Find the v2 dashboard in ./src/v2, and v1 in ./v1/dashboard.
   with 'alinea', eg 'alinea/core/Config'. If relative, include .js extension.
   If absolute do not include any extension.
 
+## Verification
+- Run typescript compiler with `bun tsgo` to verify types
+
 ## Testability
 - Use react-testing-library for testing, and test the public API of components
 - Dom implementation is preloaded
