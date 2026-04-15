@@ -1,4 +1,3 @@
-import type {EntryEditProps} from '#/dashboard/view/EntryEdit.js'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import type {EntryStatus} from './Entry.js'
@@ -164,7 +163,7 @@ export interface TypeConfig<Definition> {
   icon?: ComponentType
 
   /** A React component used to view an entry of this type in the dashboard */
-  view?: View<EntryEditProps & {type: Type}>
+  view?: View<{type: Type}>
   /** A React component used to view a row of this type in the dashboard */
   summaryRow?: View<SummaryProps>
   /** A React component used to view a thumbnail of this type in the dashboard */

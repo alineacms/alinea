@@ -1,4 +1,3 @@
-import {CloudAuthView} from '#/cloud/view/CloudAuth.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {Preview} from '#/core/Preview.js'
 import type {Auth} from './Auth.js'
@@ -188,7 +187,6 @@ export function createConfig<Definition extends Config>(
   )
     throw new Error(`"MediaLibrary" is a reserved Type name`)
   const res = {
-    auth: CloudAuthView,
     ...definition,
     roles: {admin, ...definition.roles},
     publicDir: definition.publicDir ?? '/public',

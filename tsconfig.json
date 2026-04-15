@@ -18,9 +18,11 @@
     "plugins": [{ "name": "typescript-plugin-css-modules" }],
     "lib": ["dom.iterable", "dom", "webworker", "es2025"],
     "paths": {
-      // This is only required for bun, which doesn't seem to support
-      // the import map declared in package.json
-      "#/*": ["./src/*"]
+      // This is only required for bun, which doesn't seem to support the
+      // imports declared in package.json
+      "#/*": ["./src/*"],
+      "#test/*": ["./test/*"]
     }
-  }
+  },
+  "exclude": ["v1"]
 }

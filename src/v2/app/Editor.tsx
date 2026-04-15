@@ -3,7 +3,6 @@ import {styler} from '@alinea/styler'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
-import {ErrorMessage} from '#/ui.js'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, useEffect, useTransition} from 'react'
 import {
@@ -208,10 +207,7 @@ const EditField = memo(function EditField({field}: EditFieldProps) {
   const options = useFieldOptions(field) as FieldLayoutOptions
   const View = useFieldView(field)
   if (options.hidden) return null
-  if (!View)
-    return (
-      <ErrorMessage error={`Missing view for field: ${Field.label(field)}`} />
-    )
+  if (!View) return <div>Missing view for field: {Field.label(field)}</div>
   return (
     <div
       className={styles.EditField.slot()}
@@ -250,8 +246,6 @@ function EntryStatus({entry}: EntryStatusProps) {
   const selectedVersion = useAtomValue(entry.selectedVersion)
   if (selectedVersion.type !== 'status') return
   return (
-    <span className={styles.EntryStatus.badge()}>
-      {selectedVersion.status}
-    </span>
+    <span className={styles.EntryStatus.badge()}>{selectedVersion.status}</span>
   )
 }

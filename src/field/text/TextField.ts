@@ -1,6 +1,6 @@
 import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
-import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {viewKeys} from '#/core/ViewKeys.js'
 import type {ComponentType, ReactNode} from 'react'
 
 /** Optional settings to configure a text field */

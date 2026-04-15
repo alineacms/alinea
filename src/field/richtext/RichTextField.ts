@@ -1,15 +1,16 @@
-import type {AnyExtension, Mark, Node} from '@tiptap/core'
 import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
 import {RichTextField} from '#/core/field/RichTextField.js'
 import type {Schema} from '#/core/Schema.js'
 import type {TextDoc} from '#/core/TextDoc.js'
-import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {viewKeys} from '#/core/ViewKeys.js'
+import type {AnyExtension} from '@tiptap/core'
 import type {ReactNode} from 'react'
 import type {ToolbarConfig} from './RichTextToolbar.js'
 
 /** Optional settings to configure a rich text field */
-export interface RichTextOptions<Blocks extends Schema>
-  extends FieldOptions<TextDoc<Blocks>> {
+export interface RichTextOptions<Blocks extends Schema> extends FieldOptions<
+  TextDoc<Blocks>
+> {
   /** Allow these blocks to be created between text fragments */
   schema?: Blocks
   /** Width of the field in the dashboard UI (0-1) */

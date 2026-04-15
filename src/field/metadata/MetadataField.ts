@@ -1,7 +1,7 @@
 import type {FieldOptions, WithoutLabel} from '#/core.js'
 import {RecordField} from '#/core/field/RecordField.js'
 import {Type, type} from '#/core/Type.js'
-import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {viewKeys} from '#/core/ViewKeys.js'
 import {type ImageField, type ImageLink, image} from '#/field/link.js'
 import {type ObjectField, object} from '#/field/object.js'
 import {type TextField, text} from '#/field/text.js'

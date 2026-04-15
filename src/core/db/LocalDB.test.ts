@@ -1,12 +1,12 @@
 import {suite} from '@alinea/suite'
-import {cms} from '../../test/cms'
+import {cms} from '#test/cms'
 import {Entry} from '../Entry.js'
 import {FSSource} from '../source/FSSource.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {syncWith} from '../source/Source.js'
 import {LocalDB} from './LocalDB.js'
 
-const dir = 'src/test/fixtures/demo'
+const dir = 'test/fixtures/demo'
 const source = new FSSource(dir)
 const from = new MemorySource()
 const into = new MemorySource()

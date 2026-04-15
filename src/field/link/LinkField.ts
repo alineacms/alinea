@@ -14,7 +14,7 @@ import {Reference} from '#/core/Reference.js'
 import type {Schema} from '#/core/Schema.js'
 import {ListRow} from '#/core/shape/ListShape.js'
 import {entries, fromEntries} from '#/core/util/Objects.js'
-import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {viewKeys} from '#/core/ViewKeys.js'
 import {unresolvedEntryMarker} from '#/picker/entry/EntryPicker.js'
 import type {ReactNode} from 'react'
 

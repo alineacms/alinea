@@ -1,4 +1,4 @@
-import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {viewKeys} from '#/core/ViewKeys.js'
 import {hidden} from '#/field/hidden.js'
 import {text} from '#/field/text/TextField.js'
 import {IcRoundPermMedia} from '#/ui/icons/IcRoundPermMedia.js'

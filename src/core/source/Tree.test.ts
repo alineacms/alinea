@@ -1,7 +1,5 @@
 import {suite} from '@alinea/suite'
-import treeExample from '../../test/fixtures/exampleTree.json' with {
-  type: 'json'
-}
+import treeExample from '#test/fixtures/exampleTree.json' with {type: 'json'}
 import {ShaMismatchError} from './ShaMismatchError.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 

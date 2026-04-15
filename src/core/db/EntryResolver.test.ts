@@ -1,11 +1,11 @@
-import {suite} from '@alinea/suite'
-import {Config, Field, Query} from '#/index.js'
 import {createCMS, Entry} from '#/core.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
-import {cms} from '../../test/cms.js'
-import {createEntryResolver} from '../../test/EntryFixture.js'
-import {DemoRecipe} from '../../test/schema/DemoRecipe.js'
-import {DemoRecipes} from '../../test/schema/DemoRecipes.js'
+import {Config, Field, Query} from '#/index.js'
+import {cms} from '#test/cms.js'
+import {createEntryResolver} from '#test/EntryFixture.js'
+import {DemoRecipe} from '#test/schema/DemoRecipe.js'
+import {DemoRecipes} from '#test/schema/DemoRecipes.js'
+import {suite} from '@alinea/suite'
 import {Expr} from '../Expr.js'
 import type {GraphQuery} from '../Graph.js'
 import {FSSource} from '../source/FSSource.js'
@@ -14,7 +14,7 @@ import {EntryResolver, statusChecker} from './EntryResolver.js'
 
 const test = suite(import.meta)
 
-const dir = 'src/test/fixtures/demo'
+const dir = 'test/fixtures/demo'
 const source = new FSSource(dir)
 
 const index = new EntryIndex(cms.config)

@@ -7,7 +7,7 @@ import {
 } from '#/core/Section.js'
 import {Type, type} from '#/core/Type.js'
 import {entries, fromEntries} from '#/core/util/Objects.js'
-import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {viewKeys} from '#/core/ViewKeys.js'
 
 export class TabsSection implements SectionData {
   view = viewKeys.TabsView

@@ -1,16 +1,17 @@
 import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {ListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
 import type {InferQueryValue, InferStoredValue} from '#/core/Infer.js'
 import {Schema} from '#/core/Schema.js'
-import {ListField} from '#/core/field/ListField.js'
 import {ListRow} from '#/core/shape/ListShape.js'
 import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
-import {viewKeys} from '#/dashboard/editor/ViewKeys.js'
+import {viewKeys} from '#/core/ViewKeys.js'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a list field */
-export interface ListOptions<Definitions extends Schema>
-  extends FieldOptions<Array<InferStoredValue<Definitions>>> {
+export interface ListOptions<Definitions extends Schema> extends FieldOptions<
+  Array<InferStoredValue<Definitions>>
+> {
   /** Allow these types of blocks to be created */
   schema: Definitions
   /** Width of the field in the dashboard UI (0-1) */

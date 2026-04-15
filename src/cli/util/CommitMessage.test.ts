@@ -1,5 +1,4 @@
 import {suite} from '@alinea/suite'
-import {} from '#/core.js'
 import {parseCoAuthoredBy} from './CommitMessage.js'
 
 const test = suite(import.meta)
