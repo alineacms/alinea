@@ -1,6 +1,6 @@
 # Dashboard V2 Rewrite Plan
 
-Find the v2 dashboard in src/v2, and v1 in src/dashboard.
+Find the v2 dashboard in ./src/v2, and v1 in ./v1/dashboard.
 
 ## Goals and Constraints
 - UI toolkit: use `@alinea/components` as the default UI surface.
