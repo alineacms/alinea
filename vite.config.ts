@@ -1,3 +1,4 @@
+import {alineaPlugin} from '#/adapter/vite/plugin'
 import react from '@vitejs/plugin-react'
 import {writeFileSync} from 'node:fs'
 import {defineConfig} from 'vite-plus'
@@ -6,7 +7,7 @@ import {alineaFixturePlugin} from './src/v2/plugins/alineaFixturePlugin.js'
 const generateScopedName = 'alinea-[local]'
 
 export default defineConfig({
-  plugins: [alineaFixturePlugin(), react()],
+  plugins: [alineaFixturePlugin(), react(), alineaPlugin('apps/dev')],
   resolve: {tsconfigPaths: true},
   css: {modules: {generateScopedName}},
   pack: {
