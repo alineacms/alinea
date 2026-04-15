@@ -21,7 +21,10 @@
       // This is only required for bun, which doesn't seem to support the
       // imports declared in package.json
       "#/*": ["./src/*"],
-      "#test/*": ["./test/*"]
+      "#test/*": ["./test/*"],
+      // Required for bun to resolve this package to source during runtime
+      "alinea": ["./src/index.ts"],
+      "alinea/*": ["./src/*"]
     }
   },
   "exclude": ["apps", "v1"]

@@ -1,13 +1,13 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import {Readable} from 'node:stream'
-import {ReadableStream, type Request, Response} from '@alinea/iso'
 import type {Handler} from '#/backend/Handler.js'
 import {router} from '#/backend/router/Router.js'
 import type {CMS} from '#/core/CMS.js'
 import {type Trigger, trigger} from '#/core/Trigger.js'
 import type {User} from '#/core/User.js'
+import {ReadableStream, type Request, Response} from '@alinea/iso'
 import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
+import fs from 'node:fs'
+import path from 'node:path'
+import {Readable} from 'node:stream'
 import {buildEmitter} from '../build/BuildEmitter.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
@@ -107,6 +107,18 @@ export function createLocalServer(
   let initial = true
   const plugins = buildOptions?.plugins || []
   plugins.push(viewsPlugin(rootDir, cms), ignorePlugin)
+  const alias: Record<string, string> = {
+    'alinea/next': 'alinea/core',
+    '#alinea/config': configLocation,
+    '#alinea/entry': `data:text/javascript,
+        export * from '#alinea/config'
+        export * from '${viewsPlugin.entry}'
+      `
+  }
+  if (alineaDev) {
+    alias.alinea = path.join(rootDir, 'src/index.ts')
+    alias['alinea/*'] = path.join(rootDir, 'src/*')
+  }
   const config = {
     format: 'esm',
     target: 'esnext',
@@ -121,14 +133,7 @@ export function createLocalServer(
     platform: 'browser',
     ...buildOptions,
     plugins,
-    alias: {
-      'alinea/next': 'alinea/core',
-      '#alinea/config': configLocation,
-      '#alinea/entry': `data:text/javascript,
-        export * from '#alinea/config'
-        export * from '${viewsPlugin.entry}'
-      `
-    },
+    alias,
     external: ['@alinea/generated'],
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {

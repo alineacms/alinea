@@ -1,5 +1,5 @@
 [install]
-linker = "hoisted"
+linker = "isolated"
 
 [test]
 pathIgnorePatterns = ["v1/**"]

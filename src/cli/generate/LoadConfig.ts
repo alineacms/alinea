@@ -1,7 +1,7 @@
+import {CMS} from '#/core/CMS.js'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import {pathToFileURL} from 'node:url'
-import {CMS} from '#/core/CMS.js'
 
 export async function loadCMS(outDir: string): Promise<CMS> {
   const unique = Date.now()
@@ -12,7 +12,7 @@ export async function loadCMS(outDir: string): Promise<CMS> {
   const outFile = `${pathToFileURL(genConfigFile)}?${unique}`
   global.require = createRequire(import.meta.url)
   const exports = await import(outFile)
-  if ('cms' in exports && exports.cms instanceof CMS) return exports.cms
+  if ('cms' in exports) return exports.cms
   if ('default' in exports)
     throw new Error('No export named cms found, did you export it as default?')
   throw new Error('No export named cms found')
