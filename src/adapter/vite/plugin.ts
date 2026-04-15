@@ -1,5 +1,5 @@
-import {nodeHandler} from '#/backend/router/NodeHandler'
-import {createDevServer, type DevServer} from '#/cli/serve/DevServer'
+import {nodeHandler} from '#/backend/router/NodeHandler.js'
+import {createDevServer, type DevServer} from '#/cli/serve/DevServer.js'
 import type {Plugin, ViteDevServer} from 'vite'
 
 function createFallbackUrl(server: ViteDevServer): string {

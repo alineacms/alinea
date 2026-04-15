@@ -3,9 +3,9 @@
     "noEmit": true,
     "outDir": "dist",
     "rootDir": "src",
-    "module": "ESNext",
+    "module": "NodeNext",
     "target": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -16,11 +16,6 @@
     "incremental": true,
     "jsx": "react-jsx",
     "plugins": [{ "name": "typescript-plugin-css-modules" }],
-    "paths": {
-      "alinea": ["./src/index.ts"],
-      "alinea/*": ["./src/*"]
-    },
     "lib": ["dom.iterable", "dom", "webworker", "es2025"]
-  },
-  "include": ["src"]
+  }
 }
