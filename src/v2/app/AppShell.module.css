@@ -3,12 +3,6 @@
   height: 100%;
 }
 
-.AppShell-allotment {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-}
-
 .AppShell-footer {
   padding: 0;
 }

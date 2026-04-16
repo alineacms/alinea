@@ -3,7 +3,6 @@ import {styler} from '@alinea/styler'
 import {Field, type FieldOptions} from 'alinea/core/Field'
 import {Section} from 'alinea/core/Section'
 import {Type} from 'alinea/core/Type'
-import {Allotment} from 'allotment'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, useEffect, useTransition} from 'react'
 import {
@@ -148,18 +147,8 @@ function EntryEditor({entry}: EntryEditorProps) {
         )}
       </Sheet>
       <EntryScope entry={entry}>
-        {isUntranslated ? (
-          mainEditor
-        ) : (
-          <Allotment className={styles.EntryEditor.layout()} snap>
-            <Allotment.Pane preferredSize="72%" snap={false}>
-              {mainEditor}
-            </Allotment.Pane>
-            <Allotment.Pane minSize={180} preferredSize={360} maxSize={560}>
-              <EntrySidebar entry={entry} />
-            </Allotment.Pane>
-          </Allotment>
-        )}
+        {mainEditor}
+        {!isUntranslated && <EntrySidebar entry={entry} />}
       </EntryScope>
     </>
   )

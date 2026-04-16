@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
-import type { HTMLAttributes, PropsWithChildren } from 'react'
-import { Rail, RailHeader, RailHeaderProps, RailProps } from './Rail.js'
+import type {HTMLAttributes, PropsWithChildren} from 'react'
+import {Rail, RailHeader, RailHeaderProps, RailProps} from './Rail.js'
 import css from './Sidebar.module.css'
 
 const styles = styler(css)
