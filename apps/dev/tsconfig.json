@@ -16,8 +16,6 @@
     "strictNullChecks": true,
     "jsx": "react-jsx",
     "paths": {
-      "alinea": ["../../src/index.ts"],
-      "alinea/*": ["../../src/*"],
       "@/*": ["./src/*"]
     },
     "target": "ES2017",

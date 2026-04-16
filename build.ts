@@ -282,7 +282,7 @@ const externalize: Plugin = {
     build.onStart(() => {
       modules = new Set()
     })
-    build.onResolve({filter: /^\./}, args => {
+    build.onResolve({filter: /^(\.|#)/}, args => {
       if (args.kind === 'entry-point') return
       if (
         args.path.endsWith('.scss') ||
@@ -309,6 +309,10 @@ const externalize: Plugin = {
         console.error(`Missing file extension on local import: ${args.path}`)
         console.error(`In file: ${args.importer}`)
         process.exit(1)
+      }
+      if (args.path.startsWith('#')) {
+        const withoutExtension = args.path.slice(0, args.path.lastIndexOf('.'))
+        return {path: withoutExtension.replace('#/', 'alinea/'), external: true}
       }
       return {path: args.path, external: true}
     })

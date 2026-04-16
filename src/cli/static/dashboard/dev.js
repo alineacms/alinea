@@ -1,3 +1,4 @@
-import {bootDev} from '#/dashboard/boot/BootDev.js'
+//import {bootDev} from '#/dashboard/boot/BootDev.js'
 
-bootDev()
+//bootDev()
+alert('done!!')

@@ -9,7 +9,7 @@ import {
   lists,
   quotes,
   tables
-} from 'alinea/v2/app/field/richtext/RichTextToolbar'
+} from 'alinea/v2/app/field/richtext/Toolbar'
 
 export const RichTextFields = Config.document('Rich text fields', {
   fields: {

@@ -43,8 +43,9 @@ export default defineConfig({
       ].map(pkg)
     },
     outputOptions: {
-      preserveModules: true,
-      preserveModulesRoot: 'src'
+      chunkFileNames: 'chunks/[name].js'
+      //preserveModules: true,
+      //preserveModulesRoot: 'src'
     },
     css: {
       fileName: 'index.css',

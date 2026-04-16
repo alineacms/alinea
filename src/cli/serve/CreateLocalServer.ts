@@ -115,10 +115,6 @@ export function createLocalServer(
         export * from '${viewsPlugin.entry}'
       `
   }
-  if (alineaDev) {
-    alias.alinea = path.join(rootDir, 'src/index.ts')
-    alias['alinea/*'] = path.join(rootDir, 'src/*')
-  }
   const config = {
     format: 'esm',
     target: 'esnext',
