@@ -547,7 +547,14 @@ export const SimpleCodeEditor = React.forwardRef(function Editor(
         style={{...styles.editor, ...styles.highlight, ...contentStyle}}
         {...(typeof highlighted === 'string'
           ? {dangerouslySetInnerHTML: {__html: highlighted + '<br />'}}
-          : {children: highlighted})}
+          : {
+              children: (
+                <>
+                  {highlighted}
+                  <br />
+                </>
+              )
+            })}
       />
       <textarea
         ref={c => {

@@ -14,6 +14,7 @@ import {entries, fromEntries, values} from '#/core/util/Objects.js'
 import {RichTextOptions} from '#/field/richtext/RichTextField.js'
 import {ReactiveNode} from '#/v2/store/Dashboard.js'
 import {
+  useFieldError,
   useFieldNode,
   useFieldOptions,
   useFieldSetter
@@ -109,6 +110,7 @@ function RTView<Blocks extends Schema>({
 }: RichTextFieldViewProps<Blocks>) {
   const store = useStore()
   const options = useFieldOptions(field)
+  const error = useFieldError(field)
   const toolbar = document.getElementById('alinea-toolbar')
   const setValue = useFieldSetter(field)
   const node = useFieldNode(field)
@@ -124,7 +126,8 @@ function RTView<Blocks extends Schema>({
     const schemaExtensions = schemaToExtensions(field, options.schema)
     return [...values(baseExtensions), ...schemaExtensions]
   }, [field, options.schema])
-  const editable = !options.readOnly && !node.readOnly
+  const readOnly = options.readOnly || node.readOnly
+  const editable = !readOnly
   const editor = useEditor({
     content,
     extensions,
@@ -138,10 +141,11 @@ function RTView<Blocks extends Schema>({
     <>
       <Label
         description={options.help}
+        errorMessage={error}
         isRequired={options.required}
         label={options.label}
       >
-        {editor && !options.readOnly && (
+        {editor && !readOnly && (
           <InsertMenu
             editor={editor}
             schema={options.schema}
@@ -158,7 +162,12 @@ function RTView<Blocks extends Schema>({
             }}
           />
         )}
-        <EditorContent editor={editor} className={styles.RichTextFieldView()} />
+        <EditorContent
+          editor={editor}
+          className={styles.RichTextFieldView()}
+          data-invalid={Boolean(error) || undefined}
+          data-read-only={readOnly || undefined}
+        />
       </Label>
       {toolbar &&
         editor &&

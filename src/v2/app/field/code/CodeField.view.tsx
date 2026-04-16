@@ -1,5 +1,5 @@
 import {CodeField} from '#/field/code.js'
-import {Elevation, Label} from '@alinea/components'
+import {Label} from '@alinea/components'
 import {styler} from '@alinea/styler'
 import lolight from 'lolight'
 import {Fragment, ReactNode, useId} from 'react'
@@ -69,12 +69,17 @@ export function CodeEditorInput({
   const inputId = useId()
   return (
     <Label
+      htmlFor={inputId}
       label={label}
       description={description}
       errorMessage={errorMessage}
       isRequired={isRequired}
     >
-      <Elevation className={styles.CodeEditorInput({invalid})}>
+      <div
+        className={styles.CodeEditorInput()}
+        data-invalid={invalid || undefined}
+        data-read-only={readOnly || undefined}
+      >
         <SimpleCodeEditor
           autoFocus={autoFocus}
           className={styles.CodeEditorInput.editor()}
@@ -83,7 +88,7 @@ export function CodeEditorInput({
           onBlur={onBlur}
           onFocus={onFocus}
           onValueChange={onValueChange}
-          padding={14}
+          padding={{top: 8, right: 10, bottom: 8, left: 10}}
           placeholder={placeholder}
           preClassName={styles.CodeEditorInput.pre()}
           readOnly={readOnly}
@@ -92,7 +97,7 @@ export function CodeEditorInput({
           textareaId={inputId}
           value={value}
         />
-      </Elevation>
+      </div>
     </Label>
   )
 }
