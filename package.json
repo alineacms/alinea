@@ -43,7 +43,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsgo --noEmit false --declaration --emitDeclarationOnly && bun build.ts",
+    "build": "tsgo -p tsconfig.build.json && bun build.ts",
     "bump": "bun bump.js",
     "cycles:browser": "CHECK_CYCLES=browser bun build.ts && bunx --bun madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
     "cycles:server": "CHECK_CYCLES=server bun build.ts && bunx --bun madge --warning --circular dist/index.js",
