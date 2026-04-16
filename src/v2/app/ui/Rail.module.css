@@ -3,8 +3,8 @@
   flex-direction: column;
   height: 100%;
 
-  &+& {
-    border-left: 1px solid red;
+  & + & {
+    border-left: 1px solid #d3d3d3;
   }
 
   &.is-main {
@@ -18,7 +18,8 @@
   align-items: center;
   height: 56px;
   flex-shrink: 0;
-  border-bottom: 1px solid red;
+  border-bottom: 1px solid #d3d3d3;
+  padding: 0px 12px;
 }
 
 .RailFooter {
@@ -26,7 +27,7 @@
   align-items: center;
   height: 56px;
   flex-shrink: 0;
-  border-top: 1px solid red;
+  border-top: 1px solid #d3d3d3;
 }
 
 .RailBody {

@@ -1,8 +1,9 @@
-import {Field, type FieldOptions} from '#/core/Field.js'
-import {Section} from '#/core/Section.js'
-import {Type} from '#/core/Type.js'
 import {Button, Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
+import {Field, type FieldOptions} from 'alinea/core/Field'
+import {Section} from 'alinea/core/Section'
+import {Type} from 'alinea/core/Type'
+import {Allotment} from 'allotment'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, useEffect, useTransition} from 'react'
 import {
@@ -60,6 +61,7 @@ function RootEditor({root}: RootEditorProps) {
     </Rail>
   )
 }
+
 interface EntryEditorProps {
   entry: DashboardEntry
 }
@@ -75,21 +77,58 @@ function EntryEditor({entry}: EntryEditorProps) {
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
+
   const discardAndConfirm = () => {
     startTransition(() => {
       reset()
       routeBlock?.confirm()
     })
   }
+
   const saveAndConfirm = () => {
     startTransition(() => {
       save(node)
       routeBlock?.confirm()
     })
   }
+
   useEffect(() => {
     setEditing(isDirty ? node : undefined)
   }, [node, setEditing, isDirty])
+
+  const mainEditor = (
+    <Rail main>
+      <RailHeader className={styles.EntryEditor.header()}>
+        <div>
+          <h1 className={styles.EntryEditor.title()}>{title}</h1>
+          <TypeBadge type={type} />
+        </div>
+        <EntryStatus entry={entry} />
+        {isDirty && (
+          <div style={{marginLeft: 'auto'}}>
+            <Button intent="secondary" onPress={reset}>
+              Discard my changes
+            </Button>
+            <Button
+              isPending={isPending}
+              onPress={() => startTransition(() => save(node))}
+            >
+              {isPending ? 'Saving...' : 'Save Draft'}
+            </Button>
+          </div>
+        )}
+      </RailHeader>
+
+      <RailBody className={styles.EntryEditor.body()}>
+        <NodeEditor node={node} type={type.type} />
+        <RailFooter
+          id="alinea-toolbar"
+          className={styles.EntryEditor.toolbar()}
+        />
+      </RailBody>
+    </Rail>
+  )
+
   return (
     <>
       <Sheet
@@ -109,37 +148,18 @@ function EntryEditor({entry}: EntryEditorProps) {
         )}
       </Sheet>
       <EntryScope entry={entry}>
-        <Rail main>
-          <RailHeader>
-            <h1 className={styles.EntryEditor.title()}>{title}</h1>
-            <TypeBadge type={type} />
-            <EntryStatus entry={entry} />
-            {isDirty && (
-              <div style={{marginLeft: 'auto'}}>
-                <Button intent="secondary" onPress={reset}>
-                  Discard my changes
-                </Button>
-                <Button
-                  isPending={isPending}
-                  onPress={() => startTransition(() => save(node))}
-                >
-                  {isPending ? 'Saving...' : 'Save Draft'}
-                </Button>
-              </div>
-            )}
-          </RailHeader>
-
-          <RailBody>
-            <NodeEditor node={node} type={type.type} />
-
-            <RailFooter
-              id="alinea-toolbar"
-              className={styles.EntryEditor.toolbar()}
-            />
-          </RailBody>
-        </Rail>
-
-        {!isUntranslated && <EntrySidebar entry={entry} />}
+        {isUntranslated ? (
+          mainEditor
+        ) : (
+          <Allotment className={styles.EntryEditor.layout()} snap>
+            <Allotment.Pane preferredSize="72%" snap={false}>
+              {mainEditor}
+            </Allotment.Pane>
+            <Allotment.Pane minSize={180} preferredSize={360} maxSize={560}>
+              <EntrySidebar entry={entry} />
+            </Allotment.Pane>
+          </Allotment>
+        )}
       </EntryScope>
     </>
   )

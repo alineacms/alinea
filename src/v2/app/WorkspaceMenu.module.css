@@ -1,19 +1,32 @@
-.WorkspaceMenu-trigger {
-  max-width: 100%;
-  display: inline-flex;
-  align-items: center;
+.WorkspaceMenu-parent {
+  display: flex;
   gap: 8px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
 }
 
-.WorkspaceMenu-trigger-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
+.WorkspaceMenu-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
   flex-shrink: 0;
+}
+
+.WorkspaceMenu-trigger {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  justify-content: space-between;
+  padding: 0 8px !important;
+  height: 36px !important;
 }
 
 .WorkspaceMenu-trigger-text {
@@ -24,4 +37,8 @@
   white-space: nowrap;
   font-size: 14px;
   font-weight: 600;
+}
+
+.WorkspaceMenu-search {
+  flex-shrink: 0;
 }

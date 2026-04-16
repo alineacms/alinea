@@ -23,6 +23,24 @@
   min-height: 0;
 }
 
+.EntryEditor-layout {
+  min-height: 0;
+  height: 100%;
+  min-width: 0;
+}
+
+.EntryEditor-body {
+  min-height: 0;
+  min-width: 0;
+}
+
+.EntryEditor-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .EditFields {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -31,6 +49,12 @@
 
 .EditField-slot {
   min-width: 0;
+}
+
+@media (max-width: 1080px) {
+  .EntryEditor-layout {
+    height: 100%;
+  }
 }
 
 @media (max-width: 768px) {

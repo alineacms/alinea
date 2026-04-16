@@ -1,5 +1,5 @@
-import {styler} from '@alinea/styler'
-import {HTMLProps} from 'react'
+import { styler } from '@alinea/styler'
+import { HTMLProps } from 'react'
 import css from './Rail.module.css'
 
 const styles = styler(css)

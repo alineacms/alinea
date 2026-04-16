@@ -1,9 +1,9 @@
-import {Button, Icon, Tree, TreeItem} from '@alinea/components'
+import {Button, Icon, Menu, MenuItem, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
-import {assert} from '#/core/util/Assert.js'
+import {assert} from 'alinea/core/util/Assert'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {memo, Suspense, useMemo} from 'react'
+import {memo, Suspense, useMemo, useState} from 'react'
 import {
   Collection,
   DialogTrigger,
@@ -11,7 +11,12 @@ import {
   useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
-import {IcRoundEdit, IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
+import {
+  IcRoundAdd,
+  IcRoundKeyboardTab,
+  IcTwotoneDescription,
+  IcTwotoneFolder
+} from '../icons.js'
 import {
   Dashboard,
   DashboardRoot,
@@ -31,21 +36,49 @@ interface SidebarTreeProps {
 
 interface SidebarParentProps {
   root: DashboardRoot
+  roots: Array<DashboardRoot>
+  isTreeCollapsed: boolean
+  onToggleTreeCollapsed: () => void
 }
 
-const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
+const SidebarParent = memo(function SidebarParent({
+  root,
+  roots,
+  isTreeCollapsed,
+  onToggleTreeCollapsed
+}: SidebarParentProps) {
   const label = useAtomValue(root.label)
-  const icon = useAtomValue(root.icon)
   return (
     <SidebarHeader>
       <div className={styles.SidebarParent.label()}>
-        <Icon icon={icon} className={styles.SidebarParent.icon()} />
-        {label}
+        <Button
+          size="icon"
+          appearance="outline"
+          icon={IcRoundKeyboardTab}
+          style={isTreeCollapsed ? undefined : {transform: 'rotate(180deg)'}}
+          aria-label={isTreeCollapsed ? 'Expand tree' : 'Collapse tree'}
+          onPress={onToggleTreeCollapsed}
+        />
+        <Menu
+          label={
+            <Button
+              appearance="plain"
+              intent="secondary"
+              className={styles.rootsTrigger()}
+            >
+              {label}
+            </Button>
+          }
+          aria-label={label}
+          selectionMode="single"
+        >
+          {roots.map(root => (
+            <RootMenuItem key={root.key} root={root} />
+          ))}
+        </Menu>
         <LocaleMenu root={root} />
         <DialogTrigger>
-          <Button size="icon">
-            <Icon icon={IcRoundEdit} data-slot="icon" />
-          </Button>
+          <Button size="icon" appearance="outline" icon={IcRoundAdd} />
           <Sheet>
             <CreateEntry />
           </Sheet>
@@ -107,6 +140,49 @@ const treeLayoutOptions = {
   gap: 1
 }
 
+interface RootButtonProps {
+  root: DashboardRoot
+  expanded?: boolean
+}
+
+function RootButton({root, expanded = false}: RootButtonProps) {
+  const icon = useAtomValue(root.icon)
+  const label = useAtomValue(root.label)
+  const [selected, setSelected] = useAtom(root.selected)
+  return (
+    <Button
+      size="square-petite"
+      appearance={selected ? 'active' : 'plain'}
+      className={styles.rootButton()}
+      data-expanded={expanded || undefined}
+      aria-label={label}
+      onPress={() => setSelected(true)}
+    >
+      {icon && <Icon icon={icon} data-slot="icon" />}
+      {expanded && <span className={styles.rootButtonLabel()}>{label}</span>}
+    </Button>
+  )
+}
+
+interface RootMenuItemProps {
+  root: DashboardRoot
+}
+
+function RootMenuItem({root}: RootMenuItemProps) {
+  const label = useAtomValue(root.label)
+  const selectRoot = useSetAtom(root.selected)
+  return (
+    <MenuItem
+      key={root.key}
+      id={root.key}
+      onAction={() => selectRoot(true)}
+      className={styles.rootButton()}
+    >
+      {label}
+    </MenuItem>
+  )
+}
+
 export const SidebarTree = memo(function SidebarTree({
   dashboard
 }: SidebarTreeProps) {
@@ -126,27 +202,56 @@ export const SidebarTree = memo(function SidebarTree({
     onItemDrop,
     onMove
   })
+  const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
+  const [isTreeCollapsed, setIsTreeCollapsed] = useState(false)
   return (
     <>
-      {currentRoot && <SidebarParent root={currentRoot} />}
+      {currentRoot && (
+        <SidebarParent
+          root={currentRoot}
+          roots={roots}
+          isTreeCollapsed={isTreeCollapsed}
+          onToggleTreeCollapsed={() =>
+            setIsTreeCollapsed(isCollapsed => !isCollapsed)
+          }
+        />
+      )}
       <SidebarBody>
-        <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
-          <Tree
-            aria-label="Content tree"
-            style={{display: 'block', padding: 0, height: '100%'}}
-            items={items}
-            dragAndDropHooks={dragAndDropHooks}
-            selectionMode="single"
-            selectionBehavior="replace"
-            disallowEmptySelection
-            expandedKeys={expandedKeys}
-            onExpandedChange={setExpandedKeys}
-            selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
+        <div className={styles.locator()}>
+          <div
+            className={styles.locator.rootSelector()}
+            data-expanded={isTreeCollapsed || undefined}
           >
-            {renderItem}
-          </Tree>
-        </Virtualizer>
+            {roots.map(root => (
+              <RootButton
+                key={root.key}
+                root={root}
+                expanded={isTreeCollapsed}
+              />
+            ))}
+          </div>
+          <div
+            className={styles.SidebarTree.tree({collapsed: isTreeCollapsed})}
+          >
+            <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
+              <Tree
+                aria-label="Content tree"
+                style={{display: 'block', padding: 0, height: '100%'}}
+                items={items}
+                dragAndDropHooks={dragAndDropHooks}
+                selectionMode="single"
+                selectionBehavior="replace"
+                disallowEmptySelection
+                expandedKeys={expandedKeys}
+                onExpandedChange={setExpandedKeys}
+                selectedKeys={selectedKeys}
+                onSelectionChange={setSelectedKeys}
+              >
+                {renderItem}
+              </Tree>
+            </Virtualizer>
+          </div>
+        </div>
       </SidebarBody>
     </>
   )

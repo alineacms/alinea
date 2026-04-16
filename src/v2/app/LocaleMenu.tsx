@@ -1,5 +1,6 @@
 import {Button, Menu, MenuItem} from '@alinea/components'
 import {useAtom, useAtomValue} from 'jotai'
+import {IcRoundUnfoldMore} from '../icons.js'
 import {DashboardRoot} from '../store/Dashboard.js'
 
 interface LocaleMenuProps {
@@ -12,7 +13,11 @@ export function LocaleMenu({root}: LocaleMenuProps) {
   if (!i18n || !selectedLocale) return null
   return (
     <Menu
-      label={<Button appearance="plain">{selectedLocale.toUpperCase()}</Button>}
+      label={
+        <Button appearance="outline" intent="secondary">
+          {selectedLocale.toUpperCase()} <IcRoundUnfoldMore />
+        </Button>
+      }
       aria-label="Language"
       selectionMode="single"
       selectedKeys={new Set([selectedLocale])}

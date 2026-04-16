@@ -4,10 +4,7 @@
   justify-content: flex-start;
   gap: 8px;
   min-width: 0;
-  flex: 1;
-  padding: 0 8px 0 0;
   text-align: left;
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--alinea-text-color);
@@ -17,6 +14,19 @@
   min-height: 34px;
   border: 0;
   background: transparent;
+  width: 100%;
+}
+
+.rootsTrigger {
+  font: inherit;
+
+  min-height: 34px;
+  padding: 0;
+  width: 100%;
+
+  display: flex;
+  justify-content: space-between;
+  padding: 0 8px;
 }
 
 .SidebarParent-icon {
@@ -29,6 +39,77 @@
   height: 100%;
 }
 
+:global(.alinea-Sidebar-body) :global(.alinea-rac-Tree) {
+  min-width: 0;
+  padding: 8px !important;
+
+  /* TODO */
+  > div {
+    width: 100% !important;
+
+    > div {
+      height: auto !important;
+      width: 100% !important;
+    }
+  }
+}
+
 :global(.alinea-rac-TreeItem) {
+  border-radius: 6px;
+  width: 100%;
   padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px) !important;
+}
+
+.locator {
+  display: flex;
+  height: 100%;
+}
+
+.locator > :not(.locator-rootSelector) {
+  width: 100%;
+}
+
+.locator-rootSelector {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  border-right: solid 1px lightgray;
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: 56px;
+  align-items: center;
+}
+
+.locator-rootSelector[data-expanded] {
+  width: 100%;
+  border-right: 0;
+  align-items: stretch;
+}
+
+.rootButton {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  justify-content: center;
+}
+
+.rootButton[data-expanded] {
+  aspect-ratio: auto;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 5px;
+}
+
+.rootButtonLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.SidebarTree-tree {
+  &.is-collapsed {
+    display: none;
+  }
 }

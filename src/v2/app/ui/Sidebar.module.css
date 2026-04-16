@@ -1,5 +1,5 @@
 .Sidebar {
-  width: 320px;
+  min-width: 0;
 }
 
 .SidebarBody {
@@ -10,3 +10,7 @@
 }
 
 .SidebarFooter {}
+
+.SidebarHeader {
+  justify-content: space-between;
+}

@@ -1184,6 +1184,22 @@ export class DashboardRoot {
     return getRoot(rootConfig)
   })
 
+  selected = atom(
+    get => {
+      if (
+        get(this.workspace.dashboard.selectedWorkspace) !== this.workspace.key
+      )
+        return false
+      return get(this.workspace.dashboard.selectedRoot) === this.key
+    },
+    (get, set, value: boolean) => {
+      set(
+        this.workspace.dashboard.route,
+        value ? {workspace: this.workspace.key, root: this.key} : {}
+      )
+    }
+  )
+
   #languagePreference = atom<string>()
   selectedLocale = atom(
     get => {
