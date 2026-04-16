@@ -17,7 +17,7 @@
   width: 100%;
 }
 
-.rootsTrigger {
+.SidebarTree-rootsTrigger {
   font: inherit;
 
   min-height: 34px;
@@ -29,17 +29,21 @@
   padding: 0 8px;
 }
 
-.SidebarParent-icon {
-  flex-shrink: 0;
-  opacity: 0.75;
+.SidebarTree-tree {
+  min-width: 0;
+  width: 100%;
 }
 
-:global(.react-aria-Virtualizer) {
+.SidebarTree-tree.is-collapsed {
+  display: none;
+}
+
+.SidebarTree-tree :global(.react-aria-Virtualizer) {
   min-height: 0;
   height: 100%;
 }
 
-:global(.alinea-Sidebar-body) :global(.alinea-rac-Tree) {
+.SidebarTree-tree :global(.alinea-rac-Tree) {
   min-width: 0;
   padding: 8px !important;
 
@@ -54,22 +58,22 @@
   }
 }
 
-:global(.alinea-rac-TreeItem) {
+.SidebarTree-tree :global(.alinea-rac-TreeItem) {
   border-radius: 6px;
   width: 100%;
   padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px) !important;
 }
 
-.locator {
+.SidebarTree-locator {
   display: flex;
   height: 100%;
 }
 
-.locator > :not(.locator-rootSelector) {
+.SidebarTree-locator > :not(.SidebarTree-locator-rootSelector) {
   width: 100%;
 }
 
-.locator-rootSelector {
+.SidebarTree-locator-rootSelector {
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
@@ -82,34 +86,28 @@
   align-items: center;
 }
 
-.locator-rootSelector[data-expanded] {
+.SidebarTree-locator-rootSelector[data-expanded] {
   width: 100%;
   border-right: 0;
   align-items: stretch;
 }
 
-.rootButton {
+.SidebarTree-rootButton {
   width: 100%;
   height: auto;
   aspect-ratio: 1 / 1;
   justify-content: center;
 }
 
-.rootButton[data-expanded] {
+.SidebarTree-rootButton[data-expanded] {
   aspect-ratio: auto;
   justify-content: flex-start;
   width: 100%;
   padding: 5px;
 }
 
-.rootButtonLabel {
+.SidebarTree-rootButton-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.SidebarTree-tree {
-  &.is-collapsed {
-    display: none;
-  }
 }

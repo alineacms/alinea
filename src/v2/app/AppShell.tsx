@@ -117,7 +117,7 @@ export function AppShell({dashboard}: AppShellProps) {
                               intent="secondary"
                               className={styles.AppShell.trigger()}
                             >
-                              <span className={styles.AppShell.triggerText()}>
+                              <span className={styles.AppShell.trigger.text()}>
                                 Admin
                               </span>
                               <IcRoundUnfoldMore />
@@ -146,7 +146,7 @@ export function AppShell({dashboard}: AppShellProps) {
                   </Popover>
                 </DialogTrigger>
                 <div className={styles.AppShell.status()}>
-                  <span className={styles.AppShell.statusSha()}>
+                  <span className={styles.AppShell.status.sha()}>
                     db.sha: {sha ?? '-'}
                   </span>
                   <Button

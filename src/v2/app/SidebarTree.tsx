@@ -64,7 +64,7 @@ const SidebarParent = memo(function SidebarParent({
             <Button
               appearance="plain"
               intent="secondary"
-              className={styles.rootsTrigger()}
+              className={styles.SidebarTree.rootsTrigger()}
             >
               {label}
             </Button>
@@ -153,13 +153,15 @@ function RootButton({root, expanded = false}: RootButtonProps) {
     <Button
       size="square-petite"
       appearance={selected ? 'active' : 'plain'}
-      className={styles.rootButton()}
+      className={styles.SidebarTree.rootButton()}
       data-expanded={expanded || undefined}
       aria-label={label}
       onPress={() => setSelected(true)}
     >
       {icon && <Icon icon={icon} data-slot="icon" />}
-      {expanded && <span className={styles.rootButtonLabel()}>{label}</span>}
+      {expanded && (
+        <span className={styles.SidebarTree.rootButton.label()}>{label}</span>
+      )}
     </Button>
   )
 }
@@ -176,7 +178,7 @@ function RootMenuItem({root}: RootMenuItemProps) {
       key={root.key}
       id={root.key}
       onAction={() => selectRoot(true)}
-      className={styles.rootButton()}
+      className={styles.SidebarTree.rootButton()}
     >
       {label}
     </MenuItem>
@@ -217,9 +219,9 @@ export const SidebarTree = memo(function SidebarTree({
         />
       )}
       <SidebarBody>
-        <div className={styles.locator()}>
+        <div className={styles.SidebarTree.locator()}>
           <div
-            className={styles.locator.rootSelector()}
+            className={styles.SidebarTree.locator.rootSelector()}
             data-expanded={isTreeCollapsed || undefined}
           >
             {roots.map(root => (

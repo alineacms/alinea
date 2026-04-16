@@ -59,7 +59,7 @@
   justify-content: space-between;
 }
 
-.AppShell-triggerText {
+.AppShell-trigger-text {
   display: block;
   min-width: 0;
   overflow: hidden;
@@ -76,7 +76,7 @@
   border-top: 1px solid #e5e7eb;
 }
 
-.AppShell-statusSha {
+.AppShell-status-sha {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
