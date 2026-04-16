@@ -1,4 +1,4 @@
-import {Entry} from '#/core.js'
+import {Entry} from '#/core/Entry.js'
 import type {WithoutLabel} from '#/core/Field.js'
 import type {InferStoredValue} from '#/core/Infer.js'
 import type {Label} from '#/core/Label.js'
@@ -31,7 +31,8 @@ export namespace EntryLink {
 }
 
 interface EntryOptions<Fields>
-  extends LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
+  extends
+    LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
     Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
 export function entry<Fields = undefined>(
@@ -58,7 +59,8 @@ export namespace entry {
   type EntryRow<Fields> = EntryLink<Type.Infer<Fields>> & ListRow
 
   interface EntryOptions<Fields>
-    extends LinkFieldOptions<
+    extends
+      LinkFieldOptions<
         Array<EntryReference & ListRow & InferStoredValue<Fields>>
       >,
       Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}

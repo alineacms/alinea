@@ -1,14 +1,3 @@
-import {Elevation, Label} from '@alinea/components'
-import styler from '@alinea/styler'
-import {Node as TipTapNode} from '@tiptap/core'
-import {
-  EditorContent,
-  JSONContent,
-  mergeAttributes,
-  NodeViewWrapper,
-  ReactNodeViewRenderer,
-  useEditor
-} from '@tiptap/react'
 import {Field} from '#/core/Field.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {Schema} from '#/core/Schema.js'
@@ -23,12 +12,23 @@ import {
 import {Type} from '#/core/Type.js'
 import {entries, fromEntries, values} from '#/core/util/Objects.js'
 import {RichTextOptions} from '#/field/richtext/RichTextField.js'
+import {ReactiveNode} from '#/v2/store/Dashboard.js'
 import {
-  ReactiveNode,
   useFieldNode,
   useFieldOptions,
   useFieldSetter
-} from '#/v2/store.js'
+} from '#/v2/store/hooks.js'
+import {Elevation, Label} from '@alinea/components'
+import styler from '@alinea/styler'
+import {Node as TipTapNode} from '@tiptap/core'
+import {
+  EditorContent,
+  JSONContent,
+  mergeAttributes,
+  NodeViewWrapper,
+  ReactNodeViewRenderer,
+  useEditor
+} from '@tiptap/react'
 import {atom, useAtomValue, useStore} from 'jotai'
 import {memo, useMemo, useRef} from 'react'
 import {createPortal} from 'react-dom'
@@ -36,7 +36,7 @@ import {NodeEditor} from '../../Editor.js'
 import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
 import css from './RichTextField.module.css'
-import {RichTextToolbar} from './RichTextToolbar.js'
+import {RichTextToolbar} from './Toolbar.js'
 
 const styles = styler(css)
 

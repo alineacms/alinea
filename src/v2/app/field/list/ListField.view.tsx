@@ -1,12 +1,3 @@
-import {
-  Button,
-  Elevation,
-  Icon,
-  Label,
-  List,
-  ListItem
-} from '@alinea/components'
-import styler from '@alinea/styler'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
 import {Schema} from '#/core/Schema.js'
@@ -22,13 +13,22 @@ import {
   IcRoundArrowUpward,
   IcRoundDelete
 } from '#/v2/icons.js'
+import {ReactiveNode} from '#/v2/store/Dashboard.js'
 import {
-  ReactiveNode,
   useFieldError,
   useFieldNode,
   useFieldOptions,
   useNodes
-} from '#/v2/store.js'
+} from '#/v2/store/hooks.js'
+import {
+  Button,
+  Elevation,
+  Icon,
+  Label,
+  List,
+  ListItem
+} from '@alinea/components'
+import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import css from './ListField.module.css'

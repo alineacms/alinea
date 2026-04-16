@@ -1,346 +1,321 @@
+import {
+  Button,
+  Menu,
+  MenuItem,
+  MenuSeparator,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarSeparator
+} from '@alinea/components'
+import styler from '@alinea/styler'
+import type {Editor} from '@tiptap/react'
+import type {Reference} from 'alinea/core/Reference'
+import {entries} from 'alinea/core/util/Objects'
 import type {
+  PickTextLinkFunc,
+  PickerValue
+} from 'alinea/field/richtext/PickTextLink'
+import {
+  attributesToReference,
+  referenceToAttributes
+} from 'alinea/field/richtext/ReferenceLink'
+import type {
+  RichTextToolbarContext,
   ToolbarButton,
   ToolbarConfig,
-  ToolbarGroup,
+  ToolbarGroup as ToolbarConfigGroup,
   ToolbarMenu
-} from '#/field/richtext/RichTextToolbar.js'
-import styler from '@alinea/styler'
-import {
-  IcAlignCenter,
-  IcAlignJustify,
-  IcAlignLeft,
-  IcAlignRight,
-  IcRoundFormatBold,
-  IcRoundFormatClear,
-  IcRoundFormatItalic,
-  IcRoundFormatListBulleted,
-  IcRoundFormatListNumbered,
-  IcRoundFormatPaint,
-  IcRoundHorizontalRule,
-  IcRoundLink,
-  IcRoundQuote,
-  IcRoundSubscript,
-  IcRoundSuperscript,
-  IcRoundTextFields,
-  IcRoundUnfoldMore,
-  TableDelete,
-  TableDeleteColumn,
-  TableDeleteRow,
-  TableHeaderCell,
-  TableHeaderColumn,
-  TableHeaderRow,
-  TableInsert,
-  TableInsertColumnAfter,
-  TableInsertColumnBefore,
-  TableInsertRowAfter,
-  TableInsertRowBefore,
-  TableMergeCells,
-  TableSplitCell
-} from '../../../icons.js'
+} from 'alinea/field/richtext/RichTextToolbar'
+import type {UrlReference} from 'alinea/picker/url'
+import {memo, useMemo, type ReactNode} from 'react'
+import {IcRoundArrowDropDown} from '../../../icons.js'
 import css from './RichTextToolbar.module.css'
+import {defaultToolbar} from './Toolbar.js'
 
 const styles = styler(css)
 
-const styleLabels = {
-  paragraph: 'Normal text',
-  h1: 'Heading 1',
-  h2: 'Heading 2',
-  h3: 'Heading 3',
-  h4: 'Heading 4',
-  h5: 'Heading 5'
+export type RichTextCommand = () => ReturnType<Editor['chain']>
+
+export interface RichTextToolbarProps {
+  editor: Editor
+  enableTables?: boolean
+  pickLink?: PickTextLinkFunc
+  toolbar?: ToolbarConfig
 }
 
-export const headings = {
-  icon: () => <IcRoundUnfoldMore />,
-  label({editor}) {
-    const selected = editor.isActive('heading', {level: 1})
-      ? 'h1'
-      : editor.isActive('heading', {level: 2})
-        ? 'h2'
-        : editor.isActive('heading', {level: 3})
-          ? 'h3'
-          : editor.isActive('heading', {level: 4})
-            ? 'h4'
-            : editor.isActive('heading', {level: 5})
-              ? 'h5'
-              : 'paragraph'
-    return styleLabels[selected as keyof typeof styleLabels]
-  },
-  items: {
-    styles: {
-      group: {
-        normal: {
-          label: () => <p>Normal text</p>,
-          onSelect: ({exec}) => exec().clearNodes().run()
-        },
-        h1: {
-          label: () => <h1>Heading 1</h1>,
-          onSelect: ({exec}) => exec().setHeading({level: 1}).run()
-        },
-        h2: {
-          label: () => <h2>Heading 2</h2>,
-          onSelect: ({exec}) => exec().setHeading({level: 2}).run()
-        },
-        h3: {
-          label: () => <h3>Heading 3</h3>,
-          onSelect: ({exec}) => exec().setHeading({level: 3}).run()
-        },
-        h4: {
-          label: () => <h4>Heading 4</h4>,
-          onSelect: ({exec}) => exec().setHeading({level: 4}).run()
-        },
-        h5: {
-          label: () => <h5>Heading 5</h5>,
-          onSelect: ({exec}) => exec().setHeading({level: 5}).run()
+export function createToolbarExec(editor: Editor): RichTextCommand {
+  return () => editor.chain().focus(null, {scrollIntoView: false})
+}
+
+export function createLinkHandler(
+  editor: Editor,
+  pickLink: PickTextLinkFunc | undefined,
+  exec = createToolbarExec(editor)
+) {
+  return function handleLink() {
+    const attrs = editor.getAttributes('link')
+    const {view} = editor
+    const {from, to} = view.state.selection
+    const isSelection = from !== to
+    if (!pickLink) return handleBrowserLink(editor, exec, attrs, isSelection)
+    const existing: Reference | undefined = attributesToReference(attrs)
+    return pickLink({
+      link: existing,
+      title: attrs.title,
+      blank: attrs.target === '_blank',
+      hasLink: Boolean(existing),
+      requireDescription: !isSelection
+    })
+      .then(picked => {
+        if (!picked || !picked.link) {
+          exec().unsetLink().run()
+          return
         }
-      }
-    }
-  }
-} satisfies ToolbarMenu
-
-export const tables = {
-  icon: () => <IcRoundUnfoldMore />,
-  label: 'Table',
-  items(ctx) {
-    const {editor, exec} = ctx
-    if (!editor.isActive('table')) {
-      return {
-        insertTable: {
-          icon: () => <TableInsert />,
-          label: 'Insert table',
-          onSelect: () =>
-            exec().insertTable({rows: 3, cols: 3, withHeaderRow: true}).run()
+        const linkAttributes = createLinkAttributes(picked)
+        if (existing) {
+          exec().extendMarkRange('link').setLink(linkAttributes).run()
+        } else if (isSelection) {
+          exec().setLink(linkAttributes).run()
+        } else {
+          exec()
+            .insertContent({
+              type: 'text',
+              text:
+                picked.title ||
+                (picked.link as UrlReference)._title ||
+                (picked.link as UrlReference)._url ||
+                '',
+              marks: [{type: 'link', attrs: linkAttributes}]
+            })
+            .run()
         }
-      }
-    }
-    const activeMenu: ToolbarConfig = {
-      cells: {
-        group: {
-          mergeCells: {
-            icon: () => <TableMergeCells />,
-            label: 'Merge cells',
-            disabled: () => !editor.can().mergeCells(),
-            onSelect: () => exec().mergeCells().run()
-          },
-          splitCell: {
-            icon: () => <TableSplitCell />,
-            label: 'Split cell',
-            disabled: () => !editor.can().splitCell(),
-            onSelect: () => exec().splitCell().run()
-          },
-          headerCell: {
-            icon: () => <TableHeaderCell />,
-            label: 'Toggle header cell',
-            onSelect: () => exec().toggleHeaderCell().run()
-          }
-        }
-      },
-      structure: {
-        group: {
-          addColumnBefore: {
-            icon: () => <TableInsertColumnBefore />,
-            label: 'Insert column before',
-            onSelect: () => exec().addColumnBefore().run()
-          },
-          addColumnAfter: {
-            icon: () => <TableInsertColumnAfter />,
-            label: 'Insert column after',
-            onSelect: () => exec().addColumnAfter().run()
-          },
-          toggleHeaderColumn: {
-            icon: () => <TableHeaderColumn />,
-            label: 'Toggle header column',
-            onSelect: () => exec().toggleHeaderColumn().run()
-          },
-          deleteColumn: {
-            icon: () => <TableDeleteColumn />,
-            label: 'Delete column',
-            onSelect: () => exec().deleteColumn().run()
-          }
-        }
-      },
-      rows: {
-        group: {
-          addRowBefore: {
-            icon: () => <TableInsertRowBefore />,
-            label: 'Insert row before',
-            onSelect: () => exec().addRowBefore().run()
-          },
-          addRowAfter: {
-            icon: () => <TableInsertRowAfter />,
-            label: 'Insert row after',
-            onSelect: () => exec().addRowAfter().run()
-          },
-          toggleHeaderRow: {
-            icon: () => <TableHeaderRow />,
-            label: 'Toggle header row',
-            onSelect: () => exec().toggleHeaderRow().run()
-          },
-          deleteRow: {
-            icon: () => <TableDeleteRow />,
-            label: 'Delete row',
-            onSelect: () => exec().deleteRow().run()
-          }
-        }
-      },
-      danger: {
-        group: {
-          deleteTable: {
-            icon: () => <TableDelete />,
-            label: 'Delete table',
-            onSelect: () => exec().deleteTable().run()
-          }
-        }
-      }
-    }
-    return activeMenu
+      })
+      .catch(console.error)
   }
-} satisfies ToolbarMenu
+}
 
-export const formatting = {
-  group: {
-    bold: {
-      icon: () => <IcRoundFormatBold />,
-      title: 'Bold',
-      active: ({editor}) => editor.isActive('bold'),
-      onSelect: ({exec}) => exec().toggleBold().run()
-    },
-    italic: {
-      icon: () => <IcRoundFormatItalic />,
-      title: 'Italic',
-      active: ({editor}) => editor.isActive('italic'),
-      onSelect: ({exec}) => exec().toggleItalic().run()
-    },
-    clear: {
-      icon: () => <IcRoundFormatClear />,
-      title: 'Clear format',
-      onSelect: ({exec}) => {
-        exec().unsetAllMarks().run()
-        exec().unsetTextAlign().run()
-      }
-    },
-    small: {
-      icon: () => <IcRoundTextFields />,
-      title: 'Small',
-      active: ({editor}) => editor.isActive('small'),
-      onSelect: ({exec}) => exec().toggleSmall().run()
-    },
-    subscript: {
-      icon: () => <IcRoundSubscript />,
-      title: 'Subscript',
-      active: ({editor}) => editor.isActive('subscript'),
-      onSelect: ({exec}) => exec().toggleSubscript().run()
-    },
-    superscript: {
-      icon: () => <IcRoundSuperscript />,
-      title: 'Superscript',
-      active: ({editor}) => editor.isActive('superscript'),
-      onSelect: ({exec}) => exec().toggleSuperscript().run()
-    },
-    highlight: {
-      icon: () => <IcRoundFormatPaint />,
-      title: 'Highlight',
-      active: ({editor}) => editor.isActive('highlight'),
-      onSelect: ({exec}) => exec().toggleHighlight().run()
-    }
-  }
-} satisfies ToolbarGroup
-
-export const alignment = {
-  icon({editor}) {
-    if (editor.isActive({textAlign: 'center'})) return <IcAlignCenter />
-    if (editor.isActive({textAlign: 'right'})) return <IcAlignRight />
-    if (editor.isActive({textAlign: 'justify'})) return <IcAlignJustify />
-    return <IcAlignLeft />
-  },
-  items: {
-    left: {
-      icon: () => <IcAlignLeft />,
-      label: 'Left',
-      active: ({editor}) => editor.isActive({textAlign: 'left'}),
-      onSelect: ({exec}) => exec().setTextAlign('left').run()
-    },
-    center: {
-      icon: () => <IcAlignCenter />,
-      label: 'Center',
-      active: ({editor}) => editor.isActive({textAlign: 'center'}),
-      onSelect: ({exec}) => exec().setTextAlign('center').run()
-    },
-    right: {
-      icon: () => <IcAlignRight />,
-      label: 'Right',
-      active: ({editor}) => editor.isActive({textAlign: 'right'}),
-      onSelect: ({exec}) => exec().setTextAlign('right').run()
-    },
-    justify: {
-      icon: () => <IcAlignJustify />,
-      label: 'Justify',
-      active: ({editor}) => editor.isActive({textAlign: 'justify'}),
-      onSelect: ({exec}) => exec().setTextAlign('justify').run()
-    }
-  }
-} satisfies ToolbarMenu
-
-export const lists = {
-  group: {
-    bulletList: {
-      icon: () => <IcRoundFormatListBulleted />,
-      title: 'Bullet list',
-      active: ({editor}) => editor.isActive('bulletList'),
-      onSelect: ({exec}) => exec().toggleBulletList().run()
-    },
-    orderedList: {
-      icon: () => <IcRoundFormatListNumbered />,
-      title: 'Ordered list',
-      active: ({editor}) => editor.isActive('orderedList'),
-      onSelect: ({exec}) => exec().toggleOrderedList().run()
-    }
-  }
-} satisfies ToolbarGroup
-
-export const links = {
-  group: {
-    link: {
-      icon: () => <IcRoundLink />,
-      title: 'Link',
-      active: ({editor}) => editor.isActive('link'),
-      onSelect: ({handleLink}) => handleLink()
-    }
-  }
-} satisfies ToolbarGroup
-
-export const quotes = {
-  icon: () => <IcRoundQuote />,
-  title: 'Blockquote',
-  active: ({editor}) => editor.isActive('blockquote'),
-  onSelect: ({exec}) => exec().toggleBlockquote().run()
-} satisfies ToolbarButton
-
-export const inserts = {
-  icon: () => <IcRoundHorizontalRule />,
-  title: 'Horizontal rule',
-  onSelect: ({exec}) => exec().setHorizontalRule().run()
-} satisfies ToolbarButton
-
-export function defaultToolbar(enableTables: boolean): ToolbarConfig {
-  if (!enableTables)
+export const RichTextToolbar = memo(function RichTextToolbar({
+  editor,
+  enableTables,
+  pickLink,
+  toolbar
+}: RichTextToolbarProps) {
+  const config = useMemo(
+    () => toolbar ?? defaultToolbar(enableTables || false),
+    [enableTables, toolbar]
+  )
+  const ctx = useMemo(() => {
+    const exec = createToolbarExec(editor)
     return {
-      headings,
-      formatting,
-      alignment,
-      lists,
-      links,
-      quotes,
-      inserts
+      editor,
+      focusToggle: noop,
+      pickLink: pickLink ?? pickBrowserLink,
+      enableTables,
+      exec,
+      handleLink: createLinkHandler(editor, pickLink, exec),
+      toolbar: config
+    } satisfies RichTextToolbarContext
+  }, [config, editor, enableTables, pickLink])
+  return (
+    <div className={styles.RichTextToolbar()} data-richtext-toolbar="true">
+      <Toolbar
+        aria-label="Text formatting"
+        className={styles.RichTextToolbar.toolbar()}
+        data-orientation="horizontal"
+      >
+        <ToolbarItems config={config} ctx={ctx} subMenu={false} />
+      </Toolbar>
+    </div>
+  )
+})
+
+interface ToolbarButtonProps {
+  button: ToolbarButton
+  ctx: RichTextToolbarContext
+}
+
+function ToolbarButtonView({button, ctx}: ToolbarButtonProps) {
+  const icon = button.icon?.(ctx)
+  const label = resolveNode(button.label, ctx)
+  const active = button.active?.(ctx)
+  const title = button.title ?? (typeof label === 'string' ? label : undefined)
+  return (
+    <Button
+      size="square-petite"
+      appearance={active ? 'active' : 'plain'}
+      isDisabled={button.disabled?.(ctx)}
+      onPress={() => button.onSelect(ctx)}
+      aria-label={title}
+      className={styles.ToolbarButtonView()}
+    >
+      {icon && <span className={styles.ToolbarButtonView.icon()}>{icon}</span>}
+      {!icon && label}
+    </Button>
+  )
+}
+
+interface ToolbarMenuProps {
+  ctx: RichTextToolbarContext
+  menu: ToolbarMenu
+}
+
+function ToolbarMenuView({ctx, menu}: ToolbarMenuProps) {
+  const icon = menu.icon?.(ctx)
+  const label = resolveNode(menu.label, ctx)
+  const config = typeof menu.items === 'function' ? menu.items(ctx) : menu.items
+  const textValue = getTextValue(label) ?? 'Menu'
+  return (
+    <Menu
+      aria-label={textValue}
+      label={
+        <Button
+          appearance="plain"
+          size="small"
+          className={styles.ToolbarMenuView.trigger()}
+        >
+          {icon && (
+            <span className={styles.ToolbarMenuView.icon()}>{icon}</span>
+          )}
+          {label && (
+            <span className={styles.ToolbarMenuView.text()}>{label}</span>
+          )}
+          <span className={styles.ToolbarMenuView.icon()}>
+            <IcRoundArrowDropDown />
+          </span>
+        </Button>
+      }
+    >
+      <ToolbarItems config={config} ctx={ctx} subMenu={true} />
+    </Menu>
+  )
+}
+
+interface ToolbarItemsProps {
+  config: ToolbarConfig
+  ctx: RichTextToolbarContext
+  subMenu: boolean
+}
+
+function ToolbarItems({config, ctx, subMenu}: ToolbarItemsProps) {
+  return entries(config).reduce((result, [name, entry], index) => {
+    if (index > 0) {
+      result.push(
+        subMenu ? (
+          <MenuSeparator key={`${name}-separator`} />
+        ) : (
+          <ToolbarSeparator key={`${name}-separator`} />
+        )
+      )
     }
-  return {
-    headings,
-    tables,
-    formatting,
-    alignment,
-    lists,
-    links,
-    quotes,
-    inserts
+    result.push(renderEntry(name, entry, ctx, subMenu))
+    return result
+  }, Array<ReactNode>())
+}
+
+function renderEntry(
+  name: string,
+  entry: ToolbarButton | ToolbarMenu | ToolbarConfigGroup,
+  ctx: RichTextToolbarContext,
+  subMenu: boolean
+): ReactNode {
+  if ('items' in entry) {
+    return <ToolbarMenuView key={name} menu={entry} ctx={ctx} />
   }
+  if ('group' in entry) {
+    const config =
+      typeof entry.group === 'function' ? entry.group(ctx) : entry.group
+    const content: Array<ReactNode> = entries(config).map(
+      ([groupName, groupEntry]) =>
+        renderEntry(`${name}-${groupName}`, groupEntry, ctx, subMenu)
+    )
+    if (subMenu) return content
+    return <ToolbarGroup key={name}>{content}</ToolbarGroup>
+  }
+  if (subMenu) {
+    const label = resolveNode(entry.label, ctx)
+    const title =
+      entry.title ?? getTextValue(label) ?? humanizeToolbarName(name)
+    const icon = entry.icon?.(ctx)
+    return (
+      <MenuItem
+        key={name}
+        id={name}
+        textValue={title}
+        isDisabled={entry.disabled?.(ctx)}
+        onAction={() => entry.onSelect(ctx)}
+      >
+        <span className={styles.ToolbarMenuView.item()}>
+          {icon && (
+            <span className={styles.ToolbarMenuView.icon()}>{icon}</span>
+          )}
+          <span>{label ?? title}</span>
+        </span>
+      </MenuItem>
+    )
+  }
+  return <ToolbarButtonView key={name} button={entry} ctx={ctx} />
+}
+
+function handleBrowserLink(
+  editor: Editor,
+  exec: RichTextCommand,
+  attrs: Record<string, unknown>,
+  isSelection: boolean
+) {
+  if (typeof window === 'undefined') return
+  const currentHref = typeof attrs.href === 'string' ? attrs.href : ''
+  const href = window.prompt('Enter link URL', currentHref)
+  if (href === null) return
+  const nextHref = href.trim()
+  if (!nextHref) {
+    exec().unsetLink().run()
+    return
+  }
+  const linkAttributes = {href: nextHref}
+  if (editor.isActive('link')) {
+    exec().extendMarkRange('link').setLink(linkAttributes).run()
+  } else if (isSelection) {
+    exec().setLink(linkAttributes).run()
+  } else {
+    exec()
+      .insertContent({
+        type: 'text',
+        text: nextHref,
+        marks: [{type: 'link', attrs: linkAttributes}]
+      })
+      .run()
+  }
+}
+
+function createLinkAttributes(picked: PickerValue) {
+  const link = picked.link!
+  return {
+    title: picked.title,
+    ...referenceToAttributes(link),
+    target:
+      (link as UrlReference)._target ?? (picked.blank ? '_blank' : undefined)
+  }
+}
+
+function resolveNode(
+  value: ToolbarButton['label'] | ToolbarMenu['label'],
+  ctx: RichTextToolbarContext
+) {
+  return typeof value === 'function' ? value(ctx) : value
+}
+
+function getTextValue(value: ReactNode) {
+  return typeof value === 'string' ? value : undefined
+}
+
+function humanizeToolbarName(name: string) {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/(^|\s)\w/g, letter => letter.toUpperCase())
+}
+
+function noop() {}
+
+async function pickBrowserLink() {
+  return undefined
 }

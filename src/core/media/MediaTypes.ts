@@ -1,4 +1,4 @@
-import {hidden} from '#/field/hidden.js'
+import {hidden} from '#/field/hidden/HiddenField.js'
 import {text} from '#/field/text/TextField.js'
 import {IcRoundPermMedia} from '#/v2/icons.js'
 import {type Type, type} from '../Type.js'

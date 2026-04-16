@@ -1,6 +1,6 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
-import {Entry} from '#/core.js'
 import type {LocalDB} from '#/core/db/LocalDB.js'
+import {Entry} from '#/core/Entry.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {PreviewRequest} from '#/core/Preview.js'
 import {applyFilePatch} from '#/core/source/FilePatch.js'

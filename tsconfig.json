@@ -14,6 +14,7 @@
     "preserveWatchOutput": true,
     "moduleDetection": "force",
     "incremental": true,
+    "isolatedModules": true,
     "jsx": "react-jsx",
     "plugins": [{ "name": "typescript-plugin-css-modules" }],
     "lib": ["dom.iterable", "dom", "webworker", "es2025"],
