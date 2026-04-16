@@ -15,24 +15,16 @@
   },
   "exports": {
     "./package.json": "./package.json",
-    ".": {
-      "source": "./src/index.ts",
-      "default": "./dist/index.js"
-    },
+    ".": "./dist/index.js",
     "./css": "./dist/index.css",
     "./next": {
-      "source": "./src/next.ts",
       "edge-light": "./dist/next.edge.js",
       "require": "./dist/next.cjs",
       "default": "./dist/next.js"
     },
     "./*.cjs": "./dist/*.cjs",
-    "./*": {
-      "source": "./src/*.ts",
-      "default": "./dist/*.js"
-    },
+    "./*": "./dist/*.js",
     "./core/media/CreatePreview": {
-      "source": "./src/core/media/CreatePreview.ts",
       "edge-light": "./dist/core/media/CreatePreview.js",
       "worker": "./dist/core/media/CreatePreview.js",
       "browser": "./dist/core/media/CreatePreview.browser.js",
@@ -162,6 +154,7 @@
     "sade": "^1.8.1",
     "sass": "^1.63.4",
     "sass-embedded": "^1.83.4",
+    "sharp": "^0.34.5",
     "smartcrop": "^2.0.5",
     "speedscope": "^1.14.0",
     "symlink-dir": "^6.0.5",

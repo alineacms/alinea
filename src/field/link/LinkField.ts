@@ -14,8 +14,8 @@ import {Reference} from '#/core/Reference.js'
 import type {Schema} from '#/core/Schema.js'
 import {ListRow} from '#/core/shape/ListShape.js'
 import {entries, fromEntries} from '#/core/util/Objects.js'
-import {viewKeys} from '#/core/ViewKeys.js'
 import {unresolvedEntryMarker} from '#/picker/entry/EntryPicker.js'
+import {viewKeys} from '#/v2/ViewKeys.js'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */

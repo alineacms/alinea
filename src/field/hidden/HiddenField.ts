@@ -1,6 +1,6 @@
 import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
-import {viewKeys} from '#/core/ViewKeys.js'
+import {viewKeys} from '#/v2/ViewKeys.js'
 
 /** Internal representation of a text field */
 export class HiddenField<T> extends ScalarField<T, FieldOptions<T>> {}

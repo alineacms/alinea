@@ -5,7 +5,7 @@ import type {InferQueryValue, InferStoredValue} from '#/core/Infer.js'
 import {Schema} from '#/core/Schema.js'
 import {ListRow} from '#/core/shape/ListShape.js'
 import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
-import {viewKeys} from '#/core/ViewKeys.js'
+import {viewKeys} from '#/v2/ViewKeys.js'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a list field */

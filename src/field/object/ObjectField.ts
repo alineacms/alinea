@@ -1,7 +1,7 @@
 import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
 import {RecordField} from '#/core/field/RecordField.js'
 import {type FieldsDefinition, Type, type} from '#/core/Type.js'
-import {viewKeys} from '#/core/ViewKeys.js'
+import {viewKeys} from '#/v2/ViewKeys.js'
 import type {ReactNode} from 'react'
 
 export interface ObjectOptions<Definition> extends FieldOptions<
