@@ -36,7 +36,7 @@ import {NodeEditor} from '../../Editor.js'
 import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
 import css from './RichTextField.module.css'
-import {RichTextToolbar} from './Toolbar.js'
+import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
 

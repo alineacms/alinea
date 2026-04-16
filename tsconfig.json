@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
     "noEmit": true,
-    "outDir": "dist",
-    "rootDir": "src",
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "bundler",
