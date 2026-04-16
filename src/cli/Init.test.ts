@@ -6,7 +6,7 @@ import path from 'node:path'
 const testPms = false
 
 async function setup(cwd: string) {
-  await fs.rm(cwd, {recursive: true})
+  await fs.rm(cwd, {recursive: true}).catch(() => {})
   await fs.mkdir(cwd, {recursive: true})
   await fs.writeFile(
     path.join(cwd, 'package.json'),
