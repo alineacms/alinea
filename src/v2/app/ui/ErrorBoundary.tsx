@@ -15,7 +15,9 @@ export function ErrorBoundary({children}: ErrorBoundaryProps) {
   const {ErrorBoundary, didCatch, error, reset} = useErrorBoundary()
   const dashboard = useDashboard()
   const route = useAtomValue(dashboard.route)
-  useEffect(reset, [reset, route])
+  useEffect(() => {
+    if (error) reset()
+  }, [error, reset, route])
   return (
     <>
       {didCatch ? (

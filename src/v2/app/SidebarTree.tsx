@@ -1,5 +1,13 @@
-import {assert} from '#/core/util/Assert'
-import {Button, Icon, Menu, MenuItem, Tree, TreeItem} from '@alinea/components'
+import {assert} from '#/core/util/Assert.js'
+import {
+  Button,
+  Icon,
+  Menu,
+  MenuItem,
+  ProgressCircle,
+  Tree,
+  TreeItem
+} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, Suspense, useMemo, useState} from 'react'
@@ -19,7 +27,8 @@ import {
 import {
   Dashboard,
   DashboardRoot,
-  DashboardTreeItem
+  DashboardTreeItem,
+  DashboardWorkspace
 } from '../store/Dashboard.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {CreateEntry} from './modals/CreateEntry.js'
@@ -140,6 +149,76 @@ const treeLayoutOptions = {
   gap: 1
 }
 
+interface SidebarTreeBodyProps {
+  workspace: DashboardWorkspace
+}
+
+const SidebarTreeBody = memo(function SidebarTreeBody({
+  workspace
+}: SidebarTreeBodyProps) {
+  const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
+  const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
+  const items = useAtomValue(workspace.tree.items)
+  const getItems = useSetAtom(workspace.tree.getItems)
+  const onInsert = useSetAtom(workspace.tree.onInsert)
+  const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
+  const onMove = useSetAtom(workspace.tree.onMove)
+  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
+    getItems,
+    onInsert,
+    onItemDrop,
+    onMove
+  })
+  return (
+    <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
+      <Tree
+        aria-label="Content tree"
+        style={{display: 'block', padding: 0, height: '100%'}}
+        items={items}
+        dragAndDropHooks={dragAndDropHooks}
+        selectionMode="single"
+        selectionBehavior="replace"
+        disallowEmptySelection
+        expandedKeys={expandedKeys}
+        onExpandedChange={setExpandedKeys}
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+      >
+        {renderItem}
+      </Tree>
+    </Virtualizer>
+  )
+})
+
+interface SidebarTreeRootsProps {
+  roots: Array<DashboardRoot>
+  isTreeCollapsed: boolean
+}
+
+const SidebarTreeRoots = memo(function SidebarTreeRoots({
+  roots,
+  isTreeCollapsed
+}: SidebarTreeRootsProps) {
+  return (
+    <div
+      className={styles.SidebarTree.locator.rootSelector()}
+      data-expanded={isTreeCollapsed || undefined}
+    >
+      {roots.map(root => (
+        <RootButton key={root.key} root={root} expanded={isTreeCollapsed} />
+      ))}
+    </div>
+  )
+})
+
+const SidebarTreeBodyFallback = memo(function SidebarTreeBodyFallback() {
+  return (
+    <div className={styles.SidebarTree.loading()}>
+      <ProgressCircle isIndeterminate aria-label="Loading content tree" />
+    </div>
+  )
+})
+
 interface RootButtonProps {
   root: DashboardRoot
   expanded?: boolean
@@ -191,19 +270,6 @@ export const SidebarTree = memo(function SidebarTree({
   const workspace = useAtomValue(dashboard.currentWorkspace)
   assert(workspace, 'No workspace selected')
   const currentRoot = useAtomValue(dashboard.currentRoot)
-  const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
-  const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
-  const items = useAtomValue(workspace.tree.items)
-  const getItems = useSetAtom(workspace.tree.getItems)
-  const onInsert = useSetAtom(workspace.tree.onInsert)
-  const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
-  const onMove = useSetAtom(workspace.tree.onMove)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
-    getItems,
-    onInsert,
-    onItemDrop,
-    onMove
-  })
   const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
   const [isTreeCollapsed, setIsTreeCollapsed] = useState(false)
   return (
@@ -220,38 +286,13 @@ export const SidebarTree = memo(function SidebarTree({
       )}
       <SidebarBody>
         <div className={styles.SidebarTree.locator()}>
-          <div
-            className={styles.SidebarTree.locator.rootSelector()}
-            data-expanded={isTreeCollapsed || undefined}
-          >
-            {roots.map(root => (
-              <RootButton
-                key={root.key}
-                root={root}
-                expanded={isTreeCollapsed}
-              />
-            ))}
-          </div>
+          <SidebarTreeRoots roots={roots} isTreeCollapsed={isTreeCollapsed} />
           <div
             className={styles.SidebarTree.tree({collapsed: isTreeCollapsed})}
           >
-            <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
-              <Tree
-                aria-label="Content tree"
-                style={{display: 'block', padding: 0, height: '100%'}}
-                items={items}
-                dragAndDropHooks={dragAndDropHooks}
-                selectionMode="single"
-                selectionBehavior="replace"
-                disallowEmptySelection
-                expandedKeys={expandedKeys}
-                onExpandedChange={setExpandedKeys}
-                selectedKeys={selectedKeys}
-                onSelectionChange={setSelectedKeys}
-              >
-                {renderItem}
-              </Tree>
-            </Virtualizer>
+            <Suspense fallback={<SidebarTreeBodyFallback />}>
+              <SidebarTreeBody workspace={workspace} />
+            </Suspense>
           </div>
         </div>
       </SidebarBody>

@@ -92,6 +92,13 @@
   align-items: stretch;
 }
 
+.SidebarTree-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
 .SidebarTree-rootButton {
   width: 100%;
   height: auto;
