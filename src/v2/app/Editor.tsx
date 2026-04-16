@@ -1,8 +1,8 @@
-import {Button, Icon} from '@alinea/components'
-import {styler} from '@alinea/styler'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
+import {Button, Icon} from '@alinea/components'
+import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, useEffect, useTransition} from 'react'
 import {
@@ -66,6 +66,7 @@ interface EntryEditorProps {
 
 function EntryEditor({entry}: EntryEditorProps) {
   const title = useAtomValue(entry.label)
+  const isUntranslated = useAtomValue(entry.untranslated)
   const node = useAtomValue(entry.selectedNode)
   const setEditing = useSetAtom(entry.currentlyEditing)
   const type = useAtomValue(entry.type)
@@ -138,7 +139,7 @@ function EntryEditor({entry}: EntryEditorProps) {
           </RailBody>
         </Rail>
 
-        <EntrySidebar entry={entry} />
+        {!isUntranslated && <EntrySidebar entry={entry} />}
       </EntryScope>
     </>
   )

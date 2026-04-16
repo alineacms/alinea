@@ -198,7 +198,10 @@ export class Dashboard {
     return Object.keys(config.workspaces)
   })
 
-  workspace = dispense(key => new DashboardWorkspace(this, key))
+  workspace = dispense(key => {
+    assert(key, 'Workspace key cannot be empty')
+    return new DashboardWorkspace(this, key)
+  })
 
   workspaceMenu = atom(get => {
     const workspaces = get(this.workspaces)
@@ -243,7 +246,8 @@ export class Dashboard {
   }
 
   entries = dispense(id => {
-    const data = atom<Promise<EntryData>>(get => {
+    const dataAtom = atom<Promise<EntryData>>(get => {
+      get(this.revisions(id))
       // todo: this will get out of sync for hasChildren
       const load = get(this.#entryLoader)
       return load(id).then(([result, error]) => {
@@ -251,12 +255,15 @@ export class Dashboard {
         return result
       })
     })
-    const entry = new DashboardEntry(this, id, swr(data) as Atom<EntryData>)
+    let entry: DashboardEntry
     return swr(
       atom(async get => {
-        get(this.revisions(id))
-        await get(data)
-        return entry
+        const initial = await get(dataAtom)
+        return (entry ??= new DashboardEntry(
+          this,
+          id,
+          unwrap(dataAtom, prev => prev ?? initial)
+        ))
       })
     )
   })
@@ -940,9 +947,11 @@ export class DashboardEntry {
           })
         )
     )
-    this.root = atom(get =>
-      dashboard.workspace(get(this.workspaceKey)).root(get(this.rootKey))
-    )
+    this.root = atom(get => {
+      const workspace = get(this.workspaceKey)
+      const root = get(this.rootKey)
+      return dashboard.workspace(workspace).root(root)
+    })
   }
 
   activeStatus = atom(get => {
@@ -1167,7 +1176,10 @@ export class DashboardRoot {
   #settings = atom(get => {
     const config = get(this.workspace.dashboard.config)
     const workspaceConfig = config.workspaces[this.workspace.key]
-    assert(workspaceConfig)
+    assert(
+      workspaceConfig,
+      `Workspace "${this.workspace.key}" not found in config`
+    )
     const rootConfig = workspaceConfig[this.key]
     return getRoot(rootConfig)
   })
