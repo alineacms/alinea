@@ -100,7 +100,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
     }
   })
   return (
-    <div className={styles.ExplorerList.viewport()}>
+    <div className={styles.ExplorerList()}>
       {isPending && (
         <div className={styles.ExplorerList.pending()}>
           <ProgressCircle isIndeterminate aria-label="Pending..." />

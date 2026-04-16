@@ -90,6 +90,7 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
         <Button
           size="icon"
           appearance="outline"
+          intent="tertiary"
           className={styles.WorkspaceMenu.search()}
         >
           <IconComp icon={IcRoundSearch} data-slot="icon" />

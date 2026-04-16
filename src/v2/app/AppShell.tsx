@@ -40,119 +40,6 @@ export function AppShell({dashboard}: AppShellProps) {
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
-        <Sidebar>
-          <SidebarHeader>
-            <WorkspaceMenu dashboard={dashboard} />
-          </SidebarHeader>
-
-          <SidebarTree dashboard={dashboard} />
-
-          <SidebarFooter className={styles.AppShell.footer()}>
-            <DialogTrigger>
-              <Button
-                appearance="plain"
-                intent="secondary"
-                className={styles.AppShell.profile()}
-              >
-                <div className={styles.AppShell.profile.identity()}>
-                  <IcBaselineAccountCircle />
-                  John Doe
-                </div>
-                <IcRoundMoreHoriz />
-              </Button>
-              <Popover
-                placement="top"
-                offset={16}
-                style={{
-                  padding: '0',
-                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'
-                }}
-              >
-                <ul className={styles.AppShell.profile.popover()}>
-                  <li
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 16px'
-                    }}
-                  >
-                    <p>Theme</p>
-                    <div
-                      className={styles.AppShell.profile.popover.themeOptions()}
-                    >
-                      <Button
-                        size="icon"
-                        appearance="outline"
-                        icon={IcRoundDesktopWindows}
-                      />
-                      <Button
-                        size="icon"
-                        appearance="outline"
-                        icon={IcRoundWbSunny}
-                      />
-                      <Button
-                        size="icon"
-                        appearance="outline"
-                        icon={IcRoundBrightness2}
-                      />
-                    </div>
-                  </li>
-                  <li
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 16px'
-                    }}
-                  >
-                    <p>Role</p>
-                    <Menu
-                      label={
-                        <Button
-                          appearance="outline"
-                          intent="secondary"
-                          className={styles.AppShell.trigger()}
-                        >
-                          <span className={styles.AppShell.trigger.text()}>
-                            Admin
-                          </span>
-                          <IcRoundUnfoldMore />
-                        </Button>
-                      }
-                    >
-                      <MenuItem id="admin">Admin</MenuItem>
-                    </Menu>
-                  </li>
-                  <li
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 16px'
-                    }}
-                  >
-                    <p>Logout</p>
-                    <Button
-                      size="icon"
-                      appearance="outline"
-                      icon={IcRoundLogout}
-                    />
-                  </li>
-                </ul>
-              </Popover>
-            </DialogTrigger>
-            <div className={styles.AppShell.status()}>
-              <span className={styles.AppShell.status.sha()}>
-                db.sha: {sha ?? '-'}
-              </span>
-              <Button appearance="outline" intent="secondary" onPress={sync}>
-                Sync
-              </Button>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-
         <Suspense
           fallback={
             <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
@@ -160,9 +47,137 @@ export function AppShell({dashboard}: AppShellProps) {
             </Rail>
           }
         >
-          <ErrorBoundary>
-            <Editor dashboard={dashboard} />
-          </ErrorBoundary>
+          <Sidebar>
+            <SidebarHeader>
+              <WorkspaceMenu dashboard={dashboard} />
+            </SidebarHeader>
+
+            <SidebarTree dashboard={dashboard} />
+
+            <SidebarFooter className={styles.AppShell.footer()}>
+              <DialogTrigger>
+                <Button
+                  appearance="plain"
+                  intent="secondary"
+                  className={styles.AppShell.profile()}
+                >
+                  <div className={styles.AppShell.profile.identity()}>
+                    <IcBaselineAccountCircle />
+                    John Doe
+                  </div>
+                  <IcRoundMoreHoriz />
+                </Button>
+                <Popover
+                  placement="top"
+                  offset={16}
+                  style={{
+                    padding: '0',
+                    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'
+                  }}
+                >
+                  <ul className={styles.AppShell.profile.popover()}>
+                    <li
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '8px 16px'
+                      }}
+                    >
+                      <p>Theme</p>
+                      <div
+                        className={styles.AppShell.profile.popover.themeOptions()}
+                      >
+                        <Button
+                          size="icon"
+                          appearance="outline"
+                          intent="tertiary"
+                          icon={IcRoundDesktopWindows}
+                        />
+                        <Button
+                          size="icon"
+                          appearance="outline"
+                          intent="tertiary"
+                          icon={IcRoundWbSunny}
+                        />
+                        <Button
+                          size="icon"
+                          appearance="outline"
+                          intent="tertiary"
+                          icon={IcRoundBrightness2}
+                        />
+                      </div>
+                    </li>
+                    <li
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '8px 16px'
+                      }}
+                    >
+                      <p>Role</p>
+                      <Menu
+                        label={
+                          <Button
+                            appearance="outline"
+                            intent="secondary"
+                            className={styles.AppShell.trigger()}
+                          >
+                            <span className={styles.AppShell.trigger.text()}>
+                              Admin
+                            </span>
+                            <IcRoundUnfoldMore />
+                          </Button>
+                        }
+                      >
+                        <MenuItem id="admin">Admin</MenuItem>
+                      </Menu>
+                    </li>
+                    <li
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '8px 16px'
+                      }}
+                    >
+                      <p>Logout</p>
+                      <Button
+                        size="icon"
+                        appearance="outline"
+                        intent="tertiary"
+                        icon={IcRoundLogout}
+                      />
+                    </li>
+                  </ul>
+                </Popover>
+              </DialogTrigger>
+              <div className={styles.AppShell.status()}>
+                <span className={styles.AppShell.status.sha()}>
+                  db.sha: {sha ?? '-'}
+                </span>
+                <Button appearance="outline" intent="secondary" onPress={sync}>
+                  Sync
+                </Button>
+              </div>
+            </SidebarFooter>
+          </Sidebar>
+
+          <Suspense
+            fallback={
+              <Rail
+                main
+                style={{alignItems: 'center', justifyContent: 'center'}}
+              >
+                <ProgressCircle isIndeterminate aria-label="loading" />
+              </Rail>
+            }
+          >
+            <ErrorBoundary>
+              <Editor dashboard={dashboard} />
+            </ErrorBoundary>
+          </Suspense>
         </Suspense>
       </DashboardScopeInternal>
     </main>

@@ -606,8 +606,6 @@ export class DashboardType {
   }
 }
 
-const ROOT_KEY_PREFIX = 'root:'
-
 export class DashboardWorkspace {
   constructor(
     public dashboard: Dashboard,
@@ -619,7 +617,6 @@ export class DashboardWorkspace {
       const route = get(this.dashboard.route)
       if (route.workspace && route.workspace !== this.key) return new Set<Key>()
       if (route.entry) return new Set<Key>([route.entry])
-      if (route.root) return new Set<Key>([`root:${route.root}`])
       return new Set<Key>()
     },
     async (get, set, next: 'all' | Set<Key>) => {
@@ -632,14 +629,6 @@ export class DashboardWorkspace {
         return
       }
       const selectedId = String(selectedKey)
-      if (selectedId.startsWith(ROOT_KEY_PREFIX)) {
-        set(this.dashboard.route, {
-          workspace: this.key,
-          root: selectedId.slice(ROOT_KEY_PREFIX.length),
-          locale: current.locale
-        })
-        return
-      }
       const {rootKey: root, workspaceKey: workspace} = await get(
         this.dashboard.entries(selectedId)
       )
@@ -696,9 +685,7 @@ export class DashboardTree {
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
     const {parentIds} = await get(this.workspace.dashboard.entries(route.entry))
-    const keys = new Set<Key>(get(parentIds))
-    if (route.root) keys.add(`${ROOT_KEY_PREFIX}${route.root}`)
-    return keys
+    return new Set<Key>(get(parentIds))
   })
 
   expandedKeys = Object.assign(
@@ -762,29 +749,13 @@ export class DashboardTree {
     }
   )
 
-  rootItems: (key: string) => Atom<Promise<DashboardTreeItem>> = dispense(
-    (key: string): Atom<Promise<DashboardTreeItem>> => {
-      return atom(async (get): Promise<DashboardTreeItem> => {
-        const root = this.workspace.root(key)
-        const hasChildren = await get(root.hasChildren)
-        return new DashboardTreeItem(
-          this,
-          `${ROOT_KEY_PREFIX}${root.key}`,
-          root.icon,
-          root.label,
-          atom(async (get): Promise<Array<DashboardTreeItem>> => {
-            const ids = await get(root.children)
-            return Promise.all(ids.map(id => this.entryItems(id)).map(get))
-          }),
-          hasChildren
-        )
-      })
-    }
-  )
-
-  items = atom(get => {
-    const roots = get(this.workspace.roots)
-    return Promise.all(roots.map(key => this.rootItems(key)).map(get))
+  items = atom(async get => {
+    const currentRoot = get(this.workspace.dashboard.currentRoot)
+    if (!currentRoot || currentRoot.workspace.key !== this.workspace.key)
+      return []
+    const ids = await get(currentRoot.children)
+    for (const id of ids) get(this.entryItems(id))
+    return Promise.all(ids.map(id => this.entryItems(id)).map(get))
   })
 
   // dnd
@@ -815,10 +786,10 @@ export class DashboardTree {
 
   async #moveDraggedKeys(get: Getter, keys: Set<Key>, target: ItemDropTarget) {
     const db = get(this.workspace.dashboard.db)
-    const {moveTarget, targetType} = this.#target(target.key)
+    const selectedRoot = get(this.workspace.dashboard.selectedRoot)
+    const {moveTarget, targetType} = this.#target(target.key, selectedRoot)
     for (const key of keys) {
       const draggedId = String(key)
-      if (draggedId.startsWith(ROOT_KEY_PREFIX)) continue
       await db.move({
         id: draggedId,
         target: moveTarget,
@@ -842,19 +813,23 @@ export class DashboardTree {
       } else if (item.types.has('text/plain')) {
         draggedId = await item.getText('text/plain')
       }
-      if (!draggedId || draggedId.startsWith(ROOT_KEY_PREFIX)) continue
+      if (!draggedId) continue
       draggedKeys.add(draggedId)
     }
     await this.#moveDraggedKeys(get, draggedKeys, target)
   }
 
-  #target(key: Key) {
+  #target(key: Key | undefined, selectedRoot: string) {
+    if (!key) {
+      return {
+        moveTarget: selectedRoot,
+        targetType: 'root'
+      } as const
+    }
     const targetId = String(key)
     return {
-      moveTarget: targetId.startsWith(ROOT_KEY_PREFIX)
-        ? targetId.slice(ROOT_KEY_PREFIX.length)
-        : targetId,
-      targetType: targetId.startsWith(ROOT_KEY_PREFIX) ? 'root' : 'entry'
+      moveTarget: targetId,
+      targetType: 'entry'
     } as const
   }
 

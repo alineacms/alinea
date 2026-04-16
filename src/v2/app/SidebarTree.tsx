@@ -2,7 +2,6 @@ import {Button, Icon, Menu, MenuItem, Tree, TreeItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {assert} from 'alinea/core/util/Assert'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
 import {memo, Suspense, useMemo, useState} from 'react'
 import {
   Collection,
@@ -54,6 +53,7 @@ const SidebarParent = memo(function SidebarParent({
         <Button
           size="icon"
           appearance="outline"
+          intent="tertiary"
           icon={IcRoundKeyboardTab}
           style={isTreeCollapsed ? undefined : {transform: 'rotate(180deg)'}}
           aria-label={isTreeCollapsed ? 'Expand tree' : 'Collapse tree'}
@@ -78,7 +78,7 @@ const SidebarParent = memo(function SidebarParent({
         </Menu>
         <LocaleMenu root={root} />
         <DialogTrigger>
-          <Button size="icon" appearance="outline" icon={IcRoundAdd} />
+          <Button size="icon" icon={IcRoundAdd} />
           <Sheet>
             <CreateEntry />
           </Sheet>
@@ -193,7 +193,7 @@ export const SidebarTree = memo(function SidebarTree({
   const currentRoot = useAtomValue(dashboard.currentRoot)
   const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
-  const items = useAtomValue(unwrap(workspace.tree.items))
+  const items = useAtomValue(workspace.tree.items)
   const getItems = useSetAtom(workspace.tree.getItems)
   const onInsert = useSetAtom(workspace.tree.onInsert)
   const onItemDrop = useSetAtom(workspace.tree.onItemDrop)

@@ -1,7 +1,7 @@
-.ExplorerList-viewport {
+.ExplorerList {
   position: relative;
-  min-height: 0;
   height: 100%;
+  width: 100%;
 }
 
 .ExplorerList-viewport > :global(.react-aria-Virtualizer) {
