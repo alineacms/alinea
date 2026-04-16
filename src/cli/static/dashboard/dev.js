@@ -1,4 +1,3 @@
-//import {bootDev} from '#/dashboard/boot/BootDev.js'
+import {bootDev} from 'alinea/v2/boot/BootDev'
 
-//bootDev()
-alert('done!!')
+bootDev()

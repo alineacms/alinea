@@ -1,4 +1,3 @@
-import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
@@ -15,6 +14,7 @@ import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries, fromEntries, values} from '#/core/util/Objects.js'
 import {parents, translations} from '#/query.js'
+import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
@@ -26,6 +26,7 @@ import type {
   DroppableCollectionReorderEvent,
   Key
 } from 'react-aria-components'
+import {WorkerDB} from '../boot/WorkerDB.js'
 import {IcRoundDescription} from '../icons.js'
 
 export interface DashboardRoute {
@@ -132,7 +133,10 @@ export class Dashboard {
     const root = get(this.selectedRoot)
     const workspace = get(this.selectedWorkspace)
     const {entry} = get(this.route)
-    if (entry) return {entry: await get(this.entries(entry))}
+    if (entry)
+      try {
+        return {entry: await get(this.entries(entry))}
+      } catch {}
     if (!workspace) return null
     if (root) return {root: this.workspace(workspace).root(root)}
     return null
@@ -156,6 +160,13 @@ export class Dashboard {
     ),
     {onMount: (init: () => void) => init()}
   )
+
+  sync = atom(null, (get, set) => {
+    const db = get(this.db)
+    if (db instanceof WorkerDB) {
+      return db.sync()
+    }
+  })
 
   selectedWorkspace = atom(
     get => {
@@ -234,16 +245,16 @@ export class Dashboard {
   entries = dispense(id => {
     const data = atom<Promise<EntryData>>(get => {
       // todo: this will get out of sync for hasChildren
-      get(this.revisions(id))
       const load = get(this.#entryLoader)
       return load(id).then(([result, error]) => {
-        if (error) throw error
+        if (error) throw new Error('Could not load entry', {cause: error})
         return result
       })
     })
     const entry = new DashboardEntry(this, id, swr(data) as Atom<EntryData>)
     return swr(
       atom(async get => {
+        get(this.revisions(id))
         await get(data)
         return entry
       })
