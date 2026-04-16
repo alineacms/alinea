@@ -5,7 +5,7 @@
     "": {
       "name": "alinea",
       "dependencies": {
-        "@alinea/components": "0.0.50",
+        "@alinea/components": "^0.0.50",
         "@alinea/iso": "^0.3.3",
         "esbuild": "^0.28.0",
         "react-aria-components": "^1.17.0",

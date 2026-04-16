@@ -1,8 +1,8 @@
+import {getType} from '#/core/Internal.js'
+import {Section} from '#/core/Section.js'
+import {Type} from '#/core/Type.js'
+import {TabsSection} from '#/field/tabs.js'
 import {Tab, TabList, TabPanel, Tabs} from '@alinea/components'
-import {getType} from 'alinea/core/Internal'
-import {Section} from 'alinea/core/Section'
-import {Type} from 'alinea/core/Type'
-import {TabsSection} from 'alinea/field/tabs'
 import {EditFields} from '../../Editor.js'
 
 interface TabsViewProps {

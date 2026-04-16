@@ -1,8 +1,8 @@
+import {Field, type FieldOptions} from '#/core/Field'
+import {Section} from '#/core/Section'
+import {Type} from '#/core/Type'
 import {Button, Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
-import {Field, type FieldOptions} from 'alinea/core/Field'
-import {Section} from 'alinea/core/Section'
-import {Type} from 'alinea/core/Type'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, useEffect, useTransition} from 'react'
 import {
