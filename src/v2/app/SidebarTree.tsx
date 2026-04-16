@@ -9,7 +9,8 @@ import {
   TreeItem
 } from '@alinea/components'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import {memo, Suspense, useMemo, useState} from 'react'
 import {
   Collection,
@@ -97,17 +98,6 @@ const SidebarParent = memo(function SidebarParent({
   )
 })
 
-interface SidebarItemChildrenProps {
-  item: DashboardTreeItem
-}
-
-const SidebarItemChildren = memo(function SidebarItemChildren({
-  item
-}: SidebarItemChildrenProps) {
-  const items = useAtomValue(item.items)
-  return <Collection items={items}>{renderItem}</Collection>
-})
-
 interface SidebarItemProps {
   item: DashboardTreeItem
 }
@@ -115,17 +105,22 @@ interface SidebarItemProps {
 const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   const label = useAtomValue(item.label)
   const isExpanded = useAtomValue(item.isExpanded)
+  const childItems = useAtomValue(
+    useMemo(() => {
+      if (!item.hasChildren) return atom<Array<DashboardTreeItem> | undefined>(undefined)
+      return unwrap(
+        atom(async get => {
+          if (!get(item.isExpanded)) return undefined
+          return get(item.items)
+        })
+      )
+    }, [item])
+  )
   let icon = useAtomValue(item.icon)
   if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription
-  const children = useMemo(() => {
-    return (
-      isExpanded && (
-        <Suspense>
-          <SidebarItemChildren item={item} />
-        </Suspense>
-      )
-    )
-  }, [isExpanded, item])
+  const isLoadingChildren =
+    item.hasChildren && isExpanded && childItems === undefined
+
   return (
     <TreeItem
       id={item.id}
@@ -133,8 +128,15 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
       title={label}
       hasChildItems={item.hasChildren}
       icon={icon}
+      suffix={
+        isLoadingChildren ? (
+          <span className={styles.SidebarTree.itemLoading()} aria-hidden="true" />
+        ) : undefined
+      }
     >
-      {children}
+      {isExpanded && childItems && (
+        <Collection items={childItems}>{renderItem}</Collection>
+      )}
     </TreeItem>
   )
 })

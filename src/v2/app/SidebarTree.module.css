@@ -99,6 +99,27 @@
   height: 100%;
 }
 
+.SidebarTree-itemLoading {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+  animation: SidebarTree-itemLoading-pulse 900ms ease-in-out infinite;
+}
+
+@keyframes SidebarTree-itemLoading-pulse {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
 .SidebarTree-rootButton {
   width: 100%;
   height: auto;
