@@ -58,9 +58,9 @@
 }
 
 .EntryEditor-toolbar {
-  position: sticky;
-  bottom: 0;
-  background: white;
+  z-index: 1;
+  background: var(--alinea-background);
+  overflow: hidden;
 
   &:empty {
     display: none;

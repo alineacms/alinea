@@ -31,7 +31,7 @@ import {
   useEditor
 } from '@tiptap/react'
 import {atom, useAtomValue, useStore} from 'jotai'
-import {memo, useMemo, useRef} from 'react'
+import {memo, useCallback, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor.js'
 import {extensions as baseExtensions} from './Extensions.js'
@@ -114,6 +114,8 @@ function RTView<Blocks extends Schema>({
   const toolbar = document.getElementById('alinea-toolbar')
   const setValue = useFieldSetter(field)
   const node = useFieldNode(field)
+  const [focus, setFocus] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   const content = useMemo(() => {
     // Get the value once, but don't subscribe to updates
     const value = store.get(node.value) as TextDoc | undefined
@@ -128,10 +130,28 @@ function RTView<Blocks extends Schema>({
   }, [field, options.schema])
   const readOnly = options.readOnly || node.readOnly
   const editable = !readOnly
+  const focusToggle = useCallback(function focusToggle(target: EventTarget | null) {
+    const element =
+      (target as HTMLElement | null) ||
+      (document.activeElement as HTMLElement | null)
+    const editorElement = containerRef.current?.querySelector('.ProseMirror')
+    setFocus(
+      !!element &&
+        (element.closest('[data-richtext-toolbar="true"]') !== null ||
+          (editorElement instanceof HTMLElement &&
+            (editorElement === element || editorElement.contains(element))))
+    )
+  }, [])
   const editor = useEditor({
     content,
     extensions,
     editable,
+    onFocus({event}) {
+      focusToggle(event.currentTarget)
+    },
+    onBlur({event}) {
+      focusToggle(event.relatedTarget)
+    },
     onUpdate({editor}) {
       const current = store.get(node.value) as TextDoc | undefined
       setValue(fromContent(editor.getJSON(), current))
@@ -163,6 +183,7 @@ function RTView<Blocks extends Schema>({
           />
         )}
         <EditorContent
+          ref={containerRef}
           editor={editor}
           className={styles.RichTextFieldView()}
           data-invalid={Boolean(error) || undefined}
@@ -171,10 +192,12 @@ function RTView<Blocks extends Schema>({
       </Label>
       {toolbar &&
         editor &&
+        focus &&
         createPortal(
           <RichTextToolbar
             editor={editor}
             enableTables={options.enableTables}
+            focusToggle={focusToggle}
             toolbar={options.toolbar}
           />,
           toolbar

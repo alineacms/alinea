@@ -10,6 +10,9 @@ const Page = Config.document('Page', {
       multiline: true,
       placeholder: 'Write a short summary'
     }),
+    intro: Field.richText('Intro', {
+      searchable: true
+    }),
     codeSample: Field.code('Code sample', {
       language: 'ts'
     }),
@@ -40,6 +43,9 @@ const Page = Config.document('Page', {
       },
       searchable: true,
       enableTables: true
+    }),
+    notes: Field.richText('Notes', {
+      searchable: true
     }),
     featured: Field.check('Featured', {
       width: 0.5,

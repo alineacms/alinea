@@ -6,6 +6,17 @@
   "title": "Home",
   "path": "home",
   "summary": "Simple workspace root page",
+  "intro": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use this intro field to test switching focus between multiple rich text editors on the same page."
+        }
+      ]
+    }
+  ],
   "codeSample": "export function formatTitle(title: string) {\n  return title.trim().toUpperCase()\n}",
   "body": [
     {
@@ -71,6 +82,26 @@
               ]
             }
           ]
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This notes field sits below the main body so you can verify the toolbar transitions cleanly between editors."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Try focusing Intro, then Body, then Notes to check stacking and animation."
         }
       ]
     }

@@ -120,11 +120,11 @@ function EntryEditor({entry}: EntryEditorProps) {
 
       <RailBody className={styles.EntryEditor.body()}>
         <NodeEditor node={node} type={type.type} />
-        <RailFooter
-          id="alinea-toolbar"
-          className={styles.EntryEditor.toolbar()}
-        />
       </RailBody>
+      <RailFooter
+        id="alinea-toolbar"
+        className={styles.EntryEditor.toolbar()}
+      />
     </Rail>
   )
 

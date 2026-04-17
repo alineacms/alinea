@@ -39,6 +39,7 @@ export type RichTextCommand = () => ReturnType<Editor['chain']>
 export interface RichTextToolbarProps {
   editor: Editor
   enableTables?: boolean
+  focusToggle: (target: EventTarget | null) => void
   pickLink?: PickTextLinkFunc
   toolbar?: ToolbarConfig
 }
@@ -97,6 +98,7 @@ export function createLinkHandler(
 export const RichTextToolbar = memo(function RichTextToolbar({
   editor,
   enableTables,
+  focusToggle,
   pickLink,
   toolbar
 }: RichTextToolbarProps) {
@@ -108,16 +110,22 @@ export const RichTextToolbar = memo(function RichTextToolbar({
     const exec = createToolbarExec(editor)
     return {
       editor,
-      focusToggle: noop,
+      focusToggle,
       pickLink: pickLink ?? pickBrowserLink,
       enableTables,
       exec,
       handleLink: createLinkHandler(editor, pickLink, exec),
       toolbar: config
     } satisfies RichTextToolbarContext
-  }, [config, editor, enableTables, pickLink])
+  }, [config, editor, enableTables, focusToggle, pickLink])
   return (
-    <div className={styles.RichTextToolbar()} data-richtext-toolbar="true">
+    <div
+      tabIndex={-1}
+      className={styles.RichTextToolbar()}
+      data-richtext-toolbar="true"
+      onFocus={event => ctx.focusToggle(event.currentTarget)}
+      onBlur={event => ctx.focusToggle(event.relatedTarget)}
+    >
       <Toolbar
         aria-label="Text formatting"
         className={styles.RichTextToolbar.toolbar()}
@@ -313,8 +321,6 @@ function humanizeToolbarName(name: string) {
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/(^|\s)\w/g, letter => letter.toUpperCase())
 }
-
-function noop() {}
 
 async function pickBrowserLink() {
   return undefined
