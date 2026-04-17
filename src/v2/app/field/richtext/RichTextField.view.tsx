@@ -1,5 +1,26 @@
+import {Field} from '#/core/Field.js'
+import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
+import {Schema} from '#/core/Schema.js'
+import {
+  BlockNode,
+  ElementNode,
+  Mark,
+  Node,
+  TextDoc,
+  TextNode
+} from '#/core/TextDoc.js'
+import {Type} from '#/core/Type.js'
+import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {RichTextOptions} from '#/field/richtext/RichTextField.js'
+import {ReactiveNode} from '#/v2/store/Dashboard.js'
+import {
+  useFieldError,
+  useFieldNode,
+  useFieldOptions,
+  useFieldSetter
+} from '#/v2/store/hooks.js'
 import styler from '@alinea/styler'
-import { Node as TipTapNode } from '@tiptap/core'
+import {Node as TipTapNode} from '@tiptap/core'
 import {
   EditorContent,
   JSONContent,
@@ -8,35 +29,15 @@ import {
   ReactNodeViewRenderer,
   useEditor
 } from '@tiptap/react'
-import { Field } from 'alinea/core/Field'
-import { RichTextField as CoreRichTextField } from 'alinea/core/field/RichTextField'
-import { Schema } from 'alinea/core/Schema'
-import {
-  BlockNode,
-  ElementNode,
-  Mark,
-  Node,
-  TextDoc,
-  TextNode
-} from 'alinea/core/TextDoc'
-import { Type } from 'alinea/core/Type'
-import { entries, fromEntries, values } from 'alinea/core/util/Objects'
-import { RichTextOptions } from 'alinea/field/richtext/RichTextField'
-import {
-  ReactiveNode,
-  useFieldNode,
-  useFieldOptions,
-  useFieldSetter
-} from 'alinea/v2/store'
-import { atom, useAtomValue, useStore } from 'jotai'
-import { memo, useMemo, useRef } from 'react'
-import { createPortal } from 'react-dom'
-import { Box, BoxContent, BoxHeader, BoxRow } from '../../Box'
-import { NodeEditor } from '../../Editor'
-import { extensions as baseExtensions } from './Extensions.js'
-import { InsertMenu } from './InsertMenu.js'
+import {atom, useAtomValue, useStore} from 'jotai'
+import {memo, useMemo, useRef} from 'react'
+import {createPortal} from 'react-dom'
+import {Box, BoxContent, BoxHeader, BoxRow} from '../../Box'
+import {NodeEditor} from '../../Editor'
+import {extensions as baseExtensions} from './Extensions.js'
+import {InsertMenu} from './InsertMenu.js'
 import css from './RichTextField.module.css'
-import { RichTextToolbar } from './RichTextToolbar.js'
+import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
 
@@ -64,13 +65,13 @@ function typeExtension(field: Field, name: string, type: Type) {
     return (
       <NodeViewWrapper>
         {/* <Elevation> */}
-          {/* <div>
+        {/* <div>
             <button data-drag-handle style={{cursor: 'grab'}}>
               drag handle
             </button>
             Block, type: {Type.label(type)}
           </div> */}
-          <NodeEditor type={type} node={rowNode} />
+        <NodeEditor type={type} node={rowNode} />
         {/* </Elevation> */}
       </NodeViewWrapper>
     )
@@ -107,66 +108,72 @@ function schemaToExtensions(field: Field, schema: Schema | undefined) {
 function RTView<Blocks extends Schema>({
   field
 }: RichTextFieldViewProps<Blocks>) {
-  const store = useStore();
-  const options = useFieldOptions(field);
-  const toolbar = document.getElementById("alinea-toolbar");
-  const setValue = useFieldSetter(field);
-  const node = useFieldNode(field);
+  const store = useStore()
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
+  const toolbar = document.getElementById('alinea-toolbar')
+  const setValue = useFieldSetter(field)
+  const node = useFieldNode(field)
   const content = useMemo(() => {
     // Get the value once, but don't subscribe to updates
-    const value = store.get(node.value) as TextDoc | undefined;
+    const value = store.get(node.value) as TextDoc | undefined
     return {
-      type: "doc",
-      content: value?.map(toContent) ?? [],
-    };
-  }, [node, store]);
+      type: 'doc',
+      content: value?.map(toContent) ?? []
+    }
+  }, [node, store])
   const extensions = useMemo(() => {
-    const schemaExtensions = schemaToExtensions(field, options.schema);
-    return [...values(baseExtensions), ...schemaExtensions];
-  }, [field, options.schema]);
-  const editable = !options.readOnly && !node.readOnly;
+    const schemaExtensions = schemaToExtensions(field, options.schema)
+    return [...values(baseExtensions), ...schemaExtensions]
+  }, [field, options.schema])
+  const readOnly = options.readOnly || node.readOnly
+  const editable = !readOnly
   const editor = useEditor({
     content,
     extensions,
     editable,
-    onUpdate({ editor }) {
-      const current = store.get(node.value) as TextDoc | undefined;
-      setValue(fromContent(editor.getJSON(), current));
-    },
-  });
+    onUpdate({editor}) {
+      const current = store.get(node.value) as TextDoc | undefined
+      setValue(fromContent(editor.getJSON(), current))
+    }
+  })
   return (
     <>
       <Box>
         <BoxRow>
-          <BoxHeader>
-            {options.label}
-          </BoxHeader>
+          <BoxHeader>{options.label}</BoxHeader>
         </BoxRow>
         {/* <Label
           description={options.help}
+        errorMessage={error}
           isRequired={options.required}
           label={options.label}
         > */}
-          <BoxContent>
-            {editor && !options.readOnly && (
-              <InsertMenu
-                editor={editor}
-                schema={options.schema}
-                onInsert={(id, typeName) => {
-                  const type = options.schema?.[typeName];
-                  setValue((current) => [
-                    ...(current ?? []),
-                    {
-                      [Node.type]: typeName,
-                      [BlockNode.id]: id,
-                      ...(type ? Type.initialValue(type) : {}),
-                    } as Node,
-                  ]);
-                }}
-              />
-            )}
-            <EditorContent editor={editor} className={styles.root()} />
-          </BoxContent>
+        <BoxContent>
+          {editor && !readOnly && (
+            <InsertMenu
+              editor={editor}
+              schema={options.schema}
+              onInsert={(id, typeName) => {
+                const type = options.schema?.[typeName]
+                setValue(current => [
+                  ...(current ?? []),
+                  {
+                    [Node.type]: typeName,
+                    [BlockNode.id]: id,
+                    ...(type ? Type.initialValue(type) : {})
+                  } as Node
+                ])
+              }}
+            />
+          )}
+          <EditorContent
+            editor={editor}
+            className={styles.RichTextFieldView()}
+            data-invalid={Boolean(error) || undefined}
+            data-read-only={readOnly || undefined}
+          />
+        </BoxContent>
         {/* </Label> */}
       </Box>
       {toolbar &&
@@ -177,10 +184,10 @@ function RTView<Blocks extends Schema>({
             enableTables={options.enableTables}
             toolbar={options.toolbar}
           />,
-          toolbar,
+          toolbar
         )}
     </>
-  );
+  )
 }
 
 export interface RichTextFieldViewProps<Blocks extends Schema> {

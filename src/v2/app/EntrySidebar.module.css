@@ -1,0 +1,5 @@
+.EntrySidebar-header {
+  & > :global(.alinea-rac-Tablist) {
+    align-self: auto;
+  }
+}

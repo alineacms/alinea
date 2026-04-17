@@ -1,6 +1,6 @@
 # Dashboard V2 Rewrite Plan
 
-Find the v2 dashboard in src/v2, and v1 in src/dashboard.
+Find the v2 dashboard in ./src/v2, and v1 in ./v1/dashboard.
 
 ## Goals and Constraints
 - UI toolkit: use `@alinea/components` as the default UI surface.
@@ -10,6 +10,7 @@ Find the v2 dashboard in src/v2, and v1 in src/dashboard.
 - Styling: use CSS Modules plus `@alinea/styler`.
 - Styling ownership: each component should use its own CSS Module file. Do not import another component's CSS Module into a different component.
 - Use `@alinea/styler` for composing and joining class names. Do not introduce custom class name join helpers for this.
+- CSS module naming in `src/v2`: every selector starts with the exact component name, eg `.ComponentName`; replace `.root` with that component name; nested selectors become `.ComponentName-part`, deeper nesting becomes `.ComponentName-part-subpart`; flatten unused parent segments.
 - Bundle all icons into the same file src/v2/icons.tsx, download them if needed
   from icones (https://icones.js.org/) using the Google Material Icons set.
 
@@ -21,6 +22,9 @@ Find the v2 dashboard in src/v2, and v1 in src/dashboard.
 - Imports should be relative if in same src subdir, otherwise absolute starting
   with 'alinea', eg 'alinea/core/Config'. If relative, include .js extension.
   If absolute do not include any extension.
+
+## Verification
+- Run typescript compiler with `bun tsgo` to verify types
 
 ## Testability
 - Use react-testing-library for testing, and test the public API of components

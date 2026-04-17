@@ -1,4 +1,4 @@
-import {localUser} from 'alinea/core/User'
+import {localUser} from '#/core/User.js'
 import {exec} from 'node:child_process'
 import {promisify} from 'node:util'
 import PLazy from 'p-lazy'

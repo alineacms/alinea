@@ -1,18 +1,16 @@
 import {
   type BackendOptions,
   createBackend
-} from 'alinea/backend/api/CreateBackend'
+} from '#/backend/api/CreateBackend.js'
 import {
   createHandler as createCoreHandler,
   type HandlerHooks
-} from 'alinea/backend/Handler'
-import {proxy} from 'alinea/backend/router/Proxy'
-import {generatedSource} from 'alinea/backend/store/GeneratedSource'
-import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
-import {CloudRemote} from 'alinea/cloud/CloudRemote'
-import {Config} from 'alinea/core/Config'
-import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
-import {LocalDB} from 'alinea/core/db/LocalDB'
+} from '#/backend/Handler.js'
+import {generatedSource} from '#/backend/store/GeneratedSource.js'
+import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
+import {CloudRemote} from '#/cloud/CloudRemote.js'
+import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'

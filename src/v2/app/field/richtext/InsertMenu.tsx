@@ -1,12 +1,12 @@
 import {Button, Icon, Menu, MenuItem} from '@alinea/components'
 import styler from '@alinea/styler'
 import {Editor, FloatingMenu} from '@tiptap/react'
-import {createId} from 'alinea/core/Id'
-import {getType} from 'alinea/core/Internal'
-import {Schema} from 'alinea/core/Schema'
-import {BlockNode} from 'alinea/core/TextDoc'
-import {Type} from 'alinea/core/Type'
-import {entries} from 'alinea/core/util/Objects'
+import {createId} from '#/core/Id.js'
+import {getType} from '#/core/Internal.js'
+import {Schema} from '#/core/Schema.js'
+import {BlockNode} from '#/core/TextDoc.js'
+import {Type} from '#/core/Type.js'
+import {entries} from '#/core/util/Objects.js'
 import {IcRoundAddCircle} from '../../../icons.js'
 import css from './InsertMenu.module.css'
 
@@ -31,7 +31,7 @@ export function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
       <Menu
         aria-label="Insert block"
         label={
-          <Button appearance="plain" className={styles.trigger()}>
+          <Button appearance="plain" className={styles.InsertMenu.trigger()}>
             <Icon icon={IcRoundAddCircle} />
             <span>Insert block</span>
           </Button>
@@ -58,7 +58,7 @@ export function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
                   .run()
               }}
             >
-              <span className={styles.item()}>
+              <span className={styles.InsertMenu.item()}>
                 <Icon aria-hidden icon={meta.icon ?? IcRoundAddCircle} />
                 <span>{label}</span>
               </span>

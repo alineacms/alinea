@@ -1,4 +1,4 @@
-import {JsonField} from 'alinea/field/json'
+import {JsonField} from '#/field/json.js'
 import {useEffect, useState} from 'react'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 import {CodeEditorInput} from '../code/CodeField.view.js'

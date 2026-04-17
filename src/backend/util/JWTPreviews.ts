@@ -1,4 +1,4 @@
-import {sign, verify} from 'alinea/core/util/JWT'
+import {sign, verify} from '#/core/util/JWT.js'
 import type {PreviewInfo, Previews} from '../Previews.js'
 
 export class JWTPreviews implements Previews {

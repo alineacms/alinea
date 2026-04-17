@@ -1,130 +1,126 @@
+import {assert} from '#/core/util/Assert.js'
 import {
   Button,
   Icon,
   Menu,
   MenuItem,
+  ProgressCircle,
   Tree,
-  TreeItem,
-} from "@alinea/components";
-import styler from "@alinea/styler";
-import { assert } from "alinea/core/util/Assert";
-import { IcRoundUnfoldMore } from "alinea/ui/icons/IcRoundUnfoldMore.js";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { unwrap } from "jotai/utils";
-import { memo, Suspense, useMemo } from "react";
+  TreeItem
+} from '@alinea/components'
+import styler from '@alinea/styler'
+import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
+import {memo, Suspense, useMemo, useState} from 'react'
 import {
   Collection,
   DialogTrigger,
   ListLayout,
   useDragAndDrop,
-  Virtualizer,
-} from "react-aria-components";
+  Virtualizer
+} from 'react-aria-components'
 import {
-  IcRoundArrowBack,
-  IcRoundEdit,
+  IcRoundAdd,
+  IcRoundKeyboardTab,
   IcTwotoneDescription,
-  IcTwotoneFolder,
-} from "../icons.js";
+  IcTwotoneFolder
+} from '../icons.js'
 import {
   Dashboard,
   DashboardRoot,
   DashboardTreeItem,
-} from "../store/Dashboard.js";
-import { LocaleMenu } from "./LocaleMenu.js";
-import { CreateEntry } from "./modals/CreateEntry.js";
-import css from "./SidebarTree.module.css";
-import { Sheet } from "./ui/Sheet.js";
-import { SidebarBody, SidebarHeader } from "./ui/Sidebar.js";
+  DashboardWorkspace
+} from '../store/Dashboard.js'
+import {LocaleMenu} from './LocaleMenu.js'
+import {CreateEntry} from './modals/CreateEntry.js'
+import css from './SidebarTree.module.css'
+import {Sheet} from './ui/Sheet.js'
+import {SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 
-const styles = styler(css);
+const styles = styler(css)
 
 interface SidebarTreeProps {
-  dashboard: Dashboard;
+  dashboard: Dashboard
 }
 
 interface SidebarParentProps {
-  root: DashboardRoot;
-  items: DashboardTreeItem[] | undefined;
+  root: DashboardRoot
+  roots: Array<DashboardRoot>
+  isTreeCollapsed: boolean
+  onToggleTreeCollapsed: () => void
 }
 
 const SidebarParent = memo(function SidebarParent({
   root,
-  items,
+  roots,
+  isTreeCollapsed,
+  onToggleTreeCollapsed
 }: SidebarParentProps) {
-  const label = useAtomValue(root.label);
-  const icon = useAtomValue(root.icon);
-  const roots = (items || [])
-    .map((item) => item.id)
-    .filter((item) => item.startsWith("root:"))
-    .map((item) => item.replace("root:", ""));
-  console.log(roots);
+  const label = useAtomValue(root.label)
   return (
     <SidebarHeader>
-      <div className={styles.focusLabel()}>
-        <Button size="icon" appearance="outline">
-          <Icon icon={IcRoundArrowBack} data-slot="icon" />
-        </Button>
+      <div className={styles.SidebarParent.label()}>
+        <Button
+          size="icon"
+          appearance="outline"
+          intent="tertiary"
+          icon={IcRoundKeyboardTab}
+          style={isTreeCollapsed ? undefined : {transform: 'rotate(180deg)'}}
+          aria-label={isTreeCollapsed ? 'Expand tree' : 'Collapse tree'}
+          onPress={onToggleTreeCollapsed}
+        />
         <Menu
           label={
             <Button
-              appearance="outline"
+              appearance="plain"
               intent="secondary"
-              className={styles.rootsTrigger()}
+              className={styles.SidebarTree.rootsTrigger()}
             >
-              {label} <IcRoundUnfoldMore />
+              {label}
             </Button>
           }
           aria-label={label}
+          selectionMode="single"
         >
-          {roots.map((root) => (
-            <MenuItem key={root} id={root}>
-              {root}
-            </MenuItem>
+          {roots.map(root => (
+            <RootMenuItem key={root.key} root={root} />
           ))}
         </Menu>
         <LocaleMenu root={root} />
         <DialogTrigger>
-          <Button size="icon" appearance="outline">
-            <Icon icon={IcRoundEdit} data-slot="icon" />
-          </Button>
+          <Button size="icon" icon={IcRoundAdd} />
           <Sheet>
             <CreateEntry />
           </Sheet>
         </DialogTrigger>
       </div>
     </SidebarHeader>
-  );
-});
-
-interface SidebarItemChildrenProps {
-  item: DashboardTreeItem;
-}
-
-const SidebarItemChildren = memo(function SidebarItemChildren({
-  item,
-}: SidebarItemChildrenProps) {
-  const items = useAtomValue(item.items);
-  return <Collection items={items}>{renderItem}</Collection>;
-});
+  )
+})
 
 interface SidebarItemProps {
-  item: DashboardTreeItem;
+  item: DashboardTreeItem
 }
 
-const SidebarItem = memo(function SidebarItem({ item }: SidebarItemProps) {
-  const label = useAtomValue(item.label);
-  const isExpanded = useAtomValue(item.isExpanded);
-  let icon = useAtomValue(item.icon);
-  if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription;
-  const children = useMemo(() => {
-    return (
-      isExpanded && (
-        <Suspense>
-          <SidebarItemChildren item={item} />
-        </Suspense>
+const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
+  const label = useAtomValue(item.label)
+  const isExpanded = useAtomValue(item.isExpanded)
+  const childItems = useAtomValue(
+    useMemo(() => {
+      if (!item.hasChildren) return atom<Array<DashboardTreeItem> | undefined>(undefined)
+      return unwrap(
+        atom(async get => {
+          if (!get(item.isExpanded)) return undefined
+          return get(item.items)
+        })
       )
-    );
-  }, [isExpanded, item]);
+    }, [item])
+  )
+  let icon = useAtomValue(item.icon)
+  if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription
+  const isLoadingChildren =
+    item.hasChildren && isExpanded && childItems === undefined
+
   return (
     <TreeItem
       id={item.id}
@@ -132,63 +128,176 @@ const SidebarItem = memo(function SidebarItem({ item }: SidebarItemProps) {
       title={label}
       hasChildItems={item.hasChildren}
       icon={icon}
+      suffix={
+        isLoadingChildren ? (
+          <span className={styles.SidebarTree.itemLoading()} aria-hidden="true" />
+        ) : undefined
+      }
     >
-      {children}
+      {isExpanded && childItems && (
+        <Collection items={childItems}>{renderItem}</Collection>
+      )}
     </TreeItem>
-  );
-});
+  )
+})
 
 function renderItem(item: DashboardTreeItem) {
-  return <SidebarItem item={item} />;
+  return <SidebarItem item={item} />
 }
 
 const treeLayoutOptions = {
   rowHeight: 34,
   padding: 0,
-  gap: 1,
-};
+  gap: 1
+}
 
-export const SidebarTree = memo(function SidebarTree({
-  dashboard,
-}: SidebarTreeProps) {
-  const workspace = useAtomValue(dashboard.currentWorkspace);
-  assert(workspace, "No workspace selected");
-  const currentRoot = useAtomValue(dashboard.currentRoot);
-  const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys);
-  const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys);
-  const items = useAtomValue(unwrap(workspace.tree.items));
-  const getItems = useSetAtom(workspace.tree.getItems);
-  const onInsert = useSetAtom(workspace.tree.onInsert);
-  const onItemDrop = useSetAtom(workspace.tree.onItemDrop);
-  const onMove = useSetAtom(workspace.tree.onMove);
-  const { dragAndDropHooks } = useDragAndDrop<DashboardTreeItem>({
+interface SidebarTreeBodyProps {
+  workspace: DashboardWorkspace
+}
+
+const SidebarTreeBody = memo(function SidebarTreeBody({
+  workspace
+}: SidebarTreeBodyProps) {
+  const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
+  const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
+  const items = useAtomValue(workspace.tree.items)
+  const getItems = useSetAtom(workspace.tree.getItems)
+  const onInsert = useSetAtom(workspace.tree.onInsert)
+  const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
+  const onMove = useSetAtom(workspace.tree.onMove)
+  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
     getItems,
     onInsert,
     onItemDrop,
-    onMove,
-  });
+    onMove
+  })
+  return (
+    <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
+      <Tree
+        aria-label="Content tree"
+        style={{display: 'block', padding: 0, height: '100%'}}
+        items={items}
+        dragAndDropHooks={dragAndDropHooks}
+        selectionMode="single"
+        selectionBehavior="replace"
+        disallowEmptySelection
+        expandedKeys={expandedKeys}
+        onExpandedChange={setExpandedKeys}
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+      >
+        {renderItem}
+      </Tree>
+    </Virtualizer>
+  )
+})
+
+interface SidebarTreeRootsProps {
+  roots: Array<DashboardRoot>
+  isTreeCollapsed: boolean
+}
+
+const SidebarTreeRoots = memo(function SidebarTreeRoots({
+  roots,
+  isTreeCollapsed
+}: SidebarTreeRootsProps) {
+  return (
+    <div
+      className={styles.SidebarTree.locator.rootSelector()}
+      data-expanded={isTreeCollapsed || undefined}
+    >
+      {roots.map(root => (
+        <RootButton key={root.key} root={root} expanded={isTreeCollapsed} />
+      ))}
+    </div>
+  )
+})
+
+const SidebarTreeBodyFallback = memo(function SidebarTreeBodyFallback() {
+  return (
+    <div className={styles.SidebarTree.loading()}>
+      <ProgressCircle isIndeterminate aria-label="Loading content tree" />
+    </div>
+  )
+})
+
+interface RootButtonProps {
+  root: DashboardRoot
+  expanded?: boolean
+}
+
+function RootButton({root, expanded = false}: RootButtonProps) {
+  const icon = useAtomValue(root.icon)
+  const label = useAtomValue(root.label)
+  const [selected, setSelected] = useAtom(root.selected)
+  return (
+    <Button
+      size="square-petite"
+      appearance={selected ? 'active' : 'plain'}
+      className={styles.SidebarTree.rootButton()}
+      data-expanded={expanded || undefined}
+      aria-label={label}
+      onPress={() => setSelected(true)}
+    >
+      {icon && <Icon icon={icon} data-slot="icon" />}
+      {expanded && (
+        <span className={styles.SidebarTree.rootButton.label()}>{label}</span>
+      )}
+    </Button>
+  )
+}
+
+interface RootMenuItemProps {
+  root: DashboardRoot
+}
+
+function RootMenuItem({root}: RootMenuItemProps) {
+  const label = useAtomValue(root.label)
+  const selectRoot = useSetAtom(root.selected)
+  return (
+    <MenuItem
+      key={root.key}
+      id={root.key}
+      onAction={() => selectRoot(true)}
+      className={styles.SidebarTree.rootButton()}
+    >
+      {label}
+    </MenuItem>
+  )
+}
+
+export const SidebarTree = memo(function SidebarTree({
+  dashboard
+}: SidebarTreeProps) {
+  const workspace = useAtomValue(dashboard.currentWorkspace)
+  assert(workspace, 'No workspace selected')
+  const currentRoot = useAtomValue(dashboard.currentRoot)
+  const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
+  const [isTreeCollapsed, setIsTreeCollapsed] = useState(false)
   return (
     <>
-      {currentRoot && <SidebarParent root={currentRoot} items={items} />}
+      {currentRoot && (
+        <SidebarParent
+          root={currentRoot}
+          roots={roots}
+          isTreeCollapsed={isTreeCollapsed}
+          onToggleTreeCollapsed={() =>
+            setIsTreeCollapsed(isCollapsed => !isCollapsed)
+          }
+        />
+      )}
       <SidebarBody>
-        <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
-          <Tree
-            aria-label="Content tree"
-            style={{ display: "block", padding: 0, height: "100%" }}
-            items={items}
-            dragAndDropHooks={dragAndDropHooks}
-            selectionMode="single"
-            selectionBehavior="replace"
-            disallowEmptySelection
-            expandedKeys={expandedKeys}
-            onExpandedChange={setExpandedKeys}
-            selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
+        <div className={styles.SidebarTree.locator()}>
+          <SidebarTreeRoots roots={roots} isTreeCollapsed={isTreeCollapsed} />
+          <div
+            className={styles.SidebarTree.tree({collapsed: isTreeCollapsed})}
           >
-            {renderItem}
-          </Tree>
-        </Virtualizer>
+            <Suspense fallback={<SidebarTreeBodyFallback />}>
+              <SidebarTreeBody workspace={workspace} />
+            </Suspense>
+          </div>
+        </div>
       </SidebarBody>
     </>
-  );
-});
+  )
+})

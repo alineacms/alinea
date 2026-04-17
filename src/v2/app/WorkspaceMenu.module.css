@@ -1,16 +1,15 @@
-.trigger {
-  max-width: 100%;
-  display: inline-flex;
-  align-items: center;
+.WorkspaceMenu-parent {
+  display: flex;
   gap: 8px;
-  width: 100%;
-  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
 }
 
-.triggerAvatar {
+.WorkspaceMenu-avatar {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -18,7 +17,19 @@
   flex-shrink: 0;
 }
 
-.triggerText {
+.WorkspaceMenu-trigger {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  justify-content: space-between;
+  padding: 0 8px !important;
+  height: 36px !important;
+}
+
+.WorkspaceMenu-trigger-text {
   display: block;
   min-width: 0;
   overflow: hidden;
@@ -28,9 +39,6 @@
   font-weight: 600;
 }
 
-.parent {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex: 1;
+.WorkspaceMenu-search {
+  flex-shrink: 0;
 }

@@ -1,31 +1,31 @@
-.viewport {
+.ExplorerList {
   position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.ExplorerList-viewport > :global(.react-aria-Virtualizer) {
   min-height: 0;
   height: 100%;
 }
 
-.viewport > :global(.react-aria-Virtualizer) {
-  min-height: 0;
-  height: 100%;
-}
-
-.root {
+.ExplorerList {
   display: block;
   min-height: 100%;
   width: 100%;
   height: 100%;
   overflow: auto;
+
+  &.is-card {
+    padding: 10px 2px 2px;
+  }
+
+  &.is-row {
+    padding: 2px;
+  }
 }
 
-.root-view-card {
-  padding: 10px 2px 2px;
-}
-
-.root-view-row {
-  padding: 2px;
-}
-
-.pending {
+.ExplorerList-pending {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -33,29 +33,42 @@
   pointer-events: none;
 }
 
-.item {
+.ExplorerList-drag-preview {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  color: #223042;
+}
+
+.ExplorerList-drag-preview-label {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ExplorerItem {
   display: block;
   min-width: 0;
   position: relative;
   outline: none;
+
+  &[data-focus-visible] .ExplorerItem-card {
+    outline: 2px solid #5b91ff;
+    outline-offset: 2px;
+  }
+
+  &[data-selected] .ExplorerItem-card {
+    border-color: #7ea6df;
+    outline: 2px solid #7ea6df;
+    outline-offset: 1px;
+    box-shadow:
+      0 0 0 1px #7ea6df,
+      lch(0 0 0 / 0.022) 0px 3px 6px -2px,
+      lch(0 0 0 / 0.044) 0px 1px 1px;
+  }
 }
 
-.item[data-focus-visible] .card {
-  outline: 2px solid #5b91ff;
-  outline-offset: 2px;
-}
-
-.item[data-selected] .card {
-  border-color: #7ea6df;
-  outline: 2px solid #7ea6df;
-  outline-offset: 1px;
-  box-shadow:
-    0 0 0 1px #7ea6df,
-    lch(0 0 0 / 0.022) 0px 3px 6px -2px,
-    lch(0 0 0 / 0.044) 0px 1px 1px;
-}
-
-.dragHandle {
+.ExplorerItem-drag-handle {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -63,20 +76,7 @@
   color: #6c7b8c;
 }
 
-.dragPreview {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 12px;
-  color: #223042;
-}
-
-.dragPreviewLabel {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.card {
+.ExplorerItem-card {
   position: relative;
   display: flex;
   min-width: 0;
@@ -86,7 +86,7 @@
   color: #223042;
 }
 
-.root-view-card .card {
+.ExplorerList.is-card .ExplorerItem-card {
   min-height: 184px;
   flex-direction: column;
   align-items: flex-start;
@@ -94,23 +94,23 @@
   padding-top: 56px;
 }
 
-.root-view-row .card {
+.ExplorerList.is-row .ExplorerItem-card {
   min-height: 76px;
   width: 100%;
   padding-right: 48px;
   padding-left: 16px;
 }
 
-.icon {
+.ExplorerItem-icon {
   flex-shrink: 0;
   opacity: 0.78;
 }
 
-.root-view-card .icon {
+.ExplorerList.is-card .ExplorerItem-icon {
   font-size: 24px;
 }
 
-.body {
+.ExplorerItem-body {
   display: flex;
   min-width: 0;
   flex: 1;
@@ -118,7 +118,7 @@
   gap: 4px;
 }
 
-.label {
+.ExplorerItem-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -127,7 +127,7 @@
   line-height: 1.35;
 }
 
-.meta {
+.ExplorerItem-meta {
   color: #6c7b8c;
   font-size: 12px;
   line-height: 1.3;

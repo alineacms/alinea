@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
-import type { HTMLAttributes, PropsWithChildren } from 'react'
-import { Rail, RailHeader, RailHeaderProps, RailProps } from './Rail.js'
+import type {HTMLAttributes, PropsWithChildren} from 'react'
+import {Rail, RailHeader, RailHeaderProps, RailProps} from './Rail.js'
 import css from './Sidebar.module.css'
 
 const styles = styler(css)
@@ -8,13 +8,20 @@ const styles = styler(css)
 export interface SidebarProps extends RailProps {}
 
 export function Sidebar(props: SidebarProps) {
-  return <Rail className={styles.root(styler.merge(props))} {...props} />
+  return <Rail className={styles.Sidebar(styler.merge(props))} {...props} />
 }
 
 export interface SidebarHeaderProps extends RailHeaderProps {}
 
 export function SidebarHeader(props: SidebarHeaderProps) {
-  return <RailHeader {...props} className={styles.header(styler.merge({className: props.className}))} />
+  return (
+    <RailHeader
+      {...props}
+      className={styles.SidebarHeader(
+        styler.merge({className: props.className})
+      )}
+    />
+  )
 }
 
 export interface SidebarBodyProps
@@ -24,7 +31,7 @@ export interface SidebarBodyProps
 
 export function SidebarBody({children, ...props}: SidebarBodyProps) {
   return (
-    <div {...props} className={styles.body()}>
+    <div {...props} className={styles.SidebarBody()}>
       {children}
     </div>
   )
@@ -39,7 +46,10 @@ export function SidebarFooter({
   ...props
 }: SidebarFooterProps) {
   return (
-    <footer {...props} className={styles.footer(styler.merge({className}))}>
+    <footer
+      {...props}
+      className={styles.SidebarFooter(styler.merge({className}))}
+    >
       {children}
     </footer>
   )

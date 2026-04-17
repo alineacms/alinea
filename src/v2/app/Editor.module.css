@@ -1,80 +1,63 @@
-.mainTitle {
+.RootEditor-title,
+.EntryEditor-title {
   margin: 0;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
 }
 
-.mainBody {
-  min-height: 0;
-  overflow: auto;
-  padding: 24px 28px;
-}
-
-.entryMainBody {
-  min-height: 0;
-  min-width: 0;
-}
-
-.entryLayout {
-  min-height: 0;
-  height: 100%;
-  min-width: 0;
-}
-
-.typeBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #58708a;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.explorerMainBody {
+.RootEditor-body {
   min-height: 0;
   overflow: hidden;
   padding: 24px 28px;
 }
 
-.explorerBody {
+.RootEditor-explorer {
   display: flex;
   min-height: 100%;
   height: 100%;
+  width: 100%;
 }
 
-.explorerBody > * {
+.RootEditor-explorer > * {
   flex: 1;
   min-height: 0;
 }
 
-.fields {
+.EntryEditor-body {
+  min-height: 0;
+  min-width: 0;
+  padding: 16px;
+}
+
+.EntryEditor-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.EditFields {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 16px;
 }
 
-.fieldSlot {
+.EditField-slot {
   min-width: 0;
 }
 
-@media (max-width: 1080px) {
-  .entryLayout {
-    height: 100%;
-  }
-}
-
 @media (max-width: 768px) {
-  .fields {
+  .EditFields {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .fieldSlot {
+  .EditField-slot {
     grid-column: 1 / -1 !important;
   }
 }
 
-.toolbar {
+.EntryEditor-toolbar {
   position: sticky;
   bottom: 0;
   background: white;
@@ -84,7 +67,16 @@
   }
 }
 
-.statusBadge {
+.TypeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #58708a;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.EntryStatus-badge {
   margin-left: 12px;
   padding: 4px 10px;
   font-size: 11px;
@@ -100,6 +92,6 @@
   justify-content: space-between;
 }
 
-:global(.alinea-rac-TabPanel){
-  padding: 0; 
+:global(.alinea-rac-TabPanel) {
+  padding: 0;
 }

@@ -1,6 +1,6 @@
+import {SelectField, SelectOptions} from '#/field/select.js'
 import {Select, SelectItem} from '@alinea/components'
 import {Key} from '@react-types/shared'
-import {SelectField, SelectOptions} from 'alinea/field/select'
 import {useMemo} from 'react'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 
@@ -20,7 +20,7 @@ export function SelectFieldView<KeyType extends string | null>({
   const options = useFieldOptions(field) as SelectOptions<NonNullable<KeyType>>
   const error = useFieldError(field)
   const items = useMemo(() => {
-    return Object.entries(options.options).map(
+    return Object.entries<string>(options.options).map(
       ([id, label]): SelectItemData => ({id, label})
     )
   }, [options.options])

@@ -1,28 +1,28 @@
-import {Response} from '@alinea/iso'
-import {AuthAction} from 'alinea/backend/Auth'
-import {OAuth2} from 'alinea/backend/api/OAuth2'
-import {Config} from 'alinea/core/Config'
+import {OAuth2} from '#/backend/api/OAuth2.js'
+import {AuthAction} from '#/backend/Auth.js'
+import {Config} from '#/core/Config.js'
 import type {
   AuthedContext,
   RemoteConnection,
   RequestContext,
   Revision
-} from 'alinea/core/Connection'
+} from '#/core/Connection.js'
+import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {
   type Draft,
   type DraftKey,
   formatDraftKey,
   parseDraftKey
-} from 'alinea/core/Draft'
-import type {CommitRequest} from 'alinea/core/db/CommitRequest'
-import type {EntryRecord} from 'alinea/core/EntryRecord'
-import {HttpError} from 'alinea/core/HttpError'
-import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
-import {ReadonlyTree, type Tree} from 'alinea/core/source/Tree'
-import {base64} from 'alinea/core/util/Encoding'
-import {entries, values} from 'alinea/core/util/Objects'
-import {Workspace} from 'alinea/core/Workspace'
-import pkg from '../../package.json'
+} from '#/core/Draft.js'
+import type {EntryRecord} from '#/core/EntryRecord.js'
+import {HttpError} from '#/core/HttpError.js'
+import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import {base64} from '#/core/util/Encoding.js'
+import {entries, values} from '#/core/util/Objects.js'
+import {Workspace} from '#/core/Workspace.js'
+import {Response} from '@alinea/iso'
+import pkg from '../../package.json' with {type: 'json'}
 import {AuthResultType} from './AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
 
@@ -78,6 +78,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     }).then(failOnHttpError)
     const form = await response.formData()
     for (const [key, value] of form.entries()) {
+      // @ts-ignore - Bun formData types are wrong
       if (value instanceof Blob) {
         const sha = key.slice(0, 40)
         const blob = new Uint8Array(await value.arrayBuffer())

@@ -1,4 +1,4 @@
-import {assert} from 'alinea/core/util/Assert'
+import {assert} from '#/core/util/Assert.js'
 import type {Field} from './Field.js'
 import type {Graph} from './Graph.js'
 import {ErrorCode, HttpError} from './HttpError.js'

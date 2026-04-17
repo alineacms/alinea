@@ -1,0 +1,100 @@
+@import '@alinea/ui/style.scss';
+
+.root {
+  position: relative;
+}
+
+.image {
+  overflow: hidden;
+  position: relative;
+  padding: 0 !important;
+
+  @include l {
+    display: flex;
+  }
+
+  &-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    @include l {
+      flex: 0 0 220px;
+    }
+  }
+
+  &-preview {
+    cursor: crosshair;
+    position: relative;
+
+    &-focus {
+      pointer-events: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 100%;
+      border: 1px solid white;
+      background-color: rgba(white, 0.4);
+      opacity: 1;
+      transition: opacity 0.3s;
+
+      &::before {
+        content: '';
+        width: 2px;
+        height: 2px;
+        border-radius: 100%;
+        background-color: white;
+        border: 1px solid var(--alinea-foreground);
+      }
+    }
+    &:hover &-focus {
+      opacity: 1;
+    }
+
+    &-img {
+      display: block;
+      height: auto;
+      max-width: 100%;
+      background-size: 20px 20px;
+      background-position: 0px 0px, 10px 10px;
+      background-image: linear-gradient(
+          45deg,
+          #eee 25%,
+          transparent 25%,
+          transparent 75%,
+          #eee 75%,
+          #eee 100%
+        ),
+        linear-gradient(
+          45deg,
+          #eee 25%,
+          white 25%,
+          white 75%,
+          #eee 75%,
+          #eee 100%
+        );
+    }
+  }
+
+  &-content {
+    padding: 20px;
+    min-width: 0;
+
+    &-url {
+      display: block;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}

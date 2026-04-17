@@ -282,12 +282,13 @@ const externalize: Plugin = {
     build.onStart(() => {
       modules = new Set()
     })
-    build.onResolve({filter: /^\./}, args => {
+    build.onResolve({filter: /^(\.|#)/}, args => {
       if (args.kind === 'entry-point') return
       if (
         args.path.endsWith('.scss') ||
         args.path.endsWith('.json') ||
-        args.path.endsWith('.css')
+        args.path.endsWith('.css') ||
+        args.path.endsWith('.woff2')
       )
         return
       if (!args.resolveDir.startsWith(src)) {
@@ -308,6 +309,10 @@ const externalize: Plugin = {
         console.error(`Missing file extension on local import: ${args.path}`)
         console.error(`In file: ${args.importer}`)
         process.exit(1)
+      }
+      if (args.path.startsWith('#')) {
+        const withoutExtension = args.path.slice(0, args.path.lastIndexOf('.'))
+        return {path: withoutExtension.replace('#/', 'alinea/'), external: true}
       }
       return {path: args.path, external: true}
     })
@@ -479,6 +484,9 @@ function jsEntry({
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33
                 'import.meta.env.MODE': '"production"'
+              },
+              loader: {
+                '.woff2': 'file'
               }
             })
             currentFiles = files
@@ -509,7 +517,7 @@ const postCssPlugins = [
   }),
   postcssModules({
     localsConvention: 'dashes',
-    generateScopedName(name, fileName, css) {
+    generateScopedName(name, fileName) {
       const module = path.basename(fileName).split('.')[0]
       if (name.startsWith('root-')) name = name.slice(5)
       if (name.startsWith('root')) name = name.slice(4)

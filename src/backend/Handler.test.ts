@@ -1,10 +1,10 @@
 import {Request, Response} from '@alinea/iso'
 import {suite} from '@alinea/suite'
-import {Config} from 'alinea'
-import {createHandler} from 'alinea/backend/Handler'
-import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
-import {createCMS} from 'alinea/core'
-import {LocalDB} from 'alinea/core/db/LocalDB'
+import {Config} from '#/index.js'
+import {createHandler} from '#/backend/Handler.js'
+import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
+import {createCMS} from '#/core.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
 
 const test = suite(import.meta)
 

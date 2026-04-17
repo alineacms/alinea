@@ -1,10 +1,10 @@
-import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
-import {execGit} from 'alinea/backend/util/ExecGit'
-import type {Config} from 'alinea/core/Config'
-import type {Revision} from 'alinea/core/Connection'
-import type {HistoryApi} from 'alinea/core/Connection'
-import type {EntryRecord} from 'alinea/core/EntryRecord'
-import {fileVersions} from 'alinea/core/util/EntryFilenames'
+import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {execGit} from '#/backend/util/ExecGit.js'
+import type {Config} from '#/core/Config.js'
+import type {Revision} from '#/core/Connection.js'
+import type {HistoryApi} from '#/core/Connection.js'
+import type {EntryRecord} from '#/core/EntryRecord.js'
+import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {parseCoAuthoredBy} from '../util/CommitMessage.js'
 
 const encoder = new TextEncoder()

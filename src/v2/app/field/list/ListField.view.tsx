@@ -1,3 +1,25 @@
+import {createId} from '#/core/Id.js'
+import {getType} from '#/core/Internal.js'
+import {Schema} from '#/core/Schema.js'
+import {Type} from '#/core/Type.js'
+import {ListField as CoreListField} from '#/core/field/ListField.js'
+import {ListRow} from '#/core/shape/ListShape.js'
+import {ListOptions} from '#/field/list.js'
+import {NodeEditor} from '#/v2/app/Editor.js'
+import {
+  IcOutlineList,
+  IcRoundAdd,
+  IcRoundArrowDownward,
+  IcRoundArrowUpward,
+  IcRoundDelete
+} from '#/v2/icons.js'
+import {ReactiveNode} from '#/v2/store/Dashboard.js'
+import {
+  useFieldError,
+  useFieldNode,
+  useFieldOptions,
+  useNodes
+} from '#/v2/store/hooks.js'
 import {
   Button,
   Icon
@@ -68,7 +90,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
                   list={list}
                   readOnly={readOnly}
                   row={row}
-                  rows={nodes.length}
+                  rows=ns.des.length}
                   schema={options.schema}
                 />
               ))
@@ -143,19 +165,22 @@ function ListFieldRow({
   const icon = getType(type).icon || IcOutlineList
   return (
     <section
+     
       aria-label={`${label} item ${index + 1}`}
-      className={styles.row()}
+     
+      className={styles.ListFieldRow()}
+    
       role="listitem"
     >
-        <BoxRow className={styles.header()}>
-          <BoxHeader className={styles.leading()}>
+        <BoxRow className={styles.ListFieldRow.header()}>
+          <BoxHeader className={styles.ListFieldRow.leading()}>
             <Icon aria-hidden icon={icon} />
             <strong className={styles.title()}>{label}</strong>
           </BoxHeader>
-          <div className={styles.actions()}>
+          <div className={styles.ListFieldRow.actions()}>
             <Button
               aria-label={`Move ${label} up`}
-              className={styles.action()}
+              className={styles.ListFieldRow.action()}
               isDisabled={readOnly || index === 0}
               onPress={() =>
                 setRows(current => {
@@ -173,7 +198,7 @@ function ListFieldRow({
             </Button>
             <Button
               aria-label={`Move ${label} down`}
-              className={styles.action()}
+              className={styles.ListFieldRow.action()}
               isDisabled={readOnly || index === rows - 1}
               onPress={() =>
                 setRows(current => {
@@ -191,7 +216,7 @@ function ListFieldRow({
             </Button>
             <Button
               aria-label={`Remove ${label}`}
-              className={styles.action()}
+              className={styles.ListFieldRow.action()}
               isDisabled={readOnly}
               onPress={() =>
                 setRows(current =>

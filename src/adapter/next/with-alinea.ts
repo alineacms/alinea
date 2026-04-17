@@ -1,9 +1,8 @@
+import {bold, cyan} from '#/cli/util/Report.js'
+import type {NextConfig} from 'next/dist/types.js'
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
-import {bold, cyan, gray} from 'alinea/cli/util/Report'
-import type {NextConfig} from 'next/dist/types.js'
-import {version} from '../../../package.json'
 
 type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
 type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>

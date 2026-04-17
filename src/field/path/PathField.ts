@@ -1,6 +1,6 @@
-import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {ScalarField} from 'alinea/core/field/ScalarField'
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
+import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {ScalarField} from '#/core/field/ScalarField.js'
+import {viewKeys} from '#/v2/ViewKeys.js'
 import type {ReactNode} from 'react'
 
 export interface PathOptions extends FieldOptions<string> {

@@ -1,13 +1,13 @@
-import type {Reference} from 'alinea/core/Reference'
-import type {TextDoc} from 'alinea/core/TextDoc'
-import {ListEditor, type ListField} from 'alinea/core/field/ListField'
+import type {Reference} from '#/core/Reference.js'
+import type {TextDoc} from '#/core/TextDoc.js'
+import {ListEditor, type ListField} from '#/core/field/ListField.js'
 import {
   RichTextEditor,
   type RichTextField
-} from 'alinea/core/field/RichTextField'
-import type {ListRow} from 'alinea/core/shape/ListShape'
-import {LinkEditor, LinksEditor} from 'alinea/field/link/LinkEditor'
-import type {LinkField, LinksField} from 'alinea/field/link/LinkField'
+} from '#/core/field/RichTextField.js'
+import type {ListRow} from '#/core/shape/ListShape.js'
+import {LinkEditor, LinksEditor} from '#/field/link/LinkEditor.js'
+import type {LinkField, LinksField} from '#/field/link/LinkField.js'
 
 export {
   update,
@@ -17,7 +17,7 @@ export {
   publish,
   archive,
   remove
-} from 'alinea/core/db/Operation'
+} from '#/core/db/Operation.js'
 
 export function list<StoredValue extends ListRow, QueryValue extends ListRow>(
   field: ListField<StoredValue, QueryValue, any>,

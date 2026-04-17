@@ -20,7 +20,7 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
   return (
     <Sidebar>
       <Tabs defaultSelectedKey="history" variant="subtle">
-        <SidebarHeader>
+        <SidebarHeader className={styles.EntrySidebar.header()}>
           <TabList aria-label="Entry sidebar">
             <Tab id="history">
               <Icon icon={IcRoundHistory} />
@@ -36,7 +36,7 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
         <SidebarBody>
           <TabPanel id="history">
             <ul>
-              {statuses.map((status, index) => {
+              {statuses.map(status => {
                 const isEditing =
                   activeStatus == status && currentlyEditing !== undefined
                 return (

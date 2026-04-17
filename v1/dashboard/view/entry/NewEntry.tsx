@@ -1,0 +1,312 @@
+import styler from '@alinea/styler'
+import {Entry} from '#/core/Entry.js'
+import {createId} from '#/core/Id.js'
+import {Reference} from '#/core/Reference.js'
+import {Schema} from '#/core/Schema.js'
+import {track} from '#/core/Tracker.js'
+import {Type, type} from '#/core/Type.js'
+import {entries, fromEntries, keys} from '#/core/util/Objects.js'
+import {slugify} from '#/core/util/Slugs.js'
+import {useForm} from '#/dashboard/atoms/FormAtoms.js'
+import {InputForm} from '#/dashboard/editor/InputForm.js'
+import {useLocation, useNavigate} from '#/dashboard/util/HashRouter.js'
+import {Modal} from '#/dashboard/view/Modal.js'
+import {EntryLink, entry} from '#/field/link.js'
+import {type SelectField, select} from '#/field/select.js'
+import {text} from '#/field/text.js'
+import {entryPicker} from '#/picker/entry/EntryPicker.js'
+import {EntryReference} from '#/picker/entry/EntryReference.js'
+import {parents} from '#/query.js'
+import {Button, Loader} from '#/ui.js'
+import {Link} from '#/ui/Link.js'
+import {useAtomValue} from 'jotai'
+import {type FormEvent, Suspense, useEffect, useMemo, useState} from 'react'
+import {useQuery} from 'react-query'
+import {useConfig} from '../../hook/UseConfig.js'
+import {useDb} from '../../hook/UseDb.js'
+import {useLocale} from '../../hook/UseLocale.js'
+import {useNav} from '../../hook/UseNav.js'
+import {usePolicy} from '../../hook/UsePolicy.js'
+import {useRoot} from '../../hook/UseRoot.js'
+import {useWorkspace} from '../../hook/UseWorkspace.js'
+import css from './NewEntry.module.scss'
+
+const styles = styler(css)
+
+const parentData = {
+  id: Entry.id,
+  type: Entry.type,
+  path: Entry.path,
+  url: Entry.url,
+  level: Entry.level,
+  parent: Entry.parentId,
+  parents: Entry.parents,
+  parentPaths: parents({
+    select: Entry.path
+  })
+}
+
+const titleField = text('Title', {autoFocus: true})
+
+function NewEntryForm({parentId}: NewEntryProps) {
+  const config = useConfig()
+  const locale = useLocale()
+  const policy = usePolicy()
+  const db = useDb()
+  const {data: requestedParent} = useQuery(
+    ['parent-req', parentId],
+    async () => {
+      return parentId
+        ? db.first({
+            select: parentData,
+            id: parentId,
+            locale,
+            status: 'preferDraft'
+          })
+        : null
+    },
+    {suspense: true, keepPreviousData: true, staleTime: 0}
+  )
+  const preselectedId =
+    requestedParent &&
+    (Type.isContainer(config.schema[requestedParent.type])
+      ? requestedParent.id
+      : requestedParent.parent)
+  const {pathname} = useLocation()
+  const nav = useNav()
+  const navigate = useNavigate()
+  const {name: workspace} = useWorkspace()
+  const containerTypes = entries(config.schema)
+    .filter(([, type]) => {
+      return Type.isContainer(type!)
+    })
+    .map(pair => pair[0])
+  const root = useRoot()
+  const parentField = useMemo(() => {
+    return entry('Parent', {
+      location: {workspace, root: root.name},
+      condition: {_type: {in: containerTypes}},
+      enableNavigation: true,
+      initialValue: preselectedId
+        ? {
+            [Reference.id]: 'parent',
+            [Reference.type]: 'entry',
+            [EntryReference.entry]: preselectedId
+          }
+        : undefined
+    })
+  }, [])
+
+  async function allowedTypes(parentId?: string): Promise<Array<string>> {
+    if (!parentId) {
+      return root.contains
+        ? Schema.contained(config.schema, root.contains)
+        : keys(config.schema)
+    }
+    const parent = parentId
+      ? await db.get({
+          select: parentData,
+          id: parentId,
+          status: 'preferDraft'
+        })
+      : null
+    const parentType = parent && config.schema[parent.type]
+    if (parentType)
+      return Schema.contained(config.schema, Type.contains(parentType))
+    return keys(config.schema)
+  }
+
+  const typeField = useMemo(() => {
+    const typeField: SelectField<string> = select('Select type', {
+      options: {}
+    }) as any
+    return track.options(typeField, async get => {
+      const selectedParent = get(parentField)
+      const parentId = selectedParent?.[EntryReference.entry]
+      const types: Array<string> = await allowedTypes(parentId)
+      return {
+        options: fromEntries(
+          types
+            .filter(type => {
+              return policy.canCreate({
+                workspace,
+                root: root.name,
+                type
+              })
+            })
+            .map(key => {
+              return [key, config.schema[key]] as const
+            })
+            .filter(row => row[1])
+            .map(([key, type]) => {
+              return [key, (Type.label(type) || key) as string]
+            })
+        )
+      }
+    })
+  }, [])
+
+  const insertOrderField = useMemo(() => {
+    const insertOrderField: SelectField<'first' | 'last'> = select(
+      'Insert order',
+      {
+        initialValue: 'last',
+        options: {
+          first: 'At the top of the list',
+          last: 'At the bottom of the list'
+        }
+      }
+    )
+    return track.options(insertOrderField, async get => {
+      const selectedParent = get(parentField)
+      const parentId = selectedParent?.[EntryReference.entry]
+      const parent = await db.first({
+        select: {type: Entry.type},
+        id: parentId,
+        status: 'preferDraft'
+      })
+      const parentType = parent && config.schema[parent.type]
+      const parentInsertOrder = parentType && Type.insertOrder(parentType)
+      return {
+        hidden: parentInsertOrder !== 'free'
+      }
+    })
+  }, [])
+
+  const copyFromField = useMemo(() => {
+    const copyFromField = entry('Copy content from')
+    return track.options(copyFromField, get => {
+      const type = get(typeField)!
+      return {
+        readOnly: !type,
+        pickers: {
+          entry: entryPicker({
+            condition: {_type: type},
+            title: 'Copy content from',
+            max: 1,
+            selection: EntryLink
+          })
+        }
+      }
+    })
+  }, [])
+
+  const [isCreating, setIsCreating] = useState(false)
+
+  const formType = useMemo(
+    () =>
+      type('New entry', {
+        fields: {
+          parent: parentField,
+          title: titleField,
+          type: typeField,
+          order: insertOrderField,
+          copyFrom: copyFromField
+        }
+      }),
+    []
+  )
+  const form = useForm(formType)
+
+  const parentAtoms = form.fieldInfo(parentField)
+  const typeAtoms = form.fieldInfo(typeField)
+  const copyFromAtoms = form.fieldInfo(copyFromField)
+  const selectedType = useAtomValue(typeAtoms.value)
+  const selectedParent = useAtomValue(parentAtoms.value)
+
+  const isAllowed = policy.canCreate({
+    workspace,
+    root: root.name,
+    type: selectedType,
+    parents: requestedParent
+      ? [requestedParent.id, ...requestedParent.parents]
+      : [],
+    locale
+  })
+
+  useEffect(() => {
+    allowedTypes(selectedParent?.[EntryReference.entry]).then(types => {
+      if (types.length > 0) typeAtoms.mutator(types[0])
+    })
+  }, [selectedParent])
+
+  useEffect(() => {
+    copyFromAtoms.mutator.replace(undefined!)
+  }, [selectedType])
+
+  async function handleCreate(e: FormEvent) {
+    e.preventDefault()
+    const {title, type: selected} = form.data()
+    if (isCreating || !selected || !title) return
+    setIsCreating(true)
+    const path = slugify(title)
+    const id = createId()
+    const parentId = form.data().parent?.[EntryReference.entry]
+    const entryType = config.schema[selected]!
+    const copyFrom = form.data().copyFrom?.[EntryReference.entry]
+    const entryData = copyFrom
+      ? await db.first({
+          select: Entry.data,
+          id: copyFrom,
+          locale: locale,
+          status: 'preferPublished'
+        })
+      : Type.initialValue(entryType)
+    const parent = parentId ? await db.first({id: parentId}) : undefined
+    const parentType = parent && config.schema[parent._type]
+    const parentInsertOrder = parentType && Type.insertOrder(parentType)
+    return db
+      .create({
+        type: entryType,
+        id: id,
+        insertOrder:
+          !parentInsertOrder || parentInsertOrder === 'free'
+            ? form.data().order
+            : parentInsertOrder,
+        parentId: parentId,
+        locale: locale,
+        root: root.name,
+        workspace: workspace,
+        status: config.enableDrafts ? 'draft' : 'published',
+        set: {...entryData, title, path}
+      })
+      .then(entry => {
+        navigate(nav.entry({id: entry._id}))
+      })
+      .finally(() => {
+        setIsCreating(false)
+      })
+  }
+  return (
+    <form
+      onSubmit={handleCreate}
+      className={styles.form({loading: isCreating})}
+    >
+      {isCreating && <Loader absolute />}
+      <InputForm border={false} form={form} />
+      <div className={styles.root.footer()}>
+        <Link href={pathname} className={styles.root.footer.link()}>
+          Cancel
+        </Link>
+        <Button disabled={!isAllowed}>Create</Button>
+      </div>
+    </form>
+  )
+}
+
+export type NewEntryProps = {parentId?: string}
+
+export function NewEntry({parentId}: NewEntryProps) {
+  const navigate = useNavigate()
+  const {pathname} = useLocation()
+  function handleClose() {
+    navigate(pathname)
+  }
+  return (
+    <Modal open onClose={handleClose} className={styles.root()}>
+      <Suspense fallback={<Loader />}>
+        <NewEntryForm parentId={parentId} />
+      </Suspense>
+    </Modal>
+  )
+}

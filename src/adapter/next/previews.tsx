@@ -1,8 +1,8 @@
 'use client'
 
-import {setPreviewCookies} from 'alinea/preview/PreviewCookies'
-import {usePreview} from 'alinea/preview/react'
-import {registerPreviewWidget} from 'alinea/preview/widget'
+import {setPreviewCookies} from '#/preview/PreviewCookies.js'
+import {usePreview} from '#/preview/react.js'
+import {registerPreviewWidget} from '#/preview/widget.js'
 import {usePathname, useRouter} from 'next/navigation.js'
 import {useEffect, useState, useTransition} from 'react'
 

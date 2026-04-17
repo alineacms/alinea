@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {isSeparator, slugify} from 'alinea/core/util/Slugs'
+import {isSeparator, slugify} from '#/core/util/Slugs.js'
 
 const test = suite(import.meta)
 

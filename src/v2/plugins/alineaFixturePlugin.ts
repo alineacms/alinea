@@ -13,10 +13,6 @@ interface AlineaFixturePluginOptions {
   query: string
 }
 
-interface ResolveIdOptions {
-  attributes?: Record<string, string>
-}
-
 function hasQueryFlag(source: string, query: string): boolean {
   const questionMark = source.indexOf('?')
   if (questionMark === -1) return false
@@ -58,10 +54,9 @@ export function alineaFixturePlugin(): Plugin {
     name: 'alinea-fixture',
     enforce: 'pre',
 
-    async resolveId(source, importer, resolveOptions?: ResolveIdOptions) {
+    async resolveId(source, importer) {
       const queryImport = hasQueryFlag(source, options.query)
-      const attributeImport = resolveOptions?.attributes?.type === 'alinea'
-      if (!queryImport && !attributeImport) return null
+      if (!queryImport) return null
 
       const request = stripQuery(source)
       const resolved = await this.resolve(request, importer, {skipSelf: true})
@@ -82,8 +77,8 @@ export function alineaFixturePlugin(): Plugin {
       const importPath = JSON.stringify(cmsFile)
 
       return `
-import {LocalDB} from 'alinea/core/db/LocalDB'
-import {importSource} from 'alinea/core/source/SourceExport'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {importSource} from '#/core/source/SourceExport.js'
 import {cms} from ${importPath}
 
 const exportedSource = ${serialized}

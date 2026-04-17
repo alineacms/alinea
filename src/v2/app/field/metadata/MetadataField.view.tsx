@@ -1,5 +1,5 @@
 import {Elevation, Label} from '@alinea/components'
-import {MetadataField} from 'alinea/field/metadata'
+import {MetadataField} from '#/field/metadata.js'
 import {useFieldError, useFieldNode, useFieldOptions} from '../../../store.js'
 import {NodeEditor} from '../../Editor.js'
 

@@ -1,22 +1,23 @@
-.root {
+.Explorer {
   display: flex;
   min-height: 0;
   height: 100%;
+  width: 100%;
   flex-direction: column;
   gap: 16px;
 }
 
-.toolbar {
+.Explorer-toolbar {
   display: flex;
   gap: 12px;
   align-items: center;
 }
 
-.toolbar > *:first-child {
+.Explorer-toolbar > *:first-child {
   flex: 1;
 }
 
-.listViewport {
+.Explorer-viewport {
   min-height: 0;
   flex: 1;
   height: 100%;

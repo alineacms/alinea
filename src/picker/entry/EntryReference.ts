@@ -1,4 +1,4 @@
-import type {Reference} from 'alinea/core/Reference'
+import type {Reference} from '#/core/Reference.js'
 
 export interface EntryReference extends Reference {
   _type: 'entry' | 'image' | 'file'

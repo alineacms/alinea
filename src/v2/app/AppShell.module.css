@@ -1,9 +1,80 @@
-.root {
+.AppShell {
   display: flex;
   height: 100%;
 }
-.allotment {
+
+.AppShell-footer {
+  padding: 0;
+}
+
+.AppShell-profile {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  border-radius: 0;
   display: flex;
-  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
   width: 100%;
+}
+
+.AppShell-profile-identity {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.AppShell-profile-popover {
+  min-width: 260px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+
+  & > li {
+    font-size: 14px;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    &:nth-child(even) {
+      background-color: #fbfbfb;
+    }
+  }
+}
+
+.AppShell-profile-popover-themeOptions {
+  display: flex;
+  gap: 8px;
+}
+
+.AppShell-trigger {
+  min-width: 96px;
+  justify-content: space-between;
+}
+
+.AppShell-trigger-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.AppShell-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.AppShell-status-sha {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #6c7b8c;
+  font-size: 12px;
 }

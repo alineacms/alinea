@@ -2,7 +2,4 @@
 linker = "hoisted"
 
 [test]
-coveragePathIgnorePatterns = [
-  # Playwright
-  "**/*.spec.ts"
-]
+pathIgnorePatterns = ["v1/**"]

@@ -1,21 +1,21 @@
-import {parseCoAuthoredBy} from 'alinea/cli/util/CommitMessage'
+import {parseCoAuthoredBy} from '#/cli/util/CommitMessage.js'
 import type {
   CommitApi,
   HistoryApi,
   Revision,
   SyncApi
-} from 'alinea/core/Connection'
-import type {EntryRecord} from 'alinea/core/EntryRecord'
-import {HttpError} from 'alinea/core/HttpError'
-import type {CommitChange, CommitRequest} from 'alinea/core/db/CommitRequest'
+} from '#/core/Connection.js'
+import type {EntryRecord} from '#/core/EntryRecord.js'
+import {HttpError} from '#/core/HttpError.js'
+import type {CommitChange, CommitRequest} from '#/core/db/CommitRequest.js'
 import {
   GithubSource,
   type GithubSourceOptions
-} from 'alinea/core/source/GithubSource'
-import {ShaMismatchError} from 'alinea/core/source/ShaMismatchError'
-import {base64, btoa} from 'alinea/core/util/Encoding'
-import {fileVersions} from 'alinea/core/util/EntryFilenames'
-import {join} from 'alinea/core/util/Paths'
+} from '#/core/source/GithubSource.js'
+import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {base64, btoa} from '#/core/util/Encoding.js'
+import {fileVersions} from '#/core/util/EntryFilenames.js'
+import {join} from '#/core/util/Paths.js'
 
 export interface GithubOptions extends GithubSourceOptions {
   author?: {name: string; email: string}

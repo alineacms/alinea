@@ -33,6 +33,7 @@ export interface Entry<Data extends object = Record<string, unknown>> {
   data: Data
   searchableText: string
 }
+
 export const Entry = {
   id: new Expr<string>({type: 'entryField', name: 'id'}),
   status: new Expr<EntryStatus>({type: 'entryField', name: 'status'}),

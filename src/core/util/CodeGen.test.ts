@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {code} from 'alinea/core/util/CodeGen'
+import {code} from '#/core/util/CodeGen.js'
 
 const test = suite(import.meta)
 

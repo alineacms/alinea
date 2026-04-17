@@ -1,7 +1,7 @@
+import {HandleAction} from '#/backend/HandleAction.js'
+import type {PreviewInfo} from '#/backend/Previews.js'
+import {type AuthResult, AuthResultType} from '#/cloud/AuthResult.js'
 import {AbortController, fetch, type Response} from '@alinea/iso'
-import {HandleAction} from 'alinea/backend/HandleAction'
-import type {PreviewInfo} from 'alinea/backend/Previews'
-import {type AuthResult, AuthResultType} from 'alinea/cloud/AuthResult'
 import type {Config} from './Config.js'
 import type {
   DraftTransport,
@@ -9,9 +9,9 @@ import type {
   Revision,
   UploadResponse
 } from './Connection.js'
-import type {Draft, DraftKey} from './Draft.js'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
+import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
@@ -154,6 +154,7 @@ export class Client implements LocalConnection {
     ).then(response => this.#failOnHttpError<Response>(response, false))
     const form = await response.formData()
     for (const [key, value] of form.entries()) {
+      // @ts-ignore - Bun types declare entries wrong
       if (value instanceof Blob) {
         const sha = key.slice(0, 40)
         const blob = new Uint8Array(await value.arrayBuffer())

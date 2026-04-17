@@ -1,12 +1,10 @@
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
-import {hidden} from 'alinea/field/hidden'
-import {text} from 'alinea/field/text/TextField'
-import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
+import {hidden} from '#/field/hidden/HiddenField.js'
+import {text} from '#/field/text/TextField.js'
+import {IcRoundPermMedia} from '#/v2/icons.js'
 import {type Type, type} from '../Type.js'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
-  view: viewKeys.MediaExplorer,
   icon: IcRoundPermMedia,
   contains: ['MediaLibrary'],
   fields: {
@@ -17,9 +15,6 @@ export const MediaLibrary = type('Media directory', {
 
 export type MediaFile = Type.Infer<typeof MediaFile>
 export const MediaFile = type('Media file', {
-  view: viewKeys.MediaFile,
-  summaryRow: viewKeys.FileSummaryRow,
-  summaryThumb: viewKeys.FileSummaryThumb,
   hidden: true,
   fields: {
     title: text('Title'),

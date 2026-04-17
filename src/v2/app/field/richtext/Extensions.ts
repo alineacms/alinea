@@ -35,7 +35,7 @@ export const extensions = {
   Text,
   Paragraph: Paragraph.configure({
     HTMLAttributes: {
-      class: styles.paragraph()
+      class: styles.Paragraph()
     }
   }),
   Small,
@@ -45,28 +45,28 @@ export const extensions = {
   HorizontalRule,
   BulletList: BulletList.configure({
     HTMLAttributes: {
-      class: styles.list()
+      class: styles.BulletList()
     }
   }),
   OrderedList: OrderedList.configure({
     HTMLAttributes: {
-      class: styles.list()
+      class: styles.OrderedList()
     }
   }),
   ListItem: ListItem.configure({
     HTMLAttributes: {
-      class: styles.listItem()
+      class: styles.ListItem()
     }
   }),
   Blockquote: Blockquote.configure({
     HTMLAttributes: {
-      class: styles.blockquote()
+      class: styles.Blockquote()
     }
   }),
   HardBreak,
   Heading: Heading.configure({
     HTMLAttributes: {
-      class: styles.heading()
+      class: styles.Heading()
     }
   }),
   TextAlign: TextAlign.configure({
@@ -76,7 +76,7 @@ export const extensions = {
   Gapcursor,
   Link: Link.configure({
     HTMLAttributes: {
-      class: styles.link()
+      class: styles.Link()
     }
   }),
   FloatingMenu,
@@ -84,23 +84,23 @@ export const extensions = {
   SubScript,
   Table: Table.configure({
     HTMLAttributes: {
-      class: styles.table()
+      class: styles.Table()
     }
   }),
   TableCell: TableCell.configure({
     HTMLAttributes: {
-      class: styles.td()
+      class: styles.TableCell()
     }
   }),
   TableHeader: TableHeader.configure({
     HTMLAttributes: {
-      class: styles.th()
+      class: styles.TableHeader()
     }
   }),
   TableRow,
   Highlight: Highlight.configure({
     HTMLAttributes: {
-      class: styles.highlight()
+      class: styles.Highlight()
     }
   }),
   History

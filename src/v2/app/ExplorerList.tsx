@@ -1,8 +1,8 @@
-import { Button, Elevation, Icon, ProgressCircle } from '@alinea/components'
+import {Button, Elevation, Icon, ProgressCircle} from '@alinea/components'
 import styler from '@alinea/styler'
-import { Size } from '@react-stately/virtualizer'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { memo } from 'react'
+import {Size} from '@react-stately/virtualizer'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {memo} from 'react'
 import {
   GridLayout,
   type GridLayoutOptions,
@@ -13,8 +13,8 @@ import {
   useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
-import { IcRoundDragIndicator } from '../icons.js'
-import type { DashboardEntry, DashboardExplorer } from '../store.js'
+import {IcRoundDragIndicator} from '../icons.js'
+import type {DashboardEntry, DashboardExplorer} from '../store.js'
 import css from './ExplorerList.module.css'
 
 const styles = styler(css)
@@ -50,7 +50,7 @@ const ExplorerItem = memo(function ExplorerItem({
     <GridListItem
       id={entry.id}
       textValue={label}
-      className={styles.item()}
+      className={styles.ExplorerItem()}
       onAction={
         // This is not ideal, but I can't see how to cleanly make the setter
         // optional
@@ -63,15 +63,15 @@ const ExplorerItem = memo(function ExplorerItem({
         slot="drag"
         aria-label={`Drag ${label}`}
         appearance="plain"
-        className={styles.dragHandle()}
+        className={styles.ExplorerItem.drag.handle()}
       >
         <IcRoundDragIndicator />
       </Button>
-      <Elevation className={styles.card()}>
-        {icon && <Icon icon={icon} className={styles.icon()} />}
-        <div className={styles.body()}>
-          <div className={styles.label()}>{label}</div>
-          <div className={styles.meta()}>{type.label}</div>
+      <Elevation className={styles.ExplorerItem.card()}>
+        {icon && <Icon icon={icon} className={styles.ExplorerItem.icon()} />}
+        <div className={styles.ExplorerItem.body()}>
+          <div className={styles.ExplorerItem.label()}>{label}</div>
+          <div className={styles.ExplorerItem.meta()}>{type.label}</div>
         </div>
       </Elevation>
     </GridListItem>
@@ -91,8 +91,8 @@ export function ExplorerList({explorer}: ExplorerListProps) {
     getItems,
     renderDragPreview(items) {
       return (
-        <Elevation className={styles.dragPreview()}>
-          <span className={styles.dragPreviewLabel()}>
+        <Elevation className={styles.ExplorerList.drag.preview()}>
+          <span className={styles.ExplorerList.drag.preview.label()}>
             {items.length === 1 ? '1 item' : `${items.length} items`}
           </span>
         </Elevation>
@@ -100,9 +100,9 @@ export function ExplorerList({explorer}: ExplorerListProps) {
     }
   })
   return (
-    <div className={styles.viewport()}>
+    <div className={styles.ExplorerList()}>
       {isPending && (
-        <div className={styles.pending()}>
+        <div className={styles.ExplorerList.pending()}>
           <ProgressCircle isIndeterminate aria-label="Pending..." />
         </div>
       )}
@@ -112,7 +112,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
             aria-label="Explorer entries"
             items={items}
             layout="grid"
-            className={styles.root({view: 'card'})}
+            className={styles.ExplorerList(view)}
             selectionMode={explorer.selectionMode}
             selectionBehavior={explorer.selectionBehavior}
             dragAndDropHooks={dragAndDropHooks}
@@ -129,7 +129,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
             aria-label="Explorer entries"
             items={items}
             layout="stack"
-            className={styles.root({view: 'row'})}
+            className={styles.ExplorerList(view)}
             selectionMode={explorer.selectionMode}
             selectionBehavior={explorer.selectionBehavior}
             dragAndDropHooks={dragAndDropHooks}

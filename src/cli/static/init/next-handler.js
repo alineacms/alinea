@@ -1,4 +1,4 @@
-import {createHandler} from 'alinea/next'
+import {createHandler} from '#/next.js'
 import {cms} from '@/cms'
 
 // This handler will respond to API request of the dashboard

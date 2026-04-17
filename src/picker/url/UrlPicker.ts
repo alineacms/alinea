@@ -1,10 +1,10 @@
-import type {Picker} from 'alinea/core/Picker'
-import {Reference} from 'alinea/core/Reference'
-import {Type, type} from 'alinea/core/Type'
-import {ListRow} from 'alinea/core/shape/ListShape'
-import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {keys} from 'alinea/core/util/Objects'
+import type {Picker} from '#/core/Picker.js'
+import {Reference} from '#/core/Reference.js'
+import {Type, type} from '#/core/Type.js'
+import {ListRow} from '#/core/shape/ListShape.js'
+import {RecordShape} from '#/core/shape/RecordShape.js'
+import {ScalarShape} from '#/core/shape/ScalarShape.js'
+import {keys} from '#/core/util/Objects.js'
 
 export interface UrlReference extends Reference {
   _type: 'url'

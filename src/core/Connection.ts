@@ -1,5 +1,5 @@
 import type {Request, Response} from '@alinea/iso'
-import type {PreviewInfo} from 'alinea/backend/Previews'
+import type {PreviewInfo} from '#/backend/Previews.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'

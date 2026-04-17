@@ -4,7 +4,7 @@
   }
 }
 
-.root {
+.Sheet {
   margin-left: auto;
   height: 100%;
   max-width: 100%;
@@ -30,7 +30,7 @@
   }
 }
 
-.root-dialog {
+.SheetDialog {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -43,7 +43,7 @@
   }
 }
 
-.root-controls {
+.SheetDialog-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -51,19 +51,19 @@
   width: 100%;
 }
 
-.root-header {
+.SheetDialog-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.root-footer {
+.SheetFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.root-content {
+.SheetContent {
   flex: 1;
   overflow: auto;
   scrollbar-width: thin;
@@ -74,6 +74,6 @@
   flex-direction: column;
 }
 
-.separator {
+.SheetSeparator {
   border-top: 1px solid light-dark(var(--gray-200), var(--gray-800));
 }

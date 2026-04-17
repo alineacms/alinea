@@ -6,7 +6,7 @@ import {
   DashboardMenuItem,
   ExplorerLocation,
   useDashboard
-} from '../store'
+} from '../store.js'
 
 interface BreadcrumbMenuProps {
   label: Atom<string>

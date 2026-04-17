@@ -1,71 +1,96 @@
-.root {
+.CodeEditorInput {
   overflow: hidden;
-  border: 1px solid #d8e1eb;
-  border-radius: 12px;
-  background: #fbfcfe;
-  transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease,
-    background-color 120ms ease;
+  background-color: var(--alinea-field-background);
+  border: 1px solid var(--alinea-border-color);
+  border-radius: 6px;
+  outline: 4px solid transparent;
+  transition: var(--alinea-transition);
+  transition-property:
+    border-color,
+    outline-color,
+    background-color;
+
+  &:hover {
+    border-color: var(--alinea-border-color-hover);
+    outline-color: var(--alinea-box-shadow-color);
+  }
+
+  &:focus-within {
+    border-color: var(--alinea-highlight-border);
+    outline-color: var(--alinea-highlight-overlay);
+  }
+
+  &[data-invalid='true'] {
+    border-color: var(--alinea-invalid-color);
+    outline-color: var(--alinea-invalid-overlay);
+  }
+
+  &[data-read-only='true'] {
+    background-color: var(--alinea-field-background-disabled);
+  }
+
+  &[data-read-only='true']:hover,
+  &[data-read-only='true']:focus-within {
+    border-color: var(--alinea-border-color);
+    outline-color: transparent;
+  }
 }
 
-.root:focus-within {
-  border-color: #7ea7d8;
-  box-shadow: 0 0 0 3px rgba(126, 167, 216, 0.2);
-  background: #ffffff;
-}
-
-.root-invalid {
-  border-color: #d15b6a;
-  box-shadow: 0 0 0 3px rgba(209, 91, 106, 0.16);
-  background: #fff8f8;
-}
-
-.editor {
+.CodeEditorInput-editor {
   width: 100%;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
   tab-size: 2;
 }
 
-.textarea {
+.CodeEditorInput-textarea {
   outline: none;
+  color: var(--alinea-field-text-color);
+
+  &::placeholder {
+    color: var(--alinea-text-color-placeholder);
+  }
+
+  &:disabled,
+  &[readonly] {
+    color: var(--alinea-text-color-disabled);
+  }
 }
 
-.pre {
-  color: #22303d;
+.CodeEditorInput-pre {
+  color: var(--alinea-field-text-color);
   white-space: pre-wrap;
   word-break: normal;
   overflow-wrap: anywhere;
 }
 
-.comment {
-  color: #98a3ad;
+.CodeEditorInput-comment {
+  color: var(--alinea-gray-400);
   font-style: italic;
 }
 
-.keyword {
-  color: #55616b;
+.CodeEditorInput-keyword {
+  color: var(--alinea-gray-700);
   font-weight: 600;
 }
 
-.identifier {
-  color: #1e88e5;
+.CodeEditorInput-identifier {
+  color: var(--alinea-primary-500);
 }
 
-.number {
-  color: #d81b60;
+.CodeEditorInput-number {
+  color: var(--alinea-danger-500);
 }
 
-.string {
-  color: #2e7d32;
+.CodeEditorInput-string {
+  color: var(--alinea-warning-600);
 }
 
-.regex {
-  color: #ef6c00;
+.CodeEditorInput-regex {
+  color: var(--alinea-warning-500);
 }
 
-.punctuation {
-  color: #607d8b;
+.CodeEditorInput-punctuation {
+  color: var(--alinea-gray-600);
 }

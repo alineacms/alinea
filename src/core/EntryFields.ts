@@ -1,5 +1,5 @@
-import {Entry} from 'alinea/core'
 import type {EntryStatus} from './Entry.js'
+import {Entry} from './Entry.js'
 
 export interface EntryFields {
   _id: string

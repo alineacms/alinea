@@ -23,7 +23,7 @@ import TableHeader from '@tiptap/extension-table-header'
 import TableRow from '@tiptap/extension-table-row'
 import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
-import css from './Extensions.module.scss'
+import css from './Extensions.module.css'
 import {Link} from './extensions/Link.js'
 import Small from './extensions/Small.js'
 

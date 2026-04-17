@@ -1,6 +1,6 @@
-import type {FieldOptions, WithoutLabel} from 'alinea/core'
-import {ScalarField} from 'alinea/core/field/ScalarField'
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
+import type {FieldOptions, WithoutLabel} from '#/core.js'
+import {ScalarField} from '#/core/field/ScalarField.js'
+import {viewKeys} from '#/v2/ViewKeys.js'
 import type {ReactNode} from 'react'
 
 export interface NumberOptions extends FieldOptions<number | null> {

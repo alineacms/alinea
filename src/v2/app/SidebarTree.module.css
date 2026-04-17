@@ -1,19 +1,4 @@
-.root {
-  display: flex;
-  flex: 1;
-  min-height: 100%;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.focusHeader {
-  display: flex;
-  align-items: center;
-  min-height: 34px;
-  margin-bottom: 4px;
-}
-
-.focusLabel {
+.SidebarParent-label {
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -32,35 +17,40 @@
   width: 100%;
 }
 
-.rootsTrigger {
+.SidebarTree-rootsTrigger {
   font: inherit;
+
   min-height: 34px;
   padding: 0;
   width: 100%;
+
   display: flex;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 8px;
 }
 
-.focusIcon {
-  flex-shrink: 0;
-  opacity: 0.75;
+.SidebarTree-tree {
+  min-width: 0;
+  width: 100%;
 }
 
-:global(.react-aria-Virtualizer) {
+.SidebarTree-tree.is-collapsed {
+  display: none;
+}
+
+.SidebarTree-tree :global(.react-aria-Virtualizer) {
   min-height: 0;
   height: 100%;
 }
 
-:global(.alinea-Sidebar-body) :global(.alinea-rac-Tree) {
+.SidebarTree-tree :global(.alinea-rac-Tree) {
   min-width: 0;
   padding: 8px !important;
-  
+
   /* TODO */
   > div {
-    height: auto !important;
     width: 100% !important;
-    
+
     > div {
       height: auto !important;
       width: 100% !important;
@@ -68,8 +58,84 @@
   }
 }
 
-:global(.alinea-rac-TreeItem){
+.SidebarTree-tree :global(.alinea-rac-TreeItem) {
   border-radius: 6px;
   width: 100%;
   padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px) !important;
+}
+
+.SidebarTree-locator {
+  display: flex;
+  height: 100%;
+}
+
+.SidebarTree-locator > :not(.SidebarTree-locator-rootSelector) {
+  width: 100%;
+}
+
+.SidebarTree-locator-rootSelector {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  border-right: solid 1px lightgray;
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: 56px;
+  align-items: center;
+}
+
+.SidebarTree-locator-rootSelector[data-expanded] {
+  width: 100%;
+  border-right: 0;
+  align-items: stretch;
+}
+
+.SidebarTree-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.SidebarTree-itemLoading {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+  animation: SidebarTree-itemLoading-pulse 900ms ease-in-out infinite;
+}
+
+@keyframes SidebarTree-itemLoading-pulse {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
+.SidebarTree-rootButton {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  justify-content: center;
+}
+
+.SidebarTree-rootButton[data-expanded] {
+  aspect-ratio: auto;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 5px;
+}
+
+.SidebarTree-rootButton-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

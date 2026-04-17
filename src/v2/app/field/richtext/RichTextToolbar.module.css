@@ -1,37 +1,46 @@
-.root {
+.RichTextToolbar {
   width: 100%;
   min-width: 0;
   overflow-x: auto;
   padding: 4px 8px;
 }
 
-.toolbar {
+.RichTextToolbar-toolbar {
   flex-wrap: nowrap;
   min-width: max-content;
 }
 
-.button {
+.ToolbarButtonView {
   flex: 0 0 auto;
 }
 
-.menuTrigger {
+.ToolbarButtonView-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.ToolbarMenuView-trigger {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   white-space: nowrap;
 }
 
-.menuText {
+.ToolbarMenuView-text {
   line-height: 1;
 }
 
-.menuItem {
+.ToolbarMenuView-item {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.icon {
+.ToolbarMenuView-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -41,7 +50,7 @@
 }
 
 @media (max-width: 768px) {
-  .root {
+  .RichTextToolbar-toolbar {
     justify-content: flex-start;
   }
 }

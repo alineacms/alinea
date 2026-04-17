@@ -1,10 +1,9 @@
 import {Button, DialogTrigger, Elevation, Label} from '@alinea/components'
-import {styler} from '@alinea/styler'
-import {createId} from 'alinea/core/Id'
-import {Reference} from 'alinea/core/Reference'
-import {ListRow} from 'alinea/core/shape/ListShape'
-import {LinkField, LinksField} from 'alinea/field/link/LinkField'
-import {EntryReference} from 'alinea/types.js'
+import {createId} from '#/core/Id.js'
+import {Reference} from '#/core/Reference.js'
+import {ListRow} from '#/core/shape/ListShape.js'
+import {LinkField, LinksField} from '#/field/link/LinkField.js'
+import {EntryReference} from '#/types.js'
 import {useAtomValue} from 'jotai'
 import {
   ReactiveNode,
@@ -14,9 +13,6 @@ import {
   useFieldValue
 } from '../../../store.js'
 import {LinkPicker} from '../../LinkPicker.js'
-import css from './LinkField.module.css'
-
-const styles = styler(css)
 
 interface EntryRowProps {
   entryId: string

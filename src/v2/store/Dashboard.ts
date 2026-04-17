@@ -1,18 +1,20 @@
+import type {Config} from '#/core/Config.js'
+import type {LocalConnection} from '#/core/Connection.js'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
+import {UploadOperation} from '#/core/db/Operation.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import {Entry, EntryStatus} from '#/core/Entry.js'
+import {Field, FieldOptions} from '#/core/Field.js'
+import type {Order} from '#/core/Graph.js'
+import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
+import {createPreview} from '#/core/media/CreatePreview.js'
+import {Section} from '#/core/Section.js'
+import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
+import {Type} from '#/core/Type.js'
+import {assert} from '#/core/util/Assert.js'
+import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {parents, translations} from '#/query.js'
 import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
-import type {Config} from 'alinea/core/Config'
-import type {LocalConnection} from 'alinea/core/Connection'
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
-import type {WriteableGraph} from 'alinea/core/db/WriteableGraph'
-import {Entry, EntryStatus} from 'alinea/core/Entry'
-import {Field, FieldOptions} from 'alinea/core/Field'
-import type {Order} from 'alinea/core/Graph'
-import {getRoot, getType, getWorkspace} from 'alinea/core/Internal'
-import {Section} from 'alinea/core/Section'
-import {FieldGetter, optionTrackerOf} from 'alinea/core/Tracker'
-import {Type} from 'alinea/core/Type'
-import {assert} from 'alinea/core/util/Assert'
-import {entries, fromEntries, values} from 'alinea/core/util/Objects'
-import {parents, translations} from 'alinea/query'
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
@@ -24,6 +26,7 @@ import type {
   DroppableCollectionReorderEvent,
   Key
 } from 'react-aria-components'
+import {WorkerDB} from '../boot/WorkerDB.js'
 import {IcRoundDescription} from '../icons.js'
 
 export interface DashboardRoute {
@@ -130,7 +133,10 @@ export class Dashboard {
     const root = get(this.selectedRoot)
     const workspace = get(this.selectedWorkspace)
     const {entry} = get(this.route)
-    if (entry) return {entry: await get(this.entries(entry))}
+    if (entry)
+      try {
+        return {entry: await get(this.entries(entry))}
+      } catch {}
     if (!workspace) return null
     if (root) return {root: this.workspace(workspace).root(root)}
     return null
@@ -154,6 +160,13 @@ export class Dashboard {
     ),
     {onMount: (init: () => void) => init()}
   )
+
+  sync = atom(null, (get, set) => {
+    const db = get(this.db)
+    if (db instanceof WorkerDB) {
+      return db.sync()
+    }
+  })
 
   selectedWorkspace = atom(
     get => {
@@ -185,7 +198,10 @@ export class Dashboard {
     return Object.keys(config.workspaces)
   })
 
-  workspace = dispense(key => new DashboardWorkspace(this, key))
+  workspace = dispense(key => {
+    assert(key, 'Workspace key cannot be empty')
+    return new DashboardWorkspace(this, key)
+  })
 
   workspaceMenu = atom(get => {
     const workspaces = get(this.workspaces)
@@ -230,20 +246,24 @@ export class Dashboard {
   }
 
   entries = dispense(id => {
-    const data = atom<Promise<EntryData>>(get => {
-      // todo: this will get out of sync for hasChildren
+    const dataAtom = atom<Promise<EntryData>>(get => {
       get(this.revisions(id))
+      // todo: this will get out of sync for hasChildren
       const load = get(this.#entryLoader)
       return load(id).then(([result, error]) => {
-        if (error) throw error
+        if (error) throw new Error('Could not load entry', {cause: error})
         return result
       })
     })
-    const entry = new DashboardEntry(this, id, swr(data) as Atom<EntryData>)
+    let entry: DashboardEntry
     return swr(
       atom(async get => {
-        await get(data)
-        return entry
+        const initial = await get(dataAtom)
+        return (entry ??= new DashboardEntry(
+          this,
+          id,
+          unwrap(dataAtom, prev => prev ?? initial)
+        ))
       })
     )
   })
@@ -415,6 +435,28 @@ export class DashboardExplorer {
     return [...keys].map(id => dragItem(id))
   })
 
+  isMedia = atom(get => {
+    const root = get(this.root)
+    return root ? get(root.isMedia) : false
+  })
+
+  upload = atom(null, (get, set, files: FileList) => {
+    const location = get(this.location)
+    const db = get(this.dashboard.db)
+    const ops = Array.from(
+      files,
+      file =>
+        new UploadOperation({
+          file,
+          createPreview: createPreview,
+          parentId: location.parentId,
+          workspace: location.workspace,
+          root: location.root
+        })
+    )
+    return db.commit(...ops)
+  })
+
   workspace = atom(
     get => {
       const {workspace} = get(this.location)
@@ -564,8 +606,6 @@ export class DashboardType {
   }
 }
 
-const ROOT_KEY_PREFIX = 'root:'
-
 export class DashboardWorkspace {
   constructor(
     public dashboard: Dashboard,
@@ -577,7 +617,6 @@ export class DashboardWorkspace {
       const route = get(this.dashboard.route)
       if (route.workspace && route.workspace !== this.key) return new Set<Key>()
       if (route.entry) return new Set<Key>([route.entry])
-      if (route.root) return new Set<Key>([`root:${route.root}`])
       return new Set<Key>()
     },
     async (get, set, next: 'all' | Set<Key>) => {
@@ -590,14 +629,6 @@ export class DashboardWorkspace {
         return
       }
       const selectedId = String(selectedKey)
-      if (selectedId.startsWith(ROOT_KEY_PREFIX)) {
-        set(this.dashboard.route, {
-          workspace: this.key,
-          root: selectedId.slice(ROOT_KEY_PREFIX.length),
-          locale: current.locale
-        })
-        return
-      }
       const {rootKey: root, workspaceKey: workspace} = await get(
         this.dashboard.entries(selectedId)
       )
@@ -654,9 +685,7 @@ export class DashboardTree {
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
     const {parentIds} = await get(this.workspace.dashboard.entries(route.entry))
-    const keys = new Set<Key>(get(parentIds))
-    if (route.root) keys.add(`${ROOT_KEY_PREFIX}${route.root}`)
-    return keys
+    return new Set<Key>(get(parentIds))
   })
 
   expandedKeys = Object.assign(
@@ -720,29 +749,13 @@ export class DashboardTree {
     }
   )
 
-  rootItems: (key: string) => Atom<Promise<DashboardTreeItem>> = dispense(
-    (key: string): Atom<Promise<DashboardTreeItem>> => {
-      return atom(async (get): Promise<DashboardTreeItem> => {
-        const root = this.workspace.root(key)
-        const hasChildren = await get(root.hasChildren)
-        return new DashboardTreeItem(
-          this,
-          `${ROOT_KEY_PREFIX}${root.key}`,
-          root.icon,
-          root.label,
-          atom(async (get): Promise<Array<DashboardTreeItem>> => {
-            const ids = await get(root.children)
-            return Promise.all(ids.map(id => this.entryItems(id)).map(get))
-          }),
-          hasChildren
-        )
-      })
-    }
-  )
-
-  items = atom(get => {
-    const roots = get(this.workspace.roots)
-    return Promise.all(roots.map(key => this.rootItems(key)).map(get))
+  items = atom(async get => {
+    const currentRoot = get(this.workspace.dashboard.currentRoot)
+    if (!currentRoot || currentRoot.workspace.key !== this.workspace.key)
+      return []
+    const ids = await get(currentRoot.children)
+    for (const id of ids) get(this.entryItems(id))
+    return Promise.all(ids.map(id => this.entryItems(id)).map(get))
   })
 
   // dnd
@@ -773,10 +786,10 @@ export class DashboardTree {
 
   async #moveDraggedKeys(get: Getter, keys: Set<Key>, target: ItemDropTarget) {
     const db = get(this.workspace.dashboard.db)
-    const {moveTarget, targetType} = this.#target(target.key)
+    const selectedRoot = get(this.workspace.dashboard.selectedRoot)
+    const {moveTarget, targetType} = this.#target(target.key, selectedRoot)
     for (const key of keys) {
       const draggedId = String(key)
-      if (draggedId.startsWith(ROOT_KEY_PREFIX)) continue
       await db.move({
         id: draggedId,
         target: moveTarget,
@@ -800,19 +813,23 @@ export class DashboardTree {
       } else if (item.types.has('text/plain')) {
         draggedId = await item.getText('text/plain')
       }
-      if (!draggedId || draggedId.startsWith(ROOT_KEY_PREFIX)) continue
+      if (!draggedId) continue
       draggedKeys.add(draggedId)
     }
     await this.#moveDraggedKeys(get, draggedKeys, target)
   }
 
-  #target(key: Key) {
+  #target(key: Key | undefined, selectedRoot: string) {
+    if (!key) {
+      return {
+        moveTarget: selectedRoot,
+        targetType: 'root'
+      } as const
+    }
     const targetId = String(key)
     return {
-      moveTarget: targetId.startsWith(ROOT_KEY_PREFIX)
-        ? targetId.slice(ROOT_KEY_PREFIX.length)
-        : targetId,
-      targetType: targetId.startsWith(ROOT_KEY_PREFIX) ? 'root' : 'entry'
+      moveTarget: targetId,
+      targetType: 'entry'
     } as const
   }
 
@@ -905,9 +922,11 @@ export class DashboardEntry {
           })
         )
     )
-    this.root = atom(get =>
-      dashboard.workspace(get(this.workspaceKey)).root(get(this.rootKey))
-    )
+    this.root = atom(get => {
+      const workspace = get(this.workspaceKey)
+      const root = get(this.rootKey)
+      return dashboard.workspace(workspace).root(root)
+    })
   }
 
   activeStatus = atom(get => {
@@ -1132,10 +1151,29 @@ export class DashboardRoot {
   #settings = atom(get => {
     const config = get(this.workspace.dashboard.config)
     const workspaceConfig = config.workspaces[this.workspace.key]
-    assert(workspaceConfig)
+    assert(
+      workspaceConfig,
+      `Workspace "${this.workspace.key}" not found in config`
+    )
     const rootConfig = workspaceConfig[this.key]
     return getRoot(rootConfig)
   })
+
+  selected = atom(
+    get => {
+      if (
+        get(this.workspace.dashboard.selectedWorkspace) !== this.workspace.key
+      )
+        return false
+      return get(this.workspace.dashboard.selectedRoot) === this.key
+    },
+    (get, set, value: boolean) => {
+      set(
+        this.workspace.dashboard.route,
+        value ? {workspace: this.workspace.key, root: this.key} : {}
+      )
+    }
+  )
 
   #languagePreference = atom<string>()
   selectedLocale = atom(
@@ -1170,6 +1208,7 @@ export class DashboardRoot {
   children = atom(get =>
     queryTreeChildren(get, this, null, this.orderChildrenBy)
   )
+  isMedia = atom(get => get(this.#settings).isMediaRoot)
 
   hasChildren = atom(async get => {
     const db = get(this.workspace.dashboard.db)

@@ -1,8 +1,12 @@
+import {DateField} from '#/field/date.js'
+import {
+  useFieldError,
+  useFieldOptions,
+  useFieldValue
+} from '#/v2/store/hooks.js'
 import {DatePicker} from '@alinea/components'
 import {parseDate} from '@internationalized/date'
-import {DateField} from 'alinea/field/date'
 import {useMemo} from 'react'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 
 export interface DateFieldViewProps {
   field: DateField

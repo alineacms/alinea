@@ -3,11 +3,11 @@ import type {
   RequestContext,
   UploadResponse,
   UploadsApi
-} from 'alinea/core/Connection'
-import {type Draft, type DraftKey, parseDraftKey} from 'alinea/core/Draft'
-import {createId} from 'alinea/core/Id'
-import {basename, extname} from 'alinea/core/util/Paths'
-import {slugify} from 'alinea/core/util/Slugs'
+} from '#/core/Connection.js'
+import {type Draft, type DraftKey, parseDraftKey} from '#/core/Draft.js'
+import {createId} from '#/core/Id.js'
+import {basename, extname} from '#/core/util/Paths.js'
+import {slugify} from '#/core/util/Slugs.js'
 import PLazy from 'p-lazy'
 import {type Database, eq, primaryKey, table} from 'rado'
 import type {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData'

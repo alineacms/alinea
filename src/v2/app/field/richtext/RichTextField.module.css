@@ -1,7 +1,47 @@
-.root {
-  /* padding: 10px; */
+.RichTextFieldView {
+  overflow: hidden;
+  background-color: var(--alinea-field-background);
+  border: 1px solid var(--alinea-border-color);
+  border-radius: 6px;
+  outline: 4px solid transparent;
+  transition: var(--alinea-transition);
+  transition-property: border-color, outline-color, background-color;
+
+  &:hover {
+    border-color: var(--alinea-border-color-hover);
+    outline-color: var(--alinea-box-shadow-color);
+  }
+
+  &:focus-within {
+    border-color: var(--alinea-highlight-border);
+    outline-color: var(--alinea-highlight-overlay);
+  }
+
+  &[data-invalid='true'] {
+    border-color: var(--alinea-invalid-color);
+    outline-color: var(--alinea-invalid-overlay);
+  }
+
+  &[data-read-only='true'] {
+    background-color: var(--alinea-field-background-disabled);
+  }
+
+  &[data-read-only='true']:hover,
+  &[data-read-only='true']:focus-within {
+    border-color: var(--alinea-border-color);
+    outline-color: transparent;
+  }
 
   :global(.ProseMirror) {
     outline: none;
+    min-height: calc(1.5em + 16px);
+    padding: 8px 10px;
+    color: var(--alinea-field-text-color);
+    font-size: var(--alinea-font-size-base);
+    line-height: 1.5;
+  }
+
+  &[data-read-only='true'] :global(.ProseMirror) {
+    color: var(--alinea-text-color-disabled);
   }
 }

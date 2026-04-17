@@ -1,21 +1,21 @@
 import * as fsp from 'node:fs/promises'
-import {Config} from 'alinea/core/Config'
-import type {UploadResponse} from 'alinea/core/Connection'
-import {type CommitRequest, checkCommit} from 'alinea/core/db/CommitRequest'
-import {LocalDB} from 'alinea/core/db/LocalDB'
-import {createId} from 'alinea/core/Id'
-import {getWorkspace} from 'alinea/core/Internal'
-import {CachedFSSource} from 'alinea/core/source/FSSource'
-import {assert} from 'alinea/core/util/Assert'
-import {keys, values} from 'alinea/core/util/Objects'
+import {Config} from '#/core/Config.js'
+import type {UploadResponse} from '#/core/Connection.js'
+import {type CommitRequest, checkCommit} from '#/core/db/CommitRequest.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {createId} from '#/core/Id.js'
+import {getWorkspace} from '#/core/Internal.js'
+import {CachedFSSource} from '#/core/source/FSSource.js'
+import {assert} from '#/core/util/Assert.js'
+import {keys, values} from '#/core/util/Objects.js'
 import {
   basename,
   contains,
   dirname,
   extname,
   join
-} from 'alinea/core/util/Paths'
-import {slugify} from 'alinea/core/util/Slugs'
+} from '#/core/util/Paths.js'
+import {slugify} from '#/core/util/Slugs.js'
 
 export interface DevDBOptions {
   config: Config

@@ -1,1 +1,1 @@
-export {createHandler} from 'alinea/backend/Handler'
+export {createHandler} from '#/backend/Handler.js'

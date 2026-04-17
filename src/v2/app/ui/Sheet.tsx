@@ -15,7 +15,7 @@ const styles = styler(css)
 export interface SheetProps extends ModalOverlayProps {}
 
 export function Sheet(props: ModalOverlayProps) {
-  return <Modal isDismissable className={styles.root()} {...props} />
+  return <Modal isDismissable className={styles.Sheet()} {...props} />
 }
 
 export interface SheetDialogProps extends PropsWithChildren {
@@ -25,14 +25,14 @@ export interface SheetDialogProps extends PropsWithChildren {
 
 export function SheetDialog({label, controls, children}: SheetDialogProps) {
   return (
-    <Dialog className={styles.root.dialog()}>
-      <header className={styles.root.header()}>
+    <Dialog className={styles.SheetDialog()}>
+      <header className={styles.SheetDialog.header()}>
         <h2 slot="title" style={{margin: 0}}>
           {label}
         </h2>
         <CloseButton />
       </header>
-      {controls && <div className={styles.root.controls()}>{controls}</div>}
+      {controls && <div className={styles.SheetDialog.controls()}>{controls}</div>}
       {/*<SheetSeparator />*/}
       {children}
     </Dialog>
@@ -40,14 +40,14 @@ export function SheetDialog({label, controls, children}: SheetDialogProps) {
 }
 
 export function SheetContent({children}: PropsWithChildren) {
-  return <div className={styles.root.content()}>{children}</div>
+  return <div className={styles.SheetContent()}>{children}</div>
 }
 
 export function SheetFooter({children}: PropsWithChildren) {
   return (
     <>
       <SheetSeparator />
-      <footer className={styles.root.footer()}>{children}</footer>
+      <footer className={styles.SheetFooter()}>{children}</footer>
     </>
   )
 }
@@ -68,5 +68,5 @@ function CloseButton() {
 }
 
 export function SheetSeparator() {
-  return <div className={styles.separator()} />
+  return <div className={styles.SheetSeparator()} />
 }
