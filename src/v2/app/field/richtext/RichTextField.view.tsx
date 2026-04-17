@@ -1,3 +1,4 @@
+import {Elevation, Label} from '#/components.js'
 import {Field} from '#/core/Field.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {Schema} from '#/core/Schema.js'
@@ -19,7 +20,6 @@ import {
   useFieldOptions,
   useFieldSetter
 } from '#/v2/store/hooks.js'
-import {Elevation, Label} from '@alinea/components'
 import styler from '@alinea/styler'
 import {Node as TipTapNode} from '@tiptap/core'
 import {
@@ -130,7 +130,9 @@ function RTView<Blocks extends Schema>({
   }, [field, options.schema])
   const readOnly = options.readOnly || node.readOnly
   const editable = !readOnly
-  const focusToggle = useCallback(function focusToggle(target: EventTarget | null) {
+  const focusToggle = useCallback(function focusToggle(
+    target: EventTarget | null
+  ) {
     const element =
       (target as HTMLElement | null) ||
       (document.activeElement as HTMLElement | null)

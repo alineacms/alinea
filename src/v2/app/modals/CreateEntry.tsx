@@ -1,7 +1,7 @@
+import {Button, Select, SelectItem, TextField} from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {ExplorerLocation} from '#/v2/store/Dashboard.js'
 import {useDashboard} from '#/v2/store/hooks.js'
-import {Button, Select, SelectItem, TextField} from '@alinea/components'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {useState} from 'react'
 import {LocationBreadcrumbs} from '../LocationBreadcrumbs.js'

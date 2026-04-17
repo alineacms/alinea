@@ -1,4 +1,4 @@
-import {Button, Elevation, Icon, ProgressCircle} from '@alinea/components'
+import {Button, Elevation, Icon, ProgressCircle} from '#/components.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'

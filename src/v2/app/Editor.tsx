@@ -1,7 +1,7 @@
+import {Button, Icon} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
-import {Button, Icon} from '@alinea/components'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, useEffect, useTransition} from 'react'

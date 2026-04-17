@@ -1,3 +1,4 @@
+import {Button, Elevation, Icon, Label, List, ListItem} from '#/components.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
 import {Schema} from '#/core/Schema.js'
@@ -20,14 +21,6 @@ import {
   useFieldOptions,
   useNodes
 } from '#/v2/store/hooks.js'
-import {
-  Button,
-  Elevation,
-  Icon,
-  Label,
-  List,
-  ListItem
-} from '@alinea/components'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'

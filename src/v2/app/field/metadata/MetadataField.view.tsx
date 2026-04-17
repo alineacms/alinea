@@ -1,4 +1,4 @@
-import {Elevation, Label} from '@alinea/components'
+import {Elevation, Label} from '#/components.js'
 import {MetadataField} from '#/field/metadata.js'
 import {useFieldError, useFieldNode, useFieldOptions} from '../../../store.js'
 import {NodeEditor} from '../../Editor.js'

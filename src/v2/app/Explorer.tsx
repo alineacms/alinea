@@ -1,4 +1,4 @@
-import {Button, SearchField} from '@alinea/components'
+import {Button, SearchField} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {

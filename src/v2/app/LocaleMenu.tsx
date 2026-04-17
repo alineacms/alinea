@@ -1,4 +1,4 @@
-import {Button, Menu, MenuItem} from '@alinea/components'
+import {Button, Menu, MenuItem} from '#/components.js'
 import {useAtom, useAtomValue} from 'jotai'
 import {IcRoundUnfoldMore} from '../icons.js'
 import {DashboardRoot} from '../store/Dashboard.js'

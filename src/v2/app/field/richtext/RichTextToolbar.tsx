@@ -1,3 +1,12 @@
+import {
+  Button,
+  Menu,
+  MenuItem,
+  MenuSeparator,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarSeparator
+} from '#/components.js'
 import type {Reference} from '#/core/Reference.js'
 import {entries} from '#/core/util/Objects.js'
 import type {
@@ -16,15 +25,6 @@ import type {
   ToolbarMenu
 } from '#/field/richtext/RichTextToolbar.js'
 import type {UrlReference} from '#/picker/url.js'
-import {
-  Button,
-  Menu,
-  MenuItem,
-  MenuSeparator,
-  Toolbar,
-  ToolbarGroup,
-  ToolbarSeparator
-} from '@alinea/components'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/react'
 import {memo, useMemo, type ReactNode} from 'react'

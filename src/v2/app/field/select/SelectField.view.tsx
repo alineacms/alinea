@@ -1,5 +1,5 @@
+import {Select, SelectItem} from '#/components.js'
 import {SelectField, SelectOptions} from '#/field/select.js'
-import {Select, SelectItem} from '@alinea/components'
 import {Key} from '@react-types/shared'
 import {useMemo} from 'react'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'

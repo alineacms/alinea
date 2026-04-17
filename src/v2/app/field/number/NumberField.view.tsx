@@ -1,4 +1,4 @@
-import {NumberField as RacNumberField} from '@alinea/components'
+import {NumberField as RacNumberField} from '#/components.js'
 import {NumberField} from '#/field/number.js'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 

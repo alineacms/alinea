@@ -6,7 +6,7 @@ import {
   MenuItem,
   MenuSeparator,
   Modal
-} from '@alinea/components'
+} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
 import {useState} from 'react'
@@ -90,7 +90,6 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
         <Button
           size="icon"
           appearance="outline"
-          intent="tertiary"
           className={styles.WorkspaceMenu.search()}
         >
           <IconComp icon={IcRoundSearch} data-slot="icon" />

@@ -1,18 +1,18 @@
-@import "../theme.css";
+@import '../theme.css';
 
 .Tabs {
   display: flex;
   color: var(--alinea-text-color);
 
-  &[data-orientation="horizontal"] {
+  &[data-orientation='horizontal'] {
     flex-direction: column;
   }
 
-  &[data-variant="enclosed"] {
+  &[data-variant='enclosed'] {
     align-items: flex-start;
   }
 
-  &[data-orientation="vertical"] {
+  &[data-orientation='vertical'] {
     flex-direction: row;
   }
 }
@@ -23,7 +23,7 @@
   border-radius: 4px;
   outline: none;
 
-  [data-orientation="vertical"] & {
+  [data-orientation='vertical'] & {
     margin-top: 0;
   }
 
@@ -46,14 +46,15 @@
   padding: 8px 16px;
   cursor: pointer;
   border-radius: 4px;
-  transition: background var(--alinea-transition), color
-    var(--alinea-transition);
+  transition:
+    background var(--alinea-transition),
+    color var(--alinea-transition);
 
-  [data-variant="line"] & {
+  [data-variant='line'] & {
     padding: 12px 8px;
 
     &:before {
-      content: "";
+      content: '';
       position: absolute;
       bottom: -1px;
       left: 0;
@@ -66,13 +67,13 @@
     }
   }
 
-  [data-variant="subtle"] & {
+  [data-variant='subtle'] & {
     padding: 6px 11px;
     border-radius: 7px;
     font-weight: 550;
   }
 
-  [data-variant="enclosed"] & {
+  [data-variant='enclosed'] & {
     padding: 8px 12px;
     border-radius: 8px;
   }
@@ -81,12 +82,12 @@
   &[data-focused] {
     color: var(--alinea-text-color-hover);
 
-    [data-variant="line"] &:before {
+    [data-variant='line'] &:before {
       transform-origin: bottom left;
       transform: scaleX(1);
     }
 
-    [data-variant="subtle"] & {
+    [data-variant='subtle'] & {
       color: var(--alinea-text-color);
       background-color: color-mix(
         in oklab,
@@ -95,7 +96,7 @@
       );
     }
 
-    [data-variant="enclosed"] & {
+    [data-variant='enclosed'] & {
       background-color: var(--alinea-background-color-hover);
     }
   }
@@ -104,18 +105,18 @@
     color: var(--alinea-text-color);
     font-weight: 600;
 
-    [data-variant="line"] &:before {
+    [data-variant='line'] &:before {
       background-color: var(--alinea-highlight-background);
       transform-origin: bottom left;
       transform: scaleX(1);
     }
 
-    [data-variant="subtle"] & {
+    [data-variant='subtle'] & {
       color: var(--alinea-text-color-focused);
       background-color: var(--alinea-field-background);
     }
 
-    [data-variant="enclosed"] & {
+    [data-variant='enclosed'] & {
       color: var(--alinea-tab-color-active);
       background-color: var(--alinea-tab-background-color-active);
     }
@@ -137,15 +138,15 @@
     cursor: pointer;
   }
 }
+
 .TabList {
   overflow-x: auto;
   max-width: 100%;
-  padding: 2px;
   white-space: nowrap;
   scrollbar-width: thin;
   scrollbar-color: var(--alinea-border-color) transparent;
 
-  [data-variant="subtle"] & {
+  [data-variant='subtle'] & {
     display: inline-flex;
     align-self: flex-start;
     max-width: max-content;
@@ -156,11 +157,11 @@
   .TabList-list {
     display: flex;
 
-    &[data-orientation="horizontal"] {
+    &[data-orientation='horizontal'] {
       border-bottom: 1px solid var(--alinea-border-color);
     }
 
-    [data-variant="subtle"] & {
+    [data-variant='subtle'] & {
       align-items: center;
       border: none;
       border-radius: 10px;
@@ -173,18 +174,18 @@
       );
     }
 
-    [data-variant="enclosed"] & {
+    [data-variant='enclosed'] & {
       border: none;
       gap: 4px;
     }
 
-    [data-variant="enclosed"] & {
+    [data-variant='enclosed'] & {
       background-color: var(--alinea-tab-background-color);
       border-radius: 8px;
       padding: 4px;
     }
 
-    &[data-orientation="vertical"] {
+    &[data-orientation='vertical'] {
       flex-direction: column;
     }
   }

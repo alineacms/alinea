@@ -1,8 +1,8 @@
+import {Tab, TabList, TabPanel, Tabs} from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
 import {TabsSection} from '#/field/tabs.js'
-import {Tab, TabList, TabPanel, Tabs} from '@alinea/components'
 import {EditFields} from '../../Editor.js'
 import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
 

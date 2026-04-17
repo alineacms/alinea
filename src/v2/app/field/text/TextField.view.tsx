@@ -1,4 +1,4 @@
-import {TextField as RacTextField} from '@alinea/components'
+import {TextField as RacTextField} from '#/components.js'
 import {TextField} from '#/field/text.js'
 import {memo} from 'react'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'

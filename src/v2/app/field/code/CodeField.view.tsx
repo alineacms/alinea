@@ -1,5 +1,5 @@
+import {Label} from '#/components.js'
 import {CodeField} from '#/field/code.js'
-import {Label} from '@alinea/components'
 import {styler} from '@alinea/styler'
 import lolight from 'lolight'
 import {Fragment, ReactNode, useId} from 'react'

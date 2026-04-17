@@ -1,4 +1,3 @@
-import {assert} from '#/core/util/Assert.js'
 import {
   Button,
   Icon,
@@ -7,7 +6,8 @@ import {
   ProgressCircle,
   Tree,
   TreeItem
-} from '@alinea/components'
+} from '#/components.js'
+import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -63,7 +63,6 @@ const SidebarParent = memo(function SidebarParent({
         <Button
           size="icon"
           appearance="outline"
-          intent="tertiary"
           icon={IcRoundKeyboardTab}
           style={isTreeCollapsed ? undefined : {transform: 'rotate(180deg)'}}
           aria-label={isTreeCollapsed ? 'Expand tree' : 'Collapse tree'}
@@ -107,7 +106,8 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   const isExpanded = useAtomValue(item.isExpanded)
   const childItems = useAtomValue(
     useMemo(() => {
-      if (!item.hasChildren) return atom<Array<DashboardTreeItem> | undefined>(undefined)
+      if (!item.hasChildren)
+        return atom<Array<DashboardTreeItem> | undefined>(undefined)
       return unwrap(
         atom(async get => {
           if (!get(item.isExpanded)) return undefined
@@ -130,7 +130,10 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
       icon={icon}
       suffix={
         isLoadingChildren ? (
-          <span className={styles.SidebarTree.itemLoading()} aria-hidden="true" />
+          <span
+            className={styles.SidebarTree.itemLoading()}
+            aria-hidden="true"
+          />
         ) : undefined
       }
     >

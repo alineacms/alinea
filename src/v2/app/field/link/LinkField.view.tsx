@@ -1,4 +1,4 @@
-import {Button, DialogTrigger, Elevation, Label} from '@alinea/components'
+import {Button, DialogTrigger, Elevation, Label} from '#/components.js'
 import {createId} from '#/core/Id.js'
 import {Reference} from '#/core/Reference.js'
 import {ListRow} from '#/core/shape/ListShape.js'

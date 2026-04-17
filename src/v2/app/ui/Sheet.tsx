@@ -1,6 +1,6 @@
 'use client'
 
-import {Button, Dialog, Modal} from '@alinea/components'
+import {Button, Dialog, Modal} from '#/components.js'
 import styler from '@alinea/styler'
 import {useContext, type PropsWithChildren, type ReactNode} from 'react'
 import {
@@ -32,7 +32,9 @@ export function SheetDialog({label, controls, children}: SheetDialogProps) {
         </h2>
         <CloseButton />
       </header>
-      {controls && <div className={styles.SheetDialog.controls()}>{controls}</div>}
+      {controls && (
+        <div className={styles.SheetDialog.controls()}>{controls}</div>
+      )}
       {/*<SheetSeparator />*/}
       {children}
     </Dialog>

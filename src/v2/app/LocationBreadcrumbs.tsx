@@ -1,4 +1,4 @@
-import {Button, Menu, MenuItem} from '@alinea/components'
+import {Button, Menu, MenuItem} from '#/components.js'
 import {Atom, useAtomValue} from 'jotai'
 import {Dispatch, SetStateAction} from 'react'
 import {

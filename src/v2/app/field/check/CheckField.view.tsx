@@ -1,4 +1,4 @@
-import {Checkbox, Label} from '@alinea/components'
+import {Checkbox, Label} from '#/components.js'
 import {CheckField} from '#/field/check.js'
 import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
 

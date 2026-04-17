@@ -5,7 +5,7 @@ import {
   MenuItem,
   Popover,
   ProgressCircle
-} from '@alinea/components'
+} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
@@ -84,19 +84,16 @@ export function AppShell({dashboard}: AppShellProps) {
                       <Button
                         size="icon"
                         appearance="outline"
-                        intent="tertiary"
                         icon={IcRoundDesktopWindows}
                       />
                       <Button
                         size="icon"
                         appearance="outline"
-                        intent="tertiary"
                         icon={IcRoundWbSunny}
                       />
                       <Button
                         size="icon"
                         appearance="outline"
-                        intent="tertiary"
                         icon={IcRoundBrightness2}
                       />
                     </div>
@@ -139,7 +136,6 @@ export function AppShell({dashboard}: AppShellProps) {
                     <Button
                       size="icon"
                       appearance="outline"
-                      intent="tertiary"
                       icon={IcRoundLogout}
                     />
                   </li>

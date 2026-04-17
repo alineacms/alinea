@@ -1,4 +1,4 @@
-import {Button, Icon, Tab, TabList, TabPanel, Tabs} from '@alinea/components'
+import {Button, Icon, Tab, TabList, TabPanel, Tabs} from '#/components.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
 import {IcRoundHistory, IcRoundVisibility} from '../icons.js'

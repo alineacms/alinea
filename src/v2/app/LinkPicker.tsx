@@ -1,4 +1,4 @@
-import {Button} from '@alinea/components'
+import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {startTransition, useState} from 'react'
 import {ExplorerOptions, useDashboard} from '../store.js'
