@@ -107,39 +107,43 @@ export function ExplorerList({explorer}: ExplorerListProps) {
         </div>
       )}
       {view === 'card' ? (
-        <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
-          <GridList
-            aria-label="Explorer entries"
-            items={items}
-            layout="grid"
-            className={styles.ExplorerList(view)}
-            selectionMode={explorer.selectionMode}
-            selectionBehavior={explorer.selectionBehavior}
-            dragAndDropHooks={dragAndDropHooks}
-            selectedKeys={selected}
-            onSelectionChange={setSelected}
-            style={{display: 'block', height: '100%'}}
-          >
-            {item => <ExplorerItem entry={item} explorer={explorer} />}
-          </GridList>
-        </Virtualizer>
+        <div className={styles.ExplorerList.viewport()}>
+          <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
+            <GridList
+              aria-label="Explorer entries"
+              items={items}
+              layout="grid"
+              className={styles.ExplorerList(view)}
+              selectionMode={explorer.selectionMode}
+              selectionBehavior={explorer.selectionBehavior}
+              dragAndDropHooks={dragAndDropHooks}
+              selectedKeys={selected}
+              onSelectionChange={setSelected}
+              style={{display: 'block', height: '100%'}}
+            >
+              {item => <ExplorerItem entry={item} explorer={explorer} />}
+            </GridList>
+          </Virtualizer>
+        </div>
       ) : (
-        <Virtualizer layout={ListLayout} layoutOptions={rowLayoutOptions}>
-          <GridList
-            aria-label="Explorer entries"
-            items={items}
-            layout="stack"
-            className={styles.ExplorerList(view)}
-            selectionMode={explorer.selectionMode}
-            selectionBehavior={explorer.selectionBehavior}
-            dragAndDropHooks={dragAndDropHooks}
-            selectedKeys={selected}
-            onSelectionChange={setSelected}
-            style={{display: 'block', height: '100%'}}
-          >
-            {item => <ExplorerItem entry={item} explorer={explorer} />}
-          </GridList>
-        </Virtualizer>
+        <div className={styles.ExplorerList.viewport()}>
+          <Virtualizer layout={ListLayout} layoutOptions={rowLayoutOptions}>
+            <GridList
+              aria-label="Explorer entries"
+              items={items}
+              layout="stack"
+              className={styles.ExplorerList(view)}
+              selectionMode={explorer.selectionMode}
+              selectionBehavior={explorer.selectionBehavior}
+              dragAndDropHooks={dragAndDropHooks}
+              selectedKeys={selected}
+              onSelectionChange={setSelected}
+              style={{display: 'block', height: '100%'}}
+            >
+              {item => <ExplorerItem entry={item} explorer={explorer} />}
+            </GridList>
+          </Virtualizer>
+        </div>
       )}
     </div>
   )

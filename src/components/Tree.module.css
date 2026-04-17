@@ -1,7 +1,6 @@
 .Tree {
   display: flex;
   flex-direction: column;
-  gap: 1px;
   overflow: auto;
   padding: 0;
   outline: none;
@@ -24,6 +23,7 @@
   /* ---- Tree item ---- */
 
   .TreeItem {
+    height: 34px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -41,7 +41,7 @@
 
     /* Chevron */
 
-    [slot="chevron"] {
+    [slot='chevron'] {
       all: unset;
       display: flex;
       align-items: center;
@@ -60,17 +60,17 @@
       }
     }
 
-    &[data-has-child-items] [slot="chevron"] {
+    &[data-has-child-items] [slot='chevron'] {
       visibility: visible;
     }
 
-    &[data-expanded] [slot="chevron"] svg {
+    &[data-expanded] [slot='chevron'] svg {
       rotate: 90deg;
     }
 
     /* Icon slot */
 
-    [data-slot="icon"] {
+    [data-slot='icon'] {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -80,7 +80,7 @@
 
     /* Label text */
 
-    [data-slot="label"] {
+    [data-slot='label'] {
       margin-left: 2px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -91,7 +91,7 @@
 
     /* Suffix (trailing status icons) */
 
-    [data-slot="suffix"] {
+    [data-slot='suffix'] {
       display: flex;
       align-items: center;
       gap: 4px;
@@ -118,7 +118,7 @@
       color: var(--alinea-selected-foreground);
       font-weight: 500;
 
-      [data-slot="icon"] {
+      [data-slot='icon'] {
         opacity: 1;
       }
 
@@ -140,7 +140,7 @@
     /* Drag & drop */
 
     &[data-allows-dragging] {
-      padding-left: 4px;
+      padding-left: calc(4px + (var(--tree-item-level, 1) - 1) * 16px);
     }
 
     &[data-dragging] {
@@ -152,7 +152,7 @@
       background: var(--alinea-highlight-overlay);
     }
 
-    [slot="drag"] {
+    [slot='drag'] {
       width: 15px;
       text-align: center;
 
@@ -168,7 +168,7 @@
 
   /* Drop indicator */
 
-  [data-drop-target][role="row"] {
+  [data-drop-target][role='row'] {
     outline: 1px solid var(--alinea-highlight-background);
     margin-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px);
   }
@@ -222,15 +222,18 @@
     box-shadow: none;
   }
 
-  &[data-invisible="true"] {
+  &[data-invisible='true'] {
     opacity: 0 !important;
 
     &:focus-visible {
       opacity: 1 !important;
 
-      + .react-aria-Button[data-invisible="false"] {
+      + .TreeItem-chevron[data-invisible='false'] {
         opacity: 0 !important;
       }
     }
   }
+}
+
+.TreeItem-chevron {
 }

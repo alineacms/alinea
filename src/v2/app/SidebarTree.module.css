@@ -38,7 +38,7 @@
   display: none;
 }
 
-.SidebarTree-tree :global(.react-aria-Virtualizer) {
+.SidebarTree-tree-viewport {
   min-height: 0;
   height: 100%;
 }

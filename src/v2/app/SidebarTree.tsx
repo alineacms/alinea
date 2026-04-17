@@ -175,23 +175,25 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
     onMove
   })
   return (
-    <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
-      <Tree
-        aria-label="Content tree"
-        style={{display: 'block', padding: 0, height: '100%'}}
-        items={items}
-        dragAndDropHooks={dragAndDropHooks}
-        selectionMode="single"
-        selectionBehavior="replace"
-        disallowEmptySelection
-        expandedKeys={expandedKeys}
-        onExpandedChange={setExpandedKeys}
-        selectedKeys={selectedKeys}
-        onSelectionChange={setSelectedKeys}
-      >
-        {renderItem}
-      </Tree>
-    </Virtualizer>
+    <div className={styles.SidebarTree.tree.viewport()}>
+      <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
+        <Tree
+          aria-label="Content tree"
+          style={{display: 'block', padding: 0, height: '100%'}}
+          items={items}
+          dragAndDropHooks={dragAndDropHooks}
+          selectionMode="single"
+          selectionBehavior="replace"
+          disallowEmptySelection
+          expandedKeys={expandedKeys}
+          onExpandedChange={setExpandedKeys}
+          selectedKeys={selectedKeys}
+          onSelectionChange={setSelectedKeys}
+        >
+          {renderItem}
+        </Tree>
+      </Virtualizer>
+    </div>
   )
 })
 

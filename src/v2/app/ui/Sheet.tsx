@@ -15,7 +15,14 @@ const styles = styler(css)
 export interface SheetProps extends ModalOverlayProps {}
 
 export function Sheet(props: ModalOverlayProps) {
-  return <Modal isDismissable className={styles.Sheet()} {...props} />
+  return (
+    <Modal
+      isDismissable
+      className={styles.Sheet()}
+      overlayClassName={styles.SheetOverlay()}
+      {...props}
+    />
+  )
 }
 
 export interface SheetDialogProps extends PropsWithChildren {

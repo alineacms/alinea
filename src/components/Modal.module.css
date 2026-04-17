@@ -1,6 +1,6 @@
 @import "../theme.css";
 
-.react-aria-ModalOverlay {
+.ModalOverlay {
   position: fixed;
   top: 0;
   left: 0;

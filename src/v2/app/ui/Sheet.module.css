@@ -1,4 +1,4 @@
-:global(.react-aria-ModalOverlay) {
+.SheetOverlay {
   @media (max-width: 768px) {
     padding: 12px;
   }

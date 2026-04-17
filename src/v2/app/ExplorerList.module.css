@@ -4,7 +4,7 @@
   width: 100%;
 }
 
-.ExplorerList-viewport > :global(.react-aria-Virtualizer) {
+.ExplorerList-viewport {
   min-height: 0;
   height: 100%;
 }

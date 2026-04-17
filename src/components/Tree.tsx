@@ -68,7 +68,11 @@ export const TreeItemContent = memo(function TreeItemContent({
             >
               ≡
             </Button>
-            <Button slot="chevron" data-invisible={isDragging}>
+            <Button
+              slot="chevron"
+              data-invisible={isDragging}
+              className={styles.TreeItem.chevron()}
+            >
               <IcRoundKeyboardArrowRight />
             </Button>
           </div>
