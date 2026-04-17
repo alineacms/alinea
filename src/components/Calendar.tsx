@@ -10,8 +10,10 @@ import {
   RangeCalendar as RangeCalendarPrimitive,
   type RangeCalendarProps
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowLeft} from '../stories/icons/IcRoundKeyboardArrowLeft.js'
-import {IcRoundKeyboardArrowRight} from '../stories/icons/IcRoundKeyboardArrowRight.js'
+import {
+  IcRoundKeyboardArrowLeft,
+  IcRoundKeyboardArrowRight
+} from '../v2/icons.js'
 import css from './Calendar.module.css'
 import {Icon} from './Icon.js'
 

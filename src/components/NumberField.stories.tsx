@@ -1,11 +1,10 @@
 import {I18nProvider} from 'react-aria-components'
-import {Stack} from '../stories/Stack.js'
 import {NumberField} from './NumberField.js'
 
 export const Basic = () => {
   return (
     <I18nProvider locale="en-US">
-      <Stack align="normal">
+      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
         <NumberField label="Number of cookies" steppers={false} />
         <NumberField label="Number of cookies (with steppers)" steppers />
         <NumberField label="Number of cookies (disabled)" steppers isDisabled />
@@ -18,7 +17,7 @@ export const Basic = () => {
         />
 
         <NumberField label="Temperature" minValue={-50} maxValue={50} />
-      </Stack>
+      </div>
     </I18nProvider>
   )
 }
@@ -26,7 +25,7 @@ export const Basic = () => {
 export const Currency = () => {
   return (
     <I18nProvider locale="en-US">
-      <Stack align="normal">
+      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
         <NumberField
           label="Transaction amount (€)"
           defaultValue={45}
@@ -54,7 +53,7 @@ export const Currency = () => {
             currencyDisplay: 'symbol'
           }}
         />
-      </Stack>
+      </div>
     </I18nProvider>
   )
 }
@@ -62,7 +61,7 @@ export const Currency = () => {
 export const Percentages = () => {
   return (
     <I18nProvider locale="en-US">
-      <Stack align="normal">
+      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
         <NumberField
           label="Discount (%)"
           formatOptions={{
@@ -80,7 +79,7 @@ export const Percentages = () => {
             maximumFractionDigits: 2
           }}
         />
-      </Stack>
+      </div>
     </I18nProvider>
   )
 }
@@ -88,7 +87,7 @@ export const Percentages = () => {
 export const Validation = () => {
   return (
     <I18nProvider locale="nl-BE">
-      <Stack align="normal">
+      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
         <NumberField
           isInvalid
           isRequired
@@ -96,7 +95,7 @@ export const Validation = () => {
           description="This field is required."
           errorMessage="Field cannot be empty."
         />
-      </Stack>
+      </div>
     </I18nProvider>
   )
 }

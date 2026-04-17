@@ -1,8 +1,9 @@
 import {Group} from 'react-aria-components'
-import {Stack} from '../stories/Stack.js'
-import {IcRoundClose} from '../stories/icons/IcRoundClose.js'
-import {IcRoundEdit} from '../stories/icons/IcRoundEdit.js'
-import {IcRoundSettings} from '../stories/icons/IcRoundSettings.js'
+import {
+  IcOutlineSettings as IcRoundSettings,
+  IcRoundClose,
+  IcRoundEdit
+} from '../v2/icons.js'
 import {Button} from './Button.js'
 import {Elevation} from './Elevation.js'
 import {Icon} from './Icon.js'
@@ -44,7 +45,7 @@ export function Basic() {
           trailing={itemControls}
           inner={
             <Elevation>
-              <Stack align="normal">
+              <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
                 You can put more complex content in the body, including links
                 and controls.
                 <TextField
@@ -59,7 +60,7 @@ export function Basic() {
                     <strong>Is possible</strong>
                   </ListItem>
                 </List>
-              </Stack>
+              </div>
             </Elevation>
           }
         >

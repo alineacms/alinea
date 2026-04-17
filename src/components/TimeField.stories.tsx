@@ -1,10 +1,9 @@
-import {Stack} from '../stories/Stack.js'
 import {Button} from './Button.js'
 import {TimeField} from './TimeField.js'
 
 export const Example = () => {
   return (
-    <Stack align="normal">
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <TimeField label="Event time" />
 
       <form
@@ -12,14 +11,14 @@ export const Example = () => {
           e.preventDefault()
         }}
       >
-        <Stack align="normal">
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
           <TimeField
             isRequired
             label="Event time with error"
             errorMessage="time is required"
           />
           <Button type="submit">Submit</Button>
-        </Stack>
+        </div>
       </form>
 
       <TimeField label="Event time (24h mode)" hourCycle={24} />
@@ -29,7 +28,7 @@ export const Example = () => {
         hourCycle={24}
         description="(24h mode) with description"
       />
-    </Stack>
+    </div>
   )
 }
 

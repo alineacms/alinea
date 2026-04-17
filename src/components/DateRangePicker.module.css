@@ -4,7 +4,6 @@
   gap: 8px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
   padding: 8px 10px;
   background: var(--alinea-field-background);
@@ -20,7 +19,8 @@
     border-color: var(--alinea-border-color-hover);
     outline-color: var(--alinea-box-shadow-color);
   }
-  [data-open] & {
+  [data-open] &,
+  [data-focus-within] & {
     border-color: var(--alinea-highlight-border);
     outline-color: var(--alinea-highlight-overlay);
   }
@@ -36,6 +36,7 @@
   }
 
   .DateRangePicker-inputs {
+    flex: 1;
     gap: 4px;
     display: flex;
     align-items: center;
@@ -71,6 +72,7 @@
     cursor: pointer;
     background: none;
     border: none;
+    padding: 0;
     position: relative;
     display: flex;
     align-items: center;
@@ -89,16 +91,26 @@
       transition: var(--alinea-transition);
     }
 
-    svg {
+    .Icon {
       position: relative;
     }
 
     &[data-hovered],
+    &[data-focused],
     &[data-focus-within] {
+      outline: none;
       color: var(--alinea-icon-color);
 
       &:before {
         background-color: var(--alinea-background-color);
+      }
+    }
+
+    [data-open] & {
+      color: var(--alinea-icon-color-active);
+
+      &:before {
+        background-color: var(--alinea-highlight-overlay);
       }
     }
   }

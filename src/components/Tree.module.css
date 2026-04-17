@@ -37,6 +37,7 @@
     width: 100%;
     box-sizing: border-box;
     outline: none;
+    border-radius: 6px;
 
     /* Chevron */
 
@@ -108,6 +109,7 @@
 
     &[data-focus-visible] {
       outline: 2px solid var(--alinea-focus-ring-color);
+      background: var(--alinea-background-color);
       outline-offset: -2px;
     }
 
@@ -159,26 +161,9 @@
       }
     }
 
-    /* Action buttons */
-
-    button:not([slot]) {
-      margin-left: auto;
-      background: transparent;
-      border: none;
-      font-size: 1.05rem;
-      line-height: 1.2em;
-      padding: 4px 6px;
-      transition: background 200ms;
-
-      &[data-hovered] {
-        background: var(--alinea-highlight-hover);
-      }
-
-      &[data-pressed] {
-        background: var(--alinea-highlight-pressed);
-        box-shadow: none;
-      }
-    }
+    user-select: none;
+    -webkit-user-drag: element;
+    touch-action: none;
   }
 
   /* Drop indicator */
@@ -205,4 +190,47 @@
   outline: 2px solid var(--alinea-highlight-background);
   outline-offset: -1px;
   background: var(--alinea-highlight-overlay);
+}
+
+.TreeItem-controls {
+  position: relative;
+  width: 16px;
+  height: 16px;
+
+  & > * {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
+}
+
+.TreeItem-dragHandle {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  font-size: 1.05rem;
+  line-height: 1.2em;
+  padding: 4px 6px;
+  transition: background 200ms;
+
+  &[data-hovered] {
+    background: var(--alinea-highlight-hover);
+  }
+
+  &[data-pressed] {
+    background: var(--alinea-highlight-pressed);
+    box-shadow: none;
+  }
+
+  &[data-invisible="true"] {
+    opacity: 0 !important;
+
+    &:focus-visible {
+      opacity: 1 !important;
+
+      + .react-aria-Button[data-invisible="false"] {
+        opacity: 0 !important;
+      }
+    }
+  }
 }

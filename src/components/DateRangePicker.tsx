@@ -9,7 +9,7 @@ import {
   Dialog,
   Group
 } from 'react-aria-components'
-import {IcRoundCalendarMonth} from '../stories/icons/IcRoundCalendarMonth.js'
+import {IcRoundDateRange as IcRoundCalendarMonth} from '../v2/icons.js'
 import {RangeCalendar} from './Calendar.js'
 import css from './DateRangePicker.module.css'
 import {Icon} from './Icon.js'

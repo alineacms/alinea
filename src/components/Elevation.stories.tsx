@@ -1,9 +1,8 @@
-import {Stack} from '../stories/Stack.js'
 import {Elevation} from './Elevation.js'
 import {List, ListItem} from './List.js'
 
 export const Variants = () => (
-  <Stack gap={24}>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
     <div>
       <Elevation>
         Basic elevation with some content to show the spacing and shadow.
@@ -23,7 +22,7 @@ export const Variants = () => (
         Item 2
       </ListItem>
     </List>
-  </Stack>
+  </div>
 )
 
 export default {

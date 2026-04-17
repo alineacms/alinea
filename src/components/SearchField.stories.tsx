@@ -1,9 +1,8 @@
-import {Stack} from '../stories/Stack.js'
 import {Button} from './Button.js'
 import {SearchField} from './SearchField.js'
 
 export const Example = () => (
-  <Stack align="normal">
+  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
     <SearchField label="Search" />
     <SearchField aria-label="Search" placeholder="Search..." hasIcon />
     <SearchField
@@ -22,7 +21,7 @@ export const Example = () => (
       errorMessage="This field is invalid."
     />
     <form onSubmit={e => e.preventDefault()}>
-      <Stack align="normal" gap={8}>
+      <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
         <SearchField
           isRequired
           label="Search"
@@ -32,7 +31,7 @@ export const Example = () => (
         <Button type="submit" style={{alignSelf: 'flex-start'}}>
           Submit
         </Button>
-      </Stack>
+      </div>
     </form>
     <SearchField
       isDisabled
@@ -46,7 +45,7 @@ export const Example = () => (
       description="isReadOnly"
       value="Read-only text"
     />
-  </Stack>
+  </div>
 )
 
 export default {

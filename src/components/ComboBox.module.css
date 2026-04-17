@@ -15,10 +15,13 @@
   transition: var(--alinea-transition);
 
   &:has(> .ComboBoxTrigger-input[data-hovered]),
+  &:has(> .ComboBoxTrigger-actions:hover) {
+    border-color: var(--alinea-border-color-hover);
+    outline-color: var(--alinea-box-shadow-color);
+  }
+
   &:has(> .ComboBoxTrigger-input[data-focused]),
-  &:has(> .ComboBoxTrigger-input[aria-expanded="true"]),
-  &:has(> .ComboBoxTrigger-button[data-hovered]),
-  &:has(> .ComboBoxTrigger-button[data-open]) {
+  &:has(> .ComboBoxTrigger-input[aria-expanded="true"]) {
     border-color: var(--alinea-highlight-border);
     outline-color: var(--alinea-highlight-overlay);
   }
@@ -71,29 +74,43 @@
   }
 
   .ComboBoxTrigger-button {
-    appearance: none;
     background: none;
-    font: inherit;
-    outline: none;
+    width: 24px;
+    flex-shrink: 0;
+    align-self: center;
+    padding: 0;
+    justify-content: center;
     border: none;
+    border-radius: 100%;
+    color: var(--alinea-icon-color);
+    position: relative;
 
-    display: flex;
-    align-items: center;
-    text-align: left;
-    padding: 8px 10px 8px 10px;
-    gap: 20px;
-
-    &[data-clear] {
-      padding-right: 0;
+    &:after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      border-radius: 100%;
+      background-color: var(--alinea-background-color);
+      z-index: -1;
+      transition: var(--alinea-transition);
+      opacity: 0;
+      border: 1px solid transparent;
+      outline: 4px solid transparent;
     }
 
-    .ComboBoxTrigger-button-value {
-      flex-grow: 1;
-      color: var(--alinea-field-text-color);
+    &:hover:after {
+      opacity: 1;
+    }
 
-      &[data-placeholder] {
-        color: var(--alinea-text-color-placeholder);
-      }
+    &:focus:after {
+      background-color: transparent;
+      border-color: var(--alinea-highlight-border);
+      outline-color: var(--alinea-highlight-overlay);
+      opacity: 1;
     }
 
     .ComboBoxTrigger-button-arrow {
@@ -106,6 +123,11 @@
       }
     }
   }
+}
+
+.ComboBoxTrigger-actions {
+  display: flex;
+  padding-right: 8px;
 }
 
 .ComboBoxPopover-listbox {
@@ -126,7 +148,7 @@
   position: relative;
   cursor: pointer;
   background: none;
-  width: 40px;
+  width: 24px;
   flex-shrink: 0;
   padding: 0;
   display: flex;

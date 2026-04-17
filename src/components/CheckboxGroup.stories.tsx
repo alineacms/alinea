@@ -1,9 +1,8 @@
-import {Stack} from '../stories/Stack.js'
 import {Checkbox} from './Checkbox.js'
 import {CheckboxGroup} from './CheckboxGroup.js'
 
 export const Example = (args: any) => (
-  <Stack>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
     <CheckboxGroup label="Favorite sport">
       <Checkbox value="soccer">Soccer</Checkbox>
       <Checkbox value="baseball">Baseball</Checkbox>
@@ -40,7 +39,7 @@ export const Example = (args: any) => (
       </CheckboxGroup>
       <button type="submit">submit</button>
     </form>
-  </Stack>
+  </div>
 )
 
 export default {

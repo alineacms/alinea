@@ -1,127 +1,121 @@
-import {Separator} from 'react-aria-components'
-import {IcRoundBrightness} from '../stories/icons/IcRoundBrightness.js'
-import {IcRoundUnfoldMore} from '../stories/icons/IcRoundUnfoldMore.js'
+import {
+  IcRoundFormatAlignLeft,
+  IcRoundFormatBold,
+  IcRoundRedo,
+  IcRoundUndo,
+  IcRoundUnfoldMore
+} from '../v2/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {Menu, MenuItem} from './Menu.js'
-import {Toolbar, ToolbarGroup} from './Toolbar.js'
+import {Toolbar, ToolbarGroup, ToolbarSeparator} from './Toolbar.js'
 
 export const Example = (args: any) => (
   <Toolbar aria-label="Text formatting" data-orientation="horizontal" {...args}>
     <ToolbarGroup>
+      <Button appearance="plain" size="square-petite" icon={IcRoundUndo} />
+      <Button appearance="plain" size="square-petite" icon={IcRoundRedo} />
+    </ToolbarGroup>
+
+    <ToolbarSeparator />
+
+    <ToolbarGroup>
       <Menu
         label={
           <Button appearance="plain">
-            Options...
+            Heading
             <IcRoundUnfoldMore />
           </Button>
         }
       >
-        <MenuItem>
-          <IcRoundBrightness />
-          Undo
-        </MenuItem>
-        <MenuItem>
-          <IcRoundBrightness />
-          Redo
-        </MenuItem>
-        <MenuItem>
-          <IcRoundBrightness />
-          Insert Link
-        </MenuItem>
-        <MenuItem>
-          <IcRoundBrightness />
-          Insert Image
-        </MenuItem>
-        <MenuItem>
-          <IcRoundBrightness />
-          Insert Grid
-        </MenuItem>
+        {[
+          {icon: IcRoundFormatBold, label: 'Heading 2'},
+          {icon: IcRoundFormatBold, label: 'Heading 3'},
+          {icon: IcRoundFormatBold, label: 'Heading 4'},
+          {icon: IcRoundFormatBold, label: 'Heading 5'}
+        ].map(({icon, label}) => (
+          <MenuItem key={label}>
+            <Icon icon={icon} />
+            {label}
+          </MenuItem>
+        ))}
       </Menu>
     </ToolbarGroup>
 
-    <Separator />
+    <ToolbarSeparator />
 
     <ToolbarGroup>
-      <Button size="square-petite" appearance="plain" data-appearance="active">
-        <Icon icon={IcRoundBrightness} />
-      </Button>
+      <Button
+        appearance="plain"
+        size="square-petite"
+        icon={IcRoundFormatBold}
+      />
+      <Button
+        appearance="plain"
+        size="square-petite"
+        icon={IcRoundFormatBold}
+      />
+      <Button
+        appearance="plain"
+        size="square-petite"
+        icon={IcRoundFormatBold}
+      />
+    </ToolbarGroup>
 
+    <ToolbarSeparator />
+
+    <ToolbarGroup>
       <Menu
         label={
-          <Button size="large" appearance="plain">
-            <Icon icon={IcRoundBrightness} />
+          <Button appearance="plain">
+            <Icon icon={IcRoundFormatAlignLeft} />
             <Icon icon={IcRoundUnfoldMore} />
           </Button>
         }
       >
-        <MenuItem>
-          <IcRoundBrightness />
-          Undo
-        </MenuItem>
-        <MenuItem>
-          <IcRoundBrightness />
-          Redo
-        </MenuItem>
-        <MenuItem>
-          <IcRoundBrightness />
-          Insert Link
-        </MenuItem>
-        <MenuItem>
-          <IcRoundBrightness />
-          Insert Image
-        </MenuItem>
-        <MenuItem>
-          <IcRoundBrightness />
-          Insert Grid
-        </MenuItem>
+        {[
+          {icon: IcRoundFormatAlignLeft, label: 'Align left'},
+          {icon: IcRoundFormatAlignLeft, label: 'Align center'},
+          {icon: IcRoundFormatAlignLeft, label: 'Align right'},
+          {icon: IcRoundFormatAlignLeft, label: 'Align justify'}
+        ].map(({icon, label}) => (
+          <MenuItem key={label}>
+            <Icon icon={icon} />
+            {label}
+          </MenuItem>
+        ))}
       </Menu>
 
-      <Button size="square-petite" appearance="plain">
-        <Icon icon={IcRoundBrightness} />
-      </Button>
-
-      <Button size="square-petite" appearance="plain">
-        <Icon icon={IcRoundBrightness} />
-      </Button>
+      <Button
+        appearance="plain"
+        size="square-petite"
+        icon={IcRoundFormatBold}
+      />
+      <Button
+        appearance="plain"
+        size="square-petite"
+        icon={IcRoundFormatBold}
+      />
     </ToolbarGroup>
 
-    <Separator />
+    <ToolbarSeparator />
 
     <ToolbarGroup>
-      <Button size="square-petite" appearance="plain">
-        <Icon icon={IcRoundBrightness} />
-      </Button>
-      <Button size="square-petite" appearance="plain">
-        <Icon icon={IcRoundBrightness} />
-      </Button>
+      <Button
+        appearance="plain"
+        size="square-petite"
+        icon={IcRoundFormatBold}
+      />
     </ToolbarGroup>
 
-    <Separator />
+    <ToolbarSeparator />
 
     <ToolbarGroup>
-      <Button size="square-petite" appearance="plain">
-        <Icon icon={IcRoundBrightness} />
-      </Button>
-    </ToolbarGroup>
-
-    <Separator />
-
-    <ToolbarGroup>
-      <Button size="square-petite" appearance="plain">
-        <Icon icon={IcRoundBrightness} />
-      </Button>
-      <Button size="square-petite" appearance="plain">
-        <Icon icon={IcRoundBrightness} />
-      </Button>
-    </ToolbarGroup>
-
-    <Separator />
-
-    <ToolbarGroup>
-      <Button size="square-petite" appearance="plain">
-        <Icon icon={IcRoundBrightness} />
-      </Button>
+      <Button
+        appearance="plain"
+        size="square-petite"
+        icon={IcRoundFormatBold}
+      />
     </ToolbarGroup>
   </Toolbar>
 )

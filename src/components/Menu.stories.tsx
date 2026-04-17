@@ -3,9 +3,7 @@ import {
   MenuSection,
   type Selection as SelectionType
 } from 'react-aria-components'
-import {Stack} from '../stories/Stack.js'
-import {IcRoundArchive} from '../stories/icons/IcRoundArchive.js'
-import {IcRoundHistory} from '../stories/icons/IcRoundHistory.js'
+import {IcRoundArchive, IcRoundHistory} from '../v2/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {Menu, MenuHeader, MenuItem, MenuSeparator} from './Menu.js'
@@ -216,7 +214,7 @@ const languages = [
 ]
 
 export const Example = () => (
-  <Stack>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
     <Menu label="Default">
       {items.map(item => (
         <MenuItem key={item.id}>{item.name}</MenuItem>
@@ -269,7 +267,7 @@ export const Example = () => (
         <MenuItem>Right</MenuItem>
       </MenuSection>
     </Menu>
-  </Stack>
+  </div>
 )
 
 export const Selection = () => {

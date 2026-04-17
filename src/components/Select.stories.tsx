@@ -1,10 +1,11 @@
 import {useState} from 'react'
-import {Stack} from '../stories/Stack.js'
-import {IcRoundBrightness} from '../stories/icons/IcRoundBrightness.js'
-import {IcRoundContentCopy} from '../stories/icons/IcRoundContentCopy.js'
-import {IcRoundHome} from '../stories/icons/IcRoundHome.js'
-import {IcRoundSearch} from '../stories/icons/IcRoundSearch.js'
-import {IcRoundSettings} from '../stories/icons/IcRoundSettings.js'
+import {
+  IcAlineaLogo as IcRoundHome,
+  IcBaselineContentCopy as IcRoundContentCopy,
+  IcOutlineSettings as IcRoundSettings,
+  IcRoundBrightness2 as IcRoundBrightness,
+  IcRoundSearch
+} from '../v2/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {Select, SelectItem} from './Select.js'
@@ -76,7 +77,7 @@ export const Basic = () => {
   ]
 
   return (
-    <Stack align="normal">
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <Select items={softwareOptions} label="Design software">
         {item => <SelectItem key={item.id}>{item.name}</SelectItem>}
       </Select>
@@ -167,7 +168,7 @@ export const Basic = () => {
       </Select>
 
       <form onSubmit={e => e.preventDefault()}>
-        <Stack gap={8} align="normal">
+        <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
           <Select
             isRequired
             items={softwareOptions}
@@ -180,9 +181,9 @@ export const Basic = () => {
           <Button type="submit" style={{alignSelf: 'flex-start'}}>
             Submit
           </Button>
-        </Stack>
+        </div>
       </form>
-    </Stack>
+    </div>
   )
 }
 
@@ -250,20 +251,20 @@ export const Details = () => {
   ]
 
   return (
-    <Stack align="normal">
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <Select label="Rich text options" items={richTextOptions}>
         {item => (
           <SelectItem key={item.id} textValue={item.title}>
-            <Stack gap={0}>
+            <div style={{display: 'flex', flexDirection: 'column', gap: 0}}>
               <p style={{margin: 0}}>
                 <strong>{item.title}</strong>
               </p>
               <p style={{margin: 0, fontSize: '0.75rem'}}>{item.description}</p>
-            </Stack>
+            </div>
           </SelectItem>
         )}
       </Select>
-    </Stack>
+    </div>
   )
 }
 
@@ -282,11 +283,13 @@ export const Dynamic = () => {
   const [newOption, setNewOption] = useState('')
 
   return (
-    <Stack>
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <Select label="Dynamic options" items={options}>
         {item => <SelectItem key={item.id}>{item.name}</SelectItem>}
       </Select>
-      <Stack align="end" direction="row">
+      <div
+        style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 16}}
+      >
         <TextField
           label="Add option"
           value={newOption}
@@ -301,8 +304,8 @@ export const Dynamic = () => {
         >
           Add option
         </Button>
-      </Stack>
-    </Stack>
+      </div>
+    </div>
   )
 }
 

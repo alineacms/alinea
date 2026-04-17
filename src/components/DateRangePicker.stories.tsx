@@ -3,12 +3,11 @@ import {useState} from 'react'
 import type {DateRange} from 'react-aria-components'
 import {I18nProvider} from 'react-aria-components'
 import {DateRangePicker} from '../components/DateRangePicker.js'
-import {Stack} from '../stories/Stack.js'
 
 export const Basic = () => {
   return (
     <I18nProvider locale="en-UK">
-      <Stack gap={32}>
+      <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
         <DateRangePicker label="Default" />
         <DateRangePicker
           label="With Description"
@@ -29,7 +28,7 @@ export const Basic = () => {
           errorMessage="Date range is required"
         />
         <DateRangePicker label="Disabled" isDisabled />
-      </Stack>
+      </div>
     </I18nProvider>
   )
 }

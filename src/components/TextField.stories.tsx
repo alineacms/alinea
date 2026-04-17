@@ -1,6 +1,5 @@
 import {useState} from 'react'
-import {Stack} from '../stories/Stack.js'
-import {IcRoundInfo} from '../stories/icons/IcRoundInfo.js'
+import {IcRoundDescription as IcRoundInfo} from '../v2/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {TextField} from './TextField.js'
@@ -8,7 +7,7 @@ import {TextField} from './TextField.js'
 export const Example = () => {
   const [text, setText] = useState('Multi-line text input, used as textarea.')
   return (
-    <Stack align="normal">
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <TextField label="Name" />
       <TextField label="Name (with initial value)" value="Initial name" />
       <TextField
@@ -42,7 +41,9 @@ export const Example = () => {
 
       <h3 style={{marginBottom: 0}}>States</h3>
       <form action={'#'}>
-        <Stack align="start" gap={8}>
+        <div
+          style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8}}
+        >
           <TextField
             isRequired
             label="Username"
@@ -50,7 +51,7 @@ export const Example = () => {
             errorMessage="Username already exists"
           />
           <Button type="submit">Submit</Button>
-        </Stack>
+        </div>
       </form>
       <TextField
         isDisabled
@@ -68,7 +69,7 @@ export const Example = () => {
       <h3 style={{marginBottom: 0}}>Types</h3>
       <TextField type="email" label="Email" />
       <TextField type="password" label="Password" />
-    </Stack>
+    </div>
   )
 }
 

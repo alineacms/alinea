@@ -107,6 +107,37 @@
     }
   }
 
+  &[data-size="icon-nav"] {
+    --alinea-font-size-base: 1rem;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    padding: 0;
+    border-radius: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--alinea-icon-color-plain);
+
+    [data-slot="icon"] {
+      font-size: var(--alinea-font-size-base);
+    }
+
+    &[data-hovered] {
+      background-color: light-dark(
+        var(--alinea-gray-100),
+        var(--alinea-gray-800)
+      );
+      color: var(--alinea-button-color);
+    }
+
+    &[data-active],
+    &[data-appearance="active"] {
+      background-color: var(--alinea-selected-background);
+      color: var(--alinea-selected-foreground);
+    }
+  }
+
   &[data-size="square-petite"] {
     width: 2rem;
     height: 2rem;

@@ -1,5 +1,4 @@
 import {useListData} from 'react-stately'
-import {Stack} from '../stories/Stack.js'
 import {
   MultipleSelect,
   MultipleSelectItem,
@@ -15,7 +14,7 @@ export function Basic() {
     initialItems: [fruits[0], fruits[1]]
   })
   return (
-    <Stack>
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <MultipleSelect
         label="Fruits"
         selectedItems={emptyItems}
@@ -50,7 +49,7 @@ export function Basic() {
           )
         }}
       </MultipleSelect>
-    </Stack>
+    </div>
   )
 }
 

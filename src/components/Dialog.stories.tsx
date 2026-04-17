@@ -1,7 +1,6 @@
 import {use} from 'react'
 import {DialogTrigger, OverlayTriggerStateContext} from 'react-aria-components'
-import {IcRoundClose} from '../stories/icons/IcRoundClose.js'
-import {Form} from '../todo/Form.js'
+import {IcRoundClose} from '../v2/icons.js'
 import {Button} from './Button.js'
 import {Dialog} from './Dialog.js'
 import {Modal} from './Modal.js'
@@ -28,13 +27,13 @@ export const Example = () => {
         <Dialog>
           Sign up
           <CloseButton />
-          <Form>
+          <form>
             <TextField name="fname" isRequired label="First Name" autoFocus />
             <TextField name="lname" isRequired label="Last Name" />
             <Button slot="close" style={{marginTop: 8}}>
               Submit
             </Button>
-          </Form>
+          </form>
         </Dialog>
       </Modal>
     </DialogTrigger>

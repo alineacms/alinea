@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import type {ReactNode} from 'react'
+import {type ReactNode, memo} from 'react'
 import {
   Tree as AriaTree,
   TreeItem as AriaTreeItem,
@@ -10,7 +10,7 @@ import {
   type TreeItemContentRenderProps,
   type TreeProps
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowRight} from '../stories/icons/IcRoundKeyboardArrowRight.js'
+import {IcRoundKeyboardArrowRight} from '../v2/icons.js'
 import {Checkbox} from './Checkbox.js'
 import {Icon, type IconProps} from './Icon.js'
 import css from './Tree.module.css'
@@ -36,35 +36,42 @@ export function Tree<T extends object>(props: TreeProps<T>) {
   )
 }
 
-export interface TreeItemContentProps2 extends Omit<
-  AriaTreeItemContentProps,
-  'children'
-> {
+export interface TreeItemContentProps
+  extends Omit<AriaTreeItemContentProps, 'children'> {
   children?: ReactNode
   icon?: IconProps['icon']
   suffix?: ReactNode
 }
 
-export function TreeItemContent({
+export const TreeItemContent = memo(function TreeItemContent({
   icon,
   suffix,
   children
-}: TreeItemContentProps2) {
+}: TreeItemContentProps) {
   return (
     <AriaTreeItemContent>
       {({
         selectionBehavior,
         selectionMode,
-        allowsDragging
+        allowsDragging,
+        isDragging
       }: TreeItemContentRenderProps) => (
         <>
-          {allowsDragging && <Button slot="drag">≡</Button>}
           {selectionBehavior === 'toggle' && selectionMode !== 'none' && (
             <Checkbox slot="selection" />
           )}
-          <Button slot="chevron">
-            <IcRoundKeyboardArrowRight />
-          </Button>
+          <div className={styles.TreeItem.controls()}>
+            <Button
+              slot="drag"
+              data-invisible={!isDragging}
+              className={styles.TreeItem.dragHandle()}
+            >
+              ≡
+            </Button>
+            <Button slot="chevron" data-invisible={isDragging}>
+              <IcRoundKeyboardArrowRight />
+            </Button>
+          </div>
           {icon && (
             <span data-slot="icon">
               <Icon icon={icon} />
@@ -76,7 +83,7 @@ export function TreeItemContent({
       )}
     </AriaTreeItemContent>
   )
-}
+})
 
 export interface TreeItemProps extends Partial<AriaTreeItemProps> {
   title: string
@@ -90,12 +97,14 @@ export function TreeItem({
   suffix,
   children,
   className,
+  hasChildItems,
   ...rest
 }: TreeItemProps) {
   return (
     <AriaTreeItem
       textValue={title}
       {...rest}
+      hasChildItems={hasChildItems}
       className={renderProps =>
         styles.TreeItem(
           styler.merge({

@@ -10,7 +10,7 @@ import {
   TagList,
   Tag as TagPrimitive
 } from 'react-aria-components'
-import {IcRoundCancel} from '../stories/icons/IcRoundCancel.js'
+import {IcRoundClose as IcRoundCancel} from '../v2/icons.js'
 import {Icon} from './Icon.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import css from './TagGroup.module.css'

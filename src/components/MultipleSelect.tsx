@@ -21,8 +21,7 @@ import {
   TagList
 } from 'react-aria-components'
 import {type ListData, useListData} from 'react-stately'
-import {IcRoundCheck} from '../stories/icons/IcRoundCheck.js'
-import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.js'
+import {IcRoundCheck, IcRoundKeyboardArrowDown} from '../v2/icons.js'
 import {Icon} from './Icon.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import {Popover} from './Popover.js'

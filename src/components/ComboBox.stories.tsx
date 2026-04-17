@@ -1,5 +1,4 @@
 import {useState} from 'react'
-import {Stack} from '../stories/Stack.js'
 import {Button} from './Button.js'
 import {ComboBox, ComboBoxItem} from './ComboBox.js'
 import {TextField} from './TextField.js'
@@ -38,7 +37,7 @@ export const Basic = () => {
   ]
 
   return (
-    <Stack align="normal">
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <ComboBox items={softwareOptions} label="Design software">
         {item => <ComboBoxItem key={item.id}>{item.name}</ComboBoxItem>}
       </ComboBox>
@@ -57,6 +56,14 @@ export const Basic = () => {
 
       <ComboBox
         items={softwareOptions}
+        label="ComboBox multiple select"
+        // selectionMode="multiple"
+      >
+        {item => <ComboBoxItem key={item.id}>{item.name}</ComboBoxItem>}
+      </ComboBox>
+
+      <ComboBox
+        items={softwareOptions}
         label="ComboBoxItem: isDisabled"
         disabledKeys={[2, 4]}
       >
@@ -64,7 +71,7 @@ export const Basic = () => {
       </ComboBox>
 
       <form onSubmit={e => e.preventDefault()}>
-        <Stack gap={8}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
           <ComboBox
             isRequired
             items={softwareOptions}
@@ -75,7 +82,7 @@ export const Basic = () => {
             {item => <ComboBoxItem key={item.id}>{item.name}</ComboBoxItem>}
           </ComboBox>
           <Button type="submit">Submit</Button>
-        </Stack>
+        </div>
       </form>
 
       <ComboBox label="Large option list" items={largeOptions}>
@@ -85,7 +92,7 @@ export const Basic = () => {
       <ComboBox label="Funny long text options" items={longTextOptions}>
         {item => <ComboBoxItem key={item.id}>{item.name}</ComboBoxItem>}
       </ComboBox>
-    </Stack>
+    </div>
   )
 }
 
@@ -104,11 +111,13 @@ export const Dynamic = () => {
   const [newOption, setNewOption] = useState('')
 
   return (
-    <Stack>
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <ComboBox label="Dynamic options" items={options}>
         {item => <ComboBoxItem key={item.id}>{item.name}</ComboBoxItem>}
       </ComboBox>
-      <Stack align="end" direction="row">
+      <div
+        style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 16}}
+      >
         <TextField
           label="Add option"
           value={newOption}
@@ -123,8 +132,8 @@ export const Dynamic = () => {
         >
           Add option
         </Button>
-      </Stack>
-    </Stack>
+      </div>
+    </div>
   )
 }
 

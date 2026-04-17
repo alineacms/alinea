@@ -1,37 +1,37 @@
 import styler from '@alinea/styler'
-import type {ComponentType, ReactNode} from 'react'
 import {
   Button as ButtonPrimitive,
   type ButtonProps as ButtonPrimitiveProps
 } from 'react-aria-components'
-import css from './Button.module.css'
+import type {ComponentType, ReactNode} from 'react'
 import {Icon} from './Icon.js'
 import {ProgressCircle} from './ProgressCircle.js'
+import css from './Button.module.css'
 
 const styles = styler(css)
 
 export interface ButtonProps extends ButtonPrimitiveProps {
   appearance?: 'solid' | 'outline' | 'plain' | 'active'
   intent?: 'primary' | 'secondary' | 'danger' | 'warning'
-  size?: 'small' | 'medium' | 'large' | 'square-petite' | 'icon'
+  size?: 'small' | 'medium' | 'large' | 'icon' | 'icon-nav' | 'square-petite'
   icon?: ComponentType
   children?: ReactNode
 }
 
 export function Button({
-  intent = 'primary',
-  size = 'medium',
-  appearance = 'solid',
-  children,
+  appearance,
+  intent,
+  size,
   icon,
+  children,
   className,
   ...props
 }: ButtonProps) {
   return (
     <ButtonPrimitive
+      data-appearance={appearance}
       data-intent={intent}
       data-size={size}
-      data-appearance={appearance}
       {...props}
       className={renderProps =>
         styles.Button(

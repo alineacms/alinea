@@ -11,8 +11,7 @@ import {
   Separator as PrimitiveSeparator,
   SubmenuTrigger
 } from 'react-aria-components'
-import {IcRoundCheck} from '../stories/icons/IcRoundCheck.js'
-import {IcRoundKeyboardArrowRight} from '../stories/icons/IcRoundKeyboardArrowRight.js'
+import {IcRoundCheck, IcRoundKeyboardArrowRight} from '../v2/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import css from './Menu.module.css'

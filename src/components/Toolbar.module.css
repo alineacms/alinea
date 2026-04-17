@@ -1,12 +1,10 @@
 @import "../theme.css";
 
 .Toolbar {
-  display: flex;
+  display: inline-flex;
   flex-direction: row;
-  gap: 5px;
-  border: 1px solid var(--alinea-border-color);
-  border-radius: 5px;
-  padding: 5px;
+  justify-content: center;
+  gap: 8px;
 
   &[data-orientation="horizontal"] {
     flex-direction: row;
@@ -14,7 +12,7 @@
 
   .ToolbarGroup {
     display: flex;
-    gap: 8px;
+    gap: 4px;
   }
   &[data-orientation="vertical"] {
     flex-direction: column;
@@ -41,7 +39,7 @@
 }
 
 .ToolbarSeparator {
-  background-color: var(--alinea-border-color);
-
-  width: 1px;
+  margin: 4px 0;
+  border: none;
+  border-right: 1px solid var(--alinea-border-color);
 }

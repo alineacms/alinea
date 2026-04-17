@@ -1,8 +1,7 @@
-import {Stack} from '../stories/Stack.js'
 import {Tab, TabList, TabPanel, Tabs} from './Tabs.js'
 
 export const Variants = () => (
-  <Stack gap={32}>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
     <Tabs>
       <TabList>
         <Tab id="tab1">Tab 1</Tab>
@@ -59,7 +58,7 @@ export const Variants = () => (
         Proin rhoncus, nunc eu venenatis convallis, arcu sagittis risus.
       </TabPanel>
     </Tabs>
-  </Stack>
+  </div>
 )
 
 export const Orientation = () => (

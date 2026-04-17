@@ -1,5 +1,4 @@
 import {useListData} from 'react-stately'
-import {Stack} from '../stories/Stack.js'
 import {type IntentProps, type ShapeProps, Tag, TagGroup} from './TagGroup.js'
 
 const intents: IntentProps[] = ['primary', 'secondary']
@@ -13,13 +12,13 @@ const items = [
 ]
 
 export const Intents = () => (
-  <Stack>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
     {intents.map(intent => (
       <TagGroup items={items} label={intent} intent={intent} key={intent}>
         {item => <Tag>{item.name}</Tag>}
       </TagGroup>
     ))}
-  </Stack>
+  </div>
 )
 
 export const Selection = () => {
@@ -33,7 +32,7 @@ export const Selection = () => {
   })
 
   return (
-    <Stack>
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <TagGroup items={list.items} label="Ice cream flavor">
         {item => <Tag isDisabled={item.isDisabled}>{item.name}</Tag>}
       </TagGroup>
@@ -46,18 +45,18 @@ export const Selection = () => {
       >
         {item => <Tag isDisabled={item.isDisabled}>{item.name}</Tag>}
       </TagGroup>
-    </Stack>
+    </div>
   )
 }
 
 export const Shape = () => (
-  <Stack>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
     {shapes.map(shape => (
       <TagGroup items={items} label={shape} shape={shape} key={shape}>
         {item => <Tag>{item.name}</Tag>}
       </TagGroup>
     ))}
-  </Stack>
+  </div>
 )
 
 export default {

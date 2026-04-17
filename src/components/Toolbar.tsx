@@ -40,12 +40,12 @@ export function Toolbar({className, ...props}: ToolbarProps) {
 export function ToolbarGroup({isDisabled, className, ...props}: GroupProps) {
   return (
     <Group
+      {...props}
       className={styles.ToolbarGroup(
         styler.merge({
           className: typeof className === 'string' ? className : undefined
         })
       )}
-      {...props}
     >
       {props.children}
     </Group>

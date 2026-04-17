@@ -1,9 +1,8 @@
-import {Stack} from '../stories/Stack.js'
 import {Button} from './Button.js'
 import {Checkbox} from './Checkbox.js'
 
 export const Example = () => (
-  <Stack>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
     <Checkbox>Checkbox</Checkbox>
     <Checkbox
       label="Label & description"
@@ -19,10 +18,12 @@ export const Example = () => (
     <Checkbox isInvalid>isInvalid</Checkbox>
 
     <form onSubmit={e => e.preventDefault()}>
-      <Stack align="start" gap={8}>
+      <div
+        style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8}}
+      >
         <Checkbox isRequired label="isRequired" />
         <Button type="submit">Submit</Button>
-      </Stack>
+      </div>
     </form>
 
     <Checkbox isDisabled label="Disabled" description="isDisabled" />
@@ -38,7 +39,7 @@ export const Example = () => (
       label="Read-only & selected"
       description="isReadOnly & isSelected"
     />
-  </Stack>
+  </div>
 )
 
 export default {

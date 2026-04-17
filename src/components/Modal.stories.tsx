@@ -1,18 +1,16 @@
 import {DialogTrigger, Heading, Text} from 'react-aria-components'
-import {Stack} from '../stories/Stack.js'
-import {Form} from '../todo/Form.js'
 import {Button} from './Button.js'
 import {Dialog} from './Dialog.js'
 import {Modal} from './Modal.js'
 import {TextField} from './TextField.js'
 
 export const Example = () => (
-  <Stack>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
     <DialogTrigger>
       <Button>Click to open modal</Button>
       <Modal isDismissable>
         <Dialog>
-          <Stack>
+          <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
             <Heading slot="title">Modal title</Heading>
             <Text>
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque
@@ -21,7 +19,7 @@ export const Example = () => (
               lacinia tempor tortor.
             </Text>
             <Button slot="close">Close modal</Button>
-          </Stack>
+          </div>
         </Dialog>
       </Modal>
     </DialogTrigger>
@@ -29,14 +27,14 @@ export const Example = () => (
       <Button>Sign up</Button>
       <Modal isDismissable style={{width: 460}}>
         <Dialog>
-          <Form>
+          <form>
             <h1>Sign up</h1>
             <TextField name="fname" isRequired label="First Name" autoFocus />
             <TextField name="lname" isRequired label="Last Name" />
             <Button type="submit" slot="close">
               Submit
             </Button>
-          </Form>
+          </form>
         </Dialog>
       </Modal>
     </DialogTrigger>
@@ -44,7 +42,7 @@ export const Example = () => (
       <Button intent="danger">Delete entry</Button>
       <Modal isDismissable style={{width: 460}}>
         <Dialog>
-          <Form>
+          <form>
             <Heading slot="title">Delete entry</Heading>
             <Text>
               Are you sure you want to delete "Documents"? All contents will be
@@ -69,11 +67,11 @@ export const Example = () => (
                 Delete
               </Button>
             </div>
-          </Form>
+          </form>
         </Dialog>
       </Modal>
     </DialogTrigger>
-  </Stack>
+  </div>
 )
 
 export default {

@@ -1,7 +1,6 @@
 import {endOfYear, getLocalTimeZone, today} from '@internationalized/date'
 import {useState} from 'react'
 import {I18nProvider} from 'react-aria-components'
-import {Stack} from '../stories/Stack.js'
 import {DatePicker} from './DatePicker.js'
 
 export const Example = () => {
@@ -14,7 +13,7 @@ export const Example = () => {
 
   return (
     <I18nProvider locale="en-UK">
-      <Stack gap={32}>
+      <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
         <DatePicker label="Default" />
         <DatePicker
           label="With Description"
@@ -35,7 +34,7 @@ export const Example = () => {
           errorMessage="Date is required"
         />
         <DatePicker label="Disabled" isDisabled />
-      </Stack>
+      </div>
     </I18nProvider>
   )
 }

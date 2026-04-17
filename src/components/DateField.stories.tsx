@@ -1,11 +1,10 @@
 import {I18nProvider} from 'react-aria-components'
-import {Stack} from '../stories/Stack.js'
 import {DateField} from './DateField.js'
 
 export const Example = () => {
   return (
     <I18nProvider locale="en-UK">
-      <Stack gap={32}>
+      <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
         <DateField label="Default" />
         <DateField
           label="With Description"
@@ -18,7 +17,7 @@ export const Example = () => {
           errorMessage="Date is required"
         />
         <DateField label="Disabled" isDisabled />
-      </Stack>
+      </div>
     </I18nProvider>
   )
 }

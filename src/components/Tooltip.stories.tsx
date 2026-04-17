@@ -1,10 +1,11 @@
 import {Button} from 'react-aria-components'
-import {Stack} from '../stories/Stack.js'
 import {Tooltip} from './Tooltip.js'
 
 export const Basic = () => (
   <div style={{paddingBlock: '80px'}}>
-    <Stack align="center" gap={64}>
+    <div
+      style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 64}}
+    >
       <Tooltip tooltip="Save">
         <Button>💾</Button>
       </Tooltip>
@@ -12,13 +13,15 @@ export const Basic = () => (
       <Tooltip tooltip="Delete">
         <Button>❌</Button>
       </Tooltip>
-    </Stack>
+    </div>
   </div>
 )
 
 export const Positions = () => (
   <div style={{paddingBlock: '80px'}}>
-    <Stack align="center" gap={32}>
+    <div
+      style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32}}
+    >
       <Tooltip
         placement="start"
         tooltip="
@@ -43,7 +46,7 @@ export const Positions = () => (
       >
         <Button>➡️</Button>
       </Tooltip>
-    </Stack>
+    </div>
   </div>
 )
 
@@ -56,10 +59,10 @@ export const DelayedTooltip = () => (
 export const InteractiveTooltip = () => (
   <Tooltip
     tooltip={
-      <Stack>
+      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
         <strong>Important Info</strong>
         <p>This tooltip contains multiple elements.</p>
-      </Stack>
+      </div>
     }
   >
     <Button>🛠️ Hover for info</Button>

@@ -1,9 +1,8 @@
-import {Stack} from '../stories/Stack.js'
 import {Radio, RadioGroup} from './RadioGroup.js'
 
 export const Example = () => {
   return (
-    <Stack>
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <RadioGroup label="Favorite sport">
         <Radio value="soccer">Soccer</Radio>
         <Radio value="baseball">Baseball</Radio>
@@ -19,7 +18,7 @@ export const Example = () => {
         <Radio value="orange">Orange</Radio>
         <Radio value="grape">Grape</Radio>
       </RadioGroup>
-    </Stack>
+    </div>
   )
 }
 

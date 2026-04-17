@@ -35,6 +35,8 @@
     justify-content: center;
     border-radius: 4px;
     background-color: transparent;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
     transition: var(--alinea-transition);
     color: var(--alinea-icon-color);
     font-size: 18px;
@@ -43,6 +45,10 @@
     &[data-focus-visible] {
       background-color: var(--alinea-background-color);
       color: var(--alinea-icon-color);
+    }
+
+    &[data-focus-visible] {
+      outline-color: var(--alinea-border-color);
     }
 
     &[data-disabled] {
@@ -54,16 +60,19 @@
 
   .Calendar-grid {
     border-spacing: 0 4px;
+    font-size: var(--alinea-font-size-base);
   }
 
   .Calendar-cell {
     cursor: pointer;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: var(--alinea-border-radius);
+    outline: 2px solid transparent;
+    outline-offset: -2px;
     font-size: var(--alinea-font-size-base);
     text-align: center;
     transition: var(--alinea-transition);
@@ -88,8 +97,7 @@
     }
 
     &[data-focus-visible] {
-      outline: 2px solid var(--alinea-border-color);
-      outline-offset: 2px;
+      outline-color: var(--alinea-border-color);
     }
 
     &[data-selected] {
@@ -103,6 +111,7 @@
 
     &[data-selected][data-focus-visible] {
       outline-color: var(--alinea-highlight-background);
+      outline-offset: 2px;
     }
 
     &[data-disabled] {

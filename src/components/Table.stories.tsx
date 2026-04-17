@@ -1,8 +1,6 @@
 import type {SelectionBehavior, SelectionMode} from '@react-types/shared'
 import {useAsyncList} from 'react-stately'
-import {Stack} from '../stories/Stack.js'
-import {IcRoundDelete} from '../stories/icons/IcRoundDelete.js'
-import {IcRoundEdit} from '../stories/icons/IcRoundEdit.js'
+import {IcRoundDelete, IcRoundEdit} from '../v2/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {Cell, Column, Row, Table, TableBody, TableHeader} from './Table.js'
@@ -13,7 +11,7 @@ const exampleStories = [
   {label: 'Table - striped', props: {striped: true}}
 ]
 export const Example = () => (
-  <Stack gap={32}>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
     <Table>
       {columns?.length > 0 && (
         <TableHeader>
@@ -62,7 +60,7 @@ export const Example = () => (
         </Table>
       </div>
     ))}
-  </Stack>
+  </div>
 )
 
 const selectionStories = [
@@ -80,7 +78,7 @@ const selectionStories = [
   }
 ]
 export const Selection = () => (
-  <Stack gap={32}>
+  <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
     {selectionStories.map((item, index) => (
       <div key={index} style={{width: '100%'}}>
         <h3>{item.label}</h3>
@@ -133,7 +131,7 @@ export const Selection = () => (
         </Table>
       </div>
     ))}
-  </Stack>
+  </div>
 )
 type TableItem = {
   id: string
