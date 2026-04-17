@@ -4,6 +4,7 @@ import {Type} from '#/core/Type.js'
 import {TabsSection} from '#/field/tabs.js'
 import {Tab, TabList, TabPanel, Tabs} from '@alinea/components'
 import {EditFields} from '../../Editor.js'
+import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
 
 interface TabsViewProps {
   section: Section
@@ -14,19 +15,25 @@ export function TabsView({section}: TabsViewProps) {
   const visibleTypes = tabs.types.filter(type => !Type.isHidden(type))
   if (!visibleTypes.length) return null
   return (
-    <Tabs variant="subtle">
-      <TabList>
-        {visibleTypes.map((type, i) => (
-          <Tab key={i} id={i}>
-            {Type.label(type)}
-          </Tab>
-        ))}
-      </TabList>
-      {visibleTypes.map((type, i) => (
-        <TabPanel key={i} id={i}>
-          <EditFields fields={getType(type).fields} />
-        </TabPanel>
-      ))}
-    </Tabs>
+    <Surface>
+      <Tabs>
+        <SurfaceHeader>
+          <TabList>
+            {visibleTypes.map((type, i) => (
+              <Tab key={i} id={i}>
+                {Type.label(type)}
+              </Tab>
+            ))}
+          </TabList>
+        </SurfaceHeader>
+        <SurfaceContent>
+          {visibleTypes.map((type, i) => (
+            <TabPanel key={i} id={i}>
+              <EditFields fields={getType(type).fields} />
+            </TabPanel>
+          ))}
+        </SurfaceContent>
+      </Tabs>
+    </Surface>
   )
 }

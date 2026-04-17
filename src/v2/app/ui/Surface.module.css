@@ -4,10 +4,12 @@
   background: white;
   overflow: hidden;
   font-size: var(--alinea-font-size-base);
+  flex-shrink: 0;
 }
 
 .SurfaceHeader {
-  padding: 12px;
+  padding: 0 12px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   gap: 8px;
