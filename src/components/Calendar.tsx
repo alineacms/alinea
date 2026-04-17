@@ -10,10 +10,10 @@ import {
   RangeCalendar as RangeCalendarPrimitive,
   type RangeCalendarProps
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowLeft} from '../stories/icons/IcRoundKeyboardArrowLeft.tsx'
-import {IcRoundKeyboardArrowRight} from '../stories/icons/IcRoundKeyboardArrowRight.tsx'
-import {Icon} from './Icon.tsx'
+import {IcRoundKeyboardArrowLeft} from '../stories/icons/IcRoundKeyboardArrowLeft.js'
+import {IcRoundKeyboardArrowRight} from '../stories/icons/IcRoundKeyboardArrowRight.js'
 import css from './Calendar.module.css'
+import {Icon} from './Icon.js'
 
 const styles = styler(css)
 
@@ -45,7 +45,9 @@ export function Calendar<T extends DateValue>(
         </Button>
       </header>
       <CalendarGrid className={styles.Calendar.grid()}>
-        {date => <CalendarCell date={date} className={styles.Calendar.cell()} />}
+        {date => (
+          <CalendarCell date={date} className={styles.Calendar.cell()} />
+        )}
       </CalendarGrid>
     </CalendarPrimitive>
   )
@@ -79,7 +81,9 @@ export function RangeCalendar<T extends DateValue>(
         </Button>
       </header>
       <CalendarGrid className={styles.Calendar.grid()}>
-        {date => <CalendarCell date={date} className={styles.Calendar.cell()} />}
+        {date => (
+          <CalendarCell date={date} className={styles.Calendar.cell()} />
+        )}
       </CalendarGrid>
     </RangeCalendarPrimitive>
   )

@@ -1,6 +1,6 @@
-import {Stack} from '../stories/Stack.tsx'
-import {Checkbox} from './Checkbox.tsx'
-import {CheckboxGroup} from './CheckboxGroup.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Checkbox} from './Checkbox.js'
+import {CheckboxGroup} from './CheckboxGroup.js'
 
 export const Example = (args: any) => (
   <Stack>

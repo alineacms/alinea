@@ -1,10 +1,10 @@
-import {IcOutlineDescription} from '../stories/icons/IcOutlineDescription.tsx'
-import {IcRoundDescription} from '../stories/icons/IcRoundDescription.tsx'
-import {IcRoundEdit} from '../stories/icons/IcRoundEdit.tsx'
-import {IcRoundHome} from '../stories/icons/IcRoundHome.tsx'
-import {IcRoundVisibility} from '../stories/icons/IcRoundVisibility.tsx'
-import {IcRoundVisibilityOff} from '../stories/icons/IcRoundVisibilityOff.tsx'
-import {Tree, TreeItem} from './Tree.tsx'
+import {IcOutlineDescription} from '../stories/icons/IcOutlineDescription.js'
+import {IcRoundDescription} from '../stories/icons/IcRoundDescription.js'
+import {IcRoundEdit} from '../stories/icons/IcRoundEdit.js'
+import {IcRoundHome} from '../stories/icons/IcRoundHome.js'
+import {IcRoundVisibility} from '../stories/icons/IcRoundVisibility.js'
+import {IcRoundVisibilityOff} from '../stories/icons/IcRoundVisibilityOff.js'
+import {Tree, TreeItem} from './Tree.js'
 
 export const Example = () => (
   <Tree aria-label="Files" defaultExpandedKeys={['docs', 'blog']}>

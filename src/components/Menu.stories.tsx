@@ -3,12 +3,12 @@ import {
   MenuSection,
   type Selection as SelectionType
 } from 'react-aria-components'
-import {Stack} from '../stories/Stack.tsx'
-import {IcRoundArchive} from '../stories/icons/IcRoundArchive.tsx'
-import {IcRoundHistory} from '../stories/icons/IcRoundHistory.tsx'
-import {Button} from './Button.tsx'
-import {Icon} from './Icon.tsx'
-import {Menu, MenuHeader, MenuItem, MenuSeparator} from './Menu.tsx'
+import {Stack} from '../stories/Stack.js'
+import {IcRoundArchive} from '../stories/icons/IcRoundArchive.js'
+import {IcRoundHistory} from '../stories/icons/IcRoundHistory.js'
+import {Button} from './Button.js'
+import {Icon} from './Icon.js'
+import {Menu, MenuHeader, MenuItem, MenuSeparator} from './Menu.js'
 
 const items = [
   {id: 1, name: 'New'},

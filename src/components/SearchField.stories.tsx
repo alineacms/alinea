@@ -1,6 +1,6 @@
-import {Stack} from '../stories/Stack.tsx'
-import {Button} from './Button.tsx'
-import {SearchField} from './SearchField.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Button} from './Button.js'
+import {SearchField} from './SearchField.js'
 
 export const Example = () => (
   <Stack align="normal">

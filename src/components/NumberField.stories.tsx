@@ -1,6 +1,6 @@
 import {I18nProvider} from 'react-aria-components'
-import {Stack} from '../stories/Stack.tsx'
-import {NumberField} from './NumberField.tsx'
+import {Stack} from '../stories/Stack.js'
+import {NumberField} from './NumberField.js'
 
 export const Basic = () => {
   return (

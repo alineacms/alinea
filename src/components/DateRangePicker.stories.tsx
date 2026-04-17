@@ -1,9 +1,9 @@
 import {endOfYear, getLocalTimeZone, today} from '@internationalized/date'
 import {useState} from 'react'
-import {I18nProvider} from 'react-aria-components'
 import type {DateRange} from 'react-aria-components'
-import {DateRangePicker} from '../components/DateRangePicker.tsx'
-import {Stack} from '../stories/Stack.tsx'
+import {I18nProvider} from 'react-aria-components'
+import {DateRangePicker} from '../components/DateRangePicker.js'
+import {Stack} from '../stories/Stack.js'
 
 export const Basic = () => {
   return (

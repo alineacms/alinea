@@ -1,6 +1,6 @@
-import {Stack} from '../stories/Stack.tsx'
-import {Button} from './Button.tsx'
-import {TimeField} from './TimeField.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Button} from './Button.js'
+import {TimeField} from './TimeField.js'
 
 export const Example = () => {
   return (

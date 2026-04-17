@@ -1,6 +1,6 @@
 import {useListData} from 'react-stately'
-import {Stack} from '../stories/Stack.tsx'
-import {type IntentProps, type ShapeProps, Tag, TagGroup} from './TagGroup.tsx'
+import {Stack} from '../stories/Stack.js'
+import {type IntentProps, type ShapeProps, Tag, TagGroup} from './TagGroup.js'
 
 const intents: IntentProps[] = ['primary', 'secondary']
 const shapes: ShapeProps[] = ['square', 'circle']

@@ -1,9 +1,9 @@
 import {useState} from 'react'
-import {Stack} from '../stories/Stack.tsx'
-import {IcRoundInfo} from '../stories/icons/IcRoundInfo.tsx'
-import {Button} from './Button.tsx'
-import {Icon} from './Icon.tsx'
-import {TextField} from './TextField.tsx'
+import {Stack} from '../stories/Stack.js'
+import {IcRoundInfo} from '../stories/icons/IcRoundInfo.js'
+import {Button} from './Button.js'
+import {Icon} from './Icon.js'
+import {TextField} from './TextField.js'
 
 export const Example = () => {
   const [text, setText] = useState('Multi-line text input, used as textarea.')

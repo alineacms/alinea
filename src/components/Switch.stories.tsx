@@ -1,4 +1,4 @@
-import {Switch} from './Switch.tsx'
+import {Switch} from './Switch.js'
 
 export const Example = (args: any) => <Switch {...args}>Wi-Fi</Switch>
 

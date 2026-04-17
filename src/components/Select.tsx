@@ -12,18 +12,17 @@ import {
   SelectStateContext,
   SelectValue
 } from 'react-aria-components'
-import {IcRoundCheck} from '../stories/icons/IcRoundCheck.tsx'
-import {IcRoundClose} from '../stories/icons/IcRoundClose.tsx'
-import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.tsx'
-import {Label, type LabelSharedProps, labelProps} from './Label.tsx'
-import {Popover} from './Popover.tsx'
+import {IcRoundCheck} from '../stories/icons/IcRoundCheck.js'
+import {IcRoundClose} from '../stories/icons/IcRoundClose.js'
+import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.js'
+import {Label, type LabelSharedProps, labelProps} from './Label.js'
+import {Popover} from './Popover.js'
 import css from './Select.module.css'
 
 const styles = styler(css)
 
 export interface SelectProps<T extends object>
-  extends Omit<SelectPrimitiveProps<T>, 'children'>,
-    LabelSharedProps {
+  extends Omit<SelectPrimitiveProps<T>, 'children'>, LabelSharedProps {
   items?: Iterable<T>
   children: React.ReactNode | ((item: T) => React.ReactNode)
 }
@@ -73,7 +72,9 @@ function SelectTrigger<T extends object>({
         data-clear={hasClear || undefined}
       >
         <SelectValue className={styles.SelectTrigger.button.value()} />
-        <IcRoundKeyboardArrowDown className={styles.SelectTrigger.button.arrow()} />
+        <IcRoundKeyboardArrowDown
+          className={styles.SelectTrigger.button.arrow()}
+        />
       </Button>
       {!props.isRequired && <SelectClear />}
     </div>
@@ -130,7 +131,9 @@ export function SelectItem({children, ...props}: SelectItemProps) {
       {({isSelected}) => {
         return (
           <>
-            {isSelected && <IcRoundCheck className={styles.SelectItem.check()} />}
+            {isSelected && (
+              <IcRoundCheck className={styles.SelectItem.check()} />
+            )}
             {children}
           </>
         )

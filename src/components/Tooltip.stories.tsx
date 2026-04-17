@@ -1,6 +1,6 @@
 import {Button} from 'react-aria-components'
-import {Stack} from '../stories/Stack.tsx'
-import {Tooltip} from './Tooltip.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Tooltip} from './Tooltip.js'
 
 export const Basic = () => (
   <div style={{paddingBlock: '80px'}}>

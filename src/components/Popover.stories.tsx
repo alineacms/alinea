@@ -1,5 +1,5 @@
 import {Button, DialogTrigger, Heading} from 'react-aria-components'
-import {Popover} from './Popover.tsx'
+import {Popover} from './Popover.js'
 
 export const Example = (args: any) => (
   <DialogTrigger>

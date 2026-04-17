@@ -21,11 +21,11 @@ import {
   TagList
 } from 'react-aria-components'
 import {type ListData, useListData} from 'react-stately'
-import {IcRoundCheck} from '../stories/icons/IcRoundCheck.tsx'
-import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.tsx'
-import {Icon} from './Icon.tsx'
-import {Label, type LabelSharedProps, labelProps} from './Label.tsx'
-import {Popover} from './Popover.tsx'
+import {IcRoundCheck} from '../stories/icons/IcRoundCheck.js'
+import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.js'
+import {Icon} from './Icon.js'
+import {Label, type LabelSharedProps, labelProps} from './Label.js'
+import {Popover} from './Popover.js'
 
 import css from './MultipleSelect.module.css'
 
@@ -37,7 +37,8 @@ export interface SelectedKey {
 }
 
 interface MultipleSelectProps<T extends object>
-  extends LabelSharedProps,
+  extends
+    LabelSharedProps,
     Omit<
       ComboBoxPrimitiveProps<T>,
       | 'children'

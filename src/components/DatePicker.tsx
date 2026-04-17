@@ -9,18 +9,17 @@ import {
   Dialog,
   Group
 } from 'react-aria-components'
-import {Calendar} from './Calendar.tsx'
-import {Icon} from './Icon.tsx'
-import {Label, type LabelSharedProps, labelProps} from './Label.tsx'
-import {Popover} from './Popover.tsx'
-import {IcRoundCalendarMonth} from '../stories/icons/IcRoundCalendarMonth.tsx'
+import {IcRoundCalendarMonth} from '../stories/icons/IcRoundCalendarMonth.js'
+import {Calendar} from './Calendar.js'
 import css from './DatePicker.module.css'
+import {Icon} from './Icon.js'
+import {Label, type LabelSharedProps, labelProps} from './Label.js'
+import {Popover} from './Popover.js'
 
 const styles = styler(css)
 
 export interface DatePickerProps<T extends DateValue>
-  extends DatePickerPrimitiveProps<T>,
-    LabelSharedProps {}
+  extends DatePickerPrimitiveProps<T>, LabelSharedProps {}
 
 export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
   return (
@@ -30,7 +29,9 @@ export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
           className={styles.DatePicker(
             styler.merge({
               className:
-                typeof props.className === 'string' ? props.className : undefined
+                typeof props.className === 'string'
+                  ? props.className
+                  : undefined
             })
           )}
         >

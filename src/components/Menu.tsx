@@ -11,12 +11,12 @@ import {
   Separator as PrimitiveSeparator,
   SubmenuTrigger
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowRight} from '../stories/icons/IcRoundKeyboardArrowRight.tsx'
-import {Button} from './Button.tsx'
-import {Icon} from './Icon.tsx'
-import {Popover, type PopoverProps} from './Popover.tsx'
-import {IcRoundCheck} from '../stories/icons/IcRoundCheck.tsx'
+import {IcRoundCheck} from '../stories/icons/IcRoundCheck.js'
+import {IcRoundKeyboardArrowRight} from '../stories/icons/IcRoundKeyboardArrowRight.js'
+import {Button} from './Button.js'
+import {Icon} from './Icon.js'
 import css from './Menu.module.css'
+import {Popover, type PopoverProps} from './Popover.js'
 
 const styles = styler(css)
 
@@ -38,7 +38,10 @@ export function MenuItem(props: MenuItemProps) {
             <IcRoundCheck className={styles.MenuItem.check()} />
           )}
           {hasSubmenu && (
-            <Icon className={styles.MenuItem.icon()} icon={IcRoundKeyboardArrowRight} />
+            <Icon
+              className={styles.MenuItem.icon()}
+              icon={IcRoundKeyboardArrowRight}
+            />
           )}
         </>
       )}

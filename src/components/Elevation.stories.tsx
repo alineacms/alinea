@@ -1,6 +1,6 @@
-import {Stack} from '../stories/Stack.tsx'
-import {Elevation} from './Elevation.tsx'
-import {List, ListItem} from './List.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Elevation} from './Elevation.js'
+import {List, ListItem} from './List.js'
 
 export const Variants = () => (
   <Stack gap={24}>

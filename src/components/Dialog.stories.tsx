@@ -1,11 +1,11 @@
 import {use} from 'react'
 import {DialogTrigger, OverlayTriggerStateContext} from 'react-aria-components'
-import {IcRoundClose} from '../stories/icons/IcRoundClose.tsx'
-import {Form} from '../todo/Form.tsx'
-import {Button} from './Button.tsx'
-import {Dialog} from './Dialog.tsx'
-import {Modal} from './Modal.tsx'
-import {TextField} from './TextField.tsx'
+import {IcRoundClose} from '../stories/icons/IcRoundClose.js'
+import {Form} from '../todo/Form.js'
+import {Button} from './Button.js'
+import {Dialog} from './Dialog.js'
+import {Modal} from './Modal.js'
+import {TextField} from './TextField.js'
 
 function CloseButton() {
   const state = use(OverlayTriggerStateContext)

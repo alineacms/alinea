@@ -1,11 +1,11 @@
 import {useListData} from 'react-stately'
-import {Stack} from '../stories/Stack.tsx'
+import {Stack} from '../stories/Stack.js'
 import {
   MultipleSelect,
   MultipleSelectItem,
   type SelectedKey
-} from './MultipleSelect.tsx'
-import {Tag} from './TagGroup.tsx'
+} from './MultipleSelect.js'
+import {Tag} from './TagGroup.js'
 
 export function Basic() {
   const emptyItems = useListData<SelectedKey>({

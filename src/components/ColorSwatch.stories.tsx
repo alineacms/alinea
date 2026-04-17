@@ -1,4 +1,4 @@
-import {ColorSwatch} from './ColorSwatch.tsx'
+import {ColorSwatch} from './ColorSwatch.js'
 
 export const Example = (args: any) => <ColorSwatch {...args} />
 

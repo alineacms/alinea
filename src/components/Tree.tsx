@@ -1,4 +1,5 @@
 import styler from '@alinea/styler'
+import type {ReactNode} from 'react'
 import {
   Tree as AriaTree,
   TreeItem as AriaTreeItem,
@@ -9,10 +10,9 @@ import {
   type TreeItemContentRenderProps,
   type TreeProps
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowRight} from '../stories/icons/IcRoundKeyboardArrowRight.tsx'
-import {Checkbox} from './Checkbox.tsx'
-import {Icon, type IconProps} from './Icon.tsx'
-import type {ReactNode} from 'react'
+import {IcRoundKeyboardArrowRight} from '../stories/icons/IcRoundKeyboardArrowRight.js'
+import {Checkbox} from './Checkbox.js'
+import {Icon, type IconProps} from './Icon.js'
 import css from './Tree.module.css'
 
 const styles = styler(css)
@@ -36,8 +36,10 @@ export function Tree<T extends object>(props: TreeProps<T>) {
   )
 }
 
-export interface TreeItemContentProps2
-  extends Omit<AriaTreeItemContentProps, 'children'> {
+export interface TreeItemContentProps2 extends Omit<
+  AriaTreeItemContentProps,
+  'children'
+> {
   children?: ReactNode
   icon?: IconProps['icon']
   suffix?: ReactNode

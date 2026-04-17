@@ -1,5 +1,5 @@
-import {Stack} from '../stories/Stack.tsx'
-import {Tab, TabList, TabPanel, Tabs} from './Tabs.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Tab, TabList, TabPanel, Tabs} from './Tabs.js'
 
 export const Variants = () => (
   <Stack gap={32}>

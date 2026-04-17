@@ -1,4 +1,4 @@
-export {Example} from './TextField.stories.tsx'
+export {Example} from './TextField.stories.js'
 
 export default {
   title: 'Components / Label'

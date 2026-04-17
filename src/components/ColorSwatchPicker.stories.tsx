@@ -1,4 +1,4 @@
-import {ColorSwatchPicker, ColorSwatchPickerItem} from './ColorSwatchPicker.tsx'
+import {ColorSwatchPicker, ColorSwatchPickerItem} from './ColorSwatchPicker.js'
 
 export const Example = (args: any) => (
   <ColorSwatchPicker {...args}>

@@ -1,5 +1,5 @@
-import {Stack} from '../stories/Stack.tsx'
-import {Link} from './Link.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Link} from './Link.js'
 
 export const Variants = () => (
   <Stack>

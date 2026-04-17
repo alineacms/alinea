@@ -1,4 +1,13 @@
 import styler from '@alinea/styler'
+import type {PropsWithChildren} from 'react'
+import type {
+  CellProps,
+  ColumnProps,
+  RowProps,
+  TableBodyProps,
+  TableHeaderProps,
+  TableProps as TablePrimitiveProps
+} from 'react-aria-components'
 import {
   Cell as CellPrimitive,
   Collection,
@@ -9,26 +18,17 @@ import {
   Table as TablePrimitive,
   useTableOptions
 } from 'react-aria-components'
-import type {
-  CellProps,
-  ColumnProps,
-  RowProps,
-  TableBodyProps,
-  TableHeaderProps,
-  TableProps as TablePrimitiveProps
-} from 'react-aria-components'
-import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.tsx'
-import {IcRoundKeyboardArrowUp} from '../stories/icons/IcRoundKeyboardArrowUp.tsx'
-import {Checkbox} from './Checkbox.tsx'
-import type {PropsWithChildren} from 'react'
+import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.js'
+import {IcRoundKeyboardArrowUp} from '../stories/icons/IcRoundKeyboardArrowUp.js'
+import {Checkbox} from './Checkbox.js'
 import css from './Table.module.css'
 
 const styles = styler(css)
 
 export type {
+  CellProps,
   ColumnProps,
   RowProps,
-  CellProps,
   TableBodyProps
 } from 'react-aria-components'
 

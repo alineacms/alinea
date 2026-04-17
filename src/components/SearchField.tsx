@@ -5,18 +5,17 @@ import {
   SearchField as SearchFieldPrimitive,
   type SearchFieldProps as SearchFieldPrimitiveProps
 } from 'react-aria-components'
-import {IcRoundClose} from '../stories/icons/IcRoundClose.tsx'
-import {IcRoundSearch} from '../stories/icons/IcRoundSearch.tsx'
-import {Icon} from './Icon.tsx'
-import {Label, type LabelSharedProps, labelProps} from './Label.tsx'
-import {ProgressCircle} from './ProgressCircle.tsx'
+import {IcRoundClose} from '../stories/icons/IcRoundClose.js'
+import {IcRoundSearch} from '../stories/icons/IcRoundSearch.js'
+import {Icon} from './Icon.js'
+import {Label, type LabelSharedProps, labelProps} from './Label.js'
+import {ProgressCircle} from './ProgressCircle.js'
 import css from './SearchField.module.css'
 
 const styles = styler(css)
 
 export interface SearchFieldProps
-  extends SearchFieldPrimitiveProps,
-    LabelSharedProps {
+  extends SearchFieldPrimitiveProps, LabelSharedProps {
   placeholder?: string
   hasIcon?: boolean
   isPending?: boolean

@@ -1,9 +1,8 @@
 import type {DropEvent} from '@react-types/shared'
 import {useState} from 'react'
-import {FileTrigger, Text} from 'react-aria-components'
-import {isFileDropItem} from 'react-aria-components'
-import {Button} from './Button.tsx'
-import {DropZone} from './DropZone.tsx'
+import {FileTrigger, isFileDropItem, Text} from 'react-aria-components'
+import {Button} from './Button.js'
+import {DropZone} from './DropZone.js'
 
 export const image = () => {
   const [droppedImage, setDroppedImage] = useState<string | undefined>(

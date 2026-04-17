@@ -1,5 +1,5 @@
-import {Stack} from '../stories/Stack.tsx'
-import {Radio, RadioGroup} from './RadioGroup.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Radio, RadioGroup} from './RadioGroup.js'
 
 export const Example = () => {
   return (

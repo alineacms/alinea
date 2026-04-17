@@ -1,11 +1,11 @@
 import type {SelectionBehavior, SelectionMode} from '@react-types/shared'
 import {useAsyncList} from 'react-stately'
-import {Stack} from '../stories/Stack.tsx'
-import {IcRoundDelete} from '../stories/icons/IcRoundDelete.tsx'
-import {IcRoundEdit} from '../stories/icons/IcRoundEdit.tsx'
-import {Button} from './Button.tsx'
-import {Icon} from './Icon.tsx'
-import {Cell, Column, Row, Table, TableBody, TableHeader} from './Table.tsx'
+import {Stack} from '../stories/Stack.js'
+import {IcRoundDelete} from '../stories/icons/IcRoundDelete.js'
+import {IcRoundEdit} from '../stories/icons/IcRoundEdit.js'
+import {Button} from './Button.js'
+import {Icon} from './Icon.js'
+import {Cell, Column, Row, Table, TableBody, TableHeader} from './Table.js'
 
 const exampleStories = [
   {label: 'Table - autowidth (custom style)', props: {style: {width: 'auto'}}},

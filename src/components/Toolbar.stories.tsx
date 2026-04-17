@@ -1,10 +1,10 @@
 import {Separator} from 'react-aria-components'
-import {IcRoundBrightness} from '../stories/icons/IcRoundBrightness.tsx'
-import {IcRoundUnfoldMore} from '../stories/icons/IcRoundUnfoldMore.tsx'
-import {Button} from './Button.tsx'
-import {Icon} from './Icon.tsx'
-import {Menu, MenuItem} from './Menu.tsx'
-import {Toolbar, ToolbarGroup} from './Toolbar.tsx'
+import {IcRoundBrightness} from '../stories/icons/IcRoundBrightness.js'
+import {IcRoundUnfoldMore} from '../stories/icons/IcRoundUnfoldMore.js'
+import {Button} from './Button.js'
+import {Icon} from './Icon.js'
+import {Menu, MenuItem} from './Menu.js'
+import {Toolbar, ToolbarGroup} from './Toolbar.js'
 
 export const Example = (args: any) => (
   <Toolbar aria-label="Text formatting" data-orientation="horizontal" {...args}>

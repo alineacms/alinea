@@ -5,14 +5,13 @@ import {
   TextField as TextFieldPrimitive,
   type TextFieldProps as TextFieldPrimitiveProps
 } from 'react-aria-components'
-import {Label, type LabelSharedProps, labelProps} from '../components/Label.tsx'
+import {Label, type LabelSharedProps, labelProps} from '../components/Label.js'
 import css from './TextField.module.css'
 
 const styles = styler(css)
 
 export interface TextFieldProps
-  extends LabelSharedProps,
-    TextFieldPrimitiveProps {
+  extends LabelSharedProps, TextFieldPrimitiveProps {
   multiline?: boolean
   rows?: number
   placeholder?: string

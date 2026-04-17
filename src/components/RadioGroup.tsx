@@ -1,11 +1,12 @@
 import styler from '@alinea/styler'
+import type {PropsWithChildren} from 'react'
 import {
   RadioGroup as AriaRadioGroup,
-  type RadioGroupProps as AriaRadioGroupProps
+  type RadioGroupProps as AriaRadioGroupProps,
+  Radio as RadioPrimitive,
+  type RadioProps
 } from 'react-aria-components'
-import {Radio as RadioPrimitive, type RadioProps} from 'react-aria-components'
-import {Label, type LabelSharedProps, labelProps} from './Label.tsx'
-import type {PropsWithChildren} from 'react'
+import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import css from './RadioGroup.module.css'
 
 const styles = styler(css)
@@ -32,8 +33,7 @@ export function Radio(props: RadioProps) {
 }
 
 export interface RadioGroupProps
-  extends Omit<AriaRadioGroupProps, 'children'>,
-    LabelSharedProps {}
+  extends Omit<AriaRadioGroupProps, 'children'>, LabelSharedProps {}
 
 export function RadioGroup({
   children,

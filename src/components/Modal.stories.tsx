@@ -1,10 +1,10 @@
 import {DialogTrigger, Heading, Text} from 'react-aria-components'
-import {Stack} from '../stories/Stack.tsx'
-import {Form} from '../todo/Form.tsx'
-import {Button} from './Button.tsx'
-import {Dialog} from './Dialog.tsx'
-import {Modal} from './Modal.tsx'
-import {TextField} from './TextField.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Form} from '../todo/Form.js'
+import {Button} from './Button.js'
+import {Dialog} from './Dialog.js'
+import {Modal} from './Modal.js'
+import {TextField} from './TextField.js'
 
 export const Example = () => (
   <Stack>
@@ -33,9 +33,9 @@ export const Example = () => (
             <h1>Sign up</h1>
             <TextField name="fname" isRequired label="First Name" autoFocus />
             <TextField name="lname" isRequired label="Last Name" />
-              <Button type="submit" slot="close">
-                Submit
-              </Button>
+            <Button type="submit" slot="close">
+              Submit
+            </Button>
           </Form>
         </Dialog>
       </Modal>

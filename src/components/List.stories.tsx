@@ -1,13 +1,13 @@
 import {Group} from 'react-aria-components'
-import {Stack} from '../stories/Stack.tsx'
-import {IcRoundClose} from '../stories/icons/IcRoundClose.tsx'
-import {IcRoundEdit} from '../stories/icons/IcRoundEdit.tsx'
-import {IcRoundSettings} from '../stories/icons/IcRoundSettings.tsx'
-import {Button} from './Button.tsx'
-import {Elevation} from './Elevation.tsx'
-import {Icon} from './Icon.tsx'
-import {List, ListItem} from './List.tsx'
-import {TextField} from './TextField.tsx'
+import {Stack} from '../stories/Stack.js'
+import {IcRoundClose} from '../stories/icons/IcRoundClose.js'
+import {IcRoundEdit} from '../stories/icons/IcRoundEdit.js'
+import {IcRoundSettings} from '../stories/icons/IcRoundSettings.js'
+import {Button} from './Button.js'
+import {Elevation} from './Elevation.js'
+import {Icon} from './Icon.js'
+import {List, ListItem} from './List.js'
+import {TextField} from './TextField.js'
 
 const itemControls = (
   <Group>

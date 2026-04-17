@@ -5,7 +5,7 @@ import {
   type ColorSwatchPickerItemProps,
   type ColorSwatchPickerProps
 } from 'react-aria-components'
-import {ColorSwatch} from './ColorSwatch.tsx'
+import {ColorSwatch} from './ColorSwatch.js'
 import css from './ColorSwatchPicker.module.css'
 
 const styles = styler(css)

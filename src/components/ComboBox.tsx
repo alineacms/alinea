@@ -12,18 +12,17 @@ import {
   ListBox,
   ListBoxItem
 } from 'react-aria-components'
-import {IcRoundCheck} from '../stories/icons/IcRoundCheck.tsx'
-import {IcRoundClose} from '../stories/icons/IcRoundClose.tsx'
-import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.tsx'
-import {Label, type LabelSharedProps, labelProps} from './Label.tsx'
-import {Popover} from './Popover.tsx'
+import {IcRoundCheck} from '../stories/icons/IcRoundCheck.js'
+import {IcRoundClose} from '../stories/icons/IcRoundClose.js'
+import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.js'
 import css from './ComboBox.module.css'
+import {Label, type LabelSharedProps, labelProps} from './Label.js'
+import {Popover} from './Popover.js'
 
 const styles = styler(css)
 
 export interface ComboBoxProps<T extends object>
-  extends Omit<ComboBoxPrimitiveProps<T>, 'children'>,
-    LabelSharedProps {
+  extends Omit<ComboBoxPrimitiveProps<T>, 'children'>, LabelSharedProps {
   items?: Iterable<T>
   children: React.ReactNode | ((item: T) => React.ReactNode)
 }
@@ -66,7 +65,9 @@ function ComboBoxTrigger<T extends object>({
     <div className={styles.ComboBoxTrigger()}>
       <Input className={styles.ComboBoxTrigger.input()} />
       <Button className={styles.ComboBoxTrigger.button()}>
-        <IcRoundKeyboardArrowDown className={styles.ComboBoxTrigger.button.arrow()} />
+        <IcRoundKeyboardArrowDown
+          className={styles.ComboBoxTrigger.button.arrow()}
+        />
       </Button>
       {hasClear && <ComboBoxClear />}
     </div>
@@ -82,10 +83,7 @@ function ComboBoxPopover<T extends object>(props: ComboBoxProps<T>) {
       className={styles.ComboBoxPopover()}
       data-clear={hasClear || undefined}
     >
-      <ListBox
-        items={props.items}
-        className={styles.ComboBoxPopover.listbox()}
-      >
+      <ListBox items={props.items} className={styles.ComboBoxPopover.listbox()}>
         {props.children}
       </ListBox>
     </Popover>
@@ -120,7 +118,9 @@ export function ComboBoxItem({children, ...props}: ComboBoxItemProps) {
       {({isSelected}) => (
         <>
           {children}
-          {isSelected && <IcRoundCheck className={styles.ComboBoxItem.check()} />}
+          {isSelected && (
+            <IcRoundCheck className={styles.ComboBoxItem.check()} />
+          )}
         </>
       )}
     </ListBoxItem>

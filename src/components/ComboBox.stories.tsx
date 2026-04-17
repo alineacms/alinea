@@ -1,8 +1,8 @@
 import {useState} from 'react'
-import {Stack} from '../stories/Stack.tsx'
-import {Button} from './Button.tsx'
-import {ComboBox, ComboBoxItem} from './ComboBox.tsx'
-import {TextField} from './TextField.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Button} from './Button.js'
+import {ComboBox, ComboBoxItem} from './ComboBox.js'
+import {TextField} from './TextField.js'
 
 export const Basic = () => {
   const softwareOptions = [

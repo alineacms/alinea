@@ -8,14 +8,13 @@ import {
   Group
 } from 'react-aria-components'
 
-import {Label, type LabelSharedProps, labelProps} from './Label.tsx'
 import css from './DateField.module.css'
+import {Label, type LabelSharedProps, labelProps} from './Label.js'
 
 const styles = styler(css)
 
 export interface DateFieldProps<T extends DateValue>
-  extends Omit<DateFieldPrimitiveProps<T>, 'children'>,
-    LabelSharedProps {}
+  extends Omit<DateFieldPrimitiveProps<T>, 'children'>, LabelSharedProps {}
 
 export function DateField<T extends DateValue>(props: DateFieldProps<T>) {
   return (
@@ -25,7 +24,9 @@ export function DateField<T extends DateValue>(props: DateFieldProps<T>) {
           className={styles.DateField(
             styler.merge({
               className:
-                typeof props.className === 'string' ? props.className : undefined
+                typeof props.className === 'string'
+                  ? props.className
+                  : undefined
             })
           )}
         >

@@ -7,14 +7,13 @@ import {
   type TimeValue
 } from 'react-aria-components'
 
-import {Label, type LabelSharedProps, labelProps} from './Label.tsx'
+import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import css from './TimeField.module.css'
 
 const styles = styler(css)
 
 export interface TimeFieldProps<T extends TimeValue>
-  extends TimeFieldPrimitiveProps<T>,
-    LabelSharedProps {}
+  extends TimeFieldPrimitiveProps<T>, LabelSharedProps {}
 
 export function TimeField<T extends TimeValue>(props: TimeFieldProps<T>) {
   return (
@@ -24,7 +23,9 @@ export function TimeField<T extends TimeValue>(props: TimeFieldProps<T>) {
           className={styles.TimeField(
             styler.merge({
               className:
-                typeof props.className === 'string' ? props.className : undefined
+                typeof props.className === 'string'
+                  ? props.className
+                  : undefined
             })
           )}
         >

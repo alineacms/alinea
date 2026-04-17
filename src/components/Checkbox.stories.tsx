@@ -1,6 +1,6 @@
-import {Stack} from '../stories/Stack.tsx'
-import {Button} from './Button.tsx'
-import {Checkbox} from './Checkbox.tsx'
+import {Stack} from '../stories/Stack.js'
+import {Button} from './Button.js'
+import {Checkbox} from './Checkbox.js'
 
 export const Example = () => (
   <Stack>

@@ -1,21 +1,20 @@
 import styler from '@alinea/styler'
 import {
   Button,
+  Group,
   Input,
   NumberField as NumberFieldPrimitive,
-  type NumberFieldProps as NumberFieldPrimitiveProps,
-  Group
+  type NumberFieldProps as NumberFieldPrimitiveProps
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.tsx'
-import {IcRoundKeyboardArrowUp} from '../stories/icons/IcRoundKeyboardArrowUp.tsx'
-import {Label, type LabelSharedProps, labelProps} from './Label.tsx'
+import {IcRoundKeyboardArrowDown} from '../stories/icons/IcRoundKeyboardArrowDown.js'
+import {IcRoundKeyboardArrowUp} from '../stories/icons/IcRoundKeyboardArrowUp.js'
+import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import css from './NumberField.module.css'
 
 const styles = styler(css)
 
 export interface NumberFieldProps
-  extends Omit<NumberFieldPrimitiveProps, 'children'>,
-    LabelSharedProps {
+  extends Omit<NumberFieldPrimitiveProps, 'children'>, LabelSharedProps {
   steppers?: boolean
 }
 
@@ -31,7 +30,9 @@ export function NumberField({steppers = true, ...props}: NumberFieldProps) {
           className={styles.NumberField.wrapper(
             styler.merge({
               className:
-                typeof props.className === 'string' ? props.className : undefined
+                typeof props.className === 'string'
+                  ? props.className
+                  : undefined
             })
           )}
           data-invalid={props.errorMessage ? true : undefined}

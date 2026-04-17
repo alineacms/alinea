@@ -1,7 +1,6 @@
-import {} from '@internationalized/date'
 import {I18nProvider} from 'react-aria-components'
-import {Stack} from '../stories/Stack.tsx'
-import {DateField} from './DateField.tsx'
+import {Stack} from '../stories/Stack.js'
+import {DateField} from './DateField.js'
 
 export const Example = () => {
   return (
