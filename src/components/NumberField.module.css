@@ -1,0 +1,106 @@
+@import "../theme.css";
+
+.NumberField {
+  color: var(--alinea-text-color);
+
+  &[data-disabled] {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .NumberField-wrapper {
+    display: flex;
+    position: relative;
+    border: 1px solid var(--alinea-border-color);
+    border-radius: 6px;
+    background-color: var(--alinea-field-background);
+    transition: var(--alinea-transition);
+
+    &[data-hovered] {
+      border-color: var(--alinea-border-color-hover);
+      box-shadow: 0 0 0 4px var(--alinea-box-shadow-color);
+    }
+
+    &:focus-within {
+      border-color: var(--alinea-highlight-background);
+      box-shadow: 0 0 0 4px var(--alinea-highlight-overlay);
+    }
+
+    &[data-invalid] {
+      border: 1px solid var(--alinea-invalid-color);
+      box-shadow: 0 0 0 4px var(--alinea-invalid-overlay);
+    }
+
+    .NumberField-input {
+      font: inherit;
+      outline: none;
+      width: 100%;
+      min-width: 70px;
+      padding: 8px 10px;
+      border: none;
+      background: transparent;
+      font-size: var(--alinea-font-size-base);
+      line-height: 1.5;
+      color: var(--alinea-field-text-color);
+      text-align: left;
+
+      &::placeholder {
+        color: var(--alinea-text-color-placeholder);
+      }
+
+      &[data-disabled] {
+        pointer-events: none;
+        background-color: var(--alinea-background-color);
+        opacity: 0.5;
+      }
+
+      &[data-readonly] {
+        pointer-events: none;
+        color: var(--alinea-text-color-disabled);
+      }
+    }
+
+    .NumberField-buttons {
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--alinea-border-color);
+
+      .NumberField-button {
+        flex-grow: 1;
+        background: none;
+        border: none;
+        width: 22px;
+        height: 16px;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--alinea-icon-color);
+        transition: var(--alinea-transition);
+        cursor: pointer;
+
+        &[data-slot="increment"] {
+          border-top-right-radius: 4px;
+        }
+        &[data-slot="decrement"] {
+          border-bottom-right-radius: 4px;
+        }
+
+        &:hover {
+          background-color: var(--alinea-background-color-hover);
+          color: var(--alinea-icon-color-active);
+        }
+
+        &:active {
+          background-color: var(--alinea-background-color-pressed);
+        }
+      }
+    }
+
+    &[data-steppers="false"] {
+      .NumberField-buttons {
+        display: none;
+      }
+    }
+  }
+}

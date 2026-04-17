@@ -1,0 +1,9 @@
+@import "../theme.css";
+
+.Dialog {
+  outline: none;
+  padding: 22px;
+  max-height: inherit;
+  box-sizing: border-box;
+  overflow: auto;
+}

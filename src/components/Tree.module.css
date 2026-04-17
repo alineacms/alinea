@@ -1,0 +1,208 @@
+.Tree {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: auto;
+  padding: 0;
+  outline: none;
+  forced-color-adjust: none;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--alinea-border-color-hover) transparent;
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--alinea-focus-ring-color);
+    outline-offset: -1px;
+  }
+
+  &[data-empty] {
+    align-items: center;
+    justify-content: center;
+    font-style: italic;
+  }
+
+  /* ---- Tree item ---- */
+
+  .TreeItem {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 7px 12px;
+    padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px);
+    font-size: var(--alinea-font-size-base);
+    font-weight: 400;
+    background: transparent;
+    color: var(--alinea-text-color);
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+
+    /* Chevron */
+
+    [slot="chevron"] {
+      all: unset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      visibility: hidden;
+      color: var(--alinea-text-color);
+
+      svg {
+        width: 16px;
+        height: 16px;
+        rotate: 0deg;
+        transition: rotate 200ms;
+      }
+    }
+
+    &[data-has-child-items] [slot="chevron"] {
+      visibility: visible;
+    }
+
+    &[data-expanded] [slot="chevron"] svg {
+      rotate: 90deg;
+    }
+
+    /* Icon slot */
+
+    [data-slot="icon"] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    /* Label text */
+
+    [data-slot="label"] {
+      margin-left: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Suffix (trailing status icons) */
+
+    [data-slot="suffix"] {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      margin-left: auto;
+      font-size: 14px;
+      color: var(--alinea-text-color-base);
+    }
+
+    /* States */
+
+    &[data-hovered] {
+      background: var(--alinea-background-color);
+    }
+
+    &[data-focus-visible] {
+      outline: 2px solid var(--alinea-focus-ring-color);
+      outline-offset: -2px;
+    }
+
+    &[data-selected] {
+      background: var(--alinea-selected-background);
+      color: var(--alinea-selected-foreground);
+      font-weight: 500;
+
+      [data-slot="icon"] {
+        opacity: 1;
+      }
+
+      &[data-focus-visible] {
+        outline-color: var(--alinea-selected-foreground);
+        outline-offset: -4px;
+      }
+    }
+
+    &[data-disabled] {
+      color: var(--alinea-text-color-disabled);
+      cursor: default;
+    }
+
+    &[data-href] {
+      cursor: pointer;
+    }
+
+    /* Drag & drop */
+
+    &[data-allows-dragging] {
+      padding-left: 4px;
+    }
+
+    &[data-dragging] {
+      opacity: 0.6;
+    }
+
+    &[data-drop-target] {
+      outline: 2px solid var(--alinea-highlight-background);
+      background: var(--alinea-highlight-overlay);
+    }
+
+    [slot="drag"] {
+      width: 15px;
+      text-align: center;
+
+      &[data-focus-visible] {
+        outline: 2px solid var(--alinea-focus-ring-color);
+      }
+    }
+
+    /* Action buttons */
+
+    button:not([slot]) {
+      margin-left: auto;
+      background: transparent;
+      border: none;
+      font-size: 1.05rem;
+      line-height: 1.2em;
+      padding: 4px 6px;
+      transition: background 200ms;
+
+      &[data-hovered] {
+        background: var(--alinea-highlight-hover);
+      }
+
+      &[data-pressed] {
+        background: var(--alinea-highlight-pressed);
+        box-shadow: none;
+      }
+    }
+  }
+
+  /* Drop indicator */
+
+  [data-drop-target][role="row"] {
+    outline: 1px solid var(--alinea-highlight-background);
+    margin-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px);
+  }
+}
+
+.Tree::-webkit-scrollbar {
+  width: 8px;
+}
+
+.Tree::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.Tree::-webkit-scrollbar-thumb {
+  background: var(--alinea-border-color-hover);
+}
+
+.Tree[data-drop-target] {
+  outline: 2px solid var(--alinea-highlight-background);
+  outline-offset: -1px;
+  background: var(--alinea-highlight-overlay);
+}

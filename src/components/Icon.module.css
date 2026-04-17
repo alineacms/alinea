@@ -1,0 +1,7 @@
+.Icon {
+  display: block;
+  color: inherit;
+  fill: currentColor;
+  pointer-events: none;
+  flex-shrink: 0;
+}

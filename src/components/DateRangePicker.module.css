@@ -1,0 +1,105 @@
+@import "../theme.css";
+
+.DateRangePicker {
+  gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--alinea-field-background);
+  border: 1px solid var(--alinea-border-color);
+  border-radius: 6px;
+  outline: 4px solid transparent;
+  color: var(--alinea-field-text-color);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+  transition: var(--alinea-transition);
+
+  &[data-hovered] {
+    border-color: var(--alinea-border-color-hover);
+    outline-color: var(--alinea-box-shadow-color);
+  }
+  [data-open] & {
+    border-color: var(--alinea-highlight-border);
+    outline-color: var(--alinea-highlight-overlay);
+  }
+  &[data-invalid="true"] {
+    border: 1px solid var(--alinea-invalid-color);
+    outline: 3px solid var(--alinea-invalid-overlay);
+  }
+  &[data-disabled] {
+    pointer-events: none;
+    background-color: var(--alinea-field-background-disabled);
+    color: var(--alinea-text-color-disabled);
+    opacity: 0.5;
+  }
+
+  .DateRangePicker-inputs {
+    gap: 4px;
+    display: flex;
+    align-items: center;
+  }
+
+  .DateRangePicker-input {
+    .DateRangePicker-input-segment {
+      padding-inline: 1px;
+      transition: var(--alinea-transition);
+
+      &[data-placeholder] {
+        color: var(--alinea-text-color-placeholder);
+      }
+
+      &[data-hovered] {
+        color: var(--alinea-text-color);
+      }
+
+      &[data-focused] {
+        outline: none;
+        background-color: var(--alinea-highlight-overlay);
+        border-radius: 4px;
+        color: var(--alinea-highlight-background);
+      }
+    }
+  }
+
+  .DateRangePicker-separator {
+    padding-inline: 4px;
+  }
+
+  .DateRangePicker-trigger {
+    cursor: pointer;
+    background: none;
+    border: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--alinea-transition);
+    color: var(--alinea-icon-color-plain);
+    font-size: 16px;
+
+    &:before {
+      content: "";
+      width: 24px;
+      height: 24px;
+      position: absolute;
+      border-radius: 4px;
+      background-color: transparent;
+      transition: var(--alinea-transition);
+    }
+
+    svg {
+      position: relative;
+    }
+
+    &[data-hovered],
+    &[data-focus-within] {
+      color: var(--alinea-icon-color);
+
+      &:before {
+        background-color: var(--alinea-background-color);
+      }
+    }
+  }
+}

@@ -1,0 +1,191 @@
+@import "../theme.css";
+
+.Tabs {
+  display: flex;
+  color: var(--alinea-text-color);
+
+  &[data-orientation="horizontal"] {
+    flex-direction: column;
+  }
+
+  &[data-variant="enclosed"] {
+    align-items: flex-start;
+  }
+
+  &[data-orientation="vertical"] {
+    flex-direction: row;
+  }
+}
+
+.TabPanel {
+  margin-top: 4px;
+  padding: 10px;
+  border-radius: 4px;
+  outline: none;
+
+  [data-orientation="vertical"] & {
+    margin-top: 0;
+  }
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--alinea-focus-ring-color);
+  }
+}
+
+.Tab {
+  outline: none;
+  position: relative;
+  color: var(--alinea-tab-color-base);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.25rem;
+  font-weight: 500;
+  forced-color-adjust: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background var(--alinea-transition), color
+    var(--alinea-transition);
+
+  [data-variant="line"] & {
+    padding: 12px 8px;
+
+    &:before {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: var(--alinea-border-color);
+      transform-origin: bottom right;
+      transform: scaleX(0);
+      transition: var(--alinea-transition);
+    }
+  }
+
+  [data-variant="subtle"] & {
+    padding: 6px 11px;
+    border-radius: 7px;
+    font-weight: 550;
+  }
+
+  [data-variant="enclosed"] & {
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
+
+  &[data-hovered],
+  &[data-focused] {
+    color: var(--alinea-text-color-hover);
+
+    [data-variant="line"] &:before {
+      transform-origin: bottom left;
+      transform: scaleX(1);
+    }
+
+    [data-variant="subtle"] & {
+      color: var(--alinea-text-color);
+      background-color: color-mix(
+        in oklab,
+        var(--alinea-background-color) 55%,
+        white
+      );
+    }
+
+    [data-variant="enclosed"] & {
+      background-color: var(--alinea-background-color-hover);
+    }
+  }
+
+  &[data-selected] {
+    color: var(--alinea-text-color);
+    font-weight: 600;
+
+    [data-variant="line"] &:before {
+      background-color: var(--alinea-highlight-background);
+      transform-origin: bottom left;
+      transform: scaleX(1);
+    }
+
+    [data-variant="subtle"] & {
+      color: var(--alinea-text-color-focused);
+      background-color: var(--alinea-field-background);
+    }
+
+    [data-variant="enclosed"] & {
+      color: var(--alinea-tab-color-active);
+      background-color: var(--alinea-tab-background-color-active);
+    }
+  }
+
+  &[data-disabled] {
+    color: var(--alinea-text-color-disabled);
+    &[data-selected] {
+      --alinea-border-color: var(--alinea-border-color-disabled);
+    }
+  }
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--alinea-focus-ring-color);
+  }
+
+  &[href] {
+    text-decoration: none;
+    cursor: pointer;
+  }
+}
+.TabList {
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 2px;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: var(--alinea-border-color) transparent;
+
+  [data-variant="subtle"] & {
+    display: inline-flex;
+    align-self: flex-start;
+    max-width: max-content;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .TabList-list {
+    display: flex;
+
+    &[data-orientation="horizontal"] {
+      border-bottom: 1px solid var(--alinea-border-color);
+    }
+
+    [data-variant="subtle"] & {
+      align-items: center;
+      border: none;
+      border-radius: 10px;
+      gap: 2px;
+      padding: 3px;
+      background-color: color-mix(
+        in oklab,
+        var(--alinea-background-color) 75%,
+        white
+      );
+    }
+
+    [data-variant="enclosed"] & {
+      border: none;
+      gap: 4px;
+    }
+
+    [data-variant="enclosed"] & {
+      background-color: var(--alinea-tab-background-color);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    &[data-orientation="vertical"] {
+      flex-direction: column;
+    }
+  }
+}

@@ -1,0 +1,66 @@
+@import "../theme.css";
+
+.TimeField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--alinea-text-color);
+}
+
+.TimeField-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border: 1px solid var(--alinea-border-color);
+  border-radius: 6px;
+  background: var(--alinea-field-background);
+
+  white-space: nowrap;
+  transition: var(--alinea-transition);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+}
+
+.TimeField-input:focus-within {
+  border-color: var(--alinea-highlight-background);
+  box-shadow: 0 0 0 4px var(--alinea-highlight-overlay);
+  outline: none;
+}
+
+.TimeField-segment {
+  padding: 4px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--alinea-text-color);
+}
+
+.TimeField-segment[data-type="literal"] {
+  padding: 0;
+}
+
+.TimeField-segment[data-placeholder] {
+  color: var(--alinea-text-color-placeholder);
+  font-style: italic;
+}
+
+.TimeField-segment:focus {
+  color: var(--alinea-highlight-foreground);
+  background: var(--alinea-highlight-background);
+  outline: none;
+  border-radius: 4px;
+  caret-color: transparent;
+}
+
+.TimeField-segment[data-invalid] {
+  color: var(--alinea-invalid-color);
+}
+
+.TimeField-segment[data-invalid]:focus {
+  background: var(--alinea-highlight-background-invalid);
+  color: var(--alinea-highlight-foreground);
+}
+
+.TimeField [slot="description"] {
+  font-size: 12px;
+}

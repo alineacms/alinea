@@ -1,0 +1,106 @@
+@import "../theme.css";
+
+.SearchField {
+  .SearchField-field {
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    background-color: var(--alinea-field-background);
+    border: 1px solid var(--alinea-border-color);
+    border-radius: 6px;
+    outline: 4px solid transparent;
+    transition: var(--alinea-transition);
+
+    &:has(.SearchField-field-input[data-hovered]) {
+      border-color: var(--alinea-border-color-hover);
+      outline-color: var(--alinea-box-shadow-color);
+    }
+    &:has(.SearchField-field-input[data-focused]) {
+      border-color: var(--alinea-highlight-border);
+      outline-color: var(--alinea-highlight-overlay);
+    }
+    &:has(.SearchField-field-input[data-invalid="true"]) {
+      border-color: var(--alinea-invalid-color);
+      outline-color: var(--alinea-invalid-overlay);
+    }
+    &:has(.SearchField-field-input[disabled]),
+    &:has(.SearchField-field-input[readonly]) {
+      pointer-events: none;
+      background-color: var(--alinea-field-background-disabled);
+      color: var(--alinea-text-color-disabled);
+    }
+    &:has(.SearchField-field-input[disabled]) {
+      opacity: 0.5;
+    }
+
+    .SearchField-field-icon {
+      color: var(--alinea-text-color-placeholder);
+      font-size: 20px;
+      margin-left: 8px;
+      margin-right: -4px;
+    }
+
+    .SearchField-field-pending {
+      margin-left: 8px;
+    }
+
+    .SearchField-field-input {
+      background: none;
+      border: none;
+      outline: none;
+      width: 100%;
+      padding: 8px 10px;
+      color: var(--alinea-field-text-color);
+      font: inherit;
+      font-size: var(--alinea-font-size-base);
+      line-height: 1.5;
+
+      &::placeholder {
+        color: var(--alinea-text-color-placeholder);
+      }
+
+      &::-webkit-search-cancel-button,
+      &::-webkit-search-decoration {
+        -webkit-appearance: none;
+      }
+
+      &[value=""] + .SearchField-field-clear {
+        visibility: hidden;
+      }
+    }
+
+    .SearchField-field-clear {
+      position: relative;
+      cursor: pointer;
+      background: none;
+      border: none;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0px 8px;
+      color: var(--alinea-icon-color);
+      font: inherit;
+
+      &:before {
+        content: "";
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        border-radius: 100%;
+        background-color: transparent;
+        transition: var(--alinea-transition);
+        transition-property: background-color;
+      }
+
+      &:hover:before,
+      &:focus:before {
+        background-color: var(--alinea-background-color);
+      }
+
+      .SearchField-field-clear-icon {
+        position: relative;
+      }
+    }
+  }
+}

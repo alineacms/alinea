@@ -1,0 +1,111 @@
+@import "../theme.css";
+
+.Table {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--alinea-border-color) transparent;
+
+  &[data-striped] .Row:nth-child(odd) {
+    background-color: var(--alinea-table-background-striped);
+  }
+
+  .Table-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+
+    tr th:first-child,
+    tr td:first-child {
+      border-left: 1px solid var(--alinea-border-color);
+    }
+    tr th {
+      border-top: solid 1px var(--alinea-border-color);
+    }
+    tr:first-child th:first-child {
+      border-top-left-radius: 6px;
+    }
+    tr:first-child th:last-child {
+      border-top-right-radius: 6px;
+    }
+  }
+
+  .TableBody {
+    .Row:last-child {
+      .Cell:first-child {
+        border-bottom-left-radius: 6px;
+      }
+      .Cell:last-child {
+        border-bottom-right-radius: 6px;
+      }
+    }
+    &[data-empty="true"] {
+      tr td:first-child {
+        border: 1px solid var(--alinea-border-color);
+        border-top: none;
+        border-bottom-left-radius: 6px;
+        border-bottom-right-radius: 6px;
+        padding: 10px 12px;
+        text-align: center;
+        font-style: italic;
+      }
+    }
+  }
+}
+
+.TableHeader {
+  background-color: var(--alinea-header-background);
+  font-weight: bold;
+}
+
+.TableHeader,
+.TableBody {
+  color: var(--alinea-text-color);
+  font-size: var(--alinea-font-size-base);
+}
+
+.Column,
+.Cell {
+  border-right: 1px solid var(--alinea-border-color);
+  border-bottom: 1px solid var(--alinea-border-color);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.Column {
+  .Column-label {
+    display: inline-flex;
+    align-items: center;
+
+    &[data-sortable] {
+      cursor: pointer;
+    }
+  }
+
+  .Column-sortIndicator {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background-color: var(--alinea-background-color);
+    margin-left: 8px;
+    color: var(--alinea-icon-color);
+    font-size: 18px;
+  }
+}
+
+.Row {
+  &[data-selected] {
+    background-color: var(--alinea-table-color-selected) !important;
+  }
+}
+
+.Cell {
+  word-wrap: break-word;
+
+  &[data-nowrap] {
+    white-space: nowrap;
+  }
+}

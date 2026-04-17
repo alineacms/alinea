@@ -1,0 +1,55 @@
+@import "../theme.css";
+
+.List {
+  color: var(--alinea-text-color);
+  border: 1px solid var(--alinea-border-color);
+  background: var(--alinea-list-background);
+  border-radius: 8px;
+  cursor: default;
+  overflow: hidden;
+  position: relative;
+  font-size: var(--alinea-font-size-base);
+}
+
+.ListItem {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  & + & {
+    box-shadow: var(--alinea-divider-top);
+  }
+}
+
+.ListItem-header {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  padding: 6px 8px;
+  height: 26px;
+}
+
+.ListItem-content {
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.ListItem-leading,
+.ListItem-trailing {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  padding: 0;
+  position: relative;
+}
+
+.ListItem-inner {
+  flex-grow: 1;
+  padding: 10px;
+}
+
+.ListItem-header + .ListItem-inner {
+  padding-top: 4px;
+}

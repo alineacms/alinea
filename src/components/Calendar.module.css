@@ -1,0 +1,160 @@
+@import "../theme.css";
+
+.Calendar {
+  --alinea-border-radius: 6px;
+
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+
+  .Calendar-header {
+    width: 100%;
+    gap: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 4px;
+    padding-bottom: 8px;
+  }
+
+  .Calendar-heading {
+    flex: 1;
+    margin: 0;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .Calendar-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background-color: transparent;
+    transition: var(--alinea-transition);
+    color: var(--alinea-icon-color);
+    font-size: 18px;
+
+    &[data-hovered],
+    &[data-focus-visible] {
+      background-color: var(--alinea-background-color);
+      color: var(--alinea-icon-color);
+    }
+
+    &[data-disabled] {
+      cursor: not-allowed;
+      color: var(--alinea-text-color-disabled);
+      opacity: 0.5;
+    }
+  }
+
+  .Calendar-grid {
+    border-spacing: 0 4px;
+  }
+
+  .Calendar-cell {
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--alinea-border-radius);
+    font-size: var(--alinea-font-size-base);
+    text-align: center;
+    transition: var(--alinea-transition);
+
+    &[data-today] {
+      position: relative;
+
+      &:after {
+        content: "";
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background-color: var(--alinea-highlight-background);
+        position: absolute;
+        bottom: 4px;
+      }
+    }
+
+    &[data-hovered],
+    &[data-focus-visible] {
+      background-color: var(--alinea-background-color);
+    }
+
+    &[data-focus-visible] {
+      outline: 2px solid var(--alinea-border-color);
+      outline-offset: 2px;
+    }
+
+    &[data-selected] {
+      background-color: var(--alinea-highlight-background);
+      color: var(--alinea-highlight-foreground);
+    }
+
+    &[data-selected][data-today]:after {
+      background-color: var(--alinea-highlight-foreground);
+    }
+
+    &[data-selected][data-focus-visible] {
+      outline-color: var(--alinea-highlight-background);
+    }
+
+    &[data-disabled] {
+      cursor: not-allowed;
+      color: var(--alinea-text-color-disabled);
+      opacity: 0.5;
+    }
+
+    &[data-invalid] {
+      background-color: var(--invalid-color);
+      color: white;
+    }
+  }
+
+  &:has(.Calendar-cell[data-selection-start]),
+  &:has(.Calendar-cell[data-selection-end]) {
+    .Calendar-cell {
+      &[data-selected] {
+        background-color: var(--alinea-highlight-overlay);
+        color: var(--alinea-highlight-background);
+        border-radius: 0;
+
+        &[data-selection-start],
+        &[data-selection-end] {
+          background-color: var(--alinea-highlight-background);
+          color: var(--alinea-highlight-foreground);
+        }
+
+        &[data-selection-start] {
+          border-start-start-radius: var(--alinea-border-radius);
+          border-end-start-radius: var(--alinea-border-radius);
+        }
+
+        &[data-selection-end] {
+          border-start-end-radius: var(--alinea-border-radius);
+          border-end-end-radius: var(--alinea-border-radius);
+        }
+      }
+    }
+
+    td:first-child {
+      .Calendar-cell {
+        border-start-start-radius: var(--alinea-border-radius);
+        border-end-start-radius: var(--alinea-border-radius);
+      }
+    }
+
+    td:last-child {
+      .Calendar-cell {
+        border-start-end-radius: var(--alinea-border-radius);
+        border-end-end-radius: var(--alinea-border-radius);
+      }
+    }
+  }
+}

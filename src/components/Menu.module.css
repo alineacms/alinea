@@ -1,0 +1,56 @@
+@import "../theme.css";
+
+.Menu {
+  outline: none;
+}
+
+.MenuItem {
+  cursor: pointer;
+  font-size: var(--alinea-font-size-base);
+  padding: 0.4rem;
+  display: flex;
+  outline: none;
+  align-items: center;
+  border-radius: 4px;
+  gap: 8px;
+  position: relative;
+
+  .MenuItem-icon {
+    font-size: 16px;
+    margin-left: auto;
+  }
+
+  &[data-focus-visible] {
+    outline: none;
+  }
+
+  &[data-selected] {
+    font-weight: 500;
+    background: var(--alinea-gray-200);
+    color: var(--alinea-text-color);
+    position: relative;
+  }
+
+  &[data-focused] {
+    background: var(--alinea-highlight-background);
+    color: var(--alinea-highlight-foreground);
+  }
+
+  &[data-disabled] {
+    pointer-events: none;
+    opacity: 0.2;
+  }
+}
+
+.MenuHeader {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--alinea-text-color-base);
+  padding: 4px 6px;
+}
+
+.MenuSeparator {
+  height: 1px;
+  margin: 4px 8px;
+  background-color: var(--alinea-border-color);
+}

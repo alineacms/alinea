@@ -1,0 +1,59 @@
+@import "../theme.css";
+
+.DateField {
+  gap: 4px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--alinea-field-background);
+  border: 1px solid var(--alinea-border-color);
+  border-radius: 6px;
+  outline: 4px solid transparent;
+  color: var(--alinea-field-text-color);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+  white-space: nowrap;
+  transition: var(--alinea-transition);
+
+  &[data-hovered] {
+    border-color: var(--alinea-border-color-hover);
+    outline-color: var(--alinea-box-shadow-color);
+  }
+  &[data-focus-within] {
+    border-color: var(--alinea-highlight-border);
+    outline-color: var(--alinea-highlight-overlay);
+  }
+  &[data-invalid="true"] {
+    border-color: var(--alinea-invalid-color);
+    outline-color: var(--alinea-invalid-overlay);
+  }
+  &[data-disabled] {
+    pointer-events: none;
+    background-color: var(--alinea-field-background-disabled);
+    color: var(--alinea-text-color-disabled);
+    opacity: 0.5;
+  }
+
+  .DateField-input {
+    .DateField-input-segment {
+      padding-inline: 1px;
+      transition: var(--alinea-transition);
+
+      &[data-placeholder] {
+        color: var(--alinea-text-color-placeholder);
+      }
+
+      &[data-hovered] {
+        color: var(--alinea-text-color);
+      }
+
+      &[data-focused] {
+        outline: none;
+        background-color: var(--alinea-highlight-overlay);
+        border-radius: 4px;
+        color: var(--alinea-highlight-background);
+      }
+    }
+  }
+}

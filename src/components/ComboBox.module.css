@@ -1,0 +1,209 @@
+@import "../theme.css";
+
+.ComboBoxTrigger {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid var(--alinea-border-color);
+  outline: 4px solid transparent;
+  border-radius: 6px;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+  text-align: left;
+  color: var(--alinea-field-text-color);
+  transition: var(--alinea-transition);
+
+  &:has(> .ComboBoxTrigger-input[data-hovered]),
+  &:has(> .ComboBoxTrigger-input[data-focused]),
+  &:has(> .ComboBoxTrigger-input[aria-expanded="true"]),
+  &:has(> .ComboBoxTrigger-button[data-hovered]),
+  &:has(> .ComboBoxTrigger-button[data-open]) {
+    border-color: var(--alinea-highlight-border);
+    outline-color: var(--alinea-highlight-overlay);
+  }
+
+  &:has(> .ComboBoxTrigger-input[data-disabled]) {
+    pointer-events: none;
+    background-color: var(--alinea-field-background);
+    opacity: 0.5;
+  }
+
+  .ComboBox[data-invalid="true"] & {
+    border-color: var(--alinea-invalid-color);
+    outline-color: var(--alinea-invalid-overlay);
+  }
+  .ComboBoxTrigger-input {
+    appearance: none;
+    background: none;
+    font: inherit;
+    outline: none;
+    border: none;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    padding: 8px 10px 8px 10px;
+    gap: 20px;
+
+    &[data-clear] {
+      padding-right: 0;
+    }
+
+    .ComboBoxTrigger-button-value {
+      flex-grow: 1;
+      color: var(--alinea-field-text-color);
+
+      &[data-placeholder] {
+        color: var(--alinea-text-color-placeholder);
+      }
+    }
+
+    .ComboBoxTrigger-button-arrow {
+      font-size: 18px;
+      color: var(--alinea-icon-color);
+      transition: transform 0.3s ease-out;
+
+      [aria-expanded="true"] & {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  .ComboBoxTrigger-button {
+    appearance: none;
+    background: none;
+    font: inherit;
+    outline: none;
+    border: none;
+
+    display: flex;
+    align-items: center;
+    text-align: left;
+    padding: 8px 10px 8px 10px;
+    gap: 20px;
+
+    &[data-clear] {
+      padding-right: 0;
+    }
+
+    .ComboBoxTrigger-button-value {
+      flex-grow: 1;
+      color: var(--alinea-field-text-color);
+
+      &[data-placeholder] {
+        color: var(--alinea-text-color-placeholder);
+      }
+    }
+
+    .ComboBoxTrigger-button-arrow {
+      font-size: 18px;
+      color: var(--alinea-icon-color);
+      transition: transform 0.3s ease-out;
+
+      [aria-expanded="true"] & {
+        transform: rotate(180deg);
+      }
+    }
+  }
+}
+
+.ComboBoxPopover-listbox {
+  outline: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  width: 100%;
+  display: block;
+  min-height: unset;
+  max-height: inherit;
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--alinea-border-color);
+  background-color: var(--alinea-field-background);
+}
+
+.ComboBoxClear {
+  position: relative;
+  cursor: pointer;
+  background: none;
+  width: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 100%;
+  background-color: transparent;
+  color: var(--alinea-icon-color);
+  font-size: var(--alinea-font-size-base);
+  outline: none;
+
+  &:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 100%;
+    background-color: var(--alinea-background-color);
+    z-index: -1;
+    transition: var(--alinea-transition);
+    opacity: 0;
+    border: 1px solid transparent;
+    outline: 4px solid transparent;
+  }
+  &:hover:after {
+    opacity: 1;
+  }
+  &:focus:after {
+    background-color: transparent;
+    border-color: var(--alinea-highlight-border);
+    outline-color: var(--alinea-highlight-overlay);
+    opacity: 1;
+  }
+}
+
+.ComboBoxItem {
+  cursor: pointer;
+  font-size: var(--alinea-font-size-base);
+  padding: 0.4rem;
+  padding-right: 2.4rem;
+  display: flex;
+  outline: none;
+  border-radius: 4px;
+  justify-content: space-between;
+  position: relative;
+
+  .ComboBoxItem-check {
+    font-size: 1rem;
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+  }
+
+  &[data-focus-visible] {
+    outline: none;
+  }
+
+  &[data-selected] {
+    font-weight: 500;
+    background: var(--alinea-border-color);
+    color: var(--alinea-text-color);
+    position: relative;
+  }
+
+  &[data-focused],
+  &[data-pressed] {
+    background: var(--alinea-highlight-background);
+    color: var(--alinea-highlight-foreground);
+  }
+
+  &[data-disabled] {
+    pointer-events: none;
+    opacity: 0.2;
+  }
+}

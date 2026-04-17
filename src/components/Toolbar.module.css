@@ -1,0 +1,47 @@
+@import "../theme.css";
+
+.Toolbar {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  border: 1px solid var(--alinea-border-color);
+  border-radius: 5px;
+  padding: 5px;
+
+  &[data-orientation="horizontal"] {
+    flex-direction: row;
+  }
+
+  .ToolbarGroup {
+    display: flex;
+    gap: 8px;
+  }
+  &[data-orientation="vertical"] {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .ToolbarButton {
+    width: 32px;
+    padding: 5px;
+    border-radius: 5px;
+    background-color: var(--alinea-background-color);
+    color: var(--alinea-text-color);
+    border: 1px solid var(--alinea-border-color);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--alinea-hover-color);
+    }
+
+    &[data-active="true"] {
+      background-color: var(--alinea-active-color);
+    }
+  }
+}
+
+.ToolbarSeparator {
+  background-color: var(--alinea-border-color);
+
+  width: 1px;
+}

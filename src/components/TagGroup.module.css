@@ -1,0 +1,91 @@
+@import "../theme.css";
+
+.TagGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: small;
+  color: var(--alinea-text-color);
+
+  .TagGroup-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+.Tag {
+  cursor: default;
+  outline: none;
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: var(--alinea-primary-50);
+  color: var(--alinea-primary-700);
+  font-size: var(--alinea-font-size-base);
+  transition: var(--alinea-transition);
+  transition-property: background-color, border-color, color;
+
+  .TagGroup[data-intent="secondary"] & {
+    background-color: var(--alinea-background-color);
+    color: var(--alinea-text-color);
+  }
+
+  .TagGroup[data-shape="circle"] & {
+    border-radius: 50px;
+    padding-inline: 12px;
+  }
+
+  &[data-selection-mode] {
+    cursor: pointer;
+    padding-block: 2px;
+    border: 1px solid var(--alinea-border-color);
+    background-color: var(--alinea-background-color);
+    color: var(--alinea-text-color);
+  }
+
+  &[data-hovered] {
+    border-color: var(--alinea-border-color-hover);
+  }
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--alinea-focus-ring-color);
+    outline-offset: 2px;
+  }
+
+  &[data-selected] {
+    border-color: var(--alinea-highlight-background);
+    background: var(--alinea-highlight-background);
+    color: var(--alinea-highlight-foreground);
+  }
+
+  &[data-disabled] {
+    color: var(--alinea-tag-color-disabled);
+    pointer-events: none;
+  }
+
+  [slot="remove"] {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 8px;
+    color: var(--alinea-text-color-base);
+    transition: color 200ms;
+    outline: none;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+
+    &[data-hovered] {
+      color: var(--alinea-text-color-hover);
+    }
+  }
+
+  &[data-selected] {
+    [slot="remove"] {
+      color: inherit;
+    }
+  }
+}

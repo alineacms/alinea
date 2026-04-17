@@ -1,0 +1,36 @@
+@import "../theme.css";
+
+.ColorSwatchPicker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  &[data-layout="stack"] {
+    flex-direction: column;
+  }
+}
+
+.ColorSwatchPickerItem {
+  position: relative;
+  outline: none;
+  border-radius: 4px;
+  forced-color-adjust: none;
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--alinea-focus-ring-color);
+    outline-offset: 2px;
+  }
+
+  &[data-selected]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid black;
+    outline: 2px solid white;
+    outline-offset: -4px;
+    border-radius: inherit;
+  }
+
+  &[data-disabled] {
+    opacity: 0.2;
+  }
+}

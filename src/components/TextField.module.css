@@ -1,0 +1,73 @@
+@import "../theme.css";
+
+.TextField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .TextField-input,
+  .TextField-multiline-area,
+  .TextField-multiline-shadow {
+    box-sizing: border-box;
+    font: inherit;
+    outline: none;
+    width: 100%;
+    padding: 8px 10px;
+    background-color: var(--alinea-field-background);
+    border: 1px solid var(--alinea-border-color);
+    border-radius: 6px;
+    outline: 4px solid transparent;
+    color: var(--alinea-field-text-color);
+    font-size: var(--alinea-font-size-base);
+    line-height: 1.5;
+    transition: var(--alinea-transition);
+
+    &::placeholder {
+      color: var(--alinea-text-color-placeholder);
+    }
+
+    &[data-hovered] {
+      border-color: var(--alinea-border-color-hover);
+      outline-color: var(--alinea-box-shadow-color);
+    }
+    &[data-focused] {
+      border-color: var(--alinea-highlight-border);
+      outline-color: var(--alinea-highlight-overlay);
+    }
+    &[data-invalid="true"] {
+      border-color: var(--alinea-invalid-color);
+      outline-color: var(--alinea-invalid-overlay);
+    }
+    &[disabled] {
+      pointer-events: none;
+      background-color: var(--alinea-field-background-disabled);
+      color: var(--alinea-text-color-disabled);
+      opacity: 0.5;
+    }
+    &[readonly] {
+      pointer-events: none;
+      background-color: var(--alinea-field-background-disabled);
+      color: var(--alinea-text-color-disabled);
+      opacity: 1;
+    }
+  }
+
+  .TextField-multiline {
+    display: grid;
+    width: 100%;
+  }
+
+  .TextField-multiline-area {
+    grid-area: 1 / 1 / 2 / 2;
+    overflow-x: auto;
+    resize: none;
+    white-space: pre-wrap;
+  }
+
+  .TextField-multiline-shadow {
+    grid-area: 1 / 1 / 2 / 2;
+    overflow-x: auto;
+    visibility: hidden;
+    white-space: pre-wrap;
+  }
+}

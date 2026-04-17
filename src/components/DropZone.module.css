@@ -1,0 +1,22 @@
+@import "../theme.css";
+
+.DropZone {
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  margin-inline: auto;
+  border-radius: 6px;
+  border: 2px dashed var(--alinea-border-color);
+  color: var(--alinea-text-color);
+  transition: var(--alinea-transition);
+  transition-property: background, border, box-shadow;
+}
+
+.DropZone[data-drop-target] {
+  background-color: var(--alinea-highlight-overlay);
+  border-color: var(--alinea-highlight-background);
+  box-shadow: 0 0 0 4px var(--alinea-highlight-overlay);
+}
