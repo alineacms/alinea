@@ -17,6 +17,7 @@ import {
 import {
   EditorScope,
   EntryScope,
+  useDashboard,
   useFieldOptions,
   useFieldView,
   useNodeEditor
@@ -188,18 +189,30 @@ const FormSection = memo(function FormSection({section}: FormSectionProps) {
   const View = useAtomValue(section.view)
   const props = {section: section.section}
   if (View) return <View {...props} />
-  return <EditFields fields={Section.fields(section.section)} />
+  return <EditFields fields={Section.definition(section.section)} />
 })
 
 export interface EditFieldsProps {
-  fields: Record<string, Field>
+  fields: Record<string, Field | Section>
 }
 
 export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
+  const dashboard = useDashboard()
   return (
     <div className={styles.EditFields()}>
-      {Object.entries(fields).map(([name, field]) => {
-        return <EditField key={name} field={field} />
+      {Object.entries(fields).map(([name, value]) => {
+        if (Field.isField(value)) return <EditField key={name} field={value} />
+        if (Section.isSection(value))
+          return (
+            <div
+              key={name}
+              className={styles.EditField.slot()}
+              style={{gridColumn: `span ${fieldSpan()}`}}
+            >
+              <FormSection section={new DashboardSection(dashboard, value)} />
+            </div>
+          )
+        return null
       })}
     </div>
   )
