@@ -1,4 +1,3 @@
-import {bold, cyan} from '#/cli/util/Report.js'
 import type {NextConfig} from 'next/dist/types.js'
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
@@ -114,7 +113,7 @@ function createRewrites(config: NextConfig, adminPath: string) {
     const location = origin ? new URL(adminPath, origin).href : adminPath
     if (isDev && !process.env.__NEXT_PRIVATE_ALINEA_REPORTED) {
       process.env.__NEXT_PRIVATE_ALINEA_REPORTED = 'true'
-      console.log(`\n${cyan(bold('ɑ Alinea CMS'))}:    ${location}\n`)
+      console.log(`${'- Alinea CMS'}:    ${location}\n`)
     }
     const existing = config.rewrites ? await config.rewrites() : []
     const rewrites = Array.isArray(existing)

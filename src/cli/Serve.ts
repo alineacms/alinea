@@ -54,15 +54,15 @@ export async function serve(options: ServeOptions): Promise<void> {
         )
       },
       dashboardUrl,
-      onAfterGenerate(message, config) {
+      onAfterGenerate(msg, config) {
         dashboardUrl.then(url => {
           const version = gray(pkg.version)
-          const header = `${cyan(bold('Alinea'))} ${version}\n`
+          const header = `${cyan(bold('ɑ Alinea'))} ${version}\n`
           const showUrl = cmd === 'dev' && !options.onAfterGenerate
-          const connector = gray(showUrl ? '|-' : '`-')
-          const details = `${connector} ${gray(message)}\n`
+          const connector = gray(showUrl ? '├' : '╰')
+          const details = `${connector} ${gray(msg)}\n`
           const footer = showUrl
-            ? `${gray('`-')} Local CMS:    ${url}\n\n`
+            ? `${gray('╰')} Local CMS:    ${url}\n\n`
             : '\n'
           process.stdout.write(header + details + footer)
           options.onAfterGenerate?.({
