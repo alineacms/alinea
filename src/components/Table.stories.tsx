@@ -1,6 +1,6 @@
 import type {SelectionBehavior, SelectionMode} from '@react-types/shared'
 import {useAsyncList} from 'react-stately'
-import {IcRoundDelete, IcRoundEdit} from '../v2/icons.js'
+import {IcRoundDelete, IcRoundEdit} from '../dashboard/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {Cell, Column, Row, Table, TableBody, TableHeader} from './Table.js'

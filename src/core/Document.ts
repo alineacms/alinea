@@ -1,3 +1,4 @@
+import {IcRoundDescription, IcRoundShare} from '#/dashboard/icons.js'
 import {
   type MetadataField,
   metadata as createMetadata
@@ -5,7 +6,6 @@ import {
 import {type PathField, path as createPath} from '#/field/path.js'
 import {tab, tabs} from '#/field/tabs.js'
 import {type TextField, text} from '#/field/text.js'
-import {IcRoundDescription, IcRoundShare} from '#/v2/icons.js'
 import {
   type FieldsDefinition,
   type Type,

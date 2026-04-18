@@ -1,5 +1,5 @@
 import {Config, Field} from 'alinea'
-import {extensions} from 'alinea/v2/app/field/richtext/Extensions'
+import {extensions} from 'alinea/dashboard/app/field/richtext/Extensions'
 import {
   alignment,
   formatting,
@@ -9,7 +9,7 @@ import {
   lists,
   quotes,
   tables
-} from 'alinea/v2/app/field/richtext/Toolbar'
+} from 'alinea/dashboard/app/field/richtext/Toolbar'
 
 export const RichTextFields = Config.document('Rich text fields', {
   fields: {

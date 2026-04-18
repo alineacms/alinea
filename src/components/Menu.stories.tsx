@@ -3,7 +3,7 @@ import {
   MenuSection,
   type Selection as SelectionType
 } from 'react-aria-components'
-import {IcRoundArchive, IcRoundHistory} from '../v2/icons.js'
+import {IcRoundArchive, IcRoundHistory} from '../dashboard/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {Menu, MenuHeader, MenuItem, MenuSeparator} from './Menu.js'

@@ -1,13 +1,13 @@
 import {type HTMLAttributes, type PropsWithChildren, useState} from 'react'
 import {
-  IcOutlineSettings as IcRoundSettings,
   IcRoundArchive,
   IcRoundClose,
   IcRoundHistory,
   IcRoundLanguage,
   IcRoundRefresh,
-  IcRoundSearch
-} from '../v2/icons.js'
+  IcRoundSearch,
+  IcOutlineSettings as IcRoundSettings
+} from '../dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
 import {ProgressCircle} from './ProgressCircle.js'
 

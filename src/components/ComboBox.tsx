@@ -16,16 +16,15 @@ import {
   IcRoundCheck,
   IcRoundClose,
   IcRoundKeyboardArrowDown
-} from '../v2/icons.js'
+} from '../dashboard/icons.js'
+import css from './ComboBox.module.css'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import {Popover} from './Popover.js'
-import css from './ComboBox.module.css'
 
 const styles = styler(css)
 
 export interface ComboBoxProps<T extends object>
-  extends Omit<ComboBoxPrimitiveProps<T>, 'children'>,
-    LabelSharedProps {
+  extends Omit<ComboBoxPrimitiveProps<T>, 'children'>, LabelSharedProps {
   items?: Iterable<T>
   children: React.ReactNode | ((item: T) => React.ReactNode)
 }
@@ -127,7 +126,9 @@ export function ComboBoxItem({children, ...props}: ComboBoxItemProps) {
       {({isSelected}) => (
         <>
           {children}
-          {isSelected && <IcRoundCheck className={styles.ComboBoxItem.check()} />}
+          {isSelected && (
+            <IcRoundCheck className={styles.ComboBoxItem.check()} />
+          )}
         </>
       )}
     </ListBoxItem>

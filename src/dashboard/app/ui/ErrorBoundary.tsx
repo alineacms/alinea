@@ -1,6 +1,6 @@
 import {Icon} from '#/components.js'
-import {IcRoundWarning} from '#/v2/icons.js'
-import {useDashboard} from '#/v2/store.js'
+import {IcRoundWarning} from '#/dashboard/icons.js'
+import {useDashboard} from '#/dashboard/store.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {useEffect, type PropsWithChildren} from 'react'

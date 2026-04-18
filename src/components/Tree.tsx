@@ -10,7 +10,7 @@ import {
   type TreeItemContentRenderProps,
   type TreeProps
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowRight} from '../v2/icons.js'
+import {IcRoundKeyboardArrowRight} from '../dashboard/icons.js'
 import {Checkbox} from './Checkbox.js'
 import {Icon, type IconProps} from './Icon.js'
 import css from './Tree.module.css'
@@ -36,8 +36,10 @@ export function Tree<T extends object>(props: TreeProps<T>) {
   )
 }
 
-export interface TreeItemContentProps
-  extends Omit<AriaTreeItemContentProps, 'children'> {
+export interface TreeItemContentProps extends Omit<
+  AriaTreeItemContentProps,
+  'children'
+> {
   children?: ReactNode
   icon?: IconProps['icon']
   suffix?: ReactNode

@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcRoundDescription as IcRoundInfo} from '../v2/icons.js'
+import {IcRoundDescription as IcRoundInfo} from '../dashboard/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {TextField} from './TextField.js'
@@ -42,7 +42,12 @@ export const Example = () => {
       <h3 style={{marginBottom: 0}}>States</h3>
       <form action={'#'}>
         <div
-          style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8}}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: 8
+          }}
         >
           <TextField
             isRequired

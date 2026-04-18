@@ -1,9 +1,9 @@
 import {Group} from 'react-aria-components'
 import {
-  IcOutlineSettings as IcRoundSettings,
   IcRoundClose,
-  IcRoundEdit
-} from '../v2/icons.js'
+  IcRoundEdit,
+  IcOutlineSettings as IcRoundSettings
+} from '../dashboard/icons.js'
 import {Button} from './Button.js'
 import {Elevation} from './Elevation.js'
 import {Icon} from './Icon.js'

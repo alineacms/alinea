@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react'
 import {writeFileSync} from 'node:fs'
 import {defineConfig} from 'vite-plus'
-import {alineaFixturePlugin} from './src/v2/plugins/alineaFixturePlugin.js'
+import {alineaFixturePlugin} from './src/dashboard/plugins/alineaFixturePlugin.js'
 
 const generateScopedName = 'alinea-[local]'
 

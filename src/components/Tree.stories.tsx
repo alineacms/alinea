@@ -2,13 +2,13 @@ import type {Key, Selection} from '@react-types/shared'
 import {useEffect, useMemo, useState, useTransition} from 'react'
 import {Collection, ListLayout, Virtualizer} from 'react-aria-components'
 import {
-  IcAlineaLogo as IcRoundHome,
   IcOutlineDescription,
   IcRoundDescription,
   IcRoundEdit,
+  IcAlineaLogo as IcRoundHome,
   IcRoundVisibility,
   IcRoundVisibilityOff
-} from '../v2/icons.js'
+} from '../dashboard/icons.js'
 import {Button} from './Button.js'
 import {Checkbox} from './Checkbox.js'
 import {Select, SelectItem} from './Select.js'
@@ -33,9 +33,7 @@ const treeCountOptions: TreeCountOption[] = [
   {id: '1000', label: '1000 items', amount: 1000}
 ]
 
-function createGeneratedTree(
-  itemCount: number
-): GeneratedTreeNode[] {
+function createGeneratedTree(itemCount: number): GeneratedTreeNode[] {
   const sections: GeneratedTreeNode[] = []
   let itemNumber = 1
   let sectionNumber = 1
@@ -219,15 +217,12 @@ export function DynamicList() {
   const nodes = useMemo(() => createGeneratedTree(itemCount), [itemCount])
   const defaultExpandedKeys = useMemo(
     () =>
-      [nodes[0]?.id, nodes[0]?.children?.[0]?.id].filter(
-        (key): key is string => Boolean(key)
+      [nodes[0]?.id, nodes[0]?.children?.[0]?.id].filter((key): key is string =>
+        Boolean(key)
       ),
     [nodes]
   )
-  const allExpandableKeys = useMemo(
-    () => collectExpandableKeys(nodes),
-    [nodes]
-  )
+  const allExpandableKeys = useMemo(() => collectExpandableKeys(nodes), [nodes])
   const [expandedKeys, setExpandedKeys] = useState<Set<Key>>(
     () => new Set(defaultExpandedKeys)
   )

@@ -1,6 +1,6 @@
 import {use} from 'react'
 import {DialogTrigger, OverlayTriggerStateContext} from 'react-aria-components'
-import {IcRoundClose} from '../v2/icons.js'
+import {IcRoundClose} from '../dashboard/icons.js'
 import {Button} from './Button.js'
 import {Dialog} from './Dialog.js'
 import {Modal} from './Modal.js'

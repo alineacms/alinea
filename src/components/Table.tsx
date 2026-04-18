@@ -18,7 +18,10 @@ import {
   Table as TablePrimitive,
   useTableOptions
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowDown, IcRoundKeyboardArrowUp} from '../v2/icons.js'
+import {
+  IcRoundKeyboardArrowDown,
+  IcRoundKeyboardArrowUp
+} from '../dashboard/icons.js'
 import {Checkbox} from './Checkbox.js'
 import css from './Table.module.css'
 

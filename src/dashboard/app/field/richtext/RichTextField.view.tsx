@@ -12,14 +12,14 @@ import {
 } from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {entries, fromEntries, values} from '#/core/util/Objects.js'
-import {RichTextOptions} from '#/field/richtext/RichTextField.js'
-import {ReactiveNode} from '#/v2/store/Dashboard.js'
+import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {
   useFieldError,
   useFieldNode,
   useFieldOptions,
   useFieldSetter
-} from '#/v2/store/hooks.js'
+} from '#/dashboard/store/hooks.js'
+import {RichTextOptions} from '#/field/richtext/RichTextField.js'
 import styler from '@alinea/styler'
 import {Node as TipTapNode} from '@tiptap/core'
 import {

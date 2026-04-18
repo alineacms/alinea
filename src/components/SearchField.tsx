@@ -5,7 +5,7 @@ import {
   SearchField as SearchFieldPrimitive,
   type SearchFieldProps as SearchFieldPrimitiveProps
 } from 'react-aria-components'
-import {IcRoundClose, IcRoundSearch} from '../v2/icons.js'
+import {IcRoundClose, IcRoundSearch} from '../dashboard/icons.js'
 import {Icon} from './Icon.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import {ProgressCircle} from './ProgressCircle.js'

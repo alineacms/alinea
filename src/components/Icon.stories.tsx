@@ -1,25 +1,24 @@
 import {
-  IcAlineaLogo as IcRoundHome,
-  IcBaselineAccountCircle as IcRoundAccountCircle,
-  IcBaselineContentCopy as IcRoundContentCopy,
-  IcOutlineCloudUpload as IcRoundCloudUpload,
-  IcOutlineGridView as IcRoundGridView,
-  IcOutlineSettings as IcRoundSettings,
-  IcOutlineTableRows as IcRoundViewList,
   IcOutlineDescription,
+  IcBaselineAccountCircle as IcRoundAccountCircle,
   IcRoundAddCircle,
   IcRoundArchive,
   IcRoundArrowBack,
   IcRoundArrowForward,
   IcRoundBrightness2 as IcRoundBrightness,
+  IcRoundClose as IcRoundCancel,
   IcRoundCheck,
   IcRoundClose,
+  IcOutlineCloudUpload as IcRoundCloudUpload,
+  IcBaselineContentCopy as IcRoundContentCopy,
   IcRoundDelete,
   IcRoundDescription,
   IcRoundEdit,
   IcRoundFormatAlignLeft,
   IcRoundFormatBold,
+  IcOutlineGridView as IcRoundGridView,
   IcRoundHistory,
+  IcAlineaLogo as IcRoundHome,
   IcRoundDescription as IcRoundInfo,
   IcRoundKeyboardArrowDown,
   IcRoundKeyboardArrowLeft,
@@ -35,19 +34,20 @@ import {
   IcRoundRedo,
   IcRoundRefresh,
   IcRoundSearch,
+  IcOutlineSettings as IcRoundSettings,
   IcRoundShare,
   IcRoundTextFields,
   IcRoundTranslate,
   IcRoundArchive as IcRoundUnarchive,
   IcRoundUndo,
   IcRoundUnfoldMore,
-  IcRoundVisibility,
-  IcRoundVisibilityOff,
   IcRoundVisibilityOff as IcRoundUnpublished,
   IcRoundUploadFile as IcRoundUpload,
+  IcOutlineTableRows as IcRoundViewList,
   IcOutlineGridView as IcRoundViewModule,
-  IcRoundClose as IcRoundCancel
-} from '../v2/icons.js'
+  IcRoundVisibility,
+  IcRoundVisibilityOff
+} from '../dashboard/icons.js'
 import {Icon} from './Icon.js'
 
 const icons = [
@@ -106,7 +106,12 @@ export const Example = () => (
     {icons.map(({icon, name}) => (
       <div
         key={name}
-        style={{display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16}}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 16
+        }}
       >
         <Icon icon={icon} />
         <p>{name}</p>

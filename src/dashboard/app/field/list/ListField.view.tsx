@@ -5,22 +5,22 @@ import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {ListRow} from '#/core/shape/ListShape.js'
-import {ListOptions} from '#/field/list.js'
-import {NodeEditor} from '#/v2/app/Editor.js'
+import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   IcOutlineList,
   IcRoundAdd,
   IcRoundArrowDownward,
   IcRoundArrowUpward,
   IcRoundDelete
-} from '#/v2/icons.js'
-import {ReactiveNode} from '#/v2/store/Dashboard.js'
+} from '#/dashboard/icons.js'
+import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {
   useFieldError,
   useFieldNode,
   useFieldOptions,
   useNodes
-} from '#/v2/store/hooks.js'
+} from '#/dashboard/store/hooks.js'
+import {ListOptions} from '#/field/list.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'

@@ -1,10 +1,4 @@
 import {
-  ToolbarButton,
-  ToolbarConfig,
-  ToolbarGroup,
-  ToolbarMenu
-} from '#/field/richtext/RichTextToolbar.js'
-import {
   IcAlignCenter,
   IcAlignJustify,
   IcAlignLeft,
@@ -35,7 +29,13 @@ import {
   TableInsertRowBefore,
   TableMergeCells,
   TableSplitCell
-} from '#/v2/icons.js'
+} from '#/dashboard/icons.js'
+import {
+  ToolbarButton,
+  ToolbarConfig,
+  ToolbarGroup,
+  ToolbarMenu
+} from '#/field/richtext/RichTextToolbar.js'
 
 const styleLabels = {
   paragraph: 'Normal text',

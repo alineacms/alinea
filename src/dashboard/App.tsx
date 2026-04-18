@@ -1,8 +1,8 @@
 import type {Config} from '#/core/Config'
 import type {WriteableGraph} from '#/core/db/WriteableGraph'
 import {ComponentType, useState} from 'react'
-import '../global.css'
 import {AppShell} from './app/AppShell.js'
+import './global.css'
 import {Dashboard} from './store/Dashboard.js'
 
 export interface AppProps {

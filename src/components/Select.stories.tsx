@@ -1,11 +1,11 @@
 import {useState} from 'react'
 import {
-  IcAlineaLogo as IcRoundHome,
-  IcBaselineContentCopy as IcRoundContentCopy,
-  IcOutlineSettings as IcRoundSettings,
   IcRoundBrightness2 as IcRoundBrightness,
-  IcRoundSearch
-} from '../v2/icons.js'
+  IcBaselineContentCopy as IcRoundContentCopy,
+  IcAlineaLogo as IcRoundHome,
+  IcRoundSearch,
+  IcOutlineSettings as IcRoundSettings
+} from '../dashboard/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {Select, SelectItem} from './Select.js'
@@ -288,7 +288,12 @@ export const Dynamic = () => {
         {item => <SelectItem key={item.id}>{item.name}</SelectItem>}
       </Select>
       <div
-        style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 16}}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          gap: 16
+        }}
       >
         <TextField
           label="Add option"

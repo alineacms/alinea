@@ -6,7 +6,10 @@ import {
   NumberField as NumberFieldPrimitive,
   type NumberFieldProps as NumberFieldPrimitiveProps
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowDown, IcRoundKeyboardArrowUp} from '../v2/icons.js'
+import {
+  IcRoundKeyboardArrowDown,
+  IcRoundKeyboardArrowUp
+} from '../dashboard/icons.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import css from './NumberField.module.css'
 

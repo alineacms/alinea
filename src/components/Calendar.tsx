@@ -13,7 +13,7 @@ import {
 import {
   IcRoundKeyboardArrowLeft,
   IcRoundKeyboardArrowRight
-} from '../v2/icons.js'
+} from '../dashboard/icons.js'
 import css from './Calendar.module.css'
 import {Icon} from './Icon.js'
 

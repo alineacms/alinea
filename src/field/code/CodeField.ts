@@ -1,6 +1,6 @@
 import type {FieldOptions, WithoutLabel} from '#/core.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
-import {viewKeys} from '#/v2/ViewKeys.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {ReactNode} from 'react'
 
 export interface CodeFieldOptions extends FieldOptions<string> {

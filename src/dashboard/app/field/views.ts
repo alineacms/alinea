@@ -1,4 +1,4 @@
-import {viewKeys} from '#/v2/ViewKeys.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {ComponentType} from 'react'
 import {CheckFieldView} from './check/CheckField.view.js'
 import {CodeFieldView} from './code/CodeField.view.js'

@@ -1,10 +1,10 @@
 import {DatePicker} from '#/components.js'
-import {DateField} from '#/field/date.js'
 import {
   useFieldError,
   useFieldOptions,
   useFieldValue
-} from '#/v2/store/hooks.js'
+} from '#/dashboard/store/hooks.js'
+import {DateField} from '#/field/date.js'
 import {parseDate} from '@internationalized/date'
 import {useMemo} from 'react'
 

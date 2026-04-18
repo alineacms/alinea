@@ -4,7 +4,7 @@ import {
   IcRoundRedo,
   IcRoundUndo,
   IcRoundUnfoldMore
-} from '../v2/icons.js'
+} from '../dashboard/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {Menu, MenuItem} from './Menu.js'

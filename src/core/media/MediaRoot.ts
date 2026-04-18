@@ -1,4 +1,4 @@
-import {IcRoundPermMedia} from '#/v2/icons.js'
+import {IcRoundPermMedia} from '#/dashboard/icons.js'
 import type {Page} from '../Page.js'
 import {type Root, root} from '../Root.js'
 

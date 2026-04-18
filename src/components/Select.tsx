@@ -16,7 +16,7 @@ import {
   IcRoundCheck,
   IcRoundClose,
   IcRoundKeyboardArrowDown
-} from '../v2/icons.js'
+} from '../dashboard/icons.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import {Popover} from './Popover.js'
 import css from './Select.module.css'

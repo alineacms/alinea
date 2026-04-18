@@ -2,7 +2,7 @@ import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import {code} from '#/core/util/CodeGen.js'
 import {values} from '#/core/util/Objects.js'
-import {viewKeys} from '#/v2/ViewKeys.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {Plugin} from 'esbuild'
 
 export function viewsPlugin(rootDir: string, cms: CMS): Plugin {
