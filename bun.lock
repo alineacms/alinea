@@ -102,7 +102,7 @@
         "typescript": "^6.0.2",
         "typescript-plugin-css-modules": "^5.2.0",
         "use-error-boundary": "^2.0.6",
-        "vite": "^8.0.0",
+        "vite": "^8.0.8",
         "vite-plus": "^0.1.16",
         "yjs": "^13.6.11",
         "yjs-src": "npm:yjs@13.6.11",
