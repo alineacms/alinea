@@ -18,7 +18,7 @@ import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
-import {unwrap} from 'jotai/utils'
+import {atomWithStorage, unwrap} from 'jotai/utils'
 import {SetStateAction, startTransition, type ComponentType} from 'react'
 import type {
   DroppableCollectionInsertDropEvent,
@@ -44,6 +44,17 @@ type DashboardTreeSelection = WritableAtom<
 
 type FocusedItem = {entry: DashboardEntry} | {root: DashboardRoot} | null
 
+const dashboardThemeStorageKey = 'alinea-dashboard-theme'
+
+export type DashboardTheme = 'system' | 'light' | 'dark'
+
+function applyDashboardTheme(theme: DashboardTheme) {
+  if (typeof document === 'undefined') return
+  const root = document.documentElement
+  if (theme === 'system') root.removeAttribute('data-theme')
+  else root.dataset.theme = theme
+}
+
 export class Dashboard {
   graph
   config
@@ -51,6 +62,11 @@ export class Dashboard {
   views
   db: Atom<WriteableGraph>
   events: Atom<EventTarget>
+  #themeStorage = atomWithStorage<DashboardTheme>(
+    dashboardThemeStorageKey,
+    'system',
+    undefined
+  )
 
   constructor(
     graph: WriteableGraph,
@@ -167,6 +183,23 @@ export class Dashboard {
       return db.sync()
     }
   })
+
+  theme = Object.assign(
+    atom(
+      get => get(this.#themeStorage),
+      (get, set, next: SetStateAction<DashboardTheme>) => {
+        const current = get(this.#themeStorage)
+        const theme = typeof next === 'function' ? next(current) : next
+        set(this.#themeStorage, theme)
+        applyDashboardTheme(theme)
+      }
+    ),
+    {
+      onMount(setTheme: (update: SetStateAction<DashboardTheme>) => void) {
+        setTheme(current => current)
+      }
+    }
+  )
 
   selectedWorkspace = atom(
     get => {

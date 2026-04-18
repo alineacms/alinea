@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light dark;
   --alinea-gray-50: #f9fafb;
   --alinea-gray-100: #f3f4f6;
   --alinea-gray-200: #e5e7eb;
@@ -63,99 +64,142 @@
   --alinea-error-border-color-transparent: rgba(244, 67, 54, 0.5);
 }
 
-/* Light */
 :root {
+  --alinea-gray-50: light-dark(#f9fafb, #f3f5f7);
+  --alinea-gray-100: light-dark(#f3f4f6, #e6eaee);
+  --alinea-gray-200: light-dark(#e5e7eb, #ced5de);
+  --alinea-gray-300: light-dark(#d1d5dc, #b0bac7);
+  --alinea-gray-400: light-dark(#99a1af, #8f9bac);
+  --alinea-gray-500: light-dark(#6a7282, #707f92);
+  --alinea-gray-600: light-dark(#4a5565, #566274);
+  --alinea-gray-700: light-dark(#364153, #3f4958);
+  --alinea-gray-800: light-dark(#1e2939, #2a323e);
+  --alinea-gray-900: light-dark(#101828, #191f28);
   --alinea-focus-ring-color: var(--alinea-primary-500);
-  --alinea-text-color: var(--alinea-gray-800);
-  --alinea-text-color-base: var(--alinea-gray-600);
-  --alinea-text-color-hover: var(--alinea-gray-700);
-  --alinea-text-color-focused: var(--alinea-gray-900);
-  --alinea-text-color-disabled: var(--alinea-gray-500);
-  --alinea-text-color-placeholder: var(--alinea-gray-400);
+  --alinea-text-color: light-dark(var(--alinea-gray-800), var(--alinea-gray-200));
+  --alinea-text-color-base: light-dark(
+    var(--alinea-gray-600),
+    var(--alinea-gray-400)
+  );
+  --alinea-text-color-hover: light-dark(
+    var(--alinea-gray-700),
+    var(--alinea-gray-300)
+  );
+  --alinea-text-color-focused: light-dark(
+    var(--alinea-gray-900),
+    var(--alinea-gray-100)
+  );
+  --alinea-text-color-disabled: light-dark(
+    var(--alinea-gray-500),
+    var(--alinea-gray-600)
+  );
+  --alinea-text-color-placeholder: light-dark(
+    var(--alinea-gray-400),
+    var(--alinea-gray-500)
+  );
   --alinea-link-color: var(--alinea-primary-500);
-  --alinea-link-color-hover: var(--alinea-primary-600);
-  --alinea-link-color-pressed: var(--alinea-primary-700);
-  --alinea-border-color: var(--alinea-gray-200);
-  --alinea-border-color-hover: var(--alinea-gray-400);
-  --alinea-border-color-pressed: var(--alinea-gray-500);
-  --alinea-field-background: white;
+  --alinea-link-color-hover: light-dark(
+    var(--alinea-primary-600),
+    var(--alinea-primary-400)
+  );
+  --alinea-link-color-pressed: light-dark(
+    var(--alinea-primary-700),
+    var(--alinea-primary-300)
+  );
+  --alinea-border-color: light-dark(
+    var(--alinea-gray-200),
+    var(--alinea-gray-700)
+  );
+  --alinea-border-color-hover: light-dark(
+    var(--alinea-gray-400),
+    var(--alinea-gray-500)
+  );
+  --alinea-border-color-pressed: light-dark(
+    var(--alinea-gray-500),
+    var(--alinea-gray-400)
+  );
+  --alinea-border-color-disabled: var(--alinea-gray-800);
+  --alinea-field-background: light-dark(white, var(--alinea-gray-900));
   --alinea-field-background-disabled: var(--alinea-gray-50);
-  --alinea-field-text-color: var(--alinea-gray-700);
+  --alinea-field-text-color: light-dark(
+    var(--alinea-gray-700),
+    var(--alinea-gray-50)
+  );
   --alinea-overlay-background: var(--alinea-gray-50);
-  --alinea-background-color: var(--alinea-gray-100);
-  --alinea-sidebar-background: var(--alinea-gray-50);
-  --alinea-header-background: var(--alinea-gray-100);
-  --alinea-background-color-hover: var(--alinea-gray-300);
-  --alinea-background-color-pressed: var(--alinea-gray-400);
-  --alinea-box-shadow-color: var(--alinea-gray-200);
+  --alinea-background-color: light-dark(
+    var(--alinea-gray-100),
+    var(--alinea-gray-900)
+  );
+  --alinea-sidebar-background: light-dark(
+    var(--alinea-gray-50),
+    var(--alinea-gray-800)
+  );
+  --alinea-header-background: light-dark(
+    var(--alinea-gray-100),
+    var(--alinea-gray-800)
+  );
+  --alinea-background-color-hover: light-dark(
+    var(--alinea-gray-300),
+    var(--alinea-gray-800)
+  );
+  --alinea-background-color-pressed: light-dark(
+    var(--alinea-gray-400),
+    var(--alinea-gray-700)
+  );
+  --alinea-box-shadow-color: light-dark(
+    var(--alinea-gray-200),
+    var(--alinea-gray-800)
+  );
+  --alinea-text-color-readonly: var(--alinea-gray-50);
   --alinea-error-border-color: var(--alinea-danger-500);
   --alinea-icon-background-color-active: rgb(from #3f61e8 r g b / 20%);
   --alinea-icon-color: var(--alinea-gray-600);
   --alinea-icon-color-plain: var(--alinea-gray-500);
-  --alinea-icon-color-active: var(--alinea-primary-700);
+  --alinea-icon-color-active: light-dark(
+    var(--alinea-primary-700),
+    var(--alinea-primary-50)
+  );
   --alinea-tag-color-disabled: var(--alinea-gray-500);
-  --alinea-tab-background-color: var(--alinea-gray-100);
-  --alinea-tab-background-color-active: rgb(from #abbaf5 r g b / 20%);
-  --alinea-tab-color-active: var(--alinea-primary-800);
-  --alinea-tab-color-base: var(--alinea-gray-500);
-  --alinea-table-background-striped: var(--alinea-gray-50);
-  --alinea-table-color-selected: rgb(from #c1ccf8 r g b / 50%);
-  --alinea-list-background: var(--alinea-gray-100);
-  --alinea-divider-top: 0 -1px 0 var(--alinea-border-color), inset 0 1px 0
-    rgba(255, 255, 255, 0.5);
+  --alinea-tab-background-color: light-dark(
+    var(--alinea-gray-100),
+    var(--alinea-gray-800)
+  );
+  --alinea-tab-background-color-active: light-dark(
+    rgb(from #abbaf5 r g b / 20%),
+    rgb(from #3f61e8 r g b / 20%)
+  );
+  --alinea-tab-color-active: light-dark(
+    var(--alinea-primary-800),
+    var(--alinea-primary-300)
+  );
+  --alinea-tab-color-base: light-dark(
+    var(--alinea-gray-500),
+    var(--alinea-gray-300)
+  );
+  --alinea-table-background-striped: light-dark(
+    var(--alinea-gray-50),
+    var(--alinea-gray-900)
+  );
+  --alinea-table-color-selected: light-dark(
+    rgb(from #c1ccf8 r g b / 50%),
+    rgb(from #3f61e8 r g b / 30%)
+  );
+  --alinea-list-background: light-dark(
+    var(--alinea-gray-100),
+    var(--alinea-gray-800)
+  );
+  --alinea-list-divider: var(--alinea-border-color);
+  --alinea-divider-top: light-dark(
+    0 -1px 0 var(--alinea-border-color),
+    0 -1px 0 rgba(0, 0, 0, 0.25)
+  ), inset 0 1px 0
+    light-dark(rgba(255, 255, 255, 0.5), var(--alinea-border-color));
 }
 
-/* Dark */
-:root[data-theme="dark"],
-.alinea-Viewport-is-dark {
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
   color-scheme: dark;
-  --alinea-gray-50: #f3f5f7;
-  --alinea-gray-100: #e6eaee;
-  --alinea-gray-200: #ced5de;
-  --alinea-gray-300: #b0bac7;
-  --alinea-gray-400: #8f9bac;
-  --alinea-gray-500: #707f92;
-  --alinea-gray-600: #566274;
-  --alinea-gray-700: #3f4958;
-  --alinea-gray-800: #2a323e;
-  --alinea-gray-900: #191f28;
-  --alinea-focus-ring-color: var(--alinea-primary-500);
-  --alinea-text-color: var(--alinea-gray-200);
-  --alinea-text-color-base: var(--alinea-gray-400);
-  --alinea-text-color-hover: var(--alinea-gray-300);
-  --alinea-text-color-focused: var(--alinea-gray-100);
-  --alinea-text-color-disabled: var(--alinea-gray-600);
-  --alinea-text-color-placeholder: var(--alinea-gray-500);
-  --alinea-link-color: var(--alinea-primary-500);
-  --alinea-link-color-hover: var(--alinea-primary-400);
-  --alinea-link-color-pressed: var(--alinea-primary-300);
-  --alinea-border-color: var(--alinea-gray-700);
-  --alinea-border-color-hover: var(--alinea-gray-500);
-  --alinea-border-color-pressed: var(--alinea-gray-400);
-  --alinea-border-color-disabled: var(--alinea-gray-800);
-  --alinea-field-background: var(--alinea-gray-900);
-  --alinea-field-text-color: var(--alinea-gray-50);
-  --alinea-overlay-background: var(--alinea-gray-900);
-  --alinea-background-color: var(--alinea-gray-900);
-  --alinea-sidebar-background: var(--alinea-gray-800);
-  --alinea-header-background: var(--alinea-gray-800);
-  --alinea-background-color-hover: var(--alinea-gray-800);
-  --alinea-background-color-pressed: var(--alinea-gray-700);
-  --alinea-box-shadow-color: var(--alinea-gray-800);
-  --alinea-text-color-readonly: var(--alinea-gray-50);
-  --alinea-error-border-color: var(--alinea-danger-500);
-  --alinea-icon-color-active: var(--alinea-primary-50);
-  --alinea-icon-background-color-active: rgb(from #3f61e8 r g b / 20%);
-  --alinea-icon-color-plain: var(--alinea-gray-500);
-  --alinea-tag-color-disabled: var(--alinea-gray-500);
-  --alinea-tab-background-color: var(--alinea-gray-800);
-  --alinea-tab-background-color-active: rgb(from #3f61e8 r g b / 20%);
-  --alinea-tab-color-active: var(--alinea-primary-300);
-  --alinea-tab-color-base: var(--alinea-gray-300);
-  --alinea-table-background-striped: var(--alinea-gray-900);
-  --alinea-table-color-selected: rgb(from #3f61e8 r g b / 30%);
-  --alinea-list-background: var(--alinea-gray-800);
-  --alinea-list-divider: var(--alinea-border-color);
-  --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0
-    var(--alinea-border-color);
 }

@@ -7,7 +7,7 @@ import {
   ProgressCircle
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
 import {
   IcBaselineAccountCircle,
@@ -37,6 +37,7 @@ interface AppShellProps {
 export function AppShell({dashboard}: AppShellProps) {
   const sha = useAtomValue(dashboard.sha)
   const sync = useSetAtom(dashboard.sync)
+  const [theme, setTheme] = useAtom(dashboard.theme)
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
@@ -83,18 +84,26 @@ export function AppShell({dashboard}: AppShellProps) {
                     >
                       <Button
                         size="icon"
-                        appearance="outline"
+                        appearance={
+                          theme === 'system' ? 'active' : 'outline'
+                        }
                         icon={IcRoundDesktopWindows}
+                        aria-label="Use system theme"
+                        onPress={() => setTheme('system')}
                       />
                       <Button
                         size="icon"
-                        appearance="outline"
+                        appearance={theme === 'light' ? 'active' : 'outline'}
                         icon={IcRoundWbSunny}
+                        aria-label="Use light theme"
+                        onPress={() => setTheme('light')}
                       />
                       <Button
                         size="icon"
-                        appearance="outline"
+                        appearance={theme === 'dark' ? 'active' : 'outline'}
                         icon={IcRoundBrightness2}
+                        aria-label="Use dark theme"
+                        onPress={() => setTheme('dark')}
                       />
                     </div>
                   </li>
