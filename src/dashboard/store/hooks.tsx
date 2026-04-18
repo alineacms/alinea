@@ -1,7 +1,7 @@
-import {Type} from '#/index.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Field} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
+import {Type} from '#/index.js'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
@@ -62,9 +62,10 @@ function useField(field: Field) {
 
 export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
   const dashboard = useDashboard()
+  const parent = useContext(editorContext)
   const editor = useMemo(
-    () => new DashboardEditor(dashboard, type, node),
-    [dashboard, node, type]
+    () => new DashboardEditor(dashboard, type, node, parent ?? undefined),
+    [dashboard, node, parent, type]
   )
   return editor
 }

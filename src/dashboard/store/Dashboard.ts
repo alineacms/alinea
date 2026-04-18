@@ -323,7 +323,8 @@ export class DashboardEditor {
   constructor(
     public dashboard: Dashboard,
     public type: Type,
-    public node: ReactiveNode<object>
+    public node: ReactiveNode<object>,
+    public parent?: DashboardEditor
   ) {
     this.value = node.value
     this.sections = getType(this.type).sections.map(
@@ -336,16 +337,12 @@ export class DashboardEditor {
     if (!field) return undefined
     return new DashboardField(this, key, field)
   })
-  #keyOfField(field: Field) {
+  get(field: Field): DashboardField | undefined {
     const fields = getType(this.type).allFields
     for (const [key, candidate] of Object.entries(fields)) {
-      if (candidate === field) return key
+      if (candidate === field) return this.field(key)
     }
-    throw new Error(`Field not found in type: ${Field.label(field)}`)
-  }
-  get(field: Field) {
-    const key = this.#keyOfField(field)
-    return this.field(key)
+    return this.parent?.get(field)
   }
 }
 
