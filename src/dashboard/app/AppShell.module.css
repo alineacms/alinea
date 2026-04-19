@@ -9,7 +9,7 @@
 
 .AppShell-profile {
   border: 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--alinea-dashboard-surface-border);
   border-radius: 0;
   display: flex;
   justify-content: space-between;
@@ -34,11 +34,11 @@
     font-size: 14px;
 
     &:not(:last-child) {
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid var(--alinea-dashboard-surface-border);
     }
 
     &:nth-child(even) {
-      background-color: #fbfbfb;
+      background-color: var(--alinea-dashboard-list-empty-background);
     }
   }
 }
@@ -67,7 +67,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 8px 12px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--alinea-dashboard-surface-border);
 }
 
 .AppShell-status-sha {
@@ -75,6 +75,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #6c7b8c;
+  color: var(--alinea-dashboard-explorer-muted-foreground);
   font-size: 12px;
 }

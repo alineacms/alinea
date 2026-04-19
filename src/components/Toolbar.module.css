@@ -23,17 +23,17 @@
     width: 32px;
     padding: 5px;
     border-radius: 5px;
-    background-color: var(--alinea-background-color);
-    color: var(--alinea-text-color);
-    border: 1px solid var(--alinea-border-color);
+    background-color: var(--alinea-surface-subtle);
+    color: var(--alinea-content-primary);
+    border: 1px solid var(--alinea-border-default);
     cursor: pointer;
 
     &:hover {
-      background-color: var(--alinea-hover-color);
+      background-color: var(--alinea-surface-subtle-hover);
     }
 
     &[data-active="true"] {
-      background-color: var(--alinea-active-color);
+      background-color: var(--alinea-surface-selected);
     }
   }
 }
@@ -41,5 +41,5 @@
 .ToolbarSeparator {
   margin: 4px 0;
   border: none;
-  border-right: 1px solid var(--alinea-border-color);
+  border-right: 1px solid var(--alinea-border-default);
 }

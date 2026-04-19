@@ -305,7 +305,7 @@ export function DynamicList() {
         Simulate transition
       </Button>
 
-      <span style={{fontSize: 12, color: 'var(--alinea-text-color-base)'}}>
+      <span style={{fontSize: 12, color: 'var(--alinea-content-secondary)'}}>
         Transitions completed: {transitionCount}
       </span>
 

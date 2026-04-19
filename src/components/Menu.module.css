@@ -26,14 +26,14 @@
 
   &[data-selected] {
     font-weight: 500;
-    background: var(--alinea-gray-200);
-    color: var(--alinea-text-color);
+    background: var(--alinea-surface-selected);
+    color: var(--alinea-content-accent);
     position: relative;
   }
 
   &[data-focused] {
-    background: var(--alinea-highlight-background);
-    color: var(--alinea-highlight-foreground);
+    background: var(--alinea-surface-accent);
+    color: var(--alinea-content-on-accent);
   }
 
   &[data-disabled] {
@@ -45,12 +45,12 @@
 .MenuHeader {
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--alinea-text-color-base);
+  color: var(--alinea-content-secondary);
   padding: 4px 6px;
 }
 
 .MenuSeparator {
   height: 1px;
   margin: 4px 8px;
-  background-color: var(--alinea-border-color);
+  background-color: var(--alinea-border-default);
 }

@@ -15,6 +15,6 @@
   max-height: inherit;
   padding: 4px;
   border-radius: 6px;
-  border: 1px solid var(--alinea-border-color);
-  background-color: var(--alinea-field-background);
+  border: 1px solid var(--alinea-border-default);
+  background-color: var(--alinea-surface-field);
 }

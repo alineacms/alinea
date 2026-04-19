@@ -24,8 +24,8 @@
     content: "";
     position: absolute;
     inset: 0;
-    border: 2px solid black;
-    outline: 2px solid white;
+    border: 2px solid var(--alinea-fg);
+    outline: 2px solid var(--alinea-bg);
     outline-offset: -4px;
     border-radius: inherit;
   }

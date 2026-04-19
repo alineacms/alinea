@@ -1,7 +1,7 @@
 @import "../theme.css";
 
 .NumberField {
-  color: var(--alinea-text-color);
+  color: var(--alinea-content-primary);
 
   &[data-disabled] {
     pointer-events: none;
@@ -11,24 +11,24 @@
   .NumberField-wrapper {
     display: flex;
     position: relative;
-    border: 1px solid var(--alinea-border-color);
+    border: 1px solid var(--alinea-border-default);
     border-radius: 6px;
-    background-color: var(--alinea-field-background);
+    background-color: var(--alinea-surface-field);
     transition: var(--alinea-transition);
 
     &[data-hovered] {
-      border-color: var(--alinea-border-color-hover);
-      box-shadow: 0 0 0 4px var(--alinea-box-shadow-color);
+      border-color: var(--alinea-border-hover);
+      box-shadow: 0 0 0 4px var(--alinea-ring-subtle);
     }
 
     &:focus-within {
-      border-color: var(--alinea-highlight-background);
-      box-shadow: 0 0 0 4px var(--alinea-highlight-overlay);
+      border-color: var(--alinea-surface-accent);
+      box-shadow: 0 0 0 4px var(--alinea-accent-overlay);
     }
 
     &[data-invalid] {
-      border: 1px solid var(--alinea-invalid-color);
-      box-shadow: 0 0 0 4px var(--alinea-invalid-overlay);
+      border: 1px solid var(--alinea-border-danger);
+      box-shadow: 0 0 0 4px var(--alinea-danger-overlay);
     }
 
     .NumberField-input {
@@ -41,29 +41,29 @@
       background: transparent;
       font-size: var(--alinea-font-size-base);
       line-height: 1.5;
-      color: var(--alinea-field-text-color);
+      color: var(--alinea-content-primary);
       text-align: left;
 
       &::placeholder {
-        color: var(--alinea-text-color-placeholder);
+        color: var(--alinea-content-placeholder);
       }
 
       &[data-disabled] {
         pointer-events: none;
-        background-color: var(--alinea-background-color);
+        background-color: var(--alinea-surface-subtle);
         opacity: 0.5;
       }
 
       &[data-readonly] {
         pointer-events: none;
-        color: var(--alinea-text-color-disabled);
+        color: var(--alinea-content-disabled);
       }
     }
 
     .NumberField-buttons {
       display: flex;
       flex-direction: column;
-      border-left: 1px solid var(--alinea-border-color);
+      border-left: 1px solid var(--alinea-border-default);
 
       .NumberField-button {
         flex-grow: 1;
@@ -75,7 +75,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--alinea-icon-color);
+        color: var(--alinea-icon-primary);
         transition: var(--alinea-transition);
         cursor: pointer;
 
@@ -87,12 +87,12 @@
         }
 
         &:hover {
-          background-color: var(--alinea-background-color-hover);
-          color: var(--alinea-icon-color-active);
+          background-color: var(--alinea-surface-subtle-hover);
+          color: var(--alinea-icon-accent);
         }
 
         &:active {
-          background-color: var(--alinea-background-color-pressed);
+          background-color: var(--alinea-surface-subtle-pressed);
         }
       }
     }

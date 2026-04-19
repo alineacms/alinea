@@ -59,7 +59,7 @@
 
 .EntryEditor-toolbar {
   z-index: 1;
-  background: var(--alinea-background);
+  background: var(--alinea-dashboard-background);
   overflow: hidden;
 
   &:empty {
@@ -71,7 +71,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #58708a;
+  color: var(--alinea-dashboard-muted-foreground);
   font-size: 13px;
   white-space: nowrap;
 }
@@ -81,7 +81,7 @@
   padding: 4px 10px;
   font-size: 11px;
   font-weight: 500;
-  color: #58708a;
-  background: #f0f4f8;
+  color: var(--alinea-dashboard-status-foreground);
+  background: var(--alinea-dashboard-status-background);
   border-radius: 4px;
 }

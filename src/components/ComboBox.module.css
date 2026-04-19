@@ -5,36 +5,36 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  border: 1px solid var(--alinea-border-color);
+  border: 1px solid var(--alinea-border-default);
   outline: 4px solid transparent;
   border-radius: 6px;
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
   text-align: left;
-  color: var(--alinea-field-text-color);
+  color: var(--alinea-content-primary);
   transition: var(--alinea-transition);
 
   &:has(> .ComboBoxTrigger-input[data-hovered]),
   &:has(> .ComboBoxTrigger-actions:hover) {
-    border-color: var(--alinea-border-color-hover);
-    outline-color: var(--alinea-box-shadow-color);
+    border-color: var(--alinea-border-hover);
+    outline-color: var(--alinea-ring-subtle);
   }
 
   &:has(> .ComboBoxTrigger-input[data-focused]),
   &:has(> .ComboBoxTrigger-input[aria-expanded="true"]) {
-    border-color: var(--alinea-highlight-border);
-    outline-color: var(--alinea-highlight-overlay);
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-accent-overlay);
   }
 
   &:has(> .ComboBoxTrigger-input[data-disabled]) {
     pointer-events: none;
-    background-color: var(--alinea-field-background);
+    background-color: var(--alinea-surface-field);
     opacity: 0.5;
   }
 
   .ComboBox[data-invalid="true"] & {
-    border-color: var(--alinea-invalid-color);
-    outline-color: var(--alinea-invalid-overlay);
+    border-color: var(--alinea-border-danger);
+    outline-color: var(--alinea-danger-overlay);
   }
   .ComboBoxTrigger-input {
     appearance: none;
@@ -55,16 +55,16 @@
 
     .ComboBoxTrigger-button-value {
       flex-grow: 1;
-      color: var(--alinea-field-text-color);
+      color: var(--alinea-content-primary);
 
       &[data-placeholder] {
-        color: var(--alinea-text-color-placeholder);
+        color: var(--alinea-content-placeholder);
       }
     }
 
     .ComboBoxTrigger-button-arrow {
       font-size: 18px;
-      color: var(--alinea-icon-color);
+      color: var(--alinea-icon-primary);
       transition: transform 0.3s ease-out;
 
       [aria-expanded="true"] & {
@@ -82,7 +82,7 @@
     justify-content: center;
     border: none;
     border-radius: 100%;
-    color: var(--alinea-icon-color);
+    color: var(--alinea-icon-primary);
     position: relative;
 
     &:after {
@@ -94,7 +94,7 @@
       width: 24px;
       height: 24px;
       border-radius: 100%;
-      background-color: var(--alinea-background-color);
+      background-color: var(--alinea-surface-subtle);
       z-index: -1;
       transition: var(--alinea-transition);
       opacity: 0;
@@ -108,14 +108,14 @@
 
     &:focus:after {
       background-color: transparent;
-      border-color: var(--alinea-highlight-border);
-      outline-color: var(--alinea-highlight-overlay);
+      border-color: var(--alinea-border-accent);
+      outline-color: var(--alinea-accent-overlay);
       opacity: 1;
     }
 
     .ComboBoxTrigger-button-arrow {
       font-size: 18px;
-      color: var(--alinea-icon-color);
+      color: var(--alinea-icon-primary);
       transition: transform 0.3s ease-out;
 
       [aria-expanded="true"] & {
@@ -140,8 +140,8 @@
   max-height: inherit;
   padding: 4px;
   border-radius: 6px;
-  border: 1px solid var(--alinea-border-color);
-  background-color: var(--alinea-field-background);
+  border: 1px solid var(--alinea-border-default);
+  background-color: var(--alinea-surface-field);
 }
 
 .ComboBoxClear {
@@ -157,7 +157,7 @@
   border: none;
   border-radius: 100%;
   background-color: transparent;
-  color: var(--alinea-icon-color);
+  color: var(--alinea-icon-primary);
   font-size: var(--alinea-font-size-base);
   outline: none;
 
@@ -170,7 +170,7 @@
     width: 24px;
     height: 24px;
     border-radius: 100%;
-    background-color: var(--alinea-background-color);
+    background-color: var(--alinea-surface-subtle);
     z-index: -1;
     transition: var(--alinea-transition);
     opacity: 0;
@@ -182,8 +182,8 @@
   }
   &:focus:after {
     background-color: transparent;
-    border-color: var(--alinea-highlight-border);
-    outline-color: var(--alinea-highlight-overlay);
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-accent-overlay);
     opacity: 1;
   }
 }
@@ -213,15 +213,15 @@
 
   &[data-selected] {
     font-weight: 500;
-    background: var(--alinea-border-color);
-    color: var(--alinea-text-color);
+    background: var(--alinea-surface-selected);
+    color: var(--alinea-content-accent);
     position: relative;
   }
 
   &[data-focused],
   &[data-pressed] {
-    background: var(--alinea-highlight-background);
-    color: var(--alinea-highlight-foreground);
+    background: var(--alinea-surface-accent);
+    color: var(--alinea-content-on-accent);
   }
 
   &[data-disabled] {

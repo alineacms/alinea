@@ -1,7 +1,7 @@
 .Surface {
   border-radius: 6px;
-  border: 1px solid var(--alinea-border-color);
-  background: white;
+  border: 1px solid var(--alinea-dashboard-surface-border);
+  background: var(--alinea-dashboard-surface-background);
   overflow: hidden;
   font-size: var(--alinea-font-size-base);
   flex-shrink: 0;
@@ -13,10 +13,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--alinea-gray-100);
+  background: var(--alinea-dashboard-surface-header-background);
 
   &:not(:first-child) {
-    border-top: 1px solid var(--alinea-border-color);
+    border-top: 1px solid var(--alinea-dashboard-surface-border);
   }
 }
 
@@ -27,6 +27,6 @@
   gap: 8px;
 
   &:not(:first-child) {
-    border-top: 1px solid var(--alinea-border-color);
+    border-top: 1px solid var(--alinea-dashboard-surface-border);
   }
 }

@@ -38,22 +38,22 @@
     outline: 2px solid transparent;
     outline-offset: 2px;
     transition: var(--alinea-transition);
-    color: var(--alinea-icon-color);
+    color: var(--alinea-icon-primary);
     font-size: 18px;
 
     &[data-hovered],
     &[data-focus-visible] {
-      background-color: var(--alinea-background-color);
-      color: var(--alinea-icon-color);
+      background-color: var(--alinea-surface-subtle);
+      color: var(--alinea-icon-primary);
     }
 
     &[data-focus-visible] {
-      outline-color: var(--alinea-border-color);
+      outline-color: var(--alinea-border-default);
     }
 
     &[data-disabled] {
       cursor: not-allowed;
-      color: var(--alinea-text-color-disabled);
+      color: var(--alinea-content-disabled);
       opacity: 0.5;
     }
   }
@@ -85,7 +85,7 @@
         width: 3px;
         height: 3px;
         border-radius: 50%;
-        background-color: var(--alinea-highlight-background);
+        background-color: var(--alinea-surface-accent);
         position: absolute;
         bottom: 4px;
       }
@@ -93,36 +93,36 @@
 
     &[data-hovered],
     &[data-focus-visible] {
-      background-color: var(--alinea-background-color);
+      background-color: var(--alinea-surface-subtle);
     }
 
     &[data-focus-visible] {
-      outline-color: var(--alinea-border-color);
+      outline-color: var(--alinea-border-default);
     }
 
     &[data-selected] {
-      background-color: var(--alinea-highlight-background);
-      color: var(--alinea-highlight-foreground);
+      background-color: var(--alinea-surface-accent);
+      color: var(--alinea-content-on-accent);
     }
 
     &[data-selected][data-today]:after {
-      background-color: var(--alinea-highlight-foreground);
+      background-color: var(--alinea-content-on-accent);
     }
 
     &[data-selected][data-focus-visible] {
-      outline-color: var(--alinea-highlight-background);
+      outline-color: var(--alinea-surface-accent);
       outline-offset: 2px;
     }
 
     &[data-disabled] {
       cursor: not-allowed;
-      color: var(--alinea-text-color-disabled);
+      color: var(--alinea-content-disabled);
       opacity: 0.5;
     }
 
     &[data-invalid] {
-      background-color: var(--invalid-color);
-      color: white;
+      background-color: var(--alinea-surface-danger);
+      color: var(--alinea-content-on-danger);
     }
   }
 
@@ -130,14 +130,14 @@
   &:has(.Calendar-cell[data-selection-end]) {
     .Calendar-cell {
       &[data-selected] {
-        background-color: var(--alinea-highlight-overlay);
-        color: var(--alinea-highlight-background);
+        background-color: var(--alinea-accent-overlay);
+        color: var(--alinea-surface-accent);
         border-radius: 0;
 
         &[data-selection-start],
         &[data-selection-end] {
-          background-color: var(--alinea-highlight-background);
-          color: var(--alinea-highlight-foreground);
+          background-color: var(--alinea-surface-accent);
+          color: var(--alinea-content-on-accent);
         }
 
         &[data-selection-start] {

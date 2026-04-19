@@ -1,10 +1,10 @@
 @import "../theme.css";
 
 .Tooltip {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--alinea-shadow-tooltip);
   border-radius: 4px;
-  background: var(--alinea-highlight-background);
-  color: var(--alinea-highlight-foreground);
+  background: var(--alinea-surface-accent);
+  color: var(--alinea-content-on-accent);
   forced-color-adjust: none;
   outline: none;
   padding: 4px 8px;
@@ -43,7 +43,7 @@
 
   .Tooltip-arrow svg {
     display: block;
-    fill: var(--alinea-highlight-background);
+    fill: var(--alinea-surface-accent);
   }
 
   &[data-entering] {

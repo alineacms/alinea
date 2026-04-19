@@ -1,3 +1,5 @@
+@import "../theme.css";
+
 .Tree {
   display: flex;
   flex-direction: column;
@@ -7,7 +9,7 @@
   forced-color-adjust: none;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: var(--alinea-border-color-hover) transparent;
+  scrollbar-color: var(--alinea-border-hover) transparent;
 
   &[data-focus-visible] {
     outline: 2px solid var(--alinea-focus-ring-color);
@@ -33,7 +35,7 @@
     font-size: var(--alinea-font-size-base);
     font-weight: 400;
     background: transparent;
-    color: var(--alinea-text-color);
+    color: var(--alinea-content-primary);
     width: 100%;
     box-sizing: border-box;
     outline: none;
@@ -50,7 +52,7 @@
       height: 16px;
       flex-shrink: 0;
       visibility: hidden;
-      color: var(--alinea-text-color);
+      color: var(--alinea-content-primary);
 
       svg {
         width: 16px;
@@ -98,24 +100,24 @@
       flex-shrink: 0;
       margin-left: auto;
       font-size: 14px;
-      color: var(--alinea-text-color-base);
+      color: var(--alinea-content-secondary);
     }
 
     /* States */
 
     &[data-hovered] {
-      background: var(--alinea-background-color);
+      background: var(--alinea-surface-subtle);
     }
 
     &[data-focus-visible] {
       outline: 2px solid var(--alinea-focus-ring-color);
-      background: var(--alinea-background-color);
+      background: var(--alinea-surface-subtle);
       outline-offset: -2px;
     }
 
     &[data-selected] {
-      background: var(--alinea-selected-background);
-      color: var(--alinea-selected-foreground);
+      background: var(--alinea-surface-selected);
+      color: var(--alinea-content-accent);
       font-weight: 500;
 
       [data-slot='icon'] {
@@ -123,13 +125,13 @@
       }
 
       &[data-focus-visible] {
-        outline-color: var(--alinea-selected-foreground);
+        outline-color: var(--alinea-content-accent);
         outline-offset: -4px;
       }
     }
 
     &[data-disabled] {
-      color: var(--alinea-text-color-disabled);
+      color: var(--alinea-content-disabled);
       cursor: default;
     }
 
@@ -148,8 +150,8 @@
     }
 
     &[data-drop-target] {
-      outline: 2px solid var(--alinea-highlight-background);
-      background: var(--alinea-highlight-overlay);
+      outline: 2px solid var(--alinea-surface-accent);
+      background: var(--alinea-accent-overlay);
     }
 
     [slot='drag'] {
@@ -169,7 +171,7 @@
   /* Drop indicator */
 
   [data-drop-target][role='row'] {
-    outline: 1px solid var(--alinea-highlight-background);
+    outline: 1px solid var(--alinea-surface-accent);
     margin-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px);
   }
 }
@@ -183,13 +185,13 @@
 }
 
 .Tree::-webkit-scrollbar-thumb {
-  background: var(--alinea-border-color-hover);
+  background: var(--alinea-border-hover);
 }
 
 .Tree[data-drop-target] {
-  outline: 2px solid var(--alinea-highlight-background);
+  outline: 2px solid var(--alinea-surface-accent);
   outline-offset: -1px;
-  background: var(--alinea-highlight-overlay);
+  background: var(--alinea-accent-overlay);
 }
 
 .TreeItem-controls {
@@ -214,11 +216,11 @@
   transition: background 200ms;
 
   &[data-hovered] {
-    background: var(--alinea-highlight-hover);
+    background: var(--alinea-surface-subtle-hover);
   }
 
   &[data-pressed] {
-    background: var(--alinea-highlight-pressed);
+    background: var(--alinea-surface-subtle-pressed);
     box-shadow: none;
   }
 

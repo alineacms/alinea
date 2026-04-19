@@ -5,7 +5,7 @@
   flex-direction: column;
   gap: 2px;
   font-size: small;
-  color: var(--alinea-text-color);
+  color: var(--alinea-content-primary);
 
   .TagGroup-list {
     display: flex;
@@ -21,15 +21,15 @@
   align-items: center;
   padding: 4px 8px;
   border-radius: 4px;
-  background-color: var(--alinea-primary-50);
-  color: var(--alinea-primary-700);
+  background-color: var(--alinea-surface-accent-subtle);
+  color: var(--alinea-content-accent);
   font-size: var(--alinea-font-size-base);
   transition: var(--alinea-transition);
   transition-property: background-color, border-color, color;
 
   .TagGroup[data-intent="secondary"] & {
-    background-color: var(--alinea-background-color);
-    color: var(--alinea-text-color);
+    background-color: var(--alinea-surface-subtle);
+    color: var(--alinea-content-primary);
   }
 
   .TagGroup[data-shape="circle"] & {
@@ -40,13 +40,13 @@
   &[data-selection-mode] {
     cursor: pointer;
     padding-block: 2px;
-    border: 1px solid var(--alinea-border-color);
-    background-color: var(--alinea-background-color);
-    color: var(--alinea-text-color);
+    border: 1px solid var(--alinea-border-default);
+    background-color: var(--alinea-surface-subtle);
+    color: var(--alinea-content-primary);
   }
 
   &[data-hovered] {
-    border-color: var(--alinea-border-color-hover);
+    border-color: var(--alinea-border-hover);
   }
 
   &[data-focus-visible] {
@@ -55,13 +55,13 @@
   }
 
   &[data-selected] {
-    border-color: var(--alinea-highlight-background);
-    background: var(--alinea-highlight-background);
-    color: var(--alinea-highlight-foreground);
+    border-color: var(--alinea-surface-accent);
+    background: var(--alinea-surface-accent);
+    color: var(--alinea-content-on-accent);
   }
 
   &[data-disabled] {
-    color: var(--alinea-tag-color-disabled);
+    color: var(--alinea-content-disabled);
     pointer-events: none;
   }
 
@@ -71,7 +71,7 @@
     border: none;
     padding: 0;
     margin-left: 8px;
-    color: var(--alinea-text-color-base);
+    color: var(--alinea-content-secondary);
     transition: color 200ms;
     outline: none;
     font-size: 0.95em;
@@ -79,7 +79,7 @@
     align-items: center;
 
     &[data-hovered] {
-      color: var(--alinea-text-color-hover);
+      color: var(--alinea-content-hover);
     }
   }
 

@@ -1,7 +1,7 @@
 @import "../theme.css";
 
 .Switch {
-  --alinea-selected-color: var(--alinea-highlight-background);
+  --alinea-selected-color: var(--alinea-surface-accent);
 
   cursor: pointer;
   display: flex;
@@ -9,14 +9,14 @@
   gap: 0.571rem;
   font-size: var(--alinea-font-size-base);
   line-height: 1;
-  color: var(--alinea-text-color);
+  color: var(--alinea-content-primary);
   forced-color-adjust: none;
 
   .Switch-track {
     width: 2rem;
     height: 1.143rem;
-    border: 1px solid var(--alinea-border-color);
-    background: var(--alinea-field-background);
+    border: 1px solid var(--alinea-border-default);
+    background: var(--alinea-surface-field);
     border-radius: 1.143rem;
     transition: var(--alinea-transition);
     transition-property: background, border, box-shadow;
@@ -27,7 +27,7 @@
       margin: 2px;
       width: 0.857rem;
       height: 0.857rem;
-      background: var(--alinea-border-color-hover);
+      background: var(--alinea-border-hover);
       border-radius: 50%;
       transition: var(--alinea-transition);
       transition-property: background, transform;
@@ -35,12 +35,12 @@
   }
 
   &[data-hovered] .Switch-track {
-    border-color: var(--alinea-border-color-hover);
-    box-shadow: 0 0 0 4px var(--alinea-box-shadow-color);
+    border-color: var(--alinea-border-hover);
+    box-shadow: 0 0 0 4px var(--alinea-ring-subtle);
   }
 
   &[data-focus-visible] .Switch-track {
-    outline: 2px solid var(--alinea-border-color);
+    outline: 2px solid var(--alinea-border-default);
     outline-offset: 2px;
   }
 
@@ -50,13 +50,13 @@
       border-color: var(--alinea-selected-color);
 
       &::before {
-        background: var(--alinea-highlight-foreground);
+        background: var(--alinea-content-on-accent);
         transform: translateX(100%);
       }
     }
 
     &[data-hovered] .Switch-track {
-      box-shadow: 0 0 0 4px var(--alinea-highlight-overlay);
+      box-shadow: 0 0 0 4px var(--alinea-accent-overlay);
     }
 
     &[data-focus-visible] .Switch-track {
@@ -64,23 +64,23 @@
     }
 
     &[data-pressed] .Switch-track {
-      background: var(--alinea-highlight-background-pressed);
-      border-color: var(--alinea-highlight-background-pressed);
+      background: var(--alinea-surface-accent-pressed);
+      border-color: var(--alinea-surface-accent-pressed);
     }
   }
 
   &[data-pressed] .Switch-track {
-    border-color: var(--alinea-border-color-pressed);
+    border-color: var(--alinea-border-pressed);
 
     &::before {
-      background: var(--alinea-border-color-pressed);
+      background: var(--alinea-border-pressed);
     }
   }
 
   &[data-disabled],
   &[data-readonly] {
     pointer-events: none;
-    color: var(--alinea-text-color-disabled);
+    color: var(--alinea-content-disabled);
   }
 
   &[data-disabled] {
@@ -89,8 +89,8 @@
 
   &[data-readonly] {
     .Switch-track {
-      background: var(--alinea-border-color);
-      border-color: var(--alinea-border-color);
+      background: var(--alinea-border-default);
+      border-color: var(--alinea-border-default);
     }
   }
 }

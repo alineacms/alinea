@@ -4,10 +4,10 @@
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--alinea-border-color) transparent;
+  scrollbar-color: var(--alinea-border-default) transparent;
 
   &[data-striped] .Row:nth-child(odd) {
-    background-color: var(--alinea-table-background-striped);
+    background-color: var(--alinea-surface-table-striped);
   }
 
   .Table-table {
@@ -17,10 +17,10 @@
 
     tr th:first-child,
     tr td:first-child {
-      border-left: 1px solid var(--alinea-border-color);
+      border-left: 1px solid var(--alinea-border-default);
     }
     tr th {
-      border-top: solid 1px var(--alinea-border-color);
+      border-top: solid 1px var(--alinea-border-default);
     }
     tr:first-child th:first-child {
       border-top-left-radius: 6px;
@@ -41,7 +41,7 @@
     }
     &[data-empty="true"] {
       tr td:first-child {
-        border: 1px solid var(--alinea-border-color);
+        border: 1px solid var(--alinea-border-default);
         border-top: none;
         border-bottom-left-radius: 6px;
         border-bottom-right-radius: 6px;
@@ -54,20 +54,20 @@
 }
 
 .TableHeader {
-  background-color: var(--alinea-header-background);
+  background-color: var(--alinea-surface-header);
   font-weight: bold;
 }
 
 .TableHeader,
 .TableBody {
-  color: var(--alinea-text-color);
+  color: var(--alinea-content-primary);
   font-size: var(--alinea-font-size-base);
 }
 
 .Column,
 .Cell {
-  border-right: 1px solid var(--alinea-border-color);
-  border-bottom: 1px solid var(--alinea-border-color);
+  border-right: 1px solid var(--alinea-border-default);
+  border-bottom: 1px solid var(--alinea-border-default);
   padding: 10px 12px;
   text-align: left;
 }
@@ -89,16 +89,16 @@
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-    background-color: var(--alinea-background-color);
+    background-color: var(--alinea-surface-subtle);
     margin-left: 8px;
-    color: var(--alinea-icon-color);
+    color: var(--alinea-icon-primary);
     font-size: 18px;
   }
 }
 
 .Row {
   &[data-selected] {
-    background-color: var(--alinea-table-color-selected) !important;
+    background-color: var(--alinea-surface-accent-subtle-strong) !important;
   }
 }
 

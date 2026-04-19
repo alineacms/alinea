@@ -16,10 +16,10 @@
 
 .ListFieldView-empty {
   padding: 16px;
-  border: 1px dashed #d8e1eb;
+  border: 1px dashed var(--alinea-dashboard-list-empty-border);
   border-radius: 12px;
-  color: #5d6b79;
-  background: #fbfcfe;
+  color: var(--alinea-dashboard-list-empty-foreground);
+  background: var(--alinea-dashboard-list-empty-background);
   font-size: 14px;
 }
 
@@ -30,7 +30,7 @@
 .ListFieldRow-title {
   font-size: 13px;
   font-weight: 500;
-  color: #22303d;
+  color: var(--alinea-dashboard-list-title-foreground);
 }
 
 .ListFieldRow-actions {

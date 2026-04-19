@@ -1,15 +1,12 @@
 @import "../theme.css";
 
 .Elevation {
-  --alinea-elevation-background: var(--alinea-field-background);
-  --alinea-elevation-shadow: var(--alinea-box-shadow-color);
+  --alinea-elevation-background: var(--alinea-surface-field);
   --alinea-elevation-radius: 6px;
   background: var(--alinea-elevation-background);
-  border: 1px solid var(--alinea-border-color);
-  box-shadow:
-    lch(0 0 0 / 0.022) 0px 3px 6px -2px,
-    lch(0 0 0 / 0.044) 0px 1px 1px;
-  border-radius: 4px;
+  border: 1px solid var(--alinea-border-default);
+  box-shadow: var(--alinea-shadow-raised);
+  border-radius: var(--alinea-elevation-radius);
   transition: box-shadow var(--alinea-transition);
   padding: 10px;
   font-size: var(--alinea-font-size-base);

@@ -37,7 +37,7 @@
   display: inline-flex;
   align-items: center;
   padding: 8px 12px;
-  color: #223042;
+  color: var(--alinea-dashboard-explorer-foreground);
 }
 
 .ExplorerList-drag-preview-label {
@@ -53,18 +53,15 @@
   outline: none;
 
   &[data-focus-visible] .ExplorerItem-card {
-    outline: 2px solid #5b91ff;
+    outline: 2px solid var(--alinea-dashboard-explorer-focus-ring);
     outline-offset: 2px;
   }
 
   &[data-selected] .ExplorerItem-card {
-    border-color: #7ea6df;
-    outline: 2px solid #7ea6df;
+    border-color: var(--alinea-dashboard-explorer-selected-border);
+    outline: 2px solid var(--alinea-dashboard-explorer-selected-border);
     outline-offset: 1px;
-    box-shadow:
-      0 0 0 1px #7ea6df,
-      lch(0 0 0 / 0.022) 0px 3px 6px -2px,
-      lch(0 0 0 / 0.044) 0px 1px 1px;
+    box-shadow: var(--alinea-dashboard-explorer-selected-shadow);
   }
 }
 
@@ -73,7 +70,7 @@
   top: 10px;
   right: 10px;
   z-index: 1;
-  color: #6c7b8c;
+  color: var(--alinea-dashboard-explorer-muted-foreground);
 }
 
 .ExplorerItem-card {
@@ -83,7 +80,7 @@
   height: 100%;
   align-items: center;
   gap: 12px;
-  color: #223042;
+  color: var(--alinea-dashboard-explorer-foreground);
 }
 
 .ExplorerList.is-card .ExplorerItem-card {
@@ -128,7 +125,7 @@
 }
 
 .ExplorerItem-meta {
-  color: #6c7b8c;
+  color: var(--alinea-dashboard-explorer-muted-foreground);
   font-size: 12px;
   line-height: 1.3;
 }

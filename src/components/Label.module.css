@@ -20,11 +20,11 @@
 
   .Label-icon {
     font-size: var(--alinea-font-size-base);
-    color: var(--alinea-text-color);
+    color: var(--alinea-content-primary);
   }
 
   .Label-label {
-    color: var(--alinea-text-color-base);
+    color: var(--alinea-content-secondary);
     font-size: var(--alinea-font-size-base);
     font-weight: 500;
     transition: var(--alinea-transition);
@@ -34,7 +34,7 @@
   .Label-description {
     display: block;
     max-width: 100%;
-    color: var(--alinea-text-color-base);
+    color: var(--alinea-content-secondary);
     font-size: var(--alinea-font-size-base);
     line-height: 1.1;
     font-weight: 400;
@@ -44,13 +44,13 @@
   }
 
   .Label-error {
-    color: var(--alinea-danger-500);
+    color: var(--alinea-content-danger);
     font-size: var(--alinea-font-size-base);
     padding-top: 4px;
   }
 
   .Label-required {
-    color: var(--alinea-danger-500);
+    color: var(--alinea-content-danger);
     font-size: var(--alinea-font-size-base);
   }
 }

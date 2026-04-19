@@ -5,38 +5,38 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  border: 1px solid var(--alinea-border-color);
+  border: 1px solid var(--alinea-border-default);
   outline: 4px solid transparent;
   border-radius: 6px;
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
   min-width: 100px;
   text-align: left;
-  color: var(--alinea-field-text-color);
+  color: var(--alinea-content-primary);
   transition: var(--alinea-transition);
-  background: var(--alinea-field-background);
+  background: var(--alinea-surface-field);
 
   &:has(> .SelectTrigger-button[data-hovered]) {
-    border-color: var(--alinea-border-color-hover);
-    outline-color: var(--alinea-box-shadow-color);
+    border-color: var(--alinea-border-hover);
+    outline-color: var(--alinea-ring-subtle);
   }
 
   &:has(> .SelectTrigger-button[data-focus-visible]),
   &:has(> .SelectTrigger-button[aria-expanded="true"]) {
-    border-color: var(--alinea-highlight-border);
-    outline-color: var(--alinea-highlight-overlay);
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-accent-overlay);
   }
 
   &:has(> .SelectTrigger-button[data-disabled]) {
     pointer-events: none;
-    background-color: var(--alinea-field-background-disabled);
-    color: var(--alinea-text-color-disabled);
+    background-color: var(--alinea-surface-field-disabled);
+    color: var(--alinea-content-disabled);
     opacity: 0.5;
   }
 
   .Select[data-invalid="true"] & {
-    border-color: var(--alinea-invalid-color);
-    outline-color: var(--alinea-invalid-overlay);
+    border-color: var(--alinea-border-danger);
+    outline-color: var(--alinea-danger-overlay);
   }
 
   .SelectTrigger-button {
@@ -63,20 +63,20 @@
       flex-grow: 1;
       display: flex;
       align-items: center;
-      color: var(--alinea-field-text-color);
+      color: var(--alinea-content-primary);
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
 
       &[data-placeholder] {
-        color: var(--alinea-text-color-placeholder);
+        color: var(--alinea-content-placeholder);
       }
     }
 
     .SelectTrigger-button-arrow {
       flex-shrink: 0;
       font-size: 18px;
-      color: var(--alinea-icon-color);
+      color: var(--alinea-icon-primary);
 
       [aria-expanded="true"] & {
         transform: rotate(180deg);
@@ -103,8 +103,8 @@
     max-height: inherit;
     padding: 4px;
     border-radius: 6px;
-    border: 1px solid var(--alinea-border-color);
-    background-color: var(--alinea-field-background);
+    border: 1px solid var(--alinea-border-default);
+    background-color: var(--alinea-surface-field);
   }
 }
 
@@ -121,7 +121,7 @@
   border: none;
   border-radius: 100%;
   background-color: transparent;
-  color: var(--alinea-icon-color);
+  color: var(--alinea-icon-primary);
   font-size: 18px;
   font-size: var(--alinea-font-size-base);
   outline: none;
@@ -136,7 +136,7 @@
     width: 24px;
     height: 24px;
     border-radius: 100%;
-    background-color: var(--alinea-background-color);
+    background-color: var(--alinea-surface-subtle);
     z-index: -1;
     transition: var(--alinea-transition);
     opacity: 0;
@@ -150,8 +150,8 @@
 
   &:focus:after {
     background-color: transparent;
-    border-color: var(--alinea-highlight-border);
-    outline-color: var(--alinea-highlight-overlay);
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-accent-overlay);
     opacity: 1;
   }
 }
@@ -190,15 +190,15 @@
 
   &[data-selected] {
     font-weight: 500;
-    background: var(--alinea-border-color);
-    color: var(--alinea-text-color);
+    background: var(--alinea-surface-selected);
+    color: var(--alinea-content-accent);
     position: relative;
   }
 
   &[data-focused],
   &[data-pressed] {
-    background: var(--alinea-highlight-background);
-    color: var(--alinea-highlight-foreground);
+    background: var(--alinea-surface-accent);
+    color: var(--alinea-content-on-accent);
   }
 
   &[data-disabled] {

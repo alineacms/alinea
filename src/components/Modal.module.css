@@ -7,7 +7,7 @@
   width: 100vw;
   height: var(--visual-viewport-height);
   padding: 20px;
-  background: rgba(0 0 0 / 0.5);
+  background: var(--alinea-surface-scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -28,10 +28,10 @@
   max-height: 100%;
   max-width: 460px;
   border-radius: 16px;
-  border: 1px solid var(--alinea-border-color);
-  background: var(--alinea-overlay-background);
-  box-shadow: 0px 2px 13px rgba(0, 0, 0, 0.11);
-  color: var(--alinea-text-color);
+  border: 1px solid var(--alinea-border-default);
+  background: var(--alinea-surface-overlay);
+  box-shadow: var(--alinea-shadow-modal);
+  color: var(--alinea-content-primary);
 
   &[data-entering] {
     animation: Modal-zoom 300ms

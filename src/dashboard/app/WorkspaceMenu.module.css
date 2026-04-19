@@ -13,7 +13,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--alinea-dashboard-workspace-avatar-foreground);
   flex-shrink: 0;
   transition: background-color 0.25s ease-out;
 }

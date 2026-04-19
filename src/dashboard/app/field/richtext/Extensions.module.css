@@ -87,7 +87,7 @@ h5.Heading {
 
 .Blockquote {
   padding: 4px 16px;
-  border-left: 2px solid hsla(var(--alinea-negative), 0.5);
+  border-left: 2px solid hsla(var(--alinea-dashboard-richtext-accent-hsl), 0.5);
 
   &:not(:last-child) {
     margin-bottom: 14px;
@@ -98,7 +98,7 @@ h5.Heading {
   cursor: text;
   color: inherit;
   text-decoration: underline;
-  text-decoration-color: hsla(var(--alinea-negative), 0.4);
+  text-decoration-color: hsla(var(--alinea-dashboard-richtext-accent-hsl), 0.4);
   text-underline-offset: 0.3em;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -124,20 +124,20 @@ h5.Heading {
 .TableCell,
 .TableHeader {
   padding: 4px 8px;
-  border: 1px solid var(--alinea-fields-table);
+  border: 1px solid var(--alinea-dashboard-richtext-table-border);
 
   &:global(.selectedCell) {
-    background-color: var(--alinea-highlight);
+    background-color: var(--alinea-dashboard-richtext-selection-background);
   }
 }
 
 .TableHeader {
-  background: var(--alinea-fields-header);
+  background: var(--alinea-dashboard-richtext-table-header-background);
   text-align: left;
   font-weight: 700;
 }
 
 .Highlight {
-  background: var(--alinea-variant-info-action);
-  color: var(--alinea-variant-info-foreground);
+  background: var(--alinea-dashboard-richtext-highlight-background);
+  color: var(--alinea-dashboard-richtext-highlight-foreground);
 }

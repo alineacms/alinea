@@ -2,7 +2,7 @@
 
 .Tabs {
   display: flex;
-  color: var(--alinea-text-color);
+  color: var(--alinea-content-primary);
 
   &[data-orientation='horizontal'] {
     flex-direction: column;
@@ -35,7 +35,7 @@
 .Tab {
   outline: none;
   position: relative;
-  color: var(--alinea-tab-color-base);
+  color: var(--alinea-content-tertiary);
   font-size: var(--alinea-font-size-base);
   line-height: 1.25rem;
   font-weight: 500;
@@ -60,7 +60,7 @@
       left: 0;
       right: 0;
       height: 2px;
-      background-color: var(--alinea-border-color);
+      background-color: var(--alinea-border-default);
       transform-origin: bottom right;
       transform: scaleX(0);
       transition: var(--alinea-transition);
@@ -80,7 +80,7 @@
 
   &[data-hovered],
   &[data-focused] {
-    color: var(--alinea-text-color-hover);
+    color: var(--alinea-content-hover);
 
     [data-variant='line'] &:before {
       transform-origin: bottom left;
@@ -88,44 +88,40 @@
     }
 
     [data-variant='subtle'] & {
-      color: var(--alinea-text-color);
-      background-color: color-mix(
-        in oklab,
-        var(--alinea-background-color) 55%,
-        white
-      );
+      color: var(--alinea-content-primary);
+      background-color: var(--alinea-surface-tab-subtle-hover);
     }
 
     [data-variant='enclosed'] & {
-      background-color: var(--alinea-background-color-hover);
+      background-color: var(--alinea-surface-subtle-hover);
     }
   }
 
   &[data-selected] {
-    color: var(--alinea-text-color);
+    color: var(--alinea-content-primary);
     font-weight: 600;
 
     [data-variant='line'] &:before {
-      background-color: var(--alinea-highlight-background);
+      background-color: var(--alinea-surface-accent);
       transform-origin: bottom left;
       transform: scaleX(1);
     }
 
     [data-variant='subtle'] & {
-      color: var(--alinea-text-color-focused);
-      background-color: var(--alinea-field-background);
+      color: var(--alinea-content-strong);
+      background-color: var(--alinea-surface-field);
     }
 
     [data-variant='enclosed'] & {
-      color: var(--alinea-tab-color-active);
-      background-color: var(--alinea-tab-background-color-active);
+      color: var(--alinea-content-accent);
+      background-color: var(--alinea-surface-tab-active);
     }
   }
 
   &[data-disabled] {
-    color: var(--alinea-text-color-disabled);
+    color: var(--alinea-content-disabled);
     &[data-selected] {
-      --alinea-border-color: var(--alinea-border-color-disabled);
+      --alinea-border-default: var(--alinea-border-disabled);
     }
   }
 
@@ -144,7 +140,7 @@
   max-width: 100%;
   white-space: nowrap;
   scrollbar-width: thin;
-  scrollbar-color: var(--alinea-border-color) transparent;
+  scrollbar-color: var(--alinea-border-default) transparent;
 
   [data-variant='subtle'] & {
     display: inline-flex;
@@ -158,7 +154,7 @@
     display: flex;
 
     &[data-orientation='horizontal'] {
-      border-bottom: 1px solid var(--alinea-border-color);
+      border-bottom: 1px solid var(--alinea-border-default);
     }
 
     [data-variant='subtle'] & {
@@ -167,11 +163,7 @@
       border-radius: 10px;
       gap: 2px;
       padding: 3px;
-      background-color: color-mix(
-        in oklab,
-        var(--alinea-background-color) 75%,
-        white
-      );
+      background-color: var(--alinea-surface-tab-subtle);
     }
 
     [data-variant='enclosed'] & {
@@ -180,7 +172,7 @@
     }
 
     [data-variant='enclosed'] & {
-      background-color: var(--alinea-tab-background-color);
+      background-color: var(--alinea-surface-tab);
       border-radius: 8px;
       padding: 4px;
     }

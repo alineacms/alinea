@@ -1,8 +1,8 @@
 @import "../theme.css";
 
 .Checkbox {
-  --alinea-selected-color: var(--alinea-highlight-background);
-  --alinea-checkmark-color: var(--alinea-highlight-foreground);
+  --alinea-selected-color: var(--alinea-surface-accent);
+  --alinea-checkmark-color: var(--alinea-content-on-accent);
   position: relative;
   cursor: pointer;
   display: flex;
@@ -11,7 +11,7 @@
   gap: 0.571rem;
   font-size: var(--alinea-font-size-base);
   line-height: 1;
-  color: var(--alinea-text-color);
+  color: var(--alinea-content-primary);
   forced-color-adjust: none;
 
   .Checkbox-box {
@@ -20,8 +20,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--alinea-field-background);
-    border: 1px solid var(--alinea-border-color);
+    background-color: var(--alinea-surface-field);
+    border: 1px solid var(--alinea-border-default);
     border-radius: 4px;
     transition: var(--alinea-transition);
     transition-property: background, border, box-shadow;
@@ -39,12 +39,12 @@
   }
 
   &[data-hovered] .Checkbox-box {
-    border-color: var(--alinea-border-color-hover);
-    box-shadow: 0 0 0 4px var(--alinea-box-shadow-color);
+    border-color: var(--alinea-border-hover);
+    box-shadow: 0 0 0 4px var(--alinea-ring-subtle);
   }
 
   &[data-focus-visible] .Checkbox-box {
-    outline: 2px solid var(--alinea-border-color);
+    outline: 2px solid var(--alinea-border-default);
     outline-offset: 2px;
   }
 
@@ -56,7 +56,7 @@
     }
 
     &[data-hovered] .Checkbox-box {
-      box-shadow: 0 0 0 4px var(--alinea-highlight-overlay);
+      box-shadow: 0 0 0 4px var(--alinea-accent-overlay);
     }
 
     &[data-focus-visible] .Checkbox-box {
@@ -77,21 +77,21 @@
 
   &[data-invalid] {
     .Checkbox-box {
-      border-color: var(--alinea-invalid-color);
+      border-color: var(--alinea-border-danger);
     }
 
     &[data-hovered] .Checkbox-box {
-      box-shadow: 0 0 0 4px var(--alinea-invalid-overlay);
+      box-shadow: 0 0 0 4px var(--alinea-danger-overlay);
     }
 
     &[data-focus-visible] .Checkbox-box {
-      outline-color: var(--alinea-invalid-color);
+      outline-color: var(--alinea-border-danger);
     }
 
     &[data-selected],
     &[data-indeterminate] {
       .Checkbox-box {
-        background-color: var(--alinea-invalid-color);
+        background-color: var(--alinea-border-danger);
       }
     }
   }
@@ -99,7 +99,7 @@
   &[data-disabled],
   &[data-readonly] {
     pointer-events: none;
-    color: var(--alinea-text-color-disabled);
+    color: var(--alinea-content-disabled);
   }
 
   &[data-disabled] {
@@ -108,13 +108,13 @@
 
   &[data-readonly] {
     .Checkbox-box {
-      background-color: var(--alinea-border-color);
-      border-color: var(--alinea-border-color);
+      background-color: var(--alinea-border-default);
+      border-color: var(--alinea-border-default);
     }
   }
 
   .Checkbox-description {
-    color: var(--alinea-text-color-base);
+    color: var(--alinea-content-secondary);
     font-size: 12px;
     line-height: normal;
     font-weight: 400;

@@ -6,32 +6,32 @@
   align-items: center;
   width: 100%;
   padding: 8px 10px;
-  background: var(--alinea-field-background);
-  border: 1px solid var(--alinea-border-color);
+  background: var(--alinea-surface-field);
+  border: 1px solid var(--alinea-border-default);
   border-radius: 6px;
   outline: 4px solid transparent;
-  color: var(--alinea-field-text-color);
+  color: var(--alinea-content-primary);
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
   white-space: nowrap;
   transition: var(--alinea-transition);
 
   &[data-hovered] {
-    border-color: var(--alinea-border-color-hover);
-    outline-color: var(--alinea-box-shadow-color);
+    border-color: var(--alinea-border-hover);
+    outline-color: var(--alinea-ring-subtle);
   }
   &[data-focus-within] {
-    border-color: var(--alinea-highlight-border);
-    outline-color: var(--alinea-highlight-overlay);
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-accent-overlay);
   }
   &[data-invalid="true"] {
-    border-color: var(--alinea-invalid-color);
-    outline-color: var(--alinea-invalid-overlay);
+    border-color: var(--alinea-border-danger);
+    outline-color: var(--alinea-danger-overlay);
   }
   &[data-disabled] {
     pointer-events: none;
-    background-color: var(--alinea-field-background-disabled);
-    color: var(--alinea-text-color-disabled);
+    background-color: var(--alinea-surface-field-disabled);
+    color: var(--alinea-content-disabled);
     opacity: 0.5;
   }
 
@@ -41,18 +41,18 @@
       transition: var(--alinea-transition);
 
       &[data-placeholder] {
-        color: var(--alinea-text-color-placeholder);
+        color: var(--alinea-content-placeholder);
       }
 
       &[data-hovered] {
-        color: var(--alinea-text-color);
+        color: var(--alinea-content-primary);
       }
 
       &[data-focused] {
         outline: none;
-        background-color: var(--alinea-highlight-overlay);
+        background-color: var(--alinea-accent-overlay);
         border-radius: 4px;
-        color: var(--alinea-highlight-background);
+        color: var(--alinea-surface-accent);
       }
     }
   }
