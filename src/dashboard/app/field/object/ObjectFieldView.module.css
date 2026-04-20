@@ -1,0 +1,5 @@
+.ObjectFieldView-error {
+  color: var(--alinea-content-danger);
+  font-size: var(--alinea-font-size-base);
+  padding-top: 4px;
+}

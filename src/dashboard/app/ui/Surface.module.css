@@ -1,7 +1,7 @@
 .Surface {
   border-radius: 6px;
   border: 1px solid var(--alinea-dashboard-surface-border);
-  background: var(--alinea-dashboard-surface-background);
+  background: var(--alinea-surface-page);
   overflow: hidden;
   font-size: var(--alinea-font-size-base);
   flex-shrink: 0;

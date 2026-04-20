@@ -142,7 +142,6 @@
   --alinea-icon-accent: var(--alinea-blue-700);
 
   /* Dashboard */
-  --alinea-dashboard-background: var(--alinea-surface-page);
   --alinea-dashboard-surface-background: var(--alinea-overlay);
   --alinea-dashboard-surface-header-background: var(--alinea-header);
   --alinea-dashboard-surface-border: var(--alinea-border-default);
