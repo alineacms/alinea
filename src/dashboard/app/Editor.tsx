@@ -23,6 +23,7 @@ import {
   useNodeEditor
 } from '../store/hooks.js'
 import {Badge} from './Badge.js'
+import {DetailsBar} from './DetailsBar.js'
 import css from './Editor.module.css'
 import {EntrySidebar} from './EntrySidebar.js'
 import {Explorer} from './Explorer.js'
@@ -78,6 +79,7 @@ function EntryEditor({entry}: EntryEditorProps) {
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
+  const status = useAtomValue(entry.activeStatus)
 
   const discardAndConfirm = () => {
     startTransition(() => {
@@ -119,6 +121,7 @@ function EntryEditor({entry}: EntryEditorProps) {
           </div>
         )}
       </RailHeader>
+      <DetailsBar status={status} />
 
       <RailBody className={styles.EntryEditor.body()}>
         <NodeEditor node={node} type={type.type} />

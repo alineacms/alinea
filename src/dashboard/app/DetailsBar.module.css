@@ -1,0 +1,26 @@
+.DetailsBar {
+  padding: 0px 16px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  height: 56px;
+  width: 100%;
+  transition: background 0.25s ease-out;
+
+  &[data-status='published'] {
+    background-color: var(--alinea-dashboard-details-bar-published-background);
+  }
+
+  &[data-status='unpublished'] {
+    background-color: var(--alinea-dashboard-details-bar-unpublished-background);
+  }
+
+  &[data-status='draft'] {
+    background-color: var(--alinea-dashboard-details-bar-draft-background);
+  }
+
+  &[data-status='archived'] {
+    background-color: var(--alinea-dashboard-details-bar-archived-background);
+  }
+}
