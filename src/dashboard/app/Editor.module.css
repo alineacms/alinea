@@ -67,15 +67,6 @@
   }
 }
 
-.TypeBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--alinea-dashboard-muted-foreground);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
 .EntryStatus-badge {
   margin-left: 12px;
   padding: 4px 10px;

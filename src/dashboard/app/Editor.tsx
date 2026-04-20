@@ -1,4 +1,4 @@
-import {Button, Icon} from '#/components.js'
+import {Button} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
@@ -22,6 +22,7 @@ import {
   useFieldView,
   useNodeEditor
 } from '../store/hooks.js'
+import {Badge} from './Badge.js'
 import css from './Editor.module.css'
 import {EntrySidebar} from './EntrySidebar.js'
 import {Explorer} from './Explorer.js'
@@ -253,12 +254,7 @@ interface TypeBadgeProps {
 function TypeBadge({type}: TypeBadgeProps) {
   const label = type.label
   const icon = type.icon
-  return (
-    <span className={styles.TypeBadge()}>
-      {icon && <Icon icon={icon} />}
-      {label}
-    </span>
-  )
+  return <Badge icon={icon}>{label}</Badge>
 }
 
 interface EntryStatusProps {
@@ -268,7 +264,5 @@ interface EntryStatusProps {
 function EntryStatus({entry}: EntryStatusProps) {
   const selectedVersion = useAtomValue(entry.selectedVersion)
   if (selectedVersion.type !== 'status') return
-  return (
-    <span className={styles.EntryStatus.badge()}>{selectedVersion.status}</span>
-  )
+  return <Badge>{selectedVersion.status}</Badge>
 }

@@ -1,33 +1,35 @@
-import clsx from 'clsx'
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import {Icon} from '#/components.js'
+import {styler} from '@alinea/styler'
+import {
+  type ComponentPropsWithoutRef,
+  type ComponentType,
+  type ReactElement
+} from 'react'
+import css from './Badge.module.css'
 
-import './Badge.css'
+const styles = styler(css)
 
 interface BadgeProps extends ComponentPropsWithoutRef<'div'> {
-  label: string
-  icon: ReactNode
-  iconpos?: 'left' | 'right'
-  appearence?: 'background' | 'outline' | 'plain' | 'default'
-  status: 'success' | 'warning' | 'neutral' | 'danger'
+  icon?: ComponentType | ReactElement
+  appearance?: 'background' | 'outline' | 'plain' | 'default'
+  status?: 'success' | 'warning' | 'neutral' | 'danger'
 }
 
 export function Badge({
-  label,
+  children,
   icon,
-  status,
-  iconpos = 'left',
-  appearence = 'default',
+  status = 'neutral',
+  appearance = 'default',
   ...props
 }: BadgeProps) {
   return (
     <div
       data-status={status}
-      data-appearence={appearence}
-      className={clsx('alinea-rac-Badge', props.className)}
+      data-appearance={appearance}
+      className={styles.Badge(styler.merge(props))}
     >
-      {iconpos === 'left' && icon}
-      <p className="sublabel">{label}</p>
-      {iconpos === 'right' && icon}
+      {icon && <Icon icon={icon} />}
+      <span>{children}</span>
     </div>
   )
 }
