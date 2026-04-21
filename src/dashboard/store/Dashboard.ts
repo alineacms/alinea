@@ -8,12 +8,14 @@ import {Field, FieldOptions} from '#/core/Field.js'
 import type {Order} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Section} from '#/core/Section.js'
 import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries, fromEntries, values} from '#/core/util/Objects.js'
 import {parents, translations} from '#/query.js'
+import {Infer} from '#/types.js'
 import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
@@ -299,6 +301,20 @@ export class Dashboard {
     )
   })
 
+  versionLoader = atom(get => {
+    const db = get(this.db)
+    return loader(async ids => {
+      const rows = await db.find({
+        id: {in: ids},
+        status: 'all',
+        select: Entry
+      })
+      return ids.map(id => {
+        return [rows.filter(row => row.id === id), null] as const
+      })
+    })
+  })
+
   #entryLoader = atom(get => {
     const db = get(this.db)
     return loader(async ids => {
@@ -452,7 +468,18 @@ export class DashboardExplorer {
   })
 
   search = atom('')
-  view = atom<'card' | 'row'>('row')
+  #selectedView = atom<'card' | 'row' | undefined>()
+  view = atom(
+    get => {
+      const selected = get(this.#selectedView)
+      if (selected) return selected
+      const isMedia = get(this.isMedia)
+      return isMedia ? 'card' : 'row'
+    },
+    (get, set, next: 'card' | 'row') => {
+      set(this.#selectedView, next)
+    }
+  )
   location = atom(
     get => get(this.#location),
     (get, set, update: SetStateAction<ExplorerLocation>) => {
@@ -1006,6 +1033,13 @@ export class DashboardEntry {
     return ''
   })
 
+  fileInfo = atom(async (get): Promise<Infer<typeof MediaFile> | null> => {
+    if (get(this.type).type !== MediaFile) return null
+    const lang = this.languages(null)
+    const data = await get(lang.activeVersion)
+    return data.data as Infer<typeof MediaFile>
+  })
+
   parents = atom(async get => {
     const parentIds = get(this.parentIds)
     return Promise.all(parentIds.map(id => get(this.dashboard.entries(id))))
@@ -1092,20 +1126,27 @@ export class DashboardEntryLanguage {
   ) {}
 
   versions = atom(async get => {
-    const db = get(this.entry.dashboard.db)
     get(this.entry.dashboard.revisions(this.entry.id)) // subscribe to entry changes
-    const entries = await db.find({
-      id: this.entry.id,
-      locale: this.locale,
-      select: Entry,
-      status: 'all'
-    })
+    const loader = get(this.entry.dashboard.versionLoader)
+    const [entries] = await loader(this.entry.id)
+    if (!entries)
+      throw new Error(`No versions found for entry ${this.entry.id}`)
     // order by draft, published, archived
     const order = ['draft', 'published', 'archived']
     entries.sort((a, b) => {
       return order.indexOf(a.status) - order.indexOf(b.status)
     })
     return new Map(entries.map(entry => [entry.status, entry] as const))
+  })
+
+  activeVersion = atom(async get => {
+    const versions = await get(this.versions)
+    const first = versions.values().next().value
+    assert(
+      first,
+      `No versions found for entry ${this.entry.id} and locale ${this.locale}`
+    )
+    return first
   })
 
   data = dispense((status: EntryStatus) => {
