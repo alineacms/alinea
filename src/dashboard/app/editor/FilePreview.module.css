@@ -1,0 +1,104 @@
+.FilePreview {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50%;
+  max-width: 50%;
+  min-height: 512px;
+  max-height: 512px;
+  padding: 16px;
+  overflow: hidden;
+  background-size: cover;
+
+  &:before {
+    position: absolute;
+    z-index: -1;
+    content: '';
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgb(from var(--alinea-bg) r g b / 20%),
+      rgb(from var(--alinea-bg) r g b / 80%)
+    );
+  }
+}
+
+@media (max-width: 800px) {
+  .FilePreview {
+    width: 100%;
+    max-width: 100%;
+    min-height: 320px;
+    max-height: 320px;
+  }
+}
+
+.FilePreview-interactive {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  user-select: none;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.FilePreview-image {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+  user-select: none;
+  -webkit-user-drag: none;
+
+  &[data-visible] {
+    opacity: 1;
+  }
+}
+
+.FilePreview-focus {
+  position: absolute;
+  inset: auto auto 0 0;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  z-index: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.FilePreview-focus-inner {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid rgb(255 255 255 / 96%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 32%);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 22%),
+    inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+
+.FilePreview-focus-dot {
+  position: relative;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 96%);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 26%),
+    0 0 0 3px rgb(255 255 255 / 24%);
+}

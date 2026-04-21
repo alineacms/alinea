@@ -1,7 +1,7 @@
 import {Breadcrumb, Breadcrumbs} from '#/components/Breadcrumbs.js'
 import {styler} from '@alinea/styler'
 import {IcRoundRemoveRedEye} from '../icons.js'
-import {Badge} from './Badge'
+import {Badge} from './Badge.js'
 import css from './DetailsBar.module.css'
 import {RailHeader} from './ui/Rail.js'
 

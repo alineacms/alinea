@@ -1,81 +1,16 @@
 .FileEditor {
   display: flex;
-}
-
-.FileEditor-preview {
-  position: relative;
-  z-index: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50%;
-  background-size: cover;
-
-  &:before {
-    position: absolute;
-    z-index: -1;
-    content: '';
-    inset: 0;
-    background: linear-gradient(
-      to top,
-      rgb(from var(--alinea-bg) r g b / 20%),
-      rgb(from var(--alinea-bg) r g b / 80%)
-    );
-  }
-}
-
-.FileEditor-preview-interactive {
-  position: relative;
-  cursor: crosshair;
-  user-select: none;
-  touch-action: none;
-}
-
-.FileEditor-preview-image {
-  position: relative;
-  display: block;
-  max-width: 100%;
-  height: auto;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.FileEditor-preview-focus {
-  position: absolute;
-  inset: auto auto 0 0;
-  display: grid;
-  place-items: center;
-  width: 14px;
-  height: 14px;
-  z-index: 1;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-}
-
-.FileEditor-preview-focus-inner {
-  position: absolute;
-  inset: 0;
-  border: 1.5px solid rgb(255 255 255 / 96%);
-  border-radius: 999px;
-  background: rgb(255 255 255 / 32%);
-  box-shadow:
-    0 0 0 1px rgb(0 0 0 / 22%),
-    inset 0 0 0 1px rgb(255 255 255 / 12%);
-}
-
-.FileEditor-preview-focus-dot {
-  position: relative;
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 96%);
-  box-shadow:
-    0 0 0 1px rgb(0 0 0 / 26%),
-    0 0 0 3px rgb(255 255 255 / 24%);
+  flex-wrap: wrap;
 }
 
 .FileEditor-details {
   padding: 16px;
   flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 800px) {
+  .FileEditor {
+    flex-direction: column;
+  }
 }
