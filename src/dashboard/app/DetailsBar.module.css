@@ -9,18 +9,22 @@
   transition: background 0.25s ease-out;
 
   &[data-status='published'] {
-    background-color: var(--alinea-dashboard-details-bar-published-background);
+    background-color: var(--alinea-status-published-bg);
+    color: var(--alinea-status-published-fg);
   }
 
   &[data-status='unpublished'] {
-    background-color: var(--alinea-dashboard-details-bar-unpublished-background);
+    background-color: var(--alinea-status-unpublished-bg);
+    color: var(--alinea-status-unpublished-fg);
   }
 
   &[data-status='draft'] {
-    background-color: var(--alinea-dashboard-details-bar-draft-background);
+    background-color: var(--alinea-status-draft-bg);
+    color: var(--alinea-status-draft-fg);
   }
 
   &[data-status='archived'] {
-    background-color: var(--alinea-dashboard-details-bar-archived-background);
+    background-color: var(--alinea-status-archived-bg);
+    color: var(--alinea-status-archived-fg);
   }
 }

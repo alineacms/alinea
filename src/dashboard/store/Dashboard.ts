@@ -606,7 +606,6 @@ export class DashboardField {
 
   view = atom(get => {
     const view = Field.view(this.field)
-    console.log({view})
     if (typeof view === 'string') return get(this.draft.dashboard.view(view))
     return view
   })
