@@ -266,11 +266,9 @@ export class Dashboard {
   })
 
   view = dispense(key => {
-    return atom(get => {
+    return atom((get): ComponentType | undefined => {
       const views = get(this.views)
-      const component = views[key]
-      // assert(component, `View "${key}" not found in views`)
-      return component
+      return views[key]
     })
   })
 
@@ -608,6 +606,7 @@ export class DashboardField {
 
   view = atom(get => {
     const view = Field.view(this.field)
+    console.log({view})
     if (typeof view === 'string') return get(this.draft.dashboard.view(view))
     return view
   })

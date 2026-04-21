@@ -1,0 +1,53 @@
+@import '../theme.css';
+
+.Breadcrumbs {
+  --alinea-breadcrumbs-fg: hsl(var(--alinea-fg));
+
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+
+  .Breadcrumb:not(:last-child)::after {
+    content: '›';
+    content: '›' / '';
+    alt: ' ';
+    padding: 0 10px;
+  }
+}
+
+.Breadcrumb {
+  font: inherit;
+  outline: none;
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--alinea-breadcrumbs-fg);
+
+  &[data-hovered] {
+    text-decoration: underline;
+  }
+
+  &[data-current] {
+    font-weight: bold;
+  }
+
+  &[data-focus-visible]:after {
+    content: '';
+    position: absolute;
+    inset: -2px -4px;
+    border-radius: 6px;
+    border: 2px solid hsl(var(--alinea-ring));
+  }
+
+  &[data-disabled] {
+    cursor: default;
+
+    &:not([data-current]) {
+      color: var(--alinea-text-color-disabled);
+    }
+  }
+}

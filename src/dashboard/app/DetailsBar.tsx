@@ -1,5 +1,5 @@
+import {Breadcrumb, Breadcrumbs} from '#/components/Breadcrumbs.js'
 import {styler} from '@alinea/styler'
-import {Breadcrumb, Breadcrumbs} from 'react-aria-components'
 import {IcRoundRemoveRedEye} from '../icons.js'
 import {Badge} from './Badge'
 import css from './DetailsBar.module.css'

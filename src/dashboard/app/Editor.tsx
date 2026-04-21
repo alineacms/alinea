@@ -11,7 +11,6 @@ import {
   DashboardEntry,
   DashboardRoot,
   DashboardSection,
-  DashboardType,
   ReactiveNode
 } from '../store/Dashboard.js'
 import {
@@ -104,7 +103,6 @@ function EntryEditor({entry}: EntryEditorProps) {
       <RailHeader className={styles.EntryEditor.header()}>
         <div>
           <h1 className={styles.EntryEditor.title()}>{title}</h1>
-          <TypeBadge type={type} />
         </div>
         <EntryStatus entry={entry} />
         {isDirty && (
@@ -248,16 +246,6 @@ const EditField = memo(function EditField({field}: EditFieldProps) {
 function fieldSpan(width = 1): number {
   const columns = 12
   return Math.max(1, Math.min(columns, Math.round(width * columns)))
-}
-
-interface TypeBadgeProps {
-  type: DashboardType
-}
-
-function TypeBadge({type}: TypeBadgeProps) {
-  const label = type.label
-  const icon = type.icon
-  return <Badge icon={icon}>{label}</Badge>
 }
 
 interface EntryStatusProps {
