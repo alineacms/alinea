@@ -1,9 +1,10 @@
-import {Button, Elevation, Icon, ProgressCircle} from '#/components.js'
+import {Button, Icon, ProgressCircle} from '#/components.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {memo, Suspense} from 'react'
+import type {ComponentType} from 'react'
 import {
   GridLayout,
   type GridLayoutOptions,
@@ -14,8 +15,13 @@ import {
   useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
-import {IcRoundDragIndicator} from '../icons.js'
+import {
+  IcRoundDragIndicator,
+  IcTwotoneDescription,
+  IcTwotoneFolder
+} from '../icons.js'
 import type {DashboardEntry, DashboardExplorer} from '../store.js'
+import {ExplorerFileCard} from './ExplorerFileCard.js'
 import css from './ExplorerList.module.css'
 
 const styles = styler(css)
@@ -27,8 +33,8 @@ const rowLayoutOptions: ListLayoutOptions = {
 }
 
 const cardLayoutOptions: GridLayoutOptions = {
-  minItemSize: new Size(240, 188),
-  maxItemSize: new Size(320, 188),
+  minItemSize: new Size(240, 196),
+  maxItemSize: new Size(320, 196),
   minSpace: new Size(20, 20),
   maxColumns: 5,
   preserveAspectRatio: true
@@ -43,9 +49,11 @@ const ExplorerItem = memo(function ExplorerItem({
   entry,
   explorer
 }: ExplorerItemProps) {
+  const view = useAtomValue(explorer.view)
   const label = useAtomValue(entry.label)
   const icon = useAtomValue(entry.icon)
   const type = useAtomValue(entry.type)
+  const hasChildren = useAtomValue(entry.hasChildren)
   const onAction = useSetAtom(explorer.onAction)
   const info = useAtomValue(unwrap(entry.fileInfo))
   return (
@@ -69,16 +77,51 @@ const ExplorerItem = memo(function ExplorerItem({
       >
         <IcRoundDragIndicator />
       </Button>
-      <Elevation className={styles.ExplorerItem.card()}>
-        {icon && <Icon icon={icon} className={styles.ExplorerItem.icon()} />}
-        <div className={styles.ExplorerItem.body()}>
-          <div className={styles.ExplorerItem.label()}>{label}</div>
-          <div className={styles.ExplorerItem.meta()}>{type.label}</div>
-        </div>
-      </Elevation>
+      <div className={styles.ExplorerItem.card({file: Boolean(info)})}>
+        {info ? (
+          <ExplorerFileCard file={info} label={label} layout={view} />
+        ) : (
+          <ExplorerEntryCard
+            icon={icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription)}
+            label={label}
+            typeLabel={type.label}
+            layout={view}
+          />
+        )}
+      </div>
     </GridListItem>
   )
 })
+
+interface ExplorerEntryCardProps {
+  icon?: ComponentType
+  label: string
+  typeLabel: string
+  layout: 'card' | 'row'
+}
+
+function ExplorerEntryCard({
+  icon,
+  label,
+  typeLabel,
+  layout
+}: ExplorerEntryCardProps) {
+  return (
+    <div className={styles.ExplorerEntryCard(layout)}>
+      <div className={styles.ExplorerEntryCard.top()}>
+        {icon && (
+          <Icon icon={icon} className={styles.ExplorerEntryCard.icon()} />
+        )}
+      </div>
+      <div className={styles.ExplorerEntryCard.body()}>
+        <div className={styles.ExplorerEntryCard.body.inner()}>
+          <div className={styles.ExplorerEntryCard.label()}>{label}</div>
+          <div className={styles.ExplorerEntryCard.meta()}>{typeLabel}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export interface ExplorerListProps {
   explorer: DashboardExplorer
@@ -93,11 +136,11 @@ export function ExplorerList({explorer}: ExplorerListProps) {
     getItems,
     renderDragPreview(items) {
       return (
-        <Elevation className={styles.ExplorerList.drag.preview()}>
+        <div className={styles.ExplorerList.drag.preview()}>
           <span className={styles.ExplorerList.drag.preview.label()}>
             {items.length === 1 ? '1 item' : `${items.length} items`}
           </span>
-        </Elevation>
+        </div>
       )
     }
   })
@@ -124,7 +167,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
                 dragAndDropHooks={dragAndDropHooks}
                 selectedKeys={selected}
                 onSelectionChange={setSelected}
-                style={{display: 'block', height: '100%'}}
+                style={{display: 'block', width: '100%', height: '100%'}}
               >
                 {item => <ExplorerItem entry={item} explorer={explorer} />}
               </GridList>
@@ -143,7 +186,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
                 dragAndDropHooks={dragAndDropHooks}
                 selectedKeys={selected}
                 onSelectionChange={setSelected}
-                style={{display: 'block', height: '100%'}}
+                style={{display: 'block', width: '100%', height: '100%'}}
               >
                 {item => <ExplorerItem entry={item} explorer={explorer} />}
               </GridList>

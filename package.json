@@ -144,6 +144,7 @@
     "p-debounce": "^4.0.0",
     "p-lazy": "^4.0.0",
     "p-limit": "^4.0.0",
+    "playwright": "^1.59.1",
     "postcss-modules": "^6.0.0",
     "postcss-pxtorem": "^6.0.0",
     "pretty-bytes": "^6.0.0",
