@@ -2,14 +2,14 @@ import {TimeField as RacTimeField} from '#/components.js'
 import {TimeField} from '#/field/time.js'
 import {parseTime} from '@internationalized/date'
 import {useMemo} from 'react'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
+import {useField, useFieldError, useFieldOptions} from '../../../store.js'
 
 export interface TimeFieldViewProps {
   field: TimeField
 }
 
 export function TimeFieldView({field}: TimeFieldViewProps) {
-  const [value = '', setValue] = useFieldValue(field)
+  const [value = '', setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   const parsedValue = useMemo(() => {

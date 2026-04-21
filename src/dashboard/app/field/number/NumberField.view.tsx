@@ -1,13 +1,13 @@
 import {NumberField as RacNumberField} from '#/components.js'
 import {NumberField} from '#/field/number.js'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
+import {useField, useFieldError, useFieldOptions} from '../../../store.js'
 
 export interface NumberFieldViewProps {
   field: NumberField
 }
 
 export function NumberFieldView({field}: NumberFieldViewProps) {
-  const [value, setValue] = useFieldValue(field)
+  const [value, setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   return (

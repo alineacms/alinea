@@ -1,6 +1,6 @@
 import {JsonField} from '#/field/json.js'
 import {useEffect, useState} from 'react'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
+import {useField, useFieldError, useFieldOptions} from '../../../store.js'
 import {CodeEditorInput} from '../code/CodeField.view.js'
 
 export interface JsonFieldViewProps<Value> {
@@ -18,7 +18,7 @@ function parseJsonValue<Value>(text: string): Value | undefined {
 }
 
 export function JsonFieldView<Value>({field}: JsonFieldViewProps<Value>) {
-  const [value, setValue] = useFieldValue(field)
+  const [value, setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   const [text, setText] = useState(() => formatJsonValue(value))

@@ -1,12 +1,4 @@
-import {
-  Button,
-  Icon,
-  Menu,
-  MenuItem,
-  ProgressCircle,
-  Tree,
-  TreeItem
-} from '#/components.js'
+import {Button, Icon, ProgressCircle, Tree, TreeItem} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -45,18 +37,17 @@ interface SidebarTreeProps {
 
 interface SidebarParentProps {
   root: DashboardRoot
-  roots: Array<DashboardRoot>
   isTreeCollapsed: boolean
   onToggleTreeCollapsed: () => void
 }
 
 const SidebarParent = memo(function SidebarParent({
   root,
-  roots,
   isTreeCollapsed,
   onToggleTreeCollapsed
 }: SidebarParentProps) {
   const label = useAtomValue(root.label)
+  const selectRoot = useSetAtom(root.selected)
   return (
     <SidebarHeader>
       <div className={styles.SidebarParent.label()}>
@@ -68,23 +59,14 @@ const SidebarParent = memo(function SidebarParent({
           aria-label={isTreeCollapsed ? 'Expand tree' : 'Collapse tree'}
           onPress={onToggleTreeCollapsed}
         />
-        <Menu
-          label={
-            <Button
-              appearance="plain"
-              intent="secondary"
-              className={styles.SidebarTree.rootsTrigger()}
-            >
-              {label}
-            </Button>
-          }
-          aria-label={label}
-          selectionMode="single"
+        <Button
+          appearance="plain"
+          intent="secondary"
+          className={styles.SidebarTree.rootsTrigger()}
+          onPress={() => selectRoot(true)}
         >
-          {roots.map(root => (
-            <RootMenuItem key={root.key} root={root} />
-          ))}
-        </Menu>
+          {label}
+        </Button>
         <LocaleMenu root={root} />
         <DialogTrigger>
           <Button size="icon" icon={IcRoundAdd} />
@@ -252,25 +234,6 @@ function RootButton({root, expanded = false}: RootButtonProps) {
   )
 }
 
-interface RootMenuItemProps {
-  root: DashboardRoot
-}
-
-function RootMenuItem({root}: RootMenuItemProps) {
-  const label = useAtomValue(root.label)
-  const selectRoot = useSetAtom(root.selected)
-  return (
-    <MenuItem
-      key={root.key}
-      id={root.key}
-      onAction={() => selectRoot(true)}
-      className={styles.SidebarTree.rootButton()}
-    >
-      {label}
-    </MenuItem>
-  )
-}
-
 export const SidebarTree = memo(function SidebarTree({
   dashboard
 }: SidebarTreeProps) {
@@ -284,7 +247,6 @@ export const SidebarTree = memo(function SidebarTree({
       {currentRoot && (
         <SidebarParent
           root={currentRoot}
-          roots={roots}
           isTreeCollapsed={isTreeCollapsed}
           onToggleTreeCollapsed={() =>
             setIsTreeCollapsed(isCollapsed => !isCollapsed)

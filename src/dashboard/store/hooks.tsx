@@ -47,13 +47,13 @@ export function EntryScope({
   return createElement(entryContext.Provider, {value: entry}, children)
 }
 
-function useEditor() {
+export function useEditor() {
   const editor = useContext(editorContext)
   assert(editor, 'DashboardEditor not found in context')
   return editor
 }
 
-function useField(field: Field) {
+function useFieldInfo(field: Field) {
   const editor = useEditor()
   const info = editor.get(field)
   assert(info, 'Field info not found in editor')
@@ -81,8 +81,15 @@ export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
 
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
+): StoredValue {
+  const info = useFieldInfo(field)
+  return useAtomValue(info.value) as StoredValue
+}
+
+export function useField<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
 ): [StoredValue, Dispatch<SetStateAction<StoredValue>>] {
-  const info = useField(field)
+  const info = useFieldInfo(field)
   // Todo: "mutator" will not really be relevant anymore
   return useAtom(info.value) as [
     StoredValue,
@@ -93,35 +100,35 @@ export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
 export function useFieldSetter<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): Dispatch<SetStateAction<StoredValue>> {
-  const info = useField(field)
+  const info = useFieldInfo(field)
   return useSetAtom(info.value) as Dispatch<SetStateAction<StoredValue>>
 }
 
 export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): string {
-  const info = useField(field)
+  const info = useFieldInfo(field)
   return info.key
 }
 
 export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ) {
-  const info = useField(field)
+  const info = useFieldInfo(field)
   return useAtomValue(info.options) as Options
 }
 
 export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): string | undefined {
-  const info = useField(field)
+  const info = useFieldInfo(field)
   return useAtomValue(info.error)
 }
 
 export function useFieldView<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ) {
-  const info = useField(field)
+  const info = useFieldInfo(field)
   return useAtomValue(info.view)
 }
 

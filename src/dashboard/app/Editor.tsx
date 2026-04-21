@@ -1,13 +1,13 @@
 import {Button} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {memo, useEffect, useTransition} from 'react'
+import {memo, PropsWithChildren, useEffect, useTransition} from 'react'
 import {
   Dashboard,
-  DashboardEditor,
   DashboardEntry,
   DashboardRoot,
   DashboardSection,
@@ -17,6 +17,7 @@ import {
   EditorScope,
   EntryScope,
   useDashboard,
+  useEditor,
   useFieldOptions,
   useFieldView,
   useNodeEditor
@@ -24,6 +25,7 @@ import {
 import {Badge} from './Badge.js'
 import {DetailsBar} from './DetailsBar.js'
 import css from './Editor.module.css'
+import {FileEditor} from './editor/FileEditor.js'
 import {EntrySidebar} from './EntrySidebar.js'
 import {Explorer} from './Explorer.js'
 import {Rail, RailBody, RailFooter, RailHeader} from './ui/Rail.js'
@@ -98,12 +100,30 @@ function EntryEditor({entry}: EntryEditorProps) {
     setEditing(isDirty ? node : undefined)
   }, [node, setEditing, isDirty])
 
+  let editorBody = (
+    <>
+      <DetailsBar status={status} />
+
+      <RailBody className={styles.EntryEditor.body()}>
+        <NodeEditor node={node} type={type.type} />
+      </RailBody>
+    </>
+  )
+
+  if (type.type === MediaFile) {
+    editorBody = (
+      <RailBody className={styles.EntryEditor.body()}>
+        <NodeEditor node={node} type={type.type}>
+          <FileEditor entry={entry} />
+        </NodeEditor>
+      </RailBody>
+    )
+  }
+
   const mainEditor = (
     <Rail main>
       <RailHeader className={styles.EntryEditor.header()}>
-        <div>
-          <h1 className={styles.EntryEditor.title()}>{title}</h1>
-        </div>
+        <h1 className={styles.EntryEditor.title()}>{title}</h1>
         <EntryStatus entry={entry} />
         {isDirty && (
           <div style={{marginLeft: 'auto'}}>
@@ -119,11 +139,9 @@ function EntryEditor({entry}: EntryEditorProps) {
           </div>
         )}
       </RailHeader>
-      <DetailsBar status={status} />
 
-      <RailBody className={styles.EntryEditor.body()}>
-        <NodeEditor node={node} type={type.type} />
-      </RailBody>
+      {editorBody}
+
       <RailFooter
         id="alinea-toolbar"
         className={styles.EntryEditor.toolbar()}
@@ -157,31 +175,26 @@ function EntryEditor({entry}: EntryEditorProps) {
   )
 }
 
-interface NodeEditorProps {
+interface NodeEditorProps extends PropsWithChildren {
   node: ReactiveNode<object>
   type: Type
 }
 
-export function NodeEditor({node, type}: NodeEditorProps) {
+export function NodeEditor({
+  children = <FieldsEditor />,
+  node,
+  type
+}: NodeEditorProps) {
   const editor = useNodeEditor(node, type)
-  return (
-    <EditorScope editor={editor}>
-      <FieldsEditor editor={editor} />
-    </EditorScope>
-  )
+  return <EditorScope editor={editor}>{children}</EditorScope>
 }
 
-interface FieldsEditorProps {
-  editor: DashboardEditor
-}
-
-export const FieldsEditor = memo(function TypeForm({
-  editor
-}: FieldsEditorProps) {
+export function FieldsEditor() {
+  const editor = useEditor()
   return editor.sections.map((section, index) => {
     return <FormSection key={index} section={section} />
   })
-})
+}
 
 interface FormSectionProps {
   section: DashboardSection

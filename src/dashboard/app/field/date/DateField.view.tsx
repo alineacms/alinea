@@ -1,8 +1,8 @@
 import {DatePicker} from '#/components.js'
 import {
+  useField,
   useFieldError,
-  useFieldOptions,
-  useFieldValue
+  useFieldOptions
 } from '#/dashboard/store/hooks.js'
 import {DateField} from '#/field/date.js'
 import {parseDate} from '@internationalized/date'
@@ -13,7 +13,7 @@ export interface DateFieldViewProps {
 }
 
 export function DateFieldView({field}: DateFieldViewProps) {
-  const [value = '', setValue] = useFieldValue(field)
+  const [value = '', setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   const parsedValue = useMemo(() => {

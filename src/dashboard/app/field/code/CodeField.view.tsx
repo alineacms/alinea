@@ -3,7 +3,7 @@ import {CodeField} from '#/field/code.js'
 import {styler} from '@alinea/styler'
 import lolight from 'lolight'
 import {Fragment, ReactNode, useId} from 'react'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
+import {useField, useFieldError, useFieldOptions} from '../../../store.js'
 import css from './CodeField.module.css'
 import {SimpleCodeEditor} from './SimpleCodeEditor.js'
 
@@ -103,7 +103,7 @@ export function CodeEditorInput({
 }
 
 export function CodeFieldView({field}: CodeFieldViewProps) {
-  const [value = '', setValue] = useFieldValue(field)
+  const [value = '', setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   return (

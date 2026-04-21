@@ -2,7 +2,7 @@ import {Select, SelectItem} from '#/components.js'
 import {SelectField, SelectOptions} from '#/field/select.js'
 import {Key} from '@react-types/shared'
 import {useMemo} from 'react'
-import {useFieldError, useFieldOptions, useFieldValue} from '../../../store.js'
+import {useField, useFieldError, useFieldOptions} from '../../../store.js'
 
 interface SelectItemData {
   id: string
@@ -16,7 +16,7 @@ export interface SelectFieldViewProps<KeyType extends string | null> {
 export function SelectFieldView<KeyType extends string | null>({
   field
 }: SelectFieldViewProps<KeyType>) {
-  const [value, setValue] = useFieldValue(field)
+  const [value, setValue] = useField(field)
   const options = useFieldOptions(field) as SelectOptions<NonNullable<KeyType>>
   const error = useFieldError(field)
   const items = useMemo(() => {

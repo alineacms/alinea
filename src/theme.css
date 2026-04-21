@@ -68,7 +68,8 @@
   --alinea-font-size-base: 0.8125rem;
 
   /* Theme */
-  --alinea-bg: light-dark(white, var(--alinea-gray-900));
+  --alinea-bg: light-dark(white, var(--alinea-gray-800));
+  --alinea-bg-muted: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
   --alinea-fg: light-dark(var(--alinea-gray-800), var(--alinea-gray-200));
   --alinea-fg-muted: light-dark(var(--alinea-gray-600), var(--alinea-gray-400));
   --alinea-fg-subtle: light-dark(var(--alinea-gray-500), var(--alinea-gray-300));

@@ -4,8 +4,17 @@ import css from './Surface.module.css'
 
 const styles = styler(css)
 
-export function Surface(props: HTMLProps<HTMLDivElement>) {
-  return <div {...props} className={styles.Surface(styler.merge(props))} />
+export interface SurfaceProps extends HTMLProps<HTMLDivElement> {
+  variant?: 'muted'
+}
+
+export function Surface(props: SurfaceProps) {
+  return (
+    <div
+      {...props}
+      className={styles.Surface(props.variant, styler.merge(props))}
+    />
+  )
 }
 
 export function SurfaceRow(props: HTMLProps<HTMLDivElement>) {

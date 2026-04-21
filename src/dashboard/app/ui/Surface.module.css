@@ -1,10 +1,14 @@
 .Surface {
   border-radius: 6px;
   border: 1px solid var(--alinea-dashboard-surface-border);
-  background: var(--alinea-surface-page);
+  background: var(--alinea-bg);
   overflow: hidden;
   font-size: var(--alinea-font-size-base);
   flex-shrink: 0;
+
+  &.is-muted {
+    background: var(--alinea-bg-muted);
+  }
 }
 
 .SurfaceHeader {
@@ -13,7 +17,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--alinea-dashboard-surface-header-background);
+  /* background: var(--alinea-dashboard-surface-header-background); */
 
   &:not(:first-child) {
     border-top: 1px solid var(--alinea-dashboard-surface-border);

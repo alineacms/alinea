@@ -8,7 +8,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 0.875rem;
+  font-size: var(--alinea-font-size-base);
   line-height: 1.25rem;
 
   .Breadcrumb:not(:last-child)::after {

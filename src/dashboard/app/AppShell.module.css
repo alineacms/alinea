@@ -1,6 +1,7 @@
 .AppShell {
   display: flex;
   height: 100%;
+  background: var(--alinea-bg);
 }
 
 .AppShell-footer {

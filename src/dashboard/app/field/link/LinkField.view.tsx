@@ -8,9 +8,9 @@ import {useAtomValue} from 'jotai'
 import {
   ReactiveNode,
   useDashboard,
+  useField,
   useFieldNode,
-  useFieldOptions,
-  useFieldValue
+  useFieldOptions
 } from '../../../store.js'
 import {LinkPicker} from '../../LinkPicker.js'
 
@@ -45,7 +45,7 @@ export interface SingleLinkFieldViewProps {
 }
 
 export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
-  const [value, setValue] = useFieldValue(field)
+  const [value, setValue] = useField(field)
   const options = useFieldOptions(field)
   const node = useFieldNode(field)
   const isEmpty = useAtomValue(node.isEmpty)
@@ -79,7 +79,7 @@ export interface MultipleLinksFieldViewProps {
 }
 
 export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
-  const [value, setValue] = useFieldValue(field)
+  const [value, setValue] = useField(field)
   const options = useFieldOptions(field)
   const node = useFieldNode(field)
   const nodes = useAtomValue(node.nodes) as Array<ReactiveNode<Reference>>
