@@ -95,7 +95,7 @@
     rgb(from var(--alinea-yellow-500) r g b / 18%)
   );
   --alinea-warning-subtle-fg: light-dark(var(--alinea-yellow-600), var(--alinea-yellow-300));
-  --alinea-border: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
+  --alinea-border: light-dark(var(--alinea-gray-200), var(--alinea-gray-700));
   --alinea-border-muted: light-dark(var(--alinea-gray-300), var(--alinea-gray-800));
   --alinea-input: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
   --alinea-muted: light-dark(var(--alinea-gray-100), var(--alinea-gray-800));

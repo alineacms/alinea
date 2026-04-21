@@ -17,7 +17,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  /* background: var(--alinea-dashboard-surface-header-background); */
+  background: var(--alinea-dashboard-surface-header-background);
 
   &:not(:first-child) {
     border-top: 1px solid var(--alinea-dashboard-surface-border);

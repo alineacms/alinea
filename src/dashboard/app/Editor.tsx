@@ -110,7 +110,8 @@ function EntryEditor({entry}: EntryEditorProps) {
     </>
   )
 
-  if (type.type === MediaFile) {
+  const isFile = type.type === MediaFile
+  if (isFile) {
     editorBody = (
       <RailBody className={styles.EntryEditor.body()}>
         <NodeEditor node={node} type={type.type}>
@@ -169,7 +170,7 @@ function EntryEditor({entry}: EntryEditorProps) {
       </Sheet>
       <EntryScope entry={entry}>
         {mainEditor}
-        {!isUntranslated && <EntrySidebar entry={entry} />}
+        {!isUntranslated && !isFile && <EntrySidebar entry={entry} />}
       </EntryScope>
     </>
   )
