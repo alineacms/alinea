@@ -1,4 +1,11 @@
-import {Button, Icon, ProgressCircle, Tree, TreeItem} from '#/components.js'
+import {
+  Button,
+  Icon,
+  ProgressCircle,
+  Tooltip,
+  Tree,
+  TreeItem
+} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -217,7 +224,7 @@ function RootButton({root, expanded = false}: RootButtonProps) {
   const icon = useAtomValue(root.icon)
   const label = useAtomValue(root.label)
   const [selected, setSelected] = useAtom(root.selected)
-  return (
+  const button = (
     <Button
       size="square-petite"
       appearance={selected ? 'active' : 'plain'}
@@ -231,6 +238,12 @@ function RootButton({root, expanded = false}: RootButtonProps) {
         <span className={styles.SidebarTree.rootButton.label()}>{label}</span>
       )}
     </Button>
+  )
+  if (expanded) return button
+  return (
+    <Tooltip placement="right" delay={100} tooltip={label}>
+      {button}
+    </Tooltip>
   )
 }
 
