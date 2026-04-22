@@ -10,6 +10,7 @@
   &.is-main {
     flex: 1;
     min-width: 0;
+    background: var(--alinea-bg-muted);
   }
 }
 
@@ -20,6 +21,7 @@
   flex-shrink: 0;
   border-bottom: 1px solid var(--alinea-border-default);
   padding: 0px 12px;
+  background: var(--alinea-bg);
 }
 
 .RailFooter {

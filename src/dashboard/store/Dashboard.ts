@@ -50,8 +50,27 @@ const dashboardThemeStorageKey = 'alinea-dashboard-theme'
 
 export type DashboardTheme = 'system' | 'light' | 'dark'
 
+let enableThemeTransitionsFrame: number | undefined
+
+function suspendTransitionsDuringThemeChange() {
+  if (typeof document === 'undefined') return
+  const {body} = document
+  if (!body) return
+  body.dataset.disableTransition = 'true'
+  void body.offsetWidth
+  if (enableThemeTransitionsFrame)
+    cancelAnimationFrame(enableThemeTransitionsFrame)
+  enableThemeTransitionsFrame = requestAnimationFrame(() => {
+    enableThemeTransitionsFrame = requestAnimationFrame(() => {
+      body.removeAttribute('data-disable-transition')
+      enableThemeTransitionsFrame = undefined
+    })
+  })
+}
+
 function applyDashboardTheme(theme: DashboardTheme) {
   if (typeof document === 'undefined') return
+  suspendTransitionsDuringThemeChange()
   const root = document.documentElement
   if (theme === 'system') root.removeAttribute('data-theme')
   else root.dataset.theme = theme
