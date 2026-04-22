@@ -22,10 +22,10 @@ import {
   useFieldView,
   useNodeEditor
 } from '../store/hooks.js'
-import {Badge} from './Badge.js'
 import {DetailsBar} from './DetailsBar.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
+import {EntryHeader} from './EntryHeader.js'
 import {EntrySidebar} from './EntrySidebar.js'
 import {Explorer} from './Explorer.js'
 import {Rail, RailBody, RailFooter, RailHeader} from './ui/Rail.js'
@@ -70,7 +70,6 @@ interface EntryEditorProps {
 }
 
 function EntryEditor({entry}: EntryEditorProps) {
-  const title = useAtomValue(entry.label)
   const isUntranslated = useAtomValue(entry.untranslated)
   const node = useAtomValue(entry.selectedNode)
   const setEditing = useSetAtom(entry.currentlyEditing)
@@ -123,23 +122,7 @@ function EntryEditor({entry}: EntryEditorProps) {
 
   const mainEditor = (
     <Rail main>
-      <RailHeader className={styles.EntryEditor.header()}>
-        <h1 className={styles.EntryEditor.title()}>{title}</h1>
-        <EntryStatus entry={entry} />
-        {isDirty && (
-          <div style={{marginLeft: 'auto'}}>
-            <Button intent="secondary" onPress={reset}>
-              Discard my changes
-            </Button>
-            <Button
-              isPending={isPending}
-              onPress={() => startTransition(() => save(node))}
-            >
-              {isPending ? 'Saving...' : 'Save Draft'}
-            </Button>
-          </div>
-        )}
-      </RailHeader>
+      <EntryHeader entry={entry} node={node} />
 
       {editorBody}
 
@@ -260,14 +243,4 @@ const EditField = memo(function EditField({field}: EditFieldProps) {
 function fieldSpan(width = 1): number {
   const columns = 12
   return Math.max(1, Math.min(columns, Math.round(width * columns)))
-}
-
-interface EntryStatusProps {
-  entry: DashboardEntry
-}
-
-function EntryStatus({entry}: EntryStatusProps) {
-  const selectedVersion = useAtomValue(entry.selectedVersion)
-  if (selectedVersion.type !== 'status') return
-  return <Badge>{selectedVersion.status}</Badge>
 }

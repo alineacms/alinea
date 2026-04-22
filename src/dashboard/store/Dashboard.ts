@@ -1052,25 +1052,31 @@ export class DashboardEntry {
     return ''
   })
 
-  fileInfo = atom(async (get): Promise<Infer<typeof MediaFile> | null> => {
-    if (get(this.type).type !== MediaFile) return null
-    const lang = this.languages(null)
-    const data = await get(lang.activeVersion)
-    return data.data as Infer<typeof MediaFile>
-  })
+  fileInfo = swr(
+    atom(async (get): Promise<Infer<typeof MediaFile> | null> => {
+      if (get(this.type).type !== MediaFile) return null
+      const lang = this.languages(null)
+      const data = await get(lang.activeVersion)
+      return data.data as Infer<typeof MediaFile>
+    })
+  )
 
-  parents = atom(async get => {
-    const parentIds = get(this.parentIds)
-    return Promise.all(parentIds.map(id => get(this.dashboard.entries(id))))
-  })
+  parents = swr(
+    atom(async get => {
+      const parentIds = get(this.parentIds)
+      return Promise.all(parentIds.map(id => get(this.dashboard.entries(id))))
+    })
+  )
 
   icon = atom(get => get(this.type).icon)
 
-  children = atom(async get => {
-    const root = get(this.root)
-    const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
-    return queryTreeChildren(get, root, this.id, orderChildrenBy)
-  })
+  children = swr(
+    atom(async get => {
+      const root = get(this.root)
+      const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
+      return queryTreeChildren(get, root, this.id, orderChildrenBy)
+    })
+  )
 
   untranslated = atom(get => {
     const root = get(this.root)
@@ -1079,24 +1085,28 @@ export class DashboardEntry {
     return !locales.has(locale)
   })
 
-  availableStatuses = atom(async get => {
-    const locale = get(get(this.root).selectedLocale)
-    const language = this.languages(locale)
-    const versions = await get(language.versions)
-    return [...versions.keys()]
-  })
+  availableStatuses = swr(
+    atom(async get => {
+      const locale = get(get(this.root).selectedLocale)
+      const language = this.languages(locale)
+      const versions = await get(language.versions)
+      return [...versions.keys()]
+    })
+  )
 
-  activeVersion = atom(async get => {
-    const root = get(this.root)
-    const locales = get(this.locales)
-    const locale = get(root.selectedLocale)
-    const entry = locales.get(locale)
-    if (entry) return entry
-    for (const fallback of locales.values()) {
-      if (fallback.title) return fallback
-    }
-    return null
-  })
+  activeVersion = swr(
+    atom(async get => {
+      const root = get(this.root)
+      const locales = get(this.locales)
+      const locale = get(root.selectedLocale)
+      const entry = locales.get(locale)
+      if (entry) return entry
+      for (const fallback of locales.values()) {
+        if (fallback.title) return fallback
+      }
+      return null
+    })
+  )
 
   languages = dispense((locale: string | null) => {
     return new DashboardEntryLanguage(this, locale)
@@ -1136,6 +1146,76 @@ export class DashboardEntry {
     })
     set(node.commit)
   })
+
+  publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    const data = get(node.value)
+    const db = get(this.dashboard.db)
+    const type = get(this.type).type
+    await db.create({
+      type,
+      id: this.id,
+      locale,
+      status: 'published',
+      set: data,
+      overwrite: true
+    })
+    set(node.commit)
+  })
+
+  publishDraft = atom(null, async (get, set) => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    const db = get(this.dashboard.db)
+    await db.publish({
+      id: this.id,
+      locale,
+      status: 'draft'
+    })
+  })
+
+  discardDraft = atom(null, async (get, set) => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    const db = get(this.dashboard.db)
+    await db.discard({
+      id: this.id,
+      locale,
+      status: 'draft'
+    })
+  })
+
+  unpublish = atom(null, async (get, set) => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    const db = get(this.dashboard.db)
+    await db.unpublish({
+      id: this.id,
+      locale
+    })
+  })
+
+  archive = atom(null, async (get, set) => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    const db = get(this.dashboard.db)
+    await db.archive({
+      id: this.id,
+      locale
+    })
+  })
+
+  publishArchived = atom(null, async (get, set) => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    const db = get(this.dashboard.db)
+    await db.publish({
+      id: this.id,
+      locale,
+      status: 'archived'
+    })
+  })
 }
 
 export class DashboardEntryLanguage {
@@ -1144,29 +1224,33 @@ export class DashboardEntryLanguage {
     public locale: string | null
   ) {}
 
-  versions = atom(async get => {
-    get(this.entry.dashboard.revisions(this.entry.id)) // subscribe to entry changes
-    const loader = get(this.entry.dashboard.versionLoader)
-    const [entries] = await loader(this.entry.id)
-    if (!entries)
-      throw new Error(`No versions found for entry ${this.entry.id}`)
-    // order by draft, published, archived
-    const order = ['draft', 'published', 'archived']
-    entries.sort((a, b) => {
-      return order.indexOf(a.status) - order.indexOf(b.status)
+  versions = swr(
+    atom(async get => {
+      get(this.entry.dashboard.revisions(this.entry.id)) // subscribe to entry changes
+      const loader = get(this.entry.dashboard.versionLoader)
+      const [entries] = await loader(this.entry.id)
+      if (!entries)
+        throw new Error(`No versions found for entry ${this.entry.id}`)
+      // order by draft, published, archived
+      const order = ['draft', 'published', 'archived']
+      entries.sort((a, b) => {
+        return order.indexOf(a.status) - order.indexOf(b.status)
+      })
+      return new Map(entries.map(entry => [entry.status, entry] as const))
     })
-    return new Map(entries.map(entry => [entry.status, entry] as const))
-  })
+  )
 
-  activeVersion = atom(async get => {
-    const versions = await get(this.versions)
-    const first = versions.values().next().value
-    assert(
-      first,
-      `No versions found for entry ${this.entry.id} and locale ${this.locale}`
-    )
-    return first
-  })
+  activeVersion = swr(
+    atom(async get => {
+      const versions = await get(this.versions)
+      const first = versions.values().next().value
+      assert(
+        first,
+        `No versions found for entry ${this.entry.id} and locale ${this.locale}`
+      )
+      return first
+    })
+  )
 
   data = dispense((status: EntryStatus) => {
     return atom(async get => {
