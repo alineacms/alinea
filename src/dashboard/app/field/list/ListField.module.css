@@ -29,9 +29,45 @@
 }
 
 .ListFieldView-dragPreview {
-  padding-right: 8px;
+  min-width: 220px;
+  max-width: 300px;
+  padding: 10px 14px;
   display: inline-flex;
   align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--alinea-dashboard-surface-border) 70%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--alinea-bg) 94%, white);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.ListFieldView-dragPreviewIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--alinea-surface-accent);
+  background: color-mix(in srgb, var(--alinea-surface-accent) 12%, transparent);
+}
+
+.ListFieldView-dragPreviewBody {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.ListFieldView-dragPreviewTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--alinea-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ListFieldView-create {
@@ -46,16 +82,6 @@
   flex-shrink: 0;
 }
 
-.ListFieldView-createButton[data-appearance='outline'][data-hovered],
-.ListFieldView-create .ListFieldTypePicker-trigger[data-appearance='outline'][data-hovered] {
-  background-color: light-dark(white, var(--alinea-gray-700));
-}
-
-.ListFieldView-createButton[data-appearance='outline'][data-pressed],
-.ListFieldView-create .ListFieldTypePicker-trigger[data-appearance='outline'][data-pressed] {
-  background-color: light-dark(var(--alinea-gray-50), var(--alinea-gray-600));
-}
-
 .ListFieldView-createRow {
   align-items: center;
   display: flex;
@@ -67,14 +93,11 @@
   padding: 4px 12px;
 }
 
-.ListFieldView-empty {
+.ListFieldTypePicker-empty {
   padding: 16px;
-  border: 1px dashed var(--alinea-dashboard-surface-border);
-  border-radius: 6px;
   color: var(--alinea-fg-muted);
-  background: var(--alinea-bg-muted);
   font-size: 14px;
-  margin: 8px;
+  text-align: center;
 }
 
 .ListFieldTypePicker-trigger {
@@ -158,15 +181,11 @@
 
 .ListFieldRow-separator {
   position: relative;
-  height: 0;
+  z-index: 1;
+  height: 24px;
+  margin: -12px 0;
   width: 100%;
   overflow: visible;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -8px 0;
-  }
 
   &::after {
     content: '';
@@ -174,19 +193,34 @@
     z-index: 1;
     left: 0;
     right: 0;
-    top: -1px;
+    top: calc(50% - 1px);
     height: 2px;
     opacity: 0;
-    background: var(--alinea-surface-accent);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--alinea-surface-accent) 55%, transparent) 12%,
+      var(--alinea-surface-accent) 50%,
+      color-mix(in srgb, var(--alinea-surface-accent) 55%, transparent) 88%,
+      transparent 100%
+    );
     pointer-events: none;
     transition: opacity 140ms ease;
+    transition-delay: 0s;
   }
 }
 
-.ListFieldRow:not([data-dragging]) .ListFieldRow-separator:is(:hover, :focus-within) {
-  &::after {
-    opacity: 1;
-  }
+.ListFieldRow-separator[data-top='true']::after {
+  left: 6px;
+  right: 6px;
+  border-radius: 999px 999px 0 0;
+}
+
+.ListFieldRow-separator[data-drop-target='true']::after,
+.ListFieldRow-separator[data-picker-open='true']::after,
+.ListFieldRow:not([data-dragging]) .ListFieldRow-separator:is(:hover, :focus-within)::after {
+  opacity: 1;
+  transition-delay: 60ms;
 }
 
 .ListFieldRow-separatorPicker {
@@ -194,25 +228,12 @@
   z-index: 2;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.92);
   opacity: 0;
-  transition: opacity 140ms ease;
-}
-
-.ListFieldRow-separatorPicker.ListFieldTypePicker-trigger,
-.ListFieldRow-separatorPicker .ListFieldTypePicker-trigger {
-  --alinea-button-bg: var(--alinea-surface-field);
-  --alinea-button-hovered: var(--alinea-surface-field);
-  color: var(--alinea-surface-accent);
-  background-color: var(--alinea-surface-field);
-  border: 1px solid currentColor;
-}
-
-.ListFieldRow-separatorPicker.ListFieldTypePicker-trigger[data-size='icon'][data-appearance='outline'],
-.ListFieldRow-separatorPicker .ListFieldTypePicker-trigger[data-size='icon'][data-appearance='outline'],
-.ListFieldRow-separatorPicker.ListFieldTypePicker-trigger:is(:hover, [data-hovered], [data-focused], [data-pressed]),
-.ListFieldRow-separatorPicker .ListFieldTypePicker-trigger:is(:hover, [data-hovered], [data-focused], [data-pressed]) {
-  background-color: var(--alinea-surface-field);
+  transition:
+    opacity 250ms ease-out,
+    transform 250ms ease-out;
+  transition-delay: 0s;
 }
 
 .ListFieldRow:not([data-dragging])
@@ -220,6 +241,8 @@
   .ListFieldRow-separatorPicker,
 .ListFieldRow-separatorPicker[data-open='true'] {
   opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  transition-delay: 60ms;
 }
 
 .ListFieldRow-header {
@@ -230,11 +253,31 @@
   border-bottom: 0;
 }
 
+.ListFieldRow-header[data-first-row='true'] {
+  border-top: 0;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background-clip: padding-box;
+}
+
+.ListFieldRow-drag {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: grab;
+}
+
+.ListFieldRow-drag[data-dragging] {
+  cursor: grabbing;
+}
+
 .ListFieldRow-leading {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   color: var(--alinea-fg);
-  gap: 8px;
+  flex: 1;
   min-width: 0;
 }
 
@@ -251,19 +294,9 @@
 .ListFieldRow-actions {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 8px;
 }
 
-.ListFieldRow-actions > * + .ListFieldRow-action {
-  margin-left: 8px;
-}
-
-.ListFieldRow-action {
-  min-width: 2rem;
-  width: 2rem;
-}
-
-.ListFieldRow-action[data-disabled],
 .ListFieldRow-fold[data-disabled],
 .ListFieldView-fold[data-disabled] {
   cursor: default;
@@ -289,16 +322,4 @@
   display: grid;
   gap: 12px;
   align-items: normal;
-}
-
-:global(.react-aria-DropIndicator)::before {
-  background-color: var(--alinea-bg);
-}
-
-:global(.react-aria-DropIndicator) {
-  min-height: 32px;
-  background-color: var(--alinea-bg-muted);
-  border: 1px dashed var(--alinea-selected);
-  border-radius: 6px;
-  box-sizing: border-box;
 }
