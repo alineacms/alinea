@@ -3,9 +3,12 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .EntrySidebar-header {
+  flex-shrink: 0;
+
   & > :global(.alinea-rac-Tablist) {
     align-self: auto;
   }
@@ -16,12 +19,14 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   & > :global(.alinea-rac-Tabpanel) {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 }
 
@@ -57,4 +62,5 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  overflow: hidden;
 }

@@ -15,4 +15,5 @@
 
 .SidebarHeader {
   justify-content: space-between;
+  flex-shrink: 0;
 }

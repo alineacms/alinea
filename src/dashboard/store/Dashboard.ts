@@ -1,19 +1,23 @@
 import {Config} from '#/core/Config.js'
+import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {UploadOperation} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
+import {createRecord} from '#/core/EntryRecord.js'
 import {Field, FieldOptions} from '#/core/Field.js'
 import type {Order} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Section} from '#/core/Section.js'
+import {createFilePatch} from '#/core/source/FilePatch.js'
 import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Infer} from '#/types.js'
 import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
@@ -57,6 +61,8 @@ export type DashboardTheme = 'system' | 'light' | 'dark'
 interface SyncableGraph {
   sync: () => Promise<string>
 }
+
+const decoder = new TextDecoder()
 
 let enableThemeTransitionsFrame: number | undefined
 
@@ -114,7 +120,7 @@ export class Dashboard {
     graph: WriteableGraph,
     config: Config,
     events: EventTarget,
-    client: LocalConnection = undefined!,
+    client: LocalConnection,
     views: Record<string, ComponentType>
   ) {
     this.graph = atom(graph)
@@ -1167,6 +1173,12 @@ export class DashboardEntry {
 
   hasPreview = atom(get => Boolean(get(this.preview)))
 
+  #previewRetry = atom(0)
+
+  retryPreviewUrl = atom(null, (get, set) => {
+    set(this.#previewRetry, current => current + 1)
+  })
+
   previewEntry = swr(
     atom(async get => {
       if (!get(this.hasPreview)) return null
@@ -1188,24 +1200,82 @@ export class DashboardEntry {
     })
   )
 
-  previewUrl = swr(
-    atom(async get => {
-      if (get(this.preview) !== true) return null
-      const locale = get(get(this.root).selectedLocale)
-      const language = this.languages(locale)
-      const activeVersion = await get(language.activeVersion)
-      const previewToken = await get(this.dashboard.client).previewToken({
-        url: activeVersion.url
-      })
-      const config = get(this.dashboard.config)
+  #previewPayloadSignal = atom(get => {
+    if (get(this.preview) !== true) return undefined
+    const currentNode = get(this.currentlyEditing)
+    if (!currentNode) return undefined
+    return get(currentNode.value)
+  })
+  previewPayloadSignal = atomWithDebounce(this.#previewPayloadSignal, 250)
+
+  updatePreviewPayload = atom(null, async get => {
+    if (get(this.preview) !== true) return undefined
+    const currentNode = get(this.currentlyEditing)
+    if (!currentNode) return undefined
+    const value = get(currentNode.value)
+    if (!isObject<Record<string, unknown>>(value))
+      return undefined
+    const sha = get(this.dashboard.sha)
+    if (!sha) return undefined
+
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    const activeVersion = await get(this.languages(locale).activeVersion)
+    if (!activeVersion) return undefined
+    const selected = get(this.selectedVersion)
+    const status =
+      selected.type === 'status' ? selected.status : activeVersion.status
+
+    const nextTitle =
+      typeof value.title === 'string' ? value.title : activeVersion.title
+    const nextPath =
+      typeof value.path === 'string' ? value.path : activeVersion.path
+    const nextVersion = {
+      ...activeVersion,
+      title: nextTitle,
+      path: nextPath,
+      data: value,
+      status
+    }
+    const schema = get(this.dashboard.config).schema
+    const baseText = decoder.decode(
+      JsonLoader.format(schema, createRecord(activeVersion, activeVersion.status))
+    )
+    const nextText = decoder.decode(
+      JsonLoader.format(schema, createRecord(nextVersion, status))
+    )
+    const patch = await createFilePatch(baseText, nextText)
+    return encodePreviewPayload({
+      locale: activeVersion.locale,
+      entryId: activeVersion.id,
+      contentHash: sha,
+      status,
+      patch
+    })
+  })
+
+  previewUrl = atom(async get => {
+    if (get(this.preview) !== true) return undefined
+    get(this.#previewRetry)
+    const client = get(this.dashboard.client)
+    if (!client || typeof client.previewToken !== 'function') return undefined
+    const config = get(this.dashboard.config)
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    const activeVersion = await get(this.languages(locale).activeVersion)
+    if (!activeVersion) return undefined
+    try {
+      const previewToken = await client.previewToken({url: activeVersion.url})
       const base = new URL(
         config.handlerUrl ?? '',
         Config.baseUrl(config) ??
           (typeof location === 'undefined' ? 'http://localhost' : location.href)
       )
       return new URL(`?preview=${previewToken}`, base).toString()
-    })
-  )
+    } catch {
+      return undefined
+    }
+  })
 
   languages = dispense((locale: string | null) => {
     return new DashboardEntryLanguage(this, locale)
@@ -1633,6 +1703,18 @@ function atomWithPending<Value>(asyncAtom: Atom<Promise<Value> | Value>) {
     return [false, data] as const
   })
   return unwrap(wrappedAtom, prev => [true, prev?.[1]] as const)
+}
+
+function atomWithDebounce<Value>(
+  source: Atom<Value>,
+  delayMilliseconds: number
+): Atom<Value | undefined> {
+  const debounced = atom(async get => {
+    const value = get(source)
+    await new Promise(resolve => setTimeout(resolve, delayMilliseconds))
+    return value
+  })
+  return unwrap(debounced)
 }
 
 // data nodes
