@@ -32,7 +32,7 @@ import {
   Label,
   Popover,
   SearchField
-} from 'alinea/components'
+} from '#/components.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import type {ComponentType} from 'react'
