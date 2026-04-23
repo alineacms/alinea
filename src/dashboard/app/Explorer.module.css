@@ -8,13 +8,33 @@
 }
 
 .Explorer-toolbar {
+  flex: 0 1 640px;
   display: flex;
   gap: 12px;
   align-items: center;
+  min-width: 0;
+  margin-left: auto;
+  justify-content: flex-end;
 }
 
 .Explorer-toolbar > *:first-child {
   flex: 1;
+}
+
+.Explorer-breadcrumbs {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.Explorer-search {
+  min-width: 280px;
+}
+
+.Explorer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .Explorer-viewport {

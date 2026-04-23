@@ -1,0 +1,70 @@
+@import "../theme.css";
+
+.ToggleButtonGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--alinea-border-default);
+  border-radius: 8px;
+  background-color: var(--alinea-surface-tab);
+
+  &[data-orientation="vertical"] {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.ToggleButton {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--alinea-content-tertiary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: var(--alinea-font-size-base);
+  font-weight: 550;
+  line-height: 20px;
+  outline: none;
+  white-space: nowrap;
+  transition: var(--alinea-transition);
+  transition-property: background-color, border-color, color;
+
+  svg,
+  [data-slot="icon"] {
+    display: block;
+    flex-shrink: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &[data-hovered],
+  &[data-focused] {
+    color: var(--alinea-content-primary);
+    background-color: var(--alinea-surface-subtle-hover);
+  }
+
+  &[data-selected] {
+    color: var(--alinea-content-accent);
+    background-color: var(--alinea-surface-tab-active);
+    border-color: color-mix(in srgb, var(--alinea-border-accent) 22%, transparent);
+  }
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--alinea-focus-ring-color);
+    outline-offset: 1px;
+  }
+
+  &[data-disabled] {
+    color: var(--alinea-content-disabled);
+    cursor: not-allowed;
+  }
+}

@@ -1,11 +1,12 @@
-import {Button, SearchField} from '#/components.js'
-import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {
-  FileTrigger,
+  Button,
+  SearchField,
   ToggleButton,
   ToggleButtonGroup
-} from 'react-aria-components'
+} from '#/components.js'
+import styler from '@alinea/styler'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {FileTrigger} from 'react-aria-components'
 import {IcOutlineGridView, IcOutlineList, IcRoundUploadFile} from '../icons.js'
 import {DashboardExplorer} from '../store.js'
 import css from './Explorer.module.css'
@@ -27,7 +28,9 @@ function ExplorerSearch({explorer}: ExplorerSearchProps) {
   const [search, setSearch] = useAtom(explorer.search)
   return (
     <SearchField
-      label="Search"
+      aria-label="Search"
+      className={styles.Explorer.search()}
+      hasIcon
       placeholder="Search..."
       value={search}
       onChange={setSearch}
@@ -44,18 +47,21 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   const isMedia = useAtomValue(explorer.isMedia)
   const upload = useSetAtom(explorer.upload)
   return (
-    <div>
+    <div className={styles.Explorer.actions()}>
       <ToggleButtonGroup
+        aria-label="Explorer view"
+        selectionMode="single"
+        disallowEmptySelection
         selectedKeys={[view]}
         onSelectionChange={keys => {
           setView(keys.has('card') ? 'card' : 'row')
         }}
       >
         <ToggleButton id="card">
-          <IcOutlineGridView /> Cards
+          <IcOutlineGridView data-slot="icon" /> Cards
         </ToggleButton>
         <ToggleButton id="row">
-          <IcOutlineList /> Rows
+          <IcOutlineList data-slot="icon" /> Rows
         </ToggleButton>
       </ToggleButtonGroup>
       {isMedia && (
@@ -78,7 +84,13 @@ export function Explorer({explorer}: ExplorerProps) {
   return (
     <>
       <RailHeader>
-        <LocationBreadcrumbs location={location} setLocation={setLocation} />
+        <div className={styles.Explorer.breadcrumbs()}>
+          <LocationBreadcrumbs
+            location={location}
+            setLocation={setLocation}
+            enableRoot
+          />
+        </div>
         <div className={styles.Explorer.toolbar()}>
           <ExplorerSearch explorer={explorer} />
           <ExplorerToolbar explorer={explorer} />
