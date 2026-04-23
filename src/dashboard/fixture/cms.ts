@@ -1,5 +1,12 @@
 import {Config, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
+import {
+  IcOutlineGridView,
+  IcRoundHistory,
+  IcRoundTranslate,
+  MaterialSymbolsDatabase,
+  MiLayers
+} from '../icons.js'
 
 const Page = Config.document('Page', {
   contains: ['Page', 'Folder'],
@@ -110,6 +117,7 @@ const Folder = Config.document('Folder', {
 
 const simple = Config.workspace('Simple', {
   source: 'content/simple',
+  icon: IcOutlineGridView,
   roots: {
     pages: Config.root('Pages', {
       contains: ['Page', 'Folder'],
@@ -121,6 +129,7 @@ const simple = Config.workspace('Simple', {
 
 const nested = Config.workspace('Deeply nested', {
   source: 'content/nested',
+  icon: MiLayers,
   roots: {
     pages: Config.root('Pages', {
       contains: ['Page', 'Folder'],
@@ -132,6 +141,7 @@ const nested = Config.workspace('Deeply nested', {
 
 const many = Config.workspace('Many entries', {
   source: 'content/many',
+  icon: MaterialSymbolsDatabase,
   roots: {
     pages: Config.root('Pages', {
       contains: ['Page', 'Folder'],
@@ -143,6 +153,7 @@ const many = Config.workspace('Many entries', {
 
 const i18n = Config.workspace('Multi language', {
   source: 'content/i18n',
+  icon: IcRoundTranslate,
   roots: {
     pages: Config.root('Pages', {
       contains: ['Page', 'Folder'],
@@ -157,6 +168,7 @@ const i18n = Config.workspace('Multi language', {
 
 const statuses = Config.workspace('Statuses', {
   source: 'content/statuses',
+  icon: IcRoundHistory,
   roots: {
     pages: Config.root('Pages', {
       contains: ['Page', 'Folder'],

@@ -9,18 +9,40 @@ import {
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {useState} from 'react'
+import {useState, type ComponentType} from 'react'
 import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {useDashboard} from '../store.js'
 import type {Dashboard, DashboardWorkspace} from '../store/Dashboard.js'
-import {AlineaLogo} from './AlineaLogo.js'
 import {Explorer} from './Explorer.js'
+import {LogoShape} from './LogoShape.js'
 import css from './WorkspaceMenu.module.css'
 
 const styles = styler(css)
 
 interface WorkspaceMenuProps {
   dashboard: Dashboard
+}
+
+interface WorkspaceAvatarProps {
+  color: string
+  icon?: ComponentType
+  size?: 'default' | 'small'
+}
+
+function WorkspaceAvatar({
+  color,
+  icon,
+  size = 'default'
+}: WorkspaceAvatarProps) {
+  return (
+    <span className={styles.WorkspaceMenu.avatar(size)}>
+      <LogoShape
+        background={color}
+        icon={icon}
+        className={styles.WorkspaceMenu.avatar.logo()}
+      />
+    </span>
+  )
 }
 
 function SearchPopup() {
@@ -43,16 +65,11 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
   const workspace = dashboard.workspace(selected)
   const color = useAtomValue(workspace.color)
-  const Icon = useAtomValue(workspace.icon) ?? AlineaLogo
+  const icon = useAtomValue(workspace.icon)
   const label = useAtomValue(workspace.label)
   return (
     <div className={styles.WorkspaceMenu.parent()}>
-      <span
-        className={styles.WorkspaceMenu.avatar()}
-        style={{backgroundColor: color}}
-      >
-        <Icon />
-      </span>
+      <WorkspaceAvatar color={color} icon={icon} />
 
       <Menu
         label={
@@ -101,8 +118,11 @@ interface WorkspaceItemProps {
 function WorkspaceItem({workspace}: WorkspaceItemProps) {
   const id = workspace.key
   const label = useAtomValue(workspace.label)
+  const color = useAtomValue(workspace.color)
+  const icon = useAtomValue(workspace.icon)
   return (
     <MenuItem key={id} id={id} textValue={label}>
+      <WorkspaceAvatar color={color} icon={icon} size="small" />
       {label}
     </MenuItem>
   )

@@ -21,6 +21,7 @@ import {
 import {DashboardScopeInternal} from '../store.js'
 import type {Dashboard} from '../store/Dashboard.js'
 import css from './AppShell.module.css'
+import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
 import {SidebarTree} from './SidebarTree.js'
 import {ErrorBoundary} from './ui/ErrorBoundary.js'
@@ -162,6 +163,7 @@ export function AppShell({dashboard}: AppShellProps) {
             </Rail>
           }
         >
+          <DashboardMeta dashboard={dashboard} />
           <SyncedEditor dashboard={dashboard} />
         </Suspense>
       </DashboardScopeInternal>

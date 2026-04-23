@@ -41,6 +41,11 @@ export interface DashboardRoute {
   locale?: string
 }
 
+export interface DashboardFavicon {
+  color: string
+  icon?: ComponentType
+}
+
 type DashboardTreeSelection = WritableAtom<
   Set<Key>,
   [next: 'all' | Set<Key>],
@@ -316,6 +321,31 @@ export class Dashboard {
   currentWorkspace = atom(get => {
     const workspaceKey = get(this.selectedWorkspace)
     return workspaceKey ? this.workspace(workspaceKey) : null
+  })
+
+  title = atom(async get => {
+    const workspace = get(this.currentWorkspace)
+    const workspaceLabel = workspace ? get(workspace.label) : 'Alinea'
+    const focused = await get(this.focused)
+    let viewLabel = workspaceLabel
+    if (focused) {
+      if ('entry' in focused) viewLabel = get(focused.entry.label)
+      else if ('missingEntry' in focused) viewLabel = 'Entry not found'
+      else if ('missingRoot' in focused) viewLabel = 'Root not found'
+      else viewLabel = get(focused.root.label)
+    }
+    return viewLabel === workspaceLabel
+      ? workspaceLabel
+      : `${workspaceLabel}: ${viewLabel}`
+  })
+
+  favicon = atom((get): DashboardFavicon => {
+    const workspace = get(this.currentWorkspace)
+    if (!workspace) return {color: '#7c3aed'}
+    return {
+      color: get(workspace.color),
+      icon: get(workspace.icon)
+    }
   })
 
   currentRoot = atom(get => {

@@ -7,15 +7,24 @@
 }
 
 .WorkspaceMenu-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  margin-left: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--alinea-dashboard-workspace-avatar-foreground);
   flex-shrink: 0;
-  transition: background-color 0.25s ease-out;
+
+  &.is-small {
+    width: 24px;
+    height: 24px;
+    margin-left: 0;
+  }
+}
+
+.WorkspaceMenu-avatar-logo {
+  width: 100%;
+  height: 100%;
 }
 
 .WorkspaceMenu-trigger {
