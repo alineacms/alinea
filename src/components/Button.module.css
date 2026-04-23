@@ -202,6 +202,17 @@
     --alinea-button-hovered: var(--alinea-button-plain-background-hover);
   }
 
+  &[data-appearance="active"] {
+    --alinea-button-color: var(--alinea-button-icon-active-color);
+    --alinea-button-bg: var(--alinea-button-icon-active-background);
+    --alinea-button-border: transparent;
+    --alinea-button-hovered: var(--alinea-button-icon-active-background);
+  }
+
+  &[data-appearance="active"][data-hovered] {
+    --alinea-button-bg: var(--alinea-button-hovered);
+  }
+
   &[data-size="small"] {
     padding: 2px 10px;
     line-height: 20px;

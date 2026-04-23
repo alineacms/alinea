@@ -3,7 +3,7 @@
 
   --alinea-gray-50: #f9fafb;
   --alinea-gray-100: #f3f4f6;
-  --alinea-gray-200: #e5e7eb;
+  --alinea-gray-200: #e7e8ec;
   --alinea-gray-300: #d1d5dc;
   --alinea-gray-400: #99a1af;
   --alinea-gray-500: #6a7282;
@@ -192,7 +192,11 @@
   --alinea-dashboard-explorer-selected-border: var(--alinea-border-accent);
   --alinea-dashboard-explorer-card-background: var(--alinea-dashboard-surface-background);
   --alinea-dashboard-explorer-card-top-background: light-dark(
-    color-mix(in srgb, var(--alinea-dashboard-surface-background) 88%, var(--alinea-dashboard-surface-border)),
+    color-mix(
+      in srgb,
+      var(--alinea-dashboard-surface-background) 88%,
+      var(--alinea-dashboard-surface-border)
+    ),
     color-mix(in srgb, var(--alinea-dashboard-surface-background) 82%, black)
   );
   --alinea-dashboard-explorer-card-footer-background: light-dark(
@@ -204,8 +208,16 @@
     color-mix(in srgb, white 10%, var(--alinea-dashboard-surface-border))
   );
   --alinea-dashboard-explorer-card-selected-background: light-dark(
-    color-mix(in srgb, var(--alinea-dashboard-surface-background) 88%, var(--alinea-dashboard-explorer-selected-border)),
-    color-mix(in srgb, var(--alinea-dashboard-surface-background) 78%, var(--alinea-dashboard-explorer-selected-border))
+    color-mix(
+      in srgb,
+      var(--alinea-dashboard-surface-background) 88%,
+      var(--alinea-dashboard-explorer-selected-border)
+    ),
+    color-mix(
+      in srgb,
+      var(--alinea-dashboard-surface-background) 78%,
+      var(--alinea-dashboard-explorer-selected-border)
+    )
   );
   --alinea-dashboard-explorer-selected-shadow:
     0 0 0 1px var(--alinea-dashboard-explorer-selected-border), var(--alinea-shadow-raised);

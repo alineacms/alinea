@@ -3,53 +3,229 @@
   gap: 14px;
 }
 
+.ListFieldView-surface {
+  overflow: visible;
+}
+
+.ListFieldView-fold {
+  min-width: 22px;
+  width: 22px;
+  height: 28px;
+  padding: 0;
+
+  svg {
+    rotate: 0deg;
+    transition: rotate 200ms;
+  }
+}
+
+.ListFieldView-fold[data-expanded='true'] svg {
+  rotate: 90deg;
+}
+
 .ListFieldView-rows {
   display: grid;
-  gap: 12px;
+  gap: 0;
+}
+
+.ListFieldView-dragPreview {
+  padding-right: 8px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .ListFieldView-create {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
+}
+
+.ListFieldView-createRow {
+  align-items: center;
+  background: var(--alinea-bg-muted);
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 4px 12px;
 }
 
 .ListFieldView-empty {
   padding: 16px;
-  border: 1px dashed var(--alinea-dashboard-list-empty-border);
-  border-radius: 12px;
-  color: var(--alinea-dashboard-list-empty-foreground);
-  background: var(--alinea-dashboard-list-empty-background);
+  border: 1px dashed var(--alinea-dashboard-surface-border);
+  border-radius: 6px;
+  color: var(--alinea-fg-muted);
+  background: var(--alinea-bg-muted);
   font-size: 14px;
+  margin: 8px;
 }
 
 .ListFieldRow {
-  display: block;
+  display: grid;
+  position: relative;
+  transition: 200ms opacity ease-out;
+
+  &[data-dragging] {
+    opacity: 0.5;
+  }
+}
+
+.ListFieldRow + .ListFieldRow {
+  border-top: 1px solid var(--alinea-dashboard-surface-border);
+}
+
+.ListFieldRow-separator {
+  position: relative;
+  height: 0;
+  width: 100%;
+  overflow: visible;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -8px 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    top: -1px;
+    height: 2px;
+    opacity: 0;
+    background: var(--alinea-surface-accent);
+    pointer-events: none;
+    transition: opacity 140ms ease;
+  }
+}
+
+.ListFieldRow:not([data-dragging]) .ListFieldRow-separator:is(:hover, [data-open='true']) {
+  &::after {
+    opacity: 1;
+  }
+}
+
+.ListFieldRow-separatorButton {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  color: var(--alinea-surface-accent);
+  background: var(--alinea-bg);
+  border: 1px solid currentColor;
+  transition: opacity 140ms ease;
+}
+
+.ListFieldRow:not([data-dragging])
+  .ListFieldRow-separator:is(:hover, [data-open='true'])
+  .ListFieldRow-separatorButton {
+  opacity: 1;
+}
+
+.ListFieldRow-addBetween {
+  box-sizing: border-box;
+  height: 0;
+  min-height: 0;
+  padding: 0 12px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-top: 0;
+  border-bottom: 1px solid transparent;
+  transition:
+    height 180ms ease,
+    opacity 160ms ease,
+    border-color 180ms ease,
+    border-bottom-color 180ms ease;
+}
+
+.ListFieldRow-addBetween[data-open='true'] {
+  height: 40px;
+  opacity: 1;
+  pointer-events: auto;
+  border-bottom-color: var(--alinea-dashboard-surface-border);
+}
+
+.ListFieldRow-header {
+  justify-content: space-between;
+  padding-left: 8px;
+  padding-right: 12px;
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.ListFieldRow-leading {
+  display: inline-flex;
+  align-items: center;
+  color: var(--alinea-fg);
+  gap: 8px;
+  min-width: 0;
 }
 
 .ListFieldRow-title {
   font-size: 13px;
   font-weight: 500;
-  color: var(--alinea-dashboard-list-title-foreground);
+  color: var(--alinea-fg);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ListFieldRow-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
+}
+
+.ListFieldRow-actions > * + .ListFieldRow-action {
+  margin-left: 8px;
 }
 
 .ListFieldRow-action {
-  min-width: 36px;
-  padding: 0 10px;
+  min-width: 2rem;
+  width: 2rem;
 }
 
-.ListFieldRow-inner {
-  margin-top: 6px;
+.ListFieldRow-action[data-disabled],
+.ListFieldRow-fold[data-disabled],
+.ListFieldView-fold[data-disabled] {
+  cursor: default;
+}
+
+.ListFieldRow-fold {
+  min-width: 22px;
+  width: 22px;
+  height: 28px;
+  padding: 0;
+
+  svg {
+    rotate: 0deg;
+    transition: rotate 200ms;
+  }
+}
+
+.ListFieldRow-header[data-expanded='true'] .ListFieldRow-fold svg {
+  rotate: 90deg;
 }
 
 .ListFieldRow-body {
   display: grid;
   gap: 12px;
   align-items: normal;
+}
+
+:global(.react-aria-DropIndicator)::before {
+  background-color: var(--alinea-bg);
+}
+
+:global(.react-aria-DropIndicator) {
+  min-height: 32px;
+  background-color: var(--alinea-bg-muted);
+  border: 1px dashed var(--alinea-selected);
+  border-radius: 6px;
+  box-sizing: border-box;
 }

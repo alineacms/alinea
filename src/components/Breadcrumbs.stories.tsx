@@ -15,4 +15,4 @@ export const Example = (args: any) => (
   </Breadcrumbs>
 )
 
-export default {title: 'Todo / Breadcrumbs'}
+export default {title: 'Components / Breadcrumbs'}

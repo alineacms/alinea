@@ -1,3 +1,4 @@
+import {Label} from '#/components.js'
 import {ObjectField} from '#/field/object.js'
 import {styler} from '@alinea/styler'
 import {
@@ -7,7 +8,7 @@ import {
   useFieldOptions
 } from '../../../store.js'
 import {NodeEditor} from '../../Editor.js'
-import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
+import {Surface, SurfaceContent} from '../../ui/Surface.js'
 import css from './ObjectFieldView.module.css'
 
 const styles = styler(css)
@@ -21,14 +22,18 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
   const error = useFieldError(field)
   const node = useFieldNode(field)
   return (
-    <Surface className={styles.ObjectFieldView()}>
-      <SurfaceHeader>
-        <strong>{options.label}</strong>
-      </SurfaceHeader>
-      <SurfaceContent>
-        <NodeEditor node={node as ReactiveNode<object>} type={options.fields} />
-        {error && <div className={styles.ObjectFieldView.error()}>{error}</div>}
-      </SurfaceContent>
-    </Surface>
+    <Label label={options.label}>
+      <Surface className={styles.ObjectFieldView()}>
+        <SurfaceContent>
+          <NodeEditor
+            node={node as ReactiveNode<object>}
+            type={options.fields}
+          />
+          {error && (
+            <div className={styles.ObjectFieldView.error()}>{error}</div>
+          )}
+        </SurfaceContent>
+      </Surface>
+    </Label>
   )
 }

@@ -32,6 +32,28 @@ const VStack = (props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) => (
   />
 )
 
+const IconExample = ({
+  title,
+  props
+}: {
+  title: string
+  props?: ButtonProps
+}) => (
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 6
+    }}
+  >
+    <Button size="icon" aria-label={title} {...props}>
+      <IcRoundRefresh data-slot="icon" />
+    </Button>
+    <span style={{fontSize: 12}}>{title}</span>
+  </div>
+)
+
 export function All() {
   return (
     <VStack>
@@ -222,33 +244,28 @@ export function Icons() {
         </Button>
       </HStack>
       <HStack>
-        <Button size="icon">
-          <IcRoundRefresh data-slot="icon" />
-        </Button>
-        <Button size="icon" intent="primary">
-          <IcRoundRefresh data-slot="icon" />
-        </Button>
-        <Button size="icon" intent="secondary">
-          <IcRoundRefresh data-slot="icon" />
-        </Button>
-        <Button size="icon" appearance="outline">
-          <IcRoundRefresh data-slot="icon" />
-        </Button>
-        <Button size="icon" appearance="outline" intent="primary">
-          <IcRoundRefresh data-slot="icon" />
-        </Button>
-        <Button size="icon" appearance="outline" intent="secondary">
-          <IcRoundRefresh data-slot="icon" />
-        </Button>
-        <Button size="icon" appearance="plain">
-          <IcRoundRefresh data-slot="icon" />
-        </Button>
-        <Button size="icon" appearance="plain" intent="primary">
-          <IcRoundRefresh data-slot="icon" />
-        </Button>
-        <Button size="icon" appearance="plain" intent="secondary">
-          <IcRoundRefresh data-slot="icon" />
-        </Button>
+        <IconExample title="Default" />
+        <IconExample title="Primary" props={{intent: 'primary'}} />
+        <IconExample title="Secondary" props={{intent: 'secondary'}} />
+        <IconExample title="Outline" props={{appearance: 'outline'}} />
+        <IconExample
+          title="Outline primary"
+          props={{appearance: 'outline', intent: 'primary'}}
+        />
+        <IconExample
+          title="Outline secondary"
+          props={{appearance: 'outline', intent: 'secondary'}}
+        />
+        <IconExample title="Plain" props={{appearance: 'plain'}} />
+        <IconExample
+          title="Plain primary"
+          props={{appearance: 'plain', intent: 'primary'}}
+        />
+        <IconExample
+          title="Plain secondary"
+          props={{appearance: 'plain', intent: 'secondary'}}
+        />
+        <IconExample title="Active" props={{appearance: 'active'}} />
       </HStack>
     </VStack>
   )
