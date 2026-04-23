@@ -162,11 +162,18 @@ export function AppShell({dashboard}: AppShellProps) {
             </Rail>
           }
         >
-          <ErrorBoundary>
-            <Editor dashboard={dashboard} />
-          </ErrorBoundary>
+          <SyncedEditor dashboard={dashboard} />
         </Suspense>
       </DashboardScopeInternal>
     </main>
+  )
+}
+
+function SyncedEditor({dashboard}: AppShellProps) {
+  useAtomValue(dashboard.ensureInitialSync)
+  return (
+    <ErrorBoundary>
+      <Editor dashboard={dashboard} />
+    </ErrorBoundary>
   )
 }

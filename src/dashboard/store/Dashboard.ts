@@ -1,4 +1,4 @@
-import type {Config} from '#/core/Config.js'
+import {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {UploadOperation} from '#/core/db/Operation.js'
@@ -28,7 +28,6 @@ import type {
   DroppableCollectionReorderEvent,
   Key
 } from 'react-aria-components'
-import {WorkerDB} from '../boot/WorkerDB.js'
 import {IcRoundDescription} from '../icons.js'
 
 export interface DashboardRoute {
@@ -49,6 +48,10 @@ type FocusedItem = {entry: DashboardEntry} | {root: DashboardRoot} | null
 const dashboardThemeStorageKey = 'alinea-dashboard-theme'
 
 export type DashboardTheme = 'system' | 'light' | 'dark'
+
+interface SyncableGraph {
+  sync: () => Promise<string>
+}
 
 let enableThemeTransitionsFrame: number | undefined
 
@@ -74,6 +77,12 @@ function applyDashboardTheme(theme: DashboardTheme) {
   const root = document.documentElement
   if (theme === 'system') root.removeAttribute('data-theme')
   else root.dataset.theme = theme
+}
+
+function isSyncableGraph(
+  graph: WriteableGraph
+): graph is WriteableGraph & SyncableGraph {
+  return typeof (graph as Partial<SyncableGraph>).sync === 'function'
 }
 
 export class Dashboard {
@@ -200,9 +209,15 @@ export class Dashboard {
     {onMount: (init: () => void) => init()}
   )
 
+  ensureInitialSync = atom(get => {
+    const db = get(this.db)
+    if (!isSyncableGraph(db)) return
+    return db.sync()
+  })
+
   sync = atom(null, (get, set) => {
     const db = get(this.db)
-    if (db instanceof WorkerDB) {
+    if (isSyncableGraph(db)) {
       return db.sync()
     }
   })
@@ -1108,6 +1123,63 @@ export class DashboardEntry {
         if (fallback.title) return fallback
       }
       return null
+    })
+  )
+
+  preview = atom(get => {
+    const type = get(this.type).type
+    const typePreview = Type.preview(type)
+    if (typePreview !== undefined) return typePreview
+    const config = get(this.dashboard.config)
+    const workspace = config.workspaces[get(this.workspaceKey)]
+    if (!workspace) return config.preview
+    const root = workspace[get(this.rootKey)]
+    return (
+      (root ? getRoot(root).preview : undefined) ??
+      getWorkspace(workspace).preview ??
+      config.preview
+    )
+  })
+
+  hasPreview = atom(get => Boolean(get(this.preview)))
+
+  previewEntry = swr(
+    atom(async get => {
+      if (!get(this.hasPreview)) return null
+      const locale = get(get(this.root).selectedLocale)
+      const language = this.languages(locale)
+      const activeVersion = await get(language.activeVersion)
+      const node = await get(this.selectedNode)
+      const value = get(node.value)
+      if (!isObject<Record<string, unknown>>(value)) return activeVersion
+      const title =
+        typeof value.title === 'string' ? value.title : activeVersion.title
+      const path = typeof value.path === 'string' ? value.path : activeVersion.path
+      return {
+        ...activeVersion,
+        title,
+        path,
+        data: value
+      }
+    })
+  )
+
+  previewUrl = swr(
+    atom(async get => {
+      if (get(this.preview) !== true) return null
+      const locale = get(get(this.root).selectedLocale)
+      const language = this.languages(locale)
+      const activeVersion = await get(language.activeVersion)
+      const previewToken = await get(this.dashboard.client).previewToken({
+        url: activeVersion.url
+      })
+      const config = get(this.dashboard.config)
+      const base = new URL(
+        config.handlerUrl ?? '',
+        Config.baseUrl(config) ??
+          (typeof location === 'undefined' ? 'http://localhost' : location.href)
+      )
+      return new URL(`?preview=${previewToken}`, base).toString()
     })
   )
 

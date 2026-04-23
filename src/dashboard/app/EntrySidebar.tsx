@@ -4,6 +4,7 @@ import {useAtom, useAtomValue} from 'jotai'
 import {IcRoundHistory, IcRoundVisibility} from '../icons.js'
 import {DashboardEntry} from '../store.js'
 import css from './EntrySidebar.module.css'
+import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 import {Sidebar, SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 
 const styles = styler(css)
@@ -19,7 +20,11 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
   const [selectedVersion, setSelectedVersion] = useAtom(entry.selectedVersion)
   return (
     <Sidebar>
-      <Tabs defaultSelectedKey="history" variant="subtle">
+      <Tabs
+        defaultSelectedKey="history"
+        variant="subtle"
+        className={styles.EntrySidebar.tabs()}
+      >
         <SidebarHeader className={styles.EntrySidebar.header()}>
           <TabList aria-label="Entry sidebar">
             <Tab id="history">
@@ -33,32 +38,40 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
           </TabList>
         </SidebarHeader>
 
-        <SidebarBody>
-          <TabPanel id="history">
-            <ul>
+        <SidebarBody className={styles.EntrySidebar.body()}>
+          <TabPanel id="history" className={styles.EntrySidebar.historyPanel()}>
+            <ul className={styles.EntrySidebar.historyList()}>
               {statuses.map(status => {
                 const isEditing =
                   activeStatus == status && currentlyEditing !== undefined
+                const selected =
+                  selectedVersion.type === 'status' &&
+                  selectedVersion.status === status
                 return (
                   <li key={status}>
                     <Button
+                      appearance={selected ? 'active' : 'outline'}
+                      intent="secondary"
+                      className={styles.EntrySidebar.historyButton()}
                       onPress={() =>
                         setSelectedVersion({type: 'status', status})
                       }
                     >
-                      {status}{' '}
-                      {selectedVersion.type === 'status' &&
-                      selectedVersion.status === status
-                        ? 'selected'
-                        : ''}{' '}
-                      {isEditing ? 'editing' : ''}
+                      {status}
+                      {isEditing && (
+                        <span className={styles.EntrySidebar.historyBadge()}>
+                          Editing
+                        </span>
+                      )}
                     </Button>
                   </li>
                 )
               })}
             </ul>
           </TabPanel>
-          <TabPanel id="preview">Preview placeholder</TabPanel>
+          <TabPanel id="preview" className={styles.EntrySidebar.previewPanel()}>
+            <EntrySidebarPreview entry={entry} />
+          </TabPanel>
         </SidebarBody>
       </Tabs>
     </Sidebar>

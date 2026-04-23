@@ -1,5 +1,60 @@
+.EntrySidebar-tabs {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .EntrySidebar-header {
   & > :global(.alinea-rac-Tablist) {
     align-self: auto;
   }
+}
+
+.EntrySidebar-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  & > :global(.alinea-rac-Tabpanel) {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.EntrySidebar-historyPanel {
+  min-height: 0;
+  overflow: auto;
+}
+
+.EntrySidebar-historyList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.EntrySidebar-historyButton {
+  width: 100%;
+  justify-content: space-between;
+  text-transform: capitalize;
+}
+
+.EntrySidebar-historyBadge {
+  color: var(--alinea-content-secondary);
+  font-size: 11px;
+}
+
+.EntrySidebar-previewPanel {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
