@@ -139,7 +139,7 @@ function renderItem(item: DashboardTreeItem) {
 
 const treeLayoutOptions = {
   rowHeight: 34,
-  padding: 0,
+  padding: 6,
   gap: 1
 }
 
@@ -168,7 +168,6 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
       <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
         <Tree
           aria-label="Content tree"
-          style={{display: 'block', padding: 0, height: '100%'}}
           items={items}
           dragAndDropHooks={dragAndDropHooks}
           selectionMode="single"

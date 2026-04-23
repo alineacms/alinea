@@ -41,27 +41,9 @@
 .SidebarTree-tree-viewport {
   min-height: 0;
   height: 100%;
-}
-
-.SidebarTree-tree :global(.alinea-rac-Tree) {
-  min-width: 0;
-  padding: 12px !important;
-
-  /* TODO */
-  > div {
-    width: 100% !important;
-
-    > div {
-      height: auto !important;
-      width: 100% !important;
-    }
-  }
-}
-
-.SidebarTree-tree :global(.alinea-rac-TreeItem) {
-  border-radius: 6px;
-  width: 100%;
-  padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px) !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .SidebarTree-locator {
