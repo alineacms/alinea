@@ -18,7 +18,6 @@ import {
   IcRoundFormatBold,
   IcOutlineGridView as IcRoundGridView,
   IcRoundHistory,
-  IcAlineaLogo as IcRoundHome,
   IcRoundDescription as IcRoundInfo,
   IcRoundKeyboardArrowDown,
   IcRoundKeyboardArrowLeft,
@@ -48,6 +47,7 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../dashboard/icons.js'
+import {AlineaLogo as IcRoundHome} from '../dashboard/app/AlineaLogo.js'
 import {Icon} from './Icon.js'
 
 const icons = [

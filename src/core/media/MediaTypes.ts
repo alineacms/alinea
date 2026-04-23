@@ -6,7 +6,7 @@ import {type Type, type} from '../Type.js'
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
   icon: IcRoundPermMedia,
-  contains: ['MediaLibrary'],
+  contains: ['MediaLibrary', 'MediaFile'],
   fields: {
     title: hidden<string>('Title'),
     path: hidden<string>('Path')

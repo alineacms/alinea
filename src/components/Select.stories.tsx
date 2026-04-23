@@ -2,10 +2,10 @@ import {useState} from 'react'
 import {
   IcRoundBrightness2 as IcRoundBrightness,
   IcBaselineContentCopy as IcRoundContentCopy,
-  IcAlineaLogo as IcRoundHome,
   IcRoundSearch,
   IcOutlineSettings as IcRoundSettings
 } from '../dashboard/icons.js'
+import {AlineaLogo as IcRoundHome} from '../dashboard/app/AlineaLogo.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
 import {Select, SelectItem} from './Select.js'

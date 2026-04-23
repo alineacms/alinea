@@ -11,13 +11,13 @@ import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
 import {useState} from 'react'
 import {
-  IcAlineaLogo,
   IcOutlineSettings,
   IcRoundSearch,
   IcRoundUnfoldMore
 } from '../icons.js'
 import {useDashboard} from '../store.js'
 import type {Dashboard, DashboardWorkspace} from '../store/Dashboard.js'
+import {AlineaLogo} from './AlineaLogo.js'
 import {Explorer} from './Explorer.js'
 import css from './WorkspaceMenu.module.css'
 
@@ -47,7 +47,7 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
   const workspace = dashboard.workspace(selected)
   const color = useAtomValue(workspace.color)
-  const Icon = useAtomValue(workspace.icon) ?? IcAlineaLogo
+  const Icon = useAtomValue(workspace.icon) ?? AlineaLogo
   const label = useAtomValue(workspace.label)
   return (
     <div className={styles.WorkspaceMenu.parent()}>

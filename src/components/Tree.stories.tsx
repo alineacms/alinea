@@ -5,10 +5,10 @@ import {
   IcOutlineDescription,
   IcRoundDescription,
   IcRoundEdit,
-  IcAlineaLogo as IcRoundHome,
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../dashboard/icons.js'
+import {AlineaLogo as IcRoundHome} from '../dashboard/app/AlineaLogo.js'
 import {Button} from './Button.js'
 import {Checkbox} from './Checkbox.js'
 import {Select, SelectItem} from './Select.js'
