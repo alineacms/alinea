@@ -58,6 +58,30 @@
   line-height: 1.2;
 }
 
+.ExplorerList-empty {
+  display: flex;
+  min-height: 280px;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--alinea-dashboard-explorer-muted-foreground);
+  text-align: center;
+}
+
+.ExplorerList-empty-icon {
+  color: color-mix(in srgb, var(--alinea-dashboard-explorer-muted-foreground) 70%, transparent);
+  font-size: 72px;
+}
+
+.ExplorerList-empty-text {
+  color: var(--alinea-dashboard-explorer-muted-foreground);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .ExplorerItem {
   display: block;
   min-width: 0;

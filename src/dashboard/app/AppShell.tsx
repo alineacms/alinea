@@ -50,11 +50,7 @@ export function AppShell({dashboard}: AppShellProps) {
 
           <SidebarFooter className={styles.AppShell.footer()}>
             <DialogTrigger>
-              <Button
-                appearance="plain"
-                intent="secondary"
-                className={styles.AppShell.profile()}
-              >
+              <Button appearance="plain" className={styles.AppShell.profile()}>
                 <div className={styles.AppShell.profile.identity()}>
                   <IcBaselineAccountCircle />
                   John Doe
@@ -84,9 +80,7 @@ export function AppShell({dashboard}: AppShellProps) {
                     >
                       <Button
                         size="icon"
-                        appearance={
-                          theme === 'system' ? 'active' : 'outline'
-                        }
+                        appearance={theme === 'system' ? 'active' : 'outline'}
                         icon={IcRoundDesktopWindows}
                         aria-label="Use system theme"
                         onPress={() => setTheme('system')}
@@ -120,7 +114,6 @@ export function AppShell({dashboard}: AppShellProps) {
                       label={
                         <Button
                           appearance="outline"
-                          intent="secondary"
                           className={styles.AppShell.trigger()}
                         >
                           <span className={styles.AppShell.trigger.text()}>

@@ -68,7 +68,6 @@ const SidebarParent = memo(function SidebarParent({
         />
         <Button
           appearance="plain"
-          intent="secondary"
           className={styles.SidebarTree.rootsTrigger()}
           onPress={() => selectRoot(true)}
         >

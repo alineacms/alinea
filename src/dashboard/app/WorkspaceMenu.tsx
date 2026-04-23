@@ -10,11 +10,7 @@ import {
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
 import {useState} from 'react'
-import {
-  IcOutlineSettings,
-  IcRoundSearch,
-  IcRoundUnfoldMore
-} from '../icons.js'
+import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {useDashboard} from '../store.js'
 import type {Dashboard, DashboardWorkspace} from '../store/Dashboard.js'
 import {AlineaLogo} from './AlineaLogo.js'
@@ -60,11 +56,7 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
 
       <Menu
         label={
-          <Button
-            appearance="plain"
-            intent="secondary"
-            className={styles.WorkspaceMenu.trigger()}
-          >
+          <Button appearance="plain" className={styles.WorkspaceMenu.trigger()}>
             <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>
             <IcRoundUnfoldMore />
           </Button>

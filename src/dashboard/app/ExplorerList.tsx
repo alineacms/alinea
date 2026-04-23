@@ -1,10 +1,11 @@
 import {Button, Icon, ProgressCircle} from '#/components.js'
+import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {memo, Suspense} from 'react'
 import type {ComponentType} from 'react'
+import {memo, Suspense} from 'react'
 import {
   GridLayout,
   type GridLayoutOptions,
@@ -20,7 +21,11 @@ import {
   IcTwotoneDescription,
   IcTwotoneFolder
 } from '../icons.js'
-import type {DashboardEntry, DashboardExplorer} from '../store.js'
+import type {
+  DashboardEntry,
+  DashboardExplorer,
+  DashboardRoot
+} from '../store.js'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 import css from './ExplorerList.module.css'
 
@@ -82,7 +87,9 @@ const ExplorerItem = memo(function ExplorerItem({
           <ExplorerFileCard file={info} label={label} layout={view} />
         ) : (
           <ExplorerEntryCard
-            icon={icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription)}
+            icon={
+              icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription)
+            }
             label={label}
             typeLabel={type.label}
             layout={view}
@@ -123,12 +130,28 @@ function ExplorerEntryCard({
   )
 }
 
+interface EmptyResultsProps {
+  root: DashboardRoot
+}
+
+function EmptyResults({root}: EmptyResultsProps) {
+  const icon = useAtomValue(root.icon)
+  return (
+    <div className={styles.ExplorerList.empty()}>
+      <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
+      <div className={styles.ExplorerList.empty.text()}>No results found</div>
+    </div>
+  )
+}
+
 export interface ExplorerListProps {
   explorer: DashboardExplorer
 }
 
 export function ExplorerList({explorer}: ExplorerListProps) {
   const view = useAtomValue(explorer.view)
+  const root = useAtomValue(explorer.root)
+  assert(root, 'ExplorerList requires a root')
   const [isPending, items] = useAtomValue(explorer.items)
   const getItems = useSetAtom(explorer.getItems)
   const [selected, setSelected] = useAtom(explorer.selection)
@@ -167,6 +190,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
                 dragAndDropHooks={dragAndDropHooks}
                 selectedKeys={selected}
                 onSelectionChange={setSelected}
+                renderEmptyState={() => <EmptyResults root={root} />}
                 style={{display: 'block', width: '100%', height: '100%'}}
               >
                 {item => <ExplorerItem entry={item} explorer={explorer} />}
@@ -186,6 +210,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
                 dragAndDropHooks={dragAndDropHooks}
                 selectedKeys={selected}
                 onSelectionChange={setSelected}
+                renderEmptyState={() => <EmptyResults root={root} />}
                 style={{display: 'block', width: '100%', height: '100%'}}
               >
                 {item => <ExplorerItem entry={item} explorer={explorer} />}
