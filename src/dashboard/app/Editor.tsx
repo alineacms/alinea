@@ -237,7 +237,7 @@ function EntryEditor({entry}: EntryEditorProps) {
 
   let editorBody = (
     <>
-      <DetailsBar status={status} />
+      <DetailsBar entry={entry} status={status} />
 
       <RailBody className={styles.EntryEditor.body()}>
         <NodeEditor node={node} type={type.type} />
