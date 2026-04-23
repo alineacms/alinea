@@ -4,6 +4,16 @@
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RootEditor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .RootEditor-body {

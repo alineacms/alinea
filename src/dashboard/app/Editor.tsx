@@ -24,6 +24,7 @@ import {
 } from '../store/hooks.js'
 import {DetailsBar} from './DetailsBar.js'
 import css from './Editor.module.css'
+import {EditorBackButton} from './EditorBackButton.js'
 import {FileEditor} from './editor/FileEditor.js'
 import {EntryHeader} from './EntryHeader.js'
 import {EntrySidebar} from './EntrySidebar.js'
@@ -50,14 +51,41 @@ interface RootEditorProps {
 
 function RootEditor({root}: RootEditorProps) {
   const title = useAtomValue(root.label)
+  const location = useAtomValue(root.explorer.location)
   return (
     <Rail main>
-      <RailHeader>
+      <RailHeader className={styles.RootEditor.header()}>
+        {location.parentId && (
+          <RootEditorBackButton root={root} parentId={location.parentId} />
+        )}
         <h1 className={styles.RootEditor.title()}>{title}</h1>
       </RailHeader>
 
       <Explorer explorer={root.explorer} />
     </Rail>
+  )
+}
+
+interface RootEditorBackButtonProps {
+  root: DashboardRoot
+  parentId: string
+}
+
+function RootEditorBackButton({root, parentId}: RootEditorBackButtonProps) {
+  const parent = useAtomValue(root.workspace.dashboard.entries(parentId))
+  const parentParentId = useAtomValue(parent.parentId)
+  const setLocation = useSetAtom(root.explorer.location)
+  const nextParentId = parentParentId ?? undefined
+  return (
+    <EditorBackButton
+      label={parentParentId ? 'Back to parent entry' : 'Back to root'}
+      onPress={() => {
+        setLocation(location => ({
+          ...location,
+          parentId: nextParentId
+        }))
+      }}
+    />
   )
 }
 

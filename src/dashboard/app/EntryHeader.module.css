@@ -9,7 +9,7 @@
 .EntryHeader-main {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -18,6 +18,10 @@
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .EntryHeader-badge {

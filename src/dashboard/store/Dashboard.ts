@@ -245,7 +245,7 @@ export class Dashboard {
     const workspace = get(this.currentWorkspace)
     const roots = workspace ? get(workspace.roots) : []
     const first = roots[0]
-    if (!first) return null
+    assert(first, 'No root found for selected workspace')
     return first
   })
 
@@ -1283,7 +1283,14 @@ export class DashboardRoot {
     const parentId = atom<string>()
     const selectedParent = atom(get => {
       const route = get(this.workspace.dashboard.route)
-      if (route.entry) return route.entry
+      const selectedWorkspace = get(this.workspace.dashboard.selectedWorkspace)
+      const selectedRoot = get(this.workspace.dashboard.selectedRoot)
+      if (
+        route.entry &&
+        selectedWorkspace === workspace.key &&
+        selectedRoot === key
+      )
+        return route.entry
       return get(parentId)
     })
     this.explorer = new DashboardExplorer(
@@ -1307,8 +1314,21 @@ export class DashboardRoot {
               root: next.root
             })
           } else {
-            console.log('Updating parentId to', next.parentId)
+            const route = get(workspace.dashboard.route)
+            const selectedWorkspace = get(workspace.dashboard.selectedWorkspace)
+            const selectedRoot = get(workspace.dashboard.selectedRoot)
             set(parentId, next.parentId)
+            if (
+              route.entry &&
+              selectedWorkspace === workspace.key &&
+              selectedRoot === key
+            )
+              set(workspace.dashboard.route, {
+                workspace: workspace.key,
+                root: key,
+                entry: next.parentId,
+                locale: route.locale
+              })
             set(
               workspace.tree.expandedKeys,
               new Set(next.parentId ? [next.parentId] : [])
@@ -1320,7 +1340,11 @@ export class DashboardRoot {
         selectionMode: 'multiple',
         selectionBehavior: 'replace',
         onAction: atom(null, (get, set, entry) => {
-          if (get(entry.hasChildren)) set(parentId, entry.id)
+          if (get(entry.hasChildren))
+            set(this.explorer.location, location => ({
+              ...location,
+              parentId: entry.id
+            }))
           else
             set(this.workspace.dashboard.route, {
               workspace: this.workspace.key,

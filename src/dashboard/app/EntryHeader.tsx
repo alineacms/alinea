@@ -13,6 +13,7 @@ import {
 } from '../icons.js'
 import {DashboardEntry, ReactiveNode} from '../store/Dashboard.js'
 import {Badge} from './Badge.js'
+import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {RailHeader} from './ui/Rail.js'
 
@@ -70,6 +71,31 @@ interface EntryHeaderActionProps {
   isDirty: boolean
   isUnpublished: boolean
   untranslated: boolean
+}
+
+interface EntryHeaderBackButtonProps {
+  entry: DashboardEntry
+}
+
+function EntryHeaderBackButton({entry}: EntryHeaderBackButtonProps) {
+  const route = useAtomValue(entry.dashboard.route)
+  const parentId = useAtomValue(entry.parentId)
+  const workspace = useAtomValue(entry.workspaceKey)
+  const root = useAtomValue(entry.rootKey)
+  const setRoute = useSetAtom(entry.dashboard.route)
+  return (
+    <EditorBackButton
+      label={parentId ? 'Back to parent entry' : 'Back to root'}
+      onPress={() => {
+        setRoute({
+          workspace,
+          root,
+          entry: parentId ?? undefined,
+          locale: route.locale
+        })
+      }}
+    />
+  )
 }
 
 function EntryHeaderActions({
@@ -192,6 +218,7 @@ export function EntryHeader({entry, node}: EntryHeaderProps) {
   return (
     <RailHeader className={styles.EntryHeader()}>
       <div className={styles.EntryHeader.main()}>
+        <EntryHeaderBackButton entry={entry} />
         <h1 className={styles.EntryHeader.title()}>{title}</h1>
         <Badge
           className={styles.EntryHeader.badge()}
