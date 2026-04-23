@@ -1,49 +1,90 @@
-import {Button, Menu, MenuItem} from '#/components.js'
+import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import styler from '@alinea/styler'
 import {Atom, useAtomValue} from 'jotai'
 import {Dispatch, SetStateAction} from 'react'
+import {IcRoundChevronRight, IcRoundUnfoldMore} from '../icons.js'
 import {
   DashboardEntry,
   DashboardMenuItem,
   ExplorerLocation,
   useDashboard
 } from '../store.js'
+import css from './LocationBreadcrumbs.module.css'
+
+const styles = styler(css)
 
 interface BreadcrumbMenuProps {
   label: Atom<string>
   items: Atom<Array<DashboardMenuItem>>
+  onSelect: () => void
   onAction: (id: string) => void
 }
 
-function BreadcrumbMenu(props: BreadcrumbMenuProps) {
-  const label = useAtomValue(props.label)
-  const items = useAtomValue(props.items)
-  const onAction = props.onAction
+function BreadcrumbMenu({
+  label: labelAtom,
+  items: itemsAtom,
+  onSelect,
+  onAction
+}: BreadcrumbMenuProps) {
+  const label = useAtomValue(labelAtom)
+  const items = useAtomValue(itemsAtom)
   return (
-    <Menu
-      label={<Button appearance="plain">{label}</Button>}
-      aria-label={label}
-      onAction={key => onAction(String(key))}
-    >
-      {items.map(item => {
-        return (
-          <MenuItem key={item.id} id={item.id} textValue={item.label}>
-            {item.label}
-          </MenuItem>
-        )
-      })}
-    </Menu>
+    <span className={styles.LocationBreadcrumbs.item()}>
+      <Button
+        appearance="plain"
+        className={styles.LocationBreadcrumbs.label()}
+        onPress={onSelect}
+      >
+        {label}
+      </Button>
+      <Menu
+        label={
+          <Button
+            appearance="plain"
+            size="icon"
+            className={styles.LocationBreadcrumbs.menu()}
+            aria-label={`${label} menu`}
+          >
+            <Icon icon={IcRoundUnfoldMore} />
+          </Button>
+        }
+        aria-label={`${label} menu`}
+        onAction={key => onAction(String(key))}
+      >
+        {items.map(item => {
+          return (
+            <MenuItem key={item.id} id={item.id} textValue={item.label}>
+              {item.label}
+            </MenuItem>
+          )
+        })}
+      </Menu>
+    </span>
   )
 }
 
-interface EntryBreacrumbProps {
+function BreadcrumbSeparator() {
+  return (
+    <Icon
+      icon={IcRoundChevronRight}
+      className={styles.LocationBreadcrumbs.separator()}
+    />
+  )
+}
+
+interface EntryBreadcrumbProps {
   entry: DashboardEntry
   onAction: (id: string) => void
 }
 
-function EntryBreadcrumb({entry, onAction}: EntryBreacrumbProps) {
+function EntryBreadcrumb({entry, onAction}: EntryBreadcrumbProps) {
   const label = useAtomValue(entry.label)
   return (
-    <Button appearance="plain" onPress={() => onAction(entry.id)}>
+    <Button
+      appearance="plain"
+      className={styles.LocationBreadcrumbs.label()}
+      onPress={() => onAction(entry.id)}
+    >
       {label}
     </Button>
   )
@@ -51,17 +92,22 @@ function EntryBreadcrumb({entry, onAction}: EntryBreacrumbProps) {
 
 interface ParentBreadcrumbsProps {
   parentId: string
+  showLeadingSeparator: boolean
   setParentId: (id: string) => void
 }
 
-function ParentBreadcrumbs({parentId, setParentId}: ParentBreadcrumbsProps) {
+function ParentBreadcrumbs({
+  parentId,
+  showLeadingSeparator,
+  setParentId
+}: ParentBreadcrumbsProps) {
   const dashboard = useDashboard()
   const entry = useAtomValue(dashboard.entries(parentId))
   const parents = useAtomValue(entry.parents)
-  return parents.concat(entry).map(entry => {
+  return parents.concat(entry).map((entry, index) => {
     return (
-      <span key={entry.id}>
-        {' > '}
+      <span key={entry.id} className={styles.LocationBreadcrumbs.item()}>
+        {(showLeadingSeparator || index > 0) && <BreadcrumbSeparator />}
         <EntryBreadcrumb entry={entry} onAction={setParentId} />
       </span>
     )
@@ -71,11 +117,15 @@ function ParentBreadcrumbs({parentId, setParentId}: ParentBreadcrumbsProps) {
 interface LocationBreadcrumbsProps {
   location: ExplorerLocation
   setLocation: Dispatch<SetStateAction<ExplorerLocation>>
+  enableWorkspace?: boolean
+  enableRoot?: boolean
 }
 
 export function LocationBreadcrumbs({
   location,
-  setLocation
+  setLocation,
+  enableWorkspace = false,
+  enableRoot = false
 }: LocationBreadcrumbsProps) {
   const dashboard = useDashboard()
   const workspace = dashboard.workspace(location.workspace)
@@ -87,6 +137,9 @@ export function LocationBreadcrumbs({
   const setRoot = (root: string) => {
     setLocation(location => ({workspace: location.workspace, root}))
   }
+  const selectRoot = () => {
+    setLocation(location => ({workspace: location.workspace, root: root.key}))
+  }
   const setParentId = (parentId: string) => {
     setLocation(location => ({
       workspace: location.workspace,
@@ -94,24 +147,34 @@ export function LocationBreadcrumbs({
       parentId
     }))
   }
+  const hasRoot = Boolean(root)
+  const showRoot = enableRoot && hasRoot
+  const hasLeadingSegment = enableWorkspace || showRoot
   return (
-    <div>
-      <BreadcrumbMenu
-        label={workspace.label}
-        items={dashboard.workspaceMenu}
-        onAction={setWorkspace}
-      />
-      &gt;
-      {root && (
+    <div className={styles.LocationBreadcrumbs()}>
+      {enableWorkspace && (
         <BreadcrumbMenu
-          label={root.label}
-          items={workspace.rootMenu}
-          onAction={setRoot}
+          label={workspace.label}
+          items={dashboard.workspaceMenu}
+          onSelect={() => setWorkspace(location.workspace)}
+          onAction={setWorkspace}
         />
+      )}
+      {showRoot && (
+        <>
+          {enableWorkspace && <BreadcrumbSeparator />}
+          <BreadcrumbMenu
+            label={root.label}
+            items={workspace.rootMenu}
+            onSelect={selectRoot}
+            onAction={setRoot}
+          />
+        </>
       )}
       {location.parentId && (
         <ParentBreadcrumbs
           parentId={location.parentId}
+          showLeadingSeparator={hasLeadingSegment}
           setParentId={setParentId}
         />
       )}

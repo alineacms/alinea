@@ -76,7 +76,7 @@ const SidebarParent = memo(function SidebarParent({
         </Button>
         <LocaleMenu root={root} />
         <DialogTrigger>
-          <Button size="icon" icon={IcRoundAdd} />
+          <Button size="icon" icon={IcRoundAdd} intent="primary" />
           <Sheet>
             <CreateEntry />
           </Sheet>

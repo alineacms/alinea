@@ -64,7 +64,9 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
             if (files) upload(files)
           }}
         >
-          <Button icon={IcRoundUploadFile}>Upload media</Button>
+          <Button icon={IcRoundUploadFile} intent="primary">
+            Upload media
+          </Button>
         </FileTrigger>
       )}
     </div>

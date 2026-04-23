@@ -1,0 +1,29 @@
+.LocationBreadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-width: 0;
+}
+
+.LocationBreadcrumbs-item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.LocationBreadcrumbs-label {
+  min-width: 0;
+}
+
+.LocationBreadcrumbs-menu {
+  margin-left: -8px;
+  color: var(--alinea-icon-muted);
+}
+
+.LocationBreadcrumbs-separator {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--alinea-icon-muted);
+}
