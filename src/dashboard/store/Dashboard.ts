@@ -1904,6 +1904,17 @@ export class ReactiveNode<Value = unknown> {
     set(this.#dirty, true)
   })
 
+  insert = atom(null, (get, set, index: number, val: unknown) => {
+    if (this.readOnly) return
+    const structure = get(this.nodes)
+    if (!isArray(structure)) return
+    const next = [...structure]
+    const insertAt = Math.max(0, Math.min(index, next.length))
+    next.splice(insertAt, 0, new ReactiveNode(val, this.readOnly))
+    set(this.nodes, next)
+    set(this.#dirty, true)
+  })
+
   remove = atom(null, (get, set, i: number) => {
     if (this.readOnly) return
     const structure = get(this.nodes)

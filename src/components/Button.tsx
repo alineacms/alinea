@@ -1,12 +1,12 @@
 import styler from '@alinea/styler'
+import type {ComponentType, ReactNode} from 'react'
 import {
   Button as ButtonPrimitive,
   type ButtonProps as ButtonPrimitiveProps
 } from 'react-aria-components'
-import type {ComponentType, ReactNode} from 'react'
+import css from './Button.module.css'
 import {Icon} from './Icon.js'
 import {ProgressCircle} from './ProgressCircle.js'
-import css from './Button.module.css'
 
 const styles = styler(css)
 

@@ -11,10 +11,9 @@ import {
   IcRoundAdd,
   IcRoundArrowDownward,
   IcRoundArrowUpward,
-  IcRoundCheck,
   IcRoundClose,
   IcRoundKeyboardArrowRight,
-  IcRoundMoreVert,
+  IcRoundMoreVert
 } from '#/dashboard/icons.js'
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {
@@ -45,11 +44,7 @@ import {
   ListBoxItem,
   OverlayTriggerStateContext
 } from 'react-aria-components'
-import {
-  Surface,
-  SurfaceContent,
-  SurfaceHeader
-} from '../../ui/Surface.js'
+import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
 import css from './ListField.module.css'
 
 const styles = styler(css)
@@ -89,8 +84,8 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const list = useFieldNode(field) as ReactiveNode<Array<ListValue>>
   const nodes = useNodes(list) as Array<ReactiveNode<ListValue>>
   const pushRow = useSetAtom(list.push)
+  const insertRow = useSetAtom(list.insert)
   const pasted = useAtomValue(copyAtom)
-  const setPasted = useSetAtom(copyAtom)
   const schemaEntries = useMemo(
     () => Object.entries(options.schema),
     [options.schema]
@@ -131,30 +126,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
     [list]
   )
   const copyRow = useSetAtom(copyRowAtom)
-  const insertRowAtom = useMemo(
-    () =>
-      atom(
-        null,
-        (
-          get,
-          set,
-          centralRow: ReactiveNode<ListValue>,
-          row: ListValue,
-          position: 'before' | 'after'
-        ) => {
-          const centralRowId = get(centralRow.field('_id')) as string
-          const current = get(list.value)
-          const positionIndex = position === 'after' ? 1 : -1
-          const insertAt = current.findIndex(row => row._id === centralRowId)
-          if (insertAt === -1) return
-          const next = [...current]
-          next.splice(insertAt + positionIndex, 0, row)
-          set(list.value, next)
-        }
-      ),
-    [list]
-  )
-  const insertRow = useSetAtom(insertRowAtom)
   const allExpanded = nodes.length > 0 && foldedIds.size === 0
 
   function toggleAll() {
@@ -196,9 +167,9 @@ export function ListFieldView({field}: ListFieldViewProps) {
         >
           {nodes.map((row, index) => (
             <ListFieldRow
-              key={index}
+              key={`${row.value}`}
               addBetweenRow={(value, position = 'after') =>
-                insertRow(row, value, position)
+                insertRow(insertIndex(index, position), value)
               }
               copiedRowId={pasted?._id}
               foldedIds={foldedIds}
@@ -234,6 +205,13 @@ export function ListFieldView({field}: ListFieldViewProps) {
       <div className={styles.ListFieldView()}>{content}</div>
     </Label>
   )
+}
+
+export function insertIndex(
+  rowIndex: number,
+  position: 'before' | 'after'
+): number {
+  return position === 'before' ? rowIndex : rowIndex + 1
 }
 
 function createRow(typeName: string, type: Schema[string]): ListValue {
@@ -301,7 +279,7 @@ function ListFieldCreateActions({
           size="small"
         >
           <Icon aria-hidden icon={getType(item.type).icon || IcRoundAdd} />
-          {`Add ${item.label}`}
+          {item.label}
         </Button>
       ))}
       {hasMenu && (
@@ -445,11 +423,7 @@ function ListFieldRow({
             onPress={() => onCopyRow(itemId)}
             size="icon"
           >
-            <Icon
-              aria-hidden
-              data-slot="icon"
-              icon={isCopied ? IcRoundCheck : IcBaselineContentCopy}
-            />
+            <Icon aria-hidden data-slot="icon" icon={IcBaselineContentCopy} />
           </Button>
           <Button
             aria-label={`Move ${label} up`}

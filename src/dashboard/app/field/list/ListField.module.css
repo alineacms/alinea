@@ -37,6 +37,7 @@
 .ListFieldView-create {
   display: flex;
   flex-wrap: wrap;
+  width: 100%;
   justify-content: center;
   gap: 8px;
 }
@@ -45,9 +46,22 @@
   flex-shrink: 0;
 }
 
+.ListFieldView-createButton[data-appearance='outline'][data-hovered],
+.ListFieldView-create .ListFieldTypePicker-trigger[data-appearance='outline'][data-hovered] {
+  background-color: light-dark(white, var(--alinea-gray-700));
+}
+
+.ListFieldView-createButton[data-appearance='outline'][data-pressed],
+.ListFieldView-create .ListFieldTypePicker-trigger[data-appearance='outline'][data-pressed] {
+  background-color: light-dark(var(--alinea-gray-50), var(--alinea-gray-600));
+}
+
 .ListFieldView-createRow {
   align-items: center;
-  background: var(--alinea-bg-muted);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  background: var(--alinea-dashboard-surface-header-background);
   box-sizing: border-box;
   min-height: 40px;
   padding: 4px 12px;
