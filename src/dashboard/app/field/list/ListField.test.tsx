@@ -65,6 +65,35 @@ test('renders draggable row headers and reorders rows on drop', async () => {
   ])
 })
 
+test('renders a bottom drop target and reorders rows to the end on drop', async () => {
+  const view = render(<Example />)
+
+  const heroDragHandle = view.getByLabelText('Drag Hero item 1')
+  const moveAfterFaq = view.getByLabelText('Move block after FAQ Item')
+  const dataTransfer = new DataTransfer()
+  Object.defineProperty(dataTransfer, 'setDragImage', {
+    configurable: true,
+    value() {}
+  })
+
+  await act(async () => {
+    fireEvent.dragStart(heroDragHandle, {dataTransfer})
+    fireEvent.dragEnter(moveAfterFaq, {dataTransfer})
+    fireEvent.dragOver(moveAfterFaq, {dataTransfer})
+    fireEvent.drop(moveAfterFaq, {dataTransfer})
+    await Promise.resolve()
+  })
+
+  const after = view
+    .getAllByLabelText(/^Drag /)
+    .map(element => element.getAttribute('aria-label'))
+  test.equal(after, [
+    'Drag Quote item 1',
+    'Drag FAQ Item item 2',
+    'Drag Hero item 3'
+  ])
+})
+
 test('marks only the first row header as the first row', () => {
   const view = render(<Example />)
 

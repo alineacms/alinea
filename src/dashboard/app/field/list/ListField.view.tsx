@@ -350,6 +350,7 @@ interface ListFieldSeparatorProps {
   readOnly: boolean
   items: Array<ListFieldTypeItem>
   pasted?: ListValue
+  showPicker?: boolean
   onPaste: (row: ListValue, position: 'before' | 'after') => void
   onSelect: (item: ListFieldTypeItem, position: 'before' | 'after') => void
   onMoveRow?: (rowId: string, targetIndex: number) => void
@@ -363,6 +364,7 @@ function ListFieldSeparator({
   readOnly,
   items,
   pasted,
+  showPicker = true,
   onPaste,
   onSelect,
   onMoveRow,
@@ -394,17 +396,19 @@ function ListFieldSeparator({
       data-top={isTop || undefined}
       ref={separatorRef}
     >
-      <ListFieldTypePicker
-        className={styles.ListFieldRow.separatorPicker()}
-        isDisabled={readOnly}
-        items={items}
-        label={`Add ${label} ${position}`}
-        onOpenChange={setIsPickerOpen}
-        pasted={pasted}
-        pasteLabel={pasted ? pasteBlockLabel(pasted, items) : undefined}
-        onPaste={row => onPaste(row, position)}
-        onSelect={item => onSelect(item, position)}
-      />
+      {showPicker && (
+        <ListFieldTypePicker
+          className={styles.ListFieldRow.separatorPicker()}
+          isDisabled={readOnly}
+          items={items}
+          label={`Add ${label} ${position}`}
+          onOpenChange={setIsPickerOpen}
+          pasted={pasted}
+          pasteLabel={pasted ? pasteBlockLabel(pasted, items) : undefined}
+          onPaste={row => onPaste(row, position)}
+          onSelect={item => onSelect(item, position)}
+        />
+      )}
     </div>
   )
 }
@@ -509,21 +513,20 @@ function ListFieldRow({
           <NodeEditor node={row as ReactiveNode<object>} type={type} />
         </SurfaceContent>
       )}
-      {index < rows - 1 && (
-        <ListFieldSeparator
-          items={typeItems}
-          label={label}
-          pasted={pasted && schema[pasted._type] ? pasted : undefined}
-          onMoveRow={onMoveRow}
-          onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
-          onSelect={(item, position) =>
-            addBetweenRow(createRow(item.id, item.type), position)
-          }
-          position="after"
-          readOnly={readOnly}
-          targetIndex={insertIndex(index, 'after')}
-        />
-      )}
+      <ListFieldSeparator
+        items={typeItems}
+        label={label}
+        pasted={pasted && schema[pasted._type] ? pasted : undefined}
+        showPicker={index < rows - 1}
+        onMoveRow={onMoveRow}
+        onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
+        onSelect={(item, position) =>
+          addBetweenRow(createRow(item.id, item.type), position)
+        }
+        position="after"
+        readOnly={readOnly}
+        targetIndex={insertIndex(index, 'after')}
+      />
     </section>
   )
 }
