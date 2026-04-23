@@ -41,6 +41,10 @@
   gap: 8px;
 }
 
+.ListFieldView-createButton {
+  flex-shrink: 0;
+}
+
 .ListFieldView-createRow {
   align-items: center;
   background: var(--alinea-bg-muted);
@@ -57,6 +61,71 @@
   background: var(--alinea-bg-muted);
   font-size: 14px;
   margin: 8px;
+}
+
+.ListFieldTypePicker-trigger {
+  flex-shrink: 0;
+  min-width: 2rem;
+  width: 2rem;
+}
+
+.ListFieldTypePicker-popover {
+  width: 280px;
+  min-width: 280px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.ListFieldTypePicker-dialog {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ListFieldTypePicker-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--alinea-dashboard-surface-border);
+}
+
+.ListFieldTypePicker-list {
+  box-sizing: border-box;
+  max-height: 260px;
+  overflow: auto;
+  padding: 4px;
+  outline: none;
+}
+
+.ListFieldTypePicker-item {
+  cursor: pointer;
+  font-size: var(--alinea-font-size-base);
+  padding: 0.4rem;
+  display: flex;
+  outline: none;
+  align-items: center;
+  border-radius: 4px;
+  gap: 8px;
+  position: relative;
+  color: var(--alinea-fg);
+}
+
+.ListFieldTypePicker-item[data-focus-visible] {
+  outline: none;
+}
+
+.ListFieldTypePicker-item[data-selected] {
+  font-weight: 500;
+  background: var(--alinea-surface-selected);
+  color: var(--alinea-content-accent);
+  position: relative;
+}
+
+.ListFieldTypePicker-item[data-focused] {
+  background: var(--alinea-surface-accent);
+  color: var(--alinea-content-on-accent);
+}
+
+.ListFieldTypePicker-item[data-disabled] {
+  pointer-events: none;
+  opacity: 0.2;
 }
 
 .ListFieldRow {
@@ -100,53 +169,43 @@
   }
 }
 
-.ListFieldRow:not([data-dragging]) .ListFieldRow-separator:is(:hover, [data-open='true']) {
+.ListFieldRow:not([data-dragging]) .ListFieldRow-separator:is(:hover, :focus-within) {
   &::after {
     opacity: 1;
   }
 }
 
-.ListFieldRow-separatorButton {
+.ListFieldRow-separatorPicker {
   position: absolute;
   z-index: 2;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   opacity: 0;
-  color: var(--alinea-surface-accent);
-  background: var(--alinea-bg);
-  border: 1px solid currentColor;
   transition: opacity 140ms ease;
 }
 
+.ListFieldRow-separatorPicker.ListFieldTypePicker-trigger,
+.ListFieldRow-separatorPicker .ListFieldTypePicker-trigger {
+  --alinea-button-bg: var(--alinea-surface-field);
+  --alinea-button-hovered: var(--alinea-surface-field);
+  color: var(--alinea-surface-accent);
+  background-color: var(--alinea-surface-field);
+  border: 1px solid currentColor;
+}
+
+.ListFieldRow-separatorPicker.ListFieldTypePicker-trigger[data-size='icon'][data-appearance='outline'],
+.ListFieldRow-separatorPicker .ListFieldTypePicker-trigger[data-size='icon'][data-appearance='outline'],
+.ListFieldRow-separatorPicker.ListFieldTypePicker-trigger:is(:hover, [data-hovered], [data-focused], [data-pressed]),
+.ListFieldRow-separatorPicker .ListFieldTypePicker-trigger:is(:hover, [data-hovered], [data-focused], [data-pressed]) {
+  background-color: var(--alinea-surface-field);
+}
+
 .ListFieldRow:not([data-dragging])
-  .ListFieldRow-separator:is(:hover, [data-open='true'])
-  .ListFieldRow-separatorButton {
+  .ListFieldRow-separator:is(:hover, :focus-within)
+  .ListFieldRow-separatorPicker,
+.ListFieldRow-separatorPicker[data-open='true'] {
   opacity: 1;
-}
-
-.ListFieldRow-addBetween {
-  box-sizing: border-box;
-  height: 0;
-  min-height: 0;
-  padding: 0 12px;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
-  border-top: 0;
-  border-bottom: 1px solid transparent;
-  transition:
-    height 180ms ease,
-    opacity 160ms ease,
-    border-color 180ms ease,
-    border-bottom-color 180ms ease;
-}
-
-.ListFieldRow-addBetween[data-open='true'] {
-  height: 40px;
-  opacity: 1;
-  pointer-events: auto;
-  border-bottom-color: var(--alinea-dashboard-surface-border);
 }
 
 .ListFieldRow-header {

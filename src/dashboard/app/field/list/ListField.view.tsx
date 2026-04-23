@@ -14,6 +14,7 @@ import {
   IcRoundCheck,
   IcRoundClose,
   IcRoundKeyboardArrowRight,
+  IcRoundMoreVert,
 } from '#/dashboard/icons.js'
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {
@@ -24,15 +25,30 @@ import {
 } from '#/dashboard/store/hooks.js'
 import {ListOptions} from '#/field/list.js'
 import styler from '@alinea/styler'
-import {Button, Icon, Label} from 'alinea/components'
+import {
+  Button,
+  Dialog,
+  DialogTrigger,
+  Icon,
+  Label,
+  Popover,
+  SearchField
+} from 'alinea/components'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
-import {useMemo, useState} from 'react'
+import type {ComponentType} from 'react'
+import {useContext, useMemo, useState} from 'react'
+import {useFilter} from 'react-aria'
+import {
+  Autocomplete,
+  ListBox,
+  ListBoxItem,
+  OverlayTriggerStateContext
+} from 'react-aria-components'
 import {
   Surface,
   SurfaceContent,
-  SurfaceHeader,
-  SurfaceRow
+  SurfaceHeader
 } from '../../ui/Surface.js'
 import css from './ListField.module.css'
 
@@ -49,6 +65,20 @@ const copyAtom = atomWithStorage<ListValue | undefined>(
   undefined
 )
 
+interface ListFieldTypeItem {
+  id: string
+  label: string
+  type: Schema[string]
+}
+
+interface ListFieldPickerOption {
+  id: string
+  label: string
+  icon: ComponentType
+  typeItem?: ListFieldTypeItem
+  pasted?: ListValue
+}
+
 export interface ListFieldViewProps {
   field: CoreListField<ListRow, ListValue, ListOptions<Schema>>
 }
@@ -64,6 +94,15 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const schemaEntries = useMemo(
     () => Object.entries(options.schema),
     [options.schema]
+  )
+  const typeItems = useMemo(
+    () =>
+      schemaEntries.map(([id, type]) => ({
+        id,
+        label: Type.label(type),
+        type
+      })),
+    [schemaEntries]
   )
   const readOnly = Boolean(options.readOnly)
   const hasRows = nodes.length > 0
@@ -100,22 +139,20 @@ export function ListFieldView({field}: ListFieldViewProps) {
           get,
           set,
           centralRow: ReactiveNode<ListValue>,
-          typeName: string,
+          row: ListValue,
           position: 'before' | 'after'
         ) => {
-          const type = options.schema[typeName]
-          if (!type) return
           const centralRowId = get(centralRow.field('_id')) as string
           const current = get(list.value)
           const positionIndex = position === 'after' ? 1 : -1
           const insertAt = current.findIndex(row => row._id === centralRowId)
           if (insertAt === -1) return
           const next = [...current]
-          next.splice(insertAt + positionIndex, 0, createRow(typeName, type))
+          next.splice(insertAt + positionIndex, 0, row)
           set(list.value, next)
         }
       ),
-    [list, options.schema]
+    [list]
   )
   const insertRow = useSetAtom(insertRowAtom)
   const allExpanded = nodes.length > 0 && foldedIds.size === 0
@@ -135,10 +172,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
 
   function addRow(typeName: string, type: Schema[string]) {
     pushRow(createRow(typeName, type))
-  }
-
-  function pasteRow(row: ListValue) {
-    pushRow(cloneRow(row))
   }
 
   const foldAll = hasRows ? (
@@ -164,8 +197,8 @@ export function ListFieldView({field}: ListFieldViewProps) {
           {nodes.map((row, index) => (
             <ListFieldRow
               key={index}
-              addBetweenRow={(typeName, position = 'after') =>
-                insertRow(row, typeName, position)
+              addBetweenRow={(value, position = 'after') =>
+                insertRow(row, value, position)
               }
               copiedRowId={pasted?._id}
               foldedIds={foldedIds}
@@ -177,37 +210,20 @@ export function ListFieldView({field}: ListFieldViewProps) {
               row={row}
               rows={nodes.length}
               schema={options.schema}
+              pasted={pasted}
+              typeItems={typeItems}
             />
           ))}
         </div>
       )}
       {!readOnly && (
         <SurfaceContent className={styles.ListFieldView.createRow()}>
-          <div className={styles.ListFieldView.create()}>
-            {schemaEntries.map(([typeName, type]) => (
-              <Button
-                key={typeName}
-                appearance="outline"
-                intent="secondary"
-                size="small"
-                onPress={() => addRow(typeName, type)}
-              >
-                <Icon aria-hidden icon={getType(type).icon || IcRoundAdd} />
-                {`Add ${Type.label(type)}`}
-              </Button>
-            ))}
-            {pasted && options.schema[pasted._type] && (
-              <Button
-                appearance="outline"
-                intent="secondary"
-                size="small"
-                onPress={() => pasteRow(pasted)}
-              >
-                <Icon aria-hidden icon={IcBaselineContentPasteGo} />
-                Paste block
-              </Button>
-            )}
-          </div>
+          <ListFieldCreateActions
+            items={typeItems}
+            pasted={pasted && options.schema[pasted._type] ? pasted : undefined}
+            onPaste={row => pushRow(cloneRow(row))}
+            onSelect={item => addRow(item.id, item.type)}
+          />
         </SurfaceContent>
       )}
     </Surface>
@@ -238,6 +254,68 @@ function cloneRow(row: ListValue): ListValue {
   }
 }
 
+function pasteBlockLabel(
+  row: ListValue,
+  items: Array<ListFieldTypeItem>
+): string {
+  const item = items.find(item => item.id === row._type)
+  return item ? `Paste ${item.label} block` : 'Paste block'
+}
+
+interface ListFieldCreateActionsProps {
+  items: Array<ListFieldTypeItem>
+  pasted?: ListValue
+  onPaste: (row: ListValue) => void
+  onSelect: (item: ListFieldTypeItem) => void
+}
+
+function ListFieldCreateActions({
+  items,
+  pasted,
+  onPaste,
+  onSelect
+}: ListFieldCreateActionsProps) {
+  const visibleItems = items.slice(0, 5)
+  const hasMenu = items.length > visibleItems.length
+  return (
+    <div className={styles.ListFieldView.create()}>
+      {pasted && (
+        <Button
+          appearance="outline"
+          className={styles.ListFieldView.createButton()}
+          intent="secondary"
+          onPress={() => onPaste(pasted)}
+          size="small"
+        >
+          <Icon aria-hidden icon={IcBaselineContentPasteGo} />
+          {pasteBlockLabel(pasted, items)}
+        </Button>
+      )}
+      {visibleItems.map(item => (
+        <Button
+          appearance="outline"
+          className={styles.ListFieldView.createButton()}
+          intent="secondary"
+          key={item.id}
+          onPress={() => onSelect(item)}
+          size="small"
+        >
+          <Icon aria-hidden icon={getType(item.type).icon || IcRoundAdd} />
+          {`Add ${item.label}`}
+        </Button>
+      ))}
+      {hasMenu && (
+        <ListFieldTypePicker
+          items={items}
+          label="More block types"
+          triggerIcon={IcRoundMoreVert}
+          onSelect={onSelect}
+        />
+      )}
+    </div>
+  )
+}
+
 interface ListFieldRowProps {
   index: number
   list: ReactiveNode<Array<ListValue>>
@@ -245,45 +323,46 @@ interface ListFieldRowProps {
   row: ReactiveNode<ListValue>
   rows: number
   schema: Schema
+  typeItems: Array<ListFieldTypeItem>
+  pasted?: ListValue
   foldedIds: Set<string>
   copiedRowId?: string
   onToggleRow: (rowId: string) => void
   onCopyRow: (rowId: string) => void
-  addBetweenRow: (typeName: string, position?: 'before' | 'after') => void
+  addBetweenRow: (row: ListValue, position?: 'before' | 'after') => void
 }
 
 interface ListFieldSeparatorProps {
   label: string
   position: 'before' | 'after'
-  isOpen: boolean
   readOnly: boolean
-  addBetweenOpen: boolean
-  onPress: (position: 'before' | 'after') => void
+  items: Array<ListFieldTypeItem>
+  pasted?: ListValue
+  onPaste: (row: ListValue, position: 'before' | 'after') => void
+  onSelect: (item: ListFieldTypeItem, position: 'before' | 'after') => void
 }
 
 function ListFieldSeparator({
   label,
   position,
-  isOpen,
   readOnly,
-  addBetweenOpen,
-  onPress
+  items,
+  pasted,
+  onPaste,
+  onSelect
 }: ListFieldSeparatorProps) {
   return (
-    <div
-      className={styles.ListFieldRow.separator()}
-      data-open={isOpen ? 'true' : undefined}
-    >
-      <Button
-        aria-expanded={addBetweenOpen}
-        aria-label={`Add ${label} ${position}`}
-        className={styles.ListFieldRow.separatorButton()}
+    <div className={styles.ListFieldRow.separator()}>
+      <ListFieldTypePicker
+        className={styles.ListFieldRow.separatorPicker()}
         isDisabled={readOnly}
-        onPress={() => onPress(position)}
-        size="icon"
-      >
-        <Icon aria-hidden icon={isOpen ? IcRoundClose : IcRoundAdd} />
-      </Button>
+        items={items}
+        label={`Add ${label} ${position}`}
+        pasted={pasted}
+        pasteLabel={pasted ? pasteBlockLabel(pasted, items) : undefined}
+        onPaste={row => onPaste(row, position)}
+        onSelect={item => onSelect(item, position)}
+      />
     </div>
   )
 }
@@ -295,6 +374,8 @@ function ListFieldRow({
   row,
   rows,
   schema,
+  typeItems,
+  pasted,
   foldedIds,
   copiedRowId,
   onToggleRow,
@@ -306,23 +387,11 @@ function ListFieldRow({
   const moveListRow = useSetAtom(list.move)
   const removeRow = useSetAtom(list.remove)
   const type = schema[typeName]
-  const [addBetweenPosition, setAddBetweenPosition] = useState<
-    'before' | 'after' | null
-  >(null)
   if (!type) return null
 
   const label = Type.label(type)
   const expanded = !foldedIds.has(itemId)
   const isCopied = copiedRowId === itemId
-  const addBetweenOpen = addBetweenPosition !== null
-
-  function openAddBetween(position: 'before' | 'after') {
-    setAddBetweenPosition(current => (current === position ? null : position))
-  }
-
-  function closeAddBetween() {
-    setAddBetweenPosition(null)
-  }
 
   function moveCurrentRow(direction: -1 | 1) {
     moveListRow(index, index + direction)
@@ -340,28 +409,16 @@ function ListFieldRow({
     >
       {index === 0 && (
         <ListFieldSeparator
-          addBetweenOpen={addBetweenOpen}
-          isOpen={addBetweenPosition === 'before'}
+          items={typeItems}
           label={label}
-          onPress={openAddBetween}
+          pasted={pasted && schema[pasted._type] ? pasted : undefined}
+          onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
+          onSelect={(item, position) =>
+            addBetweenRow(createRow(item.id, item.type), position)
+          }
           position="before"
           readOnly={readOnly}
         />
-      )}
-      {addBetweenPosition === 'before' && (
-        <SurfaceRow
-          className={styles.ListFieldRow.addBetween()}
-          data-open="true"
-        >
-          <AddBetweenButton
-            label={label}
-            onPress={() => {
-              addBetweenRow(typeName, 'before')
-              closeAddBetween()
-            }}
-            type={type}
-          />
-        </SurfaceRow>
       )}
       <SurfaceHeader
         className={styles.ListFieldRow.header()}
@@ -429,50 +486,142 @@ function ListFieldRow({
         </SurfaceContent>
       )}
       <ListFieldSeparator
-        addBetweenOpen={addBetweenOpen}
-        isOpen={addBetweenPosition === 'after'}
+        items={typeItems}
         label={label}
-        onPress={openAddBetween}
+        pasted={pasted && schema[pasted._type] ? pasted : undefined}
+        onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
+        onSelect={(item, position) =>
+          addBetweenRow(createRow(item.id, item.type), position)
+        }
         position="after"
         readOnly={readOnly}
       />
-      {addBetweenPosition === 'after' && (
-        <SurfaceRow
-          className={styles.ListFieldRow.addBetween()}
-          data-open="true"
-        >
-          <AddBetweenButton
-            label={label}
-            onPress={() => {
-              addBetweenRow(typeName, 'after')
-              closeAddBetween()
-            }}
-            type={type}
-          />
-        </SurfaceRow>
-      )}
     </section>
   )
 }
 
-interface AddBetweenButtonProps {
+interface ListFieldTypePickerProps {
+  className?: string
+  isDisabled?: boolean
+  items: Array<ListFieldTypeItem>
   label: string
-  onPress: () => void
-  type: Schema[string]
+  pasted?: ListValue
+  pasteLabel?: string
+  triggerIcon?: ComponentType
+  onPaste?: (row: ListValue) => void
+  onSelect: (item: ListFieldTypeItem) => void
 }
 
-function AddBetweenButton({label, onPress, type}: AddBetweenButtonProps) {
+function ListFieldTypePicker({
+  className,
+  isDisabled,
+  items,
+  label,
+  pasted,
+  pasteLabel,
+  triggerIcon = IcRoundAdd,
+  onPaste,
+  onSelect
+}: ListFieldTypePickerProps) {
+  const {contains} = useFilter({sensitivity: 'base'})
+  const pickerItems = useMemo<Array<ListFieldPickerOption>>(() => {
+    const pasteItem =
+      pasted && onPaste
+        ? [
+            {
+              id: 'paste',
+              label: pasteLabel || 'Paste block',
+              icon: IcBaselineContentPasteGo,
+              pasted
+            }
+          ]
+        : []
+    return [
+      ...pasteItem,
+      ...items.map(item => ({
+        id: item.id,
+        label: item.label,
+        icon: getType(item.type).icon || IcRoundAdd,
+        typeItem: item
+      }))
+    ]
+  }, [items, onPaste, pasteLabel, pasted])
+
   return (
-    <div className={styles.ListFieldView.create()}>
+    <DialogTrigger>
       <Button
         appearance="outline"
+        aria-label={label}
+        className={styles.ListFieldTypePicker.trigger(
+          styler.merge({className})
+        )}
+        isDisabled={isDisabled}
         intent="secondary"
-        onPress={onPress}
-        size="small"
+        size="icon"
       >
-        <Icon aria-hidden icon={getType(type).icon || IcRoundAdd} />
-        {`Add ${label}`}
+        <Icon aria-hidden icon={triggerIcon} />
       </Button>
-    </div>
+      <Popover className={styles.ListFieldTypePicker.popover()}>
+        <Dialog className={styles.ListFieldTypePicker.dialog()}>
+          <Autocomplete filter={contains}>
+            <SearchField
+              aria-label="Search types"
+              autoFocus
+              className={styles.ListFieldTypePicker.search()}
+              hasIcon
+              placeholder="Search types..."
+            />
+            <ListBox
+              aria-label={label}
+              className={styles.ListFieldTypePicker.list()}
+              items={pickerItems}
+              renderEmptyState={() => (
+                <div className={styles.ListFieldTypePicker.empty()}>
+                  No matching types
+                </div>
+              )}
+            >
+              {item => (
+                <ListFieldTypePickerAction
+                  key={item.id}
+                  item={item}
+                  onPaste={onPaste}
+                  onSelect={onSelect}
+                />
+              )}
+            </ListBox>
+          </Autocomplete>
+        </Dialog>
+      </Popover>
+    </DialogTrigger>
+  )
+}
+
+interface ListFieldTypePickerActionProps {
+  item: ListFieldPickerOption
+  onPaste?: (row: ListValue) => void
+  onSelect: (item: ListFieldTypeItem) => void
+}
+
+function ListFieldTypePickerAction({
+  item,
+  onPaste,
+  onSelect
+}: ListFieldTypePickerActionProps) {
+  const overlay = useContext(OverlayTriggerStateContext)
+  return (
+    <ListBoxItem
+      className={styles.ListFieldTypePicker.item()}
+      id={item.id}
+      onAction={() => {
+        if (item.pasted) onPaste?.(item.pasted)
+        if (item.typeItem) onSelect(item.typeItem)
+        overlay?.close()
+      }}
+      textValue={item.label}
+    >
+      <Icon aria-hidden icon={item.icon} />
+      <span>{item.label}</span>
+    </ListBoxItem>
   )
 }

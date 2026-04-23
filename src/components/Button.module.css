@@ -254,12 +254,12 @@
     }
 
     &[data-appearance="outline"][data-hovered] {
-      background-color: transparent;
+      background-color: var(--alinea-button-hovered);
       color: var(--alinea-content-primary);
     }
 
     &[data-appearance="outline"][data-pressed] {
-      background-color: transparent;
+      background-color: var(--alinea-button-hovered);
     }
   }
 
