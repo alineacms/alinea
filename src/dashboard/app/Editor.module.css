@@ -78,6 +78,55 @@
   }
 }
 
+.MissingEntry {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.MissingEntry-card {
+  width: min(560px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+  border: 1px solid var(--alinea-border-default);
+  background: var(--alinea-bg);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: var(--alinea-shadow-raised);
+}
+
+.MissingEntry-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--alinea-warning-subtle);
+  color: var(--alinea-warning-subtle-fg);
+}
+
+.MissingEntry-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--alinea-content-primary);
+}
+
+.MissingEntry-message {
+  margin: 0;
+  color: var(--alinea-content-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.MissingEntry-id {
+  font-family: 'JetBrains Mono';
+  font-size: 12px;
+}
+
 .EntryStatus-badge {
   margin-left: 12px;
   padding: 4px 10px;

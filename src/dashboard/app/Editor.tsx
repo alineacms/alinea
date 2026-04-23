@@ -1,4 +1,4 @@
-import {Button} from '#/components.js'
+import {Button, Icon} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Section} from '#/core/Section.js'
@@ -13,6 +13,7 @@ import {
   DashboardSection,
   ReactiveNode
 } from '../store/Dashboard.js'
+import {IcBaselineErrorOutline} from '../icons.js'
 import {
   EditorScope,
   EntryScope,
@@ -42,7 +43,118 @@ export function Editor({dashboard}: EditorProps) {
   const focused = useAtomValue(dashboard.focused)
   if (!focused) return <Rail main />
   if ('entry' in focused) return <EntryEditor entry={focused.entry} />
+  if ('missingEntry' in focused)
+    return (
+      <MissingEntry
+        dashboard={dashboard}
+        entryId={focused.missingEntry}
+        root={focused.root}
+      />
+    )
+  if ('missingRoot' in focused)
+    return (
+      <MissingRoot
+        dashboard={dashboard}
+        rootKey={focused.missingRoot}
+        root={focused.root}
+      />
+    )
   return <RootEditor root={focused.root} />
+}
+
+interface MissingEntryProps {
+  dashboard: Dashboard
+  entryId: string
+  root: DashboardRoot
+}
+
+function MissingEntry({dashboard, entryId, root}: MissingEntryProps) {
+  const rootLabel = useAtomValue(root.label)
+  const route = useAtomValue(dashboard.route)
+  const setRoute = useSetAtom(dashboard.route)
+  return (
+    <NotFoundPanel
+      title="Entry not found"
+      message="The requested entry could not be found. It may have been deleted, moved, or is no longer available."
+      requestedLabel="Requested id"
+      requestedValue={entryId}
+      actionLabel={`Go to ${rootLabel}`}
+      onAction={() =>
+        setRoute({
+          workspace: root.workspace.key,
+          root: root.key,
+          locale: route.locale
+        })
+      }
+    />
+  )
+}
+
+interface MissingRootProps {
+  dashboard: Dashboard
+  rootKey: string
+  root: DashboardRoot
+}
+
+function MissingRoot({dashboard, rootKey, root}: MissingRootProps) {
+  const rootLabel = useAtomValue(root.label)
+  const route = useAtomValue(dashboard.route)
+  const setRoute = useSetAtom(dashboard.route)
+  return (
+    <NotFoundPanel
+      title="Root not found"
+      message="The requested root could not be found in this workspace. It may have been renamed, removed, or moved."
+      requestedLabel="Requested root"
+      requestedValue={rootKey}
+      actionLabel={`Go to ${rootLabel}`}
+      onAction={() =>
+        setRoute({
+          workspace: root.workspace.key,
+          root: root.key,
+          locale: route.locale
+        })
+      }
+    />
+  )
+}
+
+interface NotFoundPanelProps {
+  title: string
+  message: string
+  requestedLabel: string
+  requestedValue: string
+  actionLabel?: string
+  onAction?: () => void
+}
+
+function NotFoundPanel({
+  title,
+  message,
+  requestedLabel,
+  requestedValue,
+  actionLabel,
+  onAction
+}: NotFoundPanelProps) {
+  return (
+    <Rail main>
+      <RailBody className={styles.MissingEntry()}>
+        <div className={styles.MissingEntry.card()}>
+          <div className={styles.MissingEntry.icon()}>
+            <Icon icon={IcBaselineErrorOutline} />
+          </div>
+          <h1 className={styles.MissingEntry.title()}>{title}</h1>
+          <p className={styles.MissingEntry.message()}>{message}</p>
+          <p className={styles.MissingEntry.message()}>
+            {requestedLabel}:{' '}
+            <code className={styles.MissingEntry.id()}>{requestedValue}</code>
+          </p>
+          {onAction && actionLabel && (
+            <Button onPress={onAction}>{actionLabel}</Button>
+          )}
+        </div>
+      </RailBody>
+    </Rail>
+  )
 }
 
 interface RootEditorProps {

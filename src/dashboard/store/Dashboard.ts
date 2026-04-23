@@ -43,7 +43,12 @@ type DashboardTreeSelection = WritableAtom<
   Promise<void>
 >
 
-type FocusedItem = {entry: DashboardEntry} | {root: DashboardRoot} | null
+type FocusedItem =
+  | {entry: DashboardEntry}
+  | {root: DashboardRoot}
+  | {missingEntry: string; root: DashboardRoot}
+  | {missingRoot: string; root: DashboardRoot}
+  | null
 
 const dashboardThemeStorageKey = 'alinea-dashboard-theme'
 
@@ -83,6 +88,13 @@ function isSyncableGraph(
   graph: WriteableGraph
 ): graph is WriteableGraph & SyncableGraph {
   return typeof (graph as Partial<SyncableGraph>).sync === 'function'
+}
+
+function isMissingEntryError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  if (error.message.startsWith('Missing entry ')) return true
+  const cause = error.cause
+  return cause instanceof Error && cause.message.startsWith('Missing entry ')
 }
 
 export class Dashboard {
@@ -176,15 +188,27 @@ export class Dashboard {
   )
 
   focused = atom(async (get): Promise<FocusedItem> => {
-    const root = get(this.selectedRoot)
     const workspace = get(this.selectedWorkspace)
-    const {entry} = get(this.route)
+    const root = get(this.selectedRoot)
+    const {root: routeRoot, entry} = get(this.route)
+    if (workspace && routeRoot && routeRoot !== root)
+      return {
+        missingRoot: routeRoot,
+        root: this.workspace(workspace).root(root)
+      }
     if (entry)
       try {
         const model = await get(this.entries(entry))
         const type = get(model.type)
         if (type.type !== MediaLibrary) return {entry: model}
-      } catch {}
+      } catch (error) {
+        if (workspace && root && isMissingEntryError(error))
+          return {
+            missingEntry: entry,
+            root: this.workspace(workspace).root(root)
+          }
+        throw error
+      }
     if (!workspace) return null
     if (root) return {root: this.workspace(workspace).root(root)}
     return null
@@ -255,10 +279,10 @@ export class Dashboard {
   )
 
   selectedRoot = atom(get => {
-    const {root} = get(this.route)
-    if (root) return root
     const workspace = get(this.currentWorkspace)
     const roots = workspace ? get(workspace.roots) : []
+    const {root} = get(this.route)
+    if (root && roots.includes(root)) return root
     const first = roots[0]
     assert(first, 'No root found for selected workspace')
     return first
