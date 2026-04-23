@@ -56,11 +56,7 @@ function RootEditor({root}: RootEditorProps) {
         <h1 className={styles.RootEditor.title()}>{title}</h1>
       </RailHeader>
 
-      <div className={styles.RootEditor.body()}>
-        <div className={styles.RootEditor.explorer()}>
-          <Explorer explorer={root.explorer} />
-        </div>
-      </div>
+      <Explorer explorer={root.explorer} />
     </Rail>
   )
 }
@@ -109,8 +105,8 @@ function EntryEditor({entry}: EntryEditorProps) {
     </>
   )
 
-  const isFile = type.type === MediaFile
-  if (isFile) {
+  const isMediaFile = type.type === MediaFile
+  if (isMediaFile) {
     editorBody = (
       <RailBody className={styles.EntryEditor.body()}>
         <NodeEditor node={node} type={type.type}>
@@ -153,7 +149,7 @@ function EntryEditor({entry}: EntryEditorProps) {
       </Sheet>
       <EntryScope entry={entry}>
         {mainEditor}
-        {!isUntranslated && !isFile && <EntrySidebar entry={entry} />}
+        {!isUntranslated && !isMediaFile && <EntrySidebar entry={entry} />}
       </EntryScope>
     </>
   )

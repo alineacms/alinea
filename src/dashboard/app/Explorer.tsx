@@ -11,6 +11,7 @@ import {DashboardExplorer} from '../store.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {LocationBreadcrumbs} from './LocationBreadcrumbs.js'
+import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -73,16 +74,19 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
 export function Explorer({explorer}: ExplorerProps) {
   const [location, setLocation] = useAtom(explorer.location)
   return (
-    <div className={styles.Explorer()}>
-      <LocationBreadcrumbs location={location} setLocation={setLocation} />
-      <div className={styles.Explorer.toolbar()}>
-        <ExplorerSearch explorer={explorer} />
-        <ExplorerToolbar explorer={explorer} />
-      </div>
-
-      <div className={styles.Explorer.viewport()}>
-        <ExplorerList explorer={explorer} />
-      </div>
-    </div>
+    <>
+      <RailHeader>
+        <LocationBreadcrumbs location={location} setLocation={setLocation} />
+        <div className={styles.Explorer.toolbar()}>
+          <ExplorerSearch explorer={explorer} />
+          <ExplorerToolbar explorer={explorer} />
+        </div>
+      </RailHeader>
+      <RailBody>
+        <div className={styles.Explorer.viewport()}>
+          <ExplorerList explorer={explorer} />
+        </div>
+      </RailBody>
+    </>
   )
 }

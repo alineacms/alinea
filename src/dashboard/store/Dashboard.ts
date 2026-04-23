@@ -8,7 +8,7 @@ import {Field, FieldOptions} from '#/core/Field.js'
 import type {Order} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Section} from '#/core/Section.js'
 import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
 import {Type} from '#/core/Type.js'
@@ -172,7 +172,9 @@ export class Dashboard {
     const {entry} = get(this.route)
     if (entry)
       try {
-        return {entry: await get(this.entries(entry))}
+        const model = await get(this.entries(entry))
+        const type = get(model.type)
+        if (type.type !== MediaLibrary) return {entry: model}
       } catch {}
     if (!workspace) return null
     if (root) return {root: this.workspace(workspace).root(root)}
@@ -243,7 +245,7 @@ export class Dashboard {
     const workspace = get(this.currentWorkspace)
     const roots = workspace ? get(workspace.roots) : []
     const first = roots[0]
-    if (!first) throw new Error('No root found in workspace')
+    if (!first) return null
     return first
   })
 
@@ -274,6 +276,7 @@ export class Dashboard {
   currentRoot = atom(get => {
     const workspace = get(this.currentWorkspace)
     const rootKey = get(this.selectedRoot)
+    assert(rootKey, 'No root selected')
     return workspace ? workspace.root(rootKey) : null
   })
 
@@ -1278,11 +1281,20 @@ export class DashboardRoot {
     public key: string
   ) {
     const parentId = atom<string>()
+    const selectedParent = atom(get => {
+      const route = get(this.workspace.dashboard.route)
+      if (route.entry) return route.entry
+      return get(parentId)
+    })
     this.explorer = new DashboardExplorer(
       workspace.dashboard,
       atom(
         get => {
-          return {workspace: workspace.key, root: key, parentId: get(parentId)}
+          return {
+            workspace: workspace.key,
+            root: key,
+            parentId: get(selectedParent)
+          }
         },
         (get, set, update: SetStateAction<ExplorerLocation>) => {
           const next =

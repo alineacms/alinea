@@ -45,7 +45,7 @@
 
 .SidebarTree-tree :global(.alinea-rac-Tree) {
   min-width: 0;
-  padding: 8px !important;
+  padding: 12px !important;
 
   /* TODO */
   > div {
@@ -77,7 +77,7 @@
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   height: 100%;
   border-right: solid 1px var(--alinea-border);
   flex-shrink: 0;
