@@ -187,6 +187,14 @@ function EmptyResults({root}: EmptyResultsProps) {
   )
 }
 
+function ExplorerListLoading() {
+  return (
+    <div className={styles.ExplorerList.loading()}>
+      <ProgressCircle isIndeterminate aria-label="Loading entries" />
+    </div>
+  )
+}
+
 export interface ExplorerListProps {
   explorer: DashboardExplorer
 }
@@ -218,9 +226,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
   })
   return (
     <div className={styles.ExplorerList()}>
-      <Suspense
-        fallback={<ProgressCircle isIndeterminate aria-label="Loading..." />}
-      >
+      <Suspense fallback={<ExplorerListLoading />}>
         {isPending && (
           <div className={styles.ExplorerList.pending()}>
             <ProgressCircle isIndeterminate aria-label="Pending..." />

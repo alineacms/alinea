@@ -3,12 +3,16 @@ import {getType} from '#/core/Internal.js'
 import {ExplorerLocation} from '#/dashboard/store/Dashboard.js'
 import {useDashboard} from '#/dashboard/store/hooks.js'
 import {atom, useAtom, useAtomValue} from 'jotai'
-import {useState} from 'react'
+import {useState, type FormEvent} from 'react'
 import {LocationBreadcrumbs} from '../LocationBreadcrumbs.js'
 import {
-  DashboardModalContent,
+  DashboardModalCloseButton,
   DashboardModalDialog,
-  DashboardModalFooter
+  DashboardModalForm,
+  DashboardModalFormBody,
+  DashboardModalFormFooter,
+  DashboardModalFormHeader,
+  DashboardModalTitle
 } from '../ui/DashboardModal.js'
 
 const titleAtom = atom('')
@@ -25,10 +29,19 @@ export function CreateEntry() {
   })
   const [title, setTitle] = useAtom(titleAtom)
   const {schema} = useAtomValue(dashboard.config)
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+  }
+
   return (
-    <>
-      <DashboardModalDialog label="Create entry">
-        <DashboardModalContent>
+    <DashboardModalDialog aria-label="Create entry" variant="explorer">
+      <DashboardModalForm onSubmit={onSubmit}>
+        <DashboardModalFormHeader>
+          <DashboardModalTitle>Create entry</DashboardModalTitle>
+          <DashboardModalCloseButton />
+        </DashboardModalFormHeader>
+        <DashboardModalFormBody>
           <LocationBreadcrumbs location={location} setLocation={setLocation} />
 
           <Select label="Type">
@@ -42,12 +55,12 @@ export function CreateEntry() {
             })}
           </Select>
           <TextField value={title} onChange={setTitle} label="Title" />
-        </DashboardModalContent>
+        </DashboardModalFormBody>
 
-        <DashboardModalFooter>
-          <Button>Create entry</Button>
-        </DashboardModalFooter>
-      </DashboardModalDialog>
-    </>
+        <DashboardModalFormFooter>
+          <Button type="submit">Create entry</Button>
+        </DashboardModalFormFooter>
+      </DashboardModalForm>
+    </DashboardModalDialog>
   )
 }

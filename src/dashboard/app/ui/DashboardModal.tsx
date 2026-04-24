@@ -13,6 +13,7 @@ import {
   type ModalOverlayProps
 } from 'react-aria-components'
 import {IcRoundClose} from '../../icons.js'
+import {RailBody, RailFooter, RailHeader} from './Rail.js'
 import css from './DashboardModal.module.css'
 
 const styles = styler(css)
@@ -51,9 +52,7 @@ export function DashboardModalDialog({
     <Dialog {...props} className={styles.DashboardModalDialog(variant)}>
       {label !== undefined && (
         <header className={styles.DashboardModalDialog.header()}>
-          <h2 slot="title" style={{margin: 0}}>
-            {label}
-          </h2>
+          <DashboardModalTitle>{label}</DashboardModalTitle>
           <DashboardModalCloseButton />
         </header>
       )}
@@ -80,6 +79,14 @@ export function DashboardModalFooter({children}: PropsWithChildren) {
   )
 }
 
+export function DashboardModalTitle({children}: PropsWithChildren) {
+  return (
+    <h2 slot="title" className={styles.DashboardModalTitle()}>
+      {children}
+    </h2>
+  )
+}
+
 export function useDashboardModal() {
   const ctx = useContext(OverlayTriggerStateContext)
   if (!ctx)
@@ -97,6 +104,7 @@ export function DashboardModalCloseButton() {
       appearance="outline"
       className={styles.DashboardModalCloseButton()}
       size="icon"
+      type="button"
       onPress={close}
     >
       <IcRoundClose data-slot="icon" />
@@ -119,4 +127,91 @@ export function DashboardModalExplorer(
   )
 }
 
-export const dashboardModalStyles = styles
+export interface DashboardModalFormProps extends ComponentProps<'form'> {}
+
+export function DashboardModalForm(props: DashboardModalFormProps) {
+  return (
+    <form
+      {...props}
+      className={styles.DashboardModalForm(styler.merge(props))}
+    />
+  )
+}
+
+export interface DashboardModalExplorerFooterProps
+  extends ComponentProps<typeof RailHeader> {}
+
+export function DashboardModalExplorerFooter(
+  props: DashboardModalExplorerFooterProps
+) {
+  return (
+    <RailHeader
+      {...props}
+      className={styles.DashboardModalExplorerFooter(styler.merge(props))}
+    />
+  )
+}
+
+export interface DashboardModalExplorerSelectionProps
+  extends ComponentProps<'span'> {}
+
+export function DashboardModalExplorerSelection(
+  props: DashboardModalExplorerSelectionProps
+) {
+  return (
+    <span
+      {...props}
+      className={styles.DashboardModalExplorerSelection(styler.merge(props))}
+    />
+  )
+}
+
+export interface DashboardModalExplorerActionsProps
+  extends ComponentProps<'div'> {}
+
+export function DashboardModalExplorerActions(
+  props: DashboardModalExplorerActionsProps
+) {
+  return (
+    <div
+      {...props}
+      className={styles.DashboardModalExplorerActions(styler.merge(props))}
+    />
+  )
+}
+
+export interface DashboardModalFormHeaderProps
+  extends ComponentProps<typeof RailHeader> {}
+
+export function DashboardModalFormHeader(props: DashboardModalFormHeaderProps) {
+  return (
+    <RailHeader
+      {...props}
+      className={styles.DashboardModalFormHeader(styler.merge(props))}
+    />
+  )
+}
+
+export interface DashboardModalFormBodyProps
+  extends ComponentProps<typeof RailBody> {}
+
+export function DashboardModalFormBody(props: DashboardModalFormBodyProps) {
+  return (
+    <RailBody
+      {...props}
+      className={styles.DashboardModalFormBody(styler.merge(props))}
+    />
+  )
+}
+
+export interface DashboardModalFormFooterProps
+  extends ComponentProps<typeof RailFooter> {}
+
+export function DashboardModalFormFooter(props: DashboardModalFormFooterProps) {
+  return (
+    <RailFooter
+      {...props}
+      className={styles.DashboardModalFormFooter(styler.merge(props))}
+    />
+  )
+}

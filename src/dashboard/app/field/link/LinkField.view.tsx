@@ -37,7 +37,10 @@ import {
   useNodes
 } from '../../../store.js'
 import {NodeEditor} from '../../Editor.js'
-import {ExternalLinkPicker} from '../../ExternalLinkPicker.js'
+import {
+  ExternalLinkPicker,
+  type ExternalLinkValue
+} from '../../ExternalLinkPicker.js'
 import {ImagePicker} from '../../ImagePicker.js'
 import {LinkPicker} from '../../LinkPicker.js'
 import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
@@ -236,13 +239,14 @@ function createEntryLink(
 
 function createUrlLink(
   value: {url: string; title: string; target: string},
-  picker: Picker<LinkFieldRow>
+  picker: Picker<LinkFieldRow>,
+  current?: LinkFieldRow
 ) {
   return {
-    ...initialFields(picker),
-    _id: createId(),
+    ...(current ?? initialFields(picker)),
+    _id: current?._id ?? createId(),
     _type: 'url',
-    _index: '',
+    _index: current?._index ?? '',
     _url: value.url,
     _title: value.title,
     _target: value.target
@@ -272,8 +276,10 @@ function LinkPickerAction({
           {children}
         </Button>
         <ExternalLinkPicker
+          initialValue={externalLinkValue(value)}
           selectionMode="single"
-          onConfirm={link => onPick(createUrlLink(link, picker))}
+          submitLabel={value ? 'Save link' : undefined}
+          onConfirm={link => onPick(createUrlLink(link, picker, value))}
         />
       </DialogTrigger>
     )
@@ -312,6 +318,15 @@ function LinkPickerAction({
       <LinkPicker {...pickerProps} />
     </DialogTrigger>
   )
+}
+
+function externalLinkValue(value?: LinkFieldRow): ExternalLinkValue | undefined {
+  if (value?.[Reference.type] !== 'url') return undefined
+  return {
+    url: value._url,
+    title: value._title,
+    target: value._target
+  }
 }
 
 function initialSelection(

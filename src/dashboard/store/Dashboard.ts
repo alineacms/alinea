@@ -1485,18 +1485,20 @@ export class DashboardRoot {
     public workspace: DashboardWorkspace,
     public key: string
   ) {
-    const parentId = atom<string>()
+    const parentId = atom<string | null | undefined>(undefined)
     const selectedParent = atom(get => {
       const route = get(this.workspace.dashboard.route)
       const selectedWorkspace = get(this.workspace.dashboard.selectedWorkspace)
       const selectedRoot = get(this.workspace.dashboard.selectedRoot)
+      const selected = get(parentId)
+      if (selected !== undefined) return selected ?? undefined
       if (
         route.entry &&
         selectedWorkspace === workspace.key &&
         selectedRoot === key
       )
         return route.entry
-      return get(parentId)
+      return selected
     })
     this.explorer = new DashboardExplorer(
       workspace.dashboard,
@@ -1522,7 +1524,7 @@ export class DashboardRoot {
             const route = get(workspace.dashboard.route)
             const selectedWorkspace = get(workspace.dashboard.selectedWorkspace)
             const selectedRoot = get(workspace.dashboard.selectedRoot)
-            set(parentId, next.parentId)
+            set(parentId, next.parentId ?? null)
             if (
               route.entry &&
               selectedWorkspace === workspace.key &&
@@ -1550,12 +1552,15 @@ export class DashboardRoot {
               ...location,
               parentId: entry.id
             }))
-          else
+          else {
+            const entryParentId = get(entry.parentId) ?? undefined
+            set(parentId, entryParentId ?? null)
             set(this.workspace.dashboard.route, {
               workspace: this.workspace.key,
               root: this.key,
               entry: entry.id
             })
+          }
         })
       }
     )

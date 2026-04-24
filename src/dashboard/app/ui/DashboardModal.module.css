@@ -89,6 +89,13 @@
   padding: 0 22px;
 }
 
+.DashboardModalTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
 .DashboardModalSeparator {
   border-top: 1px solid var(--alinea-dashboard-surface-border);
 }
@@ -100,7 +107,11 @@
   flex-direction: column;
 }
 
-.DashboardModalExplorer-footer {
+.DashboardModalForm {
+  display: contents;
+}
+
+.DashboardModalExplorerFooter {
   justify-content: space-between;
   gap: 12px;
   padding: 0 12px;
@@ -108,32 +119,32 @@
   border-bottom: 0;
 }
 
-.DashboardModalExplorer-selection {
+.DashboardModalExplorerSelection {
   color: var(--alinea-fg-muted);
   font-size: 13px;
   line-height: 20px;
 }
 
-.DashboardModalExplorer-actions {
+.DashboardModalExplorerActions {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-left: auto;
 }
 
-.DashboardModalForm-header {
+.DashboardModalFormHeader {
   justify-content: space-between;
   padding-right: 12px;
 }
 
-.DashboardModalForm-body {
+.DashboardModalFormBody {
   gap: 16px;
   padding: 22px;
   overflow: visible;
 }
 
-.DashboardModalForm-footer {
-  justify-content: space-between;
+.DashboardModalFormFooter {
+  justify-content: flex-end;
   gap: 8px;
   padding: 0 12px;
 }

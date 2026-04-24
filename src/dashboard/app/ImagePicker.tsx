@@ -10,10 +10,11 @@ import {
   DashboardModalCloseButton,
   DashboardModalDialog,
   DashboardModalExplorer,
-  dashboardModalStyles,
+  DashboardModalExplorerActions,
+  DashboardModalExplorerFooter,
+  DashboardModalExplorerSelection,
   useDashboardModal
 } from './ui/DashboardModal.js'
-import {RailHeader} from './ui/Rail.js'
 
 export interface ImagePickerOptions extends ExplorerOptions {
   label?: ReactNode
@@ -70,21 +71,17 @@ function ExplorerModal({options}: ExplorerModalProps) {
           explorer={explorer}
         />
         <ExplorerBody explorer={explorer} />
-        <RailHeader className={dashboardModalStyles.DashboardModalExplorer.footer()}>
-          <span
-            className={dashboardModalStyles.DashboardModalExplorer.selection()}
-          >
+        <DashboardModalExplorerFooter>
+          <DashboardModalExplorerSelection>
             {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-          </span>
-          <div
-            className={dashboardModalStyles.DashboardModalExplorer.actions()}
-          >
+          </DashboardModalExplorerSelection>
+          <DashboardModalExplorerActions>
             <Button intent="secondary" onPress={modal.close}>
               Cancel
             </Button>
             <Button onPress={onSubmit}>Pick</Button>
-          </div>
-        </RailHeader>
+          </DashboardModalExplorerActions>
+        </DashboardModalExplorerFooter>
       </DashboardModalExplorer>
     </DashboardModalDialog>
   )
