@@ -5,7 +5,11 @@ import {useDashboard} from '#/dashboard/store/hooks.js'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {useState} from 'react'
 import {LocationBreadcrumbs} from '../LocationBreadcrumbs.js'
-import {SheetContent, SheetDialog, SheetFooter} from '../ui/Sheet.js'
+import {
+  DashboardModalContent,
+  DashboardModalDialog,
+  DashboardModalFooter
+} from '../ui/DashboardModal.js'
 
 const titleAtom = atom('')
 
@@ -23,8 +27,8 @@ export function CreateEntry() {
   const {schema} = useAtomValue(dashboard.config)
   return (
     <>
-      <SheetDialog label="Create entry">
-        <SheetContent>
+      <DashboardModalDialog label="Create entry">
+        <DashboardModalContent>
           <LocationBreadcrumbs location={location} setLocation={setLocation} />
 
           <Select label="Type">
@@ -38,12 +42,12 @@ export function CreateEntry() {
             })}
           </Select>
           <TextField value={title} onChange={setTitle} label="Title" />
-        </SheetContent>
+        </DashboardModalContent>
 
-        <SheetFooter>
+        <DashboardModalFooter>
           <Button>Create entry</Button>
-        </SheetFooter>
-      </SheetDialog>
+        </DashboardModalFooter>
+      </DashboardModalDialog>
     </>
   )
 }

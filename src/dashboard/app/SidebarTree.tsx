@@ -33,7 +33,7 @@ import {
 import {LocaleMenu} from './LocaleMenu.js'
 import {CreateEntry} from './modals/CreateEntry.js'
 import css from './SidebarTree.module.css'
-import {Sheet} from './ui/Sheet.js'
+import {DashboardModal} from './ui/DashboardModal.js'
 import {SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 
 const styles = styler(css)
@@ -76,9 +76,9 @@ const SidebarParent = memo(function SidebarParent({
         <LocaleMenu root={root} />
         <DialogTrigger>
           <Button size="icon" icon={IcRoundAdd} intent="primary" />
-          <Sheet>
+          <DashboardModal>
             <CreateEntry />
-          </Sheet>
+          </DashboardModal>
         </DialogTrigger>
       </div>
     </SidebarHeader>

@@ -1,26 +1,38 @@
 // oxlint-disable jsx_a11y/no-autofocus
-import {Button, Modal} from '#/components.js'
+import {Button} from '#/components.js'
 import {Workspace} from '#/core/Workspace.js'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {startTransition, useState} from 'react'
+import {startTransition, useState, type ReactNode} from 'react'
 import {ExplorerOptions, useDashboard} from '../store.js'
-import {Explorer} from './Explorer.js'
-import {SheetContent, SheetDialog, SheetFooter, useSheet} from './ui/Sheet.js'
+import {ExplorerBody, ExplorerHeader} from './Explorer.js'
+import {
+  DashboardModal,
+  DashboardModalCloseButton,
+  DashboardModalDialog,
+  DashboardModalExplorer,
+  dashboardModalStyles,
+  useDashboardModal
+} from './ui/DashboardModal.js'
+import {RailHeader} from './ui/Rail.js'
 
-export function ImagePicker(options: ExplorerOptions) {
+export interface ImagePickerOptions extends ExplorerOptions {
+  label?: ReactNode
+}
+
+export function ImagePicker(options: ImagePickerOptions) {
   return (
-    <Modal isDismissable>
-      <ExplorerSheet options={options} />
-    </Modal>
+    <DashboardModal size="explorer">
+      <ExplorerModal options={options} />
+    </DashboardModal>
   )
 }
 
-interface ExplorerSheetProps {
-  options: ExplorerOptions
+interface ExplorerModalProps {
+  options: ImagePickerOptions
 }
 
-function ExplorerSheet({options}: ExplorerSheetProps) {
-  const sheet = useSheet()
+function ExplorerModal({options}: ExplorerModalProps) {
+  const modal = useDashboardModal()
   const dashboard = useDashboard()
   const workspace = useAtomValue(dashboard.selectedWorkspace)
   const selectedRoot = useAtomValue(dashboard.selectedRoot)
@@ -33,25 +45,42 @@ function ExplorerSheet({options}: ExplorerSheetProps) {
     dashboard.explore({workspace, root: mediaRoot}, options)
   )
   const onConfirm = useSetAtom(explorer.onConfirm)
+  const selection = useAtomValue(explorer.selection)
+  const selectedItems =
+    selection === 'all' ? 0 : selection.size
 
   function onSubmit() {
     startTransition(() => {
       onConfirm()
-      sheet.close()
+      modal.close()
     })
   }
 
   return (
-    <SheetDialog label="Pick an image">
-      <SheetContent>
-        <Explorer explorer={explorer} />
-      </SheetContent>
-      <SheetFooter>
-        <Button intent="secondary" onPress={sheet.close}>
-          Cancel
-        </Button>
-        <Button onPress={onSubmit}>Pick</Button>
-      </SheetFooter>
-    </SheetDialog>
+    <DashboardModalDialog
+      aria-label={String(options.label ?? 'Pick media')}
+      variant="explorer"
+    >
+      <DashboardModalExplorer>
+        <ExplorerHeader
+          controls={<DashboardModalCloseButton />}
+          explorer={explorer}
+        />
+        <ExplorerBody explorer={explorer} />
+        <RailHeader className={dashboardModalStyles.DashboardModalExplorer.footer()}>
+          <span>
+            {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
+          </span>
+          <div
+            className={dashboardModalStyles.DashboardModalExplorer.actions()}
+          >
+            <Button intent="secondary" onPress={modal.close}>
+              Cancel
+            </Button>
+            <Button onPress={onSubmit}>Pick</Button>
+          </div>
+        </RailHeader>
+      </DashboardModalExplorer>
+    </DashboardModalDialog>
   )
 }

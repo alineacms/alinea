@@ -555,7 +555,14 @@ export class DashboardExplorer {
   }
 
   onAction = atom(null, (get, set, entry: DashboardEntry) => {
-    if (this.#options.onAction) set(this.#options.onAction, entry)
+    if (this.#options.onAction) {
+      set(this.#options.onAction, entry)
+      return
+    }
+    if (get(entry.hasChildren)) {
+      const location = get(this.location)
+      set(this.location, {...location, parentId: entry.id})
+    }
   })
 
   onConfirm = atom(null, (get, set) => {

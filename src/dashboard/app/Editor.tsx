@@ -30,8 +30,13 @@ import {FileEditor} from './editor/FileEditor.js'
 import {EntryHeader} from './EntryHeader.js'
 import {EntrySidebar} from './EntrySidebar.js'
 import {Explorer} from './Explorer.js'
+import {
+  DashboardModal,
+  DashboardModalContent,
+  DashboardModalDialog,
+  DashboardModalFooter
+} from './ui/DashboardModal.js'
 import {Rail, RailBody, RailFooter, RailHeader} from './ui/Rail.js'
-import {Sheet, SheetContent, SheetDialog, SheetFooter} from './ui/Sheet.js'
 
 const styles = styler(css)
 
@@ -271,22 +276,24 @@ function EntryEditor({entry}: EntryEditorProps) {
 
   return (
     <>
-      <Sheet
+      <DashboardModal
         isOpen={Boolean(routeBlock)}
         onOpenChange={open => !open && setRouteBlock(null)}
       >
         {routeBlock && (
-          <SheetDialog label="Confirm navigation">
-            <SheetContent>This entry has unsaved changes</SheetContent>
-            <SheetFooter>
+          <DashboardModalDialog label="Confirm navigation">
+            <DashboardModalContent>
+              This entry has unsaved changes
+            </DashboardModalContent>
+            <DashboardModalFooter>
               <Button intent="warning" onPress={discardAndConfirm}>
                 Discard my changes
               </Button>
               <Button onPress={saveAndConfirm}>Save as draft</Button>
-            </SheetFooter>
-          </SheetDialog>
+            </DashboardModalFooter>
+          </DashboardModalDialog>
         )}
-      </Sheet>
+      </DashboardModal>
       <EntryScope entry={entry}>
         {mainEditor}
         {!isUntranslated && !isMediaFile && <EntrySidebar entry={entry} />}

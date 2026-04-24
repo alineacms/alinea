@@ -11,6 +11,7 @@ import {
   type GridLayoutOptions,
   GridList,
   GridListItem,
+  type Key,
   ListLayout,
   type ListLayoutOptions,
   useDragAndDrop,
@@ -59,20 +60,12 @@ const ExplorerItem = memo(function ExplorerItem({
   const icon = useAtomValue(entry.icon)
   const type = useAtomValue(entry.type)
   const hasChildren = useAtomValue(entry.hasChildren)
-  const onAction = useSetAtom(explorer.onAction)
   const info = useAtomValue(unwrap(entry.fileInfo))
   return (
     <GridListItem
       id={entry.id}
       textValue={label}
       className={styles.ExplorerItem()}
-      onAction={
-        // This is not ideal, but I can't see how to cleanly make the setter
-        // optional
-        explorer.selectionBehavior === 'replace'
-          ? onAction.bind(null, entry)
-          : undefined
-      }
     >
       <Button
         slot="drag"
@@ -152,9 +145,15 @@ export function ExplorerList({explorer}: ExplorerListProps) {
   const view = useAtomValue(explorer.view)
   const root = useAtomValue(explorer.root)
   assert(root, 'ExplorerList requires a root')
-  const [isPending, items] = useAtomValue(explorer.items)
+  const [isPending, loadedItems] = useAtomValue(explorer.items)
+  const items = loadedItems ?? []
   const getItems = useSetAtom(explorer.getItems)
   const [selected, setSelected] = useAtom(explorer.selection)
+  const onAction = useSetAtom(explorer.onAction)
+  function onItemAction(key: Key) {
+    const entry = items.find(item => item.id === String(key))
+    if (entry) onAction(entry)
+  }
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     getItems,
     renderDragPreview(items) {
@@ -190,6 +189,11 @@ export function ExplorerList({explorer}: ExplorerListProps) {
                 dragAndDropHooks={dragAndDropHooks}
                 selectedKeys={selected}
                 onSelectionChange={setSelected}
+                onAction={
+                  explorer.selectionBehavior === 'replace'
+                    ? onItemAction
+                    : undefined
+                }
                 renderEmptyState={() => <EmptyResults root={root} />}
                 style={{display: 'block', width: '100%', height: '100%'}}
               >
@@ -210,6 +214,11 @@ export function ExplorerList({explorer}: ExplorerListProps) {
                 dragAndDropHooks={dragAndDropHooks}
                 selectedKeys={selected}
                 onSelectionChange={setSelected}
+                onAction={
+                  explorer.selectionBehavior === 'replace'
+                    ? onItemAction
+                    : undefined
+                }
                 renderEmptyState={() => <EmptyResults root={root} />}
                 style={{display: 'block', width: '100%', height: '100%'}}
               >

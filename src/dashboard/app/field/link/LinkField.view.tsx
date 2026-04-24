@@ -278,25 +278,38 @@ function LinkPickerAction({
       </DialogTrigger>
     )
   }
-  const Picker = type === 'file' || type === 'image' ? ImagePicker : LinkPicker
+  const pickerProps = {
+    selectionMode: picker.handlesMultiple ? 'multiple' : 'single',
+    selectionBehavior: 'replace',
+    initialSelection: initialSelection(value, selection),
+    onConfirm(selection: Array<string>) {
+      const links = selection.map(entryId =>
+        createEntryLink(type, entryId, picker)
+      )
+      if (onPickMany) return onPickMany(links)
+      const [link] = links
+      if (link) onPick(link)
+    }
+  } as const
+  if (type === 'file' || type === 'image') {
+    return (
+      <DialogTrigger>
+        <Button appearance="outline" className={className} size={buttonSize}>
+          {children}
+        </Button>
+        <ImagePicker
+          {...pickerProps}
+          label={type === 'file' ? 'Pick a file' : 'Pick an image'}
+        />
+      </DialogTrigger>
+    )
+  }
   return (
     <DialogTrigger>
       <Button appearance="outline" className={className} size={buttonSize}>
         {children}
       </Button>
-      <Picker
-        selectionMode={picker.handlesMultiple ? 'multiple' : 'single'}
-        selectionBehavior={picker.handlesMultiple ? 'toggle' : 'replace'}
-        initialSelection={initialSelection(value, selection)}
-        onConfirm={selection => {
-          const links = selection.map(entryId =>
-            createEntryLink(type, entryId, picker)
-          )
-          if (onPickMany) return onPickMany(links)
-          const [link] = links
-          if (link) onPick(link)
-        }}
-      />
+      <LinkPicker {...pickerProps} />
     </DialogTrigger>
   )
 }
@@ -371,7 +384,8 @@ interface MultipleLinkCreateActionsProps {
 function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
   const options = useFieldOptions(field)
   const [value, setValue] = useField(field)
-  const showCreate = options.max ? value.length < options.max : true
+  const links = value ?? []
+  const showCreate = options.max ? links.length < options.max : true
   if (options.readOnly) return null
   if (!showCreate) return null
   return (
@@ -381,20 +395,20 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
           className={styles.MultipleLinksFieldView.createButton()}
           key={type}
           onPick={link => {
-            setValue(links => [...links, link])
+            setValue(links => [...(links ?? []), link])
           }}
           onPickMany={picked => {
             if (picker.handlesMultiple) {
               setValue(links => [
-                ...links.filter(link => link._type !== type),
+                ...(links ?? []).filter(link => link._type !== type),
                 ...picked
               ])
             } else {
-              setValue(links => [...links, ...picked])
+              setValue(links => [...(links ?? []), ...picked])
             }
           }}
           picker={picker as Picker<LinkFieldRow>}
-          selection={value.filter(row => row._type === type)}
+          selection={links.filter(row => row._type === type)}
           type={type as PickerType}
         >
           <Icon aria-hidden icon={getLinkIcon(type)} />
@@ -722,7 +736,8 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const [value] = useField(field)
   const options = useFieldOptions(field)
   const list = useFieldNode<Array<LinkFieldRow>>(field)
-  const nodes = useNodes(list)
+  const links = value ?? []
+  const nodes = useNodes(list) ?? []
   const moveRowAtom = useMemo(
     () =>
       atom(null, (get, set, rowId: string, targetIndex: number) => {
@@ -749,12 +764,12 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
               <MultipleLinkRow
                 field={field}
                 index={index}
-                key={value[index]?._id || index}
+                key={links[index]?._id || index}
                 list={list}
                 node={node}
                 onMoveRow={moveRow}
                 rows={nodes.length}
-                value={value[index]}
+                value={links[index]}
               />
             ))}
           </div>

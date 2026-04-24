@@ -1,18 +1,22 @@
+import {Button, DialogTrigger} from '#/components.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {Field} from '#/core/Field.js'
-import {Type, type, type Type as TypeInstance} from '#/core/Type.js'
-import {localUser} from '#/core/User.js'
 import {Reference} from '#/core/Reference.js'
 import {ListRow} from '#/core/shape/ListShape.js'
+import {Type, type, type Type as TypeInstance} from '#/core/Type.js'
+import {localUser} from '#/core/User.js'
 import {image, link, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
-import {cms, db} from '../../../fixture/cms.ts?alinea'
 import {text} from '#/field/text.js'
 import '#/theme.css'
 import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
+import {cms, db} from '../../../fixture/cms.ts?alinea'
 import {Dashboard, DashboardEditor, ReactiveNode} from '../../../store.js'
 import {DashboardScopeInternal, EditorScope} from '../../../store/hooks.js'
+import {ExternalLinkPicker} from '../../ExternalLinkPicker.js'
+import {ImagePicker} from '../../ImagePicker.js'
+import {LinkPicker} from '../../LinkPicker.js'
 import {views} from '../views.js'
 import {
   MultipleLinksFieldView,
@@ -94,6 +98,10 @@ const storyStyle: CSSProperties = {
   gap: 24
 }
 
+const pickerStoryStyle: CSSProperties = {
+  padding: 24
+}
+
 const fixtureConnection: LocalConnection = {
   mutate(mutations) {
     return db.mutate(mutations)
@@ -165,6 +173,98 @@ export function Example() {
       </EditorScope>
     </DashboardScopeInternal>
   )
+}
+
+interface ExternalPickerStoryProps {
+  selectionMode: 'single' | 'multiple'
+}
+
+function ExternalPickerStory({selectionMode}: ExternalPickerStoryProps) {
+  return (
+    <div style={pickerStoryStyle}>
+      <DialogTrigger defaultOpen>
+        <Button>
+          {selectionMode === 'multiple'
+            ? 'Pick external links'
+            : 'Pick external link'}
+        </Button>
+        <ExternalLinkPicker
+          selectionMode={selectionMode}
+          onConfirm={value => console.info(value)}
+        />
+      </DialogTrigger>
+    </div>
+  )
+}
+
+interface ExplorerPickerStoryProps {
+  label: string
+  multiple?: boolean
+  picker: 'entry' | 'file' | 'image'
+}
+
+function ExplorerPickerStory({
+  label,
+  multiple = false,
+  picker
+}: ExplorerPickerStoryProps) {
+  const selectionMode = multiple ? 'multiple' : 'single'
+  const selectionBehavior = 'replace'
+  return (
+    <DashboardScopeInternal dashboard={dashboard}>
+      <div style={pickerStoryStyle}>
+        <DialogTrigger defaultOpen>
+          <Button>{label}</Button>
+          {picker === 'entry' ? (
+            <LinkPicker
+              selectionMode={selectionMode}
+              selectionBehavior={selectionBehavior}
+              onConfirm={selection => console.info(selection)}
+            />
+          ) : (
+            <ImagePicker
+              label={label}
+              selectionMode={selectionMode}
+              selectionBehavior={selectionBehavior}
+              onConfirm={selection => console.info(selection)}
+            />
+          )}
+        </DialogTrigger>
+      </div>
+    </DashboardScopeInternal>
+  )
+}
+
+export function ExternalLinkPickerSingle() {
+  return <ExternalPickerStory selectionMode="single" />
+}
+
+export function ExternalLinkPickerMultiple() {
+  return <ExternalPickerStory selectionMode="multiple" />
+}
+
+export function ImagePickerSingle() {
+  return <ExplorerPickerStory label="Pick an image" picker="image" />
+}
+
+export function ImagePickerMultiple() {
+  return <ExplorerPickerStory label="Pick images" multiple picker="image" />
+}
+
+export function FilePickerSingle() {
+  return <ExplorerPickerStory label="Pick a file" picker="file" />
+}
+
+export function FilePickerMultiple() {
+  return <ExplorerPickerStory label="Pick files" multiple picker="file" />
+}
+
+export function EntryPickerSingle() {
+  return <ExplorerPickerStory label="Pick an entry" picker="entry" />
+}
+
+export function EntryPickerMultiple() {
+  return <ExplorerPickerStory label="Pick entries" multiple picker="entry" />
 }
 
 export default {

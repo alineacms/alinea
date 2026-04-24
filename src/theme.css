@@ -100,7 +100,7 @@
   --alinea-input: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
   --alinea-muted: light-dark(var(--alinea-gray-100), var(--alinea-gray-800));
   --alinea-overlay: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
-  --alinea-header: light-dark(var(--alinea-gray-100), var(--alinea-gray-800));
+  --alinea-header: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
   --alinea-selected: light-dark(
     var(--alinea-blue-50),
     rgb(from var(--alinea-blue-800) r g b / 24%)
@@ -177,7 +177,7 @@
 
   /* Dashboard */
   --alinea-dashboard-surface-background: var(--alinea-overlay);
-  --alinea-dashboard-surface-header-background: var(--alinea-gray-50);
+  --alinea-dashboard-surface-header-background: var(--alinea-header);
   --alinea-dashboard-surface-border: var(--alinea-border-default);
   --alinea-dashboard-muted-foreground: var(--alinea-fg-muted);
   --alinea-dashboard-status-background: var(--alinea-muted);

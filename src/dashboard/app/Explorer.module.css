@@ -8,26 +8,26 @@
 }
 
 .Explorer-toolbar {
-  flex: 0 1 640px;
+  flex: 1 1 0;
   display: flex;
   gap: 12px;
   align-items: center;
   min-width: 0;
-  margin-left: auto;
   justify-content: flex-end;
 }
 
-.Explorer-toolbar > *:first-child {
-  flex: 1;
-}
-
 .Explorer-breadcrumbs {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
 }
 
+.Explorer-searchSlot {
+  flex: 0 1 420px;
+  min-width: 220px;
+}
+
 .Explorer-search {
-  min-width: 280px;
+  width: 100%;
 }
 
 .Explorer-actions {

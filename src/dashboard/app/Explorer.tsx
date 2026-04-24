@@ -6,6 +6,7 @@ import {
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import type {ReactNode} from 'react'
 import {FileTrigger} from 'react-aria-components'
 import {IcOutlineGridView, IcOutlineList, IcRoundUploadFile} from '../icons.js'
 import {DashboardExplorer} from '../store.js'
@@ -17,6 +18,15 @@ import {RailBody, RailHeader} from './ui/Rail.js'
 const styles = styler(css)
 
 export interface ExplorerProps {
+  explorer: DashboardExplorer
+}
+
+export interface ExplorerHeaderProps {
+  controls?: ReactNode
+  explorer: DashboardExplorer
+}
+
+export interface ExplorerBodyProps {
   explorer: DashboardExplorer
 }
 
@@ -79,28 +89,43 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   )
 }
 
-export function Explorer({explorer}: ExplorerProps) {
+export function ExplorerHeader({controls, explorer}: ExplorerHeaderProps) {
   const [location, setLocation] = useAtom(explorer.location)
   return (
+    <RailHeader>
+      <div className={styles.Explorer.breadcrumbs()}>
+        <LocationBreadcrumbs
+          location={location}
+          setLocation={setLocation}
+          enableRoot
+        />
+      </div>
+      <div className={styles.Explorer.searchSlot()}>
+        <ExplorerSearch explorer={explorer} />
+      </div>
+      <div className={styles.Explorer.toolbar()}>
+        <ExplorerToolbar explorer={explorer} />
+        {controls}
+      </div>
+    </RailHeader>
+  )
+}
+
+export function ExplorerBody({explorer}: ExplorerBodyProps) {
+  return (
+    <RailBody>
+      <div className={styles.Explorer.viewport()}>
+        <ExplorerList explorer={explorer} />
+      </div>
+    </RailBody>
+  )
+}
+
+export function Explorer({explorer}: ExplorerProps) {
+  return (
     <>
-      <RailHeader>
-        <div className={styles.Explorer.breadcrumbs()}>
-          <LocationBreadcrumbs
-            location={location}
-            setLocation={setLocation}
-            enableRoot
-          />
-        </div>
-        <div className={styles.Explorer.toolbar()}>
-          <ExplorerSearch explorer={explorer} />
-          <ExplorerToolbar explorer={explorer} />
-        </div>
-      </RailHeader>
-      <RailBody>
-        <div className={styles.Explorer.viewport()}>
-          <ExplorerList explorer={explorer} />
-        </div>
-      </RailBody>
+      <ExplorerHeader explorer={explorer} />
+      <ExplorerBody explorer={explorer} />
     </>
   )
 }
