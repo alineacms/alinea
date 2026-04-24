@@ -297,7 +297,6 @@ function ListFieldCreateActions({
         <Button
           appearance="outline"
           className={styles.ListFieldView.createButton()}
-          intent="secondary"
           onPress={() => onPaste(pasted)}
           size="small"
         >
@@ -309,7 +308,6 @@ function ListFieldCreateActions({
         <Button
           appearance="outline"
           className={styles.ListFieldView.createButton()}
-          intent="secondary"
           key={item.id}
           onPress={() => onSelect(item)}
           size="small"

@@ -3,12 +3,11 @@ import {createId} from '#/core/Id.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Type} from '#/core/Type.js'
-import type {ComponentType} from 'react'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import type {ReactNode} from 'react'
+import type {ComponentType, ReactNode} from 'react'
 import {useMemo, useRef} from 'react'
 import {
   type DragItem,
@@ -19,9 +18,9 @@ import {
   useDrop
 } from 'react-aria'
 import {
-  IcRoundAttachFile,
   IcRoundArrowDownward,
   IcRoundArrowUpward,
+  IcRoundAttachFile,
   IcRoundClose,
   IcRoundEdit,
   IcRoundLink,
@@ -59,7 +58,9 @@ function LinkRow({hasFields, node}: LinkRowProps) {
   const type = useAtomValue(node.field('_type')) as string | undefined
   return (
     <>
-      {type && type !== 'image' && <Icon aria-hidden icon={getLinkIcon(type)} />}
+      {type && type !== 'image' && (
+        <Icon aria-hidden icon={getLinkIcon(type)} />
+      )}
       {(type === 'entry' || type === 'image' || type === 'file') && (
         <EntryRowLayer hasFields={hasFields} node={node} />
       )}
@@ -78,10 +79,7 @@ function LinkRowText({node}: LinkRowProps) {
 
 function isPickerType(type: string): type is PickerType {
   return (
-    type === 'entry' ||
-    type === 'url' ||
-    type === 'file' ||
-    type === 'image'
+    type === 'entry' || type === 'url' || type === 'file' || type === 'image'
   )
 }
 
@@ -214,7 +212,6 @@ interface LinkPickerActionProps {
   buttonSize?: 'small' | 'icon'
   children: ReactNode
   className?: string
-  intent?: 'primary' | 'secondary' | 'danger' | 'warning'
   picker: Picker<LinkFieldRow>
   selection?: Array<LinkFieldRow>
   type: PickerType
@@ -261,7 +258,6 @@ function LinkPickerAction({
   buttonSize = 'small',
   children,
   className,
-  intent = 'secondary',
   onPick,
   onPickMany,
   picker,
@@ -272,12 +268,7 @@ function LinkPickerAction({
   if (type === 'url') {
     return (
       <DialogTrigger>
-        <Button
-          appearance="outline"
-          className={className}
-          intent={intent}
-          size={buttonSize}
-        >
+        <Button appearance="outline" className={className} size={buttonSize}>
           {children}
         </Button>
         <ExternalLinkPicker
@@ -290,12 +281,7 @@ function LinkPickerAction({
   const Picker = type === 'file' || type === 'image' ? ImagePicker : LinkPicker
   return (
     <DialogTrigger>
-      <Button
-        appearance="outline"
-        className={className}
-        intent={intent}
-        size={buttonSize}
-      >
+      <Button appearance="outline" className={className} size={buttonSize}>
         {children}
       </Button>
       <Picker
@@ -740,7 +726,9 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const moveRowAtom = useMemo(
     () =>
       atom(null, (get, set, rowId: string, targetIndex: number) => {
-        const currentNodes = get(list.nodes) as Array<ReactiveNode<LinkFieldRow>>
+        const currentNodes = get(list.nodes) as Array<
+          ReactiveNode<LinkFieldRow>
+        >
         const fromIndex = currentNodes.findIndex(node => {
           return get(node.field('_id')) === rowId
         })
@@ -756,10 +744,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
     <Label label={options.label}>
       <Surface className={styles.MultipleLinksFieldView()}>
         {nodes.length > 0 && (
-          <div
-            aria-label={options.label || 'Links'}
-            role="list"
-          >
+          <div aria-label={options.label || 'Links'} role="list">
             {nodes.map((node, index) => (
               <MultipleLinkRow
                 field={field}

@@ -177,7 +177,7 @@
 
   /* Dashboard */
   --alinea-dashboard-surface-background: var(--alinea-overlay);
-  --alinea-dashboard-surface-header-background: var(--alinea-header);
+  --alinea-dashboard-surface-header-background: var(--alinea-gray-50);
   --alinea-dashboard-surface-border: var(--alinea-border-default);
   --alinea-dashboard-muted-foreground: var(--alinea-fg-muted);
   --alinea-dashboard-status-background: var(--alinea-muted);
