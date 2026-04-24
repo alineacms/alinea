@@ -90,6 +90,83 @@
   animation: SidebarTree-itemLoading-pulse 900ms ease-in-out infinite;
 }
 
+.SidebarTree-item.is-archived,
+.SidebarTree-item.is-untranslated {
+  color: var(--alinea-status-archived-fg);
+}
+
+.SidebarTree-item.is-unpublished {
+  color: var(--alinea-status-unpublished-fg);
+}
+
+.SidebarTree-item.is-archived[data-hovered],
+.SidebarTree-item.is-archived[data-selected] {
+  background: var(--alinea-status-archived-bg);
+}
+
+.SidebarTree-item.is-unpublished[data-hovered],
+.SidebarTree-item.is-unpublished[data-selected] {
+  background: var(--alinea-status-unpublished-bg);
+}
+
+.SidebarTree-item.is-parentSelected.is-archived:not([data-selected]) {
+  background: color-mix(
+    in srgb,
+    var(--alinea-status-archived-bg) 54%,
+    transparent
+  );
+}
+
+.SidebarTree-item.is-parentSelected.is-unpublished:not([data-selected]) {
+  background: color-mix(
+    in srgb,
+    var(--alinea-status-unpublished-bg) 54%,
+    transparent
+  );
+}
+
+.SidebarTree-item.is-archived [data-slot='label'],
+.SidebarTree-item.is-untranslated [data-slot='label'] {
+  opacity: 0.72;
+}
+
+.SidebarTree-item.is-archived[data-selected] [data-slot='label'] {
+  opacity: 1;
+}
+
+.SidebarTree-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  color: var(--alinea-dashboard-status-foreground);
+  background: var(--alinea-dashboard-status-background);
+}
+
+.SidebarTree-status svg {
+  width: 13px;
+  height: 13px;
+}
+
+.SidebarTree-status.is-draft {
+  color: var(--alinea-status-draft-fg);
+  background: var(--alinea-status-draft-bg);
+}
+
+.SidebarTree-status.is-unpublished {
+  color: var(--alinea-status-unpublished-fg);
+  background: var(--alinea-status-unpublished-bg);
+}
+
+.SidebarTree-status.is-archived,
+.SidebarTree-status.is-untranslated {
+  color: var(--alinea-status-archived-fg);
+  background: var(--alinea-status-archived-bg);
+}
+
 @keyframes SidebarTree-itemLoading-pulse {
   0%,
   100% {

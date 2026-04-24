@@ -10,7 +10,7 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {memo, Suspense, useMemo, useState} from 'react'
+import {type ComponentType, memo, Suspense, useMemo, useState} from 'react'
 import {
   Collection,
   DialogTrigger,
@@ -19,13 +19,18 @@ import {
   Virtualizer
 } from 'react-aria-components'
 import {
+  IcOutlineArchive,
   IcRoundAdd,
+  IcRoundEdit,
   IcRoundKeyboardTab,
+  IcRoundTranslate,
   IcTwotoneDescription,
-  IcTwotoneFolder
+  IcTwotoneFolder,
+  RiFlashlightFill
 } from '../icons.js'
 import {
   Dashboard,
+  type DashboardEntryTreeStatus,
   DashboardRoot,
   DashboardTreeItem,
   DashboardWorkspace
@@ -89,9 +94,62 @@ interface SidebarItemProps {
   item: DashboardTreeItem
 }
 
+interface SidebarStatusDisplay {
+  icon: ComponentType
+  label: string
+  status: 'draft' | 'unpublished' | 'archived' | 'untranslated'
+}
+
+function sidebarStatus(
+  treeStatus: DashboardEntryTreeStatus
+): SidebarStatusDisplay | undefined {
+  if (treeStatus.status === 'untranslated') {
+    return {
+      icon: IcRoundTranslate,
+      label: 'Untranslated',
+      status: 'untranslated'
+    }
+  }
+  if (treeStatus.status === 'archived') {
+    return {
+      icon: IcOutlineArchive,
+      label: 'Archived',
+      status: 'archived'
+    }
+  }
+  if (treeStatus.status === 'unpublished') {
+    return {
+      icon: RiFlashlightFill,
+      label: 'Unpublished',
+      status: 'unpublished'
+    }
+  }
+  if (treeStatus.status === 'draft') {
+    return {
+      icon: IcRoundEdit,
+      label: 'Draft',
+      status: 'draft'
+    }
+  }
+  return undefined
+}
+
+function affectedStatus(
+  ownStatus: DashboardEntryTreeStatus,
+  ancestorStatus: DashboardEntryTreeStatus | undefined
+) {
+  if (ancestorStatus?.status === 'archived') return ancestorStatus
+  if (ancestorStatus?.status === 'unpublished') return ancestorStatus
+  return ownStatus
+}
+
 const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   const label = useAtomValue(item.label)
   const isExpanded = useAtomValue(item.isExpanded)
+  const status = useAtomValue(item.status)
+  const selectedAncestorStatus = useAtomValue(
+    useMemo(() => unwrap(item.selectedAncestorStatus), [item])
+  )
   const childItems = useAtomValue(
     useMemo(() => {
       if (!item.hasChildren)
@@ -108,6 +166,10 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   const isLoadingChildren =
     item.hasChildren && isExpanded && childItems === undefined
+  const displayStatus = sidebarStatus(status)
+  const rowStatus = affectedStatus(status, selectedAncestorStatus)
+  const isArchived = rowStatus.status === 'archived'
+  const isUnpublished = rowStatus.status === 'unpublished'
 
   return (
     <TreeItem
@@ -116,12 +178,29 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
       title={label}
       hasChildItems={item.hasChildren}
       icon={icon}
+      className={styles.SidebarTree.item({
+        archived: isArchived,
+        unpublished: isUnpublished,
+        untranslated: status.status === 'untranslated',
+        parentSelected: selectedAncestorStatus !== undefined
+      })}
       suffix={
         isLoadingChildren ? (
           <span
             className={styles.SidebarTree.itemLoading()}
             aria-hidden="true"
           />
+        ) : displayStatus ? (
+          <span
+            className={styles.SidebarTree.status({
+              [displayStatus.status]: true
+            })}
+            aria-label={displayStatus.label}
+            role="img"
+            title={displayStatus.label}
+          >
+            <Icon icon={displayStatus.icon} />
+          </span>
         ) : undefined
       }
     >

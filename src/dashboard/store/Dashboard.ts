@@ -897,6 +897,8 @@ export class DashboardTree {
           id,
           entry.icon,
           entry.label,
+          entry.parentIds,
+          entry.treeStatus,
           atom(async (get): Promise<Array<DashboardTreeItem>> => {
             const children = await get(entry.children)
             for (const childId of children) get(this.entryItems(childId))
@@ -1010,11 +1012,25 @@ export class DashboardTreeItem {
     public id: string,
     public icon: Atom<ComponentType | undefined>,
     public label: Atom<string>,
+    public parentIds: Atom<Array<string>>,
+    public status: Atom<DashboardEntryTreeStatus>,
     public items: Atom<Awaitable<Array<DashboardTreeItem>>>,
     public hasChildren: boolean
   ) {}
 
   isExpanded = atom(get => get(this.tree.expandedKeys).has(this.id))
+
+  selectedAncestorStatus = atom(
+    async (get): Promise<DashboardEntryTreeStatus | undefined> => {
+      const selectedKey = get(this.tree.selectedKeys).values().next().value
+      if (!selectedKey) return undefined
+      const selectedId = String(selectedKey)
+      if (selectedId === this.id) return undefined
+      if (!get(this.parentIds).includes(selectedId)) return undefined
+      const selected = await get(this.tree.entryItems(selectedId))
+      return get(selected.status)
+    }
+  )
 }
 
 interface EntryData {
@@ -1037,6 +1053,10 @@ interface EntryData {
     path: string
     fileHash: string
   }>
+}
+
+export interface DashboardEntryTreeStatus {
+  status: EntryStatus | 'unpublished' | 'untranslated'
 }
 
 type SelectedVersion =
@@ -1137,6 +1157,22 @@ export class DashboardEntry {
       if (fallback.title) return fallback.title
     }
     return ''
+  })
+
+  treeStatus = atom((get): DashboardEntryTreeStatus => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    const locales = get(this.locales)
+    const localized = locales.get(locale)
+    const fallback = locales.values().next().value
+    const entry = localized ?? fallback
+    assert(entry, `Entry ${this.id} has no versions`)
+    if (localized === undefined) return {status: 'untranslated'}
+    if (entry.status === 'draft' && entry.main === true)
+      return {status: 'unpublished'}
+    return {
+      status: entry.status
+    }
   })
 
   fileInfo = swr(
