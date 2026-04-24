@@ -1,5 +1,5 @@
-import {Config} from '#/core/Config.js'
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {UploadOperation} from '#/core/db/Operation.js'
@@ -11,10 +11,12 @@ import type {Order} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {Policy} from '#/core/Role.js'
 import {Section} from '#/core/Section.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
 import {Type} from '#/core/Type.js'
+import {localUser, type User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries, fromEntries, values} from '#/core/util/Objects.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
@@ -46,6 +48,11 @@ export interface DashboardFavicon {
   icon?: ComponentType
 }
 
+export interface DashboardOptions {
+  alineaDev?: boolean
+  local?: boolean
+}
+
 type DashboardTreeSelection = WritableAtom<
   Set<Key>,
   [next: 'all' | Set<Key>],
@@ -65,6 +72,10 @@ export type DashboardTheme = 'system' | 'light' | 'dark'
 
 interface SyncableGraph {
   sync: () => Promise<string>
+}
+
+interface LogoutConnection {
+  logout(): Promise<void>
 }
 
 const decoder = new TextDecoder()
@@ -115,6 +126,9 @@ export class Dashboard {
   views
   db: Atom<WriteableGraph>
   events: Atom<EventTarget>
+  local: Atom<boolean>
+  alineaDev: Atom<boolean>
+  #userOverride = atom<User | null | undefined>()
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
     'system',
@@ -126,13 +140,16 @@ export class Dashboard {
     config: Config,
     events: EventTarget,
     client: LocalConnection,
-    views: Record<string, ComponentType>
+    views: Record<string, ComponentType>,
+    options: DashboardOptions = {}
   ) {
     this.graph = atom(graph)
     this.config = atom(config)
     this.events = atom(events)
     this.client = atom(client)
     this.views = atom(views)
+    this.local = atom(Boolean(options.local))
+    this.alineaDev = atom(Boolean(options.alineaDev))
     this.db = Object.assign(
       atom(
         get => get(this.graph),
@@ -159,6 +176,54 @@ export class Dashboard {
   }
 
   revisions = dispense(id => atom(0))
+
+  user = swr(
+    atom(async get => {
+      const override = get(this.#userOverride)
+      if (override !== undefined) return override
+      const forceAuth = Boolean(
+        typeof process !== 'undefined' && process.env.ALINEA_FORCE_AUTH
+      )
+      const isAnonymousLocal = get(this.local) && !forceAuth
+      if (isAnonymousLocal) {
+        const userData =
+          typeof process !== 'undefined' &&
+          (process.env.ALINEA_USER as string | undefined)
+        if (!userData) return localUser
+        return JSON.parse(userData) as User
+      }
+      return get(this.client).user()
+    })
+  )
+
+  setUserRoles = atom(null, async (get, set, roles: Array<string>) => {
+    const user = await get(this.user)
+    if (!user) return
+    set(this.#userOverride, {...user, roles})
+  })
+
+  logout = atom(null, async (get, set) => {
+    const client = get(this.client)
+    const logout = (client as Partial<LogoutConnection>).logout
+    if (typeof logout === 'function') await logout.call(client)
+    set(this.#userOverride, null)
+  })
+
+  canLogout = atom(get => {
+    if (get(this.local)) return false
+    const client = get(this.client)
+    return typeof (client as Partial<LogoutConnection>).logout === 'function'
+  })
+
+  policy = swr(
+    atom(async get => {
+      const user = await get(this.user)
+      if (!user) return Policy.ALLOW_NONE
+      const db = get(this.db)
+      get(this.sha) // subscribe to content changes
+      return db.createPolicy(user.roles)
+    })
+  )
 
   #location = atomWithLocation({
     subscribe(setLocation) {
@@ -1265,7 +1330,8 @@ export class DashboardEntry {
       if (!isObject<Record<string, unknown>>(value)) return activeVersion
       const title =
         typeof value.title === 'string' ? value.title : activeVersion.title
-      const path = typeof value.path === 'string' ? value.path : activeVersion.path
+      const path =
+        typeof value.path === 'string' ? value.path : activeVersion.path
       return {
         ...activeVersion,
         title,
@@ -1288,8 +1354,7 @@ export class DashboardEntry {
     const currentNode = get(this.currentlyEditing)
     if (!currentNode) return undefined
     const value = get(currentNode.value)
-    if (!isObject<Record<string, unknown>>(value))
-      return undefined
+    if (!isObject<Record<string, unknown>>(value)) return undefined
     const sha = get(this.dashboard.sha)
     if (!sha) return undefined
 
@@ -1314,7 +1379,10 @@ export class DashboardEntry {
     }
     const schema = get(this.dashboard.config).schema
     const baseText = decoder.decode(
-      JsonLoader.format(schema, createRecord(activeVersion, activeVersion.status))
+      JsonLoader.format(
+        schema,
+        createRecord(activeVersion, activeVersion.status)
+      )
     )
     const nextText = decoder.decode(
       JsonLoader.format(schema, createRecord(nextVersion, status))

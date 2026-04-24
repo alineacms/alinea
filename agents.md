@@ -12,6 +12,7 @@ Find the v2 dashboard in ./src/dashboard, and v1 in ./v1/dashboard.
 - Do not export CSS module styler instances or style objects from component modules. Expose named wrapper components for shared layout/styling instead.
 - Use `@alinea/styler` for composing and joining class names. Do not introduce custom class name join helpers for this.
 - CSS module naming in `src/dashboard`: every selector starts with the exact component name, eg `.ComponentName`; replace `.root` with that component name; nested selectors become `.ComponentName-part`, deeper nesting becomes `.ComponentName-part-subpart`; flatten unused parent segments.
+- Do not style child elements with tag selectors such as `> span`, `> p`, or `> li`. Always add and target a named CSS module class instead.
 - CSS variable names from v1 will not work in v2
 - Bundle all icons into the same file src/dashboard/icons.tsx, download them if needed
   from icones (https://icones.js.org/) using the Google Material Icons set.
