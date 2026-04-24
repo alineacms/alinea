@@ -26,6 +26,8 @@
   .ExplorerFileCard.is-row & {
     flex: 0 0 52px;
     width: 52px;
+    height: 52px;
+    max-height: 52px;
   }
 }
 
@@ -42,7 +44,7 @@
     padding: 8px;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid var(--alinea-dashboard-explorer-card-divider);
+    box-shadow: inset 0 -1px var(--alinea-dashboard-explorer-card-divider);
     border-radius: inherit inherit 0 0;
   }
 
@@ -53,13 +55,34 @@
   }
 }
 
+:global(.ExplorerItem[data-selected]) .ExplorerFileCard-preview {
+  isolation: isolate;
+}
+
+:global(.ExplorerItem[data-selected]) .ExplorerFileCard-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: var(--alinea-blue-600);
+  opacity: 0.18;
+}
+
 .ExplorerFileCard-preview-image {
   display: block;
+  position: relative;
+  z-index: 0;
   width: auto;
   height: auto;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+
+  .ExplorerFileCard.is-row & {
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .ExplorerFileCard-preview-placeholder {
@@ -96,13 +119,11 @@
   justify-content: center;
   overflow: hidden;
   background: var(--alinea-dashboard-explorer-card-footer-background);
-  border-top: 1px solid var(--alinea-dashboard-explorer-card-divider);
   border-radius: 0 0 var(--alinea-elevation-radius) var(--alinea-elevation-radius);
 
   .ExplorerFileCard.is-row & {
     width: auto;
     background: transparent;
-    border-top: 0;
     border-radius: 0;
   }
 }

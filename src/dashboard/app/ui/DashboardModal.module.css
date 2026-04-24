@@ -108,6 +108,12 @@
   border-bottom: 0;
 }
 
+.DashboardModalExplorer-selection {
+  color: var(--alinea-fg-muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
 .DashboardModalExplorer-actions {
   display: flex;
   align-items: center;

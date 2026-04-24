@@ -280,7 +280,7 @@ function LinkPickerAction({
   }
   const pickerProps = {
     selectionMode: picker.handlesMultiple ? 'multiple' : 'single',
-    selectionBehavior: 'replace',
+    selectionBehavior: picker.handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
     onConfirm(selection: Array<string>) {
       const links = selection.map(entryId =>

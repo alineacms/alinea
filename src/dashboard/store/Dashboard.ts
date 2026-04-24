@@ -518,6 +518,7 @@ export interface ExplorerOptions {
   selectionMode?: 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
   initialSelection?: Array<string>
+  searchDepth?: 'current' | 'all'
   onAction?: WritableAtom<void, [entry: DashboardEntry], void>
   onConfirm?: (selection: Array<string>) => void
 }
@@ -661,12 +662,13 @@ export class DashboardExplorer {
       const root = get(this.root)
       if (!root) return []
       const locale = get(root.selectedLocale)
+      const searchAll = Boolean(search && this.#options.searchDepth === 'all')
       const children = await db.find({
         locale,
         search: search || undefined,
         workspace: location.workspace,
         root: location.root,
-        parentId: location.parentId ?? null,
+        parentId: searchAll ? undefined : (location.parentId ?? null),
         select: Entry.id,
         status: 'preferDraft'
       })

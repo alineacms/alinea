@@ -28,6 +28,7 @@ import type {
   DashboardRoot
 } from '../store.js'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
+import {Surface} from './ui/Surface.js'
 import css from './ExplorerList.module.css'
 
 const styles = styler(css)
@@ -35,7 +36,7 @@ const styles = styler(css)
 const rowLayoutOptions: ListLayoutOptions = {
   rowHeight: 80,
   gap: 8,
-  padding: 0
+  padding: 12
 }
 
 const cardLayoutOptions: GridLayoutOptions = {
@@ -61,11 +62,14 @@ const ExplorerItem = memo(function ExplorerItem({
   const type = useAtomValue(entry.type)
   const hasChildren = useAtomValue(entry.hasChildren)
   const info = useAtomValue(unwrap(entry.fileInfo))
+  const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
+  const onAction = useSetAtom(explorer.onAction)
   return (
     <GridListItem
       id={entry.id}
       textValue={label}
       className={styles.ExplorerItem()}
+      onDoubleClick={() => onAction(entry)}
     >
       <Button
         slot="drag"
@@ -75,20 +79,21 @@ const ExplorerItem = memo(function ExplorerItem({
       >
         <IcRoundDragIndicator />
       </Button>
-      <div className={styles.ExplorerItem.card({file: Boolean(info)})}>
+      <Surface
+        className={styles.ExplorerItem.card({file: Boolean(info)})}
+        variant={view === 'row' ? 'muted' : undefined}
+      >
         {info ? (
           <ExplorerFileCard file={info} label={label} layout={view} />
         ) : (
           <ExplorerEntryCard
-            icon={
-              icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription)
-            }
+            icon={icon ?? fallbackIcon}
             label={label}
             typeLabel={type.label}
             layout={view}
           />
         )}
-      </div>
+      </Surface>
     </GridListItem>
   )
 })

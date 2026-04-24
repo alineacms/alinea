@@ -4,8 +4,7 @@ import {
   Icon as IconComp,
   Menu,
   MenuItem,
-  MenuSeparator,
-  Modal
+  MenuSeparator
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
@@ -14,7 +13,14 @@ import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {useDashboard} from '../store.js'
 import type {Dashboard, DashboardWorkspace} from '../store/Dashboard.js'
 import {Explorer} from './Explorer.js'
+import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {LogoShape} from './LogoShape.js'
+import {
+  DashboardModal,
+  DashboardModalCloseButton,
+  DashboardModalDialog,
+  DashboardModalExplorer
+} from './ui/DashboardModal.js'
 import css from './WorkspaceMenu.module.css'
 
 const styles = styler(css)
@@ -49,14 +55,20 @@ function SearchPopup() {
   const dashboard = useDashboard()
   const workspace = useAtomValue(dashboard.selectedWorkspace)
   const root = useAtomValue(dashboard.selectedRoot)
-  const [explorer] = useState(() => dashboard.explore({workspace, root}))
+  const [explorer] = useState(() =>
+    dashboard.explore({workspace, root}, {searchDepth: 'all'})
+  )
 
   return (
-    <div style={{padding: '8px 12px', borderRadius: '6px'}}>
-      <div>
-        <Explorer explorer={explorer} />
-      </div>
-    </div>
+    <DashboardModalDialog aria-label="Search entries" variant="explorer">
+      <DashboardModalExplorer>
+        <ExplorerHeader
+          controls={<DashboardModalCloseButton />}
+          explorer={explorer}
+        />
+        <ExplorerBody explorer={explorer} />
+      </DashboardModalExplorer>
+    </DashboardModalDialog>
   )
 }
 
@@ -103,9 +115,9 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
         >
           <IconComp icon={IcRoundSearch} data-slot="icon" />
         </Button>
-        <Modal isDismissable>
+        <DashboardModal size="explorer">
           <SearchPopup />
-        </Modal>
+        </DashboardModal>
       </DialogTrigger>
     </div>
   )

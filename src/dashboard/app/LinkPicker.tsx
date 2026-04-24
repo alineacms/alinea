@@ -31,7 +31,7 @@ function ExplorerModal({options}: ExplorerModalProps) {
   const workspace = useAtomValue(dashboard.selectedWorkspace)
   const root = useAtomValue(dashboard.selectedRoot)
   const [explorer] = useState(() =>
-    dashboard.explore({workspace, root}, options)
+    dashboard.explore({workspace, root}, {...options, searchDepth: 'all'})
   )
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
@@ -52,7 +52,9 @@ function ExplorerModal({options}: ExplorerModalProps) {
         />
         <ExplorerBody explorer={explorer} />
         <RailHeader className={dashboardModalStyles.DashboardModalExplorer.footer()}>
-          <span>
+          <span
+            className={dashboardModalStyles.DashboardModalExplorer.selection()}
+          >
             {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
           </span>
           <div

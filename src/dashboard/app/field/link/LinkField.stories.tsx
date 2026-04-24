@@ -209,7 +209,7 @@ function ExplorerPickerStory({
   picker
 }: ExplorerPickerStoryProps) {
   const selectionMode = multiple ? 'multiple' : 'single'
-  const selectionBehavior = 'replace'
+  const selectionBehavior = multiple ? 'toggle' : 'replace'
   return (
     <DashboardScopeInternal dashboard={dashboard}>
       <div style={pickerStoryStyle}>
