@@ -48,8 +48,8 @@ export function FileEditor({entry}: FileEditorProps) {
   const displayedFocusPoint = hoverPoint ?? focusPoint
 
   return (
-    <Surface>
-      <div className={styles.FileEditor()}>
+    <Surface className={styles.FileEditor.surface()}>
+      <div className={styles.FileEditor({image: isImage})}>
         {isImage && (
           <FilePreview
             liveUrl={liveUrl ? String(liveUrl) : undefined}
@@ -60,41 +60,67 @@ export function FileEditor({entry}: FileEditorProps) {
             onHoverPointChange={setHoverPoint}
           />
         )}
-        <div className={styles.FileEditor.details()}>
-          <Surface variant="muted">
-            <div>
-              <strong>Extension</strong>
-              <span>{extension}</span>
-            </div>
-
-            <div>
-              <strong>File size</strong>
-              <span>{prettyBytes(size)}</span>
-            </div>
-            {liveUrl && (
-              <div>
-                <strong>URL</strong>
-                <span>{liveUrl.pathname}</span>
+        <div className={styles.FileEditor.content()}>
+          <Surface
+            variant="muted"
+            className={styles.FileEditor.metadata()}
+          >
+            <dl className={styles.FileEditor.metadata.grid()}>
+              <div className={styles.FileEditor.metadata.item()}>
+                <dt className={styles.FileEditor.metadata.term()}>
+                  Extension
+                </dt>
+                <dd className={styles.FileEditor.metadata.value()}>
+                  {extension}
+                </dd>
               </div>
-            )}
-            {isImage && (
-              <>
-                <div>
-                  <strong>Dimensions</strong>
-                  <span>
+              <div className={styles.FileEditor.metadata.item()}>
+                <dt className={styles.FileEditor.metadata.term()}>
+                  File size
+                </dt>
+                <dd className={styles.FileEditor.metadata.value()}>
+                  {prettyBytes(size)}
+                </dd>
+              </div>
+              {isImage && (
+                <div className={styles.FileEditor.metadata.item()}>
+                  <dt className={styles.FileEditor.metadata.term()}>
+                    Dimensions
+                  </dt>
+                  <dd className={styles.FileEditor.metadata.value()}>
                     {width}px x {height}px
-                  </span>
+                  </dd>
                 </div>
-              </>
-            )}
+              )}
+              {liveUrl && (
+                <div className={styles.FileEditor.metadata.item({full: true})}>
+                  <dt className={styles.FileEditor.metadata.term()}>URL</dt>
+                  <dd className={styles.FileEditor.metadata.value()}>
+                    {liveUrl.pathname}
+                  </dd>
+                </div>
+              )}
+            </dl>
           </Surface>
-          <div>
-            <strong>Focus point</strong>
-            <span>
-              ({displayedFocusPoint.x.toFixed(2)}, {displayedFocusPoint.y.toFixed(2)})
-            </span>
+          {isImage && (
+            <div className={styles.FileEditor.focus()}>
+              <div className={styles.FileEditor.focus.header()}>
+                <strong className={styles.FileEditor.focus.label()}>
+                  Focus point
+                </strong>
+                <span className={styles.FileEditor.focus.description()}>
+                  Click on the image to change the focus point
+                </span>
+              </div>
+              <span className={styles.FileEditor.focus.value()}>
+                ({displayedFocusPoint.x.toFixed(2)},{' '}
+                {displayedFocusPoint.y.toFixed(2)})
+              </span>
+            </div>
+          )}
+          <div className={styles.FileEditor.fields()}>
+            <FieldsEditor />
           </div>
-          <FieldsEditor />
         </div>
       </div>
     </Surface>

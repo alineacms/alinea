@@ -1,16 +1,125 @@
+.FileEditor-surface {
+  width: 100%;
+}
+
 .FileEditor {
   display: flex;
   flex-wrap: wrap;
 }
 
-.FileEditor-details {
-  padding: 16px;
+.FileEditor.is-image {
+  height: 512px;
+}
+
+.FileEditor-content {
+  display: flex;
   flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 20px;
+  overflow: auto;
+  padding: 12px;
+}
+
+.FileEditor-metadata {
+  width: 100%;
+  padding: 12px;
+}
+
+.FileEditor-metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 40px;
+  margin: 0;
+}
+
+.FileEditor-metadata-item {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+
+  &.is-full {
+    grid-column: 1 / -1;
+  }
+}
+
+.FileEditor-metadata-term {
+  margin: 0;
+  color: var(--alinea-content-secondary);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.FileEditor-metadata-value {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--alinea-content-primary);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.FileEditor-focus {
+  display: block;
+}
+
+.FileEditor-focus-header {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px 8px;
+  padding-bottom: 8px;
+  line-height: 1;
+}
+
+.FileEditor-focus-label {
+  color: var(--alinea-content-secondary);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 500;
+}
+
+.FileEditor-focus-description {
+  display: block;
+  max-width: 100%;
+  color: var(--alinea-content-secondary);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.1;
+  font-weight: 400;
+  font-style: italic;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.FileEditor-focus-value {
+  display: block;
+  color: var(--alinea-content-primary);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.35;
+}
+
+.FileEditor-fields {
   min-width: 0;
 }
 
 @media (max-width: 800px) {
   .FileEditor {
     flex-direction: column;
+  }
+
+  .FileEditor.is-image {
+    height: auto;
+  }
+
+  .FileEditor-content {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  .FileEditor-metadata-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
