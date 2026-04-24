@@ -168,6 +168,29 @@
   }
 }
 
+.ExplorerEntryParents {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  color: var(--alinea-dashboard-explorer-muted-foreground);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  .ExplorerEntryCard.is-card &,
+  .ExplorerFileCard.is-card & {
+    width: 100%;
+  }
+}
+
+.ExplorerEntryParents-separator {
+  flex: 0 0 auto;
+  font-size: 14px;
+}
+
 .ExplorerEntryCard-top {
   display: flex;
   flex: 0 0 124px;

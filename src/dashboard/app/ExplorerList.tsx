@@ -5,7 +5,7 @@ import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType} from 'react'
-import {memo, Suspense} from 'react'
+import {Fragment, memo, Suspense, type ReactNode} from 'react'
 import {
   GridLayout,
   type GridLayoutOptions,
@@ -19,6 +19,7 @@ import {
 } from 'react-aria-components'
 import {
   IcRoundDragIndicator,
+  IcRoundKeyboardArrowRight,
   IcTwotoneDescription,
   IcTwotoneFolder
 } from '../icons.js'
@@ -61,6 +62,7 @@ const ExplorerItem = memo(function ExplorerItem({
   const icon = useAtomValue(entry.icon)
   const type = useAtomValue(entry.type)
   const hasChildren = useAtomValue(entry.hasChildren)
+  const parents = useAtomValue(entry.parents)
   const info = useAtomValue(unwrap(entry.fileInfo))
   const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   const onAction = useSetAtom(explorer.onAction)
@@ -84,11 +86,17 @@ const ExplorerItem = memo(function ExplorerItem({
         variant={view === 'row' ? 'muted' : undefined}
       >
         {info ? (
-          <ExplorerFileCard file={info} label={label} layout={view} />
+          <ExplorerFileCard
+            file={info}
+            label={label}
+            layout={view}
+            parents={<ExplorerEntryParents parents={parents} />}
+          />
         ) : (
           <ExplorerEntryCard
             icon={icon ?? fallbackIcon}
             label={label}
+            parents={<ExplorerEntryParents parents={parents} />}
             typeLabel={type.label}
             layout={view}
           />
@@ -101,6 +109,7 @@ const ExplorerItem = memo(function ExplorerItem({
 interface ExplorerEntryCardProps {
   icon?: ComponentType
   label: string
+  parents?: ReactNode
   typeLabel: string
   layout: 'card' | 'row'
 }
@@ -108,6 +117,7 @@ interface ExplorerEntryCardProps {
 function ExplorerEntryCard({
   icon,
   label,
+  parents,
   typeLabel,
   layout
 }: ExplorerEntryCardProps) {
@@ -120,12 +130,47 @@ function ExplorerEntryCard({
       </div>
       <div className={styles.ExplorerEntryCard.body()}>
         <div className={styles.ExplorerEntryCard.body.inner()}>
+          {parents}
           <div className={styles.ExplorerEntryCard.label()}>{label}</div>
           <div className={styles.ExplorerEntryCard.meta()}>{typeLabel}</div>
         </div>
       </div>
     </div>
   )
+}
+
+interface ExplorerEntryParentsProps {
+  parents: Array<DashboardEntry>
+}
+
+function ExplorerEntryParents({parents}: ExplorerEntryParentsProps) {
+  if (parents.length === 0) return null
+  return (
+    <div className={styles.ExplorerEntryParents()}>
+      {parents
+        .map<ReactNode>(parent => (
+          <ExplorerEntryParent key={parent.id} parent={parent} />
+        ))
+        .reduce((prev, curr, index) => [
+          prev,
+          <IcRoundKeyboardArrowRight
+            aria-hidden
+            className={styles.ExplorerEntryParents.separator()}
+            key={`separator-${index}`}
+          />,
+          curr
+        ])}
+    </div>
+  )
+}
+
+interface ExplorerEntryParentProps {
+  parent: DashboardEntry
+}
+
+function ExplorerEntryParent({parent}: ExplorerEntryParentProps) {
+  const label = useAtomValue(parent.label)
+  return <Fragment>{label}</Fragment>
 }
 
 interface EmptyResultsProps {

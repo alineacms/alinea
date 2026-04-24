@@ -4,6 +4,7 @@ import {isImage} from '#/core/media/IsImage.js'
 import {type Infer} from '#/types.js'
 import styler from '@alinea/styler'
 import prettyBytes from 'pretty-bytes'
+import type {ReactNode} from 'react'
 import {IcRoundInsertDriveFile} from '../icons.js'
 import css from './ExplorerFileCard.module.css'
 
@@ -13,12 +14,14 @@ export interface ExplorerFileCardProps {
   file: Infer<typeof MediaFile>
   label: string
   layout: 'card' | 'row'
+  parents?: ReactNode
 }
 
 export function ExplorerFileCard({
   file,
   label,
-  layout
+  layout,
+  parents
 }: ExplorerFileCardProps) {
   const extension = formatExtension(file.extension)
   const isImageFile = Boolean(file.extension && isImage(file.extension))
@@ -53,6 +56,7 @@ export function ExplorerFileCard({
 
       <div className={styles.ExplorerFileCard.body()}>
         <div className={styles.ExplorerFileCard.body.inner()}>
+          {parents}
           <div className={styles.ExplorerFileCard.label()}>{label}</div>
           <div className={styles.ExplorerFileCard.meta()}>
             {extension && (
