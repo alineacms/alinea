@@ -1,0 +1,35 @@
+.LinkFieldView {
+  margin-bottom: 8px;
+}
+
+.LinkFieldView-row {
+  justify-content: space-between;
+}
+
+.LinkFieldView-rowCenter {
+  justify-content: center;
+}
+
+.LinkFieldView-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.MultipleLinksFieldView {
+  margin-bottom: 8px;
+}
+
+.MultipleLinksFieldView-row {
+  justify-content: space-between;
+}
+
+.MultipleLinksFieldView-rowCenter {
+  justify-content: center;
+}
+
+.MultipleLinksFieldView-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
