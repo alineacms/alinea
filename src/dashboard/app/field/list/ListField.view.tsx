@@ -169,17 +169,24 @@ export function ListFieldView({field}: ListFieldViewProps) {
     pushRow(createRow(typeName, type))
   }
 
-  const foldAll = hasRows ? (
+  const foldAll = (
     <Button
-      aria-label={allExpanded ? 'Collapse all items' : 'Expand all items'}
+      aria-label={
+        hasRows
+          ? allExpanded
+            ? 'Collapse all items'
+            : 'Expand all items'
+          : 'No list items to fold'
+      }
       appearance="plain"
       className={styles.ListFieldView.fold()}
       data-expanded={allExpanded ? 'true' : undefined}
+      isDisabled={!hasRows}
       onPress={toggleAll}
     >
       <Icon aria-hidden icon={IcRoundKeyboardArrowRight} />
     </Button>
-  ) : undefined
+  )
 
   const content = (hasRows || !readOnly) && (
     <Surface className={styles.ListFieldView.surface()}>
