@@ -1,12 +1,14 @@
-import {Config} from '#/core/Config.js'
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {UploadOperation} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
+import type {EntryFields} from '#/core/EntryFields.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {Field, FieldOptions} from '#/core/Field.js'
+import type {Filter} from '#/core/Filter.js'
 import type {Order} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
@@ -17,6 +19,7 @@ import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {slugify} from '#/core/util/Slugs.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Infer} from '#/types.js'
@@ -46,6 +49,17 @@ export interface DashboardFavicon {
   icon?: ComponentType
 }
 
+export interface DashboardCreateEntryRequest {
+  workspace: string
+  root: string
+  locale: string | null
+  type: string
+  title: string
+  parentId?: string
+  copyFrom?: string
+  insertOrder?: 'first' | 'last'
+}
+
 type DashboardTreeSelection = WritableAtom<
   Set<Key>,
   [next: 'all' | Set<Key>],
@@ -59,54 +73,21 @@ type FocusedItem =
   | {missingRoot: string; root: DashboardRoot}
   | null
 
-const dashboardThemeStorageKey = 'alinea-dashboard-theme'
-
 export type DashboardTheme = 'system' | 'light' | 'dark'
 
-interface SyncableGraph {
-  sync: () => Promise<string>
-}
+const internalDashboard = atom<Dashboard | null>(null)
+export const dashboardAtom = atom(
+  get => {
+    const dashboard = get(internalDashboard)
+    assert(dashboard, 'Dashboard not found')
+    return dashboard
+  },
+  (get, set, dashboard: Dashboard) => {
+    set(internalDashboard, dashboard)
+  }
+)
 
-const decoder = new TextDecoder()
-
-let enableThemeTransitionsFrame: number | undefined
-
-function suspendTransitionsDuringThemeChange() {
-  if (typeof document === 'undefined') return
-  const {body} = document
-  if (!body) return
-  body.dataset.disableTransition = 'true'
-  void body.offsetWidth
-  if (enableThemeTransitionsFrame)
-    cancelAnimationFrame(enableThemeTransitionsFrame)
-  enableThemeTransitionsFrame = requestAnimationFrame(() => {
-    enableThemeTransitionsFrame = requestAnimationFrame(() => {
-      body.removeAttribute('data-disable-transition')
-      enableThemeTransitionsFrame = undefined
-    })
-  })
-}
-
-function applyDashboardTheme(theme: DashboardTheme) {
-  if (typeof document === 'undefined') return
-  suspendTransitionsDuringThemeChange()
-  const root = document.documentElement
-  if (theme === 'system') root.removeAttribute('data-theme')
-  else root.dataset.theme = theme
-}
-
-function isSyncableGraph(
-  graph: WriteableGraph
-): graph is WriteableGraph & SyncableGraph {
-  return typeof (graph as Partial<SyncableGraph>).sync === 'function'
-}
-
-function isMissingEntryError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false
-  if (error.message.startsWith('Missing entry ')) return true
-  const cause = error.cause
-  return cause instanceof Error && cause.message.startsWith('Missing entry ')
-}
+const dashboardThemeStorageKey = 'alinea-dashboard-theme'
 
 export class Dashboard {
   graph
@@ -458,7 +439,65 @@ export class Dashboard {
     })
   })
 
-  createEntry = atom(null, async (get, set, request) => {})
+  createEntry = atom(
+    null,
+    async (get, set, request: DashboardCreateEntryRequest) => {
+      const config = get(this.config)
+      const db = get(this.db)
+      const type = config.schema[request.type]
+      assert(type, `Type "${request.type}" not found in config`)
+
+      const title = request.title.trim()
+      assert(title, 'Title is required')
+
+      const copiedData = request.copyFrom
+        ? await db.first({
+            select: Entry.data,
+            id: request.copyFrom,
+            locale: request.locale,
+            status: 'preferPublished'
+          })
+        : undefined
+
+      const parent = request.parentId
+        ? await db.first({
+            select: {type: Entry.type},
+            id: request.parentId,
+            status: 'preferDraft'
+          })
+        : undefined
+      const parentType = parent ? config.schema[parent.type] : undefined
+      const parentInsertOrder = parentType && Type.insertOrder(parentType)
+
+      const created = await db.create({
+        type,
+        workspace: request.workspace,
+        root: request.root,
+        parentId: request.parentId,
+        locale: request.locale,
+        status: config.enableDrafts ? 'draft' : 'published',
+        insertOrder:
+          parentInsertOrder && parentInsertOrder !== 'free'
+            ? parentInsertOrder
+            : request.insertOrder,
+        set: {
+          ...Type.initialValue(type),
+          ...copiedData,
+          title,
+          path: slugify(title)
+        }
+      })
+
+      set(this.route, {
+        workspace: request.workspace,
+        root: request.root,
+        entry: created._id,
+        locale: request.locale ?? undefined
+      })
+
+      return created
+    }
+  )
 }
 
 export class DashboardEditor {
@@ -515,6 +554,8 @@ export interface DashboardMenuItem {
 }
 
 export interface ExplorerOptions {
+  condition?: Filter<EntryFields>
+  location?: ExplorerLocation
   selectionMode?: 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
   initialSelection?: Array<string>
@@ -663,12 +704,14 @@ export class DashboardExplorer {
       if (!root) return []
       const locale = get(root.selectedLocale)
       const searchAll = Boolean(search && this.#options.searchDepth === 'all')
+      const flatList = Boolean(this.#options.condition) || searchAll
       const children = await db.find({
         locale,
         search: search || undefined,
         workspace: location.workspace,
         root: location.root,
-        parentId: searchAll ? undefined : (location.parentId ?? null),
+        parentId: flatList ? undefined : (location.parentId ?? null),
+        filter: this.#options.condition,
         select: Entry.id,
         status: 'preferDraft'
       })
@@ -1265,7 +1308,8 @@ export class DashboardEntry {
       if (!isObject<Record<string, unknown>>(value)) return activeVersion
       const title =
         typeof value.title === 'string' ? value.title : activeVersion.title
-      const path = typeof value.path === 'string' ? value.path : activeVersion.path
+      const path =
+        typeof value.path === 'string' ? value.path : activeVersion.path
       return {
         ...activeVersion,
         title,
@@ -1288,8 +1332,7 @@ export class DashboardEntry {
     const currentNode = get(this.currentlyEditing)
     if (!currentNode) return undefined
     const value = get(currentNode.value)
-    if (!isObject<Record<string, unknown>>(value))
-      return undefined
+    if (!isObject<Record<string, unknown>>(value)) return undefined
     const sha = get(this.dashboard.sha)
     if (!sha) return undefined
 
@@ -1314,7 +1357,10 @@ export class DashboardEntry {
     }
     const schema = get(this.dashboard.config).schema
     const baseText = decoder.decode(
-      JsonLoader.format(schema, createRecord(activeVersion, activeVersion.status))
+      JsonLoader.format(
+        schema,
+        createRecord(activeVersion, activeVersion.status)
+      )
     )
     const nextText = decoder.decode(
       JsonLoader.format(schema, createRecord(nextVersion, status))
@@ -1985,4 +2031,49 @@ export class ReactiveNode<Value = unknown> {
     set(this.nodes, next)
     set(this.#dirty, true)
   })
+}
+
+const decoder = new TextDecoder()
+
+let enableThemeTransitionsFrame: number | undefined
+
+function suspendTransitionsDuringThemeChange() {
+  if (typeof document === 'undefined') return
+  const {body} = document
+  if (!body) return
+  body.dataset.disableTransition = 'true'
+  void body.offsetWidth
+  if (enableThemeTransitionsFrame)
+    cancelAnimationFrame(enableThemeTransitionsFrame)
+  enableThemeTransitionsFrame = requestAnimationFrame(() => {
+    enableThemeTransitionsFrame = requestAnimationFrame(() => {
+      body.removeAttribute('data-disable-transition')
+      enableThemeTransitionsFrame = undefined
+    })
+  })
+}
+
+function applyDashboardTheme(theme: DashboardTheme) {
+  if (typeof document === 'undefined') return
+  suspendTransitionsDuringThemeChange()
+  const root = document.documentElement
+  if (theme === 'system') root.removeAttribute('data-theme')
+  else root.dataset.theme = theme
+}
+
+interface SyncableGraph {
+  sync: () => Promise<string>
+}
+
+function isSyncableGraph(
+  graph: WriteableGraph
+): graph is WriteableGraph & SyncableGraph {
+  return typeof (graph as Partial<SyncableGraph>).sync === 'function'
+}
+
+function isMissingEntryError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  if (error.message.startsWith('Missing entry ')) return true
+  const cause = error.cause
+  return cause instanceof Error && cause.message.startsWith('Missing entry ')
 }

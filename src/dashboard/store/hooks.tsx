@@ -3,12 +3,12 @@ import type {Field} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
 import {Type} from '#/index.js'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useHydrateAtoms} from 'jotai/utils'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
 import type {Dashboard, DashboardEntry, ReactiveNode} from './Dashboard.js'
-import {DashboardEditor} from './Dashboard.js'
+import {dashboardAtom, DashboardEditor} from './Dashboard.js'
 
-const dashboardContext = createContext<Dashboard | null>(null)
 const entryContext = createContext<DashboardEntry | null>(null)
 const editorContext = createContext<DashboardEditor | null>(null)
 
@@ -16,13 +16,12 @@ export function DashboardScopeInternal({
   children,
   dashboard
 }: PropsWithChildren<{dashboard: Dashboard}>) {
-  return createElement(dashboardContext.Provider, {value: dashboard}, children)
+  useHydrateAtoms([[dashboardAtom, dashboard]])
+  return children
 }
 
 export function useDashboard() {
-  const dashboard = useContext(dashboardContext)
-  assert(dashboard, 'Dashboard not found in context')
-  return dashboard
+  return useAtomValue(dashboardAtom)
 }
 
 export interface EditorScopeProps {
