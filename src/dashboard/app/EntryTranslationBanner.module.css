@@ -1,0 +1,48 @@
+.EntryTranslationBanner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--alinea-border-default);
+  border-radius: 8px;
+  background: var(--alinea-bg);
+}
+
+.EntryTranslationBanner-body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.EntryTranslationBanner-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--alinea-content-primary);
+}
+
+.EntryTranslationBanner-message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--alinea-content-secondary);
+}
+
+.EntryTranslationBanner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.EntryTranslationBanner-label {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--alinea-content-secondary);
+}
+
+.EntryTranslationBanner-select {
+  min-width: 120px;
+}

@@ -41,6 +41,11 @@
   background: var(--alinea-bg-muted);
 }
 
+.EntryEditor-banner {
+  padding-bottom: 16px;
+  background: var(--alinea-bg-muted);
+}
+
 .EntryEditor-header {
   display: flex;
   align-items: center;

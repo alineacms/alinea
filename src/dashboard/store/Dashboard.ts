@@ -1148,6 +1148,7 @@ export class DashboardEntry {
   parentId: Atom<string | null>
   parentIds: Atom<Array<string>>
   root: Atom<DashboardRoot>
+  #translationSourceLocale = atom<string | null | undefined>(undefined)
 
   constructor(
     public dashboard: Dashboard,
@@ -1175,9 +1176,37 @@ export class DashboardEntry {
     })
   }
 
+  translationSourceLocales = atom(get => {
+    return Array.from(get(this.locales).keys()).filter(
+      (locale): locale is string => locale !== null
+    )
+  })
+
+  translationSourceLocale = atom(
+    get => {
+      const locale = get(this.#translationSourceLocale)
+      const available = get(this.translationSourceLocales)
+      if (locale && available.includes(locale)) return locale
+      return available[0] ?? null
+    },
+    (get, set, locale: string) => {
+      if (get(this.#translationSourceLocale) === locale) return
+      startTransition(() => {
+        set(this.#translationSourceLocale, locale)
+        set(this.currentlyEditing, undefined)
+        set(this.#selection, undefined)
+      })
+    }
+  )
+
+  sourceLocale = atom(get => {
+    if (get(this.untranslated)) return get(this.translationSourceLocale)
+    return get(get(this.root).selectedLocale)
+  })
+
   activeStatus = atom(get => {
     const locales = get(this.locales)
-    const locale = get(get(this.root).selectedLocale)
+    const locale = get(this.sourceLocale)
     const entry = locales.get(locale)
     assert(entry, `Entry ${this.id} has no data for locale ${locale}`)
     return entry.status
@@ -1202,10 +1231,20 @@ export class DashboardEntry {
     atom(async (get): Promise<ReactiveNode<object>> => {
       const version = get(this.selectedVersion)
       if (version.type === 'status') {
-        const language = this.languages(get(get(this.root).selectedLocale))
+        const untranslated = get(this.untranslated)
+        const locale = get(this.sourceLocale)
+        const language = this.languages(locale)
         if (version.status === get(this.activeStatus)) {
           const editing = get(this.currentlyEditing)
           if (editing) return editing
+        }
+        if (untranslated) {
+          const sourceNode = await get(language.data(version.status))
+          const sourceValue = get(sourceNode.value) as Record<string, unknown>
+          return new ReactiveNode<object>({
+            ...sourceValue,
+            path: undefined
+          })
         }
         return get(language.data(version.status))
       }
@@ -1214,7 +1253,7 @@ export class DashboardEntry {
   )
 
   label = atom(get => {
-    const locale = get(get(this.root).selectedLocale)
+    const locale = get(this.sourceLocale)
     const locales = get(this.locales)
     const entry = locales.get(locale)
     if (entry?.title) return entry.title
@@ -1275,7 +1314,7 @@ export class DashboardEntry {
 
   availableStatuses = swr(
     atom(async get => {
-      const locale = get(get(this.root).selectedLocale)
+      const locale = get(this.sourceLocale)
       const language = this.languages(locale)
       const versions = await get(language.versions)
       return [...versions.keys()]
@@ -1284,15 +1323,32 @@ export class DashboardEntry {
 
   activeVersion = swr(
     atom(async get => {
-      const root = get(this.root)
       const locales = get(this.locales)
-      const locale = get(root.selectedLocale)
+      const locale = get(this.sourceLocale)
       const entry = locales.get(locale)
       if (entry) return entry
       for (const fallback of locales.values()) {
         if (fallback.title) return fallback
       }
       return null
+    })
+  )
+
+  parentNeedsTranslation = swr(
+    atom(async get => {
+      if (!get(this.untranslated)) return false
+      const parentId = get(this.parentId)
+      if (!parentId) return false
+      const locale = get(get(this.root).selectedLocale)
+      if (!locale) return false
+      const db = get(this.dashboard.db)
+      const parentLink = await db.first({
+        select: Entry.id,
+        id: parentId,
+        locale,
+        status: 'preferDraft'
+      })
+      return !parentLink
     })
   )
 
@@ -1528,6 +1584,44 @@ export class DashboardEntry {
       status: 'archived'
     })
   })
+
+  saveTranslation = atom(
+    null,
+    async (get, set, node: ReactiveNode<object>) => {
+      const root = get(this.root)
+      const locale = get(root.selectedLocale)
+      assert(locale, `Cannot translate entry ${this.id} without a locale`)
+      const sourceLocale = get(this.translationSourceLocale)
+      assert(
+        sourceLocale,
+        `Cannot translate entry ${this.id} without a source locale`
+      )
+      const activeVersion = await get(this.languages(sourceLocale).activeVersion)
+      const parentId = activeVersion.parentId
+      const db = get(this.dashboard.db)
+      if (parentId) {
+        const parentLink = await db.first({
+          select: Entry.id,
+          id: parentId,
+          locale,
+          status: 'preferDraft'
+        })
+        assert(parentLink, 'Parent not translated')
+      }
+      const config = get(this.dashboard.config)
+      const type = get(this.type).type
+      const data = get(node.value)
+      await db.create({
+        type,
+        id: this.id,
+        parentId,
+        locale,
+        status: config.enableDrafts ? 'draft' : 'published',
+        set: data
+      })
+      set(node.commit)
+    }
+  )
 }
 
 export class DashboardEntryLanguage {
