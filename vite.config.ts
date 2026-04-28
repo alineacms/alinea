@@ -68,9 +68,5 @@ export default defineConfig({
 })
 
 function pkg(name: string) {
-  return new RegExp(`^${escapeRegExp(name)}(/|$)`)
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`^${RegExp.escape(name)}(/|$)`)
 }

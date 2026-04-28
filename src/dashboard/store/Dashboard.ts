@@ -580,10 +580,12 @@ export interface DashboardMenuItem {
   label: string
 }
 
-export type ExplorerSortBase = 'title' | 'path' | 'size' | 'id'
-export type ExplorerSort =
-  | `${ExplorerSortBase}-asc`
-  | `${ExplorerSortBase}-desc`
+export type ExplorerSortBy = 'title' | 'path' | 'size' | 'id'
+export type ExplorerSortDirections = 'asc' | 'desc'
+export type ExplorerSort = {
+  sortBy: ExplorerSortBy
+  direction: ExplorerSortDirections
+}
 
 export type ExplorerTypeFilters = typeof MediaFile | typeof MediaLibrary
 
@@ -659,8 +661,25 @@ export class DashboardExplorer {
       set(this.#selectedView, next)
     }
   )
-  sort = atom<ExplorerSort>('title-asc')
-  filter = atom<ExplorerTypeFilters | undefined>(undefined)
+  #sort = atom<ExplorerSort>({sortBy: 'title', direction: 'asc'})
+  sort = atom(
+    get => get(this.#sort),
+    (get, set, sortBy: ExplorerSortBy) => {
+      const sort = get(this.#sort)
+      const direction =
+        sort.sortBy === sortBy && sort.direction === 'desc' ? 'asc' : 'desc'
+      set(this.#sort, {sortBy, direction})
+    }
+  )
+  #filter = atom<ExplorerTypeFilters | undefined>(undefined)
+  filter = atom(
+    get => get(this.#filter),
+    (get, set, filterBy: ExplorerTypeFilters) => {
+      const filter = get(this.#filter)
+      const payload = filter === filterBy ? undefined : filterBy
+      set(this.#filter, payload)
+    }
+  )
   location = atom(
     get => get(this.#location),
     (get, set, update: SetStateAction<ExplorerLocation>) => {
@@ -738,18 +757,14 @@ export class DashboardExplorer {
       const root = get(this.root)
       const sort = get(this.sort)
       const filter = get(this.filter)
-      const [path, order] = sort.split('-') as [
-        ExplorerSortBase,
-        'asc' | 'desc'
-      ]
-      const fieldMap: Record<ExplorerSortBase, Expr<string | number>> = {
+      const fieldMap: Record<ExplorerSortBy, Expr<string | number>> = {
         title: Entry.title,
         path: Entry.path,
         size: MediaFile.size,
         id: Entry.id
       }
       const orderBy = {
-        [order]: fieldMap[path]
+        [sort.direction]: fieldMap[sort.sortBy]
       }
       if (!root) return []
       const locale = get(root.selectedLocale)

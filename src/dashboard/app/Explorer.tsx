@@ -16,7 +16,7 @@ import {
 import {
   DashboardExplorer,
   ExplorerSort,
-  ExplorerSortBase,
+  ExplorerSortBy,
   ExplorerTypeFilters
 } from '../store.js'
 import css from './Explorer.module.css'
@@ -64,26 +64,26 @@ const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaFile, label: 'File'},
   {type: MediaLibrary, label: 'Folder'}
 ]
-const sortingOptions: Array<{id: ExplorerSortBase; label: string}> = [
+const sortingOptions: Array<{id: ExplorerSortBy; label: string}> = [
   {id: 'title', label: 'Title'},
   {id: 'id', label: 'Creation date'},
   {id: 'size', label: 'Size'}
 ]
 
 interface ExplorerControlsProps {
-  isMedia: boolean
+  isMedia: boolean | undefined
   sort: ExplorerSort
   selectedFilter: ExplorerTypeFilters | undefined
-  setSortMiddle: (sortBy: ExplorerSortBase) => void
-  setFilterMiddle: (filterBy: ExplorerTypeFilters) => void
+  setSort: (sortBy: ExplorerSortBy) => void
+  toggleFilter: (filterBy: ExplorerTypeFilters) => void
 }
 
 function ExplorerControlsButton({
   isMedia,
   sort,
   selectedFilter,
-  setSortMiddle,
-  setFilterMiddle
+  setSort,
+  toggleFilter
 }: ExplorerControlsProps) {
   return (
     <DialogTrigger>
@@ -97,8 +97,8 @@ function ExplorerControlsButton({
           isMedia={isMedia}
           sort={sort}
           selectedFilter={selectedFilter}
-          setSortMiddle={setSortMiddle}
-          setFilterMiddle={setFilterMiddle}
+          setSort={setSort}
+          toggleFilter={toggleFilter}
         />
       </Popover>
     </DialogTrigger>
@@ -108,8 +108,8 @@ function ExplorerControlsPopover({
   isMedia,
   sort,
   selectedFilter,
-  setSortMiddle,
-  setFilterMiddle
+  setSort,
+  toggleFilter
 }: ExplorerControlsProps) {
   return (
     <>
@@ -120,7 +120,7 @@ function ExplorerControlsPopover({
             <Button
               key={slugify(filter.label)}
               appearance={selectedFilter === filter.type ? 'active' : 'plain'}
-              onPress={() => setFilterMiddle(filter.type)}
+              onPress={() => toggleFilter(filter.type)}
               className={styles.Sorting.button()}
             >
               {filter.label}
@@ -131,16 +131,16 @@ function ExplorerControlsPopover({
       )}
       <span className={styles.Popover.Label()}>Sort by</span>
       {sortingOptions.map(option =>
-        !isMedia && option.label === 'Size' ? null : (
+        !isMedia && option.id === 'size' ? null : (
           <Button
             key={option.id}
-            appearance={sort.startsWith(option.id) ? 'solid' : 'plain'}
-            onPress={() => setSortMiddle(option.id)}
+            appearance={sort.sortBy === option.id ? 'solid' : 'plain'}
+            onPress={() => setSort(option.id)}
             className={styles.Sorting.button()}
           >
             {option.label}
-            {sort.startsWith(option.id) &&
-              (sort.endsWith('-asc') ? (
+            {sort.sortBy === option.id &&
+              (sort.direction === 'asc' ? (
                 <IcRoundArrowUpward />
               ) : (
                 <IcRoundArrowDownward />
@@ -155,38 +155,18 @@ function ExplorerControlsPopover({
 function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   const [view, setView] = useAtom(explorer.view)
   const [sort, setSort] = useAtom(explorer.sort)
-  const [selectedFilter, setFilter] = useAtom(explorer.filter)
-
-  function setSortMiddle(sortBy: ExplorerSortBase) {
-    if (sort.startsWith(sortBy)) {
-      if (sort.endsWith('-desc')) {
-        setSort(`${sortBy}-asc`)
-      } else {
-        setSort(`${sortBy}-desc`)
-      }
-    } else {
-      setSort(`${sortBy}-desc`)
-    }
-  }
-
-  function setFilterMiddle(filterBy: ExplorerTypeFilters) {
-    if (filterBy === selectedFilter) {
-      setFilter(undefined)
-    } else {
-      setFilter(filterBy)
-    }
-  }
-
+  const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
   const isMedia = useAtomValue(explorer.isMedia)
   const upload = useSetAtom(explorer.upload)
+
   return (
     <div className={styles.Explorer.toolbar.tools()}>
       <ExplorerControlsButton
         isMedia={isMedia}
         sort={sort}
         selectedFilter={selectedFilter}
-        setSortMiddle={setSortMiddle}
-        setFilterMiddle={setFilterMiddle}
+        setSort={setSort}
+        toggleFilter={toggleFilter}
       />
       {isMedia && (
         <FileTrigger
