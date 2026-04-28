@@ -17,6 +17,16 @@
   border-radius: 8px;
   background: var(--alinea-dashboard-surface-background);
 
+  &:has(.DashboardModalDialog.is-loading) {
+    width: auto;
+    max-width: none;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
   &[data-entering] {
     animation: DashboardModal-enter 180ms ease-out;
   }
@@ -51,6 +61,15 @@
     gap: 0;
     min-height: 0;
   }
+
+  &.is-loading {
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-width: 0;
+    min-height: 0;
+    background: transparent;
+  }
 }
 
 .DashboardModalDialog-controls {
@@ -59,6 +78,10 @@
   align-items: center;
   gap: 8px;
   width: 100%;
+}
+
+.DashboardModalDialog-loader {
+  color: white;
 }
 
 .DashboardModalDialog-header {

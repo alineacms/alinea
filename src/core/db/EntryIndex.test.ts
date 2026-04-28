@@ -312,6 +312,9 @@ test('syncWith and indexChanges dispatch entry/index events', async () => {
     emitted.some(event => event.op === 'entry' && event.value === 'cookie-3')
   )
   test.ok(
+    emitted.some(event => event.op === 'entry' && event.value === 'recipes')
+  )
+  test.ok(
     emitted.some(event => event.op === 'index' && event.value === changedSha)
   )
 
@@ -325,6 +328,62 @@ test('syncWith and indexChanges dispatch entry/index events', async () => {
     () => index.indexChanges({fromSha: 'invalid-sha', changes: []}),
     'SHA mismatch'
   )
+})
+
+test('indexChanges dispatches entry events for old and new parents on move', async () => {
+  const {index, source} = await createEntryIndex(cms.config, [
+    ...fixtureEntries,
+    {
+      id: 'desserts',
+      type: 'DemoRecipes',
+      index: 'a2',
+      path: 'desserts',
+      data: {title: 'Desserts'}
+    }
+  ])
+  const emitted = Array<string>()
+  index.addEventListener(IndexEvent.type, event => {
+    const indexEvent = event as IndexEvent
+    if (indexEvent.data.op === 'entry') emitted.push(indexEvent.data.id)
+  })
+
+  const from = await source.getTree()
+  const fromPath = 'pages/recipes/cookie-1.json'
+  const leaf = from.getLeaf(fromPath)
+  const movedRecord = createRecord(
+    {
+      id: 'cookie-1',
+      type: 'DemoRecipe',
+      index: 'a1',
+      parentId: 'desserts',
+      root: 'pages',
+      path: 'cookie-1',
+      title: 'Cookie 1',
+      seeded: null,
+      data: {path: 'cookie-1', title: 'Cookie 1'}
+    },
+    'published'
+  )
+  const contents = new TextEncoder().encode(JSON.stringify(movedRecord, null, 2))
+  const sha = await hashBlob(contents)
+  await source.applyChanges({
+    fromSha: from.sha,
+    changes: [
+      {op: 'delete', path: fromPath, sha: leaf.sha},
+      {
+        op: 'add',
+        path: 'pages/desserts/cookie-1.json',
+        sha,
+        contents
+      }
+    ]
+  })
+
+  await index.syncWith(source)
+
+  test.ok(emitted.includes('cookie-1'))
+  test.ok(emitted.includes('recipes'))
+  test.ok(emitted.includes('desserts'))
 })
 
 test('seed creates missing seeded entries and reuses i18n ids', async () => {

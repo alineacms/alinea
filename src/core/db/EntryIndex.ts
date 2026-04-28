@@ -543,6 +543,43 @@ function getNodePath(filePath: string) {
   return `${dir}/${base}`
 }
 
+interface EntryRelation {
+  parentId: string | null
+  index: string
+}
+
+function entryRelation(node: EntryNode): EntryRelation {
+  return {
+    parentId: node.parentId,
+    index: node.index
+  }
+}
+
+function changedParentIds(
+  previous: Map<string, EntryRelation>,
+  next: Map<string, EntryRelation>
+) {
+  const ids = new Set([...previous.keys(), ...next.keys()])
+  const parents = new Set<string>()
+  for (const id of ids) {
+    const before = previous.get(id)
+    const after = next.get(id)
+    if (!before && after) {
+      if (after.parentId) parents.add(after.parentId)
+    } else if (before && !after) {
+      if (before.parentId) parents.add(before.parentId)
+    } else if (
+      before &&
+      after &&
+      (before.parentId !== after.parentId || before.index !== after.index)
+    ) {
+      if (before.parentId) parents.add(before.parentId)
+      if (after.parentId) parents.add(after.parentId)
+    }
+  }
+  return parents
+}
+
 export class EntryIndex extends EventTarget {
   tree = ReadonlyTree.EMPTY
   initialSync: ReadonlyTree | undefined
@@ -587,12 +624,15 @@ export class EntryIndex extends EventTarget {
       throw new ShaMismatchError(fromSha, this.tree.sha)
     if (changes.length === 0) return this.tree.sha
     const changed = new Set<EntryNode>()
+    const previousRelations = new Map<string, EntryRelation>()
+    const nextRelations = new Map<string, EntryRelation>()
     for (const change of changes) {
       if (change.op !== 'delete') continue
       const nodePath = getNodePath(change.path)
       const node = this.graph.byDir(nodePath)
       assert(node, `Missing node for deleted path: ${change.path}`)
       changed.add(node)
+      previousRelations.set(node.id, entryRelation(node))
     }
     this.graph = this.graph.withChanges(batch)
     for (const change of changes) {
@@ -601,18 +641,33 @@ export class EntryIndex extends EventTarget {
       const node = this.graph.byDir(nodePath)
       assert(node, `Missing node for added path: ${change.path}`)
       changed.add(node)
+      nextRelations.set(node.id, entryRelation(node))
     }
     const updatedTree = await this.tree.withChanges(batch)
     const sha = updatedTree.sha
     this.tree = updatedTree
+    const affectedParentIds = changedParentIds(
+      previousRelations,
+      nextRelations
+    )
+    const emittedEntryIds = new Set<string>()
+    const dispatchEntry = (id: string) => {
+      if (emittedEntryIds.has(id)) return
+      emittedEntryIds.add(id)
+      this.dispatchEvent(new IndexEvent({op: 'entry', id}))
+    }
     const pool = Array.from(changed)
     while (pool.length > 0) {
       const node = pool.shift()!
-      this.dispatchEvent(new IndexEvent({op: 'entry', id: node.id}))
+      dispatchEntry(node.id)
       for (const child of node.children()) {
-        if (!changed.has(child)) pool.push(child)
+        if (!changed.has(child)) {
+          changed.add(child)
+          pool.push(child)
+        }
       }
     }
+    for (const id of affectedParentIds) dispatchEntry(id)
     this.dispatchEvent(new IndexEvent({op: 'index', sha}))
     return sha
   }

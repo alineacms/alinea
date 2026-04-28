@@ -32,7 +32,10 @@ function ExplorerModal({options}: ExplorerModalProps) {
   const workspace = useAtomValue(dashboard.selectedWorkspace)
   const root = useAtomValue(dashboard.selectedRoot)
   const [explorer] = useState(() =>
-    dashboard.explore({workspace, root}, {...options, searchDepth: 'all'})
+    dashboard.explore(options.location ?? {workspace, root}, {
+      ...options,
+      searchDepth: 'all'
+    })
   )
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)

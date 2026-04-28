@@ -5,6 +5,7 @@ import {Reference} from '#/core/Reference.js'
 import {Type} from '#/core/Type.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
+import type {EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
@@ -29,6 +30,7 @@ import {
 } from '../../../icons.js'
 import {
   type DashboardEntry,
+  type ExplorerOptions,
   ReactiveNode,
   useDashboard,
   useField,
@@ -284,7 +286,14 @@ function LinkPickerAction({
       </DialogTrigger>
     )
   }
-  const pickerProps = {
+  const options = picker.options as Partial<EntryPickerOptions>
+  const condition =
+    typeof options.condition === 'function' ? undefined : options.condition
+  const location =
+    typeof options.location === 'function' ? undefined : options.location
+  const pickerProps: ExplorerOptions = {
+    condition,
+    location,
     selectionMode: picker.handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: picker.handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),

@@ -1,0 +1,22 @@
+.CreateEntry-message {
+  margin: 0;
+  color: var(--alinea-fg-muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.CreateEntry-parentRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.CreateEntry-parentField {
+  flex: 1;
+  min-width: min(320px, 100%);
+}
+
+.CreateEntry-insertOrder {
+  flex: 0 0 auto;
+}

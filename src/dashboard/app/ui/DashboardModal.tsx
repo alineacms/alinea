@@ -1,6 +1,6 @@
 'use client'
 
-import {Button, Dialog, Modal} from '#/components.js'
+import {Button, Dialog, Modal, ProgressCircle} from '#/components.js'
 import styler from '@alinea/styler'
 import {
   useContext,
@@ -36,32 +36,53 @@ export function DashboardModal({size = 'default', ...props}: DashboardModalProps
 export interface DashboardModalDialogProps
   extends PropsWithChildren,
     Omit<ComponentProps<typeof Dialog>, 'children' | 'className'> {
+  isLoading?: boolean
   label?: ReactNode
   controls?: ReactNode
   variant?: 'default' | 'explorer'
 }
 
 export function DashboardModalDialog({
+  isLoading = false,
   label,
   controls,
   children,
   variant = 'default',
   ...props
 }: DashboardModalDialogProps) {
+  const loadingLabel =
+    typeof props['aria-label'] === 'string'
+      ? `Loading ${props['aria-label'].toLowerCase()}`
+      : 'Loading'
+
   return (
-    <Dialog {...props} className={styles.DashboardModalDialog(variant)}>
-      {label !== undefined && (
-        <header className={styles.DashboardModalDialog.header()}>
-          <DashboardModalTitle>{label}</DashboardModalTitle>
-          <DashboardModalCloseButton />
-        </header>
+    <Dialog
+      {...props}
+      className={styles.DashboardModalDialog(variant, {loading: isLoading})}
+      data-loading={isLoading ? '' : undefined}
+    >
+      {isLoading ? (
+        <ProgressCircle
+          isIndeterminate
+          aria-label={loadingLabel}
+          className={styles.DashboardModalDialog.loader()}
+        />
+      ) : (
+        <>
+          {label !== undefined && (
+            <header className={styles.DashboardModalDialog.header()}>
+              <DashboardModalTitle>{label}</DashboardModalTitle>
+              <DashboardModalCloseButton />
+            </header>
+          )}
+          {controls && (
+            <div className={styles.DashboardModalDialog.controls()}>
+              {controls}
+            </div>
+          )}
+          {children}
+        </>
       )}
-      {controls && (
-        <div className={styles.DashboardModalDialog.controls()}>
-          {controls}
-        </div>
-      )}
-      {children}
     </Dialog>
   )
 }

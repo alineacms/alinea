@@ -122,7 +122,10 @@ export class Dashboard {
           // Listen to db changes and update entry revisions
           const listen = (event: Event) => {
             if (event instanceof IndexEvent && event.data.op === 'entry') {
-              set(this.revisions(event.data.id), current => current + 1)
+              const id = event.data.id
+              startTransition(() =>
+                set(this.revisions(id), current => current + 1)
+              )
             }
           }
           events.addEventListener(IndexEvent.type, listen)
@@ -357,14 +360,12 @@ export class Dashboard {
   }
 
   entries = dispense(id => {
-    const dataAtom = atom<Promise<EntryData>>(get => {
+    const dataAtom = atom<Promise<EntryData>>(async get => {
       get(this.revisions(id))
-      // todo: this will get out of sync for hasChildren
       const load = get(this.#entryLoader)
-      return load(id).then(([result, error]) => {
-        if (error) throw new Error('Could not load entry', {cause: error})
-        return result
-      })
+      const [result, error] = await load(id)
+      if (error) throw new Error('Could not load entry', {cause: error})
+      return result
     })
     let entry: DashboardEntry
     return swr(

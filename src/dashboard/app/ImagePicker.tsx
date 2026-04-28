@@ -44,7 +44,7 @@ function ExplorerModal({options}: ExplorerModalProps) {
       : selectedRoot
   const [explorer] = useState(() =>
     dashboard.explore(
-      {workspace, root: mediaRoot},
+      options.location ?? {workspace, root: mediaRoot},
       {...options, searchDepth: 'all'}
     )
   )
