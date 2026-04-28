@@ -66,11 +66,12 @@ const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
 ]
 const sortingOptions: Array<{id: ExplorerSortBase; label: string}> = [
   {id: 'title', label: 'Title'},
-  {id: 'path', label: 'Path'},
+  {id: 'id', label: 'Creation date'},
   {id: 'size', label: 'Size'}
 ]
 
 interface ExplorerControlsProps {
+  isMedia: boolean
   sort: ExplorerSort
   selectedFilter: ExplorerTypeFilters | undefined
   setSortMiddle: (sortBy: ExplorerSortBase) => void
@@ -78,6 +79,7 @@ interface ExplorerControlsProps {
 }
 
 function ExplorerControlsButton({
+  isMedia,
   sort,
   selectedFilter,
   setSortMiddle,
@@ -92,6 +94,7 @@ function ExplorerControlsButton({
       />
       <Popover placement="bottom left">
         <ExplorerControlsPopover
+          isMedia={isMedia}
           sort={sort}
           selectedFilter={selectedFilter}
           setSortMiddle={setSortMiddle}
@@ -102,6 +105,7 @@ function ExplorerControlsButton({
   )
 }
 function ExplorerControlsPopover({
+  isMedia,
   sort,
   selectedFilter,
   setSortMiddle,
@@ -109,35 +113,41 @@ function ExplorerControlsPopover({
 }: ExplorerControlsProps) {
   return (
     <>
-      <span className={styles.Popover.Label()}>Filter by</span>
-      {filters.map(filter => (
-        <Button
-          key={slugify(filter.label)}
-          appearance={selectedFilter === filter.type ? 'active' : 'plain'}
-          onPress={() => setFilterMiddle(filter.type)}
-          className={styles.Sorting.button()}
-        >
-          {filter.label}
-          {selectedFilter === filter.type && <IcRoundClose />}
-        </Button>
-      ))}
+      {isMedia && (
+        <>
+          <span className={styles.Popover.Label()}>Filter by</span>
+          {filters.map(filter => (
+            <Button
+              key={slugify(filter.label)}
+              appearance={selectedFilter === filter.type ? 'active' : 'plain'}
+              onPress={() => setFilterMiddle(filter.type)}
+              className={styles.Sorting.button()}
+            >
+              {filter.label}
+              {selectedFilter === filter.type && <IcRoundClose />}
+            </Button>
+          ))}
+        </>
+      )}
       <span className={styles.Popover.Label()}>Sort by</span>
-      {sortingOptions.map(option => (
-        <Button
-          key={option.id}
-          appearance={sort.startsWith(option.id) ? 'solid' : 'plain'}
-          onPress={() => setSortMiddle(option.id)}
-          className={styles.Sorting.button()}
-        >
-          {option.label}
-          {sort.startsWith(option.id) &&
-            (sort.endsWith('-asc') ? (
-              <IcRoundArrowUpward />
-            ) : (
-              <IcRoundArrowDownward />
-            ))}
-        </Button>
-      ))}
+      {sortingOptions.map(option =>
+        !isMedia && option.label === 'Size' ? null : (
+          <Button
+            key={option.id}
+            appearance={sort.startsWith(option.id) ? 'solid' : 'plain'}
+            onPress={() => setSortMiddle(option.id)}
+            className={styles.Sorting.button()}
+          >
+            {option.label}
+            {sort.startsWith(option.id) &&
+              (sort.endsWith('-asc') ? (
+                <IcRoundArrowUpward />
+              ) : (
+                <IcRoundArrowDownward />
+              ))}
+          </Button>
+        )
+      )}
     </>
   )
 }
@@ -172,6 +182,7 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   return (
     <div className={styles.Explorer.toolbar.tools()}>
       <ExplorerControlsButton
+        isMedia={isMedia}
         sort={sort}
         selectedFilter={selectedFilter}
         setSortMiddle={setSortMiddle}

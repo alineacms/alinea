@@ -580,7 +580,7 @@ export interface DashboardMenuItem {
   label: string
 }
 
-export type ExplorerSortBase = 'title' | 'path' | 'size'
+export type ExplorerSortBase = 'title' | 'path' | 'size' | 'id'
 export type ExplorerSort =
   | `${ExplorerSortBase}-asc`
   | `${ExplorerSortBase}-desc`
@@ -745,7 +745,8 @@ export class DashboardExplorer {
       const fieldMap: Record<ExplorerSortBase, Expr<string | number>> = {
         title: Entry.title,
         path: Entry.path,
-        size: MediaFile.size
+        size: MediaFile.size,
+        id: Entry.id
       }
       const orderBy = {
         [order]: fieldMap[path]
@@ -1612,43 +1613,40 @@ export class DashboardEntry {
     })
   })
 
-  saveTranslation = atom(
-    null,
-    async (get, set, node: ReactiveNode<object>) => {
-      const root = get(this.root)
-      const locale = get(root.selectedLocale)
-      assert(locale, `Cannot translate entry ${this.id} without a locale`)
-      const sourceLocale = get(this.translationSourceLocale)
-      assert(
-        sourceLocale,
-        `Cannot translate entry ${this.id} without a source locale`
-      )
-      const activeVersion = await get(this.languages(sourceLocale).activeVersion)
-      const parentId = activeVersion.parentId
-      const db = get(this.dashboard.db)
-      if (parentId) {
-        const parentLink = await db.first({
-          select: Entry.id,
-          id: parentId,
-          locale,
-          status: 'preferDraft'
-        })
-        assert(parentLink, 'Parent not translated')
-      }
-      const config = get(this.dashboard.config)
-      const type = get(this.type).type
-      const data = get(node.value)
-      await db.create({
-        type,
-        id: this.id,
-        parentId,
+  saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    assert(locale, `Cannot translate entry ${this.id} without a locale`)
+    const sourceLocale = get(this.translationSourceLocale)
+    assert(
+      sourceLocale,
+      `Cannot translate entry ${this.id} without a source locale`
+    )
+    const activeVersion = await get(this.languages(sourceLocale).activeVersion)
+    const parentId = activeVersion.parentId
+    const db = get(this.dashboard.db)
+    if (parentId) {
+      const parentLink = await db.first({
+        select: Entry.id,
+        id: parentId,
         locale,
-        status: config.enableDrafts ? 'draft' : 'published',
-        set: data
+        status: 'preferDraft'
       })
-      set(node.commit)
+      assert(parentLink, 'Parent not translated')
     }
-  )
+    const config = get(this.dashboard.config)
+    const type = get(this.type).type
+    const data = get(node.value)
+    await db.create({
+      type,
+      id: this.id,
+      parentId,
+      locale,
+      status: config.enableDrafts ? 'draft' : 'published',
+      set: data
+    })
+    set(node.commit)
+  })
 }
 
 export class DashboardEntryLanguage {
