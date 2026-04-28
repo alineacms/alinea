@@ -1,4 +1,4 @@
-@import "../theme.css";
+@import '../theme.css';
 
 .TimeField {
   display: flex;
@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px;
+  padding: 4px;
   border: 1px solid var(--alinea-border-default);
   border-radius: 6px;
   background: var(--alinea-surface-field);
@@ -35,7 +35,7 @@
   color: var(--alinea-content-primary);
 }
 
-.TimeField-segment[data-type="literal"] {
+.TimeField-segment[data-type='literal'] {
   padding: 0;
 }
 
@@ -61,6 +61,6 @@
   color: var(--alinea-content-on-accent);
 }
 
-.TimeField [slot="description"] {
+.TimeField [slot='description'] {
   font-size: 12px;
 }
