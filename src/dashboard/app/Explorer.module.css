@@ -7,6 +7,11 @@
   gap: 16px;
 }
 
+.Explorer-bar {
+  display: flex;
+  gap: 12px;
+}
+
 .Explorer-toolbar {
   flex: 1 1 0;
   display: flex;
@@ -14,6 +19,16 @@
   align-items: center;
   min-width: 0;
   justify-content: flex-end;
+}
+
+.Explorer-toolbar-tools {
+  flex: 1 1 0;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: end;
 }
 
 .Explorer-breadcrumbs {
@@ -28,6 +43,7 @@
 
 .Explorer-search {
   width: 100%;
+  flex-grow: 1 !important;
 }
 
 .Explorer-actions {
@@ -41,4 +57,20 @@
   min-height: 0;
   flex: 1;
   height: 100%;
+}
+
+.Popover {
+  display: flex;
+  flex-direction: column;
+}
+
+.Popover-Label {
+  padding-top: 4px;
+  padding-left: 4px;
+  font-size: 12px;
+}
+
+.Sorting-button {
+  display: flex;
+  justify-content: space-between;
 }

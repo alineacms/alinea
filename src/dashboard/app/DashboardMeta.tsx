@@ -1,4 +1,4 @@
-import {btoa} from 'alinea/core/util/Encoding'
+import {btoa} from '#/core/util/Encoding.js'
 import {useAtomValue} from 'jotai'
 import type {ComponentType} from 'react'
 import {useMemo} from 'react'

@@ -6,6 +6,7 @@ import {UploadOperation} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
+import type {Expr} from '#/core/Expr.js'
 import {Field, FieldOptions} from '#/core/Field.js'
 import type {Order} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
@@ -579,11 +580,19 @@ export interface DashboardMenuItem {
   label: string
 }
 
+export type ExplorerSortBase = 'title' | 'path' | 'size'
+export type ExplorerSort =
+  | `${ExplorerSortBase}-asc`
+  | `${ExplorerSortBase}-desc`
+
+export type ExplorerTypeFilters = typeof MediaFile | typeof MediaLibrary
+
 export interface ExplorerOptions {
   selectionMode?: 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
+  // initialSort?: ExplorerSort
   onAction?: WritableAtom<void, [entry: DashboardEntry], void>
   onConfirm?: (selection: Array<string>) => void
 }
@@ -650,6 +659,8 @@ export class DashboardExplorer {
       set(this.#selectedView, next)
     }
   )
+  sort = atom<ExplorerSort>('title-asc')
+  filter = atom<ExplorerTypeFilters | undefined>(undefined)
   location = atom(
     get => get(this.#location),
     (get, set, update: SetStateAction<ExplorerLocation>) => {
@@ -725,6 +736,20 @@ export class DashboardExplorer {
       const db = get(this.dashboard.db)
       const search = get(this.search)
       const root = get(this.root)
+      const sort = get(this.sort)
+      const filter = get(this.filter)
+      const [path, order] = sort.split('-') as [
+        ExplorerSortBase,
+        'asc' | 'desc'
+      ]
+      const fieldMap: Record<ExplorerSortBase, Expr<string | number>> = {
+        title: Entry.title,
+        path: Entry.path,
+        size: MediaFile.size
+      }
+      const orderBy = {
+        [order]: fieldMap[path]
+      }
       if (!root) return []
       const locale = get(root.selectedLocale)
       const searchAll = Boolean(search && this.#options.searchDepth === 'all')
@@ -735,7 +760,9 @@ export class DashboardExplorer {
         root: location.root,
         parentId: searchAll ? undefined : (location.parentId ?? null),
         select: Entry.id,
-        status: 'preferDraft'
+        orderBy,
+        status: 'preferDraft',
+        type: filter
       })
       return Promise.all(
         children.map(id => this.dashboard.entries(id)).map(get)
