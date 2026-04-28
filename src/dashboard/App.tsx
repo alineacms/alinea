@@ -12,11 +12,25 @@ export interface AppProps {
   config: Config
   client: LocalConnection
   views: Record<string, ComponentType>
+  local?: boolean
+  alineaDev?: boolean
 }
 
-export function App({graph, events, config, client, views}: AppProps) {
+export function App({
+  graph,
+  events,
+  config,
+  client,
+  views,
+  local,
+  alineaDev
+}: AppProps) {
   const [dashboard] = useState(
-    () => new Dashboard(graph, config, events, client, views)
+    () =>
+      new Dashboard(graph, config, events, client, views, {
+        alineaDev,
+        local
+      })
   )
   return <AppShell dashboard={dashboard} />
 }

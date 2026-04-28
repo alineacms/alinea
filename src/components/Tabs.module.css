@@ -97,7 +97,7 @@
   }
 
   &[data-selected] {
-    color: var(--alinea-content-primary);
+    color: var(--alinea-primary);
     font-weight: 600;
 
     [data-variant='line'] &:before {

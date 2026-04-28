@@ -6,6 +6,7 @@ import {Type} from '#/core/Type.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, PropsWithChildren, useEffect, useTransition} from 'react'
+import {IcBaselineErrorOutline} from '../icons.js'
 import {
   Dashboard,
   DashboardEntry,
@@ -13,7 +14,6 @@ import {
   DashboardSection,
   ReactiveNode
 } from '../store/Dashboard.js'
-import {IcBaselineErrorOutline} from '../icons.js'
 import {
   EditorScope,
   EntryScope,
@@ -25,10 +25,11 @@ import {
 } from '../store/hooks.js'
 import {DetailsBar} from './DetailsBar.js'
 import css from './Editor.module.css'
-import {EditorBackButton} from './EditorBackButton.js'
 import {FileEditor} from './editor/FileEditor.js'
+import {EditorBackButton} from './EditorBackButton.js'
 import {EntryHeader} from './EntryHeader.js'
 import {EntrySidebar} from './EntrySidebar.js'
+import {EntryTranslationBanner} from './EntryTranslationBanner.js'
 import {Explorer} from './Explorer.js'
 import {
   DashboardModal,
@@ -237,14 +238,20 @@ function EntryEditor({entry}: EntryEditorProps) {
   }
 
   useEffect(() => {
-    setEditing(isDirty ? node : undefined)
-  }, [node, setEditing, isDirty])
+    setEditing(isUntranslated || isDirty ? node : undefined)
+  }, [isDirty, isUntranslated, node, setEditing])
 
   let editorBody = (
     <>
       <DetailsBar entry={entry} status={status} />
 
       <RailBody className={styles.EntryEditor.body()}>
+        {isUntranslated && (
+          <div className={styles.EntryEditor.banner()}>
+            <EntryTranslationBanner entry={entry} />
+          </div>
+        )}
+
         <NodeEditor node={node} type={type.type} />
       </RailBody>
     </>

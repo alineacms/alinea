@@ -71,6 +71,7 @@ interface EntryHeaderActionProps {
   isDirty: boolean
   isUnpublished: boolean
   untranslated: boolean
+  parentNeedsTranslation: boolean
 }
 
 interface EntryHeaderBackButtonProps {
@@ -104,10 +105,12 @@ function EntryHeaderActions({
   activeStatus,
   isDirty,
   isUnpublished,
-  untranslated
+  untranslated,
+  parentNeedsTranslation
 }: EntryHeaderActionProps) {
   const reset = useSetAtom(node.reset)
   const saveDraft = useSetAtom(entry.saveDraft)
+  const saveTranslation = useSetAtom(entry.saveTranslation)
   const publishEdits = useSetAtom(entry.publishEdits)
   const publishDraft = useSetAtom(entry.publishDraft)
   const discardDraft = useSetAtom(entry.discardDraft)
@@ -115,7 +118,12 @@ function EntryHeaderActions({
   const archive = useSetAtom(entry.archive)
   const publishArchived = useSetAtom(entry.publishArchived)
 
-  const primaryButton = untranslated ? null : isDirty ? (
+  const primaryButton =
+    untranslated && !parentNeedsTranslation ? (
+      <Button icon={IcRoundTranslate} onPress={() => saveTranslation(node)}>
+        Translate
+      </Button>
+    ) : untranslated ? null : isDirty ? (
     <>
       <Button intent="secondary" onPress={() => reset()}>
         Discard my changes
@@ -212,6 +220,7 @@ export function EntryHeader({entry, node}: EntryHeaderProps) {
   const activeStatus = useAtomValue(entry.activeStatus)
   const activeVersion = useAtomValue(entry.activeVersion)
   const untranslated = useAtomValue(entry.untranslated)
+  const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
   const isDirty = useAtomValue(node.isDirty)
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
   const status = entryStatus(untranslated, isDirty, activeStatus, isUnpublished)
@@ -235,6 +244,7 @@ export function EntryHeader({entry, node}: EntryHeaderProps) {
         isDirty={isDirty}
         isUnpublished={isUnpublished}
         untranslated={untranslated}
+        parentNeedsTranslation={parentNeedsTranslation}
       />
     </RailHeader>
   )
