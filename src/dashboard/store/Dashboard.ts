@@ -1021,14 +1021,16 @@ export class DashboardTree {
     }
   )
 
-  items = atom(async get => {
-    const currentRoot = get(this.workspace.dashboard.currentRoot)
-    if (!currentRoot || currentRoot.workspace.key !== this.workspace.key)
-      return []
-    const ids = await get(currentRoot.children)
-    for (const id of ids) get(this.entryItems(id))
-    return Promise.all(ids.map(id => this.entryItems(id)).map(get))
-  })
+  items = swr(
+    atom(async get => {
+      const currentRoot = get(this.workspace.dashboard.currentRoot)
+      if (!currentRoot || currentRoot.workspace.key !== this.workspace.key)
+        return []
+      const ids = await get(currentRoot.children)
+      for (const id of ids) get(this.entryItems(id))
+      return Promise.all(ids.map(id => this.entryItems(id)).map(get))
+    })
+  )
 
   // dnd
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
@@ -1629,43 +1631,40 @@ export class DashboardEntry {
     })
   })
 
-  saveTranslation = atom(
-    null,
-    async (get, set, node: ReactiveNode<object>) => {
-      const root = get(this.root)
-      const locale = get(root.selectedLocale)
-      assert(locale, `Cannot translate entry ${this.id} without a locale`)
-      const sourceLocale = get(this.translationSourceLocale)
-      assert(
-        sourceLocale,
-        `Cannot translate entry ${this.id} without a source locale`
-      )
-      const activeVersion = await get(this.languages(sourceLocale).activeVersion)
-      const parentId = activeVersion.parentId
-      const db = get(this.dashboard.db)
-      if (parentId) {
-        const parentLink = await db.first({
-          select: Entry.id,
-          id: parentId,
-          locale,
-          status: 'preferDraft'
-        })
-        assert(parentLink, 'Parent not translated')
-      }
-      const config = get(this.dashboard.config)
-      const type = get(this.type).type
-      const data = get(node.value)
-      await db.create({
-        type,
-        id: this.id,
-        parentId,
+  saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    assert(locale, `Cannot translate entry ${this.id} without a locale`)
+    const sourceLocale = get(this.translationSourceLocale)
+    assert(
+      sourceLocale,
+      `Cannot translate entry ${this.id} without a source locale`
+    )
+    const activeVersion = await get(this.languages(sourceLocale).activeVersion)
+    const parentId = activeVersion.parentId
+    const db = get(this.dashboard.db)
+    if (parentId) {
+      const parentLink = await db.first({
+        select: Entry.id,
+        id: parentId,
         locale,
-        status: config.enableDrafts ? 'draft' : 'published',
-        set: data
+        status: 'preferDraft'
       })
-      set(node.commit)
+      assert(parentLink, 'Parent not translated')
     }
-  )
+    const config = get(this.dashboard.config)
+    const type = get(this.type).type
+    const data = get(node.value)
+    await db.create({
+      type,
+      id: this.id,
+      parentId,
+      locale,
+      status: config.enableDrafts ? 'draft' : 'published',
+      set: data
+    })
+    set(node.commit)
+  })
 }
 
 export class DashboardEntryLanguage {
