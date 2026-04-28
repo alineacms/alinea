@@ -1,4 +1,4 @@
-@import "../theme.css";
+@import '../theme.css';
 
 .Popover {
   width: var(--alinea-trigger-width);
