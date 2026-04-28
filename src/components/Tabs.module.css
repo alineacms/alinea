@@ -45,6 +45,7 @@
   padding: 8px 16px;
   cursor: pointer;
   border-radius: 4px;
+  gap: 8px;
   transition:
     background var(--alinea-transition),
     color var(--alinea-transition);
@@ -143,7 +144,6 @@
 
   [data-variant='subtle'] & {
     display: inline-flex;
-    align-self: flex-start;
     max-width: max-content;
     padding: 0;
     overflow: visible;

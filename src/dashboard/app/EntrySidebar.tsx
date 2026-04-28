@@ -25,7 +25,7 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
         variant="subtle"
         className={styles.EntrySidebar.tabs()}
       >
-        <SidebarHeader className={styles.EntrySidebar.header()}>
+        <SidebarHeader>
           <TabList aria-label="Entry sidebar">
             <Tab id="history">
               <Icon icon={IcRoundHistory} />
