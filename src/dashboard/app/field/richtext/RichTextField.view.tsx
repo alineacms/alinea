@@ -1,6 +1,7 @@
-import {Elevation, Label} from '#/components.js'
+import {Button, Icon, Label} from '#/components.js'
 import {Field} from '#/core/Field.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
+import {createId} from '#/core/Id.js'
 import {Schema} from '#/core/Schema.js'
 import {
   BlockNode,
@@ -12,6 +13,12 @@ import {
 } from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {
+  IcBaselineContentCopy,
+  IcRoundClose,
+  IcRoundKeyboardArrowDown,
+  IcRoundKeyboardArrowUp
+} from '#/dashboard/icons.js'
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {
   useFieldError,
@@ -22,6 +29,7 @@ import {
 import {RichTextOptions} from '#/field/richtext/RichTextField.js'
 import styler from '@alinea/styler'
 import {Node as TipTapNode} from '@tiptap/core'
+import type {Editor as TipTapEditor} from '@tiptap/react'
 import {
   EditorContent,
   JSONContent,
@@ -34,6 +42,12 @@ import {atom, useAtomValue, useStore} from 'jotai'
 import {memo, useCallback, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor.js'
+import {
+  Surface,
+  SurfaceContent,
+  SurfaceHeader,
+  SurfaceRow
+} from '../../ui/Surface.js'
 import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
 import css from './RichTextField.module.css'
@@ -42,14 +56,104 @@ import {RichTextToolbar} from './RichTextToolbar.js'
 const styles = styler(css)
 
 type NodeViewProps = {
-  node: {attrs: {[BlockNode.id]?: string}}
+  editor: TipTapEditor
+  getPos: () => number | undefined
+  node: {attrs: {[BlockNode.id]?: string}; nodeSize: number}
   deleteNode: () => void
 }
 
+interface TypeExtensionHeaderProps {
+  type: Type
+  exp: boolean
+  onDelete: () => void
+  onToggle: () => void
+  onCopy: () => void
+}
+
+function TypeExtensionHeader({
+  type,
+  onDelete,
+  onToggle,
+  exp,
+  onCopy
+}: TypeExtensionHeaderProps) {
+  const label = Type.label(type)
+  return (
+    <SurfaceHeader className={styles.RichTextFieldView.Surface.Header()}>
+      <div className={styles.RichTextFieldView.Surface.Header.Label()}>
+        <Button
+          appearance="plain"
+          intent="secondary"
+          size="square-petite"
+          className={styles.ListFieldRow.fold()}
+          onPress={onToggle}
+        >
+          <Icon
+            aria-hidden
+            icon={
+              exp === true ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowUp
+            }
+          />
+        </Button>
+        {label}
+      </div>
+      <div className={styles.RichTextFieldView.Surface.Header.actions()}>
+        <Button
+          aria-label={`Duplicate ${label}`}
+          appearance="outline"
+          intent="secondary"
+          onPress={onCopy}
+          size="icon"
+        >
+          <Icon aria-hidden icon={IcBaselineContentCopy} />
+        </Button>
+        <Button
+          aria-label={`Remove ${label}`}
+          appearance="outline"
+          intent="danger"
+          onPress={onDelete}
+          size="icon"
+        >
+          <Icon aria-hidden icon={IcRoundClose} />
+        </Button>
+      </div>
+    </SurfaceHeader>
+  )
+}
+
 function typeExtension(field: Field, name: string, type: Type) {
-  function View({node, deleteNode}: NodeViewProps) {
+  function View({editor, getPos, node, deleteNode}: NodeViewProps) {
+    const [exp, toggleExp] = useState(true)
+    const store = useStore()
+    const setValue = useFieldSetter(field)
     const reactive = useFieldNode(field)
     const {[BlockNode.id]: id} = node.attrs
+
+    function onToggle() {
+      toggleExp(exp => !exp)
+    }
+
+    function onCopy() {
+      const value = (store.get(reactive.value) as TextDoc | undefined) ?? []
+      const index = value.findIndex(node => {
+        return Node.isBlock(node) && node[BlockNode.id] === id
+      })
+      const pos = getPos()
+      if (index === -1 || typeof pos !== 'number') return
+
+      const newId = createId()
+      const clone = {...value[index], [BlockNode.id]: newId} as Node
+      setValue([...value.slice(0, index + 1), clone, ...value.slice(index + 1)])
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(pos + node.nodeSize, {
+          type: name,
+          attrs: {[BlockNode.id]: newId}
+        })
+        .run()
+    }
+
     // Find the corresponding reactive node for this block
     const rowNodeAtom = useMemo(() => {
       return atom(get => {
@@ -64,15 +168,22 @@ function typeExtension(field: Field, name: string, type: Type) {
     if (!rowNode) return null
     return (
       <NodeViewWrapper>
-        <Elevation>
-          <div>
-            <button data-drag-handle style={{cursor: 'grab'}}>
-              drag handle
-            </button>
-            Block, type: {Type.label(type)}
-          </div>
-          <NodeEditor type={type} node={rowNode} />
-        </Elevation>
+        <Surface className={styles.RichTextFieldView.Surface()} tabIndex={0}>
+          <SurfaceRow>
+            <TypeExtensionHeader
+              type={type}
+              onDelete={deleteNode}
+              onToggle={onToggle}
+              onCopy={onCopy}
+              exp={exp}
+            />
+          </SurfaceRow>
+          {exp && (
+            <SurfaceContent>
+              <NodeEditor type={type} node={rowNode} />
+            </SurfaceContent>
+          )}
+        </Surface>
       </NodeViewWrapper>
     )
   }

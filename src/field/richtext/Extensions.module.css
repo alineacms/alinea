@@ -54,7 +54,8 @@ h5.Heading {
   }
 }
 
-.Paragraph {
+/* Where does this work? */
+/* .Paragraph {
   max-width: 50ch;
   font-size: 14px;
   line-height: 1.6;
@@ -65,10 +66,13 @@ h5.Heading {
   word-break: break-word;
   hyphens: auto;
 
-  &:not(:last-child) {
-    margin-bottom: 14px;
+  & :not(:has(+ .Paragraph)) {
+    margin-top: 12px;
   }
-}
+  &:not(:last-child) {
+    margin-bottom: 12px;
+  }
+} */
 
 .BulletList,
 .OrderedList {
