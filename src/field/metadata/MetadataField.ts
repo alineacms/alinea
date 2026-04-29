@@ -43,7 +43,7 @@ export function metadata(
 ) {
   const fields = type('Fields', {
     fields: {
-      title: text('Title', {width: 0.5}),
+      title: text('Title'),
       description: text('Description', {multiline: true}),
       openGraph: object('Open Graph', {
         fields: {

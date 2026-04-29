@@ -32,6 +32,7 @@ import {EntryHeader} from './EntryHeader.js'
 import {EntrySidebar} from './EntrySidebar.js'
 import {EntryTranslationBanner} from './EntryTranslationBanner.js'
 import {Explorer} from './Explorer.js'
+import {previewMetadataAtom} from './PreviewMetadata.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -249,6 +250,7 @@ function EntryEditor({entry}: EntryEditorProps) {
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
+  const setPreviewMetadata = useSetAtom(previewMetadataAtom)
   const status = useAtomValue(entry.activeStatus)
   const activeVersion = useAtomValue(entry.activeVersion)
   const isUnpublished = Boolean(activeVersion?.main && status === 'draft')
@@ -272,6 +274,10 @@ function EntryEditor({entry}: EntryEditorProps) {
   useEffect(() => {
     setEditing(isUntranslated || isDirty ? node : undefined)
   }, [isDirty, isUntranslated, node, setEditing])
+
+  useEffect(() => {
+    setPreviewMetadata(undefined)
+  }, [entry.id, setPreviewMetadata])
 
   let editorBody = (
     <>
