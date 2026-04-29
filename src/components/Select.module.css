@@ -1,4 +1,4 @@
-@import "../theme.css";
+@import '../theme.css';
 
 .SelectTrigger {
   position: relative;
@@ -22,7 +22,7 @@
   }
 
   &:has(> .SelectTrigger-button[data-focus-visible]),
-  &:has(> .SelectTrigger-button[aria-expanded="true"]) {
+  &:has(> .SelectTrigger-button[aria-expanded='true']) {
     border-color: var(--alinea-border-accent);
     outline-color: var(--alinea-accent-overlay);
   }
@@ -34,7 +34,7 @@
     opacity: 0.5;
   }
 
-  .Select[data-invalid="true"] & {
+  .Select[data-invalid='true'] & {
     border-color: var(--alinea-border-danger);
     outline-color: var(--alinea-danger-overlay);
   }
@@ -78,7 +78,7 @@
       font-size: 18px;
       color: var(--alinea-icon-primary);
 
-      [aria-expanded="true"] & {
+      [aria-expanded='true'] & {
         transform: rotate(180deg);
       }
     }
@@ -90,21 +90,6 @@
 
   &[data-clear] {
     width: calc(var(--trigger-width) + 40px);
-  }
-
-  .SelectPopover-listbox {
-    outline: none;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    width: 100%;
-    display: block;
-    min-height: unset;
-    max-height: inherit;
-    padding: 4px;
-    border-radius: 6px;
-    border: 1px solid var(--alinea-border-default);
-    background-color: var(--alinea-surface-field);
   }
 }
 
@@ -128,7 +113,7 @@
   z-index: 0;
 
   &:after {
-    content: "";
+    content: '';
     position: absolute;
     top: 50%;
     left: 50%;
