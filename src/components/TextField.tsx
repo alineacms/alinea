@@ -42,7 +42,7 @@ export function TextField({
                 aria-hidden="true"
                 className={styles.TextField.multiline.shadow()}
               >
-                {props.value || props.placeholder}{' '}
+                {props.value || props.placeholder}
               </div>
             </div>
           ) : (
