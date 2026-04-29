@@ -27,7 +27,7 @@ import type {
 import type {UrlReference} from '#/picker/url.js'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/react'
-import {memo, useMemo, type ReactNode} from 'react'
+import {memo, useEffect, useMemo, useReducer, type ReactNode} from 'react'
 import {IcRoundArrowDropDown} from '../../../icons.js'
 import css from './RichTextToolbar.module.css'
 import {defaultToolbar} from './Toolbar.js'
@@ -68,7 +68,8 @@ export function createLinkHandler(
       requireDescription: !isSelection
     })
       .then(picked => {
-        if (!picked || !picked.link) {
+        if (picked === undefined) return
+        if (!picked.link) {
           exec().unsetLink().run()
           return
         }
@@ -82,7 +83,7 @@ export function createLinkHandler(
             .insertContent({
               type: 'text',
               text:
-                picked.title ||
+                picked.description ||
                 (picked.link as UrlReference)._title ||
                 (picked.link as UrlReference)._url ||
                 '',
@@ -102,6 +103,13 @@ export const RichTextToolbar = memo(function RichTextToolbar({
   pickLink,
   toolbar
 }: RichTextToolbarProps) {
+  const [, forceUpdate] = useReducer(value => value + 1, 0)
+  useEffect(() => {
+    editor.on('transaction', forceUpdate)
+    return () => {
+      editor.off('transaction', forceUpdate)
+    }
+  }, [editor])
   const config = useMemo(
     () => toolbar ?? defaultToolbar(enableTables || false),
     [enableTables, toolbar]

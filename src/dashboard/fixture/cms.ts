@@ -35,6 +35,26 @@ const Page = Config.document('Page', {
             actionCode: Field.code('Action code', {
               language: 'ts'
             }),
+            variant: Field.select('Variant', {
+              options: {
+                primary: 'Primary',
+                secondary: 'Secondary',
+                subtle: 'Subtle'
+              },
+              initialValue: 'primary'
+            }),
+            details: Field.richText('Details', {
+              schema: {
+                Note: Config.type('Note', {
+                  fields: {
+                    text: Field.text('Text', {
+                      multiline: true,
+                      placeholder: 'Add a nested note'
+                    })
+                  }
+                })
+              }
+            }),
             featured: Field.check('Featured')
           }
         }),

@@ -1,6 +1,7 @@
-import {Elevation, Label} from '#/components.js'
+import {Button, Icon, Label} from '#/components.js'
 import {Field} from '#/core/Field.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
+import {getType} from '#/core/Internal.js'
 import {Schema} from '#/core/Schema.js'
 import {
   BlockNode,
@@ -31,11 +32,14 @@ import {
   useEditor
 } from '@tiptap/react'
 import {atom, useAtomValue, useStore} from 'jotai'
-import {memo, useCallback, useMemo, useRef, useState} from 'react'
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
+import {IcRoundClose, IcRoundDragHandle} from '../../../icons.js'
 import {NodeEditor} from '../../Editor.js'
+import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
 import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
+import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import css from './RichTextField.module.css'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
@@ -47,9 +51,11 @@ type NodeViewProps = {
 }
 
 function typeExtension(field: Field, name: string, type: Type) {
-  function View({node, deleteNode}: NodeViewProps) {
+  function RichTextFieldBlock({node, deleteNode}: NodeViewProps) {
     const reactive = useFieldNode(field)
+    const options = useFieldOptions(field)
     const {[BlockNode.id]: id} = node.attrs
+    const meta = getType(type)
     // Find the corresponding reactive node for this block
     const rowNodeAtom = useMemo(() => {
       return atom(get => {
@@ -60,19 +66,55 @@ function typeExtension(field: Field, name: string, type: Type) {
         })
       })
     }, [reactive, id])
-    const rowNode = useAtomValue(rowNodeAtom) as ReactiveNode<object>
+    const rowNode = useAtomValue(rowNodeAtom) as
+      | ReactiveNode<object>
+      | undefined
+    const rowValueAtom = useMemo(() => {
+      return atom(get => (rowNode ? get(rowNode.value) : undefined))
+    }, [rowNode])
+    const rowValue = useAtomValue(rowValueAtom) as object | undefined
+    const hydratedValue = useMemo(() => {
+      return rowValue ? hydrateBlockValue(rowValue, type) : rowValue
+    }, [rowValue, type])
+    const store = useStore()
+    useEffect(() => {
+      if (!rowNode || !hydratedValue || hydratedValue === rowValue) return
+      store.set(rowNode.value, hydratedValue)
+    }, [hydratedValue, rowNode, rowValue, store])
     if (!rowNode) return null
+    if (hydratedValue !== rowValue) return null
     return (
       <NodeViewWrapper>
-        <Elevation>
-          <div>
-            <button data-drag-handle style={{cursor: 'grab'}}>
-              drag handle
-            </button>
-            Block, type: {Type.label(type)}
-          </div>
-          <NodeEditor type={type} node={rowNode} />
-        </Elevation>
+        <Surface className={styles.RichTextFieldBlock()}>
+          <SurfaceHeader className={styles.RichTextFieldBlock.header()}>
+            <Button
+              aria-label="Drag block"
+              appearance="plain"
+              className={styles.RichTextFieldBlock.drag()}
+              data-drag-handle
+              size="icon"
+            >
+              <Icon aria-hidden icon={meta.icon || IcRoundDragHandle} />
+            </Button>
+            <strong className={styles.RichTextFieldBlock.title()}>
+              {Type.label(type)}
+            </strong>
+            {!options.readOnly && (
+              <Button
+                aria-label="Remove block"
+                appearance="plain"
+                intent="secondary"
+                size="icon"
+                onPress={deleteNode}
+              >
+                <Icon aria-hidden icon={IcRoundClose} />
+              </Button>
+            )}
+          </SurfaceHeader>
+          <SurfaceContent className={styles.RichTextFieldBlock.body()}>
+            <NodeEditor type={type} node={rowNode} />
+          </SurfaceContent>
+        </Surface>
       </NodeViewWrapper>
     )
   }
@@ -88,7 +130,7 @@ function typeExtension(field: Field, name: string, type: Type) {
       return [name, mergeAttributes(HTMLAttributes)]
     },
     addNodeView() {
-      return ReactNodeViewRenderer(View)
+      return ReactNodeViewRenderer(RichTextFieldBlock)
     },
     addAttributes() {
       return {
@@ -96,6 +138,18 @@ function typeExtension(field: Field, name: string, type: Type) {
       }
     }
   })
+}
+
+function hydrateBlockValue(value: object, type: Type): object {
+  const initialValue = Type.initialValue(type)
+  let changed = false
+  const result = {...value} as Record<string, unknown>
+  for (const [key, initial] of entries(initialValue)) {
+    if (key in result) continue
+    result[key] = initial
+    changed = true
+  }
+  return changed ? result : value
 }
 
 function schemaToExtensions(field: Field, schema: Schema | undefined) {
@@ -114,6 +168,7 @@ function RTView<Blocks extends Schema>({
   const toolbar = document.getElementById('alinea-toolbar')
   const setValue = useFieldSetter(field)
   const node = useFieldNode(field)
+  const picker = usePickTextLink()
   const [focus, setFocus] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const content = useMemo(() => {
@@ -200,10 +255,12 @@ function RTView<Blocks extends Schema>({
             editor={editor}
             enableTables={options.enableTables}
             focusToggle={focusToggle}
+            pickLink={picker.pickLink}
             toolbar={options.toolbar}
           />,
           toolbar
         )}
+      <PickTextLink picker={picker} />
     </>
   )
 }

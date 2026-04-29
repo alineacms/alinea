@@ -8,7 +8,6 @@ import {
   Button,
   ListBox,
   ListBoxItem,
-  Popover,
   Select as SelectPrimitive,
   SelectStateContext,
   SelectValue
@@ -19,6 +18,7 @@ import {
   IcRoundKeyboardArrowDown
 } from '../dashboard/icons.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
+import {Popover} from './Popover.js'
 import css from './Select.module.css'
 
 const styles = styler(css)
