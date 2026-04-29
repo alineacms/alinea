@@ -37,6 +37,10 @@ npx alinea dev
 
 [Start configuring types and fields →](https://alineacms.com/docs/configuration)
 
+## Coding agents
+
+If you are working in a project that depends on `alinea`, a handbook is included in the npm distribution at `./llms-full.txt`.
+
 ## Configure
 
 Configure Alinea in `cms.ts`
