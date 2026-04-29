@@ -648,7 +648,7 @@ async function build({
   test: boolean
   report: boolean
 }): Promise<void> {
-  if (!watch) {
+  if (!watch && !fs.existsSync(llmsHandbookFile)) {
     const response = await fetch(llmsHandbookUrl)
     if (!response.ok) {
       throw new Error(
