@@ -22,11 +22,9 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.2.23
-      - run: bun install
-      - name: Check cycles for server target
-        run: bun cycles:server
-      - name: Check cycles for browser target
-        run: bun cycles:browser
+      - run: bun ci
+      - name: Check cycles
+        run: bun cycles
       - run: bun test
       - uses: nowsprinting/check-version-format-action@v3
         id: version

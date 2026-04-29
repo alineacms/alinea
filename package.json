@@ -45,8 +45,7 @@
   "scripts": {
     "build": "tsgo -p tsconfig.build.json && bun build.ts",
     "bump": "bun bump.js",
-    "cycles:browser": "CHECK_CYCLES=browser bun build.ts && bunx --bun madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
-    "cycles:server": "CHECK_CYCLES=server bun build.ts && bunx --bun madge --warning --circular dist/index.js",
+    "cycles": "bun run build && bunx --bun madge --warning --circular dist/index.js",
     "dev": "run-p dev:run",
     "dev:check": "tsgo -w",
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
