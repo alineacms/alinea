@@ -3,9 +3,9 @@ import {
   OverlayArrow,
   Tooltip as TooltipPrimitive,
   type TooltipProps as TooltipPrimitiveProps,
-  TooltipTrigger
+  TooltipTrigger,
+  type TooltipTriggerComponentProps
 } from 'react-aria-components'
-import type {TooltipTriggerProps} from '@react-types/tooltip'
 import type {ReactNode} from 'react'
 import css from './Tooltip.module.css'
 
@@ -13,7 +13,7 @@ const styles = styler(css)
 
 export interface TooltipProps
   extends TooltipPrimitiveProps,
-    TooltipTriggerProps {
+    Omit<TooltipTriggerComponentProps, 'children'> {
   children: ReactNode
   tooltip: ReactNode
 }
