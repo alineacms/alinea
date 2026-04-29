@@ -483,7 +483,9 @@ export class Dashboard {
             select: {
               id: Entry.id,
               path: Entry.path,
-              type: Entry.type
+              type: Entry.type,
+              status: Entry.status,
+              main: Entry.main
             }
           }),
           entries: translations({select: data, includeSelf: true})
@@ -1198,6 +1200,8 @@ interface EntryData {
     id: string
     path: string
     type: string
+    status: EntryStatus
+    main: boolean
   }>
   entries: Array<{
     title: string
@@ -1242,8 +1246,9 @@ export class DashboardEntry {
   constructor(
     public dashboard: Dashboard,
     public id: string,
-    data: Atom<EntryData>
+    public entryData: Atom<EntryData>
   ) {
+    const data = entryData
     this.workspaceKey = atom(get => get(data).workspace)
     this.rootKey = atom(get => get(data).root)
     this.hasChildren = atom(get => get(data).hasChildren)
@@ -1383,6 +1388,18 @@ export class DashboardEntry {
       return Promise.all(parentIds.map(id => get(this.dashboard.entries(id))))
     })
   )
+
+  canPublish = atom(get => {
+    return get(this.parentInfo).every(parent => parent.status === 'published')
+  })
+
+  parentUnpublished = atom(get => {
+    return get(this.parentInfo).some(parent => parent.status === 'draft')
+  })
+
+  parentInfo = atom(get => {
+    return get(this.entryData).parents
+  })
 
   icon = atom(get => get(this.type).icon)
 
@@ -1672,6 +1689,27 @@ export class DashboardEntry {
       locale,
       status: 'archived'
     })
+  })
+
+  deleteEntry = atom(null, async get => {
+    const db = get(this.dashboard.db)
+    await db.remove(this.id)
+  })
+
+  replaceFile = atom(null, async (get, set, file: File) => {
+    const locale = get(this.sourceLocale)
+    const activeVersion = await get(this.languages(locale).activeVersion)
+    const db = get(this.dashboard.db)
+    await db.commit(
+      new UploadOperation({
+        file,
+        createPreview,
+        replaceId: this.id,
+        parentId: activeVersion.parentId,
+        workspace: activeVersion.workspace,
+        root: activeVersion.root
+      })
+    )
   })
 
   saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {

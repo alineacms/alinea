@@ -24,6 +24,7 @@ import {
   useNodeEditor
 } from '../store/hooks.js'
 import {DetailsBar} from './DetailsBar.js'
+import type {DetailsBarStatus} from './DetailsBar.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EditorBackButton} from './EditorBackButton.js'
@@ -211,6 +212,33 @@ interface EntryEditorProps {
   entry: DashboardEntry
 }
 
+function detailsBarStatus(
+  activeStatus: 'draft' | 'published' | 'archived',
+  isDirty: boolean,
+  isUnpublished: boolean
+): DetailsBarStatus {
+  if (isDirty) return 'draft'
+  if (isUnpublished) return 'unpublished'
+  return activeStatus
+}
+
+function detailsBarStatusLabel(
+  activeStatus: 'draft' | 'published' | 'archived',
+  isDirty: boolean,
+  isUnpublished: boolean
+) {
+  if (isDirty) return 'Editing'
+  if (isUnpublished) return 'Unpublished'
+  switch (activeStatus) {
+    case 'published':
+      return 'Published'
+    case 'archived':
+      return 'Archived'
+    default:
+      return 'Draft'
+  }
+}
+
 function EntryEditor({entry}: EntryEditorProps) {
   const isUntranslated = useAtomValue(entry.untranslated)
   const node = useAtomValue(entry.selectedNode)
@@ -222,6 +250,10 @@ function EntryEditor({entry}: EntryEditorProps) {
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
   const status = useAtomValue(entry.activeStatus)
+  const activeVersion = useAtomValue(entry.activeVersion)
+  const isUnpublished = Boolean(activeVersion?.main && status === 'draft')
+  const barStatus = detailsBarStatus(status, isDirty, isUnpublished)
+  const barStatusLabel = detailsBarStatusLabel(status, isDirty, isUnpublished)
 
   const discardAndConfirm = () => {
     startTransition(() => {
@@ -243,7 +275,11 @@ function EntryEditor({entry}: EntryEditorProps) {
 
   let editorBody = (
     <>
-      <DetailsBar entry={entry} status={status} />
+      <DetailsBar
+        entry={entry}
+        status={barStatus}
+        statusLabel={barStatusLabel}
+      />
 
       <RailBody className={styles.EntryEditor.body()}>
         {isUntranslated && (
@@ -260,11 +296,18 @@ function EntryEditor({entry}: EntryEditorProps) {
   const isMediaFile = type.type === MediaFile
   if (isMediaFile) {
     editorBody = (
-      <RailBody className={styles.EntryEditor.body()}>
-        <NodeEditor node={node} type={type.type}>
-          <FileEditor entry={entry} />
-        </NodeEditor>
-      </RailBody>
+      <>
+        <DetailsBar
+          entry={entry}
+          status={barStatus}
+          statusLabel={barStatusLabel}
+        />
+        <RailBody className={styles.EntryEditor.body()}>
+          <NodeEditor node={node} type={type.type}>
+            <FileEditor entry={entry} />
+          </NodeEditor>
+        </RailBody>
+      </>
     )
   }
 

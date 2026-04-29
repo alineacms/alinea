@@ -1,18 +1,10 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {
-  IcOutlineArchive,
-  IcOutlineRemoveRedEye,
-  IcRoundCheck,
-  IcRoundEdit,
-  IcRoundFlashOn,
-  IcRoundMoreVert,
-  IcRoundSave,
-  IcRoundTranslate
-} from '../icons.js'
+import {IcRoundCheck, IcRoundMoreVert, IcRoundSave} from '../icons.js'
 import {DashboardEntry, ReactiveNode} from '../store/Dashboard.js'
-import {Badge} from './Badge.js'
+import {usePolicy} from '../store/hooks.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {RailHeader} from './ui/Rail.js'
@@ -24,46 +16,6 @@ export interface EntryHeaderProps {
   node: ReactiveNode<object>
 }
 
-function entryStatus(
-  untranslated: boolean,
-  isDirty: boolean,
-  activeStatus: 'draft' | 'published' | 'archived',
-  isUnpublished: boolean
-) {
-  if (untranslated)
-    return {
-      label: 'Untranslated',
-      icon: IcRoundTranslate
-    }
-  if (isDirty)
-    return {
-      label: 'Editing',
-      icon: IcRoundEdit
-    }
-  if (isUnpublished)
-    return {
-      label: 'Unpublished',
-      icon: IcRoundFlashOn
-    }
-  switch (activeStatus) {
-    case 'published':
-      return {
-        label: 'Published',
-        icon: IcOutlineRemoveRedEye
-      }
-    case 'archived':
-      return {
-        label: 'Archived',
-        icon: IcOutlineArchive
-      }
-    default:
-      return {
-        label: 'Draft',
-        icon: IcRoundEdit
-      }
-  }
-}
-
 interface EntryHeaderActionProps {
   entry: DashboardEntry
   node: ReactiveNode<object>
@@ -72,6 +24,12 @@ interface EntryHeaderActionProps {
   isUnpublished: boolean
   untranslated: boolean
   parentNeedsTranslation: boolean
+}
+
+interface EntryHeaderMenuItem {
+  id: string
+  label: string
+  action: () => void | Promise<void>
 }
 
 interface EntryHeaderBackButtonProps {
@@ -108,7 +66,21 @@ function EntryHeaderActions({
   untranslated,
   parentNeedsTranslation
 }: EntryHeaderActionProps) {
+  const policy = usePolicy()
+  const config = useAtomValue(entry.dashboard.config)
+  const route = useAtomValue(entry.dashboard.route)
+  const parentId = useAtomValue(entry.parentId)
+  const workspace = useAtomValue(entry.workspaceKey)
+  const root = useAtomValue(entry.rootKey)
+  const sourceLocale = useAtomValue(entry.sourceLocale)
+  const activeVersion = useAtomValue(
+    entry.languages(sourceLocale).activeVersion
+  )
+  const type = useAtomValue(entry.type)
+  const canPublishParents = useAtomValue(entry.canPublish)
+  const isParentUnpublished = useAtomValue(entry.parentUnpublished)
   const reset = useSetAtom(node.reset)
+  const setRoute = useSetAtom(entry.dashboard.route)
   const saveDraft = useSetAtom(entry.saveDraft)
   const saveTranslation = useSetAtom(entry.saveTranslation)
   const publishEdits = useSetAtom(entry.publishEdits)
@@ -117,80 +89,167 @@ function EntryHeaderActions({
   const unpublish = useSetAtom(entry.unpublish)
   const archive = useSetAtom(entry.archive)
   const publishArchived = useSetAtom(entry.publishArchived)
+  const deleteEntry = useSetAtom(entry.deleteEntry)
+  const replaceFile = useSetAtom(entry.replaceFile)
+  const access = policy.get(activeVersion)
+  const canDelete = activeVersion.seeded === null
+  const isMediaFile = type.type === MediaFile
 
-  const primaryButton =
-    untranslated && !parentNeedsTranslation ? (
-      <Button icon={IcRoundTranslate} onPress={() => saveTranslation(node)}>
-        Translate
+  async function deleteAndNavigate() {
+    await deleteEntry()
+    setRoute({
+      workspace,
+      root,
+      entry: parentId ?? undefined,
+      locale: route.locale
+    })
+  }
+
+  function replaceMediaFile() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    const extension = activeVersion.data.extension
+    if (typeof extension === 'string') input.accept = extension
+    input.onchange = () => {
+      const file = input.files?.[0]
+      if (file) replaceFile(file)
+    }
+    input.click()
+  }
+
+  const saveDraftVisible = config.enableDrafts && access.update
+  const actionButtons =
+    untranslated && !parentNeedsTranslation && access.update ? (
+      <Button
+        icon={IcRoundSave}
+        intent="primary"
+        onPress={() => saveTranslation(node)}
+      >
+        Save translation
       </Button>
     ) : untranslated ? null : isDirty ? (
-    <>
-      <Button intent="secondary" onPress={() => reset()}>
-        Discard my changes
-      </Button>
-      <Button icon={IcRoundCheck} onPress={() => publishEdits(node)}>
+      <>
+        <Button appearance="plain" onPress={() => reset()}>
+          Discard my changes
+        </Button>
+        {access.publish && (
+          <Button
+            icon={IcRoundCheck}
+            intent={saveDraftVisible ? 'secondary' : 'primary'}
+            onPress={() => publishEdits(node)}
+          >
+            Publish
+          </Button>
+        )}
+        {saveDraftVisible && (
+          <Button
+            icon={IcRoundSave}
+            intent="primary"
+            onPress={() => saveDraft(node)}
+          >
+            Save draft
+          </Button>
+        )}
+      </>
+    ) : activeStatus === 'draft' && canPublishParents && access.publish ? (
+      <Button
+        icon={IcRoundCheck}
+        intent="primary"
+        onPress={() => publishDraft()}
+      >
         Publish
       </Button>
-      <Button icon={IcRoundSave} onPress={() => saveDraft(node)}>
-        Save draft
-      </Button>
-    </>
-  ) : activeStatus === 'draft' ? (
-    <Button icon={IcRoundCheck} onPress={() => publishDraft()}>
-      Publish
-    </Button>
-  ) : activeStatus === 'archived' ? (
-    <Button icon={IcRoundCheck} onPress={() => publishArchived()}>
-      Publish
-    </Button>
-  ) : null
+    ) : null
 
-  const menuItems =
-    activeStatus === 'draft'
-      ? isUnpublished
-        ? [
-            {
-              id: 'discard-draft',
-              label: 'Discard draft',
-              action: discardDraft
-            },
-            {
-              id: 'archive',
-              label: 'Archive',
-              action: archive
-            }
-          ]
-        : [
-            {
-              id: 'discard-draft',
-              label: 'Discard draft',
-              action: discardDraft
-            }
-          ]
-      : !isDirty && activeStatus === 'published'
-        ? [
-            {
-              id: 'unpublish',
-              label: 'Unpublish',
-              action: unpublish
-            },
-            {
-              id: 'archive',
-              label: 'Archive',
-              action: archive
-            }
-          ]
-        : []
+  const menuItems: Array<EntryHeaderMenuItem> = []
+
+  if (!isDirty && !untranslated) {
+    if (activeStatus === 'draft') {
+      if (isUnpublished) {
+        if (isParentUnpublished && canDelete && access.delete) {
+          menuItems.push({
+            id: 'delete',
+            label: 'Delete',
+            action: deleteAndNavigate
+          })
+        }
+        if (!isParentUnpublished && access.archive) {
+          menuItems.push({
+            id: 'archive',
+            label: 'Archive',
+            action: archive
+          })
+        }
+      } else if (access.update) {
+        menuItems.push({
+          id: 'remove-draft',
+          label: 'Remove draft',
+          action: discardDraft
+        })
+      }
+    }
+
+    if (activeStatus === 'published') {
+      if (isMediaFile) {
+        if (access.update && access.upload) {
+          menuItems.push({
+            id: 'replace',
+            label: 'Replace',
+            action: replaceMediaFile
+          })
+        }
+        if (canDelete && access.delete) {
+          menuItems.push({
+            id: 'delete',
+            label: 'Delete',
+            action: deleteAndNavigate
+          })
+        }
+      } else {
+        if (config.enableDrafts && access.publish) {
+          menuItems.push({
+            id: 'unpublish',
+            label: 'Unpublish',
+            action: unpublish
+          })
+        }
+        if (canDelete && access.archive) {
+          menuItems.push({
+            id: 'archive',
+            label: 'Archive',
+            action: archive
+          })
+        }
+      }
+    }
+
+    if (activeStatus === 'archived') {
+      if (canPublishParents && access.publish) {
+        menuItems.push({
+          id: 'publish',
+          label: 'Publish',
+          action: publishArchived
+        })
+      }
+      if (canDelete && access.delete) {
+        menuItems.push({
+          id: 'delete',
+          label: 'Delete',
+          action: deleteAndNavigate
+        })
+      }
+    }
+  }
 
   return (
     <div className={styles.EntryHeader.actions()}>
-      {primaryButton}
+      {actionButtons}
       {menuItems.length > 0 && (
         <Menu
           label={
             <Button
               size="icon"
-              appearance="plain"
+              appearance="outline"
               intent="secondary"
               aria-label="More actions"
             >
@@ -204,7 +263,9 @@ function EntryHeaderActions({
               key={item.id}
               id={item.id}
               textValue={item.label}
-              onAction={() => item.action()}
+              onAction={() => {
+                void item.action()
+              }}
             >
               {item.label}
             </MenuItem>
@@ -223,19 +284,11 @@ export function EntryHeader({entry, node}: EntryHeaderProps) {
   const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
   const isDirty = useAtomValue(node.isDirty)
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
-  const status = entryStatus(untranslated, isDirty, activeStatus, isUnpublished)
   return (
     <RailHeader className={styles.EntryHeader()}>
       <div className={styles.EntryHeader.main()}>
         <EntryHeaderBackButton entry={entry} />
         <h1 className={styles.EntryHeader.title()}>{title}</h1>
-        <Badge
-          className={styles.EntryHeader.badge()}
-          icon={status.icon}
-          appearance="plain"
-        >
-          {status.label}
-        </Badge>
       </div>
       <EntryHeaderActions
         entry={entry}

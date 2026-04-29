@@ -1,7 +1,12 @@
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import type {SetStateAction} from 'react'
-import {IcRoundRemoveRedEye} from '../icons.js'
+import type {ReactNode, SetStateAction} from 'react'
+import {
+  IcOutlineArchive,
+  IcOutlineRemoveRedEye,
+  IcRoundEdit,
+  IcRoundFlashOn
+} from '../icons.js'
 import type {DashboardEntry, ExplorerLocation} from '../store.js'
 import {Badge} from './Badge.js'
 import css from './DetailsBar.module.css'
@@ -10,12 +15,32 @@ import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
+export type DetailsBarStatus =
+  | 'published'
+  | 'unpublished'
+  | 'draft'
+  | 'archived'
+
 interface DetailsBarProps {
   entry: DashboardEntry
-  status: 'published' | 'unpublished' | 'draft' | 'archived'
+  status: DetailsBarStatus
+  statusLabel: ReactNode
 }
 
-export function DetailsBar({entry, status}: DetailsBarProps) {
+function statusIcon(status: DetailsBarStatus) {
+  switch (status) {
+    case 'published':
+      return IcOutlineRemoveRedEye
+    case 'unpublished':
+      return IcRoundFlashOn
+    case 'archived':
+      return IcOutlineArchive
+    default:
+      return IcRoundEdit
+  }
+}
+
+export function DetailsBar({entry, status, statusLabel}: DetailsBarProps) {
   const workspace = useAtomValue(entry.workspaceKey)
   const root = useAtomValue(entry.rootKey)
   const parentId = useAtomValue(entry.parentId) ?? undefined
@@ -36,8 +61,8 @@ export function DetailsBar({entry, status}: DetailsBarProps) {
   return (
     <RailHeader className={styles.DetailsBar()} data-status={status}>
       <LocationBreadcrumbs location={location} setLocation={setLocation} />
-      <Badge icon={IcRoundRemoveRedEye} appearance="plain">
-        Published
+      <Badge icon={statusIcon(status)} appearance="plain">
+        {statusLabel}
       </Badge>
     </RailHeader>
   )

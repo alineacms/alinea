@@ -24,6 +24,11 @@ export function useDashboard() {
   return useAtomValue(dashboardAtom)
 }
 
+export function usePolicy() {
+  const dashboard = useDashboard()
+  return useAtomValue(dashboard.policy)
+}
+
 export interface EditorScopeProps {
   editor: DashboardEditor
 }

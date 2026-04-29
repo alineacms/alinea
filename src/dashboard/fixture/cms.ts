@@ -1,5 +1,5 @@
-import {Config, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
+import {Config, Field} from '#/index.js'
 import {
   IcOutlineGridView,
   IcRoundHistory,
@@ -179,6 +179,7 @@ const statuses = Config.workspace('Statuses', {
 })
 
 export const cms = createCMS({
+  enableDrafts: true,
   schema: {Page, Folder},
   workspaces: {
     simple,
