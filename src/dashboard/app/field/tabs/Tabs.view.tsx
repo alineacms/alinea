@@ -1,4 +1,4 @@
-import {Tab, TabList, TabPanel, Tabs} from '#/components.js'
+import {Icon, Tab, TabList, TabPanel, Tabs} from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
@@ -19,11 +19,15 @@ export function TabsView({section}: TabsViewProps) {
       <Tabs>
         <SurfaceHeader>
           <TabList>
-            {visibleTypes.map((type, i) => (
-              <Tab key={i} id={i}>
-                {Type.label(type)}
-              </Tab>
-            ))}
+            {visibleTypes.map((type, i) => {
+              const {icon} = getType(type)
+              return (
+                <Tab key={i} id={i}>
+                  {icon && <Icon icon={icon} />}
+                  {Type.label(type)}
+                </Tab>
+              )
+            })}
           </TabList>
         </SurfaceHeader>
         <SurfaceContent>
