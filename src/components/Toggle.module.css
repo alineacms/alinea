@@ -1,4 +1,4 @@
-@import "../theme.css";
+@import '../theme.css';
 
 .ToggleButtonGroup {
   display: inline-flex;
@@ -7,9 +7,10 @@
   padding: 3px;
   border: 1px solid var(--alinea-border-default);
   border-radius: 8px;
-  background-color: var(--alinea-surface-tab);
+  /* background-color: var(--alinea-surface-tab); */
+  background-color: var(--alinea-bg);
 
-  &[data-orientation="vertical"] {
+  &[data-orientation='vertical'] {
     flex-direction: column;
     align-items: stretch;
   }
@@ -38,7 +39,7 @@
   transition-property: background-color, border-color, color;
 
   svg,
-  [data-slot="icon"] {
+  [data-slot='icon'] {
     display: block;
     flex-shrink: 0;
     font-size: 18px;

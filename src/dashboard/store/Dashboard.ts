@@ -7,6 +7,7 @@ import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import {createRecord} from '#/core/EntryRecord.js'
+import type {Expr} from '#/core/Expr.js'
 import {Field, FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Order} from '#/core/Graph.js'
@@ -619,6 +620,15 @@ export interface DashboardMenuItem {
   label: string
 }
 
+export type ExplorerSortBy = 'title' | 'path' | 'size' | 'id'
+export type ExplorerSortDirections = 'asc' | 'desc'
+export type ExplorerSort = {
+  sortBy: ExplorerSortBy
+  direction: ExplorerSortDirections
+}
+
+export type ExplorerTypeFilters = typeof MediaFile | typeof MediaLibrary
+
 export interface ExplorerOptions {
   condition?: Filter<EntryFields>
   location?: ExplorerLocation
@@ -626,6 +636,7 @@ export interface ExplorerOptions {
   selectionBehavior?: 'toggle' | 'replace'
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
+  // initialSort?: ExplorerSort
   onAction?: WritableAtom<void, [entry: DashboardEntry], void>
   onConfirm?: (selection: Array<string>) => void
 }
@@ -690,6 +701,25 @@ export class DashboardExplorer {
     },
     (get, set, next: 'card' | 'row') => {
       set(this.#selectedView, next)
+    }
+  )
+  #sort = atom<ExplorerSort>({sortBy: 'title', direction: 'asc'})
+  sort = atom(
+    get => get(this.#sort),
+    (get, set, sortBy: ExplorerSortBy) => {
+      const sort = get(this.#sort)
+      const direction =
+        sort.sortBy === sortBy && sort.direction === 'desc' ? 'asc' : 'desc'
+      set(this.#sort, {sortBy, direction})
+    }
+  )
+  #filter = atom<ExplorerTypeFilters | undefined>(undefined)
+  filter = atom(
+    get => get(this.#filter),
+    (get, set, filterBy: ExplorerTypeFilters) => {
+      const filter = get(this.#filter)
+      const payload = filter === filterBy ? undefined : filterBy
+      set(this.#filter, payload)
     }
   )
   location = atom(
@@ -767,6 +797,17 @@ export class DashboardExplorer {
       const db = get(this.dashboard.db)
       const search = get(this.search)
       const root = get(this.root)
+      const sort = get(this.sort)
+      const filter = get(this.filter)
+      const fieldMap: Record<ExplorerSortBy, Expr<string | number>> = {
+        title: Entry.title,
+        path: Entry.path,
+        size: MediaFile.size,
+        id: Entry.id
+      }
+      const orderBy = {
+        [sort.direction]: fieldMap[sort.sortBy]
+      }
       if (!root) return []
       const locale = get(root.selectedLocale)
       const searchAll = Boolean(search && this.#options.searchDepth === 'all')
@@ -779,7 +820,9 @@ export class DashboardExplorer {
         parentId: flatList ? undefined : (location.parentId ?? null),
         filter: this.#options.condition,
         select: Entry.id,
-        status: 'preferDraft'
+        orderBy,
+        status: 'preferDraft',
+        type: filter
       })
       return Promise.all(
         children.map(id => this.dashboard.entries(id)).map(get)
