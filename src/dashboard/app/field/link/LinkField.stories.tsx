@@ -124,11 +124,11 @@ const fixtureConnection: LocalConnection = {
   getBlobs(shas) {
     return db.getBlobs(shas)
   },
-  revisions() {
-    return Promise.resolve([])
+  revisions(file) {
+    return db.revisions(file)
   },
-  revisionData() {
-    return Promise.resolve(undefined)
+  revisionData(file, revisionId) {
+    return db.revisionData(file, revisionId)
   },
   getDraft() {
     return Promise.resolve(undefined)

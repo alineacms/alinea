@@ -1,0 +1,81 @@
+@import '../theme.css';
+
+.Disclosure {
+  display: flex;
+  flex-direction: column;
+  color: var(--alinea-content-primary);
+}
+
+.Disclosure-heading {
+  margin: 0;
+}
+
+.Disclosure-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 8px;
+  color: var(--alinea-content-secondary);
+  font: inherit;
+  font-size: var(--alinea-font-size-base);
+  font-weight: 500;
+  text-align: left;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  transition:
+    color var(--alinea-transition),
+    background-color var(--alinea-transition);
+}
+
+.Disclosure-trigger[data-hovered] {
+  color: var(--alinea-content-hover);
+}
+
+.Disclosure-trigger[data-focus-visible] {
+  outline: 2px solid var(--alinea-focus-ring-color);
+  outline-offset: 2px;
+}
+
+.Disclosure-trigger[data-disabled] {
+  color: var(--alinea-content-disabled);
+  cursor: not-allowed;
+}
+
+.Disclosure-chevron {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--alinea-content-secondary);
+  transform: rotate(0deg);
+  transform-origin: center;
+  transition: transform var(--alinea-transition);
+}
+
+.Disclosure[data-expanded] .Disclosure-chevron {
+  transform: rotate(90deg);
+}
+
+.Disclosure-title {
+  min-width: 0;
+  flex: 1;
+  color: var(--alinea-content-secondary);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: var(--alinea-transition);
+  transition-property: color;
+}
+
+.Disclosure-panel {
+  outline: none;
+}
+
+.Disclosure-panel[data-focus-visible-within] {
+  outline: 2px solid var(--alinea-focus-ring-color);
+  outline-offset: 2px;
+}
