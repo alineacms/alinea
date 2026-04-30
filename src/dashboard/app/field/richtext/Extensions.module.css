@@ -70,10 +70,6 @@
   &:not(:last-child) {
     margin-bottom: 8px;
   }
-
-  &:not(:has(+ .Paragraph)) {
-    margin-top: 8px;
-  }
 }
 
 .BulletList,
@@ -129,11 +125,7 @@
   cursor: text;
   color: var(--alinea-link-default);
   text-decoration: underline;
-  text-decoration-color: color-mix(
-    in srgb,
-    var(--alinea-link-default) 38%,
-    transparent
-  );
+  text-decoration-color: color-mix(in srgb, var(--alinea-link-default) 38%, transparent);
   text-underline-offset: 0.3em;
   overflow-wrap: break-word;
   word-wrap: break-word;
