@@ -84,6 +84,13 @@ type FocusedItem =
 
 export type DashboardTheme = 'system' | 'light' | 'dark'
 
+export class MissingEntryError extends Error {
+  constructor(public id: string) {
+    super(`Missing entry ${id}`)
+    this.name = 'MissingEntryError'
+  }
+}
+
 const internalDashboard = atom<Dashboard | null>(null)
 export const dashboardAtom = atom(
   get => {
@@ -258,9 +265,13 @@ export class Dashboard {
         missingRoot: routeRoot,
         root: this.workspace(workspace).root(root)
       }
-    if (entry) {
-      const model = await get(this.entries(entry))
-      if (!model) {
+    if (entry)
+      try {
+        const model = await get(this.entries(entry))
+        const type = get(model.type)
+        if (type.type !== MediaLibrary) return {entry: model}
+      } catch (error) {
+        if (!(error instanceof MissingEntryError)) throw error
         if (workspace && root) {
           return {
             missingEntry: entry,
@@ -269,9 +280,6 @@ export class Dashboard {
         }
         throw new Error(`Entry "${entry}" not found`)
       }
-      const type = get(model.type)
-      if (type.type !== MediaLibrary) return {entry: model}
-    }
     if (!workspace) return null
     if (root) return {root: this.workspace(workspace).root(root)}
     return null
@@ -428,21 +436,23 @@ export class Dashboard {
   }
 
   entries = dispense(id => {
-    const dataAtom = atom<Promise<EntryData | null>>(async get => {
+    const dataAtom = atom<Promise<EntryData>>(async get => {
+      await get(this.ensureInitialSync)
       get(this.revisions(id))
       const load = get(this.#entryLoader)
       const [result, error] = await load(id)
       if (error) {
-        get(this.sha) // subscribe to entry revisions to update when entry synced
-        return null
+        if (error instanceof MissingEntryError)
+          get(this.sha) // subscribe to entry revisions to update when entry synced
+        throw error
       }
+      assert(result, `Entry "${id}" not found`)
       return result
     })
     let entry: DashboardEntry
     return swr(
-      atom(async (get): Promise<DashboardEntry | null> => {
+      atom(async (get): Promise<DashboardEntry> => {
         const initial = await get(dataAtom)
-        if (!initial) return null
 
         return (entry ??= new DashboardEntry(
           this,
@@ -510,7 +520,7 @@ export class Dashboard {
       const byId = new Map(rows.map(row => [row.id, row] as const))
       return ids.map(id => {
         const row = byId.get(id)
-        if (!row) return [null, new Error(`Missing entry ${id}`)] as const
+        if (!row) return [null, new MissingEntryError(id)] as const
         return [{...row, hasChildren: parentIds.includes(id)}, null] as const
       })
     })
@@ -2402,11 +2412,4 @@ function isSyncableGraph(
   graph: WriteableGraph
 ): graph is WriteableGraph & SyncableGraph {
   return typeof (graph as Partial<SyncableGraph>).sync === 'function'
-}
-
-function isMissingEntryError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false
-  if (error.message.startsWith('Missing entry ')) return true
-  const cause = error.cause
-  return cause instanceof Error && cause.message.startsWith('Missing entry ')
 }

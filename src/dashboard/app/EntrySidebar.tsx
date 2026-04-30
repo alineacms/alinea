@@ -203,10 +203,7 @@ function EntrySidebarRevisionItem({
   )
 }
 
-export type EntrySidebarVersionStatus =
-  | EntryStatus
-  | 'unpublished'
-  | 'none'
+export type EntrySidebarVersionStatus = EntryStatus | 'unpublished' | 'none'
 
 export interface EntrySidebarVersionRowProps {
   selected?: boolean
@@ -303,7 +300,7 @@ function formatStatus(status: EntryStatus) {
 }
 
 function formatMeta(revision?: Revision) {
-  const user = revision?.user?.name ?? 'Local user'
+  const user = revision?.user?.name
   if (!revision) return user
   return `${user} - ${formatRelativeTime(revision.createdAt)}`
 }
