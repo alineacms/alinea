@@ -5,7 +5,13 @@ import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {memo, PropsWithChildren, useEffect, useState, useTransition} from 'react'
+import {
+  memo,
+  PropsWithChildren,
+  useEffect,
+  useState,
+  useTransition
+} from 'react'
 import {IcBaselineErrorOutline} from '../icons.js'
 import {
   Dashboard,
@@ -24,7 +30,6 @@ import {
   useNodeEditor
 } from '../store/hooks.js'
 import type {DetailsBarStatus} from './DetailsBar.js'
-import {DetailsBar} from './DetailsBar.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EditorBackButton} from './EditorBackButton.js'
@@ -298,11 +303,11 @@ function EntryEditor({entry}: EntryEditorProps) {
   if (isMediaFile) {
     editorBody = (
       <>
-        <DetailsBar
+        {/*<DetailsBar
           entry={entry}
           status={barStatus}
           statusLabel={barStatusLabel}
-        />
+        />*/}
         <RailBody className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
             <FileEditor entry={entry} />

@@ -39,8 +39,7 @@ function ExplorerModal({options}: ExplorerModalProps) {
   )
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
-  const selectedItems =
-    selection === 'all' ? 0 : selection.size
+  const selectedItems = selection === 'all' ? 0 : selection.size
   const onSubmit = () => {
     startTransition(() => {
       onConfirm()
@@ -60,10 +59,10 @@ function ExplorerModal({options}: ExplorerModalProps) {
             {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
           </DashboardModalExplorerSelection>
           <DashboardModalExplorerActions>
-            <Button intent="secondary" onPress={modal.close}>
-              Cancel
+            <Button onPress={modal.close}>Cancel</Button>
+            <Button intent="primary" onPress={onSubmit}>
+              Select
             </Button>
-            <Button onPress={onSubmit}>Pick</Button>
           </DashboardModalExplorerActions>
         </DashboardModalExplorerFooter>
       </DashboardModalExplorer>

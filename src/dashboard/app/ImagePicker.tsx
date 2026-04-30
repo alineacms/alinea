@@ -43,15 +43,14 @@ function ExplorerModal({options}: ExplorerModalProps) {
       ? Workspace.defaultMediaRoot(config.workspaces[workspace])
       : selectedRoot
   const [explorer] = useState(() =>
-    dashboard.explore(
-      options.location ?? {workspace, root: mediaRoot},
-      {...options, searchDepth: 'all'}
-    )
+    dashboard.explore(options.location ?? {workspace, root: mediaRoot}, {
+      ...options,
+      searchDepth: 'all'
+    })
   )
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
-  const selectedItems =
-    selection === 'all' ? 0 : selection.size
+  const selectedItems = selection === 'all' ? 0 : selection.size
 
   function onSubmit() {
     startTransition(() => {
@@ -76,10 +75,10 @@ function ExplorerModal({options}: ExplorerModalProps) {
             {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
           </DashboardModalExplorerSelection>
           <DashboardModalExplorerActions>
-            <Button intent="secondary" onPress={modal.close}>
-              Cancel
+            <Button onPress={modal.close}>Cancel</Button>
+            <Button intent="primary" onPress={onSubmit}>
+              Select
             </Button>
-            <Button onPress={onSubmit}>Pick</Button>
           </DashboardModalExplorerActions>
         </DashboardModalExplorerFooter>
       </DashboardModalExplorer>
