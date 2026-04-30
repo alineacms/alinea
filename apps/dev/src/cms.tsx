@@ -81,7 +81,7 @@ export const cms = createCMS({
         }),
         media: Config.media()
       }
-    }),
+    }) /*,
     secondary: Config.workspace('Secondary workspace', {
       source: 'content/secondary',
       roots: {
@@ -89,6 +89,6 @@ export const cms = createCMS({
           contains: ['Page', 'Folder']
         })
       }
-    })
+    })*/
   }
 })
