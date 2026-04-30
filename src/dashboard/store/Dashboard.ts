@@ -1392,10 +1392,19 @@ export class DashboardEntry {
       const activeVersion = await get(language.activeVersion)
       const data = await get(this.historyData(historyDataKey(version)))
       const type = get(this.type).type
+      const historyData = data ? parseRecord(data).data : activeVersion.data
       return new ReactiveNode<object>(
         {
           ...Type.initialValue(type),
-          ...(data ? parseRecord(data).data : activeVersion.data)
+          ...historyData,
+          title:
+            typeof historyData.title === 'string'
+              ? historyData.title
+              : activeVersion.title,
+          path:
+            typeof historyData.path === 'string'
+              ? historyData.path
+              : activeVersion.path
         },
         true
       )
