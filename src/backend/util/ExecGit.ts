@@ -1,12 +1,12 @@
 import {localUser} from '#/core/User.js'
-import {exec} from 'node:child_process'
+import {execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import PLazy from 'p-lazy'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 export async function execGit(cwd: string, args: string[]): Promise<string> {
-  const {stdout} = await execAsync(`git ${args.join(' ')}`, {cwd})
+  const {stdout} = await execFileAsync('git', args, {cwd})
   return stdout.trim()
 }
 

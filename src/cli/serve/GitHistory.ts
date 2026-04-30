@@ -19,6 +19,8 @@ export class GitHistory implements HistoryApi {
     const results = Array<Revision>()
     for (const versioned of versions) {
       const output = await execGit(this.rootDir, [
+        '-c',
+        'core.quotePath=false',
         'log',
         '--follow',
         '--name-status',
@@ -63,6 +65,8 @@ export class GitHistory implements HistoryApi {
   async revisionData(file: string, ref: string): Promise<EntryRecord> {
     const {config} = this
     const data = await execGit(this.rootDir, [
+      '-c',
+      'core.quotePath=false',
       'show',
       `${ref}:${file}`,
       '--format=%B'
