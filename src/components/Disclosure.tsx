@@ -1,11 +1,11 @@
 import styler from '@alinea/styler'
-import type {ReactNode} from 'react'
 import {
   Button,
   Disclosure as DisclosurePrimitive,
   DisclosurePanel as DisclosurePanelPrimitive,
   type DisclosurePanelProps,
   type DisclosureProps as DisclosurePrimitiveProps,
+  type HeadingProps,
   Heading
 } from 'react-aria-components'
 import {IcRoundKeyboardArrowRight} from '../dashboard/icons.js'
@@ -14,20 +14,9 @@ import css from './Disclosure.module.css'
 
 const styles = styler(css)
 
-export type {DisclosurePanelProps} from 'react-aria-components'
+export type {DisclosurePanelProps, DisclosurePrimitiveProps as DisclosureProps}
 
-export interface DisclosureProps
-  extends Omit<DisclosurePrimitiveProps, 'children'> {
-  title: ReactNode
-  children?: ReactNode
-}
-
-export function Disclosure({
-  title,
-  children,
-  className,
-  ...props
-}: DisclosureProps) {
+export function Disclosure({className, ...props}: DisclosurePrimitiveProps) {
   return (
     <DisclosurePrimitive
       {...props}
@@ -41,22 +30,35 @@ export function Disclosure({
           })
         )
       }
+    />
+  )
+}
+
+export function DisclosureHeader({children, className, ...props}: HeadingProps) {
+  return (
+    <Heading
+      {...props}
+      className={
+        styles.Disclosure.heading(
+          styler.merge({
+            className
+          })
+        )
+      }
     >
-      <Heading className={styles.Disclosure.heading()}>
-        <Button slot="trigger" className={styles.Disclosure.trigger()}>
-          <Icon
-            icon={IcRoundKeyboardArrowRight}
-            className={styles.Disclosure.chevron()}
-          />
-          <span className={styles.Disclosure.title()}>{title}</span>
-        </Button>
-      </Heading>
-      <DisclosurePanel>{children}</DisclosurePanel>
-    </DisclosurePrimitive>
+      <Button slot="trigger" className={styles.Disclosure.trigger()}>
+        <Icon
+          icon={IcRoundKeyboardArrowRight}
+          className={styles.Disclosure.chevron()}
+        />
+        <span className={styles.Disclosure.title()}>{children}</span>
+      </Button>
+    </Heading>
   )
 }
 
 export function DisclosurePanel({
+  children,
   className,
   ...props
 }: DisclosurePanelProps) {
@@ -73,6 +75,8 @@ export function DisclosurePanel({
           })
         )
       }
-    />
+    >
+      <div className={styles.Disclosure.panel.content()}>{children}</div>
+    </DisclosurePanelPrimitive>
   )
 }

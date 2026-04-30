@@ -79,3 +79,7 @@
   outline: 2px solid var(--alinea-focus-ring-color);
   outline-offset: 2px;
 }
+
+.Disclosure-panel-content {
+  min-width: 0;
+}

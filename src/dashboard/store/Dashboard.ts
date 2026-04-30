@@ -1354,7 +1354,7 @@ export class DashboardEntry {
       const revisions = await client.revisions(file)
       // Sort revisions by date
       revisions.sort((a, b) => b.createdAt - a.createdAt)
-      return revisions
+      return revisions.slice(1)
     })
   )
 

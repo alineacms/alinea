@@ -1,6 +1,8 @@
 import {
   Button,
   Disclosure,
+  DisclosureHeader,
+  DisclosurePanel,
   Icon,
   ProgressCircle,
   Tab,
@@ -12,13 +14,15 @@ import {Revision} from '#/core/Connection.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {useState, type ComponentType} from 'react'
+import {useState, type ComponentType, type ReactNode} from 'react'
 import {
   IcOutlineDrafts,
+  IcRoundArchive,
   IcRoundEdit,
   IcRoundHistory,
   IcRoundPublishedWithChanges,
-  IcRoundVisibility
+  IcRoundVisibility,
+  IcRoundVisibilityOff
 } from '../icons.js'
 import {DashboardEntry} from '../store.js'
 import css from './EntrySidebar.module.css'
@@ -89,12 +93,15 @@ function EntrySidebarHistory({entry}: EntrySidebarHistoryProps) {
       <section className={styles.EntrySidebar.section()}>
         <Disclosure
           key={entry.id}
-          title="Previous versions"
+          className={styles.EntrySidebar.disclosure()}
           onExpandedChange={setPreviousVersionsOpen}
         >
-          {previousVersionsOpen && (
-            <EntrySidebarPreviousVersions entry={entry} />
-          )}
+          <DisclosureHeader>Previous versions</DisclosureHeader>
+          <DisclosurePanel className={styles.EntrySidebar.disclosurePanel()}>
+            {previousVersionsOpen && (
+              <EntrySidebarPreviousVersions entry={entry} />
+            )}
+          </DisclosurePanel>
         </Disclosure>
       </section>
     </div>
@@ -134,37 +141,27 @@ function EntrySidebarStatusItem({
   currentRevision
 }: EntrySidebarStatusItemProps) {
   const activeStatus = useAtomValue(entry.activeStatus)
+  const activeVersion = useAtomValue(entry.activeVersion)
   const currentlyEditing = useAtomValue(entry.currentlyEditing)
   const [selectedVersion, setSelectedVersion] = useAtom(entry.selectedVersion)
   const isEditing = activeStatus === status && currentlyEditing !== undefined
   const selected =
     selectedVersion.type === 'status' && selectedVersion.status === status
+  const rowStatus = getStatusItemVersionStatus(status, activeVersion?.main)
   return (
     <li className={styles.EntrySidebar.historyItem()}>
-      <Button
-        appearance={selected ? 'active' : 'outline'}
-        intent="secondary"
-        className={styles.EntrySidebar.versionButton({
-          selected,
-          status
-        })}
+      <EntrySidebarVersionRow
+        selected={selected}
+        status={rowStatus}
+        icon={getVersionStatusIcon(rowStatus)}
+        title={formatStatus(status)}
+        meta={formatMeta(currentRevision)}
         onPress={() => setSelectedVersion({type: 'status', status})}
       >
-        <EntrySidebarHistoryIcon
-          icon={status === 'published' ? IcRoundVisibility : IcRoundEdit}
-        />
-        <span className={styles.EntrySidebar.versionContent()}>
-          <span className={styles.EntrySidebar.versionTitle()}>
-            {formatStatus(status)}
-          </span>
-          <span className={styles.EntrySidebar.versionMeta()}>
-            {formatMeta(currentRevision)}
-          </span>
-        </span>
         {isEditing && (
           <span className={styles.EntrySidebar.historyBadge()}>Editing</span>
         )}
-      </Button>
+      </EntrySidebarVersionRow>
     </li>
   )
 }
@@ -185,12 +182,15 @@ function EntrySidebarRevisionItem({
     selectedVersion.type === 'history' &&
     selectedVersion.ref === revision.ref &&
     selectedVersion.file === revision.file
+  const revisionKind = getRevisionKind(revision)
   return (
     <li className={styles.EntrySidebar.historyItem()}>
-      <Button
-        appearance={selected ? 'active' : 'outline'}
-        intent="secondary"
-        className={styles.EntrySidebar.revisionButton({selected})}
+      <EntrySidebarVersionRow
+        selected={selected}
+        status={revisionKind.status}
+        icon={isLatest ? IcRoundPublishedWithChanges : revisionKind.icon}
+        title={revision.description ?? 'Page published'}
+        meta={formatMeta(revision)}
         onPress={() =>
           setSelectedVersion({
             type: 'history',
@@ -198,33 +198,96 @@ function EntrySidebarRevisionItem({
             ref: revision.ref
           })
         }
-      >
-        <EntrySidebarHistoryIcon
-          icon={isLatest ? IcRoundPublishedWithChanges : IcOutlineDrafts}
-        />
-        <span className={styles.EntrySidebar.versionContent()}>
-          <span className={styles.EntrySidebar.versionTitle()}>
-            {revision.description ?? 'Page published'}
-          </span>
-          <span className={styles.EntrySidebar.versionMeta()}>
-            {formatMeta(revision)}
-          </span>
-        </span>
-      </Button>
+      />
     </li>
   )
 }
 
-interface EntrySidebarHistoryIconProps {
+export type EntrySidebarVersionStatus =
+  | EntryStatus
+  | 'unpublished'
+  | 'none'
+
+export interface EntrySidebarVersionRowProps {
+  selected?: boolean
+  status?: EntrySidebarVersionStatus
   icon: ComponentType
+  title: ReactNode
+  meta: ReactNode
+  children?: ReactNode
+  onPress?: () => void
 }
 
-function EntrySidebarHistoryIcon({icon}: EntrySidebarHistoryIconProps) {
+export function EntrySidebarVersionRow({
+  selected = false,
+  status = 'none',
+  icon,
+  title,
+  meta,
+  children,
+  onPress
+}: EntrySidebarVersionRowProps) {
   return (
-    <span className={styles.EntrySidebar.historyIcon()}>
-      <Icon icon={icon} />
-    </span>
+    <Button
+      appearance="outline"
+      className={styles.EntrySidebar.versionButton()}
+      data-selected={selected || undefined}
+      data-status={status}
+      onPress={onPress}
+    >
+      <span className={styles.EntrySidebar.historyIcon()}>
+        <Icon icon={icon} />
+      </span>
+      <span className={styles.EntrySidebar.versionContent()}>
+        <span className={styles.EntrySidebar.versionTitle()}>{title}</span>
+        <span className={styles.EntrySidebar.versionMeta()}>{meta}</span>
+      </span>
+      {children}
+    </Button>
   )
+}
+
+interface EntrySidebarRevisionKind {
+  icon: ComponentType
+  status: EntrySidebarVersionStatus
+}
+
+function getStatusItemVersionStatus(
+  status: EntryStatus,
+  main?: boolean
+): EntrySidebarVersionStatus {
+  if (status === 'draft' && main === true) return 'unpublished'
+  return status
+}
+
+function getVersionStatusIcon(status: EntrySidebarVersionStatus) {
+  switch (status) {
+    case 'published':
+      return IcRoundVisibility
+    case 'unpublished':
+      return IcRoundVisibilityOff
+    case 'archived':
+      return IcRoundArchive
+    default:
+      return IcRoundEdit
+  }
+}
+
+function getRevisionKind(revision: Revision): EntrySidebarRevisionKind {
+  const description = revision.description?.toLowerCase() ?? ''
+  if (description.includes('unpublish')) {
+    return {icon: getVersionStatusIcon('unpublished'), status: 'unpublished'}
+  }
+  if (description.includes('archive')) {
+    return {icon: getVersionStatusIcon('archived'), status: 'archived'}
+  }
+  if (description.includes('draft')) {
+    return {icon: getVersionStatusIcon('draft'), status: 'draft'}
+  }
+  if (description.includes('publish')) {
+    return {icon: getVersionStatusIcon('published'), status: 'published'}
+  }
+  return {icon: IcOutlineDrafts, status: 'none'}
 }
 
 function EntrySidebarHistoryLoading() {

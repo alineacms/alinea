@@ -8,9 +8,10 @@ const generateScopedName = 'alinea-[local]'
 export default defineConfig({
   plugins: [alineaFixturePlugin(), react() /*, alineaPlugin('apps/dev')*/],
   css: {modules: {generateScopedName}},
-  experimental: {
+  // This doesn't work for Ladle
+  /*experimental: {
     bundledDev: true
-  },
+  },*/
   pack: {
     format: ['esm'],
     outExtensions() {

@@ -276,6 +276,7 @@ function EntryEditor({entry}: EntryEditorProps) {
   }
 
   useEffect(() => {
+    if (node.readOnly && !isUntranslated) return
     setEditing(isUntranslated || isDirty ? node : undefined)
   }, [isDirty, isUntranslated, node, setEditing])
 
