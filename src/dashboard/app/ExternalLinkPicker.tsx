@@ -64,6 +64,7 @@ function ExternalLinkPickerDialog({
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    event.stopPropagation()
     startTransition(() => {
       onConfirm({url, title, target: openInNewTab ? '_blank' : '_self'})
       modal.close()
