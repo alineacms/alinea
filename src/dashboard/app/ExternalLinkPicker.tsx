@@ -72,7 +72,9 @@ function ExternalLinkPickerDialog({
 
   return (
     <DashboardModalDialog
-      aria-label={selectionMode === 'multiple' ? 'External links' : 'External link'}
+      aria-label={
+        selectionMode === 'multiple' ? 'External links' : 'External link'
+      }
       variant="explorer"
     >
       <DashboardModalForm onSubmit={onSubmit}>
@@ -106,7 +108,9 @@ function ExternalLinkPickerDialog({
           </Label>
         </DashboardModalFormBody>
         <DashboardModalFormFooter>
-          <Button type="submit">{submitLabel ?? 'Add link'}</Button>
+          <Button type="submit" intent="primary">
+            {submitLabel ?? 'Add link'}
+          </Button>
         </DashboardModalFormFooter>
       </DashboardModalForm>
     </DashboardModalDialog>
