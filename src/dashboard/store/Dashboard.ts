@@ -310,13 +310,6 @@ export class Dashboard {
     return db.sync()
   })
 
-  sync = atom(null, (get, set) => {
-    const db = get(this.db)
-    if (isSyncableGraph(db)) {
-      return db.sync()
-    }
-  })
-
   theme = Object.assign(
     atom(
       get => get(this.#themeStorage),
@@ -442,8 +435,7 @@ export class Dashboard {
       const load = get(this.#entryLoader)
       const [result, error] = await load(id)
       if (error) {
-        if (error instanceof MissingEntryError)
-          get(this.sha) // subscribe to entry revisions to update when entry synced
+        if (error instanceof MissingEntryError) get(this.sha) // subscribe to entry revisions to update when entry synced
         throw error
       }
       assert(result, `Entry "${id}" not found`)

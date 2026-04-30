@@ -350,10 +350,12 @@ function EntryEditor({entry}: EntryEditorProps) {
               This entry has unsaved changes
             </DashboardModalContent>
             <DashboardModalFooter>
-              <Button intent="warning" onPress={discardAndConfirm}>
+              <Button onPress={discardAndConfirm} intent="secondary">
                 Discard my changes
               </Button>
-              <Button onPress={saveAndConfirm}>Save as draft</Button>
+              <Button onPress={saveAndConfirm} intent="primary">
+                Save as draft
+              </Button>
             </DashboardModalFooter>
           </DashboardModalDialog>
         )}

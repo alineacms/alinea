@@ -38,8 +38,7 @@ interface AppShellProps {
 }
 
 export function AppShell({dashboard}: AppShellProps) {
-  const sha = useAtomValue(dashboard.sha)
-  const sync = useSetAtom(dashboard.sync)
+  useAtomValue(dashboard.ensureInitialSync)
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
