@@ -2,6 +2,7 @@ import {Button, Icon, Label} from '#/components.js'
 import {Field} from '#/core/Field.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {createId} from '#/core/Id.js'
+import {getType} from '#/core/Internal.js'
 import {Schema} from '#/core/Schema.js'
 import {
   BlockNode,
@@ -16,6 +17,7 @@ import {entries, fromEntries, values} from '#/core/util/Objects.js'
 import {
   IcBaselineContentCopy,
   IcRoundClose,
+  IcRoundDragHandle,
   IcRoundKeyboardArrowDown,
   IcRoundKeyboardArrowUp
 } from '#/dashboard/icons.js'
@@ -39,17 +41,13 @@ import {
   useEditor
 } from '@tiptap/react'
 import {atom, useAtomValue, useStore} from 'jotai'
-import {memo, useCallback, useMemo, useRef, useState} from 'react'
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor.js'
-import {
-  Surface,
-  SurfaceContent,
-  SurfaceHeader,
-  SurfaceRow
-} from '../../ui/Surface.js'
+import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
 import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
+import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import css from './RichTextField.module.css'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
@@ -62,72 +60,21 @@ type NodeViewProps = {
   deleteNode: () => void
 }
 
-interface TypeExtensionHeaderProps {
-  type: Type
-  exp: boolean
-  onDelete: () => void
-  onToggle: () => void
-  onCopy: () => void
-}
-
-function TypeExtensionHeader({
-  type,
-  onDelete,
-  onToggle,
-  exp,
-  onCopy
-}: TypeExtensionHeaderProps) {
-  const label = Type.label(type)
-  return (
-    <SurfaceHeader className={styles.RichTextFieldView.Surface.Header()}>
-      <div className={styles.RichTextFieldView.Surface.Header.Label()}>
-        <Button
-          appearance="plain"
-          intent="secondary"
-          size="square-petite"
-          className={styles.ListFieldRow.fold()}
-          onPress={onToggle}
-        >
-          <Icon
-            aria-hidden
-            icon={
-              exp === true ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowUp
-            }
-          />
-        </Button>
-        {label}
-      </div>
-      <div className={styles.RichTextFieldView.Surface.Header.actions()}>
-        <Button
-          aria-label={`Duplicate ${label}`}
-          appearance="outline"
-          intent="secondary"
-          onPress={onCopy}
-          size="icon"
-        >
-          <Icon aria-hidden icon={IcBaselineContentCopy} />
-        </Button>
-        <Button
-          aria-label={`Remove ${label}`}
-          appearance="outline"
-          intent="danger"
-          onPress={onDelete}
-          size="icon"
-        >
-          <Icon aria-hidden icon={IcRoundClose} />
-        </Button>
-      </div>
-    </SurfaceHeader>
-  )
-}
-
 function typeExtension(field: Field, name: string, type: Type) {
-  function View({editor, getPos, node, deleteNode}: NodeViewProps) {
+  function RichTextFieldBlock({
+    editor,
+    getPos,
+    node,
+    deleteNode
+  }: NodeViewProps) {
     const [exp, toggleExp] = useState(true)
     const store = useStore()
     const setValue = useFieldSetter(field)
     const reactive = useFieldNode(field)
+    const options = useFieldOptions(field)
     const {[BlockNode.id]: id} = node.attrs
+    const meta = getType(type)
+    const label = Type.label(type)
 
     function onToggle() {
       toggleExp(exp => !exp)
@@ -164,22 +111,80 @@ function typeExtension(field: Field, name: string, type: Type) {
         })
       })
     }, [reactive, id])
-    const rowNode = useAtomValue(rowNodeAtom) as ReactiveNode<object>
+    const rowNode = useAtomValue(rowNodeAtom) as
+      | ReactiveNode<object>
+      | undefined
+    const rowValueAtom = useMemo(() => {
+      return atom(get => (rowNode ? get(rowNode.value) : undefined))
+    }, [rowNode])
+    const rowValue = useAtomValue(rowValueAtom) as object | undefined
+    const hydratedValue = useMemo(() => {
+      return rowValue ? hydrateBlockValue(rowValue, type) : rowValue
+    }, [rowValue, type])
+    useEffect(() => {
+      if (!rowNode || !hydratedValue || hydratedValue === rowValue) return
+      store.set(rowNode.value, hydratedValue)
+    }, [hydratedValue, rowNode, rowValue, store])
     if (!rowNode) return null
+    if (hydratedValue !== rowValue) return null
     return (
       <NodeViewWrapper>
-        <Surface className={styles.RichTextFieldView.Surface()} tabIndex={0}>
-          <SurfaceRow>
-            <TypeExtensionHeader
-              type={type}
-              onDelete={deleteNode}
-              onToggle={onToggle}
-              onCopy={onCopy}
-              exp={exp}
-            />
-          </SurfaceRow>
+        <Surface className={styles.RichTextFieldBlock()} tabIndex={0}>
+          <SurfaceHeader className={styles.RichTextFieldBlock.header()}>
+            <Button
+              aria-label="Drag block"
+              appearance="plain"
+              className={styles.RichTextFieldBlock.drag()}
+              data-drag-handle
+              size="icon"
+            >
+              <Icon aria-hidden icon={meta.icon || IcRoundDragHandle} />
+            </Button>
+            <Button
+              aria-label={exp ? `Collapse ${label}` : `Expand ${label}`}
+              appearance="plain"
+              className={styles.RichTextFieldBlock.fold()}
+              intent="secondary"
+              size="square-petite"
+              onPress={onToggle}
+            >
+              <Icon
+                aria-hidden
+                icon={
+                  exp === true
+                    ? IcRoundKeyboardArrowDown
+                    : IcRoundKeyboardArrowUp
+                }
+              />
+            </Button>
+            <strong className={styles.RichTextFieldBlock.title()}>
+              {label}
+            </strong>
+            {!options.readOnly && (
+              <div className={styles.RichTextFieldBlock.actions()}>
+                <Button
+                  aria-label={`Duplicate ${label}`}
+                  appearance="plain"
+                  intent="secondary"
+                  size="icon"
+                  onPress={onCopy}
+                >
+                  <Icon aria-hidden icon={IcBaselineContentCopy} />
+                </Button>
+                <Button
+                  aria-label={`Remove ${label}`}
+                  appearance="plain"
+                  intent="secondary"
+                  size="icon"
+                  onPress={deleteNode}
+                >
+                  <Icon aria-hidden icon={IcRoundClose} />
+                </Button>
+              </div>
+            )}
+          </SurfaceHeader>
           {exp && (
-            <SurfaceContent>
+            <SurfaceContent className={styles.RichTextFieldBlock.body()}>
               <NodeEditor type={type} node={rowNode} />
             </SurfaceContent>
           )}
@@ -199,7 +204,7 @@ function typeExtension(field: Field, name: string, type: Type) {
       return [name, mergeAttributes(HTMLAttributes)]
     },
     addNodeView() {
-      return ReactNodeViewRenderer(View)
+      return ReactNodeViewRenderer(RichTextFieldBlock)
     },
     addAttributes() {
       return {
@@ -207,6 +212,18 @@ function typeExtension(field: Field, name: string, type: Type) {
       }
     }
   })
+}
+
+function hydrateBlockValue(value: object, type: Type): object {
+  const initialValue = Type.initialValue(type)
+  let changed = false
+  const result = {...value} as Record<string, unknown>
+  for (const [key, initial] of entries(initialValue)) {
+    if (key in result) continue
+    result[key] = initial
+    changed = true
+  }
+  return changed ? result : value
 }
 
 function schemaToExtensions(field: Field, schema: Schema | undefined) {
@@ -225,6 +242,7 @@ function RTView<Blocks extends Schema>({
   const toolbar = document.getElementById('alinea-toolbar')
   const setValue = useFieldSetter(field)
   const node = useFieldNode(field)
+  const picker = usePickTextLink()
   const [focus, setFocus] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const content = useMemo(() => {
@@ -311,10 +329,12 @@ function RTView<Blocks extends Schema>({
             editor={editor}
             enableTables={options.enableTables}
             focusToggle={focusToggle}
+            pickLink={picker.pickLink}
             toolbar={options.toolbar}
           />,
           toolbar
         )}
+      <PickTextLink picker={picker} />
     </>
   )
 }

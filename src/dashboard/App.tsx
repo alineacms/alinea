@@ -1,8 +1,11 @@
+import {ProgressCircle} from '#/components.js'
 import type {Config} from '#/core/Config'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph'
-import {ComponentType, useState} from 'react'
+import {useAtomValue} from 'jotai'
+import {ComponentType, Suspense, useState} from 'react'
 import {AppShell} from './app/AppShell.js'
+import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {Dashboard} from './store/Dashboard.js'
 
@@ -32,5 +35,16 @@ export function App({
         local
       })
   )
-  return <AppShell dashboard={dashboard} />
+  const theme = useAtomValue(dashboard.theme)
+  return (
+    <Suspense
+      fallback={
+        <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+          <ProgressCircle isIndeterminate aria-label="loading" />
+        </Rail>
+      }
+    >
+      <AppShell dashboard={dashboard} />
+    </Suspense>
+  )
 }

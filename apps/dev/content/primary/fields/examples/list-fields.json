@@ -2,5 +2,51 @@
   "_id": "2dgg7Hkjt0lksSEgm2gDjLTXL9t",
   "_type": "ListFields",
   "_index": "aA",
-  "title": "List fields"
+  "title": "List fields gtj",
+  "list": [],
+  "listWithInitial": [
+    {
+      "_id": "3D4PkNFvkU0BZCumUdzBK90BYt6",
+      "_index": "a0",
+      "_type": "Text",
+      "title": "Initial item",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "This is an initial item"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_id": "3D4PkN2KurCf9mNusbYqSoCVcGa",
+      "_index": "a1",
+      "_type": "Text",
+      "title": "Initial item",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "This is an initial item"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    }
+  }
 }

@@ -1,5 +1,6 @@
 .Heading {
   min-width: 0;
+  margin: 0;
   font-weight: 600;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
@@ -13,12 +14,12 @@
   }
 }
 
-h1.Heading {
+.Heading.is-level1 {
   font-size: 33px;
   line-height: 1.25;
 }
 
-h2.Heading {
+.Heading.is-level2 {
   font-size: 18px;
   line-height: 1.33;
 
@@ -27,7 +28,7 @@ h2.Heading {
   }
 }
 
-h3.Heading {
+.Heading.is-level3 {
   font-size: 16px;
   line-height: 1.2;
 
@@ -36,7 +37,7 @@ h3.Heading {
   }
 }
 
-h4.Heading {
+.Heading.is-level4 {
   font-size: 13px;
   font-weight: 700;
 
@@ -45,7 +46,7 @@ h4.Heading {
   }
 }
 
-h5.Heading {
+.Heading.is-level5 {
   font-size: 11.5px;
   font-weight: 700;
 
@@ -56,6 +57,7 @@ h5.Heading {
 
 .Paragraph {
   max-width: 50ch;
+  margin: 0;
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-line;
@@ -68,41 +70,62 @@ h5.Heading {
   &:not(:last-child) {
     margin-bottom: 8px;
   }
-
-  &:not(:has(+ .Paragraph)) {
-    margin-top: 8px;
-  }
 }
 
 .BulletList,
 .OrderedList {
-  margin-left: 20px;
+  padding-left: 24px;
+  margin: 0;
+  list-style-position: outside;
 
   &:not(:last-child) {
     margin-bottom: 14px;
   }
 }
 
+.BulletList {
+  list-style-type: disc;
+}
+
+.OrderedList {
+  list-style-type: decimal;
+}
+
 .ListItem {
+  display: list-item;
+  padding-left: 2px;
+
   &:not(:last-child) {
     margin-bottom: 5px;
   }
 }
 
+.ListItem .Paragraph:not(:last-child) {
+  margin-bottom: 5px;
+}
+
 .Blockquote {
-  padding: 4px 16px;
-  border-left: 2px solid hsla(var(--alinea-dashboard-richtext-accent-hsl), 0.5);
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--alinea-surface-accent);
+  border-radius: 0 6px 6px 0;
+  background: var(--alinea-surface-accent-subtle);
+  color: var(--alinea-content-secondary);
 
   &:not(:last-child) {
     margin-bottom: 14px;
   }
 }
 
+.Blockquote .Paragraph {
+  max-width: 60ch;
+}
+
 .Link {
   cursor: text;
-  color: inherit;
+  color: var(--alinea-link-default);
   text-decoration: underline;
-  text-decoration-color: hsla(var(--alinea-dashboard-richtext-accent-hsl), 0.4);
+  text-decoration-color: color-mix(in srgb, var(--alinea-link-default) 38%, transparent);
   text-underline-offset: 0.3em;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -110,12 +133,43 @@ h5.Heading {
   hyphens: auto;
 
   &:hover {
-    text-decoration-color: currentColor;
+    color: var(--alinea-link-hover);
+    text-decoration-color: var(--alinea-link-hover);
   }
+}
+
+.Bold {
+  font-weight: 700;
+}
+
+.Italic {
+  font-style: italic;
+}
+
+.Strike {
+  text-decoration: line-through;
+}
+
+.Small {
+  font-size: 0.875em;
+}
+
+.SubScript,
+.SuperScript {
+  font-size: 0.75em;
+  line-height: 0;
+}
+
+.HorizontalRule {
+  height: 0;
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid var(--alinea-border-default);
 }
 
 .Table {
   width: 100%;
+  margin: 0;
   overflow: hidden;
   border-collapse: collapse;
   table-layout: fixed;
@@ -128,6 +182,7 @@ h5.Heading {
 .TableCell,
 .TableHeader {
   padding: 4px 8px;
+  vertical-align: top;
   border: 1px solid var(--alinea-dashboard-richtext-table-border);
 
   &:global(.selectedCell) {
@@ -141,7 +196,14 @@ h5.Heading {
   font-weight: 700;
 }
 
+.TableCell .Paragraph,
+.TableHeader .Paragraph {
+  max-width: none;
+}
+
 .Highlight {
+  padding: 0 2px;
+  border-radius: 3px;
   background: var(--alinea-dashboard-richtext-highlight-background);
   color: var(--alinea-dashboard-richtext-highlight-foreground);
 }

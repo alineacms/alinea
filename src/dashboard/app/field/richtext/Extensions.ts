@@ -1,4 +1,5 @@
 import styler from '@alinea/styler'
+import {mergeAttributes} from '@tiptap/core'
 import Blockquote from '@tiptap/extension-blockquote'
 import Bold from '@tiptap/extension-bold'
 import BulletList from '@tiptap/extension-bullet-list'
@@ -30,6 +31,21 @@ import Small from './extensions/Small.js'
 
 const styles = styler(css)
 
+const HeadingWithClasses = Heading.extend({
+  renderHTML({node, HTMLAttributes}) {
+    const level = this.options.levels.includes(node.attrs.level)
+      ? node.attrs.level
+      : this.options.levels[0]
+    return [
+      `h${level}`,
+      mergeAttributes(HTMLAttributes, {
+        class: styles.Heading(`level${level}`)
+      }),
+      0
+    ]
+  }
+})
+
 export const extensions = {
   Document,
   Text,
@@ -38,11 +54,31 @@ export const extensions = {
       class: styles.Paragraph()
     }
   }),
-  Small,
-  Bold,
-  Italic,
-  Strike,
-  HorizontalRule,
+  Small: Small.configure({
+    HTMLAttributes: {
+      class: styles.Small()
+    }
+  }),
+  Bold: Bold.configure({
+    HTMLAttributes: {
+      class: styles.Bold()
+    }
+  }),
+  Italic: Italic.configure({
+    HTMLAttributes: {
+      class: styles.Italic()
+    }
+  }),
+  Strike: Strike.configure({
+    HTMLAttributes: {
+      class: styles.Strike()
+    }
+  }),
+  HorizontalRule: HorizontalRule.configure({
+    HTMLAttributes: {
+      class: styles.HorizontalRule()
+    }
+  }),
   BulletList: BulletList.configure({
     HTMLAttributes: {
       class: styles.BulletList()
@@ -64,11 +100,7 @@ export const extensions = {
     }
   }),
   HardBreak,
-  Heading: Heading.configure({
-    HTMLAttributes: {
-      class: styles.Heading()
-    }
-  }),
+  Heading: HeadingWithClasses,
   TextAlign: TextAlign.configure({
     types: ['heading', 'paragraph']
   }),
@@ -80,8 +112,16 @@ export const extensions = {
     }
   }),
   FloatingMenu,
-  SuperScript,
-  SubScript,
+  SuperScript: SuperScript.configure({
+    HTMLAttributes: {
+      class: styles.SuperScript()
+    }
+  }),
+  SubScript: SubScript.configure({
+    HTMLAttributes: {
+      class: styles.SubScript()
+    }
+  }),
   Table: Table.configure({
     HTMLAttributes: {
       class: styles.Table()

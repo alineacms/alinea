@@ -28,11 +28,10 @@
   justify-content: center;
   gap: 6px;
   min-height: 30px;
-  padding: 4px 10px;
+  padding: 4px 6px;
   font: inherit;
   font-size: var(--alinea-font-size-base);
   font-weight: 550;
-  line-height: 20px;
   outline: none;
   white-space: nowrap;
   transition: var(--alinea-transition);

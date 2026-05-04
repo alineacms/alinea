@@ -1,8 +1,13 @@
-import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import {Button, Icon, Menu, MenuItem, ToggleButton} from '#/components.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {IcRoundCheck, IcRoundMoreVert, IcRoundSave} from '../icons.js'
+import {
+  IcRoundCheck,
+  IcRoundMoreVert,
+  IcRoundSave,
+  SolarSidebarMinimalisticOutline
+} from '../icons.js'
 import {DashboardEntry, ReactiveNode} from '../store/Dashboard.js'
 import {usePolicy} from '../store/hooks.js'
 import {EditorBackButton} from './EditorBackButton.js'
@@ -13,7 +18,9 @@ const styles = styler(css)
 
 export interface EntryHeaderProps {
   entry: DashboardEntry
+  isSidebarOpen?: boolean
   node: ReactiveNode<object>
+  onSidebarOpenChange?: (isOpen: boolean) => void
 }
 
 interface EntryHeaderActionProps {
@@ -22,6 +29,8 @@ interface EntryHeaderActionProps {
   activeStatus: 'draft' | 'published' | 'archived'
   isDirty: boolean
   isUnpublished: boolean
+  isSidebarOpen?: boolean
+  onSidebarOpenChange?: (isOpen: boolean) => void
   untranslated: boolean
   parentNeedsTranslation: boolean
 }
@@ -63,6 +72,8 @@ function EntryHeaderActions({
   activeStatus,
   isDirty,
   isUnpublished,
+  isSidebarOpen,
+  onSidebarOpenChange,
   untranslated,
   parentNeedsTranslation
 }: EntryHeaderActionProps) {
@@ -272,11 +283,27 @@ function EntryHeaderActions({
           ))}
         </Menu>
       )}
+      {onSidebarOpenChange && (
+        <ToggleButton
+          isSelected={isSidebarOpen}
+          aria-label={
+            isSidebarOpen ? 'Close entry sidebar' : 'Open entry sidebar'
+          }
+          onChange={onSidebarOpenChange}
+        >
+          <SolarSidebarMinimalisticOutline data-slot="icon" />
+        </ToggleButton>
+      )}
     </div>
   )
 }
 
-export function EntryHeader({entry, node}: EntryHeaderProps) {
+export function EntryHeader({
+  entry,
+  isSidebarOpen,
+  node,
+  onSidebarOpenChange
+}: EntryHeaderProps) {
   const title = useAtomValue(entry.label)
   const activeStatus = useAtomValue(entry.activeStatus)
   const activeVersion = useAtomValue(entry.activeVersion)
@@ -296,6 +323,8 @@ export function EntryHeader({entry, node}: EntryHeaderProps) {
         activeStatus={activeStatus}
         isDirty={isDirty}
         isUnpublished={isUnpublished}
+        isSidebarOpen={isSidebarOpen}
+        onSidebarOpenChange={onSidebarOpenChange}
         untranslated={untranslated}
         parentNeedsTranslation={parentNeedsTranslation}
       />

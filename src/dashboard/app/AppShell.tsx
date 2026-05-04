@@ -38,8 +38,7 @@ interface AppShellProps {
 }
 
 export function AppShell({dashboard}: AppShellProps) {
-  const sha = useAtomValue(dashboard.sha)
-  const sync = useSetAtom(dashboard.sync)
+  useAtomValue(dashboard.ensureInitialSync)
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
@@ -52,14 +51,14 @@ export function AppShell({dashboard}: AppShellProps) {
 
           <SidebarFooter className={styles.AppShell.footer()}>
             <ProfileMenu dashboard={dashboard} />
-            <div className={styles.AppShell.status()}>
+            {/*<div className={styles.AppShell.status()}>
               <span className={styles.AppShell.status.sha()}>
                 db.sha: {sha ?? '-'}
               </span>
               <Button appearance="outline" intent="secondary" onPress={sync}>
                 Sync
               </Button>
-            </div>
+            </div>*/}
           </SidebarFooter>
         </Sidebar>
 
@@ -79,9 +78,7 @@ export function AppShell({dashboard}: AppShellProps) {
 }
 
 function ProfileMenu({dashboard}: AppShellProps) {
-  const user = useAtomValue(
-    useMemo(() => unwrap(dashboard.user), [dashboard])
-  )
+  const user = useAtomValue(useMemo(() => unwrap(dashboard.user), [dashboard]))
   const config = useAtomValue(dashboard.config)
   const isDev = useAtomValue(dashboard.alineaDev)
   const canLogout = useAtomValue(dashboard.canLogout)

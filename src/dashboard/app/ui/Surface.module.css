@@ -2,7 +2,6 @@
   border-radius: 6px;
   border: 1px solid var(--alinea-dashboard-surface-border);
   background: var(--alinea-bg);
-  overflow: hidden;
   font-size: var(--alinea-font-size-base);
   flex-shrink: 0;
 
