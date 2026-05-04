@@ -1,0 +1,76 @@
+.AuthView {
+  display: flex;
+  min-height: 100%;
+  width: 100%;
+  background:
+    radial-gradient(circle at 20% 20%, rgb(16 185 129 / 10%), transparent 32%),
+    radial-gradient(circle at 80% 0%, rgb(59 130 246 / 12%), transparent 30%),
+    var(--alinea-bg-muted);
+  color: var(--alinea-fg);
+}
+
+.AuthView-panel {
+  width: min(100%, 520px);
+  margin: auto;
+  padding: 24px;
+}
+
+.AuthView-loader {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+}
+
+.AuthView-surface {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+  border: 1px solid var(--alinea-border-default);
+  border-radius: 8px;
+  background: var(--alinea-bg);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 10%);
+}
+
+.AuthView-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.AuthView-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: var(--alinea-primary);
+  color: var(--alinea-primary-fg);
+  font-size: 24px;
+}
+
+.AuthView-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.AuthView-text {
+  margin: 0;
+  color: var(--alinea-fg-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.AuthView-link {
+  color: var(--alinea-primary);
+  font-weight: 600;
+}
+
+.AuthView-actionRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

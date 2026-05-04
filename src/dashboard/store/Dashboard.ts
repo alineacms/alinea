@@ -1,4 +1,5 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {Client} from '#/core/Client.js'
 import {Config} from '#/core/Config.js'
 import type {LocalConnection, Revision} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
@@ -119,6 +120,7 @@ export class Dashboard {
   local: Atom<boolean>
   alineaDev: Atom<boolean>
   #userOverride = atom<User | null | undefined>()
+  #authRevision = atom(0)
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
     'system',
@@ -195,12 +197,32 @@ export class Dashboard {
     set(this.#userOverride, {...user, roles})
   })
 
+  authenticate = atom(null, (get, set, user: User) => {
+    const client = get(this.client)
+    if (client instanceof Client) {
+      set(
+        this.client,
+        client.authenticate(
+          options => options,
+          () => {
+            set(this.#userOverride, null)
+            set(this.#authRevision, revision => revision + 1)
+          }
+        )
+      )
+    }
+    set(this.#userOverride, user)
+  })
+
   logout = atom(null, async (get, set) => {
     const client = get(this.client)
     const logout = (client as Partial<LogoutConnection>).logout
     if (typeof logout === 'function') await logout.call(client)
     set(this.#userOverride, null)
+    set(this.#authRevision, revision => revision + 1)
   })
+
+  authRevision = atom(get => get(this.#authRevision))
 
   canLogout = atom(get => {
     if (get(this.local)) return false
