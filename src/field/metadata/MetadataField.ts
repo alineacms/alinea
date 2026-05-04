@@ -1,16 +1,9 @@
-import type {FieldOptions, WithoutLabel} from '#/core.js'
 import {RecordField} from '#/core/field/RecordField.js'
 import {Type, type} from '#/core/Type.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {type ImageField, type ImageLink, image} from '#/field/link.js'
 import {type ObjectField, object} from '#/field/object.js'
 import {type TextField, text} from '#/field/text.js'
-
-export interface MetadataOptions extends FieldOptions<Metadata> {
-  inferTitleFrom?: string
-  inferDescriptionFrom?: string
-  inferImageFrom?: string
-}
 
 export interface MetadataFields {
   title: TextField
@@ -34,12 +27,12 @@ export interface Metadata {
 
 export class MetadataField extends RecordField<
   Metadata,
-  MetadataOptions & {fields: Type<MetadataFields>}
+  {label: string; fields: Type<MetadataFields>}
 > {}
 
 export function metadata(
   label = 'Metadata',
-  options: WithoutLabel<MetadataOptions> = {}
+  options: Partial<MetadataFields> = {}
 ) {
   const fields = type('Fields', {
     fields: {

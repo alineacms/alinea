@@ -18,7 +18,6 @@ import {
   DashboardEntry,
   DashboardRoot,
   DashboardSection,
-  previewMetadataAtom,
   ReactiveNode
 } from '../store/Dashboard.js'
 import {
@@ -31,6 +30,7 @@ import {
   useNodeEditor
 } from '../store/hooks.js'
 import type {DetailsBarStatus} from './DetailsBar.js'
+import {DetailsBar} from './DetailsBar.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EditorBackButton} from './EditorBackButton.js'
@@ -255,7 +255,6 @@ function EntryEditor({entry}: EntryEditorProps) {
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
-  const setPreviewMetadata = useSetAtom(previewMetadataAtom)
   const status = useAtomValue(entry.activeStatus)
   const activeVersion = useAtomValue(entry.activeVersion)
   const isUnpublished = Boolean(activeVersion?.main && status === 'draft')
@@ -281,10 +280,6 @@ function EntryEditor({entry}: EntryEditorProps) {
     if (node.readOnly && !isUntranslated) return
     setEditing(isUntranslated || isDirty ? node : undefined)
   }, [isDirty, isUntranslated, node, setEditing])
-
-  useEffect(() => {
-    setPreviewMetadata(undefined)
-  }, [entry.id, setPreviewMetadata])
 
   let editorBody = (
     <>

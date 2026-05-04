@@ -5,8 +5,7 @@ import {MetadataField} from '#/field/metadata.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {
-  previewMetadataAtom,
-  previewOriginAtom,
+  useDashboard,
   useFieldError,
   useFieldNode,
   useFieldOptions
@@ -25,16 +24,11 @@ export function MetadataFieldView({field}: MetadataFieldViewProps) {
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   const node = useFieldNode<object>(field)
-  const metadata = useAtomValue(previewMetadataAtom)
-  const origin = useAtomValue(previewOriginAtom)
-  console.log(metadata)
+  const dashboard = useDashboard()
+  const metadata = useAtomValue(dashboard.previewMetadata)
   return (
     <>
-      <Label
-        label={options.label}
-        errorMessage={error}
-        isRequired={options.required}
-      >
+      <Label label={options.label} errorMessage={error}>
         <Elevation>
           <NodeEditor node={node} type={options.fields} />
         </Elevation>
@@ -115,7 +109,7 @@ function SearchEnginePreview({metadata, origin}: MetadataProps) {
           <div className={styles.SearchEnginePreview.og()}>
             <Button size="icon" icon={IcRoundPublic} />
             <div className={styles.SearchEnginePreview.og.label()}>
-              <span>{metadata['og:site_name'] || 'siteName'}</span>
+              <span>{metadata['og:site_name']}</span>
               <span className={styles.SearchEnginePreview.og.label.small()}>
                 {fullUrl}
               </span>
