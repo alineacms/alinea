@@ -12,6 +12,7 @@ import {
   DashboardEntry,
   DashboardRoot,
   DashboardSection,
+  previewMetadataAtom,
   ReactiveNode
 } from '../store/Dashboard.js'
 import {
@@ -32,7 +33,6 @@ import {EntryHeader} from './EntryHeader.js'
 import {EntrySidebar} from './EntrySidebar.js'
 import {EntryTranslationBanner} from './EntryTranslationBanner.js'
 import {Explorer} from './Explorer.js'
-import {previewMetadataAtom} from './PreviewMetadata.js'
 import {
   DashboardModal,
   DashboardModalContent,

@@ -4,9 +4,14 @@ import {IcRoundPublic} from '#/dashboard/icons.js'
 import {MetadataField} from '#/field/metadata.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
-import {useFieldError, useFieldNode, useFieldOptions} from '../../../store.js'
+import {
+  previewMetadataAtom,
+  previewOriginAtom,
+  useFieldError,
+  useFieldNode,
+  useFieldOptions
+} from '../../../store.js'
 import {NodeEditor} from '../../Editor.js'
-import {previewMetadataAtom, previewOriginAtom} from '../../PreviewMetadata.js'
 import {Surface, SurfaceContent} from '../../ui/Surface.js'
 import css from './MetadataField.module.css'
 

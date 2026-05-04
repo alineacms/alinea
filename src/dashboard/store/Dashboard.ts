@@ -14,6 +14,7 @@ import type {Order} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {PreviewMetadata} from '#/core/Preview.js'
 import {Policy} from '#/core/Role.js'
 import {Section} from '#/core/Section.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
@@ -94,6 +95,9 @@ export const dashboardAtom = atom(
     set(internalDashboard, dashboard)
   }
 )
+
+export const previewMetadataAtom = atom<PreviewMetadata | undefined>(undefined)
+export const previewOriginAtom = atom<string | undefined>(undefined)
 
 const dashboardThemeStorageKey = 'alinea-dashboard-theme'
 

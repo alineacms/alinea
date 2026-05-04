@@ -10,9 +10,12 @@ import {
   IcRoundOpenInNew,
   IcRoundRefresh
 } from '../icons.js'
-import {DashboardEntry} from '../store.js'
+import {
+  DashboardEntry,
+  previewMetadataAtom,
+  previewOriginAtom
+} from '../store.js'
 import css from './EntrySidebarPreview.module.css'
-import {previewMetadataAtom, previewOriginAtom} from './PreviewMetadata.js'
 import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
