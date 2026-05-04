@@ -80,7 +80,11 @@ function TypeExtensionHeader({
   const label = Type.label(type)
   return (
     <SurfaceHeader className={styles.RichTextFieldView.Surface.Header()}>
-      <div className={styles.RichTextFieldView.Surface.Header.Label()}>
+      <div
+        className={styles.RichTextFieldView.Surface.Header.Label()}
+        data-drag-handle
+        role="button"
+      >
         <Button
           appearance="plain"
           intent="secondary"
@@ -121,16 +125,28 @@ function TypeExtensionHeader({
   )
 }
 
-function typeExtension(field: Field, name: string, type: Type) {
+function typeExtension(
+  field: Field,
+  name: string,
+  type: Type,
+  expandedByBlockId: Map<string, boolean>
+) {
   function View({editor, getPos, node, deleteNode}: NodeViewProps) {
-    const [exp, toggleExp] = useState(true)
     const store = useStore()
     const setValue = useFieldSetter(field)
     const reactive = useFieldNode(field)
     const {[BlockNode.id]: id} = node.attrs
+    const blockId = String(id ?? '')
+    const [exp, setExp] = useState(() => {
+      return expandedByBlockId.get(blockId) ?? true
+    })
 
     function onToggle() {
-      toggleExp(exp => !exp)
+      setExp(exp => {
+        const next = !exp
+        expandedByBlockId.set(blockId, next)
+        return next
+      })
     }
 
     function onCopy() {
@@ -209,10 +225,14 @@ function typeExtension(field: Field, name: string, type: Type) {
   })
 }
 
-function schemaToExtensions(field: Field, schema: Schema | undefined) {
+function schemaToExtensions(
+  field: Field,
+  schema: Schema | undefined,
+  expandedByBlockId: Map<string, boolean>
+) {
   if (!schema) return []
   return entries(schema).map(([name, type]) => {
-    return typeExtension(field, name, type)
+    return typeExtension(field, name, type, expandedByBlockId)
   })
 }
 
@@ -226,6 +246,7 @@ function RTView<Blocks extends Schema>({
   const setValue = useFieldSetter(field)
   const node = useFieldNode(field)
   const [focus, setFocus] = useState(false)
+  const expandedByBlockId = useRef(new Map<string, boolean>())
   const containerRef = useRef<HTMLDivElement>(null)
   const content = useMemo(() => {
     // Get the value once, but don't subscribe to updates
@@ -236,7 +257,11 @@ function RTView<Blocks extends Schema>({
     }
   }, [node, store])
   const extensions = useMemo(() => {
-    const schemaExtensions = schemaToExtensions(field, options.schema)
+    const schemaExtensions = schemaToExtensions(
+      field,
+      options.schema,
+      expandedByBlockId.current
+    )
     return [...values(baseExtensions), ...schemaExtensions]
   }, [field, options.schema])
   const readOnly = options.readOnly || node.readOnly

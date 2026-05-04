@@ -86,6 +86,16 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  min-width: 0;
+  flex-grow: 1;
+
+  &:is(:hover) {
+    cursor: grab;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .RichTextFieldView-Surface-Header-actions {
