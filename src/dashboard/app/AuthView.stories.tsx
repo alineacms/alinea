@@ -4,10 +4,15 @@ import type {Config} from 'alinea/core/Config'
 import type {User} from 'alinea/core/User'
 import 'alinea/theme.css'
 import type {CSSProperties} from 'react'
-import {useState} from 'react'
+import {useMemo, useState} from 'react'
 import {AuthView} from './AuthView.js'
 
 const config = {schema: {}, workspaces: {}} as Config
+const user: User = {
+  sub: 'editor',
+  name: 'Editor',
+  roles: ['admin']
+}
 
 const storyStyle: CSSProperties = {
   height: 520,
@@ -20,10 +25,13 @@ function createClient() {
 }
 
 export function Loading() {
-  const client = createClient()
-  client.authStatus = function authStatus() {
-    return new Promise(() => {})
-  }
+  const client = useMemo(() => {
+    const client = createClient()
+    client.authStatus = function authStatus() {
+      return new Promise(() => {})
+    }
+    return client
+  }, [])
   return (
     <div style={storyStyle}>
       <AuthView client={client} onAuthenticated={() => {}} />
@@ -32,10 +40,13 @@ export function Loading() {
 }
 
 export function DeployedWithoutHandler() {
-  const client = createClient()
-  client.authStatus = function authStatus() {
-    return Promise.reject(new Error('Missing handler'))
-  }
+  const client = useMemo(() => {
+    const client = createClient()
+    client.authStatus = function authStatus() {
+      return Promise.reject(new Error('Missing handler'))
+    }
+    return client
+  }, [])
   return (
     <div style={storyStyle}>
       <AuthView client={client} onAuthenticated={() => {}} />
@@ -44,13 +55,16 @@ export function DeployedWithoutHandler() {
 }
 
 export function MissingApiKey() {
-  const client = createClient()
-  client.authStatus = function authStatus() {
-    return Promise.resolve({
-      type: AuthResultType.MissingApiKey,
-      setupUrl: 'https://app.alinea.cloud/setup'
-    })
-  }
+  const client = useMemo(() => {
+    const client = createClient()
+    client.authStatus = function authStatus() {
+      return Promise.resolve({
+        type: AuthResultType.MissingApiKey,
+        setupUrl: 'https://app.alinea.cloud/setup'
+      })
+    }
+    return client
+  }, [])
   return (
     <div style={storyStyle}>
       <AuthView client={client} onAuthenticated={() => {}} />
@@ -59,19 +73,17 @@ export function MissingApiKey() {
 }
 
 export function Authenticated() {
-  const user: User = {
-    sub: 'editor',
-    name: 'Editor',
-    roles: ['admin']
-  }
   const [authenticatedUser, setAuthenticatedUser] = useState<User>()
-  const client = createClient()
-  client.authStatus = function authStatus() {
-    return Promise.resolve({
-      type: AuthResultType.Authenticated,
-      user
-    })
-  }
+  const client = useMemo(() => {
+    const client = createClient()
+    client.authStatus = function authStatus() {
+      return Promise.resolve({
+        type: AuthResultType.Authenticated,
+        user
+      })
+    }
+    return client
+  }, [])
   return (
     <div style={storyStyle}>
       {authenticatedUser ? (

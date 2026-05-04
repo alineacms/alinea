@@ -56,35 +56,24 @@ export function AuthView({client, onAuthenticated}: AuthViewProps) {
   }, [onAuthenticated, state])
 
   if (state.status === 'loading') {
-    return (
-      <div className={styles.AuthView()}>
-        <div className={styles.AuthView.panel()}>
-          <div className={styles.AuthView.loader()}>
-            <ProgressCircle isIndeterminate aria-label="Checking sign in" />
-          </div>
-        </div>
-      </div>
-    )
+    return <AuthViewLoader />
   }
 
   if (state.status === 'missingHandler') {
     return (
-      <>
-        {renderAuthViewFrame(
-          'Ready to deploy?',
-          <p className={styles.AuthView.text()}>
-            Alinea requires a{' '}
-            <Link
-              className={styles.AuthView.link()}
-              href="https://alineacms.com/docs/deploy"
-              target="_blank"
-            >
-              handler
-            </Link>{' '}
-            to continue.
-          </p>
-        )}
-      </>
+      <AuthViewFrame title="Ready to deploy?">
+        <p className={styles.AuthView.text()}>
+          Alinea requires a{' '}
+          <Link
+            className={styles.AuthView.link()}
+            href="https://alineacms.com/docs/deploy"
+            target="_blank"
+          >
+            handler
+          </Link>{' '}
+          to continue.
+        </p>
+      </AuthViewFrame>
     )
   }
 
@@ -104,41 +93,53 @@ export function AuthView({client, onAuthenticated}: AuthViewProps) {
     case AuthResultType.MissingApiKey: {
       const {setupUrl} = state.result
       return (
-        <>
-          {renderAuthViewFrame(
-            'Ready to deploy?',
-            <>
-              <p className={styles.AuthView.text()}>
-                Alinea requires a backend to continue. You can{' '}
-                <Link
-                  className={styles.AuthView.link()}
-                  href="https://alineacms.com/docs/deploy"
-                  target="_blank"
-                >
-                  fully configure a custom backend
-                </Link>
-                , or get set up with alinea.cloud.
-              </p>
-              <div className={styles.AuthView.actionRow()}>
-                <Button
-                  intent="primary"
-                  icon={IcRoundArrowForward}
-                  onPress={() => {
-                    location.href = `${setupUrl}?from=${from}`
-                  }}
-                >
-                  Continue with alinea.cloud
-                </Button>
-              </div>
-            </>
-          )}
-        </>
+        <AuthViewFrame title="Ready to deploy?">
+          <p className={styles.AuthView.text()}>
+            Alinea requires a backend to continue. You can{' '}
+            <Link
+              className={styles.AuthView.link()}
+              href="https://alineacms.com/docs/deploy"
+              target="_blank"
+            >
+              fully configure a custom backend
+            </Link>
+            , or get set up with alinea.cloud.
+          </p>
+          <div className={styles.AuthView.actionRow()}>
+            <Button
+              intent="primary"
+              icon={IcRoundArrowForward}
+              onPress={() => {
+                location.href = `${setupUrl}?from=${from}`
+              }}
+            >
+              Continue with alinea.cloud
+            </Button>
+          </div>
+        </AuthViewFrame>
       )
     }
   }
 }
 
-function renderAuthViewFrame(title: string, children: ReactNode) {
+function AuthViewLoader() {
+  return (
+    <div className={styles.AuthView()}>
+      <div className={styles.AuthView.panel()}>
+        <div className={styles.AuthView.loader()}>
+          <ProgressCircle isIndeterminate aria-label="Checking sign in" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface AuthViewFrameProps {
+  title: string
+  children: ReactNode
+}
+
+function AuthViewFrame({title, children}: AuthViewFrameProps) {
   return (
     <div className={styles.AuthView()}>
       <div className={styles.AuthView.panel()}>

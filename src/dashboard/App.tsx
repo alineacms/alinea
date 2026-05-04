@@ -3,8 +3,7 @@ import type {Config} from '#/core/Config'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph'
 import type {User} from '#/core/User.js'
-import {useAtomValue} from 'jotai'
-import {useSetAtom} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType, Suspense, useCallback, useEffect, useState} from 'react'
 import {AppShell} from './app/AppShell.js'
 import {AuthView} from './app/AuthView.js'
@@ -38,7 +37,7 @@ export function App({
         local
       })
   )
-  const theme = useAtomValue(dashboard.theme)
+  useAtomValue(dashboard.theme)
   return (
     <Suspense
       fallback={
