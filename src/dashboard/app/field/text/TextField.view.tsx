@@ -15,10 +15,18 @@ export const TextFieldView = memo(function TextFieldView({
   const error = useFieldError(field)
   return (
     <RacTextField
+      autoFocus={options.autoFocus}
+      description={options.help}
+      errorMessage={error}
+      isDisabled={options.readOnly}
       label={options.label}
+      isRequired={options.required}
+      multiline={options.multiline}
       value={value}
       onChange={setValue}
       isInvalid={Boolean(error)}
+      placeholder={options.placeholder}
+      type={options.type}
     />
   )
 })
