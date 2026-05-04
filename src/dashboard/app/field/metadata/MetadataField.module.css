@@ -1,13 +1,4 @@
 .OpenGraphPreview {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: white;
-  margin: 12px 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
   max-width: 500px;
 }
 
@@ -30,7 +21,7 @@
 }
 
 .OpenGraphPreview-content {
-  padding: 12px;
+  gap: 0 !important;
 }
 
 .OpenGraphPreview-site {
@@ -45,13 +36,9 @@
   font-size: 16px;
   font-weight: 600;
   color: #050505;
-  margin: 0 0 8px 0;
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .OpenGraphPreview-description {
@@ -62,8 +49,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+}
+
+.SearchEnginePreview {
+  margin: 12px 0;
+  max-width: 500px;
 }
 
 .SearchEnginePreview-link {

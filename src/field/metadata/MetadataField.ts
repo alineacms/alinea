@@ -44,14 +44,23 @@ export function metadata(
   const fields = type('Fields', {
     fields: {
       title: text('Title'),
-      description: text('Description', {multiline: true}),
+      description: text('Description', {
+        multiline: true,
+        help: 'Optimal length: 120–160 characters',
+        validate(value) {
+          if (value.length > 160) return 'Too many characters.'
+        }
+      }),
       openGraph: object('Open Graph', {
         fields: {
           image: image('Image', {
             help: 'Recommended size: 1200x630 pixels'
           }),
-          title: text('Title'),
-          description: text('Description', {multiline: true})
+          title: text('Title', {help: 'If empty, default title'}),
+          description: text('Description', {
+            multiline: true,
+            help: 'If empty, default description'
+          })
         }
       })
     }

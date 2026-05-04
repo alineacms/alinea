@@ -1,8 +1,8 @@
+import {cms} from '@/cms'
 import {Entry} from 'alinea/core'
 import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {cache} from 'react'
-import {cms} from '@/cms'
 
 type PageProps = {
   params: Promise<{slug: Array<string>}>
@@ -105,7 +105,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
       url: fields?._url ?? page.url,
       title: openGraphTitle,
       description: openGraphDescription,
-      images: image ? [image] : undefined
+      images: image ? [image] : undefined,
+      siteName: 'Alinea'
     },
     twitter: {
       card: image ? 'summary_large_image' : 'summary',

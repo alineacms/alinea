@@ -12,7 +12,7 @@ import {
 } from '../icons.js'
 import {DashboardEntry} from '../store.js'
 import css from './EntrySidebarPreview.module.css'
-import {previewMetadataAtom} from './PreviewMetadata.js'
+import {previewMetadataAtom, previewOriginAtom} from './PreviewMetadata.js'
 import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
@@ -137,6 +137,7 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
   const [loading, setLoading] = useState(true)
   const hasPreviewListener = useRef(false)
   const setMetadata = useSetAtom(previewMetadataAtom)
+  const setPreviewOrigin = useSetAtom(previewOriginAtom)
 
   const targetOrigin = useMemo(() => {
     if (!previewUrl) return undefined
@@ -150,7 +151,8 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
     setFrameVersion(0)
     hasPreviewListener.current = false
     setMetadata(undefined)
-  }, [previewUrl, setMetadata])
+    setPreviewOrigin(targetOrigin)
+  }, [previewUrl, setMetadata, setPreviewOrigin, targetOrigin])
 
   useEffect(() => {
     if (!targetOrigin) return

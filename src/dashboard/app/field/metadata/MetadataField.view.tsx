@@ -6,7 +6,8 @@ import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {useFieldError, useFieldNode, useFieldOptions} from '../../../store.js'
 import {NodeEditor} from '../../Editor.js'
-import {previewMetadataAtom} from '../../PreviewMetadata.js'
+import {previewMetadataAtom, previewOriginAtom} from '../../PreviewMetadata.js'
+import {Surface, SurfaceContent} from '../../ui/Surface.js'
 import css from './MetadataField.module.css'
 
 const styles = styler(css)
@@ -20,6 +21,7 @@ export function MetadataFieldView({field}: MetadataFieldViewProps) {
   const error = useFieldError(field)
   const node = useFieldNode<object>(field)
   const metadata = useAtomValue(previewMetadataAtom)
+  const origin = useAtomValue(previewOriginAtom)
   console.log(metadata)
   return (
     <>
@@ -32,32 +34,41 @@ export function MetadataFieldView({field}: MetadataFieldViewProps) {
           <NodeEditor node={node} type={options.fields} />
         </Elevation>
       </Label>
-      <MetadataPreview metadata={metadata} />
+      <MetadataPreview metadata={metadata} origin={origin} />
     </>
   )
 }
 
 interface MetadataPreviewProps {
   metadata?: PreviewMetadata | undefined
+  origin?: string | undefined
 }
-function MetadataPreview({metadata}: MetadataPreviewProps) {
-  if (!metadata) return <p>Swap to preview mode to load the previews</p>
+function MetadataPreview({metadata, origin}: MetadataPreviewProps) {
+  console.log(metadata)
+  if (!metadata)
+    return (
+      <Label
+        label="Swap to preview mode to load the metadata"
+        style={{marginTop: '32px'}}
+      />
+    )
   return (
-    <Label label="Metadata previews">
-      <OpenGraphPreview metadata={metadata} />
-      <SearchEnginePreview metadata={metadata} />
+    <Label label="Metadata previews" style={{marginTop: '32px'}}>
+      <SearchEnginePreview metadata={metadata} origin={origin} />
+      <OpenGraphPreview metadata={metadata} origin={origin} />
     </Label>
   )
 }
 
 interface MetadataProps {
   metadata: PreviewMetadata
+  origin?: string | undefined
 }
 
-function OpenGraphPreview({metadata}: MetadataProps) {
+function OpenGraphPreview({metadata, origin}: MetadataProps) {
   return (
-    <Label label="Open Graph Preview">
-      <div className={styles.OpenGraphPreview()}>
+    <Label label="Open Graph Preview (Social Share)">
+      <Surface className={styles.OpenGraphPreview()}>
         <div className={styles.OpenGraphPreview.image()}>
           {metadata['og:image'] ? (
             <img src={metadata['og:image']} alt="" />
@@ -65,40 +76,54 @@ function OpenGraphPreview({metadata}: MetadataProps) {
             <span>No image</span>
           )}
         </div>
-        <div className={styles.OpenGraphPreview.content()}>
+        <SurfaceContent className={styles.OpenGraphPreview.content()}>
           <div className={styles.OpenGraphPreview.site()}>
-            {metadata['og:site_name']}
+            {origin || metadata['og:site_name']}
           </div>
           <h3 className={styles.OpenGraphPreview.title()}>
             {metadata['og:title']}
           </h3>
-          {metadata['og:description'] && (
+          {/* {metadata['og:description'] && (
             <p className={styles.OpenGraphPreview.description()}>
               {metadata['og:description']}
             </p>
-          )}
-        </div>
-      </div>
+          )} */}
+        </SurfaceContent>
+      </Surface>
     </Label>
   )
 }
 
-function SearchEnginePreview({metadata}: MetadataProps) {
+function SearchEnginePreview({metadata, origin}: MetadataProps) {
+  const fullUrl =
+    origin && metadata['og:url']
+      ? new URL(metadata['og:url'], origin).toString()
+      : metadata['og:url']
+
   return (
-    <Label label="Search Engine Preview">
-      <div className={styles.SearchEnginePreview.og()}>
-        <Button size="icon" icon={IcRoundPublic} />
-        <div className={styles.SearchEnginePreview.og.label()}>
-          <span>{metadata['og:site_name'] || 'tempname'}</span>
-          <span className={styles.SearchEnginePreview.og.label.small()}>
-            {metadata['og:url']}
-          </span>
-        </div>
-      </div>
-      <h3 className={styles.SearchEnginePreview.link()}>{metadata['title']}</h3>
-      <p className={styles.SearchEnginePreview.description()}>
-        {metadata['description']}
-      </p>
+    <Label
+      label="Search Engine Preview"
+      className={styles.SearchEnginePreview()}
+    >
+      <Surface>
+        <SurfaceContent style={{gap: '0'}}>
+          <div className={styles.SearchEnginePreview.og()}>
+            <Button size="icon" icon={IcRoundPublic} />
+            <div className={styles.SearchEnginePreview.og.label()}>
+              <span>{metadata['og:site_name'] || 'siteName'}</span>
+              <span className={styles.SearchEnginePreview.og.label.small()}>
+                {fullUrl}
+              </span>
+            </div>
+          </div>
+          <h3 className={styles.SearchEnginePreview.link()}>
+            {metadata['title']}
+          </h3>
+          <p className={styles.SearchEnginePreview.description()}>
+            {metadata['description']}
+          </p>
+        </SurfaceContent>
+      </Surface>
     </Label>
   )
 }
