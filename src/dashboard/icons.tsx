@@ -2218,6 +2218,7 @@ export function IcRoundFirstPage(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
+
 export function IcRoundPublic(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

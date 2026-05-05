@@ -1,8 +1,7 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {execGit} from '#/backend/util/ExecGit.js'
 import type {Config} from '#/core/Config.js'
-import type {Revision} from '#/core/Connection.js'
-import type {HistoryApi} from '#/core/Connection.js'
+import type {HistoryApi, Revision} from '#/core/Connection.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {parseCoAuthoredBy} from '../util/CommitMessage.js'
@@ -20,6 +19,8 @@ export class GitHistory implements HistoryApi {
     const results = Array<Revision>()
     for (const versioned of versions) {
       const output = await execGit(this.rootDir, [
+        '-c',
+        'core.quotePath=false',
         'log',
         '--follow',
         '--name-status',
@@ -49,12 +50,23 @@ export class GitHistory implements HistoryApi {
         })
       results.push(...revisions)
     }
-    return results
+
+    // de-duplicate revisions by ref
+    const uniqueRevisions = new Map<string, Revision>()
+    for (const revision of results) {
+      const existing = uniqueRevisions.get(revision.ref)
+      if (!existing) uniqueRevisions.set(revision.ref, revision)
+    }
+    return [...uniqueRevisions.values()].sort(
+      (a, b) => b.createdAt - a.createdAt
+    )
   }
 
   async revisionData(file: string, ref: string): Promise<EntryRecord> {
     const {config} = this
     const data = await execGit(this.rootDir, [
+      '-c',
+      'core.quotePath=false',
       'show',
       `${ref}:${file}`,
       '--format=%B'

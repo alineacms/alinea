@@ -2,13 +2,13 @@ import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Client} from '#/core/Client.js'
 import {Config} from '#/core/Config.js'
-import type {LocalConnection} from '#/core/Connection.js'
+import type {LocalConnection, Revision} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {UploadOperation} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
-import {createRecord} from '#/core/EntryRecord.js'
+import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {Expr} from '#/core/Expr.js'
 import {Field, FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
@@ -25,6 +25,7 @@ import {Type} from '#/core/Type.js'
 import {localUser, type User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {join} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
@@ -129,6 +130,13 @@ type FocusedItem =
   | null
 
 export type DashboardTheme = 'system' | 'light' | 'dark'
+
+export class MissingEntryError extends Error {
+  constructor(public id: string) {
+    super(`Missing entry ${id}`)
+    this.name = 'MissingEntryError'
+  }
+}
 
 const internalDashboard = atom<Dashboard | null>(null)
 export const dashboardAtom = atom(
@@ -426,12 +434,14 @@ export class Dashboard {
         const type = get(model.type)
         if (type.type !== MediaLibrary) return {entry: model}
       } catch (error) {
-        if (workspace && root && isMissingEntryError(error))
+        if (!(error instanceof MissingEntryError)) throw error
+        if (workspace && root) {
           return {
             missingEntry: entry,
             root: this.workspace(workspace).root(root)
           }
-        throw error
+        }
+        throw new Error(`Entry "${entry}" not found`)
       }
     if (!workspace) return null
     if (root) return {root: this.workspace(workspace).root(root)}
@@ -461,13 +471,6 @@ export class Dashboard {
     const db = get(this.db)
     if (!isSyncableGraph(db)) return
     return db.sync()
-  })
-
-  sync = atom(null, (get, set) => {
-    const db = get(this.db)
-    if (isSyncableGraph(db)) {
-      return db.sync()
-    }
   })
 
   theme = Object.assign(
@@ -590,20 +593,26 @@ export class Dashboard {
 
   entries = dispense(id => {
     const dataAtom = atom<Promise<EntryData>>(async get => {
+      await get(this.ensureInitialSync)
       get(this.revisions(id))
       const load = get(this.#entryLoader)
       const [result, error] = await load(id)
-      if (error) throw new Error('Could not load entry', {cause: error})
+      if (error) {
+        if (error instanceof MissingEntryError) get(this.sha) // subscribe to entry revisions to update when entry synced
+        throw error
+      }
+      assert(result, `Entry "${id}" not found`)
       return result
     })
     let entry: DashboardEntry
     return swr(
-      atom(async get => {
+      atom(async (get): Promise<DashboardEntry> => {
         const initial = await get(dataAtom)
+
         return (entry ??= new DashboardEntry(
           this,
           id,
-          unwrap(dataAtom, prev => prev ?? initial)
+          unwrap(dataAtom, prev => prev ?? initial) as Atom<EntryData>
         ))
       })
     )
@@ -632,7 +641,8 @@ export class Dashboard {
         locale: Entry.locale,
         main: Entry.main,
         path: Entry.path,
-        fileHash: Entry.fileHash
+        fileHash: Entry.fileHash,
+        filePath: Entry.filePath
       }
       const rows = await db.find({
         groupBy: Entry.id,
@@ -665,7 +675,7 @@ export class Dashboard {
       const byId = new Map(rows.map(row => [row.id, row] as const))
       return ids.map(id => {
         const row = byId.get(id)
-        if (!row) return [null, new Error(`Missing entry ${id}`)] as const
+        if (!row) return [null, new MissingEntryError(id)] as const
         return [{...row, hasChildren: parentIds.includes(id)}, null] as const
       })
     })
@@ -1000,6 +1010,7 @@ export class DashboardExplorer {
       const {parentId} = get(this.location)
       if (!parentId) return []
       const parent = await get(this.dashboard.entries(parentId))
+      assert(parent, 'Parent entry not found')
       const parents = await get(parent.parents)
       const label = get(parent.label)
       return [
@@ -1107,9 +1118,9 @@ export class DashboardWorkspace {
         return
       }
       const selectedId = String(selectedKey)
-      const {rootKey: root, workspaceKey: workspace} = await get(
-        this.dashboard.entries(selectedId)
-      )
+      const selectedEntry = await get(this.dashboard.entries(selectedId))
+      assert(selectedEntry, 'Selected entry not found')
+      const {rootKey: root, workspaceKey: workspace} = selectedEntry
       set(this.dashboard.route, {
         workspace: get(workspace),
         root: get(root),
@@ -1162,7 +1173,9 @@ export class DashboardTree {
     const route = get(this.workspace.dashboard.route)
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
-    const {parentIds} = await get(this.workspace.dashboard.entries(route.entry))
+    const entry = await get(this.workspace.dashboard.entries(route.entry))
+    assert(entry, 'Entry not found')
+    const {parentIds} = entry
     return new Set<Key>(get(parentIds))
   })
 
@@ -1209,6 +1222,7 @@ export class DashboardTree {
     (id: string): Atom<Promise<DashboardTreeItem>> => {
       return atom(async (get): Promise<DashboardTreeItem> => {
         const entry = await get(this.workspace.dashboard.entries(id))
+        assert(entry, `Entry "${id}" not found`)
         return new DashboardTreeItem(
           this,
           id,
@@ -1373,6 +1387,7 @@ interface EntryData {
     main: boolean
     path: string
     fileHash: string
+    filePath: string
   }>
 }
 
@@ -1382,7 +1397,7 @@ export interface DashboardEntryTreeStatus {
 
 type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
-  | {type: 'history'; ref: string}
+  | {type: 'history'; file: string; ref: string}
 
 export class DashboardEntry {
   workspaceKey: Atom<string>
@@ -1398,6 +1413,7 @@ export class DashboardEntry {
         locale: string | null
         main: boolean
         path: string
+        filePath: string
       }
     >
   >
@@ -1484,6 +1500,37 @@ export class DashboardEntry {
     }
   )
 
+  #historyFile = atom(get => {
+    const config = get(this.dashboard.config)
+    const locale = get(this.sourceLocale)
+    const data = get(this.locales).get(locale)
+    assert(data, `No locale data found for locale ${locale}`)
+    return dashboardEntryFile(config, {
+      workspace: get(this.workspaceKey),
+      root: get(this.rootKey),
+      filePath: data.filePath
+    })
+  })
+
+  history = unwrap(
+    atom(async (get): Promise<Array<Revision>> => {
+      const file = get(this.#historyFile)
+      const client = get(this.dashboard.client)
+      const revisions = await client.revisions(file)
+      // Sort revisions by date
+      revisions.sort((a, b) => b.createdAt - a.createdAt)
+      return revisions.slice(1)
+    })
+  )
+
+  historyData = dispense((key: string) => {
+    return atom(async get => {
+      const [ref, file] = parseHistoryDataKey(key)
+      const client = get(this.dashboard.client)
+      return client.revisionData(file, ref)
+    })
+  })
+
   selectedNode = swr(
     atom(async (get): Promise<ReactiveNode<object>> => {
       const version = get(this.selectedVersion)
@@ -1505,7 +1552,27 @@ export class DashboardEntry {
         }
         return get(language.data(version.status))
       }
-      throw new Error(`Unsupported version type: ${version.type}`)
+      const locale = get(this.sourceLocale)
+      const language = this.languages(locale)
+      const activeVersion = await get(language.activeVersion)
+      const data = await get(this.historyData(historyDataKey(version)))
+      const type = get(this.type).type
+      const historyData = data ? parseRecord(data).data : activeVersion.data
+      return new ReactiveNode<object>(
+        {
+          ...Type.initialValue(type),
+          ...historyData,
+          title:
+            typeof historyData.title === 'string'
+              ? historyData.title
+              : activeVersion.title,
+          path:
+            typeof historyData.path === 'string'
+              ? historyData.path
+              : activeVersion.path
+        },
+        true
+      )
     })
   )
 
@@ -1548,7 +1615,13 @@ export class DashboardEntry {
   parents = swr(
     atom(async get => {
       const parentIds = get(this.parentIds)
-      return Promise.all(parentIds.map(id => get(this.dashboard.entries(id))))
+      return Promise.all(
+        parentIds.map(async id => {
+          const parent = await get(this.dashboard.entries(id))
+          assert(parent, `Parent entry not found: ${id}`)
+          return parent
+        })
+      )
     })
   )
 
@@ -1668,17 +1741,18 @@ export class DashboardEntry {
 
   #previewPayloadSignal = atom(get => {
     if (get(this.preview) !== true) return undefined
+    const selected = get(this.selectedVersion)
     const currentNode = get(this.currentlyEditing)
-    if (!currentNode) return undefined
-    return get(currentNode.value)
+    const selectedKey =
+      selected.type === 'status' ? selected.status : selected.ref
+    return [selected.type, selectedKey, currentNode && get(currentNode.value)]
   })
   previewPayloadSignal = atomWithDebounce(this.#previewPayloadSignal, 250)
 
   updatePreviewPayload = atom(null, async get => {
     if (get(this.preview) !== true) return undefined
-    const currentNode = get(this.currentlyEditing)
-    if (!currentNode) return undefined
-    const value = get(currentNode.value)
+    const node = await get(this.selectedNode)
+    const value = get(node.value)
     if (!isObject<Record<string, unknown>>(value)) return undefined
     const sha = get(this.dashboard.sha)
     if (!sha) return undefined
@@ -1909,6 +1983,27 @@ export class DashboardEntry {
     })
     set(node.commit)
   })
+}
+
+function historyDataKey(version: {file: string; ref: string}) {
+  return `${version.ref}\0${version.file}`
+}
+
+function parseHistoryDataKey(key: string): [ref: string, file: string] {
+  const index = key.indexOf('\0')
+  assert(index !== -1, 'Invalid history data key')
+  return [key.slice(0, index), key.slice(index + 1)]
+}
+
+function dashboardEntryFile(
+  config: Config,
+  entry: Pick<Entry, 'filePath' | 'root' | 'workspace'>
+) {
+  const workspace = config.workspaces[entry.workspace]
+  assert(workspace, `Workspace "${entry.workspace}" does not exist`)
+  const root = getWorkspace(workspace).roots[entry.root]
+  assert(root, `Root "${entry.root}" does not exist`)
+  return join(Config.contentDir(config), entry.filePath)
 }
 
 export class DashboardEntryLanguage {
@@ -2481,11 +2576,4 @@ function isSyncableGraph(
   graph: WriteableGraph
 ): graph is WriteableGraph & SyncableGraph {
   return typeof (graph as Partial<SyncableGraph>).sync === 'function'
-}
-
-function isMissingEntryError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false
-  if (error.message.startsWith('Missing entry ')) return true
-  const cause = error.cause
-  return cause instanceof Error && cause.message.startsWith('Missing entry ')
 }
