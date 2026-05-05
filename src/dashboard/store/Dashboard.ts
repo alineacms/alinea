@@ -16,6 +16,7 @@ import type {Order} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {PreviewMetadata} from '#/core/Preview.js'
 import {Policy} from '#/core/Role.js'
 import {Section} from '#/core/Section.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
@@ -213,6 +214,8 @@ export class Dashboard {
       }
     )
   }
+
+  previewMetadata = atom<PreviewMetadata | undefined>(undefined)
 
   revisions = dispense(id => atom(0))
 
