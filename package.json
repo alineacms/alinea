@@ -57,6 +57,8 @@
     "prepublishOnly": "bun run build",
     "stories": "ladle serve",
     "tag": "bun tag.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "type": "tsgo --diagnostics",
     "web": "run-p dev:check web:run",
