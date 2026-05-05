@@ -291,11 +291,12 @@ function LinkPickerAction({
     typeof options.condition === 'function' ? undefined : options.condition
   const location =
     typeof options.location === 'function' ? undefined : options.location
+  const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
     location,
-    selectionMode: picker.handlesMultiple ? 'multiple' : 'single',
-    selectionBehavior: picker.handlesMultiple ? 'toggle' : 'replace',
+    selectionMode: handlesMultiple ? 'multiple' : 'single',
+    selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
     onConfirm(selection: Array<string>) {
       const links = selection.map(entryId =>
