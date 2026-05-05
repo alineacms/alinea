@@ -110,6 +110,7 @@
   flex-direction: column;
   gap: 16px;
   padding: 0 22px;
+  font-size: var(--alinea-font-size-base);
 }
 
 .DashboardModalTitle {
