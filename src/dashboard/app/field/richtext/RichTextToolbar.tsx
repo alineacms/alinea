@@ -68,7 +68,8 @@ export function createLinkHandler(
       requireDescription: !isSelection
     })
       .then(picked => {
-        if (!picked || !picked.link) {
+        if (picked === undefined) return
+        if (!picked.link) {
           exec().unsetLink().run()
           return
         }

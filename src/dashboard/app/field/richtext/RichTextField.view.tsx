@@ -50,6 +50,7 @@ import {
 } from '../../ui/Surface.js'
 import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
+import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import css from './RichTextField.module.css'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
@@ -137,6 +138,7 @@ function typeExtension(
     const reactive = useFieldNode(field)
     const {[BlockNode.id]: id} = node.attrs
     const blockId = String(id ?? '')
+
     const [exp, setExp] = useState(() => {
       return expandedByBlockId.get(blockId) ?? true
     })
@@ -243,6 +245,7 @@ function RTView<Blocks extends Schema>({
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   const toolbar = document.getElementById('alinea-toolbar')
+  const picker = usePickTextLink()
   const setValue = useFieldSetter(field)
   const node = useFieldNode(field)
   const [focus, setFocus] = useState(false)
@@ -297,6 +300,7 @@ function RTView<Blocks extends Schema>({
   })
   return (
     <>
+      <PickTextLink picker={picker} />
       <Label
         description={options.help}
         errorMessage={error}
@@ -336,6 +340,7 @@ function RTView<Blocks extends Schema>({
             editor={editor}
             enableTables={options.enableTables}
             focusToggle={focusToggle}
+            pickLink={picker.pickLink}
             toolbar={options.toolbar}
           />,
           toolbar
