@@ -47,7 +47,7 @@ function MetadataPreview({metadata, origin}: MetadataPreviewProps) {
   if (!metadata)
     return (
       <Label
-        label="Swap to preview mode to load the metadata"
+        label="Open preview mode to display a metadata preview"
         style={{marginTop: '32px'}}
       />
     )

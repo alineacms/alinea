@@ -115,17 +115,11 @@ export class Dashboard {
   config
   client
   views
-  previewMetadata: WritableAtom<
-    PreviewMetadata | undefined,
-    [PreviewMetadata | undefined],
-    void
-  >
   db: Atom<WriteableGraph>
   events: Atom<EventTarget>
   local: Atom<boolean>
   alineaDev: Atom<boolean>
   #userOverride = atom<User | null | undefined>()
-  #previewMetadataAtom = atom<PreviewMetadata | undefined>(undefined)
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
     'system',
@@ -147,12 +141,6 @@ export class Dashboard {
     this.views = atom(views)
     this.local = atom(Boolean(options.local))
     this.alineaDev = atom(Boolean(options.alineaDev))
-    this.previewMetadata = atom(
-      get => get(this.#previewMetadataAtom),
-      (get, set, value: PreviewMetadata | undefined) => {
-        set(this.#previewMetadataAtom, value)
-      }
-    )
     this.db = Object.assign(
       atom(
         get => get(this.graph),
@@ -180,6 +168,8 @@ export class Dashboard {
       }
     )
   }
+
+  previewMetadata = atom<PreviewMetadata | undefined>(undefined)
 
   revisions = dispense(id => atom(0))
 
