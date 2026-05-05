@@ -5,6 +5,7 @@ import type {WriteableGraph} from '#/core/db/WriteableGraph'
 import {useAtomValue} from 'jotai'
 import {ComponentType, Suspense, useState} from 'react'
 import {AppShell} from './app/AppShell.js'
+import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {Dashboard} from './store/Dashboard.js'
@@ -35,7 +36,7 @@ export function App({
         local
       })
   )
-  const theme = useAtomValue(dashboard.theme)
+  useAtomValue(dashboard.theme)
   return (
     <Suspense
       fallback={
@@ -44,7 +45,21 @@ export function App({
         </Rail>
       }
     >
-      <AppShell dashboard={dashboard} />
+      <AppRoot dashboard={dashboard} />
     </Suspense>
   )
+}
+
+interface AppRootProps {
+  dashboard: Dashboard
+}
+
+function AppRoot({dashboard}: AppRootProps) {
+  const auth = useAtomValue(dashboard.auth)
+
+  if (auth.status !== 'authenticated') {
+    return <AuthView dashboard={dashboard} />
+  }
+
+  return <AppShell dashboard={dashboard} />
 }
