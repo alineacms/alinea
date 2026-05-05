@@ -38,20 +38,43 @@ interface AppShellProps {
 }
 
 export function AppShell({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.ensureInitialSync)
+  useAtomValue(dashboard.ready)
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
+        <AppShellContent dashboard={dashboard} />
+      </DashboardScopeInternal>
+    </main>
+  )
+}
+
+function AppShellContent({dashboard}: AppShellProps) {
+  const workspaces = useAtomValue(dashboard.workspaces)
+  if (workspaces.length === 0) {
+    return (
+      <>
         <Sidebar>
-          <SidebarHeader>
-            <WorkspaceMenu dashboard={dashboard} />
-          </SidebarHeader>
-
-          <SidebarTree dashboard={dashboard} />
-
           <SidebarFooter className={styles.AppShell.footer()}>
             <ProfileMenu dashboard={dashboard} />
-            {/*<div className={styles.AppShell.status()}>
+          </SidebarFooter>
+        </Sidebar>
+        <NoWorkspaceAccess />
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Sidebar>
+        <SidebarHeader>
+          <WorkspaceMenu dashboard={dashboard} />
+        </SidebarHeader>
+
+        <SidebarTree dashboard={dashboard} />
+
+        <SidebarFooter className={styles.AppShell.footer()}>
+          <ProfileMenu dashboard={dashboard} />
+          {/*<div className={styles.AppShell.status()}>
               <span className={styles.AppShell.status.sha()}>
                 db.sha: {sha ?? '-'}
               </span>
@@ -59,21 +82,33 @@ export function AppShell({dashboard}: AppShellProps) {
                 Sync
               </Button>
             </div>*/}
-          </SidebarFooter>
-        </Sidebar>
+        </SidebarFooter>
+      </Sidebar>
 
-        <Suspense
-          fallback={
-            <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-              <ProgressCircle isIndeterminate aria-label="loading" />
-            </Rail>
-          }
-        >
-          <DashboardMeta dashboard={dashboard} />
-          <SyncedEditor dashboard={dashboard} />
-        </Suspense>
-      </DashboardScopeInternal>
-    </main>
+      <Suspense
+        fallback={
+          <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+            <ProgressCircle isIndeterminate aria-label="loading" />
+          </Rail>
+        }
+      >
+        <DashboardMeta dashboard={dashboard} />
+        <SyncedEditor dashboard={dashboard} />
+      </Suspense>
+    </>
+  )
+}
+
+function NoWorkspaceAccess() {
+  return (
+    <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+      <div style={{maxWidth: 420, textAlign: 'center'}}>
+        <h1 style={{fontSize: 20, margin: '0 0 8px'}}>No workspace access</h1>
+        <p style={{margin: 0, opacity: 0.72}}>
+          Your current roles do not grant permission to read any workspace.
+        </p>
+      </div>
+    </Rail>
   )
 }
 
@@ -199,7 +234,7 @@ function ProfileMenu({dashboard}: AppShellProps) {
 }
 
 function SyncedEditor({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.ensureInitialSync)
+  useAtomValue(dashboard.ready)
   return (
     <ErrorBoundary>
       <Editor dashboard={dashboard} />
