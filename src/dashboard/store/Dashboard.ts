@@ -2355,6 +2355,7 @@ function atomWithDebounce<Value>(
 // data nodes
 
 export type Writable<Value> = WritableAtom<Value, [SetStateAction<Value>], void>
+export type Peek<Value> = WritableAtom<null, [], Value>
 
 function isArray<Value = any>(input: unknown): input is Array<Value> {
   return Array.isArray(input)
@@ -2375,6 +2376,7 @@ export class ReactiveNode<Value = unknown> {
     return []
   })
   value: Writable<Value>
+  peek: Peek<Value> = atom(null, get => get(this.value))
 
   constructor(initialValue: Value, readOnly = false) {
     this.#initialValue = initialValue

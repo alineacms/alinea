@@ -1,5 +1,4 @@
 import {Button, Icon, Label} from '#/components.js'
-import {Field} from '#/core/Field.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {createId} from '#/core/Id.js'
 import {Schema} from '#/core/Schema.js'
@@ -38,8 +37,8 @@ import {
   ReactNodeViewRenderer,
   useEditor
 } from '@tiptap/react'
-import {atom, useAtomValue, useStore} from 'jotai'
-import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {memo, useCallback, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor.js'
 import {
@@ -127,15 +126,14 @@ function TypeExtensionHeader({
 }
 
 function typeExtension(
-  field: Field,
+  reactive: ReactiveNode<TextDoc>,
   name: string,
   type: Type,
   expandedByBlockId: Map<string, boolean>
 ) {
+  const fieldKeys = entries(Type.initialValue(type)).map(([key]) => key)
+
   function View({editor, getPos, node, deleteNode}: NodeViewProps) {
-    const store = useStore()
-    const setValue = useFieldSetter(field)
-    const reactive = useFieldNode(field)
     const {[BlockNode.id]: id} = node.attrs
     const blockId = String(id ?? '')
 
@@ -151,17 +149,43 @@ function typeExtension(
       })
     }
 
-    function onCopy() {
-      const value = (store.get(reactive.value) as TextDoc | undefined) ?? []
-      const index = value.findIndex(node => {
-        return Node.isBlock(node) && node[BlockNode.id] === id
+    const rowNodeAtom = useMemo(() => {
+      return atom(get => {
+        const nodes = get(reactive.nodes) as Array<ReactiveNode> | undefined
+        return nodes?.find(node => {
+          const value = get(node.value) as Node | undefined
+          return isEditableBlockValue(value, blockId, name, fieldKeys)
+        })
       })
-      const pos = getPos()
-      if (index === -1 || typeof pos !== 'number') return
+    }, [blockId, fieldKeys, name, reactive])
+    const rowNode = useAtomValue(rowNodeAtom) as
+      | ReactiveNode<object>
+      | undefined
+    const copyBlockAtom = useMemo(() => {
+      return atom(null, (get, set): string | undefined => {
+        if (!rowNode) return
+        const nodes = get(reactive.nodes) as
+          | Array<ReactiveNode<object>>
+          | undefined
+        const index = nodes?.indexOf(rowNode)
+        if (index === undefined || index < 0) return
+        const value = get(rowNode.value) as Node
+        if (!Node.isBlock(value)) return
+        const newId = createId()
+        set(reactive.insert, index + 1, {
+          ...value,
+          [BlockNode.id]: newId
+        })
+        return newId
+      })
+    }, [reactive, rowNode])
+    const copyBlock = useSetAtom(copyBlockAtom)
 
-      const newId = createId()
-      const clone = {...value[index], [BlockNode.id]: newId} as Node
-      setValue([...value.slice(0, index + 1), clone, ...value.slice(index + 1)])
+    function onCopy() {
+      const pos = getPos()
+      if (typeof pos !== 'number') return
+      const newId = copyBlock()
+      if (!newId) return
       editor
         .chain()
         .focus()
@@ -172,32 +196,7 @@ function typeExtension(
         .run()
     }
 
-    // Find the corresponding reactive node for this block
-    const rowNodeAtom = useMemo(() => {
-      return atom(get => {
-        const nodes = get(reactive.nodes) as Array<ReactiveNode> | undefined
-        return nodes?.find(node => {
-          const value = get(node.value) as Node
-          return Node.isBlock(value) && value[BlockNode.id] === id
-        })
-      })
-    }, [reactive, id])
-    const rowNode = useAtomValue(rowNodeAtom) as
-      | ReactiveNode<object>
-      | undefined
-    const rowValueAtom = useMemo(() => {
-      return atom(get => (rowNode ? get(rowNode.value) : undefined))
-    }, [rowNode])
-    const rowValue = useAtomValue(rowValueAtom) as object | undefined
-    const hydratedValue = useMemo(() => {
-      return rowValue ? hydrateBlockValue(rowValue, type) : rowValue
-    }, [rowValue, type])
-    useEffect(() => {
-      if (!rowNode || !hydratedValue || hydratedValue === rowValue) return
-      store.set(rowNode.value, hydratedValue)
-    }, [hydratedValue, rowNode, rowValue, store])
     if (!rowNode) return null
-    if (hydratedValue !== rowValue) return null
     return (
       <NodeViewWrapper>
         <Surface className={styles.RichTextFieldBlock()} tabIndex={0}>
@@ -241,58 +240,60 @@ function typeExtension(
   })
 }
 
-function hydrateBlockValue(value: object, type: Type): object {
-  const initialValue = Type.initialValue(type)
-  let changed = false
-  const result = {...value} as Record<string, unknown>
-  for (const [key, initial] of entries(initialValue)) {
-    if (key in result) continue
-    result[key] = initial
-    changed = true
+function isEditableBlockValue(
+  value: Node | undefined,
+  blockId: string,
+  name: string,
+  fieldKeys: Array<string>
+): value is BlockNode {
+  if (!Node.isBlock(value)) return false
+  if (String(value[BlockNode.id]) !== blockId) return false
+  if (value[Node.type] !== name) return false
+  for (const key of fieldKeys) {
+    if (!(key in value)) return false
   }
-  return changed ? result : value
+  return true
 }
 
 function schemaToExtensions(
-  field: Field,
+  reactive: ReactiveNode<TextDoc>,
   schema: Schema | undefined,
   expandedByBlockId: Map<string, boolean>
 ) {
   if (!schema) return []
   return entries(schema).map(([name, type]) => {
-    return typeExtension(field, name, type, expandedByBlockId)
+    return typeExtension(reactive, name, type, expandedByBlockId)
   })
 }
 
 function RTView<Blocks extends Schema>({
   field
 }: RichTextFieldViewProps<Blocks>) {
-  const store = useStore()
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   const toolbar = document.getElementById('alinea-toolbar')
   const picker = usePickTextLink()
   const setValue = useFieldSetter(field)
-  const node = useFieldNode(field)
+  const node = useFieldNode<TextDoc>(field)
+  const peekValue = useSetAtom(node.peek)
   const [focus, setFocus] = useState(false)
   const expandedByBlockId = useRef(new Map<string, boolean>())
   const containerRef = useRef<HTMLDivElement>(null)
   const content = useMemo(() => {
-    // Get the value once, but don't subscribe to updates
-    const value = store.get(node.value) as TextDoc | undefined
+    const value = peekValue()
     return {
       type: 'doc',
       content: value?.map(toContent) ?? []
     }
-  }, [node, store])
+  }, [peekValue])
   const extensions = useMemo(() => {
     const schemaExtensions = schemaToExtensions(
-      field,
+      node,
       options.schema,
       expandedByBlockId.current
     )
     return [...values(baseExtensions), ...schemaExtensions]
-  }, [field, options.schema])
+  }, [node, options.schema])
   const readOnly = options.readOnly || node.readOnly
   const editable = !readOnly
   const focusToggle = useCallback(function focusToggle(
@@ -320,8 +321,7 @@ function RTView<Blocks extends Schema>({
       focusToggle(event.relatedTarget)
     },
     onUpdate({editor}) {
-      const current = store.get(node.value) as TextDoc | undefined
-      setValue(fromContent(editor.getJSON(), current))
+      setValue(current => fromContent(editor.getJSON(), current))
     }
   })
   return (
