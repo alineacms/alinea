@@ -455,8 +455,10 @@ export class Dashboard {
       (get, set) => {
         const events = get(this.events)
         const listen = (event: Event) => {
-          if (event instanceof IndexEvent && event.data.op === 'index')
-            set(this.#sha, event.data.sha)
+          if (event instanceof IndexEvent && event.data.op === 'index') {
+            const sha = event.data.sha
+            startTransition(() => set(this.#sha, sha))
+          }
         }
         events.addEventListener(IndexEvent.type, listen)
         return () => {
