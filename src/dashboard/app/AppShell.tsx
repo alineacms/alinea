@@ -80,7 +80,6 @@ export function AppShell({dashboard}: AppShellProps) {
 function ProfileMenu({dashboard}: AppShellProps) {
   const user = useAtomValue(useMemo(() => unwrap(dashboard.user), [dashboard]))
   const config = useAtomValue(dashboard.config)
-  const isDev = useAtomValue(dashboard.alineaDev)
   const canLogout = useAtomValue(dashboard.canLogout)
   const [theme, setTheme] = useAtom(dashboard.theme)
   const setUserRoles = useSetAtom(dashboard.setUserRoles)
@@ -149,7 +148,7 @@ function ProfileMenu({dashboard}: AppShellProps) {
               />
             </div>
           </li>
-          {isDev && roleEntries.length > 0 && (
+          {dashboard.isLocal && roleEntries.length > 0 && (
             <li className={styles.AppShell.profile.popover.item()}>
               <p className={styles.AppShell.profile.popover.item.label()}>
                 Role

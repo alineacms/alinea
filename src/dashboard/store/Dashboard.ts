@@ -162,8 +162,6 @@ export class Dashboard {
   views
   db: Atom<WriteableGraph>
   events: Atom<EventTarget>
-  local: Atom<boolean>
-  alineaDev: Atom<boolean>
   #userOverride = atom<User | null | undefined>()
   #authRevision = atom(0)
   #authState = atom<DashboardAuthState>({status: 'loading'})
@@ -172,6 +170,7 @@ export class Dashboard {
     'system',
     undefined
   )
+  #options: DashboardOptions
 
   constructor(
     graph: WriteableGraph,
@@ -186,8 +185,7 @@ export class Dashboard {
     this.events = atom(events)
     this.client = atom(client)
     this.views = atom(views)
-    this.local = atom(Boolean(options.local))
-    this.alineaDev = atom(Boolean(options.alineaDev))
+    this.#options = options
     this.db = Object.assign(
       atom(
         get => get(this.graph),
@@ -218,7 +216,18 @@ export class Dashboard {
 
   revisions = dispense(id => atom(0))
 
-  authRequired = atom(get => !get(this.local) && !get(this.alineaDev))
+  authRequired = atom((get): boolean => {
+    const forceAuth =
+      typeof process !== 'undefined' && process.env.ALINEA_FORCE_AUTH
+    if (forceAuth) return true
+    const {alineaDev, local} = this.#options
+    return !(alineaDev || local)
+  })
+
+  get isLocal() {
+    const {alineaDev, local} = this.#options
+    return alineaDev || local
+  }
 
   auth = Object.assign(
     atom(
