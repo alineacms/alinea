@@ -54,6 +54,7 @@ const app = (
       config={cms.config}
       client={fixtureConnection}
       views={views}
+      alineaDev
     />
   </StrictMode>
 )

@@ -1,8 +1,12 @@
+import {ProgressCircle} from '#/components.js'
 import type {Config} from '#/core/Config'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph'
-import {ComponentType, useState} from 'react'
+import {useAtomValue} from 'jotai'
+import {ComponentType, Suspense, useState} from 'react'
 import {AppShell} from './app/AppShell.js'
+import {AuthView} from './app/AuthView.js'
+import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {Dashboard} from './store/Dashboard.js'
 
@@ -32,5 +36,30 @@ export function App({
         local
       })
   )
+  useAtomValue(dashboard.theme)
+  return (
+    <Suspense
+      fallback={
+        <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+          <ProgressCircle isIndeterminate aria-label="loading" />
+        </Rail>
+      }
+    >
+      <AppRoot dashboard={dashboard} />
+    </Suspense>
+  )
+}
+
+interface AppRootProps {
+  dashboard: Dashboard
+}
+
+function AppRoot({dashboard}: AppRootProps) {
+  const auth = useAtomValue(dashboard.auth)
+
+  if (auth.status !== 'authenticated') {
+    return <AuthView dashboard={dashboard} />
+  }
+
   return <AppShell dashboard={dashboard} />
 }
