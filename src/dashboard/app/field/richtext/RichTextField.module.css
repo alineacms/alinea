@@ -62,12 +62,8 @@
 }
 
 .RichTextFieldBlock-header {
-  gap: 6px;
-}
-
-.RichTextFieldBlock-drag {
-  flex: 0 0 auto;
-  cursor: grab;
+  padding-left: 4px !important;
+  padding-right: 8px !important;
 }
 
 .RichTextFieldBlock-fold {
@@ -75,8 +71,11 @@
 }
 
 .RichTextFieldBlock-title {
+  display: flex;
   min-width: 0;
   flex: 1;
+  align-items: center;
+  gap: 8px;
   overflow: hidden;
   color: var(--alinea-content-primary);
   font-size: var(--alinea-font-size-base);
@@ -84,6 +83,14 @@
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  &:is(:hover) {
+    cursor: grab;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .RichTextFieldBlock-actions {
