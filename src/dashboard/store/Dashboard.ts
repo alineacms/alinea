@@ -1,4 +1,5 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Client} from '#/core/Client.js'
 import {Config} from '#/core/Config.js'
 import type {LocalConnection, Revision} from '#/core/Connection.js'
@@ -70,6 +71,50 @@ export interface DashboardOptions {
   local?: boolean
 }
 
+export interface DashboardAuthLoading {
+  status: 'loading'
+}
+
+export interface DashboardAuthMissingHandler {
+  status: 'missingHandler'
+}
+
+export interface DashboardAuthMissingApiKey {
+  status: 'missingApiKey'
+  setupUrl: string
+}
+
+export interface DashboardAuthRedirecting {
+  status: 'redirecting'
+}
+
+export interface DashboardAuthError {
+  status: 'error'
+  error: Error
+}
+
+export interface DashboardAuthAuthenticated {
+  status: 'authenticated'
+}
+
+export type DashboardAuthState =
+  | DashboardAuthLoading
+  | DashboardAuthMissingHandler
+  | DashboardAuthMissingApiKey
+  | DashboardAuthRedirecting
+  | DashboardAuthError
+  | DashboardAuthAuthenticated
+
+interface DashboardAuthCheck {
+  type: 'check'
+}
+
+interface DashboardAuthSetupCloud {
+  type: 'setupCloud'
+}
+
+type DashboardAuthAction = DashboardAuthCheck | DashboardAuthSetupCloud
+
 type DashboardTreeSelection = WritableAtom<
   Set<Key>,
   [next: 'all' | Set<Key>],
@@ -121,6 +166,7 @@ export class Dashboard {
   alineaDev: Atom<boolean>
   #userOverride = atom<User | null | undefined>()
   #authRevision = atom(0)
+  #authState = atom<DashboardAuthState>({status: 'loading'})
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
     'system',
@@ -172,15 +218,95 @@ export class Dashboard {
 
   revisions = dispense(id => atom(0))
 
+  authRequired = atom(get => !get(this.local) && !get(this.alineaDev))
+
+  auth = Object.assign(
+    atom(
+      get => {
+        get(this.#authRevision)
+        if (!get(this.authRequired)) {
+          return {status: 'authenticated'} satisfies DashboardAuthState
+        }
+        return get(this.#authState)
+      },
+      async (get, set, action: DashboardAuthAction = {type: 'check'}) => {
+        if (action.type === 'setupCloud') {
+          const state = get(this.#authState)
+          if (state.status !== 'missingApiKey') return
+          window.location.href = appendFrom(state.setupUrl)
+          return
+        }
+
+        if (!get(this.authRequired)) {
+          set(this.#authState, {status: 'authenticated'})
+          return
+        }
+
+        const client = get(this.client)
+        if (!(client instanceof Client)) {
+          set(this.#authState, {
+            status: 'error',
+            error: new Error('Cannot authenticate with non http client')
+          })
+          return
+        }
+
+        set(this.#authState, {status: 'loading'})
+        try {
+          const result = await client.authStatus()
+          switch (result.type) {
+            case AuthResultType.NeedsRefresh:
+              set(this.#authState, {
+                status: 'error',
+                error: new Error(
+                  'Authentication failure, please refresh the page'
+                )
+              })
+              return
+            case AuthResultType.Authenticated:
+              set(
+                this.client,
+                client.authenticate(
+                  options => options,
+                  () => {
+                    set(this.#userOverride, null)
+                    set(this.#authState, {status: 'loading'})
+                    set(this.#authRevision, revision => revision + 1)
+                    set(this.auth, {type: 'check'})
+                  }
+                )
+              )
+              set(this.#userOverride, result.user)
+              set(this.#authState, {status: 'authenticated'})
+              return
+            case AuthResultType.UnAuthenticated:
+              set(this.#authState, {status: 'redirecting'})
+              window.location.href = appendFrom(result.redirect)
+              return
+            case AuthResultType.MissingApiKey:
+              set(this.#authState, {
+                status: 'missingApiKey',
+                setupUrl: result.setupUrl
+              })
+              return
+          }
+        } catch {
+          set(this.#authState, {status: 'missingHandler'})
+        }
+      }
+    ),
+    {
+      onMount(checkAuth: (action?: DashboardAuthAction) => void) {
+        checkAuth({type: 'check'})
+      }
+    }
+  )
+
   user = swr(
     atom(async get => {
       const override = get(this.#userOverride)
       if (override !== undefined) return override
-      const forceAuth = Boolean(
-        typeof process !== 'undefined' && process.env.ALINEA_FORCE_AUTH
-      )
-      const isAnonymousLocal = get(this.local) && !forceAuth
-      if (isAnonymousLocal) {
+      if (!get(this.authRequired)) {
         const userData =
           typeof process !== 'undefined' &&
           (process.env.ALINEA_USER as string | undefined)
@@ -206,7 +332,9 @@ export class Dashboard {
           options => options,
           () => {
             set(this.#userOverride, null)
+            set(this.#authState, {status: 'loading'})
             set(this.#authRevision, revision => revision + 1)
+            set(this.auth, {type: 'check'})
           }
         )
       )
@@ -220,12 +348,13 @@ export class Dashboard {
     if (typeof logout === 'function') await logout.call(client)
     set(this.#userOverride, null)
     set(this.#authRevision, revision => revision + 1)
+    if (get(this.authRequired)) await set(this.auth, {type: 'check'})
   })
 
   authRevision = atom(get => get(this.#authRevision))
 
   canLogout = atom(get => {
-    if (get(this.local)) return false
+    if (!get(this.authRequired)) return false
     const client = get(this.client)
     return typeof (client as Partial<LogoutConnection>).logout === 'function'
   })
@@ -2178,6 +2307,15 @@ function swr<Value>(asyncAtom: Atom<Promise<Value>>) {
     const current = get(withPrev)
     return current ?? get(asyncAtom)
   })
+}
+
+function appendFrom(url: string): string {
+  const {location} = window
+  const from = encodeURIComponent(
+    `${location.protocol}//${location.host}${location.pathname}`
+  )
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}from=${from}`
 }
 
 function atomWithPending<Value>(asyncAtom: Atom<Promise<Value> | Value>) {

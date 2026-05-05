@@ -2,9 +2,8 @@ import {ProgressCircle} from '#/components.js'
 import type {Config} from '#/core/Config'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph'
-import type {User} from '#/core/User.js'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {ComponentType, Suspense, useCallback, useEffect, useState} from 'react'
+import {useAtomValue} from 'jotai'
+import {ComponentType, Suspense, useState} from 'react'
 import {AppShell} from './app/AppShell.js'
 import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
@@ -56,31 +55,10 @@ interface AppRootProps {
 }
 
 function AppRoot({dashboard}: AppRootProps) {
-  const isDev = useAtomValue(dashboard.alineaDev)
-  const local = useAtomValue(dashboard.local)
-  const client = useAtomValue(dashboard.client)
-  const authRevision = useAtomValue(dashboard.authRevision)
-  const authenticate = useSetAtom(dashboard.authenticate)
-  const [authenticated, setAuthenticated] = useState(false)
-  const forceAuth = Boolean(
-    typeof process !== 'undefined' && process.env.ALINEA_FORCE_AUTH
-  )
-  const requiresAuth = !isDev && (!local || forceAuth)
+  const auth = useAtomValue(dashboard.auth)
 
-  useEffect(() => {
-    if (requiresAuth) setAuthenticated(false)
-  }, [authRevision, requiresAuth])
-
-  const onAuthenticated = useCallback(
-    (user: User) => {
-      authenticate(user)
-      setAuthenticated(true)
-    },
-    [authenticate]
-  )
-
-  if (requiresAuth && !authenticated) {
-    return <AuthView client={client} onAuthenticated={onAuthenticated} />
+  if (auth.status !== 'authenticated') {
+    return <AuthView dashboard={dashboard} />
   }
 
   return <AppShell dashboard={dashboard} />
