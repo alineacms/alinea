@@ -1,16 +1,9 @@
-import type {FieldOptions, WithoutLabel} from '#/core.js'
 import {RecordField} from '#/core/field/RecordField.js'
 import {Type, type} from '#/core/Type.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {type ImageField, type ImageLink, image} from '#/field/link.js'
 import {type ObjectField, object} from '#/field/object.js'
 import {type TextField, text} from '#/field/text.js'
-
-export interface MetadataOptions extends FieldOptions<Metadata> {
-  inferTitleFrom?: string
-  inferDescriptionFrom?: string
-  inferImageFrom?: string
-}
 
 export interface MetadataFields {
   title: TextField
@@ -34,24 +27,33 @@ export interface Metadata {
 
 export class MetadataField extends RecordField<
   Metadata,
-  MetadataOptions & {fields: Type<MetadataFields>}
+  {label: string; fields: Type<MetadataFields>}
 > {}
 
 export function metadata(
   label = 'Metadata',
-  options: WithoutLabel<MetadataOptions> = {}
+  options: Partial<MetadataFields> = {}
 ) {
   const fields = type('Fields', {
     fields: {
-      title: text('Title', {width: 0.5}),
-      description: text('Description', {multiline: true}),
+      title: text('Title'),
+      description: text('Description', {
+        multiline: true,
+        help: 'Optimal length: 120–160 characters',
+        validate(value) {
+          if (value.length > 160) return 'Too many characters.'
+        }
+      }),
       openGraph: object('Open Graph', {
         fields: {
           image: image('Image', {
             help: 'Recommended size: 1200x630 pixels'
           }),
-          title: text('Title'),
-          description: text('Description', {multiline: true})
+          title: text('Title', {help: 'If empty, default title'}),
+          description: text('Description', {
+            multiline: true,
+            help: 'If empty, default description'
+          })
         }
       })
     }

@@ -10,7 +10,7 @@ import {
   IcRoundOpenInNew,
   IcRoundRefresh
 } from '../icons.js'
-import {DashboardEntry} from '../store.js'
+import {DashboardEntry, useDashboard} from '../store.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
 
@@ -41,7 +41,9 @@ interface EntrySidebarPreviewMessageProps {
   children: string
 }
 
-function EntrySidebarPreviewMessage({children}: EntrySidebarPreviewMessageProps) {
+function EntrySidebarPreviewMessage({
+  children
+}: EntrySidebarPreviewMessageProps) {
   return (
     <div className={styles.EntrySidebarPreview()}>
       <p className={styles.EntrySidebarPreview.message()}>{children}</p>
@@ -133,6 +135,8 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
   const [frameVersion, setFrameVersion] = useState(0)
   const [loading, setLoading] = useState(true)
   const hasPreviewListener = useRef(false)
+  const dashboard = useDashboard()
+  const setMetadata = useSetAtom(dashboard.previewMetadata)
 
   const targetOrigin = useMemo(() => {
     if (!previewUrl) return undefined
@@ -145,7 +149,7 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
     setLoading(true)
     setFrameVersion(0)
     hasPreviewListener.current = false
-  }, [previewUrl])
+  }, [previewUrl, targetOrigin])
 
   useEffect(() => {
     if (!targetOrigin) return
@@ -164,11 +168,15 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
             targetOrigin
           )
         }
+        return
+      }
+      if (event.data.action === PreviewAction.Meta) {
+        setMetadata(event.data)
       }
     }
     addEventListener('message', handleMessage)
     return () => removeEventListener('message', handleMessage)
-  }, [targetOrigin])
+  }, [targetOrigin, setMetadata])
 
   useEffect(() => {
     let cancelled = false

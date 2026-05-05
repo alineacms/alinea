@@ -23,8 +23,8 @@ import {
   useFieldView,
   useNodeEditor
 } from '../store/hooks.js'
-import {DetailsBar} from './DetailsBar.js'
 import type {DetailsBarStatus} from './DetailsBar.js'
+import {DetailsBar} from './DetailsBar.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EditorBackButton} from './EditorBackButton.js'
