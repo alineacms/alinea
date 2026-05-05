@@ -1,13 +1,13 @@
 import {Button, TextField} from '#/components.js'
 import {Reference} from '#/core/Reference.js'
-import {type as createType, Type} from '#/core/Type.js'
+import {Type, type as createType} from '#/core/Type.js'
 import {link as createLink, type LinkRow} from '#/field/link.js'
-import type {LinkField} from '#/field/link/LinkField.js'
 import type {
   PickerOptions,
   PickerValue,
   PickTextLinkFunc
 } from '#/field/richtext/PickTextLink.js'
+import type {LinkField} from '#/field/link/LinkField.js'
 import styler from '@alinea/styler'
 import {useAtomValue, type WritableAtom} from 'jotai'
 import {

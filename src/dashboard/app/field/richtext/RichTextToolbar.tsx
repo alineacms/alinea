@@ -83,7 +83,7 @@ export function createLinkHandler(
             .insertContent({
               type: 'text',
               text:
-                picked.title ||
+                picked.description ||
                 (picked.link as UrlReference)._title ||
                 (picked.link as UrlReference)._url ||
                 '',

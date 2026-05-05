@@ -46,48 +46,43 @@
   }
 }
 
-:global(.react-renderer) {
-  &:not(:last-child) {
-    margin-bottom: 12px;
-  }
-  &:last-child {
-    margin-bottom: 4px;
-  }
-}
-
-.RichTextFieldView-Surface {
+.RichTextFieldBlock {
+  margin: 14px 0;
   outline: 4px solid transparent;
   transition: var(--alinea-transition);
 }
+
 .RichTextFieldView {
-  &:focus-within:not(:has(.RichTextFieldView-Surface:focus-within)) {
-    :global(.ProseMirror-selectednode) .RichTextFieldView-Surface {
+  &:focus-within:not(:has(.RichTextFieldBlock:focus-within)) {
+    :global(.ProseMirror-selectednode) .RichTextFieldBlock {
       border-color: var(--alinea-border-hover);
       outline-color: var(--alinea-ring-subtle);
     }
   }
 }
 
-.RichTextFieldView-Surface-Header {
-  padding-left: 4px;
-  padding-right: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--alinea-fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  display: flex;
-  justify-content: space-between;
+.RichTextFieldBlock-header {
+  padding-left: 4px !important;
+  padding-right: 8px !important;
 }
 
-.RichTextFieldView-Surface-Header-Label {
+.RichTextFieldBlock-fold {
+  flex: 0 0 auto;
+}
+
+.RichTextFieldBlock-title {
   display: flex;
-  gap: 8px;
-  align-items: center;
   min-width: 0;
-  flex-grow: 1;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  color: var(--alinea-content-primary);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   &:is(:hover) {
     cursor: grab;
@@ -98,8 +93,13 @@
   }
 }
 
-.RichTextFieldView-Surface-Header-actions {
+.RichTextFieldBlock-actions {
   display: flex;
-  gap: 8px;
+  flex: 0 0 auto;
+  gap: 4px;
   align-items: center;
+}
+
+.RichTextFieldBlock-body {
+  background: var(--alinea-surface-field);
 }

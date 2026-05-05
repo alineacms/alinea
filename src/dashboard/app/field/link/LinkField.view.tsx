@@ -330,7 +330,9 @@ function LinkPickerAction({
   )
 }
 
-function externalLinkValue(value?: LinkFieldRow): ExternalLinkValue | undefined {
+function externalLinkValue(
+  value?: LinkFieldRow
+): ExternalLinkValue | undefined {
   if (value?.[Reference.type] !== 'url') return undefined
   return {
     url: value._url,

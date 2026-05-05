@@ -39,7 +39,7 @@ import {
   useEditor
 } from '@tiptap/react'
 import {atom, useAtomValue, useStore} from 'jotai'
-import {memo, useCallback, useMemo, useRef, useState} from 'react'
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor.js'
 import {
@@ -80,9 +80,9 @@ function TypeExtensionHeader({
 }: TypeExtensionHeaderProps) {
   const label = Type.label(type)
   return (
-    <SurfaceHeader className={styles.RichTextFieldView.Surface.Header()}>
+    <SurfaceHeader className={styles.RichTextFieldBlock.header()}>
       <div
-        className={styles.RichTextFieldView.Surface.Header.Label()}
+        className={styles.RichTextFieldBlock.title()}
         data-drag-handle
         role="button"
       >
@@ -90,7 +90,7 @@ function TypeExtensionHeader({
           appearance="plain"
           intent="secondary"
           size="square-petite"
-          className={styles.ListFieldRow.fold()}
+          className={styles.RichTextFieldBlock.fold()}
           onPress={onToggle}
         >
           <Icon
@@ -102,7 +102,7 @@ function TypeExtensionHeader({
         </Button>
         {label}
       </div>
-      <div className={styles.RichTextFieldView.Surface.Header.actions()}>
+      <div className={styles.RichTextFieldBlock.actions()}>
         <Button
           aria-label={`Duplicate ${label}`}
           appearance="outline"
@@ -182,11 +182,25 @@ function typeExtension(
         })
       })
     }, [reactive, id])
-    const rowNode = useAtomValue(rowNodeAtom) as ReactiveNode<object>
+    const rowNode = useAtomValue(rowNodeAtom) as
+      | ReactiveNode<object>
+      | undefined
+    const rowValueAtom = useMemo(() => {
+      return atom(get => (rowNode ? get(rowNode.value) : undefined))
+    }, [rowNode])
+    const rowValue = useAtomValue(rowValueAtom) as object | undefined
+    const hydratedValue = useMemo(() => {
+      return rowValue ? hydrateBlockValue(rowValue, type) : rowValue
+    }, [rowValue, type])
+    useEffect(() => {
+      if (!rowNode || !hydratedValue || hydratedValue === rowValue) return
+      store.set(rowNode.value, hydratedValue)
+    }, [hydratedValue, rowNode, rowValue, store])
     if (!rowNode) return null
+    if (hydratedValue !== rowValue) return null
     return (
       <NodeViewWrapper>
-        <Surface className={styles.RichTextFieldView.Surface()} tabIndex={0}>
+        <Surface className={styles.RichTextFieldBlock()} tabIndex={0}>
           <SurfaceRow>
             <TypeExtensionHeader
               type={type}
@@ -197,7 +211,7 @@ function typeExtension(
             />
           </SurfaceRow>
           {exp && (
-            <SurfaceContent>
+            <SurfaceContent className={styles.RichTextFieldBlock.body()}>
               <NodeEditor type={type} node={rowNode} />
             </SurfaceContent>
           )}
@@ -225,6 +239,18 @@ function typeExtension(
       }
     }
   })
+}
+
+function hydrateBlockValue(value: object, type: Type): object {
+  const initialValue = Type.initialValue(type)
+  let changed = false
+  const result = {...value} as Record<string, unknown>
+  for (const [key, initial] of entries(initialValue)) {
+    if (key in result) continue
+    result[key] = initial
+    changed = true
+  }
+  return changed ? result : value
 }
 
 function schemaToExtensions(

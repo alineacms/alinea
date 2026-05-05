@@ -42,6 +42,7 @@ export const RichTextFields = Config.document('Rich text fields', {
             })
           }
         }),
+
         NestLayout: Config.type('Nested layout fields', {
           fields: {
             object: Field.object('Object field', {
