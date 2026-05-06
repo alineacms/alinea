@@ -4,7 +4,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 16px;
-  border: 1px solid var(--alinea-border-default);
+  border: 1px solid var(--alinea-border);
   border-radius: 8px;
   background: var(--alinea-bg);
 }
@@ -20,14 +20,14 @@
   font-size: 13px;
   font-weight: 700;
   line-height: 1.4;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
 }
 
 .EntryTranslationBanner-message {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
 }
 
 .EntryTranslationBanner-actions {
@@ -40,7 +40,7 @@
 .EntryTranslationBanner-label {
   font-size: 13px;
   line-height: 1.4;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
 }
 
 .EntryTranslationBanner-select {

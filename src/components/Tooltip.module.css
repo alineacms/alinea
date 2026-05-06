@@ -1,10 +1,8 @@
-@import "../theme.css";
-
 .Tooltip {
   box-shadow: var(--alinea-shadow-tooltip);
   border-radius: 4px;
-  background: var(--alinea-surface-accent);
-  color: var(--alinea-content-on-accent);
+  background: var(--alinea-primary);
+  color: var(--alinea-primary-fg);
   forced-color-adjust: none;
   outline: none;
   padding: 4px 8px;
@@ -12,12 +10,12 @@
   font-size: var(--alinea-font-size-base);
   line-height: 1.4;
 
-  &[data-placement="top"] {
+  &[data-placement='top'] {
     margin-bottom: 8px;
     --alinea-origin: translateY(4px);
   }
 
-  &[data-placement="bottom"] {
+  &[data-placement='bottom'] {
     margin-top: 8px;
     --alinea-origin: translateY(-4px);
     .Tooltip-arrow svg {
@@ -25,7 +23,7 @@
     }
   }
 
-  &[data-placement="right"] {
+  &[data-placement='right'] {
     margin-left: 8px;
     --alinea-origin: translateX(-4px);
     .Tooltip-arrow svg {
@@ -33,7 +31,7 @@
     }
   }
 
-  &[data-placement="left"] {
+  &[data-placement='left'] {
     margin-right: 8px;
     --alinea-origin: translateX(4px);
     .Tooltip-arrow svg {
@@ -43,7 +41,7 @@
 
   .Tooltip-arrow svg {
     display: block;
-    fill: var(--alinea-surface-accent);
+    fill: var(--alinea-primary);
   }
 
   &[data-entering] {

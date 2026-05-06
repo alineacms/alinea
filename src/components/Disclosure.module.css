@@ -1,9 +1,7 @@
-@import '../theme.css';
-
 .Disclosure {
   display: flex;
   flex-direction: column;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
 }
 
 .Disclosure-heading {
@@ -16,7 +14,7 @@
   align-items: center;
   gap: 4px;
   padding-bottom: 8px;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font: inherit;
   font-size: var(--alinea-font-size-base);
   font-weight: 500;
@@ -31,16 +29,16 @@
 }
 
 .Disclosure-trigger[data-hovered] {
-  color: var(--alinea-content-hover);
+  color: var(--alinea-fg-hover);
 }
 
 .Disclosure-trigger[data-focus-visible] {
-  outline: 2px solid var(--alinea-focus-ring-color);
+  outline: 2px solid var(--alinea-ring);
   outline-offset: 2px;
 }
 
 .Disclosure-trigger[data-disabled] {
-  color: var(--alinea-content-disabled);
+  color: var(--alinea-fg-disabled);
   cursor: not-allowed;
 }
 
@@ -48,7 +46,7 @@
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   transform: rotate(0deg);
   transform-origin: center;
   transition: transform var(--alinea-transition);
@@ -61,7 +59,7 @@
 .Disclosure-title {
   min-width: 0;
   flex: 1;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font-size: var(--alinea-font-size-base);
   font-weight: 500;
   overflow: hidden;
@@ -76,7 +74,7 @@
 }
 
 .Disclosure-panel[data-focus-visible-within] {
-  outline: 2px solid var(--alinea-focus-ring-color);
+  outline: 2px solid var(--alinea-ring);
   outline-offset: 2px;
 }
 

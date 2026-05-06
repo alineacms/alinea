@@ -1,7 +1,7 @@
 .CodeEditorInput {
   overflow: hidden;
-  background-color: var(--alinea-surface-field);
-  border: 1px solid var(--alinea-border-default);
+  background-color: var(--alinea-input);
+  border: 1px solid var(--alinea-border);
   border-radius: 6px;
   outline: 4px solid transparent;
   transition: var(--alinea-transition);
@@ -17,7 +17,7 @@
 
   &:focus-within {
     border-color: var(--alinea-border-accent);
-    outline-color: var(--alinea-accent-overlay);
+    outline-color: var(--alinea-primary-overlay);
   }
 
   &[data-invalid='true'] {
@@ -26,12 +26,12 @@
   }
 
   &[data-read-only='true'] {
-    background-color: var(--alinea-surface-field-disabled);
+    background-color: var(--alinea-input-disabled);
   }
 
   &[data-read-only='true']:hover,
   &[data-read-only='true']:focus-within {
-    border-color: var(--alinea-border-default);
+    border-color: var(--alinea-border);
     outline-color: transparent;
   }
 }
@@ -46,20 +46,20 @@
 
 .CodeEditorInput-textarea {
   outline: none;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
 
   &::placeholder {
-    color: var(--alinea-content-placeholder);
+    color: var(--alinea-fg-subtle);
   }
 
   &:disabled,
   &[readonly] {
-    color: var(--alinea-content-disabled);
+    color: var(--alinea-fg-disabled);
   }
 }
 
 .CodeEditorInput-pre {
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
   white-space: pre-wrap;
   word-break: normal;
   overflow-wrap: anywhere;

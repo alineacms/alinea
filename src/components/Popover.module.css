@@ -1,5 +1,3 @@
-@import '../theme.css';
-
 .Popover {
   width: var(--alinea-trigger-width);
   &[data-clear] {
@@ -15,6 +13,6 @@
   max-height: inherit;
   padding: 4px;
   border-radius: 6px;
-  border: 1px solid var(--alinea-border-default);
-  background-color: var(--alinea-surface-field);
+  border: 1px solid var(--alinea-border);
+  background-color: var(--alinea-input);
 }

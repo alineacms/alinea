@@ -1,5 +1,3 @@
-@import '../theme.css';
-
 .Label {
   .Label-header {
     display: flex;
@@ -20,11 +18,11 @@
 
   .Label-icon {
     font-size: var(--alinea-font-size-base);
-    color: var(--alinea-content-primary);
+    color: var(--alinea-fg);
   }
 
   .Label-label {
-    color: var(--alinea-content-secondary);
+    color: var(--alinea-fg-muted);
     font-size: var(--alinea-font-size-base);
     font-weight: 600;
     transition: var(--alinea-transition);
@@ -34,7 +32,7 @@
   .Label-description {
     display: block;
     max-width: 100%;
-    color: var(--alinea-content-secondary);
+    color: var(--alinea-fg-muted);
     font-size: var(--alinea-font-size-base);
     line-height: 1.1;
     font-weight: 400;
@@ -44,13 +42,13 @@
   }
 
   .Label-error {
-    color: var(--alinea-content-danger);
+    color: var(--alinea-danger-subtle-fg);
     font-size: var(--alinea-font-size-base);
     padding-top: 4px;
   }
 
   .Label-required {
-    color: var(--alinea-content-danger);
+    color: var(--alinea-danger-subtle-fg);
     font-size: var(--alinea-font-size-base);
   }
 }

@@ -1,9 +1,7 @@
-@import "../theme.css";
-
 .List {
-  color: var(--alinea-content-primary);
-  border: 1px solid var(--alinea-border-default);
-  background: var(--alinea-surface-list);
+  color: var(--alinea-fg);
+  border: 1px solid var(--alinea-border);
+  background: var(--alinea-muted);
   border-radius: 8px;
   cursor: default;
   overflow: hidden;

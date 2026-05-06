@@ -1,4 +1,3 @@
-import '#/theme.css'
 import type {CSSProperties} from 'react'
 import {
   IcOutlineArchive,

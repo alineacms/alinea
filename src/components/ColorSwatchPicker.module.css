@@ -1,10 +1,8 @@
-@import "../theme.css";
-
 .ColorSwatchPicker {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  &[data-layout="stack"] {
+  &[data-layout='stack'] {
     flex-direction: column;
   }
 }
@@ -16,12 +14,12 @@
   forced-color-adjust: none;
 
   &[data-focus-visible] {
-    outline: 2px solid var(--alinea-focus-ring-color);
+    outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }
 
   &[data-selected]::after {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     border: 2px solid var(--alinea-fg);

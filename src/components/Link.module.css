@@ -1,17 +1,15 @@
-@import "../theme.css";
-
 .Link {
   outline: none;
   cursor: pointer;
   position: relative;
-  color: var(--alinea-link-default);
+  color: var(--alinea-link);
   font-size: var(--alinea-font-size-base);
   text-decoration: underline;
   text-decoration-color: transparent;
   text-underline-offset: 2px;
   transition: var(--alinea-transition);
 
-  &[data-variant="underline"] {
+  &[data-variant='underline'] {
     text-decoration-color: currentColor;
   }
 
@@ -19,7 +17,7 @@
     color: var(--alinea-link-hover);
     text-decoration-color: currentColor;
 
-    &[data-variant="underline"] {
+    &[data-variant='underline'] {
       text-decoration-color: transparent;
     }
   }
@@ -29,15 +27,15 @@
   }
 
   &[data-focus-visible]:after {
-    content: "";
+    content: '';
     position: absolute;
     inset: -3px -6px;
     border-radius: 6px;
-    border: 2px solid var(--alinea-focus-ring-color);
+    border: 2px solid var(--alinea-ring);
   }
 
   &[data-disabled] {
     cursor: default;
-    color: var(--alinea-content-disabled);
+    color: var(--alinea-fg-disabled);
   }
 }

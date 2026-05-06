@@ -4,7 +4,7 @@
   height: 100%;
 
   & + & {
-    border-left: 1px solid var(--alinea-border-default);
+    border-left: 1px solid var(--alinea-border);
   }
 
   &.is-main {
@@ -19,7 +19,7 @@
   align-items: center;
   height: 56px;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--alinea-border-default);
+  border-bottom: 1px solid var(--alinea-border);
   padding: 0px 12px;
   background: var(--alinea-bg);
 }
@@ -29,7 +29,7 @@
   align-items: center;
   height: 56px;
   flex-shrink: 0;
-  border-top: 1px solid var(--alinea-border-default);
+  border-top: 1px solid var(--alinea-border);
 }
 
 .RailBody {

@@ -1,9 +1,7 @@
-@import "../theme.css";
-
 .Link {
   outline: none;
   cursor: pointer;
-  color: var(--alinea-link-default);
+  color: var(--alinea-link);
   text-decoration: underline;
   text-decoration-color: currentColor;
   text-underline-offset: 2px;
@@ -19,6 +17,6 @@
 }
 
 .Link:focus-visible {
-  outline: 2px solid var(--alinea-focus-ring-color);
+  outline: 2px solid var(--alinea-ring);
   outline-offset: 3px;
 }

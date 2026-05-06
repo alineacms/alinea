@@ -15,7 +15,7 @@
   max-height: none;
   overflow: hidden;
   border-radius: 8px;
-  background: var(--alinea-dashboard-surface-background);
+  background: var(--alinea-overlay);
 
   &:has(.DashboardModalDialog.is-loading) {
     width: auto;
@@ -55,7 +55,7 @@
   overflow: visible;
   height: 100%;
   padding: 0;
-  background: var(--alinea-dashboard-surface-background);
+  background: var(--alinea-overlay);
 
   &.is-explorer {
     gap: 0;
@@ -121,7 +121,7 @@
 }
 
 .DashboardModalSeparator {
-  border-top: 1px solid var(--alinea-dashboard-surface-border);
+  border-top: 1px solid var(--alinea-border);
 }
 
 .DashboardModalExplorer {
@@ -139,7 +139,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 0 12px;
-  border-top: 1px solid var(--alinea-border-default);
+  border-top: 1px solid var(--alinea-border);
   border-bottom: 0;
 }
 

@@ -76,7 +76,7 @@
 .EntryEditor-toolbar {
   z-index: 1;
   overflow: hidden;
-  border-top: 1px solid var(--alinea-border-default);
+  border-top: 1px solid var(--alinea-border);
 
   &:empty {
     display: none;
@@ -96,7 +96,7 @@
   justify-items: center;
   gap: 14px;
   text-align: center;
-  border: 1px solid var(--alinea-border-default);
+  border: 1px solid var(--alinea-border);
   background: var(--alinea-bg);
   border-radius: 12px;
   padding: 28px;
@@ -117,12 +117,12 @@
   margin: 0;
   font-size: 20px;
   line-height: 1.2;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
 }
 
 .MissingEntry-message {
   margin: 0;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -137,7 +137,7 @@
   padding: 4px 10px;
   font-size: 11px;
   font-weight: 500;
-  color: var(--alinea-dashboard-status-foreground);
-  background: var(--alinea-dashboard-status-background);
+  color: var(--alinea-fg-muted);
+  background: var(--alinea-muted);
   border-radius: 4px;
 }

@@ -1,8 +1,4 @@
-@import '../theme.css';
-
 .Breadcrumbs {
-  --alinea-breadcrumbs-fg: hsl(var(--alinea-fg));
-
   display: flex;
   align-items: center;
   list-style: none;
@@ -12,8 +8,8 @@
   line-height: 1.25rem;
 
   .Breadcrumb:not(:last-child)::after {
-    content: '›';
-    content: '›' / '';
+    content: '\203A';
+    content: '\203A' / '';
     alt: ' ';
     padding: 0 10px;
   }
@@ -25,7 +21,7 @@
   position: relative;
   text-decoration: none;
   cursor: pointer;
-  color: var(--alinea-breadcrumbs-fg);
+  color: var(--alinea-fg);
 
   &[data-hovered] {
     text-decoration: underline;
@@ -40,14 +36,14 @@
     position: absolute;
     inset: -2px -4px;
     border-radius: 6px;
-    border: 2px solid hsl(var(--alinea-ring));
+    border: 2px solid var(--alinea-ring);
   }
 
   &[data-disabled] {
     cursor: default;
 
     &:not([data-current]) {
-      color: var(--alinea-text-color-disabled);
+      color: var(--alinea-fg-disabled);
     }
   }
 }

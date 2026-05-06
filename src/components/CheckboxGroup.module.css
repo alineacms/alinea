@@ -1,12 +1,10 @@
-@import "../theme.css";
-
 .CheckboxGroup {
   display: flex;
   flex-direction: column;
   gap: 0.571rem;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
 
-  [slot="description"] {
+  [slot='description'] {
     font-size: 12px;
   }
 }

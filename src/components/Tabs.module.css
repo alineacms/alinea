@@ -1,8 +1,6 @@
-@import '../theme.css';
-
 .Tabs {
   display: flex;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
 
   &[data-orientation='horizontal'] {
     flex-direction: column;
@@ -27,14 +25,14 @@
   }
 
   &[data-focus-visible] {
-    outline: 2px solid var(--alinea-focus-ring-color);
+    outline: 2px solid var(--alinea-ring);
   }
 }
 
 .Tab {
   outline: none;
   position: relative;
-  color: var(--alinea-content-tertiary);
+  color: var(--alinea-fg-subtle);
   font-size: var(--alinea-font-size-base);
   line-height: 1.25rem;
   font-weight: 500;
@@ -60,7 +58,7 @@
       left: 0;
       right: 0;
       height: 2px;
-      background-color: var(--alinea-border-default);
+      background-color: var(--alinea-border);
       transform-origin: bottom right;
       transform: scaleX(0);
       transition: var(--alinea-transition);
@@ -80,7 +78,7 @@
 
   &[data-hovered],
   &[data-focused] {
-    color: var(--alinea-content-hover);
+    color: var(--alinea-fg-hover);
 
     [data-variant='line'] &:before {
       transform-origin: bottom left;
@@ -88,12 +86,12 @@
     }
 
     [data-variant='subtle'] & {
-      color: var(--alinea-content-primary);
-      background-color: var(--alinea-surface-tab-subtle-hover);
+      color: var(--alinea-fg);
+      background-color: var(--alinea-overlay-hover);
     }
 
     [data-variant='enclosed'] & {
-      background-color: var(--alinea-surface-subtle-hover);
+      background-color: var(--alinea-muted-hover);
     }
   }
 
@@ -102,31 +100,31 @@
     font-weight: 600;
 
     [data-variant='line'] &:before {
-      background-color: var(--alinea-surface-accent);
+      background-color: var(--alinea-primary);
       transform-origin: bottom left;
       transform: scaleX(1);
     }
 
     [data-variant='subtle'] & {
-      color: var(--alinea-content-strong);
-      background-color: var(--alinea-surface-field);
+      color: var(--alinea-fg-strong);
+      background-color: var(--alinea-input);
     }
 
     [data-variant='enclosed'] & {
-      color: var(--alinea-content-accent);
-      background-color: var(--alinea-surface-tab-active);
+      color: var(--alinea-primary-subtle-fg);
+      background-color: var(--alinea-primary-subtle);
     }
   }
 
   &[data-disabled] {
-    color: var(--alinea-content-disabled);
+    color: var(--alinea-fg-disabled);
     &[data-selected] {
-      --alinea-border-default: var(--alinea-border-disabled);
+      --alinea-border: var(--alinea-border-muted);
     }
   }
 
   &[data-focus-visible] {
-    outline: 2px solid var(--alinea-focus-ring-color);
+    outline: 2px solid var(--alinea-ring);
   }
 
   &[href] {
@@ -140,7 +138,7 @@
   max-width: 100%;
   white-space: nowrap;
   scrollbar-width: thin;
-  scrollbar-color: var(--alinea-border-default) transparent;
+  scrollbar-color: var(--alinea-border) transparent;
 
   [data-variant='subtle'] & {
     display: inline-flex;
@@ -153,7 +151,7 @@
     display: flex;
 
     &[data-orientation='horizontal'] {
-      border-bottom: 1px solid var(--alinea-border-default);
+      border-bottom: 1px solid var(--alinea-border);
     }
 
     [data-variant='subtle'] & {
@@ -162,7 +160,7 @@
       border-radius: 10px;
       gap: 2px;
       padding: 3px;
-      background-color: var(--alinea-surface-tab-subtle);
+      background-color: var(--alinea-overlay);
     }
 
     [data-variant='enclosed'] & {
@@ -171,7 +169,7 @@
     }
 
     [data-variant='enclosed'] & {
-      background-color: var(--alinea-surface-tab);
+      background-color: var(--alinea-muted);
       border-radius: 8px;
       padding: 4px;
     }

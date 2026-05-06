@@ -36,13 +36,13 @@
 }
 
 .EntrySidebar-section + .EntrySidebar-section {
-  border-top: 1px solid var(--alinea-border-default);
+  border-top: 1px solid var(--alinea-border);
   padding-top: 14px;
 }
 
 .EntrySidebar-sectionTitle {
   margin: 0;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font-size: var(--alinea-font-size-base);
   font-weight: 500;
   transition: var(--alinea-transition);
@@ -65,8 +65,8 @@
 
 .EntrySidebar-versionButton {
   --EntrySidebar-version-background: var(--alinea-bg);
-  --EntrySidebar-version-border: var(--alinea-border-default);
-  --EntrySidebar-version-color: var(--alinea-content-primary);
+  --EntrySidebar-version-border: var(--alinea-border);
+  --EntrySidebar-version-color: var(--alinea-fg);
   --EntrySidebar-version-icon-background: var(--alinea-bg-muted);
 
   width: 100%;
@@ -223,7 +223,7 @@
   display: grid;
   place-items: center;
   font-size: 16px;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   background: var(--EntrySidebar-version-icon-background);
 }
 
@@ -256,7 +256,7 @@
 }
 
 .EntrySidebar-versionMeta {
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font-size: 12px;
   line-height: 1.25;
 }
@@ -293,13 +293,13 @@
 }
 
 .EntrySidebar-historyBadge {
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font-size: 12px;
 }
 
 .EntrySidebar-empty {
   margin: 0;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font-size: 14px;
 }
 

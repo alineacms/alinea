@@ -1,5 +1,3 @@
-@import "../theme.css";
-
 .TextField {
   display: flex;
   flex-direction: column;
@@ -13,17 +11,17 @@
     outline: none;
     width: 100%;
     padding: 8px 10px;
-    background-color: var(--alinea-surface-field);
-    border: 1px solid var(--alinea-border-default);
+    background-color: var(--alinea-input);
+    border: 1px solid var(--alinea-border);
     border-radius: 6px;
     outline: 4px solid transparent;
-    color: var(--alinea-content-primary);
+    color: var(--alinea-fg);
     font-size: var(--alinea-font-size-base);
     line-height: 1.5;
     transition: var(--alinea-transition);
 
     &::placeholder {
-      color: var(--alinea-content-placeholder);
+      color: var(--alinea-fg-subtle);
     }
 
     &[data-hovered] {
@@ -32,22 +30,22 @@
     }
     &[data-focused] {
       border-color: var(--alinea-border-accent);
-      outline-color: var(--alinea-accent-overlay);
+      outline-color: var(--alinea-primary-overlay);
     }
-    &[data-invalid="true"] {
+    &[data-invalid='true'] {
       border-color: var(--alinea-border-danger);
       outline-color: var(--alinea-danger-overlay);
     }
     &[disabled] {
       pointer-events: none;
-      background-color: var(--alinea-surface-field-disabled);
-      color: var(--alinea-content-disabled);
+      background-color: var(--alinea-input-disabled);
+      color: var(--alinea-fg-disabled);
       opacity: 0.5;
     }
     &[readonly] {
       pointer-events: none;
-      background-color: var(--alinea-surface-field-disabled);
-      color: var(--alinea-content-disabled);
+      background-color: var(--alinea-input-disabled);
+      color: var(--alinea-fg-disabled);
       opacity: 1;
     }
   }

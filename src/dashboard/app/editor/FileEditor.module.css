@@ -46,7 +46,7 @@
 
 .FileEditor-metadata-term {
   margin: 0;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font-size: var(--alinea-font-size-base);
   font-weight: 500;
   line-height: 1;
@@ -56,7 +56,7 @@
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
   font-size: 14px;
   line-height: 1.35;
 }
@@ -76,7 +76,7 @@
 }
 
 .FileEditor-focus-label {
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font-size: var(--alinea-font-size-base);
   font-weight: 500;
 }
@@ -84,7 +84,7 @@
 .FileEditor-focus-description {
   display: block;
   max-width: 100%;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   font-size: var(--alinea-font-size-base);
   line-height: 1.1;
   font-weight: 400;
@@ -95,7 +95,7 @@
 
 .FileEditor-focus-value {
   display: block;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
   font-size: var(--alinea-font-size-base);
   line-height: 1.35;
 }

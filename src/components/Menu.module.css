@@ -1,5 +1,3 @@
-@import '../theme.css';
-
 .Menu {
   outline: none;
 }
@@ -26,14 +24,14 @@
 
   &[data-selected] {
     font-weight: 500;
-    background: var(--alinea-surface-selected);
-    color: var(--alinea-content-accent);
+    background: var(--alinea-selected);
+    color: var(--alinea-primary-subtle-fg);
     position: relative;
   }
 
   &[data-focused] {
-    background: var(--alinea-surface-accent);
-    color: var(--alinea-content-on-accent);
+    background: var(--alinea-primary);
+    color: var(--alinea-primary-fg);
   }
 
   &[data-disabled] {
@@ -45,12 +43,12 @@
 .MenuHeader {
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--alinea-content-secondary);
+  color: var(--alinea-fg-muted);
   padding: 4px 6px;
 }
 
 .MenuSeparator {
   height: 1px;
   margin: 4px 8px;
-  background-color: var(--alinea-border-default);
+  background-color: var(--alinea-border);
 }

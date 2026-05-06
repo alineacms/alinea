@@ -1,30 +1,26 @@
-@import '../theme.css';
-
 .Button {
   --alinea-button-focus-outline: light-dark(var(--alinea-blue-800), var(--alinea-blue-400));
-  --alinea-button-focus-outline-plain: var(--alinea-surface-subtle);
+  --alinea-button-focus-outline-plain: var(--alinea-muted);
 
   --alinea-button-default-color: var(--alinea-fg);
   --alinea-button-default-background: var(--alinea-muted);
-  --alinea-button-default-background-hover: var(--alinea-surface-subtle-hover);
-  --alinea-button-default-background-pressed: var(--alinea-surface-subtle-pressed);
+  --alinea-button-default-background-hover: var(--alinea-muted-hover);
   --alinea-button-default-background-disabled: var(--alinea-input);
-  --alinea-button-default-color-disabled: var(--alinea-content-disabled);
+  --alinea-button-default-color-disabled: var(--alinea-fg-disabled);
   --alinea-button-default-border: transparent;
   --alinea-button-default-border-disabled: transparent;
   --alinea-button-default-outline-color: var(--alinea-fg);
-  --alinea-button-default-outline-color-disabled: var(--alinea-content-disabled);
-  --alinea-button-default-outline-border: var(--alinea-border-default);
+  --alinea-button-default-outline-color-disabled: var(--alinea-fg-disabled);
+  --alinea-button-default-outline-border: var(--alinea-border);
   --alinea-button-default-outline-border-disabled: var(--alinea-border-muted);
   --alinea-button-default-outline-background-hover: var(--alinea-input);
   --alinea-button-default-plain-color: var(--alinea-fg);
 
   --alinea-button-primary-color: var(--alinea-primary-fg);
   --alinea-button-primary-background: var(--alinea-primary);
-  --alinea-button-primary-background-hover: var(--alinea-surface-accent-hover);
-  --alinea-button-primary-background-pressed: var(--alinea-surface-accent-pressed);
+  --alinea-button-primary-background-hover: var(--alinea-primary-hover);
   --alinea-button-primary-background-disabled: var(--alinea-primary-subtle);
-  --alinea-button-primary-color-disabled: var(--alinea-content-accent-disabled);
+  --alinea-button-primary-color-disabled: var(--alinea-primary-disabled-fg);
   --alinea-button-primary-outline-color: var(--alinea-primary-subtle-fg);
   --alinea-button-primary-outline-color-disabled: light-dark(
     var(--alinea-blue-200),
@@ -32,7 +28,7 @@
   );
   --alinea-button-primary-outline-background-hover: var(--alinea-primary-subtle);
   --alinea-button-primary-plain-color: var(--alinea-primary-subtle-fg);
-  --alinea-button-primary-plain-color-disabled: var(--alinea-content-accent-disabled);
+  --alinea-button-primary-plain-color-disabled: var(--alinea-primary-disabled-fg);
 
   --alinea-button-secondary-color: var(--alinea-primary-subtle-fg);
   --alinea-button-secondary-background: light-dark(
@@ -42,10 +38,6 @@
   --alinea-button-secondary-background-hover: light-dark(
     var(--alinea-blue-100),
     rgb(from var(--alinea-blue-800) r g b / 24%)
-  );
-  --alinea-button-secondary-background-pressed: light-dark(
-    var(--alinea-blue-200),
-    rgb(from var(--alinea-blue-800) r g b / 32%)
   );
   --alinea-button-secondary-background-disabled: var(--alinea-button-secondary-background);
   --alinea-button-secondary-color-disabled: light-dark(
@@ -71,8 +63,7 @@
 
   --alinea-button-danger-color: var(--alinea-danger-fg);
   --alinea-button-danger-background: var(--alinea-danger);
-  --alinea-button-danger-background-hover: var(--alinea-surface-danger-hover);
-  --alinea-button-danger-background-pressed: var(--alinea-surface-danger-pressed);
+  --alinea-button-danger-background-hover: var(--alinea-danger-hover);
   --alinea-button-danger-background-disabled: var(--alinea-danger-subtle);
   --alinea-button-danger-color-disabled: light-dark(var(--alinea-red-400), var(--alinea-red-400));
   --alinea-button-danger-outline-color: light-dark(var(--alinea-red-400), var(--alinea-red-300));
@@ -89,8 +80,7 @@
 
   --alinea-button-warning-color: var(--alinea-warning-fg);
   --alinea-button-warning-background: var(--alinea-warning);
-  --alinea-button-warning-background-hover: var(--alinea-surface-warning-hover);
-  --alinea-button-warning-background-pressed: var(--alinea-surface-warning-pressed);
+  --alinea-button-warning-background-hover: var(--alinea-warning-hover);
   --alinea-button-warning-background-disabled: var(--alinea-warning-subtle);
   --alinea-button-warning-color-disabled: light-dark(
     var(--alinea-yellow-400),
@@ -108,10 +98,9 @@
     var(--alinea-yellow-500)
   );
 
-  --alinea-button-plain-background-hover: var(--alinea-surface-subtle);
-  --alinea-button-plain-background-pressed: var(--alinea-surface-subtle-hover);
-  --alinea-button-plain-color-disabled: var(--alinea-content-disabled);
-  --alinea-button-icon-active-background: var(--alinea-accent-overlay);
+  --alinea-button-plain-background-hover: var(--alinea-muted);
+  --alinea-button-plain-color-disabled: var(--alinea-fg-disabled);
+  --alinea-button-icon-active-background: var(--alinea-primary-overlay);
   --alinea-button-icon-active-color: light-dark(var(--alinea-blue-800), var(--alinea-blue-200));
   --alinea-button-icon-nav-background-hover: var(--alinea-muted);
   --alinea-button-icon-nav-background-active: var(--alinea-selected);
@@ -223,13 +212,13 @@
 
     &[data-appearance='outline'] {
       background-color: transparent;
-      border-color: var(--alinea-border-default);
-      color: var(--alinea-content-secondary);
+      border-color: var(--alinea-border);
+      color: var(--alinea-fg-muted);
     }
 
     &[data-appearance='outline'][data-hovered] {
       background-color: var(--alinea-button-hovered);
-      color: var(--alinea-content-primary);
+      color: var(--alinea-fg);
     }
 
     &[data-appearance='outline'][data-pressed] {
@@ -247,7 +236,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--alinea-icon-muted);
+    color: var(--alinea-fg-subtle);
 
     [data-slot='icon'] {
       font-size: var(--alinea-font-size-base);

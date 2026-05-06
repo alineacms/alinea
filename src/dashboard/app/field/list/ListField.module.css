@@ -35,7 +35,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid color-mix(in srgb, var(--alinea-dashboard-surface-border) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--alinea-border) 70%, transparent);
   border-radius: 10px;
   background: color-mix(in srgb, var(--alinea-bg) 94%, white);
   box-shadow:
@@ -51,8 +51,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--alinea-surface-accent);
-  background: color-mix(in srgb, var(--alinea-surface-accent) 12%, transparent);
+  color: var(--alinea-primary);
+  background: color-mix(in srgb, var(--alinea-primary) 12%, transparent);
 }
 
 .ListFieldView-dragPreviewBody {
@@ -87,7 +87,7 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  background: var(--alinea-dashboard-surface-header-background);
+  background: var(--alinea-header);
   background-clip: padding-box;
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
@@ -128,7 +128,7 @@
 
 .ListFieldTypePicker-search {
   padding: 8px;
-  border-bottom: 1px solid var(--alinea-dashboard-surface-border);
+  border-bottom: 1px solid var(--alinea-border);
 }
 
 .ListFieldTypePicker-list {
@@ -158,14 +158,14 @@
 
 .ListFieldTypePicker-item[data-selected] {
   font-weight: 500;
-  background: var(--alinea-surface-selected);
-  color: var(--alinea-content-accent);
+  background: var(--alinea-selected);
+  color: var(--alinea-primary-subtle-fg);
   position: relative;
 }
 
 .ListFieldTypePicker-item[data-focused] {
-  background: var(--alinea-surface-accent);
-  color: var(--alinea-content-on-accent);
+  background: var(--alinea-primary);
+  color: var(--alinea-primary-fg);
 }
 
 .ListFieldTypePicker-item[data-disabled] {
@@ -184,7 +184,7 @@
 }
 
 .ListFieldRow + .ListFieldRow {
-  border-top: 1px solid var(--alinea-dashboard-surface-border);
+  border-top: 1px solid var(--alinea-border);
 }
 
 .ListFieldRow-separator {
@@ -207,9 +207,9 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      color-mix(in srgb, var(--alinea-surface-accent) 55%, transparent) 12%,
-      var(--alinea-surface-accent) 50%,
-      color-mix(in srgb, var(--alinea-surface-accent) 55%, transparent) 88%,
+      color-mix(in srgb, var(--alinea-primary) 55%, transparent) 12%,
+      var(--alinea-primary) 50%,
+      color-mix(in srgb, var(--alinea-primary) 55%, transparent) 88%,
       transparent 100%
     );
     pointer-events: none;

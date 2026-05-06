@@ -1,16 +1,14 @@
-@import "../theme.css";
-
 .DatePicker {
   gap: 8px;
   display: flex;
   align-items: center;
   width: 100%;
   padding: 8px 10px;
-  background: var(--alinea-surface-field);
-  border: 1px solid var(--alinea-border-default);
+  background: var(--alinea-input);
+  border: 1px solid var(--alinea-border);
   border-radius: 6px;
   outline: 4px solid transparent;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
   transition: var(--alinea-transition);
@@ -22,16 +20,16 @@
   [data-open] &,
   [data-focus-within] & {
     border-color: var(--alinea-border-accent);
-    outline-color: var(--alinea-accent-overlay);
+    outline-color: var(--alinea-primary-overlay);
   }
-  &[data-invalid="true"] {
+  &[data-invalid='true'] {
     border: 1px solid var(--alinea-border-danger);
     outline: 3px solid var(--alinea-danger-overlay);
   }
   &[data-disabled] {
     pointer-events: none;
-    background-color: var(--alinea-surface-field-disabled);
-    color: var(--alinea-content-disabled);
+    background-color: var(--alinea-input-disabled);
+    color: var(--alinea-fg-disabled);
     opacity: 0.5;
   }
 
@@ -44,18 +42,18 @@
       transition: var(--alinea-transition);
 
       &[data-placeholder] {
-        color: var(--alinea-content-placeholder);
+        color: var(--alinea-fg-subtle);
       }
 
       &[data-hovered] {
-        color: var(--alinea-content-primary);
+        color: var(--alinea-fg);
       }
 
       &[data-focused] {
         outline: none;
-        background-color: var(--alinea-accent-overlay);
+        background-color: var(--alinea-primary-overlay);
         border-radius: 4px;
-        color: var(--alinea-surface-accent);
+        color: var(--alinea-primary);
       }
     }
   }
@@ -70,11 +68,11 @@
     align-items: center;
     justify-content: center;
     transition: var(--alinea-transition);
-    color: var(--alinea-icon-muted);
+    color: var(--alinea-fg-subtle);
     font-size: 16px;
 
     &:before {
-      content: "";
+      content: '';
       width: 24px;
       height: 24px;
       position: absolute;
@@ -91,18 +89,18 @@
     &[data-focus-within],
     &[data-focused] {
       outline: none;
-      color: var(--alinea-icon-primary);
+      color: var(--alinea-fg-muted);
 
       &:before {
-        background-color: var(--alinea-surface-subtle);
+        background-color: var(--alinea-muted);
       }
     }
 
     [data-open] & {
-      color: var(--alinea-icon-accent);
+      color: var(--alinea-primary-icon);
 
       &:before {
-        background-color: var(--alinea-accent-overlay);
+        background-color: var(--alinea-primary-overlay);
       }
     }
   }

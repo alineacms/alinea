@@ -1,10 +1,8 @@
-@import "../theme.css";
-
 .Elevation {
-  --alinea-elevation-background: var(--alinea-surface-field);
+  --alinea-elevation-background: var(--alinea-input);
   --alinea-elevation-radius: 6px;
   background: var(--alinea-elevation-background);
-  border: 1px solid var(--alinea-border-default);
+  border: 1px solid var(--alinea-border);
   box-shadow: var(--alinea-shadow-raised);
   border-radius: var(--alinea-elevation-radius);
   transition: box-shadow var(--alinea-transition);

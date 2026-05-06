@@ -1,5 +1,3 @@
-@import "../theme.css";
-
 .Calendar {
   --alinea-border-radius: 6px;
 
@@ -38,22 +36,22 @@
     outline: 2px solid transparent;
     outline-offset: 2px;
     transition: var(--alinea-transition);
-    color: var(--alinea-icon-primary);
+    color: var(--alinea-fg-muted);
     font-size: 18px;
 
     &[data-hovered],
     &[data-focus-visible] {
-      background-color: var(--alinea-surface-subtle);
-      color: var(--alinea-icon-primary);
+      background-color: var(--alinea-muted);
+      color: var(--alinea-fg-muted);
     }
 
     &[data-focus-visible] {
-      outline-color: var(--alinea-border-default);
+      outline-color: var(--alinea-border);
     }
 
     &[data-disabled] {
       cursor: not-allowed;
-      color: var(--alinea-content-disabled);
+      color: var(--alinea-fg-disabled);
       opacity: 0.5;
     }
   }
@@ -81,11 +79,11 @@
       position: relative;
 
       &:after {
-        content: "";
+        content: '';
         width: 3px;
         height: 3px;
         border-radius: 50%;
-        background-color: var(--alinea-surface-accent);
+        background-color: var(--alinea-primary);
         position: absolute;
         bottom: 4px;
       }
@@ -93,36 +91,36 @@
 
     &[data-hovered],
     &[data-focus-visible] {
-      background-color: var(--alinea-surface-subtle);
+      background-color: var(--alinea-muted);
     }
 
     &[data-focus-visible] {
-      outline-color: var(--alinea-border-default);
+      outline-color: var(--alinea-border);
     }
 
     &[data-selected] {
-      background-color: var(--alinea-surface-accent);
-      color: var(--alinea-content-on-accent);
+      background-color: var(--alinea-primary);
+      color: var(--alinea-primary-fg);
     }
 
     &[data-selected][data-today]:after {
-      background-color: var(--alinea-content-on-accent);
+      background-color: var(--alinea-primary-fg);
     }
 
     &[data-selected][data-focus-visible] {
-      outline-color: var(--alinea-surface-accent);
+      outline-color: var(--alinea-primary);
       outline-offset: 2px;
     }
 
     &[data-disabled] {
       cursor: not-allowed;
-      color: var(--alinea-content-disabled);
+      color: var(--alinea-fg-disabled);
       opacity: 0.5;
     }
 
     &[data-invalid] {
-      background-color: var(--alinea-surface-danger);
-      color: var(--alinea-content-on-danger);
+      background-color: var(--alinea-danger);
+      color: var(--alinea-danger-fg);
     }
   }
 
@@ -130,14 +128,14 @@
   &:has(.Calendar-cell[data-selection-end]) {
     .Calendar-cell {
       &[data-selected] {
-        background-color: var(--alinea-accent-overlay);
-        color: var(--alinea-surface-accent);
+        background-color: var(--alinea-primary-overlay);
+        color: var(--alinea-primary);
         border-radius: 0;
 
         &[data-selection-start],
         &[data-selection-end] {
-          background-color: var(--alinea-surface-accent);
-          color: var(--alinea-content-on-accent);
+          background-color: var(--alinea-primary);
+          color: var(--alinea-primary-fg);
         }
 
         &[data-selection-start] {

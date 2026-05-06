@@ -1,11 +1,9 @@
-@import "../theme.css";
-
 .TagGroup {
   display: flex;
   flex-direction: column;
   gap: 2px;
   font-size: small;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
 
   .TagGroup-list {
     display: flex;
@@ -21,18 +19,18 @@
   align-items: center;
   padding: 4px 8px;
   border-radius: 4px;
-  background-color: var(--alinea-surface-accent-subtle);
-  color: var(--alinea-content-accent);
+  background-color: var(--alinea-primary-subtle);
+  color: var(--alinea-primary-subtle-fg);
   font-size: var(--alinea-font-size-base);
   transition: var(--alinea-transition);
   transition-property: background-color, border-color, color;
 
-  .TagGroup[data-intent="secondary"] & {
-    background-color: var(--alinea-surface-subtle);
-    color: var(--alinea-content-primary);
+  .TagGroup[data-intent='secondary'] & {
+    background-color: var(--alinea-muted);
+    color: var(--alinea-fg);
   }
 
-  .TagGroup[data-shape="circle"] & {
+  .TagGroup[data-shape='circle'] & {
     border-radius: 50px;
     padding-inline: 12px;
   }
@@ -40,9 +38,9 @@
   &[data-selection-mode] {
     cursor: pointer;
     padding-block: 2px;
-    border: 1px solid var(--alinea-border-default);
-    background-color: var(--alinea-surface-subtle);
-    color: var(--alinea-content-primary);
+    border: 1px solid var(--alinea-border);
+    background-color: var(--alinea-muted);
+    color: var(--alinea-fg);
   }
 
   &[data-hovered] {
@@ -50,28 +48,28 @@
   }
 
   &[data-focus-visible] {
-    outline: 2px solid var(--alinea-focus-ring-color);
+    outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }
 
   &[data-selected] {
-    border-color: var(--alinea-surface-accent);
-    background: var(--alinea-surface-accent);
-    color: var(--alinea-content-on-accent);
+    border-color: var(--alinea-primary);
+    background: var(--alinea-primary);
+    color: var(--alinea-primary-fg);
   }
 
   &[data-disabled] {
-    color: var(--alinea-content-disabled);
+    color: var(--alinea-fg-disabled);
     pointer-events: none;
   }
 
-  [slot="remove"] {
+  [slot='remove'] {
     cursor: pointer;
     background: none;
     border: none;
     padding: 0;
     margin-left: 8px;
-    color: var(--alinea-content-secondary);
+    color: var(--alinea-fg-muted);
     transition: color 200ms;
     outline: none;
     font-size: 0.95em;
@@ -79,12 +77,12 @@
     align-items: center;
 
     &[data-hovered] {
-      color: var(--alinea-content-hover);
+      color: var(--alinea-fg-hover);
     }
   }
 
   &[data-selected] {
-    [slot="remove"] {
+    [slot='remove'] {
       color: inherit;
     }
   }

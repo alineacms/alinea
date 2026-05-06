@@ -7,7 +7,7 @@
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--alinea-content-primary);
+  color: var(--alinea-fg);
   font-size: var(--alinea-font-size-base);
   font-weight: 600;
   line-height: 34px;
@@ -149,8 +149,8 @@
   width: 18px;
   height: 18px;
   border-radius: 4px;
-  color: var(--alinea-dashboard-status-foreground);
-  background: var(--alinea-dashboard-status-background);
+  color: var(--alinea-fg-muted);
+  background: var(--alinea-muted);
 }
 
 .SidebarTree-status svg {

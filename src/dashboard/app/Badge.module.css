@@ -1,7 +1,7 @@
 .Badge {
-  --alinea-badge-color: var(--alinea-content-secondary);
-  --alinea-badge-background: var(--alinea-surface-subtle);
-  --alinea-badge-border: var(--alinea-border-default);
+  --alinea-badge-color: var(--alinea-fg-muted);
+  --alinea-badge-background: var(--alinea-muted);
+  --alinea-badge-border: var(--alinea-border);
 
   display: flex;
   align-items: center;
@@ -22,8 +22,8 @@
   }
 
   &[data-status='success'] {
-    --alinea-badge-color: var(--alinea-content-accent);
-    --alinea-badge-background: var(--alinea-surface-accent-subtle);
+    --alinea-badge-color: var(--alinea-primary-subtle-fg);
+    --alinea-badge-background: var(--alinea-primary-subtle);
     --alinea-badge-border: var(--alinea-border-accent);
   }
 
@@ -34,9 +34,9 @@
   }
 
   &[data-status='neutral'] {
-    --alinea-badge-color: var(--alinea-content-secondary);
-    --alinea-badge-background: var(--alinea-surface-subtle);
-    --alinea-badge-border: var(--alinea-border-default);
+    --alinea-badge-color: var(--alinea-fg-muted);
+    --alinea-badge-background: var(--alinea-muted);
+    --alinea-badge-border: var(--alinea-border);
   }
 
   &[data-status='danger'] {
