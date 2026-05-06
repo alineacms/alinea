@@ -6,7 +6,7 @@ import {
   IcRoundCheck,
   IcRoundMoreVert,
   IcRoundSave,
-  SolarSidebarMinimalisticOutline
+  MaterialSymbolsRightPanelOpenRounded
 } from '../icons.js'
 import {DashboardEntry, ReactiveNode} from '../store/Dashboard.js'
 import {usePolicy} from '../store/hooks.js'
@@ -268,6 +268,7 @@ function EntryHeaderActions({
             </Button>
           }
           aria-label="More actions"
+          popoverProps={{placement: 'bottom end'}}
         >
           {menuItems.map(item => (
             <MenuItem
@@ -291,7 +292,7 @@ function EntryHeaderActions({
           }
           onChange={onSidebarOpenChange}
         >
-          <SolarSidebarMinimalisticOutline data-slot="icon" />
+          <MaterialSymbolsRightPanelOpenRounded data-slot="icon" />
         </ToggleButton>
       )}
     </div>

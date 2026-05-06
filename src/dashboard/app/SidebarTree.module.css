@@ -74,6 +74,13 @@
   align-items: stretch;
 }
 
+.SidebarTree-locator-expandButton {
+  margin-top: auto;
+  align-self: flex-start;
+  flex-shrink: 0;
+  width: 30px;
+}
+
 .SidebarTree-loading {
   display: flex;
   align-items: center;

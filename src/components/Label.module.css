@@ -26,7 +26,7 @@
   .Label-label {
     color: var(--alinea-content-secondary);
     font-size: var(--alinea-font-size-base);
-    font-weight: 500;
+    font-weight: 600;
     transition: var(--alinea-transition);
     transition-property: color;
   }

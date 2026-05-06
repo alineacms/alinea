@@ -2,6 +2,7 @@ import {
   Button,
   Icon,
   ProgressCircle,
+  ToggleButton,
   Tooltip,
   Tree,
   TreeItem
@@ -22,10 +23,10 @@ import {
   IcOutlineArchive,
   IcRoundAdd,
   IcRoundEdit,
-  IcRoundKeyboardTab,
   IcRoundTranslate,
   IcTwotoneDescription,
   IcTwotoneFolder,
+  MaterialSymbolsLeftPanelOpenOutlineRounded,
   RiFlashlightFill
 } from '../icons.js'
 import {
@@ -49,28 +50,14 @@ interface SidebarTreeProps {
 
 interface SidebarParentProps {
   root: DashboardRoot
-  isTreeCollapsed: boolean
-  onToggleTreeCollapsed: () => void
 }
 
-const SidebarParent = memo(function SidebarParent({
-  root,
-  isTreeCollapsed,
-  onToggleTreeCollapsed
-}: SidebarParentProps) {
+const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
   const label = useAtomValue(root.label)
   const selectRoot = useSetAtom(root.selected)
   return (
     <SidebarHeader>
       <div className={styles.SidebarParent.label()}>
-        <Button
-          size="icon"
-          appearance="outline"
-          icon={IcRoundKeyboardTab}
-          style={isTreeCollapsed ? undefined : {transform: 'rotate(180deg)'}}
-          aria-label={isTreeCollapsed ? 'Expand tree' : 'Collapse tree'}
-          onPress={onToggleTreeCollapsed}
-        />
         <Button
           appearance="plain"
           className={styles.SidebarTree.rootsTrigger()}
@@ -265,21 +252,31 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
 
 interface SidebarTreeRootsProps {
   roots: Array<DashboardRoot>
-  isTreeCollapsed: boolean
+  isTreeOpen: boolean
+  onTreeOpenChange: (isTreeOpen: boolean) => void
 }
 
 const SidebarTreeRoots = memo(function SidebarTreeRoots({
   roots,
-  isTreeCollapsed
+  isTreeOpen,
+  onTreeOpenChange
 }: SidebarTreeRootsProps) {
   return (
     <div
       className={styles.SidebarTree.locator.rootSelector()}
-      data-expanded={isTreeCollapsed || undefined}
+      data-expanded={!isTreeOpen || undefined}
     >
       {roots.map(root => (
-        <RootButton key={root.key} root={root} expanded={isTreeCollapsed} />
+        <RootButton key={root.key} root={root} expanded={!isTreeOpen} />
       ))}
+      <ToggleButton
+        isSelected={!isTreeOpen}
+        className={styles.SidebarTree.locator.expandButton()}
+        aria-label={isTreeOpen ? 'Hide file tree' : 'Show file tree'}
+        onChange={value => onTreeOpenChange(!value)}
+      >
+        <MaterialSymbolsLeftPanelOpenOutlineRounded data-slot="icon" />
+      </ToggleButton>
     </div>
   )
 })
@@ -331,24 +328,18 @@ export const SidebarTree = memo(function SidebarTree({
   assert(workspace, 'No workspace selected')
   const currentRoot = useAtomValue(dashboard.currentRoot)
   const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
-  const [isTreeCollapsed, setIsTreeCollapsed] = useState(false)
+  const [isTreeOpen, setIsTreeOpen] = useState(true)
   return (
     <>
-      {currentRoot && (
-        <SidebarParent
-          root={currentRoot}
-          isTreeCollapsed={isTreeCollapsed}
-          onToggleTreeCollapsed={() =>
-            setIsTreeCollapsed(isCollapsed => !isCollapsed)
-          }
-        />
-      )}
+      {currentRoot && <SidebarParent root={currentRoot} />}
       <SidebarBody>
         <div className={styles.SidebarTree.locator()}>
-          <SidebarTreeRoots roots={roots} isTreeCollapsed={isTreeCollapsed} />
-          <div
-            className={styles.SidebarTree.tree({collapsed: isTreeCollapsed})}
-          >
+          <SidebarTreeRoots
+            roots={roots}
+            isTreeOpen={isTreeOpen}
+            onTreeOpenChange={setIsTreeOpen}
+          />
+          <div className={styles.SidebarTree.tree({collapsed: !isTreeOpen})}>
             <Suspense fallback={<SidebarTreeBodyFallback />}>
               <SidebarTreeBody workspace={workspace} />
             </Suspense>
