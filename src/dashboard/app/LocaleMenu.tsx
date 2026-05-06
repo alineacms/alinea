@@ -14,7 +14,7 @@ export function LocaleMenu({root}: LocaleMenuProps) {
   return (
     <Menu
       label={
-        <Button appearance="outline" intent="secondary">
+        <Button appearance="outline">
           {selectedLocale.toUpperCase()} <IcRoundUnfoldMore />
         </Button>
       }

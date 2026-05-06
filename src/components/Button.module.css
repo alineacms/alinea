@@ -228,20 +228,12 @@
   }
 
   &[data-size='icon-nav'] {
-    --alinea-font-size-base: 16px;
     width: 2rem;
     height: 2rem;
     flex-shrink: 0;
-    padding: 0;
-    border-radius: 0.5rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--alinea-fg-subtle);
-
-    [data-slot='icon'] {
-      font-size: var(--alinea-font-size-base);
-    }
 
     &[data-hovered] {
       background-color: var(--alinea-button-icon-nav-background-hover);

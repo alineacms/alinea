@@ -117,19 +117,11 @@
 }
 
 .SidebarTree-item.is-parentSelected.is-archived:not([data-selected]) {
-  background: color-mix(
-    in srgb,
-    var(--alinea-status-archived-bg) 54%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--alinea-status-archived-bg) 54%, transparent);
 }
 
 .SidebarTree-item.is-parentSelected.is-unpublished:not([data-selected]) {
-  background: color-mix(
-    in srgb,
-    var(--alinea-status-unpublished-bg) 54%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--alinea-status-unpublished-bg) 54%, transparent);
 }
 
 .SidebarTree-item.is-archived [data-slot='label'],
@@ -197,7 +189,7 @@
   aspect-ratio: auto;
   justify-content: flex-start;
   width: 100%;
-  padding: 5px;
+  padding: 7px;
 }
 
 .SidebarTree-rootButton-label {
