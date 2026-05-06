@@ -419,10 +419,30 @@ export class Dashboard {
     }
   )
 
-  focused = atom(async (get): Promise<FocusedItem> => {
+  focused = atom((get): FocusedItem | Promise<FocusedItem> => {
     const workspace = get(this.selectedWorkspace)
     const root = get(this.selectedRoot)
     const {root: routeRoot, entry} = get(this.route)
+    const rootFocus = (): FocusedItem => {
+      if (!workspace) return null
+      if (root) return {root: this.workspace(workspace).root(root)}
+      return null
+    }
+    const missingEntryFocus = (error: unknown): FocusedItem => {
+      if (!(error instanceof MissingEntryError)) throw error
+      if (workspace && root) {
+        return {
+          missingEntry: entry!,
+          root: this.workspace(workspace).root(root)
+        }
+      }
+      throw new Error(`Entry "${entry}" not found`)
+    }
+    const entryFocus = (model: DashboardEntry): FocusedItem => {
+      const type = get(model.type)
+      if (type.type !== MediaLibrary) return {entry: model}
+      return rootFocus()
+    }
     if (workspace && routeRoot && routeRoot !== root)
       return {
         missingRoot: routeRoot,
@@ -430,22 +450,14 @@ export class Dashboard {
       }
     if (entry)
       try {
-        const model = await get(this.entries(entry))
-        const type = get(model.type)
-        if (type.type !== MediaLibrary) return {entry: model}
+        const model = get(this.entries(entry))
+        if (isPromiseLike(model))
+          return model.then(entryFocus).catch(missingEntryFocus)
+        return entryFocus(model)
       } catch (error) {
-        if (!(error instanceof MissingEntryError)) throw error
-        if (workspace && root) {
-          return {
-            missingEntry: entry,
-            root: this.workspace(workspace).root(root)
-          }
-        }
-        throw new Error(`Entry "${entry}" not found`)
+        return missingEntryFocus(error)
       }
-    if (!workspace) return null
-    if (root) return {root: this.workspace(workspace).root(root)}
-    return null
+    return rootFocus()
   })
 
   #sha = atom<string>()
@@ -1114,18 +1126,16 @@ export class DashboardWorkspace {
       if (next === 'all')
         throw new Error('Selecting all items is not supported')
       const current = get(this.dashboard.route)
+      const root = get(this.dashboard.selectedRoot)
       const selectedKey = next.values().next().value
       if (!selectedKey) {
         set(this.dashboard.route, {workspace: this.key})
         return
       }
       const selectedId = String(selectedKey)
-      const selectedEntry = await get(this.dashboard.entries(selectedId))
-      assert(selectedEntry, 'Selected entry not found')
-      const {rootKey: root, workspaceKey: workspace} = selectedEntry
       set(this.dashboard.route, {
-        workspace: get(workspace),
-        root: get(root),
+        workspace: this.key,
+        root,
         entry: selectedId,
         locale: current.locale
       })
@@ -1540,19 +1550,27 @@ export class DashboardEntry {
         const untranslated = get(this.untranslated)
         const locale = get(this.sourceLocale)
         const language = this.languages(locale)
-        if (version.status === get(this.activeStatus)) {
+        const versions = await get(language.versions)
+        const status = versions.has(version.status)
+          ? version.status
+          : versions.keys().next().value
+        assert(
+          status,
+          `No versions found for entry ${this.id} and locale ${locale}`
+        )
+        if (status === get(this.activeStatus)) {
           const editing = get(this.currentlyEditing)
           if (editing) return editing
         }
         if (untranslated) {
-          const sourceNode = await get(language.data(version.status))
+          const sourceNode = await get(language.data(status))
           const sourceValue = get(sourceNode.value) as Record<string, unknown>
           return new ReactiveNode<object>({
             ...sourceValue,
             path: undefined
           })
         }
-        return get(language.data(version.status))
+        return get(language.data(status))
       }
       const locale = get(this.sourceLocale)
       const language = this.languages(locale)
@@ -2321,6 +2339,17 @@ function swr<Value>(asyncAtom: Atom<Promise<Value>>) {
     const current = get(withPrev)
     return current ?? get(asyncAtom)
   })
+}
+
+function isPromiseLike<Value>(
+  value: Value | PromiseLike<Value>
+): value is PromiseLike<Value> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'then' in value &&
+    typeof value.then === 'function'
+  )
 }
 
 function appendFrom(url: string): string {
