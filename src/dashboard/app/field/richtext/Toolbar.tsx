@@ -8,7 +8,6 @@ import {
   IcRoundFormatItalic,
   IcRoundFormatListBulleted,
   IcRoundFormatListNumbered,
-  IcRoundFormatPaint,
   IcRoundHorizontalRule,
   IcRoundLink,
   IcRoundQuote,
@@ -16,6 +15,7 @@ import {
   IcRoundSuperscript,
   IcRoundTextFields,
   IcRoundUnfoldMore,
+  MaterialSymbolsFormatInkHighlighterRounded,
   TableDelete,
   TableDeleteColumn,
   TableDeleteRow,
@@ -234,7 +234,7 @@ export const formatting = {
       onSelect: ({exec}) => exec().toggleSuperscript().run()
     },
     highlight: {
-      icon: () => <IcRoundFormatPaint />,
+      icon: () => <MaterialSymbolsFormatInkHighlighterRounded />,
       title: 'Highlight',
       active: ({editor}) => editor.isActive('highlight'),
       onSelect: ({exec}) => exec().toggleHighlight().run()

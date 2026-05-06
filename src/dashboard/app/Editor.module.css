@@ -75,8 +75,8 @@
 
 .EntryEditor-toolbar {
   z-index: 1;
-  background: var(--alinea-dashboard-background);
   overflow: hidden;
+  border-top: 1px solid var(--alinea-border-default);
 
   &:empty {
     display: none;

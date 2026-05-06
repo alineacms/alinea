@@ -88,7 +88,7 @@ function TypeExtensionHeader({
         <Button
           appearance="plain"
           intent="secondary"
-          size="square-petite"
+          size="icon-nav"
           className={styles.RichTextFieldBlock.fold()}
           onPress={onToggle}
         >

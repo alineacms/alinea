@@ -300,7 +300,7 @@ function RootButton({root, expanded = false}: RootButtonProps) {
   const [selected, setSelected] = useAtom(root.selected)
   const button = (
     <Button
-      size="square-petite"
+      size="icon-nav"
       appearance={selected ? 'active' : 'plain'}
       className={styles.SidebarTree.rootButton()}
       data-expanded={expanded || undefined}

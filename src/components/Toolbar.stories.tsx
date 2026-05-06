@@ -13,8 +13,8 @@ import {Toolbar, ToolbarGroup, ToolbarSeparator} from './Toolbar.js'
 export const Example = (args: any) => (
   <Toolbar aria-label="Text formatting" data-orientation="horizontal" {...args}>
     <ToolbarGroup>
-      <Button appearance="plain" size="square-petite" icon={IcRoundUndo} />
-      <Button appearance="plain" size="square-petite" icon={IcRoundRedo} />
+      <Button appearance="plain" size="icon-nav" icon={IcRoundUndo} />
+      <Button appearance="plain" size="icon-nav" icon={IcRoundRedo} />
     </ToolbarGroup>
 
     <ToolbarSeparator />
@@ -45,21 +45,9 @@ export const Example = (args: any) => (
     <ToolbarSeparator />
 
     <ToolbarGroup>
-      <Button
-        appearance="plain"
-        size="square-petite"
-        icon={IcRoundFormatBold}
-      />
-      <Button
-        appearance="plain"
-        size="square-petite"
-        icon={IcRoundFormatBold}
-      />
-      <Button
-        appearance="plain"
-        size="square-petite"
-        icon={IcRoundFormatBold}
-      />
+      <Button appearance="plain" size="icon-nav" icon={IcRoundFormatBold} />
+      <Button appearance="plain" size="icon-nav" icon={IcRoundFormatBold} />
+      <Button appearance="plain" size="icon-nav" icon={IcRoundFormatBold} />
     </ToolbarGroup>
 
     <ToolbarSeparator />
@@ -86,36 +74,20 @@ export const Example = (args: any) => (
         ))}
       </Menu>
 
-      <Button
-        appearance="plain"
-        size="square-petite"
-        icon={IcRoundFormatBold}
-      />
-      <Button
-        appearance="plain"
-        size="square-petite"
-        icon={IcRoundFormatBold}
-      />
+      <Button appearance="plain" size="icon-nav" icon={IcRoundFormatBold} />
+      <Button appearance="plain" size="icon-nav" icon={IcRoundFormatBold} />
     </ToolbarGroup>
 
     <ToolbarSeparator />
 
     <ToolbarGroup>
-      <Button
-        appearance="plain"
-        size="square-petite"
-        icon={IcRoundFormatBold}
-      />
+      <Button appearance="plain" size="icon-nav" icon={IcRoundFormatBold} />
     </ToolbarGroup>
 
     <ToolbarSeparator />
 
     <ToolbarGroup>
-      <Button
-        appearance="plain"
-        size="square-petite"
-        icon={IcRoundFormatBold}
-      />
+      <Button appearance="plain" size="icon-nav" icon={IcRoundFormatBold} />
     </ToolbarGroup>
   </Toolbar>
 )

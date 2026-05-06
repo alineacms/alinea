@@ -1,5 +1,6 @@
 import {
   Button,
+  Icon,
   Menu,
   MenuItem,
   MenuSeparator,
@@ -27,8 +28,7 @@ import type {
 import type {UrlReference} from '#/picker/url.js'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/react'
-import {memo, useEffect, useMemo, useReducer, type ReactNode} from 'react'
-import {IcRoundArrowDropDown} from '../../../icons.js'
+import {useMemo, type ReactNode} from 'react'
 import css from './RichTextToolbar.module.css'
 import {defaultToolbar} from './Toolbar.js'
 
@@ -96,20 +96,13 @@ export function createLinkHandler(
   }
 }
 
-export const RichTextToolbar = memo(function RichTextToolbar({
+export function RichTextToolbar({
   editor,
   enableTables,
   focusToggle,
   pickLink,
   toolbar
 }: RichTextToolbarProps) {
-  const [, forceUpdate] = useReducer(value => value + 1, 0)
-  useEffect(() => {
-    editor.on('transaction', forceUpdate)
-    return () => {
-      editor.off('transaction', forceUpdate)
-    }
-  }, [editor])
   const config = useMemo(
     () => toolbar ?? defaultToolbar(enableTables || false),
     [enableTables, toolbar]
@@ -143,7 +136,7 @@ export const RichTextToolbar = memo(function RichTextToolbar({
       </Toolbar>
     </div>
   )
-})
+}
 
 interface ToolbarButtonProps {
   button: ToolbarButton
@@ -157,14 +150,13 @@ function ToolbarButtonView({button, ctx}: ToolbarButtonProps) {
   const title = button.title ?? (typeof label === 'string' ? label : undefined)
   return (
     <Button
-      size="square-petite"
+      size="icon-nav"
       appearance={active ? 'active' : 'plain'}
       isDisabled={button.disabled?.(ctx)}
       onPress={() => button.onSelect(ctx)}
       aria-label={title}
-      className={styles.ToolbarButtonView()}
     >
-      {icon && <span className={styles.ToolbarButtonView.icon()}>{icon}</span>}
+      {icon && <Icon icon={icon} />}
       {!icon && label}
     </Button>
   )
@@ -184,20 +176,9 @@ function ToolbarMenuView({ctx, menu}: ToolbarMenuProps) {
     <Menu
       aria-label={textValue}
       label={
-        <Button
-          appearance="plain"
-          size="small"
-          className={styles.ToolbarMenuView.trigger()}
-        >
-          {icon && (
-            <span className={styles.ToolbarMenuView.icon()}>{icon}</span>
-          )}
-          {label && (
-            <span className={styles.ToolbarMenuView.text()}>{label}</span>
-          )}
-          <span className={styles.ToolbarMenuView.icon()}>
-            <IcRoundArrowDropDown />
-          </span>
+        <Button appearance="plain">
+          {icon && <Icon icon={icon} />}
+          {label}
         </Button>
       }
     >
@@ -260,12 +241,8 @@ function renderEntry(
         isDisabled={entry.disabled?.(ctx)}
         onAction={() => entry.onSelect(ctx)}
       >
-        <span className={styles.ToolbarMenuView.item()}>
-          {icon && (
-            <span className={styles.ToolbarMenuView.icon()}>{icon}</span>
-          )}
-          <span>{label ?? title}</span>
-        </span>
+        {icon && <Icon icon={icon} />}
+        <span>{label ?? title}</span>
       </MenuItem>
     )
   }

@@ -1,13 +1,15 @@
 import type {Editor} from '@tiptap/react'
-import type {ReactNode} from 'react'
+import type {ComponentType, ReactElement, ReactNode} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
 
 export interface RichTextCommand {
   (): ReturnType<Editor['chain']>
 }
 
+type IconType = ComponentType | ReactElement
+
 export interface ToolbarButton {
-  icon?: (ctx: RichTextToolbarContext) => ReactNode
+  icon?: (ctx: RichTextToolbarContext) => IconType
   label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
   title?: string
   disabled?: (ctx: RichTextToolbarContext) => boolean
@@ -16,7 +18,7 @@ export interface ToolbarButton {
 }
 
 export interface ToolbarMenu {
-  icon?: (ctx: RichTextToolbarContext) => ReactNode
+  icon?: (ctx: RichTextToolbarContext) => IconType
   label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
   items: ToolbarConfig | ((ctx: RichTextToolbarContext) => ToolbarConfig)
 }

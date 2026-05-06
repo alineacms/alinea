@@ -9,11 +9,7 @@ import {TextField} from './TextField.js'
 function CloseButton() {
   const state = use(OverlayTriggerStateContext)
   return (
-    <Button
-      size="square-petite"
-      appearance="plain"
-      onPress={() => state!.close()}
-    >
+    <Button size="icon-nav" appearance="plain" onPress={() => state!.close()}>
       <IcRoundClose data-slot="icon" />
     </Button>
   )

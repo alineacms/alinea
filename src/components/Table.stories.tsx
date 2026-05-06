@@ -106,17 +106,13 @@ export const Selection = () => (
                   <Cell nowrap>
                     <Button
                       type="button"
-                      size="square-petite"
+                      size="icon-nav"
                       appearance="outline"
                       style={{marginRight: 8}}
                     >
                       <Icon icon={IcRoundEdit} />
                     </Button>
-                    <Button
-                      type="button"
-                      size="square-petite"
-                      appearance="outline"
-                    >
+                    <Button type="button" size="icon-nav" appearance="outline">
                       <Icon icon={IcRoundDelete} />
                     </Button>
                   </Cell>

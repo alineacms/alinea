@@ -87,11 +87,7 @@ function ExplorerControlsButton({
 }: ExplorerControlsProps) {
   return (
     <DialogTrigger>
-      <Button
-        size="square-petite"
-        appearance="outline"
-        icon={IcRoundFilterList}
-      />
+      <Button size="icon-nav" appearance="outline" icon={IcRoundFilterList} />
       <Popover placement="bottom left">
         <ExplorerControlsPopover
           isMedia={isMedia}

@@ -1,56 +1,19 @@
 .RichTextToolbar {
   width: 100%;
+  height: 40px;
   min-width: 0;
+  display: flex;
+  align-items: center;
   overflow-x: auto;
-  padding: 4px 8px;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  scrollbar-width: none;
+  padding: 4px 12px;
+  background: var(--alinea-gray-0);
 }
 
 .RichTextToolbar-toolbar {
   flex-wrap: nowrap;
   min-width: max-content;
-}
-
-.ToolbarButtonView {
-  flex: 0 0 auto;
-}
-
-.ToolbarButtonView-icon {
-  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-}
-
-.ToolbarMenuView-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-}
-
-.ToolbarMenuView-text {
-  line-height: 1;
-}
-
-.ToolbarMenuView-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ToolbarMenuView-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-}
-
-@media (max-width: 768px) {
-  .RichTextToolbar-toolbar {
-    justify-content: flex-start;
-  }
 }
