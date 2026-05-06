@@ -21,6 +21,16 @@
   &:not(:first-child) {
     border-top: 1px solid var(--alinea-dashboard-surface-border);
   }
+
+  &:first-child {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+  }
+
+  &:last-child {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+  }
 }
 
 .SurfaceContent {
@@ -31,5 +41,15 @@
 
   &:not(:first-child) {
     border-top: 1px solid var(--alinea-dashboard-surface-border);
+  }
+
+  &:first-child {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+  }
+
+  &:last-child {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
   }
 }

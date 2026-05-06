@@ -15,8 +15,8 @@ export function TabsView({section}: TabsViewProps) {
   const visibleTypes = tabs.types.filter(type => !Type.isHidden(type))
   if (!visibleTypes.length) return null
   return (
-    <Surface>
-      <Tabs>
+    <Tabs>
+      <Surface>
         <SurfaceHeader>
           <TabList>
             {visibleTypes.map((type, i) => {
@@ -37,7 +37,7 @@ export function TabsView({section}: TabsViewProps) {
             </TabPanel>
           ))}
         </SurfaceContent>
-      </Tabs>
-    </Surface>
+      </Surface>
+    </Tabs>
   )
 }
