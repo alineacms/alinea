@@ -54,8 +54,8 @@
   --alinea-transition: 0.2s ease-out;
   --alinea-font-size-base: 0.8125rem;
 
-  --alinea-bg: light-dark(white, var(--alinea-gray-800));
-  --alinea-bg-muted: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
+  --alinea-bg: light-dark(var(--alinea-gray-0), var(--alinea-gray-900));
+  --alinea-bg-muted: light-dark(var(--alinea-gray-0), var(--alinea-gray-800));
   --alinea-fg: light-dark(var(--alinea-gray-800), var(--alinea-gray-200));
   --alinea-fg-muted: light-dark(var(--alinea-gray-600), var(--alinea-gray-400));
   --alinea-fg-subtle: light-dark(var(--alinea-gray-600), var(--alinea-gray-300));
@@ -73,14 +73,14 @@
 
   --alinea-input: light-dark(var(--alinea-gray-0), var(--alinea-gray-900));
   --alinea-input-disabled: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
-  --alinea-muted: light-dark(var(--alinea-gray-100), var(--alinea-gray-800));
+  --alinea-muted: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
   --alinea-muted-hover: light-dark(var(--alinea-gray-200), var(--alinea-gray-700));
   --alinea-muted-pressed: light-dark(var(--alinea-gray-300), var(--alinea-gray-600));
   --alinea-overlay: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
   --alinea-overlay-hover: light-dark(var(--alinea-gray-50), var(--alinea-gray-700));
   --alinea-header: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
 
-  --alinea-primary: light-dark(var(--alinea-blue-800), var(--alinea-blue-700));
+  --alinea-primary: light-dark(var(--alinea-blue-800), var(--alinea-blue-600));
   --alinea-primary-fg: var(--alinea-gray-50);
   --alinea-primary-hover: light-dark(var(--alinea-blue-700), var(--alinea-blue-600));
   --alinea-primary-pressed: light-dark(var(--alinea-blue-900), var(--alinea-blue-800));

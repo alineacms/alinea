@@ -18,8 +18,9 @@
   .Calendar-heading {
     flex: 1;
     margin: 0;
-    font-size: 1rem;
+    font-size: var(--alinea-font-size-base);
     text-align: center;
+    font-weight: 500;
   }
 
   .Calendar-button {
@@ -37,7 +38,7 @@
     outline-offset: 2px;
     transition: var(--alinea-transition);
     color: var(--alinea-fg-muted);
-    font-size: 18px;
+    font-size: var(--alinea-font-size-base);
 
     &[data-hovered],
     &[data-focus-visible] {
