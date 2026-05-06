@@ -46,6 +46,14 @@ const fixtureConnection: LocalConnection = {
   }
 }
 
+const sourceMutate = db.mutate.bind(db)
+
+db.mutate = async (...args) => {
+  console.log('Mutate called with', args)
+  await new Promise(resolve => setTimeout(resolve, 500))
+  return sourceMutate(...args)
+}
+
 const app = (
   <StrictMode>
     <App
