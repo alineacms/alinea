@@ -127,11 +127,7 @@ export function RichTextToolbar({
       onFocus={event => ctx.focusToggle(event.currentTarget)}
       onBlur={event => ctx.focusToggle(event.relatedTarget)}
     >
-      <Toolbar
-        aria-label="Text formatting"
-        className={styles.RichTextToolbar.toolbar()}
-        data-orientation="horizontal"
-      >
+      <Toolbar aria-label="Text formatting" data-orientation="horizontal">
         <ToolbarItems config={config} ctx={ctx} subMenu={false} />
       </Toolbar>
     </div>
@@ -156,7 +152,7 @@ function ToolbarButtonView({button, ctx}: ToolbarButtonProps) {
       onPress={() => button.onSelect(ctx)}
       aria-label={title}
     >
-      {icon && <Icon icon={icon} />}
+      {icon && <Icon icon={icon} data-slot="icon" />}
       {!icon && label}
     </Button>
   )
@@ -177,7 +173,7 @@ function ToolbarMenuView({ctx, menu}: ToolbarMenuProps) {
       aria-label={textValue}
       label={
         <Button appearance="plain">
-          {icon && <Icon icon={icon} />}
+          {icon && <Icon icon={icon} data-slot="icon" />}
           {label}
         </Button>
       }
@@ -241,7 +237,7 @@ function renderEntry(
         isDisabled={entry.disabled?.(ctx)}
         onAction={() => entry.onSelect(ctx)}
       >
-        {icon && <Icon icon={icon} />}
+        {icon && <Icon icon={icon} data-slot="icon" />}
         <span>{label ?? title}</span>
       </MenuItem>
     )

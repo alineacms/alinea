@@ -1,4 +1,26 @@
 .Button {
+  color: var(--alinea-button-color);
+  font: inherit;
+  font-size: var(--alinea-font-size-base);
+  line-height: 24px;
+  text-decoration: none;
+  text-align: left;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  vertical-align: middle;
+  background-color: var(--alinea-button-bg);
+  padding: 3px 8px;
+  border-radius: 0.5rem;
+  border: 1px solid var(--alinea-button-border);
+  transition: var(--alinea-transition);
+  transition-property: background-color, border-color, color;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+
   --alinea-button-focus-outline: light-dark(var(--alinea-blue-800), var(--alinea-blue-400));
   --alinea-button-focus-outline-plain: var(--alinea-muted);
 
@@ -111,27 +133,6 @@
   --alinea-button-border: var(--alinea-button-default-border);
   --alinea-button-hovered: var(--alinea-button-default-background-hover);
 
-  color: var(--alinea-button-color);
-  font: inherit;
-  font-size: var(--alinea-font-size-base);
-  line-height: 24px;
-  text-decoration: none;
-  text-align: left;
-  appearance: none;
-  cursor: pointer;
-  outline: none;
-  position: relative;
-  vertical-align: middle;
-  background-color: var(--alinea-button-bg);
-  padding: 3px 10px;
-  border-radius: 0.5rem;
-  border: 1px solid var(--alinea-button-border);
-  transition: var(--alinea-transition);
-  transition-property: background-color, border-color, color;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
   &[data-disabled] {
     cursor: not-allowed;
     pointer-events: none;
@@ -188,7 +189,7 @@
   [data-slot='icon'] {
     flex-shrink: 0;
     display: block;
-    font-size: 20px;
+    font-size: 16px;
   }
 
   &[data-size='icon'] {

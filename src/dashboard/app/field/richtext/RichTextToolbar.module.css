@@ -11,9 +11,3 @@
   padding: 4px 12px;
   background: var(--alinea-gray-0);
 }
-
-.RichTextToolbar-toolbar {
-  flex-wrap: nowrap;
-  min-width: max-content;
-  align-items: center;
-}
