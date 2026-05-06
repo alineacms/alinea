@@ -43,7 +43,6 @@ interface MetadataPreviewProps {
   origin?: string | undefined
 }
 function MetadataPreview({metadata, origin}: MetadataPreviewProps) {
-  console.log(metadata)
   if (!metadata)
     return (
       <Label

@@ -1,6 +1,5 @@
 import {TextField} from '#/components.js'
 import {isSeparator, slugify} from '#/core/util/Slugs.js'
-import {IcRoundLink} from '#/dashboard/icons.js'
 import {
   useField,
   useFieldError,
@@ -80,7 +79,6 @@ export function PathInput({
     <TextField
       description={description}
       errorMessage={errorMessage}
-      icon={<IcRoundLink />}
       isInvalid={isInvalid}
       isReadOnly={isReadOnly}
       isRequired={isRequired}
