@@ -1,9 +1,12 @@
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
 import type {LocalConnection} from './src/core/Connection.js'
+import {MemorySource} from './src/core/source/MemorySource.js'
 import {localUser} from './src/core/User.js'
 import {App} from './src/dashboard/App.js'
 import {views} from './src/dashboard/app/field/views.js'
+import {DashboardWorker} from './src/dashboard/boot/DashboardWorker.js'
+import {WorkerDB} from './src/dashboard/boot/WorkerDB.js'
 import {cms, db} from './src/dashboard/fixture/cms.ts?alinea'
 
 const elem = document.getElementById('root')!
@@ -49,16 +52,21 @@ const fixtureConnection: LocalConnection = {
 const sourceMutate = db.mutate.bind(db)
 
 db.mutate = async (...args) => {
-  console.log('Mutate called with', args)
-  await new Promise(resolve => setTimeout(resolve, 500))
+  console.log('Remote mutate called with', args)
+  await new Promise(resolve => setTimeout(resolve, 5000))
+  if (Math.random() < 0.5) throw new Error('Random fixture mutation failure')
   return sourceMutate(...args)
 }
+
+const worker = new DashboardWorker(new MemorySource())
+await worker.load('frontend-fixture', cms.config, fixtureConnection)
+const graph = new WorkerDB(cms.config, worker, fixtureConnection, worker)
 
 const app = (
   <StrictMode>
     <App
-      graph={db}
-      events={db.index}
+      graph={graph}
+      events={worker}
       config={cms.config}
       client={fixtureConnection}
       views={views}

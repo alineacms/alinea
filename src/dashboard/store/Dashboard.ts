@@ -42,6 +42,10 @@ import type {
   DroppableCollectionReorderEvent,
   Key
 } from 'react-aria-components'
+import {
+  MutationQueueEvent,
+  type MutationQueueEntry
+} from '../boot/MutationQueueEvent.js'
 import {IcRoundDescription} from '../icons.js'
 
 export interface DashboardRoute {
@@ -129,6 +133,23 @@ type FocusedItem =
   | {missingRoot: string; root: DashboardRoot}
   | null
 
+export interface DashboardMutationQueue {
+  entries: Array<MutationQueueEntry>
+  pending: number
+  syncing: number
+  failed: number
+  blocked: number
+  error?: string
+}
+
+interface MutationQueueRetry {
+  retryMutationQueue(): Promise<void>
+}
+
+interface MutationQueueDiscard {
+  discardMutationQueue(): void
+}
+
 export type DashboardTheme = 'system' | 'light' | 'dark'
 
 export class MissingEntryError extends Error {
@@ -166,6 +187,13 @@ export class Dashboard {
   #userOverride = atom<User | null | undefined>()
   #authRevision = atom(0)
   #authState = atom<DashboardAuthState>({status: 'loading'})
+  #mutationQueue = atom<DashboardMutationQueue>({
+    entries: [],
+    pending: 0,
+    syncing: 0,
+    failed: 0,
+    blocked: 0
+  })
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
     'system',
@@ -364,6 +392,39 @@ export class Dashboard {
   })
 
   authRevision = atom(get => get(this.#authRevision))
+
+  mutationQueue = Object.assign(
+    atom(
+      get => get(this.#mutationQueue),
+      (get, set) => {
+        const events = get(this.events)
+        const listen = (event: Event) => {
+          if (event instanceof MutationQueueEvent) {
+            startTransition(() =>
+              set(this.#mutationQueue, mutationQueueState(event.entries))
+            )
+          }
+        }
+        events.addEventListener(MutationQueueEvent.type, listen)
+        return () => {
+          events.removeEventListener(MutationQueueEvent.type, listen)
+        }
+      }
+    ),
+    {onMount: (init: () => void) => init()}
+  )
+
+  retryMutationQueue = atom(null, async get => {
+    const db = get(this.db)
+    const retry = (db as Partial<MutationQueueRetry>).retryMutationQueue
+    if (retry) await retry.call(db)
+  })
+
+  discardMutationQueue = atom(null, get => {
+    const db = get(this.db)
+    const discard = (db as Partial<MutationQueueDiscard>).discardMutationQueue
+    if (discard) discard.call(db)
+  })
 
   canLogout = atom(get => {
     if (!get(this.authRequired)) return false
@@ -2350,6 +2411,19 @@ function isPromiseLike<Value>(
     'then' in value &&
     typeof value.then === 'function'
   )
+}
+
+function mutationQueueState(
+  entries: Array<MutationQueueEntry>
+): DashboardMutationQueue {
+  return {
+    entries,
+    pending: entries.filter(entry => entry.status === 'pending').length,
+    syncing: entries.filter(entry => entry.status === 'syncing').length,
+    failed: entries.filter(entry => entry.status === 'failed').length,
+    blocked: entries.filter(entry => entry.status === 'blocked').length,
+    error: entries.find(entry => entry.status === 'failed')?.error
+  }
 }
 
 function appendFrom(url: string): string {

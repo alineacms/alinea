@@ -1,7 +1,8 @@
-import {Button, Icon, Menu, MenuItem, ToggleButton} from '#/components.js'
+import {Button, Menu, MenuItem, ToggleButton} from '#/components.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
+import {useTransition} from 'react'
 import {
   IcRoundCheck,
   IcRoundMoreVert,
@@ -105,6 +106,13 @@ function EntryHeaderActions({
   const access = policy.get(activeVersion)
   const canDelete = activeVersion.seeded === null
   const isMediaFile = type.type === MediaFile
+  const [isPending, startTransition] = useTransition()
+
+  function runAction(action: () => void | Promise<void>) {
+    startTransition(async () => {
+      await action()
+    })
+  }
 
   async function deleteAndNavigate() {
     await deleteEntry()
@@ -123,7 +131,7 @@ function EntryHeaderActions({
     if (typeof extension === 'string') input.accept = extension
     input.onchange = () => {
       const file = input.files?.[0]
-      if (file) replaceFile(file)
+      if (file) runAction(() => replaceFile(file))
     }
     input.click()
   }
@@ -134,20 +142,28 @@ function EntryHeaderActions({
       <Button
         icon={IcRoundSave}
         intent="primary"
-        onPress={() => saveTranslation(node)}
+        isDisabled={isPending}
+        isPending={isPending}
+        onPress={() => runAction(() => saveTranslation(node))}
       >
         Save translation
       </Button>
     ) : untranslated ? null : isDirty ? (
       <>
-        <Button appearance="plain" onPress={() => reset()}>
+        <Button
+          appearance="plain"
+          isDisabled={isPending}
+          onPress={() => reset()}
+        >
           Discard my changes
         </Button>
         {access.publish && (
           <Button
             icon={IcRoundCheck}
             intent={saveDraftVisible ? 'secondary' : 'primary'}
-            onPress={() => publishEdits(node)}
+            isDisabled={isPending}
+            isPending={isPending}
+            onPress={() => runAction(() => publishEdits(node))}
           >
             Publish
           </Button>
@@ -156,7 +172,9 @@ function EntryHeaderActions({
           <Button
             icon={IcRoundSave}
             intent="primary"
-            onPress={() => saveDraft(node)}
+            isDisabled={isPending}
+            isPending={isPending}
+            onPress={() => runAction(() => saveDraft(node))}
           >
             Save draft
           </Button>
@@ -166,7 +184,9 @@ function EntryHeaderActions({
       <Button
         icon={IcRoundCheck}
         intent="primary"
-        onPress={() => publishDraft()}
+        isDisabled={isPending}
+        isPending={isPending}
+        onPress={() => runAction(publishDraft)}
       >
         Publish
       </Button>
@@ -263,9 +283,10 @@ function EntryHeaderActions({
               appearance="outline"
               intent="secondary"
               aria-label="More actions"
-            >
-              <Icon icon={IcRoundMoreVert} />
-            </Button>
+              icon={IcRoundMoreVert}
+              isDisabled={isPending}
+              isPending={isPending}
+            />
           }
           aria-label="More actions"
           popoverProps={{placement: 'bottom end'}}
@@ -275,8 +296,9 @@ function EntryHeaderActions({
               key={item.id}
               id={item.id}
               textValue={item.label}
+              isDisabled={isPending}
               onAction={() => {
-                void item.action()
+                runAction(item.action)
               }}
             >
               {item.label}

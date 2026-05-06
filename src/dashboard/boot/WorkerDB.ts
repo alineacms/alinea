@@ -39,6 +39,14 @@ export class WorkerDB extends WriteableGraph {
     return this.#worker.sync()
   }
 
+  retryMutationQueue(): Promise<void> {
+    return this.#worker.retryQueue()
+  }
+
+  discardMutationQueue(): void {
+    this.#worker.discardQueue()
+  }
+
   prepareUpload(file: string): Promise<UploadResponse> {
     return this.#client.prepareUpload(file)
   }
