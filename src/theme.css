@@ -54,8 +54,8 @@
   --alinea-transition: 0.2s ease-out;
   --alinea-font-size-base: 0.8125rem;
 
-  --alinea-bg: light-dark(var(--alinea-gray-0), var(--alinea-gray-900));
-  --alinea-bg-muted: light-dark(var(--alinea-gray-0), var(--alinea-gray-800));
+  --alinea-bg: light-dark(var(--alinea-gray-0), var(--alinea-gray-800));
+  --alinea-bg-muted: light-dark(var(--alinea-gray-0), var(--alinea-gray-900));
   --alinea-fg: light-dark(var(--alinea-gray-800), var(--alinea-gray-200));
   --alinea-fg-muted: light-dark(var(--alinea-gray-600), var(--alinea-gray-400));
   --alinea-fg-subtle: light-dark(var(--alinea-gray-600), var(--alinea-gray-300));
