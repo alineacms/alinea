@@ -52,9 +52,7 @@ const fixtureConnection: LocalConnection = {
 const sourceMutate = db.mutate.bind(db)
 
 db.mutate = async (...args) => {
-  console.log('Remote mutate called with', args)
-  await new Promise(resolve => setTimeout(resolve, 5000))
-  if (Math.random() < 0.5) throw new Error('Random fixture mutation failure')
+  console.log('Mutate called with', args)
   return sourceMutate(...args)
 }
 

@@ -151,6 +151,7 @@ export class DashboardWorker extends EventTarget {
         this.#emitQueue()
         try {
           await db.syncWith(client)
+          item.sha = undefined
         } catch {}
       }
     })

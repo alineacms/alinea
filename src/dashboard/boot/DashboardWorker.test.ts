@@ -1,10 +1,12 @@
-import {suite} from '@alinea/suite'
 import {createCMS} from '#/core.js'
-import {Config, Field} from '#/index.js'
+import {Entry} from '#/core/Entry.js'
+import {getScope} from '#/core/Scope.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {TestDB} from '#/core/db/TestDB.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
+import {Config, Field} from '#/index.js'
+import {suite} from '@alinea/suite'
 import {DashboardWorker} from './DashboardWorker.js'
 import {
   MutationQueueEvent,
@@ -37,10 +39,16 @@ class TestConnection extends TestDB {
   failGetTree: Error | undefined
   mutateDelay: Promise<void> | undefined
   forceDifferentSha = false
+  failMutateOnce: Error | undefined
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     this.mutateCalls += 1
     await this.mutateDelay
+    if (this.failMutateOnce) {
+      const error = this.failMutateOnce
+      this.failMutateOnce = undefined
+      throw error
+    }
     if (this.failMutate) throw this.failMutate
     const result = await super.mutate(mutations)
     return this.forceDifferentSha ? {sha: 'different'} : result
@@ -104,7 +112,9 @@ async function waitForQueue(
 test('DashboardWorker serializes local queue mutations', async () => {
   const {worker, connection} = await createWorker()
   const first = worker.queue('first', [createPageMutation('page-1', 'Page 1')])
-  const second = worker.queue('second', [createPageMutation('page-2', 'Page 2')])
+  const second = worker.queue('second', [
+    createPageMutation('page-2', 'Page 2')
+  ])
 
   const results = await Promise.allSettled([first, second])
 
@@ -145,4 +155,29 @@ test('DashboardWorker keeps queue item failed when post-mutation resync fails', 
   test.is(entries.length, 1)
   test.is(entries[0].status, 'failed')
   test.is(entries[0].error, 'Remote sync failed')
+})
+
+test('DashboardWorker reapplies local mutation after failed remote mutation resyncs local DB', async () => {
+  const {worker, connection} = await createWorker()
+  connection.failMutateOnce = new Error('Remote mutation failed')
+
+  await worker.queue('retry-after-resync', [
+    createPageMutation('page-retry-after-resync', 'Retry after resync')
+  ])
+  await waitForQueue(worker, entries =>
+    entries.some(entry => entry.status === 'failed')
+  )
+
+  await worker.retryQueue()
+  await waitForQueue(worker, entries => entries.length === 0)
+  const localEntry = await worker.resolve(
+    getScope(cms.config).stringify({
+      select: {title: Entry.title},
+      id: 'page-retry-after-resync',
+      status: 'preferPublished'
+    })
+  )
+
+  test.equal(localEntry, [{title: 'Retry after resync'}])
+  test.is(connection.mutateCalls, 2)
 })
