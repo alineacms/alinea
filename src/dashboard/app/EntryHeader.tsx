@@ -103,12 +103,15 @@ function EntryHeaderActions({
   const publishArchived = useSetAtom(entry.publishArchived)
   const deleteEntry = useSetAtom(entry.deleteEntry)
   const replaceFile = useSetAtom(entry.replaceFile)
+  const mutationQueue = useAtomValue(entry.dashboard.mutationQueue)
   const access = policy.get(activeVersion)
   const canDelete = activeVersion.seeded === null
   const isMediaFile = type.type === MediaFile
   const [isPending, startTransition] = useTransition()
+  const isActionDisabled = isPending || mutationQueue.failed > 0
 
   function runAction(action: () => void | Promise<void>) {
+    if (mutationQueue.failed > 0) return
     startTransition(async () => {
       await action()
     })
@@ -142,7 +145,7 @@ function EntryHeaderActions({
       <Button
         icon={IcRoundSave}
         intent="primary"
-        isDisabled={isPending}
+        isDisabled={isActionDisabled}
         isPending={isPending}
         onPress={() => runAction(() => saveTranslation(node))}
       >
@@ -161,7 +164,7 @@ function EntryHeaderActions({
           <Button
             icon={IcRoundCheck}
             intent={saveDraftVisible ? 'secondary' : 'primary'}
-            isDisabled={isPending}
+            isDisabled={isActionDisabled}
             isPending={isPending}
             onPress={() => runAction(() => publishEdits(node))}
           >
@@ -172,7 +175,7 @@ function EntryHeaderActions({
           <Button
             icon={IcRoundSave}
             intent="primary"
-            isDisabled={isPending}
+            isDisabled={isActionDisabled}
             isPending={isPending}
             onPress={() => runAction(() => saveDraft(node))}
           >
@@ -184,7 +187,7 @@ function EntryHeaderActions({
       <Button
         icon={IcRoundCheck}
         intent="primary"
-        isDisabled={isPending}
+        isDisabled={isActionDisabled}
         isPending={isPending}
         onPress={() => runAction(publishDraft)}
       >
@@ -284,7 +287,7 @@ function EntryHeaderActions({
               intent="secondary"
               aria-label="More actions"
               icon={IcRoundMoreVert}
-              isDisabled={isPending}
+              isDisabled={isActionDisabled}
               isPending={isPending}
             />
           }
@@ -296,7 +299,7 @@ function EntryHeaderActions({
               key={item.id}
               id={item.id}
               textValue={item.label}
-              isDisabled={isPending}
+              isDisabled={isActionDisabled}
               onAction={() => {
                 runAction(item.action)
               }}

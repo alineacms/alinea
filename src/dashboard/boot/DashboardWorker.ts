@@ -1,5 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
+import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {getScope} from '#/core/Scope.js'
 import {trigger} from '#/core/Trigger.js'
@@ -18,6 +19,7 @@ const remote = pLimit(1)
 
 interface MutationQueueItem extends MutationQueueEntry {
   mutations: Array<Mutation>
+  mutationSummaries: Array<MutationQueueMutation>
   attempt: number
   sha?: string
 }
@@ -56,15 +58,19 @@ export class DashboardWorker extends EventTarget {
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
     const db = await this.db
+    if (this.#blocked) {
+      throw new Error('Resolve the sync error before making more changes')
+    }
+    const mutationSummaries = await summarizeMutations(db, mutations)
     const item: MutationQueueItem = {
       id,
       mutations,
-      status: this.#blocked ? 'blocked' : 'pending',
+      mutationSummaries,
+      status: 'pending',
       attempt: 0
     }
     this.#queue.push(item)
     this.#emitQueue()
-    if (this.#blocked) return db.sha
     try {
       await db.mutate(mutations)
       item.sha = db.sha
@@ -88,8 +94,18 @@ export class DashboardWorker extends EventTarget {
       item.attempt += 1
       item.status = 'pending'
       item.error = undefined
-      await db.mutate(item.mutations)
-      item.sha = db.sha
+      if (!item.sha) {
+        try {
+          await db.mutate(item.mutations)
+          item.sha = db.sha
+        } catch (error) {
+          this.#blocked = true
+          item.status = 'failed'
+          item.error = errorMessage(error)
+          this.#emitQueue()
+          throw error
+        }
+      }
     }
     this.#emitQueue()
     for (const item of this.#queue) this.#flush(item)
@@ -135,10 +151,10 @@ export class DashboardWorker extends EventTarget {
   #emitQueue() {
     this.dispatchEvent(
       new MutationQueueEvent(
-        this.#queue.map(({id, status, mutations, error}) => ({
+        this.#queue.map(({id, status, mutationSummaries, error}) => ({
           id,
           status,
-          mutations: mutations.map(mutationSummary),
+          mutations: mutationSummaries,
           error
         }))
       )
@@ -184,20 +200,64 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-function mutationSummary(mutation: Mutation): MutationQueueMutation {
+interface MutationTitleRow {
+  id: string
+  locale: string | null
+  status: string
+  title: string
+}
+
+async function summarizeMutations(
+  db: LocalDB,
+  mutations: Array<Mutation>
+): Promise<Array<MutationQueueMutation>> {
+  const targets = mutations.flatMap(mutation =>
+    'id' in mutation && mutation.id ? [mutation.id] : []
+  )
+  const rows =
+    targets.length > 0
+      ? await db.find({
+          select: {
+            id: Entry.id,
+            locale: Entry.locale,
+            status: Entry.status,
+            title: Entry.title
+          },
+          id: {in: targets},
+          status: 'all'
+        })
+      : []
+  return mutations.map(mutation =>
+    mutationSummary(mutation, rows as Array<MutationTitleRow>)
+  )
+}
+
+function mutationSummary(
+  mutation: Mutation,
+  rows: Array<MutationTitleRow>
+): MutationQueueMutation {
   switch (mutation.op) {
     case 'create':
       return {
         op: mutation.op,
         target: mutation.id,
+        title: titleFromData(mutation.data) ?? titleForMutation(mutation, rows),
         locale: mutation.locale,
         status: mutation.status
       }
     case 'update':
+      return {
+        op: mutation.op,
+        target: mutation.id,
+        title: titleFromData(mutation.set) ?? titleForMutation(mutation, rows),
+        locale: mutation.locale,
+        status: mutation.status
+      }
     case 'remove':
       return {
         op: mutation.op,
         target: mutation.id,
+        title: titleForMutation(mutation, rows),
         locale: mutation.locale,
         status: mutation.status
       }
@@ -205,6 +265,7 @@ function mutationSummary(mutation: Mutation): MutationQueueMutation {
       return {
         op: mutation.op,
         target: mutation.id,
+        title: titleForMutation(mutation, rows),
         locale: mutation.locale,
         status: mutation.status
       }
@@ -213,22 +274,51 @@ function mutationSummary(mutation: Mutation): MutationQueueMutation {
       return {
         op: mutation.op,
         target: mutation.id,
+        title: titleForMutation(mutation, rows),
         locale: mutation.locale
       }
     case 'move':
       return {
         op: mutation.op,
-        target: mutation.id
+        target: mutation.id,
+        title: titleForMutation(mutation, rows)
       }
     case 'uploadFile':
       return {
         op: mutation.op,
-        target: mutation.location
+        target: mutation.location,
+        title: fileTitle(mutation.location)
       }
     case 'removeFile':
       return {
         op: mutation.op,
-        target: mutation.location
+        target: mutation.location,
+        title: fileTitle(mutation.location)
       }
   }
+}
+
+function titleFromData(data: Record<string, unknown>): string | undefined {
+  return typeof data.title === 'string' && data.title.trim()
+    ? data.title.trim()
+    : undefined
+}
+
+function titleForMutation(
+  mutation: {id?: string; locale?: string | null; status?: string},
+  rows: Array<MutationTitleRow>
+): string | undefined {
+  if (!mutation.id) return undefined
+  const exact = rows.find(
+    row =>
+      row.id === mutation.id &&
+      (!('locale' in mutation) || row.locale === mutation.locale) &&
+      (!('status' in mutation) || row.status === mutation.status)
+  )
+  if (exact) return exact.title
+  return rows.find(row => row.id === mutation.id)?.title
+}
+
+function fileTitle(location: string): string {
+  return location.split('/').pop() || location
 }

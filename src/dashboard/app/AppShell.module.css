@@ -5,22 +5,21 @@
 }
 
 .AppShell-footer {
-  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-top: 1px solid var(--alinea-border);
 }
 
 .AppShell-mutationQueue {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 8px 12px;
-  width: 100%;
-  justify-content: flex-start;
   border: 0;
-  border-top: 1px solid var(--alinea-border);
-  border-radius: 0;
+  flex: 0 0 auto;
   color: var(--alinea-fg-muted);
-  font-size: 12px;
+}
+
+.AppShell-mutationQueue.is-syncing {
+  color: var(--alinea-fg);
 }
 
 .AppShell-mutationQueue.is-failed {
@@ -31,21 +30,6 @@
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
-}
-
-.AppShell-mutationQueue-errorIcon {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex: 0 0 auto;
-  background: currentColor;
-}
-
-.AppShell-mutationQueue-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .AppShell-mutationQueue-popover {
@@ -71,6 +55,13 @@
   margin: 0;
   font-size: 13px;
   font-weight: 700;
+}
+
+.AppShell-mutationQueue-popover-message {
+  margin: 0;
+  padding: 12px;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
 }
 
 .AppShell-mutationQueue-popover-actions {
@@ -111,14 +102,14 @@
   gap: 12px;
 }
 
-.AppShell-mutationQueue-popover-item-id {
+.AppShell-mutationQueue-popover-item-title {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--alinea-mono-font);
   color: var(--alinea-fg);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .AppShell-mutationQueue-popover-item-status {
@@ -162,13 +153,13 @@
 
 .AppShell-profile {
   border: 0;
-  border-top: 1px solid var(--alinea-border);
   border-radius: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 4px 8px 8px;
 }
 
 .AppShell-profile-identity {

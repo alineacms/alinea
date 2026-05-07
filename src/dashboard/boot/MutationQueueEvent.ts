@@ -8,6 +8,7 @@ export interface MutationQueueEntry {
 export interface MutationQueueMutation {
   op: string
   target?: string
+  title?: string
   locale?: string | null
   status?: string
 }

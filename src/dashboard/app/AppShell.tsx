@@ -4,20 +4,23 @@ import {
   Menu,
   MenuItem,
   Popover,
-  ProgressCircle
+  ProgressCircle,
+  Tooltip
 } from '#/components.js'
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {Suspense, useMemo} from 'react'
+import {Suspense, useEffect, useMemo, useRef, useState} from 'react'
 import {
   IcBaselineAccountCircle,
   IcRoundBrightness2,
+  IcRoundCheck,
   IcRoundDesktopWindows,
   IcRoundLogout,
   IcRoundMoreHoriz,
   IcRoundUnfoldMore,
+  IcRoundWarning,
   IcRoundWbSunny
 } from '../icons.js'
 import {DashboardScopeInternal} from '../store.js'
@@ -82,31 +85,52 @@ function MutationQueueStatus({dashboard}: AppShellProps) {
   const queue = useAtomValue(dashboard.mutationQueue)
   const retry = useSetAtom(dashboard.retryMutationQueue)
   const discard = useSetAtom(dashboard.discardMutationQueue)
-  if (queue.entries.length === 0) return null
+  const [isOpen, setIsOpen] = useState(false)
+  const wasFailed = useRef(false)
   const isFailed = queue.failed > 0
-  const label = isFailed ? 'Could not sync changes' : 'Syncing...'
+  const isSyncing = queue.entries.length > 0
+  const label = isFailed
+    ? 'Sync failed'
+    : isSyncing
+      ? 'Syncing changes'
+      : 'Content is up to date'
+
+  useEffect(() => {
+    if (isFailed && !wasFailed.current) setIsOpen(true)
+    wasFailed.current = isFailed
+  }, [isFailed])
+
   return (
-    <DialogTrigger>
-      <Button
-        appearance="plain"
-        className={styles.AppShell.mutationQueue({failed: isFailed})}
-        aria-label={label}
-      >
-        {!isFailed && (
-          <ProgressCircle
-            isIndeterminate
-            aria-label="Saving changes"
-            className={styles.AppShell.mutationQueue.icon()}
-          />
-        )}
-        {isFailed && (
-          <span
-            aria-hidden="true"
-            className={styles.AppShell.mutationQueue.errorIcon()}
-          />
-        )}
-        <span className={styles.AppShell.mutationQueue.text()}>{label}</span>
-      </Button>
+    <DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
+      <Tooltip placement="top" delay={300} tooltip={label}>
+        <Button
+          size="icon"
+          appearance="plain"
+          className={styles.AppShell.mutationQueue({
+            failed: isFailed,
+            syncing: isSyncing
+          })}
+          aria-label={label}
+        >
+          {isSyncing && !isFailed ? (
+            <ProgressCircle
+              isIndeterminate
+              aria-label="Syncing changes"
+              className={styles.AppShell.mutationQueue.icon()}
+            />
+          ) : isFailed ? (
+            <IcRoundWarning
+              aria-hidden="true"
+              className={styles.AppShell.mutationQueue.icon()}
+            />
+          ) : (
+            <IcRoundCheck
+              aria-hidden="true"
+              className={styles.AppShell.mutationQueue.icon()}
+            />
+          )}
+        </Button>
+      </Tooltip>
       <Popover
         className={styles.AppShell.mutationQueue.popover.surface()}
         placement="top"
@@ -144,6 +168,11 @@ function MutationQueueStatus({dashboard}: AppShellProps) {
               </div>
             )}
           </div>
+          {queue.entries.length === 0 && (
+            <p className={styles.AppShell.mutationQueue.popover.message()}>
+              All changes are synced.
+            </p>
+          )}
           {queue.error && (
             <p className={styles.AppShell.mutationQueue.popover.error()}>
               {queue.error}
@@ -159,9 +188,9 @@ function MutationQueueStatus({dashboard}: AppShellProps) {
                   className={styles.AppShell.mutationQueue.popover.item.main()}
                 >
                   <span
-                    className={styles.AppShell.mutationQueue.popover.item.id()}
+                    className={styles.AppShell.mutationQueue.popover.item.title()}
                   >
-                    {shortMutationId(entry.id)}
+                    {formatMutationQueueTitle(entry.mutations)}
                   </span>
                   <span
                     className={styles.AppShell.mutationQueue.popover.item.status(
@@ -201,10 +230,6 @@ function MutationQueueStatus({dashboard}: AppShellProps) {
   )
 }
 
-function shortMutationId(id: string) {
-  return id.slice(-7)
-}
-
 function formatMutationStatus(status: string) {
   switch (status) {
     case 'pending':
@@ -222,14 +247,66 @@ function formatMutationStatus(status: string) {
 
 function formatMutation(mutation: {
   op: string
-  target?: string
+  title?: string
   locale?: string | null
   status?: string
 }) {
-  const target = mutation.target ? ` ${mutation.target.slice(-7)}` : ''
-  const status = mutation.status ? ` (${mutation.status})` : ''
-  const locale = mutation.locale ? ` [${mutation.locale}]` : ''
-  return `${mutation.op}${target}${status}${locale}`
+  const status = mutation.status ? ` ${formatEntryStatus(mutation.status)}` : ''
+  const locale = mutation.locale ? ` (${mutation.locale})` : ''
+  switch (mutation.op) {
+    case 'create':
+      return `Saved${status}${locale}`
+    case 'update':
+      return `Updated${status}${locale}`
+    case 'remove':
+      return `Deleted${status}${locale}`
+    case 'publish':
+      return `Published${status}${locale}`
+    case 'unpublish':
+      return `Unpublished${locale}`
+    case 'archive':
+      return `Archived${locale}`
+    case 'move':
+      return 'Moved'
+    case 'uploadFile':
+      return 'Uploaded file'
+    case 'removeFile':
+      return 'Removed file'
+    default:
+      return mutation.op
+  }
+}
+
+function formatMutationQueueTitle(
+  mutations: Array<{
+    title?: string
+    op: string
+  }>
+) {
+  const titles = [
+    ...new Set(mutations.map(mutation => mutation.title).filter(isString))
+  ]
+  if (titles.length === 1) return titles[0]
+  if (titles.length > 1) return `${titles.length} entries`
+  if (mutations.some(mutation => mutation.op === 'uploadFile')) return 'File'
+  return 'Content changes'
+}
+
+function formatEntryStatus(status: string) {
+  switch (status) {
+    case 'draft':
+      return 'draft'
+    case 'published':
+      return 'published version'
+    case 'archived':
+      return 'archived version'
+    default:
+      return status
+  }
+}
+
+function isString(value: string | undefined): value is string {
+  return typeof value === 'string'
 }
 
 function ProfileMenu({dashboard}: AppShellProps) {
