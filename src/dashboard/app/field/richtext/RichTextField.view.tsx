@@ -2,16 +2,9 @@ import {Button, Icon, Label} from '#/components.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {createId} from '#/core/Id.js'
 import {Schema} from '#/core/Schema.js'
-import {
-  BlockNode,
-  ElementNode,
-  Mark,
-  Node,
-  TextDoc,
-  TextNode
-} from '#/core/TextDoc.js'
+import {BlockNode, Node, TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
-import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {entries, values} from '#/core/util/Objects.js'
 import {
   IcBaselineContentCopy,
   IcRoundClose,
@@ -31,14 +24,13 @@ import {Node as TipTapNode} from '@tiptap/core'
 import type {Editor as TipTapEditor} from '@tiptap/react'
 import {
   EditorContent,
-  JSONContent,
   mergeAttributes,
   NodeViewWrapper,
   ReactNodeViewRenderer,
   useEditor
 } from '@tiptap/react'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {memo, useCallback, useMemo, useRef, useState} from 'react'
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {NodeEditor} from '../../Editor.js'
 import {
@@ -50,15 +42,25 @@ import {
 import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
+import {
+  decodeRichTextBlock,
+  encodeRichTextBlock,
+  richTextBlockAttribute,
+  richTextBlockAttributes
+} from './RichTextBlockCodec.js'
+import {cacheRichTextBlocks, fromContent, toContent} from './RichTextContent.js'
 import css from './RichTextField.module.css'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
 
-type NodeViewProps = {
+interface NodeViewProps {
   editor: TipTapEditor
   getPos: () => number | undefined
-  node: {attrs: {[BlockNode.id]?: string}; nodeSize: number}
+  node: {
+    attrs: {[BlockNode.id]?: string}
+    nodeSize: number
+  }
   deleteNode: () => void
 }
 
@@ -161,8 +163,32 @@ function typeExtension(
     const rowNode = useAtomValue(rowNodeAtom) as
       | ReactiveNode<object>
       | undefined
+    const rowValueAtom = useMemo(() => {
+      return atom(get => {
+        if (!rowNode) return
+        return get(rowNode.value) as Node
+      })
+    }, [rowNode])
+    const rowValue = useAtomValue(rowValueAtom)
+    useEffect(() => {
+      if (!isBlockNode(rowValue)) return
+      cacheRichTextBlocks([rowValue])
+      const pos = getPos()
+      if (typeof pos !== 'number') return
+      const editorNode = editor.view.state.doc.nodeAt(pos)
+      if (!editorNode || editorNode.type.name !== name) return
+      const currentBlock = editorNode.attrs[richTextBlockAttribute]
+      if (encodeRichTextBlock(currentBlock) === encodeRichTextBlock(rowValue))
+        return
+      const tr = editor.view.state.tr.setNodeMarkup(pos, undefined, {
+        ...editorNode.attrs,
+        ...richTextBlockAttributes(rowValue)
+      })
+      tr.setMeta('addToHistory', false)
+      editor.view.dispatch(tr)
+    }, [editor, getPos, name, rowValue])
     const copyBlockAtom = useMemo(() => {
-      return atom(null, (get, set): string | undefined => {
+      return atom(null, (get, set): BlockNode | undefined => {
         if (!rowNode) return
         const nodes = get(reactive.nodes) as
           | Array<ReactiveNode<object>>
@@ -170,13 +196,14 @@ function typeExtension(
         const index = nodes?.indexOf(rowNode)
         if (index === undefined || index < 0) return
         const value = get(rowNode.value) as Node
-        if (!Node.isBlock(value)) return
+        if (!isBlockNode(value)) return
         const newId = createId()
-        set(reactive.insert, index + 1, {
+        const block = {
           ...value,
           [BlockNode.id]: newId
-        })
-        return newId
+        }
+        set(reactive.insert, index + 1, block)
+        return block
       })
     }, [reactive, rowNode])
     const copyBlock = useSetAtom(copyBlockAtom)
@@ -184,14 +211,14 @@ function typeExtension(
     function onCopy() {
       const pos = getPos()
       if (typeof pos !== 'number') return
-      const newId = copyBlock()
-      if (!newId) return
+      const block = copyBlock()
+      if (!block) return
       editor
         .chain()
         .focus()
         .insertContentAt(pos + node.nodeSize, {
           type: name,
-          attrs: {[BlockNode.id]: newId}
+          attrs: richTextBlockAttributes(block)
         })
         .run()
     }
@@ -234,25 +261,49 @@ function typeExtension(
     },
     addAttributes() {
       return {
-        [BlockNode.id]: {default: null}
+        [BlockNode.id]: {default: null},
+        [richTextBlockAttribute]: {
+          default: null,
+          parseHTML(element) {
+            return decodeRichTextBlock(
+              element.getAttribute(richTextBlockAttribute)
+            )
+          },
+          renderHTML(attributes) {
+            const encoded = encodeRichTextBlock(
+              attributes[richTextBlockAttribute]
+            )
+            if (!encoded) return {}
+            return {[richTextBlockAttribute]: encoded}
+          }
+        }
       }
     }
   })
 }
 
 function isEditableBlockValue(
-  value: Node | undefined,
+  value: unknown,
   blockId: string,
   name: string,
   fieldKeys: Array<string>
 ): value is BlockNode {
-  if (!Node.isBlock(value)) return false
+  if (!isBlockNode(value)) return false
   if (String(value[BlockNode.id]) !== blockId) return false
   if (value[Node.type] !== name) return false
   for (const key of fieldKeys) {
     if (!(key in value)) return false
   }
   return true
+}
+
+function isBlockNode(value: unknown): value is BlockNode {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Node.isBlock(value)
+  )
 }
 
 function schemaToExtensions(
@@ -339,14 +390,13 @@ function RTView<Blocks extends Schema>({
             schema={options.schema}
             onInsert={(id, typeName) => {
               const type = options.schema?.[typeName]
-              setValue(current => [
-                ...(current ?? []),
-                {
-                  [Node.type]: typeName,
-                  [BlockNode.id]: id,
-                  ...(type ? Type.initialValue(type) : {})
-                } as Node
-              ])
+              const block = {
+                [Node.type]: typeName,
+                [BlockNode.id]: id,
+                ...(type ? Type.initialValue(type) : {})
+              } as BlockNode
+              setValue(current => [...(current ?? []), block])
+              return block
             }}
           />
         )}
@@ -390,115 +440,3 @@ export const RichTextFieldView = memo(function RichTextFieldView<
   // Tiptap really does not want you to control its state
   return <RTView field={field} key={`${node.value}:${wasReset}`} />
 })
-
-function toContent(node: Node): JSONContent {
-  if (Node.isText(node))
-    return {
-      type: 'text',
-      text: node[TextNode.text],
-      marks: node[TextNode.marks]?.map(mark => {
-        const {[Mark.type]: type, ...attrs} = mark
-        const res = Object.fromEntries(
-          entries(attrs).map(([key, value]) => {
-            if (key.startsWith('_')) return [`data-${key.slice(1)}`, value]
-            return [key, value]
-          })
-        )
-        return {type, attrs: res}
-      })
-    }
-  if (Node.isElement(node)) {
-    const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
-    return {type, content: content?.map(toContent), attrs}
-  }
-  if (Node.isBlock(node)) {
-    const {[Node.type]: type} = node
-    return {type, attrs: {[BlockNode.id]: node[BlockNode.id]}}
-  }
-  throw new TypeError('Invalid node')
-}
-
-function fromContent(
-  content: JSONContent,
-  currentValue: Array<Node> = []
-): Array<Node> {
-  const blocksById = new Map(
-    currentValue
-      .filter(Node.isBlock)
-      .map(node => [String(node[BlockNode.id]), node] as const)
-  )
-  const nodes =
-    content.content?.flatMap(node => fromNode(node, blocksById)) ?? []
-  const [first] = nodes
-  const isEmptyParagraph =
-    nodes.length === 1 &&
-    Node.isElement(first) &&
-    first[Node.type] === 'paragraph' &&
-    first[ElementNode.content]?.length === 0
-  return isEmptyParagraph ? [] : nodes
-}
-
-function fromNode(
-  content: JSONContent,
-  blocksById: Map<string, Node>
-): Array<Node> {
-  const {type, text, marks, attrs} = content
-  if (!type) return []
-  if (type === 'text') {
-    const node: Node = {
-      [Node.type]: 'text',
-      [TextNode.text]: text,
-      [TextNode.marks]: marks?.map(fromMark)
-    }
-    if (!node[TextNode.marks]?.length) delete node[TextNode.marks]
-    return [node]
-  }
-  if (type[0] === type[0].toUpperCase()) {
-    const id = String(attrs?.[BlockNode.id] ?? '')
-    return [
-      blocksById.get(id) ?? {
-        [Node.type]: type,
-        [BlockNode.id]: id
-      }
-    ]
-  }
-  const normalizedAttrs = normalizeNodeAttrs(attrs)
-  return [
-    {
-      [Node.type]: type,
-      ...normalizedAttrs,
-      [ElementNode.content]: content.content?.flatMap(node =>
-        fromNode(node, blocksById)
-      )
-    }
-  ]
-}
-
-function fromMark(mark: NonNullable<JSONContent['marks']>[number]): Mark {
-  const {type, attrs} = mark
-  return {
-    [Mark.type]: type,
-    ...Object.fromEntries(
-      entries(normalizeMarkAttrs(attrs)).map(([key, value]) => {
-        if (key.startsWith('data-')) return [`_${key.slice(5)}`, value]
-        return [key, value]
-      })
-    )
-  }
-}
-
-function normalizeNodeAttrs(
-  attrs: Record<string, unknown> | undefined
-): Record<string, unknown> {
-  return Object.fromEntries(
-    entries(attrs ?? {}).filter(
-      ([, value]) => value !== null && value !== undefined
-    )
-  )
-}
-
-function normalizeMarkAttrs(attrs: Record<string, unknown> | undefined) {
-  return fromEntries(
-    entries(attrs ?? {}).filter(([, value]) => typeof value === 'string')
-  ) as Record<string, string>
-}
