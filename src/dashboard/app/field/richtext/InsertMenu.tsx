@@ -9,13 +9,14 @@ import styler from '@alinea/styler'
 import {Editor, FloatingMenu} from '@tiptap/react'
 import {IcRoundAddCircle} from '../../../icons.js'
 import css from './InsertMenu.module.css'
+import {richTextBlockAttributes} from './RichTextBlockCodec.js'
 
 const styles = styler(css)
 
 export interface InsertMenuProps {
   editor: Editor
   schema: Schema | undefined
-  onInsert: (id: string, type: string) => void
+  onInsert: (id: string, type: string) => BlockNode | undefined
 }
 
 export function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
@@ -47,13 +48,15 @@ export function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
               textValue={label}
               onAction={() => {
                 const id = createId()
-                onInsert(id, key)
+                const block = onInsert(id, key)
                 editor
                   .chain()
                   .focus()
                   .insertContent({
                     type: key,
-                    attrs: {[BlockNode.id]: id}
+                    attrs: block
+                      ? richTextBlockAttributes(block)
+                      : {[BlockNode.id]: id}
                   })
                   .run()
               }}
