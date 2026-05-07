@@ -12,6 +12,28 @@
   border-top: 1px solid var(--alinea-border);
 }
 
+.AppShell-empty {
+  display: grid;
+  gap: 8px;
+  max-width: 420px;
+  padding: 24px;
+  text-align: center;
+}
+
+.AppShell-empty-title {
+  margin: 0;
+  color: var(--alinea-fg);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.AppShell-empty-text {
+  margin: 0;
+  color: var(--alinea-fg-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .AppShell-mutationQueue {
   border: 0;
   flex: 0 0 auto;

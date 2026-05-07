@@ -45,17 +45,20 @@ export function AppShell({dashboard}: AppShellProps) {
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
-        <Sidebar>
-          <SidebarHeader>
-            <WorkspaceMenu dashboard={dashboard} />
-          </SidebarHeader>
+        <AppShellContent dashboard={dashboard} />
+      </DashboardScopeInternal>
+    </main>
+  )
+}
 
-          <SidebarTree dashboard={dashboard} />
-
-          <SidebarFooter className={styles.AppShell.footer()}>
-            <MutationQueueStatus dashboard={dashboard} />
-            <ProfileMenu dashboard={dashboard} />
-            {/*<div className={styles.AppShell.status()}>
+function AppShellContent({dashboard}: AppShellProps) {
+  const policyReady = useAtomValue(dashboard.policyReady)
+  const workspaces = useAtomValue(dashboard.workspaces)
+  const footer = (
+    <SidebarFooter className={styles.AppShell.footer()}>
+      <MutationQueueStatus dashboard={dashboard} />
+      <ProfileMenu dashboard={dashboard} />
+      {/*<div className={styles.AppShell.status()}>
               <span className={styles.AppShell.status.sha()}>
                 db.sha: {sha ?? '-'}
               </span>
@@ -63,21 +66,61 @@ export function AppShell({dashboard}: AppShellProps) {
                 Sync
               </Button>
             </div>*/}
-          </SidebarFooter>
-        </Sidebar>
+    </SidebarFooter>
+  )
 
-        <Suspense
-          fallback={
-            <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-              <ProgressCircle isIndeterminate aria-label="loading" />
-            </Rail>
-          }
-        >
-          <DashboardMeta dashboard={dashboard} />
-          <SyncedEditor dashboard={dashboard} />
-        </Suspense>
-      </DashboardScopeInternal>
-    </main>
+  if (!policyReady) {
+    return (
+      <>
+        <Sidebar>{footer}</Sidebar>
+        <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+          <ProgressCircle isIndeterminate aria-label="loading" />
+        </Rail>
+      </>
+    )
+  }
+
+  if (workspaces.length === 0) {
+    return (
+      <>
+        <Sidebar>{footer}</Sidebar>
+        <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+          <div className={styles.AppShell.empty()}>
+            <h1 className={styles.AppShell.empty.title()}>
+              No workspace access
+            </h1>
+            <p className={styles.AppShell.empty.text()}>
+              Your current roles do not grant permission to read any workspace.
+            </p>
+          </div>
+        </Rail>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Sidebar>
+        <SidebarHeader>
+          <WorkspaceMenu dashboard={dashboard} />
+        </SidebarHeader>
+
+        <SidebarTree dashboard={dashboard} />
+
+        {footer}
+      </Sidebar>
+
+      <Suspense
+        fallback={
+          <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+            <ProgressCircle isIndeterminate aria-label="loading" />
+          </Rail>
+        }
+      >
+        <DashboardMeta dashboard={dashboard} />
+        <SyncedEditor dashboard={dashboard} />
+      </Suspense>
+    </>
   )
 }
 

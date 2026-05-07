@@ -1,8 +1,16 @@
 import {suite} from '@alinea/suite'
 import {Client} from '#/core/Client.js'
+import {createConfig} from '#/core/Config.js'
 import type {Config} from '#/core/Config.js'
+import type {UploadResponse} from '#/core/Connection.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import {WriteableGraph as WriteableGraphBase} from '#/core/db/WriteableGraph.js'
+import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
+import {role} from '#/core/Role.js'
+import {root} from '#/core/Root.js'
 import {localUser} from '#/core/User.js'
+import {workspace} from '#/core/Workspace.js'
 import {createStore} from 'jotai/vanilla'
 import {Dashboard, ReactiveNode} from './Dashboard.js'
 
@@ -18,6 +26,48 @@ function ids(rows: Array<Row>): Array<string> {
 }
 
 const config = {schema: {}, workspaces: {}} as Config
+
+function waitForPolicy(
+  dashboard: Dashboard,
+  store: ReturnType<typeof createStore>
+) {
+  return new Promise<void>(resolve => {
+    if (store.get(dashboard.policyReady)) {
+      resolve()
+      return
+    }
+    const unsubscribe = store.sub(dashboard.policyReady, () => {
+      if (!store.get(dashboard.policyReady)) return
+      unsubscribe()
+      resolve()
+    })
+  })
+}
+
+class TestGraph extends WriteableGraphBase {
+  constructor(public config: Config) {
+    super()
+  }
+
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    return Promise.resolve([] as AnyQueryResult<Query>)
+  }
+
+  mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
+    return Promise.resolve({sha: 'test'})
+  }
+
+  prepareUpload(file: string): Promise<UploadResponse> {
+    return Promise.resolve({
+      entryId: 'upload',
+      location: file,
+      previewUrl: file,
+      url: file
+    })
+  }
+}
 
 function createDashboard(options: {local?: boolean; alineaDev?: boolean}) {
   const client = new Client({config, url: 'https://example.com/api'})
@@ -41,6 +91,47 @@ test('Dashboard does not require auth in local dev', async () => {
   test.equal(store.get(dashboard.authRequired), false)
   test.equal(store.get(dashboard.auth).status, 'authenticated')
   test.equal(await store.get(dashboard.user), localUser)
+})
+
+test('Dashboard role overrides update the active policy', async () => {
+  const publicRoot = root('Public')
+  const privateRoot = root('Private')
+  const secondaryRoot = root('Secondary')
+  const main = workspace('Main', {
+    source: 'content/main',
+    roots: {publicRoot, privateRoot}
+  })
+  const secondary = workspace('Secondary', {
+    source: 'content/secondary',
+    roots: {secondaryRoot}
+  })
+  const editor = role('Editor', {
+    permissions(policy) {
+      policy.set({root: publicRoot, allow: {read: true}})
+    }
+  })
+  const config = createConfig({
+    schema: {},
+    workspaces: {main, secondary},
+    roles: {editor}
+  })
+  const store = createStore()
+  const dashboard = new Dashboard(
+    new TestGraph(config),
+    config,
+    new EventTarget(),
+    new Client({config, url: 'https://example.com/api'}),
+    {},
+    {local: true}
+  )
+
+  await store.set(dashboard.setUserRoles, ['editor'])
+  await waitForPolicy(dashboard, store)
+  const policy = store.get(dashboard.policy)
+
+  test.ok(policy.canRead({workspace: 'main', root: 'publicRoot'}))
+  test.not.ok(policy.canRead({workspace: 'main', root: 'privateRoot'}))
+  test.not.ok(policy.canRead({workspace: 'secondary'}))
 })
 
 test('ReactiveNode inserts array values at the requested index', () => {

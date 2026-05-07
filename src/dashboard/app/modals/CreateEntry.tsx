@@ -138,6 +138,7 @@ function createLinkEditor(
 
 function typeOptionsAtom(
   location: ExplorerLocation,
+  locale: string | null,
   parentId: string | undefined
 ) {
   return unwrap(
@@ -145,16 +146,19 @@ function typeOptionsAtom(
       const dashboard = get(dashboardAtom)
       const config = get(dashboard.config)
       const db = get(dashboard.db)
+      const policy = get(dashboard.policy)
       const rootKey = location.root
       let allowed = [] as Array<string>
+      let parentIds = [] as Array<string>
 
       if (parentId) {
         const parent = await db.first({
-          select: {type: Entry.type},
+          select: {type: Entry.type, parents: Entry.parents},
           id: parentId,
           status: 'preferDraft'
         })
         const parentType = parent && config.schema[parent.type]
+        parentIds = [parentId, ...(parent?.parents ?? [])]
         allowed = parentType
           ? Schema.contained(config.schema, Type.contains(parentType))
           : []
@@ -166,7 +170,18 @@ function typeOptionsAtom(
           : []
       }
 
-      return buildTypeOptions(config.schema, allowed)
+      return buildTypeOptions(
+        config.schema,
+        allowed.filter(type => {
+          return policy.canCreate({
+            workspace: location.workspace,
+            root: rootKey,
+            locale,
+            parents: parentIds,
+            type
+          })
+        })
+      )
     }),
     previous => previous ?? []
   )
@@ -255,7 +270,10 @@ function CreateEntryForm() {
   )
 
   const typeOptions = useAtomValue(
-    useMemo(() => typeOptionsAtom(location, parentId), [location, parentId])
+    useMemo(
+      () => typeOptionsAtom(location, locale, parentId),
+      [locale, location, parentId]
+    )
   )
   const selectedType =
     selectedTypeOverride &&

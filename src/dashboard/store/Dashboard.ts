@@ -17,7 +17,7 @@ import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
-import {Policy} from '#/core/Role.js'
+import {Permission, Policy, type Resource} from '#/core/Role.js'
 import {Section} from '#/core/Section.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
@@ -432,15 +432,26 @@ export class Dashboard {
     return typeof (client as Partial<LogoutConnection>).logout === 'function'
   })
 
-  policy = swr(
-    atom(async get => {
-      const user = await get(this.user)
-      if (!user) return Policy.ALLOW_NONE
-      const db = get(this.db)
-      get(this.sha) // subscribe to content changes
-      return db.createPolicy(user.roles)
-    })
-  )
+  #policyResource = atom(async get => {
+    await get(this.ensureInitialSync)
+    const user = await get(this.user)
+    if (!user) return Policy.ALLOW_NONE
+    const db = get(this.db)
+    get(this.sha) // subscribe to content changes
+    return db.createPolicy(user.roles)
+  })
+
+  #policyState = atomWithPending(this.#policyResource)
+
+  policyReady = atom(get => {
+    const [pending] = get(this.#policyState)
+    return !pending
+  })
+
+  policy = atom(get => {
+    const [, policy] = get(this.#policyState)
+    return policy ?? Policy.ALLOW_NONE
+  })
 
   #location = atomWithLocation({
     subscribe(setLocation) {
@@ -569,8 +580,10 @@ export class Dashboard {
     get => {
       const {workspace} = get(this.route)
       const config = get(this.config)
-      if (workspace && config.workspaces[workspace]) return workspace
-      const workspaceKeys = Object.keys(config.workspaces)
+      const workspaceKeys = get(this.workspaces)
+      if (workspace && config.workspaces[workspace]) {
+        if (workspaceKeys.includes(workspace)) return workspace
+      }
       return workspaceKeys[0] ?? null
     },
     (get, set, workspace: string) => {
@@ -592,7 +605,10 @@ export class Dashboard {
 
   workspaces = atom(get => {
     const config = get(this.config)
-    return Object.keys(config.workspaces)
+    const policy = get(this.policy)
+    return Object.keys(config.workspaces).filter(workspace => {
+      return policy.canRead({workspace})
+    })
   })
 
   workspace = dispense(key => {
@@ -709,13 +725,23 @@ export class Dashboard {
 
   #entryLoader = atom(get => {
     const db = get(this.db)
+    const policy = get(this.policy)
     return loader(async ids => {
       const data = {
+        id: Entry.id,
+        type: Entry.type,
         title: Entry.title,
         status: Entry.status,
         locale: Entry.locale,
         main: Entry.main,
         path: Entry.path,
+        parentId: Entry.parentId,
+        parents: Entry.parents,
+        seeded: Entry.seeded,
+        workspace: Entry.workspace,
+        root: Entry.root,
+        url: Entry.url,
+        data: Entry.data,
         fileHash: Entry.fileHash,
         filePath: Entry.filePath
       }
@@ -751,7 +777,19 @@ export class Dashboard {
       return ids.map(id => {
         const row = byId.get(id)
         if (!row) return [null, new MissingEntryError(id)] as const
-        return [{...row, hasChildren: parentIds.includes(id)}, null] as const
+        const readableEntries = row.entries.filter(entry =>
+          policy.canRead(entry)
+        )
+        if (readableEntries.length === 0)
+          return [null, new MissingEntryError(id)] as const
+        return [
+          {
+            ...row,
+            entries: readableEntries,
+            hasChildren: parentIds.includes(id)
+          },
+          null
+        ] as const
       })
     })
   })
@@ -761,6 +799,7 @@ export class Dashboard {
     async (get, set, request: DashboardCreateEntryRequest) => {
       const config = get(this.config)
       const db = get(this.db)
+      const policy = get(this.policy)
       const type = config.schema[request.type]
       assert(type, `Type "${request.type}" not found in config`)
 
@@ -778,13 +817,22 @@ export class Dashboard {
 
       const parent = request.parentId
         ? await db.first({
-            select: {type: Entry.type},
+            select: {type: Entry.type, parents: Entry.parents},
             id: request.parentId,
             status: 'preferDraft'
           })
         : undefined
       const parentType = parent ? config.schema[parent.type] : undefined
       const parentInsertOrder = parentType && Type.insertOrder(parentType)
+      policy.assert(Permission.Create, {
+        workspace: request.workspace,
+        root: request.root,
+        locale: request.locale,
+        type: request.type,
+        parents: request.parentId
+          ? [request.parentId, ...(parent?.parents ?? [])]
+          : []
+      })
 
       const created = await db.create({
         type,
@@ -824,8 +872,10 @@ export class DashboardEditor {
     public dashboard: Dashboard,
     public type: Type,
     public node: ReactiveNode<object>,
-    public parent?: DashboardEditor
+    public parent?: DashboardEditor,
+    public resource?: Resource
   ) {
+    this.resource ??= parent?.resource
     this.value = node.value
     this.sections = getType(this.type).sections.map(
       section => new DashboardSection(this.dashboard, section)
@@ -987,9 +1037,25 @@ export class DashboardExplorer {
     return root ? get(root.isMedia) : false
   })
 
+  canUpload = atom(get => {
+    const location = get(this.location)
+    const policy = get(this.dashboard.policy)
+    return policy.canUpload({
+      workspace: location.workspace,
+      root: location.root,
+      id: location.parentId
+    })
+  })
+
   upload = atom(null, (get, set, files: FileList) => {
     const location = get(this.location)
     const db = get(this.dashboard.db)
+    const policy = get(this.dashboard.policy)
+    policy.assert(Permission.Upload, {
+      workspace: location.workspace,
+      root: location.root,
+      id: location.parentId
+    })
     const ops = Array.from(
       files,
       file =>
@@ -1011,6 +1077,7 @@ export class DashboardExplorer {
     },
     (get, set, update: string) => {
       const roots = get(this.dashboard.workspace(update).roots)
+      assert(roots[0], `No readable roots found for workspace "${update}"`)
       set(this.location, {workspace: update, root: roots[0]})
     }
   )
@@ -1062,6 +1129,7 @@ export class DashboardExplorer {
       const locale = get(root.selectedLocale)
       const searchAll = Boolean(search && this.#options.searchDepth === 'all')
       const flatList = Boolean(this.#options.condition) || searchAll
+      const policy = get(this.dashboard.policy)
       const children = await db.find({
         locale,
         search: search || undefined,
@@ -1069,13 +1137,23 @@ export class DashboardExplorer {
         root: location.root,
         parentId: flatList ? undefined : (location.parentId ?? null),
         filter: this.#options.condition,
-        select: Entry.id,
+        select: {
+          id: Entry.id,
+          type: Entry.type,
+          workspace: Entry.workspace,
+          root: Entry.root,
+          parents: Entry.parents,
+          locale: Entry.locale
+        },
         orderBy,
         status: 'preferDraft',
         type: filter
       })
       return Promise.all(
-        children.map(id => this.dashboard.entries(id)).map(get)
+        children
+          .filter(child => policy.canRead(child))
+          .map(child => this.dashboard.entries(child.id))
+          .map(get)
       )
     })
   )
@@ -1120,7 +1198,16 @@ export class DashboardField {
     const defaultOptions = Field.options(this.field)
     const tracker = optionTrackerOf(this.field)
     const update = tracker ? tracker(get(this.#getter)) : undefined
-    return {...defaultOptions, ...update}
+    const options = {...defaultOptions, ...update}
+    const resource = this.draft.resource
+    if (!resource || this.draft.parent) return options
+    const policy = get(this.draft.dashboard.policy)
+    const fieldResource = {...resource, field: this.key}
+    return {
+      ...options,
+      hidden: options.hidden || !policy.canRead(fieldResource),
+      readOnly: options.readOnly || !policy.canUpdate(fieldResource)
+    }
   })
 
   error = atom((get): string | undefined => {
@@ -1218,7 +1305,10 @@ export class DashboardWorkspace {
 
   roots = atom(get => {
     const roots = get(this.#settings).roots
-    return Object.keys(roots)
+    const policy = get(this.dashboard.policy)
+    return Object.keys(roots).filter(root => {
+      return policy.canRead({workspace: this.key, root})
+    })
   })
 
   root = dispense(key => new DashboardRoot(this, key))
@@ -1355,10 +1445,16 @@ export class DashboardTree {
 
   async #moveDraggedKeys(get: Getter, keys: Set<Key>, target: ItemDropTarget) {
     const db = get(this.workspace.dashboard.db)
+    const policy = get(this.workspace.dashboard.policy)
     const selectedRoot = get(this.workspace.dashboard.selectedRoot)
     const {moveTarget, targetType} = this.#target(target.key, selectedRoot)
     for (const key of keys) {
       const draggedId = String(key)
+      const entry = await get(this.workspace.dashboard.entries(draggedId))
+      const [resource] = get(entry.entryData).entries
+      const permission =
+        target.dropPosition === 'on' ? Permission.Move : Permission.Reorder
+      policy.assert(permission, resource)
       await db.move({
         id: draggedId,
         target: moveTarget,
@@ -1439,6 +1535,25 @@ export class DashboardTreeItem {
   )
 }
 
+interface EntryVersionData {
+  id: string
+  type: string
+  title: string
+  status: EntryStatus
+  locale: string | null
+  main: boolean
+  path: string
+  parentId: string | null
+  parents: Array<string>
+  seeded: string | null
+  workspace: string
+  root: string
+  url: string
+  data: Record<string, unknown>
+  fileHash: string
+  filePath: string
+}
+
 interface EntryData {
   id: string
   type: string
@@ -1453,15 +1568,7 @@ interface EntryData {
     status: EntryStatus
     main: boolean
   }>
-  entries: Array<{
-    title: string
-    status: EntryStatus
-    locale: string | null
-    main: boolean
-    path: string
-    fileHash: string
-    filePath: string
-  }>
+  entries: Array<EntryVersionData>
 }
 
 export interface DashboardEntryTreeStatus {
@@ -1477,19 +1584,7 @@ export class DashboardEntry {
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
   type: Atom<DashboardType>
-  locales: Atom<
-    Map<
-      string | null,
-      {
-        title: string
-        status: EntryStatus
-        locale: string | null
-        main: boolean
-        path: string
-        filePath: string
-      }
-    >
-  >
+  locales: Atom<Map<string | null, EntryVersionData>>
   parentId: Atom<string | null>
   parentIds: Atom<Array<string>>
   root: Atom<DashboardRoot>
@@ -1922,9 +2017,20 @@ export class DashboardEntry {
 
   currentlyEditing = atom<ReactiveNode<object>>()
 
+  async #assertPermission(
+    get: Getter,
+    permission: Permission,
+    locale: string | null
+  ) {
+    const activeVersion = await get(this.languages(locale).activeVersion)
+    get(this.dashboard.policy).assert(permission, activeVersion)
+    return activeVersion
+  }
+
   saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
+    await this.#assertPermission(get, Permission.Update, locale)
     const data = get(node.value)
     const db = get(this.dashboard.db)
     const type = get(this.type).type
@@ -1942,6 +2048,7 @@ export class DashboardEntry {
   publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
+    await this.#assertPermission(get, Permission.Publish, locale)
     const data = get(node.value)
     const db = get(this.dashboard.db)
     const type = get(this.type).type
@@ -1959,6 +2066,7 @@ export class DashboardEntry {
   publishDraft = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
+    await this.#assertPermission(get, Permission.Publish, locale)
     const db = get(this.dashboard.db)
     await db.publish({
       id: this.id,
@@ -1970,6 +2078,7 @@ export class DashboardEntry {
   discardDraft = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
+    await this.#assertPermission(get, Permission.Update, locale)
     const db = get(this.dashboard.db)
     await db.discard({
       id: this.id,
@@ -1981,6 +2090,7 @@ export class DashboardEntry {
   unpublish = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
+    await this.#assertPermission(get, Permission.Publish, locale)
     const db = get(this.dashboard.db)
     await db.unpublish({
       id: this.id,
@@ -1991,6 +2101,7 @@ export class DashboardEntry {
   archive = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
+    await this.#assertPermission(get, Permission.Archive, locale)
     const db = get(this.dashboard.db)
     await db.archive({
       id: this.id,
@@ -2001,6 +2112,7 @@ export class DashboardEntry {
   publishArchived = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
+    await this.#assertPermission(get, Permission.Publish, locale)
     const db = get(this.dashboard.db)
     await db.publish({
       id: this.id,
@@ -2010,6 +2122,9 @@ export class DashboardEntry {
   })
 
   deleteEntry = atom(null, async get => {
+    const root = get(this.root)
+    const locale = get(root.selectedLocale)
+    await this.#assertPermission(get, Permission.Delete, locale)
     const db = get(this.dashboard.db)
     await db.remove(this.id)
   })
@@ -2017,6 +2132,9 @@ export class DashboardEntry {
   replaceFile = atom(null, async (get, set, file: File) => {
     const locale = get(this.sourceLocale)
     const activeVersion = await get(this.languages(locale).activeVersion)
+    const policy = get(this.dashboard.policy)
+    policy.assert(Permission.Update, activeVersion)
+    policy.assert(Permission.Upload, activeVersion)
     const db = get(this.dashboard.db)
     await db.commit(
       new UploadOperation({
@@ -2040,6 +2158,10 @@ export class DashboardEntry {
       `Cannot translate entry ${this.id} without a source locale`
     )
     const activeVersion = await get(this.languages(sourceLocale).activeVersion)
+    get(this.dashboard.policy).assert(Permission.Update, {
+      ...activeVersion,
+      locale
+    })
     const parentId = activeVersion.parentId
     const db = get(this.dashboard.db)
     if (parentId) {
@@ -2100,12 +2222,16 @@ export class DashboardEntryLanguage {
       const [entries] = await loader(this.entry.id)
       if (!entries)
         throw new Error(`No versions found for entry ${this.entry.id}`)
+      const policy = get(this.entry.dashboard.policy)
+      const readable = entries.filter(entry => {
+        return entry.locale === this.locale && policy.canRead(entry)
+      })
       // order by draft, published, archived
       const order = ['draft', 'published', 'archived']
-      entries.sort((a, b) => {
+      readable.sort((a, b) => {
         return order.indexOf(a.status) - order.indexOf(b.status)
       })
-      return new Map(entries.map(entry => [entry.status, entry] as const))
+      return new Map(readable.map(entry => [entry.status, entry] as const))
     })
   )
 
@@ -2129,13 +2255,17 @@ export class DashboardEntryLanguage {
       const version = versions.get(status)
       assert(version, `No version found`)
       const data = version.data
+      const policy = get(this.entry.dashboard.policy)
       // Todo: fix data during indexing instead of here
       const initialValue = {
         ...Type.initialValue(type),
         ...data
       }
       const isActiveVersion = status === activeStatus
-      return new ReactiveNode(initialValue, !isActiveVersion)
+      return new ReactiveNode(
+        initialValue,
+        !isActiveVersion || !policy.canUpdate(version)
+      )
     })
   })
 }
@@ -2292,15 +2422,23 @@ export class DashboardRoot {
   hasChildren = atom(async get => {
     const db = get(this.workspace.dashboard.db)
     const visibleTypes = get(this.workspace.tree.visibleTypes)
-    return Boolean(
-      await db.first({
-        workspace: this.workspace.key,
-        root: this.key,
-        parentId: null,
-        filter: {_type: {in: visibleTypes}},
-        status: 'preferDraft'
-      })
-    )
+    const policy = get(this.workspace.dashboard.policy)
+    const children = await db.find({
+      workspace: this.workspace.key,
+      root: this.key,
+      parentId: null,
+      filter: {_type: {in: visibleTypes}},
+      select: {
+        id: Entry.id,
+        type: Entry.type,
+        workspace: Entry.workspace,
+        root: Entry.root,
+        parents: Entry.parents,
+        locale: Entry.locale
+      },
+      status: 'preferDraft'
+    })
+    return children.some(child => policy.canRead(child))
   })
 }
 
@@ -2313,11 +2451,16 @@ async function queryTreeChildren(
   get(root.workspace.dashboard.sha) // subscribe to content changes
   const visibleTypes = get(root.workspace.tree.visibleTypes)
   const db = get(root.workspace.dashboard.db)
+  const policy = get(root.workspace.dashboard.policy)
   const orderBy = get(orderByAtom)
   const locale = get(root.selectedLocale)
   const children = await db.find({
     select: {
       id: Entry.id,
+      type: Entry.type,
+      workspace: Entry.workspace,
+      root: Entry.root,
+      parents: Entry.parents,
       locale: Entry.locale
     },
     orderBy,
@@ -2329,11 +2472,14 @@ async function queryTreeChildren(
     },
     status: 'preferDraft'
   })
+  const readableChildren = children.filter(child => policy.canRead(child))
   const translatedChildren = new Set(
-    children.filter(child => child.locale === locale).map(child => child.id)
+    readableChildren
+      .filter(child => child.locale === locale)
+      .map(child => child.id)
   )
   const untranslated = new Set()
-  const orderedChildren = children.filter(child => {
+  const orderedChildren = readableChildren.filter(child => {
     if (translatedChildren.has(child.id)) return child.locale === locale
     if (untranslated.has(child.id)) return false
     untranslated.add(child.id)

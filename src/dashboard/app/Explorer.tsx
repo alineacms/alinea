@@ -153,6 +153,7 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   const [sort, setSort] = useAtom(explorer.sort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
   const isMedia = useAtomValue(explorer.isMedia)
+  const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
 
   return (
@@ -164,7 +165,7 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
         setSort={setSort}
         toggleFilter={toggleFilter}
       />
-      {isMedia && (
+      {isMedia && canUpload && (
         <FileTrigger
           onSelect={files => {
             if (files) upload(files)

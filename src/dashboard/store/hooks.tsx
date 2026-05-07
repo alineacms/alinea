@@ -2,7 +2,7 @@ import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Field} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
 import {Type} from '#/index.js'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
@@ -67,9 +67,21 @@ function useFieldInfo(field: Field) {
 export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
   const dashboard = useDashboard()
   const parent = useContext(editorContext)
+  const entry = useContext(entryContext)
+  const activeVersionAtom = useMemo(() => {
+    return entry?.activeVersion ?? atom(null)
+  }, [entry])
+  const activeVersion = useAtomValue(activeVersionAtom)
   const editor = useMemo(
-    () => new DashboardEditor(dashboard, type, node, parent ?? undefined),
-    [dashboard, node, parent, type]
+    () =>
+      new DashboardEditor(
+        dashboard,
+        type,
+        node,
+        parent ?? undefined,
+        activeVersion ?? undefined
+      ),
+    [activeVersion, dashboard, node, parent, type]
   )
   return editor
 }
