@@ -72,8 +72,15 @@ function SearchPopup() {
 
 export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
   const [selected, setSelected] = useAtom(dashboard.selectedWorkspace)
-  const workspaces = useAtomValue(dashboard.workspaces)
-  const workspace = dashboard.workspace(selected)
+  const policy = useAtomValue(dashboard.policy)
+  const workspaces = useAtomValue(dashboard.workspaces).filter(workspace =>
+    policy.canRead({workspace})
+  )
+  const selectedWorkspace = workspaces.includes(selected)
+    ? selected
+    : workspaces[0]
+  if (!selectedWorkspace) return null
+  const workspace = dashboard.workspace(selectedWorkspace)
   const color = useAtomValue(workspace.color)
   const icon = useAtomValue(workspace.icon)
   const label = useAtomValue(workspace.label)
@@ -88,7 +95,7 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
         }
         aria-label="Workspace"
         selectionMode="single"
-        selectedKeys={[selected]}
+        selectedKeys={[selectedWorkspace]}
         onAction={key => setSelected(String(key))}
       >
         {workspaces.map(workspace => (

@@ -50,6 +50,21 @@
   margin: 0;
 }
 
+.AppShell-profile-popover-rolesItem {
+  display: grid;
+  gap: 10px;
+  padding: 8px 16px 12px;
+  font-size: 14px;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--alinea-dashboard-surface-border);
+  }
+}
+
+.AppShell-profile-popover-roles {
+  gap: 8px;
+}
+
 .AppShell-profile-popover {
   min-width: 260px;
   padding: 0;
@@ -65,19 +80,6 @@
 .AppShell-profile-popover-themeOptions {
   display: flex;
   gap: 8px;
-}
-
-.AppShell-trigger {
-  min-width: 96px;
-  justify-content: space-between;
-}
-
-.AppShell-trigger-text {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .AppShell-status {

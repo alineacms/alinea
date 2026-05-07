@@ -1,23 +1,22 @@
 import {
   Button,
+  Checkbox,
+  CheckboxGroup,
   DialogTrigger,
-  Menu,
-  MenuItem,
   Popover,
   ProgressCircle
 } from '#/components.js'
+import {getWorkspace} from '#/core/Internal.js'
 import styler from '@alinea/styler'
-import type {Key} from '@react-types/shared'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {Suspense, useMemo} from 'react'
+import {Suspense, useEffect, useMemo, type PropsWithChildren} from 'react'
 import {
   IcBaselineAccountCircle,
   IcRoundBrightness2,
   IcRoundDesktopWindows,
   IcRoundLogout,
   IcRoundMoreHoriz,
-  IcRoundUnfoldMore,
   IcRoundWbSunny
 } from '../icons.js'
 import {DashboardScopeInternal} from '../store.js'
@@ -69,8 +68,10 @@ export function AppShell({dashboard}: AppShellProps) {
             </Rail>
           }
         >
-          <DashboardMeta dashboard={dashboard} />
-          <SyncedEditor dashboard={dashboard} />
+          <PolicyRouteGate dashboard={dashboard}>
+            <DashboardMeta dashboard={dashboard} />
+            <SyncedEditor dashboard={dashboard} />
+          </PolicyRouteGate>
         </Suspense>
       </DashboardScopeInternal>
     </main>
@@ -86,17 +87,10 @@ function ProfileMenu({dashboard}: AppShellProps) {
   const logout = useSetAtom(dashboard.logout)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
-  const selectedRoles = new Set<Key>(user.roles)
-  const roleLabel =
-    user.roles
-      .map(role => config.roles?.[role]?.label ?? role)
-      .filter(Boolean)
-      .join(', ') || 'No roles'
   const userName = user.name ?? user.sub
 
-  function handleRoleSelectionChange(keys: 'all' | Set<Key>) {
-    if (keys === 'all') return
-    setUserRoles([...keys].map(String))
+  function handleRoleSelectionChange(roles: Array<string>) {
+    setUserRoles(roles)
   }
 
   return (
@@ -149,33 +143,22 @@ function ProfileMenu({dashboard}: AppShellProps) {
             </div>
           </li>
           {dashboard.isLocal && roleEntries.length > 0 && (
-            <li className={styles.AppShell.profile.popover.item()}>
+            <li className={styles.AppShell.profile.popover.rolesItem()}>
               <p className={styles.AppShell.profile.popover.item.label()}>
                 Role
               </p>
-              <Menu
+              <CheckboxGroup
                 aria-label="Development roles"
-                selectionMode="multiple"
-                selectedKeys={selectedRoles}
-                onSelectionChange={handleRoleSelectionChange}
-                label={
-                  <Button
-                    appearance="outline"
-                    className={styles.AppShell.trigger()}
-                  >
-                    <span className={styles.AppShell.trigger.text()}>
-                      {roleLabel}
-                    </span>
-                    <IcRoundUnfoldMore />
-                  </Button>
-                }
+                className={styles.AppShell.profile.popover.roles()}
+                value={user.roles}
+                onChange={handleRoleSelectionChange}
               >
                 {roleEntries.map(([name, role]) => (
-                  <MenuItem id={name} key={name} textValue={role.label}>
+                  <Checkbox key={name} value={name}>
                     {role.label}
-                  </MenuItem>
+                  </Checkbox>
                 ))}
-              </Menu>
+              </CheckboxGroup>
             </li>
           )}
           {canLogout && (
@@ -196,6 +179,72 @@ function ProfileMenu({dashboard}: AppShellProps) {
       </Popover>
     </DialogTrigger>
   )
+}
+
+function PolicyRouteGate({
+  children,
+  dashboard
+}: PropsWithChildren<AppShellProps>) {
+  const config = useAtomValue(dashboard.config)
+  const policy = useAtomValue(dashboard.policy)
+  const route = useAtomValue(dashboard.route)
+  const setRoute = useSetAtom(dashboard.route)
+  const workspaceKeys = Object.keys(config.workspaces)
+  const readableWorkspaces = workspaceKeys.filter(workspace =>
+    policy.canRead({workspace})
+  )
+  const selectedWorkspace =
+    route.workspace && readableWorkspaces.includes(route.workspace)
+      ? route.workspace
+      : readableWorkspaces[0]
+  const workspace = selectedWorkspace
+    ? config.workspaces[selectedWorkspace]
+    : undefined
+  const rootKeys = selectedWorkspace && workspace
+    ? Object.keys(getWorkspace(workspace).roots).filter(root =>
+        policy.canRead({workspace: selectedWorkspace, root})
+      )
+    : []
+  const selectedRoot =
+    route.root && rootKeys.includes(route.root) ? route.root : rootKeys[0]
+  const isAllowed =
+    selectedWorkspace === route.workspace &&
+    (!selectedRoot || selectedRoot === route.root)
+
+  useEffect(() => {
+    if (!selectedWorkspace || isAllowed) return
+    setRoute({
+      workspace: selectedWorkspace,
+      root: selectedRoot,
+      locale: undefined
+    })
+  }, [isAllowed, selectedRoot, selectedWorkspace, setRoute])
+
+  if (readableWorkspaces.length === 0) {
+    return (
+      <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+        You don't have access to any workspaces
+      </Rail>
+    )
+  }
+
+  if (rootKeys.length === 0) {
+    return (
+      <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+        You don't have access to any roots
+      </Rail>
+    )
+  }
+
+  if (!isAllowed) {
+    return (
+      <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+        <ProgressCircle isIndeterminate aria-label="loading" />
+      </Rail>
+    )
+  }
+
+  return children
 }
 
 function SyncedEditor({dashboard}: AppShellProps) {

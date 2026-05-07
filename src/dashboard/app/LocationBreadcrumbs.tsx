@@ -1,7 +1,7 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
 import styler from '@alinea/styler'
-import {Atom, useAtomValue} from 'jotai'
-import {Dispatch, SetStateAction} from 'react'
+import {useAtomValue, type Atom} from 'jotai'
+import {type Dispatch, type SetStateAction} from 'react'
 import {IcRoundChevronRight, IcRoundUnfoldMore} from '../icons.js'
 import {
   DashboardEntry,
@@ -16,18 +16,21 @@ const styles = styler(css)
 interface BreadcrumbMenuProps {
   label: Atom<string>
   items: Atom<Array<DashboardMenuItem>>
+  filter?: (item: DashboardMenuItem) => boolean
   onSelect: () => void
   onAction: (id: string) => void
 }
 
 function BreadcrumbMenu({
   label: labelAtom,
+  filter,
   items: itemsAtom,
   onSelect,
   onAction
 }: BreadcrumbMenuProps) {
   const label = useAtomValue(labelAtom)
-  const items = useAtomValue(itemsAtom)
+  const allItems = useAtomValue(itemsAtom)
+  const items = filter ? allItems.filter(filter) : allItems
   return (
     <span className={styles.LocationBreadcrumbs.item()}>
       <Button
@@ -128,6 +131,7 @@ export function LocationBreadcrumbs({
   enableRoot = false
 }: LocationBreadcrumbsProps) {
   const dashboard = useDashboard()
+  const policy = useAtomValue(dashboard.policy)
   const workspace = dashboard.workspace(location.workspace)
   const roots = useAtomValue(workspace.roots)
   const root = workspace.root(location.root ?? roots[0])
@@ -156,6 +160,7 @@ export function LocationBreadcrumbs({
         <BreadcrumbMenu
           label={workspace.label}
           items={dashboard.workspaceMenu}
+          filter={item => policy.canRead({workspace: item.id})}
           onSelect={() => setWorkspace(location.workspace)}
           onAction={setWorkspace}
         />
@@ -166,6 +171,9 @@ export function LocationBreadcrumbs({
           <BreadcrumbMenu
             label={root.label}
             items={workspace.rootMenu}
+            filter={item =>
+              policy.canRead({workspace: location.workspace, root: item.id})
+            }
             onSelect={selectRoot}
             onAction={setRoot}
           />

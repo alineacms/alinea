@@ -138,13 +138,15 @@ function createLinkEditor(
 
 function typeOptionsAtom(
   location: ExplorerLocation,
-  parentId: string | undefined
+  parentId: string | undefined,
+  locale: string | null
 ) {
   return unwrap(
     atom(async get => {
       const dashboard = get(dashboardAtom)
       const config = get(dashboard.config)
       const db = get(dashboard.db)
+      const policy = await get(dashboard.policy)
       const rootKey = location.root
       let allowed = [] as Array<string>
 
@@ -166,7 +168,15 @@ function typeOptionsAtom(
           : []
       }
 
-      return buildTypeOptions(config.schema, allowed)
+      return buildTypeOptions(config.schema, allowed).filter(option =>
+        policy.canCreate({
+          workspace: location.workspace,
+          root: rootKey,
+          type: option.id,
+          locale,
+          parents: parentId ? [parentId] : []
+        })
+      )
     }),
     previous => previous ?? []
   )
@@ -255,7 +265,10 @@ function CreateEntryForm() {
   )
 
   const typeOptions = useAtomValue(
-    useMemo(() => typeOptionsAtom(location, parentId), [location, parentId])
+    useMemo(
+      () => typeOptionsAtom(location, parentId, locale),
+      [locale, location, parentId]
+    )
   )
   const selectedType =
     selectedTypeOverride &&

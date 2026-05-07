@@ -60,6 +60,11 @@ const SidebarParent = memo(function SidebarParent({
 }: SidebarParentProps) {
   const label = useAtomValue(root.label)
   const selectRoot = useSetAtom(root.selected)
+  const policy = useAtomValue(root.workspace.dashboard.policy)
+  const canCreate = policy.canCreate({
+    workspace: root.workspace.key,
+    root: root.key
+  })
   return (
     <SidebarHeader>
       <div className={styles.SidebarParent.label()}>
@@ -79,12 +84,14 @@ const SidebarParent = memo(function SidebarParent({
           {label}
         </Button>
         <LocaleMenu root={root} />
-        <DialogTrigger>
-          <Button size="icon" icon={IcRoundAdd} intent="primary" />
-          <DashboardModal>
-            <CreateEntry />
-          </DashboardModal>
-        </DialogTrigger>
+        {canCreate && (
+          <DialogTrigger>
+            <Button size="icon" icon={IcRoundAdd} intent="primary" />
+            <DashboardModal>
+              <CreateEntry />
+            </DashboardModal>
+          </DialogTrigger>
+        )}
       </div>
     </SidebarHeader>
   )
@@ -235,6 +242,16 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   const onInsert = useSetAtom(workspace.tree.onInsert)
   const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
   const onMove = useSetAtom(workspace.tree.onMove)
+  const policy = useAtomValue(workspace.dashboard.policy)
+  const currentRoot = useAtomValue(workspace.dashboard.currentRoot)
+  const currentRootResource = currentRoot
+    ? {workspace: workspace.key, root: currentRoot.key}
+    : undefined
+  const canDrop = Boolean(
+    currentRootResource &&
+      (policy.canMove(currentRootResource) ||
+        policy.canReorder(currentRootResource))
+  )
   const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
     getItems,
     onInsert,
@@ -247,7 +264,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
         <Tree
           aria-label="Content tree"
           items={items}
-          dragAndDropHooks={dragAndDropHooks}
+          dragAndDropHooks={canDrop ? dragAndDropHooks : undefined}
           selectionMode="single"
           selectionBehavior="replace"
           disallowEmptySelection
@@ -329,14 +346,22 @@ export const SidebarTree = memo(function SidebarTree({
 }: SidebarTreeProps) {
   const workspace = useAtomValue(dashboard.currentWorkspace)
   assert(workspace, 'No workspace selected')
+  const policy = useAtomValue(dashboard.policy)
   const currentRoot = useAtomValue(dashboard.currentRoot)
-  const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
+  const roots = useAtomValue(workspace.roots)
+    .filter(root => policy.canRead({workspace: workspace.key, root}))
+    .map(root => workspace.root(root))
+  const activeRoot =
+    currentRoot &&
+    policy.canRead({workspace: workspace.key, root: currentRoot.key})
+      ? currentRoot
+      : roots[0]
   const [isTreeCollapsed, setIsTreeCollapsed] = useState(false)
   return (
     <>
-      {currentRoot && (
+      {activeRoot && (
         <SidebarParent
-          root={currentRoot}
+          root={activeRoot}
           isTreeCollapsed={isTreeCollapsed}
           onToggleTreeCollapsed={() =>
             setIsTreeCollapsed(isCollapsed => !isCollapsed)
@@ -349,9 +374,11 @@ export const SidebarTree = memo(function SidebarTree({
           <div
             className={styles.SidebarTree.tree({collapsed: isTreeCollapsed})}
           >
-            <Suspense fallback={<SidebarTreeBodyFallback />}>
-              <SidebarTreeBody workspace={workspace} />
-            </Suspense>
+            {activeRoot && currentRoot === activeRoot && (
+              <Suspense fallback={<SidebarTreeBodyFallback />}>
+                <SidebarTreeBody workspace={workspace} />
+              </Suspense>
+            )}
           </div>
         </div>
       </SidebarBody>

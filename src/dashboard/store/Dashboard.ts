@@ -13,6 +13,7 @@ import type {Expr} from '#/core/Expr.js'
 import {Field, FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Order} from '#/core/Graph.js'
+import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
@@ -402,7 +403,16 @@ export class Dashboard {
       return {workspace, root, entry, locale}
     },
     async (get, set, update: DashboardRoute) => {
-      const focused = await get(this.focused)
+      let focused: FocusedItem = null
+      try {
+        focused = await get(this.focused)
+      } catch (error) {
+        if (
+          !(error instanceof HttpError) ||
+          error.code !== ErrorCode.Unauthorized
+        )
+          throw error
+      }
       const confirm = () => {
         let {workspace, root, entry, locale} = update
         const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
@@ -431,6 +441,9 @@ export class Dashboard {
     if (entry)
       try {
         const model = await get(this.entries(entry))
+        const policy = await get(this.policy)
+        if (!policy.canRead(get(model.resource)))
+          throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
         const type = get(model.type)
         if (type.type !== MediaLibrary) return {entry: model}
       } catch (error) {
@@ -444,7 +457,12 @@ export class Dashboard {
         throw new Error(`Entry "${entry}" not found`)
       }
     if (!workspace) return null
-    if (root) return {root: this.workspace(workspace).root(root)}
+    if (root) {
+      const policy = await get(this.policy)
+      if (!policy.canRead({workspace, root}))
+        throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
+      return {root: this.workspace(workspace).root(root)}
+    }
     return null
   })
 
@@ -688,11 +706,22 @@ export class Dashboard {
     async (get, set, request: DashboardCreateEntryRequest) => {
       const config = get(this.config)
       const db = get(this.db)
+      const policy = await get(this.policy)
       const type = config.schema[request.type]
       assert(type, `Type "${request.type}" not found in config`)
 
       const title = request.title.trim()
       assert(title, 'Title is required')
+      if (
+        !policy.canCreate({
+          workspace: request.workspace,
+          root: request.root,
+          type: request.type,
+          locale: request.locale,
+          parents: request.parentId ? [request.parentId] : []
+        })
+      )
+        throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
 
       const copiedData = request.copyFrom
         ? await db.first({
@@ -972,6 +1001,7 @@ export class DashboardExplorer {
       get(this.dashboard.sha) // subscribe to content changes, todo: refine
       const location = get(this.location)
       const db = get(this.dashboard.db)
+      const policy = await get(this.dashboard.policy)
       const search = get(this.search)
       const root = get(this.root)
       const sort = get(this.sort)
@@ -996,13 +1026,23 @@ export class DashboardExplorer {
         root: location.root,
         parentId: flatList ? undefined : (location.parentId ?? null),
         filter: this.#options.condition,
-        select: Entry.id,
+        select: {
+          id: Entry.id,
+          locale: Entry.locale,
+          parents: Entry.parents,
+          root: Entry.root,
+          type: Entry.type,
+          workspace: Entry.workspace
+        },
         orderBy,
         status: 'preferDraft',
         type: filter
       })
       return Promise.all(
-        children.map(id => this.dashboard.entries(id)).map(get)
+        children
+          .filter(child => policy.canRead(child))
+          .map(child => this.dashboard.entries(child.id))
+          .map(get)
       )
     })
   )
@@ -1284,10 +1324,15 @@ export class DashboardTree {
 
   async #moveDraggedKeys(get: Getter, keys: Set<Key>, target: ItemDropTarget) {
     const db = get(this.workspace.dashboard.db)
+    const policy = await get(this.workspace.dashboard.policy)
     const selectedRoot = get(this.workspace.dashboard.selectedRoot)
     const {moveTarget, targetType} = this.#target(target.key, selectedRoot)
     for (const key of keys) {
       const draggedId = String(key)
+      const dragged = await get(this.workspace.dashboard.entries(draggedId))
+      const resource = get(dragged.resource)
+      if (!policy.canMove(resource) && !policy.canReorder(resource))
+        throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
       await db.move({
         id: draggedId,
         target: moveTarget,
@@ -1450,6 +1495,19 @@ export class DashboardEntry {
       return dashboard.workspace(workspace).root(root)
     })
   }
+
+  resource = atom(get => {
+    const data = get(this.entryData)
+    const root = get(this.root)
+    return {
+      id: this.id,
+      workspace: data.workspace,
+      root: data.root,
+      type: data.type,
+      parents: data.parents.map(parent => parent.id),
+      locale: get(root.selectedLocale)
+    }
+  })
 
   translationSourceLocales = atom(get => {
     return Array.from(get(this.locales).keys()).filter(
@@ -2234,12 +2292,17 @@ async function queryTreeChildren(
   get(root.workspace.dashboard.sha) // subscribe to content changes
   const visibleTypes = get(root.workspace.tree.visibleTypes)
   const db = get(root.workspace.dashboard.db)
+  const policy = await get(root.workspace.dashboard.policy)
   const orderBy = get(orderByAtom)
   const locale = get(root.selectedLocale)
   const children = await db.find({
     select: {
       id: Entry.id,
-      locale: Entry.locale
+      locale: Entry.locale,
+      parents: Entry.parents,
+      root: Entry.root,
+      type: Entry.type,
+      workspace: Entry.workspace
     },
     orderBy,
     workspace: root.workspace.key,
@@ -2250,11 +2313,14 @@ async function queryTreeChildren(
     },
     status: 'preferDraft'
   })
+  const readableChildren = children.filter(child => policy.canRead(child))
   const translatedChildren = new Set(
-    children.filter(child => child.locale === locale).map(child => child.id)
+    readableChildren
+      .filter(child => child.locale === locale)
+      .map(child => child.id)
   )
   const untranslated = new Set()
-  const orderedChildren = children.filter(child => {
+  const orderedChildren = readableChildren.filter(child => {
     if (translatedChildren.has(child.id)) return child.locale === locale
     if (untranslated.has(child.id)) return false
     untranslated.add(child.id)
