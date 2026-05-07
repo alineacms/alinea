@@ -32,6 +32,7 @@ export class DashboardWorker extends EventTarget {
   #defer: Function | undefined
   #currentRevision: string | undefined
   #queue: Array<MutationQueueItem> = []
+  #local = pLimit(1)
   #blocked = false
 
   constructor(source: Source) {
@@ -50,63 +51,73 @@ export class DashboardWorker extends EventTarget {
   async sync() {
     const db = await this.db
     const client = await this.#client
-    if (remote.activeCount > 0 || remote.pendingCount > 0) return db.sha
+    if (
+      this.#local.activeCount > 0 ||
+      this.#local.pendingCount > 0 ||
+      remote.activeCount > 0 ||
+      remote.pendingCount > 0
+    )
+      return db.sha
     const sync = remote(() => db.syncWith(client))
     if (db.index.tree.isEmpty) await sync
     return db.sha
   }
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
-    const db = await this.db
-    if (this.#blocked) {
-      throw new Error('Resolve the sync error before making more changes')
-    }
-    const mutationSummaries = await summarizeMutations(db, mutations)
-    const item: MutationQueueItem = {
-      id,
-      mutations,
-      mutationSummaries,
-      status: 'pending',
-      attempt: 0
-    }
-    this.#queue.push(item)
-    this.#emitQueue()
-    try {
-      await db.mutate(mutations)
-      item.sha = db.sha
+    return this.#local(async () => {
+      const db = await this.db
+      if (this.#blocked) {
+        throw new Error('Resolve the sync error before making more changes')
+      }
+      const mutationSummaries = await summarizeMutations(db, mutations)
+      const item: MutationQueueItem = {
+        id,
+        mutations,
+        mutationSummaries,
+        status: 'pending',
+        attempt: 0
+      }
+      this.#queue.push(item)
       this.#emitQueue()
-      this.#flush(item)
-      return item.sha
-    } catch (error) {
-      this.#blocked = true
-      item.status = 'failed'
-      item.error = errorMessage(error)
-      this.#emitQueue()
-      throw error
-    }
+      try {
+        await db.mutate(mutations)
+        item.sha = db.sha
+        this.#emitQueue()
+        this.#flush(item)
+        return item.sha
+      } catch (error) {
+        this.#blocked = true
+        item.status = 'failed'
+        item.error = errorMessage(error)
+        this.#emitQueue()
+        throw error
+      }
+    })
   }
 
   async retryQueue(): Promise<void> {
     if (!this.#blocked) return
-    const db = await this.db
-    this.#blocked = false
-    for (const item of this.#queue) {
-      item.attempt += 1
-      item.status = 'pending'
-      item.error = undefined
-      if (!item.sha) {
-        try {
-          await db.mutate(item.mutations)
-          item.sha = db.sha
-        } catch (error) {
-          this.#blocked = true
-          item.status = 'failed'
-          item.error = errorMessage(error)
-          this.#emitQueue()
-          throw error
+    await this.#local(async () => {
+      const db = await this.db
+      this.#blocked = false
+      for (const item of this.#queue) {
+        item.attempt += 1
+        item.status = 'pending'
+        item.error = undefined
+        if (!item.sha) {
+          try {
+            await db.mutate(item.mutations)
+            item.sha = db.sha
+          } catch (error) {
+            this.#blocked = true
+            item.status = 'failed'
+            item.error = errorMessage(error)
+            this.#emitQueue()
+            throw error
+          }
         }
       }
-    }
+    })
     this.#emitQueue()
     for (const item of this.#queue) this.#flush(item)
   }
@@ -130,15 +141,17 @@ export class DashboardWorker extends EventTarget {
       const db = await this.db
       try {
         const {sha} = await client.mutate(item.mutations)
-        this.#removeQueueItem(item)
         if (remote.pendingCount === 0 && sha !== item.sha)
           await db.syncWith(client)
+        this.#removeQueueItem(item)
       } catch (error) {
         this.#blocked = true
         item.status = 'failed'
         item.error = errorMessage(error)
-        await db.syncWith(client)
         this.#emitQueue()
+        try {
+          await db.syncWith(client)
+        } catch {}
       }
     })
   }
