@@ -43,10 +43,13 @@ function ExplorerModal({options}: ExplorerModalProps) {
       ? Workspace.defaultMediaRoot(config.workspaces[workspace])
       : selectedRoot
   const [explorer] = useState(() =>
-    dashboard.explore(options.location ?? {workspace, root: mediaRoot}, {
-      ...options,
-      searchDepth: 'all'
-    })
+    dashboard.explore(
+      options.location ?? {workspace, root: mediaRoot ?? undefined},
+      {
+        ...options,
+        searchDepth: 'all'
+      }
+    )
   )
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)

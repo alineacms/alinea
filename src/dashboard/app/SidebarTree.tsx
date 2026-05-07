@@ -55,6 +55,7 @@ interface SidebarParentProps {
 const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
   const label = useAtomValue(root.label)
   const selectRoot = useSetAtom(root.selected)
+  const canCreate = useAtomValue(root.canCreate)
   return (
     <SidebarHeader>
       <div className={styles.SidebarParent.label()}>
@@ -66,12 +67,14 @@ const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
           {label}
         </Button>
         <LocaleMenu root={root} />
-        <DialogTrigger>
-          <Button size="icon" icon={IcRoundAdd} intent="primary" />
-          <DashboardModal>
-            <CreateEntry />
-          </DashboardModal>
-        </DialogTrigger>
+        {canCreate && (
+          <DialogTrigger>
+            <Button size="icon" icon={IcRoundAdd} intent="primary" />
+            <DashboardModal>
+              <CreateEntry />
+            </DashboardModal>
+          </DialogTrigger>
+        )}
       </div>
     </SidebarHeader>
   )
@@ -218,12 +221,18 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   const [selectedKeys, setSelectedKeys] = useAtom(workspace.tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(workspace.tree.expandedKeys)
   const items = useAtomValue(workspace.tree.items)
+  const dragDisabled = useAtomValue(workspace.tree.dragDisabled)
   const getItems = useSetAtom(workspace.tree.getItems)
+  const getDropOperation = useSetAtom(workspace.tree.getDropOperation)
+  const shouldAcceptItemDrop = useSetAtom(workspace.tree.shouldAcceptItemDrop)
   const onInsert = useSetAtom(workspace.tree.onInsert)
   const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
   const onMove = useSetAtom(workspace.tree.onMove)
   const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
     getItems,
+    isDisabled: dragDisabled,
+    getDropOperation,
+    shouldAcceptItemDrop,
     onInsert,
     onItemDrop,
     onMove

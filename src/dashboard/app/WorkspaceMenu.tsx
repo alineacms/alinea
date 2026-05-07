@@ -54,7 +54,10 @@ function SearchPopup() {
   const workspace = useAtomValue(dashboard.selectedWorkspace)
   const root = useAtomValue(dashboard.selectedRoot)
   const [explorer] = useState(() =>
-    dashboard.explore({workspace, root}, {searchDepth: 'all'})
+    dashboard.explore(
+      {workspace, root: root ?? undefined},
+      {searchDepth: 'all'}
+    )
   )
 
   return (

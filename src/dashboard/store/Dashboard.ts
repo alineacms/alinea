@@ -18,6 +18,7 @@ import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import {Permission, Policy, type Resource} from '#/core/Role.js'
+import {getScope} from '#/core/Scope.js'
 import {Section} from '#/core/Section.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
@@ -30,7 +31,14 @@ import {slugify} from '#/core/util/Slugs.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Infer} from '#/types.js'
-import {DragItem, type DropItem, type ItemDropTarget} from '@react-types/shared'
+import {
+  DragItem,
+  type DragTypes,
+  type DropItem,
+  type DropOperation,
+  type DropTarget,
+  type ItemDropTarget
+} from '@react-types/shared'
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
@@ -515,11 +523,13 @@ export class Dashboard {
       if (type.type !== MediaLibrary) return {entry: model}
       return rootFocus()
     }
-    if (workspace && routeRoot && routeRoot !== root)
+    if (workspace && routeRoot && routeRoot !== root) {
+      if (!root) return null
       return {
         missingRoot: routeRoot,
         root: this.workspace(workspace).root(root)
       }
+    }
     if (entry)
       try {
         const model = get(this.entries(entry))
@@ -593,14 +603,12 @@ export class Dashboard {
     }
   )
 
-  selectedRoot = atom(get => {
+  selectedRoot = atom<string | null>(get => {
     const workspace = get(this.currentWorkspace)
     const roots = workspace ? get(workspace.roots) : []
     const {root} = get(this.route)
     if (root && roots.includes(root)) return root
-    const first = roots[0]
-    assert(first, 'No root found for selected workspace')
-    return first
+    return roots[0] ?? null
   })
 
   workspaces = atom(get => {
@@ -658,8 +666,8 @@ export class Dashboard {
   currentRoot = atom(get => {
     const workspace = get(this.currentWorkspace)
     const rootKey = get(this.selectedRoot)
-    assert(rootKey, 'No root selected')
-    return workspace ? workspace.root(rootKey) : null
+    if (!workspace || !rootKey) return null
+    return workspace.root(rootKey)
   })
 
   type = dispense(key => {
@@ -1200,9 +1208,12 @@ export class DashboardField {
     const update = tracker ? tracker(get(this.#getter)) : undefined
     const options = {...defaultOptions, ...update}
     const resource = this.draft.resource
-    if (!resource || this.draft.parent) return options
+    if (!resource) return options
+    const config = get(this.draft.dashboard.config)
+    const fieldName = getScope(config).nameOf(this.field)
+    if (!fieldName) return options
     const policy = get(this.draft.dashboard.policy)
-    const fieldResource = {...resource, field: this.key}
+    const fieldResource = {...resource, field: fieldName}
     return {
       ...options,
       hidden: options.hidden || !policy.canRead(fieldResource),
@@ -1283,7 +1294,7 @@ export class DashboardWorkspace {
       const selectedId = String(selectedKey)
       set(this.dashboard.route, {
         workspace: this.key,
-        root,
+        root: root ?? undefined,
         entry: selectedId,
         locale: current.locale
       })
@@ -1381,6 +1392,16 @@ export class DashboardTree {
     }
   )
 
+  selectedResource = unwrap(
+    atom(async get => {
+      const selected = get(this.selectedKeys).values().next().value
+      if (!selected) return undefined
+      const entry = await get(this.workspace.dashboard.entries(String(selected)))
+      const [resource] = get(entry.entryData).entries
+      return resource
+    })
+  )
+
   entryItems: (id: string) => Atom<Promise<DashboardTreeItem>> = dispense(
     (id: string): Atom<Promise<DashboardTreeItem>> => {
       return atom(async (get): Promise<DashboardTreeItem> => {
@@ -1419,8 +1440,59 @@ export class DashboardTree {
 
   // dnd
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
+    const resource = get(this.selectedResource)
+    if (!resource) return []
+    const policy = get(this.workspace.dashboard.policy)
+    if (!policy.canMove(resource) && !policy.canReorder(resource)) return []
     return [...keys].map(id => dragItem(id))
   })
+
+  dragDisabled = atom(get => {
+    const currentRoot = get(this.workspace.dashboard.currentRoot)
+    if (!currentRoot) return true
+    const policy = get(this.workspace.dashboard.policy)
+    const resource = {workspace: this.workspace.key, root: currentRoot.key}
+    return !policy.canMove(resource) && !policy.canReorder(resource)
+  })
+
+  getDropOperation = atom(
+    null,
+    (
+      get,
+      set,
+      target: DropTarget,
+      types: DragTypes,
+      allowedOperations: Array<DropOperation>
+    ): DropOperation => {
+      if (!acceptsDashboardEntryDrag(types)) return 'cancel'
+      if (!allowedOperations.includes('move')) return 'cancel'
+      const resource = get(this.selectedResource)
+      if (!resource) return 'cancel'
+      const policy = get(this.workspace.dashboard.policy)
+      if (target.type === 'root')
+        return policy.canMove(resource) ? 'move' : 'cancel'
+      return target.dropPosition === 'on'
+        ? policy.canMove(resource)
+          ? 'move'
+          : 'cancel'
+        : policy.canReorder(resource)
+          ? 'move'
+          : 'cancel'
+    }
+  )
+
+  shouldAcceptItemDrop = atom(
+    null,
+    (get, set, target: ItemDropTarget, types: DragTypes): boolean => {
+      if (!acceptsDashboardEntryDrag(types)) return false
+      const resource = get(this.selectedResource)
+      if (!resource) return false
+      const policy = get(this.workspace.dashboard.policy)
+      return target.dropPosition === 'on'
+        ? policy.canMove(resource)
+        : policy.canReorder(resource)
+    }
+  )
 
   onMove = atom(
     null,
@@ -1447,6 +1519,7 @@ export class DashboardTree {
     const db = get(this.workspace.dashboard.db)
     const policy = get(this.workspace.dashboard.policy)
     const selectedRoot = get(this.workspace.dashboard.selectedRoot)
+    if (!selectedRoot) return
     const {moveTarget, targetType} = this.#target(target.key, selectedRoot)
     for (const key of keys) {
       const draggedId = String(key)
@@ -2414,6 +2487,13 @@ export class DashboardRoot {
   i18n = atom(get => get(this.#settings).i18n)
   view = atom(get => get(this.#settings).view)
   orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
+  canCreate = atom(get => {
+    const policy = get(this.workspace.dashboard.policy)
+    return policy.canCreate({
+      workspace: this.workspace.key,
+      root: this.key
+    })
+  })
   children = atom(get =>
     queryTreeChildren(get, this, null, this.orderChildrenBy)
   )
@@ -2531,6 +2611,10 @@ function dispense<Key = string, Value = unknown>(
 }
 
 const DASHBOARD_ENTRY_DRAG_TYPE = 'application/x-alinea-entry-id'
+
+function acceptsDashboardEntryDrag(types: DragTypes) {
+  return types.has(DASHBOARD_ENTRY_DRAG_TYPE) || types.has('text/plain')
+}
 
 function dragItem(id: Key): DragItem {
   const key = String(id)

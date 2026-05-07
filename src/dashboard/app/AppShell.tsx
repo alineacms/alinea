@@ -7,11 +7,19 @@ import {
   ProgressCircle,
   Tooltip
 } from '#/components.js'
+import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {Suspense, useEffect, useMemo, useRef, useState} from 'react'
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode
+} from 'react'
 import {
   IcBaselineAccountCircle,
   IcRoundBrightness2,
@@ -91,6 +99,35 @@ function AppShellContent({dashboard}: AppShellProps) {
             </h1>
             <p className={styles.AppShell.empty.text()}>
               Your current roles do not grant permission to read any workspace.
+            </p>
+          </div>
+        </Rail>
+      </>
+    )
+  }
+
+  return <AppShellWorkspace dashboard={dashboard} footer={footer} />
+}
+
+interface AppShellWorkspaceProps extends AppShellProps {
+  footer: ReactNode
+}
+
+function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
+  const currentWorkspace = useAtomValue(dashboard.currentWorkspace)
+  assert(currentWorkspace, 'No workspace selected')
+  const roots = useAtomValue(currentWorkspace.roots)
+
+  if (roots.length === 0) {
+    return (
+      <>
+        <Sidebar>{footer}</Sidebar>
+        <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+          <div className={styles.AppShell.empty()}>
+            <h1 className={styles.AppShell.empty.title()}>No root access</h1>
+            <p className={styles.AppShell.empty.text()}>
+              Your current roles do not grant permission to read any roots in
+              this workspace.
             </p>
           </div>
         </Rail>
