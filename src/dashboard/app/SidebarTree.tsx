@@ -224,7 +224,6 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   const dragDisabled = useAtomValue(workspace.tree.dragDisabled)
   const getItems = useSetAtom(workspace.tree.getItems)
   const getDropOperation = useSetAtom(workspace.tree.getDropOperation)
-  const shouldAcceptItemDrop = useSetAtom(workspace.tree.shouldAcceptItemDrop)
   const onInsert = useSetAtom(workspace.tree.onInsert)
   const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
   const onMove = useSetAtom(workspace.tree.onMove)
@@ -232,7 +231,6 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
     getItems,
     isDisabled: dragDisabled,
     getDropOperation,
-    shouldAcceptItemDrop,
     onInsert,
     onItemDrop,
     onMove

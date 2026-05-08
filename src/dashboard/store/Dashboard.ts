@@ -1394,16 +1394,6 @@ export class DashboardTree {
     }
   )
 
-  selectedResource = unwrap(
-    atom(async get => {
-      const selected = get(this.selectedKeys).values().next().value
-      if (!selected) return undefined
-      const entry = await get(this.workspace.dashboard.entries(String(selected)))
-      const [resource] = get(entry.entryData).entries
-      return resource
-    })
-  )
-
   entryItems: (id: string) => Atom<Promise<DashboardTreeItem>> = dispense(
     (id: string): Atom<Promise<DashboardTreeItem>> => {
       return atom(async (get): Promise<DashboardTreeItem> => {
@@ -1442,10 +1432,6 @@ export class DashboardTree {
 
   // dnd
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
-    const resource = get(this.selectedResource)
-    if (!resource) return []
-    const policy = get(this.workspace.dashboard.policy)
-    if (!policy.canMove(resource) && !policy.canReorder(resource)) return []
     return [...keys].map(id => dragItem(id))
   })
 
@@ -1462,37 +1448,12 @@ export class DashboardTree {
     (
       get,
       set,
-      target: DropTarget,
+      _target: DropTarget,
       types: DragTypes,
       allowedOperations: Array<DropOperation>
-    ): DropOperation => {
+    ) => {
       if (!acceptsDashboardEntryDrag(types)) return 'cancel'
-      if (!allowedOperations.includes('move')) return 'cancel'
-      const resource = get(this.selectedResource)
-      if (!resource) return 'cancel'
-      const policy = get(this.workspace.dashboard.policy)
-      if (target.type === 'root')
-        return policy.canMove(resource) ? 'move' : 'cancel'
-      return target.dropPosition === 'on'
-        ? policy.canMove(resource)
-          ? 'move'
-          : 'cancel'
-        : policy.canReorder(resource)
-          ? 'move'
-          : 'cancel'
-    }
-  )
-
-  shouldAcceptItemDrop = atom(
-    null,
-    (get, set, target: ItemDropTarget, types: DragTypes): boolean => {
-      if (!acceptsDashboardEntryDrag(types)) return false
-      const resource = get(this.selectedResource)
-      if (!resource) return false
-      const policy = get(this.workspace.dashboard.policy)
-      return target.dropPosition === 'on'
-        ? policy.canMove(resource)
-        : policy.canReorder(resource)
+      return allowedOperations.includes('move') ? 'move' : 'cancel'
     }
   )
 
