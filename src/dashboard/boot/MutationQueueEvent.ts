@@ -3,6 +3,13 @@ export interface MutationQueueEntry {
   status: 'pending' | 'syncing' | 'failed' | 'blocked'
   mutations: Array<MutationQueueMutation>
   error?: string
+  upload?: MutationQueueUpload
+}
+
+export interface MutationQueueUpload {
+  workspace: string
+  root?: string
+  parentId?: string
 }
 
 export interface MutationQueueMutation {

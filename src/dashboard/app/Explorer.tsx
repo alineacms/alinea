@@ -22,6 +22,7 @@ import {
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {LocationBreadcrumbs} from './LocationBreadcrumbs.js'
+import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
@@ -154,10 +155,24 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
+  const uploads = useAtomValue(explorer.uploadsInCurrentFolder)
   const upload = useSetAtom(explorer.upload)
+  const uploadLabel =
+    uploads.length === 1
+      ? '1 file uploading'
+      : `${uploads.length} files uploading`
 
   return (
     <div className={styles.Explorer.toolbar.tools()}>
+      {isMedia && uploads.length > 0 && (
+        <MutationQueueStatus
+          ariaLabel={uploadLabel}
+          dashboard={explorer.dashboard}
+          placement="bottom"
+        >
+          {uploads.length}
+        </MutationQueueStatus>
+      )}
       <ExplorerControlsButton
         isMedia={isMedia}
         sort={sort}
@@ -165,18 +180,21 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
         setSort={setSort}
         toggleFilter={toggleFilter}
       />
-      {isMedia && canUpload && (
-        <FileTrigger
-          onSelect={files => {
-            if (files) upload(files)
-          }}
-        >
-          <Button icon={IcRoundUploadFile} intent="primary">
+      <div className={styles.Explorer.toolbar.mediaActions()}>
+        <ViewToggle view={view} setView={setView} />
+        {isMedia && canUpload && (
+          <FileTrigger
+            allowsMultiple
+            onSelect={files => {
+              if (files) upload(files)
+            }}
+          >
+            <Button icon={IcRoundUploadFile} intent="primary">
             Upload media
           </Button>
         </FileTrigger>
       )}
-      <ViewToggle view={view} setView={setView} />
+      </div>
     </div>
   )
 }

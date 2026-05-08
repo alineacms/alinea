@@ -451,6 +451,7 @@ export class Dashboard {
         | {
             type: 'start'
             uploads: Array<{id: string; file: File}>
+            destination: MutationQueueEntry['upload']
           }
         | {
             type: 'progress'
@@ -468,6 +469,7 @@ export class Dashboard {
             ({id, file}): MutationQueueEntry => ({
               id,
               status: 'syncing',
+              upload: update.destination,
               mutations: [
                 {
                   op: 'uploadFile',
@@ -1125,6 +1127,21 @@ export class DashboardExplorer {
     })
   })
 
+  uploadsInCurrentFolder = atom(get => {
+    const location = get(this.location)
+    const queue = get(this.dashboard.mutationQueue)
+    return queue.entries.filter(entry => {
+      if (!entry.upload) return false
+      if (!entry.mutations.some(mutation => mutation.op === 'uploadFile'))
+        return false
+      return (
+        entry.upload.workspace === location.workspace &&
+        entry.upload.root === location.root &&
+        (entry.upload.parentId ?? null) === (location.parentId ?? null)
+      )
+    })
+  })
+
   upload = atom(null, async (get, set, files: DashboardUploadFiles) => {
     const location = get(this.location)
     const db = get(this.dashboard.db)
@@ -1158,7 +1175,15 @@ export class DashboardExplorer {
       file
     }))
     const ids = uploads.map(upload => upload.id)
-    set(this.dashboard.uploadProgress, {type: 'start', uploads})
+    set(this.dashboard.uploadProgress, {
+      type: 'start',
+      uploads,
+      destination: {
+        workspace: location.workspace,
+        root: location.root,
+        parentId: location.parentId
+      }
+    })
     try {
       await db.commit(...ops)
     } finally {

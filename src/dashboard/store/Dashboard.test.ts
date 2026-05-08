@@ -134,6 +134,45 @@ test('Dashboard role overrides update the active policy', async () => {
   test.not.ok(policy.canRead({workspace: 'secondary'}))
 })
 
+test('DashboardExplorer filters queued uploads to its current folder', () => {
+  const store = createStore()
+  const dashboard = createDashboard({local: true})
+  const explorer = dashboard.explore({
+    workspace: 'main',
+    root: 'media',
+    parentId: 'folder'
+  })
+
+  store.set(dashboard.uploadProgress, {
+    type: 'start',
+    uploads: [{id: 'current-upload', file: new File(['a'], 'current.png')}],
+    destination: {
+      workspace: 'main',
+      root: 'media',
+      parentId: 'folder'
+    }
+  })
+  store.set(dashboard.uploadProgress, {
+    type: 'start',
+    uploads: [{id: 'other-upload', file: new File(['b'], 'other.png')}],
+    destination: {
+      workspace: 'main',
+      root: 'media',
+      parentId: 'other-folder'
+    }
+  })
+
+  test.equal(store.get(explorer.uploadsInCurrentFolder).length, 1)
+  test.equal(store.get(explorer.uploadsInCurrentFolder)[0]?.id, 'current-upload')
+
+  store.set(dashboard.uploadProgress, {
+    type: 'finish',
+    ids: ['current-upload']
+  })
+
+  test.equal(store.get(explorer.uploadsInCurrentFolder).length, 0)
+})
+
 test('ReactiveNode inserts array values at the requested index', () => {
   const store = createStore()
   const node = new ReactiveNode<Array<Row>>([
