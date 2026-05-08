@@ -147,6 +147,10 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
         {footer}
       </Sidebar>
 
+      <Suspense fallback={null}>
+        <DashboardMeta dashboard={dashboard} />
+      </Suspense>
+
       <Suspense
         fallback={
           <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
@@ -154,7 +158,6 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
           </Rail>
         }
       >
-        <DashboardMeta dashboard={dashboard} />
         <SyncedEditor dashboard={dashboard} />
       </Suspense>
     </>

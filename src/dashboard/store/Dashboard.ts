@@ -638,21 +638,23 @@ export class Dashboard {
     return workspaceKey ? this.workspace(workspaceKey) : null
   })
 
-  title = atom(async get => {
-    const workspace = get(this.currentWorkspace)
-    const workspaceLabel = workspace ? get(workspace.label) : 'Alinea'
-    const focused = await get(this.focused)
-    let viewLabel = workspaceLabel
-    if (focused) {
-      if ('entry' in focused) viewLabel = get(focused.entry.label)
-      else if ('missingEntry' in focused) viewLabel = 'Entry not found'
-      else if ('missingRoot' in focused) viewLabel = 'Root not found'
-      else viewLabel = get(focused.root.label)
-    }
-    return viewLabel === workspaceLabel
-      ? workspaceLabel
-      : `${workspaceLabel}: ${viewLabel}`
-  })
+  title = swr(
+    atom(async get => {
+      const workspace = get(this.currentWorkspace)
+      const workspaceLabel = workspace ? get(workspace.label) : 'Alinea'
+      const focused = await get(this.focused)
+      let viewLabel = workspaceLabel
+      if (focused) {
+        if ('entry' in focused) viewLabel = get(focused.entry.label)
+        else if ('missingEntry' in focused) viewLabel = 'Entry not found'
+        else if ('missingRoot' in focused) viewLabel = 'Root not found'
+        else viewLabel = get(focused.root.label)
+      }
+      return viewLabel === workspaceLabel
+        ? workspaceLabel
+        : `${workspaceLabel}: ${viewLabel}`
+    })
+  )
 
   favicon = atom((get): DashboardFavicon => {
     const workspace = get(this.currentWorkspace)
