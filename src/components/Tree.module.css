@@ -17,11 +17,6 @@
     font-style: italic;
   }
 
-  [data-drop-target][role='row'] {
-    outline: 1px solid var(--alinea-primary);
-    margin-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px);
-  }
-
   &::-webkit-scrollbar {
     width: 8px;
   }
@@ -167,10 +162,14 @@
 
   &[data-dragging] {
     opacity: 0.6;
+
+    .TreeItem-dragHandle {
+      opacity: 0 !important;
+    }
   }
 
   &[data-drop-target] {
-    outline: 2px solid var(--alinea-primary);
+    outline: 1px solid var(--alinea-primary);
     background: var(--alinea-primary-overlay);
   }
 

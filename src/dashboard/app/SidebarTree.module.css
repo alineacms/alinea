@@ -40,8 +40,8 @@
 
 .SidebarTree-tree :global(.react-aria-DropIndicator) {
   position: relative;
-  height: 6px;
-  margin: -3px 8px;
+  height: 0;
+  margin: 0 10px;
   pointer-events: none;
   z-index: 2;
 }
@@ -49,27 +49,13 @@
 .SidebarTree-tree :global(.react-aria-DropIndicator[data-drop-target])::before {
   content: '';
   position: absolute;
-  top: 50%;
-  right: 6px;
-  left: 6px;
+  top: 0;
+  right: 0;
+  left: 0;
   height: 2px;
   transform: translateY(-50%);
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--alinea-primary);
-  box-shadow: 0 0 0 1px var(--alinea-bg);
-}
-
-.SidebarTree-tree :global(.react-aria-DropIndicator[data-drop-target])::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 2px;
-  width: 6px;
-  height: 6px;
-  transform: translateY(-50%);
-  border-radius: 999px;
-  background: var(--alinea-primary);
-  box-shadow: 0 0 0 1px var(--alinea-bg);
 }
 
 .SidebarTree-tree-viewport {
