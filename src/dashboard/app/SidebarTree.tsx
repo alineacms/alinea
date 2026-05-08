@@ -229,6 +229,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
   const onMove = useSetAtom(workspace.tree.onMove)
   const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
+    acceptedDragTypes: workspace.tree.acceptedDragTypes,
     getItems,
     isDisabled: dragDisabled,
     getDropOperation,

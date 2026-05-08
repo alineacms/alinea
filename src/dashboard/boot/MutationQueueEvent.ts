@@ -11,6 +11,12 @@ export interface MutationQueueMutation {
   title?: string
   locale?: string | null
   status?: string
+  progress?: MutationQueueProgress
+}
+
+export interface MutationQueueProgress {
+  loaded: number
+  total?: number
 }
 
 export class MutationQueueEvent extends Event {

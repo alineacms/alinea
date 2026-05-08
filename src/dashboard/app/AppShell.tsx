@@ -333,7 +333,11 @@ function formatMutation(mutation: {
   title?: string
   locale?: string | null
   status?: string
+  progress?: {loaded: number; total?: number}
 }) {
+  const progress = mutation.progress
+    ? ` ${formatProgress(mutation.progress)}`
+    : ''
   const status = mutation.status ? ` ${formatEntryStatus(mutation.status)}` : ''
   const locale = mutation.locale ? ` (${mutation.locale})` : ''
   switch (mutation.op) {
@@ -352,12 +356,29 @@ function formatMutation(mutation: {
     case 'move':
       return 'Moved'
     case 'uploadFile':
-      return 'Uploaded file'
+      return mutation.progress
+        ? `Uploading file${progress}`
+        : 'Uploaded file'
     case 'removeFile':
       return 'Removed file'
     default:
       return mutation.op
   }
+}
+
+function formatProgress(progress: {loaded: number; total?: number}) {
+  if (!progress.total) return formatBytes(progress.loaded)
+  const percentage = Math.max(
+    0,
+    Math.min(100, Math.round((progress.loaded / progress.total) * 100))
+  )
+  return `${percentage}%`
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${Math.round(bytes / (1024 * 1024))} MB`
 }
 
 function formatMutationQueueTitle(

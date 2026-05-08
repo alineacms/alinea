@@ -14,9 +14,12 @@ import {
   type Key,
   ListLayout,
   type ListLayoutOptions,
-  useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
+import {
+  isFileDropItem,
+  useDragAndDrop
+} from 'react-aria-components/useDragAndDrop'
 import {
   IcRoundDragIndicator,
   IcRoundKeyboardArrowRight,
@@ -206,6 +209,9 @@ export function ExplorerList({explorer}: ExplorerListProps) {
   const [isPending, loadedItems] = useAtomValue(explorer.items)
   const items = loadedItems ?? []
   const getItems = useSetAtom(explorer.getItems)
+  const isMedia = useAtomValue(explorer.isMedia)
+  const canUpload = useAtomValue(explorer.canUpload)
+  const upload = useSetAtom(explorer.upload)
   const [selected, setSelected] = useAtom(explorer.selection)
   const onAction = useSetAtom(explorer.onAction)
   function onItemAction(key: Key) {
@@ -213,7 +219,19 @@ export function ExplorerList({explorer}: ExplorerListProps) {
     if (entry) onAction(entry)
   }
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
+    acceptedDragTypes: isMedia && canUpload ? 'all' : [],
     getItems,
+    getDropOperation(target, _types, allowedOperations) {
+      if (!isMedia || !canUpload) return 'cancel'
+      if (target.type !== 'root') return 'cancel'
+      return allowedOperations.includes('copy') ? 'copy' : 'cancel'
+    },
+    async onRootDrop(event) {
+      const files = await Promise.all(
+        event.items.filter(isFileDropItem).map(item => item.getFile())
+      )
+      if (files.length > 0) await upload(files)
+    },
     renderDragPreview(items) {
       return (
         <div className={styles.ExplorerList.drag.preview()}>
