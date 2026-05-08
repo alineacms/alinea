@@ -4,7 +4,7 @@ import {Client} from '#/core/Client.js'
 import {Config} from '#/core/Config.js'
 import type {LocalConnection, Revision} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {UploadOperation} from '#/core/db/Operation.js'
+import {UploadOperation, type UploadProgress} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
@@ -150,6 +150,8 @@ export interface DashboardMutationQueue {
   error?: string
 }
 
+type DashboardUploadFiles = Iterable<File> | ArrayLike<File>
+
 interface MutationQueueRetry {
   retryMutationQueue(): Promise<void>
 }
@@ -202,6 +204,7 @@ export class Dashboard {
     failed: 0,
     blocked: 0
   })
+  #uploadQueue = atom<Array<MutationQueueEntry>>([])
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
     'system',
@@ -403,7 +406,12 @@ export class Dashboard {
 
   mutationQueue = Object.assign(
     atom(
-      get => get(this.#mutationQueue),
+      get => {
+        const uploads = get(this.#uploadQueue)
+        const queue = get(this.#mutationQueue)
+        if (uploads.length === 0) return queue
+        return mutationQueueState([...uploads, ...queue.entries])
+      },
       (get, set) => {
         const events = get(this.events)
         const listen = (event: Event) => {
@@ -433,6 +441,66 @@ export class Dashboard {
     const discard = (db as Partial<MutationQueueDiscard>).discardMutationQueue
     if (discard) discard.call(db)
   })
+
+  uploadProgress = atom(
+    null,
+    (
+      get,
+      set,
+      update:
+        | {
+            type: 'start'
+            uploads: Array<{id: string; file: File}>
+          }
+        | {
+            type: 'progress'
+            id: string
+            progress: UploadProgress
+          }
+        | {
+            type: 'finish'
+            ids: Array<string>
+          }
+    ) => {
+      if (update.type === 'start') {
+        set(this.#uploadQueue, current => [
+          ...update.uploads.map(
+            ({id, file}): MutationQueueEntry => ({
+              id,
+              status: 'syncing',
+              mutations: [
+                {
+                  op: 'uploadFile',
+                  title: file.name,
+                  progress: {loaded: 0, total: file.size || undefined}
+                }
+              ]
+            })
+          ),
+          ...current
+        ])
+        return
+      }
+      if (update.type === 'progress') {
+        set(this.#uploadQueue, current =>
+          current.map(entry => {
+            if (entry.id !== update.id) return entry
+            return {
+              ...entry,
+              mutations: entry.mutations.map(mutation => ({
+                ...mutation,
+                progress: update.progress
+              }))
+            }
+          })
+        )
+        return
+      }
+      set(this.#uploadQueue, current =>
+        current.filter(entry => !update.ids.includes(entry.id))
+      )
+    }
+  )
 
   canLogout = atom(get => {
     if (!get(this.authRequired)) return false
@@ -1057,7 +1125,7 @@ export class DashboardExplorer {
     })
   })
 
-  upload = atom(null, (get, set, files: FileList) => {
+  upload = atom(null, async (get, set, files: DashboardUploadFiles) => {
     const location = get(this.location)
     const db = get(this.dashboard.db)
     const policy = get(this.dashboard.policy)
@@ -1066,18 +1134,36 @@ export class DashboardExplorer {
       root: location.root,
       id: location.parentId
     })
-    const ops = Array.from(
-      files,
-      file =>
-        new UploadOperation({
-          file,
-          createPreview: createPreview,
-          parentId: location.parentId,
-          workspace: location.workspace,
-          root: location.root
-        })
-    )
-    return db.commit(...ops)
+    const uploadFiles = Array.from(files)
+    if (uploadFiles.length === 0) return
+    const ops = uploadFiles.map(file => {
+      const op = new UploadOperation({
+        file,
+        createPreview: createPreview,
+        parentId: location.parentId,
+        workspace: location.workspace,
+        root: location.root,
+        onProgress: progress => {
+          set(this.dashboard.uploadProgress, {
+            type: 'progress',
+            id: op.id,
+            progress
+          })
+        }
+      })
+      return op
+    })
+    const uploads = uploadFiles.map((file, index) => ({
+      id: ops[index]!.id,
+      file
+    }))
+    const ids = uploads.map(upload => upload.id)
+    set(this.dashboard.uploadProgress, {type: 'start', uploads})
+    try {
+      await db.commit(...ops)
+    } finally {
+      set(this.dashboard.uploadProgress, {type: 'finish', ids})
+    }
   })
 
   workspace = atom(
@@ -1132,8 +1218,10 @@ export class DashboardExplorer {
         size: MediaFile.size,
         id: Entry.id
       }
+      const fieldToSort = fieldMap[sort.sortBy]
       const orderBy = {
-        [sort.direction]: fieldMap[sort.sortBy]
+        [sort.direction]: fieldToSort,
+        caseSensitive: fieldToSort !== Entry.id
       }
       if (!root) return []
       const locale = get(root.selectedLocale)
@@ -1431,6 +1519,8 @@ export class DashboardTree {
   )
 
   // dnd
+  acceptedDragTypes = [DASHBOARD_ENTRY_DRAG_TYPE, 'text/plain']
+
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
     return [...keys].map(id => dragItem(id))
   })

@@ -188,7 +188,13 @@ export interface UploadQuery {
   root?: string
   parentId?: string | null
   createPreview?(blob: Blob): Promise<ImagePreviewDetails>
+  onProgress?(progress: UploadProgress): void
   replaceId?: string
+}
+
+export interface UploadProgress {
+  loaded: number
+  total?: number
 }
 
 export class UploadOperation extends Operation {
@@ -216,16 +222,8 @@ export class UploadOperation extends Operation {
             file instanceof Blob ? file : new Blob([body as BlobPart])
           )
         : undefined
-      await fetch(info.url, {
-        method: info.method ?? 'POST',
-        headers: {'Content-Type': contentType},
-        body: body as BodyInit
-      }).then(result => {
-        if (!result.ok)
-          throw new HttpError(
-            result.status,
-            'Could not reach server for upload'
-          )
+      await sendUpload(info.url, info.method ?? 'POST', contentType, body, {
+        onProgress: query.onProgress
       })
       const title = basename(fileName, extension)
       const hash = await createFileHash(new Uint8Array(body))
@@ -263,6 +261,66 @@ export class UploadOperation extends Operation {
     })
     this.id = query.replaceId ?? createId()
   }
+}
+
+interface UploadFileOptions {
+  onProgress?(progress: UploadProgress): void
+}
+
+async function sendUpload(
+  url: string,
+  method: string,
+  contentType: string,
+  body: ArrayBuffer | Uint8Array,
+  options: UploadFileOptions
+) {
+  const {onProgress} = options
+  if (onProgress && typeof XMLHttpRequest !== 'undefined') {
+    await uploadFileWithProgress(url, method, contentType, body, onProgress)
+    return
+  }
+  await fetch(url, {
+    method,
+    headers: {'Content-Type': contentType},
+    body: body as BodyInit
+  }).then(result => {
+    if (!result.ok)
+      throw new HttpError(result.status, 'Could not reach server for upload')
+  })
+}
+
+function uploadFileWithProgress(
+  url: string,
+  method: string,
+  contentType: string,
+  body: ArrayBuffer | Uint8Array,
+  onProgress: (progress: UploadProgress) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest()
+    request.open(method, url)
+    request.setRequestHeader('Content-Type', contentType)
+    request.upload.addEventListener('progress', event => {
+      onProgress({
+        loaded: event.loaded,
+        total: event.lengthComputable ? event.total : undefined
+      })
+    })
+    request.addEventListener('load', () => {
+      if (request.status >= 200 && request.status < 300) {
+        onProgress({loaded: body.byteLength, total: body.byteLength})
+        resolve()
+        return
+      }
+      reject(
+        new HttpError(request.status, 'Could not reach server for upload')
+      )
+    })
+    request.addEventListener('error', () => {
+      reject(new HttpError(request.status, 'Could not reach server for upload'))
+    })
+    request.send(body as XMLHttpRequestBodyInit)
+  })
 }
 
 export function update<Definition>(
