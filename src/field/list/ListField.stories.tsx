@@ -8,6 +8,8 @@ import {
   IcRoundNorthEast,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
+import {Dashboard, DashboardEditor, ReactiveNode} from '#/dashboard/store.js'
+import {DashboardScopeInternal, EditorScope} from '#/dashboard/store/hooks.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
 import {list} from '#/field/list.js'
@@ -18,8 +20,6 @@ import '#/theme.css'
 import {atom, type Atom} from 'jotai'
 import type {ComponentType, CSSProperties} from 'react'
 import {useMemo} from 'react'
-import {Dashboard, DashboardEditor, ReactiveNode} from '../../../store.js'
-import {DashboardScopeInternal, EditorScope} from '../../../store/hooks.js'
 import {views} from '../views.js'
 import {ListFieldView} from './ListField.view.js'
 

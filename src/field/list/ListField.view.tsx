@@ -15,6 +15,11 @@ import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {ListRow} from '#/core/shape/ListShape.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
+  Surface,
+  SurfaceContent,
+  SurfaceHeader
+} from '#/dashboard/app/ui/Surface.js'
+import {
   IcBaselineContentCopy,
   IcBaselineContentPasteGo,
   IcRoundAdd,
@@ -52,7 +57,6 @@ import {
   ListBoxItem,
   OverlayTriggerStateContext
 } from 'react-aria-components'
-import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
 import css from './ListField.module.css'
 
 const styles = styler(css)

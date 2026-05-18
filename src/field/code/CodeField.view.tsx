@@ -1,9 +1,9 @@
 import {Label} from '#/components.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
 import {CodeField} from '#/field/code.js'
 import {styler} from '@alinea/styler'
 import lolight from 'lolight'
 import {Fragment, ReactNode, useId} from 'react'
-import {useField, useFieldError, useFieldOptions} from '../../../store.js'
 import css from './CodeField.module.css'
 import {SimpleCodeEditor} from './SimpleCodeEditor.js'
 

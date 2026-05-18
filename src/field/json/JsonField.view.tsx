@@ -1,6 +1,6 @@
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
 import {JsonField} from '#/field/json.js'
 import {useEffect, useState} from 'react'
-import {useField, useFieldError, useFieldOptions} from '../../../store.js'
 import {CodeEditorInput} from '../code/CodeField.view.js'
 
 export interface JsonFieldViewProps<Value> {

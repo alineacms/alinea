@@ -1,8 +1,8 @@
 import {Select, SelectItem} from '#/components.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
 import {SelectField, SelectOptions} from '#/field/select.js'
 import {Key} from '@react-types/shared'
 import {useMemo} from 'react'
-import {useField, useFieldError, useFieldOptions} from '../../../store.js'
 
 interface SelectItemData {
   id: string

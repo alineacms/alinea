@@ -1,24 +1,7 @@
 import {Button, TextField} from '#/components.js'
 import {Reference} from '#/core/Reference.js'
-import {Type, type as createType} from '#/core/Type.js'
-import {link as createLink, type LinkRow} from '#/field/link.js'
-import type {
-  PickerOptions,
-  PickerValue,
-  PickTextLinkFunc
-} from '#/field/richtext/PickTextLink.js'
-import type {LinkField} from '#/field/link/LinkField.js'
-import styler from '@alinea/styler'
-import {useAtomValue, type WritableAtom} from 'jotai'
-import {
-  useCallback,
-  useMemo,
-  useState,
-  type FormEvent,
-  type SetStateAction
-} from 'react'
-import {ReactiveNode} from '../../../store.js'
-import {NodeEditor} from '../../Editor.js'
+import {type as createType, Type} from '#/core/Type.js'
+import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -29,8 +12,36 @@ import {
   DashboardModalFormHeader,
   DashboardModalTitle,
   useDashboardModal
-} from '../../ui/DashboardModal.js'
+} from '#/dashboard/app/ui/DashboardModal.js'
+import {ReactiveNode} from '#/dashboard/store.js'
+import {link as createLink, type LinkRow} from '#/field/link.js'
+import type {LinkField} from '#/field/link/LinkField.js'
+import styler from '@alinea/styler'
+import {useAtomValue, type WritableAtom} from 'jotai'
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type FormEvent,
+  type SetStateAction
+} from 'react'
 import css from './PickTextLink.module.css'
+
+export interface PickerValue {
+  link?: Reference
+  description?: string
+  title?: string
+  blank?: boolean
+}
+
+export interface PickerOptions extends PickerValue {
+  requireDescription?: boolean
+  hasLink?: boolean
+}
+
+export interface PickTextLinkFunc {
+  (options: Partial<PickerOptions>): Promise<PickerValue | undefined>
+}
 
 const styles = styler(css)
 

@@ -1,6 +1,6 @@
 import {Checkbox, Label} from '#/components.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
 import {CheckField} from '#/field/check.js'
-import {useField, useFieldError, useFieldOptions} from '../../../store.js'
 
 export interface CheckFieldViewProps {
   field: CheckField

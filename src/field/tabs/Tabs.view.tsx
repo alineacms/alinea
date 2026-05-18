@@ -2,9 +2,13 @@ import {Icon, Tab, TabList, TabPanel, Tabs} from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
+import {EditFields} from '#/dashboard/app/Editor.js'
+import {
+  Surface,
+  SurfaceContent,
+  SurfaceHeader
+} from '#/dashboard/app/ui/Surface.js'
 import {TabsSection} from '#/field/tabs.js'
-import {EditFields} from '../../Editor.js'
-import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
 
 interface TabsViewProps {
   section: Section

@@ -5,23 +5,20 @@ import {Reference} from '#/core/Reference.js'
 import {ListRow} from '#/core/shape/ListShape.js'
 import {Type, type, type Type as TypeInstance} from '#/core/Type.js'
 import {localUser} from '#/core/User.js'
+import {ExternalLinkPicker} from '#/dashboard/app/ExternalLinkPicker.js'
+import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
+import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
+import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
+import {Dashboard, DashboardEditor, ReactiveNode} from '#/dashboard/store.js'
+import {DashboardScopeInternal, EditorScope} from '#/dashboard/store/hooks.js'
 import {image, link, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
 import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
-import {cms, db} from '../../../fixture/cms.ts?alinea'
-import {Dashboard, DashboardEditor, ReactiveNode} from '../../../store.js'
-import {DashboardScopeInternal, EditorScope} from '../../../store/hooks.js'
-import {ExternalLinkPicker} from '../../ExternalLinkPicker.js'
-import {ImagePicker} from '../../ImagePicker.js'
-import {LinkPicker} from '../../LinkPicker.js'
 import {views} from '../views.js'
-import {
-  MultipleLinksFieldView,
-  SingleLinkFieldView
-} from './LinkField.view.js'
+import {MultipleLinksFieldView, SingleLinkFieldView} from './LinkField.view.js'
 
 interface StoryLinkFields {
   label: string
@@ -157,8 +154,12 @@ export function Example() {
   const relatedLink = Field.isField(pageType.relatedLink)
     ? pageType.relatedLink
     : null
-  const heroImage = Field.isField(pageType.heroImage) ? pageType.heroImage : null
-  const resources = Field.isField(pageType.resources) ? pageType.resources : null
+  const heroImage = Field.isField(pageType.heroImage)
+    ? pageType.heroImage
+    : null
+  const resources = Field.isField(pageType.resources)
+    ? pageType.resources
+    : null
   if (!relatedLink || !heroImage || !resources) return null
   return (
     <DashboardScopeInternal dashboard={dashboard}>

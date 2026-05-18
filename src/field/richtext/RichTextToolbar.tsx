@@ -24,7 +24,7 @@ import type {
   ToolbarConfig,
   ToolbarGroup as ToolbarConfigGroup,
   ToolbarMenu
-} from '#/field/richtext/RichTextToolbar.js'
+} from '#/field/richtext/Toolbar.js'
 import type {UrlReference} from '#/picker/url.js'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/react'

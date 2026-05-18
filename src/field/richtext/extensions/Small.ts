@@ -1,23 +1,14 @@
 import {Mark, mergeAttributes} from '@tiptap/core'
 
 export interface SmallOptions {
-  HTMLAttributes: Record<string, any>
+  HTMLAttributes: Record<string, unknown>
 }
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     small: {
-      /**
-       * Set a small mark
-       */
       setSmall: () => ReturnType
-      /**
-       * Toggle a small mark
-       */
       toggleSmall: () => ReturnType
-      /**
-       * Unset a small mark
-       */
       unsetSmall: () => ReturnType
     }
   }
@@ -25,21 +16,14 @@ declare module '@tiptap/core' {
 
 const Small = Mark.create<SmallOptions>({
   name: 'small',
-
   addOptions() {
     return {
       HTMLAttributes: {}
     }
   },
-
   parseHTML() {
-    return [
-      {
-        tag: 'small'
-      }
-    ]
+    return [{tag: 'small'}]
   },
-
   renderHTML({HTMLAttributes}) {
     return [
       'small',
@@ -47,7 +31,6 @@ const Small = Mark.create<SmallOptions>({
       0
     ]
   },
-
   addCommands() {
     return {
       setSmall:

@@ -3,6 +3,38 @@ import {createId} from '#/core/Id.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Type} from '#/core/Type.js'
+import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {
+  ExternalLinkPicker,
+  type ExternalLinkValue
+} from '#/dashboard/app/ExternalLinkPicker.js'
+import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
+import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
+import {
+  Surface,
+  SurfaceContent,
+  SurfaceHeader
+} from '#/dashboard/app/ui/Surface.js'
+import {
+  IcRoundArrowDownward,
+  IcRoundArrowUpward,
+  IcRoundAttachFile,
+  IcRoundClose,
+  IcRoundEdit,
+  IcRoundLink,
+  IcRoundOpenInNew,
+  IcRoundPanorama
+} from '#/dashboard/icons.js'
+import {
+  type DashboardEntry,
+  type ExplorerOptions,
+  ReactiveNode,
+  useDashboard,
+  useField,
+  useFieldNode,
+  useFieldOptions,
+  useNodes
+} from '#/dashboard/store.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EntryPickerOptions} from '#/picker/entry.js'
@@ -18,34 +50,6 @@ import {
   useDrag,
   useDrop
 } from 'react-aria'
-import {
-  IcRoundArrowDownward,
-  IcRoundArrowUpward,
-  IcRoundAttachFile,
-  IcRoundClose,
-  IcRoundEdit,
-  IcRoundLink,
-  IcRoundOpenInNew,
-  IcRoundPanorama
-} from '../../../icons.js'
-import {
-  type DashboardEntry,
-  type ExplorerOptions,
-  ReactiveNode,
-  useDashboard,
-  useField,
-  useFieldNode,
-  useFieldOptions,
-  useNodes
-} from '../../../store.js'
-import {NodeEditor} from '../../Editor.js'
-import {
-  ExternalLinkPicker,
-  type ExternalLinkValue
-} from '../../ExternalLinkPicker.js'
-import {ImagePicker} from '../../ImagePicker.js'
-import {LinkPicker} from '../../LinkPicker.js'
-import {Surface, SurfaceContent, SurfaceHeader} from '../../ui/Surface.js'
 import css from './LinkField.module.css'
 
 const styles = styler(css)
@@ -104,8 +108,8 @@ interface RowLayerProps {
 
 function EntryRowLayer({hasFields, node, textOnly}: RowLayerProps) {
   const entryId = useAtomValue(node.field('_entry')) as string | undefined
-  if (!entryId) return null
   const type = useAtomValue(node.field('_type')) as string | undefined
+  if (!entryId) return null
   return (
     <EntryRow
       entryId={entryId}

@@ -5,6 +5,13 @@ import {Schema} from '#/core/Schema.js'
 import {BlockNode, Node, TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {entries, values} from '#/core/util/Objects.js'
+import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {
+  Surface,
+  SurfaceContent,
+  SurfaceHeader,
+  SurfaceRow
+} from '#/dashboard/app/ui/Surface.js'
 import {
   IcBaselineContentCopy,
   IcRoundClose,
@@ -32,13 +39,6 @@ import {
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
-import {NodeEditor} from '../../Editor.js'
-import {
-  Surface,
-  SurfaceContent,
-  SurfaceHeader,
-  SurfaceRow
-} from '../../ui/Surface.js'
 import {extensions as baseExtensions} from './Extensions.js'
 import {InsertMenu} from './InsertMenu.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
@@ -159,7 +159,7 @@ function typeExtension(
           return isEditableBlockValue(value, blockId, name, fieldKeys)
         })
       })
-    }, [blockId, fieldKeys, name, reactive])
+    }, [blockId])
     const rowNode = useAtomValue(rowNodeAtom) as
       | ReactiveNode<object>
       | undefined
@@ -186,7 +186,7 @@ function typeExtension(
       })
       tr.setMeta('addToHistory', false)
       editor.view.dispatch(tr)
-    }, [editor, getPos, name, rowValue])
+    }, [editor, getPos, rowValue])
     const copyBlockAtom = useMemo(() => {
       return atom(null, (get, set): BlockNode | undefined => {
         if (!rowNode) return
@@ -205,7 +205,7 @@ function typeExtension(
         set(reactive.insert, index + 1, block)
         return block
       })
-    }, [reactive, rowNode])
+    }, [rowNode])
     const copyBlock = useSetAtom(copyBlockAtom)
 
     function onCopy() {

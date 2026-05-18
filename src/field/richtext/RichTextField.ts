@@ -5,7 +5,7 @@ import type {TextDoc} from '#/core/TextDoc.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {AnyExtension} from '@tiptap/core'
 import type {ReactNode} from 'react'
-import type {ToolbarConfig} from './RichTextToolbar.js'
+import type {ToolbarConfig} from './Toolbar.js'
 
 /** Optional settings to configure a rich text field */
 export interface RichTextOptions<Blocks extends Schema> extends FieldOptions<

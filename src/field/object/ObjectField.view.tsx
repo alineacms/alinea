@@ -1,14 +1,14 @@
 import {Label} from '#/components.js'
-import {ObjectField} from '#/field/object.js'
-import {styler} from '@alinea/styler'
+import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {Surface, SurfaceContent} from '#/dashboard/app/ui/Surface.js'
 import {
   ReactiveNode,
   useFieldError,
   useFieldNode,
   useFieldOptions
-} from '../../../store.js'
-import {NodeEditor} from '../../Editor.js'
-import {Surface, SurfaceContent} from '../../ui/Surface.js'
+} from '#/dashboard/store.js'
+import {ObjectField} from '#/field/object.js'
+import {styler} from '@alinea/styler'
 import css from './ObjectFieldView.module.css'
 
 const styles = styler(css)
