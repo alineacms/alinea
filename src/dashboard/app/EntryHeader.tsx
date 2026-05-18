@@ -92,6 +92,8 @@ function EntryHeaderActions({
   const canPublishParents = useAtomValue(entry.canPublish)
   const isParentUnpublished = useAtomValue(entry.parentUnpublished)
   const reset = useSetAtom(node.reset)
+  const selectedVersion = useAtomValue(entry.selectedVersion)
+  const setSelectedVersion = useSetAtom(entry.selectedVersion)
   const setRoute = useSetAtom(entry.dashboard.route)
   const saveDraft = useSetAtom(entry.saveDraft)
   const saveTranslation = useSetAtom(entry.saveTranslation)
@@ -109,6 +111,7 @@ function EntryHeaderActions({
   const isMediaFile = type.type === MediaFile
   const [isPending, startTransition] = useTransition()
   const isActionDisabled = isPending || mutationQueue.failed > 0
+  const isRevision = selectedVersion.type === 'history'
 
   function runAction(action: () => void | Promise<void>) {
     if (mutationQueue.failed > 0) return
@@ -139,9 +142,26 @@ function EntryHeaderActions({
     input.click()
   }
 
+  async function createDraftFromRevision() {
+    await saveDraft(node)
+    setSelectedVersion({type: 'status', status: 'draft'})
+  }
+
   const saveDraftVisible = config.enableDrafts && access.update
   const actionButtons =
-    untranslated && !parentNeedsTranslation && access.update ? (
+    isRevision && saveDraftVisible ? (
+      <Button
+        icon={IcRoundSave}
+        intent="primary"
+        isDisabled={isActionDisabled}
+        isPending={isPending}
+        onPress={() => runAction(createDraftFromRevision)}
+      >
+        Create draft
+      </Button>
+    ) : isRevision ? null : untranslated &&
+      !parentNeedsTranslation &&
+      access.update ? (
       <Button
         icon={IcRoundSave}
         intent="primary"
@@ -197,7 +217,7 @@ function EntryHeaderActions({
 
   const menuItems: Array<EntryHeaderMenuItem> = []
 
-  if (!isDirty && !untranslated) {
+  if (!isRevision && !isDirty && !untranslated) {
     if (activeStatus === 'draft') {
       if (isUnpublished) {
         if (isParentUnpublished && canDelete && access.delete) {
