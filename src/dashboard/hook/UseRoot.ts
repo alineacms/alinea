@@ -1,0 +1,19 @@
+import {Root, type RootData} from 'alinea/core/Root'
+import {useAtomValue} from 'jotai'
+import {useDashboard} from '../store.js'
+
+export interface DashboardRoot extends RootData {
+  name: string
+}
+
+export function useRoot(): DashboardRoot {
+  const dashboard = useDashboard()
+  const config = useAtomValue(dashboard.config)
+  const workspaceName = useAtomValue(dashboard.selectedWorkspace)
+  const rootName = useAtomValue(dashboard.selectedRoot)
+  if (!workspaceName) throw new Error('No workspace selected')
+  if (!rootName) throw new Error('No root selected')
+  const root = config.workspaces[workspaceName]?.[rootName]
+  if (!root) throw new Error('No root found')
+  return {name: rootName, ...Root.data(root)}
+}

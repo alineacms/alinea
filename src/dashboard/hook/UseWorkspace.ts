@@ -1,0 +1,17 @@
+import {Workspace, type WorkspaceInternal} from 'alinea/core/Workspace'
+import {useAtomValue} from 'jotai'
+import {useDashboard} from '../store.js'
+
+export interface DashboardWorkspace extends WorkspaceInternal {
+  name: string
+}
+
+export function useWorkspace(): DashboardWorkspace {
+  const dashboard = useDashboard()
+  const config = useAtomValue(dashboard.config)
+  const workspaceName = useAtomValue(dashboard.selectedWorkspace)
+  if (!workspaceName) throw new Error('No workspace selected')
+  const workspace = config.workspaces[workspaceName]
+  if (!workspace) throw new Error('No workspace found')
+  return {name: workspaceName, ...Workspace.data(workspace)}
+}
