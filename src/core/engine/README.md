@@ -36,19 +36,30 @@ Future live-query support can compare traces with changed rows, changed hierarch
 
 Latest local benchmark settings: 10,000 rows, 1,000 query runs, 5 samples.
 
-- Fresh `syncWith`: baseline ~247 ms, engine ~18 ms, about 14x faster.
-- Fresh `syncWith + snapshot`: baseline ~247 ms, engine ~41 ms, about 6x faster.
-- Native `syncWith`: baseline ~247 ms, engine ~17 ms, about 15x faster.
-- Native `syncWith + snapshot`: baseline ~247 ms, engine ~36 ms, about 7x faster.
-- One-row `indexChanges`: baseline ~40 ms, engine ~21 ms, about 1.9x faster.
-- One-row `indexChanges + snapshot`: baseline ~40 ms, engine ~21-23 ms, about 1.8-1.9x faster.
-- Planner id lookup x1000: scan baseline ~606 ms, engine planner ~0.18 ms, thousands of times faster.
-- Planner type lookup x1000: scan baseline ~810 ms, engine planner ~0.13 ms, thousands of times faster.
-- Resolver id query x1000: baseline ~121 ms, engine ~0.82 ms, about 147x faster.
-- Resolver count-by-type x1000: baseline ~837 ms, engine ~0.48 ms, about 1,743x faster.
-- Compact snapshot write: ~0.4 ms. Expand compact snapshot: ~9 ms. Hydrate memory engine: ~11 ms.
+- Fresh `syncWith`: baseline ~240 ms, engine ~16 ms, about 15x faster.
+- Fresh `syncWith + snapshot`: baseline ~240 ms, engine ~40 ms, about 6x faster.
+- Native `syncWith`: baseline ~240 ms, engine ~16 ms, about 15x faster.
+- Native `syncWith + snapshot`: baseline ~240 ms, engine ~39 ms, about 6x faster.
+- One-row `indexChanges`: baseline ~41 ms, engine ~20 ms, about 2x faster.
+- One-row `indexChanges + snapshot`: baseline ~41 ms, engine ~21-23 ms, about 1.7-2x faster.
+- Planner id lookup x1000: scan baseline ~580 ms, engine planner ~0.18 ms, thousands of times faster.
+- Planner type lookup x1000: scan baseline ~835 ms, engine planner ~0.13 ms, thousands of times faster.
+- Resolver id query x1000: baseline ~116 ms, engine ~1.3 ms, about 87x faster.
+- Resolver count-by-type x1000: baseline ~855 ms, engine ~0.50 ms, about 1,716x faster.
+- Compact snapshot write: ~0.4 ms. Expand compact snapshot: ~7 ms. Hydrate memory engine: ~10 ms.
+- Snapshot size for 10,000 rows: `exportSource` JSON ~1.5 MiB, full snapshot JSON ~15.3 MiB, compact snapshot JSON ~7.4 MiB, packed snapshot JSON ~3.2 MiB, compact gzip -9 ~1.3 MiB (87% of `exportSource`), packed gzip -9 ~1.1 MiB (71% of `exportSource`), compact Brotli q11 ~543 KiB (36% of `exportSource`).
 
 The clear remaining performance gap is broader incremental snapshot/index maintenance and source-tree update cost. Same-shape content updates now patch the current snapshot without rebuilding all rows, and tree compilation reuses unchanged previous subtrees, but structural changes still rebuild the full snapshot.
+
+The clear remaining snapshot-size gap is raw, engine-portable packing. Brotli is only useful as an upper-bound transfer number. The packed snapshot removes row object overhead, column-encodes rows, packs the tree, and shortens SHA strings, but it is still larger than `exportSource` without a compression primitive.
+
+## Source Test Parity
+
+The integration tests in `src/test/*.test.ts` can be run against the engine by preloading `EngineSrcTestPreload.ts`, which aliases `alinea/core/db/LocalDB` to the engine `LocalDB` without changing the original test files:
+
+```sh
+bun run test:engine-src
+```
 
 ## Implementation Roadmap
 
@@ -67,4 +78,5 @@ Next steps, in priority order:
 3. Next: replace transaction scans with native index/snapshot lookups for by-id, parent, locale, status, children, siblings, and path-conflict checks.
 4. In progress: add incremental snapshot/index maintenance for small changes instead of rebuilding all rows and indexes after every mutation. Same-file, same-shape replacements are covered; creates, deletes, moves, path/status changes, and inherited-status cascades still rebuild.
 5. Next: split resolver behavior into focused engine modules: query normalization, candidate planning, post-filtering, projection, ordering/grouping, edge traversal, and link post-processing.
-6. Next: remove transitional `filter`, `findFirst`, `findMany`, and graph-like usage from resolver/transaction internals after native helpers cover those call sites.
+6. Next: reduce packed snapshot size without relying on Brotli by removing duplicated tree/hash/data payloads and adding schema-aware field storage.
+7. Next: remove transitional `filter`, `findFirst`, `findMany`, and graph-like usage from resolver/transaction internals after native helpers cover those call sites.

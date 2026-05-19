@@ -472,7 +472,34 @@ export class EntryResolver implements Resolver {
       const results = getSelected()
       return isSingle ? results[0] : results
     }
-    const getProcessed = async () => getUnprocessed()
+    const getProcessed = async () => {
+      if (query.count) return canCountRows ? rowIds.length : entries.length
+      const results = getSelected()
+      if (isSingle) {
+        const entry = entries[0]
+        if (results[0]) {
+          const linkResolver = new EngineLinkResolver(this, ctx, entry.locale)
+          await this.postRow({linkResolver}, results[0], edge)
+        }
+        return results[0] as any
+      }
+      if (results.length > 0) {
+        await Promise.all(
+          results
+            .map((result, index) => {
+              if (!result) return
+              const linkResolver = new EngineLinkResolver(
+                this,
+                ctx,
+                entries[index].locale
+              )
+              return this.postRow({linkResolver}, result, edge)
+            })
+            .filter(Boolean)
+        )
+      }
+      return results as any
+    }
     return {
       entries,
       getUnprocessed,

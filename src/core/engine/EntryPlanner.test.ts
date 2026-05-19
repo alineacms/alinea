@@ -8,7 +8,9 @@ import {
   indexKey,
   indexValue,
   NULL_INDEX_VALUE,
+  packEntrySnapshot,
   SnapshotEntryPlanner,
+  unpackEntrySnapshot,
   type EntryRowStore,
   type EntrySnapshot,
   type EntryVersionRow
@@ -381,4 +383,5 @@ test('compacts and expands snapshots while rebuilding indexes', () => {
   test.is(compact.r.v[0][0], 'home:published')
   test.is(compact.r.l[1][8], '/home/child')
   test.equal(expandEntrySnapshot(compact), snapshot)
+  test.equal(unpackEntrySnapshot(packEntrySnapshot(snapshot)), snapshot)
 })

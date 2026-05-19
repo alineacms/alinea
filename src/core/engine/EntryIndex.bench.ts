@@ -1,3 +1,8 @@
+import {
+  brotliCompressSync,
+  constants as zlibConstants,
+  gzipSync
+} from 'node:zlib'
 import {Config, Field} from 'alinea'
 import {createConfig} from '../Config.js'
 import {Entry} from '../Entry.js'
@@ -6,9 +11,11 @@ import {EntryIndex as BaseEntryIndex} from '../db/EntryIndex.js'
 import {EntryResolver as BaseEntryResolver} from '../db/EntryResolver.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {MemorySource} from '../source/MemorySource.js'
+import {exportSource} from '../source/SourceExport.js'
 import {
   compactEntrySnapshot,
-  expandEntrySnapshot
+  expandEntrySnapshot,
+  packEntrySnapshot
 } from './EntrySnapshotCodec.js'
 import {MemoryEntryEngine} from './EntryEngine.js'
 import {EntryIndex} from './EntryIndex.js'
@@ -43,6 +50,7 @@ const hydrateSnapshot = (index: EntryIndex | NativeEntryIndex) =>
 
 const source = await createSource(ROWS)
 const updateBatch = await createUpdateBatch(source, Math.floor(ROWS / 3))
+const exportedSource = await exportSource(source)
 const base = new BaseEntryIndex(config)
 const engine = new EntryIndex(config)
 
@@ -144,6 +152,13 @@ const compactSnapshot = bench('compact snapshot', () => {
 })
 
 const compact = compactEntrySnapshot(engine.snapshot)
+const packed = packEntrySnapshot(engine.snapshot)
+const snapshotSizes = snapshotSizeReport(
+  engine.snapshot,
+  compact,
+  packed,
+  exportedSource
+)
 const expandSnapshot = bench('expand compact snapshot', () => {
   expandEntrySnapshot(compact)
 })
@@ -301,6 +316,7 @@ console.table([
   singleResult('expand compact snapshot', expandSnapshot),
   singleResult('hydrate memory engine', hydrateMemoryEngine)
 ])
+console.table(snapshotSizes)
 console.table([
   result('id', scanById, planById),
   result('type', scanByType, planByType),
@@ -443,6 +459,50 @@ function singleResult(name: string, result: {duration: number}) {
     task: name,
     ms: result.duration.toFixed(2)
   }
+}
+
+function snapshotSizeReport(
+  snapshot: EntryIndex['snapshot'],
+  compact: unknown,
+  packed: unknown,
+  exportedSource: unknown
+) {
+  const exportJson = bytesOfJson(exportedSource)
+  const fullJson = bytesOfJson(snapshot)
+  const compactJson = bytesOfJson(compact)
+  const packedJson = bytesOfJson(packed)
+  const compactBuffer = Buffer.from(JSON.stringify(compact))
+  const packedBuffer = Buffer.from(JSON.stringify(packed))
+  const gzip = gzipSync(compactBuffer, {level: 9}).byteLength
+  const packedGzip = gzipSync(packedBuffer, {level: 9}).byteLength
+  const brotli = brotliCompressSync(compactBuffer, {
+    params: {
+      [zlibConstants.BROTLI_PARAM_QUALITY]: 11
+    }
+  }).byteLength
+  return [
+    sizeResult('exportSource json', exportJson, exportJson),
+    sizeResult('full snapshot json', fullJson, exportJson),
+    sizeResult('compact snapshot json', compactJson, exportJson),
+    sizeResult('packed snapshot json', packedJson, exportJson),
+    sizeResult('compact snapshot gzip -9', gzip, exportJson),
+    sizeResult('packed snapshot gzip -9', packedGzip, exportJson),
+    sizeResult('compact snapshot brotli q11', brotli, exportJson)
+  ]
+}
+
+function sizeResult(name: string, bytes: number, exportBytes: number) {
+  return {
+    snapshot: name,
+    bytes,
+    kib: (bytes / 1024).toFixed(1),
+    vsExport: `${((bytes / exportBytes) * 100).toFixed(1)}%`,
+    bytesPerRow: (bytes / ROWS).toFixed(1)
+  }
+}
+
+function bytesOfJson(input: unknown) {
+  return Buffer.byteLength(JSON.stringify(input))
 }
 
 function median(values: Array<number>) {
