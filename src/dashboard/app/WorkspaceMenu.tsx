@@ -11,6 +11,7 @@ import {useState, type ComponentType} from 'react'
 import {IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {useDashboard} from '../store.js'
 import type {Dashboard, DashboardWorkspace} from '../store/Dashboard.js'
+import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {LogoShape} from './LogoShape.js'
 import {
@@ -42,7 +43,7 @@ function WorkspaceAvatar({
     <span className={styles.WorkspaceMenu.avatar(size)}>
       <LogoShape
         background={color}
-        icon={icon}
+        icon={icon ?? AlineaLogo}
         className={styles.WorkspaceMenu.avatar.logo()}
       />
     </span>

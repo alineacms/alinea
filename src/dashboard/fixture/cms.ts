@@ -4,7 +4,6 @@ import {
   IcOutlineGridView,
   IcRoundHistory,
   IcRoundTranslate,
-  MaterialSymbolsDatabase,
   MiLayers
 } from '../icons.js'
 
@@ -161,7 +160,6 @@ const nested = Config.workspace('Deeply nested', {
 
 const many = Config.workspace('Many entries', {
   source: 'content/many',
-  icon: MaterialSymbolsDatabase,
   roots: {
     pages: Config.root('Pages', {
       contains: ['Page', 'Folder'],
