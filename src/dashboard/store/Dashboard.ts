@@ -1667,7 +1667,7 @@ export class DashboardTreeItem {
     public label: Atom<string>,
     public parentIds: Atom<Array<string>>,
     public status: Atom<DashboardEntryTreeStatus>,
-    public items: Atom<Awaitable<Array<DashboardTreeItem>>>,
+    private items: Atom<Awaitable<Array<DashboardTreeItem>>>,
     public hasChildren: boolean
   ) {}
 
@@ -1684,6 +1684,12 @@ export class DashboardTreeItem {
       return get(selected.status)
     }
   )
+
+  children = atom(get => {
+    if (!this.hasChildren) return undefined
+    if (!get(this.isExpanded)) return undefined
+    return get(unwrap(this.items))
+  })
 }
 
 interface EntryVersionData {

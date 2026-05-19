@@ -9,7 +9,7 @@ import {
 } from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {type ComponentType, memo, Suspense, useMemo, useState} from 'react'
 import {
@@ -140,18 +140,7 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   const selectedAncestorStatus = useAtomValue(
     useMemo(() => unwrap(item.selectedAncestorStatus), [item])
   )
-  const childItems = useAtomValue(
-    useMemo(() => {
-      if (!item.hasChildren)
-        return atom<Array<DashboardTreeItem> | undefined>(undefined)
-      return unwrap(
-        atom(async get => {
-          if (!get(item.isExpanded)) return undefined
-          return get(item.items)
-        })
-      )
-    }, [item])
-  )
+  const childItems = useAtomValue(item.children)
   let icon = useAtomValue(item.icon)
   if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   const isLoadingChildren =
