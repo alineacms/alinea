@@ -38,6 +38,8 @@ const ROWS = Number(process.env.ALINEA_BENCH_ROWS ?? 10000)
 const RUNS = Number(process.env.ALINEA_BENCH_RUNS ?? 1000)
 const SAMPLES = Number(process.env.ALINEA_BENCH_SAMPLES ?? 5)
 const targetId = `page-${Math.floor(ROWS / 2)}`
+const hydrateSnapshot = (index: EntryIndex | NativeEntryIndex) =>
+  index.snapshot.graphSha
 
 const source = await createSource(ROWS)
 const updateBatch = await createUpdateBatch(source, Math.floor(ROWS / 3))
@@ -66,7 +68,7 @@ const engineIndexFreshSnapshot = await benchAsync(
   async () => {
     const index = new EntryIndex(config)
     await index.syncWith(source)
-    index.snapshot
+    hydrateSnapshot(index)
   }
 )
 
@@ -80,7 +82,7 @@ const nativeIndexFreshSnapshot = await benchAsync(
   async () => {
     const index = new NativeEntryIndex(config)
     await index.syncWith(source)
-    index.snapshot
+    hydrateSnapshot(index)
   }
 )
 
@@ -107,10 +109,10 @@ const engineIndexChangesSnapshot = await benchAsyncMeasured(
   async () => {
     const index = new EntryIndex(config)
     await index.syncWith(source)
-    index.snapshot
+    hydrateSnapshot(index)
     return async () => {
       await index.indexChanges(updateBatch)
-      index.snapshot
+      hydrateSnapshot(index)
     }
   }
 )
@@ -129,10 +131,10 @@ const nativeIndexChangesSnapshot = await benchAsyncMeasured(
   async () => {
     const index = new NativeEntryIndex(config)
     await index.syncWith(source)
-    index.snapshot
+    hydrateSnapshot(index)
     return async () => {
       await index.indexChanges(updateBatch)
-      index.snapshot
+      hydrateSnapshot(index)
     }
   }
 )
@@ -198,6 +200,30 @@ const engineResolveById = await benchAsync(
       await engineResolver.resolve({
         id: targetId,
         select: Entry.id
+      })
+    }
+  }
+)
+
+const baseResolveCountType = await benchAsync(
+  `base resolve count type x${RUNS}`,
+  async () => {
+    for (let i = 0; i < RUNS; i++) {
+      await baseResolver.resolve({
+        type: 'Page',
+        count: true
+      })
+    }
+  }
+)
+
+const engineResolveCountType = await benchAsync(
+  `engine resolve count type x${RUNS}`,
+  async () => {
+    for (let i = 0; i < RUNS; i++) {
+      await engineResolver.resolve({
+        type: 'Page',
+        count: true
       })
     }
   }
@@ -279,6 +305,7 @@ console.table([
   result('id', scanById, planById),
   result('type', scanByType, planByType),
   result('resolve id', baseResolveById, engineResolveById),
+  result('resolve count type', baseResolveCountType, engineResolveCountType),
   result('memory query id', baseResolveById, memoryQueryById),
   result('memory traced id', baseResolveById, memoryQueryByIdTrace),
   result('memory count type', scanByType, memoryCountByType)

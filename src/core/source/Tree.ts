@@ -205,7 +205,7 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
   withChanges(batch: ChangesBatch): Promise<ReadonlyTree> {
     const result = this.clone()
     result.applyChanges(batch)
-    return result.compile()
+    return result.compile(this)
   }
 
   #flatEntries(prefix: string): Array<FlatTreeEntry> {

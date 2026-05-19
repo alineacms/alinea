@@ -22,6 +22,7 @@ export class SnapshotEntryPlanner implements EntryPlanner {
   readonly #versions = new Map<EntryRowId, EntryVersionRow>()
   readonly #languages = new Map<string, EntryLanguageRow>()
   readonly #nodes = new Map<EntryNodeId, EntryNodeRow>()
+  readonly #candidateCache = new Map<string, Array<EntryRowId>>()
 
   constructor(snapshot: EntrySnapshot) {
     this.#snapshot = snapshot
@@ -43,6 +44,12 @@ export class SnapshotEntryPlanner implements EntryPlanner {
     plan: EntryQueryPlan,
     options: EntryQueryOptions = {}
   ): EntryCandidatePlan {
+    const cacheKey = !options.trace ? candidateCacheKey(plan) : undefined
+    if (cacheKey) {
+      const rowIds = this.#candidateCache.get(cacheKey)
+      if (rowIds) return {rowIds}
+    }
+
     let trace = options.trace
       ? emptyQueryTrace(this.#snapshot.graphSha)
       : undefined
@@ -109,6 +116,7 @@ export class SnapshotEntryPlanner implements EntryPlanner {
         })
       }
     }
+    if (cacheKey) this.#candidateCache.set(cacheKey, candidates)
     return {rowIds: candidates}
   }
 
@@ -303,4 +311,20 @@ function setOf(rowIds: Array<EntryRowId>): Set<EntryRowId> {
 
 function unique<T>(values: Array<T>): Array<T> {
   return Array.from(new Set(values))
+}
+
+function candidateCacheKey(plan: EntryQueryPlan): string | undefined {
+  if (!plan.constraints || plan.preFilter) return
+  const constraints = plan.constraints
+  const parts = Array<string>()
+  for (const key of Object.keys(constraints).sort()) {
+    const value = constraints[key as keyof EntryQueryConstraints]
+    if (value === undefined) continue
+    if (Array.isArray(value)) {
+      parts.push(`${key}=${value.map(String).sort().join('\u0000')}`)
+    } else {
+      parts.push(`${key}=${String(value)}`)
+    }
+  }
+  return parts.join('\u0001')
 }
