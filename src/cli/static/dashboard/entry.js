@@ -1,4 +1,4 @@
-import {bootProd} from 'alinea/dashboard/boot/BootProd.js'
+import {bootProd} from 'alinea/dashboard/boot/BootProd'
 // These are aliased during build
 import {cms} from '#alinea/config'
 import {views} from '#alinea/views'
