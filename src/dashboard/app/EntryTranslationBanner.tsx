@@ -1,13 +1,13 @@
 import {Select, SelectItem} from '#/components.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {DashboardEntry} from '../store/Dashboard.js'
+import {DashboardEntryData} from '../store/Dashboard.js'
 import css from './EntryTranslationBanner.module.css'
 
 const styles = styler(css)
 
 export interface EntryTranslationBannerProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
 }
 
 export function EntryTranslationBanner({

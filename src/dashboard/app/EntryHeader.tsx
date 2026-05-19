@@ -9,7 +9,7 @@ import {
   IcRoundSave,
   MaterialSymbolsRightPanelOpenRounded
 } from '../icons.js'
-import {DashboardEntry, ReactiveNode} from '../store/Dashboard.js'
+import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
 import {usePolicy} from '../store/hooks.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
@@ -18,14 +18,14 @@ import {RailHeader} from './ui/Rail.js'
 const styles = styler(css)
 
 export interface EntryHeaderProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
   isSidebarOpen?: boolean
   node: ReactiveNode<object>
   onSidebarOpenChange?: (isOpen: boolean) => void
 }
 
 interface EntryHeaderActionProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
   node: ReactiveNode<object>
   activeStatus: 'draft' | 'published' | 'archived'
   isDirty: boolean
@@ -43,7 +43,7 @@ interface EntryHeaderMenuItem {
 }
 
 interface EntryHeaderBackButtonProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
 }
 
 function EntryHeaderBackButton({entry}: EntryHeaderBackButtonProps) {

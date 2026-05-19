@@ -27,6 +27,7 @@ import {
 } from '#/dashboard/icons.js'
 import {
   type DashboardEntry,
+  type DashboardEntryData,
   type ExplorerOptions,
   ReactiveNode,
   useDashboard,
@@ -129,10 +130,77 @@ interface EntryRowProps {
 
 function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
   const dashboard = useDashboard()
-  const entry = useAtomValue(dashboard.entries(entryId))
+  const entry = dashboard.entries(entryId)
+  const [pending, data] = useAtomValue(entry.data)
+  if (!data)
+    return (
+      <EntryLoadingRow
+        hasFields={hasFields}
+        image={image}
+        pending={pending}
+        textOnly={textOnly}
+      />
+    )
+  return (
+    <LoadedEntryRow
+      entry={data}
+      hasFields={hasFields}
+      image={image}
+      textOnly={textOnly}
+    />
+  )
+}
+
+interface EntryLoadingRowProps {
+  hasFields?: boolean
+  image?: boolean
+  pending: boolean
+  textOnly?: boolean
+}
+
+function EntryLoadingRow({
+  hasFields,
+  image,
+  pending,
+  textOnly
+}: EntryLoadingRowProps) {
+  return (
+    <span
+      className={styles.LinkFieldView.label({loading: true})}
+      aria-busy={pending || undefined}
+    >
+      {image && !textOnly && (
+        <span
+          className={styles.LinkFieldView.imagePlaceholder()}
+          data-has-fields={hasFields ? 'true' : undefined}
+          aria-hidden="true"
+        />
+      )}
+      <span className={styles.LinkFieldView.labelText()}>
+        <span className={styles.LinkFieldView.skeleton({wide: true})} />
+        <span className={styles.LinkFieldView.skeleton()} />
+      </span>
+    </span>
+  )
+}
+
+interface LoadedEntryRowProps {
+  entry: DashboardEntryData
+  hasFields?: boolean
+  image?: boolean
+  textOnly?: boolean
+}
+
+function LoadedEntryRow({
+  entry,
+  hasFields,
+  image,
+  textOnly
+}: LoadedEntryRowProps) {
   const label = useAtomValue(entry.label)
   const type = useAtomValue(entry.type)
-  const parents = useAtomValue(entry.parents)
+  const parentIds = useAtomValue(entry.parentIds)
+  const [parentsPending, parents] = useAtomValue(entry.parentsState)
   const fileInfo = useAtomValue(entry.fileInfo)
   return (
     <span className={styles.LinkFieldView.label()}>
@@ -148,11 +216,15 @@ function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
         <span className={styles.LinkFieldView.title()}>
           {label} ({type.label})
         </span>
-        {parents.length > 0 && (
+        {(parentsPending && parents === undefined && parentIds.length > 0) ||
+        (parents && parents.length > 0) ? (
           <span className={styles.LinkFieldView.meta()}>
-            <EntryParents parents={parents} />
+            <EntryParents
+              loading={parentsPending && parents === undefined}
+              parents={parents ?? []}
+            />
           </span>
-        )}
+        ) : null}
       </span>
     </span>
   )
@@ -174,10 +246,12 @@ function UrlRow({node, textOnly}: RowLayerProps) {
 }
 
 interface EntryParentsProps {
+  loading: boolean
   parents: Array<DashboardEntry>
 }
 
-function EntryParents({parents}: EntryParentsProps) {
+function EntryParents({loading, parents}: EntryParentsProps) {
+  if (loading) return <EntryParentsLoading />
   return (
     <>
       {parents.map((parent, index) => (
@@ -191,12 +265,39 @@ function EntryParents({parents}: EntryParentsProps) {
   )
 }
 
+function EntryParentsLoading() {
+  return (
+    <>
+      <span
+        className={styles.LinkFieldView.skeleton({wide: true})}
+        aria-hidden="true"
+      />
+      {' / '}
+      <span className={styles.LinkFieldView.skeleton()} aria-hidden="true" />
+    </>
+  )
+}
+
 interface EntryParentLabelProps {
   parent: DashboardEntry
   suffix: string
 }
 
 function EntryParentLabel({parent, suffix}: EntryParentLabelProps) {
+  const [, data] = useAtomValue(parent.data)
+  if (!data) return null
+  return <LoadedEntryParentLabel parent={data} suffix={suffix} />
+}
+
+interface LoadedEntryParentLabelProps {
+  parent: DashboardEntryData
+  suffix: string
+}
+
+function LoadedEntryParentLabel({
+  parent,
+  suffix
+}: LoadedEntryParentLabelProps) {
   const label = useAtomValue(parent.label)
   return (
     <>

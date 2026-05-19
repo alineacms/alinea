@@ -32,11 +32,20 @@
   height: 100%;
 }
 
+.LinkFieldView-label.is-loading {
+  min-width: 180px;
+}
+
 .LinkFieldView-labelText {
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
   min-width: 0;
+}
+
+.LinkFieldView-label.is-loading .LinkFieldView-labelText {
+  align-items: center;
+  width: 100%;
 }
 
 .LinkFieldView-image {
@@ -52,7 +61,24 @@
   border-bottom-left-radius: 5px;
 }
 
+.LinkFieldView-imagePlaceholder {
+  align-self: center;
+  aspect-ratio: 1;
+  height: 40px;
+  width: 40px;
+  flex-shrink: 0;
+  margin-left: -12px;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  background: color-mix(in srgb, var(--alinea-fg-muted) 16%, transparent);
+  animation: LinkFieldView-skeleton-pulse 1100ms ease-in-out infinite;
+}
+
 .LinkFieldView-image[data-has-fields='true'] {
+  border-bottom-left-radius: 0;
+}
+
+.LinkFieldView-imagePlaceholder[data-has-fields='true'] {
   border-bottom-left-radius: 0;
 }
 
@@ -70,6 +96,29 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.LinkFieldView-skeleton {
+  display: inline-block;
+  width: 48px;
+  height: 10px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--alinea-fg-muted) 16%, transparent);
+  animation: LinkFieldView-skeleton-pulse 1100ms ease-in-out infinite;
+}
+
+.LinkFieldView-skeleton.is-wide {
+  width: 120px;
+}
+
+@keyframes LinkFieldView-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
 }
 
 .LinkFieldView-create {

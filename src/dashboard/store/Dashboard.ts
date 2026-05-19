@@ -135,7 +135,7 @@ type DashboardTreeSelection = WritableAtom<
 >
 
 type FocusedItem =
-  | {entry: DashboardEntry}
+  | {entry: DashboardEntryData}
   | {root: DashboardRoot}
   | {missingEntry: string; root: DashboardRoot}
   | {missingRoot: string; root: DashboardRoot}
@@ -588,9 +588,9 @@ export class Dashboard {
       }
       throw new Error(`Entry "${entry}" not found`)
     }
-    const entryFocus = (model: DashboardEntry): FocusedItem => {
-      const type = get(model.type)
-      if (type.type !== MediaLibrary) return {entry: model}
+    const entryFocus = (data: DashboardEntryData): FocusedItem => {
+      const type = get(data.type)
+      if (type.type !== MediaLibrary) return {entry: data}
       return rootFocus()
     }
     if (workspace && routeRoot && routeRoot !== root) {
@@ -602,10 +602,10 @@ export class Dashboard {
     }
     if (entry)
       try {
-        const model = get(this.entries(entry))
-        if (isPromiseLike(model))
-          return model.then(entryFocus).catch(missingEntryFocus)
-        return entryFocus(model)
+        const model = this.entries(entry)
+        const [, data] = get(model.data)
+        if (data) return entryFocus(data)
+        return null
       } catch (error) {
         return missingEntryFocus(error)
       }
@@ -763,30 +763,7 @@ export class Dashboard {
   }
 
   entries = dispense(id => {
-    const dataAtom = atom<Promise<EntryData>>(async get => {
-      await get(this.ensureInitialSync)
-      get(this.revisions(id))
-      const load = get(this.#entryLoader)
-      const [result, error] = await load(id)
-      if (error) {
-        if (error instanceof MissingEntryError) get(this.sha) // subscribe to entry revisions to update when entry synced
-        throw error
-      }
-      assert(result, `Entry "${id}" not found`)
-      return result
-    })
-    let entry: DashboardEntry
-    return swr(
-      atom(async (get): Promise<DashboardEntry> => {
-        const initial = await get(dataAtom)
-
-        return (entry ??= new DashboardEntry(
-          this,
-          id,
-          unwrap(dataAtom, prev => prev ?? initial) as Atom<EntryData>
-        ))
-      })
-    )
+    return new DashboardEntry(this, id)
   })
 
   versionLoader = atom(get => {
@@ -803,10 +780,11 @@ export class Dashboard {
     })
   })
 
-  #entryLoader = atom(get => {
+  entryLoader = atom(get => {
     const db = get(this.db)
     const policy = get(this.policy)
     return loader(async ids => {
+      await delay(600)
       const data = {
         id: Entry.id,
         type: Entry.type,
@@ -1058,7 +1036,8 @@ export class DashboardExplorer {
       set(this.#options.onAction, entry)
       return
     }
-    if (get(entry.hasChildren)) {
+    const [, data] = get(entry.data)
+    if (data && get(data.hasChildren)) {
       const location = get(this.location)
       set(this.location, {...location, parentId: entry.id})
     }
@@ -1220,7 +1199,7 @@ export class DashboardExplorer {
     get => {
       const {parentId} = get(this.location)
       if (!parentId) return
-      return get(this.dashboard.entries(parentId))
+      return this.dashboard.entries(parentId)
     },
     (get, set, parentId: string | undefined) => {
       const location = get(this.location)
@@ -1276,7 +1255,6 @@ export class DashboardExplorer {
         children
           .filter(child => policy.canRead(child))
           .map(child => this.dashboard.entries(child.id))
-          .map(get)
       )
     })
   )
@@ -1285,12 +1263,17 @@ export class DashboardExplorer {
     atom(async get => {
       const {parentId} = get(this.location)
       if (!parentId) return []
-      const parent = await get(this.dashboard.entries(parentId))
+      const parent = this.dashboard.entries(parentId)
       assert(parent, 'Parent entry not found')
-      const parents = await get(parent.parents)
-      const label = get(parent.label)
+      const [, parentData] = get(parent.data)
+      if (!parentData) return []
+      const parents = await get(parentData.parents)
+      const label = get(parentData.label)
       return [
-        ...parents.map(entry => ({id: entry.id, label: get(entry.label)})),
+        ...parents
+          .map(entry => get(entry.data)[1])
+          .filter((entry): entry is DashboardEntryData => entry !== undefined)
+          .map(entry => ({id: entry.id, label: get(entry.label)})),
         {id: parent.id, label}
       ]
     }),
@@ -1462,10 +1445,10 @@ export class DashboardTree {
     const route = get(this.workspace.dashboard.route)
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
-    const entry = await get(this.workspace.dashboard.entries(route.entry))
-    assert(entry, 'Entry not found')
-    const {parentIds} = entry
-    return new Set<Key>(get(parentIds))
+    const entry = this.workspace.dashboard.entries(route.entry)
+    const [, data] = get(entry.data)
+    if (!data) return new Set<Key>()
+    return new Set<Key>(get(data.parentIds))
   })
 
   expandedKeys = Object.assign(
@@ -1507,30 +1490,9 @@ export class DashboardTree {
     }
   )
 
-  entryItems: (id: string) => Atom<Promise<DashboardTreeItem>> = dispense(
-    (id: string): Atom<Promise<DashboardTreeItem>> => {
-      return atom(async (get): Promise<DashboardTreeItem> => {
-        const entry = await get(this.workspace.dashboard.entries(id))
-        assert(entry, `Entry "${id}" not found`)
-        return new DashboardTreeItem(
-          this,
-          id,
-          entry.icon,
-          entry.label,
-          entry.parentIds,
-          entry.treeStatus,
-          atom(async (get): Promise<Array<DashboardTreeItem>> => {
-            const children = await get(entry.children)
-            for (const childId of children) get(this.entryItems(childId))
-            return Promise.all(
-              children.map(childId => this.entryItems(childId)).map(get)
-            )
-          }),
-          get(entry.hasChildren)
-        )
-      })
-    }
-  )
+  entryItems = dispense((id: string): DashboardEntry => {
+    return this.workspace.dashboard.entries(id)
+  })
 
   items = swr(
     atom(async get => {
@@ -1538,10 +1500,42 @@ export class DashboardTree {
       if (!currentRoot || currentRoot.workspace.key !== this.workspace.key)
         return []
       const ids = await get(currentRoot.children)
-      for (const id of ids) get(this.entryItems(id))
-      return Promise.all(ids.map(id => this.entryItems(id)).map(get))
+      return ids.map(id => this.entryItems(id))
     })
   )
+
+  isExpanded = dispense((entry: DashboardEntry) => {
+    return atom(get => get(this.expandedKeys).has(entry.id))
+  })
+
+  selectedAncestorStatus = dispense((entry: DashboardEntry) => {
+    return atom(
+      async (get): Promise<DashboardEntryTreeStatus | undefined> => {
+        const [, data] = get(entry.data)
+        if (!data) return undefined
+        const selectedKey = get(this.selectedKeys).values().next().value
+        if (!selectedKey) return undefined
+        const selectedId = String(selectedKey)
+        if (selectedId === entry.id) return undefined
+        if (!get(data.parentIds).includes(selectedId)) return undefined
+        const selected = this.entryItems(selectedId)
+        const [, selectedData] = get(selected.data)
+        if (!selectedData) return undefined
+        return get(selectedData.treeStatus)
+      }
+    )
+  })
+
+  children = dispense((entry: DashboardEntry) => {
+    return atom(get => {
+      const [, data] = get(entry.data)
+      if (!data) return undefined
+      if (!get(data.hasChildren)) return undefined
+      if (!get(this.isExpanded(entry))) return undefined
+      const children = get(unwrap(data.children))
+      return children?.map(childId => this.entryItems(childId))
+    })
+  })
 
   // dnd
   acceptedDragTypes = [DASHBOARD_ENTRY_DRAG_TYPE, 'text/plain']
@@ -1601,8 +1595,10 @@ export class DashboardTree {
     const {moveTarget, targetType} = this.#target(target.key, selectedRoot)
     for (const key of keys) {
       const draggedId = String(key)
-      const entry = await get(this.workspace.dashboard.entries(draggedId))
-      const [resource] = get(entry.entryData).entries
+      const entry = this.workspace.dashboard.entries(draggedId)
+      const [, data] = get(entry.data)
+      assert(data, `Entry "${draggedId}" is not loaded`)
+      const [resource] = get(data.entryData).entries
       const permission =
         target.dropPosition === 'on' ? Permission.Move : Permission.Reorder
       policy.assert(permission, resource)
@@ -1657,41 +1653,6 @@ export class DashboardTree {
   })
 }
 
-type Awaitable<T> = T | Promise<T>
-
-export class DashboardTreeItem {
-  constructor(
-    public tree: DashboardTree,
-    public id: string,
-    public icon: Atom<ComponentType | undefined>,
-    public label: Atom<string>,
-    public parentIds: Atom<Array<string>>,
-    public status: Atom<DashboardEntryTreeStatus>,
-    private items: Atom<Awaitable<Array<DashboardTreeItem>>>,
-    public hasChildren: boolean
-  ) {}
-
-  isExpanded = atom(get => get(this.tree.expandedKeys).has(this.id))
-
-  selectedAncestorStatus = atom(
-    async (get): Promise<DashboardEntryTreeStatus | undefined> => {
-      const selectedKey = get(this.tree.selectedKeys).values().next().value
-      if (!selectedKey) return undefined
-      const selectedId = String(selectedKey)
-      if (selectedId === this.id) return undefined
-      if (!get(this.parentIds).includes(selectedId)) return undefined
-      const selected = await get(this.tree.entryItems(selectedId))
-      return get(selected.status)
-    }
-  )
-
-  children = atom(get => {
-    if (!this.hasChildren) return undefined
-    if (!get(this.isExpanded)) return undefined
-    return get(unwrap(this.items))
-  })
-}
-
 interface EntryVersionData {
   id: string
   type: string
@@ -1737,6 +1698,39 @@ type SelectedVersion =
   | {type: 'history'; file: string; ref: string}
 
 export class DashboardEntry {
+  data: Atom<
+    readonly [pending: boolean, data: DashboardEntryData | undefined]
+  >
+
+  constructor(
+    public dashboard: Dashboard,
+    public id: string
+  ) {
+    const entryData = atom<Promise<EntryData>>(async get => {
+      await get(this.dashboard.ensureInitialSync)
+      get(this.dashboard.revisions(id))
+      const load = get(this.dashboard.entryLoader)
+      const [result, error] = await load(id)
+      if (error) {
+        if (error instanceof MissingEntryError) get(this.dashboard.sha) // subscribe to entry revisions to update when entry synced
+        throw error
+      }
+      assert(result, `Entry "${id}" not found`)
+      return result
+    })
+    let data: DashboardEntryData
+    const loaded = atom(async get => {
+      const initial = await get(entryData)
+      return (data ??= new DashboardEntryData(
+        this,
+        unwrap(entryData, prev => prev ?? initial) as Atom<EntryData>
+      ))
+    })
+    this.data = atomWithPending(loaded)
+  }
+}
+
+export class DashboardEntryData {
   workspaceKey: Atom<string>
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
@@ -1748,11 +1742,12 @@ export class DashboardEntry {
   #translationSourceLocale = atom<string | null | undefined>(undefined)
 
   constructor(
-    public dashboard: Dashboard,
-    public id: string,
+    public entry: DashboardEntry,
     public entryData: Atom<EntryData>
   ) {
-    const data = entryData
+    const dashboard = entry.dashboard
+    const id = entry.id
+    const data = this.entryData
     this.workspaceKey = atom(get => get(data).workspace)
     this.rootKey = atom(get => get(data).root)
     this.hasChildren = atom(get => get(data).hasChildren)
@@ -1772,6 +1767,14 @@ export class DashboardEntry {
       const root = get(this.rootKey)
       return dashboard.workspace(workspace).root(root)
     })
+  }
+
+  get dashboard() {
+    return this.entry.dashboard
+  }
+
+  get id() {
+    return this.entry.id
   }
 
   translationSourceLocales = atom(get => {
@@ -1945,18 +1948,20 @@ export class DashboardEntry {
     })
   )
 
-  parents = swr(
-    atom(async get => {
-      const parentIds = get(this.parentIds)
-      return Promise.all(
-        parentIds.map(async id => {
-          const parent = await get(this.dashboard.entries(id))
-          assert(parent, `Parent entry not found: ${id}`)
-          return parent
-        })
-      )
-    })
-  )
+  #parents = atom(async get => {
+    const parentIds = get(this.parentIds)
+    return Promise.all(
+      parentIds.map(async id => {
+        const parent = this.dashboard.entries(id)
+        assert(parent, `Parent entry not found: ${id}`)
+        return parent
+      })
+    )
+  })
+
+  parentsState = atomWithPending(this.#parents)
+
+  parents = swr(this.#parents)
 
   canPublish = atom(get => {
     return get(this.parentInfo).every(parent => parent.status === 'published')
@@ -2368,7 +2373,7 @@ function dashboardEntryFile(
 
 export class DashboardEntryLanguage {
   constructor(
-    public entry: DashboardEntry,
+    public entry: DashboardEntryData,
     public locale: string | null
   ) {}
 
@@ -2495,13 +2500,15 @@ export class DashboardRoot {
         selectionMode: 'multiple',
         selectionBehavior: 'replace',
         onAction: atom(null, (get, set, entry) => {
-          if (get(entry.hasChildren))
+          const [, data] = get(entry.data)
+          if (!data) return
+          if (get(data.hasChildren))
             set(this.explorer.location, location => ({
               ...location,
               parentId: entry.id
             }))
           else {
-            const entryParentId = get(entry.parentId) ?? undefined
+            const entryParentId = get(data.parentId) ?? undefined
             set(parentId, entryParentId ?? null)
             set(this.workspace.dashboard.route, {
               workspace: this.workspace.key,
@@ -2767,6 +2774,10 @@ function atomWithDebounce<Value>(
     return value
   })
   return unwrap(debounced)
+}
+
+function delay(milliseconds: number) {
+  return new Promise(resolve => setTimeout(resolve, milliseconds))
 }
 
 // data nodes

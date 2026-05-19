@@ -6,10 +6,10 @@ import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
-import type {Dashboard, DashboardEntry, ReactiveNode} from './Dashboard.js'
+import type {Dashboard, DashboardEntryData, ReactiveNode} from './Dashboard.js'
 import {dashboardAtom, DashboardEditor} from './Dashboard.js'
 
-const entryContext = createContext<DashboardEntry | null>(null)
+const entryContext = createContext<DashboardEntryData | null>(null)
 const editorContext = createContext<DashboardEditor | null>(null)
 
 export function DashboardScopeInternal({
@@ -41,7 +41,7 @@ export function EditorScope({
 }
 
 export interface EntryScopeProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
 }
 
 export function EntryScope({

@@ -117,6 +117,10 @@
   animation: SidebarTree-itemLoading-pulse 900ms ease-in-out infinite;
 }
 
+.SidebarTree-item.is-loading {
+  color: var(--alinea-fg-muted);
+}
+
 .SidebarTree-item.is-archived,
 .SidebarTree-item.is-untranslated {
   color: var(--alinea-status-archived-fg);

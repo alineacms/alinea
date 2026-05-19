@@ -5,7 +5,7 @@ import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType} from 'react'
-import {Fragment, memo, Suspense, type ReactNode} from 'react'
+import {Fragment, memo, Suspense, useMemo, type ReactNode} from 'react'
 import {
   GridLayout,
   type GridLayoutOptions,
@@ -28,6 +28,7 @@ import {
 } from '../icons.js'
 import type {
   DashboardEntry,
+  DashboardEntryData,
   DashboardExplorer,
   DashboardRoot
 } from '../store.js'
@@ -61,12 +62,79 @@ const ExplorerItem = memo(function ExplorerItem({
   explorer
 }: ExplorerItemProps) {
   const view = useAtomValue(explorer.view)
-  const label = useAtomValue(entry.label)
-  const icon = useAtomValue(entry.icon)
-  const type = useAtomValue(entry.type)
-  const hasChildren = useAtomValue(entry.hasChildren)
-  const parents = useAtomValue(entry.parents)
-  const info = useAtomValue(unwrap(entry.fileInfo))
+  const [, data] = useAtomValue(entry.data)
+  if (!data) return <ExplorerLoadingItem entry={entry} view={view} />
+  return (
+    <ExplorerLoadedItem
+      entry={entry}
+      data={data}
+      explorer={explorer}
+      view={view}
+    />
+  )
+})
+
+interface ExplorerLoadingItemProps {
+  entry: DashboardEntry
+  view: 'card' | 'row'
+}
+
+function ExplorerLoadingItem({
+  entry,
+  view
+}: ExplorerLoadingItemProps) {
+  return (
+    <GridListItem
+      id={entry.id}
+      textValue="Loading entry"
+      className={styles.ExplorerItem({loading: true})}
+      aria-label="Loading entry"
+    >
+      <Surface
+        className={styles.ExplorerItem.card()}
+        variant={view === 'row' ? 'muted' : undefined}
+      >
+        <div className={styles.ExplorerEntryCard(view)}>
+          <div className={styles.ExplorerEntryCard.top()}>
+            <div
+              className={styles.ExplorerEntryCard.iconSkeleton()}
+              aria-hidden="true"
+            />
+          </div>
+          <div className={styles.ExplorerEntryCard.body()}>
+            <div className={styles.ExplorerEntryCard.body.inner()}>
+              <div className={styles.ExplorerEntryCard.skeleton({wide: true})} />
+              <div className={styles.ExplorerEntryCard.skeleton()} />
+            </div>
+          </div>
+        </div>
+      </Surface>
+    </GridListItem>
+  )
+}
+
+interface ExplorerLoadedItemProps {
+  entry: DashboardEntry
+  data: DashboardEntryData
+  explorer: DashboardExplorer
+  view: 'card' | 'row'
+}
+
+const ExplorerLoadedItem = memo(function ExplorerLoadedItem({
+  entry,
+  data,
+  explorer,
+  view
+}: ExplorerLoadedItemProps) {
+  const label = useAtomValue(data.label)
+  const icon = useAtomValue(data.icon)
+  const type = useAtomValue(data.type)
+  const hasChildren = useAtomValue(data.hasChildren)
+  const parentIds = useAtomValue(data.parentIds)
+  const [parentsPending, parents] = useAtomValue(data.parentsState)
+  const info = useAtomValue(
+    useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
+  )
   const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   const onAction = useSetAtom(explorer.onAction)
   return (
@@ -93,13 +161,25 @@ const ExplorerItem = memo(function ExplorerItem({
             file={info}
             label={label}
             layout={view}
-            parents={<ExplorerEntryParents parents={parents} />}
+            parents={
+              <ExplorerEntryParents
+                loading={parentsPending && parents === undefined}
+                parentIds={parentIds}
+                parents={parents ?? []}
+              />
+            }
           />
         ) : (
           <ExplorerEntryCard
             icon={icon ?? fallbackIcon}
             label={label}
-            parents={<ExplorerEntryParents parents={parents} />}
+            parents={
+              <ExplorerEntryParents
+                loading={parentsPending && parents === undefined}
+                parentIds={parentIds}
+                parents={parents ?? []}
+              />
+            }
             typeLabel={type.label}
             layout={view}
           />
@@ -143,10 +223,17 @@ function ExplorerEntryCard({
 }
 
 interface ExplorerEntryParentsProps {
+  loading: boolean
+  parentIds: Array<string>
   parents: Array<DashboardEntry>
 }
 
-function ExplorerEntryParents({parents}: ExplorerEntryParentsProps) {
+function ExplorerEntryParents({
+  loading,
+  parentIds,
+  parents
+}: ExplorerEntryParentsProps) {
+  if (loading && parentIds.length > 0) return <ExplorerEntryParentsLoading />
   if (parents.length === 0) return null
   return (
     <div className={styles.ExplorerEntryParents()}>
@@ -167,11 +254,40 @@ function ExplorerEntryParents({parents}: ExplorerEntryParentsProps) {
   )
 }
 
+function ExplorerEntryParentsLoading() {
+  return (
+    <div className={styles.ExplorerEntryParents()}>
+      <span
+        className={styles.ExplorerEntryParents.skeleton({wide: true})}
+        aria-hidden="true"
+      />
+      <IcRoundKeyboardArrowRight
+        aria-hidden
+        className={styles.ExplorerEntryParents.separator()}
+      />
+      <span
+        className={styles.ExplorerEntryParents.skeleton()}
+        aria-hidden="true"
+      />
+    </div>
+  )
+}
+
 interface ExplorerEntryParentProps {
   parent: DashboardEntry
 }
 
 function ExplorerEntryParent({parent}: ExplorerEntryParentProps) {
+  const [, data] = useAtomValue(parent.data)
+  if (!data) return null
+  return <ExplorerLoadedEntryParent parent={data} />
+}
+
+interface ExplorerLoadedEntryParentProps {
+  parent: DashboardEntryData
+}
+
+function ExplorerLoadedEntryParent({parent}: ExplorerLoadedEntryParentProps) {
   const label = useAtomValue(parent.label)
   return <Fragment>{label}</Fragment>
 }
@@ -242,6 +358,13 @@ export function ExplorerList({explorer}: ExplorerListProps) {
       )
     }
   })
+  if (isPending && loadedItems === undefined) {
+    return (
+      <div className={styles.ExplorerList()}>
+        <ExplorerListLoading />
+      </div>
+    )
+  }
   return (
     <div className={styles.ExplorerList()}>
       <Suspense fallback={<ExplorerListLoading />}>

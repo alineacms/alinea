@@ -15,7 +15,7 @@ import {
 import {IcBaselineErrorOutline} from '../icons.js'
 import {
   Dashboard,
-  DashboardEntry,
+  DashboardEntryData,
   DashboardRoot,
   DashboardSection,
   ReactiveNode
@@ -196,7 +196,21 @@ interface RootEditorBackButtonProps {
 }
 
 function RootEditorBackButton({root, parentId}: RootEditorBackButtonProps) {
-  const parent = useAtomValue(root.workspace.dashboard.entries(parentId))
+  const parent = root.workspace.dashboard.entries(parentId)
+  const [, parentData] = useAtomValue(parent.data)
+  if (!parentData) return null
+  return <LoadedRootEditorBackButton root={root} parent={parentData} />
+}
+
+interface LoadedRootEditorBackButtonProps {
+  root: DashboardRoot
+  parent: DashboardEntryData
+}
+
+function LoadedRootEditorBackButton({
+  root,
+  parent
+}: LoadedRootEditorBackButtonProps) {
   const parentParentId = useAtomValue(parent.parentId)
   const setLocation = useSetAtom(root.explorer.location)
   const nextParentId = parentParentId ?? undefined
@@ -214,7 +228,7 @@ function RootEditorBackButton({root, parentId}: RootEditorBackButtonProps) {
 }
 
 interface EntryEditorProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
 }
 
 function detailsBarStatus(

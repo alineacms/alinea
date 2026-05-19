@@ -31,9 +31,11 @@ import {
 } from '../icons.js'
 import {
   Dashboard,
+  DashboardEntry,
+  DashboardEntryData,
   type DashboardEntryTreeStatus,
   DashboardRoot,
-  DashboardTreeItem,
+  DashboardTree,
   DashboardWorkspace
 } from '../store/Dashboard.js'
 import {LocaleMenu} from './LocaleMenu.js'
@@ -81,7 +83,8 @@ const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
 })
 
 interface SidebarItemProps {
-  item: DashboardTreeItem
+  item: DashboardEntry
+  tree: DashboardTree
 }
 
 interface SidebarStatusDisplay {
@@ -133,18 +136,72 @@ function affectedStatus(
   return ownStatus
 }
 
-const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
-  const label = useAtomValue(item.label)
-  const isExpanded = useAtomValue(item.isExpanded)
-  const status = useAtomValue(item.status)
-  const selectedAncestorStatus = useAtomValue(
-    useMemo(() => unwrap(item.selectedAncestorStatus), [item])
+const SidebarItem = memo(function SidebarItem({
+  item,
+  tree
+}: SidebarItemProps) {
+  const [isEntryPending, data] = useAtomValue(item.data)
+  if (!data) return <SidebarLoadingItem item={item} pending={isEntryPending} />
+  return (
+    <SidebarLoadedItem
+      item={item}
+      data={data}
+      tree={tree}
+      pending={isEntryPending}
+    />
   )
-  const childItems = useAtomValue(item.children)
-  let icon = useAtomValue(item.icon)
-  if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription
+})
+
+interface SidebarLoadingItemProps {
+  item: DashboardEntry
+  pending: boolean
+}
+
+function SidebarLoadingItem({item, pending}: SidebarLoadingItemProps) {
+  return (
+    <TreeItem
+      id={item.id}
+      textValue="Loading entry"
+      title="Loading entry"
+      icon={IcTwotoneDescription}
+      className={styles.SidebarTree.item({loading: true})}
+      suffix={
+        pending ? (
+          <span
+            className={styles.SidebarTree.itemLoading()}
+            aria-hidden="true"
+          />
+        ) : undefined
+      }
+    />
+  )
+}
+
+interface SidebarLoadedItemProps {
+  item: DashboardEntry
+  data: DashboardEntryData
+  tree: DashboardTree
+  pending: boolean
+}
+
+const SidebarLoadedItem = memo(function SidebarLoadedItem({
+  item,
+  data,
+  tree,
+  pending
+}: SidebarLoadedItemProps) {
+  const label = useAtomValue(data.label)
+  const isExpanded = useAtomValue(tree.isExpanded(item))
+  const status = useAtomValue(data.treeStatus)
+  const selectedAncestorStatus = useAtomValue(
+    useMemo(() => unwrap(tree.selectedAncestorStatus(item)), [item, tree])
+  )
+  const childItems = useAtomValue(tree.children(item))
+  let icon = useAtomValue(data.icon)
+  const hasChildren = useAtomValue(data.hasChildren)
+  if (!icon) icon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   const isLoadingChildren =
-    item.hasChildren && isExpanded && childItems === undefined
+    hasChildren && isExpanded && childItems === undefined
   const displayStatus = sidebarStatus(status)
   const rowStatus = affectedStatus(status, selectedAncestorStatus)
   const isArchived = rowStatus.status === 'archived'
@@ -155,7 +212,7 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
       id={item.id}
       textValue={label}
       title={label}
-      hasChildItems={item.hasChildren}
+      hasChildItems={hasChildren}
       icon={icon}
       className={styles.SidebarTree.item({
         archived: isArchived,
@@ -164,7 +221,7 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
         parentSelected: selectedAncestorStatus !== undefined
       })}
       suffix={
-        isLoadingChildren ? (
+        isLoadingChildren || pending ? (
           <span
             className={styles.SidebarTree.itemLoading()}
             aria-hidden="true"
@@ -184,15 +241,13 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
       }
     >
       {isExpanded && childItems && (
-        <Collection items={childItems}>{renderItem}</Collection>
+        <Collection items={childItems}>
+          {child => <SidebarItem item={child} tree={tree} />}
+        </Collection>
       )}
     </TreeItem>
   )
 })
-
-function renderItem(item: DashboardTreeItem) {
-  return <SidebarItem item={item} />
-}
 
 const treeLayoutOptions = {
   rowHeight: 34,
@@ -216,7 +271,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   const onInsert = useSetAtom(workspace.tree.onInsert)
   const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
   const onMove = useSetAtom(workspace.tree.onMove)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
+  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     acceptedDragTypes: workspace.tree.acceptedDragTypes,
     getItems,
     isDisabled: dragDisabled,
@@ -240,7 +295,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
           selectedKeys={selectedKeys}
           onSelectionChange={setSelectedKeys}
         >
-          {renderItem}
+          {item => <SidebarItem item={item} tree={workspace.tree} />}
         </Tree>
       </Virtualizer>
     </div>

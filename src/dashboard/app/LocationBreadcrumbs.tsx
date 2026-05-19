@@ -5,6 +5,7 @@ import {Dispatch, SetStateAction} from 'react'
 import {IcRoundChevronRight, IcRoundUnfoldMore} from '../icons.js'
 import {
   DashboardEntry,
+  DashboardEntryData,
   DashboardMenuItem,
   ExplorerLocation,
   useDashboard
@@ -78,6 +79,20 @@ interface EntryBreadcrumbProps {
 }
 
 function EntryBreadcrumb({entry, onAction}: EntryBreadcrumbProps) {
+  const [, data] = useAtomValue(entry.data)
+  if (!data) return null
+  return <LoadedEntryBreadcrumb entry={data} onAction={onAction} />
+}
+
+interface LoadedEntryBreadcrumbProps {
+  entry: DashboardEntryData
+  onAction: (id: string) => void
+}
+
+function LoadedEntryBreadcrumb({
+  entry,
+  onAction
+}: LoadedEntryBreadcrumbProps) {
   const label = useAtomValue(entry.label)
   return (
     <Button
@@ -102,8 +117,33 @@ function ParentBreadcrumbs({
   setParentId
 }: ParentBreadcrumbsProps) {
   const dashboard = useDashboard()
-  const entry = useAtomValue(dashboard.entries(parentId))
-  const parents = useAtomValue(entry.parents)
+  const entry = dashboard.entries(parentId)
+  const [, data] = useAtomValue(entry.data)
+  if (!data) return null
+  return (
+    <LoadedParentBreadcrumbs
+      entry={entry}
+      data={data}
+      showLeadingSeparator={showLeadingSeparator}
+      setParentId={setParentId}
+    />
+  )
+}
+
+interface LoadedParentBreadcrumbsProps {
+  entry: DashboardEntry
+  data: DashboardEntryData
+  showLeadingSeparator: boolean
+  setParentId: (id: string) => void
+}
+
+function LoadedParentBreadcrumbs({
+  entry,
+  data,
+  showLeadingSeparator,
+  setParentId
+}: LoadedParentBreadcrumbsProps) {
+  const parents = useAtomValue(data.parents)
   return parents.concat(entry).map((entry, index) => {
     return (
       <span key={entry.id} className={styles.LocationBreadcrumbs.item()}>

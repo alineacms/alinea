@@ -4,7 +4,7 @@ import {MediaFile} from '#/core/media/MediaTypes.js'
 import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
 import {
-  DashboardEntry,
+  DashboardEntryData,
   useDashboard,
   useField,
   useFieldValue
@@ -22,7 +22,7 @@ import css from './FileEditor.module.css'
 const styles = styler(css)
 
 interface FileEditorProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
 }
 
 export function FileEditor({entry}: FileEditorProps) {

@@ -7,7 +7,7 @@ import {
   IcRoundEdit,
   IcRoundFlashOn
 } from '../icons.js'
-import type {DashboardEntry, ExplorerLocation} from '../store.js'
+import type {DashboardEntryData, ExplorerLocation} from '../store.js'
 import {Badge} from './Badge.js'
 import css from './DetailsBar.module.css'
 import {LocationBreadcrumbs} from './LocationBreadcrumbs.js'
@@ -22,7 +22,7 @@ export type DetailsBarStatus =
   | 'archived'
 
 interface DetailsBarProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
   status: DetailsBarStatus
   statusLabel: ReactNode
 }

@@ -169,6 +169,10 @@
   box-shadow: var(--alinea-shadow-raised);
 }
 
+.ExplorerItem.is-loading .ExplorerItem-card {
+  pointer-events: none;
+}
+
 .ExplorerList.is-card .ExplorerItem-card {
   height: 196px;
   min-height: 196px;
@@ -230,6 +234,18 @@
   font-size: 14px;
 }
 
+.ExplorerEntryParents-skeleton {
+  width: 38px;
+  height: 8px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--alinea-fg-muted) 18%, transparent);
+  animation: ExplorerEntryCard-skeleton-pulse 1100ms ease-in-out infinite;
+}
+
+.ExplorerEntryParents-skeleton.is-wide {
+  width: 58px;
+}
+
 .ExplorerEntryCard-top {
   display: flex;
   flex: 0 0 124px;
@@ -262,6 +278,23 @@
 
   .ExplorerEntryCard.is-row & {
     font-size: 28px;
+  }
+}
+
+.ExplorerEntryCard-iconSkeleton {
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--alinea-fg-muted) 18%, transparent);
+  animation: ExplorerEntryCard-skeleton-pulse 1100ms ease-in-out infinite;
+
+  .ExplorerEntryCard.is-card & {
+    width: 48px;
+    height: 48px;
+  }
+
+  .ExplorerEntryCard.is-row & {
+    width: 28px;
+    height: 28px;
   }
 }
 
@@ -309,4 +342,26 @@
   color: var(--alinea-fg-muted);
   font-size: 12px;
   line-height: 1.3;
+}
+
+.ExplorerEntryCard-skeleton {
+  width: 42%;
+  height: 10px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--alinea-fg-muted) 18%, transparent);
+  animation: ExplorerEntryCard-skeleton-pulse 1100ms ease-in-out infinite;
+}
+
+.ExplorerEntryCard-skeleton.is-wide {
+  width: 72%;
+}
+
+@keyframes ExplorerEntryCard-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
 }

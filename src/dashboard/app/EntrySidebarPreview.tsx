@@ -10,14 +10,14 @@ import {
   IcRoundOpenInNew,
   IcRoundRefresh
 } from '../icons.js'
-import {DashboardEntry, useDashboard} from '../store.js'
+import {DashboardEntryData, useDashboard} from '../store.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
 export interface EntrySidebarPreviewProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
 }
 
 export function EntrySidebarPreview({entry}: EntrySidebarPreviewProps) {
@@ -52,7 +52,7 @@ function EntrySidebarPreviewMessage({
 }
 
 interface EntrySidebarComponentPreviewProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
   preview: Exclude<Preview, boolean>
 }
 
@@ -78,7 +78,7 @@ function EntrySidebarComponentPreview({
 }
 
 interface EntrySidebarBrowserPreviewProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
 }
 
 function EntrySidebarBrowserPreviewFallback() {

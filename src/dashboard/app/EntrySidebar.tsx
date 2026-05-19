@@ -24,7 +24,7 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {DashboardEntry} from '../store.js'
+import {DashboardEntryData} from '../store.js'
 import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 import {Sidebar, SidebarBody, SidebarHeader} from './ui/Sidebar.js'
@@ -32,7 +32,7 @@ import {Sidebar, SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 const styles = styler(css)
 
 export interface EntrySidebarProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
 }
 
 export function EntrySidebar({entry}: EntrySidebarProps) {
@@ -70,7 +70,7 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
 }
 
 interface EntrySidebarHistoryProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
 }
 
 function EntrySidebarHistory({entry}: EntrySidebarHistoryProps) {
@@ -130,7 +130,7 @@ function EntrySidebarPreviousVersions({entry}: EntrySidebarHistoryProps) {
 }
 
 interface EntrySidebarStatusItemProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
   status: EntryStatus
   currentRevision?: Revision
 }
@@ -167,7 +167,7 @@ function EntrySidebarStatusItem({
 }
 
 interface EntrySidebarRevisionItemProps {
-  entry: DashboardEntry
+  entry: DashboardEntryData
   revision: Revision
   isLatest: boolean
 }

@@ -105,9 +105,16 @@ const initialLocationAtom = atom(async get => {
     }
   }
 
-  const entry = await get(dashboard.entries(route.entry))
-  const type = get(entry.type).type
-  const parentId = get(entry.parentId) ?? undefined
+  const entry = dashboard.entries(route.entry)
+  const [, data] = get(entry.data)
+  if (!data) {
+    return {
+      workspace: selectedWorkspace,
+      root: selectedRoot
+    }
+  }
+  const type = get(data.type).type
+  const parentId = get(data.parentId) ?? undefined
 
   return {
     workspace: selectedWorkspace,
