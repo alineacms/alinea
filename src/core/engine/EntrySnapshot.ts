@@ -19,11 +19,16 @@ export interface EntrySnapshotIndexes {
   byFilePath: Record<string, EntryRowId>
   byDir: Record<string, EntryNodeId>
   byParent: Record<string, Array<EntryRowId>>
+  byPath: Record<string, Array<EntryRowId>>
+  byUrl: Record<string, Array<EntryRowId>>
+  byLevel: Record<string, Array<EntryRowId>>
   byType: Record<string, Array<EntryRowId>>
   byWorkspace: Record<string, Array<EntryRowId>>
   byRoot: Record<string, Array<EntryRowId>>
   byLocale: Record<string, Array<EntryRowId>>
   byStatus: Record<string, Array<EntryRowId>>
+  byActive: Array<EntryRowId>
+  byMain: Array<EntryRowId>
 }
 
 export interface EntrySearchSnapshot {

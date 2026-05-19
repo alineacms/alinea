@@ -16,7 +16,12 @@ export interface EntryQueryConstraints {
   root?: string | ReadonlyArray<string>
   locale?: string | null | ReadonlyArray<string | null>
   status?: EntryStatus | ReadonlyArray<EntryStatus>
+  active?: true
+  main?: true
   parentId?: string | null | ReadonlyArray<string | null>
+  path?: string | ReadonlyArray<string>
+  url?: string | ReadonlyArray<string>
+  level?: number | ReadonlyArray<number>
   filePath?: string | ReadonlyArray<string>
   dir?: string | ReadonlyArray<string>
   search?: string

@@ -8,15 +8,32 @@ export function createEntrySnapshotIndexes(
 ): EntrySnapshotIndexes {
   const indexes = emptyEntrySnapshotIndexes()
   const rowIdsByNode = new Map<EntryNodeId, Array<EntryRowId>>()
+  const languages = new Map(
+    rows.languages.map(language => [language.languageId, language])
+  )
 
   for (const version of rows.versions) {
     appendIndex(indexes.byId, version.id, version.rowId)
+    appendIndex(indexes.byPath, version.path, version.rowId)
+    appendIndex(indexes.byLevel, String(version.level), version.rowId)
     appendIndex(indexes.byType, version.type, version.rowId)
     appendIndex(indexes.byWorkspace, version.workspace, version.rowId)
     appendIndex(indexes.byRoot, version.root, version.rowId)
     appendIndex(indexes.byLocale, indexValue(version.locale), version.rowId)
-    appendIndex(indexes.byStatus, version.status, version.rowId)
     indexes.byFilePath[version.filePath] = version.rowId
+    const language = languages.get(version.languageId)
+    appendIndex(
+      indexes.byStatus,
+      language?.inheritedStatus ?? version.status,
+      version.rowId
+    )
+    if (language) {
+      appendIndex(indexes.byUrl, language.url, version.rowId)
+      if (language.activeRowId === version.rowId)
+        indexes.byActive.push(version.rowId)
+      if (language.mainRowId === version.rowId)
+        indexes.byMain.push(version.rowId)
+    }
 
     const nodeRows = rowIdsByNode.get(version.nodeId) ?? []
     nodeRows.push(version.rowId)
@@ -44,11 +61,16 @@ export function emptyEntrySnapshotIndexes(): EntrySnapshotIndexes {
     byFilePath: {},
     byDir: {},
     byParent: {},
+    byPath: {},
+    byUrl: {},
+    byLevel: {},
     byType: {},
     byWorkspace: {},
     byRoot: {},
     byLocale: {},
-    byStatus: {}
+    byStatus: {},
+    byActive: [],
+    byMain: []
   }
 }
 

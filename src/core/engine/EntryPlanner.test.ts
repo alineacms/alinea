@@ -1,7 +1,10 @@
 import {suite} from '@alinea/suite'
 import {
+  compactEntrySnapshot,
+  compileEntryQueryConstraints,
   createEntrySnapshotIndexes,
   ENTRY_SNAPSHOT_VERSION,
+  expandEntrySnapshot,
   indexKey,
   indexValue,
   NULL_INDEX_VALUE,
@@ -187,6 +190,22 @@ test('creates snapshot indexes from normalized rows', () => {
     'asset:published'
   ])
   test.equal(snapshot.indexes.byParent.home, ['child:published', 'child:draft'])
+  test.equal(snapshot.indexes.byPath.child, ['child:published', 'child:draft'])
+  test.equal(snapshot.indexes.byUrl['/home/child'], [
+    'child:published',
+    'child:draft'
+  ])
+  test.equal(snapshot.indexes.byLevel[1], ['child:published', 'child:draft'])
+  test.equal(snapshot.indexes.byActive, [
+    'home:published',
+    'child:draft',
+    'asset:published'
+  ])
+  test.equal(snapshot.indexes.byMain, [
+    'home:published',
+    'child:published',
+    'asset:published'
+  ])
   test.is(snapshot.indexes.byDir['pages/home/child'], 'child')
   test.is(
     snapshot.indexes.byFilePath['pages/home/child.draft.json'],
@@ -206,6 +225,96 @@ test('plans candidates by intersecting indexed constraints', () => {
   })
 
   test.equal(plan.rowIds, ['child:published'])
+})
+
+test('compiles primitive graph query filters into engine constraints', () => {
+  const constraints = compileEntryQueryConstraints({
+    id: {in: ['home', 'child']},
+    type: 'Page',
+    parentId: 'home',
+    path: 'child',
+    url: '/home/child',
+    level: 1,
+    workspace: 'main',
+    root: 'pages',
+    locale: null,
+    status: 'published'
+  })
+
+  test.equal(constraints, {
+    id: ['home', 'child'],
+    type: 'Page',
+    parentId: 'home',
+    path: 'child',
+    url: '/home/child',
+    level: 1,
+    workspace: 'main',
+    root: 'pages',
+    locale: null,
+    status: 'published'
+  })
+
+  const planner = new SnapshotEntryPlanner(createSnapshot())
+  const plan = planner.candidates({query: {}, constraints})
+  test.equal(plan.rowIds, ['child:published'])
+})
+
+test('compiles default and all status query semantics', () => {
+  test.equal(compileEntryQueryConstraints({id: 'home'}), {
+    id: 'home',
+    status: 'published'
+  })
+  test.equal(compileEntryQueryConstraints({id: 'home', status: 'all'}), {
+    id: 'home'
+  })
+  test.equal(
+    compileEntryQueryConstraints({id: 'child', status: 'preferDraft'}),
+    {
+      id: 'child',
+      active: true
+    }
+  )
+  test.equal(
+    compileEntryQueryConstraints({id: 'child', status: 'preferPublished'}),
+    {
+      id: 'child',
+      main: true
+    }
+  )
+  test.equal(
+    compileEntryQueryConstraints({id: 'home', preferredLocale: 'EN'}),
+    {
+      id: 'home',
+      locale: ['en', null],
+      status: 'published'
+    }
+  )
+})
+
+test('rejects unsupported graph query features in engine compiler', () => {
+  test.throws(
+    () => compileEntryQueryConstraints({search: 'child'}),
+    'Unsupported engine query'
+  )
+})
+
+test('plans candidates by active and main status modes', () => {
+  const planner = new SnapshotEntryPlanner(createSnapshot())
+
+  test.equal(
+    planner.candidates({
+      query: {},
+      constraints: {id: 'child', active: true}
+    }).rowIds,
+    ['child:draft']
+  )
+  test.equal(
+    planner.candidates({
+      query: {},
+      constraints: {id: 'child', main: true}
+    }).rowIds,
+    ['child:published']
+  )
 })
 
 test('plans candidates for missing index values as empty result', () => {
@@ -239,9 +348,7 @@ test('plans candidates with trace dependencies', () => {
   test.ok(plan.trace)
   test.ok(plan.trace!.indexes.has(indexKey('locale', null)))
   test.ok(
-    plan.trace!.indexes.has(
-      indexKey('filePath', 'pages/home/child.draft.json')
-    )
+    plan.trace!.indexes.has(indexKey('filePath', 'pages/home/child.draft.json'))
   )
   test.ok(plan.trace!.indexes.has(indexKey('search', 'child')))
   test.ok(plan.trace!.indexes.has('custom:index'))
@@ -264,4 +371,14 @@ test('plans unconstrained queries as broad reads', () => {
 test('normalizes null index values', () => {
   test.is(indexValue(null), NULL_INDEX_VALUE)
   test.is(indexKey('parent', null), `parent:${NULL_INDEX_VALUE}`)
+})
+
+test('compacts and expands snapshots while rebuilding indexes', () => {
+  const snapshot = createSnapshot()
+  const compact = compactEntrySnapshot(snapshot)
+
+  test.ok(Array.isArray(compact.r.v[0]))
+  test.is(compact.r.v[0][0], 'home:published')
+  test.is(compact.r.l[1][8], '/home/child')
+  test.equal(expandEntrySnapshot(compact), snapshot)
 })
