@@ -18,6 +18,7 @@ import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import {Permission, Policy, type Resource} from '#/core/Role.js'
+import type {RootData} from '#/core/Root.js'
 import {getScope} from '#/core/Scope.js'
 import {Section} from '#/core/Section.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
@@ -2575,7 +2576,19 @@ export class DashboardRoot {
   label = atom(get => get(this.#settings).label)
   icon = atom(get => get(this.#settings).icon ?? IcRoundDescription)
   i18n = atom(get => get(this.#settings).i18n)
-  view = atom(get => get(this.#settings).view)
+  data = atom((get): RootData & {name: string} => ({
+    name: this.key,
+    ...get(this.#settings)
+  }))
+  view = atom((get): ComponentType<{root: RootData}> | undefined => {
+    const view = get(this.#settings).view
+    if (!view) return undefined
+    if (typeof view === 'string')
+      return get(this.workspace.dashboard.view(view)) as
+        | ComponentType<{root: RootData}>
+        | undefined
+    return view
+  })
   orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
   canCreate = atom(get => {
     const policy = get(this.workspace.dashboard.policy)

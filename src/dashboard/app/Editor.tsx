@@ -1,11 +1,13 @@
 import {Button, Icon} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import type {RootData} from '#/core/Root.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {
+  type ComponentType,
   memo,
   PropsWithChildren,
   useEffect,
@@ -174,6 +176,28 @@ interface RootEditorProps {
 }
 
 function RootEditor({root}: RootEditorProps) {
+  const View = useAtomValue(root.view)
+  if (View) return <CustomRootEditor root={root} view={View} />
+  return <DefaultRootEditor root={root} />
+}
+
+interface CustomRootEditorProps {
+  root: DashboardRoot
+  view: ComponentType<{root: RootData}>
+}
+
+function CustomRootEditor({root, view: View}: CustomRootEditorProps) {
+  const rootData = useAtomValue(root.data)
+  return (
+    <Rail main>
+      <RailBody className={styles.RootEditor.customView()}>
+        <View root={rootData} />
+      </RailBody>
+    </Rail>
+  )
+}
+
+function DefaultRootEditor({root}: RootEditorProps) {
   const title = useAtomValue(root.label)
   const location = useAtomValue(root.explorer.location)
   return (

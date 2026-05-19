@@ -16,6 +16,12 @@
   gap: 8px;
 }
 
+.RootEditor-customView {
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+}
+
 .RootEditor-body {
   min-height: 0;
   overflow: hidden;
