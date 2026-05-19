@@ -6,6 +6,9 @@ export interface DashboardWorkspace extends WorkspaceInternal {
   name: string
 }
 
+/**
+ * @deprecated Compatibility hook for legacy dashboard extensions.
+ */
 export function useWorkspace(): DashboardWorkspace {
   const dashboard = useDashboard()
   const config = useAtomValue(dashboard.config)

@@ -6,6 +6,9 @@ export interface DashboardRoot extends RootData {
   name: string
 }
 
+/**
+ * @deprecated Compatibility hook for legacy dashboard extensions.
+ */
 export function useRoot(): DashboardRoot {
   const dashboard = useDashboard()
   const config = useAtomValue(dashboard.config)

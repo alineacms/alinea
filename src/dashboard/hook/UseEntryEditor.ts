@@ -62,7 +62,10 @@ export function useEntryEditor(): EntryEditor | undefined {
 
 const nullVersionAtom = atom<EntryEditorSourceVersion | null>(null)
 
-function strictObject<Value extends object>(label: string, value: Value): Value {
+function strictObject<Value extends object>(
+  label: string,
+  value: Value
+): Value {
   return new Proxy(value, {
     get(target, property, receiver) {
       if (typeof property === 'symbol')
