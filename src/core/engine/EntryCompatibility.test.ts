@@ -11,6 +11,7 @@ import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {LocalDB} from './LocalDB.js'
+import {NativeEntryIndex} from './NativeEntryIndex.js'
 
 const test = suite(import.meta)
 
@@ -79,6 +80,27 @@ test('engine EntryIndex builds a queryable snapshot', async () => {
   test.is(engine.snapshot.graphSha, engine.sha)
   test.ok(engine.snapshot.rows.versions.length > 0)
   test.ok(engine.snapshot.indexes.byId[chocolateChip!.id].length > 0)
+})
+
+test('native EntryIndex builds the same snapshot rows and indexes', async () => {
+  const source = await copyFixture()
+  const engine = new EntryIndex(cms.config)
+  const native = new NativeEntryIndex(cms.config)
+  await engine.syncWith(source)
+  await native.syncWith(source)
+
+  test.equal(native.snapshot.rows, engine.snapshot.rows)
+  test.equal(native.snapshot.indexes, engine.snapshot.indexes)
+  test.equal(
+    native.planner.candidates({
+      query: {},
+      constraints: {type: 'DemoRecipe', status: 'published'}
+    }).rowIds,
+    engine.planner.candidates({
+      query: {},
+      constraints: {type: 'DemoRecipe', status: 'published'}
+    }).rowIds
+  )
 })
 
 test('engine EntryResolver resolves the same rows as current resolver', async () => {

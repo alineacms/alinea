@@ -154,18 +154,18 @@ function createNodeRows(
   entries: Array<Entry>
 ): Array<EntryNodeRow> {
   const byNode = new Map<EntryNodeId, Entry>()
+  const languageIdsByNode = new Map<EntryNodeId, Set<string>>()
   for (const entry of entries) {
     if (!byNode.has(entry.id)) byNode.set(entry.id, entry)
+    let languageIds = languageIdsByNode.get(entry.id)
+    if (!languageIds) {
+      languageIds = new Set()
+      languageIdsByNode.set(entry.id, languageIds)
+    }
+    languageIds.add(languageId(entry.id, entry.locale))
   }
   return Array.from(byNode, ([id, entry]) => {
     const node = index.byId(id)
-    const languageIds = Array.from(
-      new Set(
-        entries
-          .filter(row => row.id === id)
-          .map(row => languageId(row.id, row.locale))
-      )
-    )
     return {
       nodeId: id,
       id,
@@ -176,7 +176,7 @@ function createNodeRows(
       root: entry.root,
       type: entry.type,
       level: entry.level,
-      languageIds,
+      languageIds: Array.from(languageIdsByNode.get(id) ?? []),
       childNodeIds: node ? Array.from(node.children(), child => child.id) : []
     }
   })

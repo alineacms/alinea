@@ -13,6 +13,7 @@ import {
 import {MemoryEntryEngine} from './EntryEngine.js'
 import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver} from './EntryResolver.js'
+import {NativeEntryIndex} from './NativeEntryIndex.js'
 
 const Page = Config.document('Page', {
   fields: {
@@ -60,21 +61,79 @@ const engineIndexFresh = await benchAsync('engine syncWith fresh', async () => {
   await index.syncWith(source)
 })
 
-const baseIndexChanges = await benchAsync(
+const engineIndexFreshSnapshot = await benchAsync(
+  'engine syncWith fresh + snapshot',
+  async () => {
+    const index = new EntryIndex(config)
+    await index.syncWith(source)
+    index.snapshot
+  }
+)
+
+const nativeIndexFresh = await benchAsync('native syncWith fresh', async () => {
+  const index = new NativeEntryIndex(config)
+  await index.syncWith(source)
+})
+
+const nativeIndexFreshSnapshot = await benchAsync(
+  'native syncWith fresh + snapshot',
+  async () => {
+    const index = new NativeEntryIndex(config)
+    await index.syncWith(source)
+    index.snapshot
+  }
+)
+
+const baseIndexChanges = await benchAsyncMeasured(
   'base indexChanges one row',
   async () => {
     const index = new BaseEntryIndex(config)
     await index.syncWith(source)
-    await index.indexChanges(updateBatch)
+    return () => index.indexChanges(updateBatch)
   }
 )
 
-const engineIndexChanges = await benchAsync(
+const engineIndexChanges = await benchAsyncMeasured(
   'engine indexChanges one row',
   async () => {
     const index = new EntryIndex(config)
     await index.syncWith(source)
-    await index.indexChanges(updateBatch)
+    return () => index.indexChanges(updateBatch)
+  }
+)
+
+const engineIndexChangesSnapshot = await benchAsyncMeasured(
+  'engine indexChanges one row + snapshot',
+  async () => {
+    const index = new EntryIndex(config)
+    await index.syncWith(source)
+    index.snapshot
+    return async () => {
+      await index.indexChanges(updateBatch)
+      index.snapshot
+    }
+  }
+)
+
+const nativeIndexChanges = await benchAsyncMeasured(
+  'native indexChanges one row',
+  async () => {
+    const index = new NativeEntryIndex(config)
+    await index.syncWith(source)
+    return () => index.indexChanges(updateBatch)
+  }
+)
+
+const nativeIndexChangesSnapshot = await benchAsyncMeasured(
+  'native indexChanges one row + snapshot',
+  async () => {
+    const index = new NativeEntryIndex(config)
+    await index.syncWith(source)
+    index.snapshot
+    return async () => {
+      await index.indexChanges(updateBatch)
+      index.snapshot
+    }
   }
 )
 
@@ -85,6 +144,9 @@ const compactSnapshot = bench('compact snapshot', () => {
 const compact = compactEntrySnapshot(engine.snapshot)
 const expandSnapshot = bench('expand compact snapshot', () => {
   expandEntrySnapshot(compact)
+})
+const hydrateMemoryEngine = bench('hydrate memory engine', () => {
+  new MemoryEntryEngine({snapshot: expandEntrySnapshot(compact)})
 })
 
 const scanById = bench(`base findMany id x${RUNS}`, () => {
@@ -180,9 +242,38 @@ const memoryCountByType = await benchAsync(
 console.log({ROWS, RUNS, SAMPLES})
 console.table([
   result('fresh syncWith', baseIndexFresh, engineIndexFresh),
+  compareToBase(
+    'fresh syncWith + snapshot',
+    baseIndexFresh,
+    engineIndexFreshSnapshot
+  ),
+  compareToBase('native syncWith', baseIndexFresh, nativeIndexFresh),
+  compareToBase(
+    'native syncWith + snapshot',
+    baseIndexFresh,
+    nativeIndexFreshSnapshot
+  ),
   result('indexChanges one row', baseIndexChanges, engineIndexChanges),
+  compareToBase(
+    'indexChanges one row + snapshot',
+    baseIndexChanges,
+    engineIndexChangesSnapshot
+  ),
+  compareToBase(
+    'native indexChanges one row',
+    baseIndexChanges,
+    nativeIndexChanges
+  ),
+  compareToBase(
+    'native indexChanges one row + snapshot',
+    baseIndexChanges,
+    nativeIndexChangesSnapshot
+  )
+])
+console.table([
   singleResult('compact snapshot', compactSnapshot),
-  singleResult('expand compact snapshot', expandSnapshot)
+  singleResult('expand compact snapshot', expandSnapshot),
+  singleResult('hydrate memory engine', hydrateMemoryEngine)
 ])
 console.table([
   result('id', scanById, planById),
@@ -282,6 +373,23 @@ async function benchAsync(label: string, run: () => Promise<void>) {
   return {label, duration: median(durations), durations}
 }
 
+async function benchAsyncMeasured(
+  label: string,
+  setup: () => Promise<() => Promise<unknown>>
+) {
+  await (
+    await setup()
+  )()
+  const durations = []
+  for (let i = 0; i < SAMPLES; i++) {
+    const run = await setup()
+    const start = performance.now()
+    await run()
+    durations.push(performance.now() - start)
+  }
+  return {label, duration: median(durations), durations}
+}
+
 function result(
   name: string,
   base: {duration: number},
@@ -293,6 +401,14 @@ function result(
     engineMs: engine.duration.toFixed(2),
     speedup: `${(base.duration / engine.duration).toFixed(1)}x`
   }
+}
+
+function compareToBase(
+  name: string,
+  base: {duration: number},
+  engine: {duration: number}
+) {
+  return result(name, base, engine)
 }
 
 function singleResult(name: string, result: {duration: number}) {
