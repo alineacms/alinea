@@ -762,26 +762,10 @@ export class Dashboard {
     return new DashboardExplorer(this, atom(initialLocation), options)
   }
 
-  #entryDataCache = new Map<string, {revision: number; data: EntryData}>()
-  #cachedEntryData(id: string, revision: number): EntryData | undefined {
-    const cached = this.#entryDataCache.get(id)
-    if (cached?.revision === revision) return cached.data
-  }
-  #cacheEntryData(data: EntryData, revision: number): EntryData {
-    this.#entryDataCache.set(data.id, {
-      revision,
-      data
-    })
-    return data
-  }
-
-  #entryData = dispense((id: string) =>
-    atom<Promise<EntryData>>(async get => {
+  entries = dispense(id => {
+    const dataAtom = atom<Promise<EntryData>>(async get => {
       await get(this.ensureInitialSync)
-      const revision = get(this.revisions(id))
-      const cached = this.#cachedEntryData(id, revision)
-      if (cached) return cached
-
+      get(this.revisions(id))
       const load = get(this.#entryLoader)
       const [result, error] = await load(id)
       if (error) {
@@ -789,27 +773,18 @@ export class Dashboard {
         throw error
       }
       assert(result, `Entry "${id}" not found`)
-      return this.#cacheEntryData(result, revision)
+      return result
     })
-  )
-
-  #entryCurrentData = dispense(
-    (id: string) =>
-      unwrap(
-        this.#entryData(id),
-        previous => previous ?? this.#entryDataCache.get(id)?.data
-      ) as Atom<EntryData>
-  )
-
-  #entryModels = dispense((id: string) => {
-    return new DashboardEntry(this, id, this.#entryCurrentData(id))
-  })
-
-  entries = dispense(id => {
+    let entry: DashboardEntry
     return swr(
       atom(async (get): Promise<DashboardEntry> => {
-        await get(this.#entryData(id))
-        return this.#entryModels(id)
+        const initial = await get(dataAtom)
+
+        return (entry ??= new DashboardEntry(
+          this,
+          id,
+          unwrap(dataAtom, prev => prev ?? initial) as Atom<EntryData>
+        ))
       })
     )
   })
@@ -898,26 +873,6 @@ export class Dashboard {
       })
     })
   })
-
-  entryList = dispense((ids: ReadonlyArray<string>) =>
-    atom(async get => {
-      await get(this.ensureInitialSync)
-      const load = get(this.#entryLoader)
-      await Promise.all(
-        ids.map(async id => {
-          const revision = get(this.revisions(id))
-          const cached = this.#cachedEntryData(id, revision)
-          if (cached) return cached
-
-          const [result, error] = await load(id)
-          if (error) throw error
-          assert(result, `Entry "${id}" not found`)
-          return this.#cacheEntryData(result, revision)
-        })
-      )
-      return ids.map(id => this.#entryModels(id))
-    })
-  )
 
   createEntry = atom(
     null,
@@ -1552,12 +1507,29 @@ export class DashboardTree {
     }
   )
 
-  entryItems: (id: string) => Atom<Promise<DashboardEntry>> = dispense(
-    (id: string): Atom<Promise<DashboardEntry>> =>
-      atom(async get => {
-        const [entry] = await get(this.workspace.dashboard.entryList([id]))
-        return entry
+  entryItems: (id: string) => Atom<Promise<DashboardTreeItem>> = dispense(
+    (id: string): Atom<Promise<DashboardTreeItem>> => {
+      return atom(async (get): Promise<DashboardTreeItem> => {
+        const entry = await get(this.workspace.dashboard.entries(id))
+        assert(entry, `Entry "${id}" not found`)
+        return new DashboardTreeItem(
+          this,
+          id,
+          entry.icon,
+          entry.label,
+          entry.parentIds,
+          entry.treeStatus,
+          atom(async (get): Promise<Array<DashboardTreeItem>> => {
+            const children = await get(entry.children)
+            for (const childId of children) get(this.entryItems(childId))
+            return Promise.all(
+              children.map(childId => this.entryItems(childId)).map(get)
+            )
+          }),
+          get(entry.hasChildren)
+        )
       })
+    }
   )
 
   items = swr(
@@ -1566,7 +1538,8 @@ export class DashboardTree {
       if (!currentRoot || currentRoot.workspace.key !== this.workspace.key)
         return []
       const ids = await get(currentRoot.children)
-      return get(this.workspace.dashboard.entryList(ids))
+      for (const id of ids) get(this.entryItems(id))
+      return Promise.all(ids.map(id => this.entryItems(id)).map(get))
     })
   )
 
@@ -1681,6 +1654,41 @@ export class DashboardTree {
     return Object.entries(config.schema)
       .filter(([, type]) => !Type.isHidden(type))
       .map(([name]) => name)
+  })
+}
+
+type Awaitable<T> = T | Promise<T>
+
+export class DashboardTreeItem {
+  constructor(
+    public tree: DashboardTree,
+    public id: string,
+    public icon: Atom<ComponentType | undefined>,
+    public label: Atom<string>,
+    public parentIds: Atom<Array<string>>,
+    public status: Atom<DashboardEntryTreeStatus>,
+    private items: Atom<Awaitable<Array<DashboardTreeItem>>>,
+    public hasChildren: boolean
+  ) {}
+
+  isExpanded = atom(get => get(this.tree.expandedKeys).has(this.id))
+
+  selectedAncestorStatus = atom(
+    async (get): Promise<DashboardEntryTreeStatus | undefined> => {
+      const selectedKey = get(this.tree.selectedKeys).values().next().value
+      if (!selectedKey) return undefined
+      const selectedId = String(selectedKey)
+      if (selectedId === this.id) return undefined
+      if (!get(this.parentIds).includes(selectedId)) return undefined
+      const selected = await get(this.tree.entryItems(selectedId))
+      return get(selected.status)
+    }
+  )
+
+  children = atom(get => {
+    if (!this.hasChildren) return undefined
+    if (!get(this.isExpanded)) return undefined
+    return get(unwrap(this.items))
   })
 }
 
@@ -1926,39 +1934,6 @@ export class DashboardEntry {
     return {
       status: entry.status
     }
-  })
-
-  isExpanded = atom(get => {
-    const root = get(this.root)
-    return get(root.workspace.tree.expandedKeys).has(this.id)
-  })
-
-  selectedAncestorStatus = atom(
-    async (get): Promise<DashboardEntryTreeStatus | undefined> => {
-      const root = get(this.root)
-      const selectedKey = get(root.workspace.tree.selectedKeys)
-        .values()
-        .next().value
-      if (!selectedKey) return undefined
-      const selectedId = String(selectedKey)
-      if (selectedId === this.id) return undefined
-      if (!get(this.parentIds).includes(selectedId)) return undefined
-      const selected = await get(root.workspace.tree.entryItems(selectedId))
-      return get(selected.treeStatus)
-    }
-  )
-
-  #treeChildren = swr(
-    atom(async (get): Promise<Array<DashboardEntry>> => {
-      const children = await get(this.children)
-      return get(this.dashboard.entryList(children))
-    })
-  )
-
-  treeChildren = atom(get => {
-    if (!get(this.hasChildren)) return undefined
-    if (!get(this.isExpanded)) return undefined
-    return get(this.#treeChildren)
   })
 
   fileInfo = swr(
