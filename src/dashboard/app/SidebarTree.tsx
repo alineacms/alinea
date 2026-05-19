@@ -31,9 +31,9 @@ import {
 } from '../icons.js'
 import {
   Dashboard,
+  DashboardEntry,
   type DashboardEntryTreeStatus,
   DashboardRoot,
-  DashboardTreeItem,
   DashboardWorkspace
 } from '../store/Dashboard.js'
 import {LocaleMenu} from './LocaleMenu.js'
@@ -81,7 +81,7 @@ const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
 })
 
 interface SidebarItemProps {
-  item: DashboardTreeItem
+  item: DashboardEntry
 }
 
 interface SidebarStatusDisplay {
@@ -136,15 +136,16 @@ function affectedStatus(
 const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   const label = useAtomValue(item.label)
   const isExpanded = useAtomValue(item.isExpanded)
-  const status = useAtomValue(item.status)
+  const status = useAtomValue(item.treeStatus)
   const selectedAncestorStatus = useAtomValue(
     useMemo(() => unwrap(item.selectedAncestorStatus), [item])
   )
-  const childItems = useAtomValue(item.children)
+  const childItems = useAtomValue(item.treeChildren)
+  const hasChildren = useAtomValue(item.hasChildren)
   let icon = useAtomValue(item.icon)
-  if (!icon) icon = item.hasChildren ? IcTwotoneFolder : IcTwotoneDescription
+  if (!icon) icon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   const isLoadingChildren =
-    item.hasChildren && isExpanded && childItems === undefined
+    hasChildren && isExpanded && childItems === undefined
   const displayStatus = sidebarStatus(status)
   const rowStatus = affectedStatus(status, selectedAncestorStatus)
   const isArchived = rowStatus.status === 'archived'
@@ -155,7 +156,7 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
       id={item.id}
       textValue={label}
       title={label}
-      hasChildItems={item.hasChildren}
+      hasChildItems={hasChildren}
       icon={icon}
       className={styles.SidebarTree.item({
         archived: isArchived,
@@ -190,7 +191,7 @@ const SidebarItem = memo(function SidebarItem({item}: SidebarItemProps) {
   )
 })
 
-function renderItem(item: DashboardTreeItem) {
+function renderItem(item: DashboardEntry) {
   return <SidebarItem item={item} />
 }
 
@@ -216,7 +217,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   const onInsert = useSetAtom(workspace.tree.onInsert)
   const onItemDrop = useSetAtom(workspace.tree.onItemDrop)
   const onMove = useSetAtom(workspace.tree.onMove)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardTreeItem>({
+  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     acceptedDragTypes: workspace.tree.acceptedDragTypes,
     getItems,
     isDisabled: dragDisabled,
