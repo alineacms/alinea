@@ -784,7 +784,6 @@ export class Dashboard {
     const db = get(this.db)
     const policy = get(this.policy)
     return loader(async ids => {
-      await delay(600)
       const data = {
         id: Entry.id,
         type: Entry.type,
@@ -2774,10 +2773,6 @@ function atomWithDebounce<Value>(
     return value
   })
   return unwrap(debounced)
-}
-
-function delay(milliseconds: number) {
-  return new Promise(resolve => setTimeout(resolve, milliseconds))
 }
 
 // data nodes
