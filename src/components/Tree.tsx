@@ -94,12 +94,14 @@ export const TreeItemContent = memo(function TreeItemContent({
 export interface TreeItemProps extends Partial<AriaTreeItemProps> {
   title: string
   icon?: IconProps['icon']
+  label?: ReactNode
   suffix?: ReactNode
 }
 
 export function TreeItem({
   title,
   icon,
+  label,
   suffix,
   children,
   className,
@@ -123,7 +125,7 @@ export function TreeItem({
       }
     >
       <TreeItemContent icon={icon} suffix={suffix}>
-        {title}
+        {label ?? title}
       </TreeItemContent>
       {children}
     </AriaTreeItem>

@@ -1,7 +1,6 @@
 import {
   Button,
   Icon,
-  ProgressCircle,
   ToggleButton,
   Tooltip,
   Tree,
@@ -164,6 +163,12 @@ function SidebarLoadingItem({item, pending}: SidebarLoadingItemProps) {
       textValue="Loading entry"
       title="Loading entry"
       icon={IcTwotoneDescription}
+      label={
+        <span
+          className={styles.SidebarTree.itemSkeleton.label()}
+          aria-hidden="true"
+        />
+      }
       className={styles.SidebarTree.item({loading: true})}
       suffix={
         pending ? (
@@ -335,8 +340,25 @@ const SidebarTreeRoots = memo(function SidebarTreeRoots({
 
 const SidebarTreeBodyFallback = memo(function SidebarTreeBodyFallback() {
   return (
-    <div className={styles.SidebarTree.loading()}>
-      <ProgressCircle isIndeterminate aria-label="Loading content tree" />
+    <div
+      className={styles.SidebarTree.skeleton()}
+      aria-label="Loading content tree"
+      aria-busy="true"
+    >
+      {Array.from({length: 10}, (_, index) => (
+        <div
+          className={styles.SidebarTree.skeleton.row()}
+          key={index}
+        >
+          <span className={styles.SidebarTree.skeleton.chevron()} />
+          <span className={styles.SidebarTree.skeleton.icon()} />
+          <span
+            className={styles.SidebarTree.skeleton.label({
+              short: index % 4 === 0
+            })}
+          />
+        </div>
+      ))}
     </div>
   )
 })
