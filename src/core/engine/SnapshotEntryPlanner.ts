@@ -159,6 +159,8 @@ export class SnapshotEntryPlanner implements EntryPlanner {
     values: Array<string | null>,
     index: Record<string, Array<EntryRowId>>
   ): [name: string, values: Array<string | null>, rows: Array<EntryRowId>] {
+    if (values.length === 1)
+      return [name, values, index[indexValue(values[0])] ?? []]
     return [
       name,
       values,
@@ -204,7 +206,7 @@ function intersectCandidates(
   current: Array<EntryRowId> | undefined,
   next: Array<EntryRowId>
 ): Array<EntryRowId> {
-  if (!current) return unique(next)
+  if (!current) return next
   const allowed = new Set(next)
   return current.filter(rowId => allowed.has(rowId))
 }

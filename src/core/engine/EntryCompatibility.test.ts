@@ -53,6 +53,34 @@ test('engine EntryIndex filters match the current EntryIndex', async () => {
   test.ok(tx instanceof EntryTransaction)
 })
 
+test('engine EntryIndex builds a queryable snapshot', async () => {
+  const source = await copyFixture()
+  const engine = new EntryIndex(cms.config)
+  await engine.syncWith(source)
+
+  const chocolateChip = Array.from(engine.filter({})).find(
+    entry => entry.path === 'chocolate-chip'
+  )
+  test.ok(chocolateChip)
+  const planned = engine.planner.candidates(
+    {
+      query: {},
+      constraints: {
+        id: chocolateChip!.id,
+        status: chocolateChip!.status,
+        type: chocolateChip!.type
+      }
+    },
+    {trace: true}
+  )
+
+  test.equal(planned.rowIds, [chocolateChip!.filePath])
+  test.ok(planned.trace!.rows.has(chocolateChip!.filePath))
+  test.is(engine.snapshot.graphSha, engine.sha)
+  test.ok(engine.snapshot.rows.versions.length > 0)
+  test.ok(engine.snapshot.indexes.byId[chocolateChip!.id].length > 0)
+})
+
 test('engine EntryResolver resolves the same rows as current resolver', async () => {
   const source = await copyFixture()
   const baseIndex = new BaseEntryIndex(cms.config)
