@@ -7,7 +7,12 @@ import type {QueryTrace} from './QueryTrace.js'
 import {
   hydrateRxbEntryRowAt,
   indexKey,
-  indexValue
+  indexValue,
+  RxbEntryArtifactCursor,
+  rxbEntryIsActive,
+  rxbEntryIsMain,
+  rxbEntryInfoFromRowId,
+  rxbEntryStatusFromFlags
 } from './RxbEntryArtifact.js'
 import {createQueryTrace, emptyQueryTrace, traceIndex} from './QueryTrace.js'
 import type {
@@ -66,6 +71,7 @@ export interface RxbEntryCandidatePlan extends EntryCandidatePlan {
 }
 
 export interface RxbEntryPlannerOptions {
+  bytes?: Uint8Array
   leafCacheSize?: number
   planCacheSize?: number
   rowCacheSize?: number
@@ -78,11 +84,20 @@ export class RxbEntryPlanner {
   readonly #leafCacheSize: number
   readonly #planCacheSize: number
   readonly #rowCacheSize: number
+  readonly #cursor: RxbEntryArtifactCursor | undefined
   readonly #leafCache = new Map<string, Array<string>>()
   readonly #numberCache = new Map<string, Array<[number, string]>>()
+  readonly #entryFieldIndexCache = new Map<
+    keyof RxbEntryRow,
+    Map<string, Array<string>>
+  >()
   readonly #planCache = new Map<string, Array<string>>()
   readonly #rowCache = new Map<string, RxbEntryRow>()
+  readonly #rowInfoCache = new Map<string, ReturnType<typeof rxbEntryInfoFromRowId>>()
   #rowOrdinals: Map<string, number> | undefined
+  #rowIds: Array<string> | undefined
+  #flags: Array<number> | undefined
+  #sparseFlagReads = 0
   #fileHashes: Map<string, string> | undefined
 
   constructor(
@@ -96,6 +111,9 @@ export class RxbEntryPlanner {
     this.#leafCacheSize = options.leafCacheSize ?? 256
     this.#planCacheSize = options.planCacheSize ?? 256
     this.#rowCacheSize = options.rowCacheSize ?? 16384
+    this.#cursor = options.bytes
+      ? new RxbEntryArtifactCursor(options.bytes)
+      : undefined
   }
 
   candidates(
@@ -154,8 +172,9 @@ export class RxbEntryPlanner {
         candidates.length <= rowIds.length &&
         canMatchIndexOnRow(name)
       ) {
+        const expected = new Set(values.map(value => String(value)))
         candidates = candidates.filter(rowId =>
-          rowMatchesIndex(this.row(rowId), name, values)
+          this.#rowMatchesIndex(rowId, name, expected)
         )
       } else {
         candidates = intersectRowIds(candidates, rowIds)
@@ -175,7 +194,6 @@ export class RxbEntryPlanner {
       )) {
         apply(name, values, rowIds)
       }
-      candidates = this.#scanConstraints(candidates, constraints)
       if (constraints.search && trace) {
         trace = traceIndex(trace, indexKey('search', constraints.search))
       }
@@ -190,10 +208,7 @@ export class RxbEntryPlanner {
     if (plan.preFilter?.nodeIds) {
       const rowIds = this.#rowIdsFromOrdinals(
         Array.from(plan.preFilter.nodeIds).flatMap(
-          nodeId =>
-            this.#payload.indexes.byNode[nodeId] ??
-            this.#payload.indexes.byId[nodeId] ??
-            []
+          nodeId => this.#payload.indexes.byId[nodeId] ?? []
         )
       )
       candidates = intersectRowIds(candidates, rowIds)
@@ -202,7 +217,7 @@ export class RxbEntryPlanner {
       for (const key of plan.preFilter.indexKeys) trace = traceIndex(trace, key)
     }
 
-    const rowIds = candidates ?? Array.from(this.#payload.columns.rowIds)
+    const rowIds = candidates ?? this.#rowIdsArray()
     if (trace) {
       if (!constraints && !plan.preFilter && !fieldRowIds)
         trace = traceIndex(trace, 'all')
@@ -273,70 +288,32 @@ export class RxbEntryPlanner {
         valuesOf(constraints.type),
         this.#payload.indexes.byType
       )
-    if (constraints.status)
-      yield this.#fromIndex(
-        'status',
-        valuesOf(constraints.status),
-        this.#payload.indexes.byStatus
-      )
-    if (constraints.path)
-      void constraints.path
-    if (constraints.url)
-      void constraints.url
-    if (constraints.filePath) {
-      const values = valuesOf(constraints.filePath)
-      yield [
-        'filePath',
-        values,
-        values.flatMap(value => {
-          const ordinal = this.#rowOrdinal(indexValue(value))
-          return ordinal === undefined ? [] : [this.#rowIdAt(ordinal)]
-        })
-      ]
+    if (constraints.status) {
+      const values = valuesOf(constraints.status)
+      yield ['status', values, this.#statusRowIds(values)]
     }
-    if (constraints.dir) {
-      const values = valuesOf(constraints.dir)
-      const nodeIds = values
-        .map(value => this.#payload.indexes.byDir[indexValue(value)])
-        .filter(Boolean)
-      const rowIds = nodeIds.length
-        ? this.#rowIdsFromOrdinals(
-            nodeIds.flatMap(nodeId => this.#payload.indexes.byNode[nodeId] ?? [])
-          )
-        : this.#rowIdsMatchingField('childrenDir', values)
-      yield ['dir', values, uniqueRowIds(rowIds)]
-    }
-  }
-
-  #scanConstraints(
-    candidates: Array<string> | undefined,
-    constraints: EntryQueryConstraints
-  ): Array<string> | undefined {
-    const checks =
-      Array<[keyof RxbEntryRow, Array<string | number | boolean | null>]>()
+    if (constraints.active)
+      yield ['active', [true], this.#flagRowIds('active', [true])]
+    if (constraints.main)
+      yield ['main', [true], this.#flagRowIds('main', [true])]
     if (constraints.workspace)
-      checks.push(['workspace', valuesOf(constraints.workspace)])
-    if (constraints.root) checks.push(['root', valuesOf(constraints.root)])
+      yield this.#fromEntryFieldIndex('workspace', valuesOf(constraints.workspace))
+    if (constraints.root)
+      yield this.#fromEntryFieldIndex('root', valuesOf(constraints.root))
     if (constraints.locale !== undefined)
-      checks.push(['locale', valuesOf(constraints.locale)])
+      yield this.#fromEntryFieldIndex('locale', valuesOf(constraints.locale))
     if (constraints.parentId !== undefined)
-      checks.push(['parentId', valuesOf(constraints.parentId)])
+      yield this.#fromEntryFieldIndex('parentId', valuesOf(constraints.parentId))
     if (constraints.level !== undefined)
-      checks.push(['level', valuesOf(constraints.level)])
-    if (constraints.path) checks.push(['path', valuesOf(constraints.path)])
-    if (constraints.url) checks.push(['url', valuesOf(constraints.url)])
-    if (constraints.active) checks.push(['active', [true]])
-    if (constraints.main) checks.push(['main', [true]])
-    if (checks.length === 0) return candidates
-    const rowIds = candidates ?? Array.from(this.#payload.columns.rowIds)
-    return rowIds.filter(rowId => {
-      const row = this.row(rowId)
-      if (!row) return false
-      for (const [name, values] of checks) {
-        if (!values.map(String).includes(String(row[name]))) return false
-      }
-      return true
-    })
+      yield this.#fromEntryFieldIndex('level', valuesOf(constraints.level))
+    if (constraints.path)
+      yield this.#fromEntryFieldIndex('path', valuesOf(constraints.path))
+    if (constraints.url)
+      yield this.#fromEntryFieldIndex('url', valuesOf(constraints.url))
+    if (constraints.filePath)
+      yield this.#fromEntryFieldIndex('filePath', valuesOf(constraints.filePath))
+    if (constraints.dir)
+      yield this.#fromEntryFieldIndex('childrenDir', valuesOf(constraints.dir))
   }
 
   #fromIndex(
@@ -367,6 +344,28 @@ export class RxbEntryPlanner {
             () => index[key] ?? []
           )
         })
+      )
+    ]
+  }
+
+  #fromEntryFieldIndex(
+    field: keyof RxbEntryRow,
+    values: Array<string | number | boolean | null>
+  ): [
+    name: string,
+    values: Array<string | number | boolean | null>,
+    rowIds: Array<string>
+  ] {
+    return [
+      field,
+      values,
+      uniqueRowIds(
+        values.flatMap(value =>
+          this.#cachedRowIds(
+            `runtime:${String(field)}:${rxbIndexValue(value)}`,
+            () => this.#entryFieldIndex(field).get(rxbIndexValue(value)) ?? []
+          )
+        )
       )
     ]
   }
@@ -424,6 +423,8 @@ export class RxbEntryPlanner {
     condition: unknown,
     trace: ReturnType<typeof emptyQueryTrace> | undefined
   ): {rowIds: Array<string>; trace: typeof trace} | undefined {
+    const entryField = ENTRY_FIELD_ALIASES[path]
+    if (entryField) return this.#entryFieldRowIds(path, entryField, condition, trace)
     if (isPrimitiveIndexValue(condition))
       return this.#exactRowIds(path, [condition], trace)
     if (!isRecord(condition)) return
@@ -489,6 +490,57 @@ export class RxbEntryPlanner {
     return {rowIds: uniqueRowIds(parts.flat()), trace}
   }
 
+  #entryFieldRowIds(
+    path: string,
+    field: keyof RxbEntryRow,
+    condition: unknown,
+    trace: ReturnType<typeof emptyQueryTrace> | undefined
+  ): {rowIds: Array<string>; trace: typeof trace} | undefined {
+    const values = conditionValues(condition)
+    if (!values) return
+    if (trace) {
+      for (const value of values)
+        trace = traceIndex(trace, `field:${path}:${rxbIndexValue(value)}`)
+    }
+    if (field === 'id')
+      return {
+        rowIds: uniqueRowIds(
+          values.flatMap(value =>
+            this.#cachedLeaf(`index:id:${indexValue(value as any)}`, () => {
+              return this.#payload.indexes.byId[indexValue(value as any)] ?? []
+            })
+          )
+        ),
+        trace
+      }
+    if (field === 'type')
+      return {
+        rowIds: uniqueRowIds(
+          values.flatMap(value =>
+            this.#cachedLeaf(`index:type:${indexValue(value as any)}`, () => {
+              return this.#payload.indexes.byType[indexValue(value as any)] ?? []
+            })
+          )
+        ),
+        trace
+      }
+    if (field === 'status')
+      return {rowIds: this.#statusRowIds(values), trace}
+    if (field === 'active' || field === 'main')
+      return {rowIds: this.#flagRowIds(field, values), trace}
+    return {
+      rowIds: uniqueRowIds(
+        values.flatMap(value =>
+          this.#cachedRowIds(
+            `runtime:${String(field)}:${rxbIndexValue(value)}`,
+            () => this.#entryFieldIndex(field).get(rxbIndexValue(value)) ?? []
+          )
+        )
+      ),
+      trace
+    }
+  }
+
   #numberRangeRowIds(
     path: string,
     condition: Record<string, unknown>,
@@ -527,19 +579,57 @@ export class RxbEntryPlanner {
   }
 
   #cachedLeaf(key: string, read: () => Array<number>): Array<string> {
+    return this.#cachedRowIds(key, () => this.#rowIdsFromOrdinals(read()))
+  }
+
+  #cachedRowIds(key: string, read: () => Array<string>): Array<string> {
     const cached = this.#leafCache.get(key)
     if (cached) {
       this.#leafCache.delete(key)
       this.#leafCache.set(key, cached)
       return cached
     }
-    const value = this.#rowIdsFromOrdinals(read())
+    const value = read()
     this.#leafCache.set(key, value)
     if (this.#leafCache.size > this.#leafCacheSize) {
       const first = this.#leafCache.keys().next().value
       if (first) this.#leafCache.delete(first)
     }
     return value
+  }
+
+  #statusRowIds(
+    values: Array<string | number | boolean | null>
+  ): Array<string> {
+    return this.#cachedRowIds(`flag:status:${cacheValue(values)}`, () => {
+      const expected = new Set(values.map(String))
+      const flags = this.#flagsArray()
+      const rowIds = this.#rowIdsArray()
+      const result = Array<string>()
+      for (let ordinal = 0; ordinal < rowIds.length; ordinal++) {
+        if (expected.has(rxbEntryStatusFromFlags(flags[ordinal])))
+          result.push(rowIds[ordinal])
+      }
+      return result
+    })
+  }
+
+  #flagRowIds(
+    field: 'active' | 'main',
+    values: Array<string | number | boolean | null>
+  ): Array<string> {
+    return this.#cachedRowIds(`flag:${field}:${cacheValue(values)}`, () => {
+      const expected = new Set(values.map(String))
+      const flags = this.#flagsArray()
+      const rowIds = this.#rowIdsArray()
+      const result = Array<string>()
+      const read = field === 'active' ? rxbEntryIsActive : rxbEntryIsMain
+      for (let ordinal = 0; ordinal < rowIds.length; ordinal++) {
+        if (expected.has(String(read(flags[ordinal]))))
+          result.push(rowIds[ordinal])
+      }
+      return result
+    })
   }
 
   #numberIndex(path: string): Array<[number, string]> | undefined {
@@ -555,8 +645,24 @@ export class RxbEntryPlanner {
     return value
   }
 
+  #entryFieldIndex(field: keyof RxbEntryRow): Map<string, Array<string>> {
+    const cached = this.#entryFieldIndexCache.get(field)
+    if (cached) return cached
+    const index = new Map<string, Array<string>>()
+    for (const rowId of this.#rowIdsArray()) {
+      const value = this.#fieldValue(rowId, field)
+      if (!isPrimitiveIndexValue(value)) continue
+      const key = rxbIndexValue(value)
+      const rows = index.get(key) ?? []
+      rows.push(rowId)
+      index.set(key, rows)
+    }
+    this.#entryFieldIndexCache.set(field, index)
+    return index
+  }
+
   #rowIdAt(ordinal: number): string {
-    return this.#payload.columns.rowIds[ordinal]
+    return this.#rowIdsArray()[ordinal]
   }
 
   #rowIdsFromOrdinals(ordinals: ReadonlyArray<number>): Array<string> {
@@ -565,7 +671,7 @@ export class RxbEntryPlanner {
 
   #rowOrdinal(rowId: string): number | undefined {
     if (this.#rowOrdinals) return this.#rowOrdinals.get(rowId)
-    const rowIds = this.#payload.columns.rowIds
+    const rowIds = this.#rowIdsArray()
     const ordinals = new Map<string, number>()
     for (let i = 0; i < rowIds.length; i++) {
       ordinals.set(rowIds[i], i)
@@ -574,18 +680,75 @@ export class RxbEntryPlanner {
     return ordinals.get(rowId)
   }
 
-  #rowIdsMatchingField(
-    name: keyof RxbEntryRow,
-    values: ReadonlyArray<string | number | boolean | null>
-  ): Array<string> {
-    const expected = new Set(values.map(String))
-    const result = Array<string>()
-    const rowIds = this.#payload.columns.rowIds
-    for (const rowId of rowIds) {
-      const row = this.row(rowId)
-      if (row && expected.has(String(row[name]))) result.push(rowId)
+  #fieldValue(rowId: string, name: keyof RxbEntryRow): unknown {
+    if (name === 'filePath') return rowId
+    const ordinal = this.#rowOrdinal(rowId)
+    if (ordinal === undefined) return undefined
+    switch (name) {
+      case 'id':
+      case 'type':
+      case 'index':
+      case 'seeded':
+      case 'parentId':
+      case 'parents':
+      case 'url':
+        return this.#payload.columns.values[name][ordinal]
+      case 'active':
+        return rxbEntryIsActive(this.#flagAt(ordinal))
+      case 'main':
+        return rxbEntryIsMain(this.#flagAt(ordinal))
+      case 'status':
+      case 'versionStatus':
+        return rxbEntryStatusFromFlags(this.#flagAt(ordinal))
+      case 'workspace':
+      case 'root':
+      case 'locale':
+      case 'path':
+      case 'parentDir':
+      case 'childrenDir':
+      case 'level':
+        return this.#rowInfo(rowId)[name]
+      default:
+        return this.row(rowId)?.[name]
     }
-    return result
+  }
+
+  #rowMatchesIndex(
+    rowId: string,
+    name: string,
+    expected: Set<string>
+  ): boolean {
+    switch (name) {
+      case 'parent':
+        return expected.has(String(this.#fieldValue(rowId, 'parentId')))
+      default:
+        return expected.has(String(this.#fieldValue(rowId, name as keyof RxbEntryRow)))
+    }
+  }
+
+  #rowInfo(rowId: string): ReturnType<typeof rxbEntryInfoFromRowId> {
+    const cached = this.#rowInfoCache.get(rowId)
+    if (cached) return cached
+    const value = rxbEntryInfoFromRowId(this.#config, rowId)
+    this.#rowInfoCache.set(rowId, value)
+    return value
+  }
+
+  #rowIdsArray(): Array<string> {
+    return (this.#rowIds ??= Array.from(this.#payload.columns.rowIds))
+  }
+
+  #flagsArray(): Array<number> {
+    return (this.#flags ??= Array.from(this.#payload.columns.flags))
+  }
+
+  #flagAt(ordinal: number): number {
+    if (this.#flags) return this.#flags[ordinal]
+    if (this.#cursor && this.#sparseFlagReads++ < 64) {
+      const value = this.#cursor.flagAt(ordinal)
+      if (value !== undefined) return value
+    }
+    return this.#flagsArray()[ordinal]
   }
 
   #fileHashAt(rowId: string): string {
@@ -609,6 +772,18 @@ function valuesOf<T extends string | number>(
 ): Array<T | null> {
   if (Array.isArray(value)) return Array.from(value)
   return [value as T | null]
+}
+
+function conditionValues(
+  condition: unknown
+): Array<string | number | boolean | null> | undefined {
+  if (isPrimitiveIndexValue(condition)) return [condition]
+  if (!isRecord(condition)) return
+  if (isPrimitiveIndexValue(condition.is)) return [condition.is]
+  if (Array.isArray(condition.in)) {
+    const values = condition.in.filter(isPrimitiveIndexValue)
+    if (values.length > 0) return values
+  }
 }
 
 function intersectRowIds(
@@ -692,29 +867,6 @@ function canMatchIndexOnRow(name: string): boolean {
   )
 }
 
-function rowMatchesIndex(
-  row: RxbEntryRow | undefined,
-  name: string,
-  values: ReadonlyArray<string | number | boolean | null>
-): boolean {
-  if (!row) return false
-  const expected = new Set(values.map(value => String(value)))
-  switch (name) {
-    case 'parent':
-      return expected.has(String(row.parentId))
-    case 'active':
-      return row.active
-    case 'main':
-      return row.main
-    case 'level':
-      return expected.has(String(row.level))
-    case 'locale':
-      return expected.has(String(row.locale))
-    default:
-      return expected.has(String(row[name as keyof RxbEntryRow]))
-  }
-}
-
 function isPrimitiveIndexValue(
   value: unknown
 ): value is string | number | boolean | null {
@@ -736,4 +888,18 @@ function isOnlyKey<T extends string>(
 
 function isRecord(input: unknown): input is Record<string, unknown> {
   return Boolean(input && typeof input === 'object')
+}
+
+const ENTRY_FIELD_ALIASES: Record<string, keyof RxbEntryRow> = {
+  _id: 'id',
+  _type: 'type',
+  _index: 'index',
+  _workspace: 'workspace',
+  _root: 'root',
+  _status: 'status',
+  _parentId: 'parentId',
+  _locale: 'locale',
+  _path: 'path',
+  _url: 'url',
+  _active: 'active'
 }

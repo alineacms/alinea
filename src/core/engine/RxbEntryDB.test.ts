@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {Config, Field} from 'alinea'
+import {Config, Edit, Field} from 'alinea'
 import {Config as ConfigUtils, createConfig} from '../Config.js'
 import {Entry} from '../Entry.js'
 import type {EntryStatus} from '../Entry.js'
@@ -14,15 +14,18 @@ import {
   RxbEntryDB
 } from './index.js'
 import {EntryIndex} from '../db/EntryIndex.js'
+import {exportSource} from '../source/SourceExport.js'
 
 const test = suite(import.meta)
 
 const QueryArticle = Config.document('QueryArticle', {
+  contains: ['QueryArticle'],
   fields: {
     title: Field.text('Title'),
     path: Field.path('Path'),
     score: Field.number('Score'),
-    featured: Field.check('Featured')
+    featured: Field.check('Featured'),
+    links: Field.entry.multiple('Links')
   }
 })
 
@@ -46,6 +49,7 @@ interface FixtureEntry {
   score: number
   featured?: boolean
   status?: EntryStatus
+  links?: Array<unknown>
 }
 
 test('RXB entry DB can apply an array of optimistic mutations and re-encode', async () => {
@@ -249,6 +253,289 @@ test('RXB entry DB syncs bytes from a remote source', async () => {
   )
 })
 
+test('RXB entry DB post-processes selected entry links', async () => {
+  const source = await createSource([
+    entry('published-target', 'a1', 'published-target', 'Published target', 10),
+    {
+      ...entry('draft-target', 'a2', 'draft-target', 'Draft target', 20),
+      status: 'draft'
+    },
+    {
+      ...entry('source-entry', 'a3', 'source-entry', 'Source', 30),
+      links: Edit.links(QueryArticle.links)
+        .addEntry('published-target')
+        .addEntry('draft-target')
+        .value()
+    }
+  ])
+  const artifact = await createArtifact(source)
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
+
+  test.equal(
+    await db.resolve({
+      id: {in: ['published-target', 'draft-target']},
+      select: {
+        id: Entry.id,
+        status: Entry.status
+      }
+    } as any),
+    [{id: 'published-target', status: 'published'}]
+  )
+
+  const published = (await db.resolve({
+    id: 'source-entry',
+    get: true,
+    select: QueryArticle.links
+  } as any)) as Array<any>
+  test.equal(
+    published.map((link: any) => link.entryId),
+    ['published-target']
+  )
+  test.is((published[0] as any).title, 'Published target')
+
+  const all = (await db.resolve({
+    id: 'source-entry',
+    status: 'all',
+    get: true,
+    select: QueryArticle.links
+  } as any)) as Array<any>
+  test.equal(
+    all.map((link: any) => link.entryId).sort(),
+    ['draft-target', 'published-target']
+  )
+})
+
+test('RXB entry DB handles publish, archive, remove, and rollback', async () => {
+  const source = await createSource([
+    entry('article-alpha', 'a1', 'alpha', 'Alpha', 10)
+  ])
+  const artifact = await createArtifact(source)
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
+
+  const unpublish = await db.mutations([
+    {op: 'unpublish', id: 'article-alpha', locale: null}
+  ])
+  test.equal(
+    await db.resolve({
+      id: 'article-alpha',
+      status: 'all',
+      select: Entry.status
+    } as any),
+    ['draft']
+  )
+
+  db.rollback(unpublish.rollback)
+  test.equal(
+    await db.resolve({
+      id: 'article-alpha',
+      status: 'all',
+      select: Entry.status
+    } as any),
+    ['published']
+  )
+
+  await db.mutations([{op: 'unpublish', id: 'article-alpha', locale: null}])
+  await db.mutations([
+    {op: 'publish', id: 'article-alpha', locale: null, status: 'draft'}
+  ])
+  await db.mutations([{op: 'archive', id: 'article-alpha', locale: null}])
+  test.equal(
+    await db.resolve({
+      id: 'article-alpha',
+      status: 'all',
+      select: Entry.status
+    } as any),
+    ['archived']
+  )
+
+  await db.mutations([
+    {op: 'remove', id: 'article-alpha', locale: null, status: 'archived'}
+  ])
+  test.equal(
+    await db.resolve({
+      id: 'article-alpha',
+      status: 'all',
+      select: Entry.id
+    } as any),
+    []
+  )
+})
+
+test('RXB entry DB handles move mutations', async () => {
+  const source = await createSource([
+    entry('parent-a', 'a1', 'parent-a', 'Parent A', 10),
+    entry('parent-b', 'a2', 'parent-b', 'Parent B', 20),
+    entry('child', 'a3', 'parent-a/child', 'Child', 30)
+  ])
+  const artifact = await createArtifact(source)
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
+
+  await db.mutations([
+    {op: 'move', id: 'child', toParent: 'parent-b', after: null}
+  ])
+
+  test.equal(
+    await db.resolve({
+      id: 'child',
+      select: {
+        id: Entry.id,
+        parentId: Entry.parentId,
+        filePath: Entry.filePath
+      },
+      get: true
+    } as any),
+    {
+      id: 'child',
+      parentId: 'parent-b',
+      filePath: 'pages/parent-b/child.json'
+    }
+  )
+})
+
+test('RXB entry DB leaves state unchanged when mutation validation fails', async () => {
+  const source = await createSource([
+    entry('article-alpha', 'a1', 'alpha', 'Alpha', 10)
+  ])
+  const artifact = await createArtifact(source)
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
+  const sha = db.sha
+
+  await test.throws(async () => {
+    await db.mutations([
+      {
+        op: 'update',
+        id: 'missing-entry',
+        locale: null,
+        status: 'published',
+        set: {title: 'Should not apply'}
+      }
+    ])
+  }, 'Entry not found')
+
+  test.is(db.sha, sha)
+  test.is(
+    await db.resolve({
+      id: 'article-alpha',
+      select: Entry.title,
+      get: true
+    } as any),
+    'Alpha'
+  )
+})
+
+test('RXB entry DB sync rebases optimistic local state onto server source', async () => {
+  const local = await createSource([
+    entry('article-alpha', 'a1', 'alpha', 'Alpha', 10)
+  ])
+  const remote = await createSource([
+    entry('article-alpha', 'a1', 'alpha', 'Server Alpha', 20),
+    entry('article-beta', 'a2', 'beta', 'Server Beta', 30)
+  ])
+  const artifact = await createArtifact(local)
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
+
+  await db.mutations([
+    {
+      op: 'update',
+      id: 'article-alpha',
+      locale: null,
+      status: 'published',
+      set: {title: 'Optimistic Alpha'}
+    }
+  ])
+  await db.syncWith(remote)
+
+  test.equal(
+    await db.resolve({
+      type: 'QueryArticle',
+      orderBy: {asc: Entry.title},
+      select: {
+        id: Entry.id,
+        title: Entry.title
+      }
+    } as any),
+    [
+      {id: 'article-alpha', title: 'Server Alpha'},
+      {id: 'article-beta', title: 'Server Beta'}
+    ]
+  )
+})
+
+test('RXB entry DB leaves state unchanged when sync misses remote blobs', async () => {
+  const local = await createSource([
+    entry('article-alpha', 'a1', 'alpha', 'Alpha', 10)
+  ])
+  const remote = await createSource([
+    entry('article-alpha', 'a1', 'alpha', 'Server Alpha', 20)
+  ])
+  const artifact = await createArtifact(local)
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
+  const sha = db.sha
+  const brokenRemote: SyncApi = {
+    getTreeIfDifferent: remote.getTreeIfDifferent.bind(remote),
+    async *getBlobs() {}
+  }
+
+  await test.throws(async () => {
+    await db.syncWith(brokenRemote)
+  }, 'Missing remote blobs')
+
+  test.is(db.sha, sha)
+  test.is(
+    await db.resolve({
+      id: 'article-alpha',
+      select: Entry.title,
+      get: true
+    } as any),
+    'Alpha'
+  )
+})
+
+test('RXB entry DB sync is a no-op when the remote tree is unchanged', async () => {
+  const source = await createSource([
+    entry('article-alpha', 'a1', 'alpha', 'Alpha', 10)
+  ])
+  const artifact = await createArtifact(source)
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
+  const bytes = db.exportBytes()
+  const requestedBlobs = Array<string>()
+  const trackedRemote: SyncApi = {
+    getTreeIfDifferent: sha => source.getTreeIfDifferent(sha),
+    async *getBlobs(shas) {
+      requestedBlobs.push(...shas)
+      yield* source.getBlobs(shas)
+    }
+  }
+
+  const sha = await db.syncWith(trackedRemote)
+
+  test.is(sha, artifact.meta.graphSha)
+  test.is(db.exportBytes(), bytes)
+  test.equal(requestedBlobs, [])
+})
+
+test('RXB entry DB compressed export stays smaller than source export', async () => {
+  const source = await createSource(
+    Array.from({length: 1000}, (_, i) =>
+      entry(
+        `article-${i}`,
+        i.toString().padStart(8, '0'),
+        `article-${i}`,
+        `Article ${i}`,
+        i
+      )
+    )
+  )
+  const artifact = await createArtifact(source)
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
+  const rxbBytes = Buffer.byteLength(await db.exportCompressedBytes())
+  const sourceBytes = Buffer.byteLength(
+    JSON.stringify(await exportSource(source))
+  )
+
+  test.ok(rxbBytes < sourceBytes)
+})
+
 function entry(
   id: string,
   index: string,
@@ -287,7 +574,8 @@ async function createSource(entries: Array<FixtureEntry>) {
             title: input.title,
             path: input.path,
             score: input.score,
-            featured: input.featured ?? false
+            featured: input.featured ?? false,
+            links: input.links ?? []
           }
         },
         status

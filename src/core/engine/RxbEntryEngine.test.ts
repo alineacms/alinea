@@ -9,6 +9,9 @@ import {
   createRxbEntryData,
   indexKey,
   openRxbEntryEngine,
+  rxbEntryIsActive,
+  rxbEntryIsMain,
+  rxbEntryStatusFromFlags,
   RxbEntryEngine,
   RxbEntryPlanner,
   serializeQueryTrace,
@@ -166,37 +169,11 @@ function createArtifact(rows = createRows()): RxbEntryArtifact {
 function createIndexes(rows: Array<RxbEntryRow>): RxbEntryIndexes {
   const indexes: RxbEntryIndexes = {
     byId: {},
-    byNode: {},
-    byFilePath: {},
-    byDir: {},
-    byParent: {},
-    byPath: {},
-    byUrl: {},
-    byLevel: {},
-    byType: {},
-    byWorkspace: {},
-    byRoot: {},
-    byLocale: {},
-    byStatus: {},
-    byActive: [],
-    byMain: []
+    byType: {}
   }
   rows.forEach((row, ordinal) => {
     add(indexes.byId, row.id, ordinal)
-    add(indexes.byNode, row.nodeId, ordinal)
-    indexes.byFilePath[row.filePath] = ordinal
-    indexes.byDir[row.childrenDir] = row.nodeId
-    add(indexes.byParent, '<null>', ordinal)
-    add(indexes.byPath, row.path, ordinal)
-    add(indexes.byUrl, row.url, ordinal)
-    add(indexes.byLevel, String(row.level), ordinal)
     add(indexes.byType, row.type, ordinal)
-    add(indexes.byWorkspace, row.workspace, ordinal)
-    add(indexes.byRoot, row.root, ordinal)
-    add(indexes.byLocale, '<null>', ordinal)
-    add(indexes.byStatus, row.status, ordinal)
-    if (row.active) indexes.byActive.push(ordinal)
-    if (row.main) indexes.byMain.push(ordinal)
   })
   return indexes
 }
@@ -230,8 +207,57 @@ test('RXB artifact opens metadata and stores compact ordinal index leaves', () =
   test.is(opened.payload.fieldIndexes.number.score[0][1], 0)
 })
 
+test('RXB artifact packs active, main, and status into row flags', () => {
+  const artifact = createArtifact([
+    row('alpha:published', {id: 'alpha'}),
+    row('beta:draft', {
+      id: 'beta',
+      status: 'draft',
+      active: false,
+      main: false
+    }),
+    row('gamma:archived', {id: 'gamma', status: 'archived'})
+  ])
+
+  test.equal(Object.keys(artifact.payload.indexes).sort(), [
+    'byId',
+    'byType'
+  ])
+  test.equal(artifact.payload.columns.flags.length, 3)
+  test.is(rxbEntryStatusFromFlags(artifact.payload.columns.flags[0]), 'published')
+  test.is(rxbEntryStatusFromFlags(artifact.payload.columns.flags[1]), 'draft')
+  test.is(rxbEntryStatusFromFlags(artifact.payload.columns.flags[2]), 'archived')
+  test.is(rxbEntryIsActive(artifact.payload.columns.flags[0]), true)
+  test.is(rxbEntryIsMain(artifact.payload.columns.flags[0]), true)
+  test.is(rxbEntryIsActive(artifact.payload.columns.flags[1]), false)
+  test.is(rxbEntryIsMain(artifact.payload.columns.flags[1]), false)
+})
+
+test('RXB artifact rejects unsupported versions', async () => {
+  const artifact = createArtifact()
+  await test.throws(
+    () =>
+      decodeRxbEntryArtifact(
+        encodeRxbEntryArtifact({
+          ...artifact,
+          meta: {...artifact.meta, version: 2 as any}
+        })
+      ),
+    'unsupported version 2'
+  )
+})
+
 test('RXB planner uses exact, nested, list, and numeric field indexes', () => {
   const planner = new RxbEntryPlanner(config, createArtifact())
+
+  test.equal(
+    planner.candidateRows({
+      query: {
+        filter: {_type: {in: ['QueryArticle']}, _active: true}
+      } as any
+    }).rowIds,
+    ['alpha:published', 'beta:published', 'gamma:published']
+  )
 
   test.equal(
     planner.candidateRows({
@@ -259,6 +285,36 @@ test('RXB planner uses exact, nested, list, and numeric field indexes', () => {
     }).rowIds,
     ['beta:published', 'gamma:published']
   )
+})
+
+test('RXB planner lazily indexes queried entry fields', () => {
+  const rows = createRows().map(input =>
+    row(`pages/${input.id}.json`, {
+      ...input,
+      id: input.id,
+      filePath: `pages/${input.id}.json`
+    })
+  )
+  const planner = new RxbEntryPlanner(config, createArtifact(rows), {
+    leafCacheSize: 2
+  })
+  const query = {
+    query: {
+      filter: {_workspace: 'main', _root: 'pages', _parentId: null}
+    } as any,
+    constraints: {type: 'QueryArticle'}
+  }
+
+  const result = planner.candidateRows(query, {trace: true})
+
+  test.equal(result.rowIds, [
+    'pages/alpha.json',
+    'pages/beta.json',
+    'pages/gamma.json'
+  ])
+  test.ok(result.trace!.indexes.has('field:_workspace:main'))
+  test.ok(result.trace!.indexes.has('field:_root:pages'))
+  test.ok(result.trace!.indexes.has('field:_parentId:<null>'))
 })
 
 test('RXB planner traces cached and uncached field leaves identically', () => {
@@ -335,6 +391,37 @@ test('RXB engine projects selected entry fields directly from rows', async () =>
       {id: 'gamma', nested: {url: '/gamma', status: 'published'}},
       {id: 'alpha', nested: {url: '/alpha', status: 'published'}}
     ]
+  )
+})
+
+test('RXB engine applies row-id ordering windows before projection', async () => {
+  const engine = openRxbEntryEngine(config, encodeRxbEntryArtifact(createArtifact()))
+
+  test.equal(
+    await engine.query({
+      query: {
+        orderBy: {desc: Entry.id},
+        skip: 1,
+        take: 1,
+        select: Entry.id
+      } as any
+    }),
+    ['beta']
+  )
+})
+
+test('RXB engine searches with a lazy in-memory search index', async () => {
+  const engine = openRxbEntryEngine(config, encodeRxbEntryArtifact(createArtifact()))
+
+  test.equal(
+    await engine.query({
+      query: {
+        type: 'QueryArticle',
+        search: 'alp',
+        select: Entry.id
+      } as any
+    }),
+    ['alpha']
   )
 })
 

@@ -1,4 +1,4 @@
-import {Config, Field} from 'alinea'
+import {Config, Edit, Field} from 'alinea'
 import {Config as ConfigUtils, createConfig} from '../Config.js'
 import {Entry} from '../Entry.js'
 import {createRecord} from '../EntryRecord.js'
@@ -33,7 +33,8 @@ const Page = Config.document('Page', {
           }
         })
       }
-    })
+    }),
+    related: Field.entry.multiple('Related')
   }
 })
 
@@ -53,12 +54,26 @@ const ROWS = Number(process.env.ALINEA_BENCH_ROWS ?? 10000)
 const RUNS = Number(process.env.ALINEA_BENCH_RUNS ?? 1000)
 const SAMPLES = Number(process.env.ALINEA_BENCH_SAMPLES ?? 5)
 const targetId = `page-${Math.floor(ROWS / 2)}`
+const changedId = Math.floor(ROWS / 2)
 const scoreCutoff = Math.floor(ROWS * 0.75)
 
 const source = await createSource(ROWS)
+const changedSource = await createSource(ROWS, i =>
+  i === changedId
+    ? {
+        title: `Page ${i} changed`,
+        body: `Changed body ${i}`,
+        score: i + 1
+      }
+    : undefined
+)
+const linkedSource = await createSource(ROWS, undefined, {linksPerEntry: 3})
 const base = new BaseEntryIndex(config)
 await base.syncWith(source)
 const baseResolver = new BaseEntryResolver(config, base)
+const linkedBase = new BaseEntryIndex(config)
+await linkedBase.syncWith(linkedSource)
+const linkedResolver = new BaseEntryResolver(config, linkedBase)
 const artifact = createRxbEntryArtifact(config, base, {
   configHash: 'bench-config',
   contentHash: base.sha
@@ -66,6 +81,14 @@ const artifact = createRxbEntryArtifact(config, base, {
 const rxbBytes = encodeRxbEntryArtifact(artifact)
 const compressedRxbBytes = await compressRxbEntryBytes(rxbBytes)
 const rxbDb = RxbEntryDB.open(config, rxbBytes)
+const linkedArtifact = createRxbEntryArtifact(config, linkedBase, {
+  configHash: 'bench-config',
+  contentHash: linkedBase.sha
+})
+const linkedRxbDb = RxbEntryDB.open(
+  config,
+  encodeRxbEntryArtifact(linkedArtifact)
+)
 const exportedSource = await exportSource(source)
 
 const baseIndexFresh = await benchAsync('baseline syncWith fresh', async () => {
@@ -83,6 +106,38 @@ const rxbBuildFresh = await benchAsync('rxb build bytes fresh', async () => {
     })
   )
 })
+
+const baseSyncNoop = await benchAsyncPrepared(
+  'baseline syncWith noop',
+  async () => {
+    const index = new BaseEntryIndex(config)
+    await index.syncWith(source)
+    return index
+  },
+  index => index.syncWith(source)
+)
+
+const rxbSyncNoop = await benchAsyncPrepared(
+  'rxb syncWith noop',
+  async () => RxbEntryDB.open(config, rxbBytes),
+  db => db.syncWith(source)
+)
+
+const baseSyncChanged = await benchAsyncPrepared(
+  'baseline syncWith changed',
+  async () => {
+    const index = new BaseEntryIndex(config)
+    await index.syncWith(source)
+    return index
+  },
+  index => index.syncWith(changedSource)
+)
+
+const rxbSyncChanged = await benchAsyncPrepared(
+  'rxb syncWith changed',
+  async () => RxbEntryDB.open(config, rxbBytes),
+  db => db.syncWith(changedSource)
+)
 
 const openRxbDb = bench('open rxb db', () => {
   RxbEntryDB.open(config, rxbBytes)
@@ -160,8 +215,121 @@ const rxbNestedFilter = await benchRxb(`rxb nested filter x${RUNS}`, rxbDb, {
   select: Entry.id
 } as any)
 
+const baseDashboardChildren = await benchResolver(
+  `baseline dashboard children x${RUNS}`,
+  baseResolver,
+  {
+    workspace: 'main',
+    root: 'pages',
+    parentId: null,
+    filter: {_type: {in: ['Page']}},
+    status: 'preferDraft',
+    select: {
+      id: Entry.id,
+      type: Entry.type,
+      parentId: Entry.parentId,
+      active: Entry.active
+    }
+  } as any
+)
+const rxbDashboardChildren = await benchRxb(
+  `rxb dashboard children x${RUNS}`,
+  rxbDb,
+  {
+    workspace: 'main',
+    root: 'pages',
+    parentId: null,
+    filter: {_type: {in: ['Page']}},
+    status: 'preferDraft',
+    select: {
+      id: Entry.id,
+      type: Entry.type,
+      parentId: Entry.parentId,
+      active: Entry.active
+    }
+  } as any
+)
+
+const baseMediaCount = await benchResolver(
+  `baseline media-style count x${RUNS}`,
+  baseResolver,
+  {
+    filter: {_root: 'pages', _workspace: 'main', _parentId: null},
+    status: 'preferDraft',
+    count: true
+  } as any
+)
+const rxbMediaCount = await benchRxb(`rxb media-style count x${RUNS}`, rxbDb, {
+  filter: {_root: 'pages', _workspace: 'main', _parentId: null},
+  status: 'preferDraft',
+  count: true
+} as any)
+
+const baseMediaBatch = await benchResolver(
+  `baseline media-style batch x${RUNS}`,
+  baseResolver,
+  {
+    filter: {_root: 'pages', _workspace: 'main', _parentId: null},
+    orderBy: [{desc: Entry.type}, {desc: Entry.id}],
+    status: 'preferDraft',
+    take: 50,
+    select: Entry.id
+  } as any
+)
+const rxbMediaBatch = await benchRxb(`rxb media-style batch x${RUNS}`, rxbDb, {
+  filter: {_root: 'pages', _workspace: 'main', _parentId: null},
+  orderBy: [{desc: Entry.type}, {desc: Entry.id}],
+  status: 'preferDraft',
+  take: 50,
+  select: Entry.id
+} as any)
+
+const baseSearch = await benchResolver(
+  `baseline search x${RUNS}`,
+  baseResolver,
+  {
+    workspace: 'main',
+    root: 'pages',
+    search: ['Body', String(Math.floor(ROWS / 2))],
+    select: Entry.id
+  } as any
+)
+const rxbSearch = await benchRxb(`rxb search x${RUNS}`, rxbDb, {
+  workspace: 'main',
+  root: 'pages',
+  search: ['Body', String(Math.floor(ROWS / 2))],
+  select: Entry.id
+} as any)
+
+const baseLinkResolver = await benchResolver(
+  `baseline link resolver x${RUNS}`,
+  linkedResolver,
+  {
+    type: Page,
+    take: 100,
+    select: {
+      id: Entry.id,
+      related: Page.related
+    }
+  } as any
+)
+const rxbLinkResolver = await benchRxb(
+  `rxb link resolver x${RUNS}`,
+  linkedRxbDb,
+  {
+    type: 'Page',
+    take: 100,
+    select: {
+      id: Entry.id,
+      related: Page.related
+    }
+  } as any
+)
+
 console.table([
   compare('fresh index/export', baseIndexFresh, rxbBuildFresh),
+  compare('syncWith noop', baseSyncNoop, rxbSyncNoop),
+  compare('syncWith changed', baseSyncChanged, rxbSyncChanged),
   single('open rxb db', openRxbDb),
   single('export rxb bytes', exportRxbBytes)
 ])
@@ -169,18 +337,43 @@ console.table([
   compare('resolve id', baseResolveById, rxbResolveById),
   compare('count type', baseCountByType, rxbCountByType),
   compare('score filter', baseScoreFilter, rxbScoreFilter),
-  compare('nested/list filter', baseNestedFilter, rxbNestedFilter)
+  compare('nested/list filter', baseNestedFilter, rxbNestedFilter),
+  compare('dashboard children', baseDashboardChildren, rxbDashboardChildren),
+  compare('media-style count', baseMediaCount, rxbMediaCount),
+  compare('media-style batch', baseMediaBatch, rxbMediaBatch),
+  compare('search', baseSearch, rxbSearch),
+  compare('link resolver', baseLinkResolver, rxbLinkResolver)
 ])
 console.table(sizeReport(rxbBytes, compressedRxbBytes, exportedSource))
 
-async function createSource(rows: number) {
+async function createSource(
+  rows: number,
+  override?: (
+    index: number
+  ) =>
+    | {
+        title?: string
+        body?: string
+        score?: number
+      }
+    | undefined
+  ,
+  options: {linksPerEntry?: number} = {}
+) {
   const source = new MemorySource()
   const tree = await source.getTree()
   const changes = await Promise.all(
     Array.from({length: rows}, async (_, i) => {
       const id = `page-${i}`
       const path = `page-${i}`
-      const title = `Page ${i}`
+      const patch = override?.(i)
+      const title = patch?.title ?? `Page ${i}`
+      const body = patch?.body ?? `Body ${i}`
+      const score = patch?.score ?? i
+      const related = Edit.links(Page.related)
+      for (let offset = 1; offset <= (options.linksPerEntry ?? 0); offset++) {
+        related.addEntry(`page-${(i + offset) % rows}`)
+      }
       const contents = new TextEncoder().encode(
         JSON.stringify(
           createRecord(
@@ -196,14 +389,15 @@ async function createSource(rows: number) {
               data: {
                 title,
                 path,
-                body: `Body ${i}`,
-                score: i,
+                body,
+                score,
                 featured: i % 2 === 0,
                 meta: {inner: i % 2 === 0 ? 'even' : 'odd'},
                 tags: [
                   {itemId: `tag-${i % 5}`},
                   {itemId: `group-${Math.floor(i / 100)}`}
-                ]
+                ],
+                related: related.value()
               }
             },
             'published'
@@ -265,6 +459,21 @@ async function benchAsync(name: string, run: () => Promise<void>) {
   for (let i = 0; i < SAMPLES; i++) {
     const start = performance.now()
     await run()
+    samples.push(performance.now() - start)
+  }
+  return {name, duration: median(samples)}
+}
+
+async function benchAsyncPrepared<T>(
+  name: string,
+  prepare: () => Promise<T>,
+  run: (target: T) => Promise<unknown>
+) {
+  const samples = Array<number>()
+  for (let i = 0; i < SAMPLES; i++) {
+    const target = await prepare()
+    const start = performance.now()
+    await run(target)
     samples.push(performance.now() - start)
   }
   return {name, duration: median(samples)}

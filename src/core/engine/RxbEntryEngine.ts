@@ -1,10 +1,13 @@
+import MiniSearch from 'minisearch'
 import type {EntryStatus} from '../Entry.js'
 import type {Entry} from '../Entry.js'
 import type {Config} from '../Config.js'
 import type {Expr} from '../Expr.js'
+import {Field} from '../Field.js'
 import type {GraphQuery, Order, Projection, Status} from '../Graph.js'
 import {querySource} from '../Graph.js'
-import {getExpr, hasExpr} from '../Internal.js'
+import {getExpr, hasExpr, hasField} from '../Internal.js'
+import {getScope, type Scope} from '../Scope.js'
 import {compileEntryFilter} from './EntryFilter.js'
 import type {
   EntryQueryConstraints,
@@ -18,7 +21,14 @@ import type {
   RxbEntryColumnName,
   RxbEntryRow
 } from './RxbEntryArtifact.js'
-import {decodeRxbEntryArtifact, rxbEntryColumnNames} from './RxbEntryArtifact.js'
+import {
+  decodeRxbEntryArtifact,
+  RxbEntryArtifactCursor,
+  rxbEntryColumnNames,
+  rxbEntryIsActive,
+  rxbEntryIsMain,
+  rxbEntryStatusFromFlags
+} from './RxbEntryArtifact.js'
 import {RxbEntryPlanner} from './RxbEntryPlanner.js'
 
 export interface RxbEntryEngineOptions {
@@ -41,19 +51,29 @@ export interface OpenRxbEntryEngineOptions {
 export class RxbEntryEngine {
   readonly #artifact: RxbEntryArtifact
   readonly #planner: RxbEntryPlanner
+  readonly #scope: Scope
+  readonly #cursor: RxbEntryArtifactCursor | undefined
   readonly #entryCacheSize: number
   readonly #entries = new Map<string, Entry>()
+  #searchIndex: MiniSearch | undefined
   #rowOrdinals: Map<string, number> | undefined
   readonly #ordinalCache = new WeakMap<Array<string>, Array<number>>()
   readonly #columnCache = new Map<RxbEntryColumnName, Array<unknown>>()
+  #flags: Array<number> | undefined
+  #sparseFlagReads = 0
 
   constructor(options: RxbEntryEngineOptions) {
     this.#artifact = options.artifact
+    this.#scope = getScope(options.config)
     this.#planner = new RxbEntryPlanner(options.config, options.artifact, {
+      bytes: options.bytes,
       leafCacheSize: options.leafCacheSize,
       planCacheSize: options.planCacheSize,
       rowCacheSize: options.rowCacheSize
     })
+    this.#cursor = options.bytes
+      ? new RxbEntryArtifactCursor(options.bytes)
+      : undefined
     this.#entryCacheSize = options.entryCacheSize ?? 512
   }
 
@@ -92,21 +112,25 @@ export class RxbEntryEngine {
       ? undefined
       : compileEntryFilter(query.filter, readRowField)
     let rowIds = candidatePlan.rowIds
+    if (query.search) rowIds = this.#searchRowIds(query.search, rowIds)
     if (predicate) {
       rowIds = this.#planner
         .rowsForIds(rowIds)
         .filter(row => predicate(row))
         .map(row => row.rowId)
     }
+    const orderByRowId = query.orderBy && canOrderByRowId(query.orderBy)
+    if (orderByRowId) this.#orderRowIds(rowIds, query.orderBy!)
     if (
       !options?.trace &&
       !query.count &&
       !query.groupBy &&
-      !query.orderBy &&
-      !query.skip &&
-      !query.take
+      (!query.orderBy || orderByRowId)
     ) {
-      return this.#projectRowIds(rowIds, query) as Value
+      const windowedRowIds = windowRowIds(rowIds, query)
+      const value = this.#projectRowIds(windowedRowIds, query) as Value
+      await this.#postProcessResult(query, value, windowedRowIds)
+      return value
     }
     let rows =
       query.count && !query.groupBy && !query.orderBy
@@ -115,7 +139,7 @@ export class RxbEntryEngine {
 
     if (query.groupBy && !Array.isArray(query.groupBy))
       rows = groupRows(rows, query.groupBy)
-    if (query.orderBy) orderRows(rows, query.orderBy)
+    if (query.orderBy && !orderByRowId) orderRows(rows, query.orderBy)
 
     if (query.skip) {
       if (query.count && !query.groupBy) rowIds = rowIds.slice(query.skip)
@@ -140,6 +164,7 @@ export class RxbEntryEngine {
               : null
             : rows.map(row => this.#projectRow(row, query.select, row.rowId))
     ) as Value
+    await this.#postProcessResult(query, value, rowIds)
 
     if (options?.trace) {
       return {
@@ -175,6 +200,46 @@ export class RxbEntryEngine {
     return entry
   }
 
+  #searchRowIds(search: string | Array<string>, candidates: Array<string>) {
+    const terms = Array.isArray(search) ? search.join(' ') : search
+    if (!terms) return candidates
+    const allowed = new Set(candidates)
+    return this.#search()
+      .search(terms, {
+        prefix: true,
+        fuzzy: 0.1,
+        boost: {title: 2},
+        filter: result => allowed.has((result as any).rowId)
+      })
+      .map(result => (result as any).rowId as string)
+  }
+
+  #search(): MiniSearch {
+    if (this.#searchIndex) return this.#searchIndex
+    const search = new MiniSearch({
+      fields: ['title', 'searchableText'],
+      storeFields: ['rowId'],
+      tokenize(text) {
+        return text
+          .normalize('NFD')
+          .replace(DIACRITIC, '')
+          .split(SPACE_OR_PUNCTUATION)
+      }
+    })
+    for (const rowId of this.#artifact.payload.columns.rowIds) {
+      const row = this.#planner.row(rowId)
+      if (!row) continue
+      search.add({
+        id: rowId,
+        rowId,
+        title: row.title,
+        searchableText: row.searchableText
+      })
+    }
+    this.#searchIndex = search
+    return search
+  }
+
   #projectRow(
     row: RxbEntryRow | undefined,
     projection: Projection | undefined,
@@ -186,6 +251,11 @@ export class RxbEntryEngine {
     }
     if (hasExpr(projection as any)) {
       const expr = getExpr(projection as any)
+      if (expr.type === 'field') {
+        if (!row) return undefined
+        const value = this.#field(row, projection as Expr)
+        return cloneProjectedValue(value)
+      }
       if (expr.type !== 'entryField')
         throw new Error(`Unsupported RXB engine projection: ${expr.type}`)
       if (rowId) {
@@ -247,6 +317,8 @@ export class RxbEntryEngine {
     const ordinal = this.#rowOrdinal(rowId)
     if (ordinal === undefined) return {found: false, value: undefined}
     if (name === 'rowId') return {found: true, value: rowId}
+    const flagValue = this.#flagFieldValue(ordinal, name)
+    if (flagValue.found) return flagValue
     if (!isRxbEntryColumnName(name)) {
       const row = this.#planner.row(rowId)
       return {found: Boolean(row), value: row?.[name]}
@@ -294,6 +366,13 @@ export class RxbEntryEngine {
     }
     if (hasExpr(projection as any)) {
       const expr = getExpr(projection as any)
+      if (expr.type === 'field') {
+        const rowId = this.#rowIdAt(ordinal)
+        const row = this.#planner.row(rowId)
+        if (!row) return undefined
+        const value = this.#field(row, projection as Expr)
+        return cloneProjectedValue(value)
+      }
       if (expr.type !== 'entryField')
         throw new Error(`Unsupported RXB engine projection: ${expr.type}`)
       if (expr.name === 'data') {
@@ -301,6 +380,11 @@ export class RxbEntryEngine {
         return this.#planner.row(rowId)?.data
       }
       if (expr.name === 'rowId') return this.#rowIdAt(ordinal)
+      const flagValue = this.#flagFieldValue(
+        ordinal,
+        expr.name as keyof RxbEntryRow
+      )
+      if (flagValue.found) return flagValue.value
       if (!isRxbEntryColumnName(expr.name)) {
         const rowId = this.#rowIdAt(ordinal)
         return this.#planner.row(rowId)?.[expr.name as keyof RxbEntryRow]
@@ -317,12 +401,215 @@ export class RxbEntryEngine {
   #rowIdAt(ordinal: number): string {
     return this.#artifact.payload.columns.rowIds[ordinal]
   }
+
+  #orderRowIds(rowIds: Array<string>, orderBy: Order | Array<Order>) {
+    const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
+    const sorters = orders.flatMap(order => {
+      const expr = order.asc ?? order.desc
+      if (!expr || !hasExpr(expr as any)) return []
+      const internal = getExpr(expr as any)
+      if (internal.type !== 'entryField') return []
+      return [
+        {
+          field: internal.name as keyof RxbEntryRow,
+          desc: Boolean(order.desc),
+          caseSensitive: order.caseSensitive
+        }
+      ]
+    })
+    const ordinals = this.#ordinalsForRowIds(rowIds)
+    ordinals.sort((a, b) => {
+      for (const sorter of sorters) {
+        const result = compareValues(
+          this.#ordinalSortValue(a, sorter.field),
+          this.#ordinalSortValue(b, sorter.field),
+          sorter.caseSensitive
+        )
+        if (result !== 0) return sorter.desc ? -result : result
+      }
+      return 0
+    })
+    for (let index = 0; index < ordinals.length; index++) {
+      rowIds[index] = this.#rowIdAt(ordinals[index])
+    }
+  }
+
+  #ordinalSortValue(ordinal: number, name: keyof RxbEntryRow): unknown {
+    if (name === 'rowId' || name === 'filePath') return this.#rowIdAt(ordinal)
+    const flagValue = this.#flagFieldValue(ordinal, name)
+    if (flagValue.found) return flagValue.value
+    if (isRxbEntryColumnName(name))
+      return this.#columnValues(name as RxbEntryColumnName)[ordinal]
+    return this.#planner.row(this.#rowIdAt(ordinal))?.[name]
+  }
+
+  #field(row: RxbEntryRow, field: Expr): unknown {
+    const name = this.#scope.nameOf(field)
+    if (!name) throw new Error(`Expression has no name ${field}`)
+    return row.data[name]
+  }
+
+  async #postProcessResult(
+    query: GraphQuery<Projection>,
+    value: unknown,
+    rowIds: Array<string>
+  ) {
+    if (query.count || !query.select) return
+    if (!projectionHasField(query.select)) return
+    if (query.get || query.first) {
+      if (value)
+        await this.#postProcessRow(
+          query.select,
+          value,
+          rowIds[0],
+          query.status ?? 'published'
+        )
+      return
+    }
+    if (!Array.isArray(value)) return
+    await Promise.all(
+      value.map((row, index) =>
+        row
+          ? this.#postProcessRow(
+              query.select!,
+              row,
+              rowIds[index],
+              query.status ?? 'published'
+            )
+          : undefined
+      )
+    )
+  }
+
+  async #postProcessRow(
+    projection: Projection,
+    value: unknown,
+    rowId: string | undefined,
+    status: Status
+  ) {
+    if (!rowId) return
+    const row = this.#planner.row(rowId)
+    const linkResolver = new RxbLinkResolver(
+      this,
+      row?.locale ?? null,
+      status
+    )
+    await this.#postProcessProjection(projection, value, linkResolver)
+  }
+
+  async #postProcessProjection(
+    projection: Projection,
+    value: unknown,
+    linkResolver: RxbLinkResolver
+  ): Promise<void> {
+    if (!value) return
+    if (hasExpr(projection as any)) {
+      if (hasField(projection as any))
+        await Field.shape(projection as any).applyLinks(value, linkResolver as any)
+      return
+    }
+    if (!isRecord(projection) || querySource(projection)) return
+    await Promise.all(
+      Object.entries(projection).map(([key, nextProjection]) => {
+        const nextValue = (value as Record<string, unknown>)[key]
+        return this.#postProcessProjection(
+          nextProjection as Projection,
+          nextValue,
+          linkResolver
+        )
+      })
+    )
+  }
+
+  #flagFieldValue(
+    ordinal: number,
+    name: keyof RxbEntryRow
+  ): {found: boolean; value: unknown} {
+    const flags = this.#flagAt(ordinal)
+    switch (name) {
+      case 'active':
+        return {found: true, value: rxbEntryIsActive(flags)}
+      case 'main':
+        return {found: true, value: rxbEntryIsMain(flags)}
+      case 'status':
+      case 'versionStatus':
+        return {found: true, value: rxbEntryStatusFromFlags(flags)}
+      default:
+        return {found: false, value: undefined}
+    }
+  }
+
+  #flagAt(ordinal: number): number {
+    if (this.#flags) return this.#flags[ordinal]
+    if (this.#cursor && this.#sparseFlagReads++ < 64) {
+      const value = this.#cursor.flagAt(ordinal)
+      if (value !== undefined) return value
+    }
+    this.#flags = Array.from(this.#artifact.payload.columns.flags)
+    return this.#flags[ordinal]
+  }
 }
 
 const rxbEntryColumnNameSet = new Set<string>(rxbEntryColumnNames)
+const DIACRITIC = /[\u0300-\u036f]/g
+const SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u
+
+class RxbLinkResolver {
+  readonly #engine: RxbEntryEngine
+  readonly #locale: string | null
+  readonly #status: Status
+
+  constructor(
+    engine: RxbEntryEngine,
+    locale: string | null,
+    status: Status
+  ) {
+    this.#engine = engine
+    this.#locale = locale
+    this.#status = status
+  }
+
+  includedAtBuild(filePath: string): boolean {
+    return Boolean(this.#engine.artifact.payload.tree.tree.find(entry => entry.path === filePath))
+  }
+
+  resolveLinks<P extends Projection>(
+    projection: P,
+    entryIds: ReadonlyArray<string>
+  ): Promise<Array<unknown>> {
+    return this.#engine.query({
+      query: {
+        preferredLocale: this.#locale ?? undefined,
+        status: this.#status,
+        select: projection,
+        id: {in: entryIds}
+      } as GraphQuery<Projection>
+    }) as Promise<Array<unknown>>
+  }
+}
 
 function isRxbEntryColumnName(name: unknown): name is RxbEntryColumnName {
   return typeof name === 'string' && rxbEntryColumnNameSet.has(name)
+}
+
+function cloneProjectedValue(value: unknown): unknown {
+  if (value && typeof value === 'object') {
+    try {
+      return structuredClone(value)
+    } catch {
+      return JSON.parse(JSON.stringify(value))
+    }
+  }
+  return value
+}
+
+function projectionHasField(projection: Projection | undefined): boolean {
+  if (!projection) return false
+  if (hasExpr(projection as any)) return hasField(projection as any)
+  if (!isRecord(projection) || querySource(projection)) return false
+  return Object.values(projection).some(value =>
+    projectionHasField(value as Projection)
+  )
 }
 
 export function openRxbEntryEngine(
@@ -367,6 +654,11 @@ export function compileRxbEntryQueryConstraints(
   }
   const type = stringValues(query.type)
   if (type) constraints.type = type
+  if (query.search) {
+    constraints.search = Array.isArray(query.search)
+      ? query.search.join(' ')
+      : query.search
+  }
   applyStatusConstraint(constraints, query.status)
 
   return Object.keys(constraints).length > 0 ? constraints : undefined
@@ -381,7 +673,6 @@ export function unsupportedRxbEntryQueryReason(
     if (reason) return `projection ${reason}`
   }
   if (query.include) return 'include'
-  if (query.search) return 'search'
   if (query.location) return 'location'
   if (query.orderBy) {
     const reason = unsupportedEntryOrderReason(query.orderBy)
@@ -407,6 +698,8 @@ export function unsupportedRxbEntryQueryReason(
 }
 
 function readRowField(row: RxbEntryRow, name: string): unknown {
+  const entryField = ENTRY_FIELD_ALIASES[name]
+  if (entryField) return row[entryField]
   if (name in row) return row[name as keyof RxbEntryRow]
   return row.data[name]
 }
@@ -417,6 +710,7 @@ function unsupportedEntryProjectionReason(
   if (!projection) return
   if (hasExpr(projection as any)) {
     const expr = getExpr(projection as any)
+    if (expr.type === 'field') return
     if (expr.type === 'entryField') return
     return expr.type
   }
@@ -450,6 +744,27 @@ function unsupportedEntryGroupReason(
   if (!hasExpr(groupBy as any)) return 'non-expression'
   const internal = getExpr(groupBy as any)
   if (internal.type !== 'entryField') return internal.type
+}
+
+function canOrderByRowId(orderBy: Order | Array<Order> | undefined): boolean {
+  if (!orderBy) return false
+  const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
+  return orders.every(order => {
+    const expr = order.asc ?? order.desc
+    return Boolean(
+      expr && hasExpr(expr as any) && getExpr(expr as any).type === 'entryField'
+    )
+  })
+}
+
+function windowRowIds(
+  rowIds: Array<string>,
+  query: Pick<GraphQuery, 'skip' | 'take'>
+): Array<string> {
+  if (!query.skip && !query.take) return rowIds
+  const start = query.skip ?? 0
+  const end = query.take ? start + query.take : undefined
+  return rowIds.slice(start, end)
 }
 
 function orderRows(rows: Array<RxbEntryRow>, orderBy: Order | Array<Order>) {
@@ -494,12 +809,19 @@ function compareValues(
 ) {
   if (typeof a === 'number' && typeof b === 'number') return a - b
   if (typeof a === 'string' && typeof b === 'string') {
-    return caseSensitive
-      ? a.localeCompare(b)
-      : a.localeCompare(b, undefined, {numeric: true})
+    return (caseSensitive ? CASE_SENSITIVE_COLLATOR : NATURAL_COLLATOR).compare(
+      a,
+      b
+    )
   }
   return 0
 }
+
+const NATURAL_COLLATOR = new Intl.Collator(undefined, {numeric: true})
+const CASE_SENSITIVE_COLLATOR = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'variant'
+})
 
 function isRxbFilterFullyIndexed(filter: unknown): boolean {
   if (!filter) return true
@@ -628,4 +950,18 @@ function isExactStatus(input: unknown): input is EntryStatus {
 
 function isRecord(input: unknown): input is Record<string, unknown> {
   return Boolean(input && typeof input === 'object')
+}
+
+const ENTRY_FIELD_ALIASES: Record<string, keyof RxbEntryRow> = {
+  _id: 'id',
+  _type: 'type',
+  _index: 'index',
+  _workspace: 'workspace',
+  _root: 'root',
+  _status: 'status',
+  _parentId: 'parentId',
+  _locale: 'locale',
+  _path: 'path',
+  _url: 'url',
+  _active: 'active'
 }

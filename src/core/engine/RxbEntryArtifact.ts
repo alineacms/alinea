@@ -1,13 +1,28 @@
-import {rxbEncode, rxbOpen} from '@creationix/rx'
+import {
+  rxbEncode,
+  rxbFindKey,
+  rxbMakeCursor,
+  rxbOpen,
+  rxbRead,
+  rxbSeekChild,
+  type RxbCursor
+} from '@creationix/rx'
 import * as base64 from 'alinea/core/util/BufferToBase64'
 import {Config as ConfigUtils, type Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
+import {parseRecord} from '../EntryRecord.js'
 import {getRoot} from '../Internal.js'
+import {Type} from '../Type.js'
 import type {EntryIndex} from '../db/EntryIndex.js'
 import type {FlatTree, ReadonlyTree} from '../source/Tree.js'
+import {entryUrl} from '../util/EntryFilenames.js'
 
 export const RXB_ENTRY_ARTIFACT_VERSION = 1
 export const NULL_INDEX_VALUE = '<null>'
+export const RXB_ENTRY_FLAG_ACTIVE = 1
+export const RXB_ENTRY_FLAG_MAIN = 1 << 1
+const RXB_ENTRY_STATUS_SHIFT = 2
+const RXB_ENTRY_STATUS_MASK = 3 << RXB_ENTRY_STATUS_SHIFT
 
 export interface RxbEntryArtifactMeta {
   kind: 'alinea.entry-engine.rxb'
@@ -38,20 +53,7 @@ export interface RxbEntryManifest {
 
 export interface RxbEntryIndexes {
   byId: Record<string, Array<number>>
-  byNode: Record<string, Array<number>>
-  byFilePath: Record<string, number>
-  byDir: Record<string, string>
-  byParent: Record<string, Array<number>>
-  byPath: Record<string, Array<number>>
-  byUrl: Record<string, Array<number>>
-  byLevel: Record<string, Array<number>>
   byType: Record<string, Array<number>>
-  byWorkspace: Record<string, Array<number>>
-  byRoot: Record<string, Array<number>>
-  byLocale: Record<string, Array<number>>
-  byStatus: Record<string, Array<number>>
-  byActive: Array<number>
-  byMain: Array<number>
 }
 
 export interface RxbEntryFieldIndexes {
@@ -66,9 +68,7 @@ export const rxbEntryColumnNames = [
   'seeded',
   'parentId',
   'parents',
-  'url',
-  'active',
-  'main'
+  'url'
 ] as const
 
 export type RxbEntryColumnName = (typeof rxbEntryColumnNames)[number]
@@ -79,6 +79,7 @@ export type RxbEntryColumnArrays = {
 
 export interface RxbEntryColumns {
   rowIds: Array<string>
+  flags: Array<number>
   values: RxbEntryColumnArrays
 }
 
@@ -149,7 +150,7 @@ interface RxbEntryNode {
   childNodeIds: Array<string>
 }
 
-interface RxbEntryVersion {
+export interface RxbEntryVersion {
   rowId: string
   versionId: string
   nodeId: string
@@ -180,11 +181,54 @@ export function createRxbEntryArtifact(
   options: CreateRxbEntryArtifactOptions = {},
   tree: ReadonlyTree = index.tree
 ): RxbEntryArtifact {
-  const manifest = createRxbEntryManifest(config)
   const entries = Array.from(index.filter({}))
   const versions = entries.map(createVersion)
-  const languages = createLanguages(entries)
-  const nodes = createNodes(index, entries)
+  const rows = Object.values(
+    createRowsById(versions, createLanguages(entries), createNodes(index, entries))
+  )
+  return createRxbEntryArtifactFromRows(config, tree, rows, {
+    contentHash: index.sha,
+    ...options
+  })
+}
+
+export function createRxbEntryArtifactFromBlobs(
+  config: Config,
+  tree: ReadonlyTree,
+  blobs: ReadonlyMap<string, Uint8Array>,
+  options: CreateRxbEntryArtifactOptions = {}
+): RxbEntryArtifact {
+  return createRxbEntryArtifactFromVersions(
+    config,
+    tree,
+    createVersionsFromBlobs(config, tree, blobs),
+    options
+  )
+}
+
+export function createRxbEntryArtifactFromRows(
+  config: Config,
+  tree: ReadonlyTree,
+  rows: Array<RxbEntryRow>,
+  options: CreateRxbEntryArtifactOptions = {}
+): RxbEntryArtifact {
+  return createRxbEntryArtifactFromVersions(
+    config,
+    tree,
+    rows.map(row => createRxbEntryVersionFromRow(row)),
+    options
+  )
+}
+
+export function createRxbEntryArtifactFromVersions(
+  config: Config,
+  tree: ReadonlyTree,
+  versions: Array<RxbEntryVersion>,
+  options: CreateRxbEntryArtifactOptions = {}
+): RxbEntryArtifact {
+  const manifest = createRxbEntryManifest(config)
+  const languages = createLanguagesFromVersions(config, versions)
+  const nodes = createNodesFromVersions(config, versions)
   const rows = Object.values(createRowsById(versions, languages, nodes))
 
   return {
@@ -192,8 +236,8 @@ export function createRxbEntryArtifact(
       kind: 'alinea.entry-engine.rxb',
       version: RXB_ENTRY_ARTIFACT_VERSION,
       configHash: options.configHash ?? manifest.version.toString(),
-      graphSha: index.sha,
-      contentHash: options.contentHash ?? index.sha,
+      graphSha: tree.sha,
+      contentHash: options.contentHash ?? tree.sha,
       createdAt: options.createdAt ?? new Date(0).toISOString()
     },
     payload: {
@@ -210,12 +254,52 @@ export function createRxbEntryArtifact(
   }
 }
 
+export function createRxbEntryVersionFromBlob(
+  config: Config,
+  filePath: string,
+  sha: string,
+  blob: Uint8Array
+): RxbEntryVersion {
+  const info = rxbEntryInfoFromRowId(config, filePath)
+  const record = JSON.parse(new TextDecoder().decode(blob))
+  const {meta, data: recordData} = parseRecord(record)
+  const data: Record<string, unknown> = {path: info.path, ...recordData}
+  const type = meta.type
+  const entryType = config.schema[type]
+  return {
+    rowId: filePath,
+    versionId: filePath,
+    nodeId: meta.id,
+    languageId: languageId(meta.id, info.locale),
+    id: meta.id,
+    type,
+    index: meta.index,
+    title: String(data.title ?? ''),
+    searchableText: entryType ? Type.searchableText(entryType, data) : '',
+    seeded: meta.seeded ?? null,
+    rowHash: sha,
+    fileHash: sha,
+    data,
+    status: info.status,
+    locale: info.locale,
+    workspace: info.workspace,
+    root: info.root,
+    path: info.path,
+    parentDir: info.parentDir,
+    childrenDir: info.childrenDir,
+    filePath,
+    level: info.level
+  }
+}
+
 export function encodeRxbEntryArtifact(artifact: RxbEntryArtifact): Uint8Array {
   return rxbEncode(artifact, {indexThreshold: 0})
 }
 
 export function decodeRxbEntryArtifact(buffer: Uint8Array): RxbEntryArtifact {
-  return rxbOpen(buffer) as RxbEntryArtifact
+  const artifact = rxbOpen(buffer) as RxbEntryArtifact
+  validateRxbEntryArtifact(artifact)
+  return artifact
 }
 
 export function compressRxbEntryBytes(bytes: Uint8Array): Promise<string> {
@@ -238,6 +322,31 @@ export async function decodeCompressedRxbEntryArtifact(
   encoded: string
 ): Promise<RxbEntryArtifact> {
   return decodeRxbEntryArtifact(await decompressRxbEntryBytes(encoded))
+}
+
+export function validateRxbEntryArtifact(
+  artifact: RxbEntryArtifact
+): asserts artifact is RxbEntryArtifact {
+  if (artifact.meta?.kind !== 'alinea.entry-engine.rxb')
+    throw new Error('Invalid RXB entry artifact: unsupported kind')
+  if (artifact.meta.version !== RXB_ENTRY_ARTIFACT_VERSION)
+    throw new Error(
+      `Invalid RXB entry artifact: unsupported version ${artifact.meta.version}`
+    )
+  if (artifact.payload?.manifest?.version !== RXB_ENTRY_ARTIFACT_VERSION)
+    throw new Error('Invalid RXB entry artifact: unsupported payload version')
+  if (!Array.isArray(artifact.payload.columns?.rowIds))
+    throw new Error('Invalid RXB entry artifact: missing row ids')
+  if (!artifact.payload.columns?.flags)
+    throw new Error('Invalid RXB entry artifact: missing flags')
+  if (!artifact.payload.columns?.values)
+    throw new Error('Invalid RXB entry artifact: missing columns')
+  if (!Array.isArray(artifact.payload.data))
+    throw new Error('Invalid RXB entry artifact: missing data rows')
+  if (artifact.payload.columns.rowIds.length !== artifact.payload.data.length)
+    throw new Error('Invalid RXB entry artifact: row/data length mismatch')
+  if (artifact.payload.columns.rowIds.length !== artifact.payload.columns.flags.length)
+    throw new Error('Invalid RXB entry artifact: row/flag length mismatch')
 }
 
 export function indexKey(name: string, value: string | null): string {
@@ -287,7 +396,6 @@ function createRxbEntryIndexes(rows: Array<RxbEntryRow>): RxbEntryIndexes {
   rows.forEach((row, ordinal) => {
     appendIndex(indexes.byId, row.id, ordinal)
     appendIndex(indexes.byType, row.type, ordinal)
-    appendIndex(indexes.byStatus, row.status, ordinal)
   })
 
   return indexes
@@ -296,25 +404,13 @@ function createRxbEntryIndexes(rows: Array<RxbEntryRow>): RxbEntryIndexes {
 function emptyRxbEntryIndexes(): RxbEntryIndexes {
   return {
     byId: {},
-    byNode: {},
-    byFilePath: {},
-    byDir: {},
-    byParent: {},
-    byPath: {},
-    byUrl: {},
-    byLevel: {},
-    byType: {},
-    byWorkspace: {},
-    byRoot: {},
-    byLocale: {},
-    byStatus: {},
-    byActive: [],
-    byMain: []
+    byType: {}
   }
 }
 
 export function createRxbEntryColumns(rows: Array<RxbEntryRow>): RxbEntryColumns {
   const rowIds = Array<string>()
+  const flags = Array<number>(rows.length)
   const values: RxbEntryColumnArrays = {
     id: [],
     type: [],
@@ -322,12 +418,11 @@ export function createRxbEntryColumns(rows: Array<RxbEntryRow>): RxbEntryColumns
     seeded: [],
     parentId: [],
     parents: [],
-    url: [],
-    active: [],
-    main: []
+    url: []
   }
-  for (const row of rows) {
+  rows.forEach((row, ordinal) => {
     rowIds.push(row.rowId)
+    flags[ordinal] = rxbEntryFlags(row)
     values.id.push(row.id)
     values.type.push(row.type)
     values.index.push(row.index)
@@ -335,10 +430,8 @@ export function createRxbEntryColumns(rows: Array<RxbEntryRow>): RxbEntryColumns
     values.parentId.push(row.parentId)
     values.parents.push(row.parents)
     values.url.push(row.url)
-    values.active.push(row.active)
-    values.main.push(row.main)
-  }
-  return {rowIds, values}
+  })
+  return {rowIds, flags, values}
 }
 
 export function createRxbEntryData(
@@ -356,24 +449,29 @@ export function hydrateRxbEntryRowAt(
   const rowId = payload.columns.rowIds[ordinal]
   if (rowId === undefined) return
   const values = payload.columns.values
-  const info = rowInfoFromRowId(config, rowId)
+  const info = rxbEntryInfoFromRowId(config, rowId)
   const id = values.id[ordinal]
+  const data = payload.data[ordinal] ?? {}
+  const type = values.type[ordinal]
+  const entryType = config.schema[type]
+  const flags = payload.columns.flags[ordinal]
+  const status = rxbEntryStatusFromFlags(flags)
   return {
     rowId,
     versionId: rowId,
     nodeId: id,
     languageId: languageId(id, info.locale),
     id,
-    type: values.type[ordinal],
+    type,
     index: values.index[ordinal],
-    title: String((payload.data[ordinal] ?? {}).title ?? ''),
-    searchableText: String((payload.data[ordinal] ?? {}).title ?? ''),
+    title: String(data.title ?? ''),
+    searchableText: entryType ? Type.searchableText(entryType, data) : '',
     seeded: values.seeded[ordinal],
     rowHash: fileHash,
     fileHash,
-    data: payload.data[ordinal] ?? {},
-    versionStatus: info.status,
-    status: info.status,
+    data,
+    versionStatus: status,
+    status,
     locale: info.locale,
     workspace: info.workspace,
     root: info.root,
@@ -385,12 +483,85 @@ export function hydrateRxbEntryRowAt(
     parentId: values.parentId[ordinal],
     parents: values.parents[ordinal],
     url: values.url[ordinal],
-    active: values.active[ordinal],
-    main: values.main[ordinal]
+    active: rxbEntryIsActive(flags),
+    main: rxbEntryIsMain(flags)
   }
 }
 
-function rowInfoFromRowId(config: Config, rowId: string) {
+export function rxbEntryFlags(row: Pick<RxbEntryRow, 'active' | 'main' | 'status'>): number {
+  let flags = rxbStatusFlags(row.status)
+  if (row.active) flags |= RXB_ENTRY_FLAG_ACTIVE
+  if (row.main) flags |= RXB_ENTRY_FLAG_MAIN
+  return flags
+}
+
+export function rxbEntryIsActive(flags: number): boolean {
+  return Boolean(flags & RXB_ENTRY_FLAG_ACTIVE)
+}
+
+export function rxbEntryIsMain(flags: number): boolean {
+  return Boolean(flags & RXB_ENTRY_FLAG_MAIN)
+}
+
+export function rxbEntryStatusFromFlags(flags: number): EntryStatus {
+  switch (flags & RXB_ENTRY_STATUS_MASK) {
+    case 1 << RXB_ENTRY_STATUS_SHIFT:
+      return 'draft'
+    case 2 << RXB_ENTRY_STATUS_SHIFT:
+      return 'archived'
+    default:
+      return 'published'
+  }
+}
+
+export class RxbEntryArtifactCursor {
+  readonly #bytes: Uint8Array
+  #flags: RxbCursor | undefined
+
+  constructor(bytes: Uint8Array) {
+    this.#bytes = bytes
+  }
+
+  flagAt(ordinal: number): number | undefined {
+    const flags = this.#flagsCursor()
+    if (!flags || ordinal < 0 || ordinal >= flags.ixCount) return
+    const child = rxbMakeCursor(this.#bytes)
+    rxbSeekChild(child, flags, ordinal)
+    const tag = rxbRead(child)
+    return tag === 'int' ? child.val : undefined
+  }
+
+  #flagsCursor(): RxbCursor | undefined {
+    if (this.#flags) return this.#flags
+    const cursor = this.#findPath('payload', 'columns', 'flags')
+    if (cursor?.tag === 'array') this.#flags = cursor
+    return this.#flags
+  }
+
+  #findPath(...keys: Array<string>): RxbCursor | undefined {
+    let current = rxbMakeCursor(this.#bytes)
+    rxbRead(current)
+    for (const key of keys) {
+      const next = rxbMakeCursor(this.#bytes)
+      if (!rxbFindKey(next, current, key)) return
+      current = next
+    }
+    return current
+  }
+}
+
+function rxbStatusFlags(status: EntryStatus): number {
+  switch (status) {
+    case 'draft':
+      return 1 << RXB_ENTRY_STATUS_SHIFT
+    case 'archived':
+      return 2 << RXB_ENTRY_STATUS_SHIFT
+    default:
+      return 0
+  }
+}
+
+export function rxbEntryInfoFromRowId(config: Config, rowId: string) {
   const segments = rowId.split('/')
   const workspaces = Object.keys(config.workspaces)
   const singleWorkspace = ConfigUtils.multipleWorkspaces(config)
@@ -450,6 +621,7 @@ function createRxbEntryManifest(config: Config): RxbEntryManifest {
 }
 
 function createVersion(entry: Entry): RxbEntryVersion {
+  const status = fileStatus(entry)
   return {
     rowId: entry.filePath,
     versionId: entry.filePath,
@@ -464,7 +636,7 @@ function createVersion(entry: Entry): RxbEntryVersion {
     rowHash: entry.rowHash,
     fileHash: entry.fileHash,
     data: entry.data,
-    status: entry.status,
+    status,
     locale: entry.locale,
     workspace: entry.workspace,
     root: entry.root,
@@ -474,6 +646,14 @@ function createVersion(entry: Entry): RxbEntryVersion {
     filePath: entry.filePath,
     level: entry.level
   }
+}
+
+function fileStatus(entry: Pick<Entry, 'filePath'>): EntryStatus {
+  const fileName = entry.filePath.split('/').at(-1) ?? ''
+  const baseName = fileName.endsWith('.json')
+    ? fileName.slice(0, -'.json'.length)
+    : fileName
+  return entryInfoFromBaseName(baseName).status
 }
 
 function createLanguages(entries: Array<Entry>): Array<RxbEntryLanguage> {
@@ -500,6 +680,46 @@ function createLanguages(entries: Array<Entry>): Array<RxbEntryLanguage> {
       path: main.path,
       seeded: main.seeded,
       versionRowIds: rows.map(row => row.filePath)
+    }
+  })
+}
+
+function createLanguagesFromVersions(
+  config: Config,
+  versions: Array<RxbEntryVersion>
+): Array<RxbEntryLanguage> {
+  const byLanguage = new Map<string, Array<RxbEntryVersion>>()
+  const byDir = new Map(versions.map(row => [row.childrenDir, row]))
+  for (const version of versions) {
+    const key = languageId(version.id, version.locale)
+    const rows = byLanguage.get(key) ?? []
+    rows.push(version)
+    byLanguage.set(key, rows)
+  }
+  return Array.from(byLanguage, ([id, rows]) => {
+    const first = rows[0]
+    const active =
+      rows.find(row => row.status === 'draft') ??
+      rows.find(row => row.status === 'published') ??
+      rows.find(row => row.status === 'archived') ??
+      first
+    const main =
+      rows.find(row => row.status === 'published') ??
+      rows.find(row => row.status === 'archived') ??
+      rows.find(row => row.status === 'draft') ??
+      active
+    return {
+      languageId: id,
+      nodeId: first.id,
+      locale: first.locale,
+      parentDir: first.parentDir,
+      selfDir: first.childrenDir,
+      activeRowId: active.rowId,
+      mainRowId: main.rowId,
+      url: createVersionUrl(config, main, byDir),
+      path: main.path,
+      seeded: main.seeded,
+      versionRowIds: rows.map(row => row.rowId)
     }
   })
 }
@@ -531,6 +751,121 @@ function createNodes(index: EntryIndex, entries: Array<Entry>): Array<RxbEntryNo
       languageIds: Array.from(languageIdsByNode.get(id) ?? []),
       childNodeIds: node ? Array.from(node.children(), child => child.id) : []
     }
+  })
+}
+
+function createNodesFromVersions(
+  config: Config,
+  versions: Array<RxbEntryVersion>
+): Array<RxbEntryNode> {
+  const byNode = new Map<string, Array<RxbEntryVersion>>()
+  const byDir = new Map<string, string>()
+  for (const version of versions) {
+    const rows = byNode.get(version.id) ?? []
+    rows.push(version)
+    byNode.set(version.id, rows)
+    byDir.set(version.childrenDir, version.id)
+  }
+  const nodes = new Map<string, RxbEntryNode>()
+  const mkNode = (id: string): RxbEntryNode => {
+    const cached = nodes.get(id)
+    if (cached) return cached
+    const rows = byNode.get(id)
+    if (!rows) throw new Error(`Entry node not found: ${id}`)
+    const first = rows[0]
+    const parentId = byDir.get(first.parentDir) ?? null
+    const parent = parentId ? mkNode(parentId) : undefined
+    const languageIds = Array.from(
+      new Set(rows.map(row => languageId(row.id, row.locale)))
+    )
+    const node: RxbEntryNode = {
+      nodeId: id,
+      id,
+      index: first.index,
+      parentId,
+      parents: parent ? parent.parents.concat(parent.id) : [],
+      workspace: first.workspace,
+      root: first.root,
+      type: first.type,
+      level: first.level,
+      languageIds,
+      childNodeIds: []
+    }
+    nodes.set(id, node)
+    return node
+  }
+  for (const id of byNode.keys()) mkNode(id)
+  for (const node of nodes.values()) {
+    if (!node.parentId) continue
+    const parent = nodes.get(node.parentId)
+    if (parent) parent.childNodeIds.push(node.id)
+  }
+  void config
+  return Array.from(nodes.values()).sort((a, b) => a.index.localeCompare(b.index))
+}
+
+function createVersionsFromBlobs(
+  config: Config,
+  tree: ReadonlyTree,
+  blobs: ReadonlyMap<string, Uint8Array>
+): Array<RxbEntryVersion> {
+  const versions = Array<RxbEntryVersion>()
+  for (const [filePath, sha] of tree.index()) {
+    const blob = blobs.get(sha)
+    if (!blob) throw new Error(`Missing blob for ${filePath}: ${sha}`)
+    versions.push(createRxbEntryVersionFromBlob(config, filePath, sha, blob))
+  }
+  return versions
+}
+
+export function createRxbEntryVersionFromRow(
+  row: RxbEntryRow
+): RxbEntryVersion {
+  return {
+    rowId: row.rowId,
+    versionId: row.versionId,
+    nodeId: row.nodeId,
+    languageId: row.languageId,
+    id: row.id,
+    type: row.type,
+    index: row.index,
+    title: row.title,
+    searchableText: row.searchableText,
+    seeded: row.seeded,
+    rowHash: row.rowHash,
+    fileHash: row.fileHash,
+    data: row.data,
+    status: row.versionStatus,
+    locale: row.locale,
+    workspace: row.workspace,
+    root: row.root,
+    path: row.path,
+    parentDir: row.parentDir,
+    childrenDir: row.childrenDir,
+    filePath: row.filePath,
+    level: row.level
+  }
+}
+
+function createVersionUrl(
+  config: Config,
+  version: RxbEntryVersion,
+  byDir: ReadonlyMap<string, RxbEntryVersion>
+): string {
+  const entryType = config.schema[version.type]
+  const parentPaths = Array<string>()
+  let parent = byDir.get(version.parentDir)
+  while (parent) {
+    parentPaths.unshift(parent.path)
+    parent = byDir.get(parent.parentDir)
+  }
+  return entryUrl(entryType, {
+    status: version.status,
+    path: version.path,
+    parentPaths,
+    locale: version.locale,
+    workspace: version.workspace,
+    root: version.root
   })
 }
 
