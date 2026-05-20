@@ -4,6 +4,8 @@ export const viewKeys = {
   DateInput: 'alinea/field/date/DateField.view#DateFieldView',
   HiddenInput: 'alinea/field/hidden/HiddenField.view#HiddenInput',
   JsonInput: 'alinea/field/json/JsonField.view#JsonFieldView',
+  LocalisedInput:
+    'alinea/field/localiser/LocalisedField.view#LocalisedFieldView',
   SingleLinkInput: 'alinea/field/link/LinkField.view#SingleLinkFieldView',
   MultipleLinksInput: 'alinea/field/link/LinkField.view#MultipleLinksFieldView',
   ListInput: 'alinea/field/list/ListField.view#ListFieldView',

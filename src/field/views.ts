@@ -5,6 +5,7 @@ import {CodeFieldView} from './code/CodeField.view.js'
 import {DateFieldView} from './date/DateField.view.js'
 import {HiddenInput} from './hidden/HiddenField.view.js'
 import {JsonFieldView} from './json/JsonField.view.js'
+import {LocalisedFieldView} from './localiser/LocalisedField.view.js'
 import {
   MultipleLinksFieldView,
   SingleLinkFieldView
@@ -25,6 +26,7 @@ export const views: Record<string, ComponentType<any>> = {
   [viewKeys.CodeInput]: CodeFieldView,
   [viewKeys.DateInput]: DateFieldView,
   [viewKeys.JsonInput]: JsonFieldView,
+  [viewKeys.LocalisedInput]: LocalisedFieldView,
   [viewKeys.SingleLinkInput]: SingleLinkFieldView,
   [viewKeys.MultipleLinksInput]: MultipleLinksFieldView,
   [viewKeys.TabsView]: TabsView,
