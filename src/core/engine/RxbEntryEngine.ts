@@ -12,7 +12,7 @@ import type {
   Status
 } from '../Graph.js'
 import {querySource} from '../Graph.js'
-import {getExpr, hasExpr, hasField} from '../Internal.js'
+import {getExpr, hasExpr, hasField, hasRoot, hasWorkspace} from '../Internal.js'
 import {getScope, type Scope} from '../Scope.js'
 import {compileEntryFilter} from './EntryFilter.js'
 import type {
@@ -106,26 +106,30 @@ export class RxbEntryEngine {
     plan: EntryQueryPlan,
     options?: EntryQueryOptions
   ): Promise<Value | TracedEntryQueryResult<Value>> {
-    const unsupported = unsupportedRxbEntryQueryReason(plan.query)
+    const query = this.#normalizeQuery(plan.query as GraphQuery<Projection>)
+    const unsupported = unsupportedRxbEntryQueryReason(query)
     if (unsupported)
       throw new Error(`Unsupported RXB engine query: ${unsupported}`)
 
     const constraints =
-      plan.constraints ?? compileRxbEntryQueryConstraints(plan.query)
+      plan.constraints ?? compileRxbEntryQueryConstraints(query)
     const candidatePlan = this.#planner.candidateRowIds(
-      {...plan, constraints},
+      {...plan, query, constraints},
       options
     )
-    const query = plan.query as GraphQuery<Projection>
     const predicate = isRxbFilterFullyIndexed(query.filter)
       ? undefined
       : compileEntryFilter(query.filter, readRowField)
+    const locationPredicate = this.#locationPredicate(query.location)
     let rowIds = candidatePlan.rowIds
     if (query.search) rowIds = this.#searchRowIds(query.search, rowIds)
-    if (predicate) {
+    if (predicate || locationPredicate) {
       rowIds = this.#planner
         .rowsForIds(rowIds)
-        .filter(row => predicate(row))
+        .filter(row => {
+          if (predicate && !predicate(row)) return false
+          return locationPredicate ? locationPredicate(row) : true
+        })
         .map(row => row.rowId)
     }
     const orderByRowId = query.orderBy && canOrderByRowId(query.orderBy)
@@ -558,9 +562,10 @@ export class RxbEntryEngine {
 
   #queryRows(
     inputRowIds: Array<string>,
-    query: GraphQuery<Projection>,
+    inputQuery: GraphQuery<Projection>,
     status: Status
   ): unknown {
+    const query = this.#normalizeQuery(inputQuery)
     const constraints = compileRxbEntryQueryConstraints(query)
     const candidatePlan = this.#planner.candidateRowIds({
       query,
@@ -570,12 +575,16 @@ export class RxbEntryEngine {
     const predicate = isRxbFilterFullyIndexed(query.filter)
       ? undefined
       : compileEntryFilter(query.filter, readRowField)
+    const locationPredicate = this.#locationPredicate(query.location)
     let rowIds = candidatePlan.rowIds
     if (query.search) rowIds = this.#searchRowIds(query.search, rowIds)
-    if (predicate) {
+    if (predicate || locationPredicate) {
       rowIds = this.#planner
         .rowsForIds(rowIds)
-        .filter(row => predicate(row))
+        .filter(row => {
+          if (predicate && !predicate(row)) return false
+          return locationPredicate ? locationPredicate(row) : true
+        })
         .map(row => row.rowId)
     }
     const orderByRowId = query.orderBy && canOrderByRowId(query.orderBy)
@@ -739,6 +748,52 @@ export class RxbEntryEngine {
       }
     }
     return this.#rowsByParentId.get(parentId) ?? []
+  }
+
+  #normalizeQuery<Query extends GraphQuery>(query: Query): Query {
+    let next: Record<string, unknown> | undefined
+    const write = (key: string, value: unknown) => {
+      next ??= {...(query as Record<string, unknown>)}
+      next[key] = value
+    }
+    if (query.type && !stringValues(query.type)) {
+      const types = Array.isArray(query.type) ? query.type : [query.type]
+      write(
+        'type',
+        types.map(type => this.#scope.nameOf(type as any)).filter(Boolean)
+      )
+    }
+    if (query.workspace && !stringValues(query.workspace)) {
+      const workspace = hasWorkspace(query.workspace as any)
+        ? this.#scope.nameOf(query.workspace as any)
+        : undefined
+      if (workspace) write('workspace', workspace)
+    }
+    if (query.root && !stringValues(query.root)) {
+      const root = hasRoot(query.root as any)
+        ? this.#scope.nameOf(query.root as any)
+        : undefined
+      if (root) write('root', root)
+    }
+    if (query.location && !Array.isArray(query.location)) {
+      const location = this.#scope.locationOf(query.location as any)
+      if (location) write('location', location)
+    }
+    return (next ?? query) as Query
+  }
+
+  #locationPredicate(
+    location: unknown
+  ): ((row: RxbEntryRow) => boolean) | undefined {
+    if (!Array.isArray(location) || location.length < 3) return
+    const [workspace, root, segment] = location
+    return row => {
+      if (row.workspace !== workspace) return false
+      if (row.root !== root) return false
+      if (row.level === 0) return false
+      if (row.level === 1) return row.parentDir.endsWith(`/${segment}`)
+      return row.parentDir.split('/').at(-row.level) === segment
+    }
   }
 
   async #postProcessResult(
@@ -988,6 +1043,11 @@ export function compileRxbEntryQueryConstraints(
   if (workspace) constraints.workspace = workspace
   const root = stringValues(query.root)
   if (root) constraints.root = root
+  if (Array.isArray(query.location)) {
+    const [workspace, root] = query.location
+    if (typeof workspace === 'string') constraints.workspace = workspace
+    if (typeof root === 'string') constraints.root = root
+  }
   if (query.locale !== undefined) {
     constraints.locale = query.locale
   } else if (query.preferredLocale) {
@@ -1013,7 +1073,6 @@ export function unsupportedRxbEntryQueryReason(
     if (reason) return `projection ${reason}`
   }
   if (query.include) return 'include'
-  if (query.location) return 'location'
   if (query.orderBy) {
     const reason = unsupportedEntryOrderReason(query.orderBy)
     if (reason) return `orderBy ${reason}`
@@ -1237,6 +1296,10 @@ function isOnlyFilterKey<T extends string>(
 
 function stringValues(input: unknown): string | Array<string> | undefined {
   if (typeof input === 'string') return input
+  if (Array.isArray(input)) {
+    const values = input.filter(value => typeof value === 'string')
+    if (values.length > 0) return values
+  }
   if (isRecord(input) && Array.isArray(input.in)) {
     const values = input.in.filter(value => typeof value === 'string')
     if (values.length > 0) return values
@@ -1247,6 +1310,12 @@ function nullableStringValues(
   input: unknown
 ): string | null | Array<string | null> | undefined {
   if (input === null || typeof input === 'string') return input
+  if (Array.isArray(input)) {
+    const values = input.filter(
+      value => value === null || typeof value === 'string'
+    )
+    if (values.length > 0) return values
+  }
   if (isRecord(input) && Array.isArray(input.in)) {
     const values = input.in.filter(
       value => value === null || typeof value === 'string'
@@ -1257,6 +1326,10 @@ function nullableStringValues(
 
 function numberValues(input: unknown): number | Array<number> | undefined {
   if (typeof input === 'number') return input
+  if (Array.isArray(input)) {
+    const values = input.filter(value => typeof value === 'number')
+    if (values.length > 0) return values
+  }
   if (isRecord(input) && Array.isArray(input.in)) {
     const values = input.in.filter(value => typeof value === 'number')
     if (values.length > 0) return values

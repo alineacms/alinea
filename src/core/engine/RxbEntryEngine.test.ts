@@ -30,20 +30,20 @@ const QueryArticle = Config.document('QueryArticle', {
   }
 })
 
-const config = createConfig({
-  schema: {QueryArticle},
-  workspaces: {
-    main: Config.workspace('Main', {
-      source: 'content',
-      roots: {
-        pages: Config.root('Pages', {contains: ['QueryArticle']}),
-        localized: Config.root('Localized', {
-          i18n: {locales: ['en', 'de']},
-          contains: ['QueryArticle']
-        })
-      }
+const mainWorkspace = Config.workspace('Main', {
+  source: 'content',
+  roots: {
+    pages: Config.root('Pages', {contains: ['QueryArticle']}),
+    localized: Config.root('Localized', {
+      i18n: {locales: ['en', 'de']},
+      contains: ['QueryArticle']
     })
   }
+})
+
+const config = createConfig({
+  schema: {QueryArticle},
+  workspaces: {main: mainWorkspace}
 })
 
 function row(
@@ -449,6 +449,37 @@ test('RXB engine falls back to post-filtering unsupported filter parts', async (
   test.ok(result.trace.rows.has('alpha:published'))
   test.ok(result.trace.rows.has('beta:published'))
   test.ok(result.trace.rows.has('gamma:published'))
+})
+
+test('RXB engine normalizes type, root, workspace, and location objects', async () => {
+  const engine = openRxbEntryEngine(
+    config,
+    encodeRxbEntryArtifact(createArtifact(createEdgeRows()))
+  )
+
+  test.equal(
+    await engine.query({
+      query: {
+        type: QueryArticle,
+        location: mainWorkspace.pages,
+        parentId: 'parent',
+        select: Entry.id,
+        orderBy: {asc: Entry.index}
+      } as any
+    }),
+    ['child-1', 'child-2']
+  )
+
+  test.equal(
+    await engine.query({
+      query: {
+        location: ['main', 'pages', 'parent'],
+        select: Entry.id,
+        orderBy: {asc: Entry.index}
+      } as any
+    }),
+    ['child-1', 'grand', 'child-2']
+  )
 })
 
 test('RXB engine resolves structural edge projections', async () => {
