@@ -32,9 +32,7 @@ export function emptyQueryTrace(graphSha?: string): QueryTrace {
   return createQueryTrace({graphSha})
 }
 
-export function serializeQueryTrace(
-  trace: QueryTrace
-): SerializedQueryTrace {
+export function serializeQueryTrace(trace: QueryTrace): SerializedQueryTrace {
   return {
     graphSha: trace.graphSha,
     rows: Array.from(trace.rows),

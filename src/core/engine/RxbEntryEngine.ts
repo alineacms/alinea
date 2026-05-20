@@ -4,26 +4,22 @@ import type {Expr} from '../Expr.js'
 import type {GraphQuery, Order, Projection, Status} from '../Graph.js'
 import {querySource} from '../Graph.js'
 import {getExpr, hasExpr} from '../Internal.js'
-import type {ChangesBatch} from '../source/Change.js'
 import {compileEntryFilter} from './EntryFilter.js'
-import {unsupportedEntryGroupReason} from './EntryGroup.js'
-import type {EntryEngine} from './EntryEngine.js'
-import {unsupportedEntryOrderReason} from './EntryOrder.js'
 import type {
   EntryQueryConstraints,
   EntryQueryOptions,
   EntryQueryPlan,
   TracedEntryQueryResult
-} from './EntryPlanner.js'
-import {unsupportedEntryProjectionReason} from './EntryProjection.js'
-import type {EntrySnapshot} from './EntrySnapshot.js'
+} from './RxbEntryPlanner.js'
 import {createQueryTrace, mergeQueryTraces} from './QueryTrace.js'
 import type {RxbEntryArtifact, RxbEntryRow} from './RxbEntryArtifact.js'
 import {decodeRxbEntryArtifact} from './RxbEntryArtifact.js'
+import {RxbEntryCursorStore} from './RxbEntryCursorStore.js'
 import {RxbEntryPlanner} from './RxbEntryPlanner.js'
 
 export interface RxbEntryEngineOptions {
   artifact: RxbEntryArtifact
+  bytes?: Uint8Array
   leafCacheSize?: number
   planCacheSize?: number
   rowCacheSize?: number
@@ -37,15 +33,18 @@ export interface OpenRxbEntryEngineOptions {
   entryCacheSize?: number
 }
 
-export class RxbEntryEngine implements EntryEngine {
+export class RxbEntryEngine {
   readonly #artifact: RxbEntryArtifact
   readonly #planner: RxbEntryPlanner
+  readonly #cursor: RxbEntryCursorStore | undefined
   readonly #entryCacheSize: number
   readonly #entries = new Map<string, Entry>()
 
   constructor(options: RxbEntryEngineOptions) {
     this.#artifact = options.artifact
+    this.#cursor = options.bytes && new RxbEntryCursorStore(options.bytes)
     this.#planner = new RxbEntryPlanner(options.artifact, {
+      cursorStore: this.#cursor,
       leafCacheSize: options.leafCacheSize,
       planCacheSize: options.planCacheSize,
       rowCacheSize: options.rowCacheSize
@@ -59,10 +58,6 @@ export class RxbEntryEngine implements EntryEngine {
 
   get artifact() {
     return this.#artifact
-  }
-
-  get snapshot(): EntrySnapshot {
-    throw new Error('RXB entry engine snapshot export is not implemented yet')
   }
 
   query<Value>(
@@ -99,7 +94,9 @@ export class RxbEntryEngine implements EntryEngine {
         .map(row => row.rowId)
     }
     let rows =
-      query.count && !query.groupBy ? [] : this.#planner.rowsForIds(rowIds)
+      query.count && !query.groupBy && !query.orderBy
+        ? []
+        : this.#planner.rowsForIds(rowIds)
 
     if (query.groupBy && !Array.isArray(query.groupBy))
       rows = groupRows(rows, query.groupBy)
@@ -113,6 +110,7 @@ export class RxbEntryEngine implements EntryEngine {
       if (query.count && !query.groupBy) rowIds = rowIds.slice(0, query.take)
       else rows.splice(query.take)
     }
+    if (!(query.count && !query.groupBy)) rowIds = rows.map(row => row.rowId)
 
     const value = (
       query.count
@@ -120,12 +118,14 @@ export class RxbEntryEngine implements EntryEngine {
           ? rows.length
           : rowIds.length
         : query.get
-          ? this.#projectRow(rows[0], query.select)
+          ? this.#projectRowId(rowIds[0], rows[0], query.select)
           : query.first
-            ? rows[0]
-              ? this.#projectRow(rows[0], query.select)
+            ? rowIds[0]
+              ? this.#projectRowId(rowIds[0], rows[0], query.select)
               : null
-            : rows.map(row => this.#projectRow(row, query.select))
+            : rowIds.map((rowId, index) =>
+                this.#projectRowId(rowId, rows[index], query.select)
+              )
     ) as Value
 
     if (options?.trace) {
@@ -181,14 +181,25 @@ export class RxbEntryEngine implements EntryEngine {
     )
   }
 
-  async applyChanges(_batch: ChangesBatch): Promise<EntryEngine> {
-    throw new Error(
-      'RXB entry engine change application is not implemented yet'
+  #projectRowId(
+    rowId: string | undefined,
+    row: RxbEntryRow | undefined,
+    projection: Projection | undefined
+  ): unknown {
+    if (!rowId) return undefined
+    if (!this.#cursor) return this.#projectRow(row, projection)
+    if (!projection) return this.#entryForRow(row ?? this.#planner.row(rowId))
+    if (hasExpr(projection as any)) {
+      const expr = getExpr(projection as any)
+      if (expr.type !== 'entryField')
+        throw new Error(`Unsupported RXB engine projection: ${expr.type}`)
+      return this.#cursor.rowValue(rowId, expr.name as keyof RxbEntryRow)
+    }
+    return Object.fromEntries(
+      Object.entries(projection as Record<string, Projection>).map(
+        ([key, value]) => [key, this.#projectRowId(rowId, row, value)]
+      )
     )
-  }
-
-  exportSnapshot(): EntrySnapshot {
-    throw new Error('RXB entry engine snapshot export is not implemented yet')
   }
 }
 
@@ -198,6 +209,7 @@ export function openRxbEntryEngine(
 ): RxbEntryEngine {
   return new RxbEntryEngine({
     artifact: decodeRxbEntryArtifact(buffer),
+    bytes: buffer,
     ...options
   })
 }
@@ -273,6 +285,47 @@ export function unsupportedRxbEntryQueryReason(
 function readRowField(row: RxbEntryRow, name: string): unknown {
   if (name in row) return row[name as keyof RxbEntryRow]
   return row.data[name]
+}
+
+function unsupportedEntryProjectionReason(
+  projection: Projection | undefined
+): string | undefined {
+  if (!projection) return
+  if (hasExpr(projection as any)) {
+    const expr = getExpr(projection as any)
+    if (expr.type === 'entryField') return
+    return expr.type
+  }
+  if (!isRecord(projection)) return 'non-object projection'
+  if (querySource(projection)) return 'edges'
+  for (const value of Object.values(projection)) {
+    const reason = unsupportedEntryProjectionReason(value as Projection)
+    if (reason) return reason
+  }
+}
+
+function unsupportedEntryOrderReason(
+  orderBy: Order | Array<Order> | undefined
+): string | undefined {
+  if (!orderBy) return
+  const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
+  for (const order of orders) {
+    const expr = order.asc ?? order.desc
+    if (!expr) return 'missing expression'
+    if (!hasExpr(expr as any)) return 'non-expression'
+    const internal = getExpr(expr as any)
+    if (internal.type !== 'entryField') return internal.type
+  }
+}
+
+function unsupportedEntryGroupReason(
+  groupBy: Expr | Array<Expr> | undefined
+): string | undefined {
+  if (!groupBy) return
+  if (Array.isArray(groupBy)) return 'multiple fields'
+  if (!hasExpr(groupBy as any)) return 'non-expression'
+  const internal = getExpr(groupBy as any)
+  if (internal.type !== 'entryField') return internal.type
 }
 
 function orderRows(rows: Array<RxbEntryRow>, orderBy: Order | Array<Order>) {

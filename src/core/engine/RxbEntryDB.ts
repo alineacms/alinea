@@ -1,20 +1,22 @@
 import type {Config} from '../Config.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
 import {Graph} from '../Graph.js'
+import {createRecord} from '../EntryRecord.js'
 import type {Policy} from '../Role.js'
+import {sourceChanges} from '../db/CommitRequest.js'
+import {EntryIndex} from '../db/EntryIndex.js'
+import {EntryTransaction} from '../db/EntryTransaction.js'
 import type {Mutation} from '../db/Mutation.js'
+import {MemorySource} from '../source/MemorySource.js'
 import type {RemoteSource} from '../source/Source.js'
-import type {EntrySnapshot} from './EntrySnapshot.js'
+import {ReadonlyTree} from '../source/Tree.js'
 import {
   createRxbEntryArtifact,
   decodeRxbEntryArtifact,
   encodeRxbEntryArtifact,
-  type RxbEntryArtifact
+  type RxbEntryArtifact,
+  type RxbEntryRow
 } from './RxbEntryArtifact.js'
-import {
-  applyRxbEntryMutations,
-  syncRxbEntryArtifact
-} from './RxbEntryArtifactSource.js'
 import {RxbEntryEngine} from './RxbEntryEngine.js'
 
 export interface RxbEntryRollback {
@@ -48,7 +50,7 @@ export class RxbEntryDB extends Graph {
     super()
     this.#options = options
     this.#artifact = decodeRxbEntryArtifact(bytes)
-    this.#engine = this.#createEngine(this.#artifact)
+    this.#engine = this.#createEngine(this.#artifact, bytes)
     this.#bytes = bytes
   }
 
@@ -66,18 +68,6 @@ export class RxbEntryDB extends Graph {
     options?: RxbEntryDBOptions
   ): RxbEntryDB {
     return new RxbEntryDB(config, encodeRxbEntryArtifact(artifact), options)
-  }
-
-  static fromSnapshot(
-    config: Config,
-    snapshot: EntrySnapshot,
-    options?: RxbEntryDBOptions
-  ): RxbEntryDB {
-    return RxbEntryDB.fromArtifact(
-      config,
-      createRxbEntryArtifact(snapshot),
-      options
-    )
   }
 
   get sha(): string {
@@ -104,12 +94,12 @@ export class RxbEntryDB extends Graph {
     }) as Promise<AnyQueryResult<Query>>
   }
 
-  async applyLocal(
+  async mutations(
     mutations: Array<Mutation>,
     options: {policy?: Policy} = {}
   ): Promise<RxbEntryApplyResult> {
     const rollback = this.checkpoint()
-    const next = await applyRxbEntryMutations(
+    const next = await applyMutationsToArtifact(
       this.config,
       this.#artifact,
       mutations,
@@ -119,15 +109,15 @@ export class RxbEntryDB extends Graph {
     return {sha: this.sha, rollback}
   }
 
-  async applyMutations(
+  async applyLocal(
     mutations: Array<Mutation>,
     options: {policy?: Policy} = {}
   ): Promise<RxbEntryApplyResult> {
-    return this.applyLocal(mutations, options)
+    return this.mutations(mutations, options)
   }
 
   async syncWith(remote: RemoteSource): Promise<string> {
-    const next = await syncRxbEntryArtifact(this.config, this.#artifact, remote)
+    const next = await syncArtifactWithRemote(this.config, this.#artifact, remote)
     this.#replace(next)
     return this.sha
   }
@@ -149,18 +139,109 @@ export class RxbEntryDB extends Graph {
   }
 
   #replace(artifact: RxbEntryArtifact, bytes?: Uint8Array) {
+    bytes ??= encodeRxbEntryArtifact(artifact)
     this.#artifact = artifact
-    this.#engine = this.#createEngine(artifact)
+    this.#engine = this.#createEngine(artifact, bytes)
     this.#bytes = bytes
   }
 
-  #createEngine(artifact: RxbEntryArtifact): RxbEntryEngine {
+  #createEngine(
+    artifact: RxbEntryArtifact,
+    bytes?: Uint8Array
+  ): RxbEntryEngine {
     return new RxbEntryEngine({
       artifact,
+      bytes,
       entryCacheSize: this.#options.entryCacheSize,
       leafCacheSize: this.#options.leafCacheSize,
       planCacheSize: this.#options.planCacheSize,
       rowCacheSize: this.#options.rowCacheSize
     })
   }
+}
+
+function createSourceFromArtifact(
+  artifact: RxbEntryArtifact,
+  tree = ReadonlyTree.fromFlat(artifact.payload.tree),
+  extraBlobs = new Map<string, Uint8Array>()
+): MemorySource {
+  const blobs = new Map<string, Uint8Array>()
+  for (const row of Object.values(artifact.payload.rowsById)) {
+    blobs.set(row.fileHash, encodeRxbEntryRow(row))
+  }
+  for (const [sha, blob] of extraBlobs) blobs.set(sha, blob)
+  return new MemorySource(tree, blobs)
+}
+
+async function applyMutationsToArtifact(
+  config: Config,
+  artifact: RxbEntryArtifact,
+  mutations: Array<Mutation>,
+  options: {policy?: Policy} = {}
+): Promise<RxbEntryArtifact> {
+  const source = createSourceFromArtifact(artifact)
+  const index = new EntryIndex(config)
+  await index.syncWith(source)
+  const from = await source.getTree()
+  const tx = new EntryTransaction(config, index, source, from, options.policy)
+  tx.apply(mutations)
+  const request = await tx.toRequest()
+  const batch = sourceChanges(request)
+  if (batch.changes.length) {
+    await index.indexChanges(batch)
+    await source.applyChanges(batch)
+  }
+  return createRxbEntryArtifact(config, index, {
+    configHash: artifact.meta.configHash,
+    contentHash: index.sha
+  })
+}
+
+async function syncArtifactWithRemote(
+  config: Config,
+  artifact: RxbEntryArtifact,
+  remote: RemoteSource
+): Promise<RxbEntryArtifact> {
+  const localTree = ReadonlyTree.fromFlat(artifact.payload.tree)
+  const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
+  if (!remoteTree) return artifact
+
+  const batch = localTree.diff(remoteTree)
+  const missingShas = Array.from(
+    new Set(
+      batch.changes
+        .filter(change => change.op === 'add')
+        .map(change => change.sha)
+    )
+  )
+  const blobs = new Map<string, Uint8Array>()
+  for await (const [sha, blob] of remote.getBlobs(missingShas)) {
+    blobs.set(sha, blob)
+  }
+
+  const source = createSourceFromArtifact(artifact, remoteTree, blobs)
+  const index = new EntryIndex(config)
+  await index.syncWith(source)
+  return createRxbEntryArtifact(config, index, {
+    configHash: artifact.meta.configHash,
+    contentHash: index.sha
+  })
+}
+
+function encodeRxbEntryRow(row: RxbEntryRow): Uint8Array {
+  const record = createRecord(
+    {
+      id: row.id,
+      type: row.type,
+      index: row.index,
+      root: row.root,
+      path: row.path,
+      title: row.title,
+      seeded: row.seeded,
+      data: row.data,
+      parentId: row.parentId
+    },
+    row.versionStatus ?? row.status
+  )
+  return new TextEncoder().encode(JSON.stringify(record, null, 2))
 }

@@ -11,14 +11,9 @@ import {MemorySource} from '../source/MemorySource.js'
 import {
   createRxbEntryArtifact,
   encodeRxbEntryArtifact,
-  openRxbEntryEngine,
   RxbEntryDB
 } from './index.js'
-import {
-  applyRxbEntryMutations,
-  syncRxbEntryArtifact
-} from './RxbEntryArtifactSource.js'
-import {EntryIndex} from './EntryIndex.js'
+import {EntryIndex} from '../db/EntryIndex.js'
 
 const test = suite(import.meta)
 
@@ -53,12 +48,13 @@ interface FixtureEntry {
   status?: EntryStatus
 }
 
-test('RXB artifact can apply an array of optimistic mutations and re-encode', async () => {
+test('RXB entry DB can apply an array of optimistic mutations and re-encode', async () => {
   const source = await createSource([
     entry('article-alpha', 'a1', 'alpha', 'Alpha', 10),
     entry('article-beta', 'a2', 'beta', 'Beta', 20)
   ])
   const artifact = await createArtifact(source)
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
 
   const mutations: Array<Mutation> = [
     {
@@ -84,27 +80,24 @@ test('RXB artifact can apply an array of optimistic mutations and re-encode', as
     }
   ]
 
-  const next = await applyRxbEntryMutations(config, artifact, mutations)
-  const engine = openRxbEntryEngine(encodeRxbEntryArtifact(next))
+  await db.mutations(mutations)
 
   test.equal(
-    await engine.query({
-      query: {
-        type: 'QueryArticle',
-        orderBy: {asc: Entry.title},
-        select: {
-          id: Entry.id,
-          title: Entry.title
-        }
-      } as any
-    }),
+    await db.resolve({
+      type: 'QueryArticle',
+      orderBy: {asc: Entry.title},
+      select: {
+        id: Entry.id,
+        title: Entry.title
+      }
+    } as any),
     [
       {id: 'article-alpha', title: 'Alpha Prime'},
       {id: 'article-beta', title: 'Beta'},
       {id: 'article-gamma', title: 'Gamma'}
     ]
   )
-  test.is(next.meta.contentHash, next.meta.graphSha)
+  test.is(db.artifact.meta.contentHash, db.artifact.meta.graphSha)
 })
 
 test('RXB entry DB opens bytes, resolves, applies local mutations, exports, and rolls back', async () => {
@@ -124,7 +117,7 @@ test('RXB entry DB opens bytes, resolves, applies local mutations, exports, and 
     ['article-alpha', 'article-beta']
   )
 
-  const {rollback} = await db.applyLocal([
+  const {rollback} = await db.mutations([
     {
       op: 'update',
       id: 'article-alpha',
@@ -164,7 +157,7 @@ test('RXB entry DB opens bytes, resolves, applies local mutations, exports, and 
   )
 })
 
-test('RXB artifact can sync from a server source by fetching only changed blobs', async () => {
+test('RXB entry DB can sync from a server source by fetching only changed blobs', async () => {
   const local = await createSource([
     entry('article-alpha', 'a1', 'alpha', 'Alpha', 10),
     entry('article-beta', 'a2', 'beta', 'Beta', 20)
@@ -189,23 +182,21 @@ test('RXB artifact can sync from a server source by fetching only changed blobs'
       yield* remote.getBlobs(shas)
     }
   }
+  const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
 
-  const synced = await syncRxbEntryArtifact(config, artifact, trackedRemote)
-  const engine = openRxbEntryEngine(encodeRxbEntryArtifact(synced))
+  await db.syncWith(trackedRemote)
 
   test.equal(requestedBlobs.sort(), expectedBlobRequests)
-  test.is(synced.meta.graphSha, remoteTree.sha)
+  test.is(db.graphSha, remoteTree.sha)
   test.equal(
-    await engine.query({
-      query: {
-        type: 'QueryArticle',
-        orderBy: {asc: Entry.title},
-        select: {
-          id: Entry.id,
-          title: Entry.title
-        }
-      } as any
-    }),
+    await db.resolve({
+      type: 'QueryArticle',
+      orderBy: {asc: Entry.title},
+      select: {
+        id: Entry.id,
+        title: Entry.title
+      }
+    } as any),
     [
       {id: 'article-beta', title: 'Beta Remote'},
       {id: 'article-gamma', title: 'Gamma'}
@@ -260,7 +251,7 @@ function entry(
 async function createArtifact(source: MemorySource) {
   const index = new EntryIndex(config)
   await index.syncWith(source)
-  return createRxbEntryArtifact(index.snapshot, {
+  return createRxbEntryArtifact(config, index, {
     configHash: 'config-hash',
     contentHash: index.sha
   })

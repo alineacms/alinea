@@ -18,7 +18,6 @@
     "build": "tsgo --noEmit false --declaration --emitDeclarationOnly && bun build.ts",
     "lint": "oxlint --ignore-path .gitignore .",
     "lint:fix": "oxlint --fix --ignore-path .gitignore .",
-    "test:engine-src": "bun test --preload ./src/core/engine/EngineSrcTestPreload.ts",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "cycles:server": "CHECK_CYCLES=server bun build.ts && bunx --bun madge --warning --circular dist/index.js",

@@ -1,11 +1,15 @@
 import {rxbEncode, rxbOpen} from '@creationix/rx'
-import type {EntryStatus} from '../Entry.js'
-import type {FlatTree} from '../source/Tree.js'
-import {indexValue} from './EntrySnapshotIndex.js'
-import type {EntryManifest} from './EntryManifest.js'
-import type {EntrySnapshot} from './EntrySnapshot.js'
+import type {Config} from '../Config.js'
+import type {Entry, EntryStatus} from '../Entry.js'
+import {getRoot, getWorkspace} from '../Internal.js'
+import {Schema} from '../Schema.js'
+import {Type} from '../Type.js'
+import type {EntryIndex} from '../db/EntryIndex.js'
+import type {FlatTree, ReadonlyTree} from '../source/Tree.js'
+import {entries} from '../util/Objects.js'
 
 export const RXB_ENTRY_ARTIFACT_VERSION = 1
+export const NULL_INDEX_VALUE = '<null>'
 
 export interface RxbEntryArtifactMeta {
   kind: 'alinea.entry-engine.rxb'
@@ -22,11 +26,38 @@ export interface RxbEntryArtifact {
 }
 
 export interface RxbEntryPayload {
-  manifest: EntryManifest
+  manifest: RxbEntryManifest
   tree: FlatTree
   rowsById: Record<string, RxbEntryRow>
   indexes: RxbEntryIndexes
   fieldIndexes: RxbEntryFieldIndexes
+}
+
+export interface RxbEntryManifest {
+  version: 1
+  workspaces: Record<string, RxbEntryManifestWorkspace>
+  types: Record<string, RxbEntryManifestType>
+}
+
+export interface RxbEntryManifestWorkspace {
+  roots: Record<string, RxbEntryManifestRoot>
+  mediaDir?: string
+}
+
+export interface RxbEntryManifestRoot {
+  i18n?: RxbEntryManifestI18n
+  contains?: Array<string>
+}
+
+export interface RxbEntryManifestI18n {
+  locales: Array<string>
+}
+
+export interface RxbEntryManifestType {
+  contains?: Array<string>
+  sharedFields: Array<string>
+  searchFields?: Array<string>
+  insertOrder?: 'first' | 'last' | 'free'
 }
 
 export interface RxbEntryIndexes {
@@ -89,17 +120,124 @@ export interface CreateRxbEntryArtifactOptions {
   createdAt?: string
 }
 
+interface RxbEntryLanguage {
+  languageId: string
+  nodeId: string
+  locale: string | null
+  parentDir: string
+  selfDir: string
+  activeRowId: string
+  mainRowId: string
+  inheritedStatus?: EntryStatus
+  url: string
+  path: string
+  seeded: string | null
+  versionRowIds: Array<string>
+}
+
+interface RxbEntryNode {
+  nodeId: string
+  id: string
+  index: string
+  parentId: string | null
+  parents: Array<string>
+  workspace: string
+  root: string
+  type: string
+  level: number
+  languageIds: Array<string>
+  childNodeIds: Array<string>
+}
+
+interface RxbEntryVersion {
+  rowId: string
+  versionId: string
+  nodeId: string
+  languageId: string
+  id: string
+  type: string
+  index: string
+  title: string
+  searchableText: string
+  seeded: string | null
+  rowHash: string
+  fileHash: string
+  data: Record<string, unknown>
+  status: EntryStatus
+  locale: string | null
+  workspace: string
+  root: string
+  path: string
+  parentDir: string
+  childrenDir: string
+  filePath: string
+  level: number
+}
+
 export function createRxbEntryArtifact(
-  snapshot: EntrySnapshot,
-  options: CreateRxbEntryArtifactOptions = {}
+  config: Config,
+  index: EntryIndex,
+  options: CreateRxbEntryArtifactOptions = {},
+  tree: ReadonlyTree = index.tree
 ): RxbEntryArtifact {
+  const manifest = createRxbEntryManifest(config)
+  const entries = Array.from(index.filter({}))
+  const versions = entries.map(createVersion)
+  const languages = createLanguages(entries)
+  const nodes = createNodes(index, entries)
+  const rowsById = createRowsById(versions, languages, nodes)
+
+  return {
+    meta: {
+      kind: 'alinea.entry-engine.rxb',
+      version: RXB_ENTRY_ARTIFACT_VERSION,
+      configHash: options.configHash ?? manifest.version.toString(),
+      graphSha: index.sha,
+      contentHash: options.contentHash ?? index.sha,
+      createdAt: options.createdAt ?? new Date(0).toISOString()
+    },
+    payload: {
+      manifest,
+      tree: tree.flat(),
+      rowsById,
+      indexes: createRxbEntryIndexes(rowsById, languages, nodes),
+      fieldIndexes: createRxbEntryFieldIndexes(Object.values(rowsById))
+    }
+  }
+}
+
+export function encodeRxbEntryArtifact(artifact: RxbEntryArtifact): Uint8Array {
+  return rxbEncode(artifact, {indexThreshold: 0})
+}
+
+export function decodeRxbEntryArtifact(buffer: Uint8Array): RxbEntryArtifact {
+  return rxbOpen(buffer) as RxbEntryArtifact
+}
+
+export function indexKey(name: string, value: string | null): string {
+  return `${name}:${indexValue(value)}`
+}
+
+export function indexValue(value: string | null | undefined): string {
+  return value ?? NULL_INDEX_VALUE
+}
+
+export function rxbIndexValue(value: string | number | boolean | null): string {
+  return value === null ? indexValue(null) : String(value)
+}
+
+function createRowsById(
+  versions: Array<RxbEntryVersion>,
+  languageRows: Array<RxbEntryLanguage>,
+  nodeRows: Array<RxbEntryNode>
+): Record<string, RxbEntryRow> {
   const rowsById: Record<string, RxbEntryRow> = {}
   const languages = new Map(
-    snapshot.rows.languages.map(language => [language.languageId, language])
+    languageRows.map(language => [language.languageId, language])
   )
-  const nodes = new Map(snapshot.rows.nodes.map(node => [node.nodeId, node]))
+  const nodes = new Map(nodeRows.map(node => [node.nodeId, node]))
 
-  for (const version of snapshot.rows.versions) {
+  for (const version of versions) {
     const language = languages.get(version.languageId)
     const node = nodes.get(version.nodeId)
     if (!language || !node) continue
@@ -114,68 +252,204 @@ export function createRxbEntryArtifact(
       main: version.rowId === language.mainRowId
     }
   }
-
-  return {
-    meta: {
-      kind: 'alinea.entry-engine.rxb',
-      version: RXB_ENTRY_ARTIFACT_VERSION,
-      configHash: options.configHash ?? snapshot.manifest.version.toString(),
-      graphSha: snapshot.graphSha,
-      contentHash: options.contentHash ?? snapshot.graphSha,
-      createdAt: options.createdAt ?? new Date(0).toISOString()
-    },
-    payload: {
-      manifest: snapshot.manifest,
-      tree: snapshot.tree,
-      rowsById,
-      indexes: createRxbEntryIndexes(snapshot, rowsById),
-      fieldIndexes: createRxbEntryFieldIndexes(Object.values(rowsById))
-    }
-  }
-}
-
-export function encodeRxbEntryArtifact(artifact: RxbEntryArtifact): Uint8Array {
-  return rxbEncode(artifact, {indexThreshold: 0})
-}
-
-export function decodeRxbEntryArtifact(buffer: Uint8Array): RxbEntryArtifact {
-  return rxbOpen(buffer) as RxbEntryArtifact
+  return rowsById
 }
 
 function createRxbEntryIndexes(
-  snapshot: EntrySnapshot,
-  _rowsById: Record<string, RxbEntryRow>
+  rowsById: Record<string, RxbEntryRow>,
+  languages: Array<RxbEntryLanguage>,
+  nodes: Array<RxbEntryNode>
 ): RxbEntryIndexes {
-  const languages = new Map(
-    snapshot.rows.languages.map(language => [language.languageId, language])
-  )
-  return {
-    byId: snapshot.indexes.byId,
-    byNode: mapRows(
-      Object.fromEntries(
-        snapshot.rows.nodes.map(node => [
-          node.nodeId,
-          node.languageIds.flatMap(languageId => {
-            const language = languages.get(languageId)
-            return language?.versionRowIds ?? []
-          })
-        ])
-      )
-    ),
-    byFilePath: snapshot.indexes.byFilePath,
-    byDir: snapshot.indexes.byDir,
-    byParent: snapshot.indexes.byParent,
-    byPath: snapshot.indexes.byPath,
-    byUrl: snapshot.indexes.byUrl,
-    byLevel: snapshot.indexes.byLevel,
-    byType: snapshot.indexes.byType,
-    byWorkspace: snapshot.indexes.byWorkspace,
-    byRoot: snapshot.indexes.byRoot,
-    byLocale: snapshot.indexes.byLocale,
-    byStatus: snapshot.indexes.byStatus,
-    byActive: snapshot.indexes.byActive,
-    byMain: snapshot.indexes.byMain
+  const indexes = emptyRxbEntryIndexes()
+  const rowIdsByNode = new Map<string, Array<string>>()
+
+  for (const row of Object.values(rowsById)) {
+    appendIndex(indexes.byId, row.id, row.rowId)
+    appendIndex(indexes.byPath, row.path, row.rowId)
+    appendIndex(indexes.byLevel, String(row.level), row.rowId)
+    appendIndex(indexes.byType, row.type, row.rowId)
+    appendIndex(indexes.byWorkspace, row.workspace, row.rowId)
+    appendIndex(indexes.byRoot, row.root, row.rowId)
+    appendIndex(indexes.byLocale, indexValue(row.locale), row.rowId)
+    appendIndex(indexes.byStatus, row.status, row.rowId)
+    appendIndex(indexes.byUrl, row.url, row.rowId)
+    indexes.byFilePath[row.filePath] = row.rowId
+    if (row.active) indexes.byActive.push(row.rowId)
+    if (row.main) indexes.byMain.push(row.rowId)
+
+    const nodeRows = rowIdsByNode.get(row.nodeId) ?? []
+    nodeRows.push(row.rowId)
+    rowIdsByNode.set(row.nodeId, nodeRows)
   }
+
+  for (const [nodeId, rowIds] of rowIdsByNode) indexes.byNode[nodeId] = rowIds
+  for (const node of nodes) {
+    appendValues(
+      indexes.byParent,
+      indexValue(node.parentId),
+      rowIdsByNode.get(node.nodeId) ?? []
+    )
+  }
+  for (const language of languages) indexes.byDir[language.selfDir] = language.nodeId
+  return indexes
+}
+
+function emptyRxbEntryIndexes(): RxbEntryIndexes {
+  return {
+    byId: {},
+    byNode: {},
+    byFilePath: {},
+    byDir: {},
+    byParent: {},
+    byPath: {},
+    byUrl: {},
+    byLevel: {},
+    byType: {},
+    byWorkspace: {},
+    byRoot: {},
+    byLocale: {},
+    byStatus: {},
+    byActive: [],
+    byMain: []
+  }
+}
+
+function createRxbEntryManifest(config: Config): RxbEntryManifest {
+  const typeNames = Schema.typeNames(config.schema)
+  return {
+    version: 1,
+    workspaces: Object.fromEntries(
+      entries(config.workspaces).map(([workspaceName, workspace]) => {
+        const workspaceData = getWorkspace(workspace)
+        return [
+          workspaceName,
+          {
+            mediaDir: workspaceData.mediaDir,
+            roots: Object.fromEntries(
+              entries(workspace).map(([rootName, root]) => {
+                const rootData = getRoot(root)
+                return [
+                  rootName,
+                  {
+                    i18n: rootData.i18n && {
+                      locales: Array.from(rootData.i18n.locales)
+                    },
+                    contains: rootData.contains?.map(type =>
+                      typeof type === 'string'
+                        ? type
+                        : (typeNames.get(type) ?? Type.label(type))
+                    )
+                  }
+                ]
+              })
+            )
+          }
+        ]
+      })
+    ),
+    types: Object.fromEntries(
+      entries(config.schema).map(([typeName, type]) => {
+        const shared = Type.sharedData(type, {}) ?? {}
+        return [
+          typeName,
+          {
+            contains: Type.contains(type).map(type =>
+              typeof type === 'string'
+                ? type
+                : (typeNames.get(type) ?? Type.label(type))
+            ),
+            sharedFields: Object.keys(shared),
+            insertOrder: Type.insertOrder(type)
+          }
+        ]
+      })
+    )
+  }
+}
+
+function createVersion(entry: Entry): RxbEntryVersion {
+  return {
+    rowId: entry.filePath,
+    versionId: entry.filePath,
+    nodeId: entry.id,
+    languageId: languageId(entry.id, entry.locale),
+    id: entry.id,
+    type: entry.type,
+    index: entry.index,
+    title: entry.title,
+    searchableText: entry.searchableText,
+    seeded: entry.seeded,
+    rowHash: entry.rowHash,
+    fileHash: entry.fileHash,
+    data: entry.data,
+    status: entry.status,
+    locale: entry.locale,
+    workspace: entry.workspace,
+    root: entry.root,
+    path: entry.path,
+    parentDir: entry.parentDir,
+    childrenDir: entry.childrenDir,
+    filePath: entry.filePath,
+    level: entry.level
+  }
+}
+
+function createLanguages(entries: Array<Entry>): Array<RxbEntryLanguage> {
+  const byLanguage = new Map<string, Array<Entry>>()
+  for (const entry of entries) {
+    const key = languageId(entry.id, entry.locale)
+    const rows = byLanguage.get(key) ?? []
+    rows.push(entry)
+    byLanguage.set(key, rows)
+  }
+  return Array.from(byLanguage, ([id, rows]) => {
+    const first = rows[0]
+    const active = rows.find(row => row.active) ?? first
+    const main = rows.find(row => row.main) ?? active
+    return {
+      languageId: id,
+      nodeId: first.id,
+      locale: first.locale,
+      parentDir: first.parentDir,
+      selfDir: first.childrenDir,
+      activeRowId: active.filePath,
+      mainRowId: main.filePath,
+      url: main.url,
+      path: main.path,
+      seeded: main.seeded,
+      versionRowIds: rows.map(row => row.filePath)
+    }
+  })
+}
+
+function createNodes(index: EntryIndex, entries: Array<Entry>): Array<RxbEntryNode> {
+  const byNode = new Map<string, Entry>()
+  const languageIdsByNode = new Map<string, Set<string>>()
+  for (const entry of entries) {
+    if (!byNode.has(entry.id)) byNode.set(entry.id, entry)
+    let languageIds = languageIdsByNode.get(entry.id)
+    if (!languageIds) {
+      languageIds = new Set()
+      languageIdsByNode.set(entry.id, languageIds)
+    }
+    languageIds.add(languageId(entry.id, entry.locale))
+  }
+  return Array.from(byNode, ([id, entry]) => {
+    const node = index.byId(id)
+    return {
+      nodeId: id,
+      id,
+      index: entry.index,
+      parentId: entry.parentId,
+      parents: entry.parents,
+      workspace: entry.workspace,
+      root: entry.root,
+      type: entry.type,
+      level: entry.level,
+      languageIds: Array.from(languageIdsByNode.get(id) ?? []),
+      childNodeIds: node ? Array.from(node.children(), child => child.id) : []
+    }
+  })
 }
 
 function createRxbEntryFieldIndexes(
@@ -236,16 +510,29 @@ function addExact(
   if (!rows.includes(rowId)) rows.push(rowId)
 }
 
-function mapRows(
-  index: Record<string, Array<string>>
-): Record<string, Array<string>> {
-  return Object.fromEntries(
-    Object.entries(index).map(([key, rowIds]) => [key, Array.from(rowIds)])
-  )
+function appendIndex(
+  target: Record<string, Array<string>>,
+  key: string,
+  value: string
+) {
+  const values = target[key] ?? []
+  values.push(value)
+  target[key] = values
 }
 
-export function rxbIndexValue(value: string | number | boolean | null): string {
-  return value === null ? indexValue(null) : String(value)
+function appendValues(
+  target: Record<string, Array<string>>,
+  key: string,
+  values: Array<string>
+) {
+  if (values.length === 0) return
+  const current = target[key] ?? []
+  current.push(...values)
+  target[key] = current
+}
+
+function languageId(id: string, locale: string | null): string {
+  return `${id}:${locale ?? '<null>'}`
 }
 
 function compareRowIds(a: string, b: string): number {

@@ -1,27 +1,24 @@
 import {suite} from '@alinea/suite'
 import {Entry} from '../Entry.js'
 import {
-  createEntrySnapshotIndexes,
-  createRxbEntryArtifact,
   decodeRxbEntryArtifact,
   encodeRxbEntryArtifact,
-  ENTRY_SNAPSHOT_VERSION,
   indexKey,
   openRxbEntryEngine,
   RxbEntryEngine,
   RxbEntryPlanner,
   serializeQueryTrace,
-  type EntryRowStore,
-  type EntrySnapshot,
-  type EntryVersionRow
+  type RxbEntryArtifact,
+  type RxbEntryIndexes,
+  type RxbEntryRow
 } from './index.js'
 
 const test = suite(import.meta)
 
-function version(
+function row(
   rowId: string,
-  input: Partial<EntryVersionRow> = {}
-): EntryVersionRow {
+  input: Partial<RxbEntryRow> = {}
+): RxbEntryRow {
   const id = input.id ?? rowId.replace(':published', '')
   const title = input.title ?? id
   return {
@@ -46,13 +43,19 @@ function version(
     parentDir: input.parentDir ?? 'pages',
     childrenDir: input.childrenDir ?? `pages/${id}`,
     filePath: input.filePath ?? `pages/${id}.json`,
-    level: input.level ?? 0
+    level: input.level ?? 0,
+    parentId: input.parentId ?? null,
+    parents: input.parents ?? [],
+    url: input.url ?? `/${input.path ?? id}`,
+    active: input.active ?? true,
+    main: input.main ?? true,
+    versionStatus: input.versionStatus ?? input.status ?? 'published'
   }
 }
 
-function createRows(): EntryRowStore {
-  const versions = [
-    version('alpha:published', {
+function createRows(): Array<RxbEntryRow> {
+  return [
+    row('alpha:published', {
       id: 'alpha',
       title: 'Alpha',
       index: 'a1',
@@ -65,7 +68,7 @@ function createRows(): EntryRowStore {
         tags: [{itemId: 'one'}, {itemId: 'two'}]
       }
     }),
-    version('beta:published', {
+    row('beta:published', {
       id: 'beta',
       title: 'Beta',
       index: 'a2',
@@ -78,7 +81,7 @@ function createRows(): EntryRowStore {
         tags: [{itemId: 'two'}]
       }
     }),
-    version('gamma:published', {
+    row('gamma:published', {
       id: 'gamma',
       title: 'Gamma',
       index: 'a3',
@@ -92,61 +95,108 @@ function createRows(): EntryRowStore {
       }
     })
   ]
+}
+
+function createArtifact(rows = createRows()): RxbEntryArtifact {
+  const rowsById = Object.fromEntries(rows.map(row => [row.rowId, row]))
   return {
-    versions,
-    languages: versions.map(row => ({
-      languageId: row.languageId,
-      nodeId: row.nodeId,
-      locale: row.locale,
-      parentDir: row.parentDir,
-      selfDir: row.childrenDir,
-      activeRowId: row.rowId,
-      mainRowId: row.rowId,
-      url: `/${row.path}`,
-      path: row.path,
-      seeded: null,
-      versionRowIds: [row.rowId]
-    })),
-    nodes: versions.map(row => ({
-      nodeId: row.nodeId,
-      id: row.id,
-      index: row.index,
-      parentId: null,
-      parents: [],
-      workspace: row.workspace,
-      root: row.root,
-      type: row.type,
-      level: row.level,
-      languageIds: [row.languageId],
-      childNodeIds: []
-    }))
+    meta: {
+      kind: 'alinea.entry-engine.rxb',
+      version: 1,
+      configHash: 'config-hash',
+      graphSha: 'graph-sha',
+      contentHash: 'content-hash',
+      createdAt: '2026-05-20T00:00:00.000Z'
+    },
+    payload: {
+      manifest: {version: 1, workspaces: {}, types: {}},
+      tree: {sha: 'tree-sha', tree: []},
+      rowsById,
+      indexes: createIndexes(rows),
+      fieldIndexes: {
+        exact: {
+          featured: {
+            true: ['alpha:published', 'gamma:published'],
+            false: ['beta:published']
+          },
+          'meta.inner': {
+            x: ['alpha:published', 'gamma:published'],
+            y: ['beta:published']
+          },
+          'tags.itemId': {
+            one: ['alpha:published'],
+            two: ['alpha:published', 'beta:published'],
+            three: ['gamma:published']
+          }
+        },
+        number: {
+          score: [
+            [10, 'alpha:published'],
+            [20, 'beta:published'],
+            [30, 'gamma:published']
+          ]
+        }
+      }
+    }
   }
 }
 
-function createSnapshot(rows = createRows()): EntrySnapshot {
-  return {
-    version: ENTRY_SNAPSHOT_VERSION,
-    manifest: {version: 1, workspaces: {}, types: {}},
-    graphSha: 'graph-sha',
-    tree: {sha: 'tree-sha', tree: []},
-    rows,
-    indexes: createEntrySnapshotIndexes(rows)
+function createIndexes(rows: Array<RxbEntryRow>): RxbEntryIndexes {
+  const indexes: RxbEntryIndexes = {
+    byId: {},
+    byNode: {},
+    byFilePath: {},
+    byDir: {},
+    byParent: {},
+    byPath: {},
+    byUrl: {},
+    byLevel: {},
+    byType: {},
+    byWorkspace: {},
+    byRoot: {},
+    byLocale: {},
+    byStatus: {},
+    byActive: [],
+    byMain: []
   }
+  for (const row of rows) {
+    add(indexes.byId, row.id, row.rowId)
+    add(indexes.byNode, row.nodeId, row.rowId)
+    indexes.byFilePath[row.filePath] = row.rowId
+    indexes.byDir[row.childrenDir] = row.nodeId
+    add(indexes.byParent, '<null>', row.rowId)
+    add(indexes.byPath, row.path, row.rowId)
+    add(indexes.byUrl, row.url, row.rowId)
+    add(indexes.byLevel, String(row.level), row.rowId)
+    add(indexes.byType, row.type, row.rowId)
+    add(indexes.byWorkspace, row.workspace, row.rowId)
+    add(indexes.byRoot, row.root, row.rowId)
+    add(indexes.byLocale, '<null>', row.rowId)
+    add(indexes.byStatus, row.status, row.rowId)
+    if (row.active) indexes.byActive.push(row.rowId)
+    if (row.main) indexes.byMain.push(row.rowId)
+  }
+  return indexes
 }
 
-function createArtifact() {
-  return createRxbEntryArtifact(createSnapshot(), {
-    configHash: 'config-hash',
-    contentHash: 'content-hash',
-    createdAt: '2026-05-20T00:00:00.000Z'
-  })
+function add(
+  target: Record<string, Array<string>>,
+  key: string,
+  value: string
+) {
+  const values = target[key] ?? []
+  values.push(value)
+  target[key] = values
 }
 
 test('RXB artifact opens metadata and stores compact row-id index leaves', () => {
   const artifact = createArtifact()
   test.is(artifact.payload.indexes.byId.alpha[0], 'alpha:published')
   test.is(artifact.payload.indexes.byType.QueryArticle[0], 'alpha:published')
-  test.is(artifact.payload.fieldIndexes.exact['meta.inner'].x[0], 'alpha:published')
+  test.is(
+    artifact.payload.fieldIndexes.exact['meta.inner'].x[0],
+    'alpha:published'
+  )
 
   const opened = decodeRxbEntryArtifact(encodeRxbEntryArtifact(artifact))
 
@@ -212,7 +262,10 @@ test('RXB planner traces cached and uncached field leaves identically', () => {
   const first = planner.candidateRows(query, {trace: true})
   const second = planner.candidateRows(query, {trace: true})
 
-  test.equal(serializeQueryTrace(first.trace!), serializeQueryTrace(second.trace!))
+  test.equal(
+    serializeQueryTrace(first.trace!),
+    serializeQueryTrace(second.trace!)
+  )
   test.ok(first.trace!.indexes.has(indexKey('type', 'QueryArticle')))
   test.ok(first.trace!.indexes.has('field:featured:true'))
   test.ok(first.trace!.indexes.has('field:meta.inner:x'))

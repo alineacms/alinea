@@ -1,12 +1,8 @@
 import type {Filter} from '../Filter.js'
-import type {
-  EntryCandidatePlan,
-  EntryPlanner,
-  EntryQueryConstraints,
-  EntryQueryOptions,
-  EntryQueryPlan
-} from './EntryPlanner.js'
-import {indexKey, indexValue} from './EntrySnapshotIndex.js'
+import type {GraphQuery} from '../Graph.js'
+import type {EntryStatus} from '../Entry.js'
+import type {QueryTrace} from './QueryTrace.js'
+import {indexKey, indexValue} from './RxbEntryArtifact.js'
 import {createQueryTrace, emptyQueryTrace, traceIndex} from './QueryTrace.js'
 import type {
   RxbEntryArtifact,
@@ -14,19 +10,66 @@ import type {
   RxbEntryRow
 } from './RxbEntryArtifact.js'
 import {rxbIndexValue} from './RxbEntryArtifact.js'
+import type {RxbEntryCursorStore} from './RxbEntryCursorStore.js'
+
+export interface EntryQueryPlan<Query = GraphQuery> {
+  query: Query
+  constraints?: EntryQueryConstraints
+  preFilter?: EntryCandidateFilter
+}
+
+export interface EntryQueryConstraints {
+  id?: string | ReadonlyArray<string>
+  type?: string | ReadonlyArray<string>
+  workspace?: string | ReadonlyArray<string>
+  root?: string | ReadonlyArray<string>
+  locale?: string | null | ReadonlyArray<string | null>
+  status?: EntryStatus | ReadonlyArray<EntryStatus>
+  active?: true
+  main?: true
+  parentId?: string | null | ReadonlyArray<string | null>
+  path?: string | ReadonlyArray<string>
+  url?: string | ReadonlyArray<string>
+  level?: number | ReadonlyArray<number>
+  filePath?: string | ReadonlyArray<string>
+  dir?: string | ReadonlyArray<string>
+  search?: string
+}
+
+export interface EntryCandidateFilter {
+  rowIds?: Iterable<string>
+  nodeIds?: Iterable<string>
+  indexKeys?: Iterable<string>
+}
+
+export interface EntryQueryOptions {
+  trace?: boolean
+}
+
+export interface TracedEntryQueryResult<Value> {
+  value: Value
+  trace: QueryTrace
+}
+
+export interface EntryCandidatePlan {
+  rowIds: Array<string>
+  trace?: QueryTrace
+}
 
 export interface RxbEntryCandidatePlan extends EntryCandidatePlan {
   rows: Array<RxbEntryRow>
 }
 
 export interface RxbEntryPlannerOptions {
+  cursorStore?: RxbEntryCursorStore
   leafCacheSize?: number
   planCacheSize?: number
   rowCacheSize?: number
 }
 
-export class RxbEntryPlanner implements EntryPlanner {
+export class RxbEntryPlanner {
   readonly #payload: RxbEntryPayload
+  readonly #cursor: RxbEntryCursorStore | undefined
   readonly #graphSha: string
   readonly #leafCacheSize: number
   readonly #planCacheSize: number
@@ -41,6 +84,7 @@ export class RxbEntryPlanner implements EntryPlanner {
     options: RxbEntryPlannerOptions = {}
   ) {
     this.#payload = artifact.payload
+    this.#cursor = options.cursorStore
     this.#graphSha = artifact.meta.graphSha
     this.#leafCacheSize = options.leafCacheSize ?? 256
     this.#planCacheSize = options.planCacheSize ?? 256
@@ -130,7 +174,10 @@ export class RxbEntryPlanner implements EntryPlanner {
     }
 
     if (plan.preFilter?.rowIds) {
-      candidates = intersectRowIds(candidates, Array.from(plan.preFilter.rowIds))
+      candidates = intersectRowIds(
+        candidates,
+        Array.from(plan.preFilter.rowIds)
+      )
     }
     if (plan.preFilter?.nodeIds) {
       const rowIds = Array.from(plan.preFilter.nodeIds).flatMap(
@@ -191,37 +238,37 @@ export class RxbEntryPlanner implements EntryPlanner {
     ]
   > {
     if (constraints.id)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'id',
         valuesOf(constraints.id),
         this.#payload.indexes.byId
       )
     if (constraints.type)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'type',
         valuesOf(constraints.type),
         this.#payload.indexes.byType
       )
     if (constraints.workspace)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'workspace',
         valuesOf(constraints.workspace),
         this.#payload.indexes.byWorkspace
       )
     if (constraints.root)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'root',
         valuesOf(constraints.root),
         this.#payload.indexes.byRoot
       )
     if (constraints.locale !== undefined)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'locale',
         valuesOf(constraints.locale),
         this.#payload.indexes.byLocale
       )
     if (constraints.status)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'status',
         valuesOf(constraints.status),
         this.#payload.indexes.byStatus
@@ -230,34 +277,42 @@ export class RxbEntryPlanner implements EntryPlanner {
       yield [
         'active',
         ['true'],
-        this.#cachedLeaf('index:active:true', () => this.#payload.indexes.byActive)
+        this.#cursor?.activeRowIds() ??
+          this.#cachedLeaf(
+            'index:active:true',
+            () => this.#payload.indexes.byActive
+          )
       ]
     if (constraints.main)
       yield [
         'main',
         ['true'],
-        this.#cachedLeaf('index:main:true', () => this.#payload.indexes.byMain)
+        this.#cursor?.mainRowIds() ??
+          this.#cachedLeaf(
+            'index:main:true',
+            () => this.#payload.indexes.byMain
+          )
       ]
     if (constraints.parentId !== undefined)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'parent',
         valuesOf(constraints.parentId),
         this.#payload.indexes.byParent
       )
     if (constraints.path)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'path',
         valuesOf(constraints.path),
         this.#payload.indexes.byPath
       )
     if (constraints.url)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'url',
         valuesOf(constraints.url),
         this.#payload.indexes.byUrl
       )
     if (constraints.level !== undefined)
-      yield this.#fromMultiIndex(
+      yield this.#fromIndex(
         'level',
         valuesOf(constraints.level).map(String),
         this.#payload.indexes.byLevel
@@ -288,7 +343,7 @@ export class RxbEntryPlanner implements EntryPlanner {
     }
   }
 
-  #fromMultiIndex(
+  #fromIndex(
     name: string,
     values: Array<string | number | boolean | null>,
     index: Record<string, Array<string>>
@@ -297,6 +352,9 @@ export class RxbEntryPlanner implements EntryPlanner {
     values: Array<string | number | boolean | null>,
     rowIds: Array<string>
   ] {
+    if (this.#cursor) {
+      return [name, values, this.#cursor.indexRowIds(name, values)]
+    }
     if (values.length === 1) {
       const key = indexValue(values[0] as any)
       return [
@@ -311,7 +369,10 @@ export class RxbEntryPlanner implements EntryPlanner {
       uniqueRowIds(
         values.flatMap(value => {
           const key = indexValue(value as any)
-          return this.#cachedLeaf(`index:${name}:${key}`, () => index[key] ?? [])
+          return this.#cachedLeaf(
+            `index:${name}:${key}`,
+            () => index[key] ?? []
+          )
         })
       )
     ]
@@ -426,8 +487,11 @@ export class RxbEntryPlanner implements EntryPlanner {
     const parts = values.map(value => {
       const key = `field:${path}:${rxbIndexValue(value)}`
       if (trace) trace = traceIndex(trace, key)
+      if (this.#cursor) return this.#cursor.fieldExactRowIds(path, [value])
       return this.#cachedLeaf(key, () => {
-        return this.#payload.fieldIndexes.exact[path]?.[rxbIndexValue(value)] ?? []
+        return (
+          this.#payload.fieldIndexes.exact[path]?.[rxbIndexValue(value)] ?? []
+        )
       })
     })
     return {rowIds: uniqueRowIds(parts.flat()), trace}
@@ -438,6 +502,12 @@ export class RxbEntryPlanner implements EntryPlanner {
     condition: Record<string, unknown>,
     trace: ReturnType<typeof emptyQueryTrace> | undefined
   ): {rowIds: Array<string>; trace: typeof trace} | undefined {
+    if (this.#cursor) {
+      const rowIds = this.#cursor.fieldNumberRangeRowIds(path, condition)
+      if (!rowIds) return
+      if (trace) trace = traceIndex(trace, `field:${path}:range`)
+      return {rowIds, trace}
+    }
     const index = this.#numberIndex(path)
     if (!index) return
     const gt = typeof condition.gt === 'number' ? condition.gt : undefined
@@ -464,7 +534,10 @@ export class RxbEntryPlanner implements EntryPlanner {
         : lte !== undefined
           ? upperNumberBound(index, lte)
           : index.length
-    return {rowIds: Array.from(index.slice(start, end), ([, rowId]) => rowId), trace}
+    return {
+      rowIds: Array.from(index.slice(start, end), ([, rowId]) => rowId),
+      trace
+    }
   }
 
   #cachedLeaf(key: string, read: () => Array<string>): Array<string> {
