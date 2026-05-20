@@ -1,8 +1,14 @@
 import type {Filter} from '../Filter.js'
 import type {GraphQuery} from '../Graph.js'
 import type {EntryStatus} from '../Entry.js'
+import type {Config} from '../Config.js'
+import {ReadonlyTree} from '../source/Tree.js'
 import type {QueryTrace} from './QueryTrace.js'
-import {indexKey, indexValue} from './RxbEntryArtifact.js'
+import {
+  hydrateRxbEntryRowAt,
+  indexKey,
+  indexValue
+} from './RxbEntryArtifact.js'
 import {createQueryTrace, emptyQueryTrace, traceIndex} from './QueryTrace.js'
 import type {
   RxbEntryArtifact,
@@ -66,6 +72,7 @@ export interface RxbEntryPlannerOptions {
 }
 
 export class RxbEntryPlanner {
+  readonly #config: Config
   readonly #payload: RxbEntryPayload
   readonly #graphSha: string
   readonly #leafCacheSize: number
@@ -75,11 +82,15 @@ export class RxbEntryPlanner {
   readonly #numberCache = new Map<string, Array<[number, string]>>()
   readonly #planCache = new Map<string, Array<string>>()
   readonly #rowCache = new Map<string, RxbEntryRow>()
+  #rowOrdinals: Map<string, number> | undefined
+  #fileHashes: Map<string, string> | undefined
 
   constructor(
+    config: Config,
     artifact: RxbEntryArtifact,
     options: RxbEntryPlannerOptions = {}
   ) {
+    this.#config = config
     this.#payload = artifact.payload
     this.#graphSha = artifact.meta.graphSha
     this.#leafCacheSize = options.leafCacheSize ?? 256
@@ -164,6 +175,7 @@ export class RxbEntryPlanner {
       )) {
         apply(name, values, rowIds)
       }
+      candidates = this.#scanConstraints(candidates, constraints)
       if (constraints.search && trace) {
         trace = traceIndex(trace, indexKey('search', constraints.search))
       }
@@ -176,8 +188,13 @@ export class RxbEntryPlanner {
       )
     }
     if (plan.preFilter?.nodeIds) {
-      const rowIds = Array.from(plan.preFilter.nodeIds).flatMap(
-        nodeId => this.#payload.indexes.byNode[nodeId] ?? []
+      const rowIds = this.#rowIdsFromOrdinals(
+        Array.from(plan.preFilter.nodeIds).flatMap(
+          nodeId =>
+            this.#payload.indexes.byNode[nodeId] ??
+            this.#payload.indexes.byId[nodeId] ??
+            []
+        )
       )
       candidates = intersectRowIds(candidates, rowIds)
     }
@@ -185,7 +202,7 @@ export class RxbEntryPlanner {
       for (const key of plan.preFilter.indexKeys) trace = traceIndex(trace, key)
     }
 
-    const rowIds = candidates ?? Object.keys(this.#payload.rowsById)
+    const rowIds = candidates ?? Array.from(this.#payload.columns.rowIds)
     if (trace) {
       if (!constraints && !plan.preFilter && !fieldRowIds)
         trace = traceIndex(trace, 'all')
@@ -209,7 +226,16 @@ export class RxbEntryPlanner {
       this.#rowCache.set(rowId, cached)
       return cached
     }
-    const row = hydrateRow(this.#payload.rowsById[rowId])
+    const ordinal = this.#rowOrdinal(rowId)
+    const row =
+      ordinal === undefined
+        ? undefined
+        : hydrateRxbEntryRowAt(
+            this.#config,
+            this.#payload,
+            ordinal,
+            this.#fileHashAt(rowId)
+          )
     if (row) {
       this.#rowCache.set(rowId, row)
       if (this.#rowCache.size > this.#rowCacheSize) {
@@ -247,80 +273,24 @@ export class RxbEntryPlanner {
         valuesOf(constraints.type),
         this.#payload.indexes.byType
       )
-    if (constraints.workspace)
-      yield this.#fromIndex(
-        'workspace',
-        valuesOf(constraints.workspace),
-        this.#payload.indexes.byWorkspace
-      )
-    if (constraints.root)
-      yield this.#fromIndex(
-        'root',
-        valuesOf(constraints.root),
-        this.#payload.indexes.byRoot
-      )
-    if (constraints.locale !== undefined)
-      yield this.#fromIndex(
-        'locale',
-        valuesOf(constraints.locale),
-        this.#payload.indexes.byLocale
-      )
     if (constraints.status)
       yield this.#fromIndex(
         'status',
         valuesOf(constraints.status),
         this.#payload.indexes.byStatus
       )
-    if (constraints.active)
-      yield [
-        'active',
-        ['true'],
-        this.#cachedLeaf(
-          'index:active:true',
-          () => this.#payload.indexes.byActive
-        )
-      ]
-    if (constraints.main)
-      yield [
-        'main',
-        ['true'],
-        this.#cachedLeaf(
-          'index:main:true',
-          () => this.#payload.indexes.byMain
-        )
-      ]
-    if (constraints.parentId !== undefined)
-      yield this.#fromIndex(
-        'parent',
-        valuesOf(constraints.parentId),
-        this.#payload.indexes.byParent
-      )
     if (constraints.path)
-      yield this.#fromIndex(
-        'path',
-        valuesOf(constraints.path),
-        this.#payload.indexes.byPath
-      )
+      void constraints.path
     if (constraints.url)
-      yield this.#fromIndex(
-        'url',
-        valuesOf(constraints.url),
-        this.#payload.indexes.byUrl
-      )
-    if (constraints.level !== undefined)
-      yield this.#fromIndex(
-        'level',
-        valuesOf(constraints.level).map(String),
-        this.#payload.indexes.byLevel
-      )
+      void constraints.url
     if (constraints.filePath) {
       const values = valuesOf(constraints.filePath)
       yield [
         'filePath',
         values,
         values.flatMap(value => {
-          const rowId = this.#payload.indexes.byFilePath[indexValue(value)]
-          return rowId ? [rowId] : []
+          const ordinal = this.#rowOrdinal(indexValue(value))
+          return ordinal === undefined ? [] : [this.#rowIdAt(ordinal)]
         })
       ]
     }
@@ -329,20 +299,50 @@ export class RxbEntryPlanner {
       const nodeIds = values
         .map(value => this.#payload.indexes.byDir[indexValue(value)])
         .filter(Boolean)
-      yield [
-        'dir',
-        values,
-        uniqueRowIds(
-          nodeIds.flatMap(nodeId => this.#payload.indexes.byNode[nodeId] ?? [])
-        )
-      ]
+      const rowIds = nodeIds.length
+        ? this.#rowIdsFromOrdinals(
+            nodeIds.flatMap(nodeId => this.#payload.indexes.byNode[nodeId] ?? [])
+          )
+        : this.#rowIdsMatchingField('childrenDir', values)
+      yield ['dir', values, uniqueRowIds(rowIds)]
     }
+  }
+
+  #scanConstraints(
+    candidates: Array<string> | undefined,
+    constraints: EntryQueryConstraints
+  ): Array<string> | undefined {
+    const checks =
+      Array<[keyof RxbEntryRow, Array<string | number | boolean | null>]>()
+    if (constraints.workspace)
+      checks.push(['workspace', valuesOf(constraints.workspace)])
+    if (constraints.root) checks.push(['root', valuesOf(constraints.root)])
+    if (constraints.locale !== undefined)
+      checks.push(['locale', valuesOf(constraints.locale)])
+    if (constraints.parentId !== undefined)
+      checks.push(['parentId', valuesOf(constraints.parentId)])
+    if (constraints.level !== undefined)
+      checks.push(['level', valuesOf(constraints.level)])
+    if (constraints.path) checks.push(['path', valuesOf(constraints.path)])
+    if (constraints.url) checks.push(['url', valuesOf(constraints.url)])
+    if (constraints.active) checks.push(['active', [true]])
+    if (constraints.main) checks.push(['main', [true]])
+    if (checks.length === 0) return candidates
+    const rowIds = candidates ?? Array.from(this.#payload.columns.rowIds)
+    return rowIds.filter(rowId => {
+      const row = this.row(rowId)
+      if (!row) return false
+      for (const [name, values] of checks) {
+        if (!values.map(String).includes(String(row[name]))) return false
+      }
+      return true
+    })
   }
 
   #fromIndex(
     name: string,
     values: Array<string | number | boolean | null>,
-    index: Record<string, Array<string>>
+    index: Record<string, Array<number>>
   ): [
     name: string,
     values: Array<string | number | boolean | null>,
@@ -526,14 +526,14 @@ export class RxbEntryPlanner {
     }
   }
 
-  #cachedLeaf(key: string, read: () => Array<string>): Array<string> {
+  #cachedLeaf(key: string, read: () => Array<number>): Array<string> {
     const cached = this.#leafCache.get(key)
     if (cached) {
       this.#leafCache.delete(key)
       this.#leafCache.set(key, cached)
       return cached
     }
-    const value = Array.from(read())
+    const value = this.#rowIdsFromOrdinals(read())
     this.#leafCache.set(key, value)
     if (this.#leafCache.size > this.#leafCacheSize) {
       const first = this.#leafCache.keys().next().value
@@ -547,9 +547,52 @@ export class RxbEntryPlanner {
     if (cached) return cached
     const index = this.#payload.fieldIndexes.number[path]
     if (!index) return
-    const value = Array.from(index)
+    const value = Array.from(
+      index,
+      ([score, ordinal]) => [score, this.#rowIdAt(ordinal)] as [number, string]
+    )
     this.#numberCache.set(path, value)
     return value
+  }
+
+  #rowIdAt(ordinal: number): string {
+    return this.#payload.columns.rowIds[ordinal]
+  }
+
+  #rowIdsFromOrdinals(ordinals: ReadonlyArray<number>): Array<string> {
+    return Array.from(ordinals, ordinal => this.#rowIdAt(ordinal))
+  }
+
+  #rowOrdinal(rowId: string): number | undefined {
+    if (this.#rowOrdinals) return this.#rowOrdinals.get(rowId)
+    const rowIds = this.#payload.columns.rowIds
+    const ordinals = new Map<string, number>()
+    for (let i = 0; i < rowIds.length; i++) {
+      ordinals.set(rowIds[i], i)
+    }
+    this.#rowOrdinals = ordinals
+    return ordinals.get(rowId)
+  }
+
+  #rowIdsMatchingField(
+    name: keyof RxbEntryRow,
+    values: ReadonlyArray<string | number | boolean | null>
+  ): Array<string> {
+    const expected = new Set(values.map(String))
+    const result = Array<string>()
+    const rowIds = this.#payload.columns.rowIds
+    for (const rowId of rowIds) {
+      const row = this.row(rowId)
+      if (row && expected.has(String(row[name]))) result.push(rowId)
+    }
+    return result
+  }
+
+  #fileHashAt(rowId: string): string {
+    if (!this.#fileHashes) {
+      this.#fileHashes = new Map(ReadonlyTree.fromFlat(this.#payload.tree).index())
+    }
+    return this.#fileHashes.get(rowId) ?? ''
   }
 
   #cachePlan(key: string, rowIds: Array<string>) {
@@ -669,40 +712,6 @@ function rowMatchesIndex(
       return expected.has(String(row.locale))
     default:
       return expected.has(String(row[name as keyof RxbEntryRow]))
-  }
-}
-
-function hydrateRow(row: RxbEntryRow | undefined): RxbEntryRow | undefined {
-  if (!row) return
-  return {
-    rowId: row.rowId,
-    versionId: row.versionId,
-    nodeId: row.nodeId,
-    languageId: row.languageId,
-    id: row.id,
-    type: row.type,
-    index: row.index,
-    title: row.title,
-    searchableText: row.searchableText,
-    seeded: row.seeded,
-    rowHash: row.rowHash,
-    fileHash: row.fileHash,
-    data: row.data,
-    versionStatus: row.versionStatus,
-    status: row.status,
-    locale: row.locale,
-    workspace: row.workspace,
-    root: row.root,
-    path: row.path,
-    parentDir: row.parentDir,
-    childrenDir: row.childrenDir,
-    filePath: row.filePath,
-    level: row.level,
-    parentId: row.parentId,
-    parents: row.parents,
-    url: row.url,
-    active: row.active,
-    main: row.main
   }
 }
 

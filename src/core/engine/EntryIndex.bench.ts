@@ -8,6 +8,7 @@ import {hashBlob} from '../source/GitUtils.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {exportSource} from '../source/SourceExport.js'
 import {
+  compressRxbEntryBytes,
   createRxbEntryArtifact,
   encodeRxbEntryArtifact
 } from './RxbEntryArtifact.js'
@@ -63,6 +64,7 @@ const artifact = createRxbEntryArtifact(config, base, {
   contentHash: base.sha
 })
 const rxbBytes = encodeRxbEntryArtifact(artifact)
+const compressedRxbBytes = await compressRxbEntryBytes(rxbBytes)
 const rxbDb = RxbEntryDB.open(config, rxbBytes)
 const exportedSource = await exportSource(source)
 
@@ -169,7 +171,7 @@ console.table([
   compare('score filter', baseScoreFilter, rxbScoreFilter),
   compare('nested/list filter', baseNestedFilter, rxbNestedFilter)
 ])
-console.table(sizeReport(rxbBytes, exportedSource))
+console.table(sizeReport(rxbBytes, compressedRxbBytes, exportedSource))
 
 async function createSource(rows: number) {
   const source = new MemorySource()
@@ -288,11 +290,16 @@ function single(name: string, result: {duration: number}) {
   }
 }
 
-function sizeReport(rxbBytes: Uint8Array, exportedSource: unknown) {
+function sizeReport(
+  rxbBytes: Uint8Array,
+  compressedRxbBytes: string,
+  exportedSource: unknown
+) {
   const exportBytes = bytesOfJson(exportedSource)
   return [
     size('exportSource json', exportBytes, exportBytes),
-    size('rxb bytes', rxbBytes.byteLength, exportBytes)
+    size('rxb bytes', rxbBytes.byteLength, exportBytes),
+    size('rxb deflate+base64', Buffer.byteLength(compressedRxbBytes), exportBytes)
   ]
 }
 

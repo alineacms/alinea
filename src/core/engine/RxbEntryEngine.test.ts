@@ -1,9 +1,12 @@
 import {suite} from '@alinea/suite'
+import {Config, Field} from 'alinea'
+import {createConfig} from '../Config.js'
 import {Entry} from '../Entry.js'
 import {
   decodeRxbEntryArtifact,
   encodeRxbEntryArtifact,
   createRxbEntryColumns,
+  createRxbEntryData,
   indexKey,
   openRxbEntryEngine,
   RxbEntryEngine,
@@ -15,6 +18,24 @@ import {
 } from './index.js'
 
 const test = suite(import.meta)
+
+const QueryArticle = Config.document('QueryArticle', {
+  fields: {
+    title: Field.text('Title')
+  }
+})
+
+const config = createConfig({
+  schema: {QueryArticle},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {
+        pages: Config.root('Pages', {contains: ['QueryArticle']})
+      }
+    })
+  }
+})
 
 function row(
   rowId: string,
@@ -99,7 +120,6 @@ function createRows(): Array<RxbEntryRow> {
 }
 
 function createArtifact(rows = createRows()): RxbEntryArtifact {
-  const rowsById = Object.fromEntries(rows.map(row => [row.rowId, row]))
   return {
     meta: {
       kind: 'alinea.entry-engine.rxb',
@@ -110,32 +130,32 @@ function createArtifact(rows = createRows()): RxbEntryArtifact {
       createdAt: '2026-05-20T00:00:00.000Z'
     },
     payload: {
-      manifest: {version: 1, workspaces: {}, types: {}},
+      manifest: {version: 1},
       tree: {sha: 'tree-sha', tree: []},
-      rowsById,
+      data: createRxbEntryData(rows),
       columns: createRxbEntryColumns(rows),
       indexes: createIndexes(rows),
       fieldIndexes: {
         exact: {
           featured: {
-            true: ['alpha:published', 'gamma:published'],
-            false: ['beta:published']
+            true: [0, 2],
+            false: [1]
           },
           'meta.inner': {
-            x: ['alpha:published', 'gamma:published'],
-            y: ['beta:published']
+            x: [0, 2],
+            y: [1]
           },
           'tags.itemId': {
-            one: ['alpha:published'],
-            two: ['alpha:published', 'beta:published'],
-            three: ['gamma:published']
+            one: [0],
+            two: [0, 1],
+            three: [2]
           }
         },
         number: {
           score: [
-            [10, 'alpha:published'],
-            [20, 'beta:published'],
-            [30, 'gamma:published']
+            [10, 0],
+            [20, 1],
+            [30, 2]
           ]
         }
       }
@@ -161,44 +181,41 @@ function createIndexes(rows: Array<RxbEntryRow>): RxbEntryIndexes {
     byActive: [],
     byMain: []
   }
-  for (const row of rows) {
-    add(indexes.byId, row.id, row.rowId)
-    add(indexes.byNode, row.nodeId, row.rowId)
-    indexes.byFilePath[row.filePath] = row.rowId
+  rows.forEach((row, ordinal) => {
+    add(indexes.byId, row.id, ordinal)
+    add(indexes.byNode, row.nodeId, ordinal)
+    indexes.byFilePath[row.filePath] = ordinal
     indexes.byDir[row.childrenDir] = row.nodeId
-    add(indexes.byParent, '<null>', row.rowId)
-    add(indexes.byPath, row.path, row.rowId)
-    add(indexes.byUrl, row.url, row.rowId)
-    add(indexes.byLevel, String(row.level), row.rowId)
-    add(indexes.byType, row.type, row.rowId)
-    add(indexes.byWorkspace, row.workspace, row.rowId)
-    add(indexes.byRoot, row.root, row.rowId)
-    add(indexes.byLocale, '<null>', row.rowId)
-    add(indexes.byStatus, row.status, row.rowId)
-    if (row.active) indexes.byActive.push(row.rowId)
-    if (row.main) indexes.byMain.push(row.rowId)
-  }
+    add(indexes.byParent, '<null>', ordinal)
+    add(indexes.byPath, row.path, ordinal)
+    add(indexes.byUrl, row.url, ordinal)
+    add(indexes.byLevel, String(row.level), ordinal)
+    add(indexes.byType, row.type, ordinal)
+    add(indexes.byWorkspace, row.workspace, ordinal)
+    add(indexes.byRoot, row.root, ordinal)
+    add(indexes.byLocale, '<null>', ordinal)
+    add(indexes.byStatus, row.status, ordinal)
+    if (row.active) indexes.byActive.push(ordinal)
+    if (row.main) indexes.byMain.push(ordinal)
+  })
   return indexes
 }
 
 function add(
-  target: Record<string, Array<string>>,
+  target: Record<string, Array<number>>,
   key: string,
-  value: string
+  value: number
 ) {
   const values = target[key] ?? []
   values.push(value)
   target[key] = values
 }
 
-test('RXB artifact opens metadata and stores compact row-id index leaves', () => {
+test('RXB artifact opens metadata and stores compact ordinal index leaves', () => {
   const artifact = createArtifact()
-  test.is(artifact.payload.indexes.byId.alpha[0], 'alpha:published')
-  test.is(artifact.payload.indexes.byType.QueryArticle[0], 'alpha:published')
-  test.is(
-    artifact.payload.fieldIndexes.exact['meta.inner'].x[0],
-    'alpha:published'
-  )
+  test.is(artifact.payload.indexes.byId.alpha[0], 0)
+  test.is(artifact.payload.indexes.byType.QueryArticle[0], 0)
+  test.is(artifact.payload.fieldIndexes.exact['meta.inner'].x[0], 0)
 
   const opened = decodeRxbEntryArtifact(encodeRxbEntryArtifact(artifact))
 
@@ -206,21 +223,15 @@ test('RXB artifact opens metadata and stores compact row-id index leaves', () =>
   test.is(opened.meta.contentHash, 'content-hash')
   test.is(opened.meta.graphSha, 'graph-sha')
 
-  test.is(opened.payload.indexes.byId.alpha[0], 'alpha:published')
-  test.is(opened.payload.indexes.byType.QueryArticle[0], 'alpha:published')
-  test.is(
-    opened.payload.fieldIndexes.exact['meta.inner'].x[0],
-    'alpha:published'
-  )
-  test.is(
-    opened.payload.fieldIndexes.exact['tags.itemId'].two[0],
-    'alpha:published'
-  )
-  test.is(opened.payload.fieldIndexes.number.score[0][1], 'alpha:published')
+  test.is(opened.payload.indexes.byId.alpha[0], 0)
+  test.is(opened.payload.indexes.byType.QueryArticle[0], 0)
+  test.is(opened.payload.fieldIndexes.exact['meta.inner'].x[0], 0)
+  test.is(opened.payload.fieldIndexes.exact['tags.itemId'].two[0], 0)
+  test.is(opened.payload.fieldIndexes.number.score[0][1], 0)
 })
 
 test('RXB planner uses exact, nested, list, and numeric field indexes', () => {
-  const planner = new RxbEntryPlanner(createArtifact())
+  const planner = new RxbEntryPlanner(config, createArtifact())
 
   test.equal(
     planner.candidateRows({
@@ -251,7 +262,7 @@ test('RXB planner uses exact, nested, list, and numeric field indexes', () => {
 })
 
 test('RXB planner traces cached and uncached field leaves identically', () => {
-  const planner = new RxbEntryPlanner(createArtifact(), {leafCacheSize: 2})
+  const planner = new RxbEntryPlanner(config, createArtifact(), {leafCacheSize: 2})
   const query = {
     query: {
       filter: {
@@ -276,7 +287,7 @@ test('RXB planner traces cached and uncached field leaves identically', () => {
 })
 
 test('RXB engine queries indexed filters and materializes only final entries', async () => {
-  const engine = openRxbEntryEngine(encodeRxbEntryArtifact(createArtifact()))
+  const engine = openRxbEntryEngine(config, encodeRxbEntryArtifact(createArtifact()))
 
   test.equal(
     await engine.query({
@@ -303,7 +314,7 @@ test('RXB engine queries indexed filters and materializes only final entries', a
 })
 
 test('RXB engine projects selected entry fields directly from rows', async () => {
-  const engine = openRxbEntryEngine(encodeRxbEntryArtifact(createArtifact()))
+  const engine = openRxbEntryEngine(config, encodeRxbEntryArtifact(createArtifact()))
 
   test.equal(
     await engine.query({
@@ -328,7 +339,7 @@ test('RXB engine projects selected entry fields directly from rows', async () =>
 })
 
 test('RXB engine falls back to post-filtering unsupported filter parts', async () => {
-  const engine = new RxbEntryEngine({artifact: createArtifact()})
+  const engine = new RxbEntryEngine({config, artifact: createArtifact()})
   const result = await engine.query<Array<string>>(
     {
       query: {

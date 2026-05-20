@@ -1,5 +1,6 @@
 import type {EntryStatus} from '../Entry.js'
 import type {Entry} from '../Entry.js'
+import type {Config} from '../Config.js'
 import type {Expr} from '../Expr.js'
 import type {GraphQuery, Order, Projection, Status} from '../Graph.js'
 import {querySource} from '../Graph.js'
@@ -17,10 +18,11 @@ import type {
   RxbEntryColumnName,
   RxbEntryRow
 } from './RxbEntryArtifact.js'
-import {decodeRxbEntryArtifact} from './RxbEntryArtifact.js'
+import {decodeRxbEntryArtifact, rxbEntryColumnNames} from './RxbEntryArtifact.js'
 import {RxbEntryPlanner} from './RxbEntryPlanner.js'
 
 export interface RxbEntryEngineOptions {
+  config: Config
   artifact: RxbEntryArtifact
   bytes?: Uint8Array
   leafCacheSize?: number
@@ -47,7 +49,7 @@ export class RxbEntryEngine {
 
   constructor(options: RxbEntryEngineOptions) {
     this.#artifact = options.artifact
-    this.#planner = new RxbEntryPlanner(options.artifact, {
+    this.#planner = new RxbEntryPlanner(options.config, options.artifact, {
       leafCacheSize: options.leafCacheSize,
       planCacheSize: options.planCacheSize,
       rowCacheSize: options.rowCacheSize
@@ -244,6 +246,11 @@ export class RxbEntryEngine {
     if (!columns) return {found: false, value: undefined}
     const ordinal = this.#rowOrdinal(rowId)
     if (ordinal === undefined) return {found: false, value: undefined}
+    if (name === 'rowId') return {found: true, value: rowId}
+    if (!isRxbEntryColumnName(name)) {
+      const row = this.#planner.row(rowId)
+      return {found: Boolean(row), value: row?.[name]}
+    }
     const values = this.#columnValues(name as RxbEntryColumnName)
     return {found: true, value: values[ordinal]}
   }
@@ -282,7 +289,7 @@ export class RxbEntryEngine {
     projection: Projection | undefined
   ): unknown {
     if (!projection) {
-      const rowId = this.#columnValues('rowId')[ordinal] as string
+      const rowId = this.#rowIdAt(ordinal)
       return this.#projectRow(this.#planner.row(rowId), undefined)
     }
     if (hasExpr(projection as any)) {
@@ -290,8 +297,13 @@ export class RxbEntryEngine {
       if (expr.type !== 'entryField')
         throw new Error(`Unsupported RXB engine projection: ${expr.type}`)
       if (expr.name === 'data') {
-        const rowId = this.#columnValues('rowId')[ordinal] as string
+        const rowId = this.#rowIdAt(ordinal)
         return this.#planner.row(rowId)?.data
+      }
+      if (expr.name === 'rowId') return this.#rowIdAt(ordinal)
+      if (!isRxbEntryColumnName(expr.name)) {
+        const rowId = this.#rowIdAt(ordinal)
+        return this.#planner.row(rowId)?.[expr.name as keyof RxbEntryRow]
       }
       return this.#columnValues(expr.name as RxbEntryColumnName)[ordinal]
     }
@@ -301,13 +313,25 @@ export class RxbEntryEngine {
       )
     )
   }
+
+  #rowIdAt(ordinal: number): string {
+    return this.#artifact.payload.columns.rowIds[ordinal]
+  }
+}
+
+const rxbEntryColumnNameSet = new Set<string>(rxbEntryColumnNames)
+
+function isRxbEntryColumnName(name: unknown): name is RxbEntryColumnName {
+  return typeof name === 'string' && rxbEntryColumnNameSet.has(name)
 }
 
 export function openRxbEntryEngine(
+  config: Config,
   buffer: Uint8Array,
   options: OpenRxbEntryEngineOptions = {}
 ): RxbEntryEngine {
   return new RxbEntryEngine({
+    config,
     artifact: decodeRxbEntryArtifact(buffer),
     bytes: buffer,
     ...options

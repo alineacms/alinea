@@ -146,6 +146,17 @@ test('RXB entry DB opens bytes, resolves, applies local mutations, exports, and 
     'Alpha Prime'
   )
 
+  const compressed = await db.exportCompressedBytes()
+  const reopenedCompressed = await RxbEntryDB.openCompressed(config, compressed)
+  test.equal(
+    await reopenedCompressed.resolve({
+      id: 'article-alpha',
+      select: Entry.title,
+      get: true
+    } as any),
+    'Alpha Prime'
+  )
+
   db.rollback(rollback)
   test.equal(
     await db.resolve({

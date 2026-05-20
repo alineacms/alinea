@@ -12,8 +12,11 @@ import type {RemoteSource} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {
   createRxbEntryArtifact,
+  compressRxbEntryBytes,
   decodeRxbEntryArtifact,
+  decompressRxbEntryBytes,
   encodeRxbEntryArtifact,
+  hydrateRxbEntryRowAt,
   type RxbEntryArtifact,
   type RxbEntryRow
 } from './RxbEntryArtifact.js'
@@ -60,6 +63,18 @@ export class RxbEntryDB extends Graph {
     options?: RxbEntryDBOptions
   ): RxbEntryDB {
     return new RxbEntryDB(config, bytes, options)
+  }
+
+  static async openCompressed(
+    config: Config,
+    encoded: string,
+    options?: RxbEntryDBOptions
+  ): Promise<RxbEntryDB> {
+    return new RxbEntryDB(
+      config,
+      await decompressRxbEntryBytes(encoded),
+      options
+    )
   }
 
   static fromArtifact(
@@ -138,6 +153,10 @@ export class RxbEntryDB extends Graph {
     return (this.#bytes ??= encodeRxbEntryArtifact(this.#artifact))
   }
 
+  exportCompressedBytes(): Promise<string> {
+    return compressRxbEntryBytes(this.exportBytes())
+  }
+
   #replace(artifact: RxbEntryArtifact, bytes?: Uint8Array) {
     bytes ??= encodeRxbEntryArtifact(artifact)
     this.#artifact = artifact
@@ -150,6 +169,7 @@ export class RxbEntryDB extends Graph {
     bytes?: Uint8Array
   ): RxbEntryEngine {
     return new RxbEntryEngine({
+      config: this.config,
       artifact,
       bytes,
       entryCacheSize: this.#options.entryCacheSize,
@@ -161,12 +181,23 @@ export class RxbEntryDB extends Graph {
 }
 
 function createSourceFromArtifact(
+  config: Config,
   artifact: RxbEntryArtifact,
   tree = ReadonlyTree.fromFlat(artifact.payload.tree),
   extraBlobs = new Map<string, Uint8Array>()
 ): MemorySource {
   const blobs = new Map<string, Uint8Array>()
-  for (const row of Object.values(artifact.payload.rowsById)) {
+  const fileHashes = new Map(tree.index())
+  const rowIds = artifact.payload.columns.rowIds
+  for (let ordinal = 0; ordinal < rowIds.length; ordinal++) {
+    const rowId = rowIds[ordinal]
+    const row = hydrateRxbEntryRowAt(
+      config,
+      artifact.payload,
+      ordinal,
+      fileHashes.get(rowId)
+    )
+    if (!row) continue
     blobs.set(row.fileHash, encodeRxbEntryRow(row))
   }
   for (const [sha, blob] of extraBlobs) blobs.set(sha, blob)
@@ -179,7 +210,7 @@ async function applyMutationsToArtifact(
   mutations: Array<Mutation>,
   options: {policy?: Policy} = {}
 ): Promise<RxbEntryArtifact> {
-  const source = createSourceFromArtifact(artifact)
+  const source = createSourceFromArtifact(config, artifact)
   const index = new EntryIndex(config)
   await index.syncWith(source)
   const from = await source.getTree()
@@ -219,7 +250,7 @@ async function syncArtifactWithRemote(
     blobs.set(sha, blob)
   }
 
-  const source = createSourceFromArtifact(artifact, remoteTree, blobs)
+  const source = createSourceFromArtifact(config, artifact, remoteTree, blobs)
   const index = new EntryIndex(config)
   await index.syncWith(source)
   return createRxbEntryArtifact(config, index, {
