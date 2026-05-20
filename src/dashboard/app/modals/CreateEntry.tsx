@@ -106,7 +106,7 @@ const initialLocationAtom = atom(async get => {
   }
 
   const entry = dashboard.entries(route.entry)
-  const [, data] = get(entry.data)
+  const {data} = get(entry.data)
   if (!data) {
     return {
       workspace: selectedWorkspace,

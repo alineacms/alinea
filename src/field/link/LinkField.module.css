@@ -36,6 +36,14 @@
   min-width: 180px;
 }
 
+.LinkFieldView-label.is-missing {
+  color: var(--alinea-fg-muted);
+}
+
+.LinkFieldView-label.is-missing .LinkFieldView-imagePlaceholder {
+  animation: none;
+}
+
 .LinkFieldView-labelText {
   display: inline-flex;
   align-items: baseline;

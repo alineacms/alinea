@@ -79,7 +79,7 @@ interface EntryBreadcrumbProps {
 }
 
 function EntryBreadcrumb({entry, onAction}: EntryBreadcrumbProps) {
-  const [, data] = useAtomValue(entry.data)
+  const {data} = useAtomValue(entry.data)
   if (!data) return null
   return <LoadedEntryBreadcrumb entry={data} onAction={onAction} />
 }
@@ -118,7 +118,7 @@ function ParentBreadcrumbs({
 }: ParentBreadcrumbsProps) {
   const dashboard = useDashboard()
   const entry = dashboard.entries(parentId)
-  const [, data] = useAtomValue(entry.data)
+  const {data} = useAtomValue(entry.data)
   if (!data) return null
   return (
     <LoadedParentBreadcrumbs

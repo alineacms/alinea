@@ -604,7 +604,8 @@ export class Dashboard {
     if (entry)
       try {
         const model = this.entries(entry)
-        const [, data] = get(model.data)
+        const {data, error} = get(model.data)
+        if (error) return missingEntryFocus(error)
         if (data) return entryFocus(data)
         return null
       } catch (error) {
@@ -1036,7 +1037,7 @@ export class DashboardExplorer {
       set(this.#options.onAction, entry)
       return
     }
-    const [, data] = get(entry.data)
+    const {data} = get(entry.data)
     if (data && get(data.hasChildren)) {
       const location = get(this.location)
       set(this.location, {...location, parentId: entry.id})
@@ -1265,13 +1266,13 @@ export class DashboardExplorer {
       if (!parentId) return []
       const parent = this.dashboard.entries(parentId)
       assert(parent, 'Parent entry not found')
-      const [, parentData] = get(parent.data)
+      const {data: parentData} = get(parent.data)
       if (!parentData) return []
       const parents = await get(parentData.parents)
       const label = get(parentData.label)
       return [
         ...parents
-          .map(entry => get(entry.data)[1])
+          .map(entry => get(entry.data).data)
           .filter((entry): entry is DashboardEntryData => entry !== undefined)
           .map(entry => ({id: entry.id, label: get(entry.label)})),
         {id: parent.id, label}
@@ -1446,7 +1447,7 @@ export class DashboardTree {
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
     const entry = this.workspace.dashboard.entries(route.entry)
-    const [, data] = get(entry.data)
+    const {data} = get(entry.data)
     if (!data) return new Set<Key>()
     return new Set<Key>(get(data.parentIds))
   })
@@ -1512,7 +1513,7 @@ export class DashboardTree {
 
   selectedAncestorStatus = dispense((entry: DashboardEntry) => {
     return atom(async (get): Promise<DashboardEntryTreeStatus | undefined> => {
-      const [, data] = get(entry.data)
+      const {data} = get(entry.data)
       if (!data) return undefined
       const selectedKey = get(this.selectedKeys).values().next().value
       if (!selectedKey) return undefined
@@ -1520,7 +1521,7 @@ export class DashboardTree {
       if (selectedId === entry.id) return undefined
       if (!get(data.parentIds).includes(selectedId)) return undefined
       const selected = this.entryItems(selectedId)
-      const [, selectedData] = get(selected.data)
+      const {data: selectedData} = get(selected.data)
       if (!selectedData) return undefined
       return get(selectedData.treeStatus)
     })
@@ -1528,7 +1529,7 @@ export class DashboardTree {
 
   children = dispense((entry: DashboardEntry) => {
     return atom(get => {
-      const [, data] = get(entry.data)
+      const {data} = get(entry.data)
       if (!data) return undefined
       if (!get(data.hasChildren)) return undefined
       if (!get(this.isExpanded(entry))) return undefined
@@ -1596,7 +1597,7 @@ export class DashboardTree {
     for (const key of keys) {
       const draggedId = String(key)
       const entry = this.workspace.dashboard.entries(draggedId)
-      const [, data] = get(entry.data)
+      const {data} = get(entry.data)
       assert(data, `Entry "${draggedId}" is not loaded`)
       const [resource] = get(data.entryData).entries
       const permission =
@@ -1693,12 +1694,23 @@ export interface DashboardEntryTreeStatus {
   status: EntryStatus | 'unpublished' | 'untranslated'
 }
 
+export interface DashboardEntryState {
+  pending: boolean
+  data: DashboardEntryData | undefined
+  error: MissingEntryError | undefined
+}
+
+export interface DashboardFileInfoState {
+  pending: boolean
+  data: Infer<typeof MediaFile> | null | undefined
+}
+
 type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
 
 export class DashboardEntry {
-  data: Atom<readonly [pending: boolean, data: DashboardEntryData | undefined]>
+  data: Atom<DashboardEntryState>
 
   constructor(
     public dashboard: Dashboard,
@@ -1717,7 +1729,29 @@ export class DashboardEntry {
         unwrap(entryData, prev => prev ?? initial) as Atom<EntryData>
       ))
     })
-    this.data = atomWithPending(loaded)
+    const state = atom(async get => {
+      try {
+        return {
+          pending: false,
+          data: await get(loaded),
+          error: undefined
+        } satisfies DashboardEntryState
+      } catch (error) {
+        if (error instanceof MissingEntryError) {
+          return {
+            pending: false,
+            data: undefined,
+            error
+          } satisfies DashboardEntryState
+        }
+        throw error
+      }
+    })
+    this.data = unwrap(state, prev => ({
+      pending: true,
+      data: prev?.data,
+      error: prev?.error
+    }))
   }
 
   preload = atom(async get => {
@@ -1949,6 +1983,12 @@ export class DashboardEntryData {
       return data.data as Infer<typeof MediaFile>
     })
   )
+
+  #fileInfoState = atomWithPending(this.fileInfo)
+  fileInfoState: Atom<DashboardFileInfoState> = atom(get => {
+    const [pending, data] = get(this.#fileInfoState)
+    return {pending, data}
+  })
 
   #parents = atom(async get => {
     const parentIds = get(this.parentIds)
@@ -2502,7 +2542,7 @@ export class DashboardRoot {
         selectionMode: 'multiple',
         selectionBehavior: 'replace',
         onAction: atom(null, (get, set, entry) => {
-          const [, data] = get(entry.data)
+          const {data} = get(entry.data)
           if (!data) return
           if (get(data.hasChildren))
             set(this.explorer.location, location => ({

@@ -131,21 +131,39 @@ interface EntryRowProps {
 function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
   const dashboard = useDashboard()
   const entry = dashboard.entries(entryId)
-  const [pending, data] = useAtomValue(entry.data)
-  if (!data)
+  const {pending, data, error} = useAtomValue(entry.data)
+  if (data)
     return (
-      <EntryLoadingRow
+      <LoadedEntryRow
+        entry={data}
         hasFields={hasFields}
         image={image}
-        pending={pending}
+        textOnly={textOnly}
+      />
+    )
+  if (error)
+    return (
+      <MissingEntryRow
+        entryId={entryId}
+        hasFields={hasFields}
+        image={image}
+        textOnly={textOnly}
+      />
+    )
+  if (!pending)
+    return (
+      <MissingEntryRow
+        entryId={entryId}
+        hasFields={hasFields}
+        image={image}
         textOnly={textOnly}
       />
     )
   return (
-    <LoadedEntryRow
-      entry={data}
+    <EntryLoadingRow
       hasFields={hasFields}
       image={image}
+      pending
       textOnly={textOnly}
     />
   )
@@ -156,6 +174,38 @@ interface EntryLoadingRowProps {
   image?: boolean
   pending: boolean
   textOnly?: boolean
+}
+
+interface MissingEntryRowProps {
+  entryId: string
+  hasFields?: boolean
+  image?: boolean
+  textOnly?: boolean
+}
+
+function MissingEntryRow({
+  entryId,
+  hasFields,
+  image,
+  textOnly
+}: MissingEntryRowProps) {
+  return (
+    <span className={styles.LinkFieldView.label({missing: true})}>
+      {image && !textOnly && (
+        <span
+          className={styles.LinkFieldView.imagePlaceholder()}
+          data-has-fields={hasFields ? 'true' : undefined}
+          aria-hidden="true"
+        />
+      )}
+      <span className={styles.LinkFieldView.labelText()}>
+        <span className={styles.LinkFieldView.title()}>Missing entry</span>
+        {!textOnly && (
+          <span className={styles.LinkFieldView.meta()}>{entryId}</span>
+        )}
+      </span>
+    </span>
+  )
 }
 
 function EntryLoadingRow({
@@ -201,16 +251,10 @@ function LoadedEntryRow({
   const type = useAtomValue(entry.type)
   const parentIds = useAtomValue(entry.parentIds)
   const [parentsPending, parents] = useAtomValue(entry.parentsState)
-  const fileInfo = useAtomValue(entry.fileInfo)
   return (
     <span className={styles.LinkFieldView.label()}>
-      {image && !textOnly && fileInfo?.preview && (
-        <img
-          alt=""
-          className={styles.LinkFieldView.image()}
-          data-has-fields={hasFields ? 'true' : undefined}
-          src={fileInfo.preview}
-        />
+      {image && !textOnly && (
+        <EntryRowImage entry={entry} hasFields={hasFields} />
       )}
       <span className={styles.LinkFieldView.labelText()}>
         <span className={styles.LinkFieldView.title()}>
@@ -228,6 +272,35 @@ function LoadedEntryRow({
       </span>
     </span>
   )
+}
+
+interface EntryRowImageProps {
+  entry: DashboardEntryData
+  hasFields?: boolean
+}
+
+function EntryRowImage({entry, hasFields}: EntryRowImageProps) {
+  const {pending, data: fileInfo} = useAtomValue(entry.fileInfoState)
+  if (fileInfo?.preview) {
+    return (
+      <img
+        alt=""
+        className={styles.LinkFieldView.image()}
+        data-has-fields={hasFields ? 'true' : undefined}
+        src={fileInfo.preview}
+      />
+    )
+  }
+  if (pending) {
+    return (
+      <span
+        className={styles.LinkFieldView.imagePlaceholder()}
+        data-has-fields={hasFields ? 'true' : undefined}
+        aria-hidden="true"
+      />
+    )
+  }
+  return null
 }
 
 function UrlRow({node, textOnly}: RowLayerProps) {
@@ -256,7 +329,7 @@ function EntryParents({loading, parents}: EntryParentsProps) {
     <>
       {parents.map((parent, index) => (
         <EntryParentLabel
-          key={index}
+          key={parent.id}
           parent={parent}
           suffix={index < parents.length - 1 ? ' / ' : ''}
         />
@@ -284,7 +357,7 @@ interface EntryParentLabelProps {
 }
 
 function EntryParentLabel({parent, suffix}: EntryParentLabelProps) {
-  const [, data] = useAtomValue(parent.data)
+  const {data} = useAtomValue(parent.data)
   if (!data) return null
   return <LoadedEntryParentLabel parent={data} suffix={suffix} />
 }

@@ -139,14 +139,14 @@ const SidebarItem = memo(function SidebarItem({
   item,
   tree
 }: SidebarItemProps) {
-  const [isEntryPending, data] = useAtomValue(item.data)
-  if (!data) return <SidebarLoadingItem item={item} pending={isEntryPending} />
+  const {pending, data} = useAtomValue(item.data)
+  if (!data) return <SidebarLoadingItem item={item} pending={pending} />
   return (
     <SidebarLoadedItem
       item={item}
       data={data}
       tree={tree}
-      pending={isEntryPending}
+      pending={pending}
     />
   )
 })

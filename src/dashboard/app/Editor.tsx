@@ -221,7 +221,7 @@ interface RootEditorBackButtonProps {
 
 function RootEditorBackButton({root, parentId}: RootEditorBackButtonProps) {
   const parent = root.workspace.dashboard.entries(parentId)
-  const [, parentData] = useAtomValue(parent.data)
+  const {data: parentData} = useAtomValue(parent.data)
   if (!parentData) return null
   return <LoadedRootEditorBackButton root={root} parent={parentData} />
 }

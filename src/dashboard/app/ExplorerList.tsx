@@ -62,7 +62,7 @@ const ExplorerItem = memo(function ExplorerItem({
   explorer
 }: ExplorerItemProps) {
   const view = useAtomValue(explorer.view)
-  const [, data] = useAtomValue(entry.data)
+  const {data} = useAtomValue(entry.data)
   if (!data) return <ExplorerLoadingItem entry={entry} view={view} />
   return (
     <ExplorerLoadedItem
@@ -278,7 +278,7 @@ interface ExplorerEntryParentProps {
 }
 
 function ExplorerEntryParent({parent}: ExplorerEntryParentProps) {
-  const [, data] = useAtomValue(parent.data)
+  const {data} = useAtomValue(parent.data)
   if (!data) return null
   return <ExplorerLoadedEntryParent parent={data} />
 }
