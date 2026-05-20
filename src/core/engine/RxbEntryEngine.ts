@@ -468,6 +468,13 @@ export class RxbEntryEngine {
         status
       )
     }
+    if (!projectionNeedsHydratedRow(projection)) {
+      return Object.fromEntries(
+        Object.entries(projection as Record<string, Projection>).map(
+          ([key, value]) => [key, this.#projectOrdinal(ordinal, value, status)]
+        )
+      )
+    }
     const rowId = this.#rowIdAt(ordinal)
     const row = this.#planner.row(rowId)
     return Object.fromEntries(
@@ -795,7 +802,7 @@ export class RxbEntryEngine {
     }
     if (isRecord(projection) && querySource(projection)) {
       await this.#postProcessEdgeProjection(
-        projection as EdgeQuery<Projection>,
+        projection as unknown as EdgeQuery<Projection>,
         value,
         linkResolver
       )
@@ -925,10 +932,24 @@ function projectionHasField(projection: Projection | undefined): boolean {
   if (!projection) return false
   if (hasExpr(projection as any)) return hasField(projection as any)
   if (isRecord(projection) && querySource(projection))
-    return projectionHasField((projection as EdgeQuery<Projection>).select)
+    return projectionHasField(
+      (projection as unknown as EdgeQuery<Projection>).select
+    )
   if (!isRecord(projection)) return false
   return Object.values(projection).some(value =>
     projectionHasField(value as Projection)
+  )
+}
+
+function projectionNeedsHydratedRow(
+  projection: Projection | undefined
+): boolean {
+  if (!projection) return true
+  if (hasExpr(projection as any)) return getExpr(projection as any).type === 'field'
+  if (isRecord(projection) && querySource(projection)) return true
+  if (!isRecord(projection)) return true
+  return Object.values(projection).some(value =>
+    projectionNeedsHydratedRow(value as Projection)
   )
 }
 
@@ -1036,7 +1057,7 @@ function unsupportedEntryProjectionReason(
   if (!isRecord(projection)) return 'non-object projection'
   if (querySource(projection)) {
     const reason = unsupportedRxbEntryQueryReason(
-      projection as EdgeQuery<Projection>
+      projection as unknown as EdgeQuery<Projection>
     )
     return reason ? `edge ${reason}` : undefined
   }
