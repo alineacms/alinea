@@ -29,6 +29,7 @@ export interface RxbEntryPayload {
   manifest: RxbEntryManifest
   tree: FlatTree
   rowsById: Record<string, RxbEntryRow>
+  columns: RxbEntryColumns
   indexes: RxbEntryIndexes
   fieldIndexes: RxbEntryFieldIndexes
 }
@@ -81,6 +82,18 @@ export interface RxbEntryIndexes {
 export interface RxbEntryFieldIndexes {
   exact: Record<string, Record<string, Array<string>>>
   number: Record<string, Array<[number, string]>>
+}
+
+export type RxbEntryColumnName = Exclude<keyof RxbEntryRow, 'data'>
+
+export type RxbEntryColumnArrays = {
+  [Name in RxbEntryColumnName]: Array<RxbEntryRow[Name]>
+}
+
+export interface RxbEntryColumns {
+  rowIds: Array<string>
+  ordinalByRowId: Record<string, number>
+  values: RxbEntryColumnArrays
 }
 
 export interface RxbEntryRow {
@@ -200,6 +213,7 @@ export function createRxbEntryArtifact(
       manifest,
       tree: tree.flat(),
       rowsById,
+      columns: createRxbEntryColumns(Object.values(rowsById)),
       indexes: createRxbEntryIndexes(rowsById, languages, nodes),
       fieldIndexes: createRxbEntryFieldIndexes(Object.values(rowsById))
     }
@@ -312,6 +326,73 @@ function emptyRxbEntryIndexes(): RxbEntryIndexes {
     byActive: [],
     byMain: []
   }
+}
+
+export function createRxbEntryColumns(rows: Array<RxbEntryRow>): RxbEntryColumns {
+  const rowIds = Array<string>()
+  const ordinalByRowId: Record<string, number> = {}
+  const values: RxbEntryColumnArrays = {
+    rowId: [],
+    versionId: [],
+    nodeId: [],
+    languageId: [],
+    id: [],
+    type: [],
+    index: [],
+    title: [],
+    searchableText: [],
+    seeded: [],
+    rowHash: [],
+    fileHash: [],
+    versionStatus: [],
+    status: [],
+    locale: [],
+    workspace: [],
+    root: [],
+    path: [],
+    parentDir: [],
+    childrenDir: [],
+    filePath: [],
+    level: [],
+    parentId: [],
+    parents: [],
+    url: [],
+    active: [],
+    main: []
+  }
+  for (const row of rows) {
+    const ordinal = rowIds.length
+    rowIds.push(row.rowId)
+    ordinalByRowId[row.rowId] = ordinal
+    values.rowId.push(row.rowId)
+    values.versionId.push(row.versionId)
+    values.nodeId.push(row.nodeId)
+    values.languageId.push(row.languageId)
+    values.id.push(row.id)
+    values.type.push(row.type)
+    values.index.push(row.index)
+    values.title.push(row.title)
+    values.searchableText.push(row.searchableText)
+    values.seeded.push(row.seeded)
+    values.rowHash.push(row.rowHash)
+    values.fileHash.push(row.fileHash)
+    values.versionStatus.push(row.versionStatus)
+    values.status.push(row.status)
+    values.locale.push(row.locale)
+    values.workspace.push(row.workspace)
+    values.root.push(row.root)
+    values.path.push(row.path)
+    values.parentDir.push(row.parentDir)
+    values.childrenDir.push(row.childrenDir)
+    values.filePath.push(row.filePath)
+    values.level.push(row.level)
+    values.parentId.push(row.parentId)
+    values.parents.push(row.parents)
+    values.url.push(row.url)
+    values.active.push(row.active)
+    values.main.push(row.main)
+  }
+  return {rowIds, ordinalByRowId, values}
 }
 
 function createRxbEntryManifest(config: Config): RxbEntryManifest {

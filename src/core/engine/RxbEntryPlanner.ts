@@ -10,7 +10,6 @@ import type {
   RxbEntryRow
 } from './RxbEntryArtifact.js'
 import {rxbIndexValue} from './RxbEntryArtifact.js'
-import type {RxbEntryCursorStore} from './RxbEntryCursorStore.js'
 
 export interface EntryQueryPlan<Query = GraphQuery> {
   query: Query
@@ -61,7 +60,6 @@ export interface RxbEntryCandidatePlan extends EntryCandidatePlan {
 }
 
 export interface RxbEntryPlannerOptions {
-  cursorStore?: RxbEntryCursorStore
   leafCacheSize?: number
   planCacheSize?: number
   rowCacheSize?: number
@@ -69,7 +67,6 @@ export interface RxbEntryPlannerOptions {
 
 export class RxbEntryPlanner {
   readonly #payload: RxbEntryPayload
-  readonly #cursor: RxbEntryCursorStore | undefined
   readonly #graphSha: string
   readonly #leafCacheSize: number
   readonly #planCacheSize: number
@@ -84,11 +81,10 @@ export class RxbEntryPlanner {
     options: RxbEntryPlannerOptions = {}
   ) {
     this.#payload = artifact.payload
-    this.#cursor = options.cursorStore
     this.#graphSha = artifact.meta.graphSha
     this.#leafCacheSize = options.leafCacheSize ?? 256
     this.#planCacheSize = options.planCacheSize ?? 256
-    this.#rowCacheSize = options.rowCacheSize ?? 4096
+    this.#rowCacheSize = options.rowCacheSize ?? 16384
   }
 
   candidates(
@@ -115,7 +111,7 @@ export class RxbEntryPlanner {
     options: EntryQueryOptions = {}
   ): EntryCandidatePlan {
     const cacheKey =
-      !options.trace && !plan.preFilter ? JSON.stringify(plan) : undefined
+      !options.trace && !plan.preFilter ? candidateCacheKey(plan) : undefined
     if (cacheKey) {
       const cached = this.#planCache.get(cacheKey)
       if (cached) {
@@ -206,14 +202,14 @@ export class RxbEntryPlanner {
     return {rowIds}
   }
 
-  row(rowId: string): RxbEntryRow {
+  row(rowId: string): RxbEntryRow | undefined {
     const cached = this.#rowCache.get(rowId)
     if (cached) {
       this.#rowCache.delete(rowId)
       this.#rowCache.set(rowId, cached)
       return cached
     }
-    const row = this.#payload.rowsById[rowId]
+    const row = hydrateRow(this.#payload.rowsById[rowId])
     if (row) {
       this.#rowCache.set(rowId, row)
       if (this.#rowCache.size > this.#rowCacheSize) {
@@ -225,7 +221,9 @@ export class RxbEntryPlanner {
   }
 
   rowsForIds(rowIds: Array<string>): Array<RxbEntryRow> {
-    return rowIds.map(rowId => this.row(rowId)).filter(Boolean)
+    return rowIds
+      .map(rowId => this.row(rowId))
+      .filter((row): row is RxbEntryRow => Boolean(row))
   }
 
   *#constraintIndexes(
@@ -277,21 +275,19 @@ export class RxbEntryPlanner {
       yield [
         'active',
         ['true'],
-        this.#cursor?.activeRowIds() ??
-          this.#cachedLeaf(
-            'index:active:true',
-            () => this.#payload.indexes.byActive
-          )
+        this.#cachedLeaf(
+          'index:active:true',
+          () => this.#payload.indexes.byActive
+        )
       ]
     if (constraints.main)
       yield [
         'main',
         ['true'],
-        this.#cursor?.mainRowIds() ??
-          this.#cachedLeaf(
-            'index:main:true',
-            () => this.#payload.indexes.byMain
-          )
+        this.#cachedLeaf(
+          'index:main:true',
+          () => this.#payload.indexes.byMain
+        )
       ]
     if (constraints.parentId !== undefined)
       yield this.#fromIndex(
@@ -352,9 +348,6 @@ export class RxbEntryPlanner {
     values: Array<string | number | boolean | null>,
     rowIds: Array<string>
   ] {
-    if (this.#cursor) {
-      return [name, values, this.#cursor.indexRowIds(name, values)]
-    }
     if (values.length === 1) {
       const key = indexValue(values[0] as any)
       return [
@@ -487,7 +480,6 @@ export class RxbEntryPlanner {
     const parts = values.map(value => {
       const key = `field:${path}:${rxbIndexValue(value)}`
       if (trace) trace = traceIndex(trace, key)
-      if (this.#cursor) return this.#cursor.fieldExactRowIds(path, [value])
       return this.#cachedLeaf(key, () => {
         return (
           this.#payload.fieldIndexes.exact[path]?.[rxbIndexValue(value)] ?? []
@@ -502,12 +494,6 @@ export class RxbEntryPlanner {
     condition: Record<string, unknown>,
     trace: ReturnType<typeof emptyQueryTrace> | undefined
   ): {rowIds: Array<string>; trace: typeof trace} | undefined {
-    if (this.#cursor) {
-      const rowIds = this.#cursor.fieldNumberRangeRowIds(path, condition)
-      if (!rowIds) return
-      if (trace) trace = traceIndex(trace, `field:${path}:range`)
-      return {rowIds, trace}
-    }
     const index = this.#numberIndex(path)
     if (!index) return
     const gt = typeof condition.gt === 'number' ? condition.gt : undefined
@@ -595,6 +581,28 @@ function uniqueRowIds(values: Array<string>): Array<string> {
   return Array.from(new Set(values))
 }
 
+function candidateCacheKey(plan: EntryQueryPlan): string | undefined {
+  if (!plan.constraints && !(plan.query as {filter?: unknown}).filter) {
+    return 'all'
+  }
+  const parts = Array<string>()
+  if (plan.constraints) {
+    for (const key of Object.keys(plan.constraints).sort()) {
+      const value = plan.constraints[key as keyof EntryQueryConstraints]
+      if (value === undefined) continue
+      parts.push(`${key}=${cacheValue(value)}`)
+    }
+  }
+  const filter = (plan.query as {filter?: unknown}).filter
+  if (filter) parts.push(`filter=${JSON.stringify(filter)}`)
+  return parts.join('\u0001')
+}
+
+function cacheValue(value: unknown): string {
+  if (!Array.isArray(value)) return String(value)
+  return value.map(String).sort().join('\u0000')
+}
+
 function lowerNumberBound(
   index: Array<[number, string]>,
   target: number
@@ -661,6 +669,40 @@ function rowMatchesIndex(
       return expected.has(String(row.locale))
     default:
       return expected.has(String(row[name as keyof RxbEntryRow]))
+  }
+}
+
+function hydrateRow(row: RxbEntryRow | undefined): RxbEntryRow | undefined {
+  if (!row) return
+  return {
+    rowId: row.rowId,
+    versionId: row.versionId,
+    nodeId: row.nodeId,
+    languageId: row.languageId,
+    id: row.id,
+    type: row.type,
+    index: row.index,
+    title: row.title,
+    searchableText: row.searchableText,
+    seeded: row.seeded,
+    rowHash: row.rowHash,
+    fileHash: row.fileHash,
+    data: row.data,
+    versionStatus: row.versionStatus,
+    status: row.status,
+    locale: row.locale,
+    workspace: row.workspace,
+    root: row.root,
+    path: row.path,
+    parentDir: row.parentDir,
+    childrenDir: row.childrenDir,
+    filePath: row.filePath,
+    level: row.level,
+    parentId: row.parentId,
+    parents: row.parents,
+    url: row.url,
+    active: row.active,
+    main: row.main
   }
 }
 

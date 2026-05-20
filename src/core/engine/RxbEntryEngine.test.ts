@@ -3,6 +3,7 @@ import {Entry} from '../Entry.js'
 import {
   decodeRxbEntryArtifact,
   encodeRxbEntryArtifact,
+  createRxbEntryColumns,
   indexKey,
   openRxbEntryEngine,
   RxbEntryEngine,
@@ -112,6 +113,7 @@ function createArtifact(rows = createRows()): RxbEntryArtifact {
       manifest: {version: 1, workspaces: {}, types: {}},
       tree: {sha: 'tree-sha', tree: []},
       rowsById,
+      columns: createRxbEntryColumns(rows),
       indexes: createIndexes(rows),
       fieldIndexes: {
         exact: {

@@ -12,9 +12,12 @@ import type {
   TracedEntryQueryResult
 } from './RxbEntryPlanner.js'
 import {createQueryTrace, mergeQueryTraces} from './QueryTrace.js'
-import type {RxbEntryArtifact, RxbEntryRow} from './RxbEntryArtifact.js'
+import type {
+  RxbEntryArtifact,
+  RxbEntryColumnName,
+  RxbEntryRow
+} from './RxbEntryArtifact.js'
 import {decodeRxbEntryArtifact} from './RxbEntryArtifact.js'
-import {RxbEntryCursorStore} from './RxbEntryCursorStore.js'
 import {RxbEntryPlanner} from './RxbEntryPlanner.js'
 
 export interface RxbEntryEngineOptions {
@@ -36,15 +39,15 @@ export interface OpenRxbEntryEngineOptions {
 export class RxbEntryEngine {
   readonly #artifact: RxbEntryArtifact
   readonly #planner: RxbEntryPlanner
-  readonly #cursor: RxbEntryCursorStore | undefined
   readonly #entryCacheSize: number
   readonly #entries = new Map<string, Entry>()
+  #rowOrdinals: Map<string, number> | undefined
+  readonly #ordinalCache = new WeakMap<Array<string>, Array<number>>()
+  readonly #columnCache = new Map<RxbEntryColumnName, Array<unknown>>()
 
   constructor(options: RxbEntryEngineOptions) {
     this.#artifact = options.artifact
-    this.#cursor = options.bytes && new RxbEntryCursorStore(options.bytes)
     this.#planner = new RxbEntryPlanner(options.artifact, {
-      cursorStore: this.#cursor,
       leafCacheSize: options.leafCacheSize,
       planCacheSize: options.planCacheSize,
       rowCacheSize: options.rowCacheSize
@@ -93,6 +96,16 @@ export class RxbEntryEngine {
         .filter(row => predicate(row))
         .map(row => row.rowId)
     }
+    if (
+      !options?.trace &&
+      !query.count &&
+      !query.groupBy &&
+      !query.orderBy &&
+      !query.skip &&
+      !query.take
+    ) {
+      return this.#projectRowIds(rowIds, query) as Value
+    }
     let rows =
       query.count && !query.groupBy && !query.orderBy
         ? []
@@ -118,14 +131,12 @@ export class RxbEntryEngine {
           ? rows.length
           : rowIds.length
         : query.get
-          ? this.#projectRowId(rowIds[0], rows[0], query.select)
+          ? this.#projectRow(rows[0], query.select, rowIds[0])
           : query.first
             ? rowIds[0]
-              ? this.#projectRowId(rowIds[0], rows[0], query.select)
+              ? this.#projectRow(rows[0], query.select, rowIds[0])
               : null
-            : rowIds.map((rowId, index) =>
-                this.#projectRowId(rowId, rows[index], query.select)
-              )
+            : rows.map(row => this.#projectRow(row, query.select, row.rowId))
     ) as Value
 
     if (options?.trace) {
@@ -164,40 +175,129 @@ export class RxbEntryEngine {
 
   #projectRow(
     row: RxbEntryRow | undefined,
-    projection: Projection | undefined
+    projection: Projection | undefined,
+    rowId?: string
   ): unknown {
-    if (!row) return undefined
-    if (!projection) return this.#entryForRow(row)
+    if (!projection) {
+      if (!row) return undefined
+      return this.#entryForRow(row)
+    }
     if (hasExpr(projection as any)) {
       const expr = getExpr(projection as any)
       if (expr.type !== 'entryField')
         throw new Error(`Unsupported RXB engine projection: ${expr.type}`)
+      if (rowId) {
+        const columnValue = this.#columnValue(
+          rowId,
+          expr.name as keyof RxbEntryRow
+        )
+        if (columnValue.found) return columnValue.value
+      }
+      if (!row) return undefined
       return row[expr.name as keyof RxbEntryRow]
     }
     return Object.fromEntries(
       Object.entries(projection as Record<string, Projection>).map(
-        ([key, value]) => [key, this.#projectRow(row, value)]
+        ([key, value]) => [key, this.#projectRow(row, value, rowId)]
       )
     )
   }
 
-  #projectRowId(
-    rowId: string | undefined,
-    row: RxbEntryRow | undefined,
+  #projectRowIds(
+    rowIds: Array<string>,
+    query: GraphQuery<Projection>
+  ): unknown {
+    if (!query.select) {
+      if (query.get)
+        return this.#projectRow(this.#planner.row(rowIds[0]), undefined)
+      if (query.first)
+        return rowIds[0]
+          ? this.#projectRow(this.#planner.row(rowIds[0]), undefined)
+          : null
+      return rowIds.map(rowId =>
+        this.#projectRow(this.#planner.row(rowId), undefined)
+      )
+    }
+    if (query.get) {
+      const ordinal = this.#rowOrdinal(rowIds[0])
+      return ordinal === undefined
+        ? undefined
+        : this.#projectOrdinal(ordinal, query.select)
+    }
+    if (query.first) {
+      const rowId = rowIds[0]
+      const ordinal = rowId ? this.#rowOrdinal(rowId) : undefined
+      return ordinal === undefined
+        ? null
+        : this.#projectOrdinal(ordinal, query.select)
+    }
+    const ordinals = this.#ordinalsForRowIds(rowIds)
+    return ordinals.map(ordinal => this.#projectOrdinal(ordinal, query.select))
+  }
+
+  #columnValue(
+    rowId: string,
+    name: keyof RxbEntryRow
+  ): {found: boolean; value: unknown} {
+    if (name === 'data') return {found: false, value: undefined}
+    const columns = this.#artifact.payload.columns
+    if (!columns) return {found: false, value: undefined}
+    const ordinal = this.#rowOrdinal(rowId)
+    if (ordinal === undefined) return {found: false, value: undefined}
+    const values = this.#columnValues(name as RxbEntryColumnName)
+    return {found: true, value: values[ordinal]}
+  }
+
+  #rowOrdinal(rowId: string): number | undefined {
+    if (this.#rowOrdinals) return this.#rowOrdinals.get(rowId)
+    const rowIds = Array.from(this.#artifact.payload.columns.rowIds)
+    const ordinals = new Map<string, number>()
+    for (let i = 0; i < rowIds.length; i++) ordinals.set(rowIds[i], i)
+    this.#rowOrdinals = ordinals
+    return ordinals.get(rowId)
+  }
+
+  #columnValues(name: RxbEntryColumnName): Array<unknown> {
+    const cached = this.#columnCache.get(name)
+    if (cached) return cached
+    const values = Array.from(
+      this.#artifact.payload.columns.values[name] as ReadonlyArray<unknown>
+    )
+    this.#columnCache.set(name, values)
+    return values
+  }
+
+  #ordinalsForRowIds(rowIds: Array<string>): Array<number> {
+    const cached = this.#ordinalCache.get(rowIds)
+    if (cached) return cached
+    const ordinals = rowIds
+      .map(rowId => this.#rowOrdinal(rowId))
+      .filter((ordinal): ordinal is number => ordinal !== undefined)
+    this.#ordinalCache.set(rowIds, ordinals)
+    return ordinals
+  }
+
+  #projectOrdinal(
+    ordinal: number,
     projection: Projection | undefined
   ): unknown {
-    if (!rowId) return undefined
-    if (!this.#cursor) return this.#projectRow(row, projection)
-    if (!projection) return this.#entryForRow(row ?? this.#planner.row(rowId))
+    if (!projection) {
+      const rowId = this.#columnValues('rowId')[ordinal] as string
+      return this.#projectRow(this.#planner.row(rowId), undefined)
+    }
     if (hasExpr(projection as any)) {
       const expr = getExpr(projection as any)
       if (expr.type !== 'entryField')
         throw new Error(`Unsupported RXB engine projection: ${expr.type}`)
-      return this.#cursor.rowValue(rowId, expr.name as keyof RxbEntryRow)
+      if (expr.name === 'data') {
+        const rowId = this.#columnValues('rowId')[ordinal] as string
+        return this.#planner.row(rowId)?.data
+      }
+      return this.#columnValues(expr.name as RxbEntryColumnName)[ordinal]
     }
     return Object.fromEntries(
       Object.entries(projection as Record<string, Projection>).map(
-        ([key, value]) => [key, this.#projectRowId(rowId, row, value)]
+        ([key, value]) => [key, this.#projectOrdinal(ordinal, value)]
       )
     )
   }

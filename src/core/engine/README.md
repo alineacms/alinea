@@ -33,9 +33,6 @@ the confirmed source state.
 - `RxbEntryArtifact`: artifact shape, baseline-index export, and RXB
   encode/decode helpers.
 - `RxbEntryEngine`: query executor over RXB rows and indexes.
-- `RxbEntryCursorStore`: low-level RXB cursor reads for hot index leaves and
-  entry-field projections. Object proxies remain a fallback for full row
-  materialization and unsupported post-filtering.
 - `RxbEntryPlanner`: candidate row-id planner over RXB indexes.
 - `EntryFilter` and `QueryTrace`: small query helpers still shared by the RXB
   engine.
@@ -43,7 +40,9 @@ the confirmed source state.
 ## Current Constraints
 
 - Query support is the subset implemented by `RxbEntryEngine`.
-- Hot query planning should prefer cursor reads over RXB object proxies.
+- Hot query planning uses the artifact's decoded index records and lazily
+  hydrates touched rows into a small cache. RXB cursor reads are not on the
+  repeated query path.
 - Local mutations currently use the existing baseline transaction semantics
   internally for correctness, then rebuild the RXB artifact.
 - Sync diffs the local RXB tree against a `RemoteSource`, fetches only changed
