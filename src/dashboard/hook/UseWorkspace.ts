@@ -1,4 +1,4 @@
-import {Workspace, type WorkspaceInternal} from 'alinea/core/Workspace'
+import {Workspace, type WorkspaceInternal} from '#/core/Workspace.js'
 import {useAtomValue} from 'jotai'
 import {useDashboard} from '../store.js'
 

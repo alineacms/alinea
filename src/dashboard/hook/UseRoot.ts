@@ -1,4 +1,4 @@
-import {Root, type RootData} from 'alinea/core/Root'
+import {Root, type RootData} from '#/core/Root.js'
 import {useAtomValue} from 'jotai'
 import {useDashboard} from '../store.js'
 

@@ -1,5 +1,5 @@
-import {Field, type FieldOptions} from 'alinea/core/Field'
-import {assert} from 'alinea/core/util/Assert'
+import {Field, type FieldOptions} from '#/core/Field.js'
+import {assert} from '#/core/util/Assert.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import type {DashboardField} from '../store/Dashboard.js'
 import {useEditor} from '../store/hooks.js'

@@ -1,4 +1,4 @@
-import type {Graph} from 'alinea/core/Graph'
+import type {Graph} from '#/core/Graph.js'
 import {useAtomValue} from 'jotai'
 import {useDashboard} from '../store.js'
 
