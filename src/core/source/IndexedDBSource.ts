@@ -89,19 +89,23 @@ export class IndexedDBSource implements Source {
   async *getBlobs(
     shas: Array<string>
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
+    if (shas.length === 0) return
     const db = await this.#connect()
     const transaction = db.transaction(['blobs'], 'readonly')
     const store = transaction.objectStore('blobs')
-    for (const sha of shas) {
+    const entries = shas.map(sha => {
       const request = store.get(sha)
-      yield new Promise<[sha: string, blob: Uint8Array]>((resolve, reject) => {
+      return new Promise<[sha: string, blob: Uint8Array]>((resolve, reject) => {
         request.onsuccess = event => {
           const entry = (event.target as IDBRequest).result
-          if (entry) resolve([sha, entry])
+          if (entry !== undefined) resolve([sha, entry])
           else reject(new Error(`Blob not found: ${sha}`))
         }
         request.onerror = event => reject((event.target as IDBRequest).error)
       })
+    })
+    for (const entry of await Promise.all(entries)) {
+      yield entry
     }
   }
 
