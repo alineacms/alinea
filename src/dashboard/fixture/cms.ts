@@ -142,7 +142,11 @@ const simple = Config.workspace('Simple', {
       contains: ['Page', 'Folder'],
       openByDefault: true
     }),
-    media: Config.media()
+    media: Config.media({
+      i18n: {
+        locales: ['en', 'fr', 'de']
+      }
+    })
   }
 })
 

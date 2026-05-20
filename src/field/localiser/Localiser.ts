@@ -38,9 +38,14 @@ export class LocalisedField<
   }
 }
 
-export function localiser<const Locale extends string>(
+interface LocaliserOptions<Locale extends string> {
   locales: ReadonlyArray<Locale>
-) {
+  fallback?: (requested: Locale) => ReadonlyArray<Locale>
+}
+
+export function localiser<const Locale extends string>({
+  locales
+}: LocaliserOptions<Locale>) {
   if (locales.length === 0)
     throw new Error('Field localiser requires at least one locale')
   return function localise<StoredValue, QueryValue, Mutator, Options>(

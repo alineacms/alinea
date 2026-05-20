@@ -1,3 +1,4 @@
+import {type} from '#/config.js'
 import {Config} from '#/core/Config.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -6,24 +7,31 @@ import {base64} from '#/core/util/Encoding.js'
 import {
   DashboardEntryData,
   useDashboard,
+  useEditor,
   useField,
   useFieldValue
 } from '#/dashboard/store.js'
+import {localiser, text} from '#/field.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useMemo, useState} from 'react'
 import {thumbHashToDataURL} from 'thumbhash'
-import {FieldsEditor} from '../Editor.js'
+import {FieldsEditor, NodeEditor} from '../Editor.js'
 import {Surface} from '../ui/Surface.js'
-import {FilePreview, type FocusPoint} from './FilePreview.js'
 import css from './FileEditor.module.css'
+import {FilePreview, type FocusPoint} from './FilePreview.js'
 
 const styles = styler(css)
 
 interface FileEditorProps {
   entry: DashboardEntryData
 }
+
+const alt = text('Alt text', {
+  multiline: true,
+  placeholder: 'Describe the image for screen readers and SEO'
+})
 
 export function FileEditor({entry}: FileEditorProps) {
   const dashboard = useDashboard()
@@ -46,7 +54,14 @@ export function FileEditor({entry}: FileEditorProps) {
     () => new URL(location, Config.baseUrl(config) ?? window.location.href)
   )
   const displayedFocusPoint = hoverPoint ?? focusPoint
-
+  const workspace = useAtomValue(entry.workspaceKey)
+  const root = useAtomValue(entry.rootKey)
+  const i18n = useAtomValue(dashboard.workspace(workspace).root(root).mediaI18n)
+  const extra = useMemo(() => {
+    const altField = i18n ? localiser(i18n)(alt) : alt
+    return type('Extra', {fields: {alt: altField}})
+  }, [i18n])
+  const node = useEditor().node
   return (
     <Surface className={styles.FileEditor.surface()}>
       <div className={styles.FileEditor({image: isImage})}>
@@ -61,23 +76,16 @@ export function FileEditor({entry}: FileEditorProps) {
           />
         )}
         <div className={styles.FileEditor.content()}>
-          <Surface
-            variant="muted"
-            className={styles.FileEditor.metadata()}
-          >
+          <Surface variant="muted" className={styles.FileEditor.metadata()}>
             <dl className={styles.FileEditor.metadata.grid()}>
               <div className={styles.FileEditor.metadata.item()}>
-                <dt className={styles.FileEditor.metadata.term()}>
-                  Extension
-                </dt>
+                <dt className={styles.FileEditor.metadata.term()}>Extension</dt>
                 <dd className={styles.FileEditor.metadata.value()}>
                   {extension}
                 </dd>
               </div>
               <div className={styles.FileEditor.metadata.item()}>
-                <dt className={styles.FileEditor.metadata.term()}>
-                  File size
-                </dt>
+                <dt className={styles.FileEditor.metadata.term()}>File size</dt>
                 <dd className={styles.FileEditor.metadata.value()}>
                   {prettyBytes(size)}
                 </dd>
@@ -113,13 +121,14 @@ export function FileEditor({entry}: FileEditorProps) {
                 </span>
               </div>
               <span className={styles.FileEditor.focus.value()}>
-                ({displayedFocusPoint.x.toFixed(2)},{' '}
-                {displayedFocusPoint.y.toFixed(2)})
+                ({displayedFocusPoint?.x.toFixed(2)},{' '}
+                {displayedFocusPoint?.y.toFixed(2)})
               </span>
             </div>
           )}
           <div className={styles.FileEditor.fields()}>
             <FieldsEditor />
+            <NodeEditor node={node} type={extra} />
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import {MediaFile} from '#/core/media/MediaTypes.js'
 import type {RootData} from '#/core/Root.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
+import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {
@@ -469,10 +470,11 @@ interface FieldLayoutOptions extends FieldOptions<unknown> {
   width?: number
 }
 
-const EditField = memo(function EditField({field}: EditFieldProps) {
+export const EditField = memo(function EditField({field}: EditFieldProps) {
   const options = useFieldOptions(field) as FieldLayoutOptions
   const View = useFieldView(field)
   if (options.hidden) return null
+  if (field instanceof HiddenField) return null
   if (!View) return <div>Missing view for field: {Field.label(field)}</div>
   return (
     <div

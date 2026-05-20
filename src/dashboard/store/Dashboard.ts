@@ -18,7 +18,7 @@ import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import {Permission, Policy, type Resource} from '#/core/Role.js'
-import type {RootData} from '#/core/Root.js'
+import type {RootData, RootI18n} from '#/core/Root.js'
 import {getScope} from '#/core/Scope.js'
 import {Section} from '#/core/Section.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
@@ -2618,6 +2618,10 @@ export class DashboardRoot {
   label = atom(get => get(this.#settings).label)
   icon = atom(get => get(this.#settings).icon ?? IcRoundDescription)
   i18n = atom(get => get(this.#settings).i18n)
+  mediaI18n = atom((get): RootI18n | undefined => {
+    const settings = get(this.#settings)
+    return (settings as {_media?: {i18n: RootI18n}})._media?.i18n
+  })
   data = atom((get): RootData & {name: string} => ({
     name: this.key,
     ...get(this.#settings)

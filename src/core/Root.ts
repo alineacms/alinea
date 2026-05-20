@@ -11,6 +11,7 @@ import type {View} from './View.js'
 
 export interface RootI18n {
   locales: ReadonlyArray<string>
+  fallback?: (requested: string) => ReadonlyArray<string>
 }
 
 export interface RootMeta {
