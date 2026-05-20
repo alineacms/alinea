@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {Config, Field} from 'alinea'
+import {Config, Field, Query} from 'alinea'
 import {createConfig} from '../Config.js'
 import {Entry} from '../Entry.js'
 import {
@@ -24,7 +24,9 @@ const test = suite(import.meta)
 
 const QueryArticle = Config.document('QueryArticle', {
   fields: {
-    title: Field.text('Title')
+    title: Field.text('Title'),
+    single: Field.entry('Single'),
+    multi: Field.entry.multiple('Multi')
   }
 })
 
@@ -34,7 +36,11 @@ const config = createConfig({
     main: Config.workspace('Main', {
       source: 'content',
       roots: {
-        pages: Config.root('Pages', {contains: ['QueryArticle']})
+        pages: Config.root('Pages', {contains: ['QueryArticle']}),
+        localized: Config.root('Localized', {
+          i18n: {locales: ['en', 'de']},
+          contains: ['QueryArticle']
+        })
       }
     })
   }
@@ -444,3 +450,161 @@ test('RXB engine falls back to post-filtering unsupported filter parts', async (
   test.ok(result.trace.rows.has('beta:published'))
   test.ok(result.trace.rows.has('gamma:published'))
 })
+
+test('RXB engine resolves structural edge projections', async () => {
+  const engine = openRxbEntryEngine(
+    config,
+    encodeRxbEntryArtifact(createArtifact(createEdgeRows()))
+  )
+
+  const parent = await engine.query({
+    query: {
+      id: 'parent',
+      first: true,
+      select: {
+        children: Query.children({
+          select: Entry.id,
+          orderBy: {asc: Entry.index}
+        })
+      }
+    } as any
+  })
+  test.equal(parent, {children: ['child-1', 'child-2']})
+
+  const child = await engine.query({
+    query: {
+      id: 'child-1',
+      first: true,
+      select: {
+        siblings: Query.siblings({select: Entry.id}),
+        next: Query.next({select: Entry.id}),
+        previous: Query.previous({select: Entry.id}),
+        parent: Query.parent({select: Entry.id})
+      }
+    } as any
+  })
+  test.equal(child, {
+    siblings: ['child-2'],
+    next: 'child-2',
+    previous: undefined,
+    parent: 'parent'
+  })
+
+  const grand = await engine.query({
+    query: {
+      id: 'grand',
+      first: true,
+      select: Query.parents({select: Entry.id})
+    } as any
+  })
+  test.equal(grand, ['parent', 'child-1'])
+})
+
+test('RXB engine resolves translation and entry link edges', async () => {
+  const engine = openRxbEntryEngine(
+    config,
+    encodeRxbEntryArtifact(createArtifact(createEdgeRows()))
+  )
+
+  const translations = await engine.query({
+    query: {
+      id: 'trans',
+      locale: 'en',
+      root: 'localized',
+      first: true,
+      select: Query.translations({select: Entry.locale})
+    } as any
+  })
+  test.equal(translations, ['de'])
+
+  const links = await engine.query({
+    query: {
+      id: 'child-1',
+      first: true,
+      select: {
+        single: QueryArticle.single.first({select: Entry.id}),
+        multi: QueryArticle.multi.find({
+          select: Entry.id,
+          orderBy: {asc: Entry.index}
+        })
+      }
+    } as any
+  })
+  test.equal(links, {single: 'child-2', multi: ['child-2']})
+})
+
+function createEdgeRows(): Array<RxbEntryRow> {
+  return [
+    row('pages/parent.json', {
+      id: 'parent',
+      title: 'Parent',
+      index: 'a1',
+      path: 'parent',
+      filePath: 'pages/parent.json',
+      childrenDir: 'pages/parent',
+      parentDir: 'pages',
+      level: 0
+    }),
+    row('pages/parent/alpha.json', {
+      id: 'child-1',
+      title: 'Alpha',
+      index: 'a1',
+      parentId: 'parent',
+      parents: ['parent'],
+      path: 'parent/alpha',
+      filePath: 'pages/parent/alpha.json',
+      childrenDir: 'pages/parent/alpha',
+      parentDir: 'pages/parent',
+      level: 1,
+      data: {
+        title: 'Alpha',
+        single: {_entry: 'child-2'},
+        multi: [{_entry: 'child-2'}, {_entry: 'missing'}]
+      }
+    }),
+    row('pages/parent/beta.json', {
+      id: 'child-2',
+      title: 'Beta',
+      index: 'a2',
+      parentId: 'parent',
+      parents: ['parent'],
+      path: 'parent/beta',
+      filePath: 'pages/parent/beta.json',
+      childrenDir: 'pages/parent/beta',
+      parentDir: 'pages/parent',
+      level: 1
+    }),
+    row('pages/parent/alpha/grand.json', {
+      id: 'grand',
+      title: 'Grand',
+      index: 'a1',
+      parentId: 'child-1',
+      parents: ['parent', 'child-1'],
+      path: 'parent/alpha/grand',
+      filePath: 'pages/parent/alpha/grand.json',
+      childrenDir: 'pages/parent/alpha/grand',
+      parentDir: 'pages/parent/alpha',
+      level: 2
+    }),
+    row('localized/en/trans.json', {
+      id: 'trans',
+      title: 'Trans EN',
+      root: 'localized',
+      locale: 'en',
+      path: 'trans',
+      filePath: 'localized/en/trans.json',
+      childrenDir: 'localized/trans',
+      parentDir: 'localized'
+    }),
+    row('localized/de/trans.json', {
+      id: 'trans',
+      title: 'Trans DE',
+      root: 'localized',
+      locale: 'de',
+      path: 'trans',
+      filePath: 'localized/de/trans.json',
+      childrenDir: 'localized/trans',
+      parentDir: 'localized'
+    })
+  ]
+}

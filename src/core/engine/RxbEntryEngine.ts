@@ -4,7 +4,13 @@ import type {Entry} from '../Entry.js'
 import type {Config} from '../Config.js'
 import type {Expr} from '../Expr.js'
 import {Field} from '../Field.js'
-import type {GraphQuery, Order, Projection, Status} from '../Graph.js'
+import type {
+  EdgeQuery,
+  GraphQuery,
+  Order,
+  Projection,
+  Status
+} from '../Graph.js'
 import {querySource} from '../Graph.js'
 import {getExpr, hasExpr, hasField} from '../Internal.js'
 import {getScope, type Scope} from '../Scope.js'
@@ -57,6 +63,9 @@ export class RxbEntryEngine {
   readonly #entries = new Map<string, Entry>()
   #searchIndex: MiniSearch | undefined
   #rowOrdinals: Map<string, number> | undefined
+  #allRows: Array<RxbEntryRow> | undefined
+  #rowsById: Map<string, Array<RxbEntryRow>> | undefined
+  #rowsByParentId: Map<string, Array<RxbEntryRow>> | undefined
   readonly #ordinalCache = new WeakMap<Array<string>, Array<number>>()
   readonly #columnCache = new Map<RxbEntryColumnName, Array<unknown>>()
   #flags: Array<number> | undefined
@@ -128,7 +137,11 @@ export class RxbEntryEngine {
       (!query.orderBy || orderByRowId)
     ) {
       const windowedRowIds = windowRowIds(rowIds, query)
-      const value = this.#projectRowIds(windowedRowIds, query) as Value
+      const value = this.#projectRowIds(
+        windowedRowIds,
+        query,
+        query.status ?? 'published'
+      ) as Value
       await this.#postProcessResult(query, value, windowedRowIds)
       return value
     }
@@ -157,12 +170,29 @@ export class RxbEntryEngine {
           ? rows.length
           : rowIds.length
         : query.get
-          ? this.#projectRow(rows[0], query.select, rowIds[0])
+          ? this.#projectRow(
+              rows[0],
+              query.select,
+              rowIds[0],
+              query.status ?? 'published'
+            )
           : query.first
             ? rowIds[0]
-              ? this.#projectRow(rows[0], query.select, rowIds[0])
+              ? this.#projectRow(
+                  rows[0],
+                  query.select,
+                  rowIds[0],
+                  query.status ?? 'published'
+                )
               : null
-            : rows.map(row => this.#projectRow(row, query.select, row.rowId))
+            : rows.map(row =>
+                this.#projectRow(
+                  row,
+                  query.select,
+                  row.rowId,
+                  query.status ?? 'published'
+                )
+              )
     ) as Value
     await this.#postProcessResult(query, value, rowIds)
 
@@ -243,7 +273,8 @@ export class RxbEntryEngine {
   #projectRow(
     row: RxbEntryRow | undefined,
     projection: Projection | undefined,
-    rowId?: string
+    rowId?: string,
+    status: Status = 'published'
   ): unknown {
     if (!projection) {
       if (!row) return undefined
@@ -268,43 +299,79 @@ export class RxbEntryEngine {
       if (!row) return undefined
       return row[expr.name as keyof RxbEntryRow]
     }
+    if (querySource(projection))
+      return this.#edgeQueryValue(
+        row,
+        projection as EdgeQuery<Projection>,
+        status
+      )
     return Object.fromEntries(
       Object.entries(projection as Record<string, Projection>).map(
-        ([key, value]) => [key, this.#projectRow(row, value, rowId)]
+        ([key, value]) => [key, this.#projectRow(row, value, rowId, status)]
       )
     )
   }
 
   #projectRowIds(
     rowIds: Array<string>,
-    query: GraphQuery<Projection>
+    query: GraphQuery<Projection>,
+    status: Status
   ): unknown {
+    const edgeSingle = isEdgeSingleResult(query)
     if (!query.select) {
       if (query.get)
-        return this.#projectRow(this.#planner.row(rowIds[0]), undefined)
+        return this.#projectRow(
+          this.#planner.row(rowIds[0]),
+          undefined,
+          rowIds[0],
+          status
+        )
       if (query.first)
         return rowIds[0]
-          ? this.#projectRow(this.#planner.row(rowIds[0]), undefined)
+          ? this.#projectRow(
+              this.#planner.row(rowIds[0]),
+              undefined,
+              rowIds[0],
+              status
+            )
           : null
+      if (edgeSingle)
+        return rowIds[0]
+          ? this.#projectRow(
+              this.#planner.row(rowIds[0]),
+              undefined,
+              rowIds[0],
+              status
+            )
+          : undefined
       return rowIds.map(rowId =>
-        this.#projectRow(this.#planner.row(rowId), undefined)
+        this.#projectRow(this.#planner.row(rowId), undefined, rowId, status)
       )
     }
     if (query.get) {
       const ordinal = this.#rowOrdinal(rowIds[0])
       return ordinal === undefined
         ? undefined
-        : this.#projectOrdinal(ordinal, query.select)
+        : this.#projectOrdinal(ordinal, query.select, status)
     }
     if (query.first) {
       const rowId = rowIds[0]
       const ordinal = rowId ? this.#rowOrdinal(rowId) : undefined
       return ordinal === undefined
         ? null
-        : this.#projectOrdinal(ordinal, query.select)
+        : this.#projectOrdinal(ordinal, query.select, status)
+    }
+    if (edgeSingle) {
+      const rowId = rowIds[0]
+      const ordinal = rowId ? this.#rowOrdinal(rowId) : undefined
+      return ordinal === undefined
+        ? undefined
+        : this.#projectOrdinal(ordinal, query.select, status)
     }
     const ordinals = this.#ordinalsForRowIds(rowIds)
-    return ordinals.map(ordinal => this.#projectOrdinal(ordinal, query.select))
+    return ordinals.map(ordinal =>
+      this.#projectOrdinal(ordinal, query.select, status)
+    )
   }
 
   #columnValue(
@@ -358,7 +425,8 @@ export class RxbEntryEngine {
 
   #projectOrdinal(
     ordinal: number,
-    projection: Projection | undefined
+    projection: Projection | undefined,
+    status: Status = 'published'
   ): unknown {
     if (!projection) {
       const rowId = this.#rowIdAt(ordinal)
@@ -391,9 +459,20 @@ export class RxbEntryEngine {
       }
       return this.#columnValues(expr.name as RxbEntryColumnName)[ordinal]
     }
+    if (querySource(projection)) {
+      const rowId = this.#rowIdAt(ordinal)
+      return this.#projectRow(
+        this.#planner.row(rowId),
+        projection,
+        rowId,
+        status
+      )
+    }
+    const rowId = this.#rowIdAt(ordinal)
+    const row = this.#planner.row(rowId)
     return Object.fromEntries(
       Object.entries(projection as Record<string, Projection>).map(
-        ([key, value]) => [key, this.#projectOrdinal(ordinal, value)]
+        ([key, value]) => [key, this.#projectRow(row, value, rowId, status)]
       )
     )
   }
@@ -447,6 +526,212 @@ export class RxbEntryEngine {
     const name = this.#scope.nameOf(field)
     if (!name) throw new Error(`Expression has no name ${field}`)
     return row.data[name]
+  }
+
+  #edgeQueryValue(
+    row: RxbEntryRow | undefined,
+    query: EdgeQuery<Projection>,
+    inheritedStatus: Status
+  ): unknown {
+    if (!row) return isEdgeSingleResult(query) ? undefined : []
+    const rowIds = this.#edgeRowIds(row, query)
+    const status = query.status ?? inheritedStatus
+    const locale =
+      query.edge === 'translations'
+        ? query.locale
+        : query.locale === undefined
+          ? row.locale
+          : query.locale
+    return this.#queryRows(
+      rowIds,
+      locale === undefined ? {...query, status} : {...query, status, locale},
+      status
+    )
+  }
+
+  #queryRows(
+    inputRowIds: Array<string>,
+    query: GraphQuery<Projection>,
+    status: Status
+  ): unknown {
+    const constraints = compileRxbEntryQueryConstraints(query)
+    const candidatePlan = this.#planner.candidateRowIds({
+      query,
+      constraints,
+      preFilter: {rowIds: inputRowIds}
+    })
+    const predicate = isRxbFilterFullyIndexed(query.filter)
+      ? undefined
+      : compileEntryFilter(query.filter, readRowField)
+    let rowIds = candidatePlan.rowIds
+    if (query.search) rowIds = this.#searchRowIds(query.search, rowIds)
+    if (predicate) {
+      rowIds = this.#planner
+        .rowsForIds(rowIds)
+        .filter(row => predicate(row))
+        .map(row => row.rowId)
+    }
+    const orderByRowId = query.orderBy && canOrderByRowId(query.orderBy)
+    if (orderByRowId) this.#orderRowIds(rowIds, query.orderBy!)
+    if (!query.count && !query.groupBy && (!query.orderBy || orderByRowId)) {
+      return this.#projectRowIds(windowRowIds(rowIds, query), query, status)
+    }
+    let rows =
+      query.count && !query.groupBy && !query.orderBy
+        ? []
+        : this.#planner.rowsForIds(rowIds)
+
+    if (query.groupBy && !Array.isArray(query.groupBy))
+      rows = groupRows(rows, query.groupBy)
+    if (query.orderBy && !orderByRowId) orderRows(rows, query.orderBy)
+    else if (querySource(query) === 'parents') {
+      rows.sort((a, b) => a.level - b.level)
+    }
+
+    if (query.skip) {
+      if (query.count && !query.groupBy) rowIds = rowIds.slice(query.skip)
+      else rows.splice(0, query.skip)
+    }
+    if (query.take) {
+      if (query.count && !query.groupBy) rowIds = rowIds.slice(0, query.take)
+      else rows.splice(query.take)
+    }
+    if (!(query.count && !query.groupBy)) rowIds = rows.map(row => row.rowId)
+
+    if (query.count) return query.groupBy ? rows.length : rowIds.length
+    if (query.get || query.first || isEdgeSingleResult(query))
+      return rowIds[0]
+        ? this.#projectRow(rows[0], query.select, rowIds[0], status)
+        : query.first
+          ? null
+          : undefined
+    return rows.map(row => this.#projectRow(row, query.select, row.rowId, status))
+  }
+
+  #edgeRowIds(row: RxbEntryRow, query: EdgeQuery): Array<string> {
+    switch (query.edge) {
+      case 'parent':
+        return row.parentId
+          ? this.#rowsForEntryId(row.parentId, row.locale).map(row => row.rowId)
+          : []
+      case 'next':
+      case 'previous': {
+        const sibling = this.#adjacentSibling(row, query.edge)
+        return sibling
+          ? this.#rowsForEntryId(sibling.id, row.locale).map(row => row.rowId)
+          : []
+      }
+      case 'siblings':
+        if (!row.parentId) return []
+        return this.#rowsForParentId(row.parentId)
+          .filter(sibling => {
+            if (sibling.locale !== row.locale) return false
+            return query.includeSelf || sibling.id !== row.id
+          })
+          .map(sibling => sibling.rowId)
+      case 'translations':
+        return this.#rowsForEntryId(row.id)
+          .filter(translation => {
+            return query.includeSelf || translation.locale !== row.locale
+          })
+          .map(translation => translation.rowId)
+      case 'children': {
+        const depth = query.depth ?? 1
+        return this.#allEntryRows()
+          .filter(child => {
+            return (
+              child.filePath.startsWith(row.childrenDir) &&
+              child.level > row.level &&
+              child.level <= row.level + depth
+            )
+          })
+          .map(child => child.rowId)
+      }
+      case 'parents': {
+        const depth = query.depth ?? Number.POSITIVE_INFINITY
+        const parentIds = row.parents.slice(-depth)
+        return parentIds.flatMap(id =>
+          this.#rowsForEntryId(id, row.locale).map(parent => parent.rowId)
+        )
+      }
+      case 'entryMultiple': {
+        const value = this.#field(row, query.field)
+        if (!Array.isArray(value)) return []
+        return value.flatMap(item => {
+          const id = isRecord(item) ? item._entry : undefined
+          return typeof id === 'string'
+            ? this.#rowsForEntryId(id).map(entry => entry.rowId)
+            : []
+        })
+      }
+      case 'entrySingle': {
+        const value = this.#field(row, query.field)
+        const id = isRecord(value) ? value._entry : undefined
+        return typeof id === 'string'
+          ? this.#rowsForEntryId(id).map(entry => entry.rowId)
+          : []
+      }
+      default:
+        return []
+    }
+  }
+
+  #adjacentSibling(
+    row: RxbEntryRow,
+    direction: 'next' | 'previous'
+  ): RxbEntryRow | undefined {
+    if (!row.parentId) return
+    const seen = new Set<string>()
+    const siblings = this.#rowsForParentId(row.parentId)
+      .filter(sibling => sibling.locale === row.locale && sibling.main)
+      .filter(sibling => {
+        if (seen.has(sibling.id)) return false
+        seen.add(sibling.id)
+        return true
+      })
+      .sort((a, b) => compareValues(a.index, b.index, false))
+    const index = siblings.findIndex(sibling => sibling.id === row.id)
+    if (index === -1) return
+    return direction === 'next' ? siblings[index + 1] : siblings[index - 1]
+  }
+
+  #allEntryRows(): Array<RxbEntryRow> {
+    if (this.#allRows) return this.#allRows
+    this.#allRows = this.#planner.rowsForIds(
+      Array.from(this.#artifact.payload.columns.rowIds)
+    )
+    return this.#allRows
+  }
+
+  #rowsForEntryId(
+    id: string,
+    locale?: string | null
+  ): Array<RxbEntryRow> {
+    if (!this.#rowsById) {
+      this.#rowsById = new Map()
+      for (const row of this.#allEntryRows()) {
+        const rows = this.#rowsById.get(row.id) ?? []
+        rows.push(row)
+        this.#rowsById.set(row.id, rows)
+      }
+    }
+    const rows = this.#rowsById.get(id) ?? []
+    return locale === undefined
+      ? rows
+      : rows.filter(row => row.locale === locale)
+  }
+
+  #rowsForParentId(parentId: string): Array<RxbEntryRow> {
+    if (!this.#rowsByParentId) {
+      this.#rowsByParentId = new Map()
+      for (const row of this.#allEntryRows()) {
+        if (!row.parentId) continue
+        const rows = this.#rowsByParentId.get(row.parentId) ?? []
+        rows.push(row)
+        this.#rowsByParentId.set(row.parentId, rows)
+      }
+    }
+    return this.#rowsByParentId.get(parentId) ?? []
   }
 
   async #postProcessResult(
@@ -508,7 +793,15 @@ export class RxbEntryEngine {
         await Field.shape(projection as any).applyLinks(value, linkResolver as any)
       return
     }
-    if (!isRecord(projection) || querySource(projection)) return
+    if (isRecord(projection) && querySource(projection)) {
+      await this.#postProcessEdgeProjection(
+        projection as EdgeQuery<Projection>,
+        value,
+        linkResolver
+      )
+      return
+    }
+    if (!isRecord(projection)) return
     await Promise.all(
       Object.entries(projection).map(([key, nextProjection]) => {
         const nextValue = (value as Record<string, unknown>)[key]
@@ -547,6 +840,31 @@ export class RxbEntryEngine {
     }
     this.#flags = Array.from(this.#artifact.payload.columns.flags)
     return this.#flags[ordinal]
+  }
+
+  async #postProcessEdgeProjection(
+    projection: EdgeQuery<Projection>,
+    value: unknown,
+    linkResolver: RxbLinkResolver
+  ): Promise<void> {
+    if (projection.count || !projection.select) return
+    if (isEdgeSingleResult(projection)) {
+      if (value)
+        await this.#postProcessProjection(
+          projection.select,
+          value,
+          linkResolver
+        )
+      return
+    }
+    if (!Array.isArray(value)) return
+    await Promise.all(
+      value.map(row =>
+        row
+          ? this.#postProcessProjection(projection.select!, row, linkResolver)
+          : undefined
+      )
+    )
   }
 }
 
@@ -606,7 +924,9 @@ function cloneProjectedValue(value: unknown): unknown {
 function projectionHasField(projection: Projection | undefined): boolean {
   if (!projection) return false
   if (hasExpr(projection as any)) return hasField(projection as any)
-  if (!isRecord(projection) || querySource(projection)) return false
+  if (isRecord(projection) && querySource(projection))
+    return projectionHasField((projection as EdgeQuery<Projection>).select)
+  if (!isRecord(projection)) return false
   return Object.values(projection).some(value =>
     projectionHasField(value as Projection)
   )
@@ -667,7 +987,6 @@ export function compileRxbEntryQueryConstraints(
 export function unsupportedRxbEntryQueryReason(
   query: GraphQuery
 ): string | undefined {
-  if (querySource(query)) return 'edges'
   if (query.select) {
     const reason = unsupportedEntryProjectionReason(query.select as Projection)
     if (reason) return `projection ${reason}`
@@ -715,7 +1034,12 @@ function unsupportedEntryProjectionReason(
     return expr.type
   }
   if (!isRecord(projection)) return 'non-object projection'
-  if (querySource(projection)) return 'edges'
+  if (querySource(projection)) {
+    const reason = unsupportedRxbEntryQueryReason(
+      projection as EdgeQuery<Projection>
+    )
+    return reason ? `edge ${reason}` : undefined
+  }
   for (const value of Object.values(projection)) {
     const reason = unsupportedEntryProjectionReason(value as Projection)
     if (reason) return reason
@@ -755,6 +1079,12 @@ function canOrderByRowId(orderBy: Order | Array<Order> | undefined): boolean {
       expr && hasExpr(expr as any) && getExpr(expr as any).type === 'entryField'
     )
   })
+}
+
+function isEdgeSingleResult(query: GraphQuery & Partial<EdgeQuery>): boolean {
+  return Boolean(
+    query.edge === 'parent' || query.edge === 'next' || query.edge === 'previous'
+  )
 }
 
 function windowRowIds(

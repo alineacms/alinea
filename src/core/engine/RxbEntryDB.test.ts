@@ -11,6 +11,7 @@ import {MemorySource} from '../source/MemorySource.js'
 import {
   createRxbEntryArtifact,
   encodeRxbEntryArtifact,
+  RxbLocalDB,
   RxbEntryDB
 } from './index.js'
 import {EntryIndex} from '../db/EntryIndex.js'
@@ -534,6 +535,65 @@ test('RXB entry DB compressed export stays smaller than source export', async ()
   )
 
   test.ok(rxbBytes < sourceBytes)
+})
+
+test('RXB local DB can open from a source, resolve, mutate, sync, and export bytes', async () => {
+  const local = await createSource([
+    entry('article-alpha', 'a1', 'alpha', 'Alpha', 10)
+  ])
+  const remote = await createSource([
+    entry('article-alpha', 'a1', 'alpha', 'Remote Alpha', 15),
+    entry('article-beta', 'a2', 'beta', 'Beta', 20)
+  ])
+  const db = await RxbLocalDB.fromSource(config, local)
+
+  test.is(
+    await db.resolve({
+      id: 'article-alpha',
+      select: Entry.title,
+      get: true
+    } as any),
+    'Alpha'
+  )
+
+  await db.mutate([
+    {
+      op: 'update',
+      id: 'article-alpha',
+      locale: null,
+      status: 'published',
+      set: {title: 'Optimistic Alpha'}
+    }
+  ])
+  test.is(
+    await db.resolve({
+      id: 'article-alpha',
+      select: Entry.title,
+      get: true
+    } as any),
+    'Optimistic Alpha'
+  )
+
+  await db.syncWith(remote)
+  test.equal(
+    await db.resolve({
+      type: 'QueryArticle',
+      orderBy: {asc: Entry.title},
+      select: Entry.title
+    } as any),
+    ['Beta', 'Remote Alpha']
+  )
+  test.ok(db.exportBytes().byteLength > 0)
+
+  const reopened = RxbLocalDB.open(config, db.bytes)
+  test.is(
+    await reopened.resolve({
+      id: 'article-beta',
+      select: Entry.title,
+      get: true
+    } as any),
+    'Beta'
+  )
 })
 
 function entry(

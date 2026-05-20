@@ -111,6 +111,10 @@ export class RxbEntryDB extends Graph {
     return this.#artifact
   }
 
+  get tree(): ReadonlyTree {
+    return ReadonlyTree.fromFlat(this.#artifact.payload.tree)
+  }
+
   get bytes(): Uint8Array {
     return this.exportBytes()
   }
