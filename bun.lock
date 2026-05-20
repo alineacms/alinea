@@ -11,6 +11,7 @@
       "devDependencies": {
         "@alinea/styler": "^1.0.3",
         "@alinea/suite": "^0.6.3",
+        "@creationix/rx": "^0.9.1",
         "@esbx/reporter": "^0.0.20",
         "@esbx/workspaces": "^0.0.20",
         "@ladle/react": "^4.1.2",
@@ -252,6 +253,8 @@
     "@bundled-es-modules/statuses": ["@bundled-es-modules/statuses@1.0.1", "", { "dependencies": { "statuses": "^2.0.1" } }, "sha512-yn7BklA5acgcBr+7w064fGV+SGIFySjCKpqjcWgBAIfrAkY+4GQTJJHQMeT3V/sgz23VTEVV8TtOmkvJAhFVfg=="],
 
     "@bundled-es-modules/tough-cookie": ["@bundled-es-modules/tough-cookie@0.1.6", "", { "dependencies": { "@types/tough-cookie": "^4.0.5", "tough-cookie": "^4.1.4" } }, "sha512-dvMHbL464C0zI+Yqxbz6kZ5TOEp7GLW+pry/RWndAR8MJQAXZ2rPmIs8tziTZjeIyhSNZgZbCePtfSbdWqStJw=="],
+
+    "@creationix/rx": ["@creationix/rx@0.9.1", "", { "bin": { "rx": "dist/rx-cli.js" } }, "sha512-6pvUQYod2JTUaB/InNsoOUIONEfZCBPSRzYZ9FXfcaZcX7nsD898GOr4qIg857C6WcbIHCTT6gkSlzja4dIecw=="],
 
     "@dependents/detective-less": ["@dependents/detective-less@3.0.2", "", { "dependencies": { "gonzales-pe": "^4.3.0", "node-source-walk": "^5.0.1" } }, "sha512-1YUvQ+e0eeTWAHoN8Uz2x2U37jZs6IGutiIE5LXId7cxfUGhtZjzxE06FdUiuiRrW+UE0vNCdSNPH2lY4dQCOQ=="],
 

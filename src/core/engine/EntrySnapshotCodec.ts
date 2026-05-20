@@ -270,15 +270,18 @@ function unpackTree(
   tree: PackedFlatTree,
   decode: (value: string) => string
 ): FlatTree {
-  const rows = countPackedRows(tree.p)
+  const paths = unpackStringsColumn(tree.p, decode)
+  const modes = unpackStringsColumn(tree.m, decode)
+  const shas = unpackStringsColumn(tree.h, decode)
+  const types = unpackStringsColumn(tree.y, decode)
   return {
     sha: decode(tree.s),
-    tree: Array.from({length: rows}, (_, index) => {
+    tree: Array.from({length: paths.length}, (_, index) => {
       return {
-        path: unpackString(tree.p, index, decode),
-        mode: unpackString(tree.m, index, decode),
-        sha: unpackString(tree.h, index, decode),
-        type: unpackString(tree.y, index, decode)
+        path: paths[index],
+        mode: modes[index],
+        sha: shas[index],
+        type: types[index]
       }
     })
   }
@@ -473,57 +476,108 @@ function unpackEntryRows(
   const versionRows = countPackedRows(rows.v[0])
   const languageRows = countPackedRows(rows.l[0])
   const nodeRows = countPackedRows(rows.n[0])
+  const versionColumns = {
+    rowId: unpackStringsColumn(rows.v[0], decode),
+    versionId: unpackStringsColumn(rows.v[1], decode),
+    nodeId: unpackStringsColumn(rows.v[2], decode),
+    languageId: unpackStringsColumn(rows.v[3], decode),
+    id: unpackStringsColumn(rows.v[4], decode),
+    type: unpackStringsColumn(rows.v[5], decode),
+    index: unpackStringsColumn(rows.v[6], decode),
+    title: unpackStringsColumn(rows.v[7], decode),
+    searchableText: unpackStringsColumn(rows.v[8], decode),
+    seeded: unpackNullableStringsColumn(rows.v[9], decode),
+    rowHash: unpackStringsColumn(rows.v[10], decode),
+    fileHash: unpackStringsColumn(rows.v[11], decode),
+    data: unpackDataRows(rows.v[12], decode),
+    status: unpackStatusesColumn(rows.v[13]),
+    locale: unpackNullableStringsColumn(rows.v[14], decode),
+    workspace: unpackStringsColumn(rows.v[15], decode),
+    root: unpackStringsColumn(rows.v[16], decode),
+    path: unpackStringsColumn(rows.v[17], decode),
+    parentDir: unpackStringsColumn(rows.v[18], decode),
+    childrenDir: unpackStringsColumn(rows.v[19], decode),
+    filePath: unpackStringsColumn(rows.v[20], decode),
+    level: unpackNumbersColumn(rows.v[21])
+  }
+  const languageColumns = {
+    languageId: unpackStringsColumn(rows.l[0], decode),
+    nodeId: unpackStringsColumn(rows.l[1], decode),
+    locale: unpackNullableStringsColumn(rows.l[2], decode),
+    parentDir: unpackStringsColumn(rows.l[3], decode),
+    selfDir: unpackStringsColumn(rows.l[4], decode),
+    activeRowId: unpackStringsColumn(rows.l[5], decode),
+    mainRowId: unpackStringsColumn(rows.l[6], decode),
+    inheritedStatus: unpackNullableStatusesColumn(rows.l[7]),
+    url: unpackStringsColumn(rows.l[8], decode),
+    path: unpackStringsColumn(rows.l[9], decode),
+    seeded: unpackNullableStringsColumn(rows.l[10], decode),
+    versionRowIds: unpackStringArrays(rows.l[11], languageRows, decode)
+  }
+  const nodeColumns = {
+    nodeId: unpackStringsColumn(rows.n[0], decode),
+    id: unpackStringsColumn(rows.n[1], decode),
+    index: unpackStringsColumn(rows.n[2], decode),
+    parentId: unpackNullableStringsColumn(rows.n[3], decode),
+    parents: unpackStringArrays(rows.n[4], nodeRows, decode),
+    workspace: unpackStringsColumn(rows.n[5], decode),
+    root: unpackStringsColumn(rows.n[6], decode),
+    type: unpackStringsColumn(rows.n[7], decode),
+    level: unpackNumbersColumn(rows.n[8]),
+    languageIds: unpackStringArrays(rows.n[9], nodeRows, decode),
+    childNodeIds: unpackStringArrays(rows.n[10], nodeRows, decode)
+  }
   return {
     v: Array.from({length: versionRows}, (_, index) => [
-      unpackString(rows.v[0], index, decode),
-      unpackString(rows.v[1], index, decode),
-      unpackString(rows.v[2], index, decode),
-      unpackString(rows.v[3], index, decode),
-      unpackString(rows.v[4], index, decode),
-      unpackString(rows.v[5], index, decode),
-      unpackString(rows.v[6], index, decode),
-      unpackString(rows.v[7], index, decode),
-      unpackString(rows.v[8], index, decode),
-      unpackNullableString(rows.v[9], index, decode),
-      unpackString(rows.v[10], index, decode),
-      unpackString(rows.v[11], index, decode),
-      unpackDataRows(rows.v[12], decode)[index],
-      unpackStatus(rows.v[13], index),
-      unpackNullableString(rows.v[14], index, decode),
-      unpackString(rows.v[15], index, decode),
-      unpackString(rows.v[16], index, decode),
-      unpackString(rows.v[17], index, decode),
-      unpackString(rows.v[18], index, decode),
-      unpackString(rows.v[19], index, decode),
-      unpackString(rows.v[20], index, decode),
-      unpackNumber(rows.v[21], index)
+      versionColumns.rowId[index],
+      versionColumns.versionId[index],
+      versionColumns.nodeId[index],
+      versionColumns.languageId[index],
+      versionColumns.id[index],
+      versionColumns.type[index],
+      versionColumns.index[index],
+      versionColumns.title[index],
+      versionColumns.searchableText[index],
+      versionColumns.seeded[index],
+      versionColumns.rowHash[index],
+      versionColumns.fileHash[index],
+      versionColumns.data[index],
+      versionColumns.status[index],
+      versionColumns.locale[index],
+      versionColumns.workspace[index],
+      versionColumns.root[index],
+      versionColumns.path[index],
+      versionColumns.parentDir[index],
+      versionColumns.childrenDir[index],
+      versionColumns.filePath[index],
+      versionColumns.level[index]
     ]),
     l: Array.from({length: languageRows}, (_, index) => [
-      unpackString(rows.l[0], index, decode),
-      unpackString(rows.l[1], index, decode),
-      unpackNullableString(rows.l[2], index, decode),
-      unpackString(rows.l[3], index, decode),
-      unpackString(rows.l[4], index, decode),
-      unpackString(rows.l[5], index, decode),
-      unpackString(rows.l[6], index, decode),
-      unpackNullableStatus(rows.l[7], index),
-      unpackString(rows.l[8], index, decode),
-      unpackString(rows.l[9], index, decode),
-      unpackNullableString(rows.l[10], index, decode),
-      unpackStringArrays(rows.l[11], languageRows, decode)[index]
+      languageColumns.languageId[index],
+      languageColumns.nodeId[index],
+      languageColumns.locale[index],
+      languageColumns.parentDir[index],
+      languageColumns.selfDir[index],
+      languageColumns.activeRowId[index],
+      languageColumns.mainRowId[index],
+      languageColumns.inheritedStatus[index],
+      languageColumns.url[index],
+      languageColumns.path[index],
+      languageColumns.seeded[index],
+      languageColumns.versionRowIds[index]
     ]),
     n: Array.from({length: nodeRows}, (_, index) => [
-      unpackString(rows.n[0], index, decode),
-      unpackString(rows.n[1], index, decode),
-      unpackString(rows.n[2], index, decode),
-      unpackNullableString(rows.n[3], index, decode),
-      unpackStringArrays(rows.n[4], nodeRows, decode)[index],
-      unpackString(rows.n[5], index, decode),
-      unpackString(rows.n[6], index, decode),
-      unpackString(rows.n[7], index, decode),
-      unpackNumber(rows.n[8], index),
-      unpackStringArrays(rows.n[9], nodeRows, decode)[index],
-      unpackStringArrays(rows.n[10], nodeRows, decode)[index]
+      nodeColumns.nodeId[index],
+      nodeColumns.id[index],
+      nodeColumns.index[index],
+      nodeColumns.parentId[index],
+      nodeColumns.parents[index],
+      nodeColumns.workspace[index],
+      nodeColumns.root[index],
+      nodeColumns.type[index],
+      nodeColumns.level[index],
+      nodeColumns.languageIds[index],
+      nodeColumns.childNodeIds[index]
     ])
   }
 }
@@ -724,7 +778,7 @@ function unpackDataRows(
   rows: PackedDataRows,
   decode: (value: string) => string
 ): Array<Record<string, unknown>> {
-  const indexes = rows.i === '' ? [] : rows.i.split(',').map(Number)
+  const indexes = unpackNumbersColumn(rows.i)
   return rows.v.map((values, rowIndex) => {
     const keys = rows.k[indexes[rowIndex]]
     return Object.fromEntries(
@@ -759,21 +813,41 @@ function unpackJson(
   )
 }
 
-function unpackString(
+function unpackStringsColumn(
   column: string,
-  index: number,
   decode: (value: string) => string
-): string {
-  return decode(column.split(',')[index])
+): Array<string> {
+  if (column === '') return []
+  return column.split(',').map(decode)
 }
 
-function unpackNullableString(
+function unpackNullableStringsColumn(
   column: string,
-  index: number,
   decode: (value: string) => string
-): string | null {
-  const value = column.split(',')[index]
-  return value === '-' ? null : decode(value)
+): Array<string | null> {
+  if (column === '') return []
+  return column.split(',').map(value => (value === '-' ? null : decode(value)))
+}
+
+function unpackNumbersColumn(column: string): Array<number> {
+  if (column === '') return []
+  return column.split(',').map(value => parseInt(value, 36))
+}
+
+function unpackStatusesColumn(column: string): Array<EntryStatus> {
+  if (column === '') return []
+  return Array.from(column, value =>
+    statusFromCode(Number(value) as PackedStatus)
+  )
+}
+
+function unpackNullableStatusesColumn(
+  column: string
+): Array<EntryStatus | null> {
+  if (column === '') return []
+  return Array.from(column, value =>
+    value === '-' ? null : statusFromCode(Number(value) as PackedStatus)
+  )
 }
 
 function unpackStringArrays(
@@ -786,22 +860,6 @@ function unpackStringArrays(
     if (row === '') return []
     return row.split(',').map(decode)
   })
-}
-
-function unpackNumber(column: string, index: number): number {
-  return parseInt(column.split(',')[index], 36)
-}
-
-function unpackStatus(column: string, index: number): EntryStatus {
-  return statusFromCode(Number(column[index]) as PackedStatus)
-}
-
-function unpackNullableStatus(
-  column: string,
-  index: number
-): EntryStatus | null {
-  const value = column[index]
-  return value === '-' ? null : statusFromCode(Number(value) as PackedStatus)
 }
 
 function countPackedRows(column: string): number {

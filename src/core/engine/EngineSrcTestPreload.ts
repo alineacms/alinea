@@ -5,7 +5,7 @@ plugin({
   setup(build) {
     build.module('alinea/core/db/LocalDB', async () => {
       return {
-        exports: await import('./LocalDB.ts'),
+        exports: await import('./LocalDB.js'),
         loader: 'object'
       }
     })

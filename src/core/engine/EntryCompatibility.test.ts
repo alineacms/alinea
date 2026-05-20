@@ -1,5 +1,7 @@
 import {suite} from '@alinea/suite'
+import {Config, Field} from 'alinea'
 import {cms} from '../../test/cms.js'
+import {createConfig} from '../Config.js'
 import {Entry} from '../Entry.js'
 import {createRecord} from '../EntryRecord.js'
 import {LocalDB as BaseLocalDB} from '../db/LocalDB.js'
@@ -21,10 +23,131 @@ const dir = 'src/test/fixtures/demo'
 const fixtureSource = new FSSource(dir)
 const {schema} = cms
 
+const QueryArticle = Config.document('QueryArticle', {
+  fields: {
+    title: Field.text('Title'),
+    path: Field.path('Path'),
+    score: Field.number('Score'),
+    featured: Field.check('Featured'),
+    body: Field.text('Body'),
+    meta: Field.object('Meta', {
+      fields: {
+        inner: Field.text('Inner')
+      }
+    }),
+    tags: Field.list('Tags', {
+      schema: {
+        tag: Config.type('Tag', {
+          fields: {
+            itemId: Field.text('Item id')
+          }
+        })
+      }
+    })
+  }
+})
+
+const queryConfig = createConfig({
+  schema: {QueryArticle},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {
+        pages: Config.root('Pages', {contains: ['QueryArticle']})
+      }
+    })
+  }
+})
+
 async function copyFixture() {
   const source = new MemorySource()
   await syncWith(source, fixtureSource)
   return source
+}
+
+async function createQueryFixtureSource() {
+  const source = new MemorySource()
+  const tree = await source.getTree()
+  const entries = [
+    {
+      id: 'article-alpha',
+      index: 'a1',
+      path: 'alpha',
+      data: {
+        title: 'Alpha',
+        score: 10,
+        featured: true,
+        body: 'red body',
+        meta: {inner: 'x'},
+        tags: [{itemId: 'one'}, {itemId: 'two'}]
+      }
+    },
+    {
+      id: 'article-beta',
+      index: 'a2',
+      path: 'beta',
+      data: {
+        title: 'Beta',
+        score: 20,
+        featured: false,
+        body: 'blue body',
+        meta: {inner: 'y'},
+        tags: [{itemId: 'two'}]
+      }
+    },
+    {
+      id: 'article-gamma',
+      index: 'a3',
+      path: 'gamma',
+      data: {
+        title: 'Gamma',
+        score: 30,
+        featured: true,
+        body: 'green body',
+        meta: {inner: 'x'},
+        tags: [{itemId: 'three'}]
+      }
+    }
+  ]
+  const changes = await Promise.all(
+    entries.map(async entry => {
+      const record = createRecord(
+        {
+          id: entry.id,
+          type: 'QueryArticle',
+          index: entry.index,
+          root: 'pages',
+          path: entry.path,
+          title: entry.data.title,
+          seeded: null,
+          data: {...entry.data, path: entry.path}
+        },
+        'published'
+      )
+      const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
+      const sha = await hashBlob(contents)
+      return {
+        op: 'add' as const,
+        path: `pages/${entry.path}.json`,
+        sha,
+        contents
+      }
+    })
+  )
+  await source.applyChanges({fromSha: tree.sha, changes})
+  return source
+}
+
+async function createQueryResolvers() {
+  const source = await createQueryFixtureSource()
+  const baseIndex = new BaseEntryIndex(queryConfig)
+  const engineIndex = new EntryIndex(queryConfig)
+  await baseIndex.syncWith(source)
+  await engineIndex.syncWith(source)
+  return {
+    base: new BaseEntryResolver(queryConfig, baseIndex),
+    engine: new EntryResolver(queryConfig, engineIndex)
+  }
 }
 
 test('engine EntryIndex filters match the current EntryIndex', async () => {
@@ -202,6 +325,73 @@ test('engine EntryResolver resolves the same rows as current resolver', async ()
     test.equal(
       await engine.resolve(indexedQuery as any),
       await base.resolve(indexedQuery as any)
+    )
+  }
+})
+
+test('engine EntryResolver matches non-indexed field filters', async () => {
+  const {base, engine} = await createQueryResolvers()
+  const queries = [
+    {
+      type: QueryArticle,
+      filter: {
+        title: {
+          startsWith: 'Al',
+          in: ['Alpha', 'Gamma'],
+          isNot: 'Beta'
+        }
+      },
+      select: Entry.id
+    },
+    {
+      type: QueryArticle,
+      filter: {
+        score: {
+          gt: 10,
+          gte: 20,
+          lt: 31,
+          lte: 30,
+          notIn: [10]
+        }
+      },
+      orderBy: {desc: QueryArticle.score},
+      select: {
+        id: Entry.id,
+        score: QueryArticle.score
+      }
+    },
+    {
+      type: QueryArticle,
+      filter: {
+        and: [
+          {featured: true},
+          {meta: {has: {inner: {is: 'x'}}}},
+          {tags: {includes: {itemId: {is: 'two'}}}}
+        ]
+      },
+      select: Entry.id
+    },
+    {
+      type: QueryArticle,
+      id: {in: ['article-alpha', 'article-beta', 'missing']},
+      filter: {
+        or: [{title: 'Beta'}, {body: {startsWith: 'red'}}]
+      },
+      orderBy: {asc: QueryArticle.title},
+      select: Entry.id
+    },
+    {
+      filter: {
+        score: {gte: 20}
+      },
+      count: true
+    }
+  ]
+
+  for (const query of queries) {
+    test.equal(
+      await engine.resolve(query as any),
+      await base.resolve(query as any)
     )
   }
 })
