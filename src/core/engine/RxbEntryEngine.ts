@@ -78,7 +78,8 @@ export class RxbEntryEngine implements EntryEngine {
     options?: EntryQueryOptions
   ): Promise<Value | TracedEntryQueryResult<Value>> {
     const unsupported = unsupportedRxbEntryQueryReason(plan.query)
-    if (unsupported) throw new Error(`Unsupported RXB engine query: ${unsupported}`)
+    if (unsupported)
+      throw new Error(`Unsupported RXB engine query: ${unsupported}`)
 
     const constraints =
       plan.constraints ?? compileRxbEntryQueryConstraints(plan.query)
@@ -150,6 +151,7 @@ export class RxbEntryEngine implements EntryEngine {
       versionId: _versionId,
       nodeId: _nodeId,
       languageId: _languageId,
+      versionStatus: _versionStatus,
       ...entry
     } = row
     this.#entries.set(row.rowId, entry)
@@ -180,7 +182,9 @@ export class RxbEntryEngine implements EntryEngine {
   }
 
   async applyChanges(_batch: ChangesBatch): Promise<EntryEngine> {
-    throw new Error('RXB entry engine change application is not implemented yet')
+    throw new Error(
+      'RXB entry engine change application is not implemented yet'
+    )
   }
 
   exportSnapshot(): EntrySnapshot {
@@ -202,7 +206,8 @@ export function compileRxbEntryQueryConstraints(
   query: GraphQuery
 ): EntryQueryConstraints | undefined {
   const unsupported = unsupportedRxbEntryQueryReason(query)
-  if (unsupported) throw new Error(`Unsupported RXB engine query: ${unsupported}`)
+  if (unsupported)
+    throw new Error(`Unsupported RXB engine query: ${unsupported}`)
 
   const constraints: EntryQueryConstraints = {}
   const id = stringValues(query.id)
@@ -289,7 +294,10 @@ function orderRows(rows: Array<RxbEntryRow>, orderBy: Order | Array<Order>) {
   })
 }
 
-function groupRows(rows: Array<RxbEntryRow>, groupBy: Expr): Array<RxbEntryRow> {
+function groupRows(
+  rows: Array<RxbEntryRow>,
+  groupBy: Expr
+): Array<RxbEntryRow> {
   const groups = new Map<unknown, RxbEntryRow>()
   const internal = getExpr(groupBy as any)
   for (const row of rows) {

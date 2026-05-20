@@ -66,6 +66,7 @@ export interface RxbEntryRow {
   rowHash: string
   fileHash: string
   data: Record<string, unknown>
+  versionStatus: EntryStatus
   status: EntryStatus
   locale: string | null
   workspace: string
@@ -104,6 +105,7 @@ export function createRxbEntryArtifact(
     if (!language || !node) continue
     rowsById[version.rowId] = {
       ...version,
+      versionStatus: version.status,
       status: language.inheritedStatus ?? version.status,
       parentId: node.parentId,
       parents: node.parents,
@@ -234,7 +236,9 @@ function addExact(
   if (!rows.includes(rowId)) rows.push(rowId)
 }
 
-function mapRows(index: Record<string, Array<string>>): Record<string, Array<string>> {
+function mapRows(
+  index: Record<string, Array<string>>
+): Record<string, Array<string>> {
   return Object.fromEntries(
     Object.entries(index).map(([key, rowIds]) => [key, Array.from(rowIds)])
   )
