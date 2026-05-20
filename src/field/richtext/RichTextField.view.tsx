@@ -337,14 +337,17 @@ function RTView<Blocks extends Schema>({
       content: value?.map(toContent) ?? []
     }
   }, [peekValue])
+  const base = useMemo(() => {
+    return values(options.extensions ?? baseExtensions)
+  }, [options.extensions])
   const extensions = useMemo(() => {
     const schemaExtensions = schemaToExtensions(
       node,
       options.schema,
       expandedByBlockId.current
     )
-    return [...values(baseExtensions), ...schemaExtensions]
-  }, [node, options.schema])
+    return [...base, ...schemaExtensions]
+  }, [base, node, options.schema])
   const readOnly = options.readOnly || node.readOnly
   const editable = !readOnly
   const focusToggle = useCallback(function focusToggle(
