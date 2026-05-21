@@ -14,7 +14,7 @@ import {useAtomValue} from 'jotai'
 import type {CSSProperties} from 'react'
 import {views} from '../views'
 
-const localise = localiser(['nl', 'fr'] as const)
+const localise = localiser({locales: ['nl', 'fr']})
 
 const pageType = type('Page', {
   fields: {

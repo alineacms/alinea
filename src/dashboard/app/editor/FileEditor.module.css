@@ -102,6 +102,9 @@
 
 .FileEditor-fields {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 @media (max-width: 800px) {

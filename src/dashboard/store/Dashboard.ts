@@ -2979,8 +2979,18 @@ export class ReactiveNode<Value = unknown> {
       },
       (get, set, update) => {
         const structure = get(this.nodes)
-        if (isObject<any>(structure) && structure[key])
-          set((structure[key] as ReactiveNode).value, update)
+        if (isObject<any>(structure))
+          if (structure[key])
+            set((structure[key] as ReactiveNode).value, update)
+          else
+            set(this.nodes, {
+              ...structure,
+              [key]: new ReactiveNode(update, this.readOnly)
+            })
+        else
+          set(this.nodes, {
+            [key]: new ReactiveNode(update, this.readOnly)
+          })
       }
     )
   })
