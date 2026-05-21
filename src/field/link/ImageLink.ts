@@ -18,6 +18,7 @@ import type {EntryReference} from '#/picker/entry/EntryReference.js'
 
 export interface ImageLink<InferredFields = undefined> extends EntryReference {
   title: string
+  alt?: string
   src: string
   url: string
   extension: string
@@ -33,6 +34,7 @@ export interface ImageLink<InferredFields = undefined> extends EntryReference {
 
 export namespace ImageLink {
   export const title = Entry.title
+  export const alt = MediaFile.alt
   export const src = MediaFile.location
   export const extension = MediaFile.extension
   export const size = MediaFile.size
@@ -76,6 +78,8 @@ function imagePicker<Fields>(
     selection: {
       ...ImageLink,
       filePath: Entry.filePath,
+      root: Entry.root,
+      workspace: Entry.workspace,
       previewUrl: MediaFile.previewUrl
     }
   })

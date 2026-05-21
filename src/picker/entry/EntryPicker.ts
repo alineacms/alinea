@@ -9,6 +9,7 @@ import {ListRow} from '#/core/shape/ListShape.js'
 import {RecordShape} from '#/core/shape/RecordShape.js'
 import {ScalarShape} from '#/core/shape/ScalarShape.js'
 import {assign, keys} from '#/core/util/Objects.js'
+import {selectLinkedLocalisedValue} from '#/field/localiser.js'
 import {EntryReference} from './EntryReference.js'
 
 export const unresolvedEntryMarker = Symbol('unresolvedEntryMarker')
@@ -94,13 +95,25 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         return
       }
       if (type !== 'image') return assign(row, extra)
-      const {src: location, previewUrl, filePath, ...rest} = extra
-      if (!previewUrl) return assign(row, extra, {src: location})
+      const {src: location, previewUrl, filePath, alt, root, workspace, ...rest} =
+        extra
+      const selectedAlt = selectLinkedLocalisedValue({
+        value: alt as string | Record<string, string>,
+        loader,
+        workspace,
+        root
+      })
+      if (!previewUrl) {
+        assign(row, rest, {src: location})
+        if (typeof selectedAlt === 'string') row.alt = selectedAlt
+        return
+      }
       // If the DB was built with this entry in it we can assume the location
       // is ready to use, otherwise use the preview url
       const locationAvailable = loader.includedAtBuild(filePath)
       const src = locationAvailable ? location : previewUrl
       row.src = src
+      if (typeof selectedAlt === 'string') row.alt = selectedAlt
       assign(row, rest)
     }
   }

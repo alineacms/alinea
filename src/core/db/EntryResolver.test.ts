@@ -1,5 +1,6 @@
 import {createCMS, Entry} from '#/core.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import {ListRow} from '#/core/shape/ListShape.js'
 import {Config, Field, Query} from '#/index.js'
 import {cms} from '#test/cms.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
@@ -201,6 +202,8 @@ const Article = Config.document('Article', {
     text: Field.text('Text'),
     single: Field.entry('Single'),
     multi: Field.entry.multiple('Multi'),
+    heroImage: Field.image('Hero image'),
+    gallery: Field.image.multiple('Gallery'),
     meta: Field.object('Meta', {
       fields: {inner: Field.text('Inner')}
     }),
@@ -223,6 +226,15 @@ const mainWorkspace = Config.workspace('Main', {
     localized: Config.root('Localized', {
       i18n: {locales: ['en', 'de']},
       contains: ['Article']
+    }),
+    media: Config.media({
+      i18n: {
+        locales: ['en', 'de', 'fr'],
+        fallback(requested) {
+          if (requested === 'de') return ['fr', 'en']
+          return ['en']
+        }
+      }
     })
   }
 })
@@ -252,6 +264,15 @@ const advancedEntries = [
       text: 'one two cookie four five',
       single: {_entry: 'child-2'},
       multi: [{_entry: 'child-2'}, {_entry: 'missing'}],
+      heroImage: {_type: 'image', _id: 'image-link-1', _entry: 'image-plain'},
+      gallery: [
+        {
+          [ListRow.id]: 'image-row-1',
+          [ListRow.index]: 'a0',
+          [ListRow.type]: 'image',
+          _entry: 'image-plain'
+        }
+      ],
       meta: {inner: 'x'},
       tags: [{itemId: 'a'}, {itemId: 'b'}]
     }
@@ -285,7 +306,12 @@ const advancedEntries = [
     root: 'localized',
     locale: 'en',
     path: 'trans',
-    data: {title: 'Trans EN', score: 1, text: 'trans en'}
+    data: {
+      title: 'Trans EN',
+      score: 1,
+      text: 'trans en',
+      heroImage: {_type: 'image', _id: 'image-link-2', _entry: 'image-i18n'}
+    }
   },
   {
     id: 'trans',
@@ -294,7 +320,54 @@ const advancedEntries = [
     root: 'localized',
     locale: 'de',
     path: 'trans',
-    data: {title: 'Trans DE', score: 1, text: 'trans de'}
+    data: {
+      title: 'Trans DE',
+      score: 1,
+      text: 'trans de',
+      heroImage: {_type: 'image', _id: 'image-link-2', _entry: 'image-i18n'}
+    }
+  },
+  {
+    id: 'image-plain',
+    type: 'MediaFile',
+    index: 'm1',
+    root: 'media',
+    path: 'plain-image',
+    data: {
+      title: 'Plain image',
+      location: '/plain.jpg',
+      previewUrl: '/preview/plain.jpg',
+      extension: '.jpg',
+      size: 12,
+      hash: 'plain-hash',
+      alt: 'Plain image alt',
+      width: 100,
+      height: 80,
+      averageColor: '#fff',
+      focus: {x: 0.5, y: 0.5},
+      thumbHash: 'plain-thumb'
+    }
+  },
+  {
+    id: 'image-i18n',
+    type: 'MediaFile',
+    index: 'm2',
+    root: 'media',
+    path: 'i18n-image',
+    data: {
+      title: 'I18n image',
+      location: '/i18n.jpg',
+      previewUrl: '/preview/i18n.jpg',
+      extension: '.jpg',
+      size: 24,
+      hash: 'i18n-hash',
+      alt: {en: 'English image alt', fr: 'Texte alternatif francais'},
+      width: 120,
+      height: 90,
+      averageColor: '#000',
+      focus: {x: 0.25, y: 0.75},
+      thumbHash: 'i18n-thumb'
+    }
   }
 ]
 
@@ -527,6 +600,35 @@ test('locales, translations and link edges', async () => {
     select: Article.multi.find({select: Query.id})
   })
   test.equal(linkedMany, ['child-2'])
+})
+
+test('image fields include alt text in query values', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const image = await resolver.resolve({
+    first: true,
+    id: 'child-1',
+    select: Article.heroImage
+  })
+  test.is(image?.alt, 'Plain image alt')
+
+  const gallery = await resolver.resolve({
+    first: true,
+    id: 'child-1',
+    select: Article.gallery
+  })
+  test.is(gallery?.[0]?.alt, 'Plain image alt')
+})
+
+test('image field alt text follows configured locale fallback', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const image = await resolver.resolve({
+    first: true,
+    locale: 'de',
+    root: mainWorkspace.localized,
+    id: 'trans',
+    select: Article.heroImage
+  })
+  test.is(image?.alt, 'Texte alternatif francais')
 })
 
 test('query mode helpers and groupBy validation', async () => {

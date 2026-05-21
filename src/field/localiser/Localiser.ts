@@ -1,6 +1,8 @@
+import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {FieldOptions} from '#/core/Field.js'
 import {Field} from '#/core/Field.js'
 import {getField} from '#/core/Internal.js'
+import {Root, type RootI18n} from '#/core/Root.js'
 import type {Shape} from '#/core/Shape.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {LocalisedShape, type LocalisedValue} from './LocalisedShape.js'
@@ -39,9 +41,25 @@ export class LocalisedField<
   }
 }
 
-interface LocaliserOptions<Locale extends string> {
+export interface LocaliserOptions<Locale extends string = string> {
   locales: ReadonlyArray<Locale>
   fallback?: (requested: Locale) => ReadonlyArray<Locale>
+}
+
+export interface SelectLocalisedValueOptions<Locale extends string, Value> {
+  value: LocalisedValue<Locale, Value>
+  locale: string | null
+  locales: ReadonlyArray<Locale>
+  fallback?: (requested: Locale) => ReadonlyArray<Locale>
+  defaultValue?: Value
+}
+
+export interface SelectLinkedLocalisedValueOptions<Value> {
+  value: LocalisedValue<string, Value> | Value
+  loader: LinkResolver
+  workspace: string
+  root: string
+  defaultValue?: Value
 }
 
 export function localiser<const Locale extends string>({
@@ -54,10 +72,11 @@ export function localiser<const Locale extends string>({
     field: Field<StoredValue, QueryValue, Mutator, Options>
   ): LocalisedField<Locale, StoredValue, QueryValue, Options> {
     const data = getField(field)
+    const innerShape = data.shape as Shape<StoredValue>
     const shape = new LocalisedShape<Locale, StoredValue>(
       data.shape.label,
       locales,
-      data.shape as Shape<StoredValue>
+      innerShape
     )
     return new LocalisedField<Locale, StoredValue, QueryValue, Options>(
       {
@@ -73,13 +92,13 @@ export function localiser<const Locale extends string>({
         } as Omit<Options, 'initialValue' | 'validate'> &
           FieldOptions<LocalisedValue<Locale, StoredValue>>,
         async queryValue(value, loader) {
-          const selected = selectLocalisedValue(
-            value ?? shape.create(),
-            loader.locale,
+          const selected = selectLocalisedValue<Locale, StoredValue>({
+            value: value ?? shape.create(),
+            locale: loader.locale,
             locales,
             fallback,
-            data.shape as Shape<StoredValue>
-          )
+            defaultValue: innerShape.create()
+          })
           return Field.queryValue(field, selected, loader)
         }
       },
@@ -97,22 +116,57 @@ export function localiser<const Locale extends string>({
   }
 }
 
-function selectLocalisedValue<Locale extends string, Value>(
-  value: LocalisedValue<Locale, Value>,
-  locale: string | null,
-  locales: ReadonlyArray<Locale>,
-  fallback: ((requested: Locale) => ReadonlyArray<Locale>) | undefined,
-  shape: Shape<Value>
-): Value {
+export function selectLocalisedValue<Locale extends string, Value>({
+  value,
+  locale,
+  locales,
+  fallback,
+  defaultValue
+}: SelectLocalisedValueOptions<Locale, Value>): Value {
+  const localisedValue = value as Partial<LocalisedValue<Locale, Value>>
   const requested = selectLocale(locale, locales)
-  const directValue = value[requested]
-  if (isAvailable(directValue)) return directValue
+  const directValue = localisedValue[requested]
+  if (isAvailable(directValue)) return directValue as Value
   const fallbacks = fallback?.(requested) ?? []
   for (const fallbackLocale of fallbacks) {
-    const fallbackValue = value[fallbackLocale]
-    if (isAvailable(fallbackValue)) return fallbackValue
+    const fallbackValue = localisedValue[fallbackLocale]
+    if (isAvailable(fallbackValue)) return fallbackValue as Value
   }
-  return directValue === undefined ? shape.create() : directValue
+  return directValue === undefined && defaultValue !== undefined
+    ? defaultValue
+    : (directValue as Value)
+}
+
+export function selectLinkedLocalisedValue<Value>({
+  value,
+  loader,
+  workspace,
+  root,
+  defaultValue
+}: SelectLinkedLocalisedValueOptions<Value>): Value | LocalisedValue<string, Value> {
+  if (!isRecord(value)) return value
+  const localisation = linkedLocalisation(loader, workspace, root)
+  if (!localisation) return value
+  return selectLocalisedValue({
+    value: value as LocalisedValue<string, Value>,
+    locale: loader.locale,
+    locales: localisation.locales,
+    fallback: localisation.fallback,
+    defaultValue
+  })
+}
+
+function linkedLocalisation(
+  loader: LinkResolver,
+  workspaceName: string,
+  rootName: string
+): LocaliserOptions | undefined {
+  const workspace = loader.resolver.config.workspaces[workspaceName]
+  const root = workspace?.[rootName]
+  if (!root) return
+  const rootData = Root.data(root)
+  const mediaI18n = (rootData as {_media?: {i18n?: RootI18n}})._media?.i18n
+  return mediaI18n ?? rootData.i18n
 }
 
 function selectLocale<Locale extends string>(
@@ -127,4 +181,8 @@ function selectLocale<Locale extends string>(
 
 function isAvailable<Value>(value: Value | undefined): value is Value {
   return value !== undefined && value !== null && value !== ''
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }

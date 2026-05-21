@@ -57,7 +57,7 @@ export class EntryResolver implements Resolver {
   index: EntryIndex
   #scope: Scope
 
-  constructor(config: Config, index: EntryIndex) {
+  constructor(public config: Config, index: EntryIndex) {
     this.#scope = getScope(config)
     this.index = index
   }
