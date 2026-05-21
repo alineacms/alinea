@@ -401,7 +401,10 @@ export class RichTextShape<Blocks>
       }
     }
   }
-  async applyLinks(doc: TextDoc<Blocks>, loader: LinkResolver): Promise<void> {
+  async applyLinkMarks(
+    doc: TextDoc<Blocks>,
+    loader: LinkResolver
+  ): Promise<void> {
     if (!Array.isArray(doc)) return
     const links = new Map<Mark, string>()
     iterMarks(doc, mark => {
@@ -423,8 +426,13 @@ export class RichTextShape<Blocks>
         if (data) mark!.href = type === 'file' ? data.location : data.url
       }
     }
+    await loadLinks()
+  }
+
+  async applyLinks(doc: TextDoc<Blocks>, loader: LinkResolver): Promise<void> {
+    if (!Array.isArray(doc)) return
     await Promise.all(
-      [loadLinks()].concat(
+      [this.applyLinkMarks(doc, loader)].concat(
         doc.flatMap(row => {
           if (!this.blocks || !Node.isBlock(row)) return []
           const shape = this.blocks[row[Node.type]]

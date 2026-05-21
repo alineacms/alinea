@@ -7,6 +7,7 @@ import {LocalisedShape, type LocalisedValue} from './LocalisedShape.js'
 
 export interface Localisation<Locale extends string = string, Value = unknown> {
   locales: ReadonlyArray<Locale>
+  fallback?: (requested: Locale) => ReadonlyArray<Locale>
   inner: Field<Value, unknown, unknown, FieldOptions<Value>>
 }
 
@@ -17,7 +18,7 @@ export class LocalisedField<
   Options
 > extends Field<
   LocalisedValue<Locale, StoredValue>,
-  Record<Locale, QueryValue>,
+  QueryValue,
   (value: LocalisedValue<Locale, StoredValue>) => void,
   Omit<Options, 'initialValue' | 'validate'> &
     FieldOptions<LocalisedValue<Locale, StoredValue>>
@@ -26,7 +27,7 @@ export class LocalisedField<
     data: ConstructorParameters<
       typeof Field<
         LocalisedValue<Locale, StoredValue>,
-        Record<Locale, QueryValue>,
+        QueryValue,
         (value: LocalisedValue<Locale, StoredValue>) => void,
         Omit<Options, 'initialValue' | 'validate'> &
           FieldOptions<LocalisedValue<Locale, StoredValue>>
@@ -44,7 +45,8 @@ interface LocaliserOptions<Locale extends string> {
 }
 
 export function localiser<const Locale extends string>({
-  locales
+  locales,
+  fallback
 }: LocaliserOptions<Locale>) {
   if (locales.length === 0)
     throw new Error('Field localiser requires at least one locale')
@@ -69,10 +71,21 @@ export function localiser<const Locale extends string>({
           ...data.options,
           initialValue: shape.initialValue
         } as Omit<Options, 'initialValue' | 'validate'> &
-          FieldOptions<LocalisedValue<Locale, StoredValue>>
+          FieldOptions<LocalisedValue<Locale, StoredValue>>,
+        async queryValue(value, loader) {
+          const selected = selectLocalisedValue(
+            value ?? shape.create(),
+            loader.locale,
+            locales,
+            fallback,
+            data.shape as Shape<StoredValue>
+          )
+          return Field.queryValue(field, selected, loader)
+        }
       },
       {
         locales,
+        fallback,
         inner: field as Field<
           StoredValue,
           unknown,
@@ -82,4 +95,36 @@ export function localiser<const Locale extends string>({
       }
     )
   }
+}
+
+function selectLocalisedValue<Locale extends string, Value>(
+  value: LocalisedValue<Locale, Value>,
+  locale: string | null,
+  locales: ReadonlyArray<Locale>,
+  fallback: ((requested: Locale) => ReadonlyArray<Locale>) | undefined,
+  shape: Shape<Value>
+): Value {
+  const requested = selectLocale(locale, locales)
+  const directValue = value[requested]
+  if (isAvailable(directValue)) return directValue
+  const fallbacks = fallback?.(requested) ?? []
+  for (const fallbackLocale of fallbacks) {
+    const fallbackValue = value[fallbackLocale]
+    if (isAvailable(fallbackValue)) return fallbackValue
+  }
+  return directValue === undefined ? shape.create() : directValue
+}
+
+function selectLocale<Locale extends string>(
+  locale: string | null,
+  locales: ReadonlyArray<Locale>
+): Locale {
+  const matchingLocale = locales.find(
+    candidate => candidate.toLowerCase() === locale?.toLowerCase()
+  )
+  return matchingLocale ?? locales[0]
+}
+
+function isAvailable<Value>(value: Value | undefined): value is Value {
+  return value !== undefined && value !== null && value !== ''
 }

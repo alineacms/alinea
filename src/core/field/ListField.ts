@@ -1,9 +1,11 @@
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {createId} from '../Id.js'
 import {Schema} from '../Schema.js'
-import {type ListMutator, type ListRow, ListShape} from '../shape/ListShape.js'
+import {type ListMutator, ListRow, ListShape} from '../shape/ListShape.js'
+import {Type} from '../Type.js'
 import type {RecordShape} from '../shape/RecordShape.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
+import {entries} from '../util/Objects.js'
 
 export class ListField<
   StoredValue extends ListRow,
@@ -25,15 +27,33 @@ export class ListField<
       Options
     >
   ) {
+    const customQueryValue = meta.queryValue
+    const shape = new ListShape(
+      meta.options.label,
+      shapes,
+      meta.options.initialValue
+    )
     super({
-      shape: new ListShape(
-        meta.options.label,
-        shapes,
-        meta.options.initialValue,
-        meta.postProcess
-      ),
+      shape,
       referencedViews: Schema.referencedViews(schema),
-      ...meta
+      ...meta,
+      async queryValue(value, loader) {
+        const rows = Array.isArray(value) ? value : []
+        await Promise.all(
+          rows.map(async row => {
+            const type = schema[row[ListRow.type]]
+            if (!type) return
+            const record = row as Record<string, unknown>
+            await Promise.all(
+              entries(Type.fields(type)).map(async ([key, field]) => {
+                record[key] = await Field.queryValue(field, record[key], loader)
+              })
+            )
+          })
+        )
+        if (customQueryValue) return customQueryValue(rows, loader)
+        return rows as unknown as Array<QueryValue>
+      }
     })
   }
 }

@@ -400,7 +400,11 @@ export class EntryResolver implements Resolver {
         const entry = entries[0]
         if (results[0]) {
           const linkResolver = new LinkResolver(this, ctx, entry.locale)
-          await this.postRow({linkResolver}, results[0], asEdge)
+          return (await this.postRow(
+            {linkResolver},
+            results[0],
+            asEdge
+          )) as any
         }
         return results[0] as any
       }
@@ -414,7 +418,11 @@ export class EntryResolver implements Resolver {
                 ctx,
                 entries[index].locale
               )
-              return this.postRow({linkResolver}, result, asEdge)
+              return this.postRow({linkResolver}, result, asEdge).then(
+                processed => {
+                  results[index] = processed
+                }
+              )
             })
             .filter(Boolean)
         )
@@ -432,48 +440,58 @@ export class EntryResolver implements Resolver {
     ctx: PostContext,
     interim: Interim,
     field: Field
-  ): Promise<void> {
-    const shape = Field.shape(field)
-    await shape.applyLinks(interim, ctx.linkResolver)
+  ): Promise<unknown> {
+    return Field.queryValue(field, interim, ctx.linkResolver)
   }
 
   async postExpr(
     ctx: PostContext,
     interim: Interim,
     expr: HasExpr
-  ): Promise<void> {
-    if (hasField(expr)) await this.postField(ctx, interim, expr as any)
+  ): Promise<unknown> {
+    if (hasField(expr)) return this.postField(ctx, interim, expr as any)
+    return interim
   }
 
   async postRow(
     ctx: PostContext,
     interim: Interim,
     query: GraphQuery<Projection>
-  ): Promise<void> {
-    if (!interim) return
+  ): Promise<unknown> {
+    if (!interim) return interim
     const selected = this.projection(query)
     if (hasExpr(selected)) return this.postExpr(ctx, interim, selected)
     if (queryEdge(selected))
       return this.post(ctx, interim, selected as EdgeQuery<Projection>)
     await Promise.all(
-      entries(selected).map(([key, value]) => {
+      entries(selected).map(async ([key, value]) => {
         const source = queryEdge(value)
         if (source)
-          return this.post(ctx, interim[key], value as EdgeQuery<Projection>)
-        return this.postExpr(ctx, interim[key], value as Expr)
+          interim[key] = await this.post(
+            ctx,
+            interim[key],
+            value as EdgeQuery<Projection>
+          )
+        else interim[key] = await this.postExpr(ctx, interim[key], value as Expr)
       })
     )
+    return interim
   }
 
   async post(
     ctx: PostContext,
     interim: Interim,
     input: EdgeQuery<Projection>
-  ): Promise<void> {
-    if (input.count === true) return
+  ): Promise<unknown> {
+    if (input.count === true) return interim
     const isSingle = this.isSingleResult(input)
     if (isSingle) return this.postRow(ctx, interim, input)
-    await Promise.all(interim.map((row: any) => this.postRow(ctx, row, input)))
+    await Promise.all(
+      interim.map(async (row: any, index: number) => {
+        interim[index] = await this.postRow(ctx, row, input)
+      })
+    )
+    return interim
   }
 
   async resolve<Query extends GraphQuery>(

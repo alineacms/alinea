@@ -3,7 +3,6 @@ import * as Y from 'yjs'
 import {createId} from '../Id.js'
 import type {Label} from '../Label.js'
 import type {Shape} from '../Shape.js'
-import type {PostProcess} from '../pages/PostProcess.js'
 import {entries, fromEntries} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
 import {ScalarShape} from './ScalarShape.js'
@@ -29,8 +28,7 @@ export class UnionShape<T extends UnionRow>
   constructor(
     public label: Label,
     shapes: Record<string, RecordShape>,
-    public initialValue?: T,
-    protected postProcess?: PostProcess<T>
+    public initialValue?: T
   ) {
     this.shapes = fromEntries(
       entries(shapes).map(([key, type]) => {
@@ -117,7 +115,6 @@ export class UnionShape<T extends UnionRow>
     const tasks = []
     if (shape) tasks.push(shape.applyLinks(value, loader))
     await Promise.all(tasks)
-    if (this.postProcess) await this.postProcess(value, loader)
   }
 
   toV1(value: any): T {

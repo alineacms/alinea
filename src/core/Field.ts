@@ -31,7 +31,10 @@ export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   view: View<{
     field: Field<StoredValue, QueryValue, Mutator, Options>
   }>
-  postProcess?: (value: StoredValue, loader: LinkResolver) => Promise<void>
+  queryValue?: (
+    value: StoredValue,
+    loader: LinkResolver
+  ) => Promise<QueryValue>
 }
 
 export interface FieldData<StoredValue, QueryValue, Mutator, Options>
@@ -108,6 +111,22 @@ export namespace Field {
     Options extends FieldOptions<StoredValue>
   >(field: Field<StoredValue, QueryValue, any, Options>): Options {
     return getField(field).options
+  }
+
+  export async function queryValue<
+    StoredValue,
+    QueryValue,
+    Mutator,
+    Options
+  >(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue,
+    loader: LinkResolver
+  ): Promise<QueryValue> {
+    const data = getField(field)
+    if (data.queryValue) return data.queryValue(value, loader)
+    await data.shape.applyLinks(value, loader)
+    return value as unknown as QueryValue
   }
 
   export function isField(value: any): value is Field {

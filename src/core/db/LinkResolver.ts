@@ -5,7 +5,7 @@ export class LinkResolver {
   constructor(
     public resolver: EntryResolver,
     private ctx: ResolveContext,
-    private locale: string | null
+    public locale: string | null
   ) {}
 
   includedAtBuild(filePath: string): boolean {

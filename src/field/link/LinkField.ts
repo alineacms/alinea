@@ -63,11 +63,12 @@ export function createLink<StoredValue extends Reference, QueryValue>(
   )
   return new LinkField(schema, shapes, {
     options: {label, initialValue: null!, ...options},
-    async postProcess(value, loader) {
+    async queryValue(value, loader) {
       const type = value[Reference.type]
       const picker = options.pickers[type]
-      if (!picker) return
+      if (!picker) return value as unknown as QueryValue
       if (picker.postProcess) await picker.postProcess(value, loader)
+      return value as unknown as QueryValue
     },
     view: viewKeys.SingleLinkInput
   })
@@ -125,7 +126,7 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
   )
   return new LinksField(schema, shapes, {
     options: {label, ...options},
-    async postProcess(rows, loader) {
+    async queryValue(rows, loader) {
       const tasks = []
       for (const row of rows) {
         const type = row[ListRow.type]
@@ -135,9 +136,12 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
       }
       await Promise.all(tasks)
       for (let index = rows.length - 1; index >= 0; index--) {
-        const row = rows[index] as any
+        const row = rows[index] as StoredValue & {
+          [unresolvedEntryMarker]?: true
+        }
         if (row[unresolvedEntryMarker]) rows.splice(index, 1)
       }
+      return rows as unknown as Array<QueryValue>
     },
     view: viewKeys.MultipleLinksInput
   })

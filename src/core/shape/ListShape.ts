@@ -3,7 +3,6 @@ import * as Y from 'yjs'
 import {createId} from '../Id.js'
 import type {Label} from '../Label.js'
 import type {Shape} from '../Shape.js'
-import type {PostProcess} from '../pages/PostProcess.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 import {RecordShape} from './RecordShape.js'
 import {ScalarShape} from './ScalarShape.js'
@@ -43,8 +42,7 @@ export class ListShape<Row extends ListRow>
   constructor(
     public label: Label,
     shapes: Record<string, RecordShape>,
-    public initialValue?: Array<Row>,
-    protected postProcess?: PostProcess<Array<Row>>
+    public initialValue?: Array<Row>
   ) {
     this.shapes = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
@@ -227,7 +225,6 @@ export class ListShape<Row extends ListRow>
       if (shape) tasks.push(shape.applyLinks(row, loader))
     }
     await Promise.all(tasks)
-    if (this.postProcess) await this.postProcess(value, loader)
   }
 
   searchableText(value: Array<Row>): string {

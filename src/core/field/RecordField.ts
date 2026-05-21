@@ -1,6 +1,7 @@
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {Type} from '../Type.js'
 import type {RecordMutator} from '../shape/RecordShape.js'
+import {entries} from '../util/Objects.js'
 
 export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
   Row,
@@ -15,6 +16,15 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
     super({
       shape: Type.shape(type) as any,
       referencedViews: Type.referencedViews(type),
+      async queryValue(value, loader) {
+        const row = (value ?? {}) as Record<string, unknown>
+        await Promise.all(
+          entries(Type.fields(type)).map(async ([key, field]) => {
+            row[key] = await Field.queryValue(field, row[key], loader)
+          })
+        )
+        return row as Row
+      },
       ...meta
     })
   }

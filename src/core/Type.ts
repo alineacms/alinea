@@ -56,7 +56,7 @@ export namespace Type {
     return shape(type).searchableText(value).trim()
   }
 
-  function fields(type: Type): Record<string, Field> {
+  export function fields(type: Type): Record<string, Field> {
     return getType(type).allFields
   }
 

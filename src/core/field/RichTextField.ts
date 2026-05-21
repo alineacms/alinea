@@ -9,6 +9,8 @@ import {
   type TextDoc,
   type TextNode
 } from '../TextDoc.js'
+import {Type} from '../Type.js'
+import {entries} from '../util/Objects.js'
 
 export class RichTextField<
   Blocks,
@@ -30,15 +32,41 @@ export class RichTextField<
       Options
     >
   ) {
+    const customQueryValue = meta.queryValue
+    const shape = new RichTextShape(
+      meta.options.label,
+      schema && Schema.shapes(schema),
+      meta.options.initialValue,
+      meta.options.searchable
+    )
     super({
-      shape: new RichTextShape(
-        meta.options.label,
-        schema && Schema.shapes(schema),
-        meta.options.initialValue,
-        meta.options.searchable
-      ),
+      shape,
       referencedViews: schema ? Schema.referencedViews(schema) : [],
-      ...meta
+      ...meta,
+      async queryValue(value, loader) {
+        const doc = Array.isArray(value) ? value : []
+        const tasks: Array<Promise<unknown>> = [shape.applyLinkMarks(doc, loader)]
+        for (const row of doc) {
+          if (!schema || !Node.isBlock(row)) continue
+          const type = schema[row[Node.type]]
+          if (!type) continue
+          const record = row as Record<string, unknown>
+          tasks.push(
+            Promise.all(
+              entries(Type.fields(type)).map(async ([key, field]) => {
+                record[key] = await Field.queryValue(
+                  field,
+                  record[key],
+                  loader
+                )
+              })
+            )
+          )
+        }
+        await Promise.all(tasks)
+        if (customQueryValue) return customQueryValue(doc, loader)
+        return doc
+      }
     })
   }
 }
