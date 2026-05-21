@@ -30,7 +30,7 @@ interface FileEditorProps {
 
 const alt = text('Alt text', {
   multiline: true,
-  placeholder: 'Describe the image for screen readers and SEO'
+  help: 'Describe the image for screen readers and SEO'
 })
 
 export function FileEditor({entry}: FileEditorProps) {

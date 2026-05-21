@@ -24,9 +24,7 @@ export const MediaFile = type('Media file', {
     extension: hidden<string>('Extension'),
     size: hidden<number>('File size'),
     hash: hidden<string>('Hash'),
-    alt: hidden<object>('Alt text', {
-      initialValue: {}
-    }),
+    alt: hidden<object>('Alt text'),
     width: hidden<number>('Image width'),
     height: hidden<number>('Image height'),
     preview: hidden<string>('Preview'),
