@@ -1,4 +1,4 @@
-import {useEntry, useUser} from 'alinea/dashboard'
+import {useEntry, useUser} from 'alinea/dashboard/hooks'
 
 export function CustomViewExample() {
   const entry = useEntry()

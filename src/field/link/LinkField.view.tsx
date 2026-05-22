@@ -16,6 +16,13 @@ import {
   SurfaceHeader
 } from '#/dashboard/app/ui/Surface.js'
 import {
+  useDashboard,
+  useField,
+  useFieldNode,
+  useFieldOptions,
+  useNodes
+} from '#/dashboard/hooks.js'
+import {
   IcRoundArrowDownward,
   IcRoundArrowUpward,
   IcRoundAttachFile,
@@ -29,12 +36,7 @@ import {
   type DashboardEntry,
   type DashboardEntryData,
   type ExplorerOptions,
-  ReactiveNode,
-  useDashboard,
-  useField,
-  useFieldNode,
-  useFieldOptions,
-  useNodes
+  ReactiveNode
 } from '#/dashboard/store.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
@@ -367,10 +369,7 @@ interface LoadedEntryParentLabelProps {
   suffix: string
 }
 
-function LoadedEntryParentLabel({
-  parent,
-  suffix
-}: LoadedEntryParentLabelProps) {
+function LoadedEntryParentLabel({parent, suffix}: LoadedEntryParentLabelProps) {
   const label = useAtomValue(parent.label)
   return (
     <>

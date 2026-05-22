@@ -31,7 +31,7 @@ import {
   useFieldOptions,
   useFieldView,
   useNodeEditor
-} from '../store/hooks.js'
+} from '../hooks.js'
 import type {DetailsBarStatus} from './DetailsBar.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'

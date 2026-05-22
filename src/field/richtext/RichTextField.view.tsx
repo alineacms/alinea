@@ -24,7 +24,7 @@ import {
   useFieldNode,
   useFieldOptions,
   useFieldSetter
-} from '#/dashboard/store/hooks.js'
+} from '#/dashboard/hooks.js'
 import {RichTextOptions} from '#/field/richtext/RichTextField.js'
 import styler from '@alinea/styler'
 import {Node as TipTapNode} from '@tiptap/core'

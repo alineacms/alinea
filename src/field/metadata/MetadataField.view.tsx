@@ -2,14 +2,14 @@ import {Button, Elevation, Label} from '#/components.js'
 import {PreviewMetadata} from '#/core/Preview.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {Surface, SurfaceContent} from '#/dashboard/app/ui/Surface.js'
-import {IcRoundPublic} from '#/dashboard/icons.js'
 import {
   useDashboard,
   useFieldError,
   useFieldNode,
   useFieldOptions,
   useFieldValue
-} from '#/dashboard/store.js'
+} from '#/dashboard/hooks.js'
+import {IcRoundPublic} from '#/dashboard/icons.js'
 import {
   MetadataField,
   MetadataTimestampField,

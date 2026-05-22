@@ -1,5 +1,5 @@
 import {TimeField as RacTimeField} from '#/components.js'
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {TimeField} from '#/field/time.js'
 import {parseTime} from '@internationalized/date'
 import {useMemo} from 'react'

@@ -1,2 +1,2 @@
 export * from './store/Dashboard.js'
-export * from './store/hooks.js'
+export * from './hooks.js'

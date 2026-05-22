@@ -1,5 +1,5 @@
 import {Select, SelectItem} from '#/components.js'
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {SelectField, SelectOptions} from '#/field/select.js'
 import {Key} from '@react-types/shared'
 import {useMemo} from 'react'

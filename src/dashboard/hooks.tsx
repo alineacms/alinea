@@ -6,14 +6,14 @@ import {assert} from '#/core/util/Assert.js'
 import {Type} from '#/index.js'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
-import type {
-  Dispatch,
-  PropsWithChildren,
-  SetStateAction
-} from 'react'
+import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
-import type {Dashboard, DashboardEntryData, ReactiveNode} from './Dashboard.js'
-import {dashboardAtom, DashboardEditor} from './Dashboard.js'
+import type {
+  Dashboard,
+  DashboardEntryData,
+  ReactiveNode
+} from './store/Dashboard.js'
+import {dashboardAtom, DashboardEditor} from './store/Dashboard.js'
 
 const entryContext = createContext<DashboardEntryData | null>(null)
 const editorContext = createContext<DashboardEditor | null>(null)

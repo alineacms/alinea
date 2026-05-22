@@ -32,7 +32,7 @@ import {
   dashboardAtom,
   type ExplorerLocation
 } from '../../store.js'
-import {useDashboard} from '../../store/hooks.js'
+import {useDashboard} from '../../hooks.js'
 import {NodeEditor} from '../Editor.js'
 import {
   DashboardModalCloseButton,
