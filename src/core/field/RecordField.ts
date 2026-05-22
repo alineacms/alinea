@@ -25,6 +25,14 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
         )
         return row as Row
       },
+      beforeSave({value, ...context}) {
+        if (value === undefined || value === null) return value
+        return Type.beforeSave(
+          type,
+          value as Record<string, unknown>,
+          context
+        ) as Row
+      },
       ...meta
     })
   }

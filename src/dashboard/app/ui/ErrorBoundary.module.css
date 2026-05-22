@@ -20,7 +20,7 @@
 }
 
 .ErrorBoundary-mesage {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--alinea-mono-font);
   font-size: 0.9em;
   font-feature-settings: 'tnum' 1;
   max-width: 500px;

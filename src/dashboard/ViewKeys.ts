@@ -9,6 +9,10 @@ export const viewKeys = {
   SingleLinkInput: 'alinea/field/link/LinkField.view#SingleLinkFieldView',
   MultipleLinksInput: 'alinea/field/link/LinkField.view#MultipleLinksFieldView',
   ListInput: 'alinea/field/list/ListField.view#ListFieldView',
+  MetadataTimestampInput:
+    'alinea/field/metadata/MetadataField.view#MetadataTimestampFieldView',
+  MetadataUserInput:
+    'alinea/field/metadata/MetadataField.view#MetadataUserFieldView',
   MetadataInput: 'alinea/field/metadata/MetadataField.view#MetadataFieldView',
   NumberInput: 'alinea/field/number/NumberField.view#NumberFieldView',
   ObjectInput: 'alinea/field/object/ObjectField.view#ObjectFieldView',

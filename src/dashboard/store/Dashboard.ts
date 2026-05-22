@@ -900,6 +900,23 @@ export class Dashboard {
           : []
       })
 
+      const user = await get(this.user)
+      const initialData = Type.withInitialValue(type, {
+        ...Type.initialValue(type),
+        ...copiedData,
+        title,
+        path: slugify(title)
+      })
+      const data = Type.beforeSave(
+        type,
+        initialData,
+        {
+          action: 'create',
+          user,
+          now: new Date()
+        }
+      )
+
       const created = await db.create({
         type,
         workspace: request.workspace,
@@ -911,12 +928,7 @@ export class Dashboard {
           parentInsertOrder && parentInsertOrder !== 'free'
             ? parentInsertOrder
             : request.insertOrder,
-        set: {
-          ...Type.initialValue(type),
-          ...copiedData,
-          title,
-          path: slugify(title)
-        }
+        set: data
       })
 
       set(this.route, {
@@ -1938,7 +1950,7 @@ export class DashboardEntryData {
       const type = get(this.type).type
       const historyData = data ? parseRecord(data).data : activeVersion.data
       return new ReactiveNode<object>(
-        {
+        Type.withInitialValue(type, {
           ...Type.initialValue(type),
           ...historyData,
           title:
@@ -1949,7 +1961,7 @@ export class DashboardEntryData {
             typeof historyData.path === 'string'
               ? historyData.path
               : activeVersion.path
-        },
+        }),
         true
       )
     })
@@ -2238,13 +2250,29 @@ export class DashboardEntryData {
     return activeVersion
   }
 
+  async #beforeSave(
+    get: Getter,
+    node: ReactiveNode<object>,
+    type: Type,
+    action: 'update' | 'publish' | 'translate'
+  ) {
+    const user = await get(this.dashboard.user)
+    const current = get(node.value) as Record<string, unknown>
+    const data = Type.beforeSave(type, current, {
+      action,
+      user,
+      now: new Date()
+    })
+    return {data, changed: data !== current}
+  }
+
   saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Update, locale)
-    const data = get(node.value)
     const db = get(this.dashboard.db)
     const type = get(this.type).type
+    const {data, changed} = await this.#beforeSave(get, node, type, 'update')
     await db.create({
       type,
       id: this.id,
@@ -2253,6 +2281,7 @@ export class DashboardEntryData {
       set: data,
       overwrite: true
     })
+    if (changed) set(node.value, data)
     set(node.commit)
   })
 
@@ -2260,9 +2289,9 @@ export class DashboardEntryData {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
-    const data = get(node.value)
     const db = get(this.dashboard.db)
     const type = get(this.type).type
+    const {data, changed} = await this.#beforeSave(get, node, type, 'publish')
     await db.create({
       type,
       id: this.id,
@@ -2271,6 +2300,7 @@ export class DashboardEntryData {
       set: data,
       overwrite: true
     })
+    if (changed) set(node.value, data)
     set(node.commit)
   })
 
@@ -2386,7 +2416,12 @@ export class DashboardEntryData {
     }
     const config = get(this.dashboard.config)
     const type = get(this.type).type
-    const data = get(node.value)
+    const {data, changed} = await this.#beforeSave(
+      get,
+      node,
+      type,
+      'translate'
+    )
     await db.create({
       type,
       id: this.id,
@@ -2395,6 +2430,7 @@ export class DashboardEntryData {
       status: config.enableDrafts ? 'draft' : 'published',
       set: data
     })
+    if (changed) set(node.value, data)
     set(node.commit)
   })
 }
@@ -2468,12 +2504,12 @@ export class DashboardEntryLanguage {
       const data = version.data
       const policy = get(this.entry.dashboard.policy)
       // Todo: fix data during indexing instead of here
-      const initialValue = {
+      const initialValue = Type.withInitialValue(type, {
         ...Type.initialValue(type),
         ...data
-      }
+      })
       const isActiveVersion = status === activeStatus
-      return new ReactiveNode(
+      return new ReactiveNode<object>(
         initialValue,
         !isActiveVersion || !policy.canUpdate(version)
       )

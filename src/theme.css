@@ -53,6 +53,7 @@
 :root {
   --alinea-transition: 0.2s ease-out;
   --alinea-font-size-base: 0.8125rem;
+  --alinea-mono-font: 'JetBrains Mono', monospace;
 
   --alinea-bg: light-dark(var(--alinea-gray-0), var(--alinea-gray-800));
   --alinea-bg-muted: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));

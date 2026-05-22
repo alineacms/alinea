@@ -134,7 +134,7 @@
 }
 
 .MissingEntry-id {
-  font-family: 'JetBrains Mono';
+  font-family: var(--alinea-mono-font);
   font-size: 12px;
 }
 

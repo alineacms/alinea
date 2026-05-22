@@ -38,7 +38,7 @@
 
 .CodeEditorInput-editor {
   width: 100%;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: var(--alinea-mono-font);
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
   tab-size: 2;

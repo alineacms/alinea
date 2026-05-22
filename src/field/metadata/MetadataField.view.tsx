@@ -7,9 +7,14 @@ import {
   useDashboard,
   useFieldError,
   useFieldNode,
-  useFieldOptions
+  useFieldOptions,
+  useFieldValue
 } from '#/dashboard/store.js'
-import {MetadataField} from '#/field/metadata.js'
+import {
+  MetadataField,
+  MetadataTimestampField,
+  MetadataUserField
+} from '#/field/metadata.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import css from './MetadataField.module.css'
@@ -18,6 +23,50 @@ const styles = styler(css)
 
 export interface MetadataFieldViewProps {
   field: MetadataField
+}
+
+export interface MetadataTimestampFieldViewProps {
+  field: MetadataTimestampField
+}
+
+export function MetadataTimestampFieldView({
+  field
+}: MetadataTimestampFieldViewProps) {
+  const value = useFieldValue(field)
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
+  const displayValue = formatAuditTimestamp(value)
+  return (
+    <Label label={options.label} errorMessage={error}>
+      <div className={styles.MetadataTimestampFieldView()}>
+        {displayValue || 'Not available'}
+      </div>
+    </Label>
+  )
+}
+
+export interface MetadataUserFieldViewProps {
+  field: MetadataUserField
+}
+
+export function MetadataUserFieldView({field}: MetadataUserFieldViewProps) {
+  const value = useFieldValue(field)
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
+  const name = value?.name || 'Unknown user'
+  const email = value?.email
+  return (
+    <Label label={options.label} errorMessage={error}>
+      <div className={styles.MetadataUserFieldView()}>
+        <div className={styles.MetadataUserFieldView.person()}>{name}</div>
+        {email && (
+          <div className={styles.MetadataUserFieldView.contact()}>
+            &lt;{email}&gt;
+          </div>
+        )}
+      </div>
+    </Label>
+  )
 }
 
 export function MetadataFieldView({field}: MetadataFieldViewProps) {
@@ -36,6 +85,21 @@ export function MetadataFieldView({field}: MetadataFieldViewProps) {
       <MetadataPreview metadata={metadata} origin={origin} />
     </>
   )
+}
+
+function formatAuditTimestamp(value: number | string | null): string {
+  if (value === null) return ''
+  const date = new Date(typeof value === 'number' ? value * 1000 : value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short'
+  }).format(date)
 }
 
 interface MetadataPreviewProps {

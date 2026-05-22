@@ -2,7 +2,7 @@ import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import type {EntryStatus} from './Entry.js'
 import type {Expr} from './Expr.js'
-import {Field} from './Field.js'
+import {Field, type FieldBeforeSaveContext} from './Field.js'
 import {type HasType, getType, hasType, internalType} from './Internal.js'
 import type {Label} from './Label.js'
 import type {OrderBy} from './OrderBy.js'
@@ -93,6 +93,32 @@ export namespace Type {
     return res
   }
 
+  export function withInitialValue(
+    type: Type,
+    value: Record<string, unknown>
+  ): Record<string, unknown> {
+    return mergeInitialValue(value, initialValue(type)) as Record<
+      string,
+      unknown
+    >
+  }
+
+  export function beforeSave(
+    type: Type,
+    value: Record<string, unknown>,
+    context: Omit<FieldBeforeSaveContext<unknown>, 'value'>
+  ): Record<string, unknown> {
+    let next = value
+    for (const [key, field] of entries(fields(type))) {
+      const before = next[key]
+      const after = Field.beforeSave(field, before, context)
+      if (after === before) continue
+      if (next === value) next = {...value}
+      next[key] = after
+    }
+    return next
+  }
+
   export function preview(type: Type): Preview | undefined {
     return getType(type).preview
   }
@@ -124,6 +150,28 @@ export namespace Type {
       ...viewsOfDefinition(getType(type).fields)
     ].filter(v => typeof v === 'string')
   }
+}
+
+function mergeInitialValue(value: unknown, initialValue: unknown): unknown {
+  if (!isRecord(initialValue)) return value
+  if (!isRecord(value)) return initialValue
+  let next = value
+  for (const [key, initialChildValue] of entries(initialValue)) {
+    const childValue = value[key]
+    const child = mergeInitialValue(childValue, initialChildValue)
+    if (child !== childValue) {
+      if (next === value) next = {...value}
+      next[key] = child
+    } else if (childValue === undefined) {
+      if (next === value) next = {...value}
+      next[key] = initialChildValue
+    }
+  }
+  return next
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 function viewsOfDefinition(definition: FieldsDefinition): Array<string> {

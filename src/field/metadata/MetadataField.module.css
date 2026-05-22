@@ -83,3 +83,46 @@
   gap: 4px;
   font-size: 14px;
 }
+
+.MetadataTimestampFieldView {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--alinea-border);
+  border-radius: 6px;
+  background: var(--alinea-input);
+  color: var(--alinea-fg);
+  font-size: 14px;
+  font-family: var(--alinea-mono-font);
+}
+
+.MetadataUserFieldView {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--alinea-border);
+  border-radius: 6px;
+  background: var(--alinea-input);
+  color: var(--alinea-fg);
+  overflow: hidden;
+}
+
+.MetadataUserFieldView-person {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.MetadataUserFieldView-contact {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--alinea-fg-muted);
+}

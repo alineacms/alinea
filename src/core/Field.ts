@@ -2,6 +2,7 @@ import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Expr} from './Expr.js'
 import {type HasField, getField, hasField, internalField} from './Internal.js'
 import type {Shape} from './Shape.js'
+import type {User} from './User.js'
 import type {View} from './View.js'
 
 export interface FieldOptions<StoredValue> {
@@ -35,6 +36,22 @@ export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
     value: StoredValue,
     loader: LinkResolver
   ) => Promise<QueryValue>
+  beforeSave?: (
+    context: FieldBeforeSaveContext<StoredValue>
+  ) => StoredValue
+}
+
+export type FieldBeforeSaveAction =
+  | 'create'
+  | 'update'
+  | 'publish'
+  | 'translate'
+
+export interface FieldBeforeSaveContext<StoredValue> {
+  value: StoredValue
+  action: FieldBeforeSaveAction
+  user?: User | null
+  now: Date
 }
 
 export interface FieldData<StoredValue, QueryValue, Mutator, Options>
@@ -127,6 +144,16 @@ export namespace Field {
     if (data.queryValue) return data.queryValue(value, loader)
     await data.shape.applyLinks(value, loader)
     return value as unknown as QueryValue
+  }
+
+  export function beforeSave<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue,
+    context: Omit<FieldBeforeSaveContext<StoredValue>, 'value'>
+  ): StoredValue {
+    const data = getField(field)
+    if (!data.beforeSave) return value
+    return data.beforeSave({...context, value})
   }
 
   export function isField(value: any): value is Field {
