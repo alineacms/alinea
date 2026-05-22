@@ -42,6 +42,14 @@ const Page = Config.document('Page', {
               },
               initialValue: 'primary'
             }),
+            targets: Field.select.multiple('Targets', {
+              options: {
+                header: 'Header',
+                sidebar: 'Sidebar',
+                footer: 'Footer'
+              },
+              initialValue: ['header', 'footer']
+            }),
             details: Field.richText('Details', {
               schema: {
                 Note: Config.type('Note', {
@@ -86,6 +94,16 @@ const Page = Config.document('Page', {
         release: 'Release notes'
       },
       initialValue: 'docs'
+    }),
+    audiences: Field.select.multiple('Audiences', {
+      width: 0.5,
+      options: {
+        developers: 'Developers',
+        editors: 'Editors',
+        marketers: 'Marketers',
+        partners: 'Partners'
+      },
+      initialValue: ['developers', 'editors']
     }),
     wordCount: Field.number('Word count', {
       width: 1 / 3,
