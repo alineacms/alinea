@@ -1,8 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {createId} from 'alinea/core/Id'
-import {MemorySource} from 'alinea/core/source/MemorySource'
-import {exportSource} from 'alinea/core/source/SourceExport'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
 import type {GenerateContext} from './GenerateContext.js'
 
@@ -23,8 +21,6 @@ const packageJson = {
   }
 }
 
-const emptySource = await exportSource(new MemorySource())
-
 export async function copyStaticFiles({outDir}: GenerateContext) {
   await fs.mkdir(outDir, {recursive: true}).catch(console.error)
 
@@ -38,11 +34,11 @@ export async function copyStaticFiles({outDir}: GenerateContext) {
   )
   await fs.writeFile(
     path.join(outDir, 'empty-source.js'),
-    `export const source = ${JSON.stringify(emptySource, null, 2)}`
+    `export const content = undefined\nexport const source = undefined`
   )
   await fs.writeFile(
     path.join(outDir, 'source.js'),
-    `export const source = ${JSON.stringify(emptySource, null, 2)}`
+    `export const content = undefined\nexport const source = undefined`
   )
   // await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)*/
   await writeFileIfContentsDiffer(

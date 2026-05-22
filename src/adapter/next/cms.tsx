@@ -4,7 +4,6 @@ import {Client} from 'alinea/core/Client'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import type {UploadResponse} from 'alinea/core/Connection'
-import {LocalDB} from 'alinea/core/db/LocalDB'
 import type {Mutation} from 'alinea/core/db/Mutation'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {outcome} from 'alinea/core/Outcome'
@@ -31,13 +30,10 @@ export class NextCMS<
   bundledDb = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
-    const {generatedSource} = await import(
+    const {generatedContentDB} = await import(
       'alinea/backend/store/GeneratedSource'
     )
-    const source = await generatedSource
-    const db = new LocalDB(this.config, source)
-    await db.sync()
-    return db
+    return generatedContentDB(this.config)
   })
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {

@@ -12,10 +12,10 @@ import {
   createRxbEntryArtifact,
   encodeRxbEntryArtifact,
   RxbLocalDB,
-  RxbEntryDB
+  RxbEntryDB,
+  ContentEntryDB
 } from './index.js'
 import {EntryIndex} from '../db/EntryIndex.js'
-import {exportSource} from '../source/SourceExport.js'
 
 const test = suite(import.meta)
 
@@ -515,7 +515,7 @@ test('RXB entry DB sync is a no-op when the remote tree is unchanged', async () 
   test.equal(requestedBlobs, [])
 })
 
-test('RXB entry DB compressed export stays smaller than source export', async () => {
+test('RXB and ContentDB compressed exports stay smaller than raw ContentDB bytes', async () => {
   const source = await createSource(
     Array.from({length: 1000}, (_, i) =>
       entry(
@@ -527,14 +527,22 @@ test('RXB entry DB compressed export stays smaller than source export', async ()
       )
     )
   )
-  const artifact = await createArtifact(source)
+  const index = new EntryIndex(config)
+  await index.syncWith(source)
+  const artifact = createRxbEntryArtifact(config, index, {
+    configHash: 'config-hash',
+    contentHash: index.sha
+  })
   const db = RxbEntryDB.open(config, encodeRxbEntryArtifact(artifact))
   const rxbBytes = Buffer.byteLength(await db.exportCompressedBytes())
-  const sourceBytes = Buffer.byteLength(
-    JSON.stringify(await exportSource(source))
+  const contentDb = ContentEntryDB.fromIndex(config, index)
+  const contentBytes = contentDb.exportBytes().byteLength
+  const compressedContentBytes = Buffer.byteLength(
+    await contentDb.exportCompressedBytes()
   )
 
-  test.ok(rxbBytes < sourceBytes)
+  test.ok(rxbBytes < contentBytes)
+  test.ok(compressedContentBytes < contentBytes)
 })
 
 test('RXB local DB can open from a source, resolve, mutate, sync, and export bytes', async () => {

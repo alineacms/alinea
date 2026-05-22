@@ -16,8 +16,12 @@ import {getExpr, hasExpr, hasField, hasRoot, hasWorkspace} from '../Internal.js'
 import {getScope, type Scope} from '../Scope.js'
 import {Type, type Type as AlineaType} from '../Type.js'
 import {EntryIndex} from '../db/EntryIndex.js'
+import * as base64 from '../util/BufferToBase64.js'
 import {ScalarShape} from '../shape/ScalarShape.js'
-import type {Source} from '../source/Source.js'
+import {MemorySource} from '../source/MemorySource.js'
+import type {RemoteSource, Source} from '../source/Source.js'
+import type {ReadonlyTree} from '../source/Tree.js'
+import {accumulate} from '../util/Async.js'
 import {entries, fromEntries} from '../util/Objects.js'
 import {
   ContentDB,
@@ -151,18 +155,23 @@ export class ContentEntryDB extends Graph {
     return new ContentEntryDB(config, bytes)
   }
 
+  static async openCompressed(
+    config: Config,
+    encoded: string
+  ): Promise<ContentEntryDB> {
+    return new ContentEntryDB(config, new Uint8Array(await base64.decode(encoded)))
+  }
+
   get sha(): string | undefined {
     return this.#sha
   }
 
-  async syncWith(source: Source): Promise<string> {
-    const tree =
-      this.#sha === undefined
-        ? await source.getTree()
-        : await source.getTreeIfDifferent(this.#sha)
+  async syncWith(source: Source | RemoteSource): Promise<string> {
+    const tree = await contentTree(source, this.#sha)
     if (!tree) return this.#sha!
+    const fullSource = await contentSource(source, tree)
     const index = new EntryIndex(this.config)
-    const sha = await index.syncWith(source)
+    const sha = await index.syncWith(fullSource)
     if (this.#sha === sha) return sha
     this.#replaceFromIndex(index)
     return sha
@@ -207,6 +216,10 @@ export class ContentEntryDB extends Graph {
       this.#db.compile(),
       this.#sha
     ))
+  }
+
+  exportCompressedBytes(): Promise<string> {
+    return base64.encode(this.exportBytes())
   }
 
   async resolve<Query extends GraphQuery>(
@@ -717,6 +730,7 @@ export class ContentEntryDB extends Graph {
     const internal = getExpr(expr)
     switch (internal.type) {
       case 'entryField': {
+        if (internal.name === 'data') return id => this.#entryData(id)
         const field = entryFieldAliases[internal.name] ?? internal.name
         if (field === '_rowHash')
           return id => cloneProjectedValue(this.#read(id, field))
@@ -800,13 +814,17 @@ export class ContentEntryDB extends Graph {
   #fullRow(id: number): AnyRecord {
     const row = this.#db.hydrate(id) as AnyRecord
     row._rowHash ??= row._fileHash
-    const data = fromEntries(
-      entries(row).filter(([key]) => !key.startsWith('_'))
-    )
+    const data = entryData(row)
     const entry = fromEntries(
       entries(entryFieldAliases).map(([field, alias]) => [field, row[alias]])
     )
     return cloneProjectedValue({...entry, data}) as AnyRecord
+  }
+
+  #entryData(id: number): AnyRecord {
+    return cloneProjectedValue(
+      entryData(this.#db.hydrate(id) as AnyRecord)
+    ) as AnyRecord
   }
 }
 
@@ -896,6 +914,10 @@ function needsPostProcessing(projection: Projection | undefined): boolean {
   return entries(projection as AnyRecord).some(([, value]) =>
     needsPostProcessing(value as Projection)
   )
+}
+
+function entryData(row: AnyRecord): AnyRecord {
+  return fromEntries(entries(row).filter(([key]) => !key.startsWith('_')))
 }
 
 function createContentEntryShape(
@@ -1039,6 +1061,24 @@ function selector(
   async: boolean
 ): ContentSelector {
   return Object.assign(select, {async})
+}
+
+async function contentTree(
+  source: Source | RemoteSource,
+  sha: string | undefined
+): Promise<ReadonlyTree | undefined> {
+  if (sha !== undefined) return source.getTreeIfDifferent(sha)
+  if ('getTree' in source) return source.getTree()
+  return source.getTreeIfDifferent('')
+}
+
+async function contentSource(
+  source: Source | RemoteSource,
+  tree: ReadonlyTree
+): Promise<Source> {
+  if ('getTree' in source) return source
+  const shas = Array.from(tree.index(), ([, sha]) => sha)
+  return new MemorySource(tree, new Map(await accumulate(source.getBlobs(shas))))
 }
 
 const CONTENT_ENTRY_MAGIC = 0x414c4345

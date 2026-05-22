@@ -6,7 +6,6 @@ import {EntryIndex as BaseEntryIndex} from '../db/EntryIndex.js'
 import {EntryResolver as BaseEntryResolver} from '../db/EntryResolver.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {MemorySource} from '../source/MemorySource.js'
-import {exportSource} from '../source/SourceExport.js'
 import {
   compressRxbEntryBytes,
   createRxbEntryArtifact,
@@ -99,7 +98,6 @@ const linkedContentBytes = ContentEntryDB.fromIndex(
   linkedBase
 ).exportBytes()
 const linkedContentDb = ContentEntryDB.open(config, linkedContentBytes)
-const exportedSource = await exportSource(source)
 
 const baseIndexFresh = await benchAsync('baseline syncWith fresh', async () => {
   const index = new BaseEntryIndex(config)
@@ -598,8 +596,7 @@ console.table(
     rxbBytes,
     compressedRxbBytes,
     contentBytes,
-    compressedContentBytes,
-    exportedSource
+    compressedContentBytes
   )
 )
 
@@ -819,23 +816,20 @@ function sizeReport(
   rxbBytes: Uint8Array,
   compressedRxbBytes: string,
   contentBytes: Uint8Array,
-  compressedContentBytes: string,
-  exportedSource: unknown
+  compressedContentBytes: string
 ) {
-  const exportBytes = bytesOfJson(exportedSource)
   return [
-    size('exportSource json', exportBytes, exportBytes),
-    size('rxb bytes', rxbBytes.byteLength, exportBytes),
+    size('rxb bytes', rxbBytes.byteLength, rxbBytes.byteLength),
     size(
       'rxb deflate+base64',
       Buffer.byteLength(compressedRxbBytes),
-      exportBytes
+      rxbBytes.byteLength
     ),
-    size('contentdb bytes', contentBytes.byteLength, exportBytes),
+    size('contentdb bytes', contentBytes.byteLength, rxbBytes.byteLength),
     size(
       'contentdb deflate+base64',
       Buffer.byteLength(compressedContentBytes),
-      exportBytes
+      Buffer.byteLength(compressedRxbBytes)
     )
   ]
 }
@@ -845,13 +839,9 @@ function size(name: string, bytes: number, baselineBytes: number) {
     artifact: name,
     bytes,
     kib: (bytes / 1024).toFixed(1),
-    vsExport: `${((bytes / baselineBytes) * 100).toFixed(1)}%`,
+    vsBaseline: `${((bytes / baselineBytes) * 100).toFixed(1)}%`,
     bytesPerRow: (bytes / ROWS).toFixed(1)
   }
-}
-
-function bytesOfJson(input: unknown) {
-  return Buffer.byteLength(JSON.stringify(input))
 }
 
 function median(values: Array<number>) {

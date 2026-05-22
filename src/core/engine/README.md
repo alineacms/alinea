@@ -75,21 +75,22 @@ the confirmed source state.
 
 ## Benchmarks
 
-`EntryIndex.bench.ts` compares the RXB database against the current baseline
-resolver and source export. It reports:
+`EntryIndex.bench.ts` compares the RXB database and ContentDB against the
+current baseline resolver. It reports:
 
 - baseline `syncWith` vs RXB byte build
-- RXB open/export cost
-- baseline resolver vs RXB resolve for id, count, numeric filter, nested/list
-  filters, dashboard children, media explorer count/batch, and search
+- RXB and ContentDB open/export cost
+- baseline resolver vs RXB/ContentDB resolve for id, count, numeric filter,
+  nested/list filters, dashboard children, media explorer count/batch, and
+  search
 - a separate entry-link resolver fixture where each benchmark row links to a
   small number of other entries, so normal dashboard/media timings are not
   inflated by link-field payloads
-- raw `exportSource` JSON size vs exported RXB bytes and compressed RXB bytes
+- exported RXB and ContentDB bytes, plus compressed base64 artifact sizes
 
-Compression and alternate packed snapshot benchmarks are intentionally removed.
-The deploy/browser artifact is the RXB byte array; compression is only applied
-when comparing against the existing source export transport.
+Alternate packed snapshot benchmarks are intentionally removed. The
+deploy/browser artifact is the ContentDB byte array, compressed to base64 for
+the generated static artifact.
 
 ## Useful Commands
 

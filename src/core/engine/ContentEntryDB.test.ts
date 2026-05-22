@@ -117,6 +117,29 @@ test('ContentEntryDB reconstructs full public entries from underscored storage',
   test.is(full._id, undefined)
 })
 
+test('ContentEntryDB reconstructs Entry.data when selecting Entry projection', async () => {
+  const db = await createDb([
+    entry('article-alpha', 'a1', 'alpha', 'Alpha', 'Cookie Body', 10, true)
+  ])
+
+  const selected = (await db.resolve({
+    id: 'article-alpha',
+    status: 'all',
+    select: Entry,
+    get: true
+  } as any)) as any
+
+  test.is(selected.id, 'article-alpha')
+  test.is(selected.title, 'Alpha')
+  test.equal(selected.data, {
+    title: 'Alpha',
+    path: 'alpha',
+    body: 'Cookie Body',
+    score: 10,
+    featured: true
+  })
+})
+
 test('ContentEntryDB syncWith builds, no-ops, and replaces changed content', async () => {
   const source = await createSource([
     entry('article-alpha', 'a1', 'alpha', 'Alpha', 'Cookie Body', 10),
