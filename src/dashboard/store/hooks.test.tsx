@@ -13,6 +13,13 @@ import {
 } from './Dashboard.js'
 import {DashboardScopeInternal, EntryScope, useEntry, useGraphQuery} from './hooks.js'
 
+interface ReactActGlobal {
+  IS_REACT_ACT_ENVIRONMENT?: boolean
+}
+
+(globalThis as typeof globalThis & ReactActGlobal).IS_REACT_ACT_ENVIRONMENT =
+  true
+
 const test = suite(import.meta)
 
 function entry(

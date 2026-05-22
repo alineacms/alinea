@@ -1,6 +1,4 @@
 import fs from 'node:fs'
-import {createServer} from 'node:http'
-import type {AddressInfo} from 'node:net'
 import {suite} from '@alinea/suite'
 import {Config, Edit, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
@@ -34,43 +32,38 @@ const example = new File(
 
 class DB extends LocalDB {
   async prepareUpload(file: string): Promise<UploadResponse> {
-    const serve = await listenForUpload()
     const id = createId()
     return {
       entryId: id,
       location: `media/${file}_${id}`,
       previewUrl: `preview/${file}_${id}`,
-      url: serve.url
+      url: `https://uploads.alinea.test/${file}_${id}`
     }
   }
 }
 
 test('upload urls', async () => {
+  const fetch = globalThis.fetch
+  const uploadFetch: typeof fetch = Object.assign(
+    async () => new Response(null, {status: 204}),
+    {preconnect: fetch.preconnect}
+  )
+  globalThis.fetch = uploadFetch
   const db = new DB(cms.config)
-  const upload = await db.upload({
-    file: example,
-    createPreview
-  })
-  const page = await db.create({
-    type: Page,
-    set: {
-      title: 'Page 1',
-      image: Edit.link(Page.image).addImage(upload._id).value()
-    }
-  })
-  test.is(page.image.src, upload.previewUrl)
-})
-
-async function listenForUpload(): Promise<{url: string}> {
-  const server = createServer((req, res) => {
-    res.end()
-    server.close()
-  })
-  return new Promise(resolve => {
-    server.listen(0, () => {
-      resolve({
-        url: `http://localhost:${(<AddressInfo>server.address()).port}`
-      })
+  try {
+    const upload = await db.upload({
+      file: example,
+      createPreview
     })
-  })
-}
+    const page = await db.create({
+      type: Page,
+      set: {
+        title: 'Page 1',
+        image: Edit.link(Page.image).addImage(upload._id).value()
+      }
+    })
+    test.is(page.image.src, upload.previewUrl)
+  } finally {
+    globalThis.fetch = fetch
+  }
+})
