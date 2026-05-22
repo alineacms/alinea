@@ -6,7 +6,11 @@ import type {LocalConnection, Revision} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {UploadOperation, type UploadProgress} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import {Entry, EntryStatus} from '#/core/Entry.js'
+import {
+  Entry,
+  type Entry as EntryRecord,
+  type EntryStatus
+} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {Expr} from '#/core/Expr.js'
@@ -793,24 +797,6 @@ export class Dashboard {
     const db = get(this.db)
     const policy = get(this.policy)
     return loader(async ids => {
-      const data = {
-        id: Entry.id,
-        type: Entry.type,
-        title: Entry.title,
-        status: Entry.status,
-        locale: Entry.locale,
-        main: Entry.main,
-        path: Entry.path,
-        parentId: Entry.parentId,
-        parents: Entry.parents,
-        seeded: Entry.seeded,
-        workspace: Entry.workspace,
-        root: Entry.root,
-        url: Entry.url,
-        data: Entry.data,
-        fileHash: Entry.fileHash,
-        filePath: Entry.filePath
-      }
       const rows = await db.find({
         groupBy: Entry.id,
         select: {
@@ -828,7 +814,7 @@ export class Dashboard {
               main: Entry.main
             }
           }),
-          entries: translations({select: data, includeSelf: true})
+          entries: translations({select: Entry, includeSelf: true})
         },
         id: {in: ids},
         status: 'preferDraft'
@@ -1673,24 +1659,7 @@ export class DashboardTree {
   })
 }
 
-interface EntryVersionData {
-  id: string
-  type: string
-  title: string
-  status: EntryStatus
-  locale: string | null
-  main: boolean
-  path: string
-  parentId: string | null
-  parents: Array<string>
-  seeded: string | null
-  workspace: string
-  root: string
-  url: string
-  data: Record<string, unknown>
-  fileHash: string
-  filePath: string
-}
+type EntryVersionData = EntryRecord<Record<string, unknown>>
 
 interface EntryData {
   id: string
@@ -1790,6 +1759,7 @@ export class DashboardEntryData {
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
   type: Atom<DashboardType>
+  currentEntry: Atom<Promise<EntryRecord<Record<string, unknown>> | null>>
   locales: Atom<Map<string | null, EntryVersionData>>
   parentId: Atom<string | null>
   parentIds: Atom<Array<string>>
@@ -1821,6 +1791,30 @@ export class DashboardEntryData {
       const workspace = get(this.workspaceKey)
       const root = get(this.rootKey)
       return dashboard.workspace(workspace).root(root)
+    })
+    this.currentEntry = atom(async get => {
+      const selected = get(this.selectedVersion)
+      const locale = get(this.sourceLocale)
+      const language = this.languages(locale)
+      const versions = await get(language.versions)
+      const fallback = versions.values().next().value ?? null
+      if (selected.type === 'status') {
+        return versions.get(selected.status) ?? fallback
+      }
+      const activeVersion = await get(language.activeVersion)
+      const data = await get(this.historyData(historyDataKey(selected)))
+      if (!data) return activeVersion
+      const parsedData = parseRecord(data).data
+      return {
+        ...activeVersion,
+        title:
+          typeof parsedData.title === 'string'
+            ? parsedData.title
+            : activeVersion.title,
+        path:
+          typeof parsedData.path === 'string' ? parsedData.path : activeVersion.path,
+        data: parsedData
+      }
     })
   }
 

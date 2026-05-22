@@ -1,5 +1,4 @@
 import type {EntryStatus} from 'alinea/core/Entry'
-import {atom, useAtomValue} from 'jotai'
 import {useEntry} from '../store.js'
 
 export interface EntryEditorVersionData {
@@ -14,10 +13,6 @@ export interface EntryEditorVersion {
   path: string
   title: string
   type: string
-}
-
-interface EntryEditorSourceVersion extends EntryEditorVersion {
-  status: EntryStatus
 }
 
 export interface EntryEditorData {
@@ -36,18 +31,17 @@ export interface EntryEditor {
  */
 export function useEntryEditor(): EntryEditor | undefined {
   const entry = useEntry()
-  const activeVersion = useAtomValue(entry?.activeVersion ?? nullVersionAtom)
-  if (!entry || !activeVersion) return undefined
+  if (!entry) return undefined
   const version = strictObject('entry editor activeVersion', {
     data: strictObject('entry editor activeVersion.data', {
-      path: activeVersion.path,
-      status: activeVersion.status
+      path: entry.path,
+      status: entry.status
     }),
-    id: activeVersion.id,
-    locale: activeVersion.locale,
-    path: activeVersion.path,
-    title: activeVersion.title,
-    type: activeVersion.type
+    id: entry.id,
+    locale: entry.locale,
+    path: entry.path,
+    title: entry.title,
+    type: entry.type
   })
   return strictObject('entry editor', {
     activeVersion: version,
@@ -59,8 +53,6 @@ export function useEntryEditor(): EntryEditor | undefined {
     entryId: entry.id
   })
 }
-
-const nullVersionAtom = atom<EntryEditorSourceVersion | null>(null)
 
 function strictObject<Value extends object>(
   label: string,
