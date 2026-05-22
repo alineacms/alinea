@@ -53,7 +53,8 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.3",
-    "esbuild": "^0.25.4"
+    "esbuild": "^0.25.4",
+    "msgpackr": "^2.0.1"
   },
   "peerDependencies": {
     "react": "*",

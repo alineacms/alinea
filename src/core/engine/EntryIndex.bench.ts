@@ -12,6 +12,7 @@ import {
   createRxbEntryArtifact,
   encodeRxbEntryArtifact
 } from './RxbEntryArtifact.js'
+import {ContentEntryDB} from './ContentEntryDB.js'
 import {RxbEntryDB} from './RxbEntryDB.js'
 
 const Page = Config.document('Page', {
@@ -81,6 +82,9 @@ const artifact = createRxbEntryArtifact(config, base, {
 const rxbBytes = encodeRxbEntryArtifact(artifact)
 const compressedRxbBytes = await compressRxbEntryBytes(rxbBytes)
 const rxbDb = RxbEntryDB.open(config, rxbBytes)
+const contentBytes = ContentEntryDB.fromIndex(config, base).exportBytes()
+const compressedContentBytes = await compressRxbEntryBytes(contentBytes)
+const contentDb = ContentEntryDB.open(config, contentBytes)
 const linkedArtifact = createRxbEntryArtifact(config, linkedBase, {
   configHash: 'bench-config',
   contentHash: linkedBase.sha
@@ -89,6 +93,11 @@ const linkedRxbDb = RxbEntryDB.open(
   config,
   encodeRxbEntryArtifact(linkedArtifact)
 )
+const linkedContentBytes = ContentEntryDB.fromIndex(
+  config,
+  linkedBase
+).exportBytes()
+const linkedContentDb = ContentEntryDB.open(config, linkedContentBytes)
 const exportedSource = await exportSource(source)
 
 const baseIndexFresh = await benchAsync('baseline syncWith fresh', async () => {
@@ -107,6 +116,15 @@ const rxbBuildFresh = await benchAsync('rxb build bytes fresh', async () => {
   )
 })
 
+const contentBuildFresh = await benchAsync(
+  'contentdb build bytes fresh',
+  async () => {
+    const index = new BaseEntryIndex(config)
+    await index.syncWith(source)
+    ContentEntryDB.fromIndex(config, index).exportBytes()
+  }
+)
+
 const baseSyncNoop = await benchAsyncPrepared(
   'baseline syncWith noop',
   async () => {
@@ -120,6 +138,12 @@ const baseSyncNoop = await benchAsyncPrepared(
 const rxbSyncNoop = await benchAsyncPrepared(
   'rxb syncWith noop',
   async () => RxbEntryDB.open(config, rxbBytes),
+  db => db.syncWith(source)
+)
+
+const contentSyncNoop = await benchAsyncPrepared(
+  'contentdb syncWith noop',
+  async () => ContentEntryDB.open(config, contentBytes),
   db => db.syncWith(source)
 )
 
@@ -139,12 +163,26 @@ const rxbSyncChanged = await benchAsyncPrepared(
   db => db.syncWith(changedSource)
 )
 
+const contentSyncChanged = await benchAsyncPrepared(
+  'contentdb syncWith changed',
+  async () => ContentEntryDB.open(config, contentBytes),
+  db => db.syncWith(changedSource)
+)
+
 const openRxbDb = bench('open rxb db', () => {
   RxbEntryDB.open(config, rxbBytes)
 })
 
+const openContentDb = bench('open contentdb', () => {
+  ContentEntryDB.open(config, contentBytes)
+})
+
 const exportRxbBytes = bench('export rxb bytes', () => {
   rxbDb.exportBytes()
+})
+
+const exportContentBytes = bench('export contentdb bytes', () => {
+  contentDb.exportBytes()
 })
 
 const baseResolveById = await benchResolver(
@@ -159,6 +197,14 @@ const rxbResolveById = await benchRxb(`rxb resolve id x${RUNS}`, rxbDb, {
   id: targetId,
   select: Entry.id
 })
+const contentResolveById = await benchContent(
+  `contentdb resolve id x${RUNS}`,
+  contentDb,
+  {
+    id: targetId,
+    select: Entry.id
+  }
+)
 
 const baseCountByType = await benchResolver(
   `baseline count type x${RUNS}`,
@@ -172,6 +218,14 @@ const rxbCountByType = await benchRxb(`rxb count type x${RUNS}`, rxbDb, {
   type: 'Page',
   count: true
 } as any)
+const contentCountByType = await benchContent(
+  `contentdb count type x${RUNS}`,
+  contentDb,
+  {
+    type: 'Page',
+    count: true
+  } as any
+)
 
 const baseScoreFilter = await benchResolver(
   `baseline score filter x${RUNS}`,
@@ -187,6 +241,15 @@ const rxbScoreFilter = await benchRxb(`rxb score filter x${RUNS}`, rxbDb, {
   filter: {score: {gte: scoreCutoff}},
   select: Entry.id
 } as any)
+const contentScoreFilter = await benchContent(
+  `contentdb score filter x${RUNS}`,
+  contentDb,
+  {
+    type: 'Page',
+    filter: {score: {gte: scoreCutoff}},
+    select: Entry.id
+  } as any
+)
 
 const baseNestedFilter = await benchResolver(
   `baseline nested filter x${RUNS}`,
@@ -214,6 +277,21 @@ const rxbNestedFilter = await benchRxb(`rxb nested filter x${RUNS}`, rxbDb, {
   },
   select: Entry.id
 } as any)
+const contentNestedFilter = await benchContent(
+  `contentdb nested filter x${RUNS}`,
+  contentDb,
+  {
+    type: 'Page',
+    filter: {
+      and: [
+        {featured: true},
+        {meta: {has: {inner: {is: 'even'}}}},
+        {tags: {includes: {itemId: {is: 'tag-0'}}}}
+      ]
+    },
+    select: Entry.id
+  } as any
+)
 
 const baseDashboardChildren = await benchResolver(
   `baseline dashboard children x${RUNS}`,
@@ -249,6 +327,23 @@ const rxbDashboardChildren = await benchRxb(
     }
   } as any
 )
+const contentDashboardChildren = await benchContent(
+  `contentdb dashboard children x${RUNS}`,
+  contentDb,
+  {
+    workspace: 'main',
+    root: 'pages',
+    parentId: null,
+    filter: {_type: {in: ['Page']}},
+    status: 'preferDraft',
+    select: {
+      id: Entry.id,
+      type: Entry.type,
+      parentId: Entry.parentId,
+      active: Entry.active
+    }
+  } as any
+)
 
 const baseMediaCount = await benchResolver(
   `baseline media-style count x${RUNS}`,
@@ -264,6 +359,15 @@ const rxbMediaCount = await benchRxb(`rxb media-style count x${RUNS}`, rxbDb, {
   status: 'preferDraft',
   count: true
 } as any)
+const contentMediaCount = await benchContent(
+  `contentdb media-style count x${RUNS}`,
+  contentDb,
+  {
+    filter: {_root: 'pages', _workspace: 'main', _parentId: null},
+    status: 'preferDraft',
+    count: true
+  } as any
+)
 
 const baseMediaBatch = await benchResolver(
   `baseline media-style batch x${RUNS}`,
@@ -283,6 +387,17 @@ const rxbMediaBatch = await benchRxb(`rxb media-style batch x${RUNS}`, rxbDb, {
   take: 50,
   select: Entry.id
 } as any)
+const contentMediaBatch = await benchContent(
+  `contentdb media-style batch x${RUNS}`,
+  contentDb,
+  {
+    filter: {_root: 'pages', _workspace: 'main', _parentId: null},
+    orderBy: [{desc: Entry.type}, {desc: Entry.id}],
+    status: 'preferDraft',
+    take: 50,
+    select: Entry.id
+  } as any
+)
 
 const baseSearch = await benchResolver(
   `baseline search x${RUNS}`,
@@ -300,6 +415,16 @@ const rxbSearch = await benchRxb(`rxb search x${RUNS}`, rxbDb, {
   search: ['Body', String(Math.floor(ROWS / 2))],
   select: Entry.id
 } as any)
+const contentSearch = await benchContent(
+  `contentdb search x${RUNS}`,
+  contentDb,
+  {
+    workspace: 'main',
+    root: 'pages',
+    search: ['Body', String(Math.floor(ROWS / 2))],
+    select: Entry.id
+  } as any
+)
 
 const baseLinkResolver = await benchResolver(
   `baseline link resolver x${RUNS}`,
@@ -325,39 +450,167 @@ const rxbLinkResolver = await benchRxb(
     }
   } as any
 )
+const contentLinkResolver = await benchContent(
+  `contentdb link resolver x${RUNS}`,
+  linkedContentDb,
+  {
+    type: 'Page',
+    take: 100,
+    select: {
+      id: Entry.id,
+      related: Page.related
+    }
+  } as any
+)
+
+const rxbColdResolveById = await benchRxbCold(
+  `rxb cold resolve id x${RUNS}`,
+  rxbBytes,
+  {
+    id: targetId,
+    select: Entry.id
+  }
+)
+const contentColdResolveById = await benchContentCold(
+  `contentdb cold resolve id x${RUNS}`,
+  contentBytes,
+  {
+    id: targetId,
+    select: Entry.id
+  }
+)
+const rxbColdScoreFilter = await benchRxbCold(
+  `rxb cold score filter x${RUNS}`,
+  rxbBytes,
+  {
+    type: 'Page',
+    filter: {score: {gte: scoreCutoff}},
+    select: Entry.id
+  } as any
+)
+const contentColdScoreFilter = await benchContentCold(
+  `contentdb cold score filter x${RUNS}`,
+  contentBytes,
+  {
+    type: 'Page',
+    filter: {score: {gte: scoreCutoff}},
+    select: Entry.id
+  } as any
+)
+const rxbColdMediaBatch = await benchRxbCold(
+  `rxb cold media-style batch x${RUNS}`,
+  rxbBytes,
+  {
+    filter: {_root: 'pages', _workspace: 'main', _parentId: null},
+    orderBy: [{desc: Entry.type}, {desc: Entry.id}],
+    status: 'preferDraft',
+    take: 50,
+    select: Entry.id
+  } as any
+)
+const contentColdMediaBatch = await benchContentCold(
+  `contentdb cold media-style batch x${RUNS}`,
+  contentBytes,
+  {
+    filter: {_root: 'pages', _workspace: 'main', _parentId: null},
+    orderBy: [{desc: Entry.type}, {desc: Entry.id}],
+    status: 'preferDraft',
+    take: 50,
+    select: Entry.id
+  } as any
+)
 
 console.table([
-  compare('fresh index/export', baseIndexFresh, rxbBuildFresh),
-  compare('syncWith noop', baseSyncNoop, rxbSyncNoop),
-  compare('syncWith changed', baseSyncChanged, rxbSyncChanged),
+  compare3(
+    'fresh index/export',
+    baseIndexFresh,
+    rxbBuildFresh,
+    contentBuildFresh
+  ),
+  compare3('syncWith noop', baseSyncNoop, rxbSyncNoop, contentSyncNoop),
+  compare3(
+    'syncWith changed',
+    baseSyncChanged,
+    rxbSyncChanged,
+    contentSyncChanged
+  ),
   single('open rxb db', openRxbDb),
-  single('export rxb bytes', exportRxbBytes)
+  single('open contentdb', openContentDb),
+  single('export rxb bytes', exportRxbBytes),
+  single('export contentdb bytes', exportContentBytes)
 ])
 console.table([
-  compare('resolve id', baseResolveById, rxbResolveById),
-  compare('count type', baseCountByType, rxbCountByType),
-  compare('score filter', baseScoreFilter, rxbScoreFilter),
-  compare('nested/list filter', baseNestedFilter, rxbNestedFilter),
-  compare('dashboard children', baseDashboardChildren, rxbDashboardChildren),
-  compare('media-style count', baseMediaCount, rxbMediaCount),
-  compare('media-style batch', baseMediaBatch, rxbMediaBatch),
-  compare('search', baseSearch, rxbSearch),
-  compare('link resolver', baseLinkResolver, rxbLinkResolver)
+  compare3('resolve id', baseResolveById, rxbResolveById, contentResolveById),
+  compare3('count type', baseCountByType, rxbCountByType, contentCountByType),
+  compare3('score filter', baseScoreFilter, rxbScoreFilter, contentScoreFilter),
+  compare3(
+    'nested/list filter',
+    baseNestedFilter,
+    rxbNestedFilter,
+    contentNestedFilter
+  ),
+  compare3(
+    'dashboard children',
+    baseDashboardChildren,
+    rxbDashboardChildren,
+    contentDashboardChildren
+  ),
+  compare3(
+    'media-style count',
+    baseMediaCount,
+    rxbMediaCount,
+    contentMediaCount
+  ),
+  compare3(
+    'media-style batch',
+    baseMediaBatch,
+    rxbMediaBatch,
+    contentMediaBatch
+  ),
+  compare3('search', baseSearch, rxbSearch, contentSearch),
+  compare3(
+    'link resolver',
+    baseLinkResolver,
+    rxbLinkResolver,
+    contentLinkResolver
+  )
 ])
-console.table(sizeReport(rxbBytes, compressedRxbBytes, exportedSource))
+console.table([
+  compareRxbContent(
+    'cold resolve id',
+    rxbColdResolveById,
+    contentColdResolveById
+  ),
+  compareRxbContent(
+    'cold score filter',
+    rxbColdScoreFilter,
+    contentColdScoreFilter
+  ),
+  compareRxbContent(
+    'cold media-style batch',
+    rxbColdMediaBatch,
+    contentColdMediaBatch
+  )
+])
+console.table(
+  sizeReport(
+    rxbBytes,
+    compressedRxbBytes,
+    contentBytes,
+    compressedContentBytes,
+    exportedSource
+  )
+)
 
 async function createSource(
   rows: number,
-  override?: (
-    index: number
-  ) =>
+  override?: (index: number) =>
     | {
         title?: string
         body?: string
         score?: number
       }
-    | undefined
-  ,
+    | undefined,
   options: {linksPerEntry?: number} = {}
 ) {
   const source = new MemorySource()
@@ -444,6 +697,38 @@ async function benchRxb(
   })
 }
 
+async function benchContent(
+  name: string,
+  db: ContentEntryDB,
+  query: Parameters<ContentEntryDB['resolve']>[0]
+) {
+  return benchAsync(name, async () => {
+    for (let i = 0; i < RUNS; i++) await db.resolve(query)
+  })
+}
+
+async function benchRxbCold(
+  name: string,
+  bytes: Uint8Array,
+  query: Parameters<RxbEntryDB['resolve']>[0]
+) {
+  return benchAsync(name, async () => {
+    for (let i = 0; i < RUNS; i++)
+      await RxbEntryDB.open(config, bytes).resolve(query)
+  })
+}
+
+async function benchContentCold(
+  name: string,
+  bytes: Uint8Array,
+  query: Parameters<ContentEntryDB['resolve']>[0]
+) {
+  return benchAsync(name, async () => {
+    for (let i = 0; i < RUNS; i++)
+      await ContentEntryDB.open(config, bytes).resolve(query)
+  })
+}
+
 function bench(name: string, run: () => void) {
   const samples = Array<number>()
   for (let i = 0; i < SAMPLES; i++) {
@@ -479,16 +764,33 @@ async function benchAsyncPrepared<T>(
   return {name, duration: median(samples)}
 }
 
-function compare(
+function compare3(
   name: string,
   baseline: {duration: number},
-  rxb: {duration: number}
+  rxb: {duration: number},
+  contentdb: {duration: number}
 ) {
   return {
     task: name,
     baselineMs: baseline.duration.toFixed(2),
     rxbMs: rxb.duration.toFixed(2),
-    rxbVsBaseline: `${(baseline.duration / rxb.duration).toFixed(1)}x`
+    contentdbMs: contentdb.duration.toFixed(2),
+    rxbVsBaseline: `${(baseline.duration / rxb.duration).toFixed(1)}x`,
+    contentdbVsBaseline: `${(baseline.duration / contentdb.duration).toFixed(1)}x`,
+    contentdbVsRxb: `${(rxb.duration / contentdb.duration).toFixed(1)}x`
+  }
+}
+
+function compareRxbContent(
+  name: string,
+  rxb: {duration: number},
+  contentdb: {duration: number}
+) {
+  return {
+    task: name,
+    rxbMs: rxb.duration.toFixed(2),
+    contentdbMs: contentdb.duration.toFixed(2),
+    contentdbVsRxb: `${(rxb.duration / contentdb.duration).toFixed(1)}x`
   }
 }
 
@@ -502,13 +804,25 @@ function single(name: string, result: {duration: number}) {
 function sizeReport(
   rxbBytes: Uint8Array,
   compressedRxbBytes: string,
+  contentBytes: Uint8Array,
+  compressedContentBytes: string,
   exportedSource: unknown
 ) {
   const exportBytes = bytesOfJson(exportedSource)
   return [
     size('exportSource json', exportBytes, exportBytes),
     size('rxb bytes', rxbBytes.byteLength, exportBytes),
-    size('rxb deflate+base64', Buffer.byteLength(compressedRxbBytes), exportBytes)
+    size(
+      'rxb deflate+base64',
+      Buffer.byteLength(compressedRxbBytes),
+      exportBytes
+    ),
+    size('contentdb bytes', contentBytes.byteLength, exportBytes),
+    size(
+      'contentdb deflate+base64',
+      Buffer.byteLength(compressedContentBytes),
+      exportBytes
+    )
   ]
 }
 

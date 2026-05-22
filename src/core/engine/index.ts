@@ -1,5 +1,7 @@
 export * from './EntryFilter.js'
 export * from './QueryTrace.js'
+export * from './ContentDB.js'
+export * from './ContentEntryDB.js'
 export * from './RxbEntryArtifact.js'
 export * from './RxbEntryDB.js'
 export * from './RxbEntryEngine.js'
