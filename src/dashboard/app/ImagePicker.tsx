@@ -1,6 +1,5 @@
 // oxlint-disable jsx_a11y/no-autofocus
 import {Button} from '#/components.js'
-import {Workspace} from '#/core/Workspace.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {startTransition, useState, type ReactNode} from 'react'
 import {ExplorerOptions, useDashboard} from '../store.js'
@@ -36,12 +35,7 @@ function ExplorerModal({options}: ExplorerModalProps) {
   const modal = useDashboardModal()
   const dashboard = useDashboard()
   const workspace = useAtomValue(dashboard.selectedWorkspace)
-  const selectedRoot = useAtomValue(dashboard.selectedRoot)
-  const config = useAtomValue(dashboard.config)
-  const mediaRoot =
-    workspace && config
-      ? Workspace.defaultMediaRoot(config.workspaces[workspace])
-      : selectedRoot
+  const mediaRoot = useAtomValue(dashboard.selectedMediaRoot)
   const [explorer] = useState(() =>
     dashboard.explore(
       options.location ?? {workspace, root: mediaRoot ?? undefined},

@@ -37,6 +37,10 @@ export interface RootData extends RootMeta {
   label: string
 }
 
+interface RootMediaData {
+  _media?: {i18n?: RootI18n}
+}
+
 export type Root<Children extends ChildrenDefinition = ChildrenDefinition> =
   Children & HasRoot
 
@@ -51,6 +55,10 @@ export namespace Root {
 
   export function data(root: Root): RootData {
     return getRoot(root)
+  }
+
+  export function mediaI18n(root: RootData): RootI18n | undefined {
+    return (root as RootData & RootMediaData)._media?.i18n
   }
 
   export function preview(root: Root): Preview | undefined {

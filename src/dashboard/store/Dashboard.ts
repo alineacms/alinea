@@ -18,7 +18,7 @@ import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import {Permission, Policy, type Resource} from '#/core/Role.js'
-import type {RootData, RootI18n} from '#/core/Root.js'
+import {Root, type RootData, type RootI18n} from '#/core/Root.js'
 import {getScope} from '#/core/Scope.js'
 import {Section} from '#/core/Section.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
@@ -708,6 +708,13 @@ export class Dashboard {
   currentWorkspace = atom(get => {
     const workspaceKey = get(this.selectedWorkspace)
     return workspaceKey ? this.workspace(workspaceKey) : null
+  })
+
+  selectedMediaRoot = atom(get => {
+    const workspace = get(this.currentWorkspace)
+    if (!workspace) return null
+    const roots = get(workspace.roots)
+    return roots.find(root => get(workspace.root(root).isMedia)) ?? null
   })
 
   title = swr(
@@ -2619,8 +2626,7 @@ export class DashboardRoot {
   icon = atom(get => get(this.#settings).icon ?? IcRoundDescription)
   i18n = atom(get => get(this.#settings).i18n)
   mediaI18n = atom((get): RootI18n | undefined => {
-    const settings = get(this.#settings)
-    return (settings as {_media?: {i18n: RootI18n}})._media?.i18n
+    return Root.mediaI18n(get(this.#settings))
   })
   data = atom((get): RootData & {name: string} => ({
     name: this.key,

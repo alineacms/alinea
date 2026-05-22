@@ -1,8 +1,6 @@
-import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {FieldOptions} from '#/core/Field.js'
 import {Field} from '#/core/Field.js'
 import {getField} from '#/core/Internal.js'
-import {Root, type RootI18n} from '#/core/Root.js'
 import type {Shape} from '#/core/Shape.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {LocalisedShape, type LocalisedValue} from './LocalisedShape.js'
@@ -51,14 +49,6 @@ export interface SelectLocalisedValueOptions<Locale extends string, Value> {
   locale: string | null
   locales: ReadonlyArray<Locale>
   fallback?: (requested: Locale) => ReadonlyArray<Locale>
-  defaultValue?: Value
-}
-
-export interface SelectLinkedLocalisedValueOptions<Value> {
-  value: LocalisedValue<string, Value> | Value
-  loader: LinkResolver
-  workspace: string
-  root: string
   defaultValue?: Value
 }
 
@@ -137,38 +127,6 @@ export function selectLocalisedValue<Locale extends string, Value>({
     : (directValue as Value)
 }
 
-export function selectLinkedLocalisedValue<Value>({
-  value,
-  loader,
-  workspace,
-  root,
-  defaultValue
-}: SelectLinkedLocalisedValueOptions<Value>): Value | LocalisedValue<string, Value> {
-  if (!isRecord(value)) return value
-  const localisation = linkedLocalisation(loader, workspace, root)
-  if (!localisation) return value
-  return selectLocalisedValue({
-    value: value as LocalisedValue<string, Value>,
-    locale: loader.locale,
-    locales: localisation.locales,
-    fallback: localisation.fallback,
-    defaultValue
-  })
-}
-
-function linkedLocalisation(
-  loader: LinkResolver,
-  workspaceName: string,
-  rootName: string
-): LocaliserOptions | undefined {
-  const workspace = loader.resolver.config.workspaces[workspaceName]
-  const root = workspace?.[rootName]
-  if (!root) return
-  const rootData = Root.data(root)
-  const mediaI18n = (rootData as {_media?: {i18n?: RootI18n}})._media?.i18n
-  return mediaI18n ?? rootData.i18n
-}
-
 function selectLocale<Locale extends string>(
   locale: string | null,
   locales: ReadonlyArray<Locale>
@@ -181,8 +139,4 @@ function selectLocale<Locale extends string>(
 
 function isAvailable<Value>(value: Value | undefined): value is Value {
   return value !== undefined && value !== null && value !== ''
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }

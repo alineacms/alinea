@@ -1,15 +1,17 @@
 import type {EntryFields} from '#/core/EntryFields.js'
+import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Graph, Projection} from '#/core/Graph.js'
 import type {Label} from '#/core/Label.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
+import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
 import {ListRow} from '#/core/shape/ListShape.js'
 import {RecordShape} from '#/core/shape/RecordShape.js'
 import {ScalarShape} from '#/core/shape/ScalarShape.js'
 import {assign, keys} from '#/core/util/Objects.js'
-import {selectLinkedLocalisedValue} from '#/field/localiser.js'
+import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
 import {EntryReference} from './EntryReference.js'
 
 export const unresolvedEntryMarker = Symbol('unresolvedEntryMarker')
@@ -45,8 +47,9 @@ export interface EntryPickerConditions {
   enableNavigation?: boolean
 }
 
-export interface EntryPickerOptions<Definition = {}>
-  extends EntryPickerConditions {
+export interface EntryPickerOptions<
+  Definition = {}
+> extends EntryPickerConditions {
   selection: Projection
   defaultView?: 'row' | 'thumb'
   showMedia?: boolean
@@ -97,11 +100,9 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       if (type !== 'image') return assign(row, extra)
       const {src: location, previewUrl, filePath, alt, root, workspace, ...rest} =
         extra
-      const selectedAlt = selectLinkedLocalisedValue({
-        value: alt as string | Record<string, string>,
-        loader,
-        workspace,
-        root
+      const selectedAlt = selectImageAlt(alt, loader, {
+        root,
+        workspace
       })
       if (!previewUrl) {
         assign(row, rest, {src: location})
@@ -117,4 +118,44 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       assign(row, rest)
     }
   }
+}
+
+interface LinkedEntryLocation {
+  root: unknown
+  workspace: unknown
+}
+
+function selectImageAlt(
+  alt: unknown,
+  loader: LinkResolver,
+  location: LinkedEntryLocation
+): string {
+  if (isRecord(alt)) {
+    const localisation = linkedLocalisation(loader, location)
+    return selectLocalisedValue({
+      value: alt as LocalisedValue<string, string>,
+      locale: loader.locale,
+      locales: localisation?.locales ?? keys(alt),
+      fallback: localisation?.fallback,
+      defaultValue: ''
+    })
+  }
+  if (typeof alt === 'string') return alt
+  return ''
+}
+
+function linkedLocalisation(
+  loader: LinkResolver,
+  {workspace, root}: LinkedEntryLocation
+): RootI18n | undefined {
+  if (typeof workspace !== 'string' || typeof root !== 'string') return
+  const workspaceConfig = loader.resolver.config.workspaces[workspace]
+  const rootConfig = workspaceConfig?.[root]
+  if (!rootConfig) return
+  const rootData = Root.data(rootConfig)
+  return Root.mediaI18n(rootData) ?? rootData.i18n
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
