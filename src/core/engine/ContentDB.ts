@@ -26,9 +26,9 @@ export interface ContentShape<Meta, Derived> {
 
 export interface Queryable<Row> {
   get(lookupKey: string): number | undefined
-  find(filter: Filter<Row>): Iterable<number>
-  count(filter: Filter<Row>): number
-  findKeys(filter: Filter<Row>): Iterable<string>
+  find(filter: Filter<Row>, options?: FindOptions): Iterable<number>
+  count(filter: Filter<Row>, options?: FindOptions): number
+  findKeys(filter: Filter<Row>, options?: FindOptions): Iterable<string>
   pick(
     id: number,
     fields: ReadonlyArray<string>
@@ -87,6 +87,17 @@ export interface PickStats {
 
 export interface ContentDBOptions {
   hash?: HashFunction
+}
+
+export interface FindOptions {
+  /**
+   * Restrict query execution to known type pools without changing the filter.
+   *
+   * This is a planner hint for callers that can infer the possible row types
+   * from schema metadata. It should use ContentDB's persistent type pools as
+   * row candidates, not ad-hoc per-query Set/Map indexes or hydrated scans.
+   */
+  types?: ReadonlyArray<string>
 }
 
 type AnyRecord = Record<string, any>
@@ -202,6 +213,7 @@ type RuntimeIndex = {
   globalColumns?: RuntimeGlobalColumns
   pools?: Map<number, RuntimePool>
   fieldToPools?: Map<string, RuntimePool[]>
+  typeCandidates?: Map<string, number[]>
   payloadValueIndexes: Map<string, RuntimeExactIndex>
 }
 
@@ -318,6 +330,7 @@ export class ContentDB<
   #activeMaterializationStack?: Set<string>
   #filterCostCache: WeakMap<object, number> = new WeakMap()
   #andChildrenCache: WeakMap<object, Array<Filter<AnyRecord>>> = new WeakMap()
+  #readers = new Map<string, (id: number) => unknown>()
 
   constructor(
     shape: ContentShape<Meta, Derived>,
@@ -351,39 +364,49 @@ export class ContentDB<
     this.#derivedCache = new WeakMap()
     this.#filterCostCache = new WeakMap()
     this.#andChildrenCache = new WeakMap()
+    this.#readers.clear()
   }
 
   get(lookupKey: string): number | undefined {
     return this.#rowIdByLookup(lookupKey)
   }
 
-  find(filter: Filter<Meta & Derived>): Iterable<number> {
+  find(
+    filter: Filter<Meta & Derived>,
+    options?: FindOptions
+  ): Iterable<number> {
     if (this.#activeMaterializationStack) {
       return this.#runtime
         ? this.#findOverlay(
             filter as Filter<AnyRecord>,
-            this.#activeMaterializationStack
+            this.#activeMaterializationStack,
+            options
           )
         : this.#findStaged(
             filter as Filter<AnyRecord>,
-            this.#activeMaterializationStack
+            this.#activeMaterializationStack,
+            options
           )
     }
     if (this.#runtime && this.#records.length === 0)
-      return this.#findRuntime(filter as Filter<AnyRecord>)
-    if (this.#runtime) return this.#findOverlay(filter as Filter<AnyRecord>)
+      return this.#findRuntime(filter as Filter<AnyRecord>, options)
+    if (this.#runtime)
+      return this.#findOverlay(filter as Filter<AnyRecord>, new Set(), options)
 
-    return this.#findStaged(filter as Filter<AnyRecord>, new Set())
+    return this.#findStaged(filter as Filter<AnyRecord>, new Set(), options)
   }
 
-  count(filter: Filter<Meta & Derived>): number {
+  count(filter: Filter<Meta & Derived>, options?: FindOptions): number {
     if (this.#runtime && this.#records.length === 0)
-      return this.#countRuntime(filter as Filter<AnyRecord>)
-    return Array.from(this.find(filter)).length
+      return this.#countRuntime(filter as Filter<AnyRecord>, options)
+    return Array.from(this.find(filter, options)).length
   }
 
-  findKeys(filter: Filter<Meta & Derived>): Iterable<string> {
-    return [...this.find(filter)].map(id => this.#lookupKeyForId(id))
+  findKeys(
+    filter: Filter<Meta & Derived>,
+    options?: FindOptions
+  ): Iterable<string> {
+    return [...this.find(filter, options)].map(id => this.#lookupKeyForId(id))
   }
 
   pick(
@@ -413,6 +436,16 @@ export class ContentDB<
       this.#activeMaterializationStack ?? new Set(),
       undefined
     )
+  }
+
+  reader(field: string): (id: number) => unknown {
+    const cached = this.#readers.get(field)
+    if (cached) return cached
+    const reader = this.#runtime && this.#records.length === 0
+      ? this.#runtimeReader(field)
+      : (id: number) => this.read(id, field)
+    this.#readers.set(field, reader)
+    return reader
   }
 
   pickMany(
@@ -641,16 +674,25 @@ export class ContentDB<
     return row
   }
 
-  #findStaged(filter: Filter<AnyRecord>, stack: Set<string>): number[] {
+  #findStaged(
+    filter: Filter<AnyRecord>,
+    stack: Set<string>,
+    options?: FindOptions
+  ): number[] {
+    const types = options?.types ? new Set(options.types) : undefined
     const matches: number[] = []
     for (let index = 0; index < this.#records.length; index += 1) {
+      const record = this.#records[index]!
+      if (types && !types.has(record.typeName)) continue
       const row = this.#materialize(index, stack)
       if (matchesFilter(row, filter)) matches.push(index)
     }
     this.#lastQueryPlan = {
       fastPathFields: [],
       slowPathFields: collectTopLevelFields(filter),
-      candidateCountBeforeSlow: this.#records.length,
+      candidateCountBeforeSlow: types
+        ? this.#records.filter(record => types.has(record.typeName)).length
+        : this.#records.length,
       resultCount: matches.length
     }
     return matches
@@ -658,16 +700,28 @@ export class ContentDB<
 
   #findOverlay(
     filter: Filter<AnyRecord>,
-    stack: Set<string> = new Set()
+    stack: Set<string> = new Set(),
+    options?: FindOptions
   ): number[] {
     const runtime = must(this.#runtime, 'Runtime index not initialized')
+    const stagedTypes = options?.types ? new Set(options.types) : undefined
+    const runtimeCandidates = this.#runtimeTypeCandidates(options?.types)
     const stats: QueryPlanStats = {
       fastPathFields: [],
       slowPathFields: [],
-      candidateCountBeforeSlow: runtime.rowCount + this.#records.length,
+      candidateCountBeforeSlow:
+        (runtimeCandidates?.length ?? runtime.rowCount) +
+        (stagedTypes
+          ? this.#records.filter(record => stagedTypes.has(record.typeName))
+              .length
+          : this.#records.length),
       resultCount: 0
     }
-    const baselineCandidates = this.#scanRuntimeFilter(filter, undefined, stats)
+    const baselineCandidates = this.#scanRuntimeFilter(
+      filter,
+      runtimeCandidates,
+      stats
+    )
     const matches: number[] = []
     const shadowed = new Set<string>()
     for (const record of this.#records) shadowed.add(record.lookupKey)
@@ -683,6 +737,7 @@ export class ContentDB<
       stagedIndex += 1
     ) {
       const staged = this.#records[stagedIndex]!
+      if (stagedTypes && !stagedTypes.has(staged.typeName)) continue
       const baselineId = this.#runtimeRowIdByLookup(staged.lookupKey)
       const id = baselineId ?? runtime.rowCount + stagedIndex
       if (matchesFilter(this.#materialize(stagedIndex, stack), filter))
@@ -1548,32 +1603,137 @@ export class ContentDB<
     return row
   }
 
-  #findRuntime(filter: Filter<AnyRecord>): number[] {
+  #findRuntime(filter: Filter<AnyRecord>, options?: FindOptions): number[] {
     const runtime = must(this.#runtime, 'Runtime index not initialized')
+    const candidates = this.#runtimeTypeCandidates(options?.types)
     const stats: QueryPlanStats = {
       fastPathFields: [],
       slowPathFields: [],
-      candidateCountBeforeSlow: runtime.rowCount,
+      candidateCountBeforeSlow: candidates?.length ?? runtime.rowCount,
       resultCount: 0
     }
-    const ids = this.#scanRuntimeFilter(filter, undefined, stats)
+    const ids = this.#scanRuntimeFilter(filter, candidates, stats)
     stats.resultCount = ids.length
     this.#lastQueryPlan = stats
     return ids
   }
 
-  #countRuntime(filter: Filter<AnyRecord>): number {
+  #countRuntime(filter: Filter<AnyRecord>, options?: FindOptions): number {
     const runtime = must(this.#runtime, 'Runtime index not initialized')
+    const candidates = this.#runtimeTypeCandidates(options?.types)
     const stats: QueryPlanStats = {
       fastPathFields: [],
       slowPathFields: [],
-      candidateCountBeforeSlow: runtime.rowCount,
+      candidateCountBeforeSlow: candidates?.length ?? runtime.rowCount,
       resultCount: 0
     }
-    const result = this.#scanRuntimeFilter(filter, undefined, stats)
-    stats.resultCount = result.length
+    const count = this.#countRuntimeFilter(filter, candidates, stats)
+    stats.resultCount = count
     this.#lastQueryPlan = stats
-    return result.length
+    return count
+  }
+
+  #countRuntimeFilter(
+    filter: Filter<AnyRecord> | undefined,
+    candidates: number[] | undefined,
+    stats: QueryPlanStats
+  ): number {
+    const runtime = must(this.#runtime, 'Runtime index not initialized')
+    if (!filter) return candidates?.length ?? runtime.rowCount
+
+    if (isAnd(filter)) {
+      let current = candidates
+      const children = this.#sortedAndChildren(filter)
+      for (let index = 0; index < children.length; index += 1) {
+        const child = children[index]!
+        if (index === children.length - 1)
+          return this.#countRuntimeFilter(child, current, stats)
+        current = this.#scanRuntimeFilter(child, current, stats)
+        if (current.length === 0) return 0
+      }
+      return current?.length ?? runtime.rowCount
+    }
+
+    if (isOr(filter)) return this.#scanRuntimeFilter(filter, candidates, stats).length
+
+    const entries = Object.entries(filter)
+    if (entries.length === 1) {
+      const [field, condition] = entries[0]!
+      const before = candidates?.length ?? runtime.rowCount
+      const count = this.#countRuntimeField(field, condition, candidates)
+      if (this.#canColumnScan(field)) stats.fastPathFields.push(field)
+      else stats.slowPathFields.push(field)
+      stats.candidateCountBeforeSlow = Math.min(
+        stats.candidateCountBeforeSlow,
+        before
+      )
+      return count
+    }
+
+    return this.#scanRuntimeFilter(filter, candidates, stats).length
+  }
+
+  #countRuntimeField(
+    field: string,
+    condition: unknown,
+    candidates: number[] | undefined
+  ): number {
+    const runtime = must(this.#runtime, 'Runtime index not initialized')
+    const nested = nestedExactRequest(field, condition)
+    if (nested) {
+      const indexed = this.#payloadIndexedRows(nested.path, nested.keys)
+      return candidates ? intersectSortedRowCount(candidates, indexed) : indexed.length
+    }
+    const equality = equalityKeys(condition)
+    if (equality) {
+      const indexedCount = this.#exactIndexedCount(field, equality)
+      if (indexedCount !== undefined) {
+        if (!candidates) return indexedCount
+        if (indexedCount === runtime.rowCount) return candidates.length
+      }
+      const indexed = this.#exactIndexedRows(field, equality)
+      if (indexed)
+        return candidates
+          ? intersectSortedRowCount(candidates, indexed)
+          : indexed.length
+    }
+    const range = numberRange(condition)
+    if (range) {
+      const indexed = this.#rangeIndexedRows(field, range)
+      if (indexed)
+        return candidates
+          ? intersectSortedRowCount(candidates, indexed)
+          : indexed.length
+    }
+    const primitive = primitivePredicate(condition)
+    const source = candidates ?? allRowIdArray(runtime.rowCount)
+    let count = 0
+    for (const rowId of source) {
+      const value = this.#readRuntimeField(rowId, field, undefined)
+      if (primitive ? primitive(value) : matchesCondition(value, condition))
+        count += 1
+    }
+    return count
+  }
+
+  #runtimeTypeCandidates(
+    types: ReadonlyArray<string> | undefined
+  ): number[] | undefined {
+    if (!types) return
+    if (types.length === 0) return []
+    const runtime = must(this.#runtime, 'Runtime index not initialized')
+    const cacheKey = types.slice().sort().join('\0')
+    const cached = runtime.typeCandidates?.get(cacheKey)
+    if (cached) return cached
+    const wanted = new Set(types)
+    const rows: number[] = []
+    for (const pool of this.#getPools().values()) {
+      if (!wanted.has(pool.typeName)) continue
+      rows.push(...pool.localRowToId)
+    }
+    if (wanted.size > 1) rows.sort(compareNumbers)
+    ;(runtime.typeCandidates ??= new Map()).set(cacheKey, rows)
+    return rows
   }
 
   #scanRuntimeFilter(
@@ -1630,6 +1790,10 @@ export class ContentDB<
     if (nested) return this.#scanNestedExactField(nested, candidates)
     const equality = equalityKeys(condition)
     if (equality) {
+      if (candidates) {
+        const count = this.#exactIndexedCount(field, equality)
+        if (count === runtime.rowCount) return candidates
+      }
       const indexed = this.#exactIndexedRows(field, equality)
       if (indexed) return candidates ? intersectSortedRows(candidates, indexed) : indexed
     }
@@ -2054,6 +2218,29 @@ export class ContentDB<
       return zone4[field]
     }
     return undefined
+  }
+
+  #runtimeReader(field: string): (id: number) => unknown {
+    const runtime = must(this.#runtime, 'Runtime index not initialized')
+    if (field === this.#shape.lookup)
+      return id => this.#runtimeLookupKey(id)
+    const globalColumn = this.#getGlobalColumns().columns.get(field)
+    if (globalColumn)
+      return id => readColumnValue(runtime.buffer, globalColumn, id)
+    const pools = this.#getPools()
+    if (this.#getFieldToPools().has(field))
+      return id => {
+        const entry = this.#runtimeRow(id)
+        const pool = must(
+          pools.get(entry.typeId),
+          `Missing type pool ${entry.typeId}`
+        )
+        const column = pool.columns.get(field)
+        return column
+          ? readColumnValue(runtime.buffer, column, entry.localRowIndex)
+          : undefined
+      }
+    return id => this.#readRuntimeField(id, field, undefined)
   }
 
   #payloadValueIndex(path: string): RuntimeExactIndex {
@@ -2614,14 +2801,38 @@ function compareNumbers(left: number, right: number): number {
 }
 
 function intersectSortedRows(left: number[], right: number[]): number[] {
-  const matched: number[] = []
+  let matched: number[] | undefined
   let leftIndex = 0
   let rightIndex = 0
   while (leftIndex < left.length && rightIndex < right.length) {
     const leftId = left[leftIndex]!
     const rightId = right[rightIndex]!
     if (leftId === rightId) {
-      matched.push(leftId)
+      if (matched) matched.push(leftId)
+      leftIndex += 1
+      rightIndex += 1
+    } else if (leftId < rightId) {
+      matched ??= left.slice(0, leftIndex)
+      leftIndex += 1
+    } else {
+      matched ??= left.slice(0, leftIndex)
+      rightIndex += 1
+    }
+  }
+  if (!matched && leftIndex === left.length) return left
+  matched ??= left.slice(0, leftIndex)
+  return matched
+}
+
+function intersectSortedRowCount(left: number[], right: number[]): number {
+  let count = 0
+  let leftIndex = 0
+  let rightIndex = 0
+  while (leftIndex < left.length && rightIndex < right.length) {
+    const leftId = left[leftIndex]!
+    const rightId = right[rightIndex]!
+    if (leftId === rightId) {
+      count += 1
       leftIndex += 1
       rightIndex += 1
     } else if (leftId < rightId) {
@@ -2630,7 +2841,7 @@ function intersectSortedRows(left: number[], right: number[]): number[] {
       rightIndex += 1
     }
   }
-  return matched
+  return count
 }
 
 function uniqueSortedRows(rows: number[]): number[] {

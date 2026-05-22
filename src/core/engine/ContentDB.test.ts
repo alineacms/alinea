@@ -214,6 +214,48 @@ test('ContentDB stores global columns once across all types', () => {
   })
 })
 
+test('ContentDB can restrict queries to hinted type pools', () => {
+  const globalShape: ContentShape<Meta, Derived> = {
+    ...shape,
+    global: {group: 'exact', type: 'dictionary'},
+    fields(type): Readonly<Record<string, FieldDirective>> {
+      if (type === 'Article') return {score: 'range', title: 'payload'}
+      return {featured: 'column', title: 'payload'}
+    }
+  }
+  const db = new ContentDB(globalShape)
+  db.upsert(
+    {_filePath: 'content/article.json', type: 'Article', group: 'shared'},
+    {score: 10, title: 'Article'}
+  )
+  db.upsert(
+    {_filePath: 'content/draft.json', type: 'Draft', group: 'shared'},
+    {featured: true, title: 'Draft'}
+  )
+  db.upsert(
+    {_filePath: 'content/second.json', type: 'Article', group: 'other'},
+    {score: 20, title: 'Second'}
+  )
+
+  const opened = new ContentDB(globalShape, db.compile())
+
+  test.equal(
+    Array.from(opened.findKeys({}, {types: ['Article']})).sort(),
+    ['content/article.json', 'content/second.json']
+  )
+  test.equal(
+    Array.from(opened.findKeys({group: 'shared'}, {types: ['Draft']})),
+    ['content/draft.json']
+  )
+  test.is(opened.count({}, {types: ['Missing']}), 0)
+  test.equal(opened.getLastQueryPlan(), {
+    fastPathFields: [],
+    slowPathFields: [],
+    candidateCountBeforeSlow: 0,
+    resultCount: 0
+  })
+})
+
 test('ContentDB serialized exact indexes can return duplicate values', () => {
   const idShape: ContentShape<Meta, Derived> = {
     ...shape,

@@ -52,8 +52,9 @@ const config = createConfig({
 })
 
 const ROWS = Number(process.env.ALINEA_BENCH_ROWS ?? 10000)
-const RUNS = Number(process.env.ALINEA_BENCH_RUNS ?? 1000)
-const SAMPLES = Number(process.env.ALINEA_BENCH_SAMPLES ?? 5)
+const RUNS = Number(process.env.ALINEA_BENCH_RUNS ?? 10)
+const SAMPLES = Number(process.env.ALINEA_BENCH_SAMPLES ?? 3)
+const TRACE = process.env.ALINEA_BENCH_TRACE !== '0'
 const targetId = `page-${Math.floor(ROWS / 2)}`
 const changedId = Math.floor(ROWS / 2)
 const scoreCutoff = Math.floor(ROWS * 0.75)
@@ -734,7 +735,9 @@ function bench(name: string, run: () => void) {
   for (let i = 0; i < SAMPLES; i++) {
     const start = performance.now()
     run()
-    samples.push(performance.now() - start)
+    const duration = performance.now() - start
+    samples.push(duration)
+    traceSample(name, i, duration)
   }
   return {name, duration: median(samples)}
 }
@@ -744,7 +747,9 @@ async function benchAsync(name: string, run: () => Promise<void>) {
   for (let i = 0; i < SAMPLES; i++) {
     const start = performance.now()
     await run()
-    samples.push(performance.now() - start)
+    const duration = performance.now() - start
+    samples.push(duration)
+    traceSample(name, i, duration)
   }
   return {name, duration: median(samples)}
 }
@@ -759,9 +764,18 @@ async function benchAsyncPrepared<T>(
     const target = await prepare()
     const start = performance.now()
     await run(target)
-    samples.push(performance.now() - start)
+    const duration = performance.now() - start
+    samples.push(duration)
+    traceSample(name, i, duration)
   }
   return {name, duration: median(samples)}
+}
+
+function traceSample(name: string, sample: number, duration: number) {
+  if (!TRACE) return
+  console.error(
+    `[bench] ${name} sample ${sample + 1}/${SAMPLES}: ${duration.toFixed(2)}ms`
+  )
 }
 
 function compare3(

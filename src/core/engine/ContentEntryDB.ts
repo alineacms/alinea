@@ -1,15 +1,17 @@
 import type {Config} from '../Config.js'
-import type {Entry} from '../Entry.js'
+import {Entry, type Entry as EntryRecord} from '../Entry.js'
+import {EntryFields} from '../EntryFields.js'
 import type {Expr} from '../Expr.js'
 import {Field} from '../Field.js'
 import type {
   AnyQueryResult,
+  EdgeQuery,
   GraphQuery,
   Order,
   Projection,
   Status
 } from '../Graph.js'
-import {Graph} from '../Graph.js'
+import {Graph, querySource as queryEdge} from '../Graph.js'
 import {getExpr, hasExpr, hasField, hasRoot, hasWorkspace} from '../Internal.js'
 import {getScope, type Scope} from '../Scope.js'
 import {Type, type Type as AlineaType} from '../Type.js'
@@ -21,6 +23,7 @@ import {
   ContentDB,
   type ContentShape,
   type FieldDirective,
+  type FindOptions,
   type Filter
 } from './ContentDB.js'
 
@@ -29,9 +32,17 @@ type AnyRecord = Record<string, any>
 type ContentQueryPlan = {
   filter: Filter<AnyRecord>
   searchTerms?: string[]
-  select: (id: number) => unknown
+  projection: Projection | undefined
+  select: ContentSelector
   needsPostProcessing: boolean
+  locationPredicate?: (id: number) => boolean
   orders?: Array<CompiledOrder>
+  typeHints?: ReadonlyArray<string>
+}
+
+type ContentSelector = {
+  (id: number): unknown | Promise<unknown>
+  async: boolean
 }
 
 type CompiledOrder = {
@@ -43,7 +54,7 @@ type CompiledOrder = {
 type ContentEntryMeta = {
   _id: string
   _type: string
-  _status: Entry['status']
+  _status: EntryRecord['status']
   _active: boolean
   _main: boolean
   _workspace: string
@@ -110,6 +121,7 @@ const entryFieldAliases: Record<string, string> = {
 
 export class ContentEntryDB extends Graph {
   readonly #scope: Scope
+  readonly #typesByField: Map<string, Set<string>>
   #db: ContentDB<ContentEntryMeta, ContentEntryDerived>
   #plans = new WeakMap<GraphQuery, ContentQueryPlan>()
   #sha: string | undefined
@@ -121,6 +133,7 @@ export class ContentEntryDB extends Graph {
   ) {
     super()
     this.#scope = getScope(config)
+    this.#typesByField = contentEntryTypesByField(config)
     const parsed = source ? parseContentEntryBytes(source) : undefined
     const buffer = parsed?.buffer
     this.#db = new ContentDB(createContentEntryShape(config), buffer)
@@ -155,8 +168,9 @@ export class ContentEntryDB extends Graph {
     return sha
   }
 
-  upsert(entry: Entry) {
+  upsert(entry: EntryRecord) {
     this.#bytes = undefined
+    this.#plans = new WeakMap()
     const meta: ContentEntryMeta = {
       _id: entry.id,
       _type: entry.type,
@@ -178,7 +192,9 @@ export class ContentEntryDB extends Graph {
       ...fromEntries(
         entries(entryFieldAliases).map(([field, alias]) => [
           alias,
-          (entry as any)[field]
+          field === 'title'
+            ? ((entry.data as AnyRecord).title ?? entry.title)
+            : (entry as any)[field]
         ])
       )
     }
@@ -196,29 +212,44 @@ export class ContentEntryDB extends Graph {
   async resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
+    if (Array.isArray(query.groupBy))
+      throw new Error('groupBy must be a single field')
+    if (query.preview && 'entry' in query.preview) {
+      const preview = ContentEntryDB.open(this.config, this.exportBytes())
+      preview.upsert(query.preview.entry)
+      return preview.resolve({...query, preview: undefined} as Query)
+    }
     const plan = this.#plan(query)
     if (
       query.count &&
       !plan.searchTerms &&
+      !plan.locationPredicate &&
       !query.orderBy &&
       !query.groupBy &&
       !query.skip &&
       !query.take
     )
-      return this.#db.count(plan.filter) as AnyQueryResult<Query>
+      return this.#db.count(
+        plan.filter,
+        this.#findOptions(plan)
+      ) as AnyQueryResult<Query>
     const ids = this.#matchingIds(plan)
     const ordered =
-      query.orderBy || query.groupBy ? this.#orderIds(ids, query, plan) : ids
+      query.orderBy || query.groupBy || queryEdge(query) === 'parents'
+        ? this.#orderIds(ids, query, plan)
+        : ids
     if (query.skip) ordered.splice(0, query.skip)
     if (query.take) ordered.splice(query.take)
     if (query.count) return ordered.length as AnyQueryResult<Query>
-    const projection = query as GraphQuery<Projection>
-    const projected =
-      query.first || query.get
-        ? ordered.length > 0
-          ? [plan.select(ordered[0]!)]
-          : []
-        : ordered.map(plan.select)
+    const single = query.first || query.get || isEdgeSingleResult(query)
+    const selected = single
+      ? ordered.length > 0
+        ? [plan.select(ordered[0]!)]
+        : []
+      : ordered.map(plan.select)
+    const projected = plan.select.async
+      ? await Promise.all(selected)
+      : selected
     if (plan.needsPostProcessing) {
       const loaders = new Map<string, ContentEntryLinkLoader>()
       await Promise.all(
@@ -231,12 +262,18 @@ export class ContentEntryDB extends Graph {
               () => this.#read(ordered[index], '_locale') as string | null
             ),
             row,
-            projection
+            plan.projection
           )
         )
       )
     }
-    const result = query.first || query.get ? projected[0] : projected
+    const result = single
+      ? ordered.length === 0
+        ? query.first
+          ? null
+          : undefined
+        : projected[0]
+      : projected
     return result as AnyQueryResult<Query>
   }
 
@@ -265,6 +302,7 @@ export class ContentEntryDB extends Graph {
           }
         )
       : undefined
+    const selectedProjection = this.#projection(projection)
     const plan = {
       filter: this.#filter(query),
       searchTerms: Array.isArray(query.search)
@@ -272,22 +310,31 @@ export class ContentEntryDB extends Graph {
         : query.search
           ? [query.search.toLowerCase()]
           : undefined,
-      select: this.#selector(projection.select),
-      needsPostProcessing: needsPostProcessing(projection.select),
-      orders
+      projection: selectedProjection,
+      select: this.#selector(selectedProjection, query.status ?? 'published'),
+      needsPostProcessing: needsPostProcessing(selectedProjection),
+      locationPredicate: this.#locationPredicate(query),
+      orders,
+      typeHints: this.#typeHints(query, selectedProjection)
     }
     this.#plans.set(query, plan)
     return plan
   }
 
   #matchingIds(plan: ContentQueryPlan): Array<number> {
-    const ids = Array.from(this.#db.find(plan.filter))
+    let ids = Array.from(this.#db.find(plan.filter, this.#findOptions(plan)))
+    if (plan.locationPredicate)
+      ids = ids.filter(id => plan.locationPredicate!(id))
     return plan.searchTerms
       ? ids.filter(id => {
           const text = this.#searchTextFor(id)
           return plan.searchTerms!.every(term => text.includes(term))
         })
       : ids
+  }
+
+  #findOptions(plan: ContentQueryPlan): FindOptions | undefined {
+    return plan.typeHints ? {types: plan.typeHints} : undefined
   }
 
   #filter(query: GraphQuery): Filter<AnyRecord> {
@@ -317,13 +364,19 @@ export class ContentEntryDB extends Graph {
     if (root !== undefined) and.push({_root: root} as Filter<AnyRecord>)
     if (query.locale !== undefined)
       and.push({_locale: query.locale} as Filter<AnyRecord>)
-    if (query.type) and.push(this.#typeFilter(query.type))
+    else if (query.preferredLocale)
+      and.push(
+        {_locale: {in: [query.preferredLocale, query.preferredLocale.toLowerCase(), null]}} as Filter<AnyRecord>
+      )
+    // `query.type` is passed as a ContentDB type-pool hint. Keeping a second
+    // `_type` filter would only repeat work against the same persistent type
+    // metadata on every query.
     if (query.filter) and.push(normalizeFilter(query.filter as AnyRecord))
     if (query.location) {
       const location = Array.isArray(query.location)
         ? query.location
         : this.#scope.locationOf(query.location)
-      if (location) and.push(locationFilter(location))
+      if (location && location.length < 3) and.push(locationFilter(location))
     }
     return and.length === 1 ? and[0] : {and}
   }
@@ -343,16 +396,54 @@ export class ContentEntryDB extends Graph {
     }
   }
 
-  #typeFilter(type: unknown): Filter<AnyRecord> {
+  #typeNames(type: unknown): string[] {
     const types = Array.isArray(type) ? type : [type]
-    const names = types.map(type =>
-      typeof type === 'string' ? type : this.#scope.nameOf(type as AlineaType)
-    )
-    return {_type: {in: names}}
+    return types.flatMap(type => {
+      const name =
+        typeof type === 'string' ? type : this.#scope.nameOf(type as AlineaType)
+      return name ? [name] : []
+    })
+  }
+
+  #typeHints(
+    query: GraphQuery,
+    projection: Projection | undefined
+  ): ReadonlyArray<string> | undefined {
+    if (query.type) return this.#typeNames(query.type)
+    const fields = new Set<string>()
+    if (projection) collectProjectionFields(this.#scope, projection, fields)
+    if (query.filter && !collectFilterFields(query.filter as AnyRecord, fields))
+      return
+    if (query.groupBy && !Array.isArray(query.groupBy))
+      collectExprField(this.#scope, query.groupBy, fields)
+    if (query.orderBy) {
+      const orders = Array.isArray(query.orderBy)
+        ? query.orderBy
+        : [query.orderBy]
+      for (const order of orders) {
+        const expr = order.asc ?? order.desc
+        if (expr) collectExprField(this.#scope, expr, fields)
+      }
+    }
+    if (fields.size === 0) return
+    let candidates: Set<string> | undefined
+    for (const field of fields) {
+      const fieldTypes = this.#typesByField.get(field)
+      if (!fieldTypes) continue
+      candidates = candidates
+        ? intersectSets(candidates, fieldTypes)
+        : new Set(fieldTypes)
+      if (candidates.size === 0) return
+    }
+    return candidates && candidates.size > 0
+      ? Array.from(candidates)
+      : undefined
   }
 
   #searchTextFor(id: number): string {
-    return String(this.#read(id, '_searchableText') ?? '').toLowerCase()
+    return `${String(this.#read(id, '_title') ?? '')} ${String(
+      this.#read(id, '_searchableText') ?? ''
+    )}`.toLowerCase()
   }
 
   #orderIds(
@@ -379,6 +470,11 @@ export class ContentEntryDB extends Graph {
         this.#compareOrderedValues(left.values, right.values, plan.orders!)
       )
       ordered = decorated.map(item => item.id)
+    } else if (queryEdge(query) === 'parents') {
+      ordered.sort(
+        (left, right) =>
+          Number(this.#read(left, '_level')) - Number(this.#read(right, '_level'))
+      )
     }
     return ordered
   }
@@ -408,15 +504,213 @@ export class ContentEntryDB extends Graph {
     return 0
   }
 
-  #selector(projection: Projection | undefined): (id: number) => unknown {
-    if (!projection) return id => this.#fullRow(id)
-    if (hasExpr(projection)) return this.#exprReader(projection as Expr)
+  #projection(query: GraphQuery<Projection>): Projection | undefined {
+    if (query.select) return query.select
+    if (!query.type && !query.include) return undefined
+    const fields = entries(EntryFields as Projection)
+    if (query.type) {
+      const types = Array.isArray(query.type) ? query.type : [query.type]
+      fields.push(
+        ...types
+          .filter(type => typeof type !== 'string')
+          .flatMap(type => entries(type as AlineaType))
+      )
+    }
+    if (query.include) fields.push(...entries(query.include as AnyRecord))
+    return fromEntries(fields)
+  }
+
+  #selector(
+    projection: Projection | undefined,
+    status: Status
+  ): ContentSelector {
+    if (!projection)
+      return selector(id => this.#fullRow(id), false)
+    if (hasExpr(projection))
+      return selector(this.#exprReader(projection as Expr), false)
+    if (queryEdge(projection))
+      return selector(
+        id =>
+        this.#edgeValue(
+          id,
+          projection as unknown as EdgeQuery<Projection>,
+          status
+        ),
+        true
+      )
     const fields = entries(projection as AnyRecord).map(([key, value]) => [
       key,
-      this.#selector(value as Projection)
+      this.#selector(value as Projection, status)
     ] as const)
-    return id =>
-      fromEntries(fields.map(([key, select]) => [key, select(id)]))
+    const async = fields.some(([, select]) => select.async)
+    if (!async)
+      return selector(
+        id => fromEntries(fields.map(([key, select]) => [key, select(id)])),
+        false
+      )
+    return selector(
+      async id =>
+        fromEntries(
+          await Promise.all(
+            fields.map(async ([key, select]) => [key, await select(id)])
+          )
+        ),
+      true
+    )
+  }
+
+  async #edgeValue(
+    id: number,
+    query: EdgeQuery<Projection>,
+    inheritedStatus: Status
+  ): Promise<unknown> {
+    const entryIds = this.#edgeEntryIds(id, query)
+    if (entryIds.length === 0) return isEdgeSingleResult(query) ? undefined : []
+    const status = query.status ?? inheritedStatus
+    const rowLocale = this.#read(id, '_locale') as string | null
+    const locale =
+      query.edge === 'translations'
+        ? query.locale
+        : query.locale === undefined
+          ? rowLocale
+          : query.locale
+    return this.resolve({
+      ...query,
+      status,
+      locale,
+      id: {in: entryIds},
+      filter:
+        query.edge === 'translations' && !query.includeSelf
+          ? {
+              and: [
+                query.filter as Filter<AnyRecord> | undefined,
+                {_locale: {isNot: rowLocale}} as Filter<AnyRecord>
+              ].filter(Boolean)
+            }
+          : query.filter
+    } as GraphQuery<Projection>)
+  }
+
+  #edgeEntryIds(id: number, query: EdgeQuery): string[] {
+    const entryId = this.#read(id, '_id') as string
+    switch (query.edge) {
+      case 'parent': {
+        const parentId = this.#read(id, '_parentId')
+        return typeof parentId === 'string' ? [parentId] : []
+      }
+      case 'next':
+      case 'previous': {
+        const sibling = this.#adjacentSibling(id, query.edge)
+        return sibling === undefined ? [] : [sibling]
+      }
+      case 'siblings': {
+        const parentId = this.#read(id, '_parentId')
+        if (typeof parentId !== 'string') return []
+        const locale = this.#read(id, '_locale')
+        return uniqueStrings(
+          this.#rowIdsForParentId(parentId)
+            .filter(rowId => this.#read(rowId, '_locale') === locale)
+            .map(rowId => this.#read(rowId, '_id') as string)
+            .filter(id => query.includeSelf || id !== entryId)
+        )
+      }
+      case 'translations':
+        return [entryId]
+      case 'children': {
+        const depth = query.depth ?? 1
+        const childrenDir = this.#read(id, '_childrenDir')
+        const level = Number(this.#read(id, '_level'))
+        if (typeof childrenDir !== 'string') return []
+        return uniqueStrings(
+          this.#allRowIds()
+            .filter(rowId => {
+              const filePath = this.#read(rowId, '_filePath')
+              const childLevel = Number(this.#read(rowId, '_level'))
+              return (
+                typeof filePath === 'string' &&
+                filePath.startsWith(childrenDir) &&
+                childLevel > level &&
+                childLevel <= level + depth
+              )
+            })
+            .map(rowId => this.#read(rowId, '_id') as string)
+        )
+      }
+      case 'parents': {
+        const depth = query.depth ?? Number.POSITIVE_INFINITY
+        const parents = this.#read(id, '_parents')
+        return Array.isArray(parents) ? parents.slice(-depth) : []
+      }
+      case 'entryMultiple': {
+        const value = this.#fieldValue(id, query.field)
+        if (!Array.isArray(value)) return []
+        return value
+          .map(item => (isRecord(item) ? item._entry : undefined))
+          .filter((value): value is string => typeof value === 'string')
+      }
+      case 'entrySingle': {
+        const value = this.#fieldValue(id, query.field)
+        const entryId = isRecord(value) ? value._entry : undefined
+        return typeof entryId === 'string' ? [entryId] : []
+      }
+      default:
+        return []
+    }
+  }
+
+  #fieldValue(id: number, field: Expr): unknown {
+    const name = this.#scope.nameOf(field)
+    return name ? this.#read(id, name) : undefined
+  }
+
+  #adjacentSibling(
+    id: number,
+    direction: 'next' | 'previous'
+  ): string | undefined {
+    const parentId = this.#read(id, '_parentId')
+    if (typeof parentId !== 'string') return
+    const selfId = this.#read(id, '_id')
+    const locale = this.#read(id, '_locale')
+    const siblings = this.#rowIdsForParentId(parentId)
+      .filter(rowId => this.#read(rowId, '_locale') === locale)
+      .filter(rowId => this.#read(rowId, '_main') === true)
+      .map(rowId => ({
+        id: this.#read(rowId, '_id') as string,
+        index: this.#read(rowId, '_index') as string
+      }))
+      .filter(uniqueById())
+      .sort((left, right) => stringCompare(left.index, right.index))
+    const index = siblings.findIndex(sibling => sibling.id === selfId)
+    if (index === -1) return
+    return direction === 'next'
+      ? siblings[index + 1]?.id
+      : siblings[index - 1]?.id
+  }
+
+  #rowIdsForParentId(parentId: string): number[] {
+    return Array.from(this.#db.find({_parentId: parentId} as Filter<AnyRecord>))
+  }
+
+  #allRowIds(): number[] {
+    return Array.from(this.#db.find({} as Filter<AnyRecord>))
+  }
+
+  #locationPredicate(query: GraphQuery): ((id: number) => boolean) | undefined {
+    if (!query.location) return
+    const location = Array.isArray(query.location)
+      ? query.location
+      : this.#scope.locationOf(query.location)
+    if (!location || location.length < 3) return
+    const [workspace, root, segment] = location
+    return id => {
+      if (this.#read(id, '_workspace') !== workspace) return false
+      if (this.#read(id, '_root') !== root) return false
+      const level = Number(this.#read(id, '_level'))
+      if (level === 0) return false
+      const parentDir = String(this.#read(id, '_parentDir') ?? '')
+      if (level === 1) return parentDir.endsWith(`/${segment}`)
+      return parentDir.split('/').at(-level) === segment
+    }
   }
 
   #exprReader(expr: Expr): (id: number) => unknown {
@@ -424,11 +718,16 @@ export class ContentEntryDB extends Graph {
     switch (internal.type) {
       case 'entryField': {
         const field = entryFieldAliases[internal.name] ?? internal.name
-        return id => this.#read(id, field)
+        if (field === '_rowHash')
+          return id => cloneProjectedValue(this.#read(id, field))
+        const read = this.#db.reader(field)
+        return id => cloneProjectedValue(read(id))
       }
       case 'field': {
         const name = this.#scope.nameOf(expr)
-        return name ? id => this.#read(id, name) : () => undefined
+        if (!name) return () => undefined
+        const read = this.#db.reader(name)
+        return id => cloneProjectedValue(read(id))
       }
       case 'value':
         return () => internal.value
@@ -456,19 +755,37 @@ export class ContentEntryDB extends Graph {
   async #postRow(
     loader: ContentEntryLinkLoader,
     interim: unknown,
-    query: GraphQuery<Projection>
-  ) {
-    if (!interim || !query.select) return
-    if (hasExpr(query.select))
-      return this.#postExpr(loader, interim, query.select as Expr)
+    projection: Projection | undefined
+  ): Promise<void> {
+    if (!interim || !projection) return
+    if (hasExpr(projection))
+      return this.#postExpr(loader, interim, projection as Expr)
+    if (queryEdge(projection)) {
+      const edge = projection as unknown as EdgeQuery<Projection>
+      if (edge.count || !edge.select) return
+      if (isEdgeSingleResult(edge))
+        return this.#postRow(loader, interim, edge.select)
+      if (!Array.isArray(interim)) return
+      await Promise.all(
+        interim.map(row =>
+          row ? this.#postRow(loader, row, edge.select) : undefined
+        )
+      )
+      return
+    }
     await Promise.all(
-      entries(query.select as AnyRecord).map(([key, value]) => {
+      entries(projection as AnyRecord).map(([key, value]) => {
         if (value && hasExpr(value))
           return this.#postExpr(
             loader,
             (interim as AnyRecord)[key],
             value as Expr
           )
+        return this.#postRow(
+          loader,
+          (interim as AnyRecord)[key],
+          value as Projection
+        )
       })
     )
   }
@@ -489,7 +806,7 @@ export class ContentEntryDB extends Graph {
     const entry = fromEntries(
       entries(entryFieldAliases).map(([field, alias]) => [field, row[alias]])
     )
-    return {...entry, data}
+    return cloneProjectedValue({...entry, data}) as AnyRecord
   }
 }
 
@@ -537,11 +854,14 @@ class ContentEntryLinkLoader {
         id: {in: ids},
         preferredLocale: this.locale ?? undefined,
         status: this.status,
-        select: this.#projection
+        select: {
+          __entryId: Entry.id,
+          value: this.#projection
+        }
       } as any)) as Array<any>
       for (const row of rows) {
-        const id = row.id ?? row.entryId ?? row._id
-        if (typeof id === 'string') this.#resolved.set(id, row)
+        const id = row.__entryId
+        if (typeof id === 'string') this.#resolved.set(id, row.value)
       }
     }
     this.#flush = undefined
@@ -566,8 +886,13 @@ function getLinkLoader(
 
 function needsPostProcessing(projection: Projection | undefined): boolean {
   if (!projection) return false
+  if (!isRecord(projection)) return false
   if (hasField(projection)) return true
   if (hasExpr(projection)) return false
+  if (queryEdge(projection))
+    return needsPostProcessing(
+      (projection as unknown as EdgeQuery<Projection>).select
+    )
   return entries(projection as AnyRecord).some(([, value]) =>
     needsPostProcessing(value as Projection)
   )
@@ -608,9 +933,63 @@ function createContentEntryShape(
 }
 
 function scalarDirective(shape: ScalarShape<unknown>): FieldDirective {
-  if (typeof shape.initialValue === 'string') return 'dictionary'
+  if (typeof shape.initialValue === 'string') return 'column'
   if (typeof shape.initialValue === 'number') return 'range'
-  return 'column'
+  if (typeof shape.initialValue === 'boolean') return 'column'
+  return 'payload'
+}
+
+function contentEntryTypesByField(config: Config): Map<string, Set<string>> {
+  const typesByField = new Map<string, Set<string>>()
+  for (const [typeName, type] of entries(config.schema)) {
+    for (const fieldName of Object.keys(Type.shape(type).shapes)) {
+      const types = typesByField.get(fieldName) ?? new Set<string>()
+      types.add(typeName)
+      typesByField.set(fieldName, types)
+    }
+  }
+  return typesByField
+}
+
+function collectProjectionFields(
+  scope: Scope,
+  projection: Projection,
+  fields: Set<string>
+): void {
+  if (hasExpr(projection)) {
+    collectExprField(scope, projection as Expr, fields)
+    return
+  }
+  if (!isRecord(projection) || queryEdge(projection)) return
+  for (const value of Object.values(projection))
+    if (value) collectProjectionFields(scope, value as Projection, fields)
+}
+
+function collectExprField(scope: Scope, expr: Expr, fields: Set<string>): void {
+  const internal = getExpr(expr)
+  if (internal.type !== 'field') return
+  const name = scope.nameOf(expr)
+  if (name) fields.add(name)
+}
+
+function collectFilterFields(filter: AnyRecord, fields: Set<string>): boolean {
+  if (!isRecord(filter)) return true
+  if (Array.isArray(filter.and)) {
+    for (const child of filter.and) {
+      if (child && !collectFilterFields(child as AnyRecord, fields))
+        return false
+    }
+    return true
+  }
+  if (Array.isArray(filter.or)) return false
+  for (const field of Object.keys(filter)) fields.add(field)
+  return true
+}
+
+function intersectSets<T>(left: Set<T>, right: Set<T>): Set<T> {
+  const result = new Set<T>()
+  for (const value of left) if (right.has(value)) result.add(value)
+  return result
 }
 
 const NATURAL_COLLATOR = new Intl.Collator(undefined, {numeric: true})
@@ -621,6 +1000,45 @@ const CASE_SENSITIVE_COLLATOR = new Intl.Collator(undefined, {
 
 function stringCompare(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0
+}
+
+function isEdgeSingleResult(query: GraphQuery & Partial<EdgeQuery>): boolean {
+  return (
+    query.edge === 'parent' ||
+    query.edge === 'next' ||
+    query.edge === 'previous' ||
+    query.edge === 'entrySingle'
+  )
+}
+
+function isRecord(input: unknown): input is Record<string, unknown> {
+  return Boolean(input && typeof input === 'object' && !Array.isArray(input))
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)]
+}
+
+function uniqueById<T extends {id: string}>(): (value: T) => boolean {
+  const seen = new Set<string>()
+  return value => {
+    if (seen.has(value.id)) return false
+    seen.add(value.id)
+    return true
+  }
+}
+
+function cloneProjectedValue(value: unknown): unknown {
+  if (!value || typeof value !== 'object') return value
+  if (typeof structuredClone === 'function') return structuredClone(value)
+  return JSON.parse(JSON.stringify(value))
+}
+
+function selector(
+  select: (id: number) => unknown | Promise<unknown>,
+  async: boolean
+): ContentSelector {
+  return Object.assign(select, {async})
 }
 
 const CONTENT_ENTRY_MAGIC = 0x414c4345

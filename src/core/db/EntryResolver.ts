@@ -30,6 +30,7 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {unreachable} from 'alinea/core/util/Types'
 import * as cito from 'cito'
 import {createRecord} from '../EntryRecord.js'
+import {ContentEntryDB} from '../engine/ContentEntryDB.js'
 import {compareStrings} from '../source/Utils.js'
 import {assert} from '../util/Assert.js'
 import {
@@ -56,11 +57,20 @@ export interface PostContext {
 export class EntryResolver implements Resolver {
   index: EntryIndex
   #scope: Scope
+  #contentDb:
+    | {
+        sha: string
+        db: ContentEntryDB
+      }
+    | undefined
 
   constructor(config: Config, index: EntryIndex) {
     this.#scope = getScope(config)
     this.index = index
+    this.config = config
   }
+
+  private config: Config
 
   call(
     ctx: ResolveContext,
@@ -479,6 +489,42 @@ export class EntryResolver implements Resolver {
   async resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
+    if (this.#canUseContentDB(query)) {
+      const contentQuery = query.select
+        ? query
+        : ({
+            ...query,
+            select: this.projection(query as GraphQuery<Projection>)
+          } as Query)
+      return this.#content().resolve(contentQuery) as Promise<
+        AnyQueryResult<Query>
+      >
+    }
+    return this.#resolveGraph(query)
+  }
+
+  #content(): ContentEntryDB {
+    const sha = this.index.sha
+    if (!this.#contentDb || this.#contentDb.sha !== sha) {
+      this.#contentDb = {
+        sha,
+        db: ContentEntryDB.fromIndex(this.config, this.index)
+      }
+    }
+    return this.#contentDb.db
+  }
+
+  #canUseContentDB(query: GraphQuery): boolean {
+    return (
+      !filterHasEntryReference(query.filter) &&
+      !projectionHasCall(query.select as Projection | undefined) &&
+      !projectionHasCall(query.include as Projection | undefined)
+    )
+  }
+
+  async #resolveGraph<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
     const {preview} = query
     const previewEntry =
       preview && 'entry' in preview ? preview.entry : undefined
@@ -513,6 +559,27 @@ export class EntryResolver implements Resolver {
   }
 }
 
+function projectionHasCall(projection: Projection | undefined): boolean {
+  if (!projection) return false
+  if (hasExpr(projection)) return getExpr(projection as Expr).type === 'call'
+  if (queryEdge(projection as EdgeQuery))
+    return projectionHasCall(
+      (projection as unknown as EdgeQuery<Projection>).select
+    )
+  return entries(projection as Record<string, unknown>).some(([, value]) =>
+    projectionHasCall(value as Projection)
+  )
+}
+
+function filterHasEntryReference(filter: unknown): boolean {
+  if (!filter || typeof filter !== 'object') return false
+  if (Array.isArray(filter))
+    return filter.some(item => filterHasEntryReference(item))
+  return entries(filter as Record<string, unknown>).some(([key, value]) => {
+    return key === '_entry' || filterHasEntryReference(value)
+  })
+}
+
 export interface ResolveContext {
   //entries: Array<Entry>
   status: Status
@@ -534,7 +601,7 @@ export function statusChecker(status: Status): Check {
     case 'preferPublished':
       return entry => entry.main
     case 'all':
-      return entry => true
+      return () => true
   }
 }
 
@@ -592,7 +659,7 @@ function locationChecker(location: Array<string>): Check {
       }
     }
     default:
-      return entry => true
+      return () => true
   }
 }
 
