@@ -1,17 +1,8 @@
-import {useEntry, useGraphQuery, useUser} from 'alinea/dashboard'
+import {useEntry, useUser} from 'alinea/dashboard'
 
 export function CustomViewExample() {
   const entry = useEntry()
   const user = useUser()
-  const siblingCount = useGraphQuery(({graph, entry}) => {
-    if (!entry) return 0
-    return graph.count({
-      parentId: entry.parentId,
-      root: entry.root,
-      workspace: entry.workspace,
-      status: 'preferDraft'
-    })
-  }, [])
 
   return (
     <section style={{display: 'grid', gap: 12}}>
@@ -32,8 +23,6 @@ export function CustomViewExample() {
         <dd>{entry?.locale ?? 'default'}</dd>
         <dt>User</dt>
         <dd>{user?.name ?? 'Anonymous'}</dd>
-        <dt>Siblings</dt>
-        <dd>{siblingCount}</dd>
       </dl>
     </section>
   )
