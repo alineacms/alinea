@@ -1,27 +1,35 @@
 import styler from '@alinea/styler'
 import {
+  type PointerEvent,
   type ReactNode,
   useCallback,
-  useEffect,
-  useId,
   useRef,
   useState
 } from 'react'
-import {useFilter} from 'react-aria'
 import {
+  Autocomplete,
   Button,
-  ComboBox,
-  type ComboBoxProps as ComboBoxPrimitiveProps,
+  Group,
   Input,
   type Key,
   ListBox,
   ListBoxItem,
   type ListBoxItemProps,
+  SearchField as SearchFieldPrimitive,
+  Select as SelectPrimitive,
+  type SelectProps as SelectPrimitiveProps,
+  SelectValue,
   TagGroup,
-  TagList
+  TagList,
+  useFilter
 } from 'react-aria-components'
-import {type ListData, useListData} from 'react-stately'
-import {IcRoundCheck, IcRoundKeyboardArrowDown} from '../dashboard/icons.js'
+import type {ListData} from 'react-stately'
+import {
+  IcRoundCheck,
+  IcRoundClose,
+  IcRoundKeyboardArrowDown,
+  IcRoundSearch
+} from '../dashboard/icons.js'
 import {Icon} from './Icon.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import {Popover} from './Popover.js'
@@ -39,16 +47,16 @@ interface MultipleSelectProps<T extends object>
   extends
     LabelSharedProps,
     Omit<
-      ComboBoxPrimitiveProps<T>,
+      SelectPrimitiveProps<T, 'multiple'>,
       | 'children'
-      | 'validate'
-      | 'allowsEmptyCollection'
-      | 'inputValue'
-      | 'selectedKey'
       | 'className'
-      | 'value'
+      | 'defaultSelectedKey'
+      | 'defaultValue'
+      | 'onChange'
       | 'onSelectionChange'
-      | 'onInputChange'
+      | 'selectedKey'
+      | 'selectionMode'
+      | 'value'
     > {
   items: Array<T>
   selectedItems: ListData<T>
@@ -72,201 +80,161 @@ export function MultipleSelect<T extends SelectedKey>({
   renderEmptyState,
   ...props
 }: MultipleSelectProps<T>) {
-  const tagGroupIdentifier = useId()
   const triggerRef = useRef<HTMLDivElement | null>(null)
-  const [width, setWidth] = useState(0)
-
-  const {contains} = useFilter({sensitivity: 'base'})
-  const selectedKeys = selectedItems.items.map(i => i.id)
-
-  const filter = useCallback(
-    (item: T, filterText: string) => {
-      return !selectedKeys.includes(item.id) && contains(item.name, filterText)
-    },
-    [contains, selectedKeys]
-  )
-
-  const accessibleList = useListData({
-    initialItems: items,
-    filter
-  })
-
-  const [fieldState, setFieldState] = useState<{
-    selectedKey: Key | null
-    inputValue: string
-  }>({
-    selectedKey: null,
-    inputValue: ''
-  })
-
-  const onRemove = useCallback(
-    (keys: Set<Key>) => {
-      const key = keys.values().next().value
-      if (key) {
-        selectedItems.remove(key)
-        setFieldState({
-          inputValue: '',
-          selectedKey: null
-        })
-        onItemCleared?.(key)
-      }
-    },
-    [selectedItems, onItemCleared]
-  )
-
-  const onSelectionChange = (id: Key | null) => {
-    if (!id) return
-    const item = accessibleList.getItem(id)
-    if (!item) return
-    if (!selectedKeys.includes(id)) {
-      selectedItems.append(item)
-      setFieldState({
-        inputValue: '',
-        selectedKey: id
-      })
-      onItemInserted?.(id)
-    }
-
-    accessibleList.setFilterText('')
-  }
-
-  const onInputChange = (value: string) => {
-    setFieldState(prev => ({
-      inputValue: value,
-      selectedKey: value === '' ? null : prev.selectedKey
-    }))
-
-    accessibleList.setFilterText(value)
-  }
-
-  const popLast = useCallback(() => {
-    if (selectedItems.items.length === 0) return
-    const endKey = selectedItems.items[selectedItems.items.length - 1]
-    if (endKey) {
-      selectedItems.remove(endKey.id)
-      onItemCleared?.(endKey.id)
-    }
-
-    setFieldState({
-      inputValue: '',
-      selectedKey: null
-    })
-  }, [selectedItems, onItemCleared])
-
-  const onKeyDownCapture = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Backspace' && fieldState.inputValue === '') {
-        popLast()
-      }
-    },
-    [popLast, fieldState.inputValue]
-  )
-
-  useEffect(() => {
-    const trigger = triggerRef.current
-    if (!trigger) return
-
-    const observer = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        setWidth(entry.target.clientWidth)
-      }
-    })
-
-    observer.observe(trigger)
-    return () => {
-      observer.unobserve(trigger)
-    }
-  }, [])
-
   const triggerButtonRef = useRef<HTMLButtonElement | null>(null)
+  const [search, setSearch] = useState('')
+  const {contains} = useFilter({sensitivity: 'base'})
+  const selectedKeys = selectedItems.items.map(item => item.id)
+  const selectLabel =
+    props['aria-label'] ??
+    (typeof props.label === 'string' ? props.label : 'Available items')
+
+  const onChange = useCallback(
+    (keys: Key[]) => {
+      const previousKeys = new Set(selectedKeys)
+      const nextKeys = new Set(keys)
+      const removedKeys = selectedKeys.filter(key => !nextKeys.has(key))
+      const insertedKeys = keys.filter(key => !previousKeys.has(key))
+
+      if (removedKeys.length > 0) {
+        selectedItems.remove(...removedKeys)
+        for (const key of removedKeys) onItemCleared?.(key)
+      }
+
+      const insertedItems = insertedKeys
+        .map(key => items.find(item => item.id === key))
+        .filter((item): item is T => Boolean(item))
+
+      if (insertedItems.length > 0) {
+        selectedItems.append(...insertedItems)
+        for (const item of insertedItems) onItemInserted?.(item.id)
+      }
+      setSearch('')
+    },
+    [items, onItemCleared, onItemInserted, selectedItems, selectedKeys]
+  )
+
+  const onFieldPointerDown = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      if (!(event.target instanceof Element)) return
+      if (event.target.closest('button, [role="row"]')) return
+      triggerButtonRef.current?.click()
+    },
+    []
+  )
 
   return (
-    <Label {...labelProps(props)} className={styles.MultipleSelect()}>
-      <div className={styles.MultipleSelect.container()} ref={triggerRef}>
-        <TagGroup
-          className={styles.MultipleSelect.tagGroup()}
-          aria-label="Selected items"
-          id={tagGroupIdentifier}
-          onRemove={onRemove}
-        >
-          <TagList
-            items={selectedItems.items}
-            className={styles.MultipleSelect.tagGroup.tagList()}
+    <>
+      <SelectPrimitive
+        {...props}
+        aria-label={selectLabel}
+        className={styles.MultipleSelect.select(styler.merge({className}))}
+        onChange={onChange}
+        selectionMode="multiple"
+        value={selectedKeys}
+      >
+        <Label {...labelProps(props)}>
+          <Group
+            aria-label={selectLabel}
+            className={styles.MultipleSelect.container()}
+            onPointerDown={onFieldPointerDown}
+            ref={triggerRef}
           >
-            {props.tag}
-          </TagList>
-        </TagGroup>
-        <ComboBox
-          {...props}
-          allowsEmptyCollection
-          aria-label="Available items"
-          items={accessibleList.items}
-          selectedKey={fieldState.selectedKey}
-          inputValue={fieldState.inputValue}
-          onSelectionChange={onSelectionChange}
-          onInputChange={onInputChange}
-          className={styles.MultipleSelect.comboBox()}
-        >
-          <div className={styles.MultipleSelect.wrapper()}>
-            <Input
-              className={styles.MultipleSelect.input()}
-              placeholder={props.placeholder}
-              onBlur={() => {
-                setFieldState({
-                  inputValue: '',
-                  selectedKey: null
-                })
-                accessibleList.setFilterText('')
+            <SelectValue<T> className={styles.MultipleSelect.value()}>
+              {({selectedItems, state}) => {
+                const tagItems = selectedItems.filter(
+                  (item): item is T => item !== null
+                )
+                return (
+                  <TagGroup
+                    aria-label="Selected items"
+                    className={styles.MultipleSelect.tagGroup()}
+                    onRemove={keys => {
+                      if (Array.isArray(state.value)) {
+                        state.setValue(
+                          state.value.filter(key => !keys.has(key))
+                        )
+                      }
+                    }}
+                  >
+                    <TagList
+                      className={styles.MultipleSelect.tagGroup.tagList()}
+                      items={tagItems}
+                      renderEmptyState={() => (
+                        <span className={styles.MultipleSelect.placeholder()}>
+                          {props.placeholder}
+                        </span>
+                      )}
+                    >
+                      {props.tag}
+                    </TagList>
+                  </TagGroup>
+                )
               }}
-              onKeyDownCapture={onKeyDownCapture}
-            />
+            </SelectValue>
             <Button
-              type="button"
-              ref={triggerButtonRef}
               className={styles.MultipleSelect.trigger()}
+              ref={triggerButtonRef}
             >
               <Icon
                 icon={IcRoundKeyboardArrowDown}
                 className={styles.MultipleSelect.trigger.icon()}
               />
             </Button>
-          </div>
+          </Group>
           <Popover
-            isNonModal
-            style={{width: `${width}px`}}
-            triggerRef={triggerRef}
-            trigger="ComboBox"
             className={styles.MultipleSelectPopover()}
+            triggerRef={triggerRef}
           >
-            <ListBox
-              renderEmptyState={() =>
-                renderEmptyState ? (
-                  renderEmptyState(fieldState.inputValue)
-                ) : (
-                  <p className={styles.MultipleSelectPopover.empty()}>
-                    {fieldState.inputValue ? (
-                      <>
-                        No results found for:{' '}
-                        <strong>{fieldState.inputValue}</strong>
-                      </>
-                    ) : (
-                      'No options'
-                    )}
-                  </p>
-                )
-              }
-              selectionMode="multiple"
-              className={styles.MultipleSelectPopover.listbox()}
-            >
-              {children}
-            </ListBox>
+            <Autocomplete filter={contains}>
+              <SearchFieldPrimitive
+                aria-label="Search options"
+                autoFocus
+                className={styles.MultipleSelectPopover.search()}
+                onChange={setSearch}
+              >
+                <div className={styles.MultipleSelectPopover.search.field()}>
+                  <Icon
+                    icon={IcRoundSearch}
+                    className={styles.MultipleSelectPopover.search.icon()}
+                  />
+                  <Input
+                    className={styles.MultipleSelectPopover.search.input()}
+                    placeholder="Search"
+                  />
+                  <Button
+                    className={styles.MultipleSelectPopover.search.clear()}
+                  >
+                    <Icon
+                      icon={IcRoundClose}
+                      className={styles.MultipleSelectPopover.search.clear.icon()}
+                    />
+                  </Button>
+                </div>
+              </SearchFieldPrimitive>
+              <ListBox
+                className={styles.MultipleSelectPopover.listbox()}
+                items={items}
+                renderEmptyState={() =>
+                  renderEmptyState ? (
+                    renderEmptyState(search)
+                  ) : (
+                    <p className={styles.MultipleSelectPopover.empty()}>
+                      No options
+                    </p>
+                  )
+                }
+              >
+                {children}
+              </ListBox>
+            </Autocomplete>
           </Popover>
-        </ComboBox>
-      </div>
+        </Label>
+      </SelectPrimitive>
       {name && (
         <input hidden name={name} value={selectedKeys.join(',')} readOnly />
       )}
-    </Label>
+    </>
   )
 }
 

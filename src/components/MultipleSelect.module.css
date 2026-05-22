@@ -1,68 +1,150 @@
-.MultipleSelect {
-  .MultipleSelect-container {
-    box-sizing: border-box;
-    gap: 8px;
+.MultipleSelect-select {
+  width: 100%;
+
+  &[data-open] .MultipleSelect-container,
+  &[data-focused] .MultipleSelect-container {
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-primary-overlay);
+  }
+
+  &[data-invalid='true'] .MultipleSelect-container {
+    border-color: var(--alinea-border-danger);
+    outline-color: var(--alinea-danger-overlay);
+  }
+
+  &[data-disabled] .MultipleSelect-container {
+    pointer-events: none;
+    background-color: var(--alinea-input-disabled);
+    color: var(--alinea-fg-disabled);
+    opacity: 0.5;
+  }
+}
+
+.MultipleSelect-container {
+  box-sizing: border-box;
+  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 4px 34px 4px 6px;
+  min-height: 39px;
+  background-color: var(--alinea-input);
+  border: 1px solid var(--alinea-border);
+  border-radius: 6px;
+  outline: 4px solid transparent;
+  position: relative;
+  transition: var(--alinea-transition);
+
+  &:has(.MultipleSelect-trigger[data-hovered]) {
+    border-color: var(--alinea-border-hover);
+    outline-color: var(--alinea-ring-subtle);
+  }
+}
+
+.MultipleSelect-value {
+  flex: 1 1 auto;
+  min-width: 80px;
+}
+
+.MultipleSelect-tagGroup {
+  .MultipleSelect-tagGroup-tagList {
+    gap: 6px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    padding: 4px 6px;
-    min-height: 39px;
-    background-color: var(--alinea-input);
-    border: 1px solid var(--alinea-border);
-    border-radius: 6px;
-    outline: 4px solid transparent;
+  }
+}
+
+.MultipleSelect-placeholder {
+  color: var(--alinea-fg-subtle);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+}
+
+.MultipleSelect-trigger {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--alinea-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+
+  &:before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 100%;
+    background-color: transparent;
     transition: var(--alinea-transition);
-
-    &:has(.MultipleSelect-input[data-hovered]) {
-      border-color: var(--alinea-border-hover);
-      outline-color: var(--alinea-ring-subtle);
-    }
-
-    &:has(.MultipleSelect-input[data-focused]) {
-      border-color: var(--alinea-border-accent);
-      outline-color: var(--alinea-primary-overlay);
-    }
-
-    &:has(.MultipleSelect-input[data-invalid='true']) {
-      border-color: var(--alinea-border-danger);
-      outline-color: var(--alinea-danger-overlay);
-    }
-
-    &:has(.MultipleSelect-input[data-disabled]) {
-      pointer-events: none;
-      background-color: var(--alinea-input-disabled);
-      color: var(--alinea-fg-disabled);
-      opacity: 0.5;
-    }
+    transition-property: background-color;
   }
 
-  .MultipleSelect-tagGroup {
-    .MultipleSelect-tagGroup-tagList {
-      gap: 6px;
+  &:hover:before,
+  &:focus:before {
+    background-color: var(--alinea-muted);
+  }
+
+  &[aria-expanded='true'] .MultipleSelect-trigger-icon {
+    transform: rotate(180deg);
+  }
+
+  .MultipleSelect-trigger-icon {
+    position: relative;
+    flex-shrink: 0;
+    color: var(--alinea-fg-muted);
+    transition: transform 0.3s ease-out;
+  }
+}
+
+.MultipleSelectPopover {
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+
+  .MultipleSelectPopover-search {
+    margin: 4px 4px 8px;
+    flex-shrink: 0;
+
+    .MultipleSelectPopover-search-field:has(.MultipleSelectPopover-search-input[data-focused]) {
+      border-color: var(--alinea-border);
+      outline-color: transparent;
+    }
+
+    .MultipleSelectPopover-search-field {
+      overflow: hidden;
       display: flex;
-      flex-wrap: wrap;
+      align-items: center;
+      background-color: var(--alinea-input);
+      border: 1px solid var(--alinea-border);
+      border-radius: 6px;
+      outline: 4px solid transparent;
+      transition: var(--alinea-transition);
     }
-  }
 
-  .MultipleSelect-comboBox {
-    flex-grow: 1;
-    gap: 8px;
-    display: flex;
-    align-items: center;
-  }
+    .MultipleSelectPopover-search-icon {
+      color: var(--alinea-fg-subtle);
+      font-size: 20px;
+      margin-left: 8px;
+      margin-right: -4px;
+    }
 
-  .MultipleSelect-wrapper {
-    flex-grow: 1;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-
-    .MultipleSelect-input {
-      flex-grow: 1;
+    .MultipleSelectPopover-search-input {
       background: none;
       border: none;
       outline: none;
-      padding: 0;
+      width: 100%;
+      padding: 8px 10px;
       color: var(--alinea-fg);
       font: inherit;
       font-size: var(--alinea-font-size-base);
@@ -71,17 +153,28 @@
       &::placeholder {
         color: var(--alinea-fg-subtle);
       }
+
+      &::-webkit-search-cancel-button,
+      &::-webkit-search-decoration {
+        -webkit-appearance: none;
+      }
+
+      &[value=''] + .MultipleSelectPopover-search-clear {
+        visibility: hidden;
+      }
     }
 
-    .MultipleSelect-trigger {
+    .MultipleSelectPopover-search-clear {
       position: relative;
       cursor: pointer;
-      background-color: transparent;
+      background: none;
       border: none;
       outline: none;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 0px 8px;
+      color: var(--alinea-fg-muted);
       font: inherit;
 
       &:before {
@@ -100,15 +193,11 @@
         background-color: var(--alinea-muted);
       }
 
-      .MultipleSelect-trigger-icon {
+      .MultipleSelectPopover-search-clear-icon {
         position: relative;
       }
     }
   }
-}
-
-.MultipleSelectPopover {
-  width: var(--alinea-trigger-width);
 
   .MultipleSelectPopover-empty {
     margin: 0;
@@ -125,10 +214,6 @@
     display: block;
     min-height: unset;
     max-height: inherit;
-    padding: 4px;
-    border-radius: 6px;
-    border: 1px solid var(--alinea-border);
-    background-color: var(--alinea-input);
   }
 }
 
