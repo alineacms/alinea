@@ -1755,7 +1755,7 @@ export class DashboardEntryData {
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
   type: Atom<DashboardType>
-  currentEntry: Atom<Promise<EntryRecord<Record<string, unknown>> | null>>
+  currentEntry: Atom<Promise<Entry | null> | Entry | null>
   locales: Atom<Map<string | null, EntryVersionData>>
   parentId: Atom<string | null>
   parentIds: Atom<Array<string>>
@@ -1789,7 +1789,7 @@ export class DashboardEntryData {
       return dashboard.workspace(workspace).root(root)
     })
     this.currentEntry = swr(
-      atom(async get => {
+      atom(async (get): Promise<Entry | null> => {
         const selected = get(this.selectedVersion)
         const locale = get(this.sourceLocale)
         const language = this.languages(locale)
