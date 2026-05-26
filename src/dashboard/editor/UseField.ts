@@ -1,8 +1,8 @@
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
 import {useAtomValue, useSetAtom} from 'jotai'
+import {useEditor} from '../hooks.js'
 import type {DashboardField} from '../store/Dashboard.js'
-import {useEditor} from '../store/hooks.js'
 
 export interface UseFieldResult<StoredValue, Mutator, Options> {
   fieldKey: string

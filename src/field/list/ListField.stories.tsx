@@ -8,8 +8,8 @@ import {
   IcRoundNorthEast,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
+import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
 import {Dashboard, DashboardEditor, ReactiveNode} from '#/dashboard/store.js'
-import {DashboardScopeInternal, EditorScope} from '#/dashboard/store/hooks.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
 import {list} from '#/field/list.js'

@@ -5,7 +5,7 @@ import {
   useFieldError,
   useFieldOptions,
   useSiblingFieldValue
-} from '#/dashboard/store.js'
+} from '#/dashboard/hooks.js'
 import type {PathField} from '#/field/path.js'
 import type {ReactNode} from 'react'
 import {memo, useState} from 'react'

@@ -1,5 +1,5 @@
 import {TextField as RacTextField} from '#/components.js'
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {TextField} from '#/field/text.js'
 import {memo} from 'react'
 

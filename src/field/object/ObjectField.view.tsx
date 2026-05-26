@@ -2,11 +2,11 @@ import {Label} from '#/components.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {Surface, SurfaceContent} from '#/dashboard/app/ui/Surface.js'
 import {
-  ReactiveNode,
   useFieldError,
   useFieldNode,
   useFieldOptions
-} from '#/dashboard/store.js'
+} from '#/dashboard/hooks.js'
+import {ReactiveNode} from '#/dashboard/store.js'
 import {ObjectField} from '#/field/object.js'
 import {styler} from '@alinea/styler'
 import css from './ObjectFieldView.module.css'

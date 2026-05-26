@@ -35,7 +35,7 @@ import {
   useFieldNode,
   useFieldOptions,
   useNodes
-} from '#/dashboard/store/hooks.js'
+} from '#/dashboard/hooks.js'
 import {ListOptions} from '#/field/list.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'

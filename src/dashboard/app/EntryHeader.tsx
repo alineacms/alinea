@@ -9,8 +9,8 @@ import {
   IcRoundSave,
   MaterialSymbolsRightPanelOpenRounded
 } from '../icons.js'
+import {usePolicy} from '../hooks.js'
 import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
-import {usePolicy} from '../store/hooks.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {RailHeader} from './ui/Rail.js'

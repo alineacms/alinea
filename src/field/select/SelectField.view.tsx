@@ -5,7 +5,7 @@ import {
   SelectItem,
   Tag
 } from '#/components.js'
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import type {Key} from '@react-types/shared'
 import {type ReactNode, useMemo} from 'react'
 import {useListData} from 'react-stately'
@@ -31,9 +31,7 @@ export interface SelectFieldViewProps<
 export function SelectFieldView<
   Value extends KeyType | null,
   KeyType extends string
->({
-  field
-}: SelectFieldViewProps<Value, KeyType>) {
+>({field}: SelectFieldViewProps<Value, KeyType>) {
   const [value, setValue] = useField(field)
   const options = useFieldOptions(field) as SelectOptions<KeyType, Value>
   const error = useFieldError(field)
