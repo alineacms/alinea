@@ -3,7 +3,8 @@ import {
   DialogTrigger,
   Menu,
   MenuItem,
-  Popover
+  Popover,
+  ProgressCircle
 } from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
@@ -258,7 +259,17 @@ function ProfileMenu({dashboard}: AppShellProps) {
 function EditorBoundary({dashboard}: AppShellProps) {
   return (
     <ErrorBoundary>
-      <Editor dashboard={dashboard} />
+      <Suspense fallback={<EditorLoading />}>
+        <Editor dashboard={dashboard} />
+      </Suspense>
     </ErrorBoundary>
+  )
+}
+
+function EditorLoading() {
+  return (
+    <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+      <ProgressCircle isIndeterminate aria-label="Loading editor" />
+    </Rail>
   )
 }
