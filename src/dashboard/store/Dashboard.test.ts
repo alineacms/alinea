@@ -209,6 +209,23 @@ test('Dashboard background sync is optional for unsyncable graphs', async () => 
   await store.set(dashboard.sync)
 })
 
+test('DashboardEntry ready state resolves missing entries', async () => {
+  const store = createStore()
+  const dashboard = new Dashboard(
+    new TestGraph(config),
+    config,
+    new EventTarget(),
+    new Client({config, url: 'https://example.com/api'}),
+    {},
+    {local: true}
+  )
+  const ready = await store.get(dashboard.entries('missing').readyState)
+
+  test.equal(ready.pending, false)
+  test.equal(ready.data, undefined)
+  test.ok(ready.error instanceof MissingEntryError)
+})
+
 test('DashboardExplorer filters queued uploads to its current folder', () => {
   const store = createStore()
   const dashboard = createDashboard({local: true})

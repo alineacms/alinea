@@ -199,6 +199,7 @@ export class DashboardWorker extends EventTarget {
     const db = new LocalDB(config, this.#source)
     try {
       if (this.#defer) this.#defer()
+      await this.#syncLocalIndex(db)
       this.#nextLoad.resolve({db, client})
       this.#localDB = db
       this.#localClient = client
@@ -212,10 +213,16 @@ export class DashboardWorker extends EventTarget {
       }
     } catch (error) {
       this.#nextLoad.reject(new Error('Failed to load database'))
+      throw error
     } finally {
       this.#nextLoad = trigger()
     }
     this.#startSyncing()
+  }
+
+  async #syncLocalIndex(db: LocalDB) {
+    const sourceTree = await db.source.getTree()
+    if (!sourceTree.isEmpty) await db.sync()
   }
 
   #startSyncing() {

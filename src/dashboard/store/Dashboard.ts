@@ -530,6 +530,36 @@ export class Dashboard {
     return !pending
   })
 
+  #initialContentLoaded = atom(false)
+
+  #initialContentResource = atom(async get => {
+    if (get(this.#initialContentLoaded)) return true
+    await get(this.#policyResource)
+    const workspace = get(this.currentWorkspace)
+    if (!workspace) return true
+    const roots = get(workspace.roots)
+    if (roots.length === 0) return true
+    await get(workspace.tree.items)
+    const {entry} = get(this.route)
+    if (entry) await get(this.entries(entry).readyState)
+    return true
+  })
+
+  initialContentAvailable = Object.assign(
+    atom(
+      get => get(this.#initialContentResource),
+      async (get, set) => {
+        await get(this.#initialContentResource)
+        set(this.#initialContentLoaded, true)
+      }
+    ),
+    {
+      onMount(load: () => void) {
+        load()
+      }
+    }
+  )
+
   policy = atom(get => {
     const [, policy] = get(this.#policyState)
     return policy ?? Policy.ALLOW_NONE
@@ -1697,6 +1727,7 @@ type SelectedVersion =
 
 export class DashboardEntry {
   data: Atom<DashboardEntryState>
+  readyState: Atom<Promise<DashboardEntryState>>
 
   constructor(
     public dashboard: Dashboard,
@@ -1732,6 +1763,7 @@ export class DashboardEntry {
         throw error
       }
     })
+    this.readyState = state
     this.data = unwrap(state, prev => ({
       pending: true,
       data: prev?.data,

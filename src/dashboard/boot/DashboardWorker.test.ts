@@ -2,6 +2,7 @@ import {createCMS} from '#/core.js'
 import {Entry} from '#/core/Entry.js'
 import {getScope} from '#/core/Scope.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
 import {TestDB} from '#/core/db/TestDB.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
@@ -67,6 +68,12 @@ class TestWorker extends DashboardWorker {
   }
 }
 
+class FailingTreeSource extends MemorySource {
+  getTree(): Promise<ReadonlyTree> {
+    return Promise.reject(new Error('Local sync failed'))
+  }
+}
+
 function createPageMutation(id: string, title: string): Mutation {
   return {
     op: 'create',
@@ -123,6 +130,36 @@ test('DashboardWorker serializes local queue mutations', async () => {
     ['fulfilled', 'fulfilled']
   )
   test.is(connection.mutateCalls, 2)
+})
+
+test('DashboardWorker hydrates cached source before resolving queries', async () => {
+  const source = new MemorySource()
+  const cached = new LocalDB(cms.config, source)
+  await cached.mutate([createPageMutation('cached-page', 'Cached Page')])
+  const worker = new TestWorker(source)
+  const connection = new TestConnection(cms.config)
+
+  const loading = worker.load('test', cms.config, connection)
+  const result = await worker.resolve(
+    getScope(cms.config).stringify({
+      select: {title: Entry.title},
+      id: 'cached-page',
+      status: 'preferPublished'
+    })
+  )
+  await loading
+
+  test.equal(result, [{title: 'Cached Page'}])
+})
+
+test('DashboardWorker rejects load when cached source hydration fails', async () => {
+  const worker = new TestWorker(new FailingTreeSource())
+  const connection = new TestConnection(cms.config)
+
+  await test.throws(
+    () => worker.load('test', cms.config, connection),
+    'Local sync failed'
+  )
 })
 
 test('DashboardWorker emits failed queue state when remote mutation and resync fail', async () => {

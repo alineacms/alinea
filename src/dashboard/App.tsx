@@ -2,13 +2,17 @@ import {ProgressCircle} from '#/components.js'
 import type {Config} from '#/core/Config'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph'
+import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {ComponentType, Suspense, useState} from 'react'
 import {AppShell} from './app/AppShell.js'
 import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
+import css from './App.module.css'
 import './global.css'
 import {Dashboard} from './store/Dashboard.js'
+
+const styles = styler(css)
 
 export interface AppProps {
   graph: WriteableGraph
@@ -41,7 +45,9 @@ export function App({
     <Suspense
       fallback={
         <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-          <ProgressCircle isIndeterminate aria-label="loading" />
+          <div className={styles.AppLoading.progress()}>
+            <ProgressCircle isIndeterminate aria-label="loading" />
+          </div>
         </Rail>
       }
     >

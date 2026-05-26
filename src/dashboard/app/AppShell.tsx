@@ -3,8 +3,7 @@ import {
   DialogTrigger,
   Menu,
   MenuItem,
-  Popover,
-  ProgressCircle
+  Popover
 } from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
@@ -40,6 +39,7 @@ interface AppShellProps {
 }
 
 export function AppShell({dashboard}: AppShellProps) {
+  useAtomValue(dashboard.initialContentAvailable)
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
@@ -50,7 +50,6 @@ export function AppShell({dashboard}: AppShellProps) {
 }
 
 function AppShellContent({dashboard}: AppShellProps) {
-  const policyReady = useAtomValue(dashboard.policyReady)
   const workspaces = useAtomValue(dashboard.workspaces)
   const footer = (
     <SidebarFooter className={styles.AppShell.footer()}>
@@ -66,17 +65,6 @@ function AppShellContent({dashboard}: AppShellProps) {
             </div>*/}
     </SidebarFooter>
   )
-
-  if (!policyReady) {
-    return (
-      <>
-        <Sidebar>{footer}</Sidebar>
-        <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-          <ProgressCircle isIndeterminate aria-label="loading" />
-        </Rail>
-      </>
-    )
-  }
 
   if (workspaces.length === 0) {
     return (
@@ -141,15 +129,7 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
         <DashboardMeta dashboard={dashboard} />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-            <ProgressCircle isIndeterminate aria-label="loading" />
-          </Rail>
-        }
-      >
-        <EditorBoundary dashboard={dashboard} />
-      </Suspense>
+      <EditorBoundary dashboard={dashboard} />
     </>
   )
 }
