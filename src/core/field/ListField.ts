@@ -34,6 +34,7 @@ export class ListField<
     >
   ) {
     const customQueryValue = meta.queryValue
+    const customReferences = meta.references
     super({
       referencedViews: Schema.referencedViews(schema),
       ...meta,
@@ -61,6 +62,22 @@ export class ListField<
           }
         }
         return res
+      },
+      references(value, context) {
+        const result = customReferences?.(value, context) ?? []
+        const rows = Array.isArray(value) ? value : []
+        for (const row of rows) {
+          const type = schema[row[ListRow.type]]
+          if (!type) continue
+          const segment = row[ListRow.id] || String(rows.indexOf(row))
+          result.push(
+            ...Type.references(type, row as Record<string, unknown>, [
+              ...context.path,
+              segment
+            ])
+          )
+        }
+        return result
       },
       async queryValue(value, loader) {
         const rows = Array.isArray(value) ? value : []

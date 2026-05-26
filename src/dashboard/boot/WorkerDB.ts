@@ -3,6 +3,10 @@ import type {Connection, UploadResponse} from '#/core/Connection.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {createId} from '#/core/Id.js'
 import {getScope} from '#/core/Scope.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from '#/core/db/EntryReference.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {DashboardWorker} from './DashboardWorker.js'
@@ -37,6 +41,10 @@ export class WorkerDB extends WriteableGraph {
 
   sync(): Promise<string> {
     return this.#worker.sync()
+  }
+
+  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
+    return this.#worker.referencesTo(query)
   }
 
   retryMutationQueue(): Promise<void> {

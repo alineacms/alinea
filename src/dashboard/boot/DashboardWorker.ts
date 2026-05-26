@@ -4,6 +4,10 @@ import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {getScope} from '#/core/Scope.js'
 import {trigger} from '#/core/Trigger.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from '#/core/db/EntryReference.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
@@ -186,6 +190,13 @@ export class DashboardWorker extends EventTarget {
     const scope = getScope(db.config)
     const query = scope.parse<GraphQuery>(raw)
     return db.resolve(query)
+  }
+
+  async referencesTo(
+    query: EntryReferenceQuery
+  ): Promise<EntryReferenceResult> {
+    const db = await this.db
+    return db.referencesTo(query)
   }
 
   async load(revision: string, config: Config, client: LocalConnection) {

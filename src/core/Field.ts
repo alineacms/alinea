@@ -1,3 +1,7 @@
+import type {
+  EntryReferenceTarget,
+  FieldReferenceContext
+} from '#/core/db/EntryReference.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Expr} from './Expr.js'
 import {type HasField, getField, hasField, internalField} from './Internal.js'
@@ -31,13 +35,12 @@ export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   view: View<{
     field: Field<StoredValue, QueryValue, Mutator, Options>
   }>
-  queryValue?: (
+  queryValue?: (value: StoredValue, loader: LinkResolver) => Promise<QueryValue>
+  references?: (
     value: StoredValue,
-    loader: LinkResolver
-  ) => Promise<QueryValue>
-  beforeSave?: (
-    context: FieldBeforeSaveContext<StoredValue>
-  ) => StoredValue
+    context: FieldReferenceContext
+  ) => Array<EntryReferenceTarget>
+  beforeSave?: (context: FieldBeforeSaveContext<StoredValue>) => StoredValue
 }
 
 export type FieldBeforeSaveAction =
@@ -53,8 +56,12 @@ export interface FieldBeforeSaveContext<StoredValue> {
   now: Date
 }
 
-export interface FieldData<StoredValue, QueryValue, Mutator, Options>
-  extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
+export interface FieldData<
+  StoredValue,
+  QueryValue,
+  Mutator,
+  Options
+> extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   referencedViews?: Array<string>
   defaultValue?: () => StoredValue
   applyLinks?: (value: StoredValue, loader: LinkResolver) => Promise<void>
@@ -67,11 +74,11 @@ export interface FieldInternal extends FieldData<any, any, any, any> {
 
 declare const brand: unique symbol
 export class Field<
-    StoredValue = any,
-    QueryValue = any,
-    Mutator = any,
-    Options = any
-  >
+  StoredValue = any,
+  QueryValue = any,
+  Mutator = any,
+  Options = any
+>
   extends Expr<QueryValue>
   implements HasField
 {
@@ -129,12 +136,7 @@ export namespace Field {
     return getField(field).options
   }
 
-  export async function queryValue<
-    StoredValue,
-    QueryValue,
-    Mutator,
-    Options
-  >(
+  export async function queryValue<StoredValue, QueryValue, Mutator, Options>(
     field: Field<StoredValue, QueryValue, Mutator, Options>,
     value: StoredValue,
     loader: LinkResolver
@@ -170,6 +172,15 @@ export namespace Field {
   ): string {
     const data = getField(field)
     return data.searchableText?.(value) ?? ''
+  }
+
+  export function references<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue,
+    context: FieldReferenceContext
+  ): Array<EntryReferenceTarget> {
+    const data = getField(field)
+    return data.references?.(value, context) ?? []
   }
 
   export function isField(value: any): value is Field {

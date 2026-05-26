@@ -357,7 +357,7 @@ function EntryEditor({entry}: EntryEditorProps) {
     )
   }
 
-  const hasSidebar = !isUntranslated && !isMediaFile
+  const hasSidebar = !isUntranslated
 
   const mainEditor = (
     <Rail main>

@@ -222,6 +222,23 @@ export function IcRoundInsertDriveFile(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+export function IcRoundImage(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2M8.5 11.5l2.5 3.01L14.5 10l4.5 6H5z"
+      />
+    </svg>
+  )
+}
+
 export function IcRoundAdd(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

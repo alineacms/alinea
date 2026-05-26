@@ -14,6 +14,7 @@ export class UnionField<
     meta: FieldMeta<StoredValue, QueryValue, UnionMutator<StoredValue>, Options>
   ) {
     const customQueryValue = meta.queryValue
+    const customReferences = meta.references
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta,
@@ -29,6 +30,13 @@ export class UnionField<
         if (!value) return ''
         const type = schema?.[value[UnionRow.type]]
         return type ? Type.searchableText(type, value) : ''
+      },
+      references(value, context) {
+        const result = customReferences?.(value, context) ?? []
+        if (!value) return result
+        const type = schema?.[value[UnionRow.type]]
+        if (type) result.push(...Type.references(type, value, context.path))
+        return result
       },
       async queryValue(value, loader) {
         if (!value) return value as QueryValue

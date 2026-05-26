@@ -28,6 +28,13 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
         const text = Type.searchableText(type, value)
         return text ? ` ${text}` : ''
       },
+      references(value, context) {
+        return Type.references(
+          type,
+          (value ?? {}) as Record<string, unknown>,
+          context.path
+        )
+      },
       async queryValue(value, loader) {
         const row = (value ?? {}) as Record<string, unknown>
         await Promise.all(

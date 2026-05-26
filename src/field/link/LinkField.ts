@@ -1,4 +1,9 @@
 import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {
+  type EntryReferenceLinkType,
+  type EntryReferenceTarget,
+  referenceFieldPath
+} from '#/core/db/EntryReference.js'
 import {ListField} from '#/core/field/ListField.js'
 import {UnionField} from '#/core/field/UnionField.js'
 import type {
@@ -66,6 +71,19 @@ export function createLink<StoredValue extends Reference, QueryValue>(
       if (!picker) return value as unknown as QueryValue
       if (picker.postProcess) await picker.postProcess(value, loader)
       return value as unknown as QueryValue
+    },
+    references(value, context) {
+      const entryId = entryIdOf(value)
+      if (!entryId) return []
+      return [
+        {
+          targetId: entryId,
+          fieldPath: referenceFieldPath(context.path),
+          fieldLabel: context.label,
+          linkId: value[Reference.id],
+          linkType: entryLinkType(value[Reference.type])
+        }
+      ]
     },
     view: viewKeys.SingleLinkInput
   })
@@ -137,6 +155,37 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
       }
       return rows as unknown as Array<QueryValue>
     },
+    references(rows, context) {
+      if (!Array.isArray(rows)) return []
+      const result: Array<EntryReferenceTarget> = []
+      for (const row of rows) {
+        const entryId = entryIdOf(row)
+        if (!entryId) continue
+        const rowId = row[ListRow.id]
+        result.push({
+          targetId: entryId,
+          fieldPath: referenceFieldPath(
+            rowId ? [...context.path, rowId] : context.path
+          ),
+          fieldLabel: context.label,
+          linkId: row[Reference.id],
+          linkType: entryLinkType(row[Reference.type])
+        })
+      }
+      return result
+    },
     view: viewKeys.MultipleLinksInput
   })
+}
+
+function entryIdOf(value: Reference | undefined | null): string | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const entry = (value as {_entry?: unknown})._entry
+  return typeof entry === 'string' ? entry : undefined
+}
+
+function entryLinkType(type: string): EntryReferenceLinkType | undefined {
+  return type === 'entry' || type === 'image' || type === 'file'
+    ? type
+    : undefined
 }

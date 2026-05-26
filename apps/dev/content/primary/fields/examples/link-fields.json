@@ -6,6 +6,7 @@
   "externalLink": {},
   "entry": {},
   "entryWithCondition": {},
+  "entryWithLocation": null,
   "linkMultiple": [
     {
       "_id": "2mBuT1TZFS5gx3z62yF4hh6X6SJ",
@@ -37,7 +38,14 @@
     }
   ],
   "image": {},
-  "images": [],
+  "images": [
+    {
+      "_id": "3EGUknMFTu3GvyTBpZMOTonZ5qw",
+      "_type": "image",
+      "_index": "",
+      "_entry": "2V4cZUBByx9N29qv1YybylOCQqI"
+    }
+  ],
   "file": {},
   "withFields": {},
   "multipleWithFields": [],
@@ -45,9 +53,24 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "image": {},
+      "image": {
+        "_id": "3EGUqg71WkcHALx0afMmS1Rwtc7",
+        "_type": "image",
+        "_index": "",
+        "_entry": "2V4cZUBByx9N29qv1YybylOCQqI"
+      },
       "title": "",
       "description": ""
+    },
+    "createdAt": 1779804544,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1779804591,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

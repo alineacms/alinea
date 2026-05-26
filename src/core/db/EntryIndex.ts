@@ -19,6 +19,11 @@ import {entryInfo, entryUrl} from '../util/EntryFilenames.js'
 import {entries, keys} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
 import {sourceChanges} from './CommitRequest.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from './EntryReference.js'
+import {EntryReferenceIndex} from './EntryReferenceIndex.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {IndexEvent} from './IndexEvent.js'
 
@@ -356,6 +361,18 @@ export class EntryGraph {
     return this.byId(id)
   }
 
+  entryByFilePath(filePath: string): Entry | undefined {
+    const node = this.byDir(getNodePath(filePath))
+    if (!node) return undefined
+    return Array.from(
+      node.filter({
+        entry(entry) {
+          return entry.filePath === filePath
+        }
+      })
+    )[0]
+  }
+
   withChanges(batch: ChangesBatch) {
     const parser = getParser(this.#config)
     const versions = new Map(this.#versionData)
@@ -587,6 +604,8 @@ export class EntryIndex extends EventTarget {
   #config: Config
   #seeds: Map<string, Seed>
   #singleWorkspace: string | undefined
+  #references: EntryReferenceIndex | undefined
+  #referencesBuild: Promise<EntryReferenceIndex> | undefined
   constructor(config: Config) {
     super()
     this.#config = config
@@ -611,6 +630,28 @@ export class EntryIndex extends EventTarget {
   findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
     return this.graph.filter({entry: filter})
   }
+  async referencesTo(
+    query: EntryReferenceQuery
+  ): Promise<EntryReferenceResult> {
+    const references = await this.references
+    return references.referencesTo(query)
+  }
+  async referencesFrom(sourceId: string) {
+    const references = await this.references
+    return references.referencesFrom(sourceId)
+  }
+  get references(): Promise<EntryReferenceIndex> {
+    if (this.#references) return Promise.resolve(this.#references)
+    this.#referencesBuild ??= EntryReferenceIndex.build(this.graph, {
+      onProgress: scan => {
+        this.dispatchEvent(new IndexEvent({op: 'references', ...scan}))
+      }
+    }).then(references => {
+      this.#references = references
+      return references
+    })
+    return this.#referencesBuild
+  }
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
     if (!this.initialSync) this.initialSync = tree
@@ -623,9 +664,11 @@ export class EntryIndex extends EventTarget {
     if (fromSha !== this.tree.sha)
       throw new ShaMismatchError(fromSha, this.tree.sha)
     if (changes.length === 0) return this.tree.sha
+    if (this.#referencesBuild && !this.#references) await this.#referencesBuild
     const changed = new Set<EntryNode>()
     const previousRelations = new Map<string, EntryRelation>()
     const nextRelations = new Map<string, EntryRelation>()
+    const affectedReferenceIds = new Set<string>()
     for (const change of changes) {
       if (change.op !== 'delete') continue
       const nodePath = getNodePath(change.path)
@@ -633,6 +676,15 @@ export class EntryIndex extends EventTarget {
       assert(node, `Missing node for deleted path: ${change.path}`)
       changed.add(node)
       previousRelations.set(node.id, entryRelation(node))
+    }
+    const references = this.#references
+    if (references) {
+      for (const change of changes) {
+        if (change.op !== 'delete') continue
+        for (const id of references.removeFile(change.path)) {
+          affectedReferenceIds.add(id)
+        }
+      }
     }
     this.graph = this.graph.withChanges(batch)
     for (const change of changes) {
@@ -642,14 +694,19 @@ export class EntryIndex extends EventTarget {
       assert(node, `Missing node for added path: ${change.path}`)
       changed.add(node)
       nextRelations.set(node.id, entryRelation(node))
+      if (references) {
+        const entry = this.graph.entryByFilePath(change.path)
+        if (entry) {
+          for (const id of references.replaceEntry(entry)) {
+            affectedReferenceIds.add(id)
+          }
+        }
+      }
     }
     const updatedTree = await this.tree.withChanges(batch)
     const sha = updatedTree.sha
     this.tree = updatedTree
-    const affectedParentIds = changedParentIds(
-      previousRelations,
-      nextRelations
-    )
+    const affectedParentIds = changedParentIds(previousRelations, nextRelations)
     const emittedEntryIds = new Set<string>()
     const dispatchEntry = (id: string) => {
       if (emittedEntryIds.has(id)) return
@@ -668,6 +725,7 @@ export class EntryIndex extends EventTarget {
       }
     }
     for (const id of affectedParentIds) dispatchEntry(id)
+    for (const id of affectedReferenceIds) dispatchEntry(id)
     this.dispatchEvent(new IndexEvent({op: 'index', sha}))
     return sha
   }

@@ -9,6 +9,7 @@ import type {OrderBy} from './OrderBy.js'
 import type {Preview} from './Preview.js'
 import {Section, section} from './Section.js'
 import type {View} from './View.js'
+import type {EntryReferenceTarget} from './db/EntryReference.js'
 import type {SummaryProps} from './media/Summary.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries, keys, values} from './util/Objects.js'
@@ -54,6 +55,20 @@ export namespace Type {
       res += Field.searchableText(field, self[key])
     }
     return res.trim()
+  }
+
+  export function references(
+    type: Type,
+    value: Record<string, unknown>,
+    path: Array<string> = []
+  ): Array<EntryReferenceTarget> {
+    const self = value || {}
+    return entries(fields(type)).flatMap(([key, field]) => {
+      return Field.references(field, self[key], {
+        path: [...path, key],
+        label: Field.label(field)
+      })
+    })
   }
 
   export function fields(type: Type): Record<string, Field> {

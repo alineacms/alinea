@@ -1,4 +1,6 @@
 import {Parser} from 'htmlparser2'
+import type {EntryReferenceTarget} from '../db/EntryReference.js'
+import {referenceFieldPath} from '../db/EntryReference.js'
 import {Entry} from '../Entry.js'
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {MediaFile} from '../media/MediaTypes.js'
@@ -45,6 +47,7 @@ export class RichTextField<
     >
   ) {
     const customQueryValue = meta.queryValue
+    const customReferences = meta.references
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta,
@@ -65,6 +68,14 @@ export class RichTextField<
         if (!meta.options.searchable) return ''
         return richTextSearchableText(schema, value)
       },
+      references(value, context) {
+        const doc = Array.isArray(value) ? value : []
+        const result = customReferences?.(value, context) ?? []
+        result.push(
+          ...richTextReferences(schema, doc, context.path, context.label)
+        )
+        return result
+      },
       async queryValue(value, loader) {
         const doc = Array.isArray(value) ? value : []
         const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
@@ -76,11 +87,7 @@ export class RichTextField<
           tasks.push(
             Promise.all(
               entries(Type.fields(type)).map(async ([key, field]) => {
-                record[key] = await Field.queryValue(
-                  field,
-                  record[key],
-                  loader
-                )
+                record[key] = await Field.queryValue(field, record[key], loader)
               })
             )
           )
@@ -91,6 +98,51 @@ export class RichTextField<
       }
     })
   }
+}
+
+function richTextReferences<Blocks>(
+  schema: Schema | undefined,
+  doc: TextDoc<Blocks>,
+  path: Array<string>,
+  label?: string
+): Array<EntryReferenceTarget> {
+  const result: Array<EntryReferenceTarget> = []
+  iterMarks(doc, mark => {
+    if (mark[Mark.type] !== 'link') return
+    const entryId = mark[LinkMark.entry]
+    if (typeof entryId !== 'string') return
+    const linkType = richTextLinkType(mark[LinkMark.link])
+    if (linkType === 'url') return
+    const linkId = mark[LinkMark.id]
+    result.push({
+      targetId: entryId,
+      fieldPath: referenceFieldPath(
+        typeof linkId === 'string' ? [...path, linkId] : path
+      ),
+      fieldLabel: label,
+      linkId,
+      linkType
+    })
+  })
+  doc.forEach((row, index) => {
+    if (!schema || !Node.isBlock(row)) return
+    const type = schema[row[Node.type]]
+    if (!type) return
+    result.push(
+      ...Type.references(type, row as Record<string, unknown>, [
+        ...path,
+        row._id ?? String(index)
+      ])
+    )
+  })
+  return result
+}
+
+function richTextLinkType(
+  value: string | undefined
+): 'entry' | 'file' | undefined | 'url' {
+  if (value === 'entry' || value === 'file' || value === 'url') return value
+  return undefined
 }
 
 async function applyLinkMarks(

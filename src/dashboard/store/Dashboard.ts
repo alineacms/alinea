@@ -3,6 +3,10 @@ import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Client} from '#/core/Client.js'
 import {Config} from '#/core/Config.js'
 import type {LocalConnection, Revision} from '#/core/Connection.js'
+import type {
+  EntryReference,
+  EntryReferenceScan
+} from '#/core/db/EntryReference.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {UploadOperation, type UploadProgress} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
@@ -209,6 +213,7 @@ export class Dashboard {
     failed: 0,
     blocked: 0
   })
+  #entryReferenceScan = atom<EntryReferenceScan>()
   #uploadQueue = atom<Array<MutationQueueEntry>>([])
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
@@ -262,6 +267,32 @@ export class Dashboard {
   previewMetadata = atom<PreviewMetadata | undefined>(undefined)
 
   revisions = dispense(id => atom(0))
+
+  entryReferenceScan = Object.assign(
+    atom(
+      get => get(this.#entryReferenceScan),
+      (get, set) => {
+        const events = get(this.events)
+        const listen = (event: Event) => {
+          if (event instanceof IndexEvent && event.data.op === 'references') {
+            const {scanned, total, complete} = event.data
+            startTransition(() => {
+              set(this.#entryReferenceScan, {scanned, total, complete})
+            })
+          }
+        }
+        events.addEventListener(IndexEvent.type, listen)
+        return () => {
+          events.removeEventListener(IndexEvent.type, listen)
+        }
+      }
+    ),
+    {
+      onMount(init: () => void) {
+        init()
+      }
+    }
+  )
 
   authRequired = atom((get): boolean => {
     const forceAuth =
@@ -1689,6 +1720,35 @@ export interface DashboardFileInfoState {
   data: Infer<typeof MediaFile> | null | undefined
 }
 
+export interface DashboardEntryReferencesState {
+  pending: boolean
+  data: DashboardEntryReferences | undefined
+  scan: EntryReferenceScan | undefined
+}
+
+export interface DashboardEntryReferences {
+  references: Array<DashboardEntryReference>
+  total: number
+  scan: EntryReferenceScan
+}
+
+export interface DashboardEntryReference {
+  reference: EntryReference
+  source: DashboardEntryReferenceSource
+}
+
+export interface DashboardEntryReferenceSource {
+  id: string
+  title: string
+  type: string
+  workspace: string
+  root: string
+  locale: string | null
+  status: EntryStatus
+  path: string
+  url: string
+}
+
 type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
@@ -2017,6 +2077,63 @@ export class DashboardEntryData {
   parentsState = atomWithPending(this.#parents)
 
   parents = swr(this.#parents)
+
+  #incomingReferences = atom(async get => {
+    get(this.dashboard.revisions(this.id))
+    const db = get(this.dashboard.db)
+    const policy = get(this.dashboard.policy)
+    const result = await db.referencesTo({
+      targetId: this.id,
+      status: 'preferDraft'
+    })
+    const sourceIds = Array.from(
+      new Set(result.references.map(reference => reference.sourceId))
+    )
+    const sources =
+      sourceIds.length > 0
+        ? await db.find({
+            id: {in: sourceIds},
+            status: 'preferDraft',
+            select: {
+              id: Entry.id,
+              title: Entry.title,
+              type: Entry.type,
+              workspace: Entry.workspace,
+              root: Entry.root,
+              locale: Entry.locale,
+              status: Entry.status,
+              path: Entry.path,
+              url: Entry.url
+            }
+          })
+        : []
+    const sourceByLocale = new Map(
+      sources.map(source => [entryReferenceSourceKey(source), source] as const)
+    )
+    const sourceById = new Map(sources.map(source => [source.id, source]))
+    const references = result.references.flatMap(reference => {
+      const source =
+        sourceByLocale.get(entryReferenceKey(reference)) ??
+        sourceById.get(reference.sourceId)
+      if (!source || !policy.canRead(source)) return []
+      return [{reference, source}]
+    })
+    return {
+      references,
+      total: result.total,
+      scan: result.scan
+    } satisfies DashboardEntryReferences
+  })
+
+  #incomingReferencesPending = atomWithPending(this.#incomingReferences)
+
+  incomingReferencesState: Atom<DashboardEntryReferencesState> = atom(get => {
+    const [pending, data] = get(this.#incomingReferencesPending)
+    const scan = pending ? get(this.dashboard.entryReferenceScan) : data?.scan
+    return {pending, data, scan}
+  })
+
+  incomingReferences = swr(this.#incomingReferences)
 
   canPublish = atom(get => {
     return get(this.parentInfo).every(parent => parent.status === 'published')
@@ -2443,6 +2560,16 @@ function dashboardEntryFile(
   const root = getWorkspace(workspace).roots[entry.root]
   assert(root, `Root "${entry.root}" does not exist`)
   return join(Config.contentDir(config), entry.filePath)
+}
+
+function entryReferenceKey(reference: EntryReference): string {
+  return `${reference.sourceId}\0${reference.sourceLocale ?? ''}`
+}
+
+function entryReferenceSourceKey(
+  source: DashboardEntryReferenceSource
+): string {
+  return `${source.id}\0${source.locale ?? ''}`
 }
 
 export class DashboardEntryLanguage {

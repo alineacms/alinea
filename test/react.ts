@@ -8,4 +8,5 @@ export const render = testingLibrary.render
 export const screen = testingLibrary.screen
 export const within = testingLibrary.within
 export const waitFor = testingLibrary.waitFor
+export const fireEvent = testingLibrary.fireEvent
 export const cleanup = testingLibrary.cleanup

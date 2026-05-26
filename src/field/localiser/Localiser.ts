@@ -3,10 +3,7 @@ import {Field} from '#/core/Field.js'
 import {getField} from '#/core/Internal.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 
-export type LocalisedValue<Locale extends string, Value> = Record<
-  Locale,
-  Value
->
+export type LocalisedValue<Locale extends string, Value> = Record<Locale, Value>
 
 export interface Localisation<Locale extends string = string, Value = unknown> {
   locales: ReadonlyArray<Locale>
@@ -96,6 +93,15 @@ export function localiser<const Locale extends string>({
           return locales
             .map(locale => Field.searchableText(field, record[locale]))
             .join('')
+        },
+        references(value, context) {
+          const record = value ?? initialValue()
+          return locales.flatMap(locale =>
+            Field.references(field, record[locale], {
+              ...context,
+              path: [...context.path, locale]
+            })
+          )
         },
         async queryValue(value, loader) {
           const selected = selectLocalisedValue<Locale, StoredValue>({

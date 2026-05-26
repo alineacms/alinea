@@ -12,6 +12,7 @@ import {
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
 import type {EntryStatus} from '#/core/Entry.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
 import {useState, type ComponentType, type ReactNode} from 'react'
@@ -20,12 +21,14 @@ import {
   IcRoundArchive,
   IcRoundEdit,
   IcRoundHistory,
+  IcRoundLink,
   IcRoundPublishedWithChanges,
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
 import {DashboardEntryData} from '../store.js'
 import css from './EntrySidebar.module.css'
+import {EntryReferences} from './EntryReferences.js'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 import {Sidebar, SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 
@@ -36,32 +39,58 @@ export interface EntrySidebarProps {
 }
 
 export function EntrySidebar({entry}: EntrySidebarProps) {
+  const type = useAtomValue(entry.type)
+  const isMediaFile = type.type === MediaFile
   return (
     <Sidebar>
       <Tabs
-        defaultSelectedKey="history"
+        defaultSelectedKey={isMediaFile ? 'references' : 'history'}
         variant="subtle"
         className={styles.EntrySidebar.tabs()}
       >
         <SidebarHeader>
           <TabList aria-label="Entry sidebar">
-            <Tab id="history">
-              <Icon icon={IcRoundHistory} />
-              History
-            </Tab>
-            <Tab id="preview">
-              <Icon icon={IcRoundVisibility} />
-              Preview
+            {!isMediaFile && (
+              <>
+                <Tab id="history">
+                  <Icon icon={IcRoundHistory} />
+                  History
+                </Tab>
+                <Tab id="preview">
+                  <Icon icon={IcRoundVisibility} />
+                  Preview
+                </Tab>
+              </>
+            )}
+            <Tab id="references">
+              <Icon icon={IcRoundLink} />
+              References
             </Tab>
           </TabList>
         </SidebarHeader>
 
         <SidebarBody className={styles.EntrySidebar.body()}>
-          <TabPanel id="history" className={styles.EntrySidebar.historyPanel()}>
-            <EntrySidebarHistory entry={entry} />
-          </TabPanel>
-          <TabPanel id="preview" className={styles.EntrySidebar.previewPanel()}>
-            <EntrySidebarPreview entry={entry} />
+          {!isMediaFile && (
+            <>
+              <TabPanel
+                id="history"
+                className={styles.EntrySidebar.historyPanel()}
+              >
+                <EntrySidebarHistory entry={entry} />
+              </TabPanel>
+              <TabPanel
+                id="preview"
+                className={styles.EntrySidebar.previewPanel()}
+              >
+                <EntrySidebarPreview entry={entry} />
+              </TabPanel>
+            </>
+          )}
+          <TabPanel
+            id="references"
+            className={styles.EntrySidebar.referencesPanel()}
+          >
+            <EntryReferences entry={entry} />
           </TabPanel>
         </SidebarBody>
       </Tabs>

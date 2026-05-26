@@ -2,6 +2,10 @@ import type {Infer} from '#/index.js'
 import type {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import type {UploadResponse} from '../Connection.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from './EntryReference.js'
 import {Entry} from '../Entry.js'
 import type {EntryFields} from '../EntryFields.js'
 import {Graph} from '../Graph.js'
@@ -33,6 +37,10 @@ import {
 export abstract class WriteableGraph extends Graph {
   abstract mutate(mutations: Array<Mutation>): Promise<{sha: string}>
   abstract prepareUpload(file: string): Promise<UploadResponse>
+
+  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
+    throw new Error('Entry references are not supported on this graph')
+  }
 
   async create<Definition>(
     create: CreateQuery<Definition>
