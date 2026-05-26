@@ -51,6 +51,8 @@ export class DashboardWorker extends EventTarget {
   async sync() {
     const db = await this.db
     const client = await this.#client
+    // The index is in-memory and starts empty for every fresh worker.
+    const emptyIndexBeforeLocal = db.index.tree.isEmpty
     if (
       this.#local.activeCount > 0 ||
       this.#local.pendingCount > 0 ||
@@ -58,8 +60,13 @@ export class DashboardWorker extends EventTarget {
       remote.pendingCount > 0
     )
       return db.sha
+    // First hydrate from IndexedDB; this is fast when the local source is warm.
+    if (emptyIndexBeforeLocal) await db.sync()
+    const emptyIndexAfterLocal = db.index.tree.isEmpty
+    // Always schedule a remote freshness check, but do not block boot if local
+    // data was enough to build the index.
     const sync = remote(() => db.syncWith(client))
-    if (db.index.tree.isEmpty) await sync
+    if (emptyIndexAfterLocal) await sync
     return db.sha
   }
 
