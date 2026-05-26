@@ -16,6 +16,7 @@ import {
 } from './MutationQueueEvent.js'
 
 const remote = pLimit(1)
+const syncInterval = 120_000
 
 interface MutationQueueItem extends MutationQueueEntry {
   mutations: Array<Mutation>
@@ -34,6 +35,7 @@ export class DashboardWorker extends EventTarget {
   #queue: Array<MutationQueueItem> = []
   #local = pLimit(1)
   #blocked = false
+  #syncInterval: ReturnType<typeof setInterval> | undefined
 
   constructor(source: Source) {
     super()
@@ -213,6 +215,16 @@ export class DashboardWorker extends EventTarget {
     } finally {
       this.#nextLoad = trigger()
     }
+    this.#startSyncing()
+  }
+
+  #startSyncing() {
+    if (this.#syncInterval) return
+    const sync = () => {
+      void this.sync().catch(() => {})
+    }
+    sync()
+    this.#syncInterval = setInterval(sync, syncInterval)
   }
 }
 

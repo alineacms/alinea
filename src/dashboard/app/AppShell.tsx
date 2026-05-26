@@ -40,7 +40,6 @@ interface AppShellProps {
 }
 
 export function AppShell({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.ensureInitialSync)
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
@@ -149,7 +148,7 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
           </Rail>
         }
       >
-        <SyncedEditor dashboard={dashboard} />
+        <EditorBoundary dashboard={dashboard} />
       </Suspense>
     </>
   )
@@ -276,8 +275,7 @@ function ProfileMenu({dashboard}: AppShellProps) {
   )
 }
 
-function SyncedEditor({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.ensureInitialSync)
+function EditorBoundary({dashboard}: AppShellProps) {
   return (
     <ErrorBoundary>
       <Editor dashboard={dashboard} />

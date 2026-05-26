@@ -516,7 +516,6 @@ export class Dashboard {
   })
 
   #policyResource = atom(async get => {
-    await get(this.ensureInitialSync)
     const user = await get(this.user)
     if (!user) return Policy.ALLOW_NONE
     const db = get(this.db)
@@ -639,10 +638,13 @@ export class Dashboard {
     {onMount: (init: () => void) => init()}
   )
 
-  ensureInitialSync = atom(get => {
+  sync = atom(null, async (get, set) => {
     const db = get(this.db)
     if (!isSyncableGraph(db)) return
-    return db.sync()
+    const sync = db.sync()
+    const sha = await sync
+    set(this.#sha, sha)
+    return sha
   })
 
   theme = Object.assign(
@@ -1701,7 +1703,6 @@ export class DashboardEntry {
     public id: string
   ) {
     const entryData = atom<Promise<EntryData>>(async get => {
-      await get(this.dashboard.ensureInitialSync)
       get(this.dashboard.revisions(id))
       return get(this.preload)
     })

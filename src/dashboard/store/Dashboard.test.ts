@@ -12,7 +12,7 @@ import {root} from '#/core/Root.js'
 import {localUser} from '#/core/User.js'
 import {workspace} from '#/core/Workspace.js'
 import {createStore} from 'jotai/vanilla'
-import {Dashboard, ReactiveNode} from './Dashboard.js'
+import {Dashboard, MissingEntryError, ReactiveNode} from './Dashboard.js'
 
 const test = suite(import.meta)
 
@@ -66,6 +66,23 @@ class TestGraph extends WriteableGraphBase {
       previewUrl: file,
       url: file
     })
+  }
+}
+
+class SlowSyncGraph extends TestGraph {
+  syncCalls = 0
+  #resolveSync: (sha: string) => void = () => {}
+  #syncPromise = new Promise<string>(resolve => {
+    this.#resolveSync = resolve
+  })
+
+  sync(): Promise<string> {
+    this.syncCalls += 1
+    return this.#syncPromise
+  }
+
+  resolveSync(sha = 'synced'): void {
+    this.#resolveSync(sha)
   }
 }
 
@@ -132,6 +149,64 @@ test('Dashboard role overrides update the active policy', async () => {
   test.ok(policy.canRead({workspace: 'main', root: 'publicRoot'}))
   test.not.ok(policy.canRead({workspace: 'main', root: 'privateRoot'}))
   test.not.ok(policy.canRead({workspace: 'secondary'}))
+})
+
+test('Dashboard policy and entry preloads do not wait for sync', async () => {
+  const publicRoot = root('Public')
+  const main = workspace('Main', {
+    source: 'content/main',
+    roots: {publicRoot}
+  })
+  const editor = role('Editor', {
+    permissions(policy) {
+      policy.set({root: publicRoot, allow: {read: true}})
+    }
+  })
+  const config = createConfig({
+    schema: {},
+    workspaces: {main},
+    roles: {editor}
+  })
+  const graph = new SlowSyncGraph(config)
+  const store = createStore()
+  const dashboard = new Dashboard(
+    graph,
+    config,
+    new EventTarget(),
+    new Client({config, url: 'https://example.com/api'}),
+    {},
+    {local: true}
+  )
+
+  await store.set(dashboard.setUserRoles, ['editor'])
+  await waitForPolicy(dashboard, store)
+
+  test.equal(graph.syncCalls, 0)
+  test.ok(
+    store.get(dashboard.policy).canRead({workspace: 'main', root: 'publicRoot'})
+  )
+
+  let missingEntryError = false
+  try {
+    await store.get(dashboard.entries('missing').preload)
+  } catch (error) {
+    missingEntryError = error instanceof MissingEntryError
+  }
+  test.equal(missingEntryError, true)
+  test.equal(graph.syncCalls, 0)
+
+  const sync = store.set(dashboard.sync)
+  test.equal(graph.syncCalls, 1)
+  graph.resolveSync()
+  test.equal(await sync, 'synced')
+  test.equal(store.get(dashboard.sha), 'synced')
+})
+
+test('Dashboard background sync is optional for unsyncable graphs', async () => {
+  const dashboard = createDashboard({local: true})
+  const store = createStore()
+
+  await store.set(dashboard.sync)
 })
 
 test('DashboardExplorer filters queued uploads to its current folder', () => {
