@@ -5,7 +5,7 @@ import {
   RichTextEditor,
   type RichTextField
 } from '#/core/field/RichTextField.js'
-import type {ListRow} from '#/core/shape/ListShape.js'
+import type {ListRow} from '#/core/ListRow.js'
 import {LinkEditor, LinksEditor} from '#/field/link/LinkEditor.js'
 import type {LinkField, LinksField} from '#/field/link/LinkField.js'
 

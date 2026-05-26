@@ -64,7 +64,6 @@
   },
   "resolutions": {
     "lib0": "0.2.88",
-    "yjs": "13.6.11",
     "vite": "^8.0.10"
   },
   "dependencies": {
@@ -168,8 +167,6 @@
     "typescript-plugin-css-modules": "^5.2.0",
     "use-error-boundary": "^2.0.6",
     "vite": "^8.0.10",
-    "vite-plus": "^0.1.16",
-    "yjs": "^13.6.11",
-    "yjs-src": "npm:yjs@13.6.11"
+    "vite-plus": "^0.1.16"
   }
 }

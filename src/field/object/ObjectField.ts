@@ -27,14 +27,15 @@ export function object<Fields extends FieldsDefinition>(
   const fields: Type<Fields> = type('Object fields', {
     fields: options.fields
   })
-  const initialValue = Type.initialValue(fields) as any
   return Object.assign(
     new ObjectField(fields, {
       options: {
         label,
-        initialValue,
         ...options,
         fields
+      },
+      defaultValue() {
+        return Type.initialValue(fields) as Type.Infer<Fields>
       },
       view: viewKeys.ObjectInput
     }),

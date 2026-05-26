@@ -1,16 +1,28 @@
 import {Parser} from 'htmlparser2'
+import {Entry} from '../Entry.js'
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
+import {MediaFile} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
-import {type RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
 import {
   type ElementNode,
-  type Mark,
+  LinkMark,
+  Mark,
   Node,
   type TextDoc,
   type TextNode
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
 import {entries} from '../util/Objects.js'
+
+export type RichTextMutator<R> = {
+  insert: (id: string, block: string) => void
+}
+
+const linkInfoFields = {
+  id: Entry.id,
+  url: Entry.url,
+  location: MediaFile.location
+}
 
 export class RichTextField<
   Blocks,
@@ -33,19 +45,29 @@ export class RichTextField<
     >
   ) {
     const customQueryValue = meta.queryValue
-    const shape = new RichTextShape(
-      meta.options.label,
-      schema && Schema.shapes(schema),
-      meta.options.initialValue,
-      meta.options.searchable
-    )
     super({
-      shape,
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta,
+      defaultValue() {
+        return meta.options.initialValue ?? ([] as TextDoc<Blocks>)
+      },
+      async applyLinks(value, loader) {
+        const doc = Array.isArray(value) ? value : []
+        const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
+        for (const row of doc) {
+          if (!schema || !Node.isBlock(row)) continue
+          const type = schema[row[Node.type]]
+          if (type) tasks.push(Type.applyLinks(type, row, loader))
+        }
+        await Promise.all(tasks)
+      },
+      searchableText(value) {
+        if (!meta.options.searchable) return ''
+        return richTextSearchableText(schema, value)
+      },
       async queryValue(value, loader) {
         const doc = Array.isArray(value) ? value : []
-        const tasks: Array<Promise<unknown>> = [shape.applyLinkMarks(doc, loader)]
+        const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
         for (const row of doc) {
           if (!schema || !Node.isBlock(row)) continue
           const type = schema[row[Node.type]]
@@ -68,6 +90,61 @@ export class RichTextField<
         return doc
       }
     })
+  }
+}
+
+async function applyLinkMarks(
+  doc: TextDoc<unknown>,
+  loader: import('../db/LinkResolver.js').LinkResolver
+): Promise<void> {
+  if (!Array.isArray(doc)) return
+  const links = new Map<Mark, string>()
+  iterMarks(doc, mark => {
+    if (mark[Mark.type] !== 'link') return
+    const entryId = mark[LinkMark.entry]
+    if (typeof entryId === 'string') links.set(mark, entryId)
+  })
+  const linkIds = Array.from(new Set(links.values()))
+  const entries = await loader.resolveLinks(linkInfoFields, linkIds)
+  const info = new Map(entries.map(entry => [entry.id, entry]))
+  for (const [mark, entryId] of links) {
+    const type = mark[LinkMark.link] as 'entry' | 'file' | undefined
+    const data = info.get(entryId)
+    if (data) mark.href = type === 'file' ? data.location : data.url
+  }
+}
+
+function richTextSearchableText<Blocks>(
+  schema: Schema | undefined,
+  value: TextDoc<Blocks>
+): string {
+  if (!Array.isArray(value)) return ''
+  return value.reduce((acc, node) => {
+    return acc + richTextNodeText(schema, node)
+  }, '')
+}
+
+function richTextNodeText(schema: Schema | undefined, node: Node): string {
+  if (Node.isText(node)) return node.text ? ` ${node.text}` : ''
+  if (Node.isElement(node) && node.content) {
+    return node.content.reduce((acc, node) => {
+      return acc + richTextNodeText(schema, node)
+    }, '')
+  }
+  if (Node.isBlock(node)) {
+    const type = schema?.[node[Node.type]]
+    if (type) {
+      const text = Type.searchableText(type, node)
+      return text ? ` ${text}` : ''
+    }
+  }
+  return ''
+}
+
+function iterMarks(doc: TextDoc<unknown>, fn: (mark: Mark) => void) {
+  for (const row of doc) {
+    if (Node.isText(row)) row.marks?.forEach(fn)
+    else if (Node.isElement(row) && row.content) iterMarks(row.content, fn)
   }
 }
 

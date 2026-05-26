@@ -5,7 +5,7 @@ import type {Label} from '#/core/Label.js'
 import type {Type} from '#/core/Type.js'
 import {imageExtensions} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
-import type {ListRow} from '#/core/shape/ListShape.js'
+import type {ListRow} from '#/core/ListRow.js'
 import {
   type LinkFieldOptions,
   createLink,

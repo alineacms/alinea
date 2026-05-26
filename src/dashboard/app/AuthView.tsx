@@ -1,5 +1,5 @@
+import {Button, Link, ProgressCircle} from '#/components.js'
 import styler from '@alinea/styler'
-import {Button, Link, ProgressCircle} from 'alinea/components'
 import {useAtomValue, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
 import {IcRoundArrowForward, IcRoundPublish} from '../icons.js'

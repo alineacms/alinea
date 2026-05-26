@@ -2,7 +2,7 @@ import type {WithoutLabel} from '#/core/Field.js'
 import type {InferStoredValue} from '#/core/Infer.js'
 import type {Label} from '#/core/Label.js'
 import type {Type} from '#/core/Type.js'
-import type {ListRow} from '#/core/shape/ListShape.js'
+import type {ListRow} from '#/core/ListRow.js'
 import {
   type LinkFieldOptions,
   createLink,

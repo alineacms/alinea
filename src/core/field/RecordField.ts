@@ -1,7 +1,10 @@
-import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
+import {Field, type FieldData, type FieldOptions} from '../Field.js'
 import {Type} from '../Type.js'
-import type {RecordMutator} from '../shape/RecordShape.js'
 import {entries} from '../util/Objects.js'
+
+export type RecordMutator<T> = {
+  set: <K extends keyof T>(k: K, v: T[K]) => void
+}
 
 export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
   Row,
@@ -11,11 +14,20 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
 > {
   constructor(
     type: Type,
-    meta: FieldMeta<Row, Row, RecordMutator<Row>, Options>
+    meta: FieldData<Row, Row, RecordMutator<Row>, Options>
   ) {
     super({
-      shape: Type.shape(type) as any,
       referencedViews: Type.referencedViews(type),
+      defaultValue() {
+        return Type.initialValue(type) as Row
+      },
+      applyLinks(value, loader) {
+        return Type.applyLinks(type, value as Record<string, unknown>, loader)
+      },
+      searchableText(value) {
+        const text = Type.searchableText(type, value)
+        return text ? ` ${text}` : ''
+      },
       async queryValue(value, loader) {
         const row = (value ?? {}) as Record<string, unknown>
         await Promise.all(

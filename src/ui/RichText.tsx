@@ -1,5 +1,4 @@
 import type {Infer} from 'alinea/core/Infer'
-import type {RichTextElements} from 'alinea/core/shape/RichTextShape'
 import {
   BlockNode,
   ElementNode,
@@ -14,11 +13,12 @@ import {
   type CSSProperties,
   Fragment,
   isValidElement,
+  type JSX,
   type ReactElement,
   type ReactNode
 } from 'react'
 
-type Element = keyof typeof RichTextElements
+type Element = keyof JSX.IntrinsicElements
 type Attributes = Record<string, unknown>
 type View = ComponentType<Attributes & {children?: ReactNode}> | ReactElement
 type TextAlign = CSSProperties['textAlign']

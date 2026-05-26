@@ -10,7 +10,6 @@ import type {Preview} from './Preview.js'
 import {Section, section} from './Section.js'
 import type {View} from './View.js'
 import type {SummaryProps} from './media/Summary.js'
-import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries, keys, values} from './util/Objects.js'
 import type {Expand} from './util/Types.js'
@@ -48,12 +47,13 @@ export namespace Type {
     return Boolean(getType(type).hidden)
   }
 
-  export function shape(type: Type): RecordShape {
-    return getType(type).shape
-  }
-
   export function searchableText(type: Type, value: any): string {
-    return shape(type).searchableText(value).trim()
+    const self: Record<string, any> = value || {}
+    let res = ''
+    for (const [key, field] of entries(fields(type))) {
+      res += Field.searchableText(field, self[key])
+    }
+    return res.trim()
   }
 
   export function fields(type: Type): Record<string, Field> {
@@ -117,6 +117,19 @@ export namespace Type {
       next[key] = after
     }
     return next
+  }
+
+  export async function applyLinks(
+    type: Type,
+    value: Record<string, unknown>,
+    loader: import('./db/LinkResolver.js').LinkResolver
+  ): Promise<void> {
+    const self = value || {}
+    await Promise.all(
+      entries(fields(type)).map(([key, field]) => {
+        return Field.applyLinks(field, self[key], loader)
+      })
+    )
   }
 
   export function preview(type: Type): Preview | undefined {
@@ -185,16 +198,6 @@ function viewsOfDefinition(definition: FieldsDefinition): Array<string> {
   })
 }
 
-function fieldsOfDefinition(
-  definition: FieldsDefinition
-): Array<readonly [string, Field]> {
-  return entries(definition).flatMap(([key, value]) => {
-    if (Field.isField(value)) return [[key, value]] as const
-    if (Section.isSection(value)) return entries(Section.fields(value))
-    return []
-  })
-}
-
 export interface FieldsDefinition {
   [key: string]: Field
 }
@@ -229,7 +232,6 @@ export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   label: string
   allFields: Record<string, Field>
   sections: Array<Section>
-  shape: RecordShape
 }
 
 /** Create a new type */
@@ -267,14 +269,6 @@ export function type<Fields extends FieldsDefinition>(
       ...config,
       allFields,
       sections,
-      shape: new RecordShape(
-        label,
-        fromEntries(
-          fieldsOfDefinition(config.fields).map(([key, field]) => {
-            return [key, Field.shape(field as Field)]
-          })
-        )
-      ),
       label
     }
   }

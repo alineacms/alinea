@@ -1,7 +1,6 @@
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Expr} from './Expr.js'
 import {type HasField, getField, hasField, internalField} from './Internal.js'
-import type {Shape} from './Shape.js'
 import type {User} from './User.js'
 import type {View} from './View.js'
 
@@ -56,8 +55,10 @@ export interface FieldBeforeSaveContext<StoredValue> {
 
 export interface FieldData<StoredValue, QueryValue, Mutator, Options>
   extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
-  shape: Shape<StoredValue, Mutator>
-  referencedViews: Array<string>
+  referencedViews?: Array<string>
+  defaultValue?: () => StoredValue
+  applyLinks?: (value: StoredValue, loader: LinkResolver) => Promise<void>
+  searchableText?: (value: StoredValue) => string
 }
 
 export interface FieldInternal extends FieldData<any, any, any, any> {
@@ -90,16 +91,14 @@ export namespace Field {
     return getField(field).ref
   }
 
-  export function shape(field: HasField): Shape {
-    return getField(field).shape
-  }
-
   export function label(field: HasField): string {
     return getField(field).options.label
   }
 
   export function initialValue(field: HasField): unknown {
-    return getField(field).options.initialValue
+    const data = getField(field)
+    if ('initialValue' in data.options) return data.options.initialValue
+    return data.defaultValue?.()
   }
 
   export function view<
@@ -118,8 +117,8 @@ export namespace Field {
   export function referencedViews(field: Field): Array<string> {
     const fieldView = Field.view(field)
     if (typeof fieldView === 'string')
-      return [fieldView, ...getField(field).referencedViews]
-    return getField(field).referencedViews
+      return [fieldView, ...(getField(field).referencedViews ?? [])]
+    return getField(field).referencedViews ?? []
   }
 
   export function options<
@@ -142,7 +141,7 @@ export namespace Field {
   ): Promise<QueryValue> {
     const data = getField(field)
     if (data.queryValue) return data.queryValue(value, loader)
-    await data.shape.applyLinks(value, loader)
+    if (data.applyLinks) await data.applyLinks(value, loader)
     return value as unknown as QueryValue
   }
 
@@ -154,6 +153,23 @@ export namespace Field {
     const data = getField(field)
     if (!data.beforeSave) return value
     return data.beforeSave({...context, value})
+  }
+
+  export async function applyLinks<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue,
+    loader: LinkResolver
+  ): Promise<void> {
+    const data = getField(field)
+    if (data.applyLinks) await data.applyLinks(value, loader)
+  }
+
+  export function searchableText<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue
+  ): string {
+    const data = getField(field)
+    return data.searchableText?.(value) ?? ''
   }
 
   export function isField(value: any): value is Field {

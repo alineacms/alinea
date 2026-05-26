@@ -2,8 +2,8 @@ import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
 import {ListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
 import type {InferQueryValue, InferStoredValue} from '#/core/Infer.js'
-import {Schema} from '#/core/Schema.js'
-import {ListRow} from '#/core/shape/ListShape.js'
+import type {Schema} from '#/core/Schema.js'
+import {ListRow} from '#/core/ListRow.js'
 import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {ReactNode} from 'react'
@@ -43,7 +43,7 @@ export function list<Definitions extends Schema>(
     InferStoredValue<Definitions> & ListRow,
     InferQueryValue<Definitions> & ListRow,
     ListOptions<Definitions>
-  >(options.schema, Schema.shapes(options.schema), {
+  >(options.schema, {
     options: {
       label,
       ...options,

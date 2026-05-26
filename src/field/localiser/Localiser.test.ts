@@ -1,7 +1,8 @@
 import {createCMS} from '#/core.js'
 import type {Infer} from '#/core/Infer.js'
-import {ListRow} from '#/core/shape/ListShape.js'
+import {ListRow} from '#/core/ListRow.js'
 import {BlockNode, Node} from '#/core/TextDoc.js'
+import {Type} from '#/core/Type.js'
 import {Config, Field} from '#/index.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
@@ -411,4 +412,36 @@ test('localised field applies underlying field postprocess before replacing', as
       label: 'Deutscher Link'
     }
   })
+})
+
+test('localised fields use defaults when source value is missing', () => {
+  const Page = Config.type('Page', {
+    fields: {
+      title: localise(Field.text('Title', {searchable: true}))
+    }
+  })
+
+  test.is(Type.searchableText(Page, {}), '')
+})
+
+test('localised object defaults do not share nested references', () => {
+  const Page = Config.type('Page', {
+    fields: {
+      seo: localise(
+        Field.object('SEO', {
+          fields: {
+            title: Field.text('Title')
+          }
+        })
+      )
+    }
+  })
+  const value = Type.initialValue(Page).seo as {
+    en: {title: string}
+    de: {title: string}
+  }
+
+  test.ok(value.en !== value.de)
+  value.en.title = 'English'
+  test.is(value.de.title, '')
 })

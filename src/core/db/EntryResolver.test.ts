@@ -1,6 +1,6 @@
 import {createCMS, Entry} from '#/core.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
-import {ListRow} from '#/core/shape/ListShape.js'
+import {ListRow} from '#/core/ListRow.js'
 import {Config, Field, Query} from '#/index.js'
 import {cms} from '#test/cms.js'
 import {createEntryResolver} from '#test/EntryFixture.js'

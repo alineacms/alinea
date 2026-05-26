@@ -7,9 +7,7 @@ import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
-import {ListRow} from '#/core/shape/ListShape.js'
-import {RecordShape} from '#/core/shape/RecordShape.js'
-import {ScalarShape} from '#/core/shape/ScalarShape.js'
+import {ListRow} from '#/core/ListRow.js'
 import {assign, keys} from '#/core/util/Objects.js'
 import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
 import {EntryReference} from './EntryReference.js'
@@ -65,13 +63,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
   const fieldType = Type.isType(options.fields)
     ? options.fields
     : options.fields && type('Entry fields', {fields: options.fields as any})
-  const extra = fieldType && Type.shape(fieldType)
   return {
-    shape: new RecordShape('Entry', {
-      [Reference.id]: new ScalarShape('Id'),
-      [Reference.type]: new ScalarShape('Type'),
-      [EntryReference.entry]: new ScalarShape('Entry')
-    }).concat(extra),
     fields: fieldType,
     label: options.label || 'Page link',
     handlesMultiple: true,

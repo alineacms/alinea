@@ -2,7 +2,7 @@ import {suite} from '@alinea/suite'
 import {Type, type} from '#/core/Type.js'
 import {list, richText, text} from '#/field.js'
 import {ElementNode, Node, TextNode} from './TextDoc.js'
-import {ListRow} from './shape/ListShape.js'
+import {ListRow} from './ListRow.js'
 
 const Test = type('Test', {
   fields: {

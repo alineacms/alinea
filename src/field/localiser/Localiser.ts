@@ -1,9 +1,12 @@
 import type {FieldOptions} from '#/core/Field.js'
 import {Field} from '#/core/Field.js'
 import {getField} from '#/core/Internal.js'
-import type {Shape} from '#/core/Shape.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
-import {LocalisedShape, type LocalisedValue} from './LocalisedShape.js'
+
+export type LocalisedValue<Locale extends string, Value> = Record<
+  Locale,
+  Value
+>
 
 export interface Localisation<Locale extends string = string, Value = unknown> {
   locales: ReadonlyArray<Locale>
@@ -62,32 +65,45 @@ export function localiser<const Locale extends string>({
     field: Field<StoredValue, QueryValue, Mutator, Options>
   ): LocalisedField<Locale, StoredValue, QueryValue, Options> {
     const data = getField(field)
-    const innerShape = data.shape as Shape<StoredValue>
-    const shape = new LocalisedShape<Locale, StoredValue>(
-      data.shape.label,
-      locales,
-      innerShape
-    )
+    const initialValue = () => {
+      return Object.fromEntries(
+        locales.map(locale => [locale, Field.initialValue(field)])
+      ) as LocalisedValue<Locale, StoredValue>
+    }
     return new LocalisedField<Locale, StoredValue, QueryValue, Options>(
       {
-        shape,
         referencedViews:
           typeof data.view === 'string'
-            ? [data.view, ...data.referencedViews]
+            ? [data.view, ...(data.referencedViews ?? [])]
             : data.referencedViews,
         view: viewKeys.LocalisedInput,
         options: {
           ...data.options,
-          initialValue: shape.initialValue
+          initialValue: initialValue()
         } as Omit<Options, 'initialValue' | 'validate'> &
           FieldOptions<LocalisedValue<Locale, StoredValue>>,
+        defaultValue: initialValue,
+        async applyLinks(value, loader) {
+          const record = value ?? initialValue()
+          await Promise.all(
+            locales.map(locale =>
+              Field.applyLinks(field, record[locale], loader)
+            )
+          )
+        },
+        searchableText(value) {
+          const record = value ?? initialValue()
+          return locales
+            .map(locale => Field.searchableText(field, record[locale]))
+            .join('')
+        },
         async queryValue(value, loader) {
           const selected = selectLocalisedValue<Locale, StoredValue>({
-            value: value ?? shape.create(),
+            value: value ?? initialValue(),
             locale: loader.locale,
             locales,
             fallback,
-            defaultValue: innerShape.create()
+            defaultValue: Field.initialValue(field) as StoredValue
           })
           return Field.queryValue(field, selected, loader)
         }

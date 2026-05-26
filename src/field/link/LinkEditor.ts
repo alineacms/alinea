@@ -1,7 +1,7 @@
 import {createId} from '#/core/Id.js'
 import {Reference} from '#/core/Reference.js'
 import {ListEditor} from '#/core/field/ListField.js'
-import type {ListRow} from '#/core/shape/ListShape.js'
+import type {ListRow} from '#/core/ListRow.js'
 import {EntryReference} from '#/picker/entry/EntryReference.js'
 import {UrlReference} from '#/picker/url/UrlPicker.js'
 

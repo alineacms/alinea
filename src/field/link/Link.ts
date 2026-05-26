@@ -1,7 +1,7 @@
 import type {WithoutLabel} from '#/core/Field.js'
 import type {Label} from '#/core/Label.js'
 import type {Type} from '#/core/Type.js'
-import type {ListRow} from '#/core/shape/ListShape.js'
+import type {ListRow} from '#/core/ListRow.js'
 import {type FileLink, filePicker} from '#/field/link/FileLink.js'
 import {
   type LinkField,

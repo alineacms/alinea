@@ -1,12 +1,7 @@
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {Schema} from '../Schema.js'
-import type {RecordShape} from '../shape/RecordShape.js'
 import {Type} from '../Type.js'
-import {
-  type UnionMutator,
-  UnionRow,
-  UnionShape
-} from '../shape/UnionShape.js'
+import {type UnionMutator, UnionRow} from '../UnionRow.js'
 import {entries} from '../util/Objects.js'
 
 export class UnionField<
@@ -16,19 +11,25 @@ export class UnionField<
 > extends Field<StoredValue, QueryValue, UnionMutator<StoredValue>, Options> {
   constructor(
     schema: Schema,
-    shapes: Record<string, RecordShape<any>>,
     meta: FieldMeta<StoredValue, QueryValue, UnionMutator<StoredValue>, Options>
   ) {
     const customQueryValue = meta.queryValue
-    const shape = new UnionShape<StoredValue>(
-      meta.options.label,
-      shapes,
-      meta.options.initialValue
-    )
     super({
-      shape,
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta,
+      defaultValue() {
+        return meta.options.initialValue ?? ({} as StoredValue)
+      },
+      async applyLinks(value, loader) {
+        if (!value) return
+        const type = schema?.[value[UnionRow.type]]
+        if (type) await Type.applyLinks(type, value, loader)
+      },
+      searchableText(value) {
+        if (!value) return ''
+        const type = schema?.[value[UnionRow.type]]
+        return type ? Type.searchableText(type, value) : ''
+      },
       async queryValue(value, loader) {
         if (!value) return value as QueryValue
         const type = schema?.[value[UnionRow.type]]

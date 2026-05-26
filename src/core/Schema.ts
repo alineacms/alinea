@@ -1,10 +1,7 @@
 import {getType} from './Internal.js'
 import {Type} from './Type.js'
-import type {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, fromEntries, values} from './util/Objects.js'
-
-const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
+import {entries, values} from './util/Objects.js'
 
 export interface Schema<Definitions = {}> extends Record<string, Type> {}
 
@@ -46,19 +43,6 @@ export namespace Schema {
         }
       }
     }
-  }
-
-  export function shapes(schema: Schema): Record<string, RecordShape> {
-    if (!shapesCache.has(schema))
-      shapesCache.set(
-        schema,
-        fromEntries(
-          entries(schema).map(([key, type]) => {
-            return [key, Type.shape(type!)]
-          })
-        )
-      )
-    return shapesCache.get(schema)!
   }
 
   export function typeNames(schema: Schema): Map<Type, string> {

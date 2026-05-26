@@ -3,7 +3,7 @@ import type {EntryFields} from './EntryFields.js'
 import type {Expr} from './Expr.js'
 import type {Field} from './Field.js'
 import type {InferProjection} from './Graph.js'
-import type {ListRow} from './shape/ListShape.js'
+import type {ListRow} from './ListRow.js'
 import type {Type} from './Type.js'
 
 type QueryList<T> = Expand<

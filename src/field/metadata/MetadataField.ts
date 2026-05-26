@@ -99,9 +99,11 @@ export function metadata(
   return new MetadataField(fields, {
     options: {
       label,
-      initialValue: Type.initialValue(fields) as unknown as Metadata,
       ...options,
       fields
+    },
+    defaultValue() {
+      return Type.initialValue(fields) as unknown as Metadata
     },
     view: viewKeys.MetadataInput,
     beforeSave(context) {

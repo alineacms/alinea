@@ -12,7 +12,7 @@ import type {
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import type {Schema} from '#/core/Schema.js'
-import {ListRow} from '#/core/shape/ListShape.js'
+import {ListRow} from '#/core/ListRow.js'
 import {entries, fromEntries} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {unresolvedEntryMarker} from '#/picker/entry/EntryPicker.js'
@@ -58,10 +58,7 @@ export function createLink<StoredValue extends Reference, QueryValue>(
       .filter(([type, picker]) => picker.fields)
       .map(([type, picker]) => [type, picker.fields])
   )
-  const shapes = fromEntries(
-    pickers.map(([type, picker]) => [type, picker.shape])
-  )
-  return new LinkField(schema, shapes, {
+  return new LinkField(schema, {
     options: {label, initialValue: null!, ...options},
     async queryValue(value, loader) {
       const type = value[Reference.type]
@@ -121,10 +118,7 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
       .filter(([type, picker]) => picker.fields)
       .map(([type, picker]) => [type, picker.fields])
   )
-  const shapes = fromEntries(
-    pickers.map(([type, picker]) => [type, picker.shape])
-  )
-  return new LinksField(schema, shapes, {
+  return new LinksField(schema, {
     options: {label, ...options},
     async queryValue(rows, loader) {
       const tasks = []

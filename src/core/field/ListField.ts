@@ -1,11 +1,18 @@
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {createId} from '../Id.js'
+import {ListRow} from '../ListRow.js'
 import {Schema} from '../Schema.js'
-import {type ListMutator, ListRow, ListShape} from '../shape/ListShape.js'
 import {Type} from '../Type.js'
-import type {RecordShape} from '../shape/RecordShape.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 import {entries} from '../util/Objects.js'
+
+export interface ListMutator<Row> {
+  replace(id: string, row: Row): void
+  push(row: Omit<Row, '_id' | '_index'>, insertAt?: number): void
+  remove(id: string): void
+  move(oldIndex: number, newIndex: number): void
+  read(id: string): Row | undefined
+}
 
 export class ListField<
   StoredValue extends ListRow,
@@ -19,7 +26,6 @@ export class ListField<
 > {
   constructor(
     schema: Schema,
-    shapes: Record<string, RecordShape<any>>,
     meta: FieldMeta<
       Array<StoredValue>,
       Array<QueryValue>,
@@ -28,15 +34,34 @@ export class ListField<
     >
   ) {
     const customQueryValue = meta.queryValue
-    const shape = new ListShape(
-      meta.options.label,
-      shapes,
-      meta.options.initialValue
-    )
     super({
-      shape,
       referencedViews: Schema.referencedViews(schema),
       ...meta,
+      defaultValue() {
+        return meta.options.initialValue ?? []
+      },
+      async applyLinks(value, loader) {
+        const rows = Array.isArray(value) ? value : []
+        await Promise.all(
+          rows.map(async row => {
+            const type = schema[row[ListRow.type]]
+            if (!type) return
+            await Type.applyLinks(type, row as Record<string, unknown>, loader)
+          })
+        )
+      },
+      searchableText(value) {
+        let res = ''
+        const rows = Array.isArray(value) ? value : []
+        for (const row of rows) {
+          const type = schema[row[ListRow.type]]
+          if (type) {
+            const text = Type.searchableText(type, row)
+            if (text) res += ` ${text}`
+          }
+        }
+        return res
+      },
       async queryValue(value, loader) {
         const rows = Array.isArray(value) ? value : []
         await Promise.all(

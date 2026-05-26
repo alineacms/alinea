@@ -12,7 +12,7 @@ import {getType} from '#/core/Internal.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {ListField as CoreListField} from '#/core/field/ListField.js'
-import {ListRow} from '#/core/shape/ListShape.js'
+import {ListRow} from '#/core/ListRow.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   Surface,
