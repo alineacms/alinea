@@ -1,5 +1,4 @@
 import type {Config} from '#/core/Config.js'
-import type {Entry} from '#/core/Entry.js'
 import type {EntryCondition} from '#/core/db/EntryIndex.js'
 import {
   type EntryReference,
@@ -8,6 +7,7 @@ import {
   type EntryReferenceScan,
   type EntryReferenceTarget
 } from '#/core/db/EntryReference.js'
+import type {Entry} from '#/core/Entry.js'
 import {Type} from '#/core/Type.js'
 
 export interface EntryReferenceGraph {

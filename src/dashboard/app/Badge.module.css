@@ -3,7 +3,7 @@
   --alinea-badge-background: var(--alinea-muted);
   --alinea-badge-border: var(--alinea-border);
 
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;

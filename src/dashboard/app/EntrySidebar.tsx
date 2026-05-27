@@ -26,7 +26,10 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {DashboardEntryData} from '../store.js'
+import type {
+  DashboardEntryData,
+  DashboardEntrySidebarTab
+} from '../store.js'
 import css from './EntrySidebar.module.css'
 import {EntryReferences} from './EntryReferences.js'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
@@ -40,11 +43,25 @@ export interface EntrySidebarProps {
 
 export function EntrySidebar({entry}: EntrySidebarProps) {
   const type = useAtomValue(entry.type)
+  const [selectedTab, setSelectedTab] = useAtom(entry.dashboard.entrySidebarTab)
   const isMediaFile = type.type === MediaFile
+  const allowedTabs: Array<DashboardEntrySidebarTab> = isMediaFile
+    ? ['references']
+    : ['history', 'preview', 'references']
+  const selectedKey = allowedTabs.includes(selectedTab)
+    ? selectedTab
+    : allowedTabs[0]
   return (
     <Sidebar>
       <Tabs
-        defaultSelectedKey={isMediaFile ? 'references' : 'history'}
+        selectedKey={selectedKey}
+        onSelectionChange={key => {
+          if (isMediaFile) return
+          const next = key as DashboardEntrySidebarTab
+          if (allowedTabs.includes(next)) {
+            setSelectedTab(next)
+          }
+        }}
         variant="subtle"
         className={styles.EntrySidebar.tabs()}
       >

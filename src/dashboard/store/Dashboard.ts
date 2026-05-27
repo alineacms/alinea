@@ -170,6 +170,7 @@ interface MutationQueueDiscard {
 }
 
 export type DashboardTheme = 'system' | 'light' | 'dark'
+export type DashboardEntrySidebarTab = 'history' | 'preview' | 'references'
 
 export class MissingEntryError extends Error {
   constructor(public id: string) {
@@ -213,6 +214,7 @@ export class Dashboard {
     failed: 0,
     blocked: 0
   })
+  entrySidebarTab = atom<DashboardEntrySidebarTab>('history')
   #entryReferenceScan = atom<EntryReferenceScan>()
   #uploadQueue = atom<Array<MutationQueueEntry>>([])
   #themeStorage = atomWithStorage<DashboardTheme>(

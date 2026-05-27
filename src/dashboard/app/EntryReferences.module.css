@@ -79,9 +79,30 @@
 }
 
 .EntryReferences-path {
+  min-width: 0;
+  flex: 1;
   color: var(--alinea-fg-muted);
   font-size: 11px;
   line-height: 1.25;
+}
+
+.EntryReferences-statusLine {
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.EntryReferences-status {
+  flex: 0 0 auto;
+  align-self: center;
+  height: 18px;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .EntryReferences-empty {

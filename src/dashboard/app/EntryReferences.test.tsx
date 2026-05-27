@@ -34,7 +34,7 @@ test('EntryReferences lists sources and navigates to them', () => {
       pending: false,
       scan: {scanned: 3, total: 3, complete: true},
       data: {
-        total: 1,
+        total: 3,
         scan: {scanned: 3, total: 3, complete: true},
         references: [
           {
@@ -63,6 +63,60 @@ test('EntryReferences lists sources and navigates to them', () => {
               path: 'source',
               url: '/source'
             }
+          },
+          {
+            reference: {
+              targetId: 'target',
+              sourceId: 'source',
+              sourceFilePath: 'pages/source.draft.json',
+              sourceType: 'Page',
+              sourceLocale: null,
+              sourceStatus: 'draft',
+              sourceActive: true,
+              sourceMain: false,
+              fieldPath: 'resources',
+              fieldLabel: 'Resources',
+              linkId: 'resources-link',
+              linkType: 'entry'
+            },
+            source: {
+              id: 'source',
+              title: 'Source entry',
+              type: 'Page',
+              workspace: 'main',
+              root: 'pages',
+              locale: null,
+              status: 'draft',
+              path: 'source',
+              url: '/source'
+            }
+          },
+          {
+            reference: {
+              targetId: 'target',
+              sourceId: 'draft-source',
+              sourceFilePath: 'pages/draft-source.draft.json',
+              sourceType: 'Page',
+              sourceLocale: null,
+              sourceStatus: 'draft',
+              sourceActive: true,
+              sourceMain: false,
+              fieldPath: 'related',
+              fieldLabel: 'Related',
+              linkId: 'draft-related-link',
+              linkType: 'entry'
+            },
+            source: {
+              id: 'draft-source',
+              title: 'Draft source entry',
+              type: 'Page',
+              workspace: 'main',
+              root: 'pages',
+              locale: null,
+              status: 'draft',
+              path: 'draft-source',
+              url: '/draft-source'
+            }
           }
         ]
       }
@@ -79,7 +133,11 @@ test('EntryReferences lists sources and navigates to them', () => {
   fireEvent.click(screen.getByRole('button', {name: 'Open Source entry'}))
 
   expect(screen.getByText('Source entry')).toBeTruthy()
+  expect(screen.getAllByRole('button')).toHaveLength(2)
+  expect(screen.getByText('Related, Resources')).toBeTruthy()
   expect(screen.getByText('Related')).toBeTruthy()
+  expect(screen.getByText('Published')).toBeTruthy()
+  expect(screen.getAllByText('Draft')).toHaveLength(2)
   expect(store.get(route)).toEqual({
     workspace: 'main',
     root: 'pages',
