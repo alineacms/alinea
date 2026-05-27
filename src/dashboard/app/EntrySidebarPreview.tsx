@@ -81,41 +81,70 @@ interface EntrySidebarBrowserPreviewProps {
   entry: DashboardEntryData
 }
 
-function EntrySidebarBrowserPreviewFallback() {
+interface EntrySidebarBrowserPreviewHeaderProps {
+  canOpenPreview: boolean
+  reloadLabel: string
+  onPrevious?: () => void
+  onNext?: () => void
+  onReload?: () => void
+  onOpen?: () => void
+}
+
+function EntrySidebarBrowserPreviewHeader({
+  canOpenPreview,
+  reloadLabel,
+  onPrevious,
+  onNext,
+  onReload,
+  onOpen
+}: EntrySidebarBrowserPreviewHeaderProps) {
   return (
-    <div className={styles.EntrySidebarPreview()}>
-      <RailHeader className={styles.EntrySidebarPreview.subheader()}>
-        <div className={styles.EntrySidebarPreview.controls()}>
-          <Button
-            appearance="outline"
-            size="icon"
-            icon={IcRoundArrowBack}
-            aria-label="Go back in preview"
-            isDisabled
-          />
-          <Button
-            appearance="outline"
-            size="icon"
-            icon={IcRoundArrowForward}
-            aria-label="Go forward in preview"
-            isDisabled
-          />
-          <Button
-            appearance="outline"
-            size="icon"
-            icon={IcRoundRefresh}
-            aria-label="Reload preview"
-            isDisabled
-          />
-        </div>
+    <RailHeader className={styles.EntrySidebarPreview.subheader()}>
+      <div className={styles.EntrySidebarPreview.controls()}>
         <Button
           appearance="outline"
           size="icon"
-          icon={IcRoundOpenInNew}
-          aria-label="Open preview in new tab"
-          isDisabled
+          icon={IcRoundArrowBack}
+          aria-label="Go back in preview"
+          isDisabled={!canOpenPreview}
+          onPress={onPrevious}
         />
-      </RailHeader>
+        <Button
+          appearance="outline"
+          size="icon"
+          icon={IcRoundArrowForward}
+          aria-label="Go forward in preview"
+          isDisabled={!canOpenPreview}
+          onPress={onNext}
+        />
+        <Button
+          appearance="outline"
+          size="icon"
+          icon={IcRoundRefresh}
+          aria-label={reloadLabel}
+          isDisabled={!onReload}
+          onPress={onReload}
+        />
+      </div>
+      <Button
+        appearance="outline"
+        size="icon"
+        icon={IcRoundOpenInNew}
+        aria-label="Open preview in new tab"
+        isDisabled={!canOpenPreview}
+        onPress={onOpen}
+      />
+    </RailHeader>
+  )
+}
+
+function EntrySidebarBrowserPreviewFallback() {
+  return (
+    <div className={styles.EntrySidebarPreview()}>
+      <EntrySidebarBrowserPreviewHeader
+        canOpenPreview={false}
+        reloadLabel="Reload preview"
+      />
       <div className={styles.EntrySidebarPreview.browser()}>
         <div className={styles.EntrySidebarPreview.loading()}>
           <ProgressCircle isIndeterminate aria-label="Loading preview" />
@@ -227,41 +256,14 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
 
   return (
     <div className={styles.EntrySidebarPreview()}>
-      <RailHeader className={styles.EntrySidebarPreview.subheader()}>
-        <div className={styles.EntrySidebarPreview.controls()}>
-          <Button
-            appearance="outline"
-            size="icon"
-            icon={IcRoundArrowBack}
-            aria-label="Go back in preview"
-            isDisabled={!previewUrl}
-            onPress={() => post(PreviewAction.Previous)}
-          />
-          <Button
-            appearance="outline"
-            size="icon"
-            icon={IcRoundArrowForward}
-            aria-label="Go forward in preview"
-            isDisabled={!previewUrl}
-            onPress={() => post(PreviewAction.Next)}
-          />
-          <Button
-            appearance="outline"
-            size="icon"
-            icon={IcRoundRefresh}
-            aria-label={previewUrl ? 'Reload preview' : 'Retry preview'}
-            onPress={reloadPreview}
-          />
-        </div>
-        <Button
-          appearance="outline"
-          size="icon"
-          icon={IcRoundOpenInNew}
-          aria-label="Open preview in new tab"
-          isDisabled={!previewUrl}
-          onPress={openInNewTab}
-        />
-      </RailHeader>
+      <EntrySidebarBrowserPreviewHeader
+        canOpenPreview={Boolean(previewUrl)}
+        reloadLabel={previewUrl ? 'Reload preview' : 'Retry preview'}
+        onPrevious={() => post(PreviewAction.Previous)}
+        onNext={() => post(PreviewAction.Next)}
+        onReload={reloadPreview}
+        onOpen={openInNewTab}
+      />
       <div className={styles.EntrySidebarPreview.browser()}>
         {previewUrl && loading && (
           <div className={styles.EntrySidebarPreview.loading()}>
