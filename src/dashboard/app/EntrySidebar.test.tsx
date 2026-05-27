@@ -81,6 +81,9 @@ function entryWithType(
     selectedVersion: atom({type: 'status' as const, status}),
     history: atom([]),
     preview: atom(null),
+    root: atom({
+      selectedLocale: atom(null)
+    }),
     incomingReferencesState: atom({
       pending: false,
       data: {
