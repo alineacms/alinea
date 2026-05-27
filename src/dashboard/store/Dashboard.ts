@@ -200,7 +200,6 @@ export class Dashboard {
   db: Atom<WriteableGraph>
   events: Atom<EventTarget>
   #userOverride = atom<User | null | undefined>()
-  #authRevision = atom(0)
   #authState = atom<DashboardAuthState>({status: 'loading'})
   #mutationQueue = atom<DashboardMutationQueue>({
     entries: [],
@@ -279,7 +278,6 @@ export class Dashboard {
   auth = Object.assign(
     atom(
       get => {
-        get(this.#authRevision)
         if (!get(this.authRequired)) {
           return {status: 'authenticated'} satisfies DashboardAuthState
         }
@@ -327,7 +325,6 @@ export class Dashboard {
                   () => {
                     set(this.#userOverride, null)
                     set(this.#authState, {status: 'loading'})
-                    set(this.#authRevision, revision => revision + 1)
                     set(this.auth, {type: 'check'})
                   }
                 )
@@ -389,7 +386,6 @@ export class Dashboard {
           () => {
             set(this.#userOverride, null)
             set(this.#authState, {status: 'loading'})
-            set(this.#authRevision, revision => revision + 1)
             set(this.auth, {type: 'check'})
           }
         )
@@ -403,11 +399,8 @@ export class Dashboard {
     const logout = (client as Partial<LogoutConnection>).logout
     if (typeof logout === 'function') await logout.call(client)
     set(this.#userOverride, null)
-    set(this.#authRevision, revision => revision + 1)
     if (get(this.authRequired)) await set(this.auth, {type: 'check'})
   })
-
-  authRevision = atom(get => get(this.#authRevision))
 
   mutationQueue = Object.assign(
     atom(
