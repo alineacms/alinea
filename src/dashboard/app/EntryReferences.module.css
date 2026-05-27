@@ -105,10 +105,31 @@
   line-height: 1;
 }
 
+.EntryReferences-locale {
+  flex: 0 0 auto;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--alinea-border);
+  border-radius: 4px;
+  padding: 2px 5px;
+  color: var(--alinea-fg-muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
 .EntryReferences-empty {
   margin: 0;
   color: var(--alinea-fg-muted);
   font-size: 14px;
+}
+
+.EntryReferences-other {
+  margin: 10px 0 0;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .EntryReferences-loading {

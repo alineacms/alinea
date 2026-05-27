@@ -2,9 +2,9 @@
   "_id": "2U6ifmP32fhM3IfRt9s3r4xxTDh",
   "_type": "Folder",
   "_index": "a3",
-  "title": "Root folder B",
+  "title": "Root folder B (FR)",
   "childrenLink": {
-    "_id": "3EJ1f1fzPh6GaNcPUw77wBqB8o3",
+    "_id": "3EJ1jpwzvM8y1qlNsuZmFz1winn",
     "_type": "entry",
     "_index": "",
     "_entry": "2q9sXTDlsGSy9DmS84E70KNpeM8"
@@ -13,16 +13,16 @@
     "title": "",
     "description": "",
     "openGraph": {
-      "image": null,
+      "image": {},
       "title": "",
       "description": ""
     },
-    "createdAt": 1779881958,
+    "createdAt": 1779881996,
     "createdBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1779881958,
+    "updatedAt": 1779882088,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -24,20 +24,37 @@ export interface EntryReferencesProps {
 
 export function EntryReferences({entry}: EntryReferencesProps) {
   const state = useAtomValue(entry.incomingReferencesState)
+  const root = useAtomValue(entry.root)
+  const selectedLocale = useAtomValue(root.selectedLocale)
   const setRoute = useSetAtom(entry.dashboard.route)
   if (state.pending && state.data === undefined)
     return <EntryReferencesLoading state={state} />
   const references = state.data?.references ?? []
-  if (references.length === 0) {
+  const currentReferences = references.filter(item =>
+    matchesLocale(item, selectedLocale)
+  )
+  const otherReferences = references.filter(
+    item => !matchesLocale(item, selectedLocale)
+  )
+  const groups = groupReferences(currentReferences)
+  const otherGroups = groupReferences(otherReferences)
+  const otherSummary = formatOtherLocales(otherGroups)
+  if (groups.length === 0) {
     return (
       <div className={styles.EntryReferences()}>
         <p className={styles.EntryReferences.empty()}>
-          {state.pending ? formatScan(state.scan) : 'No incoming references'}
+          {state.pending
+            ? formatScan(state.scan)
+            : formatEmpty(selectedLocale, otherSummary)}
         </p>
+        {otherSummary && (
+          <p className={styles.EntryReferences.other()}>
+            {formatOtherSummary(otherSummary)}
+          </p>
+        )}
       </div>
     )
   }
-  const groups = groupReferences(references)
   return (
     <div className={styles.EntryReferences()}>
       {state.pending && (
@@ -58,12 +75,17 @@ export function EntryReferences({entry}: EntryReferencesProps) {
                 workspace: item.source.workspace,
                 root: item.source.root,
                 entry: item.source.id,
-                locale: item.source.locale ?? undefined
+                locale: item.locale ?? undefined
               })
             }}
           />
         ))}
       </ul>
+      {otherSummary && (
+        <p className={styles.EntryReferences.other()}>
+          {formatOtherSummary(otherSummary)}
+        </p>
+      )}
     </div>
   )
 }
@@ -108,6 +130,11 @@ function EntryReferenceItem({item, onPress}: EntryReferenceItemProps) {
           </span>
           <span className={styles.EntryReferences.statusLine()}>
             <span className={styles.EntryReferences.path()}>{source.path}</span>
+            {item.locale && (
+              <span className={styles.EntryReferences.locale()}>
+                {formatLocale(item.locale)}
+              </span>
+            )}
             {item.statuses.map(status => (
               <Badge
                 appearance="default"
@@ -128,6 +155,7 @@ function EntryReferenceItem({item, onPress}: EntryReferenceItemProps) {
 interface EntryReferenceGroup {
   key: string
   source: DashboardEntryReferenceSource
+  locale: string | null
   fields: Array<string>
   statuses: Array<EntryStatus>
   linkType: DashboardEntryReference['reference']['linkType']
@@ -139,7 +167,8 @@ function groupReferences(
   const groups = new Map<string, EntryReferenceGroup>()
   for (const item of references) {
     const {reference, source} = item
-    const key = `${source.workspace}\0${source.root}\0${source.id}\0${source.locale ?? ''}`
+    const locale = reference.sourceLocale
+    const key = `${source.workspace}\0${source.root}\0${source.id}\0${locale ?? ''}`
     const field = reference.fieldLabel ?? reference.fieldPath
     const group = groups.get(key)
     if (group) {
@@ -154,12 +183,44 @@ function groupReferences(
     groups.set(key, {
       key,
       source,
+      locale,
       fields: [field],
       statuses: [reference.sourceStatus],
       linkType: reference.linkType
     })
   }
   return Array.from(groups.values())
+}
+
+interface OtherLocaleSummary {
+  count: number
+  locales: Array<OtherLocaleCount>
+}
+
+interface OtherLocaleCount {
+  locale: string | null
+  count: number
+}
+
+function matchesLocale(
+  item: DashboardEntryReference,
+  selectedLocale: string | null
+): boolean {
+  return item.reference.sourceLocale === selectedLocale
+}
+
+function formatOtherLocales(
+  groups: Array<EntryReferenceGroup>
+): OtherLocaleSummary | undefined {
+  if (groups.length === 0) return undefined
+  const locales = new Map<string | null, number>()
+  for (const group of groups) {
+    locales.set(group.locale, (locales.get(group.locale) ?? 0) + 1)
+  }
+  return {
+    count: groups.length,
+    locales: Array.from(locales, ([locale, count]) => ({locale, count}))
+  }
 }
 
 function referenceIcon(
@@ -187,6 +248,36 @@ function statusLabel(status: EntryStatus): string {
 
 function formatFields(fields: Array<string>): string {
   return fields.join(', ')
+}
+
+function formatEmpty(
+  selectedLocale: string | null,
+  otherSummary: OtherLocaleSummary | undefined
+): string {
+  if (!otherSummary) return 'No incoming references'
+  return `No incoming references in ${formatSelectedLocale(selectedLocale)}`
+}
+
+function formatOtherSummary(summary: OtherLocaleSummary): string {
+  return `${formatCount(summary.count)} in other languages: ${summary.locales
+    .map(formatLocaleCount)
+    .join(', ')}`
+}
+
+function formatLocaleCount(locale: OtherLocaleCount): string {
+  return `${formatSelectedLocale(locale.locale)} (${locale.count})`
+}
+
+function formatCount(count: number): string {
+  return `${count} ${count === 1 ? 'reference' : 'references'}`
+}
+
+function formatSelectedLocale(locale: string | null): string {
+  return locale ? formatLocale(locale) : 'default language'
+}
+
+function formatLocale(locale: string): string {
+  return locale.toUpperCase()
 }
 
 function compareStatuses(a: EntryStatus, b: EntryStatus): number {
