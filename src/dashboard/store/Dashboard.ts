@@ -205,7 +205,6 @@ export class Dashboard {
   db: Atom<WriteableGraph>
   events: Atom<EventTarget>
   #userOverride = atom<User | null | undefined>()
-  #authRevision = atom(0)
   #authState = atom<DashboardAuthState>({status: 'loading'})
   #mutationQueue = atom<DashboardMutationQueue>({
     entries: [],
@@ -312,7 +311,6 @@ export class Dashboard {
   auth = Object.assign(
     atom(
       get => {
-        get(this.#authRevision)
         if (!get(this.authRequired)) {
           return {status: 'authenticated'} satisfies DashboardAuthState
         }
@@ -360,7 +358,6 @@ export class Dashboard {
                   () => {
                     set(this.#userOverride, null)
                     set(this.#authState, {status: 'loading'})
-                    set(this.#authRevision, revision => revision + 1)
                     set(this.auth, {type: 'check'})
                   }
                 )
@@ -422,7 +419,6 @@ export class Dashboard {
           () => {
             set(this.#userOverride, null)
             set(this.#authState, {status: 'loading'})
-            set(this.#authRevision, revision => revision + 1)
             set(this.auth, {type: 'check'})
           }
         )
@@ -436,11 +432,8 @@ export class Dashboard {
     const logout = (client as Partial<LogoutConnection>).logout
     if (typeof logout === 'function') await logout.call(client)
     set(this.#userOverride, null)
-    set(this.#authRevision, revision => revision + 1)
     if (get(this.authRequired)) await set(this.auth, {type: 'check'})
   })
-
-  authRevision = atom(get => get(this.#authRevision))
 
   mutationQueue = Object.assign(
     atom(
@@ -549,7 +542,6 @@ export class Dashboard {
   })
 
   #policyResource = atom(async get => {
-    await get(this.ensureInitialSync)
     const user = await get(this.user)
     if (!user) return Policy.ALLOW_NONE
     const db = get(this.db)
@@ -563,6 +555,36 @@ export class Dashboard {
     const [pending] = get(this.#policyState)
     return !pending
   })
+
+  #initialContentLoaded = atom(false)
+
+  #initialContentResource = atom(async get => {
+    if (get(this.#initialContentLoaded)) return true
+    await get(this.#policyResource)
+    const workspace = get(this.currentWorkspace)
+    if (!workspace) return true
+    const roots = get(workspace.roots)
+    if (roots.length === 0) return true
+    await get(workspace.tree.items)
+    const {entry} = get(this.route)
+    if (entry) await get(this.entries(entry).readyState)
+    return true
+  })
+
+  initialContentAvailable = Object.assign(
+    atom(
+      get => get(this.#initialContentResource),
+      async (get, set) => {
+        await get(this.#initialContentResource)
+        set(this.#initialContentLoaded, true)
+      }
+    ),
+    {
+      onMount(load: () => void) {
+        load()
+      }
+    }
+  )
 
   policy = atom(get => {
     const [, policy] = get(this.#policyState)
@@ -672,10 +694,13 @@ export class Dashboard {
     {onMount: (init: () => void) => init()}
   )
 
-  ensureInitialSync = atom(get => {
+  sync = atom(null, async (get, set) => {
     const db = get(this.db)
     if (!isSyncableGraph(db)) return
-    return db.sync()
+    const sync = db.sync()
+    const sha = await sync
+    set(this.#sha, sha)
+    return sha
   })
 
   theme = Object.assign(
@@ -1757,13 +1782,13 @@ type SelectedVersion =
 
 export class DashboardEntry {
   data: Atom<DashboardEntryState>
+  readyState: Atom<Promise<DashboardEntryState>>
 
   constructor(
     public dashboard: Dashboard,
     public id: string
   ) {
     const entryData = atom<Promise<EntryData>>(async get => {
-      await get(this.dashboard.ensureInitialSync)
       get(this.dashboard.revisions(id))
       return get(this.preload)
     })
@@ -1793,6 +1818,7 @@ export class DashboardEntry {
         throw error
       }
     })
+    this.readyState = state
     this.data = unwrap(state, prev => ({
       pending: true,
       data: prev?.data,

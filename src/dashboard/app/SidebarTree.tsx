@@ -10,7 +10,7 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {type ComponentType, memo, Suspense, useMemo, useState} from 'react'
+import {type ComponentType, memo, useMemo, useState} from 'react'
 import {
   Collection,
   DialogTrigger,
@@ -338,31 +338,6 @@ const SidebarTreeRoots = memo(function SidebarTreeRoots({
   )
 })
 
-const SidebarTreeBodyFallback = memo(function SidebarTreeBodyFallback() {
-  return (
-    <div
-      className={styles.SidebarTree.skeleton()}
-      aria-label="Loading content tree"
-      aria-busy="true"
-    >
-      {Array.from({length: 10}, (_, index) => (
-        <div
-          className={styles.SidebarTree.skeleton.row()}
-          key={index}
-        >
-          <span className={styles.SidebarTree.skeleton.chevron()} />
-          <span className={styles.SidebarTree.skeleton.icon()} />
-          <span
-            className={styles.SidebarTree.skeleton.label({
-              short: index % 4 === 0
-            })}
-          />
-        </div>
-      ))}
-    </div>
-  )
-})
-
 interface RootButtonProps {
   root: DashboardRoot
   expanded?: boolean
@@ -414,9 +389,7 @@ export const SidebarTree = memo(function SidebarTree({
             onTreeOpenChange={setIsTreeOpen}
           />
           <div className={styles.SidebarTree.tree({collapsed: !isTreeOpen})}>
-            <Suspense fallback={<SidebarTreeBodyFallback />}>
-              <SidebarTreeBody workspace={workspace} />
-            </Suspense>
+            <SidebarTreeBody workspace={workspace} />
           </div>
         </div>
       </SidebarBody>

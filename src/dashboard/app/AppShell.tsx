@@ -40,7 +40,7 @@ interface AppShellProps {
 }
 
 export function AppShell({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.ensureInitialSync)
+  useAtomValue(dashboard.initialContentAvailable)
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
@@ -51,7 +51,6 @@ export function AppShell({dashboard}: AppShellProps) {
 }
 
 function AppShellContent({dashboard}: AppShellProps) {
-  const policyReady = useAtomValue(dashboard.policyReady)
   const workspaces = useAtomValue(dashboard.workspaces)
   const footer = (
     <SidebarFooter className={styles.AppShell.footer()}>
@@ -67,17 +66,6 @@ function AppShellContent({dashboard}: AppShellProps) {
             </div>*/}
     </SidebarFooter>
   )
-
-  if (!policyReady) {
-    return (
-      <>
-        <Sidebar>{footer}</Sidebar>
-        <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-          <ProgressCircle isIndeterminate aria-label="loading" />
-        </Rail>
-      </>
-    )
-  }
 
   if (workspaces.length === 0) {
     return (
@@ -142,15 +130,7 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
         <DashboardMeta dashboard={dashboard} />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-            <ProgressCircle isIndeterminate aria-label="loading" />
-          </Rail>
-        }
-      >
-        <SyncedEditor dashboard={dashboard} />
-      </Suspense>
+      <EditorBoundary dashboard={dashboard} />
     </>
   )
 }
@@ -276,11 +256,20 @@ function ProfileMenu({dashboard}: AppShellProps) {
   )
 }
 
-function SyncedEditor({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.ensureInitialSync)
+function EditorBoundary({dashboard}: AppShellProps) {
   return (
     <ErrorBoundary>
-      <Editor dashboard={dashboard} />
+      <Suspense fallback={<EditorLoading />}>
+        <Editor dashboard={dashboard} />
+      </Suspense>
     </ErrorBoundary>
+  )
+}
+
+function EditorLoading() {
+  return (
+    <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+      <ProgressCircle isIndeterminate aria-label="Loading editor" />
+    </Rail>
   )
 }
