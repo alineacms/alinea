@@ -2,7 +2,7 @@ import {Button, Icon, Menu, MenuItem} from '#/components.js'
 import styler from '@alinea/styler'
 import {Atom, useAtomValue} from 'jotai'
 import {Dispatch, SetStateAction} from 'react'
-import {IcRoundChevronRight, IcRoundUnfoldMore} from '../icons.js'
+import {IcRoundChevronRight, IcRoundMoreHoriz} from '../icons.js'
 import {
   DashboardEntry,
   DashboardEntryData,
@@ -46,7 +46,7 @@ function BreadcrumbMenu({
             className={styles.LocationBreadcrumbs.menu()}
             aria-label={`${label} menu`}
           >
-            <Icon icon={IcRoundUnfoldMore} />
+            <Icon icon={IcRoundMoreHoriz} />
           </Button>
         }
         aria-label={`${label} menu`}

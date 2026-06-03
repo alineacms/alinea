@@ -1,9 +1,14 @@
 .EntryHeader {
+  grid-row: 1;
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
+  height: 40px;
+  padding: 4px 0;
 }
 
 .EntryHeader-main {
@@ -24,6 +29,28 @@
   white-space: nowrap;
 }
 
+.EntryHeader-moreButton {
+  width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--alinea-fg-muted) !important;
+  box-shadow: none !important;
+}
+
+.EntryHeader-moreButton [data-slot='icon'] {
+  font-size: 16px;
+}
+
+.EntryHeader-moreButton[data-hovered],
+.EntryHeader-moreButton[data-focused] {
+  background: var(--alinea-muted) !important;
+  color: var(--alinea-fg) !important;
+}
+
 .EntryHeader-badge {
   flex-shrink: 0;
 }
@@ -33,4 +60,25 @@
   align-items: center;
   gap: 8px;
   margin-left: auto;
+  flex-shrink: 0;
+}
+
+.EntryHeader-actions :global(.Button),
+.EntryHeader-actions :global(.ToggleButton) {
+  min-height: 28px;
+}
+
+.EntryHeader-actions :global(.Button[data-size='icon']),
+.EntryHeader-actions :global(.ToggleButton) {
+  width: 32px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--alinea-dashboard-control-background);
+  color: var(--alinea-dashboard-control-color);
+  box-shadow: var(--alinea-dashboard-surface-shadow);
+}
+
+.EntryHeader-actions [data-slot='icon'] {
+  font-size: 16px;
 }

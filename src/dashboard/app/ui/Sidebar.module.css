@@ -1,7 +1,8 @@
 .Sidebar {
-  width: 320px;
+  width: 273px;
   flex-shrink: 0;
   min-width: 0;
+  overflow: hidden;
 }
 
 .SidebarBody {
@@ -9,11 +10,14 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .SidebarFooter {}
 
 .SidebarHeader {
+  gap: 8px;
   justify-content: space-between;
   flex-shrink: 0;
 }

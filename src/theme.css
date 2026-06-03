@@ -143,6 +143,25 @@
     color-mix(in srgb, white 35%, var(--alinea-border)),
     color-mix(in srgb, white 10%, var(--alinea-border))
   );
+  --alinea-dashboard-app-background: light-dark(#f3f4f7, var(--alinea-gray-900));
+  --alinea-dashboard-surface-background: var(--alinea-bg);
+  --alinea-dashboard-surface-shadow-color: light-dark(
+    rgb(from var(--alinea-gray-900) r g b / 8%),
+    rgb(from var(--alinea-gray-900) r g b / 28%)
+  );
+  --alinea-dashboard-surface-shadow: 0 2px 3.5px var(--alinea-dashboard-surface-shadow-color);
+  --alinea-dashboard-separator: var(--alinea-border);
+  --alinea-dashboard-control-background: var(--alinea-bg);
+  --alinea-dashboard-control-color: var(--alinea-fg);
+  --alinea-dashboard-primary-control-background: var(--alinea-primary);
+  --alinea-dashboard-primary-control-color: var(--alinea-primary-fg);
+  --alinea-dashboard-row-border: light-dark(#edf0f3, var(--alinea-border));
+  --alinea-dashboard-row-selected-background: var(--alinea-selected);
+  --alinea-dashboard-row-selected-color: var(--alinea-selected-fg);
+  --alinea-dashboard-row-hover-background: light-dark(
+    rgb(from var(--alinea-blue-100) r g b / 55%),
+    rgb(from var(--alinea-blue-800) r g b / 22%)
+  );
   --alinea-dashboard-explorer-card-selected-background: light-dark(
     color-mix(in srgb, var(--alinea-overlay) 88%, var(--alinea-border-accent)),
     color-mix(in srgb, var(--alinea-overlay) 78%, var(--alinea-border-accent))

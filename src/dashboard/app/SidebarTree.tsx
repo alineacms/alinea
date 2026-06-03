@@ -13,14 +13,12 @@ import {unwrap} from 'jotai/utils'
 import {type ComponentType, memo, useMemo, useState} from 'react'
 import {
   Collection,
-  DialogTrigger,
   ListLayout,
   useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
 import {
   IcOutlineArchive,
-  IcRoundAdd,
   IcRoundEdit,
   IcRoundTranslate,
   IcTwotoneDescription,
@@ -37,49 +35,14 @@ import {
   DashboardTree,
   DashboardWorkspace
 } from '../store/Dashboard.js'
-import {LocaleMenu} from './LocaleMenu.js'
-import {CreateEntry} from './modals/CreateEntry.js'
 import css from './SidebarTree.module.css'
-import {DashboardModal} from './ui/DashboardModal.js'
-import {SidebarBody, SidebarHeader} from './ui/Sidebar.js'
+import {SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
 
 interface SidebarTreeProps {
   dashboard: Dashboard
 }
-
-interface SidebarParentProps {
-  root: DashboardRoot
-}
-
-const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
-  const label = useAtomValue(root.label)
-  const selectRoot = useSetAtom(root.selected)
-  const canCreate = useAtomValue(root.canCreate)
-  return (
-    <SidebarHeader>
-      <div className={styles.SidebarParent.label()}>
-        <Button
-          appearance="plain"
-          className={styles.SidebarTree.rootsTrigger()}
-          onPress={() => selectRoot(true)}
-        >
-          {label}
-        </Button>
-        <LocaleMenu root={root} />
-        {canCreate && (
-          <DialogTrigger>
-            <Button size="icon" icon={IcRoundAdd} intent="primary" />
-            <DashboardModal>
-              <CreateEntry />
-            </DashboardModal>
-          </DialogTrigger>
-        )}
-      </div>
-    </SidebarHeader>
-  )
-})
 
 interface SidebarItemProps {
   item: DashboardEntry
@@ -255,9 +218,9 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
 })
 
 const treeLayoutOptions = {
-  rowHeight: 34,
-  padding: 6,
-  gap: 1
+  rowHeight: 32,
+  padding: 0,
+  gap: 0
 }
 
 interface SidebarTreeBodyProps {
@@ -375,24 +338,20 @@ export const SidebarTree = memo(function SidebarTree({
 }: SidebarTreeProps) {
   const workspace = useAtomValue(dashboard.currentWorkspace)
   assert(workspace, 'No workspace selected')
-  const currentRoot = useAtomValue(dashboard.currentRoot)
   const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
   const [isTreeOpen, setIsTreeOpen] = useState(true)
   return (
-    <>
-      {currentRoot && <SidebarParent root={currentRoot} />}
-      <SidebarBody>
-        <div className={styles.SidebarTree.locator()}>
-          <SidebarTreeRoots
-            roots={roots}
-            isTreeOpen={isTreeOpen}
-            onTreeOpenChange={setIsTreeOpen}
-          />
-          <div className={styles.SidebarTree.tree({collapsed: !isTreeOpen})}>
-            <SidebarTreeBody workspace={workspace} />
-          </div>
+    <SidebarBody>
+      <div className={styles.SidebarTree.locator()}>
+        <SidebarTreeRoots
+          roots={roots}
+          isTreeOpen={isTreeOpen}
+          onTreeOpenChange={setIsTreeOpen}
+        />
+        <div className={styles.SidebarTree.tree({collapsed: !isTreeOpen})}>
+          <SidebarTreeBody workspace={workspace} />
         </div>
-      </SidebarBody>
-    </>
+      </div>
+    </SidebarBody>
   )
 })

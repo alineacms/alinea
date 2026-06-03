@@ -199,16 +199,14 @@ function CustomRootEditor({root, view: View}: CustomRootEditorProps) {
 }
 
 function DefaultRootEditor({root}: RootEditorProps) {
-  const title = useAtomValue(root.label)
   const location = useAtomValue(root.explorer.location)
   return (
     <Rail main>
-      <RailHeader className={styles.RootEditor.header()}>
-        {location.parentId && (
+      {location.parentId && (
+        <RailHeader className={styles.RootEditor.header()}>
           <RootEditorBackButton root={root} parentId={location.parentId} />
-        )}
-        <h1 className={styles.RootEditor.title()}>{title}</h1>
-      </RailHeader>
+        </RailHeader>
+      )}
 
       <Explorer explorer={root.explorer} />
     </Rail>
@@ -359,23 +357,10 @@ function EntryEditor({entry}: EntryEditorProps) {
 
   const hasSidebar = !isUntranslated
 
-  const mainEditor = (
-    <Rail main>
-      <EntryHeader
-        entry={entry}
-        isSidebarOpen={isSidebarOpen}
-        node={node}
-        onSidebarOpenChange={hasSidebar ? setSidebarOpen : undefined}
-      />
-
-      {editorBody}
-
-      <div id="alinea-toolbar" className={styles.EntryEditor.toolbar()} />
-    </Rail>
-  )
+  const isSidebarVisible = hasSidebar && isSidebarOpen
 
   return (
-    <>
+    <Rail main>
       <DashboardModal
         isOpen={Boolean(routeBlock)}
         onOpenChange={open => !open && setRouteBlock(null)}
@@ -397,10 +382,25 @@ function EntryEditor({entry}: EntryEditorProps) {
         )}
       </DashboardModal>
       <EntryScope entry={entry}>
-        {mainEditor}
-        {hasSidebar && isSidebarOpen && <EntrySidebar entry={entry} />}
+        <div
+          className={styles.EntryEditor.layout({
+            sidebar: isSidebarVisible
+          })}
+        >
+          <EntryHeader
+            entry={entry}
+            isSidebarOpen={isSidebarOpen}
+            node={node}
+            onSidebarOpenChange={hasSidebar ? setSidebarOpen : undefined}
+          />
+          <div className={styles.EntryEditor.main()}>
+            {editorBody}
+            <div id="alinea-toolbar" className={styles.EntryEditor.toolbar()} />
+          </div>
+          {isSidebarVisible && <EntrySidebar entry={entry} />}
+        </div>
       </EntryScope>
-    </>
+    </Rail>
   )
 }
 

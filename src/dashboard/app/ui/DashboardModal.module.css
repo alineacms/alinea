@@ -158,12 +158,13 @@
 
 .DashboardModalFormHeader {
   justify-content: space-between;
-  padding-right: 12px;
+  min-height: 48px;
+  padding: 12px 12px 0 22px;
 }
 
 .DashboardModalFormBody {
   gap: 16px;
-  padding: 22px;
+  padding: 16px 22px 22px;
   overflow: visible;
 }
 

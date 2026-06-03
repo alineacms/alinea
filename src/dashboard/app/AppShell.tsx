@@ -9,11 +9,12 @@ import {
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {Suspense, useMemo, type ReactNode} from 'react'
 import {
   IcBaselineAccountCircle,
+  IcRoundAdd,
   IcRoundBrightness2,
   IcRoundDesktopWindows,
   IcRoundLogout,
@@ -26,8 +27,10 @@ import type {Dashboard} from '../store/Dashboard.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
+import {CreateEntry} from './modals/CreateEntry.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {SidebarTree} from './SidebarTree.js'
+import {DashboardModal} from './ui/DashboardModal.js'
 import {ErrorBoundary} from './ui/ErrorBoundary.js'
 import {Rail} from './ui/Rail.js'
 import {Sidebar, SidebarFooter, SidebarHeader} from './ui/Sidebar.js'
@@ -119,6 +122,7 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
       <Sidebar>
         <SidebarHeader>
           <WorkspaceMenu dashboard={dashboard} />
+          <CreateEntryButton dashboard={dashboard} />
         </SidebarHeader>
 
         <SidebarTree dashboard={dashboard} />
@@ -134,6 +138,28 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
     </>
   )
 }
+
+function CreateEntryButton({dashboard}: AppShellProps) {
+  const currentRoot = useAtomValue(dashboard.currentRoot)
+  const canCreate = useAtomValue(currentRoot?.canCreate ?? falseAtom)
+  if (!currentRoot || !canCreate) return null
+  return (
+    <DialogTrigger>
+      <Button
+        size="icon"
+        icon={IcRoundAdd}
+        intent="primary"
+        aria-label="Create entry"
+        className={styles.AppShell.createButton()}
+      />
+      <DashboardModal>
+        <CreateEntry />
+      </DashboardModal>
+    </DialogTrigger>
+  )
+}
+
+const falseAtom = atom(false)
 
 function ProfileMenu({dashboard}: AppShellProps) {
   const user = useAtomValue(useMemo(() => unwrap(dashboard.user), [dashboard]))

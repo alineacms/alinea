@@ -1,12 +1,13 @@
 .Surface {
-  border-radius: 6px;
-  border: 1px solid var(--alinea-border);
-  background: var(--alinea-bg);
+  border-radius: 8px;
+  border: 0;
+  background: var(--alinea-dashboard-surface-background);
   font-size: var(--alinea-font-size-base);
   flex-shrink: 0;
+  box-shadow: var(--alinea-dashboard-surface-shadow);
 
   &.is-muted {
-    background: var(--alinea-bg-muted);
+    background: var(--alinea-dashboard-surface-background);
   }
 }
 
@@ -16,10 +17,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--alinea-header);
+  background: transparent;
 
   &:not(:first-child) {
-    border-top: 1px solid var(--alinea-border);
+    border-top: 1px solid var(--alinea-dashboard-row-border);
   }
 
   &:first-child {
@@ -34,13 +35,13 @@
 }
 
 .SurfaceContent {
-  padding: 12px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 
   &:not(:first-child) {
-    border-top: 1px solid var(--alinea-border);
+    border-top: 1px solid var(--alinea-dashboard-row-border);
   }
 
   &:first-child {

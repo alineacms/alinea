@@ -2,6 +2,7 @@
   color: var(--alinea-button-color);
   font: inherit;
   font-size: var(--alinea-font-size-base);
+  font-weight: 600;
   line-height: 24px;
   text-decoration: none;
   text-align: left;
@@ -197,7 +198,7 @@
     justify-content: center;
 
     [data-slot='icon'] {
-      font-size: var(--alinea-font-size-base);
+      font-size: 16px;
     }
 
     &[data-appearance='active'] {

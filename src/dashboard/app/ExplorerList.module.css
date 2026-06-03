@@ -6,6 +6,7 @@
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background: transparent;
 }
 
 .ExplorerList-viewport {
@@ -125,13 +126,13 @@
 
   &[data-focus-visible] .ExplorerItem-card {
     border-color: var(--alinea-ring);
-    box-shadow: var(--alinea-shadow-raised);
+    box-shadow: inset 0 0 0 1px var(--alinea-ring);
   }
 
   &[data-selected] .ExplorerItem-card {
-    border-color: var(--alinea-blue-600);
-    background: var(--alinea-dashboard-explorer-card-selected-background);
-    box-shadow: var(--alinea-shadow-raised);
+    border-color: transparent;
+    background: var(--alinea-dashboard-row-selected-background);
+    box-shadow: inset 3px 0 0 var(--alinea-primary);
   }
 
   &[data-selected] .ExplorerEntryCard-top {
@@ -145,10 +146,17 @@
 
 .ExplorerItem-drag-handle {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 6px;
+  right: 8px;
   z-index: 1;
   color: var(--alinea-fg-muted);
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.ExplorerItem[data-hovered] .ExplorerItem-drag-handle,
+.ExplorerItem[data-focus-visible] .ExplorerItem-drag-handle {
+  opacity: 1;
 }
 
 .ExplorerItem-card {
@@ -186,10 +194,14 @@
 }
 
 .ExplorerList.is-row .ExplorerItem-card {
-  min-height: 76px;
+  min-height: 44px;
   width: 100%;
-  padding: 10px 48px 10px 16px;
-  background: var(--alinea-bg);
+  padding: 0 48px 0 0;
+  border: 0;
+  border-bottom: 1px solid var(--alinea-dashboard-row-border);
+  border-radius: 0;
+  background: var(--alinea-dashboard-surface-background);
+  box-shadow: none;
 }
 
 .ExplorerEntryCard {
@@ -207,7 +219,7 @@
 
   &.is-row {
     align-items: center;
-    gap: 12px;
+    gap: 0;
   }
 }
 
@@ -261,6 +273,7 @@
   }
 
   .ExplorerEntryCard.is-row & {
+    display: none;
     flex: 0 0 52px;
     width: 52px;
     height: 52px;
@@ -309,7 +322,8 @@
   border-radius: 0 0 var(--alinea-elevation-radius) var(--alinea-elevation-radius);
 
   .ExplorerEntryCard.is-row & {
-    width: auto;
+    flex: 0 0 168px;
+    width: 168px;
     background: transparent;
     border-radius: 0;
   }
@@ -325,7 +339,7 @@
   padding: 10px 12px 11px;
 
   .ExplorerEntryCard.is-row & {
-    padding: 0;
+    padding: 8px 12px;
   }
 }
 
@@ -336,12 +350,60 @@
   font-size: 14px;
   font-weight: 600;
   line-height: 1.35;
+
+  .ExplorerEntryCard.is-row & {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+  }
 }
 
 .ExplorerEntryCard-meta {
   color: var(--alinea-fg-muted);
   font-size: 12px;
   line-height: 1.3;
+
+  .ExplorerEntryCard.is-row & {
+    line-height: 1;
+  }
+}
+
+.ExplorerEntryCard.is-row .ExplorerEntryParents {
+  display: none;
+}
+
+.ExplorerEntryRowMeta {
+  display: flex;
+  align-self: stretch;
+  min-width: 0;
+  margin: 0;
+}
+
+.ExplorerEntryRowMeta-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  max-width: 180px;
+  padding: 0 12px;
+  border-left: 1px solid var(--alinea-dashboard-row-border);
+  color: var(--alinea-fg);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ExplorerEntryRowMeta-label {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+
+.ExplorerEntryRowMeta-value {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg);
+  font-weight: 400;
+  text-overflow: ellipsis;
 }
 
 .ExplorerEntryCard-skeleton {

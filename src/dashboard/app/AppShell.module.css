@@ -1,15 +1,20 @@
 .AppShell {
   display: flex;
   height: 100%;
-  background: var(--alinea-bg);
+  gap: 0;
+  padding: 10px;
+  overflow: hidden;
+  background: var(--alinea-dashboard-app-background);
+  color: var(--alinea-fg);
 }
 
 .AppShell-footer {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 8px;
-  border-top: 1px solid var(--alinea-border);
+  gap: 8px;
+  min-height: 24px;
+  padding: 0 0 2px;
+  border-top: 0;
 }
 
 .AppShell-empty {
@@ -42,7 +47,26 @@
   align-items: center;
   flex: 1;
   min-width: 0;
-  padding: 8px 4px 8px 8px;
+  min-height: 24px;
+  padding: 0;
+  color: var(--alinea-fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.AppShell-createButton {
+  flex-shrink: 0;
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  border: 0 !important;
+  background: var(--alinea-dashboard-primary-control-background) !important;
+  color: var(--alinea-dashboard-primary-control-color) !important;
+  box-shadow: var(--alinea-dashboard-surface-shadow);
+}
+
+.AppShell-createButton.AppShell-createButton [data-slot='icon'] {
+  font-size: 16px;
 }
 
 .AppShell-profile-identity {

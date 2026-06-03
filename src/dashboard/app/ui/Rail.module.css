@@ -1,27 +1,42 @@
 .Rail {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 
   & + & {
-    border-left: 1px solid var(--alinea-border);
+    margin-left: 16px;
   }
 
   &.is-main {
     flex: 1;
+    height: calc(100% + 16px);
+    margin-bottom: -16px;
     min-width: 0;
-    background: var(--alinea-bg-muted);
+    padding-left: 16px;
+    background: transparent;
+  }
+
+  &.is-main::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    background: var(--alinea-dashboard-separator);
   }
 }
 
 .RailHeader {
   display: flex;
   align-items: center;
-  height: 56px;
+  height: 40px;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--alinea-border);
-  padding: 0px 12px;
-  background: var(--alinea-bg);
+  border-bottom: 0;
+  padding: 4px 0;
+  background: transparent;
 }
 
 .RailFooter {
@@ -37,6 +52,6 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   min-width: 0;
 }

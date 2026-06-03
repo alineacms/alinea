@@ -10,6 +10,31 @@
   white-space: nowrap;
 }
 
+.EntryEditor-layout {
+  display: grid;
+  grid-template-rows: 40px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px 16px;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.EntryEditor-layout.is-sidebar {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.EntryEditor-main {
+  grid-row: 2;
+  grid-column: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .RootEditor-header {
   display: flex;
   align-items: center;
@@ -25,7 +50,7 @@
 .RootEditor-body {
   min-height: 0;
   overflow: hidden;
-  padding: 24px 28px;
+  padding: 0;
 }
 
 .RootEditor-explorer {
@@ -43,8 +68,15 @@
 .EntryEditor-body {
   min-height: 0;
   min-width: 0;
-  padding: 13px;
-  background: var(--alinea-bg-muted);
+  padding: 0 0 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: transparent;
+}
+
+.EntryEditor-body.EntryEditor-body {
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .EntryEditor-banner {

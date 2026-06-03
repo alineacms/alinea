@@ -10,12 +10,15 @@
 .Explorer-bar {
   display: flex;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
 }
 
 .Explorer-toolbar {
   flex: 1 1 0;
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
   min-width: 0;
   justify-content: flex-end;
@@ -27,7 +30,7 @@
 
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   justify-content: end;
 }
 
@@ -38,19 +41,65 @@
   flex-shrink: 0;
 }
 
+.Explorer-toolbar-tools :global(.Button) {
+  min-height: 28px;
+}
+
+.Explorer-toolbar-tools :global(.Button[data-size='icon-nav']),
+.Explorer-toolbar-tools :global(.Button[data-size='icon']) {
+  width: 32px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--alinea-dashboard-control-background);
+  color: var(--alinea-dashboard-control-color);
+  box-shadow: var(--alinea-dashboard-surface-shadow);
+}
+
+.Explorer-toolbar-tools [data-size='icon-nav'] [data-slot='icon'],
+.Explorer-toolbar-tools [data-size='icon'] [data-slot='icon'],
+.Explorer-toolbar-tools :global(.ToggleButton) [data-slot='icon'] {
+  font-size: 16px;
+}
+
+.Explorer-toolbar-tools :global(.Button[data-intent='primary']) {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--alinea-dashboard-primary-control-background);
+  color: var(--alinea-dashboard-primary-control-color);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 28px;
+}
+
 .Explorer-breadcrumbs {
-  flex: 1 1 0;
+  flex: 0 0 68px;
   min-width: 0;
 }
 
 .Explorer-searchSlot {
-  flex: 0 1 420px;
-  min-width: 220px;
+  flex: 1 1 360px;
+  min-width: 180px;
 }
 
 .Explorer-search {
   width: 100%;
   flex-grow: 1 !important;
+}
+
+.Explorer-search :global(.SearchField-field) {
+  height: 28px;
+  border: 0;
+  background: var(--alinea-dashboard-control-background);
+  box-shadow: var(--alinea-dashboard-surface-shadow);
+}
+
+.Explorer-search :global(.SearchField-field-input) {
+  padding: 5px 8px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .Explorer-actions {
@@ -64,6 +113,10 @@
   min-height: 0;
   flex: 1;
   height: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--alinea-dashboard-surface-background);
+  box-shadow: var(--alinea-dashboard-surface-shadow);
 }
 
 .Popover {

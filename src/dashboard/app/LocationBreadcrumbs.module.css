@@ -2,8 +2,9 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 2px;
+  gap: 6px;
   min-width: 0;
+  height: 32px;
 }
 
 .LocationBreadcrumbs-item {
@@ -14,11 +15,27 @@
 
 .LocationBreadcrumbs-label {
   min-width: 0;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--alinea-fg) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 28px !important;
 }
 
 .LocationBreadcrumbs-menu {
-  margin-left: -8px;
-  color: var(--alinea-fg-subtle);
+  width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  margin-left: 0;
+  color: var(--alinea-fg) !important;
+}
+
+.LocationBreadcrumbs-menu [data-slot='icon'] {
+  font-size: 16px;
 }
 
 .LocationBreadcrumbs-separator {

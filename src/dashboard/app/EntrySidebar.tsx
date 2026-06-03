@@ -21,7 +21,6 @@ import {
   IcRoundArchive,
   IcRoundEdit,
   IcRoundHistory,
-  IcRoundLink,
   IcRoundPublishedWithChanges,
   IcRoundVisibility,
   IcRoundVisibilityOff
@@ -52,7 +51,7 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
     ? selectedTab
     : allowedTabs[0]
   return (
-    <Sidebar>
+    <Sidebar className={styles.EntrySidebar()}>
       <Tabs
         selectedKey={selectedKey}
         onSelectionChange={key => {
@@ -62,27 +61,20 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
             setSelectedTab(next)
           }
         }}
-        variant="subtle"
         className={styles.EntrySidebar.tabs()}
       >
-        <SidebarHeader>
-          <TabList aria-label="Entry sidebar">
+        <SidebarHeader className={styles.EntrySidebar.tabHeader()}>
+          <TabList
+            aria-label="Entry sidebar"
+            className={styles.EntrySidebar.tabList()}
+          >
             {!isMediaFile && (
               <>
-                <Tab id="history">
-                  <Icon icon={IcRoundHistory} />
-                  History
-                </Tab>
-                <Tab id="preview">
-                  <Icon icon={IcRoundVisibility} />
-                  Preview
-                </Tab>
+                <Tab id="history">History</Tab>
+                <Tab id="preview">Preview</Tab>
               </>
             )}
-            <Tab id="references">
-              <Icon icon={IcRoundLink} />
-              References
-            </Tab>
+            <Tab id="references">References</Tab>
           </TabList>
         </SidebarHeader>
 

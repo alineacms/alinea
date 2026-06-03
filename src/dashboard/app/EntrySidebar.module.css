@@ -1,9 +1,34 @@
+.EntrySidebar {
+  grid-row: 2;
+  grid-column: 2;
+  align-self: start;
+  width: 320px;
+  height: calc(100% - 16px);
+  min-height: 0;
+  overflow: hidden;
+  border-left: 0 !important;
+  border-radius: 8px;
+  background: var(--alinea-dashboard-surface-background);
+  box-shadow: var(--alinea-dashboard-surface-shadow);
+}
+
 .EntrySidebar-tabs {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.EntrySidebar-tabHeader {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--alinea-dashboard-row-border);
+}
+
+.EntrySidebar-tabList {
+  width: 100%;
 }
 
 .EntrySidebar-body {
@@ -19,25 +44,26 @@
   margin-top: 0;
   border-radius: 0;
   overflow: auto;
+  background: var(--alinea-dashboard-surface-background);
 }
 
 .EntrySidebar-history {
   display: flex;
   flex-direction: column;
-  padding: 14px 0;
-  gap: 18px;
+  padding: 12px 0;
+  gap: 14px;
 }
 
 .EntrySidebar-section {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 0 14px;
+  padding: 0 12px;
 }
 
 .EntrySidebar-section + .EntrySidebar-section {
-  border-top: 1px solid var(--alinea-border);
-  padding-top: 14px;
+  border-top: 1px solid var(--alinea-dashboard-row-border);
+  padding-top: 12px;
 }
 
 .EntrySidebar-sectionTitle {
@@ -78,10 +104,11 @@
   box-shadow: none;
   min-height: 50px;
   padding: 8px 12px;
-  border: 1px solid var(--EntrySidebar-version-border);
-  border-radius: 6px;
+  border: 0;
+  border-radius: 8px;
   background: var(--EntrySidebar-version-background);
   color: var(--EntrySidebar-version-color);
+  box-shadow: inset 0 0 0 1px var(--alinea-dashboard-row-border);
 }
 
 .EntrySidebar-versionButton[data-hovered] {
@@ -317,6 +344,7 @@
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  background: var(--alinea-dashboard-surface-background);
 }
 
 .EntrySidebar-referencesPanel {
@@ -324,4 +352,5 @@
   margin: 0;
   border-radius: 0;
   overflow: auto;
+  background: var(--alinea-dashboard-surface-background);
 }

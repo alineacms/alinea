@@ -5,7 +5,7 @@ import {useAtomValue, useSetAtom} from 'jotai'
 import {useTransition} from 'react'
 import {
   IcRoundCheck,
-  IcRoundMoreVert,
+  IcRoundMoreHoriz,
   IcRoundSave,
   MaterialSymbolsRightPanelOpenRounded
 } from '../icons.js'
@@ -64,6 +64,192 @@ function EntryHeaderBackButton({entry}: EntryHeaderBackButtonProps) {
         })
       }}
     />
+  )
+}
+
+interface EntryHeaderMoreActionsProps {
+  entry: DashboardEntryData
+  activeStatus: 'draft' | 'published' | 'archived'
+  isDirty: boolean
+  untranslated: boolean
+}
+
+function EntryHeaderMoreActions({
+  entry,
+  activeStatus,
+  isDirty,
+  untranslated
+}: EntryHeaderMoreActionsProps) {
+  const policy = usePolicy()
+  const config = useAtomValue(entry.dashboard.config)
+  const route = useAtomValue(entry.dashboard.route)
+  const parentId = useAtomValue(entry.parentId)
+  const workspace = useAtomValue(entry.workspaceKey)
+  const root = useAtomValue(entry.rootKey)
+  const sourceLocale = useAtomValue(entry.sourceLocale)
+  const activeVersion = useAtomValue(
+    entry.languages(sourceLocale).activeVersion
+  )
+  const type = useAtomValue(entry.type)
+  const canPublishParents = useAtomValue(entry.canPublish)
+  const isParentUnpublished = useAtomValue(entry.parentUnpublished)
+  const selectedVersion = useAtomValue(entry.selectedVersion)
+  const setRoute = useSetAtom(entry.dashboard.route)
+  const discardDraft = useSetAtom(entry.discardDraft)
+  const unpublish = useSetAtom(entry.unpublish)
+  const archive = useSetAtom(entry.archive)
+  const publishArchived = useSetAtom(entry.publishArchived)
+  const deleteEntry = useSetAtom(entry.deleteEntry)
+  const replaceFile = useSetAtom(entry.replaceFile)
+  const mutationQueue = useAtomValue(entry.dashboard.mutationQueue)
+  const access = policy.get(activeVersion)
+  const canDelete = activeVersion.seeded === null
+  const isMediaFile = type.type === MediaFile
+  const [isPending, startTransition] = useTransition()
+  const isActionDisabled = isPending || mutationQueue.failed > 0
+  const isRevision = selectedVersion.type === 'history'
+  const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
+
+  function runAction(action: () => void | Promise<void>) {
+    if (mutationQueue.failed > 0) return
+    startTransition(async () => {
+      await action()
+    })
+  }
+
+  async function deleteAndNavigate() {
+    await deleteEntry()
+    setRoute({
+      workspace,
+      root,
+      entry: parentId ?? undefined,
+      locale: route.locale
+    })
+  }
+
+  function replaceMediaFile() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    const extension = activeVersion.data.extension
+    if (typeof extension === 'string') input.accept = extension
+    input.onchange = () => {
+      const file = input.files?.[0]
+      if (file) runAction(() => replaceFile(file))
+    }
+    input.click()
+  }
+
+  const menuItems: Array<EntryHeaderMenuItem> = []
+
+  if (!isRevision && !isDirty && !untranslated) {
+    if (activeStatus === 'draft') {
+      if (isUnpublished) {
+        if (isParentUnpublished && canDelete && access.delete) {
+          menuItems.push({
+            id: 'delete',
+            label: 'Delete',
+            action: deleteAndNavigate
+          })
+        }
+        if (!isParentUnpublished && access.archive) {
+          menuItems.push({
+            id: 'archive',
+            label: 'Archive',
+            action: archive
+          })
+        }
+      } else if (access.update) {
+        menuItems.push({
+          id: 'remove-draft',
+          label: 'Remove draft',
+          action: discardDraft
+        })
+      }
+    }
+
+    if (activeStatus === 'published') {
+      if (isMediaFile) {
+        if (access.update && access.upload) {
+          menuItems.push({
+            id: 'replace',
+            label: 'Replace',
+            action: replaceMediaFile
+          })
+        }
+        if (canDelete && access.delete) {
+          menuItems.push({
+            id: 'delete',
+            label: 'Delete',
+            action: deleteAndNavigate
+          })
+        }
+      } else {
+        if (config.enableDrafts && access.publish) {
+          menuItems.push({
+            id: 'unpublish',
+            label: 'Unpublish',
+            action: unpublish
+          })
+        }
+        if (canDelete && access.archive) {
+          menuItems.push({
+            id: 'archive',
+            label: 'Archive',
+            action: archive
+          })
+        }
+      }
+    }
+
+    if (activeStatus === 'archived') {
+      if (canPublishParents && access.publish) {
+        menuItems.push({
+          id: 'publish',
+          label: 'Publish',
+          action: publishArchived
+        })
+      }
+      if (canDelete && access.delete) {
+        menuItems.push({
+          id: 'delete',
+          label: 'Delete',
+          action: deleteAndNavigate
+        })
+      }
+    }
+  }
+
+  if (menuItems.length === 0) return null
+
+  return (
+    <Menu
+      label={
+        <Button
+          appearance="plain"
+          aria-label="More actions"
+          icon={IcRoundMoreHoriz}
+          isDisabled={isActionDisabled}
+          isPending={isPending}
+          className={styles.EntryHeader.moreButton()}
+        />
+      }
+      aria-label="More actions"
+      popoverProps={{placement: 'bottom start'}}
+    >
+      {menuItems.map(item => (
+        <MenuItem
+          key={item.id}
+          id={item.id}
+          textValue={item.label}
+          isDisabled={isActionDisabled}
+          onAction={() => {
+            runAction(item.action)
+          }}
+        >
+          {item.label}
+        </MenuItem>
+      ))}
+    </Menu>
   )
 }
 
@@ -215,120 +401,9 @@ function EntryHeaderActions({
       </Button>
     ) : null
 
-  const menuItems: Array<EntryHeaderMenuItem> = []
-
-  if (!isRevision && !isDirty && !untranslated) {
-    if (activeStatus === 'draft') {
-      if (isUnpublished) {
-        if (isParentUnpublished && canDelete && access.delete) {
-          menuItems.push({
-            id: 'delete',
-            label: 'Delete',
-            action: deleteAndNavigate
-          })
-        }
-        if (!isParentUnpublished && access.archive) {
-          menuItems.push({
-            id: 'archive',
-            label: 'Archive',
-            action: archive
-          })
-        }
-      } else if (access.update) {
-        menuItems.push({
-          id: 'remove-draft',
-          label: 'Remove draft',
-          action: discardDraft
-        })
-      }
-    }
-
-    if (activeStatus === 'published') {
-      if (isMediaFile) {
-        if (access.update && access.upload) {
-          menuItems.push({
-            id: 'replace',
-            label: 'Replace',
-            action: replaceMediaFile
-          })
-        }
-        if (canDelete && access.delete) {
-          menuItems.push({
-            id: 'delete',
-            label: 'Delete',
-            action: deleteAndNavigate
-          })
-        }
-      } else {
-        if (config.enableDrafts && access.publish) {
-          menuItems.push({
-            id: 'unpublish',
-            label: 'Unpublish',
-            action: unpublish
-          })
-        }
-        if (canDelete && access.archive) {
-          menuItems.push({
-            id: 'archive',
-            label: 'Archive',
-            action: archive
-          })
-        }
-      }
-    }
-
-    if (activeStatus === 'archived') {
-      if (canPublishParents && access.publish) {
-        menuItems.push({
-          id: 'publish',
-          label: 'Publish',
-          action: publishArchived
-        })
-      }
-      if (canDelete && access.delete) {
-        menuItems.push({
-          id: 'delete',
-          label: 'Delete',
-          action: deleteAndNavigate
-        })
-      }
-    }
-  }
-
   return (
     <div className={styles.EntryHeader.actions()}>
       {actionButtons}
-      {menuItems.length > 0 && (
-        <Menu
-          label={
-            <Button
-              size="icon"
-              appearance="outline"
-              intent="secondary"
-              aria-label="More actions"
-              icon={IcRoundMoreVert}
-              isDisabled={isActionDisabled}
-              isPending={isPending}
-            />
-          }
-          aria-label="More actions"
-          popoverProps={{placement: 'bottom end'}}
-        >
-          {menuItems.map(item => (
-            <MenuItem
-              key={item.id}
-              id={item.id}
-              textValue={item.label}
-              isDisabled={isActionDisabled}
-              onAction={() => {
-                runAction(item.action)
-              }}
-            >
-              {item.label}
-            </MenuItem>
-          ))}
-        </Menu>
-      )}
       {onSidebarOpenChange && (
         <ToggleButton
           isSelected={isSidebarOpen}
@@ -362,6 +437,12 @@ export function EntryHeader({
       <div className={styles.EntryHeader.main()}>
         <EntryHeaderBackButton entry={entry} />
         <h1 className={styles.EntryHeader.title()}>{title}</h1>
+        <EntryHeaderMoreActions
+          entry={entry}
+          activeStatus={activeStatus}
+          isDirty={isDirty}
+          untranslated={untranslated}
+        />
       </div>
       <EntryHeaderActions
         entry={entry}

@@ -1,4 +1,6 @@
 import {Button, Icon, ProgressCircle} from '#/components.js'
+import {Field} from '#/core/Field.js'
+import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
@@ -39,9 +41,9 @@ import css from './ExplorerList.module.css'
 const styles = styler(css)
 
 const rowLayoutOptions: ListLayoutOptions = {
-  rowHeight: 80,
-  gap: 8,
-  padding: 12
+  rowHeight: 44,
+  gap: 0,
+  padding: 0
 }
 
 const cardLayoutOptions: GridLayoutOptions = {
@@ -171,6 +173,7 @@ const ExplorerLoadedItem = memo(function ExplorerLoadedItem({
           />
         ) : (
           <ExplorerEntryCard
+            data={data}
             icon={icon ?? fallbackIcon}
             label={label}
             parents={
@@ -190,6 +193,7 @@ const ExplorerLoadedItem = memo(function ExplorerLoadedItem({
 })
 
 interface ExplorerEntryCardProps {
+  data?: DashboardEntryData
   icon?: ComponentType
   label: string
   parents?: ReactNode
@@ -198,6 +202,7 @@ interface ExplorerEntryCardProps {
 }
 
 function ExplorerEntryCard({
+  data,
   icon,
   label,
   parents,
@@ -218,8 +223,58 @@ function ExplorerEntryCard({
           <div className={styles.ExplorerEntryCard.meta()}>{typeLabel}</div>
         </div>
       </div>
+      {layout === 'row' && data && <ExplorerEntryRowMeta data={data} />}
     </div>
   )
+}
+
+interface ExplorerEntryRowMetaProps {
+  data: DashboardEntryData
+}
+
+function ExplorerEntryRowMeta({data}: ExplorerEntryRowMetaProps) {
+  const dashboardType = useAtomValue(data.type)
+  const node = useAtomValue(data.selectedNode)
+  const value = useAtomValue(node.value) as Record<string, unknown>
+  const fields = Object.entries(Type.fields(dashboardType.type))
+    .filter(([, field]) => !Field.options(field).hidden)
+    .map(([key, field]) => ({
+      key,
+      label: Field.label(field),
+      value: formatRowValue(value[key])
+    }))
+    .filter(field => field.value !== undefined)
+    .slice(0, 3)
+  if (fields.length === 0) return null
+  return (
+    <dl className={styles.ExplorerEntryRowMeta()}>
+      {fields.map(field => (
+        <div className={styles.ExplorerEntryRowMeta.item()} key={field.key}>
+          <dt className={styles.ExplorerEntryRowMeta.label()}>
+            {field.label}
+          </dt>
+          <dd className={styles.ExplorerEntryRowMeta.value()}>
+            {field.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+function formatRowValue(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === '') return undefined
+  if (typeof value === 'string') return value
+  if (typeof value === 'number') return String(value)
+  if (typeof value === 'boolean') return String(value)
+  if (value instanceof Date) return value.toLocaleDateString()
+  if (Array.isArray(value)) {
+    const values = value
+      .map(item => formatRowValue(item))
+      .filter((item): item is string => item !== undefined)
+    return values.length > 0 ? values.join(', ') : undefined
+  }
+  return undefined
 }
 
 interface ExplorerEntryParentsProps {

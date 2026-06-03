@@ -20,8 +20,8 @@
   justify-content: space-between;
   flex-shrink: 0;
   padding: 8px 10px;
-  border-bottom: 1px solid var(--alinea-border);
-  background: var(--alinea-bg);
+  border-bottom: 1px solid var(--alinea-dashboard-row-border);
+  background: var(--alinea-dashboard-surface-background);
 }
 
 .EntrySidebarPreview-controls {
@@ -43,7 +43,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--alinea-bg);
+  background: var(--alinea-dashboard-surface-background);
   z-index: 1;
 }
 
@@ -51,7 +51,7 @@
   width: 100%;
   height: 100%;
   border: 0;
-  background: #fff;
+  background: var(--alinea-dashboard-surface-background);
 }
 
 .EntrySidebarPreview-browserMessage {

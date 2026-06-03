@@ -86,6 +86,7 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
       <Menu
         label={
           <Button appearance="plain" className={styles.WorkspaceMenu.trigger()}>
+            <WorkspaceAvatar color={color} icon={icon} />
             <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>
             <IcRoundUnfoldMore />
           </Button>
@@ -104,13 +105,12 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
       </Menu>
     ) : (
       <div className={styles.WorkspaceMenu.trigger()}>
+        <WorkspaceAvatar color={color} icon={icon} />
         <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>
       </div>
     )
   return (
     <div className={styles.WorkspaceMenu.parent()}>
-      <WorkspaceAvatar color={color} icon={icon} />
-
       {menu}
 
       <DialogTrigger>
