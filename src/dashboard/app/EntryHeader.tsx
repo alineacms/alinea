@@ -1,8 +1,12 @@
 import {Button, Menu, MenuItem, ToggleButton} from '#/components.js'
+import {
+  EntryUrlConflictError,
+  type EntryUrlConflictErrorInfo
+} from '#/core/db/EntryUrlConflictError.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {useTransition} from 'react'
+import {useState, useTransition} from 'react'
 import {
   IcRoundCheck,
   IcRoundMoreVert,
@@ -13,6 +17,12 @@ import {usePolicy} from '../hooks.js'
 import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
+import {
+  DashboardModal,
+  DashboardModalContent,
+  DashboardModalDialog,
+  DashboardModalFooter
+} from './ui/DashboardModal.js'
 import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
@@ -110,13 +120,23 @@ function EntryHeaderActions({
   const canDelete = activeVersion.seeded === null
   const isMediaFile = type.type === MediaFile
   const [isPending, startTransition] = useTransition()
+  const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const isActionDisabled = isPending || mutationQueue.failed > 0
   const isRevision = selectedVersion.type === 'history'
 
   function runAction(action: () => void | Promise<void>) {
     if (mutationQueue.failed > 0) return
     startTransition(async () => {
-      await action()
+      try {
+        await action()
+      } catch (error) {
+        const conflict = entryUrlConflictInfo(error)
+        if (conflict) {
+          setUrlConflict(conflict)
+          return
+        }
+        throw error
+      }
     })
   }
 
@@ -296,52 +316,118 @@ function EntryHeaderActions({
   }
 
   return (
-    <div className={styles.EntryHeader.actions()}>
-      {actionButtons}
-      {menuItems.length > 0 && (
-        <Menu
-          label={
-            <Button
-              size="icon"
-              appearance="outline"
-              intent="secondary"
-              aria-label="More actions"
-              icon={IcRoundMoreVert}
-              isDisabled={isActionDisabled}
-              isPending={isPending}
-            />
-          }
-          aria-label="More actions"
-          popoverProps={{placement: 'bottom end'}}
-        >
-          {menuItems.map(item => (
-            <MenuItem
-              key={item.id}
-              id={item.id}
-              textValue={item.label}
-              isDisabled={isActionDisabled}
-              onAction={() => {
-                runAction(item.action)
-              }}
-            >
-              {item.label}
-            </MenuItem>
-          ))}
-        </Menu>
-      )}
-      {onSidebarOpenChange && (
-        <ToggleButton
-          isSelected={isSidebarOpen}
-          aria-label={
-            isSidebarOpen ? 'Close entry sidebar' : 'Open entry sidebar'
-          }
-          onChange={onSidebarOpenChange}
-        >
-          <MaterialSymbolsRightPanelOpenRounded data-slot="icon" />
-        </ToggleButton>
-      )}
-    </div>
+    <>
+      <div className={styles.EntryHeader.actions()}>
+        {actionButtons}
+        {menuItems.length > 0 && (
+          <Menu
+            label={
+              <Button
+                size="icon"
+                appearance="outline"
+                intent="secondary"
+                aria-label="More actions"
+                icon={IcRoundMoreVert}
+                isDisabled={isActionDisabled}
+                isPending={isPending}
+              />
+            }
+            aria-label="More actions"
+            popoverProps={{placement: 'bottom end'}}
+          >
+            {menuItems.map(item => (
+              <MenuItem
+                key={item.id}
+                id={item.id}
+                textValue={item.label}
+                isDisabled={isActionDisabled}
+                onAction={() => {
+                  runAction(item.action)
+                }}
+              >
+                {item.label}
+              </MenuItem>
+            ))}
+          </Menu>
+        )}
+        {onSidebarOpenChange && (
+          <ToggleButton
+            isSelected={isSidebarOpen}
+            aria-label={
+              isSidebarOpen ? 'Close entry sidebar' : 'Open entry sidebar'
+            }
+            onChange={onSidebarOpenChange}
+          >
+            <MaterialSymbolsRightPanelOpenRounded data-slot="icon" />
+          </ToggleButton>
+        )}
+      </div>
+      <UrlConflictModal
+        conflict={urlConflict}
+        onClose={() => setUrlConflict(undefined)}
+      />
+    </>
   )
+}
+
+interface UrlConflictModalProps {
+  conflict?: EntryUrlConflictErrorInfo
+  onClose(): void
+}
+
+function UrlConflictModal({conflict, onClose}: UrlConflictModalProps) {
+  return (
+    <DashboardModal
+      isOpen={Boolean(conflict)}
+      onOpenChange={isOpen => {
+        if (!isOpen) onClose()
+      }}
+    >
+      {conflict && (
+        <DashboardModalDialog label="URL alias already in use">
+          <DashboardModalContent>
+            <p>
+              The URL alias <strong>{conflict.url}</strong> is already defined
+              on entry <strong>{conflict.entryId}</strong>.
+            </p>
+            <p>Remove or change this alias, then publish again.</p>
+          </DashboardModalContent>
+          <DashboardModalFooter>
+            <Button intent="primary" onPress={onClose}>
+              OK
+            </Button>
+          </DashboardModalFooter>
+        </DashboardModalDialog>
+      )}
+    </DashboardModal>
+  )
+}
+
+function entryUrlConflictInfo(
+  error: unknown
+): EntryUrlConflictErrorInfo | undefined {
+  if (error instanceof EntryUrlConflictError) return error.info
+  if (!isRecord(error)) return undefined
+  if (error.name !== 'EntryUrlConflictError') return undefined
+  const info = error.info
+  if (!isRecord(info)) return undefined
+  if (
+    typeof info.url === 'string' &&
+    typeof info.entryId === 'string' &&
+    typeof info.workspace === 'string' &&
+    typeof info.root === 'string'
+  ) {
+    return {
+      url: info.url,
+      entryId: info.entryId,
+      workspace: info.workspace,
+      root: info.root
+    }
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object'
 }
 
 export function EntryHeader({

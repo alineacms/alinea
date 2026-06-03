@@ -12,6 +12,6 @@ export class Expr<Value = unknown> implements HasExpr {
 
 export type ExprInternal =
   | {type: 'field'}
-  | {type: 'entryField'; name: string}
+  | {type: 'entryField'; name: string; path?: Array<string>}
   | {type: 'call'; method: string; args: Array<Expr>}
   | {type: 'value'; value: unknown}
