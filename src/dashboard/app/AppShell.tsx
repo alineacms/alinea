@@ -69,7 +69,7 @@ function AppShellContent({dashboard}: AppShellProps) {
 
   if (workspaces.length === 0) {
     return (
-      <>
+      <div className={styles.AppShellContent()}>
         <Sidebar>{footer}</Sidebar>
         <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
           <div className={styles.AppShell.empty()}>
@@ -81,7 +81,7 @@ function AppShellContent({dashboard}: AppShellProps) {
             </p>
           </div>
         </Rail>
-      </>
+      </div>
     )
   }
 
@@ -99,7 +99,7 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
 
   if (roots.length === 0) {
     return (
-      <>
+      <div className={styles.AppShellContent()}>
         <Sidebar>{footer}</Sidebar>
         <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
           <div className={styles.AppShell.empty()}>
@@ -110,12 +110,12 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
             </p>
           </div>
         </Rail>
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div className={styles.AppShellContent()}>
       <Sidebar>
         <SidebarHeader>
           <WorkspaceMenu dashboard={dashboard} />
@@ -131,7 +131,7 @@ function AppShellWorkspace({dashboard, footer}: AppShellWorkspaceProps) {
       </Suspense>
 
       <EditorBoundary dashboard={dashboard} />
-    </>
+    </div>
   )
 }
 

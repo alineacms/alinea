@@ -2,6 +2,7 @@ import {cleanup, fireEvent, render, screen} from '#test/react.js'
 import {Provider, atom} from 'jotai'
 import {createStore} from 'jotai/vanilla'
 import {afterEach, expect, test} from 'bun:test'
+import {Suspense, act} from 'react'
 import type {
   DashboardEntryData,
   DashboardEntryReferencesState,
@@ -11,19 +12,23 @@ import {EntryReferences} from './EntryReferences.js'
 
 afterEach(cleanup)
 
-test('EntryReferences shows scan progress while loading', () => {
-  render(
-    <EntryReferences
-      entry={entryWithState({
-        pending: true,
-        data: undefined,
-        scan: {scanned: 2, total: 5, complete: false}
-      })}
-    />
-  )
+test('EntryReferences suspends while initially loading', async () => {
+  await act(async () => {
+    render(
+      <Suspense fallback={<span>Loading editor</span>}>
+        <EntryReferences
+          entry={entryWithState({
+            pending: true,
+            data: undefined,
+            scan: {scanned: 2, total: 5, complete: false}
+          })}
+        />
+      </Suspense>
+    )
+  })
 
-  expect(screen.getByText('Scanning references 2 of 5')).toBeTruthy()
-  expect(screen.getByLabelText('Loading references')).toBeTruthy()
+  expect(screen.getByText('Loading editor')).toBeTruthy()
+  expect(screen.queryByLabelText('Loading references')).toBeNull()
 })
 
 test('EntryReferences lists sources and navigates to them', () => {
@@ -326,6 +331,7 @@ function entryWithState(
 ): DashboardEntryData {
   return ({
     incomingReferencesState: atom(state),
+    incomingReferences: atom(new Promise(() => {})),
     root: atom({
       selectedLocale: atom(selectedLocale)
     }),

@@ -1,7 +1,19 @@
 .AppShell {
   display: flex;
+  justify-content: center;
   height: 100%;
-  background: var(--alinea-bg);
+  background: var(--alinea-backdrop);
+  padding: 8px;
+}
+
+.AppShellContent {
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  max-width: 1680px;
+  border: 1px solid var(--alinea-border);
 }
 
 .AppShell-footer {

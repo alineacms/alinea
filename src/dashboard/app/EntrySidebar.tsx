@@ -20,18 +20,13 @@ import {
   IcOutlineDrafts,
   IcRoundArchive,
   IcRoundEdit,
-  IcRoundHistory,
-  IcRoundLink,
   IcRoundPublishedWithChanges,
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import type {
-  DashboardEntryData,
-  DashboardEntrySidebarTab
-} from '../store.js'
-import css from './EntrySidebar.module.css'
+import type {DashboardEntryData, DashboardEntrySidebarTab} from '../store.js'
 import {EntryReferences} from './EntryReferences.js'
+import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 import {Sidebar, SidebarBody, SidebarHeader} from './ui/Sidebar.js'
 
@@ -62,27 +57,16 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
             setSelectedTab(next)
           }
         }}
-        variant="subtle"
-        className={styles.EntrySidebar.tabs()}
       >
         <SidebarHeader>
           <TabList aria-label="Entry sidebar">
             {!isMediaFile && (
               <>
-                <Tab id="history">
-                  <Icon icon={IcRoundHistory} />
-                  History
-                </Tab>
-                <Tab id="preview">
-                  <Icon icon={IcRoundVisibility} />
-                  Preview
-                </Tab>
+                <Tab id="history">History</Tab>
+                <Tab id="preview">Preview</Tab>
               </>
             )}
-            <Tab id="references">
-              <Icon icon={IcRoundLink} />
-              References
-            </Tab>
+            <Tab id="references">References</Tab>
           </TabList>
         </SidebarHeader>
 

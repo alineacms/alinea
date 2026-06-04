@@ -1,6 +1,7 @@
 .Surface {
   border-radius: 6px;
-  border: 1px solid var(--alinea-border);
+  /*border: 1px solid var(--alinea-border);*/
+  box-shadow: 0 2px 3.5px rgba(0, 0, 0, 0.08);
   background: var(--alinea-bg);
   font-size: var(--alinea-font-size-base);
   flex-shrink: 0;
@@ -16,7 +17,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--alinea-header);
 
   &:not(:first-child) {
     border-top: 1px solid var(--alinea-border);
@@ -34,7 +34,7 @@
 }
 
 .SurfaceContent {
-  padding: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -44,12 +44,12 @@
   }
 
   &:first-child {
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
   }
 
   &:last-child {
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
   }
 }

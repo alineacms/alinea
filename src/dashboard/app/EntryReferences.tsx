@@ -28,7 +28,7 @@ export function EntryReferences({entry}: EntryReferencesProps) {
   const selectedLocale = useAtomValue(root.selectedLocale)
   const setRoute = useSetAtom(entry.dashboard.route)
   if (state.pending && state.data === undefined)
-    return <EntryReferencesLoading state={state} />
+    return <EntryReferencesInitialLoad entry={entry} />
   const references = state.data?.references ?? []
   const currentReferences = references.filter(item =>
     matchesLocale(item, selectedLocale)
@@ -90,16 +90,17 @@ export function EntryReferences({entry}: EntryReferencesProps) {
   )
 }
 
-interface EntryReferencesLoadingProps {
-  state: DashboardEntryReferencesState
+function EntryReferencesInitialLoad({entry}: EntryReferencesProps) {
+  useAtomValue(entry.incomingReferences)
+  return <EntryReferencesLoading />
 }
 
-function EntryReferencesLoading({state}: EntryReferencesLoadingProps) {
+function EntryReferencesLoading() {
   return (
     <div className={styles.EntryReferences.loading()}>
       <ProgressCircle isIndeterminate aria-label="Loading references" />
       <span className={styles.EntryReferences.loadingText()}>
-        {formatScan(state.scan)}
+        Loading references
       </span>
     </div>
   )

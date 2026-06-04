@@ -151,7 +151,7 @@
     display: flex;
 
     &[data-orientation='horizontal'] {
-      border-bottom: 1px solid var(--alinea-border);
+      border-bottom: 1px solid transparent;
     }
 
     [data-variant='subtle'] & {

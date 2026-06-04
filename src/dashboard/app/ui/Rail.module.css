@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--alinea-bg);
 
   & + & {
     border-left: 1px solid var(--alinea-border);
@@ -17,10 +18,10 @@
 .RailHeader {
   display: flex;
   align-items: center;
-  height: 56px;
+  height: 48px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--alinea-border);
-  padding: 0px 12px;
+  padding: 0px 16px;
   background: var(--alinea-bg);
 }
 

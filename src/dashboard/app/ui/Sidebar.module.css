@@ -11,7 +11,8 @@
   min-height: 0;
 }
 
-.SidebarFooter {}
+.SidebarFooter {
+}
 
 .SidebarHeader {
   justify-content: space-between;

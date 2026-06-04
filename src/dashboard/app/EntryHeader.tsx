@@ -3,17 +3,16 @@ import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useTransition} from 'react'
+import {usePolicy} from '../hooks.js'
 import {
   IcRoundCheck,
   IcRoundMoreVert,
   IcRoundSave,
   MaterialSymbolsRightPanelOpenRounded
 } from '../icons.js'
-import {usePolicy} from '../hooks.js'
 import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
-import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -358,7 +357,7 @@ export function EntryHeader({
   const isDirty = useAtomValue(node.isDirty)
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
   return (
-    <RailHeader className={styles.EntryHeader()}>
+    <header className={styles.EntryHeader()}>
       <div className={styles.EntryHeader.main()}>
         <EntryHeaderBackButton entry={entry} />
         <h1 className={styles.EntryHeader.title()}>{title}</h1>
@@ -374,6 +373,6 @@ export function EntryHeader({
         untranslated={untranslated}
         parentNeedsTranslation={parentNeedsTranslation}
       />
-    </RailHeader>
+    </header>
   )
 }
