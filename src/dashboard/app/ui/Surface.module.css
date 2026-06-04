@@ -1,7 +1,6 @@
 .Surface {
   border-radius: 6px;
-  /*border: 1px solid var(--alinea-border);*/
-  box-shadow: 0 2px 3.5px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--alinea-border);
   background: var(--alinea-bg);
   font-size: var(--alinea-font-size-base);
   flex-shrink: 0;

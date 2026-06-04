@@ -6,7 +6,7 @@ import {useTransition} from 'react'
 import {usePolicy} from '../hooks.js'
 import {
   IcRoundCheck,
-  IcRoundMoreVert,
+  IcRoundMoreHoriz,
   IcRoundSave,
   MaterialSymbolsRightPanelOpenRounded
 } from '../icons.js'
@@ -302,10 +302,9 @@ function EntryHeaderActions({
           label={
             <Button
               size="icon"
-              appearance="outline"
-              intent="secondary"
+              appearance="plain"
               aria-label="More actions"
-              icon={IcRoundMoreVert}
+              icon={IcRoundMoreHoriz}
               isDisabled={isActionDisabled}
               isPending={isPending}
             />

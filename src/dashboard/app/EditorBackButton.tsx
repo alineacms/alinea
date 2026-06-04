@@ -1,4 +1,4 @@
-import {Button, Icon} from '#/components.js'
+import {Button} from '#/components.js'
 import {styler} from '@alinea/styler'
 import {IcRoundArrowBack} from '../icons.js'
 import css from './EditorBackButton.module.css'
@@ -18,8 +18,7 @@ export function EditorBackButton({label, onPress}: EditorBackButtonProps) {
       className={styles.EditorBackButton()}
       aria-label={label}
       onPress={onPress}
-    >
-      <Icon icon={IcRoundArrowBack} />
-    </Button>
+      icon={IcRoundArrowBack}
+    />
   )
 }
