@@ -203,9 +203,9 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
 })
 
 const treeLayoutOptions = {
-  rowHeight: 34,
+  rowHeight: 32,
   padding: 8,
-  gap: 1
+  gap: 0
 }
 
 interface SidebarTreeBodyProps {

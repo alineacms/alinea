@@ -12,6 +12,7 @@
   border-radius: 4px;
   gap: 8px;
   position: relative;
+  min-height: 32px;
 
   .MenuItem-icon {
     font-size: 16px;

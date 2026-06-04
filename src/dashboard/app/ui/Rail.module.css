@@ -22,6 +22,8 @@
   flex-shrink: 0;
   border-bottom: 1px solid var(--alinea-border);
   padding: 0px 16px;
+  overflow-y: hidden;
+  scrollbar-gutter: stable;
   background: var(--alinea-bg);
 }
 
@@ -39,5 +41,25 @@
   flex-direction: column;
   min-height: 0;
   overflow: auto;
+  scrollbar-gutter: stable;
   min-width: 0;
+}
+
+.RailContent {
+  width: 100%;
+  max-width: var(--alinea-main-content-max-width, 1120px);
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.RailHeader > .RailContent {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.RailBody > .RailContent {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }

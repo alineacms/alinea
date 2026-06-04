@@ -8,6 +8,7 @@
     border-radius: 6px;
     outline: 4px solid transparent;
     transition: var(--alinea-transition);
+    height: 32px;
 
     &:has(.SearchField-field-input[data-hovered]) {
       border-color: var(--alinea-border-hover);

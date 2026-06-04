@@ -12,6 +12,7 @@ import {
 } from '../icons.js'
 import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
 import {EditorBackButton} from './EditorBackButton.js'
+import {RailContent} from './ui/Rail.js'
 import css from './EntryHeader.module.css'
 
 const styles = styler(css)
@@ -394,28 +395,30 @@ export function EntryHeader({
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
   return (
     <header className={styles.EntryHeader()}>
-      <div className={styles.EntryHeader.main()}>
-        <EntryHeaderBackButton entry={entry} />
-        <h1 className={styles.EntryHeader.title()}>{title}</h1>
-        <EntryHeaderMoreActions
+      <RailContent className={styles.EntryHeader.content()}>
+        <div className={styles.EntryHeader.main()}>
+          <EntryHeaderBackButton entry={entry} />
+          <h1 className={styles.EntryHeader.title()}>{title}</h1>
+          <EntryHeaderMoreActions
+            entry={entry}
+            activeStatus={activeStatus}
+            isDirty={isDirty}
+            isUnpublished={isUnpublished}
+            untranslated={untranslated}
+          />
+        </div>
+        <EntryHeaderActions
           entry={entry}
+          node={node}
           activeStatus={activeStatus}
           isDirty={isDirty}
           isUnpublished={isUnpublished}
+          isSidebarOpen={isSidebarOpen}
+          onSidebarOpenChange={onSidebarOpenChange}
           untranslated={untranslated}
+          parentNeedsTranslation={parentNeedsTranslation}
         />
-      </div>
-      <EntryHeaderActions
-        entry={entry}
-        node={node}
-        activeStatus={activeStatus}
-        isDirty={isDirty}
-        isUnpublished={isUnpublished}
-        isSidebarOpen={isSidebarOpen}
-        onSidebarOpenChange={onSidebarOpenChange}
-        untranslated={untranslated}
-        parentNeedsTranslation={parentNeedsTranslation}
-      />
+      </RailContent>
     </header>
   )
 }

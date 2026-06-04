@@ -4,11 +4,12 @@ import {
   Icon,
   Icon as IconComp,
   Menu,
-  MenuItem
+  MenuItem,
+  type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {useState, type ComponentType} from 'react'
+import {useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
 import {
   IcRoundSearch,
@@ -45,6 +46,13 @@ interface WorkspaceAvatarProps {
   size?: 'default' | 'small'
 }
 
+interface WorkspaceSelectorMenuProps {
+  ariaLabel: string
+  dashboard: Dashboard
+  label: ReactNode
+  popoverProps?: Omit<PopoverProps, 'children'>
+}
+
 function WorkspaceAvatar({
   color,
   icon,
@@ -62,6 +70,59 @@ function WorkspaceAvatar({
 }
 
 export {WorkspaceAvatar}
+
+function WorkspaceSelectorMenu({
+  ariaLabel,
+  dashboard,
+  label,
+  popoverProps
+}: WorkspaceSelectorMenuProps) {
+  const [selected, setSelected] = useAtom(dashboard.selectedWorkspace)
+  const workspaces = useAtomValue(dashboard.workspaces)
+  if (workspaces.length <= 1) return label
+  return (
+    <Menu
+      label={label}
+      aria-label={ariaLabel}
+      selectionMode="single"
+      selectedKeys={[selected]}
+      onAction={key => setSelected(String(key))}
+      popoverProps={popoverProps}
+    >
+      {workspaces.map(workspace => (
+        <WorkspaceItem
+          key={workspace}
+          workspace={dashboard.workspace(workspace)}
+        />
+      ))}
+    </Menu>
+  )
+}
+
+export function WorkspaceAvatarMenu({dashboard}: WorkspaceMenuProps) {
+  const selected = useAtomValue(dashboard.selectedWorkspace)
+  const workspace = dashboard.workspace(selected)
+  const color = useAtomValue(workspace.color)
+  const icon = useAtomValue(workspace.icon)
+  const label = useAtomValue(workspace.label)
+  return (
+    <WorkspaceSelectorMenu
+      dashboard={dashboard}
+      ariaLabel="Workspace"
+      popoverProps={{placement: 'right top', offset: 16}}
+      label={
+        <Button
+          size="icon-nav"
+          appearance="plain"
+          className={styles.WorkspaceMenu.avatarTrigger()}
+          aria-label={label}
+        >
+          <WorkspaceAvatar color={color} icon={icon} size="small" />
+        </Button>
+      }
+    />
+  )
+}
 
 function SearchPopup() {
   const dashboard = useDashboard()
@@ -88,32 +149,23 @@ function SearchPopup() {
 }
 
 export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
-  const [selected, setSelected] = useAtom(dashboard.selectedWorkspace)
   const workspaces = useAtomValue(dashboard.workspaces)
+  const selected = useAtomValue(dashboard.selectedWorkspace)
   const workspace = dashboard.workspace(selected)
   const label = useAtomValue(workspace.label)
   const currentRoot = useAtomValue(dashboard.currentRoot)
   const menu =
     workspaces.length > 1 ? (
-      <Menu
+      <WorkspaceSelectorMenu
+        dashboard={dashboard}
+        ariaLabel="Workspace"
         label={
           <AriaButton className={styles.WorkspaceMenu.trigger()}>
             <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>
             <Icon icon={IcRoundUnfoldMore} fontSize={12} />
           </AriaButton>
         }
-        aria-label="Workspace"
-        selectionMode="single"
-        selectedKeys={[selected]}
-        onAction={key => setSelected(String(key))}
-      >
-        {workspaces.map(workspace => (
-          <WorkspaceItem
-            key={workspace}
-            workspace={dashboard.workspace(workspace)}
-          />
-        ))}
-      </Menu>
+      />
     ) : (
       <div className={styles.WorkspaceMenu.trigger()}>
         <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>
@@ -169,11 +221,8 @@ interface WorkspaceItemProps {
 function WorkspaceItem({workspace}: WorkspaceItemProps) {
   const id = workspace.key
   const label = useAtomValue(workspace.label)
-  const color = useAtomValue(workspace.color)
-  const icon = useAtomValue(workspace.icon)
   return (
     <MenuItem key={id} id={id} textValue={label}>
-      <WorkspaceAvatar color={color} icon={icon} />
       {label}
     </MenuItem>
   )

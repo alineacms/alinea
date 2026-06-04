@@ -3,7 +3,8 @@ import {
   DialogTrigger,
   Popover,
   ProgressCircle,
-  Tooltip
+  Tooltip,
+  type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
@@ -18,16 +19,16 @@ export interface MutationQueueStatusProps {
   ariaLabel?: string
   dashboard: Dashboard
   children?: ReactNode
-  placement?: 'top' | 'bottom'
   openOnFail?: boolean
+  placement?: PopoverProps['placement']
 }
 
 export function MutationQueueStatus({
   ariaLabel,
   dashboard,
   children,
-  placement = 'top',
-  openOnFail = false
+  openOnFail = false,
+  placement = 'right'
 }: MutationQueueStatusProps) {
   const queue = useAtomValue(dashboard.mutationQueue)
   const retry = useSetAtom(dashboard.retryMutationQueue)
@@ -46,7 +47,6 @@ export function MutationQueueStatus({
     if (openOnFail && isFailed && !wasFailed.current) setIsOpen(true)
     wasFailed.current = isFailed
   }, [isFailed, openOnFail])
-
   return (
     <DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
       <Tooltip placement={placement} delay={300} tooltip={label}>
@@ -109,9 +109,7 @@ export function MutationQueueStatus({
               Sync status
             </h2>
             {isFailed && (
-              <div
-                className={styles.MutationQueueStatus.popover.actions()}
-              >
+              <div className={styles.MutationQueueStatus.popover.actions()}>
                 <Button
                   size="small"
                   appearance="plain"
@@ -147,27 +145,21 @@ export function MutationQueueStatus({
                 key={entry.id}
                 className={styles.MutationQueueStatus.popover.item()}
               >
-                <div
-                  className={styles.MutationQueueStatus.popover.item.main()}
-                >
+                <div className={styles.MutationQueueStatus.popover.item.main()}>
                   <span
                     className={styles.MutationQueueStatus.popover.item.title()}
                   >
                     {formatMutationQueueTitle(entry.mutations)}
                   </span>
                   <span
-                    className={styles.MutationQueueStatus.popover.item.status(
-                      {
-                        [entry.status]: true
-                      }
-                    )}
+                    className={styles.MutationQueueStatus.popover.item.status({
+                      [entry.status]: true
+                    })}
                   >
                     {formatMutationStatus(entry.status)}
                   </span>
                 </div>
-                <ul
-                  className={styles.MutationQueueStatus.popover.item.ops()}
-                >
+                <ul className={styles.MutationQueueStatus.popover.item.ops()}>
                   {entry.mutations.map((mutation, index) => (
                     <li
                       key={index}
@@ -236,9 +228,7 @@ function formatMutation(mutation: {
     case 'move':
       return 'Moved'
     case 'uploadFile':
-      return mutation.progress
-        ? `Uploading file${progress}`
-        : 'Uploaded file'
+      return mutation.progress ? `Uploading file${progress}` : 'Uploaded file'
     case 'removeFile':
       return 'Removed file'
     default:

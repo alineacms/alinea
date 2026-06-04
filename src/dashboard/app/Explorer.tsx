@@ -22,7 +22,7 @@ import {
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
-import {RailBody} from './ui/Rail.js'
+import {RailBody, RailContent} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -201,13 +201,15 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
 export function ExplorerHeader({controls, explorer}: ExplorerHeaderProps) {
   return (
     <div className={styles.Explorer.bar()}>
-      <div className={styles.Explorer.searchSlot()}>
-        <ExplorerSearch explorer={explorer} />
-      </div>
-      <div className={styles.Explorer.toolbar()}>
-        <ExplorerToolbar explorer={explorer} />
-        {controls}
-      </div>
+      <RailContent className={styles.Explorer.bar.content()}>
+        <div className={styles.Explorer.searchSlot()}>
+          <ExplorerSearch explorer={explorer} />
+        </div>
+        <div className={styles.Explorer.toolbar()}>
+          <ExplorerToolbar explorer={explorer} />
+          {controls}
+        </div>
+      </RailContent>
     </div>
   )
 }

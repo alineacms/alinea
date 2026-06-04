@@ -1,12 +1,19 @@
 .EntryHeader {
+  height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--alinea-border);
+  overflow-y: hidden;
+  scrollbar-gutter: stable;
+  background: var(--alinea-backdrop);
+}
+
+.EntryHeader-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  height: 48px;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--alinea-border);
+  height: 100%;
 }
 
 .EntryHeader-main {

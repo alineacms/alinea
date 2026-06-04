@@ -23,7 +23,7 @@ import {
 } from '../icons.js'
 import type {Dashboard, DashboardRoot} from '../store/Dashboard.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
-import {WorkspaceAvatar} from './WorkspaceMenu.js'
+import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
 
 const styles = styler(css)
@@ -35,13 +35,11 @@ interface WorkspaceRootsProps {
 export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
   const selected = useAtomValue(dashboard.selectedWorkspace)
   const workspace = dashboard.workspace(selected)
-  const color = useAtomValue(workspace.color)
-  const icon = useAtomValue(workspace.icon)
   const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
   return (
     <aside className={styles.WorkspaceRoots()} aria-label="Workspace roots">
       <div className={styles.WorkspaceRoots.workspace()}>
-        <WorkspaceAvatar color={color} icon={icon} size="small" />
+        <WorkspaceAvatarMenu dashboard={dashboard} />
       </div>
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
@@ -104,14 +102,16 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
 
   return (
     <DialogTrigger>
-      <Button
-        size="icon-nav"
-        appearance="plain"
-        className={styles.WorkspaceRoots.profile()}
-        aria-label={userName}
-      >
-        <Icon data-slot="icon" icon={IcBaselineAccountCircle} />
-      </Button>
+      <Tooltip placement="right" delay={100} tooltip={userName}>
+        <Button
+          size="icon-nav"
+          appearance="plain"
+          className={styles.WorkspaceRoots.profile()}
+          aria-label={userName}
+        >
+          <Icon data-slot="icon" icon={IcBaselineAccountCircle} />
+        </Button>
+      </Tooltip>
       <Popover
         className={styles.WorkspaceRoots.profile.popover.surface()}
         placement="right bottom"
