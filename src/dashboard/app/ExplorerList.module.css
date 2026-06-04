@@ -55,7 +55,7 @@
     border-radius: 6px;
     box-shadow: var(--alinea-shadow-raised);
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
   }
 }
 
@@ -106,8 +106,8 @@
 }
 
 .ExplorerList-empty-icon {
-  color: color-mix(in srgb, var(--alinea-fg-muted) 70%, transparent);
   font-size: 72px;
+  opacity: 0.5;
 }
 
 .ExplorerList-empty-text {

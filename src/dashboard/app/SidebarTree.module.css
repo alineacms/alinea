@@ -1,41 +1,7 @@
-.SidebarParent-label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  min-width: 0;
-  text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 600;
-  line-height: 34px;
-  min-height: 34px;
-  border: 0;
-  background: transparent;
-  width: 100%;
-}
-
-.SidebarTree-rootsTrigger {
-  font: inherit;
-
-  min-height: 34px;
-  padding: 0;
-  width: 100%;
-
-  display: flex;
-  justify-content: space-between;
-  padding: 0 8px;
-}
-
 .SidebarTree-tree {
   min-width: 0;
   width: 100%;
-}
-
-.SidebarTree-tree.is-collapsed {
-  display: none;
+  height: 100%;
 }
 
 .SidebarTree-tree :global(.react-aria-DropIndicator) {
@@ -64,41 +30,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-.SidebarTree-locator {
-  display: flex;
-  height: 100%;
-}
-
-.SidebarTree-locator > :not(.SidebarTree-locator-rootSelector) {
-  width: 100%;
-}
-
-.SidebarTree-locator-rootSelector {
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: 100%;
-  border-right: solid 1px var(--alinea-border);
-  flex-shrink: 0;
-  flex-grow: 0;
-  width: 56px;
-  align-items: center;
-}
-
-.SidebarTree-locator-rootSelector[data-expanded] {
-  width: 100%;
-  border-right: 0;
-  align-items: stretch;
-}
-
-.SidebarTree-locator-expandButton {
-  margin-top: auto;
-  align-self: flex-start;
-  flex-shrink: 0;
-  width: 30px;
 }
 
 .SidebarTree-loading {

@@ -38,7 +38,7 @@ h3.Heading {
 
 h4.Heading {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 
   &:not(:last-child) {
     margin-bottom: 4px;
@@ -47,7 +47,7 @@ h4.Heading {
 
 h5.Heading {
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 600;
 
   &:not(:last-child) {
     margin-bottom: 3px;
@@ -138,7 +138,7 @@ h5.Heading {
 .TableHeader {
   background: var(--alinea-header);
   text-align: left;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .Highlight {

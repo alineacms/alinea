@@ -54,7 +54,7 @@
   min-width: 0;
   box-sizing: border-box;
   outline: none;
-  border-radius: 6px;
+  border-radius: 8px;
 
   /* Chevron */
 
@@ -92,13 +92,13 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    opacity: 0.6;
+    font-size: 12px;
   }
 
   /* Label text */
 
   [data-slot='label'] {
-    margin-left: 2px;
+    margin-left: 4px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -133,7 +133,7 @@
   &[data-selected] {
     background: var(--alinea-selected);
     color: var(--alinea-primary-subtle-fg);
-    font-weight: 500;
+    font-weight: 600;
 
     [data-slot='icon'] {
       opacity: 1;

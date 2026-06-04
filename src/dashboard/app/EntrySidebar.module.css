@@ -1,11 +1,3 @@
-.EntrySidebar-tabs {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
 .EntrySidebar-body {
   flex: 1;
   min-height: 0;
@@ -93,10 +85,7 @@
 }
 
 .EntrySidebar-versionButton[data-status='published'][data-hovered] {
-  --EntrySidebar-version-background: light-dark(
-    var(--alinea-green-50),
-    var(--alinea-green-800)
-  );
+  --EntrySidebar-version-background: light-dark(var(--alinea-green-50), var(--alinea-green-800));
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-green-100),
     var(--alinea-green-700)
@@ -104,10 +93,7 @@
 }
 
 .EntrySidebar-versionButton[data-status='draft'][data-hovered] {
-  --EntrySidebar-version-background: light-dark(
-    var(--alinea-blue-50),
-    var(--alinea-blue-800)
-  );
+  --EntrySidebar-version-background: light-dark(var(--alinea-blue-50), var(--alinea-blue-800));
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-blue-100),
     var(--alinea-blue-700)
@@ -115,10 +101,7 @@
 }
 
 .EntrySidebar-versionButton[data-status='unpublished'][data-hovered] {
-  --EntrySidebar-version-background: light-dark(
-    var(--alinea-orange-50),
-    var(--alinea-orange-800)
-  );
+  --EntrySidebar-version-background: light-dark(var(--alinea-orange-50), var(--alinea-orange-800));
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-orange-100),
     var(--alinea-orange-700)
@@ -126,10 +109,7 @@
 }
 
 .EntrySidebar-versionButton[data-status='archived'][data-hovered] {
-  --EntrySidebar-version-background: light-dark(
-    var(--alinea-gray-50),
-    var(--alinea-gray-800)
-  );
+  --EntrySidebar-version-background: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-gray-100),
     var(--alinea-gray-700)
@@ -137,14 +117,8 @@
 }
 
 .EntrySidebar-versionButton[data-selected] {
-  --EntrySidebar-version-background: light-dark(
-    var(--alinea-gray-100),
-    var(--alinea-gray-700)
-  );
-  --EntrySidebar-version-border: light-dark(
-    var(--alinea-gray-200),
-    var(--alinea-gray-500)
-  );
+  --EntrySidebar-version-background: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
+  --EntrySidebar-version-border: light-dark(var(--alinea-gray-200), var(--alinea-gray-500));
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-gray-200),
     var(--alinea-gray-600)
@@ -152,14 +126,8 @@
 }
 
 .EntrySidebar-versionButton[data-selected][data-status='published'] {
-  --EntrySidebar-version-background: light-dark(
-    var(--alinea-green-100),
-    var(--alinea-green-800)
-  );
-  --EntrySidebar-version-border: light-dark(
-    var(--alinea-green-200),
-    var(--alinea-green-700)
-  );
+  --EntrySidebar-version-background: light-dark(var(--alinea-green-100), var(--alinea-green-800));
+  --EntrySidebar-version-border: light-dark(var(--alinea-green-200), var(--alinea-green-700));
   --EntrySidebar-version-color: var(--alinea-status-published-fg);
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-green-200),
@@ -168,14 +136,8 @@
 }
 
 .EntrySidebar-versionButton[data-selected][data-status='draft'] {
-  --EntrySidebar-version-background: light-dark(
-    var(--alinea-blue-100),
-    var(--alinea-blue-800)
-  );
-  --EntrySidebar-version-border: light-dark(
-    var(--alinea-blue-200),
-    var(--alinea-blue-700)
-  );
+  --EntrySidebar-version-background: light-dark(var(--alinea-blue-100), var(--alinea-blue-800));
+  --EntrySidebar-version-border: light-dark(var(--alinea-blue-200), var(--alinea-blue-700));
   --EntrySidebar-version-color: var(--alinea-status-draft-fg);
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-blue-200),
@@ -184,14 +146,8 @@
 }
 
 .EntrySidebar-versionButton[data-selected][data-status='unpublished'] {
-  --EntrySidebar-version-background: light-dark(
-    var(--alinea-orange-100),
-    var(--alinea-orange-800)
-  );
-  --EntrySidebar-version-border: light-dark(
-    var(--alinea-orange-200),
-    var(--alinea-orange-700)
-  );
+  --EntrySidebar-version-background: light-dark(var(--alinea-orange-100), var(--alinea-orange-800));
+  --EntrySidebar-version-border: light-dark(var(--alinea-orange-200), var(--alinea-orange-700));
   --EntrySidebar-version-color: var(--alinea-status-unpublished-fg);
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-orange-200),
@@ -200,14 +156,8 @@
 }
 
 .EntrySidebar-versionButton[data-selected][data-status='archived'] {
-  --EntrySidebar-version-background: light-dark(
-    var(--alinea-gray-100),
-    var(--alinea-gray-800)
-  );
-  --EntrySidebar-version-border: light-dark(
-    var(--alinea-gray-200),
-    var(--alinea-gray-700)
-  );
+  --EntrySidebar-version-background: light-dark(var(--alinea-gray-100), var(--alinea-gray-800));
+  --EntrySidebar-version-border: light-dark(var(--alinea-gray-200), var(--alinea-gray-700));
   --EntrySidebar-version-color: var(--alinea-status-archived-fg);
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-gray-200),

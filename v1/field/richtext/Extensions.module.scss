@@ -1,4 +1,4 @@
-@import '../../ui/Typo.module.scss';
+@import "../../ui/Typo.module.scss";
 
 h1.heading {
   @extend .h1;
@@ -77,10 +77,10 @@ h3.heading {
 .th {
   background: var(--alinea-fields-header);
   text-align: left;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.highlight{
+.highlight {
   background: var(--alinea-variant-info-action);
   color: var(--alinea-variant-info-foreground);
 }

@@ -1,31 +1,21 @@
-import {
-  Button,
-  Icon,
-  ToggleButton,
-  Tooltip,
-  Tree,
-  TreeItem
-} from '#/components.js'
+import {Icon, Tab, TabList, Tabs, Tree, TreeItem} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {type ComponentType, memo, useMemo, useState} from 'react'
+import {type ComponentType, memo, useMemo} from 'react'
 import {
   Collection,
-  DialogTrigger,
   ListLayout,
   useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
 import {
   IcOutlineArchive,
-  IcRoundAdd,
   IcRoundEdit,
   IcRoundTranslate,
-  IcTwotoneDescription,
-  IcTwotoneFolder,
-  MaterialSymbolsLeftPanelOpenOutlineRounded,
+  LucideFile,
+  LucideFolder,
   RiFlashlightFill
 } from '../icons.js'
 import {
@@ -37,49 +27,15 @@ import {
   DashboardTree,
   DashboardWorkspace
 } from '../store/Dashboard.js'
-import {LocaleMenu} from './LocaleMenu.js'
-import {CreateEntry} from './modals/CreateEntry.js'
 import css from './SidebarTree.module.css'
-import {DashboardModal} from './ui/DashboardModal.js'
-import {SidebarBody, SidebarHeader} from './ui/Sidebar.js'
+import {RailHeader} from './ui/Rail.js'
+import {SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
 
 interface SidebarTreeProps {
   dashboard: Dashboard
 }
-
-interface SidebarParentProps {
-  root: DashboardRoot
-}
-
-const SidebarParent = memo(function SidebarParent({root}: SidebarParentProps) {
-  const label = useAtomValue(root.label)
-  const selectRoot = useSetAtom(root.selected)
-  const canCreate = useAtomValue(root.canCreate)
-  return (
-    <SidebarHeader>
-      <div className={styles.SidebarParent.label()}>
-        <Button
-          appearance="plain"
-          className={styles.SidebarTree.rootsTrigger()}
-          onPress={() => selectRoot(true)}
-        >
-          {label}
-        </Button>
-        <LocaleMenu root={root} />
-        {canCreate && (
-          <DialogTrigger>
-            <Button size="icon" icon={IcRoundAdd} intent="primary" />
-            <DashboardModal>
-              <CreateEntry />
-            </DashboardModal>
-          </DialogTrigger>
-        )}
-      </div>
-    </SidebarHeader>
-  )
-})
 
 interface SidebarItemProps {
   item: DashboardEntry
@@ -135,19 +91,11 @@ function affectedStatus(
   return ownStatus
 }
 
-const SidebarItem = memo(function SidebarItem({
-  item,
-  tree
-}: SidebarItemProps) {
+const SidebarItem = memo(function SidebarItem({item, tree}: SidebarItemProps) {
   const {pending, data} = useAtomValue(item.data)
   if (!data) return <SidebarLoadingItem item={item} pending={pending} />
   return (
-    <SidebarLoadedItem
-      item={item}
-      data={data}
-      tree={tree}
-      pending={pending}
-    />
+    <SidebarLoadedItem item={item} data={data} tree={tree} pending={pending} />
   )
 })
 
@@ -162,7 +110,7 @@ function SidebarLoadingItem({item, pending}: SidebarLoadingItemProps) {
       id={item.id}
       textValue="Loading entry"
       title="Loading entry"
-      icon={IcTwotoneDescription}
+      icon={LucideFile}
       label={
         <span
           className={styles.SidebarTree.itemSkeleton.label()}
@@ -204,7 +152,7 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
   const childItems = useAtomValue(tree.children(item))
   let icon = useAtomValue(data.icon)
   const hasChildren = useAtomValue(data.hasChildren)
-  if (!icon) icon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
+  if (!icon) icon = hasChildren ? LucideFolder : LucideFile
   const isLoadingChildren =
     hasChildren && isExpanded && childItems === undefined
   const displayStatus = sidebarStatus(status)
@@ -256,7 +204,7 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
 
 const treeLayoutOptions = {
   rowHeight: 34,
-  padding: 6,
+  padding: 8,
   gap: 1
 }
 
@@ -307,66 +255,29 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   )
 })
 
-interface SidebarTreeRootsProps {
-  roots: Array<DashboardRoot>
-  isTreeOpen: boolean
-  onTreeOpenChange: (isTreeOpen: boolean) => void
-}
-
-const SidebarTreeRoots = memo(function SidebarTreeRoots({
-  roots,
-  isTreeOpen,
-  onTreeOpenChange
-}: SidebarTreeRootsProps) {
-  return (
-    <div
-      className={styles.SidebarTree.locator.rootSelector()}
-      data-expanded={!isTreeOpen || undefined}
-    >
-      {roots.map(root => (
-        <RootButton key={root.key} root={root} expanded={!isTreeOpen} />
-      ))}
-      <ToggleButton
-        isSelected={!isTreeOpen}
-        className={styles.SidebarTree.locator.expandButton()}
-        aria-label={isTreeOpen ? 'Hide file tree' : 'Show file tree'}
-        onChange={value => onTreeOpenChange(!value)}
-      >
-        <MaterialSymbolsLeftPanelOpenOutlineRounded data-slot="icon" />
-      </ToggleButton>
-    </div>
-  )
-})
-
-interface RootButtonProps {
+interface SidebarLocaleTabsProps {
   root: DashboardRoot
-  expanded?: boolean
 }
 
-function RootButton({root, expanded = false}: RootButtonProps) {
-  const icon = useAtomValue(root.icon)
-  const label = useAtomValue(root.label)
-  const [selected, setSelected] = useAtom(root.selected)
-  const button = (
-    <Button
-      size="icon-nav"
-      appearance={selected ? 'active' : 'plain'}
-      className={styles.SidebarTree.rootButton()}
-      data-expanded={expanded || undefined}
-      aria-label={label}
-      onPress={() => setSelected(true)}
-    >
-      {icon && <Icon icon={icon} data-slot="icon" />}
-      {expanded && (
-        <span className={styles.SidebarTree.rootButton.label()}>{label}</span>
-      )}
-    </Button>
-  )
-  if (expanded) return button
+function SidebarLocaleTabs({root}: SidebarLocaleTabsProps) {
+  const i18n = useAtomValue(root.i18n)
+  const [selectedLocale, setSelectedLocale] = useAtom(root.selectedLocale)
+  if (!i18n || !selectedLocale) return null
   return (
-    <Tooltip placement="right" delay={100} tooltip={label}>
-      {button}
-    </Tooltip>
+    <RailHeader>
+      <Tabs
+        selectedKey={selectedLocale}
+        onSelectionChange={key => setSelectedLocale(String(key))}
+      >
+        <TabList aria-label="Language">
+          {i18n.locales.map(locale => (
+            <Tab id={locale} key={locale}>
+              {locale.toUpperCase()}
+            </Tab>
+          ))}
+        </TabList>
+      </Tabs>
+    </RailHeader>
   )
 }
 
@@ -376,21 +287,12 @@ export const SidebarTree = memo(function SidebarTree({
   const workspace = useAtomValue(dashboard.currentWorkspace)
   assert(workspace, 'No workspace selected')
   const currentRoot = useAtomValue(dashboard.currentRoot)
-  const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
-  const [isTreeOpen, setIsTreeOpen] = useState(true)
   return (
     <>
-      {currentRoot && <SidebarParent root={currentRoot} />}
+      {currentRoot && <SidebarLocaleTabs root={currentRoot} />}
       <SidebarBody>
-        <div className={styles.SidebarTree.locator()}>
-          <SidebarTreeRoots
-            roots={roots}
-            isTreeOpen={isTreeOpen}
-            onTreeOpenChange={setIsTreeOpen}
-          />
-          <div className={styles.SidebarTree.tree({collapsed: !isTreeOpen})}>
-            <SidebarTreeBody workspace={workspace} />
-          </div>
+        <div className={styles.SidebarTree.tree()}>
+          <SidebarTreeBody workspace={workspace} />
         </div>
       </SidebarBody>
     </>

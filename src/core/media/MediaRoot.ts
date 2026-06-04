@@ -1,4 +1,4 @@
-import {IcRoundPermMedia} from '#/dashboard/icons.js'
+import {LucideImage} from '#/dashboard/icons.js'
 import type {Page} from '../Page.js'
 import {type Root, root, RootOptions} from '../Root.js'
 
@@ -8,7 +8,7 @@ export function createMediaRoot<Children extends Record<string, Page>>(
   options?: RootOptions<Children>
 ) {
   const rootOptions = {
-    icon: IcRoundPermMedia,
+    icon: LucideImage,
     contains: ['MediaLibrary'],
     ...options,
     isMediaRoot: true,

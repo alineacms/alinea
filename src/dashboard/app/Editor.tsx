@@ -15,14 +15,6 @@ import {
   useState,
   useTransition
 } from 'react'
-import {IcBaselineErrorOutline} from '../icons.js'
-import {
-  Dashboard,
-  DashboardEntryData,
-  DashboardRoot,
-  DashboardSection,
-  ReactiveNode
-} from '../store/Dashboard.js'
 import {
   EditorScope,
   EntryScope,
@@ -32,6 +24,14 @@ import {
   useFieldView,
   useNodeEditor
 } from '../hooks.js'
+import {IcBaselineErrorOutline} from '../icons.js'
+import {
+  Dashboard,
+  DashboardEntryData,
+  DashboardRoot,
+  DashboardSection,
+  ReactiveNode
+} from '../store/Dashboard.js'
 import type {DetailsBarStatus} from './DetailsBar.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
@@ -46,7 +46,7 @@ import {
   DashboardModalDialog,
   DashboardModalFooter
 } from './ui/DashboardModal.js'
-import {Rail, RailBody, RailHeader} from './ui/Rail.js'
+import {Rail, RailBody} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -203,13 +203,6 @@ function DefaultRootEditor({root}: RootEditorProps) {
   const location = useAtomValue(root.explorer.location)
   return (
     <Rail main>
-      <RailHeader className={styles.RootEditor.header()}>
-        {location.parentId && (
-          <RootEditorBackButton root={root} parentId={location.parentId} />
-        )}
-        <h1 className={styles.RootEditor.title()}>{title}</h1>
-      </RailHeader>
-
       <Explorer explorer={root.explorer} />
     </Rail>
   )

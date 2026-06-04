@@ -1,6 +1,7 @@
 import {
   Button,
   DialogTrigger,
+  Icon,
   Icon as IconComp,
   Menu,
   MenuItem
@@ -8,12 +9,22 @@ import {
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
 import {useState, type ComponentType} from 'react'
-import {IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
+import {Button as AriaButton} from 'react-aria-components'
+import {
+  IcRoundSearch,
+  IcRoundUnfoldMore,
+  MaterialSymbolsEditSquareOutlineRounded
+} from '../icons.js'
 import {useDashboard} from '../store.js'
-import type {Dashboard, DashboardWorkspace} from '../store/Dashboard.js'
+import type {
+  Dashboard,
+  DashboardRoot,
+  DashboardWorkspace
+} from '../store/Dashboard.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {LogoShape} from './LogoShape.js'
+import {CreateEntry} from './modals/CreateEntry.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -50,6 +61,8 @@ function WorkspaceAvatar({
   )
 }
 
+export {WorkspaceAvatar}
+
 function SearchPopup() {
   const dashboard = useDashboard()
   const workspace = useAtomValue(dashboard.selectedWorkspace)
@@ -78,17 +91,16 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
   const [selected, setSelected] = useAtom(dashboard.selectedWorkspace)
   const workspaces = useAtomValue(dashboard.workspaces)
   const workspace = dashboard.workspace(selected)
-  const color = useAtomValue(workspace.color)
-  const icon = useAtomValue(workspace.icon)
   const label = useAtomValue(workspace.label)
+  const currentRoot = useAtomValue(dashboard.currentRoot)
   const menu =
     workspaces.length > 1 ? (
       <Menu
         label={
-          <Button appearance="plain" className={styles.WorkspaceMenu.trigger()}>
+          <AriaButton className={styles.WorkspaceMenu.trigger()}>
             <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>
-            <IcRoundUnfoldMore />
-          </Button>
+            <Icon icon={IcRoundUnfoldMore} fontSize={12} />
+          </AriaButton>
         }
         aria-label="Workspace"
         selectionMode="single"
@@ -109,15 +121,14 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
     )
   return (
     <div className={styles.WorkspaceMenu.parent()}>
-      <WorkspaceAvatar color={color} icon={icon} />
-
       {menu}
 
       <DialogTrigger>
         <Button
           size="icon"
-          appearance="outline"
+          appearance="plain"
           className={styles.WorkspaceMenu.search()}
+          aria-label="Search entries"
         >
           <IconComp icon={IcRoundSearch} data-slot="icon" />
         </Button>
@@ -125,7 +136,29 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
           <SearchPopup />
         </DashboardModal>
       </DialogTrigger>
+      {currentRoot && <WorkspaceCreateEntryButton root={currentRoot} />}
     </div>
+  )
+}
+
+interface WorkspaceCreateEntryButtonProps {
+  root: DashboardRoot
+}
+
+function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
+  const canCreate = useAtomValue(root.canCreate)
+  if (!canCreate) return null
+  return (
+    <DialogTrigger>
+      <Button
+        size="icon"
+        icon={MaterialSymbolsEditSquareOutlineRounded}
+        aria-label="Create entry"
+      />
+      <DashboardModal>
+        <CreateEntry />
+      </DashboardModal>
+    </DialogTrigger>
   )
 }
 
@@ -140,7 +173,7 @@ function WorkspaceItem({workspace}: WorkspaceItemProps) {
   const icon = useAtomValue(workspace.icon)
   return (
     <MenuItem key={id} id={id} textValue={label}>
-      <WorkspaceAvatar color={color} icon={icon} size="small" />
+      <WorkspaceAvatar color={color} icon={icon} />
       {label}
     </MenuItem>
   )

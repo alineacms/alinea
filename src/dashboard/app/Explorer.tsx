@@ -21,9 +21,8 @@ import {
 } from '../store.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
-import {LocationBreadcrumbs} from './LocationBreadcrumbs.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
-import {RailBody, RailHeader} from './ui/Rail.js'
+import {RailBody} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -190,26 +189,18 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
             }}
           >
             <Button icon={IcRoundUploadFile} intent="primary">
-            Upload media
-          </Button>
-        </FileTrigger>
-      )}
+              Upload media
+            </Button>
+          </FileTrigger>
+        )}
       </div>
     </div>
   )
 }
 
 export function ExplorerHeader({controls, explorer}: ExplorerHeaderProps) {
-  const [location, setLocation] = useAtom(explorer.location)
   return (
-    <RailHeader className={styles.Explorer.bar()}>
-      <div className={styles.Explorer.breadcrumbs()}>
-        <LocationBreadcrumbs
-          location={location}
-          setLocation={setLocation}
-          enableRoot
-        />
-      </div>
+    <div className={styles.Explorer.bar()}>
       <div className={styles.Explorer.searchSlot()}>
         <ExplorerSearch explorer={explorer} />
       </div>
@@ -217,7 +208,7 @@ export function ExplorerHeader({controls, explorer}: ExplorerHeaderProps) {
         <ExplorerToolbar explorer={explorer} />
         {controls}
       </div>
-    </RailHeader>
+    </div>
   )
 }
 

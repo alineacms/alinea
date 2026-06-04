@@ -1,5 +1,5 @@
 .Sidebar {
-  width: 320px;
+  width: 273px;
   flex-shrink: 0;
   min-width: 0;
 }
@@ -17,4 +17,5 @@
 .SidebarHeader {
   justify-content: space-between;
   flex-shrink: 0;
+  height: 48px;
 }

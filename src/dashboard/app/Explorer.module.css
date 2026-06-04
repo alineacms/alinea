@@ -10,10 +10,11 @@
 .Explorer-bar {
   display: flex;
   gap: 12px;
+  height: 48px;
+  padding: 0 16px;
 }
 
 .Explorer-toolbar {
-  flex: 1 1 0;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -44,8 +45,9 @@
 }
 
 .Explorer-searchSlot {
-  flex: 0 1 420px;
-  min-width: 220px;
+  display: flex;
+  flex: 1;
+  align-items: center;
 }
 
 .Explorer-search {

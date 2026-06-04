@@ -1,0 +1,114 @@
+.WorkspaceRoots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 32px;
+  height: 100%;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.WorkspaceRoots-workspace {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.WorkspaceRoots-roots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 0;
+}
+
+.WorkspaceRoots-rootButton,
+.WorkspaceRoots-profile {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  justify-content: center;
+
+  &[data-selected] {
+    background: var(--alinea-bg);
+  }
+}
+
+.WorkspaceRoots-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  width: 100%;
+}
+
+.WorkspaceRoots-profile-popover {
+  min-width: 260px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.WorkspaceRoots-profile-popover-surface {
+  overflow: hidden;
+  background: var(--alinea-bg);
+}
+
+.WorkspaceRoots-profile-popover-user,
+.WorkspaceRoots-profile-popover-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.WorkspaceRoots-profile-popover-user,
+.WorkspaceRoots-profile-popover-item:not(:last-child) {
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.WorkspaceRoots-profile-popover-user-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.WorkspaceRoots-profile-popover-user-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.WorkspaceRoots-profile-popover-item-label {
+  margin: 0;
+}
+
+.WorkspaceRoots-profile-popover-themeOptions {
+  display: flex;
+  gap: 8px;
+}
+
+.WorkspaceRoots-trigger {
+  min-width: 96px;
+  justify-content: space-between;
+}
+
+.WorkspaceRoots-trigger-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

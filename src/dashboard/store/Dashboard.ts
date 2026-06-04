@@ -63,7 +63,7 @@ import {
   MutationQueueEvent,
   type MutationQueueEntry
 } from '../boot/MutationQueueEvent.js'
-import {IcRoundDescription} from '../icons.js'
+import {LucideFile} from '../icons.js'
 
 export interface DashboardRoute {
   workspace?: string
@@ -2803,7 +2803,7 @@ export class DashboardRoot {
   )
 
   label = atom(get => get(this.#settings).label)
-  icon = atom(get => get(this.#settings).icon ?? IcRoundDescription)
+  icon = atom(get => get(this.#settings).icon ?? LucideFile)
   i18n = atom(get => get(this.#settings).i18n)
   mediaI18n = atom((get): RootI18n | undefined => {
     return Root.mediaI18n(get(this.#settings))

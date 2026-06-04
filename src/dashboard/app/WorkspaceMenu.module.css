@@ -1,25 +1,17 @@
 .WorkspaceMenu-parent {
   display: flex;
   gap: 8px;
-  align-items: center;
   flex: 1;
   min-width: 0;
 }
 
 .WorkspaceMenu-avatar {
-  width: 26px;
-  height: 26px;
-  margin-left: 3px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-
-  &.is-small {
-    width: 24px;
-    height: 24px;
-    margin-left: 0;
-  }
 }
 
 .WorkspaceMenu-avatar-logo {
@@ -28,15 +20,13 @@
 }
 
 .WorkspaceMenu-trigger {
-  max-width: 100%;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
-  min-width: 0;
   justify-content: space-between;
-  padding: 0 8px !important;
-  height: 36px !important;
+  cursor: pointer;
+  margin-right: auto;
+  outline: none;
 }
 
 .WorkspaceMenu-trigger-text {
@@ -45,8 +35,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .WorkspaceMenu-search {

@@ -39,7 +39,7 @@
 
 .Heading.is-level4 {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 
   &:not(:last-child) {
     margin-bottom: 4px;
@@ -48,7 +48,7 @@
 
 .Heading.is-level5 {
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 600;
 
   &:not(:last-child) {
     margin-bottom: 3px;
@@ -139,7 +139,7 @@
 }
 
 .Bold {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .Italic {
@@ -193,7 +193,7 @@
 .TableHeader {
   background: var(--alinea-header);
   text-align: left;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .TableCell .Paragraph,

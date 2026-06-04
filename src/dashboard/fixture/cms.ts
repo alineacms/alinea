@@ -154,7 +154,6 @@ const Folder = Config.document('Folder', {
 
 const simple = Config.workspace('Simple', {
   source: 'content/simple',
-  color: '#353535',
   icon: IcOutlineGridView,
   roots: {
     pages: Config.root('Pages', {

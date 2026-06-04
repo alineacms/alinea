@@ -28,7 +28,8 @@ import type {DashboardEntryData, DashboardEntrySidebarTab} from '../store.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
-import {Sidebar, SidebarBody, SidebarHeader} from './ui/Sidebar.js'
+import {RailHeader} from './ui/Rail.js'
+import {Sidebar, SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
 
@@ -58,7 +59,7 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
           }
         }}
       >
-        <SidebarHeader>
+        <RailHeader>
           <TabList aria-label="Entry sidebar">
             {!isMediaFile && (
               <>
@@ -68,7 +69,7 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
             )}
             <Tab id="references">References</Tab>
           </TabList>
-        </SidebarHeader>
+        </RailHeader>
 
         <SidebarBody className={styles.EntrySidebar.body()}>
           {!isMediaFile && (

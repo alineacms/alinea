@@ -35,7 +35,7 @@
   color: var(--alinea-fg-subtle);
   font-size: var(--alinea-font-size-base);
   line-height: 1.25rem;
-  font-weight: 500;
+  /* font-weight: 500; */
   forced-color-adjust: none;
   display: inline-flex;
   align-items: center;
@@ -68,7 +68,7 @@
   [data-variant='subtle'] & {
     padding: 6px 11px;
     border-radius: 7px;
-    font-weight: 550;
+    /* font-weight: 550; */
   }
 
   [data-variant='enclosed'] & {

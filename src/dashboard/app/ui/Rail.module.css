@@ -18,7 +18,7 @@
 .RailHeader {
   display: flex;
   align-items: center;
-  height: 48px;
+  height: 40px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--alinea-border);
   padding: 0px 16px;

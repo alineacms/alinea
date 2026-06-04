@@ -6,20 +6,28 @@
   padding: 8px;
 }
 
+.AppShellWorkspace {
+  display: flex;
+  gap: 8px;
+  height: 100%;
+  width: 100%;
+}
+
 .AppShellContent {
   border-radius: 8px;
   overflow: hidden;
   height: 100%;
   width: 100%;
   display: flex;
-  max-width: 1680px;
+  min-width: 0;
   border: 1px solid var(--alinea-border);
+  border-top-color: transparent;
 }
 
 .AppShell-footer {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
   padding: 0 8px;
   border-top: 1px solid var(--alinea-border);
 }
@@ -36,7 +44,7 @@
   margin: 0;
   color: var(--alinea-fg);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .AppShell-empty-text {
