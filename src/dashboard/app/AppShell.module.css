@@ -21,7 +21,6 @@
   display: flex;
   min-width: 0;
   border: 1px solid var(--alinea-border);
-  border-top-color: transparent;
 }
 
 .AppShell-footer {

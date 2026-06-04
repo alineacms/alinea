@@ -7,18 +7,24 @@ import {
   Popover,
   SearchField
 } from '#/components.js'
+import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
+import {ListRow} from '#/core/ListRow.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
-import {ListField as CoreListField} from '#/core/field/ListField.js'
-import {ListRow} from '#/core/ListRow.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   Surface,
   SurfaceContent,
   SurfaceHeader
 } from '#/dashboard/app/ui/Surface.js'
+import {
+  useFieldError,
+  useFieldNode,
+  useFieldOptions,
+  useNodes
+} from '#/dashboard/hooks.js'
 import {
   IcBaselineContentCopy,
   IcBaselineContentPasteGo,
@@ -30,12 +36,6 @@ import {
   IcRoundMoreVert
 } from '#/dashboard/icons.js'
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
-import {
-  useFieldError,
-  useFieldNode,
-  useFieldOptions,
-  useNodes
-} from '#/dashboard/hooks.js'
 import {ListOptions} from '#/field/list.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
@@ -607,12 +607,10 @@ function ListFieldRowHeader({
           appearance="plain"
           aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
           className={styles.ListFieldRow.fold()}
-          intent="secondary"
           isDisabled={isPreview}
           onPress={onToggle}
-        >
-          <Icon aria-hidden icon={IcRoundKeyboardArrowRight} />
-        </Button>
+          icon={IcRoundKeyboardArrowRight}
+        />
         <div className={styles.ListFieldRow.leading()}>
           <strong className={styles.ListFieldRow.title()}>{label}</strong>
         </div>
@@ -620,44 +618,37 @@ function ListFieldRowHeader({
       <div className={styles.ListFieldRow.actions()}>
         <Button
           aria-label={isCopied ? `${label} is copied` : `Copy ${label}`}
-          appearance={isCopied ? 'active' : 'outline'}
+          appearance={isCopied ? 'active' : 'plain'}
           isDisabled={readOnly || isPreview}
-          intent="secondary"
           onPress={onCopy}
           size="icon"
-        >
-          <Icon aria-hidden data-slot="icon" icon={IcBaselineContentCopy} />
-        </Button>
+          icon={IcBaselineContentCopy}
+        />
+
         <Button
           aria-label={`Move ${label} up`}
-          appearance="outline"
+          appearance="plain"
           isDisabled={readOnly || isPreview || isFirstRow}
-          intent="secondary"
           onPress={onMoveUp}
           size="icon"
-        >
-          <Icon aria-hidden icon={IcRoundArrowUpward} />
-        </Button>
+          icon={IcRoundArrowUpward}
+        />
         <Button
           aria-label={`Move ${label} down`}
-          appearance="outline"
+          appearance="plain"
           isDisabled={readOnly || isPreview || isLastRow}
-          intent="secondary"
           onPress={onMoveDown}
           size="icon"
-        >
-          <Icon aria-hidden icon={IcRoundArrowDownward} />
-        </Button>
+          icon={IcRoundArrowDownward}
+        />
         <Button
           aria-label={`Remove ${label}`}
-          appearance="outline"
+          appearance="plain"
           isDisabled={readOnly || isPreview}
-          intent="danger"
           onPress={onDelete}
           size="icon"
-        >
-          <Icon aria-hidden icon={IcRoundClose} />
-        </Button>
+          icon={IcRoundClose}
+        />
       </div>
     </>
   )

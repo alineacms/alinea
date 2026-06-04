@@ -49,7 +49,7 @@
     color var(--alinea-transition);
 
   [data-variant='line'] & {
-    padding: 10px 8px;
+    padding: 10px 0;
 
     &:before {
       content: '';
@@ -57,11 +57,8 @@
       bottom: -1px;
       left: 0;
       right: 0;
-      height: 2px;
+      height: 0;
       background-color: var(--alinea-border);
-      transform-origin: bottom right;
-      transform: scaleX(0);
-      transition: var(--alinea-transition);
     }
   }
 
@@ -80,11 +77,6 @@
   &[data-focused] {
     color: var(--alinea-fg-hover);
 
-    [data-variant='line'] &:before {
-      transform-origin: bottom left;
-      transform: scaleX(1);
-    }
-
     [data-variant='subtle'] & {
       color: var(--alinea-fg);
       background-color: var(--alinea-overlay-hover);
@@ -101,8 +93,7 @@
 
     [data-variant='line'] &:before {
       background-color: var(--alinea-primary);
-      transform-origin: bottom left;
-      transform: scaleX(1);
+      height: 2px;
     }
 
     [data-variant='subtle'] & {
@@ -149,6 +140,10 @@
 
   .TabList-list {
     display: flex;
+
+    [data-variant='line'] & {
+      gap: 16px;
+    }
 
     &[data-orientation='horizontal'] {
       border-bottom: 1px solid transparent;

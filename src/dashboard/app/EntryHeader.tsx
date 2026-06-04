@@ -35,6 +35,14 @@ interface EntryHeaderActionProps {
   parentNeedsTranslation: boolean
 }
 
+interface EntryHeaderMoreActionsProps {
+  entry: DashboardEntryData
+  activeStatus: 'draft' | 'published' | 'archived'
+  isDirty: boolean
+  isUnpublished: boolean
+  untranslated: boolean
+}
+
 interface EntryHeaderMenuItem {
   id: string
   label: string
@@ -66,17 +74,13 @@ function EntryHeaderBackButton({entry}: EntryHeaderBackButtonProps) {
   )
 }
 
-function EntryHeaderActions({
+function EntryHeaderMoreActions({
   entry,
-  node,
   activeStatus,
   isDirty,
   isUnpublished,
-  isSidebarOpen,
-  onSidebarOpenChange,
-  untranslated,
-  parentNeedsTranslation
-}: EntryHeaderActionProps) {
+  untranslated
+}: EntryHeaderMoreActionsProps) {
   const policy = usePolicy()
   const config = useAtomValue(entry.dashboard.config)
   const route = useAtomValue(entry.dashboard.route)
@@ -90,14 +94,8 @@ function EntryHeaderActions({
   const type = useAtomValue(entry.type)
   const canPublishParents = useAtomValue(entry.canPublish)
   const isParentUnpublished = useAtomValue(entry.parentUnpublished)
-  const reset = useSetAtom(node.reset)
   const selectedVersion = useAtomValue(entry.selectedVersion)
-  const setSelectedVersion = useSetAtom(entry.selectedVersion)
   const setRoute = useSetAtom(entry.dashboard.route)
-  const saveDraft = useSetAtom(entry.saveDraft)
-  const saveTranslation = useSetAtom(entry.saveTranslation)
-  const publishEdits = useSetAtom(entry.publishEdits)
-  const publishDraft = useSetAtom(entry.publishDraft)
   const discardDraft = useSetAtom(entry.discardDraft)
   const unpublish = useSetAtom(entry.unpublish)
   const archive = useSetAtom(entry.archive)
@@ -111,6 +109,7 @@ function EntryHeaderActions({
   const [isPending, startTransition] = useTransition()
   const isActionDisabled = isPending || mutationQueue.failed > 0
   const isRevision = selectedVersion.type === 'history'
+  const menuItems: Array<EntryHeaderMenuItem> = []
 
   function runAction(action: () => void | Promise<void>) {
     if (mutationQueue.failed > 0) return
@@ -140,81 +139,6 @@ function EntryHeaderActions({
     }
     input.click()
   }
-
-  async function createDraftFromRevision() {
-    await saveDraft(node)
-    setSelectedVersion({type: 'status', status: 'draft'})
-  }
-
-  const saveDraftVisible = config.enableDrafts && access.update
-  const actionButtons =
-    isRevision && saveDraftVisible ? (
-      <Button
-        icon={IcRoundSave}
-        intent="primary"
-        isDisabled={isActionDisabled}
-        isPending={isPending}
-        onPress={() => runAction(createDraftFromRevision)}
-      >
-        Create draft
-      </Button>
-    ) : isRevision ? null : untranslated &&
-      !parentNeedsTranslation &&
-      access.update ? (
-      <Button
-        icon={IcRoundSave}
-        intent="primary"
-        isDisabled={isActionDisabled}
-        isPending={isPending}
-        onPress={() => runAction(() => saveTranslation(node))}
-      >
-        Save translation
-      </Button>
-    ) : untranslated ? null : isDirty ? (
-      <>
-        <Button
-          appearance="plain"
-          isDisabled={isPending}
-          onPress={() => reset()}
-        >
-          Discard my changes
-        </Button>
-        {access.publish && (
-          <Button
-            icon={IcRoundCheck}
-            intent={saveDraftVisible ? 'secondary' : 'primary'}
-            isDisabled={isActionDisabled}
-            isPending={isPending}
-            onPress={() => runAction(() => publishEdits(node))}
-          >
-            Publish
-          </Button>
-        )}
-        {saveDraftVisible && (
-          <Button
-            icon={IcRoundSave}
-            intent="primary"
-            isDisabled={isActionDisabled}
-            isPending={isPending}
-            onPress={() => runAction(() => saveDraft(node))}
-          >
-            Save draft
-          </Button>
-        )}
-      </>
-    ) : activeStatus === 'draft' && canPublishParents && access.publish ? (
-      <Button
-        icon={IcRoundCheck}
-        intent="primary"
-        isDisabled={isActionDisabled}
-        isPending={isPending}
-        onPress={() => runAction(publishDraft)}
-      >
-        Publish
-      </Button>
-    ) : null
-
-  const menuItems: Array<EntryHeaderMenuItem> = []
 
   if (!isRevision && !isDirty && !untranslated) {
     if (activeStatus === 'draft') {
@@ -294,39 +218,152 @@ function EntryHeaderActions({
     }
   }
 
+  if (menuItems.length === 0) return null
+  return (
+    <Menu
+      label={
+        <Button
+          size="icon"
+          appearance="plain"
+          aria-label="More actions"
+          icon={IcRoundMoreHoriz}
+          isDisabled={isActionDisabled}
+          isPending={isPending}
+        />
+      }
+      aria-label="More actions"
+      popoverProps={{placement: 'bottom start'}}
+    >
+      {menuItems.map(item => (
+        <MenuItem
+          key={item.id}
+          id={item.id}
+          textValue={item.label}
+          isDisabled={isActionDisabled}
+          onAction={() => {
+            runAction(item.action)
+          }}
+        >
+          {item.label}
+        </MenuItem>
+      ))}
+    </Menu>
+  )
+}
+
+function EntryHeaderActions({
+  entry,
+  node,
+  activeStatus,
+  isDirty,
+  isSidebarOpen,
+  onSidebarOpenChange,
+  untranslated,
+  parentNeedsTranslation
+}: EntryHeaderActionProps) {
+  const policy = usePolicy()
+  const config = useAtomValue(entry.dashboard.config)
+  const sourceLocale = useAtomValue(entry.sourceLocale)
+  const activeVersion = useAtomValue(
+    entry.languages(sourceLocale).activeVersion
+  )
+  const canPublishParents = useAtomValue(entry.canPublish)
+  const reset = useSetAtom(node.reset)
+  const selectedVersion = useAtomValue(entry.selectedVersion)
+  const setSelectedVersion = useSetAtom(entry.selectedVersion)
+  const saveDraft = useSetAtom(entry.saveDraft)
+  const saveTranslation = useSetAtom(entry.saveTranslation)
+  const publishEdits = useSetAtom(entry.publishEdits)
+  const publishDraft = useSetAtom(entry.publishDraft)
+  const mutationQueue = useAtomValue(entry.dashboard.mutationQueue)
+  const access = policy.get(activeVersion)
+  const [isPending, startTransition] = useTransition()
+  const isActionDisabled = isPending || mutationQueue.failed > 0
+  const isRevision = selectedVersion.type === 'history'
+
+  function runAction(action: () => void | Promise<void>) {
+    if (mutationQueue.failed > 0) return
+    startTransition(async () => {
+      await action()
+    })
+  }
+
+  async function createDraftFromRevision() {
+    await saveDraft(node)
+    setSelectedVersion({type: 'status', status: 'draft'})
+  }
+
+  const saveDraftVisible = config.enableDrafts && access.update
+  const actionButtons =
+    isRevision && saveDraftVisible ? (
+      <Button
+        icon={IcRoundSave}
+        intent="primary"
+        isDisabled={isActionDisabled}
+        isPending={isPending}
+        onPress={() => runAction(createDraftFromRevision)}
+      >
+        Create draft
+      </Button>
+    ) : isRevision ? null : untranslated &&
+      !parentNeedsTranslation &&
+      access.update ? (
+      <Button
+        icon={IcRoundSave}
+        intent="primary"
+        isDisabled={isActionDisabled}
+        isPending={isPending}
+        onPress={() => runAction(() => saveTranslation(node))}
+      >
+        Save translation
+      </Button>
+    ) : untranslated ? null : isDirty ? (
+      <>
+        <Button
+          appearance="plain"
+          isDisabled={isPending}
+          onPress={() => reset()}
+        >
+          Discard my changes
+        </Button>
+        {access.publish && (
+          <Button
+            icon={IcRoundCheck}
+            intent={saveDraftVisible ? 'secondary' : 'primary'}
+            isDisabled={isActionDisabled}
+            isPending={isPending}
+            onPress={() => runAction(() => publishEdits(node))}
+          >
+            Publish
+          </Button>
+        )}
+        {saveDraftVisible && (
+          <Button
+            icon={IcRoundSave}
+            intent="primary"
+            isDisabled={isActionDisabled}
+            isPending={isPending}
+            onPress={() => runAction(() => saveDraft(node))}
+          >
+            Save draft
+          </Button>
+        )}
+      </>
+    ) : activeStatus === 'draft' && canPublishParents && access.publish ? (
+      <Button
+        icon={IcRoundCheck}
+        intent="primary"
+        isDisabled={isActionDisabled}
+        isPending={isPending}
+        onPress={() => runAction(publishDraft)}
+      >
+        Publish
+      </Button>
+    ) : null
+
   return (
     <div className={styles.EntryHeader.actions()}>
       {actionButtons}
-      {menuItems.length > 0 && (
-        <Menu
-          label={
-            <Button
-              size="icon"
-              appearance="plain"
-              aria-label="More actions"
-              icon={IcRoundMoreHoriz}
-              isDisabled={isActionDisabled}
-              isPending={isPending}
-            />
-          }
-          aria-label="More actions"
-          popoverProps={{placement: 'bottom end'}}
-        >
-          {menuItems.map(item => (
-            <MenuItem
-              key={item.id}
-              id={item.id}
-              textValue={item.label}
-              isDisabled={isActionDisabled}
-              onAction={() => {
-                runAction(item.action)
-              }}
-            >
-              {item.label}
-            </MenuItem>
-          ))}
-        </Menu>
-      )}
       {onSidebarOpenChange && (
         <ToggleButton
           isSelected={isSidebarOpen}
@@ -360,6 +397,13 @@ export function EntryHeader({
       <div className={styles.EntryHeader.main()}>
         <EntryHeaderBackButton entry={entry} />
         <h1 className={styles.EntryHeader.title()}>{title}</h1>
+        <EntryHeaderMoreActions
+          entry={entry}
+          activeStatus={activeStatus}
+          isDirty={isDirty}
+          isUnpublished={isUnpublished}
+          untranslated={untranslated}
+        />
       </div>
       <EntryHeaderActions
         entry={entry}
