@@ -467,8 +467,22 @@ test('DashboardRoot explorer opens media libraries but not focused files', async
       search: ''
     },
     history: {
-      pushState() {},
-      replaceState() {},
+      pushState(_state: unknown, _title: string, url?: string | URL | null) {
+        if (!url) return
+        const next = new URL(url, testWindow.location.href)
+        testWindow.location.hash = next.hash
+        testWindow.location.href = next.href
+        testWindow.location.pathname = next.pathname
+        testWindow.location.search = next.search
+      },
+      replaceState(_state: unknown, _title: string, url?: string | URL | null) {
+        if (!url) return
+        const next = new URL(url, testWindow.location.href)
+        testWindow.location.hash = next.hash
+        testWindow.location.href = next.href
+        testWindow.location.pathname = next.pathname
+        testWindow.location.search = next.search
+      },
       state: null
     },
     addEventListener() {},
@@ -480,9 +494,9 @@ test('DashboardRoot explorer opens media libraries but not focused files', async
   })
 
   try {
-    const createDashboard = async () => {
-      testWindow.location.hash = ''
-      testWindow.location.href = 'https://example.com/'
+    const createDashboard = async (hash = '') => {
+      testWindow.location.hash = hash
+      testWindow.location.href = `https://example.com/${hash}`
       const media = root('Media')
       const main = workspace('Main', {
         source: 'content/main',
@@ -516,14 +530,35 @@ test('DashboardRoot explorer opens media libraries but not focused files', async
         store
       }
     }
+    const waitForParentId = async (
+      model: Awaited<ReturnType<typeof createDashboard>>,
+      parentId: string | undefined
+    ) => {
+      const location = model.mediaRoot.explorer.location
+      const isMatch = () => storeParentId() === parentId
+      const storeParentId = () => model.store.get(location).parentId
+      if (isMatch()) return
+      await new Promise<void>(resolve => {
+        let unsubscribe = () => {}
+        const check = () => {
+          if (!isMatch()) return
+          unsubscribe()
+          resolve()
+        }
+        unsubscribe = model.store.sub(location, check)
+        check()
+      })
+    }
 
-    const file = await createDashboard()
-    await file.store.set(file.dashboard.route, {
-      workspace: 'main',
-      root: 'media',
-      entry: 'media-file'
-    })
+    const file = await createDashboard('#/entry/main/media/media-file')
+    const unsubscribeFileLocation = file.store.sub(
+      file.mediaRoot.explorer.location,
+      () => {}
+    )
     await file.store.get(file.dashboard.entries('media-file').readyState)
+    await new Promise(resolve => setTimeout(resolve, 0))
+    unsubscribeFileLocation()
+    await waitForParentId(file, undefined)
 
     test.equal(file.store.get(file.mediaRoot.explorer.location), {
       workspace: 'main',
@@ -531,15 +566,10 @@ test('DashboardRoot explorer opens media libraries but not focused files', async
       parentId: undefined
     })
 
-    const folder = await createDashboard()
+    const folder = await createDashboard('#/entry/main/media/media-folder')
     const folderEntry = folder.dashboard.entries('media-folder')
     const unsubscribe = folder.store.sub(folderEntry.data, () => {})
-    await folder.store.get(folderEntry.readyState)
-    await folder.store.set(folder.dashboard.route, {
-      workspace: 'main',
-      root: 'media',
-      entry: 'media-folder'
-    })
+    await waitForParentId(folder, 'media-folder')
 
     test.equal(folder.store.get(folder.mediaRoot.explorer.location), {
       workspace: 'main',
@@ -560,7 +590,19 @@ test('DashboardRoot explorer opens media libraries but not focused files', async
       parentId: 'media-folder'
     })
 
-    await new Promise(resolve => setTimeout(resolve, 0))
+    const sidebar = await createDashboard()
+    await sidebar.store.set(sidebar.dashboard.route, {
+      workspace: 'main',
+      root: 'media',
+      entry: 'media-folder'
+    })
+    await waitForParentId(sidebar, 'media-folder')
+
+    test.equal(sidebar.store.get(sidebar.mediaRoot.explorer.location), {
+      workspace: 'main',
+      root: 'media',
+      parentId: 'media-folder'
+    })
   } finally {
     if (originalWindow === undefined) {
       Reflect.deleteProperty(globalThis, 'window')

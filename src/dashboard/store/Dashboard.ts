@@ -617,18 +617,8 @@ export class Dashboard {
         let {workspace, root, entry, locale} = update
         const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
         const pathname = `/entry/${[workspace, rootPart, entry].filter(Boolean).join('/')}`
-        const routeReady = entry
-          ? await get(this.entries(entry).routeReady)
-          : undefined
+        if (entry) await get(this.entries(entry).routeReady)
         startTransition(() => {
-          if (workspace && root && entry && routeReady?.data) {
-            const type = get(routeReady.data.type)
-            if (type.type === MediaLibrary)
-              set(
-                this.workspace(workspace).root(root).exploreMediaLibrary,
-                entry
-              )
-          }
           set(this.#location, {hash: `#${pathname}`})
         })
       }
@@ -1793,6 +1783,7 @@ type SelectedVersion =
 
 export class DashboardEntry {
   data: Atom<DashboardEntryState>
+  mediaLibraryParent: Atom<string | undefined>
   readyState: Atom<Promise<DashboardEntryState>>
   routeReady: Atom<Promise<DashboardEntryState>>
 
@@ -1831,6 +1822,14 @@ export class DashboardEntry {
       }
     })
     this.readyState = state
+    this.mediaLibraryParent = unwrap(
+      atom(async get => {
+        const ready = await get(this.readyState)
+        if (!ready.data) return undefined
+        const type = get(ready.data.type)
+        return type.type === MediaLibrary ? this.id : undefined
+      })
+    )
     this.routeReady = atom(async get => {
       const ready = await get(this.readyState)
       if (ready.data && get(ready.data.type).type !== MediaLibrary)
@@ -2681,15 +2680,26 @@ export class DashboardEntryLanguage {
 
 export class DashboardRoot {
   explorer: DashboardExplorer
-  exploreMediaLibrary: WritableAtom<null, [entryId: string], void>
   constructor(
     public workspace: DashboardWorkspace,
     public key: string
   ) {
     const parentId = atom<string | null | undefined>(undefined)
     const selectedParent = atom(get => {
+      const route = get(this.workspace.dashboard.route)
+      if (
+        route.workspace === workspace.key &&
+        route.root === key &&
+        route.entry
+      ) {
+        const routeSelected = get(
+          this.workspace.dashboard.entries(route.entry).mediaLibraryParent
+        )
+        if (routeSelected !== undefined) return routeSelected
+      }
       const selected = get(parentId)
-      return selected ?? undefined
+      if (selected !== undefined) return selected ?? undefined
+      return undefined
     })
     this.explorer = new DashboardExplorer(
       workspace.dashboard,
@@ -2758,9 +2768,6 @@ export class DashboardRoot {
         })
       }
     )
-    this.exploreMediaLibrary = atom(null, (get, set, entryId: string) => {
-      set(parentId, entryId)
-    })
   }
 
   #settings = atom(get => {
