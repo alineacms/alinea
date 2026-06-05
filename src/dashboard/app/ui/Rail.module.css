@@ -23,6 +23,7 @@
   padding: 0px 16px;
   overflow-y: hidden;
   background: var(--alinea-bg);
+  min-height: 40px;
 }
 
 .RailFooter {

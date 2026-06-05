@@ -13,8 +13,8 @@ import {
   type ModalOverlayProps
 } from 'react-aria-components'
 import {IcRoundClose} from '../../icons.js'
-import {RailBody, RailFooter, RailHeader} from './Rail.js'
 import css from './DashboardModal.module.css'
+import {RailBody, RailFooter, RailHeader} from './Rail.js'
 
 const styles = styler(css)
 
@@ -22,7 +22,10 @@ export interface DashboardModalProps extends ModalOverlayProps {
   size?: 'default' | 'explorer'
 }
 
-export function DashboardModal({size = 'default', ...props}: DashboardModalProps) {
+export function DashboardModal({
+  size = 'default',
+  ...props
+}: DashboardModalProps) {
   return (
     <Modal
       isDismissable
@@ -34,7 +37,8 @@ export function DashboardModal({size = 'default', ...props}: DashboardModalProps
 }
 
 export interface DashboardModalDialogProps
-  extends PropsWithChildren,
+  extends
+    PropsWithChildren,
     Omit<ComponentProps<typeof Dialog>, 'children' | 'className'> {
   isLoading?: boolean
   label?: ReactNode
@@ -122,14 +126,13 @@ export function DashboardModalCloseButton() {
   return (
     <Button
       aria-label="Close modal"
-      appearance="outline"
+      appearance="plain"
       className={styles.DashboardModalCloseButton()}
       size="icon"
       type="button"
       onPress={close}
-    >
-      <IcRoundClose data-slot="icon" />
-    </Button>
+      icon={IcRoundClose}
+    />
   )
 }
 
@@ -137,9 +140,7 @@ export function DashboardModalSeparator() {
   return <div className={styles.DashboardModalSeparator()} />
 }
 
-export function DashboardModalExplorer(
-  props: ComponentProps<'div'>
-) {
+export function DashboardModalExplorer(props: ComponentProps<'div'>) {
   return (
     <div
       {...props}
@@ -159,8 +160,9 @@ export function DashboardModalForm(props: DashboardModalFormProps) {
   )
 }
 
-export interface DashboardModalExplorerFooterProps
-  extends ComponentProps<typeof RailHeader> {}
+export interface DashboardModalExplorerFooterProps extends ComponentProps<
+  typeof RailHeader
+> {}
 
 export function DashboardModalExplorerFooter(
   props: DashboardModalExplorerFooterProps
@@ -173,8 +175,7 @@ export function DashboardModalExplorerFooter(
   )
 }
 
-export interface DashboardModalExplorerSelectionProps
-  extends ComponentProps<'span'> {}
+export interface DashboardModalExplorerSelectionProps extends ComponentProps<'span'> {}
 
 export function DashboardModalExplorerSelection(
   props: DashboardModalExplorerSelectionProps
@@ -187,8 +188,7 @@ export function DashboardModalExplorerSelection(
   )
 }
 
-export interface DashboardModalExplorerActionsProps
-  extends ComponentProps<'div'> {}
+export interface DashboardModalExplorerActionsProps extends ComponentProps<'div'> {}
 
 export function DashboardModalExplorerActions(
   props: DashboardModalExplorerActionsProps
@@ -201,8 +201,9 @@ export function DashboardModalExplorerActions(
   )
 }
 
-export interface DashboardModalFormHeaderProps
-  extends ComponentProps<typeof RailHeader> {}
+export interface DashboardModalFormHeaderProps extends ComponentProps<
+  typeof RailHeader
+> {}
 
 export function DashboardModalFormHeader(props: DashboardModalFormHeaderProps) {
   return (
@@ -213,8 +214,9 @@ export function DashboardModalFormHeader(props: DashboardModalFormHeaderProps) {
   )
 }
 
-export interface DashboardModalFormBodyProps
-  extends ComponentProps<typeof RailBody> {}
+export interface DashboardModalFormBodyProps extends ComponentProps<
+  typeof RailBody
+> {}
 
 export function DashboardModalFormBody(props: DashboardModalFormBodyProps) {
   return (
@@ -225,8 +227,9 @@ export function DashboardModalFormBody(props: DashboardModalFormBodyProps) {
   )
 }
 
-export interface DashboardModalFormFooterProps
-  extends ComponentProps<typeof RailFooter> {}
+export interface DashboardModalFormFooterProps extends ComponentProps<
+  typeof RailFooter
+> {}
 
 export function DashboardModalFormFooter(props: DashboardModalFormFooterProps) {
   return (

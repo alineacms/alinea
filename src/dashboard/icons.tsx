@@ -1187,8 +1187,11 @@ export function MaterialSymbolsRightPanelOpenRounded(
       {/* Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE */}
       <path
         fill="currentColor"
-        d="M11.5 14.8V9.2q0-.35-.3-.475t-.55.125L8.2 11.3q-.3.3-.3.7t.3.7l2.45 2.45q.25.25.55.125t.3-.475M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21zm9-2V5H5v14z"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21H5q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3m0 2v14h14V5z"
       />
+      <rect x="14" y="5" width="2" height="14" fill="currentColor" />
     </svg>
   )
 }
@@ -1207,7 +1210,9 @@ export function MaterialSymbolsRightPanelCloseRounded(
       {/* Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE */}
       <path
         fill="currentColor"
-        d="M7.5 14.8q0 .35.3.475t.55-.125l2.45-2.45q.3-.3.3-.7t-.3-.7L8.35 8.85q-.25-.25-.55-.125t-.3.475zM5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21zm9-2V5H5v14z"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21H5q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3m0 2v14h14V5zm10 0h4v14h-4z"
       />
     </svg>
   )

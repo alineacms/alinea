@@ -55,7 +55,7 @@
   overflow: visible;
   height: 100%;
   padding: 0;
-  background: var(--alinea-overlay);
+  background: var(--alinea-bg);
 
   &.is-explorer {
     gap: 0;
