@@ -127,6 +127,7 @@
 .TabList {
   overflow-x: auto;
   max-width: 100%;
+  height: 100%;
   white-space: nowrap;
   scrollbar-width: thin;
   scrollbar-color: var(--alinea-border) transparent;
@@ -140,6 +141,7 @@
 
   .TabList-list {
     display: flex;
+    height: 100%;
 
     [data-variant='line'] & {
       gap: 16px;

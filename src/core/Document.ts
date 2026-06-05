@@ -1,4 +1,3 @@
-import {IcRoundDescription, IcRoundShare} from '#/dashboard/icons.js'
 import {
   type MetadataField,
   metadata as createMetadata
@@ -34,11 +33,9 @@ export function document<Fields extends FieldsDefinition>(
   const {title, path, metadata} = documentFields()
   const fieldsWithMeta: Document & Fields = <any>tabs(
     tab('Document', {
-      icon: IcRoundDescription,
       fields: {title, path, ...fields}
     }),
     tab('Metadata', {
-      icon: IcRoundShare,
       fields: {metadata}
     })
   )

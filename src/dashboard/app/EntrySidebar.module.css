@@ -1,3 +1,7 @@
+.EntrySidebar-header {
+  height: 48px;
+}
+
 .EntrySidebar-body {
   flex: 1;
   min-height: 0;

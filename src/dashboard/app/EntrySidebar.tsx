@@ -59,7 +59,7 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
           }
         }}
       >
-        <RailHeader>
+        <RailHeader className={styles.EntrySidebar.header()}>
           <TabList aria-label="Entry sidebar">
             {!isMediaFile && (
               <>

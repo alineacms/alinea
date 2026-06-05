@@ -3,8 +3,7 @@
   padding: 0 16px;
   border-bottom: 1px solid var(--alinea-border);
   overflow-y: hidden;
-  scrollbar-gutter: stable;
-  background: var(--alinea-backdrop);
+  background: var(--alinea-bg);
 }
 
 .EntryHeader-content {

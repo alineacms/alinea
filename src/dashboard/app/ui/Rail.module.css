@@ -18,12 +18,10 @@
 .RailHeader {
   display: flex;
   align-items: center;
-  height: 40px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--alinea-border);
   padding: 0px 16px;
   overflow-y: hidden;
-  scrollbar-gutter: stable;
   background: var(--alinea-bg);
 }
 
@@ -41,7 +39,6 @@
   flex-direction: column;
   min-height: 0;
   overflow: auto;
-  scrollbar-gutter: stable;
   min-width: 0;
 }
 

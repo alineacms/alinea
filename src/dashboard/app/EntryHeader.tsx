@@ -12,7 +12,6 @@ import {
 } from '../icons.js'
 import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
 import {EditorBackButton} from './EditorBackButton.js'
-import {RailContent} from './ui/Rail.js'
 import css from './EntryHeader.module.css'
 
 const styles = styler(css)
@@ -395,7 +394,7 @@ export function EntryHeader({
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
   return (
     <header className={styles.EntryHeader()}>
-      <RailContent className={styles.EntryHeader.content()}>
+      <div className={styles.EntryHeader.content()}>
         <div className={styles.EntryHeader.main()}>
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
@@ -418,7 +417,7 @@ export function EntryHeader({
           untranslated={untranslated}
           parentNeedsTranslation={parentNeedsTranslation}
         />
-      </RailContent>
+      </div>
     </header>
   )
 }
