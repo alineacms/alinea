@@ -14,6 +14,7 @@ import {WriteableGraph as WriteableGraphBase} from '#/core/db/WriteableGraph.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {role} from '#/core/Role.js'
 import {root} from '#/core/Root.js'
+import {type as createType} from '#/core/Type.js'
 import {localUser} from '#/core/User.js'
 import {workspace} from '#/core/Workspace.js'
 import {atom} from 'jotai'
@@ -197,6 +198,89 @@ class MediaGraph extends TestGraph {
         entries: [entries[1]]
       }
     ] as AnyQueryResult<Query>)
+  }
+}
+
+function hasInFilter(value: unknown): value is {in: Array<string>} {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'in' in value &&
+    Array.isArray((value as {in?: unknown}).in)
+  )
+}
+
+class HierarchyGraph extends TestGraph {
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    const entries = [
+      {
+        id: 'blog',
+        type: 'Page',
+        parentId: null,
+        workspace: 'main',
+        root: 'pages',
+        locale: null,
+        status: 'published',
+        main: true,
+        path: 'blog',
+        title: 'Blog',
+        url: '/blog',
+        filePath: 'pages/blog.json',
+        seeded: null,
+        data: {title: 'Blog', path: 'blog'}
+      },
+      {
+        id: 'post',
+        type: 'Page',
+        parentId: 'blog',
+        workspace: 'main',
+        root: 'pages',
+        locale: null,
+        status: 'published',
+        main: true,
+        path: 'blog/post',
+        title: 'Post',
+        url: '/blog/post',
+        filePath: 'pages/blog/post.json',
+        seeded: null,
+        data: {title: 'Post', path: 'post'}
+      }
+    ] as const
+    if ('parentId' in query && hasInFilter(query.parentId)) {
+      return Promise.resolve(['blog'] as AnyQueryResult<Query>)
+    }
+    const idFilter = 'id' in query ? query.id : undefined
+    if (hasInFilter(idFilter)) {
+      return Promise.resolve(
+        entries
+          .filter(entry => idFilter.in.includes(entry.id))
+          .map(entry => ({
+            ...entry,
+            parents:
+              entry.id === 'post'
+                ? [
+                    {
+                      id: 'blog',
+                      path: 'blog',
+                      type: 'Page',
+                      status: 'published',
+                      main: true
+                    }
+                  ]
+                : [],
+            entries: [entry]
+          })) as AnyQueryResult<Query>
+      )
+    }
+    if ('parentId' in query) {
+      return Promise.resolve(
+        entries.filter(entry => entry.parentId === query.parentId) as
+          AnyQueryResult<Query>
+      )
+    }
+    return Promise.resolve(entries as AnyQueryResult<Query>)
   }
 }
 
@@ -581,7 +665,9 @@ test('DashboardRoot explorer opens media libraries but not focused files', async
       workspace: 'main',
       root: 'media'
     })
-    folder.store.set(folder.mediaRoot.explorer.onAction, folderEntry)
+    await waitForParentId(folder, undefined)
+    await folder.store.set(folder.mediaRoot.explorer.onAction, folderEntry)
+    await waitForParentId(folder, 'media-folder')
     unsubscribe()
 
     test.equal(folder.store.get(folder.mediaRoot.explorer.location), {
@@ -602,6 +688,123 @@ test('DashboardRoot explorer opens media libraries but not focused files', async
       workspace: 'main',
       root: 'media',
       parentId: 'media-folder'
+    })
+  } finally {
+    if (originalWindow === undefined) {
+      Reflect.deleteProperty(globalThis, 'window')
+    } else {
+      Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: originalWindow
+      })
+    }
+  }
+})
+
+test('DashboardRoot explorer opens child overviews from the root listing', async () => {
+  const originalWindow = globalThis.window
+  const testWindow = {
+    location: {
+      hash: '',
+      href: 'https://example.com/',
+      pathname: '/',
+      search: ''
+    },
+    history: {
+      pushState(_state: unknown, _title: string, url?: string | URL | null) {
+        if (!url) return
+        const next = new URL(url, testWindow.location.href)
+        testWindow.location.hash = next.hash
+        testWindow.location.href = next.href
+        testWindow.location.pathname = next.pathname
+        testWindow.location.search = next.search
+      },
+      replaceState(_state: unknown, _title: string, url?: string | URL | null) {
+        if (!url) return
+        const next = new URL(url, testWindow.location.href)
+        testWindow.location.hash = next.hash
+        testWindow.location.href = next.href
+        testWindow.location.pathname = next.pathname
+        testWindow.location.search = next.search
+      },
+      state: null
+    },
+    addEventListener() {},
+    removeEventListener() {}
+  } as unknown as Window & typeof globalThis
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: testWindow
+  })
+
+  try {
+    const Page = createType('Page', {fields: {}, defaultView: 'edit'})
+    const pages = root('Pages')
+    const main = workspace('Main', {
+      source: 'content/main',
+      roots: {pages}
+    })
+    const config = createConfig({
+      schema: {Page},
+      workspaces: {main},
+      roles: {
+        admin: role('Admin', {
+          permissions(policy) {
+            policy.allowAll()
+          }
+        })
+      }
+    })
+    const store = createStore()
+    const dashboard = new Dashboard(
+      new HierarchyGraph(config),
+      config,
+      new EventTarget(),
+      new Client({config, url: 'https://example.com/api'}),
+      {},
+      {local: true}
+    )
+    await store.set(dashboard.setUserRoles, ['admin'])
+    await waitForPolicy(dashboard, store)
+
+    const rootModel = dashboard.workspace('main').root('pages')
+    const blog = dashboard.entries('blog')
+    const ready = await store.get(blog.readyState)
+    const data = ready.data
+    if (!data) throw new Error('Blog entry should be loaded')
+    test.equal(store.get(data.hasChildren), true)
+    test.equal(store.get(data.defaultView), 'overview')
+    await store.set(rootModel.explorer.onAction, blog)
+    if (store.get(rootModel.explorer.location).parentId !== 'blog') {
+      await new Promise<void>(resolve => {
+        let unsubscribe = () => {}
+        const check = () => {
+          if (store.get(rootModel.explorer.location).parentId !== 'blog')
+            return
+          unsubscribe()
+          resolve()
+        }
+        unsubscribe = store.sub(rootModel.explorer.location, check)
+        check()
+      })
+    }
+
+    test.equal(store.get(rootModel.explorer.location), {
+      workspace: 'main',
+      root: 'pages',
+      parentId: 'blog'
+    })
+
+    await store.set(dashboard.route, {
+      workspace: 'main',
+      root: 'pages',
+      entry: 'post'
+    })
+
+    test.equal(store.get(rootModel.explorer.location), {
+      workspace: 'main',
+      root: 'pages',
+      parentId: 'blog'
     })
   } finally {
     if (originalWindow === undefined) {

@@ -2,13 +2,9 @@ import {Button, Menu, MenuItem} from '#/components.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {useTransition} from 'react'
+import {type ReactNode, useTransition} from 'react'
 import {usePolicy} from '../hooks.js'
-import {
-  IcRoundCheck,
-  IcRoundMoreHoriz,
-  IcRoundSave
-} from '../icons.js'
+import {IcRoundCheck, IcRoundMoreHoriz, IcRoundSave} from '../icons.js'
 import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
@@ -17,6 +13,7 @@ import {EntrySidebarToggle} from './EntrySidebarToggle.js'
 const styles = styler(css)
 
 export interface EntryHeaderProps {
+  controls?: ReactNode
   entry: DashboardEntryData
   isSidebarOpen?: boolean
   node: ReactiveNode<object>
@@ -365,16 +362,14 @@ function EntryHeaderActions({
     <div className={styles.EntryHeader.actions()}>
       {actionButtons}
       {onSidebarOpenChange && !isSidebarOpen && (
-        <EntrySidebarToggle
-          isOpen={false}
-          onOpenChange={onSidebarOpenChange}
-        />
+        <EntrySidebarToggle isOpen={false} onOpenChange={onSidebarOpenChange} />
       )}
     </div>
   )
 }
 
 export function EntryHeader({
+  controls,
   entry,
   isSidebarOpen,
   node,
@@ -393,6 +388,7 @@ export function EntryHeader({
         <div className={styles.EntryHeader.main()}>
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
+          {controls}
           <EntryHeaderMoreActions
             entry={entry}
             activeStatus={activeStatus}

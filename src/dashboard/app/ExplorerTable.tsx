@@ -2,12 +2,14 @@ import type {FieldOptions} from '#/core/Field.js'
 import {Field} from '#/core/Field.js'
 import type {Entry} from '#/core/Entry.js'
 import {Type} from '#/core/Type.js'
+import {Icon} from '#/components.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
-import type {MouseEvent, PointerEvent} from 'react'
+import type {ComponentType} from 'react'
 import type {ReactNode} from 'react'
 import {useMemo} from 'react'
 import {
+  Button as AriaButton,
   Cell,
   Checkbox,
   Column,
@@ -22,6 +24,7 @@ import {
 } from 'react-aria-components'
 import type {TableLayoutProps} from 'react-stately/useVirtualizerState'
 import type {DashboardEntry, DashboardExplorer} from '../store.js'
+import {LucideFile, LucideFolder} from '../icons.js'
 import {Surface} from './ui/Surface.js'
 import css from './ExplorerTable.module.css'
 
@@ -40,14 +43,15 @@ interface OverviewCell {
 
 interface OverviewRow {
   cells: Array<OverviewCell>
+  icon: ComponentType
   label: string
 }
 
 interface ExplorerTableColumn {
   id: string
   index?: number
-  kind: 'selection' | 'title' | 'overview'
-  width: number
+  kind: 'selection' | 'title' | 'overview' | 'filler'
+  width: number | '1fr'
 }
 
 interface OverviewFieldOptions extends FieldOptions<unknown> {
@@ -121,41 +125,40 @@ interface ExplorerTableRowProps {
   columnById: Map<Key, ExplorerTableColumn>
   columns: Array<ExplorerTableColumn>
   entry: DashboardEntry
-  explorer: DashboardExplorer
 }
 
 function ExplorerTableRow({
   columnById,
   columns,
-  entry,
-  explorer
+  entry
 }: ExplorerTableRowProps) {
   const row = useAtomValue(
     useMemo(
       () =>
         atom((get): OverviewRow => {
           const {data} = get(entry.data)
-          if (!data) return {label: 'Loading entry', cells: []}
+          if (!data)
+            return {
+              label: 'Loading entry',
+              icon: LucideFile,
+              cells: []
+            }
           const label = get(data.label)
           const type = get(data.type).type
           const current = get(data.currentEntry)
+          const icon =
+            get(data.icon) ??
+            (get(data.hasChildren) ? LucideFolder : LucideFile)
           if (isPromise(current)) throw current
           return {
             label,
+            icon,
             cells: entryOverviewValues(current, type)
           }
         }),
       [entry]
     )
   )
-  const onAction = useSetAtom(explorer.onAction)
-  function openEntry(event: MouseEvent<HTMLButtonElement>) {
-    event.stopPropagation()
-    onAction(entry)
-  }
-  function stopTitlePointerSelection(event: PointerEvent<HTMLButtonElement>) {
-    event.stopPropagation()
-  }
   function renderCell(columnOrId: ExplorerTableColumn | Key) {
     const column =
       typeof columnOrId === 'object' ? columnOrId : columnById.get(columnOrId)
@@ -179,16 +182,21 @@ function ExplorerTableRow({
           className={styles.ExplorerTable.cell.title()}
           textValue={row.label}
         >
-          <button
-            type="button"
-            className={styles.ExplorerTable.titleAction()}
-            onClick={openEntry}
-            onPointerDown={stopTitlePointerSelection}
+          <AriaButton
+            slot="drag"
+            className={styles.ExplorerTable.iconDrag()}
+            aria-label={`Drag ${row.label}`}
           >
+            <Icon icon={row.icon} className={styles.ExplorerTable.icon()} />
+          </AriaButton>
+          <span className={styles.ExplorerTable.titleAction()}>
             {row.label}
-          </button>
+          </span>
         </Cell>
       )
+    }
+    if (column.kind === 'filler') {
+      return <Cell className={styles.ExplorerTable.cell.filler()} />
     }
     const cell =
       typeof column.index === 'number' ? row.cells[column.index] : undefined
@@ -217,7 +225,7 @@ function ExplorerTableRow({
       className={styles.ExplorerTable.row()}
       columns={columns}
       dependencies={[columns, row.cells]}
-      style={{width: 'inherit', minWidth: '100%', height: 'inherit'}}
+      style={{width: '100%', minWidth: '100%', height: 'inherit'}}
     >
       {renderCell}
     </Row>
@@ -239,25 +247,22 @@ export function ExplorerTable({
 }: ExplorerTableProps) {
   const columnCount = useOverviewColumnCount(items)
   const [selected, setSelected] = useAtom(explorer.selection)
-  const columnWidths = useMemo(() => {
-    const widths = new Map<Key, number>()
-    widths.set('selection', 16)
-    widths.set('title', 260)
-    for (let index = 0; index < columnCount; index += 1) {
-      widths.set(`overview-${index}`, 180)
-    }
-    return widths
-  }, [columnCount])
+  const onAction = useSetAtom(explorer.onAction)
+  function onItemAction(key: Key) {
+    const entry = items.find(item => item.id === String(key))
+    if (entry) onAction(entry)
+  }
   const columns = useMemo<Array<ExplorerTableColumn>>(
     () => [
-      {id: 'selection', kind: 'selection', width: 16},
+      {id: 'selection', kind: 'selection', width: 30},
       {id: 'title', kind: 'title', width: 260},
       ...Array.from({length: columnCount}, (_, index) => ({
         id: `overview-${index}`,
         index,
         kind: 'overview' as const,
         width: 180
-      }))
+      })),
+      {id: 'filler', kind: 'filler', width: '1fr'}
     ],
     [columnCount]
   )
@@ -268,12 +273,11 @@ export function ExplorerTable({
   const layoutOptions = useMemo<TableLayoutProps>(
     () => ({
       rowHeight: 32,
-      headingHeight: 1,
+      headingHeight: 0,
       padding: 0,
-      gap: 0,
-      columnWidths
+      gap: 0
     }),
-    [columnWidths]
+    []
   )
   return (
     <div className={styles.ExplorerTable.viewport()}>
@@ -284,9 +288,9 @@ export function ExplorerTable({
             className={styles.ExplorerTable()}
             dragAndDropHooks={dragAndDropHooks}
             selectedKeys={selected}
-            selectionBehavior={explorer.selectionBehavior}
             selectionMode={explorer.selectionMode}
             onSelectionChange={setSelected}
+            onRowAction={onItemAction}
             style={{display: 'block', width: '100%', height: '100%'}}
           >
             <TableHeader
@@ -298,31 +302,37 @@ export function ExplorerTable({
                   id={column.id}
                   isRowHeader={column.kind === 'title'}
                   maxWidth={
-                    column.kind === 'selection' ? column.width : undefined
+                    column.kind === 'selection' ? 30 : undefined
                   }
                   minWidth={
-                    column.kind === 'selection' ? column.width : undefined
+                    column.kind === 'selection' ? 30 : undefined
                   }
                   width={column.width}
                   className={
                     column.kind === 'selection'
-                      ? styles.ExplorerTable.column.selection()
+                        ? styles.ExplorerTable.column.selection()
+                      : column.kind === 'filler'
+                        ? styles.ExplorerTable.column.filler()
                       : styles.ExplorerTable.column()
                   }
                 />
               )}
             </TableHeader>
             <TableBody
+              className={styles.ExplorerTable.body()}
               dependencies={[columns]}
               items={items}
-              renderEmptyState={renderEmptyState}
+              renderEmptyState={() => (
+                <div className={styles.ExplorerTable.empty()}>
+                  {renderEmptyState()}
+                </div>
+              )}
             >
               {item => (
                 <ExplorerTableRow
                   columnById={columnById}
                   columns={columns}
                   entry={item}
-                  explorer={explorer}
                 />
               )}
             </TableBody>

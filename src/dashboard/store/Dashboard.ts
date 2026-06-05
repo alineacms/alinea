@@ -72,6 +72,8 @@ export interface DashboardRoute {
   locale?: string
 }
 
+export type DashboardEntryView = 'edit' | 'overview'
+
 export interface DashboardFavicon {
   color: string
   icon?: ComponentType
@@ -149,6 +151,8 @@ type FocusedItem =
   | {missingEntry: string; root: DashboardRoot}
   | {missingRoot: string; root: DashboardRoot}
   | null
+
+const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
 
 export interface DashboardMutationQueue {
   entries: Array<MutationQueueEntry>
@@ -609,7 +613,12 @@ export class Dashboard {
         .split('/')
         .slice(1) as Array<string | undefined>
       const [root, locale] = rootPart.split(':')
-      return {workspace, root, entry, locale}
+      return {
+        workspace,
+        root,
+        entry,
+        locale
+      }
     },
     async (get, set, update: DashboardRoute) => {
       const focused = await get(this.focused)
@@ -650,9 +659,7 @@ export class Dashboard {
       throw new Error(`Entry "${entry}" not found`)
     }
     const entryFocus = (data: DashboardEntryData): FocusedItem => {
-      const type = get(data.type)
-      if (type.type !== MediaLibrary) return {entry: data}
-      return rootFocus()
+      return get(data.view) === 'edit' ? {entry: data} : rootFocus()
     }
     if (workspace && routeRoot && routeRoot !== root) {
       if (!root) return null
@@ -1428,6 +1435,9 @@ export class DashboardType {
   get orderChildrenBy() {
     return getType(this.type).orderChildrenBy
   }
+  get defaultView() {
+    return Type.defaultView(this.type)
+  }
   get icon() {
     return getType(this.type).icon
   }
@@ -1792,9 +1802,9 @@ type SelectedVersion =
 
 export class DashboardEntry {
   data: Atom<DashboardEntryState>
-  mediaLibraryParent: Atom<string | undefined>
   readyState: Atom<Promise<DashboardEntryState>>
   routeReady: Atom<Promise<DashboardEntryState>>
+  #selectedView = atom<DashboardEntryView | undefined>(undefined)
 
   constructor(
     public dashboard: Dashboard,
@@ -1831,17 +1841,9 @@ export class DashboardEntry {
       }
     })
     this.readyState = state
-    this.mediaLibraryParent = unwrap(
-      atom(async get => {
-        const ready = await get(this.readyState)
-        if (!ready.data) return undefined
-        const type = get(ready.data.type)
-        return type.type === MediaLibrary ? this.id : undefined
-      })
-    )
     this.routeReady = atom(async get => {
       const ready = await get(this.readyState)
-      if (ready.data && get(ready.data.type).type !== MediaLibrary)
+      if (ready.data && get(ready.data.view) === 'edit')
         await get(ready.data.selectedNode)
       return ready
     })
@@ -1862,6 +1864,13 @@ export class DashboardEntry {
     assert(result, `Entry "${this.id}" not found`)
     return result
   })
+
+  view = atom(
+    get => get(this.#selectedView),
+    (get, set, view: DashboardEntryView | undefined) => {
+      set(this.#selectedView, view)
+    }
+  )
 }
 
 export class DashboardEntryData {
@@ -1870,6 +1879,8 @@ export class DashboardEntryData {
   hasChildren: Atom<boolean>
   type: Atom<DashboardType>
   currentEntry: Atom<Promise<Entry | null> | Entry | null>
+  defaultView: Atom<'edit' | 'overview'>
+  view: WritableAtom<DashboardEntryView, [view: DashboardEntryView], void>
   locales: Atom<Map<string | null, EntryVersionData>>
   parentId: Atom<string | null>
   parentIds: Atom<Array<string>>
@@ -1887,6 +1898,22 @@ export class DashboardEntryData {
     this.rootKey = atom(get => get(data).root)
     this.hasChildren = atom(get => get(data).hasChildren)
     this.type = atom(get => get(this.dashboard.type(get(data).type)))
+    this.defaultView = atom(get => {
+      if (get(this.hasChildren)) return 'overview'
+      const configured = get(this.type).defaultView
+      if (configured) return configured
+      return 'edit'
+    })
+    this.view = atom(
+      get => {
+        const selected = get(this.entry.view)
+        if (selected) return selected
+        return get(this.defaultView)
+      },
+      (get, set, view: DashboardEntryView) => {
+        set(this.entry.view, view)
+      }
+    )
     this.parentId = atom(get => get(data).parentId)
     this.parentIds = atom(get => get(data).parents.map(parent => parent.id))
     this.locales = atom(
@@ -2693,23 +2720,24 @@ export class DashboardRoot {
     public workspace: DashboardWorkspace,
     public key: string
   ) {
-    const parentId = atom<string | null | undefined>(undefined)
-    const selectedParent = atom(get => {
-      const route = get(this.workspace.dashboard.route)
-      if (
-        route.workspace === workspace.key &&
-        route.root === key &&
-        route.entry
-      ) {
-        const routeSelected = get(
-          this.workspace.dashboard.entries(route.entry).mediaLibraryParent
-        )
-        if (routeSelected !== undefined) return routeSelected
-      }
-      const selected = get(parentId)
-      if (selected !== undefined) return selected ?? undefined
-      return undefined
-    })
+    const selectedParent = unwrap(
+      atom(async get => {
+        const route = get(this.workspace.dashboard.route)
+        if (
+          route.workspace === workspace.key &&
+          route.root === key &&
+          route.entry
+        ) {
+          const ready = await get(
+            this.workspace.dashboard.entries(route.entry).readyState
+          )
+          if (ready.data && get(ready.data.view) === 'overview') return route.entry
+          return keepPreviousExplorerParent
+        }
+        return undefined
+      }),
+      previous => previous
+    )
     this.explorer = new DashboardExplorer(
       workspace.dashboard,
       atom(
@@ -2734,9 +2762,7 @@ export class DashboardRoot {
             const route = get(workspace.dashboard.route)
             const selectedWorkspace = get(workspace.dashboard.selectedWorkspace)
             const selectedRoot = get(workspace.dashboard.selectedRoot)
-            set(parentId, next.parentId ?? null)
             if (
-              route.entry &&
               selectedWorkspace === workspace.key &&
               selectedRoot === key
             )
@@ -2757,23 +2783,11 @@ export class DashboardRoot {
         selectionMode: 'multiple',
         selectionBehavior: 'replace',
         onAction: atom(null, (get, set, entry) => {
-          const {data} = get(entry.data)
-          if (!data) return
-          const type = get(data.type)
-          if (type.type === MediaLibrary || get(data.hasChildren))
-            set(this.explorer.location, location => ({
-              ...location,
-              parentId: entry.id
-            }))
-          else {
-            const entryParentId = get(data.parentId) ?? undefined
-            set(parentId, entryParentId ?? null)
-            set(this.workspace.dashboard.route, {
-              workspace: this.workspace.key,
-              root: this.key,
-              entry: entry.id
-            })
-          }
+          set(this.workspace.dashboard.route, {
+            workspace: this.workspace.key,
+            root: this.key,
+            entry: entry.id
+          })
         })
       }
     )

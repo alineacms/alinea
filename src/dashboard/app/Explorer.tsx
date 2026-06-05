@@ -33,12 +33,15 @@ import {RailBody, RailHeader} from './ui/Rail.js'
 const styles = styler(css)
 
 export interface ExplorerProps {
+  controls?: ReactNode
   explorer: DashboardExplorer
+  titleControls?: ReactNode
 }
 
 export interface ExplorerHeaderProps {
   controls?: ReactNode
   explorer: DashboardExplorer
+  titleControls?: ReactNode
 }
 
 export interface ExplorerBodyProps {
@@ -51,20 +54,24 @@ interface ExplorerSearchProps {
 
 interface ExplorerHeaderMainProps {
   explorer: DashboardExplorer
+  titleControls?: ReactNode
 }
 
 interface ExplorerHeaderLoadedParentMainProps {
   data: DashboardEntryData
   explorer: DashboardExplorer
+  titleControls?: ReactNode
 }
 
 interface ExplorerHeaderParentMainProps {
   explorer: DashboardExplorer
   parent: DashboardEntry
+  titleControls?: ReactNode
 }
 
 interface ExplorerHeaderRootMainProps {
   root: DashboardRoot
+  titleControls?: ReactNode
 }
 
 function ExplorerSearch({explorer}: ExplorerSearchProps) {
@@ -81,18 +88,23 @@ function ExplorerSearch({explorer}: ExplorerSearchProps) {
   )
 }
 
-function ExplorerHeaderRootMain({root}: ExplorerHeaderRootMainProps) {
+function ExplorerHeaderRootMain({
+  root,
+  titleControls
+}: ExplorerHeaderRootMainProps) {
   const label = useAtomValue(root.label)
   return (
     <div className={styles.ExplorerHeader.main()}>
       <h1 className={styles.ExplorerHeader.title()}>{label}</h1>
+      {titleControls}
     </div>
   )
 }
 
 function ExplorerHeaderLoadedParentMain({
   data,
-  explorer
+  explorer,
+  titleControls
 }: ExplorerHeaderLoadedParentMainProps) {
   const label = useAtomValue(data.label)
   const parents = useAtomValue(data.parents)
@@ -110,27 +122,47 @@ function ExplorerHeaderLoadedParentMain({
         }}
       />
       <h1 className={styles.ExplorerHeader.title()}>{label}</h1>
+      {titleControls}
     </div>
   )
 }
 
-function ExplorerHeaderMain({explorer}: ExplorerHeaderMainProps) {
+function ExplorerHeaderMain({
+  explorer,
+  titleControls
+}: ExplorerHeaderMainProps) {
   const root = useAtomValue(explorer.root)
   const parent = useAtomValue(explorer.parent)
   if (parent) {
-    return <ExplorerHeaderParentMain parent={parent} explorer={explorer} />
+    return (
+      <ExplorerHeaderParentMain
+        parent={parent}
+        explorer={explorer}
+        titleControls={titleControls}
+      />
+    )
   }
-  if (root) return <ExplorerHeaderRootMain root={root} />
+  if (root)
+    return (
+      <ExplorerHeaderRootMain root={root} titleControls={titleControls} />
+    )
   return null
 }
 
 function ExplorerHeaderParentMain({
   explorer,
-  parent
+  parent,
+  titleControls
 }: ExplorerHeaderParentMainProps) {
   const {data} = useAtomValue(parent.data)
   if (!data) return null
-  return <ExplorerHeaderLoadedParentMain data={data} explorer={explorer} />
+  return (
+    <ExplorerHeaderLoadedParentMain
+      data={data}
+      explorer={explorer}
+      titleControls={titleControls}
+    />
+  )
 }
 
 interface ExplorerToolbarProps {
@@ -275,17 +307,21 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   )
 }
 
-export function ExplorerHeader({controls, explorer}: ExplorerHeaderProps) {
+export function ExplorerHeader({
+  controls,
+  explorer,
+  titleControls
+}: ExplorerHeaderProps) {
   return (
     <RailHeader className={styles.ExplorerHeader()}>
       <div className={styles.ExplorerHeader.content()}>
-        <ExplorerHeaderMain explorer={explorer} />
+        <ExplorerHeaderMain explorer={explorer} titleControls={titleControls} />
         <div className={styles.Explorer.searchSlot()}>
           <ExplorerSearch explorer={explorer} />
         </div>
         <div className={styles.Explorer.toolbar()}>
-          <ExplorerToolbar explorer={explorer} />
           {controls}
+          <ExplorerToolbar explorer={explorer} />
         </div>
       </div>
     </RailHeader>
@@ -302,10 +338,14 @@ export function ExplorerBody({explorer}: ExplorerBodyProps) {
   )
 }
 
-export function Explorer({explorer}: ExplorerProps) {
+export function Explorer({controls, explorer, titleControls}: ExplorerProps) {
   return (
     <>
-      <ExplorerHeader explorer={explorer} />
+      <ExplorerHeader
+        controls={controls}
+        explorer={explorer}
+        titleControls={titleControls}
+      />
       <ExplorerBody explorer={explorer} />
     </>
   )

@@ -6,13 +6,13 @@ import {unwrap} from 'jotai/utils'
 import type {ComponentType, ReactNode} from 'react'
 import {Fragment, memo, useMemo} from 'react'
 import {
+  type DragAndDropHooks,
   GridLayout,
   type GridLayoutOptions,
   GridList,
   GridListItem,
   type Key,
-  Virtualizer,
-  type DragAndDropHooks
+  Virtualizer
 } from 'react-aria-components'
 import {
   IcRoundDragIndicator,
@@ -25,16 +25,16 @@ import type {
   DashboardEntryData,
   DashboardExplorer
 } from '../store.js'
+import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 import {Surface} from './ui/Surface.js'
-import css from './ExplorerCards.module.css'
 
 const styles = styler(css)
 
 const cardLayoutOptions: GridLayoutOptions = {
   minItemSize: new Size(240, 196),
   maxItemSize: new Size(320, 196),
-  minSpace: new Size(20, 20),
+  minSpace: new Size(16, 16),
   maxColumns: 5,
   preserveAspectRatio: true
 }

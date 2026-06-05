@@ -24,7 +24,11 @@ import {
   useFieldView,
   useNodeEditor
 } from '../hooks.js'
-import {IcBaselineErrorOutline} from '../icons.js'
+import {
+  IcBaselineErrorOutline,
+  IcOutlineViewList,
+  IcRoundEdit
+} from '../icons.js'
 import {
   Dashboard,
   DashboardEntryData,
@@ -46,7 +50,7 @@ import {
   DashboardModalDialog,
   DashboardModalFooter
 } from './ui/DashboardModal.js'
-import {Rail, RailBody} from './ui/Rail.js'
+import {Rail, RailBody, RailContent} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -199,13 +203,47 @@ function CustomRootEditor({root, view: View}: CustomRootEditorProps) {
 }
 
 function DefaultRootEditor({root}: RootEditorProps) {
-  const title = useAtomValue(root.label)
-  const location = useAtomValue(root.explorer.location)
   return (
     <Rail main>
-      <Explorer explorer={root.explorer} />
+      <Explorer
+        explorer={root.explorer}
+        titleControls={<RootOverviewControls root={root} />}
+      />
     </Rail>
   )
+}
+
+function RootOverviewControls({root}: RootEditorProps) {
+  const route = useAtomValue(root.workspace.dashboard.route)
+  if (!route.entry) return null
+  return <LoadedRootOverviewControls entryId={route.entry} root={root} />
+}
+
+interface LoadedRootOverviewControlsProps {
+  entryId: string
+  root: DashboardRoot
+}
+
+function LoadedRootOverviewControls({
+  entryId,
+  root
+}: LoadedRootOverviewControlsProps) {
+  const entry = root.workspace.dashboard.entries(entryId)
+  const {data} = useAtomValue(entry.data)
+  if (!data) return null
+  return <RootOverviewControlsButton entry={data} />
+}
+
+interface RootOverviewControlsButtonProps {
+  entry: DashboardEntryData
+}
+
+function RootOverviewControlsButton({entry}: RootOverviewControlsButtonProps) {
+  const defaultView = useAtomValue(entry.defaultView)
+  const view = useAtomValue(entry.view)
+  if (defaultView !== 'overview') return null
+  if (view !== 'overview') return null
+  return <EntryViewToggle entry={entry} />
 }
 
 interface RootEditorBackButtonProps {
@@ -247,6 +285,29 @@ function LoadedRootEditorBackButton({
 
 interface EntryEditorProps {
   entry: DashboardEntryData
+}
+
+interface EntryViewToggleProps {
+  entry: DashboardEntryData
+}
+
+function EntryViewToggle({entry}: EntryViewToggleProps) {
+  const view = useAtomValue(entry.view)
+  const setView = useSetAtom(entry.view)
+  const nextView = view === 'overview' ? 'edit' : 'overview'
+  const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
+  const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
+  return (
+    <Button
+      aria-label={label}
+      appearance="plain"
+      icon={ViewIcon}
+      size="icon"
+      onPress={() => {
+        setView(nextView)
+      }}
+    />
+  )
 }
 
 function detailsBarStatus(
@@ -292,6 +353,7 @@ function EntryEditor({entry}: EntryEditorProps) {
   const barStatus = detailsBarStatus(status, isDirty, isUnpublished)
   const barStatusLabel = detailsBarStatusLabel(status, isDirty, isUnpublished)
   const [isSidebarOpen, setSidebarOpen] = useState(true)
+  const defaultView = useAtomValue(entry.defaultView)
 
   const discardAndConfirm = () => {
     startTransition(() => {
@@ -321,13 +383,15 @@ function EntryEditor({entry}: EntryEditorProps) {
       />*/}
 
       <RailBody className={styles.EntryEditor.body()}>
-        {isUntranslated && (
-          <div className={styles.EntryEditor.banner()}>
-            <EntryTranslationBanner entry={entry} />
-          </div>
-        )}
+        <RailContent>
+          {isUntranslated && (
+            <div className={styles.EntryEditor.banner()}>
+              <EntryTranslationBanner entry={entry} />
+            </div>
+          )}
 
-        <NodeEditor node={node} type={type.type} />
+          <NodeEditor node={node} type={type.type} />
+        </RailContent>
       </RailBody>
     </>
   )
@@ -342,9 +406,11 @@ function EntryEditor({entry}: EntryEditorProps) {
           statusLabel={barStatusLabel}
         />*/}
         <RailBody className={styles.EntryEditor.body()}>
-          <NodeEditor node={node} type={type.type}>
-            <FileEditor entry={entry} />
-          </NodeEditor>
+          <RailContent>
+            <NodeEditor node={node} type={type.type}>
+              <FileEditor entry={entry} />
+            </NodeEditor>
+          </RailContent>
         </RailBody>
       </>
     )
@@ -355,6 +421,11 @@ function EntryEditor({entry}: EntryEditorProps) {
   const mainEditor = (
     <Rail main>
       <EntryHeader
+        controls={
+          defaultView === 'overview' ? (
+            <EntryViewToggle entry={entry} />
+          ) : undefined
+        }
         entry={entry}
         isSidebarOpen={isSidebarOpen}
         node={node}

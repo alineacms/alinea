@@ -38,28 +38,57 @@
 }
 
 .ExplorerTable-header {
-  height: 1px;
-  min-height: 1px;
+  height: 0;
+  min-height: 0;
   overflow: hidden;
 }
 
+.ExplorerTable-body {
+  box-sizing: border-box;
+  min-width: 100%;
+}
+
+.ExplorerTable-empty {
+  display: flex;
+  box-sizing: border-box;
+  min-height: 100%;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
 .ExplorerTable-column,
+.ExplorerTable-column-filler,
 .ExplorerTable-column-selection {
-  height: 1px;
+  height: 0;
   padding: 0;
   overflow: hidden;
 }
 
 .ExplorerTable-row {
+  position: relative;
   box-sizing: border-box;
-  width: inherit;
+  width: 100% !important;
   min-width: 100%;
   height: inherit;
   min-height: 0;
   outline: none;
   color: var(--alinea-fg);
   background: var(--alinea-bg);
-  border-bottom: 1px solid var(--alinea-border);
+  border-bottom: 0;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    pointer-events: none;
+    background: var(--alinea-border);
+  }
 
   &[data-hovered] {
     background: var(--alinea-bg-muted);
@@ -88,9 +117,9 @@
 .ExplorerTable-cell-selection {
   box-sizing: border-box;
   display: flex;
-  width: 16px;
+  width: 30px;
   height: 32px;
-  padding: 0;
+  padding: 0 8px;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -99,13 +128,58 @@
 
 .ExplorerTable-cell-title {
   box-sizing: border-box;
+  display: flex;
   min-width: 0;
   height: 32px;
   padding: 0 12px 0 0;
+  align-items: center;
+  gap: 3px;
   overflow: hidden;
-  vertical-align: middle;
   border: 0;
   white-space: nowrap;
+}
+
+.ExplorerTable-cell-filler {
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+}
+
+.ExplorerTable-iconDrag {
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 12px;
+  height: 32px;
+  padding: 0;
+  flex: 0 0 12px;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  outline: none;
+  cursor: grab;
+
+  &[data-hovered] {
+    color: inherit;
+  }
+
+  &[data-focus-visible] {
+    box-shadow: inset 0 0 0 2px var(--alinea-ring);
+  }
+
+  &[data-pressed] {
+    cursor: grabbing;
+  }
+}
+
+.ExplorerTable-icon {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
 }
 
 .ExplorerTable-checkbox {
@@ -152,32 +226,16 @@
   box-sizing: border-box;
   min-width: 0;
   max-width: 100%;
+  margin-left: 4px;
   padding: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--alinea-link);
-  border: 0;
-  background: transparent;
+  color: inherit;
   font-size: 13px;
   font-weight: 400;
   line-height: 32px;
   text-align: left;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--alinea-link) 58%, transparent);
-  text-underline-offset: 3px;
   white-space: nowrap;
-  cursor: pointer;
-
-  &[data-hovered],
-  &:hover {
-    color: var(--alinea-link-hover);
-    text-decoration-color: var(--alinea-link-hover);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--alinea-ring);
-    outline-offset: -1px;
-  }
 }
 
 .ExplorerTable-field {

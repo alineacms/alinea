@@ -24,6 +24,8 @@ export interface EntryUrlMeta {
   root: string
 }
 
+export type EntryDefaultView = 'edit' | 'overview'
+
 export type Type<Definition = object> = Definition & HasType
 
 type TypeRow<Definition> = Expand<{
@@ -151,7 +153,12 @@ export namespace Type {
     return getType(type).preview
   }
 
+  export function defaultView(type: Type): EntryDefaultView | undefined {
+    return getType(type).defaultView
+  }
+
   const TypeOptions = cito.object({
+    defaultView: cito.string.optional,
     view: cito.string.optional,
     summaryRow: cito.string.optional,
     summaryThumb: cito.string.optional
@@ -230,6 +237,8 @@ export interface TypeConfig<Definition> {
 
   /** A React component used to view an entry of this type in the dashboard */
   view?: View<{type: Type}>
+  /** The default dashboard view for entries of this type */
+  defaultView?: EntryDefaultView
   /** A React component used to view a row of this type in the dashboard */
   summaryRow?: View<SummaryProps>
   /** A React component used to view a thumbnail of this type in the dashboard */

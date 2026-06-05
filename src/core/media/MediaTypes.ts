@@ -1,5 +1,6 @@
 import {IcRoundPermMedia} from '#/dashboard/icons.js'
 import {hidden} from '#/field/hidden/HiddenField.js'
+import {path} from '#/field/path/PathField.js'
 import {text} from '#/field/text/TextField.js'
 import {type Type, type} from '../Type.js'
 
@@ -7,9 +8,10 @@ export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
   icon: IcRoundPermMedia,
   contains: ['MediaLibrary', 'MediaFile'],
+  defaultView: 'overview',
   fields: {
-    title: hidden<string>('Title'),
-    path: hidden<string>('Path')
+    title: text('Title'),
+    path: path('Path')
   }
 })
 
