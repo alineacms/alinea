@@ -12,7 +12,7 @@ import {EntryReferences} from './EntryReferences.js'
 
 afterEach(cleanup)
 
-test('EntryReferences suspends while initially loading', async () => {
+test('EntryReferences shows local loading while initially loading', async () => {
   await act(async () => {
     render(
       <Suspense fallback={<span>Loading editor</span>}>
@@ -27,8 +27,8 @@ test('EntryReferences suspends while initially loading', async () => {
     )
   })
 
-  expect(screen.getByText('Loading editor')).toBeTruthy()
-  expect(screen.queryByLabelText('Loading references')).toBeNull()
+  expect(screen.queryByText('Loading editor')).toBeNull()
+  expect(screen.getByLabelText('Loading references')).toBeTruthy()
 })
 
 test('EntryReferences lists sources and navigates to them', () => {

@@ -2,6 +2,7 @@ import {Button, Icon, ProgressCircle} from '#/components.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
+import {Suspense} from 'react'
 import {
   IcRoundImage,
   IcRoundInsertDriveFile,
@@ -23,6 +24,14 @@ export interface EntryReferencesProps {
 }
 
 export function EntryReferences({entry}: EntryReferencesProps) {
+  return (
+    <Suspense fallback={<EntryReferencesLoading />}>
+      <EntryReferencesContent entry={entry} />
+    </Suspense>
+  )
+}
+
+function EntryReferencesContent({entry}: EntryReferencesProps) {
   const state = useAtomValue(entry.incomingReferencesState)
   const root = useAtomValue(entry.root)
   const selectedLocale = useAtomValue(root.selectedLocale)
