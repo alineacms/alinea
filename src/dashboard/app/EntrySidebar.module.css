@@ -1,5 +1,7 @@
 .EntrySidebar-header {
   height: 48px;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .EntrySidebar-body {

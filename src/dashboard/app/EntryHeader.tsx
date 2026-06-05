@@ -1,4 +1,4 @@
-import {Button, Menu, MenuItem, ToggleButton} from '#/components.js'
+import {Button, Menu, MenuItem} from '#/components.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
@@ -7,12 +7,12 @@ import {usePolicy} from '../hooks.js'
 import {
   IcRoundCheck,
   IcRoundMoreHoriz,
-  IcRoundSave,
-  MaterialSymbolsRightPanelOpenRounded
+  IcRoundSave
 } from '../icons.js'
 import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
+import {EntrySidebarToggle} from './EntrySidebarToggle.js'
 
 const styles = styler(css)
 
@@ -364,16 +364,11 @@ function EntryHeaderActions({
   return (
     <div className={styles.EntryHeader.actions()}>
       {actionButtons}
-      {onSidebarOpenChange && (
-        <ToggleButton
-          isSelected={isSidebarOpen}
-          aria-label={
-            isSidebarOpen ? 'Close entry sidebar' : 'Open entry sidebar'
-          }
-          onChange={onSidebarOpenChange}
-        >
-          <MaterialSymbolsRightPanelOpenRounded data-slot="icon" />
-        </ToggleButton>
+      {onSidebarOpenChange && !isSidebarOpen && (
+        <EntrySidebarToggle
+          isOpen={false}
+          onOpenChange={onSidebarOpenChange}
+        />
       )}
     </div>
   )

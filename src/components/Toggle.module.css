@@ -32,8 +32,6 @@
   font-weight: 550;
   outline: none;
   white-space: nowrap;
-  transition: var(--alinea-transition);
-  transition-property: background-color, border-color, color;
 
   svg,
   [data-slot='icon'] {
@@ -44,21 +42,21 @@
     height: 18px;
   }
 
-  &[data-hovered],
-  &[data-focused] {
-    color: var(--alinea-fg);
-    background-color: var(--alinea-muted-hover);
-  }
-
   &[data-selected] {
-    color: var(--alinea-primary-subtle-fg);
-    background-color: var(--alinea-primary-subtle);
-    border-color: color-mix(in srgb, var(--alinea-border-accent) 22%, transparent);
+    color: var(--alinea-fg);
+    background-color: light-dark(var(--alinea-gray-100), var(--alinea-gray-800));
+    border-color: transparent;
   }
 
   &[data-focus-visible] {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 1px;
+  }
+
+  &[data-hovered],
+  &[data-focused] {
+    color: var(--alinea-fg);
+    background-color: var(--alinea-muted-hover);
   }
 
   &[data-disabled] {

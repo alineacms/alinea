@@ -28,6 +28,7 @@ import type {DashboardEntryData, DashboardEntrySidebarTab} from '../store.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
+import {EntrySidebarToggle} from './EntrySidebarToggle.js'
 import {RailHeader} from './ui/Rail.js'
 import {Sidebar, SidebarBody} from './ui/Sidebar.js'
 
@@ -35,9 +36,10 @@ const styles = styler(css)
 
 export interface EntrySidebarProps {
   entry: DashboardEntryData
+  onOpenChange?: (isOpen: boolean) => void
 }
 
-export function EntrySidebar({entry}: EntrySidebarProps) {
+export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
   const type = useAtomValue(entry.type)
   const [selectedTab, setSelectedTab] = useAtom(entry.dashboard.entrySidebarTab)
   const isMediaFile = type.type === MediaFile
@@ -69,6 +71,9 @@ export function EntrySidebar({entry}: EntrySidebarProps) {
             )}
             <Tab id="references">References</Tab>
           </TabList>
+          {onOpenChange && (
+            <EntrySidebarToggle isOpen={true} onOpenChange={onOpenChange} />
+          )}
         </RailHeader>
 
         <SidebarBody className={styles.EntrySidebar.body()}>

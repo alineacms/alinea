@@ -391,7 +391,9 @@ function EntryEditor({entry}: EntryEditorProps) {
       </DashboardModal>
       <EntryScope entry={entry}>
         {mainEditor}
-        {hasSidebar && isSidebarOpen && <EntrySidebar entry={entry} />}
+        {hasSidebar && isSidebarOpen && (
+          <EntrySidebar entry={entry} onOpenChange={setSidebarOpen} />
+        )}
       </EntryScope>
     </>
   )
