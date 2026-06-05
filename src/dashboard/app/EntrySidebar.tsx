@@ -52,6 +52,7 @@ export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
   return (
     <Sidebar>
       <Tabs
+        className={styles.EntrySidebar.tabs()}
         selectedKey={selectedKey}
         onSelectionChange={key => {
           if (isMediaFile) return

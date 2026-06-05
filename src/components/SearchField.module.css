@@ -33,6 +33,9 @@
     }
 
     .SearchField-field-icon {
+      flex: 0 0 auto;
+      width: 20px;
+      height: 20px;
       color: var(--alinea-fg-subtle);
       font-size: 20px;
       margin-left: 8px;
@@ -40,7 +43,9 @@
     }
 
     .SearchField-field-pending {
-      margin-left: 8px;
+      flex: 0 0 auto;
+      margin-left: 2px;
+      color: var(--alinea-fg-subtle);
     }
 
     .SearchField-field-input {
@@ -63,7 +68,7 @@
         -webkit-appearance: none;
       }
 
-      &[value=''] + .SearchField-field-clear {
+      &[value=''] ~ .SearchField-field-clear {
         visibility: hidden;
       }
     }

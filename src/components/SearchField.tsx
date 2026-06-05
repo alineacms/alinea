@@ -38,20 +38,20 @@ export function SearchField({hasIcon, isPending, ...props}: SearchFieldProps) {
     >
       <Label {...labelProps(props)}>
         <div className={styles.SearchField.field()}>
-          {hasIcon && !isPending && (
+          {hasIcon && (
             <Icon
               icon={IcRoundSearch}
               className={styles.SearchField.field.icon()}
             />
           )}
-          {hasIcon && isPending && (
+          <Input className={styles.SearchField.field.input()} />
+          {isPending && (
             <ProgressCircle
               isIndeterminate
               aria-label="Refreshing..."
               className={styles.SearchField.field.pending()}
             />
           )}
-          <Input className={styles.SearchField.field.input()} />
           <Button className={styles.SearchField.field.clear()}>
             <Icon
               icon={IcRoundClose}

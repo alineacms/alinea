@@ -65,7 +65,7 @@ import {
 } from '../boot/MutationQueueEvent.js'
 import {LucideFile} from '../icons.js'
 
-const dashboardEntryOverviewLimit = 3
+export const dashboardEntryOverviewColumnCount = 5
 
 export interface DashboardRoute {
   workspace?: string
@@ -1999,7 +1999,7 @@ export class DashboardEntryData {
       if (!entry || entry instanceof Promise) return []
       const type = get(this.type).type
       return dashboardEntryOverviewFields(type)
-        .slice(0, dashboardEntryOverviewLimit)
+        .slice(0, dashboardEntryOverviewColumnCount)
         .map(([key, field]) => {
           const options = Field.options(
             field

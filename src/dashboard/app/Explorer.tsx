@@ -4,7 +4,7 @@ import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import type {ReactNode} from 'react'
+import {useState, useTransition, type ReactNode} from 'react'
 import {DialogTrigger, FileTrigger} from 'react-aria-components'
 import {
   IcRoundArrowDownward,
@@ -75,15 +75,27 @@ interface ExplorerHeaderRootMainProps {
 }
 
 function ExplorerSearch({explorer}: ExplorerSearchProps) {
-  const [search, setSearch] = useAtom(explorer.search)
+  const search = useAtomValue(explorer.search)
+  const setSearch = useSetAtom(explorer.search)
+  const [inputValue, setInputValue] = useState(search)
+  const [isPending, startTransition] = useTransition()
+
+  function onSearchChange(value: string) {
+    setInputValue(value)
+    startTransition(() => {
+      setSearch(value)
+    })
+  }
+
   return (
     <SearchField
       aria-label="Search"
       className={styles.Explorer.search()}
       hasIcon
+      isPending={isPending}
       placeholder="Search..."
-      value={search}
-      onChange={setSearch}
+      value={inputValue}
+      onChange={onSearchChange}
     />
   )
 }

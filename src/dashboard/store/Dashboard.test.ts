@@ -17,11 +17,14 @@ import {root} from '#/core/Root.js'
 import {type as createType} from '#/core/Type.js'
 import {localUser} from '#/core/User.js'
 import {workspace} from '#/core/Workspace.js'
+import {Field} from '#/index.js'
 import {atom} from 'jotai'
 import {createStore} from 'jotai/vanilla'
 import {
   Dashboard,
   DashboardEntryData,
+  type DashboardEntryOverviewCell,
+  dashboardEntryOverviewColumnCount,
   MissingEntryError,
   ReactiveNode
 } from './Dashboard.js'
@@ -284,6 +287,51 @@ class HierarchyGraph extends TestGraph {
   }
 }
 
+class OverviewGraph extends TestGraph {
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    const entry = {
+      id: 'overview-entry',
+      type: 'Page',
+      parentId: null,
+      workspace: 'main',
+      root: 'pages',
+      locale: null,
+      status: 'published',
+      main: true,
+      path: 'overview-entry',
+      title: 'Overview entry',
+      url: '/overview-entry',
+      filePath: 'pages/overview-entry.json',
+      seeded: null,
+      data: {
+        title: 'Overview entry',
+        path: 'overview-entry',
+        first: 'First',
+        second: 'Second',
+        third: 'Third',
+        fourth: 'Fourth',
+        fifth: 'Fifth',
+        sixth: 'Sixth',
+        seventh: 'Seventh',
+        eighth: 'Eighth'
+      }
+    } as const
+    const idFilter = 'id' in query ? query.id : undefined
+    if (hasInFilter(idFilter)) {
+      return Promise.resolve([
+        {
+          ...entry,
+          parents: [],
+          entries: [entry]
+        }
+      ] as AnyQueryResult<Query>)
+    }
+    return Promise.resolve([entry] as AnyQueryResult<Query>)
+  }
+}
+
 class TestEvents extends EventTarget {
   listeners = new Set<(event: Event) => void>()
 
@@ -415,6 +463,108 @@ test('Dashboard tracks entry reference scan progress', () => {
     complete: false
   })
   unsubscribe()
+})
+
+test('DashboardEntryData exposes five overview cells', async () => {
+  const originalWindow = globalThis.window
+  const testWindow = {
+    location: {
+      hash: '',
+      href: 'https://example.com/',
+      pathname: '/',
+      search: ''
+    },
+    history: {
+      pushState() {},
+      replaceState() {},
+      state: null
+    },
+    addEventListener() {},
+    removeEventListener() {}
+  } as unknown as Window & typeof globalThis
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: testWindow
+  })
+
+  try {
+    const Page = createType('Page', {
+      fields: {
+        title: Field.text('Title'),
+        first: Field.text('First'),
+        second: Field.text('Second'),
+        third: Field.text('Third'),
+        fourth: Field.text('Fourth'),
+        fifth: Field.text('Fifth'),
+        sixth: Field.text('Sixth'),
+        seventh: Field.text('Seventh'),
+        eighth: Field.text('Eighth')
+      }
+    })
+    const pages = root('Pages')
+    const main = workspace('Main', {
+      source: 'content/main',
+      roots: {pages}
+    })
+    const config = createConfig({
+      schema: {Page},
+      workspaces: {main},
+      roles: {
+        admin: role('Admin', {
+          permissions(policy) {
+            policy.allowAll()
+          }
+        })
+      }
+    })
+    const store = createStore()
+    const dashboard = new Dashboard(
+      new OverviewGraph(config),
+      config,
+      new EventTarget(),
+      new Client({config, url: 'https://example.com/api'}),
+      {},
+      {local: true}
+    )
+    await store.set(dashboard.setUserRoles, ['admin'])
+    await waitForPolicy(dashboard, store)
+
+    const entry = dashboard.entries('overview-entry')
+    const ready = await store.get(entry.readyState)
+    const data = ready.data
+    if (!data) throw new Error('Overview entry should be loaded')
+
+    const cells = await new Promise<Array<DashboardEntryOverviewCell>>(
+      resolve => {
+        let unsubscribe = () => {}
+        const check = () => {
+          const cells = store.get(data.overviewCells)
+          if (cells.length !== dashboardEntryOverviewColumnCount) return
+          unsubscribe()
+          resolve(cells)
+        }
+        unsubscribe = store.sub(data.overviewCells, check)
+        check()
+      }
+    )
+    test.equal(cells.map(cell => cell.id), [
+      'first',
+      'second',
+      'third',
+      'fourth',
+      'fifth'
+    ])
+    test.equal(cells.length, dashboardEntryOverviewColumnCount)
+  } finally {
+    if (originalWindow === undefined) {
+      Reflect.deleteProperty(globalThis, 'window')
+    } else {
+      Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: originalWindow
+      })
+    }
+  }
 })
 
 test('DashboardEntryData exposes incoming references', async () => {

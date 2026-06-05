@@ -1,3 +1,8 @@
+.EntrySidebar-tabs {
+  flex: 1;
+  min-height: 0;
+}
+
 .EntrySidebar-header {
   height: 48px;
   justify-content: space-between;
@@ -13,6 +18,7 @@
 }
 
 .EntrySidebar-historyPanel {
+  flex: 1;
   min-height: 0;
   margin-top: 0;
   border-radius: 0;
@@ -276,6 +282,7 @@
 }
 
 .EntrySidebar-referencesPanel {
+  flex: 1;
   min-height: 0;
   margin: 0;
   border-radius: 0;

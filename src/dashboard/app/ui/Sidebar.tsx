@@ -29,9 +29,12 @@ export interface SidebarBodyProps
   scroll?: boolean
 }
 
-export function SidebarBody({children, ...props}: SidebarBodyProps) {
+export function SidebarBody({children, className, ...props}: SidebarBodyProps) {
   return (
-    <div {...props} className={styles.SidebarBody()}>
+    <div
+      {...props}
+      className={styles.SidebarBody(styler.merge({className}))}
+    >
       {children}
     </div>
   )

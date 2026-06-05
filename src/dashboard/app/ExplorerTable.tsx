@@ -25,16 +25,17 @@ import type {
   DashboardEntryOverviewCell,
   DashboardExplorer
 } from '../store.js'
+import {dashboardEntryOverviewColumnCount} from '../store.js'
 import css from './ExplorerTable.module.css'
 import {Surface} from './ui/Surface.js'
 
 const styles = styler(css)
-const overviewColumnCount = 7
 
 interface ExplorerTableColumn {
   id: string
   index?: number
   kind: 'selection' | 'title' | 'overview' | 'filler'
+  minWidth?: number
   width: number | '1fr'
 }
 
@@ -201,14 +202,17 @@ export function ExplorerTable({
   const columns = useMemo<Array<ExplorerTableColumn>>(
     () => [
       {id: 'selection', kind: 'selection', width: 30},
-      {id: 'title', kind: 'title', width: 260},
-      ...Array.from({length: overviewColumnCount}, (_, index) => ({
-        id: `overview-${index}`,
-        index,
-        kind: 'overview' as const,
-        width: 180
-      })),
-      {id: 'filler', kind: 'filler', width: '1fr'}
+      {id: 'title', kind: 'title', width: 220},
+      ...Array.from(
+        {length: dashboardEntryOverviewColumnCount},
+        (_, index) => ({
+          id: `overview-${index}`,
+          index,
+          kind: 'overview' as const,
+          minWidth: 120,
+          width: '1fr' as const
+        })
+      )
     ],
     []
   )
@@ -248,7 +252,7 @@ export function ExplorerTable({
                   id={column.id}
                   isRowHeader={column.kind === 'title'}
                   maxWidth={column.kind === 'selection' ? 30 : undefined}
-                  minWidth={column.kind === 'selection' ? 30 : undefined}
+                  minWidth={column.kind === 'selection' ? 30 : column.minWidth}
                   width={column.width}
                   className={
                     column.kind === 'selection'

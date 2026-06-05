@@ -84,7 +84,8 @@ const Page = Config.document('Page', {
     featured: Field.check('Featured', {
       width: 0.5,
       description: 'Highlight on overview pages',
-      initialValue: true
+      initialValue: true,
+      overview: false
     }),
     category: Field.select('Category', {
       width: 0.5,
