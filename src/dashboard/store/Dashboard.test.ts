@@ -123,6 +123,83 @@ class ReferenceGraph extends TestGraph {
   }
 }
 
+class MediaGraph extends TestGraph {
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    if ('parentId' in query) return Promise.resolve([] as AnyQueryResult<Query>)
+    const entries = [
+      {
+        id: 'media-folder',
+        type: 'MediaLibrary',
+        parentId: null,
+        workspace: 'main',
+        root: 'media',
+        locale: null,
+        status: 'published',
+        main: true,
+        path: 'media-folder',
+        title: 'Media folder',
+        url: '/media-folder',
+        filePath: 'media/media-folder.json',
+        seeded: null,
+        data: {title: 'Media folder', path: 'media-folder'}
+      },
+      {
+        id: 'media-file',
+        type: 'MediaFile',
+        parentId: 'media-folder',
+        workspace: 'main',
+        root: 'media',
+        locale: null,
+        status: 'published',
+        main: true,
+        path: 'media-folder/media-file.png',
+        title: 'Media file',
+        url: '/media-folder/media-file.png',
+        filePath: 'media/media-folder/media-file.png.json',
+        seeded: null,
+        data: {
+          title: 'Media file',
+          path: 'media-file.png',
+          location: '/media-file.png'
+        }
+      }
+    ] as const
+    if (!('groupBy' in query)) {
+      return Promise.resolve(entries as AnyQueryResult<Query>)
+    }
+    return Promise.resolve([
+      {
+        id: 'media-folder',
+        type: 'MediaLibrary',
+        parentId: null,
+        workspace: 'main',
+        root: 'media',
+        parents: [],
+        entries: [entries[0]]
+      },
+      {
+        id: 'media-file',
+        type: 'MediaFile',
+        parentId: 'media-folder',
+        workspace: 'main',
+        root: 'media',
+        parents: [
+          {
+            id: 'media-folder',
+            path: 'media-folder',
+            type: 'MediaLibrary',
+            status: 'published',
+            main: true
+          }
+        ],
+        entries: [entries[1]]
+      }
+    ] as AnyQueryResult<Query>)
+  }
+}
+
 class TestEvents extends EventTarget {
   listeners = new Set<(event: Event) => void>()
 
@@ -378,6 +455,122 @@ test('DashboardEntry ready state resolves missing entries', async () => {
   test.equal(ready.pending, false)
   test.equal(ready.data, undefined)
   test.ok(ready.error instanceof MissingEntryError)
+})
+
+test('DashboardRoot explorer opens media libraries but not focused files', async () => {
+  const originalWindow = globalThis.window
+  const testWindow = {
+    location: {
+      hash: '',
+      href: 'https://example.com/',
+      pathname: '/',
+      search: ''
+    },
+    history: {
+      pushState() {},
+      replaceState() {},
+      state: null
+    },
+    addEventListener() {},
+    removeEventListener() {}
+  } as unknown as Window & typeof globalThis
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: testWindow
+  })
+
+  try {
+    const createDashboard = async () => {
+      testWindow.location.hash = ''
+      testWindow.location.href = 'https://example.com/'
+      const media = root('Media')
+      const main = workspace('Main', {
+        source: 'content/main',
+        roots: {media}
+      })
+      const config = createConfig({
+        schema: {},
+        workspaces: {main},
+        roles: {
+          admin: role('Admin', {
+            permissions(policy) {
+              policy.allowAll()
+            }
+          })
+        }
+      })
+      const store = createStore()
+      const dashboard = new Dashboard(
+        new MediaGraph(config),
+        config,
+        new EventTarget(),
+        new Client({config, url: 'https://example.com/api'}),
+        {},
+        {local: true}
+      )
+      await store.set(dashboard.setUserRoles, ['admin'])
+      await waitForPolicy(dashboard, store)
+      return {
+        dashboard,
+        mediaRoot: dashboard.workspace('main').root('media'),
+        store
+      }
+    }
+
+    const file = await createDashboard()
+    await file.store.set(file.dashboard.route, {
+      workspace: 'main',
+      root: 'media',
+      entry: 'media-file'
+    })
+    await file.store.get(file.dashboard.entries('media-file').readyState)
+
+    test.equal(file.store.get(file.mediaRoot.explorer.location), {
+      workspace: 'main',
+      root: 'media',
+      parentId: undefined
+    })
+
+    const folder = await createDashboard()
+    const folderEntry = folder.dashboard.entries('media-folder')
+    const unsubscribe = folder.store.sub(folderEntry.data, () => {})
+    await folder.store.get(folderEntry.readyState)
+    await folder.store.set(folder.dashboard.route, {
+      workspace: 'main',
+      root: 'media',
+      entry: 'media-folder'
+    })
+
+    test.equal(folder.store.get(folder.mediaRoot.explorer.location), {
+      workspace: 'main',
+      root: 'media',
+      parentId: 'media-folder'
+    })
+
+    folder.store.set(folder.mediaRoot.explorer.location, {
+      workspace: 'main',
+      root: 'media'
+    })
+    folder.store.set(folder.mediaRoot.explorer.onAction, folderEntry)
+    unsubscribe()
+
+    test.equal(folder.store.get(folder.mediaRoot.explorer.location), {
+      workspace: 'main',
+      root: 'media',
+      parentId: 'media-folder'
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 0))
+  } finally {
+    if (originalWindow === undefined) {
+      Reflect.deleteProperty(globalThis, 'window')
+    } else {
+      Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: originalWindow
+      })
+    }
+  }
 })
 
 test('DashboardExplorer filters queued uploads to its current folder', () => {
