@@ -78,13 +78,13 @@ interface ExplorerTableStoryProps {
 }
 
 function ExplorerTableStory({explorer}: ExplorerTableStoryProps) {
-  const [, loadedItems] = useAtomValue(explorer.items)
+  const items = useAtomValue(explorer.itemsResource)
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({})
   return (
     <ExplorerTable
       dragAndDropHooks={dragAndDropHooks}
       explorer={explorer}
-      items={loadedItems ?? []}
+      items={items}
       renderEmptyState={() => <div style={emptyStyle}>No results found</div>}
     />
   )

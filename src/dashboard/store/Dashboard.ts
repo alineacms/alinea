@@ -1283,58 +1283,58 @@ export class DashboardExplorer {
     }
   )
 
-  items = atomWithPending(
-    atom(async get => {
-      get(this.dashboard.sha) // subscribe to content changes, todo: refine
-      const location = get(this.location)
-      const db = get(this.dashboard.db)
-      const search = get(this.search)
-      const root = get(this.root)
-      const sort = get(this.sort)
-      const filter = get(this.filter)
-      const fieldMap: Record<ExplorerSortBy, Expr<string | number>> = {
-        title: Entry.title,
-        path: Entry.path,
-        size: MediaFile.size,
+  itemsResource = atom(async get => {
+    get(this.dashboard.sha) // subscribe to content changes, todo: refine
+    const location = get(this.location)
+    const db = get(this.dashboard.db)
+    const search = get(this.search)
+    const root = get(this.root)
+    const sort = get(this.sort)
+    const filter = get(this.filter)
+    const fieldMap: Record<ExplorerSortBy, Expr<string | number>> = {
+      title: Entry.title,
+      path: Entry.path,
+      size: MediaFile.size,
+      id: Entry.id,
+      index: Entry.index
+    }
+    const fieldToSort = fieldMap[sort.sortBy]
+    const orderBy = {
+      [sort.direction]: fieldToSort,
+      caseSensitive: fieldToSort !== Entry.id
+    }
+    if (!root) return []
+    const locale = get(root.selectedLocale)
+    const searchAll = Boolean(search && this.#options.searchDepth === 'all')
+    const flatList = Boolean(this.#options.condition) || searchAll
+    const policy = get(this.dashboard.policy)
+    const children = await db.find({
+      locale,
+      search: search || undefined,
+      workspace: location.workspace,
+      root: location.root,
+      parentId: flatList ? undefined : (location.parentId ?? null),
+      filter: this.#options.condition,
+      select: {
         id: Entry.id,
-        index: Entry.index
-      }
-      const fieldToSort = fieldMap[sort.sortBy]
-      const orderBy = {
-        [sort.direction]: fieldToSort,
-        caseSensitive: fieldToSort !== Entry.id
-      }
-      if (!root) return []
-      const locale = get(root.selectedLocale)
-      const searchAll = Boolean(search && this.#options.searchDepth === 'all')
-      const flatList = Boolean(this.#options.condition) || searchAll
-      const policy = get(this.dashboard.policy)
-      const children = await db.find({
-        locale,
-        search: search || undefined,
-        workspace: location.workspace,
-        root: location.root,
-        parentId: flatList ? undefined : (location.parentId ?? null),
-        filter: this.#options.condition,
-        select: {
-          id: Entry.id,
-          type: Entry.type,
-          workspace: Entry.workspace,
-          root: Entry.root,
-          parents: Entry.parents,
-          locale: Entry.locale
-        },
-        orderBy,
-        status: 'preferDraft',
-        type: filter
-      })
-      const entries = children
-        .filter(child => policy.canRead(child))
-        .map(child => this.dashboard.entries(child.id))
-      await Promise.all(entries.map(entry => get(entry.preload)))
-      return entries
+        type: Entry.type,
+        workspace: Entry.workspace,
+        root: Entry.root,
+        parents: Entry.parents,
+        locale: Entry.locale
+      },
+      orderBy,
+      status: 'preferDraft',
+      type: filter
     })
-  )
+    const entries = children
+      .filter(child => policy.canRead(child))
+      .map(child => this.dashboard.entries(child.id))
+    await Promise.all(entries.map(entry => get(entry.preload)))
+    return entries
+  })
+
+  items = atomWithPending(this.itemsResource)
 
   parentsMenu = unwrap(
     atom(async get => {
@@ -1868,7 +1868,7 @@ export class DashboardEntry {
   view = atom(
     get => get(this.#selectedView),
     (get, set, view: DashboardEntryView | undefined) => {
-      set(this.#selectedView, view)
+      startTransition(() => set(this.#selectedView, view))
     }
   )
 }
@@ -2721,17 +2721,15 @@ export class DashboardRoot {
     public key: string
   ) {
     const selectedParent = unwrap(
-      atom(async get => {
+      atom(get => {
         const route = get(this.workspace.dashboard.route)
         if (
           route.workspace === workspace.key &&
           route.root === key &&
           route.entry
         ) {
-          const ready = await get(
-            this.workspace.dashboard.entries(route.entry).readyState
-          )
-          if (ready.data && get(ready.data.view) === 'overview') return route.entry
+          const {data} = get(this.workspace.dashboard.entries(route.entry).data)
+          if (data && get(data.view) === 'overview') return route.entry
           return keepPreviousExplorerParent
         }
         return undefined
@@ -2762,10 +2760,7 @@ export class DashboardRoot {
             const route = get(workspace.dashboard.route)
             const selectedWorkspace = get(workspace.dashboard.selectedWorkspace)
             const selectedRoot = get(workspace.dashboard.selectedRoot)
-            if (
-              selectedWorkspace === workspace.key &&
-              selectedRoot === key
-            )
+            if (selectedWorkspace === workspace.key && selectedRoot === key)
               set(workspace.dashboard.route, {
                 workspace: workspace.key,
                 root: key,

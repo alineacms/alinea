@@ -16,15 +16,6 @@
   pointer-events: none;
 }
 
-.ExplorerList-loading {
-  display: flex;
-  min-height: 280px;
-  height: 100%;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-}
-
 .ExplorerList-drag-preview {
   display: inline-flex;
   align-items: center;

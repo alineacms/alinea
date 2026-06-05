@@ -329,10 +329,11 @@ export function ExplorerHeader({
 }
 
 export function ExplorerBody({explorer}: ExplorerBodyProps) {
+  const items = useAtomValue(explorer.itemsResource)
   return (
     <RailBody>
       <div className={styles.Explorer.viewport()}>
-        <ExplorerList explorer={explorer} />
+        <ExplorerList explorer={explorer} items={items} />
       </div>
     </RailBody>
   )
