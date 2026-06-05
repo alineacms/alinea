@@ -18,8 +18,10 @@ export interface SelectConfig<Value> extends FieldOptions<Value> {
   placeholder?: string
 }
 
-export interface SelectOptions<Key extends string, Value = Key>
-  extends SelectConfig<Value> {
+export interface SelectOptions<
+  Key extends string,
+  Value = Key
+> extends SelectConfig<Value> {
   options: Record<Key, string>
 }
 
@@ -37,17 +39,15 @@ export type MultipleSelectOptions<Key extends string> = SelectOptions<
   Array<Key>
 >
 
-type SelectKey<Value extends SelectValue> = Value extends Array<infer Key>
-  ? Extract<Key, string>
-  : Extract<NonNullable<Value>, string>
+type SelectKey<Value extends SelectValue> =
+  Value extends Array<infer Key>
+    ? Extract<Key, string>
+    : Extract<NonNullable<Value>, string>
 
 export class SelectField<
   Value extends SelectValue,
   Key extends string = SelectKey<Value>
-> extends ScalarField<
-  Value,
-  SelectOptions<Key, Value>
-> {}
+> extends ScalarField<Value, SelectOptions<Key, Value>> {}
 
 type AddNullable<Keys, Initial> = Initial extends undefined ? Keys | null : Keys
 
@@ -69,6 +69,7 @@ export function select<
   >({
     options: {
       label,
+      overview: true,
       ...options
     },
     view: viewKeys.SelectInput
@@ -91,6 +92,7 @@ export namespace select {
     >({
       options: {
         label,
+        overview: true,
         initialValue: [],
         ...options
       },

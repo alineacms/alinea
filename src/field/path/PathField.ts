@@ -19,7 +19,7 @@ export function path(
   if (options.shared)
     throw new Error('The shared option is not supported on Path fields')
   return new PathField({
-    options: {label, ...options},
+    options: {label, overview: true, ...options},
     view: viewKeys.PathInput
   })
 }

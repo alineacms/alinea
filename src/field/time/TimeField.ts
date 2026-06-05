@@ -30,7 +30,7 @@ export function time(
   options: WithoutLabel<TimeOptions> = {}
 ): TimeField {
   return new TimeField({
-    options: {label, ...options},
+    options: {label, overview: true, ...options},
     view: viewKeys.TimeInput
   })
 }

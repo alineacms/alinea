@@ -32,7 +32,12 @@ export class TextField extends ScalarField<string, TextOptions> {}
 /** Create a text field */
 export function text(label: string, options: WithoutLabel<TextOptions> = {}) {
   return new TextField({
-    options: {label, ...options, initialValue: options.initialValue ?? ''},
+    options: {
+      label,
+      overview: !options.multiline,
+      ...options,
+      initialValue: options.initialValue ?? ''
+    },
     view: viewKeys.TextInput
   })
 }

@@ -24,7 +24,7 @@ export function date(
   options: WithoutLabel<DateOptions> = {}
 ): DateField {
   return new DateField({
-    options: {label, ...options},
+    options: {label, overview: true, ...options},
     view: viewKeys.DateInput
   })
 }

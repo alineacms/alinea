@@ -25,7 +25,7 @@ export function number(
   options: WithoutLabel<NumberOptions> = {}
 ): NumberField {
   return new NumberField({
-    options: {label, ...options},
+    options: {label, overview: true, ...options},
     view: viewKeys.NumberInput
   })
 }

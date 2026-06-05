@@ -141,6 +141,7 @@ const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaLibrary, label: 'Folder'}
 ]
 const sortingOptions: Array<{id: ExplorerSortBy; label: string}> = [
+  {id: 'index', label: 'Index'},
   {id: 'title', label: 'Title'},
   {id: 'id', label: 'Creation date'},
   {id: 'size', label: 'Size'}

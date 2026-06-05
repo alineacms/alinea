@@ -1,0 +1,206 @@
+.ExplorerTable-viewport {
+  box-sizing: border-box;
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.ExplorerTable-surface {
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ExplorerTable {
+  display: block;
+  box-sizing: border-box;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  color: var(--alinea-fg);
+  background: var(--alinea-bg);
+  border-collapse: collapse;
+
+  &[data-drop-target]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--alinea-bg) 74%, transparent);
+    outline: 2px dashed var(--alinea-blue-600);
+    outline-offset: -10px;
+  }
+}
+
+.ExplorerTable-header {
+  height: 1px;
+  min-height: 1px;
+  overflow: hidden;
+}
+
+.ExplorerTable-column,
+.ExplorerTable-column-selection {
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.ExplorerTable-row {
+  box-sizing: border-box;
+  width: inherit;
+  min-width: 100%;
+  height: inherit;
+  min-height: 0;
+  outline: none;
+  color: var(--alinea-fg);
+  background: var(--alinea-bg);
+  border-bottom: 1px solid var(--alinea-border);
+
+  &[data-hovered] {
+    background: var(--alinea-bg-muted);
+  }
+
+  &[data-selected] {
+    background: color-mix(in srgb, var(--alinea-blue-600) 9%, var(--alinea-bg));
+  }
+
+  &[data-focus-visible] {
+    box-shadow: inset 0 0 0 2px var(--alinea-ring);
+  }
+}
+
+.ExplorerTable-cell {
+  box-sizing: border-box;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  overflow: hidden;
+  vertical-align: middle;
+  border: 0;
+  white-space: nowrap;
+}
+
+.ExplorerTable-cell-selection {
+  box-sizing: border-box;
+  display: flex;
+  width: 16px;
+  height: 32px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 0;
+}
+
+.ExplorerTable-cell-title {
+  box-sizing: border-box;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px 0 0;
+  overflow: hidden;
+  vertical-align: middle;
+  border: 0;
+  white-space: nowrap;
+}
+
+.ExplorerTable-checkbox {
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  align-items: center;
+  justify-content: center;
+  color: var(--alinea-bg);
+  border: 1px solid var(--alinea-border);
+  border-radius: 4px;
+  background: var(--alinea-bg);
+  vertical-align: middle;
+  outline: none;
+
+  &[data-selected] {
+    color: var(--alinea-bg);
+    border-color: var(--alinea-blue-600);
+    background: var(--alinea-blue-600);
+  }
+
+  &[data-focus-visible] {
+    box-shadow: 0 0 0 2px var(--alinea-ring);
+  }
+}
+
+.ExplorerTable-checkbox-mark {
+  display: block;
+  width: 7px;
+  height: 4px;
+  transform: rotate(-45deg) translateY(-1px);
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  opacity: 0;
+}
+
+.ExplorerTable-checkbox[data-selected] .ExplorerTable-checkbox-mark {
+  opacity: 1;
+}
+
+.ExplorerTable-titleAction {
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--alinea-link);
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 32px;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--alinea-link) 58%, transparent);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &[data-hovered],
+  &:hover {
+    color: var(--alinea-link-hover);
+    text-decoration-color: var(--alinea-link-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: -1px;
+  }
+}
+
+.ExplorerTable-field {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: baseline;
+  gap: 10px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 32px;
+  vertical-align: middle;
+}
+
+.ExplorerTable-field-label {
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--alinea-fg) 28%, transparent);
+  font-weight: 500;
+}
+
+.ExplorerTable-field-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--alinea-fg);
+}

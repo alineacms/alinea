@@ -1,296 +1,22 @@
-import {Button, Icon, ProgressCircle} from '#/components.js'
+import {Icon, ProgressCircle} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {Size} from '@react-stately/virtualizer'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
-import type {ComponentType} from 'react'
-import {Fragment, memo, Suspense, useMemo, type ReactNode} from 'react'
-import {
-  GridLayout,
-  type GridLayoutOptions,
-  GridList,
-  GridListItem,
-  type Key,
-  ListLayout,
-  type ListLayoutOptions,
-  Virtualizer
-} from 'react-aria-components'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {Suspense} from 'react'
 import {
   isFileDropItem,
   useDragAndDrop
 } from 'react-aria-components/useDragAndDrop'
-import {
-  IcRoundDragIndicator,
-  IcRoundKeyboardArrowRight,
-  IcTwotoneDescription,
-  IcTwotoneFolder
-} from '../icons.js'
 import type {
   DashboardEntry,
-  DashboardEntryData,
   DashboardExplorer,
   DashboardRoot
 } from '../store.js'
-import {ExplorerFileCard} from './ExplorerFileCard.js'
-import {Surface} from './ui/Surface.js'
+import {ExplorerCards} from './ExplorerCards.js'
+import {ExplorerTable} from './ExplorerTable.js'
 import css from './ExplorerList.module.css'
 
 const styles = styler(css)
-
-const rowLayoutOptions: ListLayoutOptions = {
-  rowHeight: 80,
-  gap: 8,
-  padding: 12
-}
-
-const cardLayoutOptions: GridLayoutOptions = {
-  minItemSize: new Size(240, 196),
-  maxItemSize: new Size(320, 196),
-  minSpace: new Size(20, 20),
-  maxColumns: 5,
-  preserveAspectRatio: true
-}
-
-interface ExplorerItemProps {
-  entry: DashboardEntry
-  explorer: DashboardExplorer
-}
-
-const ExplorerItem = memo(function ExplorerItem({
-  entry,
-  explorer
-}: ExplorerItemProps) {
-  const view = useAtomValue(explorer.view)
-  const {data} = useAtomValue(entry.data)
-  if (!data) return <ExplorerLoadingItem entry={entry} view={view} />
-  return (
-    <ExplorerLoadedItem
-      entry={entry}
-      data={data}
-      explorer={explorer}
-      view={view}
-    />
-  )
-})
-
-interface ExplorerLoadingItemProps {
-  entry: DashboardEntry
-  view: 'card' | 'row'
-}
-
-function ExplorerLoadingItem({
-  entry,
-  view
-}: ExplorerLoadingItemProps) {
-  return (
-    <GridListItem
-      id={entry.id}
-      textValue="Loading entry"
-      className={styles.ExplorerItem({loading: true})}
-      aria-label="Loading entry"
-    >
-      <Surface
-        className={styles.ExplorerItem.card()}
-        variant={view === 'row' ? 'muted' : undefined}
-      >
-        <div className={styles.ExplorerEntryCard(view)}>
-          <div className={styles.ExplorerEntryCard.top()}>
-            <div
-              className={styles.ExplorerEntryCard.iconSkeleton()}
-              aria-hidden="true"
-            />
-          </div>
-          <div className={styles.ExplorerEntryCard.body()}>
-            <div className={styles.ExplorerEntryCard.body.inner()}>
-              <div className={styles.ExplorerEntryCard.skeleton({wide: true})} />
-              <div className={styles.ExplorerEntryCard.skeleton()} />
-            </div>
-          </div>
-        </div>
-      </Surface>
-    </GridListItem>
-  )
-}
-
-interface ExplorerLoadedItemProps {
-  entry: DashboardEntry
-  data: DashboardEntryData
-  explorer: DashboardExplorer
-  view: 'card' | 'row'
-}
-
-const ExplorerLoadedItem = memo(function ExplorerLoadedItem({
-  entry,
-  data,
-  explorer,
-  view
-}: ExplorerLoadedItemProps) {
-  const label = useAtomValue(data.label)
-  const icon = useAtomValue(data.icon)
-  const type = useAtomValue(data.type)
-  const hasChildren = useAtomValue(data.hasChildren)
-  const parentIds = useAtomValue(data.parentIds)
-  const [parentsPending, parents] = useAtomValue(data.parentsState)
-  const info = useAtomValue(
-    useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
-  )
-  const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
-  const onAction = useSetAtom(explorer.onAction)
-  return (
-    <GridListItem
-      id={entry.id}
-      textValue={label}
-      className={styles.ExplorerItem()}
-      onDoubleClick={() => onAction(entry)}
-    >
-      <Button
-        slot="drag"
-        aria-label={`Drag ${label}`}
-        appearance="plain"
-        className={styles.ExplorerItem.drag.handle()}
-      >
-        <IcRoundDragIndicator />
-      </Button>
-      <Surface
-        className={styles.ExplorerItem.card({file: Boolean(info)})}
-        variant={view === 'row' ? 'muted' : undefined}
-      >
-        {info ? (
-          <ExplorerFileCard
-            file={info}
-            label={label}
-            layout={view}
-            parents={
-              <ExplorerEntryParents
-                loading={parentsPending && parents === undefined}
-                parentIds={parentIds}
-                parents={parents ?? []}
-              />
-            }
-          />
-        ) : (
-          <ExplorerEntryCard
-            icon={icon ?? fallbackIcon}
-            label={label}
-            parents={
-              <ExplorerEntryParents
-                loading={parentsPending && parents === undefined}
-                parentIds={parentIds}
-                parents={parents ?? []}
-              />
-            }
-            typeLabel={type.label}
-            layout={view}
-          />
-        )}
-      </Surface>
-    </GridListItem>
-  )
-})
-
-interface ExplorerEntryCardProps {
-  icon?: ComponentType
-  label: string
-  parents?: ReactNode
-  typeLabel: string
-  layout: 'card' | 'row'
-}
-
-function ExplorerEntryCard({
-  icon,
-  label,
-  parents,
-  typeLabel,
-  layout
-}: ExplorerEntryCardProps) {
-  return (
-    <div className={styles.ExplorerEntryCard(layout)}>
-      <div className={styles.ExplorerEntryCard.top()}>
-        {icon && (
-          <Icon icon={icon} className={styles.ExplorerEntryCard.icon()} />
-        )}
-      </div>
-      <div className={styles.ExplorerEntryCard.body()}>
-        <div className={styles.ExplorerEntryCard.body.inner()}>
-          {parents}
-          <div className={styles.ExplorerEntryCard.label()}>{label}</div>
-          <div className={styles.ExplorerEntryCard.meta()}>{typeLabel}</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-interface ExplorerEntryParentsProps {
-  loading: boolean
-  parentIds: Array<string>
-  parents: Array<DashboardEntry>
-}
-
-function ExplorerEntryParents({
-  loading,
-  parentIds,
-  parents
-}: ExplorerEntryParentsProps) {
-  if (loading && parentIds.length > 0) return <ExplorerEntryParentsLoading />
-  if (parents.length === 0) return null
-  return (
-    <div className={styles.ExplorerEntryParents()}>
-      {parents
-        .map<ReactNode>(parent => (
-          <ExplorerEntryParent key={parent.id} parent={parent} />
-        ))
-        .reduce((prev, curr, index) => [
-          prev,
-          <IcRoundKeyboardArrowRight
-            aria-hidden
-            className={styles.ExplorerEntryParents.separator()}
-            key={`separator-${index}`}
-          />,
-          curr
-        ])}
-    </div>
-  )
-}
-
-function ExplorerEntryParentsLoading() {
-  return (
-    <div className={styles.ExplorerEntryParents()}>
-      <span
-        className={styles.ExplorerEntryParents.skeleton({wide: true})}
-        aria-hidden="true"
-      />
-      <IcRoundKeyboardArrowRight
-        aria-hidden
-        className={styles.ExplorerEntryParents.separator()}
-      />
-      <span
-        className={styles.ExplorerEntryParents.skeleton()}
-        aria-hidden="true"
-      />
-    </div>
-  )
-}
-
-interface ExplorerEntryParentProps {
-  parent: DashboardEntry
-}
-
-function ExplorerEntryParent({parent}: ExplorerEntryParentProps) {
-  const {data} = useAtomValue(parent.data)
-  if (!data) return null
-  return <ExplorerLoadedEntryParent parent={data} />
-}
-
-interface ExplorerLoadedEntryParentProps {
-  parent: DashboardEntryData
-}
-
-function ExplorerLoadedEntryParent({parent}: ExplorerLoadedEntryParentProps) {
-  const label = useAtomValue(parent.label)
-  return <Fragment>{label}</Fragment>
-}
 
 interface EmptyResultsProps {
   root: DashboardRoot
@@ -328,12 +54,6 @@ export function ExplorerList({explorer}: ExplorerListProps) {
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
-  const [selected, setSelected] = useAtom(explorer.selection)
-  const onAction = useSetAtom(explorer.onAction)
-  function onItemAction(key: Key) {
-    const entry = items.find(item => item.id === String(key))
-    if (entry) onAction(entry)
-  }
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     acceptedDragTypes: isMedia && canUpload ? 'all' : [],
     getItems,
@@ -374,55 +94,19 @@ export function ExplorerList({explorer}: ExplorerListProps) {
           </div>
         )}
         {view === 'card' ? (
-          <div className={styles.ExplorerList.viewport()}>
-            <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
-              <GridList
-                aria-label="Explorer entries"
-                items={items}
-                layout="grid"
-                className={styles.ExplorerList(view)}
-                selectionMode={explorer.selectionMode}
-                selectionBehavior={explorer.selectionBehavior}
-                dragAndDropHooks={dragAndDropHooks}
-                selectedKeys={selected}
-                onSelectionChange={setSelected}
-                onAction={
-                  explorer.selectionBehavior === 'replace'
-                    ? onItemAction
-                    : undefined
-                }
-                renderEmptyState={() => <EmptyResults root={root} />}
-                style={{display: 'block', width: '100%', height: '100%'}}
-              >
-                {item => <ExplorerItem entry={item} explorer={explorer} />}
-              </GridList>
-            </Virtualizer>
-          </div>
+          <ExplorerCards
+            dragAndDropHooks={dragAndDropHooks}
+            explorer={explorer}
+            items={items}
+            renderEmptyState={() => <EmptyResults root={root} />}
+          />
         ) : (
-          <div className={styles.ExplorerList.viewport()}>
-            <Virtualizer layout={ListLayout} layoutOptions={rowLayoutOptions}>
-              <GridList
-                aria-label="Explorer entries"
-                items={items}
-                layout="stack"
-                className={styles.ExplorerList(view)}
-                selectionMode={explorer.selectionMode}
-                selectionBehavior={explorer.selectionBehavior}
-                dragAndDropHooks={dragAndDropHooks}
-                selectedKeys={selected}
-                onSelectionChange={setSelected}
-                onAction={
-                  explorer.selectionBehavior === 'replace'
-                    ? onItemAction
-                    : undefined
-                }
-                renderEmptyState={() => <EmptyResults root={root} />}
-                style={{display: 'block', width: '100%', height: '100%'}}
-              >
-                {item => <ExplorerItem entry={item} explorer={explorer} />}
-              </GridList>
-            </Virtualizer>
-          </div>
+          <ExplorerTable
+            dragAndDropHooks={dragAndDropHooks}
+            explorer={explorer}
+            items={items}
+            renderEmptyState={() => <EmptyResults root={root} />}
+          />
         )}
       </Suspense>
     </div>

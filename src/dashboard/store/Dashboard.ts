@@ -1039,7 +1039,7 @@ export interface DashboardMenuItem {
   label: string
 }
 
-export type ExplorerSortBy = 'title' | 'path' | 'size' | 'id'
+export type ExplorerSortBy = 'title' | 'path' | 'size' | 'id' | 'index'
 export type ExplorerSortDirections = 'asc' | 'desc'
 export type ExplorerSort = {
   sortBy: ExplorerSortBy
@@ -1123,11 +1123,19 @@ export class DashboardExplorer {
       set(this.#selectedView, next)
     }
   )
-  #sort = atom<ExplorerSort>({sortBy: 'title', direction: 'asc'})
+  #sort = atom<ExplorerSort | undefined>(undefined)
   sort = atom(
-    get => get(this.#sort),
+    get => {
+      const selected = get(this.#sort)
+      if (selected) return selected
+      const isMedia = get(this.isMedia)
+      return {
+        sortBy: isMedia ? 'title' : 'index',
+        direction: 'asc'
+      } satisfies ExplorerSort
+    },
     (get, set, sortBy: ExplorerSortBy) => {
-      const sort = get(this.#sort)
+      const sort = get(this.sort)
       const direction =
         sort.sortBy === sortBy && sort.direction === 'desc' ? 'asc' : 'desc'
       set(this.#sort, {sortBy, direction})
@@ -1281,7 +1289,8 @@ export class DashboardExplorer {
         title: Entry.title,
         path: Entry.path,
         size: MediaFile.size,
-        id: Entry.id
+        id: Entry.id,
+        index: Entry.index
       }
       const fieldToSort = fieldMap[sort.sortBy]
       const orderBy = {

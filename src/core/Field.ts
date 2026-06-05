@@ -13,6 +13,8 @@ export interface FieldOptions<StoredValue> {
   label: string
   /** Hide this field in the dashboard */
   hidden?: boolean
+  /** Display this field in overview listings */
+  overview?: boolean
   /** Mark this field as read-only */
   readOnly?: boolean
   /** The initial value of the field */

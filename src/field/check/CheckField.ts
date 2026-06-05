@@ -26,7 +26,7 @@ export function check(
   options: WithoutLabel<CheckOptions> = {}
 ): CheckField {
   return new CheckField({
-    options: {...options, label},
+    options: {overview: true, ...options, label},
     view: viewKeys.CheckInput
   })
 }
