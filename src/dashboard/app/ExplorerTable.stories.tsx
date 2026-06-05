@@ -78,7 +78,7 @@ interface ExplorerTableStoryProps {
 }
 
 function ExplorerTableStory({explorer}: ExplorerTableStoryProps) {
-  const items = useAtomValue(explorer.itemsResource)
+  const items = useAtomValue(explorer.items)
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({})
   return (
     <ExplorerTable

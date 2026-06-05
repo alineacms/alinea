@@ -65,6 +65,8 @@ import {
 } from '../boot/MutationQueueEvent.js'
 import {LucideFile} from '../icons.js'
 
+const dashboardEntryOverviewLimit = 3
+
 export interface DashboardRoute {
   workspace?: string
   root?: string
@@ -88,6 +90,12 @@ export interface DashboardCreateEntryRequest {
   parentId?: string
   copyFrom?: string
   insertOrder?: 'first' | 'last'
+}
+
+export interface DashboardEntryOverviewCell {
+  id: string
+  label: string
+  value: string
 }
 
 export interface DashboardOptions {
@@ -1283,7 +1291,7 @@ export class DashboardExplorer {
     }
   )
 
-  itemsResource = atom(async get => {
+  items = atom(async get => {
     get(this.dashboard.sha) // subscribe to content changes, todo: refine
     const location = get(this.location)
     const db = get(this.dashboard.db)
@@ -1333,8 +1341,6 @@ export class DashboardExplorer {
     await Promise.all(entries.map(entry => get(entry.preload)))
     return entries
   })
-
-  items = atomWithPending(this.itemsResource)
 
   parentsMenu = unwrap(
     atom(async get => {
@@ -1873,12 +1879,43 @@ export class DashboardEntry {
   )
 }
 
+interface DashboardEntryOverviewFieldOptions extends FieldOptions<unknown> {
+  options?: Record<string, string>
+}
+
+function dashboardEntryOverviewFields(type: Type): Array<[string, Field]> {
+  return Object.entries(Type.fields(type)).flatMap(([key, field]) => {
+    const options = Field.options(field) as FieldOptions<unknown>
+    if (options.hidden || options.overview !== true) return []
+    if (key === 'title') return []
+    return [[key, field]]
+  })
+}
+
+function formatDashboardEntryOverviewValue(
+  value: unknown,
+  options: DashboardEntryOverviewFieldOptions
+): string {
+  if (value === undefined || value === null || value === '') return '-'
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '-'
+    return value
+      .map(item => formatDashboardEntryOverviewValue(item, options))
+      .join(', ')
+  }
+  if (typeof value === 'string') return options.options?.[value] ?? value
+  if (typeof value === 'number') return String(value)
+  return JSON.stringify(value)
+}
+
 export class DashboardEntryData {
   workspaceKey: Atom<string>
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
   type: Atom<DashboardType>
   currentEntry: Atom<Promise<Entry | null> | Entry | null>
+  overviewCells: Atom<Array<DashboardEntryOverviewCell>>
   defaultView: Atom<'edit' | 'overview'>
   view: WritableAtom<DashboardEntryView, [view: DashboardEntryView], void>
   locales: Atom<Map<string | null, EntryVersionData>>
@@ -1957,6 +1994,26 @@ export class DashboardEntryData {
         }
       })
     )
+    this.overviewCells = atom(get => {
+      const entry = get(this.currentEntry)
+      if (!entry || entry instanceof Promise) return []
+      const type = get(this.type).type
+      return dashboardEntryOverviewFields(type)
+        .slice(0, dashboardEntryOverviewLimit)
+        .map(([key, field]) => {
+          const options = Field.options(
+            field
+          ) as DashboardEntryOverviewFieldOptions
+          return {
+            id: key,
+            label: Field.label(field),
+            value: formatDashboardEntryOverviewValue(
+              entry.data[key],
+              options
+            )
+          }
+        })
+    })
   }
 
   get dashboard() {

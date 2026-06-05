@@ -1,4 +1,4 @@
-import {Icon, ProgressCircle} from '#/components.js'
+import {Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
@@ -33,14 +33,13 @@ function EmptyResults({root}: EmptyResultsProps) {
 
 export interface ExplorerListProps {
   explorer: DashboardExplorer
-  items: Array<DashboardEntry>
 }
 
-export function ExplorerList({explorer, items}: ExplorerListProps) {
+export function ExplorerList({explorer}: ExplorerListProps) {
+  const items = useAtomValue(explorer.items)
   const view = useAtomValue(explorer.view)
   const root = useAtomValue(explorer.root)
   assert(root, 'ExplorerList requires a root')
-  const [isPending] = useAtomValue(explorer.items)
   const getItems = useSetAtom(explorer.getItems)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
@@ -71,11 +70,6 @@ export function ExplorerList({explorer, items}: ExplorerListProps) {
   })
   return (
     <div className={styles.ExplorerList()}>
-      {isPending && (
-        <div className={styles.ExplorerList.pending()}>
-          <ProgressCircle isIndeterminate aria-label="Pending..." />
-        </div>
-      )}
       {view === 'card' ? (
         <ExplorerCards
           dragAndDropHooks={dragAndDropHooks}

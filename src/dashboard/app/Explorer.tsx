@@ -13,16 +13,16 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
+import type {
+  DashboardEntry,
+  DashboardEntryData,
+  DashboardRoot
+} from '../store.js'
 import {
   DashboardExplorer,
   ExplorerSort,
   ExplorerSortBy,
   ExplorerTypeFilters
-} from '../store.js'
-import type {
-  DashboardEntry,
-  DashboardEntryData,
-  DashboardRoot
 } from '../store.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
@@ -143,9 +143,7 @@ function ExplorerHeaderMain({
     )
   }
   if (root)
-    return (
-      <ExplorerHeaderRootMain root={root} titleControls={titleControls} />
-    )
+    return <ExplorerHeaderRootMain root={root} titleControls={titleControls} />
   return null
 }
 
@@ -329,11 +327,10 @@ export function ExplorerHeader({
 }
 
 export function ExplorerBody({explorer}: ExplorerBodyProps) {
-  const items = useAtomValue(explorer.itemsResource)
   return (
     <RailBody>
       <div className={styles.Explorer.viewport()}>
-        <ExplorerList explorer={explorer} items={items} />
+        <ExplorerList explorer={explorer} />
       </div>
     </RailBody>
   )
