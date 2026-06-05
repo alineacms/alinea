@@ -45,7 +45,7 @@
 
 .RailContent {
   width: 100%;
-  max-width: var(--alinea-main-content-max-width, 1120px);
+  max-width: var(--alinea-main-content-max-width, 1140px);
   margin-inline: auto;
   min-width: 0;
 }

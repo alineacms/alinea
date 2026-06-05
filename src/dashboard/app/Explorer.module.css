@@ -7,17 +7,42 @@
   gap: 16px;
 }
 
-.Explorer-bar {
+.ExplorerHeader {
   height: 48px;
   padding: 0 16px;
+  border-bottom: 1px solid var(--alinea-border);
   overflow-y: hidden;
-  scrollbar-gutter: stable;
+  background: var(--alinea-bg);
 }
 
-.Explorer-bar-content {
+.ExplorerHeader-content {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
   height: 100%;
+  width: 100%;
+}
+
+.ExplorerHeader-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.ExplorerHeader-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .Explorer-toolbar {

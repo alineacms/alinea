@@ -19,10 +19,16 @@ import {
   ExplorerSortBy,
   ExplorerTypeFilters
 } from '../store.js'
+import type {
+  DashboardEntry,
+  DashboardEntryData,
+  DashboardRoot
+} from '../store.js'
+import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
-import {RailBody, RailContent} from './ui/Rail.js'
+import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -43,6 +49,24 @@ interface ExplorerSearchProps {
   explorer: DashboardExplorer
 }
 
+interface ExplorerHeaderMainProps {
+  explorer: DashboardExplorer
+}
+
+interface ExplorerHeaderLoadedParentMainProps {
+  data: DashboardEntryData
+  explorer: DashboardExplorer
+}
+
+interface ExplorerHeaderParentMainProps {
+  explorer: DashboardExplorer
+  parent: DashboardEntry
+}
+
+interface ExplorerHeaderRootMainProps {
+  root: DashboardRoot
+}
+
 function ExplorerSearch({explorer}: ExplorerSearchProps) {
   const [search, setSearch] = useAtom(explorer.search)
   return (
@@ -55,6 +79,58 @@ function ExplorerSearch({explorer}: ExplorerSearchProps) {
       onChange={setSearch}
     />
   )
+}
+
+function ExplorerHeaderRootMain({root}: ExplorerHeaderRootMainProps) {
+  const label = useAtomValue(root.label)
+  return (
+    <div className={styles.ExplorerHeader.main()}>
+      <h1 className={styles.ExplorerHeader.title()}>{label}</h1>
+    </div>
+  )
+}
+
+function ExplorerHeaderLoadedParentMain({
+  data,
+  explorer
+}: ExplorerHeaderLoadedParentMainProps) {
+  const label = useAtomValue(data.label)
+  const parents = useAtomValue(data.parents)
+  const setLocation = useSetAtom(explorer.location)
+  const parent = parents.at(-1)
+  return (
+    <div className={styles.ExplorerHeader.main()}>
+      <EditorBackButton
+        label={parent ? 'Back to parent entry' : 'Back to root'}
+        onPress={() => {
+          setLocation(location => ({
+            ...location,
+            parentId: parent?.id
+          }))
+        }}
+      />
+      <h1 className={styles.ExplorerHeader.title()}>{label}</h1>
+    </div>
+  )
+}
+
+function ExplorerHeaderMain({explorer}: ExplorerHeaderMainProps) {
+  const root = useAtomValue(explorer.root)
+  const parent = useAtomValue(explorer.parent)
+  if (parent) {
+    return <ExplorerHeaderParentMain parent={parent} explorer={explorer} />
+  }
+  if (root) return <ExplorerHeaderRootMain root={root} />
+  return null
+}
+
+function ExplorerHeaderParentMain({
+  explorer,
+  parent
+}: ExplorerHeaderParentMainProps) {
+  const {data} = useAtomValue(parent.data)
+  if (!data) return null
+  return <ExplorerHeaderLoadedParentMain data={data} explorer={explorer} />
 }
 
 interface ExplorerToolbarProps {
@@ -200,8 +276,9 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
 
 export function ExplorerHeader({controls, explorer}: ExplorerHeaderProps) {
   return (
-    <div className={styles.Explorer.bar()}>
-      <RailContent className={styles.Explorer.bar.content()}>
+    <RailHeader className={styles.ExplorerHeader()}>
+      <div className={styles.ExplorerHeader.content()}>
+        <ExplorerHeaderMain explorer={explorer} />
         <div className={styles.Explorer.searchSlot()}>
           <ExplorerSearch explorer={explorer} />
         </div>
@@ -209,8 +286,8 @@ export function ExplorerHeader({controls, explorer}: ExplorerHeaderProps) {
           <ExplorerToolbar explorer={explorer} />
           {controls}
         </div>
-      </RailContent>
-    </div>
+      </div>
+    </RailHeader>
   )
 }
 
