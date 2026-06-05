@@ -49,15 +49,3 @@
   margin-inline: auto;
   min-width: 0;
 }
-
-.RailHeader > .RailContent {
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
-
-.RailBody > .RailContent {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
