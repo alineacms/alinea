@@ -1,0 +1,48 @@
+.LocaleMenu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 8px;
+  margin-left: -8px;
+  margin-right: auto;
+  border: 0;
+  border-radius: 0;
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  text-align: left;
+}
+
+.LocaleMenu-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.LocaleMenu-label-code {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+
+.LocaleMenu-label-fullName {
+  min-width: 0;
+  color: inherit;
+  opacity: 0.62;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.LocaleMenu-trigger-icon {
+  flex: 0 0 auto;
+  font-size: 12px;
+}

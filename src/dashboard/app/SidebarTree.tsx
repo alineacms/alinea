@@ -1,4 +1,4 @@
-import {Icon, Tab, TabList, Tabs, Tree, TreeItem} from '#/components.js'
+import {Icon, Tree, TreeItem} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -28,6 +28,7 @@ import {
   DashboardWorkspace
 } from '../store/Dashboard.js'
 import css from './SidebarTree.module.css'
+import {LocaleMenu} from './LocaleMenu.js'
 import {RailHeader} from './ui/Rail.js'
 import {SidebarBody} from './ui/Sidebar.js'
 
@@ -255,28 +256,16 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   )
 })
 
-interface SidebarLocaleTabsProps {
+interface SidebarLocaleMenuProps {
   root: DashboardRoot
 }
 
-function SidebarLocaleTabs({root}: SidebarLocaleTabsProps) {
+function SidebarLocaleMenu({root}: SidebarLocaleMenuProps) {
   const i18n = useAtomValue(root.i18n)
-  const [selectedLocale, setSelectedLocale] = useAtom(root.selectedLocale)
-  if (!i18n || !selectedLocale) return null
+  if (!i18n || i18n.locales.length === 0) return null
   return (
     <RailHeader>
-      <Tabs
-        selectedKey={selectedLocale}
-        onSelectionChange={key => setSelectedLocale(String(key))}
-      >
-        <TabList aria-label="Language">
-          {i18n.locales.map(locale => (
-            <Tab id={locale} key={locale}>
-              {locale.toUpperCase()}
-            </Tab>
-          ))}
-        </TabList>
-      </Tabs>
+      <LocaleMenu root={root} />
     </RailHeader>
   )
 }
@@ -289,7 +278,7 @@ export const SidebarTree = memo(function SidebarTree({
   const currentRoot = useAtomValue(dashboard.currentRoot)
   return (
     <>
-      {currentRoot && <SidebarLocaleTabs root={currentRoot} />}
+      {currentRoot && <SidebarLocaleMenu root={currentRoot} />}
       <SidebarBody>
         <div className={styles.SidebarTree.tree()}>
           <SidebarTreeBody workspace={workspace} />

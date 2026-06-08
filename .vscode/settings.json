@@ -5,7 +5,7 @@
   "search.useGlobalIgnoreFiles": true,
   "js/ts.experimental.useTsgo": true,
   "editor.codeActionsOnSave": {
-   "source.fixAll.oxc": "explicit",
+    "source.fixAll.oxc": "explicit",
     "source.organizeImports": "explicit"
   },
   "[typescript]": {
@@ -19,5 +19,6 @@
   },
   "[javascriptreact]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
-  }
+  },
+  "typescript.native-preview.tsdk": "node_modules/@typescript/native-preview"
 }
