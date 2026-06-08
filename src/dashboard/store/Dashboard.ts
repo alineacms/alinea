@@ -1580,17 +1580,13 @@ export class DashboardTree {
     return this.workspace.dashboard.entries(id)
   })
 
-  items = swr(
-    atom(async get => {
-      const currentRoot = get(this.workspace.dashboard.currentRoot)
-      if (!currentRoot || currentRoot.workspace.key !== this.workspace.key)
-        return []
-      const ids = await get(currentRoot.children)
-      const entries = ids.map(id => this.entryItems(id))
-      await Promise.all(entries.map(entry => get(entry.preload)))
-      return entries
-    })
-  )
+  items = atom(async get => {
+    const currentRoot = get(this.workspace.dashboard.currentRoot)
+    if (!currentRoot || currentRoot.workspace.key !== this.workspace.key)
+      return []
+    const ids = await get(currentRoot.children)
+    return ids.map(id => this.entryItems(id))
+  })
 
   isExpanded = dispense((entry: DashboardEntry) => {
     return atom(get => get(this.expandedKeys).has(entry.id))

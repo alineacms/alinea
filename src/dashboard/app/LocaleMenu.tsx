@@ -50,9 +50,7 @@ function LocaleLabel({locale}: LocaleLabelProps) {
   return (
     <span className={styles.LocaleMenu.label()}>
       <span className={styles.LocaleMenu.label.code()}>{display.code}</span>
-      <span className={styles.LocaleMenu.label.fullName()}>
-        {display.name}
-      </span>
+      <span className={styles.LocaleMenu.label.fullName()}>{display.name}</span>
     </span>
   )
 }
@@ -60,12 +58,14 @@ function LocaleLabel({locale}: LocaleLabelProps) {
 export function LocaleMenu({root}: LocaleMenuProps) {
   const i18n = useAtomValue(root.i18n)
   const [selectedLocale, setSelectedLocale] = useAtom(root.selectedLocale)
-  if (!i18n || i18n.locales.length === 0 || !selectedLocale) return null
+  if (!i18n || i18n.locales.length === 0) return null
+  const activeLocale = selectedLocale ?? i18n.locales[0]
+  if (!activeLocale) return null
   return (
     <Menu
       label={
         <Button className={styles.LocaleMenu.trigger()}>
-          <LocaleLabel locale={selectedLocale} />
+          <LocaleLabel locale={activeLocale} />
           <Icon
             icon={IcRoundUnfoldMore}
             className={styles.LocaleMenu.trigger.icon()}
@@ -74,7 +74,7 @@ export function LocaleMenu({root}: LocaleMenuProps) {
       }
       aria-label="Language"
       selectionMode="single"
-      selectedKeys={new Set([selectedLocale])}
+      selectedKeys={[activeLocale]}
       onAction={key => {
         setSelectedLocale(String(key))
       }}
