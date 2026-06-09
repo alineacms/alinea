@@ -635,7 +635,7 @@ function ListFieldRowHeader({
           appearance={isCopied ? 'active' : 'plain'}
           isDisabled={readOnly || isPreview}
           onPress={onCopy}
-          size="icon-nav"
+          size="icon-small"
           icon={IcBaselineContentCopy}
         />
 
@@ -644,7 +644,7 @@ function ListFieldRowHeader({
           appearance="plain"
           isDisabled={readOnly || isPreview || isFirstRow}
           onPress={onMoveUp}
-          size="icon-nav"
+          size="icon-small"
           icon={IcRoundArrowUpward}
         />
         <Button
@@ -652,7 +652,7 @@ function ListFieldRowHeader({
           appearance="plain"
           isDisabled={readOnly || isPreview || isLastRow}
           onPress={onMoveDown}
-          size="icon-nav"
+          size="icon-small"
           icon={IcRoundArrowDownward}
         />
         <Button
@@ -660,7 +660,7 @@ function ListFieldRowHeader({
           appearance="plain"
           isDisabled={readOnly || isPreview}
           onPress={onDelete}
-          size="icon-nav"
+          size="icon-small"
           icon={IcRoundClose}
         />
       </div>

@@ -13,7 +13,7 @@ const styles = styler(css)
 export interface ButtonProps extends ButtonPrimitiveProps {
   appearance?: 'solid' | 'outline' | 'plain' | 'active'
   intent?: 'primary' | 'secondary' | 'danger' | 'warning'
-  size?: 'small' | 'medium' | 'large' | 'icon' | 'icon-nav'
+  size?: 'small' | 'medium' | 'large' | 'icon' | 'icon-small' | 'icon-nav'
   icon?: ComponentType
   children?: ReactNode
 }
