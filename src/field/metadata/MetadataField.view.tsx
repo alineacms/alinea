@@ -1,4 +1,4 @@
-import {Button, Elevation, Label} from '#/components.js'
+import {Button, Label} from '#/components.js'
 import {PreviewMetadata} from '#/core/Preview.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {Surface, SurfaceContent} from '#/dashboard/app/ui/Surface.js'
@@ -78,9 +78,11 @@ export function MetadataFieldView({field}: MetadataFieldViewProps) {
   return (
     <>
       <Label label={options.label} errorMessage={error}>
-        <Elevation>
-          <NodeEditor node={node} type={options.fields} />
-        </Elevation>
+        <Surface variant="muted">
+          <SurfaceContent>
+            <NodeEditor node={node} type={options.fields} />
+          </SurfaceContent>
+        </Surface>
       </Label>
       <MetadataPreview metadata={metadata} origin={origin} />
     </>

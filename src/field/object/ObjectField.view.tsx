@@ -23,7 +23,7 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
   const node = useFieldNode(field)
   return (
     <Label label={options.label}>
-      <Surface className={styles.ObjectFieldView()}>
+      <Surface variant="muted">
         <SurfaceContent>
           <NodeEditor
             node={node as ReactiveNode<object>}

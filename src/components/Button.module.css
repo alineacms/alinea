@@ -20,6 +20,7 @@
   align-items: center;
   gap: 6px;
   min-height: 30px;
+  font-weight: 600;
 
   --alinea-button-focus-outline: light-dark(var(--alinea-blue-800), var(--alinea-blue-400));
   --alinea-button-focus-outline-plain: var(--alinea-muted);
@@ -127,6 +128,10 @@
   --alinea-button-border: var(--alinea-button-default-border);
   --alinea-button-hovered: var(--alinea-button-default-background-hover);
 
+  &[data-hovered] {
+    --alinea-button-bg: var(--alinea-button-hovered);
+  }
+
   &[data-disabled] {
     cursor: not-allowed;
     pointer-events: none;
@@ -222,12 +227,16 @@
   }
 
   &[data-size='icon-nav'] {
-    width: 2rem;
-    height: 2rem;
+    width: 1rem;
+    height: 1rem;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
+    [data-slot='icon'] {
+      font-size: 14px;
+    }
 
     &[data-hovered] {
       background-color: var(--alinea-button-icon-nav-background-hover);

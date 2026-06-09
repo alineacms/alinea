@@ -1,17 +1,18 @@
 .Surface {
-  border-radius: 6px;
+  border-radius: 8px;
+  overflow: hidden;
   border: 1px solid var(--alinea-border);
   background: var(--alinea-bg);
   font-size: var(--alinea-font-size-base);
   flex-shrink: 0;
 
   &.is-muted {
-    background: var(--alinea-bg-muted);
+    /* background: var(--alinea-bg-muted); */
   }
 }
 
 .SurfaceHeader {
-  padding: 0 12px;
+  padding: 0 16px;
   min-height: 40px;
   display: flex;
   align-items: center;
@@ -19,16 +20,6 @@
 
   &:not(:first-child) {
     border-top: 1px solid var(--alinea-border);
-  }
-
-  &:first-child {
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-  }
-
-  &:last-child {
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
   }
 }
 

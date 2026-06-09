@@ -10,8 +10,8 @@ import {
   type TreeItemContentRenderProps,
   type TreeProps
 } from 'react-aria-components'
-import {IcRoundKeyboardArrowRight} from '../dashboard/icons.js'
 import {Checkbox} from './Checkbox.js'
+import {FoldIcon} from './FoldIcon.js'
 import {Icon, type IconProps} from './Icon.js'
 import css from './Tree.module.css'
 
@@ -56,7 +56,8 @@ export const TreeItemContent = memo(function TreeItemContent({
         selectionBehavior,
         selectionMode,
         allowsDragging,
-        isDragging
+        isDragging,
+        isExpanded
       }: TreeItemContentRenderProps) => (
         <>
           {selectionBehavior === 'toggle' && selectionMode !== 'none' && (
@@ -75,7 +76,11 @@ export const TreeItemContent = memo(function TreeItemContent({
               data-invisible={isDragging}
               className={styles.TreeItem.chevron()}
             >
-              <IcRoundKeyboardArrowRight />
+              <FoldIcon
+                aria-hidden
+                className={styles.TreeItem.foldIcon()}
+                expanded={isExpanded}
+              />
             </Button>
           </div>
           {icon && (
