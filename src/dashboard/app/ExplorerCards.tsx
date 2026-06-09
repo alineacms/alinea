@@ -1,21 +1,21 @@
-import {Button, Icon} from '#/components.js'
+import {Checkbox, Icon} from '#/components.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import type {ComponentType, ReactNode} from 'react'
-import {Fragment, memo, useMemo} from 'react'
+import type {ComponentType, ReactNode, UIEvent} from 'react'
+import {Fragment, memo, useLayoutEffect, useMemo, useRef} from 'react'
 import {
   type DragAndDropHooks,
   GridLayout,
   type GridLayoutOptions,
   GridList,
   GridListItem,
+  Button as AriaButton,
   type Key,
   Virtualizer
 } from 'react-aria-components'
 import {
-  IcRoundDragIndicator,
   IcRoundKeyboardArrowRight,
   IcTwotoneDescription,
   IcTwotoneFolder
@@ -41,18 +41,14 @@ const cardLayoutOptions: GridLayoutOptions = {
 
 interface ExplorerCardItemProps {
   entry: DashboardEntry
-  explorer: DashboardExplorer
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
-  entry,
-  explorer
+  entry
 }: ExplorerCardItemProps) {
   const {data} = useAtomValue(entry.data)
   if (!data) return <ExplorerCardLoadingItem entry={entry} />
-  return (
-    <ExplorerCardLoadedItem entry={entry} data={data} explorer={explorer} />
-  )
+  return <ExplorerCardLoadedItem entry={entry} data={data} />
 })
 
 interface ExplorerCardLoadingItemProps {
@@ -67,6 +63,7 @@ function ExplorerCardLoadingItem({entry}: ExplorerCardLoadingItemProps) {
       className={styles.ExplorerCards.item({loading: true})}
       aria-label="Loading entry"
     >
+      <ExplorerCardCheckbox label="Loading entry" />
       <Surface className={styles.ExplorerCards.item.card()}>
         <div className={styles.ExplorerCards.entry()}>
           <div className={styles.ExplorerCards.entry.top()}>
@@ -92,13 +89,11 @@ function ExplorerCardLoadingItem({entry}: ExplorerCardLoadingItemProps) {
 interface ExplorerCardLoadedItemProps {
   entry: DashboardEntry
   data: DashboardEntryData
-  explorer: DashboardExplorer
 }
 
 const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   entry,
-  data,
-  explorer
+  data
 }: ExplorerCardLoadedItemProps) {
   const label = useAtomValue(data.label)
   const icon = useAtomValue(data.icon)
@@ -110,22 +105,18 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
   const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
-  const onAction = useSetAtom(explorer.onAction)
   return (
     <GridListItem
       id={entry.id}
       textValue={label}
       className={styles.ExplorerCards.item()}
-      onDoubleClick={() => onAction(entry)}
     >
-      <Button
+      <ExplorerCardCheckbox label={label} />
+      <AriaButton
         slot="drag"
         aria-label={`Drag ${label}`}
-        appearance="plain"
         className={styles.ExplorerCards.item.drag.handle()}
-      >
-        <IcRoundDragIndicator />
-      </Button>
+      />
       <Surface
         className={styles.ExplorerCards.item.card({file: Boolean(info)})}
       >
@@ -160,6 +151,20 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
     </GridListItem>
   )
 })
+
+interface ExplorerCardCheckboxProps {
+  label: string
+}
+
+function ExplorerCardCheckbox({label}: ExplorerCardCheckboxProps) {
+  return (
+    <Checkbox
+      slot="selection"
+      className={styles.ExplorerCards.item.checkbox()}
+      aria-label={`Select ${label}`}
+    />
+  )
+}
 
 interface ExplorerEntryCardProps {
   icon?: ComponentType
@@ -276,10 +281,28 @@ export function ExplorerCards({
   renderEmptyState
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
+  const scrollKey = useAtomValue(explorer.scrollKey)
+  const scrollPositions = useAtomValue(explorer.scrollPositions)
+  const setScrollPositions = useSetAtom(explorer.scrollPositions)
   const onAction = useSetAtom(explorer.onAction)
+  const gridListRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const gridList = gridListRef.current
+    if (!gridList) return
+    const position = scrollPositions[scrollKey]
+    gridList.scrollLeft = position?.left ?? 0
+    gridList.scrollTop = position?.top ?? 0
+  }, [scrollKey, scrollPositions])
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
     if (entry) onAction(entry)
+  }
+  function onScroll(event: UIEvent<HTMLDivElement>) {
+    const {scrollLeft, scrollTop} = event.currentTarget
+    setScrollPositions(positions => ({
+      ...positions,
+      [scrollKey]: {left: scrollLeft, top: scrollTop}
+    }))
   }
   return (
     <div className={styles.ExplorerCards.viewport()}>
@@ -290,17 +313,17 @@ export function ExplorerCards({
           layout="grid"
           className={styles.ExplorerCards()}
           selectionMode={explorer.selectionMode}
-          selectionBehavior={explorer.selectionBehavior}
+          selectionBehavior="replace"
           dragAndDropHooks={dragAndDropHooks}
           selectedKeys={selected}
           onSelectionChange={setSelected}
-          onAction={
-            explorer.selectionBehavior === 'replace' ? onItemAction : undefined
-          }
+          onAction={onItemAction}
+          onScroll={onScroll}
+          ref={gridListRef}
           renderEmptyState={renderEmptyState}
           style={{display: 'block', width: '100%', height: '100%'}}
         >
-          {item => <ExplorerCardItem entry={item} explorer={explorer} />}
+          {item => <ExplorerCardItem entry={item} />}
         </GridList>
       </Virtualizer>
     </div>

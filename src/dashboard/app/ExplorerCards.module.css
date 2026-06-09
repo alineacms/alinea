@@ -64,9 +64,18 @@
     box-shadow: var(--alinea-shadow-raised);
   }
 
+  &[data-hovered] .ExplorerCards-item-card {
+    --alinea-dashboard-explorer-card-footer-background: var(--alinea-bg-muted);
+    background: var(--alinea-dashboard-explorer-card-footer-background);
+  }
+
   &[data-selected] .ExplorerCards-item-card {
-    border-color: var(--alinea-blue-600);
-    background: var(--alinea-dashboard-explorer-card-selected-background);
+    --alinea-dashboard-explorer-card-footer-background: color-mix(
+      in srgb,
+      var(--alinea-blue-600) 9%,
+      var(--alinea-bg)
+    );
+    background: var(--alinea-dashboard-explorer-card-footer-background);
     box-shadow: var(--alinea-shadow-raised);
   }
 
@@ -79,12 +88,23 @@
   }
 }
 
-.ExplorerCards-item-drag-handle {
+.ExplorerCards-item-checkbox {
   position: absolute;
   top: 10px;
-  right: 10px;
-  z-index: 1;
-  color: var(--alinea-fg-muted);
+  left: 10px;
+  z-index: 2;
+}
+
+.ExplorerCards-item-drag-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ExplorerCards-item-card {
@@ -106,6 +126,7 @@
   border-radius: 6px;
   background: var(--alinea-dashboard-explorer-card-background);
   box-shadow: var(--alinea-shadow-raised);
+  cursor: pointer;
 }
 
 .ExplorerCards-item.is-loading .ExplorerCards-item-card {

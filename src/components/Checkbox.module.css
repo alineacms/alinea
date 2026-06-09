@@ -26,14 +26,12 @@
   }
 
   .Checkbox-mark {
-    width: 1rem;
-    height: 1rem;
+    width: 10px;
+    height: 10px;
     fill: none;
     stroke: var(--alinea-checkmark-color);
     stroke-width: 3px;
-    stroke-dasharray: 22px;
-    stroke-dashoffset: 66;
-    transition: var(--alinea-transition);
+    opacity: 0;
   }
 
   &[data-hovered] .Checkbox-box {
@@ -62,7 +60,7 @@
     }
 
     .Checkbox-mark {
-      stroke-dashoffset: 44;
+      opacity: 1;
     }
   }
 

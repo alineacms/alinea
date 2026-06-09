@@ -1061,6 +1061,11 @@ export type ExplorerSort = {
   direction: ExplorerSortDirections
 }
 
+export interface ExplorerScrollPosition {
+  left: number
+  top: number
+}
+
 export type ExplorerTypeFilters = typeof MediaFile | typeof MediaLibrary
 
 export interface ExplorerOptions {
@@ -1126,6 +1131,7 @@ export class DashboardExplorer {
   })
 
   search = atom('')
+  scrollPositions = atom<Record<string, ExplorerScrollPosition>>({})
   #selectedView = atom<'card' | 'row' | undefined>()
   view = atom(
     get => {
@@ -1171,6 +1177,21 @@ export class DashboardExplorer {
       set(this.#location, update)
     }
   )
+  scrollKey = atom(get => {
+    const view = get(this.view)
+    const location = get(this.location)
+    const search = get(this.search)
+    const sort = get(this.sort)
+    return [
+      view,
+      location.workspace,
+      location.root,
+      location.parentId ?? '',
+      search,
+      sort.sortBy,
+      sort.direction
+    ].join(':')
+  })
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
     return [...keys].map(id => dragItem(id))
   })

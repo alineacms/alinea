@@ -183,42 +183,7 @@
 }
 
 .ExplorerTable-checkbox {
-  display: inline-flex;
-  box-sizing: border-box;
-  width: 14px;
-  height: 14px;
-  align-items: center;
-  justify-content: center;
-  color: var(--alinea-bg);
-  border: 1px solid var(--alinea-border);
-  border-radius: 4px;
-  background: var(--alinea-bg);
-  vertical-align: middle;
-  outline: none;
-
-  &[data-selected] {
-    color: var(--alinea-bg);
-    border-color: var(--alinea-blue-600);
-    background: var(--alinea-blue-600);
-  }
-
-  &[data-focus-visible] {
-    box-shadow: 0 0 0 2px var(--alinea-ring);
-  }
-}
-
-.ExplorerTable-checkbox-mark {
-  display: block;
-  width: 7px;
-  height: 4px;
-  transform: rotate(-45deg) translateY(-1px);
-  border-left: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  opacity: 0;
-}
-
-.ExplorerTable-checkbox[data-selected] .ExplorerTable-checkbox-mark {
-  opacity: 1;
+  flex: 0 0 auto;
 }
 
 .ExplorerTable-titleAction {

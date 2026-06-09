@@ -1,12 +1,11 @@
-import {Icon} from '#/components.js'
+import {Checkbox, Icon} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import type {ComponentType, ReactNode} from 'react'
-import {useMemo} from 'react'
+import type {ComponentType, ReactNode, UIEvent} from 'react'
+import {useLayoutEffect, useMemo, useRef} from 'react'
 import {
   Button as AriaButton,
   Cell,
-  Checkbox,
   Column,
   Row,
   Table,
@@ -73,9 +72,7 @@ function ExplorerTableDisplayRow({
             slot="selection"
             className={styles.ExplorerTable.checkbox()}
             aria-label={`Select ${label}`}
-          >
-            <span className={styles.ExplorerTable.checkbox.mark()} />
-          </Checkbox>
+          />
         </Cell>
       )
     }
@@ -194,10 +191,28 @@ export function ExplorerTable({
   renderEmptyState
 }: ExplorerTableProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
+  const scrollKey = useAtomValue(explorer.scrollKey)
+  const scrollPositions = useAtomValue(explorer.scrollPositions)
+  const setScrollPositions = useSetAtom(explorer.scrollPositions)
   const onAction = useSetAtom(explorer.onAction)
+  const tableRef = useRef<HTMLTableElement>(null)
+  useLayoutEffect(() => {
+    const table = tableRef.current
+    if (!table) return
+    const position = scrollPositions[scrollKey]
+    table.scrollLeft = position?.left ?? 0
+    table.scrollTop = position?.top ?? 0
+  }, [scrollKey, scrollPositions])
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
     if (entry) onAction(entry)
+  }
+  function onScroll(event: UIEvent<HTMLTableElement>) {
+    const {scrollLeft, scrollTop} = event.currentTarget
+    setScrollPositions(positions => ({
+      ...positions,
+      [scrollKey]: {left: scrollLeft, top: scrollTop}
+    }))
   }
   const columns = useMemo<Array<ExplorerTableColumn>>(
     () => [
@@ -241,6 +256,8 @@ export function ExplorerTable({
             selectionMode={explorer.selectionMode}
             onSelectionChange={setSelected}
             onRowAction={onItemAction}
+            onScroll={onScroll}
+            ref={tableRef}
             style={{display: 'block', width: '100%', height: '100%'}}
           >
             <TableHeader
