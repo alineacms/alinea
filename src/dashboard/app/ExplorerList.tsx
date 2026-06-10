@@ -1,7 +1,7 @@
 import {Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {
   isFileDropItem,
   useDragAndDrop
@@ -11,22 +11,50 @@ import type {
   DashboardExplorer,
   DashboardRoot
 } from '../store.js'
+import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'
 import {ExplorerTable} from './ExplorerTable.js'
 
 const styles = styler(css)
+const fallbackEmptyIcon = atom(LucideFile)
 
 interface EmptyResultsProps {
-  root: DashboardRoot
+  root?: DashboardRoot
 }
 
 function EmptyResults({root}: EmptyResultsProps) {
-  const icon = useAtomValue(root.icon)
+  const icon = useAtomValue(root?.icon ?? fallbackEmptyIcon)
   return (
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
-      <div className={styles.ExplorerList.empty.text()}>No results found</div>
+      <div className={styles.ExplorerList.empty.copy()}>
+        <div className={styles.ExplorerList.empty.title()}>
+          No matching entries
+        </div>
+        <div className={styles.ExplorerList.empty.text()}>
+          Try a different title, path, or field value.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SearchIdleState() {
+  return (
+    <div className={styles.ExplorerList.empty()}>
+      <Icon
+        icon={IcRoundSearch}
+        className={styles.ExplorerList.empty.icon()}
+      />
+      <div className={styles.ExplorerList.empty.copy()}>
+        <div className={styles.ExplorerList.empty.title()}>
+          Search entries
+        </div>
+        <div className={styles.ExplorerList.empty.text()}>
+          Type to search all roots in this workspace.
+        </div>
+      </div>
     </div>
   )
 }
@@ -38,8 +66,8 @@ export interface ExplorerListProps {
 export function ExplorerList({explorer}: ExplorerListProps) {
   const items = useAtomValue(explorer.items)
   const view = useAtomValue(explorer.view)
+  const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
-  assert(root, 'ExplorerList requires a root')
   const getItems = useSetAtom(explorer.getItems)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
@@ -68,6 +96,16 @@ export function ExplorerList({explorer}: ExplorerListProps) {
       )
     }
   })
+  if (!showResults)
+    return (
+      <div className={styles.ExplorerList()}>
+        <SearchIdleState />
+      </div>
+    )
+  assert(
+    root || explorer.rootScope === 'workspace',
+    'ExplorerList requires a root'
+  )
   return (
     <div className={styles.ExplorerList()}>
       {view === 'card' ? (

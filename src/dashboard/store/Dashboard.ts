@@ -1115,12 +1115,17 @@ export type DashboardLocaleSelection = WritableAtom<
 >
 
 export interface ExplorerOptions {
+  autoSelectFirstItem?: boolean
   condition?: Filter<EntryFields>
   enableNavigation?: boolean
+  hideResultsUntilSearch?: boolean
   location?: ExplorerLocation
+  mode?: 'browse' | 'search'
   selectedLocale?: string | null
-  selectionMode?: 'single' | 'multiple'
+  rootScope?: 'current' | 'workspace'
+  selectionMode?: 'none' | 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
+  showSelectionControls?: boolean
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
   // initialSort?: ExplorerSort
@@ -1168,6 +1173,42 @@ export class DashboardExplorer {
     return this.#options.selectionBehavior ?? 'replace'
   }
 
+  get hasSelection() {
+    return this.selectionMode !== 'none'
+  }
+
+  get autoSelectFirstItem() {
+    if (this.#options.autoSelectFirstItem !== undefined)
+      return this.#options.autoSelectFirstItem
+    return this.mode === 'search'
+  }
+
+  get hideResultsUntilSearch() {
+    if (this.#options.hideResultsUntilSearch !== undefined)
+      return this.#options.hideResultsUntilSearch
+    return this.mode === 'search'
+  }
+
+  get mode() {
+    return this.#options.mode ?? 'browse'
+  }
+
+  get searchDepth() {
+    if (this.#options.searchDepth) return this.#options.searchDepth
+    return this.mode === 'search' ? 'all' : 'current'
+  }
+
+  get rootScope() {
+    if (this.#options.rootScope) return this.#options.rootScope
+    return this.mode === 'search' ? 'workspace' : 'current'
+  }
+
+  get showSelectionControls() {
+    if (this.#options.showSelectionControls !== undefined)
+      return this.#options.showSelectionControls
+    return this.mode !== 'search'
+  }
+
   get hasRowAction() {
     return Boolean(this.#options.onAction)
   }
@@ -1191,6 +1232,10 @@ export class DashboardExplorer {
   })
 
   search = atom('')
+  showResults = atom(get => {
+    if (!this.hideResultsUntilSearch) return true
+    return Boolean(get(this.search).trim())
+  })
   selectedLocale = atom(
     get => {
       const root = get(this.root)
@@ -1376,6 +1421,7 @@ export class DashboardExplorer {
     const root = get(this.root)
     const sort = get(this.sort)
     const filter = get(this.filter)
+    const searchStarted = Boolean(search.trim())
     const fieldMap: Record<ExplorerSortBy, Expr<string | number>> = {
       title: Entry.title,
       path: Entry.path,
@@ -1388,16 +1434,20 @@ export class DashboardExplorer {
       [sort.direction]: fieldToSort,
       caseSensitive: fieldToSort !== Entry.id
     }
-    if (!root) return []
-    const locale = get(this.selectedLocale)
-    const searchAll = Boolean(search && this.#options.searchDepth === 'all')
+    if (this.hideResultsUntilSearch && !searchStarted) return []
+    const allRoots = this.rootScope === 'workspace'
+    if (!root && !allRoots) return []
+    const locale = allRoots ? undefined : get(this.selectedLocale)
+    const searchAll = Boolean(
+      searchStarted && this.searchDepth === 'all'
+    )
     const flatList = Boolean(this.#options.condition) || searchAll
     const policy = get(this.dashboard.policy)
     const children = await db.find({
       locale,
-      search: search || undefined,
+      search: searchStarted ? search : undefined,
       workspace: location.workspace,
-      root: location.root,
+      root: allRoots ? undefined : location.root,
       parentId: flatList ? undefined : (location.parentId ?? null),
       filter: this.#options.condition,
       select: {

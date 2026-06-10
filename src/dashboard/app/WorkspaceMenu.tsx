@@ -8,7 +8,7 @@ import {
   type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue} from 'jotai'
+import {atom, useAtom, useAtomValue} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
 import {
@@ -30,7 +30,8 @@ import {CreateEntry} from './modals/CreateEntry.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
-  DashboardModalDialog
+  DashboardModalDialog,
+  useDashboardModal
 } from './ui/DashboardModal.js'
 import css from './WorkspaceMenu.module.css'
 
@@ -125,13 +126,27 @@ export function WorkspaceAvatarMenu({dashboard}: WorkspaceMenuProps) {
 }
 
 function SearchPopup() {
+  const modal = useDashboardModal()
   const dashboard = useDashboard()
   const workspace = useAtomValue(dashboard.selectedWorkspace)
   const root = useAtomValue(dashboard.selectedRoot)
   const [explorer] = useState(() =>
     dashboard.explore(
       {workspace, root: root ?? undefined},
-      {searchDepth: 'all'}
+      {
+        mode: 'search',
+        onAction: atom(null, (get, set, entry) => {
+          const {data} = get(entry.data)
+          if (!data) return
+          set(dashboard.route, {
+            workspace: get(data.workspaceKey),
+            root: get(data.rootKey),
+            entry: entry.id,
+            locale: get(data.sourceLocale) ?? undefined
+          })
+          modal.close()
+        })
+      }
     )
   )
 
@@ -140,6 +155,7 @@ function SearchPopup() {
       <ExplorerModalSuspense>
         <ExplorerModal>
           <ExplorerHeader
+            autoFocusSearch
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
           />

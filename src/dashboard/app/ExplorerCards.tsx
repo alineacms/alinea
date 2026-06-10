@@ -41,21 +41,39 @@ const cardLayoutOptions: GridLayoutOptions = {
 
 interface ExplorerCardItemProps {
   entry: DashboardEntry
+  showSelectionControls: boolean
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
-  entry
+  entry,
+  showSelectionControls
 }: ExplorerCardItemProps) {
   const {data} = useAtomValue(entry.data)
-  if (!data) return <ExplorerCardLoadingItem entry={entry} />
-  return <ExplorerCardLoadedItem entry={entry} data={data} />
+  if (!data)
+    return (
+      <ExplorerCardLoadingItem
+        entry={entry}
+        showSelectionControls={showSelectionControls}
+      />
+    )
+  return (
+    <ExplorerCardLoadedItem
+      entry={entry}
+      data={data}
+      showSelectionControls={showSelectionControls}
+    />
+  )
 })
 
 interface ExplorerCardLoadingItemProps {
   entry: DashboardEntry
+  showSelectionControls: boolean
 }
 
-function ExplorerCardLoadingItem({entry}: ExplorerCardLoadingItemProps) {
+function ExplorerCardLoadingItem({
+  entry,
+  showSelectionControls
+}: ExplorerCardLoadingItemProps) {
   return (
     <GridListItem
       id={entry.id}
@@ -63,7 +81,7 @@ function ExplorerCardLoadingItem({entry}: ExplorerCardLoadingItemProps) {
       className={styles.ExplorerCards.item({loading: true})}
       aria-label="Loading entry"
     >
-      <ExplorerCardCheckbox label="Loading entry" />
+      {showSelectionControls && <ExplorerCardCheckbox label="Loading entry" />}
       <Surface className={styles.ExplorerCards.item.card()}>
         <div className={styles.ExplorerCards.entry()}>
           <div className={styles.ExplorerCards.entry.top()}>
@@ -89,11 +107,13 @@ function ExplorerCardLoadingItem({entry}: ExplorerCardLoadingItemProps) {
 interface ExplorerCardLoadedItemProps {
   entry: DashboardEntry
   data: DashboardEntryData
+  showSelectionControls: boolean
 }
 
 const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   entry,
-  data
+  data,
+  showSelectionControls
 }: ExplorerCardLoadedItemProps) {
   const label = useAtomValue(data.label)
   const icon = useAtomValue(data.icon)
@@ -111,7 +131,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
       textValue={label}
       className={styles.ExplorerCards.item()}
     >
-      <ExplorerCardCheckbox label={label} />
+      {showSelectionControls && <ExplorerCardCheckbox label={label} />}
       <AriaButton
         slot="drag"
         aria-label={`Drag ${label}`}
@@ -282,6 +302,9 @@ export function ExplorerCards({
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
   const performAction = useSetAtom(explorer.onAction)
+  const selectionMode = explorer.selectionMode
+  const hasSelection = selectionMode !== 'none'
+  const showSelectionControls = hasSelection && explorer.showSelectionControls
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
     if (entry) performAction(entry)
@@ -295,16 +318,21 @@ export function ExplorerCards({
           items={items}
           layout="grid"
           className={styles.ExplorerCards()}
-          selectionMode={explorer.selectionMode}
+          selectionMode={hasSelection ? selectionMode : undefined}
           selectionBehavior={explorer.selectionBehavior}
           dragAndDropHooks={dragAndDropHooks}
-          selectedKeys={selected}
-          onSelectionChange={setSelected}
+          selectedKeys={hasSelection ? selected : undefined}
+          onSelectionChange={hasSelection ? setSelected : undefined}
           onAction={onAction}
           renderEmptyState={renderEmptyState}
           style={{display: 'block', width: '100%', height: '100%'}}
         >
-          {item => <ExplorerCardItem entry={item} />}
+          {item => (
+            <ExplorerCardItem
+              entry={item}
+              showSelectionControls={showSelectionControls}
+            />
+          )}
         </GridList>
       </Virtualizer>
     </div>

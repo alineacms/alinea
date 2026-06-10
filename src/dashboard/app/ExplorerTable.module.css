@@ -141,6 +141,10 @@
   white-space: nowrap;
 }
 
+.ExplorerTable.is-noSelectionControls .ExplorerTable-cell-title {
+  padding-left: 16px;
+}
+
 .ExplorerTable-cell-filler {
   box-sizing: border-box;
   height: 32px;

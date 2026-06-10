@@ -4,8 +4,16 @@ import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useState, useTransition, type ReactNode} from 'react'
-import {DialogTrigger, FileTrigger} from 'react-aria-components'
+import {unwrap} from 'jotai/utils'
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type KeyboardEvent,
+  type ReactNode
+} from 'react'
+import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
 import {
   IcRoundArrowDownward,
   IcRoundArrowUpward,
@@ -35,6 +43,7 @@ export interface ExplorerProps {
 }
 
 export interface ExplorerHeaderProps {
+  autoFocusSearch?: boolean
   controls?: ReactNode
   explorer: DashboardExplorer
   titleControls?: ReactNode
@@ -45,6 +54,7 @@ export interface ExplorerBodyProps {
 }
 
 interface ExplorerSearchProps {
+  autoFocus?: boolean
   explorer: DashboardExplorer
 }
 
@@ -65,28 +75,93 @@ interface ExplorerHeaderParentMainProps {
   titleControls?: ReactNode
 }
 
-function ExplorerSearch({explorer}: ExplorerSearchProps) {
+function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
+  const items = useAtomValue(
+    useMemo(() => unwrap(explorer.items, previous => previous ?? []), [explorer])
+  )
+  const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
+  const performAction = useSetAtom(explorer.onAction)
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
+
+  function selectEntry(entry: DashboardEntry | undefined) {
+    if (!entry) return
+    setSelection(new Set<Key>([entry.id]))
+  }
+
+  function selectedEntry() {
+    if (selection === 'all') return undefined
+    const [selected] = selection
+    if (selected === undefined) return undefined
+    return items.find(item => item.id === String(selected))
+  }
+
+  useEffect(() => {
+    if (!explorer.autoSelectFirstItem || !explorer.hasSelection) return
+    if (items.length === 0) {
+      if (selection !== 'all' && selection.size > 0)
+        setSelection(new Set<Key>())
+      return
+    }
+    if (!selectedEntry()) selectEntry(items[0])
+  }, [explorer, items, selection, setSelection])
 
   function onSearchChange(value: string) {
     setInputValue(value)
     startTransition(() => {
+      if (explorer.hasSelection) setSelection(new Set<Key>())
       setSearch(value)
     })
+  }
+
+  function selectedIndex() {
+    const entry = selectedEntry()
+    if (!entry) return -1
+    return items.findIndex(item => item.id === entry.id)
+  }
+
+  function moveSelection(direction: 1 | -1) {
+    if (!explorer.hasSelection || items.length === 0) return
+    const current = selectedIndex()
+    const next =
+      current === -1
+        ? direction === 1
+          ? 0
+          : items.length - 1
+        : Math.max(0, Math.min(items.length - 1, current + direction))
+    selectEntry(items[next])
+  }
+
+  function onSearchKeyDown(event: KeyboardEvent) {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      moveSelection(1)
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      moveSelection(-1)
+    } else if (event.key === 'Enter') {
+      const entry =
+        selectedEntry() ??
+        (explorer.autoSelectFirstItem ? items[0] : undefined)
+      if (!entry) return
+      event.preventDefault()
+      performAction(entry)
+    }
   }
 
   return (
     <SearchField
       aria-label="Search"
+      autoFocus={autoFocus}
       className={styles.Explorer.search()}
       hasIcon
       isPending={isPending}
       placeholder="Search..."
       value={inputValue}
       onChange={onSearchChange}
+      onKeyDown={onSearchKeyDown}
     />
   )
 }
@@ -297,6 +372,7 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
 }
 
 export function ExplorerHeader({
+  autoFocusSearch,
   controls,
   explorer,
   titleControls
@@ -306,7 +382,7 @@ export function ExplorerHeader({
       <div className={styles.ExplorerHeader.content()}>
         <ExplorerHeaderMain explorer={explorer} titleControls={titleControls} />
         <div className={styles.Explorer.searchSlot()}>
-          <ExplorerSearch explorer={explorer} />
+          <ExplorerSearch autoFocus={autoFocusSearch} explorer={explorer} />
         </div>
         <div className={styles.Explorer.toolbar()}>
           <ExplorerToolbar explorer={explorer} />

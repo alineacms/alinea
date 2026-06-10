@@ -287,6 +287,66 @@ class HierarchyGraph extends TestGraph {
   }
 }
 
+class SearchGraph extends TestGraph {
+  queries: Array<GraphQuery> = []
+
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    this.queries.push(query)
+    const entries = [
+      {
+        id: 'nested-page',
+        type: 'Page',
+        parentId: 'folder',
+        workspace: 'main',
+        root: 'pages',
+        locale: null,
+        status: 'published',
+        main: true,
+        path: 'folder/nested-page',
+        title: 'Nested page',
+        url: '/folder/nested-page',
+        filePath: 'pages/folder/nested-page.json',
+        seeded: null,
+        data: {title: 'Nested page', path: 'nested-page'}
+      },
+      {
+        id: 'media-file',
+        type: 'Page',
+        parentId: 'assets',
+        workspace: 'main',
+        root: 'media',
+        locale: null,
+        status: 'published',
+        main: true,
+        path: 'assets/media-file.png',
+        title: 'Media file',
+        url: '/assets/media-file.png',
+        filePath: 'media/assets/media-file.png.json',
+        seeded: null,
+        data: {title: 'Media file', path: 'media-file.png'}
+      }
+    ] as const
+    const idFilter = 'id' in query ? query.id : undefined
+    if (hasInFilter(idFilter)) {
+      return Promise.resolve(
+        entries
+          .filter(entry => idFilter.in.includes(entry.id))
+          .map(entry => ({
+            ...entry,
+            parents: [],
+            entries: [entry]
+          })) as AnyQueryResult<Query>
+      )
+    }
+    if ('parentId' in query && hasInFilter(query.parentId)) {
+      return Promise.resolve([] as AnyQueryResult<Query>)
+    }
+    return Promise.resolve(entries as AnyQueryResult<Query>)
+  }
+}
+
 class OverviewGraph extends TestGraph {
   resolve<Query extends GraphQuery>(
     query: Query
@@ -966,6 +1026,58 @@ test('DashboardRoot explorer opens child overviews from the root listing', async
       })
     }
   }
+})
+
+test('DashboardExplorer can search all roots after typing', async () => {
+  const Page = createType('Page', {fields: {}})
+  const pages = root('Pages')
+  const media = root('Media')
+  const main = workspace('Main', {
+    source: 'content/main',
+    roots: {pages, media}
+  })
+  const config = createConfig({
+    schema: {Page},
+    workspaces: {main},
+    roles: {
+      admin: role('Admin', {
+        permissions(policy) {
+          policy.allowAll()
+        }
+      })
+    }
+  })
+  const graph = new SearchGraph(config)
+  const store = createStore()
+  const dashboard = new Dashboard(
+    graph,
+    config,
+    new EventTarget(),
+    new Client({config, url: 'https://example.com/api'}),
+    {},
+    {local: true}
+  )
+  await store.set(dashboard.setUserRoles, ['admin'])
+  await waitForPolicy(dashboard, store)
+  const explorer = dashboard.explore(
+    {workspace: 'main', root: 'pages'},
+    {mode: 'search'}
+  )
+
+  test.equal(await store.get(explorer.items), [])
+  test.equal(graph.queries.length, 0)
+  test.equal(explorer.autoSelectFirstItem, true)
+  test.equal(explorer.showSelectionControls, false)
+  test.equal(explorer.selectionMode, 'single')
+
+  store.set(explorer.search, 'nested')
+  const items = await store.get(explorer.items)
+  const searchQuery = graph.queries.find(query => query.search === 'nested')
+
+  test.equal(items.map(item => item.id), ['nested-page', 'media-file'])
+  test.equal(searchQuery?.workspace, 'main')
+  test.equal(searchQuery?.root, undefined)
+  test.equal(searchQuery?.parentId, undefined)
 })
 
 test('DashboardExplorer filters queued uploads to its current folder', () => {

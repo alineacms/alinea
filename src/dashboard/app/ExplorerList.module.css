@@ -46,13 +46,35 @@
 }
 
 .ExplorerList-empty-icon {
-  font-size: 72px;
-  opacity: 0.5;
+  box-sizing: border-box;
+  width: 52px;
+  height: 52px;
+  padding: 13px;
+  color: color-mix(in srgb, var(--alinea-fg) 48%, transparent);
+  background: var(--alinea-bg-muted);
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
+  font-size: 24px;
+}
+
+.ExplorerList-empty-copy {
+  display: flex;
+  max-width: 300px;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.ExplorerList-empty-title {
+  color: var(--alinea-fg);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .ExplorerList-empty-text {
   color: var(--alinea-fg-muted);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 400;
   line-height: 1.4;
 }

@@ -192,6 +192,9 @@ export function ExplorerTable({
 }: ExplorerTableProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
   const onAction = useSetAtom(explorer.onAction)
+  const selectionMode = explorer.selectionMode
+  const hasSelection = selectionMode !== 'none'
+  const showSelectionControls = hasSelection && explorer.showSelectionControls
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
     if (entry) onAction(entry)
@@ -199,7 +202,9 @@ export function ExplorerTable({
   const onRowAction = explorer.hasRowAction ? onItemAction : undefined
   const columns = useMemo<Array<ExplorerTableColumn>>(
     () => [
-      {id: 'selection', kind: 'selection', width: 30},
+      ...(showSelectionControls
+        ? [{id: 'selection', kind: 'selection' as const, width: 30}]
+        : []),
       {id: 'title', kind: 'title', width: 220},
       ...Array.from(
         {length: dashboardEntryOverviewColumnCount},
@@ -212,7 +217,7 @@ export function ExplorerTable({
         })
       )
     ],
-    []
+    [showSelectionControls]
   )
   const columnById = useMemo(
     () => new Map(columns.map(column => [column.id, column] as const)),
@@ -233,12 +238,14 @@ export function ExplorerTable({
         <Virtualizer layout={TableLayout} layoutOptions={layoutOptions}>
           <Table
             aria-label="Explorer entries"
-            className={styles.ExplorerTable()}
+            className={styles.ExplorerTable({
+              noSelectionControls: !showSelectionControls
+            })}
             dragAndDropHooks={dragAndDropHooks}
-            selectedKeys={selected}
+            selectedKeys={hasSelection ? selected : undefined}
             selectionBehavior={explorer.selectionBehavior}
-            selectionMode={explorer.selectionMode}
-            onSelectionChange={setSelected}
+            selectionMode={hasSelection ? selectionMode : undefined}
+            onSelectionChange={hasSelection ? setSelected : undefined}
             onRowAction={onRowAction}
             style={{display: 'block', width: '100%', height: '100%'}}
           >
