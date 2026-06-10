@@ -46,6 +46,23 @@
   }
 }
 
+.RichTextFieldCompactView {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.RichTextFieldCompactView[data-empty] {
+  color: var(--alinea-fg-muted);
+}
+
 .RichTextFieldBlock {
   margin: 14px 0;
   outline: 4px solid transparent;

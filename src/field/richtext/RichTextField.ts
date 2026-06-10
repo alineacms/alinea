@@ -36,6 +36,7 @@ export function richText<Blocks extends Schema = {}>(
 ): RichTextField<Blocks, RichTextOptions<Blocks>> {
   return new RichTextField(options.schema, {
     options: {label, ...options},
-    view: viewKeys.RichTextInput
+    view: viewKeys.RichTextInput,
+    compactView: viewKeys.RichTextCompact
   })
 }

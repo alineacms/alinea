@@ -94,8 +94,9 @@ export interface DashboardCreateEntryRequest {
 
 export interface DashboardEntryOverviewCell {
   id: string
+  field: Field
   label: string
-  value: string
+  value: unknown
 }
 
 export interface DashboardOptions {
@@ -2012,10 +2013,6 @@ export class DashboardEntry {
   )
 }
 
-interface DashboardEntryOverviewFieldOptions extends FieldOptions<unknown> {
-  options?: Record<string, string>
-}
-
 function dashboardEntryOverviewFields(type: Type): Array<[string, Field]> {
   return Object.entries(Type.fields(type)).flatMap(([key, field]) => {
     const options = Field.options(field) as FieldOptions<unknown>
@@ -2023,23 +2020,6 @@ function dashboardEntryOverviewFields(type: Type): Array<[string, Field]> {
     if (key === 'title') return []
     return [[key, field]]
   })
-}
-
-function formatDashboardEntryOverviewValue(
-  value: unknown,
-  options: DashboardEntryOverviewFieldOptions
-): string {
-  if (value === undefined || value === null || value === '') return '-'
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
-  if (Array.isArray(value)) {
-    if (value.length === 0) return '-'
-    return value
-      .map(item => formatDashboardEntryOverviewValue(item, options))
-      .join(', ')
-  }
-  if (typeof value === 'string') return options.options?.[value] ?? value
-  if (typeof value === 'number') return String(value)
-  return JSON.stringify(value)
 }
 
 export class DashboardEntryData {
@@ -2134,13 +2114,11 @@ export class DashboardEntryData {
       return dashboardEntryOverviewFields(type)
         .slice(0, dashboardEntryOverviewColumnCount)
         .map(([key, field]) => {
-          const options = Field.options(
-            field
-          ) as DashboardEntryOverviewFieldOptions
           return {
             id: key,
+            field,
             label: Field.label(field),
-            value: formatDashboardEntryOverviewValue(entry.data[key], options)
+            value: entry.data[key]
           }
         })
     })

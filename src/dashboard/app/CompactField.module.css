@@ -1,0 +1,138 @@
+.CompactField {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.CompactField[data-empty] {
+  color: var(--alinea-fg-muted);
+}
+
+.CompactField[data-layout='footer'] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  line-height: 32px;
+}
+
+.CompactField-items {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.CompactField-token {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 1px 7px;
+  border: 1px solid var(--alinea-border);
+  border-radius: 999px;
+  background: var(--alinea-bg-muted);
+  color: var(--alinea-fg);
+}
+
+.CompactField-text {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.CompactField-muted {
+  color: var(--alinea-fg-muted);
+}
+
+.CompactField-json {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-family: var(--alinea-font-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.CompactField-record {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.CompactField[data-layout='footer'] .CompactField-record {
+  width: 100%;
+  max-width: 100%;
+  gap: 0;
+}
+
+.CompactField-record-field {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 clamp(150px, 22vw, 240px);
+  min-width: 120px;
+  max-width: clamp(150px, 22vw, 240px);
+  gap: 6px;
+  overflow: hidden;
+}
+
+.CompactField[data-layout='footer'] .CompactField-record-field {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+}
+
+.CompactField[data-layout='footer']
+  .CompactField-record-field
+  + .CompactField-record-field {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid var(--alinea-border);
+}
+
+.CompactField-record-label {
+  flex: 0 0 clamp(52px, 7vw, 76px);
+  min-width: 0;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--alinea-fg) 28%, transparent);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.CompactField[data-layout='footer'] .CompactField-record-label {
+  flex: 0 0 auto;
+  max-width: 140px;
+}
+
+.CompactField-record-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.CompactField[data-layout='footer'] .CompactField-record-value {
+  flex: 1 1 0;
+}
+
+.CompactField-list-count {
+  flex-shrink: 0;
+  color: var(--alinea-fg-muted);
+}

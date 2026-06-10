@@ -1,4 +1,5 @@
 import {viewKeys} from '#/dashboard/ViewKeys.js'
+import {CompactField} from '#/dashboard/app/CompactField.js'
 import {ComponentType} from 'react'
 import {CheckFieldView} from './check/CheckField.view.js'
 import {CodeFieldView} from './code/CodeField.view.js'
@@ -19,7 +20,10 @@ import {
 import {NumberFieldView} from './number/NumberField.view.js'
 import {ObjectFieldView} from './object/ObjectField.view.js'
 import {PathFieldView} from './path/PathField.view.js'
-import {RichTextFieldView} from './richtext/RichTextField.view.js'
+import {
+  RichTextFieldCompactView,
+  RichTextFieldView
+} from './richtext/RichTextField.view.js'
 import {
   MultipleSelectFieldView,
   SelectFieldView
@@ -31,6 +35,7 @@ import {TimeFieldView} from './time/TimeField.view.js'
 export const views: Record<string, ComponentType<any>> = {
   [viewKeys.CheckInput]: CheckFieldView,
   [viewKeys.CodeInput]: CodeFieldView,
+  [viewKeys.CompactField]: CompactField,
   [viewKeys.DateInput]: DateFieldView,
   [viewKeys.JsonInput]: JsonFieldView,
   [viewKeys.LocalisedInput]: LocalisedFieldView,
@@ -44,6 +49,7 @@ export const views: Record<string, ComponentType<any>> = {
   [viewKeys.PathInput]: PathFieldView,
   [viewKeys.SelectInput]: SelectFieldView,
   [viewKeys.MultipleSelectInput]: MultipleSelectFieldView,
+  [viewKeys.RichTextCompact]: RichTextFieldCompactView,
   [viewKeys.RichTextInput]: RichTextFieldView,
   [viewKeys.TextInput]: TextFieldView,
   [viewKeys.TimeInput]: TimeFieldView,

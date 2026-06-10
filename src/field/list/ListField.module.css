@@ -10,6 +10,12 @@
   margin-left: -8px;
 }
 
+.ListFieldView-label[data-hovered],
+.ListFieldView-label[data-pressed],
+.ListFieldView-label[data-active] {
+  background: transparent;
+}
+
 .ListFieldView-error {
   color: var(--alinea-danger-subtle-fg);
   font-size: var(--alinea-font-size-base);
@@ -215,13 +221,15 @@
 
 .ListFieldRow-header {
   justify-content: space-between;
+  min-width: 0;
   background: var(--alinea-backdrop);
 }
 
 .ListFieldRow-drag {
-  flex: 1;
+  flex: 1 1 0;
   align-self: stretch;
   min-width: 0;
+  overflow: hidden;
   display: flex;
   align-items: center;
   cursor: grab;
@@ -241,6 +249,12 @@
   color: var(--alinea-fg-muted);
   margin-left: -8px;
   cursor: pointer;
+}
+
+.ListFieldRow-toggle[data-hovered],
+.ListFieldRow-toggle[data-pressed],
+.ListFieldRow-toggle[data-active] {
+  background: transparent;
 }
 
 .ListFieldRow-toggle[data-disabled] {
@@ -266,6 +280,7 @@
 .ListFieldRow-actions {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 8px;
 }
 
@@ -278,4 +293,16 @@
   gap: 12px;
   align-items: normal;
   border: none !important;
+}
+
+.ListFieldRow-footer {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  overflow: hidden;
+  background: var(--alinea-bg);
+  border-top: 1px solid var(--alinea-border);
 }

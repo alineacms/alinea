@@ -14,6 +14,7 @@ import {getType} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
+import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   Surface,
@@ -438,6 +439,7 @@ function ListFieldRow({
 }: ListFieldRowProps) {
   const itemId = useAtomValue(row.field('_id')) as string
   const typeName = useAtomValue(row.field('_type')) as string
+  const value = useAtomValue(row.value) as Record<string, unknown>
   const moveListRow = useSetAtom(list.move)
   const removeRow = useSetAtom(list.remove)
   const dragPreview = useRef<DragPreviewRenderer | null>(null)
@@ -520,6 +522,15 @@ function ListFieldRow({
           <SurfaceContent className={styles.ListFieldRow.body()}>
             <NodeEditor node={row as ReactiveNode<object>} type={type} />
           </SurfaceContent>
+        )}
+        {!expanded && (
+          <div className={styles.ListFieldRow.footer()}>
+            <CompactRecordFields
+              fields={Type.fields(type)}
+              layout="footer"
+              value={value}
+            />
+          </div>
         )}
       </Surface>
       <ListFieldSeparator
