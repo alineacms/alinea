@@ -3,8 +3,8 @@ import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import type {ComponentType, ReactNode, UIEvent} from 'react'
-import {Fragment, memo, useLayoutEffect, useMemo, useRef} from 'react'
+import type {ComponentType, ReactNode} from 'react'
+import {Fragment, memo, useMemo} from 'react'
 import {
   type DragAndDropHooks,
   GridLayout,
@@ -281,29 +281,12 @@ export function ExplorerCards({
   renderEmptyState
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
-  const scrollKey = useAtomValue(explorer.scrollKey)
-  const scrollPositions = useAtomValue(explorer.scrollPositions)
-  const setScrollPositions = useSetAtom(explorer.scrollPositions)
-  const onAction = useSetAtom(explorer.onAction)
-  const gridListRef = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    const gridList = gridListRef.current
-    if (!gridList) return
-    const position = scrollPositions[scrollKey]
-    gridList.scrollLeft = position?.left ?? 0
-    gridList.scrollTop = position?.top ?? 0
-  }, [scrollKey, scrollPositions])
+  const performAction = useSetAtom(explorer.onAction)
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
-    if (entry) onAction(entry)
+    if (entry) performAction(entry)
   }
-  function onScroll(event: UIEvent<HTMLDivElement>) {
-    const {scrollLeft, scrollTop} = event.currentTarget
-    setScrollPositions(positions => ({
-      ...positions,
-      [scrollKey]: {left: scrollLeft, top: scrollTop}
-    }))
-  }
+  const onAction = explorer.hasRowAction ? onItemAction : undefined
   return (
     <div className={styles.ExplorerCards.viewport()}>
       <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
@@ -313,13 +296,11 @@ export function ExplorerCards({
           layout="grid"
           className={styles.ExplorerCards()}
           selectionMode={explorer.selectionMode}
-          selectionBehavior="replace"
+          selectionBehavior={explorer.selectionBehavior}
           dragAndDropHooks={dragAndDropHooks}
           selectedKeys={selected}
           onSelectionChange={setSelected}
-          onAction={onItemAction}
-          onScroll={onScroll}
-          ref={gridListRef}
+          onAction={onAction}
           renderEmptyState={renderEmptyState}
           style={{display: 'block', width: '100%', height: '100%'}}
         >

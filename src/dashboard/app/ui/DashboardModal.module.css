@@ -124,36 +124,8 @@
   border-top: 1px solid var(--alinea-border);
 }
 
-.DashboardModalExplorer {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  flex-direction: column;
-}
-
 .DashboardModalForm {
   display: contents;
-}
-
-.DashboardModalExplorerFooter {
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 12px;
-  border-top: 1px solid var(--alinea-border);
-  border-bottom: 0;
-}
-
-.DashboardModalExplorerSelection {
-  color: var(--alinea-fg-muted);
-  font-size: 13px;
-  line-height: 20px;
-}
-
-.DashboardModalExplorerActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
 }
 
 .DashboardModalFormHeader {

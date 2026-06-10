@@ -3,13 +3,17 @@ import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
-import type {DashboardRoot} from '../store/Dashboard.js'
+import type {
+  DashboardLocaleSelection,
+  DashboardRoot
+} from '../store/Dashboard.js'
 import css from './LocaleMenu.module.css'
 
 const styles = styler(css)
 
 interface LocaleMenuProps {
   root: DashboardRoot
+  selectedLocale?: DashboardLocaleSelection
 }
 
 interface LocaleDisplay {
@@ -55,9 +59,12 @@ function LocaleLabel({locale}: LocaleLabelProps) {
   )
 }
 
-export function LocaleMenu({root}: LocaleMenuProps) {
+export function LocaleMenu({
+  root,
+  selectedLocale: selectedLocaleAtom = root.selectedLocale
+}: LocaleMenuProps) {
   const i18n = useAtomValue(root.i18n)
-  const [selectedLocale, setSelectedLocale] = useAtom(root.selectedLocale)
+  const [selectedLocale, setSelectedLocale] = useAtom(selectedLocaleAtom)
   if (!i18n || i18n.locales.length === 0) return null
   const activeLocale = selectedLocale ?? i18n.locales[0]
   if (!activeLocale) return null
@@ -73,6 +80,7 @@ export function LocaleMenu({root}: LocaleMenuProps) {
         </Button>
       }
       aria-label="Language"
+      popoverProps={{placement: 'bottom left'}}
       selectionMode="single"
       selectedKeys={[activeLocale]}
       onAction={key => {

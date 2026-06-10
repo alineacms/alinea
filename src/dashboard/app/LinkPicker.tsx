@@ -1,23 +1,37 @@
 import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {startTransition, useState} from 'react'
+import {Suspense, startTransition, useState} from 'react'
 import {ExplorerOptions, useDashboard} from '../store.js'
-import {ExplorerBody, ExplorerHeader} from './Explorer.js'
+import {ExplorerHeader} from './Explorer.js'
+import {
+  ExplorerModal,
+  ExplorerModalActions,
+  ExplorerModalFooter,
+  ExplorerModalSelection,
+  ExplorerModalSuspense
+} from './ExplorerModal.js'
+import {ExplorerPickerContent} from './ExplorerPickerContent.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
   DashboardModalDialog,
-  DashboardModalExplorer,
-  DashboardModalExplorerActions,
-  DashboardModalExplorerFooter,
-  DashboardModalExplorerSelection,
   useDashboardModal
 } from './ui/DashboardModal.js'
 
 export function LinkPicker(options: ExplorerOptions) {
   return (
     <DashboardModal size="explorer">
-      <ExplorerModal options={options} />
+      <Suspense
+        fallback={
+          <DashboardModalDialog
+            aria-label="Pick a link"
+            variant="explorer"
+            isLoading
+          />
+        }
+      >
+        <LinkPickerModalContent options={options} />
+      </Suspense>
     </DashboardModal>
   )
 }
@@ -26,19 +40,20 @@ interface ExplorerModalProps {
   options: ExplorerOptions
 }
 
-function ExplorerModal({options}: ExplorerModalProps) {
+function LinkPickerModalContent({options}: ExplorerModalProps) {
   const modal = useDashboardModal()
   const dashboard = useDashboard()
   const workspace = useAtomValue(dashboard.selectedWorkspace)
   const root = useAtomValue(dashboard.selectedRoot)
+  const location = options.location ?? {
+    workspace,
+    root: root ?? undefined
+  }
   const [explorer] = useState(() =>
-    dashboard.explore(
-      options.location ?? {workspace, root: root ?? undefined},
-      {
-        ...options,
-        searchDepth: 'all'
-      }
-    )
+    dashboard.explore(location, {
+      ...options,
+      searchDepth: 'all'
+    })
   )
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
@@ -51,24 +66,30 @@ function ExplorerModal({options}: ExplorerModalProps) {
   }
   return (
     <DashboardModalDialog aria-label="Pick a link" variant="explorer">
-      <DashboardModalExplorer>
-        <ExplorerHeader
-          controls={<DashboardModalCloseButton />}
-          explorer={explorer}
-        />
-        <ExplorerBody explorer={explorer} />
-        <DashboardModalExplorerFooter>
-          <DashboardModalExplorerSelection>
-            {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-          </DashboardModalExplorerSelection>
-          <DashboardModalExplorerActions>
-            <Button onPress={modal.close}>Cancel</Button>
-            <Button intent="primary" onPress={onSubmit}>
-              Select
-            </Button>
-          </DashboardModalExplorerActions>
-        </DashboardModalExplorerFooter>
-      </DashboardModalExplorer>
+      <ExplorerModalSuspense>
+        <ExplorerModal>
+          <ExplorerHeader
+            controls={<DashboardModalCloseButton />}
+            explorer={explorer}
+          />
+          <ExplorerPickerContent
+            explorer={explorer}
+            navigationLabel="Link folders"
+            options={options}
+          />
+          <ExplorerModalFooter>
+            <ExplorerModalSelection>
+              {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
+            </ExplorerModalSelection>
+            <ExplorerModalActions>
+              <Button onPress={modal.close}>Cancel</Button>
+              <Button intent="primary" onPress={onSubmit}>
+                Select
+              </Button>
+            </ExplorerModalActions>
+          </ExplorerModalFooter>
+        </ExplorerModal>
+      </ExplorerModalSuspense>
     </DashboardModalDialog>
   )
 }

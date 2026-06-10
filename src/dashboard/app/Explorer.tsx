@@ -13,11 +13,7 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type {
-  DashboardEntry,
-  DashboardEntryData,
-  DashboardRoot
-} from '../store.js'
+import type {DashboardEntry, DashboardEntryData} from '../store.js'
 import {
   DashboardExplorer,
   ExplorerSort,
@@ -69,11 +65,6 @@ interface ExplorerHeaderParentMainProps {
   titleControls?: ReactNode
 }
 
-interface ExplorerHeaderRootMainProps {
-  root: DashboardRoot
-  titleControls?: ReactNode
-}
-
 function ExplorerSearch({explorer}: ExplorerSearchProps) {
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
@@ -97,19 +88,6 @@ function ExplorerSearch({explorer}: ExplorerSearchProps) {
       value={inputValue}
       onChange={onSearchChange}
     />
-  )
-}
-
-function ExplorerHeaderRootMain({
-  root,
-  titleControls
-}: ExplorerHeaderRootMainProps) {
-  const label = useAtomValue(root.label)
-  return (
-    <div className={styles.ExplorerHeader.main()}>
-      <h1 className={styles.ExplorerHeader.title()}>{label}</h1>
-      {titleControls}
-    </div>
   )
 }
 
@@ -154,8 +132,9 @@ function ExplorerHeaderMain({
       />
     )
   }
-  if (root)
-    return <ExplorerHeaderRootMain root={root} titleControls={titleControls} />
+  if (root && titleControls) {
+    return <div className={styles.ExplorerHeader.main()}>{titleControls}</div>
+  }
   return null
 }
 
@@ -330,8 +309,8 @@ export function ExplorerHeader({
           <ExplorerSearch explorer={explorer} />
         </div>
         <div className={styles.Explorer.toolbar()}>
-          {controls}
           <ExplorerToolbar explorer={explorer} />
+          {controls}
         </div>
       </div>
     </RailHeader>

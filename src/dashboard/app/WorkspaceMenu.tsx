@@ -9,7 +9,7 @@ import {
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {useState, type ComponentType, type ReactNode} from 'react'
+import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
 import {
   IcRoundSearch,
@@ -24,13 +24,13 @@ import type {
 } from '../store/Dashboard.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
+import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
 import {LogoShape} from './LogoShape.js'
 import {CreateEntry} from './modals/CreateEntry.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
-  DashboardModalDialog,
-  DashboardModalExplorer
+  DashboardModalDialog
 } from './ui/DashboardModal.js'
 import css from './WorkspaceMenu.module.css'
 
@@ -137,13 +137,15 @@ function SearchPopup() {
 
   return (
     <DashboardModalDialog aria-label="Search entries" variant="explorer">
-      <DashboardModalExplorer>
-        <ExplorerHeader
-          controls={<DashboardModalCloseButton />}
-          explorer={explorer}
-        />
-        <ExplorerBody explorer={explorer} />
-      </DashboardModalExplorer>
+      <ExplorerModalSuspense>
+        <ExplorerModal>
+          <ExplorerHeader
+            controls={<DashboardModalCloseButton />}
+            explorer={explorer}
+          />
+          <ExplorerBody explorer={explorer} />
+        </ExplorerModal>
+      </ExplorerModalSuspense>
     </DashboardModalDialog>
   )
 }
@@ -185,7 +187,17 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
           <IconComp icon={IcRoundSearch} data-slot="icon" />
         </Button>
         <DashboardModal size="explorer">
-          <SearchPopup />
+          <Suspense
+            fallback={
+              <DashboardModalDialog
+                aria-label="Search entries"
+                variant="explorer"
+                isLoading
+              />
+            }
+          >
+            <SearchPopup />
+          </Suspense>
         </DashboardModal>
       </DialogTrigger>
       {currentRoot && <WorkspaceCreateEntryButton root={currentRoot} />}

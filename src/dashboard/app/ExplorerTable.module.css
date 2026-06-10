@@ -8,6 +8,7 @@
 }
 
 .ExplorerTable-surface {
+  position: relative;
   min-height: 0;
   height: 100%;
   width: 100%;
@@ -49,13 +50,14 @@
 }
 
 .ExplorerTable-empty {
+  position: absolute;
+  inset: 0;
   display: flex;
   box-sizing: border-box;
-  min-height: 100%;
-  height: 100%;
   width: 100%;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 .ExplorerTable-column,

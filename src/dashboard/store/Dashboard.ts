@@ -147,11 +147,26 @@ interface DashboardAuthSetupCloud {
 
 type DashboardAuthAction = DashboardAuthCheck | DashboardAuthSetupCloud
 
-type DashboardTreeSelection = WritableAtom<
+export type DashboardTreeSelection = WritableAtom<
   Set<Key>,
   [next: 'all' | Set<Key>],
   Promise<void>
 >
+
+export function createDashboardTreeSelection(
+  initialSelection = new Set<Key>()
+): DashboardTreeSelection {
+  const base = atom(initialSelection)
+  const selection = atom(
+    get => get(base),
+    async (get, set, next: 'all' | Set<Key>) => {
+      if (next === 'all')
+        throw new Error('Selecting all items is not supported')
+      set(base, next)
+    }
+  )
+  return selection
+}
 
 type FocusedItem =
   | {entry: DashboardEntryData}
@@ -846,7 +861,37 @@ export class Dashboard {
   })
 
   explore(initialLocation: ExplorerLocation, options: ExplorerOptions = {}) {
-    return new DashboardExplorer(this, atom(initialLocation), options)
+    const firstSelection = options.location
+      ? undefined
+      : options.initialSelection?.[0]
+    const selectedLocation = atom(async get => {
+      if (!firstSelection) return undefined
+      const {data} = await get(this.entries(firstSelection).readyState)
+      if (!data) return undefined
+      return {
+        workspace: get(data.workspaceKey),
+        root: get(data.rootKey),
+        parentId: get(data.parentId) ?? undefined
+      } satisfies ExplorerLocation
+    })
+    const fallbackLocation = atom(initialLocation)
+    const hasManualLocation = atom(false)
+    const location = atom(
+      get => {
+        if (get(hasManualLocation)) return get(fallbackLocation)
+        return (
+          get(unwrap(selectedLocation, previous => previous)) ??
+          get(fallbackLocation)
+        )
+      },
+      (get, set, update: SetStateAction<ExplorerLocation>) => {
+        const current = get(location)
+        const next = typeof update === 'function' ? update(current) : update
+        set(hasManualLocation, true)
+        set(fallbackLocation, next)
+      }
+    )
+    return new DashboardExplorer(this, location, options)
   }
 
   entries = dispense(id => {
@@ -1061,16 +1106,19 @@ export type ExplorerSort = {
   direction: ExplorerSortDirections
 }
 
-export interface ExplorerScrollPosition {
-  left: number
-  top: number
-}
-
 export type ExplorerTypeFilters = typeof MediaFile | typeof MediaLibrary
+
+export type DashboardLocaleSelection = WritableAtom<
+  string | null,
+  [locale: string],
+  void
+>
 
 export interface ExplorerOptions {
   condition?: Filter<EntryFields>
+  enableNavigation?: boolean
   location?: ExplorerLocation
+  selectedLocale?: string | null
   selectionMode?: 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
   initialSelection?: Array<string>
@@ -1087,6 +1135,7 @@ export class DashboardExplorer {
     void
   >
   #options: ExplorerOptions
+  #selectedLocale: DashboardLocaleSelection
   selection
   constructor(
     public dashboard: Dashboard,
@@ -1099,6 +1148,13 @@ export class DashboardExplorer {
   ) {
     this.#location = location
     this.#options = options
+    const selectedLocale = atom(options.selectedLocale ?? null)
+    this.#selectedLocale = atom(
+      get => get(selectedLocale),
+      (_get, set, locale: string) => {
+        set(selectedLocale, locale)
+      }
+    )
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>(options.initialSelection)
     )
@@ -1110,6 +1166,10 @@ export class DashboardExplorer {
 
   get selectionBehavior() {
     return this.#options.selectionBehavior ?? 'replace'
+  }
+
+  get hasRowAction() {
+    return Boolean(this.#options.onAction)
   }
 
   onAction = atom(null, (get, set, entry: DashboardEntry) => {
@@ -1131,7 +1191,18 @@ export class DashboardExplorer {
   })
 
   search = atom('')
-  scrollPositions = atom<Record<string, ExplorerScrollPosition>>({})
+  selectedLocale = atom(
+    get => {
+      const root = get(this.root)
+      if (!root) return null
+      const locale = get(this.#selectedLocale)
+      if (locale) return locale
+      return get(root.selectedLocale)
+    },
+    (_get, set, locale: string) => {
+      set(this.#selectedLocale, locale)
+    }
+  )
   #selectedView = atom<'card' | 'row' | undefined>()
   view = atom(
     get => {
@@ -1177,21 +1248,6 @@ export class DashboardExplorer {
       set(this.#location, update)
     }
   )
-  scrollKey = atom(get => {
-    const view = get(this.view)
-    const location = get(this.location)
-    const search = get(this.search)
-    const sort = get(this.sort)
-    return [
-      view,
-      location.workspace,
-      location.root,
-      location.parentId ?? '',
-      search,
-      sort.sortBy,
-      sort.direction
-    ].join(':')
-  })
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
     return [...keys].map(id => dragItem(id))
   })
@@ -1333,7 +1389,7 @@ export class DashboardExplorer {
       caseSensitive: fieldToSort !== Entry.id
     }
     if (!root) return []
-    const locale = get(root.selectedLocale)
+    const locale = get(this.selectedLocale)
     const searchAll = Boolean(search && this.#options.searchDepth === 'all')
     const flatList = Boolean(this.#options.condition) || searchAll
     const policy = get(this.dashboard.policy)
@@ -1541,14 +1597,18 @@ export class DashboardWorkspace {
 
 export class DashboardTree {
   #treeSelection: DashboardTreeSelection
+  #syncRouteExpansion: boolean
   constructor(
     private workspace: DashboardWorkspace,
-    treeSelection: DashboardTreeSelection
+    treeSelection: DashboardTreeSelection,
+    options: {syncRouteExpansion?: boolean} = {}
   ) {
     this.#treeSelection = treeSelection
+    this.#syncRouteExpansion = options.syncRouteExpansion ?? true
   }
 
   #routeExpandedKeys = atom(async get => {
+    if (!this.#syncRouteExpansion) return new Set<Key>()
     const route = get(this.workspace.dashboard.route)
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
@@ -1613,6 +1673,16 @@ export class DashboardTree {
     return atom(get => get(this.expandedKeys).has(entry.id))
   })
 
+  visibleChildren = dispense((entry: DashboardEntry) => {
+    return atom(get => {
+      const {data} = get(entry.data)
+      if (!data) return undefined
+      if (!get(data.hasChildren)) return undefined
+      const children = get(unwrap(data.children))
+      return children?.map(childId => this.entryItems(childId))
+    })
+  })
+
   selectedAncestorStatus = dispense((entry: DashboardEntry) => {
     return atom(async (get): Promise<DashboardEntryTreeStatus | undefined> => {
       const {data} = get(entry.data)
@@ -1631,12 +1701,8 @@ export class DashboardTree {
 
   children = dispense((entry: DashboardEntry) => {
     return atom(get => {
-      const {data} = get(entry.data)
-      if (!data) return undefined
-      if (!get(data.hasChildren)) return undefined
       if (!get(this.isExpanded(entry))) return undefined
-      const children = get(unwrap(data.children))
-      return children?.map(childId => this.entryItems(childId))
+      return get(this.visibleChildren(entry))
     })
   })
 
@@ -2024,10 +2090,7 @@ export class DashboardEntryData {
           return {
             id: key,
             label: Field.label(field),
-            value: formatDashboardEntryOverviewValue(
-              entry.data[key],
-              options
-            )
+            value: formatDashboardEntryOverviewValue(entry.data[key], options)
           }
         })
     })
@@ -2850,7 +2913,7 @@ export class DashboardRoot {
       ),
       {
         selectionMode: 'multiple',
-        selectionBehavior: 'replace',
+        selectionBehavior: 'toggle',
         onAction: atom(null, (get, set, entry) => {
           set(this.workspace.dashboard.route, {
             workspace: this.workspace.key,

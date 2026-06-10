@@ -203,20 +203,23 @@ function CustomRootEditor({root, view: View}: CustomRootEditorProps) {
 }
 
 function DefaultRootEditor({root}: RootEditorProps) {
+  const route = useAtomValue(root.workspace.dashboard.route)
   return (
     <Rail main>
       <Explorer
         explorer={root.explorer}
-        titleControls={<RootOverviewControls root={root} />}
+        titleControls={
+          route.entry ? <RootOverviewControls root={root} /> : undefined
+        }
       />
     </Rail>
   )
 }
 
 function RootOverviewControls({root}: RootEditorProps) {
-  const route = useAtomValue(root.workspace.dashboard.route)
-  if (!route.entry) return null
-  return <LoadedRootOverviewControls entryId={route.entry} root={root} />
+  const entryId = useAtomValue(root.workspace.dashboard.route).entry
+  if (!entryId) return null
+  return <LoadedRootOverviewControls entryId={entryId} root={root} />
 }
 
 interface LoadedRootOverviewControlsProps {

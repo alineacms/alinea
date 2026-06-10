@@ -140,15 +140,6 @@ export function DashboardModalSeparator() {
   return <div className={styles.DashboardModalSeparator()} />
 }
 
-export function DashboardModalExplorer(props: ComponentProps<'div'>) {
-  return (
-    <div
-      {...props}
-      className={styles.DashboardModalExplorer(styler.merge(props))}
-    />
-  )
-}
-
 export interface DashboardModalFormProps extends ComponentProps<'form'> {}
 
 export function DashboardModalForm(props: DashboardModalFormProps) {
@@ -156,47 +147,6 @@ export function DashboardModalForm(props: DashboardModalFormProps) {
     <form
       {...props}
       className={styles.DashboardModalForm(styler.merge(props))}
-    />
-  )
-}
-
-export interface DashboardModalExplorerFooterProps extends ComponentProps<
-  typeof RailHeader
-> {}
-
-export function DashboardModalExplorerFooter(
-  props: DashboardModalExplorerFooterProps
-) {
-  return (
-    <RailHeader
-      {...props}
-      className={styles.DashboardModalExplorerFooter(styler.merge(props))}
-    />
-  )
-}
-
-export interface DashboardModalExplorerSelectionProps extends ComponentProps<'span'> {}
-
-export function DashboardModalExplorerSelection(
-  props: DashboardModalExplorerSelectionProps
-) {
-  return (
-    <span
-      {...props}
-      className={styles.DashboardModalExplorerSelection(styler.merge(props))}
-    />
-  )
-}
-
-export interface DashboardModalExplorerActionsProps extends ComponentProps<'div'> {}
-
-export function DashboardModalExplorerActions(
-  props: DashboardModalExplorerActionsProps
-) {
-  return (
-    <div
-      {...props}
-      className={styles.DashboardModalExplorerActions(styler.merge(props))}
     />
   )
 }

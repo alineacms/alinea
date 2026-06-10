@@ -1,23 +1,36 @@
 .LocaleMenu-trigger {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  padding: 0 8px;
-  margin-left: -8px;
-  margin-right: auto;
+  width: auto;
+  max-width: 92px;
+  min-height: 24px;
+  padding: 0 4px;
+  margin: 0;
   border: 0;
-  border-radius: 0;
+  border-radius: 4px;
   appearance: none;
   background: transparent;
   color: inherit;
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   outline: none;
   text-align: left;
+}
+
+.LocaleMenu-trigger[data-hovered],
+.LocaleMenu-trigger[data-pressed] {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.LocaleMenu-trigger .LocaleMenu-label {
+  gap: 4px;
+}
+
+.LocaleMenu-trigger .LocaleMenu-label-fullName {
+  display: none;
 }
 
 .LocaleMenu-label {
