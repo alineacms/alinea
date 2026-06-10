@@ -7,7 +7,6 @@ import {ReadableStream, type Request, Response} from '@alinea/iso'
 import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
-import {Readable} from 'node:stream'
 import {buildEmitter} from '../build/BuildEmitter.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
@@ -71,6 +70,7 @@ export function createLocalServer(
     alineaDev,
     buildOptions,
     production,
+    forceAuth,
     liveReload,
     buildId
   }: ServeContext,
@@ -136,7 +136,7 @@ export function createLocalServer(
       'process.env.NODE_ENV': production ? '"production"' : '"development"',
       'process.env.ALINEA_DEV': alineaDev ? 'true' : 'false',
       'process.env.ALINEA_USER': JSON.stringify(JSON.stringify(user)),
-      'process.env.ALINEA_FORCE_AUTH': process.env.ALINEA_CLOUD_URL
+      'process.env.ALINEA_FORCE_AUTH': forceAuth || process.env.ALINEA_CLOUD_URL
         ? 'true'
         : 'false',
       'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
@@ -214,7 +214,7 @@ export function createLocalServer(
       await fs.promises.mkdir(dir, {recursive: true})
       await fs.promises.writeFile(
         path.join(rootDir, file),
-        Readable.fromWeb(request.body as any)
+        Buffer.from(await request.arrayBuffer())
       )
       return new Response('Upload ok')
     }),

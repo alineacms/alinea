@@ -1,7 +1,7 @@
 import path from 'node:path'
 import type {Request, Response} from '@alinea/iso'
 import {createRemote} from '#/backend/api/CreateBackend.js'
-import {createHandler} from '#/backend/Handler.js'
+import {createHandler, type Handler} from '#/backend/Handler.js'
 import {gitUser} from '#/backend/util/ExecGit.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {CMS} from '#/core/CMS.js'
@@ -10,6 +10,7 @@ import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
 import {createId} from '#/core/Id.js'
 import type {BuildOptions} from 'esbuild'
 import {generate} from '../Generate.js'
+import type {DevDB} from '../generate/DevDB.js'
 import {dirname} from '../util/Dirname.js'
 import {findConfigFile} from '../util/FindConfigFile.js'
 import {reportError} from '../util/Report.js'
@@ -35,8 +36,16 @@ export interface CreateDevServerOptions {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
+  forceAuth?: boolean
   dashboardUrl: Promise<string>
   onAfterGenerate?: (message: string, config: Config) => void
+  handler?: (options: CreateDevServerHandlerOptions) => Handler
+}
+
+export interface CreateDevServerHandlerOptions {
+  cms: CMS
+  db: DevDB
+  drafts: MemoryDrafts
 }
 
 export interface DevServer {
@@ -55,8 +64,10 @@ export async function createDevServer(
     staticDir = path.join(__dirname, '..', 'static'),
     alineaDev = false,
     production = false,
+    forceAuth = false,
     dashboardUrl,
-    onAfterGenerate
+    onAfterGenerate,
+    handler
   } = options
 
   const rootDir = path.resolve(dir)
@@ -77,6 +88,7 @@ export async function createDevServer(
     alineaDev,
     buildOptions: options.buildOptions || {},
     production,
+    forceAuth,
     liveReload: new LiveReload(),
     buildId: createId()
   }
@@ -124,11 +136,9 @@ export async function createDevServer(
         }
 
         const history = new GitHistory(cms.config, rootDir)
-        const handleApi = createHandler({
-          cms,
-          remote: backend,
-          db
-        })
+        const handleApi = handler
+          ? handler({cms, db, drafts})
+          : createHandler({cms, remote: backend, db})
         const nextServer = createLocalServer(
           context,
           cms,

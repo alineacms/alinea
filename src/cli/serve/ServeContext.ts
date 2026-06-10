@@ -10,6 +10,7 @@ export interface ServeContext {
   alineaDev: boolean
   buildOptions: BuildOptions
   production: boolean
+  forceAuth: boolean
   liveReload: LiveReload
   buildId: string
 }

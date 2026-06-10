@@ -1,5 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
+import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
@@ -9,6 +10,7 @@ import {OAuth2, type OAuth2Options} from './OAuth2.js'
 
 export type AvailableDrivers =
   | 'd1'
+  | 'bun:sqlite'
   | 'mysql2'
   | '@neondatabase/serverless'
   | '@vercel/postgres'
@@ -27,6 +29,7 @@ type DatabaseOption<Driver extends AvailableDrivers> = {
 
 export type DatabaseDeclaration =
   | DatabaseOption<'d1'>
+  | DatabaseOption<'bun:sqlite'>
   | DatabaseOption<'mysql2'>
   | DatabaseOption<'@neondatabase/serverless'>
   | DatabaseOption<'@vercel/postgres'>
@@ -36,7 +39,10 @@ export type DatabaseDeclaration =
   | DatabaseOption<'@libsql/client'>
 
 export interface BackendOptions {
-  auth?(username: string, password: string): boolean | Promise<boolean>
+  auth?(
+    username: string,
+    password: string
+  ): boolean | User | Promise<boolean | User>
   oauth2?: OAuth2Options
   database: DatabaseDeclaration
   github: GithubOptions

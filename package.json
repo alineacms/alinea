@@ -52,6 +52,7 @@
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
+    "test:e2e": "bun test e2e",
     "lint": "oxlint --ignore-path .gitignore .",
     "lint:fix": "oxlint --fix --ignore-path .gitignore .",
     "prepublishOnly": "bun run build",
